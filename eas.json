@@ -19,7 +19,8 @@
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api-dev.forward-gestion.com.ar:8443",
-        "EXPO_PUBLIC_SIGNALR_URL": "https://api-dev.forward-gestion.com.ar:8443/hubs/erp"
+        "EXPO_PUBLIC_SIGNALR_URL": "https://api-dev.forward-gestion.com.ar:8443/hubs/erp",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "production": {
