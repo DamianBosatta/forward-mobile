@@ -15,9 +15,9 @@
  *   - ADDED: URL builders getManifiestoUrl, getEtiquetasUrl, getSurtidoPdfUrl
  */
 
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
 import { api, API_URL } from './client'
-import type { Vehiculo as VehiculoDto, VentaEmpacada, Chofer, Vehiculo, HojaDeRuta, HojaRutaListItemDto, PagedResult } from './types'
+import type { Vehiculo as VehiculoDto, VentaEmpacada, Chofer, Vehiculo, HojaDeRuta, HojaRutaListItemDto } from './types'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Query Keys
@@ -30,7 +30,6 @@ export const logisticaKeys = {
   vehiculos: () => [...logisticaKeys.all, 'vehiculos'] as const,
   hojasRuta: () => [...logisticaKeys.all, 'hojas-ruta'] as const,
   hojaRuta: (id: string) => [...logisticaKeys.all, 'hojas-ruta', id] as const,
-  infiniteHojasRuta: (filters?: unknown) => [...logisticaKeys.all, 'infinite-hojas-ruta', filters] as const,
 }
 
 /** Isolated query-key namespace for the picking board. Keeps picking invalidations
@@ -161,33 +160,8 @@ export function useHojasDeRuta(
   return useQuery({
     queryKey: [...logisticaKeys.hojasRuta(), filters],
     queryFn: () => api.get<HojaRutaListItemDto[]>(`/api/v1/Logistica/hojas-ruta?${searchParams}`),
-    ...options
-  })
-}
-
-/**
- * Infinite scroll for Hojas de Ruta.
- */
-export function useInfiniteHojasDeRuta(filters?: { choferId?: string, estado?: number, pageSize?: number }) {
-  return useInfiniteQuery({
-    queryKey: logisticaKeys.infiniteHojasRuta(filters),
-    queryFn: ({ pageParam = 1 }) => {
-      const searchParams = new URLSearchParams()
-      searchParams.set('pageNumber', String(pageParam))
-      searchParams.set('pageSize', String(filters?.pageSize ?? 20))
-      if (filters?.choferId) searchParams.set('choferId', filters.choferId)
-      if (filters?.estado !== undefined) searchParams.set('estado', String(filters.estado))
-
-      return api.get<PagedResult<HojaDeRuta>>(`/api/v1/Logistica/hojas-ruta?${searchParams}`)
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
-      if (lastPage.page < lastPage.totalPages) {
-        return lastPage.page + 1
-      }
-      return undefined
-    },
     staleTime: 30_000,
+    ...options
   })
 }
 
