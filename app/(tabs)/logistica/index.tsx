@@ -20,7 +20,7 @@ import { useColors, tokens, BRAND } from '@/libs/theme'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { MotiView } from 'moti'
 import { safeHaptics } from '@/core/utils/haptics'
-import { useVentasEmpacadas, useInfiniteHojasDeRuta } from '@/libs/api-client/logistica'
+import { useVentasEmpacadas, useHojasDeRuta } from '@/libs/api-client/logistica'
 import { useLogisticaStore } from '@/src/features/logistica/store/logistica.store'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { usePermissions } from '@/src/core/auth/RequirePermission'
@@ -58,28 +58,18 @@ export default function LogisticaScreen() {
 
   // Queries
   const { data: empacadas } = useVentasEmpacadas()
+  // The /hojas-ruta endpoint returns a flat list (not paginated), so a plain query
+  // mirrors the web client. The driver only ever sees their own assigned routes.
   const {
-    data: routePages,
+    data,
     isLoading,
     isRefetching,
     refetch,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage
-  } = useInfiniteHojasDeRuta({
+  } = useHojasDeRuta({
     choferId: isDriver ? user?.id : undefined,
-    pageSize: 15
   })
-
-  const rutas = useMemo(() => {
-    // The /hojas-ruta endpoint returns a flat array in `data` (not a PagedResult),
-    // and api.get already unwraps `data`, so each page IS the array. Support both
-    // shapes so the list renders whether or not the endpoint ever becomes paginated.
-    return routePages?.pages.flatMap(page => {
-      const p = page as any
-      return Array.isArray(p) ? p : (p?.content ?? p?.data?.content ?? p?.data ?? [])
-    }) ?? []
-  }, [routePages])
+  // Stable reference while loading so the memoized list header isn't recomputed every render.
+  const rutas = useMemo(() => data ?? [], [data])
 
   const formatDate = (dateStr: string) => {
     try {
@@ -353,8 +343,6 @@ export default function LogisticaScreen() {
           isLoading={isLoading}
           isRefetching={isRefetching}
           onRefresh={refetch}
-          onEndReached={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
-          isFetchingNextPage={isFetchingNextPage}
           SkeletonComponent={RouteCardSkeleton}
           skeletonCount={3}
           emptyMessage="No hay hojas de ruta disponibles."

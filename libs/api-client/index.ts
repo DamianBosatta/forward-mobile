@@ -144,7 +144,6 @@ export {
   useChoferes,
   useVehiculos,
   useHojasDeRuta,
-  useInfiniteHojasDeRuta,
   useHojaRuta,
   useCrearHojaRuta,
   useIniciarHojaRuta,
