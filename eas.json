@@ -1,0 +1,35 @@
+{
+  "cli": {
+    "version": ">= 12.5.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api-dev.forward-gestion.com.ar:8443",
+        "EXPO_PUBLIC_SIGNALR_URL": "https://api-dev.forward-gestion.com.ar:8443/hubs/erp"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api-dev.forward-gestion.com.ar:8443",
+        "EXPO_PUBLIC_SIGNALR_URL": "https://api-dev.forward-gestion.com.ar:8443/hubs/erp"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.forward-gestion.com.ar",
+        "EXPO_PUBLIC_SIGNALR_URL": "https://api.forward-gestion.com.ar/hubs/erp"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

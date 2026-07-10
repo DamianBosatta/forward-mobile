@@ -1,0 +1,1361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="619" failures="0" errors="0" time="49.935">
+  <testsuite name="StockListRow — rendering" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:48:56" time="31.283" tests="8">
+    <testcase classname="StockListRow — rendering renders the product name" name="StockListRow — rendering renders the product name" time="1.684">
+    </testcase>
+    <testcase classname="StockListRow — rendering renders the código propio and depósito as a subtitle" name="StockListRow — rendering renders the código propio and depósito as a subtitle" time="0.013">
+    </testcase>
+    <testcase classname="StockListRow — rendering renders the stock real number" name="StockListRow — rendering renders the stock real number" time="0.016">
+    </testcase>
+    <testcase classname="StockListRow — rendering renders the stock mínimo with a &quot;mín.&quot; prefix" name="StockListRow — rendering renders the stock mínimo with a &quot;mín.&quot; prefix" time="0.008">
+    </testcase>
+    <testcase classname="StockListRow — rendering renders the precio formatted with a $ prefix" name="StockListRow — rendering renders the precio formatted with a $ prefix" time="0.007">
+    </testcase>
+    <testcase classname="StockListRow — tap behavior calls onOpenDetail when the row is pressed" name="StockListRow — tap behavior calls onOpenDetail when the row is pressed" time="0.008">
+    </testcase>
+    <testcase classname="StockListRow — alert state includes &quot;en alerta&quot; in the accessibility label when enAlerta=true" name="StockListRow — alert state includes &quot;en alerta&quot; in the accessibility label when enAlerta=true" time="0.011">
+    </testcase>
+    <testcase classname="StockListRow — alert state does NOT include &quot;en alerta&quot; in the accessibility label when enAlerta=false" name="StockListRow — alert state does NOT include &quot;en alerta&quot; in the accessibility label when enAlerta=false" time="0.009">
+    </testcase>
+  </testsuite>
+  <testsuite name="NuevoProductoScreen — S4 FIX #1 access-denied gate" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:28" time="2.677" tests="4">
+    <testcase classname="NuevoProductoScreen — S4 FIX #1 access-denied gate Empleado → renders access-denied banner, no cost fields, no create button" name="NuevoProductoScreen — S4 FIX #1 access-denied gate Empleado → renders access-denied banner, no cost fields, no create button" time="1.594">
+    </testcase>
+    <testcase classname="NuevoProductoScreen — S4 FIX #1 access-denied gate Administrador → renders full form with cost field and create button" name="NuevoProductoScreen — S4 FIX #1 access-denied gate Administrador → renders full form with cost field and create button" time="0.509">
+    </testcase>
+    <testcase classname="EditarProductoScreen — S4 FIX #1 access-denied gate Empleado → renders access-denied banner, no cost fields, no save button" name="EditarProductoScreen — S4 FIX #1 access-denied gate Empleado → renders access-denied banner, no cost fields, no save button" time="0.008">
+    </testcase>
+    <testcase classname="EditarProductoScreen — S4 FIX #1 access-denied gate Gerencia → renders full form with cost field and save button" name="EditarProductoScreen — S4 FIX #1 access-denied gate Gerencia → renders full form with cost field and save button" time="0.032">
+    </testcase>
+  </testsuite>
+  <testsuite name="DepositosScreen UI" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:48:56" time="34.943" tests="3">
+    <testcase classname="DepositosScreen UI debe renderizar la lista de depósitos y sus métricas" name="DepositosScreen UI debe renderizar la lista de depósitos y sus métricas" time="1.009">
+    </testcase>
+    <testcase classname="DepositosScreen UI debe mostrar mensaje si no hay resultados" name="DepositosScreen UI debe mostrar mensaje si no hay resultados" time="0.054">
+    </testcase>
+    <testcase classname="DepositosScreen UI debe abrir el modal de confirmación al tocar desactivar" name="DepositosScreen UI debe abrir el modal de confirmación al tocar desactivar" time="0.08">
+    </testcase>
+  </testsuite>
+  <testsuite name="StockDetailSheet — Rentabilidad section role gate" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:48:56" time="34.967" tests="8">
+    <testcase classname="StockDetailSheet — Rentabilidad section role gate Empleado: Rentabilidad section is NOT rendered" name="StockDetailSheet — Rentabilidad section role gate Empleado: Rentabilidad section is NOT rendered" time="2.24">
+    </testcase>
+    <testcase classname="StockDetailSheet — Rentabilidad section role gate Empleado role (non-cost): Rentabilidad section is NOT rendered" name="StockDetailSheet — Rentabilidad section role gate Empleado role (non-cost): Rentabilidad section is NOT rendered" time="0.048">
+    </testcase>
+    <testcase classname="StockDetailSheet — Rentabilidad section role gate empty roles: Rentabilidad section is NOT rendered" name="StockDetailSheet — Rentabilidad section role gate empty roles: Rentabilidad section is NOT rendered" time="0.026">
+    </testcase>
+    <testcase classname="StockDetailSheet — Rentabilidad section role gate Administrador: Rentabilidad section IS rendered" name="StockDetailSheet — Rentabilidad section role gate Administrador: Rentabilidad section IS rendered" time="0.064">
+    </testcase>
+    <testcase classname="StockDetailSheet — Rentabilidad section role gate Gerencia: Rentabilidad section IS rendered" name="StockDetailSheet — Rentabilidad section role gate Gerencia: Rentabilidad section IS rendered" time="0.036">
+    </testcase>
+    <testcase classname="StockDetailSheet — Rentabilidad section role gate AdministradorSistemas: Rentabilidad section IS rendered" name="StockDetailSheet — Rentabilidad section role gate AdministradorSistemas: Rentabilidad section IS rendered" time="0.032">
+    </testcase>
+    <testcase classname="StockDetailSheet — Rentabilidad section role gate sheet is not rendered when item is null" name="StockDetailSheet — Rentabilidad section role gate sheet is not rendered when item is null" time="0.001">
+    </testcase>
+    <testcase classname="StockDetailSheet — Disponibilidad labels shows &quot;Por entrar&quot; label, never &quot;Virtual&quot;" name="StockDetailSheet — Disponibilidad labels shows &quot;Por entrar&quot; label, never &quot;Virtual&quot;" time="0.025">
+    </testcase>
+  </testsuite>
+  <testsuite name="NuevoProductoScreen UI" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:30" time="0.784" tests="2">
+    <testcase classname="NuevoProductoScreen UI deberia renderizar los campos principales" name="NuevoProductoScreen UI deberia renderizar los campos principales" time="0.1">
+    </testcase>
+    <testcase classname="NuevoProductoScreen UI deberia invocar a handleSubmit al presionar guardar" name="NuevoProductoScreen UI deberia invocar a handleSubmit al presionar guardar" time="0.038">
+    </testcase>
+  </testsuite>
+  <testsuite name="SocioCard — contact info" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:48:56" time="35.353" tests="3">
+    <testcase classname="SocioCard — contact info shows email, phone and address from the list item" name="SocioCard — contact info shows email, phone and address from the list item" time="0.181">
+    </testcase>
+    <testcase classname="SocioCard — contact info falls back to &quot;SIN REGISTRO&quot; only when contact fields are empty" name="SocioCard — contact info falls back to &quot;SIN REGISTRO&quot; only when contact fields are empty" time="0.031">
+    </testcase>
+    <testcase classname="SocioCard — contact info renders the razón social (uppercased)" name="SocioCard — contact info renders the razón social (uppercased)" time="0.055">
+    </testcase>
+  </testsuite>
+  <testsuite name="InventarioScreen UI" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:48:56" time="35.536" tests="3">
+    <testcase classname="InventarioScreen UI deberia renderizar los productos" name="InventarioScreen UI deberia renderizar los productos" time="0.455">
+    </testcase>
+    <testcase classname="InventarioScreen UI deberia abrir el modal al tocar Ajustar" name="InventarioScreen UI deberia abrir el modal al tocar Ajustar" time="0.044">
+    </testcase>
+    <testcase classname="InventarioScreen UI deberia poder escribir en el buscador" name="InventarioScreen UI deberia poder escribir en el buscador" time="0.026">
+    </testcase>
+  </testsuite>
+  <testsuite name="NuevaCompraScreen UI" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:48:56" time="35.635" tests="1">
+    <testcase classname="NuevaCompraScreen UI debe renderizar el titulo correctamente" name="NuevaCompraScreen UI debe renderizar el titulo correctamente" time="0.612">
+    </testcase>
+  </testsuite>
+  <testsuite name="StockMovimientosSheet — renders movements" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:48:56" time="35.977" tests="10">
+    <testcase classname="StockMovimientosSheet — renders movements renders the movements list when visible" name="StockMovimientosSheet — renders movements renders the movements list when visible" time="2.815">
+    </testcase>
+    <testcase classname="StockMovimientosSheet — renders movements renders tipo labels from the data" name="StockMovimientosSheet — renders movements renders tipo labels from the data" time="0.079">
+    </testcase>
+    <testcase classname="StockMovimientosSheet — renders movements renders signed cantidades" name="StockMovimientosSheet — renders movements renders signed cantidades" time="0.041">
+    </testcase>
+    <testcase classname="StockMovimientosSheet — renders movements renders observaciones" name="StockMovimientosSheet — renders movements renders observaciones" time="0.047">
+    </testcase>
+    <testcase classname="StockMovimientosSheet — renders movements renders usuario nombres" name="StockMovimientosSheet — renders movements renders usuario nombres" time="0.042">
+    </testcase>
+    <testcase classname="StockMovimientosSheet — renders movements Venta movement renders as negative cantidad (Fix B — direction correctness)" name="StockMovimientosSheet — renders movements Venta movement renders as negative cantidad (Fix B — direction correctness)" time="0.038">
+    </testcase>
+    <testcase classname="StockMovimientosSheet — empty state shows empty state when no movements" name="StockMovimientosSheet — empty state shows empty state when no movements" time="0.018">
+    </testcase>
+    <testcase classname="StockMovimientosSheet — loading state shows loading state while fetching" name="StockMovimientosSheet — loading state shows loading state while fetching" time="0.311">
+    </testcase>
+    <testcase classname="StockDetailSheet — ver movimientos affordance renders the ver-movimientos button" name="StockDetailSheet — ver movimientos affordance renders the ver-movimientos button" time="0.062">
+    </testcase>
+    <testcase classname="StockDetailSheet — ver movimientos affordance ver movimientos button has correct accessibility label" name="StockDetailSheet — ver movimientos affordance ver movimientos button has correct accessibility label" time="0.033">
+    </testcase>
+  </testsuite>
+  <testsuite name="NuevoDepositoScreen UI" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:31" time="0.971" tests="4">
+    <testcase classname="NuevoDepositoScreen UI renderiza título para nuevo depósito" name="NuevoDepositoScreen UI renderiza título para nuevo depósito" time="0.048">
+    </testcase>
+    <testcase classname="NuevoDepositoScreen UI renderiza título de edición si isEdit es true" name="NuevoDepositoScreen UI renderiza título de edición si isEdit es true" time="0.014">
+    </testcase>
+    <testcase classname="NuevoDepositoScreen UI invoca setNombre y setDireccion al escribir" name="NuevoDepositoScreen UI invoca setNombre y setDireccion al escribir" time="0.023">
+    </testcase>
+    <testcase classname="NuevoDepositoScreen UI llama a handleSubmit al guardar" name="NuevoDepositoScreen UI llama a handleSubmit al guardar" time="0.013">
+    </testcase>
+  </testsuite>
+  <testsuite name="InventarioScreen — view mode toggle" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:31" time="1.223" tests="5">
+    <testcase classname="InventarioScreen — view mode toggle renders StockCard (grid) by default" name="InventarioScreen — view mode toggle renders StockCard (grid) by default" time="0.127">
+    </testcase>
+    <testcase classname="InventarioScreen — view mode toggle switches to StockListRow when LISTA is tapped" name="InventarioScreen — view mode toggle switches to StockListRow when LISTA is tapped" time="0.061">
+    </testcase>
+    <testcase classname="InventarioScreen — view mode toggle persists the LISTA choice to storage" name="InventarioScreen — view mode toggle persists the LISTA choice to storage" time="0.045">
+    </testcase>
+    <testcase classname="InventarioScreen — view mode toggle restores the LISTA view on a fresh mount when previously persisted" name="InventarioScreen — view mode toggle restores the LISTA view on a fresh mount when previously persisted" time="0.025">
+    </testcase>
+    <testcase classname="InventarioScreen — view mode toggle switching back to TARJETAS restores StockCard and updates storage" name="InventarioScreen — view mode toggle switching back to TARJETAS restores StockCard and updates storage" time="0.05">
+    </testcase>
+  </testsuite>
+  <testsuite name="canAuthorizeVenta — estado + cost-role gate" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:32" time="0.789" tests="19">
+    <testcase classname="canAuthorizeVenta — estado + cost-role gate returns true for Administrador with estado &quot;9&quot;" name="canAuthorizeVenta — estado + cost-role gate returns true for Administrador with estado &quot;9&quot;" time="0.001">
+    </testcase>
+    <testcase classname="canAuthorizeVenta — estado + cost-role gate returns true for Gerencia with estado &quot;9&quot;" name="canAuthorizeVenta — estado + cost-role gate returns true for Gerencia with estado &quot;9&quot;" time="0.001">
+    </testcase>
+    <testcase classname="canAuthorizeVenta — estado + cost-role gate returns true for AdministradorSistemas with estado &quot;9&quot;" name="canAuthorizeVenta — estado + cost-role gate returns true for AdministradorSistemas with estado &quot;9&quot;" time="0.001">
+    </testcase>
+    <testcase classname="canAuthorizeVenta — estado + cost-role gate returns true for Administrador with estado &quot;PendienteAutorizacion&quot; (string variant)" name="canAuthorizeVenta — estado + cost-role gate returns true for Administrador with estado &quot;PendienteAutorizacion&quot; (string variant)" time="0">
+    </testcase>
+    <testcase classname="canAuthorizeVenta — estado + cost-role gate returns false for Empleado with estado &quot;9&quot;" name="canAuthorizeVenta — estado + cost-role gate returns false for Empleado with estado &quot;9&quot;" time="0">
+    </testcase>
+    <testcase classname="canAuthorizeVenta — estado + cost-role gate returns false for empty roles with estado &quot;9&quot;" name="canAuthorizeVenta — estado + cost-role gate returns false for empty roles with estado &quot;9&quot;" time="0.001">
+    </testcase>
+    <testcase classname="canAuthorizeVenta — estado + cost-role gate returns false for Administrador with estado &quot;2&quot; (Confirmada)" name="canAuthorizeVenta — estado + cost-role gate returns false for Administrador with estado &quot;2&quot; (Confirmada)" time="0">
+    </testcase>
+    <testcase classname="canAuthorizeVenta — estado + cost-role gate returns false for Administrador with estado &quot;1&quot; (Pendiente)" name="canAuthorizeVenta — estado + cost-role gate returns false for Administrador with estado &quot;1&quot; (Pendiente)" time="0.001">
+    </testcase>
+    <testcase classname="canAuthorizeVenta — estado + cost-role gate returns false for Administrador with estado &quot;8&quot; (Anulada)" name="canAuthorizeVenta — estado + cost-role gate returns false for Administrador with estado &quot;8&quot; (Anulada)" time="0.001">
+    </testcase>
+    <testcase classname="canAuthorizeVenta — estado + cost-role gate returns true for Gerencia with numeric-string estado &quot;9&quot;" name="canAuthorizeVenta — estado + cost-role gate returns true for Gerencia with numeric-string estado &quot;9&quot;" time="0.001">
+    </testcase>
+    <testcase classname="buildAutorizarPayload — includes ventaId, version, and razon only includes razon in the payload" name="buildAutorizarPayload — includes ventaId, version, and razon only includes razon in the payload" time="0">
+    </testcase>
+    <testcase classname="buildAutorizarPayload — includes ventaId, version, and razon only includes ventaId and version" name="buildAutorizarPayload — includes ventaId, version, and razon only includes ventaId and version" time="0.001">
+    </testcase>
+    <testcase classname="buildAutorizarPayload — includes ventaId, version, and razon only does NOT include usuarioId (server derives identity from the JWT token)" name="buildAutorizarPayload — includes ventaId, version, and razon only does NOT include usuarioId (server derives identity from the JWT token)" time="0.001">
+    </testcase>
+    <testcase classname="buildAutorizarPayload — includes ventaId, version, and razon only does NOT include isAdminUser (server derives role from the JWT token)" name="buildAutorizarPayload — includes ventaId, version, and razon only does NOT include isAdminUser (server derives role from the JWT token)" time="0.001">
+    </testcase>
+    <testcase classname="buildAutorizarPayload — includes ventaId, version, and razon only trims whitespace from razon" name="buildAutorizarPayload — includes ventaId, version, and razon only trims whitespace from razon" time="0.001">
+    </testcase>
+    <testcase classname="getVentaStatusConfig — PendienteAutorizacion label for filter chip returns label &quot;Por Autorizar&quot; for estado &quot;9&quot;" name="getVentaStatusConfig — PendienteAutorizacion label for filter chip returns label &quot;Por Autorizar&quot; for estado &quot;9&quot;" time="0.001">
+    </testcase>
+    <testcase classname="getVentaStatusConfig — PendienteAutorizacion label for filter chip returns label &quot;Por Autorizar&quot; for estado &quot;PendienteAutorizacion&quot; string" name="getVentaStatusConfig — PendienteAutorizacion label for filter chip returns label &quot;Por Autorizar&quot; for estado &quot;PendienteAutorizacion&quot; string" time="0">
+    </testcase>
+    <testcase classname="getVentaStatusConfig — PendienteAutorizacion label for filter chip filter predicate keeps a PendienteAutorizacion row when chip is &quot;Por Autorizar&quot;" name="getVentaStatusConfig — PendienteAutorizacion label for filter chip filter predicate keeps a PendienteAutorizacion row when chip is &quot;Por Autorizar&quot;" time="0">
+    </testcase>
+    <testcase classname="getVentaStatusConfig — PendienteAutorizacion label for filter chip returns danger color for estado &quot;9&quot;" name="getVentaStatusConfig — PendienteAutorizacion label for filter chip returns danger color for estado &quot;9&quot;" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="StockCard — tap isolation" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:31" time="1.126" tests="8">
+    <testcase classname="StockCard — tap isolation tapping the card body calls onOpenDetail and does NOT call onOpenAjuste or onOpenToggle" name="StockCard — tap isolation tapping the card body calls onOpenDetail and does NOT call onOpenAjuste or onOpenToggle" time="0.073">
+    </testcase>
+    <testcase classname="StockCard — tap isolation tapping &quot;AJUSTAR STOCK&quot; button calls onOpenAjuste and does NOT call onOpenDetail" name="StockCard — tap isolation tapping &quot;AJUSTAR STOCK&quot; button calls onOpenAjuste and does NOT call onOpenDetail" time="0.029">
+    </testcase>
+    <testcase classname="StockCard — tap isolation tapping toggle-status button calls onOpenToggle and does NOT call onOpenDetail" name="StockCard — tap isolation tapping toggle-status button calls onOpenToggle and does NOT call onOpenDetail" time="0.024">
+    </testcase>
+    <testcase classname="StockCard — tap isolation tapping toggle-status on inactive item still calls onOpenToggle, not onOpenDetail" name="StockCard — tap isolation tapping toggle-status on inactive item still calls onOpenToggle, not onOpenDetail" time="0.024">
+    </testcase>
+    <testcase classname="StockCard — alert state rendering renders alert label text when enAlerta=true" name="StockCard — alert state rendering renders alert label text when enAlerta=true" time="0.032">
+    </testcase>
+    <testcase classname="StockCard — alert state rendering renders &quot;Agotado&quot; text when disponible is 0 and enAlerta=true" name="StockCard — alert state rendering renders &quot;Agotado&quot; text when disponible is 0 and enAlerta=true" time="0.024">
+    </testcase>
+    <testcase classname="StockCard — alert state rendering does NOT render alert label when enAlerta=false" name="StockCard — alert state rendering does NOT render alert label when enAlerta=false" time="0.02">
+    </testcase>
+    <testcase classname="StockCard — alert state rendering renders the stock real number prominently" name="StockCard — alert state rendering renders the stock real number prominently" time="0.018">
+    </testcase>
+  </testsuite>
+  <testsuite name="HubNavCard — visibility gating" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:32" time="0.979" tests="17">
+    <testcase classname="HubNavCard — visibility gating renders null when visible is false" name="HubNavCard — visibility gating renders null when visible is false" time="0.021">
+    </testcase>
+    <testcase classname="HubNavCard — visibility gating renders the card when visible is true" name="HubNavCard — visibility gating renders the card when visible is true" time="0.06">
+    </testcase>
+    <testcase classname="HubNavCard — visibility gating renders the card when visible is omitted (defaults to true)" name="HubNavCard — visibility gating renders the card when visible is omitted (defaults to true)" time="0.012">
+    </testcase>
+    <testcase classname="HubNavCard — visibility gating shows the subtitle when provided" name="HubNavCard — visibility gating shows the subtitle when provided" time="0.012">
+    </testcase>
+    <testcase classname="HubNavCard — visibility gating renders without subtitle when omitted" name="HubNavCard — visibility gating renders without subtitle when omitted" time="0.01">
+    </testcase>
+    <testcase classname="isMgmtRole — management card gate returns false for an empty role list" name="isMgmtRole — management card gate returns false for an empty role list" time="0.001">
+    </testcase>
+    <testcase classname="isMgmtRole — management card gate returns false for a non-management role (Empleado)" name="isMgmtRole — management card gate returns false for a non-management role (Empleado)" time="0">
+    </testcase>
+    <testcase classname="isMgmtRole — management card gate returns false for a non-management role (Vendedor)" name="isMgmtRole — management card gate returns false for a non-management role (Vendedor)" time="0.001">
+    </testcase>
+    <testcase classname="isMgmtRole — management card gate returns true for Administrador" name="isMgmtRole — management card gate returns true for Administrador" time="0.001">
+    </testcase>
+    <testcase classname="isMgmtRole — management card gate returns true for AdministradorSistemas" name="isMgmtRole — management card gate returns true for AdministradorSistemas" time="0">
+    </testcase>
+    <testcase classname="isMgmtRole — management card gate returns true for Gerencia" name="isMgmtRole — management card gate returns true for Gerencia" time="0">
+    </testcase>
+    <testcase classname="isMgmtRole — management card gate returns true when management role is mixed with non-management roles" name="isMgmtRole — management card gate returns true when management role is mixed with non-management roles" time="0">
+    </testcase>
+    <testcase classname="isMgmtRole — management card gate returns false when only non-management roles are present (multiple)" name="isMgmtRole — management card gate returns false when only non-management roles are present (multiple)" time="0">
+    </testcase>
+    <testcase classname="Hub RBAC integration — non-management user Vehículos card is NOT visible for a non-management user" name="Hub RBAC integration — non-management user Vehículos card is NOT visible for a non-management user" time="0.001">
+    </testcase>
+    <testcase classname="Hub RBAC integration — non-management user Planificar Viaje card is NOT visible for a non-management user" name="Hub RBAC integration — non-management user Planificar Viaje card is NOT visible for a non-management user" time="0.001">
+    </testcase>
+    <testcase classname="Hub RBAC integration — management user Vehículos card IS visible for a management user" name="Hub RBAC integration — management user Vehículos card IS visible for a management user" time="0.013">
+    </testcase>
+    <testcase classname="Hub RBAC integration — management user Planificar Viaje card IS visible for a management user" name="Hub RBAC integration — management user Planificar Viaje card IS visible for a management user" time="0.01">
+    </testcase>
+  </testsuite>
+  <testsuite name="useCompraForm" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:32" time="0.324" tests="1">
+    <testcase classname="useCompraForm calculates totals correctly when adding an item" name="useCompraForm calculates totals correctly when adding an item" time="0.013">
+    </testcase>
+  </testsuite>
+  <testsuite name="useCompraForm" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:32" time="0.609" tests="2">
+    <testcase classname="useCompraForm debe iniciar vacio" name="useCompraForm debe iniciar vacio" time="0.132">
+    </testcase>
+    <testcase classname="useCompraForm debe agregar un producto y permitir submit si todo esta ok" name="useCompraForm debe agregar un producto y permitir submit si todo esta ok" time="0.008">
+    </testcase>
+  </testsuite>
+  <testsuite name="PickingBoardTablet — three-column layout" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.321" tests="4">
+    <testcase classname="PickingBoardTablet — three-column layout renders all three column containers by testID" name="PickingBoardTablet — three-column layout renders all three column containers by testID" time="0.026">
+    </testcase>
+    <testcase classname="PickingBoardTablet — three-column layout renders a card for each item in every partition" name="PickingBoardTablet — three-column layout renders a card for each item in every partition" time="0.022">
+    </testcase>
+    <testcase classname="PickingBoardTablet — three-column layout shows per-column empty state for empty columns and not for non-empty ones" name="PickingBoardTablet — three-column layout shows per-column empty state for empty columns and not for non-empty ones" time="0.008">
+    </testcase>
+    <testcase classname="PickingBoardTablet — three-column layout shows empty state in all three columns when every partition is empty" name="PickingBoardTablet — three-column layout shows empty state in all three columns when every partition is empty" time="0.006">
+    </testcase>
+  </testsuite>
+  <testsuite name="logistica store — partialize contract" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.303" tests="8">
+    <testcase classname="logistica store — partialize contract activeTrip is included in persisted state serializes activeTrip when set" name="logistica store — partialize contract activeTrip is included in persisted state serializes activeTrip when set" time="0.004">
+    </testcase>
+    <testcase classname="logistica store — partialize contract activeTrip is included in persisted state serializes activeTrip as null when cleared" name="logistica store — partialize contract activeTrip is included in persisted state serializes activeTrip as null when cleared" time="0.001">
+    </testcase>
+    <testcase classname="logistica store — partialize contract activeTrip is included in persisted state preserves stop-level delivery state in activeTrip" name="logistica store — partialize contract activeTrip is included in persisted state preserves stop-level delivery state in activeTrip" time="0.002">
+    </testcase>
+    <testcase classname="logistica store — partialize contract viajeDraft is EXCLUDED from persisted state viajeDraft is NOT part of the persisted shape" name="logistica store — partialize contract viajeDraft is EXCLUDED from persisted state viajeDraft is NOT part of the persisted shape" time="0.001">
+    </testcase>
+    <testcase classname="logistica store — partialize contract viajeDraft is EXCLUDED from persisted state viajeDraft step changes do not affect persisted shape" name="logistica store — partialize contract viajeDraft is EXCLUDED from persisted state viajeDraft step changes do not affect persisted shape" time="0.001">
+    </testcase>
+    <testcase classname="logistica store — partialize contract viajeDraft is EXCLUDED from persisted state viajeDraft selectedEmpacadaIds do not appear in persisted state" name="logistica store — partialize contract viajeDraft is EXCLUDED from persisted state viajeDraft selectedEmpacadaIds do not appear in persisted state" time="0.001">
+    </testcase>
+    <testcase classname="logistica store — partialize contract activeTrip survives viajeDraft mutations activeTrip is unchanged after wizard draft operations" name="logistica store — partialize contract activeTrip survives viajeDraft mutations activeTrip is unchanged after wizard draft operations" time="0.001">
+    </testcase>
+    <testcase classname="logistica store — partialize contract activeTrip survives viajeDraft mutations resetViajeDraft does not clear activeTrip" name="logistica store — partialize contract activeTrip survives viajeDraft mutations resetViajeDraft does not clear activeTrip" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="VentasKpiGrid — small band (width 320)" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:32" time="0.41" tests="10">
+    <testcase classname="VentasKpiGrid — small band (width 320) (a) renders without crashing" name="VentasKpiGrid — small band (width 320) (a) renders without crashing" time="0.073">
+    </testcase>
+    <testcase classname="VentasKpiGrid — small band (width 320) (b) gridWrapper uses flexDirection:column and has no fixed height:180" name="VentasKpiGrid — small band (width 320) (b) gridWrapper uses flexDirection:column and has no fixed height:180" time="0.013">
+    </testcase>
+    <testcase classname="VentasKpiGrid — small band (width 320) (c) big card wrapper is full-width (width:100%)" name="VentasKpiGrid — small band (width 320) (c) big card wrapper is full-width (width:100%)" time="0.011">
+    </testcase>
+    <testcase classname="VentasKpiGrid — small band (width 320) (d) both side card wrappers each have minHeight:88 and no flex" name="VentasKpiGrid — small band (width 320) (d) both side card wrappers each have minHeight:88 and no flex" time="0.008">
+    </testcase>
+    <testcase classname="VentasKpiGrid — small band (width 320) (d2) sideStack does not take flex:1 in the stacked layout" name="VentasKpiGrid — small band (width 320) (d2) sideStack does not take flex:1 in the stacked layout" time="0.007">
+    </testcase>
+    <testcase classname="VentasKpiGrid — medium band (width 390) (e) renders without crashing" name="VentasKpiGrid — medium band (width 390) (e) renders without crashing" time="0.008">
+    </testcase>
+    <testcase classname="VentasKpiGrid — medium band (width 390) (f) gridWrapper has row layout with minHeight:180 and no fixed height" name="VentasKpiGrid — medium band (width 390) (f) gridWrapper has row layout with minHeight:180 and no fixed height" time="0.008">
+    </testcase>
+    <testcase classname="VentasKpiGrid — medium band (width 390) (g) big card wrapper preserves asymmetric flex:1.4" name="VentasKpiGrid — medium band (width 390) (g) big card wrapper preserves asymmetric flex:1.4" time="0.011">
+    </testcase>
+    <testcase classname="VentasKpiGrid — medium band (width 390) (g2) sideStack preserves flex:1 in the row layout" name="VentasKpiGrid — medium band (width 390) (g2) sideStack preserves flex:1 in the row layout" time="0.01">
+    </testcase>
+    <testcase classname="VentasKpiGrid — medium band (width 390) (h) maxFontSizeMultiplier={1.3} is preserved on all 7 Text elements" name="VentasKpiGrid — medium band (width 390) (h) maxFontSizeMultiplier={1.3} is preserved on all 7 Text elements" time="0.009">
+    </testcase>
+  </testsuite>
+  <testsuite name="PickingDateFilter" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:32" time="0.473" tests="6">
+    <testcase classname="PickingDateFilter renders &quot;Desde&quot; and &quot;Hasta&quot; placeholders when no dates are set" name="PickingDateFilter renders &quot;Desde&quot; and &quot;Hasta&quot; placeholders when no dates are set" time="0.067">
+    </testcase>
+    <testcase classname="PickingDateFilter renders the formatted date text when fechaDesde is provided" name="PickingDateFilter renders the formatted date text when fechaDesde is provided" time="0.044">
+    </testcase>
+    <testcase classname="PickingDateFilter does not render the clear button when no dates are set" name="PickingDateFilter does not render the clear button when no dates are set" time="0.006">
+    </testcase>
+    <testcase classname="PickingDateFilter renders the clear button when a date is set; pressing it calls both onChange(null)" name="PickingDateFilter renders the clear button when a date is set; pressing it calls both onChange(null)" time="0.014">
+    </testcase>
+    <testcase classname="PickingDateFilter pressing &quot;Fecha desde&quot; opens the picker; DTP onChange fires onFechaDesdeChange" name="PickingDateFilter pressing &quot;Fecha desde&quot; opens the picker; DTP onChange fires onFechaDesdeChange" time="0.024">
+    </testcase>
+    <testcase classname="PickingDateFilter pressing &quot;Fecha hasta&quot; opens the picker; DTP onChange fires onFechaHastaChange" name="PickingDateFilter pressing &quot;Fecha hasta&quot; opens the picker; DTP onChange fires onFechaHastaChange" time="0.016">
+    </testcase>
+  </testsuite>
+  <testsuite name="useRBAC hooks - Users and Roles mutations" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.417" tests="6">
+    <testcase classname="useRBAC hooks - Users and Roles mutations Users mutations createUser calls securityApi.createUser" name="useRBAC hooks - Users and Roles mutations Users mutations createUser calls securityApi.createUser" time="0.097">
+    </testcase>
+    <testcase classname="useRBAC hooks - Users and Roles mutations Users mutations handles API errors correctly when creating a user" name="useRBAC hooks - Users and Roles mutations Users mutations handles API errors correctly when creating a user" time="0.027">
+    </testcase>
+    <testcase classname="useRBAC hooks - Users and Roles mutations Users mutations updateUser calls securityApi.updateUser" name="useRBAC hooks - Users and Roles mutations Users mutations updateUser calls securityApi.updateUser" time="0.007">
+    </testcase>
+    <testcase classname="useRBAC hooks - Users and Roles mutations Users mutations deactivateUser calls securityApi.deactivateUser" name="useRBAC hooks - Users and Roles mutations Users mutations deactivateUser calls securityApi.deactivateUser" time="0.007">
+    </testcase>
+    <testcase classname="useRBAC hooks - Users and Roles mutations Roles mutations createRole calls securityApi.createRole" name="useRBAC hooks - Users and Roles mutations Roles mutations createRole calls securityApi.createRole" time="0.008">
+    </testcase>
+    <testcase classname="useRBAC hooks - Users and Roles mutations Roles mutations updateRole calls securityApi.updateRole" name="useRBAC hooks - Users and Roles mutations Roles mutations updateRole calls securityApi.updateRole" time="0.007">
+    </testcase>
+  </testsuite>
+  <testsuite name="BentoItem — span=1 band-aware width" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.282" tests="7">
+    <testcase classname="BentoItem — span=1 band-aware width (a) small band (width 320) → 100%" name="BentoItem — span=1 band-aware width (a) small band (width 320) → 100%" time="0.008">
+    </testcase>
+    <testcase classname="BentoItem — span=1 band-aware width (b) medium band (width 400) → 48.5%" name="BentoItem — span=1 band-aware width (b) medium band (width 400) → 48.5%" time="0.002">
+    </testcase>
+    <testcase classname="BentoItem — span=1 band-aware width (c) large band (width 700) → 31.5%" name="BentoItem — span=1 band-aware width (c) large band (width 700) → 31.5%" time="0.002">
+    </testcase>
+    <testcase classname="BentoItem — span=2 is always 100% (all bands) (d) span=2 at small → 100%" name="BentoItem — span=2 is always 100% (all bands) (d) span=2 at small → 100%" time="0.002">
+    </testcase>
+    <testcase classname="BentoItem — span=2 is always 100% (all bands) (e) span=2 at medium → 100%" name="BentoItem — span=2 is always 100% (all bands) (e) span=2 at medium → 100%" time="0.002">
+    </testcase>
+    <testcase classname="BentoItem — span=2 is always 100% (all bands) (f) span=2 at large → 100%" name="BentoItem — span=2 is always 100% (all bands) (f) span=2 at large → 100%" time="0.001">
+    </testcase>
+    <testcase classname="BentoGrid container — wrap/gap/direction untouched (g) renders children without crashing; container has flexWrap row at medium" name="BentoGrid container — wrap/gap/direction untouched (g) renders children without crashing; container has flexWrap row at medium" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="ResponsiveGrid" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.246" tests="5">
+    <testcase classname="ResponsiveGrid (a) isSmall (width 320) — defaults to 1 column, width 100%" name="ResponsiveGrid (a) isSmall (width 320) — defaults to 1 column, width 100%" time="0.009">
+    </testcase>
+    <testcase classname="ResponsiveGrid (b) isMedium (width 400) — defaults to 2 columns, width 50%" name="ResponsiveGrid (b) isMedium (width 400) — defaults to 2 columns, width 50%" time="0.003">
+    </testcase>
+    <testcase classname="ResponsiveGrid (c) isLarge (width 700) — defaults to 3 columns" name="ResponsiveGrid (c) isLarge (width 700) — defaults to 3 columns" time="0.003">
+    </testcase>
+    <testcase classname="ResponsiveGrid (d) custom columns={small:1,medium:3,large:4} at isMedium → 3 cols" name="ResponsiveGrid (d) custom columns={small:1,medium:3,large:4} at isMedium → 3 cols" time="0.003">
+    </testcase>
+    <testcase classname="ResponsiveGrid (e) cell width is a percentage string matching `${100/cols}%` (1 col at small)" name="ResponsiveGrid (e) cell width is a percentage string matching `${100/cols}%` (1 col at small)" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="KpiStatRow — small band (width 320)" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.3" tests="6">
+    <testcase classname="KpiStatRow — small band (width 320) (a) resolves 1 column — cell width is &quot;100%&quot;" name="KpiStatRow — small band (width 320) (a) resolves 1 column — cell width is &quot;100%&quot;" time="0.018">
+    </testcase>
+    <testcase classname="KpiStatRow — medium band (width 400) (b) resolves 3 columns — cell width is 33.33...%" name="KpiStatRow — medium band (width 400) (b) resolves 3 columns — cell width is 33.33...%" time="0.006">
+    </testcase>
+    <testcase classname="KpiStatRow — medium band (width 400) (c) renders one cell per stat (3 stats → 3 cells)" name="KpiStatRow — medium band (width 400) (c) renders one cell per stat (3 stats → 3 cells)" time="0.005">
+    </testcase>
+    <testcase classname="KpiStatRow — large band (width 700) (d) resolves 4 columns — cell width is &quot;25%&quot;" name="KpiStatRow — large band (width 700) (d) resolves 4 columns — cell width is &quot;25%&quot;" time="0.005">
+    </testcase>
+    <testcase classname="KpiStatRow — custom columns prop (e) respects caller-supplied columns at medium band" name="KpiStatRow — custom columns prop (e) respects caller-supplied columns at medium band" time="0.004">
+    </testcase>
+    <testcase classname="KpiStatRow — custom columns prop (f) alert prop does not affect column resolution" name="KpiStatRow — custom columns prop (f) alert prop does not affect column resolution" time="0.005">
+    </testcase>
+  </testsuite>
+  <testsuite name="ResponsiveRow" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.26" tests="4">
+    <testcase classname="ResponsiveRow isSmall (width 320) — stacks to column" name="ResponsiveRow isSmall (width 320) — stacks to column" time="0.02">
+    </testcase>
+    <testcase classname="ResponsiveRow isMedium (width 400) — renders as row" name="ResponsiveRow isMedium (width 400) — renders as row" time="0.003">
+    </testcase>
+    <testcase classname="ResponsiveRow isLarge (width 700) — renders as row" name="ResponsiveRow isLarge (width 700) — renders as row" time="0.003">
+    </testcase>
+    <testcase classname="ResponsiveRow stackOn=&quot;smallMedium&quot; at isMedium (width 400) — stacks to column" name="ResponsiveRow stackOn=&quot;smallMedium&quot; at isMedium (width 400) — stacks to column" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="useDepositoForm Hook" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.23" tests="5">
+    <testcase classname="useDepositoForm Hook debe inicializar vacío para crear un nuevo depósito" name="useDepositoForm Hook debe inicializar vacío para crear un nuevo depósito" time="0.004">
+    </testcase>
+    <testcase classname="useDepositoForm Hook debe cargar datos si estamos en modo edición" name="useDepositoForm Hook debe cargar datos si estamos en modo edición" time="0.002">
+    </testcase>
+    <testcase classname="useDepositoForm Hook no debe hacer submit si el nombre está vacío" name="useDepositoForm Hook no debe hacer submit si el nombre está vacío" time="0.002">
+    </testcase>
+    <testcase classname="useDepositoForm Hook debe llamar a mutate create cuando se guarden datos válidos" name="useDepositoForm Hook debe llamar a mutate create cuando se guarden datos válidos" time="0.002">
+    </testcase>
+    <testcase classname="useDepositoForm Hook debe limpiar el formulario con resetForm" name="useDepositoForm Hook debe limpiar el formulario con resetForm" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="parsePermissionsFromArray" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.183" tests="13">
+    <testcase classname="parsePermissionsFromArray parsea permisos simples correctamente" name="parsePermissionsFromArray parsea permisos simples correctamente" time="0.003">
+    </testcase>
+    <testcase classname="parsePermissionsFromArray ignora entradas malformadas sin módulo o acción" name="parsePermissionsFromArray ignora entradas malformadas sin módulo o acción" time="0">
+    </testcase>
+    <testcase classname="parsePermissionsFromArray deduplica módulos repetidos acumulando permisos" name="parsePermissionsFromArray deduplica módulos repetidos acumulando permisos" time="0.001">
+    </testcase>
+    <testcase classname="parsePermissionsFromArray devuelve array vacío si no hay permisos" name="parsePermissionsFromArray devuelve array vacío si no hay permisos" time="0.001">
+    </testcase>
+    <testcase classname="parsePermissionsFromArray es case-sensitive en acciones (ignora READ en mayúsculas)" name="parsePermissionsFromArray es case-sensitive en acciones (ignora READ en mayúsculas)" time="0.001">
+    </testcase>
+    <testcase classname="AuthStore — lógica de permisos isAuthenticated es false por defecto" name="AuthStore — lógica de permisos isAuthenticated es false por defecto" time="0">
+    </testcase>
+    <testcase classname="AuthStore — lógica de permisos setTokens establece isAuthenticated en true" name="AuthStore — lógica de permisos setTokens establece isAuthenticated en true" time="0.001">
+    </testcase>
+    <testcase classname="AuthStore — lógica de permisos logout resetea el estado" name="AuthStore — lógica de permisos logout resetea el estado" time="0.001">
+    </testcase>
+    <testcase classname="AuthStore — lógica de permisos hasRole retorna true si el usuario tiene el rol" name="AuthStore — lógica de permisos hasRole retorna true si el usuario tiene el rol" time="0.001">
+    </testcase>
+    <testcase classname="AuthStore — lógica de permisos isAdmin retorna true para Administrador y AdministradorSistemas" name="AuthStore — lógica de permisos isAdmin retorna true para Administrador y AdministradorSistemas" time="0">
+    </testcase>
+    <testcase classname="AuthStore — lógica de permisos isSuperAdmin retorna false para Administrador normal" name="AuthStore — lógica de permisos isSuperAdmin retorna false para Administrador normal" time="0.001">
+    </testcase>
+    <testcase classname="AuthStore — lógica de permisos canDo retorna true para SuperAdmin sin importar el permiso" name="AuthStore — lógica de permisos canDo retorna true para SuperAdmin sin importar el permiso" time="0.001">
+    </testcase>
+    <testcase classname="AuthStore — lógica de permisos canDo respeta los permisos del usuario normal" name="AuthStore — lógica de permisos canDo respeta los permisos del usuario normal" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="useSocio" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.17" tests="4">
+    <testcase classname="useSocio returns SocioDetailDto with all required fields" name="useSocio returns SocioDetailDto with all required fields" time="0.005">
+    </testcase>
+    <testcase classname="useSocio returns condicionIva, email, telefono and direccion fields" name="useSocio returns condicionIva, email, telefono and direccion fields" time="0.002">
+    </testcase>
+    <testcase classname="useSocio returns saldo and account fields" name="useSocio returns saldo and account fields" time="0.002">
+    </testcase>
+    <testcase classname="useSocio is disabled when id is empty" name="useSocio is disabled when id is empty" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="useInventarioList Hook" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.208" tests="2">
+    <testcase classname="useInventarioList Hook deberia aplanar los productos y calcular los KPIs correctamente" name="useInventarioList Hook deberia aplanar los productos y calcular los KPIs correctamente" time="0.006">
+    </testcase>
+    <testcase classname="useInventarioList Hook deberia aplicar debounce a la busqueda" name="useInventarioList Hook deberia aplicar debounce a la busqueda" time="0.006">
+    </testcase>
+  </testsuite>
+  <testsuite name="sharePdf — Authorization header" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.243" tests="7">
+    <testcase classname="sharePdf — Authorization header sends Authorization: Bearer &lt;token&gt; in the fetch request" name="sharePdf — Authorization header sends Authorization: Bearer &lt;token&gt; in the fetch request" time="0.004">
+    </testcase>
+    <testcase classname="sharePdf — isAvailableAsync guard returns { ok: false, reason: &quot;unavailable&quot; } when sharing is not available" name="sharePdf — isAvailableAsync guard returns { ok: false, reason: &quot;unavailable&quot; } when sharing is not available" time="0.001">
+    </testcase>
+    <testcase classname="sharePdf — 401 auth error returns { ok: false, reason: &quot;auth&quot; } on 401 response" name="sharePdf — 401 auth error returns { ok: false, reason: &quot;auth&quot; } on 401 response" time="0.001">
+    </testcase>
+    <testcase classname="sharePdf — 401 auth error returns { ok: false, reason: &quot;auth&quot; } on 403 response" name="sharePdf — 401 auth error returns { ok: false, reason: &quot;auth&quot; } on 403 response" time="0">
+    </testcase>
+    <testcase classname="sharePdf — network error returns { ok: false, reason: &quot;network&quot; } when fetch throws" name="sharePdf — network error returns { ok: false, reason: &quot;network&quot; } when fetch throws" time="0.001">
+    </testcase>
+    <testcase classname="sharePdf — no auth token returns { ok: false, reason: &quot;auth&quot; } when accessToken is null" name="sharePdf — no auth token returns { ok: false, reason: &quot;auth&quot; } when accessToken is null" time="0">
+    </testcase>
+    <testcase classname="sharePdf — success path returns { ok: true } and calls shareAsync on success" name="sharePdf — success path returns { ok: true } and calls shareAsync on success" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="useComprasList" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.174" tests="3">
+    <testcase classname="useComprasList debe filtrar compras por mes y calcular totales" name="useComprasList debe filtrar compras por mes y calcular totales" time="0.005">
+    </testcase>
+    <testcase classname="useComprasList debe filtrar por termino de busqueda" name="useComprasList debe filtrar por termino de busqueda" time="0.002">
+    </testcase>
+    <testcase classname="useComprasList debe filtrar por estado" name="useComprasList debe filtrar por estado" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="METODO_ENTREGA constants" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.166" tests="51">
+    <testcase classname="METODO_ENTREGA constants Logistica equals 1" name="METODO_ENTREGA constants Logistica equals 1" time="0.001">
+    </testcase>
+    <testcase classname="METODO_ENTREGA constants RetiroEnLocal equals 2" name="METODO_ENTREGA constants RetiroEnLocal equals 2" time="0">
+    </testcase>
+    <testcase classname="METODO_ENTREGA constants Expreso equals 3" name="METODO_ENTREGA constants Expreso equals 3" time="0.001">
+    </testcase>
+    <testcase classname="resolveMetodoEntrega forces RetiroEnLocal (2) when entregaInmediata is true, regardless of selected method" name="resolveMetodoEntrega forces RetiroEnLocal (2) when entregaInmediata is true, regardless of selected method" time="0">
+    </testcase>
+    <testcase classname="resolveMetodoEntrega passes through the selected method when entregaInmediata is false" name="resolveMetodoEntrega passes through the selected method when entregaInmediata is false" time="0.001">
+    </testcase>
+    <testcase classname="resolveMetodoEntrega defaults to Logistica (1) when no method is provided and entregaInmediata is false" name="resolveMetodoEntrega defaults to Logistica (1) when no method is provided and entregaInmediata is false" time="0">
+    </testcase>
+    <testcase classname="resolveMetodoEntrega defaults to RetiroEnLocal (2) when no method is provided and entregaInmediata is true" name="resolveMetodoEntrega defaults to RetiroEnLocal (2) when no method is provided and entregaInmediata is true" time="0">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is ON (venta directa mode) returns false for stockDisponible = 0 (hard block — no stock)" name="isProductAddable when entregaInmediata is ON (venta directa mode) returns false for stockDisponible = 0 (hard block — no stock)" time="0.001">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is ON (venta directa mode) returns false for stockDisponible &lt; 0 (negative stock)" name="isProductAddable when entregaInmediata is ON (venta directa mode) returns false for stockDisponible &lt; 0 (negative stock)" time="0">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is ON (venta directa mode) returns true for stockDisponible = 1 (minimum positive)" name="isProductAddable when entregaInmediata is ON (venta directa mode) returns true for stockDisponible = 1 (minimum positive)" time="0">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is ON (venta directa mode) returns true for stockDisponible &gt; 1" name="isProductAddable when entregaInmediata is ON (venta directa mode) returns true for stockDisponible &gt; 1" time="0">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is OFF (normal mode) returns true regardless of zero stock" name="isProductAddable when entregaInmediata is OFF (normal mode) returns true regardless of zero stock" time="0.001">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is OFF (normal mode) returns true for negative stock (normal path allows sin-stock sales)" name="isProductAddable when entregaInmediata is OFF (normal mode) returns true for negative stock (normal path allows sin-stock sales)" time="0">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is OFF (normal mode) returns true for positive stock" name="isProductAddable when entregaInmediata is OFF (normal mode) returns true for positive stock" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload includes entregaInmediata: true in payload when toggle is ON" name="buildVentaPayload includes entregaInmediata: true in payload when toggle is ON" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload includes entregaInmediata: false in payload when toggle is OFF" name="buildVentaPayload includes entregaInmediata: false in payload when toggle is OFF" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload forces metodoEntrega to RetiroEnLocal (2) when entregaInmediata is ON" name="buildVentaPayload forces metodoEntrega to RetiroEnLocal (2) when entregaInmediata is ON" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload sends the selected metodoEntrega when entregaInmediata is OFF" name="buildVentaPayload sends the selected metodoEntrega when entregaInmediata is OFF" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload maps detalles to items array with descuentoPorcentaje defaulting to 0" name="buildVentaPayload maps detalles to items array with descuentoPorcentaje defaulting to 0" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload copies clienteId, depositoId, tipoOperacion, descuentoGeneral from form data" name="buildVentaPayload copies clienteId, depositoId, tipoOperacion, descuentoGeneral from form data" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload defaults metodoEntrega to Logistica (1) when no selectedMethod is provided and toggle is OFF" name="buildVentaPayload defaults metodoEntrega to Logistica (1) when no selectedMethod is provided and toggle is OFF" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload full venta-directa payload shape: entregaInmediata + RetiroEnLocal + items" name="buildVentaPayload full venta-directa payload shape: entregaInmediata + RetiroEnLocal + items" time="0.001">
+    </testcase>
+    <testcase classname="requiereFechaEntrega returns true for Logistica (1) when entregaInmediata is OFF" name="requiereFechaEntrega returns true for Logistica (1) when entregaInmediata is OFF" time="0.001">
+    </testcase>
+    <testcase classname="requiereFechaEntrega returns true for Expreso (3) when entregaInmediata is OFF" name="requiereFechaEntrega returns true for Expreso (3) when entregaInmediata is OFF" time="0">
+    </testcase>
+    <testcase classname="requiereFechaEntrega returns false for RetiroEnLocal (2) when entregaInmediata is OFF" name="requiereFechaEntrega returns false for RetiroEnLocal (2) when entregaInmediata is OFF" time="0">
+    </testcase>
+    <testcase classname="requiereFechaEntrega returns false for any method when entregaInmediata is ON (forces RetiroEnLocal)" name="requiereFechaEntrega returns false for any method when entregaInmediata is ON (forces RetiroEnLocal)" time="0.001">
+    </testcase>
+    <testcase classname="requiereFechaEntrega defaults to Logistica (requires date) when no method provided and entregaInmediata is OFF" name="requiereFechaEntrega defaults to Logistica (requires date) when no method provided and entregaInmediata is OFF" time="0">
+    </testcase>
+    <testcase classname="requiereFechaEntrega defaults to RetiroEnLocal (no date) when no method provided and entregaInmediata is ON" name="requiereFechaEntrega defaults to RetiroEnLocal (no date) when no method provided and entregaInmediata is ON" time="0">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns false for null" name="esFechaEntregaValida returns false for null" time="0.001">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns false for undefined" name="esFechaEntregaValida returns false for undefined" time="0">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns false for a Sunday (getDay() === 0)" name="esFechaEntregaValida returns false for a Sunday (getDay() === 0)" time="0.001">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns true for a Monday (getDay() === 1)" name="esFechaEntregaValida returns true for a Monday (getDay() === 1)" time="0">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns true for Tuesday through Saturday (getDay() 2–6)" name="esFechaEntregaValida returns true for Tuesday through Saturday (getDay() 2–6)" time="0.001">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns false for another Sunday in a different month" name="esFechaEntregaValida returns false for another Sunday in a different month" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — cargoFlete includes cargoFlete in payload when &gt; 0" name="buildVentaPayload — cargoFlete includes cargoFlete in payload when &gt; 0" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — cargoFlete omits cargoFlete from payload when 0" name="buildVentaPayload — cargoFlete omits cargoFlete from payload when 0" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — cargoFlete omits cargoFlete from payload when not provided" name="buildVentaPayload — cargoFlete omits cargoFlete from payload when not provided" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — cargoFlete includes cargoFlete for Retiro method when flete &gt; 0" name="buildVentaPayload — cargoFlete includes cargoFlete for Retiro method when flete &gt; 0" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — fechaEntrega (parity: ISO datetime string) includes fechaEntrega as ISO datetime string for Logistica when date is provided" name="buildVentaPayload — fechaEntrega (parity: ISO datetime string) includes fechaEntrega as ISO datetime string for Logistica when date is provided" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — fechaEntrega (parity: ISO datetime string) includes fechaEntrega as ISO datetime string for Expreso when date is provided" name="buildVentaPayload — fechaEntrega (parity: ISO datetime string) includes fechaEntrega as ISO datetime string for Expreso when date is provided" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when metodo is RetiroEnLocal (no date required)" name="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when metodo is RetiroEnLocal (no date required)" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when entregaInmediata is ON even if date is provided" name="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when entregaInmediata is ON even if date is provided" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when formData.fechaEntrega is null" name="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when formData.fechaEntrega is null" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when formData.fechaEntrega is not provided" name="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when formData.fechaEntrega is not provided" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — fechaEntrega (parity: ISO datetime string) payload fechaEntrega matches fecha.toISOString() — ISO datetime format (not YYYY-MM-DD)" name="buildVentaPayload — fechaEntrega (parity: ISO datetime string) payload fechaEntrega matches fecha.toISOString() — ISO datetime format (not YYYY-MM-DD)" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — parity with nueva.tsx inline payload parity: core fields match inline payload for Logistica + no entregaInmediata" name="buildVentaPayload — parity with nueva.tsx inline payload parity: core fields match inline payload for Logistica + no entregaInmediata" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — parity with nueva.tsx inline payload parity: items array has descuentoPorcentaje 0 (not undefined) when no discount" name="buildVentaPayload — parity with nueva.tsx inline payload parity: items array has descuentoPorcentaje 0 (not undefined) when no discount" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — parity with nueva.tsx inline payload parity: fechaEntrega is ISO datetime string matching fecha.toISOString()" name="buildVentaPayload — parity with nueva.tsx inline payload parity: fechaEntrega is ISO datetime string matching fecha.toISOString()" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — parity with nueva.tsx inline payload parity: cargoFlete included when fleteMonto &gt; 0" name="buildVentaPayload — parity with nueva.tsx inline payload parity: cargoFlete included when fleteMonto &gt; 0" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — parity with nueva.tsx inline payload parity: entregaInmediata is boolean in lib (inline used || undefined — semantically same)" name="buildVentaPayload — parity with nueva.tsx inline payload parity: entregaInmediata is boolean in lib (inline used || undefined — semantically same)" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — parity with nueva.tsx inline payload parity: full shape for Retiro (no flete, no fechaEntrega)" name="buildVentaPayload — parity with nueva.tsx inline payload parity: full shape for Retiro (no flete, no fechaEntrega)" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="securityApi - Permission Profiles" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.15" tests="9">
+    <testcase classname="securityApi - Permission Profiles omits detail ids so the backend can generate valid GUIDs" name="securityApi - Permission Profiles omits detail ids so the backend can generate valid GUIDs" time="0.003">
+    </testcase>
+    <testcase classname="securityApi - Permission Profiles does not let client-only profile fields leak into the save contract" name="securityApi - Permission Profiles does not let client-only profile fields leak into the save contract" time="0.001">
+    </testcase>
+    <testcase classname="securityApi - Users and Roles Users createUser calls POST /api/v1/Users with payload" name="securityApi - Users and Roles Users createUser calls POST /api/v1/Users with payload" time="0.001">
+    </testcase>
+    <testcase classname="securityApi - Users and Roles Users createUser throws error on API failure" name="securityApi - Users and Roles Users createUser throws error on API failure" time="0.009">
+    </testcase>
+    <testcase classname="securityApi - Users and Roles Users updateUser calls PUT /api/v1/Users/{id} with payload" name="securityApi - Users and Roles Users updateUser calls PUT /api/v1/Users/{id} with payload" time="0">
+    </testcase>
+    <testcase classname="securityApi - Users and Roles Users deactivateUser calls PATCH /api/v1/Users/{id}/deactivate" name="securityApi - Users and Roles Users deactivateUser calls PATCH /api/v1/Users/{id}/deactivate" time="0.001">
+    </testcase>
+    <testcase classname="securityApi - Users and Roles Roles createRole calls POST /api/v1/Roles with payload" name="securityApi - Users and Roles Roles createRole calls POST /api/v1/Roles with payload" time="0.001">
+    </testcase>
+    <testcase classname="securityApi - Users and Roles Roles createRole throws error on API failure" name="securityApi - Users and Roles Roles createRole throws error on API failure" time="0.001">
+    </testcase>
+    <testcase classname="securityApi - Users and Roles Roles updateRole calls PUT /api/v1/Roles/{id} with payload" name="securityApi - Users and Roles Roles updateRole calls PUT /api/v1/Roles/{id} with payload" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="useCajaStore" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.178" tests="5">
+    <testcase classname="useCajaStore estado inicial: cajaActiva es null e isLoading es false" name="useCajaStore estado inicial: cajaActiva es null e isLoading es false" time="0.002">
+    </testcase>
+    <testcase classname="useCajaStore setCajaActiva almacena la caja correctamente" name="useCajaStore setCajaActiva almacena la caja correctamente" time="0.013">
+    </testcase>
+    <testcase classname="useCajaStore setCajaActiva con null limpia la caja activa" name="useCajaStore setCajaActiva con null limpia la caja activa" time="0.001">
+    </testcase>
+    <testcase classname="useCajaStore setLoading actualiza isLoading" name="useCajaStore setLoading actualiza isLoading" time="0.001">
+    </testcase>
+    <testcase classname="useCajaStore almacena caja cerrada con saldos de cierre" name="useCajaStore almacena caja cerrada con saldos de cierre" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="partitionByEstado" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.128" tests="7">
+    <testcase classname="partitionByEstado correctly populates aPreparar, enPreparacion, and empacados buckets" name="partitionByEstado correctly populates aPreparar, enPreparacion, and empacados buckets" time="0.001">
+    </testcase>
+    <testcase classname="partitionByEstado silently excludes ventas with unknown estado values" name="partitionByEstado silently excludes ventas with unknown estado values" time="0">
+    </testcase>
+    <testcase classname="validateCantidadBultos returns error on empty string" name="validateCantidadBultos returns error on empty string" time="0">
+    </testcase>
+    <testcase classname="validateCantidadBultos returns error on blank/whitespace string" name="validateCantidadBultos returns error on blank/whitespace string" time="0.001">
+    </testcase>
+    <testcase classname="validateCantidadBultos returns error when value is 0" name="validateCantidadBultos returns error when value is 0" time="0">
+    </testcase>
+    <testcase classname="validateCantidadBultos returns error when value is negative" name="validateCantidadBultos returns error when value is negative" time="0">
+    </testcase>
+    <testcase classname="validateCantidadBultos returns null for value ≥ 1" name="validateCantidadBultos returns null for value ≥ 1" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="esPrecioValido" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:33" time="0.152" tests="49">
+    <testcase classname="esPrecioValido returns true when price is strictly above the floor" name="esPrecioValido returns true when price is strictly above the floor" time="0.001">
+    </testcase>
+    <testcase classname="esPrecioValido returns true at exactly the floor (inclusive — matches server VERDE-at-floor)" name="esPrecioValido returns true at exactly the floor (inclusive — matches server VERDE-at-floor)" time="0.001">
+    </testcase>
+    <testcase classname="esPrecioValido returns false when price is below the floor" name="esPrecioValido returns false when price is below the floor" time="0">
+    </testcase>
+    <testcase classname="esPrecioValido handles zero floor: 0 &gt;= 0 is valid, negative is not" name="esPrecioValido handles zero floor: 0 &gt;= 0 is valid, negative is not" time="0.001">
+    </testcase>
+    <testcase classname="calcularSubtotalConDescuento 0% discount: subtotal equals price * quantity" name="calcularSubtotalConDescuento 0% discount: subtotal equals price * quantity" time="0">
+    </testcase>
+    <testcase classname="calcularSubtotalConDescuento 10% discount: unit price becomes 90, subtotal = 180 for qty 2" name="calcularSubtotalConDescuento 10% discount: unit price becomes 90, subtotal = 180 for qty 2" time="0.001">
+    </testcase>
+    <testcase classname="calcularSubtotalConDescuento 100% discount: subtotal is zero" name="calcularSubtotalConDescuento 100% discount: subtotal is zero" time="0">
+    </testcase>
+    <testcase classname="calcularSubtotalConDescuento zero quantity: subtotal is zero regardless of discount" name="calcularSubtotalConDescuento zero quantity: subtotal is zero regardless of discount" time="0.013">
+    </testcase>
+    <testcase classname="calcularSubtotalConDescuento fractional discount: computes correctly (no rounding in this function)" name="calcularSubtotalConDescuento fractional discount: computes correctly (no rounding in this function)" time="0">
+    </testcase>
+    <testcase classname="calcularSubtotalConDescuento non-trivial combination: 15% off, qty 4, price 50" name="calcularSubtotalConDescuento non-trivial combination: 15% off, qty 4, price 50" time="0">
+    </testcase>
+    <testcase classname="pctFromPrecio returns 0 when precioVenta is 0 (guard against division by zero)" name="pctFromPrecio returns 0 when precioVenta is 0 (guard against division by zero)" time="0">
+    </testcase>
+    <testcase classname="pctFromPrecio returns 0 when precioVenta is negative" name="pctFromPrecio returns 0 when precioVenta is negative" time="0">
+    </testcase>
+    <testcase classname="pctFromPrecio returns 0 when final price equals base (no discount)" name="pctFromPrecio returns 0 when final price equals base (no discount)" time="0.001">
+    </testcase>
+    <testcase classname="pctFromPrecio returns 10 for a 10% discount" name="pctFromPrecio returns 10 for a 10% discount" time="0">
+    </testcase>
+    <testcase classname="pctFromPrecio returns 100 when final price is 0 (maximum possible discount)" name="pctFromPrecio returns 100 when final price is 0 (maximum possible discount)" time="0">
+    </testcase>
+    <testcase classname="pctFromPrecio rounds to 2 decimal places" name="pctFromPrecio rounds to 2 decimal places" time="0">
+    </testcase>
+    <testcase classname="pctFromPrecio returns negative when final price exceeds base (premium / surcharge)" name="pctFromPrecio returns negative when final price exceeds base (premium / surcharge)" time="0.001">
+    </testcase>
+    <testcase classname="precioFromPct 0% discount: returns base price unchanged" name="precioFromPct 0% discount: returns base price unchanged" time="0">
+    </testcase>
+    <testcase classname="precioFromPct 10% discount: returns 90" name="precioFromPct 10% discount: returns 90" time="0">
+    </testcase>
+    <testcase classname="precioFromPct 100% discount: returns 0" name="precioFromPct 100% discount: returns 0" time="0">
+    </testcase>
+    <testcase classname="precioFromPct rounds to 2 decimal places" name="precioFromPct rounds to 2 decimal places" time="0">
+    </testcase>
+    <testcase classname="precioFromPct non-integer base price, non-trivial pct" name="precioFromPct non-integer base price, non-trivial pct" time="0">
+    </testcase>
+    <testcase classname="canViewCost returns true for Administrador" name="canViewCost returns true for Administrador" time="0.001">
+    </testcase>
+    <testcase classname="canViewCost returns true for AdministradorSistemas" name="canViewCost returns true for AdministradorSistemas" time="0">
+    </testcase>
+    <testcase classname="canViewCost returns true for Gerencia" name="canViewCost returns true for Gerencia" time="0">
+    </testcase>
+    <testcase classname="canViewCost returns false for non-cost roles" name="canViewCost returns false for non-cost roles" time="0.001">
+    </testcase>
+    <testcase classname="canViewCost returns true when array contains at least one cost role" name="canViewCost returns true when array contains at least one cost role" time="0">
+    </testcase>
+    <testcase classname="canViewCost returns false for empty array" name="canViewCost returns false for empty array" time="0">
+    </testcase>
+    <testcase classname="canViewCost is case-sensitive (wrong case returns false)" name="canViewCost is case-sensitive (wrong case returns false)" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto no discounts: effective price equals base; returns true when above floor" name="esDescuentoValidoCompuesto no discounts: effective price equals base; returns true when above floor" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto compound discounts: effective at exactly the floor returns true (inclusive)" name="esDescuentoValidoCompuesto compound discounts: effective at exactly the floor returns true (inclusive)" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto compound discounts: effective below floor returns false" name="esDescuentoValidoCompuesto compound discounts: effective below floor returns false" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto null precioMinimo: fail-open policy returns true" name="esDescuentoValidoCompuesto null precioMinimo: fail-open policy returns true" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto undefined precioMinimo: fail-open policy returns true" name="esDescuentoValidoCompuesto undefined precioMinimo: fail-open policy returns true" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto 100% item discount: effective is 0, always below any positive floor" name="esDescuentoValidoCompuesto 100% item discount: effective is 0, always below any positive floor" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto does NOT round before comparison (unrounded effective vs floor)" name="esDescuentoValidoCompuesto does NOT round before comparison (unrounded effective vs floor)" time="0">
+    </testcase>
+    <testcase classname="computeModalFloor returns { piso: 0, floorUnknown: true } when precioMinimo is null" name="computeModalFloor returns { piso: 0, floorUnknown: true } when precioMinimo is null" time="0.001">
+    </testcase>
+    <testcase classname="computeModalFloor returns { piso: 0, floorUnknown: true } when precioMinimo is undefined" name="computeModalFloor returns { piso: 0, floorUnknown: true } when precioMinimo is undefined" time="0">
+    </testcase>
+    <testcase classname="computeModalFloor returns piso = precioMinimo when no general discount (factor = 1)" name="computeModalFloor returns piso = precioMinimo when no general discount (factor = 1)" time="0">
+    </testcase>
+    <testcase classname="computeModalFloor raises floor when general discount is active" name="computeModalFloor raises floor when general discount is active" time="0.001">
+    </testcase>
+    <testcase classname="computeModalFloor rounds piso to 2 decimal places" name="computeModalFloor rounds piso to 2 decimal places" time="0">
+    </testcase>
+    <testcase classname="computeModalFloor handles descuentoGeneral=100 without dividing by zero (clamped to 0.0001)" name="computeModalFloor handles descuentoGeneral=100 without dividing by zero (clamped to 0.0001)" time="0">
+    </testcase>
+    <testcase classname="computeModalFloor descuentoGeneral=0 default: piso equals precioMinimo exactly" name="computeModalFloor descuentoGeneral=0 default: piso equals precioMinimo exactly" time="0.001">
+    </testcase>
+    <testcase classname="derivarFloorBroken returns false when floor is null (fail-open)" name="derivarFloorBroken returns false when floor is null (fail-open)" time="0">
+    </testcase>
+    <testcase classname="derivarFloorBroken returns false when floor is undefined (fail-open)" name="derivarFloorBroken returns false when floor is undefined (fail-open)" time="0">
+    </testcase>
+    <testcase classname="derivarFloorBroken returns false when effective price is above the floor" name="derivarFloorBroken returns false when effective price is above the floor" time="0">
+    </testcase>
+    <testcase classname="derivarFloorBroken returns false at exactly the floor (inclusive — not &quot;broken&quot;)" name="derivarFloorBroken returns false at exactly the floor (inclusive — not &quot;broken&quot;)" time="0">
+    </testcase>
+    <testcase classname="derivarFloorBroken returns true when effective price pierces the floor" name="derivarFloorBroken returns true when effective price pierces the floor" time="0">
+    </testcase>
+    <testcase classname="derivarFloorBroken returns true for compound discount that pierces floor" name="derivarFloorBroken returns true for compound discount that pierces floor" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="computeStockProjection" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:34" time="0.129" tests="31">
+    <testcase classname="computeStockProjection returns positive projection when stock covers the order" name="computeStockProjection returns positive projection when stock covers the order" time="0.001">
+    </testcase>
+    <testcase classname="computeStockProjection returns zero projection when stock exactly matches order" name="computeStockProjection returns zero projection when stock exactly matches order" time="0.001">
+    </testcase>
+    <testcase classname="computeStockProjection returns negative projection when order exceeds stock" name="computeStockProjection returns negative projection when order exceeds stock" time="0">
+    </testcase>
+    <testcase classname="computeStockProjection returns disponible when cantidad is 0" name="computeStockProjection returns disponible when cantidad is 0" time="0.001">
+    </testcase>
+    <testcase classname="FIX #1 — typed-price floor validation (rounding over-block) [old path] recomputed price from rounded pct causes false block at non-integer floor" name="FIX #1 — typed-price floor validation (rounding over-block) [old path] recomputed price from rounded pct causes false block at non-integer floor" time="0">
+    </testcase>
+    <testcase classname="FIX #1 — typed-price floor validation (rounding over-block) [fix path] validating typed price allows price equal to non-integer floor" name="FIX #1 — typed-price floor validation (rounding over-block) [fix path] validating typed price allows price equal to non-integer floor" time="0">
+    </testcase>
+    <testcase classname="FIX #1 — typed-price floor validation (rounding over-block) [fix path] price just below non-integer floor is still blocked" name="FIX #1 — typed-price floor validation (rounding over-block) [fix path] price just below non-integer floor is still blocked" time="0.001">
+    </testcase>
+    <testcase classname="FIX #1 — typed-price floor validation (rounding over-block) [fix path] price well below floor is blocked regardless of rounding" name="FIX #1 — typed-price floor validation (rounding over-block) [fix path] price well below floor is blocked regardless of rounding" time="0">
+    </testcase>
+    <testcase classname="FIX #1 — typed-price floor validation (rounding over-block) [fix path] price above floor is always allowed" name="FIX #1 — typed-price floor validation (rounding over-block) [fix path] price above floor is always allowed" time="0">
+    </testcase>
+    <testcase classname="canViewCost — cost-row gating for DescuentoItemModalRN cost row NOT shown for Empleado (canViewCost false)" name="canViewCost — cost-row gating for DescuentoItemModalRN cost row NOT shown for Empleado (canViewCost false)" time="0.001">
+    </testcase>
+    <testcase classname="canViewCost — cost-row gating for DescuentoItemModalRN cost row shown for Administrador (canViewCost true)" name="canViewCost — cost-row gating for DescuentoItemModalRN cost row shown for Administrador (canViewCost true)" time="0">
+    </testcase>
+    <testcase classname="canViewCost — cost-row gating for DescuentoItemModalRN cost row shown for Gerencia (canViewCost true)" name="canViewCost — cost-row gating for DescuentoItemModalRN cost row shown for Gerencia (canViewCost true)" time="0">
+    </testcase>
+    <testcase classname="canViewCost — cost-row gating for DescuentoItemModalRN cost row NOT shown for empty roles (canViewCost false)" name="canViewCost — cost-row gating for DescuentoItemModalRN cost row NOT shown for empty roles (canViewCost false)" time="0">
+    </testcase>
+    <testcase classname="computeModalFloor — raised floor helper (mirrors web computeModalFloor) returns floorUnknown=true and piso=0 when precioMinimo is null" name="computeModalFloor — raised floor helper (mirrors web computeModalFloor) returns floorUnknown=true and piso=0 when precioMinimo is null" time="0">
+    </testcase>
+    <testcase classname="computeModalFloor — raised floor helper (mirrors web computeModalFloor) returns floorUnknown=true and piso=0 when precioMinimo is undefined" name="computeModalFloor — raised floor helper (mirrors web computeModalFloor) returns floorUnknown=true and piso=0 when precioMinimo is undefined" time="0">
+    </testcase>
+    <testcase classname="computeModalFloor — raised floor helper (mirrors web computeModalFloor) returns raw floor rounded to 2 decimals when descuentoGeneral is 0" name="computeModalFloor — raised floor helper (mirrors web computeModalFloor) returns raw floor rounded to 2 decimals when descuentoGeneral is 0" time="0.001">
+    </testcase>
+    <testcase classname="computeModalFloor — raised floor helper (mirrors web computeModalFloor) raises floor by general discount factor" name="computeModalFloor — raised floor helper (mirrors web computeModalFloor) raises floor by general discount factor" time="0">
+    </testcase>
+    <testcase classname="computeModalFloor — raised floor helper (mirrors web computeModalFloor) rounds raised floor to 2 decimal places (W2 rounding parity)" name="computeModalFloor — raised floor helper (mirrors web computeModalFloor) rounds raised floor to 2 decimal places (W2 rounding parity)" time="0">
+    </testcase>
+    <testcase classname="computeModalFloor — raised floor helper (mirrors web computeModalFloor) clamps generalFactor to 0.0001 at g=100 to prevent div/0 blow-up" name="computeModalFloor — raised floor helper (mirrors web computeModalFloor) clamps generalFactor to 0.0001 at g=100 to prevent div/0 blow-up" time="0.001">
+    </testcase>
+    <testcase classname="computeModalFloor — raised floor helper (mirrors web computeModalFloor) defaults descuentoGeneral to 0 when omitted" name="computeModalFloor — raised floor helper (mirrors web computeModalFloor) defaults descuentoGeneral to 0 when omitted" time="0">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) does NOT warn at pct=0 even when base price is below the raised floor (W1 parity)" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) does NOT warn at pct=0 even when base price is below the raised floor (W1 parity)" time="0">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) warns at pct&gt;0 when effective price is below the floor" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) warns at pct&gt;0 when effective price is below the floor" time="0.001">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) uses rounded floor for comparison (W2 rounding boundary)" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) uses rounded floor for comparison (W2 rounding boundary)" time="0">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) does not blow up when descuentoGeneral=100 (generalFactor clamp)" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) does not blow up when descuentoGeneral=100 (generalFactor clamp)" time="0">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) returns false (fail-open) when precioMinimo is null regardless of pct" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) returns false (fail-open) when precioMinimo is null regardless of pct" time="0">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) blocks when item+general compound breaks precioMinimo (C1 lesson)" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) blocks when item+general compound breaks precioMinimo (C1 lesson)" time="0.001">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) allows when item+general compound satisfies precioMinimo" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) allows when item+general compound satisfies precioMinimo" time="0">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) returns true (floor warning) when below floor — enables route to PendienteAutorizacion" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) returns true (floor warning) when below floor — enables route to PendienteAutorizacion" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — compound guard regression returns true (fail-open) when precioMinimo is null" name="esDescuentoValidoCompuesto — compound guard regression returns true (fail-open) when precioMinimo is null" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — compound guard regression returns true when compound effective price is at the floor (inclusive)" name="esDescuentoValidoCompuesto — compound guard regression returns true when compound effective price is at the floor (inclusive)" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — compound guard regression returns false when compound effective price breaks the floor" name="esDescuentoValidoCompuesto — compound guard regression returns false when compound effective price breaks the floor" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="buildAnularVentaPayload" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:34" time="0.126" tests="8">
+    <testcase classname="buildAnularVentaPayload returns { version, motivoAnulacion } with no extra fields" name="buildAnularVentaPayload returns { version, motivoAnulacion } with no extra fields" time="0.001">
+    </testcase>
+    <testcase classname="buildAnularVentaPayload does NOT include usuarioModificadorId in the payload" name="buildAnularVentaPayload does NOT include usuarioModificadorId in the payload" time="0">
+    </testcase>
+    <testcase classname="buildAnularVentaPayload does NOT wrap the payload in a &quot;data&quot; key (not axios syntax)" name="buildAnularVentaPayload does NOT wrap the payload in a &quot;data&quot; key (not axios syntax)" time="0">
+    </testcase>
+    <testcase classname="buildAnularVentaPayload accepts version 0 (uint — first save)" name="buildAnularVentaPayload accepts version 0 (uint — first save)" time="0.001">
+    </testcase>
+    <testcase classname="buildAnularVentaPayload preserves motivoAnulacion exactly" name="buildAnularVentaPayload preserves motivoAnulacion exactly" time="0">
+    </testcase>
+    <testcase classname="buildAnularVentaPayload throws if motivoAnulacion is empty" name="buildAnularVentaPayload throws if motivoAnulacion is empty" time="0.008">
+    </testcase>
+    <testcase classname="buildAnularVentaPayload throws if motivoAnulacion is whitespace only" name="buildAnularVentaPayload throws if motivoAnulacion is whitespace only" time="0.001">
+    </testcase>
+    <testcase classname="buildAnularVentaPayload throws if version is negative" name="buildAnularVentaPayload throws if version is negative" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="METODO_ENTREGA" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:34" time="0.132" tests="34">
+    <testcase classname="METODO_ENTREGA has the correct numeric values that mirror the backend C# enum" name="METODO_ENTREGA has the correct numeric values that mirror the backend C# enum" time="0.001">
+    </testcase>
+    <testcase classname="resolveMetodoEntrega forces RetiroEnLocal when entregaInmediata is true, regardless of selector" name="resolveMetodoEntrega forces RetiroEnLocal when entregaInmediata is true, regardless of selector" time="0.001">
+    </testcase>
+    <testcase classname="resolveMetodoEntrega returns the selected method when entregaInmediata is false" name="resolveMetodoEntrega returns the selected method when entregaInmediata is false" time="0">
+    </testcase>
+    <testcase classname="resolveMetodoEntrega defaults to Logistica when selectedMethod is omitted and not inmediata" name="resolveMetodoEntrega defaults to Logistica when selectedMethod is omitted and not inmediata" time="0">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is false (normal sale) allows adding regardless of stock level" name="isProductAddable when entregaInmediata is false (normal sale) allows adding regardless of stock level" time="0.001">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is true (counter-sale / venta directa) blocks adding when stock is 0" name="isProductAddable when entregaInmediata is true (counter-sale / venta directa) blocks adding when stock is 0" time="0">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is true (counter-sale / venta directa) blocks adding when stock is negative" name="isProductAddable when entregaInmediata is true (counter-sale / venta directa) blocks adding when stock is negative" time="0">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is true (counter-sale / venta directa) allows adding when stock is positive" name="isProductAddable when entregaInmediata is true (counter-sale / venta directa) allows adding when stock is positive" time="0">
+    </testcase>
+    <testcase classname="requiereFechaEntrega returns false when entregaInmediata is true (forced to RetiroEnLocal)" name="requiereFechaEntrega returns false when entregaInmediata is true (forced to RetiroEnLocal)" time="0.001">
+    </testcase>
+    <testcase classname="requiereFechaEntrega returns false for RetiroEnLocal (no date needed for pickup)" name="requiereFechaEntrega returns false for RetiroEnLocal (no date needed for pickup)" time="0">
+    </testcase>
+    <testcase classname="requiereFechaEntrega returns true for Logistica (date required)" name="requiereFechaEntrega returns true for Logistica (date required)" time="0">
+    </testcase>
+    <testcase classname="requiereFechaEntrega returns true for Expreso (date required)" name="requiereFechaEntrega returns true for Expreso (date required)" time="0.001">
+    </testcase>
+    <testcase classname="requiereFechaEntrega defaults to Logistica (requires date) when selectedMethod is omitted" name="requiereFechaEntrega defaults to Logistica (requires date) when selectedMethod is omitted" time="0">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns false for null" name="esFechaEntregaValida returns false for null" time="0">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns false for undefined" name="esFechaEntregaValida returns false for undefined" time="0.001">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns false for a Sunday (getDay() === 0)" name="esFechaEntregaValida returns false for a Sunday (getDay() === 0)" time="0">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns true for a Monday" name="esFechaEntregaValida returns true for a Monday" time="0">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns true for a Saturday (only Sunday is blocked)" name="esFechaEntregaValida returns true for a Saturday (only Sunday is blocked)" time="0.001">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns true for a mid-week date" name="esFechaEntregaValida returns true for a mid-week date" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload entregaInmediata = true (retiro en local / counter-sale) sets metodoEntrega to RetiroEnLocal and entregaInmediata to true" name="buildVentaPayload entregaInmediata = true (retiro en local / counter-sale) sets metodoEntrega to RetiroEnLocal and entregaInmediata to true" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload entregaInmediata = true (retiro en local / counter-sale) omits fechaEntrega even when a date is present in formData" name="buildVentaPayload entregaInmediata = true (retiro en local / counter-sale) omits fechaEntrega even when a date is present in formData" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload entregaInmediata = true (retiro en local / counter-sale) copies scalar fields verbatim from formData" name="buildVentaPayload entregaInmediata = true (retiro en local / counter-sale) copies scalar fields verbatim from formData" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload entregaInmediata = false, Logistica (date required) includes fechaEntrega as ISO 8601 datetime string when a date is provided" name="buildVentaPayload entregaInmediata = false, Logistica (date required) includes fechaEntrega as ISO 8601 datetime string when a date is provided" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload entregaInmediata = false, Logistica (date required) omits fechaEntrega when formData.fechaEntrega is null" name="buildVentaPayload entregaInmediata = false, Logistica (date required) omits fechaEntrega when formData.fechaEntrega is null" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload entregaInmediata = false, Logistica (date required) defaults to Logistica when selectedMethod is omitted" name="buildVentaPayload entregaInmediata = false, Logistica (date required) defaults to Logistica when selectedMethod is omitted" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload entregaInmediata = false, RetiroEnLocal (date NOT required) omits fechaEntrega even when a date is provided" name="buildVentaPayload entregaInmediata = false, RetiroEnLocal (date NOT required) omits fechaEntrega even when a date is provided" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload cargoFlete handling includes cargoFlete when strictly positive" name="buildVentaPayload cargoFlete handling includes cargoFlete when strictly positive" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload cargoFlete handling omits cargoFlete when value is 0" name="buildVentaPayload cargoFlete handling omits cargoFlete when value is 0" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload cargoFlete handling omits cargoFlete when not provided in formData" name="buildVentaPayload cargoFlete handling omits cargoFlete when not provided in formData" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload items mapping maps all detail lines with correct shape" name="buildVentaPayload items mapping maps all detail lines with correct shape" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload items mapping defaults descuentoPorcentaje to 0 when absent in a detail" name="buildVentaPayload items mapping defaults descuentoPorcentaje to 0 when absent in a detail" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload items mapping preserves explicit descuentoPorcentaje from a detail" name="buildVentaPayload items mapping preserves explicit descuentoPorcentaje from a detail" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload exact full payload shape (contract test) Expreso with date and positive flete produces the complete expected payload" name="buildVentaPayload exact full payload shape (contract test) Expreso with date and positive flete produces the complete expected payload" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload exact full payload shape (contract test) RetiroEnLocal counter-sale with no optional fields produces minimal payload" name="buildVentaPayload exact full payload shape (contract test) RetiroEnLocal counter-sale with no optional fields produces minimal payload" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="canDownloadEtiquetas" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:34" time="0.127" tests="31">
+    <testcase classname="canDownloadEtiquetas estado=1 → false" name="canDownloadEtiquetas estado=1 → false" time="0.001">
+    </testcase>
+    <testcase classname="canDownloadEtiquetas estado=2 → false" name="canDownloadEtiquetas estado=2 → false" time="0.001">
+    </testcase>
+    <testcase classname="canDownloadEtiquetas estado=3 → false" name="canDownloadEtiquetas estado=3 → false" time="0">
+    </testcase>
+    <testcase classname="canDownloadEtiquetas estado=4 → true" name="canDownloadEtiquetas estado=4 → true" time="0.001">
+    </testcase>
+    <testcase classname="canDownloadEtiquetas estado=5 → true" name="canDownloadEtiquetas estado=5 → true" time="0">
+    </testcase>
+    <testcase classname="canDownloadEtiquetas estado=6 → true" name="canDownloadEtiquetas estado=6 → true" time="0">
+    </testcase>
+    <testcase classname="canDownloadEtiquetas estado=7 → true" name="canDownloadEtiquetas estado=7 → true" time="0">
+    </testcase>
+    <testcase classname="canDownloadEtiquetas estado=8 → false" name="canDownloadEtiquetas estado=8 → false" time="0.001">
+    </testcase>
+    <testcase classname="canDownloadEtiquetas estado=9 → false" name="canDownloadEtiquetas estado=9 → false" time="0">
+    </testcase>
+    <testcase classname="canDownloadEtiquetas estado=3 → false" name="canDownloadEtiquetas estado=3 → false" time="0">
+    </testcase>
+    <testcase classname="canDownloadEtiquetas estado=4 → true" name="canDownloadEtiquetas estado=4 → true" time="0">
+    </testcase>
+    <testcase classname="canDownloadEtiquetas estado=5 → true" name="canDownloadEtiquetas estado=5 → true" time="0.001">
+    </testcase>
+    <testcase classname="canDownloadEtiquetas estado=0 → false" name="canDownloadEtiquetas estado=0 → false" time="0">
+    </testcase>
+    <testcase classname="canDownloadEtiquetas estado=99 → false" name="canDownloadEtiquetas estado=99 → false" time="0">
+    </testcase>
+    <testcase classname="canDownloadNotaEntrega estado=1 → false" name="canDownloadNotaEntrega estado=1 → false" time="0">
+    </testcase>
+    <testcase classname="canDownloadNotaEntrega estado=2 → false" name="canDownloadNotaEntrega estado=2 → false" time="0">
+    </testcase>
+    <testcase classname="canDownloadNotaEntrega estado=3 → true" name="canDownloadNotaEntrega estado=3 → true" time="0">
+    </testcase>
+    <testcase classname="canDownloadNotaEntrega estado=4 → true" name="canDownloadNotaEntrega estado=4 → true" time="0">
+    </testcase>
+    <testcase classname="canDownloadNotaEntrega estado=5 → true" name="canDownloadNotaEntrega estado=5 → true" time="0.001">
+    </testcase>
+    <testcase classname="canDownloadNotaEntrega estado=6 → true" name="canDownloadNotaEntrega estado=6 → true" time="0">
+    </testcase>
+    <testcase classname="canDownloadNotaEntrega estado=7 → true" name="canDownloadNotaEntrega estado=7 → true" time="0">
+    </testcase>
+    <testcase classname="canDownloadNotaEntrega estado=8 → false" name="canDownloadNotaEntrega estado=8 → false" time="0">
+    </testcase>
+    <testcase classname="canDownloadNotaEntrega estado=9 → false" name="canDownloadNotaEntrega estado=9 → false" time="0.001">
+    </testcase>
+    <testcase classname="canDownloadNotaEntrega estado=2 → false" name="canDownloadNotaEntrega estado=2 → false" time="0">
+    </testcase>
+    <testcase classname="canDownloadNotaEntrega estado=3 → true" name="canDownloadNotaEntrega estado=3 → true" time="0">
+    </testcase>
+    <testcase classname="canDownloadNotaEntrega estado=6 → true" name="canDownloadNotaEntrega estado=6 → true" time="0">
+    </testcase>
+    <testcase classname="canDownloadNotaEntrega estado=0 → false" name="canDownloadNotaEntrega estado=0 → false" time="0">
+    </testcase>
+    <testcase classname="canDownloadNotaEntrega estado=100 → false" name="canDownloadNotaEntrega estado=100 → false" time="0.001">
+    </testcase>
+    <testcase classname="boundary cases — EnPreparacion is the nota/etiquetas split EnPreparacion (3): nota=true, etiquetas=false" name="boundary cases — EnPreparacion is the nota/etiquetas split EnPreparacion (3): nota=true, etiquetas=false" time="0">
+    </testcase>
+    <testcase classname="boundary cases — EnPreparacion is the nota/etiquetas split Empacada (4): both true" name="boundary cases — EnPreparacion is the nota/etiquetas split Empacada (4): both true" time="0">
+    </testcase>
+    <testcase classname="boundary cases — EnPreparacion is the nota/etiquetas split Anulada (8): both false" name="boundary cases — EnPreparacion is the nota/etiquetas split Anulada (8): both false" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="useProductoForm Hook" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:32" time="1.67" tests="3">
+    <testcase classname="useProductoForm Hook deberia calcular correctamente el precio de venta sugerido" name="useProductoForm Hook deberia calcular correctamente el precio de venta sugerido" time="0.006">
+    </testcase>
+    <testcase classname="useProductoForm Hook deberia mostrar modal de error si faltan campos obligatorios" name="useProductoForm Hook deberia mostrar modal de error si faltan campos obligatorios" time="0.002">
+    </testcase>
+    <testcase classname="useProductoForm Hook deberia llamar a createProducto en modo creacion con datos validos" name="useProductoForm Hook deberia llamar a createProducto en modo creacion con datos validos" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="buildCrearHojaRutaPayload" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:34" time="0.138" tests="19">
+    <testcase classname="buildCrearHojaRutaPayload includes depositoId in the output when provided" name="buildCrearHojaRutaPayload includes depositoId in the output when provided" time="0.002">
+    </testcase>
+    <testcase classname="buildCrearHojaRutaPayload sets depositoId to null when not provided" name="buildCrearHojaRutaPayload sets depositoId to null when not provided" time="0">
+    </testcase>
+    <testcase classname="buildCrearHojaRutaPayload maps venta coords to parada lat/lon" name="buildCrearHojaRutaPayload maps venta coords to parada lat/lon" time="0.001">
+    </testcase>
+    <testcase classname="reorderStop moves an item up" name="reorderStop moves an item up" time="0">
+    </testcase>
+    <testcase classname="reorderStop moves an item down" name="reorderStop moves an item down" time="0">
+    </testcase>
+    <testcase classname="reorderStop index 0 cannot move up — returns same array" name="reorderStop index 0 cannot move up — returns same array" time="0">
+    </testcase>
+    <testcase classname="reorderStop last index cannot move down — returns same array" name="reorderStop last index cannot move down — returns same array" time="0">
+    </testcase>
+    <testcase classname="assignOrderNumbers renumbers stops from 1 sequentially" name="assignOrderNumbers renumbers stops from 1 sequentially" time="0">
+    </testcase>
+    <testcase classname="ventasToOrderedStops maps venta DTO to OrderedStop shape" name="ventasToOrderedStops maps venta DTO to OrderedStop shape" time="0">
+    </testcase>
+    <testcase classname="validateTripReadiness returns error when choferId is missing" name="validateTripReadiness returns error when choferId is missing" time="0.001">
+    </testcase>
+    <testcase classname="validateTripReadiness returns error when vehiculoId is missing" name="validateTripReadiness returns error when vehiculoId is missing" time="0">
+    </testcase>
+    <testcase classname="validateTripReadiness returns error when stops list is empty" name="validateTripReadiness returns error when stops list is empty" time="0">
+    </testcase>
+    <testcase classname="validateTripReadiness returns null when all fields are present" name="validateTripReadiness returns null when all fields are present" time="0.001">
+    </testcase>
+    <testcase classname="allParadasReported returns true when all stops have a terminal estado" name="allParadasReported returns true when all stops have a terminal estado" time="0.001">
+    </testcase>
+    <testcase classname="allParadasReported returns false when any stop is Pendiente" name="allParadasReported returns false when any stop is Pendiente" time="0">
+    </testcase>
+    <testcase classname="allParadasReported returns false when estado is null/undefined" name="allParadasReported returns false when estado is null/undefined" time="0">
+    </testcase>
+    <testcase classname="allParadasReported returns true for empty list" name="allParadasReported returns true for empty list" time="0">
+    </testcase>
+    <testcase classname="tripProgress returns correct reported/total fraction" name="tripProgress returns correct reported/total fraction" time="0">
+    </testcase>
+    <testcase classname="tripProgress returns 0/0 for empty list" name="tripProgress returns 0/0 for empty list" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="derivarEstadoAlerta — server flag is authoritative" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:34" time="0.129" tests="14">
+    <testcase classname="derivarEstadoAlerta — server flag is authoritative returns enAlerta=true when server sets enAlerta=true regardless of disponible" name="derivarEstadoAlerta — server flag is authoritative returns enAlerta=true when server sets enAlerta=true regardless of disponible" time="0.002">
+    </testcase>
+    <testcase classname="derivarEstadoAlerta — server flag is authoritative returns enAlerta=false when server sets enAlerta=false even if stock looks low" name="derivarEstadoAlerta — server flag is authoritative returns enAlerta=false when server sets enAlerta=false even if stock looks low" time="0.001">
+    </testcase>
+    <testcase classname="derivarEstadoAlerta — server flag is authoritative returns enAlerta=false for a healthy item (no alert from server or client)" name="derivarEstadoAlerta — server flag is authoritative returns enAlerta=false for a healthy item (no alert from server or client)" time="0.001">
+    </testcase>
+    <testcase classname="derivarEstadoAlerta — client fallback when enAlerta is undefined derives agotado=true when disponible &lt;= 0 (no server flag)" name="derivarEstadoAlerta — client fallback when enAlerta is undefined derives agotado=true when disponible &lt;= 0 (no server flag)" time="0">
+    </testcase>
+    <testcase classname="derivarEstadoAlerta — client fallback when enAlerta is undefined derives agotado=true when disponible is negative" name="derivarEstadoAlerta — client fallback when enAlerta is undefined derives agotado=true when disponible is negative" time="0.001">
+    </testcase>
+    <testcase classname="derivarEstadoAlerta — client fallback when enAlerta is undefined derives stockBajo=true when disponible is above 0 but at or below stockMinimo" name="derivarEstadoAlerta — client fallback when enAlerta is undefined derives stockBajo=true when disponible is above 0 but at or below stockMinimo" time="0">
+    </testcase>
+    <testcase classname="derivarEstadoAlerta — client fallback when enAlerta is undefined derives enAlerta=false when disponible is above stockMinimo" name="derivarEstadoAlerta — client fallback when enAlerta is undefined derives enAlerta=false when disponible is above stockMinimo" time="0.001">
+    </testcase>
+    <testcase classname="derivarEstadoAlerta — client fallback when enAlerta is undefined falls back to cantidadActual - cantidadReservada when cantidadDisponible is absent" name="derivarEstadoAlerta — client fallback when enAlerta is undefined falls back to cantidadActual - cantidadReservada when cantidadDisponible is absent" time="0.001">
+    </testcase>
+    <testcase classname="derivarEstadoAlerta — client fallback when enAlerta is undefined uses stockMinimo=10 as default when stockMinimo is absent" name="derivarEstadoAlerta — client fallback when enAlerta is undefined uses stockMinimo=10 as default when stockMinimo is absent" time="0">
+    </testcase>
+    <testcase classname="filtrarSoloEnAlerta keeps only items with enAlerta=true" name="filtrarSoloEnAlerta keeps only items with enAlerta=true" time="0">
+    </testcase>
+    <testcase classname="filtrarSoloEnAlerta returns empty array when no items are in alert" name="filtrarSoloEnAlerta returns empty array when no items are in alert" time="0.001">
+    </testcase>
+    <testcase classname="filtrarSoloEnAlerta returns all items when all are in alert" name="filtrarSoloEnAlerta returns all items when all are in alert" time="0">
+    </testcase>
+    <testcase classname="filtrarSoloEnAlerta returns empty array for empty input" name="filtrarSoloEnAlerta returns empty array for empty input" time="0">
+    </testcase>
+    <testcase classname="filtrarSoloEnAlerta does NOT include items where enAlerta is undefined" name="filtrarSoloEnAlerta does NOT include items where enAlerta is undefined" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="pctFromPrecio" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:34" time="0.131" tests="21">
+    <testcase classname="pctFromPrecio computes 10% discount correctly" name="pctFromPrecio computes 10% discount correctly" time="0.001">
+    </testcase>
+    <testcase classname="pctFromPrecio computes 0% when precioFinal equals precioVenta" name="pctFromPrecio computes 0% when precioFinal equals precioVenta" time="0.001">
+    </testcase>
+    <testcase classname="pctFromPrecio returns 0 when precioVenta is 0 (guard for division by zero)" name="pctFromPrecio returns 0 when precioVenta is 0 (guard for division by zero)" time="0.001">
+    </testcase>
+    <testcase classname="pctFromPrecio returns 0 when precioVenta is negative" name="pctFromPrecio returns 0 when precioVenta is negative" time="0">
+    </testcase>
+    <testcase classname="pctFromPrecio rounds pct to 2 decimal places" name="pctFromPrecio rounds pct to 2 decimal places" time="0.001">
+    </testcase>
+    <testcase classname="pctFromPrecio round-trips with precioFromPct within rounding tolerance" name="pctFromPrecio round-trips with precioFromPct within rounding tolerance" time="0.001">
+    </testcase>
+    <testcase classname="pctFromPrecio handles 100% discount (free item)" name="pctFromPrecio handles 100% discount (free item)" time="0">
+    </testcase>
+    <testcase classname="pctFromPrecio handles a non-integer floor price (sub-cent precision case)" name="pctFromPrecio handles a non-integer floor price (sub-cent precision case)" time="0">
+    </testcase>
+    <testcase classname="precioFromPct computes $900 for 10% discount on $1000 item" name="precioFromPct computes $900 for 10% discount on $1000 item" time="0.001">
+    </testcase>
+    <testcase classname="precioFromPct returns precioVenta unchanged for 0% discount" name="precioFromPct returns precioVenta unchanged for 0% discount" time="0">
+    </testcase>
+    <testcase classname="precioFromPct returns 0 for 100% discount" name="precioFromPct returns 0 for 100% discount" time="0">
+    </testcase>
+    <testcase classname="precioFromPct rounds price to 2 decimal places" name="precioFromPct rounds price to 2 decimal places" time="0">
+    </testcase>
+    <testcase classname="precioFromPct round-trips with pctFromPrecio — price → pct → price" name="precioFromPct round-trips with pctFromPrecio — price → pct → price" time="0">
+    </testcase>
+    <testcase classname="precioFromPct handles fractional precioVenta" name="precioFromPct handles fractional precioVenta" time="0">
+    </testcase>
+    <testcase classname="canViewCost returns false for Empleado" name="canViewCost returns false for Empleado" time="0">
+    </testcase>
+    <testcase classname="canViewCost returns true for Administrador" name="canViewCost returns true for Administrador" time="0">
+    </testcase>
+    <testcase classname="canViewCost returns true for AdministradorSistemas" name="canViewCost returns true for AdministradorSistemas" time="0">
+    </testcase>
+    <testcase classname="canViewCost returns true for Gerencia" name="canViewCost returns true for Gerencia" time="0">
+    </testcase>
+    <testcase classname="canViewCost returns false for empty roles array" name="canViewCost returns false for empty roles array" time="0">
+    </testcase>
+    <testcase classname="canViewCost returns true when cost role is mixed with non-cost roles" name="canViewCost returns true when cost role is mixed with non-cost roles" time="0.001">
+    </testcase>
+    <testcase classname="canViewCost mirrors AppRoles.CostViewingRoles — case sensitive" name="canViewCost mirrors AppRoles.CostViewingRoles — case sensitive" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="useAuth Hook" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:31" time="2.858" tests="2">
+    <testcase classname="useAuth Hook deberia traducir invalid_grant a un mensaje amigable" name="useAuth Hook deberia traducir invalid_grant a un mensaje amigable" time="1.053">
+    </testcase>
+    <testcase classname="useAuth Hook deberia traducir inactive a cuenta inactiva" name="useAuth Hook deberia traducir inactive a cuenta inactiva" time="0.004">
+    </testcase>
+  </testsuite>
+  <testsuite name="buildAnularCompraPayload" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:34" time="0.161" tests="7">
+    <testcase classname="buildAnularCompraPayload returns { motivoAnulacion } with no extra fields" name="buildAnularCompraPayload returns { motivoAnulacion } with no extra fields" time="0.001">
+    </testcase>
+    <testcase classname="buildAnularCompraPayload does NOT include usuarioGeneradorId in the payload" name="buildAnularCompraPayload does NOT include usuarioGeneradorId in the payload" time="0.001">
+    </testcase>
+    <testcase classname="buildAnularCompraPayload does NOT use the wrong key MotivoCancelacion (was the mobile bug)" name="buildAnularCompraPayload does NOT use the wrong key MotivoCancelacion (was the mobile bug)" time="0.001">
+    </testcase>
+    <testcase classname="buildAnularCompraPayload does NOT wrap the payload in a &quot;data&quot; key (not axios syntax)" name="buildAnularCompraPayload does NOT wrap the payload in a &quot;data&quot; key (not axios syntax)" time="0">
+    </testcase>
+    <testcase classname="buildAnularCompraPayload preserves motivoAnulacion exactly" name="buildAnularCompraPayload preserves motivoAnulacion exactly" time="0.001">
+    </testcase>
+    <testcase classname="buildAnularCompraPayload throws if motivoAnulacion is empty" name="buildAnularCompraPayload throws if motivoAnulacion is empty" time="0.009">
+    </testcase>
+    <testcase classname="buildAnularCompraPayload throws if motivoAnulacion is whitespace only" name="buildAnularCompraPayload throws if motivoAnulacion is whitespace only" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="calcularRoiProducto — normal cases" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:34" time="0.133" tests="9">
+    <testcase classname="calcularRoiProducto — normal cases calculates grossProfit and roiPercentage for a simple case" name="calcularRoiProducto — normal cases calculates grossProfit and roiPercentage for a simple case" time="0.002">
+    </testcase>
+    <testcase classname="calcularRoiProducto — normal cases matches web formula: roi = grossProfit / cost * 100" name="calcularRoiProducto — normal cases matches web formula: roi = grossProfit / cost * 100" time="0.001">
+    </testcase>
+    <testcase classname="calcularRoiProducto — normal cases returns negative grossProfit when price is below cost" name="calcularRoiProducto — normal cases returns negative grossProfit when price is below cost" time="0">
+    </testcase>
+    <testcase classname="calcularRoiProducto — normal cases returns zero grossProfit and zero roi when price equals cost" name="calcularRoiProducto — normal cases returns zero grossProfit and zero roi when price equals cost" time="0.001">
+    </testcase>
+    <testcase classname="calcularRoiProducto — normal cases handles fractional costs and prices correctly" name="calcularRoiProducto — normal cases handles fractional costs and prices correctly" time="0">
+    </testcase>
+    <testcase classname="calcularRoiProducto — normal cases handles large values without overflow" name="calcularRoiProducto — normal cases handles large values without overflow" time="0.001">
+    </testcase>
+    <testcase classname="calcularRoiProducto — cost &lt;= 0 guard returns { grossProfit: 0, roiPercentage: 0 } when cost is zero" name="calcularRoiProducto — cost &lt;= 0 guard returns { grossProfit: 0, roiPercentage: 0 } when cost is zero" time="0">
+    </testcase>
+    <testcase classname="calcularRoiProducto — cost &lt;= 0 guard returns { grossProfit: 0, roiPercentage: 0 } when cost is negative" name="calcularRoiProducto — cost &lt;= 0 guard returns { grossProfit: 0, roiPercentage: 0 } when cost is negative" time="0">
+    </testcase>
+    <testcase classname="calcularRoiProducto — cost &lt;= 0 guard returns { grossProfit: 0, roiPercentage: 0 } when both price and cost are zero" name="calcularRoiProducto — cost &lt;= 0 guard returns { grossProfit: 0, roiPercentage: 0 } when both price and cost are zero" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="S4 — Inventory cost-field gating: canViewCost()" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:34" time="0.134" tests="11">
+    <testcase classname="S4 — Inventory cost-field gating: canViewCost() returns false for Empleado — cost field must be hidden" name="S4 — Inventory cost-field gating: canViewCost() returns false for Empleado — cost field must be hidden" time="0.001">
+    </testcase>
+    <testcase classname="S4 — Inventory cost-field gating: canViewCost() returns false for empty roles — cost field must be hidden" name="S4 — Inventory cost-field gating: canViewCost() returns false for empty roles — cost field must be hidden" time="0.001">
+    </testcase>
+    <testcase classname="S4 — Inventory cost-field gating: canViewCost() returns false for unknown role — cost field must be hidden" name="S4 — Inventory cost-field gating: canViewCost() returns false for unknown role — cost field must be hidden" time="0">
+    </testcase>
+    <testcase classname="S4 — Inventory cost-field gating: canViewCost() returns true for Administrador — cost field must be visible" name="S4 — Inventory cost-field gating: canViewCost() returns true for Administrador — cost field must be visible" time="0.001">
+    </testcase>
+    <testcase classname="S4 — Inventory cost-field gating: canViewCost() returns true for AdministradorSistemas — cost field must be visible" name="S4 — Inventory cost-field gating: canViewCost() returns true for AdministradorSistemas — cost field must be visible" time="0">
+    </testcase>
+    <testcase classname="S4 — Inventory cost-field gating: canViewCost() returns true for Gerencia — cost field must be visible" name="S4 — Inventory cost-field gating: canViewCost() returns true for Gerencia — cost field must be visible" time="0">
+    </testcase>
+    <testcase classname="S4 — Inventory cost-field gating: canViewCost() returns true when Empleado also has Administrador role (mixed)" name="S4 — Inventory cost-field gating: canViewCost() returns true when Empleado also has Administrador role (mixed)" time="0">
+    </testcase>
+    <testcase classname="S4 — Inventory cost-field gating: canViewCost() returns false for two non-cost roles (no cost role present)" name="S4 — Inventory cost-field gating: canViewCost() returns false for two non-cost roles (no cost role present)" time="0">
+    </testcase>
+    <testcase classname="S4 — Inventory edit-affordance gate behavioral contract Empleado canViewCost=false → edit screen returns access-denied view (not editable form)" name="S4 — Inventory edit-affordance gate behavioral contract Empleado canViewCost=false → edit screen returns access-denied view (not editable form)" time="0.001">
+    </testcase>
+    <testcase classname="S4 — Inventory edit-affordance gate behavioral contract Gerencia canViewCost=true → edit form should be editable with cost field" name="S4 — Inventory edit-affordance gate behavioral contract Gerencia canViewCost=true → edit form should be editable with cost field" time="0">
+    </testcase>
+    <testcase classname="S4 — Inventory edit-affordance gate behavioral contract Administrador canViewCost=true → edit form should be editable with cost field" name="S4 — Inventory edit-affordance gate behavioral contract Administrador canViewCost=true → edit form should be editable with cost field" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="esPrecioValido (unified floor guard)" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:34" time="0.15" tests="22">
+    <testcase classname="esPrecioValido (unified floor guard) returns false when precioFinal is below precioMinimo" name="esPrecioValido (unified floor guard) returns false when precioFinal is below precioMinimo" time="0.001">
+    </testcase>
+    <testcase classname="esPrecioValido (unified floor guard) returns true when precioFinal equals precioMinimo exactly (inclusive at floor)" name="esPrecioValido (unified floor guard) returns true when precioFinal equals precioMinimo exactly (inclusive at floor)" time="0">
+    </testcase>
+    <testcase classname="esPrecioValido (unified floor guard) returns true when precioFinal is above precioMinimo" name="esPrecioValido (unified floor guard) returns true when precioFinal is above precioMinimo" time="0.001">
+    </testcase>
+    <testcase classname="esPrecioValido (unified floor guard) returns false for price 0 against any positive floor" name="esPrecioValido (unified floor guard) returns false for price 0 against any positive floor" time="0">
+    </testcase>
+    <testcase classname="esPrecioValido (unified floor guard) returns false when one cent below floor" name="esPrecioValido (unified floor guard) returns false when one cent below floor" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts when both item+general discounts stay at or above precioMinimo" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts when both item+general discounts stay at or above precioMinimo" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) rejects when compound effective price breaks precioMinimo" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) rejects when compound effective price breaks precioMinimo" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts when only item discount is applied (general=0)" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts when only item discount is applied (general=0)" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts when only general discount is applied (item=0)" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts when only general discount is applied (item=0)" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts at exact precioMinimo boundary" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts at exact precioMinimo boundary" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) rejects 1 cent below precioMinimo boundary" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) rejects 1 cent below precioMinimo boundary" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) returns true (fail-open) when precioMinimo is null" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) returns true (fail-open) when precioMinimo is null" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) returns true (fail-open) when precioMinimo is undefined" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) returns true (fail-open) when precioMinimo is undefined" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) returns true (fail-open) for massive discount when floor is null" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) returns true (fail-open) for massive discount when floor is null" time="0">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) returns true when compound effective price breaks precioMinimo" name="derivarFloorBroken — unified (no 0-discount early-return) returns true when compound effective price breaks precioMinimo" time="0">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) returns false when compound satisfies precioMinimo" name="derivarFloorBroken — unified (no 0-discount early-return) returns false when compound satisfies precioMinimo" time="0.001">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) returns true when base price is already below precioMinimo with 0 discounts" name="derivarFloorBroken — unified (no 0-discount early-return) returns true when base price is already below precioMinimo with 0 discounts" time="0">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) returns false when base price equals precioMinimo with 0 discounts" name="derivarFloorBroken — unified (no 0-discount early-return) returns false when base price equals precioMinimo with 0 discounts" time="0">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) returns false when base price is above precioMinimo with 0 discounts" name="derivarFloorBroken — unified (no 0-discount early-return) returns false when base price is above precioMinimo with 0 discounts" time="0">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) returns false (fail-open) when precioMinimo is null even with 0 discounts" name="derivarFloorBroken — unified (no 0-discount early-return) returns false (fail-open) when precioMinimo is null even with 0 discounts" time="0.001">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) returns false (fail-open) when precioMinimo is null with discounts applied" name="derivarFloorBroken — unified (no 0-discount early-return) returns false (fail-open) when precioMinimo is null with discounts applied" time="0">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) clears (returns false) when general discount reduced to 0 and price is above floor" name="derivarFloorBroken — unified (no 0-discount early-return) clears (returns false) when general discount reduced to 0 and price is above floor" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="StockActionModal — observacion validation (mirrors AdjustStockValidator)" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:34" time="0.127" tests="14">
+    <testcase classname="StockActionModal — observacion validation (mirrors AdjustStockValidator) rejects empty string" name="StockActionModal — observacion validation (mirrors AdjustStockValidator) rejects empty string" time="0.001">
+    </testcase>
+    <testcase classname="StockActionModal — observacion validation (mirrors AdjustStockValidator) rejects whitespace-only string" name="StockActionModal — observacion validation (mirrors AdjustStockValidator) rejects whitespace-only string" time="0.001">
+    </testcase>
+    <testcase classname="StockActionModal — observacion validation (mirrors AdjustStockValidator) rejects 1-char string" name="StockActionModal — observacion validation (mirrors AdjustStockValidator) rejects 1-char string" time="0">
+    </testcase>
+    <testcase classname="StockActionModal — observacion validation (mirrors AdjustStockValidator) rejects 2-char string (below min length 3)" name="StockActionModal — observacion validation (mirrors AdjustStockValidator) rejects 2-char string (below min length 3)" time="0">
+    </testcase>
+    <testcase classname="StockActionModal — observacion validation (mirrors AdjustStockValidator) accepts exactly 3 chars" name="StockActionModal — observacion validation (mirrors AdjustStockValidator) accepts exactly 3 chars" time="0.001">
+    </testcase>
+    <testcase classname="StockActionModal — observacion validation (mirrors AdjustStockValidator) accepts a normal reason phrase" name="StockActionModal — observacion validation (mirrors AdjustStockValidator) accepts a normal reason phrase" time="0">
+    </testcase>
+    <testcase classname="StockActionModal — observacion validation (mirrors AdjustStockValidator) trims before checking — leading/trailing whitespace does not count" name="StockActionModal — observacion validation (mirrors AdjustStockValidator) trims before checking — leading/trailing whitespace does not count" time="0">
+    </testcase>
+    <testcase classname="StockActionModal — submit button disabled guard disables button when observacion is empty — no silent default fallback" name="StockActionModal — submit button disabled guard disables button when observacion is empty — no silent default fallback" time="0.001">
+    </testcase>
+    <testcase classname="StockActionModal — submit button disabled guard disables button when observacion is only whitespace" name="StockActionModal — submit button disabled guard disables button when observacion is only whitespace" time="0">
+    </testcase>
+    <testcase classname="StockActionModal — submit button disabled guard disables button when observacion is shorter than 3 chars" name="StockActionModal — submit button disabled guard disables button when observacion is shorter than 3 chars" time="0">
+    </testcase>
+    <testcase classname="StockActionModal — submit button disabled guard enables button when observacion meets minimum length" name="StockActionModal — submit button disabled guard enables button when observacion meets minimum length" time="0.001">
+    </testcase>
+    <testcase classname="StockActionModal — submit button disabled guard enables button when all conditions are met" name="StockActionModal — submit button disabled guard enables button when all conditions are met" time="0">
+    </testcase>
+    <testcase classname="StockActionModal — submit button disabled guard disables button when cantidad is empty regardless of observacion" name="StockActionModal — submit button disabled guard disables button when cantidad is empty regardless of observacion" time="0">
+    </testcase>
+    <testcase classname="StockActionModal — submit button disabled guard disables button when isAdjusting is true regardless of other fields" name="StockActionModal — submit button disabled guard disables button when isAdjusting is true regardless of other fields" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a)" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:34" time="0.135" tests="9">
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns false (fail-open) when precioMinimo is null" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns false (fail-open) when precioMinimo is null" time="0.002">
+    </testcase>
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns false (fail-open) when precioMinimo is undefined" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns false (fail-open) when precioMinimo is undefined" time="0">
+    </testcase>
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns false even with 0 discounts and null floor" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns false even with 0 discounts and null floor" time="0">
+    </testcase>
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esDescuentoValidoCompuesto returns true (fail-open) when precioMinimo is null" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esDescuentoValidoCompuesto returns true (fail-open) when precioMinimo is null" time="0.001">
+    </testcase>
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esDescuentoValidoCompuesto returns true (fail-open) when precioMinimo is undefined" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esDescuentoValidoCompuesto returns true (fail-open) when precioMinimo is undefined" time="0">
+    </testcase>
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns true when floor IS known and price breaks it" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns true when floor IS known and price breaks it" time="0">
+    </testcase>
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esPrecioValido returns false when price is below floor" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esPrecioValido returns false when price is below floor" time="0.001">
+    </testcase>
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esPrecioValido returns true when price meets floor exactly" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esPrecioValido returns true when price meets floor exactly" time="0">
+    </testcase>
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esPrecioValido returns true when price is above floor" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esPrecioValido returns true when price is above floor" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="calcularRentabilidadVenta" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:49:34" time="0.135" tests="12">
+    <testcase classname="calcularRentabilidadVenta case 1: no discount, no flete → margenNeto 400, margenPct 40%" name="calcularRentabilidadVenta case 1: no discount, no flete → margenNeto 400, margenPct 40%" time="0.002">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta case 2: general discount 20%, no flete → margenNeto 200, margenPct 25%" name="calcularRentabilidadVenta case 2: general discount 20%, no flete → margenNeto 200, margenPct 25%" time="0.001">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta case 3: no discount, flete 200 excluded → margenNeto 400, margenPct 40%" name="calcularRentabilidadVenta case 3: no discount, flete 200 excluded → margenNeto 400, margenPct 40%" time="0.001">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta case 4: general 20% + flete 200 → margenNeto 200, margenPct 25% (flete excluded)" name="calcularRentabilidadVenta case 4: general 20% + flete 200 → margenNeto 200, margenPct 25% (flete excluded)" time="0.001">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta case 5a: empty detalles → null" name="calcularRentabilidadVenta case 5a: empty detalles → null" time="0">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta case 5b: subtotalBruto 0 → null" name="calcularRentabilidadVenta case 5b: subtotalBruto 0 → null" time="0.001">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta case 5c: ingresoNeto 0 (100% general discount) → margenPct 0 guard" name="calcularRentabilidadVenta case 5c: ingresoNeto 0 (100% general discount) → margenPct 0 guard" time="0">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta returns null when any line has null precioCostoSnapshot" name="calcularRentabilidadVenta returns null when any line has null precioCostoSnapshot" time="0.001">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta aggregates margin across multiple lines" name="calcularRentabilidadVenta aggregates margin across multiple lines" time="0">
+    </testcase>
+    <testcase classname="puedeVerRentabilidad returns true when all lines have non-null precioCostoSnapshot" name="puedeVerRentabilidad returns true when all lines have non-null precioCostoSnapshot" time="0.001">
+    </testcase>
+    <testcase classname="puedeVerRentabilidad returns false when any line has null precioCostoSnapshot" name="puedeVerRentabilidad returns false when any line has null precioCostoSnapshot" time="0">
+    </testcase>
+    <testcase classname="puedeVerRentabilidad returns false for empty detalles array" name="puedeVerRentabilidad returns false for empty detalles array" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="BulkActionBar — visibility contract" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:48:56" time="42.464" tests="9">
+    <testcase classname="BulkActionBar — visibility contract renders nothing when selectedCount is 0" name="BulkActionBar — visibility contract renders nothing when selectedCount is 0" time="0.023">
+    </testcase>
+    <testcase classname="BulkActionBar — visibility contract renders the bar when selectedCount is 1" name="BulkActionBar — visibility contract renders the bar when selectedCount is 1" time="0.077">
+    </testcase>
+    <testcase classname="BulkActionBar — visibility contract renders the bar when selectedCount is greater than 1" name="BulkActionBar — visibility contract renders the bar when selectedCount is greater than 1" time="0.018">
+    </testcase>
+    <testcase classname="BulkActionBar — visibility contract shows all three action buttons when selectedCount &gt; 0" name="BulkActionBar — visibility contract shows all three action buttons when selectedCount &gt; 0" time="0.026">
+    </testcase>
+    <testcase classname="BulkActionBar — visibility contract uses plural label for 2+ selected ventas" name="BulkActionBar — visibility contract uses plural label for 2+ selected ventas" time="0.019">
+    </testcase>
+    <testcase classname="BulkActionBar — floating variant renders the bar when selectedCount &gt; 0 with variant=floating" name="BulkActionBar — floating variant renders the bar when selectedCount &gt; 0 with variant=floating" time="0.018">
+    </testcase>
+    <testcase classname="BulkActionBar — floating variant returns null when selectedCount is 0 regardless of variant" name="BulkActionBar — floating variant returns null when selectedCount is 0 regardless of variant" time="0.001">
+    </testcase>
+    <testcase classname="BulkActionBar — floating variant applies borderRadius:20 and omits left/right in floating variant" name="BulkActionBar — floating variant applies borderRadius:20 and omits left/right in floating variant" time="0.02">
+    </testcase>
+    <testcase classname="BulkActionBar — floating variant default variant keeps left:0 and right:0 (phone behavior unchanged)" name="BulkActionBar — floating variant default variant keeps left:0 and right:0 (phone behavior unchanged)" time="0.019">
+    </testcase>
+  </testsuite>
+  <testsuite name="LoginScreen UI" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:48:56" time="42.897" tests="3">
+    <testcase classname="LoginScreen UI deberia renderizar los inputs de usuario y contraseña" name="LoginScreen UI deberia renderizar los inputs de usuario y contraseña" time="0.416">
+    </testcase>
+    <testcase classname="LoginScreen UI deberia mostrar alerta si los campos estan vacios al ingresar" name="LoginScreen UI deberia mostrar alerta si los campos estan vacios al ingresar" time="0.119">
+    </testcase>
+    <testcase classname="LoginScreen UI deberia llamar a login con los datos ingresados" name="LoginScreen UI deberia llamar a login con los datos ingresados" time="0.14">
+    </testcase>
+  </testsuite>
+  <testsuite name="Role Management Integration (TDD)" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:48:56" time="44.191" tests="3">
+    <testcase classname="Role Management Integration (TDD) should render a Create Role button and submit" name="Role Management Integration (TDD) should render a Create Role button and submit" time="0.328">
+    </testcase>
+    <testcase classname="Role Management Integration (TDD) should allow modifying a role" name="Role Management Integration (TDD) should allow modifying a role" time="0.001">
+    </testcase>
+    <testcase classname="Role Management Integration (TDD) should allow deleting a role" name="Role Management Integration (TDD) should allow deleting a role" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="User Management Integration (TDD)" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:48:56" time="44.201" tests="3">
+    <testcase classname="User Management Integration (TDD) should render a Create User button and open form" name="User Management Integration (TDD) should render a Create User button and open form" time="0.346">
+    </testcase>
+    <testcase classname="User Management Integration (TDD) should allow modifying a user" name="User Management Integration (TDD) should allow modifying a user" time="0.001">
+    </testcase>
+    <testcase classname="User Management Integration (TDD) should allow deactivating a user" name="User Management Integration (TDD) should allow deactivating a user" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="validateBultosForTest — blocks invalid inputs" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:48:56" time="44.624" tests="11">
+    <testcase classname="validateBultosForTest — blocks invalid inputs returns an error when bultosStr is empty" name="validateBultosForTest — blocks invalid inputs returns an error when bultosStr is empty" time="0.006">
+    </testcase>
+    <testcase classname="validateBultosForTest — blocks invalid inputs returns an error when bultosStr is whitespace only" name="validateBultosForTest — blocks invalid inputs returns an error when bultosStr is whitespace only" time="0.001">
+    </testcase>
+    <testcase classname="validateBultosForTest — blocks invalid inputs returns an error when bultosStr is &quot;0&quot;" name="validateBultosForTest — blocks invalid inputs returns an error when bultosStr is &quot;0&quot;" time="0">
+    </testcase>
+    <testcase classname="validateBultosForTest — blocks invalid inputs returns an error when bultosStr is a negative number" name="validateBultosForTest — blocks invalid inputs returns an error when bultosStr is a negative number" time="0.001">
+    </testcase>
+    <testcase classname="validateBultosForTest — blocks invalid inputs returns an error when bultosStr is &quot;-99&quot;" name="validateBultosForTest — blocks invalid inputs returns an error when bultosStr is &quot;-99&quot;" time="0">
+    </testcase>
+    <testcase classname="validateBultosForTest — blocks invalid inputs returns an error when bultosStr is a non-numeric string" name="validateBultosForTest — blocks invalid inputs returns an error when bultosStr is a non-numeric string" time="0">
+    </testcase>
+    <testcase classname="validateBultosForTest — allows valid inputs returns null for &quot;1&quot; (minimum valid value)" name="validateBultosForTest — allows valid inputs returns null for &quot;1&quot; (minimum valid value)" time="0">
+    </testcase>
+    <testcase classname="validateBultosForTest — allows valid inputs returns null for &quot;3&quot;" name="validateBultosForTest — allows valid inputs returns null for &quot;3&quot;" time="0">
+    </testcase>
+    <testcase classname="validateBultosForTest — allows valid inputs returns null for &quot;10&quot;" name="validateBultosForTest — allows valid inputs returns null for &quot;10&quot;" time="0.001">
+    </testcase>
+    <testcase classname="validateBultosForTest — allows valid inputs returns null for &quot;99&quot;" name="validateBultosForTest — allows valid inputs returns null for &quot;99&quot;" time="0">
+    </testcase>
+    <testcase classname="validateBultosForTest — allows valid inputs returns null for &quot; 5 &quot; (leading/trailing spaces around valid number)" name="validateBultosForTest — allows valid inputs returns null for &quot; 5 &quot; (leading/trailing spaces around valid number)" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="validateVehiculoForm — required fields" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:48:56" time="44.646" tests="21">
+    <testcase classname="validateVehiculoForm — required fields returns patente error when patente is empty" name="validateVehiculoForm — required fields returns patente error when patente is empty" time="0.007">
+    </testcase>
+    <testcase classname="validateVehiculoForm — required fields returns patente error when patente is whitespace only" name="validateVehiculoForm — required fields returns patente error when patente is whitespace only" time="0.001">
+    </testcase>
+    <testcase classname="validateVehiculoForm — required fields returns modelo error when modelo is empty" name="validateVehiculoForm — required fields returns modelo error when modelo is empty" time="0">
+    </testcase>
+    <testcase classname="validateVehiculoForm — required fields returns modelo error when modelo is whitespace only" name="validateVehiculoForm — required fields returns modelo error when modelo is whitespace only" time="0.001">
+    </testcase>
+    <testcase classname="validateVehiculoForm — required fields returns capacidadCargaKg error when capacidad is empty" name="validateVehiculoForm — required fields returns capacidadCargaKg error when capacidad is empty" time="0">
+    </testcase>
+    <testcase classname="validateVehiculoForm — required fields returns capacidadCargaKg error when capacidad is whitespace only" name="validateVehiculoForm — required fields returns capacidadCargaKg error when capacidad is whitespace only" time="0.001">
+    </testcase>
+    <testcase classname="validateVehiculoForm — required fields returns no errors when all fields are valid" name="validateVehiculoForm — required fields returns no errors when all fields are valid" time="0">
+    </testcase>
+    <testcase classname="validateVehiculoForm — capacidadCargaKg boundary rejects capacidad = 0" name="validateVehiculoForm — capacidadCargaKg boundary rejects capacidad = 0" time="0.001">
+    </testcase>
+    <testcase classname="validateVehiculoForm — capacidadCargaKg boundary rejects negative capacidad" name="validateVehiculoForm — capacidadCargaKg boundary rejects negative capacidad" time="0">
+    </testcase>
+    <testcase classname="validateVehiculoForm — capacidadCargaKg boundary rejects non-numeric capacidad string" name="validateVehiculoForm — capacidadCargaKg boundary rejects non-numeric capacidad string" time="0">
+    </testcase>
+    <testcase classname="validateVehiculoForm — capacidadCargaKg boundary accepts capacidad = 0.1 (just above 0)" name="validateVehiculoForm — capacidadCargaKg boundary accepts capacidad = 0.1 (just above 0)" time="0.001">
+    </testcase>
+    <testcase classname="validateVehiculoForm — capacidadCargaKg boundary accepts capacidad = 1500" name="validateVehiculoForm — capacidadCargaKg boundary accepts capacidad = 1500" time="0">
+    </testcase>
+    <testcase classname="validateVehiculoForm — capacidadCargaKg boundary accepts decimal capacidad like 750.5" name="validateVehiculoForm — capacidadCargaKg boundary accepts decimal capacidad like 750.5" time="0">
+    </testcase>
+    <testcase classname="isVehiculoFormValid — submit guard returns false when all fields are empty" name="isVehiculoFormValid — submit guard returns false when all fields are empty" time="0.001">
+    </testcase>
+    <testcase classname="isVehiculoFormValid — submit guard returns false when only patente is missing" name="isVehiculoFormValid — submit guard returns false when only patente is missing" time="0">
+    </testcase>
+    <testcase classname="isVehiculoFormValid — submit guard returns false when only modelo is missing" name="isVehiculoFormValid — submit guard returns false when only modelo is missing" time="0">
+    </testcase>
+    <testcase classname="isVehiculoFormValid — submit guard returns false when capacidad is 0" name="isVehiculoFormValid — submit guard returns false when capacidad is 0" time="0">
+    </testcase>
+    <testcase classname="isVehiculoFormValid — submit guard returns false when capacidad is negative" name="isVehiculoFormValid — submit guard returns false when capacidad is negative" time="0.001">
+    </testcase>
+    <testcase classname="isVehiculoFormValid — submit guard returns false when capacidad is empty" name="isVehiculoFormValid — submit guard returns false when capacidad is empty" time="0">
+    </testcase>
+    <testcase classname="isVehiculoFormValid — submit guard returns true when all fields are valid" name="isVehiculoFormValid — submit guard returns true when all fields are valid" time="0">
+    </testcase>
+    <testcase classname="isVehiculoFormValid — submit guard returns true with decimal capacidad" name="isVehiculoFormValid — submit guard returns true with decimal capacidad" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="StepConfirm — validateTripReadiness gate" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:48:56" time="44.678" tests="11">
+    <testcase classname="StepConfirm — validateTripReadiness gate blocks when required fields are missing returns error when choferId is null" name="StepConfirm — validateTripReadiness gate blocks when required fields are missing returns error when choferId is null" time="0.007">
+    </testcase>
+    <testcase classname="StepConfirm — validateTripReadiness gate blocks when required fields are missing returns error when choferId is empty string" name="StepConfirm — validateTripReadiness gate blocks when required fields are missing returns error when choferId is empty string" time="0">
+    </testcase>
+    <testcase classname="StepConfirm — validateTripReadiness gate blocks when required fields are missing returns error when vehiculoId is null" name="StepConfirm — validateTripReadiness gate blocks when required fields are missing returns error when vehiculoId is null" time="0.001">
+    </testcase>
+    <testcase classname="StepConfirm — validateTripReadiness gate blocks when required fields are missing returns error when vehiculoId is empty string" name="StepConfirm — validateTripReadiness gate blocks when required fields are missing returns error when vehiculoId is empty string" time="0">
+    </testcase>
+    <testcase classname="StepConfirm — validateTripReadiness gate blocks when required fields are missing returns error when orderedStops is empty" name="StepConfirm — validateTripReadiness gate blocks when required fields are missing returns error when orderedStops is empty" time="0.001">
+    </testcase>
+    <testcase classname="StepConfirm — validateTripReadiness gate blocks when required fields are missing returns error when all required fields are missing" name="StepConfirm — validateTripReadiness gate blocks when required fields are missing returns error when all required fields are missing" time="0">
+    </testcase>
+    <testcase classname="StepConfirm — validateTripReadiness gate allows submission when all required fields are present returns null when choferId, vehiculoId, and stops are all set" name="StepConfirm — validateTripReadiness gate allows submission when all required fields are present returns null when choferId, vehiculoId, and stops are all set" time="0">
+    </testcase>
+    <testcase classname="StepConfirm — validateTripReadiness gate allows submission when all required fields are present returns null with multiple stops" name="StepConfirm — validateTripReadiness gate allows submission when all required fields are present returns null with multiple stops" time="0.001">
+    </testcase>
+    <testcase classname="StepConfirm — validateTripReadiness gate error messages are descriptive chofer error message mentions chofer" name="StepConfirm — validateTripReadiness gate error messages are descriptive chofer error message mentions chofer" time="0">
+    </testcase>
+    <testcase classname="StepConfirm — validateTripReadiness gate error messages are descriptive vehiculo error message mentions vehículo" name="StepConfirm — validateTripReadiness gate error messages are descriptive vehiculo error message mentions vehículo" time="0.001">
+    </testcase>
+    <testcase classname="StepConfirm — validateTripReadiness gate error messages are descriptive stops error mentions parada" name="StepConfirm — validateTripReadiness gate error messages are descriptive stops error mentions parada" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="ComprasListScreen UI" errors="0" failures="0" skipped="0" timestamp="2026-07-06T03:48:56" time="45.541" tests="2">
+    <testcase classname="ComprasListScreen UI debe renderizar la lista y las metricas" name="ComprasListScreen UI debe renderizar la lista y las metricas" time="0.479">
+    </testcase>
+    <testcase classname="ComprasListScreen UI debe mostrar mensaje vacio cuando no hay ordenes" name="ComprasListScreen UI debe mostrar mensaje vacio cuando no hay ordenes" time="0.024">
+    </testcase>
+  </testsuite>
+</testsuites>
