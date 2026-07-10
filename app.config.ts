@@ -49,15 +49,6 @@ const config: ExpoConfig = {
       },
     ],
     [
-      'expo-build-properties',
-      {
-        android: {
-          enableProguardInReleaseBuilds: true,
-          enableShrinkResourcesInReleaseBuilds: true,
-        },
-      },
-    ],
-    [
       '@sentry/react-native/expo',
       {
         url: 'https://sentry.io/',
