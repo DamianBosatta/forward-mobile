@@ -117,7 +117,10 @@ export function ErrorBoundary(props: any) {
 import * as Sentry from '@sentry/react-native'
 
 Sentry.init({
-  dsn: 'https://70ed2852baf17572fcf86542da83741c@o4511485650468864.ingest.us.sentry.io/4511485997481984',
+  // Set per build profile in eas.json. Absent in local dev, which disables Sentry.
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  // Separates dev/preview/production traffic inside the same Sentry project.
+  environment: process.env.EXPO_PUBLIC_SENTRY_ENVIRONMENT ?? 'development',
   // Performance tracing: sample 10% of transactions to get perf data without
   // overwhelming the Sentry quota. Defaults to 0 (no perf) when omitted.
   tracesSampleRate: 0.1,

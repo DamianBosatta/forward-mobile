@@ -9,7 +9,9 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api-dev.forward-gestion.com.ar:8443",
-        "EXPO_PUBLIC_SIGNALR_URL": "https://api-dev.forward-gestion.com.ar:8443/hubs/erp"
+        "EXPO_PUBLIC_SIGNALR_URL": "https://api-dev.forward-gestion.com.ar:8443/hubs/erp",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://70ed2852baf17572fcf86542da83741c@o4511485650468864.ingest.us.sentry.io/4511485997481984",
+        "EXPO_PUBLIC_SENTRY_ENVIRONMENT": "development"
       }
     },
     "preview": {
@@ -20,13 +22,17 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api-dev.forward-gestion.com.ar:8443",
         "EXPO_PUBLIC_SIGNALR_URL": "https://api-dev.forward-gestion.com.ar:8443/hubs/erp",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://70ed2852baf17572fcf86542da83741c@o4511485650468864.ingest.us.sentry.io/4511485997481984",
+        "EXPO_PUBLIC_SENTRY_ENVIRONMENT": "preview",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "production": {
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api.forward-gestion.com.ar",
-        "EXPO_PUBLIC_SIGNALR_URL": "https://api.forward-gestion.com.ar/hubs/erp"
+        "EXPO_PUBLIC_SIGNALR_URL": "https://api.forward-gestion.com.ar/hubs/erp",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://70ed2852baf17572fcf86542da83741c@o4511485650468864.ingest.us.sentry.io/4511485997481984",
+        "EXPO_PUBLIC_SENTRY_ENVIRONMENT": "production"
       }
     }
   },
