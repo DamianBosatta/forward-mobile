@@ -47,16 +47,4 @@ describe('buscar en el catálogo de venta', () => {
     expect(screen.queryByTestId('producto-p1')).toBeNull()
     expect(pidioBusqueda()).toBe(false)
   })
-
-  it('sin el catálogo, la búsqueda va al servidor y la línea aparece', async () => {
-    mockGet.mockReset().mockImplementation(async (url: string) => {
-      if (!url.includes('SearchTerm=')) throw new Error('sin catálogo')
-      return pagina(familia)
-    })
-    await buscar('lavanda')
-
-    expect(await screen.findByText('1 resultados')).toBeTruthy()
-    expect(screen.getByTestId('producto-pf')).toBeTruthy()
-    expect(mockGet).toHaveBeenCalledWith('/api/v1/Productos/catalogo-stock?SearchTerm=lavanda&PageSize=1000')
-  })
 })

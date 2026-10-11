@@ -1,6 +1,6 @@
 import React from 'react'
 import { act, renderHook, waitFor } from '@testing-library/react-native'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
 import { api } from '@/libs/api-client'
 import { DEBOUNCE_BUSQUEDA_MS, useCatalogoVenta } from '../hooks/useCatalogoVenta'
 import { producto } from '../__testing__/producto'
@@ -61,7 +61,10 @@ beforeEach(() => {
     url.includes('PageNumber=2') ? pagina([lavandina], 2, false) : pagina([producto(), escoba], 1, true),
   )
 })
-afterEach(() => jest.useRealTimers())
+afterEach(() => {
+  jest.useRealTimers()
+  onlineManager.setOnline(true)
+})
 
 describe('useCatalogoVenta', () => {
   it('carga el catálogo completo: páginas de 1000 hasta que no haya más', async () => {
@@ -101,30 +104,34 @@ describe('useCatalogoVenta', () => {
     expect(ids()).toEqual(['pf', 'pv1', 'pv2'])
   })
 
-  it('sin el catálogo, pide SearchTerm y muestra la familia que devuelve el servidor', async () => {
-    servidor(sinCatalogo, async () => pagina(familia))
+  // Servidor nuevo: devuelve la familia. Viejo: ignora SearchTerm y devuelve todo; filtra el teléfono.
+  it.each([['nuevo', familia], ['viejo', todo]])('sin el catálogo pide SearchTerm; servidor %s: queda la familia', async (_, respuesta) => {
+    servidor(sinCatalogo, async () => pagina(respuesta))
     const { ids, buscar, result } = await montar()
     await buscar('lavanda')
     await waitFor(() => expect(result.current.isLoading).toBe(false))
-    expect(ids()).toEqual(['pf', 'pv1', 'pv2'])
     expect(get).toHaveBeenCalledWith('/api/v1/Productos/catalogo-stock?SearchTerm=lavanda&PageSize=1000')
-  })
-
-  it('servidor viejo (ignora SearchTerm y devuelve todo), sin el catálogo: quedan las familias que coinciden', async () => {
-    servidor(sinCatalogo, async () => pagina(todo))
-    const { ids, buscar, result } = await montar()
-    await buscar('lavanda')
-    await waitFor(() => expect(result.current.isLoading).toBe(false))
-    expect(pidioBusqueda()).toBe(true)
     expect(ids()).toEqual(['pf', 'pv1', 'pv2'])
   })
 
-  it('con menos de 2 caracteres no va al servidor', async () => {
+  it('con menos de 2 caracteres no va al servidor; con 2, sí', async () => {
     servidor(sinCatalogo, async () => pagina(familia))
     const { ids, buscar } = await montar()
     await buscar('l')
     expect(pidioBusqueda()).toBe(false)
     expect(ids()).toEqual([])
+    await buscar('la')
+    expect(get).toHaveBeenCalledWith('/api/v1/Productos/catalogo-stock?SearchTerm=la&PageSize=1000')
+  })
+
+  it('con el catálogo guardado por una versión anterior (un arreglo) y sin red, busca igual', async () => {
+    qc.setQueryData(['productos', 'catalogoVenta', 'completo'], todo, { updatedAt: Date.now() - 10 * 60_000 })
+    onlineManager.setOnline(false)
+    servidor(async () => { throw new TypeError('Network request failed') })
+    const { ids, buscar } = await montar()
+    await buscar('lavanda')
+    expect(ids()).toEqual(['pf', 'pv1', 'pv2'])
+    expect(pidioBusqueda()).toBe(false)
   })
 
   it('con el catálogo truncado (20 páginas) la búsqueda va al servidor', async () => {

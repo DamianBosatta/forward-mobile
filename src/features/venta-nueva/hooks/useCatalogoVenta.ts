@@ -14,6 +14,10 @@ interface Catalogo {
   truncado: boolean
 }
 
+// Antes se persistía como arreglo con la misma clave: se acepta, para tener catálogo sin red tras
+// actualizar. `useToggleProductoStatus` y `useAjustarStock` (reescriben cachés) no se usan en mobile.
+const aCatalogo = (d: Catalogo | CatalogoStockItem[]): Catalogo => (Array.isArray(d) ? { items: d, truncado: false } : d)
+
 /**
  * Catálogo completo de venta: páginas de 1000 hasta que no haya más.
  * TODO: unificar con `fetchCatalogoStockCompleto` (libs/api-client/productos.ts, PR #28) cuando se mergee.
@@ -53,10 +57,10 @@ export function useCatalogoVenta(busqueda: string) {
     return () => clearTimeout(t)
   }, [busqueda])
 
-  const query = useQuery({
-    // `2`: el dato pasó a ser `{ items, truncado }`; lo persistido con la forma anterior no se lee.
-    queryKey: [...productosKeys.all, 'catalogoVenta', 'completo', 2],
+  const query = useQuery<Catalogo | CatalogoStockItem[], Error, Catalogo>({
+    queryKey: [...productosKeys.all, 'catalogoVenta', 'completo'],
     queryFn: fetchCatalogoCompleto,
+    select: aCatalogo,
     staleTime: 60_000,
   })
   const completo = query.data && !query.data.truncado ? query.data.items : undefined
