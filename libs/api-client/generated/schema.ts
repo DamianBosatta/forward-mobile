@@ -9177,6 +9177,8 @@ export interface paths {
                     DepositoId?: string;
                     PageNumber?: number;
                     PageSize?: number;
+                    SearchTerm?: string;
+                    CodigoBarra?: string;
                 };
                 header?: never;
                 path?: never;
@@ -15098,6 +15100,7 @@ export interface components {
             marca?: string | null;
             codigoPropio?: string | null;
             codigoBarra?: string | null;
+            codigoProveedor?: string | null;
             /** Format: double */
             precioVenta: number;
             /** Format: double */
