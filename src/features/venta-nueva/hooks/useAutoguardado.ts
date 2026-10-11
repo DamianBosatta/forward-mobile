@@ -22,7 +22,7 @@ export function useAutoguardado<T>({ borradorId, versionInicial, valores, guarda
   const [estado, setEstado] = useState<EstadoGuardado>('inactivo')
   const [motivo, setMotivo] = useState<string | null>(null)
   const snapshot = JSON.stringify(valores)
-  const r = useRef({ valores, snapshot, guardar, borradorId, version: versionInicial, guardado: snapshot, conflicto: false, pendiente: false })
+  const r = useRef({ valores, snapshot, guardar, borradorId, version: versionInicial, guardado: snapshot, conflicto: false, pendiente: false, cerrado: false })
   Object.assign(r.current, { valores, snapshot, guardar, borradorId })
   const enVuelo = useRef<Promise<void> | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -61,14 +61,14 @@ export function useAutoguardado<T>({ borradorId, versionInicial, valores, guarda
 
   // Borrador nuevo: lo que hay en pantalla ya es lo que tiene el servidor.
   useEffect(() => {
-    Object.assign(r.current, { version: versionInicial, guardado: r.current.snapshot, conflicto: false, pendiente: false })
+    Object.assign(r.current, { version: versionInicial, guardado: r.current.snapshot, conflicto: false, pendiente: false, cerrado: false })
     setEstado('inactivo')
     setMotivo(null)
   }, [borradorId, versionInicial])
 
   useEffect(() => {
     clearTimeout(timer.current)
-    if (!borradorId || r.current.conflicto || snapshot === r.current.guardado) return
+    if (!borradorId || r.current.cerrado || r.current.conflicto || snapshot === r.current.guardado) return
     timer.current = setTimeout(() => void ejecutar(), debounceMs)
   }, [snapshot, borradorId, debounceMs, ejecutar])
 
@@ -77,12 +77,19 @@ export function useAutoguardado<T>({ borradorId, versionInicial, valores, guarda
     clearTimeout(timer.current)
     if (enVuelo.current) await enVuelo.current
     const s = r.current
-    if (s.borradorId && !s.conflicto && s.snapshot !== s.guardado) await ejecutar()
-    if (s.snapshot !== s.guardado) throw new Error('El borrador tiene cambios sin guardar. Revisá el aviso y probá de nuevo.')
+    if (s.borradorId && !s.conflicto && !s.cerrado && s.snapshot !== s.guardado) await ejecutar()
+    if (!s.cerrado && s.snapshot !== s.guardado) throw new Error('El borrador tiene cambios sin guardar. Revisá el aviso y probá de nuevo.')
     return r.current.version
   }, [ejecutar])
 
+  /** Cierra el autoguardado (la venta ya se confirmó): ni el timer ni el flush al desmontar vuelven a guardar. */
+  const cerrar = useCallback(() => {
+    clearTimeout(timer.current)
+    r.current.cerrado = true
+    r.current.pendiente = false
+  }, [])
+
   useEffect(() => () => { flush().catch(() => undefined) }, [flush])
 
-  return { estado, motivo, flush }
+  return { estado, motivo, flush, cerrar }
 }

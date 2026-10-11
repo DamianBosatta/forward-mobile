@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
@@ -37,6 +37,8 @@ export function useConfirmarVenta(d: Datos) {
   const qc = useQueryClient()
   const [clave] = useState(nuevaClaveIdempotencia)
   const [enviando, setEnviando] = useState(false)
+  // El estado no alcanza como guardia: dos toques antes del re-render leen el mismo `enviando`.
+  const enVuelo = useRef(false)
   const [error, setError] = useState<string | null>(null)
   const [pedirMotivo, setPedirMotivo] = useState(false)
   const sinStock = d.esPedido && d.lineas.some((l) => l.cantidad > l.producto.real)
@@ -65,14 +67,17 @@ export function useConfirmarVenta(d: Datos) {
       }
     }
     void qc.invalidateQueries({ queryKey: ventasKeys.all })
+    // La venta ya está guardada: vaciar el carrito no puede disparar un PUT con items=[] al borrador.
+    b.cerrar()
     d.alGuardar()
     router.replace(`/(tabs)/ventas/${r.ventaId}` as never)
     Alert.alert(titulo, mensaje)
   }
 
   async function confirmar(motivo?: string) {
-    if (enviando) return
+    if (enVuelo.current) return
     if (sinStock && !motivo) return setPedirMotivo(true)
+    enVuelo.current = true
     setEnviando(true)
     setError(null)
     try {
@@ -82,6 +87,7 @@ export function useConfirmarVenta(d: Datos) {
       if (d.esPedido && pideMotivo(e) && !motivo) setPedirMotivo(true)
       setError(mensajeDelServidor(e, 'No se pudo guardar la venta.'))
     } finally {
+      enVuelo.current = false
       setEnviando(false)
     }
   }

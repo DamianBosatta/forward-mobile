@@ -1,6 +1,6 @@
 import React from 'react'
 import { Alert } from 'react-native'
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -329,6 +329,41 @@ describe('confirmar', () => {
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/guardar-presupuesto', { ventaId: 'b1', version: 8 }))
     expect(altas()).toHaveLength(0)
     expect(mockReplace).toHaveBeenCalledWith('/(tabs)/ventas/b1')
+  })
+
+  it('dos toques en el mismo instante mandan un solo presupuesto', async () => {
+    mockTipo = 'Presupuesto'
+    await armar()
+    await waitFor(() => expect(sync()).toHaveTextContent('Guardado'), ESPERA)
+    const boton = screen.getByRole('button', { name: 'Guardar presupuesto' })
+    // Mismo tick: ningún re-render entre un toque y el otro.
+    act(() => { fireEvent.press(boton); fireEvent.press(boton) })
+    await waitFor(() => expect(mockReplace).toHaveBeenCalled())
+    expect(mockPost.mock.calls.filter(([u]) => u.endsWith('guardar-presupuesto'))).toHaveLength(1)
+    expect(mockReplace).toHaveBeenCalledTimes(1)
+  })
+
+  it('dos toques en el mismo instante mandan un solo pedido', async () => {
+    await armar()
+    const boton = screen.getByRole('button', { name: 'Confirmar pedido' })
+    // Mismo tick: ningún re-render entre un toque y el otro.
+    act(() => { fireEvent.press(boton); fireEvent.press(boton) })
+    await waitFor(() => expect(mockReplace).toHaveBeenCalled())
+    expect(altas()).toHaveLength(1)
+  })
+
+  it.each(['Presupuesto', 'Pedido'])('%s: tras confirmar no se manda ningún PUT al borrador (ni al desmontar ni por el debounce)', async (tipo) => {
+    mockTipo = tipo
+    await armar()
+    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
+    await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
+    const antes = mockPut.mock.calls.length
+    await userEvent.press(screen.getByRole('button', { name: tipo === 'Pedido' ? 'Confirmar pedido' : 'Guardar presupuesto' }))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalled())
+    await new Promise((r) => setTimeout(r, 1200))
+    screen.unmount()
+    await new Promise((r) => setTimeout(r, 50))
+    expect(mockPut.mock.calls).toHaveLength(antes)
   })
 
   it('la cesión viaja en el alta del pedido', async () => {
