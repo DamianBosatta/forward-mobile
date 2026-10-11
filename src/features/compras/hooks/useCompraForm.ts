@@ -15,6 +15,7 @@ import {
 import { api, useInfiniteProductos, useProveedores, useDepositos } from '@/libs/api-client'
 import type { SocioComercial, Deposito, Producto, CompraDetalle, ProductoDetailDto } from '@/libs/api-client'
 import { mensajeDelServidor } from '../lib/mensaje-error'
+import { leerNumero } from '@/src/utils/numero'
 
 export interface DetalleItem {
   productoId: string
@@ -22,6 +23,8 @@ export interface DetalleItem {
   imageUrl?: string
   /** null = sin costo: el servidor no tiene uno previo y el usuario todavía no lo cargó. */
   costoUnitario: number | null
+  /** Lo que el usuario tipeó en el costo (es-AR), para no comerle la coma o el punto mientras escribe. */
+  costoTexto?: string
   cantidad: number
 }
 
@@ -111,12 +114,16 @@ export function useCompraForm(editId?: string) {
   // Pre-fill Edit Mode: una sola vez por compra cargada (y por foco), para que un refetch
   // o una lista nueva de proveedores/depósitos no pise lo que el usuario está editando.
   const prefillKey = useRef<string | null>(null)
+  // La versión de la compra tal como estaba al cargar el formulario: la del caché en vivo puede
+  // venir de un refetch con el cambio de otro usuario, y mandarla pisaría ese cambio sin conflicto.
+  const versionCargada = useRef<number | undefined>(undefined)
   const relacionesKey = useRef<string | null>(null)
   const claveCompra = editId && compraEdit ? `${editId}:${focusKey}` : null
 
   useEffect(() => {
     if (!claveCompra || !compraEdit || prefillKey.current === claveCompra) return
     prefillKey.current = claveCompra
+    versionCargada.current = compraEdit.version
     setDetalles(compraEdit.detalles?.map((d: CompraDetalle) => ({
       productoId: d.productoId ?? '',
       nombre: d.nombreProducto ?? '—',
@@ -200,9 +207,9 @@ export function useCompraForm(editId?: string) {
   }, [])
 
   const updateCosto = useCallback((id: string, value: string) => {
-    const num = value.trim() === '' ? null : parseFloat(value)
-    if (num === null || (!isNaN(num) && num >= 0))
-      setDetalles(prev => prev.map(d => d.productoId === id ? { ...d, costoUnitario: num } : d))
+    // es-AR ("1.150,50"): parseFloat leía 1,15 y le comía la coma al tipear. Inválido = sin costo.
+    const num = value.trim() === '' ? null : leerNumero(value)
+    setDetalles(prev => prev.map(d => d.productoId === id ? { ...d, costoUnitario: num, costoTexto: value } : d))
   }, [])
 
   const removeDetalle = useCallback((id: string) => {
@@ -212,7 +219,7 @@ export function useCompraForm(editId?: string) {
   const onSubmit = useCallback(async () => {
     const payload = {
       id: editId,
-      version: compraEdit?.version,
+      version: versionCargada.current,
       proveedorId: proveedorSelected?.id ?? '',
       depositoId: depositoSelected?.id ?? '',
       gastosOperativos: gastos,
@@ -292,7 +299,7 @@ export function useCompraForm(editId?: string) {
       }
     }
     setSuccessModal(true)
-  }, [editId, compraEdit?.version, proveedorSelected, depositoSelected, gastos, descPct, detalles, estadoOrden, updateCompra, confirmarCompra, recibirCompra, createCompra, router])
+  }, [editId, proveedorSelected, depositoSelected, gastos, descPct, detalles, estadoOrden, updateCompra, confirmarCompra, recibirCompra, createCompra, router])
 
   // Toda línea necesita un costo cargado (el servidor exige > 0): sin eso no se confirma.
   const lineasSinCosto = detalles.filter(d => d.costoUnitario === null || d.costoUnitario <= 0).length

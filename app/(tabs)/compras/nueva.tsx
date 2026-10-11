@@ -45,6 +45,7 @@ import { ProveedorModal } from '@/features/compras/components/ProveedorModal'
 import { DepositoModal } from '@/features/compras/components/DepositoModal'
 import { CatalogModal } from '@/features/compras/components/CatalogModal'
 import { CompraNueva } from '@/features/compras/components/CompraNueva'
+import { mostrarNumero } from '@/src/utils/numero'
 
 const ESTADO_OPTIONS: { value: EstadoOrden; label: string; desc: string; Icon: any; color: string }[] = [
   { value: 'Presupuesto', label: 'Nota de Pedido', desc: 'No afecta stock', Icon: Clock, color: '#94a3b8' },
@@ -290,7 +291,7 @@ function EditarCompraScreen() {
                                  <Text style={{ color: colors.textMuted, fontWeight: '800', fontSize: 14, marginRight: 2 }}>$</Text>
                                  <TextInput 
                                    style={{ flex: 1, color: colors.text, fontWeight: '800', fontSize: 15, padding: 0 }}
-                                   keyboardType="decimal-pad" value={d.costoUnitario === null ? '' : String(d.costoUnitario)}
+                                   keyboardType="decimal-pad" value={d.costoTexto ?? (d.costoUnitario === null ? '' : mostrarNumero(d.costoUnitario))}
                                    placeholder="0,00" placeholderTextColor={colors.textDisabled} accessibilityLabel={`Costo unitario de ${d.nombre}`}
                                    onChangeText={v => updateCosto(d.productoId, v)} selectTextOnFocus
                                  />

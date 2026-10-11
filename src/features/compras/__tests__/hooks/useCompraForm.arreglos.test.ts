@@ -219,6 +219,30 @@ describe('edición y reintentos (JD11)', () => {
     )
   })
 
+  it('editar manda la versión capturada al cargar, no la de un refetch con el cambio de otro', async () => {
+    ;(useCompra as jest.Mock).mockReturnValue({ data: COMPRA, isLoading: false })
+    mockUpdate.mockResolvedValue({})
+    const { result, rerender } = render(COMPRA_ID)
+    await waitFor(() => expect(result.current.canSubmit).toBe(true))
+    ;(useCompra as jest.Mock).mockReturnValue({ data: { ...COMPRA, version: 9 }, isLoading: false })
+    rerender({})
+
+    await act(() => result.current.onSubmit())
+
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ version: 7 }) }))
+  })
+
+  it('el costo se lee en es-AR y no se le come el separador al tipear', async () => {
+    ;(useCompra as jest.Mock).mockReturnValue({ data: COMPRA, isLoading: false })
+    const { result } = render(COMPRA_ID)
+    await waitFor(() => expect(result.current.detalles).toHaveLength(1))
+
+    act(() => result.current.updateCosto(PROD_ID, '12.'))
+    expect(result.current.detalles[0]).toMatchObject({ costoTexto: '12.', costoUnitario: 12 })
+    act(() => result.current.updateCosto(PROD_ID, '1.150,50'))
+    expect(result.current.detalles[0]).toMatchObject({ costoTexto: '1.150,50', costoUnitario: 1150.5 })
+  })
+
   it('si la versión quedó vieja, muestra el mensaje del servidor y no muestra éxito', async () => {
     ;(useCompra as jest.Mock).mockReturnValue({ data: COMPRA, isLoading: false })
     mockUpdate.mockRejectedValue(errorDelServidor('La compra fue modificada por otro usuario.'))

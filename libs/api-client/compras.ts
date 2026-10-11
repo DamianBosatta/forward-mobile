@@ -164,7 +164,7 @@ export function useUpdateCompra() {
 export function useCancelarCompra() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, motivo = 'Cancelado desde app' }: { id: string; motivo?: string }) =>
+    mutationFn: ({ id, motivo }: { id: string; motivo: string }) =>
       api.delete<void>(`/api/v1/Compras/${id}/anular`, buildAnularCompraPayload(motivo)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: comprasKeys.all })
@@ -185,7 +185,9 @@ export function useConfirmarCompra() {
 export function useRecibirCompra() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.post<void>(`/api/v1/Compras/${id}/recibir`, {}),
+    /** `fechaFacturaProveedor` (yyyy-MM-dd) es obligatoria si la condición de pago es por días desde la factura. */
+    mutationFn: ({ id, fechaFacturaProveedor }: { id: string; fechaFacturaProveedor?: string }) =>
+      api.post<void>(`/api/v1/Compras/${id}/recibir`, { compraId: id, fechaFacturaProveedor: fechaFacturaProveedor ?? null }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: comprasKeys.all })
     },
