@@ -150,6 +150,24 @@ export function useCreateVenta() {
   })
 }
 
+/** Borrador con autoguardado (el de la web): Presupuesto sin líneas; el vendedor sale del token. */
+export const useIniciarBorradorVenta = () => useMutation({
+  mutationFn: (data: { clienteId: string; depositoId: string }) => api.post<VentaActionResponseDto>('/api/v1/Ventas/borradores', data),
+})
+
+/** Autoguardado del borrador: PUT /Ventas/{id} con la versión vigente; devuelve la nueva. */
+export function guardarBorradorVenta(id: string, version: number, data: Record<string, unknown>) {
+  return api.put<VentaActionResponseDto>(`/api/v1/Ventas/${id}`, { ...data, id, version })
+}
+
+export function useDescartarBorradorVenta() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.post<boolean>(`/api/v1/Ventas/${id}/descartar-borrador`),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ventasKeys.borradoresMios() }),
+  })
+}
+
 export function useEntregarVenta() {
   const queryClient = useQueryClient()
   return useMutation({

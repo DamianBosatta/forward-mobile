@@ -7,6 +7,7 @@ import { useResponsive } from '@/libs/useResponsive'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { safeHaptics } from '@/core/utils/haptics'
 import { puedeVerVentas } from './menuModules'
+import { useVentaNueva } from '@/features/ventas/lib/ventaNueva'
 import { BottomBar, Fab, type BottomBarItem } from '@/core/ui/fw'
 
 type Activa = 'inicio' | 'ventas' | 'compras'
@@ -25,6 +26,8 @@ function AccesosRapidos({ activa }: { activa: Activa }) {
   const venta = canDo('MOD_VENTAS', 'create')
   const compra = canDo('MOD_COMPRAS', 'create')
   const nuevaCompra = activa === 'compras'
+  // Con el switch de la venta nueva prendido, el "+" abre la venta nueva; si no, la de hoy.
+  const rutaVenta = useVentaNueva() ? '/(tabs)/ventas/nueva-v2' : '/(tabs)/ventas/nueva'
 
   const ir = (ruta: string) => () => {
     safeHaptics.impact('light')
@@ -46,7 +49,7 @@ function AccesosRapidos({ activa }: { activa: Activa }) {
         (nuevaCompra ? compra : venta) ? (
           <Fab
             accessibilityLabel={nuevaCompra ? 'Nueva compra' : 'Nueva venta'}
-            onPress={ir(nuevaCompra ? '/(tabs)/compras/nueva' : '/(tabs)/ventas/nueva')}
+            onPress={ir(nuevaCompra ? '/(tabs)/compras/nueva' : rutaVenta)}
             style={{ position: 'relative', right: 0, bottom: 0 }} />
         ) : undefined
       }

@@ -7,12 +7,15 @@ import React from 'react'
 import { Text } from 'react-native'
 import { render, screen, userEvent } from '@testing-library/react-native'
 import { ConAccesosRapidos } from '../AccesosRapidos'
+import { useAuthStore } from '@/features/auth/store/auth.store'
+import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 
 const mockPush = jest.fn()
 const mockDispatch = jest.fn()
 const mockCanDo = jest.fn()
 const mockDims = jest.fn()
 
+jest.mock('expo-secure-store', () => ({ setItemAsync: jest.fn(), getItemAsync: jest.fn() }))
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ dispatch: mockDispatch }),
@@ -148,5 +151,16 @@ describe('ConAccesosRapidos', () => {
     expect(screen.queryByRole('button', { name: 'Nueva compra' })).toBeNull()
     await user.press(screen.getByRole('button', { name: 'Nueva venta' }))
     expect(mockPush.mock.calls.map(([r]) => r)).toEqual(['/(tabs)/ventas/nueva'])
+  })
+
+  it.each([[false, '/(tabs)/ventas/nueva'], [true, '/(tabs)/ventas/nueva-v2']])('con el switch de la venta nueva en %s, el "+" del administrador lleva a %s', async (activa, ruta) => {
+    conAncho(390)
+    conPermisos(...VENDEDOR_Y_COMPRADOR)
+    useAuthStore.setState({ user: { id: 'u', username: 'u', roles: ['Administrador'] as never, permissions: [] } })
+    useVentaNuevaStore.setState({ activa })
+    pantalla('ventas')
+
+    await userEvent.press(screen.getByRole('button', { name: 'Nueva venta' }))
+    expect(mockPush.mock.calls.map(([r]) => r)).toEqual([ruta])
   })
 })

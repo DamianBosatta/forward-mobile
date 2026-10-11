@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, ScrollView, SectionList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
+import { Plus } from 'lucide-react-native'
+import { usePermissions } from '@/core/auth/RequirePermission'
 import {
   DocumentCard, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, useMenuLeading,
   type SegmentedOption,
@@ -50,7 +52,8 @@ export function ListaVentasNueva({ detalle }: Props) {
   const c = useColors()
   const router = useRouter()
   const leading = useMenuLeading()
-  const { isTabletLandscape } = useResponsive()
+  const { isTablet, isTabletLandscape } = useResponsive()
+  const { canDo } = usePermissions()
   const [elegida, setElegida] = useState<string | null>(null)
   const l = useVentasListaNueva()
   const q = l.ventasQuery
@@ -147,6 +150,10 @@ export function ListaVentasNueva({ detalle }: Props) {
       <TopBar
         title="Ventas"
         leading={leading}
+        // En tablet no hay barra inferior con el "+": la venta nueva se abre desde acá.
+        actions={isTablet && canDo('MOD_VENTAS', 'create')
+          ? [{ icon: Plus, accessibilityLabel: 'Nueva venta', onPress: () => router.push('/(tabs)/ventas/nueva-v2' as never) }]
+          : []}
         tabs={PESTANAS.map((p) => ({ label: p.label, selected: p.key === l.pestana, onPress: () => { l.setPestana(p.key); setElegida(null) } }))}
       />
       <TwoPane
