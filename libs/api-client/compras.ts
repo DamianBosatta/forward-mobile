@@ -191,3 +191,34 @@ export function useRecibirCompra() {
     },
   })
 }
+
+// ── Borrador con autoguardado (Bloque 9A, PR 3.2) ──────────────────────────────
+
+/** CompraActionResponseDto: lo que devuelven crear borrador, editar y guardar la nota. */
+export interface CompraActionResponse {
+  compraId: string
+  version: number
+  message: string
+}
+
+/** Cuerpo de PUT /Compras/{id} (UpdateCompraCommand). */
+export interface GuardarCompraBody {
+  id: string
+  version: number
+  proveedorId: string
+  depositoId: string
+  gastosOperativos: number
+  descuentoPorcentaje: number
+  detalles: { productoId: string; cantidad: number; costoUnitario: number; monedaCosto: string; unidadCompra: string }[]
+}
+
+/** Llamadas sueltas del borrador: el autoguardado las encadena con la versión de cada respuesta. */
+export const borradorCompraApi = {
+  iniciar: (proveedorId: string, depositoId: string) =>
+    api.post<CompraActionResponse>('/api/v1/Compras/borradores', { proveedorId, depositoId }),
+  guardar: (body: GuardarCompraBody) => api.put<CompraActionResponse>(`/api/v1/Compras/${body.id}`, body),
+  guardarNota: (id: string, version: number) =>
+    api.post<CompraActionResponse>(`/api/v1/Compras/${id}/guardar-nota-pedido`, { compraId: id, version }),
+  confirmar: (id: string) => api.post<void>(`/api/v1/Compras/${id}/confirmar`, { compraId: id }),
+  descartar: (id: string) => api.post<boolean>(`/api/v1/Compras/${id}/descartar-borrador`, {}),
+}
