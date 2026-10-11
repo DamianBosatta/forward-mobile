@@ -86,6 +86,13 @@ describe('postConSobre: data y el sobre completo en una sola llamada', () => {
     expect(await api.postConSobre('/x', {})).toEqual({ data: undefined, sobre: null })
   })
 
+  it('un sobre succeeded:false con HTTP 200 lanza ApiError con el código y los datos del sobre', async () => {
+    responder(200, SOBRE_409)
+    const e = await fallo(api.postConSobre('/api/v1/Ventas', {}))
+    expect(e).toBeInstanceOf(ApiError)
+    expect(e).toMatchObject({ status: 409, codigo: 'ClaveIdempotenciaConOtroCuerpo', data: { ventaId: 'v9', version: 3, message: 'x' } })
+  })
+
   it('un sobre de error sigue lanzando ApiError con su motivo', async () => {
     responder(409, { statusCode: 409, succeeded: false, message: 'Conflicto de concurrencia al actualizar el saldo.', errors: [] })
     const e = await fallo(api.postConSobre('/api/v1/Finanzas/pagos/multilinea', {}))
