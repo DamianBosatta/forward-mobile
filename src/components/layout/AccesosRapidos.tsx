@@ -6,6 +6,7 @@ import { House, Menu, ShoppingBag, Tag } from 'lucide-react-native'
 import { useResponsive } from '@/libs/useResponsive'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { safeHaptics } from '@/core/utils/haptics'
+import { puedeVerVentas } from './menuModules'
 import { BottomBar, Fab, type BottomBarItem } from '@/core/ui/fw'
 
 type Activa = 'inicio' | 'ventas' | 'compras'
@@ -13,14 +14,17 @@ type Activa = 'inicio' | 'ventas' | 'compras'
 /**
  * Barra inferior de accesos rápidos (lámina Main): Inicio, Ventas, "+" para una
  * venta nueva, Compras y Menú. Solo en teléfono: en tablet el menú está fijo.
- * Ventas y el "+" piden crear ventas (como el menú: el chofer las lee pero no
- * las crea); Compras pide leer compras.
+ * Ventas pide lo mismo que el menú (leer ventas o pedidos, sin el chofer); el "+"
+ * es contextual: en Compras crea una compra, en el resto una venta; Compras pide
+ * leer compras.
  */
 function AccesosRapidos({ activa }: { activa: Activa }) {
   const router = useRouter()
   const navigation = useNavigation()
   const { canDo } = usePermissions()
   const venta = canDo('MOD_VENTAS', 'create')
+  const compra = canDo('MOD_COMPRAS', 'create')
+  const nuevaCompra = activa === 'compras'
 
   const ir = (ruta: string) => () => {
     safeHaptics.impact('light')
@@ -29,7 +33,7 @@ function AccesosRapidos({ activa }: { activa: Activa }) {
 
   const items: BottomBarItem[] = [
     { key: 'inicio', label: 'Inicio', icon: House, onPress: ir('/(tabs)/') },
-    ...(venta ? [{ key: 'ventas', label: 'Ventas', icon: Tag, onPress: ir('/(tabs)/ventas') }] : []),
+    ...(puedeVerVentas(canDo) ? [{ key: 'ventas', label: 'Ventas', icon: Tag, onPress: ir('/(tabs)/ventas') }] : []),
     ...(canDo('MOD_COMPRAS', 'read') ? [{ key: 'compras', label: 'Compras', icon: ShoppingBag, onPress: ir('/(tabs)/compras') }] : []),
     { key: 'menu', label: 'Menú', icon: Menu, onPress: () => navigation.dispatch(DrawerActions.openDrawer()) },
   ]
@@ -39,8 +43,11 @@ function AccesosRapidos({ activa }: { activa: Activa }) {
       items={items}
       activeKey={activa}
       center={
-        venta ? (
-          <Fab accessibilityLabel="Nueva venta" onPress={ir('/(tabs)/ventas/nueva')} style={{ position: 'relative', right: 0, bottom: 0 }} />
+        (nuevaCompra ? compra : venta) ? (
+          <Fab
+            accessibilityLabel={nuevaCompra ? 'Nueva compra' : 'Nueva venta'}
+            onPress={ir(nuevaCompra ? '/(tabs)/compras/nueva' : '/(tabs)/ventas/nueva')}
+            style={{ position: 'relative', right: 0, bottom: 0 }} />
         ) : undefined
       }
     />

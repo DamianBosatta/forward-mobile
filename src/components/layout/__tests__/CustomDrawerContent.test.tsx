@@ -127,6 +127,13 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     expect(screen.queryByText('Logística')).toBeNull()
   })
 
+  it('un vendedor de solo lectura ve el módulo de ventas', () => {
+    conPermisos('MOD_VENTAS:read')
+    render(<CustomDrawerContent {...props()} />)
+
+    expect(visibles()).toEqual(['Inicio', 'Ventas', 'Mi cuenta y contraseña'])
+  })
+
   it('un chofer (lee ventas pero no las crea) ve su consola y no el módulo de ventas', () => {
     conPermisos('MOD_VENTAS:read', 'MOD_VIAJES:read')
     render(<CustomDrawerContent {...props()} />)

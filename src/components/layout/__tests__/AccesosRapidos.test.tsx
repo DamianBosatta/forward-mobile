@@ -101,4 +101,52 @@ describe('ConAccesosRapidos', () => {
       expect(screen.queryByRole('button', { name: nombre })).toBeNull()
     }
   })
+
+  it('un vendedor de solo lectura ve Ventas en la barra, pero no el "+"', () => {
+    conAncho(390)
+    conPermisos('MOD_VENTAS:read')
+    pantalla()
+
+    expect(screen.getByRole('button', { name: 'Ventas' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
+  })
+
+  it('con solo lectura de pedidos también ve Ventas, como la pantalla', () => {
+    conAncho(390)
+    conPermisos('MOD_PEDIDOS:read')
+    pantalla()
+
+    expect(screen.getByRole('button', { name: 'Ventas' })).toBeTruthy()
+  })
+
+  it('en Compras el "+" es uno solo y crea una compra', async () => {
+    conAncho(390)
+    conPermisos(...VENDEDOR_Y_COMPRADOR, 'MOD_COMPRAS:create')
+    const user = userEvent.setup()
+    pantalla('compras')
+
+    expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
+    await user.press(screen.getByRole('button', { name: 'Nueva compra' }))
+    expect(mockPush.mock.calls.map(([r]) => r)).toEqual(['/(tabs)/compras/nueva'])
+  })
+
+  it('en Compras sin permiso para crear compras no hay "+"', () => {
+    conAncho(390)
+    conPermisos(...VENDEDOR_Y_COMPRADOR)
+    pantalla('compras')
+
+    expect(screen.queryByRole('button', { name: 'Nueva compra' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
+  })
+
+  it('en Ventas el "+" sigue creando una venta', async () => {
+    conAncho(390)
+    conPermisos(...VENDEDOR_Y_COMPRADOR, 'MOD_COMPRAS:create')
+    const user = userEvent.setup()
+    pantalla('ventas')
+
+    expect(screen.queryByRole('button', { name: 'Nueva compra' })).toBeNull()
+    await user.press(screen.getByRole('button', { name: 'Nueva venta' }))
+    expect(mockPush.mock.calls.map(([r]) => r)).toEqual(['/(tabs)/ventas/nueva'])
+  })
 })

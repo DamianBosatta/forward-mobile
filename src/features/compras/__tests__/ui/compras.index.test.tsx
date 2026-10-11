@@ -9,11 +9,23 @@ jest.mock('expo-router', () => ({
 }))
 
 jest.mock('@react-navigation/native', () => ({
-  DrawerActions: { openDrawer: jest.fn() }
+  DrawerActions: { openDrawer: jest.fn() },
+  useNavigation: () => ({ dispatch: jest.fn() }),
 }))
 
 jest.mock('../../hooks/useComprasList', () => ({
   useComprasList: jest.fn()
+}))
+
+const mockDims = jest.fn()
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: () => mockDims(),
+}))
+
+jest.mock('@/core/auth/RequirePermission', () => ({
+  RequirePermission: ({ children }: any) => <>{children}</>,
+  usePermissions: () => ({ canDo: () => true }),
 }))
 
 jest.mock('moti', () => ({
@@ -56,9 +68,12 @@ jest.mock('@/core/ui/DataList', () => {
   }
 })
 
+const conAncho = (width: number) => mockDims.mockReturnValue({ width, height: 800, scale: 2, fontScale: 1 })
+
 describe('ComprasListScreen UI', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    conAncho(390)
   })
 
   it('debe renderizar la lista y las metricas', () => {
@@ -123,5 +138,24 @@ describe('ComprasListScreen UI', () => {
     const { getByText } = render(<ComprasListScreen />)
 
     expect(getByText('No se encontraron órdenes de compra.')).toBeTruthy()
+  })
+
+  it.each([
+    [390, 'teléfono', 0],
+    [1194, 'tablet', 1],
+  ])('en %i px (%s) hay un solo "+" para crear una compra (botón propio: %i)', (ancho, _nombre, propios) => {
+    conAncho(ancho)
+    ;(useComprasList as jest.Mock).mockReturnValue({
+      searchTerm: '', setSearchTerm: jest.fn(), filter: 'Todas', setFilter: jest.fn(),
+      pickerOpen: false, setPickerOpen: jest.fn(), selected: { year: 2023, month: 10 }, setSelected: jest.fn(),
+      isCurrentMonth: true, now: new Date(), isLoading: false, filteredCompras: [], totalMonto: 0, pendCount: 0,
+      fetchNextPage: jest.fn(), hasNextPage: false, isFetchingNextPage: false, comprasByMonth: [],
+    })
+
+    const { getAllByLabelText, queryByLabelText, queryAllByTestId } = render(<ComprasListScreen />)
+
+    expect(queryAllByTestId('fab-nueva-compra')).toHaveLength(propios)
+    expect(getAllByLabelText('Nueva compra')).toHaveLength(1)
+    expect(queryByLabelText('Nueva venta')).toBeNull()
   })
 })

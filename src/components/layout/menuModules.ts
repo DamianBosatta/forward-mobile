@@ -28,12 +28,22 @@ export interface MenuItem {
   /** Acción que tiene que tener sobre el módulo (por defecto 'read'). */
   appAction?: Accion
   requiredRoles?: AppRole[]
+  /** Condición propia que se suma a las anteriores (p. ej. varios módulos o un corte por perfil). */
+  visibleSi?: (canDo: Acceso['canDo']) => boolean
 }
 
 export interface MenuGroup {
   /** Sin título: los ítems van sueltos, como en la lámina Menu. */
   title?: string
   items: MenuItem[]
+}
+
+type CanDo = (module: AppModule, action: Accion) => boolean
+
+/** Entra a Ventas como la pantalla (leer ventas o pedidos); el chofer (lee viajes y no crea ventas) queda afuera. */
+export function puedeVerVentas(canDo: CanDo): boolean {
+  const chofer = canDo('MOD_VIAJES', 'read') && !canDo('MOD_VENTAS', 'create')
+  return !chofer && (canDo('MOD_VENTAS', 'read') || canDo('MOD_PEDIDOS', 'read'))
 }
 
 /**
@@ -45,8 +55,8 @@ export const MENU: MenuGroup[] = [
   {
     items: [
       { id: 'inicio', label: 'Inicio', icon: House, href: '/(tabs)/', routeName: 'index' },
-      // Con CREATE, no read: el chofer lee ventas (el pedido de una parada) y no debe ver el módulo.
-      { id: 'ventas', label: 'Ventas', icon: Tag, href: '/(tabs)/ventas', routeName: 'ventas/index', appModule: 'MOD_VENTAS', appAction: 'create' },
+      // Mismo criterio que la pantalla (leer ventas o pedidos), menos el chofer: lee ventas (el pedido de una parada) y no debe ver el módulo.
+      { id: 'ventas', label: 'Ventas', icon: Tag, href: '/(tabs)/ventas', routeName: 'ventas/index', visibleSi: puedeVerVentas },
       { id: 'compras', label: 'Compras', icon: ShoppingBag, href: '/(tabs)/compras', routeName: 'compras/index', appModule: 'MOD_COMPRAS' },
       { id: 'clientes', label: 'Clientes', icon: CircleUser, href: '/(tabs)/socios', routeName: 'socios/index', appModule: 'MOD_CLIENTES' },
       { id: 'catalogo', label: 'Catálogo y stock', hint: 'Consulta', icon: BookOpen, href: '/(tabs)/inventario', routeName: 'inventario/index', appModule: 'MOD_STOCK' },
@@ -82,7 +92,8 @@ interface Acceso {
 export function menuVisible(menu: MenuGroup[], { canDo, roles }: Acceso): MenuGroup[] {
   const puede = (it: MenuItem) =>
     (!it.requiredRoles || it.requiredRoles.some((r) => roles.includes(r))) &&
-    (!it.appModule || canDo(it.appModule, it.appAction ?? 'read'))
+    (!it.appModule || canDo(it.appModule, it.appAction ?? 'read')) &&
+    (!it.visibleSi || it.visibleSi(canDo))
   return menu
     .map((g) => ({ ...g, items: g.items.filter(puede) }))
     .filter((g) => g.items.length > 0)

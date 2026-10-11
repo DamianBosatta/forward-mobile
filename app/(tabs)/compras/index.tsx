@@ -30,6 +30,7 @@ import {
   X
 } from 'lucide-react-native'
 import { ForwardLogo, TopHeaderActions, RequirePermission, GlassCard, KpiStatRow } from '@/core/ui'
+import { useResponsive } from '@/libs/useResponsive'
 import { useColors, useIsDark, BRAND, tokens } from '@/libs/theme'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BlurView } from 'expo-blur'
@@ -234,6 +235,7 @@ function ComprasListScreen() {
   const colors = useColors()
   const isDark = useIsDark()
   const insets = useSafeAreaInsets()
+  const { isTablet } = useResponsive()
   const router = useRouter()
 
   const {
@@ -357,17 +359,21 @@ function ComprasListScreen() {
         />
       </View>
 
-      <RequirePermission module="MOD_COMPRAS" action="create">
+      {/* En teléfono la compra nueva sale del "+" de la barra de accesos rápidos. */}
+      {isTablet && <RequirePermission module="MOD_COMPRAS" action="create">
         <MotiView from={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ position: 'absolute', bottom: insets.bottom + 20, right: 20, zIndex: 10 }}>
           <TouchableOpacity
             activeOpacity={0.8}
+            testID="fab-nueva-compra"
+            accessibilityRole="button"
+            accessibilityLabel="Nueva compra"
             onPress={() => router.push('/(tabs)/compras/nueva')}
             style={{ width: 64, height: 64, borderRadius: 22, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', elevation: 10 }}
           >
             <Plus size={32} color="#fff" strokeWidth={3} />
           </TouchableOpacity>
         </MotiView>
-      </RequirePermission>
+      </RequirePermission>}
 
       <MonthPicker visible={pickerOpen} selected={selected} onSelect={setSelected} onClose={() => setPickerOpen(false)} />
     </View>
