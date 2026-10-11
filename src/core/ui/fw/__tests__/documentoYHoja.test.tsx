@@ -46,6 +46,19 @@ describe.each(['light', 'dark'] as const)('tema %s', (modo) => {
     )
     expect(flat(screen.getByLabelText('Hoja').props.style).backgroundColor).toBe(c.surface)
   })
+
+  it('el velo del BottomSheet usa el color veil del tema y es translúcido', () => {
+    render(
+      <BottomSheet visible onClose={() => {}} accessibilityLabel="Hoja">
+        <Text>Contenido</Text>
+      </BottomSheet>,
+    )
+    const velo = flat(screen.getByLabelText('Cerrar', { includeHiddenElements: true }).props.style).backgroundColor
+    expect(velo).toBe(c.veil)
+    const alfa = /^rgba\(\s*\d+,\s*\d+,\s*\d+,\s*([\d.]+)\s*\)$/.exec(velo)
+    expect(alfa).not.toBeNull()
+    expect(Number(alfa![1])).toBeLessThan(1)
+  })
 })
 
 describe('DocumentCard', () => {

@@ -13,7 +13,7 @@ interface BottomSheetProps {
 }
 
 /**
- * Hoja inferior de la lámina F4 (radio 24 arriba, manija, velo texto-secundario).
+ * Hoja inferior de la lámina F4 (radio 24 arriba, manija, velo translúcido, token veil).
  * En tablet (≥ 600 px, plan §8) la misma hoja se muestra como diálogo centrado.
  * Es un Modal y no @gorhom/bottom-sheet: el repo monta su proveedor pero ninguna
  * pantalla lo usa, y el Modal resuelve teléfono y tablet con un solo componente.
@@ -43,7 +43,7 @@ export function BottomSheet({ visible, onClose, accessibilityLabel, children }: 
           accessibilityRole="button"
           accessibilityLabel="Cerrar"
           onPress={onClose}
-          style={[StyleSheet.absoluteFill, { backgroundColor: c.textSecondary }]}
+          style={[StyleSheet.absoluteFill, { backgroundColor: c.veil }]}
         />
         <View
           role="dialog"

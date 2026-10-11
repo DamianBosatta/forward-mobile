@@ -51,6 +51,7 @@ export interface ForwardColors {
   onTopBar: string // texto secundario en la barra
   onTopBarStrong: string // título e íconos de la barra (lámina F4)
   topBarBorder: string
+  veil: string // velo de la hoja inferior. DECISIÓN PENDIENTE DEL DUEÑO: el plan §7.2 solo dice texto-secundario
   chip: Record<ChipEstado, ChipColors>
   // ── Claves legadas (ver mapeo arriba) ──
   bg: string
@@ -134,6 +135,7 @@ const LIGHT_COLORS: ForwardColors = {
   onTopBar: '#9DAFAB',
   onTopBarStrong: '#FFFFFF',
   topBarBorder: '#0E1514',
+  veil: 'rgba(85, 109, 104, 0.85)', // texto-secundario #556D68 al 85 %
   chip: {
     confirmado: { bg: '#E0F8F3', text: '#0A7662' },
     pendiente: { bg: '#F0F0F0', text: '#556D68' },
@@ -168,6 +170,7 @@ const DARK_COLORS: ForwardColors = {
   onTopBar: '#9DAFAB',
   onTopBarStrong: '#EDF2F1',
   topBarBorder: '#273432',
+  veil: 'rgba(8, 13, 12, 0.80)', // fondo oscuro #080D0C al 80 %
   chip: {
     confirmado: { bg: '#0B3B32', text: '#00E6BB' },
     pendiente: { bg: '#151E1C', text: '#9DAFAB' },
