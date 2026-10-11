@@ -39,6 +39,7 @@ function pares(c: ForwardColors): Par[] {
   lista.push(['onPrimary sobre primary', c.onPrimary, c.primary])
   lista.push(['onPrimary sobre primaryHover', c.onPrimary, c.primaryHover])
   lista.push(['onTopBar sobre topBar', c.onTopBar, c.topBar])
+  lista.push(['onTopBarStrong sobre topBar', c.onTopBarStrong, c.topBar])
   lista.push(['onDangerStrong sobre dangerStrong', c.onDangerStrong, c.dangerStrong])
   lista.push(['blanco sobre dangerStrong', '#FFFFFF', c.dangerStrong])
   for (const [estado, chip] of Object.entries(c.chip ?? {})) {

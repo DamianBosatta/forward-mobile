@@ -48,7 +48,8 @@ export interface ForwardColors {
   dangerStrong: string // botón de peligro
   onDangerStrong: string
   topBar: string // barra superior
-  onTopBar: string
+  onTopBar: string // texto secundario en la barra
+  onTopBarStrong: string // título e íconos de la barra (lámina F4)
   topBarBorder: string
   chip: Record<ChipEstado, ChipColors>
   // ── Claves legadas (ver mapeo arriba) ──
@@ -131,6 +132,7 @@ const LIGHT_COLORS: ForwardColors = {
   onDangerStrong: '#FFFFFF',
   topBar: '#0E1514',
   onTopBar: '#9DAFAB',
+  onTopBarStrong: '#FFFFFF',
   topBarBorder: '#0E1514',
   chip: {
     confirmado: { bg: '#E0F8F3', text: '#0A7662' },
@@ -164,6 +166,7 @@ const DARK_COLORS: ForwardColors = {
   onDangerStrong: '#FFFFFF',
   topBar: '#080D0C',
   onTopBar: '#9DAFAB',
+  onTopBarStrong: '#EDF2F1',
   topBarBorder: '#273432',
   chip: {
     confirmado: { bg: '#0B3B32', text: '#00E6BB' },
