@@ -16,6 +16,8 @@ import type { VentaCargada } from '../lib/hidratar'
 export function useCabeceraVenta(tipo: TipoDocumento) {
   const [metodoEntrega, setMetodoEntrega] = useState<MetodoEntregaValue>(METODO_ENTREGA.Logistica)
   const [fechaElegida, setFecha] = useState<string | null>(null)
+  // Al editar una venta sin fecha guardada no se propone ninguna: queda vacía hasta que el vendedor elija.
+  const [proponer, setProponer] = useState(true)
   const [fleteTexto, setFleteTexto] = useState('')
   const [observaciones, setObservaciones] = useState('')
   const [cesionTexto, setCesionTexto] = useState('')
@@ -38,12 +40,13 @@ export function useCabeceraVenta(tipo: TipoDocumento) {
 
   const cabecera: Cabecera = {
     metodoEntrega,
-    fecha: fechaElegida ?? proximoHabil(tira),
+    fecha: fechaElegida ?? (proponer ? proximoHabil(tira) : null),
     flete: metodoEntrega === METODO_ENTREGA.Logistica && fleteLeido !== null ? fleteLeido : 0,
     observaciones,
   }
-  /** Carga la cabecera de una venta del servidor (retomar un borrador). */
-  const hidratar = (h: VentaCargada['cabecera']) => {
+  /** Carga la cabecera de una venta del servidor; sin fecha, `proponerFecha` decide si se propone el próximo hábil. */
+  const hidratar = (h: VentaCargada['cabecera'], proponerFecha = true) => {
+    setProponer(proponerFecha)
     setMetodoEntrega(h.metodoEntrega)
     setFecha(h.fecha)
     setFleteTexto(h.flete > 0 ? mostrarNumero(h.flete) : '')

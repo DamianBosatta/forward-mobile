@@ -39,6 +39,7 @@ export function CabeceraVenta({ clienteId, rotuloCliente, cab }: Props) {
       {metodoEntrega !== METODO_ENTREGA.RetiroEnLocal ? (
         <View style={{ gap: space[2] }}>
           {titulo('Fecha de entrega')}
+          {fecha ? null : <Text style={secundario}>Sin fecha: elegí el día de entrega.</Text>}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space[2] }}>
             {cab.tira.map((d) => {
               const sel = d.dia === fecha

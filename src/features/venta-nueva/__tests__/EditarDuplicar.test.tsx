@@ -124,6 +124,25 @@ describe('editar y duplicar (PR 2.9b)', () => {
     expect(mockReplace).not.toHaveBeenCalled()
   })
 
+  it('editar una venta de logística sin fecha guardada no propone ni manda una fecha que no se eligió', async () => {
+    const sinFecha = { ...venta, venta: cabecera({ fechaEntrega: null }) }
+    mockGet.mockImplementation((url: string) => {
+      if (url === '/api/v1/Ventas/v9') return Promise.resolve(sinFecha)
+      if (url === '/api/v1/socios-comerciales/c7') return Promise.resolve(socio)
+      if (url.startsWith('/api/v1/Productos/catalogo-stock')) return Promise.resolve({ items: [pala], hasNextPage: false })
+      return Promise.resolve(undefined)
+    })
+    abrir({ modo: 'editar', ventaId: 'v9' })
+    await userEvent.press(await screen.findByRole('tab', { name: 'Cabecera' }))
+    expect(screen.getByText('Sin fecha: elegí el día de entrega.')).toBeTruthy()
+    const dias = screen.getAllByRole('radio', { name: /^(dom|lun|mar|mié|jue|vie|sáb) \d+/ })
+    expect(dias.length).toBeGreaterThan(0)
+    expect(dias.some((r) => r.props.accessibilityState?.selected)).toBe(false)
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1))
+    expect(mockPut.mock.calls[0][1]).not.toHaveProperty('fechaEntrega')
+  })
+
   it('si el catálogo de hoy no llega, no hidrata con lo guardado: muestra el error y Reintentar', async () => {
     let catalogoFalla = true
     mockGet.mockImplementation((url: string) => {

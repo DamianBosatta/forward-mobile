@@ -83,11 +83,11 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
   const [abierta, setAbierta] = useState(false)
   const cargada = useVentaCargada(abrir?.ventaId, !abierta)
   const [aDuplicar, setADuplicar] = useState<VentaCargada | null>(null)
-  const aplicar = (d: VentaCargada, cabecera = d.cabecera) => {
+  const aplicar = (d: VentaCargada, cabecera = d.cabecera, proponerFecha = true) => {
     useCarritoVenta.setState({ lineas: d.lineas })
     setDescuentoTexto(mostrarNumero(d.descuentoGeneral))
     setDescuentoValido(d.descuentoGeneral)
-    cab.hidratar(cabecera)
+    cab.hidratar(cabecera, proponerFecha)
   }
   useEffect(() => {
     const d = cargada.datos
@@ -99,7 +99,8 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
       setTipo(abrir.tipo)
       b.retomar(abrir.ventaId, d.version)
     } else if (abrir.modo === 'editar') {
-      aplicar(d)
+      // Una venta guardada sin fecha no recibe una que el vendedor no eligió.
+      aplicar(d, d.cabecera, false)
       setTipo(d.tipo)
       setEdicion({ ventaId: abrir.ventaId, version: d.version, codigo: d.codigo })
     } else {
