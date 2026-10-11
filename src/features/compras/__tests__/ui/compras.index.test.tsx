@@ -77,7 +77,6 @@ describe('ComprasListScreen UI', () => {
       filteredCompras: [
         { id: '1', razonSocialProveedor: 'Proveedor A', estado: '1', totalAmount: 1500, fecha: '2023-11-10T10:00:00Z' }
       ],
-      totalMonto: 1500,
       pendCount: 1,
       totalCount: 137,
       contador: 'Mostrando 40 de 137',
@@ -114,7 +113,6 @@ describe('ComprasListScreen UI', () => {
       now: new Date(),
       isLoading: false,
       filteredCompras: [],
-      totalMonto: 0,
       pendCount: 0,
       fetchNextPage: jest.fn(),
       hasNextPage: false,

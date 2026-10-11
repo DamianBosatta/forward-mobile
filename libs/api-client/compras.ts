@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import { buildAnularCompraPayload } from './anular-compra'
 import type { Compra, CompraDtoList, CompraDto, PagedResult, CreateCompraRequest } from './types'
@@ -43,6 +43,15 @@ export const comprasKeys = {
   detail: (id: string) => [...comprasKeys.details(), id] as const,
 }
 
+/**
+ * Conserva los datos previos solo si cambió la búsqueda dentro del mismo rango de fechas;
+ * al cambiar de mes se ve la carga, no las filas y totales del mes anterior.
+ */
+function mismoRango(a: unknown, b: ComprasFiltroParams) {
+  const prev = a as ComprasFiltroParams | undefined
+  return !!prev && prev.fechaDesde === b.fechaDesde && prev.fechaHasta === b.fechaHasta
+}
+
 // ── Queries ──────────────────────────────────────────────────────────────────
 
 export function useCompras(params: { pageNumber?: number; pageSize?: number } = {}) {
@@ -73,7 +82,8 @@ export function useInfiniteCompras(params: ComprasListParams = {}) {
       return undefined
     },
     staleTime: 30_000,
-    placeholderData: keepPreviousData,
+    placeholderData: (prev, prevQuery) =>
+      mismoRango(prevQuery?.queryKey[2], params) ? prev : undefined,
   })
 }
 
@@ -86,7 +96,8 @@ export function useComprasResumen(params: ComprasFiltroParams = {}) {
     queryKey: comprasKeys.resumen(params),
     queryFn: () => api.get<ComprasResumenDto>(`/api/v1/Compras/resumen?${filtroQuery(params)}`),
     staleTime: 30_000,
-    placeholderData: keepPreviousData,
+    placeholderData: (prev, prevQuery) =>
+      mismoRango(prevQuery?.queryKey[2], params) ? prev : undefined,
   })
 }
 

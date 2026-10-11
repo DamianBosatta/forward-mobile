@@ -243,7 +243,7 @@ export default function ComprasListScreen() {
     isCurrentMonth, now,
     isLoading, isRefetching, refetch,
     filteredCompras,
-    totalMonto, pendCount, totalCount, contador,
+    pendCount, totalCount, contador,
     fetchNextPage, hasNextPage, isFetchingNextPage
   } = useComprasList()
 
@@ -302,7 +302,7 @@ export default function ComprasListScreen() {
           ))}
         </ScrollView>
     </View>
-  ), [selected, isCurrentMonth, colors, filter, totalMonto, pendCount, totalCount, contador])
+  ), [selected, isCurrentMonth, colors, filter, pendCount, totalCount, contador])
 
   return (
     <RequirePermission module="MOD_COMPRAS" action="read" mode="screen">

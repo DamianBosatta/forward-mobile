@@ -48,7 +48,6 @@ describe('useComprasList', () => {
 
     expect(result.current.contador).toBe('Mostrando 2 de 137')
     expect(result.current.totalCount).toBe(137)
-    expect(result.current.totalMonto).toBe(98765)
     expect(result.current.pendCount).toBe(7)
   })
 
@@ -56,7 +55,6 @@ describe('useComprasList', () => {
     ;(useComprasResumen as jest.Mock).mockReturnValue({ data: undefined })
     const { result } = renderHook(() => useComprasList())
 
-    expect(result.current.totalMonto).toBeUndefined()
     expect(result.current.pendCount).toBeUndefined()
   })
 

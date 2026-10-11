@@ -60,7 +60,6 @@ export function useComprasList() {
   }, [comprasByMonth, filter, colors])
 
   // Del servidor o nada: sin resumen no se muestra un número que podría estar mal.
-  const totalMonto = resumen?.totalComprado
   const pendCount = resumen?.notasPedido
   // El filtro por estado es local: con un estado elegido, "cargados" no es lo que se ve.
   const contador = filter === 'Todas' ? textoContador(comprasByMonth.length, totalCount) : null
@@ -75,6 +74,6 @@ export function useComprasList() {
     isLoading, isRefetching, refetch,
     fetchNextPage, hasNextPage, isFetchingNextPage,
     comprasByMonth, filteredCompras,
-    totalMonto, pendCount, totalCount, contador
+    pendCount, totalCount, contador
   }
 }
