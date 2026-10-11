@@ -6,6 +6,8 @@ import { formatImporte as $ } from '@/core/ui/fw'
 import { conPermisos, renderConQuery } from '@/features/clientes/__testing__/ayuda'
 import { estadoDeCuenta, fichaConCuentas, mov, paginaDeMovimientos } from '../__testing__/servidor'
 
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, back: jest.fn() }) }))
 jest.mock('@/core/api/client', () => ({ api: { get: jest.fn() }, API_URL: '' }))
 
 const get = api.get as jest.Mock
@@ -93,4 +95,17 @@ it('si el servidor rechaza los movimientos, se ve su mensaje', async () => {
   renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
 
   expect(await screen.findByText('No tenés permisos para esta acción.', {}, ESPERA)).toBeTruthy()
+})
+
+it('Registrar cobro aparece solo con permiso para crear pagos y abre el cobro de este cliente', async () => {
+  const { unmount } = renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+  await screen.findByLabelText(`Saldo: ${$(186420)}`, {}, ESPERA)
+  expect(screen.queryByRole('button', { name: 'Registrar cobro' })).toBeNull()
+  unmount()
+
+  conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }])
+  renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+  await userEvent.press(await screen.findByRole('button', { name: 'Registrar cobro' }, ESPERA))
+
+  expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: 'c1' } })
 })

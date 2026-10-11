@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { useRouter } from 'expo-router'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, Segmented, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
+import { usePermissions } from '@/core/auth/RequirePermission'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { formatToLocalTime } from '@/src/utils/date'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
@@ -59,8 +61,10 @@ function Movimiento({ m }: { m: MovimientoConCuenta }) {
  * desglose TST / Normal que da el servidor y los movimientos de las dos cuentas. Qué se puede ver
  * lo decide el servidor (`puedeVerCuentaCorriente` y los permisos de cada endpoint).
  */
-export function CuentaCorrienteCliente({ socioId, acciones }: { socioId: string; acciones?: React.ReactNode }) {
+export function CuentaCorrienteCliente({ socioId }: { socioId: string }) {
   const c = useColors()
+  const router = useRouter()
+  const { canCreate } = usePermissions()
   const [filtro, setFiltro] = useState<FiltroCuenta>('ambas')
   const socio = useSocio(socioId)
   const verCuenta = !!socio.data?.puedeVerCuentaCorriente
@@ -101,7 +105,9 @@ export function CuentaCorrienteCliente({ socioId, acciones }: { socioId: string;
               {cliente.topeCredito != null ? <TotalsRow label="Tope de crédito" importe={cliente.topeCredito} /> : null}
             </>
           ) : null}
-          {acciones}
+          {canCreate('MOD_PAGOS') ? (
+            <Button label="Registrar cobro" onPress={() => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId } })} />
+          ) : null}
         </Tarjeta>
       ) : null}
 
