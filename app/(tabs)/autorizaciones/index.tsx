@@ -1,12 +1,12 @@
 import { BandejaAutorizaciones } from '@/features/autorizaciones/components/BandejaAutorizaciones'
-import { VentaDetalle } from '../ventas/[id]'
+import { DetalleAutorizacion } from '@/features/autorizaciones/components/DetalleAutorizacion'
 
-/** Autorizaciones (fase 4.1). El detalle, por ahora, es el de la venta. */
+/** Autorizaciones (fase 4.1): bandeja y, en tablet horizontal, el detalle para autorizar al lado. */
 export default function AutorizacionesScreen() {
   return (
     <BandejaAutorizaciones
-      rutaDetalle={(id) => `/(tabs)/ventas/${id}`}
-      detalle={(id, cerrar) => <VentaDetalle key={id} id={id} onVolver={cerrar} />}
+      rutaDetalle={(id) => `/(tabs)/autorizaciones/${id}`}
+      detalle={(id, cerrar) => <DetalleAutorizacion key={id} id={id} onVolver={cerrar} />}
     />
   )
 }

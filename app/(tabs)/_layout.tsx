@@ -41,6 +41,7 @@ export default function DrawerLayout() {
       <Drawer.Screen name="cuentas/nueva" />
       <Drawer.Screen name="cuentas/[id]" />
       <Drawer.Screen name="compras/[id]" />
+      <Drawer.Screen name="autorizaciones/[id]" />
     </Drawer>
   )
 }

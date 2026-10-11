@@ -1,21 +1,24 @@
 import React from 'react'
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { VentaDetalle } from '../../../../../app/(tabs)/ventas/[id]'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 
 // Anular desde el detalle: en el panel de la tablet hay que cerrar el panel (onVolver);
 // en la ruta del teléfono se vuelve a la lista con router.replace.
 const mockReplace = jest.fn()
+const mockPush = jest.fn()
+let mockEstado: string | number = 'Confirmada'
 const mockAnular = jest.fn()
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'v1' }),
-  useRouter: () => ({ push: jest.fn(), replace: mockReplace, back: jest.fn() }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace, back: jest.fn() }),
   useNavigation: () => ({ dispatch: jest.fn() }),
 }))
 jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 40, bottom: 0, left: 0, right: 0 }) }))
 jest.mock('@/libs/api-client', () => ({
   useVenta: () => ({
-    data: { venta: { id: 'v1', version: 3, estado: 'Confirmada', activo: true, tipoOperacion: 2, clienteId: 'c1', clienteNombre: 'Carlos' }, detalles: [], bultos: [] },
+    data: { venta: { id: 'v1', version: 3, estado: mockEstado, activo: true, tipoOperacion: 2, clienteId: 'c1', clienteNombre: 'Carlos' }, detalles: [], bultos: [] },
     isLoading: false, refetch: jest.fn(),
   }),
   useConvertirPresupuesto: () => ({ mutateAsync: jest.fn(), isPending: false }),
@@ -37,7 +40,6 @@ jest.mock('@/core/ui/ConfirmModal', () => {
   const { Pressable, Text } = require('react-native')
   return { ConfirmModal: ({ onConfirm }: { onConfirm: () => void }) => <Pressable accessibilityRole="button" onPress={onConfirm}><Text>Sí, anular</Text></Pressable> }
 })
-jest.mock('@/features/ventas/components/AuthorizationModal', () => ({ AuthorizationModal: () => null }))
 jest.mock('moti', () => ({
   MotiView: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -55,6 +57,7 @@ async function anular() {
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockEstado = 'Confirmada'
   mockAnular.mockResolvedValue(undefined)
 })
 
@@ -80,5 +83,15 @@ describe('anular desde el detalle de venta', () => {
     embebido.unmount()
     const ruta = render(<VentaDetalle id="v1" />)
     expect(JSON.stringify(ruta.toJSON())).toContain('"paddingTop":50')
+  })
+})
+
+describe('autorizar desde el detalle de venta', () => {
+  it('con CAP_AUTORIZAR_VENTA lleva al detalle para autorizar (motivos, razón y costos con permiso)', async () => {
+    mockEstado = 9
+    useAuthStore.setState({ user: { id: 'u1', roles: [], permissions: [{ module: 'CAP_AUTORIZAR_VENTA', canRead: true }] } } as never)
+    render(<VentaDetalle id="v1" />)
+    await userEvent.press(screen.getByText('AUTORIZAR PEDIDO'))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/autorizaciones/v1')
   })
 })

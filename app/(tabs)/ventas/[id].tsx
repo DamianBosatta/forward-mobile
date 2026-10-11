@@ -15,7 +15,6 @@ import {
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { canAuthorizeVenta } from '@/features/ventas/lib/authorization'
 import { canViewCost } from '@/features/ventas/lib/descuentos'
-import { AuthorizationModal } from '@/features/ventas/components/AuthorizationModal'
 import { Linking } from 'react-native'
 import { useColors, useIsDark, BRAND, tokens } from '@/libs/theme'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -95,7 +94,6 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
   const isDark = useIsDark()
   const insets = useSafeAreaInsets()
   
-  const [showAuthModal, setShowAuthModal] = useState(false)
   const [modalState, setModalState] = useState<{ visible: boolean; title: string; message: string; variant: 'success' | 'danger' | 'warning' | 'info' | 'primary'; onConfirm: () => void; onCancel?: () => void } | null>(null)
 
   // Premium UI & interaction state hooks
@@ -846,7 +844,8 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
         else if (canAuthorizeVenta(s, user?.permissions)) {
           actionLabel = 'Autorizar Pedido';
           actionColor = BRAND.orange;
-          actionFn = () => setShowAuthModal(true);
+          // Se decide en el detalle para autorizar (fase 4.1): motivos, razón y costos con permiso.
+          actionFn = () => router.push(`/(tabs)/autorizaciones/${id}` as never);
           IconComponent = CheckCircle2;
         }
         else {
@@ -893,15 +892,6 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
         )
       })()}
 
-      {canAuthorizeVenta(String(venta?.estado), user?.permissions) && (
-        <AuthorizationModal
-          ventaId={id ?? ''}
-          version={venta?.version ?? 0}
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-          onAuthorized={() => refetch()}
-        />
-      )}
 
       {modalState && (
         <ConfirmModal
