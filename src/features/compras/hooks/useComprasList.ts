@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useBorradoresCompraMios, useComprasResumen, useInfiniteCompras } from '@/libs/api-client/compras'
 import { itemsCargados, totalDelServidor, textoContador } from '@/features/listas/lib/contador'
 import { fechaDesdePeriodo, type PeriodoVentas } from '@/features/ventas/hooks/useVentasListaNueva'
+import { formatImporte } from '@/core/ui/fw/formatImporte'
 import type { CompraDtoList, EstadoCompra } from '@/libs/api-client'
 
 export type PestanaCompras = 'pendientes' | 'recibidas' | 'borradores'
@@ -13,6 +14,10 @@ const ESTADOS: Record<Exclude<PestanaCompras, 'borradores'>, EstadoCompra[]> = {
   recibidas: ['Entregado'],
 }
 const ESPERA_BUSQUEDA_MS = 300
+
+/** Los pesos con el signo, como el resto de la app; otra moneda con su código (`USD 1.200,00`). */
+const importeEn = (moneda: string, total: number) =>
+  moneda === 'ARS' ? formatImporte(total) : formatImporte(total).replace('$', moneda)
 
 /**
  * Lista de compras con el formato nuevo (Bloque 9A, PR 3.1). Pestaña, período y búsqueda van al
@@ -39,7 +44,7 @@ export function useComprasList() {
     { pageSize: 20, estados: ESTADOS[esBorradores ? 'pendientes' : pestana], fechaDesde, searchTerm },
     { enabled: !esBorradores },
   )
-  const { data: resumen } = useComprasResumen({ fechaDesde, searchTerm })
+  const { data: resumen, refetch: refetchResumen } = useComprasResumen({ fechaDesde, searchTerm })
   const borradores = useBorradoresCompraMios(esBorradores)
 
   const items = useMemo(() => itemsCargados<CompraDtoList>(compras.data?.pages), [compras.data])
@@ -51,6 +56,13 @@ export function useComprasList() {
     : pestana === 'recibidas' ? `${resumen.entregadas} recibidas`
     : null
 
+  // El total comprado, una cifra por moneda. Cubre las dos pestañas (el resumen no filtra por
+  // estado), así que no va junto al contador. El servidor viejo no lo separa: no se muestra.
+  const porMoneda = resumen?.totalesPorMoneda
+  const compradoTexto = porMoneda?.length
+    ? `Comprado (pendientes y recibidas): ${porMoneda.map((t) => importeEn(t.moneda, t.total)).join(' · ')}`
+    : null
+
   return {
     pestana, setPestana,
     periodo, setPeriodo,
@@ -58,7 +70,10 @@ export function useComprasList() {
     compras: items,
     contador,
     resumenTexto,
+    compradoTexto,
     comprasQuery: compras,
+    /** Deslizar para actualizar trae de nuevo la lista y su resumen. */
+    refrescar: () => Promise.all([compras.refetch(), refetchResumen()]),
     borradores: borradores.data ?? [],
     borradoresQuery: borradores,
   }

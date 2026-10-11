@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { api, API_URL } from './client'
 import { buildAnularVentaPayload } from './anular-venta'
 import { buildAutorizarPayload } from '@/features/ventas/lib/authorization'
@@ -18,6 +18,14 @@ import type { components } from './generated/schema'
 
 export type BorradorVenta = components['schemas']['BorradorVentaDto']
 export type VentaPendienteAutorizacion = components['schemas']['VentaPendienteAutorizacionDto']
+/** Estados del contrato (incluye `EnPreparacion` y `RechazadaAutorizacion`, que `EstadoVenta` de mobile no lista). */
+export type EstadoVentaServidor = components['schemas']['EstadoVenta']
+/**
+ * GET /Ventas/resumen. `cantidad` llegó con forward-system #873, junto con los filtros de tipo y
+ * estados: si no viene, el servidor es anterior, ignoró esos filtros y su `totalVendido` no es el
+ * de la lista.
+ */
+export type VentasResumen = Omit<components['schemas']['VentasResumenDto'], 'cantidad'> & { cantidad?: number }
 
 // #region Query Keys
 export const ventasKeys = {
@@ -28,6 +36,7 @@ export const ventasKeys = {
   details: () => [...ventasKeys.all, 'detail'] as const,
   detail: (id: string) => [...ventasKeys.details(), id] as const,
   borradoresMios: () => [...ventasKeys.all, 'borradores', 'mios'] as const,
+  resumen: (params: VentasFiltroParams) => [...ventasKeys.all, 'resumen', params] as const,
 }
 
 export interface VentaParams {
@@ -40,6 +49,23 @@ export interface VentaParams {
   ticketId?: string
   tipoOperacion?: number
   searchTerm?: string
+  /** Varios estados (`estados`, clave repetida; manda sobre `estado`). El servidor anterior a #873 lo ignora. */
+  estados?: EstadoVentaServidor[]
+}
+
+/** Filtros que comparten la lista y el resumen: se arman igual para que el resumen cuadre con la lista. */
+export type VentasFiltroParams = Pick<VentaParams, 'estado' | 'estados' | 'clienteId' | 'fechaDesde' | 'fechaHasta' | 'tipoOperacion' | 'searchTerm'>
+
+function filtroVentasQuery(params: VentasFiltroParams): URLSearchParams {
+  const sp = new URLSearchParams()
+  if (params.estado) sp.set('estado', params.estado)
+  for (const e of params.estados ?? []) sp.append('estados', e)
+  if (params.clienteId) sp.set('clienteId', params.clienteId)
+  if (params.fechaDesde) sp.set('fechaDesde', params.fechaDesde)
+  if (params.fechaHasta) sp.set('fechaHasta', params.fechaHasta)
+  if (params.tipoOperacion !== undefined) sp.set('tipoOperacion', String(params.tipoOperacion))
+  if (params.searchTerm) sp.set('searchTerm', params.searchTerm)
+  return sp
 }
 
 // #endregion
@@ -71,23 +97,38 @@ export function useVentas(params: VentaParams = {}, options?: { enabled?: boolea
 /**
  * Hook para scroll infinito en listas de ventas (Recomendado para Móvil)
  */
-export function useInfiniteVentas(params: VentaParams = {}, options?: { enabled?: boolean }) {
+export function useInfiniteVentas(
+  params: VentaParams = {},
+  options?: {
+    enabled?: boolean
+    /**
+     * Mientras llega la respuesta muestra (`isPlaceholderData`) las filas ya cargadas del mismo filtro
+     * sin estado ("Todas"), para quien las filtra en el teléfono mientras tanto. Nunca las de otro
+     * estado (filtrar solo saca filas, no agrega) ni las de otras fechas, tipo o búsqueda: si "Todas"
+     * de ese filtro no está en caché, se ve la carga.
+     */
+    vistaPreviaSinEstado?: boolean
+  },
+) {
+  const queryClient = useQueryClient()
   return useInfiniteQuery({
     queryKey: ventasKeys.infinite(params),
     enabled: options?.enabled,
     queryFn: ({ pageParam = 1 }) => {
-      const searchParams = new URLSearchParams()
+      const searchParams = filtroVentasQuery(params)
       searchParams.set('pageNumber', String(pageParam))
       searchParams.set('pageSize', String(params.pageSize ?? 20))
-      if (params.estado) searchParams.set('estado', params.estado)
-      if (params.clienteId) searchParams.set('clienteId', params.clienteId)
-      if (params.fechaDesde) searchParams.set('fechaDesde', params.fechaDesde)
-      if (params.fechaHasta) searchParams.set('fechaHasta', params.fechaHasta)
-      if (params.tipoOperacion !== undefined) searchParams.set('tipoOperacion', String(params.tipoOperacion))
-      if (params.searchTerm) searchParams.set('searchTerm', params.searchTerm)
-
       return api.get<PagedResult<Venta>>(`/api/v1/Ventas?${searchParams}`)
     },
+    placeholderData: options?.vistaPreviaSinEstado
+      ? () => {
+        // El hash de la key descarta los `undefined`: es la misma key que pide "Todas".
+        const todas = ventasKeys.infinite({ ...params, estado: undefined, estados: undefined })
+        // Invalidada (se grabó o anuló una venta) ya no es lo que hay: mejor la carga.
+        if (queryClient.getQueryState(todas)?.isInvalidated) return undefined
+        return queryClient.getQueryData<InfiniteData<PagedResult<Venta>>>(todas)
+      }
+      : undefined,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
       if (lastPage.hasNextPage) {
@@ -96,6 +137,19 @@ export function useInfiniteVentas(params: VentaParams = {}, options?: { enabled?
       return undefined
     },
     staleTime: 30_000,
+  })
+}
+
+/**
+ * Totales del servidor para el mismo filtro de la lista (`cantidad`, `totalVendido` de pedidos sin
+ * anuladas ni rechazadas, y contadores por estado). Mobile no suma las páginas cargadas.
+ */
+export function useVentasResumen(params: VentasFiltroParams, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ventasKeys.resumen(params),
+    queryFn: () => api.get<VentasResumen>(`/api/v1/Ventas/resumen?${filtroVentasQuery(params)}`),
+    staleTime: 30_000,
+    enabled: options?.enabled,
   })
 }
 
