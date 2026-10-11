@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { format, subDays } from 'date-fns'
+import { diaArgentina } from '@/src/utils/date'
 import { useBorradoresVentaMios, useInfiniteVentas } from '@/libs/api-client/ventas'
 import { itemsCargados, totalDelServidor, textoContador } from '@/features/listas/lib/contador'
 import type { EstadoVenta, Venta } from '@/libs/api-client'
@@ -14,11 +14,11 @@ const ESPERA_BUSQUEDA_MS = 400
 
 /**
  * Desde qué día pedir (yyyy-MM-dd). El servidor lo toma como día de Argentina
- * (`ArgentinaClock.StartOfBusinessDayUtc`), así que se manda el día, no un instante.
+ * (`ArgentinaClock.StartOfBusinessDayUtc`), así que se manda el día argentino, no el del teléfono.
  */
 export function fechaDesdePeriodo(periodo: PeriodoVentas, hoy: Date = new Date()): string | undefined {
   const dias = { hoy: 0, '7d': 6, '30d': 29, todo: null }[periodo]
-  return dias === null ? undefined : format(subDays(hoy, dias), 'yyyy-MM-dd')
+  return dias === null ? undefined : diaArgentina(hoy.getTime() - dias * 24 * 60 * 60 * 1000)
 }
 
 /**

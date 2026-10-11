@@ -2,7 +2,8 @@ import React from 'react'
 import { Text } from 'react-native'
 import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { format, subDays } from 'date-fns'
+import { subDays } from 'date-fns'
+import { diaArgentina } from '@/src/utils/date'
 import { ListaVentasNueva } from '../../components/ListaVentasNueva'
 
 const mockGet = jest.fn()
@@ -57,7 +58,7 @@ describe('lista de ventas nueva', () => {
     expect(await screen.findByText('Mostrando 2 de 61')).toBeTruthy()
     const q = ultimaConsulta()
     expect(q.get('tipoOperacion')).toBe('2')
-    expect(q.get('fechaDesde')).toBe(format(subDays(ahora, 29), 'yyyy-MM-dd'))
+    expect(q.get('fechaDesde')).toBe(diaArgentina(subDays(ahora, 29).getTime()))
     expect(q.get('estado')).toBeNull()
     expect(screen.getByRole('tab', { name: 'Pedidos' })).toBeSelected()
     expect(screen.getByRole('header', { name: 'Hoy' })).toBeTruthy()

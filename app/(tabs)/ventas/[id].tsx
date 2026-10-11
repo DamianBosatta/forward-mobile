@@ -148,7 +148,9 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
         try {
           await anular({ id: id!, version: venta.version ?? 0, motivoAnulacion: 'Cancelación manual' })
           setModalState(null)
-          router.replace('/(tabs)/ventas')
+          // Embebido (tablet) el panel cierra; la lista se refresca por la invalidación de useAnularVenta.
+          if (onVolver) onVolver()
+          else router.replace('/(tabs)/ventas')
         } catch (e: any) {
           Alert.alert('Error', 'No se pudo anular la venta.')
         }
@@ -183,7 +185,7 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
 
       {/* Sticky Header Premium */}
       <View style={{ zIndex: 100 }}>
-        <BlurView intensity={25} tint={isDark ? "dark" : "light"} style={{ paddingTop: insets.top + 10, paddingBottom: 15 }}>
+        <BlurView intensity={25} tint={isDark ? "dark" : "light"} style={{ paddingTop: (onVolver ? 0 : insets.top) + 10, paddingBottom: 15 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20 }}>
             <TouchableOpacity 
               onPress={onVolver ?? (() => router.replace('/(tabs)/ventas'))}
