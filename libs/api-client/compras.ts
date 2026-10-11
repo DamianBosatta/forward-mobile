@@ -1,7 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import { buildAnularCompraPayload } from './anular-compra'
-import type { Compra, CompraDtoList, CompraDto, PagedResult, CreateCompraRequest } from './types'
+import type { Compra, CompraDtoList, CompraDto, PagedResult, CreateCompraRequest, EstadoCompra } from './types'
 
 /** Filtros que comparten la lista y el resumen: el servidor los interpreta igual en los dos. */
 export interface ComprasFiltroParams {
@@ -13,6 +13,19 @@ export interface ComprasFiltroParams {
 
 export interface ComprasListParams extends ComprasFiltroParams {
   pageSize?: number
+  /** Estados a traer (`Estados` del servidor); sin estados, todos. */
+  estados?: EstadoCompra[]
+}
+
+/** GET /api/v1/Compras/borradores/mios — BorradorCompraDto. */
+export interface BorradorCompra {
+  id: string
+  version: number
+  proveedorId: string
+  proveedorNombre: string
+  depositoId: string
+  fechaModificacion: string
+  cantidadLineas: number
 }
 
 /** GET /api/v1/Compras/resumen — ComprasResumenDto. */
@@ -39,17 +52,19 @@ export const comprasKeys = {
   list: (params: { pageNumber?: number; pageSize?: number }) => [...comprasKeys.lists(), params] as const,
   infinite: (params: ComprasListParams) => [...comprasKeys.all, 'infinite', params] as const,
   resumen: (params: ComprasFiltroParams) => [...comprasKeys.all, 'resumen', params] as const,
+  borradoresMios: () => [...comprasKeys.all, 'borradores', 'mios'] as const,
   details: () => [...comprasKeys.all, 'detail'] as const,
   detail: (id: string) => [...comprasKeys.details(), id] as const,
 }
 
 /**
- * Conserva los datos previos solo si cambió la búsqueda dentro del mismo rango de fechas;
- * al cambiar de mes se ve la carga, no las filas y totales del mes anterior.
+ * Conserva los datos previos solo si cambió la búsqueda dentro del mismo rango de fechas y los
+ * mismos estados; al cambiar de período o de pestaña se ve la carga, no las filas y totales de antes.
  */
-function mismoRango(a: unknown, b: ComprasFiltroParams) {
-  const prev = a as ComprasFiltroParams | undefined
+function mismoRango(a: unknown, b: ComprasListParams) {
+  const prev = a as ComprasListParams | undefined
   return !!prev && prev.fechaDesde === b.fechaDesde && prev.fechaHasta === b.fechaHasta
+    && (prev.estados ?? []).join() === (b.estados ?? []).join()
 }
 
 // ── Queries ──────────────────────────────────────────────────────────────────
@@ -65,11 +80,13 @@ export function useCompras(params: { pageNumber?: number; pageSize?: number } = 
 /**
  * Hook para scroll infinito en lista de compras
  */
-export function useInfiniteCompras(params: ComprasListParams = {}) {
+export function useInfiniteCompras(params: ComprasListParams = {}, options: { enabled?: boolean } = {}) {
   return useInfiniteQuery({
     queryKey: comprasKeys.infinite(params),
+    enabled: options.enabled ?? true,
     queryFn: ({ pageParam = 1 }) => {
       const sp = filtroQuery(params)
+      for (const e of params.estados ?? []) sp.append('Estados', e)
       sp.set('PageNumber', String(pageParam))
       sp.set('PageSize', String(params.pageSize ?? 20))
       return api.get<PagedResult<CompraDtoList>>(`/api/v1/Compras?${sp}`)
@@ -98,6 +115,16 @@ export function useComprasResumen(params: ComprasFiltroParams = {}) {
     staleTime: 30_000,
     placeholderData: (prev, prevQuery) =>
       mismoRango(prevQuery?.queryKey[2], params) ? prev : undefined,
+  })
+}
+
+/** Borradores automáticos de compra del usuario (no aparecen en la lista ni en el resumen). */
+export function useBorradoresCompraMios(enabled = true) {
+  return useQuery({
+    queryKey: comprasKeys.borradoresMios(),
+    queryFn: () => api.get<BorradorCompra[]>('/api/v1/Compras/borradores/mios'),
+    enabled,
+    staleTime: 30_000,
   })
 }
 

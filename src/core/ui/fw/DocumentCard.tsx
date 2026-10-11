@@ -8,6 +8,8 @@ import type { ChipInfo } from './estadoChip'
 interface DocumentCardProps {
   numero: string
   vendedor: string
+  /** Nombre del que salen las iniciales del avatar; por defecto, el vendedor (en compras, el proveedor). */
+  avatar?: string
   /** Dirección de entrega: identifica al cliente y va como título. */
   direccion: string
   /** Nombre del cliente: línea aparte, nunca sufijo de la dirección. */
@@ -26,7 +28,7 @@ export function iniciales(nombre: string): string {
   return partes.slice(0, 2).map((p) => p[0]!.toUpperCase()).join('')
 }
 
-/** Tarjeta de documento de la lámina F4 (lista de ventas y compras). */
+/** Tarjeta de documento de la lámina F4 (lista de ventas y compras). En compras el título es el proveedor. */
 export function DocumentCard(p: DocumentCardProps) {
   const c = useColors()
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
@@ -64,7 +66,7 @@ export function DocumentCard(p: DocumentCardProps) {
         }}
       >
         <Text style={[typeScale.secundario, { fontFamily: FONT.semibold, fontWeight: '600', color: c.brandInk }]}>
-          {iniciales(p.vendedor)}
+          {iniciales(p.avatar ?? p.vendedor)}
         </Text>
       </View>
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>

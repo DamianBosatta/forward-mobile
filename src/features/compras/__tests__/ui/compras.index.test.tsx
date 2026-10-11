@@ -1,161 +1,129 @@
 import React from 'react'
-import { render } from '@testing-library/react-native'
+import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { subDays } from 'date-fns'
 import ComprasListScreen from '../../../../../app/(tabs)/compras/index'
-import { useComprasList } from '../../hooks/useComprasList'
 
-jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
-  useNavigation: () => ({ dispatch: jest.fn() })
-}))
-
-jest.mock('@react-navigation/native', () => ({
-  DrawerActions: { openDrawer: jest.fn() },
-  useNavigation: () => ({ dispatch: jest.fn() }),
-}))
-
-jest.mock('../../hooks/useComprasList', () => ({
-  useComprasList: jest.fn()
-}))
-
-const mockDims = jest.fn()
-jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
-  __esModule: true,
-  default: () => mockDims(),
-}))
-
+const mockGet = jest.fn()
+jest.mock('@/core/api/client', () => ({ api: { get: (...a: unknown[]) => mockGet(...a) }, API_URL: 'x' }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn() }) }))
+jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() }, useNavigation: () => ({ dispatch: jest.fn() }) }))
 jest.mock('@/core/auth/RequirePermission', () => ({
-  RequirePermission: ({ children }: any) => <>{children}</>,
+  RequirePermission: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   usePermissions: () => ({ canDo: () => true }),
 }))
+jest.mock('../../../../../app/(tabs)/compras/[id]', () => {
+  const { Text: T } = require('react-native')
+  return { CompraDetalle: ({ id }: { id: string }) => <T>{`detalle ${id}`}</T> }
+})
+const mockDims = jest.fn()
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => mockDims() }))
 
-jest.mock('moti', () => ({
-  MotiView: ({ children }: any) => <>{children}</>,
-  AnimatePresence: ({ children }: any) => <>{children}</>
-}))
+const ahora = new Date()
+const compra = (o: Record<string, unknown>) => ({
+  id: 'aaaa1111-0000-0000-0000-000000000000', proveedorId: 'p', razonSocialProveedor: 'Insumos del Sur SA', depositoId: 'd',
+  nombreDeposito: 'Depósito Central', fecha: ahora.toISOString(), estado: 'NotaPedido', totalAmount: 358777, itemsCount: 8, eliminada: false, ...o,
+})
+const pagina = (items: unknown[], totalCount: number) => ({ items, page: 1, pageSize: 20, totalCount, totalPages: 1, hasNextPage: false })
 
-jest.mock('expo-blur', () => ({
-  BlurView: ({ children }: any) => <>{children}</>
-}))
+/** Parámetros de la última llamada a GET /Compras (lo que se le pidió al servidor). */
+function ultimaConsulta(): URLSearchParams {
+  const urls = mockGet.mock.calls.map(([u]) => String(u)).filter((u) => u.startsWith('/api/v1/Compras?'))
+  return new URLSearchParams(urls[urls.length - 1]!.split('?')[1])
+}
 
-jest.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 })
-}))
+function pantalla(ancho = 390) {
+  mockDims.mockReturnValue({ width: ancho, height: 800, scale: 2, fontScale: 1 })
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    <QueryClientProvider client={qc}>
+      <ComprasListScreen />
+    </QueryClientProvider>,
+  )
+}
 
-jest.mock('@/core/ui', () => {
-  const React = require('react')
-  const { View, Text } = require('react-native')
-  return {
-    ForwardLogo: () => <View />,
-    TopHeaderActions: () => <View />,
-    RequirePermission: ({ children }: any) => <>{children}</>,
-    GlassCard: ({ children }: any) => <View>{children}</View>,
-    KpiStatRow: ({ stats }: any) => (
-      <View>{stats.map((s: any) => <Text key={s.key}>{s.label}</Text>)}</View>
-    ),
-  }
+beforeEach(() => {
+  mockGet.mockReset()
+  mockPush.mockReset()
+  mockGet.mockImplementation((url: string) => {
+    if (url.includes('borradores/mios')) {
+      return Promise.resolve([{ id: 'b1', version: 1, proveedorId: 'p', proveedorNombre: 'Gorrión Mayorista', depositoId: 'd', fechaModificacion: ahora.toISOString(), cantidadLineas: 3 }])
+    }
+    if (url.includes('/resumen')) {
+      return Promise.resolve({ totalComprado: 999, notasPedido: 4, confirmadas: 1, entregadas: 7, canceladas: 0, anuladas: 0 })
+    }
+    return Promise.resolve(pagina([
+      compra({}),
+      compra({ id: 'bbbb2222-0000-0000-0000-000000000000', razonSocialProveedor: 'Saphirus Distribución', fecha: subDays(ahora, 1).toISOString(), estado: 'Confirmado', itemsCount: 1 }),
+    ], 5))
+  })
 })
 
-jest.mock('@/core/ui/DataList', () => {
-  const React = require('react')
-  const { View, Text } = require('react-native')
-  return {
-    DataList: ({ data, renderItem, ListHeaderComponent, emptyMessage }: any) => (
-      <View>
-        {ListHeaderComponent}
-        {data.length === 0 ? <Text testID="empty-message">{emptyMessage}</Text> : data.map((item: any, index: number) => renderItem({ item, index }))}
-      </View>
-    )
-  }
-})
-
-const conAncho = (width: number) => mockDims.mockReturnValue({ width, height: 800, scale: 2, fontScale: 1 })
-
-describe('ComprasListScreen UI', () => {
-  beforeEach(() => {
-    jest.clearAllMocks()
-    conAncho(390)
+describe('lista de compras', () => {
+  it('arranca en Pendientes: pide nota de pedido y confirmadas al servidor, con contador y resumen del servidor', async () => {
+    pantalla()
+    expect(await screen.findByText('Mostrando 2 de 5')).toBeTruthy()
+    expect(ultimaConsulta().getAll('Estados')).toEqual(['NotaPedido', 'Confirmado'])
+    expect(ultimaConsulta().get('FechaDesde')).toBeNull()
+    expect(screen.getByRole('tab', { name: 'Pendientes' })).toBeSelected()
+    expect(await screen.findByText('4 notas de pedido · 1 por recibir')).toBeTruthy()
+    // No se muestra el total comprado: el servidor suma monedas distintas.
+    expect(screen.queryByText(/999/)).toBeNull()
+    expect(screen.getByRole('header', { name: 'Hoy' })).toBeTruthy()
+    expect(screen.getByRole('header', { name: 'Ayer' })).toBeTruthy()
+    // El proveedor es el título; el estado sale del chip único.
+    const tarjeta = screen.getByRole('button', { name: /AAAA1111/ })
+    expect(within(tarjeta).getByText('Insumos del Sur SA')).toBeTruthy()
+    expect(within(tarjeta).getByText('Pendiente')).toBeTruthy()
+    expect(within(tarjeta).getByText(/8 productos/)).toBeTruthy()
+    expect(within(screen.getByRole('button', { name: /BBBB2222/ })).getByText('Por recibir')).toBeTruthy()
   })
 
-  it('debe renderizar la lista y las metricas', () => {
-    ;(useComprasList as jest.Mock).mockReturnValue({
-      searchTerm: '',
-      setSearchTerm: jest.fn(),
-      filter: 'Todas',
-      setFilter: jest.fn(),
-      pickerOpen: false,
-      setPickerOpen: jest.fn(),
-      selected: { year: 2023, month: 10 },
-      setSelected: jest.fn(),
-      isCurrentMonth: true,
-      now: new Date(),
-      isLoading: false,
-      filteredCompras: [
-        { id: '1', razonSocialProveedor: 'Proveedor A', estado: '1', totalAmount: 1500, fecha: '2023-11-10T10:00:00Z' }
-      ],
-      pendCount: 1,
-      totalCount: 137,
-      contador: 'Mostrando 40 de 137',
-      fetchNextPage: jest.fn(),
-      hasNextPage: false,
-      isFetchingNextPage: false,
-      comprasByMonth: [{}]
-    })
-
-    const { getByText, queryByText } = render(<ComprasListScreen />)
-
-    // Header
-    expect(getByText('COMPRAS')).toBeTruthy()
-    // KPIs
-    expect(getByText('Órdenes')).toBeTruthy()
-    expect(queryByText('Inversión')).toBeNull()
-    expect(getByText('Pendientes')).toBeTruthy()
-    expect(getByText('Mostrando 40 de 137')).toBeTruthy()
-    // Card item
-    expect(getByText('Proveedor A')).toBeTruthy()
+  it('Recibidas y el período van como filtros al servidor', async () => {
+    pantalla()
+    await screen.findByText('Mostrando 2 de 5')
+    await userEvent.press(screen.getByRole('tab', { name: 'Recibidas' }))
+    await waitFor(() => expect(ultimaConsulta().getAll('Estados')).toEqual(['Entregado']))
+    expect(await screen.findByText('7 recibidas')).toBeTruthy()
+    await userEvent.press(screen.getByRole('radio', { name: '7 días' }))
+    await waitFor(() => expect(ultimaConsulta().get('FechaDesde')).toMatch(/^\d{4}-\d{2}-\d{2}$/))
+    expect(ultimaConsulta().getAll('Estados')).toEqual(['Entregado'])
   })
 
-  it('debe mostrar mensaje vacio cuando no hay ordenes', () => {
-    ;(useComprasList as jest.Mock).mockReturnValue({
-      searchTerm: '',
-      setSearchTerm: jest.fn(),
-      filter: 'Todas',
-      setFilter: jest.fn(),
-      pickerOpen: false,
-      setPickerOpen: jest.fn(),
-      selected: { year: 2023, month: 10 },
-      setSelected: jest.fn(),
-      isCurrentMonth: true,
-      now: new Date(),
-      isLoading: false,
-      filteredCompras: [],
-      pendCount: 0,
-      fetchNextPage: jest.fn(),
-      hasNextPage: false,
-      isFetchingNextPage: false,
-      comprasByMonth: []
-    })
-
-    const { getByText } = render(<ComprasListScreen />)
-
-    expect(getByText('No se encontraron órdenes de compra.')).toBeTruthy()
+  it('la búsqueda va al servidor después de una pausa, no con cada letra', async () => {
+    pantalla()
+    await screen.findByText('Mostrando 2 de 5')
+    await userEvent.type(screen.getByLabelText('Buscar'), 'saph')
+    expect(ultimaConsulta().get('SearchTerm')).toBeNull()
+    await waitFor(() => expect(ultimaConsulta().get('SearchTerm')).toBe('saph'))
+    const conBusqueda = mockGet.mock.calls.map(([u]) => String(u)).filter((u) => u.includes('SearchTerm='))
+    expect(conBusqueda.every((u) => u.includes('SearchTerm=saph'))).toBe(true)
   })
 
-  it.each([
-    [390, 'teléfono', 0],
-    [1194, 'tablet', 1],
-  ])('en %i px (%s) hay un solo "+" para crear una compra (botón propio: %i)', (ancho, _nombre, propios) => {
-    conAncho(ancho)
-    ;(useComprasList as jest.Mock).mockReturnValue({
-      searchTerm: '', setSearchTerm: jest.fn(), filter: 'Todas', setFilter: jest.fn(),
-      pickerOpen: false, setPickerOpen: jest.fn(), selected: { year: 2023, month: 10 }, setSelected: jest.fn(),
-      isCurrentMonth: true, now: new Date(), isLoading: false, filteredCompras: [], totalMonto: 0, pendCount: 0,
-      fetchNextPage: jest.fn(), hasNextPage: false, isFetchingNextPage: false, comprasByMonth: [],
-    })
+  it('Borradores muestra los del usuario que devuelve el servidor', async () => {
+    pantalla()
+    await userEvent.press(screen.getByRole('tab', { name: 'Borradores' }))
+    expect(await screen.findByText('Gorrión Mayorista')).toBeTruthy()
+    expect(screen.getByText(/3 líneas · Guardado hoy/)).toBeTruthy()
+    expect(mockGet).toHaveBeenCalledWith('/api/v1/Compras/borradores/mios')
+  })
 
-    const { getAllByLabelText, queryByLabelText, queryAllByTestId } = render(<ComprasListScreen />)
+  it('en el teléfono tocar una tarjeta abre el detalle y el "+" es el de la barra (uno solo)', async () => {
+    pantalla(390)
+    await userEvent.press(await screen.findByRole('button', { name: /BBBB2222/ }))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/compras/bbbb2222-0000-0000-0000-000000000000')
+    expect(screen.getAllByLabelText('Nueva compra')).toHaveLength(1)
+    expect(screen.queryByLabelText('Nueva venta')).toBeNull()
+  })
 
-    expect(queryAllByTestId('fab-nueva-compra')).toHaveLength(propios)
-    expect(getAllByLabelText('Nueva compra')).toHaveLength(1)
-    expect(queryByLabelText('Nueva venta')).toBeNull()
+  it('en tablet horizontal el detalle se abre al costado, sin salir de la lista', async () => {
+    pantalla(1200)
+    expect(await screen.findByText('Elegí una compra para ver el detalle.')).toBeTruthy()
+    await userEvent.press(await screen.findByRole('button', { name: /BBBB2222/ }))
+    expect(within(screen.getByTestId('two-pane-detail')).getByText('detalle bbbb2222-0000-0000-0000-000000000000')).toBeTruthy()
+    expect(within(screen.getByTestId('two-pane-list')).getByRole('button', { name: /AAAA1111/ })).toBeTruthy()
+    expect(screen.getAllByLabelText('Nueva compra')).toHaveLength(1)
+    expect(mockPush).not.toHaveBeenCalled()
   })
 })

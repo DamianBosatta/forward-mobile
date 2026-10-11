@@ -1,7 +1,7 @@
 import React from 'react'
 import { renderHook, waitFor, act } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useInfiniteCompras, useComprasResumen, type ComprasFiltroParams } from '@/libs/api-client/compras'
+import { useInfiniteCompras, useComprasResumen, type ComprasFiltroParams, type ComprasListParams } from '@/libs/api-client/compras'
 import { api } from '@/libs/api-client/client'
 
 jest.mock('@/libs/api-client/client', () => ({
@@ -63,6 +63,21 @@ describe('compras: datos previos al cambiar el filtro', () => {
 
     await act(async () => { resolver.forEach(r => r()) })
     await waitFor(() => expect(result.current.lista.data?.pages[0].items[0].id).toBe('junio'))
+  })
+
+  it('cambiar de pestaña (estados) NO muestra las filas de la pestaña anterior', async () => {
+    const wrapper = setup()
+    const { result, rerender } = renderHook(
+      ({ p }: { p: ComprasListParams }) => useInfiniteCompras(p),
+      { wrapper, initialProps: { p: { ...mayo, estados: ['NotaPedido', 'Confirmado'] } } },
+    )
+    await waitFor(() => expect(result.current.data?.pages[0].items[0].id).toBe('mayo'))
+
+    get.mockImplementation(() => new Promise(() => {}))
+    rerender({ p: { ...mayo, estados: ['Entregado'] } })
+
+    expect(result.current.data).toBeUndefined()
+    expect(get.mock.calls.at(-1)[0]).toContain('Estados=Entregado')
   })
 
   it('cambiar solo la búsqueda del mismo mes conserva las filas previas', async () => {

@@ -128,8 +128,17 @@ function Card({ children, style, colors }: { children: any; style?: any; colors:
 
 // ── Main Screen ────────────────────────────────────────────────────────────────
 
+/** Ruta `compras/[id]`: el id viene de la URL. */
 export default function CompraDetailScreen() {
-  const { id }    = useLocalSearchParams<{ id: string }>()
+  const { id } = useLocalSearchParams<{ id: string }>()
+  return <CompraDetalle id={id ?? ''} />
+}
+
+/**
+ * Detalle de una compra. Embebible en el panel derecho de la lista en tablet horizontal
+ * (Bloque 9A, PR 3.1): ahí `onVolver` cierra el panel en vez de navegar.
+ */
+export function CompraDetalle({ id, onVolver }: { id: string; onVolver?: () => void }) {
   const router    = useRouter()
   const navigation = useNavigation()
   const colors    = useColors()
@@ -184,7 +193,8 @@ export default function CompraDetailScreen() {
             try {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType?.Warning || ('Warning'.toLowerCase() as any))
               await cancelar({ id })
-              router.replace('/(tabs)/compras')
+              if (onVolver) onVolver()
+              else router.replace('/(tabs)/compras')
             } catch (e: unknown) {
               Alert.alert('Error', mensajeDelServidor(e, 'No se pudo anular la compra.'))
             }
@@ -267,7 +277,7 @@ export default function CompraDetailScreen() {
               </TouchableOpacity>
             </Link>
           )}
-          <TouchableOpacity onPress={() => router.replace('/(tabs)/compras')} style={{ padding: 8, backgroundColor: colors.surface2, borderRadius: 20 }}>
+          <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cerrar" onPress={() => (onVolver ? onVolver() : router.replace('/(tabs)/compras'))} style={{ padding: 8, backgroundColor: colors.surface2, borderRadius: 20 }}>
             <X size={20} color={colors.text} />
           </TouchableOpacity>
         </View>
