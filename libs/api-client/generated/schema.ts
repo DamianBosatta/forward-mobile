@@ -13323,6 +13323,7 @@ export interface paths {
                 query?: {
                     ClienteId?: string;
                     Estado?: components["schemas"]["EstadoVenta"];
+                    Estados?: components["schemas"]["EstadoVenta"][];
                     FechaDesde?: string;
                     FechaHasta?: string;
                     TicketId?: string;
@@ -13386,6 +13387,17 @@ export interface paths {
                         "text/json": components["schemas"]["VentaActionResponseDto"];
                     };
                 };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VentaActionResponseDtoResponse"];
+                        "application/json": components["schemas"]["VentaActionResponseDtoResponse"];
+                        "text/json": components["schemas"]["VentaActionResponseDtoResponse"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -13406,6 +13418,7 @@ export interface paths {
                 query?: {
                     ClienteId?: string;
                     Estado?: components["schemas"]["EstadoVenta"];
+                    Estados?: components["schemas"]["EstadoVenta"][];
                     FechaDesde?: string;
                     FechaHasta?: string;
                     TicketId?: string;
@@ -13461,6 +13474,9 @@ export interface paths {
                     ClienteId?: string;
                     SearchTerm?: string;
                     TicketId?: string;
+                    TipoOperacion?: components["schemas"]["TipoOperacionVenta"];
+                    Estado?: components["schemas"]["EstadoVenta"];
+                    Estados?: components["schemas"]["EstadoVenta"][];
                 };
                 header?: never;
                 path?: never;
@@ -15570,6 +15586,7 @@ export interface components {
         ComprasResumenDto: {
             /** Format: double */
             totalComprado: number;
+            totalesPorMoneda: components["schemas"]["ComprasTotalPorMonedaDto"][];
             /** Format: int32 */
             notasPedido: number;
             /** Format: int32 */
@@ -15580,6 +15597,11 @@ export interface components {
             canceladas: number;
             /** Format: int32 */
             anuladas: number;
+        };
+        ComprasTotalPorMonedaDto: {
+            moneda: string;
+            /** Format: double */
+            total: number;
         };
         ComprobanteCompraInput: {
             tipo?: components["schemas"]["TipoComprobanteRecibido"];
@@ -19403,6 +19425,16 @@ export interface components {
             version: number;
             message: string;
         };
+        VentaActionResponseDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["VentaActionResponseDto"];
+            codigo?: string | null;
+        };
         VentaConFacturaPorDefectoDto: {
             ventaConFacturaPorDefecto: boolean;
         };
@@ -19669,6 +19701,8 @@ export interface components {
             porAutorizar?: number;
             /** Format: int32 */
             entregadas?: number;
+            /** Format: int32 */
+            cantidad: number;
         };
         VerificarStockFiscalVentaQuery: {
             items?: components["schemas"]["ItemStockFiscalDto"][] | null;
