@@ -126,6 +126,23 @@ describe('elegir fragancias (PR 2.4)', () => {
     expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad])).toEqual([['pv1', 6]])
   })
 
+  it('al confirmar vuelve a acotar lo que traía el carrito al stock disponible, en cajas enteras', async () => {
+    useAuthStore.setState({ user: { roles: ['Gerencia'], permissions: [] } as never })
+    useCarritoVenta.setState({ lineas: [
+      { productoId: 'pv1', producto: lavanda, cantidad: 12, descuentoPct: 0 },
+      { productoId: 'pv2', producto: coco, cantidad: 6, descuentoPct: 0 },
+    ] })
+    mockGet.mockResolvedValue([
+      { id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, stockDisponible: 8, activo: true },
+      { id: 'pv2', fraganciaNombre: 'Coco Vainilla', puedeVenderse: false, stockDisponible: 0, activo: true },
+    ])
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
+    await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText('Stock: 8')).toBeTruthy())
+    await userEvent.press(screen.getByRole('button', { name: 'Listo · 18 unidades' }))
+    expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad])).toEqual([['pv1', 6]])
+  })
+
   it('el descuento es uno solo para toda la línea de fragancias', async () => {
     useCarritoVenta.setState({ lineas: [{ productoId: 'pv1', producto: lavanda, cantidad: 6, descuentoPct: 5 }] })
     conQuery(<CatalogoVenta onVerVenta={jest.fn()} />)

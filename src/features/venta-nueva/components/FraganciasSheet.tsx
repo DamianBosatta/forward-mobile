@@ -48,6 +48,12 @@ function Contenido({ padreId, onClose }: { padreId: string; onClose: () => void 
   const pctInvalido = pctLeido === null || pctLeido < 0 || pctLeido > 100
   const tope = avisoTope(pctInvalido ? 0 : pctLeido, user?.maxDescuentoPorcentaje ?? 0, hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO'))
   const total = Object.values(cantidades).reduce((a, n) => a + n, 0)
+  // Al confirmar se vuelve a acotar cada cantidad al stock disponible, en múltiplos de la venta mínima (como la web).
+  const aDisponible = () => Object.fromEntries(variantes.map((v) => {
+    const disponible = stockDeFragancia(v, servidor.data?.find((s) => s.id === v.id), verCantidades)
+    const m = multiploDe(v)
+    return [v.id, Math.min(cantidades[v.id] ?? 0, Math.floor(disponible / m) * m)]
+  }))
   const cambiar = (id: string, n: number) => setCantidades((s) => ({ ...s, [id]: Math.max(0, n) }))
 
   return (
@@ -95,7 +101,7 @@ function Contenido({ padreId, onClose }: { padreId: string; onClose: () => void 
       <Button
         label={total > 0 ? `Listo · ${total} unidades` : 'Listo'}
         disabled={variantes.length === 0 || pctInvalido}
-        onPress={() => { repartirFragancias(padreId, variantes, cantidades, pctLeido ?? 0); onClose() }}
+        onPress={() => { repartirFragancias(padreId, variantes, aDisponible(), pctLeido ?? 0); onClose() }}
       />
     </BottomSheet>
   )

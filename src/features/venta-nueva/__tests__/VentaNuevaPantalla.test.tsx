@@ -155,6 +155,35 @@ describe('pestaña Líneas', () => {
     })))
   })
 
+  const EXENTO = { module: 'CAP_EXENTO_TOPE_DESCUENTO', canRead: true }
+  // El borrador de un Pedido guarda cada descuento hasta el tope del perfil (también el de quien está exento,
+  // como VendedorDiscountCapPolicy); con tope 0 o un Presupuesto, viaja tal cual.
+  it.each([
+    ['exento CON tope de perfil: el borrador respeta el tope', 'Pedido', [EXENTO], 10, [12.82], 0, [10], 0],
+    ['exento SIN perfil (tope 0): nada se acota', 'Pedido', [EXENTO], 0, [12.82], 0, [12.82], 0],
+    ['no exento con tope: se acota', 'Pedido', [], 10, [12.82], 0, [10], 0],
+    ['tope 0: nada se acota', 'Pedido', [], 0, [12.82], 0, [12.82], 0],
+    ['tope sin definir: nada se acota', 'Pedido', [], undefined, [12.82], 0, [12.82], 0],
+    ['descuento general sobre el tope: se acota', 'Pedido', [], 10, [5], 15, [5], 10],
+    ['Presupuesto: no se acota', 'Presupuesto', [], 10, [12.82], 15, [12.82], 15],
+    ['líneas mezcladas: solo se acotan las que pasan el tope', 'Pedido', [], 10, [5, 12.82], 0, [5, 10], 0],
+  ] as const)('borrador: %s', async (_nombre, tipo, permissions, maxDescuentoPorcentaje, descuentos, general, items, descuentoGeneral) => {
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions, maxDescuentoPorcentaje } as never })
+    mockTipo = tipo
+    const otra = producto({ id: 'p2', real: 100 })
+    await elegirCliente()
+    useCarritoVenta.setState({ lineas: descuentos.map((descuentoPct, i) => ({ productoId: i ? 'p2' : 'p1', producto: i ? otra : pala, cantidad: 12, descuentoPct })) })
+    if (general) {
+      const campo = screen.getByLabelText('Descuento general (%)')
+      await userEvent.clear(campo)
+      await userEvent.type(campo, String(general))
+    }
+    await waitFor(() => expect(mockPut.mock.calls.at(-1)?.[1]).toEqual(expect.objectContaining({
+      descuentoGeneral,
+      items: items.map((d, i) => ({ productoId: i ? 'p2' : 'p1', cantidad: 12, descuentoPorcentaje: d })),
+    })), ESPERA)
+  })
+
   it('sin stock suficiente también avisa; dentro del tope y con stock, no hay banner', async () => {
     await elegirCliente()
     conLineas(5, 12)

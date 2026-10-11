@@ -8,7 +8,10 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { calcularSubtotalConDescuento, canViewCost, canViewStock, pctFromPrecio, precioFromPct } from '@/features/ventas/lib/descuentos'
 import { calcularRentabilidadVenta } from '@/features/ventas/lib/rentabilidad-venta'
+import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { useVariantesProducto } from '@/libs/api-client/productos'
 import { multiploDe, precioServidor, type LineaCarrito } from '../lib/carrito'
+import { stockDeFragancia } from '../lib/fragancias'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoPiso, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
 import { Redondo } from './ProductoCatalogoCard'
 
@@ -32,10 +35,20 @@ export function EditarLineaSheet(props: EditarLineaSheetProps) {
   const { linea } = props
   if (!linea) return null
   // key por producto: lo tipeado sobrevive a un cambio de identidad del objeto de la línea.
-  return <EditarLineaContenido key={linea.productoId} {...props} linea={linea} />
+  if (linea.producto.productoPadreId) return <ConStockDeFragancia key={linea.productoId} {...props} linea={linea} />
+  return <EditarLineaContenido key={linea.productoId} {...props} linea={linea} maxCantidad={Number.POSITIVE_INFINITY} />
 }
 
-function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar }: EditarLineaSheetProps & { linea: LineaCarrito }) {
+/** Una fragancia no se pide por encima de su stock disponible en el depósito de la venta (como la web). */
+function ConStockDeFragancia(props: EditarLineaSheetProps & { linea: LineaCarrito }) {
+  const user = useAuthStore((s) => s.user)
+  const p = props.linea.producto
+  const servidor = useVariantesProducto(p.productoPadreId ?? '', true, DEPOSITO_CENTRAL_ID)
+  const maxCantidad = stockDeFragancia(p, servidor.data?.find((s) => s.id === p.id), canViewStock((user?.roles ?? []) as string[]))
+  return <EditarLineaContenido {...props} maxCantidad={maxCantidad} />
+}
+
+function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad }: EditarLineaSheetProps & { linea: LineaCarrito; maxCantidad: number }) {
   const c = useColors()
   const { isTablet } = useResponsive()
   const user = useAuthStore((s) => s.user)
@@ -87,7 +100,7 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar }: EditarLin
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
                 <Redondo c={c} label="−" a11y="Restar" onPress={() => setCantidad((n) => Math.max(m, n - m))} />
                 <Text accessibilityLabel={`Unidades: ${cantidad}`} style={texto({ ...importe, minWidth: 48, textAlign: 'center' })}>{cantidad}</Text>
-                <Redondo c={c} label="+" a11y="Sumar" onPress={() => setCantidad((n) => n + m)} />
+                <Redondo c={c} label="+" a11y="Sumar" disabled={cantidad + m > maxCantidad} onPress={() => setCantidad((n) => n + m)} />
               </View>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: c.border, paddingBottom: space[3] }}>

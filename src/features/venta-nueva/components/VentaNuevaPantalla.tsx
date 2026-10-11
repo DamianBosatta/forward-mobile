@@ -58,8 +58,8 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
   const tope = user?.maxDescuentoPorcentaje ?? 0
   const exento = hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO')
   const paraGuardar = aAutoguardado(lineas, descuentoValido, cab.cabecera)
-  // Pedido sobre el tope: el borrador (Presupuesto en el servidor) guarda hasta el tope; lo demás va al confirmar.
-  const retenido = tipo === 'Pedido' && !exento && superaElTope(paraGuardar, tope)
+  // Pedido sobre el tope (el del perfil rige también a quien está exento): el borrador (Presupuesto en el servidor) guarda hasta el tope; lo demás va al confirmar.
+  const retenido = tipo === 'Pedido' && superaElTope(paraGuardar, tope)
   const b = useBorradorVenta(retenido ? hastaElTope(paraGuardar, tope) : paraGuardar)
   const comision = useComisionEstimada(lineas, descuentoValido, cab.cabecera.flete, cab.porcentajeCedido)
   const { isTabletLandscape } = useResponsive()

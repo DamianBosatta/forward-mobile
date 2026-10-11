@@ -1,11 +1,18 @@
 import React from 'react'
-import { render, screen, userEvent } from '@testing-library/react-native'
+import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { pctFromPrecio, precioFromPct } from '@/features/ventas/lib/descuentos'
 import { EditarLineaSheet } from '../components/EditarLineaSheet'
 import { leerNumero } from '../lib/linea'
 import type { LineaCarrito } from '../lib/carrito'
 import { cajaDe6, producto } from '../__testing__/producto'
+
+const mockGet = jest.fn()
+jest.mock('@/core/api/client', () => ({
+  ...jest.requireActual('@/core/api/client'),
+  api: { get: (...a: unknown[]) => mockGet(...a) },
+}))
 
 const VER_COSTOS = { module: 'CAP_VER_COSTOS', canRead: true }
 const EXENTO = { module: 'CAP_EXENTO_TOPE_DESCUENTO', canRead: true }
@@ -28,7 +35,7 @@ const escribir = async (campo: string, texto: string) => {
 }
 const valor = (campo: string) => leerNumero(screen.getByLabelText(campo).props.value)
 
-beforeEach(() => conUsuario(10))
+beforeEach(() => { conUsuario(10); mockGet.mockReset().mockResolvedValue(undefined) })
 
 describe('EditarLineaSheet: descuento % ↔ precio con descuento (descuentos.ts)', () => {
   it('el % calcula el precio igual que precioFromPct', async () => {
@@ -193,5 +200,34 @@ describe('EditarLineaSheet: costos solo con CAP_VER_COSTOS', () => {
     expect(screen.getByText('Precio de compra')).toBeTruthy()
     expect(screen.getByText('$ 1.410,00')).toBeTruthy()
     expect(screen.getByText('43,51 % · en verde')).toBeTruthy()
+  })
+})
+
+describe('EditarLineaSheet: fragancias no pasan su stock disponible', () => {
+  const lavanda = producto({ id: 'pv1', nombre: 'Saphirus - Lavanda', productoPadreId: 'pf', ventaMinimaUnidades: 6, fraccionMinimaVenta: 'Bulto', real: 100 })
+  const abrirFragancia = (cantidad: number) => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={qc}><EditarLineaSheet linea={{ productoId: 'pv1', producto: lavanda, cantidad, descuentoPct: 0 }} onClose={jest.fn()} onConfirm={jest.fn()} onQuitar={jest.fn()} /></QueryClientProvider>)
+  }
+
+  it('con stock 8 y cajas de 6, + llega a 6 y ahí queda (el stock es el del servidor, no el del catálogo)', async () => {
+    conUsuario(10)
+    useAuthStore.setState({ user: { roles: ['Gerencia'], permissions: [], maxDescuentoPorcentaje: 10 } as never })
+    mockGet.mockResolvedValue([{ id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, stockDisponible: 8, activo: true }])
+    abrirFragancia(6)
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Sumar' })).toBeDisabled())
+    await userEvent.press(screen.getByRole('button', { name: 'Sumar' }))
+    expect(screen.getByLabelText('Unidades: 6')).toBeTruthy()
+  })
+
+  it('con stock para dos cajas, + suma una caja y se detiene en 12', async () => {
+    useAuthStore.setState({ user: { roles: ['Gerencia'], permissions: [], maxDescuentoPorcentaje: 10 } as never })
+    mockGet.mockResolvedValue([{ id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, stockDisponible: 12, activo: true }])
+    abrirFragancia(6)
+    await waitFor(() => expect(mockGet).toHaveBeenCalled())
+    await screen.findByLabelText('Unidades: 6')
+    await userEvent.press(screen.getByRole('button', { name: 'Sumar' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Sumar' }))
+    expect(screen.getByLabelText('Unidades: 12')).toBeTruthy()
   })
 })
