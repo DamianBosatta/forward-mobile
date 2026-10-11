@@ -157,6 +157,29 @@ describe('Consola del chofer: hoja de ruta', () => {
     expect(screen.getByLabelText('Cambiar de ruta')).toBeTruthy()
   })
 
+  it('Cambiar de ruta en una hoja cancelada no vuelve a elegirla sola con la lista vieja', async () => {
+    // La lista de hoy la trajo Programada; después la oficina la canceló.
+    listaServidor = () => [{ id: 'h1', estado: 1 }]
+    pintar({ ...HOJA, estado: 4 })
+    await screen.findByText('Hoja cancelada.')
+    listaServidor = () => [{ id: 'h1', estado: 4 }]
+    await userEvent.press(screen.getByLabelText('Cambiar de ruta'))
+    expect(await screen.findByText('No tenés una hoja de ruta para hoy ni en curso.')).toBeTruthy()
+    expect(screen.queryByText('Hoja cancelada.')).toBeNull()
+  })
+
+  it('si iniciar choca con una hoja que la oficina canceló, la hoja se vuelve a pedir y se ve cancelada', async () => {
+    mockPost.mockImplementation(async () => {
+      hojaServidor = { ...HOJA, estado: 4 }
+      throw new Error('La hoja de ruta no está programada.')
+    })
+    pintar({ ...HOJA, estado: 1 })
+    await userEvent.press(await screen.findByLabelText('Iniciar recorrido'))
+    expect(await screen.findByText('Hoja cancelada.')).toBeTruthy()
+    expect(screen.queryByLabelText('Iniciar recorrido')).toBeNull()
+    expect(screen.getByText('La hoja de ruta no está programada.')).toBeTruthy()
+  })
+
   it('con historial de rutas viejas y una para hoy, abre la de hoy sin pasar por el selector', async () => {
     jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T01:30:00Z')) // viernes 9 en Argentina
     // El servidor filtra por día: con fecha devuelve solo ese día; sin fecha, todo el historial.

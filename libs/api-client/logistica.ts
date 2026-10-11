@@ -85,7 +85,7 @@ export interface VentaPreparacion {
   version: number
   /** Hoja de ruta Programada (todavía sin salir) en la que ya está la venta; null si está libre. */
   hojaRutaId?: string | null
-  /** "HR-000123" de esa hoja. */
+  /** Código de esa hoja: "HR-" + 6 hex del id en mayúsculas (p. ej. "HR-1A2B3C"). */
   hojaRutaCodigo?: string | null
 }
 
