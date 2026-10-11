@@ -2,6 +2,8 @@ import {
   View, Text, ScrollView, Pressable, Alert, ActivityIndicator,
   Modal, StyleSheet, Platform, TouchableOpacity
 } from 'react-native'
+import { useVentaNueva } from '@/features/ventas/lib/ventaNueva'
+import { DetalleVentaNueva } from '@/features/venta-nueva/components/DetalleVentaNueva'
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
 import { useState, useMemo } from 'react'
@@ -80,7 +82,9 @@ function getInitials(name?: string) {
 /** Ruta `ventas/[id]`: el id viene de la URL. */
 export default function VentaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  return <VentaDetalle id={id} />
+  // Con el switch de la venta nueva, el detalle con el formato nuevo (PR 2.10).
+  const ventaNueva = useVentaNueva()
+  return ventaNueva && id ? <DetalleVentaNueva id={id} /> : <VentaDetalle id={id} />
 }
 
 /**

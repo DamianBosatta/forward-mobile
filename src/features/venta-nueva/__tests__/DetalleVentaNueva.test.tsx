@@ -1,0 +1,112 @@
+import React from 'react'
+import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useAuthStore } from '@/features/auth/store/auth.store'
+import { DetalleVentaNueva, diaDeEntrega } from '../components/DetalleVentaNueva'
+
+const mockGet = jest.fn()
+jest.mock('@/core/api/client', () => ({
+  ...jest.requireActual('@/core/api/client'),
+  API_URL: 'https://api',
+  api: { get: (...a: unknown[]) => mockGet(...a), post: jest.fn(), put: jest.fn(), delete: jest.fn() },
+}))
+jest.mock('@/features/pedidos/lib/sharePdf', () => ({ sharePdf: jest.fn() }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }) }))
+const mockDims = jest.fn()
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => mockDims() }))
+jest.setTimeout(20000)
+
+const cabecera = (o: Record<string, unknown> = {}) => ({
+  id: 'v9', codigoPedido: 'A00417', clienteId: 'c7', clienteNombre: 'Carlos SRL', vendedorId: 'u1', vendedorNombre: 'Emanuel Parraquini',
+  estado: 9, tipoOperacion: 2, version: 3, fecha: new Date().toISOString(), motivoPendienteAutorizacion: 4 | 32,
+  fechaEntrega: '2026-10-08T00:00:00', metodoEntregaNombre: 'LogisticaPropia', metodoEntrega: 1, observaciones: 'Portón negro, antes de las 12',
+  subtotalBrutoAmount: 503690.4, porcentajeDescuento: 0, montoDescuentoAmount: 0, cargoFleteAmount: 4287.15, totalAmount: 507977.55, ...o,
+})
+let mockVenta = { venta: cabecera(), detalles: [
+  { id: 'i1', productoNombre: 'Detergente Magistral Limón 750 ml', cantidad: 36, precioUnitario: 2640, subtotal: 95040, porcentajeDescuentoItem: 14 },
+  { id: 'i2', productoNombre: 'Trapo de piso gris Virulana', cantidad: 120, precioUnitario: 780, subtotal: 93600, porcentajeDescuentoItem: 0 },
+], bultos: [] }
+const socio = { id: 'c7', direccion: 'Juan B. Justo 6376', nombreFantasia: 'Autoservicio Carlos', nombreContacto: 'Carlos', condicionPago: { tipo: 'DiasDesdeEntrega', dias: 30 } }
+const pagos = {
+  ventaId: 'v9', total: 507977.55, montoPagado: 100000, saldoPendiente: 407977.55, estadoPago: 'Parcial',
+  imputaciones: [{ pagoId: 'p1', numeroPago: 'Seña', medioPago: 'Transferencia', monto: 100000, fechaImputacion: new Date().toISOString(), origen: 'Pago' }],
+}
+
+function pantalla(onVolver?: () => void) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(<QueryClientProvider client={qc}><DetalleVentaNueva id="v9" onVolver={onVolver} /></QueryClientProvider>)
+}
+
+beforeEach(() => {
+  mockDims.mockReturnValue({ width: 390, height: 800, scale: 2, fontScale: 1 })
+  useAuthStore.setState({ user: { id: 'u1', roles: ['Vendedor'], permissions: [{ module: 'MOD_VENTAS', canRead: true }] } as never })
+  mockVenta = { ...mockVenta, venta: cabecera() }
+  mockPush.mockReset()
+  mockGet.mockReset().mockImplementation((url: string) => {
+    if (url === '/api/v1/Ventas/v9') return Promise.resolve(mockVenta)
+    if (url === '/api/v1/socios-comerciales/c7') return Promise.resolve(socio)
+    if (url === '/api/v1/Ventas/v9/pagos') return Promise.resolve(pagos)
+    if (url.startsWith('/api/v1/comisiones/simulacion/ventas/v9')) return Promise.resolve({ comisionActiva: true, montoCobro: 507977.55, montoComision: 25184.52 })
+    return Promise.resolve(undefined)
+  })
+})
+
+describe('detalle de la venta nueva (PR 2.10)', () => {
+  it('muestra número, cliente por dirección, estado, motivos del servidor, entrega, líneas, totales y cobros', async () => {
+    pantalla()
+    expect(await screen.findByText('Pedido A00417')).toBeTruthy()
+    expect(await screen.findAllByText('Juan B. Justo 6376')).toHaveLength(2)
+    expect(screen.getByText('Carlos · Autoservicio Carlos')).toBeTruthy()
+    expect(screen.getByLabelText('Estado: Por autorizar')).toBeTruthy()
+    expect(screen.getByText(/Hoy \d\d:\d\d · Emanuel Parraquini/)).toBeTruthy()
+    expect(screen.getByText(/• Un descuento supera tu tope\. • Supera el tope de venta del cliente\. Te avisamos/)).toBeTruthy()
+    expect(screen.getByText('Cuenta corriente, 30 días desde la entrega')).toBeTruthy()
+    expect(screen.getByText('Jueves 8 de octubre')).toBeTruthy()
+    expect(screen.getByText('Logística propia')).toBeTruthy()
+    expect(screen.getByText('Portón negro, antes de las 12')).toBeTruthy()
+    expect(screen.getByText('Líneas (2)')).toBeTruthy()
+    expect(screen.getByText('Desc. 14 %')).toBeTruthy()
+    expect(screen.getByText('Sin descuento')).toBeTruthy()
+    expect(await screen.findByText('Transferencia · Seña')).toBeTruthy()
+    expect(screen.getByText('Saldo del pedido')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Compartir PDF con el cliente' })).toBeTruthy()
+  })
+
+  it('la comisión estimada la da el servidor y solo en una venta propia', async () => {
+    const r = pantalla()
+    expect(await screen.findByText('Tu comisión estimada $ 25.184,52')).toBeTruthy()
+    expect(mockGet).toHaveBeenCalledWith('/api/v1/comisiones/simulacion/ventas/v9?monto=507977.55')
+    r.unmount()
+    mockGet.mockClear()
+    mockVenta = { ...mockVenta, venta: cabecera({ vendedorId: 'otro' }) }
+    pantalla()
+    await screen.findByText('Pedido A00417')
+    await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/v1/Ventas/v9/pagos'))
+    expect(mockGet.mock.calls.some(([u]) => String(u).includes('simulacion'))).toBe(false)
+    expect(screen.queryByText(/Tu comisión estimada/)).toBeNull()
+  })
+
+  it('un retiro no muestra fecha y un presupuesto avisa que no reserva stock', async () => {
+    mockVenta = { ...mockVenta, venta: cabecera({ tipoOperacion: 1, estado: 1, metodoEntregaNombre: 'RetiroEnLocal', codigoPedido: 'A00421' }) }
+    pantalla()
+    expect(await screen.findByText('Presupuesto A00421')).toBeTruthy()
+    expect(screen.getByText('Retiro en el local')).toBeTruthy()
+    expect(screen.queryByText('Jueves 8 de octubre')).toBeNull()
+    expect(screen.getByText('No reserva stock.')).toBeTruthy()
+  })
+
+  it('"Ver ficha" abre el cliente; embebido en tablet, volver cierra el panel', async () => {
+    const onVolver = jest.fn()
+    pantalla(onVolver)
+    await userEvent.press(await screen.findByRole('link', { name: 'Ver ficha' }))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/socios/c7')
+    await userEvent.press(screen.getByRole('button', { name: 'Volver' }))
+    expect(onVolver).toHaveBeenCalled()
+  })
+
+  it('el día de entrega se lee tal cual se guardó, sin correrse por el huso', () => {
+    expect(diaDeEntrega('2026-10-08T00:00:00Z')).toBe('Jueves 8 de octubre')
+    expect(diaDeEntrega(null)).toBeNull()
+  })
+})

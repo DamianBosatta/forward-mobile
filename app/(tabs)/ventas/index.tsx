@@ -41,7 +41,7 @@ import { VentaCardSkeleton } from '@/features/ventas/components/VentaCardSkeleto
 import { useResponsive } from '@/libs/useResponsive'
 import { useVentaNueva } from '@/features/ventas/lib/ventaNueva'
 import { ListaVentasNueva } from '@/features/ventas/components/ListaVentasNueva'
-import { VentaDetalle } from './[id]'
+import { DetalleVentaNueva } from '@/features/venta-nueva/components/DetalleVentaNueva'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const MONTHS_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
@@ -570,7 +570,7 @@ export default function VentasListScreenRoute() {
   return (
     <ConAccesosRapidos activa="ventas">
       {ventaNueva
-        ? <ListaVentasNueva detalle={(id, cerrar) => <VentaDetalle key={id} id={id} onVolver={cerrar} />} />
+        ? <ListaVentasNueva detalle={(id, cerrar) => <DetalleVentaNueva key={id} id={id} onVolver={cerrar} />} />
         : <VentasListScreen />}
     </ConAccesosRapidos>
   )
