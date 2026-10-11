@@ -2,6 +2,7 @@ import React from 'react'
 import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { RegistrarCobro, AVISO_IMPUTACION } from '../components/RegistrarCobro'
 import { SIN_CUENTA_CONFIRMADA } from '../components/CobroListo'
+import { leerFecha } from '../lib/cobro'
 import { api } from '@/core/api/client'
 import { conPermisos, renderConQuery } from '@/features/clientes/__testing__/ayuda'
 import { estadoDeCuenta, fichaConCuentas, mov, paginaDeMovimientos } from '../__testing__/servidor'
@@ -74,6 +75,27 @@ it('si el pago no aparece en ninguna cuenta, no inventa una: lo dice', async () 
   expect(screen.queryByText(/Quedó en la cuenta/)).toBeNull()
 })
 
+it('con cheque pide sus datos y los manda como cheque recibido, con las fechas del día argentino', async () => {
+  renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+  await cargarMontoYMedio('30.000', 'Cheque')
+  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+  expect(screen.getByText('Completá número, banco y titular del cheque.')).toBeTruthy()
+  expect(post).not.toHaveBeenCalled()
+
+  fireEvent.changeText(screen.getByLabelText('N.º de cheque'), '00412377')
+  fireEvent.changeText(screen.getByLabelText('Banco'), 'Banco Provincia')
+  fireEvent.changeText(screen.getByLabelText('Titular'), 'Graciela Ruiz')
+  fireEvent.changeText(screen.getByLabelText('Fecha de emisión'), '7/10/2026')
+  fireEvent.changeText(screen.getByLabelText('Fecha de pago'), '20/10/2026')
+  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+
+  expect(post.mock.calls[0][1].lineas).toEqual([{
+    medioPagoId: 'm-ch',
+    monto: 30000,
+    chequesRecibidos: [{ numero: '00412377', banco: 'Banco Provincia', titular: 'Graciela Ruiz', fechaEmision: '2026-10-07', fechaPago: '2026-10-20', monto: 30000 }],
+  }])
+})
+
 it('si el servidor rechaza, se ve su motivo y el cobro no se da por hecho', async () => {
   post.mockRejectedValue(Object.assign(new Error('No hay una caja abierta.'), { errors: [] }))
   renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
@@ -90,6 +112,7 @@ it('mientras se registra, un segundo toque no manda otro cobro', async () => {
   renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
   await cargarMontoYMedio('100', 'Efectivo')
   const boton = screen.getByRole('button', { name: /^Registrar cobro de/ })
+
   await userEvent.press(boton)
   await userEvent.press(boton)
   terminar('p1')
@@ -97,8 +120,8 @@ it('mientras se registra, un segundo toque no manda otro cobro', async () => {
   await waitFor(() => expect(post).toHaveBeenCalledTimes(1))
 })
 
-it('el medio cheque no se ofrece mientras el cobro no pueda cargar los datos del cheque', async () => {
-  renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
-  expect(await screen.findByRole('radio', { name: 'Efectivo' }, ESPERA)).toBeTruthy()
-  expect(screen.queryByRole('radio', { name: 'Cheque' })).toBeNull()
+it('lee fechas dd/mm/aaaa y rechaza las que no existen', () => {
+  expect(leerFecha('07/10/2026')).toBe('2026-10-07')
+  expect(leerFecha('31/02/2026')).toBeNull()
+  expect(leerFecha('2026-10-07')).toBeNull()
 })

@@ -5,16 +5,24 @@ import { Button, Field, FormContainer, Notice, TotalsRow, formatImporte } from '
 import { useSocio } from '@/libs/api-client/socios'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
+import { diaArgentina } from '@/src/utils/date'
 import { useEstadoCuentaSocio } from '../api/queries'
 import { useMediosDeCobro, useRegistrarCobro } from '../api/cobros'
-import { armarCobro, type FormCobro } from '../lib/cobro'
+import { armarCobro, mostrarFecha, type FormCobro } from '../lib/cobro'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
 import { CobroListo } from './CobroListo'
 
 export const AVISO_IMPUTACION =
   'Imputación automática: el servidor lo aplica a la deuda más vieja y te dice en qué cuenta (TST o Normal) quedó.'
 
-const formVacio = (): FormCobro => ({ monto: '', medioPagoId: null, referencia: '' })
+const hoy = () => mostrarFecha(diaArgentina(Date.now()))
+const formVacio = (): FormCobro => ({
+  monto: '',
+  medioPagoId: null,
+  esCheque: false,
+  referencia: '',
+  cheque: { numero: '', banco: '', titular: '', emision: hoy(), pago: hoy() },
+})
 
 /** Registrar un cobro (láminas Cobro y CobroListo). La cuenta TST / Normal la elige el servidor. */
 export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolver: () => void }) {
@@ -26,6 +34,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
   const [f, setF] = useState<FormCobro>(formVacio)
   const [aviso, setAviso] = useState<string | null>(null)
   const [pagoId, setPagoId] = useState<string | null>(null)
+  const cheque = (campo: keyof FormCobro['cheque']) => (v: string) => setF(p => ({ ...p, cheque: { ...p.cheque, [campo]: v } }))
 
   if (socio.isLoading) return <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
   if (!socio.data) return <Notice tone="peligro">{mensajeDelServidor(socio.error, 'No se pudo abrir el cliente.')}</Notice>
@@ -67,7 +76,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
 
         <View accessibilityRole="radiogroup" accessibilityLabel="Medio" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
           {medios.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
-          {(medios.data ?? []).filter(m => m.activo && !m.esCheque).map(m => {
+          {(medios.data ?? []).filter(m => m.activo).map(m => {
             const elegido = m.id === f.medioPagoId
             return (
               <Pressable
@@ -75,7 +84,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
                 accessibilityRole="radio"
                 accessibilityLabel={m.nombre ?? ''}
                 accessibilityState={{ checked: elegido, selected: elegido }}
-                onPress={() => setF(p => ({ ...p, medioPagoId: m.id ?? null }))}
+                onPress={() => setF(p => ({ ...p, medioPagoId: m.id ?? null, esCheque: !!m.esCheque }))}
                 style={{
                   minHeight: 44,
                   justifyContent: 'center',
@@ -92,6 +101,16 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
           })}
         </View>
         {medios.error ? <Notice tone="peligro">{mensajeDelServidor(medios.error, 'No se pudieron cargar los medios de pago.')}</Notice> : null}
+
+        {f.esCheque ? (
+          <>
+            <Field label="N.º de cheque" value={f.cheque.numero} onChangeText={cheque('numero')} />
+            <Field label="Banco" value={f.cheque.banco} onChangeText={cheque('banco')} />
+            <Field label="Titular" value={f.cheque.titular} onChangeText={cheque('titular')} />
+            <Field label="Fecha de emisión" value={f.cheque.emision} onChangeText={cheque('emision')} help="dd/mm/aaaa" />
+            <Field label="Fecha de pago" value={f.cheque.pago} onChangeText={cheque('pago')} help="dd/mm/aaaa" />
+          </>
+        ) : null}
 
         <Field label="Referencia (opcional)" value={f.referencia} onChangeText={v => setF(p => ({ ...p, referencia: v }))} help="Por ejemplo, el N.º de operación" />
         <Notice tone="info">{AVISO_IMPUTACION}</Notice>
