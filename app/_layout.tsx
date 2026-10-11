@@ -8,15 +8,16 @@ import { StatusBar } from 'expo-status-bar'
 import { useAuthGuard } from '../hooks/useAuthGuard'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native'
-import { useFonts, Inter_400Regular, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter'
-import { 
-  Outfit_400Regular, 
-  Outfit_500Medium, 
-  Outfit_600SemiBold, 
-  Outfit_700Bold, 
-  Outfit_800ExtraBold, 
-  Outfit_900Black 
-} from '@expo-google-fonts/outfit'
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+  Inter_900Black,
+} from '@expo-google-fonts/inter'
+import { useColors, useIsDark } from '@/libs/theme'
 import * as SplashScreen from 'expo-splash-screen'
 import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
 import { WifiOff } from 'lucide-react-native'
@@ -65,17 +66,24 @@ function RootLayoutNav() {
   const isHydrated = useAuthStore(state => state.isHydrated)
   const [isApiUrlLoaded, setIsApiUrlLoaded] = useState(false)
 
+  // Inter sola (plan §7). Los nombres Outfit_* son legados: las pantallas viejas
+  // los referencian, así que se registran apuntando a los archivos de Inter.
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
+    Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
-    Outfit_400Regular,
-    Outfit_500Medium,
-    Outfit_600SemiBold,
-    Outfit_700Bold,
-    Outfit_800ExtraBold,
-    Outfit_900Black,
+    Inter_800ExtraBold,
+    Inter_900Black,
+    Outfit_400Regular: Inter_400Regular,
+    Outfit_500Medium: Inter_500Medium,
+    Outfit_600SemiBold: Inter_600SemiBold,
+    Outfit_700Bold: Inter_700Bold,
+    Outfit_800ExtraBold: Inter_800ExtraBold,
+    Outfit_900Black: Inter_900Black,
   })
+  const colors = useColors()
+  const isDark = useIsDark()
 
   useEffect(() => {
     loadSavedApiUrl().finally(() => {
@@ -94,11 +102,11 @@ function RootLayoutNav() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#000000' }}>
-      <StatusBar style="light" />
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <OfflineBanner />
       <AuthGuardHandler />
-      <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: '#000000' } }}>
+      <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.bg } }}>
         <Stack.Screen name="login" options={{ gestureEnabled: false }} />
         <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
       </Stack>
@@ -178,6 +186,6 @@ const styles = StyleSheet.create({
   offlineText: {
     color: '#fff',
     fontSize: 12,
-    fontFamily: 'Outfit_700Bold',
+    fontFamily: 'Inter_700Bold',
   }
 })
