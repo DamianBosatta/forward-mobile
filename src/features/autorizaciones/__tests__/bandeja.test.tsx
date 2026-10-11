@@ -5,9 +5,10 @@ import { useAuthStore } from '@/libs/store/auth.store'
 import { BandejaAutorizaciones } from '../components/BandejaAutorizaciones'
 
 const mockGet = jest.fn()
+const mockPost = jest.fn()
 jest.mock('@/core/api/client', () => ({
   API_URL: 'http://api.test',
-  api: { get: (url: string) => mockGet(url) },
+  api: { get: (url: string) => mockGet(url), post: (url: string, body: unknown) => mockPost(url, body) },
 }))
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
@@ -36,8 +37,11 @@ function conCapacidades(...caps: string[]) {
   } as never)
 }
 
-function bandeja(lista: unknown) {
-  mockGet.mockImplementation(() => (lista instanceof Error ? Promise.reject(lista) : Promise.resolve(lista)))
+function bandeja(lista: unknown, detalleVenta = { venta: { version: 7, fechaModificacion: '2026-10-11T10:00:00Z' } }) {
+  mockGet.mockImplementation((url: string) =>
+    url.includes('pendientes-autorizacion')
+      ? (lista instanceof Error ? Promise.reject(lista) : Promise.resolve(lista))
+      : Promise.resolve(detalleVenta))
 }
 
 function pintar() {
@@ -49,9 +53,13 @@ function pintar() {
   )
 }
 
+/** Lo que hay dentro de la hoja abierta (la lista sigue detrás). */
+const hoja = (nombre: string) => within(screen.getByLabelText(nombre))
+
 beforeEach(() => {
   jest.clearAllMocks()
   mockAncho.mockReturnValue(390)
+  mockPost.mockResolvedValue(true)
 })
 
 describe('Autorizaciones: la bandeja', () => {
@@ -93,6 +101,48 @@ describe('Autorizaciones: la bandeja', () => {
     bandeja(new Error('Solo Administración o Gerencia pueden ver la bandeja de autorizaciones.'))
     pintar()
     expect(await screen.findByText('Solo Administración o Gerencia pueden ver la bandeja de autorizaciones.')).toBeTruthy()
+  })
+
+  it('rechazar pide el motivo y lo manda con la versión vigente de la venta', async () => {
+    conCapacidades('CAP_AUTORIZAR_VENTA')
+    bandeja([venta('a', 4, 100)])
+    pintar()
+
+    await userEvent.press(await screen.findByLabelText('Rechazar la venta de Dirección a - Cliente a'))
+    const boton = hoja('Rechazar venta').getByRole('button', { name: 'Rechazar' })
+    expect(boton.props.accessibilityState.disabled).toBe(true)
+
+    await userEvent.type(screen.getByLabelText('Motivo del rechazo · obligatorio'), '  Sin margen  ')
+    await userEvent.press(hoja('Rechazar venta').getByRole('button', { name: 'Rechazar' }))
+
+    expect(mockGet).toHaveBeenCalledWith('/api/v1/Ventas/a')
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/a/rechazar-autorizacion', { ventaId: 'a', version: 7, motivoRechazo: 'Sin margen' })
+  })
+
+  it('si la venta cambió desde que se cargó la lista, no decide y lo avisa', async () => {
+    conCapacidades('CAP_AUTORIZAR_VENTA')
+    bandeja([venta('a', 4, 100)], { venta: { version: 8, fechaModificacion: '2026-10-11T11:30:00Z' } })
+    pintar()
+
+    await userEvent.press(await screen.findByLabelText('Autorizar la venta de Dirección a - Cliente a'))
+    await userEvent.press(hoja('Autorizar venta').getByRole('button', { name: 'Autorizar' }))
+
+    expect(await screen.findByText(/La venta cambió desde que se cargó la lista/)).toBeTruthy()
+    expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  it('autorizar sin razón la manda en null; con margen en amarillo la tarjeta lleva a revisar', async () => {
+    conCapacidades('CAP_AUTORIZAR_VENTA')
+    bandeja([venta('a', 1, 100), venta('b', 2 | 1, 200)])
+    pintar()
+
+    await userEvent.press(await screen.findByLabelText('Revisar la venta de Dirección b - Cliente b'))
+    expect(mockPush).toHaveBeenCalledWith('/detalle/b')
+    expect(screen.queryByLabelText('Autorizar la venta de Dirección b - Cliente b')).toBeNull()
+
+    await userEvent.press(screen.getByLabelText('Autorizar la venta de Dirección a - Cliente a'))
+    await userEvent.press(hoja('Autorizar venta').getByRole('button', { name: 'Autorizar' }))
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/a/autorizar', { ventaId: 'a', version: 7, razon: null })
   })
 
   it('en teléfono, tocar la tarjeta abre el detalle', async () => {

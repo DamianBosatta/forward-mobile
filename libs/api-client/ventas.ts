@@ -220,19 +220,47 @@ export function useAnularVenta() {
 }
 
 /**
- * Authorize a below-floor venta (PR-2e-b). The server derives actor identity and
- * authorizing role from the JWT token. `razon` is mandatory server-side when any
- * item is below floor. On success, refreshes the venta detail (estado leaves
- * PendienteAutorizacion) and the lists.
+ * Versión vigente de la venta para decidir sobre ella. Si cambió desde que se cargó la bandeja
+ * (`fechaPendiente` es su fecha de modificación), frena: no se decide sobre algo que no se vio.
+ */
+async function versionParaDecidir(id: string, fechaPendiente?: string): Promise<number> {
+  const d = await api.get<VentaDetalleDto>(`/api/v1/Ventas/${id}`)
+  if (fechaPendiente && Date.parse(d.venta.fechaModificacion ?? '') !== Date.parse(fechaPendiente)) {
+    throw new Error('La venta cambió desde que se cargó la lista. Actualizá y revisala antes de decidir.')
+  }
+  return d.venta.version
+}
+
+/**
+ * Autoriza una venta por autorizar. Con `version` usa la del detalle que se está viendo; sin
+ * ella (desde la bandeja) la pide al servidor. La razón es obligatoria solo con margen en
+ * amarillo y la exige el servidor; vacía viaja como null.
  */
 export function useAutorizarVenta() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, version, razon }: { id: string; version: number; razon: string }) =>
+    mutationFn: async ({ id, version, razon, fechaPendiente }: { id: string; version?: number; razon?: string | null; fechaPendiente?: string }) =>
       api.post<boolean>(
         `/api/v1/Ventas/${id}/autorizar`,
-        buildAutorizarPayload({ ventaId: id, version, razon }),
+        buildAutorizarPayload({ ventaId: id, version: version ?? (await versionParaDecidir(id, fechaPendiente)), razon }),
       ),
+    onSuccess: (_data, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ventasKeys.detail(id) })
+      queryClient.invalidateQueries({ queryKey: ventasKeys.all })
+    },
+  })
+}
+
+/** Rechaza una venta por autorizar. El motivo es obligatorio (lo exige el dominio). */
+export function useRechazarAutorizacion() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, version, motivo, fechaPendiente }: { id: string; version?: number; motivo: string; fechaPendiente?: string }) =>
+      api.post<string>(`/api/v1/Ventas/${id}/rechazar-autorizacion`, {
+        ventaId: id,
+        version: version ?? (await versionParaDecidir(id, fechaPendiente)),
+        motivoRechazo: motivo.trim(),
+      }),
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ventasKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: ventasKeys.all })

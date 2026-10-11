@@ -28,6 +28,14 @@ export function motivosDe(flags: number | null | undefined): Motivo[] {
   return MOTIVOS.filter((m) => (n & m.bit) !== 0).map(({ bit: _bit, ...m }) => m)
 }
 
+/**
+ * El servidor exige la razón al autorizar cuando hay margen en amarillo
+ * (`AutorizarVentaCommandHandler`: ValidationException si falta). Para los otros motivos es opcional.
+ */
+export function pideRazon(flags: number | null | undefined): boolean {
+  return ((flags ?? 0) & 2) !== 0
+}
+
 /** Filtros con su cantidad, solo los que tienen alguna venta. "Todas" va primero. */
 export function filtrosConConteo(lista: { motivoPendienteAutorizacion: number }[]): { clave: ClaveMotivo | 'todas'; label: string; cantidad: number }[] {
   const conteo = MOTIVOS.map((m) => ({

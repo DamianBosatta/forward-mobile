@@ -40,26 +40,28 @@ export function canAuthorizeVenta(
 export interface BuildAutorizarPayloadInput {
   ventaId: string
   version: number
-  /** Mandatory reason; whitespace will be trimmed. */
-  razon: string
+  /** Razón; se recorta. Obligatoria solo con margen en amarillo (lo decide el servidor). */
+  razon?: string | null
 }
 
 export interface AutorizarPayload {
   ventaId: string
   version: number
-  razon: string
+  /** null si no hay: el validador del servidor rechaza una razón vacía o en blanco. */
+  razon: string | null
 }
 
 /**
  * Builds the POST body for the Autorizar endpoint.
  *
  * The server derives actor identity and role exclusively from the JWT token —
- * `usuarioId` and `isAdminUser` are NOT sent. Trims `razon` whitespace.
+ * `usuarioId` and `isAdminUser` are NOT sent. Trims `razon`; sin texto va null.
  */
 export function buildAutorizarPayload(input: BuildAutorizarPayloadInput): AutorizarPayload {
+  const razon = input.razon?.trim() ?? ''
   return {
     ventaId: input.ventaId,
     version: input.version,
-    razon: input.razon.trim(),
+    razon: razon.length > 0 ? razon : null,
   }
 }

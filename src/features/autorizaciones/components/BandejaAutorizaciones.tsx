@@ -1,14 +1,15 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Notice, TopBar, TwoPane, formatImporte, useMenuLeading } from '@/core/ui/fw'
+import { Button, Notice, TopBar, TwoPane, formatImporte, useMenuLeading } from '@/core/ui/fw'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { usePendientesAutorizacion, type VentaPendienteAutorizacion } from '@/libs/api-client/ventas'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { formatRelativeTime } from '@/src/utils/date'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { filtrosConConteo, motivosDe, tieneMotivo, type ClaveMotivo } from '../lib/motivos'
+import { filtrosConConteo, motivosDe, pideRazon, tieneMotivo, type ClaveMotivo } from '../lib/motivos'
+import { DecisionSheet, type Decision } from './DecisionSheet'
 
 /** Total de la bandeja: solo si todas las ventas son de la misma moneda; si no, no hay una cifra honesta. */
 export function totalDeBandeja(lista: VentaPendienteAutorizacion[]): number | null {
@@ -35,6 +36,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
   const q = usePendientesAutorizacion(puede)
   const [filtro, setFiltro] = useState<ClaveMotivo | 'todas'>('todas')
   const [elegida, setElegida] = useState<string | null>(null)
+  const [decidiendo, setDecidiendo] = useState<{ venta: VentaPendienteAutorizacion; decision: Decision } | null>(null)
 
   const lista = q.data ?? []
   const visibles = lista.filter((v) => tieneMotivo(v.motivoPendienteAutorizacion, filtro))
@@ -70,30 +72,38 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
           {`${visibles.length} POR AUTORIZAR${total !== null ? ` · ${formatImporte(total)}` : ''}`}
         </Text>
       ) : null}
-      <Text style={secundario}>La que más espera, primero.</Text>
+      <Text style={secundario}>La que más espera, primero. «Autorizar» pide confirmación; «Rechazar» pide el motivo.</Text>
     </View>
   )
 
-  const tarjeta = (v: VentaPendienteAutorizacion) => (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Ver la venta de ${v.clienteDisplayName}`}
-      onPress={() => abrir(v.id)}
-      style={({ pressed }) => ({ marginBottom: space[3], padding: space[4], gap: space[1], minHeight: 44, borderRadius: radii.tarjeta, backgroundColor: pressed ? c.surface2 : c.surface })}
-    >
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-        <Text numberOfLines={1} style={[secundario, { flexShrink: 1 }]}>{v.vendedorNombre}</Text>
-        <Text style={secundario}>{formatRelativeTime(v.fechaPendiente)}</Text>
+  const tarjeta = (v: VentaPendienteAutorizacion) => {
+    const conRazon = pideRazon(v.motivoPendienteAutorizacion)
+    return (
+      <View style={{ marginBottom: space[3], padding: space[4], gap: space[2], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Ver la venta de ${v.clienteDisplayName}`} onPress={() => abrir(v.id)} style={{ gap: space[1], minHeight: 44 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
+            <Text numberOfLines={1} style={[secundario, { flexShrink: 1 }]}>{v.vendedorNombre}</Text>
+            <Text style={secundario}>{formatRelativeTime(v.fechaPendiente)}</Text>
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
+            <Text numberOfLines={2} style={[typeScale.cuerpoDestacado, { color: c.text, flex: 1 }]}>{v.clienteDisplayName}</Text>
+            <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(v.totalAmount)}</Text>
+          </View>
+          {motivosDe(v.motivoPendienteAutorizacion).map((m) => (
+            <Text key={m.clave} style={[typeScale.secundario, { color: c.text }]}>{`• ${m.texto}`}</Text>
+          ))}
+        </Pressable>
+        <View style={{ flexDirection: 'row', gap: space[3] }}>
+          <View style={{ flex: 1 }}><Button label="Rechazar" variant="secundario" accessibilityLabel={`Rechazar la venta de ${v.clienteDisplayName}`} onPress={() => setDecidiendo({ venta: v, decision: 'rechazar' })} /></View>
+          <View style={{ flex: 1 }}>
+            {conRazon
+              ? <Button label="Revisar" accessibilityLabel={`Revisar la venta de ${v.clienteDisplayName}`} onPress={() => abrir(v.id)} />
+              : <Button label="Autorizar" accessibilityLabel={`Autorizar la venta de ${v.clienteDisplayName}`} onPress={() => setDecidiendo({ venta: v, decision: 'autorizar' })} />}
+          </View>
+        </View>
       </View>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
-        <Text numberOfLines={2} style={[typeScale.cuerpoDestacado, { color: c.text, flex: 1 }]}>{v.clienteDisplayName}</Text>
-        <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(v.totalAmount)}</Text>
-      </View>
-      {motivosDe(v.motivoPendienteAutorizacion).map((m) => (
-        <Text key={m.clave} style={[typeScale.secundario, { color: c.text }]}>{`• ${m.texto}`}</Text>
-      ))}
-    </Pressable>
-  )
+    )
+  }
 
   const cuerpo = !puede ? (
     <View style={{ padding: space[4] }}><Notice tone="info">Autorizar ventas necesita el permiso de autorizar ventas. Pedíselo a un administrador.</Notice></View>
@@ -121,6 +131,14 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
         list={cuerpo}
         detail={isTabletLandscape && elegida ? detalle(elegida, () => setElegida(null)) : null}
         emptyDetail={<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: space[6] }}><Text style={secundario}>Elegí una venta para decidir.</Text></View>}
+      />
+      <DecisionSheet
+        decision={decidiendo?.decision ?? null}
+        ventaId={decidiendo?.venta.id ?? ''}
+        cliente={decidiendo?.venta.clienteDisplayName ?? ''}
+        fechaPendiente={decidiendo?.venta.fechaPendiente}
+        onClose={() => setDecidiendo(null)}
+        onHecho={() => { if (decidiendo?.venta.id === elegida) setElegida(null) }}
       />
     </View>
   )

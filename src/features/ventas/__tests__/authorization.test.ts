@@ -67,6 +67,11 @@ describe('buildAutorizarPayload — includes ventaId, version, and razon only', 
     razon: 'Cliente estratégico, cierre de stock',
   }
 
+  it('sin razón (o en blanco) la manda en null: el servidor rechaza una razón vacía', () => {
+    expect(buildAutorizarPayload({ ventaId: 'v', version: 1, razon: '   ' }).razon).toBeNull()
+    expect(buildAutorizarPayload({ ventaId: 'v', version: 1 }).razon).toBeNull()
+  })
+
   it('includes razon in the payload', () => {
     const payload = buildAutorizarPayload(base)
     expect(payload.razon).toBe('Cliente estratégico, cierre de stock')
