@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import * as SecureStore from 'expo-secure-store'
 import { useColorScheme } from 'react-native'
 import type { TextStyle } from 'react-native'
+import { logger } from '@/core/utils/logger'
 
 // ── Tokens del Bloque 9 (plan §7 y §10) ────────────────────────────────────
 // Los dos temas usan los MISMOS nombres: la pantalla se programa una vez y el
@@ -364,7 +365,7 @@ const STORAGE_KEY = 'forward_theme_mode'
 interface ThemeState {
   mode: ThemeMode
   isHydrated: boolean
-  setMode: (mode: ThemeMode) => void
+  setMode: (mode: ThemeMode) => Promise<void>
   hydrate: () => Promise<void>
 }
 
@@ -374,7 +375,12 @@ export const useThemeStore = create<ThemeState>((set) => ({
 
   setMode: async (mode: ThemeMode) => {
     set({ mode })
-    await SecureStore.setItemAsync(STORAGE_KEY, mode)
+    try {
+      await SecureStore.setItemAsync(STORAGE_KEY, mode)
+    } catch (err) {
+      // La elección vale en esta sesión aunque no se pueda guardar.
+      logger.warn('No se pudo guardar el modo de tema', err)
+    }
   },
 
   hydrate: async () => {

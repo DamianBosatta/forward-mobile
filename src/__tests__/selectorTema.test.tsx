@@ -8,6 +8,7 @@ jest.mock('expo-secure-store', () => ({
   setItemAsync: (...a: unknown[]) => mockSetItem(...a),
   getItemAsync: (...a: unknown[]) => mockGetItem(...a),
 }))
+jest.mock('@/core/utils/logger', () => ({ logger: { warn: jest.fn(), error: jest.fn(), log: jest.fn(), info: jest.fn() } }))
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn() }), useNavigation: () => ({ dispatch: jest.fn() }) }))
 jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) }))
@@ -78,5 +79,14 @@ describe('hidratación del modo guardado', () => {
     mockGetItem.mockRejectedValue(new Error('x'))
     await useThemeStore.getState().hydrate()
     await waitFor(() => expect(useThemeStore.getState().isHydrated).toBe(true))
+    expect(useThemeStore.getState().mode).toBe('system')
+  })
+})
+
+describe('persistencia del modo', () => {
+  it('si setItemAsync falla, setMode no rechaza y el modo elegido queda en la sesión', async () => {
+    mockSetItem.mockRejectedValueOnce(new Error('disco lleno'))
+    await expect(useThemeStore.getState().setMode('dark')).resolves.toBeUndefined()
+    expect(useThemeStore.getState().mode).toBe('dark')
   })
 })
