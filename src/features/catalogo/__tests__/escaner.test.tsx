@@ -64,7 +64,7 @@ beforeEach(() => {
   api.get.mockReset().mockImplementation(servidor)
   api.post.mockReset().mockResolvedValue([])
   useAuthStore.setState({
-    user: { id: 'u1', username: 'u', depositoId: 'dep-1', roles: ['Vendedor'] as never, permissions: [{ module: 'MOD_STOCK', canRead: true }] as never },
+    user: { id: 'u1', username: 'u', roles: ['Vendedor'] as never, permissions: [{ module: 'MOD_STOCK', canRead: true }] as never },
   })
 })
 

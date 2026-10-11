@@ -4,11 +4,12 @@ import { Package, Lock } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, StatusChip, formatImporte } from '@/core/ui/fw'
 import { useProducto, useVariantesProducto } from '@/libs/api-client/productos'
-import { useStock } from '@/libs/api-client/stock'
+import { useDisponibilidad, useStock } from '@/libs/api-client/stock'
 import { getFullImageUrl } from '@/libs/api-client/media'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { canViewStock } from '@/features/ventas/lib/descuentos'
+import { useDepositoDeConsulta } from '../hooks/useDepositoDeConsulta'
 import { chipDeStock, formatPorcentaje, textoUnidadDeVenta } from '../lib/presentacion'
 
 function Fila({ label, valor, fuerte }: { label: string; valor: string; fuerte?: boolean }) {
@@ -53,10 +54,22 @@ export function FichaProducto({ productoId }: { productoId: string }) {
   const { data: variantes } = useVariantesProducto(productoId, !!p?.esPadreDeVariantes)
   const { data: stock } = useStock({ productoId }, { enabled: veCantidades && !!productoId })
 
+  // Una sola regla para tarjeta y ficha: disponibilidad que descuenta lo reservado, por la venta mínima.
+  const depositoId = useDepositoDeConsulta()
+  const cantidad = p?.ventaMinimaUnidades ?? 1
+  const idsAConsultar = p ? (p.esPadreDeVariantes ? (variantes ?? []).map((v) => v.id) : [p.id]) : []
+  const { data: disponibilidad } = useDisponibilidad(
+    depositoId,
+    idsAConsultar.map((id) => ({ productoId: id, cantidad })),
+  )
+  const hay = (id: string) => disponibilidad?.find((d) => d.productoId === id)?.disponible
+
   if (isLoading) return <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
   if (isError || !p) return <View style={{ padding: space[4] }}><Notice tone="peligro">No se pudo cargar el producto.</Notice></View>
 
-  const chip = chipDeStock(p.esPadreDeVariantes ? variantes?.some((v) => v.puedeVenderse) : p.puedeVenderse)
+  const chip = chipDeStock(
+    p.esPadreDeVariantes ? (disponibilidad ? disponibilidad.some((d) => d.disponible) : undefined) : hay(p.id),
+  )
   const foto = getFullImageUrl(p.imageUrl ?? p.imageUrlLinea)
   const encabezado = [p.codigoPropio, p.marca, p.categoriaPathCompleto].filter(Boolean).join(' · ')
   const depositos = stock?.items ?? []
@@ -98,7 +111,7 @@ export function FichaProducto({ productoId }: { productoId: string }) {
       {p.esPadreDeVariantes && variantes ? (
         <Seccion titulo={`Fragancias (${variantes.length})`}>
           {variantes.map((v) => {
-            const cv = chipDeStock(v.puedeVenderse)
+            const cv = chipDeStock(hay(v.id))
             return (
               <View key={v.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 44, gap: space[2] }}>
                 <Text style={[typeScale.cuerpo, { color: c.text, flexShrink: 1 }]}>{v.fraganciaNombre ?? v.nombre}</Text>

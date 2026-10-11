@@ -35,3 +35,5 @@ Lo que el Bloque 9A (solo mobile) necesita del servidor o de la web, y la deuda 
 | Separar clientes y proveedores | Ninguno (trabajo de la app) | `socios` / fase 1 (PR 1.3) | Lista y alta filtradas a clientes (`tipo = 1`). |
 | Pedidos por preparar, solo lectura | Ninguno (`logistica/pedidos` ya lee `tipoOperacion = 2`) | `logistica` / PR 5.2 | Se eliminó el tablero de picking (solo escribía). Queda `logistica/pedidos`; la vista de solo lectura se arma en 5.2. |
 | Tarjetas de Inicio a la lista filtrada | Ninguno (las listas de Ventas y Compras no reciben el filtro por parámetro de ruta) | Inicio / PR 0.8 → fases 1 y 3 | Cada fila lleva a la lista sin filtrar |
+| Depósito del usuario en el perfil | `GET /users/me` (`UserProfileDto`) no trae `depositoId` | Catálogo de consulta (tarjeta y ficha) / PR 1.1 | Se asume el Depósito Central (`DEPOSITO_CENTRAL_ID`) para `POST /Stocks/disponibilidad`; si el perfil trae el depósito, se usa ese. |
+| Venta mínima en el listado de productos | `ProductoDto` (`GET /Productos`) no trae `ventaMinimaUnidades` | Catálogo de consulta / PR 1.1 | La tarjeta consulta con cantidad 1; la ficha con la venta mínima del detalle. |

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import type { StockItem, PagedResult, AjusteStockRequest } from './types'
 import { productosKeys } from './productos'
@@ -39,22 +39,41 @@ export interface DisponibilidadItem {
   disponible: boolean
 }
 
+export interface DisponibilidadPedido {
+  productoId: string
+  cantidad: number
+}
+
+/** POST /Stocks/disponibilidad: (actual - reservado) >= cantidad, un booleano por producto. */
+export function fetchDisponibilidad(depositoId: string, items: DisponibilidadPedido[]) {
+  return api.post<DisponibilidadItem[]>('/api/v1/Stocks/disponibilidad', { depositoId, items })
+}
+
+const disponibilidadKey = (depositoId: string, items: DisponibilidadPedido[]) =>
+  [...stockKeys.all, 'disponibilidad', depositoId, items] as const
+
 /**
- * ¿Hay al menos una unidad para vender de cada producto en el depósito? El servidor responde
- * un booleano por producto, nunca la cantidad (PR 3.1: el vendedor ve disponibilidad).
+ * ¿Se puede vender la cantidad pedida de cada producto en el depósito? El servidor descuenta lo
+ * reservado y responde un booleano por producto, nunca la cantidad (PR 3.1).
  */
-export function useDisponibilidad(depositoId: string | undefined, productoIds: string[]) {
+export function useDisponibilidad(depositoId: string, items: DisponibilidadPedido[]) {
   return useQuery({
-    queryKey: [...stockKeys.all, 'disponibilidad', depositoId, productoIds] as const,
-    queryFn: () =>
-      api.post<DisponibilidadItem[]>('/api/v1/Stocks/disponibilidad', {
-        depositoId,
-        items: productoIds.map((productoId) => ({ productoId, cantidad: 1 })),
-      }),
-    enabled: !!depositoId && productoIds.length > 0,
-    // Al cargar otra página la lista de ids cambia: se mantienen los chips ya conocidos.
-    placeholderData: keepPreviousData,
+    queryKey: disponibilidadKey(depositoId, items),
+    queryFn: () => fetchDisponibilidad(depositoId, items),
+    enabled: items.length > 0,
     staleTime: 60_000,
+  })
+}
+
+/** Igual, pero una consulta por lote (una página del listado): al cargar otra solo se pide la nueva. */
+export function useDisponibilidadPorLotes(depositoId: string, lotes: DisponibilidadPedido[][]) {
+  return useQueries({
+    queries: lotes.map((items) => ({
+      queryKey: disponibilidadKey(depositoId, items),
+      queryFn: () => fetchDisponibilidad(depositoId, items),
+      enabled: items.length > 0,
+      staleTime: 60_000,
+    })),
   })
 }
 

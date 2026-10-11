@@ -802,6 +802,7 @@ function DescuentoItemModalRN({
 import { useLocalSearchParams } from 'expo-router'
 import { useVenta, useUpdateVenta, ventasKeys } from '@/libs/api-client'
 import { useEffect } from 'react'
+import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useFocusEffect } from '@react-navigation/native'
 
 export default function NuevaVentaMobileScreen() {
@@ -1273,7 +1274,7 @@ export default function NuevaVentaMobileScreen() {
 
     const formData: VentaFormData = {
       clienteId: clienteSelected.id!,
-      depositoId: 'fb15c487-acd2-41bb-8391-8353e61e8565', // Depósito Central
+      depositoId: DEPOSITO_CENTRAL_ID,
       tipoOperacion,
       descuentoGeneral: descGeneral,
       cargoFlete: fleteMonto,

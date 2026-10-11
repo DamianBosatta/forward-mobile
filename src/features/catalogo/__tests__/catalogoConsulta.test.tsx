@@ -2,6 +2,7 @@ import React from 'react'
 import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import CatalogoConsultaScreen from '../../../../app/(tabs)/inventario/index'
+import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 
 // PR 1.1 — catálogo de consulta. Se renderiza la pantalla real con react-query real;
@@ -52,7 +53,6 @@ function conUsuario(roles: string[], permissions: { module: string; canRead: boo
     user: {
       id: 'u1',
       username: 'u',
-      depositoId: 'dep-1',
       roles: roles as never,
       permissions: [{ module: 'MOD_STOCK', canRead: true }, ...permissions] as never,
     },
@@ -100,12 +100,48 @@ describe('Catálogo de consulta', () => {
     expect(await screen.findByText('Hay stock')).toBeTruthy()
     expect(screen.getByText('Sin stock')).toBeTruthy()
     expect(api.post).toHaveBeenCalledWith('/api/v1/Stocks/disponibilidad', {
-      depositoId: 'dep-1',
+      depositoId: DEPOSITO_CENTRAL_ID,
       items: [
         { productoId: AER.id, cantidad: 1 },
         { productoId: TEX.id, cantidad: 1 },
       ],
     })
+  })
+
+  it('con un perfil sin depósito usa el Depósito Central y el chip aparece igual', async () => {
+    expect(useAuthStore.getState().user?.depositoId).toBeUndefined()
+    renderPantalla()
+    expect(await screen.findByText('Hay stock')).toBeTruthy()
+    expect(api.post.mock.calls[0][1].depositoId).toBe(DEPOSITO_CENTRAL_ID)
+  })
+
+  it('con depósito en el perfil, usa ese', async () => {
+    useAuthStore.setState({ user: { ...useAuthStore.getState().user!, depositoId: 'dep-1' } })
+    renderPantalla()
+    await screen.findByText('Hay stock')
+    expect(api.post.mock.calls[0][1].depositoId).toBe('dep-1')
+  })
+
+  it('un producto totalmente reservado dice "Sin stock" en la tarjeta y en la ficha, aunque tenga stock físico', async () => {
+    // El servidor descuenta lo reservado: disponible=false para el producto, pero el detalle dice puedeVenderse.
+    api.post.mockResolvedValue([{ productoId: AER.id, disponible: false }])
+    renderPantalla()
+    await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
+    await screen.findByText('Precio de lista por unidad')
+    await waitFor(() => expect(screen.getAllByText('Sin stock').length).toBeGreaterThanOrEqual(2))
+    expect(screen.queryByText('Hay stock')).toBeNull()
+  })
+
+  it('la ficha pide la disponibilidad con la venta mínima como cantidad', async () => {
+    renderPantalla()
+    await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
+    await screen.findByText('Se vende por caja de 12')
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith('/api/v1/Stocks/disponibilidad', {
+        depositoId: DEPOSITO_CENTRAL_ID,
+        items: [{ productoId: AER.id, cantidad: 12 }],
+      }),
+    )
   })
 
   it('sin CAP_VER_COSTOS la ficha no dibuja costo ni margen, aunque llegaran', async () => {
