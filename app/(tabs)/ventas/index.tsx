@@ -1,3 +1,4 @@
+import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import {
   View,
   Text,
@@ -306,12 +307,14 @@ const VentaCard = React.memo(({ item, index }: { item: Venta, index: number }) =
 })
 
 // ── Main Screen ────────────────────────────────────────────────────────────────
-export default function VentasListScreen() {
+function VentasListScreen() {
   const navigation = useNavigation();
   const colors = useColors()
   const isDark = useIsDark()
   const insets = useSafeAreaInsets()
   const router = useRouter()
+  // En teléfono la venta nueva sale del "+" de la barra de accesos rápidos.
+  const { isTablet } = useResponsive()
 
   const [isSearchFocused, setIsSearchFocused] = useState(false)
 
@@ -466,7 +469,7 @@ export default function VentasListScreen() {
           />
         </View>
 
-        <RequirePermission module="MOD_VENTAS" action="create">
+        {isTablet && <RequirePermission module="MOD_VENTAS" action="create">
           <MotiView
             from={{ scale: 0, opacity: 0, translateY: 50 }} 
             animate={{ scale: 1, opacity: 1, translateY: 0 }}
@@ -481,7 +484,7 @@ export default function VentasListScreen() {
               <Plus size={32} color={isDark ? '#000' : '#fff'} strokeWidth={3} />
             </TouchableOpacity>
           </MotiView>
-        </RequirePermission>
+        </RequirePermission>}
 
         <MonthPicker
           visible={pickerOpen}
@@ -556,3 +559,12 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center'
   }
 })
+
+/** Pantalla principal: en teléfono lleva la barra de accesos rápidos (Bloque 9A, PR 0.3). */
+export default function VentasListScreenRoute() {
+  return (
+    <ConAccesosRapidos activa="ventas">
+      <VentasListScreen />
+    </ConAccesosRapidos>
+  )
+}

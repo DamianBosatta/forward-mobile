@@ -1,3 +1,4 @@
+import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import {
   View,
   Text,
@@ -228,7 +229,7 @@ const CompraCard = React.memo(({ item }: { item: CompraDtoList }) => {
 })
 
 
-export default function ComprasListScreen() {
+function ComprasListScreen() {
   const navigation = useNavigation();
   const colors = useColors()
   const isDark = useIsDark()
@@ -371,5 +372,14 @@ export default function ComprasListScreen() {
       <MonthPicker visible={pickerOpen} selected={selected} onSelect={setSelected} onClose={() => setPickerOpen(false)} />
     </View>
     </RequirePermission>
+  )
+}
+
+/** Pantalla principal: en teléfono lleva la barra de accesos rápidos (Bloque 9A, PR 0.3). */
+export default function ComprasListScreenRoute() {
+  return (
+    <ConAccesosRapidos activa="compras">
+      <ComprasListScreen />
+    </ConAccesosRapidos>
   )
 }

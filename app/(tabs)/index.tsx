@@ -1,3 +1,4 @@
+import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { safeHaptics } from '@/core/utils/haptics'
 ;
 import { useState, useCallback } from 'react'
@@ -16,7 +17,7 @@ import { FadeInDown } from 'react-native-reanimated'
 import { VendedorDashboard } from '@/features/ventas/components/VendedorDashboard'
 import { ChoferDashboard } from '@/features/logistica/components/ChoferDashboard'
 
-export default function DashboardScreen() {
+function DashboardScreen() {
   const navigation = useNavigation();
   const { user, isAdmin, isSuperAdmin, canDo } = useAuthStore()
   const { data: kpis, isLoading, refetch } = useKpiDashboard()
@@ -262,4 +263,11 @@ export default function DashboardScreen() {
   )
 }
 
-
+/** Pantalla principal: en teléfono lleva la barra de accesos rápidos (Bloque 9A, PR 0.3). */
+export default function DashboardScreenRoute() {
+  return (
+    <ConAccesosRapidos activa="inicio">
+      <DashboardScreen />
+    </ConAccesosRapidos>
+  )
+}
