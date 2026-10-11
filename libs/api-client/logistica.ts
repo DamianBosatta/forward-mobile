@@ -83,6 +83,10 @@ export interface VentaPreparacion {
   itemsCount: number
   /** Concurrency token (xmin). Used by Empacar for optimistic concurrency. */
   version: number
+  /** Hoja de ruta Programada (todavía sin salir) en la que ya está la venta; null si está libre. */
+  hojaRutaId?: string | null
+  /** Código de esa hoja: "HR-" + 6 hex del id en mayúsculas (p. ej. "HR-1A2B3C"). */
+  hojaRutaCodigo?: string | null
 }
 
 /** Write payload for create/update. Subset of VehiculoDto without the server-owned id. */
