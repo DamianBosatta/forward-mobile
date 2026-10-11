@@ -12,6 +12,7 @@ import { sinCosto, subtotalDe, totalCompra, unidadesDe, type LineaCompra } from 
 import { useCompraBorrador, type EstadoGuardado } from '../hooks/useCompraBorrador'
 import { ElegirProveedor } from './ElegirProveedor'
 import { CatalogModal } from './CatalogModal'
+import { CompraLineaSheet } from './CompraLineaSheet'
 
 const SYNC: Record<EstadoGuardado, string | undefined> = {
   nuevo: undefined, guardando: 'Guardando…', guardado: 'Guardado', error: 'Sin guardar', conflicto: 'Sin guardar',
@@ -27,12 +28,10 @@ function detalleLinea(l: LineaCompra): string {
 interface Props {
   /** Borrador a retomar (desde la pestaña Borradores). */
   borradorId?: string
-  /** Al tocar una línea (la edición de la línea es la PR 3.3). */
-  onLinea?: (l: LineaCompra) => void
 }
 
 /** Compra nueva con el formato nuevo (láminas Compra y TabCompra), como borrador con autoguardado. */
-export function CompraNueva({ borradorId, onLinea }: Props) {
+export function CompraNueva({ borradorId }: Props) {
   const c = useColors()
   const router = useRouter()
   const { isTablet } = useResponsive()
@@ -43,6 +42,7 @@ export function CompraNueva({ borradorId, onLinea }: Props) {
   const [enviada, setEnviada] = useState('')
   const [gastosTexto, setGastosTexto] = useState('')
   const [ocupado, setOcupado] = useState(false)
+  const [editando, setEditando] = useState<LineaCompra | null>(null)
   useEffect(() => {
     const t = setTimeout(() => setEnviada(busqueda.trim()), 300)
     return () => clearTimeout(t)
@@ -97,7 +97,7 @@ export function CompraNueva({ borradorId, onLinea }: Props) {
                 key={l.productoId}
                 accessibilityRole="button"
                 accessibilityLabel={`${l.nombre}, ${detalleLinea(l)}`}
-                onPress={onLinea ? () => onLinea(l) : undefined}
+                onPress={() => setEditando(l)}
                 style={{ minHeight: 44, paddingHorizontal: space[4], paddingVertical: space[3], gap: space[1], backgroundColor: tono?.bg ?? c.surface, borderTopWidth: i ? 1 : 0, borderTopColor: c.border }}
               >
                 <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{l.nombre}</Text>
@@ -182,6 +182,12 @@ export function CompraNueva({ borradorId, onLinea }: Props) {
             onPress={() => { void terminar(b.confirmar, 'No se confirmó la compra') }} />
         </View>
       </View>
+      <CompraLineaSheet
+        linea={editando}
+        onClose={() => setEditando(null)}
+        onConfirm={(nueva) => { b.setLineas((prev) => prev.map((l) => (l.productoId === nueva.productoId ? nueva : l))); setEditando(null) }}
+        onQuitar={(id) => { b.setLineas((prev) => prev.filter((l) => l.productoId !== id)); setEditando(null) }}
+      />
       <CatalogModal
         visible={catalogo}
         onClose={() => setCatalogo(false)}

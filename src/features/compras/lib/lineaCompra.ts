@@ -63,3 +63,29 @@ export function lineaDesdeDetalle(d: CompraDetalle): LineaCompra {
     costoUnitario: d.costoUnitarioBaseAmount > 0 ? d.costoUnitarioBaseAmount : null,
   }
 }
+
+/** Umbral del aviso de cambio de costo (plan 9 §2.2): más del 50 % respecto del último. */
+export const UMBRAL_CAMBIO_COSTO = 50
+
+/**
+ * Cuánto cambia el costo tipeado respecto del último costo del producto, en %. null si no hay
+ * último costo (no llegó: sin permiso o nunca se compró) o si no cambia.
+ */
+export function cambioDeCosto(costo: number | null, ultimo: number | null | undefined): { pct: number; fuerte: boolean } | null {
+  if (costo === null || costo <= 0 || ultimo == null || ultimo <= 0 || costo === ultimo) return null
+  const pct = ((costo - ultimo) / ultimo) * 100
+  return { pct, fuerte: Math.abs(pct) > UMBRAL_CAMBIO_COSTO }
+}
+
+/**
+ * Empaques en los que se puede comprar el producto, con las unidades de cada uno (misma regla que
+ * EmpaqueProducto del servidor). `bultoMadreContenido` cuenta BULTOS, no unidades: un bulto madre de
+ * 4 bultos de 12 son 48 unidades.
+ */
+export function unidadesDisponibles(ficha: { bultoContenido?: number | null; bultoMadreContenido?: number | null } | undefined) {
+  const porBulto = ficha?.bultoContenido && ficha.bultoContenido > 0 ? ficha.bultoContenido : 1
+  const opciones: { unidad: UnidadCompra; unidades: number }[] = [{ unidad: 'Unidad', unidades: 1 }]
+  if (porBulto > 1) opciones.push({ unidad: 'Bulto', unidades: porBulto })
+  if (ficha?.bultoMadreContenido && ficha.bultoMadreContenido > 0) opciones.push({ unidad: 'BultoMadre', unidades: porBulto * ficha.bultoMadreContenido })
+  return opciones
+}
