@@ -1,4 +1,4 @@
-import { agregar, cantidadEn, leyendaMultiplo, restar, sumar, totalEstimado } from '../lib/carrito'
+import { agregar, cantidadEn, leyendaMultiplo, restar, subtotalLinea, sumar, totalEstimado } from '../lib/carrito'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { cajaDe6, producto } from '../__testing__/producto'
 
@@ -36,6 +36,12 @@ describe('total estimado', () => {
     l = sumar(l, 'p1')
     l = agregar(l, cajaDe6({ precioVenta: 50, precioConOferta: 40 }))
     expect(totalEstimado(l)).toBe(2 * 100 + 6 * 40)
+  })
+
+  it('el descuento de la línea baja su subtotal y el total estimado, igual que Editar línea', () => {
+    const l = [{ ...agregar([], producto({ precioVenta: 100 }))[0], cantidad: 2, descuentoPct: 10 }, ...agregar([], cajaDe6({ precioVenta: 50 }))]
+    expect(subtotalLinea(l[0])).toBe(180)
+    expect(totalEstimado(l)).toBe(180 + 6 * 50)
   })
 })
 

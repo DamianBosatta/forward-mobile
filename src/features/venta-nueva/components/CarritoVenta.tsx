@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ShoppingCart } from 'lucide-react-native'
 import { radii, space, typeScale, importe, useColors } from '@/libs/theme'
 import { Button, formatImporte } from '@/core/ui/fw'
-import { precioServidor, totalEstimado, type LineaCarrito } from '../lib/carrito'
+import { precioServidor, subtotalLinea, totalEstimado, type LineaCarrito } from '../lib/carrito'
 
 interface CarritoProps {
   lineas: LineaCarrito[]
@@ -55,7 +55,7 @@ export function CarritoPanel({ lineas, onVerVenta }: CarritoProps) {
                 {`${l.cantidad} × ${formatImporte(precioServidor(l.producto))}`}
               </Text>
             </View>
-            <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(precioServidor(l.producto) * l.cantidad)}</Text>
+            <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(subtotalLinea(l))}</Text>
           </View>
         ))}
       </ScrollView>

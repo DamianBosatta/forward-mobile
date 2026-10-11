@@ -51,6 +51,72 @@ describe('EditarLineaSheet: descuento % ↔ precio con descuento (descuentos.ts)
   })
 })
 
+describe('EditarLineaSheet: entradas inválidas (es-AR)', () => {
+  const confirmar = () => screen.getByRole('button', { name: 'Confirmar' })
+
+  it('leerNumero entiende el punto de miles y la coma decimal; lo mal formado es inválido', () => {
+    expect(leerNumero('1.500')).toBe(1500)
+    expect(leerNumero('2.176,50')).toBe(2176.5)
+    expect(leerNumero('12,82')).toBe(12.82)
+    expect(leerNumero('')).toBeNull()
+    expect(leerNumero('abc')).toBeNull()
+    expect(leerNumero('1,2,3')).toBeNull()
+    expect(leerNumero('-5')).toBeNull()
+  })
+
+  it('"1.500" en el precio es 1500, no 1,5', async () => {
+    abrir({ ...linea(), producto: producto({ precioVenta: 2000 }) })
+    await escribir('Precio con descuento ($)', '1.500')
+    expect(valor('Descuento (%)')).toBe(25)
+  })
+
+  it('borrar el precio no manda 100 %: avisa y no deja confirmar', async () => {
+    const onConfirm = abrir()
+    await userEvent.clear(screen.getByLabelText('Precio con descuento ($)'))
+    expect(screen.getByText(/Ingresá un precio entre/)).toBeTruthy()
+    await userEvent.press(confirmar())
+    expect(onConfirm).not.toHaveBeenCalled()
+  })
+
+  it('un % mayor a 100 o negativo avisa y no deja confirmar', async () => {
+    const onConfirm = abrir()
+    await escribir('Descuento (%)', '150')
+    expect(screen.getByText(/entre 0 y 100/)).toBeTruthy()
+    await userEvent.press(confirmar())
+    await escribir('Descuento (%)', '-5')
+    expect(screen.getByText(/entre 0 y 100/)).toBeTruthy()
+    await userEvent.press(confirmar())
+    expect(onConfirm).not.toHaveBeenCalled()
+  })
+
+  it('un precio mayor a la lista avisa y no deja confirmar; corregido, confirma', async () => {
+    const onConfirm = abrir()
+    await escribir('Precio con descuento ($)', '3000')
+    expect(screen.getByText(/Ingresá un precio entre/)).toBeTruthy()
+    await userEvent.press(confirmar())
+    expect(onConfirm).not.toHaveBeenCalled()
+    await escribir('Precio con descuento ($)', '2496')
+    expect(screen.queryByText(/Ingresá un precio entre/)).toBeNull()
+    await userEvent.press(confirmar())
+    expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ descuentoPct: 0 }))
+  })
+
+  it('arranca con los valores de la línea ya en el primer render', () => {
+    abrir(linea({ descuentoPct: 10, cantidad: 12 }))
+    expect(screen.getByLabelText('Descuento (%)').props.value).toBe('10')
+    expect(screen.getByLabelText('Unidades: 12')).toBeTruthy()
+  })
+
+  it('si cambia el objeto de la línea con la hoja abierta, no pisa lo que se tipeó', async () => {
+    const l = linea()
+    const props = { onClose: jest.fn(), onConfirm: jest.fn(), onQuitar: jest.fn() }
+    const { rerender } = render(<EditarLineaSheet linea={l} {...props} />)
+    await escribir('Descuento (%)', '7')
+    rerender(<EditarLineaSheet linea={{ ...l }} {...props} />)
+    expect(screen.getByLabelText('Descuento (%)').props.value).toBe('7')
+  })
+})
+
 describe('EditarLineaSheet: múltiplo de la unidad de venta', () => {
   it('en caja de 6, + suma 6 y − no baja del mínimo', async () => {
     abrir({ ...linea(), productoId: 'p6', producto: cajaDe6(), cantidad: 6 })

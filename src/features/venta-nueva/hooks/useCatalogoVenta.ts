@@ -1,17 +1,33 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { api, productosKeys, type CatalogoStockItem, type PagedResult } from '@/libs/api-client'
 
 export const DEBOUNCE_BUSQUEDA_MS = 300
-const PAGE_SIZE = 30
+// El servidor valida PageSize entre 1 y 1000.
+const PAGE_SIZE = 1000
+// Tope de seguridad ante un servidor que nunca deje de decir hasNextPage.
+const MAX_PAGES = 20
+
+/**
+ * Catálogo completo de venta: páginas de 1000 hasta que no haya más.
+ * TODO: unificar con `fetchCatalogoStockCompleto` (libs/api-client/productos.ts, PR #28) cuando se mergee.
+ */
+async function fetchCatalogoCompleto(): Promise<CatalogoStockItem[]> {
+  const items: CatalogoStockItem[] = []
+  for (let pagina = 1; pagina <= MAX_PAGES; pagina++) {
+    const params = new URLSearchParams({ PageNumber: String(pagina), PageSize: String(PAGE_SIZE) })
+    const res = await api.get<PagedResult<CatalogoStockItem>>(`/api/v1/Productos/catalogo-stock?${params}`)
+    items.push(...(res?.items ?? []))
+    if (!res?.hasNextPage) break
+  }
+  return items
+}
 
 /**
  * Catálogo de venta: el mismo endpoint que usa hoy la venta (`catalogo-stock`), que trae
- * el precio, el piso, la venta mínima y la disponibilidad. Paginado en el servidor y
- * con la búsqueda pedida al servidor con debounce.
- *
- * BACKLOG-9B: `catalogo-stock` todavía no acepta `SearchTerm`. Mientras tanto se manda
- * igual (el servidor lo ignora) y lo cargado se filtra acá para que la búsqueda responda.
+ * el precio, el piso, la venta mínima y la disponibilidad. El endpoint no tiene búsqueda en
+ * el servidor, así que se carga completo una vez (cache de 60 s) y se busca acá, con
+ * debounce, sin distinguir mayúsculas ni tildes, por nombre y código.
  */
 export function useCatalogoVenta(busqueda: string) {
   const [termino, setTermino] = useState(busqueda.trim())
@@ -21,35 +37,26 @@ export function useCatalogoVenta(busqueda: string) {
     return () => clearTimeout(t)
   }, [busqueda])
 
-  const query = useInfiniteQuery({
-    queryKey: [...productosKeys.all, 'catalogoVenta', termino],
-    queryFn: ({ pageParam }) => {
-      const params = new URLSearchParams({ PageNumber: String(pageParam), PageSize: String(PAGE_SIZE) })
-      if (termino) params.set('SearchTerm', termino)
-      return api.get<PagedResult<CatalogoStockItem>>(`/api/v1/Productos/catalogo-stock?${params}`)
-    },
-    initialPageParam: 1,
-    getNextPageParam: (ultima) => (ultima.hasNextPage ? ultima.page + 1 : undefined),
+  const query = useQuery({
+    queryKey: [...productosKeys.all, 'catalogoVenta', 'completo'],
+    queryFn: fetchCatalogoCompleto,
     staleTime: 60_000,
   })
 
   const productos = useMemo(() => {
-    const todos = query.data?.pages.flatMap((p) => p.items ?? []) ?? []
-    return termino ? todos.filter((p) => coincide(p, termino)) : todos
+    const todos = query.data ?? []
+    if (!termino) return todos
+    const t = normalizar(termino)
+    return todos.filter((p) => coincide(p, t))
   }, [query.data, termino])
 
-  return {
-    productos,
-    totalCount: query.data?.pages[0]?.totalCount ?? 0,
-    isLoading: query.isLoading,
-    hayMas: query.hasNextPage,
-    cargarMas: () => {
-      if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage()
-    },
-  }
+  return { productos, isLoading: query.isLoading }
+}
+
+function normalizar(texto: string): string {
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 }
 
 function coincide(p: CatalogoStockItem, termino: string): boolean {
-  const t = termino.toLowerCase()
-  return [p.nombre, p.codigoPropio, p.codigoBarra, p.marca].some((v) => v?.toLowerCase().includes(t))
+  return [p.nombre, p.codigoPropio, p.codigoBarra].some((v) => v != null && normalizar(v).includes(termino))
 }

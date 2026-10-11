@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { ActivityIndicator, FlatList, Text, TextInput, View } from 'react-native'
 import { Search } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
@@ -26,7 +26,9 @@ export function CatalogoVenta({ onVerVenta, onElegirFragancias }: CatalogoVentaP
   const c = useColors()
   const { formFactor, isTabletLandscape } = useResponsive()
   const [busqueda, setBusqueda] = useState('')
-  const { productos, totalCount, isLoading, cargarMas } = useCatalogoVenta(busqueda)
+  const { productos: todos, isLoading } = useCatalogoVenta(busqueda)
+  // Las variantes (productoPadreId) vienen para resolverlas por id al elegir fragancias; no se venden sueltas.
+  const productos = useMemo(() => todos.filter((p) => !p.productoPadreId), [todos])
   const { lineas, agregar, sumar, restar, quitar, reemplazar } = useCarritoVenta()
   const [editando, setEditando] = useState<string | null>(null)
   const verCantidades = canViewStock((useAuthStore((s) => s.user?.roles) ?? []) as string[])
@@ -47,7 +49,7 @@ export function CatalogoVenta({ onVerVenta, onElegirFragancias }: CatalogoVentaP
             style={{ ...typeScale.cuerpo, flex: 1, color: c.text, paddingVertical: 0 }}
           />
         </View>
-        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Mostrando ${productos.length} de ${totalCount}`}</Text>
+        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`${productos.length} resultados`}</Text>
       </View>
       <FlatList
         key={columnas}
@@ -56,8 +58,6 @@ export function CatalogoVenta({ onVerVenta, onElegirFragancias }: CatalogoVentaP
         keyExtractor={(p) => p.id}
         columnWrapperStyle={columnas > 1 ? { gap: space[3] } : undefined}
         contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: space[4], gap: space[3] }}
-        onEndReached={cargarMas}
-        onEndReachedThreshold={0.5}
         ListEmptyComponent={
           isLoading ? <ActivityIndicator color={c.brand} /> : <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>No hay productos que coincidan.</Text>
         }

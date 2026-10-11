@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { Trash2 } from 'lucide-react-native'
 import { radii, space, typeScale, importe, useColors } from '@/libs/theme'
@@ -28,26 +28,30 @@ const BANDA = { rojo: 'en rojo', amarillo: 'en amarillo', verde: 'en verde' } as
  * precio con descuento se calculan uno del otro con descuentos.ts. Costo y margen solo con
  * CAP_VER_COSTOS: sin la capacidad no se dibuja nada de eso.
  */
-export function EditarLineaSheet({ linea, onClose, onConfirm, onQuitar }: EditarLineaSheetProps) {
+export function EditarLineaSheet(props: EditarLineaSheetProps) {
+  const { linea } = props
+  if (!linea) return null
+  // key por producto: lo tipeado sobrevive a un cambio de identidad del objeto de la línea.
+  return <EditarLineaContenido key={linea.productoId} {...props} linea={linea} />
+}
+
+function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar }: EditarLineaSheetProps & { linea: LineaCarrito }) {
   const c = useColors()
   const { isTablet } = useResponsive()
   const user = useAuthStore((s) => s.user)
-  const [cantidad, setCantidad] = useState(0)
-  const [pctTexto, setPctTexto] = useState('0')
-  const [precioTexto, setPrecioTexto] = useState('')
-
-  const p = linea?.producto
-  const base = p ? precioServidor(p) : 0
-  useEffect(() => {
-    if (!linea) return
-    setCantidad(linea.cantidad)
-    setPctTexto(mostrarNumero(linea.descuentoPct))
-    setPrecioTexto(mostrarNumero(precioFromPct(precioServidor(linea.producto), linea.descuentoPct)))
-  }, [linea])
-  if (!linea || !p) return null
+  const p = linea.producto
+  const base = precioServidor(p)
+  const [cantidad, setCantidad] = useState(linea.cantidad)
+  const [pctTexto, setPctTexto] = useState(mostrarNumero(linea.descuentoPct))
+  const [precioTexto, setPrecioTexto] = useState(mostrarNumero(precioFromPct(base, linea.descuentoPct)))
 
   const m = multiploDe(p)
-  const pct = leerNumero(pctTexto)
+  const pctLeido = leerNumero(pctTexto)
+  const precioLeido = leerNumero(precioTexto)
+  const pctInvalido = pctLeido === null || pctLeido < 0 || pctLeido > 100
+  const precioInvalido = precioLeido === null || precioLeido < 0 || precioLeido > base
+  const invalido = pctInvalido || precioInvalido
+  const pct = pctLeido !== null && !pctInvalido ? pctLeido : 0
   const precioFinal = precioFromPct(base, pct)
   const tope = avisoTope(pct, user?.maxDescuentoPorcentaje ?? 0, hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO'))
   const piso = avisoPiso(p, base, pct)
@@ -96,11 +100,21 @@ export function EditarLineaSheet({ linea, onClose, onConfirm, onQuitar }: Editar
             <View style={{ flexDirection: 'row', gap: space[3] }}>
               <View style={{ flex: 1 }}>
                 <Field label="Descuento (%)" keyboardType="decimal-pad" alignRight value={pctTexto}
-                  onChangeText={(t) => { setPctTexto(t); setPrecioTexto(mostrarNumero(precioFromPct(base, leerNumero(t)))) }} />
+                  error={pctInvalido ? 'Ingresá un descuento entre 0 y 100.' : undefined}
+                  onChangeText={(t) => {
+                    setPctTexto(t)
+                    const n = leerNumero(t)
+                    if (n !== null && n >= 0 && n <= 100) setPrecioTexto(mostrarNumero(precioFromPct(base, n)))
+                  }} />
               </View>
               <View style={{ flex: 1 }}>
                 <Field label="Precio con descuento ($)" keyboardType="decimal-pad" alignRight value={precioTexto}
-                  onChangeText={(t) => { setPrecioTexto(t); setPctTexto(mostrarNumero(pctFromPrecio(base, leerNumero(t)))) }} />
+                  error={precioInvalido ? `Ingresá un precio entre 0 y ${formatImporte(base)}.` : undefined}
+                  onChangeText={(t) => {
+                    setPrecioTexto(t)
+                    const n = leerNumero(t)
+                    if (n !== null && n >= 0 && n <= base) setPctTexto(mostrarNumero(pctFromPrecio(base, n)))
+                  }} />
               </View>
             </View>
             <Text style={{ ...typeScale.secundario, color: c.textSecondary, marginTop: -space[2] }}>Cambiás uno y el otro se calcula solo.</Text>
@@ -143,7 +157,7 @@ export function EditarLineaSheet({ linea, onClose, onConfirm, onQuitar }: Editar
             )}
           </ScrollView>
           <View style={{ padding: space[4], borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
-            <Button label="Confirmar" onPress={() => onConfirm({ ...linea, cantidad, descuentoPct: pct })} />
+            <Button label="Confirmar" disabled={invalido} onPress={() => onConfirm({ ...linea, cantidad, descuentoPct: pct })} />
           </View>
         </View>
       </View>

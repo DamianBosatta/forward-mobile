@@ -8,8 +8,8 @@ import { producto } from '../__testing__/producto'
 jest.mock('@/libs/api-client', () => ({ api: { get: jest.fn() }, productosKeys: { all: ['productos'] } }))
 const get = api.get as jest.Mock
 
-const pagina = (items: ReturnType<typeof producto>[], hasNextPage = false) => ({
-  items, page: 1, pageSize: 30, totalCount: 31, totalPages: 2, hasNextPage,
+const pagina = (items: ReturnType<typeof producto>[], page: number, hasNextPage: boolean) => ({
+  items, page, pageSize: 1000, totalCount: 3, totalPages: 2, hasNextPage,
 })
 
 function wrapper({ children }: { children: React.ReactNode }) {
@@ -17,39 +17,62 @@ function wrapper({ children }: { children: React.ReactNode }) {
   return <QueryClientProvider client={qc}>{children}</QueryClientProvider>
 }
 
+const escoba = producto({ id: 'p2', nombre: 'Escoba Rústica', codigoPropio: 'ESC1' })
+const lavandina = producto({ id: 'p3', nombre: 'Lavandina Ácida', codigoPropio: 'LAV9' })
+
 beforeEach(() => {
   get.mockReset()
-  get.mockResolvedValue(pagina([producto(), producto({ id: 'p2', nombre: 'Escoba', codigoPropio: 'ESC1' })], true))
+  get.mockImplementation(async (url: string) =>
+    url.includes('PageNumber=2') ? pagina([lavandina], 2, false) : pagina([producto(), escoba], 1, true),
+  )
 })
 afterEach(() => jest.useRealTimers())
 
 describe('useCatalogoVenta', () => {
-  it('pide la primera página del catálogo de venta paginado en el servidor', async () => {
+  it('carga el catálogo completo: páginas de 1000 hasta que no haya más', async () => {
     const { result } = renderHook(() => useCatalogoVenta(''), { wrapper })
-    await waitFor(() => expect(result.current.productos).toHaveLength(2))
-    expect(get).toHaveBeenCalledWith('/api/v1/Productos/catalogo-stock?PageNumber=1&PageSize=30')
-    expect(result.current.hayMas).toBe(true)
+    await waitFor(() => expect(result.current.productos).toHaveLength(3))
+    expect(get.mock.calls.map(([u]) => u)).toEqual([
+      '/api/v1/Productos/catalogo-stock?PageNumber=1&PageSize=1000',
+      '/api/v1/Productos/catalogo-stock?PageNumber=2&PageSize=1000',
+    ])
   })
 
-  it('la búsqueda va al servidor recién cuando se deja de tipear (debounce)', async () => {
+  it('corta en 20 páginas aunque el servidor siga diciendo que hay más', async () => {
+    get.mockImplementation(async () => pagina([producto()], 1, true))
+    const { result } = renderHook(() => useCatalogoVenta(''), { wrapper })
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(get).toHaveBeenCalledTimes(20)
+  })
+
+  it('busca en el catálogo completo, también lo que está en páginas lejanas, sin volver al servidor', async () => {
     jest.useFakeTimers()
-    const { rerender } = renderHook(({ q }: { q: string }) => useCatalogoVenta(q), { wrapper, initialProps: { q: '' } })
+    const { result, rerender } = renderHook(({ q }: { q: string }) => useCatalogoVenta(q), { wrapper, initialProps: { q: '' } })
     await act(async () => {})
-    rerender({ q: 'pa' })
-    await act(async () => jest.advanceTimersByTime(DEBOUNCE_BUSQUEDA_MS / 2))
-    rerender({ q: 'pala' })
+    await waitFor(() => expect(result.current.productos).toHaveLength(3))
+    const llamadas = get.mock.calls.length
+    rerender({ q: 'lav' })
     await act(async () => jest.advanceTimersByTime(DEBOUNCE_BUSQUEDA_MS - 1))
-    expect(get.mock.calls.some(([url]) => url.includes('SearchTerm'))).toBe(false)
+    expect(result.current.productos).toHaveLength(3)
     await act(async () => jest.advanceTimersByTime(1))
-    await waitFor(() => expect(get.mock.calls.filter(([url]) => url.includes('SearchTerm'))).toEqual([
-      ['/api/v1/Productos/catalogo-stock?PageNumber=1&PageSize=30&SearchTerm=pala'],
-    ]))
+    expect(result.current.productos.map((p) => p.id)).toEqual(['p3'])
+    expect(get.mock.calls).toHaveLength(llamadas)
+    expect(get.mock.calls.some(([u]) => u.includes('SearchTerm'))).toBe(false)
   })
 
-  it('cargarMas pide la página siguiente', async () => {
-    const { result } = renderHook(() => useCatalogoVenta(''), { wrapper })
-    await waitFor(() => expect(result.current.hayMas).toBe(true))
-    act(() => result.current.cargarMas())
-    await waitFor(() => expect(get).toHaveBeenCalledWith('/api/v1/Productos/catalogo-stock?PageNumber=2&PageSize=30'))
+  it('la búsqueda ignora mayúsculas y tildes, y encuentra por código', async () => {
+    jest.useFakeTimers()
+    const { result, rerender } = renderHook(({ q }: { q: string }) => useCatalogoVenta(q), { wrapper, initialProps: { q: '' } })
+    await act(async () => {})
+    await waitFor(() => expect(result.current.productos).toHaveLength(3))
+    rerender({ q: 'ACIDA' })
+    await act(async () => jest.advanceTimersByTime(DEBOUNCE_BUSQUEDA_MS))
+    expect(result.current.productos.map((p) => p.id)).toEqual(['p3'])
+    rerender({ q: 'rustica' })
+    await act(async () => jest.advanceTimersByTime(DEBOUNCE_BUSQUEDA_MS))
+    expect(result.current.productos.map((p) => p.id)).toEqual(['p2'])
+    rerender({ q: 'esc1' })
+    await act(async () => jest.advanceTimersByTime(DEBOUNCE_BUSQUEDA_MS))
+    expect(result.current.productos.map((p) => p.id)).toEqual(['p2'])
   })
 })

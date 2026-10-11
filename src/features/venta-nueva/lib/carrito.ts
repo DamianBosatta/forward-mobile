@@ -1,4 +1,5 @@
 import type { CatalogoStockItem } from '@/libs/api-client'
+import { calcularSubtotalConDescuento } from '@/features/ventas/lib/descuentos'
 
 /**
  * Carrito de la venta nueva (plan 9 §2.1). Funciones puras: el teléfono no pone
@@ -65,10 +66,15 @@ export function reemplazar(lineas: LineaCarrito[], linea: LineaCarrito): LineaCa
   return lineas.map((l) => (l.productoId === linea.productoId ? linea : l))
 }
 
+/** Subtotal de la línea: precio del servidor × cantidad con el descuento de la línea (igual que Editar línea). */
+export function subtotalLinea(l: LineaCarrito): number {
+  return calcularSubtotalConDescuento(precioServidor(l.producto), l.cantidad, l.descuentoPct)
+}
+
 /**
- * Total ESTIMADO: precio del servidor × cantidad. No descuenta ni suma impuestos ni
- * flete: el total real lo calcula el servidor al guardar.
+ * Total ESTIMADO: suma de los subtotales de línea (precio del servidor × cantidad, con el
+ * descuento de cada línea). No suma impuestos ni flete: el total real lo calcula el servidor al guardar.
  */
 export function totalEstimado(lineas: LineaCarrito[]): number {
-  return lineas.reduce((acc, l) => acc + precioServidor(l.producto) * l.cantidad, 0)
+  return lineas.reduce((acc, l) => acc + subtotalLinea(l), 0)
 }

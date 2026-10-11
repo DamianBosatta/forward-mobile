@@ -42,11 +42,15 @@ export function avisoPiso(
   return roto ? 'amarillo' : null
 }
 
-/** "2.176,50" → 2176.5; "12.82" → 12.82; vacío o inválido → 0. */
-export function leerNumero(texto: string): number {
-  const limpio = texto.includes(',') ? texto.replace(/\./g, '').replace(',', '.') : texto
-  const n = Number(limpio.trim() || 0)
-  return Number.isFinite(n) ? n : 0
+/**
+ * Número en formato es-AR: punto de miles, coma decimal. "2.176,50" → 2176.5; "1.500" → 1500;
+ * "12,82" → 12.82. Vacío o mal formado ("12.82", "1,2,3", "-5", "abc") → null (inválido).
+ */
+export function leerNumero(texto: string): number | null {
+  const t = texto.trim()
+  if (!/^\d{1,3}(\.\d{3})*(,\d+)?$|^\d+(,\d+)?$/.test(t)) return null
+  const n = Number(t.replace(/\./g, '').replace(',', '.'))
+  return Number.isFinite(n) ? n : null
 }
 
 /** 12.82 → "12,82" (sin miles: es un campo editable). */

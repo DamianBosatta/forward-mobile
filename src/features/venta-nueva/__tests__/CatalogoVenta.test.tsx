@@ -13,9 +13,10 @@ const mockProductos = [
   producto({ precioVenta: 1000, real: 37 }),
   cajaDe6({ precioVenta: 500, puedeVenderse: false }),
   producto({ id: 'pf', nombre: 'Saphirus Aerosol', esPadreDeVariantes: true }),
+  producto({ id: 'pv', nombre: 'Saphirus Aerosol Lavanda', productoPadreId: 'pf' }),
 ]
 jest.mock('../hooks/useCatalogoVenta', () => ({
-  useCatalogoVenta: () => ({ productos: mockProductos, totalCount: 30, isLoading: false, cargarMas: jest.fn() }),
+  useCatalogoVenta: () => ({ productos: mockProductos, isLoading: false }),
 }))
 
 const conRoles = (roles: string[]) => useAuthStore.setState({ user: { roles, permissions: [] } as never })
@@ -80,6 +81,22 @@ describe('CatalogoVenta (agregar productos)', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar' }))
     expect(useCarritoVenta.getState().lineas[0]).toMatchObject({ cantidad: 1, descuentoPct: 5 })
     expect(screen.queryByTestId('editar-linea')).toBeNull()
+  })
+
+  it('las variantes de una línea no se ofrecen como productos sueltos; el contador no las cuenta', () => {
+    render(<CatalogoVenta onVerVenta={jest.fn()} />)
+    expect(screen.queryByText('Saphirus Aerosol Lavanda')).toBeNull()
+    expect(screen.queryByTestId('producto-pv')).toBeNull()
+    expect(screen.getByText('3 resultados')).toBeTruthy()
+  })
+
+  it('el total del carrito aplica el descuento de la línea', async () => {
+    render(<CatalogoVenta onVerVenta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Añadir Pala c/Cabo Fija LP' }))
+    await userEvent.press(screen.getByRole('link', { name: 'Descuento y detalle de la línea' }))
+    await userEvent.type(screen.getByLabelText('Descuento (%)'), '10')
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar' }))
+    expect(screen.getByTestId('carrito-total')).toHaveTextContent('$ 900,00')
   })
 
   it('tablet horizontal: el carrito queda fijo a la derecha', () => {
