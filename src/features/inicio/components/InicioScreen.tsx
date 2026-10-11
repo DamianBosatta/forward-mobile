@@ -10,7 +10,7 @@ import { useAuthStore } from '@/libs/store/auth.store'
 import { useVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client/types'
 import { DocumentCard, TopBar, chipForEstado, iniciales } from '@/core/ui/fw'
-import { diaArgentina, partesArgentina } from '@/src/utils/date'
+import { diaArgentina, msHastaProximaMedianocheArgentina, partesArgentina } from '@/src/utils/date'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
 import { TarjetaPendientes, type FilaPendiente } from './TarjetaPendientes'
 
@@ -32,7 +32,7 @@ export function InicioScreen() {
   const { user, canDo } = useAuthStore()
   const pendientes = usePendientesInicio()
 
-  // "Hoy" es el día argentino (lo que interpreta el servidor), no el del teléfono; se recalcula al volver a la app y al refrescar.
+  // "Hoy" es el día argentino (lo que interpreta el servidor), no el del teléfono; se recalcula al volver a la app, al refrescar y al cruzar la medianoche argentina.
   const [ahora, setAhora] = useState(() => Date.now())
   useEffect(() => {
     const sub = AppState.addEventListener('change', (estado) => {
@@ -40,6 +40,11 @@ export function InicioScreen() {
     })
     return () => sub.remove()
   }, [])
+  // Con la pantalla abierta al cruzar la medianoche: un timer hasta la próxima 00:00 argentina; al cambiar `ahora` se reprograma.
+  useEffect(() => {
+    const t = setTimeout(() => setAhora(Date.now()), msHastaProximaMedianocheArgentina(ahora))
+    return () => clearTimeout(t)
+  }, [ahora])
   const hoy = partesArgentina(ahora)
   const dia = diaArgentina(ahora)
   const recientes = useVentas(
@@ -53,10 +58,13 @@ export function InicioScreen() {
   const [refrescando, setRefrescando] = useState(false)
   const refrescar = useCallback(async () => {
     setRefrescando(true)
-    setAhora(Date.now())
-    await Promise.all([pendientes.refetch(), recientes.refetch()])
+    const nuevo = Date.now()
+    setAhora(nuevo)
+    // Si el día cambió, la consulta de la clave nueva se pide sola: no se espera la de la clave vieja.
+    const mismoDia = diaArgentina(nuevo) === dia
+    await Promise.all([pendientes.refetch(), mismoDia ? recientes.refetch() : Promise.resolve()])
     setRefrescando(false)
-  }, [pendientes, recientes])
+  }, [pendientes, recientes, dia])
 
   const aVentas = () => router.push('/(tabs)/ventas')
   const aCompras = () => router.push('/(tabs)/compras')

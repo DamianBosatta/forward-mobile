@@ -187,6 +187,26 @@ describe('Inicio: Reciente · Hoy', () => {
     }
   })
 
+  it('con la pantalla abierta al cruzar la medianoche argentina pasa al día siguiente y lo pide', async () => {
+    jest.useFakeTimers({ now: new Date('2026-10-11T02:59:00Z'), doNotFake: ['setImmediate', 'queueMicrotask', 'nextTick'] }) // 23:59 ART del 10-10
+    try {
+      conPermisos('MOD_VENTAS')
+      servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(0, []) })
+      pintar()
+      await jest.advanceTimersByTimeAsync(0)
+      expect(screen.getByText('Sábado 10 de octubre')).toBeTruthy()
+
+      await jest.advanceTimersByTimeAsync(61_000)
+      await jest.advanceTimersByTimeAsync(100)
+
+      expect(screen.getByText('Domingo 11 de octubre')).toBeTruthy()
+      const urls = mockGet.mock.calls.map(([u]) => String(u))
+      expect(urls.some((u) => u.includes('fechaDesde=2026-10-11') && u.includes('fechaHasta=2026-10-11'))).toBe(true)
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
   it('la hora de la tarjeta se muestra en hora argentina', async () => {
     conPermisos('MOD_VENTAS')
     servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(1, [VENTA_HOY]) }) // 13:03Z

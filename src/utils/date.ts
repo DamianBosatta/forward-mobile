@@ -65,3 +65,11 @@ export function diaArgentina(ms: number): string {
   const dos = (n: number) => String(n).padStart(2, '0');
   return `${p.anio}-${dos(p.mes + 1)}-${dos(p.dia)}`;
 }
+
+const MS_POR_DIA = 24 * 60 * 60 * 1000;
+
+/** Milisegundos hasta la próxima 00:00 de Argentina (a las 00:00:00 exactas falta un día entero). */
+export function msHastaProximaMedianocheArgentina(nowMs: number): number {
+  const enDia = (((nowMs + OFFSET_ARGENTINA_MS) % MS_POR_DIA) + MS_POR_DIA) % MS_POR_DIA;
+  return MS_POR_DIA - enDia;
+}
