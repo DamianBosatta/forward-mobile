@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, FlatList, Modal, Text, TextInput, View } from 'react-native'
 import { useNavigation } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
@@ -8,6 +8,7 @@ import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Notice, TopBar } from '@/core/ui/fw'
 import { RequirePermission } from '@/core/ui'
+import { ApiError } from '@/core/api/client'
 import { buscarPorCodigoBarra } from '@/libs/api-client/productos'
 import { useCatalogoConsulta } from '@/features/catalogo/hooks/useCatalogoConsulta'
 import { ProductoCard } from '@/features/catalogo/components/ProductoCard'
@@ -16,6 +17,12 @@ import { EscanerCodigo } from '@/features/catalogo/components/EscanerCodigo'
 
 /** Ancho desde el que la grilla y la ficha van lado a lado (plan §8, lámina TabCatalogoConsulta). */
 const ANCHO_DOS_PANELES = 900
+
+/** El aviso de un escaneo que falló: sin red (no llegó respuesta), código rechazado (400) u otro error. */
+function falloDelEscaneo(error: Error, codigo?: string): string {
+  if (!(error instanceof ApiError)) return `Sin conexión: no se pudo buscar el código ${codigo}. Volvé a escanear cuando haya señal.`
+  return error.status === 400 ? `El código ${codigo} no es válido.` : `No se pudo buscar el código ${codigo}. Volvé a intentar.`
+}
 
 /** Catálogo y stock, solo consulta (láminas CatalogoConsulta, FichaProducto y TabCatalogoConsulta). */
 export default function CatalogoConsultaScreen() {
@@ -29,11 +36,23 @@ export default function CatalogoConsultaScreen() {
   const cat = useCatalogoConsulta()
   const columnas = grilla ? 2 : 1
   const [escaneando, setEscaneando] = useState(false)
-  // Código leído: el producto con ese código exacto; una fragancia abre la ficha de su línea.
-  const escaneo = useMutation({ mutationFn: buscarPorCodigoBarra })
+  // Código leído: el producto con ese código exacto; una fragancia abre la ficha de su línea. Sin red
+  // falla enseguida (`always`): no queda en pausa para abrir una ficha cuando vuelva la señal.
+  // Otro escaneo, tocar una tarjeta, tipear o salir dejan sin efecto el escaneo en curso.
+  const corte = useRef<AbortController | null>(null)
+  const escaneo = useMutation({
+    mutationFn: (codigo: string) => {
+      corte.current?.abort()
+      corte.current = new AbortController()
+      return buscarPorCodigoBarra(codigo, corte.current.signal)
+    },
+    networkMode: 'always',
+  })
+  const cancelarEscaneo = () => { corte.current?.abort(); escaneo.reset() }
+  useEffect(() => () => corte.current?.abort(), [])
   const codigo = escaneo.variables
   const avisoEscaneo = escaneo.isPending ? { tone: 'info' as const, texto: `Buscando el código ${codigo}…` }
-    : escaneo.isError ? { tone: 'peligro' as const, texto: `No se pudo buscar el código ${codigo}. Revisá la conexión y volvé a intentar.` }
+    : escaneo.error ? { tone: 'peligro' as const, texto: falloDelEscaneo(escaneo.error, codigo) }
     : escaneo.isSuccess && !escaneo.data ? { tone: 'advertencia' as const, texto: `No hay ningún producto con el código ${codigo}.` } : null
 
   const lista = (
@@ -80,7 +99,7 @@ export default function CatalogoConsultaScreen() {
               disponible={cat.disponible.get(item.id)}
               grilla={grilla}
               seleccionado={dosPaneles && seleccion === item.id}
-              onPress={() => setSeleccion(item.id)}
+              onPress={() => { cancelarEscaneo(); setSeleccion(item.id) }}
             />
           )}
         />
@@ -123,7 +142,7 @@ export default function CatalogoConsultaScreen() {
             <Search size={20} color={c.textSecondary} />
             <TextInput
               value={cat.busqueda}
-              onChangeText={(texto) => { escaneo.reset(); cat.setBusqueda(texto) }}
+              onChangeText={(texto) => { cancelarEscaneo(); cat.setBusqueda(texto) }}
               placeholder="Buscar por código o nombre"
               placeholderTextColor={c.textSecondary}
               accessibilityLabel="Buscar por código o nombre"

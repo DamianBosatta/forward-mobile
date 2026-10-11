@@ -1,4 +1,4 @@
-import { fetchCatalogoStockCompleto } from '../productos'
+import { buscarPorCodigoBarra, fetchCatalogoStockCompleto } from '../productos'
 import { api } from '../client'
 
 jest.mock('../client', () => ({ api: { get: jest.fn() } }))
@@ -36,5 +36,34 @@ describe('fetchCatalogoStockCompleto', () => {
     const res = await fetchCatalogoStockCompleto()
     expect(get).toHaveBeenCalledTimes(20)
     expect(res).toHaveLength(20)
+  })
+})
+
+describe('buscarPorCodigoBarra (servidor viejo, que ignora CodigoBarra y devuelve el catálogo)', () => {
+  const conCodigo = (id: string, codigoBarra: string) => ({ id, nombre: id, codigoBarra })
+
+  it('sigue las páginas hasta encontrar el código exacto', async () => {
+    get
+      .mockResolvedValueOnce({ hasNextPage: true, items: [conCodigo('a', '77900000000240')] })
+      .mockResolvedValueOnce({ hasNextPage: false, items: [conCodigo('b', '7790000000024')] })
+
+    expect((await buscarPorCodigoBarra('7790000000024'))?.id).toBe('b')
+    expect(get.mock.calls[1][0]).toBe('/api/v1/Productos/catalogo-stock?CodigoBarra=7790000000024&PageNumber=2&PageSize=1000')
+  })
+
+  it('corta en el tope de páginas y dice que no está', async () => {
+    get.mockResolvedValue({ hasNextPage: true, items: [conCodigo('a', '1')] })
+    expect(await buscarPorCodigoBarra('2')).toBeNull()
+    expect(get).toHaveBeenCalledTimes(20)
+  })
+
+  it('deja de recorrer cuando se cancela (otro escaneo, o se cerró la pantalla)', async () => {
+    const corte = new AbortController()
+    get.mockImplementation(async () => {
+      corte.abort()
+      return { hasNextPage: true, items: [] }
+    })
+    expect(await buscarPorCodigoBarra('2', corte.signal)).toBeNull()
+    expect(get).toHaveBeenCalledTimes(1)
   })
 })

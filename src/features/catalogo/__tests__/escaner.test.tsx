@@ -1,7 +1,7 @@
 import React from 'react'
 import { Linking } from 'react-native'
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act, render, screen, userEvent } from '@testing-library/react-native'
+import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
 import CatalogoConsultaScreen from '../../../../app/(tabs)/inventario/index'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 
@@ -24,11 +24,12 @@ jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390 })
 jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }) }))
 jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
 jest.mock('@/core/api/client', () => ({
+  ...jest.requireActual('@/core/api/client'),
   API_URL: 'http://api.test',
   api: { get: jest.fn(), post: jest.fn() },
 }))
 
-const { api } = jest.requireMock('@/core/api/client') as { api: { get: jest.Mock; post: jest.Mock } }
+const { api, ApiError } = jest.requireMock('@/core/api/client') as { api: { get: jest.Mock; post: jest.Mock }; ApiError: new (status: number, message: string) => Error }
 
 const prod = (id: string, nombre: string, codigoPropio: string) => ({ id, nombre, codigoPropio, precioVenta: 1000, esPadreDeVariantes: false, activo: true })
 const UNICO = prod('p-1', 'Saphirus Aerosol 250 ml', 'SAP-AER-250')
@@ -54,12 +55,21 @@ function servidor(url: string) {
     return Promise.resolve(pagina(!mockFiltraCodigo ? CATALOGO : leido ? CATALOGO.filter((p) => familia(p) === familia(leido)) : []))
   }
   if (url.startsWith('/api/v1/Productos?')) return Promise.resolve(pagina([UNICO, OTRO]))
-  if (url === `/api/v1/Productos/${UNICO.id}`) return Promise.resolve({ ...UNICO, ventaMinimaUnidades: 1, puedeVenderse: true })
+  const detalle = [UNICO, OTRO].find((p) => url === `/api/v1/Productos/${p.id}`)
+  if (detalle) return Promise.resolve({ ...detalle, ventaMinimaUnidades: 1, puedeVenderse: true })
   if (url === `/api/v1/Productos/${LINEA.id}`) return Promise.resolve({ ...LINEA, precioVenta: 1000, ventaMinimaUnidades: 1, activo: true })
   if (url === `/api/v1/Productos/${LINEA.id}/variantes`) return Promise.resolve([])
   return Promise.reject(new Error(`sin respuesta para ${url}`))
 }
 const pidio = (texto: string) => api.get.mock.calls.some(([u]) => String(u).includes(texto))
+/** La búsqueda por código responde `respuesta`; lo demás, el servidor de siempre. */
+const conCodigo = (respuesta: () => Promise<unknown>) =>
+  api.get.mockImplementation((url: string) => (url.includes('CodigoBarra=') ? respuesta() : servidor(url)))
+function diferido() {
+  let responder!: (v: unknown) => void
+  const promesa = new Promise((r) => { responder = r })
+  return { promesa, responder }
+}
 
 function renderPantalla() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })
@@ -76,6 +86,7 @@ async function escanear(...codigos: string[]) {
   await userEvent.press(screen.getByRole('button', { name: 'Cámara simulada' }))
 }
 
+afterEach(() => onlineManager.setOnline(true))
 beforeEach(() => {
   mockFiltraCodigo = true
   mockPermiso = { granted: true, canAskAgain: true }
@@ -132,13 +143,68 @@ describe('Escáner del catálogo', () => {
     expect(screen.queryByText('No hay ningún producto con el código 779811.')).toBeNull()
   })
 
-  it('si no se puede buscar el código, lo dice', async () => {
+  it('sin conexión: avisa enseguida y no abre ninguna ficha cuando vuelve la red', async () => {
     renderPantalla()
     await screen.findByText(OTRO.nombre)
-    api.get.mockRejectedValue(new Error('sin red'))
+    act(() => onlineManager.setOnline(false))
+    conCodigo(() => Promise.reject(new TypeError('Network request failed')))
     await escanear('7798114820536')
 
-    expect(await screen.findByText('No se pudo buscar el código 7798114820536. Revisá la conexión y volvé a intentar.')).toBeTruthy()
+    expect(await screen.findByText('Sin conexión: no se pudo buscar el código 7798114820536. Volvé a escanear cuando haya señal.')).toBeTruthy()
+    api.get.mockImplementation(servidor)
+    await act(async () => onlineManager.setOnline(true))
+    expect(screen.queryByText('Precio de lista por unidad')).toBeNull()
+    expect(pidio(`/api/v1/Productos/${UNICO.id}`)).toBe(false)
+  })
+
+  it.each([
+    [400, 'El código 7798114820536 no es válido.'],
+    [500, 'No se pudo buscar el código 7798114820536. Volvé a intentar.'],
+  ])('si el servidor responde %i, lo dice', async (status, aviso) => {
+    renderPantalla()
+    await screen.findByText(OTRO.nombre)
+    conCodigo(() => Promise.reject(new ApiError(status, 'rechazado')))
+    await escanear('7798114820536')
+
+    expect(await screen.findByText(aviso)).toBeTruthy()
+  })
+
+  it('tocar una tarjeta mientras se busca el código cancela el escaneo', async () => {
+    const codigo = diferido()
+    conCodigo(() => codigo.promesa)
+    renderPantalla()
+    await screen.findByText(OTRO.nombre)
+    await escanear('7798114820536')
+    expect(screen.getByText('Buscando el código 7798114820536…')).toBeTruthy()
+
+    await userEvent.press(screen.getByRole('button', { name: `${OTRO.nombre}, código ${OTRO.codigoPropio}` }))
+    await act(async () => codigo.responder(pagina([SUELTO])))
+    expect(await screen.findByText('Precio de lista por unidad')).toBeTruthy()
+    expect(pidio(`/api/v1/Productos/${UNICO.id}`)).toBe(false)
+    expect(screen.queryByText(/Buscando el código/)).toBeNull()
+  })
+
+  it('otro escaneo corta el recorrido de páginas del anterior (servidor viejo)', async () => {
+    const pagina1 = diferido()
+    api.get.mockImplementation((url: string) => (url.includes('CodigoBarra=7790000000024') ? pagina1.promesa : servidor(url)))
+    renderPantalla()
+    await screen.findByText(OTRO.nombre)
+    await escanear('7790000000024')
+    await escanear('7798114820536')
+    expect(await screen.findByText('Precio de lista por unidad')).toBeTruthy()
+    await act(async () => pagina1.responder({ ...pagina(CATALOGO.slice(0, 1)), hasNextPage: true }))
+    expect(pidio('CodigoBarra=7790000000024&PageNumber=2')).toBe(false)
+  })
+
+  it('si se cierra la pantalla, deja de recorrer las páginas del servidor viejo', async () => {
+    const pagina1 = diferido()
+    conCodigo(() => pagina1.promesa)
+    const { unmount } = renderPantalla()
+    await screen.findByText(OTRO.nombre)
+    await escanear('7790000000024')
+    unmount()
+    await act(async () => pagina1.responder({ ...pagina(CATALOGO.slice(0, 1)), hasNextPage: true }))
+    expect(pidio('PageNumber=2')).toBe(false)
   })
 
   it('si la cámara lee varias veces seguidas, vale solo la primera lectura', async () => {
