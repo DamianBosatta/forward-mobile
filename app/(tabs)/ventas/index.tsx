@@ -39,6 +39,8 @@ import { VentasKpiGrid } from '@/features/ventas/components/VentasKpiGrid'
 import { DataList } from '@/core/ui/DataList'
 import { VentaCardSkeleton } from '@/features/ventas/components/VentaCardSkeleton'
 import { useResponsive } from '@/libs/useResponsive'
+import { useVentaNueva } from '@/features/ventas/lib/ventaNueva'
+import { ListaVentasNueva } from '@/features/ventas/components/ListaVentasNueva'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const MONTHS_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']
@@ -562,9 +564,13 @@ const styles = StyleSheet.create({
 
 /** Pantalla principal: en teléfono lleva la barra de accesos rápidos (Bloque 9A, PR 0.3). */
 export default function VentasListScreenRoute() {
+  // Venta nueva (fase 2): convive con la lista de hoy detrás del switch de "Mi cuenta" → Pruebas.
+  const ventaNueva = useVentaNueva()
   return (
     <ConAccesosRapidos activa="ventas">
-      <VentasListScreen />
+      {ventaNueva
+        ? <ListaVentasNueva />
+        : <VentasListScreen />}
     </ConAccesosRapidos>
   )
 }
