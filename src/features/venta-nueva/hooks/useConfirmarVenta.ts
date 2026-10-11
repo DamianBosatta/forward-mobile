@@ -6,7 +6,7 @@ import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { ventasKeys } from '@/libs/api-client/ventas'
 import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { aAlta, nuevaClaveIdempotencia, type Cabecera } from '../lib/payload'
+import { aAlta, aAutoguardado, nuevaClaveIdempotencia, type Cabecera } from '../lib/payload'
 import { ESTADO_PENDIENTE_AUTORIZACION, motivosAutorizacion } from '../lib/motivosAutorizacion'
 import type { LineaCarrito } from '../lib/carrito'
 import type { useBorradorVenta } from './useBorradorVenta'
@@ -20,6 +20,8 @@ interface Datos {
   porcentajeCedido?: number
   borrador: ReturnType<typeof useBorradorVenta>
   alGuardar: () => void
+  /** Editar una venta existente: PUT /Ventas/{id} con su versión, sin borrador. */
+  edicion?: { ventaId: string; version: number } | null
 }
 
 /** El servidor pide justificación cuando un Pedido no tiene stock (CreateVentaCommandHandler). */
@@ -40,12 +42,20 @@ export function useConfirmarVenta(d: Datos) {
   const enVuelo = useRef(false)
   const [error, setError] = useState<string | null>(null)
   const [pedirMotivo, setPedirMotivo] = useState(false)
-  const sinStock = d.esPedido && d.lineas.some((l) => l.cantidad > l.producto.real)
+  // Al editar, el stock del catálogo no cuenta lo que esta venta ya reservó: el motivo lo pide el servidor si hace falta.
+  const sinStock = !d.edicion && d.esPedido && d.lineas.some((l) => l.cantidad > l.producto.real)
 
   async function enviar(motivo?: string) {
     const { borrador: b } = d
     let r: VentaActionResponseDto
-    if (!d.esPedido && b.borrador) {
+    if (d.edicion) {
+      // Igual que la web (buildUpdateVentaPayload): la cesión viaja solo si se cambió; ausente = no tocar.
+      r = await api.put<VentaActionResponseDto>(`/api/v1/Ventas/${d.edicion.ventaId}`, {
+        ...aAutoguardado(d.lineas, d.descuentoGeneral, d.cabecera), id: d.edicion.ventaId, version: d.edicion.version,
+        ...(motivo?.trim() ? { motivoVentaSinStock: motivo.trim() } : {}),
+        ...(d.esPedido && d.porcentajeCedido ? { porcentajeComisionCedido: d.porcentajeCedido } : {}),
+      })
+    } else if (!d.esPedido && b.borrador) {
       r = await api.post<VentaActionResponseDto>(`/api/v1/Ventas/${b.borrador.id}/guardar-presupuesto`, { ventaId: b.borrador.id, version: await b.flush() })
     } else {
       r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', aAlta(d.lineas, d.descuentoGeneral, d.cabecera, {

@@ -1,16 +1,22 @@
 import React from 'react'
 import { Redirect, useLocalSearchParams } from 'expo-router'
 import { useVentaNueva } from '@/features/ventas/lib/ventaNueva'
-import { VentaNuevaPantalla } from '@/features/venta-nueva/components/VentaNuevaPantalla'
+import { VentaNuevaPantalla, type AbrirVenta } from '@/features/venta-nueva/components/VentaNuevaPantalla'
 
-/**
- * Venta nueva (9A, fase 2): ruta propia para no tocar ventas/nueva; sin el switch lleva a esa.
- * `?borrador=<id>&tipo=Pedido|Presupuesto` retoma un borrador del servidor.
- */
+type Params = { borrador?: string; tipo?: string; editar?: string; duplicar?: string }
+
+/** `?borrador=<id>&tipo=…` retoma un borrador; `?editar=<id>` edita una venta; `?duplicar=<id>` parte de una. */
+export function abrirDesdeParams(p: Params): AbrirVenta | undefined {
+  if (p.borrador) return { modo: 'retomar', ventaId: p.borrador, tipo: p.tipo === 'Presupuesto' ? 'Presupuesto' : 'Pedido' }
+  if (p.editar) return { modo: 'editar', ventaId: p.editar }
+  if (p.duplicar) return { modo: 'duplicar', ventaId: p.duplicar }
+  return undefined
+}
+
+/** Venta nueva (9A, fase 2): ruta propia para no tocar ventas/nueva; sin el switch lleva a esa. */
 export default function NuevaVentaV2Route() {
   const ventaNueva = useVentaNueva()
-  const { borrador, tipo } = useLocalSearchParams<{ borrador?: string; tipo?: string }>()
+  const params = useLocalSearchParams<Params>()
   if (!ventaNueva) return <Redirect href="/(tabs)/ventas/nueva" />
-  const retomar = borrador ? { borradorId: borrador, tipo: tipo === 'Presupuesto' ? 'Presupuesto' as const : 'Pedido' as const } : undefined
-  return <VentaNuevaPantalla retomar={retomar} />
+  return <VentaNuevaPantalla abrir={abrirDesdeParams(params)} />
 }

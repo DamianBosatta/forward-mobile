@@ -34,7 +34,7 @@ const socio = { id: 'c7', direccion: 'Tarantino 1898', nombreFantasia: 'Autoserv
 
 function pantalla() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={qc}><VentaNuevaPantalla retomar={{ borradorId: 'b9', tipo: 'Presupuesto' }} /></QueryClientProvider>)
+  return render(<QueryClientProvider client={qc}><VentaNuevaPantalla abrir={{ modo: 'retomar', ventaId: 'b9', tipo: 'Presupuesto' }} /></QueryClientProvider>)
 }
 
 beforeEach(() => {

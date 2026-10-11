@@ -26,14 +26,22 @@ import { CabeceraVenta } from './CabeceraVenta'
 import { FraganciasSheet } from './FraganciasSheet'
 import { useCatalogoVenta } from '../hooks/useCatalogoVenta'
 import { useVentaCargada } from '../hooks/useVentaCargada'
+import type { VentaCargada } from '../lib/hidratar'
+
+export type AbrirVenta =
+  /** Un borrador de la pestaña Borradores: sigue autoguardándose como pedido o presupuesto. */
+  | { modo: 'retomar'; ventaId: string; tipo: TipoDocumento }
+  /** Una venta Pendiente o Confirmada: sin autoguardado; se guarda con PUT y la versión. */
+  | { modo: 'editar'; ventaId: string }
+  /** Una venta como punto de partida: borrador nuevo para el mismo cliente, con los precios de hoy. */
+  | { modo: 'duplicar'; ventaId: string }
 
 interface Props {
-  /** Retomar un borrador del servidor (pestaña Borradores) como pedido o presupuesto. */
-  retomar?: { borradorId: string; tipo: TipoDocumento }
+  abrir?: AbrirVenta
 }
 
 /** Venta nueva (plan 9, fase 2): elegir cliente crea el borrador en el servidor y desde ahí se autoguarda. */
-export function VentaNuevaPantalla({ retomar }: Props = {}) {
+export function VentaNuevaPantalla({ abrir }: Props = {}) {
   const c = useColors()
   const router = useRouter()
   const [cliente, setCliente] = useState<ClienteElegido | null>(null)
@@ -52,9 +60,10 @@ export function VentaNuevaPantalla({ retomar }: Props = {}) {
   const { isTabletLandscape } = useResponsive()
   const [pestana, setPestana] = useState<'lineas' | 'cabecera'>('lineas')
   const [motivo, setMotivo] = useState('')
+  const [edicion, setEdicion] = useState<{ ventaId: string; version: number; codigo: string } | null>(null)
   const conf = useConfirmarVenta({
     clienteId: cliente?.id ?? '', esPedido: tipo === 'Pedido', lineas, descuentoGeneral: descuentoValido, cabecera: cab.cabecera,
-    porcentajeCedido: cab.porcentajeCedido, borrador: b, alGuardar: vaciar,
+    porcentajeCedido: cab.porcentajeCedido, borrador: b, alGuardar: vaciar, edicion,
   })
   const [catalogo, setCatalogo] = useState(false)
   const [editando, setEditando] = useState<LineaCarrito | null>(null)
@@ -65,26 +74,47 @@ export function VentaNuevaPantalla({ retomar }: Props = {}) {
   // Cada venta nueva arranca con el carrito vacío.
   useEffect(() => { vaciar() }, [vaciar])
 
-  // Retomar: lo que tiene el servidor pasa a la pantalla y el borrador sigue autoguardándose.
-  const cargada = useVentaCargada(retomar?.borradorId)
-  const [retomado, setRetomado] = useState(false)
-  useEffect(() => {
-    const d = cargada.datos
-    if (!retomar || !d || retomado) return
+  // Abrir una venta del servidor (retomar, editar o duplicar): lo que tiene pasa a la pantalla.
+  const cargada = useVentaCargada(abrir?.ventaId)
+  const [abierta, setAbierta] = useState(false)
+  const [aDuplicar, setADuplicar] = useState<VentaCargada | null>(null)
+  const aplicar = (d: VentaCargada, cabecera = d.cabecera) => {
     useCarritoVenta.setState({ lineas: d.lineas })
     setDescuentoTexto(mostrarNumero(d.descuentoGeneral))
     setDescuentoValido(d.descuentoGeneral)
-    cab.hidratar(d.cabecera)
-    setTipo(retomar.tipo)
+    cab.hidratar(cabecera)
+  }
+  useEffect(() => {
+    const d = cargada.datos
+    if (!abrir || !d || abierta) return
+    setAbierta(true)
     setCliente(d.cliente)
-    b.retomar(retomar.borradorId, d.version)
-    setRetomado(true)
-  }, [retomar, cargada.datos, retomado, cab, b])
+    if (abrir.modo === 'retomar') {
+      aplicar(d)
+      setTipo(abrir.tipo)
+      b.retomar(abrir.ventaId, d.version)
+    } else if (abrir.modo === 'editar') {
+      aplicar(d)
+      setTipo(d.tipo)
+      setEdicion({ ventaId: abrir.ventaId, version: d.version, codigo: d.codigo })
+    } else {
+      // Duplicar: primero el borrador nuevo; las líneas entran cuando existe, así se autoguardan en él.
+      setTipo(d.tipo)
+      setADuplicar(d)
+      void b.crear(d.cliente.id)
+    }
+  })
+  useEffect(() => {
+    if (!aDuplicar || (!b.borrador && !b.errorAlCrear)) return
+    // La fecha de entrega no se copia: se propone el próximo día hábil.
+    aplicar(aDuplicar, { ...aDuplicar.cabecera, fecha: null })
+    setADuplicar(null)
+  })
 
-  if (retomar && !retomado) {
+  if (abrir && !abierta) {
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <TopBar title="Retomar borrador" leading={volver} />
+        <TopBar title={abrir.modo === 'retomar' ? 'Retomar borrador' : abrir.modo === 'editar' ? 'Editar venta' : 'Duplicar venta'} leading={volver} />
         <View style={{ padding: space[4] }}>
           {cargada.error ? <Notice tone="peligro">{cargada.error}</Notice> : <ActivityIndicator color={c.brand} />}
         </View>
@@ -144,7 +174,7 @@ export function VentaNuevaPantalla({ retomar }: Props = {}) {
       ) : null}
       {conf.error ? <Notice tone="peligro">{conf.error}</Notice> : null}
       <Button
-        label={tipo === 'Pedido' ? 'Confirmar pedido' : 'Guardar presupuesto'}
+        label={edicion ? 'Guardar cambios' : tipo === 'Pedido' ? 'Confirmar pedido' : 'Guardar presupuesto'}
         onPress={() => void conf.confirmar()}
         loading={conf.enviando}
         disabled={lineas.length === 0 || descuentoGeneral === null || cab.fleteInvalido || !!cab.cesionError || conf.enviando}
@@ -155,7 +185,7 @@ export function VentaNuevaPantalla({ retomar }: Props = {}) {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
-        title={tipo === 'Pedido' ? 'Nuevo pedido' : 'Nuevo presupuesto'}
+        title={edicion ? `Editar ${tipo.toLowerCase()} ${edicion.codigo}` : tipo === 'Pedido' ? 'Nuevo pedido' : 'Nuevo presupuesto'}
         subtitle={rotulo}
         leading={volver}
         syncLabel={b.etiqueta}

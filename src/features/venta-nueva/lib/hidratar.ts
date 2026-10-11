@@ -3,6 +3,7 @@ import type { SocioDetailDto, VentaDetalleDto, VentaDetalleItemDto, VentaHeaderD
 import { METODO_ENTREGA, type MetodoEntregaValue } from '@/features/ventas/lib/venta-form-retiro'
 import { aElegido, type ClienteElegido } from '@/features/clientes/lib/recientes'
 import type { LineaCarrito } from './carrito'
+import { codigoDeVenta, tipoDeVenta } from './ventaGuardada'
 
 /**
  * Llevar una venta del servidor a la pantalla de venta (retomar un borrador; después editar y
@@ -16,6 +17,9 @@ export interface VentaCargada {
   descuentoGeneral: number
   cabecera: { metodoEntrega: MetodoEntregaValue; fecha: string | null; flete: number; observaciones: string }
   version: number
+  tipo: 'Pedido' | 'Presupuesto'
+  /** A00001 (o el comienzo del id si no tiene número). */
+  codigo: string
 }
 
 function productoDesdeItem(it: VentaDetalleItemDto): CatalogoStockItem {
@@ -58,5 +62,7 @@ export function ventaCargada(venta: VentaDetalleDto, socio: SocioDetailDto, cata
     descuentoGeneral: venta.venta.porcentajeDescuento,
     cabecera: cabeceraDesdeVenta(venta.venta),
     version: venta.venta.version,
+    tipo: tipoDeVenta(venta.venta),
+    codigo: codigoDeVenta(venta.venta),
   }
 }

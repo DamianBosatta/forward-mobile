@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Alert, Text, View } from 'react-native'
+import { useRouter } from 'expo-router'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, Segmented } from '@/core/ui/fw'
 import { api } from '@/core/api/client'
@@ -13,7 +14,7 @@ import { diaArgentina } from '@/src/utils/date'
 import { ESTADO_PENDIENTE_AUTORIZACION, motivosAutorizacion } from '../lib/motivosAutorizacion'
 import { codigoDeVenta, tipoDeVenta } from '../lib/ventaGuardada'
 
-const ESTADO = { Pendiente: 1, EnRuta: 5, Anulada: 8 }
+const ESTADO = { Pendiente: 1, Confirmada: 2, EnRuta: 5, Anulada: 8 }
 const DIA_MS = 86_400_000
 const CUANDO = [
   { value: '1', label: 'Mañana' },
@@ -50,6 +51,11 @@ export function AccionesVenta({ venta, rotulo }: Props) {
   const esPresupuestoPendiente = h.tipoOperacion === 1 && h.estado === ESTADO.Pendiente
   const puedeConvertir = esPresupuestoPendiente && canDo('MOD_VENTAS', 'update')
   const puedeAnular = canDo('MOD_VENTAS', 'delete') && h.estado !== ESTADO.Anulada && h.estado !== ESTADO.EnRuta
+  // UpdateVentaCommandHandler: solo se editan ventas Pendiente o Confirmada.
+  const puedeEditar = canDo('MOD_VENTAS', 'update') && (h.estado === ESTADO.Pendiente || h.estado === ESTADO.Confirmada)
+  const puedeDuplicar = canDo('MOD_VENTAS', 'create')
+  const router = useRouter()
+  const ir = (param: 'editar' | 'duplicar') => router.push(`/(tabs)/ventas/nueva-v2?${param}=${h.id}` as never)
 
   const compartir = async () => {
     setPdf(true)
@@ -111,9 +117,13 @@ export function AccionesVenta({ venta, rotulo }: Props) {
     <View style={{ gap: space[3] }}>
       {puedeConvertir ? <Button label="Convertir en pedido" loading={convertir.isPending} onPress={aPedido} /> : null}
       <Button label="Compartir PDF con el cliente" variant={puedeConvertir ? 'secundario' : 'primario'} loading={pdf} onPress={() => void compartir()} />
-      <View style={{ flexDirection: 'row', gap: space[3] }}>
-        <View style={{ flex: 1 }}><Button label="Agendar" variant="secundario" onPress={() => abrir('agendar')} /></View>
-        {puedeAnular ? <View style={{ flex: 1 }}><Button label="Anular" variant="secundario" onPress={() => abrir('anular')} /></View> : null}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[3] }}>
+        {[
+          puedeEditar && <Button key="e" label="Editar" variant="secundario" onPress={() => ir('editar')} />,
+          puedeDuplicar && <Button key="d" label="Duplicar" variant="secundario" onPress={() => ir('duplicar')} />,
+          <Button key="g" label="Agendar" variant="secundario" onPress={() => abrir('agendar')} />,
+          puedeAnular && <Button key="a" label="Anular" variant="secundario" onPress={() => abrir('anular')} />,
+        ].filter(Boolean).map((boton, i) => <View key={i} style={{ flexBasis: '45%', flexGrow: 1 }}>{boton}</View>)}
       </View>
       <BottomSheet visible={hoja === 'anular'} onClose={() => setHoja(null)} accessibilityLabel="Anular venta">
         <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{`Anular ${tipoDeVenta(h).toLowerCase()} ${codigoDeVenta(h)}`}</Text>

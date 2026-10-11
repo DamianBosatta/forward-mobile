@@ -1,0 +1,109 @@
+import React from 'react'
+import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { useAuthStore } from '@/features/auth/store/auth.store'
+import { VentaNuevaPantalla, type AbrirVenta } from '../components/VentaNuevaPantalla'
+import { AccionesVenta } from '../components/AccionesVenta'
+import { useCarritoVenta } from '../hooks/useCarritoVenta'
+import { producto } from '../__testing__/producto'
+
+const mockGet = jest.fn()
+const mockPost = jest.fn()
+const mockPut = jest.fn()
+jest.mock('@/core/api/client', () => ({
+  ...jest.requireActual('@/core/api/client'),
+  api: { get: (...a: unknown[]) => mockGet(...a), post: (...a: unknown[]) => mockPost(...a), put: (...a: unknown[]) => mockPut(...a) },
+}))
+const mockDims = jest.fn()
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => mockDims() }))
+const mockPush = jest.fn()
+const mockReplace = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, back: jest.fn(), replace: mockReplace }) }))
+jest.mock('expo-secure-store', () => ({ setItemAsync: jest.fn(), getItemAsync: jest.fn() }))
+
+const { ApiError } = jest.requireActual('@/core/api/client')
+jest.setTimeout(20000)
+
+const pala = producto({ real: 100 })
+const cabecera = (o: Record<string, unknown> = {}) => ({
+  id: 'v9', codigoPedido: 'A00419', clienteId: 'c7', version: 4, estado: 2, tipoOperacion: 2, porcentajeDescuento: 0,
+  metodoEntregaNombre: 'LogisticaPropia', metodoEntrega: 1, fechaEntrega: '2026-01-02T00:00:00', cargoFleteAmount: 0, observaciones: null, ...o,
+})
+const venta = { venta: cabecera(), detalles: [{ id: 'i1', productoId: 'p1', productoNombre: 'Pala', cantidad: 12, porcentajeDescuentoItem: 0, stockDisponible: 100 }], bultos: [] }
+const socio = { id: 'c7', direccion: 'Tarantino 1898', nombreFantasia: 'Autoservicio Abel' }
+const ESPERA = { timeout: 3000 }
+
+function conQuery(ui: React.ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>)
+}
+const abrir = (a: AbrirVenta) => conQuery(<VentaNuevaPantalla abrir={a} />)
+const permisos = (p: Record<string, boolean>) =>
+  useAuthStore.setState({ user: { id: 'u1', roles: ['Vendedor'], permissions: [{ module: 'MOD_VENTAS', canRead: true, ...p }], maxDescuentoPorcentaje: 10 } as never })
+
+beforeEach(() => {
+  mockDims.mockReturnValue({ width: 390, height: 800, scale: 2, fontScale: 1 })
+  permisos({ canCreate: true, canUpdate: true })
+  useCarritoVenta.setState({ lineas: [] })
+  for (const m of [mockPush, mockReplace]) m.mockReset()
+  mockPost.mockReset().mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas/borradores' ? { ventaId: 'b1', version: 1, message: '' } : undefined))
+  mockPut.mockReset().mockImplementation((_u: string, b: { version: number }) => Promise.resolve({ ventaId: 'v9', version: b.version + 1, message: 'Venta actualizada.' }))
+  mockGet.mockReset().mockImplementation((url: string) => {
+    if (url === '/api/v1/Ventas/v9') return Promise.resolve(venta)
+    if (url === '/api/v1/socios-comerciales/c7') return Promise.resolve(socio)
+    if (url.startsWith('/api/v1/Productos/catalogo-stock')) return Promise.resolve({ items: [pala], hasNextPage: false })
+    return Promise.resolve(undefined)
+  })
+})
+
+describe('editar y duplicar (PR 2.9b)', () => {
+  it('Editar solo en Pendiente o Confirmada y con permiso; Duplicar con permiso de crear', async () => {
+    const r = conQuery(<AccionesVenta venta={venta as never} rotulo="Tarantino 1898" />)
+    await userEvent.press(screen.getByRole('button', { name: 'Editar' }))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva-v2?editar=v9')
+    await userEvent.press(screen.getByRole('button', { name: 'Duplicar' }))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva-v2?duplicar=v9')
+    r.unmount()
+    conQuery(<AccionesVenta venta={{ ...venta, venta: cabecera({ estado: 5 }) } as never} rotulo="Tarantino 1898" />)
+    expect(screen.queryByRole('button', { name: 'Editar' })).toBeNull()
+  })
+
+  it('editar carga la venta sin autoguardar y "Guardar cambios" la manda con PUT y su versión', async () => {
+    abrir({ modo: 'editar', ventaId: 'v9' })
+    expect(await screen.findByText('Editar pedido A00419')).toBeTruthy()
+    await userEvent.clear(screen.getByLabelText('Descuento general (%)'))
+    await userEvent.type(screen.getByLabelText('Descuento general (%)'), '5')
+    await new Promise((r) => setTimeout(r, 1200))
+    expect(mockPut).not.toHaveBeenCalled()
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1))
+    expect(mockPut.mock.calls[0][0]).toBe('/api/v1/Ventas/v9')
+    expect(mockPut.mock.calls[0][1]).toEqual({
+      id: 'v9', version: 4, descuentoGeneral: 5, metodoEntrega: 1, fechaEntrega: '2026-01-02', cargoFlete: 0,
+      items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 0 }],
+    })
+    expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas/borradores', expect.anything())
+    expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas', expect.anything())
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(tabs)/ventas/guardada', params: { id: 'v9', mensaje: 'Venta actualizada.' } }))
+  })
+
+  it('si otro la cambió (409), se ve el mensaje del servidor y no sale de la pantalla', async () => {
+    mockPut.mockRejectedValue(new ApiError(409, 'Error de concurrencia: la venta fue modificada.'))
+    abrir({ modo: 'editar', ventaId: 'v9' })
+    await userEvent.press(await screen.findByRole('button', { name: 'Guardar cambios' }))
+    expect(await screen.findByText('Error de concurrencia: la venta fue modificada.')).toBeTruthy()
+    expect(mockReplace).not.toHaveBeenCalled()
+  })
+
+  it('duplicar crea un borrador nuevo para el mismo cliente y le autoguarda las líneas, sin copiar la fecha', async () => {
+    abrir({ modo: 'duplicar', ventaId: 'v9' })
+    expect(await screen.findByText('Nuevo pedido')).toBeTruthy()
+    expect(screen.getByText('Tarantino 1898 · Autoservicio Abel')).toBeTruthy()
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c7', depositoId: DEPOSITO_CENTRAL_ID }))
+    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
+    expect(mockPut.mock.calls[0][0]).toBe('/api/v1/Ventas/b1')
+    expect(mockPut.mock.calls[0][1]).toMatchObject({ id: 'b1', version: 1, items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 0 }] })
+    expect(mockPut.mock.calls[0][1].fechaEntrega).not.toBe('2026-01-02')
+  })
+})
