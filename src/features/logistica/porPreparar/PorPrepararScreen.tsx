@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useIsFocused } from '@react-navigation/native'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { FONT, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
@@ -32,6 +32,8 @@ export function PorPrepararScreen() {
   const [elegida, setElegida] = useState<string | null>(null)
   const dia = dias.find((d) => d.fecha === elegida) ?? dias.find((d) => !feriadoDe(d.fecha)) ?? dias[0]
   const [pedido, setPedido] = useState<VentaPreparacion | null>(null)
+  // Al cambiar el día argentino no queda el pedido ni el día elegido de ayer.
+  useEffect(() => { setElegida(null); setPedido(null) }, [hoy])
   // La pantalla queda montada en el Drawer: fuera de foco no consulta cada 30 segundos.
   const q = useVentasParaPreparacion({ fechaDesde: dia.fecha, fechaHasta: dia.fecha }, { activa: useIsFocused() })
 

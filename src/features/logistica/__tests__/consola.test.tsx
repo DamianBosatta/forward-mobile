@@ -1,7 +1,7 @@
 import React from 'react'
-import { Linking, Platform } from 'react-native'
+import { AppState, Linking, Platform } from 'react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, fireEvent, render, screen, userEvent, within } from '@testing-library/react-native'
+import { act, fireEvent, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { themeColors } from '@/libs/theme'
@@ -22,6 +22,7 @@ jest.mock('expo-router', () => ({
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ dispatch: jest.fn() }),
   DrawerActions: { openDrawer: jest.fn() },
+  useFocusEffect: (cb: () => void) => { require('react').useEffect(cb, []) },
 }))
 jest.mock('@/features/logistica/components/PedidoDetalleModal', () => ({ PedidoDetalleModal: () => null }))
 jest.mock('@/features/pedidos/lib/sharePdf', () => ({ sharePdf: jest.fn() }))
@@ -231,5 +232,24 @@ describe('Consola del chofer: hoja de ruta', () => {
     const proxima = await screen.findByLabelText('Próxima parada')
     expect(estilo(proxima).borderColor).toBe(themeColors.dark.brand)
     expect(estilo(proxima).backgroundColor).toBe(themeColors.dark.surface)
+  })
+
+  it('si la app vuelve del segundo plano pasada la medianoche, pide las rutas del día nuevo', async () => {
+    const dia1 = Date.parse('2026-10-10T01:30:00Z') // viernes 9 en Argentina
+    jest.spyOn(Date, 'now').mockReturnValue(dia1)
+    let alCambiar: ((e: string) => void) | undefined
+    jest.spyOn(AppState, 'addEventListener').mockImplementation(((_t: string, cb: (e: string) => void) => {
+      alCambiar = cb
+      return { remove: jest.fn() }
+    }) as never)
+    // Dos rutas: queda el selector y la consulta por día sigue activa.
+    listaServidor = () => [{ id: 'aaaaaaaa-1', estado: 1, fechaSalida: '2026-10-09T11:00:00Z' }, { id: 'bbbbbbbb-2', estado: 1, fechaSalida: '2026-10-09T12:00:00Z' }]
+    pintar()
+    expect(await screen.findByText('Elegí la hoja de ruta')).toBeTruthy()
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T13:00:00Z')) // sábado 10
+    act(() => { alCambiar?.('active') })
+    await waitFor(() =>
+      expect(mockGet.mock.calls.map(([u]) => String(u))).toContain('/api/v1/Logistica/hojas-ruta?choferId=u1&fecha=2026-10-10'),
+    )
   })
 })

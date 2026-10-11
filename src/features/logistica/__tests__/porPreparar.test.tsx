@@ -1,5 +1,6 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { AppState } from 'react-native'
 import { act, render, screen, userEvent, within } from '@testing-library/react-native'
 import { PorPrepararScreen } from '../porPreparar/PorPrepararScreen'
 
@@ -154,5 +155,29 @@ describe('Pedidos por preparar (solo lectura)', () => {
     await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376')
     await act(async () => { jest.advanceTimersByTime(65_000) })
     expect(pedidos()).toBeGreaterThan(1)
+  })
+
+  it('al volver la app del segundo plano pasada la medianoche, "hoy" pasa al día nuevo', async () => {
+    let alCambiar: ((e: string) => void) | undefined
+    jest.spyOn(AppState, 'addEventListener').mockImplementation(((_t: string, cb: (e: string) => void) => {
+      alCambiar = cb
+      return { remove: jest.fn() }
+    }) as never)
+    pintar()
+    expect(await screen.findByLabelText('vie 9 · Hoy')).toBeTruthy()
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-13T15:00:00Z'))
+    act(() => { alCambiar?.('active') })
+    expect(await screen.findByLabelText('mar 13 · Hoy')).toBeTruthy()
+  })
+
+  it('al cambiar el día argentino no queda el pedido ni el día elegido de ayer', async () => {
+    const user = userEvent.setup()
+    pintar()
+    await user.press(await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376'))
+    expect(await screen.findByText('Portón negro del depósito, antes de las 12.')).toBeTruthy()
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-13T15:00:00Z'))
+    act(() => { mockAlEnfocar?.() })
+    expect(await screen.findByLabelText('mar 13 · Hoy')).toBeTruthy()
+    expect(screen.queryByText('Portón negro del depósito, antes de las 12.')).toBeNull()
   })
 })

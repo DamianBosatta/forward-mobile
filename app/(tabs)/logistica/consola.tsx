@@ -20,6 +20,7 @@ import { tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { sharePdf } from '@/features/pedidos/lib/sharePdf'
 import { diaArgentina, parseDateSafe } from '@/src/utils/date'
+import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
 
 /** Consola del chofer (plan §11, lámina ChoferRuta). Sin foto ni cobro: llegan con 5.1b/c/d. */
 export default function ConsolaChoferScreen() {
@@ -52,7 +53,7 @@ export default function ConsolaChoferScreen() {
 
   const objetivo = id || activeTrip?.id || rutaElegida || ''
   // El servidor devuelve todo el historial del chofer: se piden solo las de hoy (día argentino) y sin las canceladas.
-  const hoy = diaArgentina(Date.now())
+  const hoy = diaArgentina(useAhoraArgentina())
   const buscar = puedeVerViajes && !id && !activeTrip?.id && !!user?.id
   const rutas = useHojasDeRuta({ choferId: user?.id, fecha: hoy }, { enabled: buscar })
   // Un viaje en curso que salió otro día (pasada la medianoche, sin cerrar) sigue siendo del chofer: se pide aparte, sin fecha.
