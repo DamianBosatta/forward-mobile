@@ -57,7 +57,6 @@ export type {
   TipoMovimientoCuenta,
   // Reportes
   ReporteDiario,
-  KpiDashboard,
   // Logística
   HojaDeRuta,
   ParadaHojaRuta,
@@ -97,7 +96,6 @@ export {
   useMovimientosCaja,
   useAbrirCaja,
   useCerrarCaja,
-  useKpiDashboard,
   useReporteDiario,
   usePagos,
   useMovimientosCuenta

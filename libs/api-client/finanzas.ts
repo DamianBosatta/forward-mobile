@@ -1,12 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
-import type { CajaActivaDto, MovimientoCajaDto, KpiDashboard, ReporteDiario, Pago, MovimientoCuenta, PagedResult } from './types'
+import type { CajaActivaDto, MovimientoCajaDto, ReporteDiario, Pago, MovimientoCuenta, PagedResult } from './types'
 
 export const finanzasKeys = {
   cajaActiva: ['caja', 'activa'] as const,
   cajas: ['cajas'] as const,
   movimientosCaja: (cajaId: string) => ['caja', cajaId, 'movimientos'] as const,
-  kpi: ['kpi', 'dashboard'] as const,
   reporteDiario: (fecha: string) => ['reporte', 'diario', fecha] as const,
 }
 
@@ -48,17 +47,6 @@ export function useCerrarCaja() {
       api.post<string>(`/api/v1/Cajas/${cajaId}/cerrar`, { saldoFinalDeclarado }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: finanzasKeys.cajaActiva }),
-  })
-}
-
-// ── KPI Dashboard ──────────────────────────────────────────────────────────
-
-export function useKpiDashboard() {
-  return useQuery({
-    queryKey: finanzasKeys.kpi,
-    queryFn: () => api.get<KpiDashboard>('/api/v1/dashboard/summary'),
-    staleTime: 60_000,
-    refetchInterval: 60_000,
   })
 }
 

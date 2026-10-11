@@ -463,12 +463,6 @@ export interface ReporteDiario {
   resultadoNeto: number
 }
 
-/**
- * Dashboard KPI summary — matches GET /api/v1/dashboard/summary shape.
- * Derived from the generated OpenAPI schema.
- */
-export type KpiDashboard = components['schemas']['DashboardSummaryDto']
-
 // #endregion
 
 // #region Usuarios y Permisos

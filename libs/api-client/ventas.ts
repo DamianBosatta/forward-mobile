@@ -23,7 +23,6 @@ export const ventasKeys = {
   infinite: (params: VentaParams) => [...ventasKeys.all, 'infinite', params] as const,
   details: () => [...ventasKeys.all, 'detail'] as const,
   detail: (id: string) => [...ventasKeys.details(), id] as const,
-  resumen: (params: VentasResumenParams) => [...ventasKeys.all, 'resumen', params] as const,
 }
 
 export interface VentaParams {
@@ -38,19 +37,6 @@ export interface VentaParams {
   searchTerm?: string
 }
 
-export interface VentasResumenDto {
-  totalVendido: number
-  pendientes: number
-  porAutorizar: number
-  entregadas: number
-}
-
-export interface VentasResumenParams {
-  fechaDesde?: string
-  fechaHasta?: string
-  clienteId?: string
-  searchTerm?: string
-}
 // #endregion
 
 // #region Queries
@@ -131,23 +117,6 @@ export function useAutorizacionPreview(id: string, enabled: boolean) {
   })
 }
 
-/**
- * Hook para obtener el resumen de ventas (totales, pendientes, entregadas).
- * GET /api/v1/Ventas/resumen — parámetros en PascalCase según la OpenAPI spec.
- */
-export function useVentasResumen(params: VentasResumenParams = {}) {
-  const searchParams = new URLSearchParams()
-  if (params.fechaDesde) searchParams.set('FechaDesde', params.fechaDesde)
-  if (params.fechaHasta) searchParams.set('FechaHasta', params.fechaHasta)
-  if (params.clienteId) searchParams.set('ClienteId', params.clienteId)
-  if (params.searchTerm) searchParams.set('SearchTerm', params.searchTerm)
-
-  return useQuery({
-    queryKey: ventasKeys.resumen(params),
-    queryFn: () => api.get<VentasResumenDto>(`/api/v1/Ventas/resumen?${searchParams}`),
-    staleTime: 30_000,
-  })
-}
 // #endregion
 
 // #region Mutations
