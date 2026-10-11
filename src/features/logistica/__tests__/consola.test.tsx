@@ -146,6 +146,17 @@ describe('Consola del chofer: hoja de ruta', () => {
     expect(screen.queryByLabelText('Reportar entrega')).toBeNull()
   })
 
+  it('si la oficina cancela la hoja que el chofer tenía abierta, lo dice y no ofrece reportar ni iniciar', async () => {
+    // El chofer la tenía guardada sin salir; desde #860 la oficina puede cancelarla mientras está Programada.
+    useLogisticaStore.setState({ activeTrip: { ...HOJA, estado: 1 } as never })
+    pintar({ ...HOJA, estado: 4 })
+    expect(await screen.findByText(/cancelada/i)).toBeTruthy()
+    expect(screen.queryByLabelText('Reportar entrega')).toBeNull()
+    expect(screen.queryByLabelText('Iniciar recorrido')).toBeNull()
+    // No queda trabado en una hoja muerta.
+    expect(screen.getByLabelText('Cambiar de ruta')).toBeTruthy()
+  })
+
   it('con historial de rutas viejas y una para hoy, abre la de hoy sin pasar por el selector', async () => {
     jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T01:30:00Z')) // viernes 9 en Argentina
     // El servidor filtra por día: con fecha devuelve solo ese día; sin fecha, todo el historial.
