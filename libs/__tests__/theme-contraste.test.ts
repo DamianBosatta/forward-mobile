@@ -35,6 +35,12 @@ function pares(c: ForwardColors): Par[] {
   for (const [nt, t] of textos) {
     for (const [nf, f] of fondos) lista.push([`${nt} sobre ${nf}`, t, f])
   }
+  // Button inactivo, placeholder y ayuda de Field, Segmented sin elegir, texto de Field sobre surface2.
+  lista.push(['textSecondary sobre surface2', c.textSecondary, c.surface2])
+  lista.push(['text sobre surface2', c.text, c.surface2])
+  // Field con error: texto y borde en chip.anulado.text sobre ambos fondos del campo.
+  lista.push(['chip anulado text sobre surface', c.chip?.anulado.text ?? '', c.surface])
+  lista.push(['chip anulado text sobre surface2', c.chip?.anulado.text ?? '', c.surface2])
   lista.push(['onAction sobre action', c.onAction, c.action])
   lista.push(['onPrimary sobre primary', c.onPrimary, c.primary])
   lista.push(['onPrimary sobre primaryHover', c.onPrimary, c.primaryHover])
@@ -44,6 +50,8 @@ function pares(c: ForwardColors): Par[] {
   lista.push(['blanco sobre dangerStrong', '#FFFFFF', c.dangerStrong])
   for (const [estado, chip] of Object.entries(c.chip ?? {})) {
     lista.push([`chip ${estado}`, chip.text, chip.bg])
+    // Notice: el cuerpo usa `text` sobre el fondo del chip (el icono usa chip.text, ya cubierto arriba).
+    lista.push([`text sobre chip ${estado}`, c.text, chip.bg])
   }
   return lista
 }
