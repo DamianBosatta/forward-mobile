@@ -66,13 +66,6 @@ describe('CatalogoVenta (agregar productos)', () => {
     expect(onVerVenta).toHaveBeenCalled()
   })
 
-  it('una línea de fragancias ofrece "Elegir fragancias" en vez de añadir', async () => {
-    const onElegir = jest.fn()
-    render(<CatalogoVenta onVerVenta={jest.fn()} onElegirFragancias={onElegir} />)
-    await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
-    expect(onElegir).toHaveBeenCalledWith('pf')
-  })
-
   it('"Descuento y detalle de la línea" abre Editar línea y lo confirmado vuelve al carrito', async () => {
     render(<CatalogoVenta onVerVenta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Añadir Pala c/Cabo Fija LP' }))

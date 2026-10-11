@@ -11,10 +11,11 @@ import { cantidadEn } from '../lib/carrito'
 import { ProductoCatalogoCard } from './ProductoCatalogoCard'
 import { CarritoFlotante, CarritoPanel } from './CarritoVenta'
 import { EditarLineaSheet } from './EditarLineaSheet'
+import { FraganciasSheet } from './FraganciasSheet'
+import { cantidadDeFragancias } from '../lib/fragancias'
 
 interface CatalogoVentaProps {
   onVerVenta: () => void
-  onElegirFragancias?: (productoId: string) => void
 }
 
 /**
@@ -22,7 +23,7 @@ interface CatalogoVentaProps {
  * Tablet vertical: dos columnas. Tablet horizontal (≥ 900): grilla de 3 con el carrito
  * fijo a la derecha (plan §8).
  */
-export function CatalogoVenta({ onVerVenta, onElegirFragancias }: CatalogoVentaProps) {
+export function CatalogoVenta({ onVerVenta }: CatalogoVentaProps) {
   const c = useColors()
   const { formFactor, isTabletLandscape } = useResponsive()
   const [busqueda, setBusqueda] = useState('')
@@ -31,6 +32,7 @@ export function CatalogoVenta({ onVerVenta, onElegirFragancias }: CatalogoVentaP
   const productos = useMemo(() => todos.filter((p) => !p.productoPadreId), [todos])
   const { lineas, agregar, sumar, restar, quitar, reemplazar } = useCarritoVenta()
   const [editando, setEditando] = useState<string | null>(null)
+  const [fragancias, setFragancias] = useState<string | null>(null)
   const verCantidades = canViewStock((useAuthStore((s) => s.user?.roles) ?? []) as string[])
   const columnas = formFactor === 'tabletLandscape' ? 3 : formFactor === 'tabletPortrait' ? 2 : 1
 
@@ -64,13 +66,13 @@ export function CatalogoVenta({ onVerVenta, onElegirFragancias }: CatalogoVentaP
         renderItem={({ item }) => (
           <ProductoCatalogoCard
             producto={item}
-            cantidad={cantidadEn(lineas, item.id)}
+            cantidad={item.esPadreDeVariantes ? cantidadDeFragancias(lineas, item.id) : cantidadEn(lineas, item.id)}
             verCantidades={verCantidades}
             onAgregar={() => agregar(item)}
             onSumar={() => sumar(item.id)}
             onRestar={() => restar(item.id)}
-            onElegirFragancias={() => onElegirFragancias?.(item.id)}
-            onEditar={() => setEditando(item.id)}
+            onElegirFragancias={() => setFragancias(item.id)}
+            onEditar={item.esPadreDeVariantes ? undefined : () => setEditando(item.id)}
           />
         )}
       />
@@ -95,6 +97,7 @@ export function CatalogoVenta({ onVerVenta, onElegirFragancias }: CatalogoVentaP
       {lista}
       {isTabletLandscape && <CarritoPanel lineas={lineas} onVerVenta={onVerVenta} />}
       {hoja}
+      <FraganciasSheet padreId={fragancias} onClose={() => setFragancias(null)} />
     </View>
   )
 }

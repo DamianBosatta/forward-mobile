@@ -23,6 +23,8 @@ import { CatalogoVenta } from './CatalogoVenta'
 import { EditarLineaSheet } from './EditarLineaSheet'
 import { LineasVenta } from './LineasVenta'
 import { CabeceraVenta } from './CabeceraVenta'
+import { FraganciasSheet } from './FraganciasSheet'
+import { useCatalogoVenta } from '../hooks/useCatalogoVenta'
 
 /** Venta nueva (plan 9, fase 2): elegir cliente crea el borrador en el servidor y desde ahí se autoguarda. */
 export function VentaNuevaPantalla() {
@@ -50,6 +52,8 @@ export function VentaNuevaPantalla() {
   })
   const [catalogo, setCatalogo] = useState(false)
   const [editando, setEditando] = useState<LineaCarrito | null>(null)
+  const [fragancias, setFragancias] = useState<string | null>(null)
+  const { productos: catalogoVenta } = useCatalogoVenta('')
   const volver = { kind: 'atras' as const, onPress: () => router.back() }
 
   // Cada venta nueva arranca con el carrito vacío.
@@ -90,7 +94,8 @@ export function VentaNuevaPantalla() {
   const rotulo = nombre ? `${direccionDeEntrega(cliente)} · ${nombre}` : direccionDeEntrega(cliente)
   const lineasVista = (
     <LineasVenta lineas={lineas} {...avisos} tope={tope} descuentoTexto={descuentoTexto} descuentoGeneral={descuentoGeneral} flete={cab.cabecera.flete}
-      onDescuento={setDescuentoTexto} onAgregar={() => setCatalogo(true)} onEditar={setEditando} />
+      onDescuento={setDescuentoTexto} onAgregar={() => setCatalogo(true)} onEditar={setEditando}
+      onElegirFragancias={setFragancias} nombrePadre={(id) => catalogoVenta.find((p) => p.id === id)?.nombre} />
   )
   const cabeceraVista = <CabeceraVenta clienteId={cliente.id} rotuloCliente={rotulo} cab={cab} />
   const franjaTotal = (
@@ -151,6 +156,7 @@ export function VentaNuevaPantalla() {
       </BottomSheet>
       <EditarLineaSheet linea={editando} onClose={() => setEditando(null)}
         onConfirm={(l) => { reemplazar(l); setEditando(null) }} onQuitar={(id) => { quitar(id); setEditando(null) }} />
+      <FraganciasSheet padreId={fragancias} onClose={() => setFragancias(null)} />
     </View>
   )
 }

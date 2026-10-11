@@ -90,11 +90,14 @@ export function useProducto(id: string) {
 
 export type VarianteProducto = components['schemas']['VarianteListItemDto']
 
-/** Fragancias (variantes) de una línea. El servidor redacta las cantidades a quien no puede verlas. */
-export function useVariantesProducto(id: string, enabled = true) {
+/**
+ * Fragancias (variantes) de una línea. El servidor redacta las cantidades a quien no puede verlas.
+ * Con `depositoId`, la disponibilidad (`stockDisponible`, `puedeVenderse`) es la de ese depósito.
+ */
+export function useVariantesProducto(id: string, enabled = true, depositoId?: string) {
   return useQuery({
-    queryKey: [...productosKeys.detail(id), 'variantes'] as const,
-    queryFn: () => api.get<VarianteProducto[]>(`/api/v1/Productos/${id}/variantes`),
+    queryKey: [...productosKeys.detail(id), 'variantes', depositoId ?? null] as const,
+    queryFn: () => api.get<VarianteProducto[]>(`/api/v1/Productos/${id}/variantes${depositoId ? `?depositoId=${depositoId}` : ''}`),
     enabled: !!id && enabled,
     staleTime: 60_000,
   })
