@@ -17,8 +17,6 @@ import { TarjetaPendientes, type FilaPendiente } from './TarjetaPendientes'
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 const dos = (n: number) => String(n).padStart(2, '0')
-/** Alto de la BottomBar (76) que dibuja el layout: el contenido no queda tapado. */
-const ALTO_BOTTOM_BAR = 76
 const ANCHO_TARJETA_TELEFONO = 240
 
 /** Inicio (láminas Main y TabInicio): pendientes por módulo y lo de hoy. */
@@ -98,7 +96,7 @@ export function InicioScreen() {
       />
       <ScrollView
         testID="inicio-scroll"
-        contentContainerStyle={{ paddingTop: space[4], gap: space[4], paddingBottom: ALTO_BOTTOM_BAR + insets.bottom + space[4] }}
+        contentContainerStyle={{ paddingTop: space[4], gap: space[4], paddingBottom: (tablet ? insets.bottom : 0) + space[4] }}
         refreshControl={<RefreshControl refreshing={refrescando} onRefresh={refrescar} tintColor={c.brand} />}
       >
         <View style={{ paddingHorizontal: space[4], flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
