@@ -93,15 +93,17 @@ function Accion({ c, label, a11y, onPress }: { c: ForwardColors; label: string; 
   )
 }
 
-export function Redondo({ c, label, a11y, onPress }: { c: ForwardColors; label: string; a11y: string; onPress: () => void }) {
+export function Redondo({ c, label, a11y, onPress, disabled = false }: { c: ForwardColors; label: string; a11y: string; onPress: () => void; disabled?: boolean }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={a11y}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       onPress={onPress}
       style={{ width: 44, height: 44, borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}
     >
-      <Text style={{ ...typeScale.titulo, color: c.text }}>{label}</Text>
+      <Text style={{ ...typeScale.titulo, color: disabled ? c.textSecondary : c.text }}>{label}</Text>
     </Pressable>
   )
 }

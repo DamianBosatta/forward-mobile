@@ -60,10 +60,15 @@ export function quitar(lineas: LineaCarrito[], productoId: string): LineaCarrito
   return lineas.filter((l) => l.productoId !== productoId)
 }
 
-/** Reemplaza la línea editada (o la agrega si no estaba). */
+/**
+ * Reemplaza la línea editada (o la agrega si no estaba). En una fragancia, el descuento es de la
+ * línea entera: editarlo en una variante lo cambia en todas las de su línea (como en la web).
+ */
 export function reemplazar(lineas: LineaCarrito[], linea: LineaCarrito): LineaCarrito[] {
-  if (!lineas.some((l) => l.productoId === linea.productoId)) return [...lineas, linea]
-  return lineas.map((l) => (l.productoId === linea.productoId ? linea : l))
+  const padreId = linea.producto.productoPadreId
+  const hermanas = (l: LineaCarrito) => (padreId && l.producto.productoPadreId === padreId ? { ...l, descuentoPct: linea.descuentoPct } : l)
+  if (!lineas.some((l) => l.productoId === linea.productoId)) return [...lineas.map(hermanas), linea]
+  return lineas.map((l) => (l.productoId === linea.productoId ? linea : hermanas(l)))
 }
 
 /** Subtotal de la línea: precio del servidor × cantidad con el descuento de la línea (igual que Editar línea). */

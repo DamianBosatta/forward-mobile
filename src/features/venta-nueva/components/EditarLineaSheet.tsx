@@ -117,7 +117,9 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar }: EditarLin
                   }} />
               </View>
             </View>
-            <Text style={{ ...typeScale.secundario, color: c.textSecondary, marginTop: -space[2] }}>Cambiás uno y el otro se calcula solo.</Text>
+            <Text style={{ ...typeScale.secundario, color: c.textSecondary, marginTop: -space[2] }}>
+              {p.productoPadreId ? 'Cambiás uno y el otro se calcula solo. El descuento se aplica a todas las fragancias de la línea.' : 'Cambiás uno y el otro se calcula solo.'}
+            </Text>
             {tope === 'porAutorizar' && (
               <Notice tone="advertencia" title={`Tu tope de descuento es ${user?.maxDescuentoPorcentaje} %.`}>
                 Podés guardar el pedido, pero va a quedar por autorizar.

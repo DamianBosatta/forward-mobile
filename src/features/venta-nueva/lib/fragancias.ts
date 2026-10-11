@@ -37,26 +37,38 @@ export const cantidadDeFragancias = (lineas: LineaCarrito[], padreId: string) =>
   lineas.reduce((acc, l) => acc + (l.producto.productoPadreId === padreId ? l.cantidad : 0), 0)
 
 /**
- * Reparte la línea: las fragancias de `padreId` pasan a ser exactamente `cantidades` (0 = fuera).
- * Cada variante conserva su descuento; una fragancia nueva toma el de las que ya estaban (el
- * descuento es de la línea, como en la web). El grupo queda donde estaba; si es nuevo, al final.
+ * Cuántas unidades se pueden pedir de una fragancia, como la web (resolverStockDisponibleVarianteUI
+ * + clampCantidadVariante): quien ve cantidades, el stock disponible del servidor en el depósito
+ * (sin dato = 0, falla cerrado); quien no, sin límite si el servidor dice que puede venderse y 0 si no.
+ */
+export function stockDeFragancia(
+  variante: Pick<CatalogoStockItem, 'real' | 'puedeVenderse'>,
+  delServidor: { stockDisponible?: number | null; puedeVenderse?: boolean | null } | undefined,
+  verCantidades: boolean,
+): number {
+  if (!verCantidades) return (delServidor?.puedeVenderse ?? variante.puedeVenderse) ? Number.POSITIVE_INFINITY : 0
+  return Math.max(0, Math.floor(delServidor ? (delServidor.stockDisponible ?? 0) : variante.real))
+}
+
+/** El descuento de la línea de fragancias: es uno solo para todas sus variantes (como en la web). */
+export const descuentoDeFragancias = (lineas: LineaCarrito[], padreId: string) =>
+  lineas.find((l) => l.producto.productoPadreId === padreId)?.descuentoPct ?? 0
+
+/**
+ * Reparte la línea: las fragancias de `padreId` pasan a ser exactamente `cantidades` (0 = fuera),
+ * todas con el MISMO `descuentoPct` (el descuento es de la línea, como en la web). El grupo queda
+ * donde estaba; si es nuevo, al final.
  */
 export function repartirFragancias(
   lineas: LineaCarrito[],
   padreId: string,
   variantes: CatalogoStockItem[],
   cantidades: Record<string, number>,
+  descuentoPct: number,
 ): LineaCarrito[] {
-  const previas = lineas.filter((l) => l.producto.productoPadreId === padreId)
-  const descuentoDeLaLinea = previas[0]?.descuentoPct ?? 0
   const nuevas = variantes
     .filter((v) => (cantidades[v.id] ?? 0) > 0)
-    .map((v) => ({
-      productoId: v.id,
-      producto: v,
-      cantidad: cantidades[v.id],
-      descuentoPct: previas.find((l) => l.productoId === v.id)?.descuentoPct ?? descuentoDeLaLinea,
-    }))
+    .map((v) => ({ productoId: v.id, producto: v, cantidad: cantidades[v.id], descuentoPct }))
   const donde = lineas.findIndex((l) => l.producto.productoPadreId === padreId)
   const resto = lineas.filter((l) => l.producto.productoPadreId !== padreId)
   if (donde < 0) return [...resto, ...nuevas]

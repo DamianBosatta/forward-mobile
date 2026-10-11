@@ -9,6 +9,7 @@ import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { producto } from '../__testing__/producto'
 import { aAutoguardado } from '../lib/payload'
 import { repartirFragancias } from '../lib/fragancias'
+import { reemplazar } from '../lib/carrito'
 
 const mockDims = jest.fn()
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => mockDims() }))
@@ -38,7 +39,7 @@ beforeEach(() => {
   useCarritoVenta.setState({ lineas: [] })
   mockGet.mockReset().mockResolvedValue([
     { id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, activo: true },
-    { id: 'pv2', fraganciaNombre: 'Coco Vainilla', puedeVenderse: false, activo: true },
+    { id: 'pv2', fraganciaNombre: 'Coco Vainilla', puedeVenderse: true, activo: true },
   ])
 })
 
@@ -57,6 +58,10 @@ describe('elegir fragancias (PR 2.4)', () => {
   })
 
   it('la disponibilidad de cada fragancia es la del servidor en el depósito de la venta', async () => {
+    mockGet.mockResolvedValue([
+      { id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, activo: true },
+      { id: 'pv2', fraganciaNombre: 'Coco Vainilla', puedeVenderse: false, activo: true },
+    ])
     conQuery(<CatalogoVenta onVerVenta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
     await waitFor(() => expect(within(screen.getByTestId('fragancia-pv2')).getByText('Sin stock')).toBeTruthy())
@@ -99,6 +104,42 @@ describe('elegir fragancias (PR 2.4)', () => {
       { productoId: 'pv1', producto: lavanda, cantidad: 6, descuentoPct: 0 },
       { productoId: 'p1', producto: pala, cantidad: 1, descuentoPct: 0 },
     ]
-    expect(repartirFragancias(lineas, 'pf', [lavanda, coco], { pv1: 0, pv2: 6 }).map((l) => l.productoId)).toEqual(['pv2', 'p1'])
+    expect(repartirFragancias(lineas, 'pf', [lavanda, coco], { pv1: 0, pv2: 6 }, 0).map((l) => l.productoId)).toEqual(['pv2', 'p1'])
+  })
+
+  it('no deja pedir más que el stock disponible de cada fragancia (como la web)', async () => {
+    useAuthStore.setState({ user: { roles: ['Gerencia'], permissions: [] } as never })
+    mockGet.mockResolvedValue([
+      { id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, stockDisponible: 8, activo: true },
+      { id: 'pv2', fraganciaNombre: 'Coco Vainilla', puedeVenderse: false, stockDisponible: 0, activo: true },
+    ])
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
+    await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText('Stock: 8')).toBeTruthy())
+    expect(within(screen.getByTestId('fragancia-pv2')).getByText('Sin stock')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Sumar Lavanda' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Sumar Lavanda' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Sumar Coco Vainilla' }))
+    expect(screen.getByLabelText('Lavanda: 6')).toBeTruthy()
+    expect(screen.getByLabelText('Coco Vainilla: 0')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Listo · 6 unidades' }))
+    expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad])).toEqual([['pv1', 6]])
+  })
+
+  it('el descuento es uno solo para toda la línea de fragancias', async () => {
+    useCarritoVenta.setState({ lineas: [{ productoId: 'pv1', producto: lavanda, cantidad: 6, descuentoPct: 5 }] })
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
+    const campo = screen.getByLabelText('Descuento (%)')
+    expect(campo.props.value).toBe('5')
+    await userEvent.clear(campo)
+    await userEvent.type(campo, '8')
+    await userEvent.press(screen.getByRole('button', { name: 'Sumar Coco Vainilla' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Listo · 12 unidades' }))
+    expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.descuentoPct])).toEqual([['pv1', 8], ['pv2', 8]])
+    // Editar el descuento de una sola fragancia lo cambia en toda su línea, sin tocar otros productos.
+    const [l1, l2] = useCarritoVenta.getState().lineas
+    const otra = { productoId: 'p1', producto: pala, cantidad: 1, descuentoPct: 3 }
+    expect(reemplazar([l1, l2, otra], { ...l2, descuentoPct: 10 }).map((l) => l.descuentoPct)).toEqual([10, 10, 3])
   })
 })
