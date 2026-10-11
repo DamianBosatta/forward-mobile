@@ -176,4 +176,42 @@ describe('useCompraBorrador', () => {
     expect(listo).toBe(true)
     expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Compras/c1/descartar-borrador', {})
   })
+
+  it('salir con un cambio pendiente y reabrir el mismo borrador: el GET espera al guardado de salida y trae lo guardado, sin 409 después', async () => {
+    let soltar: () => void = () => {}
+    mockPut.mockImplementationOnce(() => new Promise((res) => { soltar = () => res({ compraId: 'c1', version: 11, message: 'ok' }) }))
+    const { result, unmount } = usar()
+    await act(() => result.current.elegirProveedor('p1'))
+    act(() => result.current.setLineas([{ productoId: 'pr1', nombre: 'Balde', cantidad: 7, unidad: 'Unidad', unidadesPorUnidad: 1, costoUnitario: 900 }]))
+    unmount()
+    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1), ESPERA)
+    const antes = mockGet.mock.calls.length
+    mockGet.mockImplementation((url: string) => {
+      if (url.startsWith('/api/v1/socios-comerciales/')) return Promise.resolve(socio(url.split('/').pop()!))
+      if (url === '/api/v1/Compras/c1') return Promise.resolve({ ...BORRADOR, id: 'c1', version: 11, detalles: [{ ...BORRADOR.detalles[0], cantidad: 7, cantidadIngresada: 7, unidadCompra: 'Unidad', descuentoPorcentaje: 0 }] })
+      return Promise.reject(new Error(url))
+    })
+    const otra = usar('c1')
+    await new Promise((r) => setTimeout(r, 50))
+    expect(mockGet.mock.calls.slice(antes).some(([u]) => u === '/api/v1/Compras/c1')).toBe(false)
+    await act(async () => { soltar() })
+    await waitFor(() => expect(otra.result.current.cargando).toBe(false))
+    expect(otra.result.current.lineas[0].cantidad).toBe(7)
+    act(() => otra.result.current.setLineas((prev) => prev.map((l) => ({ ...l, cantidad: 8 }))))
+    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(2), ESPERA)
+    expect(puts()[1]).toMatchObject({ version: 11 })
+  })
+
+  it('salir mientras el guardado en vuelo ya guardó esa misma instantánea no manda un PUT de más', async () => {
+    let soltar: () => void = () => {}
+    mockPut.mockImplementationOnce(() => new Promise((res) => { soltar = () => res({ compraId: 'c1', version: 11, message: 'ok' }) }))
+    const { result, unmount } = usar()
+    await act(() => result.current.elegirProveedor('p1'))
+    act(() => result.current.setCantidadProducto(BALDE, 1))
+    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1), ESPERA)
+    unmount()
+    await act(async () => { soltar() })
+    await new Promise((r) => setTimeout(r, 100))
+    expect(mockPut).toHaveBeenCalledTimes(1)
+  })
 })

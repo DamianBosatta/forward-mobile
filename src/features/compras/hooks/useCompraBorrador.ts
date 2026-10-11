@@ -20,6 +20,9 @@ const ESPERA_AUTOGUARDADO_MS = 800
 
 const esConflicto = (e: unknown) => (e as { status?: number })?.status === 409
 
+/** Guardados de salida todavía en camino, por compra: reabrir el mismo borrador espera a que lleguen antes de pedirlo. */
+const salidasPendientes = new Map<string, Promise<unknown>>()
+
 async function proveedorDesdeServidor(id: string): Promise<{ proveedor: ProveedorCompra; faltantes: string[] }> {
   const s = await api.get<SocioDetailDto>(`/api/v1/socios-comerciales/${id}`)
   return {
@@ -54,6 +57,7 @@ export function useCompraBorrador(borradorInicial?: string) {
   // Instantánea que el servidor rechazó (no por conflicto): no se reintenta sola, solo con un cambio nuevo o "Reintentar".
   const fallido = useRef<string | null>(null)
   const descartado = useRef(false)
+  const enConflicto = useRef(false)
   const estadoActual = useRef<EstadoGuardado>('nuevo')
   estadoActual.current = estado
 
@@ -78,6 +82,7 @@ export function useCompraBorrador(borradorInicial?: string) {
   const cargar = useCallback(async (id: string) => {
     setCargando(true)
     try {
+      await salidasPendientes.get(id)
       const c = await api.get<CompraDto>(`/api/v1/Compras/${id}`)
       const { proveedor: p } = await proveedorDesdeServidor(c.proveedorId)
       hidratar(c)
@@ -116,6 +121,7 @@ export function useCompraBorrador(borradorInicial?: string) {
       setError(null)
     } catch (e) {
       if (!esConflicto(e)) fallido.current = k
+      if (esConflicto(e)) enConflicto.current = true
       setEstado(esConflicto(e) ? 'conflicto' : 'error')
       setError(mensajeDelServidor(e, 'No se pudo guardar el borrador.'))
       throw e
@@ -137,10 +143,15 @@ export function useCompraBorrador(borradorInicial?: string) {
     const k = c ? JSON.stringify(c) : null
     if (!c || k === guardado.current || k === fallido.current || descartado.current || estadoActual.current === 'conflicto') return
     const previo = enVuelo.current ?? Promise.resolve()
-    void previo.catch(() => {}).then(() => borradorCompraApi.guardar({ ...c, version: version.current })).then(
-      (r) => { version.current = r.version },
-      (e) => { console.warn('No se pudo guardar el borrador al salir', e) },
-    )
+    // Las guardas se vuelven a mirar después de esperar el guardado en vuelo: pudo haber guardado lo mismo, fallado o chocado.
+    const salida = previo.catch(() => {}).then(() => {
+      if (k === guardado.current || k === fallido.current || descartado.current || enConflicto.current) return undefined
+      return borradorCompraApi.guardar({ ...c, version: version.current }).then(
+        (r) => { version.current = r.version },
+        (e) => { console.warn('No se pudo guardar el borrador al salir', e) },
+      )
+    }).finally(() => { if (salidasPendientes.get(c.id) === salida) salidasPendientes.delete(c.id) })
+    salidasPendientes.set(c.id, salida)
   }, [])
 
   /** Vuelve a intentar con lo que hay en pantalla (después de un error que no fue de conflicto). */
