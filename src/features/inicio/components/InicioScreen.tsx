@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react'
-import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
+import React, { useCallback, useEffect, useState } from 'react'
+import { AppState, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -10,14 +10,13 @@ import { useAuthStore } from '@/libs/store/auth.store'
 import { useVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client/types'
 import { DocumentCard, TopBar, chipForEstado, iniciales } from '@/core/ui/fw'
+import { diaArgentina, partesArgentina } from '@/src/utils/date'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
 import { TarjetaPendientes, type FilaPendiente } from './TarjetaPendientes'
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 const dos = (n: number) => String(n).padStart(2, '0')
-/** Día del teléfono como YYYY-MM-DD: el servidor lo lleva al día argentino completo. */
-const isoDia = (d: Date) => `${d.getFullYear()}-${dos(d.getMonth() + 1)}-${dos(d.getDate())}`
 /** Alto de la BottomBar (76) que dibuja el layout: el contenido no queda tapado. */
 const ALTO_BOTTOM_BAR = 76
 const ANCHO_TARJETA_TELEFONO = 240
@@ -33,8 +32,16 @@ export function InicioScreen() {
   const { user, canDo } = useAuthStore()
   const pendientes = usePendientesInicio()
 
-  const hoy = new Date()
-  const dia = isoDia(hoy)
+  // "Hoy" es el día argentino (lo que interpreta el servidor), no el del teléfono; se recalcula al volver a la app y al refrescar.
+  const [ahora, setAhora] = useState(() => Date.now())
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (estado) => {
+      if (estado === 'active') setAhora(Date.now())
+    })
+    return () => sub.remove()
+  }, [])
+  const hoy = partesArgentina(ahora)
+  const dia = diaArgentina(ahora)
   const recientes = useVentas(
     { pageNumber: 1, pageSize: 6, fechaDesde: dia, fechaHasta: dia },
     { enabled: canDo('MOD_VENTAS', 'read') },
@@ -46,6 +53,7 @@ export function InicioScreen() {
   const [refrescando, setRefrescando] = useState(false)
   const refrescar = useCallback(async () => {
     setRefrescando(true)
+    setAhora(Date.now())
     await Promise.all([pendientes.refetch(), recientes.refetch()])
     setRefrescando(false)
   }, [pendientes, recientes])
@@ -91,7 +99,7 @@ export function InicioScreen() {
           </View>
           <View>
             <Text style={[typeScale.secundario, { color: c.textSecondary }]}>
-              {`${DIAS[hoy.getDay()]} ${hoy.getDate()} de ${MESES[hoy.getMonth()]}`}
+              {`${DIAS[hoy.diaSemana]} ${hoy.dia} de ${MESES[hoy.mes]}`}
             </Text>
             <Text style={[typeScale.seccion, { color: c.text }]}>{`Hola, ${nombre.split(' ')[0] || ''}`.trim()}</Text>
           </View>
@@ -125,7 +133,18 @@ export function InicioScreen() {
                 <Text style={[typeScale.secundario, { color: c.brandInk, fontFamily: FONT.semibold, fontWeight: '600' }]}>Ver todo</Text>
               </Pressable>
             </View>
-            {ventasHoy.length === 0 ? (
+            {recientes.isError && !recientes.data ? (
+              <View style={{ gap: space[2], alignItems: 'flex-start' }}>
+                <Text style={[typeScale.secundario, { color: c.textSecondary }]}>No se pudieron cargar las ventas de hoy</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => recientes.refetch()}
+                  style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}
+                >
+                  <Text style={[typeScale.secundario, { color: c.brandInk, fontFamily: FONT.semibold, fontWeight: '600' }]}>Reintentar</Text>
+                </Pressable>
+              </View>
+            ) : ventasHoy.length === 0 ? (
               <Text style={[typeScale.secundario, { color: c.textSecondary }]}>
                 {recientes.isLoading ? 'Cargando…' : 'Todavía no hay ventas hoy.'}
               </Text>
@@ -149,7 +168,7 @@ export function InicioScreen() {
 
 /** Venta → DocumentCard: la dirección es el título y el nombre va en su propia línea. */
 function TarjetaVenta({ venta: v, onPress }: { venta: Venta; onPress: () => void }) {
-  const f = new Date(v.fecha)
+  const f = partesArgentina(new Date(v.fecha).getTime())
   const tipo = v.tipoOperacion === 1 ? 'Presupuesto' : 'Pedido'
   return (
     <DocumentCard
@@ -157,7 +176,7 @@ function TarjetaVenta({ venta: v, onPress }: { venta: Venta; onPress: () => void
       vendedor={v.vendedorNombre}
       direccion={v.direccionCliente || v.displayNameCliente}
       nombre={v.direccionCliente ? v.displayNameCliente : null}
-      hora={`${dos(f.getHours())}:${dos(f.getMinutes())}`}
+      hora={`${dos(f.hora)}:${dos(f.minuto)}`}
       importe={v.totalAmount}
       chip={chipForEstado('venta', v.estado)}
       onPress={onPress}

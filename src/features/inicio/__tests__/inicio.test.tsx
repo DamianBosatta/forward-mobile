@@ -146,6 +146,54 @@ describe('Inicio: Reciente · Hoy', () => {
     expect(within(tarjeta).getByText('Carlos')).toBeTruthy()
     expect(within(tarjeta).queryByText(/Juan B\. Justo 6376.*Carlos/)).toBeNull()
   })
+
+  it('si la consulta de hoy falla muestra un error con "Reintentar", no un día vacío', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ presupuestos: pagina(0), pedidos: pagina(0) }) // hoy falla
+    pintar()
+
+    expect(await screen.findByText('No se pudieron cargar las ventas de hoy')).toBeTruthy()
+    expect(screen.queryByText('Todavía no hay ventas hoy.')).toBeNull()
+
+    servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(0, []) })
+    const user = userEvent.setup()
+    await user.press(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByText('Todavía no hay ventas hoy.')).toBeTruthy()
+    expect(screen.queryByText('No se pudieron cargar las ventas de hoy')).toBeNull()
+  })
+
+  it('un día vacío con éxito dice que no hay ventas', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(0, []) })
+    pintar()
+    expect(await screen.findByText('Todavía no hay ventas hoy.')).toBeTruthy()
+    expect(screen.queryByText('No se pudieron cargar las ventas de hoy')).toBeNull()
+  })
+
+  it('"hoy" es el día argentino aunque el teléfono esté en UTC (01:30Z = 10-10 en Argentina)', async () => {
+    jest.useFakeTimers({ now: new Date('2026-10-11T01:30:00Z'), doNotFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval', 'setImmediate', 'queueMicrotask', 'nextTick'] })
+    try {
+      conPermisos('MOD_VENTAS')
+      servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(0, []) })
+      pintar()
+      await screen.findByText('Todavía no hay ventas hoy.')
+
+      const url = mockGet.mock.calls.map(([u]) => String(u)).find((u) => u.includes('fechaDesde')) ?? ''
+      expect(url).toContain('fechaDesde=2026-10-10')
+      expect(url).toContain('fechaHasta=2026-10-10')
+      expect(screen.getByText('Sábado 10 de octubre')).toBeTruthy()
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('la hora de la tarjeta se muestra en hora argentina', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(1, [VENTA_HOY]) }) // 13:03Z
+    pintar()
+    const tarjeta = await screen.findByLabelText(/^Pedido A00418/)
+    expect(within(tarjeta).getByText('10:03')).toBeTruthy()
+  })
 })
 
 describe('Inicio: tablet', () => {
