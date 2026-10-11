@@ -869,7 +869,6 @@ export default function NuevaVentaMobileScreen() {
 
   // ── Form state ──
   const [clienteSelected, setClienteSelected] = useState<ClienteLightDto | null>(null)
-  const [depositoId] = useState('DEP-001')
   const [tipoOperacion, setTipoOperacion] = useState<1 | 2>(2) // 1=Presupuesto 2=Pedido
   const [detalles, setDetalles] = useState<DetalleItem[]>([])
   const [descuentoGeneral, setDescuentoGeneral] = useState('')

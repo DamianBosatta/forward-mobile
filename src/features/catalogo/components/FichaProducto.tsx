@@ -54,13 +54,18 @@ export function FichaProducto({ productoId }: { productoId: string }) {
   const { data: variantes } = useVariantesProducto(productoId, !!p?.esPadreDeVariantes)
   const { data: stock } = useStock({ productoId }, { enabled: veCantidades && !!productoId })
 
-  // Una sola regla para tarjeta y ficha: disponibilidad que descuenta lo reservado, por la venta mínima.
+  // El chip usa cantidad 1, igual que la tarjeta: la misma respuesta en todas partes.
+  // Aparte, si se vende por caja, un segundo chequeo con la venta mínima avisa si no alcanza.
   const depositoId = useDepositoDeConsulta()
-  const cantidad = p?.ventaMinimaUnidades ?? 1
+  const ventaMinima = p?.ventaMinimaUnidades ?? 1
   const idsAConsultar = p ? (p.esPadreDeVariantes ? (variantes ?? []).map((v) => v.id) : [p.id]) : []
   const { data: disponibilidad } = useDisponibilidad(
     depositoId,
-    idsAConsultar.map((id) => ({ productoId: id, cantidad })),
+    idsAConsultar.map((id) => ({ productoId: id, cantidad: 1 })),
+  )
+  const { data: disponibilidadCaja } = useDisponibilidad(
+    depositoId,
+    ventaMinima > 1 ? idsAConsultar.map((id) => ({ productoId: id, cantidad: ventaMinima })) : [],
   )
   const hay = (id: string) => disponibilidad?.find((d) => d.productoId === id)?.disponible
 
@@ -70,6 +75,8 @@ export function FichaProducto({ productoId }: { productoId: string }) {
   const chip = chipDeStock(
     p.esPadreDeVariantes ? (disponibilidad ? disponibilidad.some((d) => d.disponible) : undefined) : hay(p.id),
   )
+  const noAlcanzaCaja =
+    ventaMinima > 1 && chip?.estado === 'entregado' && !!disponibilidadCaja && !disponibilidadCaja.some((d) => d.disponible)
   const foto = getFullImageUrl(p.imageUrl ?? p.imageUrlLinea)
   const encabezado = [p.codigoPropio, p.marca, p.categoriaPathCompleto].filter(Boolean).join(' · ')
   const depositos = stock?.items ?? []
@@ -107,6 +114,7 @@ export function FichaProducto({ productoId }: { productoId: string }) {
       </View>
 
       <Notice tone="info">{textoUnidadDeVenta(p.ventaMinimaUnidades)}</Notice>
+      {noAlcanzaCaja ? <Notice tone="advertencia">{`No alcanza para la venta mínima (caja de ${ventaMinima})`}</Notice> : null}
 
       {p.esPadreDeVariantes && variantes ? (
         <Seccion titulo={`Fragancias (${variantes.length})`}>

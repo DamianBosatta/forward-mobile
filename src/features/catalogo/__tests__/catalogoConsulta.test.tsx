@@ -132,7 +132,7 @@ describe('Catálogo de consulta', () => {
     expect(screen.queryByText('Hay stock')).toBeNull()
   })
 
-  it('la ficha pide la disponibilidad con la venta mínima como cantidad', async () => {
+  it('la ficha también pide la disponibilidad con la venta mínima, aparte del chip', async () => {
     renderPantalla()
     await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
     await screen.findByText('Se vende por caja de 12')
@@ -142,6 +142,33 @@ describe('Catálogo de consulta', () => {
         items: [{ productoId: AER.id, cantidad: 12 }],
       }),
     )
+  })
+
+  describe('stock 5 con venta mínima 12', () => {
+    // El servidor responde según la cantidad pedida: alcanza para 1, no para 12.
+    const stockCinco = (_url: string, body: { items: { productoId: string; cantidad: number }[] }) =>
+      Promise.resolve(body.items.map((i) => ({ productoId: i.productoId, disponible: i.cantidad <= 5 })))
+
+    it('la tarjeta y la ficha dicen lo mismo y la ficha avisa que no alcanza la caja', async () => {
+      api.post.mockReset().mockImplementation(stockCinco)
+      renderPantalla()
+      await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
+      await screen.findByText('Se vende por caja de 12')
+      expect(await screen.findByText('No alcanza para la venta mínima (caja de 12)')).toBeTruthy()
+      // Tarjeta (AER) y ficha: ambas "Hay stock"; nunca "Sin stock" para AER.
+      await waitFor(() => expect(screen.getAllByText('Hay stock').length).toBeGreaterThanOrEqual(2))
+    })
+
+    it('con stock de sobra no hay aviso de venta mínima', async () => {
+      api.post.mockReset().mockImplementation((_u: string, body: { items: { productoId: string }[] }) =>
+        Promise.resolve(body.items.map((i) => ({ productoId: i.productoId, disponible: true }))),
+      )
+      renderPantalla()
+      await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
+      await screen.findByText('Se vende por caja de 12')
+      await waitFor(() => expect(api.post.mock.calls.some(([, b]) => b.items[0]?.cantidad === 12)).toBe(true))
+      expect(screen.queryByText(/No alcanza para la venta mínima/)).toBeNull()
+    })
   })
 
   it('sin CAP_VER_COSTOS la ficha no dibuja costo ni margen, aunque llegaran', async () => {
