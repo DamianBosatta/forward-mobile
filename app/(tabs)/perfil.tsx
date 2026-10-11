@@ -1,262 +1,148 @@
-import { View, Text, Pressable, Switch } from 'react-native'
-import { useRouter, useNavigation } from 'expo-router'
-import { DrawerActions } from '@react-navigation/native';
-import { useAuthStore } from '../../libs/store/auth.store'
-import { useThemeStore, useColors, type ThemeMode } from '../../libs/theme'
-import { LogOut, Shield, Building2, ChevronRight } from 'lucide-react-native'
-import { ForwardLogo, ConfirmModal } from '@/core/ui'
-import { Segmented, type SegmentedOption } from '@/core/ui/fw'
-import { API_URL, setApiUrl, ENV_PROD, ENV_DEV, ENV_LOCAL } from '@/libs/api-client'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useState } from 'react'
+import React, { useState } from 'react'
+import { Pressable, ScrollView, Switch, Text, View } from 'react-native'
+import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
+import { useAuthStore } from '../../libs/store/auth.store'
+import { useThemeStore, useColors, radii, space, typeScale, type ThemeMode } from '../../libs/theme'
+import { ConfirmModal } from '@/core/ui'
+import { Button, Segmented, TopBar, useMenuLeading, type SegmentedOption } from '@/core/ui/fw'
+import { API_URL, setApiUrl, ENV_PROD, ENV_DEV, ENV_LOCAL } from '@/libs/api-client'
 import { safeHaptics } from '@/core/utils/haptics'
 import { useVentaNuevaStore, usePuedeProbarVentaNueva } from '@/features/ventas/lib/ventaNueva'
+import { CambiarContrasena } from '@/features/cuenta/components/CambiarContrasena'
+import { cerrarSesionEnElServidor } from '@/features/cuenta/api/cuenta'
+
 const THEME_OPTIONS: SegmentedOption<ThemeMode>[] = [
   { value: 'light', label: 'Claro' },
   { value: 'dark', label: 'Oscuro' },
   { value: 'system', label: 'Como el teléfono' },
 ]
+const ENTORNOS: SegmentedOption<string>[] = [
+  { value: ENV_PROD, label: 'Producción' },
+  { value: ENV_DEV, label: 'Desarrollo' },
+  ...(__DEV__ ? [{ value: ENV_LOCAL, label: 'Local' }] : []),
+]
+const nombreEntorno = (url: string | null) => (url === ENV_DEV ? 'desarrollo' : url === ENV_LOCAL ? 'local (docker)' : 'producción')
 
+/** Mi cuenta (fase 4.6, lámina MiCuenta): datos, tema, contraseña y cerrar sesión. */
 export default function PerfilScreen() {
-  const navigation = useNavigation();
+  const c = useColors()
+  const router = useRouter()
+  const leading = useMenuLeading()
+  const queryClient = useQueryClient()
   const { user, logout } = useAuthStore()
   const { mode, setMode } = useThemeStore()
-  const colors = useColors()
-  const router = useRouter()
-  const insets = useSafeAreaInsets()
-  const queryClient = useQueryClient()
   const ventaNueva = useVentaNuevaStore((s) => s.activa)
   const setVentaNueva = useVentaNuevaStore((s) => s.setActiva)
   const puedeProbarVentaNueva = usePuedeProbarVentaNueva()
+  const [saliendo, setSaliendo] = useState(false)
+  const [confirmarSalida, setConfirmarSalida] = useState(false)
+  const [entornoPendiente, setEntornoPendiente] = useState<string | null>(null)
 
-  const [logoutVisible, setLogoutVisible] = useState(false)
-  const [envModalVisible, setEnvModalVisible] = useState(false)
-  const [pendingEnvUrl, setPendingEnvUrl] = useState<string | null>(null)
+  const nombre = [user?.nombre, user?.apellido].filter(Boolean).join(' ') || user?.username || 'Usuario'
+  const iniciales = `${user?.nombre?.[0] ?? ''}${user?.apellido?.[0] ?? ''}`.toUpperCase() || '·'
+  const tarjeta = { padding: space[4], gap: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface }
+  const secundario = [typeScale.secundario, { color: c.textSecondary }]
+  const titulo = (t: string) => <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>{t}</Text>
 
-  const handleLogout = () => {
-    setLogoutVisible(true)
-  }
-
-  const handleEnvChange = (url: string) => {
-    if (url === API_URL) return
-    setPendingEnvUrl(url)
-    setEnvModalVisible(true)
-  }
-
-  const confirmEnvChange = async () => {
-    if (!pendingEnvUrl) return
+  const salir = async () => {
+    setSaliendo(true)
+    await cerrarSesionEnElServidor()
     safeHaptics.notification('success')
-    await setApiUrl(pendingEnvUrl)
-    // Drop in-memory cache too (setApiUrl already wiped the persisted copy) so the
-    // next login refetches from the new API instead of serving the old backend's data.
     queryClient.clear()
     logout()
     router.replace('/login')
-    setEnvModalVisible(false)
   }
 
-  const confirmLogout = () => {
-    safeHaptics.notification('success')
+  const cambiarEntorno = async () => {
+    if (!entornoPendiente) return
+    await setApiUrl(entornoPendiente)
+    queryClient.clear()
     logout()
     router.replace('/login')
-    setLogoutVisible(false)
   }
 
-  const userRoles = user?.roles?.join(', ') || 'Colaborador'
-  const isSuperAdmin = userRoles.toLowerCase().includes('admin')
-
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg, paddingHorizontal: 20, paddingTop: insets.top || 48 }}>
-      <Text style={{ fontSize: 28, fontWeight: '900', color: colors.text, marginBottom: 24 }}>Ajustes</Text>
-
-      {/* User Card */}
-      <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: 24, marginBottom: 20, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}>
-        <View style={{ marginBottom: 16 }}>
-          <ForwardLogo size={42} showText={false} onPress={() => { safeHaptics.impact('light'); navigation.dispatch(DrawerActions.openDrawer()); }} />
-        </View>
-        <Text style={{ color: colors.text, fontSize: 22, fontWeight: '900' }}>{user?.username || 'Usuario'}</Text>
-        
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, backgroundColor: isSuperAdmin ? colors.primary + '15' : colors.surface2, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 }}>
-          {isSuperAdmin ? <Shield size={12} color={colors.primary} /> : <Building2 size={12} color={colors.textMuted} />}
-          <Text style={{ color: isSuperAdmin ? colors.primary : colors.textMuted, fontSize: 13, fontWeight: '700', textTransform: 'uppercase' }}>
-            {userRoles}
-          </Text>
-        </View>
-      </View>
-
-      {/* Sesiones y accesos propios */}
-      <Pressable
-        onPress={() => router.push('/security')}
-        accessibilityRole="button"
-        accessibilityLabel="Sesiones y accesos"
-        style={{ minHeight: 48, backgroundColor: colors.surface, borderRadius: 24, paddingHorizontal: 20, marginBottom: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Shield size={18} color={colors.primary} />
-          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>Sesiones y accesos</Text>
-        </View>
-        <ChevronRight size={20} color={colors.textMuted} />
-      </Pressable>
-
-      {/* Tema: único selector de la app (plan §10) */}
-      <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: 20, marginBottom: 20, gap: 12 }}>
-        <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1 }}>Tema</Text>
-        <Segmented accessibilityLabel="Tema" options={THEME_OPTIONS} value={mode} onChange={setMode} />
-      </View>
-
-      {/* Pruebas: la venta nueva convive con la vieja hasta que el dueño la apruebe (9A, PR 2.0) */}
-      {puedeProbarVentaNueva && (
-        <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: 20, marginBottom: 20, gap: 12 }}>
-          <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1 }}>Pruebas</Text>
-          {/* La fila entera es el control (≥ 48 px); el Switch es solo la marca visual. */}
-          <Pressable
-            accessibilityRole="switch"
-            accessibilityLabel="Usar la venta nueva (en prueba)"
-            accessibilityState={{ checked: ventaNueva }}
-            onPress={() => { void setVentaNueva(!ventaNueva) }}
-            style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}
-          >
-            <Text style={{ flex: 1, color: colors.text, fontWeight: '700', fontSize: 16 }}>Usar la venta nueva (en prueba)</Text>
-            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none">
-              <Switch value={ventaNueva} trackColor={{ false: colors.border, true: colors.primary }} />
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <TopBar title="Mi cuenta" leading={leading} />
+      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], paddingBottom: space[12], width: '100%', maxWidth: 640, alignSelf: 'center' }}>
+        <View style={tarjeta}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
+            <View style={{ width: 48, height: 48, borderRadius: radii.pastilla, backgroundColor: c.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={[typeScale.cuerpoDestacado, { color: c.brandInk }]}>{iniciales}</Text>
             </View>
-          </Pressable>
-        </View>
-      )}
-
-      {/* Info */}
-      <View style={{ backgroundColor: colors.surface, borderRadius: 24, overflow: 'hidden', marginBottom: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}>
-        <View style={{ padding: 20, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-          <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Versión</Text>
-          <Text style={{ color: colors.text, fontWeight: '600', fontSize: 16 }}>Forward Mobile V4.0</Text>
-        </View>
-        <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Entorno API</Text>
-          
-          <View style={{
-            flexDirection: 'row',
-            backgroundColor: colors.surface2,
-            borderRadius: 14,
-            padding: 4,
-            borderWidth: 1,
-            borderColor: colors.border,
-            marginTop: 4
-          }}>
-            {/* Producción */}
-            <Pressable
-              onPress={() => handleEnvChange(ENV_PROD)}
-              style={{
-                flex: 1,
-                paddingVertical: 10,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 10,
-                backgroundColor: API_URL === ENV_PROD ? colors.primary : 'transparent',
-              }}
-            >
-              <Text style={{
-                color: API_URL === ENV_PROD ? '#ffffff' : colors.textMuted,
-                fontWeight: '800',
-                fontSize: 12,
-                letterSpacing: 0.5,
-              }}>
-                PRODUCCIÓN
-              </Text>
-            </Pressable>
-
-            {/* Desarrollo */}
-            <Pressable
-              onPress={() => handleEnvChange(ENV_DEV)}
-              style={{
-                flex: 1,
-                paddingVertical: 10,
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 10,
-                backgroundColor: API_URL === ENV_DEV ? colors.primary : 'transparent',
-              }}
-            >
-              <Text style={{
-                color: API_URL === ENV_DEV ? '#ffffff' : colors.textMuted,
-                fontWeight: '800',
-                fontSize: 12,
-                letterSpacing: 0.5,
-              }}>
-                DESARROLLO
-              </Text>
-            </Pressable>
-
-            {/* Local (docker) — dev builds only */}
-            {__DEV__ && (
-              <Pressable
-                onPress={() => handleEnvChange(ENV_LOCAL)}
-                style={{
-                  flex: 1,
-                  paddingVertical: 10,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: 10,
-                  backgroundColor: API_URL === ENV_LOCAL ? colors.primary : 'transparent',
-                }}
-              >
-                <Text style={{
-                  color: API_URL === ENV_LOCAL ? '#ffffff' : colors.textMuted,
-                  fontWeight: '800',
-                  fontSize: 12,
-                  letterSpacing: 0.5,
-                }}>
-                  LOCAL
-                </Text>
-              </Pressable>
-            )}
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{nombre}</Text>
+              <Text style={secundario}>{user?.roles?.join(' · ') ?? ''}</Text>
+            </View>
           </View>
+          <View accessible accessibilityLabel={`Correo: ${user?.email ?? 'sin dato'}`}>
+            <Text style={secundario}>Correo</Text>
+            <Text style={[typeScale.cuerpo, { color: c.text }]}>{user?.email ?? '—'}</Text>
+          </View>
+          <Text style={secundario}>Tus datos y tus permisos los cambia un administrador desde la web.</Text>
         </View>
-      </View>
 
-      {/* Logout Button */}
-      <Pressable
-        onPress={handleLogout}
-        style={{
-          backgroundColor: colors.danger,
-          borderRadius: 20,
-          padding: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          shadowColor: colors.danger,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 6,
-          elevation: 4
-        }}
-      >
-        <LogOut size={20} color="#fff" strokeWidth={2.5} />
-        <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16, marginLeft: 10 }}>Cerrar sesión</Text>
-      </Pressable>
+        <View style={tarjeta}>
+          {titulo('Tema')}
+          <Segmented accessibilityLabel="Tema" options={THEME_OPTIONS} value={mode} onChange={setMode} />
+          <Text style={secundario}>«Como el teléfono» sigue el modo claro u oscuro del sistema. Se guarda en este teléfono.</Text>
+        </View>
 
-      {/* Logout Modal */}
+        {/* Pruebas: la venta nueva convive con la vieja hasta que el dueño la apruebe (9A, PR 2.0) */}
+        {puedeProbarVentaNueva && (
+          <View style={tarjeta}>
+            {titulo('Pruebas')}
+            {/* La fila entera es el control (≥ 48 px); el Switch es solo la marca visual. */}
+            <Pressable
+              accessibilityRole="switch"
+              accessibilityLabel="Usar la venta nueva (en prueba)"
+              accessibilityState={{ checked: ventaNueva }}
+              onPress={() => { void setVentaNueva(!ventaNueva) }}
+              style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3] }}
+            >
+              <Text style={[typeScale.cuerpo, { flex: 1, color: c.text }]}>Usar la venta nueva (en prueba)</Text>
+              <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none">
+                <Switch value={ventaNueva} trackColor={{ false: c.border, true: c.action }} />
+              </View>
+            </Pressable>
+          </View>
+        )}
+
+        <View style={tarjeta}>
+          <CambiarContrasena email={user?.email} />
+        </View>
+
+        <View style={tarjeta}>
+          {titulo('Servidor')}
+          <Segmented accessibilityLabel="Servidor" options={ENTORNOS} value={API_URL} onChange={(url) => { if (url !== API_URL) setEntornoPendiente(url) }} />
+        </View>
+
+        <View style={tarjeta}>
+          <Button label="Cerrar sesión" variant="peligro" loading={saliendo} onPress={() => setConfirmarSalida(true)} />
+          <Text style={secundario}>Cierra tu sesión en todos los dispositivos, la web incluida. Para volver a entrar vas a necesitar tu usuario y tu contraseña.</Text>
+        </View>
+      </ScrollView>
+
       <ConfirmModal
-        visible={logoutVisible}
-        title="CERRAR SESIÓN"
-        message="¿ESTÁS SEGURO QUE QUERÉS SALIR DEL SISTEMA? DEBERÁS VOLVER A INGRESAR TUS CREDENCIALES."
+        visible={confirmarSalida}
+        title="Cerrar sesión"
+        message="Se cierra en todos los dispositivos, la web incluida."
         variant="danger"
-        confirmLabel="SALIR"
-        cancelLabel="CANCELAR"
-        onConfirm={confirmLogout}
-        onCancel={() => setLogoutVisible(false)}
+        confirmLabel="Cerrar sesión"
+        cancelLabel="Cancelar"
+        onConfirm={() => { setConfirmarSalida(false); void salir() }}
+        onCancel={() => setConfirmarSalida(false)}
       />
-
-      {/* Env Change Confirmation Modal */}
       <ConfirmModal
-        visible={envModalVisible}
-        title="CAMBIAR DE ENTORNO"
-        message={`¿ESTÁS SEGURO QUE QUERÉS CAMBIAR AL ENTORNO DE ${pendingEnvUrl === ENV_DEV ? 'DESARROLLO' : pendingEnvUrl === ENV_LOCAL ? 'LOCAL (DOCKER)' : 'PRODUCCIÓN'}? SE CERRARÁ TU SESIÓN ACTUAL PARA EVITAR CONFLICTOS.`}
+        visible={entornoPendiente !== null}
+        title="Cambiar de servidor"
+        message={`Vas a pasar al servidor de ${nombreEntorno(entornoPendiente)}. Se cierra tu sesión para no mezclar datos.`}
         variant="warning"
-        confirmLabel="CAMBIAR Y SALIR"
-        cancelLabel="CANCELAR"
-        onConfirm={confirmEnvChange}
-        onCancel={() => setEnvModalVisible(false)}
+        confirmLabel="Cambiar y salir"
+        cancelLabel="Cancelar"
+        onConfirm={() => { void cambiarEntorno() }}
+        onCancel={() => setEntornoPendiente(null)}
       />
     </View>
   )

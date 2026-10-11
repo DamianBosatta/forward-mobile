@@ -12,8 +12,11 @@ jest.mock('expo-secure-store', () => ({
 }))
 jest.mock('@/core/utils/logger', () => ({ logger: { warn: jest.fn(), error: jest.fn(), log: jest.fn(), info: jest.fn() } }))
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn() }), useNavigation: () => ({ dispatch: jest.fn() }) }))
-jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
-jest.mock('@tanstack/react-query', () => ({ useQueryClient: () => ({ clear: jest.fn() }) }))
+jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), DrawerActions: { openDrawer: jest.fn() } }))
+jest.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ clear: jest.fn() }),
+  useMutation: () => ({ mutate: jest.fn(), reset: jest.fn(), isPending: false, isError: false, isSuccess: false }),
+}))
 jest.mock('@/core/ui', () => ({ ForwardLogo: () => null, ConfirmModal: () => null }))
 jest.mock('@/core/utils/haptics', () => ({ safeHaptics: { impact: jest.fn(), notification: jest.fn() } }))
 jest.mock('@/libs/api-client', () => ({ API_URL: 'x', setApiUrl: jest.fn(), ENV_PROD: 'p', ENV_DEV: 'd', ENV_LOCAL: 'l' }))

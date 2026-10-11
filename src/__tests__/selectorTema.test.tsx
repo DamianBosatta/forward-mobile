@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { useThemeStore } from '@/libs/theme'
 
 const mockSetItem = jest.fn().mockResolvedValue(undefined)
@@ -10,9 +10,12 @@ jest.mock('expo-secure-store', () => ({
 }))
 jest.mock('@/core/utils/logger', () => ({ logger: { warn: jest.fn(), error: jest.fn(), log: jest.fn(), info: jest.fn() } }))
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn() }), useNavigation: () => ({ dispatch: jest.fn() }) }))
-jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
+jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), DrawerActions: { openDrawer: jest.fn() } }))
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) }))
-jest.mock('@tanstack/react-query', () => ({ useQueryClient: () => ({ clear: jest.fn() }) }))
+jest.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ clear: jest.fn() }),
+  useMutation: () => ({ mutate: jest.fn(), reset: jest.fn(), isPending: false, isError: false, isSuccess: false }),
+}))
 jest.mock('@/core/ui', () => ({ ForwardLogo: () => null, ConfirmModal: () => null }))
 jest.mock('@/core/utils/haptics', () => ({ safeHaptics: { impact: jest.fn(), notification: jest.fn() } }))
 jest.mock('@/libs/api-client', () => ({ API_URL: 'x', setApiUrl: jest.fn(), ENV_PROD: 'p', ENV_DEV: 'd', ENV_LOCAL: 'l' }))
@@ -55,7 +58,9 @@ describe('selector de tema en Mi cuenta', () => {
 
   it('es el único selector de tema: ya no hay botón de sol/luna en Mi cuenta', () => {
     render(<PerfilScreen />)
-    expect(screen.getAllByRole('radio')).toHaveLength(3)
+    // Un solo grupo de tema, con sus tres opciones (el otro grupo de Mi cuenta es el servidor).
+    expect(screen.getAllByLabelText('Tema')).toHaveLength(1)
+    expect(within(screen.getByLabelText('Tema')).getAllByRole('radio')).toHaveLength(3)
     expect(screen.queryByText('Apariencia (Tema)')).toBeNull()
     expect(screen.queryByText('Sistema')).toBeNull()
   })
