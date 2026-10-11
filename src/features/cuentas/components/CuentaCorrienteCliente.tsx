@@ -64,7 +64,7 @@ function Movimiento({ m }: { m: MovimientoConCuenta }) {
 export function CuentaCorrienteCliente({ socioId }: { socioId: string }) {
   const c = useColors()
   const router = useRouter()
-  const { canCreate } = usePermissions()
+  const { canCreate, canRead } = usePermissions()
   const [filtro, setFiltro] = useState<FiltroCuenta>('ambas')
   const socio = useSocio(socioId)
   const verCuenta = !!socio.data?.puedeVerCuentaCorriente
@@ -105,7 +105,8 @@ export function CuentaCorrienteCliente({ socioId }: { socioId: string }) {
               {cliente.topeCredito != null ? <TotalsRow label="Tope de crédito" importe={cliente.topeCredito} /> : null}
             </>
           ) : null}
-          {canCreate('MOD_PAGOS') ? (
+          {/* La pantalla de cobro pide los medios y las cajas abiertas: MOD_PAGOS:Read además de Create. */}
+          {canCreate('MOD_PAGOS') && canRead('MOD_PAGOS') ? (
             <Button label="Registrar cobro" onPress={() => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId } })} />
           ) : null}
         </Tarjeta>

@@ -181,6 +181,26 @@ describe('Mi cuenta', () => {
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
     expect(mockPost).toHaveBeenCalledTimes(1)
   })
+
+  it('si cambiar la URL falla, avisa y libera el cerrojo: se puede volver a intentar', async () => {
+    usuario()
+    const setApiUrl = jest.requireMock('@/core/api/client').setApiUrl as jest.Mock
+    const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => {})
+    mockPost.mockResolvedValue(true)
+    setApiUrl.mockRejectedValueOnce(new Error('disco lleno'))
+    pintar()
+
+    await userEvent.press(screen.getByRole('radio', { name: 'Desarrollo' }))
+    await userEvent.press(screen.getByLabelText('Confirmar: Cambiar y salir'))
+    await waitFor(() => expect(alerta).toHaveBeenCalledWith('No se pudo cambiar de servidor', expect.stringContaining('disco lleno')))
+    expect(mockReplace).not.toHaveBeenCalled()
+
+    setApiUrl.mockResolvedValueOnce(undefined)
+    await userEvent.press(screen.getByRole('radio', { name: 'Desarrollo' }))
+    await userEvent.press(screen.getByLabelText('Confirmar: Cambiar y salir'))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
+    alerta.mockRestore()
+  })
 })
 
 const SESIONES = [

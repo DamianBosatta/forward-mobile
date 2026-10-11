@@ -159,3 +159,48 @@ it('un medio que no va a caja no manda depósito', async () => {
 
   expect(post.mock.calls[0][1]).not.toHaveProperty('depositoId')
 })
+
+it('con efectivo, no se puede registrar mientras cargan las cajas abiertas: no sale un cobro sin caja', async () => {
+  let cargar: (v: unknown) => void = () => {}
+  get.mockImplementation(async (url: string) => {
+    if (url === '/api/v1/Cajas/abiertas/estado') return new Promise(r => { cargar = r })
+    if (url === '/api/v1/gastos/medios-pago') return MEDIOS
+    if (url.endsWith('/estado-cuenta')) return estadoDeCuenta()
+    return fichaConCuentas()
+  })
+  renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+  await cargarMontoYMedio('100', 'Efectivo')
+
+  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+  expect(post).not.toHaveBeenCalled()
+
+  cargar(UNA_CAJA)
+  await waitFor(() => expect(screen.getByRole('button', { name: /^Registrar cobro de/ }).props.accessibilityState?.disabled).toBeFalsy(), ESPERA)
+  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+  expect(post.mock.calls[0][1].depositoId).toBe('dep-central')
+})
+
+it('si falla la carga de cajas, lo dice con Reintentar y no manda el cobro; al reintentar, cobra con su caja', async () => {
+  let falla = true
+  get.mockImplementation(async (url: string) => {
+    if (url === '/api/v1/Cajas/abiertas/estado') {
+      if (falla) throw new Error('No se pudo leer las cajas.')
+      return UNA_CAJA
+    }
+    if (url === '/api/v1/gastos/medios-pago') return MEDIOS
+    if (url.endsWith('/estado-cuenta')) return estadoDeCuenta()
+    return fichaConCuentas()
+  })
+  renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+  await cargarMontoYMedio('100', 'Efectivo')
+
+  expect(await screen.findByText('No se pudo leer las cajas.', {}, ESPERA)).toBeTruthy()
+  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+  expect(post).not.toHaveBeenCalled()
+
+  falla = false
+  await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
+  await waitFor(() => expect(screen.queryByText('No se pudo leer las cajas.')).toBeNull(), ESPERA)
+  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+  expect(post.mock.calls[0][1].depositoId).toBe('dep-central')
+})

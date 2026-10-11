@@ -69,12 +69,18 @@ export default function PerfilScreen() {
     // La hoja se cierra antes de esperar al servidor: Cancelar no puede quedar vivo a mitad de camino
     // y el aviso de falla (Alert) no sale encima de un Modal visible.
     setEntornoPendiente(null)
-    // Antes de cambiar la URL: el logout tiene que ir al servidor donde está la sesión.
-    await revocarEnElServidor()
-    await setApiUrl(destino)
-    queryClient.clear()
-    logout()
-    router.replace('/login')
+    try {
+      // Antes de cambiar la URL: el logout tiene que ir al servidor donde está la sesión.
+      await revocarEnElServidor()
+      await setApiUrl(destino)
+      queryClient.clear()
+      logout()
+      router.replace('/login')
+    } catch (e) {
+      Alert.alert('No se pudo cambiar de servidor', e instanceof Error && e.message ? e.message : 'Probá de nuevo.')
+    } finally {
+      cambiandoEntorno.current = false
+    }
   }
 
   return (

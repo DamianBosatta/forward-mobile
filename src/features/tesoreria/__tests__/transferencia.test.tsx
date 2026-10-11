@@ -104,6 +104,14 @@ it('sin permiso para ver cuentas corrientes no se ofrece la transferencia: su pa
   expect(screen.queryByRole('button', { name: 'Transferencia entre cuentas' })).toBeNull()
 })
 
+it('sin permiso para leer pagos no se ofrece la transferencia: su pantalla pide los tipos de movimiento (MOD_PAGOS:Read)', async () => {
+  conPermisos([{ module: 'MOD_PAGOS', canCreate: true }, { module: 'MOD_CC', canRead: true }])
+  renderConQuery(<TesoreriaScreen />)
+
+  expect(await screen.findByText('No tenés acciones de tesorería habilitadas.', {}, ESPERA)).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Transferencia entre cuentas' })).toBeNull()
+})
+
 it('la cartera de cheques y la caja de efectivo no se ofrecen ni de origen ni de destino', async () => {
   get.mockImplementation(async (url: string) => {
     if (url === '/api/v1/movimientos-internos/tipos') return [{ id: 't-tr', nombre: 'Transferencia', activo: true }]

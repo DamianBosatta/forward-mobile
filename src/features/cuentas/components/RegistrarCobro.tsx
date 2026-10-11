@@ -61,6 +61,8 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
 
   const enviar = () => {
     if (registrar.isPending) return
+    // Con caja, sin las cajas abiertas no se sabe en cuál entra el efectivo: no se manda incompleto.
+    if (f.requiereCaja && !cajas.data) return
     // Con una sola caja abierta se manda esa; con varias, la elige quien cobra.
     const abiertas = cajas.data ?? []
     const depositoId = f.depositoId ?? (abiertas.length === 1 ? abiertas[0].depositoId : null)
@@ -97,6 +99,13 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
             onCambio={id => setF(p => ({ ...p, depositoId: id }))}
           />
         ) : null}
+        {f.requiereCaja && cajas.error ? (
+          <>
+            <Notice tone="peligro">{mensajeDelServidor(cajas.error, 'No se pudieron cargar las cajas abiertas.')}</Notice>
+            <Button label="Reintentar" variant="secundario" onPress={() => { void cajas.refetch() }} />
+          </>
+        ) : null}
+        {f.requiereCaja && cajas.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
         {medios.error ? <Notice tone="peligro">{mensajeDelServidor(medios.error, 'No se pudieron cargar los medios de pago.')}</Notice> : null}
 
         {f.esCheque ? (
@@ -114,7 +123,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
 
         {aviso ? <Notice tone="advertencia">{aviso}</Notice> : null}
         {registrar.error ? <Notice tone="peligro">{mensajeDelServidor(registrar.error, 'No se pudo registrar el cobro.')}</Notice> : null}
-        <Button label={monto && monto > 0 ? `Registrar cobro de ${formatImporte(monto)}` : 'Registrar cobro'} loading={registrar.isPending} disabled={registrar.isPending} onPress={enviar} />
+        <Button label={monto && monto > 0 ? `Registrar cobro de ${formatImporte(monto)}` : 'Registrar cobro'} loading={registrar.isPending} disabled={registrar.isPending || (f.requiereCaja && !cajas.data)} onPress={enviar} />
       </FormContainer>
     </ScrollView>
   )

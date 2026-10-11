@@ -110,3 +110,16 @@ it('Registrar cobro aparece solo con permiso para crear pagos y abre el cobro de
 
   expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: 'c1' } })
 })
+
+it('Registrar cobro no se ofrece sin MOD_PAGOS:Read ni sin MOD_PAGOS:Create: la pantalla de cobro pide medios y cajas', async () => {
+  conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canCreate: true }])
+  const a = renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+  await screen.findByLabelText(`Saldo: ${$(186420)}`, {}, ESPERA)
+  expect(screen.queryByRole('button', { name: 'Registrar cobro' })).toBeNull()
+  a.unmount()
+
+  conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true }])
+  renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+  await screen.findByLabelText(`Saldo: ${$(186420)}`, {}, ESPERA)
+  expect(screen.queryByRole('button', { name: 'Registrar cobro' })).toBeNull()
+})
