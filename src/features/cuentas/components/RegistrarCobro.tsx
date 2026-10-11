@@ -59,10 +59,14 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
     )
   }
 
+  // Con caja: sin lista cargada, con error (aunque haya datos viejos) o sin ninguna abierta, no se cobra.
+  const sinCajas = f.requiereCaja && !!cajas.data && !cajas.error && cajas.data.length === 0
+  const sinCajaUtil = f.requiereCaja && (!cajas.data || !!cajas.error || cajas.data.length === 0)
+
   const enviar = () => {
     if (registrar.isPending) return
     // Con caja, sin las cajas abiertas no se sabe en cuál entra el efectivo: no se manda incompleto.
-    if (f.requiereCaja && !cajas.data) return
+    if (sinCajaUtil) return
     // Con una sola caja abierta se manda esa; con varias, la elige quien cobra.
     const abiertas = cajas.data ?? []
     const depositoId = f.depositoId ?? (abiertas.length === 1 ? abiertas[0].depositoId : null)
@@ -105,6 +109,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
             <Button label="Reintentar" variant="secundario" onPress={() => { void cajas.refetch() }} />
           </>
         ) : null}
+        {sinCajas ? <Notice tone="advertencia">No hay ninguna caja abierta. Abrí una caja para registrar cobros en efectivo.</Notice> : null}
         {f.requiereCaja && cajas.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
         {medios.error ? <Notice tone="peligro">{mensajeDelServidor(medios.error, 'No se pudieron cargar los medios de pago.')}</Notice> : null}
 
@@ -123,7 +128,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
 
         {aviso ? <Notice tone="advertencia">{aviso}</Notice> : null}
         {registrar.error ? <Notice tone="peligro">{mensajeDelServidor(registrar.error, 'No se pudo registrar el cobro.')}</Notice> : null}
-        <Button label={monto && monto > 0 ? `Registrar cobro de ${formatImporte(monto)}` : 'Registrar cobro'} loading={registrar.isPending} disabled={registrar.isPending || (f.requiereCaja && !cajas.data)} onPress={enviar} />
+        <Button label={monto && monto > 0 ? `Registrar cobro de ${formatImporte(monto)}` : 'Registrar cobro'} loading={registrar.isPending} disabled={registrar.isPending || sinCajaUtil} onPress={enviar} />
       </FormContainer>
     </ScrollView>
   )

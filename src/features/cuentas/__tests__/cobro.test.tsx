@@ -204,3 +204,13 @@ it('si falla la carga de cajas, lo dice con Reintentar y no manda el cobro; al r
   await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
   expect(post.mock.calls[0][1].depositoId).toBe('dep-central')
 })
+
+it('con efectivo y ninguna caja abierta, avisa y no manda el cobro', async () => {
+  servidor({ cajas: [] })
+  renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+  await cargarMontoYMedio('100', 'Efectivo')
+
+  expect(await screen.findByText('No hay ninguna caja abierta. Abrí una caja para registrar cobros en efectivo.', {}, ESPERA)).toBeTruthy()
+  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+  expect(post).not.toHaveBeenCalled()
+})
