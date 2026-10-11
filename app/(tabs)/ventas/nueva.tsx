@@ -1731,8 +1731,8 @@ export default function NuevaVentaMobileScreen() {
               elevation: 4
             }}
           >
-            <Plus size={16} color="#fff" strokeWidth={3} />
-            <Text style={{ color: '#fff', fontWeight: '900', marginLeft: 6, fontSize: 11, letterSpacing: 0.5 }}>EXPLORAR CATÁLOGO</Text>
+            <Plus size={16} color={colors.onPrimary} strokeWidth={3} />
+            <Text style={{ color: colors.onPrimary, fontWeight: '900', marginLeft: 6, fontSize: 11, letterSpacing: 0.5 }}>EXPLORAR CATÁLOGO</Text>
           </TouchableOpacity>
         </View>
 
@@ -2215,10 +2215,10 @@ export default function NuevaVentaMobileScreen() {
                 elevation: (detalles.length > 0 && clienteSelected) ? 5 : 0,
               }}
             >
-              {isPending ? <ActivityIndicator color="#fff" /> : (
+              {isPending ? <ActivityIndicator color={colors.onPrimary} /> : (
                 <>
-                  <Check size={20} color="#fff" strokeWidth={3} />
-                  <Text maxFontSizeMultiplier={1.3} style={{ color: (detalles.length > 0 && clienteSelected) ? '#fff' : colors.textDisabled, fontWeight: '900', fontSize: 15, fontFamily: 'Outfit_900Black', letterSpacing: 0.5 }}>
+                  <Check size={20} color={colors.onPrimary} strokeWidth={3} />
+                  <Text maxFontSizeMultiplier={1.3} style={{ color: (detalles.length > 0 && clienteSelected) ? colors.onPrimary : colors.textDisabled, fontWeight: '900', fontSize: 15, fontFamily: 'Outfit_900Black', letterSpacing: 0.5 }}>
                     {isEditing ? 'GUARDAR CAMBIOS' : 'CONFIRMAR VENTA'}
                   </Text>
                 </>
@@ -2337,10 +2337,10 @@ export default function NuevaVentaMobileScreen() {
                   elevation: (detalles.length > 0 && clienteSelected) ? 5 : 0
                 }}
               >
-                {isPending ? <ActivityIndicator color="#fff" /> : (
+                {isPending ? <ActivityIndicator color={colors.onPrimary} /> : (
                   <>
-                    <Check size={20} color="#fff" strokeWidth={3} />
-                    <Text maxFontSizeMultiplier={1.3} style={{ color: (detalles.length > 0 && clienteSelected) ? '#fff' : colors.textDisabled, fontWeight: '900', fontSize: 15, fontFamily: 'Outfit_900Black', letterSpacing: 0.5 }}>
+                    <Check size={20} color={colors.onPrimary} strokeWidth={3} />
+                    <Text maxFontSizeMultiplier={1.3} style={{ color: (detalles.length > 0 && clienteSelected) ? colors.onPrimary : colors.textDisabled, fontWeight: '900', fontSize: 15, fontFamily: 'Outfit_900Black', letterSpacing: 0.5 }}>
                       {isEditing ? 'GUARDAR CAMBIOS' : entregaInmediata ? 'VENTA DIRECTA' : (tipoOperacion === 1 ? 'GUARDAR PRESUPUESTO' : 'CONFIRMAR VENTA')}
                     </Text>
                   </>
@@ -2634,11 +2634,11 @@ export default function NuevaVentaMobileScreen() {
               }}
             >
               {isSharingPdf
-                ? <ActivityIndicator color="#fff" size="small" />
+                ? <ActivityIndicator color={colors.onPrimary} size="small" />
                 : (
                   <>
                     <Text style={{ fontSize: tokens.typography.lg.size }}>📄</Text>
-                    <Text style={{ color: '#fff', fontWeight: '900', fontSize: 15, fontFamily: 'Outfit_900Black', letterSpacing: 0.3 }}>
+                    <Text style={{ color: colors.onPrimary, fontWeight: '900', fontSize: 15, fontFamily: 'Outfit_900Black', letterSpacing: 0.3 }}>
                       Enviar nota al cliente
                     </Text>
                   </>

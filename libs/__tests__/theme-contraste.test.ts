@@ -36,6 +36,8 @@ function pares(c: ForwardColors): Par[] {
     for (const [nf, f] of fondos) lista.push([`${nt} sobre ${nf}`, t, f])
   }
   lista.push(['onAction sobre action', c.onAction, c.action])
+  lista.push(['onPrimary sobre primary', c.onPrimary, c.primary])
+  lista.push(['onPrimary sobre primaryHover', c.onPrimary, c.primaryHover])
   lista.push(['onTopBar sobre topBar', c.onTopBar, c.topBar])
   lista.push(['onDangerStrong sobre dangerStrong', c.onDangerStrong, c.dangerStrong])
   lista.push(['blanco sobre dangerStrong', '#FFFFFF', c.dangerStrong])
