@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { useAuthGuard } from '../hooks/useAuthGuard'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { vaciarCacheAlCerrarSesion } from '@/features/auth/lib/vaciarCacheAlCerrarSesion'
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native'
 import {
   useFonts,
@@ -30,6 +31,7 @@ import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 SplashScreen.preventAutoHideAsync()
 
 const queryClient = crearQueryClient()
+vaciarCacheAlCerrarSesion(queryClient)
 
 function OfflineBanner() {
   const { isConnected } = useNetworkStatus()
