@@ -28,14 +28,30 @@ export function useCajasAbiertas(enabled: boolean) {
   })
 }
 
+type PagoRegistrado = components['schemas']['PagoRegistradoResponse']
+
+/** Cobro registrado: el id del pago y la cuenta donde quedó, si el servidor la informa. */
+export interface CobroRegistrado {
+  pagoId: string
+  /** `null` si la respuesta no la trae (servidor anterior a forward-system #868): se busca en los movimientos. */
+  tipoCuenta: TipoCuentaSocio | null
+}
+
+const esTipoCuenta = (t: unknown): t is TipoCuentaSocio => t === 'Tst' || t === 'Normal'
+
 /**
- * Registra el cobro. Devuelve el id del pago. Sin reintentos: el servidor no acepta una clave de
- * idempotencia, así que repetir el pedido podría cargar el cobro dos veces.
+ * Registra el cobro. Devuelve el id del pago y, desde forward-system #868, la cuenta que eligió el
+ * servidor (`tipoCuenta`, en el sobre al lado de `data`). Sin reintentos: el servidor no acepta una
+ * clave de idempotencia, así que repetir el pedido podría cargar el cobro dos veces.
  */
 export function useRegistrarCobro() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (payload: CobroPayload) => api.post<string>('/api/v1/Finanzas/pagos/multilinea', payload),
+    mutationFn: async (payload: CobroPayload): Promise<CobroRegistrado> => {
+      const r = await api.postConSobre<string, PagoRegistrado>('/api/v1/Finanzas/pagos/multilinea', payload)
+      const tipo = r.sobre?.tipoCuenta
+      return { pagoId: r.data, tipoCuenta: esTipoCuenta(tipo) ? tipo : null }
+    },
     retry: false,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: cuentasKeys.all })
@@ -45,13 +61,14 @@ export function useRegistrarCobro() {
 }
 
 /**
- * En qué cuenta del cliente quedó el pago, según el servidor: la cuenta cuyo movimiento lleva ese
- * `pagoId`. El alta solo devuelve el id; la cuenta la eligió el servidor y se lee de sus movimientos.
+ * En qué cuenta del cliente quedó el cobro, según el servidor. Si el alta la informó, es esa. Si no
+ * (servidor viejo), la cuenta cuyo movimiento lleva ese `pagoId`, en la primera página de cada una.
  */
-export function useCuentaDelPago(pagoId: string | null, cuentas: { cuentaId?: string | null; cuentaNormalId?: string | null }) {
-  return useQuery({
+export function useCuentaDelPago(cobro: CobroRegistrado, cuentas: { cuentaId?: string | null; cuentaNormalId?: string | null }) {
+  const { pagoId, tipoCuenta } = cobro
+  const buscada = useQuery({
     queryKey: [...cuentasKeys.all, 'cuenta-del-pago', pagoId],
-    enabled: !!pagoId,
+    enabled: !tipoCuenta && !!pagoId,
     queryFn: async (): Promise<TipoCuentaSocio | null> => {
       const candidatas: [TipoCuentaSocio, string | null | undefined][] = [['Tst', cuentas.cuentaId], ['Normal', cuentas.cuentaNormalId]]
       for (const [tipo, id] of candidatas) {
@@ -62,4 +79,5 @@ export function useCuentaDelPago(pagoId: string | null, cuentas: { cuentaId?: st
       return null
     },
   })
+  return { cuenta: tipoCuenta ?? buscada.data ?? null, buscando: !tipoCuenta && buscada.isLoading }
 }

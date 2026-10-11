@@ -7,7 +7,7 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { diaArgentina } from '@/src/utils/date'
 import { useEstadoCuentaSocio } from '../api/queries'
-import { useCajasAbiertas, useMediosDeCobro, useRegistrarCobro } from '../api/cobros'
+import { useCajasAbiertas, useMediosDeCobro, useRegistrarCobro, type CobroRegistrado } from '../api/cobros'
 import { armarCobro, mostrarFecha, type FormCobro } from '../lib/cobro'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
 import { CobroListo } from './CobroListo'
@@ -37,7 +37,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
   const [f, setF] = useState<FormCobro>(formVacio)
   const cajas = useCajasAbiertas(f.requiereCaja)
   const [aviso, setAviso] = useState<string | null>(null)
-  const [pagoId, setPagoId] = useState<string | null>(null)
+  const [cobro, setCobro] = useState<CobroRegistrado | null>(null)
   const cheque = (campo: keyof FormCobro['cheque']) => (v: string) => setF(p => ({ ...p, cheque: { ...p.cheque, [campo]: v } }))
 
   if (socio.isLoading) return <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
@@ -46,15 +46,15 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
   const medio = medios.data?.find(m => m.id === f.medioPagoId)
   const monto = leerNumero(f.monto)
 
-  if (pagoId) {
+  if (cobro) {
     return (
       <CobroListo
         cliente={cliente}
-        pagoId={pagoId}
+        cobro={cobro}
         monto={monto ?? 0}
         medio={medio?.nombre ?? ''}
         onVolver={onVolver}
-        onOtro={() => { setPagoId(null); setF(formVacio()); registrar.reset() }}
+        onOtro={() => { setCobro(null); setF(formVacio()); registrar.reset() }}
       />
     )
   }
@@ -74,7 +74,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
     const r = armarCobro(socioId, { ...f, depositoId })
     if ('error' in r) return setAviso(r.error)
     setAviso(null)
-    registrar.mutate(r.payload, { onSuccess: id => setPagoId(id) })
+    registrar.mutate(r.payload, { onSuccess: setCobro })
   }
 
   return (

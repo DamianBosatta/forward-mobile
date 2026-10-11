@@ -5,13 +5,13 @@ import { Button, FormContainer, Notice, TotalsRow, formatImporte } from '@/core/
 import type { SocioDetailDto } from '@/libs/api-client/types'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { useEstadoCuentaSocio } from '../api/queries'
-import { useCuentaDelPago } from '../api/cobros'
+import { useCuentaDelPago, type CobroRegistrado } from '../api/cobros'
 
 export const SIN_CUENTA_CONFIRMADA = 'No se pudo confirmar en qué cuenta quedó: fijate en los movimientos de la cuenta corriente.'
 
 interface Props {
   cliente: SocioDetailDto
-  pagoId: string
+  cobro: CobroRegistrado
   monto: number
   medio: string
   onVolver: () => void
@@ -19,9 +19,9 @@ interface Props {
 }
 
 /** Cobro registrado (lámina CobroListo): en qué cuenta quedó según el servidor y el saldo nuevo. */
-export function CobroListo({ cliente, pagoId, monto, medio, onVolver, onOtro }: Props) {
+export function CobroListo({ cliente, cobro, monto, medio, onVolver, onOtro }: Props) {
   const c = useColors()
-  const cuenta = useCuentaDelPago(pagoId, cliente)
+  const { cuenta, buscando } = useCuentaDelPago(cobro, cliente)
   const estado = useEstadoCuentaSocio(cliente.id, !!cliente.puedeVerCuentaCorriente)
 
   return (
@@ -31,18 +31,18 @@ export function CobroListo({ cliente, pagoId, monto, medio, onVolver, onOtro }: 
         <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[2] }}>
           <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(monto)}</Text>
           {medio ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{medio}</Text> : null}
-          {cuenta.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
-          {cuenta.data ? (
+          {buscando ? <ActivityIndicator color={c.brandInk} /> : null}
+          {cuenta ? (
             <>
               <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>
-                {`Quedó en la cuenta ${cuenta.data === 'Tst' ? 'TST' : 'Normal'}`}
+                {`Quedó en la cuenta ${cuenta === 'Tst' ? 'TST' : 'Normal'}`}
               </Text>
               <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
                 La eligió el servidor: la cuenta de la deuda más vieja del cliente (sin deuda, la TST).
               </Text>
             </>
           ) : null}
-          {!cuenta.isLoading && !cuenta.data ? <Notice tone="advertencia">{SIN_CUENTA_CONFIRMADA}</Notice> : null}
+          {!buscando && !cuenta ? <Notice tone="advertencia">{SIN_CUENTA_CONFIRMADA}</Notice> : null}
         </View>
 
         {estado.data ? (
