@@ -7,11 +7,11 @@ import { ventaCargada, type VentaCargada } from '../lib/hidratar'
 
 /**
  * Trae del servidor lo necesario para abrir una venta en la pantalla de venta: la venta, su
- * cliente (para nombrarlo por la dirección) y el catálogo de venta. Sin `id` no pide nada.
+ * cliente (para nombrarlo por la dirección) y el catálogo de venta. Sin `id` no pide nada; con `activo` en false (ya hidratada) no vuelve a pedir.
  */
-export function useVentaCargada(id: string | undefined): { datos: VentaCargada | null; cargando: boolean; error: string | null } {
+export function useVentaCargada(id: string | undefined, activo = true): { datos: VentaCargada | null; cargando: boolean; error: string | null } {
   // Solo vale la venta traída al abrir: el caché viejo tiene líneas y versión de antes (el próximo guardado daría 409).
-  const venta = useVenta(id ?? '', { fresco: true })
+  const venta = useVenta(id ?? '', { fresco: true, activo })
   const socio = useSocio(venta.data?.venta.clienteId ?? '')
   const catalogo = useCatalogoVenta('')
   const vigente = venta.isFetchedAfterMount && venta.isSuccess ? venta.data : undefined

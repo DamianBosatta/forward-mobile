@@ -19,8 +19,8 @@ export function useBorradorVenta(valores: AutoguardadoVenta) {
   const guardar = useCallback(
     async (v: AutoguardadoVenta, version: number) => {
       const r = await guardarBorradorVenta(borrador!.id, version, { ...v })
-      // El detalle en caché ya no es el del servidor: quien reabra el borrador tiene que traer el vigente.
-      void qc.invalidateQueries({ queryKey: ventasKeys.detail(borrador!.id) })
+      // El detalle en caché ya no es el del servidor: quien reabra el borrador tiene que traer el vigente (sin recargar ahora: nadie lo está mirando).
+      void qc.invalidateQueries({ queryKey: ventasKeys.detail(borrador!.id), refetchType: 'none' })
       return r.version
     },
     [borrador, qc],

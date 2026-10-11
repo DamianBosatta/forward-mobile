@@ -32,8 +32,7 @@ const venta = {
 }
 const socio = { id: 'c7', direccion: 'Tarantino 1898', nombreFantasia: 'Autoservicio Abel', razonSocial: 'Abel SRL' }
 
-function pantalla() {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+function pantalla(qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
   return render(<QueryClientProvider client={qc}><VentaNuevaPantalla abrir={{ modo: 'retomar', ventaId: 'b9', tipo: 'Presupuesto' }} /></QueryClientProvider>)
 }
 
@@ -78,6 +77,24 @@ describe('retomar un borrador (PR 2.2b)', () => {
       id: 'b9', version: 4, descuentoGeneral: 5, metodoEntrega: 2, observaciones: 'Portón negro, antes de las 12',
       items: [{ productoId: 'p1', cantidad: 3, descuentoPorcentaje: 10 }],
     })
+  })
+
+  it('los autoguardados no vuelven a pedir la venta, y al reabrirla se trae la vigente', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const detalles = () => mockGet.mock.calls.filter(([u]) => u === '/api/v1/Ventas/b9').length
+    const primera = pantalla(qc)
+    await screen.findByText('Nuevo presupuesto')
+    expect(detalles()).toBe(1)
+    await userEvent.press(screen.getByRole('tab', { name: 'Cabecera' }))
+    await userEvent.type(screen.getByLabelText('Observaciones'), ' uno')
+    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1), { timeout: 3000 })
+    await userEvent.type(screen.getByLabelText('Observaciones'), ' dos')
+    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(2), { timeout: 3000 })
+    await new Promise((r) => setTimeout(r, 500))
+    expect(detalles()).toBe(1)
+    primera.unmount()
+    pantalla(qc)
+    await waitFor(() => expect(detalles()).toBe(2))
   })
 
   it('si el borrador ya no existe, lo dice con el mensaje del servidor', async () => {

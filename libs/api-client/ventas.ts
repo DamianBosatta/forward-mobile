@@ -113,11 +113,11 @@ export function useBorradoresVentaMios(enabled = true) {
 }
 
 /** `fresco`: siempre trae de nuevo al montar (para actuar sobre la versión vigente, no sobre el caché). */
-export function useVenta(id: string, opciones: { fresco?: boolean } = {}) {
+export function useVenta(id: string, opciones: { fresco?: boolean; activo?: boolean } = {}) {
   return useQuery({
     queryKey: ventasKeys.detail(id),
     queryFn: () => api.get<VentaDetalleDto>(`/api/v1/Ventas/${id}`),
-    enabled: !!id,
+    enabled: !!id && opciones.activo !== false,
     staleTime: opciones.fresco ? 0 : 60_000,
     refetchOnMount: opciones.fresco ? 'always' : true,
   })

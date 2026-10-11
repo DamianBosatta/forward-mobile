@@ -75,8 +75,8 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
   useEffect(() => { vaciar() }, [vaciar])
 
   // Abrir una venta del servidor (retomar, editar o duplicar): lo que tiene pasa a la pantalla.
-  const cargada = useVentaCargada(abrir?.ventaId)
   const [abierta, setAbierta] = useState(false)
+  const cargada = useVentaCargada(abrir?.ventaId, !abierta)
   const [aDuplicar, setADuplicar] = useState<VentaCargada | null>(null)
   const aplicar = (d: VentaCargada, cabecera = d.cabecera) => {
     useCarritoVenta.setState({ lineas: d.lineas })
