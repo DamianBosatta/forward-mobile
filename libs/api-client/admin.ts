@@ -4,8 +4,6 @@ import type {
   PagedResult,
   UserListDto,
   UserDetailDto,
-  CreateUserRequest,
-  UpdateUserRequest,
   ModulePermissionDto,
 } from './types'
 
@@ -115,29 +113,6 @@ export function useUserLogs(userId: string) {
 }
 
 // ── Mutations ─────────────────────────────────────────────────────────────────
-
-export function useCreateUsuario() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (data: CreateUserRequest) =>
-      api.post<string>('/api/v1/Users', data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: adminKeys.allUsers })
-    },
-  })
-}
-
-export function useUpdateUsuario(userId: string) {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (data: UpdateUserRequest) =>
-      api.put<void>(`/api/v1/Users/${userId}`, data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: adminKeys.user(userId) })
-      qc.invalidateQueries({ queryKey: adminKeys.allUsers })
-    },
-  })
-}
 
 export function useUpdatePermisos(userId: string) {
   const qc = useQueryClient()

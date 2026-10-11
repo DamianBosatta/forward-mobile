@@ -16,8 +16,6 @@ export interface CambioContrasena {
 export function useCambiarContrasena() {
   return useMutation({
     mutationFn: (body: CambioContrasena) => api.post<boolean>('/api/v1/Users/change-password', body),
-    // Las variables llevan la contraseña actual y la nueva: nunca se guardan en el teléfono.
-    meta: { persist: false },
   })
 }
 

@@ -1,4 +1,4 @@
-import { defaultShouldDehydrateMutation, MutationCache, QueryClient, type DefaultOptions, type Mutation, type Query } from '@tanstack/react-query'
+import { MutationCache, QueryClient, type DefaultOptions, type Query } from '@tanstack/react-query'
 
 /**
  * Raíz de las consultas de Inicio: resumen de Ventas y Compras. Cada mutación la invalida al terminar
@@ -43,12 +43,13 @@ export function debePersistir(query: Query): boolean {
 }
 
 /**
- * Mutaciones que se guardan: solo las que quedaron en pausa sin red, para mandarlas al volver la
- * señal; nunca las marcadas con `meta.persist: false` (llevan secretos en las variables).
+ * Mutaciones que se guardan: ninguna, ni las que quedaron en pausa sin red. No hay cola offline
+ * (decisión M1 abierta): ninguna mutación registra `mutationKey` ni `setMutationDefaults`, así que una
+ * guardada no se puede reanudar al reiniciar la app ("No mutationFn found") y solo dejaría en el
+ * disco datos del negocio, o secretos (el cambio de contraseña lleva la actual y la nueva).
  */
-export function debePersistirMutacion(mutation: Mutation): boolean {
-  if (mutation.meta?.persist === false) return false
-  return defaultShouldDehydrateMutation(mutation)
+export function debePersistirMutacion(): boolean {
+  return false
 }
 
 /** Qué se guarda en el teléfono (`dehydrateOptions` de PersistQueryClientProvider). */

@@ -1,5 +1,6 @@
+import { persistQueryClientSubscribe } from '@tanstack/react-query-persist-client'
 import { api, configureApiClient } from '@/core/api/client'
-import { crearQueryClient } from '@/core/query/queryClient'
+import { crearQueryClient, opcionesDePersistencia } from '@/core/query/queryClient'
 import { mmkvPersister } from '@/core/query/persistConfig'
 import { useAuthStore } from '../store/auth.store'
 import { vaciarCacheAlCerrarSesion } from '../lib/vaciarCacheAlCerrarSesion'
@@ -8,14 +9,18 @@ const mockFetch = jest.fn()
 const responder = (status: number, body: unknown) =>
   mockFetch.mockResolvedValueOnce({ ok: status >= 200 && status < 300, status, json: () => Promise.resolve(body) })
 
-/** Sesión abierta con datos del usuario en la caché y guardados en el teléfono (el resumen de Inicio). */
+/**
+ * Sesión abierta con el resumen de Inicio en la caché, guardado en el teléfono por la misma
+ * suscripción que usa PersistQueryClientProvider, con el persister de la app (MMKV).
+ */
 async function conSesion() {
   const qc = crearQueryClient()
-  const soltar = vaciarCacheAlCerrarSesion(qc, mmkvPersister)
+  const dejarDeGuardar = persistQueryClientSubscribe({ queryClient: qc, persister: mmkvPersister, dehydrateOptions: opcionesDePersistencia })
+  const dejarDeEscuchar = vaciarCacheAlCerrarSesion(qc, mmkvPersister)
   useAuthStore.setState({ isAuthenticated: true, accessToken: 't1', refreshToken: 'r1' })
   qc.setQueryData(['inicio', 'resumen'], { ventas: null, compras: null, autorizacionesPendientes: { cantidad: 2, importes: [] } })
-  await mmkvPersister.persistClient({ timestamp: Date.now(), buster: '', clientState: { queries: [], mutations: [] } })
-  return { qc, soltar }
+  expect((await mmkvPersister.restoreClient())?.clientState.queries).toHaveLength(1)
+  return { qc, soltar: () => { dejarDeGuardar(); dejarDeEscuchar() } }
 }
 
 beforeEach(() => {
@@ -39,7 +44,7 @@ describe('cerrar la sesión vacía la caché: el próximo usuario del teléfono 
     await expect(api.get('/api/v1/Inicio/resumen')).rejects.toMatchObject({ status: 401 })
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
     expect(qc.getQueryCache().getAll()).toHaveLength(0)
-    // Sin esperar al guardado periódico: si la app muere enseguida, el disco ya quedó vacío.
+    // El disco queda sin nada (no un cliente vacío) aunque la app muera enseguida.
     expect(await mmkvPersister.restoreClient()).toBeUndefined()
     soltar()
   })

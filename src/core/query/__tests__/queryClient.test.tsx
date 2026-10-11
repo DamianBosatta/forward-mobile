@@ -52,27 +52,26 @@ describe('Inicio se refresca tras las mutaciones', () => {
   })
 })
 
-describe('mutaciones que se guardan en el teléfono', () => {
+describe('mutaciones en el teléfono', () => {
   afterEach(() => onlineManager.setOnline(true))
 
-  it('solo las que quedaron en pausa (sin red), y nunca el cambio de contraseña', async () => {
+  it('no se guarda ninguna, ni en pausa (no hay cola offline): tampoco el cambio de contraseña', async () => {
     const qc = crearQueryClient()
     const wrapper = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
     const { result } = renderHook(() => useCambiarContrasena(), { wrapper })
     const cambio = { email: 'a@b.c', currentPassword: 'Vieja.12345', newPassword: 'Nueva.12345', confirmNewPassword: 'Nueva.12345' }
 
-    // Terminada: no se guarda.
+    // Terminadas.
     await act(async () => { await result.current.mutateAsync(cambio) })
     await new MutationObserver(qc, { mutationFn: async () => 'ok' }).mutate()
     expect(dehydrate(qc, opcionesDePersistencia).mutations).toHaveLength(0)
 
-    // Sin red queda en pausa: una cualquiera se guarda para mandarla después; la de contraseña, no.
+    // En pausa sin red: al reiniciar la app no se podrían reanudar (no hay mutationFn registrada).
     onlineManager.setOnline(false)
     act(() => { result.current.mutate(cambio) })
     void new MutationObserver(qc, { mutationFn: async () => 'ok', mutationKey: ['otra'] }).mutate()
     await act(async () => {})
-    const guardadas = dehydrate(qc, opcionesDePersistencia).mutations
-    expect(guardadas.map((m) => m.mutationKey)).toEqual([['otra']])
-    expect(JSON.stringify(guardadas)).not.toContain('Nueva.12345')
+    expect(qc.getMutationCache().getAll().filter((m) => m.state.isPaused)).toHaveLength(2)
+    expect(dehydrate(qc, opcionesDePersistencia).mutations).toHaveLength(0)
   })
 })
