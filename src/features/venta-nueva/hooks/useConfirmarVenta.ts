@@ -34,7 +34,11 @@ const ventaConOtroCuerpo = (e: unknown): VentaActionResponseDto | null => {
   const v = e.data as Partial<VentaActionResponseDto> | undefined
   return typeof v?.ventaId === 'string' && v.ventaId ? (v as VentaActionResponseDto) : null
 }
-/** 409 sin código en el alta: otro intento con la misma clave se estaba grabando (carrera de la restricción única). */
+/**
+ * 409 sin código por la restricción única (ErrorHandlerMiddleware, 23505 «datos duplicados»): otro intento
+ * con la misma clave se estaba grabando. Los demás 409 sin código (clave foránea, concurrencia) no son eso.
+ */
+const claveEnCurso = (e: unknown) => e instanceof ApiError && e.status === 409 && !e.codigo && /duplicad/i.test(e.message)
 const CLAVE_EN_CURSO = 'Este pedido ya se estaba grabando. Tocá Confirmar de nuevo para ver cómo quedó: no se va a duplicar.'
 
 /**
@@ -90,7 +94,7 @@ export function useConfirmarVenta(d: Datos) {
           // Sin respuesta: no llegó (red) o un gateway cortó (5xx); el alta pudo haberse grabado igual.
           if (!(e instanceof ApiError) || e.status >= 500) sinRespuesta.current.add(firma)
           // La clave sigue siendo la misma: el reintento devuelve la venta o el 409 con código.
-          if (e instanceof ApiError && e.status === 409) throw new Error(CLAVE_EN_CURSO)
+          if (claveEnCurso(e)) throw new Error(CLAVE_EN_CURSO)
           throw e
         }
         r = grabada
@@ -99,7 +103,8 @@ export function useConfirmarVenta(d: Datos) {
       // La venta ya existe: el borrador quedó huérfano. Si no se puede descartar, vence solo a las 48 h.
       if (b.borrador) await b.descartar().catch(() => undefined)
     }
-    let mensaje = r.message
+    // Reintento idéntico: el texto del servidor («…clave de idempotencia (operación repetida)») es técnico.
+    let mensaje = yaExistia(r) ? 'El pedido ya estaba grabado.' : r.message
     if (d.esPedido) {
       const detalle = await api.get<VentaDetalleDto>(`/api/v1/Ventas/${r.ventaId}`).catch(() => null)
       const motivos = motivosAutorizacion(detalle?.venta.motivoPendienteAutorizacion)

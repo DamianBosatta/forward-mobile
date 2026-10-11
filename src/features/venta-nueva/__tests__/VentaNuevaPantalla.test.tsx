@@ -396,9 +396,10 @@ describe('confirmar', () => {
     expect(mockReplace).toHaveBeenCalledWith(guardada('v9', 'El pedido ya se había grabado con lo de antes. Revisalo y editalo si cambiaste algo.'))
   })
 
-  it('si tras el corte el pedido no cambió, el reintento sigue el flujo normal', async () => {
+  const YA_GRABADO = 'El pedido ya estaba grabado.'
+  it('si tras el corte el pedido no cambió, el reintento va a la venta con un mensaje claro (sin el texto técnico)', async () => {
     await cortarYReintentar(false, REPETIDA)
-    expect(mockReplace).toHaveBeenCalledWith(guardada('v9', REPETIDA))
+    expect(mockReplace).toHaveBeenCalledWith(guardada('v9', YA_GRABADO))
   })
 
   it('si tras el corte se cambió el pedido pero el primer intento no se había grabado, se guarda con las ediciones sin aviso', async () => {
@@ -422,6 +423,7 @@ describe('confirmar', () => {
     act(() => useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: pala, cantidad: 13, descuentoPct: 0 }] }))
     await confirmar()
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', CON_LO_DE_ANTES)))
+    expect(mockReplace).toHaveBeenCalledTimes(1)
     expect(altas()[1][1].claveIdempotencia).toBe(altas()[0][1].claveIdempotencia)
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador')
     expect(screen.queryByText(/clave de idempotencia/)).toBeNull()
@@ -438,8 +440,26 @@ describe('confirmar', () => {
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador')
     mockPost.mockImplementationOnce(() => Promise.resolve({ ventaId: 'v9', version: 1, message: REPETIDA }))
     await confirmar()
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', REPETIDA)))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', YA_GRABADO)))
     expect(altas()[1][1].claveIdempotencia).toBe(altas()[0][1].claveIdempotencia)
+  })
+
+  it('otro 409 sin código (clave foránea, concurrencia) muestra el mensaje del servidor, no el de la clave en curso', async () => {
+    await armar()
+    mockPost.mockImplementationOnce(() => Promise.reject(new ApiError(409, 'Operación bloqueada por restricciones de integridad (clave foránea).')))
+    await confirmar()
+    expect(await screen.findByText('Operación bloqueada por restricciones de integridad (clave foránea).')).toBeTruthy()
+    expect(screen.queryByText(/ya se estaba grabando/)).toBeNull()
+    expect(mockReplace).not.toHaveBeenCalled()
+  })
+
+  it('un 409 con el código pero sin la venta en data muestra el mensaje del servidor', async () => {
+    await armar()
+    mockPost.mockImplementationOnce(() => Promise.reject(Object.assign(otroCuerpo(), { data: undefined })))
+    await confirmar()
+    expect(await screen.findByText(/Esta clave de idempotencia ya se usó/)).toBeTruthy()
+    expect(screen.queryByText(/ya se estaba grabando/)).toBeNull()
+    expect(mockReplace).not.toHaveBeenCalled()
   })
 
   it('sin stock pide el motivo antes de mandar y lo manda en el alta', async () => {

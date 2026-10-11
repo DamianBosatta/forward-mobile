@@ -1,4 +1,4 @@
-import { api, ApiError } from '@/core/api/client'
+import { api, ApiError, configureApiClient } from '@/core/api/client'
 
 jest.mock('@/core/query/persistConfig', () => ({ mmkvPersister: { removeClient: jest.fn() } }))
 
@@ -45,5 +45,19 @@ describe('ApiError: código y datos del sobre', () => {
     responder(500, 'no es json de sobre')
     const e2 = await fallo(api.get('/x'))
     expect(e2).toMatchObject({ status: 500, codigo: undefined, data: undefined })
+  })
+
+  it('tras un 401, el reintento con el token renovado que falla también trae código y datos', async () => {
+    let token = 'viejo'
+    configureApiClient({
+      getToken: () => token, getRefreshToken: () => 'r1',
+      onTokensRefreshed: (t) => { token = t.accessToken }, onUnauthorized: jest.fn(),
+    })
+    responder(401, {})
+    responder(200, { access_token: 'nuevo', refresh_token: 'r2' })
+    responder(409, SOBRE_409)
+    const e = await fallo(api.post('/api/v1/Ventas', {}))
+    expect(mockFetch).toHaveBeenCalledTimes(3)
+    expect(e).toMatchObject({ status: 409, codigo: 'ClaveIdempotenciaConOtroCuerpo', data: { ventaId: 'v9', version: 3, message: 'x' } })
   })
 })
