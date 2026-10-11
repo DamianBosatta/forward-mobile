@@ -2908,6 +2908,143 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Compras/{id}/devoluciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegistrarDevolucionProveedorCommand"];
+                    "text/json": components["schemas"]["RegistrarDevolucionProveedorCommand"];
+                    "application/*+json": components["schemas"]["RegistrarDevolucionProveedorCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Compras/{id}/devoluciones/{devolucionId}/anular": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    devolucionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AnularDevolucionProveedorCommand"];
+                    "text/json": components["schemas"]["AnularDevolucionProveedorCommand"];
+                    "application/*+json": components["schemas"]["AnularDevolucionProveedorCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Compras/{id}/devoluciones/{devolucionId}/nota-credito": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    devolucionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CargarNotaCreditoDevolucionCommand"];
+                    "text/json": components["schemas"]["CargarNotaCreditoDevolucionCommand"];
+                    "application/*+json": components["schemas"]["CargarNotaCreditoDevolucionCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Compras/{id}/anular": {
         parameters: {
             query?: never;
@@ -13022,6 +13159,15 @@ export interface components {
                 [key: string]: string;
             } | null;
         };
+        AnularDevolucionProveedorCommand: {
+            /** Format: uuid */
+            compraId?: string;
+            /** Format: uuid */
+            devolucionId?: string;
+            /** Format: int32 */
+            version?: number | null;
+            motivo?: string | null;
+        };
         AnularMovimientoInternoCommand: {
             /** Format: uuid */
             movimientoInternoId?: string;
@@ -13298,6 +13444,15 @@ export interface components {
             /** Format: uuid */
             compraId?: string;
             motivoAnulacion?: string | null;
+        };
+        CargarNotaCreditoDevolucionCommand: {
+            /** Format: uuid */
+            compraId?: string;
+            /** Format: uuid */
+            devolucionId?: string;
+            /** Format: int32 */
+            version?: number | null;
+            notaCredito?: components["schemas"]["ComprobanteCompraInput"];
         };
         CarteraChequesResumenDto: {
             /** Format: double */
@@ -13719,6 +13874,8 @@ export interface components {
             unidadCompra: components["schemas"]["UnidadCompra"];
             /** Format: double */
             cantidadIngresada: number;
+            /** Format: double */
+            cantidadDevuelta: number;
         };
         CompraDto: {
             /** Format: uuid */
@@ -13769,6 +13926,7 @@ export interface components {
             conFactura: boolean;
             comprobante?: components["schemas"]["ComprobanteRecibidoDto"];
             detalles: components["schemas"]["CompraDetalleResponseDto"][];
+            devoluciones: components["schemas"]["DevolucionProveedorDto"][];
         };
         CompraDtoList: {
             /** Format: uuid */
@@ -14447,6 +14605,36 @@ export interface components {
             /** Format: double */
             deudaTotal?: number;
         };
+        DevolucionProveedorDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            fecha: string;
+            motivo: string;
+            /** Format: double */
+            total: number;
+            /** Format: double */
+            acreditado: number;
+            anulada: boolean;
+            /** Format: date-time */
+            fechaAnulacion?: string | null;
+            motivoAnulacion?: string | null;
+            items: components["schemas"]["DevolucionProveedorItemDto"][];
+            notaCredito?: components["schemas"]["ComprobanteRecibidoDto"];
+        };
+        DevolucionProveedorItemDto: {
+            /** Format: uuid */
+            compraDetalleId: string;
+            /** Format: uuid */
+            productoId: string;
+            nombreProducto: string;
+            /** Format: double */
+            cantidad: number;
+            /** Format: double */
+            costoUnitario: number;
+            /** Format: double */
+            subtotal: number;
+        };
         DiasEntregaDto: {
             lunes?: boolean;
             martes?: boolean;
@@ -15021,6 +15209,12 @@ export interface components {
         };
         /** @enum {string} */
         LetraComprobante: "A" | "B" | "C";
+        LineaDevolucionInput: {
+            /** Format: uuid */
+            compraDetalleId?: string;
+            /** Format: double */
+            cantidad?: number;
+        };
         LineaVistaPreviaCompraDto: {
             /** Format: double */
             subtotal: number;
@@ -15803,6 +15997,15 @@ export interface components {
             confirmPassword?: string | null;
             nombre?: string | null;
             apellido?: string | null;
+        };
+        RegistrarDevolucionProveedorCommand: {
+            /** Format: uuid */
+            compraId?: string;
+            /** Format: int32 */
+            version?: number | null;
+            motivo?: string | null;
+            items?: components["schemas"]["LineaDevolucionInput"][] | null;
+            notaCredito?: components["schemas"]["ComprobanteCompraInput"];
         };
         RegistrarGastoCommand: {
             descripcion?: string | null;
@@ -16597,7 +16800,7 @@ export interface components {
         /** @enum {string} */
         TipoMovimientoStock: "Compra" | "Venta" | "Transferencia" | "Ajuste";
         /** @enum {string} */
-        TipoMovimientoStockFiscal: "CompraFacturada" | "AnulacionCompra" | "DevolucionProveedor" | "VentaFacturada" | "AnulacionFactura" | "NotaCredito" | "NotaDebito" | "AjusteManual";
+        TipoMovimientoStockFiscal: "CompraFacturada" | "AnulacionCompra" | "DevolucionProveedor" | "VentaFacturada" | "AnulacionFactura" | "NotaCredito" | "NotaDebito" | "AjusteManual" | "AnulacionDevolucionProveedor";
         /** @enum {string} */
         TipoNotificacion: "CajaSinCerrar" | "PedidoEditadoPorDeposito" | "SocioProvisorioPorVencer" | "SocioDesactivadoAutomaticamente" | "SolicitudCambioSocio" | "SolicitudCambioResuelta" | "ImportacionCompletada" | "VentaNoEntregada" | "PresupuestoPorVencer" | "ChequePorVencer" | "VentaRechazadaAutorizacion" | "VentaPendienteAutorizacion" | "VentaAutorizada" | "PagoProveedorPorVencer" | "PagoProveedorVencido" | "VentaRegularizadaPorCobro" | "VencimientoCalendario" | "RecordatorioPersonal" | "ResumenSemanal" | "ResumenMensual" | "EntregasPasadasAlProximoDia" | "FiscalSuperaStockReal";
         /** @enum {string} */
