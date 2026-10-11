@@ -3,7 +3,7 @@ import { Alert, Modal, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Trash2 } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Notice, TopBar, formatImporte } from '@/core/ui/fw'
+import { BottomSheet, Button, Field, Notice, TopBar, formatImporte } from '@/core/ui/fw'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { SeleccionarClienteSheet, type TipoDocumento } from '@/features/clientes/components/SeleccionarClienteSheet'
@@ -11,6 +11,7 @@ import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cl
 import type { ClienteElegido } from '@/features/clientes/lib/recientes'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { useCabeceraVenta } from '../hooks/useCabeceraVenta'
+import { useConfirmarVenta } from '../hooks/useConfirmarVenta'
 import { useResponsive } from '@/libs/useResponsive'
 import { useBorradorVenta } from '../hooks/useBorradorVenta'
 import { useComisionEstimada } from '../hooks/useComisionEstimada'
@@ -42,6 +43,11 @@ export function VentaNuevaPantalla() {
   const comision = useComisionEstimada(lineas, descuentoValido, cab.cabecera.flete, cab.porcentajeCedido)
   const { isTabletLandscape } = useResponsive()
   const [pestana, setPestana] = useState<'lineas' | 'cabecera'>('lineas')
+  const [motivo, setMotivo] = useState('')
+  const conf = useConfirmarVenta({
+    clienteId: cliente?.id ?? '', esPedido: tipo === 'Pedido', lineas, descuentoGeneral: descuentoValido, cabecera: cab.cabecera,
+    porcentajeCedido: cab.porcentajeCedido, borrador: b, alGuardar: vaciar,
+  })
   const [catalogo, setCatalogo] = useState(false)
   const [editando, setEditando] = useState<LineaCarrito | null>(null)
   const volver = { kind: 'atras' as const, onPress: () => router.back() }
@@ -98,6 +104,13 @@ export function VentaNuevaPantalla() {
           {`Tu comisión estimada ${formatImporte(comision)}`}
         </Text>
       ) : null}
+      {conf.error ? <Notice tone="peligro">{conf.error}</Notice> : null}
+      <Button
+        label={tipo === 'Pedido' ? 'Confirmar pedido' : 'Guardar presupuesto'}
+        onPress={() => void conf.confirmar()}
+        loading={conf.enviando}
+        disabled={lineas.length === 0 || descuentoGeneral === null || cab.fleteInvalido || !!cab.cesionError || conf.enviando}
+      />
     </View>
   )
 
@@ -128,6 +141,14 @@ export function VentaNuevaPantalla() {
         <TopBar title="Agregar productos" leading={{ kind: 'atras', onPress: () => setCatalogo(false) }} />
         <CatalogoVenta onVerVenta={() => setCatalogo(false)} />
       </Modal>
+      <BottomSheet visible={conf.pedirMotivo} onClose={conf.cerrarMotivo} accessibilityLabel="Motivo sin stock">
+        <View style={{ gap: space[3] }}>
+          <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>Falta stock</Text>
+          <Text style={{ ...typeScale.cuerpo, color: c.text }}>Para guardar el pedido sin stock, contá por qué. Va a quedar por autorizar.</Text>
+          <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Ej.: el cliente espera la reposición del lunes." multiline />
+          <Button label="Confirmar con este motivo" disabled={!motivo.trim() || conf.enviando} loading={conf.enviando} onPress={() => void conf.confirmar(motivo)} />
+        </View>
+      </BottomSheet>
       <EditarLineaSheet linea={editando} onClose={() => setEditando(null)}
         onConfirm={(l) => { reemplazar(l); setEditando(null) }} onQuitar={(id) => { quitar(id); setEditando(null) }} />
     </View>

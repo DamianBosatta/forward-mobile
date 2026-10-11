@@ -20,8 +20,10 @@ jest.mock('@/core/api/client', () => ({
   api: { get: (...a: unknown[]) => mockGet(...a), post: (...a: unknown[]) => mockPost(...a), put: (...a: unknown[]) => mockPut(...a) },
 }))
 const mockBack = jest.fn()
+const mockReplace = jest.fn()
+let mockTipo = 'Pedido'
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ push: jest.fn(), back: mockBack, replace: jest.fn() }),
+  useRouter: () => ({ push: jest.fn(), back: mockBack, replace: mockReplace }),
   Redirect: ({ href }: { href: string }) => mockBoton(`redirige a ${href}`, jest.fn()),
 }))
 jest.mock('expo-secure-store', () => ({ setItemAsync: jest.fn(), getItemAsync: jest.fn() }))
@@ -32,7 +34,7 @@ const mockBoton = (label: string, onPress: () => void) => {
 }
 jest.mock('@/features/clientes/components/SeleccionarClienteSheet', () => ({
   SeleccionarClienteSheet: ({ onSelect }: { onSelect: (c: object, t: string) => void }) =>
-    mockBoton('Elegir Tarantino', () => onSelect({ id: 'c1', direccion: 'Tarantino 1898', nombreFantasia: 'Autoservicio Abel' }, 'Pedido')),
+    mockBoton('Elegir Tarantino', () => onSelect({ id: 'c1', direccion: 'Tarantino 1898', nombreFantasia: 'Autoservicio Abel' }, mockTipo)),
 }))
 jest.mock('../components/CatalogoVenta', () => ({
   CatalogoVenta: () => mockBoton('Añadir pala', () =>
@@ -61,6 +63,8 @@ beforeEach(() => {
   mockPost.mockReset().mockResolvedValue({ ventaId: 'b1', version: 7, message: 'Borrador creado.' })
   mockPut.mockReset().mockImplementation((_u: string, body: { version: number }) => Promise.resolve({ ventaId: 'b1', version: body.version + 1, message: 'ok' }))
   mockBack.mockReset()
+  mockReplace.mockReset()
+  mockTipo = 'Pedido'
   mockGet.mockReset().mockResolvedValue(undefined)
   mockDims.mockReturnValue({ width: 390, height: 800, scale: 2, fontScale: 1 })
   useCarritoVenta.setState({ lineas: [] })
@@ -240,6 +244,101 @@ describe('pestaña Cabecera', () => {
     expect(screen.queryByRole('tab', { name: 'Cabecera' })).toBeNull()
     expect(screen.getByText('Agregar productos')).toBeTruthy()
     expect(screen.getByText('Fecha de entrega')).toBeTruthy()
+  })
+})
+
+describe('confirmar', () => {
+  const pala = producto({ real: 100 })
+  const altas = () => mockPost.mock.calls.filter(([u]) => u === '/api/v1/Ventas')
+  let alerta: jest.SpyInstance
+  beforeEach(() => {
+    alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => {})
+    mockPost.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas'
+      ? { ventaId: 'v9', version: 1, message: 'Pedido creado y confirmado exitosamente. Stock reservado.' }
+      : url.endsWith('descartar-borrador') ? true : { ventaId: 'b1', version: 7, message: '' }))
+    mockGet.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas/v9' ? { venta: { estado: 2 }, detalles: [] } : undefined))
+  })
+  afterEach(() => alerta.mockRestore())
+  async function armar(cantidad = 12) {
+    await elegirCliente()
+    useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: pala, cantidad, descuentoPct: 0 }] })
+    await screen.findByText('Pala c/Cabo Fija LP')
+  }
+  const confirmar = () => userEvent.press(screen.getByRole('button', { name: 'Confirmar pedido' }))
+
+  it('pedido: manda el alta como CreateVentaCommand con clave de idempotencia, descarta el borrador y va al detalle', async () => {
+    await armar()
+    await confirmar()
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)/ventas/v9'))
+    expect(altas()[0][1]).toEqual({
+      clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 2, descuentoGeneral: 0, metodoEntrega: 1, entregaInmediata: false,
+      items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 0 }], fechaEntrega: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+      claveIdempotencia: expect.stringMatching(/^mobile-/),
+    })
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador')
+    expect(alerta).toHaveBeenCalledWith('Pedido guardado', 'Pedido creado y confirmado exitosamente. Stock reservado.')
+  })
+
+  it('un reintento tras un corte reusa la misma clave de idempotencia (no duplica el pedido)', async () => {
+    await armar()
+    mockPost.mockImplementationOnce(() => Promise.reject(new TypeError('Network request failed')))
+    await confirmar()
+    expect(await screen.findByText('Network request failed')).toBeTruthy()
+    expect(mockReplace).not.toHaveBeenCalled()
+    await confirmar()
+    await waitFor(() => expect(mockReplace).toHaveBeenCalled())
+    expect(altas()).toHaveLength(2)
+    expect(altas()[1][1].claveIdempotencia).toBe(altas()[0][1].claveIdempotencia)
+  })
+
+  it('sin stock pide el motivo antes de mandar y lo manda en el alta', async () => {
+    await armar(120)
+    await confirmar()
+    expect(screen.getByText('Falta stock')).toBeTruthy()
+    expect(altas()).toHaveLength(0)
+    await userEvent.type(screen.getByLabelText('Motivo'), 'Repone el lunes')
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar con este motivo' }))
+    await waitFor(() => expect(altas()).toHaveLength(1))
+    expect(altas()[0][1]).toMatchObject({ motivoVentaSinStock: 'Repone el lunes' })
+  })
+
+  it('si el servidor pide justificación por stock, se ve su motivo y se abre el pedido de motivo', async () => {
+    mockPost.mockImplementation((u: string) => u === '/api/v1/Ventas'
+      ? Promise.reject(new ApiError(400, 'Stock insuficiente para los siguientes productos en el depósito seleccionado: Pala. Debe proporcionar una justificación.'))
+      : Promise.resolve({ ventaId: 'b1', version: 7, message: '' }))
+    await armar()
+    await confirmar()
+    expect(await screen.findByText(/Debe proporcionar una justificación/)).toBeTruthy()
+    expect(screen.getByLabelText('Motivo')).toBeTruthy()
+  })
+
+  it('por autorizar: muestra los motivos que dice el servidor', async () => {
+    mockGet.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas/v9' ? { venta: { estado: 9, motivoPendienteAutorizacion: 4 | 16 }, detalles: [] } : undefined))
+    await armar()
+    await confirmar()
+    await waitFor(() => expect(alerta).toHaveBeenCalledWith('Quedó por autorizar',
+      'Porque un descuento supera tu tope, el cliente tiene deuda de más de 30 días. Te avisamos cuando lo resuelvan.'))
+  })
+
+  it('presupuesto: el borrador ya es el presupuesto (guardar-presupuesto con la versión vigente)', async () => {
+    mockTipo = 'Presupuesto'
+    await armar()
+    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
+    await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar presupuesto' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/guardar-presupuesto', { ventaId: 'b1', version: 8 }))
+    expect(altas()).toHaveLength(0)
+    expect(mockReplace).toHaveBeenCalledWith('/(tabs)/ventas/b1')
+  })
+
+  it('la cesión viaja en el alta del pedido', async () => {
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10, comisionActiva: true, porcentajeComision: 5 } as never })
+    await armar()
+    await userEvent.press(screen.getByRole('tab', { name: 'Cabecera' }))
+    await userEvent.type(screen.getByLabelText('Ceder parte de mi comisión (%)'), '3')
+    await confirmar()
+    await waitFor(() => expect(altas()).toHaveLength(1))
+    expect(altas()[0][1]).toMatchObject({ porcentajeComisionCedido: 3 })
   })
 })
 

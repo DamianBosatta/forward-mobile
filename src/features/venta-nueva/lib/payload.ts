@@ -34,3 +34,43 @@ export function aAutoguardado(lineas: LineaCarrito[], descuentoGeneral = 0, cab:
   if (cab.observaciones.trim()) p.observaciones = cab.observaciones.trim()
   return p
 }
+
+type CreateVentaCommand = import('@/libs/api-client/generated/schema').components['schemas']['CreateVentaCommand']
+/**
+ * Cuerpo de POST /Ventas, atado al contrato (`CreateVentaCommand`): una clave que el comando no
+ * tiene no compila. Los enums viajan como número, igual que la web y la venta de hoy.
+ */
+export type AltaVenta = Omit<CreateVentaCommand, 'tipoOperacion' | 'metodoEntrega' | 'vendedorId' | 'usuarioGeneradorId'> & {
+  tipoOperacion: 1 | 2
+  metodoEntrega: MetodoEntregaValue
+}
+
+export interface DatosAlta {
+  clienteId: string
+  depositoId: string
+  esPedido: boolean
+  claveIdempotencia: string
+  motivoVentaSinStock?: string
+  porcentajeComisionCedido?: number
+}
+
+/** Alta (buildVentaPayload de la web): el vendedor sale del token; el flete solo si es > 0; la cesión solo en Pedido. */
+export function aAlta(lineas: LineaCarrito[], descuentoGeneral: number, cab: Cabecera, d: DatosAlta): AltaVenta {
+  const { cargoFlete, ...resto } = aAutoguardado(lineas, descuentoGeneral, cab)
+  const p: AltaVenta = {
+    ...resto,
+    clienteId: d.clienteId,
+    depositoId: d.depositoId,
+    tipoOperacion: d.esPedido ? 2 : 1,
+    entregaInmediata: false,
+    claveIdempotencia: d.claveIdempotencia,
+  }
+  if (cargoFlete) p.cargoFlete = cargoFlete
+  if (d.motivoVentaSinStock?.trim()) p.motivoVentaSinStock = d.motivoVentaSinStock.trim()
+  if (d.esPedido && d.porcentajeComisionCedido) p.porcentajeComisionCedido = d.porcentajeComisionCedido
+  return p
+}
+
+/** Clave de idempotencia de un alta (A.4 del servidor): única por venta, < 200 caracteres. */
+export const nuevaClaveIdempotencia = () =>
+  `mobile-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`

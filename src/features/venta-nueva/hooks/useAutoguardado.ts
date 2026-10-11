@@ -72,16 +72,17 @@ export function useAutoguardado<T>({ borradorId, versionInicial, valores, guarda
     timer.current = setTimeout(() => void ejecutar(), debounceMs)
   }, [snapshot, borradorId, debounceMs, ejecutar])
 
-  /** Guarda ya lo pendiente (antes de confirmar o salir) y devuelve la versión vigente. */
+  /** Guarda ya lo pendiente (antes de confirmar o salir) y devuelve la versión vigente; si no pudo, falla. */
   const flush = useCallback(async (): Promise<number> => {
     clearTimeout(timer.current)
     if (enVuelo.current) await enVuelo.current
     const s = r.current
     if (s.borradorId && !s.conflicto && s.snapshot !== s.guardado) await ejecutar()
+    if (s.snapshot !== s.guardado) throw new Error('El borrador tiene cambios sin guardar. Revisá el aviso y probá de nuevo.')
     return r.current.version
   }, [ejecutar])
 
-  useEffect(() => () => { void flush() }, [flush])
+  useEffect(() => () => { flush().catch(() => undefined) }, [flush])
 
   return { estado, motivo, flush }
 }
