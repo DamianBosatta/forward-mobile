@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CompraDetalle } from '../../../../../app/(tabs)/compras/[id]'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -93,10 +93,26 @@ describe('detalle de compra', () => {
     await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/anular', { motivoAnulacion: 'El proveedor no tiene stock' }))
   })
 
-  it('editar abre el formulario de la compra', async () => {
+  it('no hay entrada a editar: el formulario de antes perdía el descuento y la unidad de compra', async () => {
     abrir({})
-    await userEvent.press(await screen.findByRole('button', { name: 'Editar la compra' }))
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/compras/nueva?edit=aaaa1111-0000')
+    await screen.findByText('Balde Nuvia 10L')
+    expect(screen.queryByRole('button', { name: 'Editar la compra' })).toBeNull()
+  })
+
+  it('cada hoja arranca limpia: el motivo y el error de una no pasan a la otra', async () => {
+    abrir({ estado: 'Confirmado' })
+    await userEvent.press(await screen.findByRole('button', { name: 'Cancelar compra' }))
+    mockDelete.mockRejectedValueOnce(Object.assign(new Error('Ya no se puede'), { status: 400 }))
+    await userEvent.type(screen.getByLabelText('Motivo'), 'Cambió el pedido')
+    await userEvent.press(screen.getAllByRole('button', { name: 'Cancelar compra' }).at(-1)!)
+    // El error se ve una sola vez, dentro de la hoja.
+    expect(await screen.findAllByText(/No se canceló la compra: Ya no se puede/)).toHaveLength(1)
+    fireEvent.press(screen.getByLabelText('Cerrar', { includeHiddenElements: true }))
+    await userEvent.press(screen.getByRole('button', { name: 'Recibir' }))
+    expect(screen.queryByText(/No se canceló la compra/)).toBeNull()
+    fireEvent.press(screen.getByLabelText('Cerrar', { includeHiddenElements: true }))
+    await userEvent.press(screen.getAllByRole('button', { name: 'Cancelar compra' })[0])
+    expect(screen.getByLabelText('Motivo').props.value).toBe('')
   })
 
   it('una compra recibida no se edita, no se confirma ni se cancela', async () => {
@@ -138,6 +154,23 @@ describe('detalle de compra', () => {
       abrir({ estado: 'Entregado' })
       await screen.findByText('Recibido')
       expect(screen.queryByRole('button', { name: 'Anular recepción' })).toBeNull()
+    })
+
+    it('anular arranca sin el motivo ni el error de antes y, tras un 409, manda la versión vigente', async () => {
+      conCapacidad()
+      abrir({ estado: 'Entregado' })
+      await userEvent.press(await screen.findByRole('button', { name: 'Anular recepción' }))
+      mockPost.mockRejectedValueOnce(Object.assign(new Error('Error de concurrencia'), { status: 409 }))
+      await userEvent.type(screen.getByLabelText('Motivo'), 'Se cargó dos veces')
+      mockGet.mockResolvedValue(compra({ estado: 'Entregado', version: 4 }))
+      await userEvent.press(screen.getAllByRole('button', { name: 'Anular recepción' }).at(-1)!)
+      expect(await screen.findAllByText(/No se anuló la recepción: Error de concurrencia/)).toHaveLength(1)
+      await waitFor(() => expect(mockGet.mock.calls.length).toBeGreaterThan(1))
+      await userEvent.press(screen.getAllByRole('button', { name: 'Anular recepción' }).at(-1)!)
+      await waitFor(() => expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Compras/aaaa1111-0000/anular-recepcion', { compraId: 'aaaa1111-0000', motivo: 'Se cargó dos veces', version: 4 }))
+      // Salió bien: la hoja se cerró; al abrirla otra vez no queda el motivo anterior.
+      await userEvent.press(await screen.findByRole('button', { name: 'Anular recepción' }))
+      expect(screen.getByLabelText('Motivo').props.value).toBe('')
     })
 
     it('una compra por recibir no se anula: se cancela', async () => {

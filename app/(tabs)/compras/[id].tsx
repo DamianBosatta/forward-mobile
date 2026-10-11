@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { Pencil } from 'lucide-react-native'
 import { useAnularRecepcionCompra, useCompra, useCancelarCompra, useConfirmarCompra, useRecibirCompra } from '@/libs/api-client/compras'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
@@ -82,14 +81,21 @@ export function CompraDetalle({ id, onVolver }: { id: string; onVolver?: () => v
   const puedeAnularRecepcion = estado === 'Entregado' && canDo('MOD_COMPRAS', 'delete') && hasCapability(permisos, 'CAP_ANULAR_RECEPCION_COMPRAS')
   const puedeEditar = canDo('MOD_COMPRAS', 'update')
 
-  const correr = async (accion: () => Promise<unknown>, titulo: string, despues?: () => void) => {
+  // Cada hoja arranca limpia: ni el motivo ni el error de otra quedan a la vista.
+  const abrirHoja = (h: Hoja) => { setError(null); setMotivo(''); if (h === 'anularRecepcion') setVersionVista(compra.version); setHoja(h) }
+  const cerrarHoja = () => { setError(null); setMotivo(''); setHoja(null) }
+
+  const correr = async (accion: () => Promise<unknown>, titulo: string) => {
     setError(null)
     try {
       await accion()
-      setHoja(null)
-      despues?.()
+      cerrarHoja()
     } catch (e) {
       setError(`${titulo}: ${mensajeDelServidor(e)}`)
+      // Otro cambió la compra: se trae la versión vigente para que el próximo intento no repita el conflicto.
+      if ((e as { status?: number })?.status === 409) {
+        try { const r = await q.refetch(); if (r.data) setVersionVista(r.data.version) } catch { /* queda el error del servidor */ }
+      }
     }
   }
 
@@ -99,14 +105,13 @@ export function CompraDetalle({ id, onVolver }: { id: string; onVolver?: () => v
         title={compra.razonSocialProveedor}
         subtitle={`${compra.id.slice(0, 8).toUpperCase()} · ${ddmmaaaa(diaArgentina(Date.parse(compra.fecha)))}`}
         leading={{ kind: 'atras', onPress: volver }}
-        actions={abierta && puedeEditar ? [{ icon: Pencil, accessibilityLabel: 'Editar la compra', onPress: () => router.push(`/(tabs)/compras/nueva?edit=${compra.id}` as never) }] : []}
       />
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] * 2 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text style={secundario}>{`${compra.nombreDeposito} · ${compra.detalles.length} ${compra.detalles.length === 1 ? 'producto' : 'productos'}`}</Text>
           {(() => { const chip = chipForEstado('compra', compra.estado); return chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null })()}
         </View>
-        {error ? <Notice tone="peligro">{error}</Notice> : null}
+        {error && hoja === null ? <Notice tone="peligro">{error}</Notice> : null}
         {compra.motivoCancelacion ? <Notice tone="info" title="Cancelada.">{compra.motivoCancelacion}</Notice> : null}
         {compra.motivoAnulacion ? <Notice tone="info" title="Recepción anulada.">{compra.motivoAnulacion}</Notice> : null}
         <View style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>
@@ -130,21 +135,21 @@ export function CompraDetalle({ id, onVolver }: { id: string; onVolver?: () => v
       </ScrollView>
       {abierta ? (
         <View style={{ flexDirection: 'row', gap: space[2], padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
-          {canDo('MOD_COMPRAS', 'delete') ? <Button label="Cancelar compra" variant="secundario" disabled={ocupado} onPress={() => setHoja('cancelar')} /> : null}
+          {canDo('MOD_COMPRAS', 'delete') ? <Button label="Cancelar compra" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('cancelar')} /> : null}
           {puedeEditar ? (
             <View style={{ flex: 1 }}>
               {estado === 'NotaPedido'
                 ? <Button label="Confirmar compra" loading={confirmar.isPending} disabled={ocupado} onPress={() => { void correr(() => confirmar.mutateAsync(compra.id), 'No se confirmó la compra') }} />
-                : <Button label="Recibir" disabled={ocupado} onPress={() => setHoja('recibir')} />}
+                : <Button label="Recibir" disabled={ocupado} onPress={() => abrirHoja('recibir')} />}
             </View>
           ) : null}
         </View>
       ) : puedeAnularRecepcion ? (
         <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
-          <Button label="Anular recepción" variant="secundario" disabled={ocupado} onPress={() => { setVersionVista(compra.version); setHoja('anularRecepcion') }} />
+          <Button label="Anular recepción" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('anularRecepcion')} />
         </View>
       ) : null}
-      <BottomSheet visible={hoja === 'anularRecepcion'} onClose={() => setHoja(null)} accessibilityLabel="Anular la recepción">
+      <BottomSheet visible={hoja === 'anularRecepcion'} onClose={cerrarHoja} accessibilityLabel="Anular la recepción">
         <Text style={[typeScale.titulo, { color: c.text }]}>Anular la recepción</Text>
         <Text style={secundario}>Descuenta del stock lo que ingresó y revierte la deuda con el proveedor. No se puede deshacer.</Text>
         <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Por qué se anula" />
@@ -152,7 +157,7 @@ export function CompraDetalle({ id, onVolver }: { id: string; onVolver?: () => v
         <Button label="Anular recepción" variant="peligro" loading={anularRecepcion.isPending} disabled={!motivo.trim()}
           onPress={() => { void correr(() => anularRecepcion.mutateAsync({ id: compra.id, motivo: motivo.trim(), version: versionVista }), 'No se anuló la recepción') }} />
       </BottomSheet>
-      <BottomSheet visible={hoja === 'recibir'} onClose={() => setHoja(null)} accessibilityLabel="Recibir la compra">
+      <BottomSheet visible={hoja === 'recibir'} onClose={cerrarHoja} accessibilityLabel="Recibir la compra">
         <Text style={[typeScale.titulo, { color: c.text }]}>Recibir la mercadería</Text>
         <Text style={secundario}>Ingresa el stock real y genera la deuda con el proveedor.</Text>
         {pideFactura ? (
@@ -163,7 +168,7 @@ export function CompraDetalle({ id, onVolver }: { id: string; onVolver?: () => v
         <Button label="Recibir" loading={recibir.isPending} disabled={pideFactura && !fechaLeida}
           onPress={() => { void correr(() => recibir.mutateAsync({ id: compra.id, fechaFacturaProveedor: pideFactura ? fechaLeida! : undefined }), 'No se recibió la compra') }} />
       </BottomSheet>
-      <BottomSheet visible={hoja === 'cancelar'} onClose={() => setHoja(null)} accessibilityLabel="Cancelar la compra">
+      <BottomSheet visible={hoja === 'cancelar'} onClose={cerrarHoja} accessibilityLabel="Cancelar la compra">
         <Text style={[typeScale.titulo, { color: c.text }]}>Cancelar la compra</Text>
         <Text style={secundario}>No se recibió: si estaba confirmada, se libera el stock que se esperaba.</Text>
         <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Por qué se cancela" />
