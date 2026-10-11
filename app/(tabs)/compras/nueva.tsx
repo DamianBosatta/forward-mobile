@@ -82,6 +82,7 @@ export default function NuevaCompraScreen() {
     productSearch, setProductSearch,
     subtotal, total,
     proveedoresFiltrados, productosFiltrados, depositos,
+    hayMasProductos, cargarMasProductos, lineasSinCosto,
     setProductoCantidad, updateCantidad, updateCosto, removeDetalle,
     onSubmit, canSubmit,
     // State lifecycle management
@@ -259,7 +260,7 @@ export default function NuevaCompraScreen() {
                             {/* Product Info */}
                             <View style={{ flex: 1, marginRight: 12 }}>
                               <Text style={{ color: colors.text, fontWeight: '800', fontSize: 15 }} numberOfLines={2}>{d.nombre}</Text>
-                              <Text style={{ color: colors.primary, fontWeight: '900', fontSize: 13, marginTop: 4 }}>Subtotal: {formatMoney(d.cantidad * d.costoUnitario)}</Text>
+                              <Text style={{ color: colors.primary, fontWeight: '900', fontSize: 13, marginTop: 4 }}>Subtotal: {formatMoney(d.cantidad * (d.costoUnitario ?? 0))}</Text>
                             </View>
                             {/* Delete Action */}
                             <Pressable onPress={() => removeDetalle(d.productoId)} style={{ padding: 6, backgroundColor: `${colors.danger}15`, borderRadius: 10 }}>
@@ -269,13 +270,17 @@ export default function NuevaCompraScreen() {
 
                           <View style={{ flexDirection: 'row', gap: 12 }}>
                             {/* Costo Input */}
-                            <View style={{ flex: 1, backgroundColor: colors.surface2, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 12 }}>
-                              <Text style={{ fontSize: 9, color: colors.textDisabled, fontWeight: '800', textTransform: 'uppercase', marginBottom: 2 }}>Costo Unit.</Text>
+                            <View style={{ flex: 1, backgroundColor: colors.surface2, borderRadius: 14, paddingVertical: 8, paddingHorizontal: 12, borderWidth: d.costoUnitario ? 0 : 1, borderColor: colors.warning }}>
+                              <Text style={{ fontSize: 9, color: d.costoUnitario ? colors.textDisabled : colors.warning, fontWeight: '800', textTransform: 'uppercase', marginBottom: 2 }}>
+                                {d.costoUnitario ? 'Costo Unit.' : 'Sin costo · cargalo'}
+                              </Text>
                               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                  <Text style={{ color: colors.textMuted, fontWeight: '800', fontSize: 14, marginRight: 2 }}>$</Text>
                                  <TextInput 
                                    style={{ flex: 1, color: colors.text, fontWeight: '800', fontSize: 15, padding: 0 }}
-                                   keyboardType="decimal-pad" value={String(d.costoUnitario)} onChangeText={v => updateCosto(d.productoId, v)} selectTextOnFocus
+                                   keyboardType="decimal-pad" value={d.costoUnitario === null ? '' : String(d.costoUnitario)}
+                                   placeholder="0,00" placeholderTextColor={colors.textDisabled} accessibilityLabel={`Costo unitario de ${d.nombre}`}
+                                   onChangeText={v => updateCosto(d.productoId, v)} selectTextOnFocus
                                  />
                               </View>
                             </View>
@@ -344,6 +349,12 @@ export default function NuevaCompraScreen() {
               <Text style={{ fontSize: 24, fontWeight: '900', color: colors.primary, letterSpacing: -1 }}>{formatMoney(total)}</Text>
             </View>
           </View>
+        )}
+
+        {lineasSinCosto > 0 && (
+          <Text style={{ color: colors.warning, fontWeight: '800', fontSize: 13, marginBottom: 12, textAlign: 'center' }}>
+            {lineasSinCosto === 1 ? 'Falta el costo de 1 producto.' : `Falta el costo de ${lineasSinCosto} productos.`}
+          </Text>
         )}
 
         <Pressable
@@ -439,6 +450,8 @@ export default function NuevaCompraScreen() {
         setProductSearch={setProductSearch}
         loadingProds={loadingProds}
         productosFiltrados={productosFiltrados}
+        hayMasProductos={hayMasProductos}
+        cargarMasProductos={cargarMasProductos}
         detalles={detalles}
         setProductoCantidad={setProductoCantidad}
       />

@@ -46,6 +46,7 @@ import {
 import { BlurView } from 'expo-blur'
 import { MotiView, AnimatePresence } from 'moti'
 import { ForwardLogo } from '@/core/ui'
+import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
 // ── Types & Constants ─────────────────────────────────────────────────────────
 
@@ -147,25 +148,25 @@ export default function CompraDetailScreen() {
 
   const handleConfirmar = async () => {
     try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType?.Success || ('Success'.toLowerCase() as any))
       await confirmar(id)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType?.Success || ('Success'.toLowerCase() as any))
       setShowStateModal(false)
       await refetch()
-    } catch (e: any) {
+    } catch (e: unknown) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType?.Error || ('Error'.toLowerCase() as any))
-      Alert.alert('Error', e?.message ?? 'No se pudo confirmar.')
+      Alert.alert('Error', mensajeDelServidor(e, 'No se pudo confirmar.'))
     }
   }
 
   const handleRecibir = async () => {
     try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType?.Success || ('Success'.toLowerCase() as any))
       await recibir(id)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType?.Success || ('Success'.toLowerCase() as any))
       setShowStateModal(false)
       await refetch()
-    } catch (e: any) {
+    } catch (e: unknown) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType?.Error || ('Error'.toLowerCase() as any))
-      Alert.alert('Error', e?.message ?? 'No se pudo recibir.')
+      Alert.alert('Error', mensajeDelServidor(e, 'No se pudo recibir.'))
     }
   }
 
@@ -184,8 +185,8 @@ export default function CompraDetailScreen() {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType?.Warning || ('Warning'.toLowerCase() as any))
               await cancelar({ id })
               router.replace('/(tabs)/compras')
-            } catch (e: any) {
-              Alert.alert('Error', 'No se pudo anular la compra.')
+            } catch (e: unknown) {
+              Alert.alert('Error', mensajeDelServidor(e, 'No se pudo anular la compra.'))
             }
           }
         }
@@ -474,7 +475,7 @@ export default function CompraDetailScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', gap: 12 }}>
-              <Pressable onPress={handleAnular} style={{ flex: 1 }}>
+              <Pressable onPress={handleAnular} style={{ flex: 1 }} accessibilityRole="button" accessibilityLabel="Anular orden">
                 {({pressed}) => (
                   <View style={{
                     height: 56, borderRadius: 18,

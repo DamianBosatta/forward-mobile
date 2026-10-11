@@ -40,9 +40,11 @@ function ProductCatalogItem({
           <Text style={{ fontSize: 14, fontWeight: '800', color: colors.text }} numberOfLines={2}>
             {item.nombre}
           </Text>
-          <Text style={{ fontSize: 15, fontWeight: '900', color: colors.primary, marginTop: 4 }}>
-            ${(item.precioCompraBase || item.precioVenta * 0.7 || 0).toLocaleString('es-AR')}
-          </Text>
+          {!!item.codigoPropio && (
+            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted, marginTop: 4 }}>
+              {item.codigoPropio}
+            </Text>
+          )}
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface2, borderRadius: 14 }}>
@@ -78,24 +80,29 @@ interface CatalogModalProps {
   setProductSearch: (s: string) => void
   loadingProds: boolean
   productosFiltrados: any[]
+  hayMasProductos?: boolean
+  cargarMasProductos?: () => void
   detalles: any[]
   setProductoCantidad: (prod: any, qty: number) => void
 }
 
-export function CatalogModal({ visible, onClose, colors, productSearch, setProductSearch, loadingProds, productosFiltrados, detalles, setProductoCantidad }: CatalogModalProps) {
+export function CatalogModal({ visible, onClose, colors, productSearch, setProductSearch, loadingProds, productosFiltrados, hayMasProductos, cargarMasProductos, detalles, setProductoCantidad }: CatalogModalProps) {
   if (!visible) return null
 
   return (
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1001, backgroundColor: colors.bg }}>
       <ModalHeader title="Catálogo Maestro" onClose={onClose} colors={colors} />
       <View style={{ padding: 16 }}>
-        <SearchBar value={productSearch} onChangeText={setProductSearch} placeholder="BUSCAR PRODUCTO..." colors={colors} autoFocus />
+        <SearchBar value={productSearch} onChangeText={setProductSearch} placeholder="BUSCAR POR NOMBRE O CÓDIGO..." colors={colors} autoFocus />
       </View>
       {loadingProds ? <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} /> : (
         <FlatList
           data={productosFiltrados}
           keyExtractor={item => item.id}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 60 }}
+          onEndReached={cargarMasProductos}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={hayMasProductos ? <ActivityIndicator style={{ marginVertical: 16 }} color={colors.primary} /> : null}
           renderItem={({ item }) => {
             const det = detalles.find(d => d.productoId === item.id)
             return (

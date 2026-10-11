@@ -8,6 +8,9 @@ Lo que el Bloque 9A (solo mobile) necesita del servidor o de la web, y la deuda 
 |---|---|---|---|---|
 | Venta (header): cliente | `VentaHeaderDto` no trae `cuit` ni `esProvisorio` del cliente | El selector de cliente de la edición de venta necesita `ClienteLightDto` completo | app/(tabs)/ventas/nueva.tsx / PR 0.1 | Se arma con `displayName = clienteNombre`, `cuit = ''`, `esProvisorio = false`. Nadie los lee hoy. |
 | Producto: blister | `blisterContenido` ya no existe en el contrato | Contrato avanzó | Formulario de producto / PR 0.1 | El formulario de producto salió de mobile en 0.4; queda anotado por si la venta mínima lo necesita. |
+| Compras: motivo al confirmar | `ConfirmarCompra` lanza `InvalidOperationException` ante las fallas de dominio (`compra.Confirmar`, guardado explícito) | El middleware lo convierte en 500 con "Ocurrió un error inesperado": el motivo real no llega al teléfono. Debería ser `ConflictException` (como hace `RecibirCompra`) | app/(tabs)/compras / PR 0.5 | Mobile muestra el mensaje que llega (`message` + `errors`); en ese caso es el genérico. |
+| Compras: crear, confirmar y recibir de una vez | No hay un endpoint que cree la compra y la lleve a Confirmada/Recibida en una sola transacción | Hoy son 2 o 3 llamadas desde el teléfono; si una falla en el medio la compra queda a medias | app/(tabs)/compras/nueva.tsx / PR 0.5 | Si falla un paso se avisa qué quedó hecho y qué no, con botón "Ver la compra". |
+| Compras: último costo por proveedor | No hay un endpoint de "último costo de este producto con este proveedor" | La precarga usa `precioCompraBase` de `GET /Productos/{id}` (último costo confirmado, de cualquier proveedor; solo con `CAP_VER_COSTOS`) | app/(tabs)/compras/nueva.tsx / PR 0.5 | Se precarga ese costo; sin permiso o sin costo, la línea queda sin costo y no se puede confirmar hasta cargarlo. |
 
 ## Deuda de mobile (rutas que cambiaron en el contrato; se migran en la fase que toca cada pantalla)
 

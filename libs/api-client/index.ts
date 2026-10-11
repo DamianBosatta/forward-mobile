@@ -18,6 +18,7 @@ export type {
   UserRole,
   // Productos
   Producto,
+  ProductoDetailDto,
   CreateProductoRequest,
   // Depositos
   Deposito,
@@ -86,7 +87,7 @@ export {
 } from './ventas'
 
 // Productos hooks
-export { productosKeys, useProductos, useCatalogoStock, useProducto, useCreateProducto, useUpdateProducto, useToggleProductoStatus } from './productos'
+export { productosKeys, useProductos, useInfiniteProductos, useCatalogoStock, useProducto, useCreateProducto, useUpdateProducto, useToggleProductoStatus } from './productos'
 export type { CatalogoStockItem, AlmacenStockItem } from './productos'
 
 // Finanzas hooks
