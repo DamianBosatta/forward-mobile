@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, Linking, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { FileText } from 'lucide-react-native'
@@ -19,7 +19,7 @@ import { resumenRuta, urlComoLlegar, urlLlamar } from '@/features/logistica/cons
 import { tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { sharePdf } from '@/features/pedidos/lib/sharePdf'
-import { parseDateSafe } from '@/src/utils/date'
+import { diaArgentina, parseDateSafe } from '@/src/utils/date'
 
 /** Consola del chofer (plan §11, lámina ChoferRuta). Sin foto ni cobro: llegan con 5.1b/c/d. */
 export default function ConsolaChoferScreen() {
@@ -49,10 +49,13 @@ export default function ConsolaChoferScreen() {
   }, [id, clearActiveTrip])
 
   const objetivo = id || activeTrip?.id || rutaElegida || ''
-  const rutas = useHojasDeRuta({ choferId: user?.id }, { enabled: !id && !activeTrip?.id && !!user?.id })
+  // El servidor devuelve todo el historial del chofer: se piden solo las de hoy (día argentino) y sin las canceladas.
+  const hoy = diaArgentina(Date.now())
+  const rutas = useHojasDeRuta({ choferId: user?.id, fecha: hoy }, { enabled: !id && !activeTrip?.id && !!user?.id })
+  const rutasDeHoy = useMemo(() => (rutas.data ?? []).filter((r) => r.estado !== EstadoHojaRuta.Cancelada), [rutas.data])
   useEffect(() => {
-    if (!id && !activeTrip?.id && rutas.data?.length === 1) setRutaElegida(rutas.data[0].id ?? null)
-  }, [rutas.data, id, activeTrip?.id])
+    if (!id && !activeTrip?.id && rutasDeHoy.length === 1) setRutaElegida(rutasDeHoy[0].id ?? null)
+  }, [rutasDeHoy, id, activeTrip?.id])
 
   const remota = useHojaRuta(objetivo)
   useEffect(() => {
@@ -74,12 +77,12 @@ export default function ConsolaChoferScreen() {
     )
   }
 
-  if (!id && !activeTrip?.id && !rutaElegida && (rutas.data?.length ?? 0) > 1) {
+  if (!id && !activeTrip?.id && !rutaElegida && rutasDeHoy.length > 1) {
     return (
       <RequirePermission module="MOD_VIAJES" action="read" mode="screen">
         <View style={{ flex: 1, backgroundColor: c.bg }}>
           <TopBar title="Elegí la hoja de ruta" leading={menu} />
-          <RouteSelector routes={rutas.data ?? []} onSelect={setRutaElegida} />
+          <RouteSelector routes={rutasDeHoy} onSelect={setRutaElegida} />
         </View>
       </RequirePermission>
     )
@@ -92,7 +95,7 @@ export default function ConsolaChoferScreen() {
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Hoja de ruta" leading={leading} />
         <View style={{ padding: space[4], gap: space[4] }}>
-          <Notice tone="info">No tenés una hoja de ruta asignada.</Notice>
+          <Notice tone="info">No tenés una hoja de ruta para hoy.</Notice>
           <Button label="Volver" variant="secundario" onPress={() => router.replace(volverA as never)} />
         </View>
       </View>
@@ -140,7 +143,10 @@ export default function ConsolaChoferScreen() {
       await reportar.mutateAsync({
         hojaDeRutaId: viaje.id,
         paradaId: reportando.parada.id,
-        ...r,
+        entregado: r.entregado,
+        motivoRechazo: r.motivoRechazo,
+        nombreReceptor: r.nombreReceptor,
+        observaciones: r.observaciones,
       })
       updateStopStatus(reportando.parada.id, { delivered: r.entregado, observations: r.observaciones, reason: r.motivoRechazo })
       setReportando(null)

@@ -62,6 +62,18 @@ describe('Calendario', () => {
     expect(urls()).toContain('/api/v1/Calendario?Desde=2026-10-12&Hasta=2026-10-18')
   })
 
+  it('"Agendar" recorta el texto precargado a los límites del servidor (150 / 500)', async () => {
+    mockPost.mockResolvedValue('id')
+    pintar({ titulo: 'T'.repeat(300), descripcion: 'D'.repeat(900), origen: 'A00421' })
+    expect((await screen.findByLabelText('Título')).props.value).toHaveLength(150)
+    expect(screen.getByLabelText('Título').props.maxLength).toBe(150)
+    expect(screen.getByLabelText('Descripción (opcional)').props.maxLength).toBe(500)
+    await userEvent.press(screen.getByLabelText('Guardar evento'))
+    const body = mockPost.mock.calls[0][1]
+    expect(body.titulo).toHaveLength(150)
+    expect(body.descripcion).toHaveLength(500)
+  })
+
   it('crea un recordatorio personal: guarda el día (sin hora) y los días de aviso', async () => {
     mockPost.mockResolvedValue('nuevo-id')
     pintar()

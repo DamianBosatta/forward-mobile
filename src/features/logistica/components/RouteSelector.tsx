@@ -57,7 +57,7 @@ export function RouteSelector({ routes, onSelect }: RouteSelectorProps) {
           Seleccioná tu viaje
         </Text>
         <Text style={{ fontSize: 14, color: colors.textSecondary, marginTop: 4 }}>
-          Tenés {routes.length} rutas programadas para hoy
+          Tenés {routes.length} rutas para hoy
         </Text>
       </MotiView>
 

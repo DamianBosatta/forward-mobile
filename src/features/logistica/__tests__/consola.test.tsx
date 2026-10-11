@@ -42,6 +42,7 @@ const HOJA = {
 }
 
 let hojaServidor: unknown = HOJA
+let listaServidor: (url: string) => unknown = () => [{ id: 'h1' }]
 
 function pintar(hoja: unknown = HOJA, choferId = 'u1') {
   hojaServidor = hoja
@@ -50,7 +51,7 @@ function pintar(hoja: unknown = HOJA, choferId = 'u1') {
   } as never)
   mockGet.mockImplementation((url: string) =>
     url.endsWith('/hojas-ruta/h1') ? Promise.resolve(hojaServidor)
-      : url.includes('hojas-ruta?') ? Promise.resolve([{ id: 'h1' }])
+      : url.includes('hojas-ruta?') ? Promise.resolve(listaServidor(url))
       : Promise.reject(new Error(`sin respuesta: ${url}`)),
   )
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -60,6 +61,7 @@ function pintar(hoja: unknown = HOJA, choferId = 'u1') {
 beforeEach(() => {
   jest.clearAllMocks()
   useLogisticaStore.setState({ activeTrip: null })
+  listaServidor = () => [{ id: 'h1' }]
   conTema('light')
 })
 
@@ -141,6 +143,29 @@ describe('Consola del chofer: hoja de ruta', () => {
     pintar(HOJA, 'otro')
     expect(await screen.findByText(/es de otro chofer/)).toBeTruthy()
     expect(screen.queryByLabelText('Reportar entrega')).toBeNull()
+  })
+
+  it('con historial de rutas viejas y una para hoy, abre la de hoy sin pasar por el selector', async () => {
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T01:30:00Z')) // viernes 9 en Argentina
+    // El servidor filtra por día: con fecha devuelve solo ese día; sin fecha, todo el historial.
+    const historial = [
+      { id: 'viejo', estado: 3, fechaSalida: '2026-10-01T11:00:00Z' },
+      { id: 'h1', estado: 2, fechaSalida: '2026-10-09T11:00:00Z' },
+      { id: 'cancelada', estado: 4, fechaSalida: '2026-10-09T12:00:00Z' },
+    ]
+    listaServidor = (url) => (url.includes('fecha=2026-10-09') ? historial.filter((r) => r.fechaSalida.startsWith('2026-10-09')) : historial)
+    pintar()
+    expect(await screen.findByLabelText('Próxima parada')).toBeTruthy()
+    expect(screen.queryByText('Elegí la hoja de ruta')).toBeNull()
+    expect(mockGet.mock.calls.map(([u]) => String(u))).toContain('/api/v1/Logistica/hojas-ruta?choferId=u1&fecha=2026-10-09')
+  })
+
+  it('sin ruta para hoy muestra el estado vacío y no una ruta vieja', async () => {
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T01:30:00Z'))
+    listaServidor = (url) => (url.includes('fecha=') ? [] : [{ id: 'h1', estado: 3, fechaSalida: '2026-10-01T11:00:00Z' }])
+    pintar()
+    expect(await screen.findByText('No tenés una hoja de ruta para hoy.')).toBeTruthy()
+    expect(screen.queryByLabelText('Próxima parada')).toBeNull()
   })
 
   it('en oscuro la tarjeta de la próxima parada usa la marca del tema oscuro', async () => {

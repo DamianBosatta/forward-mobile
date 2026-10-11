@@ -156,12 +156,13 @@ export function useVehiculos() {
 // cantidadParadas, no detalles) — NOT the detail shape. Typed accordingly so consumers
 // read cantidadParadas directly without an `as any` cast.
 export function useHojasDeRuta(
-  filters?: { choferId?: string, estado?: number },
+  filters?: { choferId?: string, estado?: number, fecha?: string },
   options?: Omit<UseQueryOptions<HojaRutaListItemDto[], Error>, 'queryKey' | 'queryFn'>
 ) {
   const searchParams = new URLSearchParams()
   if (filters?.choferId) searchParams.set('choferId', filters.choferId)
   if (filters?.estado !== undefined) searchParams.set('estado', String(filters.estado))
+  if (filters?.fecha) searchParams.set('fecha', filters.fecha)
 
   return useQuery({
     queryKey: [...logisticaKeys.hojasRuta(), filters],
@@ -239,6 +240,7 @@ export function useReportarParada() {
       paradaId: string
       entregado: boolean
       motivoRechazo?: string
+      nombreReceptor?: string
       evidenciaUrl?: string
       observaciones?: string
     }) => api.post<void>(`/api/v1/Logistica/hojas-ruta/${payload.hojaDeRutaId}/reportar-parada`, payload),

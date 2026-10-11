@@ -22,6 +22,10 @@ interface Props {
   onCreado: (fecha: string) => void
 }
 
+/** Límites del servidor (EventoCalendario.MaxTitulo / MaxDescripcion). */
+const MAX_TITULO = 150
+const MAX_DESCRIPCION = 500
+
 type Aviso = '0' | '1' | '3'
 
 /**
@@ -31,8 +35,8 @@ type Aviso = '0' | '1' | '3'
 export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado }: Props) {
   const c = useColors()
   const crear = useCrearEvento()
-  const [titulo, setTitulo] = useState(precarga?.titulo ?? '')
-  const [descripcion, setDescripcion] = useState(precarga?.descripcion ?? '')
+  const [titulo, setTitulo] = useState((precarga?.titulo ?? '').slice(0, MAX_TITULO))
+  const [descripcion, setDescripcion] = useState((precarga?.descripcion ?? '').slice(0, MAX_DESCRIPCION))
   const [fecha, setFecha] = useState(inicial)
   const [aviso, setAviso] = useState<Aviso>('1')
   const [error, setError] = useState<string | null>(null)
@@ -72,7 +76,7 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
       {precarga?.origen ? (
         <Notice tone="info">{`Viene de la venta ${precarga.origen}: el título y la descripción ya están cargados.`}</Notice>
       ) : null}
-      <Field label="Título" value={titulo} onChangeText={setTitulo} maxLength={200} />
+      <Field label="Título" value={titulo} onChangeText={setTitulo} maxLength={MAX_TITULO} />
       <View style={{ gap: space[1] }}>
         <Text style={{ ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600', color: c.text }}>Día</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -95,7 +99,7 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
           { value: '3', label: '3 días antes' },
         ]}
       />
-      <Field label="Descripción (opcional)" value={descripcion} onChangeText={setDescripcion} />
+      <Field label="Descripción (opcional)" value={descripcion} onChangeText={setDescripcion} maxLength={MAX_DESCRIPCION} />
       <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Lo ves solo vos.</Text>
       {error ? <Notice tone="peligro">{error}</Notice> : null}
       <Button label="Guardar evento" disabled={!titulo.trim()} loading={crear.isPending} onPress={guardar} />
