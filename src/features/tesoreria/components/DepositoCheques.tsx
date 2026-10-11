@@ -37,14 +37,16 @@ export function DepositoCheques() {
   const depositar = useDepositarCheques()
   const [elegidos, setElegidos] = useState<string[]>([])
   const [cuenta, setCuenta] = useState<string | null>(null)
-  const cheques = cartera.data?.items ?? []
+  const cheques = cartera.data?.pages.flatMap(p => p.items ?? []) ?? []
+  const total = cartera.data?.pages[0]?.totalCount ?? cheques.length
 
   const alternar = (id: string) => setElegidos(p => (p.includes(id) ? p.filter(x => x !== id) : [...p, id]))
   const enviar = () => {
     if (!cuenta || elegidos.length === 0 || depositar.isPending) return
     depositar.mutate(
       { cheques: cheques.filter(k => elegidos.includes(k.id)), cuentaDestinoId: cuenta },
-      { onSuccess: () => setElegidos([]) },
+      // Quedan elegidos solo los que fallaron: para reintentarlos sin volver a buscarlos.
+      { onSuccess: resultados => setElegidos(p => p.filter(id => resultados.some(r => r.cheque.id === id && r.error))) },
     )
   }
 
@@ -84,6 +86,13 @@ export function DepositoCheques() {
             </Pressable>
           )
         })}
+
+        {cheques.length > 0 ? (
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Mostrando ${cheques.length} de ${total}`}</Text>
+        ) : null}
+        {cartera.hasNextPage ? (
+          <Button label="Cargar más cheques" variant="secundario" loading={cartera.isFetchingNextPage} disabled={cartera.isFetchingNextPage} onPress={() => cartera.fetchNextPage()} />
+        ) : null}
 
         {cuentas.error ? <Notice tone="peligro">{mensajeDelServidor(cuentas.error, 'No se pudieron cargar las cuentas.')}</Notice> : null}
         <ElegirCuenta titulo="Depositar en" cuentas={(cuentas.data ?? []).filter(k => !k.esCuentaCarteraCheques)} valor={cuenta} onCambio={setCuenta} />

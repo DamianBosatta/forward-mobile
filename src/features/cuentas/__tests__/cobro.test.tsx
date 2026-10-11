@@ -19,9 +19,12 @@ const MEDIOS = [
   { id: 'm-ch', nombre: 'Cheque', requiereCaja: false, esCheque: true, activo: true },
 ]
 
-function servidor({ pagoEnNormal = true } = {}) {
+const UNA_CAJA = [{ depositoId: 'dep-central', depositoNombre: 'Depósito Central' }]
+
+function servidor({ pagoEnNormal = true, cajas = UNA_CAJA } = {}) {
   get.mockImplementation(async (url: string) => {
     if (url === '/api/v1/gastos/medios-pago') return MEDIOS
+    if (url === '/api/v1/Cajas/abiertas/estado') return cajas
     if (url.endsWith('/estado-cuenta')) return estadoDeCuenta()
     if (url.startsWith('/api/v1/cuentas-corrientes/cNor/movimientos')) {
       return paginaDeMovimientos([mov('n9', '2026-10-11T14:00:00Z', { haber: 86400, pagoId: pagoEnNormal ? 'p1' : 'otro' })])
@@ -125,4 +128,34 @@ it('lee fechas dd/mm/aaaa y rechaza las que no existen', () => {
   expect(leerFecha('07/10/2026')).toBe('2026-10-07')
   expect(leerFecha('31/02/2026')).toBeNull()
   expect(leerFecha('2026-10-07')).toBeNull()
+})
+
+it('un cobro en efectivo manda el depósito de la única caja abierta', async () => {
+  renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+  await cargarMontoYMedio('5.000', 'Efectivo')
+  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+
+  expect(post.mock.calls[0][1]).toEqual({ socioComercialId: 'c1', depositoId: 'dep-central', lineas: [{ medioPagoId: 'm-ef', monto: 5000 }] })
+})
+
+it('con dos cajas abiertas obliga a elegir la caja y manda esa', async () => {
+  servidor({ cajas: [...UNA_CAJA, { depositoId: 'dep-sur', depositoNombre: 'Depósito Sur' }] })
+  renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+  await cargarMontoYMedio('5.000', 'Efectivo')
+  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+  expect(screen.getByText('Elegí en qué caja entra el efectivo.')).toBeTruthy()
+  expect(post).not.toHaveBeenCalled()
+
+  await userEvent.press(await screen.findByRole('radio', { name: 'Depósito Sur' }, ESPERA))
+  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+
+  expect(post.mock.calls[0][1].depositoId).toBe('dep-sur')
+})
+
+it('un medio que no va a caja no manda depósito', async () => {
+  renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+  await cargarMontoYMedio('5.000', 'Transferencia')
+  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+
+  expect(post.mock.calls[0][1]).not.toHaveProperty('depositoId')
 })

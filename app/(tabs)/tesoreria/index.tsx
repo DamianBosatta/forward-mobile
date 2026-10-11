@@ -14,10 +14,12 @@ export default function TesoreriaScreen() {
   const c = useColors()
   const router = useRouter()
   const menu = useMenuLeading()
-  const { canCreate, canUpdate, hasRole } = usePermissions()
-  const transferir = canCreate('MOD_PAGOS')
+  const { canCreate, canRead, canUpdate, hasRole } = usePermissions()
+  // Las dos pantallas listan las cuentas propias (MOD_CC:Read); la cartera además pide MOD_PAGOS:Read.
+  const verCuentas = canRead('MOD_CC')
+  const transferir = canCreate('MOD_PAGOS') && verCuentas
   // El servidor deja operar la cartera de cheques solo a estos roles y con MOD_PAGOS:Update.
-  const depositar = ROLES_CARTERA.some(r => hasRole(r)) && canUpdate('MOD_PAGOS')
+  const depositar = ROLES_CARTERA.some(r => hasRole(r)) && canUpdate('MOD_PAGOS') && canRead('MOD_PAGOS') && verCuentas
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>

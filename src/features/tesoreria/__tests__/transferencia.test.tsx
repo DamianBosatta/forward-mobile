@@ -90,8 +90,37 @@ it('en Tesorería, la transferencia solo se ofrece con permiso para crear pagos'
   expect(screen.queryByRole('button', { name: 'Transferencia entre cuentas' })).toBeNull()
   unmount()
 
-  conPermisos([{ module: 'MOD_PAGOS', canRead: true, canCreate: true }])
+  conPermisos([{ module: 'MOD_PAGOS', canRead: true, canCreate: true }, { module: 'MOD_CC', canRead: true }])
   renderConQuery(<TesoreriaScreen />)
   await userEvent.press(await screen.findByRole('button', { name: 'Transferencia entre cuentas' }, ESPERA))
   expect(mockPush).toHaveBeenCalledWith('/(tabs)/tesoreria/transferencia')
+})
+
+it('sin permiso para ver cuentas corrientes no se ofrece la transferencia: su pantalla lista las cuentas propias', async () => {
+  conPermisos([{ module: 'MOD_PAGOS', canRead: true, canCreate: true }])
+  renderConQuery(<TesoreriaScreen />)
+
+  expect(await screen.findByText('No tenés acciones de tesorería habilitadas.', {}, ESPERA)).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Transferencia entre cuentas' })).toBeNull()
+})
+
+it('la cartera de cheques y la caja de efectivo no se ofrecen ni de origen ni de destino', async () => {
+  get.mockImplementation(async (url: string) => {
+    if (url === '/api/v1/movimientos-internos/tipos') return [{ id: 't-tr', nombre: 'Transferencia', activo: true }]
+    if (url.startsWith('/api/v1/cuentas-corrientes/propias')) {
+      return [
+        cuenta('gal', 'Banco Galicia', 100),
+        { ...cuenta('cart', 'Cartera de cheques', 5), esCuentaCarteraCheques: true },
+        { ...cuenta('cef', 'Caja efectivo', 7), esCuentaCajaEfectivo: true },
+      ]
+    }
+    throw new Error(`sin respuesta para ${url}`)
+  })
+  renderConQuery(<Transferencia onListo={jest.fn()} />)
+  await screen.findAllByRole('radio', { name: /^Banco Galicia/ }, ESPERA)
+
+  for (const grupo of ['Desde', 'Hacia']) {
+    expect(within(screen.getByLabelText(grupo)).queryByRole('radio', { name: /^Cartera de cheques/ })).toBeNull()
+    expect(within(screen.getByLabelText(grupo)).queryByRole('radio', { name: /^Caja efectivo/ })).toBeNull()
+  }
 })

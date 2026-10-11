@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/core/api/client'
 import type { components } from '@/libs/api-client/generated/schema'
 import { cuentasKeys } from '@/features/cuentas/api/queries'
@@ -11,11 +11,13 @@ export const ROLES_CARTERA = ['Administrador', 'AdministradorSistemas', 'Gerenci
 
 const chequesKeys = { cartera: ['cheques', 'cartera'] as const }
 
-/** Cheques de terceros en cartera, de a 100 (los que se pueden depositar). */
+/** Cheques de terceros en cartera, de a 100 por página (los que se pueden depositar). */
 export function useChequesEnCartera() {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: chequesKeys.cartera,
-    queryFn: () => api.get<Pagina>('/api/v1/cheques?Estado=EnCartera&Tipo=Tercero&PageNumber=1&PageSize=100'),
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) => api.get<Pagina>(`/api/v1/cheques?Estado=EnCartera&Tipo=Tercero&PageNumber=${pageParam}&PageSize=100`),
+    getNextPageParam: ultima => (ultima.hasNextPage ? (ultima.page ?? 1) + 1 : undefined),
   })
 }
 

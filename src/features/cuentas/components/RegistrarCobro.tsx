@@ -7,7 +7,7 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { diaArgentina } from '@/src/utils/date'
 import { useEstadoCuentaSocio } from '../api/queries'
-import { useMediosDeCobro, useRegistrarCobro } from '../api/cobros'
+import { useCajasAbiertas, useMediosDeCobro, useRegistrarCobro } from '../api/cobros'
 import { armarCobro, mostrarFecha, type FormCobro } from '../lib/cobro'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
 import { CobroListo } from './CobroListo'
@@ -21,6 +21,8 @@ const formVacio = (): FormCobro => ({
   monto: '',
   medioPagoId: null,
   esCheque: false,
+  requiereCaja: false,
+  depositoId: null,
   referencia: '',
   cheque: { numero: '', banco: '', titular: '', emision: hoy(), pago: hoy() },
 })
@@ -33,6 +35,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
   const medios = useMediosDeCobro()
   const registrar = useRegistrarCobro()
   const [f, setF] = useState<FormCobro>(formVacio)
+  const cajas = useCajasAbiertas(f.requiereCaja)
   const [aviso, setAviso] = useState<string | null>(null)
   const [pagoId, setPagoId] = useState<string | null>(null)
   const cheque = (campo: keyof FormCobro['cheque']) => (v: string) => setF(p => ({ ...p, cheque: { ...p.cheque, [campo]: v } }))
@@ -58,7 +61,11 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
 
   const enviar = () => {
     if (registrar.isPending) return
-    const r = armarCobro(socioId, f)
+    // Con una sola caja abierta se manda esa; con varias, la elige quien cobra.
+    const abiertas = cajas.data ?? []
+    const depositoId = f.depositoId ?? (abiertas.length === 1 ? abiertas[0].depositoId : null)
+    if (f.requiereCaja && abiertas.length > 1 && !depositoId) return setAviso('Elegí en qué caja entra el efectivo.')
+    const r = armarCobro(socioId, { ...f, depositoId })
     if ('error' in r) return setAviso(r.error)
     setAviso(null)
     registrar.mutate(r.payload, { onSuccess: id => setPagoId(id) })
@@ -80,8 +87,16 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
           titulo="Medio"
           opciones={(medios.data ?? []).filter(m => m.activo && m.id).map(m => ({ id: m.id!, label: m.nombre ?? '' }))}
           valor={f.medioPagoId}
-          onCambio={id => setF(p => ({ ...p, medioPagoId: id, esCheque: !!medios.data?.find(m => m.id === id)?.esCheque }))}
+          onCambio={id => setF(p => ({ ...p, medioPagoId: id, esCheque: !!medios.data?.find(m => m.id === id)?.esCheque, requiereCaja: !!medios.data?.find(m => m.id === id)?.requiereCaja }))}
         />
+        {f.requiereCaja && (cajas.data?.length ?? 0) > 1 ? (
+          <ElegirChip
+            titulo="Caja"
+            opciones={(cajas.data ?? []).map(k => ({ id: k.depositoId, label: k.depositoNombre ?? 'Caja' }))}
+            valor={f.depositoId}
+            onCambio={id => setF(p => ({ ...p, depositoId: id }))}
+          />
+        ) : null}
         {medios.error ? <Notice tone="peligro">{mensajeDelServidor(medios.error, 'No se pudieron cargar los medios de pago.')}</Notice> : null}
 
         {f.esCheque ? (

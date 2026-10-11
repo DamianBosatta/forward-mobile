@@ -65,7 +65,8 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
     )
   }
 
-  const propias = cuentas.data ?? []
+  // El servidor no acepta la cartera de cheques ni la caja de efectivo en una transferencia.
+  const propias = (cuentas.data ?? []).filter(k => !k.esCuentaCarteraCheques && !k.esCuentaCajaEfectivo)
   return (
     <ScrollView contentContainerStyle={{ padding: space[4] }}>
       <FormContainer style={{ gap: space[4] }}>

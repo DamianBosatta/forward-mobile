@@ -17,6 +17,17 @@ export function useMediosDeCobro() {
   })
 }
 
+export type CajaAbierta = components['schemas']['CajaAbiertaEstadoDto']
+
+/** Depósitos con la caja abierta, sin montos (`GET /Cajas/abiertas/estado`, pide MOD_PAGOS:Read). */
+export function useCajasAbiertas(enabled: boolean) {
+  return useQuery({
+    queryKey: ['cajas', 'abiertas-estado'],
+    enabled,
+    queryFn: () => api.get<CajaAbierta[]>('/api/v1/Cajas/abiertas/estado'),
+  })
+}
+
 /**
  * Registra el cobro. Devuelve el id del pago. Sin reintentos: el servidor no acepta una clave de
  * idempotencia, así que repetir el pedido podría cargar el cobro dos veces.

@@ -89,3 +89,48 @@ it('Depositar cheques se ofrece solo a los roles de la cartera con permiso para 
   renderConQuery(<TesoreriaScreen />)
   expect(await screen.findByRole('button', { name: 'Depositar cheques' }, ESPERA)).toBeTruthy()
 })
+
+it('Depositar cheques exige también poder leer pagos y cuentas corrientes', async () => {
+  conPermisos([{ module: 'MOD_PAGOS', canUpdate: true }, { module: 'MOD_CC', canRead: true }])
+  useAuthStore.setState(s => ({ user: { ...s.user!, roles: ['Gerencia'] } }))
+  const { unmount } = renderConQuery(<TesoreriaScreen />)
+  expect(await screen.findByText('No tenés acciones de tesorería habilitadas.', {}, ESPERA)).toBeTruthy()
+  unmount()
+
+  conPermisos([{ module: 'MOD_PAGOS', canRead: true, canUpdate: true }])
+  useAuthStore.setState(s => ({ user: { ...s.user!, roles: ['Gerencia'] } }))
+  renderConQuery(<TesoreriaScreen />)
+  expect(await screen.findByText('No tenés acciones de tesorería habilitadas.', {}, ESPERA)).toBeTruthy()
+})
+
+it('si hay más cheques que una página, dice cuántos muestra de cuántos y deja cargar el resto', async () => {
+  get.mockImplementation(async (url: string) => {
+    if (url.includes('PageNumber=2')) return { items: [cheque('k3', 'Banco Ciudad', '555', 1000)], page: 2, pageSize: 100, totalCount: 3, totalPages: 2, hasNextPage: false }
+    if (url.startsWith('/api/v1/cheques?')) return { items: [cheque('k1', 'Banco Nación', '00871234', 86400), cheque('k2', 'Banco Macro', '12093345', 1)], page: 1, pageSize: 100, totalCount: 3, totalPages: 2, hasNextPage: true }
+    if (url.startsWith('/api/v1/cuentas-corrientes/propias')) return [galicia]
+    throw new Error(`sin respuesta para ${url}`)
+  })
+  renderConQuery(<DepositoCheques />)
+  expect(await screen.findByText('Mostrando 2 de 3', {}, ESPERA)).toBeTruthy()
+  expect(screen.queryByRole('checkbox', { name: /^Banco Ciudad/ })).toBeNull()
+
+  await userEvent.press(screen.getByRole('button', { name: 'Cargar más cheques' }))
+
+  expect(await screen.findByRole('checkbox', { name: /^Banco Ciudad/ }, ESPERA)).toBeTruthy()
+  expect(screen.getByText('Mostrando 3 de 3')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Cargar más cheques' })).toBeNull()
+})
+
+it('tras depositar, los cheques que fallaron siguen elegidos y los depositados no', async () => {
+  post.mockImplementation(async (url: string) => {
+    if (url.includes('k2')) throw new Error('No se puede depositar.')
+    return 'ok'
+  })
+  renderConQuery(<DepositoCheques />)
+  await elegirYDepositar(/^Banco Nación/, /^Banco Macro/)
+  await screen.findByText('No se depositaron 1 de 2', {}, ESPERA)
+
+  expect(screen.getByRole('checkbox', { name: /^Banco Macro/ }).props.accessibilityState.checked).toBe(true)
+  expect(screen.getByRole('checkbox', { name: /^Banco Nación/ }).props.accessibilityState.checked).toBe(false)
+  expect(screen.getByRole('button', { name: 'Depositar 1 cheque' })).toBeTruthy()
+})
