@@ -15084,6 +15084,7 @@ export interface components {
             marca?: string | null;
             codigoPropio?: string | null;
             codigoBarra?: string | null;
+            codigoProveedor?: string | null;
             /** Format: double */
             precioVenta: number;
             /** Format: double */
