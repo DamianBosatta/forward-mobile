@@ -146,4 +146,19 @@ describe('edición: el detalle manda', () => {
     await waitFor(() => expect(put).toHaveBeenCalled())
     expect(put.mock.calls[0][1].horario).toEqual(nuevo)
   })
+
+  it('con detalle en caché y el refetch fallido, muestra el error con Reintentar y no deja guardar el viejo', async () => {
+    conPermisos(SIN_CAP)
+    mockId = 'c1'
+    ;(api.get as jest.Mock).mockRejectedValue(new Error('Sin conexión.'))
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+    qc.setQueryData(sociosKeys.detail('c1'), detalle({ nombreFantasia: 'Viejo' }))
+    render(<QueryClientProvider client={qc}><ClienteFormScreen /></QueryClientProvider>)
+
+    expect(await screen.findByText('Sin conexión.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Guardar cambios' })).toBeNull()
+    expect(screen.queryByLabelText('Nombre del local')).toBeNull()
+    expect(put).not.toHaveBeenCalled()
+  })
 })

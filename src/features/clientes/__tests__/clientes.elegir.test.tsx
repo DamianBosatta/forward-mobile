@@ -88,7 +88,7 @@ describe('recientes', () => {
 
   it('un reciente que el servidor rechaza no se elige, se avisa y se quita', async () => {
     guardarReciente('u1', reciente)
-    servidor(() => Promise.reject(new Error('403')))
+    servidor(() => Promise.reject(Object.assign(new Error('403'), { status: 403 })))
     renderConQuery(hoja())
 
     await userEvent.press(await screen.findByRole('button', { name: /Calle Vieja 1/ }))
@@ -119,5 +119,43 @@ describe('recientes', () => {
 
     await waitFor(() => expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1', direccion: 'Av. del Valle 89' }), 'Pedido'))
     expect(leerRecientes('u1')[0].direccion).toBe('Av. del Valle 89')
+  })
+
+  it('una falla de red no quita el reciente ni lo elige', async () => {
+    guardarReciente('u1', reciente)
+    servidor(() => Promise.reject(new Error('Network request failed')))
+    renderConQuery(hoja())
+
+    await userEvent.press(await screen.findByRole('button', { name: /Calle Vieja 1/ }))
+
+    expect(await screen.findByText('No se pudo verificar el cliente. Probá de nuevo.')).toBeTruthy()
+    expect(onSelect).not.toHaveBeenCalled()
+    expect(leerRecientes('u1')).toHaveLength(1)
+    expect(screen.getByText('Calle Vieja 1')).toBeTruthy()
+  })
+
+  it('un 404 quita el reciente', async () => {
+    guardarReciente('u1', reciente)
+    servidor(() => Promise.reject(Object.assign(new Error('x'), { status: 404 })))
+    renderConQuery(hoja())
+
+    await userEvent.press(await screen.findByRole('button', { name: /Calle Vieja 1/ }))
+
+    expect(await screen.findByText('Ese cliente ya no está disponible en tu cartera.')).toBeTruthy()
+    expect(leerRecientes('u1')).toEqual([])
+  })
+
+  it('dos toques seguidos mientras se verifica eligen una sola vez', async () => {
+    guardarReciente('u1', reciente)
+    servidor(() => Promise.resolve(clienteDeLista()))
+    renderConQuery(hoja())
+
+    const fila = await screen.findByRole('button', { name: /Calle Vieja 1/ })
+    fireEvent.press(fila)
+    fireEvent.press(fila)
+
+    await waitFor(() => expect(onSelect).toHaveBeenCalled())
+    await new Promise(r => setTimeout(r, 20))
+    expect(onSelect).toHaveBeenCalledTimes(1)
   })
 })

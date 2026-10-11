@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native'
 import { Plus, Search } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
@@ -25,6 +25,8 @@ const TIPOS = [
   { value: 'Presupuesto' as const, label: 'Presupuesto' },
   { value: 'Pedido' as const, label: 'Pedido' },
 ]
+
+class ClienteNoDisponible extends Error {}
 
 function Fila({ cliente, onPress }: { cliente: ClienteElegido; onPress: () => void }) {
   const c = useColors()
@@ -82,16 +84,26 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
   }
 
   // Un reciente es una foto vieja: se confirma con el servidor que sigue en la cartera y se usa el dato fresco.
+  const verificando = useRef(false)
   const elegirReciente = async (reciente: ClienteElegido) => {
+    if (verificando.current) return
+    verificando.current = true
     setAviso(null)
     try {
       const fresco = await qc.fetchQuery({ queryKey: sociosKeys.detail(reciente.id), queryFn: () => fetchSocio(reciente.id), staleTime: 0 })
-      if (!fresco.activo) throw new Error('inactivo')
+      if (!fresco.activo) throw new ClienteNoDisponible()
       elegir(fresco)
-    } catch {
-      quitarReciente(usuarioId, reciente.id)
-      setGuardados(leerRecientes(usuarioId))
-      setAviso('Ese cliente ya no está disponible en tu cartera.')
+    } catch (e) {
+      // Solo si el servidor lo niega (403/404) o está de baja se quita; una falla de red o 5xx deja el reciente.
+      if (e instanceof ClienteNoDisponible || [403, 404].includes((e as { status?: number })?.status ?? 0)) {
+        quitarReciente(usuarioId, reciente.id)
+        setGuardados(leerRecientes(usuarioId))
+        setAviso('Ese cliente ya no está disponible en tu cartera.')
+      } else {
+        setAviso('No se pudo verificar el cliente. Probá de nuevo.')
+      }
+    } finally {
+      verificando.current = false
     }
   }
 

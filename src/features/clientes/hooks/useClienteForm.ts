@@ -38,18 +38,18 @@ function condicionPago(d: DatosCliente) {
 export function useClienteForm(id: string | undefined, alGuardar: (id: string) => void) {
   const editando = !!id
   const puedeCambiarPago = useAuthStore(s => s.hasCapability('CAP_AUTORIZAR_VENTA'))
-  const { data: actual, isFetchedAfterMount, error: errorDeCarga, refetch } = useSocio(id ?? '', { fresco: true })
+  const { data: actual, isFetchedAfterMount, isSuccess, error: errorDeCarga, refetch } = useSocio(id ?? '', { fresco: true })
   const crear = useCreateSocio()
   const actualizar = useUpdateSocio()
   const [datos, setDatos] = useState<DatosCliente>(VACIO)
   const [error, setError] = useState<string | null>(null)
 
-  // Se llena UNA vez por cliente, con el detalle traído al abrir: un refetch posterior no pisa lo tipeado.
+  // Se llena UNA vez por cliente, con el detalle traído al abrir (si el refetch falló, el caché viejo no vale): un refetch posterior no pisa lo tipeado.
   const llenadoDe = useRef<string | null>(null)
   const [cargado, setCargado] = useState(false)
 
   useEffect(() => {
-    if (!editando || !actual || !isFetchedAfterMount || llenadoDe.current === id) return
+    if (!editando || !actual || !isFetchedAfterMount || !isSuccess || llenadoDe.current === id) return
     llenadoDe.current = id ?? null
     const cp = actual.condicionPago
     setDatos({
@@ -65,7 +65,7 @@ export function useClienteForm(id: string | undefined, alGuardar: (id: string) =
       plazo: String((cp?.tipo === 'DiaFijoDelMes' ? cp.diaDelMes : cp?.dias) ?? ''),
     })
     setCargado(true)
-  }, [editando, actual, isFetchedAfterMount, id])
+  }, [editando, actual, isFetchedAfterMount, isSuccess, id])
 
   const cambiar = <K extends keyof DatosCliente>(campo: K, valor: DatosCliente[K]) =>
     setDatos(d => ({ ...d, [campo]: valor }))
