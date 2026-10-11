@@ -63,3 +63,23 @@ export function useConfiguracionSistema(options: UseConfiguracionSistemaOptions 
     enabled,
   })
 }
+
+type Schemas = import('./generated/schema').components['schemas']
+
+/** Días de la semana con entregas (Configuración); cualquier usuario autenticado lo puede leer. */
+export function useDiasEntrega() {
+  return useQuery({
+    queryKey: [...configuracionKeys.all, 'dias-entrega'] as const,
+    queryFn: () => api.get<Schemas['DiasEntregaDto']>('/api/v1/Configuracion/dias-entrega'),
+    staleTime: 10 * 60_000,
+  })
+}
+
+/** Feriados cargados desde `desde` (YYYY-MM-DD). */
+export function useFeriados(desde: string) {
+  return useQuery({
+    queryKey: [...configuracionKeys.all, 'feriados', desde] as const,
+    queryFn: () => api.get<Schemas['FeriadoDto'][]>(`/api/v1/Configuracion/feriados?desde=${desde}`),
+    staleTime: 10 * 60_000,
+  })
+}

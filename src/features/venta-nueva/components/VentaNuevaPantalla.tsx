@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Alert, Modal, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Trash2 } from 'lucide-react-native'
@@ -10,6 +10,8 @@ import { SeleccionarClienteSheet, type TipoDocumento } from '@/features/clientes
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import type { ClienteElegido } from '@/features/clientes/lib/recientes'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
+import { useCabeceraVenta } from '../hooks/useCabeceraVenta'
+import { useResponsive } from '@/libs/useResponsive'
 import { useBorradorVenta } from '../hooks/useBorradorVenta'
 import { useComisionEstimada } from '../hooks/useComisionEstimada'
 import { aAutoguardado } from '../lib/payload'
@@ -19,6 +21,7 @@ import type { LineaCarrito } from '../lib/carrito'
 import { CatalogoVenta } from './CatalogoVenta'
 import { EditarLineaSheet } from './EditarLineaSheet'
 import { LineasVenta } from './LineasVenta'
+import { CabeceraVenta } from './CabeceraVenta'
 
 /** Venta nueva (plan 9, fase 2): elegir cliente crea el borrador en el servidor y desde ahí se autoguarda. */
 export function VentaNuevaPantalla() {
@@ -34,8 +37,11 @@ export function VentaNuevaPantalla() {
   // Un descuento a medio tipear o inválido no viaja: se guarda el último válido.
   const [descuentoValido, setDescuentoValido] = useState(0)
   useEffect(() => { if (descuentoGeneral !== null) setDescuentoValido(descuentoGeneral) }, [descuentoGeneral])
-  const b = useBorradorVenta(useMemo(() => aAutoguardado(lineas, descuentoValido), [lineas, descuentoValido]))
-  const comision = useComisionEstimada(lineas, descuentoValido)
+  const cab = useCabeceraVenta(tipo)
+  const b = useBorradorVenta(aAutoguardado(lineas, descuentoValido, cab.cabecera))
+  const comision = useComisionEstimada(lineas, descuentoValido, cab.cabecera.flete, cab.porcentajeCedido)
+  const { isTabletLandscape } = useResponsive()
+  const [pestana, setPestana] = useState<'lineas' | 'cabecera'>('lineas')
   const [catalogo, setCatalogo] = useState(false)
   const [editando, setEditando] = useState<LineaCarrito | null>(null)
   const volver = { kind: 'atras' as const, onPress: () => router.back() }
@@ -72,33 +78,52 @@ export function VentaNuevaPantalla() {
   const nombre = nombreDelCliente(cliente)
   const tope = user?.maxDescuentoPorcentaje ?? 0
   const avisos = avisosVenta(lineas, { tipo, tope, exento: hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO'), descuentoGeneral: descuentoValido })
-  const { total } = totalesEstimados(lineas, descuentoValido)
+  const { total } = totalesEstimados(lineas, descuentoValido, cab.cabecera.flete)
+  // La cesión no viaja en el autoguardado (el borrador es Presupuesto); va al confirmar, y siempre a autorización.
+  if (cab.porcentajeCedido) avisos.porAutorizar.push('cediste parte de tu comisión')
+  const rotulo = nombre ? `${direccionDeEntrega(cliente)} · ${nombre}` : direccionDeEntrega(cliente)
+  const lineasVista = (
+    <LineasVenta lineas={lineas} {...avisos} tope={tope} descuentoTexto={descuentoTexto} descuentoGeneral={descuentoGeneral} flete={cab.cabecera.flete}
+      onDescuento={setDescuentoTexto} onAgregar={() => setCatalogo(true)} onEditar={setEditando} />
+  )
+  const cabeceraVista = <CabeceraVenta clienteId={cliente.id} rotuloCliente={rotulo} cab={cab} />
+  const franjaTotal = (
+    <View style={{ padding: space[4], gap: space[1], borderColor: c.border, borderTopWidth: isTabletLandscape ? 0 : 1, borderBottomWidth: isTabletLandscape ? 1 : 0, backgroundColor: c.surface }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Total estimado</Text>
+        <Text testID="venta-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(total)}</Text>
+      </View>
+      {comision !== null ? (
+        <Text style={{ ...typeScale.secundario, alignSelf: 'flex-start', paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.brandSoft, color: c.brandInk }}>
+          {`Tu comisión estimada ${formatImporte(comision)}`}
+        </Text>
+      ) : null}
+    </View>
+  )
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
         title={tipo === 'Pedido' ? 'Nuevo pedido' : 'Nuevo presupuesto'}
-        subtitle={nombre ? `${direccionDeEntrega(cliente)} · ${nombre}` : direccionDeEntrega(cliente)}
+        subtitle={rotulo}
         leading={volver}
         syncLabel={b.etiqueta}
         actions={b.borrador ? [{ icon: Trash2, accessibilityLabel: 'Descartar borrador', onPress: descartar }] : []}
+        // Tablet horizontal (plan §8): Líneas y Cabecera lado a lado, sin pestañas.
+        tabs={isTabletLandscape ? undefined : [
+          { label: `Líneas (${lineas.length})`, selected: pestana === 'lineas', onPress: () => setPestana('lineas') },
+          { label: 'Cabecera', selected: pestana === 'cabecera', onPress: () => setPestana('cabecera') },
+        ]}
       />
       {aviso ? <View style={{ padding: space[4], paddingBottom: 0 }}><Notice tone="peligro">{aviso}</Notice></View> : null}
-      <View style={{ flex: 1 }}>
-        <LineasVenta lineas={lineas} {...avisos} tope={tope} descuentoTexto={descuentoTexto} descuentoGeneral={descuentoGeneral}
-          onDescuento={setDescuentoTexto} onAgregar={() => setCatalogo(true)} onEditar={setEditando} />
-      </View>
-      <View style={{ padding: space[4], gap: space[1], borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Total estimado</Text>
-          <Text testID="venta-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(total)}</Text>
+      {isTabletLandscape ? franjaTotal : null}
+      {isTabletLandscape ? (
+        <View style={{ flex: 1, flexDirection: 'row' }}>
+          <View style={{ flex: 3 }}>{lineasVista}</View>
+          <View style={{ flex: 2, borderLeftWidth: 1, borderLeftColor: c.border }}>{cabeceraVista}</View>
         </View>
-        {comision !== null ? (
-          <Text style={{ ...typeScale.secundario, alignSelf: 'flex-start', paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.brandSoft, color: c.brandInk }}>
-            {`Tu comisión estimada ${formatImporte(comision)}`}
-          </Text>
-        ) : null}
-      </View>
+      ) : <View style={{ flex: 1 }}>{pestana === 'lineas' ? lineasVista : cabeceraVista}</View>}
+      {isTabletLandscape ? null : franjaTotal}
       <Modal visible={catalogo} animationType="slide" onRequestClose={() => setCatalogo(false)}>
         <TopBar title="Agregar productos" leading={{ kind: 'atras', onPress: () => setCatalogo(false) }} />
         <CatalogoVenta onVerVenta={() => setCatalogo(false)} />

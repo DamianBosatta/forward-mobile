@@ -11,10 +11,13 @@ import { producto } from '../__testing__/producto'
 import { avisosVenta } from '../lib/avisos'
 
 const mockPost = jest.fn()
+const mockGet = jest.fn()
+const mockDims = jest.fn()
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => mockDims() }))
 const mockPut = jest.fn()
 jest.mock('@/core/api/client', () => ({
   ...jest.requireActual('@/core/api/client'),
-  api: { get: jest.fn(), post: (...a: unknown[]) => mockPost(...a), put: (...a: unknown[]) => mockPut(...a) },
+  api: { get: (...a: unknown[]) => mockGet(...a), post: (...a: unknown[]) => mockPost(...a), put: (...a: unknown[]) => mockPut(...a) },
 }))
 const mockBack = jest.fn()
 jest.mock('expo-router', () => ({
@@ -58,6 +61,8 @@ beforeEach(() => {
   mockPost.mockReset().mockResolvedValue({ ventaId: 'b1', version: 7, message: 'Borrador creado.' })
   mockPut.mockReset().mockImplementation((_u: string, body: { version: number }) => Promise.resolve({ ventaId: 'b1', version: body.version + 1, message: 'ok' }))
   mockBack.mockReset()
+  mockGet.mockReset().mockResolvedValue(undefined)
+  mockDims.mockReturnValue({ width: 390, height: 800, scale: 2, fontScale: 1 })
   useCarritoVenta.setState({ lineas: [] })
 })
 
@@ -75,7 +80,7 @@ describe('venta nueva: cliente, borrador y autoguardado', () => {
     await anadir()
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1), ESPERA)
     const items = [{ productoId: 'p1', cantidad: 1, descuentoPorcentaje: 0 }]
-    expect(mockPut).toHaveBeenLastCalledWith('/api/v1/Ventas/b1', { id: 'b1', version: 7, descuentoGeneral: 0, metodoEntrega: 1, items })
+    expect(mockPut).toHaveBeenLastCalledWith('/api/v1/Ventas/b1', { id: 'b1', version: 7, descuentoGeneral: 0, metodoEntrega: 1, items, fechaEntrega: expect.any(String), cargoFlete: 0 })
     await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
     await anadir()
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(2), ESPERA)
@@ -169,6 +174,72 @@ describe('pestaña Líneas', () => {
     // 2496 con 15 % + 10 % general = 1909,44 < mínimo 2000 → debajo del mínimo; con 15 % solo, no.
     expect(avisosVenta(lineas, { tipo: 'Pedido', tope: 50, exento: false, descuentoGeneral: 0 }).porAutorizar).toEqual([])
     expect(avisosVenta(lineas, { tipo: 'Pedido', tope: 50, exento: false, descuentoGeneral: 10 }).porAutorizar).toEqual(['un precio queda debajo del mínimo'])
+  })
+})
+
+describe('pestaña Cabecera', () => {
+  const ultimoPut = () => mockPut.mock.calls[mockPut.mock.calls.length - 1][1]
+  async function enCabecera() {
+    await elegirCliente()
+    useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: producto({ real: 100 }), cantidad: 10, descuentoPct: 0 }] })
+    await userEvent.press(screen.getByRole('tab', { name: 'Cabecera' }))
+  }
+
+  it('retiro: sin fecha ni flete en el autoguardado y sin tira de días', async () => {
+    await enCabecera()
+    await userEvent.press(screen.getByRole('radio', { name: 'Retiro' }))
+    await waitFor(() => expect(ultimoPut()).toMatchObject({ metodoEntrega: 2 }), ESPERA)
+    expect(ultimoPut()).not.toHaveProperty('fechaEntrega')
+    expect(ultimoPut()).not.toHaveProperty('cargoFlete')
+    expect(screen.queryByText('Fecha de entrega')).toBeNull()
+    expect(screen.getByText('Retira en el local: sin flete.')).toBeTruthy()
+  })
+
+  it('la tira tacha los días sin entrega y los feriados del servidor; propone el próximo hábil', async () => {
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-07T15:00:00Z')) // miércoles 7 en Argentina
+    mockGet.mockImplementation((url: string) => Promise.resolve(
+      url.includes('dias-entrega') ? { lunes: true, martes: true, miercoles: true, jueves: true, viernes: true, sabado: true, domingo: false }
+        : url.includes('feriados') ? [{ fecha: '2026-10-12', descripcion: 'Día de la Diversidad' }] : undefined))
+    await enCabecera()
+    expect(await screen.findByLabelText('lun 12, sin entregas (Día de la Diversidad)')).toBeDisabled()
+    expect(screen.getByLabelText('dom 11, sin entregas')).toBeDisabled()
+    expect(mockGet).toHaveBeenCalledWith('/api/v1/Configuracion/feriados?desde=2026-10-07')
+    await waitFor(() => expect(ultimoPut()).toMatchObject({ fechaEntrega: '2026-10-08' }), ESPERA)
+    await userEvent.press(screen.getByLabelText('vie 9'))
+    await waitFor(() => expect(ultimoPut()).toMatchObject({ fechaEntrega: '2026-10-09' }), ESPERA)
+    jest.restoreAllMocks()
+  })
+
+  it('flete y observaciones viajan en el autoguardado; el flete suma al total; la condición de pago se ve', async () => {
+    mockGet.mockImplementation((url: string) => Promise.resolve(url.includes('socios-comerciales') ? { condicionPago: { tipo: 'DiasDesdeEntrega', dias: 30 } } : undefined))
+    await enCabecera()
+    expect(await screen.findByText('Cuenta corriente, 30 días desde la entrega')).toBeTruthy()
+    await userEvent.type(screen.getByLabelText('Flete ($)'), '3300')
+    await userEvent.type(screen.getByLabelText('Observaciones'), ' Por la puerta de atrás ')
+    await waitFor(() => expect(ultimoPut()).toMatchObject({ cargoFlete: 3300, observaciones: 'Por la puerta de atrás' }), ESPERA)
+    expect(screen.getByTestId('venta-total')).toHaveTextContent('$ 28.260,00') // 10 × 2.496 + 3.300
+  })
+
+  it('cesión: valida el rango, avisa que va a autorización y no viaja en el autoguardado del borrador', async () => {
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10, comisionActiva: true, porcentajeComision: 5 } as never })
+    await enCabecera()
+    const campo = screen.getByLabelText('Ceder parte de mi comisión (%)')
+    await userEvent.type(campo, '1')
+    expect(screen.getByText('Podés ceder desde 2,5 % hasta menos de 5 %.')).toBeTruthy()
+    await userEvent.clear(campo)
+    await userEvent.type(campo, '3')
+    await userEvent.press(screen.getByRole('tab', { name: 'Líneas (1)' }))
+    expect(screen.getByText(/cediste parte de tu comisión/)).toBeTruthy()
+    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
+    expect(ultimoPut()).not.toHaveProperty('porcentajeComisionCedido')
+  })
+
+  it('tablet horizontal: Líneas y Cabecera lado a lado, sin pestañas', async () => {
+    mockDims.mockReturnValue({ width: 1194, height: 834, scale: 2, fontScale: 1 })
+    await elegirCliente()
+    expect(screen.queryByRole('tab', { name: 'Cabecera' })).toBeNull()
+    expect(screen.getByText('Agregar productos')).toBeTruthy()
+    expect(screen.getByText('Fecha de entrega')).toBeTruthy()
   })
 })
 

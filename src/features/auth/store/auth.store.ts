@@ -17,6 +17,9 @@ interface UserProfile {
   depositoId?:              string
   vendedorId?:              string
   maxDescuentoPorcentaje?:  number
+  /** De GET /Users/me: comisión configurada del vendedor (0 sin perfil) y si está activa. */
+  porcentajeComision?:      number
+  comisionActiva?:          boolean
   puedeVenderSinStock?:     boolean
   roles:                    AppRole[]
   permissions:              ModulePermission[]

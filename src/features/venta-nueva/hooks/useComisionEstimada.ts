@@ -13,11 +13,12 @@ const centavos = (n: number) => Math.round(n * 100) / 100
  * cambio. Devuelve el monto solo si hay comisión activa y algo que cobrar (un chip en cero sería
  * una promesa falsa, igual que en la web).
  */
-export function useComisionEstimada(lineas: LineaCarrito[], descuentoGeneral: number, cargoFlete = 0): number | null {
+export function useComisionEstimada(lineas: LineaCarrito[], descuentoGeneral: number, cargoFlete = 0, porcentajeComisionCedido?: number): number | null {
   const pedido = lineas.length === 0 ? null : JSON.stringify({
     lineas: lineas.map((l) => ({ productoId: l.productoId, subtotal: centavos(subtotalLinea(l)) })),
     descuentoGeneral,
     cargoFlete,
+    porcentajeComisionCedido,
   })
   const [estable, setEstable] = useState(pedido)
   useEffect(() => {
