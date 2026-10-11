@@ -42,7 +42,7 @@ export function VentasKpiGrid({ ordersCount, currentMonth, conFiltro = false }: 
               <View style={styles.iconCircleMain}>
                 <TrendingUp size={20} color="#fff" strokeWidth={2.5} />
               </View>
-              <Text style={styles.mainLabel} maxFontSizeMultiplier={1.3}>{`ÓRDENES ${currentMonth}${conFiltro ? ' · CON ESTE FILTRO' : ''}`}</Text>
+              <Text style={styles.mainLabel} maxFontSizeMultiplier={1.3}>{`ÓRDENES ${currentMonth}${conFiltro ? ' · FILTRADAS' : ''}`}</Text>
             </View>
             <View>
               <Text style={styles.mainValue} maxFontSizeMultiplier={1.3}>{ordersCount === undefined ? '—' : ordersCount}</Text>
@@ -98,6 +98,8 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)'
   },
   mainLabel: { 
+    // En una fila con el ícono: sin flexShrink un texto largo se sale de la tarjeta en vez de partirse.
+    flexShrink: 1,
     fontSize: 10, color: 'rgba(255,255,255,0.7)', 
     fontFamily: 'Outfit_900Black', letterSpacing: 1.5 
   },

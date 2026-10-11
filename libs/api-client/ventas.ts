@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { api, API_URL } from './client'
 import { buildAnularVentaPayload } from './anular-venta'
 import { buildAutorizarPayload } from '@/features/ventas/lib/authorization'
@@ -68,13 +68,6 @@ function filtroVentasQuery(params: VentasFiltroParams): URLSearchParams {
   return sp
 }
 
-/** Mismo filtro salvo el estado: lo único que la lista de hoy también sabe filtrar en el teléfono. */
-function soloCambiaElEstado(anterior: unknown, params: VentaParams): boolean {
-  if (!anterior) return false
-  const sinEstado = ({ estado: _e, estados: _es, ...resto }: VentaParams) => JSON.stringify(resto)
-  return sinEstado(anterior as VentaParams) === sinEstado(params)
-}
-
 // #endregion
 
 // #region Queries
@@ -109,13 +102,15 @@ export function useInfiniteVentas(
   options?: {
     enabled?: boolean
     /**
-     * Al cambiar solo el estado, deja las filas anteriores (`isPlaceholderData`) hasta que llega la
-     * respuesta, para quien las filtra en el teléfono mientras tanto. Con otro cambio (fechas, tipo,
-     * búsqueda) se ve la carga: esas filas ya no son del filtro.
+     * Mientras llega la respuesta muestra (`isPlaceholderData`) las filas ya cargadas del mismo filtro
+     * sin estado ("Todas"), para quien las filtra en el teléfono mientras tanto. Nunca las de otro
+     * estado (filtrar solo saca filas, no agrega) ni las de otras fechas, tipo o búsqueda: si "Todas"
+     * de ese filtro no está en caché, se ve la carga.
      */
-    conservarAlCambiarEstado?: boolean
+    vistaPreviaSinEstado?: boolean
   },
 ) {
+  const queryClient = useQueryClient()
   return useInfiniteQuery({
     queryKey: ventasKeys.infinite(params),
     enabled: options?.enabled,
@@ -125,8 +120,9 @@ export function useInfiniteVentas(
       searchParams.set('pageSize', String(params.pageSize ?? 20))
       return api.get<PagedResult<Venta>>(`/api/v1/Ventas?${searchParams}`)
     },
-    placeholderData: options?.conservarAlCambiarEstado
-      ? (anterior, consultaAnterior) => (soloCambiaElEstado(consultaAnterior?.queryKey[2], params) ? anterior : undefined)
+    // El hash de la key descarta los `undefined`: es la misma key que pide "Todas".
+    placeholderData: options?.vistaPreviaSinEstado
+      ? () => queryClient.getQueryData<InfiniteData<PagedResult<Venta>>>(ventasKeys.infinite({ ...params, estado: undefined, estados: undefined }))
       : undefined,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {

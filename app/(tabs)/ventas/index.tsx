@@ -327,7 +327,7 @@ function VentasListScreen() {
     pickerOpen, setPickerOpen,
     selected, setSelected,
     tipoOperacion, setTipoOperacion,
-    isLoading, isRefetching, refetch,
+    isLoading, isRefetching, refetch, error,
     filteredVentas,
     ordenes, ordenesConFiltro, contador,
     fetchNextPage, hasNextPage, isFetchingNextPage
@@ -461,6 +461,8 @@ function VentasListScreen() {
             isLoading={isLoading}
             isRefetching={isRefetching}
             onRefresh={refetch}
+            error={error}
+            onRetry={() => { void refetch() }}
             onEndReached={() => {
               if (hasNextPage && !isFetchingNextPage) {
                 fetchNextPage()

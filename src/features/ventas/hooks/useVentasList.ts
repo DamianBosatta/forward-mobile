@@ -51,14 +51,15 @@ export function useVentasList() {
   }
   const {
     data,
-    isLoading,
+    error,
+    isPending,
     isPlaceholderData,
     refetch,
     isRefetching,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage
-  } = useInfiniteVentas({ pageSize: 20, ...filtro }, { conservarAlCambiarEstado: true })
+  } = useInfiniteVentas({ pageSize: 20, ...filtro }, { vistaPreviaSinEstado: true })
   const resumen = useVentasResumen(filtro)
   const servidorFiltra = resumenFiltrado(resumen.data)
 
@@ -67,8 +68,8 @@ export function useVentasList() {
   // WHERE v."VendedorId" = @UserId for Vendedor role users before the query runs.
   // VentaDtoList intentionally omits vendedorId — no client-side re-filter needed.
   const rawVentas = useMemo(() => itemsCargados<Venta>(data?.pages), [data])
-  // Al tocar un chip se ven las filas anteriores filtradas acá hasta que contesta el servidor:
-  // su totalCount es del filtro anterior y no se muestra.
+  // Al tocar un chip se ven las filas de "Todas" filtradas acá hasta que contesta el servidor:
+  // su totalCount es el de "Todas" y no se muestra.
   const totalCount = isPlaceholderData ? undefined : totalDelServidor(data?.pages)
 
   const filteredVentas = useMemo(() => {
@@ -103,7 +104,11 @@ export function useVentasList() {
     tipoOperacion, setTipoOperacion,
     isCurrentMonth,
     now,
-    isLoading, isRefetching,
+    // Sin filas todavía, también en pausa sin conexión: se ve la carga, no "No hay operaciones".
+    isLoading: isPending,
+    // La vista previa también "trae datos": no es deslizar para actualizar.
+    isRefetching: isRefetching && !isPlaceholderData,
+    error,
     refetch: () => { void resumen.refetch(); return refetch() },
     fetchNextPage, hasNextPage, isFetchingNextPage,
     rawVentas, filteredVentas,
