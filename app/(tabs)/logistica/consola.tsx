@@ -51,10 +51,24 @@ export default function ConsolaChoferScreen() {
   const objetivo = id || activeTrip?.id || rutaElegida || ''
   // El servidor devuelve todo el historial del chofer: se piden solo las de hoy (día argentino) y sin las canceladas.
   const hoy = diaArgentina(Date.now())
-  const rutas = useHojasDeRuta({ choferId: user?.id, fecha: hoy }, { enabled: !id && !activeTrip?.id && !!user?.id })
-  const rutasDeHoy = useMemo(() => (rutas.data ?? []).filter((r) => r.estado !== EstadoHojaRuta.Cancelada), [rutas.data])
+  const buscar = !id && !activeTrip?.id && !!user?.id
+  const rutas = useHojasDeRuta({ choferId: user?.id, fecha: hoy }, { enabled: buscar })
+  // Un viaje en curso que salió otro día (pasada la medianoche, sin cerrar) sigue siendo del chofer: se pide aparte, sin fecha.
+  const enCurso = useHojasDeRuta({ choferId: user?.id, estado: EstadoHojaRuta.EnCurso }, { enabled: buscar })
+  const rutasDeHoy = useMemo(() => {
+    const vistas = new Set<string>()
+    return [...(enCurso.data ?? []), ...(rutas.data ?? [])].filter((r) => {
+      if (r.estado === EstadoHojaRuta.Cancelada || vistas.has(r.id)) return false
+      vistas.add(r.id)
+      return true
+    })
+  }, [rutas.data, enCurso.data])
   useEffect(() => {
-    if (!id && !activeTrip?.id && rutasDeHoy.length === 1) setRutaElegida(rutasDeHoy[0].id ?? null)
+    if (id || activeTrip?.id) return
+    // Un viaje en curso manda: hay que cerrarlo antes de arrancar otro.
+    const abiertas = rutasDeHoy.filter((r) => r.estado === EstadoHojaRuta.EnCurso)
+    const unica = abiertas.length === 1 ? abiertas[0] : rutasDeHoy.length === 1 ? rutasDeHoy[0] : null
+    if (unica) setRutaElegida(unica.id ?? null)
   }, [rutasDeHoy, id, activeTrip?.id])
 
   const remota = useHojaRuta(objetivo)
@@ -69,7 +83,7 @@ export default function ConsolaChoferScreen() {
   // El guardado sirve sin señal, pero solo si es el viaje pedido; si no, manda el servidor.
   const viaje = activeTrip && activeTrip.id === objetivo ? activeTrip : remota.data ?? null
 
-  if ((remota.isLoading || (rutas.isLoading && !objetivo)) && !viaje) {
+  if ((remota.isLoading || ((rutas.isLoading || enCurso.isLoading) && !objetivo)) && !viaje) {
     return (
       <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: 'center' }}>
         <ActivityIndicator size="large" color={c.brand} accessibilityLabel="Cargando la hoja de ruta" />
@@ -95,7 +109,7 @@ export default function ConsolaChoferScreen() {
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Hoja de ruta" leading={leading} />
         <View style={{ padding: space[4], gap: space[4] }}>
-          <Notice tone="info">No tenés una hoja de ruta para hoy.</Notice>
+          <Notice tone="info">No tenés una hoja de ruta para hoy ni en curso.</Notice>
           <Button label="Volver" variant="secundario" onPress={() => router.replace(volverA as never)} />
         </View>
       </View>

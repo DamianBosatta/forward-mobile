@@ -153,7 +153,11 @@ describe('Consola del chofer: hoja de ruta', () => {
       { id: 'h1', estado: 2, fechaSalida: '2026-10-09T11:00:00Z' },
       { id: 'cancelada', estado: 4, fechaSalida: '2026-10-09T12:00:00Z' },
     ]
-    listaServidor = (url) => (url.includes('fecha=2026-10-09') ? historial.filter((r) => r.fechaSalida.startsWith('2026-10-09')) : historial)
+    listaServidor = (url) => (
+      url.includes('fecha=2026-10-09') ? historial.filter((r) => r.fechaSalida.startsWith('2026-10-09'))
+        : url.includes('estado=2') ? historial.filter((r) => r.estado === 2)
+        : historial
+    )
     pintar()
     expect(await screen.findByLabelText('Próxima parada')).toBeTruthy()
     expect(screen.queryByText('Elegí la hoja de ruta')).toBeNull()
@@ -162,10 +166,42 @@ describe('Consola del chofer: hoja de ruta', () => {
 
   it('sin ruta para hoy muestra el estado vacío y no una ruta vieja', async () => {
     jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T01:30:00Z'))
-    listaServidor = (url) => (url.includes('fecha=') ? [] : [{ id: 'h1', estado: 3, fechaSalida: '2026-10-01T11:00:00Z' }])
+    listaServidor = (url) => (url.includes('fecha=') || url.includes('estado=2') ? [] : [{ id: 'h1', estado: 3, fechaSalida: '2026-10-01T11:00:00Z' }])
     pintar()
-    expect(await screen.findByText('No tenés una hoja de ruta para hoy.')).toBeTruthy()
+    expect(await screen.findByText('No tenés una hoja de ruta para hoy ni en curso.')).toBeTruthy()
     expect(screen.queryByLabelText('Próxima parada')).toBeNull()
+  })
+
+  it('sin ruta hoy pero con una en curso de ayer, abre la de ayer', async () => {
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T01:30:00Z'))
+    listaServidor = (url) => (url.includes('fecha=') ? [] : url.includes('estado=2') ? [{ id: 'h1', estado: 2, fechaSalida: '2026-10-08T11:00:00Z' }] : [])
+    pintar()
+    expect(await screen.findByLabelText('Próxima parada')).toBeTruthy()
+    expect(screen.queryByText(/No tenés una hoja de ruta/)).toBeNull()
+    expect(mockGet.mock.calls.map(([u]) => String(u))).toContain('/api/v1/Logistica/hojas-ruta?choferId=u1&estado=2')
+  })
+
+  it('con una ruta de hoy sin iniciar y una en curso de ayer, abre primero la en curso', async () => {
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T01:30:00Z'))
+    listaServidor = (url) => (
+      url.includes('fecha=') ? [{ id: 'hoy', estado: 1, fechaSalida: '2026-10-09T11:00:00Z' }]
+        : url.includes('estado=2') ? [{ id: 'h1', estado: 2, fechaSalida: '2026-10-08T11:00:00Z' }]
+        : []
+    )
+    pintar()
+    expect(await screen.findByLabelText('Próxima parada')).toBeTruthy()
+    expect(screen.queryByText('Elegí la hoja de ruta')).toBeNull()
+  })
+
+  it('con dos rutas en curso pendientes, el selector muestra ambas sin repetir', async () => {
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T01:30:00Z'))
+    const a = { id: 'aaaaaaaa-1', estado: 2, fechaSalida: '2026-10-09T11:00:00Z', cantidadParadas: 3 }
+    const b = { id: 'bbbbbbbb-2', estado: 2, fechaSalida: '2026-10-08T11:00:00Z', cantidadParadas: 2 }
+    listaServidor = (url) => (url.includes('fecha=') ? [a] : url.includes('estado=2') ? [a, b] : [])
+    pintar()
+    expect(await screen.findByText('Elegí la hoja de ruta')).toBeTruthy()
+    expect(screen.getAllByText('Viaje #AAAAAAAA')).toHaveLength(1)
+    expect(screen.getAllByText('Viaje #BBBBBBBB')).toHaveLength(1)
   })
 
   it('en oscuro la tarjeta de la próxima parada usa la marca del tema oscuro', async () => {
