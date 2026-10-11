@@ -14,7 +14,7 @@ import type { ModulePermission } from '@/libs/api-client/types'
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Las que mobile consulta hoy; el catálogo completo vive en AppCapabilities.cs. */
-export type AppCapability = 'CAP_VER_COSTOS' | 'CAP_AUTORIZAR_VENTA'
+export type AppCapability = 'CAP_VER_COSTOS' | 'CAP_AUTORIZAR_VENTA' | 'CAP_EXENTO_TOPE_DESCUENTO'
 
 /**
  * ¿`permissions` incluye la capacidad? Compara sin distinguir mayúsculas, igual que

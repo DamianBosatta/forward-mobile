@@ -72,6 +72,16 @@ describe('CatalogoVenta (agregar productos)', () => {
     expect(onElegir).toHaveBeenCalledWith('pf')
   })
 
+  it('"Descuento y detalle de la línea" abre Editar línea y lo confirmado vuelve al carrito', async () => {
+    render(<CatalogoVenta onVerVenta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Añadir Pala c/Cabo Fija LP' }))
+    await userEvent.press(screen.getByRole('link', { name: 'Descuento y detalle de la línea' }))
+    await userEvent.type(screen.getByLabelText('Descuento (%)'), '5')
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar' }))
+    expect(useCarritoVenta.getState().lineas[0]).toMatchObject({ cantidad: 1, descuentoPct: 5 })
+    expect(screen.queryByTestId('editar-linea')).toBeNull()
+  })
+
   it('tablet horizontal: el carrito queda fijo a la derecha', () => {
     conAncho(1194)
     render(<CatalogoVenta onVerVenta={jest.fn()} />)

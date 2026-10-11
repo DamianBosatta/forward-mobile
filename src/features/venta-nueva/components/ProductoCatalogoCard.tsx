@@ -16,11 +16,13 @@ interface ProductoCatalogoCardProps {
   onSumar: () => void
   onRestar: () => void
   onElegirFragancias?: () => void
+  /** Abre "Editar línea" (descuento y detalle); solo cuando ya está en el carrito. */
+  onEditar?: () => void
 }
 
 /** Tarjeta del catálogo de venta (lámina Catalogo): foto, código, disponibilidad, precio y "+ Añadir". */
 export function ProductoCatalogoCard({
-  producto: p, cantidad, verCantidades, onAgregar, onSumar, onRestar, onElegirFragancias,
+  producto: p, cantidad, verCantidades, onAgregar, onSumar, onRestar, onElegirFragancias, onEditar,
 }: ProductoCatalogoCardProps) {
   const c = useColors()
   const stock = c.chip[p.puedeVenderse ? 'entregado' : 'anulado'].text
@@ -66,6 +68,13 @@ export function ProductoCatalogoCard({
             <Accion c={c} label="+ Añadir" a11y={`Añadir ${p.nombre}`} onPress={onAgregar} />
           )}
         </View>
+        {cantidad > 0 && onEditar && (
+          <Pressable accessibilityRole="link" onPress={onEditar} style={{ minHeight: 44, justifyContent: 'center' }}>
+            <Text style={{ ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: c.brandInk }}>
+              Descuento y detalle de la línea
+            </Text>
+          </Pressable>
+        )}
       </View>
     </View>
   )

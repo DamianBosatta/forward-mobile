@@ -10,6 +10,7 @@ import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { cantidadEn } from '../lib/carrito'
 import { ProductoCatalogoCard } from './ProductoCatalogoCard'
 import { CarritoFlotante, CarritoPanel } from './CarritoVenta'
+import { EditarLineaSheet } from './EditarLineaSheet'
 
 interface CatalogoVentaProps {
   onVerVenta: () => void
@@ -26,7 +27,8 @@ export function CatalogoVenta({ onVerVenta, onElegirFragancias }: CatalogoVentaP
   const { formFactor, isTabletLandscape } = useResponsive()
   const [busqueda, setBusqueda] = useState('')
   const { productos, totalCount, isLoading, cargarMas } = useCatalogoVenta(busqueda)
-  const { lineas, agregar, sumar, restar } = useCarritoVenta()
+  const { lineas, agregar, sumar, restar, quitar, reemplazar } = useCarritoVenta()
+  const [editando, setEditando] = useState<string | null>(null)
   const verCantidades = canViewStock((useAuthStore((s) => s.user?.roles) ?? []) as string[])
   const columnas = formFactor === 'tabletLandscape' ? 3 : formFactor === 'tabletPortrait' ? 2 : 1
 
@@ -68,6 +70,7 @@ export function CatalogoVenta({ onVerVenta, onElegirFragancias }: CatalogoVentaP
             onSumar={() => sumar(item.id)}
             onRestar={() => restar(item.id)}
             onElegirFragancias={() => onElegirFragancias?.(item.id)}
+            onEditar={() => setEditando(item.id)}
           />
         )}
       />
@@ -79,11 +82,19 @@ export function CatalogoVenta({ onVerVenta, onElegirFragancias }: CatalogoVentaP
     </View>
   )
 
-  if (!isTabletLandscape) return lista
+  const hoja = (
+    <EditarLineaSheet
+      linea={lineas.find((l) => l.productoId === editando) ?? null}
+      onClose={() => setEditando(null)}
+      onConfirm={(l) => { reemplazar(l); setEditando(null) }}
+      onQuitar={(id) => { quitar(id); setEditando(null) }}
+    />
+  )
   return (
     <View style={{ flex: 1, flexDirection: 'row' }}>
       {lista}
-      <CarritoPanel lineas={lineas} onVerVenta={onVerVenta} />
+      {isTabletLandscape && <CarritoPanel lineas={lineas} onVerVenta={onVerVenta} />}
+      {hoja}
     </View>
   )
 }
