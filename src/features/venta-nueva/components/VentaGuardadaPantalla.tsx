@@ -19,14 +19,16 @@ interface Props {
 export function VentaGuardadaPantalla({ id, mensaje }: Props) {
   const c = useColors()
   const router = useRouter()
-  const q = useVenta(id)
+  // Recién guardada: el caché trae la versión de antes del guardado; las acciones (convertir, anular, editar) usan la vigente.
+  const q = useVenta(id, { fresco: true })
   const socio = useSocio(q.data?.venta.clienteId ?? '')
   const listo = () => router.replace('/(tabs)/ventas' as never)
-  const h = q.data?.venta
+  const vigente = q.isFetchedAfterMount && q.isSuccess ? q.data : undefined
+  const h = vigente?.venta
   const tipo = h ? tipoDeVenta(h) : 'Venta'
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
 
-  if (!q.data || !h) {
+  if (!vigente || !h) {
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Venta guardada" />
@@ -47,7 +49,7 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
         <View style={{ padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[2] }}>
           <Text style={{ ...typeScale.titulo, color: c.text }}>{`${tipo} ${codigoDeVenta(h)}`}</Text>
           <Text style={secundario}>{rotulo}</Text>
-          {q.data.detalles.map((d) => (
+          {vigente.detalles.map((d) => (
             <View key={d.id} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
               <Text style={{ ...typeScale.cuerpo, color: c.text, flex: 1 }}>{`${d.productoNombre} × ${d.cantidad}`}</Text>
               <Text style={{ ...typeScale.cuerpo, ...importe, color: c.text }}>{formatImporte(d.subtotal)}</Text>
@@ -58,7 +60,7 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
         <Notice tone={porAutorizar ? 'advertencia' : 'exito'} title={`${tipo} ${codigoDeVenta(h)} guardado`}>
           {mensaje ?? (porAutorizar ? 'Quedó por autorizar. Te avisamos cuando lo resuelvan.' : 'Quedó guardado.')}
         </Notice>
-        <AccionesVenta venta={q.data} rotulo={rotulo} />
+        <AccionesVenta venta={vigente}rotulo={rotulo} />
         <Text style={secundario}>La factura no se hace desde el teléfono: va por la pestaña Facturación de la web.</Text>
         <Button label="Listo" variant="secundario" onPress={listo} />
       </ScrollView>

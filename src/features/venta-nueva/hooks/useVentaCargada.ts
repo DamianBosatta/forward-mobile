@@ -10,12 +10,14 @@ import { ventaCargada, type VentaCargada } from '../lib/hidratar'
  * cliente (para nombrarlo por la dirección) y el catálogo de venta. Sin `id` no pide nada.
  */
 export function useVentaCargada(id: string | undefined): { datos: VentaCargada | null; cargando: boolean; error: string | null } {
-  const venta = useVenta(id ?? '')
+  // Solo vale la venta traída al abrir: el caché viejo tiene líneas y versión de antes (el próximo guardado daría 409).
+  const venta = useVenta(id ?? '', { fresco: true })
   const socio = useSocio(venta.data?.venta.clienteId ?? '')
   const catalogo = useCatalogoVenta('')
+  const vigente = venta.isFetchedAfterMount && venta.isSuccess ? venta.data : undefined
   const datos = useMemo(
-    () => (venta.data && socio.data && !catalogo.isLoading ? ventaCargada(venta.data, socio.data, catalogo.productos) : null),
-    [venta.data, socio.data, catalogo.isLoading, catalogo.productos],
+    () => (vigente && socio.data && !catalogo.isLoading ? ventaCargada(vigente, socio.data, catalogo.productos) : null),
+    [vigente, socio.data, catalogo.isLoading, catalogo.productos],
   )
   if (!id) return { datos: null, cargando: false, error: null }
   const fallo = venta.error ?? socio.error

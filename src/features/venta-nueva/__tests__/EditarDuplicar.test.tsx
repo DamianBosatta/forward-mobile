@@ -3,6 +3,7 @@ import { render, screen, userEvent, waitFor } from '@testing-library/react-nativ
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { ventasKeys } from '@/libs/api-client/ventas'
 import { VentaNuevaPantalla, type AbrirVenta } from '../components/VentaNuevaPantalla'
 import { AccionesVenta } from '../components/AccionesVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
@@ -34,11 +35,10 @@ const venta = { venta: cabecera(), detalles: [{ id: 'i1', productoId: 'p1', prod
 const socio = { id: 'c7', direccion: 'Tarantino 1898', nombreFantasia: 'Autoservicio Abel' }
 const ESPERA = { timeout: 3000 }
 
-function conQuery(ui: React.ReactElement) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+function conQuery(ui: React.ReactElement, qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })) {
   return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>)
 }
-const abrir = (a: AbrirVenta) => conQuery(<VentaNuevaPantalla abrir={a} />)
+const abrir = (a: AbrirVenta, qc?: QueryClient) => conQuery(<VentaNuevaPantalla abrir={a} />, qc)
 const permisos = (p: Record<string, boolean>) =>
   useAuthStore.setState({ user: { id: 'u1', roles: ['Vendedor'], permissions: [{ module: 'MOD_VENTAS', canRead: true, ...p }], maxDescuentoPorcentaje: 10 } as never })
 
@@ -86,6 +86,34 @@ describe('editar y duplicar (PR 2.9b)', () => {
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas/borradores', expect.anything())
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas', expect.anything())
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(tabs)/ventas/guardada', params: { id: 'v9', mensaje: 'Venta actualizada.' } }))
+  })
+
+  it('editar con un caché viejo de la venta hidrata lo vigente del servidor (líneas y versión), no lo cacheado', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+    qc.setQueryData(ventasKeys.detail('v9'), venta)
+    const vigente = { ...venta, venta: cabecera({ version: 7 }), detalles: [{ ...venta.detalles[0], cantidad: 20 }] }
+    mockGet.mockImplementation((url: string) => {
+      if (url === '/api/v1/Ventas/v9') return Promise.resolve(vigente)
+      if (url === '/api/v1/socios-comerciales/c7') return Promise.resolve(socio)
+      if (url.startsWith('/api/v1/Productos/catalogo-stock')) return Promise.resolve({ items: [pala], hasNextPage: false })
+      return Promise.resolve(undefined)
+    })
+    abrir({ modo: 'editar', ventaId: 'v9' }, qc)
+    await userEvent.press(await screen.findByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1))
+    expect(mockPut.mock.calls[0][1]).toMatchObject({ version: 7, items: [{ productoId: 'p1', cantidad: 20, descuentoPorcentaje: 0 }] })
+  })
+
+  it('el autoguardado del borrador invalida el detalle en caché, así reabrirlo trae la última versión', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+    abrir({ modo: 'duplicar', ventaId: 'v9' }, qc)
+    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
+    qc.setQueryData(ventasKeys.detail('b1'), venta)
+    expect(qc.getQueryState(ventasKeys.detail('b1'))?.isInvalidated).toBe(false)
+    await userEvent.clear(screen.getByLabelText('Descuento general (%)'))
+    await userEvent.type(screen.getByLabelText('Descuento general (%)'), '3')
+    await waitFor(() => expect(mockPut.mock.calls.length).toBeGreaterThan(1), ESPERA)
+    await waitFor(() => expect(qc.getQueryState(ventasKeys.detail('b1'))?.isInvalidated).toBe(true), ESPERA)
   })
 
   it('si otro la cambió (409), se ve el mensaje del servidor y no sale de la pantalla', async () => {

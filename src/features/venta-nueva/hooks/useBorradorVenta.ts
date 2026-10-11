@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
-import { guardarBorradorVenta, useDescartarBorradorVenta, useIniciarBorradorVenta } from '@/libs/api-client/ventas'
+import { useQueryClient } from '@tanstack/react-query'
+import { guardarBorradorVenta, useDescartarBorradorVenta, useIniciarBorradorVenta, ventasKeys } from '@/libs/api-client/ventas'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useAutoguardado } from './useAutoguardado'
 import type { AutoguardadoVenta } from '../lib/payload'
@@ -14,9 +15,15 @@ export function useBorradorVenta(valores: AutoguardadoVenta) {
   const [errorAlCrear, setErrorAlCrear] = useState<string | null>(null)
   const iniciar = useIniciarBorradorVenta()
   const descartarMut = useDescartarBorradorVenta()
+  const qc = useQueryClient()
   const guardar = useCallback(
-    async (v: AutoguardadoVenta, version: number) => (await guardarBorradorVenta(borrador!.id, version, { ...v })).version,
-    [borrador],
+    async (v: AutoguardadoVenta, version: number) => {
+      const r = await guardarBorradorVenta(borrador!.id, version, { ...v })
+      // El detalle en caché ya no es el del servidor: quien reabra el borrador tiene que traer el vigente.
+      void qc.invalidateQueries({ queryKey: ventasKeys.detail(borrador!.id) })
+      return r.version
+    },
+    [borrador, qc],
   )
   const autoguardado = useAutoguardado({ borradorId: borrador?.id, versionInicial: borrador?.version ?? 0, valores, guardar })
 

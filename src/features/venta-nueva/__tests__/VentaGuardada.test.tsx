@@ -4,6 +4,7 @@ import { render, screen, userEvent, waitFor } from '@testing-library/react-nativ
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { diaArgentina } from '@/src/utils/date'
+import { ventasKeys } from '@/libs/api-client/ventas'
 import { VentaGuardadaPantalla } from '../components/VentaGuardadaPantalla'
 
 const mockGet = jest.fn()
@@ -37,8 +38,7 @@ const socio = { id: 'c7', direccion: 'Tarantino 1898', nombreFantasia: 'Autoserv
 const permisos = (p: Record<string, boolean>) =>
   useAuthStore.setState({ user: { id: 'u1', roles: ['Vendedor'], permissions: [{ module: 'MOD_VENTAS', canRead: true, ...p }] } as never })
 
-function pantalla(mensaje?: string) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+function pantalla(mensaje?: string, qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })) {
   return render(<QueryClientProvider client={qc}><VentaGuardadaPantalla id="v9" mensaje={mensaje} /></QueryClientProvider>)
 }
 /** Toca el botón de una alerta (Alert.alert está espiado). */
@@ -111,6 +111,24 @@ describe('venta guardada (PR 2.9)', () => {
     await userEvent.press(anular())
     expect(mockDelete).toHaveBeenCalledWith('/api/v1/Ventas/v9', { version: 3, motivoAnulacion: 'Lo canceló el cliente' })
     expect(await screen.findByText('No se puede anular una venta en ruta.')).toBeTruthy()
+  })
+
+  it('recién editada: no ofrece acciones sobre el caché viejo; cuando llega la venta vigente, anula con su versión', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+    qc.setQueryData(ventasKeys.detail('v9'), { ...mockVenta, venta: cabecera({ version: 3 }) })
+    let llega!: (v: unknown) => void
+    mockGet.mockImplementation((url: string) =>
+      url === '/api/v1/Ventas/v9' ? new Promise((r) => { llega = r }) : Promise.resolve(url === '/api/v1/socios-comerciales/c7' ? socio : undefined))
+    mockDelete.mockResolvedValue(undefined)
+    pantalla(undefined, qc)
+    await waitFor(() => expect(llega).toBeDefined())
+    expect(screen.queryByRole('button', { name: 'Anular' })).toBeNull()
+    expect(screen.queryByText('Pedido A00419')).toBeNull()
+    llega({ ...mockVenta, venta: cabecera({ version: 4 }) })
+    await userEvent.press(await screen.findByRole('button', { name: 'Anular' }))
+    await userEvent.type(screen.getByLabelText('Motivo'), 'Lo canceló el cliente')
+    await userEvent.press(screen.getAllByRole('button', { name: 'Anular' }).at(-1)!)
+    expect(mockDelete).toHaveBeenCalledWith('/api/v1/Ventas/v9', { version: 4, motivoAnulacion: 'Lo canceló el cliente' })
   })
 
   it('agendar crea un recordatorio personal en el calendario del servidor para ese cliente', async () => {
