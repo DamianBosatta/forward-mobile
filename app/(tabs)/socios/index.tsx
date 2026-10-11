@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, FlatList, RefreshControl, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
-import { Search } from 'lucide-react-native'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Fab, Notice, TopBar } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useCartera } from '@/features/clientes/hooks/useCartera'
 import { ClienteCard } from '@/features/clientes/components/ClienteCard'
+import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { FichaCliente } from '@/features/clientes/components/FichaCliente'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
@@ -87,31 +87,7 @@ export default function ClientesScreen() {
         subtitle="Tu cartera, por dirección de entrega"
         leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
       />
-      <View style={{ backgroundColor: c.topBar, paddingHorizontal: space[4], paddingBottom: space[3] }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: space[2],
-            height: space[12],
-            borderRadius: radii.campo,
-            backgroundColor: c.surface,
-            paddingHorizontal: space[3],
-          }}
-        >
-          <Search size={20} color={c.textSecondary} />
-          <TextInput
-            accessibilityLabel="Buscar cliente"
-            placeholder="Dirección, nombre o CUIT"
-            placeholderTextColor={c.textSecondary}
-            value={busqueda}
-            onChangeText={setBusqueda}
-            autoCorrect={false}
-            returnKeyType="search"
-            style={{ ...typeScale.cuerpo, flex: 1, color: c.text, paddingVertical: 0 }}
-          />
-        </View>
-      </View>
+      <BuscadorCartera valor={busqueda} onCambio={setBusqueda} />
 
       {dosPaneles ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>
