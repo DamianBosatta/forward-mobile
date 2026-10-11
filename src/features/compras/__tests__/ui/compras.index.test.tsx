@@ -80,6 +80,20 @@ describe('lista de compras', () => {
     expect(within(screen.getByRole('button', { name: /BBBB2222/ })).getByText('Por recibir')).toBeTruthy()
   })
 
+  it('con el servidor que separa por moneda vuelve el total comprado, una cifra por moneda y con el mismo período', async () => {
+    const base = mockGet.getMockImplementation()!
+    mockGet.mockImplementation((url: string) => url.startsWith('/api/v1/Compras/resumen?')
+      ? Promise.resolve({ totalComprado: 999, totalesPorMoneda: [{ moneda: 'ARS', total: 998 }, { moneda: 'USD', total: 1 }], notasPedido: 4, confirmadas: 1, entregadas: 7, canceladas: 0, anuladas: 0 })
+      : base(url))
+    pantalla()
+    expect(await screen.findByText('Comprado (pendientes y recibidas): $ 998,00 · USD 1,00')).toBeTruthy()
+    expect(screen.queryByText(/999/)).toBeNull()
+    await userEvent.press(screen.getByRole('radio', { name: '7 días' }))
+    await waitFor(() => expect(ultimaConsulta().get('FechaDesde')).toMatch(/^\d{4}-\d{2}-\d{2}$/))
+    const resumenes = mockGet.mock.calls.map(([u]) => String(u)).filter((u) => u.startsWith('/api/v1/Compras/resumen?'))
+    expect(new URLSearchParams(resumenes.at(-1)!.split('?')[1]).get('FechaDesde')).toBe(ultimaConsulta().get('FechaDesde'))
+  })
+
   it('Recibidas y el período van como filtros al servidor', async () => {
     pantalla()
     await screen.findByText('Mostrando 2 de 5')

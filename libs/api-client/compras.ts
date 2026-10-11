@@ -30,7 +30,13 @@ export interface BorradorCompra {
 
 /** GET /api/v1/Compras/resumen — ComprasResumenDto. */
 export interface ComprasResumenDto {
+  /** Suma monedas distintas: no es plata de ninguna. Usar `totalesPorMoneda`. */
   totalComprado: number
+  /**
+   * Total por moneda de NotaPedido, Confirmado y Entregado (sin canceladas ni anuladas), sin importar
+   * la pestaña: el resumen no filtra por estado. Llegó con forward-system #873; antes no viene.
+   */
+  totalesPorMoneda?: { moneda: string; total: number }[]
   notasPedido: number
   confirmadas: number
   entregadas: number

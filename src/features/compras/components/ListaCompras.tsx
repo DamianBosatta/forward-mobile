@@ -56,6 +56,7 @@ export function ListaCompras({ detalle }: Props) {
       <Segmented accessibilityLabel="Período" options={PERIODOS} value={l.periodo} onChange={l.setPeriodo} />
       {l.contador ? <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{l.contador}</Text> : null}
       {l.resumenTexto ? <Text style={secundario}>{l.resumenTexto}</Text> : null}
+      {l.compradoTexto ? <Text style={secundario}>{l.compradoTexto}</Text> : null}
     </View>
   )
 
@@ -86,7 +87,7 @@ export function ListaCompras({ detalle }: Props) {
       onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) void q.fetchNextPage() }}
       onEndReachedThreshold={0.4}
       refreshing={q.isRefetching}
-      onRefresh={() => { void q.refetch() }}
+      onRefresh={() => { void l.refrescar() }}
       ListEmptyComponent={
         q.isLoading ? <ActivityIndicator color={c.brand} />
           : q.isError ? <Notice tone="peligro">No se pudieron cargar las compras. Deslizá hacia abajo para reintentar.</Notice>

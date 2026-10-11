@@ -142,6 +142,15 @@ describe('VentasKpiGrid — small band (width 320)', () => {
     const { getByText } = render(<VentasKpiGrid {...defaultProps} ordersCount={undefined} />)
     expect(getByText('—')).toBeTruthy()
   })
+
+  it('(d3) con un chip de estado la etiqueta dice que la cantidad es la del filtro; sin chip, la de siempre', () => {
+    const { getByText, rerender, queryByText } = render(<VentasKpiGrid {...defaultProps} conFiltro />)
+    // Corta y que pueda partirse en dos líneas: en 320 dp o con letra grande no desborda la tarjeta.
+    expect(flatStyle(getByText('ÓRDENES JUN · FILTRADAS').props.style).flexShrink).toBe(1)
+    rerender(<VentasKpiGrid {...defaultProps} conFiltro={false} />)
+    expect(getByText('ÓRDENES JUN')).toBeTruthy()
+    expect(queryByText(/FILTRADAS/)).toBeNull()
+  })
 })
 
 // ── Tests — medium band (width 390, isMedium=true) ────────────────────────────
