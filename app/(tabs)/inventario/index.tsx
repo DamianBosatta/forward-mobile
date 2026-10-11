@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Modal, Text, TextInput, View } from 'react-native'
 import { useNavigation } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
-import { LayoutGrid, List, Search } from 'lucide-react-native'
+import { LayoutGrid, List, ScanBarcode, Search } from 'lucide-react-native'
 import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Notice, TopBar } from '@/core/ui/fw'
@@ -10,6 +10,7 @@ import { RequirePermission } from '@/core/ui'
 import { useCatalogoConsulta } from '@/features/catalogo/hooks/useCatalogoConsulta'
 import { ProductoCard } from '@/features/catalogo/components/ProductoCard'
 import { FichaProducto } from '@/features/catalogo/components/FichaProducto'
+import { EscanerCodigo } from '@/features/catalogo/components/EscanerCodigo'
 
 /** Ancho desde el que la grilla y la ficha van lado a lado (plan §8, lámina TabCatalogoConsulta). */
 const ANCHO_DOS_PANELES = 900
@@ -25,6 +26,17 @@ export default function CatalogoConsultaScreen() {
   const [seleccion, setSeleccion] = useState<string | null>(null)
   const cat = useCatalogoConsulta()
   const columnas = grilla ? 2 : 1
+  const [escaneando, setEscaneando] = useState(false)
+  const [codigoLeido, setCodigoLeido] = useState<string | null>(null)
+
+  // Código leído: cuando llega la respuesta de ESA búsqueda, un único resultado abre la
+  // ficha; si hay varios o ninguno, la búsqueda queda cargada en la lista.
+  const { termino, isLoading, isPlaceholderData, isError, totalCount, productos } = cat
+  useEffect(() => {
+    if (!codigoLeido || termino !== codigoLeido || isLoading || isPlaceholderData) return
+    if (!isError && totalCount === 1 && productos.length === 1) setSeleccion(productos[0].id)
+    setCodigoLeido(null)
+  }, [codigoLeido, termino, isLoading, isPlaceholderData, isError, totalCount, productos])
 
   const lista = (
     <View style={{ flex: 1 }}>
@@ -85,8 +97,9 @@ export default function CatalogoConsultaScreen() {
           title="Catálogo y stock"
           subtitle="Solo consulta"
           leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
-          actions={
-            dosPaneles
+          actions={[
+            { icon: ScanBarcode, accessibilityLabel: 'Escanear código de barras', onPress: () => setEscaneando(true) },
+            ...(dosPaneles
               ? []
               : [
                   {
@@ -94,8 +107,8 @@ export default function CatalogoConsultaScreen() {
                     accessibilityLabel: grilla ? 'Ver como lista' : 'Ver como grilla',
                     onPress: () => setGrilla((g) => !g),
                   },
-                ]
-          }
+                ]),
+          ]}
         />
         <View style={{ backgroundColor: c.topBar, paddingHorizontal: space[4], paddingBottom: space[3] }}>
           <View
@@ -140,6 +153,17 @@ export default function CatalogoConsultaScreen() {
         ) : (
           lista
         )}
+
+        <EscanerCodigo
+          visible={escaneando}
+          onClose={() => setEscaneando(false)}
+          onLeido={(codigo) => {
+            setEscaneando(false)
+            setSeleccion(null)
+            setCodigoLeido(codigo)
+            cat.buscarYa(codigo)
+          }}
+        />
 
         <Modal
           visible={!dosPaneles && seleccion !== null}
