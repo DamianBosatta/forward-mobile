@@ -24,18 +24,21 @@ const UNA_CAJA = [{ depositoId: 'dep-central', depositoNombre: 'Depósito Centra
 /** Respuesta del alta del cobro: el id en `data` y lo que el sobre traiga al lado (`tipoCuenta` desde forward-system #868). */
 const registrado = (sobre: object = {}) => ({ data: 'p1', sobre: { statusCode: 200, succeeded: true, data: 'p1', ...sobre } })
 
-function servidor({ pagoEnNormal = true, cajas = UNA_CAJA } = {}) {
+/** `pagoEn`: la cuenta (`cTst` o `cNor`) cuyos movimientos traen el pago `p1`; con `null`, ninguna. */
+function servidor({ pagoEn = 'cNor' as 'cTst' | 'cNor' | null, cajas = UNA_CAJA } = {}) {
   get.mockImplementation(async (url: string) => {
     if (url === '/api/v1/gastos/medios-pago') return MEDIOS
     if (url === '/api/v1/Cajas/abiertas/estado') return cajas
     if (url.endsWith('/estado-cuenta')) return estadoDeCuenta()
-    if (url.startsWith('/api/v1/cuentas-corrientes/cNor/movimientos')) {
-      return paginaDeMovimientos([mov('n9', '2026-10-11T14:00:00Z', { haber: 86400, pagoId: pagoEnNormal ? 'p1' : 'otro' })])
+    if (url.includes('/movimientos')) {
+      const conElPago = !!pagoEn && url.startsWith(`/api/v1/cuentas-corrientes/${pagoEn}/movimientos`)
+      return paginaDeMovimientos([mov('m1', '2026-10-11T14:00:00Z', { haber: 86400, pagoId: conElPago ? 'p1' : 'otro' })])
     }
-    if (url.includes('/movimientos')) return paginaDeMovimientos([mov('t1', '2026-09-30T12:00:00Z')])
     return fichaConCuentas()
   })
 }
+
+const pidioMovimientos = () => get.mock.calls.filter(([url]) => String(url).includes('/movimientos')).map(([url]) => String(url))
 
 async function cargarMontoYMedio(monto: string, medio: string) {
   fireEvent.changeText(await screen.findByLabelText('Monto', {}, ESPERA), monto)
@@ -73,24 +76,39 @@ it('servidor nuevo: dice la cuenta que trae la respuesta del cobro, sin buscarla
   expect(await screen.findByRole('header', { name: 'Quedó en la cuenta TST' }, ESPERA)).toBeTruthy()
   expect(screen.getByText('Saldo nuevo')).toBeTruthy()
   expect(screen.queryByText(SIN_CUENTA_CONFIRMADA)).toBeNull()
-  expect(get.mock.calls.filter(([url]) => String(url).includes('/movimientos'))).toEqual([])
+  expect(pidioMovimientos()).toEqual([])
 })
 
 it.each([
-  ['servidor viejo: sin tipoCuenta en la respuesta', {}],
-  ['una cuenta que mobile no conoce', { tipoCuenta: 'Otra' }],
-])('%s, busca el pago en los movimientos y dice en qué cuenta quedó', async (_caso, sobre) => {
+  ['servidor viejo: sin tipoCuenta en la respuesta', {}, 'cNor', 'Normal'],
+  // El pago está en TST: si se tomara 'Otra' como cuenta, la pantalla diría Normal sin buscar.
+  ['un tipoCuenta que mobile no conoce', { tipoCuenta: 'Otra' }, 'cTst', 'TST'],
+] as const)('%s: busca el pago en los movimientos y dice la cuenta donde está', async (_caso, sobre, pagoEn, cuenta) => {
+  servidor({ pagoEn })
   post.mockResolvedValue(registrado(sobre))
   renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
   await cargarMontoYMedio('86400', 'Efectivo')
   await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
 
-  expect(await screen.findByRole('header', { name: 'Quedó en la cuenta Normal' }, ESPERA)).toBeTruthy()
+  expect(await screen.findByRole('header', { name: `Quedó en la cuenta ${cuenta}` }, ESPERA)).toBeTruthy()
   expect(screen.getByText('Saldo nuevo')).toBeTruthy()
+  expect(pidioMovimientos()).toContainEqual(expect.stringContaining(`/cuentas-corrientes/${pagoEn}/movimientos`))
+})
+
+it('un 2xx sin id del pago: el cobro se da por registrado, sin cuenta confirmada y sin buscar en los movimientos', async () => {
+  post.mockResolvedValue({ data: undefined, sobre: null })
+  renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+  await cargarMontoYMedio('100', 'Transferencia')
+  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+
+  expect(await screen.findByText('Cobro registrado', {}, ESPERA)).toBeTruthy()
+  expect(await screen.findByText(SIN_CUENTA_CONFIRMADA, {}, ESPERA)).toBeTruthy()
+  expect(screen.queryByText(/Quedó en la cuenta/)).toBeNull()
+  expect(pidioMovimientos()).toEqual([])
 })
 
 it('servidor viejo: si el pago no aparece en ninguna cuenta, no inventa una: lo dice', async () => {
-  servidor({ pagoEnNormal: false })
+  servidor({ pagoEn: null })
   renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
   await cargarMontoYMedio('100', 'Efectivo')
   await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))

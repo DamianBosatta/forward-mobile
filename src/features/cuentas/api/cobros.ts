@@ -32,7 +32,8 @@ type PagoRegistrado = components['schemas']['PagoRegistradoResponse']
 
 /** Cobro registrado: el id del pago y la cuenta donde quedó, si el servidor la informa. */
 export interface CobroRegistrado {
-  pagoId: string
+  /** `null` si un 2xx no trajo el id: el cobro se da por hecho, pero no se puede buscar su cuenta. */
+  pagoId: string | null
   /** `null` si la respuesta no la trae (servidor anterior a forward-system #868): se busca en los movimientos. */
   tipoCuenta: TipoCuentaSocio | null
 }
@@ -48,9 +49,9 @@ export function useRegistrarCobro() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (payload: CobroPayload): Promise<CobroRegistrado> => {
-      const r = await api.postConSobre<string, PagoRegistrado>('/api/v1/Finanzas/pagos/multilinea', payload)
+      const r = await api.postConSobre<string | undefined, PagoRegistrado>('/api/v1/Finanzas/pagos/multilinea', payload)
       const tipo = r.sobre?.tipoCuenta
-      return { pagoId: r.data, tipoCuenta: esTipoCuenta(tipo) ? tipo : null }
+      return { pagoId: r.data ?? null, tipoCuenta: esTipoCuenta(tipo) ? tipo : null }
     },
     retry: false,
     onSuccess: () => {
