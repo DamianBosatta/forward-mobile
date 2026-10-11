@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, FlatList, Pressable, ScrollView, SectionList, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, FlatList, Pressable, ScrollView, SectionList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Plus } from 'lucide-react-native'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -61,6 +61,16 @@ export function ListaVentasNueva({ detalle }: Props) {
   const abrir = (id: string) => {
     if (isTabletLandscape) setElegida(id)
     else router.push(`/(tabs)/ventas/${id}` as never)
+  }
+
+  // El borrador es siempre un presupuesto en el servidor: al retomarlo se elige qué va a ser.
+  const retomar = (b: BorradorVenta) => {
+    const ir = (tipo: 'Pedido' | 'Presupuesto') => router.push(`/(tabs)/ventas/nueva-v2?borrador=${b.id}&tipo=${tipo}` as never)
+    Alert.alert('Retomar borrador', b.clienteNombre, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Como presupuesto', onPress: () => ir('Presupuesto') },
+      { text: 'Como pedido', onPress: () => ir('Pedido') },
+    ])
   }
 
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
@@ -130,12 +140,13 @@ export function ListaVentasNueva({ detalle }: Props) {
       data={l.borradores}
       keyExtractor={(b) => b.id}
       contentContainerStyle={{ padding: space[4], gap: space[3] }}
-      ListHeaderComponent={<Notice tone="info">Los borradores se guardan solos y se descartan a las 48 h sin cambios. Por ahora se retoman desde la web.</Notice>}
+      ListHeaderComponent={<Notice tone="info">Los borradores se guardan solos y se descartan a las 48 h sin cambios. Tocá uno para seguirlo.</Notice>}
       renderItem={({ item: b }) => (
-        <View accessible style={{ padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[1] }}>
+        <Pressable accessibilityRole="button" accessibilityHint="Retomar el borrador" onPress={() => retomar(b)}
+          style={{ minHeight: 48, padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[1] }}>
           <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{b.clienteNombre}</Text>
           <Text style={secundario}>{`${b.cantidadLineas} ${b.cantidadLineas === 1 ? 'línea' : 'líneas'} · Guardado ${tituloDelDia(new Date(b.fechaModificacion)).toLowerCase()} ${horaDe(b.fechaModificacion)}`}</Text>
-        </View>
+        </Pressable>
       )}
       ListEmptyComponent={
         l.borradoresQuery.isLoading ? <ActivityIndicator color={c.brand} />

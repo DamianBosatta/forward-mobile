@@ -29,6 +29,8 @@ export function useBorradorVenta(valores: AutoguardadoVenta) {
       setErrorAlCrear(mensajeDelServidor(e, 'No se pudo crear el borrador.'))
     }
   }
+  /** Retoma un borrador que ya existe en el servidor (no crea otro). */
+  const retomar = (id: string, version: number) => setBorrador({ id, version })
   const descartar = async () => {
     if (borrador) await descartarMut.mutateAsync(borrador.id)
     setBorrador(null)
@@ -40,5 +42,5 @@ export function useBorradorVenta(valores: AutoguardadoVenta) {
     : autoguardado.estado === 'guardando' ? 'Guardando…'
     : autoguardado.estado === 'error' || autoguardado.estado === 'conflicto' ? 'Sin guardar' : 'Guardado'
 
-  return { borrador, errorAlCrear, crear, descartar, etiqueta, ...autoguardado }
+  return { borrador, errorAlCrear, crear, retomar, descartar, etiqueta, ...autoguardado }
 }

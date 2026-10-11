@@ -1,5 +1,5 @@
 import React from 'react'
-import { Text } from 'react-native'
+import { Alert, Text } from 'react-native'
 import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { subDays } from 'date-fns'
@@ -100,6 +100,16 @@ describe('lista de ventas nueva', () => {
     expect(await screen.findByText('Almacén Luis')).toBeTruthy()
     expect(screen.getByText(/3 líneas · Guardado hoy/)).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/v1/Ventas/borradores/mios')
+  })
+
+  it('tocar un borrador pregunta si sigue como pedido o presupuesto y lo abre en la venta nueva', async () => {
+    const alerta = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, botones) => botones?.find((b) => b.text === 'Como pedido')?.onPress?.())
+    pantalla()
+    await userEvent.press(screen.getByRole('tab', { name: 'Borradores' }))
+    await userEvent.press(await screen.findByRole('button', { name: /Almacén Luis/ }))
+    expect(alerta).toHaveBeenCalledWith('Retomar borrador', 'Almacén Luis', expect.any(Array))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva-v2?borrador=b1&tipo=Pedido')
+    alerta.mockRestore()
   })
 
   it('en el teléfono tocar una tarjeta abre el detalle de la venta', async () => {

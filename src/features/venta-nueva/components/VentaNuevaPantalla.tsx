@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Alert, Modal, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, Modal, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Trash2 } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
@@ -17,7 +17,7 @@ import { useBorradorVenta } from '../hooks/useBorradorVenta'
 import { useComisionEstimada } from '../hooks/useComisionEstimada'
 import { aAutoguardado } from '../lib/payload'
 import { avisosVenta, totalesEstimados } from '../lib/avisos'
-import { leerNumero } from '../lib/linea'
+import { leerNumero, mostrarNumero } from '../lib/linea'
 import type { LineaCarrito } from '../lib/carrito'
 import { CatalogoVenta } from './CatalogoVenta'
 import { EditarLineaSheet } from './EditarLineaSheet'
@@ -25,9 +25,15 @@ import { LineasVenta } from './LineasVenta'
 import { CabeceraVenta } from './CabeceraVenta'
 import { FraganciasSheet } from './FraganciasSheet'
 import { useCatalogoVenta } from '../hooks/useCatalogoVenta'
+import { useVentaCargada } from '../hooks/useVentaCargada'
+
+interface Props {
+  /** Retomar un borrador del servidor (pestaña Borradores) como pedido o presupuesto. */
+  retomar?: { borradorId: string; tipo: TipoDocumento }
+}
 
 /** Venta nueva (plan 9, fase 2): elegir cliente crea el borrador en el servidor y desde ahí se autoguarda. */
-export function VentaNuevaPantalla() {
+export function VentaNuevaPantalla({ retomar }: Props = {}) {
   const c = useColors()
   const router = useRouter()
   const [cliente, setCliente] = useState<ClienteElegido | null>(null)
@@ -58,6 +64,33 @@ export function VentaNuevaPantalla() {
 
   // Cada venta nueva arranca con el carrito vacío.
   useEffect(() => { vaciar() }, [vaciar])
+
+  // Retomar: lo que tiene el servidor pasa a la pantalla y el borrador sigue autoguardándose.
+  const cargada = useVentaCargada(retomar?.borradorId)
+  const [retomado, setRetomado] = useState(false)
+  useEffect(() => {
+    const d = cargada.datos
+    if (!retomar || !d || retomado) return
+    useCarritoVenta.setState({ lineas: d.lineas })
+    setDescuentoTexto(mostrarNumero(d.descuentoGeneral))
+    setDescuentoValido(d.descuentoGeneral)
+    cab.hidratar(d.cabecera)
+    setTipo(retomar.tipo)
+    setCliente(d.cliente)
+    b.retomar(retomar.borradorId, d.version)
+    setRetomado(true)
+  }, [retomar, cargada.datos, retomado, cab, b])
+
+  if (retomar && !retomado) {
+    return (
+      <View style={{ flex: 1, backgroundColor: c.bg }}>
+        <TopBar title="Retomar borrador" leading={volver} />
+        <View style={{ padding: space[4] }}>
+          {cargada.error ? <Notice tone="peligro">{cargada.error}</Notice> : <ActivityIndicator color={c.brand} />}
+        </View>
+      </View>
+    )
+  }
 
   if (!cliente) {
     return (

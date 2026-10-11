@@ -24,6 +24,7 @@ const mockReplace = jest.fn()
 let mockTipo = 'Pedido'
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn(), back: mockBack, replace: mockReplace }),
+  useLocalSearchParams: () => ({}),
   Redirect: ({ href }: { href: string }) => mockBoton(`redirige a ${href}`, jest.fn()),
 }))
 jest.mock('expo-secure-store', () => ({ setItemAsync: jest.fn(), getItemAsync: jest.fn() }))

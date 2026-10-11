@@ -7,6 +7,7 @@ import type { TipoDocumento } from '@/features/clientes/components/SeleccionarCl
 import { proximoHabil, tiraDeDias } from '../lib/calendario'
 import { leerNumero, mostrarNumero } from '../lib/linea'
 import type { Cabecera } from '../lib/payload'
+import type { VentaCargada } from '../lib/hidratar'
 
 /**
  * Estado de la pestaña Cabecera (plan 9 §2.1). La fecha arranca en el próximo día hábil del
@@ -41,8 +42,15 @@ export function useCabeceraVenta(tipo: TipoDocumento) {
     flete: metodoEntrega === METODO_ENTREGA.Logistica && fleteLeido !== null ? fleteLeido : 0,
     observaciones,
   }
+  /** Carga la cabecera de una venta del servidor (retomar un borrador). */
+  const hidratar = (h: VentaCargada['cabecera']) => {
+    setMetodoEntrega(h.metodoEntrega)
+    setFecha(h.fecha)
+    setFleteTexto(h.flete > 0 ? mostrarNumero(h.flete) : '')
+    setObservaciones(h.observaciones)
+  }
   return {
-    cabecera, tira, setMetodoEntrega, setFecha, fleteTexto, setFleteTexto, fleteInvalido, observaciones, setObservaciones,
+    cabecera, tira, hidratar, setMetodoEntrega, setFecha, fleteTexto, setFleteTexto, fleteInvalido, observaciones, setObservaciones,
     comision, puedeCeder, cesionTexto, setCesionTexto, cesionError,
     porcentajeCedido: puedeCeder && !cesionError && cesionLeida ? cesionLeida : undefined,
   }
