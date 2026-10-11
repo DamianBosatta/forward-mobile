@@ -1,6 +1,6 @@
 import React from 'react'
 import { Alert, Text } from 'react-native'
-import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
+import { act, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { subDays } from 'date-fns'
 import { diaArgentina } from '@/src/utils/date'
@@ -125,5 +125,60 @@ describe('lista de ventas nueva', () => {
     expect(within(screen.getByTestId('two-pane-detail')).getByText('detalle v2')).toBeTruthy()
     expect(within(screen.getByTestId('two-pane-list')).getByRole('button', { name: /A00418/ })).toBeTruthy()
     expect(mockPush).not.toHaveBeenCalled()
+  })
+})
+
+describe('lista de ventas nueva: total del filtro (GET /Ventas/resumen)', () => {
+  const RESUMEN = '/api/v1/Ventas/resumen?'
+  /** El resumen que contesta el servidor; el resto de las URLs, como en el beforeEach. */
+  function conResumen(resumen: object) {
+    const base = mockGet.getMockImplementation()!
+    mockGet.mockImplementation((url: string) => (url.startsWith(RESUMEN) ? Promise.resolve(resumen) : base(url)))
+  }
+  function ultimoResumen(): URLSearchParams {
+    const urls = mockGet.mock.calls.map(([u]) => String(u)).filter((u) => u.startsWith(RESUMEN))
+    return new URLSearchParams(urls[urls.length - 1]!.split('?')[1])
+  }
+  /** Los filtros de una consulta, sin la paginación. */
+  const filtros = (q: URLSearchParams) => { q.delete('pageNumber'); q.delete('pageSize'); q.sort(); return q.toString() }
+
+  // forward-system #873: el resumen aplica tipo y estado y trae `cantidad`.
+  const servidorNuevo = { totalVendido: 6860919, pendientes: 3, porAutorizar: 1, entregadas: 20, cantidad: 61 }
+
+  it('en Pedidos suma el importe del servidor, pedido con los mismos filtros que la lista', async () => {
+    conResumen(servidorNuevo)
+    pantalla()
+    expect(await screen.findByText('Mostrando 2 de 61 · $ 6.860.919,00')).toBeTruthy()
+    expect(filtros(ultimoResumen())).toBe(filtros(ultimaConsulta()))
+    await userEvent.press(screen.getByRole('radio', { name: 'Entregado' }))
+    await userEvent.type(screen.getByLabelText('Buscar'), 'luis')
+    await waitFor(() => expect(ultimoResumen().get('searchTerm')).toBe('luis'))
+    expect(ultimoResumen().get('estado')).toBe('Entregada')
+    expect(ultimoResumen().get('tipoOperacion')).toBe('2')
+    expect(filtros(ultimoResumen())).toBe(filtros(ultimaConsulta()))
+  })
+
+  it('en Presupuestos y con Anulado solo la cantidad: el importe del servidor es de pedidos no anulados', async () => {
+    conResumen(servidorNuevo)
+    pantalla()
+    await screen.findByText('Mostrando 2 de 61 · $ 6.860.919,00')
+    await userEvent.press(screen.getByRole('radio', { name: 'Anulado' }))
+    expect(await screen.findByText('Mostrando 2 de 61')).toBeTruthy()
+    await userEvent.press(screen.getByRole('radio', { name: 'Todos' }))
+    await screen.findByText('Mostrando 2 de 61 · $ 6.860.919,00')
+    await userEvent.press(screen.getByRole('tab', { name: 'Presupuestos' }))
+    await waitFor(() => expect(ultimoResumen().get('tipoOperacion')).toBe('1'))
+    expect(await screen.findByText('Mostrando 2 de 61')).toBeTruthy()
+    expect(screen.queryByText(/6\.860\.919/)).toBeNull()
+  })
+
+  it('con el servidor anterior a #873 (resumen sin cantidad) queda el contador de la lista, sin importe', async () => {
+    // Ese resumen ignora tipo y estado: su total mezcla presupuestos y pedidos.
+    conResumen({ totalVendido: 999999, pendientes: 3, porAutorizar: 1, entregadas: 20 })
+    pantalla()
+    await waitFor(() => expect(mockGet.mock.calls.some(([u]) => String(u).startsWith(RESUMEN))).toBe(true))
+    expect(await screen.findByText('Mostrando 2 de 61')).toBeTruthy()
+    await act(async () => {})
+    expect(screen.queryByText(/999\.999/)).toBeNull()
   })
 })

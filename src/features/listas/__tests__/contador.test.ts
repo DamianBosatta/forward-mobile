@@ -26,4 +26,10 @@ describe('contador de listas paginadas', () => {
   it('un total de 0 se muestra', () => {
     expect(textoContador(0, 0)).toBe('Mostrando 0 de 0')
   })
+
+  it('con el importe del servidor lo suma al final; sin total no hay contador aunque haya importe', () => {
+    expect(textoContador(4, 61, '$ 6.860.919,00')).toBe('Mostrando 4 de 61 · $ 6.860.919,00')
+    expect(textoContador(4, 61, null)).toBe('Mostrando 4 de 61')
+    expect(textoContador(4, undefined, '$ 1,00')).toBeNull()
+  })
 })

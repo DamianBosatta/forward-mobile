@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { diaArgentina } from '@/src/utils/date'
-import { useBorradoresVentaMios, useInfiniteVentas } from '@/libs/api-client/ventas'
-import { itemsCargados, totalDelServidor, textoContador } from '@/features/listas/lib/contador'
+import { useBorradoresVentaMios, useInfiniteVentas, useVentasResumen } from '@/libs/api-client/ventas'
+import { itemsCargados, totalDelServidor } from '@/features/listas/lib/contador'
+import { contadorVentas } from '../lib/resumenVentas'
 import type { EstadoVenta, Venta } from '@/libs/api-client'
 
 export type PestanaVentas = 'presupuestos' | 'pedidos' | 'borradores'
@@ -24,7 +25,8 @@ export function fechaDesdePeriodo(periodo: PeriodoVentas, hoy: Date = new Date()
 /**
  * Lista de ventas con el formato nuevo (Bloque 9A, PR 2.1). Todo filtro va al servidor:
  * tipo, estado, período y búsqueda. Nada se filtra sobre las páginas cargadas, así que el
- * contador "Mostrando N de M" vale con cualquier filtro.
+ * contador "Mostrando N de M" vale con cualquier filtro. El resumen se pide con los mismos filtros
+ * y da M y el importe del filtro ("· $ X").
  */
 export function useVentasListaNueva() {
   const [pestana, setPestana] = useState<PestanaVentas>('pedidos')
@@ -39,17 +41,21 @@ export function useVentasListaNueva() {
   }, [busqueda])
 
   const esBorradores = pestana === 'borradores'
-  const ventas = useInfiniteVentas({
-    pageSize: 20,
+  const filtro = {
     tipoOperacion: TIPO[esBorradores ? 'pedidos' : pestana],
     estado: estado === 'todos' ? undefined : estado,
     fechaDesde: fechaDesdePeriodo(periodo),
     searchTerm: busquedaEnviada.length >= 2 ? busquedaEnviada : undefined,
-  }, { enabled: !esBorradores })
+  }
+  const ventas = useInfiniteVentas({ pageSize: 20, ...filtro }, { enabled: !esBorradores })
+  const resumen = useVentasResumen(filtro, { enabled: !esBorradores })
   const borradores = useBorradoresVentaMios(esBorradores)
 
   const items = useMemo(() => itemsCargados<Venta>(ventas.data?.pages), [ventas.data])
-  const contador = textoContador(items.length, totalDelServidor(ventas.data?.pages))
+  const contador = contadorVentas(items.length, totalDelServidor(ventas.data?.pages), resumen.data, {
+    tipoOperacion: filtro.tipoOperacion,
+    estados: filtro.estado ? [filtro.estado] : [],
+  })
 
   return {
     pestana, setPestana,
@@ -59,6 +65,8 @@ export function useVentasListaNueva() {
     ventas: items,
     contador,
     ventasQuery: ventas,
+    /** Deslizar para actualizar trae de nuevo la lista y su resumen, para que el contador no quede viejo. */
+    refrescar: () => Promise.all([ventas.refetch(), resumen.refetch()]),
     borradores: borradores.data ?? [],
     borradoresQuery: borradores,
   }

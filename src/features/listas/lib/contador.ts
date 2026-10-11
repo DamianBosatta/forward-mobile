@@ -25,8 +25,11 @@ export function totalDelServidor(pages: Pagina[] | undefined): number | undefine
   return typeof total === 'number' ? total : undefined
 }
 
-/** "Mostrando N de M"; null mientras el servidor no informó el total. */
-export function textoContador(cargados: number, total: number | undefined): string | null {
+/**
+ * "Mostrando N de M", con " · $ X" si llega el importe del filtro (ya formateado, del resumen del
+ * servidor); null mientras el servidor no informó el total.
+ */
+export function textoContador(cargados: number, total: number | undefined, importe?: string | null): string | null {
   if (total === undefined) return null
-  return `Mostrando ${cargados} de ${total}`
+  return importe ? `Mostrando ${cargados} de ${total} · ${importe}` : `Mostrando ${cargados} de ${total}`
 }

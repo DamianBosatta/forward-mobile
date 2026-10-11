@@ -125,7 +125,7 @@ export function ListaVentasNueva({ detalle }: Props) {
       onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) void q.fetchNextPage() }}
       onEndReachedThreshold={0.4}
       refreshing={q.isRefetching}
-      onRefresh={() => { void q.refetch() }}
+      onRefresh={() => { void l.refrescar() }}
       ListEmptyComponent={
         q.isLoading ? <ActivityIndicator color={c.brand} />
           : q.isError ? <Notice tone="peligro">No se pudieron cargar las ventas. Deslizá hacia abajo para reintentar.</Notice>
