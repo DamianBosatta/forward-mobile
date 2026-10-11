@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/libs/api-client/client'
 
 export interface CambioContrasena {
@@ -29,4 +29,29 @@ export async function cerrarSesionEnElServidor(): Promise<void> {
   } catch {
     // La salida local no depende del servidor.
   }
+}
+
+/** Una sesión abierta (refresh token vigente) del usuario. `device` es el User-Agent tal cual. */
+export interface SesionAbierta {
+  id: string
+  createdAt: string | null
+  expiresAt: string | null
+  device: string
+  ip: string
+}
+
+const sesionesKey = ['cuenta', 'sesiones'] as const
+
+/** GET /api/v1/Sessions: las sesiones vigentes del usuario. */
+export function useSesiones() {
+  return useQuery({ queryKey: sesionesKey, queryFn: () => api.get<SesionAbierta[]>('/api/v1/Sessions'), staleTime: 60_000 })
+}
+
+/** DELETE /api/v1/Sessions/{id}: cierra esa sesión. */
+export function useCerrarSesionAbierta() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.delete<void>(`/api/v1/Sessions/${encodeURIComponent(id)}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: sesionesKey }),
+  })
 }

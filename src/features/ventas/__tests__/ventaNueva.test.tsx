@@ -16,6 +16,7 @@ jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ dispatch:
 jest.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ clear: jest.fn() }),
   useMutation: () => ({ mutate: jest.fn(), reset: jest.fn(), isPending: false, isError: false, isSuccess: false }),
+  useQuery: () => ({ data: undefined, isLoading: false, isError: false }),
 }))
 jest.mock('@/core/ui', () => ({ ForwardLogo: () => null, ConfirmModal: () => null }))
 jest.mock('@/core/utils/haptics', () => ({ safeHaptics: { impact: jest.fn(), notification: jest.fn() } }))

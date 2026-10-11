@@ -11,6 +11,7 @@ import { safeHaptics } from '@/core/utils/haptics'
 import { useVentaNuevaStore, usePuedeProbarVentaNueva } from '@/features/ventas/lib/ventaNueva'
 import { CambiarContrasena } from '@/features/cuenta/components/CambiarContrasena'
 import { cerrarSesionEnElServidor } from '@/features/cuenta/api/cuenta'
+import { SesionesAbiertas } from '@/features/cuenta/components/SesionesAbiertas'
 
 const THEME_OPTIONS: SegmentedOption<ThemeMode>[] = [
   { value: 'light', label: 'Claro' },
@@ -111,6 +112,10 @@ export default function PerfilScreen() {
 
         <View style={tarjeta}>
           <CambiarContrasena email={user?.email} />
+        </View>
+
+        <View style={tarjeta}>
+          <SesionesAbiertas />
         </View>
 
         <View style={tarjeta}>

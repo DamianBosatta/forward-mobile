@@ -11,11 +11,17 @@ import { useAuthStore } from '@/libs/store/auth.store'
 import PerfilScreen from '../../../../app/(tabs)/perfil'
 
 const mockPost = jest.fn()
+const mockGet = jest.fn()
+const mockDelete = jest.fn()
 jest.mock('@/core/api/client', () => ({
   API_URL: 'https://api.forward-gestion.com.ar',
   ENV_PROD: 'https://api.forward-gestion.com.ar', ENV_DEV: 'https://dev', ENV_LOCAL: 'http://local',
   setApiUrl: jest.fn(),
-  api: { post: (url: string, body: unknown) => mockPost(url, body) },
+  api: {
+    post: (url: string, body: unknown) => mockPost(url, body),
+    get: (url: string) => mockGet(url),
+    delete: (url: string) => mockDelete(url),
+  },
 }))
 const mockReplace = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: mockReplace }) }))
@@ -53,6 +59,8 @@ const botonCambiar = () => screen.getByRole('button', { name: 'Cambiar contrase�
 beforeEach(() => {
   jest.clearAllMocks()
   mockPost.mockResolvedValue(true)
+  mockGet.mockReset().mockResolvedValue([])
+  mockDelete.mockResolvedValue(undefined)
 })
 
 describe('Mi cuenta', () => {
@@ -111,5 +119,40 @@ describe('Mi cuenta', () => {
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Sessions/logout', {})
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
+  })
+})
+
+const SESIONES = [
+  { id: 't1', createdAt: '2026-10-09T10:58:00Z', expiresAt: '2026-11-08T10:58:00Z', device: 'okhttp/4.12.0', ip: '181.45.12.33' },
+  { id: 't 2', createdAt: '2026-10-06T21:20:00Z', expiresAt: '2026-11-05T21:20:00Z', device: 'Mozilla/5.0 (Windows NT 10.0) Chrome/129', ip: '200.68.141.7' },
+]
+
+describe('Mi cuenta: sesiones abiertas', () => {
+  it('lista lo que manda el servidor, en hora argentina y sin estados inventados', async () => {
+    usuario()
+    mockGet.mockResolvedValue(SESIONES)
+    pintar()
+    expect(await screen.findByText('Sesiones abiertas (2)')).toBeTruthy()
+    expect(mockGet).toHaveBeenCalledWith('/api/v1/Sessions')
+    expect(screen.getByText('okhttp/4.12.0')).toBeTruthy()
+    expect(screen.getByText('IP 181.45.12.33')).toBeTruthy()
+    expect(screen.getByText('Inició el 9 oct, 07:58 · Vence el 8 nov')).toBeTruthy()
+    expect(screen.queryByText(/este dispositivo|activa ahora|última actividad/i)).toBeNull()
+  })
+
+  it('cerrar una sesión la revoca en el servidor y vuelve a pedir la lista', async () => {
+    usuario()
+    mockGet.mockResolvedValueOnce(SESIONES).mockResolvedValueOnce([SESIONES[0]])
+    pintar()
+    await userEvent.press(await screen.findByLabelText('Cerrar la sesión de Mozilla/5.0 (Windows NT 10.0) Chrome/129'))
+    expect(mockDelete).toHaveBeenCalledWith('/api/v1/Sessions/t%202')
+    expect(await screen.findByText('Sesiones abiertas (1)')).toBeTruthy()
+  })
+
+  it('si no se pueden cargar, lo dice con el mensaje del servidor', async () => {
+    usuario()
+    mockGet.mockRejectedValue(new Error('Servicio no disponible'))
+    pintar()
+    expect(await screen.findByText('Servicio no disponible')).toBeTruthy()
   })
 })

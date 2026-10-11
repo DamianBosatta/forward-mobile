@@ -1,0 +1,61 @@
+import React from 'react'
+import { ActivityIndicator, Text, View } from 'react-native'
+import { Button, Notice } from '@/core/ui/fw'
+import { space, typeScale, useColors } from '@/libs/theme'
+import { parseDateSafe, partesArgentina } from '@/src/utils/date'
+import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
+import { useCerrarSesionAbierta, useSesiones } from '../api/cuenta'
+
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+const dos = (n: number) => String(n).padStart(2, '0')
+
+/** "9 oct, 07:58" en hora argentina; sin fecha válida, "—". */
+export function fechaSesion(iso: string | null | undefined, conHora = true): string {
+  const f = parseDateSafe(iso)
+  if (!f) return '—'
+  const p = partesArgentina(f.getTime())
+  return `${p.dia} ${MESES[p.mes]}${conHora ? `, ${dos(p.hora)}:${dos(p.minuto)}` : ''}`
+}
+
+/**
+ * Sesiones abiertas (lámina MiCuenta). Muestra lo que manda el servidor, sin estados
+ * inventados: no hay forma de saber cuál es la de este teléfono, así que no se marca.
+ */
+export function SesionesAbiertas() {
+  const c = useColors()
+  const q = useSesiones()
+  const cerrar = useCerrarSesionAbierta()
+  const sesiones = q.data ?? []
+  const secundario = [typeScale.secundario, { color: c.textSecondary }]
+
+  return (
+    <View style={{ gap: space[3] }}>
+      <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>
+        {q.data ? `Sesiones abiertas (${sesiones.length})` : 'Sesiones abiertas'}
+      </Text>
+      <Text style={secundario}>
+        Dispositivos donde entraste con tu usuario y la sesión sigue vigente. Si no reconocés uno, cerralo y cambiá la contraseña. Si cerrás la de este teléfono, te va a pedir entrar de nuevo.
+      </Text>
+      {q.isLoading ? <ActivityIndicator color={c.brand} /> : null}
+      {q.isError ? <Notice tone="peligro">{mensajeDelServidor(q.error, 'No se pudieron cargar las sesiones.')}</Notice> : null}
+      {cerrar.isError ? <Notice tone="peligro">{mensajeDelServidor(cerrar.error, 'No se pudo cerrar la sesión.')}</Notice> : null}
+      {sesiones.map((s) => (
+        <View key={s.id} style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], paddingTop: space[3], borderTopWidth: 1, borderTopColor: c.border }}>
+          <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
+            <Text numberOfLines={2} style={[typeScale.cuerpo, { color: c.text }]}>{s.device}</Text>
+            <Text style={secundario}>{`IP ${s.ip}`}</Text>
+            <Text style={secundario}>{`Inició el ${fechaSesion(s.createdAt)} · Vence el ${fechaSesion(s.expiresAt, false)}`}</Text>
+          </View>
+          <Button
+            label="Cerrar"
+            variant="secundario"
+            accessibilityLabel={`Cerrar la sesión de ${s.device}`}
+            loading={cerrar.isPending && cerrar.variables === s.id}
+            onPress={() => cerrar.mutate(s.id)}
+          />
+        </View>
+      ))}
+      {q.data && sesiones.length === 0 ? <Text style={secundario}>No hay sesiones abiertas.</Text> : null}
+    </View>
+  )
+}
