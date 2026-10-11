@@ -326,7 +326,7 @@ describe('StockDetailSheet — ver movimientos affordance', () => {
       <StockDetailSheet
         item={item}
         catalogoItem={catalogoItem}
-        userRoles={['Administrador']}
+        puedeVerCostos
         visible
         onClose={jest.fn()}
       />
@@ -342,7 +342,7 @@ describe('StockDetailSheet — ver movimientos affordance', () => {
       <StockDetailSheet
         item={item}
         catalogoItem={null}
-        userRoles={['Vendedor']}
+        puedeVerCostos={false}
         visible
         onClose={jest.fn()}
       />

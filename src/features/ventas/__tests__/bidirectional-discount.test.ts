@@ -93,33 +93,16 @@ describe('precioFromPct', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('canViewCost', () => {
-  it('returns false for Empleado', () => {
-    expect(canViewCost(['Empleado'])).toBe(false)
+  // Desde 0.2c la decide CAP_VER_COSTOS en user.permissions; el rol ya no cuenta.
+  it('returns false without CAP_VER_COSTOS', () => {
+    expect(canViewCost([{ module: 'MOD_VENTAS', canRead: true }])).toBe(false)
   })
 
-  it('returns true for Administrador', () => {
-    expect(canViewCost(['Administrador'])).toBe(true)
+  it('returns true with CAP_VER_COSTOS:Read', () => {
+    expect(canViewCost([{ module: 'CAP_VER_COSTOS', canRead: true }])).toBe(true)
   })
 
-  it('returns true for AdministradorSistemas', () => {
-    expect(canViewCost(['AdministradorSistemas'])).toBe(true)
-  })
-
-  it('returns true for Gerencia', () => {
-    expect(canViewCost(['Gerencia'])).toBe(true)
-  })
-
-  it('returns false for empty roles array', () => {
+  it('returns false for empty permissions', () => {
     expect(canViewCost([])).toBe(false)
-  })
-
-  it('returns true when cost role is mixed with non-cost roles', () => {
-    expect(canViewCost(['Empleado', 'Gerencia'])).toBe(true)
-  })
-
-  it('mirrors AppRoles.CostViewingRoles — case sensitive', () => {
-    // Role names from server are exactly: AdministradorSistemas, Administrador, Gerencia, Empleado
-    expect(canViewCost(['administrador'])).toBe(false)
-    expect(canViewCost(['GERENCIA'])).toBe(false)
   })
 })

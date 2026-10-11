@@ -41,8 +41,8 @@ export default function InventarioScreen() {
   const isDark = useIsDark()
   const insets = useSafeAreaInsets()
   const { user } = useAuthStore()
-  const userRoles = user?.roles ?? []
-  const showCost = canViewCost(userRoles as string[])
+  // CAP_VER_COSTOS (capacidad otorgable), no el rol.
+  const showCost = canViewCost(user?.permissions)
 
   const {
     searchTerm, setSearchTerm,
@@ -297,7 +297,7 @@ export default function InventarioScreen() {
         <StockDetailSheet
           item={detailItem}
           catalogoItem={catalogoForDetail}
-          userRoles={userRoles as string[]}
+          puedeVerCostos={showCost}
           visible={detailItem !== null}
           onClose={() => setDetailItem(null)}
         />

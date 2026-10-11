@@ -1,5 +1,4 @@
 import { View, Text, Platform } from 'react-native'
-import { canViewCost } from '../lib/descuentos'
 import { useColors } from '@/libs/theme'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -20,8 +19,11 @@ interface BandChipProps {
    * "Premium" band price. Visible to cost roles only; null/absent for others.
    */
   precioPremium?: number | null
-  /** Roles of the authenticated user — gates which bands are visible. */
-  userRoles: string[]
+  /**
+   * CAP_VER_COSTOS del usuario (useAuthStore canSeeCosts / canViewCost(permissions)).
+   * Sin ella no se dibuja ninguna banda.
+   */
+  puedeVerCostos: boolean
 }
 
 interface Tier {
@@ -49,11 +51,11 @@ function formatMoney(value: number): string {
 /**
  * Presentational price-band chips for a catalog product row (PR-2e-a).
  *
- * Cost roles (Administrador, AdministradorSistemas, Gerente) see three tiers:
+ * Users with CAP_VER_COSTOS see three tiers:
  *   - Precio mínimo    → danger (red)
  *   - Precio adecuado  → warning (amber)
  *   - Precio premium   → success (green)
- * Non-cost roles (Vendedor) see only "Precio mínimo".
+ * Without the capability nothing is rendered.
  *
  * A chip is omitted when its value is null. The component is 100% visual — no
  * client-side cost math; it renders the server-supplied band numbers.
@@ -62,12 +64,11 @@ export function BandChip({
   precioMinimoRentable,
   precioAdecuado,
   precioPremium,
-  userRoles,
+  puedeVerCostos,
 }: BandChipProps) {
   const colors = useColors()
-  const userCanViewCost = canViewCost(userRoles)
 
-  const tiers: Tier[] = userCanViewCost
+  const tiers: Tier[] = puedeVerCostos
     ? [
         { label: 'Precio mínimo', value: precioMinimoRentable, colorKey: 'danger' },
         { label: 'Precio adecuado', value: precioAdecuado, colorKey: 'warning' },

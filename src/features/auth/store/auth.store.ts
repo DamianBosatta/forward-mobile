@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { zustandStorage } from '@/core/utils/storage'
 import type { AppRole, AppModule, ModulePermission } from '@/libs/api-client/types'
+import { hasCapability, type AppCapability } from '../lib/capabilities'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Auth Store — JWT tokens + user profile + permisos RCUD del token
@@ -45,6 +46,10 @@ interface AuthState {
   canDo:    (module: AppModule, action: 'read' | 'create' | 'update' | 'delete') => boolean
   isAdmin:  () => boolean
   isSuperAdmin: () => boolean
+  /** Capacidad otorgable (CAP_*) leída de user.permissions — nunca del rol. */
+  hasCapability: (capability: AppCapability) => boolean
+  /** CAP_VER_COSTOS: sin ella no se dibuja ningún costo ni margen. */
+  canSeeCosts:   () => boolean
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -82,6 +87,10 @@ export const useAuthStore = create<AuthState>()(
         const roles = get().user?.roles ?? []
         return roles.includes('AdministradorSistemas') || roles.includes('Administrador')
       },
+
+      hasCapability: (capability) => hasCapability(get().user?.permissions, capability),
+
+      canSeeCosts: () => get().hasCapability('CAP_VER_COSTOS'),
 
       canDo: (module, action) => {
         if (get().isSuperAdmin()) return true

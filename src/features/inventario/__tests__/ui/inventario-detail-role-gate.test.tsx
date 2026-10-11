@@ -1,13 +1,13 @@
 /**
  * FASE 2 — Role-gate render tests for StockDetailSheet (mobile).
  *
- * Strategy: mount the REAL StockDetailSheet with real canViewCost logic.
+ * Strategy: mount the REAL StockDetailSheet. Desde 0.2c el contenedor decide
+ * `puedeVerCostos` con CAP_VER_COSTOS (no con el rol) y la hoja solo lo respeta.
  * Asserts:
- *   - Rentabilidad section (testID="rentabilidad-section") is NOT in tree for Empleado.
- *   - Rentabilidad section IS in tree for cost roles (Administrador, Gerencia).
+ *   - Sin la capacidad no hay sección Rentabilidad, ni costo, ni bandas, ni sus etiquetas.
+ *   - Con la capacidad, la sección muestra costo real y las tres bandas.
  *
  * Mirrors the web InventarioDetailSheet render tests (FASE 1).
- * Non-hollow: uses real canViewCost from descuentos.ts (no inline copy).
  */
 
 import React from 'react'
@@ -126,86 +126,42 @@ function makeCatalogoItem(): CatalogoStockItem {
 // Rentabilidad section — role gating
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('StockDetailSheet — Rentabilidad section role gate', () => {
+describe('StockDetailSheet — Rentabilidad section gate (CAP_VER_COSTOS)', () => {
   const item = makeStockItem()
   const catalogoItem = makeCatalogoItem()
 
-  it('Empleado: Rentabilidad section is NOT rendered', () => {
-    const { queryByTestId } = render(
+  it('sin la capacidad: no se dibuja ningún costo ni margen, ni sus etiquetas', () => {
+    const { queryByTestId, queryByText } = render(
       <StockDetailSheet
         item={item}
         catalogoItem={catalogoItem}
-        userRoles={['Empleado']}
+        puedeVerCostos={false}
         visible
         onClose={jest.fn()}
       />
     )
     expect(queryByTestId('rentabilidad-section')).toBeNull()
+    expect(queryByText('Rentabilidad')).toBeNull()
+    expect(queryByText('Costo real')).toBeNull()
+    expect(queryByText('Precio adecuado')).toBeNull()
+    expect(queryByText('Precio premium')).toBeNull()
   })
 
-  it('Empleado role (non-cost): Rentabilidad section is NOT rendered', () => {
-    const { queryByTestId } = render(
+  it('con la capacidad: sección con costo real y las tres bandas', () => {
+    const { queryByTestId, getByText } = render(
       <StockDetailSheet
         item={item}
         catalogoItem={catalogoItem}
-        userRoles={['Empleado']}
-        visible
-        onClose={jest.fn()}
-      />
-    )
-    expect(queryByTestId('rentabilidad-section')).toBeNull()
-  })
-
-  it('empty roles: Rentabilidad section is NOT rendered', () => {
-    const { queryByTestId } = render(
-      <StockDetailSheet
-        item={item}
-        catalogoItem={catalogoItem}
-        userRoles={[]}
-        visible
-        onClose={jest.fn()}
-      />
-    )
-    expect(queryByTestId('rentabilidad-section')).toBeNull()
-  })
-
-  it('Administrador: Rentabilidad section IS rendered', () => {
-    const { queryByTestId } = render(
-      <StockDetailSheet
-        item={item}
-        catalogoItem={catalogoItem}
-        userRoles={['Administrador']}
+        puedeVerCostos
         visible
         onClose={jest.fn()}
       />
     )
     expect(queryByTestId('rentabilidad-section')).not.toBeNull()
-  })
-
-  it('Gerencia: Rentabilidad section IS rendered', () => {
-    const { queryByTestId } = render(
-      <StockDetailSheet
-        item={item}
-        catalogoItem={catalogoItem}
-        userRoles={['Gerencia']}
-        visible
-        onClose={jest.fn()}
-      />
-    )
-    expect(queryByTestId('rentabilidad-section')).not.toBeNull()
-  })
-
-  it('AdministradorSistemas: Rentabilidad section IS rendered', () => {
-    const { queryByTestId } = render(
-      <StockDetailSheet
-        item={item}
-        catalogoItem={catalogoItem}
-        userRoles={['AdministradorSistemas']}
-        visible
-        onClose={jest.fn()}
-      />
-    )
-    expect(queryByTestId('rentabilidad-section')).not.toBeNull()
+    expect(getByText('Costo real')).toBeTruthy()
+    expect(getByText('Precio mínimo')).toBeTruthy()
+    expect(getByText('Precio adecuado')).toBeTruthy()
+    expect(getByText('Precio premium')).toBeTruthy()
   })
 
   it('sheet is not rendered when item is null', () => {
@@ -213,7 +169,7 @@ describe('StockDetailSheet — Rentabilidad section role gate', () => {
       <StockDetailSheet
         item={null}
         catalogoItem={null}
-        userRoles={['Administrador']}
+        puedeVerCostos
         visible
         onClose={jest.fn()}
       />
@@ -233,7 +189,7 @@ describe('StockDetailSheet — Disponibilidad labels', () => {
       <StockDetailSheet
         item={item}
         catalogoItem={null}
-        userRoles={[]}
+        puedeVerCostos={false}
         visible
         onClose={jest.fn()}
       />

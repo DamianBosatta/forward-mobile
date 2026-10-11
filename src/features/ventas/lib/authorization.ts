@@ -5,10 +5,11 @@
  * or any other context without side effects.
  */
 
-import { canViewCost } from './descuentos'
+import type { ModulePermission } from '@/libs/api-client/types'
+import { hasCapability } from '@/features/auth/lib/capabilities'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// canAuthorizeVenta — combined estado + cost-role gate
+// canAuthorizeVenta — combined estado + CAP_AUTORIZAR_VENTA gate
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Estado values that require authorization (numeric string from backend). */
@@ -17,17 +18,19 @@ const AUTHORIZATION_STATES = new Set(['9', 'PendienteAutorizacion'])
 /**
  * Returns true when the user is allowed to see and trigger the Autorizar action.
  *
- * Gate: estado is '9' / 'PendienteAutorizacion' AND the user holds a cost role
- * (Administrador | AdministradorSistemas | Gerente).
- *
- * Mirrors web venta-detail-client.tsx: `estadoStr === '9' && canViewCost(userRoles)`.
+ * Gate: estado is '9' / 'PendienteAutorizacion' AND the user holds CAP_AUTORIZAR_VENTA.
+ * Antes se colgaba de canViewCost (rol); autorizar no es ver costos, y el backend contesta
+ * 403 chequeando CAP_AUTORIZAR_VENTA. Mirrors web canAutorizarVenta(permissions).
  * Server is authoritative — this is UX-only (defense in depth).
  *
- * @param estado  - Venta estado value (numeric string or enum string from backend)
- * @param roles   - User role array from the mobile auth store
+ * @param estado      - Venta estado value (numeric string or enum string from backend)
+ * @param permissions - `user.permissions` from the mobile auth store
  */
-export function canAuthorizeVenta(estado: string | number, roles: string[]): boolean {
-  return AUTHORIZATION_STATES.has(String(estado)) && canViewCost(roles)
+export function canAuthorizeVenta(
+  estado: string | number,
+  permissions: ModulePermission[] | null | undefined,
+): boolean {
+  return AUTHORIZATION_STATES.has(String(estado)) && hasCapability(permissions, 'CAP_AUTORIZAR_VENTA')
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

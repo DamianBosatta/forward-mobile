@@ -14,6 +14,7 @@ import {
 } from '@/libs/api-client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { canAuthorizeVenta } from '@/features/ventas/lib/authorization'
+import { canViewCost } from '@/features/ventas/lib/descuentos'
 import { AuthorizationModal } from '@/features/ventas/components/AuthorizationModal'
 import { Linking } from 'react-native'
 import { useColors, useIsDark, BRAND, tokens } from '@/libs/theme'
@@ -585,8 +586,8 @@ export default function VentaDetailScreen() {
           </GlassCard>
         </MotiView>
 
-        {/* ── Rentabilidad de la Venta (cost roles only — gated by precioCostoSnapshot presence) ── */}
-        {puedeVerRentabilidad(
+        {/* ── Rentabilidad de la Venta — CAP_VER_COSTOS y además el snapshot de costo que el servidor solo manda con ella ── */}
+        {canViewCost(user?.permissions) && puedeVerRentabilidad(
           detalles.map((d: any) => ({
             precioUnitario: d.precioUnitario ?? 0,
             precioCostoSnapshot: d.precioCostoSnapshot ?? null,
@@ -831,7 +832,7 @@ export default function VentaDetailScreen() {
           actionColor = '#6366f1';
           actionFn = handleConvertir;
         }
-        else if (canAuthorizeVenta(s, user?.roles ?? [])) {
+        else if (canAuthorizeVenta(s, user?.permissions)) {
           actionLabel = 'Autorizar Pedido';
           actionColor = BRAND.orange;
           actionFn = () => setShowAuthModal(true);
@@ -881,7 +882,7 @@ export default function VentaDetailScreen() {
         )
       })()}
 
-      {canAuthorizeVenta(String(venta?.estado), user?.roles ?? []) && (
+      {canAuthorizeVenta(String(venta?.estado), user?.permissions) && (
         <AuthorizationModal
           ventaId={id ?? ''}
           version={venta?.version ?? 0}

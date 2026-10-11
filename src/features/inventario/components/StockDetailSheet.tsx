@@ -28,7 +28,6 @@ import { getFullImageUrl } from '@/libs/api-client'
 import type { StockItem } from '@/libs/api-client/types'
 import type { CatalogoStockItem } from '@/libs/api-client/productos'
 import { BandChip } from '@/features/ventas/components/BandChip'
-import { canViewCost } from '@/features/ventas/lib/descuentos'
 import { safeHaptics } from '@/core/utils/haptics'
 import { derivarEstadoAlerta } from '../lib/alert-utils'
 import { StockMovimientosSheet } from './StockMovimientosSheet'
@@ -40,7 +39,8 @@ import { StockMovimientosSheet } from './StockMovimientosSheet'
 interface StockDetailSheetProps {
   item: StockItem | null
   catalogoItem?: CatalogoStockItem | null
-  userRoles: string[]
+  /** CAP_VER_COSTOS — sin ella no se dibuja la sección Rentabilidad (costo ni bandas). */
+  puedeVerCostos: boolean
   visible: boolean
   onClose: () => void
 }
@@ -78,13 +78,12 @@ function DisponibilidadRow({ label, value, color, textColor }: {
 export function StockDetailSheet({
   item,
   catalogoItem,
-  userRoles,
+  puedeVerCostos,
   visible,
   onClose,
 }: StockDetailSheetProps) {
   const colors = useColors()
   const isDark = useIsDark()
-  const showCost = canViewCost(userRoles)
   const [isMovimientosOpen, setIsMovimientosOpen] = useState(false)
 
   if (!item) return null
@@ -281,8 +280,8 @@ export function StockDetailSheet({
             )}
           </View>
 
-          {/* ── Rentabilidad (cost roles only) ────────────────────────── */}
-          {showCost && (
+          {/* ── Rentabilidad (CAP_VER_COSTOS only) ────────────────────── */}
+          {puedeVerCostos && (
             <View
               testID="rentabilidad-section"
               style={[
@@ -303,7 +302,7 @@ export function StockDetailSheet({
                 precioMinimoRentable={catalogoItem?.precioMinimoRentable ?? null}
                 precioAdecuado={catalogoItem?.precioAdecuado ?? null}
                 precioPremium={catalogoItem?.precioPremium ?? null}
-                userRoles={userRoles}
+                puedeVerCostos={puedeVerCostos}
               />
 
               {/* Costo real */}
