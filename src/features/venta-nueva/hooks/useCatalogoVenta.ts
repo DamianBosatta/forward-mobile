@@ -50,7 +50,8 @@ export function useCatalogoVenta(busqueda: string) {
     return todos.filter((p) => coincide(p, t))
   }, [query.data, termino])
 
-  return { productos, isLoading: query.isLoading }
+  // `cargado`: hay un catálogo del servidor (aunque un refresco posterior haya fallado); `isError`: no lo hay.
+  return { productos, isLoading: query.isLoading, cargado: query.data !== undefined, isError: query.data === undefined && query.isError, reintentar: query.refetch }
 }
 
 function normalizar(texto: string): string {

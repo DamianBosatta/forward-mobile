@@ -116,7 +116,12 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title={abrir.modo === 'retomar' ? 'Retomar borrador' : abrir.modo === 'editar' ? 'Editar venta' : 'Duplicar venta'} leading={volver} />
         <View style={{ padding: space[4] }}>
-          {cargada.error ? <Notice tone="peligro">{cargada.error}</Notice> : <ActivityIndicator color={c.brand} />}
+          {cargada.error ? (
+            <View style={{ gap: space[3] }}>
+              <Notice tone="peligro">{cargada.error}</Notice>
+              <Button label="Reintentar" variant="secundario" onPress={cargada.reintentar} />
+            </View>
+          ) : <ActivityIndicator color={c.brand} />}
         </View>
       </View>
     )

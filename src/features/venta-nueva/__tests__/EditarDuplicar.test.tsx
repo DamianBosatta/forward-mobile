@@ -124,6 +124,26 @@ describe('editar y duplicar (PR 2.9b)', () => {
     expect(mockReplace).not.toHaveBeenCalled()
   })
 
+  it('si el catálogo de hoy no llega, no hidrata con lo guardado: muestra el error y Reintentar', async () => {
+    let catalogoFalla = true
+    mockGet.mockImplementation((url: string) => {
+      if (url === '/api/v1/Ventas/v9') return Promise.resolve(venta)
+      if (url === '/api/v1/socios-comerciales/c7') return Promise.resolve(socio)
+      if (url.startsWith('/api/v1/Productos/catalogo-stock')) {
+        return catalogoFalla ? Promise.reject(new ApiError(500, 'Error interno')) : Promise.resolve({ items: [pala], hasNextPage: false })
+      }
+      return Promise.resolve(undefined)
+    })
+    abrir({ modo: 'duplicar', ventaId: 'v9' })
+    expect(await screen.findByText('No se pudo traer el catálogo con los precios y el stock de hoy.')).toBeTruthy()
+    expect(screen.queryByText('Nuevo pedido')).toBeNull()
+    expect(mockPost).not.toHaveBeenCalled()
+    catalogoFalla = false
+    await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByText('Nuevo pedido')).toBeTruthy()
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c7', depositoId: DEPOSITO_CENTRAL_ID }))
+  })
+
   it('duplicar crea un borrador nuevo para el mismo cliente y le autoguarda las líneas, sin copiar la fecha', async () => {
     abrir({ modo: 'duplicar', ventaId: 'v9' })
     expect(await screen.findByText('Nuevo pedido')).toBeTruthy()
