@@ -9,6 +9,8 @@ export interface SociosParams {
   tipo?:       1 | 2        // 1 = Cliente, 2 = Proveedor
   activo?:     boolean | null
   search?:     string
+  /** Cartera propia: el servidor acota a los clientes del vendedor y a los "de la casa" (management ve todo). */
+  agenda?:     boolean
   pageNumber?: number
   pageSize?:   number
 }
@@ -66,6 +68,7 @@ export function useInfiniteSocios(params: SociosParams = {}) {
       if (params.tipo !== undefined) sp.append('tipo', String(params.tipo))
       if (params.activo !== undefined && params.activo !== null) sp.append('activo', String(params.activo))
       if (params.search) sp.append('searchTerm', params.search)
+      if (params.agenda) sp.append('agenda', 'true')
 
       return api.get<PagedResult<SocioComercial>>(`/api/v1/socios-comerciales?${sp}`)
     },
