@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { api } from './client'
 import { buildAnularCompraPayload } from './anular-compra'
 import type { Compra, CompraDtoList, CompraDto, PagedResult, CreateCompraRequest } from './types'
@@ -73,6 +73,7 @@ export function useInfiniteCompras(params: ComprasListParams = {}) {
       return undefined
     },
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -85,6 +86,7 @@ export function useComprasResumen(params: ComprasFiltroParams = {}) {
     queryKey: comprasKeys.resumen(params),
     queryFn: () => api.get<ComprasResumenDto>(`/api/v1/Compras/resumen?${filtroQuery(params)}`),
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   })
 }
 

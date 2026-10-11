@@ -67,16 +67,44 @@ describe('useComprasList', () => {
     expect(args.fechaHasta).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 
-  it('debe filtrar por termino de busqueda', () => {
-    const { result } = renderHook(() => useComprasList())
+  it('la búsqueda se debouncea: tipear rápido pide una sola vez con el término final', () => {
+    jest.useFakeTimers()
+    try {
+      const { result } = renderHook(() => useComprasList())
+      const terminos = () =>
+        (useInfiniteCompras as jest.Mock).mock.calls.map(c => c[0].searchTerm)
 
-    act(() => {
-      result.current.setSearchTerm('prov a')
-    })
+      act(() => { result.current.setSearchTerm('pr') })
+      act(() => { jest.advanceTimersByTime(100) })
+      act(() => { result.current.setSearchTerm('prov') })
+      act(() => { jest.advanceTimersByTime(100) })
+      act(() => { result.current.setSearchTerm('  prov a  ') })
 
-    // la búsqueda ahora va al servidor: el hook la pasa en los parámetros
-    const ultimo = (useInfiniteCompras as jest.Mock).mock.calls.at(-1)[0]
-    expect(ultimo.searchTerm).toBe('prov a')
+      // antes de cumplirse la espera, ningún término intermedio llegó a las queries
+      expect(terminos().every(t => t === undefined)).toBe(true)
+      expect((useComprasResumen as jest.Mock).mock.calls.every(c => c[0].searchTerm === undefined)).toBe(true)
+
+      act(() => { jest.advanceTimersByTime(300) })
+
+      const ultimo = (useInfiniteCompras as jest.Mock).mock.calls.at(-1)[0]
+      expect(ultimo.searchTerm).toBe('prov a')
+      expect((useComprasResumen as jest.Mock).mock.calls.at(-1)[0].searchTerm).toBe('prov a')
+      expect(new Set(terminos().filter(Boolean))).toEqual(new Set(['prov a']))
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('una búsqueda de solo espacios no llega al servidor', () => {
+    jest.useFakeTimers()
+    try {
+      const { result } = renderHook(() => useComprasList())
+      act(() => { result.current.setSearchTerm('    ') })
+      act(() => { jest.advanceTimersByTime(400) })
+      expect((useInfiniteCompras as jest.Mock).mock.calls.at(-1)[0].searchTerm).toBeUndefined()
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   it('debe filtrar por estado', () => {

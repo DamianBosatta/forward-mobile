@@ -87,13 +87,14 @@ describe('ComprasListScreen UI', () => {
       comprasByMonth: [{}]
     })
 
-    const { getByText } = render(<ComprasListScreen />)
+    const { getByText, queryByText } = render(<ComprasListScreen />)
 
     // Header
     expect(getByText('COMPRAS')).toBeTruthy()
     // KPIs
     expect(getByText('Órdenes')).toBeTruthy()
-    expect(getByText('Inversión')).toBeTruthy()
+    expect(queryByText('Inversión')).toBeNull()
+    expect(getByText('Pendientes')).toBeTruthy()
     expect(getByText('Mostrando 40 de 137')).toBeTruthy()
     // Card item
     expect(getByText('Proveedor A')).toBeTruthy()

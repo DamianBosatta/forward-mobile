@@ -281,7 +281,6 @@ export default function ComprasListScreen() {
               stats={[
                 { key: 'ordenes', label: 'Órdenes', value: totalCount === undefined ? '—' : String(totalCount), icon: ShoppingBag, color: colors.text },
                 { key: 'pendientes', label: 'Pendientes', value: pendCount === undefined ? '—' : String(pendCount), icon: TrendingUp, color: BRAND.blue },
-                { key: 'inversion', label: 'Inversión', value: totalMonto === undefined ? '—' : `$${(totalMonto / 1000).toFixed(0)}K`, icon: DollarSign, color: BRAND.lime },
               ]}
             />
           </View>

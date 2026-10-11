@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useInfiniteCompras, useComprasResumen } from '@/libs/api-client/compras'
 import { useColors } from '@/libs/theme'
 import { getCompraStatusConfig } from '@/core/constants/status_compras'
@@ -28,7 +28,13 @@ export function useComprasList() {
   const ultimoDia = new Date(selected.year, selected.month + 1, 0).getDate()
   const fechaDesde = `${selected.year}-${pad(selected.month + 1)}-01`
   const fechaHasta = `${selected.year}-${pad(selected.month + 1)}-${pad(ultimoDia)}`
-  const busqueda = searchTerm.length >= 2 ? searchTerm : undefined
+  // La búsqueda va al servidor: sin espera, cada tecla cambiaba las keys de la lista y del resumen.
+  const [terminoDebounced, setTerminoDebounced] = useState('')
+  useEffect(() => {
+    const t = setTimeout(() => setTerminoDebounced(searchTerm.trim()), 300)
+    return () => clearTimeout(t)
+  }, [searchTerm])
+  const busqueda = terminoDebounced.length >= 2 ? terminoDebounced : undefined
 
   const {
     data,
