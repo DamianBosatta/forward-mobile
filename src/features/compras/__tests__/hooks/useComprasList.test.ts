@@ -35,6 +35,24 @@ describe('useComprasList', () => {
     expect(result.current.resumenTexto).toBeNull()
   })
 
+  it('servidor nuevo: el total comprado va por moneda, tal como lo da el servidor', () => {
+    ;(useComprasResumen as jest.Mock).mockReturnValue({
+      data: {
+        totalComprado: 2119777, notasPedido: 7, confirmadas: 2, entregadas: 30,
+        totalesPorMoneda: [{ moneda: 'ARS', total: 2118577 }, { moneda: 'USD', total: 1200 }],
+      },
+    })
+    const { result } = renderHook(() => useComprasList())
+
+    expect(result.current.compradoTexto).toBe('Comprado (pendientes y recibidas): $\u00A02.118.577,00 · USD\u00A01.200,00')
+  })
+
+  it('servidor viejo (sin totalesPorMoneda): no muestra el total, que suma monedas distintas', () => {
+    const { result } = renderHook(() => useComprasList())
+
+    expect(result.current.compradoTexto).toBeNull()
+  })
+
   it('en Borradores no pide la lista de compras', () => {
     const { result } = renderHook(() => useComprasList())
     act(() => { result.current.setPestana('borradores') })
