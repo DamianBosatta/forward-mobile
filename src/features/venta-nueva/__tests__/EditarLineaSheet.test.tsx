@@ -64,6 +64,23 @@ describe('EditarLineaSheet: entradas inválidas (es-AR)', () => {
     expect(leerNumero('-5')).toBeNull()
   })
 
+  it.each([
+    ['12.345.678', 12345678],
+    ['12.5', 12.5],
+    ['2176.50', 2176.5],
+    ['0.75', 0.75],
+    ['12,5', 12.5],
+    ['12,', 12],
+    ['12.', 12],
+    ['1.2.3,4.5', null],
+    ['1.2.3', null],
+    ['.5', null],
+    [',', null],
+    ['.', null],
+  ])('leerNumero(%j) → %j (acepta punto decimal y separador final)', (texto, esperado) => {
+    expect(leerNumero(texto)).toBe(esperado)
+  })
+
   it('"1.500" en el precio es 1500, no 1,5', async () => {
     abrir({ ...linea(), producto: producto({ precioVenta: 2000 }) })
     await escribir('Precio con descuento ($)', '1.500')
