@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  CalendarDays,
   CircleUser,
   House,
   Landmark,
@@ -51,8 +52,8 @@ export function puedeVerVentas(canDo: CanDo): boolean {
 }
 
 /**
- * Módulos del alcance (plan §3), en el orden de la lámina Menu. Calendario y
- * Reportes todavía no tienen pantalla: no se listan hasta que la tengan.
+ * Módulos del alcance (plan §3), en el orden de la lámina Menu. Reportes todavía
+ * no tiene pantalla: no se lista hasta que la tenga.
  */
 export const MENU: MenuGroup[] = [
   {
@@ -74,6 +75,10 @@ export const MENU: MenuGroup[] = [
       // Transferencias y depósito de cheques; los cobros se registran desde la cuenta corriente del cliente.
       { id: 'movimientos', label: 'Transferencias y cheques', icon: Wallet, href: '/(tabs)/tesoreria', routeName: 'tesoreria/index', appModule: 'MOD_PAGOS' },
     ],
+  },
+  {
+    // El calendario no es un módulo en el servidor: cada uno ve el suyo (CalendarioController).
+    items: [{ id: 'calendario', label: 'Calendario', icon: CalendarDays, href: '/(tabs)/calendario', routeName: 'calendario/index' }],
   },
   {
     title: 'Logística',

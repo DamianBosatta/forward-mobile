@@ -28,6 +28,7 @@ export default function DrawerLayout() {
       <Drawer.Screen name="autorizaciones/index" />
       <Drawer.Screen name="cuentas/index" />
       <Drawer.Screen name="tesoreria/index" />
+      <Drawer.Screen name="calendario/index" />
       <Drawer.Screen name="logistica/index" />
       <Drawer.Screen name="logistica/consola" />
 
