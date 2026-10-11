@@ -23,22 +23,6 @@ export const configuracionKeys = {
   feriados: (desde: string) => [...configuracionKeys.all, 'feriados', desde] as const,
 }
 
-/** GET /Configuracion/feriados: días sin entregas. Lo lee cualquier usuario autenticado. */
-export interface Feriado {
-  id: string
-  /** YYYY-MM-DD */
-  fecha: string
-  descripcion?: string | null
-}
-
-export function useFeriados(desde: string) {
-  return useQuery({
-    queryKey: configuracionKeys.feriados(desde),
-    queryFn: () => api.get<Feriado[]>(`/api/v1/Configuracion/feriados?desde=${desde}`),
-    staleTime: 60 * 60_000,
-  })
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Hooks
 // ─────────────────────────────────────────────────────────────────────────────
@@ -95,7 +79,7 @@ export function useDiasEntrega() {
 /** Feriados cargados desde `desde` (YYYY-MM-DD). */
 export function useFeriados(desde: string) {
   return useQuery({
-    queryKey: [...configuracionKeys.all, 'feriados', desde] as const,
+    queryKey: configuracionKeys.feriados(desde),
     queryFn: () => api.get<Schemas['FeriadoDto'][]>(`/api/v1/Configuracion/feriados?desde=${desde}`),
     staleTime: 10 * 60_000,
   })

@@ -22,7 +22,7 @@ export function PorPrepararScreen() {
   const { isTabletLandscape } = useResponsive()
   const dias = useMemo(() => proximosDiasDeEntrega(Date.now()), [])
   const feriados = useFeriados(dias[0].fecha)
-  const feriadoDe = (fecha: string) => feriados.data?.find((f) => f.fecha.slice(0, 10) === fecha)
+  const feriadoDe = (fecha: string) => feriados.data?.find((f) => f.fecha?.slice(0, 10) === fecha)
   const [elegida, setElegida] = useState<string | null>(null)
   const dia = dias.find((d) => d.fecha === elegida) ?? dias.find((d) => !feriadoDe(d.fecha)) ?? dias[0]
   const [pedido, setPedido] = useState<VentaPreparacion | null>(null)
