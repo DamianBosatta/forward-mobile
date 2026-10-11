@@ -3,11 +3,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, userEvent, within } from '@testing-library/react-native'
 import { CalendarioScreen } from '../CalendarioScreen'
 import { semanaDe, tituloSemana } from '../semana'
+import type { Precarga } from '../NuevoEventoSheet'
 
 const mockGet = jest.fn()
+const mockPost = jest.fn()
 jest.mock('@/core/api/client', () => ({
   API_URL: 'http://api.test',
-  api: { get: (url: string) => mockGet(url) },
+  api: { get: (url: string) => mockGet(url), post: (url: string, body?: unknown) => mockPost(url, body) },
 }))
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ dispatch: jest.fn() }),
@@ -23,9 +25,9 @@ const EVENTOS = [
   evento({ clave: 'c', fecha: '2026-10-05', titulo: 'Llamar a Sofía', estado: 'Pagado' }),
 ]
 
-function pintar() {
+function pintar(precarga?: Precarga) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={qc}><CalendarioScreen /></QueryClientProvider>)
+  return render(<QueryClientProvider client={qc}><CalendarioScreen precarga={precarga} /></QueryClientProvider>)
 }
 const urls = () => mockGet.mock.calls.map(([u]) => String(u))
 
@@ -58,6 +60,34 @@ describe('Calendario', () => {
     await userEvent.press(screen.getByLabelText('Semana siguiente'))
     expect(await screen.findByText('Semana del 12 al 18 de octubre')).toBeTruthy()
     expect(urls()).toContain('/api/v1/Calendario?Desde=2026-10-12&Hasta=2026-10-18')
+  })
+
+  it('crea un recordatorio personal: guarda el día (sin hora) y los días de aviso', async () => {
+    mockPost.mockResolvedValue('nuevo-id')
+    pintar()
+    await screen.findByText('Rendir la caja de la semana')
+    await userEvent.press(screen.getByLabelText('Nuevo evento'))
+    expect(screen.getByLabelText('Guardar evento').props.accessibilityState.disabled).toBe(true)
+    await userEvent.type(screen.getByLabelText('Título'), 'Pasar a cobrar')
+    await userEvent.press(screen.getByLabelText('Día siguiente'))
+    expect(screen.getByText('Sábado 10 de octubre')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('3 días antes'))
+    await userEvent.press(screen.getByLabelText('Guardar evento'))
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Calendario/eventos', {
+      tipo: 'Manual', titulo: 'Pasar a cobrar', descripcion: null, fechaInicio: '2026-10-10', avisarDiasAntes: 3, visibilidad: 'Personal',
+    })
+    expect(await screen.findByText('Sábado 10')).toBeTruthy()
+  })
+
+  it('"Agendar" desde una venta abre el evento con el título y la descripción cargados', async () => {
+    mockPost.mockRejectedValue(Object.assign(new Error('El título no puede superar los 200 caracteres.'), { errors: [] }))
+    pintar({ titulo: 'Seguir el presupuesto A00421 · Brandsen 3314', descripcion: 'Presupuesto A00421 · $ 178.320,00', origen: 'A00421' })
+    expect(await screen.findByText('Viene de la venta A00421: el título y la descripción ya están cargados.')).toBeTruthy()
+    expect(screen.getByLabelText('Título').props.value).toBe('Seguir el presupuesto A00421 · Brandsen 3314')
+    await userEvent.press(screen.getByLabelText('Guardar evento'))
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Calendario/eventos', expect.objectContaining({ descripcion: 'Presupuesto A00421 · $ 178.320,00', fechaInicio: '2026-10-09' }))
+    // El rechazo del servidor queda a la vista y la hoja sigue abierta.
+    expect(await screen.findByText('El título no puede superar los 200 caracteres.')).toBeTruthy()
   })
 
   it('el título de una semana que cruza de mes nombra los dos meses', () => {

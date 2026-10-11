@@ -47,3 +47,8 @@ export function tituloSemana(dias: DiaSemana[]): string {
 export function nombreLargo(d: DiaSemana): string {
   return `${d.largo} ${d.numero} de ${MESES[d.mes]}`
 }
+
+/** Corre un día YYYY-MM-DD (mediodía argentino, para no cruzar de día). */
+export function moverDia(fecha: string, dias: number): DiaSemana {
+  return diaDe(Date.parse(`${fecha}T15:00:00Z`), dias)
+}

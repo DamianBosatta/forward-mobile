@@ -34,6 +34,7 @@ import { ForwardLogo, RequirePermission, GlassCard, AuroraGlow } from '@/core/ui
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { ConfirmModal } from '@/core/ui/ConfirmModal'
 import { LinearGradient } from 'expo-linear-gradient'
+import { formatImporte } from '@/core/ui/fw'
 import {
   calcularRentabilidadVenta,
   puedeVerRentabilidad,
@@ -403,6 +404,28 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
                   <Text style={[styles.heroActionBtnText, { color: colors.danger }]} maxFontSizeMultiplier={1.3}>Anular</Text>
                 </TouchableOpacity>
               </RequirePermission>
+
+              {/* Agendar (PR 5.3): el calendario no vincula el evento a la venta; solo precarga el texto. */}
+              <TouchableOpacity
+                onPress={() => {
+                  const numero = venta.codigoPedido ?? venta.id.slice(0, 8).toUpperCase()
+                  const doc = `${isPresupuesto ? 'presupuesto' : 'pedido'} ${numero}`
+                  router.push({
+                    pathname: '/(tabs)/calendario',
+                    params: {
+                      titulo: `Seguir el ${doc}${socio?.direccion ? ` · ${socio.direccion}` : ''}`,
+                      descripcion: [`${isPresupuesto ? 'Presupuesto' : 'Pedido'} ${numero}`, venta.clienteNombre, venta.totalAmount != null ? formatImporte(venta.totalAmount) : null].filter(Boolean).join(' · '),
+                      origen: numero,
+                    },
+                  } as never)
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Agendar"
+                style={[styles.heroActionBtn, { backgroundColor: colors.surface2, borderColor: colors.border }]}
+              >
+                <Calendar size={18} color={colors.text} />
+                <Text style={[styles.heroActionBtnText, { color: colors.text }]} maxFontSizeMultiplier={1.3}>Agendar</Text>
+              </TouchableOpacity>
             </View>
           </MotiView>
         )}

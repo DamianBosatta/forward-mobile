@@ -2,9 +2,10 @@ import React, { useMemo, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { ChevronLeft, ChevronRight } from 'lucide-react-native'
 import { radii, shadowMd, space, typeScale, useColors, useIsDark, type ChipEstado } from '@/libs/theme'
-import { FormContainer, Notice, StatusChip, TopBar, formatImporte, useMenuLeading } from '@/core/ui/fw'
+import { Fab, FormContainer, Notice, StatusChip, TopBar, formatImporte, useMenuLeading } from '@/core/ui/fw'
 import { useCalendario, type EventoCalendario } from '@/libs/api-client/calendario'
 import { diaDe, nombreLargo, semanaDe, tituloSemana } from './semana'
+import { NuevoEventoSheet, type Precarga } from './NuevoEventoSheet'
 
 const CHIP: Record<EventoCalendario['estado'], { estado: ChipEstado; label: string }> = {
   Pendiente: { estado: 'pendiente', label: 'Pendiente' },
@@ -23,7 +24,7 @@ const TIPO: Record<EventoCalendario['tipo'], string> = {
 }
 
 /** Lámina Calendario: la semana de lunes a domingo (días argentinos) y los eventos del día elegido. */
-export function CalendarioScreen() {
+export function CalendarioScreen({ precarga }: { precarga?: Precarga | null }) {
   const c = useColors()
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const menu = useMenuLeading()
@@ -32,6 +33,9 @@ export function CalendarioScreen() {
   const dias = useMemo(() => semanaDe(Date.now(), semana), [semana])
   const [elegido, setElegido] = useState<string | null>(null)
   const dia = dias.find((d) => d.fecha === elegido) ?? dias.find((d) => d.fecha === hoy) ?? dias[0]
+  const [creando, setCreando] = useState(!!precarga)
+  // La precarga de una venta vale para el primer evento; después, el botón abre uno en blanco.
+  const [conPrecarga, setConPrecarga] = useState(precarga ?? null)
   const q = useCalendario(dias[0].fecha, dias[6].fecha)
 
   const delDia = (fecha: string) => (q.data ?? []).filter((e) => e.fecha.slice(0, 10) === fecha)
@@ -73,7 +77,7 @@ export function CalendarioScreen() {
           )
         })}
       </View>
-      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[6] }}>
+      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] * 2 }}>
         <FormContainer style={{ gap: space[3] }}>
           <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>
             {`${nombreLargo(dia).split(' de ')[0]}${dia.fecha === hoy ? ' · hoy' : ''}`}
@@ -105,6 +109,21 @@ export function CalendarioScreen() {
           </Text>
         </FormContainer>
       </ScrollView>
+      <Fab accessibilityLabel="Nuevo evento" onPress={() => setCreando(true)} />
+      {creando ? (
+        <NuevoEventoSheet
+          fecha={dia.fecha}
+          precarga={conPrecarga}
+          onCerrar={() => { setCreando(false); setConPrecarga(null) }}
+          onCreado={(fecha) => {
+            setCreando(false)
+            setConPrecarga(null)
+            // Muestra el día del evento nuevo, aunque caiga en otra semana.
+            setSemana(semana + Math.floor((Date.parse(fecha) - Date.parse(dias[0].fecha)) / (7 * 24 * 60 * 60 * 1000)))
+            setElegido(fecha)
+          }}
+        />
+      ) : null}
     </View>
   )
 }

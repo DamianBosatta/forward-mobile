@@ -18,12 +18,12 @@ jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 40, bottom: 0, left: 0, right: 0 }) }))
 jest.mock('@/libs/api-client', () => ({
   useVenta: () => ({
-    data: { venta: { id: 'v1', version: 3, estado: mockEstado, activo: true, tipoOperacion: 2, clienteId: 'c1', clienteNombre: 'Carlos' }, detalles: [], bultos: [] },
+    data: { venta: { id: 'v1', version: 3, estado: mockEstado, activo: true, tipoOperacion: 2, clienteId: 'c1', clienteNombre: 'Carlos', codigoPedido: 'A00421', totalAmount: 178320 }, detalles: [], bultos: [] },
     isLoading: false, refetch: jest.fn(),
   }),
   useConvertirPresupuesto: () => ({ mutateAsync: jest.fn(), isPending: false }),
   useAnularVenta: () => ({ mutateAsync: mockAnular, isPending: false }),
-  useSocio: () => ({ data: undefined, isLoading: false }),
+  useSocio: () => ({ data: { direccion: 'Brandsen 3314' }, isLoading: false }),
   getNotaEntregaUrl: jest.fn(),
   getEtiquetasUrl: jest.fn(),
 }))
@@ -59,6 +59,17 @@ beforeEach(() => {
   jest.clearAllMocks()
   mockEstado = 'Confirmada'
   mockAnular.mockResolvedValue(undefined)
+})
+
+describe('agendar desde el detalle de venta (PR 5.3b)', () => {
+  it('abre el calendario con el título y la descripción de la venta, identificada por la dirección', async () => {
+    render(<VentaDetalle id="v1" />)
+    await userEvent.press(screen.getByLabelText('Agendar'))
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/(tabs)/calendario',
+      params: { titulo: 'Seguir el pedido A00421 · Brandsen 3314', descripcion: 'Pedido A00421 · Carlos · $ 178.320,00', origen: 'A00421' },
+    })
+  })
 })
 
 describe('anular desde el detalle de venta', () => {
