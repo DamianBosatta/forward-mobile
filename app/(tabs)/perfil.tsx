@@ -1,4 +1,4 @@
-import { View, Text, Pressable } from 'react-native'
+import { View, Text, Pressable, Switch } from 'react-native'
 import { useRouter, useNavigation } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native';
 import { useAuthStore } from '../../libs/store/auth.store'
@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { safeHaptics } from '@/core/utils/haptics'
+import { useVentaNuevaStore, usePuedeProbarVentaNueva } from '@/features/ventas/lib/ventaNueva'
 const THEME_OPTIONS: SegmentedOption<ThemeMode>[] = [
   { value: 'light', label: 'Claro' },
   { value: 'dark', label: 'Oscuro' },
@@ -25,6 +26,9 @@ export default function PerfilScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const queryClient = useQueryClient()
+  const ventaNueva = useVentaNuevaStore((s) => s.activa)
+  const setVentaNueva = useVentaNuevaStore((s) => s.setActiva)
+  const puedeProbarVentaNueva = usePuedeProbarVentaNueva()
 
   const [logoutVisible, setLogoutVisible] = useState(false)
   const [envModalVisible, setEnvModalVisible] = useState(false)
@@ -100,6 +104,26 @@ export default function PerfilScreen() {
         <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1 }}>Tema</Text>
         <Segmented accessibilityLabel="Tema" options={THEME_OPTIONS} value={mode} onChange={setMode} />
       </View>
+
+      {/* Pruebas: la venta nueva convive con la vieja hasta que el dueño la apruebe (9A, PR 2.0) */}
+      {puedeProbarVentaNueva && (
+        <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: 20, marginBottom: 20, gap: 12 }}>
+          <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1 }}>Pruebas</Text>
+          {/* La fila entera es el control (≥ 48 px); el Switch es solo la marca visual. */}
+          <Pressable
+            accessibilityRole="switch"
+            accessibilityLabel="Usar la venta nueva (en prueba)"
+            accessibilityState={{ checked: ventaNueva }}
+            onPress={() => { void setVentaNueva(!ventaNueva) }}
+            style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}
+          >
+            <Text style={{ flex: 1, color: colors.text, fontWeight: '700', fontSize: 16 }}>Usar la venta nueva (en prueba)</Text>
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none">
+              <Switch value={ventaNueva} trackColor={{ false: colors.border, true: colors.primary }} />
+            </View>
+          </Pressable>
+        </View>
+      )}
 
       {/* Info */}
       <View style={{ backgroundColor: colors.surface, borderRadius: 24, overflow: 'hidden', marginBottom: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}>
