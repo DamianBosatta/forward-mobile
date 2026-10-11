@@ -123,8 +123,8 @@ describe('Inicio: tarjetas de pendientes', () => {
   })
 
   it('cada fila lleva a su lista', async () => {
-    conPermisos('MOD_VENTAS', 'MOD_COMPRAS')
-    servidor({ presupuestos: pagina(1), pedidos: pagina(1), compras: { notasPedido: 1, confirmadas: 1 }, hoy: pagina(0, []) })
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
+    servidor({ presupuestos: pagina(1), pedidos: pagina(1), porAutorizar: [{ id: 'a' }], compras: { notasPedido: 1, confirmadas: 1 }, hoy: pagina(0, []) })
     pintar()
     const user = userEvent.setup()
 
@@ -132,6 +132,8 @@ describe('Inicio: tarjetas de pendientes', () => {
     expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas')
     await user.press(await screen.findByLabelText('Por recibir: 1'))
     expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/compras')
+    await user.press(await screen.findByLabelText('Por autorizar: 1'))
+    expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/autorizaciones')
   })
 })
 

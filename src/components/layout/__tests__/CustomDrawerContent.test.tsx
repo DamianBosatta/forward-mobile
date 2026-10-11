@@ -12,6 +12,7 @@ import CustomDrawerContent from '../CustomDrawerContent'
 const mockPush = jest.fn()
 const mockCanDo = jest.fn()
 let mockRoles: string[] = []
+let mockPermisos: { module: string; canRead: boolean }[] = []
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 jest.mock('@react-navigation/drawer', () => ({ useDrawerStatus: () => 'closed' }))
@@ -32,7 +33,7 @@ jest.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => ({ refreshPermissions: jest.fn(), logout: jest.fn() }),
 }))
 jest.mock('@/libs/store/auth.store', () => ({
-  useAuthStore: () => ({ isAuthenticated: true, user: { nombre: 'Emanuel', apellido: 'Parraquini', roles: mockRoles } }),
+  useAuthStore: () => ({ isAuthenticated: true, user: { nombre: 'Emanuel', apellido: 'Parraquini', roles: mockRoles, permissions: mockPermisos } }),
 }))
 
 const props = (ruta = 'index') => ({ state: { routeNames: [ruta], index: 0 } }) as any
@@ -48,7 +49,7 @@ const comoAdmin = () => {
 const FUERA_DE_ALCANCE = ['Usuarios', 'Depósitos', 'Proveedores', 'Cargas masivas', 'Viajes', 'Vehículos', 'Picking', 'Perfiles', 'Roles']
 
 // Sin pantalla todavía: no se ofrecen enlaces a pantallas que no existen.
-const SIN_PANTALLA = ['Autorizaciones', 'Calendario', 'Reportes']
+const SIN_PANTALLA = ['Calendario', 'Reportes']
 
 const APROBADOS = [
   'Inicio',
@@ -113,6 +114,7 @@ describe('CustomDrawerContent — recorte al alcance aprobado', () => {
 describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de administrador)', () => {
   beforeEach(() => {
     mockRoles = ['Empleado']
+    mockPermisos = []
   })
 
   const visibles = () => APROBADOS.filter((n) => screen.queryByText(n) !== null)
@@ -149,5 +151,17 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     expect(visibles()).toEqual(['Inicio', 'Mi cuenta y contraseña'])
     expect(screen.queryByText('Tesorería')).toBeNull()
     expect(screen.queryByText('Logística')).toBeNull()
+  })
+
+  it('Autorizaciones aparece solo con la capacidad de autorizar ventas, aunque lea ventas', async () => {
+    conPermisos('MOD_VENTAS:read', 'MOD_VENTAS:create')
+    const { unmount } = render(<CustomDrawerContent {...props()} />)
+    expect(screen.queryByText('Autorizaciones')).toBeNull()
+    unmount()
+
+    mockPermisos = [{ module: 'CAP_AUTORIZAR_VENTA', canRead: true }]
+    render(<CustomDrawerContent {...props()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Autorizaciones' }))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/autorizaciones')
   })
 })

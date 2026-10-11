@@ -17,6 +17,7 @@ import type {
 import type { components } from './generated/schema'
 
 export type BorradorVenta = components['schemas']['BorradorVentaDto']
+export type VentaPendienteAutorizacion = components['schemas']['VentaPendienteAutorizacionDto']
 
 // #region Query Keys
 export const ventasKeys = {
@@ -132,6 +133,20 @@ export function useAutorizacionPreview(id: string, enabled: boolean) {
     queryFn: () => api.get<AutorizacionPreviewDto>(`/api/v1/Ventas/${id}/autorizacion-preview`),
     enabled: !!id && enabled,
     staleTime: 0,
+  })
+}
+
+/**
+ * Bandeja de ventas frenadas por autorización: GET /api/v1/Ventas/pendientes-autorizacion.
+ * Lista completa (sin paginar), la que más espera primero. Sin CAP_AUTORIZAR_VENTA el servidor
+ * contesta 403: `enabled` evita pedirla sin la capacidad.
+ */
+export function usePendientesAutorizacion(enabled: boolean) {
+  return useQuery({
+    queryKey: [...ventasKeys.all, 'pendientes-autorizacion'] as const,
+    queryFn: () => api.get<VentaPendienteAutorizacion[]>('/api/v1/Ventas/pendientes-autorizacion'),
+    staleTime: 30_000,
+    enabled,
   })
 }
 

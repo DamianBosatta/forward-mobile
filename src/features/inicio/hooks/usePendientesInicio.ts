@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/libs/store/auth.store'
-import { useVentas } from '@/libs/api-client/ventas'
-import { useComprasResumenInicio, usePendientesAutorizacion } from '../api/queries'
+import { usePendientesAutorizacion, useVentas } from '@/libs/api-client/ventas'
+import { useComprasResumenInicio } from '../api/queries'
 
 /** Un contador de Inicio. `null` = el servidor todavía no lo dio (se muestra "—", nunca 0). */
 export type Contador = number | null

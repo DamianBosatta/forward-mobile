@@ -9,6 +9,7 @@ import { safeHaptics } from '@/core/utils/haptics'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { useAuthStore } from '@/libs/store/auth.store'
+import { hasCapability } from '@/features/auth/lib/capabilities'
 import { MENU, MI_CUENTA, esRutaActiva, menuVisible, type MenuItem } from './menuModules'
 
 const iniciales = (nombre?: string, apellido?: string) =>
@@ -34,7 +35,11 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
   }, [isDrawerOpen, isAuthenticated])
 
   const rutaActual = props.state.routeNames[props.state.index]
-  const grupos = menuVisible(MENU, { canDo, roles: user?.roles ?? [] })
+  const grupos = menuVisible(MENU, {
+    canDo,
+    roles: user?.roles ?? [],
+    tieneCapacidad: (cap) => hasCapability(user?.permissions, cap),
+  })
 
   const fondo = isTablet ? c.topBar : c.surface
   const texto = isTablet ? c.onTopBar : c.text

@@ -66,6 +66,7 @@ export function InicioScreen() {
 
   const aVentas = () => router.push('/(tabs)/ventas')
   const aCompras = () => router.push('/(tabs)/compras')
+  const aAutorizaciones = () => router.push('/(tabs)/autorizaciones')
   const nombre = [user?.nombre, user?.apellido].filter(Boolean).join(' ') || user?.username || ''
 
   const tarjetas: React.ReactNode[] = []
@@ -76,7 +77,7 @@ export function InicioScreen() {
       { label: 'Presupuestos', valor: v.presupuestos, onPress: aVentas },
       { label: 'Pedidos confirmados', valor: v.pedidos, onPress: aVentas },
     ]
-    if ('porAutorizar' in v) filas.push({ label: 'Por autorizar', valor: v.porAutorizar ?? null, alerta: true, onPress: aVentas })
+    if ('porAutorizar' in v) filas.push({ label: 'Por autorizar', valor: v.porAutorizar ?? null, alerta: true, onPress: aAutorizaciones })
     tarjetas.push(<TarjetaPendientes key="ventas" titulo="Ventas" icono={Tag} filas={filas} ancho={ancho} />)
   }
   if (pendientes.compras) {

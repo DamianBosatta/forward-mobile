@@ -6,12 +6,14 @@ import {
   Lock,
   Navigation,
   PackageCheck,
+  ShieldCheck,
   ShoppingBag,
   Tag,
   Wallet,
   type LucideIcon,
 } from 'lucide-react-native'
 import type { AppModule, AppRole } from '@/libs/api-client/types'
+import type { AppCapability } from '@/features/auth/lib/capabilities'
 
 type Accion = 'read' | 'create' | 'update' | 'delete'
 
@@ -28,6 +30,8 @@ export interface MenuItem {
   /** Acción que tiene que tener sobre el módulo (por defecto 'read'). */
   appAction?: Accion
   requiredRoles?: AppRole[]
+  /** Capacidad otorgable que tiene que tener (p. ej. CAP_AUTORIZAR_VENTA). */
+  capacidad?: AppCapability
   /** Condición propia que se suma a las anteriores (p. ej. varios módulos o un corte por perfil). */
   visibleSi?: (canDo: Acceso['canDo']) => boolean
 }
@@ -47,9 +51,8 @@ export function puedeVerVentas(canDo: CanDo): boolean {
 }
 
 /**
- * Módulos del alcance (plan §3), en el orden de la lámina Menu. Autorizaciones,
- * Calendario y Reportes todavía no tienen pantalla: no se listan hasta que la
- * tengan (Autorizaciones irá con la capacidad CAP_AUTORIZAR_VENTA).
+ * Módulos del alcance (plan §3), en el orden de la lámina Menu. Calendario y
+ * Reportes todavía no tienen pantalla: no se listan hasta que la tengan.
  */
 export const MENU: MenuGroup[] = [
   {
@@ -60,6 +63,8 @@ export const MENU: MenuGroup[] = [
       { id: 'compras', label: 'Compras', icon: ShoppingBag, href: '/(tabs)/compras', routeName: 'compras/index', appModule: 'MOD_COMPRAS' },
       { id: 'clientes', label: 'Clientes', icon: CircleUser, href: '/(tabs)/socios', routeName: 'socios/index', appModule: 'MOD_CLIENTES' },
       { id: 'catalogo', label: 'Catálogo y stock', hint: 'Consulta', icon: BookOpen, href: '/(tabs)/inventario', routeName: 'inventario/index', appModule: 'MOD_STOCK' },
+      // La bandeja exige Ventas:Read (ruta) y CAP_AUTORIZAR_VENTA (handler); sin la capacidad, 403.
+      { id: 'autorizaciones', label: 'Autorizaciones', icon: ShieldCheck, href: '/(tabs)/autorizaciones', routeName: 'autorizaciones/index', appModule: 'MOD_VENTAS', capacidad: 'CAP_AUTORIZAR_VENTA' },
     ],
   },
   {
@@ -86,11 +91,13 @@ export const MI_CUENTA: MenuItem = { id: 'cuenta', label: 'Mi cuenta y contrase�
 interface Acceso {
   canDo: (module: AppModule, action: Accion) => boolean
   roles: readonly string[]
+  tieneCapacidad: (capacidad: AppCapability) => boolean
 }
 
 /** Deja solo lo que el usuario puede usar; un grupo sin ítems visibles desaparece con su título. */
-export function menuVisible(menu: MenuGroup[], { canDo, roles }: Acceso): MenuGroup[] {
+export function menuVisible(menu: MenuGroup[], { canDo, roles, tieneCapacidad }: Acceso): MenuGroup[] {
   const puede = (it: MenuItem) =>
+    (!it.capacidad || tieneCapacidad(it.capacidad)) &&
     (!it.requiredRoles || it.requiredRoles.some((r) => roles.includes(r))) &&
     (!it.appModule || canDo(it.appModule, it.appAction ?? 'read')) &&
     (!it.visibleSi || it.visibleSi(canDo))
