@@ -52,6 +52,22 @@ export async function fetchCatalogoStockCompleto(depositoId?: string): Promise<C
   return items
 }
 
+/**
+ * Producto por código de barras exacto, para el escáner (fragancias incluidas). El servidor
+ * (forward-system #874) devuelve la familia del código y el escaneado es el que lo tiene. Uno viejo
+ * ignora `CodigoBarra` y devuelve el catálogo: se siguen las páginas hasta encontrarlo, salvo que
+ * `signal` diga que ya no hace falta (otro escaneo, o se cerró la pantalla).
+ */
+export async function buscarPorCodigoBarra(codigo: string, signal?: AbortSignal): Promise<CatalogoStockItem | null> {
+  for (let pageNumber = 1; pageNumber <= CATALOGO_STOCK_MAX_PAGES && !signal?.aborted; pageNumber++) {
+    const searchParams = new URLSearchParams({ CodigoBarra: codigo, PageNumber: String(pageNumber), PageSize: String(CATALOGO_STOCK_PAGE_SIZE) })
+    const page = await api.get<CatalogoStockPage>(`/api/v1/Productos/catalogo-stock?${searchParams}`)
+    const leido = page?.items?.find((p) => p.codigoBarra === codigo)
+    if (leido || !page?.hasNextPage) return leido ?? null
+  }
+  return null
+}
+
 export function useCatalogoStock(depositoId?: string) {
   return useQuery({
     queryKey: [...productosKeys.all, 'catalogoStock', depositoId],
