@@ -416,6 +416,8 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
                       titulo: `Seguir el ${doc}${socio?.direccion ? ` · ${socio.direccion}` : ''}`,
                       descripcion: [`${isPresupuesto ? 'Presupuesto' : 'Pedido'} ${numero}`, venta.clienteNombre, venta.totalAmount != null ? formatImporte(venta.totalAmount) : null].filter(Boolean).join(' · '),
                       origen: numero,
+                      // Cada "Agendar" es una navegación nueva: la pantalla del Drawer sigue montada y reabre la hoja.
+                      nonce: String(Date.now()),
                     },
                   } as never)
                 }}

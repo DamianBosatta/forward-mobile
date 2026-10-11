@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Linking, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { FileText } from 'lucide-react-native'
@@ -31,6 +31,8 @@ export default function ConsolaChoferScreen() {
   const { user, canDo, isAdmin, isSuperAdmin } = useAuthStore()
   // El chofer lee viajes y no crea ventas: su "inicio" es su propio tablero, no el hub de logística.
   const esChofer = !isAdmin() && !isSuperAdmin() && canDo('MOD_VIAJES', 'read') && !canDo('MOD_VENTAS', 'create')
+  // Sin permiso de viajes no se consulta nada: el servidor respondería 403.
+  const puedeVerViajes = isAdmin() || isSuperAdmin() || canDo('MOD_VIAJES', 'read')
   const volverA = esChofer ? '/(tabs)' : '/(tabs)/logistica'
   const { activeTrip, setActiveTrip, clearActiveTrip, updateStopStatus } = useLogisticaStore()
   const [rutaElegida, setRutaElegida] = useState<string | null>(null)
@@ -51,7 +53,7 @@ export default function ConsolaChoferScreen() {
   const objetivo = id || activeTrip?.id || rutaElegida || ''
   // El servidor devuelve todo el historial del chofer: se piden solo las de hoy (día argentino) y sin las canceladas.
   const hoy = diaArgentina(Date.now())
-  const buscar = !id && !activeTrip?.id && !!user?.id
+  const buscar = puedeVerViajes && !id && !activeTrip?.id && !!user?.id
   const rutas = useHojasDeRuta({ choferId: user?.id, fecha: hoy }, { enabled: buscar })
   // Un viaje en curso que salió otro día (pasada la medianoche, sin cerrar) sigue siendo del chofer: se pide aparte, sin fecha.
   const enCurso = useHojasDeRuta({ choferId: user?.id, estado: EstadoHojaRuta.EnCurso }, { enabled: buscar })
@@ -71,17 +73,27 @@ export default function ConsolaChoferScreen() {
     if (unica) setRutaElegida(unica.id ?? null)
   }, [rutasDeHoy, id, activeTrip?.id])
 
-  const remota = useHojaRuta(objetivo)
+  const remota = useHojaRuta(puedeVerViajes ? objetivo : '')
   useEffect(() => {
     if (remota.data) setActiveTrip(remota.data)
   }, [remota.data, setActiveTrip])
 
   const reportar = useReportarParada()
+  // Guarda síncrona: un doble toque llega antes de que `isPending` se vea en pantalla.
+  const reportandoYa = useRef(false)
   const iniciar = useIniciarHojaRuta()
   const finalizar = useFinalizarHojaRuta()
 
   // El guardado sirve sin señal, pero solo si es el viaje pedido; si no, manda el servidor.
   const viaje = activeTrip && activeTrip.id === objetivo ? activeTrip : remota.data ?? null
+
+  if (!puedeVerViajes) {
+    return (
+      <RequirePermission module="MOD_VIAJES" action="read" mode="screen">
+        {null}
+      </RequirePermission>
+    )
+  }
 
   if ((remota.isLoading || ((rutas.isLoading || enCurso.isLoading) && !objetivo)) && !viaje) {
     return (
@@ -151,7 +163,8 @@ export default function ConsolaChoferScreen() {
   }
 
   const confirmarReporte = async (r: ReporteParada) => {
-    if (!reportando) return
+    if (!reportando || reportandoYa.current) return
+    reportandoYa.current = true
     setErrorReporte(null)
     try {
       await reportar.mutateAsync({
@@ -166,6 +179,8 @@ export default function ConsolaChoferScreen() {
       setReportando(null)
     } catch (e) {
       setErrorReporte(mensajeDelServidor(e, 'No se pudo reportar la parada.'))
+    } finally {
+      reportandoYa.current = false
     }
   }
 

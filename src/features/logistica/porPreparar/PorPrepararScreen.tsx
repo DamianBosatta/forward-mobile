@@ -1,10 +1,13 @@
 import React, { useMemo, useState } from 'react'
+import { useIsFocused } from '@react-navigation/native'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { FONT, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { Notice, StatusChip, TopBar, TwoPane, chipForEstado, useMenuLeading } from '@/core/ui/fw'
 import { useResponsive } from '@/libs/useResponsive'
 import { useVentasParaPreparacion, type VentaPreparacion } from '@/libs/api-client/logistica'
-import { useFeriados } from '@/libs/api-client/configuracion'
+import { useDiasEntrega, useFeriados } from '@/libs/api-client/configuracion'
+import { diaArgentina } from '@/src/utils/date'
+import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
 import { nombreDelDia, proximosDiasDeEntrega } from './dias'
 import { PedidoPorPrepararDetalle } from './PedidoPorPrepararDetalle'
 
@@ -20,13 +23,17 @@ export function PorPrepararScreen() {
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const menu = useMenuLeading()
   const { isTabletLandscape } = useResponsive()
-  const dias = useMemo(() => proximosDiasDeEntrega(Date.now()), [])
+  const ahora = useAhoraArgentina()
+  const hoy = diaArgentina(ahora)
+  const diasEntrega = useDiasEntrega().data
+  const dias = useMemo(() => proximosDiasDeEntrega(ahora, diasEntrega), [hoy, diasEntrega]) // eslint-disable-line react-hooks/exhaustive-deps
   const feriados = useFeriados(dias[0].fecha)
   const feriadoDe = (fecha: string) => feriados.data?.find((f) => f.fecha?.slice(0, 10) === fecha)
   const [elegida, setElegida] = useState<string | null>(null)
   const dia = dias.find((d) => d.fecha === elegida) ?? dias.find((d) => !feriadoDe(d.fecha)) ?? dias[0]
   const [pedido, setPedido] = useState<VentaPreparacion | null>(null)
-  const q = useVentasParaPreparacion({ fechaDesde: dia.fecha, fechaHasta: dia.fecha })
+  // La pantalla queda montada en el Drawer: fuera de foco no consulta cada 30 segundos.
+  const q = useVentasParaPreparacion({ fechaDesde: dia.fecha, fechaHasta: dia.fecha }, { activa: useIsFocused() })
 
   const items = q.data ?? []
   const delDia = items.filter((v) => v.estado !== NO_ENTREGADA)

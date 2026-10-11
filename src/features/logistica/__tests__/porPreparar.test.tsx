@@ -1,6 +1,6 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, userEvent, within } from '@testing-library/react-native'
+import { act, render, screen, userEvent, within } from '@testing-library/react-native'
 import { PorPrepararScreen } from '../porPreparar/PorPrepararScreen'
 
 const mockGet = jest.fn()
@@ -8,9 +8,16 @@ jest.mock('@/core/api/client', () => ({
   API_URL: 'http://api.test',
   api: { get: (url: string) => mockGet(url) },
 }))
+let mockEnfocada = true
+let mockAlEnfocar: (() => void) | undefined
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ dispatch: jest.fn() }),
   DrawerActions: { openDrawer: jest.fn() },
+  useIsFocused: () => mockEnfocada,
+  useFocusEffect: (cb: () => void) => {
+    mockAlEnfocar = cb
+    require('react').useEffect(cb, [])
+  },
 }))
 const mockAncho = jest.fn(() => 390)
 jest.mock('@/libs/useResponsive', () => ({
@@ -31,9 +38,12 @@ const PEDIDOS = [
   pedido({ id: 'v3', codigoPedido: 'A00399', direccion: 'Tarantino 1898', clienteNombre: 'Abel', estado: 7, itemsCount: 9, fechaEntrega: '2026-10-07T13:00:00Z' }),
 ]
 
+let diasEntrega: unknown = { lunes: true, martes: true, miercoles: true, jueves: true, viernes: true }
+
 function servidor() {
   mockGet.mockImplementation((url: string) =>
     url.includes('ventas-para-preparacion') ? Promise.resolve(PEDIDOS)
+      : url.includes('dias-entrega') ? Promise.resolve(diasEntrega)
       : url.includes('feriados') ? Promise.resolve([{ id: 'f', fecha: '2026-10-12', descripcion: 'Diversidad cultural' }])
       : url.endsWith('/Ventas/v1') ? Promise.resolve({
         venta: { id: 'v1', observaciones: 'Portón negro del depósito, antes de las 12.' },
@@ -53,12 +63,14 @@ const urls = () => mockGet.mock.calls.map(([u]) => String(u))
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockEnfocada = true
+  diasEntrega = { lunes: true, martes: true, miercoles: true, jueves: true, viernes: true }
   mockAncho.mockReturnValue(390)
   // Viernes 9 de octubre, 22:30 en Argentina (ya sábado 10 en UTC).
   jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T01:30:00Z'))
   servidor()
 })
-afterEach(() => jest.restoreAllMocks())
+afterEach(() => { jest.useRealTimers(); jest.restoreAllMocks() })
 
 describe('Pedidos por preparar (solo lectura)', () => {
   it('pide el día argentino de hoy y lista por dirección, sin contar los no entregados en el día', async () => {
@@ -102,5 +114,45 @@ describe('Pedidos por preparar (solo lectura)', () => {
     expect(screen.queryByLabelText('Pedido A00424: Brandsen 3314')).toBeNull()
     await userEvent.press(screen.getByLabelText('Volver'))
     expect(await screen.findByLabelText('Pedido A00424: Brandsen 3314')).toBeTruthy()
+  })
+
+  it('con el sábado habilitado en el servidor, el sábado aparece entre los días de entrega', async () => {
+    diasEntrega = { lunes: true, martes: true, miercoles: true, jueves: true, viernes: true, sabado: true }
+    pintar()
+    expect(await screen.findByLabelText('sáb 10')).toBeTruthy()
+  })
+
+  it('al cruzar la medianoche argentina con la pantalla abierta, "hoy" pasa al día nuevo', async () => {
+    jest.useFakeTimers({ now: Date.parse('2026-10-10T02:59:00Z'), doNotFake: ['nextTick', 'queueMicrotask'] })
+    pintar()
+    expect(await screen.findByLabelText('vie 9 · Hoy')).toBeTruthy()
+    await act(async () => { jest.advanceTimersByTime(61_000) })
+    expect(await screen.findByLabelText('sáb 10 · Hoy')).toBeTruthy()
+    expect(screen.queryByLabelText('vie 9 · Hoy')).toBeNull()
+  })
+
+  it('al volver a la pantalla recalcula el día de hoy', async () => {
+    pintar()
+    expect(await screen.findByLabelText('vie 9 · Hoy')).toBeTruthy()
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-13T15:00:00Z'))
+    act(() => { mockAlEnfocar?.() })
+    expect(await screen.findByLabelText('mar 13 · Hoy')).toBeTruthy()
+  })
+
+  it('fuera de foco no sigue consultando cada 30 segundos; enfocada sí', async () => {
+    jest.useFakeTimers({ now: Date.parse('2026-10-10T01:30:00Z'), doNotFake: ['nextTick', 'queueMicrotask'] })
+    const pedidos = () => urls().filter((u) => u.includes('ventas-para-preparacion')).length
+    mockEnfocada = false
+    const { unmount } = pintar()
+    await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376')
+    await act(async () => { jest.advanceTimersByTime(120_000) })
+    expect(pedidos()).toBe(1)
+    unmount()
+    mockGet.mockClear()
+    mockEnfocada = true
+    pintar()
+    await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376')
+    await act(async () => { jest.advanceTimersByTime(65_000) })
+    expect(pedidos()).toBeGreaterThan(1)
   })
 })

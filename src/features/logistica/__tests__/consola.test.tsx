@@ -1,7 +1,7 @@
 import React from 'react'
 import { Linking, Platform } from 'react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, userEvent, within } from '@testing-library/react-native'
+import { act, fireEvent, render, screen, userEvent, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { themeColors } from '@/libs/theme'
@@ -44,10 +44,10 @@ const HOJA = {
 let hojaServidor: unknown = HOJA
 let listaServidor: (url: string) => unknown = () => [{ id: 'h1' }]
 
-function pintar(hoja: unknown = HOJA, choferId = 'u1') {
+function pintar(hoja: unknown = HOJA, choferId = 'u1', permissions: unknown[] = [{ module: 'MOD_VIAJES', canRead: true }]) {
   hojaServidor = hoja
   useAuthStore.setState({
-    user: { id: choferId, username: 'c', nombre: 'Carlos', apellido: 'Chofer', roles: [], permissions: [{ module: 'MOD_VIAJES', canRead: true }] },
+    user: { id: choferId, username: 'c', nombre: 'Carlos', apellido: 'Chofer', roles: [], permissions },
   } as never)
   mockGet.mockImplementation((url: string) =>
     url.endsWith('/hojas-ruta/h1') ? Promise.resolve(hojaServidor)
@@ -202,6 +202,27 @@ describe('Consola del chofer: hoja de ruta', () => {
     expect(await screen.findByText('Elegí la hoja de ruta')).toBeTruthy()
     expect(screen.getAllByText('Viaje #AAAAAAAA')).toHaveLength(1)
     expect(screen.getAllByText('Viaje #BBBBBBBB')).toHaveLength(1)
+  })
+
+  it('sin permiso de viajes muestra la pantalla de permiso y no consulta al servidor', async () => {
+    pintar(HOJA, 'u1', [])
+    expect(await screen.findByText('Sin permisos')).toBeTruthy()
+    expect(screen.queryByLabelText('Cargando la hoja de ruta')).toBeNull()
+    expect(mockGet).not.toHaveBeenCalled()
+  })
+
+  it('un doble toque rápido en confirmar manda un solo reporte', async () => {
+    mockPost.mockReturnValue(new Promise(() => {}))
+    pintar()
+    await userEvent.press(await screen.findByLabelText('Reportar entrega'))
+    await userEvent.type(screen.getByLabelText('Quién recibió'), 'Carlos')
+    const confirmar = screen.getByLabelText('Confirmar entrega')
+    act(() => {
+      fireEvent.press(confirmar)
+      fireEvent.press(confirmar)
+    })
+    await act(async () => {})
+    expect(mockPost).toHaveBeenCalledTimes(1)
   })
 
   it('en oscuro la tarjeta de la próxima parada usa la marca del tema oscuro', async () => {

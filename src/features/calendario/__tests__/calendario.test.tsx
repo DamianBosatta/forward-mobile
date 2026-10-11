@@ -1,6 +1,6 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, userEvent, within } from '@testing-library/react-native'
+import { act, render, screen, userEvent, within } from '@testing-library/react-native'
 import { CalendarioScreen } from '../CalendarioScreen'
 import { semanaDe, tituloSemana } from '../semana'
 import type { Precarga } from '../NuevoEventoSheet'
@@ -11,9 +11,14 @@ jest.mock('@/core/api/client', () => ({
   API_URL: 'http://api.test',
   api: { get: (url: string) => mockGet(url), post: (url: string, body?: unknown) => mockPost(url, body) },
 }))
+let mockAlEnfocar: (() => void) | undefined
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ dispatch: jest.fn() }),
   DrawerActions: { openDrawer: jest.fn() },
+  useFocusEffect: (cb: () => void) => {
+    mockAlEnfocar = cb
+    require('react').useEffect(cb, [])
+  },
 }))
 
 const evento = (o: Record<string, unknown>) => ({
@@ -37,7 +42,7 @@ beforeEach(() => {
   jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T01:30:00Z'))
   mockGet.mockResolvedValue(EVENTOS)
 })
-afterEach(() => jest.restoreAllMocks())
+afterEach(() => { jest.useRealTimers(); jest.restoreAllMocks() })
 
 describe('Calendario', () => {
   it('pide la semana argentina de lunes a domingo y muestra los eventos de hoy con su estado', async () => {
@@ -104,5 +109,22 @@ describe('Calendario', () => {
 
   it('el título de una semana que cruza de mes nombra los dos meses', () => {
     expect(tituloSemana(semanaDe(Date.parse('2026-10-01T15:00:00Z')))).toBe('Semana del 28 de septiembre al 4 de octubre')
+  })
+
+  it('al cruzar la medianoche argentina con la pantalla abierta, "hoy" pasa al día nuevo', async () => {
+    jest.useFakeTimers({ now: Date.parse('2026-10-10T02:59:00Z'), doNotFake: ['nextTick', 'queueMicrotask'] })
+    pintar()
+    expect(await screen.findByText('Viernes 9 · hoy')).toBeTruthy()
+    await act(async () => { jest.advanceTimersByTime(61_000) })
+    expect(await screen.findByText('Sábado 10 · hoy')).toBeTruthy()
+  })
+
+  it('al volver a la pantalla recalcula la semana de hoy', async () => {
+    pintar()
+    expect(await screen.findByText('Semana del 5 al 11 de octubre')).toBeTruthy()
+    jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-13T15:00:00Z'))
+    act(() => { mockAlEnfocar?.() })
+    expect(await screen.findByText('Semana del 12 al 18 de octubre')).toBeTruthy()
+    expect(screen.getByText('Martes 13 · hoy')).toBeTruthy()
   })
 })

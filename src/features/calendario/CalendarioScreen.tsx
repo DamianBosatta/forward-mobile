@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react-native'
 import { radii, shadowMd, space, typeScale, useColors, useIsDark, type ChipEstado } from '@/libs/theme'
 import { Fab, FormContainer, Notice, StatusChip, TopBar, formatImporte, useMenuLeading } from '@/core/ui/fw'
 import { useCalendario, type EventoCalendario } from '@/libs/api-client/calendario'
+import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
 import { diaDe, nombreLargo, semanaDe, tituloSemana } from './semana'
 import { NuevoEventoSheet, type Precarga } from './NuevoEventoSheet'
 
@@ -28,9 +29,10 @@ export function CalendarioScreen({ precarga }: { precarga?: Precarga | null }) {
   const c = useColors()
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const menu = useMenuLeading()
-  const hoy = useMemo(() => diaDe(Date.now()).fecha, [])
+  const ahora = useAhoraArgentina()
+  const hoy = useMemo(() => diaDe(ahora).fecha, [ahora])
   const [semana, setSemana] = useState(0)
-  const dias = useMemo(() => semanaDe(Date.now(), semana), [semana])
+  const dias = useMemo(() => semanaDe(ahora, semana), [ahora, semana])
   const [elegido, setElegido] = useState<string | null>(null)
   const dia = dias.find((d) => d.fecha === elegido) ?? dias.find((d) => d.fecha === hoy) ?? dias[0]
   const [creando, setCreando] = useState(!!precarga)

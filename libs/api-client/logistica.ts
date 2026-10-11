@@ -186,7 +186,7 @@ export function useHojaRuta(id: string) {
  *
  * Query params are PascalCase to match backend GetVentasParaPreparacionQuery.cs.
  */
-export function useVentasParaPreparacion(params?: VentasPreparacionParams) {
+export function useVentasParaPreparacion(params?: VentasPreparacionParams, opciones?: { activa?: boolean }) {
   const searchParams = new URLSearchParams()
   if (params?.fechaDesde) searchParams.set('FechaDesde', params.fechaDesde)
   if (params?.fechaHasta) searchParams.set('FechaHasta', params.fechaHasta)
@@ -197,7 +197,8 @@ export function useVentasParaPreparacion(params?: VentasPreparacionParams) {
     queryKey: pickingKeys.list(params ?? {}),
     queryFn: () => api.get<VentaPreparacion[]>(`/api/v1/Logistica/ventas-para-preparacion?${searchParams}`),
     staleTime: 15_000,
-    refetchInterval: 30_000,
+    // `activa: false` (pantalla fuera de foco) pausa el sondeo.
+    refetchInterval: opciones?.activa === false ? false : 30_000,
   })
 }
 

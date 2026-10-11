@@ -67,7 +67,7 @@ describe('agendar desde el detalle de venta (PR 5.3b)', () => {
     await userEvent.press(screen.getByLabelText('Agendar'))
     expect(mockPush).toHaveBeenCalledWith({
       pathname: '/(tabs)/calendario',
-      params: { titulo: 'Seguir el pedido A00421 · Brandsen 3314', descripcion: 'Pedido A00421 · Carlos · $ 178.320,00', origen: 'A00421' },
+      params: { titulo: 'Seguir el pedido A00421 · Brandsen 3314', descripcion: 'Pedido A00421 · Carlos · $ 178.320,00', origen: 'A00421', nonce: expect.any(String) },
     })
   })
 })
