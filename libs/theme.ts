@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import * as SecureStore from 'expo-secure-store'
-import { Appearance } from 'react-native'
+import { useColorScheme } from 'react-native'
 import type { TextStyle } from 'react-native'
 
 // ── Tokens del Bloque 9 (plan §7 y §10) ────────────────────────────────────
@@ -64,6 +64,7 @@ export interface ForwardColors {
   textSecondary: string
   textDisabled: string
   primary: string
+  onPrimary: string // texto sobre fondos `primary` (legado)
   primaryHover: string
   secondary: string
   success: string
@@ -93,6 +94,7 @@ function conLegados(t: {
   textSecondary: string
   brandInk: string
   brandInkPressed: string
+  onPrimary: string
   glassBg: string
 }) {
   return {
@@ -108,6 +110,7 @@ function conLegados(t: {
     textSecondary: t.textSecondary,
     textDisabled: t.textSecondary,
     primary: t.brandInk,
+    onPrimary: t.onPrimary,
     primaryHover: t.brandInkPressed,
     secondary: ESTADOS_WEB.info,
     ...ESTADOS_WEB,
@@ -146,6 +149,7 @@ const LIGHT_COLORS: ForwardColors = {
     textSecondary: '#556D68',
     brandInk: '#0A7662',
     brandInkPressed: '#075A4B',
+    onPrimary: '#FFFFFF',
     glassBg: 'rgba(255, 255, 255, 0.85)',
   }),
 }
@@ -178,6 +182,7 @@ const DARK_COLORS: ForwardColors = {
     textSecondary: '#9DAFAB',
     brandInk: '#00E6BB',
     brandInkPressed: '#1AFFD5',
+    onPrimary: '#080D0C',
     glassBg: 'rgba(14, 21, 20, 0.85)',
   }),
 }
@@ -383,21 +388,16 @@ export const useThemeStore = create<ThemeState>((set) => ({
 // ── Hook: Resolved Colors ──────────────────────────────────────────────────
 
 export function useColors(): ForwardColors {
-  const { mode } = useThemeStore()
-
-  if (mode === 'system') {
-    const systemScheme = Appearance.getColorScheme()
-    return systemScheme === 'light' ? LIGHT_COLORS : DARK_COLORS
-  }
-
-  return mode === 'light' ? LIGHT_COLORS : DARK_COLORS
+  return useIsDark() ? DARK_COLORS : LIGHT_COLORS
 }
 
 export function useIsDark(): boolean {
   const { mode } = useThemeStore()
+  // useColorScheme se suscribe al sistema: re-renderiza cuando el teléfono cambia.
+  const systemScheme = useColorScheme()
 
   if (mode === 'system') {
-    return Appearance.getColorScheme() !== 'light'
+    return systemScheme !== 'light'
   }
 
   return mode === 'dark'

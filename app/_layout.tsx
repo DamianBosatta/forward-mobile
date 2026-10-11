@@ -17,6 +17,7 @@ import {
   Inter_800ExtraBold,
   Inter_900Black,
 } from '@expo-google-fonts/inter'
+import { colorScheme } from 'nativewind'
 import { useColors, useIsDark } from '@/libs/theme'
 import * as SplashScreen from 'expo-splash-screen'
 import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
@@ -84,6 +85,12 @@ function RootLayoutNav() {
   })
   const colors = useColors()
   const isDark = useIsDark()
+
+  // NativeWind aplica las variables de .dark (global.css) según su propio esquema:
+  // se sincroniza con el tema resuelto del store, no con el del sistema.
+  useEffect(() => {
+    colorScheme.set(isDark ? 'dark' : 'light')
+  }, [isDark])
 
   useEffect(() => {
     loadSavedApiUrl().finally(() => {
