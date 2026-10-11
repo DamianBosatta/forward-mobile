@@ -120,9 +120,14 @@ export function useInfiniteVentas(
       searchParams.set('pageSize', String(params.pageSize ?? 20))
       return api.get<PagedResult<Venta>>(`/api/v1/Ventas?${searchParams}`)
     },
-    // El hash de la key descarta los `undefined`: es la misma key que pide "Todas".
     placeholderData: options?.vistaPreviaSinEstado
-      ? () => queryClient.getQueryData<InfiniteData<PagedResult<Venta>>>(ventasKeys.infinite({ ...params, estado: undefined, estados: undefined }))
+      ? () => {
+        // El hash de la key descarta los `undefined`: es la misma key que pide "Todas".
+        const todas = ventasKeys.infinite({ ...params, estado: undefined, estados: undefined })
+        // Invalidada (se grabó o anuló una venta) ya no es lo que hay: mejor la carga.
+        if (queryClient.getQueryState(todas)?.isInvalidated) return undefined
+        return queryClient.getQueryData<InfiniteData<PagedResult<Venta>>>(todas)
+      }
       : undefined,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {

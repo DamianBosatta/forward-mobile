@@ -37,7 +37,7 @@ beforeEach(() => {
 function lista() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const wrapper = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
-  return renderHook(() => useVentasList(), { wrapper })
+  return { qc, ...renderHook(() => useVentasList(), { wrapper }) }
 }
 const ids = (r: { current: ReturnType<typeof useVentasList> }) => r.current.filteredVentas.map((v) => v.id)
 const TODAS = 'Mostrando 3 de 3 · $ 3.000,00'
@@ -74,6 +74,19 @@ describe('lista de ventas de hoy: el chip de estado responde al instante', () =>
     act(() => { result.current.setFilter('Pendiente') })
     expect(ids(result)).toEqual(['a'])
     expect(result.current.isLoading).toBe(false)
+  })
+
+  it('"Todas" invalidada (se grabó o anuló una venta) no sirve de vista previa: se ve la carga', async () => {
+    retener = (q) => q.getAll('estados').includes('Pendiente')
+    const { qc, result } = lista()
+    await waitFor(() => expect(result.current.contador).toBe(TODAS))
+    act(() => { result.current.setFilter('Entregada') })
+    await waitFor(() => expect(result.current.contador).toBe(ENTREGADAS))
+    await act(async () => { await qc.invalidateQueries({ queryKey: ['ventas'] }) })
+
+    act(() => { result.current.setFilter('Pendiente') })
+    expect(ids(result)).toEqual([])
+    expect(result.current.isLoading).toBe(true)
   })
 
   it('con un chip, cambiar de mes y tocar "Todas" no muestra lo del chip: sin "Todas" de ese mes, se ve la carga', async () => {

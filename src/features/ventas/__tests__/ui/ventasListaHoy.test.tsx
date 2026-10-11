@@ -39,19 +39,24 @@ beforeEach(() => {
 })
 
 describe('lista de ventas de hoy: error al pedir un chip', () => {
-  it('muestra el error con "Reintentar", no una lista vacía, y reintentar vuelve a pedir ese estado', async () => {
+  it('muestra el error con "Reintentar" debajo de los chips: reintentar vuelve a pedir ese estado y "Todas" vuelve a la lista', async () => {
     mockGet.mockImplementation((url: string) => {
       if (url.startsWith('/api/v1/Ventas/resumen?')) return Promise.resolve({ totalVendido: 0, pendientes: 0, porAutorizar: 0, entregadas: 0, cantidad: 0 })
       if (url.includes('estados=Entregada')) return Promise.reject(new Error('No se pudo conectar con el servidor.'))
-      return Promise.resolve(pagina([]))
+      return Promise.resolve(pagina([{ id: 'v1', razonSocialCliente: 'Almacén Luis', estado: 'Pendiente', fecha: '2026-10-01T12:00:00Z', totalAmount: 1000 }]))
     })
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(<QueryClientProvider client={qc}><VentasRoute /></QueryClientProvider>)
 
     // El chip se toca con "Todas" ya cargada.
-    await screen.findByText('No hay operaciones registradas para este periodo o filtro.')
+    await screen.findByText('Almacén Luis')
     await userEvent.press(screen.getByText('Entregada'))
     await userEvent.press(await screen.findByRole('button', { name: 'Reintentar carga' }))
     await waitFor(() => expect(mockGet.mock.calls.filter(([u]) => String(u).includes('estados=Entregada')).length).toBeGreaterThan(1))
+    // Con el error a la vista siguen los chips: "Todas" vuelve a la lista.
+    await screen.findByRole('button', { name: 'Reintentar carga' })
+    await userEvent.press(screen.getByText('Todas'))
+    expect(await screen.findByText('Almacén Luis')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Reintentar carga' })).toBeNull()
   })
 })

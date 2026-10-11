@@ -177,6 +177,30 @@ function MonthPicker({
   )
 }
 
+// ── Error de la lista ────────────────────────────────────────────────────────
+/**
+ * Va como ListEmptyComponent y no como la vista de error de DataList, que tapa el encabezado:
+ * si falla un chip, la fila de chips (con "Todas") y el deslizar para actualizar siguen a mano.
+ */
+function ErrorLista({ onRetry }: { onRetry: () => void }) {
+  const colors = useColors()
+  return (
+    <View style={{ paddingVertical: 60, paddingHorizontal: 24, alignItems: 'center', gap: 16 }}>
+      <Text style={{ fontSize: 15, textAlign: 'center', color: colors.textMuted, fontFamily: 'Outfit_700Bold' }}>
+        No se pudieron cargar las ventas.
+      </Text>
+      <TouchableOpacity
+        onPress={onRetry}
+        accessibilityRole="button"
+        accessibilityLabel="Reintentar carga"
+        style={{ minHeight: 48, paddingHorizontal: 20, borderRadius: 14, borderWidth: 1, borderColor: colors.primary, justifyContent: 'center' }}
+      >
+        <Text style={{ color: colors.primary, fontFamily: 'Outfit_800ExtraBold' }}>Reintentar</Text>
+      </TouchableOpacity>
+    </View>
+  )
+}
+
 // ── VentaCard Premium ──────────────────────────────────────────────────────────
 const VentaCard = React.memo(({ item, index }: { item: Venta, index: number }) => {
   const colors     = useColors()
@@ -461,8 +485,7 @@ function VentasListScreen() {
             isLoading={isLoading}
             isRefetching={isRefetching}
             onRefresh={refetch}
-            error={error}
-            onRetry={() => { void refetch() }}
+            {...(error ? { ListEmptyComponent: <ErrorLista onRetry={() => { void refetch() }} /> } : {})}
             onEndReached={() => {
               if (hasNextPage && !isFetchingNextPage) {
                 fetchNextPage()
