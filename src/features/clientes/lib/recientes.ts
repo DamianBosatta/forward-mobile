@@ -35,3 +35,8 @@ export function guardarReciente(usuarioId: string | undefined, cliente: ClienteE
   const lista = [aElegido(cliente), ...leerRecientes(usuarioId).filter(c => c.id !== cliente.id)].slice(0, MAX_RECIENTES)
   storage.set(clave(usuarioId), JSON.stringify(lista))
 }
+
+export function quitarReciente(usuarioId: string | undefined, id: string): void {
+  if (!usuarioId) return
+  storage.set(clave(usuarioId), JSON.stringify(leerRecientes(usuarioId).filter(c => c.id !== id)))
+}

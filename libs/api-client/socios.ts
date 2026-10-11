@@ -126,11 +126,15 @@ export function useToggleSocioStatus() {
   })
 }
 
-export function useSocio(id: string) {
+export const fetchSocio = (id: string) => api.get<SocioDetailDto>(`/api/v1/socios-comerciales/${id}`)
+
+/** `fresco`: siempre pide el detalle al servidor al montar (para editar sin pisar con un caché viejo). */
+export function useSocio(id: string, opciones: { fresco?: boolean } = {}) {
   return useQuery({
     queryKey: sociosKeys.detail(id),
-    queryFn: () => api.get<SocioDetailDto>(`/api/v1/socios-comerciales/${id}`),
+    queryFn: () => fetchSocio(id),
     enabled: !!id,
-    staleTime: 5 * 60_000,
+    staleTime: opciones.fresco ? 0 : 5 * 60_000,
+    refetchOnMount: opciones.fresco ? 'always' : true,
   })
 }

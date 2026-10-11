@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useFocusEffect } from '@react-navigation/native'
@@ -51,12 +51,17 @@ function ClienteForm({ id }: { id?: string }) {
   const c = useColors()
   const router = useRouter()
   const alGuardar = (nuevoId: string) => router.replace({ pathname: '/(tabs)/socios/[id]', params: { id: nuevoId } })
-  const { datos, cambiar, guardar, error, editando, puedeCambiarPago, cargando, guardando } = useClienteForm(id, alGuardar)
+  const { datos, cambiar, guardar, error, editando, puedeCambiarPago, cargando, guardando, errorDeCarga, reintentar } = useClienteForm(id, alGuardar)
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title={editando ? 'Editar cliente' : 'Nuevo cliente'} leading={{ kind: 'atras', onPress: () => router.back() }} />
-      {cargando ? (
+      {errorDeCarga ? (
+        <View style={{ padding: space[4], gap: space[4], width: '100%', maxWidth: 640, alignSelf: 'center' }}>
+          <Notice tone="peligro">{errorDeCarga}</Notice>
+          <Button label="Reintentar" onPress={reintentar} />
+        </View>
+      ) : cargando ? (
         <ActivityIndicator color={c.brandInk} style={{ marginTop: space[8] }} />
       ) : (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -111,6 +116,11 @@ function ClienteForm({ id }: { id?: string }) {
 export default function ClienteFormScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>()
   const [visita, setVisita] = useState(0)
-  useFocusEffect(useCallback(() => setVisita(v => v + 1), []))
+  // La primera vez ya se montó limpio: rearmar de nuevo descartaría lo que se alcance a tipear.
+  const primera = useRef(true)
+  useFocusEffect(useCallback(() => {
+    if (primera.current) { primera.current = false; return }
+    setVisita(v => v + 1)
+  }, []))
   return <ClienteForm key={`${id ?? 'nuevo'}-${visita}`} id={id || undefined} />
 }

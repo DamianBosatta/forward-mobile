@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useCreateSocio, useSocio, useUpdateSocio } from '@/libs/api-client/socios'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -38,14 +38,19 @@ function condicionPago(d: DatosCliente) {
 export function useClienteForm(id: string | undefined, alGuardar: (id: string) => void) {
   const editando = !!id
   const puedeCambiarPago = useAuthStore(s => s.hasCapability('CAP_AUTORIZAR_VENTA'))
-  const { data: actual, isLoading } = useSocio(id ?? '')
+  const { data: actual, isFetchedAfterMount, error: errorDeCarga, refetch } = useSocio(id ?? '', { fresco: true })
   const crear = useCreateSocio()
   const actualizar = useUpdateSocio()
   const [datos, setDatos] = useState<DatosCliente>(VACIO)
   const [error, setError] = useState<string | null>(null)
 
+  // Se llena UNA vez por cliente, con el detalle traído al abrir: un refetch posterior no pisa lo tipeado.
+  const llenadoDe = useRef<string | null>(null)
+  const [cargado, setCargado] = useState(false)
+
   useEffect(() => {
-    if (!editando || !actual) return
+    if (!editando || !actual || !isFetchedAfterMount || llenadoDe.current === id) return
+    llenadoDe.current = id ?? null
     const cp = actual.condicionPago
     setDatos({
       direccion: actual.direccion ?? '',
@@ -59,12 +64,14 @@ export function useClienteForm(id: string | undefined, alGuardar: (id: string) =
       tipoPago: cp?.tipo ?? 'Contado',
       plazo: String((cp?.tipo === 'DiaFijoDelMes' ? cp.diaDelMes : cp?.dias) ?? ''),
     })
-  }, [editando, actual])
+    setCargado(true)
+  }, [editando, actual, isFetchedAfterMount, id])
 
   const cambiar = <K extends keyof DatosCliente>(campo: K, valor: DatosCliente[K]) =>
     setDatos(d => ({ ...d, [campo]: valor }))
 
   const guardar = async () => {
+    if (editando && !cargado) return
     setError(null)
     const comun = {
       direccion: datos.direccion.trim(),
@@ -92,7 +99,10 @@ export function useClienteForm(id: string | undefined, alGuardar: (id: string) =
 
   return {
     datos, cambiar, guardar, error, editando, puedeCambiarPago,
-    cargando: editando && isLoading,
+    cargando: editando && !cargado && !errorDeCarga,
+    /** Al editar, el detalle no cargó: no se muestra el formulario (guardaría en blanco). */
+    errorDeCarga: editando && !cargado && errorDeCarga ? mensajeDelServidor(errorDeCarga, 'No se pudo cargar el cliente.') : null,
+    reintentar: () => { void refetch() },
     guardando: crear.isPending || actualizar.isPending,
   }
 }

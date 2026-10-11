@@ -1,6 +1,7 @@
 import React from 'react'
 import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { SeleccionarClienteSheet } from '../components/SeleccionarClienteSheet'
+import { guardarReciente, leerRecientes } from '../lib/recientes'
 import { storage } from '@/core/utils/storage'
 import { api } from '@/core/api/client'
 import { clienteDeLista, conPermisos, pagina, renderConQuery } from '../__testing__/ayuda'
@@ -78,4 +79,45 @@ it('Nuevo cliente avisa para abrir el alta', async () => {
   await userEvent.press(screen.getByRole('button', { name: 'Nuevo cliente' }))
 
   expect(onNuevoCliente).toHaveBeenCalled()
+})
+
+describe('recientes', () => {
+  const reciente = { id: 'c1', direccion: 'Calle Vieja 1', nombreFantasia: 'Local viejo' }
+  const servidor = (detalle: () => Promise<unknown>) =>
+    get.mockImplementation((u: string) => (String(u).startsWith('/api/v1/socios-comerciales?') ? Promise.resolve(pagina([], 0)) : detalle()))
+
+  it('un reciente que el servidor rechaza no se elige, se avisa y se quita', async () => {
+    guardarReciente('u1', reciente)
+    servidor(() => Promise.reject(new Error('403')))
+    renderConQuery(hoja())
+
+    await userEvent.press(await screen.findByRole('button', { name: /Calle Vieja 1/ }))
+
+    expect(await screen.findByText('Ese cliente ya no está disponible en tu cartera.')).toBeTruthy()
+    expect(onSelect).not.toHaveBeenCalled()
+    expect(leerRecientes('u1')).toEqual([])
+    expect(screen.queryByText('Calle Vieja 1')).toBeNull()
+  })
+
+  it('un reciente dado de baja tampoco se elige', async () => {
+    guardarReciente('u1', reciente)
+    servidor(() => Promise.resolve({ ...clienteDeLista(), activo: false }))
+    renderConQuery(hoja())
+
+    await userEvent.press(await screen.findByRole('button', { name: /Calle Vieja 1/ }))
+
+    expect(await screen.findByText('Ese cliente ya no está disponible en tu cartera.')).toBeTruthy()
+    expect(onSelect).not.toHaveBeenCalled()
+  })
+
+  it('un reciente válido se elige con la dirección fresca del servidor', async () => {
+    guardarReciente('u1', reciente)
+    servidor(() => Promise.resolve(clienteDeLista({ direccion: 'Av. del Valle 89' })))
+    renderConQuery(hoja())
+
+    await userEvent.press(await screen.findByRole('button', { name: /Calle Vieja 1/ }))
+
+    await waitFor(() => expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'c1', direccion: 'Av. del Valle 89' }), 'Pedido'))
+    expect(leerRecientes('u1')[0].direccion).toBe('Av. del Valle 89')
+  })
 })

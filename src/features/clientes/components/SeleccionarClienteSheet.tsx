@@ -1,13 +1,15 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native'
 import { Plus, Search } from 'lucide-react-native'
+import { useQueryClient } from '@tanstack/react-query'
+import { fetchSocio, sociosKeys } from '@/libs/api-client/socios'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Notice, Segmented } from '@/core/ui/fw'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useCartera } from '../hooks/useCartera'
 import { direccionDeEntrega, inicialesDeDireccion, nombreDelCliente } from '../lib/cliente'
-import { aElegido, guardarReciente, leerRecientes, type ClienteElegido } from '../lib/recientes'
+import { aElegido, guardarReciente, leerRecientes, quitarReciente, type ClienteElegido } from '../lib/recientes'
 
 export type TipoDocumento = 'Presupuesto' | 'Pedido'
 
@@ -63,11 +65,34 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
   const [busqueda, setBusqueda] = useState('')
   const { clientes, isLoading, error, cargarMas } = useCartera(busqueda)
   const buscando = busqueda.trim().length > 0
-  const recientes = buscando ? [] : leerRecientes(usuarioId)
+  const qc = useQueryClient()
+  // Los recientes se leen una vez por apertura, no en cada render.
+  const [guardados, setGuardados] = useState(() => leerRecientes(usuarioId))
+  const [aviso, setAviso] = useState<string | null>(null)
+  useEffect(() => {
+    if (!visible) return
+    setGuardados(leerRecientes(usuarioId))
+    setAviso(null)
+  }, [visible, usuarioId])
+  const recientes = buscando ? [] : guardados
 
   const elegir = (cliente: ClienteElegido) => {
     guardarReciente(usuarioId, cliente)
     onSelect(aElegido(cliente), tipo)
+  }
+
+  // Un reciente es una foto vieja: se confirma con el servidor que sigue en la cartera y se usa el dato fresco.
+  const elegirReciente = async (reciente: ClienteElegido) => {
+    setAviso(null)
+    try {
+      const fresco = await qc.fetchQuery({ queryKey: sociosKeys.detail(reciente.id), queryFn: () => fetchSocio(reciente.id), staleTime: 0 })
+      if (!fresco.activo) throw new Error('inactivo')
+      elegir(fresco)
+    } catch {
+      quitarReciente(usuarioId, reciente.id)
+      setGuardados(leerRecientes(usuarioId))
+      setAviso('Ese cliente ya no está disponible en tu cartera.')
+    }
   }
 
   return (
@@ -89,6 +114,7 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
           style={{ ...typeScale.cuerpo, flex: 1, color: c.text, paddingVertical: 0 }}
         />
       </View>
+      {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
       {error ? <Notice tone="peligro">{mensajeDelServidor(error, 'No se pudo cargar la cartera.')}</Notice> : null}
       <FlatList
         style={{ maxHeight: height * 0.45 }}
@@ -102,7 +128,7 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
             {recientes.length > 0 ? (
               <>
                 <Titulo>Recientes</Titulo>
-                {recientes.map(r => <Fila key={`r-${r.id}`} cliente={r} onPress={() => elegir(r)} />)}
+                {recientes.map(r => <Fila key={`r-${r.id}`} cliente={r} onPress={() => { void elegirReciente(r) }} />)}
               </>
             ) : null}
             <Titulo>{buscando ? 'Resultados' : 'Cartera'}</Titulo>
