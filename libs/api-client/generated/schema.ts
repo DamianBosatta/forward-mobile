@@ -9177,6 +9177,8 @@ export interface paths {
                     DepositoId?: string;
                     PageNumber?: number;
                     PageSize?: number;
+                    SearchTerm?: string;
+                    CodigoBarra?: string;
                 };
                 header?: never;
                 path?: never;
