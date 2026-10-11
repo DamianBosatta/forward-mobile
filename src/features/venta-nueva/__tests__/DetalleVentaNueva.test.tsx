@@ -47,7 +47,7 @@ beforeEach(() => {
     if (url === '/api/v1/Ventas/v9') return Promise.resolve(mockVenta)
     if (url === '/api/v1/socios-comerciales/c7') return Promise.resolve(socio)
     if (url === '/api/v1/Ventas/v9/pagos') return Promise.resolve(pagos)
-    if (url.startsWith('/api/v1/comisiones/simulacion/ventas/v9')) return Promise.resolve({ comisionActiva: true, montoCobro: 507977.55, montoComision: 25184.52 })
+    if (url === '/api/v1/comisiones/simulacion/ventas/v9') return Promise.resolve({ comisionActiva: true, montoCobro: 507977.55, montoComision: 25184.52 })
     return Promise.resolve(undefined)
   })
 })
@@ -76,7 +76,7 @@ describe('detalle de la venta nueva (PR 2.10)', () => {
   it('la comisión estimada la da el servidor y solo en una venta propia', async () => {
     const r = pantalla()
     expect(await screen.findByText('Tu comisión estimada $ 25.184,52')).toBeTruthy()
-    expect(mockGet).toHaveBeenCalledWith('/api/v1/comisiones/simulacion/ventas/v9?monto=507977.55')
+    expect(mockGet).toHaveBeenCalledWith('/api/v1/comisiones/simulacion/ventas/v9')
     r.unmount()
     mockGet.mockClear()
     mockVenta = { ...mockVenta, venta: cabecera({ vendedorId: 'otro' }) }
@@ -85,6 +85,20 @@ describe('detalle de la venta nueva (PR 2.10)', () => {
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/v1/Ventas/v9/pagos'))
     expect(mockGet.mock.calls.some(([u]) => String(u).includes('simulacion'))).toBe(false)
     expect(screen.queryByText(/Tu comisión estimada/)).toBeNull()
+  })
+
+  it('con cobros parciales la comisión se simula sobre lo pendiente (el default del servidor) y se rotula así', async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url === '/api/v1/Ventas/v9') return Promise.resolve(mockVenta)
+      if (url === '/api/v1/socios-comerciales/c7') return Promise.resolve(socio)
+      if (url === '/api/v1/Ventas/v9/pagos') return Promise.resolve(pagos)
+      // Igual que SimularComisionVentaQueryHandler: un monto mayor al saldo pendiente es 400.
+      if (url.startsWith('/api/v1/comisiones/simulacion/ventas/v9?monto=')) return Promise.reject(new Error('El monto a cobrar supera el saldo pendiente de la venta.'))
+      if (url === '/api/v1/comisiones/simulacion/ventas/v9') return Promise.resolve({ comisionActiva: true, montoCobro: 407977.55, montoComision: 20226.4 })
+      return Promise.resolve(undefined)
+    })
+    pantalla()
+    expect(await screen.findByText('Tu comisión estimada sobre lo pendiente de cobro $ 20.226,40')).toBeTruthy()
   })
 
   it('un retiro no muestra fecha y un presupuesto avisa que no reserva stock', async () => {

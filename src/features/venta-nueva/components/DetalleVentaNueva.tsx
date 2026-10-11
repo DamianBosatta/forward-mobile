@@ -51,9 +51,11 @@ export function DetalleVentaNueva({ id, onVolver }: Props) {
   const socio = useSocio(h?.clienteId ?? '')
   const pagos = useQuery({ queryKey: [...ventasKeys.detail(id), 'pagos'], queryFn: () => api.get<Pagos>(`/api/v1/Ventas/${id}/pagos`), enabled: !!h })
   const propia = !!h && h.vendedorId === userId
+  // Sin `monto`: el servidor simula el cobro de lo que falta (saldo pendiente). Mandar el total con
+  // cobros parciales le hace responder 400 ("supera el saldo pendiente") y el chip desaparecía.
   const comision = useQuery({
-    queryKey: ['comisiones', 'simulacion', 'venta', id, h?.totalAmount],
-    queryFn: () => api.get<Simulacion>(`/api/v1/comisiones/simulacion/ventas/${id}?monto=${h!.totalAmount}`),
+    queryKey: ['comisiones', 'simulacion', 'venta', id, h?.totalAmount, pagos.data?.montoPagado],
+    queryFn: () => api.get<Simulacion>(`/api/v1/comisiones/simulacion/ventas/${id}`),
     enabled: propia,
   })
   const volver = { kind: 'atras' as const, onPress: onVolver ?? (() => router.back()) }
@@ -98,7 +100,7 @@ export function DetalleVentaNueva({ id, onVolver }: Props) {
           <TotalsRow label="Total" importe={h.totalAmount} destacado />
           {sim?.comisionActiva && sim.montoCobro > 0 ? (
             <Text style={{ ...typeScale.secundario, alignSelf: 'flex-start', paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.brandSoft, color: c.brandInk }}>
-              {`Tu comisión estimada ${formatImporte(sim.montoComision)}`}
+              {`Tu comisión estimada${sim.montoCobro < h.totalAmount ? ' sobre lo pendiente de cobro' : ''} ${formatImporte(sim.montoComision)}`}
             </Text>
           ) : null}
         </View>
