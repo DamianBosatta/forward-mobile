@@ -1,12 +1,15 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { ActivityIndicator, FlatList, Modal, Text, TextInput, View } from 'react-native'
 import { useNavigation } from 'expo-router'
-import { DrawerActions } from '@react-navigation/native'
+import { DrawerActions, useFocusEffect } from '@react-navigation/native'
+import { useMutation } from '@tanstack/react-query'
 import { LayoutGrid, List, ScanBarcode, Search } from 'lucide-react-native'
 import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Notice, TopBar } from '@/core/ui/fw'
 import { RequirePermission } from '@/core/ui'
+import { ApiError } from '@/core/api/client'
+import { buscarPorCodigoBarra } from '@/libs/api-client/productos'
 import { useCatalogoConsulta } from '@/features/catalogo/hooks/useCatalogoConsulta'
 import { ProductoCard } from '@/features/catalogo/components/ProductoCard'
 import { FichaProducto } from '@/features/catalogo/components/FichaProducto'
@@ -14,6 +17,12 @@ import { EscanerCodigo } from '@/features/catalogo/components/EscanerCodigo'
 
 /** Ancho desde el que la grilla y la ficha van lado a lado (plan §8, lámina TabCatalogoConsulta). */
 const ANCHO_DOS_PANELES = 900
+
+/** El aviso de un escaneo que falló: sin red (no llegó respuesta), código rechazado (400) u otro error. */
+function falloDelEscaneo(error: Error, codigo?: string): string {
+  if (!(error instanceof ApiError)) return `Sin conexión: no se pudo buscar el código ${codigo}. Volvé a escanear cuando haya señal.`
+  return error.status === 400 ? `El código ${codigo} no es válido.` : `No se pudo buscar el código ${codigo}. Volvé a intentar.`
+}
 
 /** Catálogo y stock, solo consulta (láminas CatalogoConsulta, FichaProducto y TabCatalogoConsulta). */
 export default function CatalogoConsultaScreen() {
@@ -27,16 +36,26 @@ export default function CatalogoConsultaScreen() {
   const cat = useCatalogoConsulta()
   const columnas = grilla ? 2 : 1
   const [escaneando, setEscaneando] = useState(false)
-  const [codigoLeido, setCodigoLeido] = useState<string | null>(null)
-
-  // Código leído: cuando llega la respuesta de ESA búsqueda, un único resultado abre la
-  // ficha; si hay varios o ninguno, la búsqueda queda cargada en la lista.
-  const { termino, isLoading, isPlaceholderData, isError, totalCount, productos } = cat
-  useEffect(() => {
-    if (!codigoLeido || termino !== codigoLeido || isLoading || isPlaceholderData) return
-    if (!isError && totalCount === 1 && productos.length === 1) setSeleccion(productos[0].id)
-    setCodigoLeido(null)
-  }, [codigoLeido, termino, isLoading, isPlaceholderData, isError, totalCount, productos])
+  // Código leído: el producto con ese código exacto; una fragancia abre la ficha de su línea. Sin red
+  // falla enseguida (`always`): no queda en pausa para abrir una ficha cuando vuelva la señal.
+  // Otro escaneo, abrir el escáner, tocar una tarjeta, tipear o salir dejan sin efecto el escaneo en curso.
+  const corte = useRef<AbortController | null>(null)
+  const escaneo = useMutation({
+    mutationFn: (codigo: string) => {
+      corte.current?.abort()
+      corte.current = new AbortController()
+      return buscarPorCodigoBarra(codigo, corte.current.signal)
+    },
+    networkMode: 'always',
+  })
+  const { reset } = escaneo
+  const cancelarEscaneo = useCallback(() => { corte.current?.abort(); reset() }, [reset])
+  // El menú lateral deja la pantalla montada: salir es el blur, no el desmontaje.
+  useFocusEffect(useCallback(() => cancelarEscaneo, [cancelarEscaneo]))
+  const codigo = escaneo.variables
+  const avisoEscaneo = escaneo.isPending ? { tone: 'info' as const, texto: `Buscando el código ${codigo}…` }
+    : escaneo.error ? { tone: 'peligro' as const, texto: falloDelEscaneo(escaneo.error, codigo) }
+    : escaneo.isSuccess && !escaneo.data ? { tone: 'advertencia' as const, texto: `No hay ningún producto con el código ${codigo}.` } : null
 
   const lista = (
     <View style={{ flex: 1 }}>
@@ -82,7 +101,7 @@ export default function CatalogoConsultaScreen() {
               disponible={cat.disponible.get(item.id)}
               grilla={grilla}
               seleccionado={dosPaneles && seleccion === item.id}
-              onPress={() => setSeleccion(item.id)}
+              onPress={() => { cancelarEscaneo(); setSeleccion(item.id) }}
             />
           )}
         />
@@ -98,7 +117,7 @@ export default function CatalogoConsultaScreen() {
           subtitle="Solo consulta"
           leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
           actions={[
-            { icon: ScanBarcode, accessibilityLabel: 'Escanear código de barras', onPress: () => setEscaneando(true) },
+            { icon: ScanBarcode, accessibilityLabel: 'Escanear código de barras', onPress: () => { cancelarEscaneo(); setEscaneando(true) } },
             ...(dosPaneles
               ? []
               : [
@@ -125,7 +144,7 @@ export default function CatalogoConsultaScreen() {
             <Search size={20} color={c.textSecondary} />
             <TextInput
               value={cat.busqueda}
-              onChangeText={cat.setBusqueda}
+              onChangeText={(texto) => { cancelarEscaneo(); cat.setBusqueda(texto) }}
               placeholder="Buscar por código o nombre"
               placeholderTextColor={c.textSecondary}
               accessibilityLabel="Buscar por código o nombre"
@@ -136,6 +155,11 @@ export default function CatalogoConsultaScreen() {
             />
           </View>
         </View>
+        {avisoEscaneo ? (
+          <View style={{ padding: space[4], paddingBottom: 0 }}>
+            <Notice tone={avisoEscaneo.tone}>{avisoEscaneo.texto}</Notice>
+          </View>
+        ) : null}
 
         {dosPaneles ? (
           <View style={{ flex: 1, flexDirection: 'row' }}>
@@ -157,11 +181,10 @@ export default function CatalogoConsultaScreen() {
         <EscanerCodigo
           visible={escaneando}
           onClose={() => setEscaneando(false)}
-          onLeido={(codigo) => {
+          onLeido={(leido) => {
             setEscaneando(false)
             setSeleccion(null)
-            setCodigoLeido(codigo)
-            cat.buscarYa(codigo)
+            escaneo.mutate(leido, { onSuccess: (p) => { if (p) setSeleccion(p.productoPadreId ?? p.id) } })
           }}
         />
 

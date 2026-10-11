@@ -11,7 +11,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 let mockAncho = 390
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: mockAncho }) }))
 jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }) }))
-jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
+jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() }, useFocusEffect: jest.fn() }))
 jest.mock('@/core/api/client', () => ({
   API_URL: 'http://api.test',
   api: { get: jest.fn(), post: jest.fn() },

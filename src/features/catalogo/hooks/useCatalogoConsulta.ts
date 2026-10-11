@@ -50,14 +50,6 @@ export function useCatalogoConsulta() {
   return {
     busqueda,
     setBusqueda,
-    termino,
-    /** Busca ya, sin esperar: para un código leído con el escáner. */
-    buscarYa: (texto: string) => {
-      setBusqueda(texto)
-      setTermino(texto.trim())
-    },
-    /** true mientras se ven los resultados de la búsqueda anterior. */
-    isPlaceholderData: query.isPlaceholderData,
     productos,
     totalCount,
     disponible,
