@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, FlatList, SectionList, Text, View } from 'react-native'
+import { ActivityIndicator, FlatList, Pressable, SectionList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import {
   DocumentCard, Fab, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, useMenuLeading,
@@ -101,13 +101,21 @@ export function ListaCompras({ detalle }: Props) {
       data={l.borradores}
       keyExtractor={(b) => b.id}
       contentContainerStyle={{ padding: space[4], gap: space[3] }}
-      ListHeaderComponent={<Notice tone="info">Los borradores se guardan solos mientras cargás una compra.</Notice>}
-      renderItem={({ item: b }) => (
-        <View accessible style={{ minHeight: 44, padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[1] }}>
-          <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{b.proveedorNombre}</Text>
-          <Text style={secundario}>{`${b.cantidadLineas} ${b.cantidadLineas === 1 ? 'línea' : 'líneas'} · Guardado ${tituloDelDia(new Date(b.fechaModificacion)).toLowerCase()} ${horaDe(b.fechaModificacion)}`}</Text>
-        </View>
-      )}
+      ListHeaderComponent={<Notice tone="info">Los borradores se guardan solos mientras cargás una compra. Tocá uno para seguirlo.</Notice>}
+      renderItem={({ item: b }) => {
+        const pie = `${b.cantidadLineas} ${b.cantidadLineas === 1 ? 'línea' : 'líneas'} · Guardado ${tituloDelDia(new Date(b.fechaModificacion)).toLowerCase()} ${horaDe(b.fechaModificacion)}`
+        return (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${b.proveedorNombre}, ${pie}`}
+            onPress={() => router.push(`/(tabs)/compras/nueva?borrador=${b.id}` as never)}
+            style={({ pressed }) => ({ minHeight: 44, padding: space[4], borderRadius: radii.tarjeta, backgroundColor: pressed ? c.surface2 : c.surface, gap: space[1] })}
+          >
+            <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{b.proveedorNombre}</Text>
+            <Text style={secundario}>{pie}</Text>
+          </Pressable>
+        )
+      }}
       ListEmptyComponent={
         l.borradoresQuery.isLoading ? <ActivityIndicator color={c.brand} />
           : l.borradoresQuery.isError ? <Notice tone="peligro">No se pudieron cargar los borradores.</Notice>

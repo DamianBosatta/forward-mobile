@@ -44,6 +44,7 @@ import type { EstadoOrden } from '@/features/compras/hooks/useCompraForm'
 import { ProveedorModal } from '@/features/compras/components/ProveedorModal'
 import { DepositoModal } from '@/features/compras/components/DepositoModal'
 import { CatalogModal } from '@/features/compras/components/CatalogModal'
+import { CompraNueva } from '@/features/compras/components/CompraNueva'
 
 const ESTADO_OPTIONS: { value: EstadoOrden; label: string; desc: string; Icon: any; color: string }[] = [
   { value: 'Presupuesto', label: 'Nota de Pedido', desc: 'No afecta stock', Icon: Clock, color: '#94a3b8' },
@@ -59,7 +60,18 @@ function formatMoney(val: number) {
 
 // ── Main Screen ────────────────────────────────────────────────────────────────
 
-export default function NuevaCompraScreen() {
+/**
+ * Ruta `compras/nueva`. La compra nueva (y retomar un borrador con `?borrador=`) usa el formato
+ * nuevo (Bloque 9A, PR 3.2); editar una compra guardada (`?edit=`) sigue en el formulario de
+ * antes hasta la PR 3.5.
+ */
+export default function NuevaCompraRoute() {
+  const { edit, borrador } = useLocalSearchParams<{ edit?: string; borrador?: string }>()
+  if (edit) return <EditarCompraScreen />
+  return <CompraNueva key={borrador ?? 'nueva'} borradorId={borrador} />
+}
+
+function EditarCompraScreen() {
   const router = useRouter()
   const navigation = useNavigation()
   const colors = useColors()

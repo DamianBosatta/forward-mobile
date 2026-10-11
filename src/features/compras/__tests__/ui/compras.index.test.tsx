@@ -101,12 +101,15 @@ describe('lista de compras', () => {
     expect(conBusqueda.every((u) => u.includes('SearchTerm=saph'))).toBe(true)
   })
 
-  it('Borradores muestra los del usuario que devuelve el servidor', async () => {
+  it('Borradores muestra los del usuario que devuelve el servidor y se retoman al tocarlos', async () => {
     pantalla()
     await userEvent.press(screen.getByRole('tab', { name: 'Borradores' }))
     expect(await screen.findByText('Gorrión Mayorista')).toBeTruthy()
     expect(screen.getByText(/3 líneas · Guardado hoy/)).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/v1/Compras/borradores/mios')
+    // Tocar un borrador lo retoma en la compra nueva.
+    await userEvent.press(screen.getByRole('button', { name: /Gorrión Mayorista/ }))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/compras/nueva?borrador=b1')
   })
 
   it('en el teléfono tocar una tarjeta abre el detalle y el "+" es el de la barra (uno solo)', async () => {

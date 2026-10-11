@@ -8,7 +8,7 @@ export function ModalHeader({ title, onClose, colors }: { title: string, onClose
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingBottom: 20, paddingTop: Math.max(insets.top, 24), backgroundColor: colors.surface }}>
        <Text style={{ fontSize: 14, fontWeight: '900', color: colors.text, textTransform: 'uppercase', letterSpacing: 1.5 }}>{title}</Text>
-       <Pressable onPress={onClose} style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: colors.surface2, alignItems: 'center', justifyContent: 'center' }}>
+       <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Cerrar" style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: colors.surface2, alignItems: 'center', justifyContent: 'center' }}>
          <X size={20} color={colors.textDisabled} />
        </Pressable>
     </View>

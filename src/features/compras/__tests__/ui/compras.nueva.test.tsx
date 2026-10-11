@@ -5,7 +5,7 @@ import { useCompraForm } from '../../hooks/useCompraForm'
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
-  useLocalSearchParams: () => ({ edit: undefined }),
+  useLocalSearchParams: () => ({ edit: 'c1' }),
   useNavigation: () => ({ dispatch: jest.fn() })
 }))
 
@@ -40,7 +40,7 @@ describe('NuevaCompraScreen UI', () => {
     jest.clearAllMocks()
   })
 
-  it('debe renderizar el titulo correctamente', () => {
+  it('editar una compra guardada sigue en el formulario de antes (hasta la PR 3.5)', () => {
     ;(useCompraForm as jest.Mock).mockReturnValue({
       loadingEdit: false,
       proveedorSelected: null,
@@ -61,7 +61,6 @@ describe('NuevaCompraScreen UI', () => {
 
     const { getByText } = render(<NuevaCompraScreen />)
 
-    expect(getByText('Nueva Compra')).toBeTruthy()
-    expect(getByText('Flujo Inicial de la Orden')).toBeTruthy()
+    expect(getByText('Editar Orden')).toBeTruthy()
   })
 })
