@@ -74,17 +74,22 @@ export function InicioScreen() {
   if (pendientes.ventas) {
     const v = pendientes.ventas
     const filas: FilaPendiente[] = [
-      { label: 'Presupuestos', valor: v.presupuestos, onPress: aVentas },
-      { label: 'Pedidos confirmados', valor: v.pedidos, onPress: aVentas },
+      { label: 'Presupuestos', ...v.presupuestos, onPress: aVentas },
+      { label: 'Pedidos confirmados', ...v.pedidos, onPress: aVentas },
     ]
-    if ('porAutorizar' in v) filas.push({ label: 'Por autorizar', valor: v.porAutorizar ?? null, alerta: true, onPress: aAutorizaciones })
+    // Sin CAP_AUTORIZAR_VENTA no hay bandeja: son las suyas que esperan, y se ven en Ventas.
+    if (v.porAutorizar) {
+      filas.push(v.porAutorizar.propias
+        ? { label: 'Esperando autorización', ...v.porAutorizar, alerta: true, onPress: aVentas }
+        : { label: 'Por autorizar', ...v.porAutorizar, alerta: true, onPress: aAutorizaciones })
+    }
     tarjetas.push(<TarjetaPendientes key="ventas" titulo="Ventas" icono={Tag} filas={filas} ancho={ancho} />)
   }
   if (pendientes.compras) {
     const k = pendientes.compras
     const filas: FilaPendiente[] = [
-      { label: 'Notas de pedido', valor: k.notasPedido, onPress: aCompras },
-      { label: 'Por recibir', valor: k.porRecibir, onPress: aCompras },
+      { label: 'Notas de pedido', ...k.notasPedido, onPress: aCompras },
+      { label: 'Por recibir', ...k.porRecibir, onPress: aCompras },
     ]
     tarjetas.push(<TarjetaPendientes key="compras" titulo="Compras" icono={ShoppingBag} filas={filas} ancho={ancho} />)
   }
@@ -111,6 +116,23 @@ export function InicioScreen() {
             <Text style={[typeScale.seccion, { color: c.text }]}>{`Hola, ${nombre.split(' ')[0] || ''}`.trim()}</Text>
           </View>
         </View>
+
+        {pendientes.error ? (
+          <View style={{ paddingHorizontal: space[4], gap: space[2], alignItems: 'flex-start' }}>
+            <Text style={[typeScale.secundario, { color: c.textSecondary }]}>No se pudieron cargar los pendientes</Text>
+            {pendientes.error.motivo ? (
+              <Text style={[typeScale.secundario, { color: c.text }]}>{pendientes.error.motivo}</Text>
+            ) : null}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Reintentar pendientes"
+              onPress={() => pendientes.refetch()}
+              style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}
+            >
+              <Text style={[typeScale.secundario, { color: c.brandInk, fontFamily: FONT.semibold, fontWeight: '600' }]}>Reintentar</Text>
+            </Pressable>
+          </View>
+        ) : null}
 
         {tarjetas.length > 0 &&
           (tablet ? (

@@ -1,6 +1,10 @@
 import { api, ApiError, configureApiClient } from '@/core/api/client'
 
 jest.mock('@/core/query/persistConfig', () => ({ mmkvPersister: { removeClient: jest.fn() } }))
+const mockLogError = jest.fn()
+jest.mock('@/src/core/utils/logger', () => ({
+  logger: { info: jest.fn(), warn: jest.fn(), error: (...a: unknown[]) => mockLogError(...a) },
+}))
 
 const mockFetch = jest.fn()
 const responder = (status: number, body: unknown) =>
@@ -107,5 +111,26 @@ describe('postConSobre: data y el sobre completo en una sola llamada', () => {
     const r = await api.postConSobre<string, { tipoCuenta?: string }>('/api/v1/Pagos', {})
     expect(mockFetch).toHaveBeenCalledTimes(3)
     expect(r).toMatchObject({ data: 'p1', sobre: { tipoCuenta: 'Tst' } })
+  })
+})
+
+describe('estados esperados: no se registran como error', () => {
+  beforeEach(() => mockLogError.mockClear())
+
+  it('un 404 que el llamador espera (servidor sin el endpoint) lanza igual ApiError pero no va al registro de errores', async () => {
+    responder(404, {})
+    const e = await fallo(api.get('/api/v1/Inicio/resumen', { estadosEsperados: [404] }))
+    expect(e).toBeInstanceOf(ApiError)
+    expect(e.status).toBe(404)
+    expect(mockLogError).not.toHaveBeenCalled()
+    expect(mockFetch.mock.calls[0][1]).not.toHaveProperty('estadosEsperados')
+  })
+
+  it('sin declararlo, el mismo 404 se registra como error; y otro estado aunque se declare el 404, también', async () => {
+    responder(404, {})
+    await fallo(api.get('/api/v1/Inicio/resumen'))
+    responder(500, {})
+    await fallo(api.get('/api/v1/Inicio/resumen', { estadosEsperados: [404] }))
+    expect(mockLogError).toHaveBeenCalledTimes(2)
   })
 })

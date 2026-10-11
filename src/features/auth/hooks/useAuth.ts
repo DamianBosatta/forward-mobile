@@ -22,6 +22,8 @@ export function useAuth() {
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
   const lastAttemptRef = useRef<number>(0);
 
+  const queryClient = useQueryClient();
+
   const isLocked = lockedUntil !== null && Date.now() < lockedUntil;
   const lockRemainingMs = isLocked ? (lockedUntil! - Date.now()) : 0;
 
@@ -146,6 +148,8 @@ export function useAuth() {
       setFailedAttempts(0);
       setLockedUntil(null);
 
+      // Lo que quedó en la caché (y en el teléfono) es de la sesión anterior, quizá de otro usuario.
+      queryClient.clear();
       setTokens({
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token ?? '',
@@ -173,9 +177,7 @@ export function useAuth() {
       setError(err?.message ?? 'No se pudo conectar al servidor.');
       return false;
     }
-  }, [failedAttempts, isLocked, lockRemainingMs, setTokens, refreshPermissions]);
-
-  const queryClient = useQueryClient();
+  }, [failedAttempts, isLocked, lockRemainingMs, setTokens, refreshPermissions, queryClient]);
 
   const logout = useCallback(() => {
     clearAuth();

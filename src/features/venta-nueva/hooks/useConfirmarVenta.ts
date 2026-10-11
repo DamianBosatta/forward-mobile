@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '@/core/api/client'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { ventasKeys } from '@/libs/api-client/ventas'
+import { inicioKeys } from '@/core/query/queryClient'
 import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { aAlta, aAutoguardado, nuevaClaveIdempotencia, type Cabecera } from '../lib/payload'
@@ -114,6 +115,8 @@ export function useConfirmarVenta(d: Datos) {
     }
     if (conLoDeAntes) mensaje = 'El pedido ya se había grabado con lo de antes. Revisalo y editalo si cambiaste algo.'
     void qc.invalidateQueries({ queryKey: ventasKeys.all })
+    // No es una mutación de react-query: Inicio (que el QueryClient refresca tras cada mutación) se marca a mano.
+    void qc.invalidateQueries({ queryKey: inicioKeys.all })
     // La venta ya está guardada: vaciar el carrito no puede disparar un PUT con items=[] al borrador.
     b.cerrar()
     d.alGuardar()

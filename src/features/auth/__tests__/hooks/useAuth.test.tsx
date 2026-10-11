@@ -73,4 +73,19 @@ describe('useAuth Hook', () => {
 
     expect(result.current.error).toBe('El usuario se encuentra inactivo. Contactá al administrador.');
   });
+
+  it('al entrar borra la caché que haya quedado en el teléfono de otro usuario', async () => {
+    queryClient.setQueryData(['inicio', 'resumen'], { ventas: null, compras: null, autorizacionesPendientes: null });
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: 'a', refresh_token: 'r' }) })
+      .mockResolvedValue({ ok: false, json: async () => ({}) });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      expect(await result.current.login('vendedor', '123')).toBe(true);
+    });
+
+    expect(queryClient.getQueryCache().getAll()).toHaveLength(0);
+  });
 });

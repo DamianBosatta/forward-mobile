@@ -6831,6 +6831,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Inicio/resumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InicioResumenDtoResponse"];
+                        "application/json": components["schemas"]["InicioResumenDtoResponse"];
+                        "text/json": components["schemas"]["InicioResumenDtoResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InicioResumenDtoResponse"];
+                        "application/json": components["schemas"]["InicioResumenDtoResponse"];
+                        "text/json": components["schemas"]["InicioResumenDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Logistica/ventas-empacadas": {
         parameters: {
             query?: never;
@@ -16976,6 +17024,40 @@ export interface components {
             errors?: string[] | null;
             data?: components["schemas"]["IniciarPreparacionMasivaResult"];
             codigo?: string | null;
+        };
+        InicioComprasDto: {
+            notasPedido: components["schemas"]["InicioPendienteDto"];
+            porRecibir: components["schemas"]["InicioPendienteDto"];
+        };
+        InicioImporteDto: {
+            moneda: string;
+            /** Format: double */
+            total: number;
+        };
+        InicioPendienteDto: {
+            /** Format: int32 */
+            cantidad: number;
+            importes: components["schemas"]["InicioImporteDto"][];
+        };
+        InicioResumenDto: {
+            ventas?: components["schemas"]["InicioVentasDto"];
+            compras?: components["schemas"]["InicioComprasDto"];
+            autorizacionesPendientes?: components["schemas"]["InicioPendienteDto"];
+        };
+        InicioResumenDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["InicioResumenDto"];
+            codigo?: string | null;
+        };
+        InicioVentasDto: {
+            presupuestosPendientes: components["schemas"]["InicioPendienteDto"];
+            pedidosConfirmados: components["schemas"]["InicioPendienteDto"];
+            porAutorizar: components["schemas"]["InicioPendienteDto"];
         };
         ItemStockFiscalDto: {
             /** Format: uuid */

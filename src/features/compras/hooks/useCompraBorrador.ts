@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { api } from '@/libs/api-client/client'
 import { borradorCompraApi, comprasKeys, type GuardarCompraBody } from '@/libs/api-client/compras'
+import { inicioKeys } from '@/core/query/queryClient'
 import type { CompraDto, ProductoDetailDto, SocioDetailDto } from '@/libs/api-client/types'
 import { useDepositoDeConsulta } from '@/features/catalogo/hooks/useDepositoDeConsulta'
 import { mensajeDelServidor } from '../lib/mensaje-error'
@@ -209,6 +210,8 @@ export function useCompraBorrador(borradorInicial?: string) {
     const v = await guardarAhora()
     await accion(compraId!, v)
     queryClient.invalidateQueries({ queryKey: comprasKeys.all })
+    // No es una mutación de react-query: Inicio (que el QueryClient refresca tras cada mutación) se marca a mano.
+    queryClient.invalidateQueries({ queryKey: inicioKeys.all })
   }, [compraId, guardarAhora, queryClient])
 
   return {

@@ -64,4 +64,12 @@ describe('formatImporte', () => {
     expect(formatImporte(undefined)).toBe('—')
     expect(formatImporte(Number.NaN)).toBe('—')
   })
+
+  it('sin centavos redondea; otra moneda va con su código en lugar del signo', () => {
+    expect(formatImporte(302750.4, { centavos: false })).toBe('$\u00A0302.750')
+    expect(formatImporte(1199.6, { moneda: 'USD', centavos: false })).toBe('USD\u00A01.200')
+    expect(formatImporte(-0.4, { centavos: false })).toBe('$\u00A00')
+    expect(formatImporte(12.5, { moneda: 'ARS' })).toBe('$\u00A012,50')
+    expect(formatImporte(null, { moneda: 'USD' })).toBe('—')
+  })
 })

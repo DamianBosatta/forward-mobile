@@ -1,15 +1,25 @@
 import React from 'react'
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, userEvent, within } from '@testing-library/react-native'
+import { act, render, renderHook, screen, userEvent, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
+import { useAnularVenta, useAutorizarVenta, ventasKeys } from '@/libs/api-client/ventas'
+import { useCreateCompra } from '@/features/compras/api/queries'
+import { crearQueryClient } from '@/core/query/queryClient'
 import { InicioScreen } from '../components/InicioScreen'
 
 const mockGet = jest.fn()
+const mockEscribir = jest.fn((_url: string) => Promise.resolve({}))
 jest.mock('@/core/api/client', () => ({
+  ...jest.requireActual('@/core/api/client'),
   API_URL: 'http://api.test',
-  api: { get: (url: string) => mockGet(url) },
+  api: {
+    get: (url: string, opciones?: unknown) => (opciones === undefined ? mockGet(url) : mockGet(url, opciones)),
+    post: (url: string) => mockEscribir(url),
+    delete: (url: string) => mockEscribir(url),
+  },
 }))
+const { ApiError } = jest.requireActual('@/core/api/client')
 
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({
@@ -35,21 +45,44 @@ const VENTA_HOY = {
   totalAmount: 214560,
 }
 
-type Respuestas = Partial<Record<'presupuestos' | 'pedidos' | 'porAutorizar' | 'compras' | 'hoy', unknown>>
+type Respuestas = Partial<Record<'resumen' | 'presupuestos' | 'pedidos' | 'porAutorizar' | 'compras' | 'hoy', unknown>>
 
-/** Responde según la URL, como el servidor. Una clave ausente = la llamada falla. */
+/**
+ * Responde según la URL, como el servidor. Un Error = la llamada falla con ese error. Sin `resumen`
+ * es el servidor viejo: GET /Inicio/resumen da 404. Cualquier otra clave ausente = la llamada falla.
+ */
 function servidor(r: Respuestas) {
   mockGet.mockImplementation((url: string) => {
-    const clave = url.includes('pendientes-autorizacion') ? 'porAutorizar'
+    const clave = url.includes('Inicio/resumen') ? 'resumen'
+      : url.includes('pendientes-autorizacion') ? 'porAutorizar'
       : url.includes('Compras/resumen') ? 'compras'
       : url.includes('fechaDesde') ? 'hoy'
       : url.includes('tipoOperacion=1') ? 'presupuestos'
       : url.includes('tipoOperacion=2') ? 'pedidos'
       : 'otro'
     const valor = (r as Record<string, unknown>)[clave]
-    return valor === undefined ? Promise.reject(new Error(`sin respuesta: ${url}`)) : Promise.resolve(valor)
+    if (valor instanceof Error) return Promise.reject(valor)
+    if (valor !== undefined) return Promise.resolve(valor)
+    return Promise.reject(clave === 'resumen' ? new ApiError(404, 'El recurso solicitado no existe.') : new Error(`sin respuesta: ${url}`))
   })
 }
+
+// Importes como los escribe formatImporte: sin centavos y con espacio duro tras el signo.
+const ars = (cifra: string) => `$\u00A0${cifra}`
+const usd = (cifra: string) => `USD\u00A0${cifra}`
+const importe = (total: number, moneda = 'ARS') => ({ moneda, total })
+const pendiente = (cantidad: number, ...importes: { moneda: string; total: number }[]) => ({ cantidad, importes })
+/** InicioResumenDto de alguien con los dos módulos y CAP_AUTORIZAR_VENTA. */
+const RESUMEN = {
+  ventas: {
+    presupuestosPendientes: pendiente(12, importe(1284300)),
+    pedidosConfirmados: pendiente(5, importe(940120), importe(1200, 'USD')),
+    porAutorizar: pendiente(1, importe(80000)),
+  },
+  compras: { notasPedido: pendiente(3, importe(358777)), porRecibir: pendiente(0) },
+  autorizacionesPendientes: pendiente(2, importe(302750)),
+}
+const pedidosDelResumen = () => mockGet.mock.calls.filter(([u]) => String(u).includes('Inicio/resumen')).length
 
 const pagina = (totalCount: number, items: unknown[] = [{ id: 'x' }]) => ({ items, totalCount, page: 1, pageSize: 1, totalPages: totalCount, hasNextPage: totalCount > 1 })
 
@@ -59,13 +92,25 @@ function conPermisos(...modulos: string[]) {
   } as never)
 }
 
-function pintar() {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(
+/** Inicio con el QueryClient de la app (sin reintentos, salvo que se pase otro). */
+function pintar(qc: QueryClient = crearQueryClient({ retry: false })) {
+  const r = render(
     <QueryClientProvider client={qc}>
       <InicioScreen />
     </QueryClientProvider>,
   )
+  return { qc, desmontar: r.unmount }
+}
+
+/**
+ * Una mutación real de la app, con el mismo QueryClient que Inicio. Se monta antes que Inicio:
+ * `screen` apunta a lo último que se pintó. Si el servidor la rechaza, el rechazo se ignora acá.
+ */
+function mutacion(qc: QueryClient, usar: () => { mutateAsync: (v: never) => Promise<unknown> }, variables: unknown) {
+  const { result } = renderHook(usar, {
+    wrapper: ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>,
+  })
+  return () => act(async () => { await result.current.mutateAsync(variables as never).catch(() => undefined) })
 }
 
 const flat = (el: { props: { style?: unknown } }): ViewStyle => StyleSheet.flatten(el.props.style as StyleProp<ViewStyle>) ?? {}
@@ -75,7 +120,146 @@ beforeEach(() => {
   mockAncho.mockReturnValue(390)
 })
 
-describe('Inicio: tarjetas de pendientes', () => {
+describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
+  it('cada fila trae cantidad e importe; varias monedas van una por línea y una fila en 0 queda sin importe', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    pintar()
+
+    expect(await screen.findByLabelText(`Presupuestos: 12, ${ars('1.284.300')}`)).toBeTruthy()
+    const pedidos = screen.getByLabelText(`Pedidos confirmados: 5, ${ars('940.120')}, ${usd('1.200')}`)
+    expect(within(pedidos).getByText(ars('940.120'))).toBeTruthy()
+    expect(within(pedidos).getByText(usd('1.200'))).toBeTruthy()
+    // Con la capacidad, "Por autorizar" es la bandeja de todos, no las propias.
+    expect(screen.getByLabelText(`Por autorizar: 2, ${ars('302.750')}`)).toBeTruthy()
+    expect(screen.getByLabelText(`Notas de pedido: 3, ${ars('358.777')}`)).toBeTruthy()
+    const porRecibir = screen.getByLabelText('Por recibir: 0')
+    expect(within(porRecibir).getByText('0')).toBeTruthy()
+    expect(within(porRecibir).queryByText(/\$/)).toBeNull()
+    // Las tarjetas salen de una sola llamada: ni listas para contar, ni la bandeja, ni el resumen de compras.
+    expect(mockGet.mock.calls.map(([u]) => String(u)).filter((u) => !u.includes('fechaDesde'))).toEqual(['/api/v1/Inicio/resumen'])
+  })
+
+  it('una sección que el servidor manda en null no se muestra, aunque el teléfono crea tener el módulo', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
+    servidor({ resumen: { ventas: null, compras: RESUMEN.compras, autorizacionesPendientes: null }, hoy: pagina(0, []) })
+    pintar()
+
+    expect(await screen.findByLabelText(`Notas de pedido: 3, ${ars('358.777')}`)).toBeTruthy()
+    expect(screen.queryByLabelText('Ventas pendientes')).toBeNull()
+    expect(screen.queryByLabelText(/Por autorizar/)).toBeNull()
+  })
+
+  it('vendedor sin CAP_AUTORIZAR_VENTA: ve las suyas como "Esperando autorización" y la fila lleva a Ventas', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: { ventas: RESUMEN.ventas, compras: null, autorizacionesPendientes: null }, hoy: pagina(0, []) })
+    pintar()
+
+    const fila = await screen.findByLabelText(`Esperando autorización: 1, ${ars('80.000')}`)
+    expect(screen.queryByLabelText(/^Por autorizar/)).toBeNull()
+    expect(screen.queryByLabelText('Compras pendientes')).toBeNull()
+    await userEvent.setup().press(fila)
+    expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas')
+  })
+
+  it('usuario desactivado (403): muestra el motivo en lugar de las tarjetas, sin reintentar ni caer a las llamadas viejas', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
+    servidor({ resumen: new ApiError(403, 'El usuario está desactivado.'), hoy: pagina(0, []) })
+    pintar(crearQueryClient()) // con los reintentos de la app: un 403 no cambia al reintentar
+
+    expect(await screen.findByText(/El usuario está desactivado\./, {}, { timeout: 500 })).toBeTruthy()
+    expect(pedidosDelResumen()).toBe(1)
+    expect(screen.queryByLabelText('Ventas pendientes')).toBeNull()
+    expect(screen.queryByLabelText('Compras pendientes')).toBeNull()
+    expect(mockGet.mock.calls.some(([u]) => /tipoOperacion|Compras\/resumen|pendientes-autorizacion/.test(String(u)))).toBe(false)
+  })
+
+  it('si el resumen falla por otra cosa muestra el error con "Reintentar", no tarjetas en "—"', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS')
+    servidor({ resumen: new ApiError(500, 'Error interno del servidor. Intentá más tarde.'), hoy: pagina(0, []) })
+    pintar()
+
+    expect(await screen.findByText('No se pudieron cargar los pendientes', {}, { timeout: 3000 })).toBeTruthy()
+    expect(screen.queryByLabelText('Ventas pendientes')).toBeNull()
+
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Reintentar pendientes' }))
+    expect(await screen.findByLabelText(`Presupuestos: 12, ${ars('1.284.300')}`)).toBeTruthy()
+    expect(screen.queryByText('No se pudieron cargar los pendientes')).toBeNull()
+  })
+
+  it('mientras llega el resumen no muestra números viejos de las llamadas de respaldo', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
+    mockGet.mockImplementation((url: string) =>
+      url.includes('Inicio/resumen') ? new Promise(() => {}) : Promise.resolve(pagina(0, [])))
+    const qc = crearQueryClient({ retry: false })
+    // Lo que quedó en caché de cuando el servidor no tenía /Inicio/resumen.
+    qc.setQueryData(ventasKeys.list({ pageNumber: 1, pageSize: 1, tipoOperacion: 1, estado: 'Pendiente' }), pagina(99))
+    qc.setQueryData([...ventasKeys.all, 'pendientes-autorizacion'], [{ id: 'a' }])
+    pintar(qc)
+
+    expect(await screen.findByLabelText('Presupuestos: sin dato')).toBeTruthy()
+    expect(screen.getByLabelText('Por autorizar: sin dato')).toBeTruthy()
+    expect(screen.queryByLabelText(/Presupuestos: 99/)).toBeNull()
+    await screen.findByText('Todavía no hay ventas hoy.')
+  })
+})
+
+describe('Inicio: cualquier mutación vuelve a pedir el resumen', () => {
+  const NOTAS_4 = { ...RESUMEN, compras: { ...RESUMEN.compras, notasPedido: pendiente(4, importe(400000)) } }
+  const PRESUPUESTOS_13 = { ...RESUMEN, ventas: { ...RESUMEN.ventas, presupuestosPendientes: pendiente(13, importe(1300000)) } }
+  const casos = [
+    // Crear una compra solo invalida la lista de compras, no comprasKeys.all.
+    ['crear una compra', useCreateCompra, { proveedorId: 'p1', depositoId: 'd1', detalles: [] }, NOTAS_4, `Notas de pedido: 4, ${ars('400.000')}`],
+    ['anular una venta', useAnularVenta, { id: 'v1', version: 1, motivoAnulacion: 'Error de carga' }, PRESUPUESTOS_13, `Presupuestos: 13, ${ars('1.300.000')}`],
+  ] as const
+
+  it.each(casos)('%s con Inicio en pantalla', async (_, usar, variables, despues, fila) => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    const qc = crearQueryClient({ retry: false })
+    const mutar = mutacion(qc, usar, variables)
+    pintar(qc)
+    await screen.findByLabelText(`Notas de pedido: 3, ${ars('358.777')}`)
+
+    servidor({ resumen: despues, hoy: pagina(0, []) })
+    await mutar()
+    expect(await screen.findByLabelText(fila)).toBeTruthy()
+    expect(pedidosDelResumen()).toBe(2)
+  })
+
+  it('un 409 al autorizar (la venta cambió) también vuelve a pedir "Por autorizar"', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    const qc = crearQueryClient({ retry: false })
+    const autorizar = mutacion(qc, useAutorizarVenta, { id: 'v1', version: 1 })
+    pintar(qc)
+    await screen.findByLabelText(`Por autorizar: 2, ${ars('302.750')}`)
+
+    servidor({ resumen: { ...RESUMEN, autorizacionesPendientes: pendiente(1, importe(150000)) }, hoy: pagina(0, []) })
+    mockEscribir.mockRejectedValueOnce(new ApiError(409, 'La venta fue modificada por otro usuario.'))
+    await autorizar()
+    expect(await screen.findByLabelText(`Por autorizar: 1, ${ars('150.000')}`)).toBeTruthy()
+  })
+
+  it.each(casos)('%s con Inicio fuera de pantalla: al volver lo pide de nuevo', async (_, usar, variables, despues, fila) => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    const qc = crearQueryClient({ retry: false })
+    const mutar = mutacion(qc, usar, variables)
+    const { desmontar } = pintar(qc)
+    await screen.findByLabelText(`Notas de pedido: 3, ${ars('358.777')}`)
+    desmontar()
+
+    servidor({ resumen: despues, hoy: pagina(0, []) })
+    await mutar()
+    pintar(qc)
+    expect(await screen.findByLabelText(fila)).toBeTruthy()
+    expect(pedidosDelResumen()).toBe(2)
+  })
+})
+
+describe('Inicio: servidor sin /Inicio/resumen (404), las cuatro llamadas de antes', () => {
   it('los números salen del totalCount y del resumen del servidor, no de las filas recibidas', async () => {
     conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
     servidor({
@@ -92,8 +276,13 @@ describe('Inicio: tarjetas de pendientes', () => {
     expect(await screen.findByLabelText('Por autorizar: 2')).toBeTruthy()
     expect(await screen.findByLabelText('Notas de pedido: 3')).toBeTruthy()
     expect(await screen.findByLabelText('Por recibir: 2')).toBeTruthy()
-    // Los filtros que cuentan: Presupuesto+Pendiente y Pedido+Confirmada.
+    // Primero se pidió el resumen; con el 404 vino lo de antes, sin importes.
+    expect(screen.queryByText(/\$/)).toBeNull()
     const urls = mockGet.mock.calls.map(([u]) => u as string)
+    expect(urls[0]).toBe('/api/v1/Inicio/resumen')
+    // El 404 del servidor viejo es esperado: no se registra como error (no va a Sentry en cada montaje).
+    expect(mockGet).toHaveBeenCalledWith('/api/v1/Inicio/resumen', { estadosEsperados: [404] })
+    // Los filtros que cuentan: Presupuesto+Pendiente y Pedido+Confirmada.
     expect(urls.some((u) => u.includes('tipoOperacion=1') && u.includes('estado=Pendiente'))).toBe(true)
     expect(urls.some((u) => u.includes('tipoOperacion=2') && u.includes('estado=Confirmada'))).toBe(true)
   })
@@ -140,7 +329,7 @@ describe('Inicio: tarjetas de pendientes', () => {
 describe('Inicio: Reciente · Hoy', () => {
   it('usa la dirección como título y el nombre en su propia línea', async () => {
     conPermisos('MOD_VENTAS')
-    servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(1, [VENTA_HOY]) })
+    servidor({ resumen: RESUMEN, hoy: pagina(1, [VENTA_HOY]) })
     pintar()
 
     const tarjeta = await screen.findByLabelText(/^Pedido A00418 · Emanuel Parraquini/)
@@ -151,13 +340,13 @@ describe('Inicio: Reciente · Hoy', () => {
 
   it('si la consulta de hoy falla muestra un error con "Reintentar", no un día vacío', async () => {
     conPermisos('MOD_VENTAS')
-    servidor({ presupuestos: pagina(0), pedidos: pagina(0) }) // hoy falla
+    servidor({ resumen: RESUMEN }) // hoy falla
     pintar()
 
     expect(await screen.findByText('No se pudieron cargar las ventas de hoy')).toBeTruthy()
     expect(screen.queryByText('Todavía no hay ventas hoy.')).toBeNull()
 
-    servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(0, []) })
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
     const user = userEvent.setup()
     await user.press(screen.getByRole('button', { name: 'Reintentar' }))
     expect(await screen.findByText('Todavía no hay ventas hoy.')).toBeTruthy()
@@ -166,7 +355,7 @@ describe('Inicio: Reciente · Hoy', () => {
 
   it('un día vacío con éxito dice que no hay ventas', async () => {
     conPermisos('MOD_VENTAS')
-    servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(0, []) })
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
     pintar()
     expect(await screen.findByText('Todavía no hay ventas hoy.')).toBeTruthy()
     expect(screen.queryByText('No se pudieron cargar las ventas de hoy')).toBeNull()
@@ -176,7 +365,7 @@ describe('Inicio: Reciente · Hoy', () => {
     jest.useFakeTimers({ now: new Date('2026-10-11T01:30:00Z'), doNotFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval', 'setImmediate', 'queueMicrotask', 'nextTick'] })
     try {
       conPermisos('MOD_VENTAS')
-      servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(0, []) })
+      servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
       pintar()
       await screen.findByText('Todavía no hay ventas hoy.')
 
@@ -193,7 +382,7 @@ describe('Inicio: Reciente · Hoy', () => {
     jest.useFakeTimers({ now: new Date('2026-10-11T02:59:00Z'), doNotFake: ['setImmediate', 'queueMicrotask', 'nextTick'] }) // 23:59 ART del 10-10
     try {
       conPermisos('MOD_VENTAS')
-      servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(0, []) })
+      servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
       pintar()
       await jest.advanceTimersByTimeAsync(0)
       expect(screen.getByText('Sábado 10 de octubre')).toBeTruthy()
@@ -211,7 +400,7 @@ describe('Inicio: Reciente · Hoy', () => {
 
   it('la hora de la tarjeta se muestra en hora argentina', async () => {
     conPermisos('MOD_VENTAS')
-    servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(1, [VENTA_HOY]) }) // 13:03Z
+    servidor({ resumen: RESUMEN, hoy: pagina(1, [VENTA_HOY]) }) // 13:03Z
     pintar()
     const tarjeta = await screen.findByLabelText(/^Pedido A00418/)
     expect(within(tarjeta).getByText('10:03')).toBeTruthy()
