@@ -21,3 +21,8 @@ export function leerNumero(texto: string): number | null {
 export function mostrarNumero(n: number): string {
   return String(Math.round(n * 100) / 100).replace('.', ',')
 }
+
+/** 12.345 → "12,345": precisión completa, para sembrar un campo sin redondear lo que ya guardó el servidor. */
+export function numeroCompleto(n: number): string {
+  return String(n).replace('.', ',')
+}

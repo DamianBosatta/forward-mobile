@@ -5,7 +5,7 @@ import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Button, Field, Notice, Segmented, formatImporte } from '@/core/ui/fw'
 import { useProducto } from '@/libs/api-client/productos'
-import { leerNumero, mostrarNumero } from '@/src/utils/numero'
+import { leerNumero, mostrarNumero, numeroCompleto } from '@/src/utils/numero'
 import { cambioDeCosto, unidadesDisponibles, type LineaCompra, type UnidadCompra } from '../lib/lineaCompra'
 
 const NOMBRE: Record<UnidadCompra, [string, string]> = { Unidad: ['Unidad', 'Unidades'], Bulto: ['Bulto', 'Bultos'], BultoMadre: ['Bulto madre', 'Bultos madre'] }
@@ -34,8 +34,8 @@ function Contenido({ linea, onClose, onConfirm, onQuitar }: Props & { linea: Lin
   const { isTablet } = useResponsive()
   const { data: ficha } = useProducto(linea.productoId)
   const [unidad, setUnidad] = useState(linea.unidad)
-  const [cantidadTexto, setCantidadTexto] = useState(mostrarNumero(linea.cantidad))
-  const [costoTexto, setCostoTexto] = useState(linea.costoUnitario === null ? '' : mostrarNumero(linea.costoUnitario))
+  const [cantidadTexto, setCantidadTexto] = useState(numeroCompleto(linea.cantidad))
+  const [costoTexto, setCostoTexto] = useState(linea.costoUnitario === null ? '' : numeroCompleto(linea.costoUnitario))
 
   const opciones = unidadesDisponibles(ficha)
   if (!opciones.some((o) => o.unidad === linea.unidad)) opciones.push({ unidad: linea.unidad, unidades: linea.unidadesPorUnidad })

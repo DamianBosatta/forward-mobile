@@ -82,4 +82,10 @@ describe('línea de compra', () => {
     expect(screen.queryByText(/respecto del último costo/)).toBeNull()
     expect(screen.queryByText(/Último costo/)).toBeNull()
   })
+
+  it('abrir una línea y confirmarla sin tocar nada conserva la cantidad y el costo exactos', async () => {
+    const onConfirm = abrir({ precioCompraBase: null }, { ...LINEA, cantidad: 2.345, costoUnitario: 12.345 })
+    await userEvent.press(confirmar())
+    expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ cantidad: 2.345, costoUnitario: 12.345 }))
+  })
 })
