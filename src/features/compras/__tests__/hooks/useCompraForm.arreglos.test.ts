@@ -195,3 +195,81 @@ describe('errores del servidor', () => {
     expect(result.current.successModal).toBe(true)
   })
 })
+
+describe('edición y reintentos (JD11)', () => {
+  const COMPRA = {
+    id: COMPRA_ID,
+    version: 7,
+    proveedorId: PROV.id,
+    depositoId: DEP.id,
+    estado: 'Presupuesto',
+    detalles: [{ productoId: PROD_ID, nombreProducto: 'Jabón', costoUnitarioBaseAmount: 500, cantidad: 1 }],
+  }
+
+  it('editar manda la versión cargada para la concurrencia optimista', async () => {
+    ;(useCompra as jest.Mock).mockReturnValue({ data: COMPRA, isLoading: false })
+    mockUpdate.mockResolvedValue({})
+    const { result } = render(COMPRA_ID)
+    await waitFor(() => expect(result.current.canSubmit).toBe(true))
+
+    await act(() => result.current.onSubmit())
+
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ id: COMPRA_ID, data: expect.objectContaining({ version: 7 }) }),
+    )
+  })
+
+  it('si la versión quedó vieja, muestra el mensaje del servidor y no muestra éxito', async () => {
+    ;(useCompra as jest.Mock).mockReturnValue({ data: COMPRA, isLoading: false })
+    mockUpdate.mockRejectedValue(errorDelServidor('La compra fue modificada por otro usuario.'))
+    const { result } = render(COMPRA_ID)
+    await waitFor(() => expect(result.current.canSubmit).toBe(true))
+
+    await act(() => result.current.onSubmit())
+
+    expect((Alert.alert as jest.Mock).mock.calls[0][1]).toContain('modificada por otro usuario')
+    expect(result.current.successModal).toBe(false)
+  })
+
+  it('tras una falla parcial no se vuelve a crear la compra', async () => {
+    mockCreate.mockResolvedValue({ id: COMPRA_ID })
+    mockConfirmar.mockRejectedValue(errorDelServidor('El proveedor está bloqueado.'))
+    const { result } = await conProducto(500)
+    await waitFor(() => expect(result.current.canSubmit).toBe(true))
+    act(() => result.current.setEstadoOrden('Confirmado'))
+
+    await act(() => result.current.onSubmit())
+    expect(result.current.canSubmit).toBe(false)
+    await act(() => result.current.onSubmit())
+
+    expect(mockCreate).toHaveBeenCalledTimes(1)
+  })
+
+  it('si el servidor no devuelve el id, lo dice y no confirma /compras/undefined', async () => {
+    mockCreate.mockResolvedValue({})
+    const { result } = await conProducto(500)
+    await waitFor(() => expect(result.current.canSubmit).toBe(true))
+    act(() => result.current.setEstadoOrden('Confirmado'))
+
+    await act(() => result.current.onSubmit())
+
+    expect(mockConfirmar).not.toHaveBeenCalled()
+    expect(Alert.alert).toHaveBeenCalledTimes(1)
+    expect(result.current.successModal).toBe(false)
+  })
+
+  it('un refetch de proveedores no pisa el costo que el usuario está editando', async () => {
+    ;(useCompra as jest.Mock).mockReturnValue({ data: COMPRA, isLoading: false })
+    libs.useProveedores.mockImplementation(() => ({ data: { items: [PROV] } }))
+    libs.useDepositos.mockImplementation(() => ({ data: [DEP] }))
+    const { result, rerender } = render(COMPRA_ID)
+    await waitFor(() => expect(result.current.detalles).toHaveLength(1))
+
+    act(() => result.current.updateCosto(PROD_ID, '900'))
+    rerender({})
+    rerender({})
+
+    expect(result.current.detalles[0].costoUnitario).toBe(900)
+  })
+})
+

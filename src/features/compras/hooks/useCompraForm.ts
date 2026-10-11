@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
@@ -76,6 +76,9 @@ export function useCompraForm(editId?: string) {
   const [descuentoStr, setDescuentoStr] = useState('')
   const [estadoOrden, setEstadoOrden] = useState<EstadoOrden>('Presupuesto')
   const [successModal, setSuccessModal] = useState(false)
+  // La compra ya se creó en el servidor: el formulario queda bloqueado para no duplicarla.
+  const creadaId = useRef(false)
+  const [creada, setCreada] = useState(false)
 
   // Modal state
   const [showProvModal, setShowProvModal] = useState(false)
@@ -87,6 +90,8 @@ export function useCompraForm(editId?: string) {
   const [focusKey, setFocusKey] = useState(0)
 
   const resetFormState = useCallback(() => {
+    creadaId.current = false
+    setCreada(false)
     setProveedorSelected(null)
     setDepositoSelected(null)
     setDetalles([])
@@ -103,26 +108,40 @@ export function useCompraForm(editId?: string) {
 
   const bumpFocusKey = useCallback(() => setFocusKey(k => k + 1), [])
 
-  // Pre-fill Edit Mode
+  // Pre-fill Edit Mode: una sola vez por compra cargada (y por foco), para que un refetch
+  // o una lista nueva de proveedores/depósitos no pise lo que el usuario está editando.
+  const prefillKey = useRef<string | null>(null)
+  const relacionesKey = useRef<string | null>(null)
+  const claveCompra = editId && compraEdit ? `${editId}:${focusKey}` : null
+
   useEffect(() => {
-    if (editId && compraEdit) {
-      setProveedorSelected(proveedores.find(p => p.id === compraEdit.proveedorId) || null)
-      setDepositoSelected(depositos.find((d: Deposito) => d.id === compraEdit.depositoId) || null)
-      setDetalles(compraEdit.detalles?.map((d: CompraDetalle) => ({
-        productoId: d.productoId ?? '',
-        nombre: d.nombreProducto ?? '—',
-        costoUnitario: d.costoUnitarioBaseAmount ?? null,
-        cantidad: d.cantidad ?? 0,
-      })) ?? [])
-      setGastosStr(String(compraEdit.gastosOperativos || ''))
-      setDescuentoStr(String((compraEdit as typeof compraEdit & { descuentoPorcentaje?: number }).descuentoPorcentaje || ''))
-      
-      const s = String(compraEdit.estado)
-      if (s === 'Presupuesto' || s === '1' || s === 'NotaPedido') setEstadoOrden('Presupuesto')
-      else if (s === 'Confirmado' || s === '2') setEstadoOrden('Confirmado')
-      else if (s === 'Recibida' || s === '3' || s === 'Entregado') setEstadoOrden('Recibida')
-    }
-  }, [compraEdit, editId, proveedores, depositos, focusKey])
+    if (!claveCompra || !compraEdit || prefillKey.current === claveCompra) return
+    prefillKey.current = claveCompra
+    setDetalles(compraEdit.detalles?.map((d: CompraDetalle) => ({
+      productoId: d.productoId ?? '',
+      nombre: d.nombreProducto ?? '—',
+      costoUnitario: d.costoUnitarioBaseAmount ?? null,
+      cantidad: d.cantidad ?? 0,
+    })) ?? [])
+    setGastosStr(String(compraEdit.gastosOperativos || ''))
+    setDescuentoStr(String((compraEdit as typeof compraEdit & { descuentoPorcentaje?: number }).descuentoPorcentaje || ''))
+
+    const s = String(compraEdit.estado)
+    if (s === 'Presupuesto' || s === '1' || s === 'NotaPedido') setEstadoOrden('Presupuesto')
+    else if (s === 'Confirmado' || s === '2') setEstadoOrden('Confirmado')
+    else if (s === 'Recibida' || s === '3' || s === 'Entregado') setEstadoOrden('Recibida')
+  }, [claveCompra, compraEdit])
+
+  // Proveedor y depósito vienen de listas que pueden cargar después: se resuelven una vez.
+  useEffect(() => {
+    if (!claveCompra || !compraEdit || relacionesKey.current === claveCompra) return
+    const prov = proveedores.find(p => p.id === compraEdit.proveedorId)
+    const dep = depositos.find((d: Deposito) => d.id === compraEdit.depositoId)
+    if (!prov || !dep) return
+    relacionesKey.current = claveCompra
+    setProveedorSelected(prov)
+    setDepositoSelected(dep)
+  }, [claveCompra, compraEdit, proveedores, depositos])
 
   // Computed
   const gastos = useMemo(() => Math.max(parseFloat(gastosStr) || 0, 0), [gastosStr])
@@ -193,6 +212,7 @@ export function useCompraForm(editId?: string) {
   const onSubmit = useCallback(async () => {
     const payload = {
       id: editId,
+      version: compraEdit?.version,
       proveedorId: proveedorSelected?.id ?? '',
       depositoId: depositoSelected?.id ?? '',
       gastosOperativos: gastos,
@@ -226,6 +246,7 @@ export function useCompraForm(editId?: string) {
     }
 
     // Crear, confirmar y recibir son llamadas separadas: si una falla, se dice qué quedó hecho.
+    if (creadaId.current) return
     let newId: string | undefined
     const hechos: string[] = []
     const pasos = [
@@ -238,9 +259,21 @@ export function useCompraForm(editId?: string) {
     ]
     try {
       const resultId = await createCompra(payload)
-      newId = typeof resultId === 'string' ? resultId : resultId.id
+      newId = typeof resultId === 'string' ? resultId : resultId?.id
     } catch (e: unknown) {
       Alert.alert('No se creó la compra', mensajeDelServidor(e))
+      return
+    }
+    // Desde acá la compra existe: este formulario no vuelve a crear nunca.
+    creadaId.current = true
+    setCreada(true)
+    if (!newId) {
+      Alert.alert(
+        'La compra se creó, pero no pudimos abrirla',
+        'El servidor no devolvió el identificador. Revisá la lista de compras antes de volver a cargarla.',
+        [{ text: 'Entendido', onPress: () => router.replace('/(tabs)/compras') }],
+        { cancelable: false },
+      )
       return
     }
     hechos.push('La orden quedó creada como nota de pedido.')
@@ -254,16 +287,16 @@ export function useCompraForm(editId?: string) {
         const mensaje = [...hechos, `${paso.fallo}: ${mensajeDelServidor(e)}`, ...sinHacer].join('\n')
         Alert.alert('La compra quedó a medias', mensaje, [
           { text: 'Ver la compra', onPress: () => router.replace(`/(tabs)/compras/${newId}`) },
-        ])
+        ], { cancelable: false })
         return
       }
     }
     setSuccessModal(true)
-  }, [editId, proveedorSelected, depositoSelected, gastos, descPct, detalles, estadoOrden, updateCompra, confirmarCompra, recibirCompra, createCompra, router])
+  }, [editId, compraEdit?.version, proveedorSelected, depositoSelected, gastos, descPct, detalles, estadoOrden, updateCompra, confirmarCompra, recibirCompra, createCompra, router])
 
   // Toda línea necesita un costo cargado (el servidor exige > 0): sin eso no se confirma.
   const lineasSinCosto = detalles.filter(d => d.costoUnitario === null || d.costoUnitario <= 0).length
-  const canSubmit = !!proveedorSelected && !!depositoSelected && detalles.length > 0 && lineasSinCosto === 0 && !isPending
+  const canSubmit = !!proveedorSelected && !!depositoSelected && detalles.length > 0 && lineasSinCosto === 0 && !isPending && !creada
 
   return {
     loadingEdit, loadingProds, isPending,
