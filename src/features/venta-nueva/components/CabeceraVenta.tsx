@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Field, Segmented, type SegmentedOption } from '@/core/ui/fw'
+import { Button, Field, Notice, Segmented, type SegmentedOption } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
 import { textoCondicionPago } from '@/features/clientes/lib/cliente'
 import { METODO_ENTREGA, type MetodoEntregaValue } from '@/features/ventas/lib/venta-form-retiro'
@@ -39,6 +39,12 @@ export function CabeceraVenta({ clienteId, rotuloCliente, cab }: Props) {
       {metodoEntrega !== METODO_ENTREGA.RetiroEnLocal ? (
         <View style={{ gap: space[2] }}>
           {titulo('Fecha de entrega')}
+          {cab.calendarioError ? (
+            <View style={{ gap: space[2] }}>
+              <Notice tone="peligro">No se pudo traer el calendario de entregas.</Notice>
+              <Button label="Reintentar" variant="secundario" onPress={cab.reintentarCalendario} />
+            </View>
+          ) : null}
           {fecha ? null : <Text style={secundario}>Sin fecha: elegí el día de entrega.</Text>}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space[2] }}>
             {cab.tira.map((d) => {

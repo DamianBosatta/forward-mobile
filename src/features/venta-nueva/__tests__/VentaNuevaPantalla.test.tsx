@@ -59,6 +59,9 @@ async function anadir() {
   await userEvent.press(screen.getByRole('button', { name: 'Añadir pala' }))
 }
 const ESPERA = { timeout: 3000 }
+// Calendario de entregas del servidor: todos los días hábiles y sin feriados.
+const TODOS = { lunes: true, martes: true, miercoles: true, jueves: true, viernes: true, sabado: true, domingo: true }
+const calendario = (url: string) => url.includes('dias-entrega') ? TODOS : url.includes('feriados') ? [] : undefined
 
 beforeEach(() => {
   mockPost.mockReset().mockResolvedValue({ ventaId: 'b1', version: 7, message: 'Borrador creado.' })
@@ -66,18 +69,20 @@ beforeEach(() => {
   mockBack.mockReset()
   mockReplace.mockReset()
   mockTipo = 'Pedido'
-  mockGet.mockReset().mockResolvedValue(undefined)
+  mockGet.mockReset().mockImplementation((url: string) => Promise.resolve(calendario(url)))
   mockDims.mockReturnValue({ width: 390, height: 800, scale: 2, fontScale: 1 })
   useCarritoVenta.setState({ lineas: [] })
 })
 
 describe('venta nueva: cliente, borrador y autoguardado', () => {
-  it('al elegir el cliente crea el borrador para ese cliente y lo nombra por la dirección', async () => {
+  it('al elegir el cliente crea el borrador para ese cliente, lo nombra por la dirección y le guarda la fecha propuesta', async () => {
     await elegirCliente()
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID })
     expect(screen.getByText('Nuevo pedido')).toBeTruthy()
     expect(screen.getByText('Tarantino 1898 · Autoservicio Abel')).toBeTruthy()
-    expect(mockPut).not.toHaveBeenCalled()
+    // El borrador nace vacío en el servidor: la fecha propuesta viaja en el primer autoguardado.
+    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1), ESPERA)
+    expect(mockPut.mock.calls[0][1]).toMatchObject({ items: [], fechaEntrega: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) })
   })
 
   it('autoguarda las líneas con la versión del borrador y encadena la que devuelve el servidor', async () => {
@@ -90,6 +95,18 @@ describe('venta nueva: cliente, borrador y autoguardado', () => {
     await anadir()
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(2), ESPERA)
     expect(mockPut.mock.calls[1][1]).toMatchObject({ version: 8, items: [{ productoId: 'p1', cantidad: 2 }] })
+  })
+
+  it('lo que se carga mientras se crea el borrador se autoguarda cuando el borrador nace', async () => {
+    let nacer: (r: object) => void = () => undefined
+    mockPost.mockImplementationOnce(() => new Promise((r) => { nacer = r }))
+    pantalla()
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
+    expect(sync()).toHaveTextContent('Creando borrador…')
+    await anadir()
+    await act(async () => nacer({ ventaId: 'b1', version: 7, message: 'Borrador creado.' }))
+    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1), ESPERA)
+    expect(mockPut.mock.calls[0][1]).toMatchObject({ id: 'b1', version: 7, items: [{ productoId: 'p1', cantidad: 1, descuentoPorcentaje: 0 }] })
   })
 
   it('si el servidor rechaza el guardado, se ve su motivo', async () => {
@@ -257,8 +274,28 @@ describe('pestaña Cabecera', () => {
     jest.restoreAllMocks()
   })
 
+  it('sin calendario de entregas no propone fecha (ni la autoguarda), lo avisa y Reintentar lo vuelve a traer', async () => {
+    mockGet.mockImplementation((url: string) => url.includes('dias-entrega') ? Promise.reject(new TypeError('Network request failed')) : Promise.resolve(calendario(url)))
+    await enCabecera()
+    expect(await screen.findByText('No se pudo traer el calendario de entregas.')).toBeTruthy()
+    expect(screen.getByText('Sin fecha: elegí el día de entrega.')).toBeTruthy()
+    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
+    expect(ultimoPut()).not.toHaveProperty('fechaEntrega')
+    mockGet.mockImplementation((url: string) => Promise.resolve(calendario(url)))
+    await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
+    await waitFor(() => expect(ultimoPut()).toMatchObject({ fechaEntrega: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) }), ESPERA)
+    expect(screen.queryByText('No se pudo traer el calendario de entregas.')).toBeNull()
+  })
+
+  it('con el calendario todavía cargando no se autoguarda una fecha', async () => {
+    mockGet.mockImplementation((url: string) => url.includes('dias-entrega') ? new Promise(() => undefined) : Promise.resolve(calendario(url)))
+    await enCabecera()
+    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
+    expect(ultimoPut()).not.toHaveProperty('fechaEntrega')
+  })
+
   it('flete y observaciones viajan en el autoguardado; el flete suma al total; la condición de pago se ve', async () => {
-    mockGet.mockImplementation((url: string) => Promise.resolve(url.includes('socios-comerciales') ? { condicionPago: { tipo: 'DiasDesdeEntrega', dias: 30 } } : undefined))
+    mockGet.mockImplementation((url: string) => Promise.resolve(url.includes('socios-comerciales') ? { condicionPago: { tipo: 'DiasDesdeEntrega', dias: 30 } } : calendario(url)))
     await enCabecera()
     expect(await screen.findByText('Cuenta corriente, 30 días desde la entrega')).toBeTruthy()
     await userEvent.type(screen.getByLabelText('Flete ($)'), '3300')
@@ -299,7 +336,7 @@ describe('confirmar', () => {
     mockPost.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas'
       ? { ventaId: 'v9', version: 1, message: 'Pedido creado y confirmado exitosamente. Stock reservado.' }
       : url.endsWith('descartar-borrador') ? true : { ventaId: 'b1', version: 7, message: '' }))
-    mockGet.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas/v9' ? { venta: { estado: 2 }, detalles: [] } : undefined))
+    mockGet.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas/v9' ? { venta: { estado: 2 }, detalles: [] } : calendario(url)))
   })
   afterEach(() => alerta.mockRestore())
   async function armar(cantidad = 12) {
@@ -334,6 +371,19 @@ describe('confirmar', () => {
     expect(altas()[1][1].claveIdempotencia).toBe(altas()[0][1].claveIdempotencia)
   })
 
+  it('si tras el corte se cambia el pedido, el reintento lleva una clave nueva y las ediciones', async () => {
+    await armar()
+    mockPost.mockImplementationOnce(() => Promise.reject(new TypeError('Network request failed')))
+    await confirmar()
+    expect(await screen.findByText('Network request failed')).toBeTruthy()
+    act(() => useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: pala, cantidad: 13, descuentoPct: 0 }] }))
+    await confirmar()
+    await waitFor(() => expect(mockReplace).toHaveBeenCalled())
+    expect(altas()).toHaveLength(2)
+    expect(altas()[1][1].claveIdempotencia).not.toBe(altas()[0][1].claveIdempotencia)
+    expect(altas()[1][1].items).toEqual([{ productoId: 'p1', cantidad: 13, descuentoPorcentaje: 0 }])
+  })
+
   it('sin stock pide el motivo antes de mandar y lo manda en el alta', async () => {
     await armar(120)
     await confirmar()
@@ -356,7 +406,7 @@ describe('confirmar', () => {
   })
 
   it('por autorizar: muestra los motivos que dice el servidor', async () => {
-    mockGet.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas/v9' ? { venta: { estado: 9, motivoPendienteAutorizacion: 4 | 16 }, detalles: [] } : undefined))
+    mockGet.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas/v9' ? { venta: { estado: 9, motivoPendienteAutorizacion: 4 | 16 }, detalles: [] } : calendario(url)))
     await armar()
     await confirmar()
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9',

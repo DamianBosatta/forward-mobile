@@ -11,7 +11,8 @@ import type { VentaCargada } from '../lib/hidratar'
 
 /**
  * Estado de la pestaña Cabecera (plan 9 §2.1). La fecha arranca en el próximo día hábil del
- * calendario del servidor (días de entrega + feriados) hasta que el vendedor elija otra.
+ * calendario del servidor (días de entrega + feriados) hasta que el vendedor elija otra. Sin
+ * calendario (cargando o con error) no se propone ninguna: no se adivina un día hábil.
  */
 export function useCabeceraVenta(tipo: TipoDocumento) {
   const [metodoEntrega, setMetodoEntrega] = useState<MetodoEntregaValue>(METODO_ENTREGA.Logistica)
@@ -24,6 +25,7 @@ export function useCabeceraVenta(tipo: TipoDocumento) {
   const [ahora] = useState(() => Date.now())
   const dias = useDiasEntrega()
   const feriados = useFeriados(diaArgentina(ahora))
+  const calendarioListo = dias.isSuccess && feriados.isSuccess
   const tira = useMemo(() => tiraDeDias(ahora, { dias: dias.data ?? null, feriados: feriados.data ?? [] }), [ahora, dias.data, feriados.data])
   const user = useAuthStore((s) => s.user)
 
@@ -40,7 +42,7 @@ export function useCabeceraVenta(tipo: TipoDocumento) {
 
   const cabecera: Cabecera = {
     metodoEntrega,
-    fecha: fechaElegida ?? (proponer ? proximoHabil(tira) : null),
+    fecha: fechaElegida ?? (proponer && calendarioListo ? proximoHabil(tira) : null),
     flete: metodoEntrega === METODO_ENTREGA.Logistica && fleteLeido !== null ? fleteLeido : 0,
     observaciones,
   }
@@ -53,7 +55,9 @@ export function useCabeceraVenta(tipo: TipoDocumento) {
     setObservaciones(h.observaciones)
   }
   return {
-    cabecera, tira, hidratar, setMetodoEntrega, setFecha, fleteTexto, setFleteTexto, fleteInvalido, observaciones, setObservaciones,
+    cabecera, tira, hidratar,
+    calendarioError: dias.isError || feriados.isError,
+    reintentarCalendario: () => { if (dias.isError) void dias.refetch(); if (feriados.isError) void feriados.refetch() }, setMetodoEntrega, setFecha, fleteTexto, setFleteTexto, fleteInvalido, observaciones, setObservaciones,
     comision, puedeCeder, cesionTexto, setCesionTexto, cesionError,
     porcentajeCedido: puedeCeder && !cesionError && cesionLeida ? cesionLeida : undefined,
   }

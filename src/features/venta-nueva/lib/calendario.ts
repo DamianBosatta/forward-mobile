@@ -28,5 +28,5 @@ export function tiraDeDias(ahoraMs: number, cal: CalendarioEntregas, n = 14): Di
   })
 }
 
-/** La fecha que se propone: el primer día hábil desde mañana (si no hay, mañana, y que el servidor lo diga). */
-export const proximoHabil = (tira: DiaDeLaTira[]) => (tira.find((d) => d.habil) ?? tira[0]).dia
+/** La fecha que se propone: el primer día hábil desde mañana; si no hay ninguno, ninguna (que elija el vendedor). */
+export const proximoHabil = (tira: DiaDeLaTira[]) => tira.find((d) => d.habil)?.dia ?? null

@@ -4,14 +4,15 @@ import { useQueryClient } from '@tanstack/react-query'
 import { guardarBorradorVenta, useDescartarBorradorVenta, useIniciarBorradorVenta, ventasKeys } from '@/libs/api-client/ventas'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useAutoguardado } from './useAutoguardado'
-import type { AutoguardadoVenta } from '../lib/payload'
+import { aAutoguardado, type AutoguardadoVenta } from '../lib/payload'
 
 /**
  * Borrador de la venta nueva (mismo flujo que la web): nace en el servidor al elegir el cliente y
  * desde ahí se autoguarda. Si no se puede crear, la venta se sigue armando sin autoguardado.
  */
 export function useBorradorVenta(valores: AutoguardadoVenta) {
-  const [borrador, setBorrador] = useState<{ id: string; version: number } | null>(null)
+  // `base`: lo que tiene el servidor al nacer el borrador (vacío); sin base, lo que hay en pantalla (retomar).
+  const [borrador, setBorrador] = useState<{ id: string; version: number; base?: AutoguardadoVenta } | null>(null)
   const [errorAlCrear, setErrorAlCrear] = useState<string | null>(null)
   const iniciar = useIniciarBorradorVenta()
   const descartarMut = useDescartarBorradorVenta()
@@ -25,13 +26,14 @@ export function useBorradorVenta(valores: AutoguardadoVenta) {
     },
     [borrador, qc],
   )
-  const autoguardado = useAutoguardado({ borradorId: borrador?.id, versionInicial: borrador?.version ?? 0, valores, guardar })
+  const autoguardado = useAutoguardado({ borradorId: borrador?.id, versionInicial: borrador?.version ?? 0, base: borrador?.base, valores, guardar })
 
   const crear = async (clienteId: string) => {
     setErrorAlCrear(null)
     try {
       const r = await iniciar.mutateAsync({ clienteId, depositoId: DEPOSITO_CENTRAL_ID })
-      setBorrador({ id: r.ventaId, version: r.version })
+      // Lo que se cargó mientras el POST estaba en vuelo no está en el servidor: el autoguardado lo manda.
+      setBorrador({ id: r.ventaId, version: r.version, base: aAutoguardado([]) })
     } catch (e) {
       setErrorAlCrear(mensajeDelServidor(e, 'No se pudo crear el borrador.'))
     }

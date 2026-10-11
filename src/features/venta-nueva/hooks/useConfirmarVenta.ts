@@ -31,12 +31,16 @@ const pideMotivo = (e: unknown) => /justificaci[oó]n/i.test(mensajeDelServidor(
  * Confirmar (plan 9 §2.1, igual que la web). Presupuesto: el borrador autoguardado YA es el
  * presupuesto → POST /Ventas/{id}/guardar-presupuesto. Pedido: POST /Ventas con una clave de
  * idempotencia por alta (un doble toque o un reintento sin señal no duplica el pedido) y después
- * se descarta el borrador. Lo que decide el servidor (guardado o por autorizar y por qué) se muestra.
+ * se descarta el borrador. Con la misma clave el servidor devuelve la venta que ya existe sin
+ * mirar el cuerpo (CreateVentaCommandHandler): si el pedido cambió desde el intento fallido, va
+ * una clave nueva para que las ediciones no se pierdan. Lo que decide el servidor (guardado o por autorizar y por qué) se muestra.
  */
 export function useConfirmarVenta(d: Datos) {
   const router = useRouter()
   const qc = useQueryClient()
-  const [clave] = useState(nuevaClaveIdempotencia)
+  // La clave y el cuerpo (sin la clave) del último intento de alta.
+  const [claveInicial] = useState(nuevaClaveIdempotencia)
+  const alta = useRef({ clave: claveInicial, cuerpo: null as string | null })
   const [enviando, setEnviando] = useState(false)
   // El estado no alcanza como guardia: dos toques antes del re-render leen el mismo `enviando`.
   const enVuelo = useRef(false)
@@ -58,10 +62,14 @@ export function useConfirmarVenta(d: Datos) {
     } else if (!d.esPedido && b.borrador) {
       r = await api.post<VentaActionResponseDto>(`/api/v1/Ventas/${b.borrador.id}/guardar-presupuesto`, { ventaId: b.borrador.id, version: await b.flush() })
     } else {
-      r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', aAlta(d.lineas, d.descuentoGeneral, d.cabecera, {
-        clienteId: d.clienteId, depositoId: DEPOSITO_CENTRAL_ID, esPedido: d.esPedido, claveIdempotencia: clave,
+      const cuerpo = (claveIdempotencia: string) => aAlta(d.lineas, d.descuentoGeneral, d.cabecera, {
+        clienteId: d.clienteId, depositoId: DEPOSITO_CENTRAL_ID, esPedido: d.esPedido, claveIdempotencia,
         motivoVentaSinStock: motivo, porcentajeComisionCedido: d.porcentajeCedido,
-      }))
+      })
+      const firma = JSON.stringify(cuerpo(''))
+      if (alta.current.cuerpo !== null && alta.current.cuerpo !== firma) alta.current.clave = nuevaClaveIdempotencia()
+      alta.current.cuerpo = firma
+      r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', cuerpo(alta.current.clave))
       // La venta ya existe: el borrador quedó huérfano. Si no se puede descartar, vence solo a las 48 h.
       if (b.borrador) await b.descartar().catch(() => undefined)
     }

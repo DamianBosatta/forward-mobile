@@ -207,7 +207,12 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
           { label: 'Cabecera', selected: pestana === 'cabecera', onPress: () => setPestana('cabecera') },
         ]}
       />
-      {aviso ? <View style={{ padding: space[4], paddingBottom: 0 }}><Notice tone="peligro">{aviso}</Notice></View> : null}
+      {aviso ? (
+        <View style={{ padding: space[4], paddingBottom: 0, gap: space[2] }}>
+          <Notice tone="peligro">{aviso}</Notice>
+          {b.estado === 'error' && b.reintentable ? <Button label="Reintentar" variant="secundario" onPress={b.reintentar} /> : null}
+        </View>
+      ) : null}
       {isTabletLandscape ? franjaTotal : null}
       {isTabletLandscape ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>
