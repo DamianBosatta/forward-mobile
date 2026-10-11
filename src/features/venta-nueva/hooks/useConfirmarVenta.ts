@@ -1,0 +1,122 @@
+import { useRef, useState } from 'react'
+import { useRouter } from 'expo-router'
+import { useQueryClient } from '@tanstack/react-query'
+import { api, ApiError } from '@/core/api/client'
+import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { ventasKeys } from '@/libs/api-client/ventas'
+import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
+import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
+import { aAlta, aAutoguardado, nuevaClaveIdempotencia, type Cabecera } from '../lib/payload'
+import { ESTADO_PENDIENTE_AUTORIZACION, motivosAutorizacion } from '../lib/motivosAutorizacion'
+import type { LineaCarrito } from '../lib/carrito'
+import type { useBorradorVenta } from './useBorradorVenta'
+
+interface Datos {
+  clienteId: string
+  esPedido: boolean
+  lineas: LineaCarrito[]
+  descuentoGeneral: number
+  cabecera: Cabecera
+  porcentajeCedido?: number
+  borrador: ReturnType<typeof useBorradorVenta>
+  alGuardar: () => void
+  /** Editar una venta existente: PUT /Ventas/{id} con su versión, sin borrador. */
+  edicion?: { ventaId: string; version: number } | null
+}
+
+/** El servidor pide justificación cuando un Pedido no tiene stock (CreateVentaCommandHandler). */
+const pideMotivo = (e: unknown) => /justificaci[oó]n/i.test(mensajeDelServidor(e, ''))
+/** El servidor devolvió la venta que ya existía con esa clave (CreateVentaCommandHandler, operación repetida). */
+const yaExistia = (r: VentaActionResponseDto) => /ya hab[ií]a sido creada/i.test(r.message ?? '')
+
+/**
+ * Confirmar (plan 9 §2.1, igual que la web). Presupuesto: el borrador autoguardado YA es el
+ * presupuesto → POST /Ventas/{id}/guardar-presupuesto. Pedido: POST /Ventas con una clave de
+ * idempotencia por alta (un doble toque o un reintento sin señal no duplica el pedido) y después
+ * se descarta el borrador. La clave se reusa SIEMPRE en la pantalla: un pedido duplicado es peor
+ * que perder ediciones. Con la misma clave el servidor devuelve la venta que ya existe sin mirar
+ * el cuerpo (CreateVentaCommandHandler); si el pedido cambió desde un intento sin respuesta, se
+ * avisa y se lleva a esa venta para revisarla. Lo que decide el servidor (guardado o por autorizar y por qué) se muestra.
+ */
+export function useConfirmarVenta(d: Datos) {
+  const router = useRouter()
+  const qc = useQueryClient()
+  const [clave] = useState(nuevaClaveIdempotencia)
+  // Cuerpos (sin la clave) de los intentos de alta que quedaron sin respuesta: alguno pudo grabarse.
+  const sinRespuesta = useRef(new Set<string>())
+  const [enviando, setEnviando] = useState(false)
+  // El estado no alcanza como guardia: dos toques antes del re-render leen el mismo `enviando`.
+  const enVuelo = useRef(false)
+  const [error, setError] = useState<string | null>(null)
+  const [pedirMotivo, setPedirMotivo] = useState(false)
+  // Al editar, el stock del catálogo no cuenta lo que esta venta ya reservó: el motivo lo pide el servidor si hace falta.
+  const sinStock = !d.edicion && d.esPedido && d.lineas.some((l) => l.cantidad > l.producto.real)
+
+  async function enviar(motivo?: string) {
+    const { borrador: b } = d
+    let r: VentaActionResponseDto
+    let conLoDeAntes = false
+    if (d.edicion) {
+      // Igual que la web (buildUpdateVentaPayload): la cesión viaja solo si se cambió; ausente = no tocar.
+      r = await api.put<VentaActionResponseDto>(`/api/v1/Ventas/${d.edicion.ventaId}`, {
+        ...aAutoguardado(d.lineas, d.descuentoGeneral, d.cabecera), id: d.edicion.ventaId, version: d.edicion.version,
+        ...(motivo?.trim() ? { motivoVentaSinStock: motivo.trim() } : {}),
+        ...(d.esPedido && d.porcentajeCedido ? { porcentajeComisionCedido: d.porcentajeCedido } : {}),
+      })
+    } else if (!d.esPedido && b.borrador) {
+      r = await api.post<VentaActionResponseDto>(`/api/v1/Ventas/${b.borrador.id}/guardar-presupuesto`, { ventaId: b.borrador.id, version: await b.flush() })
+    } else {
+      const cuerpo = (claveIdempotencia: string) => aAlta(d.lineas, d.descuentoGeneral, d.cabecera, {
+        clienteId: d.clienteId, depositoId: DEPOSITO_CENTRAL_ID, esPedido: d.esPedido, claveIdempotencia,
+        motivoVentaSinStock: motivo, porcentajeComisionCedido: d.porcentajeCedido,
+      })
+      const firma = JSON.stringify(cuerpo(''))
+      try {
+        r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', cuerpo(clave))
+      } catch (e) {
+        // Sin respuesta: no llegó (red) o un gateway cortó (5xx); el alta pudo haberse grabado igual.
+        if (!(e instanceof ApiError) || e.status >= 500) sinRespuesta.current.add(firma)
+        throw e
+      }
+      // Grabada por un intento anterior con otro cuerpo: las ediciones de después no están en la venta.
+      conLoDeAntes = yaExistia(r) && [...sinRespuesta.current].some((f) => f !== firma)
+      // La venta ya existe: el borrador quedó huérfano. Si no se puede descartar, vence solo a las 48 h.
+      if (b.borrador) await b.descartar().catch(() => undefined)
+    }
+    let mensaje = r.message
+    if (d.esPedido) {
+      const detalle = await api.get<VentaDetalleDto>(`/api/v1/Ventas/${r.ventaId}`).catch(() => null)
+      const motivos = motivosAutorizacion(detalle?.venta.motivoPendienteAutorizacion)
+      if (detalle?.venta.estado === ESTADO_PENDIENTE_AUTORIZACION && motivos.length) {
+        mensaje = `Quedó por autorizar porque ${motivos.join(', ')}. Te avisamos cuando lo resuelvan.`
+      }
+    }
+    if (conLoDeAntes) mensaje = 'El pedido ya se había grabado con lo de antes. Revisalo y editalo si cambiaste algo.'
+    void qc.invalidateQueries({ queryKey: ventasKeys.all })
+    // La venta ya está guardada: vaciar el carrito no puede disparar un PUT con items=[] al borrador.
+    b.cerrar()
+    d.alGuardar()
+    // Lámina Guardada: el resumen, lo que dijo el servidor y las acciones (compartir, convertir, agendar, anular).
+    router.replace({ pathname: '/(tabs)/ventas/guardada', params: { id: r.ventaId, mensaje } } as never)
+  }
+
+  async function confirmar(motivo?: string) {
+    if (enVuelo.current) return
+    if (sinStock && !motivo) return setPedirMotivo(true)
+    enVuelo.current = true
+    setEnviando(true)
+    setError(null)
+    try {
+      await enviar(motivo)
+      setPedirMotivo(false)
+    } catch (e) {
+      if (d.esPedido && pideMotivo(e) && !motivo) setPedirMotivo(true)
+      setError(mensajeDelServidor(e, 'No se pudo guardar la venta.'))
+    } finally {
+      enVuelo.current = false
+      setEnviando(false)
+    }
+  }
+
+  return { confirmar, enviando, error, pedirMotivo, cerrarMotivo: () => setPedirMotivo(false) }
+}

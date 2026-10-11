@@ -1,77 +1,65 @@
-import { useState, useMemo } from 'react'
-import { useInfiniteCompras } from '@/libs/api-client/compras'
-import { useColors } from '@/libs/theme'
-import { getCompraStatusConfig } from '@/core/constants/status_compras'
-import type { CompraDtoList } from '@/libs/api-client'
+import { useEffect, useMemo, useState } from 'react'
+import { useBorradoresCompraMios, useComprasResumen, useInfiniteCompras } from '@/libs/api-client/compras'
+import { itemsCargados, totalDelServidor, textoContador } from '@/features/listas/lib/contador'
+import { fechaDesdePeriodo, type PeriodoVentas } from '@/features/ventas/hooks/useVentasListaNueva'
+import type { CompraDtoList, EstadoCompra } from '@/libs/api-client'
 
-export type SelectedMonth = { year: number; month: number }
+export type PestanaCompras = 'pendientes' | 'recibidas' | 'borradores'
+export type PeriodoCompras = PeriodoVentas
+
+/** Qué estados trae cada pestaña: el filtro lo aplica el servidor (`Estados`). */
+const ESTADOS: Record<Exclude<PestanaCompras, 'borradores'>, EstadoCompra[]> = {
+  pendientes: ['NotaPedido', 'Confirmado'],
+  recibidas: ['Entregado'],
+}
+const ESPERA_BUSQUEDA_MS = 300
 
 /**
- * Hook de Compras Refactorizado (Senior Level)
- * Implementa scroll infinito y filtrado por periodo.
+ * Lista de compras con el formato nuevo (Bloque 9A, PR 3.1). Pestaña, período y búsqueda van al
+ * servidor; nada se filtra sobre las páginas cargadas, así que "Mostrando N de M" vale siempre.
  */
 export function useComprasList() {
-  const colors = useColors()
-  const now = new Date()
+  const [pestana, setPestana] = useState<PestanaCompras>('pendientes')
+  // Lo pendiente no vence por antigüedad: por defecto se ve todo.
+  const [periodo, setPeriodo] = useState<PeriodoCompras>('todo')
+  const [busqueda, setBusqueda] = useState('')
+  const [busquedaEnviada, setBusquedaEnviada] = useState('')
 
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filter, setFilter] = useState<'Todas' | 'Pendiente' | 'Confirmado' | 'Entregado'>('Todas')
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const [selected, setSelected] = useState<SelectedMonth>({ year: now.getFullYear(), month: now.getMonth() })
+  // Sin espera, cada tecla cambiaba las keys de la lista y del resumen.
+  useEffect(() => {
+    const t = setTimeout(() => setBusquedaEnviada(busqueda.trim()), ESPERA_BUSQUEDA_MS)
+    return () => clearTimeout(t)
+  }, [busqueda])
 
-  const isCurrentMonth = selected.year === now.getFullYear() && selected.month === now.getMonth()
+  const esBorradores = pestana === 'borradores'
+  const fechaDesde = fechaDesdePeriodo(periodo)
+  const searchTerm = busquedaEnviada.length >= 2 ? busquedaEnviada : undefined
 
-  // Nota: Actualmente el backend no parece filtrar compras por fecha en el listado base,
-  // se recomienda añadir ?fechaDesde y ?fechaHasta al endpoint /api/v1/Compras
-  const {
-    data,
-    isLoading,
-    refetch,
-    isRefetching,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage
-  } = useInfiniteCompras({ pageSize: 20 })
-
-  const rawCompras = useMemo(() => {
-    return data?.pages.flatMap(page => {
-      return ((page as any)?.data?.items ?? (page as any)?.items ?? []) as CompraDtoList[]
-    }) ?? []
-  }, [data])
-
-  const comprasByMonth = useMemo(() =>
-    rawCompras.filter(c => {
-      const d = new Date(c.fecha ?? '')
-      return d.getMonth() === selected.month && d.getFullYear() === selected.year
-    }),
-    [rawCompras, selected]
+  const compras = useInfiniteCompras(
+    { pageSize: 20, estados: ESTADOS[esBorradores ? 'pendientes' : pestana], fechaDesde, searchTerm },
+    { enabled: !esBorradores },
   )
+  const { data: resumen } = useComprasResumen({ fechaDesde, searchTerm })
+  const borradores = useBorradoresCompraMios(esBorradores)
 
-  const filteredCompras = useMemo(() => {
-    let result = comprasByMonth
-    if (searchTerm) {
-      const q = searchTerm.toLowerCase()
-      result = result.filter(c => (c.razonSocialProveedor || '').toLowerCase().includes(q))
-    }
-    if (filter !== 'Todas') {
-      result = result.filter(c => getCompraStatusConfig(c.estado, colors).label === filter)
-    }
-    return result
-  }, [comprasByMonth, searchTerm, filter, colors])
+  const items = useMemo(() => itemsCargados<CompraDtoList>(compras.data?.pages), [compras.data])
+  const contador = textoContador(items.length, totalDelServidor(compras.data?.pages))
 
-  const totalMonto = useMemo(() => comprasByMonth.reduce((acc, c) => acc + (c.totalAmount ?? 0), 0), [comprasByMonth])
-  const pendCount = useMemo(() => comprasByMonth.filter(c => getCompraStatusConfig(c.estado, colors).label === 'Pendiente').length, [comprasByMonth, colors])
+  // Del servidor o nada: sin resumen no se muestra un número que podría estar mal.
+  const resumenTexto = !resumen ? null
+    : pestana === 'pendientes' ? `${resumen.notasPedido} notas de pedido · ${resumen.confirmadas} por recibir`
+    : pestana === 'recibidas' ? `${resumen.entregadas} recibidas`
+    : null
 
   return {
-    searchTerm, setSearchTerm,
-    filter, setFilter,
-    pickerOpen, setPickerOpen,
-    selected, setSelected,
-    isCurrentMonth,
-    now,
-    isLoading, isRefetching, refetch,
-    fetchNextPage, hasNextPage, isFetchingNextPage,
-    comprasByMonth, filteredCompras,
-    totalMonto, pendCount
+    pestana, setPestana,
+    periodo, setPeriodo,
+    busqueda, setBusqueda,
+    compras: items,
+    contador,
+    resumenTexto,
+    comprasQuery: compras,
+    borradores: borradores.data ?? [],
+    borradoresQuery: borradores,
   }
 }

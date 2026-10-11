@@ -1,31 +1,25 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import { TrendingUp, CheckCircle2, Clock } from 'lucide-react-native'
-import { useColors, BRAND } from '@/libs/theme'
+import { TrendingUp } from 'lucide-react-native'
+import { useColors } from '@/libs/theme'
 import { MotiView } from 'moti'
-import { GlassCard } from '@/core/ui'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useResponsive } from '@/libs/useResponsive'
 
 interface VentasKpiGridProps {
-  ordersCount: number
-  pendCount: number
-  totalMonto: number
+  /** Total de órdenes del mes según el servidor; undefined mientras no llegó. */
+  ordersCount: number | undefined
   currentMonth: string
 }
 
-function formatMoney(val: number) {
-  return `$ ${val.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
-}
-
-export function VentasKpiGrid({ ordersCount, pendCount, totalMonto, currentMonth }: VentasKpiGridProps) {
+export function VentasKpiGrid({ ordersCount, currentMonth }: VentasKpiGridProps) {
   const colors = useColors()
   const { isSmall } = useResponsive()
 
   return (
     <View style={styles.container}>
       <View style={[styles.gridWrapper, isSmall ? styles.stacked : styles.row]} testID="kpi-grid-wrapper">
-        {/* Main Bento Piece: Facturación (Big) */}
+        {/* Total de órdenes del servidor */}
         <MotiView
           from={{ opacity: 0, scale: 0.9, translateY: 20 }}
           animate={{ opacity: 1, scale: 1, translateY: 0 }}
@@ -43,56 +37,18 @@ export function VentasKpiGrid({ ordersCount, pendCount, totalMonto, currentMonth
               <View style={styles.iconCircleMain}>
                 <TrendingUp size={20} color="#fff" strokeWidth={2.5} />
               </View>
-              <Text style={styles.mainLabel} maxFontSizeMultiplier={1.3}>TOTAL {currentMonth}</Text>
+              <Text style={styles.mainLabel} maxFontSizeMultiplier={1.3}>ÓRDENES {currentMonth}</Text>
             </View>
             <View>
-              <Text style={styles.mainValue} maxFontSizeMultiplier={1.3}>{formatMoney(totalMonto)}</Text>
+              <Text style={styles.mainValue} maxFontSizeMultiplier={1.3}>{ordersCount === undefined ? '—' : ordersCount}</Text>
               <View style={styles.mainFooter}>
                 <View style={styles.footerDot} />
-                <Text style={styles.footerText} maxFontSizeMultiplier={1.3}>FACTURACIÓN BRUTA</Text>
+                <Text style={styles.footerText} maxFontSizeMultiplier={1.3}>EN EL PERÍODO</Text>
               </View>
             </View>
           </LinearGradient>
         </MotiView>
 
-        {/* Vertical Stack for smaller metrics */}
-        <View style={[styles.sideStack, isSmall ? {} : { flex: 1 }]} testID="kpi-side-stack">
-          <MotiView
-            from={{ opacity: 0, scale: 0.9, translateX: 20 }}
-            animate={{ opacity: 1, scale: 1, translateX: 0 }}
-            transition={{ type: 'spring', damping: 15, delay: 100 }}
-            style={isSmall ? { minHeight: 88 } : { flex: 1 }}
-            testID="kpi-card-confirmed"
-          >
-            <GlassCard intensity={8} style={[styles.smallCard, { borderColor: colors.border }]}>
-              <View style={[styles.iconCircleSmall, { backgroundColor: `${colors.primary}15`, borderColor: `${colors.primary}30` }]}>
-                <CheckCircle2 size={16} color={colors.primary} strokeWidth={2.5} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.smallValue, { color: colors.text }]} maxFontSizeMultiplier={1.3}>{ordersCount}</Text>
-                <Text style={[styles.smallLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1.3}>CONFIRMADOS</Text>
-              </View>
-            </GlassCard>
-          </MotiView>
-
-          <MotiView
-            from={{ opacity: 0, scale: 0.9, translateX: 20 }}
-            animate={{ opacity: 1, scale: 1, translateX: 0 }}
-            transition={{ type: 'spring', damping: 15, delay: 200 }}
-            style={isSmall ? { minHeight: 88 } : { flex: 1 }}
-            testID="kpi-card-pending"
-          >
-            <GlassCard intensity={6} style={[styles.smallCard, { backgroundColor: 'rgba(255,165,0,0.02)', borderColor: colors.border }]}>
-              <View style={[styles.iconCircleSmall, { backgroundColor: `${BRAND.orange}15`, borderColor: `${BRAND.orange}30` }]}>
-                <Clock size={16} color={BRAND.orange} strokeWidth={2.5} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.smallValue, { color: colors.text }]} maxFontSizeMultiplier={1.3}>{pendCount}</Text>
-                <Text style={[styles.smallLabel, { color: colors.textMuted }]} maxFontSizeMultiplier={1.3}>PENDIENTES</Text>
-              </View>
-            </GlassCard>
-          </MotiView>
-        </View>
       </View>
     </View>
   )

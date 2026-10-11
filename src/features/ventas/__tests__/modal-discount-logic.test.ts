@@ -109,19 +109,16 @@ describe('FIX #1 — typed-price floor validation (rounding over-block)', () => 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('canViewCost — cost-row gating for DescuentoItemModalRN', () => {
-  it('cost row NOT shown for Empleado (canViewCost false)', () => {
-    expect(canViewCost(['Empleado'])).toBe(false)
+  // Desde 0.2c la fila de costo la habilita CAP_VER_COSTOS, no el rol.
+  it('cost row NOT shown without CAP_VER_COSTOS', () => {
+    expect(canViewCost([{ module: 'MOD_VENTAS', canRead: true }])).toBe(false)
   })
 
-  it('cost row shown for Administrador (canViewCost true)', () => {
-    expect(canViewCost(['Administrador'])).toBe(true)
+  it('cost row shown with CAP_VER_COSTOS', () => {
+    expect(canViewCost([{ module: 'CAP_VER_COSTOS', canRead: true }])).toBe(true)
   })
 
-  it('cost row shown for Gerencia (canViewCost true)', () => {
-    expect(canViewCost(['Gerencia'])).toBe(true)
-  })
-
-  it('cost row NOT shown for empty roles (canViewCost false)', () => {
+  it('cost row NOT shown for empty permissions', () => {
     expect(canViewCost([])).toBe(false)
   })
 })

@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { api } from './client'
 import type { Producto, ProductoDetailDto, PagedResult, CreateProductoRequest, UpdateProductoRequest } from './types'
 import type { components } from './generated/schema'
@@ -75,10 +75,13 @@ export function useProductos(params: ProductoParams = {}) {
 }
 
 /**
- * Hook para scroll infinito en lista de productos
+ * Hook para scroll infinito en lista de productos.
+ * `mantenerAnterior`: mientras llega la búsqueda nueva se siguen viendo los resultados de la
+ * anterior (para listas cuya única clave cambiante es el término de búsqueda).
  */
-export function useInfiniteProductos(params: ProductoParams = {}) {
+export function useInfiniteProductos(params: ProductoParams = {}, { mantenerAnterior = false } = {}) {
   return useInfiniteQuery({
+    placeholderData: mantenerAnterior ? keepPreviousData : undefined,
     queryKey: productosKeys.infinite(params),
     queryFn: ({ pageParam = 1 }) => {
       const searchParams = new URLSearchParams()
@@ -109,6 +112,21 @@ export function useProducto(id: string) {
   })
 }
 
+export type VarianteProducto = components['schemas']['VarianteListItemDto']
+
+/**
+ * Fragancias (variantes) de una línea. El servidor redacta las cantidades a quien no puede verlas.
+ * Con `depositoId`, la disponibilidad (`stockDisponible`, `puedeVenderse`) es la de ese depósito.
+ */
+export function useVariantesProducto(id: string, enabled = true, depositoId?: string) {
+  return useQuery({
+    queryKey: [...productosKeys.detail(id), 'variantes', depositoId ?? null] as const,
+    queryFn: () => api.get<VarianteProducto[]>(`/api/v1/Productos/${id}/variantes${depositoId ? `?depositoId=${depositoId}` : ''}`),
+    enabled: !!id && enabled,
+    staleTime: 60_000,
+  })
+}
+
 export function useCreateProducto() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -128,6 +146,23 @@ export function useUpdateProducto() {
   })
 }
 
+/** Forma mínima de un producto dentro de cualquier caché de productos. */
+interface ProductoEnCache {
+  id?: string
+  activo?: boolean
+}
+
+/** Las cachés de productos guardan listas, páginas infinitas, envoltorios {data} o el detalle suelto. */
+type CacheProductos =
+  | ProductoEnCache[]
+  | {
+      id?: string
+      activo?: boolean
+      data?: { items?: ProductoEnCache[] }
+      items?: ProductoEnCache[]
+      pages?: { data?: { items?: ProductoEnCache[] }; items?: ProductoEnCache[] }[]
+    }
+
 /**
  * Update Optimista para Toggle Status de Producto
  */
@@ -141,44 +176,29 @@ export function useToggleProductoStatus() {
       await queryClient.cancelQueries({ queryKey: productosKeys.all })
       const previousData = queryClient.getQueryData(productosKeys.all)
 
-      queryClient.setQueriesData({ queryKey: productosKeys.all }, (old: any) => {
+      const aplicar = (p: ProductoEnCache) =>
+        p.id === variables.id ? { ...p, activo: variables.activo } : p
+
+      queryClient.setQueriesData<CacheProductos>({ queryKey: productosKeys.all }, (old) => {
         if (!old) return old
+        if (Array.isArray(old)) return old.map(aplicar)
 
         if (old.pages) {
           return {
             ...old,
-            pages: old.pages.map((page: any) => ({
+            pages: old.pages.map((page) => ({
               ...page,
-              data: {
-                ...page.data,
-                items: page.data?.items?.map((p: any) =>
-                  p.id === variables.id ? { ...p, activo: variables.activo } : p
-                )
-              },
-              items: page.items?.map((p: any) =>
-                p.id === variables.id ? { ...p, activo: variables.activo } : p
-              )
-            }))
+              data: { ...page.data, items: page.data?.items?.map(aplicar) },
+              items: page.items?.map(aplicar),
+            })),
           }
         }
 
         if (old.data?.items) {
-           return {
-             ...old,
-             data: {
-               ...old.data,
-               items: old.data.items.map((p: any) => p.id === variables.id ? { ...p, activo: variables.activo } : p)
-             }
-           }
+          return { ...old, data: { ...old.data, items: old.data.items.map(aplicar) } }
         }
 
-        if (Array.isArray(old)) {
-           return old.map((p: any) => p.id === variables.id ? { ...p, activo: variables.activo } : p)
-        }
-
-        if (old.id === variables.id) {
-           return { ...old, activo: variables.activo }
-        }
+        if (old.id === variables.id) return { ...old, activo: variables.activo }
 
         return old
       })

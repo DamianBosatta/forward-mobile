@@ -9,6 +9,8 @@ export interface SociosParams {
   tipo?:       1 | 2        // 1 = Cliente, 2 = Proveedor
   activo?:     boolean | null
   search?:     string
+  /** Cartera propia: el servidor acota a los clientes del vendedor y a los "de la casa" (management ve todo). */
+  agenda?:     boolean
   pageNumber?: number
   pageSize?:   number
 }
@@ -66,6 +68,7 @@ export function useInfiniteSocios(params: SociosParams = {}) {
       if (params.tipo !== undefined) sp.append('tipo', String(params.tipo))
       if (params.activo !== undefined && params.activo !== null) sp.append('activo', String(params.activo))
       if (params.search) sp.append('searchTerm', params.search)
+      if (params.agenda) sp.append('agenda', 'true')
 
       return api.get<PagedResult<SocioComercial>>(`/api/v1/socios-comerciales?${sp}`)
     },
@@ -111,7 +114,7 @@ export function useToggleSocioStatus() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: sociosKeys.all })
     },
-    onError: (err: any) => {
+    onError: (err: { status?: number; message?: string }) => {
       console.error('Toggle status error:', err)
       setTimeout(() => {
         Alert.alert(
@@ -123,11 +126,15 @@ export function useToggleSocioStatus() {
   })
 }
 
-export function useSocio(id: string) {
+export const fetchSocio = (id: string) => api.get<SocioDetailDto>(`/api/v1/socios-comerciales/${id}`)
+
+/** `fresco`: siempre pide el detalle al servidor al montar (para editar sin pisar con un caché viejo). */
+export function useSocio(id: string, opciones: { fresco?: boolean } = {}) {
   return useQuery({
     queryKey: sociosKeys.detail(id),
-    queryFn: () => api.get<SocioDetailDto>(`/api/v1/socios-comerciales/${id}`),
+    queryFn: () => fetchSocio(id),
     enabled: !!id,
-    staleTime: 5 * 60_000,
+    staleTime: opciones.fresco ? 0 : 5 * 60_000,
+    refetchOnMount: opciones.fresco ? 'always' : true,
   })
 }

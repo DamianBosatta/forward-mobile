@@ -19,7 +19,7 @@ jest.mock('../../api/queries', () => ({
 }))
 
 jest.mock('@/libs/api-client', () => ({
-  useProductos: () => ({ data: { items: [] }, isLoading: false }),
+  useInfiniteProductos: () => ({ data: { pages: [] }, isLoading: false }),
   useProveedores: () => ({ data: { items: [] } }),
   useDepositos: () => ({ data: [] }),
 }))

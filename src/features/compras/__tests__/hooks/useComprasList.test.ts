@@ -1,70 +1,84 @@
 import { renderHook, act } from '@testing-library/react-native'
 import { useComprasList } from '../../hooks/useComprasList'
-import { useInfiniteCompras } from '@/libs/api-client/compras'
+import { useBorradoresCompraMios, useInfiniteCompras, useComprasResumen } from '@/libs/api-client/compras'
 
 jest.mock('@/libs/api-client/compras', () => ({
-  useInfiniteCompras: jest.fn()
-}))
-
-jest.mock('@/libs/theme', () => ({
-  useColors: () => ({ primary: '#000' })
-}))
-
-jest.mock('@/core/constants/status_compras', () => ({
-  getCompraStatusConfig: (estado: string) => {
-    if (estado === '1') return { label: 'Pendiente' }
-    if (estado === '2') return { label: 'Confirmado' }
-    return { label: 'Entregado' }
-  }
+  useInfiniteCompras: jest.fn(),
+  useComprasResumen: jest.fn(),
+  useBorradoresCompraMios: jest.fn(),
 }))
 
 describe('useComprasList', () => {
-  const now = new Date()
-  
   beforeEach(() => {
     jest.clearAllMocks()
     ;(useInfiniteCompras as jest.Mock).mockReturnValue({
-      data: {
-        pages: [
-          {
-            items: [
-              { id: '1', razonSocialProveedor: 'Prov A', estado: '1', totalAmount: 100, fecha: new Date(now.getFullYear(), now.getMonth(), 10).toISOString() },
-              { id: '2', razonSocialProveedor: 'Prov B', estado: '2', totalAmount: 200, fecha: new Date(now.getFullYear(), now.getMonth(), 15).toISOString() }
-            ]
-          }
-        ]
-      },
-      isLoading: false
+      data: { pages: [{ totalCount: 137, items: [{ id: '1' }, { id: '2' }] }] },
+      isLoading: false,
     })
+    ;(useComprasResumen as jest.Mock).mockReturnValue({
+      data: { totalComprado: 98765, notasPedido: 7, confirmadas: 2, entregadas: 30 },
+    })
+    ;(useBorradoresCompraMios as jest.Mock).mockReturnValue({ data: undefined })
   })
 
-  it('debe filtrar compras por mes y calcular totales', () => {
+  it('el contador y el resumen vienen del servidor, no de sumar lo cargado', () => {
     const { result } = renderHook(() => useComprasList())
 
-    expect(result.current.comprasByMonth.length).toBe(2)
-    expect(result.current.totalMonto).toBe(300)
-    expect(result.current.pendCount).toBe(1)
+    expect(result.current.contador).toBe('Mostrando 2 de 137')
+    expect(result.current.resumenTexto).toBe('7 notas de pedido · 2 por recibir')
   })
 
-  it('debe filtrar por termino de busqueda', () => {
+  it('sin resumen del servidor no muestra números (null, no una suma parcial)', () => {
+    ;(useComprasResumen as jest.Mock).mockReturnValue({ data: undefined })
     const { result } = renderHook(() => useComprasList())
 
-    act(() => {
-      result.current.setSearchTerm('prov a')
-    })
-
-    expect(result.current.filteredCompras.length).toBe(1)
-    expect(result.current.filteredCompras[0].id).toBe('1')
+    expect(result.current.resumenTexto).toBeNull()
   })
 
-  it('debe filtrar por estado', () => {
+  it('en Borradores no pide la lista de compras', () => {
     const { result } = renderHook(() => useComprasList())
+    act(() => { result.current.setPestana('borradores') })
 
-    act(() => {
-      result.current.setFilter('Confirmado')
-    })
+    expect((useInfiniteCompras as jest.Mock).mock.calls.at(-1)[1]).toEqual({ enabled: false })
+    expect(useBorradoresCompraMios).toHaveBeenLastCalledWith(true)
+  })
 
-    expect(result.current.filteredCompras.length).toBe(1)
-    expect(result.current.filteredCompras[0].id).toBe('2')
+  it('la búsqueda se debouncea: tipear rápido pide una sola vez con el término final', () => {
+    jest.useFakeTimers()
+    try {
+      const { result } = renderHook(() => useComprasList())
+      const terminos = () =>
+        (useInfiniteCompras as jest.Mock).mock.calls.map(c => c[0].searchTerm)
+
+      act(() => { result.current.setBusqueda('pr') })
+      act(() => { jest.advanceTimersByTime(100) })
+      act(() => { result.current.setBusqueda('prov') })
+      act(() => { jest.advanceTimersByTime(100) })
+      act(() => { result.current.setBusqueda('  prov a  ') })
+
+      // antes de cumplirse la espera, ningún término intermedio llegó a las queries
+      expect(terminos().every(t => t === undefined)).toBe(true)
+      expect((useComprasResumen as jest.Mock).mock.calls.every(c => c[0].searchTerm === undefined)).toBe(true)
+
+      act(() => { jest.advanceTimersByTime(300) })
+
+      expect((useInfiniteCompras as jest.Mock).mock.calls.at(-1)[0].searchTerm).toBe('prov a')
+      expect((useComprasResumen as jest.Mock).mock.calls.at(-1)[0].searchTerm).toBe('prov a')
+      expect(new Set(terminos().filter(Boolean))).toEqual(new Set(['prov a']))
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('una búsqueda de solo espacios no llega al servidor', () => {
+    jest.useFakeTimers()
+    try {
+      const { result } = renderHook(() => useComprasList())
+      act(() => { result.current.setBusqueda('    ') })
+      act(() => { jest.advanceTimersByTime(400) })
+      expect((useInfiniteCompras as jest.Mock).mock.calls.at(-1)[0].searchTerm).toBeUndefined()
+    } finally {
+      jest.useRealTimers()
+    }
   })
 })

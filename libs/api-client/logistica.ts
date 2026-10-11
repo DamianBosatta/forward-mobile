@@ -67,6 +67,12 @@ export interface VentasPreparacionParams {
  */
 export interface VentaPreparacion {
   id: string
+  /** "A00417"; null en ventas viejas sin número. */
+  codigoPedido?: string | null
+  vendedorNombre: string
+  metodoEntregaNombre: string
+  /** Bultos de la venta (los arma el empaque). */
+  piezasCount: number
   clienteNombre: string
   direccion: string
   fechaEntrega: string | null
@@ -150,12 +156,13 @@ export function useVehiculos() {
 // cantidadParadas, no detalles) — NOT the detail shape. Typed accordingly so consumers
 // read cantidadParadas directly without an `as any` cast.
 export function useHojasDeRuta(
-  filters?: { choferId?: string, estado?: number },
+  filters?: { choferId?: string, estado?: number, fecha?: string },
   options?: Omit<UseQueryOptions<HojaRutaListItemDto[], Error>, 'queryKey' | 'queryFn'>
 ) {
   const searchParams = new URLSearchParams()
   if (filters?.choferId) searchParams.set('choferId', filters.choferId)
   if (filters?.estado !== undefined) searchParams.set('estado', String(filters.estado))
+  if (filters?.fecha) searchParams.set('fecha', filters.fecha)
 
   return useQuery({
     queryKey: [...logisticaKeys.hojasRuta(), filters],
@@ -179,7 +186,7 @@ export function useHojaRuta(id: string) {
  *
  * Query params are PascalCase to match backend GetVentasParaPreparacionQuery.cs.
  */
-export function useVentasParaPreparacion(params?: VentasPreparacionParams) {
+export function useVentasParaPreparacion(params?: VentasPreparacionParams, opciones?: { activa?: boolean }) {
   const searchParams = new URLSearchParams()
   if (params?.fechaDesde) searchParams.set('FechaDesde', params.fechaDesde)
   if (params?.fechaHasta) searchParams.set('FechaHasta', params.fechaHasta)
@@ -190,7 +197,8 @@ export function useVentasParaPreparacion(params?: VentasPreparacionParams) {
     queryKey: pickingKeys.list(params ?? {}),
     queryFn: () => api.get<VentaPreparacion[]>(`/api/v1/Logistica/ventas-para-preparacion?${searchParams}`),
     staleTime: 15_000,
-    refetchInterval: 30_000,
+    // `activa: false` (pantalla fuera de foco) pausa el sondeo.
+    refetchInterval: opciones?.activa === false ? false : 30_000,
   })
 }
 
@@ -233,6 +241,7 @@ export function useReportarParada() {
       paradaId: string
       entregado: boolean
       motivoRechazo?: string
+      nombreReceptor?: string
       evidenciaUrl?: string
       observaciones?: string
     }) => api.post<void>(`/api/v1/Logistica/hojas-ruta/${payload.hojaDeRutaId}/reportar-parada`, payload),

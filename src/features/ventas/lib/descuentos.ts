@@ -15,6 +15,9 @@
  * or any other context without side effects.
  */
 
+import type { ModulePermission } from '@/libs/api-client/types'
+import { hasCapability } from '@/features/auth/lib/capabilities'
+
 // ─────────────────────────────────────────────────────────────────────────────
 // esPrecioValido — the single unified floor primitive
 // ─────────────────────────────────────────────────────────────────────────────
@@ -92,24 +95,31 @@ export function precioFromPct(precioVenta: number, pct: number): number {
 }
 
 /**
- * Client-side UX mirror of AppRoles.CostViewingRoles.
- * Returns true if any role in the array is a cost-authorized role.
- *
- * Cost roles: Administrador, AdministradorSistemas, Gerencia.
+ * Client-side UX mirror of CAP_VER_COSTOS (Domain.Constants.AppCapabilities.VerCostos).
+ * Antes se deducía del rol (Administrador, AdministradorSistemas, Gerencia); hoy es una
+ * capacidad otorgable por sí sola (por usuario o por puesto), leída de `user.permissions`
+ * igual que en la web (es-descuento-valido.ts → canViewCost(permissions)).
  * Server is authoritative — this function is UX only (defense in depth).
  *
- * IMPORTANT: keep in sync with AppRoles.CostViewingRoles in
- * Domain/Constants/AppRoles.cs.
+ * `permissions` nulo/indefinido: nunca ve costos (fail-closed).
  *
- * Note: cost roles can SEE cost info (precioCompraBase) for display, but the
- * profitability floor is the same single server floor for all roles (PR-2e-a).
+ * @param permissions - `user.permissions` (ModulePermission[]) from the auth store
+ */
+export function canViewCost(permissions: ModulePermission[] | null | undefined): boolean {
+  return hasCapability(permissions, 'CAP_VER_COSTOS')
+}
+
+/**
+ * Client-side UX mirror of AppRoles.StockViewingRoles (igual que canViewStock en la web).
+ * Decide quién ve el desglose de stock (depósito / reservado) y la variante de gestión de
+ * la carga de venta. Deliberadamente SEPARADA de canViewCost: ver stock no es ver costos.
  *
  * @param roles - Array of role name strings from the mobile auth store
  */
-const COST_VIEWING_ROLES = new Set(['Administrador', 'AdministradorSistemas', 'Gerencia'])
+const STOCK_VIEWING_ROLES = new Set(['Administrador', 'AdministradorSistemas', 'Gerencia'])
 
-export function canViewCost(roles: string[]): boolean {
-  return roles.some((r) => COST_VIEWING_ROLES.has(r))
+export function canViewStock(roles: string[]): boolean {
+  return roles.some((r) => STOCK_VIEWING_ROLES.has(r))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

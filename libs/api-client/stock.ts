@@ -1,14 +1,12 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
-import type { StockItem, MovimientoStockHistorialDto, PagedResult, AjusteStockRequest } from './types'
+import type { StockItem, PagedResult, AjusteStockRequest } from './types'
 import { productosKeys } from './productos'
 
 export const stockKeys = {
   all: ['stock'] as const,
   lists: () => [...stockKeys.all, 'list'] as const,
-  list: (params: any) => [...stockKeys.lists(), params] as const,
-  movimientos: (productoId: string, params?: any) =>
-    [...stockKeys.all, 'movimientos', productoId, params] as const,
+  list: (params: StockParams) => [...stockKeys.lists(), params] as const,
 }
 
 export interface StockParams {
@@ -20,7 +18,7 @@ export interface StockParams {
   search?: string
 }
 
-export function useStock(params: StockParams = {}) {
+export function useStock(params: StockParams = {}, { enabled = true } = {}) {
   const searchParams = new URLSearchParams()
   if (params.pageNumber) searchParams.set('pageNumber', String(params.pageNumber))
   if (params.pageSize) searchParams.set('pageSize', String(params.pageSize))
@@ -32,63 +30,50 @@ export function useStock(params: StockParams = {}) {
   return useQuery({
     queryKey: stockKeys.list(params),
     queryFn: () => api.get<PagedResult<StockItem>>(`/api/v1/Stocks?${searchParams}`),
+    enabled,
   })
 }
 
-export function useInfiniteStock(params: StockParams = {}) {
-  return useInfiniteQuery({
-    queryKey: [...stockKeys.lists(), 'infinite', params],
-    queryFn: ({ pageParam = 1 }) => {
-      const searchParams = new URLSearchParams()
-      searchParams.set('pageNumber', String(pageParam))
-      searchParams.set('pageSize', String(params.pageSize ?? 20))
-      if (params.depositoId) searchParams.set('depositoId', params.depositoId)
-      if (params.productoId) searchParams.set('productoId', params.productoId)
-      if (params.activo !== undefined && params.activo !== null) searchParams.set('activo', String(params.activo))
-      if (params.search) searchParams.set('searchTerm', params.search)
-      
-      return api.get<PagedResult<StockItem>>(`/api/v1/Stocks?${searchParams}`)
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage: any) => {
-      if (lastPage.hasNextPage) {
-        return lastPage.page + 1
-      }
-      return undefined
-    },
-    staleTime: 5 * 60_000,
-  })
-}
-
-export interface MovimientosStockParams {
+export interface DisponibilidadItem {
   productoId: string
-  depositoId?: string
-  pageNumber?: number
-  pageSize?: number
+  disponible: boolean
 }
+
+export interface DisponibilidadPedido {
+  productoId: string
+  cantidad: number
+}
+
+/** POST /Stocks/disponibilidad: (actual - reservado) >= cantidad, un booleano por producto. */
+export function fetchDisponibilidad(depositoId: string, items: DisponibilidadPedido[]) {
+  return api.post<DisponibilidadItem[]>('/api/v1/Stocks/disponibilidad', { depositoId, items })
+}
+
+const disponibilidadKey = (depositoId: string, items: DisponibilidadPedido[]) =>
+  [...stockKeys.all, 'disponibilidad', depositoId, items] as const
 
 /**
- * Fetches the stock movement history for a product.
- * Maps to GET /api/v1/stocks/movimientos.
- * Disabled when productoId is empty.
+ * ¿Se puede vender la cantidad pedida de cada producto en el depósito? El servidor descuenta lo
+ * reservado y responde un booleano por producto, nunca la cantidad (PR 3.1).
  */
-export function useMovimientosStock(params: MovimientosStockParams) {
-  const { productoId, depositoId, pageNumber = 1, pageSize = 20 } = params
-
-  const searchParams = new URLSearchParams()
-  if (productoId) searchParams.set('productoId', productoId)
-  if (depositoId) searchParams.set('depositoId', depositoId)
-  searchParams.set('pageNumber', String(pageNumber))
-  searchParams.set('pageSize', String(pageSize))
-
+export function useDisponibilidad(depositoId: string, items: DisponibilidadPedido[]) {
   return useQuery({
-    queryKey: stockKeys.movimientos(productoId, { depositoId, pageNumber, pageSize }),
-    queryFn: () =>
-      api.get<PagedResult<MovimientoStockHistorialDto>>(
-        `/api/v1/Stocks/movimientos?${searchParams}`,
-      ),
-    enabled: Boolean(productoId),
+    queryKey: disponibilidadKey(depositoId, items),
+    queryFn: () => fetchDisponibilidad(depositoId, items),
+    enabled: items.length > 0,
     staleTime: 60_000,
+  })
+}
+
+/** Igual, pero una consulta por lote (una página del listado): al cargar otra solo se pide la nueva. */
+export function useDisponibilidadPorLotes(depositoId: string, lotes: DisponibilidadPedido[][]) {
+  return useQueries({
+    queries: lotes.map((items) => ({
+      queryKey: disponibilidadKey(depositoId, items),
+      queryFn: () => fetchDisponibilidad(depositoId, items),
+      enabled: items.length > 0,
+      staleTime: 60_000,
+    })),
   })
 }
 

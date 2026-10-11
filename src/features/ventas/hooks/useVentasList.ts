@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
 import { useInfiniteVentas } from '@/libs/api-client/ventas'
 import { useColors } from '@/libs/theme'
-import { VENTA_ESTADOS, getVentaStatusConfig } from '@/core/constants/status'
+import { getVentaStatusConfig } from '@/core/constants/status'
+import { itemsCargados, totalDelServidor, textoContador } from '@/features/listas/lib/contador'
 import type { Venta } from '@/libs/api-client'
 
 export type SelectedMonth = { year: number; month: number }
@@ -43,14 +44,11 @@ export function useVentasList() {
   })
 
   // Aplanamos las páginas en una sola lista para el renderizado
-  const rawVentas = useMemo(() => {
-    // Vendor scoping is enforced server-side: GetAllVentasQueryHandler adds
-    // WHERE v."VendedorId" = @UserId for Vendedor role users before the query runs.
-    // VentaDtoList intentionally omits vendedorId — no client-side re-filter needed.
-    return data?.pages.flatMap(page => {
-      return ((page as any)?.data?.items ?? (page as any)?.items ?? []) as Venta[]
-    }) ?? []
-  }, [data])
+  // Vendor scoping is enforced server-side: GetAllVentasQueryHandler adds
+  // WHERE v."VendedorId" = @UserId for Vendedor role users before the query runs.
+  // VentaDtoList intentionally omits vendedorId — no client-side re-filter needed.
+  const rawVentas = useMemo(() => itemsCargados<Venta>(data?.pages), [data])
+  const totalCount = totalDelServidor(data?.pages)
 
   const filteredVentas = useMemo(() => {
     let result = rawVentas
@@ -63,14 +61,11 @@ export function useVentasList() {
     return result
   }, [rawVentas, filter, colors])
 
-  // KPIs calculados sobre la data cargada (idealmente vendrán de /ventas/stats)
-  const totalMonto = rawVentas.reduce((acc, v) => acc + (v.totalAmount || 0), 0)
-
-  const pendCount = rawVentas.filter(v =>
-    [VENTA_ESTADOS.PENDIENTE, VENTA_ESTADOS.PENDIENTE_AUTORIZACION].includes(String(v.estado) as any)
-  ).length
-
-  const ordersCount = rawVentas.length
+  // El total de órdenes es el del servidor. El importe total y los pendientes NO se muestran:
+  // GET /Ventas/resumen no filtra por tipoOperacion (mezcla pedidos y presupuestos guardados) y
+  // sumar las páginas cargadas da un número parcial. Ver BACKLOG-9B.md.
+  // El filtro por estado es local: con un estado elegido, "cargados" no es lo que se ve.
+  const contador = filter === 'Todas' ? textoContador(rawVentas.length, totalCount) : null
 
   return {
     searchTerm, setSearchTerm,
@@ -83,6 +78,6 @@ export function useVentasList() {
     isLoading, isRefetching, refetch,
     fetchNextPage, hasNextPage, isFetchingNextPage,
     rawVentas, filteredVentas,
-    totalMonto, pendCount, ordersCount
+    totalCount, contador
   }
 }

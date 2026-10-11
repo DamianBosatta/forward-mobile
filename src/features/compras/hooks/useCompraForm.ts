@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
@@ -12,14 +12,19 @@ import {
   useCompra,
   comprasKeys,
 } from '../api/queries'
-import { useProductos, useProveedores, useDepositos } from '@/libs/api-client'
-import type { SocioComercial, Deposito, Producto, CompraDetalle } from '@/libs/api-client'
+import { api, useInfiniteProductos, useProveedores, useDepositos } from '@/libs/api-client'
+import type { SocioComercial, Deposito, Producto, CompraDetalle, ProductoDetailDto } from '@/libs/api-client'
+import { mensajeDelServidor } from '../lib/mensaje-error'
+import { leerNumero } from '@/src/utils/numero'
 
 export interface DetalleItem {
   productoId: string
   nombre: string
   imageUrl?: string
-  costoUnitario: number
+  /** null = sin costo: el servidor no tiene uno previo y el usuario todavía no lo cargó. */
+  costoUnitario: number | null
+  /** Lo que el usuario tipeó en el costo (es-AR), para no comerle la coma o el punto mientras escribe. */
+  costoTexto?: string
   cantidad: number
 }
 
@@ -31,11 +36,30 @@ export function useCompraForm(editId?: string) {
 
   // Queries
   const { data: compraEdit, isLoading: loadingEdit } = useCompra(editId ?? '')
-  const { data: productosResponse, isLoading: loadingProds } = useProductos({ pageSize: 150 })
+  const [productSearch, setProductSearch] = useState('')
+  const [busquedaServidor, setBusquedaServidor] = useState('')
+  useEffect(() => {
+    const t = setTimeout(() => setBusquedaServidor(productSearch.trim()), 300)
+    return () => clearTimeout(t)
+  }, [productSearch])
+  // La búsqueda la hace el servidor (nombre y códigos), paginada: sin tope de productos.
+  const {
+    data: productosPaginas,
+    isLoading: loadingProds,
+    hasNextPage: hayMasProductos,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteProductos({ pageSize: 30, search: busquedaServidor })
   const { data: proveedoresResponse } = useProveedores()
   const { data: depositosResponse } = useDepositos()
 
-  const productos = productosResponse?.items ?? []
+  const productosFiltrados = useMemo(
+    () => productosPaginas?.pages.flatMap(p => p.items ?? []) ?? [],
+    [productosPaginas]
+  )
+  const cargarMasProductos = useCallback(() => {
+    if (hayMasProductos && !isFetchingNextPage) fetchNextPage()
+  }, [hayMasProductos, isFetchingNextPage, fetchNextPage])
   const proveedores = proveedoresResponse?.items ?? []
   const depositos = depositosResponse ?? []
 
@@ -55,18 +79,22 @@ export function useCompraForm(editId?: string) {
   const [descuentoStr, setDescuentoStr] = useState('')
   const [estadoOrden, setEstadoOrden] = useState<EstadoOrden>('Presupuesto')
   const [successModal, setSuccessModal] = useState(false)
+  // La compra ya se creó en el servidor: el formulario queda bloqueado para no duplicarla.
+  const creadaId = useRef(false)
+  const [creada, setCreada] = useState(false)
 
   // Modal state
   const [showProvModal, setShowProvModal] = useState(false)
   const [showDepModal, setShowDepModal] = useState(false)
   const [showProductModal, setShowProductModal] = useState(false)
   const [provSearch, setProvSearch] = useState('')
-  const [productSearch, setProductSearch] = useState('')
 
   // ── State Lifecycle Management ───────────────────────────────────────────
   const [focusKey, setFocusKey] = useState(0)
 
   const resetFormState = useCallback(() => {
+    creadaId.current = false
+    setCreada(false)
     setProveedorSelected(null)
     setDepositoSelected(null)
     setDetalles([])
@@ -83,31 +111,49 @@ export function useCompraForm(editId?: string) {
 
   const bumpFocusKey = useCallback(() => setFocusKey(k => k + 1), [])
 
-  // Pre-fill Edit Mode
+  // Pre-fill Edit Mode: una sola vez por compra cargada (y por foco), para que un refetch
+  // o una lista nueva de proveedores/depósitos no pise lo que el usuario está editando.
+  const prefillKey = useRef<string | null>(null)
+  // La versión de la compra tal como estaba al cargar el formulario: la del caché en vivo puede
+  // venir de un refetch con el cambio de otro usuario, y mandarla pisaría ese cambio sin conflicto.
+  const versionCargada = useRef<number | undefined>(undefined)
+  const relacionesKey = useRef<string | null>(null)
+  const claveCompra = editId && compraEdit ? `${editId}:${focusKey}` : null
+
   useEffect(() => {
-    if (editId && compraEdit) {
-      setProveedorSelected(proveedores.find(p => p.id === compraEdit.proveedorId) || null)
-      setDepositoSelected(depositos.find((d: Deposito) => d.id === compraEdit.depositoId) || null)
-      setDetalles(compraEdit.detalles?.map((d: CompraDetalle) => ({
-        productoId: d.productoId ?? '',
-        nombre: d.nombreProducto ?? '—',
-        costoUnitario: d.costoUnitarioBaseAmount ?? 0,
-        cantidad: d.cantidad ?? 0,
-      })) ?? [])
-      setGastosStr(String(compraEdit.gastosOperativos || ''))
-      setDescuentoStr(String((compraEdit as typeof compraEdit & { descuentoPorcentaje?: number }).descuentoPorcentaje || ''))
-      
-      const s = String(compraEdit.estado)
-      if (s === 'Presupuesto' || s === '1' || s === 'NotaPedido') setEstadoOrden('Presupuesto')
-      else if (s === 'Confirmado' || s === '2') setEstadoOrden('Confirmado')
-      else if (s === 'Recibida' || s === '3' || s === 'Entregado') setEstadoOrden('Recibida')
-    }
-  }, [compraEdit, editId, proveedores, depositos, focusKey])
+    if (!claveCompra || !compraEdit || prefillKey.current === claveCompra) return
+    prefillKey.current = claveCompra
+    versionCargada.current = compraEdit.version
+    setDetalles(compraEdit.detalles?.map((d: CompraDetalle) => ({
+      productoId: d.productoId ?? '',
+      nombre: d.nombreProducto ?? '—',
+      costoUnitario: d.costoUnitarioBaseAmount ?? null,
+      cantidad: d.cantidad ?? 0,
+    })) ?? [])
+    setGastosStr(String(compraEdit.gastosOperativos || ''))
+    setDescuentoStr(String((compraEdit as typeof compraEdit & { descuentoPorcentaje?: number }).descuentoPorcentaje || ''))
+
+    const s = String(compraEdit.estado)
+    if (s === 'Presupuesto' || s === '1' || s === 'NotaPedido') setEstadoOrden('Presupuesto')
+    else if (s === 'Confirmado' || s === '2') setEstadoOrden('Confirmado')
+    else if (s === 'Recibida' || s === '3' || s === 'Entregado') setEstadoOrden('Recibida')
+  }, [claveCompra, compraEdit])
+
+  // Proveedor y depósito vienen de listas que pueden cargar después: se resuelven una vez.
+  useEffect(() => {
+    if (!claveCompra || !compraEdit || relacionesKey.current === claveCompra) return
+    const prov = proveedores.find(p => p.id === compraEdit.proveedorId)
+    const dep = depositos.find((d: Deposito) => d.id === compraEdit.depositoId)
+    if (!prov || !dep) return
+    relacionesKey.current = claveCompra
+    setProveedorSelected(prov)
+    setDepositoSelected(dep)
+  }, [claveCompra, compraEdit, proveedores, depositos])
 
   // Computed
   const gastos = useMemo(() => Math.max(parseFloat(gastosStr) || 0, 0), [gastosStr])
   const descPct = useMemo(() => Math.max(parseFloat(descuentoStr) || 0, 0), [descuentoStr])
-  const bruto = useMemo(() => detalles.reduce((acc, d) => acc + d.cantidad * d.costoUnitario, 0), [detalles])
+  const bruto = useMemo(() => detalles.reduce((acc, d) => acc + d.cantidad * (d.costoUnitario ?? 0), 0), [detalles])
   const subtotal = useMemo(() => bruto * (1 - descPct / 100), [bruto, descPct])
   const total = useMemo(() => subtotal + gastos, [subtotal, gastos])
 
@@ -115,13 +161,27 @@ export function useCompraForm(editId?: string) {
     () => proveedores.filter(p => (p.razonSocial ?? '').toLowerCase().includes(provSearch.toLowerCase())),
     [proveedores, provSearch]
   )
-  const productosFiltrados = useMemo(
-    () => productos.filter(p => (p.nombre ?? '').toLowerCase().includes(productSearch.toLowerCase())),
-    [productos, productSearch]
-  )
 
   // Handlers
-  const setProductoCantidad = useCallback((prod: Producto & { precioCompraBase?: number }, qty: number) => {
+  // Precarga el último costo de la ficha del producto (el servidor lo entrega solo con permiso
+  // de ver costos). Si no hay, la línea queda sin costo: nunca se inventa uno.
+  const precargarUltimoCosto = useCallback(async (productoId: string) => {
+    try {
+      const ficha = await api.get<ProductoDetailDto>(`/api/v1/Productos/${productoId}`)
+      const costo = ficha?.precioCompraBase
+      if (typeof costo !== 'number' || costo <= 0) return
+      setDetalles(prev => prev.map(d =>
+        d.productoId === productoId && d.costoUnitario === null ? { ...d, costoUnitario: costo } : d
+      ))
+    } catch {
+      // Sin costo previo: lo carga el usuario.
+    }
+  }, [])
+
+  const setProductoCantidad = useCallback((prod: Producto, qty: number) => {
+    if (qty > 0 && prod.id && !detalles.some(d => d.productoId === prod.id)) {
+      precargarUltimoCosto(prod.id)
+    }
     setDetalles(prev => {
       if (qty <= 0) return prev.filter(d => d.productoId !== prod.id)
       const idx = prev.findIndex(d => d.productoId === prod.id)
@@ -134,11 +194,11 @@ export function useCompraForm(editId?: string) {
         productoId: prod.id ?? '',
         nombre: prod.nombre ?? '',
         imageUrl: prod.imageUrl ?? undefined,
-        costoUnitario: prod.precioCompraBase ?? ((prod.precioVenta ?? 0) * 0.7),
+        costoUnitario: null,
         cantidad: qty,
       }]
     })
-  }, [])
+  }, [detalles, precargarUltimoCosto])
 
   const updateCantidad = useCallback((id: string, delta: number) => {
     setDetalles(prev => prev.map(d =>
@@ -147,9 +207,9 @@ export function useCompraForm(editId?: string) {
   }, [])
 
   const updateCosto = useCallback((id: string, value: string) => {
-    const num = parseFloat(value)
-    if (!isNaN(num) && num >= 0)
-      setDetalles(prev => prev.map(d => d.productoId === id ? { ...d, costoUnitario: num } : d))
+    // es-AR ("1.150,50"): parseFloat leía 1,15 y le comía la coma al tipear. Inválido = sin costo.
+    const num = value.trim() === '' ? null : leerNumero(value)
+    setDetalles(prev => prev.map(d => d.productoId === id ? { ...d, costoUnitario: num, costoTexto: value } : d))
   }, [])
 
   const removeDetalle = useCallback((id: string) => {
@@ -159,6 +219,7 @@ export function useCompraForm(editId?: string) {
   const onSubmit = useCallback(async () => {
     const payload = {
       id: editId,
+      version: versionCargada.current,
       proveedorId: proveedorSelected?.id ?? '',
       depositoId: depositoSelected?.id ?? '',
       gastosOperativos: gastos,
@@ -166,7 +227,7 @@ export function useCompraForm(editId?: string) {
       detalles: detalles.map(d => ({
         productoId: d.productoId,
         cantidad: d.cantidad,
-        costoUnitario: d.costoUnitario,
+        costoUnitario: d.costoUnitario ?? 0,
         descuentoPorcentaje: 0,
         monedaCosto: 'ARS',
       })),
@@ -180,33 +241,69 @@ export function useCompraForm(editId?: string) {
       return Alert.alert('⚠️ Validación', firstError)
     }
 
-    try {
-      let newId = editId
-      if (editId) {
+    if (editId) {
+      // Editar solo guarda: los cambios de estado se hacen desde el detalle de la compra.
+      try {
         await updateCompra({ id: editId, data: payload })
-        if (estadoOrden === 'Confirmado') await confirmarCompra(editId).catch(() => {})
-        if (estadoOrden === 'Recibida') {
-          await confirmarCompra(editId).catch(() => {})
-          await recibirCompra(editId).catch(() => {})
-        }
-      } else {
-        const resultId = await createCompra(payload)
-        newId = typeof resultId === 'string' ? resultId : resultId.id
-        
-        if (estadoOrden === 'Confirmado' || estadoOrden === 'Recibida') {
-          await confirmarCompra(newId!)
-        }
-        if (estadoOrden === 'Recibida') {
-           await recibirCompra(newId!)
-        }
+        setSuccessModal(true)
+      } catch (e: unknown) {
+        Alert.alert('No se guardaron los cambios', mensajeDelServidor(e))
       }
-      setSuccessModal(true)
-    } catch (e: unknown) {
-      Alert.alert('Error', (e as Error)?.message ?? 'No se pudo procesar la solicitud.')
+      return
     }
-  }, [editId, proveedorSelected, depositoSelected, gastos, descPct, detalles, estadoOrden, updateCompra, confirmarCompra, recibirCompra, createCompra])
 
-  const canSubmit = !!proveedorSelected && !!depositoSelected && detalles.length > 0 && !isPending
+    // Crear, confirmar y recibir son llamadas separadas: si una falla, se dice qué quedó hecho.
+    if (creadaId.current) return
+    let newId: string | undefined
+    const hechos: string[] = []
+    const pasos = [
+      ...(estadoOrden !== 'Presupuesto'
+        ? [{ hecho: 'La orden quedó confirmada.', fallo: 'No se confirmó la orden', correr: () => confirmarCompra(newId!) }]
+        : []),
+      ...(estadoOrden === 'Recibida'
+        ? [{ hecho: 'La mercadería quedó recibida.', fallo: 'No se recibió la mercadería', correr: () => recibirCompra(newId!) }]
+        : []),
+    ]
+    try {
+      const resultId = await createCompra(payload)
+      newId = typeof resultId === 'string' ? resultId : resultId?.id
+    } catch (e: unknown) {
+      Alert.alert('No se creó la compra', mensajeDelServidor(e))
+      return
+    }
+    // Desde acá la compra existe: este formulario no vuelve a crear nunca.
+    creadaId.current = true
+    setCreada(true)
+    if (!newId) {
+      Alert.alert(
+        'La compra se creó, pero no pudimos abrirla',
+        'El servidor no devolvió el identificador. Revisá la lista de compras antes de volver a cargarla.',
+        [{ text: 'Entendido', onPress: () => router.replace('/(tabs)/compras') }],
+        { cancelable: false },
+      )
+      return
+    }
+    hechos.push('La orden quedó creada como nota de pedido.')
+
+    for (const [i, paso] of pasos.entries()) {
+      try {
+        await paso.correr()
+        hechos.push(paso.hecho)
+      } catch (e: unknown) {
+        const sinHacer = pasos.slice(i + 1).map(p => `${p.fallo}.`)
+        const mensaje = [...hechos, `${paso.fallo}: ${mensajeDelServidor(e)}`, ...sinHacer].join('\n')
+        Alert.alert('La compra quedó a medias', mensaje, [
+          { text: 'Ver la compra', onPress: () => router.replace(`/(tabs)/compras/${newId}`) },
+        ], { cancelable: false })
+        return
+      }
+    }
+    setSuccessModal(true)
+  }, [editId, proveedorSelected, depositoSelected, gastos, descPct, detalles, estadoOrden, updateCompra, confirmarCompra, recibirCompra, createCompra, router])
+
+  // Toda línea necesita un costo cargado (el servidor exige > 0): sin eso no se confirma.
+  const lineasSinCosto = detalles.filter(d => d.costoUnitario === null || d.costoUnitario <= 0).length
+  const canSubmit = !!proveedorSelected && !!depositoSelected && detalles.length > 0 && lineasSinCosto === 0 && !isPending && !creada
 
   return {
     loadingEdit, loadingProds, isPending,
@@ -224,6 +321,7 @@ export function useCompraForm(editId?: string) {
     productSearch, setProductSearch,
     subtotal, total,
     proveedoresFiltrados, productosFiltrados, depositos,
+    hayMasProductos: !!hayMasProductos, cargarMasProductos, lineasSinCosto,
     setProductoCantidad, updateCantidad, updateCosto, removeDetalle,
     onSubmit, canSubmit,
     // State lifecycle management

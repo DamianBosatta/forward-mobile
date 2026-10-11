@@ -10,9 +10,6 @@ import {
   Calendar,
   User,
   Package,
-  ClipboardList,
-  Car,
-  Navigation,
   MonitorSmartphone,
 } from 'lucide-react-native'
 import { ForwardLogo, TopHeaderActions, RequirePermission, GlassCard, BentoGrid, BentoItem } from '@/core/ui'
@@ -23,8 +20,6 @@ import { safeHaptics } from '@/core/utils/haptics'
 import { useVentasEmpacadas, useHojasDeRuta } from '@/libs/api-client/logistica'
 import { useLogisticaStore } from '@/src/features/logistica/store/logistica.store'
 import { useAuthStore } from '@/libs/store/auth.store'
-import { usePermissions } from '@/src/core/auth/RequirePermission'
-import { isMgmtRole } from '@/src/features/logistica/lib/rbac'
 import { EstadoHojaRuta } from '@/libs/api-client/types'
 import { DataList } from '@/core/ui/DataList'
 import { RouteCardSkeleton } from '@/src/features/logistica/components/RouteCardSkeleton'
@@ -39,11 +34,9 @@ export default function LogisticaScreen() {
   const router = useRouter()
 
   const { user, canDo } = useAuthStore()
-  const { roles } = usePermissions()
   const { activeTrip, clearActiveTrip } = useLogisticaStore()
 
   const isDriver = !!user?.roles?.includes('Empleado') && canDo('MOD_VIAJES', 'read')
-  const isMgmt = isMgmtRole(roles)
 
   // A finished/cancelled trip persisted in AsyncStorage must not surface as an
   // "ongoing" shortcut — tapping it would drop the driver on the finalized summary.
@@ -276,16 +269,6 @@ export default function LogisticaScreen() {
       {/* ── Hub Nav Cards (RBAC-gated) ── */}
       <Text style={[styles.sectionTitle, { marginTop: tokens.spacing.xl }]}>Accesos rápidos</Text>
 
-      {/* Picking — any MOD_VIAJES:read holder */}
-      <HubNavCard
-        title="Picking"
-        subtitle="Tablero de preparación de órdenes"
-        icon={ClipboardList}
-        iconColor={colors.primary}
-        onPress={() => router.push('/(tabs)/logistica/picking')}
-        visible
-      />
-
       {/* Consola — any MOD_VIAJES:read holder */}
       <HubNavCard
         title="Consola"
@@ -294,26 +277,6 @@ export default function LogisticaScreen() {
         iconColor={BRAND.green}
         onPress={() => router.push('/(tabs)/logistica/consola')}
         visible
-      />
-
-      {/* Vehículos — management only */}
-      <HubNavCard
-        title="Vehículos"
-        subtitle="ABM de la flota"
-        icon={Car}
-        iconColor={BRAND.violet}
-        onPress={() => router.push('/(tabs)/logistica/vehiculos')}
-        visible={isMgmt}
-      />
-
-      {/* Planificar Viaje — management only */}
-      <HubNavCard
-        title="Planificar Viaje"
-        subtitle="Wizard de hoja de ruta"
-        icon={Navigation}
-        iconColor={colors.info}
-        onPress={() => router.push('/(tabs)/logistica/viajes')}
-        visible={isMgmt}
       />
 
       {/* ── Active Hojas de Ruta overview ── */}
@@ -325,7 +288,7 @@ export default function LogisticaScreen() {
         {isDriver ? 'Mis Viajes Asignados' : 'Hojas de Ruta de la Flota'}
       </Text>
     </View>
-  ), [empacadas?.length, rutas, activeTrip, isActiveTripClosed, colors, isDriver, isMgmt, router, navigation])
+  ), [empacadas?.length, rutas, activeTrip, isActiveTripClosed, colors, isDriver, router, navigation])
 
   return (
     <RequirePermission module="MOD_VIAJES" action="read" mode="screen">

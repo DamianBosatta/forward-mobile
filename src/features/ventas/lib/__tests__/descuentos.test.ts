@@ -13,6 +13,7 @@ import {
   pctFromPrecio,
   precioFromPct,
   canViewCost,
+  canViewStock,
   esDescuentoValidoCompuesto,
   computeModalFloor,
   derivarFloorBroken,
@@ -130,35 +131,63 @@ describe('precioFromPct', () => {
 })
 
 // ─── canViewCost ─────────────────────────────────────────────────────────────
+// Desde 0.2c decide la capacidad CAP_VER_COSTOS (user.permissions), no el rol: los casos
+// por rol que vivían acá pasaron a canViewStock, que conserva esa regla.
+
+const CAP = (module: string, canRead = true) => ({ module, canRead })
 
 describe('canViewCost', () => {
-  it('returns true for Administrador', () => {
-    expect(canViewCost(['Administrador'])).toBe(true)
+  it('returns true with CAP_VER_COSTOS:Read', () => {
+    expect(canViewCost([CAP('CAP_VER_COSTOS')])).toBe(true)
   })
 
-  it('returns true for AdministradorSistemas', () => {
-    expect(canViewCost(['AdministradorSistemas'])).toBe(true)
+  it('returns true when the capability is mixed with module rows', () => {
+    expect(canViewCost([CAP('MOD_VENTAS'), CAP('CAP_VER_COSTOS')])).toBe(true)
   })
 
-  it('returns true for Gerencia', () => {
-    expect(canViewCost(['Gerencia'])).toBe(true)
+  it('returns false with only module rows', () => {
+    expect(canViewCost([CAP('MOD_VENTAS'), CAP('MOD_STOCK')])).toBe(false)
   })
 
-  it('returns false for non-cost roles', () => {
-    expect(canViewCost(['Vendedor', 'Logistica'])).toBe(false)
+  it('returns false when the capability row has canRead=false', () => {
+    expect(canViewCost([CAP('CAP_VER_COSTOS', false)])).toBe(false)
   })
 
-  it('returns true when array contains at least one cost role', () => {
-    expect(canViewCost(['Vendedor', 'Gerencia'])).toBe(true)
+  it('returns false for empty / null / undefined permissions (fail-closed)', () => {
+    expect(canViewCost([])).toBe(false)
+    expect(canViewCost(null)).toBe(false)
+    expect(canViewCost(undefined)).toBe(false)
+  })
+
+  it('matches the capability case-insensitively, like the backend', () => {
+    expect(canViewCost([CAP('cap_ver_costos')])).toBe(true)
+  })
+})
+
+// ─── canViewStock ────────────────────────────────────────────────────────────
+
+describe('canViewStock', () => {
+  it('returns true for Administrador, AdministradorSistemas and Gerencia', () => {
+    expect(canViewStock(['Administrador'])).toBe(true)
+    expect(canViewStock(['AdministradorSistemas'])).toBe(true)
+    expect(canViewStock(['Gerencia'])).toBe(true)
+  })
+
+  it('returns false for non-management roles', () => {
+    expect(canViewStock(['Vendedor', 'Logistica'])).toBe(false)
+  })
+
+  it('returns true when array contains at least one management role', () => {
+    expect(canViewStock(['Vendedor', 'Gerencia'])).toBe(true)
   })
 
   it('returns false for empty array', () => {
-    expect(canViewCost([])).toBe(false)
+    expect(canViewStock([])).toBe(false)
   })
 
   it('is case-sensitive (wrong case returns false)', () => {
-    expect(canViewCost(['administrador'])).toBe(false)
-    expect(canViewCost(['GERENCIA'])).toBe(false)
+    expect(canViewStock(['administrador'])).toBe(false)
+    expect(canViewStock(['GERENCIA'])).toBe(false)
   })
 })
 

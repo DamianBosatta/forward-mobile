@@ -14,6 +14,10 @@ import type {
   AutorizacionPreviewDto,
   AutorizarVentaCommand,
 } from './types'
+import type { components } from './generated/schema'
+
+export type BorradorVenta = components['schemas']['BorradorVentaDto']
+export type VentaPendienteAutorizacion = components['schemas']['VentaPendienteAutorizacionDto']
 
 // #region Query Keys
 export const ventasKeys = {
@@ -23,7 +27,7 @@ export const ventasKeys = {
   infinite: (params: VentaParams) => [...ventasKeys.all, 'infinite', params] as const,
   details: () => [...ventasKeys.all, 'detail'] as const,
   detail: (id: string) => [...ventasKeys.details(), id] as const,
-  resumen: (params: VentasResumenParams) => [...ventasKeys.all, 'resumen', params] as const,
+  borradoresMios: () => [...ventasKeys.all, 'borradores', 'mios'] as const,
 }
 
 export interface VentaParams {
@@ -38,19 +42,6 @@ export interface VentaParams {
   searchTerm?: string
 }
 
-export interface VentasResumenDto {
-  totalVendido: number
-  pendientes: number
-  porAutorizar: number
-  entregadas: number
-}
-
-export interface VentasResumenParams {
-  fechaDesde?: string
-  fechaHasta?: string
-  clienteId?: string
-  searchTerm?: string
-}
 // #endregion
 
 // #region Queries
@@ -80,9 +71,10 @@ export function useVentas(params: VentaParams = {}, options?: { enabled?: boolea
 /**
  * Hook para scroll infinito en listas de ventas (Recomendado para Móvil)
  */
-export function useInfiniteVentas(params: VentaParams = {}) {
+export function useInfiniteVentas(params: VentaParams = {}, options?: { enabled?: boolean }) {
   return useInfiniteQuery({
     queryKey: ventasKeys.infinite(params),
+    enabled: options?.enabled,
     queryFn: ({ pageParam = 1 }) => {
       const searchParams = new URLSearchParams()
       searchParams.set('pageNumber', String(pageParam))
@@ -107,12 +99,27 @@ export function useInfiniteVentas(params: VentaParams = {}) {
   })
 }
 
-export function useVenta(id: string) {
+/**
+ * Borradores con autoguardado del usuario logueado: los últimos 5 con actividad en las
+ * últimas 48 h (los más viejos el servidor no los devuelve). Lista corta, sin paginar.
+ */
+export function useBorradoresVentaMios(enabled = true) {
+  return useQuery({
+    queryKey: ventasKeys.borradoresMios(),
+    queryFn: () => api.get<BorradorVenta[]>('/api/v1/Ventas/borradores/mios'),
+    enabled,
+    staleTime: 30_000,
+  })
+}
+
+/** `fresco`: siempre trae de nuevo al montar (para actuar sobre la versión vigente, no sobre el caché). */
+export function useVenta(id: string, opciones: { fresco?: boolean; activo?: boolean } = {}) {
   return useQuery({
     queryKey: ventasKeys.detail(id),
     queryFn: () => api.get<VentaDetalleDto>(`/api/v1/Ventas/${id}`),
-    enabled: !!id,
-    staleTime: 60_000,
+    enabled: !!id && opciones.activo !== false,
+    staleTime: opciones.fresco ? 0 : 60_000,
+    refetchOnMount: opciones.fresco ? 'always' : true,
   })
 }
 
@@ -132,22 +139,19 @@ export function useAutorizacionPreview(id: string, enabled: boolean) {
 }
 
 /**
- * Hook para obtener el resumen de ventas (totales, pendientes, entregadas).
- * GET /api/v1/Ventas/resumen — parámetros en PascalCase según la OpenAPI spec.
+ * Bandeja de ventas frenadas por autorización: GET /api/v1/Ventas/pendientes-autorizacion.
+ * Lista completa (sin paginar), la que más espera primero. Sin CAP_AUTORIZAR_VENTA el servidor
+ * contesta 403: `enabled` evita pedirla sin la capacidad.
  */
-export function useVentasResumen(params: VentasResumenParams = {}) {
-  const searchParams = new URLSearchParams()
-  if (params.fechaDesde) searchParams.set('FechaDesde', params.fechaDesde)
-  if (params.fechaHasta) searchParams.set('FechaHasta', params.fechaHasta)
-  if (params.clienteId) searchParams.set('ClienteId', params.clienteId)
-  if (params.searchTerm) searchParams.set('SearchTerm', params.searchTerm)
-
+export function usePendientesAutorizacion(enabled: boolean) {
   return useQuery({
-    queryKey: ventasKeys.resumen(params),
-    queryFn: () => api.get<VentasResumenDto>(`/api/v1/Ventas/resumen?${searchParams}`),
+    queryKey: [...ventasKeys.all, 'pendientes-autorizacion'] as const,
+    queryFn: () => api.get<VentaPendienteAutorizacion[]>('/api/v1/Ventas/pendientes-autorizacion'),
     staleTime: 30_000,
+    enabled,
   })
 }
+
 // #endregion
 
 // #region Mutations
@@ -160,6 +164,24 @@ export function useCreateVenta() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ventasKeys.all })
     },
+  })
+}
+
+/** Borrador con autoguardado (el de la web): Presupuesto sin líneas; el vendedor sale del token. */
+export const useIniciarBorradorVenta = () => useMutation({
+  mutationFn: (data: { clienteId: string; depositoId: string }) => api.post<VentaActionResponseDto>('/api/v1/Ventas/borradores', data),
+})
+
+/** Autoguardado del borrador: PUT /Ventas/{id} con la versión vigente; devuelve la nueva. */
+export function guardarBorradorVenta(id: string, version: number, data: Record<string, unknown>) {
+  return api.put<VentaActionResponseDto>(`/api/v1/Ventas/${id}`, { ...data, id, version })
+}
+
+export function useDescartarBorradorVenta() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.post<boolean>(`/api/v1/Ventas/${id}/descartar-borrador`),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ventasKeys.borradoresMios() }),
   })
 }
 
@@ -200,23 +222,66 @@ export function useAnularVenta() {
 }
 
 /**
- * Authorize a below-floor venta (PR-2e-b). The server derives actor identity and
- * authorizing role from the JWT token. `razon` is mandatory server-side when any
- * item is below floor. On success, refreshes the venta detail (estado leaves
- * PendienteAutorizacion) and the lists.
+ * Versión vigente de la venta para decidir sobre ella. Si cambió desde que se cargó la bandeja
+ * (`fechaPendiente` es su fecha de modificación), frena: no se decide sobre algo que no se vio.
+ */
+export class VentaCambioError extends Error {
+  constructor() {
+    super('La venta cambió desde que se cargó la lista. Actualizá y revisala antes de decidir.')
+    this.name = 'VentaCambioError'
+  }
+}
+
+/** La venta ya no es la que se vio: la frenó nuestra guarda o el servidor contestó 409. */
+export function esConflictoDeVenta(e: unknown): boolean {
+  return e instanceof VentaCambioError || (e as { status?: number } | null)?.status === 409
+}
+
+async function versionParaDecidir(id: string, fechaPendiente?: string): Promise<number> {
+  const d = await api.get<VentaDetalleDto>(`/api/v1/Ventas/${id}`)
+  if (fechaPendiente && Date.parse(d.venta.fechaModificacion ?? '') !== Date.parse(fechaPendiente)) {
+    throw new VentaCambioError()
+  }
+  return d.venta.version
+}
+
+/**
+ * Autoriza una venta por autorizar. Con `version` usa la del detalle que se está viendo; sin
+ * ella (desde la bandeja) la pide al servidor. La razón es obligatoria solo con margen en
+ * amarillo y la exige el servidor; vacía viaja como null.
  */
 export function useAutorizarVenta() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, version, razon }: { id: string; version: number; razon: string }) =>
+    mutationFn: async ({ id, version, razon, fechaPendiente }: { id: string; version?: number; razon?: string | null; fechaPendiente?: string }) =>
       api.post<boolean>(
         `/api/v1/Ventas/${id}/autorizar`,
-        buildAutorizarPayload({ ventaId: id, version, razon }),
+        buildAutorizarPayload({ ventaId: id, version: version ?? (await versionParaDecidir(id, fechaPendiente)), razon }),
       ),
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ventasKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: ventasKeys.all })
     },
+    // Con la venta cambiada, el detalle y la bandeja en pantalla quedaron viejos: se vuelven a pedir.
+    onError: (e: unknown) => { if (esConflictoDeVenta(e)) queryClient.invalidateQueries({ queryKey: ventasKeys.all }) },
+  })
+}
+
+/** Rechaza una venta por autorizar. El motivo es obligatorio (lo exige el dominio). */
+export function useRechazarAutorizacion() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, version, motivo, fechaPendiente }: { id: string; version?: number; motivo: string; fechaPendiente?: string }) =>
+      api.post<string>(`/api/v1/Ventas/${id}/rechazar-autorizacion`, {
+        ventaId: id,
+        version: version ?? (await versionParaDecidir(id, fechaPendiente)),
+        motivoRechazo: motivo.trim(),
+      }),
+    onSuccess: (_data, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ventasKeys.detail(id) })
+      queryClient.invalidateQueries({ queryKey: ventasKeys.all })
+    },
+    onError: (e: unknown) => { if (esConflictoDeVenta(e)) queryClient.invalidateQueries({ queryKey: ventasKeys.all }) },
   })
 }
 

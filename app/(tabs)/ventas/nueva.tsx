@@ -36,7 +36,7 @@ import { getFullImageUrl } from '@/libs/api-client'
 import type { ClienteLightDto, CreateVentaRequest } from '@/libs/api-client'
 import type { CreateVentaFormData } from '@/libs/validations'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { esPrecioValido, pctFromPrecio, precioFromPct, canViewCost, calcularSubtotalConDescuento, derivarFloorBroken, computeModalFloor } from '@/features/ventas/lib/descuentos'
+import { esPrecioValido, pctFromPrecio, precioFromPct, canViewCost, canViewStock, calcularSubtotalConDescuento, derivarFloorBroken, computeModalFloor } from '@/features/ventas/lib/descuentos'
 import { BandChip } from '@/features/ventas/components/BandChip'
 import { CarritoSemaforo } from '@/features/ventas/components/CarritoSemaforo'
 import { METODO_ENTREGA, isProductAddable, requiereFechaEntrega, esFechaEntregaValida, buildVentaPayload } from '@/features/ventas/lib/venta-form-retiro'
@@ -127,7 +127,7 @@ function makeDetalleFromProducto(prod: any, cantidad: number, descuentoPorcentaj
 }
 
 function ProductCatalogItem({
-  item, cartQuantity, originalQuantity, onUpdate, onDiscountChange, cartDiscount, userRoles, maxDescuento,
+  item, cartQuantity, originalQuantity, onUpdate, onDiscountChange, cartDiscount, userRoles, puedeVerCostos, maxDescuento,
 }: {
   item: any
   cartQuantity: number
@@ -137,7 +137,10 @@ function ProductCatalogItem({
   onDiscountChange: (prod: any, pct: number) => void
   /** Current discount % for this item in the cart (reflects existing cart state) */
   cartDiscount: number
+  /** Roles — solo deciden el desglose de stock (canViewStock), nunca costos. */
   userRoles: string[]
+  /** CAP_VER_COSTOS — gatea las bandas de precio. */
+  puedeVerCostos: boolean
   /** Seller's max discount % cap (0 = no cap). The inline discount input is clamped to this. */
   maxDescuento: number
 }) {
@@ -149,7 +152,7 @@ function ProductCatalogItem({
   const [infoOpen, setInfoOpen] = useState(false)
   // Inline discount input draft (keeps text while user types, syncs on blur)
   const [discDraft, setDiscDraft] = useState<string | null>(null)
-  const isVendedor = !canViewCost(userRoles)
+  const isVendedor = !canViewStock(userRoles)
 
   // Shown value in the inline discount field
   const discDisplayValue = discDraft !== null ? discDraft : (cartDiscount > 0 ? String(cartDiscount) : '')
@@ -259,14 +262,14 @@ function ProductCatalogItem({
               )}
             </View>
 
-            {/* BandChip — only for cost roles */}
-            {!isVendedor && (
+            {/* BandChip — only with CAP_VER_COSTOS */}
+            {puedeVerCostos && (
               <View style={{ marginTop: 4 }}>
                 <BandChip
                   precioMinimoRentable={item.precioMinimoRentable ?? null}
                   precioAdecuado={item.precioAdecuado ?? null}
                   precioPremium={item.precioPremium ?? null}
-                  userRoles={userRoles}
+                  puedeVerCostos={puedeVerCostos}
                 />
               </View>
             )}
@@ -370,8 +373,8 @@ interface DescuentoItemModalRNProps {
    */
   descuentoGeneral?: number
   maxDescuentoVendedor: number
-  /** Roles of the authenticated user — gates cost field visibility */
-  userRoles?: string[]
+  /** CAP_VER_COSTOS — gatea precio mínimo, precio de compra y el detalle del piso. */
+  puedeVerCostos?: boolean
   /**
    * Real stock quantity — used for post-sale stock projection.
    * When null, the projection section is hidden.
@@ -397,7 +400,7 @@ function DescuentoItemModalRN({
   precioMinimo,
   descuentoGeneral = 0,
   maxDescuentoVendedor,
-  userRoles = [],
+  puedeVerCostos = false,
   stockReal,
   stockReservado,
   cantidad = 0,
@@ -438,8 +441,8 @@ function DescuentoItemModalRN({
   const projectionNegative = postSaleStock < 0
   const showProjection = stockReal != null
 
-  // Cost row visibility (ADR-5 / S3b): only cost roles see precioCompraBase
-  const userCanViewCost = canViewCost(userRoles)
+  // Cost row visibility (ADR-5 / S3b): only CAP_VER_COSTOS sees precioCompraBase
+  const userCanViewCost = puedeVerCostos
 
   // block→route (PR-2e-a): piercesFloor is now ADVISORY — it shows a warning
   // and routes the venta to PendienteAutorizacion server-side, but does NOT
@@ -799,6 +802,7 @@ function DescuentoItemModalRN({
 import { useLocalSearchParams } from 'expo-router'
 import { useVenta, useUpdateVenta, ventasKeys } from '@/libs/api-client'
 import { useEffect } from 'react'
+import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useFocusEffect } from '@react-navigation/native'
 
 export default function NuevaVentaMobileScreen() {
@@ -848,8 +852,11 @@ export default function NuevaVentaMobileScreen() {
   // PR-2e-a: floor computation no longer uses margenGlobal client-side (server floor).
   // The query is kept for cost roles who may display cost info in the modal.
   const userRoles = (user?.roles ?? []) as string[]
-  const isVendedor = !canViewCost(userRoles)
-  const { data: configuracion } = useConfiguracionSistema({ enabled: canViewCost(userRoles) })
+  // Costos y márgenes: CAP_VER_COSTOS (capacidad otorgable). La variante "vendedor" de la
+  // pantalla (stock simplificado, entrega fija) sigue el rol, como canViewStock en la web.
+  const puedeVerCostos = canViewCost(user?.permissions)
+  const isVendedor = !canViewStock(userRoles)
+  const { data: configuracion } = useConfiguracionSistema({ enabled: puedeVerCostos })
   const queryClient = useQueryClient()
 
   const margenGlobal = configuracion?.margenMinimoGlobal ?? 0
@@ -862,7 +869,6 @@ export default function NuevaVentaMobileScreen() {
 
   // ── Form state ──
   const [clienteSelected, setClienteSelected] = useState<ClienteLightDto | null>(null)
-  const [depositoId] = useState('DEP-001')
   const [tipoOperacion, setTipoOperacion] = useState<1 | 2>(2) // 1=Presupuesto 2=Pedido
   const [detalles, setDetalles] = useState<DetalleItem[]>([])
   const [descuentoGeneral, setDescuentoGeneral] = useState('')
@@ -985,7 +991,9 @@ export default function NuevaVentaMobileScreen() {
       const items = ventaRaw.detalles ?? []
       
       if (venta) {
-        setClienteSelected({ id: venta.clienteId ?? '', razonSocial: venta.clienteNombre ?? '', cuit: '' })
+        // El header de la venta no trae cuit ni esProvisorio (ver BACKLOG-9B.md); acá no se usan.
+        const clienteNombre = venta.clienteNombre ?? ''
+        setClienteSelected({ id: venta.clienteId ?? '', razonSocial: clienteNombre, cuit: '', displayName: clienteNombre, esProvisorio: false })
         setTipoOperacion(venta.tipoOperacion as 1 | 2)
         setDescuentoGeneral(venta.porcentajeDescuento ? String(venta.porcentajeDescuento) : '')
         setMetodoEntrega((venta.metodoEntrega ?? 1) as 1 | 2 | 3)
@@ -1265,7 +1273,7 @@ export default function NuevaVentaMobileScreen() {
 
     const formData: VentaFormData = {
       clienteId: clienteSelected.id!,
-      depositoId: 'fb15c487-acd2-41bb-8391-8353e61e8565', // Depósito Central
+      depositoId: DEPOSITO_CENTRAL_ID,
       tipoOperacion,
       descuentoGeneral: descGeneral,
       cargoFlete: fleteMonto,
@@ -1723,8 +1731,8 @@ export default function NuevaVentaMobileScreen() {
               elevation: 4
             }}
           >
-            <Plus size={16} color="#fff" strokeWidth={3} />
-            <Text style={{ color: '#fff', fontWeight: '900', marginLeft: 6, fontSize: 11, letterSpacing: 0.5 }}>EXPLORAR CATÁLOGO</Text>
+            <Plus size={16} color={colors.onPrimary} strokeWidth={3} />
+            <Text style={{ color: colors.onPrimary, fontWeight: '900', marginLeft: 6, fontSize: 11, letterSpacing: 0.5 }}>EXPLORAR CATÁLOGO</Text>
           </TouchableOpacity>
         </View>
 
@@ -1860,8 +1868,8 @@ export default function NuevaVentaMobileScreen() {
                     </Pressable>
                   </View>
 
-                  {/* CarritoSemaforo — profitability traffic-light (PR-2e-a); hidden for vendedor */}
-                  {!isVendedor && (
+                  {/* CarritoSemaforo — profitability traffic-light (PR-2e-a); only with CAP_VER_COSTOS */}
+                  {puedeVerCostos && (
                     <View style={{ marginTop: 8 }}>
                       <CarritoSemaforo
                         precioFinal={precioEfectivo}
@@ -2207,10 +2215,10 @@ export default function NuevaVentaMobileScreen() {
                 elevation: (detalles.length > 0 && clienteSelected) ? 5 : 0,
               }}
             >
-              {isPending ? <ActivityIndicator color="#fff" /> : (
+              {isPending ? <ActivityIndicator color={colors.onPrimary} /> : (
                 <>
-                  <Check size={20} color="#fff" strokeWidth={3} />
-                  <Text maxFontSizeMultiplier={1.3} style={{ color: (detalles.length > 0 && clienteSelected) ? '#fff' : colors.textDisabled, fontWeight: '900', fontSize: 15, fontFamily: 'Outfit_900Black', letterSpacing: 0.5 }}>
+                  <Check size={20} color={colors.onPrimary} strokeWidth={3} />
+                  <Text maxFontSizeMultiplier={1.3} style={{ color: (detalles.length > 0 && clienteSelected) ? colors.onPrimary : colors.textDisabled, fontWeight: '900', fontSize: 15, fontFamily: 'Outfit_900Black', letterSpacing: 0.5 }}>
                     {isEditing ? 'GUARDAR CAMBIOS' : 'CONFIRMAR VENTA'}
                   </Text>
                 </>
@@ -2329,10 +2337,10 @@ export default function NuevaVentaMobileScreen() {
                   elevation: (detalles.length > 0 && clienteSelected) ? 5 : 0
                 }}
               >
-                {isPending ? <ActivityIndicator color="#fff" /> : (
+                {isPending ? <ActivityIndicator color={colors.onPrimary} /> : (
                   <>
-                    <Check size={20} color="#fff" strokeWidth={3} />
-                    <Text maxFontSizeMultiplier={1.3} style={{ color: (detalles.length > 0 && clienteSelected) ? '#fff' : colors.textDisabled, fontWeight: '900', fontSize: 15, fontFamily: 'Outfit_900Black', letterSpacing: 0.5 }}>
+                    <Check size={20} color={colors.onPrimary} strokeWidth={3} />
+                    <Text maxFontSizeMultiplier={1.3} style={{ color: (detalles.length > 0 && clienteSelected) ? colors.onPrimary : colors.textDisabled, fontWeight: '900', fontSize: 15, fontFamily: 'Outfit_900Black', letterSpacing: 0.5 }}>
                       {isEditing ? 'GUARDAR CAMBIOS' : entregaInmediata ? 'VENTA DIRECTA' : (tipoOperacion === 1 ? 'GUARDAR PRESUPUESTO' : 'CONFIRMAR VENTA')}
                     </Text>
                   </>
@@ -2460,6 +2468,7 @@ export default function NuevaVentaMobileScreen() {
                     onDiscountChange={applyInlineCatalogDiscount}
                     cartDiscount={det?.descuentoPorcentaje || 0}
                     userRoles={userRoles}
+                    puedeVerCostos={puedeVerCostos}
                     maxDescuento={maxDescuentoVendedor}
                   />
                 </View>
@@ -2502,7 +2511,7 @@ export default function NuevaVentaMobileScreen() {
             precioMinimo={item.precioMinimo}
             descuentoGeneral={descGeneral}
             maxDescuentoVendedor={maxDescuentoVendedor}
-            userRoles={userRoles}
+            puedeVerCostos={puedeVerCostos}
             stockReal={item.stockReal}
             stockReservado={item.stockReservado}
             cantidad={item.cantidad}
@@ -2625,11 +2634,11 @@ export default function NuevaVentaMobileScreen() {
               }}
             >
               {isSharingPdf
-                ? <ActivityIndicator color="#fff" size="small" />
+                ? <ActivityIndicator color={colors.onPrimary} size="small" />
                 : (
                   <>
                     <Text style={{ fontSize: tokens.typography.lg.size }}>📄</Text>
-                    <Text style={{ color: '#fff', fontWeight: '900', fontSize: 15, fontFamily: 'Outfit_900Black', letterSpacing: 0.3 }}>
+                    <Text style={{ color: colors.onPrimary, fontWeight: '900', fontSize: 15, fontFamily: 'Outfit_900Black', letterSpacing: 0.3 }}>
                       Enviar nota al cliente
                     </Text>
                   </>

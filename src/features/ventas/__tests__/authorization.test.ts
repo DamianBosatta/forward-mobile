@@ -2,7 +2,7 @@
  * PR-2e-b — Authorization flow pure-logic tests.
  *
  * Covers:
- *   1. canAuthorizeVenta(estado, roles) — combines estado gate + canViewCost gate
+ *   1. canAuthorizeVenta(estado, permissions) — combines estado gate + CAP_AUTORIZAR_VENTA
  *   2. buildAutorizarPayload(...) — verifies only ventaId, version, and razon are sent
  *      (usuarioId and isAdminUser removed; server derives identity/role from the JWT token)
  *   3. PendienteAutorizacion chip label — getVentaStatusConfig maps estado '9' to 'Por Autorizar'
@@ -12,58 +12,47 @@ import { canAuthorizeVenta, buildAutorizarPayload } from '../lib/authorization'
 import { getVentaStatusConfig } from '@/core/constants/status'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// canAuthorizeVenta — state + role gate
+// canAuthorizeVenta — state + CAP_AUTORIZAR_VENTA gate
+// Antes colgaba de canViewCost(roles). Autorizar no es ver costos: el backend contesta 403
+// chequeando CAP_AUTORIZAR_VENTA, y la web gatea con canAutorizarVenta(permissions).
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('canAuthorizeVenta — estado + cost-role gate', () => {
-  const costRoles = ['Administrador']
-  const managerRoles = ['Gerencia']
-  const sysAdminRoles = ['AdministradorSistemas']
-  const empleadoRoles = ['Empleado']
-  const emptyRoles: string[] = []
+describe('canAuthorizeVenta — estado + CAP_AUTORIZAR_VENTA', () => {
+  const conCapacidad = [{ module: 'CAP_AUTORIZAR_VENTA', canRead: true }]
+  const soloCostos = [{ module: 'CAP_VER_COSTOS', canRead: true }]
+  const soloModulos = [{ module: 'MOD_VENTAS', canRead: true, canUpdate: true }]
 
-  // Cost roles + estado '9' → can authorize
-  it('returns true for Administrador with estado "9"', () => {
-    expect(canAuthorizeVenta('9', costRoles)).toBe(true)
+  it('returns true with the capability and estado "9"', () => {
+    expect(canAuthorizeVenta('9', conCapacidad)).toBe(true)
   })
 
-  it('returns true for Gerencia with estado "9"', () => {
-    expect(canAuthorizeVenta('9', managerRoles)).toBe(true)
+  it('returns true with the capability and estado "PendienteAutorizacion" (string variant)', () => {
+    expect(canAuthorizeVenta('PendienteAutorizacion', conCapacidad)).toBe(true)
   })
 
-  it('returns true for AdministradorSistemas with estado "9"', () => {
-    expect(canAuthorizeVenta('9', sysAdminRoles)).toBe(true)
+  it('returns false without the capability, even with MOD_VENTAS update', () => {
+    expect(canAuthorizeVenta('9', soloModulos)).toBe(false)
   })
 
-  it('returns true for Administrador with estado "PendienteAutorizacion" (string variant)', () => {
-    expect(canAuthorizeVenta('PendienteAutorizacion', costRoles)).toBe(true)
+  it('CAP_VER_COSTOS alone does NOT authorize (seeing costs is not authorizing)', () => {
+    expect(canAuthorizeVenta('9', soloCostos)).toBe(false)
   })
 
-  // Non-cost role → cannot authorize even in estado 9
-  it('returns false for Empleado with estado "9"', () => {
-    expect(canAuthorizeVenta('9', empleadoRoles)).toBe(false)
+  it('returns false for empty / missing permissions', () => {
+    expect(canAuthorizeVenta('9', [])).toBe(false)
+    expect(canAuthorizeVenta('9', undefined)).toBe(false)
   })
 
-  it('returns false for empty roles with estado "9"', () => {
-    expect(canAuthorizeVenta('9', emptyRoles)).toBe(false)
+  it('returns false with the capability but estado "2" (Confirmada)', () => {
+    expect(canAuthorizeVenta('2', conCapacidad)).toBe(false)
   })
 
-  // Cost role but wrong estado → cannot authorize
-  it('returns false for Administrador with estado "2" (Confirmada)', () => {
-    expect(canAuthorizeVenta('2', costRoles)).toBe(false)
+  it('returns false with the capability but estado "1" (Pendiente)', () => {
+    expect(canAuthorizeVenta('1', conCapacidad)).toBe(false)
   })
 
-  it('returns false for Administrador with estado "1" (Pendiente)', () => {
-    expect(canAuthorizeVenta('1', costRoles)).toBe(false)
-  })
-
-  it('returns false for Administrador with estado "8" (Anulada)', () => {
-    expect(canAuthorizeVenta('8', costRoles)).toBe(false)
-  })
-
-  // Numeric estado as string
-  it('returns true for Gerencia with numeric-string estado "9"', () => {
-    expect(canAuthorizeVenta('9', managerRoles)).toBe(true)
+  it('returns false with the capability but estado "8" (Anulada)', () => {
+    expect(canAuthorizeVenta('8', conCapacidad)).toBe(false)
   })
 })
 
@@ -77,6 +66,11 @@ describe('buildAutorizarPayload — includes ventaId, version, and razon only', 
     version: 5,
     razon: 'Cliente estratégico, cierre de stock',
   }
+
+  it('sin razón (o en blanco) la manda en null: el servidor rechaza una razón vacía', () => {
+    expect(buildAutorizarPayload({ ventaId: 'v', version: 1, razon: '   ' }).razon).toBeNull()
+    expect(buildAutorizarPayload({ ventaId: 'v', version: 1 }).razon).toBeNull()
+  })
 
   it('includes razon in the payload', () => {
     const payload = buildAutorizarPayload(base)

@@ -1,6 +1,6 @@
-import { renderHook, act } from '@testing-library/react-native'
+import { renderHook, act, waitFor } from '@testing-library/react-native'
 import { useCompraForm } from '../../hooks/useCompraForm'
-import { useProductos, useProveedores, useDepositos } from '@/libs/api-client'
+import { api, useInfiniteProductos, useProveedores, useDepositos } from '@/libs/api-client'
 import { useCreateCompra, useUpdateCompra } from '../../api/queries'
 
 jest.mock('expo-router', () => ({
@@ -12,7 +12,8 @@ jest.mock('@tanstack/react-query', () => ({
 }))
 
 jest.mock('@/libs/api-client', () => ({
-  useProductos: jest.fn(),
+  api: { get: jest.fn() },
+  useInfiniteProductos: jest.fn(),
   useProveedores: jest.fn(),
   useDepositos: jest.fn()
 }))
@@ -34,7 +35,8 @@ describe('useCompraForm', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     jest.spyOn(require('react-native').Alert, 'alert').mockImplementation(() => {})
-    ;(useProductos as jest.Mock).mockReturnValue({ data: { items: [{ id: 'p1', nombre: 'Prod 1', precioCompraBase: 100 }] } })
+    ;(useInfiniteProductos as jest.Mock).mockReturnValue({ data: { pages: [{ items: [{ id: 'p1', nombre: 'Prod 1' }] }] } })
+    ;(api.get as jest.Mock).mockResolvedValue({ id: 'p1', precioCompraBase: 100 })
     ;(useProveedores as jest.Mock).mockReturnValue({ data: { items: [{ id: 'prov1', razonSocial: 'Prov 1' }] } })
     ;(useDepositos as jest.Mock).mockReturnValue({ data: [{ id: 'dep1', nombre: 'Dep 1' }] })
     
@@ -50,14 +52,15 @@ describe('useCompraForm', () => {
     expect(result.current.canSubmit).toBe(false)
   })
 
-  it('debe agregar un producto y permitir submit si todo esta ok', () => {
+  it('debe agregar un producto con el último costo del servidor y permitir submit', async () => {
     const { result } = renderHook(() => useCompraForm())
     
     act(() => {
       result.current.setProveedorSelected({ id: 'prov1', razonSocial: 'Prov 1' } as any)
       result.current.setDepositoSelected({ id: 'dep1', nombre: 'Dep 1' } as any)
-      result.current.setProductoCantidad({ id: 'p1', nombre: 'Prod 1', precioCompraBase: 100 } as any, 2)
+      result.current.setProductoCantidad({ id: 'p1', nombre: 'Prod 1' } as any, 2)
     })
+    await waitFor(() => expect(result.current.detalles[0]?.costoUnitario).toBe(100))
 
     expect(result.current.detalles.length).toBe(1)
     expect(result.current.detalles[0].cantidad).toBe(2)

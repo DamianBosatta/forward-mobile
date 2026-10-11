@@ -18,6 +18,7 @@ export type {
   UserRole,
   // Productos
   Producto,
+  ProductoDetailDto,
   CreateProductoRequest,
   // Depositos
   Deposito,
@@ -56,7 +57,6 @@ export type {
   TipoMovimientoCuenta,
   // Reportes
   ReporteDiario,
-  KpiDashboard,
   // Logística
   HojaDeRuta,
   ParadaHojaRuta,
@@ -86,8 +86,8 @@ export {
 } from './ventas'
 
 // Productos hooks
-export { productosKeys, useProductos, useCatalogoStock, useProducto, useCreateProducto, useUpdateProducto, useToggleProductoStatus } from './productos'
-export type { CatalogoStockItem, AlmacenStockItem } from './productos'
+export { productosKeys, useProductos, useInfiniteProductos, useCatalogoStock, useProducto, useVariantesProducto, useCreateProducto, useUpdateProducto, useToggleProductoStatus } from './productos'
+export type { CatalogoStockItem, AlmacenStockItem, VarianteProducto } from './productos'
 
 // Finanzas hooks
 export {
@@ -96,10 +96,8 @@ export {
   useMovimientosCaja,
   useAbrirCaja,
   useCerrarCaja,
-  useKpiDashboard,
   useReporteDiario,
   usePagos,
-  useMovimientosCuenta
 } from './finanzas'
 
 // Realtime

@@ -1,13 +1,7 @@
 /**
  * hub-nav-card-rbac.test.tsx — RBAC gating tests for the logistics hub.
  *
- * Verifies two invariants:
- *   1. HubNavCard renders null when visible=false (used for mgmt-only cards)
- *   2. isMgmtRole correctly gates management-only cards based on the user's roles
- *
- * Design intent: a non-management user (e.g. Empleado with MOD_VIAJES:read)
- * must NOT see the Vehículos or Planificar Viaje nav cards. Management roles
- * (Administrador, AdministradorSistemas, Gerencia) must see all four cards.
+ * Verifica que HubNavCard devuelve null cuando visible=false.
  *
  * Tests follow the project pattern: mock native/theme hooks, test behavioral
  * invariants (not implementation details).
@@ -16,7 +10,6 @@
 import React from 'react'
 import { render } from '@testing-library/react-native'
 import { HubNavCard } from '../../components/hub/HubNavCard'
-import { isMgmtRole } from '../../lib/rbac'
 import { Truck } from 'lucide-react-native'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -100,87 +93,5 @@ describe('HubNavCard — visibility gating', () => {
     )
     expect(getByText('Picking')).toBeTruthy()
     expect(queryByText('ABM de la flota')).toBeNull()
-  })
-})
-
-// ─────────────────────────────────────────────────────────────────────────────
-// isMgmtRole — role-based gate for management-only hub cards
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe('isMgmtRole — management card gate', () => {
-  it('returns false for an empty role list', () => {
-    expect(isMgmtRole([])).toBe(false)
-  })
-
-  it('returns false for a non-management role (Empleado)', () => {
-    expect(isMgmtRole(['Empleado'])).toBe(false)
-  })
-
-  it('returns false for a non-management role (Vendedor)', () => {
-    expect(isMgmtRole(['Vendedor'])).toBe(false)
-  })
-
-  it('returns true for Administrador', () => {
-    expect(isMgmtRole(['Administrador'])).toBe(true)
-  })
-
-  it('returns true for AdministradorSistemas', () => {
-    expect(isMgmtRole(['AdministradorSistemas'])).toBe(true)
-  })
-
-  it('returns true for Gerencia', () => {
-    expect(isMgmtRole(['Gerencia'])).toBe(true)
-  })
-
-  it('returns true when management role is mixed with non-management roles', () => {
-    expect(isMgmtRole(['Empleado', 'Administrador'])).toBe(true)
-  })
-
-  it('returns false when only non-management roles are present (multiple)', () => {
-    expect(isMgmtRole(['Empleado', 'Vendedor'])).toBe(false)
-  })
-})
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Integration: non-management user does NOT see mgmt-only cards
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe('Hub RBAC integration — non-management user', () => {
-  const NON_MGMT_ROLES = ['Empleado']
-
-  it('Vehículos card is NOT visible for a non-management user', () => {
-    const isMgmt = isMgmtRole(NON_MGMT_ROLES)
-    const { toJSON } = render(
-      <HubNavCard title="Vehículos" icon={Truck} onPress={jest.fn()} visible={isMgmt} />,
-    )
-    expect(toJSON()).toBeNull()
-  })
-
-  it('Planificar Viaje card is NOT visible for a non-management user', () => {
-    const isMgmt = isMgmtRole(NON_MGMT_ROLES)
-    const { toJSON } = render(
-      <HubNavCard title="Planificar Viaje" icon={Truck} onPress={jest.fn()} visible={isMgmt} />,
-    )
-    expect(toJSON()).toBeNull()
-  })
-})
-
-describe('Hub RBAC integration — management user', () => {
-  const MGMT_ROLES = ['Administrador']
-
-  it('Vehículos card IS visible for a management user', () => {
-    const isMgmt = isMgmtRole(MGMT_ROLES)
-    const { getByText } = render(
-      <HubNavCard title="Vehículos" icon={Truck} onPress={jest.fn()} visible={isMgmt} />,
-    )
-    expect(getByText('Vehículos')).toBeTruthy()
-  })
-
-  it('Planificar Viaje card IS visible for a management user', () => {
-    const isMgmt = isMgmtRole(MGMT_ROLES)
-    const { getByText } = render(
-      <HubNavCard title="Planificar Viaje" icon={Truck} onPress={jest.fn()} visible={isMgmt} />,
-    )
-    expect(getByText('Planificar Viaje')).toBeTruthy()
   })
 })

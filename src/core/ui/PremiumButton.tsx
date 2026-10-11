@@ -45,7 +45,7 @@ export const PremiumButton = ({
       case 'primary':
         return {
           bg: gradient || [colors.primary, colors.primaryHover],
-          text: '#FFFFFF',
+          text: colors.onPrimary,
           border: 'transparent'
         }
       case 'secondary':

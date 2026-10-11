@@ -9,9 +9,9 @@ import { BlurView } from 'expo-blur'
 import * as Haptics from 'expo-haptics'
 import { safeHaptics } from '@/core/utils/haptics'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useColors, useThemeStore, useIsDark, tokens } from '../libs/theme'
+import { useColors, useIsDark, tokens } from '../libs/theme'
 import { ForwardLogo, ConfirmModal, AuroraGlow, GlassCard } from '@/core/ui'
-import { Sun, Moon, Truck, Fingerprint, Eye, EyeOff, Lock, User } from 'lucide-react-native'
+import { Truck, Fingerprint, Eye, EyeOff, Lock, User } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, FadeInDown, FadeIn, Easing
@@ -35,7 +35,6 @@ export default function LoginScreen() {
   const colors = useColors()
   const isDark = useIsDark()
   const { login, isLoading, error, isLocked, failedAttempts } = useAuth()
-  const { mode, setMode } = useThemeStore()
   const insets = useSafeAreaInsets()
   const queryClient = useQueryClient()
 
@@ -175,28 +174,6 @@ export default function LoginScreen() {
         <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: '#000000' }} />
         <AuroraGlow opacity={0.2} />
       </View>
-
-      {/* ── Theme Toggle ── */}
-      <Animated.View 
-        entering={FadeIn.delay(800)}
-        style={{ position: 'absolute', top: insets.top + 16, right: 24, zIndex: 100 }}
-      >
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={() => {
-            Haptics.selectionAsync()
-            setMode(mode === 'dark' ? 'light' : 'dark')
-          }}
-          style={{
-            width: 44, height: 44, borderRadius: 22,
-            backgroundColor: colors.glassBg,
-            alignItems: 'center', justifyContent: 'center',
-            borderWidth: 1, borderColor: colors.glassBorder,
-          }}
-        >
-          {mode === 'dark' ? <Sun size={20} color={colors.primary} /> : <Moon size={20} color={colors.primary} />}
-        </TouchableOpacity>
-      </Animated.View>
 
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}

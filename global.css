@@ -2,19 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tokens del Bloque 9 (plan §7 y §10). Mismos nombres en los dos temas;
+   los valores salen de libs/theme.ts (themeColors). */
 @layer base {
   :root {
     --color-bg: #fafafa;
     --color-surface: #ffffff;
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
-    --surface: 0 0% 100%;
-    --primary: 174 100% 35%; /* #00b4a2 */
-    --card: 0 0% 100%;
-    --radius: 24px;
+    --color-surface-2: #f0f0f0;
+    --color-surface-3: #f0f0f0; /* legado: no hay superficie-3 */
+    --color-border: #e0e0e0;
+    --color-border-strong: #e0e0e0; /* legado: un solo gris de borde */
+    --color-text: #141f1d;
+    --color-text-muted: #556d68;
+    --color-text-disabled: #556d68; /* legado: mismo contraste que el secundario */
+    --color-brand: #00c29e;
+    --color-brand-ink: #0a7662;
+    --color-brand-soft: #e0f8f3;
+    --color-action: #2bd4bd;
+    --color-on-action: #080d0c;
+    --color-danger-strong: #c52020;
+    --color-top-bar: #0e1514;
+    --color-on-top-bar: #9dafab;
   }
 
   .dark {
-    --color-secondary: #06b6d4;
+    --color-bg: #080d0c;
+    --color-surface: #0e1514;
+    --color-surface-2: #151e1c;
+    --color-surface-3: #151e1c;
+    --color-border: #273432;
+    --color-border-strong: #273432;
+    --color-text: #edf2f1;
+    --color-text-muted: #9dafab;
+    --color-text-disabled: #9dafab;
+    --color-brand: #00e6bb;
+    --color-brand-ink: #00e6bb;
+    --color-brand-soft: #0b3b32;
+    --color-action: #2bd4bd;
+    --color-on-action: #080d0c;
+    --color-danger-strong: #c52020;
+    --color-top-bar: #080d0c;
+    --color-on-top-bar: #9dafab;
   }
 }

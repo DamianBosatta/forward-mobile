@@ -1,0 +1,168 @@
+import React from 'react'
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
+import { useRouter } from 'expo-router'
+import { useQuery } from '@tanstack/react-query'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
+import { api } from '@/core/api/client'
+import { useVenta, ventasKeys } from '@/libs/api-client/ventas'
+import { useSocio } from '@/libs/api-client/socios'
+import type { components } from '@/libs/api-client/generated/schema'
+import { useAuthStore } from '@/features/auth/store/auth.store'
+import { direccionDeEntrega, nombreDelCliente, textoCondicionPago, type CondicionPago } from '@/features/clientes/lib/cliente'
+import { horaDe, tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
+import { mostrarNumero } from '../lib/linea'
+import { ESTADO_PENDIENTE_AUTORIZACION, motivosAutorizacion } from '../lib/motivosAutorizacion'
+import { codigoDeVenta, rotuloCliente, tipoDeVenta } from '../lib/ventaGuardada'
+import { AccionesVenta } from './AccionesVenta'
+
+type Pagos = components['schemas']['VentaPagosDto']
+type Simulacion = components['schemas']['SimulacionComisionDto']
+const ENTREGA: Record<string, string> = { LogisticaPropia: 'Logística propia', RetiroEnLocal: 'Retiro en el local', Expreso: 'Expreso' }
+const ESTADO_RECHAZADA = 11
+
+/** "Jueves 8 de octubre" de un día "YYYY-MM-DD" tal como se guardó (sin pasar por husos horarios). */
+export function diaDeEntrega(fecha: string | null | undefined): string | null {
+  const m = fecha?.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!m) return null
+  const texto = format(new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])), "EEEE d 'de' MMMM", { locale: es })
+  return texto.charAt(0).toUpperCase() + texto.slice(1)
+}
+
+interface Props {
+  id: string
+  /** Embebido en el panel derecho de la lista (tablet): cierra el panel en vez de navegar. */
+  onVolver?: () => void
+}
+
+/**
+ * Detalle de la venta con el formato nuevo (lámina DetalleVenta, plan 9 §2.1, PR 2.10): estado,
+ * número, cliente por dirección, motivos de autorización del servidor, entrega, líneas, totales,
+ * comisión estimada (del servidor, solo en una venta propia), cobros y las acciones de la 2.9.
+ */
+export function DetalleVentaNueva({ id, onVolver }: Props) {
+  const c = useColors()
+  const router = useRouter()
+  const userId = useAuthStore((s) => s.user?.id)
+  const q = useVenta(id)
+  const h = q.data?.venta
+  const socio = useSocio(h?.clienteId ?? '')
+  const pagos = useQuery({ queryKey: [...ventasKeys.detail(id), 'pagos'], queryFn: () => api.get<Pagos>(`/api/v1/Ventas/${id}/pagos`), enabled: !!h })
+  const propia = !!h && h.vendedorId === userId
+  // Sin `monto`: el servidor simula el cobro de lo que falta (saldo pendiente). Mandar el total con
+  // cobros parciales le hace responder 400 ("supera el saldo pendiente") y el chip desaparecía.
+  const comision = useQuery({
+    queryKey: ['comisiones', 'simulacion', 'venta', id, h?.totalAmount, pagos.data?.montoPagado],
+    queryFn: () => api.get<Simulacion>(`/api/v1/comisiones/simulacion/ventas/${id}`),
+    enabled: propia,
+  })
+  const volver = { kind: 'atras' as const, onPress: onVolver ?? (() => router.back()) }
+  const sec = { ...typeScale.secundario, color: c.textSecondary }
+  const tarjeta = { padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[2] }
+  const titulo = (t: string) => <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{t}</Text>
+  const fila = (k: string, v: string) => (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[3] }}>
+      <Text style={sec}>{k}</Text>
+      <Text style={{ ...typeScale.cuerpo, color: c.text, flexShrink: 1, textAlign: 'right' }}>{v}</Text>
+    </View>
+  )
+
+  if (!q.data || !h) {
+    return (
+      <View style={{ flex: 1, backgroundColor: c.bg }}>
+        <TopBar title="Venta" leading={volver} />
+        <View style={{ padding: space[4] }}>
+          {q.isError ? <Notice tone="peligro">No se pudo traer la venta. Volvé a intentar.</Notice> : <ActivityIndicator color={c.brand} />}
+        </View>
+      </View>
+    )
+  }
+  const chip = chipForEstado('venta', h.estado)
+  const cliente = socio.data ?? null
+  const direccion = cliente ? direccionDeEntrega(cliente) : (h.clienteNombre ?? '')
+  const motivos = motivosAutorizacion(h.motivoPendienteAutorizacion)
+  const sim = comision.data
+  const fecha = h.fecha ? new Date(h.fecha) : null
+  const entrega = diaDeEntrega(h.fechaEntrega)
+
+  return (
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <TopBar title={`${tipoDeVenta(h)} ${codigoDeVenta(h)}`} leading={volver} />
+      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }}>
+        <View style={tarjeta}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space[2] }}>
+            <Text style={{ ...typeScale.titulo, color: c.text, flex: 1 }}>{direccion}</Text>
+            {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
+          </View>
+          <Text style={sec}>{[fecha ? `${tituloDelDia(fecha)} ${horaDe(h.fecha)}` : null, h.vendedorNombre].filter(Boolean).join(' · ')}</Text>
+          <TotalsRow label="Total" importe={h.totalAmount} destacado />
+          {sim?.comisionActiva && sim.montoCobro > 0 ? (
+            <Text style={{ ...typeScale.secundario, alignSelf: 'flex-start', paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.brandSoft, color: c.brandInk }}>
+              {`Tu comisión estimada${sim.montoCobro < h.totalAmount ? ' sobre lo pendiente de cobro' : ''} ${formatImporte(sim.montoComision)}`}
+            </Text>
+          ) : null}
+        </View>
+        <AccionesVenta venta={q.data} rotulo={cliente ? rotuloCliente(cliente) : direccion} />
+        {h.estado === ESTADO_PENDIENTE_AUTORIZACION ? (
+          <Notice tone="advertencia" title="Quedó por autorizar porque:">
+            {`${motivos.map((m) => `• ${m.charAt(0).toUpperCase()}${m.slice(1)}.`).join('\n')}${motivos.length ? '\n' : ''}Te avisamos cuando lo resuelvan.`}
+          </Notice>
+        ) : null}
+        {h.estado === ESTADO_RECHAZADA && h.motivoRechazoAutorizacion ? <Notice tone="peligro" title="No se autorizó">{h.motivoRechazoAutorizacion}</Notice> : null}
+        <View style={tarjeta}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            {titulo('Cliente')}
+            <Pressable accessibilityRole="link" onPress={() => router.push(`/(tabs)/socios/${h.clienteId}` as never)} style={{ minHeight: 44, justifyContent: 'center' }}>
+              <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Ver ficha</Text>
+            </Pressable>
+          </View>
+          <Text style={{ ...typeScale.cuerpo, color: c.text }}>{direccion}</Text>
+          {cliente && nombreDelCliente(cliente) ? <Text style={sec}>{nombreDelCliente(cliente)}</Text> : null}
+          {cliente ? fila('Condición de pago', textoCondicionPago(cliente.condicionPago as CondicionPago | null)) : null}
+        </View>
+        <View style={tarjeta}>
+          {titulo('Entrega')}
+          {entrega && h.metodoEntregaNombre !== 'RetiroEnLocal' ? fila('Fecha', entrega) : null}
+          {h.metodoEntregaNombre ? fila('Cómo', ENTREGA[h.metodoEntregaNombre] ?? h.metodoEntregaNombre) : null}
+          {h.observaciones ? fila('Observaciones', h.observaciones) : null}
+          {h.tipoOperacion === 1 ? <Text style={sec}>No reserva stock.</Text> : null}
+        </View>
+        <View style={tarjeta}>
+          {titulo(`Líneas (${q.data.detalles.length})`)}
+          {q.data.detalles.map((d) => (
+            <View key={d.id} style={{ gap: space[1], paddingVertical: space[1] }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
+                <Text style={{ ...typeScale.cuerpo, color: c.text, flex: 1 }}>{d.productoNombre}</Text>
+                <Text style={{ ...typeScale.cuerpo, ...importe, color: c.text }}>{formatImporte(d.subtotal)}</Text>
+              </View>
+              <Text style={{ ...sec, ...importe }}>{`${d.cantidad} × ${formatImporte(d.precioUnitario)}`}</Text>
+              <Text style={sec}>{d.porcentajeDescuentoItem > 0 ? `Desc. ${mostrarNumero(d.porcentajeDescuentoItem)} %` : 'Sin descuento'}</Text>
+            </View>
+          ))}
+          <TotalsRow label="Subtotal" importe={h.subtotalBrutoAmount} />
+          <TotalsRow label={`Descuento general ${mostrarNumero(h.porcentajeDescuento)} %`} importe={-h.montoDescuentoAmount} />
+          {h.cargoFleteAmount ? <TotalsRow label="Flete" importe={h.cargoFleteAmount} /> : null}
+          <TotalsRow label="Total" importe={h.totalAmount} destacado />
+        </View>
+        <View style={tarjeta}>
+          {titulo('Cobros')}
+          {pagos.isError ? <Text style={sec}>No se pudieron traer los cobros.</Text> : null}
+          {pagos.data?.imputaciones.map((p) => (
+            <View key={`${p.pagoId}-${p.fechaImputacion}`} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ ...typeScale.cuerpo, color: c.text }}>{`${p.medioPago} · ${p.numeroPago}`}</Text>
+                <Text style={sec}>{`${tituloDelDia(new Date(p.fechaImputacion))} ${horaDe(p.fechaImputacion)}`}</Text>
+              </View>
+              <Text style={{ ...typeScale.cuerpo, ...importe, color: c.text }}>{formatImporte(p.monto)}</Text>
+            </View>
+          ))}
+          {pagos.data && pagos.data.imputaciones.length === 0 ? <Text style={sec}>Todavía no tiene cobros.</Text> : null}
+          {pagos.data?.montoPagado != null ? <TotalsRow label="Cobrado" importe={pagos.data.montoPagado} /> : null}
+          {pagos.data?.saldoPendiente != null ? <TotalsRow label={`Saldo del ${tipoDeVenta(h).toLowerCase()}`} importe={pagos.data.saldoPendiente} destacado /> : null}
+        </View>
+      </ScrollView>
+    </View>
+  )
+}

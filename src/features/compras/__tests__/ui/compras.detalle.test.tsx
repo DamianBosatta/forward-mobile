@@ -1,0 +1,183 @@
+import React from 'react'
+import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { CompraDetalle } from '../../../../../app/(tabs)/compras/[id]'
+import { useAuthStore } from '@/features/auth/store/auth.store'
+
+// Tipear fechas y motivos con userEvent es lento en una corrida completa: margen para no dar falsos rojos.
+jest.setTimeout(15000)
+
+const mockGet = jest.fn()
+const mockPost = jest.fn()
+const mockDelete = jest.fn()
+jest.mock('@/core/api/client', () => ({
+  api: { get: (...a: unknown[]) => mockGet(...a), post: (...a: unknown[]) => mockPost(...a), delete: (...a: unknown[]) => mockDelete(...a) },
+  API_URL: 'x',
+}))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }), useLocalSearchParams: () => ({}) }))
+let mockPermisos = ['update', 'delete']
+jest.mock('@/core/auth/RequirePermission', () => ({ usePermissions: () => ({ canDo: (_m: string, a: string) => mockPermisos.includes(a) }) }))
+const mockDims = jest.fn()
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => mockDims() }))
+
+const compra = (o: Record<string, unknown> = {}) => ({
+  id: 'aaaa1111-0000', version: 3, proveedorId: 'p1', razonSocialProveedor: 'Insumos del Sur SA', depositoId: 'd', nombreDeposito: 'Depósito Central',
+  fecha: '2026-10-08T01:30:00Z', estado: 'NotaPedido', subtotalBrutoAmount: 55200, descuentoTotalAmount: 0, gastosOperativos: 0, totalAmount: 55200,
+  condicionPago: { tipo: 'Contado', descripcion: 'Contado' }, conFactura: false, eliminada: false,
+  detalles: [{ id: 'l1', productoId: 'pr1', nombreProducto: 'Balde Nuvia 10L', cantidad: 48, cantidadIngresada: 4, unidadCompra: 'Bulto', costoUnitarioBaseAmount: 1150, costoUnitarioNetoAmount: 1150, descuentoPorcentaje: 0, subtotalAmount: 55200 }],
+  ...o,
+})
+
+function abrir(datos: Record<string, unknown>) {
+  mockDims.mockReturnValue({ width: 390, height: 800, scale: 2, fontScale: 1 })
+  mockGet.mockResolvedValue(compra(datos))
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(<QueryClientProvider client={qc}><CompraDetalle id="aaaa1111-0000" /></QueryClientProvider>)
+}
+
+beforeEach(() => {
+  jest.clearAllMocks()
+  mockPermisos = ['update', 'delete']
+  mockPost.mockResolvedValue(undefined)
+  mockDelete.mockResolvedValue(undefined)
+  useAuthStore.setState({ user: null })
+})
+
+const conCapacidad = () => useAuthStore.setState({
+  user: { ...(useAuthStore.getState().user ?? {}), permissions: [{ module: 'CAP_ANULAR_RECEPCION_COMPRAS', canRead: true }] } as never,
+})
+
+describe('detalle de compra', () => {
+  it('nota de pedido: muestra líneas y total, y confirma; si el servidor rechaza, el motivo queda a la vista', async () => {
+    abrir({})
+    expect(await screen.findByText('Balde Nuvia 10L')).toBeTruthy()
+    expect(screen.getByText('Pendiente')).toBeTruthy()
+    // 01:30 UTC del 8 es el 7 en Argentina: el día es el del servidor, no el del teléfono.
+    expect(screen.getByText('AAAA1111 · 07/10/2026')).toBeTruthy()
+    expect(screen.getByLabelText('Total: $ 55.200,00')).toBeTruthy()
+    mockPost.mockRejectedValueOnce(Object.assign(new Error('No se le puede comprar a Insumos del Sur SA'), { status: 400 }))
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar compra' }))
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/confirmar', {})
+    expect(await screen.findByText(/No se confirmó la compra: No se le puede comprar/)).toBeTruthy()
+  })
+
+  it('confirmada con condición por días desde la factura: recibir pide la fecha de la factura', async () => {
+    abrir({ estado: 'Confirmado', condicionPago: { tipo: 'DiasDesdeFactura', dias: 30, descripcion: '30 días desde la factura' } })
+    await userEvent.press(await screen.findByRole('button', { name: 'Recibir' }))
+    const fecha = screen.getByLabelText('Fecha de la factura')
+    await userEvent.clear(fecha)
+    await userEvent.type(fecha, '31/02/2026')
+    expect(screen.getAllByRole('button', { name: 'Recibir' }).at(-1)).toBeDisabled()
+    await userEvent.clear(fecha)
+    await userEvent.type(fecha, '05/10/2026')
+    await userEvent.press(screen.getAllByRole('button', { name: 'Recibir' }).at(-1)!)
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', { compraId: 'aaaa1111-0000', fechaFacturaProveedor: '2026-10-05' })
+  })
+
+  it('confirmada al contado: recibir no pide fecha de factura', async () => {
+    abrir({ estado: 'Confirmado' })
+    await userEvent.press(await screen.findByRole('button', { name: 'Recibir' }))
+    expect(screen.queryByLabelText('Fecha de la factura')).toBeNull()
+    await userEvent.press(screen.getAllByRole('button', { name: 'Recibir' }).at(-1)!)
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', { compraId: 'aaaa1111-0000', fechaFacturaProveedor: null })
+  })
+
+  it('cancelar exige un motivo y lo manda al servidor', async () => {
+    abrir({})
+    await userEvent.press(await screen.findByRole('button', { name: 'Cancelar compra' }))
+    const boton = () => screen.getAllByRole('button', { name: 'Cancelar compra' }).at(-1)!
+    expect(boton()).toBeDisabled()
+    await userEvent.type(screen.getByLabelText('Motivo'), 'El proveedor no tiene stock')
+    await userEvent.press(boton())
+    await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/anular', { motivoAnulacion: 'El proveedor no tiene stock' }))
+  })
+
+  it('no hay entrada a editar: el formulario de antes perdía el descuento y la unidad de compra', async () => {
+    abrir({})
+    await screen.findByText('Balde Nuvia 10L')
+    expect(screen.queryByRole('button', { name: 'Editar la compra' })).toBeNull()
+  })
+
+  it('cada hoja arranca limpia: el motivo y el error de una no pasan a la otra', async () => {
+    abrir({ estado: 'Confirmado' })
+    await userEvent.press(await screen.findByRole('button', { name: 'Cancelar compra' }))
+    mockDelete.mockRejectedValueOnce(Object.assign(new Error('Ya no se puede'), { status: 400 }))
+    await userEvent.type(screen.getByLabelText('Motivo'), 'Cambió el pedido')
+    await userEvent.press(screen.getAllByRole('button', { name: 'Cancelar compra' }).at(-1)!)
+    // El error se ve una sola vez, dentro de la hoja.
+    expect(await screen.findAllByText(/No se canceló la compra: Ya no se puede/)).toHaveLength(1)
+    fireEvent.press(screen.getByLabelText('Cerrar', { includeHiddenElements: true }))
+    await userEvent.press(screen.getByRole('button', { name: 'Recibir' }))
+    expect(screen.queryByText(/No se canceló la compra/)).toBeNull()
+    fireEvent.press(screen.getByLabelText('Cerrar', { includeHiddenElements: true }))
+    await userEvent.press(screen.getAllByRole('button', { name: 'Cancelar compra' })[0])
+    expect(screen.getByLabelText('Motivo').props.value).toBe('')
+  })
+
+  it('una compra recibida no se edita, no se confirma ni se cancela', async () => {
+    abrir({ estado: 'Entregado', fechaVencimientoPago: '2026-11-07' })
+    expect(await screen.findByText('Recibido')).toBeTruthy()
+    expect(screen.getByText('Vence el 07/11/2026')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /Confirmar compra|Recibir|Cancelar compra|Editar la compra/ })).toBeNull()
+  })
+
+  it('sin permiso de modificar no hay confirmar ni editar', async () => {
+    mockPermisos = []
+    abrir({})
+    await screen.findByText('Balde Nuvia 10L')
+    expect(screen.queryByRole('button', { name: 'Confirmar compra' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Editar la compra' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Cancelar compra' })).toBeNull()
+  })
+
+  describe('anular la recepción (PR 3.6)', () => {
+    it('con MOD_COMPRAS:Delete y CAP_ANULAR_RECEPCION_COMPRAS: pide motivo y manda la versión que se estaba viendo', async () => {
+      conCapacidad()
+      abrir({ estado: 'Entregado' })
+      await userEvent.press(await screen.findByRole('button', { name: 'Anular recepción' }))
+      const boton = () => screen.getAllByRole('button', { name: 'Anular recepción' }).at(-1)!
+      expect(boton()).toBeDisabled()
+      mockPost.mockRejectedValueOnce(Object.assign(new Error('No alcanza el stock para descontar.'), { status: 409, errors: ['Balde Nuvia 10L: hay 10, se necesitan 48'] }))
+      await userEvent.type(screen.getByLabelText('Motivo'), 'Se cargó dos veces')
+      await userEvent.press(boton())
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/anular-recepcion', { compraId: 'aaaa1111-0000', motivo: 'Se cargó dos veces', version: 3 })
+      expect((await screen.findAllByText(/No se anuló la recepción: No alcanza el stock para descontar\.\s+Balde Nuvia 10L: hay 10, se necesitan 48/)).length).toBeGreaterThan(0)
+    })
+
+    it.each([
+      ['sin la capacidad', false, ['update', 'delete']],
+      ['sin permiso de borrar en compras', true, ['update']],
+    ])('%s no aparece', async (_caso, capacidad, permisos) => {
+      if (capacidad) conCapacidad()
+      mockPermisos = permisos as string[]
+      abrir({ estado: 'Entregado' })
+      await screen.findByText('Recibido')
+      expect(screen.queryByRole('button', { name: 'Anular recepción' })).toBeNull()
+    })
+
+    it('anular arranca sin el motivo ni el error de antes y, tras un 409, manda la versión vigente', async () => {
+      conCapacidad()
+      abrir({ estado: 'Entregado' })
+      await userEvent.press(await screen.findByRole('button', { name: 'Anular recepción' }))
+      mockPost.mockRejectedValueOnce(Object.assign(new Error('Error de concurrencia'), { status: 409 }))
+      await userEvent.type(screen.getByLabelText('Motivo'), 'Se cargó dos veces')
+      mockGet.mockResolvedValue(compra({ estado: 'Entregado', version: 4 }))
+      await userEvent.press(screen.getAllByRole('button', { name: 'Anular recepción' }).at(-1)!)
+      expect(await screen.findAllByText(/No se anuló la recepción: Error de concurrencia/)).toHaveLength(1)
+      await waitFor(() => expect(mockGet.mock.calls.length).toBeGreaterThan(1))
+      await userEvent.press(screen.getAllByRole('button', { name: 'Anular recepción' }).at(-1)!)
+      await waitFor(() => expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Compras/aaaa1111-0000/anular-recepcion', { compraId: 'aaaa1111-0000', motivo: 'Se cargó dos veces', version: 4 }))
+      // Salió bien: la hoja se cerró; al abrirla otra vez no queda el motivo anterior.
+      await userEvent.press(await screen.findByRole('button', { name: 'Anular recepción' }))
+      expect(screen.getByLabelText('Motivo').props.value).toBe('')
+    })
+
+    it('una compra por recibir no se anula: se cancela', async () => {
+      conCapacidad()
+      abrir({ estado: 'Confirmado' })
+      await screen.findByRole('button', { name: 'Recibir' })
+      expect(screen.queryByRole('button', { name: 'Anular recepción' })).toBeNull()
+    })
+  })
+})

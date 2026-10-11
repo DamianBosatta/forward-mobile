@@ -2,6 +2,8 @@ import {
   View, Text, ScrollView, Pressable, Alert, ActivityIndicator,
   Modal, StyleSheet, Platform, TouchableOpacity
 } from 'react-native'
+import { useVentaNueva } from '@/features/ventas/lib/ventaNueva'
+import { DetalleVentaNueva } from '@/features/venta-nueva/components/DetalleVentaNueva'
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
 import { useState, useMemo } from 'react'
@@ -14,7 +16,7 @@ import {
 } from '@/libs/api-client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { canAuthorizeVenta } from '@/features/ventas/lib/authorization'
-import { AuthorizationModal } from '@/features/ventas/components/AuthorizationModal'
+import { canViewCost } from '@/features/ventas/lib/descuentos'
 import { Linking } from 'react-native'
 import { useColors, useIsDark, BRAND, tokens } from '@/libs/theme'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -32,6 +34,7 @@ import { ForwardLogo, RequirePermission, GlassCard, AuroraGlow } from '@/core/ui
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { ConfirmModal } from '@/core/ui/ConfirmModal'
 import { LinearGradient } from 'expo-linear-gradient'
+import { formatImporte } from '@/core/ui/fw'
 import {
   calcularRentabilidadVenta,
   puedeVerRentabilidad,
@@ -77,15 +80,25 @@ function getInitials(name?: string) {
 }
 
 // ── Main Screen ────────────────────────────────────────────────────────────────
+/** Ruta `ventas/[id]`: el id viene de la URL. */
 export default function VentaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
+  // Con el switch de la venta nueva, el detalle con el formato nuevo (PR 2.10).
+  const ventaNueva = useVentaNueva()
+  return ventaNueva && id ? <DetalleVentaNueva id={id} /> : <VentaDetalle id={id} />
+}
+
+/**
+ * Detalle de una venta. Embebible en el panel derecho de la lista en tablet horizontal
+ * (Bloque 9A, PR 2.1): ahí `onVolver` cierra el panel en vez de navegar.
+ */
+export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolver?: () => void }) {
   const router = useRouter()
   const navigation = useNavigation()
   const colors = useColors()
   const isDark = useIsDark()
   const insets = useSafeAreaInsets()
   
-  const [showAuthModal, setShowAuthModal] = useState(false)
   const [modalState, setModalState] = useState<{ visible: boolean; title: string; message: string; variant: 'success' | 'danger' | 'warning' | 'info' | 'primary'; onConfirm: () => void; onCancel?: () => void } | null>(null)
 
   // Premium UI & interaction state hooks
@@ -138,7 +151,9 @@ export default function VentaDetailScreen() {
         try {
           await anular({ id: id!, version: venta.version ?? 0, motivoAnulacion: 'Cancelación manual' })
           setModalState(null)
-          router.replace('/(tabs)/ventas')
+          // Embebido (tablet) el panel cierra; la lista se refresca por la invalidación de useAnularVenta.
+          if (onVolver) onVolver()
+          else router.replace('/(tabs)/ventas')
         } catch (e: any) {
           Alert.alert('Error', 'No se pudo anular la venta.')
         }
@@ -173,10 +188,10 @@ export default function VentaDetailScreen() {
 
       {/* Sticky Header Premium */}
       <View style={{ zIndex: 100 }}>
-        <BlurView intensity={25} tint={isDark ? "dark" : "light"} style={{ paddingTop: insets.top + 10, paddingBottom: 15 }}>
+        <BlurView intensity={25} tint={isDark ? "dark" : "light"} style={{ paddingTop: (onVolver ? 0 : insets.top) + 10, paddingBottom: 15 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20 }}>
             <TouchableOpacity 
-              onPress={() => router.replace('/(tabs)/ventas')}
+              onPress={onVolver ?? (() => router.replace('/(tabs)/ventas'))}
               style={[styles.backButton, {
                 backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
                 borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
@@ -389,6 +404,30 @@ export default function VentaDetailScreen() {
                   <Text style={[styles.heroActionBtnText, { color: colors.danger }]} maxFontSizeMultiplier={1.3}>Anular</Text>
                 </TouchableOpacity>
               </RequirePermission>
+
+              {/* Agendar (PR 5.3): el calendario no vincula el evento a la venta; solo precarga el texto. */}
+              <TouchableOpacity
+                onPress={() => {
+                  const numero = venta.codigoPedido ?? venta.id.slice(0, 8).toUpperCase()
+                  const doc = `${isPresupuesto ? 'presupuesto' : 'pedido'} ${numero}`
+                  router.push({
+                    pathname: '/(tabs)/calendario',
+                    params: {
+                      titulo: `Seguir el ${doc}${socio?.direccion ? ` · ${socio.direccion}` : ''}`,
+                      descripcion: [`${isPresupuesto ? 'Presupuesto' : 'Pedido'} ${numero}`, venta.clienteNombre, venta.totalAmount != null ? formatImporte(venta.totalAmount) : null].filter(Boolean).join(' · '),
+                      origen: numero,
+                      // Cada "Agendar" es una navegación nueva: la pantalla del Drawer sigue montada y reabre la hoja.
+                      nonce: String(Date.now()),
+                    },
+                  } as never)
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Agendar"
+                style={[styles.heroActionBtn, { backgroundColor: colors.surface2, borderColor: colors.border }]}
+              >
+                <Calendar size={18} color={colors.text} />
+                <Text style={[styles.heroActionBtnText, { color: colors.text }]} maxFontSizeMultiplier={1.3}>Agendar</Text>
+              </TouchableOpacity>
             </View>
           </MotiView>
         )}
@@ -585,8 +624,8 @@ export default function VentaDetailScreen() {
           </GlassCard>
         </MotiView>
 
-        {/* ── Rentabilidad de la Venta (cost roles only — gated by precioCostoSnapshot presence) ── */}
-        {puedeVerRentabilidad(
+        {/* ── Rentabilidad de la Venta — CAP_VER_COSTOS y además el snapshot de costo que el servidor solo manda con ella ── */}
+        {canViewCost(user?.permissions) && puedeVerRentabilidad(
           detalles.map((d: any) => ({
             precioUnitario: d.precioUnitario ?? 0,
             precioCostoSnapshot: d.precioCostoSnapshot ?? null,
@@ -831,10 +870,11 @@ export default function VentaDetailScreen() {
           actionColor = '#6366f1';
           actionFn = handleConvertir;
         }
-        else if (canAuthorizeVenta(s, user?.roles ?? [])) {
+        else if (canAuthorizeVenta(s, user?.permissions)) {
           actionLabel = 'Autorizar Pedido';
           actionColor = BRAND.orange;
-          actionFn = () => setShowAuthModal(true);
+          // Se decide en el detalle para autorizar (fase 4.1): motivos, razón y costos con permiso.
+          actionFn = () => router.push(`/(tabs)/autorizaciones/${id}` as never);
           IconComponent = CheckCircle2;
         }
         else {
@@ -881,15 +921,6 @@ export default function VentaDetailScreen() {
         )
       })()}
 
-      {canAuthorizeVenta(String(venta?.estado), user?.roles ?? []) && (
-        <AuthorizationModal
-          ventaId={id ?? ''}
-          version={venta?.version ?? 0}
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-          onAuthorized={() => refetch()}
-        />
-      )}
 
       {modalState && (
         <ConfirmModal

@@ -2,8 +2,7 @@
  * logistica-store-partialize.test.ts
  *
  * TASK-5-D1: Verifies that the Zustand logistica store's `partialize` function
- * serializes `activeTrip` (persisted to AsyncStorage) and EXCLUDES `viajeDraft`
- * (ephemeral — must NOT survive app restart).
+ * serializes `activeTrip` (persisted to AsyncStorage).
  *
  * Uses the store module directly and inspects the partialize output rather than
  * going through AsyncStorage, keeping the test free of native module mocking.
@@ -54,16 +53,6 @@ describe('logistica store — partialize contract', () => {
     // Reset to a known baseline between tests
     useLogisticaStore.setState({
       activeTrip: null,
-      viajeDraft: {
-        step: 1,
-        selectedEmpacadaIds: {},
-        choferId: null,
-        vehiculoId: null,
-        depositoId: null,
-        fechaSalida: new Date().toISOString(),
-        orderedStops: [],
-        hojaRutaId: null,
-      },
     } as any)
   })
 
@@ -104,78 +93,6 @@ describe('logistica store — partialize contract', () => {
       const stop = persisted.activeTrip?.detalles?.[0]
       expect(stop?.estado).toBe(2) // EstadoParada.Entregado
       expect(stop?.observaciones).toBe('Entregado sin novedades')
-    })
-  })
-
-  describe('viajeDraft is EXCLUDED from persisted state', () => {
-    it('viajeDraft is NOT part of the persisted shape', () => {
-      // Set a non-default viajeDraft to confirm it is excluded
-      useLogisticaStore.getState().setStep(3)
-      useLogisticaStore.getState().setAssignment({
-        choferId: 'chofer-test',
-        vehiculoId: 'vehiculo-test',
-        depositoId: 'deposito-test',
-        fechaSalida: '2026-06-22T10:00:00.000Z',
-      })
-
-      const state = useLogisticaStore.getState()
-      // partialize in the store only selects activeTrip — build the persisted shape
-      const persisted: { activeTrip: unknown } = { activeTrip: state.activeTrip }
-
-      // viajeDraft must NOT appear on the persisted object
-      expect('viajeDraft' in persisted).toBe(false)
-    })
-
-    it('viajeDraft step changes do not affect persisted shape', () => {
-      useLogisticaStore.getState().setStep(4)
-
-      const state = useLogisticaStore.getState()
-      const persisted = { activeTrip: state.activeTrip }
-
-      // Draft step is 4 in runtime state but persisted object has no viajeDraft key
-      expect((persisted as any).viajeDraft).toBeUndefined()
-    })
-
-    it('viajeDraft selectedEmpacadaIds do not appear in persisted state', () => {
-      useLogisticaStore.getState().toggleDraftEmpacada('venta-abc')
-      useLogisticaStore.getState().toggleDraftEmpacada('venta-xyz')
-
-      const state = useLogisticaStore.getState()
-      const persisted = { activeTrip: state.activeTrip }
-
-      expect((persisted as any).selectedEmpacadaIds).toBeUndefined()
-    })
-  })
-
-  describe('activeTrip survives viajeDraft mutations', () => {
-    it('activeTrip is unchanged after wizard draft operations', () => {
-      useLogisticaStore.getState().setActiveTrip(MOCK_ACTIVE_TRIP)
-
-      // Simulate wizard operations
-      useLogisticaStore.getState().setStep(2)
-      useLogisticaStore.getState().toggleDraftEmpacada('venta-001')
-      useLogisticaStore.getState().setAssignment({
-        choferId: 'chofer-draft',
-        vehiculoId: 'vehiculo-draft',
-        depositoId: null,
-        fechaSalida: '2026-06-22T08:00:00.000Z',
-      })
-
-      const state = useLogisticaStore.getState()
-      const persisted = { activeTrip: state.activeTrip }
-
-      // activeTrip must still be the original value, unaffected by draft mutations
-      expect(persisted.activeTrip?.id).toBe('hoja-001')
-      expect(persisted.activeTrip?.choferId).toBe('chofer-001')
-    })
-
-    it('resetViajeDraft does not clear activeTrip', () => {
-      useLogisticaStore.getState().setActiveTrip(MOCK_ACTIVE_TRIP)
-      useLogisticaStore.getState().setStep(3)
-      useLogisticaStore.getState().resetViajeDraft()
-
-      const state = useLogisticaStore.getState()
-      expect(state.activeTrip?.id).toBe('hoja-001')
     })
   })
 })

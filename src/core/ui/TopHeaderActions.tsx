@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { View, Pressable, Text, Modal, StyleSheet, ScrollView, Platform, useWindowDimensions } from 'react-native'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { useThemeStore, useColors } from '@/libs/theme'
-import { Sun, Moon, Bell, AlertCircle, ChevronRight, Lock, Clock } from 'lucide-react-native'
+import { useColors } from '@/libs/theme'
+import { Bell, AlertCircle, ChevronRight, Lock, Clock } from 'lucide-react-native'
 import { useRouter } from 'expo-router'
 import { useVentas } from '@/libs/api-client'
 import type { Venta, PagedResult } from '@/libs/api-client/types'
@@ -11,7 +11,6 @@ import { BlurView } from 'expo-blur'
 import { MotiView } from 'moti'
 
 export function TopHeaderActions() {
-  const { mode, setMode } = useThemeStore()
   const { user, canDo, isAdmin } = useAuthStore()
   // The "requiere autorización" badge only matters to users who can see ventas. A chofer (no
   // MOD_VENTAS) would otherwise get a 403 from this poll on every screen header.
@@ -21,10 +20,6 @@ export function TopHeaderActions() {
   const insets = useSafeAreaInsets()
   const { width: windowWidth } = useWindowDimensions()
   const [showDropdown, setShowDropdown] = useState(false)
-
-  const toggleTheme = () => {
-    setMode(mode === 'dark' ? 'light' : 'dark')
-  }
 
   const getInitials = () => {
     if (user?.nombre && user?.apellido) {
@@ -41,18 +36,6 @@ export function TopHeaderActions() {
   return (
     <>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        {/* Theme Toggle */}
-        <Pressable
-          onPress={toggleTheme}
-          style={{ 
-            width: 40, height: 40, borderRadius: 20, 
-            backgroundColor: colors.surface2, alignItems: 'center', justifyContent: 'center',
-            borderWidth: 1, borderColor: colors.border
-          }}
-        >
-          {mode === 'dark' ? <Sun size={20} color={colors.text} /> : <Moon size={20} color={colors.text} />}
-        </Pressable>
-
         {/* Notifications */}
         <Pressable
           onPress={() => {

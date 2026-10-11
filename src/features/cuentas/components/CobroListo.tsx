@@ -1,0 +1,62 @@
+import React from 'react'
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { Button, FormContainer, Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
+import type { SocioDetailDto } from '@/libs/api-client/types'
+import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
+import { useEstadoCuentaSocio } from '../api/queries'
+import { useCuentaDelPago } from '../api/cobros'
+
+export const SIN_CUENTA_CONFIRMADA = 'No se pudo confirmar en qué cuenta quedó: fijate en los movimientos de la cuenta corriente.'
+
+interface Props {
+  cliente: SocioDetailDto
+  pagoId: string
+  monto: number
+  medio: string
+  onVolver: () => void
+  onOtro: () => void
+}
+
+/** Cobro registrado (lámina CobroListo): en qué cuenta quedó según el servidor y el saldo nuevo. */
+export function CobroListo({ cliente, pagoId, monto, medio, onVolver, onOtro }: Props) {
+  const c = useColors()
+  const cuenta = useCuentaDelPago(pagoId, cliente)
+  const estado = useEstadoCuentaSocio(cliente.id, !!cliente.puedeVerCuentaCorriente)
+
+  return (
+    <ScrollView contentContainerStyle={{ padding: space[4] }}>
+      <FormContainer style={{ gap: space[4] }}>
+        <Notice tone="exito" title="Cobro registrado">{`${direccionDeEntrega(cliente)} · ${nombreDelCliente(cliente)}`}</Notice>
+        <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[2] }}>
+          <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(monto)}</Text>
+          {medio ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{medio}</Text> : null}
+          {cuenta.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
+          {cuenta.data ? (
+            <>
+              <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>
+                {`Quedó en la cuenta ${cuenta.data === 'Tst' ? 'TST' : 'Normal'}`}
+              </Text>
+              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
+                La eligió el servidor: la cuenta de la deuda más vieja del cliente (sin deuda, la TST).
+              </Text>
+            </>
+          ) : null}
+          {!cuenta.isLoading && !cuenta.data ? <Notice tone="advertencia">{SIN_CUENTA_CONFIRMADA}</Notice> : null}
+        </View>
+
+        {estado.data ? (
+          <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[2] }}>
+            <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Saldo nuevo</Text>
+            <TotalsRow label="Cuenta TST" importe={estado.data.saldoTst} />
+            <TotalsRow label="Cuenta Normal" importe={estado.data.saldoNormal} />
+            <TotalsRow label="Saldo" importe={estado.data.saldoActual} destacado />
+          </View>
+        ) : null}
+
+        <Button label="Volver a la cuenta corriente" onPress={onVolver} />
+        <Button label="Registrar otro cobro" variant="secundario" onPress={onOtro} />
+      </FormContainer>
+    </ScrollView>
+  )
+}

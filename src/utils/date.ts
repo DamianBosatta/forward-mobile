@@ -40,3 +40,36 @@ export function formatRelativeTime(dateString: string | null | undefined): strin
 export function formatToLocalDate(dateString: string | null | undefined): string {
   return formatToLocalTime(dateString, 'dd/MM/yyyy');
 }
+
+/** Argentina no tiene horario de verano: UTC-3 fijo. No se usa Intl (Hermes no garantiza timeZone). */
+const OFFSET_ARGENTINA_MS = -3 * 60 * 60 * 1000;
+
+export type PartesArgentina = { anio: number; mes: number; dia: number; diaSemana: number; hora: number; minuto: number };
+
+/** Calendario y reloj de Argentina para un instante, sin importar el huso del teléfono. mes: 0-11. */
+export function partesArgentina(ms: number): PartesArgentina {
+  const d = new Date(ms + OFFSET_ARGENTINA_MS);
+  return {
+    anio: d.getUTCFullYear(),
+    mes: d.getUTCMonth(),
+    dia: d.getUTCDate(),
+    diaSemana: d.getUTCDay(),
+    hora: d.getUTCHours(),
+    minuto: d.getUTCMinutes(),
+  };
+}
+
+/** Día calendario argentino de un instante como YYYY-MM-DD (el que interpreta el servidor). */
+export function diaArgentina(ms: number): string {
+  const p = partesArgentina(ms);
+  const dos = (n: number) => String(n).padStart(2, '0');
+  return `${p.anio}-${dos(p.mes + 1)}-${dos(p.dia)}`;
+}
+
+const MS_POR_DIA = 24 * 60 * 60 * 1000;
+
+/** Milisegundos hasta la próxima 00:00 de Argentina (a las 00:00:00 exactas falta un día entero). */
+export function msHastaProximaMedianocheArgentina(nowMs: number): number {
+  const enDia = (((nowMs + OFFSET_ARGENTINA_MS) % MS_POR_DIA) + MS_POR_DIA) % MS_POR_DIA;
+  return MS_POR_DIA - enDia;
+}
