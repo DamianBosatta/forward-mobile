@@ -1,7 +1,7 @@
 import React from 'react'
 import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native'
 import ClientesScreen from '../../../../app/(tabs)/socios/index'
-import { api } from '@/libs/api-client/client'
+import { api } from '@/core/api/client'
 import { clienteDeLista, conPermisos, pagina, renderConQuery } from '../__testing__/ayuda'
 
 const mockPush = jest.fn()
@@ -10,7 +10,7 @@ jest.mock('expo-router', () => ({
   useNavigation: () => ({ dispatch: jest.fn() }),
 }))
 jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
-jest.mock('@/libs/api-client/client', () => ({ api: { get: jest.fn() } }))
+jest.mock('@/core/api/client', () => ({ api: { get: jest.fn() }, API_URL: '' }))
 
 const mockAncho = jest.fn(() => 390)
 jest.mock('@/libs/useResponsive', () => ({
@@ -84,7 +84,9 @@ it('en teléfono, tocar el cliente abre su ficha', async () => {
 it('en tablet ancha, la ficha se abre al lado de la lista', async () => {
   mockAncho.mockReturnValue(1024)
   get.mockImplementation(async (url: string) =>
-    url.startsWith('/api/v1/socios-comerciales?') ? pagina([clienteDeLista()], 1) : { ...clienteDeLista(), condicionIva: 'Monotributo' },
+    url.startsWith('/api/v1/socios-comerciales?') ? pagina([clienteDeLista()], 1)
+      : url.startsWith('/api/v1/Ventas') ? pagina([], 0)
+      : { ...clienteDeLista(), puedeVerCuentaCorriente: false, condicionIva: 'Monotributo' },
   )
   renderConQuery(<ClientesScreen />)
   await userEvent.press(await screen.findByRole('button', { name: /Av\. del Valle 89/ }))

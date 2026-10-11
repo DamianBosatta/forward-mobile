@@ -28,3 +28,22 @@ export function inicialesDeDireccion(direccion: string): string {
   const palabras = direccion.split(/\s+/).filter(Boolean)
   return palabras.slice(0, 2).map(p => p[0]).join('').toUpperCase()
 }
+
+export type TipoCondicionPago = 'Contado' | 'DiasDesdeEntrega' | 'DiasDesdeFactura' | 'DiaFijoDelMes'
+export interface CondicionPago {
+  tipo?: TipoCondicionPago
+  dias?: number | null
+  diaDelMes?: number | null
+  descripcion?: string | null
+}
+
+/** Texto de la condición de pago. Sin condición cargada el servidor trata al cliente como contado. */
+export function textoCondicionPago(cp?: CondicionPago | null): string {
+  if (cp?.descripcion?.trim()) return cp.descripcion.trim()
+  switch (cp?.tipo) {
+    case 'DiasDesdeEntrega': return `Cuenta corriente, ${cp.dias ?? '—'} días desde la entrega`
+    case 'DiasDesdeFactura': return `Cuenta corriente, ${cp.dias ?? '—'} días desde la factura`
+    case 'DiaFijoDelMes': return `Cuenta corriente, el día ${cp.diaDelMes ?? '—'} de cada mes`
+    default: return 'Contado'
+  }
+}

@@ -24,6 +24,8 @@ Lo que el Bloque 9A (solo mobile) necesita del servidor o de la web, y la deuda 
 | Clientes: saldo total de la cartera | `GET /socios-comerciales` no devuelve la suma de saldos del filtro | La lámina muestra "Mostrando N de M · Saldo $ X" | app/(tabs)/socios / PR 1.3 | Solo "Mostrando N de M" (con `totalCount`); sumar las páginas cargadas daría un número falso. |
 | Clientes: localidad y filtros | No hay campo de localidad en el socio ni filtros por deuda vencida o localidad | La lámina muestra la localidad en la tarjeta y un botón de filtro | app/(tabs)/socios / PR 1.3 | Sin localidad ni botón de filtro. |
 | Clientes: cartera propia al buscar | `Agenda=true` acota al vendedor sin `CAP_GESTIONAR_CARTERA_CLIENTES` a sus clientes y a los "de la casa", también al buscar | La web usa la agenda solo con la búsqueda vacía (el buscador global encuentra clientes ajenos) | app/(tabs)/socios / PR 1.3 | Mobile manda `agenda=true` siempre: el vendedor ve su cartera. El filtro lo hace el servidor; si el dueño quiere el buscador global en mobile, es sacar el parámetro al buscar. |
+| Ficha de cliente: disponible | `EstadoCuentaDto` / `SocioDetailDto` no devuelven el crédito disponible (tope menos saldo, según la regla del servidor) | La lámina muestra "Disponible" | Ficha de cliente / PR 1.4 | Se muestran saldo, a favor y tope; el disponible no se calcula en el teléfono. |
+| Ficha de cliente: vendedor y localidad | `SocioDetailDto` trae `vendedorResponsableId` pero no el nombre del vendedor, y no hay localidad | La lámina muestra "Vendedor" y "Localidad" en Datos | Ficha de cliente / PR 1.4 | No se muestran. |
 
 ## Deuda de mobile (rutas que cambiaron en el contrato; se migran en la fase que toca cada pantalla)
 
@@ -31,7 +33,7 @@ Lo que el Bloque 9A (solo mobile) necesita del servidor o de la web, y la deuda 
 |---|---|---|---|
 | Cerrar caja | `POST /Cajas/{id}/cerrar` → `POST /Cajas/cerrar` (body distinto) | `useCerrarCaja` (finanzas.ts) / fase 4 | Sin tocar: devuelve 404. |
 | Reporte diario | `GET /Reportes/diario` → `/Reportes/dashboard`, `/Reportes/ventas/*` | `useReporteDiario` / fase 5 (reportes, M2) | Sin tocar: devuelve 404. |
-| Movimientos de cuenta | `/CuentasCorrientes/socios/{id}/estado-cuenta` → `/cuentas-corrientes/socios/{socioId}/estado-cuenta` | `useMovimientosCuenta` (finanzas.ts) / fase 4 (4.2) | Sin tocar; verificar el DTO antes de migrar. |
+| Movimientos de cuenta | `/CuentasCorrientes/socios/{id}/estado-cuenta` → `/cuentas-corrientes/socios/{socioId}/estado-cuenta` | `useMovimientosCuenta` (finanzas.ts) / fase 4 (4.2) | Sin tocar. La ficha de cliente (PR 1.4) ya usa la ruta nueva con `useEstadoCuentaSocio` (DTO `EstadoCuentaDto` verificado: saldo actual, a favor y pendientes, sin movimientos). |
 | Reset de contraseña | `POST /Users/{id}/reset-password` → `POST /Users/reset-password` | `useResetPassword` (admin.ts) | El ABM de usuarios salió en 0.4; el hook queda sin uso. |
 | Cambiar la contraseña propia | Existe `POST /Users/change-password` | "Mi cuenta" / PR 4.6 | `perfil` queda sin cambio de contraseña hasta 4.6. |
 | Perfiles de permisos y desactivar usuario | `/PermissionProfiles/*`, `PUT /Roles/{id}/profile`, `PATCH /Users/{id}/deactivate` ya no existen | securityApi.ts | Las pantallas salieron en 0.4. |

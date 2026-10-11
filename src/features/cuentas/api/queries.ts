@@ -34,9 +34,20 @@ export const cuentasKeys = {
   proveedores: (activo?: boolean) => [...cuentasKeys.lists(), 'proveedores', activo] as const,
   movimientos: (id: string) => [...cuentasKeys.all, 'detail', id, 'movimientos'] as const,
   liquidez: () => [...cuentasKeys.all, 'liquidez'] as const,
+  estadoSocio: (socioId: string) => [...cuentasKeys.all, 'estado-cuenta', socioId] as const,
 }
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
+
+/** Estado de cuenta de un socio (saldo actual, a favor y pendientes). Pedirlo solo si el servidor dijo que se puede ver. */
+export function useEstadoCuentaSocio(socioId: string, enabled = true) {
+  return useQuery({
+    queryKey: cuentasKeys.estadoSocio(socioId),
+    queryFn: () => api.get<EstadoCuentaDto>(`/api/v1/cuentas-corrientes/socios/${socioId}/estado-cuenta`),
+    enabled: enabled && !!socioId,
+    staleTime: 30_000,
+  })
+}
 
 export function useCuentasPropias(activo: boolean = true) {
   return useQuery({
