@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
-import type { CajaActivaDto, MovimientoCajaDto, ReporteDiario, Pago, MovimientoCuenta, PagedResult } from './types'
+import type { CajaActivaDto, MovimientoCajaDto, ReporteDiario, Pago, PagedResult } from './types'
+import type { components } from './generated/schema'
+
+type CerrarCajaResponseDto = components['schemas']['CerrarCajaResponseDto']
 
 export const finanzasKeys = {
   cajaActiva: ['caja', 'activa'] as const,
@@ -44,7 +47,7 @@ export function useCerrarCaja() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ cajaId, saldoFinalDeclarado }: { cajaId: string; saldoFinalDeclarado: number }) =>
-      api.post<string>(`/api/v1/Cajas/${cajaId}/cerrar`, { saldoFinalDeclarado }),
+      api.post<CerrarCajaResponseDto>('/api/v1/Cajas/cerrar', { cajaId, saldoFinalDeclarado }),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: finanzasKeys.cajaActiva }),
   })
@@ -73,14 +76,5 @@ export function usePagos(params: { pageNumber?: number; pageSize?: number; socio
     queryFn: () =>
       api.get<PagedResult<Pago>>(`/api/v1/Pagos/socio/${params.socioId}?${searchParams}`),
     enabled: !!params.socioId
-  })
-}
-
-export function useMovimientosCuenta(entidadId: string) {
-  return useQuery({
-    queryKey: ['cuentas', entidadId],
-    queryFn: () =>
-      api.get<MovimientoCuenta[]>(`/api/v1/CuentasCorrientes/socios/${entidadId}/estado-cuenta`),
-    enabled: !!entidadId,
   })
 }

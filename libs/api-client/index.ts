@@ -98,7 +98,6 @@ export {
   useCerrarCaja,
   useReporteDiario,
   usePagos,
-  useMovimientosCuenta
 } from './finanzas'
 
 // Realtime

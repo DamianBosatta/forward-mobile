@@ -93,9 +93,10 @@ export function useLiquidez() {
   })
 }
 
-export function useCuentaMovimientos(cuentaId: string) {
+/** Movimientos de una cuenta, del más nuevo al más viejo, de a 20 (el servidor pagina y ordena). */
+export function useCuentaMovimientos(cuentaId: string | null | undefined, enabled = true) {
   return useInfiniteQuery({
-    queryKey: cuentasKeys.movimientos(cuentaId),
+    queryKey: cuentasKeys.movimientos(cuentaId ?? ''),
     queryFn: async ({ pageParam = 1 }) => {
       const res = await api.get<GetMovimientosCuentaDto>(
         `/api/v1/cuentas-corrientes/${cuentaId}/movimientos?pageNumber=${pageParam}&pageSize=20`
@@ -108,7 +109,7 @@ export function useCuentaMovimientos(cuentaId: string) {
       return page && totalPages && page < totalPages ? page + 1 : undefined
     },
     initialPageParam: 1,
-    enabled: !!cuentaId,
+    enabled: enabled && !!cuentaId,
     staleTime: 15_000,
   })
 }
