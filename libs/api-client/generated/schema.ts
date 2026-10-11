@@ -5949,7 +5949,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["PagoRegistradoResponse"];
+                        "application/json": components["schemas"]["PagoRegistradoResponse"];
+                        "text/json": components["schemas"]["PagoRegistradoResponse"];
+                    };
                 };
             };
         };
@@ -5988,7 +5992,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["PagoRegistradoResponse"];
+                        "application/json": components["schemas"]["PagoRegistradoResponse"];
+                        "text/json": components["schemas"]["PagoRegistradoResponse"];
+                    };
                 };
             };
         };
@@ -8859,7 +8867,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["PagoRegistradoResponse"];
+                        "application/json": components["schemas"]["PagoRegistradoResponse"];
+                        "text/json": components["schemas"]["PagoRegistradoResponse"];
+                    };
                 };
             };
         };
@@ -17387,6 +17399,18 @@ export interface components {
             cobroClienteId: string;
             /** Format: uuid */
             pagoProveedorId: string;
+        };
+        PagoRegistradoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            /** Format: uuid */
+            data?: string;
+            codigo?: string | null;
+            tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
         };
         ParadaDto: {
             /** Format: uuid */

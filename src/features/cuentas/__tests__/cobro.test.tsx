@@ -7,10 +7,10 @@ import { api } from '@/core/api/client'
 import { conPermisos, renderConQuery } from '@/features/clientes/__testing__/ayuda'
 import { estadoDeCuenta, fichaConCuentas, mov, paginaDeMovimientos } from '../__testing__/servidor'
 
-jest.mock('@/core/api/client', () => ({ api: { get: jest.fn(), post: jest.fn() }, API_URL: '' }))
+jest.mock('@/core/api/client', () => ({ api: { get: jest.fn(), post: jest.fn(), postConSobre: jest.fn() }, API_URL: '' }))
 
 const get = api.get as jest.Mock
-const post = api.post as jest.Mock
+const post = api.postConSobre as jest.Mock
 const ESPERA = { timeout: 5000 }
 jest.setTimeout(15_000)
 const MEDIOS = [
@@ -21,18 +21,24 @@ const MEDIOS = [
 
 const UNA_CAJA = [{ depositoId: 'dep-central', depositoNombre: 'Depósito Central' }]
 
-function servidor({ pagoEnNormal = true, cajas = UNA_CAJA } = {}) {
+/** Respuesta del alta del cobro: el id en `data` y lo que el sobre traiga al lado (`tipoCuenta` desde forward-system #868). */
+const registrado = (sobre: object = {}) => ({ data: 'p1', sobre: { statusCode: 200, succeeded: true, data: 'p1', ...sobre } })
+
+/** `pagoEn`: la cuenta (`cTst` o `cNor`) cuyos movimientos traen el pago `p1`; con `null`, ninguna. */
+function servidor({ pagoEn = 'cNor' as 'cTst' | 'cNor' | null, cajas = UNA_CAJA } = {}) {
   get.mockImplementation(async (url: string) => {
     if (url === '/api/v1/gastos/medios-pago') return MEDIOS
     if (url === '/api/v1/Cajas/abiertas/estado') return cajas
     if (url.endsWith('/estado-cuenta')) return estadoDeCuenta()
-    if (url.startsWith('/api/v1/cuentas-corrientes/cNor/movimientos')) {
-      return paginaDeMovimientos([mov('n9', '2026-10-11T14:00:00Z', { haber: 86400, pagoId: pagoEnNormal ? 'p1' : 'otro' })])
+    if (url.includes('/movimientos')) {
+      const conElPago = !!pagoEn && url.startsWith(`/api/v1/cuentas-corrientes/${pagoEn}/movimientos`)
+      return paginaDeMovimientos([mov('m1', '2026-10-11T14:00:00Z', { haber: 86400, pagoId: conElPago ? 'p1' : 'otro' })])
     }
-    if (url.includes('/movimientos')) return paginaDeMovimientos([mov('t1', '2026-09-30T12:00:00Z')])
     return fichaConCuentas()
   })
 }
+
+const pidioMovimientos = () => get.mock.calls.filter(([url]) => String(url).includes('/movimientos')).map(([url]) => String(url))
 
 async function cargarMontoYMedio(monto: string, medio: string) {
   fireEvent.changeText(await screen.findByLabelText('Monto', {}, ESPERA), monto)
@@ -43,7 +49,7 @@ beforeEach(() => {
   jest.clearAllMocks()
   conPermisos([{ module: 'MOD_PAGOS', canRead: true, canCreate: true }])
   servidor()
-  post.mockResolvedValue('p1')
+  post.mockResolvedValue(registrado())
 })
 
 it('manda un cobro de una línea sin elegir la cuenta ni imputar: eso lo decide el servidor', async () => {
@@ -60,17 +66,49 @@ it('manda un cobro de una línea sin elegir la cuenta ni imputar: eso lo decide 
   expect(cuerpo).not.toHaveProperty('tipoCuenta')
 })
 
-it('al terminar muestra en qué cuenta quedó según los movimientos del servidor', async () => {
+it('servidor nuevo: dice la cuenta que trae la respuesta del cobro, sin buscarla en los movimientos', async () => {
+  // Los movimientos dirían Normal: si la pantalla los usara en vez de la respuesta, se notaría.
+  post.mockResolvedValue(registrado({ tipoCuenta: 'Tst' }))
   renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
   await cargarMontoYMedio('86400', 'Efectivo')
   await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
 
-  expect(await screen.findByRole('header', { name: 'Quedó en la cuenta Normal' }, ESPERA)).toBeTruthy()
+  expect(await screen.findByRole('header', { name: 'Quedó en la cuenta TST' }, ESPERA)).toBeTruthy()
   expect(screen.getByText('Saldo nuevo')).toBeTruthy()
+  expect(screen.queryByText(SIN_CUENTA_CONFIRMADA)).toBeNull()
+  expect(pidioMovimientos()).toEqual([])
 })
 
-it('si el pago no aparece en ninguna cuenta, no inventa una: lo dice', async () => {
-  servidor({ pagoEnNormal: false })
+it.each([
+  ['servidor viejo: sin tipoCuenta en la respuesta', {}, 'cNor', 'Normal'],
+  // El pago está en TST: si se tomara 'Otra' como cuenta, la pantalla diría Normal sin buscar.
+  ['un tipoCuenta que mobile no conoce', { tipoCuenta: 'Otra' }, 'cTst', 'TST'],
+] as const)('%s: busca el pago en los movimientos y dice la cuenta donde está', async (_caso, sobre, pagoEn, cuenta) => {
+  servidor({ pagoEn })
+  post.mockResolvedValue(registrado(sobre))
+  renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+  await cargarMontoYMedio('86400', 'Efectivo')
+  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+
+  expect(await screen.findByRole('header', { name: `Quedó en la cuenta ${cuenta}` }, ESPERA)).toBeTruthy()
+  expect(screen.getByText('Saldo nuevo')).toBeTruthy()
+  expect(pidioMovimientos()).toContainEqual(expect.stringContaining(`/cuentas-corrientes/${pagoEn}/movimientos`))
+})
+
+it('un 2xx sin id del pago: el cobro se da por registrado, sin cuenta confirmada y sin buscar en los movimientos', async () => {
+  post.mockResolvedValue({ data: undefined, sobre: null })
+  renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+  await cargarMontoYMedio('100', 'Transferencia')
+  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+
+  expect(await screen.findByText('Cobro registrado', {}, ESPERA)).toBeTruthy()
+  expect(await screen.findByText(SIN_CUENTA_CONFIRMADA, {}, ESPERA)).toBeTruthy()
+  expect(screen.queryByText(/Quedó en la cuenta/)).toBeNull()
+  expect(pidioMovimientos()).toEqual([])
+})
+
+it('servidor viejo: si el pago no aparece en ninguna cuenta, no inventa una: lo dice', async () => {
+  servidor({ pagoEn: null })
   renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
   await cargarMontoYMedio('100', 'Efectivo')
   await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
@@ -111,7 +149,7 @@ it('si el servidor rechaza, se ve su motivo y el cobro no se da por hecho', asyn
 })
 
 it('mientras se registra, un segundo toque no manda otro cobro', async () => {
-  let terminar: (v: string) => void = () => {}
+  let terminar: (v: unknown) => void = () => {}
   post.mockImplementation(() => new Promise(r => { terminar = r }))
   renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
   await cargarMontoYMedio('100', 'Efectivo')
@@ -119,7 +157,7 @@ it('mientras se registra, un segundo toque no manda otro cobro', async () => {
 
   await userEvent.press(boton)
   await userEvent.press(boton)
-  terminar('p1')
+  terminar(registrado())
 
   await waitFor(() => expect(post).toHaveBeenCalledTimes(1))
 })

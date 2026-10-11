@@ -61,3 +61,51 @@ describe('ApiError: código y datos del sobre', () => {
     expect(e).toMatchObject({ status: 409, codigo: 'ClaveIdempotenciaConOtroCuerpo', data: { ventaId: 'v9', version: 3, message: 'x' } })
   })
 })
+
+// Sobre de éxito con un campo al lado de `data` (forward-system #868: el cobro informa su cuenta).
+const SOBRE_COBRO = { statusCode: 200, succeeded: true, message: 'Pago registrado', errors: null, data: 'p1', tipoCuenta: 'Tst' }
+
+describe('postConSobre: data y el sobre completo en una sola llamada', () => {
+  it('devuelve data y los campos del sobre que van al lado de data', async () => {
+    responder(200, SOBRE_COBRO)
+    const r = await api.postConSobre<string, { tipoCuenta?: string }>('/api/v1/Finanzas/pagos/multilinea', { monto: 1 })
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(r.data).toBe('p1')
+    expect(r.sobre?.tipoCuenta).toBe('Tst')
+  })
+
+  it('api.post sigue devolviendo solo data', async () => {
+    responder(200, SOBRE_COBRO)
+    expect(await api.post('/api/v1/Finanzas/pagos/multilinea', { monto: 1 })).toBe('p1')
+  })
+
+  it('sin sobre (JSON crudo o 204) devuelve lo que llegó y sobre null', async () => {
+    responder(200, { id: 'x' })
+    expect(await api.postConSobre('/x', {})).toEqual({ data: { id: 'x' }, sobre: null })
+    responder(204, undefined)
+    expect(await api.postConSobre('/x', {})).toEqual({ data: undefined, sobre: null })
+  })
+
+  it('un sobre succeeded:false con HTTP 200 lanza ApiError con el código y los datos del sobre', async () => {
+    responder(200, SOBRE_409)
+    const e = await fallo(api.postConSobre('/api/v1/Ventas', {}))
+    expect(e).toBeInstanceOf(ApiError)
+    expect(e).toMatchObject({ status: 409, codigo: 'ClaveIdempotenciaConOtroCuerpo', data: { ventaId: 'v9', version: 3, message: 'x' } })
+  })
+
+  it('un sobre de error sigue lanzando ApiError con su motivo', async () => {
+    responder(409, { statusCode: 409, succeeded: false, message: 'Conflicto de concurrencia al actualizar el saldo.', errors: [] })
+    const e = await fallo(api.postConSobre('/api/v1/Finanzas/pagos/multilinea', {}))
+    expect(e).toMatchObject({ status: 409, message: 'Conflicto de concurrencia al actualizar el saldo.' })
+  })
+
+  it('tras un 401 y el token renovado, el reintento también devuelve el sobre', async () => {
+    configureApiClient({ getToken: () => 't', getRefreshToken: () => 'r1', onTokensRefreshed: jest.fn(), onUnauthorized: jest.fn() })
+    responder(401, {})
+    responder(200, { access_token: 'nuevo', refresh_token: 'r2' })
+    responder(200, SOBRE_COBRO)
+    const r = await api.postConSobre<string, { tipoCuenta?: string }>('/api/v1/Pagos', {})
+    expect(mockFetch).toHaveBeenCalledTimes(3)
+    expect(r).toMatchObject({ data: 'p1', sobre: { tipoCuenta: 'Tst' } })
+  })
+})
