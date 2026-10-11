@@ -7,7 +7,7 @@ import { useRouter, useNavigation } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native';
 import { safeHaptics } from '@/core/utils/haptics'
 import { useToggleSocioStatus } from '@/libs/api-client/socios'
-import { Search, Users, Plus, Activity, BarChart3, Check } from 'lucide-react-native'
+import { Search, Users, Plus, Activity, BarChart3 } from 'lucide-react-native'
 import { useColors, useIsDark } from '@/libs/theme'
 import { SocioCard } from '@/features/socios/components/SocioCard'
 import { ConfirmModal, GlassCard, ForwardLogo, TopHeaderActions, RequirePermission } from '@/core/ui'
@@ -113,7 +113,7 @@ export default function SociosScreen() {
   const insets = useSafeAreaInsets()
 
   const {
-    socios, isLoading, isRefetching, refetch, kpis, filters, actions,
+    socios, isLoading, isRefetching, refetch, kpis, contador, filters, actions,
     fetchNextPage, hasNextPage, isFetchingNextPage
   } = useSociosList()
   const { canCreate, canUpdate } = usePermissions()
@@ -157,9 +157,11 @@ export default function SociosScreen() {
   const headerComponent = useMemo(() => (
     <MotiView from={{ opacity: 0, translateY: -20 }} animate={{ opacity: 1, translateY: 0 }}>
       <View style={{ flexDirection: 'row', gap: 12, marginBottom: 24 }}>
-        <KpiCard label="Total" value={String(kpis.todos)} color={colors.text} Icon={BarChart3} />
-        <KpiCard label="Clientes" value={String(kpis.clientes)} color={colors.primary} Icon={Check} delay={100} />
+        <KpiCard label="Total" value={kpis.todos === undefined ? '—' : String(kpis.todos)} color={colors.text} Icon={BarChart3} />
       </View>
+      {contador && (
+        <Text testID="socios-contador" style={{ marginTop: -12, marginBottom: 16, fontSize: 13, color: colors.textMuted }}>{contador}</Text>
+      )}
 
       <View style={{ marginBottom: 24, gap: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -173,7 +175,7 @@ export default function SociosScreen() {
         />
       </View>
     </MotiView>
-  ), [kpis, filters, actions, colors])
+  ), [kpis, contador, filters, actions, colors])
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>

@@ -49,11 +49,6 @@ jest.mock('expo-linear-gradient', () => ({
   LinearGradient: (...args: any[]) => mockLinearGradient(...args),
 }))
 
-const mockGlassCard = jest.fn()
-jest.mock('@/core/ui', () => ({
-  GlassCard: (...args: any[]) => mockGlassCard(...args),
-}))
-
 jest.mock('@/libs/theme', () => ({
   useColors: () => ({
     primary: '#00796b',
@@ -61,13 +56,10 @@ jest.mock('@/libs/theme', () => ({
     textMuted: '#737373',
     border: 'rgba(255,255,255,0.05)',
   }),
-  BRAND: { orange: '#FF6B00' },
 }))
 
 jest.mock('lucide-react-native', () => ({
   TrendingUp: () => null,
-  CheckCircle2: () => null,
-  Clock: () => null,
 }))
 
 // ── Component stub implementations ─────────────────────────────────────────────
@@ -88,11 +80,6 @@ beforeAll(() => {
     ({ children, style }: { children?: React.ReactNode; style?: any }) =>
       _React.createElement(View, { style }, children),
   )
-  mockGlassCard.mockImplementation(
-    ({ children, style }: { children?: React.ReactNode; style?: any }) =>
-      _React.createElement(View, { style }, children),
-  )
-
   // Safe default so a future test that forgets its own beforeEach renders
   // cleanly instead of crashing on `destructure of undefined`.
   mockUseResponsive.mockReturnValue(band(375))
@@ -110,9 +97,7 @@ const band = (width: number) => ({
 })
 
 const defaultProps = {
-  ordersCount: 12,
-  pendCount: 3,
-  totalMonto: 1_500_000,
+  ordersCount: 137,
   currentMonth: 'JUN',
 }
 
@@ -147,20 +132,15 @@ describe('VentasKpiGrid — small band (width 320)', () => {
     expect(style.width).toBe('100%')
   })
 
-  it('(d) both side card wrappers each have minHeight:88 and no flex', () => {
-    const { getByTestId } = render(<VentasKpiGrid {...defaultProps} />)
-    const confirmed = flatStyle(getByTestId('kpi-card-confirmed').props.style)
-    const pending = flatStyle(getByTestId('kpi-card-pending').props.style)
-    expect(confirmed.minHeight).toBe(88)
-    expect(pending.minHeight).toBe(88)
-    // must NOT carry the row-mode flex:1 — that would defeat the stacked layout
-    expect(confirmed.flex).toBeUndefined()
-    expect(pending.flex).toBeUndefined()
+  it('(d) muestra el total del servidor y ningún importe', () => {
+    const { getByText, queryByText } = render(<VentasKpiGrid {...defaultProps} />)
+    expect(getByText('137')).toBeTruthy()
+    expect(queryByText(/\$/)).toBeNull()
   })
 
-  it('(d2) sideStack does not take flex:1 in the stacked layout', () => {
-    const { getByTestId } = render(<VentasKpiGrid {...defaultProps} />)
-    expect(flatStyle(getByTestId('kpi-side-stack').props.style).flex).toBeUndefined()
+  it('(d2) sin total del servidor muestra un guion, no un cero', () => {
+    const { getByText } = render(<VentasKpiGrid {...defaultProps} ordersCount={undefined} />)
+    expect(getByText('—')).toBeTruthy()
   })
 })
 
@@ -190,18 +170,11 @@ describe('VentasKpiGrid — medium band (width 390)', () => {
     expect(style.flex).toBe(1.4)
   })
 
-  it('(g2) sideStack preserves flex:1 in the row layout', () => {
-    const { getByTestId } = render(<VentasKpiGrid {...defaultProps} />)
-    expect(flatStyle(getByTestId('kpi-side-stack').props.style).flex).toBe(1)
-  })
-
-  it('(h) maxFontSizeMultiplier={1.3} is preserved on all 7 Text elements', () => {
+  it('(h) maxFontSizeMultiplier={1.3} is preserved on all 3 Text elements', () => {
     const { UNSAFE_getAllByProps } = render(<VentasKpiGrid {...defaultProps} />)
     const texts = UNSAFE_getAllByProps({ maxFontSizeMultiplier: 1.3 })
-    // 7 Text source props (mainLabel, mainValue, footerText, smallValue x2,
-    // smallLabel x2). UNSAFE_getAllByProps double-counts composite+host nodes,
-    // so the runtime length is 14. Exact count = real regression guard:
-    // removing any single cap drops this to 12.
-    expect(texts.length).toBe(14)
+    // 3 Text source props (mainLabel, mainValue, footerText). UNSAFE_getAllByProps
+    // double-counts composite+host nodes, so the runtime length is 6.
+    expect(texts.length).toBe(6)
   })
 })

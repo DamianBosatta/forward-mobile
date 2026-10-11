@@ -243,8 +243,8 @@ export default function ComprasListScreen() {
     isCurrentMonth, now,
     isLoading, isRefetching, refetch,
     filteredCompras,
-    totalMonto, pendCount,
-    fetchNextPage, hasNextPage, isFetchingNextPage, comprasByMonth
+    totalMonto, pendCount, totalCount, contador,
+    fetchNextPage, hasNextPage, isFetchingNextPage
   } = useComprasList()
 
   const renderItem = useCallback(({ item }: { item: any }) => <CompraCard item={item} />, [])
@@ -279,13 +279,17 @@ export default function ComprasListScreen() {
           <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
             <KpiStatRow
               stats={[
-                { key: 'ordenes', label: 'Órdenes', value: String(comprasByMonth.length), icon: ShoppingBag, color: colors.text },
-                { key: 'pendientes', label: 'Pendientes', value: String(pendCount), icon: TrendingUp, color: BRAND.blue },
-                { key: 'inversion', label: 'Inversión', value: `$${(totalMonto / 1000).toFixed(0)}K`, icon: DollarSign, color: BRAND.lime },
+                { key: 'ordenes', label: 'Órdenes', value: totalCount === undefined ? '—' : String(totalCount), icon: ShoppingBag, color: colors.text },
+                { key: 'pendientes', label: 'Pendientes', value: pendCount === undefined ? '—' : String(pendCount), icon: TrendingUp, color: BRAND.blue },
+                { key: 'inversion', label: 'Inversión', value: totalMonto === undefined ? '—' : `$${(totalMonto / 1000).toFixed(0)}K`, icon: DollarSign, color: BRAND.lime },
               ]}
             />
           </View>
         </MotiView>
+
+        {contador && (
+          <Text testID="compras-contador" style={{ paddingHorizontal: 16, marginBottom: 8, fontSize: tokens.typography.sm.size, color: colors.textMuted }}>{contador}</Text>
+        )}
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, marginBottom: 16, gap: 8 }}>
           {(['Todas', 'Pendiente', 'Confirmado', 'Entregado'] as const).map(f => (
@@ -299,7 +303,7 @@ export default function ComprasListScreen() {
           ))}
         </ScrollView>
     </View>
-  ), [selected, isCurrentMonth, colors, filter, totalMonto, pendCount, comprasByMonth.length])
+  ), [selected, isCurrentMonth, colors, filter, totalMonto, pendCount, totalCount, contador])
 
   return (
     <RequirePermission module="MOD_COMPRAS" action="read" mode="screen">

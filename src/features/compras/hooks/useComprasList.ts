@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
-import { useInfiniteCompras } from '@/libs/api-client/compras'
+import { useInfiniteCompras, useComprasResumen } from '@/libs/api-client/compras'
 import { useColors } from '@/libs/theme'
 import { getCompraStatusConfig } from '@/core/constants/status_compras'
+import { itemsCargados, totalDelServidor, textoContador } from '@/features/listas/lib/contador'
 import type { CompraDtoList } from '@/libs/api-client'
 
 export type SelectedMonth = { year: number; month: number }
@@ -21,8 +22,14 @@ export function useComprasList() {
 
   const isCurrentMonth = selected.year === now.getFullYear() && selected.month === now.getMonth()
 
-  // Nota: Actualmente el backend no parece filtrar compras por fecha en el listado base,
-  // se recomienda añadir ?fechaDesde y ?fechaHasta al endpoint /api/v1/Compras
+  // Mes y búsqueda los resuelve el servidor (lista y resumen con el mismo filtro): filtrar en el
+  // cliente sobre páginas parciales daba contadores y totales que no eran los del mes.
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const ultimoDia = new Date(selected.year, selected.month + 1, 0).getDate()
+  const fechaDesde = `${selected.year}-${pad(selected.month + 1)}-01`
+  const fechaHasta = `${selected.year}-${pad(selected.month + 1)}-${pad(ultimoDia)}`
+  const busqueda = searchTerm.length >= 2 ? searchTerm : undefined
+
   const {
     data,
     isLoading,
@@ -31,36 +38,26 @@ export function useComprasList() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage
-  } = useInfiniteCompras({ pageSize: 20 })
+  } = useInfiniteCompras({ pageSize: 20, fechaDesde, fechaHasta, searchTerm: busqueda })
 
-  const rawCompras = useMemo(() => {
-    return data?.pages.flatMap(page => {
-      return ((page as any)?.data?.items ?? (page as any)?.items ?? []) as CompraDtoList[]
-    }) ?? []
-  }, [data])
+  const { data: resumen } = useComprasResumen({ fechaDesde, fechaHasta, searchTerm: busqueda })
 
-  const comprasByMonth = useMemo(() =>
-    rawCompras.filter(c => {
-      const d = new Date(c.fecha ?? '')
-      return d.getMonth() === selected.month && d.getFullYear() === selected.year
-    }),
-    [rawCompras, selected]
-  )
+  const comprasByMonth = useMemo(() => itemsCargados<CompraDtoList>(data?.pages), [data])
+  const totalCount = totalDelServidor(data?.pages)
 
   const filteredCompras = useMemo(() => {
     let result = comprasByMonth
-    if (searchTerm) {
-      const q = searchTerm.toLowerCase()
-      result = result.filter(c => (c.razonSocialProveedor || '').toLowerCase().includes(q))
-    }
     if (filter !== 'Todas') {
       result = result.filter(c => getCompraStatusConfig(c.estado, colors).label === filter)
     }
     return result
-  }, [comprasByMonth, searchTerm, filter, colors])
+  }, [comprasByMonth, filter, colors])
 
-  const totalMonto = useMemo(() => comprasByMonth.reduce((acc, c) => acc + (c.totalAmount ?? 0), 0), [comprasByMonth])
-  const pendCount = useMemo(() => comprasByMonth.filter(c => getCompraStatusConfig(c.estado, colors).label === 'Pendiente').length, [comprasByMonth, colors])
+  // Del servidor o nada: sin resumen no se muestra un número que podría estar mal.
+  const totalMonto = resumen?.totalComprado
+  const pendCount = resumen?.notasPedido
+  // El filtro por estado es local: con un estado elegido, "cargados" no es lo que se ve.
+  const contador = filter === 'Todas' ? textoContador(comprasByMonth.length, totalCount) : null
 
   return {
     searchTerm, setSearchTerm,
@@ -72,6 +69,6 @@ export function useComprasList() {
     isLoading, isRefetching, refetch,
     fetchNextPage, hasNextPage, isFetchingNextPage,
     comprasByMonth, filteredCompras,
-    totalMonto, pendCount
+    totalMonto, pendCount, totalCount, contador
   }
 }

@@ -323,7 +323,7 @@ export default function VentasListScreen() {
     tipoOperacion, setTipoOperacion,
     isLoading, isRefetching, refetch,
     filteredVentas,
-    totalMonto, pendCount, ordersCount,
+    totalCount, contador,
     fetchNextPage, hasNextPage, isFetchingNextPage
   } = useVentasList()
 
@@ -336,11 +336,13 @@ export default function VentasListScreen() {
   const headerComponent = useMemo(() => (
     <View style={{ paddingBottom: 10 }}>
       <VentasKpiGrid
-        ordersCount={ordersCount}
-        pendCount={pendCount}
-        totalMonto={totalMonto}
+        ordersCount={totalCount}
         currentMonth={MONTHS_SHORT[selected.month]}
       />
+
+      {contador && (
+        <Text testID="ventas-contador" style={{ paddingHorizontal: 16, marginTop: 12, fontSize: 13, color: colors.textMuted }}>{contador}</Text>
+      )}
 
       <View style={{ marginTop: 20 }}>
         <ScrollView
@@ -371,7 +373,7 @@ export default function VentasListScreen() {
         </ScrollView>
       </View>
     </View>
-  ), [ordersCount, pendCount, totalMonto, selected, filter, colors.primary, isDark])
+  ), [totalCount, contador, selected, filter, colors.primary, isDark])
 
   return (
     <RequirePermission module={["MOD_VENTAS", "MOD_PEDIDOS"]} action="read" mode="screen">

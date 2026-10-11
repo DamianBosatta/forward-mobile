@@ -1,9 +1,10 @@
 import { renderHook, act } from '@testing-library/react-native'
 import { useComprasList } from '../../hooks/useComprasList'
-import { useInfiniteCompras } from '@/libs/api-client/compras'
+import { useInfiniteCompras, useComprasResumen } from '@/libs/api-client/compras'
 
 jest.mock('@/libs/api-client/compras', () => ({
-  useInfiniteCompras: jest.fn()
+  useInfiniteCompras: jest.fn(),
+  useComprasResumen: jest.fn(),
 }))
 
 jest.mock('@/libs/theme', () => ({
@@ -27,6 +28,7 @@ describe('useComprasList', () => {
       data: {
         pages: [
           {
+            totalCount: 137,
             items: [
               { id: '1', razonSocialProveedor: 'Prov A', estado: '1', totalAmount: 100, fecha: new Date(now.getFullYear(), now.getMonth(), 10).toISOString() },
               { id: '2', razonSocialProveedor: 'Prov B', estado: '2', totalAmount: 200, fecha: new Date(now.getFullYear(), now.getMonth(), 15).toISOString() }
@@ -36,14 +38,33 @@ describe('useComprasList', () => {
       },
       isLoading: false
     })
+    ;(useComprasResumen as jest.Mock).mockReturnValue({
+      data: { totalComprado: 98765, notasPedido: 7 },
+    })
   })
 
-  it('debe filtrar compras por mes y calcular totales', () => {
+  it('el contador y los totales vienen del servidor, no de sumar lo cargado', () => {
     const { result } = renderHook(() => useComprasList())
 
-    expect(result.current.comprasByMonth.length).toBe(2)
-    expect(result.current.totalMonto).toBe(300)
-    expect(result.current.pendCount).toBe(1)
+    expect(result.current.contador).toBe('Mostrando 2 de 137')
+    expect(result.current.totalCount).toBe(137)
+    expect(result.current.totalMonto).toBe(98765)
+    expect(result.current.pendCount).toBe(7)
+  })
+
+  it('sin resumen del servidor no muestra totales (undefined, no una suma parcial)', () => {
+    ;(useComprasResumen as jest.Mock).mockReturnValue({ data: undefined })
+    const { result } = renderHook(() => useComprasList())
+
+    expect(result.current.totalMonto).toBeUndefined()
+    expect(result.current.pendCount).toBeUndefined()
+  })
+
+  it('pide al servidor el mes elegido y la búsqueda (no filtra páginas parciales)', () => {
+    renderHook(() => useComprasList())
+    const args = (useInfiniteCompras as jest.Mock).mock.calls[0][0]
+    expect(args.fechaDesde).toMatch(/^\d{4}-\d{2}-01$/)
+    expect(args.fechaHasta).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 
   it('debe filtrar por termino de busqueda', () => {
@@ -53,8 +74,9 @@ describe('useComprasList', () => {
       result.current.setSearchTerm('prov a')
     })
 
-    expect(result.current.filteredCompras.length).toBe(1)
-    expect(result.current.filteredCompras[0].id).toBe('1')
+    // la búsqueda ahora va al servidor: el hook la pasa en los parámetros
+    const ultimo = (useInfiniteCompras as jest.Mock).mock.calls.at(-1)[0]
+    expect(ultimo.searchTerm).toBe('prov a')
   })
 
   it('debe filtrar por estado', () => {

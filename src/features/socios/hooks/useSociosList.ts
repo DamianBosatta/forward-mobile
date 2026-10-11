@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useInfiniteSocios } from '@/libs/api-client/socios'
+import { itemsCargados, totalDelServidor, textoContador } from '@/features/listas/lib/contador'
 
 export type StatusFilter = 'Todos' | 'Activos' | 'Inactivos'
 
@@ -30,18 +31,12 @@ export function useSociosList() {
     search: searchTerm,
   })
 
-  // Aplanamos los resultados paginados
-  const socios = useMemo(() => {
-    return data?.pages.flatMap(page => {
-       return ((page as any)?.data?.items ?? (page as any)?.items ?? [])
-    }) ?? []
-  }, [data])
-  
-  // KPIs basados en la carga actual (mientras no haya endpoint de /stats)
-  const kpis = useMemo(() => ({
-    todos: socios.length,
-    clientes: socios.filter(s => s.tipo === 'Cliente').length,
-  }), [socios])
+  const socios = useMemo(() => itemsCargados<any>(data?.pages), [data])
+  const totalCount = totalDelServidor(data?.pages)
+  const contador = textoContador(socios.length, totalCount)
+
+  // La lista ya viene filtrada a clientes (tipo = 1): el total de clientes es el del servidor.
+  const kpis = { todos: totalCount }
 
   return {
     socios,
@@ -52,6 +47,8 @@ export function useSociosList() {
     hasNextPage,
     isFetchingNextPage,
     kpis,
+    totalCount,
+    contador,
     filters: {
       searchTerm,
       statusFilter,

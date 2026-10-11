@@ -79,6 +79,8 @@ describe('ComprasListScreen UI', () => {
       ],
       totalMonto: 1500,
       pendCount: 1,
+      totalCount: 137,
+      contador: 'Mostrando 40 de 137',
       fetchNextPage: jest.fn(),
       hasNextPage: false,
       isFetchingNextPage: false,
@@ -92,6 +94,7 @@ describe('ComprasListScreen UI', () => {
     // KPIs
     expect(getByText('Órdenes')).toBeTruthy()
     expect(getByText('Inversión')).toBeTruthy()
+    expect(getByText('Mostrando 40 de 137')).toBeTruthy()
     // Card item
     expect(getByText('Proveedor A')).toBeTruthy()
   })
