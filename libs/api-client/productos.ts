@@ -25,13 +25,37 @@ export type CatalogoStockItem = components['schemas']['CatalogoStockRealDto']
 // Additive — existing consumers of CatalogoStockItem are unaffected.
 export type AlmacenStockItem = components['schemas']['AlmacenStockDto']
 
-export function useCatalogoStock(depositoId?: string) {
-  const searchParams = new URLSearchParams()
-  if (depositoId) searchParams.set('depositoId', depositoId)
+type CatalogoStockPage = components['schemas']['CatalogoStockRealDtoPaginatedResponse']
 
+// El servidor valida PageSize entre 1 y 1000 (PaginationValidationExtensions.MaxPageSize).
+const CATALOGO_STOCK_PAGE_SIZE = 1000
+// Tope de seguridad: ante un servidor que nunca deje de decir hasNextPage, no se itera sin fin.
+const CATALOGO_STOCK_MAX_PAGES = 20
+
+/**
+ * El endpoint devuelve PaginatedResponse<CatalogoStockRealDto> (no un arreglo). Los consumidores
+ * (buscador local de la venta, inventario) necesitan el catálogo completo, así que se piden
+ * páginas de 1000 y se recorre hasNextPage. Costo: una request por cada 1000 productos
+ * (hasta 20 páginas = 20 000 productos).
+ */
+export async function fetchCatalogoStockCompleto(depositoId?: string): Promise<CatalogoStockItem[]> {
+  const items: CatalogoStockItem[] = []
+  for (let pageNumber = 1; pageNumber <= CATALOGO_STOCK_MAX_PAGES; pageNumber++) {
+    const searchParams = new URLSearchParams()
+    if (depositoId) searchParams.set('depositoId', depositoId)
+    searchParams.set('pageNumber', String(pageNumber))
+    searchParams.set('pageSize', String(CATALOGO_STOCK_PAGE_SIZE))
+    const page = await api.get<CatalogoStockPage>(`/api/v1/Productos/catalogo-stock?${searchParams}`)
+    items.push(...(page?.items ?? []))
+    if (!page?.hasNextPage) break
+  }
+  return items
+}
+
+export function useCatalogoStock(depositoId?: string) {
   return useQuery({
     queryKey: [...productosKeys.all, 'catalogoStock', depositoId],
-    queryFn: () => api.get<CatalogoStockItem[]>(`/api/v1/Productos/catalogo-stock?${searchParams}`),
+    queryFn: () => fetchCatalogoStockCompleto(depositoId),
     staleTime: 60_000,
   })
 }
