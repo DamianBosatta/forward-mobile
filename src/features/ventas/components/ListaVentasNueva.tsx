@@ -1,18 +1,21 @@
-import React from 'react'
-import { ActivityIndicator, Pressable, ScrollView, SectionList, Text, View } from 'react-native'
+import React, { useState } from 'react'
+import { ActivityIndicator, FlatList, Pressable, ScrollView, SectionList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import {
-  DocumentCard, Field, Notice, Segmented, TopBar, chipForEstado, useMenuLeading,
+  DocumentCard, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, useMenuLeading,
   type SegmentedOption,
 } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { useResponsive } from '@/libs/useResponsive'
 import type { Venta } from '@/libs/api-client'
-import { agruparPorDia, horaDe } from '../lib/agruparPorDia'
+import type { BorradorVenta } from '@/libs/api-client/ventas'
+import { agruparPorDia, horaDe, tituloDelDia } from '../lib/agruparPorDia'
 import { useVentasListaNueva, type FiltroEstado, type PeriodoVentas, type PestanaVentas } from '../hooks/useVentasListaNueva'
 
 const PESTANAS: { key: PestanaVentas; label: string }[] = [
   { key: 'presupuestos', label: 'Presupuestos' },
   { key: 'pedidos', label: 'Pedidos' },
+  { key: 'borradores', label: 'Borradores' },
 ]
 const PERIODOS: SegmentedOption<PeriodoVentas>[] = [
   { value: 'hoy', label: 'Hoy' },
@@ -37,17 +40,28 @@ function clienteDe(v: Venta): { direccion: string; nombre: string | null } {
   return direccion ? { direccion, nombre } : { direccion: nombre, nombre: null }
 }
 
+interface Props {
+  /** Detalle embebido para el panel derecho en tablet horizontal. */
+  detalle: (id: string, cerrar: () => void) => React.ReactNode
+}
+
 /** Lista de ventas con el formato nuevo (láminas Ventas y TabVentas). Detrás del switch de la venta nueva. */
-export function ListaVentasNueva() {
+export function ListaVentasNueva({ detalle }: Props) {
   const c = useColors()
   const router = useRouter()
   const leading = useMenuLeading()
+  const { isTabletLandscape } = useResponsive()
+  const [elegida, setElegida] = useState<string | null>(null)
   const l = useVentasListaNueva()
   const q = l.ventasQuery
 
-  const abrir = (id: string) => router.push(`/(tabs)/ventas/${id}` as never)
+  const abrir = (id: string) => {
+    if (isTabletLandscape) setElegida(id)
+    else router.push(`/(tabs)/ventas/${id}` as never)
+  }
 
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
+  const esBorradores = l.pestana === 'borradores'
 
   const filtros = (
     <View style={{ gap: space[3], paddingBottom: space[2] }}>
@@ -108,14 +122,38 @@ export function ListaVentasNueva() {
     />
   )
 
+  const listaBorradores = (
+    <FlatList<BorradorVenta>
+      data={l.borradores}
+      keyExtractor={(b) => b.id}
+      contentContainerStyle={{ padding: space[4], gap: space[3] }}
+      ListHeaderComponent={<Notice tone="info">Los borradores se guardan solos y se descartan a las 48 h sin cambios. Por ahora se retoman desde la web.</Notice>}
+      renderItem={({ item: b }) => (
+        <View accessible style={{ padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[1] }}>
+          <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{b.clienteNombre}</Text>
+          <Text style={secundario}>{`${b.cantidadLineas} ${b.cantidadLineas === 1 ? 'línea' : 'líneas'} · Guardado ${tituloDelDia(new Date(b.fechaModificacion)).toLowerCase()} ${horaDe(b.fechaModificacion)}`}</Text>
+        </View>
+      )}
+      ListEmptyComponent={
+        l.borradoresQuery.isLoading ? <ActivityIndicator color={c.brand} />
+          : l.borradoresQuery.isError ? <Notice tone="peligro">No se pudieron cargar los borradores.</Notice>
+          : <Text style={secundario}>No tenés borradores.</Text>
+      }
+    />
+  )
+
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
         title="Ventas"
         leading={leading}
-        tabs={PESTANAS.map((p) => ({ label: p.label, selected: p.key === l.pestana, onPress: () => l.setPestana(p.key) }))}
+        tabs={PESTANAS.map((p) => ({ label: p.label, selected: p.key === l.pestana, onPress: () => { l.setPestana(p.key); setElegida(null) } }))}
       />
-      {listaVentas}
+      <TwoPane
+        list={esBorradores ? listaBorradores : listaVentas}
+        detail={isTabletLandscape && elegida ? detalle(elegida, () => setElegida(null)) : null}
+        emptyDetail={<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: space[6] }}><Text style={secundario}>Elegí una venta para ver el detalle.</Text></View>}
+      />
     </View>
   )
 }

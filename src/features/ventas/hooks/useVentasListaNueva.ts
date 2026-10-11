@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { format, subDays } from 'date-fns'
-import { useInfiniteVentas } from '@/libs/api-client/ventas'
+import { useBorradoresVentaMios, useInfiniteVentas } from '@/libs/api-client/ventas'
 import { itemsCargados, totalDelServidor, textoContador } from '@/features/listas/lib/contador'
 import type { EstadoVenta, Venta } from '@/libs/api-client'
 
-export type PestanaVentas = 'presupuestos' | 'pedidos'
+export type PestanaVentas = 'presupuestos' | 'pedidos' | 'borradores'
 export type PeriodoVentas = 'hoy' | '7d' | '30d' | 'todo'
 export type FiltroEstado = 'todos' | EstadoVenta
 
 /** TipoOperacionVenta del servidor: 1 = Presupuesto, 2 = Pedido. */
-const TIPO: Record<PestanaVentas, number> = { presupuestos: 1, pedidos: 2 }
+const TIPO: Record<Exclude<PestanaVentas, 'borradores'>, number> = { presupuestos: 1, pedidos: 2 }
 const ESPERA_BUSQUEDA_MS = 400
 
 /**
@@ -38,13 +38,15 @@ export function useVentasListaNueva() {
     return () => clearTimeout(t)
   }, [busqueda])
 
+  const esBorradores = pestana === 'borradores'
   const ventas = useInfiniteVentas({
     pageSize: 20,
-    tipoOperacion: TIPO[pestana],
+    tipoOperacion: TIPO[esBorradores ? 'pedidos' : pestana],
     estado: estado === 'todos' ? undefined : estado,
     fechaDesde: fechaDesdePeriodo(periodo),
     searchTerm: busquedaEnviada.length >= 2 ? busquedaEnviada : undefined,
-  })
+  }, { enabled: !esBorradores })
+  const borradores = useBorradoresVentaMios(esBorradores)
 
   const items = useMemo(() => itemsCargados<Venta>(ventas.data?.pages), [ventas.data])
   const contador = textoContador(items.length, totalDelServidor(ventas.data?.pages))
@@ -57,5 +59,7 @@ export function useVentasListaNueva() {
     ventas: items,
     contador,
     ventasQuery: ventas,
+    borradores: borradores.data ?? [],
+    borradoresQuery: borradores,
   }
 }

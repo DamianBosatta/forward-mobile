@@ -14,6 +14,9 @@ import type {
   AutorizacionPreviewDto,
   AutorizarVentaCommand,
 } from './types'
+import type { components } from './generated/schema'
+
+export type BorradorVenta = components['schemas']['BorradorVentaDto']
 
 // #region Query Keys
 export const ventasKeys = {
@@ -23,6 +26,7 @@ export const ventasKeys = {
   infinite: (params: VentaParams) => [...ventasKeys.all, 'infinite', params] as const,
   details: () => [...ventasKeys.all, 'detail'] as const,
   detail: (id: string) => [...ventasKeys.details(), id] as const,
+  borradoresMios: () => [...ventasKeys.all, 'borradores', 'mios'] as const,
 }
 
 export interface VentaParams {
@@ -66,9 +70,10 @@ export function useVentas(params: VentaParams = {}, options?: { enabled?: boolea
 /**
  * Hook para scroll infinito en listas de ventas (Recomendado para Móvil)
  */
-export function useInfiniteVentas(params: VentaParams = {}) {
+export function useInfiniteVentas(params: VentaParams = {}, options?: { enabled?: boolean }) {
   return useInfiniteQuery({
     queryKey: ventasKeys.infinite(params),
+    enabled: options?.enabled,
     queryFn: ({ pageParam = 1 }) => {
       const searchParams = new URLSearchParams()
       searchParams.set('pageNumber', String(pageParam))
@@ -89,6 +94,19 @@ export function useInfiniteVentas(params: VentaParams = {}) {
       }
       return undefined
     },
+    staleTime: 30_000,
+  })
+}
+
+/**
+ * Borradores con autoguardado del usuario logueado: los últimos 5 con actividad en las
+ * últimas 48 h (los más viejos el servidor no los devuelve). Lista corta, sin paginar.
+ */
+export function useBorradoresVentaMios(enabled = true) {
+  return useQuery({
+    queryKey: ventasKeys.borradoresMios(),
+    queryFn: () => api.get<BorradorVenta[]>('/api/v1/Ventas/borradores/mios'),
+    enabled,
     staleTime: 30_000,
   })
 }

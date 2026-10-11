@@ -78,8 +78,17 @@ function getInitials(name?: string) {
 }
 
 // ── Main Screen ────────────────────────────────────────────────────────────────
+/** Ruta `ventas/[id]`: el id viene de la URL. */
 export default function VentaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
+  return <VentaDetalle id={id} />
+}
+
+/**
+ * Detalle de una venta. Embebible en el panel derecho de la lista en tablet horizontal
+ * (Bloque 9A, PR 2.1): ahí `onVolver` cierra el panel en vez de navegar.
+ */
+export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolver?: () => void }) {
   const router = useRouter()
   const navigation = useNavigation()
   const colors = useColors()
@@ -177,7 +186,7 @@ export default function VentaDetailScreen() {
         <BlurView intensity={25} tint={isDark ? "dark" : "light"} style={{ paddingTop: insets.top + 10, paddingBottom: 15 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20 }}>
             <TouchableOpacity 
-              onPress={() => router.replace('/(tabs)/ventas')}
+              onPress={onVolver ?? (() => router.replace('/(tabs)/ventas'))}
               style={[styles.backButton, {
                 backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
                 borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'

@@ -33,6 +33,7 @@ jest.mock('@/features/ventas/components/ListaVentasNueva', () => {
   const { Text } = require('react-native')
   return { ListaVentasNueva: () => <Text>lista nueva</Text> }
 })
+jest.mock('../../../../../app/(tabs)/ventas/[id]', () => ({ VentaDetalle: () => null }))
 
 import VentasRoute from '../../../../../app/(tabs)/ventas/index'
 

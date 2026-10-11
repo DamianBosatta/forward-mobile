@@ -1,4 +1,5 @@
 import React from 'react'
+import { Text } from 'react-native'
 import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { format, subDays } from 'date-fns'
@@ -31,7 +32,7 @@ function pantalla(ancho = 390) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={qc}>
-      <ListaVentasNueva />
+      <ListaVentasNueva detalle={(id) => <Text>{`detalle ${id}`}</Text>} />
     </QueryClientProvider>,
   )
 }
@@ -39,11 +40,15 @@ function pantalla(ancho = 390) {
 beforeEach(() => {
   mockGet.mockReset()
   mockPush.mockReset()
-  mockGet.mockImplementation(() =>
-    Promise.resolve(pagina([
+  mockGet.mockImplementation((url: string) => {
+    if (url.includes('borradores/mios')) {
+      return Promise.resolve([{ id: 'b1', version: 1, clienteId: 'c', clienteNombre: 'Almacén Luis', depositoId: 'd', fechaModificacion: ahora.toISOString(), cantidadLineas: 3 }])
+    }
+    return Promise.resolve(pagina([
       venta({}),
       venta({ id: 'v2', codigoPedido: 'A00415', direccionCliente: 'Brandsen 3314', nombreFantasiaCliente: 'Sofía', fecha: subDays(ahora, 1).toISOString(), estado: 'Entregada' }),
-    ], 61)))
+    ], 61))
+  })
 })
 
 describe('lista de ventas nueva', () => {
@@ -88,9 +93,26 @@ describe('lista de ventas nueva', () => {
     expect(conBusqueda.every((u) => u.includes('searchTerm=luis'))).toBe(true)
   })
 
+  it('Borradores muestra los del usuario que devuelve el servidor', async () => {
+    pantalla()
+    await userEvent.press(screen.getByRole('tab', { name: 'Borradores' }))
+    expect(await screen.findByText('Almacén Luis')).toBeTruthy()
+    expect(screen.getByText(/3 líneas · Guardado hoy/)).toBeTruthy()
+    expect(mockGet).toHaveBeenCalledWith('/api/v1/Ventas/borradores/mios')
+  })
+
   it('en el teléfono tocar una tarjeta abre el detalle de la venta', async () => {
     pantalla(390)
     await userEvent.press(await screen.findByRole('button', { name: /A00415/ }))
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/v2')
+  })
+
+  it('en tablet horizontal el detalle se abre al costado, sin salir de la lista', async () => {
+    pantalla(1200)
+    expect(await screen.findByText('Elegí una venta para ver el detalle.')).toBeTruthy()
+    await userEvent.press(await screen.findByRole('button', { name: /A00415/ }))
+    expect(within(screen.getByTestId('two-pane-detail')).getByText('detalle v2')).toBeTruthy()
+    expect(within(screen.getByTestId('two-pane-list')).getByRole('button', { name: /A00418/ })).toBeTruthy()
+    expect(mockPush).not.toHaveBeenCalled()
   })
 })
