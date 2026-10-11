@@ -16,6 +16,8 @@ export interface LineaCompra {
   unidadesPorUnidad: number
   /** null = sin costo: no hay uno previo y el usuario no lo cargó. Nunca se inventa. */
   costoUnitario: number | null
+  /** Moneda del costo tal como la guardó el servidor; sin valor (línea nueva) se manda ARS. */
+  monedaCosto?: string
 }
 
 export function sinCosto(l: LineaCompra): boolean {
@@ -46,7 +48,7 @@ export function detallesParaServidor(lineas: LineaCompra[]) {
     productoId: l.productoId,
     cantidad: l.cantidad,
     costoUnitario: l.costoUnitario ?? 0,
-    monedaCosto: 'ARS',
+    monedaCosto: l.monedaCosto ?? 'ARS',
     unidadCompra: l.unidad,
   }))
 }
@@ -61,6 +63,7 @@ export function lineaDesdeDetalle(d: CompraDetalle): LineaCompra {
     unidad: d.unidadCompra,
     unidadesPorUnidad: ingresada > 0 ? d.cantidad / ingresada : 1,
     costoUnitario: d.costoUnitarioBaseAmount > 0 ? d.costoUnitarioBaseAmount : null,
+    monedaCosto: d.moneda ?? undefined,
   }
 }
 

@@ -51,6 +51,11 @@ export function useCompraBorrador(borradorInicial?: string) {
   const version = useRef(0)
   const guardado = useRef<string | null>(null)
   const enVuelo = useRef<Promise<unknown> | null>(null)
+  // Instantánea que el servidor rechazó (no por conflicto): no se reintenta sola, solo con un cambio nuevo o "Reintentar".
+  const fallido = useRef<string | null>(null)
+  const descartado = useRef(false)
+  const estadoActual = useRef<EstadoGuardado>('nuevo')
+  estadoActual.current = estado
 
   const cuerpo = (): Omit<GuardarCompraBody, 'version'> | null =>
     compraId && proveedor
@@ -66,7 +71,8 @@ export function useCompraBorrador(borradorInicial?: string) {
     setDepositoId(c.depositoId)
     setLineas(c.detalles.map(lineaDesdeDetalle))
     setGastos(c.gastosOperativos)
-    setDescuento(c.subtotalBrutoAmount > 0 ? (c.descuentoTotalAmount / c.subtotalBrutoAmount) * 100 : 0)
+    // El porcentaje que guardó el servidor (el mismo en todas las líneas), no uno recalculado desde importes redondeados.
+    setDescuento(c.detalles[0]?.descuentoPorcentaje ?? 0)
   }, [])
 
   const cargar = useCallback(async (id: string) => {
@@ -96,11 +102,12 @@ export function useCompraBorrador(borradorInicial?: string) {
     while (enVuelo.current) await enVuelo.current.catch(() => {})
     const c = ultimo.current
     const k = c ? JSON.stringify(c) : null
-    if (!c || k === guardado.current) return version.current
+    if (!c || k === guardado.current || descartado.current) return version.current
     setEstado('guardando')
     const p = borradorCompraApi.guardar({ ...c, version: version.current }).then((r) => {
       version.current = r.version
       guardado.current = k
+      fallido.current = null
     })
     enVuelo.current = p
     try {
@@ -108,6 +115,7 @@ export function useCompraBorrador(borradorInicial?: string) {
       setEstado('guardado')
       setError(null)
     } catch (e) {
+      if (!esConflicto(e)) fallido.current = k
       setEstado(esConflicto(e) ? 'conflicto' : 'error')
       setError(mensajeDelServidor(e, 'No se pudo guardar el borrador.'))
       throw e
@@ -118,10 +126,28 @@ export function useCompraBorrador(borradorInicial?: string) {
   }, [])
 
   useEffect(() => {
-    if (!clave || clave === guardado.current || estado === 'conflicto' || cargando) return
+    if (!clave || clave === guardado.current || clave === fallido.current || estado === 'conflicto' || cargando) return
     const t = setTimeout(() => { guardarAhora().catch(() => {}) }, ESPERA_AUTOGUARDADO_MS)
     return () => clearTimeout(t)
   }, [clave, estado, cargando, guardarAhora])
+
+  // Al salir de la pantalla (volver, cerrar) lo que todavía espera el debounce se manda igual, sin esperar la respuesta.
+  useEffect(() => () => {
+    const c = ultimo.current
+    const k = c ? JSON.stringify(c) : null
+    if (!c || k === guardado.current || k === fallido.current || descartado.current || estadoActual.current === 'conflicto') return
+    const previo = enVuelo.current ?? Promise.resolve()
+    void previo.catch(() => {}).then(() => borradorCompraApi.guardar({ ...c, version: version.current })).then(
+      (r) => { version.current = r.version },
+      (e) => { console.warn('No se pudo guardar el borrador al salir', e) },
+    )
+  }, [])
+
+  /** Vuelve a intentar con lo que hay en pantalla (después de un error que no fue de conflicto). */
+  const reintentar = useCallback(async () => {
+    fallido.current = null
+    await guardarAhora().catch(() => {})
+  }, [guardarAhora])
 
   /** Elige el proveedor y crea el borrador. Si le faltan datos de compra no sigue: se completan en la web. */
   const elegirProveedor = useCallback(async (id: string) => {
@@ -177,12 +203,20 @@ export function useCompraBorrador(borradorInicial?: string) {
   return {
     compraId, proveedor, faltantes, depositoId, setDepositoId, lineas, setLineas, gastos, setGastos,
     descuentoPorcentaje, estado, error, cargando,
-    elegirProveedor, setCantidadProducto,
+    elegirProveedor, setCantidadProducto, reintentar,
     recargar: () => (compraId ? cargar(compraId) : Promise.resolve()),
     guardarNota: () => terminar((id, v) => borradorCompraApi.guardarNota(id, v)),
     confirmar: () => terminar((id) => borradorCompraApi.confirmar(id)),
     descartar: async () => {
-      if (compraId) await borradorCompraApi.descartar(compraId)
+      // Lo pendiente ya no se guarda; si hay un guardado en vuelo, se espera a que termine antes de borrar.
+      descartado.current = true
+      try {
+        while (enVuelo.current) await enVuelo.current.catch(() => {})
+        if (compraId) await borradorCompraApi.descartar(compraId)
+      } catch (e) {
+        descartado.current = false
+        throw e
+      }
       queryClient.invalidateQueries({ queryKey: comprasKeys.borradoresMios() })
     },
   }

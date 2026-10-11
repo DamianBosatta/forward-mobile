@@ -166,7 +166,12 @@ export function CompraNueva({ borradorId }: Props) {
             <Notice tone="peligro" title="Alguien más cambió esta compra.">Recargala para ver la versión actual antes de seguir.</Notice>
             <Button label="Recargar" variant="secundario" onPress={() => { void b.recargar() }} />
           </View>
-        ) : b.error ? <Notice tone="peligro">{b.error}</Notice> : null}
+        ) : b.error ? (
+          <View style={{ gap: space[2] }}>
+            <Notice tone="peligro">{b.error}</Notice>
+            {b.estado === 'error' ? <Button label="Reintentar" variant="secundario" onPress={() => { void b.reintentar() }} /> : null}
+          </View>
+        ) : null}
         {isTablet ? (
           <View style={{ flexDirection: 'row', gap: space[6], alignItems: 'flex-start' }}>
             <View style={{ flex: 3, gap: space[2] }}><Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text }]}>{`Líneas (${b.lineas.length})`}</Text>{lineas}</View>
