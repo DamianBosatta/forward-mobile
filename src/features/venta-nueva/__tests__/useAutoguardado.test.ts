@@ -171,3 +171,20 @@ describe('autoguardado: desmontaje y sin borrador', () => {
     expect(guardar).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('autoguardado: conciliación tolerante al orden y a los decimales', () => {
+  it('tras un PUT aplicado, si el servidor devuelve las líneas al revés y con otros decimales no hay conflicto', async () => {
+    const l1 = { productoId: 'a', cantidad: 2, precio: 12.5 }
+    const l2 = { productoId: 'b', cantidad: 5, precio: 3 }
+    const guardar = jest.fn().mockRejectedValueOnce(sinRed()).mockResolvedValue(3)
+    const releer = jest.fn().mockResolvedValue({ version: 2, valores: { items: [{ ...l2, precio: 3.0 }, { ...l1, precio: 12.50 }] } })
+    const h = renderHook((p: { valores: { items: object[] } }) =>
+      useAutoguardado({ borradorId: 'b1', versionInicial: 1, valores: p.valores, guardar, releer }), { initialProps: { valores: { items: [] } as { items: object[] } } })
+    h.rerender({ valores: { items: [l1, l2] } })
+    await avanzar(800)
+    await avanzar(2000)
+    expect(releer).toHaveBeenCalledTimes(1)
+    expect(h.result.current.estado).not.toBe('conflicto')
+    expect(guardar).toHaveBeenCalledTimes(1)
+  })
+})

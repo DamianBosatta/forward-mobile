@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ApiError } from '@/core/api/client'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
+import { claveCanonica } from '../lib/comparar'
 
 export type EstadoGuardado = 'inactivo' | 'guardando' | 'guardado' | 'error' | 'conflicto'
 
@@ -54,9 +55,10 @@ export function useAutoguardado<T>({ borradorId, versionInicial, valores, guarda
     if (!s.releer) return 'ilegible'
     try {
       const srv = await s.releer()
-      const contenido = JSON.stringify(srv.valores)
-      if (contenido === s.intentado) { s.version = srv.version; s.guardado = contenido; s.ambiguo = false; return 'aplicado' }
-      if (contenido === s.guardado || srv.version === s.version) { s.version = srv.version; s.ambiguo = false; return 'intacto' }
+      // Comparación canónica: el servidor no garantiza el orden de las líneas ni los decimales.
+      const contenido = claveCanonica(srv.valores)
+      if (contenido === claveCanonica(JSON.parse(s.intentado))) { s.version = srv.version; s.guardado = s.intentado; s.ambiguo = false; return 'aplicado' }
+      if (contenido === claveCanonica(JSON.parse(s.guardado)) || srv.version === s.version) { s.version = srv.version; s.ambiguo = false; return 'intacto' }
       return 'ajeno'
     } catch {
       return 'ilegible'
