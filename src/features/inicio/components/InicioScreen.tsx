@@ -9,7 +9,7 @@ import { useResponsive } from '@/libs/useResponsive'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client/types'
-import { DocumentCard, Notice, TopBar, chipForEstado, iniciales } from '@/core/ui/fw'
+import { DocumentCard, TopBar, chipForEstado, iniciales } from '@/core/ui/fw'
 import { diaArgentina, msHastaProximaMedianocheArgentina, partesArgentina } from '@/src/utils/date'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
 import { TarjetaPendientes, type FilaPendiente } from './TarjetaPendientes'
@@ -117,9 +117,20 @@ export function InicioScreen() {
           </View>
         </View>
 
-        {pendientes.bloqueo ? (
-          <View style={{ paddingHorizontal: space[4] }}>
-            <Notice tone="peligro" title="No se pudieron cargar los pendientes.">{pendientes.bloqueo}</Notice>
+        {pendientes.error ? (
+          <View style={{ paddingHorizontal: space[4], gap: space[2], alignItems: 'flex-start' }}>
+            <Text style={[typeScale.secundario, { color: c.textSecondary }]}>No se pudieron cargar los pendientes</Text>
+            {pendientes.error.motivo ? (
+              <Text style={[typeScale.secundario, { color: c.text }]}>{pendientes.error.motivo}</Text>
+            ) : null}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Reintentar pendientes"
+              onPress={() => pendientes.refetch()}
+              style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}
+            >
+              <Text style={[typeScale.secundario, { color: c.brandInk, fontFamily: FONT.semibold, fontWeight: '600' }]}>Reintentar</Text>
+            </Pressable>
           </View>
         ) : null}
 

@@ -58,15 +58,15 @@ export function TarjetaPendientes({ titulo, icono: Icono, filas, ancho }: Tarjet
       </View>
       {filas.map((f, i) => {
         const texto = f.cantidad == null ? '—' : String(f.cantidad)
-        const montos = (f.importes ?? []).map((m) => formatImporte(m.total, { moneda: m.moneda, centavos: false }))
-        const monto = (m: string) => (
-          <Text key={m} style={[typeScale.secundario, importe, { color: c.textSecondary }]}>{m}</Text>
+        const montos = (f.importes ?? []).map((m) => ({ moneda: m.moneda, texto: formatImporte(m.total, { moneda: m.moneda, centavos: false }) }))
+        const monto = (m: { moneda: string; texto: string }) => (
+          <Text key={m.moneda} style={[typeScale.secundario, importe, { color: c.textSecondary }]}>{m.texto}</Text>
         )
         return (
           <Pressable
             key={f.label}
             accessibilityRole="button"
-            accessibilityLabel={`${f.label}: ${f.cantidad == null ? 'sin dato' : [texto, ...montos].join(', ')}`}
+            accessibilityLabel={`${f.label}: ${f.cantidad == null ? 'sin dato' : [texto, ...montos.map((m) => m.texto)].join(', ')}`}
             onPress={f.onPress}
             style={({ pressed }) => ({
               minHeight: 44,

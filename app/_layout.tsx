@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Stack } from 'expo-router'
-import { QueryClient } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { asyncStoragePersister } from '@/core/query/persistConfig'
+import { crearQueryClient, debePersistir } from '@/core/query/queryClient'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { useAuthGuard } from '../hooks/useAuthGuard'
@@ -29,15 +29,7 @@ import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 
 SplashScreen.preventAutoHideAsync()
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      gcTime: 24 * 60 * 60_000,
-      retry: 1,
-    },
-  },
-})
+const queryClient = crearQueryClient()
 
 function OfflineBanner() {
   const { isConnected } = useNetworkStatus()
@@ -159,13 +151,7 @@ function RootLayout() {
           persister: asyncStoragePersister,
           dehydrateOptions: {
             shouldDehydrateMutation: () => true,
-            shouldDehydrateQuery: (query) => {
-              if (query.state.status !== 'success') return false
-              if (query.meta && query.meta.persist === false) return false
-              const queryKey = query.queryKey as string[]
-              const isHeavy = queryKey.includes('catalogoStock') || queryKey.includes('list')
-              return !isHeavy
-            }
+            shouldDehydrateQuery: debePersistir,
           }
         }}
       >

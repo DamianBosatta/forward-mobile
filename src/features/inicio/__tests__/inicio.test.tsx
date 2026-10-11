@@ -1,17 +1,23 @@
 import React from 'react'
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, render, screen, userEvent, within } from '@testing-library/react-native'
+import { act, render, renderHook, screen, userEvent, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
-import { comprasKeys } from '@/libs/api-client/compras'
-import { ventasKeys } from '@/libs/api-client/ventas'
+import { useAnularVenta, ventasKeys } from '@/libs/api-client/ventas'
+import { useCreateCompra } from '@/features/compras/api/queries'
+import { crearQueryClient } from '@/core/query/queryClient'
 import { InicioScreen } from '../components/InicioScreen'
 
 const mockGet = jest.fn()
+const mockEscribir = jest.fn((_url: string) => Promise.resolve({}))
 jest.mock('@/core/api/client', () => ({
   ...jest.requireActual('@/core/api/client'),
   API_URL: 'http://api.test',
-  api: { get: (url: string) => mockGet(url) },
+  api: {
+    get: (url: string, opciones?: unknown) => (opciones === undefined ? mockGet(url) : mockGet(url, opciones)),
+    post: (url: string) => mockEscribir(url),
+    delete: (url: string) => mockEscribir(url),
+  },
 }))
 const { ApiError } = jest.requireActual('@/core/api/client')
 
@@ -86,14 +92,25 @@ function conPermisos(...modulos: string[]) {
   } as never)
 }
 
-function pintar() {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(
+/** Inicio con el QueryClient de la app (sin reintentos, salvo que se pase otro). */
+function pintar(qc: QueryClient = crearQueryClient({ retry: false })) {
+  const r = render(
     <QueryClientProvider client={qc}>
       <InicioScreen />
     </QueryClientProvider>,
   )
-  return qc
+  return { qc, desmontar: r.unmount }
+}
+
+/**
+ * Una mutación real de la app, con el mismo QueryClient que Inicio. Se monta antes que Inicio:
+ * `screen` apunta a lo último que se pintó.
+ */
+function mutacion(qc: QueryClient, usar: () => { mutateAsync: (v: never) => Promise<unknown> }, variables: unknown) {
+  const { result } = renderHook(usar, {
+    wrapper: ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>,
+  })
+  return () => act(async () => { await result.current.mutateAsync(variables as never) })
 }
 
 const flat = (el: { props: { style?: unknown } }): ViewStyle => StyleSheet.flatten(el.props.style as StyleProp<ViewStyle>) ?? {}
@@ -145,32 +162,86 @@ describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
     expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas')
   })
 
-  it('usuario desactivado (403): muestra el motivo en lugar de las tarjetas y no cae a las llamadas viejas', async () => {
+  it('usuario desactivado (403): muestra el motivo en lugar de las tarjetas, sin reintentar ni caer a las llamadas viejas', async () => {
     conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
     servidor({ resumen: new ApiError(403, 'El usuario está desactivado.'), hoy: pagina(0, []) })
-    pintar()
+    pintar(crearQueryClient()) // con los reintentos de la app: un 403 no cambia al reintentar
 
-    expect(await screen.findByText(/El usuario está desactivado\./)).toBeTruthy()
+    expect(await screen.findByText(/El usuario está desactivado\./, {}, { timeout: 500 })).toBeTruthy()
+    expect(pedidosDelResumen()).toBe(1)
     expect(screen.queryByLabelText('Ventas pendientes')).toBeNull()
     expect(screen.queryByLabelText('Compras pendientes')).toBeNull()
     expect(mockGet.mock.calls.some(([u]) => /tipoOperacion|Compras\/resumen|pendientes-autorizacion/.test(String(u)))).toBe(false)
   })
 
-  it('una mutación de Compras o de Ventas vuelve a pedir el resumen', async () => {
+  it('si el resumen falla por otra cosa muestra el error con "Reintentar", no tarjetas en "—"', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS')
+    servidor({ resumen: new ApiError(500, 'Error interno del servidor. Intentá más tarde.'), hoy: pagina(0, []) })
+    pintar()
+
+    expect(await screen.findByText('No se pudieron cargar los pendientes', {}, { timeout: 3000 })).toBeTruthy()
+    expect(screen.queryByLabelText('Ventas pendientes')).toBeNull()
+
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    await userEvent.setup().press(screen.getByRole('button', { name: 'Reintentar pendientes' }))
+    expect(await screen.findByLabelText(`Presupuestos: 12, ${ars('1.284.300')}`)).toBeTruthy()
+    expect(screen.queryByText('No se pudieron cargar los pendientes')).toBeNull()
+  })
+
+  it('mientras llega el resumen no muestra números viejos de las llamadas de respaldo', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
+    mockGet.mockImplementation((url: string) =>
+      url.includes('Inicio/resumen') ? new Promise(() => {}) : Promise.resolve(pagina(0, [])))
+    const qc = crearQueryClient({ retry: false })
+    // Lo que quedó en caché de cuando el servidor no tenía /Inicio/resumen.
+    qc.setQueryData(ventasKeys.list({ pageNumber: 1, pageSize: 1, tipoOperacion: 1, estado: 'Pendiente' }), pagina(99))
+    qc.setQueryData([...ventasKeys.all, 'pendientes-autorizacion'], [{ id: 'a' }])
+    pintar(qc)
+
+    expect(await screen.findByLabelText('Presupuestos: sin dato')).toBeTruthy()
+    expect(screen.getByLabelText('Por autorizar: sin dato')).toBeTruthy()
+    expect(screen.queryByLabelText(/Presupuestos: 99/)).toBeNull()
+    await screen.findByText('Todavía no hay ventas hoy.')
+  })
+})
+
+describe('Inicio: cualquier mutación vuelve a pedir el resumen', () => {
+  const NOTAS_4 = { ...RESUMEN, compras: { ...RESUMEN.compras, notasPedido: pendiente(4, importe(400000)) } }
+  const PRESUPUESTOS_13 = { ...RESUMEN, ventas: { ...RESUMEN.ventas, presupuestosPendientes: pendiente(13, importe(1300000)) } }
+  const casos = [
+    // Crear una compra solo invalida la lista de compras, no comprasKeys.all.
+    ['crear una compra', useCreateCompra, { proveedorId: 'p1', depositoId: 'd1', detalles: [] }, NOTAS_4, `Notas de pedido: 4, ${ars('400.000')}`],
+    ['anular una venta', useAnularVenta, { id: 'v1', version: 1, motivoAnulacion: 'Error de carga' }, PRESUPUESTOS_13, `Presupuestos: 13, ${ars('1.300.000')}`],
+  ] as const
+
+  it.each(casos)('%s con Inicio en pantalla', async (_, usar, variables, despues, fila) => {
     conPermisos('MOD_VENTAS', 'MOD_COMPRAS')
     servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
-    const qc = pintar()
+    const qc = crearQueryClient({ retry: false })
+    const mutar = mutacion(qc, usar, variables)
+    pintar(qc)
     await screen.findByLabelText(`Notas de pedido: 3, ${ars('358.777')}`)
-    expect(pedidosDelResumen()).toBe(1)
 
-    // Las mutaciones invalidan la raíz de su módulo (comprasKeys.all / ventasKeys.all).
-    servidor({ resumen: { ...RESUMEN, compras: { ...RESUMEN.compras, notasPedido: pendiente(4, importe(400000)) } }, hoy: pagina(0, []) })
-    await act(() => qc.invalidateQueries({ queryKey: comprasKeys.all }))
-    expect(await screen.findByLabelText(`Notas de pedido: 4, ${ars('400.000')}`)).toBeTruthy()
+    servidor({ resumen: despues, hoy: pagina(0, []) })
+    await mutar()
+    expect(await screen.findByLabelText(fila)).toBeTruthy()
+    expect(pedidosDelResumen()).toBe(2)
+  })
 
-    servidor({ resumen: { ...RESUMEN, ventas: { ...RESUMEN.ventas, presupuestosPendientes: pendiente(13, importe(1300000)) } }, hoy: pagina(0, []) })
-    await act(() => qc.invalidateQueries({ queryKey: ventasKeys.all }))
-    expect(await screen.findByLabelText(`Presupuestos: 13, ${ars('1.300.000')}`)).toBeTruthy()
+  it.each(casos)('%s con Inicio fuera de pantalla: al volver lo pide de nuevo', async (_, usar, variables, despues, fila) => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    const qc = crearQueryClient({ retry: false })
+    const mutar = mutacion(qc, usar, variables)
+    const { desmontar } = pintar(qc)
+    await screen.findByLabelText(`Notas de pedido: 3, ${ars('358.777')}`)
+    desmontar()
+
+    servidor({ resumen: despues, hoy: pagina(0, []) })
+    await mutar()
+    pintar(qc)
+    expect(await screen.findByLabelText(fila)).toBeTruthy()
+    expect(pedidosDelResumen()).toBe(2)
   })
 })
 
@@ -195,6 +266,8 @@ describe('Inicio: servidor sin /Inicio/resumen (404), las cuatro llamadas de ant
     expect(screen.queryByText(/\$/)).toBeNull()
     const urls = mockGet.mock.calls.map(([u]) => u as string)
     expect(urls[0]).toBe('/api/v1/Inicio/resumen')
+    // El 404 del servidor viejo es esperado: no se registra como error (no va a Sentry en cada montaje).
+    expect(mockGet).toHaveBeenCalledWith('/api/v1/Inicio/resumen', { estadosEsperados: [404] })
     // Los filtros que cuentan: Presupuesto+Pendiente y Pedido+Confirmada.
     expect(urls.some((u) => u.includes('tipoOperacion=1') && u.includes('estado=Pendiente'))).toBe(true)
     expect(urls.some((u) => u.includes('tipoOperacion=2') && u.includes('estado=Confirmada'))).toBe(true)

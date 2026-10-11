@@ -21,8 +21,11 @@ export interface PendientesInicio {
   } | null
   /** `null` si el usuario no ve Compras. */
   compras: { notasPedido: DatoPendiente; porRecibir: DatoPendiente } | null
-  /** Motivo del 403 (usuario desactivado): Inicio lo muestra en lugar de las tarjetas. */
-  bloqueo: string | null
+  /**
+   * El resumen falló y no hay nada que mostrar: Inicio lo dice, con "Reintentar", en lugar de las
+   * tarjetas. `motivo`: el del servidor con un 403 (usuario desactivado), que tapa incluso lo que había.
+   */
+  error: { motivo?: string } | null
   refetch: () => Promise<unknown>
 }
 
@@ -64,7 +67,8 @@ export function usePendientesInicio(): PendientesInicio {
     ])
 
   const e = resumen.error
-  if (e instanceof ApiError && e.status === 403) return { ventas: null, compras: null, bloqueo: e.message, refetch }
+  if (e instanceof ApiError && e.status === 403) return { ventas: null, compras: null, error: { motivo: e.message }, refetch }
+  if (e && resumen.data === undefined) return { ventas: null, compras: null, error: {}, refetch }
 
   const r = resumen.data
   if (r) {
@@ -77,22 +81,24 @@ export function usePendientesInicio(): PendientesInicio {
           : { ...r.ventas.porAutorizar, propias: true },
       },
       compras: r.compras && { notasPedido: r.compras.notasPedido, porRecibir: r.compras.porRecibir },
-      bloqueo: null,
+      error: null,
       refetch,
     }
   }
 
-  // Mientras llega el resumen, si falló o con el servidor viejo: las tarjetas según los permisos,
-  // con lo que haya ("—" donde no hay dato).
+  // Mientras llega el resumen, o con el servidor viejo: las tarjetas según los permisos, con lo que
+  // haya ("—" donde no hay dato). Lo de las llamadas viejas cuenta solo con el servidor viejo: si no,
+  // podría ser un número de hace rato que quedó en caché.
+  const viejas = <T,>(q: { data?: T }) => (viejo ? q.data : undefined)
   const porAutorizar = autoriza
-    ? { ...contar(bandeja.data?.length), propias: false }
+    ? { ...contar(viejas(bandeja)?.length), propias: false }
     : viejo ? undefined : { ...contar(null), propias: true }
   return {
     ventas: veVentas
-      ? { presupuestos: contar(presupuestos.data?.totalCount), pedidos: contar(pedidos.data?.totalCount), ...(porAutorizar ? { porAutorizar } : {}) }
+      ? { presupuestos: contar(viejas(presupuestos)?.totalCount), pedidos: contar(viejas(pedidos)?.totalCount), ...(porAutorizar ? { porAutorizar } : {}) }
       : null,
-    compras: veCompras ? { notasPedido: contar(compras.data?.notasPedido), porRecibir: contar(compras.data?.confirmadas) } : null,
-    bloqueo: null,
+    compras: veCompras ? { notasPedido: contar(viejas(compras)?.notasPedido), porRecibir: contar(viejas(compras)?.confirmadas) } : null,
+    error: null,
     refetch,
   }
 }

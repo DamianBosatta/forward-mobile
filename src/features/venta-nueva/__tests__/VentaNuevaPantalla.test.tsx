@@ -44,8 +44,9 @@ jest.mock('../components/CatalogoVenta', () => ({
 
 const { ApiError } = jest.requireActual('@/core/api/client')
 
+let qc: QueryClient
 function pantalla() {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+  qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   return render(<QueryClientProvider client={qc}><VentaNuevaPantalla /></QueryClientProvider>)
 }
 const sync = () => screen.getByText(/Guardado|Guardando…|Sin guardar|Creando borrador…|Sin autoguardado/)
@@ -500,6 +501,16 @@ describe('confirmar', () => {
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/guardar-presupuesto', { ventaId: 'b1', version: 8 }))
     expect(altas()).toHaveLength(0)
     expect(mockReplace).toHaveBeenCalledWith(guardada('b1', ''))
+  })
+
+  it('guardar la venta marca el resumen de Inicio para volver a pedirlo (no pasa por una mutación de react-query)', async () => {
+    mockTipo = 'Presupuesto'
+    await armar()
+    qc.setQueryData(['inicio', 'resumen'], { ventas: null, compras: null, autorizacionesPendientes: null })
+    await waitFor(() => expect(sync()).toHaveTextContent('Guardado'), ESPERA)
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar presupuesto' }))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalled())
+    expect(qc.getQueryState(['inicio', 'resumen'])?.isInvalidated).toBe(true)
   })
 
   it('dos toques en el mismo instante mandan un solo presupuesto', async () => {

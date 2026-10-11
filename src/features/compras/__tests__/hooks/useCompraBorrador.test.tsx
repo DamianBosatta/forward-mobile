@@ -28,7 +28,7 @@ function socio(id: string) {
 function usar(borrador?: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const wrapper = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
-  return renderHook(() => useCompraBorrador(borrador), { wrapper })
+  return { ...renderHook(() => useCompraBorrador(borrador), { wrapper }), qc }
 }
 
 const puts = () => mockPut.mock.calls.map(([, body]) => body as { version: number; descuentoPorcentaje: number; detalles: { cantidad: number; costoUnitario: number; monedaCosto: string; unidadCompra: string }[] })
@@ -77,6 +77,15 @@ describe('useCompraBorrador', () => {
     expect(puts().at(-1)?.detalles[0]).toMatchObject({ cantidad: 3, costoUnitario: 900 })
     expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Compras/c1/confirmar', { compraId: 'c1' })
     expect(mockPut.mock.invocationCallOrder.at(-1)!).toBeLessThan(mockPost.mock.invocationCallOrder.at(-1)!)
+  })
+
+  it('confirmar marca el resumen de Inicio para volver a pedirlo (no pasa por una mutación de react-query)', async () => {
+    const { result, qc } = usar()
+    qc.setQueryData(['inicio', 'resumen'], { ventas: null, compras: null, autorizacionesPendientes: null })
+    await act(() => result.current.elegirProveedor('p1'))
+    act(() => result.current.setLineas([{ productoId: 'pr1', nombre: 'Balde', cantidad: 3, unidad: 'Unidad', unidadesPorUnidad: 1, costoUnitario: 900 }]))
+    await act(() => result.current.confirmar())
+    expect(qc.getQueryState(['inicio', 'resumen'])?.isInvalidated).toBe(true)
   })
 
   it('retomar un borrador lo trae del servidor sin reenviarlo, con unidad de compra y descuento', async () => {

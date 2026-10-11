@@ -246,9 +246,18 @@ function errorDelSobre(body: unknown, status: number): ApiError {
 
 // ── Core fetch con auth ──────────────────────────────────────────────────────
 
+/** Opciones de `api.get`: las de fetch más los estados de error que el llamador espera y maneja. */
+export interface OpcionesGet extends RequestInit {
+  /**
+   * Estados que no son una falla para quien llama (p. ej. 404 de un servidor que todavía no tiene el
+   * endpoint): igual lanzan ApiError, pero no se registran como error (ni van a Sentry).
+   */
+  estadosEsperados?: number[]
+}
+
 async function fetchWithAuth<T>(
   endpoint: string,
-  options: RequestInit = {},
+  { estadosEsperados, ...options }: OpcionesGet = {},
   leer: (json: unknown, status: number) => T = unwrapApiResponse,
 ): Promise<T> {
   const token = _getToken()
@@ -305,7 +314,8 @@ async function fetchWithAuth<T>(
         errorData = await response.json()
       } catch {}
       
-      logger.error(`API Error [${response.status}] ${endpoint}:`, errorData.message || 'Unknown error')
+      if (estadosEsperados?.includes(response.status)) logger.info(`API [${response.status}] esperado ${endpoint}`)
+      else logger.error(`API Error [${response.status}] ${endpoint}:`, errorData.message || 'Unknown error')
       
       throw errorDelSobre(errorData, response.status)
     }
@@ -321,7 +331,7 @@ async function fetchWithAuth<T>(
 // HTTP helpers
 // ─────────────────────────────────────────────────────────────────────────────
 export const api = {
-  get: <T>(endpoint: string, options: RequestInit = {}) =>
+  get: <T>(endpoint: string, options: OpcionesGet = {}) =>
     fetchWithAuth<T>(endpoint, { ...options, method: 'GET' }),
 
   post: <T>(endpoint: string, body?: unknown, options: RequestInit = {}) =>
