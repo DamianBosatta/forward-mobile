@@ -266,18 +266,18 @@ describe('confirmar', () => {
     await screen.findByText('Pala c/Cabo Fija LP')
   }
   const confirmar = () => userEvent.press(screen.getByRole('button', { name: 'Confirmar pedido' }))
+  const guardada = (id: string, mensaje: string) => ({ pathname: '/(tabs)/ventas/guardada', params: { id, mensaje } })
 
-  it('pedido: manda el alta como CreateVentaCommand con clave de idempotencia, descarta el borrador y va al detalle', async () => {
+  it('pedido: manda el alta como CreateVentaCommand con clave de idempotencia, descarta el borrador y va a la venta guardada', async () => {
     await armar()
     await confirmar()
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)/ventas/v9'))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', 'Pedido creado y confirmado exitosamente. Stock reservado.')))
     expect(altas()[0][1]).toEqual({
       clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 2, descuentoGeneral: 0, metodoEntrega: 1, entregaInmediata: false,
       items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 0 }], fechaEntrega: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
       claveIdempotencia: expect.stringMatching(/^mobile-/),
     })
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador')
-    expect(alerta).toHaveBeenCalledWith('Pedido guardado', 'Pedido creado y confirmado exitosamente. Stock reservado.')
   })
 
   it('un reintento tras un corte reusa la misma clave de idempotencia (no duplica el pedido)', async () => {
@@ -317,8 +317,8 @@ describe('confirmar', () => {
     mockGet.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas/v9' ? { venta: { estado: 9, motivoPendienteAutorizacion: 4 | 16 }, detalles: [] } : undefined))
     await armar()
     await confirmar()
-    await waitFor(() => expect(alerta).toHaveBeenCalledWith('Quedó por autorizar',
-      'Porque un descuento supera tu tope, el cliente tiene deuda de más de 30 días. Te avisamos cuando lo resuelvan.'))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9',
+      'Quedó por autorizar porque un descuento supera tu tope, el cliente tiene deuda de más de 30 días. Te avisamos cuando lo resuelvan.')))
   })
 
   it('presupuesto: el borrador ya es el presupuesto (guardar-presupuesto con la versión vigente)', async () => {
@@ -329,7 +329,7 @@ describe('confirmar', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Guardar presupuesto' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/guardar-presupuesto', { ventaId: 'b1', version: 8 }))
     expect(altas()).toHaveLength(0)
-    expect(mockReplace).toHaveBeenCalledWith('/(tabs)/ventas/b1')
+    expect(mockReplace).toHaveBeenCalledWith(guardada('b1', ''))
   })
 
   it('dos toques en el mismo instante mandan un solo presupuesto', async () => {

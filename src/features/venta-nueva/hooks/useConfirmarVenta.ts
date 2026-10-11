@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react'
-import { Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { api } from '@/core/api/client'
@@ -56,22 +55,20 @@ export function useConfirmarVenta(d: Datos) {
       // La venta ya existe: el borrador quedó huérfano. Si no se puede descartar, vence solo a las 48 h.
       if (b.borrador) await b.descartar().catch(() => undefined)
     }
-    let titulo = d.esPedido ? 'Pedido guardado' : 'Presupuesto guardado'
     let mensaje = r.message
     if (d.esPedido) {
       const detalle = await api.get<VentaDetalleDto>(`/api/v1/Ventas/${r.ventaId}`).catch(() => null)
       const motivos = motivosAutorizacion(detalle?.venta.motivoPendienteAutorizacion)
-      if (detalle?.venta.estado === ESTADO_PENDIENTE_AUTORIZACION) {
-        titulo = 'Quedó por autorizar'
-        mensaje = motivos.length ? `Porque ${motivos.join(', ')}. Te avisamos cuando lo resuelvan.` : r.message
+      if (detalle?.venta.estado === ESTADO_PENDIENTE_AUTORIZACION && motivos.length) {
+        mensaje = `Quedó por autorizar porque ${motivos.join(', ')}. Te avisamos cuando lo resuelvan.`
       }
     }
     void qc.invalidateQueries({ queryKey: ventasKeys.all })
     // La venta ya está guardada: vaciar el carrito no puede disparar un PUT con items=[] al borrador.
     b.cerrar()
     d.alGuardar()
-    router.replace(`/(tabs)/ventas/${r.ventaId}` as never)
-    Alert.alert(titulo, mensaje)
+    // Lámina Guardada: el resumen, lo que dijo el servidor y las acciones (compartir, convertir, agendar, anular).
+    router.replace({ pathname: '/(tabs)/ventas/guardada', params: { id: r.ventaId, mensaje } } as never)
   }
 
   async function confirmar(motivo?: string) {
