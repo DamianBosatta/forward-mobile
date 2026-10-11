@@ -35,6 +35,21 @@ export function aAutoguardado(lineas: LineaCarrito[], descuentoGeneral = 0, cab:
   return p
 }
 
+/**
+ * Autoguardado de un PEDIDO: el borrador nace Presupuesto en el servidor (CreateVentaBorradorCommand
+ * no recibe tipo) y UpdateVenta rechaza en un Presupuesto todo descuento sobre el tope; un Pedido
+ * legítimo quedaría en error permanente. El borrador guarda cada descuento hasta el tope y el valor
+ * elegido viaja completo recién en el POST /Ventas del final (que lo manda a autorización).
+ */
+export function hastaElTope(v: AutoguardadoVenta, tope: number): AutoguardadoVenta {
+  const t = (p: number) => Math.min(p, tope)
+  return { ...v, descuentoGeneral: t(v.descuentoGeneral), items: v.items.map((i) => ({ ...i, descuentoPorcentaje: t(i.descuentoPorcentaje) })) }
+}
+
+/** ¿Algún descuento supera el tope? (con tope > 0; con 0 el servidor lo rechaza en cualquier tipo). */
+export const superaElTope = (v: AutoguardadoVenta, tope: number) =>
+  tope > 0 && [v.descuentoGeneral, ...v.items.map((i) => i.descuentoPorcentaje)].some((p) => p > tope)
+
 type CreateVentaCommand = import('@/libs/api-client/generated/schema').components['schemas']['CreateVentaCommand']
 /**
  * Cuerpo de POST /Ventas, atado al contrato (`CreateVentaCommand`): una clave que el comando no

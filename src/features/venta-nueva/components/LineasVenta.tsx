@@ -24,10 +24,12 @@ interface Props {
   onElegirFragancias: (padreId: string) => void
   /** Nombre de la línea padre (del catálogo de venta). */
   nombrePadre: (padreId: string) => string | undefined
+  /** Aclaración bajo los avisos (p. ej., qué guarda el borrador y qué se guarda al confirmar). */
+  nota?: string | null
 }
 
 /** Pestaña Líneas (lámina Venta): las líneas, el banner de autorización y los totales estimados. */
-export function LineasVenta({ lineas, porAutorizar, rechazos, descuentoTexto, descuentoGeneral, onDescuento, tope, flete = 0, onAgregar, onEditar, onElegirFragancias, nombrePadre }: Props) {
+export function LineasVenta({ lineas, porAutorizar, rechazos, descuentoTexto, descuentoGeneral, onDescuento, tope, flete = 0, onAgregar, onEditar, onElegirFragancias, nombrePadre, nota }: Props) {
   const c = useColors()
   const t = totalesEstimados(lineas, descuentoGeneral ?? 0, flete)
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
@@ -72,6 +74,7 @@ export function LineasVenta({ lineas, porAutorizar, rechazos, descuentoTexto, de
           {`Porque ${porAutorizar.join(', ')}. El sistema lo confirma al guardar.`}
         </Notice>
       ) : null}
+      {nota ? <Text style={secundario}>{nota}</Text> : null}
       <View style={{ gap: space[2], paddingTop: space[2] }}>
         <TotalsRow label="Subtotal" importe={t.subtotal} />
         <Field label="Descuento general (%)" keyboardType="decimal-pad" alignRight value={descuentoTexto} onChangeText={onDescuento}

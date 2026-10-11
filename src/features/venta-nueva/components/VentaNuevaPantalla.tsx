@@ -15,7 +15,7 @@ import { useConfirmarVenta } from '../hooks/useConfirmarVenta'
 import { useResponsive } from '@/libs/useResponsive'
 import { useBorradorVenta } from '../hooks/useBorradorVenta'
 import { useComisionEstimada } from '../hooks/useComisionEstimada'
-import { aAutoguardado } from '../lib/payload'
+import { aAutoguardado, hastaElTope, superaElTope } from '../lib/payload'
 import { avisosVenta, totalesEstimados } from '../lib/avisos'
 import { leerNumero, mostrarNumero } from '../lib/linea'
 import type { LineaCarrito } from '../lib/carrito'
@@ -55,7 +55,12 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
   const [descuentoValido, setDescuentoValido] = useState(0)
   useEffect(() => { if (descuentoGeneral !== null) setDescuentoValido(descuentoGeneral) }, [descuentoGeneral])
   const cab = useCabeceraVenta(tipo)
-  const b = useBorradorVenta(aAutoguardado(lineas, descuentoValido, cab.cabecera))
+  const tope = user?.maxDescuentoPorcentaje ?? 0
+  const exento = hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO')
+  const paraGuardar = aAutoguardado(lineas, descuentoValido, cab.cabecera)
+  // Pedido sobre el tope: el borrador (Presupuesto en el servidor) guarda hasta el tope; lo demás va al confirmar.
+  const retenido = tipo === 'Pedido' && !exento && superaElTope(paraGuardar, tope)
+  const b = useBorradorVenta(retenido ? hastaElTope(paraGuardar, tope) : paraGuardar)
   const comision = useComisionEstimada(lineas, descuentoValido, cab.cabecera.flete, cab.porcentajeCedido)
   const { isTabletLandscape } = useResponsive()
   const [pestana, setPestana] = useState<'lineas' | 'cabecera'>('lineas')
@@ -154,14 +159,14 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
     : b.estado === 'error' || b.estado === 'conflicto' ? b.motivo : null
   // El cliente se identifica por la dirección; el nombre va aparte.
   const nombre = nombreDelCliente(cliente)
-  const tope = user?.maxDescuentoPorcentaje ?? 0
-  const avisos = avisosVenta(lineas, { tipo, tope, exento: hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO'), descuentoGeneral: descuentoValido })
+  const avisos = avisosVenta(lineas, { tipo, tope, exento, descuentoGeneral: descuentoValido })
   const { total } = totalesEstimados(lineas, descuentoValido, cab.cabecera.flete)
   // La cesión no viaja en el autoguardado (el borrador es Presupuesto); va al confirmar, y siempre a autorización.
   if (cab.porcentajeCedido) avisos.porAutorizar.push('cediste parte de tu comisión')
   const rotulo = nombre ? `${direccionDeEntrega(cliente)} · ${nombre}` : direccionDeEntrega(cliente)
   const lineasVista = (
-    <LineasVenta lineas={lineas} {...avisos} tope={tope} descuentoTexto={descuentoTexto} descuentoGeneral={descuentoGeneral} flete={cab.cabecera.flete}
+    <LineasVenta lineas={lineas} {...avisos} tope={tope}
+      nota={retenido && b.borrador ? `El borrador guarda los descuentos hasta tu tope (${mostrarNumero(tope)} %); el resto se guarda al confirmar el pedido.` : null} descuentoTexto={descuentoTexto} descuentoGeneral={descuentoGeneral} flete={cab.cabecera.flete}
       onDescuento={setDescuentoTexto} onAgregar={() => setCatalogo(true)} onEditar={setEditando}
       onElegirFragancias={setFragancias} nombrePadre={(id) => catalogoVenta.find((p) => p.id === id)?.nombre} />
   )

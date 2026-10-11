@@ -142,6 +142,19 @@ describe('pestaña Líneas', () => {
     expect(screen.getByText(/Porque un descuento supera tu tope/)).toBeTruthy()
   })
 
+  it('pedido sobre el tope: el borrador (Presupuesto en el servidor) guarda hasta el tope y el descuento elegido viaja al confirmar', async () => {
+    await elegirCliente()
+    conLineas(12.82)
+    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
+    expect(mockPut.mock.calls.at(-1)[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 10 }])
+    expect(await screen.findByText(/el resto se guarda al confirmar el pedido/)).toBeTruthy()
+    await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar pedido' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas', expect.objectContaining({
+      tipoOperacion: 2, items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 12.82 }],
+    })))
+  })
+
   it('sin stock suficiente también avisa; dentro del tope y con stock, no hay banner', async () => {
     await elegirCliente()
     conLineas(5, 12)
