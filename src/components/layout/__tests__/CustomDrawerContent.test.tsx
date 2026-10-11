@@ -78,7 +78,6 @@ const RUTAS_FUERA_DE_ALCANCE = [
   '/logistica/viajes',
   '/logistica/vehiculos',
   '/logistica/picking',
-  '/security',
 ]
 
 describe('CustomDrawerContent — recorte al alcance aprobado', () => {

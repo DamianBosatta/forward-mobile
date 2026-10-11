@@ -3,7 +3,7 @@ import { useRouter, useNavigation } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native';
 import { useAuthStore } from '../../libs/store/auth.store'
 import { useThemeStore, useColors, type ThemeMode } from '../../libs/theme'
-import { LogOut, Sun, Moon, Monitor, Shield, Building2 } from 'lucide-react-native'
+import { LogOut, Sun, Moon, Monitor, Shield, Building2, ChevronRight } from 'lucide-react-native'
 import { ForwardLogo, ConfirmModal } from '@/core/ui'
 import { API_URL, setApiUrl, ENV_PROD, ENV_DEV, ENV_LOCAL } from '@/libs/api-client'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -79,6 +79,20 @@ export default function PerfilScreen() {
           </Text>
         </View>
       </View>
+
+      {/* Sesiones y accesos propios */}
+      <Pressable
+        onPress={() => router.push('/security')}
+        accessibilityRole="button"
+        accessibilityLabel="Sesiones y accesos"
+        style={{ minHeight: 48, backgroundColor: colors.surface, borderRadius: 24, paddingHorizontal: 20, marginBottom: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Shield size={18} color={colors.primary} />
+          <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>Sesiones y accesos</Text>
+        </View>
+        <ChevronRight size={20} color={colors.textMuted} />
+      </Pressable>
 
       {/* Theme Toggle */}
       <View style={{ backgroundColor: colors.surface, borderRadius: 24, overflow: 'hidden', marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}>

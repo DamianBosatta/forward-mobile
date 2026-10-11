@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { 
@@ -14,8 +14,7 @@ import {
   Fingerprint,
   Bell,
   Lock,
-  RefreshCw,
-  User
+  RefreshCw
 } from 'lucide-react-native';
 import Animated, { 
   FadeInDown, 
@@ -53,7 +52,6 @@ const formatDistanceToNowSpanish = (date: Date): string => {
 };
 
 const SecurityCenterScreen = () => {
-  const router = useRouter();
   const colors = useColors();
   const { sessions, logs, isLoading, isError, refetch, revokeSession, isRevoking } = useSecurity();
 
@@ -266,51 +264,6 @@ const SecurityCenterScreen = () => {
                     </View>
                   </View>
                   <ChevronRight size={20} color={colors.textSecondary} />
-                </GlassCard>
-              </TouchableOpacity>
-            </Animated.View>
-          ))}
-        </View>
-
-        {/* Admin Management Section */}
-        <View style={{ paddingHorizontal: tokens.spacing.lg, marginBottom: tokens.spacing.xl }}>
-          <Text style={{ color: colors.text, fontSize: 20, fontWeight: '900', letterSpacing: -0.5, marginBottom: 16 }}>Gestión Administrativa</Text>
-          
-          {[
-            { 
-              icon: Shield, 
-              label: 'Perfiles de Permisos', 
-              desc: 'Configurar permisos granulares por módulo', 
-              route: '/security/profiles',
-              color: colors.primary
-            },
-            { 
-              icon: User, 
-              label: 'Asignación de Roles', 
-              desc: 'Vincular usuarios con roles del sistema', 
-              route: '/security/users',
-              color: colors.secondary
-            },
-          ].map((item, index) => (
-            <Animated.View 
-              key={item.label}
-              entering={FadeInDown.delay(700 + (index * 100)).duration(500)}
-              style={{ marginBottom: 12 }}
-            >
-              <TouchableOpacity activeOpacity={0.8} onPress={() => router.push(item.route as any)}>
-                <GlassCard intensity={15} style={{ padding: 20, borderRadius: tokens.radius.xl, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: colors.glassBorder }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                    <View style={{ padding: 12, backgroundColor: `${item.color}15`, borderRadius: tokens.radius.lg, marginRight: 16 }}>
-                      <item.icon size={24} color={item.color} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: colors.text, fontSize: 18, fontWeight: '900' }}>{item.label}</Text>
-                      <Text style={{ color: colors.textSecondary, fontSize: 14, marginTop: 4 }}>{item.desc}</Text>
-                    </View>
-                  </View>
-                  <View style={{ backgroundColor: `${item.color}10`, padding: 8, borderRadius: tokens.radius.full }}>
-                    <ChevronRight size={18} color={item.color} />
-                  </View>
                 </GlassCard>
               </TouchableOpacity>
             </Animated.View>
