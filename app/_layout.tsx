@@ -18,7 +18,7 @@ import {
   Inter_900Black,
 } from '@expo-google-fonts/inter'
 import { colorScheme } from 'nativewind'
-import { useColors, useIsDark } from '@/libs/theme'
+import { useColors, useIsDark, useThemeStore } from '@/libs/theme'
 import * as SplashScreen from 'expo-splash-screen'
 import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
 import { WifiOff } from 'lucide-react-native'
@@ -66,6 +66,12 @@ function AuthGuardHandler() {
 function RootLayoutNav() {
   const isHydrated = useAuthStore(state => state.isHydrated)
   const [isApiUrlLoaded, setIsApiUrlLoaded] = useState(false)
+  // El tema elegido en "Mi cuenta" vive en SecureStore: se lee antes de pintar
+  // para no mostrar un frame con "Como el teléfono" si el usuario eligió otro.
+  const isThemeHydrated = useThemeStore(state => state.isHydrated)
+  useEffect(() => {
+    useThemeStore.getState().hydrate()
+  }, [])
 
   // Inter sola (plan §7). Los nombres Outfit_* son legados: las pantallas viejas
   // los referencian, así que se registran apuntando a los archivos de Inter.
@@ -99,12 +105,12 @@ function RootLayoutNav() {
   }, [])
 
   useEffect(() => {
-    if ((fontsLoaded || fontError) && isHydrated && isApiUrlLoaded) {
+    if ((fontsLoaded || fontError) && isHydrated && isThemeHydrated && isApiUrlLoaded) {
       SplashScreen.hideAsync()
     }
-  }, [fontsLoaded, fontError, isHydrated, isApiUrlLoaded])
+  }, [fontsLoaded, fontError, isHydrated, isThemeHydrated, isApiUrlLoaded])
 
-  if (!isHydrated || (!fontsLoaded && !fontError) || !isApiUrlLoaded) {
+  if (!isHydrated || !isThemeHydrated || (!fontsLoaded && !fontError) || !isApiUrlLoaded) {
     return null; // Prevent ActivityIndicator from unmounting Splash Screen prematurely
   }
 

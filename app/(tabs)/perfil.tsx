@@ -3,17 +3,18 @@ import { useRouter, useNavigation } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native';
 import { useAuthStore } from '../../libs/store/auth.store'
 import { useThemeStore, useColors, type ThemeMode } from '../../libs/theme'
-import { LogOut, Sun, Moon, Monitor, Shield, Building2, ChevronRight } from 'lucide-react-native'
+import { LogOut, Shield, Building2, ChevronRight } from 'lucide-react-native'
 import { ForwardLogo, ConfirmModal } from '@/core/ui'
+import { Segmented, type SegmentedOption } from '@/core/ui/fw'
 import { API_URL, setApiUrl, ENV_PROD, ENV_DEV, ENV_LOCAL } from '@/libs/api-client'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { safeHaptics } from '@/core/utils/haptics'
-const THEME_OPTIONS: { mode: ThemeMode; label: string; Icon: any }[] = [
-  { mode: 'dark', label: 'Oscuro', Icon: Moon },
-  { mode: 'light', label: 'Claro', Icon: Sun },
-  { mode: 'system', label: 'Sistema', Icon: Monitor },
+const THEME_OPTIONS: SegmentedOption<ThemeMode>[] = [
+  { value: 'light', label: 'Claro' },
+  { value: 'dark', label: 'Oscuro' },
+  { value: 'system', label: 'Como el teléfono' },
 ]
 
 export default function PerfilScreen() {
@@ -94,42 +95,10 @@ export default function PerfilScreen() {
         <ChevronRight size={20} color={colors.textMuted} />
       </Pressable>
 
-      {/* Theme Toggle */}
-      <View style={{ backgroundColor: colors.surface, borderRadius: 24, overflow: 'hidden', marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 }}>
-        <View style={{ paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border }}>
-          <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1 }}>Apariencia (Tema)</Text>
-        </View>
-        <View style={{ flexDirection: 'row', padding: 8, gap: 6 }}>
-          {THEME_OPTIONS.map(({ mode: m, label, Icon }) => {
-            const isActive = mode === m
-            return (
-              <Pressable
-                key={m}
-                onPress={() => setMode(m)}
-                style={{
-                  flex: 1,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  paddingVertical: 12,
-                  borderRadius: 16,
-                  backgroundColor: isActive ? colors.primary : 'transparent',
-                  shadowColor: isActive ? colors.primary : 'transparent',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: isActive ? 0.3 : 0,
-                  shadowRadius: 4,
-                  elevation: isActive ? 2 : 0,
-                }}
-              >
-                <Icon size={16} color={isActive ? '#fff' : colors.textMuted} strokeWidth={isActive ? 2.5 : 2} />
-                <Text style={{ fontSize: 13, fontWeight: isActive ? '800' : '600', color: isActive ? '#fff' : colors.textMuted }}>
-                  {label}
-                </Text>
-              </Pressable>
-            )
-          })}
-        </View>
+      {/* Tema: único selector de la app (plan §10) */}
+      <View style={{ backgroundColor: colors.surface, borderRadius: 24, padding: 20, marginBottom: 20, gap: 12 }}>
+        <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1 }}>Tema</Text>
+        <Segmented accessibilityLabel="Tema" options={THEME_OPTIONS} value={mode} onChange={setMode} />
       </View>
 
       {/* Info */}

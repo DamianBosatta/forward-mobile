@@ -34,6 +34,7 @@ jest.mock('@/libs/api-client', () => ({
   API_URL: 'x', setApiUrl: jest.fn(), ENV_PROD: 'p', ENV_DEV: 'd', ENV_LOCAL: 'l',
 }))
 jest.mock('@/libs/theme', () => ({
+  ...jest.requireActual('@/libs/theme'),
   useColors: () => new Proxy({}, { get: () => '#000000' }),
   useThemeStore: () => ({ mode: 'light', setMode: jest.fn() }),
   tokens: {
