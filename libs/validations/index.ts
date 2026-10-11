@@ -82,21 +82,6 @@ export const loginSchema = z.object({
 export type LoginFormData = z.infer<typeof loginSchema>
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Socio Comercial Schema
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const socioSchema = z.object({
-  razonSocial: z.string().min(3, 'Mínimo 3 caracteres'),
-  cuit: z.string().length(11, 'El CUIT debe tener exactamente 11 dígitos'),
-  tipoRaw: z.union([z.literal(0), z.literal(1)]), // 0=Cliente, 1=Proveedor
-  condicionIva: z.string().min(1, 'Requerido'),
-  email: z.string().email('Email inválido').or(z.literal('')).optional(),
-  telefono: z.string().optional().default(''),
-  direccion: z.string().optional().default(''),
-})
-
-export type SocioFormData = z.infer<typeof socioSchema>
-// ─────────────────────────────────────────────────────────────────────────────
 // Compra Schema
 // ─────────────────────────────────────────────────────────────────────────────
 
