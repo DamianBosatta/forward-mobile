@@ -1,15 +1,19 @@
 import React from 'react'
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, userEvent, within } from '@testing-library/react-native'
+import { act, render, screen, userEvent, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
+import { comprasKeys } from '@/libs/api-client/compras'
+import { ventasKeys } from '@/libs/api-client/ventas'
 import { InicioScreen } from '../components/InicioScreen'
 
 const mockGet = jest.fn()
 jest.mock('@/core/api/client', () => ({
+  ...jest.requireActual('@/core/api/client'),
   API_URL: 'http://api.test',
   api: { get: (url: string) => mockGet(url) },
 }))
+const { ApiError } = jest.requireActual('@/core/api/client')
 
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({
@@ -35,21 +39,44 @@ const VENTA_HOY = {
   totalAmount: 214560,
 }
 
-type Respuestas = Partial<Record<'presupuestos' | 'pedidos' | 'porAutorizar' | 'compras' | 'hoy', unknown>>
+type Respuestas = Partial<Record<'resumen' | 'presupuestos' | 'pedidos' | 'porAutorizar' | 'compras' | 'hoy', unknown>>
 
-/** Responde según la URL, como el servidor. Una clave ausente = la llamada falla. */
+/**
+ * Responde según la URL, como el servidor. Un Error = la llamada falla con ese error. Sin `resumen`
+ * es el servidor viejo: GET /Inicio/resumen da 404. Cualquier otra clave ausente = la llamada falla.
+ */
 function servidor(r: Respuestas) {
   mockGet.mockImplementation((url: string) => {
-    const clave = url.includes('pendientes-autorizacion') ? 'porAutorizar'
+    const clave = url.includes('Inicio/resumen') ? 'resumen'
+      : url.includes('pendientes-autorizacion') ? 'porAutorizar'
       : url.includes('Compras/resumen') ? 'compras'
       : url.includes('fechaDesde') ? 'hoy'
       : url.includes('tipoOperacion=1') ? 'presupuestos'
       : url.includes('tipoOperacion=2') ? 'pedidos'
       : 'otro'
     const valor = (r as Record<string, unknown>)[clave]
-    return valor === undefined ? Promise.reject(new Error(`sin respuesta: ${url}`)) : Promise.resolve(valor)
+    if (valor instanceof Error) return Promise.reject(valor)
+    if (valor !== undefined) return Promise.resolve(valor)
+    return Promise.reject(clave === 'resumen' ? new ApiError(404, 'El recurso solicitado no existe.') : new Error(`sin respuesta: ${url}`))
   })
 }
+
+// Importes como los escribe formatImporte: sin centavos y con espacio duro tras el signo.
+const ars = (cifra: string) => `$\u00A0${cifra}`
+const usd = (cifra: string) => `USD\u00A0${cifra}`
+const importe = (total: number, moneda = 'ARS') => ({ moneda, total })
+const pendiente = (cantidad: number, ...importes: { moneda: string; total: number }[]) => ({ cantidad, importes })
+/** InicioResumenDto de alguien con los dos módulos y CAP_AUTORIZAR_VENTA. */
+const RESUMEN = {
+  ventas: {
+    presupuestosPendientes: pendiente(12, importe(1284300)),
+    pedidosConfirmados: pendiente(5, importe(940120), importe(1200, 'USD')),
+    porAutorizar: pendiente(1, importe(80000)),
+  },
+  compras: { notasPedido: pendiente(3, importe(358777)), porRecibir: pendiente(0) },
+  autorizacionesPendientes: pendiente(2, importe(302750)),
+}
+const pedidosDelResumen = () => mockGet.mock.calls.filter(([u]) => String(u).includes('Inicio/resumen')).length
 
 const pagina = (totalCount: number, items: unknown[] = [{ id: 'x' }]) => ({ items, totalCount, page: 1, pageSize: 1, totalPages: totalCount, hasNextPage: totalCount > 1 })
 
@@ -61,11 +88,12 @@ function conPermisos(...modulos: string[]) {
 
 function pintar() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(
+  render(
     <QueryClientProvider client={qc}>
       <InicioScreen />
     </QueryClientProvider>,
   )
+  return qc
 }
 
 const flat = (el: { props: { style?: unknown } }): ViewStyle => StyleSheet.flatten(el.props.style as StyleProp<ViewStyle>) ?? {}
@@ -75,7 +103,78 @@ beforeEach(() => {
   mockAncho.mockReturnValue(390)
 })
 
-describe('Inicio: tarjetas de pendientes', () => {
+describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
+  it('cada fila trae cantidad e importe; varias monedas van una por línea y una fila en 0 queda sin importe', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    pintar()
+
+    expect(await screen.findByLabelText(`Presupuestos: 12, ${ars('1.284.300')}`)).toBeTruthy()
+    const pedidos = screen.getByLabelText(`Pedidos confirmados: 5, ${ars('940.120')}, ${usd('1.200')}`)
+    expect(within(pedidos).getByText(ars('940.120'))).toBeTruthy()
+    expect(within(pedidos).getByText(usd('1.200'))).toBeTruthy()
+    // Con la capacidad, "Por autorizar" es la bandeja de todos, no las propias.
+    expect(screen.getByLabelText(`Por autorizar: 2, ${ars('302.750')}`)).toBeTruthy()
+    expect(screen.getByLabelText(`Notas de pedido: 3, ${ars('358.777')}`)).toBeTruthy()
+    const porRecibir = screen.getByLabelText('Por recibir: 0')
+    expect(within(porRecibir).getByText('0')).toBeTruthy()
+    expect(within(porRecibir).queryByText(/\$/)).toBeNull()
+    // Las tarjetas salen de una sola llamada: ni listas para contar, ni la bandeja, ni el resumen de compras.
+    expect(mockGet.mock.calls.map(([u]) => String(u)).filter((u) => !u.includes('fechaDesde'))).toEqual(['/api/v1/Inicio/resumen'])
+  })
+
+  it('una sección que el servidor manda en null no se muestra, aunque el teléfono crea tener el módulo', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
+    servidor({ resumen: { ventas: null, compras: RESUMEN.compras, autorizacionesPendientes: null }, hoy: pagina(0, []) })
+    pintar()
+
+    expect(await screen.findByLabelText(`Notas de pedido: 3, ${ars('358.777')}`)).toBeTruthy()
+    expect(screen.queryByLabelText('Ventas pendientes')).toBeNull()
+    expect(screen.queryByLabelText(/Por autorizar/)).toBeNull()
+  })
+
+  it('vendedor sin CAP_AUTORIZAR_VENTA: ve las suyas como "Esperando autorización" y la fila lleva a Ventas', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: { ventas: RESUMEN.ventas, compras: null, autorizacionesPendientes: null }, hoy: pagina(0, []) })
+    pintar()
+
+    const fila = await screen.findByLabelText(`Esperando autorización: 1, ${ars('80.000')}`)
+    expect(screen.queryByLabelText(/^Por autorizar/)).toBeNull()
+    expect(screen.queryByLabelText('Compras pendientes')).toBeNull()
+    await userEvent.setup().press(fila)
+    expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas')
+  })
+
+  it('usuario desactivado (403): muestra el motivo en lugar de las tarjetas y no cae a las llamadas viejas', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
+    servidor({ resumen: new ApiError(403, 'El usuario está desactivado.'), hoy: pagina(0, []) })
+    pintar()
+
+    expect(await screen.findByText(/El usuario está desactivado\./)).toBeTruthy()
+    expect(screen.queryByLabelText('Ventas pendientes')).toBeNull()
+    expect(screen.queryByLabelText('Compras pendientes')).toBeNull()
+    expect(mockGet.mock.calls.some(([u]) => /tipoOperacion|Compras\/resumen|pendientes-autorizacion/.test(String(u)))).toBe(false)
+  })
+
+  it('una mutación de Compras o de Ventas vuelve a pedir el resumen', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    const qc = pintar()
+    await screen.findByLabelText(`Notas de pedido: 3, ${ars('358.777')}`)
+    expect(pedidosDelResumen()).toBe(1)
+
+    // Las mutaciones invalidan la raíz de su módulo (comprasKeys.all / ventasKeys.all).
+    servidor({ resumen: { ...RESUMEN, compras: { ...RESUMEN.compras, notasPedido: pendiente(4, importe(400000)) } }, hoy: pagina(0, []) })
+    await act(() => qc.invalidateQueries({ queryKey: comprasKeys.all }))
+    expect(await screen.findByLabelText(`Notas de pedido: 4, ${ars('400.000')}`)).toBeTruthy()
+
+    servidor({ resumen: { ...RESUMEN, ventas: { ...RESUMEN.ventas, presupuestosPendientes: pendiente(13, importe(1300000)) } }, hoy: pagina(0, []) })
+    await act(() => qc.invalidateQueries({ queryKey: ventasKeys.all }))
+    expect(await screen.findByLabelText(`Presupuestos: 13, ${ars('1.300.000')}`)).toBeTruthy()
+  })
+})
+
+describe('Inicio: servidor sin /Inicio/resumen (404), las cuatro llamadas de antes', () => {
   it('los números salen del totalCount y del resumen del servidor, no de las filas recibidas', async () => {
     conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
     servidor({
@@ -92,8 +191,11 @@ describe('Inicio: tarjetas de pendientes', () => {
     expect(await screen.findByLabelText('Por autorizar: 2')).toBeTruthy()
     expect(await screen.findByLabelText('Notas de pedido: 3')).toBeTruthy()
     expect(await screen.findByLabelText('Por recibir: 2')).toBeTruthy()
-    // Los filtros que cuentan: Presupuesto+Pendiente y Pedido+Confirmada.
+    // Primero se pidió el resumen; con el 404 vino lo de antes, sin importes.
+    expect(screen.queryByText(/\$/)).toBeNull()
     const urls = mockGet.mock.calls.map(([u]) => u as string)
+    expect(urls[0]).toBe('/api/v1/Inicio/resumen')
+    // Los filtros que cuentan: Presupuesto+Pendiente y Pedido+Confirmada.
     expect(urls.some((u) => u.includes('tipoOperacion=1') && u.includes('estado=Pendiente'))).toBe(true)
     expect(urls.some((u) => u.includes('tipoOperacion=2') && u.includes('estado=Confirmada'))).toBe(true)
   })
