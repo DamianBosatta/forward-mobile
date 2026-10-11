@@ -194,6 +194,22 @@ export function useRecibirCompra() {
   })
 }
 
+/**
+ * Anula la recepción de una compra recibida (POST /Compras/{id}/anular-recepcion): descuenta el
+ * stock que ingresó y revierte la deuda. El servidor exige MOD_COMPRAS:Delete y la capacidad
+ * CAP_ANULAR_RECEPCION_COMPRAS, el motivo, y la `version` leída (409 si la compra cambió).
+ */
+export function useAnularRecepcionCompra() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, motivo, version }: { id: string; motivo: string; version: number }) =>
+      api.post<string>(`/api/v1/Compras/${id}/anular-recepcion`, { compraId: id, motivo, version }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: comprasKeys.all })
+    },
+  })
+}
+
 // ── Borrador con autoguardado (Bloque 9A, PR 3.2) ──────────────────────────────
 
 /** CompraActionResponseDto: lo que devuelven crear borrador, editar y guardar la nota. */

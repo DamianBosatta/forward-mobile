@@ -2,6 +2,10 @@ import React from 'react'
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CompraDetalle } from '../../../../../app/(tabs)/compras/[id]'
+import { useAuthStore } from '@/features/auth/store/auth.store'
+
+// Tipear fechas y motivos con userEvent es lento en una corrida completa: margen para no dar falsos rojos.
+jest.setTimeout(15000)
 
 const mockGet = jest.fn()
 const mockPost = jest.fn()
@@ -37,6 +41,11 @@ beforeEach(() => {
   mockPermisos = ['update', 'delete']
   mockPost.mockResolvedValue(undefined)
   mockDelete.mockResolvedValue(undefined)
+  useAuthStore.setState({ user: null })
+})
+
+const conCapacidad = () => useAuthStore.setState({
+  user: { ...(useAuthStore.getState().user ?? {}), permissions: [{ module: 'CAP_ANULAR_RECEPCION_COMPRAS', canRead: true }] } as never,
 })
 
 describe('detalle de compra', () => {
@@ -104,5 +113,38 @@ describe('detalle de compra', () => {
     expect(screen.queryByRole('button', { name: 'Confirmar compra' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Editar la compra' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Cancelar compra' })).toBeNull()
+  })
+
+  describe('anular la recepción (PR 3.6)', () => {
+    it('con MOD_COMPRAS:Delete y CAP_ANULAR_RECEPCION_COMPRAS: pide motivo y manda la versión que se estaba viendo', async () => {
+      conCapacidad()
+      abrir({ estado: 'Entregado' })
+      await userEvent.press(await screen.findByRole('button', { name: 'Anular recepción' }))
+      const boton = () => screen.getAllByRole('button', { name: 'Anular recepción' }).at(-1)!
+      expect(boton()).toBeDisabled()
+      mockPost.mockRejectedValueOnce(Object.assign(new Error('No alcanza el stock para descontar.'), { status: 409, errors: ['Balde Nuvia 10L: hay 10, se necesitan 48'] }))
+      await userEvent.type(screen.getByLabelText('Motivo'), 'Se cargó dos veces')
+      await userEvent.press(boton())
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/anular-recepcion', { compraId: 'aaaa1111-0000', motivo: 'Se cargó dos veces', version: 3 })
+      expect((await screen.findAllByText(/No se anuló la recepción: No alcanza el stock para descontar\.\s+Balde Nuvia 10L: hay 10, se necesitan 48/)).length).toBeGreaterThan(0)
+    })
+
+    it.each([
+      ['sin la capacidad', false, ['update', 'delete']],
+      ['sin permiso de borrar en compras', true, ['update']],
+    ])('%s no aparece', async (_caso, capacidad, permisos) => {
+      if (capacidad) conCapacidad()
+      mockPermisos = permisos as string[]
+      abrir({ estado: 'Entregado' })
+      await screen.findByText('Recibido')
+      expect(screen.queryByRole('button', { name: 'Anular recepción' })).toBeNull()
+    })
+
+    it('una compra por recibir no se anula: se cancela', async () => {
+      conCapacidad()
+      abrir({ estado: 'Confirmado' })
+      await screen.findByRole('button', { name: 'Recibir' })
+      expect(screen.queryByRole('button', { name: 'Anular recepción' })).toBeNull()
+    })
   })
 })

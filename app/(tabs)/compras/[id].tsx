@@ -2,7 +2,9 @@ import React, { useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Pencil } from 'lucide-react-native'
-import { useCompra, useCancelarCompra, useConfirmarCompra, useRecibirCompra } from '@/libs/api-client/compras'
+import { useAnularRecepcionCompra, useCompra, useCancelarCompra, useConfirmarCompra, useRecibirCompra } from '@/libs/api-client/compras'
+import { useAuthStore } from '@/features/auth/store/auth.store'
+import { hasCapability } from '@/features/auth/lib/capabilities'
 import type { CompraDto } from '@/libs/api-client'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { BottomSheet, Button, Field, Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
@@ -17,7 +19,7 @@ export default function CompraDetailScreen() {
   return <CompraDetalle id={id ?? ''} />
 }
 
-type Hoja = 'recibir' | 'cancelar' | null
+type Hoja = 'recibir' | 'cancelar' | 'anularRecepcion' | null
 
 /** "dd/mm/aaaa" → "aaaa-mm-dd" (fecha calendario, sin zona); null si no es una fecha válida. */
 export function fechaIso(texto: string): string | null {
@@ -36,7 +38,8 @@ const hoyTexto = () => ddmmaaaa(diaArgentina(Date.now()))
 /**
  * Detalle de una compra con el formato nuevo (Bloque 9A, PR 3.5). Los botones dependen del estado
  * y del permiso: nota de pedido → confirmar; confirmada → recibir (con fecha de factura si la
- * condición de pago es por días desde la factura); en las dos, editar y cancelar con motivo.
+ * condición de pago es por días desde la factura); en las dos, editar y cancelar con motivo;
+ * recibida → anular la recepción con motivo, solo con el permiso del servidor (PR 3.6).
  * Embebible en el panel derecho de la lista en tablet horizontal (`onVolver` cierra el panel).
  */
 export function CompraDetalle({ id, onVolver }: { id: string; onVolver?: () => void }) {
@@ -47,10 +50,14 @@ export function CompraDetalle({ id, onVolver }: { id: string; onVolver?: () => v
   const confirmar = useConfirmarCompra()
   const recibir = useRecibirCompra()
   const cancelar = useCancelarCompra()
+  const anularRecepcion = useAnularRecepcionCompra()
+  const permisos = useAuthStore((s) => s.user?.permissions)
   const [hoja, setHoja] = useState<Hoja>(null)
   const [error, setError] = useState<string | null>(null)
   const [fechaFactura, setFechaFactura] = useState(hoyTexto)
   const [motivo, setMotivo] = useState('')
+  // La versión que el usuario estaba mirando al abrir la hoja: si cambió después, el servidor da 409.
+  const [versionVista, setVersionVista] = useState(0)
   const volver = onVolver ?? (() => router.back())
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
 
@@ -70,7 +77,9 @@ export function CompraDetalle({ id, onVolver }: { id: string; onVolver?: () => v
   const abierta = estado === 'NotaPedido' || estado === 'Confirmado'
   const pideFactura = compra.condicionPago?.tipo === 'DiasDesdeFactura'
   const fechaLeida = fechaIso(fechaFactura)
-  const ocupado = confirmar.isPending || recibir.isPending || cancelar.isPending
+  const ocupado = confirmar.isPending || recibir.isPending || cancelar.isPending || anularRecepcion.isPending
+  // Mismo permiso que el servidor: MOD_COMPRAS:Delete y CAP_ANULAR_RECEPCION_COMPRAS.
+  const puedeAnularRecepcion = estado === 'Entregado' && canDo('MOD_COMPRAS', 'delete') && hasCapability(permisos, 'CAP_ANULAR_RECEPCION_COMPRAS')
   const puedeEditar = canDo('MOD_COMPRAS', 'update')
 
   const correr = async (accion: () => Promise<unknown>, titulo: string, despues?: () => void) => {
@@ -130,7 +139,19 @@ export function CompraDetalle({ id, onVolver }: { id: string; onVolver?: () => v
             </View>
           ) : null}
         </View>
+      ) : puedeAnularRecepcion ? (
+        <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+          <Button label="Anular recepción" variant="secundario" disabled={ocupado} onPress={() => { setVersionVista(compra.version); setHoja('anularRecepcion') }} />
+        </View>
       ) : null}
+      <BottomSheet visible={hoja === 'anularRecepcion'} onClose={() => setHoja(null)} accessibilityLabel="Anular la recepción">
+        <Text style={[typeScale.titulo, { color: c.text }]}>Anular la recepción</Text>
+        <Text style={secundario}>Descuenta del stock lo que ingresó y revierte la deuda con el proveedor. No se puede deshacer.</Text>
+        <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Por qué se anula" />
+        {error ? <Notice tone="peligro">{error}</Notice> : null}
+        <Button label="Anular recepción" variant="peligro" loading={anularRecepcion.isPending} disabled={!motivo.trim()}
+          onPress={() => { void correr(() => anularRecepcion.mutateAsync({ id: compra.id, motivo: motivo.trim(), version: versionVista }), 'No se anuló la recepción') }} />
+      </BottomSheet>
       <BottomSheet visible={hoja === 'recibir'} onClose={() => setHoja(null)} accessibilityLabel="Recibir la compra">
         <Text style={[typeScale.titulo, { color: c.text }]}>Recibir la mercadería</Text>
         <Text style={secundario}>Ingresa el stock real y genera la deuda con el proveedor.</Text>
