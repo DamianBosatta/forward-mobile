@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { ActivityIndicator, FlatList, Modal, Text, TextInput, View } from 'react-native'
 import { useNavigation } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
+import { useMutation } from '@tanstack/react-query'
 import { LayoutGrid, List, ScanBarcode, Search } from 'lucide-react-native'
 import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Notice, TopBar } from '@/core/ui/fw'
 import { RequirePermission } from '@/core/ui'
+import { buscarPorCodigoBarra } from '@/libs/api-client/productos'
 import { useCatalogoConsulta } from '@/features/catalogo/hooks/useCatalogoConsulta'
 import { ProductoCard } from '@/features/catalogo/components/ProductoCard'
 import { FichaProducto } from '@/features/catalogo/components/FichaProducto'
@@ -27,16 +29,12 @@ export default function CatalogoConsultaScreen() {
   const cat = useCatalogoConsulta()
   const columnas = grilla ? 2 : 1
   const [escaneando, setEscaneando] = useState(false)
-  const [codigoLeido, setCodigoLeido] = useState<string | null>(null)
-
-  // Código leído: cuando llega la respuesta de ESA búsqueda, un único resultado abre la
-  // ficha; si hay varios o ninguno, la búsqueda queda cargada en la lista.
-  const { termino, isLoading, isPlaceholderData, isError, totalCount, productos } = cat
-  useEffect(() => {
-    if (!codigoLeido || termino !== codigoLeido || isLoading || isPlaceholderData) return
-    if (!isError && totalCount === 1 && productos.length === 1) setSeleccion(productos[0].id)
-    setCodigoLeido(null)
-  }, [codigoLeido, termino, isLoading, isPlaceholderData, isError, totalCount, productos])
+  // Código leído: el producto con ese código exacto; una fragancia abre la ficha de su línea.
+  const escaneo = useMutation({ mutationFn: buscarPorCodigoBarra })
+  const codigo = escaneo.variables
+  const avisoEscaneo = escaneo.isPending ? { tone: 'info' as const, texto: `Buscando el código ${codigo}…` }
+    : escaneo.isError ? { tone: 'peligro' as const, texto: `No se pudo buscar el código ${codigo}. Revisá la conexión y volvé a intentar.` }
+    : escaneo.isSuccess && !escaneo.data ? { tone: 'advertencia' as const, texto: `No hay ningún producto con el código ${codigo}.` } : null
 
   const lista = (
     <View style={{ flex: 1 }}>
@@ -125,7 +123,7 @@ export default function CatalogoConsultaScreen() {
             <Search size={20} color={c.textSecondary} />
             <TextInput
               value={cat.busqueda}
-              onChangeText={cat.setBusqueda}
+              onChangeText={(texto) => { escaneo.reset(); cat.setBusqueda(texto) }}
               placeholder="Buscar por código o nombre"
               placeholderTextColor={c.textSecondary}
               accessibilityLabel="Buscar por código o nombre"
@@ -136,6 +134,11 @@ export default function CatalogoConsultaScreen() {
             />
           </View>
         </View>
+        {avisoEscaneo ? (
+          <View style={{ padding: space[4], paddingBottom: 0 }}>
+            <Notice tone={avisoEscaneo.tone}>{avisoEscaneo.texto}</Notice>
+          </View>
+        ) : null}
 
         {dosPaneles ? (
           <View style={{ flex: 1, flexDirection: 'row' }}>
@@ -157,11 +160,10 @@ export default function CatalogoConsultaScreen() {
         <EscanerCodigo
           visible={escaneando}
           onClose={() => setEscaneando(false)}
-          onLeido={(codigo) => {
+          onLeido={(leido) => {
             setEscaneando(false)
             setSeleccion(null)
-            setCodigoLeido(codigo)
-            cat.buscarYa(codigo)
+            escaneo.mutate(leido, { onSuccess: (p) => { if (p) setSeleccion(p.productoPadreId ?? p.id) } })
           }}
         />
 
