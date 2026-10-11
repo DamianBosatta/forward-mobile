@@ -52,20 +52,24 @@ export function useVentasList() {
   const {
     data,
     isLoading,
+    isPlaceholderData,
     refetch,
     isRefetching,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage
-  } = useInfiniteVentas({ pageSize: 20, ...filtro })
+  } = useInfiniteVentas({ pageSize: 20, ...filtro }, { conservarAlCambiarEstado: true })
   const resumen = useVentasResumen(filtro)
+  const servidorFiltra = resumenFiltrado(resumen.data)
 
   // Aplanamos las páginas en una sola lista para el renderizado
   // Vendor scoping is enforced server-side: GetAllVentasQueryHandler adds
   // WHERE v."VendedorId" = @UserId for Vendedor role users before the query runs.
   // VentaDtoList intentionally omits vendedorId — no client-side re-filter needed.
   const rawVentas = useMemo(() => itemsCargados<Venta>(data?.pages), [data])
-  const totalCount = totalDelServidor(data?.pages)
+  // Al tocar un chip se ven las filas anteriores filtradas acá hasta que contesta el servidor:
+  // su totalCount es del filtro anterior y no se muestra.
+  const totalCount = isPlaceholderData ? undefined : totalDelServidor(data?.pages)
 
   const filteredVentas = useMemo(() => {
     let result = rawVentas
@@ -82,9 +86,14 @@ export function useVentasList() {
   // Contador e importe del resumen, nunca sumados sobre las páginas cargadas. Con el servidor
   // anterior a #873 el estado se filtra solo acá: "cargados" no es lo que se ve y el contador
   // se oculta. Ver BACKLOG-9B.md.
-  const contador = filter === 'Todas' || resumenFiltrado(resumen.data)
+  const contador = filter === 'Todas' || servidorFiltra
     ? contadorVentas(filteredVentas.length, totalCount, resumen.data, { tipoOperacion, estados })
     : null
+
+  // Tarjeta ÓRDENES: con un chip, el servidor nuevo cuenta el filtro y el viejo (resumen sin
+  // `cantidad`) el mes entero; hasta saber cuál es, no se muestra un número.
+  const ordenesConFiltro = filter !== 'Todas' && servidorFiltra
+  const ordenes = filter === 'Todas' || resumen.data ? totalCount : undefined
 
   return {
     searchTerm, setSearchTerm,
@@ -98,6 +107,7 @@ export function useVentasList() {
     refetch: () => { void resumen.refetch(); return refetch() },
     fetchNextPage, hasNextPage, isFetchingNextPage,
     rawVentas, filteredVentas,
-    totalCount, contador
+    totalCount, contador,
+    ordenes, ordenesConFiltro,
   }
 }

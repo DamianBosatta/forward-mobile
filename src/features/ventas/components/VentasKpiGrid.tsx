@@ -7,12 +7,17 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useResponsive } from '@/libs/useResponsive'
 
 interface VentasKpiGridProps {
-  /** Total de órdenes del mes según el servidor; undefined mientras no llegó. */
+  /**
+   * Órdenes del mes según el servidor, con el filtro de la lista (tipo, búsqueda y, con el
+   * servidor que filtra por estado, el chip elegido); undefined mientras no se sabe.
+   */
   ordersCount: number | undefined
   currentMonth: string
+  /** La cantidad es la del chip de estado elegido: la etiqueta lo dice. */
+  conFiltro?: boolean
 }
 
-export function VentasKpiGrid({ ordersCount, currentMonth }: VentasKpiGridProps) {
+export function VentasKpiGrid({ ordersCount, currentMonth, conFiltro = false }: VentasKpiGridProps) {
   const colors = useColors()
   const { isSmall } = useResponsive()
 
@@ -37,7 +42,7 @@ export function VentasKpiGrid({ ordersCount, currentMonth }: VentasKpiGridProps)
               <View style={styles.iconCircleMain}>
                 <TrendingUp size={20} color="#fff" strokeWidth={2.5} />
               </View>
-              <Text style={styles.mainLabel} maxFontSizeMultiplier={1.3}>ÓRDENES {currentMonth}</Text>
+              <Text style={styles.mainLabel} maxFontSizeMultiplier={1.3}>{`ÓRDENES ${currentMonth}${conFiltro ? ' · CON ESTE FILTRO' : ''}`}</Text>
             </View>
             <View>
               <Text style={styles.mainValue} maxFontSizeMultiplier={1.3}>{ordersCount === undefined ? '—' : ordersCount}</Text>

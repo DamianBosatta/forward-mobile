@@ -142,8 +142,11 @@ describe('lista de ventas nueva: total del filtro (GET /Ventas/resumen)', () => 
   /** Los filtros de una consulta, sin la paginación. */
   const filtros = (q: URLSearchParams) => { q.delete('pageNumber'); q.delete('pageSize'); q.sort(); return q.toString() }
 
-  // forward-system #873: el resumen aplica tipo y estado y trae `cantidad`.
-  const servidorNuevo = { totalVendido: 6860919, pendientes: 3, porAutorizar: 1, entregadas: 20, cantidad: 61 }
+  // forward-system #873: el resumen aplica tipo y estado y trae `cantidad`. En el servidor `cantidad`
+  // es igual al totalCount de la lista (61); acá es otro número para ver de dónde sale M.
+  const servidorNuevo = { totalVendido: 6860919, pendientes: 3, porAutorizar: 1, entregadas: 20, cantidad: 58 }
+  /** Deja correr las respuestas ya resueltas (react-query avisa en un timeout). */
+  const procesar = () => act(() => new Promise((r) => setTimeout(r, 50)))
 
   it('en Pedidos suma el importe del servidor, pedido con los mismos filtros que la lista', async () => {
     conResumen(servidorNuevo)
@@ -170,6 +173,26 @@ describe('lista de ventas nueva: total del filtro (GET /Ventas/resumen)', () => 
     await waitFor(() => expect(ultimoResumen().get('tipoOperacion')).toBe('1'))
     expect(await screen.findByText('Mostrando 2 de 61')).toBeTruthy()
     expect(screen.queryByText(/6\.860\.919/)).toBeNull()
+  })
+
+  it('con el resumen listo y la lista cargando no hay contador (nada de "Mostrando 0 de M")', async () => {
+    const base = mockGet.getMockImplementation()!
+    mockGet.mockImplementation((url: string) => url.startsWith(RESUMEN) ? Promise.resolve(servidorNuevo)
+      : url.startsWith('/api/v1/Ventas?') ? new Promise(() => {}) : base(url))
+    pantalla()
+    await waitFor(() => expect(mockGet.mock.calls.some(([u]) => String(u).startsWith(RESUMEN))).toBe(true))
+    await procesar()
+    expect(screen.queryByText(/Mostrando/)).toBeNull()
+  })
+
+  it('con el resumen listo y la lista con error no hay contador', async () => {
+    const base = mockGet.getMockImplementation()!
+    mockGet.mockImplementation((url: string) => url.startsWith(RESUMEN) ? Promise.resolve(servidorNuevo)
+      : url.startsWith('/api/v1/Ventas?') ? Promise.reject(new Error('sin red')) : base(url))
+    pantalla()
+    expect(await screen.findByText(/No se pudieron cargar las ventas/)).toBeTruthy()
+    await procesar()
+    expect(screen.queryByText(/Mostrando/)).toBeNull()
   })
 
   it('con el servidor anterior a #873 (resumen sin cantidad) queda el contador de la lista, sin importe', async () => {

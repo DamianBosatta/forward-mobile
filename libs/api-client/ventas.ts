@@ -68,6 +68,13 @@ function filtroVentasQuery(params: VentasFiltroParams): URLSearchParams {
   return sp
 }
 
+/** Mismo filtro salvo el estado: lo único que la lista de hoy también sabe filtrar en el teléfono. */
+function soloCambiaElEstado(anterior: unknown, params: VentaParams): boolean {
+  if (!anterior) return false
+  const sinEstado = ({ estado: _e, estados: _es, ...resto }: VentaParams) => JSON.stringify(resto)
+  return sinEstado(anterior as VentaParams) === sinEstado(params)
+}
+
 // #endregion
 
 // #region Queries
@@ -97,7 +104,18 @@ export function useVentas(params: VentaParams = {}, options?: { enabled?: boolea
 /**
  * Hook para scroll infinito en listas de ventas (Recomendado para Móvil)
  */
-export function useInfiniteVentas(params: VentaParams = {}, options?: { enabled?: boolean }) {
+export function useInfiniteVentas(
+  params: VentaParams = {},
+  options?: {
+    enabled?: boolean
+    /**
+     * Al cambiar solo el estado, deja las filas anteriores (`isPlaceholderData`) hasta que llega la
+     * respuesta, para quien las filtra en el teléfono mientras tanto. Con otro cambio (fechas, tipo,
+     * búsqueda) se ve la carga: esas filas ya no son del filtro.
+     */
+    conservarAlCambiarEstado?: boolean
+  },
+) {
   return useInfiniteQuery({
     queryKey: ventasKeys.infinite(params),
     enabled: options?.enabled,
@@ -107,6 +125,9 @@ export function useInfiniteVentas(params: VentaParams = {}, options?: { enabled?
       searchParams.set('pageSize', String(params.pageSize ?? 20))
       return api.get<PagedResult<Venta>>(`/api/v1/Ventas?${searchParams}`)
     },
+    placeholderData: options?.conservarAlCambiarEstado
+      ? (anterior, consultaAnterior) => (soloCambiaElEstado(consultaAnterior?.queryKey[2], params) ? anterior : undefined)
+      : undefined,
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
       if (lastPage.hasNextPage) {

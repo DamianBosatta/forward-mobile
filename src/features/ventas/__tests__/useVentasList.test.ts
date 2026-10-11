@@ -47,25 +47,32 @@ describe('useVentasList — filtro de estado en el servidor (forward-system #873
   it('el chip va al servidor con `estados` (Preparando = EnPreparacion y Empacada) y el resumen pide lo mismo que la lista', () => {
     ;(useVentasResumen as jest.Mock).mockReturnValue({ data: undefined, refetch: jest.fn() })
     const { result } = renderHook(() => useVentasList())
+    expect(result.current.ordenes).toBe(137)
     act(() => { result.current.setFilter('Preparando') })
 
     expect(ultimaLista().estados).toEqual(['EnPreparacion', 'Empacada'])
     const { pageSize: _pagina, ...filtroLista } = ultimaLista()
     expect(ultimoResumen()).toEqual(filtroLista)
+    // Sin resumen todavía no se sabe si el servidor filtró: la tarjeta ÓRDENES no muestra un número.
+    expect(result.current.ordenes).toBeUndefined()
   })
 
-  it('servidor nuevo: con un estado elegido el contador sigue, con la cantidad y el importe del resumen', () => {
+  it('servidor nuevo: con un estado elegido el contador sigue, M de la lista e importe del resumen', () => {
+    // `cantidad` es igual al totalCount de la lista en el servidor; acá es otro número para ver de dónde sale M.
     ;(useVentasResumen as jest.Mock).mockReturnValue({
-      data: { totalVendido: 40000, pendientes: 40, porAutorizar: 0, entregadas: 0, cantidad: 40 },
+      data: { totalVendido: 40000, pendientes: 40, porAutorizar: 0, entregadas: 0, cantidad: 39 },
       refetch: jest.fn(),
     })
     const { result } = renderHook(() => useVentasList())
-    expect(result.current.contador).toBe('Mostrando 40 de 40 · $\u00A040.000,00')
+    expect(result.current.contador).toBe('Mostrando 40 de 137 · $\u00A040.000,00')
+    expect(result.current.ordenes).toBe(137)
+    expect(result.current.ordenesConFiltro).toBe(false)
     act(() => { result.current.setFilter('Pendiente') })
-    expect(result.current.contador).toBe('Mostrando 40 de 40 · $\u00A040.000,00')
+    expect(result.current.contador).toBe('Mostrando 40 de 137 · $\u00A040.000,00')
+    expect(result.current.ordenesConFiltro).toBe(true)
     act(() => { result.current.setTipoOperacion(1) })
     // Presupuestos: el resumen no da su importe (solo suma pedidos).
-    expect(result.current.contador).toBe('Mostrando 40 de 40')
+    expect(result.current.contador).toBe('Mostrando 40 de 137')
   })
 
   it('servidor viejo (resumen sin cantidad): se le pide `estados`, pero filtra el teléfono y el contador se oculta, sin importe', () => {
@@ -80,5 +87,8 @@ describe('useVentasList — filtro de estado en el servidor (forward-system #873
     expect(ultimaLista().estados).toEqual(['Entregada'])
     expect(result.current.filteredVentas).toHaveLength(0)
     expect(result.current.contador).toBeNull()
+    // Ese servidor ignora `estados`: ÓRDENES es la del mes, sin la etiqueta del filtro.
+    expect(result.current.ordenes).toBe(137)
+    expect(result.current.ordenesConFiltro).toBe(false)
   })
 })

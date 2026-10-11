@@ -27,8 +27,10 @@ function importeDelFiltro(r: VentasResumen | undefined, tipoOperacion: number, e
 }
 
 /**
- * "Mostrando N de M · $ X": M e importe del resumen (mismos filtros que la lista). Con el servidor
- * anterior a #873, M es el `totalCount` de la lista y no hay importe.
+ * "Mostrando N de M · $ X". N y M son de la lista (el servidor garantiza que su `totalCount` es la
+ * `cantidad` del resumen con los mismos filtros); sin lista cargada no hay contador, aunque el
+ * resumen haya llegado. El resumen solo pone el importe, y sin `cantidad` (servidor anterior a
+ * #873) no lo pone.
  */
 export function contadorVentas(
   cargados: number,
@@ -36,6 +38,5 @@ export function contadorVentas(
   r: VentasResumen | undefined,
   filtro: { tipoOperacion: number; estados: readonly string[] },
 ): string | null {
-  const total = resumenFiltrado(r) ? r.cantidad : totalLista
-  return textoContador(cargados, total, importeDelFiltro(r, filtro.tipoOperacion, filtro.estados))
+  return textoContador(cargados, totalLista, importeDelFiltro(r, filtro.tipoOperacion, filtro.estados))
 }

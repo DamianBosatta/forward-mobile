@@ -142,6 +142,14 @@ describe('VentasKpiGrid — small band (width 320)', () => {
     const { getByText } = render(<VentasKpiGrid {...defaultProps} ordersCount={undefined} />)
     expect(getByText('—')).toBeTruthy()
   })
+
+  it('(d3) con un chip de estado la etiqueta dice que la cantidad es la del filtro; sin chip, la de siempre', () => {
+    const { getByText, rerender, queryByText } = render(<VentasKpiGrid {...defaultProps} conFiltro />)
+    expect(getByText('ÓRDENES JUN · CON ESTE FILTRO')).toBeTruthy()
+    rerender(<VentasKpiGrid {...defaultProps} conFiltro={false} />)
+    expect(getByText('ÓRDENES JUN')).toBeTruthy()
+    expect(queryByText(/CON ESTE FILTRO/)).toBeNull()
+  })
 })
 
 // ── Tests — medium band (width 390, isMedium=true) ────────────────────────────

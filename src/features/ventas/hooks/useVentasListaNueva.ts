@@ -26,7 +26,7 @@ export function fechaDesdePeriodo(periodo: PeriodoVentas, hoy: Date = new Date()
  * Lista de ventas con el formato nuevo (Bloque 9A, PR 2.1). Todo filtro va al servidor:
  * tipo, estado, período y búsqueda. Nada se filtra sobre las páginas cargadas, así que el
  * contador "Mostrando N de M" vale con cualquier filtro. El resumen se pide con los mismos filtros
- * y da M y el importe del filtro ("· $ X").
+ * y pone el importe del filtro ("· $ X").
  */
 export function useVentasListaNueva() {
   const [pestana, setPestana] = useState<PestanaVentas>('pedidos')
