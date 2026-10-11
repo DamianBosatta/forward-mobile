@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { space, typeScale, useColors } from '@/libs/theme'
 import { Button, Field, FormContainer, Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -11,6 +11,7 @@ import { useMediosDeCobro, useRegistrarCobro } from '../api/cobros'
 import { armarCobro, mostrarFecha, type FormCobro } from '../lib/cobro'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
 import { CobroListo } from './CobroListo'
+import { ElegirChip } from './ElegirChip'
 
 export const AVISO_IMPUTACION =
   'Imputación automática: el servidor lo aplica a la deuda más vieja y te dice en qué cuenta (TST o Normal) quedó.'
@@ -74,32 +75,13 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
 
         <Field label="Monto" value={f.monto} onChangeText={v => setF(p => ({ ...p, monto: v }))} keyboardType="decimal-pad" alignRight />
 
-        <View accessibilityRole="radiogroup" accessibilityLabel="Medio" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
-          {medios.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
-          {(medios.data ?? []).filter(m => m.activo).map(m => {
-            const elegido = m.id === f.medioPagoId
-            return (
-              <Pressable
-                key={m.id}
-                accessibilityRole="radio"
-                accessibilityLabel={m.nombre ?? ''}
-                accessibilityState={{ checked: elegido, selected: elegido }}
-                onPress={() => setF(p => ({ ...p, medioPagoId: m.id ?? null, esCheque: !!m.esCheque }))}
-                style={{
-                  minHeight: 44,
-                  justifyContent: 'center',
-                  paddingHorizontal: space[4],
-                  borderRadius: radii.pastilla,
-                  backgroundColor: elegido ? c.brandSoft : c.surface2,
-                  borderWidth: elegido ? 2 : 0,
-                  borderColor: c.brand,
-                }}
-              >
-                <Text style={{ ...typeScale.secundario, color: elegido ? c.brandInk : c.text }}>{m.nombre}</Text>
-              </Pressable>
-            )
-          })}
-        </View>
+        {medios.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
+        <ElegirChip
+          titulo="Medio"
+          opciones={(medios.data ?? []).filter(m => m.activo && m.id).map(m => ({ id: m.id!, label: m.nombre ?? '' }))}
+          valor={f.medioPagoId}
+          onCambio={id => setF(p => ({ ...p, medioPagoId: id, esCheque: !!medios.data?.find(m => m.id === id)?.esCheque }))}
+        />
         {medios.error ? <Notice tone="peligro">{mensajeDelServidor(medios.error, 'No se pudieron cargar los medios de pago.')}</Notice> : null}
 
         {f.esCheque ? (

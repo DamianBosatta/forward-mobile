@@ -58,7 +58,7 @@ const APROBADOS = [
   'Clientes',
   'Catálogo y stock',
   'Cuentas corrientes',
-  'Cobros y pagos',
+  'Transferencias y cheques',
   'Consola del chofer',
   'Pedidos por preparar',
   'Mi cuenta y contraseña',

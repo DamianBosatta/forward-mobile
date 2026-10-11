@@ -26,8 +26,6 @@ export const cuentasKeys = {
   all: ['cuentas-corrientes'] as const,
   lists: () => [...cuentasKeys.all, 'list'] as const,
   propias: (activo?: boolean) => [...cuentasKeys.lists(), 'propias', activo] as const,
-  clientes: (activo?: boolean) => [...cuentasKeys.lists(), 'clientes', activo] as const,
-  proveedores: (activo?: boolean) => [...cuentasKeys.lists(), 'proveedores', activo] as const,
   movimientos: (id: string) => [...cuentasKeys.all, 'detail', id, 'movimientos'] as const,
   estadoSocio: (socioId: string) => [...cuentasKeys.all, 'estado-cuenta', socioId] as const,
 }
@@ -49,28 +47,6 @@ export function useCuentasPropias(activo: boolean = true) {
     queryKey: cuentasKeys.propias(activo),
     queryFn: async () => {
       const res = await api.get<CuentaCorrienteResumenDto[]>(`/api/v1/cuentas-corrientes/propias?activo=${activo}`)
-      return res
-    },
-    staleTime: 30_000,
-  })
-}
-
-export function useCuentasClientes(activo: boolean = true) {
-  return useQuery({
-    queryKey: cuentasKeys.clientes(activo),
-    queryFn: async () => {
-      const res = await api.get<CuentaCorrienteResumenDto[]>(`/api/v1/cuentas-corrientes/clientes?activo=${activo}`)
-      return res
-    },
-    staleTime: 30_000,
-  })
-}
-
-export function useCuentasProveedores(activo: boolean = true) {
-  return useQuery({
-    queryKey: cuentasKeys.proveedores(activo),
-    queryFn: async () => {
-      const res = await api.get<CuentaCorrienteResumenDto[]>(`/api/v1/cuentas-corrientes/proveedores?activo=${activo}`)
       return res
     },
     staleTime: 30_000,

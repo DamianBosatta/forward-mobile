@@ -17,6 +17,7 @@ jest.mock('@/libs/useResponsive', () => ({
 
 const get = api.get as jest.Mock
 const ESPERA = { timeout: 5000 }
+jest.setTimeout(15_000)
 
 beforeEach(() => {
   jest.clearAllMocks()

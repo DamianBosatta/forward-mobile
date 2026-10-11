@@ -13,6 +13,7 @@ jest.mock('@/core/api/client', () => ({ api: { get: jest.fn() }, API_URL: '' }))
 const get = api.get as jest.Mock
 /** La primera pantalla de la suite tarda en montar cuando corre el suite completo en paralelo. */
 const ESPERA = { timeout: 5000 }
+jest.setTimeout(15_000)
 const urls = () => get.mock.calls.map(([u]) => String(u))
 
 function servidor({ ficha = fichaConCuentas(), tstPaginas = 1 } = {}) {

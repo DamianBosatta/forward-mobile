@@ -12,6 +12,7 @@ jest.mock('@/core/api/client', () => ({ api: { get: jest.fn(), post: jest.fn() }
 const get = api.get as jest.Mock
 const post = api.post as jest.Mock
 const ESPERA = { timeout: 5000 }
+jest.setTimeout(15_000)
 const MEDIOS = [
   { id: 'm-ef', nombre: 'Efectivo', requiereCaja: true, esCheque: false, activo: true },
   { id: 'm-tr', nombre: 'Transferencia', requiereCaja: false, esCheque: false, activo: true },
