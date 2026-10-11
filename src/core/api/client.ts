@@ -217,6 +217,19 @@ function unwrapApiResponse<T>(result: unknown, httpStatus: number): T {
   return result as T
 }
 
+/** Respuesta de `api.postConSobre`: el `data` del sobre y el sobre entero (`null` si no vino sobre, o con 204). */
+export interface RespuestaConSobre<T, S> {
+  data: T
+  sobre: S | null
+}
+
+/** Como unwrapApiResponse, pero conserva el sobre para leer los campos que van al lado de `data`. */
+function unwrapConSobre<T, S>(result: unknown, httpStatus: number): RespuestaConSobre<T, S> {
+  const data = unwrapApiResponse<T>(result, httpStatus)
+  const esSobre = !!result && typeof result === 'object' && 'succeeded' in result
+  return { data, sobre: esSobre ? (result as S) : null }
+}
+
 /** ApiError con el mensaje (saneado), los errores, el código y los datos del sobre de error, con cualquier status. */
 function errorDelSobre(body: unknown, status: number): ApiError {
   const env = (body && typeof body === 'object' ? body : {}) as {
@@ -233,7 +246,11 @@ function errorDelSobre(body: unknown, status: number): ApiError {
 
 // ── Core fetch con auth ──────────────────────────────────────────────────────
 
-async function fetchWithAuth<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+async function fetchWithAuth<T>(
+  endpoint: string,
+  options: RequestInit = {},
+  leer: (json: unknown, status: number) => T = unwrapApiResponse,
+): Promise<T> {
   const token = _getToken()
   const isFormData = options.body instanceof FormData
 
@@ -276,7 +293,7 @@ async function fetchWithAuth<T>(endpoint: string, options: RequestInit = {}): Pr
 
       if (retryResponse.status === 204) return undefined as T
       const retryJson = await retryResponse.json()
-      return unwrapApiResponse<T>(retryJson, retryResponse.status)
+      return leer(retryJson, retryResponse.status)
     } else {
       throw new ApiError(401, 'Sesión expirada')
     }
@@ -297,7 +314,7 @@ async function fetchWithAuth<T>(endpoint: string, options: RequestInit = {}): Pr
   if (response.status === 204) return undefined as T
 
   const result = await response.json()
-  return unwrapApiResponse<T>(result, response.status)
+  return leer(result, response.status)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -315,6 +332,27 @@ export const api = {
         ? body
         : body ? JSON.stringify(body) : options.body,
     }),
+
+  /**
+   * POST que devuelve también el sobre entero, para los campos que el servidor manda al lado de
+   * `data` (p. ej. `tipoCuenta` al registrar un cobro). `api.post` sigue devolviendo solo `data`.
+   */
+  postConSobre: async <T, S extends object = Record<string, unknown>>(
+    endpoint: string,
+    body?: unknown,
+    options: RequestInit = {},
+  ): Promise<RespuestaConSobre<T, S>> =>
+    (await fetchWithAuth(
+      endpoint,
+      {
+        ...options,
+        method: 'POST',
+        body: body instanceof FormData || body instanceof Blob
+          ? body
+          : body ? JSON.stringify(body) : options.body,
+      },
+      (json, status) => unwrapConSobre<T, S>(json, status),
+    )) ?? { data: undefined as T, sobre: null },
 
   put: <T>(endpoint: string, body?: unknown, options: RequestInit = {}) =>
     fetchWithAuth<T>(endpoint, {
