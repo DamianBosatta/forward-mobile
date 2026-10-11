@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { ActivityIndicator, FlatList, Modal, Text, TextInput, View } from 'react-native'
 import { useNavigation } from 'expo-router'
-import { DrawerActions } from '@react-navigation/native'
+import { DrawerActions, useFocusEffect } from '@react-navigation/native'
 import { useMutation } from '@tanstack/react-query'
 import { LayoutGrid, List, ScanBarcode, Search } from 'lucide-react-native'
 import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
@@ -38,7 +38,7 @@ export default function CatalogoConsultaScreen() {
   const [escaneando, setEscaneando] = useState(false)
   // Código leído: el producto con ese código exacto; una fragancia abre la ficha de su línea. Sin red
   // falla enseguida (`always`): no queda en pausa para abrir una ficha cuando vuelva la señal.
-  // Otro escaneo, tocar una tarjeta, tipear o salir dejan sin efecto el escaneo en curso.
+  // Otro escaneo, abrir el escáner, tocar una tarjeta, tipear o salir dejan sin efecto el escaneo en curso.
   const corte = useRef<AbortController | null>(null)
   const escaneo = useMutation({
     mutationFn: (codigo: string) => {
@@ -48,8 +48,10 @@ export default function CatalogoConsultaScreen() {
     },
     networkMode: 'always',
   })
-  const cancelarEscaneo = () => { corte.current?.abort(); escaneo.reset() }
-  useEffect(() => () => corte.current?.abort(), [])
+  const { reset } = escaneo
+  const cancelarEscaneo = useCallback(() => { corte.current?.abort(); reset() }, [reset])
+  // El menú lateral deja la pantalla montada: salir es el blur, no el desmontaje.
+  useFocusEffect(useCallback(() => cancelarEscaneo, [cancelarEscaneo]))
   const codigo = escaneo.variables
   const avisoEscaneo = escaneo.isPending ? { tone: 'info' as const, texto: `Buscando el código ${codigo}…` }
     : escaneo.error ? { tone: 'peligro' as const, texto: falloDelEscaneo(escaneo.error, codigo) }
@@ -115,7 +117,7 @@ export default function CatalogoConsultaScreen() {
           subtitle="Solo consulta"
           leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
           actions={[
-            { icon: ScanBarcode, accessibilityLabel: 'Escanear código de barras', onPress: () => setEscaneando(true) },
+            { icon: ScanBarcode, accessibilityLabel: 'Escanear código de barras', onPress: () => { cancelarEscaneo(); setEscaneando(true) } },
             ...(dosPaneles
               ? []
               : [

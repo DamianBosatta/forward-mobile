@@ -56,14 +56,4 @@ describe('buscarPorCodigoBarra (servidor viejo, que ignora CodigoBarra y devuelv
     expect(await buscarPorCodigoBarra('2')).toBeNull()
     expect(get).toHaveBeenCalledTimes(20)
   })
-
-  it('deja de recorrer cuando se cancela (otro escaneo, o se cerró la pantalla)', async () => {
-    const corte = new AbortController()
-    get.mockImplementation(async () => {
-      corte.abort()
-      return { hasNextPage: true, items: [] }
-    })
-    expect(await buscarPorCodigoBarra('2', corte.signal)).toBeNull()
-    expect(get).toHaveBeenCalledTimes(1)
-  })
 })

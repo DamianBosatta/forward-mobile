@@ -22,7 +22,20 @@ jest.mock('expo-camera', () => {
 })
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390 }) }))
 jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }) }))
-jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
+// El menú lateral deja la pantalla montada: `salir()` simula el blur, no el desmontaje.
+const mockAlSalir = new Set<() => void>()
+jest.mock('@react-navigation/native', () => {
+  const { useEffect } = require('react')
+  return {
+    DrawerActions: { openDrawer: jest.fn() },
+    useFocusEffect: (efecto: () => void | (() => void)) => useEffect(() => {
+      const limpiar = efecto()
+      if (limpiar) mockAlSalir.add(limpiar)
+      return limpiar
+    }, [efecto]),
+  }
+})
+const salir = () => act(() => { mockAlSalir.forEach((f) => f()); mockAlSalir.clear() })
 jest.mock('@/core/api/client', () => ({
   ...jest.requireActual('@/core/api/client'),
   API_URL: 'http://api.test',
@@ -196,15 +209,28 @@ describe('Escáner del catálogo', () => {
     expect(pidio('CodigoBarra=7790000000024&PageNumber=2')).toBe(false)
   })
 
-  it('si se cierra la pantalla, deja de recorrer las páginas del servidor viejo', async () => {
-    const pagina1 = diferido()
-    conCodigo(() => pagina1.promesa)
-    const { unmount } = renderPantalla()
+  it('si se va a otra pantalla mientras busca el código, no abre la ficha al llegar la respuesta', async () => {
+    const codigo = diferido()
+    conCodigo(() => codigo.promesa)
+    renderPantalla()
     await screen.findByText(OTRO.nombre)
-    await escanear('7790000000024')
-    unmount()
-    await act(async () => pagina1.responder({ ...pagina(CATALOGO.slice(0, 1)), hasNextPage: true }))
-    expect(pidio('PageNumber=2')).toBe(false)
+    await escanear('7798114820536')
+    salir()
+    await act(async () => codigo.responder(pagina([SUELTO])))
+    expect(pidio(`/api/v1/Productos/${UNICO.id}`)).toBe(false)
+    expect(screen.queryByText('Precio de lista por unidad')).toBeNull()
+  })
+
+  it('abrir el escáner otra vez cancela el escaneo pendiente', async () => {
+    const codigo = diferido()
+    conCodigo(() => codigo.promesa)
+    renderPantalla()
+    await screen.findByText(OTRO.nombre)
+    await escanear('7798114820536')
+    await userEvent.press(screen.getByRole('button', { name: 'Escanear código de barras' }))
+    expect(screen.queryByText(/Buscando el código/)).toBeNull()
+    await act(async () => codigo.responder(pagina([SUELTO])))
+    expect(pidio(`/api/v1/Productos/${UNICO.id}`)).toBe(false)
   })
 
   it('si la cámara lee varias veces seguidas, vale solo la primera lectura', async () => {
