@@ -1,10 +1,10 @@
 import { useState, useMemo, useCallback } from 'react'
 import { View, Text, Pressable, ScrollView, TouchableOpacity, StyleSheet } from 'react-native'
-import { useRouter, useNavigation } from 'expo-router'
+import { useNavigation } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics'
 import { safeHaptics } from '@/core/utils/haptics'
-import { Search as SearchIcon, Package, Plus, MapPin, ChevronDown } from 'lucide-react-native'
+import { Search as SearchIcon, Package, MapPin, ChevronDown } from 'lucide-react-native'
 import { useColors, useIsDark } from '@/libs/theme'
 import { StockCard } from '@/features/inventario/components/StockCard'
 import { StockListRow } from '@/features/inventario/components/StockListRow'
@@ -13,7 +13,6 @@ import {
   TopHeaderActions,
   RequirePermission,
   GlassCard,
-  ConfirmModal,
   AuroraGlow,
   SegmentedControl,
   PremiumInput
@@ -23,7 +22,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BlurView } from 'expo-blur'
 import { MotiView } from 'moti'
 import { StockItem } from '@/libs/api-client/types'
-import { StockActionModal } from '@/features/inventario/components/StockActionModal'
 import { StockDetailSheet } from '@/features/inventario/components/StockDetailSheet'
 import { useInventarioList } from '@/features/inventario/hooks/useInventarioList'
 import { useCatalogoStock, CatalogoStockItem } from '@/libs/api-client/productos'
@@ -32,7 +30,6 @@ import { useAuthStore } from '@/libs/store/auth.store'
 import { canViewCost } from '@/features/ventas/lib/descuentos'
 import { storage } from '@/core/utils/storage'
 
-type StockActionMode = 'adjust' | 'status'
 
 // Persisted grid/list view-mode preference (Slice 6 — mirrors the web toggle).
 const VIEW_MODE_STORAGE_KEY = 'inventario:viewMode'
@@ -42,7 +39,6 @@ export default function InventarioScreen() {
   const navigation = useNavigation();
   const colors = useColors()
   const isDark = useIsDark()
-  const router = useRouter()
   const insets = useSafeAreaInsets()
   const { user } = useAuthStore()
   const userRoles = user?.roles ?? []
@@ -67,8 +63,6 @@ export default function InventarioScreen() {
     return new Map(catalogoItems.map((c) => [c.id ?? '', c]))
   }, [catalogoItems])
 
-  const [selectedItem, setSelectedItem] = useState<StockItem | null>(null)
-  const [modalMode, setModalMode] = useState<StockActionMode | null>(null)
   const [detailItem, setDetailItem] = useState<StockItem | null>(null)
   const [isSearchFocused, setIsSearchFocused] = useState(false)
 
@@ -83,32 +77,6 @@ export default function InventarioScreen() {
     storage.set(VIEW_MODE_STORAGE_KEY, next)
   }, [])
 
-  const [feedback, setFeedback] = useState<{
-    visible: boolean
-    variant: 'success' | 'danger'
-    title: string
-    message: string
-  }>({ visible: false, variant: 'success', title: '', message: '' })
-
-  const handleOpenAction = useCallback((item: StockItem, mode: StockActionMode) => {
-    safeHaptics.impact('medium')
-    setSelectedItem(item)
-    setModalMode(mode)
-  }, [])
-
-  const handleCloseModal = () => {
-    setModalMode(null)
-    setSelectedItem(null)
-  }
-
-  const handleActionSuccess = (title: string, message: string) => {
-    setFeedback({ visible: true, variant: 'success', title, message })
-  }
-
-  const handleActionError = (message: string) => {
-    setFeedback({ visible: true, variant: 'danger', title: 'Error', message })
-  }
-
   const handleOpenDetail = useCallback((item: StockItem) => {
     safeHaptics.impact('light')
     setDetailItem(item)
@@ -121,12 +89,10 @@ export default function InventarioScreen() {
       <StockCard
         item={item}
         index={index}
-        onOpenAjuste={() => handleOpenAction(item, 'adjust')}
-        onOpenToggle={() => handleOpenAction(item, 'status')}
         onOpenDetail={() => handleOpenDetail(item)}
       />
     )
-  ), [handleOpenAction, handleOpenDetail, viewMode])
+  ), [handleOpenDetail, viewMode])
 
   const headerComponent = useMemo(() => (
     <>
@@ -328,35 +294,6 @@ export default function InventarioScreen() {
           emptyMessage="No se encontraron productos en el inventario."
         />
 
-        <RequirePermission module="MOD_STOCK" action="create">
-          <MotiView
-            from={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: 'spring', damping: 15 }}
-            style={{ position: 'absolute', bottom: insets.bottom + 20, right: 20 }}
-          >
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => {
-                safeHaptics.impact('medium')
-                router.push('/(tabs)/inventario/nuevo')
-              }}
-              style={styles.fab}
-            >
-              <Plus size={32} color="#000" strokeWidth={3} />
-            </TouchableOpacity>
-          </MotiView>
-        </RequirePermission>
-
-        <StockActionModal
-          visible={modalMode !== null}
-          mode={modalMode}
-          item={selectedItem}
-          onClose={handleCloseModal}
-          onSuccess={handleActionSuccess}
-          onError={handleActionError}
-        />
-
         <StockDetailSheet
           item={detailItem}
           catalogoItem={catalogoForDetail}
@@ -365,15 +302,6 @@ export default function InventarioScreen() {
           onClose={() => setDetailItem(null)}
         />
 
-        <ConfirmModal
-          visible={feedback.visible}
-          title={feedback.title}
-          message={feedback.message}
-          variant={feedback.variant}
-          confirmLabel="Aceptar"
-          onConfirm={() => setFeedback(f => ({ ...f, visible: false }))}
-          onCancel={() => setFeedback(f => ({ ...f, visible: false }))}
-        />
       </View>
     </RequirePermission>
   )
@@ -436,18 +364,5 @@ const styles = StyleSheet.create({
     color: '#525252',
     fontFamily: 'Outfit_900Black',
     letterSpacing: 1.5,
-  },
-  fab: {
-    width: 64,
-    height: 64,
-    borderRadius: 22,
-    backgroundColor: '#00d1c1',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#00d1c1',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.45,
-    shadowRadius: 20,
-    elevation: 10,
   }
 })

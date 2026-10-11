@@ -20,8 +20,7 @@ import {
   StyleSheet,
 } from 'react-native'
 import { Image } from 'expo-image'
-import { useRouter } from 'expo-router'
-import { X, Edit3, Package, AlertTriangle, TrendingUp, BarChart2, History } from 'lucide-react-native'
+import { X, Package, AlertTriangle, TrendingUp, BarChart2, History } from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { MotiView } from 'moti'
 import { useColors, useIsDark } from '@/libs/theme'
@@ -85,7 +84,6 @@ export function StockDetailSheet({
 }: StockDetailSheetProps) {
   const colors = useColors()
   const isDark = useIsDark()
-  const router = useRouter()
   const showCost = canViewCost(userRoles)
   const [isMovimientosOpen, setIsMovimientosOpen] = useState(false)
 
@@ -347,29 +345,6 @@ export function StockDetailSheet({
               </Text>
             </View>
           </TouchableOpacity>
-
-          {/* ── Edit affordance ─────────────────────────────────────────── */}
-          <TouchableOpacity
-            onPress={() => {
-              safeHaptics.impact('medium')
-              onClose()
-              router.push(`/(tabs)/inventario/editar/${item.productoId}` as any)
-            }}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel={`Editar ${item.producto ?? 'producto'}`}
-            style={styles.editBtn}
-          >
-            <LinearGradient
-              colors={[colors.primary + 'CC', colors.primary]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.editBtnInner}
-            >
-              <Edit3 size={16} color="#000" strokeWidth={2.5} />
-              <Text style={styles.editBtnText}>EDITAR PRODUCTO</Text>
-            </LinearGradient>
-          </TouchableOpacity>
         </ScrollView>
       </MotiView>
     </Modal>
@@ -581,24 +556,6 @@ const styles = StyleSheet.create({
   },
   movimientosBtnText: {
     fontSize: 12,
-    fontFamily: 'Outfit_900Black',
-    letterSpacing: 0.5,
-  },
-  // Edit button
-  editBtn: {
-    marginTop: 4,
-  },
-  editBtnInner: {
-    height: 50,
-    borderRadius: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  editBtnText: {
-    color: '#000',
-    fontSize: 14,
     fontFamily: 'Outfit_900Black',
     letterSpacing: 0.5,
   },

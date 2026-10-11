@@ -7,7 +7,7 @@ import { useRouter, useNavigation } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native';
 import { safeHaptics } from '@/core/utils/haptics'
 import { useToggleSocioStatus } from '@/libs/api-client/socios'
-import { Search, Users, Plus, Building2, Filter, Activity, BarChart3, Check } from 'lucide-react-native'
+import { Search, Users, Plus, Activity, BarChart3, Check } from 'lucide-react-native'
 import { useColors, useIsDark } from '@/libs/theme'
 import { SocioCard } from '@/features/socios/components/SocioCard'
 import { ConfirmModal, GlassCard, ForwardLogo, TopHeaderActions, RequirePermission } from '@/core/ui'
@@ -117,8 +117,8 @@ export default function SociosScreen() {
     fetchNextPage, hasNextPage, isFetchingNextPage
   } = useSociosList()
   const { canCreate, canUpdate } = usePermissions()
-  const hasCreateAny = canCreate('MOD_CLIENTES') || canCreate('MOD_PROVEEDORES')
-  const hasUpdateAny = canUpdate('MOD_CLIENTES') || canUpdate('MOD_PROVEEDORES')
+  const hasCreateAny = canCreate('MOD_CLIENTES')
+  const hasUpdateAny = canUpdate('MOD_CLIENTES')
 
   const [modalVisible, setModalVisible] = useState(false)
   const [pendingToggle, setPendingToggle] = useState<SocioComercial | null>(null)
@@ -159,21 +159,10 @@ export default function SociosScreen() {
       <View style={{ flexDirection: 'row', gap: 12, marginBottom: 24 }}>
         <KpiCard label="Total" value={String(kpis.todos)} color={colors.text} Icon={BarChart3} />
         <KpiCard label="Clientes" value={String(kpis.clientes)} color={colors.primary} Icon={Check} delay={100} />
-        <KpiCard label="Proveedores" value={String(kpis.proveedores)} color={colors.secondary} Icon={Building2} delay={200} />
       </View>
 
       <View style={{ marginBottom: 24, gap: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          <Filter size={12} color={colors.textDisabled} />
-          <Text style={styles.filterLabel}>TIPO DE ENTIDAD</Text>
-        </View>
-        <SegmentedFilter
-          options={['Todos', 'Clientes', 'Proveedores']}
-          active={filters.typeFilter}
-          onChange={actions.setTypeFilter}
-        />
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, marginTop: 8 }}>
           <Activity size={12} color={colors.textDisabled} />
           <Text style={styles.filterLabel}>ESTADO OPERATIVO</Text>
         </View>
@@ -208,7 +197,7 @@ export default function SociosScreen() {
               </TouchableOpacity>
             </MotiView>
             <View>
-              <Text style={{ fontSize: 22, color: colors.text, fontFamily: 'Outfit_900Black', letterSpacing: -1 }}>SOCIOS</Text>
+              <Text style={{ fontSize: 22, color: colors.text, fontFamily: 'Outfit_900Black', letterSpacing: -1 }}>CLIENTES</Text>
             </View>
           </View>
           <TopHeaderActions />

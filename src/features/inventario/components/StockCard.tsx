@@ -16,18 +16,15 @@ import React, { useEffect } from 'react'
 import {
   View,
   Text,
-  TouchableOpacity,
   Pressable,
   StyleSheet,
 } from 'react-native'
 import { Image } from 'expo-image'
-import { Package, Eye, EyeOff, Settings2, AlertTriangle } from 'lucide-react-native'
+import { Package, AlertTriangle } from 'lucide-react-native'
 import { useColors, useIsDark } from '@/libs/theme'
 import type { StockItem } from '@/libs/api-client/types'
 import { getFullImageUrl } from '@/libs/api-client'
 import { safeHaptics } from '@/core/utils/haptics'
-import { usePermissions } from '@/core/auth/RequirePermission'
-import { LinearGradient } from 'expo-linear-gradient'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -47,8 +44,6 @@ import { derivarEstadoAlerta } from '../lib/alert-utils'
 
 interface StockCardProps {
   item: StockItem
-  onOpenAjuste: () => void
-  onOpenToggle: () => void
   /** Called when the card BODY is tapped (opens detail sheet). */
   onOpenDetail: () => void
   /** Card index for staggered entrance animation. */
@@ -61,15 +56,11 @@ interface StockCardProps {
 
 export const StockCard = React.memo(function StockCard({
   item,
-  onOpenAjuste,
-  onOpenToggle,
   onOpenDetail,
   index = 0,
 }: StockCardProps) {
   const colors = useColors()
   const isDark = useIsDark()
-  const { canUpdate } = usePermissions()
-  const canModify = canUpdate('MOD_STOCK')
   const reducedMotion = useReducedMotion()
 
   // ── Alert derivation ─────────────────────────────────────────────────────
@@ -246,62 +237,6 @@ export const StockCard = React.memo(function StockCard({
                 </Text>
               </View>
             )}
-
-            {/* ── Actions (tap-isolated) ───────────────────────────────── */}
-            {canModify && (
-              <View
-                style={styles.actionRow}
-                onStartShouldSetResponder={() => true}
-              >
-                {/* Toggle Activo/Inactivo */}
-                <TouchableOpacity
-                  onPress={() => {
-                    safeHaptics.impact('medium')
-                    onOpenToggle()
-                  }}
-                  style={[
-                    styles.iconBtn,
-                    {
-                      backgroundColor: isDark ? '#111' : '#f1f5f9',
-                      borderColor: isInactive
-                        ? colors.danger + '50'
-                        : (isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'),
-                    },
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel={isInactive ? 'Activar producto' : 'Desactivar producto'}
-                  testID="toggle-status-btn"
-                >
-                  {isInactive
-                    ? <EyeOff size={15} color={colors.danger} />
-                    : <Eye size={15} color={isDark ? '#555' : '#94a3b8'} />
-                  }
-                </TouchableOpacity>
-
-                {/* Ajustar stock */}
-                <TouchableOpacity
-                  onPress={() => {
-                    safeHaptics.impact('heavy')
-                    onOpenAjuste()
-                  }}
-                  activeOpacity={0.8}
-                  style={{ flex: 1 }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Ajustar stock"
-                  testID="ajustar-stock-btn"
-                >
-                  <LinearGradient
-                    colors={[colors.primary, '#007a6d']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.ajustarBtn}
-                  >
-                    <Settings2 size={13} color="#000" strokeWidth={2.5} />
-                    <Text style={styles.ajustarText}>AJUSTAR STOCK</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
         </Pressable>
       </Animated.View>
@@ -399,33 +334,5 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: 'Outfit_800ExtraBold',
     letterSpacing: 0.3,
-  },
-  // Actions
-  actionRow: {
-    flexDirection: 'row',
-    gap: 7,
-    marginTop: 4,
-  },
-  iconBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-  },
-  ajustarBtn: {
-    height: 34,
-    borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 5,
-  },
-  ajustarText: {
-    color: '#000',
-    fontSize: 11,
-    fontFamily: 'Outfit_900Black',
-    letterSpacing: 0.5,
   },
 })

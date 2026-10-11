@@ -42,17 +42,15 @@ const MODULES: { category: string, items: ModuleItem[] }[] = [
       { id: 'ventas', name: 'Ventas / Presupuestos', icon: ShoppingCart, route: '/(tabs)/ventas', color: '#3B82F6', appModule: 'MOD_VENTAS', appAction: 'create' },
       { id: 'compras', name: 'Compras', icon: ShoppingBag, route: '/(tabs)/compras', color: '#F59E0B', appModule: 'MOD_COMPRAS' },
       { id: 'consola', name: 'Consola del Chofer', icon: Navigation, route: '/(tabs)/logistica/consola', color: '#0EA5E9', appModule: 'MOD_VIAJES' },
-      // Logistics management (create/assign hojas de ruta) is management-only — a chofer uses the consola, not this.
-      { id: 'logistica', name: 'Gestión Logística', icon: MapPin, route: '/(tabs)/logistica', color: '#10B981', appModule: 'MOD_VIAJES', requiredRoles: ['Administrador', 'AdministradorSistemas', 'Gerencia'] },
+      // Hub de logística en SOLO lectura (pedidos y hojas de ruta); sin viajes, vehículos ni picking.
+      { id: 'logistica', name: 'Logística', icon: MapPin, route: '/(tabs)/logistica', color: '#10B981', appModule: 'MOD_VIAJES', requiredRoles: ['Administrador', 'AdministradorSistemas', 'Gerencia'] },
     ]
   },
   {
     category: "Inventario",
     items: [
-      // Stock view is READ-ONLY for the vendedor (MOD_STOCK:Read); create/edit/deactivate actions
-      // inside the screen stay gated by RequirePermission. Depósitos (warehouse management) is management-only.
+      // Catálogo y stock: SOLO consulta en mobile (Bloque 9A, PR 0.4).
       { id: 'stock', name: 'Control de Stock', icon: Package, route: '/(tabs)/inventario', color: '#EC4899', appModule: 'MOD_STOCK' },
-      { id: 'depositos', name: 'Depósitos', icon: MapPin, route: '/(tabs)/inventario/depositos', color: '#8B5CF6', appModule: 'MOD_STOCK', requiredRoles: ['Administrador', 'AdministradorSistemas', 'Gerencia'] },
     ]
   },
   {
@@ -65,8 +63,8 @@ const MODULES: { category: string, items: ModuleItem[] }[] = [
   {
     category: "Administración",
     items: [
-      { id: 'socios', name: 'Socios Comerciales', icon: BookUser, route: '/(tabs)/socios', color: '#14B8A6', appModule: 'MOD_CLIENTES' },
-      { id: 'staff', name: 'Usuarios', icon: Users, route: '/(tabs)/usuarios', color: '#F43F5E', appModule: 'MOD_USUARIOS' },
+      { id: 'socios', name: 'Clientes', icon: BookUser, route: '/(tabs)/socios', color: '#14B8A6', appModule: 'MOD_CLIENTES' },
+      { id: 'cuenta', name: 'Mi cuenta', icon: Users, route: '/(tabs)/perfil', color: '#F43F5E' },
     ]
   },
   {

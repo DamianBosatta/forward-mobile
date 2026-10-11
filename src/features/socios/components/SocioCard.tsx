@@ -28,7 +28,7 @@ export function SocioCard({ item, onEdit, onToggleStatus, delay = 0 }: SocioCard
 
   const { canRead, canUpdate } = usePermissions()
   const showSaldo = canRead('MOD_CC')
-  const showActions = canUpdate('MOD_CLIENTES') || canUpdate('MOD_PROVEEDORES')
+  const showActions = canUpdate('MOD_CLIENTES')
   const showFooter = showSaldo || showActions
 
   const isZeroCuit = !item.cuit || item.cuit === '' || /^0+[-0]+$/.test(item.cuit.replace(/\D/g, ''))
@@ -168,7 +168,7 @@ export function SocioCard({ item, onEdit, onToggleStatus, delay = 0 }: SocioCard
 
               {/* Acciones */}
               <View style={styles.actions}>
-                <RequirePermission module={isCliente ? 'MOD_CLIENTES' : 'MOD_PROVEEDORES'} action="update">
+                <RequirePermission module="MOD_CLIENTES" action="update">
                   <TouchableOpacity
                     onPress={(e) => {
                       e.stopPropagation()

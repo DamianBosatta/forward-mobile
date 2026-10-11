@@ -19,7 +19,8 @@ export function useSocioForm(id?: string) {
 
   const [razonSocial, setRazonSocial] = useState('')
   const [cuit, setCuit] = useState('')
-  const [tipoRaw, setTipoRaw] = useState<0 | 1>(0)
+  // Mobile gestiona SOLO clientes (tipo 0); proveedores fuera de alcance (Bloque 9A, PR 0.4).
+  const tipoRaw = 0 as const
   const [condicionIva, setCondicionIva] = useState<string>('Responsable Inscripto')
   const [email, setEmail] = useState('')
   const [telefono, setTelefono] = useState('')
@@ -32,7 +33,6 @@ export function useSocioForm(id?: string) {
   const resetForm = useCallback(() => {
     setRazonSocial('')
     setCuit('')
-    setTipoRaw(0)
     setCondicionIva('Responsable Inscripto')
     setEmail('')
     setTelefono('')
@@ -47,7 +47,6 @@ export function useSocioForm(id?: string) {
     if (isEditing && socio) {
       setRazonSocial(socio.razonSocial ?? '')
       setCuit(socio.cuit ?? '')
-      setTipoRaw(socio.tipo === 'Cliente' ? 0 : 1)
       setCondicionIva(socio.condicionIva ?? 'Responsable Inscripto')
       setEmail(socio.email ?? '')
       setTelefono(socio.telefono ?? '')
@@ -98,7 +97,7 @@ export function useSocioForm(id?: string) {
 
   return {
     form: { razonSocial, cuit, tipoRaw, condicionIva, email, telefono, direccion },
-    setters: { setRazonSocial, setCuit, setTipoRaw, setCondicionIva, setEmail, setTelefono, setDireccion },
+    setters: { setRazonSocial, setCuit, setCondicionIva, setEmail, setTelefono, setDireccion },
     validation: { validRazon, validCuit, validEmail },
     status: { isLoadingSocio, isEditing, isPending, formError },
     actions: { submit, resetForm, bumpFocusKey },

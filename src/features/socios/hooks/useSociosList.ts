@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useInfiniteSocios } from '@/libs/api-client/socios'
 
-export type TypeFilter = 'Todos' | 'Clientes' | 'Proveedores'
 export type StatusFilter = 'Todos' | 'Activos' | 'Inactivos'
 
 /**
@@ -10,10 +9,10 @@ export type StatusFilter = 'Todos' | 'Activos' | 'Inactivos'
  */
 export function useSociosList() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>('Todos')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('Todos')
 
-  const tipoParam = typeFilter === 'Clientes' ? 1 : typeFilter === 'Proveedores' ? 2 : undefined
+  // Mobile (Bloque 9A) gestiona SOLO clientes; la separación completa de proveedores es la fase 1 (PR 1.3).
+  const TIPO_CLIENTE = 1
   const activoParam = statusFilter === 'Activos' ? true : statusFilter === 'Inactivos' ? false : undefined
 
   const {
@@ -26,7 +25,7 @@ export function useSociosList() {
     isFetchingNextPage
   } = useInfiniteSocios({
     pageSize: 20,
-    tipo: tipoParam as any,
+    tipo: TIPO_CLIENTE as any,
     activo: activoParam,
     search: searchTerm,
   })
@@ -42,7 +41,6 @@ export function useSociosList() {
   const kpis = useMemo(() => ({
     todos: socios.length,
     clientes: socios.filter(s => s.tipo === 'Cliente').length,
-    proveedores: socios.filter(s => s.tipo === 'Proveedor').length,
   }), [socios])
 
   return {
@@ -56,12 +54,10 @@ export function useSociosList() {
     kpis,
     filters: {
       searchTerm,
-      typeFilter,
       statusFilter,
     },
     actions: {
       setSearchTerm,
-      setTypeFilter,
       setStatusFilter,
     }
   }

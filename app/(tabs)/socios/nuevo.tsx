@@ -202,32 +202,6 @@ export default function SocioFormScreen() {
             <Text style={{ color: colors.textDisabled, fontSize: 9, fontFamily: 'Outfit_900Black', textTransform: 'uppercase', letterSpacing: 2 }}>IDENTIDAD COMERCIAL</Text>
           </View>
 
-          {/* Tipo Selector Segmentado */}
-          <View style={{ marginBottom: 24 }}>
-            <Text style={styles.fieldLabel}>TIPO DE RELACIÓN</Text>
-            <View style={{ flexDirection: 'row', backgroundColor: colors.surface2, borderRadius: 16, padding: 4, borderWidth: 1, borderColor: colors.border }}>
-              {(['Cliente', 'Proveedor'] as const).map((label, idx) => {
-                const active = form.tipoRaw === idx
-                return (
-                  <TouchableOpacity
-                    key={label}
-                    onPress={() => {
-                      safeHaptics.impact('light')
-                      setters.setTipoRaw(idx as 0 | 1)
-                    }}
-                    style={{
-                      flex: 1, paddingVertical: 12, alignItems: 'center',
-                      borderRadius: 12,
-                      backgroundColor: active ? colors.primary : 'transparent',
-                    }}
-                  >
-                    <Text style={{ fontFamily: 'Outfit_800ExtraBold', fontSize: 13, color: active ? '#fff' : colors.textMuted }}>{label}</Text>
-                  </TouchableOpacity>
-                )
-              })}
-            </View>
-          </View>
-
           <FormField
             label="Razón Social"
             value={form.razonSocial}
@@ -286,7 +260,7 @@ export default function SocioFormScreen() {
           <Text style={styles.cancelBtnText}>CANCELAR</Text>
         </TouchableOpacity>
 
-        <RequirePermission module={form.tipoRaw === 0 ? 'MOD_CLIENTES' : 'MOD_PROVEEDORES'} action={status.isEditing ? 'update' : 'create'}>
+        <RequirePermission module="MOD_CLIENTES" action={status.isEditing ? 'update' : 'create'}>
           <TouchableOpacity onPress={actions.submit} disabled={status.isPending} style={[styles.submitBtn, { backgroundColor: colors.primary }]}>
             {status.isPending ? <ActivityIndicator color="#fff" /> : (
               <>

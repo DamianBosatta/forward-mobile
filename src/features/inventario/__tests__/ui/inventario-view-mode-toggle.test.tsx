@@ -100,10 +100,6 @@ jest.mock('@/features/inventario/components/StockListRow', () => ({
   },
 }))
 
-jest.mock('@/features/inventario/components/StockActionModal', () => ({
-  StockActionModal: () => null,
-}))
-
 const STORAGE_KEY = 'inventario:viewMode'
 
 beforeEach(() => {

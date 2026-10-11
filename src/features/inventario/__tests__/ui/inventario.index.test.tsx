@@ -72,24 +72,16 @@ jest.mock('@/core/ui/DataList', () => ({
 }));
 
 jest.mock('@/features/inventario/components/StockCard', () => ({
-  StockCard: ({ item, onOpenAjuste }: any) => {
-    const { View, Text, TouchableOpacity } = require('react-native');
+  StockCard: (props: any) => {
+    const { View, Text } = require('react-native');
     return (
       <View>
-        <Text>{item.nombre}</Text>
-        <TouchableOpacity testID={`ajustar-${item.id}`} onPress={onOpenAjuste}>
-          <Text>Ajustar</Text>
-        </TouchableOpacity>
+        <Text>{props.item.nombre}</Text>
+        <Text testID="acciones-de-escritura">
+          {[props.onOpenAjuste, props.onOpenToggle].filter(Boolean).length}
+        </Text>
       </View>
     );
-  }
-}));
-
-jest.mock('@/features/inventario/components/StockActionModal', () => ({
-  StockActionModal: ({ visible }: any) => {
-    if (!visible) return null;
-    const { Text } = require('react-native');
-    return <Text testID="stock-modal">Modal Abierto</Text>;
   }
 }));
 
@@ -124,14 +116,10 @@ describe('InventarioScreen UI', () => {
     expect(getByText('Producto Mock')).toBeTruthy();
   });
 
-  it('deberia abrir el modal al tocar Ajustar', () => {
+  it('es solo consulta: la tarjeta no recibe acciones de ajuste ni de activar/desactivar', () => {
     const { getByTestId } = render(<InventarioScreen />);
-    
-    // Tocar el boton de ajuste
-    fireEvent.press(getByTestId('ajustar-1'));
 
-    // Verificar que el modal se renderice
-    expect(getByTestId('stock-modal')).toBeTruthy();
+    expect(getByTestId('acciones-de-escritura').props.children).toBe(0);
   });
 
   it('deberia poder escribir en el buscador', () => {
