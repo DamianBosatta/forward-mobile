@@ -2,7 +2,7 @@ import React from 'react'
 import { Text } from 'react-native'
 import { fireEvent, render, screen } from '@testing-library/react-native'
 import { themeColors, useThemeStore } from '@/libs/theme'
-import { BottomSheet, DocumentCard } from '../index2'
+import { BottomSheet, DocumentCard } from '..'
 
 const mockUseResponsive = jest.fn()
 jest.mock('@/libs/useResponsive', () => ({

@@ -1,7 +1,7 @@
 import React from 'react'
 import { fireEvent, render, screen } from '@testing-library/react-native'
 import { themeColors, useThemeStore } from '@/libs/theme'
-import { Fab, StatusChip, TotalsRow } from '../index2'
+import { Fab, StatusChip, TotalsRow } from '..'
 
 jest.mock('lucide-react-native', () => ({ Plus: () => null }))
 
