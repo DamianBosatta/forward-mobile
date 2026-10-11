@@ -371,17 +371,35 @@ describe('confirmar', () => {
     expect(altas()[1][1].claveIdempotencia).toBe(altas()[0][1].claveIdempotencia)
   })
 
-  it('si tras el corte se cambia el pedido, el reintento lleva una clave nueva y las ediciones', async () => {
+  const REPETIDA = 'La venta ya había sido creada con esta clave de idempotencia (operación repetida).'
+  // Tras un corte la clave se reusa siempre: un pedido duplicado es peor que perder ediciones.
+  const cortarYReintentar = async (editar: boolean, mensaje: string) => {
     await armar()
     mockPost.mockImplementationOnce(() => Promise.reject(new TypeError('Network request failed')))
+      .mockImplementationOnce(() => Promise.resolve({ ventaId: 'v9', version: 1, message: mensaje }))
     await confirmar()
     expect(await screen.findByText('Network request failed')).toBeTruthy()
-    act(() => useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: pala, cantidad: 13, descuentoPct: 0 }] }))
+    if (editar) act(() => useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: pala, cantidad: 13, descuentoPct: 0 }] }))
     await confirmar()
     await waitFor(() => expect(mockReplace).toHaveBeenCalled())
     expect(altas()).toHaveLength(2)
-    expect(altas()[1][1].claveIdempotencia).not.toBe(altas()[0][1].claveIdempotencia)
+    expect(altas()[1][1].claveIdempotencia).toBe(altas()[0][1].claveIdempotencia)
+  }
+
+  it('si tras el corte se cambió el pedido y ya se había grabado, avisa y lleva a esa venta para revisarla', async () => {
+    await cortarYReintentar(true, REPETIDA)
+    expect(mockReplace).toHaveBeenCalledWith(guardada('v9', 'El pedido ya se había grabado con lo de antes. Revisalo y editalo si cambiaste algo.'))
+  })
+
+  it('si tras el corte el pedido no cambió, el reintento sigue el flujo normal', async () => {
+    await cortarYReintentar(false, REPETIDA)
+    expect(mockReplace).toHaveBeenCalledWith(guardada('v9', REPETIDA))
+  })
+
+  it('si tras el corte se cambió el pedido pero el primer intento no se había grabado, se guarda con las ediciones sin aviso', async () => {
+    await cortarYReintentar(true, 'Pedido creado y confirmado exitosamente. Stock reservado.')
     expect(altas()[1][1].items).toEqual([{ productoId: 'p1', cantidad: 13, descuentoPorcentaje: 0 }])
+    expect(mockReplace).toHaveBeenCalledWith(guardada('v9', 'Pedido creado y confirmado exitosamente. Stock reservado.'))
   })
 
   it('sin stock pide el motivo antes de mandar y lo manda en el alta', async () => {

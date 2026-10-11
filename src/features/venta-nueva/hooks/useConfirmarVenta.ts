@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { api } from '@/core/api/client'
+import { api, ApiError } from '@/core/api/client'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { ventasKeys } from '@/libs/api-client/ventas'
 import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
@@ -26,21 +26,24 @@ interface Datos {
 
 /** El servidor pide justificación cuando un Pedido no tiene stock (CreateVentaCommandHandler). */
 const pideMotivo = (e: unknown) => /justificaci[oó]n/i.test(mensajeDelServidor(e, ''))
+/** El servidor devolvió la venta que ya existía con esa clave (CreateVentaCommandHandler, operación repetida). */
+const yaExistia = (r: VentaActionResponseDto) => /ya hab[ií]a sido creada/i.test(r.message ?? '')
 
 /**
  * Confirmar (plan 9 §2.1, igual que la web). Presupuesto: el borrador autoguardado YA es el
  * presupuesto → POST /Ventas/{id}/guardar-presupuesto. Pedido: POST /Ventas con una clave de
  * idempotencia por alta (un doble toque o un reintento sin señal no duplica el pedido) y después
- * se descarta el borrador. Con la misma clave el servidor devuelve la venta que ya existe sin
- * mirar el cuerpo (CreateVentaCommandHandler): si el pedido cambió desde el intento fallido, va
- * una clave nueva para que las ediciones no se pierdan. Lo que decide el servidor (guardado o por autorizar y por qué) se muestra.
+ * se descarta el borrador. La clave se reusa SIEMPRE en la pantalla: un pedido duplicado es peor
+ * que perder ediciones. Con la misma clave el servidor devuelve la venta que ya existe sin mirar
+ * el cuerpo (CreateVentaCommandHandler); si el pedido cambió desde un intento sin respuesta, se
+ * avisa y se lleva a esa venta para revisarla. Lo que decide el servidor (guardado o por autorizar y por qué) se muestra.
  */
 export function useConfirmarVenta(d: Datos) {
   const router = useRouter()
   const qc = useQueryClient()
-  // La clave y el cuerpo (sin la clave) del último intento de alta.
-  const [claveInicial] = useState(nuevaClaveIdempotencia)
-  const alta = useRef({ clave: claveInicial, cuerpo: null as string | null })
+  const [clave] = useState(nuevaClaveIdempotencia)
+  // Cuerpos (sin la clave) de los intentos de alta que quedaron sin respuesta: alguno pudo grabarse.
+  const sinRespuesta = useRef(new Set<string>())
   const [enviando, setEnviando] = useState(false)
   // El estado no alcanza como guardia: dos toques antes del re-render leen el mismo `enviando`.
   const enVuelo = useRef(false)
@@ -52,6 +55,7 @@ export function useConfirmarVenta(d: Datos) {
   async function enviar(motivo?: string) {
     const { borrador: b } = d
     let r: VentaActionResponseDto
+    let conLoDeAntes = false
     if (d.edicion) {
       // Igual que la web (buildUpdateVentaPayload): la cesión viaja solo si se cambió; ausente = no tocar.
       r = await api.put<VentaActionResponseDto>(`/api/v1/Ventas/${d.edicion.ventaId}`, {
@@ -67,9 +71,14 @@ export function useConfirmarVenta(d: Datos) {
         motivoVentaSinStock: motivo, porcentajeComisionCedido: d.porcentajeCedido,
       })
       const firma = JSON.stringify(cuerpo(''))
-      if (alta.current.cuerpo !== null && alta.current.cuerpo !== firma) alta.current.clave = nuevaClaveIdempotencia()
-      alta.current.cuerpo = firma
-      r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', cuerpo(alta.current.clave))
+      try {
+        r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', cuerpo(clave))
+      } catch (e) {
+        if (!(e instanceof ApiError)) sinRespuesta.current.add(firma)
+        throw e
+      }
+      // Grabada por un intento anterior con otro cuerpo: las ediciones de después no están en la venta.
+      conLoDeAntes = yaExistia(r) && [...sinRespuesta.current].some((f) => f !== firma)
       // La venta ya existe: el borrador quedó huérfano. Si no se puede descartar, vence solo a las 48 h.
       if (b.borrador) await b.descartar().catch(() => undefined)
     }
@@ -81,6 +90,7 @@ export function useConfirmarVenta(d: Datos) {
         mensaje = `Quedó por autorizar porque ${motivos.join(', ')}. Te avisamos cuando lo resuelvan.`
       }
     }
+    if (conLoDeAntes) mensaje = 'El pedido ya se había grabado con lo de antes. Revisalo y editalo si cambiaste algo.'
     void qc.invalidateQueries({ queryKey: ventasKeys.all })
     // La venta ya está guardada: vaciar el carrito no puede disparar un PUT con items=[] al borrador.
     b.cerrar()
