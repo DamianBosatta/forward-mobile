@@ -1,12 +1,11 @@
 import { Drawer } from 'expo-router/drawer'
-import { StyleSheet, Platform } from 'react-native'
-import { useColors } from '../../libs/theme'
+import { Platform } from 'react-native'
 import CustomDrawerContent from '@/src/components/layout/CustomDrawerContent'
 import { useResponsive } from '@/libs/useResponsive'
 
 export default function DrawerLayout() {
-  const colors = useColors()
-  const { isLarge } = useResponsive()
+  // Plan §8: en tablet (≥ 600) el menú queda fijo; en teléfono se abre con el botón.
+  const { isTablet } = useResponsive()
 
   return (
     <Drawer
@@ -15,9 +14,9 @@ export default function DrawerLayout() {
         headerShown: false,
         drawerStyle: {
           backgroundColor: 'transparent',
-          width: isLarge ? 280 : '80%',
+          width: isTablet ? 240 : '80%', // 240: lámina TabInicio
         },
-        drawerType: isLarge ? 'permanent' : (Platform.OS === 'ios' ? 'slide' : 'front'),
+        drawerType: isTablet ? 'permanent' : (Platform.OS === 'ios' ? 'slide' : 'front'),
         swipeEdgeWidth: 100,
       }}
     >

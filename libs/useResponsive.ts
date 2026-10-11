@@ -6,12 +6,27 @@ import { useWindowDimensions } from 'react-native'
 // Backed by useWindowDimensions() so it reacts to rotation, split-screen and
 // font-driven relayout (replaces the stale module-scope Dimensions.get class).
 
+/** Puntos de corte del plan §8 (Bloque 9). */
+export const BREAKPOINTS = { tablet: 600, tabletLandscape: 900 } as const
+
+/** Teléfono < 600 · tablet vertical 600–899 · tablet horizontal ≥ 900. */
+export type FormFactor = 'phone' | 'tabletPortrait' | 'tabletLandscape'
+
+export function formFactorFor(width: number): FormFactor {
+  if (width >= BREAKPOINTS.tabletLandscape) return 'tabletLandscape'
+  if (width >= BREAKPOINTS.tablet) return 'tabletPortrait'
+  return 'phone'
+}
+
 export interface ResponsiveInfo {
   width: number
   height: number
   isSmall: boolean // width < 360 — iPhone SE / sub-360dp Android (the clippers)
   isMedium: boolean // 360 <= width < 600 — Galaxy A field fleet / standard phones
-  isLarge: boolean // width >= 600 — tablets / foldables unfolded
+  isLarge: boolean // width >= 600 — tablets / foldables unfolded (igual que isTablet)
+  formFactor: FormFactor
+  isTablet: boolean // width >= 600: menú lateral fijo, formularios centrados
+  isTabletLandscape: boolean // width >= 900: dos paneles (lista y detalle)
   scale: (size: number) => number
 }
 
@@ -36,15 +51,21 @@ function makeScale(width: number): (size: number) => number {
 export function useResponsive(): ResponsiveInfo {
   const { width, height } = useWindowDimensions()
 
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    const formFactor = formFactorFor(width)
+    const isTablet = formFactor !== 'phone'
+    return {
       width,
       height,
       isSmall: width < 360,
-      isMedium: width >= 360 && width < 600,
-      isLarge: width >= 600,
+      isMedium: width >= 360 && width < BREAKPOINTS.tablet,
+      isLarge: isTablet,
+      formFactor,
+      isTablet,
+      isTabletLandscape: formFactor === 'tabletLandscape',
       scale: makeScale(width),
-    }),
+    }
+  },
     [width, height],
   )
 }
