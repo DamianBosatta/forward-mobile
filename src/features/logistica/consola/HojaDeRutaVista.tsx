@@ -1,6 +1,6 @@
 import React from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
+import { FONT, importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { Button, Notice, StatusChip, formatImporte } from '@/core/ui/fw'
 import { EstadoParada, type ParadaDto } from '@/libs/api-client/types'
 import type { ParadaNumerada, ResumenRuta } from './hojaDeRuta'
@@ -26,7 +26,7 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onReporta
   const c = useColors()
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const { proxima, despues, reportadas } = resumen
-  const tituloSeccion = { ...typeScale.secundario, fontWeight: '600' as const, color: c.textSecondary }
+  const tituloSeccion = { ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600' as const, color: c.textSecondary }
   const tarjeta = { backgroundColor: c.surface, borderRadius: radii.tarjeta, ...sombra }
 
   return (
