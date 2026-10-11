@@ -373,12 +373,12 @@ describe('confirmar', () => {
 
   const REPETIDA = 'La venta ya había sido creada con esta clave de idempotencia (operación repetida).'
   // Tras un corte la clave se reusa siempre: un pedido duplicado es peor que perder ediciones.
-  const cortarYReintentar = async (editar: boolean, mensaje: string) => {
+  const cortarYReintentar = async (editar: boolean, mensaje: string, corte: unknown = new TypeError('Network request failed'), textoCorte = 'Network request failed') => {
     await armar()
-    mockPost.mockImplementationOnce(() => Promise.reject(new TypeError('Network request failed')))
+    mockPost.mockImplementationOnce(() => Promise.reject(corte))
       .mockImplementationOnce(() => Promise.resolve({ ventaId: 'v9', version: 1, message: mensaje }))
     await confirmar()
-    expect(await screen.findByText('Network request failed')).toBeTruthy()
+    expect(await screen.findByText(textoCorte)).toBeTruthy()
     if (editar) act(() => useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: pala, cantidad: 13, descuentoPct: 0 }] }))
     await confirmar()
     await waitFor(() => expect(mockReplace).toHaveBeenCalled())
@@ -388,6 +388,11 @@ describe('confirmar', () => {
 
   it('si tras el corte se cambió el pedido y ya se había grabado, avisa y lleva a esa venta para revisarla', async () => {
     await cortarYReintentar(true, REPETIDA)
+    expect(mockReplace).toHaveBeenCalledWith(guardada('v9', 'El pedido ya se había grabado con lo de antes. Revisalo y editalo si cambiaste algo.'))
+  })
+
+  it('un 504 del gateway cuenta como sin respuesta: si el pedido ya se había grabado, avisa', async () => {
+    await cortarYReintentar(true, REPETIDA, new ApiError(504, 'Gateway Timeout'), 'Gateway Timeout')
     expect(mockReplace).toHaveBeenCalledWith(guardada('v9', 'El pedido ya se había grabado con lo de antes. Revisalo y editalo si cambiaste algo.'))
   })
 

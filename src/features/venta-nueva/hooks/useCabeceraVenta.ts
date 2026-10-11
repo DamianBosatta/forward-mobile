@@ -25,7 +25,8 @@ export function useCabeceraVenta(tipo: TipoDocumento) {
   const [ahora] = useState(() => Date.now())
   const dias = useDiasEntrega()
   const feriados = useFeriados(diaArgentina(ahora))
-  const calendarioListo = dias.isSuccess && feriados.isSuccess
+  // Con datos en caché el calendario sirve aunque falle un refetch de fondo.
+  const calendarioListo = dias.data !== undefined && feriados.data !== undefined
   const tira = useMemo(() => tiraDeDias(ahora, { dias: dias.data ?? null, feriados: feriados.data ?? [] }), [ahora, dias.data, feriados.data])
   const user = useAuthStore((s) => s.user)
 
@@ -56,7 +57,7 @@ export function useCabeceraVenta(tipo: TipoDocumento) {
   }
   return {
     cabecera, tira, hidratar,
-    calendarioError: dias.isError || feriados.isError,
+    calendarioError: (dias.isError && dias.data === undefined) || (feriados.isError && feriados.data === undefined),
     reintentarCalendario: () => { if (dias.isError) void dias.refetch(); if (feriados.isError) void feriados.refetch() }, setMetodoEntrega, setFecha, fleteTexto, setFleteTexto, fleteInvalido, observaciones, setObservaciones,
     comision, puedeCeder, cesionTexto, setCesionTexto, cesionError,
     porcentajeCedido: puedeCeder && !cesionError && cesionLeida ? cesionLeida : undefined,

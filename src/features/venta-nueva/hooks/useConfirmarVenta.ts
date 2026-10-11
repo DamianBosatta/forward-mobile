@@ -74,7 +74,8 @@ export function useConfirmarVenta(d: Datos) {
       try {
         r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', cuerpo(clave))
       } catch (e) {
-        if (!(e instanceof ApiError)) sinRespuesta.current.add(firma)
+        // Sin respuesta: no llegó (red) o un gateway cortó (5xx); el alta pudo haberse grabado igual.
+        if (!(e instanceof ApiError) || e.status >= 500) sinRespuesta.current.add(firma)
         throw e
       }
       // Grabada por un intento anterior con otro cuerpo: las ediciones de después no están en la venta.

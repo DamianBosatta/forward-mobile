@@ -1,9 +1,12 @@
 import { useCallback, useState } from 'react'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useQueryClient } from '@tanstack/react-query'
+import { api } from '@/core/api/client'
+import type { VentaDetalleDto } from '@/libs/api-client/types'
 import { guardarBorradorVenta, useDescartarBorradorVenta, useIniciarBorradorVenta, ventasKeys } from '@/libs/api-client/ventas'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useAutoguardado } from './useAutoguardado'
+import { autoguardadoDesdeVenta } from '../lib/hidratar'
 import { aAutoguardado, type AutoguardadoVenta } from '../lib/payload'
 
 /**
@@ -26,7 +29,12 @@ export function useBorradorVenta(valores: AutoguardadoVenta) {
     },
     [borrador, qc],
   )
-  const autoguardado = useAutoguardado({ borradorId: borrador?.id, versionInicial: borrador?.version ?? 0, base: borrador?.base, valores, guardar })
+  // Tras un fallo sin respuesta, lo que el servidor tiene de verdad (el PUT pudo haberse aplicado).
+  const releer = useCallback(async () => {
+    const d = await api.get<VentaDetalleDto>(`/api/v1/Ventas/${borrador!.id}`)
+    return { version: d.venta.version, valores: autoguardadoDesdeVenta(d) }
+  }, [borrador])
+  const autoguardado = useAutoguardado({ borradorId: borrador?.id, versionInicial: borrador?.version ?? 0, base: borrador?.base, valores, guardar, releer })
 
   const crear = async (clienteId: string) => {
     setErrorAlCrear(null)

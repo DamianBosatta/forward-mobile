@@ -3,6 +3,7 @@ import type { SocioDetailDto, VentaDetalleDto, VentaDetalleItemDto, VentaHeaderD
 import { METODO_ENTREGA, type MetodoEntregaValue } from '@/features/ventas/lib/venta-form-retiro'
 import { aElegido, type ClienteElegido } from '@/features/clientes/lib/recientes'
 import type { LineaCarrito } from './carrito'
+import { aAutoguardado, type AutoguardadoVenta } from './payload'
 import { codigoDeVenta, tipoDeVenta } from './ventaGuardada'
 
 /**
@@ -54,6 +55,10 @@ export function cabeceraDesdeVenta(h: VentaHeaderDto): VentaCargada['cabecera'] 
   const dia = h.fechaEntrega?.match(/^\d{4}-\d{2}-\d{2}/)?.[0] ?? null
   return { metodoEntrega: metodo, fecha: dia, flete: h.cargoFleteAmount ?? 0, observaciones: h.observaciones ?? '' }
 }
+
+/** Lo que el servidor tiene de la venta, en la misma forma que el snapshot del autoguardado (para compararlos). */
+export const autoguardadoDesdeVenta = (v: VentaDetalleDto): AutoguardadoVenta =>
+  aAutoguardado(lineasDesdeVenta(v.detalles, []), v.venta.porcentajeDescuento, cabeceraDesdeVenta(v.venta))
 
 export function ventaCargada(venta: VentaDetalleDto, socio: SocioDetailDto, catalogo: CatalogoStockItem[]): VentaCargada {
   return {
