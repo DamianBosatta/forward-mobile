@@ -242,7 +242,7 @@ describe('Inicio: servidor sin /Inicio/resumen (404), las cuatro llamadas de ant
 describe('Inicio: Reciente · Hoy', () => {
   it('usa la dirección como título y el nombre en su propia línea', async () => {
     conPermisos('MOD_VENTAS')
-    servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(1, [VENTA_HOY]) })
+    servidor({ resumen: RESUMEN, hoy: pagina(1, [VENTA_HOY]) })
     pintar()
 
     const tarjeta = await screen.findByLabelText(/^Pedido A00418 · Emanuel Parraquini/)
@@ -253,13 +253,13 @@ describe('Inicio: Reciente · Hoy', () => {
 
   it('si la consulta de hoy falla muestra un error con "Reintentar", no un día vacío', async () => {
     conPermisos('MOD_VENTAS')
-    servidor({ presupuestos: pagina(0), pedidos: pagina(0) }) // hoy falla
+    servidor({ resumen: RESUMEN }) // hoy falla
     pintar()
 
     expect(await screen.findByText('No se pudieron cargar las ventas de hoy')).toBeTruthy()
     expect(screen.queryByText('Todavía no hay ventas hoy.')).toBeNull()
 
-    servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(0, []) })
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
     const user = userEvent.setup()
     await user.press(screen.getByRole('button', { name: 'Reintentar' }))
     expect(await screen.findByText('Todavía no hay ventas hoy.')).toBeTruthy()
@@ -268,7 +268,7 @@ describe('Inicio: Reciente · Hoy', () => {
 
   it('un día vacío con éxito dice que no hay ventas', async () => {
     conPermisos('MOD_VENTAS')
-    servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(0, []) })
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
     pintar()
     expect(await screen.findByText('Todavía no hay ventas hoy.')).toBeTruthy()
     expect(screen.queryByText('No se pudieron cargar las ventas de hoy')).toBeNull()
@@ -278,7 +278,7 @@ describe('Inicio: Reciente · Hoy', () => {
     jest.useFakeTimers({ now: new Date('2026-10-11T01:30:00Z'), doNotFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval', 'setImmediate', 'queueMicrotask', 'nextTick'] })
     try {
       conPermisos('MOD_VENTAS')
-      servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(0, []) })
+      servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
       pintar()
       await screen.findByText('Todavía no hay ventas hoy.')
 
@@ -295,7 +295,7 @@ describe('Inicio: Reciente · Hoy', () => {
     jest.useFakeTimers({ now: new Date('2026-10-11T02:59:00Z'), doNotFake: ['setImmediate', 'queueMicrotask', 'nextTick'] }) // 23:59 ART del 10-10
     try {
       conPermisos('MOD_VENTAS')
-      servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(0, []) })
+      servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
       pintar()
       await jest.advanceTimersByTimeAsync(0)
       expect(screen.getByText('Sábado 10 de octubre')).toBeTruthy()
@@ -313,7 +313,7 @@ describe('Inicio: Reciente · Hoy', () => {
 
   it('la hora de la tarjeta se muestra en hora argentina', async () => {
     conPermisos('MOD_VENTAS')
-    servidor({ presupuestos: pagina(0), pedidos: pagina(0), hoy: pagina(1, [VENTA_HOY]) }) // 13:03Z
+    servidor({ resumen: RESUMEN, hoy: pagina(1, [VENTA_HOY]) }) // 13:03Z
     pintar()
     const tarjeta = await screen.findByLabelText(/^Pedido A00418/)
     expect(within(tarjeta).getByText('10:03')).toBeTruthy()
