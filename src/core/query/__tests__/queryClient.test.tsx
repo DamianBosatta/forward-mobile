@@ -1,5 +1,10 @@
-import { MutationObserver, QueryObserver } from '@tanstack/react-query'
-import { crearQueryClient, debePersistir, inicioKeys } from '../queryClient'
+import React from 'react'
+import { dehydrate, MutationObserver, onlineManager, QueryClientProvider, QueryObserver } from '@tanstack/react-query'
+import { act, renderHook } from '@testing-library/react-native'
+import { useCambiarContrasena } from '@/features/cuenta/api/cuenta'
+import { crearQueryClient, debePersistir, inicioKeys, opcionesDePersistencia } from '../queryClient'
+
+jest.mock('@/core/api/client', () => ({ api: { post: () => Promise.resolve(true) } }))
 
 const consulta = (qc: ReturnType<typeof crearQueryClient>, queryKey: unknown[]) => qc.getQueryCache().find({ queryKey })!
 
@@ -44,5 +49,30 @@ describe('Inicio se refresca tras las mutaciones', () => {
 
     await new MutationObserver(qc, { mutationFn: () => Promise.reject(new Error('409')) }).mutate().catch(() => undefined)
     expect(qc.getQueryState(inicioKeys.resumen())?.isInvalidated).toBe(true)
+  })
+})
+
+describe('mutaciones que se guardan en el teléfono', () => {
+  afterEach(() => onlineManager.setOnline(true))
+
+  it('solo las que quedaron en pausa (sin red), y nunca el cambio de contraseña', async () => {
+    const qc = crearQueryClient()
+    const wrapper = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    const { result } = renderHook(() => useCambiarContrasena(), { wrapper })
+    const cambio = { email: 'a@b.c', currentPassword: 'Vieja.12345', newPassword: 'Nueva.12345', confirmNewPassword: 'Nueva.12345' }
+
+    // Terminada: no se guarda.
+    await act(async () => { await result.current.mutateAsync(cambio) })
+    await new MutationObserver(qc, { mutationFn: async () => 'ok' }).mutate()
+    expect(dehydrate(qc, opcionesDePersistencia).mutations).toHaveLength(0)
+
+    // Sin red queda en pausa: una cualquiera se guarda para mandarla después; la de contraseña, no.
+    onlineManager.setOnline(false)
+    act(() => { result.current.mutate(cambio) })
+    void new MutationObserver(qc, { mutationFn: async () => 'ok', mutationKey: ['otra'] }).mutate()
+    await act(async () => {})
+    const guardadas = dehydrate(qc, opcionesDePersistencia).mutations
+    expect(guardadas.map((m) => m.mutationKey)).toEqual([['otra']])
+    expect(JSON.stringify(guardadas)).not.toContain('Nueva.12345')
   })
 })

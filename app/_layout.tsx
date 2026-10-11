@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Stack } from 'expo-router'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { asyncStoragePersister } from '@/core/query/persistConfig'
-import { crearQueryClient, debePersistir } from '@/core/query/queryClient'
+import { crearQueryClient, opcionesDePersistencia } from '@/core/query/queryClient'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { useAuthGuard } from '../hooks/useAuthGuard'
@@ -31,7 +31,7 @@ import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 SplashScreen.preventAutoHideAsync()
 
 const queryClient = crearQueryClient()
-vaciarCacheAlCerrarSesion(queryClient)
+vaciarCacheAlCerrarSesion(queryClient, asyncStoragePersister)
 
 function OfflineBanner() {
   const { isConnected } = useNetworkStatus()
@@ -151,10 +151,7 @@ function RootLayout() {
         client={queryClient} 
         persistOptions={{ 
           persister: asyncStoragePersister,
-          dehydrateOptions: {
-            shouldDehydrateMutation: () => true,
-            shouldDehydrateQuery: debePersistir,
-          }
+          dehydrateOptions: opcionesDePersistencia,
         }}
       >
         <SafeAreaProvider>

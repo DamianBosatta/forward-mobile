@@ -1,4 +1,4 @@
-import { MutationCache, QueryClient, type DefaultOptions, type Query } from '@tanstack/react-query'
+import { defaultShouldDehydrateMutation, MutationCache, QueryClient, type DefaultOptions, type Mutation, type Query } from '@tanstack/react-query'
 
 /**
  * Raíz de las consultas de Inicio: resumen de Ventas y Compras. Cada mutación la invalida al terminar
@@ -42,8 +42,17 @@ export function debePersistir(query: Query): boolean {
   return !isHeavy
 }
 
+/**
+ * Mutaciones que se guardan: solo las que quedaron en pausa sin red, para mandarlas al volver la
+ * señal; nunca las marcadas con `meta.persist: false` (llevan secretos en las variables).
+ */
+export function debePersistirMutacion(mutation: Mutation): boolean {
+  if (mutation.meta?.persist === false) return false
+  return defaultShouldDehydrateMutation(mutation)
+}
+
 /** Qué se guarda en el teléfono (`dehydrateOptions` de PersistQueryClientProvider). */
 export const opcionesDePersistencia = {
   shouldDehydrateQuery: debePersistir,
-  shouldDehydrateMutation: () => true,
+  shouldDehydrateMutation: debePersistirMutacion,
 }
