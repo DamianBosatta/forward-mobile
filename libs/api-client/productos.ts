@@ -1,4 +1,4 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { api } from './client'
 import type { Producto, ProductoDetailDto, PagedResult, CreateProductoRequest, UpdateProductoRequest } from './types'
 import type { components } from './generated/schema'
@@ -51,10 +51,13 @@ export function useProductos(params: ProductoParams = {}) {
 }
 
 /**
- * Hook para scroll infinito en lista de productos
+ * Hook para scroll infinito en lista de productos.
+ * `mantenerAnterior`: mientras llega la búsqueda nueva se siguen viendo los resultados de la
+ * anterior (para listas cuya única clave cambiante es el término de búsqueda).
  */
-export function useInfiniteProductos(params: ProductoParams = {}) {
+export function useInfiniteProductos(params: ProductoParams = {}, { mantenerAnterior = false } = {}) {
   return useInfiniteQuery({
+    placeholderData: mantenerAnterior ? keepPreviousData : undefined,
     queryKey: productosKeys.infinite(params),
     queryFn: ({ pageParam = 1 }) => {
       const searchParams = new URLSearchParams()
@@ -82,6 +85,18 @@ export function useProducto(id: string) {
     queryFn: () => api.get<ProductoDetailDto>(`/api/v1/Productos/${id}`),
     enabled: !!id,
     staleTime: 5 * 60_000,
+  })
+}
+
+export type VarianteProducto = components['schemas']['VarianteListItemDto']
+
+/** Fragancias (variantes) de una línea. El servidor redacta las cantidades a quien no puede verlas. */
+export function useVariantesProducto(id: string, enabled = true) {
+  return useQuery({
+    queryKey: [...productosKeys.detail(id), 'variantes'] as const,
+    queryFn: () => api.get<VarianteProducto[]>(`/api/v1/Productos/${id}/variantes`),
+    enabled: !!id && enabled,
+    staleTime: 60_000,
   })
 }
 

@@ -86,8 +86,8 @@ export {
 } from './ventas'
 
 // Productos hooks
-export { productosKeys, useProductos, useInfiniteProductos, useCatalogoStock, useProducto, useCreateProducto, useUpdateProducto, useToggleProductoStatus } from './productos'
-export type { CatalogoStockItem, AlmacenStockItem } from './productos'
+export { productosKeys, useProductos, useInfiniteProductos, useCatalogoStock, useProducto, useVariantesProducto, useCreateProducto, useUpdateProducto, useToggleProductoStatus } from './productos'
+export type { CatalogoStockItem, AlmacenStockItem, VarianteProducto } from './productos'
 
 // Finanzas hooks
 export {

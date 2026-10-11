@@ -1,14 +1,12 @@
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { api } from './client'
-import type { StockItem, MovimientoStockHistorialDto, PagedResult, AjusteStockRequest } from './types'
+import type { StockItem, PagedResult, AjusteStockRequest } from './types'
 import { productosKeys } from './productos'
 
 export const stockKeys = {
   all: ['stock'] as const,
   lists: () => [...stockKeys.all, 'list'] as const,
   list: (params: StockParams) => [...stockKeys.lists(), params] as const,
-  movimientos: (productoId: string, params?: object) =>
-    [...stockKeys.all, 'movimientos', productoId, params] as const,
 }
 
 export interface StockParams {
@@ -20,7 +18,7 @@ export interface StockParams {
   search?: string
 }
 
-export function useStock(params: StockParams = {}) {
+export function useStock(params: StockParams = {}, { enabled = true } = {}) {
   const searchParams = new URLSearchParams()
   if (params.pageNumber) searchParams.set('pageNumber', String(params.pageNumber))
   if (params.pageSize) searchParams.set('pageSize', String(params.pageSize))
@@ -32,62 +30,30 @@ export function useStock(params: StockParams = {}) {
   return useQuery({
     queryKey: stockKeys.list(params),
     queryFn: () => api.get<PagedResult<StockItem>>(`/api/v1/Stocks?${searchParams}`),
+    enabled,
   })
 }
 
-export function useInfiniteStock(params: StockParams = {}) {
-  return useInfiniteQuery({
-    queryKey: [...stockKeys.lists(), 'infinite', params],
-    queryFn: ({ pageParam = 1 }) => {
-      const searchParams = new URLSearchParams()
-      searchParams.set('pageNumber', String(pageParam))
-      searchParams.set('pageSize', String(params.pageSize ?? 20))
-      if (params.depositoId) searchParams.set('depositoId', params.depositoId)
-      if (params.productoId) searchParams.set('productoId', params.productoId)
-      if (params.activo !== undefined && params.activo !== null) searchParams.set('activo', String(params.activo))
-      if (params.search) searchParams.set('searchTerm', params.search)
-      
-      return api.get<PagedResult<StockItem>>(`/api/v1/Stocks?${searchParams}`)
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage: any) => {
-      if (lastPage.hasNextPage) {
-        return lastPage.page + 1
-      }
-      return undefined
-    },
-    staleTime: 5 * 60_000,
-  })
-}
-
-export interface MovimientosStockParams {
+export interface DisponibilidadItem {
   productoId: string
-  depositoId?: string
-  pageNumber?: number
-  pageSize?: number
+  disponible: boolean
 }
 
 /**
- * Fetches the stock movement history for a product.
- * Maps to GET /api/v1/stocks/movimientos.
- * Disabled when productoId is empty.
+ * ¿Hay al menos una unidad para vender de cada producto en el depósito? El servidor responde
+ * un booleano por producto, nunca la cantidad (PR 3.1: el vendedor ve disponibilidad).
  */
-export function useMovimientosStock(params: MovimientosStockParams) {
-  const { productoId, depositoId, pageNumber = 1, pageSize = 20 } = params
-
-  const searchParams = new URLSearchParams()
-  if (productoId) searchParams.set('productoId', productoId)
-  if (depositoId) searchParams.set('depositoId', depositoId)
-  searchParams.set('pageNumber', String(pageNumber))
-  searchParams.set('pageSize', String(pageSize))
-
+export function useDisponibilidad(depositoId: string | undefined, productoIds: string[]) {
   return useQuery({
-    queryKey: stockKeys.movimientos(productoId, { depositoId, pageNumber, pageSize }),
+    queryKey: [...stockKeys.all, 'disponibilidad', depositoId, productoIds] as const,
     queryFn: () =>
-      api.get<PagedResult<MovimientoStockHistorialDto>>(
-        `/api/v1/Stocks/movimientos?${searchParams}`,
-      ),
-    enabled: Boolean(productoId),
+      api.post<DisponibilidadItem[]>('/api/v1/Stocks/disponibilidad', {
+        depositoId,
+        items: productoIds.map((productoId) => ({ productoId, cantidad: 1 })),
+      }),
+    enabled: !!depositoId && productoIds.length > 0,
+    // Al cargar otra página la lista de ids cambia: se mantienen los chips ya conocidos.
+    placeholderData: keepPreviousData,
     staleTime: 60_000,
   })
 }
