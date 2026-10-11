@@ -21,15 +21,20 @@ export function useCambiarContrasena() {
 
 /**
  * POST /api/v1/Sessions/logout: revoca en el servidor TODAS las sesiones del usuario (no hay
- * forma de identificar solo la de este teléfono). Si falla (sin señal), igual se sale localmente.
+ * forma de identificar solo la de este teléfono). Devuelve si se pudo: la salida local no depende
+ * del servidor, pero quien llama tiene que avisar si falló.
  */
-export async function cerrarSesionEnElServidor(): Promise<void> {
+export async function cerrarSesionEnElServidor(): Promise<boolean> {
   try {
     await api.post('/api/v1/Sessions/logout', {})
+    return true
   } catch {
-    // La salida local no depende del servidor.
+    return false
   }
 }
+
+export const AVISO_SESION_NO_CERRADA_EN_TODOS =
+  'Se cerró en este teléfono; no se pudo cerrar en los demás dispositivos. Probá de nuevo desde la web o más tarde.'
 
 /** Una sesión abierta (refresh token vigente) del usuario. `device` es el User-Agent tal cual. */
 export interface SesionAbierta {

@@ -38,6 +38,8 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
   const [elegida, setElegida] = useState<string | null>(null)
   const [decidiendo, setDecidiendo] = useState<{ venta: VentaPendienteAutorizacion; decision: Decision } | null>(null)
 
+  const [aviso, setAviso] = useState<string | null>(null)
+
   const lista = q.data ?? []
   const visibles = lista.filter((v) => tieneMotivo(v.motivoPendienteAutorizacion, filtro))
   const total = totalDeBandeja(visibles)
@@ -72,6 +74,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
           {`${visibles.length} POR AUTORIZAR${total !== null ? ` · ${formatImporte(total)}` : ''}`}
         </Text>
       ) : null}
+      {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
       <Text style={secundario}>La que más espera, primero. «Autorizar» pide confirmación; «Rechazar» pide el motivo.</Text>
     </View>
   )
@@ -94,11 +97,11 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
           ))}
         </Pressable>
         <View style={{ flexDirection: 'row', gap: space[3] }}>
-          <View style={{ flex: 1 }}><Button label="Rechazar" variant="secundario" accessibilityLabel={`Rechazar la venta de ${v.clienteDisplayName}`} onPress={() => setDecidiendo({ venta: v, decision: 'rechazar' })} /></View>
+          <View style={{ flex: 1 }}><Button label="Rechazar" variant="secundario" accessibilityLabel={`Rechazar la venta de ${v.clienteDisplayName}`} onPress={() => { setAviso(null); setDecidiendo({ venta: v, decision: 'rechazar' }) }} /></View>
           <View style={{ flex: 1 }}>
             {conRazon
               ? <Button label="Revisar" accessibilityLabel={`Revisar la venta de ${v.clienteDisplayName}`} onPress={() => abrir(v.id)} />
-              : <Button label="Autorizar" accessibilityLabel={`Autorizar la venta de ${v.clienteDisplayName}`} onPress={() => setDecidiendo({ venta: v, decision: 'autorizar' })} />}
+              : <Button label="Autorizar" accessibilityLabel={`Autorizar la venta de ${v.clienteDisplayName}`} onPress={() => { setAviso(null); setDecidiendo({ venta: v, decision: 'autorizar' }) }} />}
           </View>
         </View>
       </View>
@@ -137,6 +140,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
         ventaId={decidiendo?.venta.id ?? ''}
         cliente={decidiendo?.venta.clienteDisplayName ?? ''}
         fechaPendiente={decidiendo?.venta.fechaPendiente}
+        onConflicto={setAviso}
         onClose={() => setDecidiendo(null)}
         onHecho={() => { if (decidiendo?.venta.id === elegida) setElegida(null) }}
       />

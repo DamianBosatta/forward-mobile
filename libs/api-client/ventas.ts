@@ -223,10 +223,22 @@ export function useAnularVenta() {
  * Versión vigente de la venta para decidir sobre ella. Si cambió desde que se cargó la bandeja
  * (`fechaPendiente` es su fecha de modificación), frena: no se decide sobre algo que no se vio.
  */
+export class VentaCambioError extends Error {
+  constructor() {
+    super('La venta cambió desde que se cargó la lista. Actualizá y revisala antes de decidir.')
+    this.name = 'VentaCambioError'
+  }
+}
+
+/** La venta ya no es la que se vio: la frenó nuestra guarda o el servidor contestó 409. */
+export function esConflictoDeVenta(e: unknown): boolean {
+  return e instanceof VentaCambioError || (e as { status?: number } | null)?.status === 409
+}
+
 async function versionParaDecidir(id: string, fechaPendiente?: string): Promise<number> {
   const d = await api.get<VentaDetalleDto>(`/api/v1/Ventas/${id}`)
   if (fechaPendiente && Date.parse(d.venta.fechaModificacion ?? '') !== Date.parse(fechaPendiente)) {
-    throw new Error('La venta cambió desde que se cargó la lista. Actualizá y revisala antes de decidir.')
+    throw new VentaCambioError()
   }
   return d.venta.version
 }
@@ -248,6 +260,8 @@ export function useAutorizarVenta() {
       queryClient.invalidateQueries({ queryKey: ventasKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: ventasKeys.all })
     },
+    // Con la venta cambiada, el detalle y la bandeja en pantalla quedaron viejos: se vuelven a pedir.
+    onError: (e: unknown) => { if (esConflictoDeVenta(e)) queryClient.invalidateQueries({ queryKey: ventasKeys.all }) },
   })
 }
 
@@ -265,6 +279,7 @@ export function useRechazarAutorizacion() {
       queryClient.invalidateQueries({ queryKey: ventasKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: ventasKeys.all })
     },
+    onError: (e: unknown) => { if (esConflictoDeVenta(e)) queryClient.invalidateQueries({ queryKey: ventasKeys.all }) },
   })
 }
 

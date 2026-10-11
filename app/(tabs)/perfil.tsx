@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Pressable, ScrollView, Switch, Text, View } from 'react-native'
+import { Alert, Pressable, ScrollView, Switch, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../../libs/store/auth.store'
@@ -10,7 +10,7 @@ import { API_URL, setApiUrl, ENV_PROD, ENV_DEV, ENV_LOCAL } from '@/libs/api-cli
 import { safeHaptics } from '@/core/utils/haptics'
 import { useVentaNuevaStore, usePuedeProbarVentaNueva } from '@/features/ventas/lib/ventaNueva'
 import { CambiarContrasena } from '@/features/cuenta/components/CambiarContrasena'
-import { cerrarSesionEnElServidor } from '@/features/cuenta/api/cuenta'
+import { AVISO_SESION_NO_CERRADA_EN_TODOS, cerrarSesionEnElServidor } from '@/features/cuenta/api/cuenta'
 import { SesionesAbiertas } from '@/features/cuenta/components/SesionesAbiertas'
 
 const THEME_OPTIONS: SegmentedOption<ThemeMode>[] = [
@@ -46,9 +46,15 @@ export default function PerfilScreen() {
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
   const titulo = (t: string) => <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>{t}</Text>
 
+  /** Revoca en el servidor (mejor esfuerzo); si no se pudo, lo dice: no queda la sensación de haber cerrado todo. */
+  const revocarEnElServidor = async () => {
+    const ok = await cerrarSesionEnElServidor()
+    if (!ok) Alert.alert('Sesión cerrada solo aquí', AVISO_SESION_NO_CERRADA_EN_TODOS)
+  }
+
   const salir = async () => {
     setSaliendo(true)
-    await cerrarSesionEnElServidor()
+    await revocarEnElServidor()
     safeHaptics.notification('success')
     queryClient.clear()
     logout()
@@ -57,6 +63,8 @@ export default function PerfilScreen() {
 
   const cambiarEntorno = async () => {
     if (!entornoPendiente) return
+    // Antes de cambiar la URL: el logout tiene que ir al servidor donde está la sesión.
+    await revocarEnElServidor()
     await setApiUrl(entornoPendiente)
     queryClient.clear()
     logout()
@@ -125,14 +133,14 @@ export default function PerfilScreen() {
 
         <View style={tarjeta}>
           <Button label="Cerrar sesión" variant="peligro" loading={saliendo} onPress={() => setConfirmarSalida(true)} />
-          <Text style={secundario}>Cierra tu sesión en todos los dispositivos, la web incluida. Para volver a entrar vas a necesitar tu usuario y tu contraseña.</Text>
+          <Text style={secundario}>Cierra tu sesión aquí y en los demás dispositivos; en la web puede seguir abierta unos minutos. Para volver a entrar vas a necesitar tu usuario y tu contraseña.</Text>
         </View>
       </ScrollView>
 
       <ConfirmModal
         visible={confirmarSalida}
         title="Cerrar sesión"
-        message="Se cierra en todos los dispositivos, la web incluida."
+        message="Se cierra aquí y en los demás dispositivos; en la web puede seguir abierta unos minutos."
         variant="danger"
         confirmLabel="Cerrar sesión"
         cancelLabel="Cancelar"

@@ -6,6 +6,7 @@ import React from 'react'
 import fs from 'fs'
 import path from 'path'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Alert } from 'react-native'
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
 import PerfilScreen from '../../../../app/(tabs)/perfil'
@@ -119,6 +120,48 @@ describe('Mi cuenta', () => {
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Sessions/logout', {})
     expect(useAuthStore.getState().isAuthenticated).toBe(false)
+  })
+
+  it('si el servidor no pudo cerrar las demás sesiones, sale igual pero lo dice', async () => {
+    usuario()
+    const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => {})
+    mockPost.mockRejectedValueOnce(new Error('sin señal'))
+    pintar()
+    await userEvent.press(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    await userEvent.press(screen.getByLabelText('Confirmar: Cerrar sesión'))
+
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
+    expect(alerta).toHaveBeenCalledWith(expect.any(String), expect.stringContaining('no se pudo cerrar en los demás dispositivos'))
+  })
+
+  it('si el servidor cerró las sesiones, no hay aviso de falla', async () => {
+    usuario()
+    const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => {})
+    mockPost.mockResolvedValueOnce(true)
+    pintar()
+    await userEvent.press(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    await userEvent.press(screen.getByLabelText('Confirmar: Cerrar sesión'))
+
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
+    expect(alerta).not.toHaveBeenCalled()
+  })
+
+  it('el texto no promete cerrar la web al instante', () => {
+    usuario()
+    pintar()
+    expect(screen.queryByText(/la web incluida/)).toBeNull()
+    expect(screen.getByText(/en la web puede seguir abierta unos minutos/)).toBeTruthy()
+  })
+
+  it('cambiar de servidor también revoca las sesiones en el servidor de origen antes de salir', async () => {
+    usuario()
+    mockPost.mockResolvedValueOnce(true)
+    pintar()
+    await userEvent.press(screen.getByRole('radio', { name: 'Desarrollo' }))
+    await userEvent.press(screen.getByLabelText('Confirmar: Cambiar y salir'))
+
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Sessions/logout', {})
   })
 })
 

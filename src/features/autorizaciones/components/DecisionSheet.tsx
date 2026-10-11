@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Text, View } from 'react-native'
 import { BottomSheet, Button, Field, Notice } from '@/core/ui/fw'
 import { space, typeScale, useColors } from '@/libs/theme'
-import { useAutorizarVenta, useRechazarAutorizacion } from '@/libs/api-client/ventas'
+import { VentaCambioError, useAutorizarVenta, useRechazarAutorizacion } from '@/libs/api-client/ventas'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
 export type Decision = 'autorizar' | 'rechazar'
@@ -18,6 +18,10 @@ interface Props {
   fechaPendiente?: string
   /** Con margen en amarillo la razón es obligatoria (la exige el servidor). */
   razonObligatoria?: boolean
+  /** Mientras se vuelve a pedir la venta no se decide: la versión puede estar vieja. */
+  bloqueado?: boolean
+  /** La venta cambió desde que se cargó la bandeja: la hoja se cierra y se avisa por acá. */
+  onConflicto?: (mensaje: string) => void
   onClose: () => void
   onHecho?: () => void
 }
@@ -26,7 +30,7 @@ interface Props {
  * Confirmación de la decisión. Rechazar pide el motivo (obligatorio: vuelve al vendedor).
  * Autorizar pide confirmación y una razón, obligatoria solo con margen en amarillo.
  */
-export function DecisionSheet({ decision, ventaId, cliente, version, fechaPendiente, razonObligatoria = false, onClose, onHecho }: Props) {
+export function DecisionSheet({ decision, ventaId, cliente, version, fechaPendiente, razonObligatoria = false, bloqueado = false, onConflicto, onClose, onHecho }: Props) {
   const c = useColors()
   const [texto, setTexto] = useState('')
   const autorizar = useAutorizarVenta()
@@ -41,7 +45,10 @@ export function DecisionSheet({ decision, ventaId, cliente, version, fechaPendie
     rechazar.reset()
     onClose()
   }
-  const listo = { onSuccess: () => { cerrar(); onHecho?.() } }
+  const listo = {
+    onSuccess: () => { cerrar(); onHecho?.() },
+    onError: (e: unknown) => { if (e instanceof VentaCambioError) { cerrar(); onConflicto?.(e.message) } },
+  }
   const confirmar = () => {
     if (falta) return
     if (decision === 'rechazar') rechazar.mutate({ id: ventaId, version, fechaPendiente, motivo: texto }, listo)
@@ -72,7 +79,7 @@ export function DecisionSheet({ decision, ventaId, cliente, version, fechaPendie
           <Button
             label={esRechazo ? 'Rechazar' : 'Autorizar'}
             variant={esRechazo ? 'peligro' : 'primario'}
-            disabled={falta}
+            disabled={falta || bloqueado}
             loading={m.isPending}
             onPress={confirmar}
           />

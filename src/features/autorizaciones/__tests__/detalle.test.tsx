@@ -1,6 +1,6 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, userEvent, within } from '@testing-library/react-native'
+import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { DetalleAutorizacion } from '../components/DetalleAutorizacion'
 
@@ -97,5 +97,50 @@ describe('Autorizar venta: el detalle', () => {
     pintar({ ...VENTA, venta: { ...VENTA.venta, estado: 2 } })
     expect(await screen.findByText('Esta venta ya no espera autorización.')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Autorizar' })).toBeNull()
+  })
+
+  it('sin CAP_AUTORIZAR_VENTA (entrando por un enlace) el detalle es de solo lectura', async () => {
+    permisos('MOD_VENTAS')
+    pintar()
+    expect(await screen.findByText(/necesitás el permiso de autorizar ventas/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Autorizar' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Rechazar' })).toBeNull()
+  })
+
+  it('al abrir la decisión vuelve a pedir la venta y manda la versión nueva, no la cacheada', async () => {
+    permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+    let pedidos = 0
+    mockGet.mockImplementation((url: string) =>
+      Promise.resolve(url.endsWith('autorizacion-preview') ? PREVIEW : { ...VENTA, venta: { ...VENTA.venta, version: 42 + pedidos++ } }))
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={qc}><DetalleAutorizacion id="v1" /></QueryClientProvider>)
+    await userEvent.press(await screen.findByRole('button', { name: 'Autorizar' }))
+    const hoja = within(screen.getByLabelText('Autorizar venta'))
+    await userEvent.type(hoja.getByLabelText('Razón para autorizar · obligatoria'), 'ok')
+    await waitFor(() => expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBeFalsy())
+    await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 43, razon: 'ok' })
+  })
+
+  it('tras un 409 vuelve a pedir la venta y el reintento manda la versión nueva', async () => {
+    permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+    let version = 42
+    mockGet.mockImplementation((url: string) =>
+      Promise.resolve(url.endsWith('autorizacion-preview') ? PREVIEW : { ...VENTA, venta: { ...VENTA.venta, version } }))
+    mockPost.mockRejectedValueOnce(Object.assign(new Error('Conflicto: el dato fue modificado por otro usuario.'), { status: 409 }))
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={qc}><DetalleAutorizacion id="v1" /></QueryClientProvider>)
+    await userEvent.press(await screen.findByRole('button', { name: 'Autorizar' }))
+    const hoja = within(screen.getByLabelText('Autorizar venta'))
+    await userEvent.type(hoja.getByLabelText('Razón para autorizar · obligatoria'), 'ok')
+    await waitFor(() => expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBeFalsy())
+    version = 44 // otro usuario editó la venta
+    await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
+    expect(await screen.findByText(/modificado por otro usuario/)).toBeTruthy()
+
+    await waitFor(() => expect(mockGet.mock.calls.filter(([u]) => u === '/api/v1/Ventas/v1').length).toBeGreaterThanOrEqual(3))
+    await waitFor(() => expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBeFalsy())
+    await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
+    expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 44, razon: 'ok' })
   })
 })

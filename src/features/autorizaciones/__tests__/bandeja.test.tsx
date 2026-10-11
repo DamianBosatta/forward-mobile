@@ -1,6 +1,6 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, userEvent, within } from '@testing-library/react-native'
+import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { BandejaAutorizaciones } from '../components/BandejaAutorizaciones'
 
@@ -129,6 +129,20 @@ describe('Autorizaciones: la bandeja', () => {
 
     expect(await screen.findByText(/La venta cambió desde que se cargó la lista/)).toBeTruthy()
     expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  it('si la venta cambió, vuelve a pedir la bandeja, cierra la hoja y avisa (no queda la tarjeta vieja fallando)', async () => {
+    conCapacidades('CAP_AUTORIZAR_VENTA')
+    bandeja([venta('a', 4, 100)], { venta: { version: 8, fechaModificacion: '2026-10-11T11:30:00Z' } })
+    pintar()
+    await userEvent.press(await screen.findByLabelText('Autorizar la venta de Dirección a - Cliente a'))
+    const pedidas = () => mockGet.mock.calls.filter(([u]) => String(u).includes('pendientes-autorizacion')).length
+    const antes = pedidas()
+    await userEvent.press(hoja('Autorizar venta').getByRole('button', { name: 'Autorizar' }))
+
+    expect(await screen.findByText(/La venta cambió desde que se cargó la lista/)).toBeTruthy()
+    await waitFor(() => expect(pedidas()).toBeGreaterThan(antes))
+    expect(screen.queryByLabelText('Autorizar venta')).toBeNull()
   })
 
   it('autorizar sin razón la manda en null; con margen en amarillo la tarjeta lleva a revisar', async () => {

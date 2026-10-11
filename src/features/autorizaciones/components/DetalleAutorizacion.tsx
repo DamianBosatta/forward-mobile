@@ -33,11 +33,14 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
   const veCostos = useAuthStore((s) => s.hasCapability('CAP_VER_COSTOS'))
   // La vista previa la abre Reportes:Read en el servidor; sin ese permiso daría 403.
   const vePreview = useAuthStore((s) => veCostos && s.canDo('MOD_REPORTES', 'read'))
+  const puedeAutorizar = useAuthStore((s) => s.hasCapability('CAP_AUTORIZAR_VENTA'))
   const q = useVenta(id)
   const venta = q.data?.venta
   const porAutorizar = POR_AUTORIZAR.includes(String(venta?.estado))
   const preview = useAutorizacionPreview(id, vePreview && porAutorizar)
   const [decision, setDecision] = useState<Decision | null>(null)
+  // La versión cacheada puede tener hasta 60 s: al decidir se vuelve a pedir la venta.
+  const abrirDecision = (d: Decision) => { setDecision(d); void q.refetch() }
   const volver = onVolver ?? (() => router.back())
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
   const tarjeta = { padding: space[4], gap: space[2], borderRadius: radii.tarjeta, backgroundColor: c.surface }
@@ -81,10 +84,14 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
               {motivos.map((m) => <Text key={m.clave} style={[typeScale.secundario, { color: c.text }]}>{`• ${m.texto}`}</Text>)}
               {venta.motivoVentaSinStock ? <Text style={secundario}>{`Motivo del vendedor: «${venta.motivoVentaSinStock}»`}</Text> : null}
             </View>
-            <View style={{ flexDirection: 'row', gap: space[3] }}>
-              <View style={{ flex: 1 }}><Button label="Rechazar" variant="secundario" onPress={() => setDecision('rechazar')} /></View>
-              <View style={{ flex: 1 }}><Button label="Autorizar" onPress={() => setDecision('autorizar')} /></View>
-            </View>
+            {puedeAutorizar ? (
+              <View style={{ flexDirection: 'row', gap: space[3] }}>
+                <View style={{ flex: 1 }}><Button label="Rechazar" variant="secundario" onPress={() => abrirDecision('rechazar')} /></View>
+                <View style={{ flex: 1 }}><Button label="Autorizar" onPress={() => abrirDecision('autorizar')} /></View>
+              </View>
+            ) : (
+              <Notice tone="info">Para autorizar o rechazar necesitás el permiso de autorizar ventas. Pedíselo a un administrador.</Notice>
+            )}
           </>
         )}
 
@@ -133,6 +140,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
         ventaId={id}
         cliente={venta.clienteNombre ?? ''}
         version={venta.version}
+        bloqueado={q.isFetching}
         razonObligatoria={pideRazon(venta.motivoPendienteAutorizacion)}
         onClose={() => setDecision(null)}
         onHecho={volver}
