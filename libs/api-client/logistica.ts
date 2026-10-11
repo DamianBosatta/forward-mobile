@@ -67,6 +67,12 @@ export interface VentasPreparacionParams {
  */
 export interface VentaPreparacion {
   id: string
+  /** "A00417"; null en ventas viejas sin número. */
+  codigoPedido?: string | null
+  vendedorNombre: string
+  metodoEntregaNombre: string
+  /** Bultos de la venta (los arma el empaque). */
+  piezasCount: number
   clienteNombre: string
   direccion: string
   fechaEntrega: string | null

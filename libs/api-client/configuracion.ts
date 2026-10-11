@@ -20,6 +20,23 @@ export interface MargenMinimoResponse {
 export const configuracionKeys = {
   all: ['configuracion'] as const,
   margenMinimo: () => [...configuracionKeys.all, 'margen-minimo'] as const,
+  feriados: (desde: string) => [...configuracionKeys.all, 'feriados', desde] as const,
+}
+
+/** GET /Configuracion/feriados: días sin entregas. Lo lee cualquier usuario autenticado. */
+export interface Feriado {
+  id: string
+  /** YYYY-MM-DD */
+  fecha: string
+  descripcion?: string | null
+}
+
+export function useFeriados(desde: string) {
+  return useQuery({
+    queryKey: configuracionKeys.feriados(desde),
+    queryFn: () => api.get<Feriado[]>(`/api/v1/Configuracion/feriados?desde=${desde}`),
+    staleTime: 60 * 60_000,
+  })
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
