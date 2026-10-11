@@ -111,7 +111,7 @@ export function useToggleSocioStatus() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: sociosKeys.all })
     },
-    onError: (err: any) => {
+    onError: (err: { status?: number; message?: string }) => {
       console.error('Toggle status error:', err)
       setTimeout(() => {
         Alert.alert(

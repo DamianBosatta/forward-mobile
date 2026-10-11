@@ -985,7 +985,9 @@ export default function NuevaVentaMobileScreen() {
       const items = ventaRaw.detalles ?? []
       
       if (venta) {
-        setClienteSelected({ id: venta.clienteId ?? '', razonSocial: venta.clienteNombre ?? '', cuit: '' })
+        // El header de la venta no trae cuit ni esProvisorio (ver BACKLOG-9B.md); acá no se usan.
+        const clienteNombre = venta.clienteNombre ?? ''
+        setClienteSelected({ id: venta.clienteId ?? '', razonSocial: clienteNombre, cuit: '', displayName: clienteNombre, esProvisorio: false })
         setTipoOperacion(venta.tipoOperacion as 1 | 2)
         setDescuentoGeneral(venta.porcentajeDescuento ? String(venta.porcentajeDescuento) : '')
         setMetodoEntrega((venta.metodoEntrega ?? 1) as 1 | 2 | 3)

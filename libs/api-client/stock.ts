@@ -6,8 +6,8 @@ import { productosKeys } from './productos'
 export const stockKeys = {
   all: ['stock'] as const,
   lists: () => [...stockKeys.all, 'list'] as const,
-  list: (params: any) => [...stockKeys.lists(), params] as const,
-  movimientos: (productoId: string, params?: any) =>
+  list: (params: StockParams) => [...stockKeys.lists(), params] as const,
+  movimientos: (productoId: string, params?: object) =>
     [...stockKeys.all, 'movimientos', productoId, params] as const,
 }
 

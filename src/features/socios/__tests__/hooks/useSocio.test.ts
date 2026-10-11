@@ -19,6 +19,13 @@ const mockSocioDetail: SocioDetailDto = {
   saldoAmount: 15000,
   saldoCurrency: 'ARS',
   cuentaId: 'a1b2c3d4-0000-0000-0000-000000000001',
+  displayName: 'Acme S.A.',
+  condicionesDeCompraFaltantes: [],
+  esPropio: true,
+  puedeVerSaldo: true,
+  puedeVerCuentaCorriente: true,
+  puedeEditar: true,
+  deLaCasa: false,
 }
 
 describe('useSocio', () => {

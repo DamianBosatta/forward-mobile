@@ -4,6 +4,104 @@
  */
 
 export interface paths {
+    "/api/v1/acreditaciones-tarjeta/{id}/acreditar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AcreditarTarjetaCommand"];
+                    "text/json": components["schemas"]["AcreditarTarjetaCommand"];
+                    "application/*+json": components["schemas"]["AcreditarTarjetaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/acreditaciones-tarjeta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Estado?: components["schemas"]["EstadoAcreditacionTarjeta"];
+                    PageNumber?: number;
+                    PageSize?: number;
+                    IncluirInactivos?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AcreditacionesTarjetaResponse"];
+                        "application/json": components["schemas"]["AcreditacionesTarjetaResponse"];
+                        "text/json": components["schemas"]["AcreditacionesTarjetaResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Audit/logs": {
         parameters: {
             query?: never;
@@ -145,9 +243,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": string;
-                        "application/json": string;
-                        "text/json": string;
+                        "text/plain": components["schemas"]["CerrarCajaResponseDto"];
+                        "application/json": components["schemas"]["CerrarCajaResponseDto"];
+                        "text/json": components["schemas"]["CerrarCajaResponseDto"];
                     };
                 };
             };
@@ -246,7 +344,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    DepositoId?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -262,6 +362,685 @@ export interface paths {
                         "text/plain": components["schemas"]["CajaActivaDto"];
                         "application/json": components["schemas"]["CajaActivaDto"];
                         "text/json": components["schemas"]["CajaActivaDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Cajas/abiertas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CajaAbiertaDto"][];
+                        "application/json": components["schemas"]["CajaAbiertaDto"][];
+                        "text/json": components["schemas"]["CajaAbiertaDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Cajas/abiertas/estado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CajaAbiertaEstadoDto"][];
+                        "application/json": components["schemas"]["CajaAbiertaEstadoDto"][];
+                        "text/json": components["schemas"]["CajaAbiertaEstadoDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Cajas/cerradas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    DepositoId?: string;
+                    PageNumber?: number;
+                    PageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CajaCerradaDtoPaginatedResponse"];
+                        "application/json": components["schemas"]["CajaCerradaDtoPaginatedResponse"];
+                        "text/json": components["schemas"]["CajaCerradaDtoPaginatedResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Calendario": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Desde?: string;
+                    Hasta?: string;
+                    Tipos?: components["schemas"]["TipoEventoCalendario"][];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EventoCalendarioDto"][];
+                        "application/json": components["schemas"]["EventoCalendarioDto"][];
+                        "text/json": components["schemas"]["EventoCalendarioDto"][];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Calendario/proximos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Dias?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EventoCalendarioDto"][];
+                        "application/json": components["schemas"]["EventoCalendarioDto"][];
+                        "text/json": components["schemas"]["EventoCalendarioDto"][];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Calendario/eventos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CrearEventoCommand"];
+                    "text/json": components["schemas"]["CrearEventoCommand"];
+                    "application/*+json": components["schemas"]["CrearEventoCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Calendario/eventos/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EventoCalendarioDetalleDto"];
+                        "application/json": components["schemas"]["EventoCalendarioDetalleDto"];
+                        "text/json": components["schemas"]["EventoCalendarioDetalleDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EditarEventoCommand"];
+                    "text/json": components["schemas"]["EditarEventoCommand"];
+                    "application/*+json": components["schemas"]["EditarEventoCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Calendario/eventos/{id}/ocurrencias/{fecha}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    fecha: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MarcarOcurrenciaCommand"];
+                    "text/json": components["schemas"]["MarcarOcurrenciaCommand"];
+                    "application/*+json": components["schemas"]["MarcarOcurrenciaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    fecha: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalogo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Marca?: string;
+                    CategoriaId?: string;
+                    SearchTerm?: string;
+                    SoloDisponibles?: boolean;
+                    PageNumber?: number;
+                    PageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CatalogoComercialItemDtoPaginatedResponse"];
+                        "application/json": components["schemas"]["CatalogoComercialItemDtoPaginatedResponse"];
+                        "text/json": components["schemas"]["CatalogoComercialItemDtoPaginatedResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalogo/marcas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MarcaDto"][];
+                        "application/json": components["schemas"]["MarcaDto"][];
+                        "text/json": components["schemas"]["MarcaDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalogo/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Marca?: string;
+                    CategoriaId?: string;
+                    SearchTerm?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/catalogos/condiciones-iva": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CondicionIvaDtoListResponse"];
+                        "application/json": components["schemas"]["CondicionIvaDtoListResponse"];
+                        "text/json": components["schemas"]["CondicionIvaDtoListResponse"];
                     };
                 };
             };
@@ -338,6 +1117,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Categorias/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Categorias/{id}": {
         parameters: {
             query?: never;
@@ -406,6 +1222,1175 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cheques/{id}/depositar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DepositarChequeCommand"];
+                    "text/json": components["schemas"]["DepositarChequeCommand"];
+                    "application/*+json": components["schemas"]["DepositarChequeCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cheques/{id}/acreditar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cheques/{id}/rechazar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RechazarChequeCommand"];
+                    "text/json": components["schemas"]["RechazarChequeCommand"];
+                    "application/*+json": components["schemas"]["RechazarChequeCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cheques/{id}/imagen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AsignarImagenChequeCommand"];
+                    "text/json": components["schemas"]["AsignarImagenChequeCommand"];
+                    "application/*+json": components["schemas"]["AsignarImagenChequeCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cheques": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Estado?: components["schemas"]["EstadoCheque"];
+                    Estados?: components["schemas"]["EstadoCheque"][];
+                    Tipo?: components["schemas"]["TipoCheque"];
+                    FechaPagoDesde?: string;
+                    FechaPagoHasta?: string;
+                    Numero?: string;
+                    Banco?: string;
+                    Titular?: string;
+                    MontoMin?: number;
+                    MontoMax?: number;
+                    PageNumber?: number;
+                    PageSize?: number;
+                    IncluirInactivos?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChequeListDtoPaginatedResponse"];
+                        "application/json": components["schemas"]["ChequeListDtoPaginatedResponse"];
+                        "text/json": components["schemas"]["ChequeListDtoPaginatedResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cheques/cartera/resumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CarteraChequesResumenDto"];
+                        "application/json": components["schemas"]["CarteraChequesResumenDto"];
+                        "text/json": components["schemas"]["CarteraChequesResumenDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cheques/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChequeDto"];
+                        "application/json": components["schemas"]["ChequeDto"];
+                        "text/json": components["schemas"]["ChequeDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cheques/{id}/ficha": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ChequeFichaDto"];
+                        "application/json": components["schemas"]["ChequeFichaDto"];
+                        "text/json": components["schemas"]["ChequeFichaDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comisiones/generado-vs-pagado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    vendedorId?: string;
+                    desde?: string;
+                    hasta?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ComisionGeneradoVsPagadoDto"][];
+                        "application/json": components["schemas"]["ComisionGeneradoVsPagadoDto"][];
+                        "text/json": components["schemas"]["ComisionGeneradoVsPagadoDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comisiones/generado-vs-pagado/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    VendedorId?: string;
+                    Desde?: string;
+                    Hasta?: string;
+                    Formato?: components["schemas"]["FormatoExport"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comisiones/reglas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Alcance?: components["schemas"]["AlcanceReglaComision"];
+                    TargetId?: string;
+                    VendedorId?: string;
+                    Estado?: components["schemas"]["EstadoVigenciaRegla"];
+                    Fecha?: string;
+                    PageNumber?: number;
+                    PageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ReglaComisionDtoPaginatedResponseResponse"];
+                        "application/json": components["schemas"]["ReglaComisionDtoPaginatedResponseResponse"];
+                        "text/json": components["schemas"]["ReglaComisionDtoPaginatedResponseResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CrearReglaComisionCommand"];
+                    "text/json": components["schemas"]["CrearReglaComisionCommand"];
+                    "application/*+json": components["schemas"]["CrearReglaComisionCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comisiones/reglas/{id}/cerrar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CerrarVigenciaReglaComisionCommand"];
+                    "text/json": components["schemas"]["CerrarVigenciaReglaComisionCommand"];
+                    "application/*+json": components["schemas"]["CerrarVigenciaReglaComisionCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comisiones/reglas/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comisiones/reglas/{id}/reemplazar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ReemplazarReglaComisionCommand"];
+                    "text/json": components["schemas"]["ReemplazarReglaComisionCommand"];
+                    "application/*+json": components["schemas"]["ReemplazarReglaComisionCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comisiones/tasa-efectiva": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    ProductoId?: string;
+                    VendedorId?: string;
+                    Fecha?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TasaEfectivaProductoDtoResponse"];
+                        "application/json": components["schemas"]["TasaEfectivaProductoDtoResponse"];
+                        "text/json": components["schemas"]["TasaEfectivaProductoDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comisiones/simulacion/ventas/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    monto?: number;
+                    fecha?: string;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SimulacionComisionDtoResponse"];
+                        "application/json": components["schemas"]["SimulacionComisionDtoResponse"];
+                        "text/json": components["schemas"]["SimulacionComisionDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comisiones/simulacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SimularComisionBorradorQuery"];
+                    "text/json": components["schemas"]["SimularComisionBorradorQuery"];
+                    "application/*+json": components["schemas"]["SimularComisionBorradorQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SimulacionComisionDtoResponse"];
+                        "application/json": components["schemas"]["SimulacionComisionDtoResponse"];
+                        "text/json": components["schemas"]["SimulacionComisionDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comisiones/por-linea": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    AgruparPor?: components["schemas"]["AgrupacionComisionPorLinea"];
+                    VendedorId?: string;
+                    Desde?: string;
+                    Hasta?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ComisionesPorLineaDtoResponse"];
+                        "application/json": components["schemas"]["ComisionesPorLineaDtoResponse"];
+                        "text/json": components["schemas"]["ComisionesPorLineaDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comisiones/por-linea/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    AgruparPor?: components["schemas"]["AgrupacionComisionPorLinea"];
+                    VendedorId?: string;
+                    Desde?: string;
+                    Hasta?: string;
+                    Formato?: components["schemas"]["FormatoExport"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comisiones/vendedores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendedorComisionDtoListResponse"];
+                        "application/json": components["schemas"]["VendedorComisionDtoListResponse"];
+                        "text/json": components["schemas"]["VendedorComisionDtoListResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Compras": {
         parameters: {
             query?: never;
@@ -417,8 +2402,17 @@ export interface paths {
             parameters: {
                 query?: {
                     ProveedorId?: string;
+                    DepositoId?: string;
                     Estado?: components["schemas"]["EstadoCompra"];
+                    Estados?: components["schemas"]["EstadoCompra"][];
+                    FechaDesde?: string;
+                    FechaHasta?: string;
                     SearchTerm?: string;
+                    Moneda?: string;
+                    MontoMin?: number;
+                    MontoMax?: number;
+                    IncluirEliminadas?: boolean;
+                    OrdenarPorVencimiento?: boolean;
                     LastModified?: string;
                     PageNumber?: number;
                     PageSize?: number;
@@ -473,6 +2467,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Compras/vista-previa-rentabilidad": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["GetVistaPreviaRentabilidadCompraQuery"];
+                    "text/json": components["schemas"]["GetVistaPreviaRentabilidadCompraQuery"];
+                    "application/*+json": components["schemas"]["GetVistaPreviaRentabilidadCompraQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VistaPreviaRentabilidadCompraDto"];
+                        "application/json": components["schemas"]["VistaPreviaRentabilidadCompraDto"];
+                        "text/json": components["schemas"]["VistaPreviaRentabilidadCompraDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Compras/{id}": {
         parameters: {
             query?: never;
@@ -482,7 +2519,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    incluirEliminadas?: boolean;
+                };
                 header?: never;
                 path: {
                     id: string;
@@ -526,11 +2565,216 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["CompraActionResponseDto"];
+                        "application/json": components["schemas"]["CompraActionResponseDto"];
+                        "text/json": components["schemas"]["CompraActionResponseDto"];
+                    };
                 };
             };
         };
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Compras/borradores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateCompraBorradorCommand"];
+                    "text/json": components["schemas"]["CreateCompraBorradorCommand"];
+                    "application/*+json": components["schemas"]["CreateCompraBorradorCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CompraActionResponseDto"];
+                        "application/json": components["schemas"]["CompraActionResponseDto"];
+                        "text/json": components["schemas"]["CompraActionResponseDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Compras/borradores/mio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BorradorCompraDto"];
+                        "application/json": components["schemas"]["BorradorCompraDto"];
+                        "text/json": components["schemas"]["BorradorCompraDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Compras/borradores/mios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BorradorCompraDto"][];
+                        "application/json": components["schemas"]["BorradorCompraDto"][];
+                        "text/json": components["schemas"]["BorradorCompraDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Compras/{id}/descartar-borrador": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": boolean;
+                        "application/json": boolean;
+                        "text/json": boolean;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Compras/{id}/guardar-nota-pedido": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["GuardarNotaPedidoCommand"];
+                    "text/json": components["schemas"]["GuardarNotaPedidoCommand"];
+                    "application/*+json": components["schemas"]["GuardarNotaPedidoCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CompraActionResponseDto"];
+                        "application/json": components["schemas"]["CompraActionResponseDto"];
+                        "text/json": components["schemas"]["CompraActionResponseDto"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -619,6 +2863,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Compras/{id}/comprobante": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ComprobanteCompraInput"];
+                    "text/json": components["schemas"]["ComprobanteCompraInput"];
+                    "application/*+json": components["schemas"]["ComprobanteCompraInput"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ComprobanteRecibidoDtoResponse"];
+                        "application/json": components["schemas"]["ComprobanteRecibidoDtoResponse"];
+                        "text/json": components["schemas"]["ComprobanteRecibidoDtoResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Compras/{id}/anular": {
         parameters: {
             query?: never;
@@ -655,6 +2944,231 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Compras/{id}/anular-recepcion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AnularRecepcionCompraCommand"];
+                    "text/json": components["schemas"]["AnularRecepcionCompraCommand"];
+                    "application/*+json": components["schemas"]["AnularRecepcionCompraCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Compras/{id}/eliminar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EliminarCompraCommand"];
+                    "text/json": components["schemas"]["EliminarCompraCommand"];
+                    "application/*+json": components["schemas"]["EliminarCompraCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Compras/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    ProveedorId?: string;
+                    DepositoId?: string;
+                    Estado?: components["schemas"]["EstadoCompra"];
+                    Estados?: components["schemas"]["EstadoCompra"][];
+                    FechaDesde?: string;
+                    FechaHasta?: string;
+                    SearchTerm?: string;
+                    Moneda?: string;
+                    MontoMin?: number;
+                    MontoMax?: number;
+                    IncluirEliminadas?: boolean;
+                    Formato?: components["schemas"]["FormatoExport"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Compras/resumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    ProveedorId?: string;
+                    DepositoId?: string;
+                    Moneda?: string;
+                    MontoMin?: number;
+                    MontoMax?: number;
+                    FechaDesde?: string;
+                    FechaHasta?: string;
+                    SearchTerm?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ComprasResumenDto"];
+                        "application/json": components["schemas"]["ComprasResumenDto"];
+                        "text/json": components["schemas"]["ComprasResumenDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Compras/recepciones-esperadas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Fecha?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RecepcionesEsperadasDtoResponse"];
+                        "application/json": components["schemas"]["RecepcionesEsperadasDtoResponse"];
+                        "text/json": components["schemas"]["RecepcionesEsperadasDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -832,6 +3346,543 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Configuracion/cuenta-caja-efectivo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CuentaCajaEfectivoResponse"];
+                        "application/json": components["schemas"]["CuentaCajaEfectivoResponse"];
+                        "text/json": components["schemas"]["CuentaCajaEfectivoResponse"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateCuentaCajaEfectivoCommand"];
+                    "text/json": components["schemas"]["UpdateCuentaCajaEfectivoCommand"];
+                    "application/*+json": components["schemas"]["UpdateCuentaCajaEfectivoCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Configuracion/cuenta-cartera-cheques": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CuentaCarteraChequesResponse"];
+                        "application/json": components["schemas"]["CuentaCarteraChequesResponse"];
+                        "text/json": components["schemas"]["CuentaCarteraChequesResponse"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateCuentaCarteraChequesCommand"];
+                    "text/json": components["schemas"]["UpdateCuentaCarteraChequesCommand"];
+                    "application/*+json": components["schemas"]["UpdateCuentaCarteraChequesCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Configuracion/datos-empresa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DatosEmpresaDto"];
+                        "application/json": components["schemas"]["DatosEmpresaDto"];
+                        "text/json": components["schemas"]["DatosEmpresaDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateDatosEmpresaCommand"];
+                    "text/json": components["schemas"]["UpdateDatosEmpresaCommand"];
+                    "application/*+json": components["schemas"]["UpdateDatosEmpresaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Configuracion/condicion-fiscal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CondicionFiscalEmpresaDto"];
+                        "application/json": components["schemas"]["CondicionFiscalEmpresaDto"];
+                        "text/json": components["schemas"]["CondicionFiscalEmpresaDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateCondicionFiscalEmpresaCommand"];
+                    "text/json": components["schemas"]["UpdateCondicionFiscalEmpresaCommand"];
+                    "application/*+json": components["schemas"]["UpdateCondicionFiscalEmpresaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CondicionFiscalEmpresaDto"];
+                        "application/json": components["schemas"]["CondicionFiscalEmpresaDto"];
+                        "text/json": components["schemas"]["CondicionFiscalEmpresaDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Configuracion/venta-con-factura-por-defecto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VentaConFacturaPorDefectoDto"];
+                        "application/json": components["schemas"]["VentaConFacturaPorDefectoDto"];
+                        "text/json": components["schemas"]["VentaConFacturaPorDefectoDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateVentaConFacturaPorDefectoCommand"];
+                    "text/json": components["schemas"]["UpdateVentaConFacturaPorDefectoCommand"];
+                    "application/*+json": components["schemas"]["UpdateVentaConFacturaPorDefectoCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VentaConFacturaPorDefectoDto"];
+                        "application/json": components["schemas"]["VentaConFacturaPorDefectoDto"];
+                        "text/json": components["schemas"]["VentaConFacturaPorDefectoDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Configuracion/etiqueta-pieza": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EtiquetaPiezaDto"];
+                        "application/json": components["schemas"]["EtiquetaPiezaDto"];
+                        "text/json": components["schemas"]["EtiquetaPiezaDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateEtiquetaPiezaCommand"];
+                    "text/json": components["schemas"]["UpdateEtiquetaPiezaCommand"];
+                    "application/*+json": components["schemas"]["UpdateEtiquetaPiezaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EtiquetaPiezaDto"];
+                        "application/json": components["schemas"]["EtiquetaPiezaDto"];
+                        "text/json": components["schemas"]["EtiquetaPiezaDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Configuracion/dias-entrega": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DiasEntregaDto"];
+                        "application/json": components["schemas"]["DiasEntregaDto"];
+                        "text/json": components["schemas"]["DiasEntregaDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateDiasEntregaCommand"];
+                    "text/json": components["schemas"]["UpdateDiasEntregaCommand"];
+                    "application/*+json": components["schemas"]["UpdateDiasEntregaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DiasEntregaDto"];
+                        "application/json": components["schemas"]["DiasEntregaDto"];
+                        "text/json": components["schemas"]["DiasEntregaDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Configuracion/feriados": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    desde?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FeriadoDto"][];
+                        "application/json": components["schemas"]["FeriadoDto"][];
+                        "text/json": components["schemas"]["FeriadoDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CrearFeriadoCommand"];
+                    "text/json": components["schemas"]["CrearFeriadoCommand"];
+                    "application/*+json": components["schemas"]["CrearFeriadoCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FeriadoDto"];
+                        "application/json": components["schemas"]["FeriadoDto"];
+                        "text/json": components["schemas"]["FeriadoDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Configuracion/feriados/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cuentas-corrientes/propias": {
         parameters: {
             query?: never;
@@ -986,6 +4037,150 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cuentas-corrientes/vendedores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    activo?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CuentaCorrienteResumenDto"][];
+                        "application/json": components["schemas"]["CuentaCorrienteResumenDto"][];
+                        "text/json": components["schemas"]["CuentaCorrienteResumenDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cuentas-corrientes/vendedores/mi-cuenta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    pageNumber?: number;
+                    pageSize?: number;
+                    fechaDesde?: string;
+                    fechaHasta?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GetMovimientosCuentaDto"];
+                        "application/json": components["schemas"]["GetMovimientosCuentaDto"];
+                        "text/json": components["schemas"]["GetMovimientosCuentaDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cuentas-corrientes/vendedores/mi-cuenta/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    FechaDesde?: string;
+                    FechaHasta?: string;
+                    Formato?: components["schemas"]["FormatoExport"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cuentas-corrientes/{id}/movimientos": {
         parameters: {
             query?: never;
@@ -998,6 +4193,8 @@ export interface paths {
                 query?: {
                     pageNumber?: number;
                     pageSize?: number;
+                    fechaDesde?: string;
+                    fechaHasta?: string;
                 };
                 header?: never;
                 path: {
@@ -1016,6 +4213,61 @@ export interface paths {
                         "text/plain": components["schemas"]["GetMovimientosCuentaDto"];
                         "application/json": components["schemas"]["GetMovimientosCuentaDto"];
                         "text/json": components["schemas"]["GetMovimientosCuentaDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cuentas-corrientes/{id}/movimientos/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    CuentaId?: string;
+                    FechaDesde?: string;
+                    FechaHasta?: string;
+                    Formato?: components["schemas"]["FormatoExport"];
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
                     };
                 };
                 /** @description Not Found */
@@ -1202,6 +4454,96 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/cuentas-corrientes/{id}/movimientos/manual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegistrarMovimientoManualVendedorCommand"];
+                    "text/json": components["schemas"]["RegistrarMovimientoManualVendedorCommand"];
+                    "application/*+json": components["schemas"]["RegistrarMovimientoManualVendedorCommand"];
+                };
+            };
+            responses: {
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cuentas-corrientes/vendedores/{id}/pagos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PagarComisionVendedorCommand"];
+                    "text/json": components["schemas"]["PagarComisionVendedorCommand"];
+                    "application/*+json": components["schemas"]["PagarComisionVendedorCommand"];
+                };
+            };
+            responses: {
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Dashboard/summary": {
         parameters: {
             query?: never;
@@ -1373,6 +4715,335 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/deudas/clientes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    PageNumber?: number;
+                    PageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DeudasSocioPagedResult"];
+                        "application/json": components["schemas"]["DeudasSocioPagedResult"];
+                        "text/json": components["schemas"]["DeudasSocioPagedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deudas/proveedores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    PageNumber?: number;
+                    PageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DeudasSocioPagedResult"];
+                        "application/json": components["schemas"]["DeudasSocioPagedResult"];
+                        "text/json": components["schemas"]["DeudasSocioPagedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deudas/resumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DeudasResumenDto"];
+                        "application/json": components["schemas"]["DeudasResumenDto"];
+                        "text/json": components["schemas"]["DeudasResumenDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deudas/socios/{socioId}/pendientes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    socioId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentoPendienteDto"][];
+                        "application/json": components["schemas"]["DocumentoPendienteDto"][];
+                        "text/json": components["schemas"]["DocumentoPendienteDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturacion/stock-fiscal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Search?: string;
+                    PageNumber?: number;
+                    PageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StockFiscalProductoDtoPaginatedResponseResponse"];
+                        "application/json": components["schemas"]["StockFiscalProductoDtoPaginatedResponseResponse"];
+                        "text/json": components["schemas"]["StockFiscalProductoDtoPaginatedResponseResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturacion/stock-fiscal/{productoId}/movimientos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    ProductoId?: string;
+                    PageNumber?: number;
+                    PageSize?: number;
+                };
+                header?: never;
+                path: {
+                    productoId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MovimientoStockFiscalDtoPaginatedResponseResponse"];
+                        "application/json": components["schemas"]["MovimientoStockFiscalDtoPaginatedResponseResponse"];
+                        "text/json": components["schemas"]["MovimientoStockFiscalDtoPaginatedResponseResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturacion/stock-fiscal/{productoId}/ajuste": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    productoId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AjustarStockFiscalCommand"];
+                    "text/json": components["schemas"]["AjustarStockFiscalCommand"];
+                    "application/*+json": components["schemas"]["AjustarStockFiscalCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["AjusteStockFiscalDtoResponse"];
+                        "application/json": components["schemas"]["AjusteStockFiscalDtoResponse"];
+                        "text/json": components["schemas"]["AjusteStockFiscalDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Finanzas/pagos": {
         parameters: {
             query?: never;
@@ -1412,6 +5083,155 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Finanzas/pagos/multilinea": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegistrarPagoMultilineaCommand"];
+                    "text/json": components["schemas"]["RegistrarPagoMultilineaCommand"];
+                    "application/*+json": components["schemas"]["RegistrarPagoMultilineaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Finanzas/pagos/por-cuenta-de-terceros": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegistrarPagoPorCuentaDeTercerosCommand"];
+                    "text/json": components["schemas"]["RegistrarPagoPorCuentaDeTercerosCommand"];
+                    "application/*+json": components["schemas"]["RegistrarPagoPorCuentaDeTercerosCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PagoPorCuentaDeTercerosDto"];
+                        "application/json": components["schemas"]["PagoPorCuentaDeTercerosDto"];
+                        "text/json": components["schemas"]["PagoPorCuentaDeTercerosDto"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Finanzas/pagos/{id}/comprobante": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AsignarComprobantePagoCommand"];
+                    "text/json": components["schemas"]["AsignarComprobantePagoCommand"];
+                    "application/*+json": components["schemas"]["AsignarComprobantePagoCommand"];
+                };
+            };
+            responses: {
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Fragancias": {
         parameters: {
             query?: never;
@@ -1423,6 +5243,7 @@ export interface paths {
             parameters: {
                 query?: {
                     activo?: boolean;
+                    productoPadreId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -1546,6 +5367,586 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/gastos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    TipoGastoId?: string;
+                    FechaDesde?: string;
+                    FechaHasta?: string;
+                    PageNumber?: number;
+                    PageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GastosPagedResult"];
+                        "application/json": components["schemas"]["GastosPagedResult"];
+                        "text/json": components["schemas"]["GastosPagedResult"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegistrarGastoCommand"];
+                    "text/json": components["schemas"]["RegistrarGastoCommand"];
+                    "application/*+json": components["schemas"]["RegistrarGastoCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gastos/tipos-gasto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TipoGastoResponse"][];
+                        "application/json": components["schemas"]["TipoGastoResponse"][];
+                        "text/json": components["schemas"]["TipoGastoResponse"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/gastos/medios-pago": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MedioPagoResponse"][];
+                        "application/json": components["schemas"]["MedioPagoResponse"][];
+                        "text/json": components["schemas"]["MedioPagoResponse"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/importaciones/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        tipo?: components["schemas"]["TipoImportacion"];
+                        /** Format: binary */
+                        file?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PreparacionImportacionDto"];
+                        "application/json": components["schemas"]["PreparacionImportacionDto"];
+                        "text/json": components["schemas"]["PreparacionImportacionDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/importaciones/{id}/analizar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AnalizarImportacionCommand"];
+                    "text/json": components["schemas"]["AnalizarImportacionCommand"];
+                    "application/*+json": components["schemas"]["AnalizarImportacionCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PreviewImportacionDto"];
+                        "application/json": components["schemas"]["PreviewImportacionDto"];
+                        "text/json": components["schemas"]["PreviewImportacionDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/importaciones/{id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    ImportacionJobId?: string;
+                    Resultado?: string;
+                    Page?: number;
+                    PageSize?: number;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PagedFilasPreviewDto"];
+                        "application/json": components["schemas"]["PagedFilasPreviewDto"];
+                        "text/json": components["schemas"]["PagedFilasPreviewDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/importaciones/{id}/confirmar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ConfirmarImportacionCommand"];
+                    "text/json": components["schemas"]["ConfirmarImportacionCommand"];
+                    "application/*+json": components["schemas"]["ConfirmarImportacionCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/importaciones/plantilla/{tipo}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tipo: components["schemas"]["TipoImportacion"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/importaciones/instructivo/{tipo}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tipo: components["schemas"]["TipoImportacion"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/importaciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Tipo?: components["schemas"]["TipoImportacion"];
+                    Limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ImportacionResumenDto"][];
+                        "application/json": components["schemas"]["ImportacionResumenDto"][];
+                        "text/json": components["schemas"]["ImportacionResumenDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/importaciones/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ImportacionResumenDto"];
+                        "application/json": components["schemas"]["ImportacionResumenDto"];
+                        "text/json": components["schemas"]["ImportacionResumenDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/importaciones/{id}/revertir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ReversionImportacionDto"];
+                        "application/json": components["schemas"]["ReversionImportacionDto"];
+                        "text/json": components["schemas"]["ReversionImportacionDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/importaciones/{id}/cancelar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Logistica/ventas-empacadas": {
         parameters: {
             query?: never;
@@ -1597,6 +5998,7 @@ export interface paths {
                     FechaHasta?: string;
                     TicketId?: string;
                     MetodoEntrega?: components["schemas"]["MetodoEntrega"];
+                    VendedorId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -2311,6 +6713,219 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Logistica/{id}/confirmar-retiro": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ConfirmarRetiroCommand"];
+                    "text/json": components["schemas"]["ConfirmarRetiroCommand"];
+                    "application/*+json": components["schemas"]["ConfirmarRetiroCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VentaActionResponseDto"];
+                        "application/json": components["schemas"]["VentaActionResponseDto"];
+                        "text/json": components["schemas"]["VentaActionResponseDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/{id}/despachar-expreso": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DespacharExpresoCommand"];
+                    "text/json": components["schemas"]["DespacharExpresoCommand"];
+                    "application/*+json": components["schemas"]["DespacharExpresoCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VentaActionResponseDto"];
+                        "application/json": components["schemas"]["VentaActionResponseDto"];
+                        "text/json": components["schemas"]["VentaActionResponseDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/{id}/registros-entrega": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RegistroEntregaDto"][];
+                        "application/json": components["schemas"]["RegistroEntregaDto"][];
+                        "text/json": components["schemas"]["RegistroEntregaDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/{id}/editar-deposito": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EditarVentaDepositoCommand"];
+                    "text/json": components["schemas"]["EditarVentaDepositoCommand"];
+                    "application/*+json": components["schemas"]["EditarVentaDepositoCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VentaActionResponseDto"];
+                        "application/json": components["schemas"]["VentaActionResponseDto"];
+                        "text/json": components["schemas"]["VentaActionResponseDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/{id}/historial-edicion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EdicionVentaDto"][];
+                        "application/json": components["schemas"]["EdicionVentaDto"][];
+                        "text/json": components["schemas"]["EdicionVentaDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Logistica/hojas-ruta/{id}/manifiesto-pdf": {
         parameters: {
             query?: never;
@@ -2458,6 +7073,724 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Media/upload-avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Media/upload-cheque": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Media/upload-comprobante": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/medios-pago": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MedioPagoResponse"][];
+                        "application/json": components["schemas"]["MedioPagoResponse"][];
+                        "text/json": components["schemas"]["MedioPagoResponse"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateMedioPagoCommand"];
+                    "text/json": components["schemas"]["CreateMedioPagoCommand"];
+                    "application/*+json": components["schemas"]["CreateMedioPagoCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/medios-pago/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateMedioPagoCommand"];
+                    "text/json": components["schemas"]["UpdateMedioPagoCommand"];
+                    "application/*+json": components["schemas"]["UpdateMedioPagoCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/movimientos-internos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegistrarMovimientoEntreCuentasCommand"];
+                    "text/json": components["schemas"]["RegistrarMovimientoEntreCuentasCommand"];
+                    "application/*+json": components["schemas"]["RegistrarMovimientoEntreCuentasCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/movimientos-internos/{id}/anular": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AnularMovimientoInternoCommand"];
+                    "text/json": components["schemas"]["AnularMovimientoInternoCommand"];
+                    "application/*+json": components["schemas"]["AnularMovimientoInternoCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/movimientos-internos/tipos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TipoMovimientoInternoResponse"][];
+                        "application/json": components["schemas"]["TipoMovimientoInternoResponse"][];
+                        "text/json": components["schemas"]["TipoMovimientoInternoResponse"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Notificaciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    SoloNoLeidas?: boolean;
+                    Limite?: number;
+                    Tipo?: components["schemas"]["TipoNotificacion"];
+                    AntesDe?: string;
+                    AntesDeId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["NotificacionesBandejaDto"];
+                        "application/json": components["schemas"]["NotificacionesBandejaDto"];
+                        "text/json": components["schemas"]["NotificacionesBandejaDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Notificaciones/marcar-leidas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MarcarNotificacionesLeidasCommand"];
+                    "text/json": components["schemas"]["MarcarNotificacionesLeidasCommand"];
+                    "application/*+json": components["schemas"]["MarcarNotificacionesLeidasCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": number;
+                        "application/json": number;
+                        "text/json": number;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Notificaciones/preferencias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PreferenciaNotificacionDto"][];
+                        "application/json": components["schemas"]["PreferenciaNotificacionDto"][];
+                        "text/json": components["schemas"]["PreferenciaNotificacionDto"][];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ActualizarPreferenciasNotificacionCommand"];
+                    "text/json": components["schemas"]["ActualizarPreferenciasNotificacionCommand"];
+                    "application/*+json": components["schemas"]["ActualizarPreferenciasNotificacionCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": number;
+                        "application/json": number;
+                        "text/json": number;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ofertas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    ProductoId?: string;
+                    SoloVigentes?: boolean;
+                    IncluirInactivas?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OfertaDto"][];
+                        "application/json": components["schemas"]["OfertaDto"][];
+                        "text/json": components["schemas"]["OfertaDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CrearOfertaCommand"];
+                    "text/json": components["schemas"]["CrearOfertaCommand"];
+                    "application/*+json": components["schemas"]["CrearOfertaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ofertas/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ActualizarOfertaCommand"];
+                    "text/json": components["schemas"]["ActualizarOfertaCommand"];
+                    "application/*+json": components["schemas"]["ActualizarOfertaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ofertas/{id}/estado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CambiarEstadoOfertaCommand"];
+                    "text/json": components["schemas"]["CambiarEstadoOfertaCommand"];
+                    "application/*+json": components["schemas"]["CambiarEstadoOfertaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Pagos": {
         parameters: {
             query?: never;
@@ -2584,6 +7917,17 @@ export interface paths {
                 };
             };
             responses: {
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
                 /** @description Not Found */
                 404: {
                     headers: {
@@ -2597,6 +7941,62 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Pagos/{id}/revertir-endoso-cheques": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RevertirEndosoEntregaChequesCommand"];
+                    "text/json": components["schemas"]["RevertirEndosoEntregaChequesCommand"];
+                    "application/*+json": components["schemas"]["RevertirEndosoEntregaChequesCommand"];
+                };
+            };
+            responses: {
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2641,189 +8041,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/PermissionProfiles": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["PermissionProfile"][];
-                        "application/json": components["schemas"]["PermissionProfile"][];
-                        "text/json": components["schemas"]["PermissionProfile"][];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["UpsertPermissionProfileRequest"];
-                    "text/json": components["schemas"]["UpsertPermissionProfileRequest"];
-                    "application/*+json": components["schemas"]["UpsertPermissionProfileRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["PermissionProfile"];
-                        "application/json": components["schemas"]["PermissionProfile"];
-                        "text/json": components["schemas"]["PermissionProfile"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/PermissionProfiles/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["PermissionProfile"];
-                        "application/json": components["schemas"]["PermissionProfile"];
-                        "text/json": components["schemas"]["PermissionProfile"];
-                    };
-                };
-            };
-        };
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["UpsertPermissionProfileRequest"];
-                    "text/json": components["schemas"]["UpsertPermissionProfileRequest"];
-                    "application/*+json": components["schemas"]["UpsertPermissionProfileRequest"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        post?: never;
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/PermissionProfiles/{id}/apply-to-user/{userId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    id: string;
-                    userId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/Productos": {
         parameters: {
             query?: never;
@@ -2839,6 +8056,8 @@ export interface paths {
                     LastModified?: string;
                     PageNumber?: number;
                     PageSize?: number;
+                    SoloPadres?: boolean;
+                    SinPeso?: boolean;
                 };
                 header?: never;
                 path?: never;
@@ -2944,6 +8163,88 @@ export interface paths {
         };
         get: {
             parameters: {
+                query?: {
+                    Marca?: string;
+                    CategoriaId?: string;
+                    SearchTerm?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Productos/export-catalogo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    SearchTerm?: string;
+                    Marca?: string;
+                    IncluirInactivos?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Productos/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
                 query?: never;
                 header?: never;
                 path?: never;
@@ -2960,6 +8261,45 @@ export interface paths {
                         "text/plain": string;
                         "application/json": string;
                         "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Productos/marcas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    IncluirInactivos?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MarcaDto"][];
+                        "application/json": components["schemas"]["MarcaDto"][];
+                        "text/json": components["schemas"]["MarcaDto"][];
                     };
                 };
             };
@@ -3005,6 +8345,49 @@ export interface paths {
                         "text/plain": string;
                         "application/json": string;
                         "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Productos/vista-previa-precio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["GetVistaPreviaPrecioQuery"];
+                    "text/json": components["schemas"]["GetVistaPreviaPrecioQuery"];
+                    "application/*+json": components["schemas"]["GetVistaPreviaPrecioQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VistaPreviaPrecioDto"];
+                        "application/json": components["schemas"]["VistaPreviaPrecioDto"];
+                        "text/json": components["schemas"]["VistaPreviaPrecioDto"];
                     };
                 };
             };
@@ -3237,6 +8620,312 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Productos/{id}/variante/activo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CambiarEstadoVarianteRequest"];
+                    "text/json": components["schemas"]["CambiarEstadoVarianteRequest"];
+                    "application/*+json": components["schemas"]["CambiarEstadoVarianteRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": boolean;
+                        "application/json": boolean;
+                        "text/json": boolean;
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/Productos/acciones-masivas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AplicarAccionMasivaProductosCommand"];
+                    "text/json": components["schemas"]["AplicarAccionMasivaProductosCommand"];
+                    "application/*+json": components["schemas"]["AplicarAccionMasivaProductosCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResultadoAccionMasivaItemDto"][];
+                        "application/json": components["schemas"]["ResultadoAccionMasivaItemDto"][];
+                        "text/json": components["schemas"]["ResultadoAccionMasivaItemDto"][];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/puestos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PuestoDto"][];
+                        "application/json": components["schemas"]["PuestoDto"][];
+                        "text/json": components["schemas"]["PuestoDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpsertPuestoRequest"];
+                    "text/json": components["schemas"]["UpsertPuestoRequest"];
+                    "application/*+json": components["schemas"]["UpsertPuestoRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PuestoDto"];
+                        "application/json": components["schemas"]["PuestoDto"];
+                        "text/json": components["schemas"]["PuestoDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/puestos/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PuestoDto"];
+                        "application/json": components["schemas"]["PuestoDto"];
+                        "text/json": components["schemas"]["PuestoDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpsertPuestoRequest"];
+                    "text/json": components["schemas"]["UpsertPuestoRequest"];
+                    "application/*+json": components["schemas"]["UpsertPuestoRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/puestos/{id}/apply-to-user/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/puestos/users/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    userId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Reportes/dashboard": {
         parameters: {
             query?: never;
@@ -3327,6 +9016,405 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Reportes/ventas/serie": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Desde?: string;
+                    Hasta?: string;
+                    Agrupar?: components["schemas"]["AgrupacionReporte"];
+                    VendedorId?: string;
+                    LineaId?: string;
+                    DepositoId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SerieVentasDtoResponse"];
+                        "application/json": components["schemas"]["SerieVentasDtoResponse"];
+                        "text/json": components["schemas"]["SerieVentasDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Reportes/ventas/resumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Desde?: string;
+                    Hasta?: string;
+                    Agrupar?: components["schemas"]["AgrupacionReporte"];
+                    VendedorId?: string;
+                    LineaId?: string;
+                    DepositoId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResumenVentasDtoResponse"];
+                        "application/json": components["schemas"]["ResumenVentasDtoResponse"];
+                        "text/json": components["schemas"]["ResumenVentasDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Reportes/ventas/por-cliente": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Dimension?: components["schemas"]["DimensionRanking"];
+                    Desde?: string;
+                    Hasta?: string;
+                    Agrupar?: components["schemas"]["AgrupacionReporte"];
+                    VendedorId?: string;
+                    LineaId?: string;
+                    DepositoId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RankingVentasDtoResponse"];
+                        "application/json": components["schemas"]["RankingVentasDtoResponse"];
+                        "text/json": components["schemas"]["RankingVentasDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Reportes/ventas/por-vendedor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Dimension?: components["schemas"]["DimensionRanking"];
+                    Desde?: string;
+                    Hasta?: string;
+                    Agrupar?: components["schemas"]["AgrupacionReporte"];
+                    VendedorId?: string;
+                    LineaId?: string;
+                    DepositoId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RankingVentasDtoResponse"];
+                        "application/json": components["schemas"]["RankingVentasDtoResponse"];
+                        "text/json": components["schemas"]["RankingVentasDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Reportes/ventas/por-cliente/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Dimension?: components["schemas"]["DimensionRanking"];
+                    Formato?: components["schemas"]["FormatoExport"];
+                    Desde?: string;
+                    Hasta?: string;
+                    Agrupar?: components["schemas"]["AgrupacionReporte"];
+                    VendedorId?: string;
+                    LineaId?: string;
+                    DepositoId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Reportes/ventas/por-vendedor/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Dimension?: components["schemas"]["DimensionRanking"];
+                    Formato?: components["schemas"]["FormatoExport"];
+                    Desde?: string;
+                    Hasta?: string;
+                    Agrupar?: components["schemas"]["AgrupacionReporte"];
+                    VendedorId?: string;
+                    LineaId?: string;
+                    DepositoId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Reportes/ventas/descuentos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Desde?: string;
+                    Hasta?: string;
+                    Agrupar?: components["schemas"]["AgrupacionReporte"];
+                    VendedorId?: string;
+                    LineaId?: string;
+                    DepositoId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DescuentosDtoResponse"];
+                        "application/json": components["schemas"]["DescuentosDtoResponse"];
+                        "text/json": components["schemas"]["DescuentosDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Reportes/ventas/destacados": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Desde?: string;
+                    Hasta?: string;
+                    Agrupar?: components["schemas"]["AgrupacionReporte"];
+                    VendedorId?: string;
+                    LineaId?: string;
+                    DepositoId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DestacadosDtoResponse"];
+                        "application/json": components["schemas"]["DestacadosDtoResponse"];
+                        "text/json": components["schemas"]["DestacadosDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Reportes/stock/valorizado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    LineaId?: string;
+                    DepositoId?: string;
+                    DiasInmovilizado?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StockValorizadoDtoResponse"];
+                        "application/json": components["schemas"]["StockValorizadoDtoResponse"];
+                        "text/json": components["schemas"]["StockValorizadoDtoResponse"];
+                    };
                 };
             };
         };
@@ -3442,47 +9530,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/Roles/{roleId}/profile": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    roleId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["RoleProfileUpdateDto"];
-                    "text/json": components["schemas"]["RoleProfileUpdateDto"];
-                    "application/*+json": components["schemas"]["RoleProfileUpdateDto"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/Sessions": {
         parameters: {
             query?: never;
@@ -3551,6 +9598,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Sessions/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/socios-comerciales": {
         parameters: {
             query?: never;
@@ -3565,6 +9645,8 @@ export interface paths {
                     Activo?: boolean;
                     SearchTerm?: string;
                     LastModified?: string;
+                    Agenda?: boolean;
+                    SoloIncompletos?: boolean;
                     PageNumber?: number;
                     PageSize?: number;
                 };
@@ -3612,6 +9694,255 @@ export interface paths {
                         "text/plain": string;
                         "application/json": string;
                         "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/socios-comerciales/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/socios-comerciales/cuits-duplicados": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GrupoCuitDuplicadoDto"][];
+                        "application/json": components["schemas"]["GrupoCuitDuplicadoDto"][];
+                        "text/json": components["schemas"]["GrupoCuitDuplicadoDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/socios-comerciales/{id}/reactivar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ReactivarSocioCommand"];
+                    "text/json": components["schemas"]["ReactivarSocioCommand"];
+                    "application/*+json": components["schemas"]["ReactivarSocioCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": boolean;
+                        "application/json": boolean;
+                        "text/json": boolean;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/socios-comerciales/{id}/solicitudes-cambio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SolicitarCambioSocioCommand"];
+                    "text/json": components["schemas"]["SolicitarCambioSocioCommand"];
+                    "application/*+json": components["schemas"]["SolicitarCambioSocioCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/socios-comerciales/solicitudes-cambio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Estado?: components["schemas"]["EstadoSolicitudCambio"];
+                    SocioId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SolicitudCambioDto"][];
+                        "application/json": components["schemas"]["SolicitudCambioDto"][];
+                        "text/json": components["schemas"]["SolicitudCambioDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/socios-comerciales/solicitudes-cambio/{solicitudId}/resolver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    solicitudId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ResolverSolicitudCambioCommand"];
+                    "text/json": components["schemas"]["ResolverSolicitudCambioCommand"];
+                    "application/*+json": components["schemas"]["ResolverSolicitudCambioCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": boolean;
+                        "application/json": boolean;
+                        "text/json": boolean;
                     };
                 };
             };
@@ -3727,6 +10058,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/socios-comerciales/{id}/productos-proveedor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProductoProveedorDtoListResponse"];
+                        "application/json": components["schemas"]["ProductoProveedorDtoListResponse"];
+                        "text/json": components["schemas"]["ProductoProveedorDtoListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/socios-comerciales/{id}/toggle-status": {
         parameters: {
             query?: never;
@@ -3772,6 +10142,94 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/socios-comerciales/{id}/vendedor-responsable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AsignarVendedorResponsableCommand"];
+                    "text/json": components["schemas"]["AsignarVendedorResponsableCommand"];
+                    "application/*+json": components["schemas"]["AsignarVendedorResponsableCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": boolean;
+                        "application/json": boolean;
+                        "text/json": boolean;
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/socios-comerciales/vendedor-responsable/masivo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AsignarVendedorResponsableMasivoCommand"];
+                    "text/json": components["schemas"]["AsignarVendedorResponsableMasivoCommand"];
+                    "application/*+json": components["schemas"]["AsignarVendedorResponsableMasivoCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResultadoAsignacionVendedorItemDto"][];
+                        "application/json": components["schemas"]["ResultadoAsignacionVendedorItemDto"][];
+                        "text/json": components["schemas"]["ResultadoAsignacionVendedorItemDto"][];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/v1/socios-comerciales/geocode-backfill": {
         parameters: {
             query?: never;
@@ -3811,6 +10269,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/socios-comerciales/{id}/cuentas-bancarias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CuentaBancariaSocioResponseIEnumerableResponse"];
+                        "application/json": components["schemas"]["CuentaBancariaSocioResponseIEnumerableResponse"];
+                        "text/json": components["schemas"]["CuentaBancariaSocioResponseIEnumerableResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateCuentaBancariaSocioCommand"];
+                    "text/json": components["schemas"]["CreateCuentaBancariaSocioCommand"];
+                    "application/*+json": components["schemas"]["CreateCuentaBancariaSocioCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Stocks": {
         parameters: {
             query?: never;
@@ -3826,6 +10352,8 @@ export interface paths {
                     Activo?: boolean;
                     SearchTerm?: string;
                     LastModified?: string;
+                    Marca?: string;
+                    CategoriaId?: string;
                     PageNumber?: number;
                     PageSize?: number;
                 };
@@ -3850,6 +10378,49 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Stocks/disponibilidad": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["GetDisponibilidadVentaQuery"];
+                    "text/json": components["schemas"]["GetDisponibilidadVentaQuery"];
+                    "application/*+json": components["schemas"]["GetDisponibilidadVentaQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DisponibilidadItemDtoListResponse"];
+                        "application/json": components["schemas"]["DisponibilidadItemDtoListResponse"];
+                        "text/json": components["schemas"]["DisponibilidadItemDtoListResponse"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -3911,6 +10482,10 @@ export interface paths {
                 query?: {
                     ProductoId?: string;
                     DepositoId?: string;
+                    TipoMovimiento?: number;
+                    FechaDesde?: string;
+                    FechaHasta?: string;
+                    UsuarioId?: string;
                     PageNumber?: number;
                     PageSize?: number;
                 };
@@ -3941,6 +10516,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Stocks/movimientos/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    ProductoId?: string;
+                    DepositoId?: string;
+                    TipoMovimiento?: number;
+                    FechaDesde?: string;
+                    FechaHasta?: string;
+                    UsuarioId?: string;
+                    Formato?: components["schemas"]["FormatoExport"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Tesoreria": {
         parameters: {
             query?: never;
@@ -3955,6 +10575,7 @@ export interface paths {
                     TipoMovimientoId?: string;
                     SocioId?: string;
                     Categoria?: string;
+                    Fuente?: string;
                     FechaDesde?: string;
                     FechaHasta?: string;
                     SearchTerm?: string;
@@ -4069,6 +10690,224 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tipos-gasto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TipoGastoResponse"][];
+                        "application/json": components["schemas"]["TipoGastoResponse"][];
+                        "text/json": components["schemas"]["TipoGastoResponse"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateTipoGastoCommand"];
+                    "text/json": components["schemas"]["CreateTipoGastoCommand"];
+                    "application/*+json": components["schemas"]["CreateTipoGastoCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tipos-gasto/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateTipoGastoCommand"];
+                    "text/json": components["schemas"]["UpdateTipoGastoCommand"];
+                    "application/*+json": components["schemas"]["UpdateTipoGastoCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tipos-movimiento-interno": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TipoMovimientoInternoResponse"][];
+                        "application/json": components["schemas"]["TipoMovimientoInternoResponse"][];
+                        "text/json": components["schemas"]["TipoMovimientoInternoResponse"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateTipoMovimientoInternoCommand"];
+                    "text/json": components["schemas"]["CreateTipoMovimientoInternoCommand"];
+                    "application/*+json": components["schemas"]["CreateTipoMovimientoInternoCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tipos-movimiento-interno/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateTipoMovimientoInternoCommand"];
+                    "text/json": components["schemas"]["UpdateTipoMovimientoInternoCommand"];
+                    "application/*+json": components["schemas"]["UpdateTipoMovimientoInternoCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Users/me": {
         parameters: {
             query?: never;
@@ -4095,6 +10934,45 @@ export interface paths {
             };
         };
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Users/me/preferencias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ActualizarMisPreferenciasCommand"];
+                    "text/json": components["schemas"]["ActualizarMisPreferenciasCommand"];
+                    "application/*+json": components["schemas"]["ActualizarMisPreferenciasCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         post?: never;
         delete?: never;
         options?: never;
@@ -4398,6 +11276,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Users/totales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UsuariosTotalesDtoResponse"];
+                        "application/json": components["schemas"]["UsuariosTotalesDtoResponse"];
+                        "text/json": components["schemas"]["UsuariosTotalesDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Users/{id}": {
         parameters: {
             query?: never;
@@ -4456,7 +11371,26 @@ export interface paths {
             };
         };
         post?: never;
-        delete?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;
@@ -4610,6 +11544,107 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/Users/{id}/set-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SetPasswordRequestDto"];
+                    "text/json": components["schemas"]["SetPasswordRequestDto"];
+                    "application/*+json": components["schemas"]["SetPasswordRequestDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Users/{id}/vendedor-limites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpsertVendedorLimitesRequestDto"];
+                    "text/json": components["schemas"]["UpsertVendedorLimitesRequestDto"];
+                    "application/*+json": components["schemas"]["UpsertVendedorLimitesRequestDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Ventas": {
         parameters: {
             query?: never;
@@ -4627,6 +11662,12 @@ export interface paths {
                     TicketId?: string;
                     TipoOperacion?: components["schemas"]["TipoOperacionVenta"];
                     SearchTerm?: string;
+                    Cliente?: string;
+                    VendedorId?: string;
+                    MontoMin?: number;
+                    MontoMax?: number;
+                    Moneda?: string;
+                    EstadoPago?: components["schemas"]["EstadoPagoVenta"];
                     LastModified?: string;
                     LastCursorDate?: string;
                     LastCursorId?: string;
@@ -4687,6 +11728,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Ventas/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    ClienteId?: string;
+                    Estado?: components["schemas"]["EstadoVenta"];
+                    FechaDesde?: string;
+                    FechaHasta?: string;
+                    TicketId?: string;
+                    TipoOperacion?: components["schemas"]["TipoOperacionVenta"];
+                    SearchTerm?: string;
+                    Cliente?: string;
+                    VendedorId?: string;
+                    MontoMin?: number;
+                    MontoMax?: number;
+                    Moneda?: string;
+                    EstadoPago?: components["schemas"]["EstadoPagoVenta"];
+                    Formato?: components["schemas"]["FormatoExport"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Ventas/resumen": {
         parameters: {
             query?: never;
@@ -4724,6 +11817,363 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/vendedores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendedorListItemDto"][];
+                        "application/json": components["schemas"]["VendedorListItemDto"][];
+                        "text/json": components["schemas"]["VendedorListItemDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/con-factura-por-defecto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VentaConFacturaPorDefectoDto"];
+                        "application/json": components["schemas"]["VentaConFacturaPorDefectoDto"];
+                        "text/json": components["schemas"]["VentaConFacturaPorDefectoDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/stock-fiscal/verificar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VerificarStockFiscalVentaQuery"];
+                    "text/json": components["schemas"]["VerificarStockFiscalVentaQuery"];
+                    "application/*+json": components["schemas"]["VerificarStockFiscalVentaQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FaltanteStockFiscalDto"][];
+                        "application/json": components["schemas"]["FaltanteStockFiscalDto"][];
+                        "text/json": components["schemas"]["FaltanteStockFiscalDto"][];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/borradores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateVentaBorradorCommand"];
+                    "text/json": components["schemas"]["CreateVentaBorradorCommand"];
+                    "application/*+json": components["schemas"]["CreateVentaBorradorCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VentaActionResponseDto"];
+                        "application/json": components["schemas"]["VentaActionResponseDto"];
+                        "text/json": components["schemas"]["VentaActionResponseDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/borradores/mio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BorradorVentaDto"];
+                        "application/json": components["schemas"]["BorradorVentaDto"];
+                        "text/json": components["schemas"]["BorradorVentaDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/borradores/mios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BorradorVentaDto"][];
+                        "application/json": components["schemas"]["BorradorVentaDto"][];
+                        "text/json": components["schemas"]["BorradorVentaDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/{id}/descartar-borrador": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": boolean;
+                        "application/json": boolean;
+                        "text/json": boolean;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/{id}/guardar-presupuesto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["GuardarPresupuestoCommand"];
+                    "text/json": components["schemas"]["GuardarPresupuestoCommand"];
+                    "application/*+json": components["schemas"]["GuardarPresupuestoCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VentaActionResponseDto"];
+                        "application/json": components["schemas"]["VentaActionResponseDto"];
+                        "text/json": components["schemas"]["VentaActionResponseDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/{id}/reabrir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VentaActionResponseDto"];
+                        "application/json": components["schemas"]["VentaActionResponseDto"];
+                        "text/json": components["schemas"]["VentaActionResponseDto"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -4784,9 +12234,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": boolean;
-                        "application/json": boolean;
-                        "text/json": boolean;
+                        "text/plain": components["schemas"]["VentaActionResponseDto"];
+                        "application/json": components["schemas"]["VentaActionResponseDto"];
+                        "text/json": components["schemas"]["VentaActionResponseDto"];
                     };
                 };
             };
@@ -4827,6 +12277,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Ventas/pendientes-autorizacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VentaPendienteAutorizacionDto"][];
+                        "application/json": components["schemas"]["VentaPendienteAutorizacionDto"][];
+                        "text/json": components["schemas"]["VentaPendienteAutorizacionDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Ventas/{id}/autorizar": {
         parameters: {
             query?: never;
@@ -4862,6 +12349,96 @@ export interface paths {
                         "text/plain": boolean;
                         "application/json": boolean;
                         "text/json": boolean;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/{id}/rechazar-autorizacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RechazarAutorizacionVentaCommand"];
+                    "text/json": components["schemas"]["RechazarAutorizacionVentaCommand"];
+                    "application/*+json": components["schemas"]["RechazarAutorizacionVentaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/{id}/corregir-cesion-comision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CorregirCesionComisionCommand"];
+                    "text/json": components["schemas"]["CorregirCesionComisionCommand"];
+                    "application/*+json": components["schemas"]["CorregirCesionComisionCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VentaActionResponseDto"];
+                        "application/json": components["schemas"]["VentaActionResponseDto"];
+                        "text/json": components["schemas"]["VentaActionResponseDto"];
                     };
                 };
             };
@@ -5001,6 +12578,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Ventas/no-entregadas-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": number;
+                        "application/json": number;
+                        "text/json": number;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Ventas/{id}/pagos": {
         parameters: {
             query?: never;
@@ -5040,7 +12654,136 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/Ventas/reporte-diario": {
+    "/api/v1/Ventas/{id}/devoluciones-posibles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RenglonDevolvibleDtoIEnumerableResponse"];
+                        "application/json": components["schemas"]["RenglonDevolvibleDtoIEnumerableResponse"];
+                        "text/json": components["schemas"]["RenglonDevolvibleDtoIEnumerableResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/{id}/notas-credito": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EmitirNotaCreditoCommand"];
+                    "text/json": components["schemas"]["EmitirNotaCreditoCommand"];
+                    "application/*+json": components["schemas"]["EmitirNotaCreditoCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/notas-credito/{notaId}/resolver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    notaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ResolverNotaCreditoCommand"];
+                    "text/json": components["schemas"]["ResolverNotaCreditoCommand"];
+                    "application/*+json": components["schemas"]["ResolverNotaCreditoCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/notas-credito": {
         parameters: {
             query?: never;
             header?: never;
@@ -5050,7 +12793,9 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
-                    fecha?: string;
+                    VentaId?: string;
+                    ClienteId?: string;
+                    Estado?: components["schemas"]["EstadoNotaCredito"];
                 };
                 header?: never;
                 path?: never;
@@ -5064,9 +12809,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["ReporteDiarioDto"];
-                        "application/json": components["schemas"]["ReporteDiarioDto"];
-                        "text/json": components["schemas"]["ReporteDiarioDto"];
+                        "text/plain": components["schemas"]["NotaCreditoListDtoIEnumerableResponse"];
+                        "application/json": components["schemas"]["NotaCreditoListDtoIEnumerableResponse"];
+                        "text/json": components["schemas"]["NotaCreditoListDtoIEnumerableResponse"];
                     };
                 };
             };
@@ -5083,15 +12828,109 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AbcDto: {
+            /** Format: int32 */
+            totalProductos?: number;
+            clases?: components["schemas"]["ResumenClaseAbcDto"][] | null;
+            principales?: components["schemas"]["FilaAbcDto"][] | null;
+        };
         AbrirCajaCommand: {
             /**
              * Format: uuid
              * @deprecated
              */
             usuarioId?: string;
+            /** Format: uuid */
+            depositoId?: string;
             /** Format: double */
             saldoInicialDeclarado?: number;
             moneda?: string | null;
+        };
+        /** @enum {string} */
+        AccionDestino: "Cheques" | "Venta" | "VentasPendientesAutorizacion" | "Caja" | "Socios" | "SolicitudesSocio" | "Importaciones" | "Picking" | "Compra" | "Calendario" | "Inventario";
+        /** @enum {string} */
+        AccionMasivaProducto: "Activar" | "Desactivar" | "AjustarMarkup";
+        AccionSugeridaDto: {
+            destino: components["schemas"]["AccionDestino"];
+            /** Format: uuid */
+            entidadId?: string | null;
+            etiqueta: string;
+        };
+        AcreditacionTarjetaListDto: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            pagoId?: string;
+            /** Format: uuid */
+            socioComercialId?: string | null;
+            socioComercialNombre?: string | null;
+            /** Format: uuid */
+            medioPagoId?: string;
+            medioPagoNombre?: string | null;
+            /** Format: double */
+            montoBrutoAmount?: number;
+            montoBrutoMoneda?: string | null;
+            /** Format: double */
+            comisionPorcentaje?: number;
+            /** Format: double */
+            comisionMontoAmount?: number;
+            /** Format: double */
+            montoNetoAmount?: number;
+            /** Format: date-time */
+            fechaEstimada?: string;
+            estado?: components["schemas"]["EstadoAcreditacionTarjeta"];
+            /** Format: date-time */
+            fechaAcreditacion?: string | null;
+            activo?: boolean;
+        };
+        AcreditacionTarjetaListDtoPaginatedResponse: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            readonly hasNextPage?: boolean;
+            items?: components["schemas"]["AcreditacionTarjetaListDto"][] | null;
+        };
+        AcreditacionesTarjetaResponse: {
+            pagina?: components["schemas"]["AcreditacionTarjetaListDtoPaginatedResponse"];
+            totales?: components["schemas"]["AcreditacionesTarjetaTotalesDto"];
+        };
+        AcreditacionesTarjetaTotalesDto: {
+            /** Format: double */
+            montoBrutoTotal?: number;
+            /** Format: double */
+            comisionMontoTotal?: number;
+            /** Format: double */
+            montoNetoTotal?: number;
+        };
+        AcreditarTarjetaCommand: {
+            /** Format: uuid */
+            acreditacionTarjetaId?: string;
+            /** Format: uuid */
+            cuentaDestinoId?: string;
+        };
+        ActualizarMisPreferenciasCommand: {
+            temaPreferido?: string | null;
+            foto?: string | null;
+        };
+        ActualizarOfertaCommand: {
+            /** Format: uuid */
+            id?: string;
+            tipo?: components["schemas"]["TipoOferta"];
+            /** Format: double */
+            valor?: number;
+            /** Format: date-time */
+            desde?: string;
+            /** Format: date-time */
+            hasta?: string | null;
+            nota?: string | null;
+        };
+        ActualizarPreferenciasNotificacionCommand: {
+            preferencias?: components["schemas"]["PreferenciaToastDto"][] | null;
         };
         AdjustStockCommand: {
             /** Format: uuid */
@@ -5103,6 +12942,66 @@ export interface components {
             tipoMovimiento?: components["schemas"]["TipoMovimientoStock"];
             observacion?: string | null;
         };
+        /** @enum {string} */
+        AgrupacionComisionPorLinea: "Producto" | "Categoria" | "Vendedor";
+        /** @enum {string} */
+        AgrupacionReporte: "Dia" | "Semana" | "Mes" | "Anio";
+        AjustarStockFiscalCommand: {
+            /** Format: double */
+            cantidad?: number;
+            motivo?: string | null;
+            /** Format: double */
+            costoUnitario?: number | null;
+        };
+        AjusteStockFiscalDto: {
+            /** Format: uuid */
+            productoId: string;
+            /** Format: uuid */
+            movimientoId: string;
+            /** Format: double */
+            cantidadFiscal: number;
+            quedaNegativo: boolean;
+        };
+        AjusteStockFiscalDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["AjusteStockFiscalDto"];
+        };
+        /** @enum {string} */
+        AlcanceReglaComision: "Articulo" | "Subcategoria" | "Categoria" | "Familia" | "Linea";
+        AlertasMargenDto: {
+            /** Format: double */
+            umbralPorcentaje?: number;
+            /** Format: int32 */
+            ventasEvaluadas?: number;
+            /** Format: int32 */
+            ventasSinCosto?: number;
+            /** Format: int32 */
+            bajoElUmbral?: number;
+            /** Format: int32 */
+            conPerdida?: number;
+            peores?: components["schemas"]["VentaEnAlertaDto"][] | null;
+        };
+        AlicuotaComprobanteDto: {
+            alicuota: components["schemas"]["AlicuotaIva"];
+            /** Format: double */
+            netoGravado: number;
+            /** Format: double */
+            iva: number;
+        };
+        AlicuotaComprobanteInput: {
+            alicuota?: components["schemas"]["AlicuotaIva"];
+            /** Format: double */
+            netoGravado?: number;
+            /** Format: double */
+            iva?: number;
+        };
+        /** @enum {string} */
+        AlicuotaIva: "Cero" | "DiezComaCinco" | "Veintiuno" | "Veintisiete" | "Cinco" | "DosComaCinco";
         AlmacenStockDto: {
             /** Format: uuid */
             depositoId: string;
@@ -5116,6 +13015,18 @@ export interface components {
             /** Format: double */
             disponible: number;
         };
+        AnalizarImportacionCommand: {
+            /** Format: uuid */
+            importacionJobId?: string;
+            mapeo?: {
+                [key: string]: string;
+            } | null;
+        };
+        AnularMovimientoInternoCommand: {
+            /** Format: uuid */
+            movimientoInternoId?: string;
+            motivo?: string | null;
+        };
         AnularPagoCommand: {
             /** Format: uuid */
             pagoId?: string;
@@ -5125,6 +13036,13 @@ export interface components {
              */
             usuarioId?: string;
             motivoAnulacion?: string | null;
+        };
+        AnularRecepcionCompraCommand: {
+            /** Format: uuid */
+            compraId?: string;
+            motivo?: string | null;
+            /** Format: int32 */
+            version?: number | null;
         };
         AnularTransaccionCommand: {
             /** Format: uuid */
@@ -5147,6 +13065,33 @@ export interface components {
              */
             usuarioModificadorId?: string;
             motivoAnulacion?: string | null;
+        };
+        AplicarAccionMasivaProductosCommand: {
+            productoIds: string[];
+            accion?: components["schemas"]["AccionMasivaProducto"];
+            /** Format: double */
+            markupPorcentaje?: number | null;
+        };
+        AsignarComprobantePagoCommand: {
+            /** Format: uuid */
+            pagoId?: string;
+            comprobanteUrl?: string | null;
+        };
+        AsignarImagenChequeCommand: {
+            /** Format: uuid */
+            chequeId?: string;
+            imagenUrl?: string | null;
+        };
+        AsignarVendedorResponsableCommand: {
+            /** Format: uuid */
+            socioId?: string;
+            /** Format: uuid */
+            vendedorResponsableId?: string;
+        };
+        AsignarVendedorResponsableMasivoCommand: {
+            socioIds?: string[] | null;
+            /** Format: uuid */
+            vendedorResponsableId?: string;
         };
         AssignRoleRequestDto: {
             roleName?: string | null;
@@ -5171,11 +13116,12 @@ export interface components {
             /** Format: double */
             precioEfectivo: number;
             /** Format: double */
-            precioMinimoRentable: number;
+            precioMinimoRentable?: number | null;
             /** Format: double */
-            aporteOverhead: number;
+            aporteOverhead?: number | null;
             /** Format: double */
-            sacrificio: number;
+            sacrificio?: number | null;
+            desglosePiso: components["schemas"]["PisoDesgloseDto"];
         };
         AutorizarVentaCommand: {
             /** Format: uuid */
@@ -5190,6 +13136,8 @@ export interface components {
             /** @deprecated */
             isAdminUser?: boolean;
             razon?: string | null;
+            /** Format: double */
+            descuentoAdicionalPorcentaje?: number | null;
         };
         BackfillResult: {
             /** Format: int32 */
@@ -5210,6 +13158,36 @@ export interface components {
             errors?: string[] | null;
             data?: boolean;
         };
+        BorradorCompraDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            version: number;
+            /** Format: uuid */
+            proveedorId: string;
+            proveedorNombre: string;
+            /** Format: uuid */
+            depositoId: string;
+            /** Format: date-time */
+            fechaModificacion: string;
+            /** Format: int32 */
+            cantidadLineas: number;
+        };
+        BorradorVentaDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            version: number;
+            /** Format: uuid */
+            clienteId: string;
+            clienteNombre: string;
+            /** Format: uuid */
+            depositoId: string;
+            /** Format: date-time */
+            fechaModificacion: string;
+            /** Format: int32 */
+            cantidadLineas: number;
+        };
         BultoDto: {
             /** Format: uuid */
             id: string;
@@ -5223,6 +13201,24 @@ export interface components {
             /** Format: date-time */
             fechaCreacion: string;
         };
+        CajaAbiertaDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            depositoId: string;
+            depositoNombre?: string | null;
+            /** Format: date-time */
+            fecha: string;
+            /** Format: double */
+            saldoSistemaAmount: number;
+            saldoSistemaMoneda?: string | null;
+            abiertaPor?: string | null;
+        };
+        CajaAbiertaEstadoDto: {
+            /** Format: uuid */
+            depositoId: string;
+            depositoNombre?: string | null;
+        };
         CajaActivaDto: {
             /** Format: uuid */
             id: string;
@@ -5235,22 +13231,137 @@ export interface components {
             saldoSistemaAmount: number;
             saldoSistemaMoneda?: string | null;
             abierta: boolean;
+            /** Format: uuid */
+            depositoId: string;
+            depositoNombre?: string | null;
+        };
+        CajaCerradaDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            depositoId: string;
+            depositoNombre?: string | null;
+            /** Format: date-time */
+            fechaApertura: string;
+            /** Format: date-time */
+            fechaCierre: string;
+            /** Format: double */
+            saldoInicialAmount: number;
+            saldoInicialMoneda?: string | null;
+            /** Format: double */
+            saldoSistemaAmount: number;
+            saldoSistemaMoneda?: string | null;
+            /** Format: double */
+            saldoDeclaradoAmount: number;
+            saldoDeclaradoMoneda?: string | null;
+            /** Format: double */
+            diferenciaAmount: number;
+            diferenciaMoneda?: string | null;
+            cerradaPor?: string | null;
+        };
+        CajaCerradaDtoPaginatedResponse: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            readonly hasNextPage?: boolean;
+            items?: components["schemas"]["CajaCerradaDto"][] | null;
+        };
+        CambiarEstadoOfertaCommand: {
+            /** Format: uuid */
+            id?: string;
+            habilitada?: boolean;
+        };
+        CambiarEstadoVarianteRequest: {
+            activo?: boolean;
+        };
+        CambioCampoDto: {
+            anterior?: string | null;
+            nuevo?: string | null;
+        };
+        CambioCantidadDto: {
+            /** Format: uuid */
+            detalleId: string;
+            /** Format: double */
+            nuevaCantidad: number;
+        };
+        CampoPlantillaDto: {
+            clave?: string | null;
+            etiqueta?: string | null;
+            obligatorio?: boolean;
         };
         CancelCompraCommand: {
             /** Format: uuid */
             compraId?: string;
             motivoAnulacion?: string | null;
         };
+        CarteraChequesResumenDto: {
+            /** Format: double */
+            saldoCartera: number;
+            /** Format: int32 */
+            cantidadEnCartera: number;
+            /** Format: int32 */
+            cantidadDepositados: number;
+            /** Format: double */
+            montoPorVencer7d: number;
+            /** Format: double */
+            montoVencidosSinDepositar: number;
+            /** Format: int32 */
+            cantidadRechazadosMes: number;
+        };
+        CatalogoComercialItemDto: {
+            /** Format: uuid */
+            productoId: string;
+            nombre: string;
+            codigoPropio: string;
+            marca?: string | null;
+            categoria?: string | null;
+            linea: string;
+            familia: string;
+            tipo: string;
+            subtipo: string;
+            imageUrl?: string | null;
+            /** Format: double */
+            precioVenta: number;
+            disponible: boolean;
+            /** Format: double */
+            precioConOferta?: number | null;
+        };
+        CatalogoComercialItemDtoPaginatedResponse: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            readonly hasNextPage?: boolean;
+            items?: components["schemas"]["CatalogoComercialItemDto"][] | null;
+        };
         CatalogoExcelRequest: {
             stockIds?: string[] | null;
             columnas?: string[] | null;
+            marca?: string | null;
+            /** Format: uuid */
+            categoriaId?: string | null;
+            searchTerm?: string | null;
         };
         CatalogoStockRealDto: {
             /** Format: uuid */
             id: string;
             nombre: string;
+            marca?: string | null;
+            codigoPropio?: string | null;
+            codigoBarra?: string | null;
             /** Format: double */
             precioVenta: number;
+            /** Format: double */
+            precioConOferta?: number | null;
             /** Format: double */
             precioCompraBase?: number | null;
             /** Format: double */
@@ -5261,19 +13372,25 @@ export interface components {
             real: number;
             /** Format: double */
             virtual: number;
+            /** Format: double */
+            stockMinimo: number;
+            puedeVenderse: boolean;
             ubicacionDeposito?: string | null;
             imageUrl?: string | null;
             esPadreDeVariantes: boolean;
+            /** Format: uuid */
+            productoPadreId?: string | null;
             unidadMedida: string;
             /** Format: double */
             bultoContenido: number;
             /** Format: double */
-            blisterContenido?: number | null;
+            bultoMadreContenido?: number | null;
             fraccionMinimaVenta: string;
             /** Format: double */
             ventaMinimaUnidades: number;
             /** Format: double */
             precioMinimoRentable?: number | null;
+            desglosePiso?: components["schemas"]["PisoDesgloseDto"];
             /** Format: double */
             precioAdecuado?: number | null;
             /** Format: double */
@@ -5300,11 +13417,22 @@ export interface components {
             /** Format: uuid */
             id?: string;
             nombre?: string | null;
+            codigo?: string | null;
             /** Format: int32 */
             nivel?: number;
             /** Format: uuid */
             categoriaPadreId?: string | null;
             activo?: boolean;
+        };
+        CeldaCalorDto: {
+            /** Format: int32 */
+            dia?: number;
+            /** Format: int32 */
+            hora?: number;
+            /** Format: double */
+            facturado?: number;
+            /** Format: int32 */
+            operaciones?: number;
         };
         CerrarCajaCommand: {
             /** Format: uuid */
@@ -5318,22 +13446,248 @@ export interface components {
             saldoFinalDeclarado?: number;
             moneda?: string | null;
         };
+        CerrarCajaResponseDto: {
+            /** Format: uuid */
+            cajaId: string;
+            /** Format: double */
+            saldoSistemaAmount: number;
+            saldoSistemaMoneda?: string | null;
+            /** Format: double */
+            saldoDeclaradoAmount: number;
+            saldoDeclaradoMoneda?: string | null;
+            /** Format: double */
+            diferenciaAmount: number;
+            diferenciaMoneda?: string | null;
+            asientoGenerado?: boolean;
+            cuentaDestinoNombre?: string | null;
+            /** Format: uuid */
+            movimientoCuentaId?: string | null;
+            advertenciaAsiento?: string | null;
+        };
+        CerrarVigenciaReglaComisionCommand: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: date */
+            hasta?: string;
+        };
         ChangePasswordCommand: {
             email?: string | null;
             currentPassword?: string | null;
             newPassword?: string | null;
             confirmNewPassword?: string | null;
         };
+        ChequeDetalleItem: {
+            numero?: string | null;
+            banco?: string | null;
+            titular?: string | null;
+            /** Format: date-time */
+            fechaEmision?: string;
+            /** Format: date-time */
+            fechaPago?: string;
+            /** Format: double */
+            monto?: number;
+            imagenUrl?: string | null;
+        };
+        ChequeDto: {
+            /** Format: uuid */
+            id: string;
+            numero: string;
+            banco: string;
+            titular: string;
+            tipo: components["schemas"]["TipoCheque"];
+            estado: components["schemas"]["EstadoCheque"];
+            /** Format: date-time */
+            fechaEmision: string;
+            /** Format: date-time */
+            fechaPago: string;
+            /** Format: double */
+            montoAmount: number;
+            montoMoneda?: string | null;
+            /** Format: uuid */
+            socioComercialOrigenId?: string | null;
+            /** Format: uuid */
+            socioComercialDestinoId?: string | null;
+            /** Format: uuid */
+            pagoCobroId?: string | null;
+            /** Format: uuid */
+            pagoEndosoId?: string | null;
+            /** Format: uuid */
+            cuentaDepositoId?: string | null;
+            /** Format: date-time */
+            fechaDeposito?: string | null;
+            /** Format: uuid */
+            usuarioDepositoId?: string | null;
+            /** Format: date-time */
+            fechaAcreditacion?: string | null;
+            /** Format: uuid */
+            usuarioAcreditacionId?: string | null;
+            /** Format: date-time */
+            fechaRechazo?: string | null;
+            /** Format: uuid */
+            usuarioRechazoId?: string | null;
+            motivoRechazo?: string | null;
+            /** Format: date-time */
+            fechaEndoso?: string | null;
+            /** Format: uuid */
+            usuarioEndosoId?: string | null;
+            imagenUrl?: string | null;
+            activo: boolean;
+        };
+        ChequeEnGestionDto: {
+            /** Format: uuid */
+            id: string;
+            numero: string;
+            banco: string;
+            estado: components["schemas"]["EstadoCheque"];
+            /** Format: double */
+            monto: number;
+            /** Format: date-time */
+            fechaPago: string;
+        };
+        ChequeFichaDto: {
+            /** Format: uuid */
+            id: string;
+            numero: string;
+            banco: string;
+            titular: string;
+            tipo: components["schemas"]["TipoCheque"];
+            estado: components["schemas"]["EstadoCheque"];
+            /** Format: date-time */
+            fechaEmision: string;
+            /** Format: date-time */
+            fechaPago: string;
+            /** Format: double */
+            montoAmount: number;
+            montoMoneda?: string | null;
+            imagenUrl?: string | null;
+            activo: boolean;
+            socioOrigen?: components["schemas"]["SocioFichaDto"];
+            socioDestino?: components["schemas"]["SocioFichaDto"];
+            pagoCobro?: components["schemas"]["PagoCobroFichaDto"];
+            pagoEndoso?: components["schemas"]["PagoFichaResumenDto"];
+            transiciones: components["schemas"]["TransicionFichaDto"][];
+            movimientosCartera: components["schemas"]["MovimientoFichaDto"][];
+            movimientosDeuda: components["schemas"]["MovimientoFichaDto"][];
+        };
+        ChequeListDto: {
+            /** Format: uuid */
+            id: string;
+            numero: string;
+            banco: string;
+            titular: string;
+            tipo: components["schemas"]["TipoCheque"];
+            estado: components["schemas"]["EstadoCheque"];
+            /** Format: date-time */
+            fechaEmision: string;
+            /** Format: date-time */
+            fechaPago: string;
+            /** Format: double */
+            montoAmount: number;
+            montoMoneda?: string | null;
+            /** Format: uuid */
+            socioComercialOrigenId?: string | null;
+            /** Format: uuid */
+            socioComercialDestinoId?: string | null;
+            /** Format: uuid */
+            pagoCobroId?: string | null;
+            /** Format: uuid */
+            pagoEndosoId?: string | null;
+            activo: boolean;
+            puedeVerDetalle: boolean;
+        };
+        ChequeListDtoPaginatedResponse: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            readonly hasNextPage?: boolean;
+            items?: components["schemas"]["ChequeListDto"][] | null;
+        };
         ChoferDto: {
             /** Format: uuid */
             id: string;
             nombreCompleto: string;
+        };
+        /** @enum {string} */
+        ClaseAbc: "A" | "B" | "C";
+        ClienteEnRiesgoDto: {
+            /** Format: uuid */
+            id?: string;
+            nombre?: string | null;
+            motivo?: components["schemas"]["MotivoRiesgo"];
+            /** Format: double */
+            facturadoAnterior?: number;
+            /** Format: double */
+            facturadoActual?: number;
+            /** Format: double */
+            variacion?: number;
+            /** Format: date */
+            ultimaCompra?: string | null;
         };
         ClienteLightDto: {
             /** Format: uuid */
             id: string;
             razonSocial: string;
             cuit: string;
+            displayName: string;
+            esProvisorio: boolean;
+        };
+        ComisionGeneradoVsPagadoDto: {
+            /** Format: uuid */
+            vendedorId?: string;
+            vendedorNombre?: string | null;
+            /** Format: double */
+            devengado?: number;
+            /** Format: double */
+            reversiones?: number;
+            /** Format: double */
+            neto?: number;
+            /** Format: double */
+            pagado?: number;
+            /** Format: double */
+            saldoActual?: number;
+            cierra?: boolean;
+        };
+        ComisionPorLineaFilaDto: {
+            /** Format: uuid */
+            clave?: string | null;
+            etiqueta: string;
+            /** Format: double */
+            generado: number;
+            /** Format: double */
+            reversiones: number;
+            /** Format: double */
+            neto: number;
+        };
+        ComisionesPorLineaDto: {
+            agruparPor: components["schemas"]["AgrupacionComisionPorLinea"];
+            filas: components["schemas"]["ComisionPorLineaFilaDto"][];
+            /** Format: double */
+            totalGenerado: number;
+            /** Format: double */
+            totalReversiones: number;
+            /** Format: double */
+            totalNeto: number;
+        };
+        ComisionesPorLineaDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ComisionesPorLineaDto"];
+        };
+        CompraActionResponseDto: {
+            /** Format: uuid */
+            compraId: string;
+            /** Format: int32 */
+            version: number;
+            message: string;
         };
         CompraDetalleDto: {
             /** Format: uuid */
@@ -5343,6 +13697,7 @@ export interface components {
             /** Format: double */
             costoUnitario?: number;
             monedaCosto?: string | null;
+            unidadCompra?: components["schemas"]["UnidadCompra"];
         };
         CompraDetalleResponseDto: {
             /** Format: uuid */
@@ -5361,10 +13716,15 @@ export interface components {
             /** Format: double */
             subtotalAmount: number;
             moneda?: string | null;
+            unidadCompra: components["schemas"]["UnidadCompra"];
+            /** Format: double */
+            cantidadIngresada: number;
         };
         CompraDto: {
             /** Format: uuid */
             id: string;
+            /** Format: int32 */
+            version: number;
             /** Format: uuid */
             proveedorId: string;
             razonSocialProveedor: string;
@@ -5383,6 +13743,31 @@ export interface components {
             /** Format: double */
             totalAmount: number;
             totalCurrency?: string | null;
+            motivoCancelacion?: string | null;
+            /** Format: date-time */
+            fechaCancelacion?: string | null;
+            usuarioCancelacionNombre?: string | null;
+            motivoAnulacion?: string | null;
+            /** Format: date-time */
+            fechaAnulacion?: string | null;
+            usuarioAnulacionNombre?: string | null;
+            eliminada: boolean;
+            motivoEliminacion?: string | null;
+            /** Format: date-time */
+            fechaEliminacion?: string | null;
+            usuarioEliminacionNombre?: string | null;
+            /** Format: date-time */
+            fechaRecepcion?: string | null;
+            /** Format: date */
+            fechaFacturaProveedor?: string | null;
+            condicionPago?: components["schemas"]["CondicionPagoDto"];
+            /** Format: date */
+            fechaVencimientoPago?: string | null;
+            /** Format: date */
+            vencimientoEstimado?: string | null;
+            franjaEntregaProveedor?: components["schemas"]["FranjaHorariaDto"][] | null;
+            conFactura: boolean;
+            comprobante?: components["schemas"]["ComprobanteRecibidoDto"];
             detalles: components["schemas"]["CompraDetalleResponseDto"][];
         };
         CompraDtoList: {
@@ -5402,6 +13787,9 @@ export interface components {
             totalCurrency?: string | null;
             /** Format: int32 */
             itemsCount: number;
+            eliminada: boolean;
+            /** Format: date */
+            fechaVencimientoPago?: string | null;
         };
         CompraDtoListPaginatedResponse: {
             /** Format: int32 */
@@ -5444,9 +13832,89 @@ export interface components {
             productoNombre: string;
             /** Format: double */
             cantidad: number;
+            unidadCompra: components["schemas"]["UnidadCompra"];
+            /** Format: double */
+            cantidadIngresada: number;
             /** Format: double */
             costoUnitarioBaseAmount: number;
         };
+        ComprasResumenDto: {
+            /** Format: double */
+            totalComprado: number;
+            /** Format: int32 */
+            notasPedido: number;
+            /** Format: int32 */
+            confirmadas: number;
+            /** Format: int32 */
+            entregadas: number;
+            /** Format: int32 */
+            canceladas: number;
+            /** Format: int32 */
+            anuladas: number;
+        };
+        ComprobanteCompraInput: {
+            tipo?: components["schemas"]["TipoComprobanteRecibido"];
+            letra?: components["schemas"]["LetraComprobante"];
+            /** Format: int32 */
+            puntoVenta?: number;
+            /** Format: int64 */
+            numero?: number;
+            /** Format: date */
+            fecha?: string;
+            cuitEmisor?: string | null;
+            razonSocialEmisor?: string | null;
+            /** Format: double */
+            noGravado?: number;
+            /** Format: double */
+            exento?: number;
+            /** Format: double */
+            total?: number;
+            alicuotas?: components["schemas"]["AlicuotaComprobanteInput"][] | null;
+            tributos?: components["schemas"]["TributoComprobanteInput"][] | null;
+        };
+        ComprobanteRecibidoDto: {
+            /** Format: uuid */
+            id: string;
+            tipo: components["schemas"]["TipoComprobanteRecibido"];
+            letra: components["schemas"]["LetraComprobante"];
+            /** Format: int32 */
+            puntoVenta: number;
+            /** Format: int64 */
+            numero: number;
+            /** Format: date */
+            fecha: string;
+            /** Format: int32 */
+            periodoFiscal: number;
+            cuitEmisor: string;
+            razonSocialEmisor: string;
+            /** Format: double */
+            noGravado: number;
+            /** Format: double */
+            exento: number;
+            /** Format: double */
+            total: number;
+            alicuotas: components["schemas"]["AlicuotaComprobanteDto"][];
+            tributos: components["schemas"]["TributoComprobanteDto"][];
+            /** Format: double */
+            diferenciaConTotal: number;
+            cuadra: boolean;
+            computaCreditoFiscal: boolean;
+            /** Format: double */
+            creditoFiscal: number;
+            /** Format: double */
+            baseCostoMercaderia: number;
+        };
+        ComprobanteRecibidoDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ComprobanteRecibidoDto"];
+        };
+        /** @enum {string} */
+        ComprobanteStockFiscal: "AjusteManual" | "ComprobanteRecibido" | "Factura" | "NotaCredito" | "NotaDebito" | "DevolucionProveedor";
         ConciliacionDto: {
             /** Format: uuid */
             movimientoCuentaId?: string;
@@ -5460,6 +13928,35 @@ export interface components {
             /** Format: uuid */
             usuarioGeneradorId?: string;
         };
+        /** @enum {string} */
+        CondicionFiscalEmpresa: "ResponsableInscripto" | "Monotributo";
+        CondicionFiscalEmpresaDto: {
+            condicionFiscal?: components["schemas"]["CondicionFiscalEmpresa"];
+            letrasQueEmite?: components["schemas"]["LetraComprobante"][] | null;
+        };
+        CondicionIvaDto: {
+            /** Format: int32 */
+            id?: number;
+            nombre?: string | null;
+            leyenda?: string | null;
+        };
+        CondicionIvaDtoListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["CondicionIvaDto"][] | null;
+        };
+        CondicionPagoDto: {
+            tipo: components["schemas"]["TipoCondicionPago"];
+            /** Format: int32 */
+            dias?: number | null;
+            /** Format: int32 */
+            diaDelMes?: number | null;
+            descripcion?: string | null;
+        };
         ConfirmarCompraCommand: {
             /** Format: uuid */
             compraId?: string;
@@ -5468,6 +13965,28 @@ export interface components {
              * @deprecated
              */
             usuarioId?: string;
+        };
+        ConfirmarImportacionCommand: {
+            /** Format: uuid */
+            importacionJobId?: string;
+            politicaDuplicados?: components["schemas"]["PoliticaDuplicados"];
+        };
+        ConfirmarRetiroCommand: {
+            /** Format: uuid */
+            ventaId?: string;
+            /** Format: int32 */
+            version?: number;
+            nombreRetira?: string | null;
+            dni?: string | null;
+            observacion?: string | null;
+            fotoUrl?: string | null;
+        };
+        ConservadoDto: {
+            /** Format: uuid */
+            entidadId?: string;
+            /** Format: int32 */
+            numeroFila?: number;
+            motivo?: string | null;
         };
         ConvertirPresupuestoCommand: {
             /** Format: uuid */
@@ -5479,6 +13998,35 @@ export interface components {
              * @deprecated
              */
             usuarioGeneradorId?: string;
+        };
+        CorregirCesionComisionCommand: {
+            /** Format: uuid */
+            ventaId?: string;
+            /** Format: int32 */
+            version?: number;
+            /** Format: double */
+            nuevoPorcentaje?: number | null;
+        };
+        CrearEventoCommand: {
+            tipo: components["schemas"]["TipoEventoCalendario"];
+            subtipo?: string | null;
+            titulo: string;
+            descripcion?: string | null;
+            /** Format: date */
+            fechaInicio: string;
+            recurrencia?: components["schemas"]["RecurrenciaDto"];
+            /** Format: double */
+            montoEstimado?: number | null;
+            /** Format: uuid */
+            socioComercialId?: string | null;
+            /** Format: int32 */
+            avisarDiasAntes: number;
+            visibilidad: components["schemas"]["VisibilidadEvento"];
+        };
+        CrearFeriadoCommand: {
+            /** Format: date */
+            fecha?: string;
+            descripcion?: string | null;
         };
         CrearHojaRutaCommand: {
             /** Format: uuid */
@@ -5493,12 +14041,45 @@ export interface components {
             /** Format: uuid */
             depositoId?: string | null;
         };
+        CrearOfertaCommand: {
+            /** Format: uuid */
+            productoId?: string;
+            tipo?: components["schemas"]["TipoOferta"];
+            /** Format: double */
+            valor?: number;
+            /** Format: date-time */
+            desde?: string;
+            /** Format: date-time */
+            hasta?: string | null;
+            nota?: string | null;
+        };
+        CrearReglaComisionCommand: {
+            alcance?: components["schemas"]["AlcanceReglaComision"];
+            /** Format: uuid */
+            targetId?: string;
+            /** Format: uuid */
+            vendedorId?: string | null;
+            /** Format: double */
+            porcentaje?: number;
+            /** Format: date */
+            vigenciaDesde?: string;
+            /** Format: date */
+            vigenciaHasta?: string | null;
+            motivo?: string | null;
+        };
         CreateCategoriaCommand: {
             nombre?: string | null;
             /** Format: int32 */
             nivel?: number;
             /** Format: uuid */
             categoriaPadreId?: string | null;
+            codigo?: string | null;
+        };
+        CreateCompraBorradorCommand: {
+            /** Format: uuid */
+            proveedorId?: string;
+            /** Format: uuid */
+            depositoId?: string;
         };
         CreateCompraCommand: {
             /** Format: uuid */
@@ -5516,10 +14097,20 @@ export interface components {
              */
             usuarioGeneradorId?: string;
         };
+        CreateCuentaBancariaSocioCommand: {
+            /** Format: uuid */
+            socioComercialId?: string;
+            alias?: string | null;
+            banco?: string | null;
+            cbu?: string | null;
+            titular?: string | null;
+        };
         CreateCuentaCorrienteCommand: {
             nombre?: string | null;
             /** Format: uuid */
             socioComercialId?: string | null;
+            /** Format: uuid */
+            vendedorId?: string | null;
             esPrincipal?: boolean;
         };
         CreateDepositoCommand: {
@@ -5532,6 +14123,16 @@ export interface components {
         };
         CreateFraganciaCommand: {
             nombre?: string | null;
+            /** Format: uuid */
+            productoPadreId?: string | null;
+        };
+        CreateMedioPagoCommand: {
+            nombre?: string | null;
+            requiereCaja?: boolean;
+            /** Format: double */
+            comisionPorcentaje?: number;
+            /** Format: int32 */
+            diasAcreditacion?: number;
         };
         CreateProductoCommand: {
             nombre?: string | null;
@@ -5539,7 +14140,7 @@ export interface components {
             /** Format: double */
             precioCompraBase?: number;
             /** Format: double */
-            margenGanancia?: number;
+            markupPorcentaje?: number | null;
             unidadMedida?: string | null;
             /** Format: double */
             bultoContenido?: number;
@@ -5550,7 +14151,7 @@ export interface components {
             /** Format: double */
             stockMinimo?: number;
             /** Format: double */
-            blisterContenido?: number | null;
+            bultoMadreContenido?: number | null;
             fraccionMinimaVenta?: string | null;
             /** Format: double */
             ventaMinimaUnidades?: number;
@@ -5561,6 +14162,13 @@ export interface components {
             /** Format: uuid */
             categoriaId?: string | null;
             codigoBarra?: string | null;
+            /** Format: int32 */
+            alicuotaIva?: number | null;
+            /** Format: double */
+            pesoKg?: number | null;
+            /** Format: double */
+            cotUmbralPropioKg?: number | null;
+            esCargaMasiva?: boolean;
         };
         CreateSocioCommand: {
             razonSocial?: string | null;
@@ -5568,14 +14176,31 @@ export interface components {
             /** Format: int32 */
             tipoRaw?: number;
             condicionIva?: string | null;
+            /** Format: int32 */
+            condicionIvaId?: number | null;
             email?: string | null;
             telefono?: string | null;
             direccion?: string | null;
+            nombreFantasia?: string | null;
+            nombreContacto?: string | null;
+            horario?: components["schemas"]["FranjaHorariaDto"][] | null;
+            condicionPago?: components["schemas"]["CondicionPagoDto"];
+            franjaEntrega?: components["schemas"]["FranjaHorariaDto"][] | null;
+            topeCredito?: components["schemas"]["TopeCreditoDto"];
+            altaProvisoria?: boolean;
+            /** Format: double */
+            saldoInicial?: number;
             /**
              * Format: uuid
              * @deprecated
              */
             usuarioId?: string;
+        };
+        CreateTipoGastoCommand: {
+            nombre?: string | null;
+        };
+        CreateTipoMovimientoInternoCommand: {
+            nombre?: string | null;
         };
         CreateUserCommand: {
             nombre?: string | null;
@@ -5583,6 +14208,8 @@ export interface components {
             email?: string | null;
             password?: string | null;
             role?: string | null;
+            /** Format: uuid */
+            puestoId?: string | null;
             permissions?: components["schemas"]["CreateUserPermissionRequest"][] | null;
         };
         CreateUserPermissionRequest: {
@@ -5598,6 +14225,12 @@ export interface components {
             /** Format: double */
             capacidadCargaKg?: number;
         };
+        CreateVentaBorradorCommand: {
+            /** Format: uuid */
+            clienteId?: string;
+            /** Format: uuid */
+            depositoId?: string;
+        };
         CreateVentaCommand: {
             /** Format: uuid */
             clienteId?: string;
@@ -5612,6 +14245,7 @@ export interface components {
             motivoVentaSinStock?: string | null;
             /** Format: date-time */
             fechaEntrega?: string | null;
+            observaciones?: string | null;
             metodoEntrega?: components["schemas"]["MetodoEntrega"];
             /** Format: double */
             cargoFlete?: number;
@@ -5621,6 +14255,10 @@ export interface components {
              */
             usuarioGeneradorId?: string;
             entregaInmediata?: boolean;
+            claveIdempotencia?: string | null;
+            /** Format: double */
+            porcentajeComisionCedido?: number | null;
+            conFactura?: boolean | null;
         };
         CreateVentaCommandItemDto: {
             /** Format: uuid */
@@ -5630,18 +14268,54 @@ export interface components {
             /** Format: double */
             descuentoPorcentaje?: number;
         };
+        CuentaBancariaSocioResponse: {
+            /** Format: uuid */
+            id?: string;
+            alias?: string | null;
+            banco?: string | null;
+            cbu?: string | null;
+            titular?: string | null;
+        };
+        CuentaBancariaSocioResponseIEnumerableResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["CuentaBancariaSocioResponse"][] | null;
+        };
+        CuentaCajaEfectivoResponse: {
+            /** Format: uuid */
+            cuentaCajaEfectivoId?: string | null;
+            nombre?: string | null;
+            activo?: boolean | null;
+        };
+        CuentaCarteraChequesResponse: {
+            /** Format: uuid */
+            cuentaCarteraChequesId?: string | null;
+            nombre?: string | null;
+            activo?: boolean | null;
+        };
         CuentaCorrienteResumenDto: {
             /** Format: uuid */
             id: string;
             nombre: string;
             esPrincipal: boolean;
+            tipo?: components["schemas"]["TipoCuentaSocio"];
             /** Format: double */
             saldoActual: number;
             /** Format: uuid */
             socioComercialId?: string | null;
             razonSocial?: string | null;
             tipoSocio?: string | null;
+            /** Format: uuid */
+            vendedorId?: string | null;
+            vendedorNombre?: string | null;
             activo: boolean;
+            esCuentaCajaEfectivo: boolean;
+            esCuentaCarteraCheques: boolean;
+            puedeVerMovimientos: boolean;
         };
         DashboardSummaryDto: {
             /** Format: double */
@@ -5653,6 +14327,25 @@ export interface components {
             /** Format: int32 */
             activeRoutes?: number;
         };
+        DatosEmpresaDto: {
+            razonSocial?: string | null;
+            nombreFantasia?: string | null;
+            cuit?: string | null;
+            condicionFiscal?: components["schemas"]["CondicionFiscalEmpresa"];
+            ingresosBrutos?: string | null;
+            /** Format: date */
+            inicioActividades?: string | null;
+            domicilioFiscal?: string | null;
+            domicilioDeposito?: string | null;
+            telefono?: string | null;
+            email?: string | null;
+        };
+        DepositarChequeCommand: {
+            /** Format: uuid */
+            chequeId?: string;
+            /** Format: uuid */
+            cuentaDestinoId?: string;
+        };
         DepositoResponse: {
             /** Format: uuid */
             id?: string;
@@ -5663,6 +14356,193 @@ export interface components {
             latitude?: number | null;
             /** Format: double */
             longitude?: number | null;
+        };
+        DescuentosDto: {
+            periodo?: components["schemas"]["PeriodoDto"];
+            periodoAnterior?: components["schemas"]["PeriodoDto"];
+            agrupar?: components["schemas"]["AgrupacionReporte"];
+            totales?: components["schemas"]["TotalesDescuentoDto"];
+            totalesAnterior?: components["schemas"]["TotalesDescuentoDto"];
+            porTipo?: components["schemas"]["TipoDescuentoDto"][] | null;
+            porVendedor?: components["schemas"]["VendedorDescuentoDto"][] | null;
+            serie?: components["schemas"]["PuntoDescuentoDto"][] | null;
+            serieAnterior?: components["schemas"]["PuntoDescuentoDto"][] | null;
+        };
+        DescuentosDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["DescuentosDto"];
+        };
+        DespacharExpresoCommand: {
+            /** Format: uuid */
+            ventaId?: string;
+            /** Format: int32 */
+            version?: number;
+            transportista?: string | null;
+            numeroGuia?: string | null;
+            observacion?: string | null;
+        };
+        DestacadosDto: {
+            periodo?: components["schemas"]["PeriodoDto"];
+            periodoAnterior?: components["schemas"]["PeriodoDto"];
+            clientesEnRiesgo?: components["schemas"]["ClienteEnRiesgoDto"][] | null;
+            abc?: components["schemas"]["AbcDto"];
+            mapaCalor?: components["schemas"]["CeldaCalorDto"][] | null;
+            records?: components["schemas"]["RecordsDto"];
+            alertasMargen?: components["schemas"]["AlertasMargenDto"];
+        };
+        DestacadosDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["DestacadosDto"];
+        };
+        /** @enum {string} */
+        DestinoNotaCredito: "SaldoAFavor" | "DevolucionDinero";
+        DeudaSocioDto: {
+            /** Format: uuid */
+            socioId: string;
+            razonSocial: string;
+            cuit: string;
+            /** Format: double */
+            saldoDeuda: number;
+            /** Format: double */
+            saldoTst: number;
+            /** Format: double */
+            saldoNormal: number;
+            moneda?: string | null;
+            puedeVerCuentaCorriente: boolean;
+        };
+        DeudaSocioDtoPaginatedResponse: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            readonly hasNextPage?: boolean;
+            items?: components["schemas"]["DeudaSocioDto"][] | null;
+        };
+        DeudasResumenDto: {
+            /** Format: int32 */
+            clientesConDeuda: number;
+            /** Format: double */
+            totalDeudaClientes: number;
+            /** Format: int32 */
+            proveedoresConDeuda: number;
+            /** Format: double */
+            totalDeudaProveedores: number;
+        };
+        DeudasSocioPagedResult: {
+            pagina?: components["schemas"]["DeudaSocioDtoPaginatedResponse"];
+            /** Format: double */
+            deudaTotal?: number;
+        };
+        DiasEntregaDto: {
+            lunes?: boolean;
+            martes?: boolean;
+            miercoles?: boolean;
+            jueves?: boolean;
+            viernes?: boolean;
+            sabado?: boolean;
+            domingo?: boolean;
+        };
+        /** @enum {string} */
+        DimensionRanking: "Cliente" | "Vendedor";
+        DisponibilidadItemDto: {
+            /** Format: uuid */
+            productoId?: string;
+            disponible?: boolean;
+        };
+        DisponibilidadItemDtoListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["DisponibilidadItemDto"][] | null;
+        };
+        DisponibilidadItemRequest: {
+            /** Format: uuid */
+            productoId?: string;
+            /** Format: double */
+            cantidad?: number;
+        };
+        DocumentoPendienteDto: {
+            /** Format: uuid */
+            documentoId: string;
+            /** Format: int32 */
+            numero?: number | null;
+            /** Format: int64 */
+            numeroPedido?: number | null;
+            readonly codigoPedido?: string | null;
+            /** Format: date-time */
+            fecha: string;
+            /** Format: double */
+            total: number;
+            moneda?: string | null;
+            /** Format: double */
+            saldoPendiente: number;
+            tipoCuenta: components["schemas"]["TipoCuentaSocio"];
+        };
+        EdicionVentaDto: {
+            /** Format: uuid */
+            id: string;
+            snapshotAntes: unknown;
+            snapshotDespues: unknown;
+            motivo: string;
+            /** Format: date-time */
+            fecha: string;
+            editadoPor: string;
+        };
+        EditarEventoCommand: {
+            tipo: components["schemas"]["TipoEventoCalendario"];
+            subtipo?: string | null;
+            titulo: string;
+            descripcion?: string | null;
+            /** Format: date */
+            fechaInicio: string;
+            recurrencia?: components["schemas"]["RecurrenciaDto"];
+            /** Format: double */
+            montoEstimado?: number | null;
+            /** Format: uuid */
+            socioComercialId?: string | null;
+            /** Format: int32 */
+            avisarDiasAntes: number;
+        };
+        EditarVentaDepositoCommand: {
+            /** Format: uuid */
+            ventaId?: string;
+            /** Format: int32 */
+            version?: number;
+            cambios?: components["schemas"]["CambioCantidadDto"][] | null;
+            motivo?: string | null;
+        };
+        EliminarCompraCommand: {
+            /** Format: uuid */
+            compraId?: string;
+            motivo?: string | null;
+            /** Format: int32 */
+            version?: number | null;
+        };
+        EmitirNotaCreditoCommand: {
+            /** Format: uuid */
+            ventaId?: string;
+            destino?: components["schemas"]["DestinoNotaCredito"];
+            /** Format: uuid */
+            cuentaPropiaId?: string | null;
+            motivo?: string | null;
+            items?: components["schemas"]["NotaCreditoItemInput"][] | null;
         };
         EmpacarVentaCommand: {
             /** Format: uuid */
@@ -5692,7 +14572,21 @@ export interface components {
             usuarioModificadorId?: string;
         };
         /** @enum {string} */
-        EstadoCompra: "NotaPedido" | "Confirmado" | "Entregado" | "Cancelada";
+        EscalonComision: "Articulo" | "PadreDeVariantes" | "Subcategoria" | "Categoria" | "Familia" | "Linea" | "DefaultVendedor";
+        EscalonTasaDto: {
+            escalon: components["schemas"]["EscalonComision"];
+            /** Format: uuid */
+            targetId: string;
+            reglaDelVendedor?: components["schemas"]["ReglaTasaDto"];
+            reglaParaTodos?: components["schemas"]["ReglaTasaDto"];
+            gano: boolean;
+        };
+        /** @enum {string} */
+        EstadoAcreditacionTarjeta: "Pendiente" | "Acreditada";
+        /** @enum {string} */
+        EstadoCheque: "EnCartera" | "Depositado" | "Acreditado" | "Rechazado" | "Endosado" | "Entregado";
+        /** @enum {string} */
+        EstadoCompra: "NotaPedido" | "Confirmado" | "Entregado" | "Cancelada" | "Anulada";
         EstadoCuentaDto: {
             /** Format: uuid */
             socioComercialId: string;
@@ -5700,11 +14594,27 @@ export interface components {
             /** Format: double */
             saldoActual: number;
             /** Format: double */
+            saldoTst: number;
+            /** Format: double */
+            saldoNormal: number;
+            /** Format: double */
             saldoAFavor: number;
             movimientosPendientes: components["schemas"]["MovimientoPendienteDto"][];
         };
         /** @enum {string} */
-        EstadoVenta: "Pendiente" | "Confirmada" | "EnPreparacion" | "Empacada" | "EnRuta" | "Entregada" | "NoEntregada" | "Anulada" | "PendienteAutorizacion";
+        EstadoEventoCalendario: "Pendiente" | "Pagado" | "Vencido" | "Cancelado";
+        /** @enum {string} */
+        EstadoNotaCredito: "Solicitada" | "Emitida" | "Rechazada";
+        /** @enum {string} */
+        EstadoOcurrenciaEvento: "Pagado" | "Omitido";
+        /** @enum {string} */
+        EstadoPagoVenta: "Historica" | "Pendiente" | "Parcial" | "Pagada";
+        /** @enum {string} */
+        EstadoSolicitudCambio: "Pendiente" | "Aprobada" | "Rechazada";
+        /** @enum {string} */
+        EstadoVenta: "Pendiente" | "Confirmada" | "EnPreparacion" | "Empacada" | "EnRuta" | "Entregada" | "NoEntregada" | "Anulada" | "PendienteAutorizacion" | "Vencido" | "RechazadaAutorizacion";
+        /** @enum {string} */
+        EstadoVigenciaRegla: "Todas" | "Vigentes" | "Historicas" | "Futuras";
         EtiquetaDto: {
             /** Format: uuid */
             ventaId: string;
@@ -5716,28 +14626,221 @@ export interface components {
             clienteDireccion: string;
             leyenda: string;
         };
+        EtiquetaPiezaDto: {
+            /** Format: double */
+            anchoMm?: number;
+            /** Format: double */
+            altoMm?: number;
+            conLineaDeCorte?: boolean;
+        };
+        EventoCalendarioDetalleDto: {
+            /** Format: uuid */
+            id: string;
+            tipo: components["schemas"]["TipoEventoCalendario"];
+            subtipo?: string | null;
+            titulo: string;
+            descripcion?: string | null;
+            /** Format: date */
+            fechaInicio: string;
+            recurrencia?: components["schemas"]["RecurrenciaDto"];
+            /** Format: double */
+            montoEstimado?: number | null;
+            /** Format: uuid */
+            socioComercialId?: string | null;
+            /** Format: int32 */
+            avisarDiasAntes: number;
+            visibilidad: components["schemas"]["VisibilidadEvento"];
+            ocurrencias: components["schemas"]["OcurrenciaEventoDto"][];
+        };
+        EventoCalendarioDto: {
+            clave: string;
+            /** Format: uuid */
+            origenId: string;
+            /** Format: date */
+            fecha: string;
+            tipo: components["schemas"]["TipoEventoCalendario"];
+            origen: components["schemas"]["OrigenEventoCalendario"];
+            estado: components["schemas"]["EstadoEventoCalendario"];
+            titulo: string;
+            descripcion?: string | null;
+            /** Format: double */
+            monto?: number | null;
+            accion?: components["schemas"]["AccionSugeridaDto"];
+            esFinanciero: boolean;
+            /** Format: int32 */
+            avisarDiasAntes?: number | null;
+            /** Format: uuid */
+            propietarioId?: string | null;
+        };
         ExecutePasswordResetCommand: {
             email?: string | null;
             token?: string | null;
             newPassword?: string | null;
             confirmNewPassword?: string | null;
         };
+        FaltanteStockFiscalDto: {
+            /** Format: uuid */
+            productoId: string;
+            nombre: string;
+            /** Format: double */
+            cantidad?: number | null;
+            /** Format: double */
+            stockFiscal?: number | null;
+        };
+        FeriadoDto: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: date */
+            fecha?: string;
+            descripcion?: string | null;
+        };
+        FilaAbcDto: {
+            /** Format: uuid */
+            productoId?: string;
+            nombre?: string | null;
+            /** Format: double */
+            facturado?: number;
+            /** Format: double */
+            participacionPorcentaje?: number;
+            /** Format: double */
+            acumuladoPorcentaje?: number;
+            clase?: components["schemas"]["ClaseAbc"];
+        };
+        FilaPreviewDto: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: int32 */
+            numeroFila?: number;
+            resultado?: string | null;
+            motivo?: string | null;
+            datos?: {
+                [key: string]: string | null;
+            } | null;
+            cambios?: {
+                [key: string]: components["schemas"]["CambioCampoDto"];
+            } | null;
+        };
+        FilaRankingDto: {
+            /** Format: uuid */
+            id?: string | null;
+            nombre?: string | null;
+            /** Format: int32 */
+            agrupados?: number;
+            /** Format: double */
+            facturado?: number;
+            /** Format: int32 */
+            operaciones?: number;
+            /** Format: double */
+            ticketPromedio?: number;
+            /** Format: double */
+            participacionPorcentaje?: number;
+            /** Format: double */
+            descuentoSobreListaPorcentaje?: number | null;
+            /** Format: double */
+            margenBrutoPorcentaje?: number | null;
+            /** Format: double */
+            facturadoAnterior?: number;
+            /** Format: double */
+            variacion?: number | null;
+        };
+        FilaValorStockDto: {
+            /** Format: uuid */
+            id?: string | null;
+            nombre?: string | null;
+            /** Format: double */
+            unidades?: number;
+            /** Format: double */
+            valorCosto?: number;
+            /** Format: double */
+            valorLista?: number;
+            /** Format: double */
+            margenPotencialPorcentaje?: number | null;
+            /** Format: double */
+            valorCostoInmovilizado?: number;
+            /** Format: double */
+            inmovilizadoPorcentaje?: number;
+        };
+        /** @enum {string} */
+        FormatoExport: "Excel" | "Pdf";
         FraganciaResponse: {
             /** Format: uuid */
             id?: string;
             nombre?: string | null;
             activo?: boolean;
+            /** Format: uuid */
+            productoPadreId?: string | null;
+        };
+        FranjaHorariaDto: {
+            /** Format: int32 */
+            dia: number;
+            desde: string;
+            hasta: string;
+            readonly esValida?: boolean;
+        };
+        /** @enum {string} */
+        FrecuenciaRecurrencia: "Mensual" | "Anual" | "CadaNDias" | "CadaNMeses";
+        GastoListDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            fecha: string;
+            descripcion: string;
+            /** Format: double */
+            monto: number;
+            moneda?: string | null;
+            /** Format: uuid */
+            tipoGastoId: string;
+            tipoGastoNombre: string;
+            /** Format: uuid */
+            cuentaOrigenId?: string | null;
+            cuentaOrigenNombre?: string | null;
+            /** Format: uuid */
+            medioPagoId: string;
+            medioPagoNombre: string;
+            comprobanteUrl?: string | null;
+            observaciones?: string | null;
+            conFactura: boolean;
+            comprobanteLetra?: components["schemas"]["LetraComprobante"];
+            /** Format: int32 */
+            comprobantePuntoVenta?: number | null;
+            /** Format: int64 */
+            comprobanteNumero?: number | null;
+        };
+        GastoListDtoPaginatedResponse: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            readonly hasNextPage?: boolean;
+            items?: components["schemas"]["GastoListDto"][] | null;
+        };
+        GastosPagedResult: {
+            pagina?: components["schemas"]["GastoListDtoPaginatedResponse"];
+            /** Format: double */
+            montoTotalFiltrado?: number;
         };
         GenerarVariantesProductoCommand: {
             /** Format: uuid */
             productoPadreId?: string;
             fraganciaIds?: string[] | null;
+            stockInicialPorFragancia?: {
+                [key: string]: number;
+            } | null;
         };
         GenerarVariantesResult: {
             /** Format: uuid */
             productoPadreId: string;
             creadas: components["schemas"]["VarianteGeneradaDto"][];
             omitidas: components["schemas"]["VarianteGeneradaDto"][];
+        };
+        GetDisponibilidadVentaQuery: {
+            /** Format: uuid */
+            depositoId?: string;
+            items?: components["schemas"]["DisponibilidadItemRequest"][] | null;
         };
         GetMovimientosCuentaDto: {
             /** Format: uuid */
@@ -5749,8 +14852,43 @@ export interface components {
             socioComercialId?: string | null;
             razonSocial?: string | null;
             tipoSocio?: string | null;
+            /** Format: uuid */
+            vendedorId?: string | null;
+            vendedorNombre?: string | null;
             activo: boolean;
             movimientos: components["schemas"]["MovimientoCuentaDtoPaginatedResponse"];
+        };
+        GetVistaPreviaPrecioQuery: {
+            /** Format: double */
+            precioCompraBase?: number;
+            /** Format: double */
+            markupPorcentaje?: number;
+            /** Format: double */
+            precioVenta?: number | null;
+        };
+        GetVistaPreviaRentabilidadCompraQuery: {
+            detalles?: components["schemas"]["CompraDetalleDto"][] | null;
+            /** Format: double */
+            descuentoPorcentaje?: number;
+            /** Format: double */
+            gastosOperativos?: number;
+        };
+        GrupoCuitDuplicadoDto: {
+            cuit: string;
+            esValido: boolean;
+            socios: components["schemas"]["SocioDuplicadoDto"][];
+        };
+        GuardarNotaPedidoCommand: {
+            /** Format: uuid */
+            compraId?: string;
+            /** Format: int32 */
+            version?: number;
+        };
+        GuardarPresupuestoCommand: {
+            /** Format: uuid */
+            ventaId?: string;
+            /** Format: int32 */
+            version?: number;
         };
         GuidResponse: {
             /** Format: int32 */
@@ -5791,6 +14929,34 @@ export interface components {
             /** Format: double */
             distanciaTotalMetros: number;
         };
+        ImportacionResumenDto: {
+            /** Format: uuid */
+            id?: string;
+            tipo?: string | null;
+            estado?: string | null;
+            nombreArchivo?: string | null;
+            /** Format: int32 */
+            totalFilas?: number;
+            /** Format: int32 */
+            filasProcesadas?: number;
+            /** Format: int32 */
+            filasCreadas?: number;
+            /** Format: int32 */
+            filasActualizadas?: number;
+            /** Format: int32 */
+            filasRechazadas?: number;
+            /** Format: int32 */
+            filasDuplicadas?: number;
+            /** Format: int32 */
+            porcentajeProgreso?: number;
+            /** Format: date-time */
+            fechaCreacion?: string;
+            /** Format: date-time */
+            fechaFin?: string | null;
+            reporteUrl?: string | null;
+            motivoFallo?: string | null;
+            puedeRevertirse?: boolean;
+        };
         ImputacionDetalleDto: {
             /** Format: uuid */
             pagoId: string;
@@ -5803,8 +14969,14 @@ export interface components {
             fechaImputacion: string;
             origen: components["schemas"]["ImputacionOrigen"];
         };
+        ImputacionManualItem: {
+            /** Format: uuid */
+            documentoId?: string;
+            /** Format: double */
+            monto?: number;
+        };
         /** @enum {string} */
-        ImputacionOrigen: "AutomaticaFifo" | "SaldoAFavor";
+        ImputacionOrigen: "AutomaticaFifo" | "SaldoAFavor" | "Manual";
         IniciarPreparacionMasivaRequest: {
             ventaIds?: string[] | null;
         };
@@ -5821,6 +14993,38 @@ export interface components {
             errors?: string[] | null;
             data?: components["schemas"]["IniciarPreparacionMasivaResult"];
         };
+        ItemStockFiscalDto: {
+            /** Format: uuid */
+            productoId: string;
+            /** Format: double */
+            cantidad: number;
+        };
+        KpiDto: {
+            /** Format: double */
+            actual?: number;
+            /** Format: double */
+            anterior?: number;
+            /** Format: double */
+            variacion?: number | null;
+            sparkline?: number[] | null;
+        };
+        KpiMargenDto: {
+            /** Format: double */
+            actualPorcentaje?: number | null;
+            /** Format: double */
+            anteriorPorcentaje?: number | null;
+            /** Format: double */
+            variacionPuntos?: number | null;
+            /** Format: int32 */
+            ventasSinCosto?: number;
+            sparkline?: number[] | null;
+        };
+        /** @enum {string} */
+        LetraComprobante: "A" | "B" | "C";
+        LineaVistaPreviaCompraDto: {
+            /** Format: double */
+            subtotal: number;
+        };
         LiquidezConsolidadaDto: {
             /** Format: double */
             totalDisponible: number;
@@ -5831,6 +15035,53 @@ export interface components {
         ListaSurtidoPdfRequest: {
             ventaIds?: string[] | null;
         };
+        MarcaDto: {
+            nombre?: string | null;
+            /** Format: int32 */
+            cantidad?: number;
+        };
+        MarcarNotificacionesLeidasCommand: {
+            ids?: string[] | null;
+            tipo?: components["schemas"]["TipoNotificacion"];
+        };
+        MarcarOcurrenciaCommand: {
+            estado: components["schemas"]["EstadoOcurrenciaEvento"];
+            /** Format: date */
+            fechaReprogramada?: string | null;
+            /** Format: double */
+            montoReal?: number | null;
+        };
+        MedioPagoLineaDto: {
+            nombre: string;
+            /** Format: double */
+            monto: number;
+            esCheque: boolean;
+            /** Format: int32 */
+            chequesCount: number;
+            chequeEstado?: components["schemas"]["EstadoCheque"];
+        };
+        MedioPagoResponse: {
+            /** Format: uuid */
+            id?: string;
+            nombre?: string | null;
+            requiereCaja?: boolean;
+            esCheque?: boolean;
+            activo?: boolean;
+            /** Format: double */
+            comisionPorcentaje?: number;
+            /** Format: int32 */
+            diasAcreditacion?: number;
+            /** Format: uuid */
+            cuentaPropiaDefaultId?: string | null;
+        };
+        MejorDiaDto: {
+            /** Format: date */
+            dia?: string;
+            /** Format: double */
+            facturado?: number;
+            /** Format: int32 */
+            operaciones?: number;
+        };
         /** @enum {string} */
         MetodoEntrega: "LogisticaPropia" | "RetiroEnLocal" | "Expreso";
         ModulePermissionDto: {
@@ -5839,7 +15090,16 @@ export interface components {
             canCreate?: boolean;
             canUpdate?: boolean;
             canDelete?: boolean;
+            /** Format: uuid */
+            origenPuestoId?: string | null;
         };
+        MotivoAgrupadoDto: {
+            motivo?: string | null;
+            /** Format: int32 */
+            cantidad?: number;
+        };
+        /** @enum {string} */
+        MotivoRiesgo: "SinCompras" | "Caida";
         MovimientoCajaDto: {
             /** Format: uuid */
             id: string;
@@ -5866,6 +15126,11 @@ export interface components {
             haber: number;
             /** Format: double */
             saldoHistorico: number;
+            medioPagoNombre?: string | null;
+            /** Format: uuid */
+            pagoId?: string | null;
+            mediosPago?: components["schemas"]["MedioPagoLineaDto"][] | null;
+            detalle?: string | null;
         };
         MovimientoCuentaDtoPaginatedResponse: {
             /** Format: int32 */
@@ -5878,6 +15143,24 @@ export interface components {
             totalPages?: number;
             readonly hasNextPage?: boolean;
             items?: components["schemas"]["MovimientoCuentaDto"][] | null;
+        };
+        MovimientoFichaDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            fecha: string;
+            referencia: string;
+            /** Format: double */
+            debe: number;
+            /** Format: double */
+            haber: number;
+            /** Format: double */
+            saldoHistorico: number;
+            /** Format: uuid */
+            cuentaCorrienteId: string;
+            cuentaNombre: string;
+            socioNombre?: string | null;
+            detalle?: string | null;
         };
         MovimientoPendienteDto: {
             /** Format: uuid */
@@ -5893,6 +15176,7 @@ export interface components {
             montoPagado: number;
             /** Format: double */
             saldoPendiente: number;
+            tipoCuenta: components["schemas"]["TipoCuentaSocio"];
         };
         MovimientoStockDto: {
             /** Format: uuid */
@@ -5909,6 +15193,8 @@ export interface components {
             usuarioNombre: string;
             /** Format: uuid */
             referenciaId?: string | null;
+            productoNombre?: string | null;
+            depositoNombre?: string | null;
         };
         MovimientoStockDtoPaginatedResponse: {
             /** Format: int32 */
@@ -5931,6 +15217,209 @@ export interface components {
             errors?: string[] | null;
             data?: components["schemas"]["MovimientoStockDtoPaginatedResponse"];
         };
+        MovimientoStockFiscalDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            fecha: string;
+            tipo: components["schemas"]["TipoMovimientoStockFiscal"];
+            /** Format: double */
+            cantidad: number;
+            /** Format: double */
+            saldoResultante: number;
+            comprobanteTipo: components["schemas"]["ComprobanteStockFiscal"];
+            /** Format: uuid */
+            comprobanteId?: string | null;
+            /** Format: double */
+            costoUnitario?: number | null;
+            motivo?: string | null;
+            usuarioNombre: string;
+        };
+        MovimientoStockFiscalDtoPaginatedResponse: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            readonly hasNextPage?: boolean;
+            items?: components["schemas"]["MovimientoStockFiscalDto"][] | null;
+        };
+        MovimientoStockFiscalDtoPaginatedResponseResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["MovimientoStockFiscalDtoPaginatedResponse"];
+        };
+        NotaCreditoItemInput: {
+            /** Format: uuid */
+            ventaDetalleId?: string;
+            /** Format: double */
+            cantidad?: number;
+        };
+        NotaCreditoListDto: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            ventaId?: string;
+            /** Format: uuid */
+            clienteId?: string;
+            clienteRazonSocial?: string | null;
+            /** Format: date-time */
+            fecha?: string;
+            estado?: string | null;
+            destino?: string | null;
+            /** Format: double */
+            montoTotal?: number;
+            moneda?: string | null;
+            motivo?: string | null;
+            motivoRechazo?: string | null;
+            /** Format: int32 */
+            cantidadItems?: number;
+        };
+        NotaCreditoListDtoIEnumerableResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["NotaCreditoListDto"][] | null;
+        };
+        NotificacionDto: {
+            /** Format: uuid */
+            id: string;
+            tipo: components["schemas"]["TipoNotificacion"];
+            titulo: string;
+            mensaje: string;
+            link?: string | null;
+            /** Format: uuid */
+            referenciaId?: string | null;
+            entidadTipo?: string | null;
+            severidad: components["schemas"]["SeveridadNotificacion"];
+            presentacion: components["schemas"]["PresentacionNotificacion"];
+            accion?: components["schemas"]["AccionSugeridaDto"];
+            payloadJson?: string | null;
+            leida: boolean;
+            /** Format: date-time */
+            fechaCreacion: string;
+        };
+        NotificacionesBandejaDto: {
+            items: components["schemas"]["NotificacionDto"][];
+            /** Format: int32 */
+            noLeidas: number;
+            hayMas: boolean;
+        };
+        OcurrenciaEventoDto: {
+            /** Format: date */
+            fecha: string;
+            estado: components["schemas"]["EstadoOcurrenciaEvento"];
+            /** Format: date */
+            fechaReprogramada?: string | null;
+            /** Format: double */
+            montoReal?: number | null;
+        };
+        OfertaDto: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            productoId?: string;
+            productoNombre?: string | null;
+            productoMarca?: string | null;
+            /** Format: double */
+            precioLista?: number;
+            tipo?: components["schemas"]["TipoOferta"];
+            /** Format: double */
+            valor?: number;
+            /** Format: double */
+            precioConOferta?: number;
+            /** Format: date-time */
+            desde?: string;
+            /** Format: date-time */
+            hasta?: string | null;
+            habilitada?: boolean;
+            vigente?: boolean;
+            nota?: string | null;
+            /** Format: double */
+            precioMinimoRentable?: number | null;
+            piso?: components["schemas"]["PisoVerdict"];
+        };
+        /** @enum {string} */
+        OrigenEventoCalendario: "Automatico" | "Manual";
+        PagarComisionVendedorCommand: {
+            /** Format: uuid */
+            vendedorId?: string;
+            /** Format: double */
+            monto?: number;
+            moneda?: string | null;
+            /** Format: uuid */
+            medioPagoId?: string;
+            numeroComprobante?: string | null;
+            comprobanteUrl?: string | null;
+            observaciones?: string | null;
+        };
+        PagedFilasPreviewDto: {
+            items?: components["schemas"]["FilaPreviewDto"][] | null;
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            hasNextPage?: boolean;
+        };
+        PagoCobroFichaDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            fecha: string;
+            /** Format: date-time */
+            fechaOperacion: string;
+            /** Format: double */
+            montoTotalAmount: number;
+            montoTotalMoneda?: string | null;
+            medioPago: string;
+            ventasCubiertas: components["schemas"]["VentaCubiertaFichaDto"][];
+        };
+        PagoFichaResumenDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            fecha: string;
+            /** Format: date-time */
+            fechaOperacion: string;
+            /** Format: double */
+            montoTotalAmount: number;
+            montoTotalMoneda?: string | null;
+            medioPago: string;
+        };
+        PagoLineaInput: {
+            /** Format: uuid */
+            medioPagoId: string;
+            /** Format: double */
+            monto: number;
+            /** Format: uuid */
+            cuentaPropiaId?: string | null;
+            /** Format: uuid */
+            cuentaClienteId?: string | null;
+            cuentaClienteInfo?: string | null;
+            chequesRecibidos?: components["schemas"]["ChequeDetalleItem"][] | null;
+            chequesPropiosEntregados?: components["schemas"]["ChequeDetalleItem"][] | null;
+            chequesAEndosar?: string[] | null;
+        };
+        PagoPorCuentaDeTercerosDto: {
+            /** Format: uuid */
+            cobroClienteId: string;
+            /** Format: uuid */
+            pagoProveedorId: string;
+        };
         ParadaDto: {
             /** Format: uuid */
             id: string;
@@ -5949,6 +15438,8 @@ export interface components {
             latitud: number;
             /** Format: double */
             longitud: number;
+            /** Format: double */
+            montoTotal: number;
             motivoRechazo?: string | null;
             evidenciaUrl?: string | null;
         };
@@ -5961,50 +15452,72 @@ export interface components {
             /** Format: double */
             longitud?: number;
         };
-        PermissionProfile: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: date-time */
-            fechaCreacion: string;
-            /** Format: uuid */
-            usuarioCreadorId: string;
-            /** Format: date-time */
-            fechaModificacion?: string | null;
-            /** Format: uuid */
-            usuarioModificadorId?: string | null;
-            nombre?: string | null;
-            descripcion?: string | null;
-            activo?: boolean;
-            roleName?: string | null;
-            detalles?: components["schemas"]["PermissionProfileDetail"][] | null;
+        PeriodoDto: {
+            /** Format: date */
+            desde?: string;
+            /** Format: date */
+            hasta?: string;
         };
-        PermissionProfileDetail: {
-            /** Format: uuid */
-            id?: string;
-            /** Format: date-time */
-            fechaCreacion: string;
-            /** Format: uuid */
-            usuarioCreadorId: string;
-            /** Format: date-time */
-            fechaModificacion?: string | null;
-            /** Format: uuid */
-            usuarioModificadorId?: string | null;
-            activo: boolean;
-            /** Format: uuid */
-            permissionProfileId?: string;
-            profile?: components["schemas"]["PermissionProfile"];
-            module?: string | null;
-            canRead?: boolean;
-            canCreate?: boolean;
-            canUpdate?: boolean;
-            canDelete?: boolean;
+        PisoDesgloseDto: {
+            /** Format: double */
+            costo?: number | null;
+            /** Format: double */
+            fletePorcentaje?: number | null;
+            /** Format: double */
+            percepcionesPorcentaje?: number | null;
+            /** Format: double */
+            costoDirecto?: number | null;
+            /** Format: double */
+            ratioPricingPorcentaje?: number | null;
+            /** Format: double */
+            costoRealPricing?: number | null;
+            /** Format: double */
+            margenMinimoPorcentaje?: number | null;
+            /** Format: double */
+            precioMinimo?: number | null;
+            esCalculable?: boolean;
         };
-        PermissionProfileDetailRequest: {
-            module?: string | null;
-            canRead?: boolean;
-            canCreate?: boolean;
-            canUpdate?: boolean;
-            canDelete?: boolean;
+        /** @enum {string} */
+        PisoVerdict: "Rojo" | "Amarillo" | "Verde";
+        /** @enum {string} */
+        PoliticaDuplicados: "Omitir" | "Actualizar" | "CrearIgual";
+        PreferenciaNotificacionDto: {
+            tipo: components["schemas"]["TipoNotificacion"];
+            severidad: components["schemas"]["SeveridadNotificacion"];
+            toast: boolean;
+            silenciable: boolean;
+        };
+        PreferenciaToastDto: {
+            tipo?: components["schemas"]["TipoNotificacion"];
+            toast?: boolean;
+        };
+        PreparacionImportacionDto: {
+            /** Format: uuid */
+            importacionJobId?: string;
+            tipo?: components["schemas"]["TipoImportacion"];
+            nombreArchivo?: string | null;
+            /** Format: int32 */
+            totalFilas?: number;
+            camposEsperados?: components["schemas"]["CampoPlantillaDto"][] | null;
+            sugerencias?: components["schemas"]["SugerenciaMapeoDto"][] | null;
+            muestraFilas?: string[][] | null;
+        };
+        /** @enum {string} */
+        PresentacionNotificacion: "SoloBandeja" | "Toast" | "Modal";
+        PreviewImportacionDto: {
+            /** Format: uuid */
+            importacionJobId?: string;
+            /** Format: int32 */
+            totalFilas?: number;
+            /** Format: int32 */
+            filasValidas?: number;
+            /** Format: int32 */
+            filasRechazadas?: number;
+            /** Format: int32 */
+            filasDuplicadas?: number;
+            motivosFrecuentes?: components["schemas"]["MotivoAgrupadoDto"][] | null;
+            muestra?: components["schemas"]["FilaPreviewDto"][] | null;
+            resumenPorNivel?: components["schemas"]["ResumenNivelDto"][] | null;
         };
         ProblemDetails: {
             type?: string | null;
@@ -6024,15 +15537,20 @@ export interface components {
             /** Format: double */
             precioVenta: number;
             /** Format: double */
+            precioConOferta?: number | null;
+            /** Format: double */
             precioCompraBase?: number | null;
             /** Format: double */
-            margenGanancia?: number | null;
+            markupPorcentaje?: number | null;
+            /** Format: double */
+            margenBrutoPorcentaje?: number | null;
             imageUrl?: string | null;
+            imageUrlLinea?: string | null;
             unidadMedida: string;
             /** Format: double */
             bultoContenido: number;
             /** Format: double */
-            blisterContenido?: number | null;
+            bultoMadreContenido?: number | null;
             fraccionMinimaVenta: string;
             /** Format: double */
             ventaMinimaUnidades: number;
@@ -6049,6 +15567,7 @@ export interface components {
             stockMinimo: number;
             /** Format: double */
             stockActual: number;
+            puedeVenderse: boolean;
             esPadreDeVariantes: boolean;
             /** Format: uuid */
             productoPadreId?: string | null;
@@ -6057,6 +15576,15 @@ export interface components {
             fraganciaNombre?: string | null;
             /** Format: double */
             precioMinimoRentable?: number | null;
+            desglosePiso?: components["schemas"]["PisoDesgloseDto"];
+            /** Format: int32 */
+            alicuotaIva: number;
+            /** Format: double */
+            alicuotaIvaPorcentaje: number;
+            /** Format: double */
+            pesoKg?: number | null;
+            /** Format: double */
+            cotUmbralPropioKg?: number | null;
         };
         ProductoDto: {
             /** Format: uuid */
@@ -6075,6 +15603,14 @@ export interface components {
             productoPadreId?: string | null;
             /** Format: uuid */
             fraganciaId?: string | null;
+            /** Format: int32 */
+            alicuotaIva: number;
+            /** Format: double */
+            alicuotaIvaPorcentaje: number;
+            /** Format: double */
+            pesoKg?: number | null;
+            /** Format: double */
+            cotUmbralPropioKg?: number | null;
         };
         ProductoDtoPaginatedResponse: {
             /** Format: int32 */
@@ -6088,6 +15624,145 @@ export interface components {
             readonly hasNextPage?: boolean;
             items?: components["schemas"]["ProductoDto"][] | null;
         };
+        ProductoInmovilizadoDto: {
+            /** Format: uuid */
+            productoId?: string;
+            nombre?: string | null;
+            codigoPropio?: string | null;
+            /** Format: double */
+            unidades?: number;
+            /** Format: double */
+            valorCosto?: number;
+            /** Format: date */
+            ultimaVenta?: string | null;
+        };
+        ProductoProveedorDto: {
+            /** Format: uuid */
+            productoId: string;
+            nombre: string;
+            codigoPropio?: string | null;
+            codigoProveedor?: string | null;
+        };
+        ProductoProveedorDtoListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ProductoProveedorDto"][] | null;
+        };
+        PuestoDetalleDto: {
+            /** Format: uuid */
+            id?: string;
+            module?: string | null;
+            canRead?: boolean;
+            canCreate?: boolean;
+            canUpdate?: boolean;
+            canDelete?: boolean;
+        };
+        PuestoDetalleInput: {
+            module?: string | null;
+            canRead?: boolean;
+            canCreate?: boolean;
+            canUpdate?: boolean;
+            canDelete?: boolean;
+        };
+        PuestoDto: {
+            /** Format: uuid */
+            id?: string;
+            nombre?: string | null;
+            descripcion?: string | null;
+            activo?: boolean;
+            detalles?: components["schemas"]["PuestoDetalleDto"][] | null;
+            /** Format: int32 */
+            titularesCount?: number;
+        };
+        PuntoDescuentoDto: {
+            /** Format: date */
+            inicio?: string;
+            /** Format: double */
+            item?: number;
+            /** Format: double */
+            general?: number;
+            /** Format: double */
+            oferta?: number;
+            /** Format: double */
+            porcentajeSobreLista?: number | null;
+        };
+        PuntoSerieDto: {
+            /** Format: date */
+            inicio?: string;
+            /** Format: double */
+            facturado?: number;
+            /** Format: int32 */
+            operaciones?: number;
+        };
+        RankingVentasDto: {
+            periodo?: components["schemas"]["PeriodoDto"];
+            periodoAnterior?: components["schemas"]["PeriodoDto"];
+            /** Format: double */
+            totalFacturado?: number;
+            /** Format: double */
+            totalFacturadoAnterior?: number;
+            /** Format: int32 */
+            cantidad?: number;
+            filas?: components["schemas"]["FilaRankingDto"][] | null;
+        };
+        RankingVentasDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["RankingVentasDto"];
+        };
+        ReactivarSocioCommand: {
+            /** Format: uuid */
+            socioId?: string;
+            direccion?: string | null;
+            telefono?: string | null;
+            nombreFantasia?: string | null;
+            cuit?: string | null;
+        };
+        RecepcionEsperadaDto: {
+            /** Format: uuid */
+            compraId: string;
+            /** Format: date-time */
+            fechaCompra: string;
+            /** Format: uuid */
+            proveedorId: string;
+            proveedorNombre: string;
+            franjas: components["schemas"]["FranjaHorariaDto"][];
+        };
+        RecepcionesEsperadasDto: {
+            items: components["schemas"]["RecepcionEsperadaDto"][];
+            /** Format: int32 */
+            total: number;
+            truncado: boolean;
+        };
+        RecepcionesEsperadasDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["RecepcionesEsperadasDto"];
+        };
+        RechazarAutorizacionVentaCommand: {
+            /** Format: uuid */
+            ventaId?: string;
+            /** Format: int32 */
+            version?: number;
+            motivoRechazo?: string | null;
+        };
+        RechazarChequeCommand: {
+            /** Format: uuid */
+            chequeId?: string;
+            motivo?: string | null;
+        };
         RecibirCompraCommand: {
             /** Format: uuid */
             compraId?: string;
@@ -6096,6 +15771,31 @@ export interface components {
              * @deprecated
              */
             usuarioId?: string;
+            /** Format: date */
+            fechaFacturaProveedor?: string | null;
+            comprobante?: components["schemas"]["ComprobanteCompraInput"];
+        };
+        RecordsDto: {
+            mejorDia?: components["schemas"]["MejorDiaDto"];
+            mejorDiaAnterior?: components["schemas"]["MejorDiaDto"];
+            mejorDiaHistorico?: components["schemas"]["MejorDiaDto"];
+            ventaMasGrande?: components["schemas"]["VentaMasGrandeDto"];
+        };
+        RecurrenciaDto: {
+            frecuencia: components["schemas"]["FrecuenciaRecurrencia"];
+            /** Format: int32 */
+            intervalo: number;
+            /** Format: int32 */
+            diaDelMes?: number | null;
+            /** Format: date */
+            fechaFin?: string | null;
+        };
+        ReemplazarReglaComisionCommand: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: double */
+            porcentaje?: number;
+            motivo?: string | null;
         };
         RegisterUserCommand: {
             email?: string | null;
@@ -6103,6 +15803,30 @@ export interface components {
             confirmPassword?: string | null;
             nombre?: string | null;
             apellido?: string | null;
+        };
+        RegistrarGastoCommand: {
+            descripcion?: string | null;
+            /** Format: double */
+            monto?: number;
+            moneda?: string | null;
+            /** Format: uuid */
+            tipoGastoId?: string;
+            /** Format: uuid */
+            cuentaOrigenId?: string | null;
+            /** Format: uuid */
+            medioPagoId?: string;
+            /** Format: uuid */
+            depositoId?: string | null;
+            comprobanteUrl?: string | null;
+            observaciones?: string | null;
+            /** Format: date-time */
+            fecha?: string | null;
+            comprobante?: components["schemas"]["ComprobanteCompraInput"];
+            /**
+             * Format: uuid
+             * @deprecated
+             */
+            usuarioId?: string;
         };
         RegistrarMovimientoCajaCommand: {
             /** Format: uuid */
@@ -6121,6 +15845,30 @@ export interface components {
              */
             usuarioId?: string;
         };
+        RegistrarMovimientoEntreCuentasCommand: {
+            /** Format: double */
+            monto?: number;
+            moneda?: string | null;
+            /** Format: uuid */
+            tipoMovimientoInternoId?: string;
+            /** Format: uuid */
+            cuentaOrigenId?: string;
+            /** Format: uuid */
+            cuentaDestinoId?: string | null;
+            observaciones?: string | null;
+            /** Format: uuid */
+            retiradoPorUsuarioId?: string | null;
+            retiradoPorNombre?: string | null;
+        };
+        RegistrarMovimientoManualVendedorCommand: {
+            /** Format: uuid */
+            cuentaCorrienteId?: string;
+            /** Format: double */
+            monto?: number;
+            moneda?: string | null;
+            tipo?: components["schemas"]["TipoAjusteManualVendedor"];
+            motivo?: string | null;
+        };
         RegistrarPagoCommand: {
             /** Format: uuid */
             socioComercialId?: string;
@@ -6129,11 +15877,140 @@ export interface components {
             medioPago?: string | null;
             moneda?: string | null;
             referencia?: string | null;
+            /** Format: uuid */
+            medioPagoId?: string | null;
+            /** Format: date-time */
+            fechaOperacion?: string | null;
+            imputaciones?: components["schemas"]["ImputacionManualItem"][] | null;
+            chequesRecibidos?: components["schemas"]["ChequeDetalleItem"][] | null;
+            chequesPropiosEntregados?: components["schemas"]["ChequeDetalleItem"][] | null;
+            chequesAEndosar?: string[] | null;
+            tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
             /**
              * Format: uuid
              * @deprecated
              */
             usuarioId?: string;
+        };
+        RegistrarPagoMultilineaCommand: {
+            /** Format: uuid */
+            socioComercialId?: string;
+            moneda?: string | null;
+            referencia?: string | null;
+            /** Format: date-time */
+            fechaOperacion?: string | null;
+            imputaciones?: components["schemas"]["ImputacionManualItem"][] | null;
+            tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
+            comprobanteUrl?: string | null;
+            /** Format: uuid */
+            depositoId?: string | null;
+            lineas?: components["schemas"]["PagoLineaInput"][] | null;
+        };
+        RegistrarPagoPorCuentaDeTercerosCommand: {
+            /** Format: uuid */
+            clienteId?: string;
+            /** Format: uuid */
+            proveedorId?: string;
+            /** Format: double */
+            monto?: number;
+            moneda?: string | null;
+            /** Format: date-time */
+            fechaOperacion?: string | null;
+            referencia?: string | null;
+            imputacionesVenta?: components["schemas"]["ImputacionManualItem"][] | null;
+            imputacionesCompra?: components["schemas"]["ImputacionManualItem"][] | null;
+            tipoCuentaCliente?: components["schemas"]["TipoCuentaSocio"];
+            tipoCuentaProveedor?: components["schemas"]["TipoCuentaSocio"];
+        };
+        RegistroEntregaDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            metodo: number;
+            nombreReceptor: string;
+            dni?: string | null;
+            numeroGuia?: string | null;
+            observacion?: string | null;
+            fotoUrl?: string | null;
+            /** Format: date-time */
+            fecha: string;
+            registradoPor: string;
+        };
+        ReglaComisionDto: {
+            /** Format: uuid */
+            id: string;
+            alcance: components["schemas"]["AlcanceReglaComision"];
+            /** Format: uuid */
+            productoId?: string | null;
+            /** Format: uuid */
+            categoriaId?: string | null;
+            targetNombre: string;
+            /** Format: uuid */
+            vendedorId?: string | null;
+            vendedorNombre?: string | null;
+            /** Format: double */
+            porcentaje: number;
+            /** Format: date */
+            vigenciaDesde: string;
+            /** Format: date */
+            vigenciaHasta?: string | null;
+            motivo?: string | null;
+            vigenteHoy: boolean;
+        };
+        ReglaComisionDtoPaginatedResponse: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            readonly hasNextPage?: boolean;
+            items?: components["schemas"]["ReglaComisionDto"][] | null;
+        };
+        ReglaComisionDtoPaginatedResponseResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ReglaComisionDtoPaginatedResponse"];
+        };
+        ReglaTasaDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: double */
+            porcentaje: number;
+            /** Format: date */
+            vigenciaDesde: string;
+            /** Format: date */
+            vigenciaHasta?: string | null;
+        };
+        RenglonDevolvibleDto: {
+            /** Format: uuid */
+            ventaDetalleId?: string;
+            /** Format: uuid */
+            productoId?: string;
+            productoNombre?: string | null;
+            /** Format: double */
+            cantidadVendida?: number;
+            /** Format: double */
+            cantidadDevuelta?: number;
+            /** Format: double */
+            cantidadDisponible?: number;
+            /** Format: double */
+            precioUnitario?: number;
+        };
+        RenglonDevolvibleDtoIEnumerableResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["RenglonDevolvibleDto"][] | null;
         };
         ReportarResultadoParadaCommand: {
             /** Format: uuid */
@@ -6141,19 +16018,10 @@ export interface components {
             /** Format: uuid */
             paradaId?: string;
             entregado?: boolean;
+            nombreReceptor?: string | null;
             motivoRechazo?: string | null;
             evidenciaUrl?: string | null;
             observaciones?: string | null;
-        };
-        ReporteDiarioDto: {
-            /** Format: date-time */
-            fecha?: string;
-            /** Format: double */
-            totalVentas?: number;
-            /** Format: double */
-            totalCobranzas?: number;
-            /** Format: double */
-            resultadoNeto?: number;
         };
         ReprogramarEntregaCommand: {
             /** Format: uuid */
@@ -6164,9 +16032,92 @@ export interface components {
         RequestPasswordResetCommand: {
             email?: string | null;
         };
-        RoleProfileUpdateDto: {
+        ResolverNotaCreditoCommand: {
             /** Format: uuid */
-            profileId?: string | null;
+            notaCreditoId?: string;
+            aprobar?: boolean;
+            motivoRechazo?: string | null;
+        };
+        ResolverSolicitudCambioCommand: {
+            /** Format: uuid */
+            solicitudId?: string;
+            aprobar?: boolean;
+            comentario?: string | null;
+        };
+        ResultadoAccionMasivaItemDto: {
+            /** Format: uuid */
+            productoId: string;
+            ok: boolean;
+            error?: string | null;
+        };
+        ResultadoAsignacionVendedorItemDto: {
+            /** Format: uuid */
+            socioId?: string;
+            ok?: boolean;
+            error?: string | null;
+        };
+        ResumenClaseAbcDto: {
+            clase?: components["schemas"]["ClaseAbc"];
+            /** Format: int32 */
+            productos?: number;
+            /** Format: double */
+            facturado?: number;
+            /** Format: double */
+            participacionPorcentaje?: number;
+        };
+        ResumenNivelDto: {
+            nivel?: string | null;
+            /** Format: int32 */
+            cantidad?: number;
+        };
+        ResumenVentasDto: {
+            periodo?: components["schemas"]["PeriodoDto"];
+            periodoAnterior?: components["schemas"]["PeriodoDto"];
+            agrupar?: components["schemas"]["AgrupacionReporte"];
+            /** Format: int32 */
+            operaciones?: number;
+            /** Format: int32 */
+            operacionesAnterior?: number;
+            facturado?: components["schemas"]["KpiDto"];
+            ticketPromedio?: components["schemas"]["KpiDto"];
+            descuentos?: components["schemas"]["KpiDto"];
+            /** Format: double */
+            descuentosSobreListaPorcentaje?: number | null;
+            cobrado?: components["schemas"]["KpiDto"];
+            margenBruto?: components["schemas"]["KpiMargenDto"];
+        };
+        ResumenVentasDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ResumenVentasDto"];
+        };
+        ReversionImportacionDto: {
+            /** Format: uuid */
+            importacionJobId?: string;
+            /** Format: int32 */
+            revertidos?: number;
+            /** Format: int32 */
+            restaurados?: number;
+            /** Format: int32 */
+            conservados?: number;
+            /** Format: int32 */
+            conservadosReintentables?: number;
+            loteRevertido?: boolean;
+            /** Format: int32 */
+            padresRevertidos?: number;
+            /** Format: int32 */
+            fraganciasRevertidas?: number;
+            detalle?: components["schemas"]["ConservadoDto"][] | null;
+        };
+        RevertirEndosoEntregaChequesCommand: {
+            /** Format: uuid */
+            pagoId?: string;
+            motivo?: string | null;
+            confirmaRecuperoFisico?: boolean;
         };
         SaludRentabilidadDto: {
             /** Format: double */
@@ -6178,6 +16129,103 @@ export interface components {
             /** Format: double */
             umbral?: number;
             enAlerta?: boolean;
+            pisoCalculable?: boolean;
+            /** Format: double */
+            gastosMasMargenMinimoPorcentaje?: number;
+            avisoPiso?: string | null;
+        };
+        SerieVentasDto: {
+            periodo?: components["schemas"]["PeriodoDto"];
+            periodoAnterior?: components["schemas"]["PeriodoDto"];
+            agrupar?: components["schemas"]["AgrupacionReporte"];
+            /** Format: double */
+            totalFacturado?: number;
+            /** Format: double */
+            totalFacturadoAnterior?: number;
+            actual?: components["schemas"]["PuntoSerieDto"][] | null;
+            anterior?: components["schemas"]["PuntoSerieDto"][] | null;
+        };
+        SerieVentasDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["SerieVentasDto"];
+        };
+        SetPasswordRequestDto: {
+            newPassword?: string | null;
+            confirmNewPassword?: string | null;
+        };
+        /** @enum {string} */
+        SeveridadNotificacion: "Info" | "Aviso" | "Critica";
+        SimulacionComisionDto: {
+            /** Format: uuid */
+            vendedorId: string;
+            /** Format: date */
+            fecha: string;
+            comisionActiva: boolean;
+            /** Format: double */
+            montoCobro: number;
+            /** Format: double */
+            montoComision: number;
+            /** Format: double */
+            porcentajePonderado: number;
+            esMixta: boolean;
+            lineas: components["schemas"]["SimulacionComisionLineaDto"][];
+        };
+        SimulacionComisionDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["SimulacionComisionDto"];
+        };
+        SimulacionComisionLineaDto: {
+            /** Format: uuid */
+            ventaDetalleId?: string | null;
+            /** Format: int32 */
+            indice?: number | null;
+            /** Format: uuid */
+            productoId?: string | null;
+            descripcion: string;
+            esFlete: boolean;
+            escalon: components["schemas"]["EscalonComision"];
+            esReglaDelVendedor: boolean;
+            /** Format: double */
+            porcentajeRegla: number;
+            /** Format: double */
+            factorCesion: number;
+            /** Format: double */
+            porcentajeEfectivo: number;
+            /** Format: double */
+            base: number;
+            /** Format: double */
+            monto: number;
+        };
+        SimularComisionBorradorLineaDto: {
+            /** Format: uuid */
+            productoId: string;
+            /** Format: double */
+            subtotal: number;
+        };
+        SimularComisionBorradorQuery: {
+            /** Format: uuid */
+            vendedorId?: string | null;
+            lineas: components["schemas"]["SimularComisionBorradorLineaDto"][];
+            /** Format: double */
+            descuentoGeneral?: number;
+            /** Format: double */
+            cargoFlete?: number;
+            /** Format: double */
+            porcentajeComisionCedido?: number | null;
+            /** Format: double */
+            monto?: number | null;
+            /** Format: date */
+            fecha?: string | null;
         };
         SkippedItem: {
             /** Format: uuid */
@@ -6191,15 +16239,54 @@ export interface components {
             cuit: string;
             tipo: string;
             condicionIva: string;
+            /** Format: int32 */
+            condicionIvaId?: number | null;
             email: string;
             telefono: string;
             direccion: string;
+            nombreFantasia?: string | null;
+            nombreContacto?: string | null;
+            displayName: string;
+            horario?: components["schemas"]["FranjaHorariaDto"][] | null;
+            condicionPago?: components["schemas"]["CondicionPagoDto"];
+            franjaEntrega?: components["schemas"]["FranjaHorariaDto"][] | null;
+            /** Format: double */
+            topeCredito?: number | null;
+            condicionesDeCompraFaltantes: string[];
             activo: boolean;
             /** Format: double */
             saldoAmount: number;
+            /** Format: double */
+            saldoTstAmount?: number;
+            /** Format: double */
+            saldoNormalAmount?: number;
             saldoCurrency?: string | null;
             /** Format: uuid */
             cuentaId?: string | null;
+            /** Format: uuid */
+            cuentaNormalId?: string | null;
+            /** Format: uuid */
+            vendedorResponsableId?: string | null;
+            esPropio: boolean;
+            puedeVerSaldo: boolean;
+            puedeVerCuentaCorriente: boolean;
+            puedeEditar: boolean;
+            deLaCasa: boolean;
+        };
+        SocioDuplicadoDto: {
+            /** Format: uuid */
+            id: string;
+            razonSocial: string;
+            cuitOriginal: string;
+            tipo: string;
+            activo: boolean;
+            /** Format: int32 */
+            movimientos: number;
+        };
+        SocioFichaDto: {
+            /** Format: uuid */
+            id: string;
+            razonSocial: string;
         };
         SocioListDto: {
             /** Format: uuid */
@@ -6208,15 +16295,34 @@ export interface components {
             cuit: string;
             tipo: string;
             condicionIva: string;
+            /** Format: int32 */
+            condicionIvaId?: number | null;
             email: string;
             telefono: string;
             direccion: string;
+            nombreFantasia?: string | null;
+            nombreContacto?: string | null;
+            displayName: string;
+            esProvisorio: boolean;
+            requiereCompletar: boolean;
+            motivoDesactivacion?: string | null;
             activo: boolean;
             /** Format: double */
             saldoAmount: number;
+            /** Format: double */
+            saldoTstAmount?: number;
+            /** Format: double */
+            saldoNormalAmount?: number;
             saldoCurrency?: string | null;
             /** Format: uuid */
             cuentaId?: string | null;
+            /** Format: uuid */
+            vendedorResponsableId?: string | null;
+            esPropio: boolean;
+            puedeVerSaldo: boolean;
+            puedeVerCuentaCorriente: boolean;
+            puedeEditar: boolean;
+            deLaCasa: boolean;
         };
         SocioListDtoPaginatedResponse: {
             /** Format: int32 */
@@ -6230,6 +16336,64 @@ export interface components {
             readonly hasNextPage?: boolean;
             items?: components["schemas"]["SocioListDto"][] | null;
         };
+        SolicitarCambioSocioCommand: {
+            /** Format: uuid */
+            socioId?: string;
+            razonSocial?: string | null;
+            cuit?: string | null;
+            direccion?: string | null;
+            motivo?: string | null;
+        };
+        SolicitudCambioDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            socioId: string;
+            socioRazonSocial: string;
+            diff: unknown;
+            motivo: string;
+            /** Format: int32 */
+            estado: number;
+            solicitadoPor: string;
+            /** Format: date-time */
+            fechaSolicitud: string;
+            resueltaPor?: string | null;
+            /** Format: date-time */
+            fechaResolucion?: string | null;
+            comentarioResolucion?: string | null;
+        };
+        StockFiscalProductoDto: {
+            /** Format: uuid */
+            productoId: string;
+            codigoPropio: string;
+            nombre: string;
+            /** Format: double */
+            cantidadFiscal: number;
+            activo: boolean;
+            /** Format: double */
+            stockRealTotal: number;
+        };
+        StockFiscalProductoDtoPaginatedResponse: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            readonly hasNextPage?: boolean;
+            items?: components["schemas"]["StockFiscalProductoDto"][] | null;
+        };
+        StockFiscalProductoDtoPaginatedResponseResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["StockFiscalProductoDtoPaginatedResponse"];
+        };
         StockListResponse: {
             /** Format: uuid */
             id: string;
@@ -6241,6 +16405,8 @@ export interface components {
             codigoBarra?: string | null;
             /** Format: double */
             precioVenta: number;
+            /** Format: double */
+            precioCompraBase?: number | null;
             imageUrl?: string | null;
             /** Format: uuid */
             depositoId: string;
@@ -6264,6 +16430,21 @@ export interface components {
             productoPadreId?: string | null;
             /** Format: uuid */
             fraganciaId?: string | null;
+            marca?: string | null;
+            /** Format: uuid */
+            categoriaId?: string | null;
+            lineaNombre?: string | null;
+            familiaNombre?: string | null;
+            categoriaNombre?: string | null;
+            categoria?: string | null;
+            /** Format: double */
+            precioConOferta?: number | null;
+            /** Format: double */
+            cantidadFiscal: number;
+            /** Format: double */
+            stockRealTotal: number;
+            fiscalSuperaReal: boolean;
+            fiscalNegativo: boolean;
         };
         StockListResponsePaginatedResponse: {
             /** Format: int32 */
@@ -6276,6 +16457,60 @@ export interface components {
             totalPages?: number;
             readonly hasNextPage?: boolean;
             items?: components["schemas"]["StockListResponse"][] | null;
+        };
+        StockValorizadoDto: {
+            /** Format: int32 */
+            diasInmovilizado?: number;
+            total?: components["schemas"]["FilaValorStockDto"];
+            porLinea?: components["schemas"]["FilaValorStockDto"][] | null;
+            porDeposito?: components["schemas"]["FilaValorStockDto"][] | null;
+            inmovilizados?: components["schemas"]["ProductoInmovilizadoDto"][] | null;
+        };
+        StockValorizadoDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["StockValorizadoDto"];
+        };
+        SugerenciaMapeoDto: {
+            /** Format: int32 */
+            indiceColumna?: number;
+            nombreColumna?: string | null;
+            claveCampo?: string | null;
+            /** Format: double */
+            confianza?: number;
+        };
+        TasaEfectivaProductoDto: {
+            /** Format: uuid */
+            productoId: string;
+            /** Format: uuid */
+            vendedorId: string;
+            /** Format: date */
+            fecha: string;
+            comisionActiva: boolean;
+            /** Format: double */
+            porcentajeDefault: number;
+            escalon: components["schemas"]["EscalonComision"];
+            /** Format: uuid */
+            reglaId?: string | null;
+            esReglaDelVendedor: boolean;
+            /** Format: double */
+            porcentajeResuelto: number;
+            /** Format: double */
+            tasaEfectiva: number;
+            cascada: components["schemas"]["EscalonTasaDto"][];
+        };
+        TasaEfectivaProductoDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["TasaEfectivaProductoDto"];
         };
         TesoreriaListDto: {
             /** Format: uuid */
@@ -6290,9 +16525,14 @@ export interface components {
             cuentaDestinoNombre?: string | null;
             socioRazonSocial?: string | null;
             observaciones: string;
+            /** Format: int32 */
+            factor: number;
             esAnulacion: boolean;
             estaAnulado: boolean;
             fuente: string;
+            sinMovimientoDeCaja: boolean;
+            /** Format: uuid */
+            pagoVinculadoId?: string | null;
         };
         TesoreriaListDtoPaginatedResponse: {
             /** Format: int32 */
@@ -6314,13 +16554,60 @@ export interface components {
             factor: number;
         };
         /** @enum {string} */
+        TipoAjusteManualVendedor: "Credito" | "Debito";
+        /** @enum {string} */
+        TipoCheque: "Propio" | "Tercero";
+        /** @enum {string} */
+        TipoComprobanteRecibido: "Factura" | "NotaCredito" | "NotaDebito" | "Recibo" | "Ticket" | "Otro";
+        /** @enum {string} */
+        TipoCondicionPago: "Contado" | "DiasDesdeEntrega" | "DiasDesdeFactura" | "DiaFijoDelMes";
+        /** @enum {string} */
+        TipoCuentaSocio: "Tst" | "Normal";
+        /** @enum {string} */
+        TipoDescuento: "Item" | "General" | "Oferta";
+        TipoDescuentoDto: {
+            tipo?: components["schemas"]["TipoDescuento"];
+            /** Format: double */
+            monto?: number;
+            /** Format: double */
+            porcentajeSobreLista?: number | null;
+            /** Format: double */
+            montoAnterior?: number;
+            /** Format: double */
+            variacion?: number | null;
+        };
+        /** @enum {string} */
+        TipoEventoCalendario: "VencimientoCompra" | "ChequeEmitido" | "ChequeRecibido" | "ServicioRecurrente" | "ObligacionPeriodica" | "Manual";
+        TipoGastoResponse: {
+            /** Format: uuid */
+            id?: string;
+            nombre?: string | null;
+            activo?: boolean;
+        };
+        /** @enum {string} */
+        TipoImportacion: "Socios" | "Productos" | "Compras" | "Ventas" | "Categorias" | "ReglasComision";
+        /** @enum {string} */
         TipoMovimientoCaja: "Ingreso" | "Egreso";
+        TipoMovimientoInternoResponse: {
+            /** Format: uuid */
+            id?: string;
+            nombre?: string | null;
+            activo?: boolean;
+        };
         /** @enum {string} */
         TipoMovimientoStock: "Compra" | "Venta" | "Transferencia" | "Ajuste";
+        /** @enum {string} */
+        TipoMovimientoStockFiscal: "CompraFacturada" | "AnulacionCompra" | "DevolucionProveedor" | "VentaFacturada" | "AnulacionFactura" | "NotaCredito" | "NotaDebito" | "AjusteManual";
+        /** @enum {string} */
+        TipoNotificacion: "CajaSinCerrar" | "PedidoEditadoPorDeposito" | "SocioProvisorioPorVencer" | "SocioDesactivadoAutomaticamente" | "SolicitudCambioSocio" | "SolicitudCambioResuelta" | "ImportacionCompletada" | "VentaNoEntregada" | "PresupuestoPorVencer" | "ChequePorVencer" | "VentaRechazadaAutorizacion" | "VentaPendienteAutorizacion" | "VentaAutorizada" | "PagoProveedorPorVencer" | "PagoProveedorVencido" | "VentaRegularizadaPorCobro" | "VencimientoCalendario" | "RecordatorioPersonal" | "ResumenSemanal" | "ResumenMensual" | "EntregasPasadasAlProximoDia" | "FiscalSuperaStockReal";
+        /** @enum {string} */
+        TipoOferta: "Porcentaje" | "PrecioFijo";
         /** @enum {string} */
         TipoOperacionVenta: "Presupuesto" | "Pedido";
         /** @enum {string} */
         TipoSocioComercial: "Cliente" | "Proveedor";
+        /** @enum {string} */
+        TipoTributoRecibido: "PercepcionIva" | "PercepcionIibb" | "PercepcionNacional" | "PercepcionMunicipal" | "ImpuestoInterno" | "Otro";
         ToggleProductoStatusCommand: {
             /** Format: uuid */
             productoId?: string;
@@ -6335,6 +16622,52 @@ export interface components {
              */
             usuarioId?: string;
         };
+        TopeCreditoDto: {
+            /** Format: double */
+            monto?: number | null;
+        };
+        TotalesDescuentoDto: {
+            /** Format: double */
+            item?: number;
+            /** Format: double */
+            general?: number;
+            /** Format: double */
+            oferta?: number;
+            /** Format: double */
+            total?: number;
+            /** Format: double */
+            listaOriginal?: number;
+            /** Format: double */
+            porcentajeSobreLista?: number | null;
+            /** Format: int32 */
+            operaciones?: number;
+            /** Format: int32 */
+            ventasConDescuento?: number;
+        };
+        TransicionFichaDto: {
+            key: string;
+            titulo: string;
+            /** Format: date-time */
+            fecha: string;
+            /** Format: uuid */
+            usuarioId?: string | null;
+            usuarioNombre?: string | null;
+            motivo?: string | null;
+        };
+        TributoComprobanteDto: {
+            tipo: components["schemas"]["TipoTributoRecibido"];
+            jurisdiccion?: string | null;
+            /** Format: double */
+            importe: number;
+        };
+        TributoComprobanteInput: {
+            tipo?: components["schemas"]["TipoTributoRecibido"];
+            jurisdiccion?: string | null;
+            /** Format: double */
+            importe?: number;
+        };
+        /** @enum {string} */
+        UnidadCompra: "Unidad" | "Bulto" | "BultoMadre";
         UpdateCategoriaCommand: {
             /** Format: uuid */
             id?: string;
@@ -6353,11 +16686,36 @@ export interface components {
             /** Format: double */
             descuentoPorcentaje?: number;
             detalles?: components["schemas"]["CompraDetalleDto"][] | null;
+            /** Format: int32 */
+            version?: number | null;
             /**
              * Format: uuid
              * @deprecated
              */
             usuarioGeneradorId?: string;
+        };
+        UpdateCondicionFiscalEmpresaCommand: {
+            condicionFiscal?: components["schemas"]["CondicionFiscalEmpresa"];
+        };
+        UpdateCuentaCajaEfectivoCommand: {
+            /** Format: uuid */
+            cuentaCajaEfectivoId?: string | null;
+        };
+        UpdateCuentaCarteraChequesCommand: {
+            /** Format: uuid */
+            cuentaCarteraChequesId?: string | null;
+        };
+        UpdateDatosEmpresaCommand: {
+            razonSocial?: string | null;
+            nombreFantasia?: string | null;
+            cuit?: string | null;
+            ingresosBrutos?: string | null;
+            /** Format: date */
+            inicioActividades?: string | null;
+            domicilioFiscal?: string | null;
+            domicilioDeposito?: string | null;
+            telefono?: string | null;
+            email?: string | null;
         };
         UpdateDepositoCommand: {
             /** Format: uuid */
@@ -6370,6 +16728,22 @@ export interface components {
             /** Format: double */
             longitude?: number | null;
         };
+        UpdateDiasEntregaCommand: {
+            lunes?: boolean;
+            martes?: boolean;
+            miercoles?: boolean;
+            jueves?: boolean;
+            viernes?: boolean;
+            sabado?: boolean;
+            domingo?: boolean;
+        };
+        UpdateEtiquetaPiezaCommand: {
+            /** Format: double */
+            anchoMm?: number;
+            /** Format: double */
+            altoMm?: number;
+            conLineaDeCorte?: boolean;
+        };
         UpdateFraganciaCommand: {
             /** Format: uuid */
             id?: string;
@@ -6379,6 +16753,19 @@ export interface components {
         UpdateMargenMinimoCommand: {
             /** Format: double */
             nuevoMargen?: number;
+        };
+        UpdateMedioPagoCommand: {
+            /** Format: uuid */
+            id?: string;
+            nombre?: string | null;
+            requiereCaja?: boolean;
+            /** Format: double */
+            comisionPorcentaje?: number;
+            /** Format: int32 */
+            diasAcreditacion?: number;
+            activo?: boolean;
+            /** Format: uuid */
+            cuentaPropiaDefaultId?: string | null;
         };
         UpdateParametrosCostoCommand: {
             /** Format: double */
@@ -6411,26 +16798,33 @@ export interface components {
             /** Format: double */
             precioCompraBase?: number;
             /** Format: double */
-            margenGanancia?: number;
+            markupPorcentaje?: number | null;
             ubicacionDeposito?: string | null;
             imageUrl?: string | null;
             /** Format: int32 */
-            stockMinimo?: number;
+            stockMinimo?: number | null;
             unidadMedida?: string | null;
             /** Format: double */
             bultoContenido?: number;
             /** Format: double */
-            blisterContenido?: number | null;
+            bultoMadreContenido?: number | null;
             fraccionMinimaVenta?: string | null;
             /** Format: double */
             ventaMinimaUnidades?: number;
-            activo?: boolean;
+            activo?: boolean | null;
             codigoProveedor?: string | null;
             marca?: string | null;
             codigoPropio?: string | null;
             /** Format: uuid */
             categoriaId?: string | null;
             codigoBarra?: string | null;
+            /** Format: int32 */
+            alicuotaIva?: number | null;
+            /** Format: double */
+            pesoKg?: number | null;
+            /** Format: double */
+            cotUmbralPropioKg?: number | null;
+            esCargaMasiva?: boolean;
         };
         UpdateSocioCommand: {
             /** Format: uuid */
@@ -6438,14 +16832,35 @@ export interface components {
             razonSocial?: string | null;
             cuit?: string | null;
             condicionIva?: string | null;
+            /** Format: int32 */
+            condicionIvaId?: number | null;
+            limpiarCondicionIva?: boolean;
             email?: string | null;
             telefono?: string | null;
             direccion?: string | null;
+            nombreFantasia?: string | null;
+            nombreContacto?: string | null;
+            horario?: components["schemas"]["FranjaHorariaDto"][] | null;
+            condicionPago?: components["schemas"]["CondicionPagoDto"];
+            franjaEntrega?: components["schemas"]["FranjaHorariaDto"][] | null;
+            topeCredito?: components["schemas"]["TopeCreditoDto"];
             /**
              * Format: uuid
              * @deprecated
              */
             usuarioId?: string;
+        };
+        UpdateTipoGastoCommand: {
+            /** Format: uuid */
+            id?: string;
+            nombre?: string | null;
+            activo?: boolean;
+        };
+        UpdateTipoMovimientoInternoCommand: {
+            /** Format: uuid */
+            id?: string;
+            nombre?: string | null;
+            activo?: boolean;
         };
         UpdateUserCommand: {
             /** Format: uuid */
@@ -6479,6 +16894,13 @@ export interface components {
             motivoVentaSinStock?: string | null;
             /** Format: date-time */
             fechaEntrega?: string | null;
+            observaciones?: string | null;
+            metodoEntrega?: components["schemas"]["MetodoEntrega"];
+            /** Format: double */
+            cargoFlete?: number | null;
+            /** Format: double */
+            porcentajeComisionCedido?: number | null;
+            conFactura?: boolean | null;
         };
         UpdateVentaCommandItemDto: {
             /** Format: uuid */
@@ -6488,11 +16910,25 @@ export interface components {
             /** Format: double */
             descuentoPorcentaje?: number;
         };
-        UpsertPermissionProfileRequest: {
+        UpdateVentaConFacturaPorDefectoCommand: {
+            ventaConFacturaPorDefecto?: boolean | null;
+        };
+        UpsertPuestoRequest: {
             nombre?: string | null;
             descripcion?: string | null;
             activo?: boolean;
-            detalles?: components["schemas"]["PermissionProfileDetailRequest"][] | null;
+            detalles?: components["schemas"]["PuestoDetalleInput"][] | null;
+        };
+        UpsertVendedorLimitesRequestDto: {
+            /** Format: double */
+            porcentajeDescuentoMaximo?: number;
+            /** Format: double */
+            montoMaximoOperacion?: number;
+            moneda?: string | null;
+            puedeVenderSinStock?: boolean;
+            /** Format: double */
+            porcentajeComision?: number;
+            comisionActiva?: boolean;
         };
         UserDetailDto: {
             /** Format: uuid */
@@ -6504,6 +16940,9 @@ export interface components {
             estaActivo?: boolean;
             /** Format: date-time */
             fechaRegistro?: string;
+            /** Format: uuid */
+            puestoId?: string | null;
+            puestoNombre?: string | null;
             permissions?: components["schemas"]["ModulePermissionDto"][] | null;
         };
         UserListDto: {
@@ -6517,6 +16956,8 @@ export interface components {
             estaActivo?: boolean;
             /** Format: date-time */
             fechaRegistro?: string;
+            puestoNombre?: string | null;
+            foto?: string | null;
         };
         UserListDtoPaginatedResponse: {
             /** Format: int32 */
@@ -6529,6 +16970,37 @@ export interface components {
             totalPages?: number;
             readonly hasNextPage?: boolean;
             items?: components["schemas"]["UserListDto"][] | null;
+        };
+        UsuariosTotalesDto: {
+            /** Format: int32 */
+            colaboradores?: number;
+            /** Format: int32 */
+            activos?: number;
+            /** Format: int32 */
+            bloqueados?: number;
+        };
+        UsuariosTotalesDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["UsuariosTotalesDto"];
+        };
+        ValoresEnGestionCompactoDto: {
+            /** Format: double */
+            enRiesgo: number;
+            /** Format: double */
+            perdido: number;
+        };
+        ValoresEnGestionVentaDto: {
+            /** Format: double */
+            enRiesgo: number;
+            /** Format: double */
+            perdido: number;
+            cheques: components["schemas"]["ChequeEnGestionDto"][];
+            atribucion: string;
         };
         VarianteGeneradaDto: {
             /** Format: uuid */
@@ -6548,13 +17020,22 @@ export interface components {
             fraganciaNombre?: string | null;
             codigoPropio: string;
             codigoBarra?: string | null;
+            codigoProveedor?: string | null;
+            imageUrl?: string | null;
             /** Format: double */
             stockActual: number;
             /** Format: double */
             precioVenta: number;
             /** Format: double */
+            precioConOferta?: number | null;
+            /** Format: double */
+            stockReservado: number;
+            /** Format: double */
             stockDisponible?: number | null;
+            /** Format: double */
+            stockActualDeposito?: number | null;
             activo: boolean;
+            puedeVenderse: boolean;
         };
         VehiculoDto: {
             /** Format: uuid */
@@ -6564,12 +17045,55 @@ export interface components {
             /** Format: double */
             capacidadCargaKg: number;
         };
+        VendedorComisionDto: {
+            /** Format: uuid */
+            usuarioId: string;
+            nombre: string;
+            comisionActiva: boolean;
+            /** Format: double */
+            porcentajeComision: number;
+            activo: boolean;
+        };
+        VendedorComisionDtoListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["VendedorComisionDto"][] | null;
+        };
+        VendedorDescuentoDto: {
+            /** Format: uuid */
+            id?: string;
+            nombre?: string | null;
+            totales?: components["schemas"]["TotalesDescuentoDto"];
+            /** Format: double */
+            porcentajeSobreListaAnterior?: number | null;
+        };
+        VendedorListItemDto: {
+            /** Format: uuid */
+            id: string;
+            nombre: string;
+        };
         VentaActionResponseDto: {
             /** Format: uuid */
             ventaId: string;
             /** Format: int32 */
             version: number;
             message: string;
+        };
+        VentaConFacturaPorDefectoDto: {
+            ventaConFacturaPorDefecto: boolean;
+        };
+        VentaCubiertaFichaDto: {
+            /** Format: uuid */
+            ventaId: string;
+            /** Format: double */
+            monto: number;
+            /** Format: int64 */
+            numeroPedido?: number | null;
+            readonly codigoPedido?: string | null;
         };
         VentaDetalleDto: {
             venta: components["schemas"]["VentaHeaderDto"];
@@ -6604,13 +17128,20 @@ export interface components {
             porcentajeDescuentoItem: number;
             /** Format: double */
             precioMinimoRentable?: number | null;
+            desglosePiso?: components["schemas"]["PisoDesgloseDto"];
         };
         VentaDtoList: {
             /** Format: uuid */
             id: string;
+            /** Format: int64 */
+            numeroPedido?: number | null;
+            readonly codigoPedido?: string | null;
             /** Format: uuid */
             clienteId: string;
             razonSocialCliente: string;
+            displayNameCliente: string;
+            direccionCliente?: string | null;
+            nombreFantasiaCliente?: string | null;
             /** Format: uuid */
             vendedorId: string;
             vendedorNombre: string;
@@ -6626,11 +17157,13 @@ export interface components {
             totalAmount: number;
             totalCurrency: string;
             metodoEntrega: components["schemas"]["MetodoEntrega"];
+            conFactura: boolean;
             /** Format: int32 */
             itemsCount: number;
             /** Format: double */
             montoPagado?: number | null;
             estadoPago: string;
+            valoresEnGestion?: components["schemas"]["ValoresEnGestionCompactoDto"];
         };
         VentaDtoListPaginatedResponse: {
             /** Format: int32 */
@@ -6658,9 +17191,23 @@ export interface components {
             /** Format: date-time */
             fechaEntrega?: string | null;
         };
+        VentaEnAlertaDto: {
+            /** Format: uuid */
+            ventaId?: string;
+            /** Format: date */
+            dia?: string;
+            cliente?: string | null;
+            /** Format: double */
+            total?: number;
+            /** Format: double */
+            margenBrutoPorcentaje?: number;
+        };
         VentaHeaderDto: {
             /** Format: uuid */
             id: string;
+            /** Format: int64 */
+            numeroPedido?: number | null;
+            readonly codigoPedido?: string | null;
             /** Format: uuid */
             clienteId: string;
             /** Format: uuid */
@@ -6688,12 +17235,20 @@ export interface components {
             /** Format: double */
             cargoFleteAmount?: number | null;
             cargoFleteCurrency?: string | null;
+            /** Format: double */
+            gananciaBrutaAmount?: number | null;
+            /** Format: double */
+            margenBrutoPorcentaje?: number | null;
             /** Format: int32 */
             metodoEntrega?: number | null;
+            metodoEntregaNombre?: string | null;
+            conFactura?: boolean;
             motivoVentaSinStock?: string | null;
             /** Format: date-time */
             fechaEntrega?: string | null;
+            observaciones?: string | null;
             clienteNombre?: string | null;
+            clienteTelefono?: string | null;
             depositoNombre?: string | null;
             vendedorNombre?: string | null;
             creadoPor?: string | null;
@@ -6703,6 +17258,31 @@ export interface components {
             /** Format: date-time */
             fechaModificacion?: string | null;
             autorizadoPor?: string | null;
+            motivoRechazoAutorizacion?: string | null;
+            /** Format: int32 */
+            motivoPendienteAutorizacion?: number | null;
+            /** Format: double */
+            baseComision?: number | null;
+            /** Format: double */
+            porcentajeDescuentoAdicional?: number | null;
+            descuentoAdicionalOtorgadoPor?: string | null;
+            /** Format: double */
+            porcentajeComisionCedido?: number | null;
+            porcentajeComisionCedidoPor?: string | null;
+            /** Format: double */
+            porcentajeComisionConfigurado?: number | null;
+            /** Format: double */
+            porcentajeComisionEfectivo?: number | null;
+            valoresEnGestion?: components["schemas"]["ValoresEnGestionVentaDto"];
+        };
+        VentaMasGrandeDto: {
+            /** Format: uuid */
+            ventaId?: string;
+            /** Format: date */
+            dia?: string;
+            cliente?: string | null;
+            /** Format: double */
+            total?: number;
         };
         VentaPagosDto: {
             /** Format: uuid */
@@ -6717,9 +17297,29 @@ export interface components {
             estadoPago: string;
             imputaciones: components["schemas"]["ImputacionDetalleDto"][];
         };
+        VentaPendienteAutorizacionDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            clienteId: string;
+            clienteDisplayName: string;
+            /** Format: uuid */
+            vendedorId: string;
+            vendedorNombre: string;
+            /** Format: double */
+            totalAmount: number;
+            totalCurrency: string;
+            /** Format: date-time */
+            fechaPendiente: string;
+            /** Format: int32 */
+            motivoPendienteAutorizacion: number;
+        };
         VentaPreparacionDto: {
             /** Format: uuid */
             id: string;
+            /** Format: int64 */
+            numeroPedido?: number | null;
+            readonly codigoPedido?: string | null;
             clienteNombre: string;
             direccion: string;
             /** Format: date-time */
@@ -6728,8 +17328,12 @@ export interface components {
             estado: number;
             /** Format: int32 */
             metodoEntrega: number;
+            metodoEntregaNombre: string;
+            vendedorNombre: string;
             /** Format: int32 */
             itemsCount: number;
+            /** Format: int32 */
+            piezasCount: number;
             /** Format: int32 */
             version: number;
         };
@@ -6742,6 +17346,44 @@ export interface components {
             porAutorizar?: number;
             /** Format: int32 */
             entregadas?: number;
+        };
+        VerificarStockFiscalVentaQuery: {
+            items?: components["schemas"]["ItemStockFiscalDto"][] | null;
+        };
+        /** @enum {string} */
+        VisibilidadEvento: "Personal" | "Administracion";
+        VistaPreviaPrecioDto: {
+            /** Format: double */
+            precioVenta: number;
+            /** Format: double */
+            gananciaBruta: number;
+            /** Format: double */
+            margenBrutoPorcentaje: number;
+            /** Format: double */
+            markupPorcentaje: number;
+        };
+        VistaPreviaRentabilidadCompraDto: {
+            /** Format: double */
+            subtotalBruto: number;
+            /** Format: double */
+            descuentoTotal: number;
+            /** Format: double */
+            subtotalNeto: number;
+            /** Format: double */
+            gastosOperativos: number;
+            /** Format: double */
+            total: number;
+            lineas: components["schemas"]["LineaVistaPreviaCompraDto"][];
+            /** Format: double */
+            inversion?: number | null;
+            /** Format: double */
+            totalConGastos?: number | null;
+            /** Format: double */
+            retornoEsperado?: number | null;
+            /** Format: double */
+            gananciaMonto?: number | null;
+            /** Format: double */
+            margenBrutoPorcentaje?: number | null;
         };
     };
     responses: never;

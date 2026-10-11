@@ -386,6 +386,9 @@ export type MedioPago = 'Efectivo' | 'Transferencia' | 'Tarjeta'
 // #region Finanzas: Pagos & Conciliación
 // ── Finanzas: Pagos & Conciliación ────────────────────────────────────────────
 
+/** Cuenta del socio a la que va un cobro o pago: Tst o Normal. Mobile no la manda; la elige el servidor. */
+export type TipoCuentaSocio = components['schemas']['TipoCuentaSocio']
+
 export interface Pago {
   id: string
   fecha: string
@@ -394,6 +397,7 @@ export interface Pago {
   entidadId: string
   entidad: string
   medioPago: MedioPago
+  tipoCuenta?: TipoCuentaSocio
   conciliaciones?: Conciliacion[]
 }
 

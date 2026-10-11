@@ -14,7 +14,7 @@
     "test:unit": "jest --testPathPattern='__tests__' --forceExit",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
-    "generate:types": "openapi-typescript ../Forward-Api/openapi.json -o libs/api-client/generated/schema.ts",
+    "generate:types": "node scripts/generate-types.js",
     "knip": "knip"
   },
   "dependencies": {

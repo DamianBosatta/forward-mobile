@@ -104,6 +104,23 @@ export function useUpdateProducto() {
   })
 }
 
+/** Forma mínima de un producto dentro de cualquier caché de productos. */
+interface ProductoEnCache {
+  id?: string
+  activo?: boolean
+}
+
+/** Las cachés de productos guardan listas, páginas infinitas, envoltorios {data} o el detalle suelto. */
+type CacheProductos =
+  | ProductoEnCache[]
+  | {
+      id?: string
+      activo?: boolean
+      data?: { items?: ProductoEnCache[] }
+      items?: ProductoEnCache[]
+      pages?: { data?: { items?: ProductoEnCache[] }; items?: ProductoEnCache[] }[]
+    }
+
 /**
  * Update Optimista para Toggle Status de Producto
  */
@@ -117,44 +134,29 @@ export function useToggleProductoStatus() {
       await queryClient.cancelQueries({ queryKey: productosKeys.all })
       const previousData = queryClient.getQueryData(productosKeys.all)
 
-      queryClient.setQueriesData({ queryKey: productosKeys.all }, (old: any) => {
+      const aplicar = (p: ProductoEnCache) =>
+        p.id === variables.id ? { ...p, activo: variables.activo } : p
+
+      queryClient.setQueriesData<CacheProductos>({ queryKey: productosKeys.all }, (old) => {
         if (!old) return old
+        if (Array.isArray(old)) return old.map(aplicar)
 
         if (old.pages) {
           return {
             ...old,
-            pages: old.pages.map((page: any) => ({
+            pages: old.pages.map((page) => ({
               ...page,
-              data: {
-                ...page.data,
-                items: page.data?.items?.map((p: any) =>
-                  p.id === variables.id ? { ...p, activo: variables.activo } : p
-                )
-              },
-              items: page.items?.map((p: any) =>
-                p.id === variables.id ? { ...p, activo: variables.activo } : p
-              )
-            }))
+              data: { ...page.data, items: page.data?.items?.map(aplicar) },
+              items: page.items?.map(aplicar),
+            })),
           }
         }
 
         if (old.data?.items) {
-           return {
-             ...old,
-             data: {
-               ...old.data,
-               items: old.data.items.map((p: any) => p.id === variables.id ? { ...p, activo: variables.activo } : p)
-             }
-           }
+          return { ...old, data: { ...old.data, items: old.data.items.map(aplicar) } }
         }
 
-        if (Array.isArray(old)) {
-           return old.map((p: any) => p.id === variables.id ? { ...p, activo: variables.activo } : p)
-        }
-
-        if (old.id === variables.id) {
-           return { ...old, activo: variables.activo }
-        }
+        if (old.id === variables.id) return { ...old, activo: variables.activo }
 
         return old
       })

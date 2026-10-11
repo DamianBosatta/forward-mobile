@@ -107,7 +107,7 @@ export function useProductoForm(id?: string) {
       setNombre(p.nombre ?? '')
       setDescripcion(p.descripcion ?? '')
       setPrecioCompra(String(p.precioCompraBase ?? p.precioVenta ?? ''))
-      setMargen(String((p.margenGanancia ?? 0.2) * 100))
+      setMargen(String(p.markupPorcentaje ?? 20))
       setBultoContenido(p.bultoContenido && p.bultoContenido > 1 ? String(p.bultoContenido) : '')
       setBlisterContenido(p.blisterContenido ? String(p.blisterContenido) : '')
       setFraccionMinimaVenta(p.fraccionMinimaVenta ?? 'Unidad')
@@ -128,13 +128,12 @@ export function useProductoForm(id?: string) {
   }, [fraccionMinimaVenta, ventaMinimaUnidades])
 
   // Lógica de cálculo de precio de venta sugerido
-  // Fórmula: Costo / (1 - Margen)
+  // Markup sobre el costo (%): Costo * (1 + Markup/100). El servidor recalcula y manda.
   const precioVentaSugerido = useMemo(() => {
     const costo = parseFloat(precioCompra) || 0
     const m = parseFloat(margen) || 0
     if (costo <= 0) return 0
-    const factor = 1 - (m / 100)
-    return factor > 0 ? costo / factor : costo
+    return costo * (1 + m / 100)
   }, [precioCompra, margen])
 
   // ROI preview — gross profit + markup-over-cost percentage (D6 / web parity).
@@ -197,7 +196,7 @@ export function useProductoForm(id?: string) {
       setModalConfig({
         visible: true,
         title: 'Campos requeridos',
-        message: 'Completá nombre, costo y margen.',
+        message: 'Completá nombre, costo y markup.',
         variant: 'warning',
         confirmLabel: 'Entendido',
         onConfirm: () => setModalConfig(prev => ({ ...prev, visible: false })),
@@ -224,7 +223,7 @@ export function useProductoForm(id?: string) {
       setModalConfig({
         visible: true,
         title: 'Error',
-        message: 'El margen debe ser mayor a 0.',
+        message: 'El markup debe ser mayor a 0.',
         variant: 'danger',
         confirmLabel: 'Entendido',
         onConfirm: () => setModalConfig(prev => ({ ...prev, visible: false })),
@@ -235,7 +234,6 @@ export function useProductoForm(id?: string) {
 
     // Packaging is optional metadata; it is no longer tied to the minimum fraction.
     const bContenido = bultoContenido ? parseFloat(bultoContenido) : undefined
-    const blContenido = blisterContenido ? parseFloat(blisterContenido) : undefined
 
     if (fraccionMinimaVenta === 'Pack' && !(parseFloat(ventaMinimaUnidades) >= 1)) {
       setModalConfig({
@@ -258,10 +256,9 @@ export function useProductoForm(id?: string) {
           nombre,
           descripcion,
           precioCompraBase: costo,
-          margenGanancia: m / 100,
+          markupPorcentaje: m,
           unidadMedida: 'Unidad',
           bultoContenido: bContenido,
-          blisterContenido: blContenido,
           fraccionMinimaVenta,
           ventaMinimaUnidades: fraccionMinimaVenta === 'Pack' ? parseFloat(ventaMinimaUnidades) : 1,
           ubicacionDeposito: ubicacion || undefined,
@@ -290,10 +287,9 @@ export function useProductoForm(id?: string) {
           nombre,
           descripcion,
           precioCompraBase: costo,
-          margenGanancia: m / 100,
+          markupPorcentaje: m,
           unidadMedida: 'Unidad',
           bultoContenido: bContenido,
-          blisterContenido: blContenido,
           fraccionMinimaVenta,
           ventaMinimaUnidades: fraccionMinimaVenta === 'Pack' ? parseFloat(ventaMinimaUnidades) : 1,
           ubicacionDeposito: ubicacion || undefined,

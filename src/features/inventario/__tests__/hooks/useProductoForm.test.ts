@@ -30,11 +30,11 @@ describe('useProductoForm Hook', () => {
 
     act(() => {
       result.current.setPrecioCompra('100'); // Costo 100
-      result.current.setMargen('20'); // Margen 20%
+      result.current.setMargen('20'); // Markup 20%
     });
 
-    // Costo / (1 - Margen/100) => 100 / 0.8 = 125
-    expect(result.current.precioVentaSugerido).toBe(125);
+    // Markup sobre el costo: 100 * 1.2 = 120
+    expect(result.current.precioVentaSugerido).toBe(120);
   });
 
   it('deberia mostrar modal de error si faltan campos obligatorios', async () => {
@@ -67,10 +67,30 @@ describe('useProductoForm Hook', () => {
     expect(mockMutateAsyncCreate).toHaveBeenCalledWith(expect.objectContaining({
       nombre: 'Producto Test',
       precioCompraBase: 100,
-      margenGanancia: 0.2
+      markupPorcentaje: 20
     }));
     
     // Deberia mostrar exito
     expect(result.current.modalConfig.variant).toBe('success');
+  });
+
+  it('en edicion carga el markup del servidor y lo manda tal cual al guardar', async () => {
+    const { useProducto } = require('../../api/queries');
+    (useProducto as jest.Mock).mockReturnValueOnce({
+      data: { id: 'p1', nombre: 'Jabon', precioCompraBase: 100, markupPorcentaje: 130 },
+      isLoading: false,
+    });
+    mockMutateAsyncUpdate.mockResolvedValueOnce({});
+    const { result } = renderHook(() => useProductoForm('p1'));
+
+    expect(result.current.margen).toBe('130');
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    const body = mockMutateAsyncUpdate.mock.calls[0][0];
+    expect(body.markupPorcentaje).toBe(130);
+    expect(body).not.toHaveProperty('margenGanancia');
   });
 });

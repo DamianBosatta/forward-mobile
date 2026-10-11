@@ -317,7 +317,7 @@ export default function NuevoProductoScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <PremiumInput
-                    label="Margen (%)"
+                    label="Markup (%)"
                     keyboardType="numeric"
                     value={margen}
                     onChangeText={setMargen}
