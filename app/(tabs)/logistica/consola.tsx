@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Linking, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { FileText } from 'lucide-react-native'
 import { RequirePermission } from '@/core/ui'
 import { BottomSheet, Button, Notice, TopBar, useMenuLeading, type TopBarAction } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { useFinalizarHojaRuta, useHojaRuta, useHojasDeRuta, useIniciarHojaRuta, useReportarParada } from '@/libs/api-client'
-import { getManifiestoUrl } from '@/libs/api-client/logistica'
+import { getManifiestoUrl, logisticaKeys } from '@/libs/api-client/logistica'
 import { getNotaEntregaUrl } from '@/libs/api-client/ventas'
 import { EstadoHojaRuta, type ParadaDto } from '@/libs/api-client/types'
 import { useAuthStore } from '@/libs/store'
@@ -37,6 +38,9 @@ export default function ConsolaChoferScreen() {
   const volverA = esChofer ? '/(tabs)' : '/(tabs)/logistica'
   const { activeTrip, setActiveTrip, clearActiveTrip, updateStopStatus } = useLogisticaStore()
   const [rutaElegida, setRutaElegida] = useState<string | null>(null)
+  // La hoja que el chofer acaba de dejar con "Cambiar de ruta": la lista vieja no la vuelve a elegir sola.
+  const [descartada, setDescartada] = useState<string | null>(null)
+  const qc = useQueryClient()
   const [reportando, setReportando] = useState<{ parada: ParadaDto; numero: number } | null>(null)
   const [errorReporte, setErrorReporte] = useState<string | null>(null)
   const [pedido, setPedido] = useState<ParadaDto | null>(null)
@@ -71,8 +75,8 @@ export default function ConsolaChoferScreen() {
     // Un viaje en curso manda: hay que cerrarlo antes de arrancar otro.
     const abiertas = rutasDeHoy.filter((r) => r.estado === EstadoHojaRuta.EnCurso)
     const unica = abiertas.length === 1 ? abiertas[0] : rutasDeHoy.length === 1 ? rutasDeHoy[0] : null
-    if (unica) setRutaElegida(unica.id ?? null)
-  }, [rutasDeHoy, id, activeTrip?.id])
+    if (unica && unica.id !== descartada) setRutaElegida(unica.id ?? null)
+  }, [rutasDeHoy, id, activeTrip?.id, descartada])
 
   const remota = useHojaRuta(puedeVerViajes ? objetivo : '')
   useEffect(() => {
@@ -133,6 +137,8 @@ export default function ConsolaChoferScreen() {
   const resumen = resumenRuta(detalles)
   const finalizada = viaje.estado === EstadoHojaRuta.Finalizada
   const programada = viaje.estado === EstadoHojaRuta.Programada
+  // La oficina puede cancelar una hoja mientras no salió (#860): ya no se inicia ni se reporta.
+  const cancelada = viaje.estado === EstadoHojaRuta.Cancelada
   // Solo el chofer asignado (o el administrador de sistemas) reporta; el servidor lo exige igual.
   const soloLectura = !isSuperAdmin() && viaje.choferId !== user?.id
   const fecha = parseDateSafe(viaje.fechaSalida)
@@ -199,6 +205,9 @@ export default function ConsolaChoferScreen() {
       router.replace(volverA as never)
     } catch (e) {
       setFinalizando(false)
+      // Un 409 puede ser que la oficina la canceló o la cambió: se vuelve a pedir lo que dice el servidor.
+      remota.refetch()
+      qc.invalidateQueries({ queryKey: logisticaKeys.hojasRuta() })
       setAviso(mensajeDelServidor(e, accion === 'iniciar' ? 'No se pudo iniciar el recorrido.' : 'No se pudo finalizar el viaje.'))
     }
   }
@@ -206,11 +215,16 @@ export default function ConsolaChoferScreen() {
   const todasReportadas = resumen.total > 0 && resumen.hechas === resumen.total
   const pie = soloLectura ? null : programada ? (
     <Button label="Iniciar recorrido" loading={iniciar.isPending} onPress={() => accionViaje('iniciar')} />
-  ) : finalizada ? (
+  ) : finalizada || cancelada ? (
     !id ? (
-      <Button label="Cambiar de ruta" variant="secundario" onPress={() => { clearActiveTrip(); setRutaElegida(null) }} />
+      <Button label="Cambiar de ruta" variant="secundario" onPress={() => {
+        setDescartada(viaje.id)
+        clearActiveTrip()
+        setRutaElegida(null)
+        qc.invalidateQueries({ queryKey: logisticaKeys.hojasRuta() })
+      }} />
     ) : null
-  ) : todasReportadas ? (
+  ) : viaje.estado === EstadoHojaRuta.EnCurso && todasReportadas ? (
     <Button label="Finalizar viaje" onPress={() => setFinalizando(true)} />
   ) : null
 
@@ -234,12 +248,13 @@ export default function ConsolaChoferScreen() {
         <View style={{ paddingHorizontal: space[4], paddingTop: space[3], gap: space[2] }}>
           {soloLectura ? <Notice tone="info">Esta hoja de ruta es de otro chofer: solo podés verla.</Notice> : null}
           {finalizada ? <Notice tone="exito" title="Viaje finalizado.">Quedó cerrado en el sistema.</Notice> : null}
+          {cancelada ? <Notice tone="info" title="Hoja cancelada.">La oficina canceló esta hoja de ruta antes de salir.</Notice> : null}
           {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
         </View>
         <HojaDeRutaVista
           resumen={resumen}
           soloLectura={soloLectura}
-          puedeReportar={!programada && !finalizada}
+          puedeReportar={viaje.estado === EstadoHojaRuta.EnCurso}
           onReportar={(p) => {
             setErrorReporte(null)
             setReportando({ parada: p, numero: resumen.proxima?.numero ?? 0 })

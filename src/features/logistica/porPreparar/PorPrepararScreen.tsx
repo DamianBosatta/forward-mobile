@@ -67,6 +67,10 @@ export function PorPrepararScreen() {
         {/* El cliente se identifica por la dirección; el nombre va aparte. */}
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{v.direccion}</Text>
         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{v.clienteNombre}</Text>
+        {/* Ya está en una hoja que no salió: el servidor no la deja sumar a otra. */}
+        {v.hojaRutaCodigo ? (
+          <Text style={{ ...typeScale.secundario, ...semibold, color: c.text }}>{`En hoja ${v.hojaRutaCodigo}`}</Text>
+        ) : null}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2], marginTop: space[1] }}>
           <Text style={{ ...typeScale.secundario, color: c.text, flex: 1 }}>{v.metodoEntregaNombre}</Text>
           <Text style={{ ...typeScale.secundario, ...semibold, color: c.text }}>

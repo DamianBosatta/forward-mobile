@@ -85,6 +85,22 @@ describe('Pedidos por preparar (solo lectura)', () => {
     expect(urls().some((u) => u.includes('FechaDesde=2026-10-09') && u.includes('FechaHasta=2026-10-09'))).toBe(true)
   })
 
+  it('el pedido que ya está en una hoja de ruta muestra su número; el que no, no', async () => {
+    const servido = mockGet.getMockImplementation()!
+    mockGet.mockImplementation((url: string) =>
+      url.includes('ventas-para-preparacion')
+        ? Promise.resolve([
+          { ...PEDIDOS[0], estado: 4, hojaRutaId: 'h1', hojaRutaCodigo: 'HR-1A2B3C' },
+          { ...PEDIDOS[1], hojaRutaId: null, hojaRutaCodigo: null },
+        ])
+        : servido(url))
+    pintar()
+    const enHoja = await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376')
+    expect(within(enHoja).getByText('En hoja HR-1A2B3C')).toBeTruthy()
+    const libre = screen.getByLabelText('Pedido A00424: Brandsen 3314')
+    expect(within(libre).queryByText(/En hoja/)).toBeNull()
+  })
+
   it('los días saltean el fin de semana, el feriado no se elige y otro día pide esa fecha', async () => {
     pintar()
     await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376')
