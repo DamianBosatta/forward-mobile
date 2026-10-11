@@ -11,5 +11,5 @@ export const itemsDe = (lineas: LineaCarrito[]): ItemVenta[] =>
   lineas.map((l) => ({ productoId: l.productoId, cantidad: l.cantidad, descuentoPorcentaje: l.descuentoPct }))
 
 /** Por defecto, logística propia (como la web). */
-export const aAutoguardado = (lineas: LineaCarrito[]): AutoguardadoVenta =>
-  ({ descuentoGeneral: 0, metodoEntrega: METODO_ENTREGA.Logistica, items: itemsDe(lineas) })
+export const aAutoguardado = (lineas: LineaCarrito[], descuentoGeneral = 0): AutoguardadoVenta =>
+  ({ descuentoGeneral, metodoEntrega: METODO_ENTREGA.Logistica, items: itemsDe(lineas) })

@@ -7,6 +7,8 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 import { VentaNuevaPantalla } from '../components/VentaNuevaPantalla'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
+import { producto } from '../__testing__/producto'
+import { avisosVenta } from '../lib/avisos'
 
 const mockPost = jest.fn()
 const mockPut = jest.fn()
@@ -46,7 +48,10 @@ async function elegirCliente() {
   await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
   await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
 }
-const anadir = () => userEvent.press(screen.getByRole('button', { name: 'Añadir pala' }))
+async function anadir() {
+  if (!screen.queryByRole('button', { name: 'Añadir pala' })) await userEvent.press(screen.getByRole('button', { name: 'Agregar productos' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Añadir pala' }))
+}
 const ESPERA = { timeout: 3000 }
 
 beforeEach(() => {
@@ -101,7 +106,7 @@ describe('venta nueva: cliente, borrador y autoguardado', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
     expect(await screen.findByText(/Cliente no encontrado.*no se guarda sola/s)).toBeTruthy()
     expect(sync()).toHaveTextContent('Sin autoguardado')
-    expect(screen.getByRole('button', { name: 'Añadir pala' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Agregar productos' })).toBeTruthy()
   })
 
   it('descartar borra el borrador en el servidor y vuelve', async () => {
@@ -111,6 +116,59 @@ describe('venta nueva: cliente, borrador y autoguardado', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Descartar borrador' }))
     await waitFor(() => expect(mockBack).toHaveBeenCalled())
     expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Ventas/b1/descartar-borrador')
+  })
+})
+
+describe('pestaña Líneas', () => {
+  const pala = producto({ real: 100 })
+  const conLineas = (descuentoPct = 0, cantidad = 12, p = pala) => useCarritoVenta.setState({ lineas: [{ productoId: p.id, producto: p, cantidad, descuentoPct }] })
+  beforeEach(() => useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10 } as never }))
+
+  it('una línea sobre el tope lo marca y avisa que el pedido va a quedar por autorizar', async () => {
+    await elegirCliente()
+    conLineas(12.82)
+    expect(await screen.findByText('Desc. 12,82 % · sobre tu tope')).toBeTruthy()
+    expect(screen.getByText('Este pedido va a quedar por autorizar')).toBeTruthy()
+    expect(screen.getByText(/Porque un descuento supera tu tope/)).toBeTruthy()
+  })
+
+  it('sin stock suficiente también avisa; dentro del tope y con stock, no hay banner', async () => {
+    await elegirCliente()
+    conLineas(5, 12)
+    expect(await screen.findByText('Desc. 5 %')).toBeTruthy()
+    expect(screen.queryByText('Este pedido va a quedar por autorizar')).toBeNull()
+    conLineas(5, 120)
+    expect(await screen.findByText(/Porque falta stock/)).toBeTruthy()
+  })
+
+  it('el descuento general viaja en el autoguardado y baja el total estimado', async () => {
+    await elegirCliente()
+    conLineas(0, 10)
+    const campo = screen.getByLabelText('Descuento general (%)')
+    await userEvent.clear(campo)
+    await userEvent.type(campo, '10')
+    await waitFor(() => expect(mockPut).toHaveBeenLastCalledWith('/api/v1/Ventas/b1', expect.objectContaining({ descuentoGeneral: 10 })), ESPERA)
+    expect(screen.getByTestId('venta-total')).toHaveTextContent('$ 22.464,00') // 10 × 2.496 − 10 %
+  })
+
+  it('muestra la comisión estimada que calcula el servidor, solo con comisión activa', async () => {
+    mockPost.mockImplementation((url: string) => Promise.resolve(url.includes('simulacion')
+      ? { comisionActiva: true, montoCobro: 29952, montoComision: 2567.5, porcentajePonderado: 5, esMixta: false, lineas: [] }
+      : { ventaId: 'b1', version: 7, message: '' }))
+    await elegirCliente()
+    conLineas()
+    expect(await screen.findByText('Tu comisión estimada $ 2.567,50', {}, ESPERA)).toBeTruthy()
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/comisiones/simulacion', { lineas: [{ productoId: 'p1', subtotal: 29952 }], descuentoGeneral: 0, cargoFlete: 0 })
+  })
+
+  it('avisos: un presupuesto sobre el tope se rechaza (no va a autorización) y el piso suma el descuento general', () => {
+    const lineas = [{ productoId: 'p1', producto: pala, cantidad: 1, descuentoPct: 15 }]
+    const presupuesto = avisosVenta(lineas, { tipo: 'Presupuesto', tope: 10, exento: false, descuentoGeneral: 0 })
+    expect(presupuesto.porAutorizar).toEqual([])
+    expect(presupuesto.rechazos).toEqual([expect.stringMatching(/presupuesto no admite/)])
+    // 2496 con 15 % + 10 % general = 1909,44 < mínimo 2000 → debajo del mínimo; con 15 % solo, no.
+    expect(avisosVenta(lineas, { tipo: 'Pedido', tope: 50, exento: false, descuentoGeneral: 0 }).porAutorizar).toEqual([])
+    expect(avisosVenta(lineas, { tipo: 'Pedido', tope: 50, exento: false, descuentoGeneral: 10 }).porAutorizar).toEqual(['un precio queda debajo del mínimo'])
   })
 })
 
