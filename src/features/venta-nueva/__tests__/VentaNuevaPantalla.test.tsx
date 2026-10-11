@@ -386,7 +386,7 @@ describe('confirmar', () => {
     expect(altas()[1][1].claveIdempotencia).toBe(altas()[0][1].claveIdempotencia)
   }
 
-  it('si tras el corte se cambió el pedido y ya se había grabado, avisa y lleva a esa venta para revisarla', async () => {
+  it('servidor viejo (200 «ya había sido creada»): si tras el corte se cambió el pedido y ya se había grabado, avisa y lleva a esa venta para revisarla', async () => {
     await cortarYReintentar(true, REPETIDA)
     expect(mockReplace).toHaveBeenCalledWith(guardada('v9', 'El pedido ya se había grabado con lo de antes. Revisalo y editalo si cambiaste algo.'))
   })
@@ -405,6 +405,41 @@ describe('confirmar', () => {
     await cortarYReintentar(true, 'Pedido creado y confirmado exitosamente. Stock reservado.')
     expect(altas()[1][1].items).toEqual([{ productoId: 'p1', cantidad: 13, descuentoPorcentaje: 0 }])
     expect(mockReplace).toHaveBeenCalledWith(guardada('v9', 'Pedido creado y confirmado exitosamente. Stock reservado.'))
+  })
+
+  // Servidor nuevo (forward-system #867): la clave ya usada con otro cuerpo es un 409 con código y la venta grabada.
+  const CON_LO_DE_ANTES = 'El pedido ya se había grabado con lo de antes. Revisalo y editalo si cambiaste algo.'
+  const otroCuerpo = () => Object.assign(
+    new ApiError(409, 'Esta clave de idempotencia ya se usó para grabar otro pedido (distinto cliente, tipo, líneas, cantidades o descuentos).'),
+    { codigo: 'ClaveIdempotenciaConOtroCuerpo', data: { ventaId: 'v9', version: 3, message: 'x' } })
+
+  it('servidor nuevo: si tras el corte se cambió el pedido, el 409 con la venta grabada lleva a ella con el aviso y descarta el borrador', async () => {
+    await armar()
+    mockPost.mockImplementationOnce(() => Promise.reject(new TypeError('Network request failed')))
+      .mockImplementationOnce(() => Promise.reject(otroCuerpo()))
+    await confirmar()
+    expect(await screen.findByText('Network request failed')).toBeTruthy()
+    act(() => useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: pala, cantidad: 13, descuentoPct: 0 }] }))
+    await confirmar()
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', CON_LO_DE_ANTES)))
+    expect(altas()[1][1].claveIdempotencia).toBe(altas()[0][1].claveIdempotencia)
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador')
+    expect(screen.queryByText(/clave de idempotencia/)).toBeNull()
+    expect(useCarritoVenta.getState().lineas).toEqual([])
+  })
+
+  it('un 409 sin código (la clave ya se estaba grabando) no cambia la clave: avisa y el reintento la reusa', async () => {
+    await armar()
+    mockPost.mockImplementationOnce(() => Promise.reject(new ApiError(409, 'Ya existe un registro con datos duplicados.')))
+    await confirmar()
+    expect(await screen.findByText(/Este pedido ya se estaba grabando/)).toBeTruthy()
+    expect(screen.queryByText(/datos duplicados/)).toBeNull()
+    expect(mockReplace).not.toHaveBeenCalled()
+    expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador')
+    mockPost.mockImplementationOnce(() => Promise.resolve({ ventaId: 'v9', version: 1, message: REPETIDA }))
+    await confirmar()
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', REPETIDA)))
+    expect(altas()[1][1].claveIdempotencia).toBe(altas()[0][1].claveIdempotencia)
   })
 
   it('sin stock pide el motivo antes de mandar y lo manda en el alta', async () => {

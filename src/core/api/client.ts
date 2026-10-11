@@ -59,6 +59,10 @@ class ApiError extends Error {
     public status: number,
     public message: string,
     public errors?: string[],
+    /** Código estable del error que manda el servidor en el sobre (`Response.Codigo`), p. ej. `ClaveIdempotenciaConOtroCuerpo`. */
+    public codigo?: string,
+    /** `data` del sobre de error: lo que el servidor adjunta al rechazo (p. ej. la venta ya grabada en un 409). */
+    public data?: unknown,
   ) {
     super(message)
     this.name = 'ApiError'
@@ -204,26 +208,27 @@ function sanitizeErrorMessage(status: number, serverMessage?: string): string {
  */
 function unwrapApiResponse<T>(result: unknown, httpStatus: number): T {
   if (result && typeof result === 'object' && 'succeeded' in result) {
-    const env = result as {
-      succeeded: boolean
-      statusCode?: number
-      message?: string
-      errors?: unknown
-      data?: unknown
-    }
+    const env = result as { succeeded: boolean; statusCode?: number; data?: unknown }
     if (env.succeeded === false) {
-      throw new ApiError(
-        typeof env.statusCode === 'number' ? env.statusCode : httpStatus,
-        sanitizeErrorMessage(
-          typeof env.statusCode === 'number' ? env.statusCode : httpStatus,
-          typeof env.message === 'string' ? env.message : undefined,
-        ),
-        Array.isArray(env.errors) ? env.errors : undefined,
-      )
+      throw errorDelSobre(result, typeof env.statusCode === 'number' ? env.statusCode : httpStatus)
     }
     return ('data' in env ? env.data : undefined) as T
   }
   return result as T
+}
+
+/** ApiError con el mensaje (saneado), los errores, el código y los datos del sobre de error, con cualquier status. */
+function errorDelSobre(body: unknown, status: number): ApiError {
+  const env = (body && typeof body === 'object' ? body : {}) as {
+    message?: unknown; errors?: unknown; codigo?: unknown; data?: unknown
+  }
+  return new ApiError(
+    status,
+    sanitizeErrorMessage(status, typeof env.message === 'string' ? env.message : undefined),
+    Array.isArray(env.errors) ? env.errors : undefined,
+    typeof env.codigo === 'string' ? env.codigo : undefined,
+    env.data ?? undefined,
+  )
 }
 
 // ── Core fetch con auth ──────────────────────────────────────────────────────
@@ -266,11 +271,7 @@ async function fetchWithAuth<T>(endpoint: string, options: RequestInit = {}): Pr
 
       if (!retryResponse.ok) {
         const errorData = await retryResponse.json().catch(() => ({}))
-        throw new ApiError(
-          retryResponse.status,
-          sanitizeErrorMessage(retryResponse.status, errorData?.message),
-          Array.isArray(errorData?.errors) ? errorData.errors : undefined
-        )
+        throw errorDelSobre(errorData, retryResponse.status)
       }
 
       if (retryResponse.status === 204) return undefined as T
@@ -282,18 +283,14 @@ async function fetchWithAuth<T>(endpoint: string, options: RequestInit = {}): Pr
   }
 
     if (!response.ok) {
-      let errorData: { message?: string; errors?: string[] } = {}
+      let errorData: { message?: string } = {}
       try {
         errorData = await response.json()
       } catch {}
       
       logger.error(`API Error [${response.status}] ${endpoint}:`, errorData.message || 'Unknown error')
       
-      throw new ApiError(
-        response.status,
-        sanitizeErrorMessage(response.status, errorData.message),
-        Array.isArray(errorData.errors) ? errorData.errors : undefined
-      )
+      throw errorDelSobre(errorData, response.status)
     }
 
   // 204 No Content

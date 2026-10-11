@@ -28,15 +28,24 @@ interface Datos {
 const pideMotivo = (e: unknown) => /justificaci[oó]n/i.test(mensajeDelServidor(e, ''))
 /** El servidor devolvió la venta que ya existía con esa clave (CreateVentaCommandHandler, operación repetida). */
 const yaExistia = (r: VentaActionResponseDto) => /ya hab[ií]a sido creada/i.test(r.message ?? '')
+/** La clave ya grabó otro pedido: 409 con la venta que quedó en `data` (forward-system #867, CreateVentaCommandHandler). */
+const ventaConOtroCuerpo = (e: unknown): VentaActionResponseDto | null => {
+  if (!(e instanceof ApiError) || e.status !== 409 || e.codigo !== 'ClaveIdempotenciaConOtroCuerpo') return null
+  const v = e.data as Partial<VentaActionResponseDto> | undefined
+  return typeof v?.ventaId === 'string' && v.ventaId ? (v as VentaActionResponseDto) : null
+}
+/** 409 sin código en el alta: otro intento con la misma clave se estaba grabando (carrera de la restricción única). */
+const CLAVE_EN_CURSO = 'Este pedido ya se estaba grabando. Tocá Confirmar de nuevo para ver cómo quedó: no se va a duplicar.'
 
 /**
  * Confirmar (plan 9 §2.1, igual que la web). Presupuesto: el borrador autoguardado YA es el
  * presupuesto → POST /Ventas/{id}/guardar-presupuesto. Pedido: POST /Ventas con una clave de
  * idempotencia por alta (un doble toque o un reintento sin señal no duplica el pedido) y después
  * se descarta el borrador. La clave se reusa SIEMPRE en la pantalla: un pedido duplicado es peor
- * que perder ediciones. Con la misma clave el servidor devuelve la venta que ya existe sin mirar
- * el cuerpo (CreateVentaCommandHandler); si el pedido cambió desde un intento sin respuesta, se
- * avisa y se lleva a esa venta para revisarla. Lo que decide el servidor (guardado o por autorizar y por qué) se muestra.
+ * que perder ediciones. Con la misma clave el servidor devuelve la venta que ya existe; si el pedido
+ * cambió desde un intento sin respuesta, se avisa y se lleva a esa venta para revisarla. El servidor
+ * nuevo lo dice con un 409 con código y la venta en `data`; el viejo (o los campos que no compara)
+ * con el 200 «ya había sido creada», que se cruza con los intentos sin respuesta. Lo que decide el servidor (guardado o por autorizar y por qué) se muestra.
  */
 export function useConfirmarVenta(d: Datos) {
   const router = useRouter()
@@ -73,13 +82,20 @@ export function useConfirmarVenta(d: Datos) {
       const firma = JSON.stringify(cuerpo(''))
       try {
         r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', cuerpo(clave))
+        // Grabada por un intento anterior con otro cuerpo: las ediciones de después no están en la venta.
+        conLoDeAntes = yaExistia(r) && [...sinRespuesta.current].some((f) => f !== firma)
       } catch (e) {
-        // Sin respuesta: no llegó (red) o un gateway cortó (5xx); el alta pudo haberse grabado igual.
-        if (!(e instanceof ApiError) || e.status >= 500) sinRespuesta.current.add(firma)
-        throw e
+        const grabada = ventaConOtroCuerpo(e)
+        if (!grabada) {
+          // Sin respuesta: no llegó (red) o un gateway cortó (5xx); el alta pudo haberse grabado igual.
+          if (!(e instanceof ApiError) || e.status >= 500) sinRespuesta.current.add(firma)
+          // La clave sigue siendo la misma: el reintento devuelve la venta o el 409 con código.
+          if (e instanceof ApiError && e.status === 409) throw new Error(CLAVE_EN_CURSO)
+          throw e
+        }
+        r = grabada
+        conLoDeAntes = true
       }
-      // Grabada por un intento anterior con otro cuerpo: las ediciones de después no están en la venta.
-      conLoDeAntes = yaExistia(r) && [...sinRespuesta.current].some((f) => f !== firma)
       // La venta ya existe: el borrador quedó huérfano. Si no se puede descartar, vence solo a las 48 h.
       if (b.borrador) await b.descartar().catch(() => undefined)
     }
