@@ -3,7 +3,7 @@ import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, renderHook, screen, userEvent, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
-import { useAnularVenta, ventasKeys } from '@/libs/api-client/ventas'
+import { useAnularVenta, useAutorizarVenta, ventasKeys } from '@/libs/api-client/ventas'
 import { useCreateCompra } from '@/features/compras/api/queries'
 import { crearQueryClient } from '@/core/query/queryClient'
 import { InicioScreen } from '../components/InicioScreen'
@@ -104,13 +104,13 @@ function pintar(qc: QueryClient = crearQueryClient({ retry: false })) {
 
 /**
  * Una mutación real de la app, con el mismo QueryClient que Inicio. Se monta antes que Inicio:
- * `screen` apunta a lo último que se pintó.
+ * `screen` apunta a lo último que se pintó. Si el servidor la rechaza, el rechazo se ignora acá.
  */
 function mutacion(qc: QueryClient, usar: () => { mutateAsync: (v: never) => Promise<unknown> }, variables: unknown) {
   const { result } = renderHook(usar, {
     wrapper: ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>,
   })
-  return () => act(async () => { await result.current.mutateAsync(variables as never) })
+  return () => act(async () => { await result.current.mutateAsync(variables as never).catch(() => undefined) })
 }
 
 const flat = (el: { props: { style?: unknown } }): ViewStyle => StyleSheet.flatten(el.props.style as StyleProp<ViewStyle>) ?? {}
@@ -226,6 +226,20 @@ describe('Inicio: cualquier mutación vuelve a pedir el resumen', () => {
     await mutar()
     expect(await screen.findByLabelText(fila)).toBeTruthy()
     expect(pedidosDelResumen()).toBe(2)
+  })
+
+  it('un 409 al autorizar (la venta cambió) también vuelve a pedir "Por autorizar"', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    const qc = crearQueryClient({ retry: false })
+    const autorizar = mutacion(qc, useAutorizarVenta, { id: 'v1', version: 1 })
+    pintar(qc)
+    await screen.findByLabelText(`Por autorizar: 2, ${ars('302.750')}`)
+
+    servidor({ resumen: { ...RESUMEN, autorizacionesPendientes: pendiente(1, importe(150000)) }, hoy: pagina(0, []) })
+    mockEscribir.mockRejectedValueOnce(new ApiError(409, 'La venta fue modificada por otro usuario.'))
+    await autorizar()
+    expect(await screen.findByLabelText(`Por autorizar: 1, ${ars('150.000')}`)).toBeTruthy()
   })
 
   it.each(casos)('%s con Inicio fuera de pantalla: al volver lo pide de nuevo', async (_, usar, variables, despues, fila) => {

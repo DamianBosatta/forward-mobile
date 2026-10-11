@@ -47,6 +47,8 @@ export default function CatalogoConsultaScreen() {
       return buscarPorCodigoBarra(codigo, corte.current.signal)
     },
     networkMode: 'always',
+    // Es una búsqueda: no cambia nada que resuma Inicio.
+    meta: { noRefrescaInicio: true },
   })
   const { reset } = escaneo
   const cancelarEscaneo = useCallback(() => { corte.current?.abort(); reset() }, [reset])
