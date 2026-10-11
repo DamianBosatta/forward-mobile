@@ -145,6 +145,21 @@ describe('Autorizaciones: la bandeja', () => {
     expect(screen.queryByLabelText('Autorizar venta')).toBeNull()
   })
 
+  it('un 409 real del servidor cierra la hoja y avisa; el aviso se va al abrir otra venta', async () => {
+    conCapacidades('CAP_AUTORIZAR_VENTA')
+    bandeja([venta('a', 4, 100), venta('b', 4, 200)])
+    mockPost.mockRejectedValueOnce(Object.assign(new Error('Conflicto'), { status: 409 }))
+    pintar()
+    await userEvent.press(await screen.findByLabelText('Autorizar la venta de Dirección a - Cliente a'))
+    await userEvent.press(hoja('Autorizar venta').getByRole('button', { name: 'Autorizar' }))
+
+    expect(await screen.findByText(/Otra persona modificó o resolvió esta venta/)).toBeTruthy()
+    expect(screen.queryByLabelText('Autorizar venta')).toBeNull()
+
+    await userEvent.press(screen.getByLabelText('Ver la venta de Dirección b - Cliente b'))
+    expect(screen.queryByText(/Otra persona modificó o resolvió esta venta/)).toBeNull()
+  })
+
   it('autorizar sin razón la manda en null; con margen en amarillo la tarjeta lleva a revisar', async () => {
     conCapacidades('CAP_AUTORIZAR_VENTA')
     bandeja([venta('a', 1, 100), venta('b', 2 | 1, 200)])

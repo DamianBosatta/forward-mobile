@@ -2,8 +2,10 @@ import React, { useState } from 'react'
 import { Text, View } from 'react-native'
 import { BottomSheet, Button, Field, Notice } from '@/core/ui/fw'
 import { space, typeScale, useColors } from '@/libs/theme'
-import { VentaCambioError, useAutorizarVenta, useRechazarAutorizacion } from '@/libs/api-client/ventas'
+import { VentaCambioError, esConflictoDeVenta, useAutorizarVenta, useRechazarAutorizacion } from '@/libs/api-client/ventas'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
+
+const MENSAJE_CONFLICTO = 'Otra persona modificó o resolvió esta venta mientras la veías. Se actualizó: revisala antes de decidir.'
 
 export type Decision = 'autorizar' | 'rechazar'
 
@@ -47,7 +49,11 @@ export function DecisionSheet({ decision, ventaId, cliente, version, fechaPendie
   }
   const listo = {
     onSuccess: () => { cerrar(); onHecho?.() },
-    onError: (e: unknown) => { if (e instanceof VentaCambioError) { cerrar(); onConflicto?.(e.message) } },
+    onError: (e: unknown) => {
+      if (!esConflictoDeVenta(e)) return
+      cerrar()
+      onConflicto?.(e instanceof VentaCambioError ? e.message : MENSAJE_CONFLICTO)
+    },
   }
   const confirmar = () => {
     if (falta) return

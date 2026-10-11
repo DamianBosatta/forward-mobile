@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Alert, Pressable, ScrollView, Switch, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
@@ -61,11 +61,17 @@ export default function PerfilScreen() {
     router.replace('/login')
   }
 
+  const cambiandoEntorno = useRef(false)
   const cambiarEntorno = async () => {
-    if (!entornoPendiente) return
+    if (!entornoPendiente || cambiandoEntorno.current) return
+    cambiandoEntorno.current = true
+    const destino = entornoPendiente
+    // La hoja se cierra antes de esperar al servidor: Cancelar no puede quedar vivo a mitad de camino
+    // y el aviso de falla (Alert) no sale encima de un Modal visible.
+    setEntornoPendiente(null)
     // Antes de cambiar la URL: el logout tiene que ir al servidor donde está la sesión.
     await revocarEnElServidor()
-    await setApiUrl(entornoPendiente)
+    await setApiUrl(destino)
     queryClient.clear()
     logout()
     router.replace('/login')

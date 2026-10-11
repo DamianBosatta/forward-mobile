@@ -7,7 +7,7 @@ import fs from 'fs'
 import path from 'path'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Alert } from 'react-native'
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
 import PerfilScreen from '../../../../app/(tabs)/perfil'
 
@@ -162,6 +162,24 @@ describe('Mi cuenta', () => {
 
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Sessions/logout', {})
+  })
+
+  it('cambiar de servidor cierra la confirmación antes de esperar al servidor y un segundo toque no repite el logout', async () => {
+    usuario()
+    let terminar: (v: boolean) => void = () => {}
+    mockPost.mockReturnValueOnce(new Promise<boolean>((r) => { terminar = r }))
+    pintar()
+    await userEvent.press(screen.getByRole('radio', { name: 'Desarrollo' }))
+    const confirmar = screen.getByLabelText('Confirmar: Cambiar y salir')
+    fireEvent.press(confirmar)
+    fireEvent.press(confirmar) // segundo toque sobre la misma confirmación
+
+    // El logout todavía no terminó y la confirmación ya no está.
+    expect(screen.queryByLabelText('Confirmar: Cambiar y salir')).toBeNull()
+    expect(mockPost).toHaveBeenCalledTimes(1)
+    terminar(true)
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
+    expect(mockPost).toHaveBeenCalledTimes(1)
   })
 })
 

@@ -136,11 +136,36 @@ describe('Autorizar venta: el detalle', () => {
     await waitFor(() => expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBeFalsy())
     version = 44 // otro usuario editó la venta
     await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
-    expect(await screen.findByText(/modificado por otro usuario/)).toBeTruthy()
+    // Un 409 real del servidor cierra la hoja y avisa en el detalle, igual que la guarda local.
+    expect(await screen.findByText(/Otra persona modificó o resolvió esta venta/)).toBeTruthy()
+    expect(screen.queryByLabelText('Autorizar venta')).toBeNull()
 
     await waitFor(() => expect(mockGet.mock.calls.filter(([u]) => u === '/api/v1/Ventas/v1').length).toBeGreaterThanOrEqual(3))
-    await waitFor(() => expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBeFalsy())
-    await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Autorizar' }))
+    const hoja2 = within(screen.getByLabelText('Autorizar venta'))
+    await userEvent.type(hoja2.getByLabelText('Razón para autorizar · obligatoria'), 'ok')
+    await waitFor(() => expect(hoja2.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBeFalsy())
+    await userEvent.press(hoja2.getByRole('button', { name: 'Autorizar' }))
     expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 44, razon: 'ok' })
+  })
+
+  it('tras un 409, si la venta ya no espera autorización, no quedan los botones de decidir', async () => {
+    permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+    let estado = 9
+    mockGet.mockImplementation((url: string) =>
+      Promise.resolve(url.endsWith('autorizacion-preview') ? PREVIEW : { ...VENTA, venta: { ...VENTA.venta, estado } }))
+    mockPost.mockRejectedValueOnce(Object.assign(new Error('Conflicto'), { status: 409 }))
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={qc}><DetalleAutorizacion id="v1" /></QueryClientProvider>)
+    await userEvent.press(await screen.findByRole('button', { name: 'Autorizar' }))
+    const hoja = within(screen.getByLabelText('Autorizar venta'))
+    await userEvent.type(hoja.getByLabelText('Razón para autorizar · obligatoria'), 'ok')
+    await waitFor(() => expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBeFalsy())
+    estado = 2 // otro usuario la resolvió
+    await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
+
+    expect(await screen.findByText('Esta venta ya no espera autorización.')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Autorizar' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Rechazar' })).toBeNull()
   })
 })

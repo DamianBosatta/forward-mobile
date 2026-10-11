@@ -40,7 +40,8 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
   const preview = useAutorizacionPreview(id, vePreview && porAutorizar)
   const [decision, setDecision] = useState<Decision | null>(null)
   // La versión cacheada puede tener hasta 60 s: al decidir se vuelve a pedir la venta.
-  const abrirDecision = (d: Decision) => { setDecision(d); void q.refetch() }
+  const [aviso, setAviso] = useState<string | null>(null)
+  const abrirDecision = (d: Decision) => { setAviso(null); setDecision(d); void q.refetch() }
   const volver = onVolver ?? (() => router.back())
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
   const tarjeta = { padding: space[4], gap: space[2], borderRadius: radii.tarjeta, backgroundColor: c.surface }
@@ -75,6 +76,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
           <TotalsRow label="Total" importe={venta.totalAmount} destacado />
         </View>
 
+        {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
         {!porAutorizar ? (
           <Notice tone="info">Esta venta ya no espera autorización.</Notice>
         ) : (
@@ -142,6 +144,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
         version={venta.version}
         bloqueado={q.isFetching}
         razonObligatoria={pideRazon(venta.motivoPendienteAutorizacion)}
+        onConflicto={setAviso}
         onClose={() => setDecision(null)}
         onHecho={volver}
       />

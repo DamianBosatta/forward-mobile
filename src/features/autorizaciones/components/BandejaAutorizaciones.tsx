@@ -46,6 +46,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
 
   const abrir = (id: string) => {
+    setAviso(null)
     if (isTabletLandscape) setElegida(id)
     else router.push(rutaDetalle(id) as never)
   }
@@ -118,7 +119,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
       contentContainerStyle={{ padding: space[4], paddingBottom: space[12] }}
       renderItem={({ item }) => tarjeta(item)}
       refreshing={q.isRefetching}
-      onRefresh={() => { void q.refetch() }}
+      onRefresh={() => { setAviso(null); void q.refetch() }}
       ListEmptyComponent={
         q.isLoading ? <ActivityIndicator color={c.brand} />
           : q.isError ? <Notice tone="peligro">{mensajeDelServidor(q.error, 'No se pudo cargar la bandeja. Deslizá hacia abajo para reintentar.')}</Notice>
