@@ -173,6 +173,8 @@ describe('pestaña Líneas', () => {
   it('servidor nuevo: el autoguardado de un pedido manda el descuento sobre el tope sin recortarlo', async () => {
     servidorNuevo('Pedido')
     await elegirCliente()
+    // El id del POST es el que se busca en /mios (si no coincidiera, el servidor nuevo pasaría por viejo).
+    expect(await mockPost.mock.results[0].value).toMatchObject({ ventaId: 'b1' })
     conLineas(12.82)
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     expect(mockPut.mock.calls.at(-1)[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 12.82 }])
@@ -182,6 +184,8 @@ describe('pestaña Líneas', () => {
   it.each([
     ['servidor viejo: el borrador no trae el tipo', () => mockGet.mockImplementation((url: string) =>
       Promise.resolve(url === '/api/v1/Ventas/borradores/mios' ? [{ id: 'b1', version: 7 }] : calendario(url)))],
+    ['/mios no trae el borrador', () => mockGet.mockImplementation((url: string) =>
+      Promise.resolve(url === '/api/v1/Ventas/borradores/mios' ? [{ id: 'otro', version: 1, tipoOperacion: 'Pedido' }] : calendario(url)))],
     ['no se puede saber (el GET falla)', () => mockGet.mockImplementation((url: string) =>
       url === '/api/v1/Ventas/borradores/mios' ? Promise.reject(new Error('sin señal')) : Promise.resolve(calendario(url)))],
   ])('%s: se sigue recortando al tope', async (_nombre, preparar) => {
@@ -190,6 +194,21 @@ describe('pestaña Líneas', () => {
     conLineas(12.82)
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     expect(mockPut.mock.calls.at(-1)[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 10 }])
+  })
+
+  it('si el GET de /mios falla una vez, se reintenta una vez en el siguiente cambio y deja de recortar', async () => {
+    let llamadas = 0
+    mockGet.mockImplementation((url: string) => {
+      if (url !== '/api/v1/Ventas/borradores/mios') return Promise.resolve(calendario(url))
+      return ++llamadas === 1 ? Promise.reject(new Error('sin señal')) : Promise.resolve([{ id: 'b1', version: 7, tipoOperacion: 'Pedido' }])
+    })
+    await elegirCliente()
+    // El primer cambio después del fallo dispara el reintento (uno solo) y el descuento ya viaja completo.
+    conLineas(12.82)
+    await waitFor(() => expect(mockPut.mock.calls.at(-1)?.[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 12.82 }]), ESPERA)
+    conLineas(12.82, 13)
+    await waitFor(() => expect(mockPut.mock.calls.at(-1)?.[1].items).toEqual([{ productoId: 'p1', cantidad: 13, descuentoPorcentaje: 12.82 }]), ESPERA)
+    expect(llamadas).toBe(2)
   })
 
   it('pedido sobre el tope: el borrador (Presupuesto en el servidor) guarda hasta el tope y el descuento elegido viaja al confirmar', async () => {

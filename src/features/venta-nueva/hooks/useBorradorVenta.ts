@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useQueryClient } from '@tanstack/react-query'
 import { api } from '@/core/api/client'
@@ -20,8 +20,12 @@ import { aAutoguardado, hastaElTope, superaElTope, type AutoguardadoVenta } from
  */
 export function useBorradorVenta(valores: AutoguardadoVenta, topePedido = 0) {
   // `base`: lo que tiene el servidor al nacer el borrador (vacío); sin base, lo que hay en pantalla (retomar).
-  // `guardaTipo`: el servidor devolvió el tipo del borrador creado; un borrador retomado no lo sabe (se recorta).
-  const [borrador, setBorrador] = useState<{ id: string; version: number; base?: AutoguardadoVenta; guardaTipo?: boolean } | null>(null)
+  // `guardaTipo`: el servidor guarda el tipo del borrador (true), no (false), o no se pudo saber (null / aún sin preguntar: se recorta).
+  const [borrador, setBorrador] = useState<{ id: string; version: number; base?: AutoguardadoVenta; guardaTipo?: boolean | null } | null>(null)
+  // Intentos de preguntarlo por borrador (máx. 2: el primero y un reintento en el siguiente cambio), y los valores del último fallo.
+  const intentos = useRef(0)
+  const valoresDelFallo = useRef<string | null>(null)
+  const preguntando = useRef(false)
   const [errorAlCrear, setErrorAlCrear] = useState<string | null>(null)
   const iniciar = useIniciarBorradorVenta()
   const descartarMut = useDescartarBorradorVenta()
@@ -40,6 +44,19 @@ export function useBorradorVenta(valores: AutoguardadoVenta, topePedido = 0) {
     const d = await api.get<VentaDetalleDto>(`/api/v1/Ventas/${borrador!.id}`)
     return { version: d.venta.version, valores: autoguardadoDesdeVenta(d) }
   }, [borrador])
+  const claveValores = JSON.stringify(valores)
+  useEffect(() => {
+    if (!borrador || topePedido <= 0 || typeof borrador.guardaTipo === 'boolean' || preguntando.current) return
+    if (intentos.current >= 2 || (borrador.guardaTipo === null && valoresDelFallo.current === claveValores)) return
+    const id = borrador.id
+    preguntando.current = true
+    intentos.current += 1
+    void servidorGuardaElTipo(id).then((guardaTipo) => {
+      preguntando.current = false
+      valoresDelFallo.current = guardaTipo === null ? claveValores : null
+      setBorrador((b) => (b && b.id === id ? { ...b, guardaTipo } : b))
+    })
+  }, [borrador, topePedido, claveValores])
   const retenido = topePedido > 0 && !borrador?.guardaTipo && superaElTope(valores, topePedido)
   const autoguardado = useAutoguardado({
     borradorId: borrador?.id, versionInicial: borrador?.version ?? 0, base: borrador?.base,
@@ -51,15 +68,21 @@ export function useBorradorVenta(valores: AutoguardadoVenta, topePedido = 0) {
     try {
       const r = await iniciar.mutateAsync({ clienteId, depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion })
       // El POST no devuelve el tipo: un Presupuesto no lo necesita, y para un Pedido se pregunta si el servidor lo guardó.
-      const guardaTipo = tipoOperacion === 'Pedido' && await servidorGuardaElTipo(r.ventaId)
+      const guardaTipo = tipoOperacion === 'Pedido' ? await servidorGuardaElTipo(r.ventaId) : false
       // Lo que se cargó mientras el POST estaba en vuelo no está en el servidor: el autoguardado lo manda.
+      intentos.current = 1
+      valoresDelFallo.current = guardaTipo === null ? JSON.stringify(valores) : null
       setBorrador({ id: r.ventaId, version: r.version, base: aAutoguardado([]), guardaTipo })
     } catch (e) {
       setErrorAlCrear(mensajeDelServidor(e, 'No se pudo crear el borrador.'))
     }
   }
   /** Retoma un borrador que ya existe en el servidor (no crea otro). */
-  const retomar = (id: string, version: number) => setBorrador({ id, version })
+  const retomar = (id: string, version: number) => {
+    intentos.current = 0
+    valoresDelFallo.current = null
+    setBorrador({ id, version })
+  }
   const descartar = async () => {
     if (borrador) await descartarMut.mutateAsync(borrador.id)
     setBorrador(null)

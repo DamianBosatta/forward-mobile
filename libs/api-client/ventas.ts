@@ -16,7 +16,8 @@ import type {
 } from './types'
 import type { components } from './generated/schema'
 
-export type BorradorVenta = components['schemas']['BorradorVentaDto']
+/** `tipoOperacion` llegó con forward-system #883 (enum por nombre): un servidor anterior no lo manda. */
+export type BorradorVenta = components['schemas']['BorradorVentaDto'] & { tipoOperacion?: 'Pedido' | 'Presupuesto' }
 /** Número, cliente por partes y `version` (xmin) llegaron con forward-system #884: un servidor anterior no los manda. */
 export type VentaPendienteAutorizacion = components['schemas']['VentaPendienteAutorizacionDto'] & {
   numeroPedido?: number | null
@@ -250,15 +251,17 @@ export const useIniciarBorradorVenta = () => useMutation({
 
 /**
  * ¿El servidor guarda el tipo del borrador? El POST no lo devuelve; `BorradorVentaDto.tipoOperacion`
- * existe solo desde #883, así que si el borrador recién creado lo trae, el servidor es el nuevo.
- * Ante cualquier duda (sin respuesta, borrador no listado, sin el campo) es que no: se recorta el descuento.
+ * existe solo desde #883, así que si el borrador viene en /mios con el campo, el servidor es el nuevo.
+ * `false`: el servidor respondió y no lo trae (viejo) o el borrador no está en la lista; `null`: no se
+ * pudo preguntar (se puede reintentar). En ambos casos se recorta el descuento.
  */
-export async function servidorGuardaElTipo(borradorId: string): Promise<boolean> {
+export async function servidorGuardaElTipo(borradorId: string): Promise<boolean | null> {
   try {
     const borradores = await api.get<BorradorVenta[]>('/api/v1/Ventas/borradores/mios')
-    return Array.isArray(borradores) && borradores.some((b) => b.id === borradorId && b.tipoOperacion !== undefined)
+    if (!Array.isArray(borradores)) return null
+    return borradores.some((b) => b.id === borradorId && b.tipoOperacion !== undefined)
   } catch {
-    return false
+    return null
   }
 }
 

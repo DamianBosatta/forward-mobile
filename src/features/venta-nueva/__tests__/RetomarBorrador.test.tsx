@@ -32,8 +32,8 @@ const venta = {
 }
 const socio = { id: 'c7', direccion: 'Tarantino 1898', nombreFantasia: 'Autoservicio Abel', razonSocial: 'Abel SRL' }
 
-function pantalla(qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
-  return render(<QueryClientProvider client={qc}><VentaNuevaPantalla abrir={{ modo: 'retomar', ventaId: 'b9', tipo: 'Presupuesto' }} /></QueryClientProvider>)
+function pantalla(qc = new QueryClient({ defaultOptions: { queries: { retry: false } } }), tipo: 'Pedido' | 'Presupuesto' = 'Presupuesto') {
+  return render(<QueryClientProvider client={qc}><VentaNuevaPantalla abrir={{ modo: 'retomar', ventaId: 'b9', tipo }} /></QueryClientProvider>)
 }
 
 beforeEach(() => {
@@ -76,6 +76,26 @@ describe('retomar un borrador (PR 2.2b)', () => {
     expect(mockPut.mock.calls[0][1]).toMatchObject({
       id: 'b9', version: 4, descuentoGeneral: 5, metodoEntrega: 2, observaciones: 'Portón negro, antes de las 12',
       items: [{ productoId: 'p1', cantidad: 3, descuentoPorcentaje: 10 }],
+    })
+  })
+
+  // Un Pedido guardado con 12,82 % y tope 10: el descuento no se pierde al editar si el servidor guarda el tipo.
+  describe.each([
+    ['servidor nuevo (el borrador trae su tipo)', [{ id: 'b9', tipoOperacion: 'Pedido' }], 12.82],
+    ['servidor viejo (sin tipo)', [{ id: 'b9' }], 10],
+    ['/mios no trae el borrador', [], 10],
+  ] as const)('retomar un Pedido sobre el tope con %s', (_n, mios, esperado) => {
+    it(`el autoguardado manda ${esperado} %`, async () => {
+      const base = mockGet.getMockImplementation()!
+      mockGet.mockImplementation((url: string) => url === '/api/v1/Ventas/b9' ? Promise.resolve({ ...venta, detalles: [{ ...venta.detalles[0], porcentajeDescuentoItem: 12.82 }] })
+        : url === '/api/v1/Ventas/borradores/mios' ? Promise.resolve(mios) : base(url))
+      pantalla(undefined, 'Pedido')
+      await screen.findByText('Nuevo pedido')
+      await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/v1/Ventas/borradores/mios'))
+      await userEvent.press(screen.getByRole('tab', { name: 'Cabecera' }))
+      await userEvent.type(screen.getByLabelText('Observaciones'), ' y más')
+      await waitFor(() => expect(mockPut).toHaveBeenCalled(), { timeout: 3000 })
+      expect(mockPut.mock.calls.at(-1)[1].items).toEqual([{ productoId: 'p1', cantidad: 3, descuentoPorcentaje: esperado }])
     })
   })
 
