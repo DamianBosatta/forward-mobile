@@ -25,10 +25,10 @@ function socio(id: string) {
     : { id, razonSocial: 'Insumos del Sur SA', condicionPago: { descripcion: '30 días' }, condicionesDeCompraFaltantes: [] }
 }
 
-function usar(borrador?: string) {
+function usar(borrador?: string, opciones?: { edicion?: boolean }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const wrapper = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
-  return { ...renderHook(() => useCompraBorrador(borrador), { wrapper }), qc }
+  return { ...renderHook(() => useCompraBorrador(borrador, opciones), { wrapper }), qc }
 }
 
 const puts = () => mockPut.mock.calls.map(([, body]) => body as { version: number; descuentoPorcentaje: number; detalles: { cantidad: number; costoUnitario: number; monedaCosto: string; unidadCompra: string }[] })
@@ -222,5 +222,58 @@ describe('useCompraBorrador', () => {
     await act(async () => { soltar() })
     await new Promise((r) => setTimeout(r, 100))
     expect(mockPut).toHaveBeenCalledTimes(1)
+  })
+
+  describe('modo edición de una compra guardada', () => {
+    const CONFIRMADA = { ...BORRADOR, id: 'c7', version: 7, estado: 'Confirmado' }
+    beforeEach(() => {
+      mockGet.mockImplementation((url: string) => {
+        if (url.startsWith('/api/v1/socios-comerciales/')) return Promise.resolve(socio('p1'))
+        if (url === '/api/v1/Compras/c7') return Promise.resolve({ ...CONFIRMADA, detalles: [{ ...CONFIRMADA.detalles[0], costoUnitarioBaseAmount: 100 }] })
+        return Promise.reject(new Error(url))
+      })
+    })
+    const cargada = async () => {
+      const r = usar('c7', { edicion: true })
+      await waitFor(() => expect(r.result.current.cargando).toBe(false))
+      return r
+    }
+
+    it('hidrata las líneas con descuento, unidad de compra y moneda', async () => {
+      const { result } = await cargada()
+      expect(result.current.descuentoPorcentaje).toBe(10)
+      expect(result.current.lineas[0]).toMatchObject({ cantidad: 4, unidad: 'Bulto', unidadesPorUnidad: 12, costoUnitario: 100, monedaCosto: 'USD' })
+      expect(result.current.hayCambios).toBe(false)
+    })
+
+    it('no autoguarda: cambiar algo no manda ningún PUT hasta guardar los cambios', async () => {
+      const { result, unmount } = await cargada()
+      act(() => result.current.setLineas((prev) => prev.map((l) => ({ ...l, cantidad: 9 }))))
+      expect(result.current.hayCambios).toBe(true)
+      await new Promise((r) => setTimeout(r, 1200))
+      expect(mockPut).not.toHaveBeenCalled()
+      unmount()
+      await new Promise((r) => setTimeout(r, 50))
+      expect(mockPut).not.toHaveBeenCalled()
+    })
+
+    it('guardar cambios manda un solo PUT con la versión de la compra y conserva descuento, unidad y moneda', async () => {
+      const { result } = await cargada()
+      act(() => result.current.setLineas((prev) => prev.map((l) => ({ ...l, cantidad: 9 }))))
+      await act(() => result.current.guardarCambios())
+      expect(mockPut).toHaveBeenCalledTimes(1)
+      expect(mockPut.mock.calls[0][0]).toBe('/api/v1/Compras/c7')
+      expect(puts()[0]).toMatchObject({ version: 7, descuentoPorcentaje: 10, detalles: [{ cantidad: 9, costoUnitario: 100, monedaCosto: 'USD', unidadCompra: 'Bulto' }] })
+      expect(result.current.estado).toBe('guardado')
+    })
+
+    it('un 409 deja el mensaje del servidor y el estado de conflicto', async () => {
+      const { result } = await cargada()
+      mockPut.mockRejectedValueOnce(Object.assign(new Error('Error de concurrencia: la compra ha sido modificada por otro usuario. Por favor, recargue.'), { status: 409 }))
+      act(() => result.current.setLineas((prev) => prev.map((l) => ({ ...l, cantidad: 9 }))))
+      await act(() => result.current.guardarCambios().catch(() => {}))
+      expect(result.current.estado).toBe('conflicto')
+      expect(result.current.error).toMatch(/Error de concurrencia/)
+    })
   })
 })
