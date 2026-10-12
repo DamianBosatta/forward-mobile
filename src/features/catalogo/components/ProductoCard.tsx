@@ -5,11 +5,11 @@ import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from
 import { StatusChip, formatImporte } from '@/core/ui/fw'
 import { getFullImageUrl } from '@/libs/api-client/media'
 import type { Producto } from '@/libs/api-client/types'
-import { chipDeStock } from '../lib/presentacion'
+import { chipDeStock, detalleDeTarjeta } from '../lib/presentacion'
 
 interface ProductoCardProps {
   producto: Producto
-  /** Lo decide el servidor; undefined = sin dato (líneas o sin depósito): sin chip. */
+  /** Lo decide el servidor (`hayDisponible` del listado o la consulta de disponibilidad); undefined = sin dato: sin chip. */
   disponible?: boolean
   grilla?: boolean
   seleccionado?: boolean
@@ -21,6 +21,7 @@ export function ProductoCard({ producto, disponible, grilla, seleccionado, onPre
   const c = useColors()
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const chip = chipDeStock(disponible)
+  const detalle = detalleDeTarjeta(producto)
   const foto = getFullImageUrl(producto.imageUrl)
   const ladoFoto = grilla ? undefined : 72
 
@@ -70,9 +71,7 @@ export function ProductoCard({ producto, disponible, grilla, seleccionado, onPre
         <Text numberOfLines={2} style={[typeScale.cuerpoDestacado, { color: c.text }]}>
           {producto.nombre}
         </Text>
-        {producto.esPadreDeVariantes ? (
-          <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Con fragancias</Text>
-        ) : null}
+        {detalle ? <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{detalle}</Text> : null}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
           <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Precio de lista</Text>
           <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(producto.precioVenta)}</Text>

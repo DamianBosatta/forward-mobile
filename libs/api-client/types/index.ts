@@ -64,11 +64,33 @@ export type UserRole = 'AdministradorSistemas' | 'Administrador' | 'Gerencia' | 
 // ── Productos ────────────────────────────────────────────────────────────────
 // Types derived from the generated OpenAPI schema — do not hand-edit these aliases.
 
-/** Slim list projection — matches GET /api/v1/productos list shape. */
-export type Producto = components['schemas']['ProductoDto']
+/**
+ * Slim list projection — matches GET /api/v1/productos list shape.
+ * Los campos de forward-system #894 van a mano hasta regenerar el schema: opcionales porque un servidor anterior no los manda.
+ */
+export type Producto = components['schemas']['ProductoDto'] & {
+  /** Hay stock disponible (real menos reservado, en todos los depósitos; en una línea, sumado entre sus fragancias activas). Misma regla que `catalogo-stock`. */
+  hayDisponible?: boolean | null
+  /** Solo en líneas (padres de fragancias); null en el resto. */
+  cantidadFragancias?: number | null
+  /** Unidades de la venta mínima ("caja de N"). */
+  ventaMinimaUnidades?: number | null
+}
 
-/** Full detail projection — matches GET /api/v1/productos/{id} shape. */
-export type ProductoDetailDto = components['schemas']['ProductoDetailDto']
+/** Última compra del producto (forward-system #894). Solo la ve quien tiene CAP_VER_COSTOS; sin ella el servidor manda null. */
+export interface UltimaCompraProducto {
+  /** Instante UTC; el día se muestra en hora argentina. */
+  fecha: string
+  proveedorNombre?: string | null
+  costoUnitario: number
+  /** Contra la compra anterior; null en la primera compra. */
+  variacionCostoPorcentaje?: number | null
+}
+
+/** Full detail projection — matches GET /api/v1/productos/{id} shape. `ultimaCompra` llegó con #894: opcional. */
+export type ProductoDetailDto = components['schemas']['ProductoDetailDto'] & {
+  ultimaCompra?: UltimaCompraProducto | null
+}
 
 /**
  * Create producto request — maps to CreateProductoCommand.

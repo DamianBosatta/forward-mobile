@@ -3,6 +3,7 @@ import { ActivityIndicator, Image, ScrollView, Text, View } from 'react-native'
 import { Package, Lock } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, StatusChip, formatImporte } from '@/core/ui/fw'
+import type { UltimaCompraProducto } from '@/libs/api-client/types'
 import { useProducto, useVariantesProducto } from '@/libs/api-client/productos'
 import { useDisponibilidad, useStock } from '@/libs/api-client/stock'
 import { getFullImageUrl } from '@/libs/api-client/media'
@@ -10,7 +11,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { canViewStock } from '@/features/ventas/lib/descuentos'
 import { useDepositoDeConsulta } from '../hooks/useDepositoDeConsulta'
-import { chipDeStock, formatPorcentaje, textoUnidadDeVenta } from '../lib/presentacion'
+import { chipDeStock, formatPorcentaje, formatVariacion, textoUltimaCompra, textoUnidadDeVenta } from '../lib/presentacion'
 
 function Fila({ label, valor, fuerte }: { label: string; valor: string; fuerte?: boolean }) {
   const c = useColors()
@@ -18,6 +19,29 @@ function Fila({ label, valor, fuerte }: { label: string; valor: string; fuerte?:
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2], minHeight: 28 }}>
       <Text style={[typeScale.secundario, { color: c.textSecondary, flexShrink: 1 }]}>{label}</Text>
       <Text style={[fuerte ? typeScale.cuerpoDestacado : typeScale.cuerpo, importe, { color: c.text }]}>{valor}</Text>
+    </View>
+  )
+}
+
+/**
+ * Última compra del producto, en el bloque de costos (forward-system #894). La variación contra la compra
+ * anterior lleva signo y color: subir el costo es malo (rojo), bajarlo es bueno (verde); sin variación, sin renglón.
+ */
+function UltimaCompra({ compra }: { compra: UltimaCompraProducto }) {
+  const c = useColors()
+  const variacion = compra.variacionCostoPorcentaje
+  const color =
+    variacion == null || Math.abs(variacion) < 0.05
+      ? c.textSecondary
+      : variacion > 0
+        ? c.chip.anulado.text
+        : c.chip.entregado.text
+  return (
+    <View style={{ gap: space[1], paddingVertical: space[1] }}>
+      <Text style={[typeScale.cuerpo, { color: c.text }]}>{textoUltimaCompra(compra)}</Text>
+      {variacion != null ? (
+        <Text style={[typeScale.secundario, importe, { color }]}>{`${formatVariacion(variacion)} respecto de la compra anterior`}</Text>
+      ) : null}
     </View>
   )
 }
@@ -80,7 +104,9 @@ export function FichaProducto({ productoId }: { productoId: string }) {
   const foto = getFullImageUrl(p.imageUrl ?? p.imageUrlLinea)
   const encabezado = [p.codigoPropio, p.marca, p.categoriaPathCompleto].filter(Boolean).join(' · ')
   const depositos = stock?.items ?? []
-  const hayCostos = veCostos && (p.precioCompraBase != null || p.margenBrutoPorcentaje != null)
+  // Sin CAP_VER_COSTOS el servidor manda null; aunque llegara, no se dibuja. Un servidor anterior a #894 no la manda.
+  const ultimaCompra = veCostos ? p.ultimaCompra : null
+  const hayCostos = veCostos && (p.precioCompraBase != null || p.margenBrutoPorcentaje != null || !!ultimaCompra)
 
   return (
     <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }}>
@@ -149,6 +175,7 @@ export function FichaProducto({ productoId }: { productoId: string }) {
           {p.margenBrutoPorcentaje != null ? (
             <Fila label="Margen bruto" valor={formatPorcentaje(p.margenBrutoPorcentaje)} />
           ) : null}
+          {ultimaCompra ? <UltimaCompra compra={ultimaCompra} /> : null}
         </Seccion>
       ) : null}
 

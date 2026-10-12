@@ -1,9 +1,11 @@
 import React from 'react'
+import { StyleSheet } from 'react-native'
 import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import CatalogoConsultaScreen from '../../../../app/(tabs)/inventario/index'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { themeColors } from '@/libs/theme'
 
 // PR 1.1 — catálogo de consulta. Se renderiza la pantalla real con react-query real;
 // solo se reemplaza el transporte HTTP (api.get / api.post) por respuestas del servidor.
@@ -227,5 +229,224 @@ describe('Catálogo de consulta', () => {
     renderPantalla()
     await screen.findByText(AER.nombre)
     expect(screen.queryByTestId('panel-ficha')).toBeNull()
+  })
+})
+
+// ── Adopción de forward-system #894 ──────────────────────────────────────────
+// Servidor nuevo: el listado trae hayDisponible, cantidadFragancias y ventaMinimaUnidades, y el detalle la
+// última compra. Servidor anterior: nada de eso, y la pantalla se comporta como antes.
+
+const LINEA = { id: 'p-lin', nombre: 'Saphirus Difusor', codigoPropio: 'SAP-DIF', precioVenta: 5200, esPadreDeVariantes: true, activo: true }
+
+/** El servidor con otra lista de productos (y, si se quiere, otro detalle de AER). */
+function servidorCon(items: object[], detalle: object = DETALLE) {
+  return (url: string) => {
+    if (url.startsWith('/api/v1/Productos?')) {
+      return Promise.resolve({ items, page: 1, pageSize: 20, totalCount: items.length, totalPages: 1, hasNextPage: false })
+    }
+    if (url === `/api/v1/Productos/${AER.id}`) return Promise.resolve(detalle)
+    return servidor(url)
+  }
+}
+
+const consultasDeDisponibilidad = () => api.post.mock.calls.filter(([url]) => url === '/api/v1/Stocks/disponibilidad')
+const abrirFichaDeAer = async () => userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
+const colorDe = (texto: string): string => StyleSheet.flatten(screen.getByText(texto).props.style).color
+const rojo = [themeColors.light.chip.anulado.text, themeColors.dark.chip.anulado.text]
+const verde = [themeColors.light.chip.entregado.text, themeColors.dark.chip.entregado.text]
+
+const ULTIMA = {
+  // 01:30 UTC del 11 es la noche del 10 en Argentina (UTC-3).
+  fecha: '2026-10-11T01:30:00Z',
+  proveedorNombre: 'Distribuidora Norte S.A.',
+  costoUnitario: 1846.71,
+  variacionCostoPorcentaje: 5.2,
+}
+
+describe('Catálogo con servidor nuevo (forward-system #894)', () => {
+  it('el chip sale de hayDisponible y no se consulta la disponibilidad por tarjeta', async () => {
+    api.get.mockImplementation(
+      servidorCon([
+        { ...AER, hayDisponible: true, ventaMinimaUnidades: 1 },
+        { ...TEX, hayDisponible: false, ventaMinimaUnidades: 1 },
+      ]),
+    )
+    // Aunque la consulta dijera otra cosa, manda lo que dice el listado.
+    api.post.mockResolvedValue([
+      { productoId: AER.id, disponible: false },
+      { productoId: TEX.id, disponible: true },
+    ])
+    renderPantalla()
+
+    expect(await screen.findByText('Hay stock')).toBeTruthy()
+    expect(screen.getByText('Sin stock')).toBeTruthy()
+    expect(consultasDeDisponibilidad()).toHaveLength(0)
+  })
+
+  it('una línea muestra su chip y "12 fragancias · caja de 12"', async () => {
+    api.get.mockImplementation(
+      servidorCon([{ ...LINEA, hayDisponible: true, cantidadFragancias: 12, ventaMinimaUnidades: 12 }]),
+    )
+    renderPantalla()
+
+    expect(await screen.findByText('12 fragancias · caja de 12')).toBeTruthy()
+    expect(screen.getByText('Hay stock')).toBeTruthy()
+    expect(screen.queryByText('Con fragancias')).toBeNull()
+    expect(consultasDeDisponibilidad()).toHaveLength(0)
+  })
+
+  it('un producto que se vende por caja dice "caja de N"; por unidad no dice nada', async () => {
+    api.get.mockImplementation(
+      servidorCon([
+        { ...AER, hayDisponible: true, ventaMinimaUnidades: 6 },
+        { ...TEX, hayDisponible: true, ventaMinimaUnidades: 1 },
+      ]),
+    )
+    renderPantalla()
+
+    expect(await screen.findByText('caja de 6')).toBeTruthy()
+    expect(screen.getAllByText(/caja de/)).toHaveLength(1)
+  })
+
+  it('lo que el listado no trae se consulta igual, con la venta mínima del listado como cantidad', async () => {
+    api.get.mockImplementation(
+      servidorCon([
+        { ...AER, hayDisponible: true, ventaMinimaUnidades: 12 },
+        { ...TEX, ventaMinimaUnidades: 6 },
+      ]),
+    )
+    api.post.mockResolvedValue([{ productoId: TEX.id, disponible: false }])
+    renderPantalla()
+
+    expect(await screen.findByText('Sin stock')).toBeTruthy()
+    expect(screen.getByText('Hay stock')).toBeTruthy()
+    expect(consultasDeDisponibilidad()).toHaveLength(1)
+    expect(api.post).toHaveBeenCalledWith('/api/v1/Stocks/disponibilidad', {
+      depositoId: DEPOSITO_CENTRAL_ID,
+      items: [{ productoId: TEX.id, cantidad: 6 }],
+    })
+  })
+
+  describe('última compra en el bloque de costos', () => {
+    beforeEach(() => conUsuario(['Vendedor'], [{ module: 'CAP_VER_COSTOS', canRead: true }]))
+
+    it('con CAP_VER_COSTOS muestra el día argentino, el proveedor, el costo y la variación con signo', async () => {
+      api.get.mockImplementation(servidorCon([AER, TEX], { ...DETALLE, ultimaCompra: ULTIMA }))
+      renderPantalla()
+      await abrirFichaDeAer()
+
+      expect(await screen.findByText('Última compra: 10/10/2026 · Distribuidora Norte S.A. · $ 1.846,71')).toBeTruthy()
+      expect(screen.getByText('+5,2 % respecto de la compra anterior')).toBeTruthy()
+      // Sigue el costo por unidad y el margen de antes.
+      expect(screen.getByText('Costo por unidad')).toBeTruthy()
+      expect(screen.getByText('40,0 %')).toBeTruthy()
+    })
+
+    it('si el costo sube la variación va en rojo y si baja, en verde', async () => {
+      api.get.mockImplementation(servidorCon([AER, TEX], { ...DETALLE, ultimaCompra: ULTIMA }))
+      const { unmount } = renderPantalla()
+      await abrirFichaDeAer()
+      await screen.findByText('+5,2 % respecto de la compra anterior')
+      expect(rojo).toContain(colorDe('+5,2 % respecto de la compra anterior'))
+      unmount()
+
+      api.get.mockImplementation(
+        servidorCon([AER, TEX], { ...DETALLE, ultimaCompra: { ...ULTIMA, variacionCostoPorcentaje: -3.04 } }),
+      )
+      renderPantalla()
+      await abrirFichaDeAer()
+      await screen.findByText('-3,0 % respecto de la compra anterior')
+      expect(verde).toContain(colorDe('-3,0 % respecto de la compra anterior'))
+    })
+
+    it('la primera compra (sin variación) no dibuja el renglón de la variación', async () => {
+      api.get.mockImplementation(
+        servidorCon([AER, TEX], {
+          ...DETALLE,
+          ultimaCompra: { ...ULTIMA, proveedorNombre: null, variacionCostoPorcentaje: null },
+        }),
+      )
+      renderPantalla()
+      await abrirFichaDeAer()
+
+      // Sin proveedor, esa parte se omite.
+      expect(await screen.findByText('Última compra: 10/10/2026 · $ 1.846,71')).toBeTruthy()
+      expect(screen.queryByText(/respecto de la compra anterior/)).toBeNull()
+    })
+
+    it('la medianoche argentina cambia el día: 03:00 UTC ya es el 11', async () => {
+      api.get.mockImplementation(
+        servidorCon([AER, TEX], { ...DETALLE, ultimaCompra: { ...ULTIMA, fecha: '2026-10-11T03:00:00Z' } }),
+      )
+      renderPantalla()
+      await abrirFichaDeAer()
+
+      expect(await screen.findByText(/^Última compra: 11\/10\/2026/)).toBeTruthy()
+    })
+
+    it('si solo hay última compra (sin costo ni margen) el bloque de costos aparece igual', async () => {
+      api.get.mockImplementation(
+        servidorCon([AER, TEX], { ...DETALLE, precioCompraBase: null, margenBrutoPorcentaje: null, ultimaCompra: ULTIMA }),
+      )
+      renderPantalla()
+      await abrirFichaDeAer()
+
+      expect(await screen.findByText('Costo y margen')).toBeTruthy()
+      expect(screen.getByText(/^Última compra:/)).toBeTruthy()
+    })
+
+    it('con ultimaCompra null no hay nada nuevo: se ve costo y margen como antes', async () => {
+      api.get.mockImplementation(servidorCon([AER, TEX], { ...DETALLE, ultimaCompra: null }))
+      renderPantalla()
+      await abrirFichaDeAer()
+
+      expect(await screen.findByText('$ 1.846,71')).toBeTruthy()
+      expect(screen.queryByText(/Última compra/)).toBeNull()
+    })
+  })
+
+  it('sin CAP_VER_COSTOS la ficha no dibuja la última compra, aunque llegara', async () => {
+    api.get.mockImplementation(servidorCon([AER, TEX], { ...DETALLE, ultimaCompra: ULTIMA }))
+    renderPantalla()
+    await abrirFichaDeAer()
+
+    expect(await screen.findByText('Precio de lista por unidad')).toBeTruthy()
+    expect(screen.queryByText(/Última compra/)).toBeNull()
+    expect(screen.queryByText(/Distribuidora Norte/)).toBeNull()
+    expect(screen.queryByText(/respecto de la compra anterior/)).toBeNull()
+    expect(screen.queryByText('Costo y margen')).toBeNull()
+  })
+})
+
+describe('Catálogo con servidor anterior a #894', () => {
+  it('sigue como hoy: chip por consulta con cantidad 1, la línea sin chip y "Con fragancias", sin "caja de"', async () => {
+    api.get.mockImplementation(servidorCon([AER, TEX, LINEA]))
+    renderPantalla()
+
+    expect(await screen.findByText('Hay stock')).toBeTruthy()
+    expect(screen.getByText('Sin stock')).toBeTruthy()
+    // La línea no tiene stock propio: solo AER y TEX, y solo uno de cada chip.
+    expect(screen.getAllByText('Hay stock')).toHaveLength(1)
+    expect(screen.getAllByText('Sin stock')).toHaveLength(1)
+    expect(screen.getByText('Con fragancias')).toBeTruthy()
+    expect(screen.queryByText(/caja de/)).toBeNull()
+    expect(consultasDeDisponibilidad()).toHaveLength(1)
+    expect(api.post).toHaveBeenCalledWith('/api/v1/Stocks/disponibilidad', {
+      depositoId: DEPOSITO_CENTRAL_ID,
+      items: [
+        { productoId: AER.id, cantidad: 1 },
+        { productoId: TEX.id, cantidad: 1 },
+      ],
+    })
+  })
+
+  it('la ficha con CAP_VER_COSTOS muestra costo y margen y nada de última compra', async () => {
+    conUsuario(['Vendedor'], [{ module: 'CAP_VER_COSTOS', canRead: true }])
+    renderPantalla()
+    await abrirFichaDeAer()
+
+    expect(await screen.findByText('$ 1.846,71')).toBeTruthy()
+    expect(screen.getByText('40,0 %')).toBeTruthy()
+    expect(screen.queryByText(/Última compra/)).toBeNull()
   })
 })
