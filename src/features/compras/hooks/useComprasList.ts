@@ -3,6 +3,7 @@ import { useBorradoresCompraMios, useComprasResumen, useInfiniteCompras } from '
 import { itemsCargados, totalDelServidor, textoContador } from '@/features/listas/lib/contador'
 import { fechaDesdePeriodo, type PeriodoVentas } from '@/features/ventas/hooks/useVentasListaNueva'
 import { formatImporte } from '@/core/ui/fw/formatImporte'
+import { useAlLlegarFiltro, type EstadoCompraRuta } from '@/features/listas/lib/filtroDeRuta'
 import type { CompraDtoList, EstadoCompra } from '@/libs/api-client'
 
 export type PestanaCompras = 'pendientes' | 'recibidas' | 'borradores'
@@ -22,9 +23,12 @@ const importeEn = (moneda: string, total: number) =>
 /**
  * Lista de compras con el formato nuevo (Bloque 9A, PR 3.1). Pestaña, período y búsqueda van al
  * servidor; nada se filtra sobre las páginas cargadas, así que "Mostrando N de M" vale siempre.
+ * `estadoDeRuta` (una fila de Inicio): Pendientes con uno solo de sus dos estados.
  */
-export function useComprasList() {
+export function useComprasList(estadoDeRuta: EstadoCompraRuta | null = null) {
   const [pestana, setPestana] = useState<PestanaCompras>('pendientes')
+  /** Dentro de Pendientes, uno solo de sus estados; null = los dos. */
+  const [soloEstado, setSoloEstado] = useState<EstadoCompraRuta | null>(estadoDeRuta)
   // Lo pendiente no vence por antigüedad: por defecto se ve todo.
   const [periodo, setPeriodo] = useState<PeriodoCompras>('todo')
   const [busqueda, setBusqueda] = useState('')
@@ -35,13 +39,20 @@ export function useComprasList() {
     const t = setTimeout(() => setBusquedaEnviada(busqueda.trim()), ESPERA_BUSQUEDA_MS)
     return () => clearTimeout(t)
   }, [busqueda])
+  useAlLlegarFiltro(estadoDeRuta, (e) => {
+    setPestana('pendientes')
+    setSoloEstado(e)
+    setPeriodo('todo')
+    setBusqueda('')
+    setBusquedaEnviada('')
+  })
 
   const esBorradores = pestana === 'borradores'
   const fechaDesde = fechaDesdePeriodo(periodo)
   const searchTerm = busquedaEnviada.length >= 2 ? busquedaEnviada : undefined
 
   const compras = useInfiniteCompras(
-    { pageSize: 20, estados: ESTADOS[esBorradores ? 'pendientes' : pestana], fechaDesde, searchTerm },
+    { pageSize: 20, estados: pestana === 'pendientes' && soloEstado ? [soloEstado] : ESTADOS[esBorradores ? 'pendientes' : pestana], fechaDesde, searchTerm },
     { enabled: !esBorradores },
   )
   const { data: resumen, refetch: refetchResumen } = useComprasResumen({ fechaDesde, searchTerm })
@@ -65,6 +76,7 @@ export function useComprasList() {
 
   return {
     pestana, setPestana,
+    soloEstado, setSoloEstado,
     periodo, setPeriodo,
     busqueda, setBusqueda,
     compras: items,

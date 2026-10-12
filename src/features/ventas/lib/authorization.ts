@@ -42,6 +42,8 @@ export interface BuildAutorizarPayloadInput {
   version: number
   /** Razón; se recorta. Obligatoria solo con margen en amarillo (lo decide el servidor). */
   razon?: string | null
+  /** Puntos de descuento que se dan al autorizar; null o ausente = ninguno. */
+  descuentoAdicionalPorcentaje?: number | null
 }
 
 export interface AutorizarPayload {
@@ -49,6 +51,8 @@ export interface AutorizarPayload {
   version: number
   /** null si no hay: el validador del servidor rechaza una razón vacía o en blanco. */
   razon: string | null
+  /** Solo si se da: el servidor rechaza un 0. */
+  descuentoAdicionalPorcentaje?: number
 }
 
 /**
@@ -63,5 +67,6 @@ export function buildAutorizarPayload(input: BuildAutorizarPayloadInput): Autori
     ventaId: input.ventaId,
     version: input.version,
     razon: razon.length > 0 ? razon : null,
+    ...(input.descuentoAdicionalPorcentaje != null ? { descuentoAdicionalPorcentaje: input.descuentoAdicionalPorcentaje } : {}),
   }
 }

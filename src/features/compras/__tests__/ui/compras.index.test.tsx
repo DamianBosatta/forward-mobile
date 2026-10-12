@@ -7,7 +7,7 @@ import ComprasListScreen from '../../../../../app/(tabs)/compras/index'
 const mockGet = jest.fn()
 jest.mock('@/core/api/client', () => ({ api: { get: (...a: unknown[]) => mockGet(...a) }, API_URL: 'x' }))
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn() }) }))
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn() }), useLocalSearchParams: () => ({}) }))
 jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() }, useNavigation: () => ({ dispatch: jest.fn() }) }))
 jest.mock('@/core/auth/RequirePermission', () => ({
   RequirePermission: ({ children }: { children: React.ReactNode }) => <>{children}</>,

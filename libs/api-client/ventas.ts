@@ -206,6 +206,16 @@ export function usePendientesAutorizacion(enabled: boolean) {
   })
 }
 
+/** GET /api/v1/Ventas/vendedores: id y "Nombre Apellido" de quienes venden. Pide Ventas:Read. */
+export function useVendedores(enabled: boolean) {
+  return useQuery({
+    queryKey: [...ventasKeys.all, 'vendedores'] as const,
+    queryFn: () => api.get<components['schemas']['VendedorListItemDto'][]>('/api/v1/Ventas/vendedores'),
+    staleTime: 5 * 60_000,
+    enabled,
+  })
+}
+
 // #endregion
 
 // #region Mutations
@@ -307,10 +317,12 @@ async function versionParaDecidir(id: string, fechaPendiente?: string): Promise<
 export function useAutorizarVenta() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, version, razon, fechaPendiente }: { id: string; version?: number; razon?: string | null; fechaPendiente?: string }) =>
+    mutationFn: async ({ id, version, razon, fechaPendiente, descuentoAdicionalPorcentaje }: {
+      id: string; version?: number; razon?: string | null; fechaPendiente?: string; descuentoAdicionalPorcentaje?: number | null
+    }) =>
       api.post<boolean>(
         `/api/v1/Ventas/${id}/autorizar`,
-        buildAutorizarPayload({ ventaId: id, version: version ?? (await versionParaDecidir(id, fechaPendiente)), razon }),
+        buildAutorizarPayload({ ventaId: id, version: version ?? (await versionParaDecidir(id, fechaPendiente)), razon, descuentoAdicionalPorcentaje }),
       ),
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ventasKeys.detail(id) })

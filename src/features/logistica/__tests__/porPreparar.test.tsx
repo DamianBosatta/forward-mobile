@@ -2,6 +2,7 @@ import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AppState } from 'react-native'
 import { act, render, screen, userEvent, within } from '@testing-library/react-native'
+import { useAuthStore } from '@/libs/store/auth.store'
 import { PorPrepararScreen } from '../porPreparar/PorPrepararScreen'
 
 const mockGet = jest.fn()
@@ -45,6 +46,7 @@ function servidor() {
   mockGet.mockImplementation((url: string) =>
     url.includes('ventas-para-preparacion') ? Promise.resolve(PEDIDOS)
       : url.includes('dias-entrega') ? Promise.resolve(diasEntrega)
+      : url.endsWith('/Ventas/vendedores') ? Promise.resolve([{ id: 'u1', nombre: 'Emanuel Parraquini' }, { id: 'u2', nombre: 'Lucía Ferreyra' }])
       : url.includes('feriados') ? Promise.resolve([{ id: 'f', fecha: '2026-10-12', descripcion: 'Diversidad cultural' }])
       : url.endsWith('/Ventas/v1') ? Promise.resolve({
         venta: { id: 'v1', observaciones: 'Portón negro del depósito, antes de las 12.' },
@@ -69,6 +71,7 @@ beforeEach(() => {
   mockAncho.mockReturnValue(390)
   // Viernes 9 de octubre, 22:30 en Argentina (ya sábado 10 en UTC).
   jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T01:30:00Z'))
+  useAuthStore.setState({ user: { id: 'u9', username: 'ramiro', roles: [], permissions: [{ module: 'MOD_VIAJES', canRead: true }, { module: 'MOD_VENTAS', canRead: true }] } } as never)
   servidor()
 })
 afterEach(() => { jest.useRealTimers(); jest.restoreAllMocks() })
@@ -195,5 +198,53 @@ describe('Pedidos por preparar (solo lectura)', () => {
     act(() => { mockAlEnfocar?.() })
     expect(await screen.findByLabelText('mar 13 · Hoy')).toBeTruthy()
     expect(screen.queryByText('Portón negro del depósito, antes de las 12.')).toBeNull()
+  })
+
+  describe('filtros (logística, vendedor, estado)', () => {
+    const pedidosPedidos = () => urls().filter((u) => u.includes('ventas-para-preparacion'))
+    async function abrirFiltros() {
+      await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376')
+      await userEvent.press(screen.getByRole('button', { name: 'Filtrar: logística, vendedor, estado' }))
+      return within(screen.getByLabelText('Filtrar pedidos'))
+    }
+
+    it('logística y vendedor van al servidor (MetodoEntrega, VendedorId) y se ve qué filtro hay', async () => {
+      pintar()
+      const hoja = await abrirFiltros()
+      await userEvent.press(hoja.getByRole('radio', { name: 'Retiro en el local' }))
+      await userEvent.press(await hoja.findByRole('radio', { name: 'Lucía Ferreyra' }))
+      expect(pedidosPedidos().at(-1)).toMatch(/MetodoEntrega=2/)
+      expect(pedidosPedidos().at(-1)).toMatch(/VendedorId=u2/)
+      expect(pedidosPedidos().at(-1)).toMatch(/FechaDesde=2026-10-09/)
+      await userEvent.press(hoja.getByRole('button', { name: 'Listo' }))
+      expect(screen.getByText('Filtros: Retiro en el local · Lucía Ferreyra')).toBeTruthy()
+    })
+
+    it('el estado se filtra en el teléfono: la cuenta del día es la de lo filtrado y el servidor no recibe estado', async () => {
+      pintar()
+      const hoja = await abrirFiltros()
+      await userEvent.press(hoja.getByRole('radio', { name: 'Confirmado' }))
+      await userEvent.press(hoja.getByRole('button', { name: 'Listo' }))
+      expect(screen.getByText('Hoy · 1 pedido · 3 líneas')).toBeTruthy()
+      expect(screen.queryByLabelText('Pedido A00417: Juan B. Justo 6376')).toBeNull()
+      expect(screen.getByLabelText('Pedido A00424: Brandsen 3314')).toBeTruthy()
+      // Los no entregados no son "Confirmado": con el filtro no se muestran.
+      expect(screen.queryByText(/No entregados/)).toBeNull()
+      expect(pedidosPedidos().some((u) => /estado/i.test(u.split('?')[1] ?? ''))).toBe(false)
+      expect(screen.getByText('Filtros: Confirmado')).toBeTruthy()
+
+      await userEvent.press(screen.getByRole('button', { name: 'Quitar filtros' }))
+      expect(screen.getByText('Hoy · 2 pedidos · 8 líneas')).toBeTruthy()
+      expect(screen.queryByText(/^Filtros:/)).toBeNull()
+    })
+
+    it('sin permiso de leer ventas no ofrece vendedor ni pide la lista de vendedores', async () => {
+      useAuthStore.setState({ user: { id: 'u9', username: 'ramiro', roles: [], permissions: [{ module: 'MOD_VIAJES', canRead: true }] } } as never)
+      pintar()
+      const hoja = await abrirFiltros()
+      expect(hoja.getByRole('radio', { name: 'Expreso' })).toBeTruthy()
+      expect(hoja.queryByRole('radiogroup', { name: 'Vendedor' })).toBeNull()
+      expect(urls().some((u) => u.includes('/Ventas/vendedores'))).toBe(false)
+    })
   })
 })

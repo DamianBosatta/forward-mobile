@@ -5,7 +5,7 @@ import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 
 // La ruta ventas/index elige entre la lista de hoy y la nueva según el switch (PR 2.0).
 jest.mock('expo-secure-store', () => ({ setItemAsync: jest.fn(), getItemAsync: jest.fn() }))
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn() }), useNavigation: () => ({ dispatch: jest.fn() }) }))
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn() }), useNavigation: () => ({ dispatch: jest.fn() }), useLocalSearchParams: () => ({}) }))
 jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() }, useNavigation: () => ({ dispatch: jest.fn() }) }))
 jest.mock('@/core/auth/RequirePermission', () => ({
   RequirePermission: ({ children }: { children: React.ReactNode }) => <>{children}</>,

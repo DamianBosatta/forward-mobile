@@ -4,6 +4,7 @@ import { useColors } from '@/libs/theme'
 import { getVentaStatusConfig } from '@/core/constants/status'
 import { itemsCargados, totalDelServidor } from '@/features/listas/lib/contador'
 import { contadorVentas, resumenFiltrado } from '../lib/resumenVentas'
+import { useAlLlegarFiltro, type FiltroVentasRuta } from '@/features/listas/lib/filtroDeRuta'
 import type { Venta } from '@/libs/api-client'
 
 export type SelectedMonth = { year: number; month: number }
@@ -21,24 +22,40 @@ const ESTADOS_DEL_FILTRO: Record<FiltroVentas, EstadoVentaServidor[]> = {
   'Por Autorizar': ['PendienteAutorizacion'],
 }
 
+/** Chip de cada estado que puede llegar desde Inicio. */
+const CHIP_DE_RUTA: Record<FiltroVentasRuta['estado'], FiltroVentas> = {
+  Pendiente: 'Pendiente',
+  Confirmada: 'Confirmada',
+  PendienteAutorizacion: 'Por Autorizar',
+}
+const tipoDeRuta = (f: FiltroVentasRuta) => (f.tipo === 'presupuestos' ? 1 : 2)
+
 /**
  * Hook para gestionar la lógica de la lista de ventas con soporte para scroll infinito.
  * Delega búsqueda y filtrado al backend (SQL) para máximo rendimiento móvil.
+ * `filtroDeRuta` (una fila de Inicio): tipo y chip de estado, sin mes, como cuenta Inicio.
  */
-export function useVentasList() {
+export function useVentasList(filtroDeRuta: FiltroVentasRuta | null = null) {
   const colors = useColors()
   const now = new Date()
 
   const [searchTerm, setSearchTerm] = useState('')
-  const [filter, setFilter] = useState<FiltroVentas>('Todas')
+  const [filter, setFilter] = useState<FiltroVentas>(filtroDeRuta ? CHIP_DE_RUTA[filtroDeRuta.estado] : 'Todas')
   const [pickerOpen, setPickerOpen] = useState(false)
-  const [selected, setSelected] = useState<SelectedMonth>({ year: now.getFullYear(), month: now.getMonth() })
-  const [tipoOperacion, setTipoOperacion] = useState<number>(2) // 2 = Pedido, 1 = Presupuesto
+  // null = sin filtro de mes (lo que cuenta Inicio); elegir un mes en el selector lo vuelve a poner.
+  const [selected, setSelected] = useState<SelectedMonth | null>(filtroDeRuta ? null : { year: now.getFullYear(), month: now.getMonth() })
+  const [tipoOperacion, setTipoOperacion] = useState<number>(filtroDeRuta ? tipoDeRuta(filtroDeRuta) : 2) // 2 = Pedido, 1 = Presupuesto
+  useAlLlegarFiltro(filtroDeRuta, (f) => {
+    setTipoOperacion(tipoDeRuta(f))
+    setFilter(CHIP_DE_RUTA[f.estado])
+    setSelected(null)
+    setSearchTerm('')
+  })
 
-  const isCurrentMonth = selected.year === now.getFullYear() && selected.month === now.getMonth()
+  const isCurrentMonth = selected?.year === now.getFullYear() && selected?.month === now.getMonth()
 
-  const fechaDesde = new Date(selected.year, selected.month, 1).toISOString()
-  const fechaHasta = new Date(selected.year, selected.month + 1, 0, 23, 59, 59).toISOString()
+  const fechaDesde = selected ? new Date(selected.year, selected.month, 1).toISOString() : undefined
+  const fechaHasta = selected ? new Date(selected.year, selected.month + 1, 0, 23, 59, 59).toISOString() : undefined
 
   // Búsqueda y estado van al servidor; el resumen se pide con los mismos filtros.
   const estados = ESTADOS_DEL_FILTRO[filter]

@@ -1,15 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useIsFocused } from '@react-navigation/native'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
+import { Filter } from 'lucide-react-native'
 import { FONT, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { Notice, StatusChip, TopBar, TwoPane, chipForEstado, useMenuLeading } from '@/core/ui/fw'
 import { useResponsive } from '@/libs/useResponsive'
 import { useVentasParaPreparacion, type VentaPreparacion } from '@/libs/api-client/logistica'
 import { useDiasEntrega, useFeriados } from '@/libs/api-client/configuracion'
+import { useVendedores } from '@/libs/api-client/ventas'
+import { useAuthStore } from '@/libs/store/auth.store'
 import { diaArgentina } from '@/src/utils/date'
 import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
 import { nombreDelDia, proximosDiasDeEntrega } from './dias'
 import { PedidoPorPrepararDetalle } from './PedidoPorPrepararDetalle'
+import { FiltrosPorPreparar, SIN_FILTROS, textoFiltros, type FiltrosPreparacion } from './FiltrosPorPreparar'
 
 /** EstadoVenta.NoEntregada: el servidor la manda siempre, sin importar el día elegido. */
 const NO_ENTREGADA = 7
@@ -34,10 +38,20 @@ export function PorPrepararScreen() {
   const [pedido, setPedido] = useState<VentaPreparacion | null>(null)
   // Al cambiar el día argentino no queda el pedido ni el día elegido de ayer.
   useEffect(() => { setElegida(null); setPedido(null) }, [hoy])
+  const [filtros, setFiltros] = useState<FiltrosPreparacion>(SIN_FILTROS)
+  const [filtrando, setFiltrando] = useState(false)
+  // La lista de vendedores pide Ventas:Read; sin ese permiso no se ofrece filtrar por vendedor.
+  const veVendedores = useAuthStore((s) => s.canDo('MOD_VENTAS', 'read'))
+  const vendedores = useVendedores(veVendedores && filtrando)
   // La pantalla queda montada en el Drawer: fuera de foco no consulta cada 30 segundos.
-  const q = useVentasParaPreparacion({ fechaDesde: dia.fecha, fechaHasta: dia.fecha }, { activa: useIsFocused() })
+  // Logística y vendedor los filtra el servidor; el estado, el teléfono (el endpoint no lo recibe).
+  const q = useVentasParaPreparacion(
+    { fechaDesde: dia.fecha, fechaHasta: dia.fecha, metodoEntrega: filtros.metodo ?? undefined, vendedorId: filtros.vendedor?.id },
+    { activa: useIsFocused() },
+  )
 
-  const items = q.data ?? []
+  const items = (q.data ?? []).filter((v) => filtros.estado === null || v.estado === filtros.estado)
+  const resumenFiltros = textoFiltros(filtros)
   const delDia = items.filter((v) => v.estado !== NO_ENTREGADA)
   const noEntregados = items.filter((v) => v.estado === NO_ENTREGADA)
   const lineas = delDia.reduce((s, v) => s + v.itemsCount, 0)
@@ -112,15 +126,33 @@ export function PorPrepararScreen() {
           {`El ${nombreDelDia(feriadoEnLaTira)} es feriado: no hay entregas.`}
         </Text>
       ) : null}
-      <Text accessibilityRole="header" style={{ ...typeScale.secundario, ...semibold, color: c.text }}>
-        {`${nombreDelDia(dia)} · ${plural(delDia.length, 'pedido', 'pedidos')} · ${plural(lineas, 'línea', 'líneas')}`}
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] }}>
+        <Text accessibilityRole="header" style={{ ...typeScale.secundario, ...semibold, color: c.text, flex: 1 }}>
+          {`${nombreDelDia(dia)} · ${plural(delDia.length, 'pedido', 'pedidos')} · ${plural(lineas, 'línea', 'líneas')}`}
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Filtrar: logística, vendedor, estado"
+          onPress={() => setFiltrando(true)}
+          style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Filter size={22} color={c.brandInk} strokeWidth={2} />
+        </Pressable>
+      </View>
+      {resumenFiltros ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] }}>
+          <Text style={{ ...typeScale.secundario, color: c.text, flex: 1 }}>{resumenFiltros}</Text>
+          <Pressable accessibilityRole="button" onPress={() => setFiltros(SIN_FILTROS)} style={{ minHeight: 44, justifyContent: 'center' }}>
+            <Text style={{ ...typeScale.secundario, ...semibold, color: c.brandInk }}>Quitar filtros</Text>
+          </Pressable>
+        </View>
+      ) : null}
       {q.isLoading ? (
         <ActivityIndicator color={c.brand} accessibilityLabel="Cargando los pedidos" />
       ) : q.isError ? (
         <Notice tone="peligro">No se pudieron cargar los pedidos.</Notice>
       ) : delDia.length === 0 ? (
-        <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>No hay pedidos para entregar ese día.</Text>
+        <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{resumenFiltros ? 'No hay pedidos con estos filtros ese día.' : 'No hay pedidos para entregar ese día.'}</Text>
       ) : (
         delDia.map(tarjeta)
       )}
@@ -147,6 +179,13 @@ export function PorPrepararScreen() {
             <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Elegí un pedido para ver qué hay que preparar.</Text>
           </View>
         }
+      />
+      <FiltrosPorPreparar
+        visible={filtrando}
+        filtros={filtros}
+        onCambio={setFiltros}
+        vendedores={veVendedores ? vendedores.data ?? [] : null}
+        onClose={() => setFiltrando(false)}
       />
     </View>
   )

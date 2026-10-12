@@ -59,6 +59,7 @@ export interface VentasPreparacionParams {
   fechaHasta?: string
   metodoEntrega?: number
   ticketId?: string
+  vendedorId?: string
 }
 
 /**
@@ -196,6 +197,7 @@ export function useVentasParaPreparacion(params?: VentasPreparacionParams, opcio
   if (params?.fechaHasta) searchParams.set('FechaHasta', params.fechaHasta)
   if (params?.metodoEntrega != null) searchParams.set('MetodoEntrega', String(params.metodoEntrega))
   if (params?.ticketId) searchParams.set('TicketId', params.ticketId)
+  if (params?.vendedorId) searchParams.set('VendedorId', params.vendedorId)
 
   return useQuery({
     queryKey: pickingKeys.list(params ?? {}),
