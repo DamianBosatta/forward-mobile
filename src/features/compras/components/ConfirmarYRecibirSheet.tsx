@@ -24,7 +24,6 @@ interface Props {
 export function ConfirmarYRecibirSheet({ visible, onClose, pideFactura, ocupado, error, onConfirmar }: Props) {
   const c = useColors()
   const [fecha, onFecha] = useState(hoyTexto)
-  console.log('MONTA', fecha)
   const leida = fechaIso(fecha)
   return (
     <BottomSheet visible={visible} onClose={() => { if (!ocupado) onClose() }} accessibilityLabel="Confirmar y recibir la compra">
