@@ -234,7 +234,9 @@ describe('Catálogo de consulta', () => {
 
 // ── Adopción de forward-system #894 ──────────────────────────────────────────
 // Servidor nuevo: el listado trae hayDisponible, cantidadFragancias y ventaMinimaUnidades, y el detalle la
-// última compra. Servidor anterior: nada de eso, y la pantalla se comporta como antes.
+// última compra. Mobile usa fragancias, venta mínima y última compra; NO usa hayDisponible (es de todos los
+// depósitos y la ficha usa el del usuario): el chip sigue saliendo de POST /Stocks/disponibilidad con cantidad 1.
+// Servidor anterior: nada de eso, y la pantalla se comporta como antes.
 
 const LINEA = { id: 'p-lin', nombre: 'Saphirus Difusor', codigoPropio: 'SAP-DIF', precioVenta: 5200, esPadreDeVariantes: true, activo: true }
 
@@ -254,6 +256,7 @@ const abrirFichaDeAer = async () => userEvent.press(await screen.findByLabelText
 const colorDe = (texto: string): string => StyleSheet.flatten(screen.getByText(texto).props.style).color
 const rojo = [themeColors.light.chip.anulado.text, themeColors.dark.chip.anulado.text]
 const verde = [themeColors.light.chip.entregado.text, themeColors.dark.chip.entregado.text]
+const neutro = [themeColors.light.textSecondary, themeColors.dark.textSecondary]
 
 const ULTIMA = {
   // 01:30 UTC del 11 es la noche del 10 en Argentina (UTC-3).
@@ -264,42 +267,48 @@ const ULTIMA = {
 }
 
 describe('Catálogo con servidor nuevo (forward-system #894)', () => {
-  it('el chip sale de hayDisponible y no se consulta la disponibilidad por tarjeta', async () => {
+  it('el chip sigue saliendo de la disponibilidad del depósito del usuario, con cantidad 1: hayDisponible no lo cambia', async () => {
+    // hayDisponible (todos los depósitos) contradice a propósito la consulta por depósito.
     api.get.mockImplementation(
       servidorCon([
-        { ...AER, hayDisponible: true, ventaMinimaUnidades: 1 },
-        { ...TEX, hayDisponible: false, ventaMinimaUnidades: 1 },
+        { ...AER, hayDisponible: false, ventaMinimaUnidades: 12 },
+        { ...TEX, hayDisponible: true, ventaMinimaUnidades: 6 },
       ]),
     )
-    // Aunque la consulta dijera otra cosa, manda lo que dice el listado.
-    api.post.mockResolvedValue([
-      { productoId: AER.id, disponible: false },
-      { productoId: TEX.id, disponible: true },
-    ])
     renderPantalla()
 
-    expect(await screen.findByText('Hay stock')).toBeTruthy()
-    expect(screen.getByText('Sin stock')).toBeTruthy()
-    expect(consultasDeDisponibilidad()).toHaveLength(0)
+    const tarjetaAer = await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`)
+    await waitFor(() => expect(within(tarjetaAer).getByText('Hay stock')).toBeTruthy())
+    const tarjetaTex = screen.getByLabelText(`${TEX.nombre}, código ${TEX.codigoPropio}`)
+    expect(within(tarjetaTex).getByText('Sin stock')).toBeTruthy()
+    expect(api.post).toHaveBeenCalledTimes(1)
+    expect(api.post).toHaveBeenCalledWith('/api/v1/Stocks/disponibilidad', {
+      depositoId: DEPOSITO_CENTRAL_ID,
+      items: [
+        { productoId: AER.id, cantidad: 1 },
+        { productoId: TEX.id, cantidad: 1 },
+      ],
+    })
   })
 
-  it('una línea muestra su chip y "12 fragancias · caja de 12"', async () => {
+  it('una línea muestra "12 fragancias · caja de 12" y sigue sin chip, aunque traiga hayDisponible', async () => {
     api.get.mockImplementation(
       servidorCon([{ ...LINEA, hayDisponible: true, cantidadFragancias: 12, ventaMinimaUnidades: 12 }]),
     )
     renderPantalla()
 
     expect(await screen.findByText('12 fragancias · caja de 12')).toBeTruthy()
-    expect(screen.getByText('Hay stock')).toBeTruthy()
     expect(screen.queryByText('Con fragancias')).toBeNull()
+    expect(screen.queryByText('Hay stock')).toBeNull()
+    expect(screen.queryByText('Sin stock')).toBeNull()
     expect(consultasDeDisponibilidad()).toHaveLength(0)
   })
 
   it('un producto que se vende por caja dice "caja de N"; por unidad no dice nada', async () => {
     api.get.mockImplementation(
       servidorCon([
-        { ...AER, hayDisponible: true, ventaMinimaUnidades: 6 },
-        { ...TEX, hayDisponible: true, ventaMinimaUnidades: 1 },
+        { ...AER, ventaMinimaUnidades: 6 },
+        { ...TEX, ventaMinimaUnidades: 1 },
       ]),
     )
     renderPantalla()
@@ -308,22 +317,30 @@ describe('Catálogo con servidor nuevo (forward-system #894)', () => {
     expect(screen.getAllByText(/caja de/)).toHaveLength(1)
   })
 
-  it('lo que el listado no trae se consulta igual, con la venta mínima del listado como cantidad', async () => {
-    api.get.mockImplementation(
-      servidorCon([
-        { ...AER, hayDisponible: true, ventaMinimaUnidades: 12 },
-        { ...TEX, ventaMinimaUnidades: 6 },
-      ]),
-    )
-    api.post.mockResolvedValue([{ productoId: TEX.id, disponible: false }])
-    renderPantalla()
+  describe('stock 5 con venta mínima 12 en el listado', () => {
+    // El servidor responde según la cantidad pedida: alcanza para 1, no para 12.
+    const stockCinco = (_url: string, body: { items: { productoId: string; cantidad: number }[] }) =>
+      Promise.resolve(body.items.map((i) => ({ productoId: i.productoId, disponible: i.cantidad <= 5 })))
 
-    expect(await screen.findByText('Sin stock')).toBeTruthy()
-    expect(screen.getByText('Hay stock')).toBeTruthy()
-    expect(consultasDeDisponibilidad()).toHaveLength(1)
-    expect(api.post).toHaveBeenCalledWith('/api/v1/Stocks/disponibilidad', {
-      depositoId: DEPOSITO_CENTRAL_ID,
-      items: [{ productoId: TEX.id, cantidad: 6 }],
+    it('la tarjeta consulta con cantidad 1 y dice lo mismo que la ficha, que aparte avisa que no alcanza la caja', async () => {
+      api.get.mockImplementation(servidorCon([{ ...AER, ventaMinimaUnidades: 12 }, TEX]))
+      api.post.mockReset().mockImplementation(stockCinco)
+      renderPantalla()
+
+      const tarjeta = await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`)
+      await waitFor(() => expect(within(tarjeta).getByText('Hay stock')).toBeTruthy())
+      expect(api.post).toHaveBeenCalledWith('/api/v1/Stocks/disponibilidad', {
+        depositoId: DEPOSITO_CENTRAL_ID,
+        items: [
+          { productoId: AER.id, cantidad: 1 },
+          { productoId: TEX.id, cantidad: 1 },
+        ],
+      })
+
+      await userEvent.press(tarjeta)
+      expect(await screen.findByText('No alcanza para la venta mínima (caja de 12)')).toBeTruthy()
+      // Tarjeta (AER) y ficha: ambas "Hay stock"; nunca "Sin stock" para AER.
+      await waitFor(() => expect(screen.getAllByText('Hay stock').length).toBeGreaterThanOrEqual(2))
     })
   })
 
@@ -357,6 +374,24 @@ describe('Catálogo con servidor nuevo (forward-system #894)', () => {
       await abrirFichaDeAer()
       await screen.findByText('-3,0 % respecto de la compra anterior')
       expect(verde).toContain(colorDe('-3,0 % respecto de la compra anterior'))
+    })
+
+    // El color sale del valor redondeado que se escribe: "0,0 %" nunca va en rojo ni en verde, y ±0,05 redondean para el mismo lado.
+    it.each([
+      [0.05, '+0,1 % respecto de la compra anterior', rojo],
+      [-0.05, '-0,1 % respecto de la compra anterior', verde],
+      [0, '0,0 % respecto de la compra anterior', neutro],
+      [0.04, '0,0 % respecto de la compra anterior', neutro],
+      [-0.04, '0,0 % respecto de la compra anterior', neutro],
+    ])('la variación %p se escribe "%s" y toma el color de ese valor', async (variacion, texto, colores) => {
+      api.get.mockImplementation(
+        servidorCon([AER, TEX], { ...DETALLE, ultimaCompra: { ...ULTIMA, variacionCostoPorcentaje: variacion } }),
+      )
+      renderPantalla()
+      await abrirFichaDeAer()
+
+      await screen.findByText(texto)
+      expect(colores).toContain(colorDe(texto))
     })
 
     it('la primera compra (sin variación) no dibuja el renglón de la variación', async () => {

@@ -69,7 +69,10 @@ export type UserRole = 'AdministradorSistemas' | 'Administrador' | 'Gerencia' | 
  * Los campos de forward-system #894 van a mano hasta regenerar el schema: opcionales porque un servidor anterior no los manda.
  */
 export type Producto = components['schemas']['ProductoDto'] & {
-  /** Hay stock disponible (real menos reservado, en todos los depósitos; en una línea, sumado entre sus fragancias activas). Misma regla que `catalogo-stock`. */
+  /**
+   * Hay stock disponible (real menos reservado, en todos los depósitos; en una línea, sumado entre sus fragancias activas).
+   * Mobile NO lo usa para el chip: la ficha usa el depósito del usuario y las dos tienen que decir lo mismo.
+   */
   hayDisponible?: boolean | null
   /** Solo en líneas (padres de fragancias); null en el resto. */
   cantidadFragancias?: number | null

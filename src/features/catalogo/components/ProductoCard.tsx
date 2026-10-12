@@ -9,7 +9,7 @@ import { chipDeStock, detalleDeTarjeta } from '../lib/presentacion'
 
 interface ProductoCardProps {
   producto: Producto
-  /** Lo decide el servidor (`hayDisponible` del listado o la consulta de disponibilidad); undefined = sin dato: sin chip. */
+  /** Lo decide el servidor; undefined = sin dato (líneas o sin depósito): sin chip. */
   disponible?: boolean
   grilla?: boolean
   seleccionado?: boolean

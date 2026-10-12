@@ -11,7 +11,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { canViewStock } from '@/features/ventas/lib/descuentos'
 import { useDepositoDeConsulta } from '../hooks/useDepositoDeConsulta'
-import { chipDeStock, formatPorcentaje, formatVariacion, textoUltimaCompra, textoUnidadDeVenta } from '../lib/presentacion'
+import { chipDeStock, formatPorcentaje, formatVariacion, redondearVariacion, textoUltimaCompra, textoUnidadDeVenta } from '../lib/presentacion'
 
 function Fila({ label, valor, fuerte }: { label: string; valor: string; fuerte?: boolean }) {
   const c = useColors()
@@ -26,16 +26,13 @@ function Fila({ label, valor, fuerte }: { label: string; valor: string; fuerte?:
 /**
  * Última compra del producto, en el bloque de costos (forward-system #894). La variación contra la compra
  * anterior lleva signo y color: subir el costo es malo (rojo), bajarlo es bueno (verde); sin variación, sin renglón.
+ * El color sale del valor redondeado que se escribe: "0,0 %" siempre va neutro.
  */
 function UltimaCompra({ compra }: { compra: UltimaCompraProducto }) {
   const c = useColors()
   const variacion = compra.variacionCostoPorcentaje
-  const color =
-    variacion == null || Math.abs(variacion) < 0.05
-      ? c.textSecondary
-      : variacion > 0
-        ? c.chip.anulado.text
-        : c.chip.entregado.text
+  const redondeada = variacion == null ? 0 : redondearVariacion(variacion)
+  const color = redondeada === 0 ? c.textSecondary : redondeada > 0 ? c.chip.anulado.text : c.chip.entregado.text
   return (
     <View style={{ gap: space[1], paddingVertical: space[1] }}>
       <Text style={[typeScale.cuerpo, { color: c.text }]}>{textoUltimaCompra(compra)}</Text>

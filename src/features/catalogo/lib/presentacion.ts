@@ -33,14 +33,18 @@ export function detalleDeTarjeta(p: Pick<Producto, 'esPadreDeVariantes' | 'canti
   return partes.length ? partes.join(' · ') : null
 }
 
-/** Cantidad con la que se consulta la disponibilidad de una tarjeta: la venta mínima del listado, o 1 si el servidor no la manda. */
-export function cantidadDeConsulta(ventaMinimaUnidades: number | null | undefined): number {
-  return ventaMinimaUnidades != null && ventaMinimaUnidades > 1 ? ventaMinimaUnidades : 1
+/**
+ * Variación a un decimal, simétrica (-0,05 → -0,1 igual que +0,05 → +0,1; Math.round(-0.5) daría -0) y nunca -0.
+ * Es el valor que se escribe y el que decide el color, para que lo que se ve y el color no se contradigan.
+ */
+export function redondearVariacion(valor: number): number {
+  const redondeado = (Math.sign(valor) * Math.round(Math.abs(valor) * 10)) / 10
+  return redondeado === 0 ? 0 : redondeado
 }
 
 /** Variación con signo y un decimal: +5,2 % / -3,0 % (sin signo si redondea a cero). */
 export function formatVariacion(valor: number): string {
-  const redondeado = Math.round(valor * 10) / 10
+  const redondeado = redondearVariacion(valor)
   const signo = redondeado > 0 ? '+' : redondeado < 0 ? '-' : ''
   return `${signo}${formatPorcentaje(Math.abs(redondeado))}`
 }

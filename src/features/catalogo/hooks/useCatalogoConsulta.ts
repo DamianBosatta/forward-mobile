@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useInfiniteProductos } from '@/libs/api-client/productos'
 import { useDisponibilidadPorLotes } from '@/libs/api-client/stock'
 import { useDepositoDeConsulta } from './useDepositoDeConsulta'
-import { cantidadDeConsulta } from '../lib/presentacion'
 
 const DEBOUNCE_BUSQUEDA_MS = 300
 const TAMANO_PAGINA = 20
@@ -10,10 +9,8 @@ const TAMANO_PAGINA = 20
 /**
  * Catálogo de consulta: busca por código o nombre EN EL SERVIDOR (GET /Productos, paginado),
  * con el término esperado ~300 ms. Mientras llega la búsqueda nueva se ven los resultados
- * anteriores. El chip de stock sale de `hayDisponible` del listado (forward-system #894: real menos reservado
- * en todos los depósitos; una línea suma sus fragancias activas). Con un servidor anterior, que no lo manda,
- * sale de POST /Stocks/disponibilidad (un booleano por producto, descontando lo reservado, en el depósito del
- * usuario o el Central, con la venta mínima del listado si la trae, o 1): las líneas no tienen stock propio, así que no llevan chip.
+ * anteriores. El chip de stock sale de POST /Stocks/disponibilidad (un booleano por producto,
+ * descontando lo reservado, en el depósito del usuario o el Central): las líneas no tienen stock propio, así que no llevan chip.
  */
 export function useCatalogoConsulta() {
   const depositoId = useDepositoDeConsulta()
@@ -33,28 +30,22 @@ export function useCatalogoConsulta() {
   const productos = useMemo(() => query.data?.pages.flatMap((p) => p?.items ?? []) ?? [], [query.data])
   const totalCount = query.data?.pages[0]?.totalCount
 
-  // Un pedido por página: al cargar otra solo se consultan los ids nuevos. Lo que ya trae `hayDisponible`
-  // no se consulta: con el servidor nuevo todos lo traen y no sale ninguna consulta por tarjeta.
+  // Un pedido por página: al cargar otra solo se consultan los ids nuevos.
   const lotes = useMemo(
     () =>
       (query.data?.pages ?? []).map((pag) =>
         (pag?.items ?? [])
-          .filter((p) => !p.esPadreDeVariantes && p.hayDisponible == null)
-          .map((p) => ({ productoId: p.id, cantidad: cantidadDeConsulta(p.ventaMinimaUnidades) })),
+          .filter((p) => !p.esPadreDeVariantes)
+          .map((p) => ({ productoId: p.id, cantidad: 1 })),
       ),
     [query.data],
   )
   const resultados = useDisponibilidadPorLotes(depositoId, lotes)
-  const consultadas = useMemo(
+  const disponible = useMemo(
     () => new Map(resultados.flatMap((r) => (r.data ?? []).map((d) => [d.productoId, d.disponible] as const))),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [resultados.map((r) => r.dataUpdatedAt).join(',')],
   )
-  const disponible = useMemo(() => {
-    const todas = new Map(consultadas)
-    for (const p of productos) if (p.hayDisponible != null) todas.set(p.id, p.hayDisponible)
-    return todas
-  }, [consultadas, productos])
 
   return {
     busqueda,

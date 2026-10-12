@@ -1,8 +1,8 @@
 import {
-  cantidadDeConsulta,
   detalleDeTarjeta,
   diaDeUltimaCompra,
   formatVariacion,
+  redondearVariacion,
   textoUltimaCompra,
 } from '../lib/presentacion'
 
@@ -28,13 +28,16 @@ describe('detalleDeTarjeta', () => {
   })
 })
 
-describe('cantidadDeConsulta', () => {
-  it('usa la venta mínima del listado y, sin ella o por unidad, 1', () => {
-    expect(cantidadDeConsulta(12)).toBe(12)
-    expect(cantidadDeConsulta(1)).toBe(1)
-    expect(cantidadDeConsulta(0)).toBe(1)
-    expect(cantidadDeConsulta(null)).toBe(1)
-    expect(cantidadDeConsulta(undefined)).toBe(1)
+describe('redondearVariacion', () => {
+  it('redondea a un decimal de forma simétrica y nunca devuelve -0', () => {
+    expect(redondearVariacion(0.05)).toBe(0.1)
+    expect(redondearVariacion(-0.05)).toBe(-0.1)
+    expect(redondearVariacion(0.04)).toBe(0)
+    expect(Object.is(redondearVariacion(-0.04), 0)).toBe(true)
+    expect(Object.is(redondearVariacion(-0), 0)).toBe(true)
+    expect(redondearVariacion(-3.04)).toBe(-3)
+    expect(redondearVariacion(5.25)).toBe(5.3)
+    expect(redondearVariacion(-5.25)).toBe(-5.3)
   })
 })
 
@@ -45,6 +48,11 @@ describe('formatVariacion', () => {
     expect(formatVariacion(0)).toBe('0,0 %')
     expect(formatVariacion(0.04)).toBe('0,0 %')
     expect(formatVariacion(-0.04)).toBe('0,0 %')
+  })
+
+  it('±0,05 redondean para el mismo lado, con su signo', () => {
+    expect(formatVariacion(0.05)).toBe('+0,1 %')
+    expect(formatVariacion(-0.05)).toBe('-0,1 %')
   })
 })
 
