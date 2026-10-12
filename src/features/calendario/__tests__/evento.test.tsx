@@ -2,6 +2,7 @@ import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { CalendarioScreen } from '../CalendarioScreen'
+import { calendarioKeys } from '@/libs/api-client/calendario'
 
 const mockGet = jest.fn()
 const mockPost = jest.fn()
@@ -37,8 +38,9 @@ const DETALLE = {
 
 let eventos: unknown[] = []
 let detalle: Record<string, unknown> = DETALLE
-function pintar() {
+function pintar(antes?: (qc: QueryClient) => void) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  antes?.(qc)
   render(<QueryClientProvider client={qc}><CalendarioScreen /></QueryClientProvider>)
   return qc
 }
@@ -55,8 +57,8 @@ beforeEach(() => {
 })
 afterEach(() => jest.restoreAllMocks())
 
-async function abrir(etiqueta: string) {
-  const qc = pintar()
+async function abrir(etiqueta: string, antes?: (qc: QueryClient) => void) {
+  const qc = pintar(antes)
   await userEvent.press(await screen.findByLabelText(etiqueta))
   return qc
 }
@@ -125,19 +127,47 @@ describe('Detalle de un evento del calendario', () => {
     expect(mockPost).toHaveBeenCalledWith(`/api/v1/Calendario/eventos/${ID}/ocurrencias/2026-10-09`, { estado: 'Pagado' })
   })
 
-  it('borrar cierra la hoja sin volver a pedir el evento borrado (que ya da 404)', async () => {
+  it('borrar cierra la hoja sin volver a pedir el evento borrado (que ya da 404), lo saca de la semana y olvida su detalle', async () => {
     mockDelete.mockImplementation(() => {
+      // Después de borrar: el detalle da 404 y la semana nueva tarda en llegar.
       mockGet.mockImplementation((url: string) => url.includes('/eventos/')
         ? Promise.reject(Object.assign(new Error('No encontrado.'), { status: 404, errors: [] }))
-        : Promise.resolve([]))
+        : new Promise(() => {}))
       return Promise.resolve(ID)
     })
-    await abrir('Rendir la caja, Pendiente')
+    const qc = await abrir('Rendir la caja, Pendiente')
     await userEvent.press(await screen.findByLabelText('Borrar evento'))
     await userEvent.press(screen.getByLabelText('Sí, borrar'))
     await waitFor(() => expect(screen.queryByLabelText('Sí, borrar')).toBeNull())
     expect(screen.queryByText('No se pudo cargar el evento.')).toBeNull()
     expect(urlsDelDetalle()).toHaveLength(1)
+    // La tarjeta se va sin esperar el refetch: no se puede volver a abrir un evento que ya no existe.
+    await waitFor(() => expect(screen.queryByLabelText('Rendir la caja, Pendiente')).toBeNull())
+    expect(screen.getByLabelText('Cheque de Del Sur, Vencido')).toBeTruthy()
+    await waitFor(() => expect(qc.getQueryCache().find({ queryKey: calendarioKeys.evento(ID), exact: true })).toBeUndefined())
+  })
+
+  it('si el detalle guardado no se puede refrescar, muestra el error y no arma el formulario con lo viejo', async () => {
+    mockGet.mockImplementation((url: string) => url.includes('/eventos/')
+      ? Promise.reject(Object.assign(new Error('Se cortó la conexión.'), { errors: [] }))
+      : Promise.resolve(eventos))
+    await abrir('Rendir la caja, Pendiente', (qc) => qc.setQueryData(calendarioKeys.evento(ID), { ...DETALLE, titulo: 'Versión vieja' }))
+    expect(await screen.findByText('Se cortó la conexión.')).toBeTruthy()
+    expect(screen.queryByLabelText('Título')).toBeNull()
+    expect(screen.getByText('Cerrar')).toBeTruthy()
+  })
+
+  it('"Hecho" o "Pagado" sale del tipo: un servicio personal se paga y un recordatorio de Administración se hace', async () => {
+    eventos = [
+      evento({ clave: `evento:${ID}:2026-10-09`, fecha: '2026-10-09', titulo: 'Pagar el gas', tipo: 'ServicioRecurrente', esFinanciero: false, estado: 'Pagado' }),
+      { ...CAJA, esFinanciero: true },
+    ]
+    await abrir('Pagar el gas, Pagado')
+    expect(await screen.findByLabelText('Desmarcar pagado')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Cerrar', { includeHiddenElements: true }))
+    await userEvent.press(screen.getByLabelText('Rendir la caja, Pendiente'))
+    expect(await screen.findByLabelText('Marcar hecho')).toBeTruthy()
+    expect(screen.queryByLabelText('Marcar pagado')).toBeNull()
   })
 
   it('si el evento se vuelve a pedir (vuelve la red), lo que se estaba escribiendo no se pierde', async () => {
@@ -164,12 +194,29 @@ describe('Detalle de un evento del calendario', () => {
     await abrir('Rendir la caja, Hecho')
     await userEvent.press(await screen.findByLabelText('Día siguiente'))
     await userEvent.press(screen.getByLabelText('Guardar cambios'))
-    expect(screen.getByText('Cambiar el día descarta las marcas (pagadas u omitidas) que queden fuera del evento. Este tiene 1.')).toBeTruthy()
+    expect(screen.getByText('Se pierde su marca (pagada u omitida).')).toBeTruthy()
+    // Sin título no se puede confirmar.
+    await userEvent.clear(screen.getByLabelText('Título'))
+    expect(screen.getByLabelText('Sí, guardar').props.accessibilityState.disabled).toBe(true)
+    await userEvent.type(screen.getByLabelText('Título'), 'Rendir la caja')
     await userEvent.press(screen.getByLabelText('No guardar'))
     expect(mockPut).not.toHaveBeenCalled()
     await userEvent.press(screen.getByLabelText('Guardar cambios'))
     await userEvent.press(screen.getByLabelText('Sí, guardar'))
     expect(mockPut).toHaveBeenCalledWith(`/api/v1/Calendario/eventos/${ID}`, expect.objectContaining({ fechaInicio: '2026-10-10' }))
+  })
+
+  it('en un evento que se repite, avisa que solo se pierden las marcas que queden fuera de la serie', async () => {
+    eventos = [LUZ]
+    detalle = { ...DETALLE, tipo: 'ServicioRecurrente', fechaInicio: '2026-09-09', recurrencia: { frecuencia: 'Mensual', intervalo: 1 },
+      ocurrencias: [{ fecha: '2026-09-09', estado: 'Pagado' }, { fecha: '2026-10-09', estado: 'Omitido', fechaReprogramada: '2026-10-08' }] }
+    pintar()
+    await userEvent.press(await screen.findByLabelText('jue 8, 1 evento'))
+    await userEvent.press(screen.getByLabelText('Pagar la luz, Vencido'))
+    await userEvent.press(await screen.findByLabelText('Día siguiente'))
+    await userEvent.press(screen.getByLabelText('Guardar cambios'))
+    expect(screen.getByText('Tiene 2 marcas (pagadas u omitidas). Al cambiar el primer día se pierden las que ya no caigan en la serie.')).toBeTruthy()
+    expect(mockPut).not.toHaveBeenCalled()
   })
 
   it('un evento automático (cheque) se ve sin editar, borrar ni marcar, y no pide el detalle', async () => {

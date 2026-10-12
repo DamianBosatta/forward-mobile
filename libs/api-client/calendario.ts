@@ -9,6 +9,7 @@ export type CrearEvento = components['schemas']['CrearEventoCommand']
 export const calendarioKeys = {
   all: ['calendario'] as const,
   rango: (desde: string, hasta: string) => [...calendarioKeys.all, desde, hasta] as const,
+  evento: (id: string) => [...calendarioKeys.all, 'evento', id] as const,
 }
 
 /** Desde y hasta son días YYYY-MM-DD, inclusive (el servidor acepta hasta 93 días). */
@@ -31,12 +32,10 @@ export function useCrearEvento() {
 export type EventoDetalle = components['schemas']['EventoCalendarioDetalleDto']
 export type EditarEvento = components['schemas']['EditarEventoCommand']
 
-const eventoKey = (id: string) => [...calendarioKeys.all, 'evento', id] as const
-
 /** GET /Calendario/eventos/{id}: el evento manual completo (el PUT lo reemplaza entero). Ajeno: 404. */
 export function useEventoCalendario(id: string | null) {
   return useQuery({
-    queryKey: eventoKey(id ?? ''),
+    queryKey: calendarioKeys.evento(id ?? ''),
     queryFn: () => api.get<EventoDetalle>(`/api/v1/Calendario/eventos/${id}`),
     enabled: !!id,
   })
@@ -44,16 +43,19 @@ export function useEventoCalendario(id: string | null) {
 
 /**
  * Editar, borrar y marcar/desmarcar una ocurrencia: todo invalida el calendario. Sin devolver la
- * promesa (como `queryClient.ts`): la mutación no espera los refetch. `menos` deja afuera el detalle
- * de un evento borrado, que ya daría 404.
+ * promesa (como `queryClient.ts`): la mutación no espera los refetch. `borrado` da el id de un
+ * evento que ya no existe: sale en el acto de las semanas cargadas (no se puede volver a abrir
+ * mientras llega el refetch) y su detalle, que daría 404, no se vuelve a pedir.
  */
-function useMutacionCalendario<V>(fn: (v: V) => Promise<unknown>, menos?: (v: V) => string) {
+function useMutacionCalendario<V>(fn: (v: V) => Promise<unknown>, borrado?: (v: V) => string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: fn,
     onSuccess: (_r, v) => {
-      const fuera = menos?.(v)
-      void qc.invalidateQueries({ queryKey: calendarioKeys.all, predicate: (q) => !fuera || q.queryKey[2] !== fuera })
+      const id = borrado?.(v)
+      const semanas = { queryKey: calendarioKeys.all, predicate: (q: { queryKey: readonly unknown[] }) => !id || q.queryKey[1] !== 'evento' }
+      if (id) qc.setQueriesData<EventoCalendario[]>(semanas, (semana) => semana?.filter((e) => e.origenId !== id))
+      void qc.invalidateQueries(semanas)
     },
   })
 }

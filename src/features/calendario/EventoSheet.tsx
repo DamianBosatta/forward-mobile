@@ -1,13 +1,14 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Text, View, useWindowDimensions } from 'react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, StatusChip } from '@/core/ui/fw'
+import { useQueryClient } from '@tanstack/react-query'
 import {
-  useBorrarEvento, useEditarEvento, useEventoCalendario, useMarcarPagado,
+  calendarioKeys, useBorrarEvento, useEditarEvento, useEventoCalendario, useMarcarPagado,
   type EventoCalendario, type EventoDetalle,
 } from '@/libs/api-client/calendario'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { chipDe, TIPO } from './presentacion'
+import { chipDe, esRecordatorio, TIPO } from './presentacion'
 import { moverDia, nombreLargo } from './semana'
 import { SelectorDia } from './SelectorDia'
 
@@ -64,11 +65,18 @@ export function EventoSheet({ evento, onCerrar, onMovido }: Props) {
 
 function Edicion({ evento, ...props }: Props) {
   const c = useColors()
+  const qc = useQueryClient()
   const detalle = useEventoCalendario(evento.origenId)
+  // Borrado: al cerrar la hoja (ya sin quien lo mire) se olvida su detalle, que daría 404.
+  const borrado = useRef(false)
+  useEffect(() => () => {
+    if (borrado.current) qc.removeQueries({ queryKey: calendarioKeys.evento(evento.origenId), exact: true })
+  }, [qc, evento.origenId])
   // El PUT reemplaza el evento entero: la primera vez se espera la versión fresca. Después se
   // queda con esa, para que un refetch (vuelve la red) no borre lo que se está escribiendo.
   const [d, setD] = useState<EventoDetalle | null>(null)
-  if (!d && detalle.data && !detalle.isFetching) setD(detalle.data)
+  // `isSuccess`: si el refetch falla, react-query conserva el dato viejo con el error.
+  if (!d && detalle.isSuccess && !detalle.isFetching) setD(detalle.data)
   if (!d && detalle.isError) {
     return (
       <>
@@ -78,10 +86,10 @@ function Edicion({ evento, ...props }: Props) {
     )
   }
   if (!d) return <ActivityIndicator color={c.brand} accessibilityLabel="Cargando el evento" />
-  return <Formulario d={d} evento={evento} {...props} />
+  return <Formulario d={d} evento={evento} {...props} onBorrado={() => { borrado.current = true; props.onCerrar() }} />
 }
 
-function Formulario({ d, evento, onCerrar, onMovido }: Props & { d: EventoDetalle }) {
+function Formulario({ d, evento, onCerrar, onMovido, onBorrado }: Props & { d: EventoDetalle; onBorrado: () => void }) {
   const c = useColors()
   const editar = useEditarEvento()
   const borrar = useBorrarEvento()
@@ -92,8 +100,10 @@ function Formulario({ d, evento, onCerrar, onMovido }: Props & { d: EventoDetall
   const [confirmando, setConfirmando] = useState<'borrar' | 'mover' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const ocupado = editar.isPending || borrar.isPending || pagar.isPending
-  // Lo mismo se manda como Pagado; un recordatorio (no financiero) se lee "hecho".
-  const verbo = evento.esFinanciero ? 'pagado' : 'hecho'
+  // Lo mismo se manda como Pagado; un recordatorio se lee "hecho".
+  const verbo = esRecordatorio(evento) ? 'hecho' : 'pagado'
+  const n = d.ocurrencias.length
+  const marcas = n === 1 ? '1 marca (pagada u omitida)' : `${n} marcas (pagadas u omitidas)`
 
   const correr = async (accion: () => Promise<unknown>, listo: () => void, porDefecto: string) => {
     setError(null)
@@ -151,13 +161,18 @@ function Formulario({ d, evento, onCerrar, onMovido }: Props & { d: EventoDetall
       {confirmando === 'borrar' ? (
         <>
           <Notice tone="advertencia">Se borra el evento y todas sus fechas. No se puede deshacer.</Notice>
-          <Button label="Sí, borrar" variant="peligro" disabled={ocupado} loading={borrar.isPending} onPress={() => void correr(() => borrar.mutateAsync(d.id), onCerrar, 'No se pudo borrar el evento.')} />
+          <Button label="Sí, borrar" variant="peligro" disabled={ocupado} loading={borrar.isPending} onPress={() => void correr(() => borrar.mutateAsync(d.id), onBorrado, 'No se pudo borrar el evento.')} />
           <Button label="No borrar" variant="secundario" disabled={ocupado} onPress={() => setConfirmando(null)} />
         </>
       ) : confirmando === 'mover' ? (
         <>
-          <Notice tone="advertencia">{`Cambiar el día descarta las marcas (pagadas u omitidas) que queden fuera del evento. Este tiene ${d.ocurrencias.length}.`}</Notice>
-          <Button label="Sí, guardar" disabled={ocupado} loading={editar.isPending} onPress={guardar} />
+          {/* El servidor descarta solo las marcas que quedan fuera de la serie nueva. */}
+          <Notice tone="advertencia">
+            {d.recurrencia
+              ? `Tiene ${marcas}. Al cambiar el primer día se pierden las que ya no caigan en la serie.`
+              : n === 1 ? 'Se pierde su marca (pagada u omitida).' : `Se pierden sus ${marcas}.`}
+          </Notice>
+          <Button label="Sí, guardar" disabled={!titulo.trim() || ocupado} loading={editar.isPending} onPress={guardar} />
           <Button label="No guardar" variant="secundario" disabled={ocupado} onPress={() => setConfirmando(null)} />
         </>
       ) : (
