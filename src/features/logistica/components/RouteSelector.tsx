@@ -20,6 +20,7 @@ interface RouteSelectorProps {
 function estatoLabel(estado: number | undefined): string {
   switch (estado) {
     case EstadoHojaRuta.Programada: return 'PROGRAMADA'
+    case EstadoHojaRuta.Documentada: return 'DOCUMENTADA'
     case EstadoHojaRuta.EnCurso:    return 'EN RUTA'
     case EstadoHojaRuta.Finalizada: return 'FINALIZADA'
     case EstadoHojaRuta.Cancelada:  return 'CANCELADA'
@@ -29,6 +30,7 @@ function estatoLabel(estado: number | undefined): string {
 
 function estadoColor(estado: number | undefined, primary: string): string {
   switch (estado) {
+    case EstadoHojaRuta.Documentada: return BRAND.blue
     case EstadoHojaRuta.EnCurso:    return primary
     case EstadoHojaRuta.Finalizada: return BRAND.green
     case EstadoHojaRuta.Cancelada:  return BRAND.red

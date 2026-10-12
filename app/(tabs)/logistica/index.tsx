@@ -77,6 +77,8 @@ export default function LogisticaScreen() {
     switch (estado) {
       case EstadoHojaRuta.Programada:
         return { label: 'PROGRAMADA', color: BRAND.violet, bgColor: BRAND.violet + '15' }
+      case EstadoHojaRuta.Documentada:
+        return { label: 'DOCUMENTADA', color: BRAND.blue, bgColor: BRAND.blue + '15' }
       case EstadoHojaRuta.EnCurso:
         return { label: 'EN CURSO', color: colors.primary, bgColor: colors.primary + '15' }
       case EstadoHojaRuta.Finalizada:
