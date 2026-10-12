@@ -15,7 +15,7 @@ import { useConfirmarVenta } from '../hooks/useConfirmarVenta'
 import { useResponsive } from '@/libs/useResponsive'
 import { useBorradorVenta } from '../hooks/useBorradorVenta'
 import { useComisionEstimada } from '../hooks/useComisionEstimada'
-import { aAutoguardado, hastaElTope, superaElTope } from '../lib/payload'
+import { aAutoguardado } from '../lib/payload'
 import { avisosVenta, totalesEstimados } from '../lib/avisos'
 import { leerNumero, mostrarNumero } from '../lib/linea'
 import type { LineaCarrito } from '../lib/carrito'
@@ -58,9 +58,9 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
   const tope = user?.maxDescuentoPorcentaje ?? 0
   const exento = hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO')
   const paraGuardar = aAutoguardado(lineas, descuentoValido, cab.cabecera)
-  // Pedido sobre el tope (el del perfil rige también a quien está exento): el borrador (Presupuesto en el servidor) guarda hasta el tope; lo demás va al confirmar.
-  const retenido = tipo === 'Pedido' && superaElTope(paraGuardar, tope)
-  const b = useBorradorVenta(retenido ? hastaElTope(paraGuardar, tope) : paraGuardar)
+  // Pedido sobre el tope (el del perfil rige también a quien está exento): con un servidor que no guarda el tipo
+  // del borrador, éste (Presupuesto allá) guarda hasta el tope y lo demás va al confirmar (ver useBorradorVenta).
+  const b = useBorradorVenta(paraGuardar, tipo === 'Pedido' ? tope : 0)
   const comision = useComisionEstimada(lineas, descuentoValido, cab.cabecera.flete, cab.porcentajeCedido)
   const { isTabletLandscape } = useResponsive()
   const [pestana, setPestana] = useState<'lineas' | 'cabecera'>('lineas')
@@ -107,7 +107,7 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
       // Duplicar: primero el borrador nuevo; las líneas entran cuando existe, así se autoguardan en él.
       setTipo(d.tipo)
       setADuplicar(d)
-      void b.crear(d.cliente.id)
+      void b.crear(d.cliente.id, d.tipo)
     }
   })
   useEffect(() => {
@@ -140,7 +140,7 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
         <SeleccionarClienteSheet
           visible
           onClose={() => router.back()}
-          onSelect={(elegido, t) => { setCliente(elegido); setTipo(t); void b.crear(elegido.id) }}
+          onSelect={(elegido, t) => { setCliente(elegido); setTipo(t); void b.crear(elegido.id, t) }}
           onNuevoCliente={() => router.push('/(tabs)/socios/nuevo' as never)}
         />
       </View>
@@ -167,7 +167,7 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
   const rotulo = nombre ? `${direccionDeEntrega(cliente)} · ${nombre}` : direccionDeEntrega(cliente)
   const lineasVista = (
     <LineasVenta lineas={lineas} {...avisos} tope={tope}
-      nota={retenido && b.borrador ? `El borrador guarda los descuentos hasta tu tope (${mostrarNumero(tope)} %); el resto se guarda al confirmar el pedido.` : null} descuentoTexto={descuentoTexto} descuentoGeneral={descuentoGeneral} flete={cab.cabecera.flete}
+      nota={b.retenido && b.borrador ? `El borrador guarda los descuentos hasta tu tope (${mostrarNumero(tope)} %); el resto se guarda al confirmar el pedido.` : null} descuentoTexto={descuentoTexto} descuentoGeneral={descuentoGeneral} flete={cab.cabecera.flete}
       onDescuento={setDescuentoTexto} onAgregar={() => setCatalogo(true)} onEditar={setEditando}
       onElegirFragancias={setFragancias} nombrePadre={(id) => catalogoVenta.find((p) => p.id === id)?.nombre} />
   )

@@ -15078,6 +15078,8 @@ export interface components {
             fechaModificacion: string;
             /** Format: int32 */
             cantidadLineas: number;
+            /** Desde forward-system #883 (un servidor anterior no lo manda); el Pedido/Presupuesto que se estaba armando. */
+            tipoOperacion?: components["schemas"]["TipoOperacionVenta"];
         };
         BultoDto: {
             /** Format: uuid */

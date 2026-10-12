@@ -160,14 +160,14 @@ describe('editar y duplicar (PR 2.9b)', () => {
     catalogoFalla = false
     await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
     expect(await screen.findByText('Nuevo pedido')).toBeTruthy()
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c7', depositoId: DEPOSITO_CENTRAL_ID }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c7', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
   })
 
   it('duplicar crea un borrador nuevo para el mismo cliente y le autoguarda las líneas, sin copiar la fecha', async () => {
     abrir({ modo: 'duplicar', ventaId: 'v9' })
     expect(await screen.findByText('Nuevo pedido')).toBeTruthy()
     expect(screen.getByText('Tarantino 1898 · Autoservicio Abel')).toBeTruthy()
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c7', depositoId: DEPOSITO_CENTRAL_ID }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c7', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     expect(mockPut.mock.calls[0][0]).toBe('/api/v1/Ventas/b1')
     expect(mockPut.mock.calls[0][1]).toMatchObject({ id: 'b1', version: 1, items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 0 }] })

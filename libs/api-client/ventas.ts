@@ -239,10 +239,28 @@ export function useCreateVenta() {
   })
 }
 
-/** Borrador con autoguardado (el de la web): Presupuesto sin líneas; el vendedor sale del token. */
+/**
+ * Borrador con autoguardado (el de la web): sin líneas; el vendedor sale del token. `tipoOperacion`
+ * (forward-system #883) dice qué se arma: un servidor viejo lo ignora y el borrador nace Presupuesto.
+ */
 export const useIniciarBorradorVenta = () => useMutation({
-  mutationFn: (data: { clienteId: string; depositoId: string }) => api.post<VentaActionResponseDto>('/api/v1/Ventas/borradores', data),
+  mutationFn: (data: { clienteId: string; depositoId: string; tipoOperacion?: 'Pedido' | 'Presupuesto' }) =>
+    api.post<VentaActionResponseDto>('/api/v1/Ventas/borradores', data),
 })
+
+/**
+ * ¿El servidor guarda el tipo del borrador? El POST no lo devuelve; `BorradorVentaDto.tipoOperacion`
+ * existe solo desde #883, así que si el borrador recién creado lo trae, el servidor es el nuevo.
+ * Ante cualquier duda (sin respuesta, borrador no listado, sin el campo) es que no: se recorta el descuento.
+ */
+export async function servidorGuardaElTipo(borradorId: string): Promise<boolean> {
+  try {
+    const borradores = await api.get<BorradorVenta[]>('/api/v1/Ventas/borradores/mios')
+    return Array.isArray(borradores) && borradores.some((b) => b.id === borradorId && b.tipoOperacion !== undefined)
+  } catch {
+    return false
+  }
+}
 
 /** Autoguardado del borrador: PUT /Ventas/{id} con la versión vigente; devuelve la nueva. */
 export function guardarBorradorVenta(id: string, version: number, data: Record<string, unknown>) {
