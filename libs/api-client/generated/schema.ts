@@ -2863,6 +2863,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Compras/{id}/confirmar-y-recibir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ConfirmarYRecibirCompraCommand"];
+                    "text/json": components["schemas"]["ConfirmarYRecibirCompraCommand"];
+                    "application/*+json": components["schemas"]["ConfirmarYRecibirCompraCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Compras/{id}/comprobante": {
         parameters: {
             query?: never;
@@ -3077,7 +3155,44 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
                 };
             };
         };
@@ -15788,6 +15903,13 @@ export interface components {
             dni?: string | null;
             observacion?: string | null;
             fotoUrl?: string | null;
+        };
+        ConfirmarYRecibirCompraCommand: {
+            /** Format: int32 */
+            version?: number | null;
+            /** Format: date */
+            fechaFacturaProveedor?: string | null;
+            comprobante?: components["schemas"]["ComprobanteCompraInput"];
         };
         ConservadoDto: {
             /** Format: uuid */

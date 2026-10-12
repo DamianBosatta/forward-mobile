@@ -60,7 +60,7 @@ describe('useCompraBorrador', () => {
     const { result } = usar()
     await act(() => result.current.elegirProveedor('p1'))
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/borradores', { proveedorId: 'p1', depositoId: DEPOSITO_CENTRAL_ID })
-    expect(result.current.proveedor).toEqual({ id: 'p1', nombre: 'Insumos del Sur SA', condicion: '30 días' })
+    expect(result.current.proveedor).toEqual({ id: 'p1', nombre: 'Insumos del Sur SA', condicion: '30 días', pideFactura: false })
 
     act(() => result.current.setCantidadProducto(BALDE, 2))
     await waitFor(() => expect(puts().at(-1)?.detalles[0]).toMatchObject({ cantidad: 2, costoUnitario: 1020 }), ESPERA)
