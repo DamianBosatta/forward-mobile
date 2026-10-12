@@ -602,7 +602,7 @@ export type Vehiculo = components['schemas']['VehiculoDto']
 
 /**
  * HojaRuta list item — matches GET /api/v1/logistica/hojas-ruta list item shape.
- * estado is a numeric int (1=Programada, 2=EnCurso, 3=Finalizada, 4=Cancelada).
+ * estado is a numeric int (1=Programada, 2=EnCurso, 3=Finalizada, 4=Cancelada, 5=Documentada).
  */
 export type HojaRutaListItemDto = components['schemas']['HojaRutaListItemDto']
 
@@ -630,7 +630,9 @@ export enum EstadoHojaRuta {
   Programada = 1,
   EnCurso = 2,
   Finalizada = 3,
-  Cancelada = 4
+  Cancelada = 4,
+  /** Confirmada con remitos, todavía sin salir; se inicia igual que una Programada. */
+  Documentada = 5
 }
 
 // Backward-compatible alias for screens using HojaDeRuta.

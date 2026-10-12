@@ -136,7 +136,8 @@ export default function ConsolaChoferScreen() {
   const detalles = (viaje.detalles ?? []) as ParadaDto[]
   const resumen = resumenRuta(detalles)
   const finalizada = viaje.estado === EstadoHojaRuta.Finalizada
-  const programada = viaje.estado === EstadoHojaRuta.Programada
+  // Documentada (confirmada con remitos, sin salir) se inicia igual que Programada.
+  const programada = viaje.estado === EstadoHojaRuta.Programada || viaje.estado === EstadoHojaRuta.Documentada
   // La oficina puede cancelar una hoja mientras no salió (#860): ya no se inicia ni se reporta.
   const cancelada = viaje.estado === EstadoHojaRuta.Cancelada
   // Solo el chofer asignado (o el administrador de sistemas) reporta; el servidor lo exige igual.

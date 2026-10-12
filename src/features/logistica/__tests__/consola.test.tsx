@@ -286,4 +286,23 @@ describe('Consola del chofer: hoja de ruta', () => {
       expect(mockGet.mock.calls.map(([u]) => String(u))).toContain('/api/v1/Logistica/hojas-ruta?choferId=u1&fecha=2026-10-10'),
     )
   })
+
+  it('una hoja Documentada (5) deja iniciar el recorrido y manda el mismo POST que una Programada', async () => {
+    mockPost.mockImplementation(async () => {
+      hojaServidor = { ...HOJA, estado: 2 }
+      return true
+    })
+    pintar({ ...HOJA, estado: 5 })
+    expect(screen.queryByLabelText('Reportar entrega')).toBeNull()
+    await userEvent.press(await screen.findByLabelText('Iniciar recorrido'))
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/iniciar', undefined)
+  })
+
+  it('si el servidor bloquea la salida de una Documentada, se ve su mensaje y la hoja sigue sin salir', async () => {
+    mockPost.mockRejectedValue(Object.assign(new Error('Falta la documentación de 2 paradas.'), { errors: [] }))
+    pintar({ ...HOJA, estado: 5 })
+    await userEvent.press(await screen.findByLabelText('Iniciar recorrido'))
+    expect(await screen.findByText('Falta la documentación de 2 paradas.')).toBeTruthy()
+    expect(screen.getByLabelText('Iniciar recorrido')).toBeTruthy()
+  })
 })

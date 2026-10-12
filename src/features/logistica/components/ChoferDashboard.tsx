@@ -37,6 +37,8 @@ function getEstadoBadge(estado: number | undefined, colors: ReturnType<typeof us
   switch (estado) {
     case EstadoHojaRuta.Programada:
       return { label: 'PROGRAMADA', color: BRAND.orange }
+    case EstadoHojaRuta.Documentada:
+      return { label: 'DOCUMENTADA', color: BRAND.blue }
     case EstadoHojaRuta.EnCurso:
       return { label: 'EN CURSO', color: colors.primary }
     case EstadoHojaRuta.Finalizada:
@@ -104,7 +106,7 @@ export function ChoferDashboard() {
   )
 
   const programado = useMemo(
-    () => sorted.find(h => h.estado === EstadoHojaRuta.Programada),
+    () => sorted.find(h => h.estado === EstadoHojaRuta.Programada || h.estado === EstadoHojaRuta.Documentada),
     [sorted],
   )
 
@@ -121,7 +123,7 @@ export function ChoferDashboard() {
       return h.estado === EstadoHojaRuta.Finalizada && t >= mesStart
     }).length
 
-    const totalProgramados = hojas.filter(h => h.estado === EstadoHojaRuta.Programada).length
+    const totalProgramados = hojas.filter(h => h.estado === EstadoHojaRuta.Programada || h.estado === EstadoHojaRuta.Documentada).length
 
     // The list endpoint returns HojaRutaListItemDto; cantidadParadas is required in the contract.
     const paradasActivas = heroHoja?.cantidadParadas ?? 0
