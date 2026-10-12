@@ -6,7 +6,7 @@ import { useAuthStore } from '../../libs/store/auth.store'
 import { useThemeStore, useColors, radii, space, typeScale, type ThemeMode } from '../../libs/theme'
 import { ConfirmModal } from '@/core/ui'
 import { Button, Segmented, TopBar, useMenuLeading, type SegmentedOption } from '@/core/ui/fw'
-import { API_URL, setApiUrl, ENV_PROD, ENV_DEV, ENV_LOCAL } from '@/libs/api-client'
+import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
 import { safeHaptics } from '@/core/utils/haptics'
 import { useVentaNuevaStore, usePuedeProbarVentaNueva } from '@/features/ventas/lib/ventaNueva'
 import { CambiarContrasena } from '@/features/cuenta/components/CambiarContrasena'
@@ -20,10 +20,9 @@ const THEME_OPTIONS: SegmentedOption<ThemeMode>[] = [
 ]
 const ENTORNOS: SegmentedOption<string>[] = [
   { value: ENV_PROD, label: 'Producción' },
-  { value: ENV_DEV, label: 'Desarrollo' },
   ...(__DEV__ ? [{ value: ENV_LOCAL, label: 'Local' }] : []),
 ]
-const nombreEntorno = (url: string | null) => (url === ENV_DEV ? 'desarrollo' : url === ENV_LOCAL ? 'local (docker)' : 'producción')
+const nombreEntorno = (url: string | null) => (url === ENV_LOCAL ? 'local (docker)' : 'producción')
 
 /** Mi cuenta (fase 4.6, lámina MiCuenta): datos, tema, contraseña y cerrar sesión. */
 export default function PerfilScreen() {

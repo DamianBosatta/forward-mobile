@@ -16,7 +16,7 @@ const mockGet = jest.fn()
 const mockDelete = jest.fn()
 jest.mock('@/core/api/client', () => ({
   API_URL: 'https://api.forward-gestion.com.ar',
-  ENV_PROD: 'https://api.forward-gestion.com.ar', ENV_DEV: 'https://dev', ENV_LOCAL: 'http://local',
+  ENV_PROD: 'https://api.forward-gestion.com.ar', ENV_LOCAL: 'http://local',
   setApiUrl: jest.fn(),
   api: {
     post: (url: string, body: unknown) => mockPost(url, body),
@@ -157,7 +157,7 @@ describe('Mi cuenta', () => {
     usuario()
     mockPost.mockResolvedValueOnce(true)
     pintar()
-    await userEvent.press(screen.getByRole('radio', { name: 'Desarrollo' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Local' }))
     await userEvent.press(screen.getByLabelText('Confirmar: Cambiar y salir'))
 
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
@@ -169,7 +169,7 @@ describe('Mi cuenta', () => {
     let terminar: (v: boolean) => void = () => {}
     mockPost.mockReturnValueOnce(new Promise<boolean>((r) => { terminar = r }))
     pintar()
-    await userEvent.press(screen.getByRole('radio', { name: 'Desarrollo' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Local' }))
     const confirmar = screen.getByLabelText('Confirmar: Cambiar y salir')
     fireEvent.press(confirmar)
     fireEvent.press(confirmar) // segundo toque sobre la misma confirmación
@@ -190,13 +190,13 @@ describe('Mi cuenta', () => {
     setApiUrl.mockRejectedValueOnce(new Error('disco lleno'))
     pintar()
 
-    await userEvent.press(screen.getByRole('radio', { name: 'Desarrollo' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Local' }))
     await userEvent.press(screen.getByLabelText('Confirmar: Cambiar y salir'))
     await waitFor(() => expect(alerta).toHaveBeenCalledWith('No se pudo cambiar de servidor', expect.stringContaining('disco lleno')))
     expect(mockReplace).not.toHaveBeenCalled()
 
     setApiUrl.mockResolvedValueOnce(undefined)
-    await userEvent.press(screen.getByRole('radio', { name: 'Desarrollo' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Local' }))
     await userEvent.press(screen.getByLabelText('Confirmar: Cambiar y salir'))
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
     alerta.mockRestore()
