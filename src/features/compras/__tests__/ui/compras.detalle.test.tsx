@@ -10,8 +10,12 @@ jest.setTimeout(15000)
 const mockGet = jest.fn()
 const mockPost = jest.fn()
 const mockDelete = jest.fn()
+const mockPostConSobre = jest.fn()
 jest.mock('@/core/api/client', () => ({
-  api: { get: (...a: unknown[]) => mockGet(...a), post: (...a: unknown[]) => mockPost(...a), delete: (...a: unknown[]) => mockDelete(...a) },
+  api: {
+    get: (...a: unknown[]) => mockGet(...a), post: (...a: unknown[]) => mockPost(...a), delete: (...a: unknown[]) => mockDelete(...a),
+    postConSobre: (...a: unknown[]) => mockPostConSobre(...a),
+  },
   API_URL: 'x',
 }))
 const mockPush = jest.fn()
@@ -41,6 +45,7 @@ beforeEach(() => {
   mockPermisos = ['update', 'delete']
   mockPost.mockResolvedValue(undefined)
   mockDelete.mockResolvedValue(undefined)
+  mockPostConSobre.mockResolvedValue({ data: 'aaaa1111-0000', sobre: { succeeded: true, message: 'Compra confirmada. Compra recibida.' } })
   useAuthStore.setState({ user: null })
 })
 
@@ -178,6 +183,63 @@ describe('detalle de compra', () => {
       abrir({ estado: 'Confirmado' })
       await screen.findByRole('button', { name: 'Recibir' })
       expect(screen.queryByRole('button', { name: 'Anular recepción' })).toBeNull()
+    })
+  })
+
+  describe('confirmar y recibir desde la nota de pedido', () => {
+    const URL_CYR = '/api/v1/Compras/aaaa1111-0000/confirmar-y-recibir'
+    const enviar = () => userEvent.press(screen.getAllByRole('button', { name: 'Confirmar y recibir' }).at(-1)!)
+
+    it('una sola llamada con la versión vista y la fecha de factura; muestra el mensaje del servidor y recarga', async () => {
+      abrir({ condicionPago: { tipo: 'DiasDesdeFactura', dias: 30, descripcion: '30 días desde la factura' } })
+      await userEvent.press(await screen.findByRole('button', { name: 'Confirmar y recibir' }))
+      fireEvent.changeText(screen.getByLabelText('Fecha de la factura'), '05/10/2026')
+      mockGet.mockClear()
+      await enviar()
+      expect(mockPostConSobre).toHaveBeenCalledWith(URL_CYR, { version: 3, fechaFacturaProveedor: '2026-10-05' })
+      expect(await screen.findByText('Compra confirmada. Compra recibida.')).toBeTruthy()
+      await waitFor(() => expect(mockGet).toHaveBeenCalled())
+      expect(mockPost).not.toHaveBeenCalled()
+    })
+
+    it('409 CompraYaRecibida: avisa que ya quedó recibida, sin error', async () => {
+      mockPostConSobre.mockRejectedValue(Object.assign(new Error('La compra ya fue recibida.'), { status: 409, codigo: 'CompraYaRecibida' }))
+      abrir({})
+      await userEvent.press(await screen.findByRole('button', { name: 'Confirmar y recibir' }))
+      expect(screen.queryByLabelText('Fecha de la factura')).toBeNull()
+      await enviar()
+      expect(await screen.findByText('La compra ya quedó recibida.')).toBeTruthy()
+      expect(screen.queryByRole('alert')).toBeNull()
+    })
+
+    it('un 400 queda en la hoja con el motivo del servidor', async () => {
+      mockPostConSobre.mockRejectedValue(Object.assign(new Error('Falta la fecha de la factura del proveedor.'), { status: 400 }))
+      abrir({})
+      await userEvent.press(await screen.findByRole('button', { name: 'Confirmar y recibir' }))
+      await enviar()
+      expect(await screen.findByText('Falta la fecha de la factura del proveedor.')).toBeTruthy()
+      expect(screen.getByLabelText('Confirmar y recibir la compra')).toBeTruthy()
+    })
+
+    it('sin respuesta (red): no dice que no se hizo, pide revisar la compra', async () => {
+      mockPostConSobre.mockRejectedValue(new TypeError('Network request failed'))
+      abrir({})
+      await userEvent.press(await screen.findByRole('button', { name: 'Confirmar y recibir' }))
+      await enviar()
+      expect(await screen.findByText('No sabemos si se recibió; revisá la compra.')).toBeTruthy()
+    })
+
+    it('una compra ya confirmada no la ofrece: se recibe', async () => {
+      abrir({ estado: 'Confirmado' })
+      await screen.findByRole('button', { name: 'Recibir' })
+      expect(screen.queryByRole('button', { name: 'Confirmar y recibir' })).toBeNull()
+    })
+
+    it('sin permiso de modificar no está', async () => {
+      mockPermisos = ['delete']
+      abrir({})
+      await screen.findByRole('button', { name: 'Cancelar compra' })
+      expect(screen.queryByRole('button', { name: 'Confirmar y recibir' })).toBeNull()
     })
   })
 })

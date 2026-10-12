@@ -6,6 +6,7 @@ import { inicioKeys } from '@/core/query/queryClient'
 import type { CompraDto, ProductoDetailDto, SocioDetailDto } from '@/libs/api-client/types'
 import { useDepositoDeConsulta } from '@/features/catalogo/hooks/useDepositoDeConsulta'
 import { mensajeDelServidor } from '../lib/mensaje-error'
+import { confirmarYRecibir } from '../lib/confirmar-y-recibir'
 import { detallesParaServidor, lineaDesdeDetalle, type LineaCompra } from '../lib/lineaCompra'
 
 export interface ProveedorCompra {
@@ -13,6 +14,8 @@ export interface ProveedorCompra {
   nombre: string
   /** Condición de pago del proveedor, tal como la describe el servidor. */
   condicion: string | null
+  /** La condición de pago se cuenta desde la factura: recibir pide su fecha. */
+  pideFactura: boolean
 }
 
 export type EstadoGuardado = 'nuevo' | 'guardando' | 'guardado' | 'error' | 'conflicto'
@@ -27,7 +30,7 @@ const salidasPendientes = new Map<string, Promise<unknown>>()
 async function proveedorDesdeServidor(id: string): Promise<{ proveedor: ProveedorCompra; faltantes: string[] }> {
   const s = await api.get<SocioDetailDto>(`/api/v1/socios-comerciales/${id}`)
   return {
-    proveedor: { id, nombre: s.razonSocial, condicion: s.condicionPago?.descripcion ?? null },
+    proveedor: { id, nombre: s.razonSocial, condicion: s.condicionPago?.descripcion ?? null, pideFactura: s.condicionPago?.tipo === 'DiasDesdeFactura' },
     faltantes: s.condicionesDeCompraFaltantes ?? [],
   }
 }
@@ -206,12 +209,13 @@ export function useCompraBorrador(borradorInicial?: string) {
     })
   }, [lineas, precargarCosto])
 
-  const terminar = useCallback(async (accion: (id: string, v: number) => Promise<unknown>) => {
+  const terminar = useCallback(async <T>(accion: (id: string, v: number) => Promise<T>): Promise<T> => {
     const v = await guardarAhora()
-    await accion(compraId!, v)
+    const r = await accion(compraId!, v)
     queryClient.invalidateQueries({ queryKey: comprasKeys.all })
     // No es una mutación de react-query: Inicio (que el QueryClient refresca tras cada mutación) se marca a mano.
     queryClient.invalidateQueries({ queryKey: inicioKeys.all })
+    return r
   }, [compraId, guardarAhora, queryClient])
 
   return {
@@ -219,8 +223,11 @@ export function useCompraBorrador(borradorInicial?: string) {
     descuentoPorcentaje, estado, error, cargando,
     elegirProveedor, setCantidadProducto, reintentar,
     recargar: () => (compraId ? cargar(compraId) : Promise.resolve()),
-    guardarNota: () => terminar((id, v) => borradorCompraApi.guardarNota(id, v)),
-    confirmar: () => terminar((id) => borradorCompraApi.confirmar(id)),
+    guardarNota: () => terminar((id, v) => borradorCompraApi.guardarNota(id, v)).then(() => {}),
+    confirmar: () => terminar((id) => borradorCompraApi.confirmar(id)).then(() => {}),
+    /** Guarda lo pendiente y confirma y recibe en una llamada, con la versión de ese guardado. */
+    confirmarYRecibir: (fechaFacturaProveedor?: string) =>
+      terminar((id, version) => confirmarYRecibir(id, { version, fechaFacturaProveedor })),
     descartar: async () => {
       // Lo pendiente ya no se guarda; si hay un guardado en vuelo, se espera a que termine antes de borrar.
       descartado.current = true

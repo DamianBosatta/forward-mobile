@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CompraNueva } from '../../components/CompraNueva'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
@@ -7,16 +7,20 @@ import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 const mockGet = jest.fn()
 const mockPost = jest.fn()
 const mockPut = jest.fn()
+const mockPostConSobre = jest.fn()
 jest.mock('@/core/api/client', () => ({
   api: {
     get: (...a: unknown[]) => mockGet(...a),
     post: (...a: unknown[]) => mockPost(...a),
     put: (...a: unknown[]) => mockPut(...a),
+    postConSobre: (...a: unknown[]) => mockPostConSobre(...a),
   },
   API_URL: 'x',
 }))
 const mockReplace = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: mockReplace, back: jest.fn() }) }))
+let mockPuedeModificar = true
+jest.mock('@/core/auth/RequirePermission', () => ({ usePermissions: () => ({ canDo: (m: string, a: string) => mockPuedeModificar && m === 'MOD_COMPRAS' && a === 'update' }) }))
 const mockDims = jest.fn()
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => mockDims() }))
 
@@ -24,10 +28,11 @@ const ESPERA = { timeout: 3000 }
 const COMPLETO = { id: 'p1', razonSocial: 'Insumos del Sur SA', requiereCompletar: false }
 const INCOMPLETO = { id: 'p2', razonSocial: 'Gorrión Mayorista', requiereCompletar: true }
 
+let mockCondicion: { tipo: string; dias: number; descripcion: string } | undefined
 function socio(id: string) {
   return id === 'p2'
     ? { id, razonSocial: 'Gorrión Mayorista', condicionesDeCompraFaltantes: ['condición de pago', 'franja de entrega'] }
-    : { id, razonSocial: 'Insumos del Sur SA', condicionPago: { tipo: 'DiasDesdeEntrega', dias: 30, descripcion: '30 días' }, condicionesDeCompraFaltantes: [] }
+    : { id, razonSocial: 'Insumos del Sur SA', condicionPago: mockCondicion, condicionesDeCompraFaltantes: [] }
 }
 
 function pantalla(props: { borradorId?: string } = {}) {
@@ -40,6 +45,9 @@ const puts = () => mockPut.mock.calls.map(([, body]) => body as { detalles: { co
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockPuedeModificar = true
+  mockCondicion = { tipo: 'DiasDesdeEntrega', dias: 30, descripcion: '30 días' }
+  mockPostConSobre.mockResolvedValue({ data: 'c1', sobre: { succeeded: true, message: 'Compra confirmada. Compra recibida.' } })
   mockGet.mockImplementation((url: string) => {
     if (url.startsWith('/api/v1/socios-comerciales?')) return Promise.resolve({ items: [COMPLETO, INCOMPLETO], totalCount: 2 })
     if (url.startsWith('/api/v1/socios-comerciales/')) return Promise.resolve(socio(url.split('/').pop()!))
@@ -106,5 +114,77 @@ describe('pantalla de compra nueva', () => {
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/c1/confirmar', { compraId: 'c1' }), ESPERA)
     expect(puts().at(-1)?.detalles[0]).toMatchObject({ cantidad: 3, costoUnitario: 1020 })
     expect(mockReplace).toHaveBeenCalledWith('/(tabs)/compras/c1')
+  })
+
+  describe('confirmar y recibir', () => {
+    const URL_CYR = '/api/v1/Compras/c1/confirmar-y-recibir'
+    async function abrirHoja(proveedor = 'Insumos del Sur SA') {
+      pantalla()
+      await userEvent.press(await screen.findByRole('button', { name: proveedor }))
+      await agregarBalde('3')
+      await userEvent.press(screen.getByRole('button', { name: 'Cerrar' }))
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar y recibir' })).toBeEnabled())
+      await userEvent.press(screen.getByRole('button', { name: 'Confirmar y recibir' }))
+    }
+    const enviar = () => userEvent.press(screen.getAllByRole('button', { name: 'Confirmar y recibir' }).at(-1)!)
+
+    it('guarda lo pendiente y hace UNA llamada con la versión de ese guardado y la fecha de factura; abre la compra con el mensaje del servidor', async () => {
+      mockCondicion = { tipo: 'DiasDesdeFactura', dias: 30, descripcion: '30 días desde la factura' }
+      await abrirHoja()
+      fireEvent.changeText(screen.getByLabelText('Fecha de la factura'), '05/10/2026')
+      await enviar()
+      await waitFor(() => expect(mockReplace).toHaveBeenCalled(), ESPERA)
+      expect(mockPostConSobre).toHaveBeenCalledTimes(1)
+      expect(mockPostConSobre).toHaveBeenCalledWith(URL_CYR, { version: 10 + mockPut.mock.calls.length, fechaFacturaProveedor: '2026-10-05' })
+      expect(puts().at(-1)?.detalles[0]).toMatchObject({ cantidad: 3, costoUnitario: 1020 })
+      expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Compras/c1/confirmar', expect.anything())
+      expect(mockReplace).toHaveBeenCalledWith(`/(tabs)/compras/c1?aviso=${encodeURIComponent('Compra confirmada. Compra recibida.')}&tono=exito`)
+    })
+
+    it('409 CompraYaRecibida no es un error: abre la compra avisando que ya quedó recibida', async () => {
+      mockPostConSobre.mockRejectedValue(Object.assign(new Error('La compra ya fue recibida.'), { status: 409, codigo: 'CompraYaRecibida', data: 'c1' }))
+      await abrirHoja()
+      await enviar()
+      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(`/(tabs)/compras/c1?aviso=${encodeURIComponent('La compra ya quedó recibida.')}&tono=exito`), ESPERA)
+      expect(screen.queryByText('La compra ya fue recibida.')).toBeNull()
+    })
+
+    it('sin condición conocida manda sin fecha; el 400 del servidor queda a la vista y no sale de la pantalla', async () => {
+      mockCondicion = undefined
+      mockPostConSobre.mockRejectedValue(Object.assign(new Error('Falta la fecha de la factura del proveedor.'), { status: 400 }))
+      await abrirHoja()
+      expect(screen.queryByLabelText('Fecha de la factura')).toBeNull()
+      await enviar()
+      expect(await screen.findByText('Falta la fecha de la factura del proveedor.', {}, ESPERA)).toBeTruthy()
+      expect(mockPostConSobre).toHaveBeenCalledWith(URL_CYR, expect.objectContaining({ fechaFacturaProveedor: null }))
+      expect(mockReplace).not.toHaveBeenCalled()
+    })
+
+    it('otro 409: muestra el motivo y recarga la compra', async () => {
+      mockPostConSobre.mockRejectedValue(Object.assign(new Error('Otro usuario modificó la compra.'), { status: 409 }))
+      await abrirHoja()
+      const base = mockGet.getMockImplementation()!
+      mockGet.mockImplementation((url: string) => base(url === '/api/v1/Compras/c1' ? '/api/v1/Compras/b9' : url))
+      mockGet.mockClear()
+      await enviar()
+      await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/v1/Compras/c1'), ESPERA)
+      expect(await screen.findByText('Otro usuario modificó la compra.', {}, ESPERA)).toBeTruthy()
+      expect(mockReplace).not.toHaveBeenCalled()
+    })
+
+    it('sin respuesta (red o timeout) no dice que no se hizo: abre la compra para revisarla', async () => {
+      mockPostConSobre.mockRejectedValue(new TypeError('Network request failed'))
+      await abrirHoja()
+      await enviar()
+      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(`/(tabs)/compras/c1?aviso=${encodeURIComponent('No sabemos si se recibió; revisá la compra.')}&tono=advertencia`), ESPERA)
+    })
+
+    it('sin permiso de modificar compras no está la acción', async () => {
+      mockPuedeModificar = false
+      pantalla()
+      await userEvent.press(await screen.findByRole('button', { name: 'Insumos del Sur SA' }))
+      await screen.findByRole('button', { name: 'Confirmar compra' })
+      expect(screen.queryByRole('button', { name: 'Confirmar y recibir' })).toBeNull()
+    })
   })
 })
