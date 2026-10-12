@@ -104,11 +104,11 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
         <View style={{ marginBottom: space[3] }}>
           <DocumentCard
             numero={x.id.slice(0, 8).toUpperCase()}
-            vendedor={x.nombreDeposito}
+            vendedor={x.creadoPor ?? x.nombreDeposito}
             avatar={x.razonSocialProveedor}
             direccion={x.razonSocialProveedor}
             hora={horaDe(x.fecha)}
-            detalle={productos(x.itemsCount ?? 0)}
+            detalle={x.creadoPor ? [productos(x.itemsCount ?? 0), x.nombreDeposito].filter(Boolean).join(' · ') : productos(x.itemsCount ?? 0)}
             importe={x.totalAmount}
             chip={chipForEstado('compra', x.estado)}
             onPress={() => abrir(x.id)}
