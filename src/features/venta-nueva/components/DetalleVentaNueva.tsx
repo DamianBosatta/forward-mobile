@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { parseDateSafe, partesArgentina } from '@/src/utils/date'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
 import { api } from '@/core/api/client'
@@ -24,11 +25,12 @@ type Simulacion = components['schemas']['SimulacionComisionDto']
 const ENTREGA: Record<string, string> = { LogisticaPropia: 'Logística propia', RetiroEnLocal: 'Retiro en el local', Expreso: 'Expreso' }
 const ESTADO_RECHAZADA = 11
 
-/** "Jueves 8 de octubre" de un día "YYYY-MM-DD" tal como se guardó (sin pasar por husos horarios). */
+/** "Jueves 8 de octubre": la fecha de entrega llega como instante UTC y el día es el argentino, igual que en la tarjeta. */
 export function diaDeEntrega(fecha: string | null | undefined): string | null {
-  const m = fecha?.match(/^(\d{4})-(\d{2})-(\d{2})/)
-  if (!m) return null
-  const texto = format(new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])), "EEEE d 'de' MMMM", { locale: es })
+  const instante = parseDateSafe(fecha)
+  if (!instante) return null
+  const f = partesArgentina(instante.getTime())
+  const texto = format(new Date(f.anio, f.mes, f.dia), "EEEE d 'de' MMMM", { locale: es })
   return texto.charAt(0).toUpperCase() + texto.slice(1)
 }
 

@@ -120,7 +120,9 @@ describe('detalle de la venta nueva (PR 2.10)', () => {
   })
 
   it('el día de entrega se lee tal cual se guardó, sin correrse por el huso', () => {
-    expect(diaDeEntrega('2026-10-08T00:00:00Z')).toBe('Jueves 8 de octubre')
+    // Medianoche argentina (03:00Z), como la guarda el servidor; 01:00Z todavía es el día anterior en Argentina.
+    expect(diaDeEntrega('2026-10-08T03:00:00Z')).toBe('Jueves 8 de octubre')
+    expect(diaDeEntrega('2026-10-08T01:00:00Z')).toBe('Miércoles 7 de octubre')
     expect(diaDeEntrega(null)).toBeNull()
   })
 })
