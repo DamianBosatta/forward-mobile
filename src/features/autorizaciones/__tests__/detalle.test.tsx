@@ -92,6 +92,54 @@ describe('Autorizar venta: el detalle', () => {
     expect(mockBack).toHaveBeenCalled()
   })
 
+  describe('descuento adicional al autorizar (opcional)', () => {
+    const SIN_AMARILLO = { ...VENTA, venta: { ...VENTA.venta, motivoPendienteAutorizacion: 1 } }
+    async function abrirHoja() {
+      permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+      pintar(SIN_AMARILLO)
+      await userEvent.press(await screen.findByRole('button', { name: 'Autorizar' }))
+      const hoja = within(screen.getByLabelText('Autorizar venta'))
+      await waitFor(() => expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBeFalsy())
+      return hoja
+    }
+
+    it('se manda en el pedido de autorizar, con coma o punto decimal', async () => {
+      const hoja = await abrirHoja()
+      expect(hoja.getByText(/No cambia la comisión del vendedor/)).toBeTruthy()
+      await userEvent.type(hoja.getByLabelText('Descuento adicional al autorizar (opcional)'), '5,25')
+      await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 42, razon: null, descuentoAdicionalPorcentaje: 5.25 })
+    })
+
+    it.each([['12,345', 'hasta 2 decimales'], ['150', 'entre 0 y 100'], ['abc', 'Escribí un número']])(
+      '"%s" no se manda: avisa (%s) y no deja autorizar',
+      async (texto, aviso) => {
+        const hoja = await abrirHoja()
+        await userEvent.type(hoja.getByLabelText('Descuento adicional al autorizar (opcional)'), texto)
+        expect(hoja.getByLabelText('Descuento adicional al autorizar (opcional)').props.accessibilityHint).toMatch(aviso)
+        expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBe(true)
+        await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
+        expect(mockPost).not.toHaveBeenCalled()
+      },
+    )
+
+    it('con descuento, la razón avisa que el piso la puede volver obligatoria', async () => {
+      const hoja = await abrirHoja()
+      const aviso = 'Si el descuento deja líneas por debajo del piso, la razón es obligatoria.'
+      expect(hoja.queryByText(aviso)).toBeNull()
+      await userEvent.type(hoja.getByLabelText('Descuento adicional al autorizar (opcional)'), '5')
+      expect(hoja.getByText(aviso)).toBeTruthy()
+      expect(hoja.getByLabelText('Razón para autorizar (opcional)').props.accessibilityHint).toBe(aviso)
+    })
+
+    it('vacío o en 0 no se manda el campo (sin descuento adicional)', async () => {
+      const hoja = await abrirHoja()
+      await userEvent.type(hoja.getByLabelText('Descuento adicional al autorizar (opcional)'), '0')
+      await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 42, razon: null })
+    })
+  })
+
   it('si la venta ya no espera autorización, no ofrece decidir', async () => {
     permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
     pintar({ ...VENTA, venta: { ...VENTA.venta, estado: 2 } })

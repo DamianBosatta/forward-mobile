@@ -3,6 +3,7 @@ import { diaArgentina } from '@/src/utils/date'
 import { useBorradoresVentaMios, useInfiniteVentas, useVentasResumen } from '@/libs/api-client/ventas'
 import { itemsCargados, totalDelServidor } from '@/features/listas/lib/contador'
 import { contadorVentas } from '../lib/resumenVentas'
+import { useAlLlegarFiltro, type FiltroVentasRuta } from '@/features/listas/lib/filtroDeRuta'
 import type { EstadoVenta, Venta } from '@/libs/api-client'
 
 export type PestanaVentas = 'presupuestos' | 'pedidos' | 'borradores'
@@ -23,17 +24,25 @@ export function fechaDesdePeriodo(periodo: PeriodoVentas, hoy: Date = new Date()
 }
 
 /**
- * Lista de ventas con el formato nuevo (Bloque 9A, PR 2.1). Todo filtro va al servidor:
+ * Lista de ventas con el formato nuevo (Bloque 9A, PR 2.1). `filtroDeRuta`: el de una fila de Inicio. Todo filtro va al servidor:
  * tipo, estado, período y búsqueda. Nada se filtra sobre las páginas cargadas, así que el
  * contador "Mostrando N de M" vale con cualquier filtro. El resumen se pide con los mismos filtros
  * y pone el importe del filtro ("· $ X").
  */
-export function useVentasListaNueva() {
-  const [pestana, setPestana] = useState<PestanaVentas>('pedidos')
-  const [estado, setEstado] = useState<FiltroEstado>('todos')
-  const [periodo, setPeriodo] = useState<PeriodoVentas>('30d')
+export function useVentasListaNueva(filtroDeRuta: FiltroVentasRuta | null = null) {
+  const [pestana, setPestana] = useState<PestanaVentas>(filtroDeRuta?.tipo ?? 'pedidos')
+  const [estado, setEstado] = useState<FiltroEstado>(filtroDeRuta?.estado ?? 'todos')
+  // Desde Inicio, todo el período: Inicio cuenta sin fecha.
+  const [periodo, setPeriodo] = useState<PeriodoVentas>(filtroDeRuta ? 'todo' : '30d')
   const [busqueda, setBusqueda] = useState('')
   const [busquedaEnviada, setBusquedaEnviada] = useState('')
+  useAlLlegarFiltro(filtroDeRuta, (f) => {
+    setPestana(f.tipo)
+    setEstado(f.estado)
+    setPeriodo('todo')
+    setBusqueda('')
+    setBusquedaEnviada('')
+  })
 
   useEffect(() => {
     const t = setTimeout(() => setBusquedaEnviada(busqueda.trim()), ESPERA_BUSQUEDA_MS)

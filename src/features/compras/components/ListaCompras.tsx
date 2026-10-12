@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, SectionList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import {
@@ -12,6 +12,7 @@ import type { CompraDtoList } from '@/libs/api-client'
 import type { BorradorCompra } from '@/libs/api-client/compras'
 import { agruparPorDia, horaDe, tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { useComprasList, type PeriodoCompras, type PestanaCompras } from '../hooks/useComprasList'
+import type { EstadoCompraRuta } from '@/features/listas/lib/filtroDeRuta'
 
 const PESTANAS: { key: PestanaCompras; label: string }[] = [
   { key: 'pendientes', label: 'Pendientes' },
@@ -25,23 +26,35 @@ const PERIODOS: SegmentedOption<PeriodoCompras>[] = [
   { value: 'todo', label: 'Todo' },
 ]
 
+const ESTADOS_PENDIENTES: { value: EstadoCompraRuta | null; label: string }[] = [
+  { value: null, label: 'Todas' },
+  { value: 'NotaPedido', label: 'Notas de pedido' },
+  { value: 'Confirmado', label: 'Por recibir' },
+]
+
 const productos = (n: number) => `${n} ${n === 1 ? 'producto' : 'productos'}`
 
 interface Props {
   /** Detalle embebido para el panel derecho en tablet horizontal. */
   detalle: (id: string, cerrar: () => void) => React.ReactNode
+  /** El estado con que la abrió una fila de Inicio. */
+  estadoDeRuta?: EstadoCompraRuta | null
 }
 
 /** Lista de compras con el formato nuevo (láminas Compras y TabCompras). */
-export function ListaCompras({ detalle }: Props) {
+export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
   const c = useColors()
   const router = useRouter()
   const leading = useMenuLeading()
   const { isTablet, isTabletLandscape } = useResponsive()
   const { canDo } = usePermissions()
   const [elegida, setElegida] = useState<string | null>(null)
-  const l = useComprasList()
+  const l = useComprasList(estadoDeRuta)
   const q = l.comprasQuery
+  // Tablet: si el filtro (también el que llega de Inicio) saca la compra abierta, se cierra su detalle.
+  useEffect(() => {
+    if (elegida && q.data && !q.isFetching && !q.isPlaceholderData && !l.compras.some((x) => x.id === elegida)) setElegida(null)
+  }, [elegida, q.data, q.isFetching, q.isPlaceholderData, l.compras])
 
   const abrir = (id: string) => {
     if (isTabletLandscape) setElegida(id)
@@ -54,6 +67,24 @@ export function ListaCompras({ detalle }: Props) {
     <View style={{ gap: space[3], paddingBottom: space[2] }}>
       <Field label="Buscar" placeholder="Proveedor o número" value={l.busqueda} onChangeText={l.setBusqueda} autoCorrect={false} />
       <Segmented accessibilityLabel="Período" options={PERIODOS} value={l.periodo} onChange={l.setPeriodo} />
+      {l.pestana === 'pendientes' ? (
+        <View accessibilityRole="radiogroup" accessibilityLabel="Estado" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+          {ESTADOS_PENDIENTES.map((e) => {
+            const sel = e.value === l.soloEstado
+            return (
+              <Pressable
+                key={e.label}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: sel }}
+                onPress={() => l.setSoloEstado(e.value)}
+                style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: sel ? c.brand : c.border, backgroundColor: sel ? c.brandSoft : c.surface }}
+              >
+                <Text style={[typeScale.secundario, { color: sel ? c.brandInk : c.text }]}>{e.label}</Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      ) : null}
       {l.contador ? <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{l.contador}</Text> : null}
       {l.resumenTexto ? <Text style={secundario}>{l.resumenTexto}</Text> : null}
       {l.compradoTexto ? <Text style={secundario}>{l.compradoTexto}</Text> : null}

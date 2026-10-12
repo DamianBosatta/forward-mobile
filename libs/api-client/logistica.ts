@@ -59,6 +59,7 @@ export interface VentasPreparacionParams {
   fechaHasta?: string
   metodoEntrega?: number
   ticketId?: string
+  vendedorId?: string
 }
 
 /**
@@ -190,17 +191,24 @@ export function useHojaRuta(id: string) {
  *
  * Query params are PascalCase to match backend GetVentasParaPreparacionQuery.cs.
  */
-export function useVentasParaPreparacion(params?: VentasPreparacionParams, opciones?: { activa?: boolean }) {
+export function useVentasParaPreparacion(params?: VentasPreparacionParams, opciones?: { activa?: boolean; mantenerAlFiltrar?: boolean }) {
   const searchParams = new URLSearchParams()
   if (params?.fechaDesde) searchParams.set('FechaDesde', params.fechaDesde)
   if (params?.fechaHasta) searchParams.set('FechaHasta', params.fechaHasta)
   if (params?.metodoEntrega != null) searchParams.set('MetodoEntrega', String(params.metodoEntrega))
   if (params?.ticketId) searchParams.set('TicketId', params.ticketId)
+  if (params?.vendedorId) searchParams.set('VendedorId', params.vendedorId)
 
   return useQuery({
     queryKey: pickingKeys.list(params ?? {}),
     queryFn: () => api.get<VentaPreparacion[]>(`/api/v1/Logistica/ventas-para-preparacion?${searchParams}`),
     staleTime: 15_000,
+    // `mantenerAlFiltrar`: al cambiar logística o vendedor siguen a la vista los pedidos de antes
+    // hasta que llega la respuesta (sin parpadeo). De otro día nunca: se ve la carga.
+    placeholderData: (anterior, consulta) => {
+      const p = consulta?.queryKey[2] as VentasPreparacionParams | undefined
+      return opciones?.mantenerAlFiltrar && p?.fechaDesde === params?.fechaDesde && p?.fechaHasta === params?.fechaHasta ? anterior : undefined
+    },
     // `activa: false` (pantalla fuera de foco) pausa el sondeo.
     refetchInterval: opciones?.activa === false ? false : 30_000,
   })

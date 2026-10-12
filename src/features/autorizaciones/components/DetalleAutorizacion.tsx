@@ -144,6 +144,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
         version={venta.version}
         bloqueado={q.isFetching}
         razonObligatoria={pideRazon(venta.motivoPendienteAutorizacion)}
+        ofrecerDescuento
         onConflicto={setAviso}
         onClose={() => setDecision(null)}
         onHecho={volver}

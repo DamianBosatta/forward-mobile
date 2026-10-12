@@ -31,6 +31,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { BlurView } from 'expo-blur'
 import { MotiView } from 'moti'
 import { useVentasList, SelectedMonth } from '@/features/ventas/hooks/useVentasList'
+import { useFiltroVentasDeRuta, type FiltroVentasRuta } from '@/features/listas/lib/filtroDeRuta'
 import { getVentaStatusConfig } from '@/core/constants/status'
 import { getNotaEntregaUrl } from '@/libs/api-client'
 import { sharePdf } from '@/features/pedidos/lib/sharePdf'
@@ -59,7 +60,8 @@ function MonthPicker({
   onClose,
 }: {
   visible: boolean
-  selected: SelectedMonth
+  /** null = sin filtro de mes: el selector arranca en el mes actual. */
+  selected: SelectedMonth | null
   onSelect: (m: SelectedMonth) => void
   onClose: () => void
 }) {
@@ -67,7 +69,7 @@ function MonthPicker({
   const isDark = useIsDark()
   const { width } = useResponsive()
   const now    = new Date()
-  const [pickerYear, setPickerYear] = useState(selected.year)
+  const [pickerYear, setPickerYear] = useState(selected?.year ?? now.getFullYear())
 
   const canGoNext = pickerYear < now.getFullYear()
 
@@ -139,7 +141,7 @@ function MonthPicker({
 
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
                   {MONTHS_SHORT.map((m, mi) => {
-                    const isSelected = selected.month === mi && selected.year === pickerYear
+                    const isSelected = selected?.month === mi && selected?.year === pickerYear
                     const isToday    = mi === now.getMonth() && pickerYear === now.getFullYear()
                     const isFuture   = pickerYear === now.getFullYear() && mi > now.getMonth()
 
@@ -334,7 +336,7 @@ const VentaCard = React.memo(({ item, index }: { item: Venta, index: number }) =
 })
 
 // ── Main Screen ────────────────────────────────────────────────────────────────
-function VentasListScreen() {
+function VentasListScreen({ filtroDeRuta }: { filtroDeRuta: FiltroVentasRuta | null }) {
   const navigation = useNavigation();
   const colors = useColors()
   const isDark = useIsDark()
@@ -355,7 +357,7 @@ function VentasListScreen() {
     filteredVentas,
     ordenes, ordenesConFiltro, contador,
     fetchNextPage, hasNextPage, isFetchingNextPage
-  } = useVentasList()
+  } = useVentasList(filtroDeRuta)
 
   const activeFilters: ('Todas' | 'Pendiente' | 'Confirmada' | 'Preparando' | 'En Ruta' | 'Entregada' | 'Anulada' | 'Por Autorizar')[] = ['Todas', 'Pendiente', 'Confirmada', 'Preparando', 'En Ruta', 'Entregada', 'Anulada', 'Por Autorizar']
 
@@ -367,7 +369,7 @@ function VentasListScreen() {
     <View style={{ paddingBottom: 10 }}>
       <VentasKpiGrid
         ordersCount={ordenes}
-        currentMonth={MONTHS_SHORT[selected.month]}
+        currentMonth={selected ? MONTHS_SHORT[selected.month] : 'TOTALES'}
         conFiltro={ordenesConFiltro}
       />
 
@@ -593,11 +595,13 @@ const styles = StyleSheet.create({
 export default function VentasListScreenRoute() {
   // Venta nueva (fase 2): convive con la lista de hoy detrás del switch de "Mi cuenta" → Pruebas.
   const ventaNueva = useVentaNueva()
+  // Las filas de Inicio llegan con el filtro en la ruta (?tipo=…&estado=…).
+  const filtroDeRuta = useFiltroVentasDeRuta()
   return (
     <ConAccesosRapidos activa="ventas">
       {ventaNueva
-        ? <ListaVentasNueva detalle={(id, cerrar) => <DetalleVentaNueva key={id} id={id} onVolver={cerrar} />} />
-        : <VentasListScreen />}
+        ? <ListaVentasNueva filtroDeRuta={filtroDeRuta} detalle={(id, cerrar) => <DetalleVentaNueva key={id} id={id} onVolver={cerrar} />} />
+        : <VentasListScreen filtroDeRuta={filtroDeRuta} />}
     </ConAccesosRapidos>
   )
 }

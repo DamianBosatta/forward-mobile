@@ -150,7 +150,7 @@ describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
     expect(screen.queryByLabelText(/Por autorizar/)).toBeNull()
   })
 
-  it('vendedor sin CAP_AUTORIZAR_VENTA: ve las suyas como "Esperando autorización" y la fila lleva a Ventas', async () => {
+  it('vendedor sin CAP_AUTORIZAR_VENTA: ve las suyas como "Esperando autorización" y la fila lleva a Ventas filtrada por ese estado', async () => {
     conPermisos('MOD_VENTAS')
     servidor({ resumen: { ventas: RESUMEN.ventas, compras: null, autorizacionesPendientes: null }, hoy: pagina(0, []) })
     pintar()
@@ -159,7 +159,7 @@ describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
     expect(screen.queryByLabelText(/^Por autorizar/)).toBeNull()
     expect(screen.queryByLabelText('Compras pendientes')).toBeNull()
     await userEvent.setup().press(fila)
-    expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas')
+    expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas?tipo=pedidos&estado=PendienteAutorizacion')
   })
 
   it('usuario desactivado (403): muestra el motivo en lugar de las tarjetas, sin reintentar ni caer a las llamadas viejas', async () => {
@@ -311,16 +311,21 @@ describe('Inicio: servidor sin /Inicio/resumen (404), las cuatro llamadas de ant
     expect(screen.queryByLabelText('Compras pendientes')).toBeNull()
   })
 
-  it('cada fila lleva a su lista', async () => {
+  it('cada fila lleva a su lista ya filtrada por lo que cuenta (los mismos filtros que el resumen)', async () => {
     conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
     servidor({ presupuestos: pagina(1), pedidos: pagina(1), porAutorizar: [{ id: 'a' }], compras: { notasPedido: 1, confirmadas: 1 }, hoy: pagina(0, []) })
     pintar()
     const user = userEvent.setup()
 
     await user.press(await screen.findByLabelText('Presupuestos: 1'))
-    expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas')
-    await user.press(await screen.findByLabelText('Por recibir: 1'))
-    expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/compras')
+    expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas?tipo=presupuestos&estado=Pendiente')
+    await user.press(screen.getByLabelText('Pedidos confirmados: 1'))
+    expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas?tipo=pedidos&estado=Confirmada')
+    await user.press(await screen.findByLabelText('Notas de pedido: 1'))
+    expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/compras?estado=NotaPedido')
+    await user.press(screen.getByLabelText('Por recibir: 1'))
+    expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/compras?estado=Confirmado')
+    // Con la capacidad, la fila es la bandeja: va a Autorizaciones.
     await user.press(await screen.findByLabelText('Por autorizar: 1'))
     expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/autorizaciones')
   })

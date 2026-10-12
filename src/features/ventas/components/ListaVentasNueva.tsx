@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, FlatList, Pressable, ScrollView, SectionList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Plus } from 'lucide-react-native'
@@ -11,6 +11,7 @@ import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import type { Venta } from '@/libs/api-client'
 import type { BorradorVenta } from '@/libs/api-client/ventas'
+import type { FiltroVentasRuta } from '@/features/listas/lib/filtroDeRuta'
 import { agruparPorDia, horaDe, tituloDelDia } from '../lib/agruparPorDia'
 import { useVentasListaNueva, type FiltroEstado, type PeriodoVentas, type PestanaVentas } from '../hooks/useVentasListaNueva'
 
@@ -45,18 +46,24 @@ function clienteDe(v: Venta): { direccion: string; nombre: string | null } {
 interface Props {
   /** Detalle embebido para el panel derecho en tablet horizontal. */
   detalle: (id: string, cerrar: () => void) => React.ReactNode
+  /** El filtro con que la abrió una fila de Inicio. */
+  filtroDeRuta?: FiltroVentasRuta | null
 }
 
 /** Lista de ventas con el formato nuevo (láminas Ventas y TabVentas). Detrás del switch de la venta nueva. */
-export function ListaVentasNueva({ detalle }: Props) {
+export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
   const c = useColors()
   const router = useRouter()
   const leading = useMenuLeading()
   const { isTablet, isTabletLandscape } = useResponsive()
   const { canDo } = usePermissions()
   const [elegida, setElegida] = useState<string | null>(null)
-  const l = useVentasListaNueva()
+  const l = useVentasListaNueva(filtroDeRuta)
   const q = l.ventasQuery
+  // Tablet: si el filtro (también el que llega de Inicio) saca la venta abierta, se cierra su detalle.
+  useEffect(() => {
+    if (elegida && q.data && !q.isFetching && !l.ventas.some((v) => v.id === elegida)) setElegida(null)
+  }, [elegida, q.data, q.isFetching, l.ventas])
 
   const abrir = (id: string) => {
     if (isTabletLandscape) setElegida(id)

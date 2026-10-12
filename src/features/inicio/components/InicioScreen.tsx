@@ -65,7 +65,8 @@ export function InicioScreen() {
   }, [pendientes, recientes, dia])
 
   const aVentas = () => router.push('/(tabs)/ventas')
-  const aCompras = () => router.push('/(tabs)/compras')
+  // Cada fila abre su lista filtrada por lo mismo que cuenta el resumen (InicioResumenDto), sin fecha.
+  const ir = (ruta: string) => () => router.push(ruta as never)
   const aAutorizaciones = () => router.push('/(tabs)/autorizaciones')
   const nombre = [user?.nombre, user?.apellido].filter(Boolean).join(' ') || user?.username || ''
 
@@ -74,13 +75,13 @@ export function InicioScreen() {
   if (pendientes.ventas) {
     const v = pendientes.ventas
     const filas: FilaPendiente[] = [
-      { label: 'Presupuestos', ...v.presupuestos, onPress: aVentas },
-      { label: 'Pedidos confirmados', ...v.pedidos, onPress: aVentas },
+      { label: 'Presupuestos', ...v.presupuestos, onPress: ir('/(tabs)/ventas?tipo=presupuestos&estado=Pendiente') },
+      { label: 'Pedidos confirmados', ...v.pedidos, onPress: ir('/(tabs)/ventas?tipo=pedidos&estado=Confirmada') },
     ]
     // Sin CAP_AUTORIZAR_VENTA no hay bandeja: son las suyas que esperan, y se ven en Ventas.
     if (v.porAutorizar) {
       filas.push(v.porAutorizar.propias
-        ? { label: 'Esperando autorización', ...v.porAutorizar, alerta: true, onPress: aVentas }
+        ? { label: 'Esperando autorización', ...v.porAutorizar, alerta: true, onPress: ir('/(tabs)/ventas?tipo=pedidos&estado=PendienteAutorizacion') }
         : { label: 'Por autorizar', ...v.porAutorizar, alerta: true, onPress: aAutorizaciones })
     }
     tarjetas.push(<TarjetaPendientes key="ventas" titulo="Ventas" icono={Tag} filas={filas} ancho={ancho} />)
@@ -88,8 +89,8 @@ export function InicioScreen() {
   if (pendientes.compras) {
     const k = pendientes.compras
     const filas: FilaPendiente[] = [
-      { label: 'Notas de pedido', ...k.notasPedido, onPress: aCompras },
-      { label: 'Por recibir', ...k.porRecibir, onPress: aCompras },
+      { label: 'Notas de pedido', ...k.notasPedido, onPress: ir('/(tabs)/compras?estado=NotaPedido') },
+      { label: 'Por recibir', ...k.porRecibir, onPress: ir('/(tabs)/compras?estado=Confirmado') },
     ]
     tarjetas.push(<TarjetaPendientes key="compras" titulo="Compras" icono={ShoppingBag} filas={filas} ancho={ancho} />)
   }

@@ -2,6 +2,7 @@ import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AppState } from 'react-native'
 import { act, render, screen, userEvent, within } from '@testing-library/react-native'
+import { useAuthStore } from '@/libs/store/auth.store'
 import { PorPrepararScreen } from '../porPreparar/PorPrepararScreen'
 
 const mockGet = jest.fn()
@@ -45,6 +46,7 @@ function servidor() {
   mockGet.mockImplementation((url: string) =>
     url.includes('ventas-para-preparacion') ? Promise.resolve(PEDIDOS)
       : url.includes('dias-entrega') ? Promise.resolve(diasEntrega)
+      : url.endsWith('/Ventas/vendedores') ? Promise.resolve([{ id: 'u1', nombre: 'Emanuel Parraquini' }, { id: 'u2', nombre: 'Lucía Ferreyra' }])
       : url.includes('feriados') ? Promise.resolve([{ id: 'f', fecha: '2026-10-12', descripcion: 'Diversidad cultural' }])
       : url.endsWith('/Ventas/v1') ? Promise.resolve({
         venta: { id: 'v1', observaciones: 'Portón negro del depósito, antes de las 12.' },
@@ -69,6 +71,7 @@ beforeEach(() => {
   mockAncho.mockReturnValue(390)
   // Viernes 9 de octubre, 22:30 en Argentina (ya sábado 10 en UTC).
   jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T01:30:00Z'))
+  useAuthStore.setState({ user: { id: 'u9', username: 'ramiro', roles: [], permissions: [{ module: 'MOD_VIAJES', canRead: true }, { module: 'MOD_VENTAS', canRead: true }] } } as never)
   servidor()
 })
 afterEach(() => { jest.useRealTimers(); jest.restoreAllMocks() })
@@ -195,5 +198,118 @@ describe('Pedidos por preparar (solo lectura)', () => {
     act(() => { mockAlEnfocar?.() })
     expect(await screen.findByLabelText('mar 13 · Hoy')).toBeTruthy()
     expect(screen.queryByText('Portón negro del depósito, antes de las 12.')).toBeNull()
+  })
+
+  describe('filtros (logística, vendedor, estado)', () => {
+    const pedidosPedidos = () => urls().filter((u) => u.includes('ventas-para-preparacion'))
+    async function abrirFiltros() {
+      await screen.findAllByLabelText(/^Pedido A004/)
+      await userEvent.press(screen.getByRole('button', { name: 'Filtrar: logística, vendedor, estado' }))
+      return within(screen.getByLabelText('Filtrar pedidos'))
+    }
+
+    it('logística y vendedor van al servidor (MetodoEntrega, VendedorId) y se ve qué filtro hay', async () => {
+      pintar()
+      const hoja = await abrirFiltros()
+      await userEvent.press(hoja.getByRole('radio', { name: 'Retiro en el local' }))
+      await userEvent.press(await hoja.findByRole('radio', { name: 'Lucía Ferreyra' }))
+      expect(pedidosPedidos().at(-1)).toMatch(/MetodoEntrega=2/)
+      expect(pedidosPedidos().at(-1)).toMatch(/VendedorId=u2/)
+      expect(pedidosPedidos().at(-1)).toMatch(/FechaDesde=2026-10-09/)
+      await userEvent.press(hoja.getByRole('button', { name: 'Listo' }))
+      expect(screen.getByText('Filtros: Retiro en el local · Lucía Ferreyra')).toBeTruthy()
+    })
+
+    it('el estado se filtra en el teléfono: la cuenta del día es la de lo filtrado y el servidor no recibe estado', async () => {
+      pintar()
+      const hoja = await abrirFiltros()
+      await userEvent.press(hoja.getByRole('radio', { name: 'Confirmado' }))
+      await userEvent.press(hoja.getByRole('button', { name: 'Listo' }))
+      expect(screen.getByText('Hoy · 1 pedido · 3 líneas')).toBeTruthy()
+      expect(screen.queryByLabelText('Pedido A00417: Juan B. Justo 6376')).toBeNull()
+      expect(screen.getByLabelText('Pedido A00424: Brandsen 3314')).toBeTruthy()
+      // Los no entregados no son "Confirmado": con el filtro no se muestran.
+      expect(screen.queryByText(/No entregados/)).toBeNull()
+      expect(pedidosPedidos().some((u) => /estado/i.test(u.split('?')[1] ?? ''))).toBe(false)
+      expect(screen.getByText('Filtros: Confirmado')).toBeTruthy()
+
+      await userEvent.press(screen.getByRole('button', { name: 'Quitar filtros' }))
+      expect(screen.getByText('Hoy · 2 pedidos · 8 líneas')).toBeTruthy()
+      expect(screen.queryByText(/^Filtros:/)).toBeNull()
+    })
+
+    it('vendedores con el mismo nombre son dos opciones distintas (sin claves repetidas)', async () => {
+      const errores = jest.spyOn(console, 'error').mockImplementation(() => {})
+      const servido = mockGet.getMockImplementation()!
+      mockGet.mockImplementation((url: string) => url.endsWith('/Ventas/vendedores')
+        ? Promise.resolve([{ id: 'u3', nombre: 'Ana Gómez' }, { id: 'u4', nombre: 'Ana Gómez' }])
+        : servido(url))
+      pintar()
+      const hoja = await abrirFiltros()
+      const anas = await hoja.findAllByRole('radio', { name: 'Ana Gómez' })
+      expect(anas).toHaveLength(2)
+      await userEvent.press(anas[1]!)
+      expect(pedidosPedidos().at(-1)).toMatch(/VendedorId=u4/)
+      expect(errores.mock.calls.some((c) => /same key/.test(String(c[0])))).toBe(false)
+    })
+
+    it('mientras carga la lista de vendedores lo dice; si falla, también', async () => {
+      const servido = mockGet.getMockImplementation()!
+      let fallar: (e: Error) => void = () => {}
+      mockGet.mockImplementation((url: string) => url.endsWith('/Ventas/vendedores')
+        ? new Promise((_r, rej) => { fallar = rej })
+        : servido(url))
+      pintar()
+      const hoja = await abrirFiltros()
+      expect(hoja.getByText('Cargando…')).toBeTruthy()
+      await act(async () => { fallar(new Error('sin conexión')) })
+      expect(await hoja.findByText('No se pudo cargar la lista de vendedores.')).toBeTruthy()
+      const grupo = within(hoja.getByLabelText('Vendedor'))
+      expect(grupo.getAllByRole('radio').map((r) => r.props.accessibilityState.checked)).toEqual([true])
+    })
+
+    it('al cambiar logística siguen a la vista los pedidos de antes hasta que llega la respuesta; otro día muestra la carga', async () => {
+      const servido = mockGet.getMockImplementation()!
+      mockGet.mockImplementation((url: string) =>
+        url.includes('MetodoEntrega=2') || url.includes('FechaDesde=2026-10-13') ? new Promise(() => {}) : servido(url))
+      pintar()
+      const hoja = await abrirFiltros()
+      await userEvent.press(hoja.getByRole('radio', { name: 'Retiro en el local' }))
+      await userEvent.press(hoja.getByRole('button', { name: 'Listo' }))
+      expect(pedidosPedidos().at(-1)).toMatch(/MetodoEntrega=2/)
+      expect(screen.getByLabelText('Pedido A00417: Juan B. Justo 6376')).toBeTruthy()
+      expect(screen.queryByLabelText('Cargando los pedidos')).toBeNull()
+
+      await userEvent.press(screen.getByLabelText('mar 13'))
+      expect(screen.getByLabelText('Cargando los pedidos')).toBeTruthy()
+      expect(screen.queryByLabelText('Pedido A00417: Juan B. Justo 6376')).toBeNull()
+    })
+
+    it('en tablet, si el filtro saca el pedido abierto, se cierra su detalle; si no, queda', async () => {
+      mockAncho.mockReturnValue(1100)
+      pintar()
+      await userEvent.press(await screen.findByLabelText('Pedido A00424: Brandsen 3314'))
+      expect(await screen.findByText('Pedido A00424')).toBeTruthy()
+      let hoja = await abrirFiltros()
+      await userEvent.press(hoja.getByRole('radio', { name: 'Confirmado' }))
+      await userEvent.press(hoja.getByRole('button', { name: 'Listo' }))
+      expect(screen.getByText('Pedido A00424')).toBeTruthy()
+
+      hoja = await abrirFiltros()
+      await userEvent.press(hoja.getByRole('radio', { name: 'En preparación' }))
+      await userEvent.press(hoja.getByRole('button', { name: 'Listo' }))
+      expect(await screen.findByText('Elegí un pedido para ver qué hay que preparar.')).toBeTruthy()
+      expect(screen.queryByText('Pedido A00424')).toBeNull()
+    })
+
+    it('sin permiso de leer ventas no ofrece vendedor ni pide la lista de vendedores', async () => {
+      useAuthStore.setState({ user: { id: 'u9', username: 'ramiro', roles: [], permissions: [{ module: 'MOD_VIAJES', canRead: true }] } } as never)
+      pintar()
+      const hoja = await abrirFiltros()
+      expect(hoja.getByRole('radio', { name: 'Expreso' })).toBeTruthy()
+      expect(hoja.queryByLabelText('Vendedor')).toBeNull()
+      expect(hoja.queryByText('Vendedor')).toBeNull()
+      expect(urls().some((u) => u.includes('/Ventas/vendedores'))).toBe(false)
+    })
   })
 })
