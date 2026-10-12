@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import { AccessibilityInfo, ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { comprasKeys, useAnularRecepcionCompra, useCompra, useCancelarCompra, useConfirmarCompra, useRecibirCompra } from '@/libs/api-client/compras'
@@ -13,19 +13,20 @@ import { diaArgentina } from '@/src/utils/date'
 import { mostrarNumero } from '@/src/utils/numero'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { ddmmaaaa, fechaIso, hoyTexto } from '@/features/compras/lib/fecha'
-import { confirmarYRecibir } from '@/features/compras/lib/confirmar-y-recibir'
+import { confirmarYRecibir, tomarAviso, type Aviso } from '@/features/compras/lib/confirmar-y-recibir'
 import { ConfirmarYRecibirSheet } from '@/features/compras/components/ConfirmarYRecibirSheet'
 import { inicioKeys } from '@/core/query/queryClient'
 
 /** Ruta `compras/[id]`: el id viene de la URL. */
 export default function CompraDetailScreen() {
-  // `aviso` y `tono`: lo que dijo el servidor al confirmar y recibir desde la compra nueva.
-  const { id, aviso, tono } = useLocalSearchParams<{ id: string; aviso?: string; tono?: string }>()
-  return <CompraDetalle id={id ?? ''} aviso={aviso ? { texto: aviso, tono: tono === 'advertencia' ? 'advertencia' : 'exito' } : undefined} />
+  // `aviso`: clave del resultado de confirmar y recibir desde la compra nueva. El texto se toma de
+  // memoria (lo dejó esa pantalla); un enlace con la clave sola no muestra nada.
+  const { id, aviso } = useLocalSearchParams<{ id: string; aviso?: string }>()
+  const [inicial] = useState(() => (id ? tomarAviso(id, aviso) : null))
+  return <CompraDetalle id={id ?? ''} aviso={inicial ?? undefined} />
 }
 
 type Hoja = 'recibir' | 'cancelar' | 'anularRecepcion' | 'confirmarYRecibir' | null
-type Aviso = { texto: string; tono: 'exito' | 'advertencia' }
 
 /**
  * Detalle de una compra con el formato nuevo (Bloque 9A, PR 3.5). Los botones dependen del estado
@@ -53,6 +54,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
   const [aviso, setAviso] = useState<Aviso | null>(avisoInicial ?? null)
   const [recibiendo, setRecibiendo] = useState(false)
   const queryClient = useQueryClient()
+  useEffect(() => { if (aviso) AccessibilityInfo.announceForAccessibility(aviso.texto) }, [aviso])
   const volver = onVolver ?? (() => router.back())
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
 
@@ -61,7 +63,8 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Compra" leading={{ kind: 'atras', onPress: volver }} />
-        <View style={{ padding: space[4] }}>
+        <View style={{ padding: space[4], gap: space[3] }}>
+          {aviso ? <Notice tone={aviso.tono}>{aviso.texto}</Notice> : null}
           {q.isError ? <Notice tone="peligro">{mensajeDelServidor(q.error, 'No se pudo cargar la compra.')}</Notice> : <ActivityIndicator color={c.brand} />}
         </View>
       </View>
@@ -78,7 +81,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
   const puedeEditar = canDo('MOD_COMPRAS', 'update')
 
   // Cada hoja arranca limpia: ni el motivo ni el error de otra quedan a la vista.
-  const abrirHoja = (h: Hoja) => { setError(null); setAviso(null); setMotivo(''); if (h === 'anularRecepcion' || h === 'confirmarYRecibir') setVersionVista(compra.version); setHoja(h) }
+  const abrirHoja = (h: Hoja) => { setError(null); setAviso(null); setMotivo(''); if (h === 'anularRecepcion' || h === 'confirmarYRecibir') setVersionVista(compra.version); if (h === 'confirmarYRecibir') setFechaFactura(hoyTexto()); setHoja(h) }
   const cerrarHoja = () => { setError(null); setMotivo(''); setHoja(null) }
 
   const correr = async (accion: () => Promise<unknown>, titulo: string) => {
@@ -103,14 +106,19 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
       const r = await confirmarYRecibir(compra.id, { version: versionVista, fechaFacturaProveedor })
       if (r.tipo === 'hecho') {
         cerrarHoja()
-        setAviso({ texto: r.aviso, tono: r.tono })
+        setAviso(r.aviso)
         queryClient.invalidateQueries({ queryKey: comprasKeys.all })
         queryClient.invalidateQueries({ queryKey: inicioKeys.all })
         return
       }
       setError(r.mensaje)
       if (r.recargar) {
-        try { const n = await q.refetch(); if (n.data) setVersionVista(n.data.version) } catch { /* queda el error del servidor */ }
+        try {
+          const n = await q.refetch()
+          if (n.data) setVersionVista(n.data.version)
+          // Ya no es nota de pedido: la hoja no sirve más; el motivo queda en la pantalla.
+          if (n.data && String(n.data.estado) !== 'NotaPedido') setHoja(null)
+        } catch { /* queda el error del servidor */ }
       }
     } finally {
       setRecibiendo(false)
@@ -154,8 +162,6 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
       </ScrollView>
       {abierta ? (
         <View style={{ gap: space[2], padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
-          {puedeEditar && estado === 'NotaPedido'
-            ? <Button label="Confirmar y recibir" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('confirmarYRecibir')} /> : null}
           <View style={{ flexDirection: 'row', gap: space[2] }}>
             {canDo('MOD_COMPRAS', 'delete') ? <Button label="Cancelar compra" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('cancelar')} /> : null}
             {puedeEditar ? (
@@ -166,6 +172,8 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
               </View>
             ) : null}
           </View>
+          {puedeEditar && estado === 'NotaPedido'
+            ? <Button label="Confirmar y recibir" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('confirmarYRecibir')} /> : null}
         </View>
       ) : puedeAnularRecepcion ? (
         <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
@@ -192,7 +200,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
           onPress={() => { void correr(() => recibir.mutateAsync({ id: compra.id, fechaFacturaProveedor: pideFactura ? fechaLeida! : undefined }), 'No se recibió la compra') }} />
       </BottomSheet>
       <ConfirmarYRecibirSheet visible={hoja === 'confirmarYRecibir'} onClose={cerrarHoja} pideFactura={pideFactura}
-        ocupado={recibiendo} error={hoja === 'confirmarYRecibir' ? error : null} onConfirmar={(f) => { void confirmarYRecibirAhora(f) }} />
+        ocupado={recibiendo} fecha={fechaFactura} onFecha={setFechaFactura} error={hoja === 'confirmarYRecibir' ? error : null} onConfirmar={(f) => { void confirmarYRecibirAhora(f) }} />
       <BottomSheet visible={hoja === 'cancelar'} onClose={cerrarHoja} accessibilityLabel="Cancelar la compra">
         <Text style={[typeScale.titulo, { color: c.text }]}>Cancelar la compra</Text>
         <Text style={secundario}>No se recibió: si estaba confirmada, se libera el stock que se esperaba.</Text>

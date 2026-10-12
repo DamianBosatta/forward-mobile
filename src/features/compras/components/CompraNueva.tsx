@@ -15,6 +15,8 @@ import { CatalogModal } from './CatalogModal'
 import { CompraLineaSheet } from './CompraLineaSheet'
 import { ConfirmarYRecibirSheet } from './ConfirmarYRecibirSheet'
 import { usePermissions } from '@/core/auth/RequirePermission'
+import { dejarAviso } from '../lib/confirmar-y-recibir'
+import { hoyTexto } from '../lib/fecha'
 
 const SYNC: Record<EstadoGuardado, string | undefined> = {
   nuevo: undefined, guardando: 'Guardando…', guardado: 'Guardado', error: 'Sin guardar', conflicto: 'Sin guardar',
@@ -46,6 +48,7 @@ export function CompraNueva({ borradorId }: Props) {
   const [ocupado, setOcupado] = useState(false)
   const [editando, setEditando] = useState<LineaCompra | null>(null)
   const [recibir, setRecibir] = useState<{ error: string | null } | null>(null)
+  const [fechaFactura, setFechaFactura] = useState(hoyTexto)
   const puedeRecibir = usePermissions().canDo('MOD_COMPRAS', 'update')
   useEffect(() => {
     const t = setTimeout(() => setEnviada(busqueda.trim()), 300)
@@ -90,7 +93,8 @@ export function CompraNueva({ borradorId }: Props) {
       const r = await b.confirmarYRecibir(fecha)
       if (r.tipo === 'hecho') {
         setRecibir(null)
-        router.replace(`/(tabs)/compras/${b.compraId}?aviso=${encodeURIComponent(r.aviso)}&tono=${r.tono}` as never)
+        dejarAviso(b.compraId!, r.aviso)
+        router.replace(`/(tabs)/compras/${b.compraId}?aviso=${r.aviso.clave}` as never)
         return
       }
       setRecibir({ error: r.mensaje })
@@ -202,10 +206,6 @@ export function CompraNueva({ borradorId }: Props) {
         ) : pestana === 'lineas' ? lineas : cabecera}
       </ScrollView>
       <View style={{ gap: space[2], padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
-        {puedeRecibir ? (
-          <Button label="Confirmar y recibir" variant="secundario" disabled={ocupado || b.lineas.length === 0 || faltanCostos > 0}
-            onPress={() => setRecibir({ error: null })} />
-        ) : null}
         <View style={{ flexDirection: 'row', gap: space[2] }}>
           <Button label="Guardar nota" variant="secundario" disabled={ocupado || b.lineas.length === 0 || faltanCostos > 0}
             onPress={() => { void terminar(b.guardarNota, 'No se guardó la nota de pedido') }} />
@@ -214,9 +214,13 @@ export function CompraNueva({ borradorId }: Props) {
               onPress={() => { void terminar(b.confirmar, 'No se confirmó la compra') }} />
           </View>
         </View>
+        {puedeRecibir ? (
+          <Button label="Confirmar y recibir" variant="secundario" disabled={ocupado || b.lineas.length === 0 || faltanCostos > 0}
+            onPress={() => { setFechaFactura(hoyTexto()); setRecibir({ error: null }) }} />
+        ) : null}
       </View>
       <ConfirmarYRecibirSheet visible={recibir !== null} onClose={() => setRecibir(null)} pideFactura={b.proveedor.pideFactura}
-        ocupado={ocupado} error={recibir?.error ?? null} onConfirmar={(f) => { void confirmarYRecibir(f) }} />
+        ocupado={ocupado} fecha={fechaFactura} onFecha={setFechaFactura} error={recibir?.error ?? null} onConfirmar={(f) => { void confirmarYRecibir(f) }} />
       <CompraLineaSheet
         linea={editando}
         onClose={() => setEditando(null)}

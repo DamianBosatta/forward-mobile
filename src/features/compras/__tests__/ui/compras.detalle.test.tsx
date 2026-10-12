@@ -1,7 +1,9 @@
 import React from 'react'
 import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { CompraDetalle } from '../../../../../app/(tabs)/compras/[id]'
+import CompraDetailScreen, { CompraDetalle } from '../../../../../app/(tabs)/compras/[id]'
+import { AccessibilityInfo } from 'react-native'
+import { confirmarYRecibir, dejarAviso } from '../../lib/confirmar-y-recibir'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 
 // Tipear fechas y motivos con userEvent es lento en una corrida completa: margen para no dar falsos rojos.
@@ -19,7 +21,8 @@ jest.mock('@/core/api/client', () => ({
   API_URL: 'x',
 }))
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }), useLocalSearchParams: () => ({}) }))
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }), useLocalSearchParams: () => mockParams }))
+let mockParams: Record<string, string> = {}
 let mockPermisos = ['update', 'delete']
 jest.mock('@/core/auth/RequirePermission', () => ({ usePermissions: () => ({ canDo: (_m: string, a: string) => mockPermisos.includes(a) }) }))
 const mockDims = jest.fn()
@@ -43,6 +46,7 @@ function abrir(datos: Record<string, unknown>) {
 beforeEach(() => {
   jest.clearAllMocks()
   mockPermisos = ['update', 'delete']
+  mockParams = {}
   mockPost.mockResolvedValue(undefined)
   mockDelete.mockResolvedValue(undefined)
   mockPostConSobre.mockResolvedValue({ data: 'aaaa1111-0000', sobre: { succeeded: true, message: 'Compra confirmada. Compra recibida.' } })
@@ -227,6 +231,59 @@ describe('detalle de compra', () => {
       await userEvent.press(await screen.findByRole('button', { name: 'Confirmar y recibir' }))
       await enviar()
       expect(await screen.findByText('No sabemos si se recibió; revisá la compra.')).toBeTruthy()
+    })
+
+    it('anuncia el resultado a los lectores de pantalla', async () => {
+      const anuncio = jest.spyOn(AccessibilityInfo, 'announceForAccessibility')
+      abrir({})
+      await userEvent.press(await screen.findByRole('button', { name: 'Confirmar y recibir' }))
+      await enviar()
+      await waitFor(() => expect(anuncio).toHaveBeenCalledWith('Compra confirmada. Compra recibida.'))
+    })
+
+    it('mientras está en curso la hoja no se cierra', async () => {
+      mockPostConSobre.mockReturnValue(new Promise(() => {}))
+      abrir({})
+      await userEvent.press(await screen.findByRole('button', { name: 'Confirmar y recibir' }))
+      await enviar()
+      fireEvent(screen.getByLabelText('Confirmar y recibir la compra'), 'accessibilityEscape')
+      expect(screen.getByLabelText('Confirmar y recibir la compra')).toBeTruthy()
+    })
+
+    it('si tras un 409 la compra ya no es nota de pedido, cierra la hoja y deja el motivo a la vista', async () => {
+      mockPostConSobre.mockRejectedValue(Object.assign(new Error('La compra no está en nota de pedido.'), { status: 409 }))
+      abrir({})
+      await userEvent.press(await screen.findByRole('button', { name: 'Confirmar y recibir' }))
+      mockGet.mockResolvedValue(compra({ estado: 'Cancelado' }))
+      await enviar()
+      expect(await screen.findByText('La compra no está en nota de pedido.')).toBeTruthy()
+      await waitFor(() => expect(screen.queryByLabelText('Confirmar y recibir la compra')).toBeNull())
+    })
+
+    describe('al llegar desde la compra nueva', () => {
+      function ruta(aviso: string) {
+        mockDims.mockReturnValue({ width: 390, height: 800, scale: 2, fontScale: 1 })
+        mockParams = { id: 'aaaa1111-0000', aviso }
+        const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+        render(<QueryClientProvider client={qc}><CompraDetailScreen /></QueryClientProvider>)
+      }
+
+      it('sin red el aviso "no sabemos" se ve aunque la compra no cargue', async () => {
+        mockPostConSobre.mockRejectedValue(new TypeError('Network request failed'))
+        const r = await confirmarYRecibir('aaaa1111-0000', {})
+        if (r.tipo === 'hecho') dejarAviso('aaaa1111-0000', r.aviso)
+        mockGet.mockRejectedValue(new TypeError('Network request failed'))
+        ruta('incierto')
+        expect(await screen.findByText('No sabemos si se recibió; revisá la compra.')).toBeTruthy()
+        expect(await screen.findByText('Network request failed')).toBeTruthy()
+      })
+
+      it('un enlace con ?aviso= solo no muestra un éxito que no pasó', async () => {
+        mockGet.mockResolvedValue(compra({}))
+        ruta('recibida')
+        await screen.findByText('Balde Nuvia 10L')
+        expect(screen.queryByText(/recibida/)).toBeNull()
+      })
     })
 
     it('una compra ya confirmada no la ofrece: se recibe', async () => {

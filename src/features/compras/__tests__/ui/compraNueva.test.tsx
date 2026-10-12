@@ -3,6 +3,7 @@ import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CompraNueva } from '../../components/CompraNueva'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { tomarAviso } from '../../lib/confirmar-y-recibir'
 
 const mockGet = jest.fn()
 const mockPost = jest.fn()
@@ -138,14 +139,17 @@ describe('pantalla de compra nueva', () => {
       expect(mockPostConSobre).toHaveBeenCalledWith(URL_CYR, { version: 10 + mockPut.mock.calls.length, fechaFacturaProveedor: '2026-10-05' })
       expect(puts().at(-1)?.detalles[0]).toMatchObject({ cantidad: 3, costoUnitario: 1020 })
       expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Compras/c1/confirmar', expect.anything())
-      expect(mockReplace).toHaveBeenCalledWith(`/(tabs)/compras/c1?aviso=${encodeURIComponent('Compra confirmada. Compra recibida.')}&tono=exito`)
+      // En la URL solo la clave; el mensaje del servidor queda en memoria para el detalle.
+      expect(mockReplace).toHaveBeenCalledWith('/(tabs)/compras/c1?aviso=recibida')
+      expect(tomarAviso('c1', 'recibida')).toMatchObject({ texto: 'Compra confirmada. Compra recibida.', tono: 'exito' })
     })
 
     it('409 CompraYaRecibida no es un error: abre la compra avisando que ya quedó recibida', async () => {
       mockPostConSobre.mockRejectedValue(Object.assign(new Error('La compra ya fue recibida.'), { status: 409, codigo: 'CompraYaRecibida', data: 'c1' }))
       await abrirHoja()
       await enviar()
-      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(`/(tabs)/compras/c1?aviso=${encodeURIComponent('La compra ya quedó recibida.')}&tono=exito`), ESPERA)
+      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)/compras/c1?aviso=ya-recibida'), ESPERA)
+      expect(tomarAviso('c1', 'ya-recibida')).toMatchObject({ texto: 'La compra ya quedó recibida.', tono: 'exito' })
       expect(screen.queryByText('La compra ya fue recibida.')).toBeNull()
     })
 
@@ -172,11 +176,29 @@ describe('pantalla de compra nueva', () => {
       expect(mockReplace).not.toHaveBeenCalled()
     })
 
+    it('tras un 409 y la recarga, la fecha de factura escrita sigue ahí y el reintento la manda', async () => {
+      mockCondicion = { tipo: 'DiasDesdeFactura', dias: 30, descripcion: '30 días desde la factura' }
+      mockPostConSobre.mockRejectedValueOnce(Object.assign(new Error('Otro usuario modificó la compra.'), { status: 409 }))
+      await abrirHoja()
+      const base = mockGet.getMockImplementation()!
+      mockGet.mockImplementation((url: string) => base(url === '/api/v1/Compras/c1' ? '/api/v1/Compras/b9' : url))
+      fireEvent.changeText(screen.getByLabelText('Fecha de la factura'), '05/10/2026')
+      await enviar()
+      await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/v1/Compras/c1'), ESPERA)
+      expect(await screen.findByText('Otro usuario modificó la compra.', {}, ESPERA)).toBeTruthy()
+      expect((await screen.findByLabelText('Fecha de la factura', {}, ESPERA)).props.value).toBe('05/10/2026')
+      await waitFor(() => expect(screen.getAllByRole('button', { name: 'Confirmar y recibir' }).at(-1)).toBeEnabled(), ESPERA)
+      await enviar()
+      await waitFor(() => expect(mockPostConSobre).toHaveBeenCalledTimes(2), ESPERA)
+      expect(mockPostConSobre).toHaveBeenLastCalledWith(URL_CYR, expect.objectContaining({ fechaFacturaProveedor: '2026-10-05' }))
+    })
+
     it('sin respuesta (red o timeout) no dice que no se hizo: abre la compra para revisarla', async () => {
       mockPostConSobre.mockRejectedValue(new TypeError('Network request failed'))
       await abrirHoja()
       await enviar()
-      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(`/(tabs)/compras/c1?aviso=${encodeURIComponent('No sabemos si se recibió; revisá la compra.')}&tono=advertencia`), ESPERA)
+      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)/compras/c1?aviso=incierto'), ESPERA)
+      expect(tomarAviso('c1', 'incierto')).toMatchObject({ texto: 'No sabemos si se recibió; revisá la compra.', tono: 'advertencia' })
     })
 
     it('sin permiso de modificar compras no está la acción', async () => {

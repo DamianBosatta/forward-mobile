@@ -11,12 +11,35 @@ export interface DatosConfirmarYRecibir {
   fechaFacturaProveedor?: string
 }
 
+/** Clave del aviso que viaja en la ruta al detalle (`?aviso=`): el texto nunca va en la URL. */
+export type ClaveAviso = 'recibida' | 'ya-recibida' | 'incierto'
+export interface Aviso { clave: ClaveAviso; texto: string; tono: 'exito' | 'advertencia' }
+
+const TEXTOS: Record<ClaveAviso, string> = {
+  recibida: 'La compra quedó confirmada y recibida.',
+  'ya-recibida': 'La compra ya quedó recibida.',
+  incierto: 'No sabemos si se recibió; revisá la compra.',
+}
+const aviso = (clave: ClaveAviso, mensaje?: string): Aviso =>
+  ({ clave, texto: (clave === 'recibida' && mensaje?.trim()) || TEXTOS[clave], tono: clave === 'incierto' ? 'advertencia' : 'exito' })
+
+/** Avisos en memoria por compra, para el detalle que se abre después: un enlace con `?aviso=` solo no muestra nada. */
+const pendientes = new Map<string, Aviso>()
+export const dejarAviso = (id: string, a: Aviso) => { pendientes.set(id, a) }
+/** Devuelve (y consume) el aviso que se dejó para esta compra, solo si coincide con la clave de la ruta. */
+export function tomarAviso(id: string, clave: string | undefined): Aviso | null {
+  const a = pendientes.get(id)
+  if (!a || a.clave !== clave) return null
+  pendientes.delete(id)
+  return a
+}
+
 /**
  * Cómo terminó el intento: `hecho` va al detalle con el aviso (también cuando no se sabe, para que
  * el usuario lo revise ahí); `error` se queda en la pantalla con el motivo del servidor.
  */
 export type Desenlace =
-  | { tipo: 'hecho'; aviso: string; tono: 'exito' | 'advertencia' }
+  | { tipo: 'hecho'; aviso: Aviso }
   | { tipo: 'error'; mensaje: string; recargar: boolean }
 
 /**
@@ -29,14 +52,12 @@ export async function confirmarYRecibir(id: string, datos: DatosConfirmarYRecibi
       version: datos.version ?? null,
       fechaFacturaProveedor: datos.fechaFacturaProveedor ?? null,
     })
-    return { tipo: 'hecho', aviso: sobre?.message?.trim() || 'La compra quedó confirmada y recibida.', tono: 'exito' }
+    return { tipo: 'hecho', aviso: aviso('recibida', sobre?.message) }
   } catch (e) {
     const { status, codigo } = (e ?? {}) as { status?: number; codigo?: string }
-    if (status === 409 && codigo === CODIGO_YA_RECIBIDA) return { tipo: 'hecho', aviso: 'La compra ya quedó recibida.', tono: 'exito' }
+    if (status === 409 && codigo === CODIGO_YA_RECIBIDA) return { tipo: 'hecho', aviso: aviso('ya-recibida') }
     // Sin respuesta (timeout, red) o con falla del servidor no se sabe si llegó a recibirse.
-    if (status === undefined || status >= 500) {
-      return { tipo: 'hecho', aviso: 'No sabemos si se recibió; revisá la compra.', tono: 'advertencia' }
-    }
+    if (status === undefined || status >= 500) return { tipo: 'hecho', aviso: aviso('incierto') }
     return { tipo: 'error', mensaje: mensajeDelServidor(e, 'No se recibió la compra.'), recargar: status === 409 }
   }
 }
