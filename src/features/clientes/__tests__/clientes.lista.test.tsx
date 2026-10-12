@@ -1,4 +1,5 @@
 import React from 'react'
+import { FlatList } from 'react-native'
 import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native'
 import ClientesScreen from '../../../../app/(tabs)/socios/index'
 import { api } from '@/core/api/client'
@@ -101,4 +102,48 @@ it('sin permiso de alta no hay botón de nuevo cliente', async () => {
 
   await screen.findByText('Av. del Valle 89')
   expect(screen.queryByLabelText('Nuevo cliente')).toBeNull()
+})
+
+describe('deuda vencida y saldo de la cartera (servidor con PR #882)', () => {
+  it('la tarjeta del cliente con deuda vencida lleva el chip; la del que no tiene, no', async () => {
+    get.mockResolvedValue(pagina([
+      clienteDeLista({ tieneDeudaVencida: true, deudaVencidaAmount: 86400 }),
+      clienteDeLista({ id: 'c2', direccion: 'Brandsen 3314', tieneDeudaVencida: false, deudaVencidaAmount: 0 }),
+    ], 2))
+    renderConQuery(<ClientesScreen />)
+
+    expect(await screen.findByRole('button', { name: /Av\. del Valle 89.*deuda vencida/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Brandsen 3314/ }).props.accessibilityLabel).not.toMatch(/deuda vencida/)
+    expect(screen.getAllByText('Deuda vencida')).toHaveLength(1)
+  })
+
+  it('con el saldo total del servidor, el contador lo muestra; nunca lo suma el teléfono', async () => {
+    get.mockResolvedValue({ ...pagina([clienteDeLista()], 142), saldoTotal: 4812330 })
+    renderConQuery(<ClientesScreen />)
+
+    expect(await screen.findByText('Mostrando 1 de 142 · Saldo $ 4.812.330')).toBeTruthy()
+  })
+
+  it('el saldo total llega solo en la página 1: al cargar más se mantiene', async () => {
+    get.mockImplementation(async (url: string) =>
+      url.includes('pageNumber=2')
+        ? { ...pagina([clienteDeLista({ id: 'c2', direccion: 'Brandsen 3314' })], 142), page: 2, saldoTotal: null }
+        : { ...pagina([clienteDeLista()], 142), hasNextPage: true, saldoTotal: 4812330 },
+    )
+    renderConQuery(<ClientesScreen />)
+    await screen.findByText('Mostrando 1 de 142 · Saldo $ 4.812.330')
+
+    fireEvent(screen.UNSAFE_getByType(FlatList), 'onEndReached')
+
+    expect(await screen.findByText('Mostrando 2 de 142 · Saldo $ 4.812.330')).toBeTruthy()
+  })
+
+  it('si el servidor no da el saldo total (null) o es un servidor anterior, queda "Mostrando N de M" y sin chips', async () => {
+    get.mockResolvedValue({ ...pagina([clienteDeLista()], 142), saldoTotal: null })
+    renderConQuery(<ClientesScreen />)
+
+    expect(await screen.findByText('Mostrando 1 de 142')).toBeTruthy()
+    expect(screen.queryByText(/Saldo \$ /)).toBeNull()
+    expect(screen.queryByText('Deuda vencida')).toBeNull()
+  })
 })

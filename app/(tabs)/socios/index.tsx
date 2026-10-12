@@ -9,6 +9,7 @@ import { usePermissions } from '@/core/auth/RequirePermission'
 import { useCartera } from '@/features/clientes/hooks/useCartera'
 import { ClienteCard } from '@/features/clientes/components/ClienteCard'
 import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
+import { textoMostrando } from '@/features/clientes/lib/cliente'
 import { FichaCliente } from '@/features/clientes/components/FichaCliente'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
@@ -26,7 +27,7 @@ export default function ClientesScreen() {
   const { canCreate } = usePermissions()
   const [busqueda, setBusqueda] = useState('')
   const [abierto, setAbierto] = useState<string | null>(null)
-  const { clientes, totalCount, isLoading, isRefetching, error, refetch, cargarMas } = useCartera(busqueda)
+  const { clientes, totalCount, saldoTotal, isLoading, isRefetching, error, refetch, cargarMas } = useCartera(busqueda)
   const dosPaneles = width >= ANCHO_DOS_PANELES
 
   const abrir = (id: string) => {
@@ -48,7 +49,7 @@ export default function ClientesScreen() {
           }}
         >
           <Text accessibilityLiveRegion="polite" style={{ ...textoDestacado, color: c.text }}>
-            {`Mostrando ${clientes.length} de ${totalCount}`}
+            {textoMostrando(clientes.length, totalCount, saldoTotal)}
           </Text>
         </View>
       ) : null}

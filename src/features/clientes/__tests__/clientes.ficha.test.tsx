@@ -18,9 +18,9 @@ const detalle = (extra = {}) => ({
   ...extra,
 })
 
-function servidor(cliente: object) {
+function servidor(cliente: object, credito: object = {}) {
   get.mockImplementation(async (url: string) => {
-    if (url.includes('/estado-cuenta')) return { socioComercialId: 'c1', razonSocial: 'x', saldoActual: 186420, saldoTst: 0, saldoNormal: 186420, saldoAFavor: 0, movimientosPendientes: [] }
+    if (url.includes('/estado-cuenta')) return { socioComercialId: 'c1', razonSocial: 'x', saldoActual: 186420, saldoTst: 0, saldoNormal: 186420, saldoAFavor: 0, movimientosPendientes: [], ...credito }
     if (url.startsWith('/api/v1/Ventas')) return pagina([], 0)
     return cliente
   })
@@ -93,4 +93,38 @@ it('si el servidor rechaza, se ve su mensaje', async () => {
   renderConQuery(<FichaCliente id="c1" />)
 
   expect(await screen.findByText('No tenés permisos para esta acción.')).toBeTruthy()
+})
+
+describe('vencido y disponible (servidor con PR #882)', () => {
+  const vencidaTst = { tieneDeudaVencida: true, deudaVencida: 86400, deudaVencidaTst: 86400, deudaVencidaNormal: 0 }
+
+  it('muestra lo vencido con la cuenta, el disponible y el aviso de autorización', async () => {
+    servidor(detalle(), { ...vencidaTst, creditoDisponible: 113580 })
+    renderConQuery(<FichaCliente id="c1" />)
+
+    expect(await screen.findByLabelText('Vencido (más de 30 días): $ 86.400,00 · TST')).toBeTruthy()
+    expect(screen.getByLabelText('Disponible: $ 113.580,00')).toBeTruthy()
+    expect(screen.getByText('Tiene deuda vencida de más de 30 días: los pedidos nuevos van a quedar por autorizar.')).toBeTruthy()
+  })
+
+  it('con el tope pasado, el disponible negativo se dice como "Pasado del tope por"', async () => {
+    servidor(detalle(), { tieneDeudaVencida: false, deudaVencida: 0, creditoDisponible: -12000 })
+    renderConQuery(<FichaCliente id="c1" />)
+
+    expect(await screen.findByText('Pasado del tope por $ 12.000,00')).toBeTruthy()
+    expect(screen.queryByText(/Vencido/)).toBeNull()
+  })
+
+  it('sin tope (null) o con un servidor anterior, no hay vencido ni disponible', async () => {
+    servidor(detalle(), { tieneDeudaVencida: false, deudaVencida: 0, creditoDisponible: null })
+    const { unmount } = renderConQuery(<FichaCliente id="c1" />)
+    await screen.findByLabelText('Saldo: $ 186.420,00')
+    expect(screen.queryByText(/Disponible|Pasado del tope|Vencido/)).toBeNull()
+    unmount()
+
+    servidor(detalle())
+    renderConQuery(<FichaCliente id="c1" />)
+    await screen.findByLabelText('Saldo: $ 186.420,00')
+    expect(screen.queryByText(/Disponible|Pasado del tope|Vencido|deuda vencida/)).toBeNull()
+  })
 })

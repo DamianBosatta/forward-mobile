@@ -4,7 +4,7 @@ import { Plus, Search } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import { fetchSocio, sociosKeys } from '@/libs/api-client/socios'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { BottomSheet, Notice, Segmented } from '@/core/ui/fw'
+import { BottomSheet, Notice, Segmented, StatusChip } from '@/core/ui/fw'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useCartera } from '../hooks/useCartera'
@@ -28,14 +28,22 @@ const TIPOS = [
 
 class ClienteNoDisponible extends Error {}
 
-function Fila({ cliente, onPress }: { cliente: ClienteElegido; onPress: () => void }) {
+/** Aviso de la lámina para un pedido: el servidor lo manda a autorizar si el cliente tiene deuda vencida. */
+export function avisoDeudaVencida(direcciones: string[]): string | null {
+  const resto = 'podés armar el pedido, pero va a quedar por autorizar.'
+  if (direcciones.length === 0) return null
+  if (direcciones.length === 1) return `${direcciones[0]} tiene deuda vencida: ${resto}`
+  return `${direcciones.length} clientes de la lista tienen deuda vencida: ${resto}`
+}
+
+function Fila({ cliente, onPress, vencida = false }: { cliente: ClienteElegido; onPress: () => void; vencida?: boolean }) {
   const c = useColors()
   const direccion = direccionDeEntrega(cliente)
   const nombre = nombreDelCliente(cliente)
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={nombre ? `${direccion}, ${nombre}` : direccion}
+      accessibilityLabel={[direccion, nombre, vencida && 'deuda vencida'].filter(Boolean).join(', ')}
       onPress={onPress}
       style={({ pressed }) => ({ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space[3], opacity: pressed ? 0.85 : 1 })}
     >
@@ -43,7 +51,10 @@ function Fila({ cliente, onPress }: { cliente: ClienteElegido; onPress: () => vo
         <Text style={{ ...typeScale.secundario, color: c.brandInk }}>{inicialesDeDireccion(direccion)}</Text>
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{direccion}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+          <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text, flexShrink: 1 }}>{direccion}</Text>
+          {vencida ? <StatusChip estado="anulado" label="Deuda vencida" /> : null}
+        </View>
         {nombre ? <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.textSecondary }}>{nombre}</Text> : null}
       </View>
     </Pressable>
@@ -77,6 +88,10 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
     setAviso(null)
   }, [visible, usuarioId])
   const recientes = buscando ? [] : guardados
+  // Lo informa el servidor por cliente (redactado como el saldo); los recientes no lo guardan.
+  const avisoVencida = tipo === 'Pedido'
+    ? avisoDeudaVencida(clientes.filter(x => x.tieneDeudaVencida === true).map(direccionDeEntrega))
+    : null
 
   const elegir = (cliente: ClienteElegido) => {
     guardarReciente(usuarioId, cliente)
@@ -146,7 +161,7 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
             <Titulo>{buscando ? 'Resultados' : 'Cartera'}</Titulo>
           </View>
         }
-        renderItem={({ item }) => <Fila cliente={item} onPress={() => elegir(item)} />}
+        renderItem={({ item }) => <Fila cliente={item} vencida={item.tieneDeudaVencida === true} onPress={() => elegir(item)} />}
         ListEmptyComponent={
           isLoading ? <ActivityIndicator color={c.brandInk} /> : error ? null : (
             <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
@@ -155,6 +170,7 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
           )
         }
       />
+      {avisoVencida ? <Notice tone="advertencia">{avisoVencida}</Notice> : null}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Nuevo cliente"

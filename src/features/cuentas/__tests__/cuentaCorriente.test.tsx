@@ -16,9 +16,9 @@ const ESPERA = { timeout: 5000 }
 jest.setTimeout(15_000)
 const urls = () => get.mock.calls.map(([u]) => String(u))
 
-function servidor({ ficha = fichaConCuentas(), tstPaginas = 1 } = {}) {
+function servidor({ ficha = fichaConCuentas(), tstPaginas = 1, estado = estadoDeCuenta() } = {}) {
   get.mockImplementation(async (url: string) => {
-    if (url.endsWith('/estado-cuenta')) return estadoDeCuenta()
+    if (url.endsWith('/estado-cuenta')) return estado
     if (url.startsWith('/api/v1/cuentas-corrientes/cTst/movimientos')) {
       return url.includes('pageNumber=2')
         ? paginaDeMovimientos([mov('t0', '2026-08-01T12:00:00Z', { referencia: 'Venta A00300 entregada', debe: 5000, saldoHistorico: 5000 })], 2, 2)
@@ -122,4 +122,22 @@ it('Registrar cobro no se ofrece sin MOD_PAGOS:Read ni sin MOD_PAGOS:Create: la 
   renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
   await screen.findByLabelText(`Saldo: ${$(186420)}`, {}, ESPERA)
   expect(screen.queryByRole('button', { name: 'Registrar cobro' })).toBeNull()
+})
+
+describe('vencido y disponible (servidor con PR #882)', () => {
+  it('lo vencido en las dos cuentas se ve con el importe de cada una, y el disponible', async () => {
+    servidor({ estado: estadoDeCuenta({ tieneDeudaVencida: true, deudaVencida: 100000, deudaVencidaTst: 60000, deudaVencidaNormal: 40000, creditoDisponible: 5000 }) })
+    renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+
+    expect(await screen.findByLabelText(`Vencido (más de 30 días): ${$(100000)} · TST ${$(60000)} · Normal ${$(40000)}`, {}, ESPERA)).toBeTruthy()
+    expect(screen.getByLabelText(`Disponible: ${$(5000)}`)).toBeTruthy()
+    expect(screen.getByText(/los pedidos nuevos van a quedar por autorizar/)).toBeTruthy()
+  })
+
+  it('con un servidor anterior, la cuenta se ve como antes: sin vencido ni disponible', async () => {
+    renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+
+    await screen.findByLabelText(`Saldo: ${$(186420)}`, {}, ESPERA)
+    expect(screen.queryByText(/Vencido|Disponible|Pasado del tope|por autorizar/)).toBeNull()
+  })
 })

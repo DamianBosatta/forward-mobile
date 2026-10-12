@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
-import { formatImporte } from '@/core/ui/fw'
+import { StatusChip, formatImporte } from '@/core/ui/fw'
 import type { SocioListDto } from '@/libs/api-client/types'
 import { direccionDeEntrega, inicialesDeDireccion, nombreDelCliente } from '../lib/cliente'
 
@@ -14,7 +14,8 @@ interface ClienteCardProps {
 
 /**
  * Tarjeta de cliente (lámina Clientes): la dirección de entrega es el título y el nombre va
- * debajo, aparte. El saldo se muestra solo si el servidor dice que este usuario puede verlo.
+ * debajo, aparte. El saldo se muestra solo si el servidor dice que este usuario puede verlo; la
+ * deuda vencida, solo si el servidor la informa (la redacta igual que el saldo).
  */
 export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteCardProps) {
   const c = useColors()
@@ -22,11 +23,12 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
   const direccion = direccionDeEntrega(cliente)
   const nombre = nombreDelCliente(cliente)
   const saldo = cliente.puedeVerSaldo ? formatImporte(cliente.saldoAmount) : null
+  const vencida = cliente.tieneDeudaVencida === true
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={[direccion, nombre, saldo && `saldo ${saldo}`].filter(Boolean).join(', ')}
+      accessibilityLabel={[direccion, vencida && 'deuda vencida', nombre, saldo && `saldo ${saldo}`].filter(Boolean).join(', ')}
       accessibilityState={{ selected: seleccionado }}
       onPress={onPress}
       style={({ pressed }) => [
@@ -60,9 +62,12 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
         </Text>
       </View>
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
-        <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>
-          {direccion}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+          <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text, flexShrink: 1 }}>
+            {direccion}
+          </Text>
+          {vencida ? <StatusChip estado="anulado" label="Deuda vencida" /> : null}
+        </View>
         {nombre ? (
           <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.textSecondary }}>
             {nombre}
