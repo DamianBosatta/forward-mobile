@@ -95,6 +95,29 @@ it('si el servidor rechaza, se ve su mensaje', async () => {
   expect(await screen.findByText('No tenés permisos para esta acción.')).toBeTruthy()
 })
 
+describe('vendedor responsable (servidor con PR #896)', () => {
+  it('muestra "Vendedor" con el nombre en Datos cuando el servidor lo manda', async () => {
+    servidor(detalle({ vendedorResponsableId: 'u1', vendedorResponsableNombre: 'Ana Pérez' }))
+    renderConQuery(<FichaCliente id="c1" />)
+
+    expect(await screen.findByText('Ana Pérez')).toBeTruthy()
+    expect(screen.getByText('Vendedor')).toBeTruthy()
+  })
+
+  it.each([
+    ['sin vendedor (null)', { vendedorResponsableId: null, vendedorResponsableNombre: null }],
+    ['con el nombre vacío', { vendedorResponsableId: 'u1', vendedorResponsableNombre: '  ' }],
+    ['con un servidor anterior, que no manda el campo', {}],
+  ])('no muestra "Vendedor" %s', async (_caso, extra) => {
+    servidor(detalle(extra))
+    renderConQuery(<FichaCliente id="c1" />)
+
+    await screen.findByText('Datos')
+    expect(screen.getByText('Razón social')).toBeTruthy()
+    expect(screen.queryByText('Vendedor')).toBeNull()
+  })
+})
+
 describe('vencido y disponible (servidor con PR #882)', () => {
   const vencidaTst = { tieneDeudaVencida: true, deudaVencida: 86400, deudaVencidaTst: 86400, deudaVencidaNormal: 0 }
 

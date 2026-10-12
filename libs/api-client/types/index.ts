@@ -291,8 +291,15 @@ interface CreditoDelSocio {
   creditoDisponible?: number | null
 }
 
+// Nombre del vendedor responsable (forward-system PR #896), tipado a mano hasta regenerar el schema:
+// opcional porque un servidor anterior no lo manda. "Nombre Apellido"; null sin vendedor, con un
+// usuario sin nombre o en un proveedor.
+interface VendedorDelSocio {
+  vendedorResponsableNombre?: string | null
+}
+
 /** Full detail projection (Email, Telefono, Direccion, CondicionIva populated). */
-export type SocioDetailDto  = components['schemas']['SocioDetailDto'] & DeudaVencidaDelSocio & CreditoDelSocio
+export type SocioDetailDto  = components['schemas']['SocioDetailDto'] & DeudaVencidaDelSocio & CreditoDelSocio & VendedorDelSocio
 
 /** Slim list projection (no contact fields — matches GET /socios-comerciales list). */
 export type SocioListDto    = components['schemas']['SocioListDto'] & DeudaVencidaDelSocio

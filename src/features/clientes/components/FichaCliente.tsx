@@ -162,6 +162,8 @@ export function FichaCliente({ id }: { id: string }) {
         <Dato etiqueta="CUIT" valor={cliente.cuit} />
         <Dato etiqueta="Condición frente al IVA" valor={cliente.condicionIva} />
         <Dato etiqueta="Email" valor={cliente.email} />
+        {/* Solo con el servidor nuevo (forward-system #896): uno anterior no manda el nombre y no se muestra nada. */}
+        <Dato etiqueta="Vendedor" valor={cliente.vendedorResponsableNombre} />
         <View style={{ gap: space[1] }}>
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Condición de pago</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
