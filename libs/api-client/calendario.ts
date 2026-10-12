@@ -27,3 +27,36 @@ export function useCrearEvento() {
     onSuccess: () => qc.invalidateQueries({ queryKey: calendarioKeys.all }),
   })
 }
+
+export type EventoDetalle = components['schemas']['EventoCalendarioDetalleDto']
+export type EditarEvento = components['schemas']['EditarEventoCommand']
+
+const eventoKey = (id: string) => [...calendarioKeys.all, 'evento', id] as const
+
+/** GET /Calendario/eventos/{id}: el evento manual completo (el PUT lo reemplaza entero). Ajeno: 404. */
+export function useEventoCalendario(id: string | null) {
+  return useQuery({
+    queryKey: eventoKey(id ?? ''),
+    queryFn: () => api.get<EventoDetalle>(`/api/v1/Calendario/eventos/${id}`),
+    enabled: !!id,
+  })
+}
+
+/** Editar, borrar y marcar/desmarcar una ocurrencia: todo invalida el calendario. */
+function useMutacionCalendario<V>(fn: (v: V) => Promise<unknown>) {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: fn, onSuccess: () => qc.invalidateQueries({ queryKey: calendarioKeys.all }) })
+}
+
+export const useEditarEvento = () =>
+  useMutacionCalendario(({ id, ...evento }: EditarEvento & { id: string }) => api.put<string>(`/api/v1/Calendario/eventos/${id}`, evento))
+
+export const useBorrarEvento = () =>
+  useMutacionCalendario((id: string) => api.delete<string>(`/api/v1/Calendario/eventos/${id}`))
+
+/** La ocurrencia se identifica por su fecha ORIGINAL (la de la clave), aunque se haya reprogramado. */
+export const useMarcarPagado = () =>
+  useMutacionCalendario(({ id, fecha, pagado }: { id: string; fecha: string; pagado: boolean }) => {
+    const url = `/api/v1/Calendario/eventos/${id}/ocurrencias/${fecha}`
+    return pagado ? api.post<string>(url, { estado: 'Pagado' }) : api.delete<string>(url)
+  })
