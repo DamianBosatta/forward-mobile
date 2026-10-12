@@ -26,7 +26,7 @@ import {
 } from '@/features/auth/utils/biometrics'
 import { PremiumInput, PremiumButton } from '@/core/ui'
 import { useQueryClient } from '@tanstack/react-query'
-import { API_URL, setApiUrl, ENV_PROD, ENV_DEV, ENV_LOCAL } from '@/libs/api-client'
+import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
 
 const SHOW_ENV_SWITCHER = __DEV__
 
@@ -318,30 +318,6 @@ export default function LoginScreen() {
                             fontFamily: 'Outfit_700Bold'
                           }}>
                             PRODUCCIÓN
-                          </Text>
-                        </TouchableOpacity>
-
-                        {/* Desarrollo */}
-                        <TouchableOpacity
-                          activeOpacity={0.7}
-                          onPress={() => handleEnvChange(ENV_DEV)}
-                          style={{
-                            flex: 1,
-                            paddingVertical: 10,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: 10,
-                            backgroundColor: currentUrl === ENV_DEV ? colors.primary : 'transparent',
-                          }}
-                        >
-                          <Text style={{
-                            color: currentUrl === ENV_DEV ? '#ffffff' : 'rgba(255,255,255,0.6)',
-                            fontWeight: '900',
-                            fontSize: 11,
-                            letterSpacing: 0.5,
-                            fontFamily: 'Outfit_700Bold'
-                          }}>
-                            DESARROLLO
                           </Text>
                         </TouchableOpacity>
 

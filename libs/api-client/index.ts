@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Client base
-export { api, configureApiClient, ApiError, API_URL, ENV_PROD, ENV_DEV, ENV_LOCAL, loadSavedApiUrl, setApiUrl } from './client'
+export { api, configureApiClient, ApiError, API_URL, ENV_PROD, ENV_LOCAL, loadSavedApiUrl, setApiUrl } from './client'
 
 // Types / DTOs
 export type {
