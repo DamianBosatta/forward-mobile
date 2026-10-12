@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Trash2 } from 'lucide-react-native'
@@ -55,6 +55,7 @@ export function CompraNueva({ borradorId, editarId }: Props) {
   const [editando, setEditando] = useState<LineaCompra | null>(null)
   const [recibir, setRecibir] = useState<{ error: string | null } | null>(null)
   const [fechaFactura, setFechaFactura] = useState(hoyTexto)
+  const guardando = useRef(false)
   const puedeRecibir = usePermissions().canDo('MOD_COMPRAS', 'update')
   useEffect(() => {
     const t = setTimeout(() => setEnviada(busqueda.trim()), 300)
@@ -74,6 +75,17 @@ export function CompraNueva({ borradorId, editarId }: Props) {
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
 
   if (b.cargando) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: 'center' }}><ActivityIndicator color={c.brand} /></View>
+  if (edicion && b.noEditable) {
+    return (
+      <View style={{ flex: 1, backgroundColor: c.bg }}>
+        <TopBar title="Editar compra" leading={{ kind: 'atras', onPress: volver }} />
+        <View style={{ padding: space[4], gap: space[3] }}>
+          <Notice tone="peligro" title="No se puede editar.">{b.error ?? 'La compra ya no está en un estado que admita cambios.'}</Notice>
+          <Button label="Volver al detalle" variant="secundario" onPress={() => router.replace(`/(tabs)/compras/${editarId}` as never)} />
+        </View>
+      </View>
+    )
+  }
   if (!b.proveedor) {
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -119,6 +131,8 @@ export function CompraNueva({ borradorId, editarId }: Props) {
     }
   }
   const guardarCambios = async () => {
+    if (guardando.current) return
+    guardando.current = true
     setOcupado(true)
     try {
       await b.guardarCambios()
@@ -126,6 +140,7 @@ export function CompraNueva({ borradorId, editarId }: Props) {
     } catch {
       // El aviso (con el mensaje del servidor y, si hubo conflicto, "Recargar") lo muestra el formulario.
     } finally {
+      guardando.current = false
       setOcupado(false)
     }
   }
@@ -219,7 +234,7 @@ Recargala para ver la versión actual antes de seguir.` : 'Recargala para ver la
         ) : b.error ? (
           <View style={{ gap: space[2] }}>
             <Notice tone="peligro">{b.error}</Notice>
-            {b.estado === 'error' ? <Button label="Reintentar" variant="secundario" onPress={() => { void b.reintentar() }} /> : null}
+            {b.estado === 'error' && !edicion ? <Button label="Reintentar" variant="secundario" onPress={() => { void b.reintentar() }} /> : null}
           </View>
         ) : null}
         {isTablet ? (

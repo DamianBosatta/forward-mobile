@@ -105,6 +105,55 @@ describe('editar una compra guardada', () => {
     expect(mockPut.mock.calls[0][1]).toMatchObject({ version: 7, descuentoPorcentaje: 10, detalles: [{ unidadCompra: 'Bulto', monedaCosto: 'USD' }] })
   })
 
+  const cambiarCosto = async () => {
+    await userEvent.press(await screen.findByRole('button', { name: /Balde Nuvia 10L, 48 × 100/ }))
+    await userEvent.type(screen.getByLabelText('Costo por unidad ($)'), '5')
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar' }))
+  }
+
+  it('un error que no es 409 no ofrece el Reintentar del autoguardado: Guardar cambios reintenta y navega', async () => {
+    mockPut.mockRejectedValueOnce(Object.assign(new Error('Sin conexión'), { status: 500 }))
+    pantalla({ editarId: 'c7' })
+    await cambiarCosto()
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(await screen.findByText(/Sin conexión/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Reintentar' })).toBeNull()
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(mockBack).toHaveBeenCalled(), ESPERA)
+    expect(mockPut).toHaveBeenCalledTimes(2)
+  })
+
+  it('dos toques seguidos en Guardar cambios mandan un solo PUT', async () => {
+    pantalla({ editarId: 'c7' })
+    await cambiarCosto()
+    const boton = screen.getByRole('button', { name: 'Guardar cambios' })
+    fireEvent.press(boton)
+    fireEvent.press(boton)
+    await waitFor(() => expect(mockBack).toHaveBeenCalled(), ESPERA)
+    expect(mockPut).toHaveBeenCalledTimes(1)
+    expect(mockBack).toHaveBeenCalledTimes(1)
+  })
+
+  it('una compra cerrada abierta por enlace no se edita: aviso y vuelta al detalle', async () => {
+    const prev = mockGet.getMockImplementation()!
+    mockGet.mockImplementation((url: string) => (url === '/api/v1/Compras/c7' ? Promise.resolve({ ...GUARDADA, estado: 'Entregado' }) : prev(url)))
+    pantalla({ editarId: 'c7' })
+    expect(await screen.findByText('No se puede editar.')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Guardar cambios' })).toBeNull()
+    await userEvent.press(screen.getByRole('button', { name: 'Volver al detalle' }))
+    expect(mockReplace).toHaveBeenCalledWith('/(tabs)/compras/c7')
+  })
+
+  it('el 409 de estado final al guardar muestra su mensaje, sin Recargar', async () => {
+    mockPut.mockRejectedValueOnce(Object.assign(new Error('No se puede editar una compra en estado Entregado.'), { status: 409 }))
+    pantalla({ editarId: 'c7' })
+    await cambiarCosto()
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(await screen.findByText(/No se puede editar una compra en estado Entregado/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Recargar' })).toBeNull()
+    expect(screen.queryByText('Alguien más cambió esta compra.')).toBeNull()
+  })
+
   it('un 409 muestra el mensaje del servidor y ofrece recargar', async () => {
     mockPut.mockRejectedValueOnce(Object.assign(new Error('La compra ha sido modificada por otro usuario.'), { status: 409 }))
     pantalla({ editarId: 'c7' })
