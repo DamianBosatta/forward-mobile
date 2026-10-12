@@ -1,11 +1,10 @@
 import React, { useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
-import { ChevronLeft, ChevronRight } from 'lucide-react-native'
-import { FONT, space, typeScale, useColors } from '@/libs/theme'
+import { Text } from 'react-native'
+import { FONT, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, Segmented } from '@/core/ui/fw'
 import { useCrearEvento } from '@/libs/api-client/calendario'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { moverDia, nombreLargo } from './semana'
+import { SelectorDia } from './SelectorDia'
 
 export interface Precarga {
   titulo: string
@@ -40,7 +39,6 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
   const [fecha, setFecha] = useState(inicial)
   const [aviso, setAviso] = useState<Aviso>('1')
   const [error, setError] = useState<string | null>(null)
-  const dia = moverDia(fecha, 0)
 
   const guardar = async () => {
     setError(null)
@@ -59,17 +57,6 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
     }
   }
 
-  const flecha = (Icono: typeof ChevronLeft, etiqueta: string, dias: number) => (
-    <Pressable
-      onPress={() => setFecha(moverDia(fecha, dias).fecha)}
-      accessibilityRole="button"
-      accessibilityLabel={etiqueta}
-      style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
-    >
-      <Icono size={22} color={c.text} />
-    </Pressable>
-  )
-
   return (
     <BottomSheet visible onClose={onCerrar} accessibilityLabel="Nuevo evento">
       <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>Agendar</Text>
@@ -77,17 +64,7 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
         <Notice tone="info">{`Viene de la venta ${precarga.origen}: el título y la descripción ya están cargados.`}</Notice>
       ) : null}
       <Field label="Título" value={titulo} onChangeText={setTitulo} maxLength={MAX_TITULO} />
-      <View style={{ gap: space[1] }}>
-        <Text style={{ ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600', color: c.text }}>Día</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {flecha(ChevronLeft, 'Día anterior', -1)}
-          <View style={{ flex: 1, alignItems: 'center' }}>
-            <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{nombreLargo(dia)}</Text>
-            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>El calendario guarda el día, no la hora</Text>
-          </View>
-          {flecha(ChevronRight, 'Día siguiente', 1)}
-        </View>
-      </View>
+      <SelectorDia fecha={fecha} onCambiar={setFecha} />
       <Text style={{ ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600', color: c.text }}>Avisarme</Text>
       <Segmented<Aviso>
         accessibilityLabel="Avisarme"

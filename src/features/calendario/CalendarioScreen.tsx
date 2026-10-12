@@ -1,28 +1,14 @@
 import React, { useMemo, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { ChevronLeft, ChevronRight } from 'lucide-react-native'
-import { radii, shadowMd, space, typeScale, useColors, useIsDark, type ChipEstado } from '@/libs/theme'
+import { radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { Fab, FormContainer, Notice, StatusChip, TopBar, formatImporte, useMenuLeading } from '@/core/ui/fw'
 import { useCalendario, type EventoCalendario } from '@/libs/api-client/calendario'
 import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
 import { diaDe, nombreLargo, semanaDe, tituloSemana } from './semana'
 import { NuevoEventoSheet, type Precarga } from './NuevoEventoSheet'
-
-const CHIP: Record<EventoCalendario['estado'], { estado: ChipEstado; label: string }> = {
-  Pendiente: { estado: 'pendiente', label: 'Pendiente' },
-  Pagado: { estado: 'entregado', label: 'Pagado' },
-  Vencido: { estado: 'porAutorizar', label: 'Vencido' },
-  Cancelado: { estado: 'anulado', label: 'Cancelado' },
-}
-
-const TIPO: Record<EventoCalendario['tipo'], string> = {
-  VencimientoCompra: 'Vencimiento de compra',
-  ChequeEmitido: 'Cheque emitido',
-  ChequeRecibido: 'Cheque recibido',
-  ServicioRecurrente: 'Servicio',
-  ObligacionPeriodica: 'Obligación',
-  Manual: 'Recordatorio',
-}
+import { EventoSheet } from './EventoSheet'
+import { chipDe, TIPO } from './presentacion'
 
 /** Lámina Calendario: la semana de lunes a domingo (días argentinos) y los eventos del día elegido. */
 export function CalendarioScreen({ precarga }: { precarga?: Precarga | null }) {
@@ -43,6 +29,12 @@ export function CalendarioScreen({ precarga }: { precarga?: Precarga | null }) {
   const delDia = (fecha: string) => (q.data ?? []).filter((e) => e.fecha.slice(0, 10) === fecha)
   const eventos = delDia(dia.fecha)
   const irASemana = (n: number) => { setSemana(n); setElegido(null) }
+  const [abierto, setAbierto] = useState<EventoCalendario | null>(null)
+  /** Muestra un día, aunque caiga en otra semana. */
+  const irADia = (fecha: string) => {
+    setSemana(semana + Math.floor((Date.parse(fecha) - Date.parse(dias[0].fecha)) / (7 * 24 * 60 * 60 * 1000)))
+    setElegido(fecha)
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -92,9 +84,9 @@ export function CalendarioScreen({ precarga }: { precarga?: Precarga | null }) {
             <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>No hay eventos este día.</Text>
           ) : (
             eventos.map((e) => {
-              const chip = CHIP[e.estado]
+              const chip = chipDe(e)
               return (
-                <View key={e.clave} accessible accessibilityLabel={`${e.titulo}, ${chip?.label ?? e.estado}`} style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[1], ...sombra }}>
+                <Pressable key={e.clave} onPress={() => setAbierto(e)} accessibilityRole="button" accessibilityLabel={`${e.titulo}, ${chip?.label ?? e.estado}`} accessibilityHint="Abre el detalle del evento" style={({ pressed }) => ({ backgroundColor: pressed ? c.surface2 : c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[1], ...sombra })}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
                     <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }}>{e.titulo}</Text>
                     {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
@@ -102,7 +94,7 @@ export function CalendarioScreen({ precarga }: { precarga?: Precarga | null }) {
                   <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
                     {[TIPO[e.tipo] ?? e.tipo, e.descripcion, e.monto != null ? formatImporte(e.monto) : null].filter(Boolean).join(' · ')}
                   </Text>
-                </View>
+                </Pressable>
               )
             })
           )}
@@ -120,10 +112,15 @@ export function CalendarioScreen({ precarga }: { precarga?: Precarga | null }) {
           onCreado={(fecha) => {
             setCreando(false)
             setConPrecarga(null)
-            // Muestra el día del evento nuevo, aunque caiga en otra semana.
-            setSemana(semana + Math.floor((Date.parse(fecha) - Date.parse(dias[0].fecha)) / (7 * 24 * 60 * 60 * 1000)))
-            setElegido(fecha)
+            irADia(fecha)
           }}
+        />
+      ) : null}
+      {abierto ? (
+        <EventoSheet
+          evento={abierto}
+          onCerrar={() => setAbierto(null)}
+          onMovido={(fecha) => { setAbierto(null); irADia(fecha) }}
         />
       ) : null}
     </View>

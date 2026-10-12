@@ -55,7 +55,7 @@ describe('Calendario', () => {
     expect(within(cheque).getByText('Cheque recibido · $ 59.566,01')).toBeTruthy()
     expect(screen.getByLabelText('vie 9, 2 eventos')).toBeTruthy()
     await userEvent.press(screen.getByLabelText('lun 5, 1 evento'))
-    expect(screen.getByLabelText('Llamar a Sofía, Pagado')).toBeTruthy()
+    expect(screen.getByLabelText('Llamar a Sofía, Hecho')).toBeTruthy()
     expect(screen.queryByText('Rendir la caja de la semana')).toBeNull()
   })
 
