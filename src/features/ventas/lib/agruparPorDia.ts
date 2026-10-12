@@ -55,3 +55,17 @@ export function horaDe(iso: string | null | undefined): string {
   const { hora, minuto } = partesArgentina(fecha.getTime())
   return `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`
 }
+
+/**
+ * "Entrega hoy", "Entrega mañana" o "Entrega jue 8" para la tarjeta. La fecha de entrega llega
+ * como instante UTC (forward-system #884) y el día es el argentino. Sin fecha, cadena vacía.
+ */
+export function entregaDe(iso: string | null | undefined, ahora: Date = new Date()): string {
+  const fecha = parseDateSafe(iso)
+  if (!fecha) return ''
+  const dias = numeroDeDiaArgentina(fecha.getTime()) - numeroDeDiaArgentina(ahora.getTime())
+  if (dias === 0) return 'Entrega hoy'
+  if (dias === 1) return 'Entrega mañana'
+  const f = partesArgentina(fecha.getTime())
+  return `Entrega ${format(new Date(f.anio, f.mes, f.dia), 'EEE d', { locale: es })}`
+}

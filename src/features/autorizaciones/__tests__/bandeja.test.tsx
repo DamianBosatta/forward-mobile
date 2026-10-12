@@ -192,4 +192,52 @@ describe('Autorizaciones: la bandeja', () => {
     expect(mockPush).not.toHaveBeenCalled()
     expect(within(screen.getByTestId('two-pane-detail')).queryByText('Elegí una venta para decidir.')).toBeNull()
   })
+
+  describe('con el servidor de forward-system #884 (número, cliente por partes y versión)', () => {
+    const nueva = (extra: object = {}) => venta('a', 32, 507977.55, {
+      clienteDisplayName: 'Juan B. Justo 6376 - Carlos', direccionCliente: 'Juan B. Justo 6376', nombreFantasiaCliente: 'Carlos',
+      razonSocialCliente: 'Autoservicio Carlos', numeroPedido: 417, codigoPedido: 'A00417', version: 41, ...extra,
+    })
+
+    it('la tarjeta lleva el número con el vendedor, la dirección como título y el nombre aparte', async () => {
+      conCapacidades('CAP_AUTORIZAR_VENTA')
+      bandeja([nueva()])
+      pintar()
+      expect(await screen.findByText('A00417 · Emanuel Parraquini')).toBeTruthy()
+      expect(screen.getByText('Juan B. Justo 6376')).toBeTruthy()
+      expect(screen.getByText('Carlos · Autoservicio Carlos')).toBeTruthy()
+      expect(screen.queryByText('Juan B. Justo 6376 - Carlos')).toBeNull()
+    })
+
+    it('sin dirección el título es el nombre; fantasía igual a la razón social no se repite', async () => {
+      conCapacidades('CAP_AUTORIZAR_VENTA')
+      bandeja([nueva({ direccionCliente: null, nombreFantasiaCliente: 'Limpieza Total', razonSocialCliente: 'Limpieza Total' })])
+      pintar()
+      expect(await screen.findByText('Limpieza Total')).toBeTruthy()
+      expect(screen.queryByText(/Limpieza Total ·/)).toBeNull()
+    })
+
+    it('autorizar y rechazar usan la versión de la bandeja, sin pedir el detalle', async () => {
+      conCapacidades('CAP_AUTORIZAR_VENTA')
+      bandeja([nueva()])
+      pintar()
+      await userEvent.press(await screen.findByLabelText('Autorizar la venta de Juan B. Justo 6376 - Carlos'))
+      await userEvent.press(hoja('Autorizar venta').getByRole('button', { name: 'Autorizar' }))
+      await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/a/autorizar', { ventaId: 'a', version: 41, razon: null }))
+
+      await userEvent.press(screen.getByLabelText('Rechazar la venta de Juan B. Justo 6376 - Carlos'))
+      await userEvent.type(screen.getByLabelText('Motivo del rechazo · obligatorio'), 'Sin crédito')
+      await userEvent.press(hoja('Rechazar venta').getByRole('button', { name: 'Rechazar' }))
+      await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/a/rechazar-autorizacion', { ventaId: 'a', version: 41, motivoRechazo: 'Sin crédito' }))
+      expect(mockGet).not.toHaveBeenCalledWith('/api/v1/Ventas/a')
+    })
+
+    it('con un servidor anterior la tarjeta queda como antes: vendedor solo y el nombre compuesto', async () => {
+      conCapacidades('CAP_AUTORIZAR_VENTA')
+      bandeja([venta('a', 4, 100)])
+      pintar()
+      expect(await screen.findByText('Emanuel Parraquini')).toBeTruthy()
+      expect(screen.getByText('Dirección a - Cliente a')).toBeTruthy()
+    })
+  })
 })

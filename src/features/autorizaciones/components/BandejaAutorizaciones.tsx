@@ -19,6 +19,18 @@ export function totalDeBandeja(lista: VentaPendienteAutorizacion[]): number | nu
   return lista.reduce((s, v) => s + v.totalAmount, 0)
 }
 
+/**
+ * Dirección como título y el nombre (fantasía · razón social, sin repetir) aparte, como la lámina.
+ * Llegan por separado desde forward-system #884; un servidor anterior solo manda el nombre compuesto.
+ */
+export function clienteDeBandeja(v: VentaPendienteAutorizacion): { titulo: string; nombre: string | null } {
+  const direccion = v.direccionCliente?.trim()
+  const nombres = [...new Set([v.nombreFantasiaCliente?.trim(), v.razonSocialCliente?.trim()].filter((n): n is string => !!n))]
+  if (direccion) return { titulo: direccion, nombre: nombres.join(' · ') || null }
+  if (!nombres.length) return { titulo: v.clienteDisplayName, nombre: null }
+  return { titulo: nombres[0]!, nombre: nombres.slice(1).join(' · ') || null }
+}
+
 interface Props {
   /** Detalle embebido para el panel derecho en tablet horizontal. */
   detalle: (id: string, cerrar: () => void) => React.ReactNode
@@ -82,17 +94,19 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
 
   const tarjeta = (v: VentaPendienteAutorizacion) => {
     const conRazon = pideRazon(v.motivoPendienteAutorizacion)
+    const cliente = clienteDeBandeja(v)
     return (
       <View style={{ marginBottom: space[3], padding: space[4], gap: space[2], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
         <Pressable accessibilityRole="button" accessibilityLabel={`Ver la venta de ${v.clienteDisplayName}`} onPress={() => abrir(v.id)} style={{ gap: space[1], minHeight: 44 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-            <Text numberOfLines={1} style={[secundario, { flexShrink: 1 }]}>{v.vendedorNombre}</Text>
+            <Text numberOfLines={1} style={[secundario, { flexShrink: 1 }]}>{v.codigoPedido ? `${v.codigoPedido} · ${v.vendedorNombre}` : v.vendedorNombre}</Text>
             <Text style={secundario}>{formatRelativeTime(v.fechaPendiente)}</Text>
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
-            <Text numberOfLines={2} style={[typeScale.cuerpoDestacado, { color: c.text, flex: 1 }]}>{v.clienteDisplayName}</Text>
+            <Text numberOfLines={2} style={[typeScale.cuerpoDestacado, { color: c.text, flex: 1 }]}>{cliente.titulo}</Text>
             <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(v.totalAmount)}</Text>
           </View>
+          {cliente.nombre ? <Text numberOfLines={1} style={[typeScale.secundario, { color: c.text }]}>{cliente.nombre}</Text> : null}
           {motivosDe(v.motivoPendienteAutorizacion).map((m) => (
             <Text key={m.clave} style={[typeScale.secundario, { color: c.text }]}>{`• ${m.texto}`}</Text>
           ))}
@@ -140,6 +154,8 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
         decision={decidiendo?.decision ?? null}
         ventaId={decidiendo?.venta.id ?? ''}
         cliente={decidiendo?.venta.clienteDisplayName ?? ''}
+        // La versión de la bandeja (#884) alcanza para decidir; sin ella, la hoja pide el detalle.
+        version={decidiendo?.venta.version}
         fechaPendiente={decidiendo?.venta.fechaPendiente}
         onConflicto={setAviso}
         onClose={() => setDecidiendo(null)}

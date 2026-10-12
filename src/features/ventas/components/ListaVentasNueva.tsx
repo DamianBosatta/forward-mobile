@@ -12,7 +12,8 @@ import { useResponsive } from '@/libs/useResponsive'
 import type { Venta } from '@/libs/api-client'
 import type { BorradorVenta } from '@/libs/api-client/ventas'
 import type { FiltroVentasRuta } from '@/features/listas/lib/filtroDeRuta'
-import { agruparPorDia, horaDe, tituloDelDia } from '../lib/agruparPorDia'
+import { agruparPorDia, entregaDe, horaDe, tituloDelDia } from '../lib/agruparPorDia'
+import { motivosDe } from '@/features/autorizaciones/lib/motivos'
 import { useVentasListaNueva, type FiltroEstado, type PeriodoVentas, type PestanaVentas } from '../hooks/useVentasListaNueva'
 
 const PESTANAS: { key: PestanaVentas; label: string }[] = [
@@ -41,6 +42,17 @@ function clienteDe(v: Venta): { direccion: string; nombre: string | null } {
   const nombre = v.nombreFantasiaCliente?.trim() || v.razonSocialCliente
   const direccion = v.direccionCliente?.trim()
   return direccion ? { direccion, nombre } : { direccion: nombre, nombre: null }
+}
+
+/**
+ * Lo que va al lado de la hora: por autorizar, el motivo (el primero y cuántos más); si no, el día
+ * de entrega. Un servidor anterior a forward-system #884 no manda ninguno de los dos: solo la hora.
+ */
+function detalleDe(v: Venta): string | undefined {
+  // El servidor solo lo manda mientras la venta espera autorización.
+  const motivos = motivosDe(v.motivoPendienteAutorizacion)
+  if (motivos.length) return `${motivos[0]!.texto}${motivos.length > 1 ? ` (+${motivos.length - 1})` : ''}`
+  return entregaDe(v.fechaEntrega) || undefined
 }
 
 interface Props {
@@ -123,6 +135,7 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
             vendedor={v.vendedorNombre}
             {...clienteDe(v)}
             hora={horaDe(v.fecha)}
+            detalle={detalleDe(v)}
             importe={v.totalAmount}
             chip={chipForEstado('venta', v.estado)}
             onPress={() => abrir(v.id)}

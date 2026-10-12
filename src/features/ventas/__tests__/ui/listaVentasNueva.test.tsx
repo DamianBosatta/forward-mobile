@@ -128,6 +128,42 @@ describe('lista de ventas nueva', () => {
   })
 })
 
+describe('lista de ventas nueva: entrega y motivo en la tarjeta (forward-system #884)', () => {
+  function conVentas(items: unknown[]) {
+    mockGet.mockImplementation((url: string) => Promise.resolve(url.includes('borradores/mios') ? [] : pagina(items, items.length)))
+  }
+
+  it('la tarjeta dice el día de entrega al lado de la hora', async () => {
+    conVentas([venta({ fechaEntrega: ahora.toISOString() })])
+    pantalla()
+    const tarjeta = await screen.findByRole('button', { name: /A00418/ })
+    expect(within(tarjeta).getByText(/ · Entrega hoy$/)).toBeTruthy()
+  })
+
+  it('una venta por autorizar dice el motivo en lugar de la entrega', async () => {
+    conVentas([venta({ estado: 'PendienteAutorizacion', fechaEntrega: ahora.toISOString(), motivoPendienteAutorizacion: 32 })])
+    pantalla()
+    const tarjeta = await screen.findByRole('button', { name: /A00418/ })
+    expect(within(tarjeta).getByText('Por autorizar')).toBeTruthy()
+    expect(within(tarjeta).getByText(/ · Supera el tope de crédito del cliente$/)).toBeTruthy()
+    expect(within(tarjeta).queryByText(/Entrega/)).toBeNull()
+  })
+
+  it('con más de un motivo dice el primero y cuántos más hay', async () => {
+    conVentas([venta({ estado: 'PendienteAutorizacion', motivoPendienteAutorizacion: 4 | 32 })])
+    pantalla()
+    const tarjeta = await screen.findByRole('button', { name: /A00418/ })
+    expect(within(tarjeta).getByText(/ · Supera el tope de descuento del vendedor \(\+1\)$/)).toBeTruthy()
+  })
+
+  it('con un servidor anterior (sin esos campos) la tarjeta muestra solo la hora', async () => {
+    conVentas([venta({ estado: 'PendienteAutorizacion' })])
+    pantalla()
+    const tarjeta = await screen.findByRole('button', { name: /A00418/ })
+    expect(within(tarjeta).getByText(/^\d{2}:\d{2}$/)).toBeTruthy()
+  })
+})
+
 describe('lista de ventas nueva: total del filtro (GET /Ventas/resumen)', () => {
   const RESUMEN = '/api/v1/Ventas/resumen?'
   /** El resumen que contesta el servidor; el resto de las URLs, como en el beforeEach. */

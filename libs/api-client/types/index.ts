@@ -169,19 +169,30 @@ export interface MovimientoStockHistorialDto {
  * Venta list item — matches GET /api/v1/ventas list shape.
  * Includes razonSocialCliente and nombreDeposito from the SQL join.
  */
-export type Venta = components['schemas']['VentaDtoList']
+export type Venta = components['schemas']['VentaDtoList'] & {
+  /** Instante UTC (forward-system #884); el día se muestra en hora argentina. Un servidor anterior no lo manda. */
+  fechaEntrega?: string | null
+  /** Flags de por qué espera autorización (#884): solo con la venta en PendienteAutorizacion. */
+  motivoPendienteAutorizacion?: number | null
+}
 
 /**
  * Venta detail response — matches GET /api/v1/ventas/{id} shape.
  * Composed of VentaHeaderDto (header), VentaDetalleItemDto[] (line items), and BultoDto[] (packages).
  */
-export type VentaDetalleDto = components['schemas']['VentaDetalleDto']
+export type VentaDetalleDto = Omit<components['schemas']['VentaDetalleDto'], 'venta' | 'detalles'> & {
+  venta: VentaHeaderDto
+  detalles: VentaDetalleItemDto[]
+}
 
-/** Venta header — nested inside VentaDetalleDto. */
-export type VentaHeaderDto = components['schemas']['VentaHeaderDto']
+/** Venta header — nested inside VentaDetalleDto. `motivoAnulacion` llegó con #884: opcional. */
+export type VentaHeaderDto = components['schemas']['VentaHeaderDto'] & { motivoAnulacion?: string | null }
 
-/** Venta line item — nested inside VentaDetalleDto. */
-export type VentaDetalleItemDto = components['schemas']['VentaDetalleItemDto']
+/** Venta line item — nested inside VentaDetalleDto. La línea de la fragancia llegó con #884: opcional. */
+export type VentaDetalleItemDto = components['schemas']['VentaDetalleItemDto'] & {
+  productoPadreId?: string | null
+  productoPadreNombre?: string | null
+}
 
 /** Bulto — nested inside VentaDetalleDto. */
 export type BultoDto = components['schemas']['BultoDto']

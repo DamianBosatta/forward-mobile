@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { parseDateSafe, partesArgentina } from '@/src/utils/date'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
 import { api } from '@/core/api/client'
@@ -14,6 +15,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { direccionDeEntrega, nombreDelCliente, textoCondicionPago, type CondicionPago } from '@/features/clientes/lib/cliente'
 import { horaDe, tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { mostrarNumero } from '../lib/linea'
+import { agruparPorPadre, nombreFragancia } from '../lib/fragancias'
 import { ESTADO_PENDIENTE_AUTORIZACION, motivosAutorizacion } from '../lib/motivosAutorizacion'
 import { codigoDeVenta, rotuloCliente, tipoDeVenta } from '../lib/ventaGuardada'
 import { AccionesVenta } from './AccionesVenta'
@@ -23,11 +25,12 @@ type Simulacion = components['schemas']['SimulacionComisionDto']
 const ENTREGA: Record<string, string> = { LogisticaPropia: 'Logística propia', RetiroEnLocal: 'Retiro en el local', Expreso: 'Expreso' }
 const ESTADO_RECHAZADA = 11
 
-/** "Jueves 8 de octubre" de un día "YYYY-MM-DD" tal como se guardó (sin pasar por husos horarios). */
+/** "Jueves 8 de octubre": la fecha de entrega llega como instante UTC y el día es el argentino, igual que en la tarjeta. */
 export function diaDeEntrega(fecha: string | null | undefined): string | null {
-  const m = fecha?.match(/^(\d{4})-(\d{2})-(\d{2})/)
-  if (!m) return null
-  const texto = format(new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])), "EEEE d 'de' MMMM", { locale: es })
+  const instante = parseDateSafe(fecha)
+  if (!instante) return null
+  const f = partesArgentina(instante.getTime())
+  const texto = format(new Date(f.anio, f.mes, f.dia), "EEEE d 'de' MMMM", { locale: es })
   return texto.charAt(0).toUpperCase() + texto.slice(1)
 }
 
@@ -110,6 +113,7 @@ export function DetalleVentaNueva({ id, onVolver }: Props) {
             {`${motivos.map((m) => `• ${m.charAt(0).toUpperCase()}${m.slice(1)}.`).join('\n')}${motivos.length ? '\n' : ''}Te avisamos cuando lo resuelvan.`}
           </Notice>
         ) : null}
+        {h.motivoAnulacion ? <Notice tone="peligro" title="Se anuló">{h.motivoAnulacion}</Notice> : null}
         {h.estado === ESTADO_RECHAZADA && h.motivoRechazoAutorizacion ? <Notice tone="peligro" title="No se autorizó">{h.motivoRechazoAutorizacion}</Notice> : null}
         <View style={tarjeta}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -131,16 +135,25 @@ export function DetalleVentaNueva({ id, onVolver }: Props) {
         </View>
         <View style={tarjeta}>
           {titulo(`Líneas (${q.data.detalles.length})`)}
-          {q.data.detalles.map((d) => (
-            <View key={d.id} style={{ gap: space[1], paddingVertical: space[1] }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-                <Text style={{ ...typeScale.cuerpo, color: c.text, flex: 1 }}>{d.productoNombre}</Text>
-                <Text style={{ ...typeScale.cuerpo, ...importe, color: c.text }}>{formatImporte(d.subtotal)}</Text>
+          {/* Las fragancias de una línea van juntas (la línea llega con forward-system #884; sin ella, cada una sola). */}
+          {agruparPorPadre(q.data.detalles, (d) => d.productoPadreId).map((g) => {
+            const items = g.tipo === 'producto' ? [g.item] : g.items
+            const padre = g.tipo === 'fragancias' ? (items[0]!.productoPadreNombre ?? items[0]!.productoNombre.split(' - ')[0]!) : null
+            const unidades = items.reduce((a, d) => a + d.cantidad, 0)
+            const precio = items.every((d) => d.precioUnitario === items[0]!.precioUnitario) ? items[0]!.precioUnitario : null
+            const desc = items.every((d) => d.porcentajeDescuentoItem === items[0]!.porcentajeDescuentoItem) ? items[0]!.porcentajeDescuentoItem : null
+            return (
+              <View key={g.tipo === 'producto' ? g.item.id : g.padreId} style={{ gap: space[1], paddingVertical: space[1] }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
+                  <Text style={{ ...typeScale.cuerpo, color: c.text, flex: 1 }}>{padre ? `${padre} · fragancias` : items[0]!.productoNombre}</Text>
+                  <Text style={{ ...typeScale.cuerpo, ...importe, color: c.text }}>{formatImporte(items.reduce((a, d) => a + d.subtotal, 0))}</Text>
+                </View>
+                <Text style={{ ...sec, ...importe }}>{precio !== null ? `${unidades} × ${formatImporte(precio)}` : `${unidades} unidades`}</Text>
+                {padre ? <Text style={{ ...typeScale.secundario, color: c.text }}>{items.map((d) => `${nombreFragancia({ nombre: d.productoNombre }, padre)} ${d.cantidad}`).join(' · ')}</Text> : null}
+                {desc !== null ? <Text style={sec}>{desc > 0 ? `Desc. ${mostrarNumero(desc)} %` : 'Sin descuento'}</Text> : null}
               </View>
-              <Text style={{ ...sec, ...importe }}>{`${d.cantidad} × ${formatImporte(d.precioUnitario)}`}</Text>
-              <Text style={sec}>{d.porcentajeDescuentoItem > 0 ? `Desc. ${mostrarNumero(d.porcentajeDescuentoItem)} %` : 'Sin descuento'}</Text>
-            </View>
-          ))}
+            )
+          })}
           <TotalsRow label="Subtotal" importe={h.subtotalBrutoAmount} />
           <TotalsRow label={`Descuento general ${mostrarNumero(h.porcentajeDescuento)} %`} importe={-h.montoDescuentoAmount} />
           {h.cargoFleteAmount ? <TotalsRow label="Flete" importe={h.cargoFleteAmount} /> : null}
