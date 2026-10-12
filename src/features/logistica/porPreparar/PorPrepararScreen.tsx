@@ -47,11 +47,15 @@ export function PorPrepararScreen() {
   // Logística y vendedor los filtra el servidor; el estado, el teléfono (el endpoint no lo recibe).
   const q = useVentasParaPreparacion(
     { fechaDesde: dia.fecha, fechaHasta: dia.fecha, metodoEntrega: filtros.metodo ?? undefined, vendedorId: filtros.vendedor?.id },
-    { activa: useIsFocused() },
+    { activa: useIsFocused(), mantenerAlFiltrar: true },
   )
 
   const items = (q.data ?? []).filter((v) => filtros.estado === null || v.estado === filtros.estado)
   const resumenFiltros = textoFiltros(filtros)
+  // En tablet el detalle queda al lado: si el filtro saca ese pedido de la lista, se cierra.
+  useEffect(() => {
+    if (pedido && q.data && !q.isPlaceholderData && !items.some((v) => v.id === pedido.id)) setPedido(null)
+  }, [pedido, q.data, q.isPlaceholderData, filtros.estado]) // eslint-disable-line react-hooks/exhaustive-deps
   const delDia = items.filter((v) => v.estado !== NO_ENTREGADA)
   const noEntregados = items.filter((v) => v.estado === NO_ENTREGADA)
   const lineas = delDia.reduce((s, v) => s + v.itemsCount, 0)
@@ -184,7 +188,7 @@ export function PorPrepararScreen() {
         visible={filtrando}
         filtros={filtros}
         onCambio={setFiltros}
-        vendedores={veVendedores ? vendedores.data ?? [] : null}
+        vendedores={veVendedores ? { lista: vendedores.data ?? [], cargando: vendedores.isLoading, error: vendedores.isError } : null}
         onClose={() => setFiltrando(false)}
       />
     </View>

@@ -80,7 +80,11 @@ export function DecisionSheet({ decision, ventaId, cliente, version, fechaPendie
       </Text>
       <Field
         label={esRechazo ? 'Motivo del rechazo · obligatorio' : razonObligatoria ? 'Razón para autorizar · obligatoria' : 'Razón para autorizar (opcional)'}
-        help={razonObligatoria && !esRechazo ? 'Se pide porque hay margen en amarillo. Queda guardada en la venta.' : undefined}
+        help={esRechazo ? undefined
+          : razonObligatoria ? 'Se pide porque hay margen en amarillo. Queda guardada en la venta.'
+          // El servidor reevalúa el piso con el descuento: si deja líneas en amarillo, pide la razón.
+          : adicional.valor !== null ? 'Si el descuento deja líneas por debajo del piso, la razón es obligatoria.'
+          : undefined}
         value={texto}
         onChangeText={setTexto}
         maxLength={500}

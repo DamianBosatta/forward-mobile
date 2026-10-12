@@ -123,6 +123,15 @@ describe('Autorizar venta: el detalle', () => {
       },
     )
 
+    it('con descuento, la razón avisa que el piso la puede volver obligatoria', async () => {
+      const hoja = await abrirHoja()
+      const aviso = 'Si el descuento deja líneas por debajo del piso, la razón es obligatoria.'
+      expect(hoja.queryByText(aviso)).toBeNull()
+      await userEvent.type(hoja.getByLabelText('Descuento adicional al autorizar (opcional)'), '5')
+      expect(hoja.getByText(aviso)).toBeTruthy()
+      expect(hoja.getByLabelText('Razón para autorizar (opcional)').props.accessibilityHint).toBe(aviso)
+    })
+
     it('vacío o en 0 no se manda el campo (sin descuento adicional)', async () => {
       const hoja = await abrirHoja()
       await userEvent.type(hoja.getByLabelText('Descuento adicional al autorizar (opcional)'), '0')

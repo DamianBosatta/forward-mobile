@@ -203,7 +203,7 @@ describe('Pedidos por preparar (solo lectura)', () => {
   describe('filtros (logística, vendedor, estado)', () => {
     const pedidosPedidos = () => urls().filter((u) => u.includes('ventas-para-preparacion'))
     async function abrirFiltros() {
-      await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376')
+      await screen.findAllByLabelText(/^Pedido A004/)
       await userEvent.press(screen.getByRole('button', { name: 'Filtrar: logística, vendedor, estado' }))
       return within(screen.getByLabelText('Filtrar pedidos'))
     }
@@ -238,12 +238,77 @@ describe('Pedidos por preparar (solo lectura)', () => {
       expect(screen.queryByText(/^Filtros:/)).toBeNull()
     })
 
+    it('vendedores con el mismo nombre son dos opciones distintas (sin claves repetidas)', async () => {
+      const errores = jest.spyOn(console, 'error').mockImplementation(() => {})
+      const servido = mockGet.getMockImplementation()!
+      mockGet.mockImplementation((url: string) => url.endsWith('/Ventas/vendedores')
+        ? Promise.resolve([{ id: 'u3', nombre: 'Ana Gómez' }, { id: 'u4', nombre: 'Ana Gómez' }])
+        : servido(url))
+      pintar()
+      const hoja = await abrirFiltros()
+      const anas = await hoja.findAllByRole('radio', { name: 'Ana Gómez' })
+      expect(anas).toHaveLength(2)
+      await userEvent.press(anas[1]!)
+      expect(pedidosPedidos().at(-1)).toMatch(/VendedorId=u4/)
+      expect(errores.mock.calls.some((c) => /same key/.test(String(c[0])))).toBe(false)
+    })
+
+    it('mientras carga la lista de vendedores lo dice; si falla, también', async () => {
+      const servido = mockGet.getMockImplementation()!
+      let fallar: (e: Error) => void = () => {}
+      mockGet.mockImplementation((url: string) => url.endsWith('/Ventas/vendedores')
+        ? new Promise((_r, rej) => { fallar = rej })
+        : servido(url))
+      pintar()
+      const hoja = await abrirFiltros()
+      expect(hoja.getByText('Cargando…')).toBeTruthy()
+      await act(async () => { fallar(new Error('sin conexión')) })
+      expect(await hoja.findByText('No se pudo cargar la lista de vendedores.')).toBeTruthy()
+      const grupo = within(hoja.getByLabelText('Vendedor'))
+      expect(grupo.getAllByRole('radio').map((r) => r.props.accessibilityState.checked)).toEqual([true])
+    })
+
+    it('al cambiar logística siguen a la vista los pedidos de antes hasta que llega la respuesta; otro día muestra la carga', async () => {
+      const servido = mockGet.getMockImplementation()!
+      mockGet.mockImplementation((url: string) =>
+        url.includes('MetodoEntrega=2') || url.includes('FechaDesde=2026-10-13') ? new Promise(() => {}) : servido(url))
+      pintar()
+      const hoja = await abrirFiltros()
+      await userEvent.press(hoja.getByRole('radio', { name: 'Retiro en el local' }))
+      await userEvent.press(hoja.getByRole('button', { name: 'Listo' }))
+      expect(pedidosPedidos().at(-1)).toMatch(/MetodoEntrega=2/)
+      expect(screen.getByLabelText('Pedido A00417: Juan B. Justo 6376')).toBeTruthy()
+      expect(screen.queryByLabelText('Cargando los pedidos')).toBeNull()
+
+      await userEvent.press(screen.getByLabelText('mar 13'))
+      expect(screen.getByLabelText('Cargando los pedidos')).toBeTruthy()
+      expect(screen.queryByLabelText('Pedido A00417: Juan B. Justo 6376')).toBeNull()
+    })
+
+    it('en tablet, si el filtro saca el pedido abierto, se cierra su detalle; si no, queda', async () => {
+      mockAncho.mockReturnValue(1100)
+      pintar()
+      await userEvent.press(await screen.findByLabelText('Pedido A00424: Brandsen 3314'))
+      expect(await screen.findByText('Pedido A00424')).toBeTruthy()
+      let hoja = await abrirFiltros()
+      await userEvent.press(hoja.getByRole('radio', { name: 'Confirmado' }))
+      await userEvent.press(hoja.getByRole('button', { name: 'Listo' }))
+      expect(screen.getByText('Pedido A00424')).toBeTruthy()
+
+      hoja = await abrirFiltros()
+      await userEvent.press(hoja.getByRole('radio', { name: 'En preparación' }))
+      await userEvent.press(hoja.getByRole('button', { name: 'Listo' }))
+      expect(await screen.findByText('Elegí un pedido para ver qué hay que preparar.')).toBeTruthy()
+      expect(screen.queryByText('Pedido A00424')).toBeNull()
+    })
+
     it('sin permiso de leer ventas no ofrece vendedor ni pide la lista de vendedores', async () => {
       useAuthStore.setState({ user: { id: 'u9', username: 'ramiro', roles: [], permissions: [{ module: 'MOD_VIAJES', canRead: true }] } } as never)
       pintar()
       const hoja = await abrirFiltros()
       expect(hoja.getByRole('radio', { name: 'Expreso' })).toBeTruthy()
-      expect(hoja.queryByRole('radiogroup', { name: 'Vendedor' })).toBeNull()
+      expect(hoja.queryByLabelText('Vendedor')).toBeNull()
+      expect(hoja.queryByText('Vendedor')).toBeNull()
       expect(urls().some((u) => u.includes('/Ventas/vendedores'))).toBe(false)
     })
   })

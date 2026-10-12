@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, SectionList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import {
@@ -51,6 +51,10 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
   const [elegida, setElegida] = useState<string | null>(null)
   const l = useComprasList(estadoDeRuta)
   const q = l.comprasQuery
+  // Tablet: si el filtro (también el que llega de Inicio) saca la compra abierta, se cierra su detalle.
+  useEffect(() => {
+    if (elegida && q.data && !q.isFetching && !q.isPlaceholderData && !l.compras.some((x) => x.id === elegida)) setElegida(null)
+  }, [elegida, q.data, q.isFetching, q.isPlaceholderData, l.compras])
 
   const abrir = (id: string) => {
     if (isTabletLandscape) setElegida(id)

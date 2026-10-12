@@ -34,7 +34,7 @@ export function textoFiltros(f: FiltrosPreparacion): string | null {
 
 interface Opcion<T> { valor: T; label: string }
 
-function Grupo<T>({ titulo, opciones, valor, onCambio }: { titulo: string; opciones: Opcion<T>[]; valor: T; onCambio: (v: T) => void }) {
+function Grupo<T>({ titulo, opciones, valor, onCambio, nota }: { titulo: string; opciones: Opcion<T>[]; valor: T; onCambio: (v: T) => void; nota?: string }) {
   const c = useColors()
   return (
     <View style={{ gap: space[2] }}>
@@ -44,7 +44,7 @@ function Grupo<T>({ titulo, opciones, valor, onCambio }: { titulo: string; opcio
           const sel = o.valor === valor
           return (
             <Pressable
-              key={o.label}
+              key={String(o.valor)}
               accessibilityRole="radio"
               accessibilityState={{ checked: sel }}
               onPress={() => onCambio(o.valor)}
@@ -55,6 +55,7 @@ function Grupo<T>({ titulo, opciones, valor, onCambio }: { titulo: string; opcio
           )
         })}
       </View>
+      {nota ? <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{nota}</Text> : null}
     </View>
   )
 }
@@ -64,7 +65,7 @@ interface Props {
   filtros: FiltrosPreparacion
   onCambio: (f: FiltrosPreparacion) => void
   /** `null`: sin permiso para leer la lista de vendedores; el filtro no se ofrece. */
-  vendedores: { id: string; nombre: string }[] | null
+  vendedores: { lista: { id: string; nombre: string }[]; cargando: boolean; error: boolean } | null
   onClose: () => void
 }
 
@@ -80,9 +81,10 @@ export function FiltrosPorPreparar({ visible, filtros, onCambio, vendedores, onC
         {vendedores ? (
           <Grupo
             titulo="Vendedor"
-            opciones={todos('Todos', vendedores.map((v) => ({ valor: v.id, label: v.nombre })))}
+            opciones={todos('Todos', vendedores.lista.map((v) => ({ valor: v.id, label: v.nombre })))}
             valor={filtros.vendedor?.id ?? null}
-            onCambio={(id) => onCambio({ ...filtros, vendedor: vendedores.find((v) => v.id === id) ?? null })}
+            onCambio={(id) => onCambio({ ...filtros, vendedor: vendedores.lista.find((v) => v.id === id) ?? null })}
+            nota={vendedores.cargando ? 'Cargando…' : vendedores.error ? 'No se pudo cargar la lista de vendedores.' : undefined}
           />
         ) : null}
         <Grupo titulo="Estado" opciones={todos('Todos', ESTADOS)} valor={filtros.estado} onCambio={(estado) => onCambio({ ...filtros, estado })} />

@@ -7,7 +7,8 @@
 export function leerDescuentoAdicional(texto: string): { valor: number | null; error?: string } {
   const limpio = texto.trim().replace(',', '.')
   if (limpio === '') return { valor: null }
-  if (!/^\d+(\.\d*)?$/.test(limpio)) return { valor: null, error: 'Escribí un número, por ejemplo 5 o 2,5.' }
+  // "5", "5.", "5.25", ".5": al menos un dígito.
+  if (!/^(\d+(\.\d*)?|\.\d+)$/.test(limpio)) return { valor: null, error: 'Escribí un número, por ejemplo 5 o 2,5.' }
   if ((limpio.split('.')[1] ?? '').length > 2) return { valor: null, error: 'Admite hasta 2 decimales.' }
   const valor = Number(limpio)
   if (valor > 100) return { valor: null, error: 'Tiene que estar entre 0 y 100.' }

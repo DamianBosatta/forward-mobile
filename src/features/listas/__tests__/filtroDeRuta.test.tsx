@@ -31,9 +31,17 @@ jest.mock('@/features/ventas/components/VentasKpiGrid', () => ({ VentasKpiGrid: 
 jest.mock('@/features/ventas/components/VentaCardSkeleton', () => ({ VentaCardSkeleton: () => null }))
 jest.mock('moti', () => ({ MotiView: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
 jest.mock('expo-blur', () => ({ BlurView: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
-jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => ({ width: 390, height: 800, scale: 2, fontScale: 1 }) }))
+let mockAncho = 390
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => ({ width: mockAncho, height: 800, scale: 2, fontScale: 1 }) }))
 jest.mock('../../../../app/(tabs)/ventas/[id]', () => ({ VentaDetalle: () => null }))
-jest.mock('../../../../app/(tabs)/compras/[id]', () => ({ CompraDetalle: () => null }))
+jest.mock('../../../../app/(tabs)/compras/[id]', () => {
+  const { Text: T } = require('react-native')
+  return { CompraDetalle: ({ id }: { id: string }) => <T>{`detalle ${id}`}</T> }
+})
+jest.mock('@/features/venta-nueva/components/DetalleVentaNueva', () => {
+  const { Text: T } = require('react-native')
+  return { DetalleVentaNueva: ({ id }: { id: string }) => <T>{`detalle ${id}`}</T> }
+})
 
 import VentasRoute from '../../../../app/(tabs)/ventas/index'
 import ComprasRoute from '../../../../app/(tabs)/compras/index'
@@ -61,6 +69,7 @@ beforeEach(() => {
   mockGet.mockReset()
   mockSetParams.mockClear()
   mockParams = {}
+  mockAncho = 390
   mockGet.mockImplementation((url: string) => {
     if (url.includes('/resumen')) return Promise.resolve({ cantidad: 1, notasPedido: 1, confirmadas: 0, entregadas: 0 })
     if (url.includes('borradores/mios')) return Promise.resolve([])
@@ -147,5 +156,53 @@ describe('Compras con el filtro de Inicio', () => {
     pintar(ComprasRoute)
     await screen.findByText('Almacén Luis')
     expect(ultimaConsulta('/api/v1/Compras?').getAll('Estados')).toEqual(['NotaPedido', 'Confirmado'])
+  })
+})
+
+describe('tablet: el filtro que llega de Inicio cierra el detalle que ya no está en la lista', () => {
+  const fila = (id: string, nombre: string, estado: string) => ({
+    id, razonSocialCliente: nombre, razonSocialProveedor: nombre, vendedorNombre: 'Emanuel Parraquini', estado, fecha: new Date().toISOString(), totalAmount: 1000,
+  })
+  beforeEach(() => { mockAncho = 1100 })
+
+  it('Compras: la compra abierta sale con el filtro y su detalle se cierra; la que queda, sigue', async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('/resumen')) return Promise.resolve({ notasPedido: 1, confirmadas: 1, entregadas: 0 })
+      const estados = new URLSearchParams(url.split('?')[1]).getAll('Estados')
+      const nota = fila('c1', 'Gorrión Mayorista', 'NotaPedido')
+      return Promise.resolve(pagina(estados.length === 1 && estados[0] === 'NotaPedido' ? [nota] : [nota, fila('c2', 'Insumos del Sur', 'Confirmado')]))
+    })
+    const { rerender } = pintar(ComprasRoute)
+    await userEvent.press(await screen.findByText('Insumos del Sur'))
+    expect(await screen.findByText('detalle c2')).toBeTruthy()
+
+    mockParams = { estado: 'NotaPedido' }
+    rerender()
+    await waitFor(() => expect(screen.queryByText('detalle c2')).toBeNull(), { timeout: 5000 })
+    expect(screen.queryByText('Insumos del Sur')).toBeNull()
+
+    await userEvent.press(screen.getByText('Gorrión Mayorista'))
+    mockParams = { estado: 'NotaPedido' }
+    rerender()
+    expect(await screen.findByText('detalle c1')).toBeTruthy()
+  })
+
+  it('Ventas (lista nueva): igual con la venta abierta', async () => {
+    loguear(['Administrador'])
+    useVentaNuevaStore.setState({ activa: true })
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('/resumen')) return Promise.resolve({ cantidad: 1 })
+      const estado = new URLSearchParams(url.split('?')[1]).get('estado')
+      const confirmada = fila('v1', 'Almacén Luis', 'Confirmada')
+      return Promise.resolve(pagina(estado === 'Confirmada' ? [confirmada] : [confirmada, fila('v2', 'Kiosco Ana', 'Pendiente')]))
+    })
+    const { rerender } = pintar(VentasRoute)
+    await userEvent.press(await screen.findByText('Kiosco Ana'))
+    expect(await screen.findByText('detalle v2')).toBeTruthy()
+
+    mockParams = { tipo: 'pedidos', estado: 'Confirmada' }
+    rerender()
+    await waitFor(() => expect(screen.queryByText('detalle v2')).toBeNull(), { timeout: 5000 })
+    expect(screen.getByText('Almacén Luis')).toBeTruthy()
   })
 })
