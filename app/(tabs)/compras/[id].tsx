@@ -174,6 +174,8 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
           </View>
           {puedeEditar && estado === 'NotaPedido'
             ? <Button label="Confirmar y recibir" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('confirmarYRecibir')} /> : null}
+          {puedeEditar
+            ? <Button label="Editar la compra" variant="secundario" disabled={ocupado} onPress={() => router.push(`/(tabs)/compras/nueva?edit=${compra.id}` as never)} /> : null}
         </View>
       ) : puedeAnularRecepcion ? (
         <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>

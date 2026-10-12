@@ -19,7 +19,8 @@ jest.mock('@/core/api/client', () => ({
   API_URL: 'x',
 }))
 const mockReplace = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: mockReplace, back: jest.fn() }) }))
+const mockBack = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: mockReplace, back: mockBack }) }))
 let mockPuedeModificar = true
 jest.mock('@/core/auth/RequirePermission', () => ({ usePermissions: () => ({ canDo: (m: string, a: string) => mockPuedeModificar && m === 'MOD_COMPRAS' && a === 'update' }) }))
 const mockDims = jest.fn()
@@ -36,7 +37,7 @@ function socio(id: string) {
     : { id, razonSocial: 'Insumos del Sur SA', condicionPago: mockCondicion, condicionesDeCompraFaltantes: [] }
 }
 
-function pantalla(props: { borradorId?: string } = {}) {
+function pantalla(props: { borradorId?: string; editarId?: string } = {}) {
   mockDims.mockReturnValue({ width: 390, height: 800, scale: 2, fontScale: 1 })
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(<QueryClientProvider client={qc}><CompraNueva {...props} /></QueryClientProvider>)
@@ -75,6 +76,96 @@ async function agregarBalde(cantidad: string) {
   await userEvent.press(screen.getByRole('button', { name: '+ Agregar productos' }))
   await userEvent.type(await screen.findByPlaceholderText('0'), cantidad)
 }
+
+describe('editar una compra guardada', () => {
+  const GUARDADA = {
+    id: 'c7', version: 7, proveedorId: 'p1', depositoId: DEPOSITO_CENTRAL_ID, gastosOperativos: 0, subtotalBrutoAmount: 4800, descuentoTotalAmount: 480, estado: 'Confirmado',
+    detalles: [{ productoId: 'pr1', nombreProducto: 'Balde Nuvia 10L', cantidad: 48, cantidadIngresada: 4, unidadCompra: 'Bulto', costoUnitarioBaseAmount: 100, descuentoPorcentaje: 10, moneda: 'USD' }],
+  }
+  beforeEach(() => {
+    const prev = mockGet.getMockImplementation()!
+    mockGet.mockImplementation((url: string) => (url === '/api/v1/Compras/c7' ? Promise.resolve(GUARDADA) : prev(url)))
+    mockPut.mockImplementation(() => Promise.resolve({ compraId: 'c7', version: 8, message: 'ok' }))
+  })
+
+  it('carga la compra, no autoguarda y guarda los cambios con un solo PUT con la versión', async () => {
+    pantalla({ editarId: 'c7' })
+    expect(await screen.findByText('48 × 100 · 4 bultos de 12')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Confirmar compra' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
+    await userEvent.press(screen.getByRole('button', { name: /Balde Nuvia 10L, 48 × 100/ }))
+    await userEvent.type(screen.getByLabelText('Costo por unidad ($)'), '5')
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeEnabled())
+    await new Promise((r) => setTimeout(r, 1200))
+    expect(mockPut).not.toHaveBeenCalled()
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(mockBack).toHaveBeenCalled(), ESPERA)
+    expect(mockPut).toHaveBeenCalledTimes(1)
+    expect(mockPut.mock.calls[0][1]).toMatchObject({ version: 7, descuentoPorcentaje: 10, detalles: [{ unidadCompra: 'Bulto', monedaCosto: 'USD' }] })
+  })
+
+  const cambiarCosto = async () => {
+    await userEvent.press(await screen.findByRole('button', { name: /Balde Nuvia 10L, 48 × 100/ }))
+    await userEvent.type(screen.getByLabelText('Costo por unidad ($)'), '5')
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar' }))
+  }
+
+  it('un error que no es 409 no ofrece el Reintentar del autoguardado: Guardar cambios reintenta y navega', async () => {
+    mockPut.mockRejectedValueOnce(Object.assign(new Error('Sin conexión'), { status: 500 }))
+    pantalla({ editarId: 'c7' })
+    await cambiarCosto()
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(await screen.findByText(/Sin conexión/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Reintentar' })).toBeNull()
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(mockBack).toHaveBeenCalled(), ESPERA)
+    expect(mockPut).toHaveBeenCalledTimes(2)
+  })
+
+  it('dos toques seguidos en Guardar cambios mandan un solo PUT', async () => {
+    pantalla({ editarId: 'c7' })
+    await cambiarCosto()
+    const boton = screen.getByRole('button', { name: 'Guardar cambios' })
+    fireEvent.press(boton)
+    fireEvent.press(boton)
+    await waitFor(() => expect(mockBack).toHaveBeenCalled(), ESPERA)
+    expect(mockPut).toHaveBeenCalledTimes(1)
+    expect(mockBack).toHaveBeenCalledTimes(1)
+  })
+
+  it('una compra cerrada abierta por enlace no se edita: aviso y vuelta al detalle', async () => {
+    const prev = mockGet.getMockImplementation()!
+    mockGet.mockImplementation((url: string) => (url === '/api/v1/Compras/c7' ? Promise.resolve({ ...GUARDADA, estado: 'Entregado' }) : prev(url)))
+    pantalla({ editarId: 'c7' })
+    expect(await screen.findByText('No se puede editar.')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Guardar cambios' })).toBeNull()
+    await userEvent.press(screen.getByRole('button', { name: 'Volver al detalle' }))
+    expect(mockReplace).toHaveBeenCalledWith('/(tabs)/compras/c7')
+  })
+
+  it('el 409 de estado final al guardar muestra su mensaje, sin Recargar', async () => {
+    mockPut.mockRejectedValueOnce(Object.assign(new Error('No se puede editar una compra en estado Entregado.'), { status: 409 }))
+    pantalla({ editarId: 'c7' })
+    await cambiarCosto()
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(await screen.findByText(/No se puede editar una compra en estado Entregado/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Recargar' })).toBeNull()
+    expect(screen.queryByText('Alguien más cambió esta compra.')).toBeNull()
+  })
+
+  it('un 409 muestra el mensaje del servidor y ofrece recargar', async () => {
+    mockPut.mockRejectedValueOnce(Object.assign(new Error('La compra ha sido modificada por otro usuario.'), { status: 409 }))
+    pantalla({ editarId: 'c7' })
+    await userEvent.press(await screen.findByRole('button', { name: /Balde Nuvia 10L, 48 × 100/ }))
+    await userEvent.type(screen.getByLabelText('Costo por unidad ($)'), '5')
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(await screen.findByText(/La compra ha sido modificada por otro usuario\./)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Recargar' })).toBeTruthy()
+    expect(mockBack).not.toHaveBeenCalled()
+  })
+})
 
 describe('pantalla de compra nueva', () => {
   it('a un proveedor sin condición de pago o franja no se le compra: aviso y no se crea el borrador', async () => {

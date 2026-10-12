@@ -102,8 +102,14 @@ describe('detalle de compra', () => {
     await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/anular', { motivoAnulacion: 'El proveedor no tiene stock' }))
   })
 
-  it('no hay entrada a editar: el formulario de antes perdía el descuento y la unidad de compra', async () => {
-    abrir({})
+  it.each(['NotaPedido', 'Confirmado'])('en %s se puede editar con el formulario nuevo', async (estado) => {
+    abrir({ estado })
+    await userEvent.press(await screen.findByRole('button', { name: 'Editar la compra' }))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/compras/nueva?edit=aaaa1111-0000')
+  })
+
+  it.each(['Entregado', 'Cancelada', 'Anulada'])('en %s no hay botón de editar', async (estado) => {
+    abrir({ estado })
     await screen.findByText('Balde Nuvia 10L')
     expect(screen.queryByRole('button', { name: 'Editar la compra' })).toBeNull()
   })

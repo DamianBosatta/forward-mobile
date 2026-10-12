@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Trash2 } from 'lucide-react-native'
@@ -32,14 +32,20 @@ function detalleLinea(l: LineaCompra): string {
 interface Props {
   /** Borrador a retomar (desde la pestaña Borradores). */
   borradorId?: string
+  /** Compra ya guardada (nota de pedido o confirmada) a editar: no autoguarda, un solo "Guardar cambios". */
+  editarId?: string
 }
 
-/** Compra nueva con el formato nuevo (láminas Compra y TabCompra), como borrador con autoguardado. */
-export function CompraNueva({ borradorId }: Props) {
+/**
+ * Compra nueva con el formato nuevo (láminas Compra y TabCompra), como borrador con autoguardado.
+ * Con `editarId` edita una compra ya guardada con el mismo formulario, sin autoguardado.
+ */
+export function CompraNueva({ borradorId, editarId }: Props) {
   const c = useColors()
   const router = useRouter()
   const { isTablet } = useResponsive()
-  const b = useCompraBorrador(borradorId)
+  const edicion = !!editarId
+  const b = useCompraBorrador(editarId ?? borradorId, { edicion })
   const [pestana, setPestana] = useState<'lineas' | 'cabecera'>('lineas')
   const [catalogo, setCatalogo] = useState(false)
   const [busqueda, setBusqueda] = useState('')
@@ -49,6 +55,7 @@ export function CompraNueva({ borradorId }: Props) {
   const [editando, setEditando] = useState<LineaCompra | null>(null)
   const [recibir, setRecibir] = useState<{ error: string | null } | null>(null)
   const [fechaFactura, setFechaFactura] = useState(hoyTexto)
+  const guardando = useRef(false)
   const puedeRecibir = usePermissions().canDo('MOD_COMPRAS', 'update')
   useEffect(() => {
     const t = setTimeout(() => setEnviada(busqueda.trim()), 300)
@@ -58,15 +65,32 @@ export function CompraNueva({ borradorId }: Props) {
   const productos = useInfiniteProductos({ pageSize: 30, search: enviada })
   const { data: depositos } = useDepositos()
 
-  const volver = () => router.back()
+  const volver = () => {
+    if (!(edicion && b.hayCambios)) return router.back()
+    Alert.alert('Salir sin guardar', 'Hay cambios sin guardar. Si salís, se pierden.', [
+      { text: 'Seguir editando', style: 'cancel' },
+      { text: 'Salir', style: 'destructive', onPress: () => router.back() },
+    ])
+  }
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
 
   if (b.cargando) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: 'center' }}><ActivityIndicator color={c.brand} /></View>
+  if (edicion && b.noEditable) {
+    return (
+      <View style={{ flex: 1, backgroundColor: c.bg }}>
+        <TopBar title="Editar compra" leading={{ kind: 'atras', onPress: volver }} />
+        <View style={{ padding: space[4], gap: space[3] }}>
+          <Notice tone="peligro" title="No se puede editar.">{b.error ?? 'La compra ya no está en un estado que admita cambios.'}</Notice>
+          <Button label="Volver al detalle" variant="secundario" onPress={() => router.replace(`/(tabs)/compras/${editarId}` as never)} />
+        </View>
+      </View>
+    )
+  }
   if (!b.proveedor) {
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <TopBar title="Nueva compra" leading={{ kind: 'atras', onPress: volver }} />
-        {b.error && borradorId ? <View style={{ padding: space[4] }}><Notice tone="peligro">{b.error}</Notice></View>
+        <TopBar title={edicion ? 'Editar compra' : 'Nueva compra'} leading={{ kind: 'atras', onPress: volver }} />
+        {b.error && (borradorId || editarId) ? <View style={{ padding: space[4] }}><Notice tone="peligro">{b.error}</Notice></View>
           : <ElegirProveedor onElegir={(id) => { void b.elegirProveedor(id) }} faltantes={b.faltantes} error={b.error} />}
       </View>
     )
@@ -103,6 +127,20 @@ export function CompraNueva({ borradorId }: Props) {
       // Falló el guardado previo: no se llegó a pedir confirmar y recibir.
       setRecibir({ error: mensajeDelServidor(e, 'No se guardó la compra.') })
     } finally {
+      setOcupado(false)
+    }
+  }
+  const guardarCambios = async () => {
+    if (guardando.current) return
+    guardando.current = true
+    setOcupado(true)
+    try {
+      await b.guardarCambios()
+      router.back()
+    } catch {
+      // El aviso (con el mensaje del servidor y, si hubo conflicto, "Recargar") lo muestra el formulario.
+    } finally {
+      guardando.current = false
       setOcupado(false)
     }
   }
@@ -173,11 +211,11 @@ export function CompraNueva({ borradorId }: Props) {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
-        title="Nueva compra"
+        title={edicion ? 'Editar compra' : 'Nueva compra'}
         subtitle={[b.proveedor.nombre, b.proveedor.condicion].filter(Boolean).join(' · ')}
         leading={{ kind: 'atras', onPress: volver }}
-        syncLabel={SYNC[b.estado]}
-        actions={b.compraId ? [{ icon: Trash2, accessibilityLabel: 'Descartar la compra', onPress: descartar }] : []}
+        syncLabel={edicion ? undefined : SYNC[b.estado]}
+        actions={b.compraId && !edicion ? [{ icon: Trash2, accessibilityLabel: 'Descartar la compra', onPress: descartar }] : []}
         tabs={isTablet ? undefined : [
           { label: `Líneas (${b.lineas.length})`, selected: pestana === 'lineas', onPress: () => setPestana('lineas') },
           { label: 'Cabecera', selected: pestana === 'cabecera', onPress: () => setPestana('cabecera') },
@@ -189,13 +227,14 @@ export function CompraNueva({ borradorId }: Props) {
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3] }}>
         {b.estado === 'conflicto' ? (
           <View style={{ gap: space[2] }}>
-            <Notice tone="peligro" title="Alguien más cambió esta compra.">Recargala para ver la versión actual antes de seguir.</Notice>
+            <Notice tone="peligro" title="Alguien más cambió esta compra.">{edicion && b.error ? `${b.error}
+Recargala para ver la versión actual antes de seguir.` : 'Recargala para ver la versión actual antes de seguir.'}</Notice>
             <Button label="Recargar" variant="secundario" onPress={() => { void b.recargar() }} />
           </View>
         ) : b.error ? (
           <View style={{ gap: space[2] }}>
             <Notice tone="peligro">{b.error}</Notice>
-            {b.estado === 'error' ? <Button label="Reintentar" variant="secundario" onPress={() => { void b.reintentar() }} /> : null}
+            {b.estado === 'error' && !edicion ? <Button label="Reintentar" variant="secundario" onPress={() => { void b.reintentar() }} /> : null}
           </View>
         ) : null}
         {isTablet ? (
@@ -205,6 +244,12 @@ export function CompraNueva({ borradorId }: Props) {
           </View>
         ) : pestana === 'lineas' ? lineas : cabecera}
       </ScrollView>
+      {edicion ? (
+        <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+          <Button label="Guardar cambios" loading={ocupado} disabled={ocupado || !puedeRecibir || !b.hayCambios || b.estado === 'conflicto' || b.lineas.length === 0 || faltanCostos > 0}
+            onPress={() => { void guardarCambios() }} />
+        </View>
+      ) : (
       <View style={{ gap: space[2], padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
         <View style={{ flexDirection: 'row', gap: space[2] }}>
           <Button label="Guardar nota" variant="secundario" disabled={ocupado || b.lineas.length === 0 || faltanCostos > 0}
@@ -219,6 +264,7 @@ export function CompraNueva({ borradorId }: Props) {
             onPress={() => { setFechaFactura(hoyTexto()); setRecibir({ error: null }) }} />
         ) : null}
       </View>
+      )}
       <ConfirmarYRecibirSheet visible={recibir !== null} onClose={() => setRecibir(null)} pideFactura={b.proveedor.pideFactura}
         ocupado={ocupado} fecha={fechaFactura} onFecha={setFechaFactura} error={recibir?.error ?? null} onConfirmar={(f) => { void confirmarYRecibir(f) }} />
       <CompraLineaSheet

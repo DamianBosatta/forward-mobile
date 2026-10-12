@@ -23,6 +23,9 @@ export type EstadoGuardado = 'nuevo' | 'guardando' | 'guardado' | 'error' | 'con
 const ESPERA_AUTOGUARDADO_MS = 800
 
 const esConflicto = (e: unknown) => (e as { status?: number })?.status === 409
+/** 409 del servidor al editar una compra en estado final (no es un choque de versión). */
+const esCerrada = (e: unknown, msg: string) => esConflicto(e) && /No se puede editar una compra en estado/.test(msg)
+const ESTADOS_EDITABLES = ['NotaPedido', 'Confirmado']
 
 /** Guardados de salida todavía en camino, por compra: reabrir el mismo borrador espera a que lleguen antes de pedirlo. */
 const salidasPendientes = new Map<string, Promise<unknown>>()
@@ -41,7 +44,10 @@ async function proveedorDesdeServidor(id: string): Promise<{ proveedor: Proveedo
  * la `version` de cada respuesta. Mientras es borrador no aparece en la lista: sale de ahí al
  * guardar la nota de pedido o al confirmarla.
  */
-export function useCompraBorrador(borradorInicial?: string) {
+export function useCompraBorrador(borradorInicial?: string, opciones: { edicion?: boolean } = {}) {
+  // Modo edición de una compra ya guardada: no autoguarda (cada guardado movería el stock virtual de una
+  // compra confirmada) y manda un único PUT con `guardarCambios`.
+  const edicion = opciones.edicion === true
   const queryClient = useQueryClient()
   const depositoPorDefecto = useDepositoDeConsulta()
   const [compraId, setCompraId] = useState<string | null>(borradorInicial ?? null)
@@ -56,6 +62,11 @@ export function useCompraBorrador(borradorInicial?: string) {
   const [cargando, setCargando] = useState(!!borradorInicial)
 
   const version = useRef(0)
+  const guardandoCambios = useRef<Promise<void> | null>(null)
+  const montado = useRef(true)
+  useEffect(() => { montado.current = true; return () => { montado.current = false } }, [])
+  // Edición: la compra cargada ya no admite cambios (cerrada o anulada) y se muestra aviso en vez del formulario.
+  const [noEditable, setNoEditable] = useState<boolean>(false)
   const guardado = useRef<string | null>(null)
   const enVuelo = useRef<Promise<unknown> | null>(null)
   // Instantánea que el servidor rechazó (no por conflicto): no se reintenta sola, solo con un cambio nuevo o "Reintentar".
@@ -90,6 +101,7 @@ export function useCompraBorrador(borradorInicial?: string) {
       const c = await api.get<CompraDto>(`/api/v1/Compras/${id}`)
       const { proveedor: p } = await proveedorDesdeServidor(c.proveedorId)
       hidratar(c)
+      setNoEditable(edicion && !ESTADOS_EDITABLES.includes(String(c.estado)))
       setProveedor(p)
       guardado.current = null
       setEstado('guardado')
@@ -100,7 +112,7 @@ export function useCompraBorrador(borradorInicial?: string) {
     } finally {
       setCargando(false)
     }
-  }, [hidratar])
+  }, [hidratar, edicion])
 
   useEffect(() => { if (borradorInicial) void cargar(borradorInicial) }, [borradorInicial, cargar])
   // Lo que llegó del servidor ya está guardado: no se reenvía.
@@ -136,16 +148,16 @@ export function useCompraBorrador(borradorInicial?: string) {
   }, [])
 
   useEffect(() => {
-    if (!clave || clave === guardado.current || clave === fallido.current || estado === 'conflicto' || cargando) return
+    if (edicion || !clave || clave === guardado.current || clave === fallido.current || estado === 'conflicto' || cargando) return
     const t = setTimeout(() => { guardarAhora().catch(() => {}) }, ESPERA_AUTOGUARDADO_MS)
     return () => clearTimeout(t)
-  }, [clave, estado, cargando, guardarAhora])
+  }, [clave, estado, cargando, guardarAhora, edicion])
 
   // Al salir de la pantalla (volver, cerrar) lo que todavía espera el debounce se manda igual, sin esperar la respuesta.
   useEffect(() => () => {
     const c = ultimo.current
     const k = c ? JSON.stringify(c) : null
-    if (!c || k === guardado.current || k === fallido.current || descartado.current || estadoActual.current === 'conflicto') return
+    if (edicion || !c || k === guardado.current || k === fallido.current || descartado.current || estadoActual.current === 'conflicto') return
     const previo = enVuelo.current ?? Promise.resolve()
     // Las guardas se vuelven a mirar después de esperar el guardado en vuelo: pudo haber guardado lo mismo, fallado o chocado.
     const salida = previo.catch(() => {}).then(() => {
@@ -156,7 +168,42 @@ export function useCompraBorrador(borradorInicial?: string) {
       )
     }).finally(() => { if (salidasPendientes.get(c.id) === salida) salidasPendientes.delete(c.id) })
     salidasPendientes.set(c.id, salida)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Edición: hay cambios en pantalla que todavía no se mandaron. */
+  const hayCambios = edicion && !cargando && clave !== null && guardado.current !== null && clave !== guardado.current
+
+  /** Edición: UN solo PUT con la versión que se cargó. Un 409 deja el estado en `conflicto` con el mensaje del servidor. */
+  const guardarCambios = useCallback((): Promise<void> => {
+    // Cerrojo síncrono: dos toques antes del re-render comparten el mismo PUT.
+    if (guardandoCambios.current) return guardandoCambios.current
+    const c = ultimo.current
+    if (!c) return Promise.resolve()
+    const k = JSON.stringify(c)
+    const p = (async () => {
+      if (montado.current) setEstado('guardando')
+      try {
+        const r = await borradorCompraApi.guardar({ ...c, version: version.current })
+        version.current = r.version
+        guardado.current = k
+        if (montado.current) { setEstado('guardado'); setError(null) }
+      } catch (e) {
+        const msg = mensajeDelServidor(e, 'No se pudieron guardar los cambios.')
+        if (montado.current) {
+          if (esCerrada(e, msg)) setNoEditable(true)
+          setEstado(esConflicto(e) && !esCerrada(e, msg) ? 'conflicto' : 'error')
+          setError(msg)
+        }
+        throw e
+      }
+      queryClient.invalidateQueries({ queryKey: comprasKeys.all })
+      queryClient.invalidateQueries({ queryKey: inicioKeys.all })
+    })()
+    guardandoCambios.current = p
+    const libre = () => { guardandoCambios.current = null }
+    p.then(libre, libre)
+    return p
+  }, [queryClient])
 
   /** Vuelve a intentar con lo que hay en pantalla (después de un error que no fue de conflicto). */
   const reintentar = useCallback(async () => {
@@ -220,7 +267,7 @@ export function useCompraBorrador(borradorInicial?: string) {
 
   return {
     compraId, proveedor, faltantes, depositoId, setDepositoId, lineas, setLineas, gastos, setGastos,
-    descuentoPorcentaje, estado, error, cargando,
+    descuentoPorcentaje, estado, error, cargando, hayCambios, guardarCambios, noEditable,
     elegirProveedor, setCantidadProducto, reintentar,
     recargar: () => (compraId ? cargar(compraId) : Promise.resolve()),
     guardarNota: () => terminar((id, v) => borradorCompraApi.guardarNota(id, v)).then(() => {}),
