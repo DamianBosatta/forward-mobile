@@ -14,6 +14,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { direccionDeEntrega, nombreDelCliente, textoCondicionPago, type CondicionPago } from '@/features/clientes/lib/cliente'
 import { horaDe, tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { mostrarNumero } from '../lib/linea'
+import { agruparPorPadre, nombreFragancia } from '../lib/fragancias'
 import { ESTADO_PENDIENTE_AUTORIZACION, motivosAutorizacion } from '../lib/motivosAutorizacion'
 import { codigoDeVenta, rotuloCliente, tipoDeVenta } from '../lib/ventaGuardada'
 import { AccionesVenta } from './AccionesVenta'
@@ -110,6 +111,7 @@ export function DetalleVentaNueva({ id, onVolver }: Props) {
             {`${motivos.map((m) => `• ${m.charAt(0).toUpperCase()}${m.slice(1)}.`).join('\n')}${motivos.length ? '\n' : ''}Te avisamos cuando lo resuelvan.`}
           </Notice>
         ) : null}
+        {h.motivoAnulacion ? <Notice tone="peligro" title="Se anuló">{h.motivoAnulacion}</Notice> : null}
         {h.estado === ESTADO_RECHAZADA && h.motivoRechazoAutorizacion ? <Notice tone="peligro" title="No se autorizó">{h.motivoRechazoAutorizacion}</Notice> : null}
         <View style={tarjeta}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -131,16 +133,25 @@ export function DetalleVentaNueva({ id, onVolver }: Props) {
         </View>
         <View style={tarjeta}>
           {titulo(`Líneas (${q.data.detalles.length})`)}
-          {q.data.detalles.map((d) => (
-            <View key={d.id} style={{ gap: space[1], paddingVertical: space[1] }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-                <Text style={{ ...typeScale.cuerpo, color: c.text, flex: 1 }}>{d.productoNombre}</Text>
-                <Text style={{ ...typeScale.cuerpo, ...importe, color: c.text }}>{formatImporte(d.subtotal)}</Text>
+          {/* Las fragancias de una línea van juntas (la línea llega con forward-system #884; sin ella, cada una sola). */}
+          {agruparPorPadre(q.data.detalles, (d) => d.productoPadreId).map((g) => {
+            const items = g.tipo === 'producto' ? [g.item] : g.items
+            const padre = g.tipo === 'fragancias' ? (items[0]!.productoPadreNombre ?? items[0]!.productoNombre.split(' - ')[0]!) : null
+            const unidades = items.reduce((a, d) => a + d.cantidad, 0)
+            const precio = items.every((d) => d.precioUnitario === items[0]!.precioUnitario) ? items[0]!.precioUnitario : null
+            const desc = items.every((d) => d.porcentajeDescuentoItem === items[0]!.porcentajeDescuentoItem) ? items[0]!.porcentajeDescuentoItem : null
+            return (
+              <View key={g.tipo === 'producto' ? g.item.id : g.padreId} style={{ gap: space[1], paddingVertical: space[1] }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
+                  <Text style={{ ...typeScale.cuerpo, color: c.text, flex: 1 }}>{padre ? `${padre} · fragancias` : items[0]!.productoNombre}</Text>
+                  <Text style={{ ...typeScale.cuerpo, ...importe, color: c.text }}>{formatImporte(items.reduce((a, d) => a + d.subtotal, 0))}</Text>
+                </View>
+                <Text style={{ ...sec, ...importe }}>{precio !== null ? `${unidades} × ${formatImporte(precio)}` : `${unidades} unidades`}</Text>
+                {padre ? <Text style={{ ...typeScale.secundario, color: c.text }}>{items.map((d) => `${nombreFragancia({ nombre: d.productoNombre }, padre)} ${d.cantidad}`).join(' · ')}</Text> : null}
+                {desc !== null ? <Text style={sec}>{desc > 0 ? `Desc. ${mostrarNumero(desc)} %` : 'Sin descuento'}</Text> : null}
               </View>
-              <Text style={{ ...sec, ...importe }}>{`${d.cantidad} × ${formatImporte(d.precioUnitario)}`}</Text>
-              <Text style={sec}>{d.porcentajeDescuentoItem > 0 ? `Desc. ${mostrarNumero(d.porcentajeDescuentoItem)} %` : 'Sin descuento'}</Text>
-            </View>
-          ))}
+            )
+          })}
           <TotalsRow label="Subtotal" importe={h.subtotalBrutoAmount} />
           <TotalsRow label={`Descuento general ${mostrarNumero(h.porcentajeDescuento)} %`} importe={-h.montoDescuentoAmount} />
           {h.cargoFleteAmount ? <TotalsRow label="Flete" importe={h.cargoFleteAmount} /> : null}

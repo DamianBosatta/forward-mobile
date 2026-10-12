@@ -17,20 +17,23 @@ export type GrupoLineas =
   | { tipo: 'producto'; linea: LineaCarrito }
   | { tipo: 'fragancias'; padreId: string; lineas: LineaCarrito[] }
 
+export type GrupoPorPadre<T> = { tipo: 'producto'; item: T } | { tipo: 'fragancias'; padreId: string; items: T[] }
+
 /** Agrupa las variantes de una misma línea padre, en el orden en que aparece la primera. */
-export function agruparLineas(lineas: LineaCarrito[]): GrupoLineas[] {
-  const grupos: GrupoLineas[] = []
-  for (const l of lineas) {
-    const padreId = l.producto.productoPadreId
-    if (!padreId) {
-      grupos.push({ tipo: 'producto', linea: l })
-      continue
-    }
-    const g = grupos.find((x) => x.tipo === 'fragancias' && x.padreId === padreId)
-    if (g && g.tipo === 'fragancias') g.lineas.push(l)
-    else grupos.push({ tipo: 'fragancias', padreId, lineas: [l] })
+export function agruparPorPadre<T>(items: T[], padreDe: (item: T) => string | null | undefined): GrupoPorPadre<T>[] {
+  const grupos: GrupoPorPadre<T>[] = []
+  for (const item of items) {
+    const padreId = padreDe(item)
+    const g = padreId ? grupos.find((x) => x.tipo === 'fragancias' && x.padreId === padreId) : undefined
+    if (g && g.tipo === 'fragancias') g.items.push(item)
+    else grupos.push(padreId ? { tipo: 'fragancias', padreId, items: [item] } : { tipo: 'producto', item })
   }
   return grupos
+}
+
+export function agruparLineas(lineas: LineaCarrito[]): GrupoLineas[] {
+  return agruparPorPadre(lineas, (l) => l.producto.productoPadreId).map((g) =>
+    g.tipo === 'producto' ? { tipo: 'producto', linea: g.item } : { tipo: 'fragancias', padreId: g.padreId, lineas: g.items })
 }
 
 export const cantidadDeFragancias = (lineas: LineaCarrito[], padreId: string) =>

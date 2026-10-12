@@ -17,7 +17,15 @@ import type {
 import type { components } from './generated/schema'
 
 export type BorradorVenta = components['schemas']['BorradorVentaDto']
-export type VentaPendienteAutorizacion = components['schemas']['VentaPendienteAutorizacionDto']
+/** Número, cliente por partes y `version` (xmin) llegaron con forward-system #884: un servidor anterior no los manda. */
+export type VentaPendienteAutorizacion = components['schemas']['VentaPendienteAutorizacionDto'] & {
+  numeroPedido?: number | null
+  codigoPedido?: string | null
+  direccionCliente?: string | null
+  nombreFantasiaCliente?: string | null
+  razonSocialCliente?: string | null
+  version?: number
+}
 /** Estados del contrato (incluye `EnPreparacion` y `RechazadaAutorizacion`, que `EstadoVenta` de mobile no lista). */
 export type EstadoVentaServidor = components['schemas']['EstadoVenta']
 /**

@@ -124,3 +124,45 @@ describe('detalle de la venta nueva (PR 2.10)', () => {
     expect(diaDeEntrega(null)).toBeNull()
   })
 })
+
+describe('detalle de la venta: motivo de anulación y fragancias (forward-system #884)', () => {
+  const saphirus = (id: string, fragancia: string, cantidad: number, o: Record<string, unknown> = {}) => ({
+    id, productoNombre: `Saphirus Aerosol 250 ml - ${fragancia}`, cantidad, precioUnitario: 3077.85, subtotal: cantidad * 3077.85, porcentajeDescuentoItem: 0,
+    productoPadreId: 'p-saphirus', productoPadreNombre: 'Saphirus Aerosol 250 ml', ...o,
+  })
+  const lavandina = { id: 'i3', productoNombre: 'Lavandina Ayudín Clásica 2 L', cantidad: 60, precioUnitario: 1890, subtotal: 113400, porcentajeDescuentoItem: 5 }
+
+  it('una venta anulada muestra el motivo con que se anuló', async () => {
+    mockVenta = { ...mockVenta, venta: cabecera({ estado: 8, motivoAnulacion: 'Anulado por el cliente' }) }
+    pantalla()
+    expect(await screen.findByText('Se anuló Anulado por el cliente')).toBeTruthy()
+    expect(screen.getByLabelText('Estado: Anulado')).toBeTruthy()
+  })
+
+  it('con un servidor anterior (sin motivo) la anulada se ve como antes: solo el chip', async () => {
+    mockVenta = { ...mockVenta, venta: cabecera({ estado: 8 }) }
+    pantalla()
+    expect(await screen.findByLabelText('Estado: Anulado')).toBeTruthy()
+    expect(screen.queryByText(/Se anuló/)).toBeNull()
+  })
+
+  it('las fragancias de una línea se agrupan bajo su nombre, con el reparto', async () => {
+    mockVenta = { venta: cabecera(), detalles: [saphirus('f1', 'Coco Vainilla', 12), lavandina, saphirus('f2', 'Bamboo', 12)], bultos: [] }
+    pantalla()
+    expect(await screen.findByText('Saphirus Aerosol 250 ml · fragancias')).toBeTruthy()
+    expect(screen.getByText('Coco Vainilla 12 · Bamboo 12')).toBeTruthy()
+    expect(screen.getByText('24 × $ 3.077,85')).toBeTruthy()
+    expect(screen.getByText('$ 73.868,40')).toBeTruthy()
+    expect(screen.getByText('Lavandina Ayudín Clásica 2 L')).toBeTruthy()
+    expect(screen.queryByText('Saphirus Aerosol 250 ml - Bamboo')).toBeNull()
+  })
+
+  it('con un servidor anterior (sin la línea) cada fragancia es una línea propia', async () => {
+    const sinPadre = { productoPadreId: undefined, productoPadreNombre: undefined }
+    mockVenta = { venta: cabecera(), detalles: [saphirus('f1', 'Coco Vainilla', 12, sinPadre), saphirus('f2', 'Bamboo', 12, sinPadre)], bultos: [] }
+    pantalla()
+    expect(await screen.findByText('Saphirus Aerosol 250 ml - Coco Vainilla')).toBeTruthy()
+    expect(screen.getByText('Saphirus Aerosol 250 ml - Bamboo')).toBeTruthy()
+    expect(screen.queryByText(/· fragancias/)).toBeNull()
+  })
+})
