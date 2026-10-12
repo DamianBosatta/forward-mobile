@@ -11,6 +11,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { formatToLocalTime } from '@/src/utils/date'
+import { CreditoDelCliente } from './CreditoDelCliente'
 import { direccionDeEntrega, nombreDelCliente, textoCondicionPago } from '../lib/cliente'
 
 export const AVISO_CONDICION_PAGO = 'Solo la cambia quien puede autorizar ventas'
@@ -117,6 +118,7 @@ export function FichaCliente({ id }: { id: string }) {
               <TotalsRow label="Saldo" importe={cuenta.data.saldoActual} destacado />
               {cuenta.data.saldoAFavor > 0 ? <TotalsRow label="A favor" importe={cuenta.data.saldoAFavor} /> : null}
               {cliente.topeCredito != null ? <TotalsRow label="Tope de crédito" importe={cliente.topeCredito} /> : null}
+              <CreditoDelCliente estado={cuenta.data} />
             </>
           ) : null}
         </Seccion>

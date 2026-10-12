@@ -70,7 +70,8 @@ export function useInfiniteSocios(params: SociosParams = {}) {
       if (params.search) sp.append('searchTerm', params.search)
       if (params.agenda) sp.append('agenda', 'true')
 
-      return api.get<PagedResult<SocioComercial>>(`/api/v1/socios-comerciales?${sp}`)
+      // `saldoTotal` (PR #882): la suma de todo el filtro, solo en la página 1; null si no se puede dar.
+      return api.get<PagedResult<SocioComercial> & { saldoTotal?: number | null }>(`/api/v1/socios-comerciales?${sp}`)
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {

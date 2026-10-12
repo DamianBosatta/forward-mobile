@@ -28,10 +28,14 @@ export function useCartera(busqueda: string) {
   const clientes = useMemo<SocioListDto[]>(() => (pages ?? []).flatMap(p => p?.items ?? []), [pages])
   const ultima = pages?.[pages.length - 1]
   const totalCount = typeof ultima?.totalCount === 'number' ? ultima.totalCount : undefined
+  // Solo la página 1 lo trae (las demás, null). Nunca se suma en el teléfono.
+  const saldo = pages?.[0]?.saldoTotal
+  const saldoTotal = typeof saldo === 'number' ? saldo : undefined
 
   return {
     clientes,
     totalCount,
+    saldoTotal,
     isLoading: query.isLoading,
     isRefetching: query.isRefetching,
     error: query.error,

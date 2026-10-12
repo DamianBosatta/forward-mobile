@@ -8,6 +8,7 @@ import { usePermissions } from '@/core/auth/RequirePermission'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { formatToLocalTime } from '@/src/utils/date'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
+import { CreditoDelCliente } from '@/features/clientes/components/CreditoDelCliente'
 import { useEstadoCuentaSocio } from '../api/queries'
 import { useMovimientosDeCliente } from '../hooks/useMovimientosDeCliente'
 import { NOMBRE_CUENTA, type FiltroCuenta, type MovimientoConCuenta } from '../lib/movimientos'
@@ -103,6 +104,7 @@ export function CuentaCorrienteCliente({ socioId }: { socioId: string }) {
               <TotalsRow label="Cuenta Normal (con factura)" importe={e.saldoNormal} />
               {e.saldoAFavor > 0 ? <TotalsRow label="A favor" importe={e.saldoAFavor} /> : null}
               {cliente.topeCredito != null ? <TotalsRow label="Tope de crédito" importe={cliente.topeCredito} /> : null}
+              <CreditoDelCliente estado={e} />
             </>
           ) : null}
           {/* La pantalla de cobro pide los medios y las cajas abiertas: MOD_PAGOS:Read además de Create. */}

@@ -1,3 +1,5 @@
+import { formatImporte } from '@/core/ui/fw/formatImporte'
+
 /**
  * Cómo se nombra a un cliente en mobile (regla del dueño): el cliente se identifica por la
  * DIRECCIÓN de entrega, que va como título; el nombre (contacto y local) va en una línea aparte,
@@ -46,4 +48,10 @@ export function textoCondicionPago(cp?: CondicionPago | null): string {
     case 'DiaFijoDelMes': return `Cuenta corriente, el día ${cp.diaDelMes ?? '—'} de cada mes`
     default: return 'Contado'
   }
+}
+
+/** "Mostrando N de M", con " · Saldo $ X" solo si el servidor dio el saldo de toda la cartera. */
+export function textoMostrando(cantidad: number, total: number, saldoTotal?: number): string {
+  const saldo = saldoTotal !== undefined ? ` · Saldo ${formatImporte(saldoTotal, { centavos: false })}` : ''
+  return `Mostrando ${cantidad} de ${total}${saldo}`
 }

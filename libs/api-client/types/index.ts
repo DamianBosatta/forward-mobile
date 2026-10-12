@@ -278,11 +278,24 @@ export interface VentaDetailResponse {
 
 import type { components } from '../generated/schema'
 
+// Deuda vencida y crédito disponible (forward-system PR #882), tipados a mano hasta regenerar el
+// schema: opcionales porque un servidor anterior no los manda. Redactados por el servidor.
+interface DeudaVencidaDelSocio {
+  tieneDeudaVencida?: boolean
+  deudaVencidaAmount?: number
+}
+interface CreditoDelSocio {
+  deudaVencidaTstAmount?: number
+  deudaVencidaNormalAmount?: number
+  /** Negativo si ya pasó el tope; null sin tope. */
+  creditoDisponible?: number | null
+}
+
 /** Full detail projection (Email, Telefono, Direccion, CondicionIva populated). */
-export type SocioDetailDto  = components['schemas']['SocioDetailDto']
+export type SocioDetailDto  = components['schemas']['SocioDetailDto'] & DeudaVencidaDelSocio & CreditoDelSocio
 
 /** Slim list projection (no contact fields — matches GET /socios-comerciales list). */
-export type SocioListDto    = components['schemas']['SocioListDto']
+export type SocioListDto    = components['schemas']['SocioListDto'] & DeudaVencidaDelSocio
 
 /**
  * Backward-compatible alias: list call sites already typed as SocioComercial
@@ -449,7 +462,14 @@ export type CuentaCorrienteResumenDto = components['schemas']['CuentaCorrienteRe
 export type MovimientoCuentaDto       = components['schemas']['MovimientoCuentaDto']
 export type GetMovimientosCuentaDto   = components['schemas']['GetMovimientosCuentaDto']
 export type LiquidezConsolidadaDto    = components['schemas']['LiquidezConsolidadaDto']
-export type EstadoCuentaDto           = components['schemas']['EstadoCuentaDto']
+export type EstadoCuentaDto           = components['schemas']['EstadoCuentaDto'] & {
+  // PR #882 de forward-system, a mano (ver DeudaVencidaDelSocio).
+  tieneDeudaVencida?: boolean
+  deudaVencida?: number
+  deudaVencidaTst?: number
+  deudaVencidaNormal?: number
+  creditoDisponible?: number | null
+}
 export type MovimientoPendienteDto    = components['schemas']['MovimientoPendienteDto']
 
 // Payload for creating a new cuenta corriente.

@@ -81,6 +81,51 @@ it('Nuevo cliente avisa para abrir el alta', async () => {
   expect(onNuevoCliente).toHaveBeenCalled()
 })
 
+describe('deuda vencida (servidor con PR #882)', () => {
+  const AVISO = 'Av. del Valle 89 tiene deuda vencida: podés armar el pedido, pero va a quedar por autorizar.'
+
+  it('el cliente con deuda vencida lleva el chip y, para un pedido, el aviso de que va a quedar por autorizar', async () => {
+    get.mockResolvedValue(pagina([
+      clienteDeLista({ tieneDeudaVencida: true, deudaVencidaAmount: 86400 }),
+      clienteDeLista({ id: 'c2', direccion: 'Brandsen 3314', tieneDeudaVencida: false }),
+    ], 2))
+    renderConQuery(hoja())
+
+    expect(await screen.findByRole('button', { name: /Av\. del Valle 89.*deuda vencida/ })).toBeTruthy()
+    expect(screen.getAllByText('Deuda vencida')).toHaveLength(1)
+    expect(screen.getByText(AVISO)).toBeTruthy()
+  })
+
+  it('el aviso habla del pedido: con presupuesto no aparece, el chip sí', async () => {
+    get.mockResolvedValue(pagina([clienteDeLista({ tieneDeudaVencida: true })], 1))
+    renderConQuery(hoja())
+    await screen.findByText('Deuda vencida')
+
+    await userEvent.press(screen.getByRole('radio', { name: 'Presupuesto' }))
+
+    expect(screen.queryByText(AVISO)).toBeNull()
+    expect(screen.getByText('Deuda vencida')).toBeTruthy()
+  })
+
+  it('con varios clientes con deuda vencida, un solo aviso que los cuenta', async () => {
+    get.mockResolvedValue(pagina([
+      clienteDeLista({ tieneDeudaVencida: true }),
+      clienteDeLista({ id: 'c2', direccion: 'Gral. Paz 10450', tieneDeudaVencida: true }),
+    ], 2))
+    renderConQuery(hoja())
+
+    expect(await screen.findByText('2 clientes de la lista tienen deuda vencida: podés armar el pedido, pero va a quedar por autorizar.')).toBeTruthy()
+  })
+
+  it('con un servidor anterior (sin el dato) no hay chip ni aviso', async () => {
+    renderConQuery(hoja())
+
+    await screen.findByText('Av. del Valle 89')
+    expect(screen.queryByText('Deuda vencida')).toBeNull()
+    expect(screen.queryByText(/deuda vencida/)).toBeNull()
+  })
+})
+
 describe('recientes', () => {
   const reciente = { id: 'c1', direccion: 'Calle Vieja 1', nombreFantasia: 'Local viejo' }
   const servidor = (detalle: () => Promise<unknown>) =>

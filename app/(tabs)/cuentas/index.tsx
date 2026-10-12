@@ -7,6 +7,7 @@ import { Notice, TopBar, TwoPane, useMenuLeading } from '@/core/ui/fw'
 import { useCartera } from '@/features/clientes/hooks/useCartera'
 import { ClienteCard } from '@/features/clientes/components/ClienteCard'
 import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
+import { textoMostrando } from '@/features/clientes/lib/cliente'
 import { CuentaCorrienteCliente } from '@/features/cuentas/components/CuentaCorrienteCliente'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
@@ -21,7 +22,7 @@ export default function CuentasCorrientesScreen() {
   const { isTabletLandscape } = useResponsive()
   const [busqueda, setBusqueda] = useState('')
   const [abierto, setAbierto] = useState<string | null>(null)
-  const { clientes, totalCount, isLoading, isRefetching, error, refetch, cargarMas } = useCartera(busqueda)
+  const { clientes, totalCount, saldoTotal, isLoading, isRefetching, error, refetch, cargarMas } = useCartera(busqueda)
 
   const abrir = (id: string) => {
     if (isTabletLandscape) setAbierto(id)
@@ -35,7 +36,7 @@ export default function CuentasCorrientesScreen() {
           accessibilityLiveRegion="polite"
           style={{ ...typeScale.secundario, color: c.text, paddingHorizontal: space[4], paddingTop: space[3] }}
         >
-          {`Mostrando ${clientes.length} de ${totalCount}`}
+          {textoMostrando(clientes.length, totalCount, saldoTotal)}
         </Text>
       ) : null}
       {error ? (
