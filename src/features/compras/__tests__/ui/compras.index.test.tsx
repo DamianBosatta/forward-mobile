@@ -80,6 +80,25 @@ describe('lista de compras', () => {
     expect(within(screen.getByRole('button', { name: /BBBB2222/ })).getByText('Por recibir')).toBeTruthy()
   })
 
+  it('con el servidor que manda quién la cargó, la tarjeta lo muestra al lado del número y el depósito pasa al pie', async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('borradores/mios')) return Promise.resolve([])
+      if (url.includes('/resumen')) return Promise.resolve({ totalComprado: 0, notasPedido: 1, confirmadas: 0, entregadas: 0, canceladas: 0, anuladas: 0 })
+      return Promise.resolve(pagina([compra({ creadoPor: 'Nacho Damiano' })], 1))
+    })
+    pantalla()
+    const tarjeta = await screen.findByRole('button', { name: /AAAA1111/ })
+    expect(within(tarjeta).getByText('AAAA1111 · Nacho Damiano')).toBeTruthy()
+    expect(within(tarjeta).getByText(/8 productos · Depósito Central/)).toBeTruthy()
+  })
+
+  it('con el servidor anterior (sin creadoPor) la tarjeta sigue mostrando el depósito al lado del número', async () => {
+    pantalla()
+    const tarjeta = await screen.findByRole('button', { name: /AAAA1111/ })
+    expect(within(tarjeta).getByText('AAAA1111 · Depósito Central')).toBeTruthy()
+    expect(within(tarjeta).queryByText(/productos · /)).toBeNull()
+  })
+
   it('con el servidor que separa por moneda vuelve el total comprado, una cifra por moneda y con el mismo período', async () => {
     const base = mockGet.getMockImplementation()!
     mockGet.mockImplementation((url: string) => url.startsWith('/api/v1/Compras/resumen?')

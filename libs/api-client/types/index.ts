@@ -321,7 +321,8 @@ export type UpdateSocioRequest = Omit<components['schemas']['UpdateSocioCommand'
 export type CompraDto = components['schemas']['CompraDto']
 
 /** Compra list item — matches GET /api/v1/compras list shape. */
-export type CompraDtoList = components['schemas']['CompraDtoList']
+// `creadoPor` (forward-system #891) va a mano hasta regenerar el schema: opcional porque un servidor anterior no lo manda.
+export type CompraDtoList = components['schemas']['CompraDtoList'] & { creadoPor?: string | null }
 
 /** Compra detail line item — nested inside CompraDto. */
 export type CompraDetalleResponseDto = components['schemas']['CompraDetalleResponseDto']
