@@ -78,7 +78,7 @@ beforeEach(() => {
 describe('venta nueva: cliente, borrador y autoguardado', () => {
   it('al elegir el cliente crea el borrador para ese cliente, lo nombra por la dirección y le guarda la fecha propuesta', async () => {
     await elegirCliente()
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID })
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' })
     expect(screen.getByText('Nuevo pedido')).toBeTruthy()
     expect(screen.getByText('Tarantino 1898 · Autoservicio Abel')).toBeTruthy()
     // El borrador nace vacío en el servidor: la fecha propuesta viaja en el primer autoguardado.
@@ -158,6 +158,57 @@ describe('pestaña Líneas', () => {
     expect(await screen.findByText('Desc. 12,82 % · sobre tu tope')).toBeTruthy()
     expect(screen.getByText('Este pedido va a quedar por autorizar')).toBeTruthy()
     expect(screen.getByText(/Porque un descuento supera tu tope/)).toBeTruthy()
+  })
+
+  // Servidor con forward-system #883: el borrador recién creado vuelve en /borradores/mios con su tipo.
+  const servidorNuevo = (tipoOperacion?: string) => mockGet.mockImplementation((url: string) =>
+    Promise.resolve(url === '/api/v1/Ventas/borradores/mios' ? [{ id: 'b1', version: 7, tipoOperacion }] : calendario(url)))
+
+  it('el borrador nace con el tipo que se eligió: Presupuesto también viaja', async () => {
+    mockTipo = 'Presupuesto'
+    await elegirCliente()
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Presupuesto' })
+  })
+
+  it('servidor nuevo: el autoguardado de un pedido manda el descuento sobre el tope sin recortarlo', async () => {
+    servidorNuevo('Pedido')
+    await elegirCliente()
+    // El id del POST es el que se busca en /mios (si no coincidiera, el servidor nuevo pasaría por viejo).
+    expect(await mockPost.mock.results[0].value).toMatchObject({ ventaId: 'b1' })
+    conLineas(12.82)
+    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
+    expect(mockPut.mock.calls.at(-1)[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 12.82 }])
+    expect(screen.queryByText(/el resto se guarda al confirmar el pedido/)).toBeNull()
+  })
+
+  it.each([
+    ['servidor viejo: el borrador no trae el tipo', () => mockGet.mockImplementation((url: string) =>
+      Promise.resolve(url === '/api/v1/Ventas/borradores/mios' ? [{ id: 'b1', version: 7 }] : calendario(url)))],
+    ['/mios no trae el borrador', () => mockGet.mockImplementation((url: string) =>
+      Promise.resolve(url === '/api/v1/Ventas/borradores/mios' ? [{ id: 'otro', version: 1, tipoOperacion: 'Pedido' }] : calendario(url)))],
+    ['no se puede saber (el GET falla)', () => mockGet.mockImplementation((url: string) =>
+      url === '/api/v1/Ventas/borradores/mios' ? Promise.reject(new Error('sin señal')) : Promise.resolve(calendario(url)))],
+  ])('%s: se sigue recortando al tope', async (_nombre, preparar) => {
+    preparar()
+    await elegirCliente()
+    conLineas(12.82)
+    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
+    expect(mockPut.mock.calls.at(-1)[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 10 }])
+  })
+
+  it('si el GET de /mios falla una vez, se reintenta una vez en el siguiente cambio y deja de recortar', async () => {
+    let llamadas = 0
+    mockGet.mockImplementation((url: string) => {
+      if (url !== '/api/v1/Ventas/borradores/mios') return Promise.resolve(calendario(url))
+      return ++llamadas === 1 ? Promise.reject(new Error('sin señal')) : Promise.resolve([{ id: 'b1', version: 7, tipoOperacion: 'Pedido' }])
+    })
+    await elegirCliente()
+    // El primer cambio después del fallo dispara el reintento (uno solo) y el descuento ya viaja completo.
+    conLineas(12.82)
+    await waitFor(() => expect(mockPut.mock.calls.at(-1)?.[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 12.82 }]), ESPERA)
+    conLineas(12.82, 13)
+    await waitFor(() => expect(mockPut.mock.calls.at(-1)?.[1].items).toEqual([{ productoId: 'p1', cantidad: 13, descuentoPorcentaje: 12.82 }]), ESPERA)
+    expect(llamadas).toBe(2)
   })
 
   it('pedido sobre el tope: el borrador (Presupuesto en el servidor) guarda hasta el tope y el descuento elegido viaja al confirmar', async () => {
@@ -501,6 +552,18 @@ describe('confirmar', () => {
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/guardar-presupuesto', { ventaId: 'b1', version: 8 }))
     expect(altas()).toHaveLength(0)
     expect(mockReplace).toHaveBeenCalledWith(guardada('b1', ''))
+  })
+
+  it('presupuesto: si el servidor rechaza guardar-presupuesto (descuento sobre el tope) se muestra su mensaje', async () => {
+    mockTipo = 'Presupuesto'
+    await armar()
+    await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
+    mockPost.mockImplementation((url: string) => url.endsWith('guardar-presupuesto')
+      ? Promise.reject(new ApiError(400, 'Un presupuesto no admite descuentos sobre tu tope.'))
+      : Promise.resolve({ ventaId: 'b1', version: 7, message: '' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar presupuesto' }))
+    expect(await screen.findByText(/Un presupuesto no admite descuentos sobre tu tope\./, {}, ESPERA)).toBeTruthy()
+    expect(mockReplace).not.toHaveBeenCalled()
   })
 
   it('guardar la venta marca el resumen de Inicio para volver a pedirlo (no pasa por una mutación de react-query)', async () => {

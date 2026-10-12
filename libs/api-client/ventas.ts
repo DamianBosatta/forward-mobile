@@ -16,7 +16,8 @@ import type {
 } from './types'
 import type { components } from './generated/schema'
 
-export type BorradorVenta = components['schemas']['BorradorVentaDto']
+/** `tipoOperacion` llegó con forward-system #883 (enum por nombre): un servidor anterior no lo manda. */
+export type BorradorVenta = components['schemas']['BorradorVentaDto'] & { tipoOperacion?: 'Pedido' | 'Presupuesto' }
 /** Número, cliente por partes y `version` (xmin) llegaron con forward-system #884: un servidor anterior no los manda. */
 export type VentaPendienteAutorizacion = components['schemas']['VentaPendienteAutorizacionDto'] & {
   numeroPedido?: number | null
@@ -239,10 +240,30 @@ export function useCreateVenta() {
   })
 }
 
-/** Borrador con autoguardado (el de la web): Presupuesto sin líneas; el vendedor sale del token. */
+/**
+ * Borrador con autoguardado (el de la web): sin líneas; el vendedor sale del token. `tipoOperacion`
+ * (forward-system #883) dice qué se arma: un servidor viejo lo ignora y el borrador nace Presupuesto.
+ */
 export const useIniciarBorradorVenta = () => useMutation({
-  mutationFn: (data: { clienteId: string; depositoId: string }) => api.post<VentaActionResponseDto>('/api/v1/Ventas/borradores', data),
+  mutationFn: (data: { clienteId: string; depositoId: string; tipoOperacion?: 'Pedido' | 'Presupuesto' }) =>
+    api.post<VentaActionResponseDto>('/api/v1/Ventas/borradores', data),
 })
+
+/**
+ * ¿El servidor guarda el tipo del borrador? El POST no lo devuelve; `BorradorVentaDto.tipoOperacion`
+ * existe solo desde #883, así que si el borrador viene en /mios con el campo, el servidor es el nuevo.
+ * `false`: el servidor respondió y no lo trae (viejo) o el borrador no está en la lista; `null`: no se
+ * pudo preguntar (se puede reintentar). En ambos casos se recorta el descuento.
+ */
+export async function servidorGuardaElTipo(borradorId: string): Promise<boolean | null> {
+  try {
+    const borradores = await api.get<BorradorVenta[]>('/api/v1/Ventas/borradores/mios')
+    if (!Array.isArray(borradores)) return null
+    return borradores.some((b) => b.id === borradorId && b.tipoOperacion !== undefined)
+  } catch {
+    return null
+  }
+}
 
 /** Autoguardado del borrador: PUT /Ventas/{id} con la versión vigente; devuelve la nueva. */
 export function guardarBorradorVenta(id: string, version: number, data: Record<string, unknown>) {
