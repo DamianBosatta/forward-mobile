@@ -7,7 +7,7 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { diaArgentina } from '@/src/utils/date'
 import { useEstadoCuentaSocio } from '../api/queries'
-import { useCajasAbiertas, useMediosDeCobro, useRegistrarCobro, type CobroRegistrado } from '../api/cobros'
+import { claveDeOtroSocio, useCajasAbiertas, useMediosDeCobro, useRegistrarCobro, type CobroRegistrado } from '../api/cobros'
 import { armarCobro, mostrarFecha, type FormCobro } from '../lib/cobro'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
 import { nuevaClaveIdempotencia } from '@/features/venta-nueva/lib/payload'
@@ -37,8 +37,10 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
   const registrar = useRegistrarCobro()
   const [f, setF] = useState<FormCobro>(formVacio)
   // Una clave por cobro, la misma en cada reintento (tocar de nuevo tras un corte no lo carga dos veces);
-  // «Registrar otro cobro» arranca otra. Un cobro duplicado es peor que perder una edición: si se cambia
-  // el formulario después de un intento sin respuesta, el servidor lo dice con un 409.
+  // «Registrar otro cobro» arranca otra. Un cobro duplicado es peor que perder una edición: se edite lo que se
+  // edite del formulario (monto, medio, cheque, referencia) la clave NO cambia, y si el cobro anterior sí se había
+  // grabado el servidor lo dice con un 409 y lo nuevo no se guarda. Solo se cambia si el servidor dice que la
+  // clave era de otro socio.
   const [clave, setClave] = useState(nuevaClaveIdempotencia)
   const cajas = useCajasAbiertas(f.requiereCaja)
   const [aviso, setAviso] = useState<string | null>(null)
@@ -79,7 +81,10 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
     const r = armarCobro(socioId, { ...f, depositoId }, clave)
     if ('error' in r) return setAviso(r.error)
     setAviso(null)
-    registrar.mutate(r.payload, { onSuccess: setCobro })
+    registrar.mutate(r.payload, {
+      onSuccess: setCobro,
+      onError: e => { if (claveDeOtroSocio(e)) setClave(nuevaClaveIdempotencia()) },
+    })
   }
 
   return (

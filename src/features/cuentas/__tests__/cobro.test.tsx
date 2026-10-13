@@ -174,6 +174,96 @@ describe('idempotencia del cobro (forward-system: claveIdempotencia)', () => {
     expect(screen.getByText('Saldo nuevo')).toBeTruthy()
   })
 
+  // Tras un intento sin respuesta, editar CUALQUIER campo no cambia la clave: el servidor decide con un 409.
+  const editarMonto = () => fireEvent.changeText(screen.getByLabelText('Monto'), '2.500')
+  const editarReferencia = () => fireEvent.changeText(screen.getByLabelText('Referencia (opcional)'), 'Recibo 0042')
+  const editarMedio = async () => {
+    await userEvent.press(screen.getByRole('radio', { name: 'Efectivo' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Registrar cobro de/ }).props.accessibilityState?.disabled).toBeFalsy(), ESPERA)
+  }
+  it.each([
+    ['el monto', editarMonto],
+    ['la referencia', editarReferencia],
+    ['el medio de pago', editarMedio],
+  ])('tras un corte, si se edita %s la clave es la misma y el 409 dice que lo nuevo NO se guardó', async (_campo, editar) => {
+    post.mockRejectedValueOnce(new TypeError('Network request failed')).mockRejectedValueOnce(otroCuerpo())
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+    await cargarMontoYMedio('1.000', 'Transferencia')
+    await registrar()
+    expect(await screen.findByText('Network request failed', {}, ESPERA)).toBeTruthy()
+
+    await editar()
+    await registrar()
+
+    expect(await screen.findByText(COBRO_CON_LO_DE_ANTES, {}, ESPERA)).toBeTruthy()
+    expect(COBRO_CON_LO_DE_ANTES).toMatch(/datos de antes.*NO se guardaron/)
+    expect(screen.getByText('Cobro ya registrado')).toBeTruthy()
+    expect(post).toHaveBeenCalledTimes(2)
+    expect(clavesEnviadas()[1]).toBe(clavesEnviadas()[0])
+  })
+
+  it('tras un corte, si se edita un dato del cheque la clave es la misma y el 409 dice que lo nuevo NO se guardó', async () => {
+    post.mockRejectedValueOnce(new TypeError('Network request failed')).mockRejectedValueOnce(otroCuerpo())
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+    await cargarMontoYMedio('30.000', 'Cheque')
+    fireEvent.changeText(screen.getByLabelText('N.º de cheque'), '00412377')
+    fireEvent.changeText(screen.getByLabelText('Banco'), 'Banco Provincia')
+    fireEvent.changeText(screen.getByLabelText('Titular'), 'Graciela Ruiz')
+    await registrar()
+    expect(await screen.findByText('Network request failed', {}, ESPERA)).toBeTruthy()
+
+    fireEvent.changeText(screen.getByLabelText('N.º de cheque'), '99999999')
+    await registrar()
+
+    expect(await screen.findByText(COBRO_CON_LO_DE_ANTES, {}, ESPERA)).toBeTruthy()
+    expect(post.mock.calls[1][1].lineas[0].chequesRecibidos[0].numero).toBe('99999999')
+    expect(clavesEnviadas()[1]).toBe(clavesEnviadas()[0])
+  })
+
+  /** 409 de la clave de OTRO socio: el servidor no devuelve ningún dato del pago (`data` es el Guid vacío). */
+  const claveDeOtroSocio = () => Object.assign(
+    new ApiError(409, 'Esta clave de idempotencia ya se usó en otra operación. No se registró nada: probá con un cobro nuevo.'),
+    { codigo: 'ClaveIdempotenciaConOtroCuerpo', data: '00000000-0000-0000-0000-000000000000' })
+
+  it('409 con la clave de otro socio: muestra el motivo del servidor, no da nada por registrado y la próxima vez usa otra clave', async () => {
+    post.mockRejectedValueOnce(claveDeOtroSocio())
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+    await cargarMontoYMedio('1.000', 'Transferencia')
+    await registrar()
+
+    expect(await screen.findByText(/Esta clave de idempotencia ya se usó en otra operación/, {}, ESPERA)).toBeTruthy()
+    expect(screen.queryByText('Saldo nuevo')).toBeNull()
+    expect(screen.queryByText('Cobro ya registrado')).toBeNull()
+
+    await registrar()
+
+    await waitFor(() => expect(post).toHaveBeenCalledTimes(2))
+    expect(clavesEnviadas()[1]).not.toBe(clavesEnviadas()[0])
+  })
+
+  it('409 con el cobro anulado: lo dice con el mensaje del servidor, sin "registrado" ni cuenta, y «Registrar otro cobro» usa otra clave', async () => {
+    const MENSAJE = 'Este cobro ya se había registrado con esta clave y después se anuló. No se registró uno nuevo: si hace falta cobrar de nuevo, registrá un cobro nuevo.'
+    post.mockRejectedValueOnce(Object.assign(new ApiError(409, MENSAJE), { codigo: 'ClaveIdempotenciaConOtroCuerpo', data: 'p1' }))
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+    await cargarMontoYMedio('1.000', 'Transferencia')
+    await registrar()
+
+    expect(await screen.findByText(MENSAJE, {}, ESPERA)).toBeTruthy()
+    expect(screen.getByText('Cobro anulado')).toBeTruthy()
+    expect(screen.queryByText('Cobro registrado')).toBeNull()
+    expect(screen.queryByText(COBRO_CON_LO_DE_ANTES)).toBeNull()
+    expect(screen.queryByText(/Quedó en la cuenta/)).toBeNull()
+    expect(screen.queryByText(SIN_CUENTA_CONFIRMADA)).toBeNull()
+    expect(pidioMovimientos()).toEqual([])
+
+    await userEvent.press(screen.getByRole('button', { name: 'Registrar otro cobro' }))
+    await cargarMontoYMedio('1.000', 'Transferencia')
+    await registrar()
+
+    await waitFor(() => expect(post).toHaveBeenCalledTimes(2))
+    expect(clavesEnviadas()[1]).not.toBe(clavesEnviadas()[0])
+  })
+
   it('un 409 sin el código de la clave (p. ej. conflicto de concurrencia) es un error común: no se da el cobro por registrado', async () => {
     post.mockRejectedValueOnce(new ApiError(409, 'Conflicto de concurrencia al actualizar el saldo. Reintentá la operación.'))
     renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)

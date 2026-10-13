@@ -18164,7 +18164,6 @@ export interface components {
             chequesPropiosEntregados?: components["schemas"]["ChequeDetalleItem"][] | null;
             chequesAEndosar?: string[] | null;
             tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
-            claveIdempotencia?: string | null;
             /**
              * Format: uuid
              * @deprecated
@@ -18180,7 +18179,6 @@ export interface components {
             fechaOperacion?: string | null;
             imputaciones?: components["schemas"]["ImputacionManualItem"][] | null;
             tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
-            claveIdempotencia?: string | null;
             comprobanteUrl?: string | null;
             /** Format: uuid */
             depositoId?: string | null;

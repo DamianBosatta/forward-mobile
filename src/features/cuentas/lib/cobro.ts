@@ -1,4 +1,4 @@
-import type { components } from '@/libs/api-client/generated/schema'
+import type { RegistrarPagoMultilineaCommand } from '@/libs/api-client/types'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
 
 /** "7/10/2026" o "07/10/2026" → "2026-10-07" (día argentino, como lo interpreta el servidor). */
@@ -50,7 +50,7 @@ export interface CobroPayload {
    * Clave de idempotencia del cobro (forward-system, `RegistrarPagoMultilineaCommand.claveIdempotencia`): una
    * por cobro, la misma en cada reintento. Un servidor anterior la ignora.
    */
-  claveIdempotencia?: components['schemas']['RegistrarPagoMultilineaCommand']['claveIdempotencia']
+  claveIdempotencia?: RegistrarPagoMultilineaCommand['claveIdempotencia']
   lineas: { medioPagoId: string; monto: number; chequesRecibidos?: ChequeRecibido[] }[]
 }
 
