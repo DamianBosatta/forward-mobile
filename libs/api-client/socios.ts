@@ -22,6 +22,7 @@ export const sociosKeys = {
   list: (params: SociosParams) => [...sociosKeys.lists(), params] as const,
   infinite: (params: SociosParams) => [...sociosKeys.all, 'infinite', params] as const,
   detail: (id: string) => [...sociosKeys.all, 'detail', id] as const,
+  recientes: () => [...sociosKeys.all, 'recientes'] as const,
 }
 
 export function useClientes() {
@@ -33,6 +34,45 @@ export function useClientesActivos() {
     queryKey: [...sociosKeys.clientes(), 'activos'],
     queryFn: () => api.get<ClienteLightDto[]>('/api/v1/socios-comerciales/clientes-activos'),
     staleTime: 5 * 60_000,
+  })
+}
+
+/**
+ * Un cliente de "recientes" tal como lo manda `GET /socios-comerciales/clientes-recientes`
+ * (forward-system #915). Tipado a mano: el schema generado todavía no lo trae.
+ */
+export interface ClienteReciente {
+  id: string
+  razonSocial: string
+  direccion?: string | null
+  nombreFantasia?: string | null
+  nombreContacto?: string | null
+  displayName: string
+  /** Fecha UTC de la última venta o borrador del usuario con este cliente. */
+  ultimoUso: string
+}
+
+/** Máximo de recientes que se le piden al servidor (el servidor acepta de 1 a 10). */
+export const LIMITE_RECIENTES = 5
+
+/**
+ * Los últimos clientes activos que el usuario usó en sus ventas y borradores, del más reciente al más
+ * viejo. El 404 de un servidor que todavía no tiene el endpoint es esperado: no se registra como error.
+ */
+export const fetchClientesRecientes = (limite: number = LIMITE_RECIENTES) =>
+  api.get<ClienteReciente[]>(`/api/v1/socios-comerciales/clientes-recientes?limite=${limite}`, { estadosEsperados: [404] })
+
+/**
+ * Recientes del servidor para el selector de cliente. Sin reintentos: si falla (404 de un servidor
+ * viejo, sin red, 403), `data` queda sin definir y el selector sigue con los recientes del teléfono.
+ */
+export function useClientesRecientes(habilitado: boolean) {
+  return useQuery({
+    queryKey: sociosKeys.recientes(),
+    queryFn: () => fetchClientesRecientes(),
+    enabled: habilitado,
+    retry: false,
+    staleTime: 30_000,
   })
 }
 
