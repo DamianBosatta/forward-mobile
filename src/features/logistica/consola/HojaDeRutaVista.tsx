@@ -4,6 +4,7 @@ import { FONT, importe, radii, shadowMd, space, typeScale, useColors, useIsDark 
 import { Button, Notice, StatusChip, formatImporte } from '@/core/ui/fw'
 import { EstadoParada, type ParadaDto } from '@/libs/api-client/types'
 import type { ParadaNumerada, ResumenRuta } from './hojaDeRuta'
+import { chipCobro, etiquetaNota, importeParada, leyendaSinCobro } from './cobroParada'
 
 interface Props {
   resumen: ResumenRuta
@@ -38,17 +39,20 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onReporta
             accessibilityLabel="Próxima parada"
             style={{ ...tarjeta, borderWidth: 2, borderColor: c.brand, padding: space[4], gap: space[3] }}
           >
-            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-              {`Parada ${proxima.numero} · ${proxima.parada.cantidadBultos} ${proxima.parada.cantidadBultos === 1 ? 'bulto' : 'bultos'}`}
-            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
+              <Text style={{ ...typeScale.secundario, color: c.textSecondary, flex: 1 }}>
+                {[`Parada ${proxima.numero}`, etiquetaNota(proxima.parada), `${proxima.parada.cantidadBultos} ${proxima.parada.cantidadBultos === 1 ? 'bulto' : 'bultos'}`].filter(Boolean).join(' · ')}
+              </Text>
+              <ChipCobro parada={proxima.parada} />
+            </View>
             {/* El cliente se identifica por la dirección; el nombre va aparte. */}
             <View>
               <Text style={{ ...typeScale.titulo, color: c.text }}>{proxima.parada.direccion}</Text>
               <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{proxima.parada.clienteNombre}</Text>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Total del pedido</Text>
-              <Text style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(proxima.parada.montoTotal)}</Text>
+              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{importeParada(proxima.parada).rotulo}</Text>
+              <Text style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(importeParada(proxima.parada).valor)}</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: space[2] }}>
               <View style={{ flex: 1 }}>
@@ -130,6 +134,7 @@ function Fila({ n, ultima, onPress }: { n: ParadaNumerada; ultima: boolean; onPr
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }}>{`${numero} · ${parada.direccion}`}</Text>
         {parada.estado === EstadoParada.Entregado ? <StatusChip estado="entregado" /> : null}
         {parada.estado === EstadoParada.NoEntregado ? <StatusChip estado="porAutorizar" label="No entregado" /> : null}
+        {parada.estado === EstadoParada.Pendiente ? <ChipCobro parada={parada} /> : null}
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
         <Text style={{ ...typeScale.secundario, color: c.textSecondary, flex: 1 }}>
@@ -137,8 +142,22 @@ function Fila({ n, ultima, onPress }: { n: ParadaNumerada; ultima: boolean; onPr
             ? `${parada.clienteNombre} · ${parada.motivoRechazo}`
             : parada.clienteNombre}
         </Text>
-        <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(parada.montoTotal)}</Text>
+        {/* Las ya reportadas (Hechas) muestran el total del pedido como antes: no hay nada que cobrar. */}
+        {parada.estado !== EstadoParada.Pendiente ? (
+          <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(parada.montoTotal)}</Text>
+        ) : leyendaSinCobro(parada) ? (
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
+            {[etiquetaNota(parada), leyendaSinCobro(parada)].filter(Boolean).join(' · ')}
+          </Text>
+        ) : (
+          <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(importeParada(parada).valor)}</Text>
+        )}
       </View>
     </Pressable>
   )
+}
+
+function ChipCobro({ parada }: { parada: ParadaDto }) {
+  const chip = chipCobro(parada)
+  return chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null
 }
