@@ -356,6 +356,44 @@ describe('pestaña Cabecera', () => {
     expect(screen.getByTestId('venta-total')).toHaveTextContent('$ 28.260,00') // 10 × 2.496 + 3.300
   })
 
+  describe('crédito disponible del cliente', () => {
+    const conSocio = (socio: unknown) => mockGet.mockImplementation((url: string) =>
+      url.includes('socios-comerciales') ? socio instanceof Error ? Promise.reject(socio) : Promise.resolve(socio) : Promise.resolve(calendario(url)))
+
+    it('lo muestra de la ficha del cliente cuando el servidor deja ver importes', async () => {
+      conSocio({ condicionPago: { tipo: 'DiasDesdeEntrega', dias: 30 }, puedeVerSaldo: true, creditoDisponible: 125000 })
+      await enCabecera()
+      expect(await screen.findByLabelText('Crédito disponible: $ 125.000,00')).toBeTruthy()
+    })
+
+    it('pasado del tope: lo dice con el importe que se pasó', async () => {
+      conSocio({ puedeVerSaldo: true, creditoDisponible: -4500 })
+      await enCabecera()
+      expect(await screen.findByLabelText('Crédito disponible: Pasado del tope por $ 4.500,00')).toBeTruthy()
+    })
+
+    it.each([
+      ['redactado por el servidor (puedeVerSaldo false, llega en 0)', { puedeVerSaldo: false, creditoDisponible: 0 }],
+      ['sin tope (null)', { puedeVerSaldo: true, creditoDisponible: null }],
+      ['de un servidor anterior (sin el campo)', { puedeVerSaldo: true }],
+      ['de un servidor que ni manda puedeVerSaldo', { creditoDisponible: 80000 }],
+    ])('no lo muestra si está %s', async (_caso, socio) => {
+      conSocio({ condicionPago: { tipo: 'DiasDesdeEntrega', dias: 30 }, ...socio })
+      await enCabecera()
+      expect(await screen.findByText('Cuenta corriente, 30 días desde la entrega')).toBeTruthy()
+      expect(screen.queryByText('Crédito disponible')).toBeNull()
+    })
+
+    it('si la ficha falla no muestra nada y la cabecera sigue usable', async () => {
+      conSocio(new TypeError('Network request failed'))
+      await enCabecera()
+      expect(await screen.findByText('Fecha de entrega')).toBeTruthy()
+      expect(screen.queryByText('Crédito disponible')).toBeNull()
+      expect(screen.getByLabelText('Flete ($)')).toBeTruthy()
+      await waitFor(() => expect(ultimoPut()).toMatchObject({ fechaEntrega: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) }), ESPERA)
+    })
+  })
+
   it('cesión: valida el rango, avisa que va a autorización y no viaja en el autoguardado del borrador', async () => {
     useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10, comisionActiva: true, porcentajeComision: 5 } as never })
     await enCabecera()
