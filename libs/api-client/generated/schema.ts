@@ -11932,6 +11932,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/socios-comerciales/clientes-recientes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Limite?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ClienteRecienteDtoListResponse"];
+                        "application/json": components["schemas"]["ClienteRecienteDtoListResponse"];
+                        "text/json": components["schemas"]["ClienteRecienteDtoListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/socios-comerciales/{id}/productos-proveedor": {
         parameters: {
             query?: never;
@@ -15939,6 +15978,27 @@ export interface components {
             displayName: string;
             esProvisorio: boolean;
         };
+        ClienteRecienteDto: {
+            /** Format: uuid */
+            id: string;
+            razonSocial: string;
+            direccion?: string | null;
+            nombreFantasia?: string | null;
+            nombreContacto?: string | null;
+            displayName: string;
+            /** Format: date-time */
+            ultimoUso: string;
+        };
+        ClienteRecienteDtoListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ClienteRecienteDto"][] | null;
+            codigo?: string | null;
+        };
         ComisionGeneradoVsPagadoDto: {
             /** Format: uuid */
             vendedorId?: string;
@@ -19559,9 +19619,9 @@ export interface components {
         /** @enum {string} */
         TipoCheque: "Propio" | "Tercero";
         /** @enum {string} */
-        TipoComprobanteEmitido: "FacturaA" | "NotaDebitoA" | "NotaCreditoA" | "FacturaB" | "NotaDebitoB" | "NotaCreditoB" | "FacturaC" | "NotaDebitoC" | "NotaCreditoC";
-        /** @enum {string} */
         TipoCobroParada: "Contado" | "Saldo" | "Pagado" | "CuentaCorriente";
+        /** @enum {string} */
+        TipoComprobanteEmitido: "FacturaA" | "NotaDebitoA" | "NotaCreditoA" | "FacturaB" | "NotaDebitoB" | "NotaCreditoB" | "FacturaC" | "NotaDebitoC" | "NotaCreditoC";
         /** @enum {string} */
         TipoComprobanteRecibido: "Factura" | "NotaCredito" | "NotaDebito" | "Recibo" | "Ticket" | "Otro";
         /** @enum {string} */
