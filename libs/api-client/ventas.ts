@@ -20,7 +20,10 @@ import type { components } from './generated/schema'
  * `tipoOperacion` llegó con forward-system #883 (enum por nombre); `clienteDireccion` (null si el cliente no
  * tiene), `totalAmount` y `totalCurrency` con forward-system #898: un servidor anterior no los manda.
  */
-export type BorradorVenta = components['schemas']['BorradorVentaDto'] & {
+export type BorradorVenta = Omit<
+  components['schemas']['BorradorVentaDto'],
+  'tipoOperacion' | 'clienteDireccion' | 'totalAmount' | 'totalCurrency'
+> & {
   tipoOperacion?: 'Pedido' | 'Presupuesto'
   clienteDireccion?: string | null
   totalAmount?: number

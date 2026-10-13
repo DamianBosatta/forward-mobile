@@ -15,6 +15,7 @@
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "generate:types": "node scripts/generate-types.js",
+    "check:types": "node scripts/check-types.js",
     "knip": "knip"
   },
   "dependencies": {

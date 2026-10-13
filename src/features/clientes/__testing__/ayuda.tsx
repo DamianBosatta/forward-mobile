@@ -41,6 +41,8 @@ export function clienteDeLista(extra: Partial<SocioListDto> = {}): SocioListDto 
     puedeVerCuentaCorriente: true,
     puedeEditar: true,
     deLaCasa: false,
+    tieneDeudaVencida: false,
+    deudaVencidaAmount: 0,
     ...extra,
   }
 }
