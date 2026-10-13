@@ -28,6 +28,8 @@ module.exports = {
     '!**/__tests__/**',
   ],
   coverageReporters: ['text', 'lcov', 'json-summary'],
+  // Suite pesada de RN (render + 130 ms reales por cada userEvent.press): 5 s no alcanza con la máquina cargada.
+  testTimeout: 10000,
   reporters: [
     'default',
     ['jest-junit', { outputDirectory: '.', outputName: 'junit.xml' }],

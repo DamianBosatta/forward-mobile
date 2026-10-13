@@ -238,7 +238,7 @@ it('si falla la carga de cajas, lo dice con Reintentar y no manda el cobro; al r
 
   falla = false
   await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
-  await waitFor(() => expect(screen.queryByText('No se pudo leer las cajas.')).toBeNull(), ESPERA)
+  await waitFor(() => expect(screen.queryByText('No se pudo leer las cajas.') === null).toBe(true), ESPERA)
   await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
   expect(post.mock.calls[0][1].depositoId).toBe('dep-central')
 })
