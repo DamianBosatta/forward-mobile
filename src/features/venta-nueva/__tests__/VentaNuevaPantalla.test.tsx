@@ -581,6 +581,63 @@ describe('confirmar', () => {
       'Quedó por autorizar porque un descuento supera tu tope, el cliente tiene deuda de más de 30 días. Te avisamos cuando lo resuelvan.')))
   })
 
+  // Servidor nuevo (forward-system #916): el alta ya dice cómo quedó la venta (estado y motivos).
+  const lecturasDeLaVenta = () => mockGet.mock.calls.filter(([u]) => u === '/api/v1/Ventas/v9')
+  const altaConResultado = (resultado: object) => mockPost.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas'
+    ? { ventaId: 'v9', version: 1, message: 'Pedido creado exitosamente. Pendiente de autorización.', ...resultado }
+    : url.endsWith('descartar-borrador') ? true : { ventaId: 'b1', version: 7, message: '' }))
+
+  it('servidor nuevo: el alta trae el estado y los motivos, se muestran sin pedir la venta', async () => {
+    altaConResultado({ estado: 9, motivoPendienteAutorizacion: 4 | 16 })
+    await armar()
+    await confirmar()
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9',
+      'Quedó por autorizar porque un descuento supera tu tope, el cliente tiene deuda de más de 30 días. Te avisamos cuando lo resuelvan.')))
+    expect(lecturasDeLaVenta()).toHaveLength(0)
+  })
+
+  it('servidor nuevo: un pedido confirmado (sin motivos) tampoco pide la venta y deja el mensaje del servidor', async () => {
+    altaConResultado({ estado: 2, motivoPendienteAutorizacion: null, message: 'Pedido creado y confirmado exitosamente. Stock reservado.' })
+    await armar()
+    await confirmar()
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', 'Pedido creado y confirmado exitosamente. Stock reservado.')))
+    expect(lecturasDeLaVenta()).toHaveLength(0)
+  })
+
+  it('servidor nuevo: el 409 por otro cuerpo trae el estado de la venta grabada y tampoco pide la venta', async () => {
+    await armar()
+    mockPost.mockImplementationOnce(() => Promise.reject(Object.assign(otroCuerpo(),
+      { data: { ventaId: 'v9', version: 3, message: 'x', estado: 9, motivoPendienteAutorizacion: 1 } })))
+    await confirmar()
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', CON_LO_DE_ANTES)))
+    expect(lecturasDeLaVenta()).toHaveLength(0)
+  })
+
+  it('servidor viejo: el alta no trae el estado, se pide la venta y se leen sus motivos', async () => {
+    mockGet.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas/v9' ? { venta: { estado: 9, motivoPendienteAutorizacion: 1 }, detalles: [] } : calendario(url)))
+    await armar()
+    await confirmar()
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', 'Quedó por autorizar porque falta stock. Te avisamos cuando lo resuelvan.')))
+    expect(lecturasDeLaVenta()).toHaveLength(1)
+  })
+
+  it('servidor nuevo, pero por autorizar sin motivos en la respuesta: se pide la venta para leerlos', async () => {
+    altaConResultado({ estado: 9 })
+    mockGet.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas/v9' ? { venta: { estado: 9, motivoPendienteAutorizacion: 2 }, detalles: [] } : calendario(url)))
+    await armar()
+    await confirmar()
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', 'Quedó por autorizar porque un precio queda debajo del mínimo. Te avisamos cuando lo resuelvan.')))
+    expect(lecturasDeLaVenta()).toHaveLength(1)
+  })
+
+  it('servidor viejo: si pedir la venta falla, se muestra el mensaje del alta', async () => {
+    mockGet.mockImplementation((url: string) => url === '/api/v1/Ventas/v9' ? Promise.reject(new TypeError('Network request failed')) : Promise.resolve(calendario(url)))
+    await armar()
+    await confirmar()
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', 'Pedido creado y confirmado exitosamente. Stock reservado.')))
+    expect(lecturasDeLaVenta()).toHaveLength(1)
+  })
+
   it('presupuesto: el borrador ya es el presupuesto (guardar-presupuesto con la versión vigente)', async () => {
     mockTipo = 'Presupuesto'
     await armar()

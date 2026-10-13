@@ -308,7 +308,15 @@ export interface CreateVentaRequest {
 /**
  * VentaActionResponseDto — matches empacar / entregar / anular response shape.
  */
-export type VentaActionResponseDto = components['schemas']['VentaActionResponseDto']
+export type VentaActionResponseDto = components['schemas']['VentaActionResponseDto'] & {
+  /**
+   * Cómo quedó la venta (`EstadoVenta`, el mismo entero que `VentaDetalleDto.venta.estado`). Solo lo manda
+   * `POST /Ventas` del servidor nuevo (forward-system #916); ausente en el viejo y en las demás acciones.
+   */
+  estado?: number | null
+  /** Flags de `MotivoPendienteAutorizacion` si la venta quedó por autorizar; null si no. Mismo origen que `estado`. */
+  motivoPendienteAutorizacion?: number | null
+}
 
 /**
  * EmpacarVentaResponseDto — extends VentaActionResponseDto with etiquetas.
