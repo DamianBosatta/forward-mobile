@@ -2,6 +2,7 @@ import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
+import { AVISO_DEUDA_VENCIDA } from '@/features/clientes/components/CreditoDelCliente'
 import { DetalleAutorizacion } from '../components/DetalleAutorizacion'
 
 const mockGet = jest.fn()
@@ -195,6 +196,129 @@ describe('Autorizar venta: el detalle', () => {
     await waitFor(() => expect(hoja2.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBeFalsy())
     await userEvent.press(hoja2.getByRole('button', { name: 'Autorizar' }))
     expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 44, razon: 'ok' })
+  })
+
+  describe('el cliente: condición de pago, saldo y vencido (de la ficha del cliente)', () => {
+    const CON_CLIENTE = { ...VENTA, venta: { ...VENTA.venta, clienteId: 'c1' } }
+    const FICHA = '/api/v1/socios-comerciales/c1'
+    const SOCIO = {
+      id: 'c1', razonSocial: 'Limpieza Total SRL', puedeVerSaldo: true, saldoAmount: 450000,
+      condicionPago: { tipo: 'DiasDesdeEntrega', dias: 30 },
+      deudaVencidaAmount: 120000, deudaVencidaTstAmount: 0, deudaVencidaNormalAmount: 120000, creditoDisponible: -50000,
+    }
+    const pedidos = (url: string) => mockGet.mock.calls.filter(([u]) => String(u).includes(url))
+
+    function pintarConCliente(ficha: () => Promise<unknown>, ...modulos: string[]) {
+      permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA', ...(modulos.length ? modulos : ['MOD_CLIENTES']))
+      mockGet.mockImplementation((url: string) => {
+        if (url.endsWith('autorizacion-preview')) return Promise.resolve(PREVIEW)
+        if (url.includes('socios-comerciales')) return ficha()
+        return Promise.resolve(CON_CLIENTE)
+      })
+      const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      return render(<QueryClientProvider client={qc}><DetalleAutorizacion id="v1" /></QueryClientProvider>)
+    }
+    const botonesUsables = async () => {
+      for (const name of ['Autorizar', 'Rechazar']) {
+        const boton = await screen.findByRole('button', { name })
+        expect(boton.props.accessibilityState?.disabled).toBeFalsy()
+      }
+    }
+
+    it('muestra condición de pago, saldo, vencido y disponible del servidor, sin el aviso de pedidos nuevos', async () => {
+      pintarConCliente(() => Promise.resolve(SOCIO))
+      const bloque = await screen.findByTestId('bloque-cliente')
+      expect(within(bloque).getByLabelText('Condición de pago: Cuenta corriente, 30 días desde la entrega')).toBeTruthy()
+      expect(within(bloque).getByLabelText('Saldo: $ 450.000,00')).toBeTruthy()
+      expect(within(bloque).getByLabelText('Vencido (más de 30 días): $ 120.000,00 · Normal')).toBeTruthy()
+      expect(within(bloque).getByLabelText('Disponible: Pasado del tope por $ 50.000,00')).toBeTruthy()
+      // La venta ya está por autorizar: el aviso "los pedidos nuevos van a quedar por autorizar" no corresponde.
+      expect(within(bloque).queryByText(AVISO_DEUDA_VENCIDA)).toBeNull()
+      expect(pedidos(FICHA)).toHaveLength(1)
+      await botonesUsables()
+    })
+
+    it('sin deuda vencida y con tope, muestra el disponible y no inventa un vencido', async () => {
+      pintarConCliente(() => Promise.resolve({ ...SOCIO, deudaVencidaAmount: 0, creditoDisponible: 80000 }))
+      const bloque = await screen.findByTestId('bloque-cliente')
+      expect(within(bloque).getByLabelText('Disponible: $ 80.000,00')).toBeTruthy()
+      expect(within(bloque).queryByText(/Vencido/)).toBeNull()
+    })
+
+    it('si el servidor redacta los importes (puedeVerSaldo false) solo queda la condición de pago, nunca "$ 0"', async () => {
+      pintarConCliente(() => Promise.resolve({
+        ...SOCIO, puedeVerSaldo: false, saldoAmount: 0, deudaVencidaAmount: 0, deudaVencidaNormalAmount: 0, creditoDisponible: 0,
+      }))
+      const bloque = await screen.findByTestId('bloque-cliente')
+      expect(within(bloque).getByLabelText('Condición de pago: Cuenta corriente, 30 días desde la entrega')).toBeTruthy()
+      expect(within(bloque).queryByText(/Saldo|Vencido|Disponible/)).toBeNull()
+      expect(within(bloque).queryByText(/\$ /)).toBeNull()
+    })
+
+    it('con un servidor anterior (sin vencido ni disponible) muestra lo que hay y no falla', async () => {
+      const { deudaVencidaAmount, deudaVencidaTstAmount, deudaVencidaNormalAmount, creditoDisponible, ...anterior } = SOCIO
+      void [deudaVencidaAmount, deudaVencidaTstAmount, deudaVencidaNormalAmount, creditoDisponible]
+      pintarConCliente(() => Promise.resolve(anterior))
+      const bloque = await screen.findByTestId('bloque-cliente')
+      expect(within(bloque).getByLabelText('Saldo: $ 450.000,00')).toBeTruthy()
+      expect(within(bloque).queryByText(/Vencido|Disponible/)).toBeNull()
+    })
+
+    it('sin tope (disponible null) ni condición cargada: no hay Disponible y la condición es Contado', async () => {
+      pintarConCliente(() => Promise.resolve({ ...SOCIO, creditoDisponible: null, deudaVencidaAmount: 0, condicionPago: null }))
+      const bloque = await screen.findByTestId('bloque-cliente')
+      expect(within(bloque).getByLabelText('Condición de pago: Contado')).toBeTruthy()
+      expect(within(bloque).queryByText(/Disponible/)).toBeNull()
+    })
+
+    it('si el servidor ni manda puedeVerSaldo (muy anterior), no muestra importes que podrían estar redactados', async () => {
+      const { puedeVerSaldo, ...sinFlag } = SOCIO
+      void puedeVerSaldo
+      pintarConCliente(() => Promise.resolve(sinFlag))
+      const bloque = await screen.findByTestId('bloque-cliente')
+      expect(within(bloque).queryByText(/Saldo|Vencido|Disponible/)).toBeNull()
+    })
+
+    it.each([[403, 'No tenés permisos para esta acción.'], [404, 'No encontrado']])(
+      'si la ficha da %s no muestra nada y el resto del detalle y los botones siguen',
+      async (status, mensaje) => {
+        pintarConCliente(() => Promise.reject(Object.assign(new Error(mensaje), { status })))
+        await waitFor(() => expect(pedidos(FICHA)).toHaveLength(1))
+        expect(await screen.findByText('Autorizar A00428')).toBeTruthy()
+        expect(screen.getByText(/Falta stock/)).toBeTruthy()
+        await botonesUsables()
+        await waitFor(() => expect(screen.queryByTestId('bloque-cliente')).toBeNull())
+        expect(screen.queryByText(mensaje)).toBeNull()
+      },
+    )
+
+    it('mientras la ficha carga no hay bloque y los botones se pueden usar; al llegar aparece sin tocarlos', async () => {
+      let llega: (socio: object) => void = () => {}
+      pintarConCliente(() => new Promise((resolver) => { llega = resolver }))
+      await botonesUsables()
+      expect(screen.queryByTestId('bloque-cliente')).toBeNull()
+      await userEvent.press(screen.getByRole('button', { name: 'Rechazar' }))
+      expect(screen.getByLabelText('Rechazar venta')).toBeTruthy()
+
+      llega(SOCIO)
+      expect(await screen.findByTestId('bloque-cliente')).toBeTruthy()
+      expect(screen.getByLabelText('Rechazar venta')).toBeTruthy()
+    })
+
+    it('sin Clientes:Read no pide la ficha (el servidor daría 403) y el detalle queda igual', async () => {
+      pintarConCliente(() => Promise.resolve(SOCIO), 'MOD_REPORTES')
+      await botonesUsables()
+      expect(pedidos('socios-comerciales')).toHaveLength(0)
+      expect(screen.queryByTestId('bloque-cliente')).toBeNull()
+    })
+
+    it('si la venta no trae clienteId no pide ninguna ficha', async () => {
+      permisos('MOD_VENTAS', 'MOD_CLIENTES', 'CAP_AUTORIZAR_VENTA')
+      pintar()
+      await botonesUsables()
+      expect(pedidos('socios-comerciales')).toHaveLength(0)
+      expect(screen.queryByTestId('bloque-cliente')).toBeNull()
+    })
   })
 
   it('tras un 409, si la venta ya no espera autorización, no quedan los botones de decidir', async () => {

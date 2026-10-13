@@ -4,9 +4,11 @@ import { useRouter } from 'expo-router'
 import { Button, Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useAutorizacionPreview, useVenta } from '@/libs/api-client/ventas'
+import { useSocio } from '@/libs/api-client/socios'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { motivosDe, pideRazon } from '../lib/motivos'
+import { ClienteParaAutorizar } from './ClienteParaAutorizar'
 import { DecisionSheet, type Decision } from './DecisionSheet'
 
 /** El servidor manda el estado como número o como nombre según el endpoint. */
@@ -34,10 +36,15 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
   // La vista previa la abre Reportes:Read en el servidor; sin ese permiso daría 403.
   const vePreview = useAuthStore((s) => veCostos && s.canDo('MOD_REPORTES', 'read'))
   const puedeAutorizar = useAuthStore((s) => s.hasCapability('CAP_AUTORIZAR_VENTA'))
+  // La ficha del cliente la abre Clientes:Read en el servidor; sin ese permiso daría 403 (y quedaría logueado).
+  const veClientes = useAuthStore((s) => s.canDo('MOD_CLIENTES', 'read'))
   const q = useVenta(id)
   const venta = q.data?.venta
   const porAutorizar = POR_AUTORIZAR.includes(String(venta?.estado))
   const preview = useAutorizacionPreview(id, vePreview && porAutorizar)
+  // Saldo y condición de pago del cliente: es información de apoyo, así que ni la carga ni un error
+  // (403, 404, sin red) tocan los botones. `fresco`: para decidir sobre plata no sirve un saldo de hace 5 minutos.
+  const socio = useSocio(veClientes ? (venta?.clienteId ?? '') : '', { fresco: true })
   const [decision, setDecision] = useState<Decision | null>(null)
   // La versión cacheada puede tener hasta 60 s: al decidir se vuelve a pedir la venta.
   const [aviso, setAviso] = useState<string | null>(null)
@@ -96,6 +103,9 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
             )}
           </>
         )}
+
+        {/* Debajo de los botones: si la ficha llega tarde, no los corre de lugar. */}
+        <ClienteParaAutorizar socio={socio.isError ? null : socio.data} />
 
         {veCostos ? (
           <View style={tarjeta} testID="bloque-costos">
