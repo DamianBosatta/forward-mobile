@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
-import type { CajaActivaDto, MovimientoCajaDto, ReporteDiario, Pago, PagedResult } from './types'
+import type { CajaActivaDto, MovimientoCajaDto, Pago, PagedResult } from './types'
 import type { components } from './generated/schema'
 
 type CerrarCajaResponseDto = components['schemas']['CerrarCajaResponseDto']
@@ -9,7 +9,6 @@ export const finanzasKeys = {
   cajaActiva: ['caja', 'activa'] as const,
   cajas: ['cajas'] as const,
   movimientosCaja: (cajaId: string) => ['caja', cajaId, 'movimientos'] as const,
-  reporteDiario: (fecha: string) => ['reporte', 'diario', fecha] as const,
 }
 
 // ── Caja ─────────────────────────────────────────────────────────────────────
@@ -53,16 +52,6 @@ export function useCerrarCaja() {
   })
 }
 
-// ── Reporte Diario ──────────────────────────────────────────────────────────
-
-export function useReporteDiario(fecha: string) {
-  return useQuery({
-    queryKey: finanzasKeys.reporteDiario(fecha),
-    queryFn: () => api.get<ReporteDiario>(`/api/v1/Reportes/diario?fecha=${fecha}`),
-    enabled: !!fecha,
-    staleTime: 5 * 60_000,
-  })
-}
 
 // ── Pagos & Cuentas Corrientes ──────────────────────────────────────────────
 

@@ -55,8 +55,6 @@ export type {
   Conciliacion,
   MovimientoCuenta,
   TipoMovimientoCuenta,
-  // Reportes
-  ReporteDiario,
   // Logística
   HojaDeRuta,
   ParadaHojaRuta,
@@ -96,7 +94,6 @@ export {
   useMovimientosCaja,
   useAbrirCaja,
   useCerrarCaja,
-  useReporteDiario,
   usePagos,
 } from './finanzas'
 
