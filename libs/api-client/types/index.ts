@@ -232,6 +232,7 @@ export interface MotivoAutorizacionDetalle {
   porcentajeDescuento?: number | null
   topeDescuento?: number | null
   precioEfectivo?: number | null
+  /** Solo con CAP_VER_COSTOS (sale del costo actual): sin ella viene null y el `texto` no lo trae. */
   precioMinimo?: number | null
   /** Solo con CAP_VER_COSTOS. */
   aporteOverhead?: number | null
