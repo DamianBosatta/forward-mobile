@@ -4,6 +4,7 @@ import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Field, Notice, Segmented, type SegmentedOption } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
 import { textoCondicionPago } from '@/features/clientes/lib/cliente'
+import { Fila, textoDisponible } from '@/features/clientes/components/CreditoDelCliente'
 import { METODO_ENTREGA, type MetodoEntregaValue } from '@/features/ventas/lib/venta-form-retiro'
 import type { CabeceraVentaEstado } from '../hooks/useCabeceraVenta'
 
@@ -20,6 +21,10 @@ export function CabeceraVenta({ clienteId, rotuloCliente, cab }: Props) {
   const c = useColors()
   const socio = useSocio(clienteId)
   const { metodoEntrega, fecha } = cab.cabecera
+  // Crédito disponible (ficha del cliente, forward-system #882): solo si el servidor lo manda (null sin tope)
+  // y deja ver importes (`puedeVerSaldo`; si no, llega redactado en 0). Cargando o con error, no se muestra
+  // y el formulario sigue: el servidor valida el tope al guardar.
+  const disponible = socio.data?.puedeVerSaldo === true && typeof socio.data.creditoDisponible === 'number' ? socio.data.creditoDisponible : null
   const titulo = (t: string) => <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{t}</Text>
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
   return (
@@ -29,6 +34,7 @@ export function CabeceraVenta({ clienteId, rotuloCliente, cab }: Props) {
         <Text style={{ ...typeScale.cuerpo, color: c.text }}>{rotuloCliente}</Text>
         {/* Solo lectura: la condición de pago se cambia con permiso de autorizar ventas, no acá. */}
         <Text style={secundario}>{socio.data ? textoCondicionPago(socio.data.condicionPago) : 'Condición de pago…'}</Text>
+        {disponible !== null ? <Fila etiqueta="Crédito disponible" valor={textoDisponible(disponible)} alerta={disponible < 0} /> : null}
       </View>
       <View style={{ gap: space[2] }}>
         {titulo('Entrega')}

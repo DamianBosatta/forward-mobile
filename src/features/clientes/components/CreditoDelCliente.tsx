@@ -27,6 +27,10 @@ export function Fila({ etiqueta, valor, alerta = false }: { etiqueta: string; va
   )
 }
 
+/** El disponible como se lee en la app: el importe, o cuánto se pasó del tope si es negativo. */
+export const textoDisponible = (disponible: number) =>
+  disponible < 0 ? `Pasado del tope por ${formatImporte(-disponible)}` : formatImporte(disponible)
+
 /** En qué cuenta está lo vencido: "TST", "Normal" o el importe de cada una si están las dos. */
 function vencidoPorCuenta(e: DatosDeCredito): string {
   const tst = e.deudaVencidaTst ?? 0
@@ -55,7 +59,7 @@ export function CreditoDelCliente({ estado, sinAviso = false }: { estado: DatosD
       {disponible !== null ? (
         <Fila
           etiqueta="Disponible"
-          valor={disponible < 0 ? `Pasado del tope por ${formatImporte(-disponible)}` : formatImporte(disponible)}
+          valor={textoDisponible(disponible)}
           alerta={disponible < 0}
         />
       ) : null}

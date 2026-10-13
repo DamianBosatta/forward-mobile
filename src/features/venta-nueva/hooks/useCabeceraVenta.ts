@@ -4,15 +4,16 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { METODO_ENTREGA, type MetodoEntregaValue } from '@/features/ventas/lib/venta-form-retiro'
 import { diaArgentina } from '@/src/utils/date'
 import type { TipoDocumento } from '@/features/clientes/components/SeleccionarClienteSheet'
-import { proximoHabil, tiraDeDias } from '../lib/calendario'
+import { fechaEntregaPorDefecto, tiraDeDias } from '../lib/calendario'
 import { leerNumero, mostrarNumero } from '../lib/linea'
 import type { Cabecera } from '../lib/payload'
 import type { VentaCargada } from '../lib/hidratar'
 
 /**
- * Estado de la pestaña Cabecera (plan 9 §2.1). La fecha arranca en el próximo día hábil del
- * calendario del servidor (días de entrega + feriados) hasta que el vendedor elija otra. Sin
- * calendario (cargando o con error) no se propone ninguna: no se adivina un día hábil.
+ * Estado de la pestaña Cabecera (plan 9 §2.1). La fecha arranca en la que propone el servidor al
+ * crear una venta sin fecha (primer día hábil desde mañana, días de entrega + feriados; ver
+ * `fechaEntregaPorDefecto`) hasta que el vendedor elija otra. Sin calendario (cargando o con
+ * error) no se propone ninguna: no se adivina un día hábil.
  */
 export function useCabeceraVenta(tipo: TipoDocumento) {
   const [metodoEntrega, setMetodoEntrega] = useState<MetodoEntregaValue>(METODO_ENTREGA.Logistica)
@@ -27,7 +28,9 @@ export function useCabeceraVenta(tipo: TipoDocumento) {
   const feriados = useFeriados(diaArgentina(ahora))
   // Con datos en caché el calendario sirve aunque falle un refetch de fondo.
   const calendarioListo = dias.data !== undefined && feriados.data !== undefined
-  const tira = useMemo(() => tiraDeDias(ahora, { dias: dias.data ?? null, feriados: feriados.data ?? [] }), [ahora, dias.data, feriados.data])
+  const calendario = useMemo(() => ({ dias: dias.data ?? null, feriados: feriados.data ?? [] }), [dias.data, feriados.data])
+  const tira = useMemo(() => tiraDeDias(ahora, calendario), [ahora, calendario])
+  const propuesta = useMemo(() => (calendarioListo ? fechaEntregaPorDefecto(ahora, calendario) : null), [ahora, calendario, calendarioListo])
   const user = useAuthStore((s) => s.user)
 
   const fleteLeido = fleteTexto.trim() ? leerNumero(fleteTexto) : 0
@@ -43,11 +46,11 @@ export function useCabeceraVenta(tipo: TipoDocumento) {
 
   const cabecera: Cabecera = {
     metodoEntrega,
-    fecha: fechaElegida ?? (proponer && calendarioListo ? proximoHabil(tira) : null),
+    fecha: fechaElegida ?? (proponer ? propuesta : null),
     flete: metodoEntrega === METODO_ENTREGA.Logistica && fleteLeido !== null ? fleteLeido : 0,
     observaciones,
   }
-  /** Carga la cabecera de una venta del servidor; sin fecha, `proponerFecha` decide si se propone el próximo hábil. */
+  /** Carga la cabecera de una venta del servidor; sin fecha, `proponerFecha` decide si se propone la del servidor. */
   const hidratar = (h: VentaCargada['cabecera'], proponerFecha = true) => {
     setProponer(proponerFecha)
     setMetodoEntrega(h.metodoEntrega)
