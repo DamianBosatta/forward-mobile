@@ -14,6 +14,16 @@ export const AVISO_ACREDITACION = 'El saldo del banco cambia cuando el cheque se
 const nombreCheque = (k: ChequeEnCartera) => `${k.banco} · N.º ${k.numero}`
 const diferido = (k: ChequeEnCartera) => diaArgentina(Date.parse(k.fechaPago)) > diaArgentina(Date.now())
 
+/**
+ * Cliente que entregó el cheque (forward-system #897): el nombre ya viene resuelto por el servidor
+ * (fantasía o, si no, razón social) y la dirección es lo que identifica al cliente en la app.
+ * Cada uno se muestra solo si viene con texto; un servidor anterior no manda ninguno.
+ */
+const origenDelCheque = (k: ChequeEnCartera) => ({
+  nombre: k.socioComercialOrigenNombre?.trim() || null,
+  direccion: k.socioComercialOrigenDireccion?.trim() || null,
+})
+
 /** Qué pasó con cada cheque: nunca un éxito parcial callado. */
 function Resultado({ resultados }: { resultados: ResultadoDeposito[] }) {
   const ok = resultados.filter(r => !r.error)
@@ -63,11 +73,13 @@ export function DepositoCheques() {
         {cheques.map(k => {
           const elegido = elegidos.includes(k.id)
           const cuando = `${diferido(k) ? 'Pago diferido' : 'Al día'} · ${formatToLocalTime(k.fechaPago, 'd MMM')}`
+          const origen = origenDelCheque(k)
+          const etiqueta = [nombreCheque(k), formatImporte(k.montoAmount), cuando, origen.nombre && `de ${origen.nombre}`, origen.direccion].filter(Boolean).join(', ')
           return (
             <Pressable
               key={k.id}
               accessibilityRole="checkbox"
-              accessibilityLabel={`${nombreCheque(k)}, ${formatImporte(k.montoAmount)}, ${cuando}`}
+              accessibilityLabel={etiqueta}
               accessibilityState={{ checked: elegido }}
               onPress={() => alternar(k.id)}
               style={{
@@ -81,6 +93,8 @@ export function DepositoCheques() {
               <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
                 <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{nombreCheque(k)}</Text>
                 <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`${k.titular} · ${cuando}`}</Text>
+                {origen.nombre ? <Text style={{ ...typeScale.secundario, color: c.text }}>{`De ${origen.nombre}`}</Text> : null}
+                {origen.direccion ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{origen.direccion}</Text> : null}
               </View>
               <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(k.montoAmount)}</Text>
             </Pressable>

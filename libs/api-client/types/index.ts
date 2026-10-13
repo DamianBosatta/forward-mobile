@@ -613,6 +613,22 @@ export interface AnularTransaccionRequest {
   motivo: string
 }
 
+// Cliente de origen del cheque (forward-system #897), tipado a mano hasta regenerar el schema:
+// opcional porque un servidor anterior no lo manda.
+interface OrigenDelCheque {
+  /** Nombre de fantasía o, si no hay, razón social; null sin cliente de origen. */
+  socioComercialOrigenNombre?: string | null
+  /** Dirección del cliente de origen; null si está en blanco. */
+  socioComercialOrigenDireccion?: string | null
+}
+
+/** Cheque de la lista — matches GET /api/v1/cheques list shape. */
+export type ChequeListDto = components['schemas']['ChequeListDto'] & OrigenDelCheque
+
+/** Página de cheques — GET /api/v1/cheques, con los ítems que traen el cliente de origen. */
+export type ChequeListDtoPaginatedResponse =
+  Omit<components['schemas']['ChequeListDtoPaginatedResponse'], 'items'> & { items?: ChequeListDto[] | null }
+
 // #endregion
 
 // ── Logística ─────────────────────────────────────────────────────────────────

@@ -1,10 +1,10 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/core/api/client'
-import type { components } from '@/libs/api-client/generated/schema'
+import type { ChequeListDto, ChequeListDtoPaginatedResponse } from '@/libs/api-client/types'
 import { cuentasKeys } from '@/features/cuentas/api/queries'
 
-export type ChequeEnCartera = components['schemas']['ChequeListDto']
-type Pagina = components['schemas']['ChequeListDtoPaginatedResponse']
+export type ChequeEnCartera = ChequeListDto
+type Pagina = ChequeListDtoPaginatedResponse
 
 /** Roles que operan la cartera de cheques en el servidor (además de MOD_PAGOS:Update). */
 export const ROLES_CARTERA = ['Administrador', 'AdministradorSistemas', 'Gerencia'] as const

@@ -15,9 +15,10 @@ const get = api.get as jest.Mock
 const post = api.post as jest.Mock
 const ESPERA = { timeout: 5000 }
 jest.setTimeout(15_000)
-const cheque = (id: string, banco: string, numero: string, montoAmount: number) => ({
+const cheque = (id: string, banco: string, numero: string, montoAmount: number, extra: Record<string, unknown> = {}) => ({
   id, banco, numero, montoAmount, titular: 'Graciela Ruiz', tipo: 'Tercero', estado: 'EnCartera',
   fechaEmision: '2026-09-01T03:00:00Z', fechaPago: '2026-10-05T03:00:00Z', activo: true, puedeVerDetalle: true,
+  ...extra,
 })
 const galicia = { id: 'gal', nombre: 'Banco Galicia', saldoActual: 0, esPrincipal: false, activo: true, esCuentaCajaEfectivo: false, esCuentaCarteraCheques: false, puedeVerMovimientos: true }
 
@@ -133,4 +134,60 @@ it('tras depositar, los cheques que fallaron siguen elegidos y los depositados n
   expect(screen.getByRole('checkbox', { name: /^Banco Macro/ }).props.accessibilityState.checked).toBe(true)
   expect(screen.getByRole('checkbox', { name: /^Banco Nación/ }).props.accessibilityState.checked).toBe(false)
   expect(screen.getByRole('button', { name: 'Depositar 1 cheque' })).toBeTruthy()
+})
+
+describe('cliente que entregó el cheque (forward-system #897)', () => {
+  const conCheques = (...items: ReturnType<typeof cheque>[]) =>
+    get.mockImplementation(async (url: string) => {
+      if (url.startsWith('/api/v1/cheques?')) return pagina(items, items.length)
+      if (url.startsWith('/api/v1/cuentas-corrientes/propias')) return [galicia]
+      throw new Error(`sin respuesta para ${url}`)
+    })
+
+  it('con el servidor nuevo, cada cheque muestra el nombre del cliente y, aparte, su dirección', async () => {
+    conCheques(
+      cheque('k1', 'Banco Nación', '00871234', 86400, { socioComercialOrigenNombre: 'Kiosco Chela', socioComercialOrigenDireccion: 'Av. del Valle 89' }),
+      cheque('k2', 'Banco Macro', '12093345', 1, { socioComercialOrigenNombre: 'Panadería Lucero', socioComercialOrigenDireccion: 'Brandsen 3314' }),
+    )
+    renderConQuery(<DepositoCheques />)
+
+    expect(await screen.findByText('De Kiosco Chela', {}, ESPERA)).toBeTruthy()
+    expect(screen.getByText('Av. del Valle 89')).toBeTruthy()
+    expect(screen.getByText('De Panadería Lucero')).toBeTruthy()
+    expect(screen.getByText('Brandsen 3314')).toBeTruthy()
+    // El lector de pantalla también las oye, y no hace falta pedir el cliente cheque por cheque.
+    expect(screen.getByRole('checkbox', { name: /^Banco Nación/ }).props.accessibilityLabel).toMatch(/, de Kiosco Chela, Av\. del Valle 89$/)
+    expect(get.mock.calls.map(([u]) => u).filter((u: string) => !u.startsWith('/api/v1/cheques?') && !u.startsWith('/api/v1/cuentas-corrientes/propias'))).toEqual([])
+  })
+
+  it('si la dirección viene null o en blanco, muestra solo el nombre', async () => {
+    conCheques(
+      cheque('k1', 'Banco Nación', '00871234', 86400, { socioComercialOrigenNombre: 'Kiosco Chela', socioComercialOrigenDireccion: null }),
+      cheque('k2', 'Banco Macro', '12093345', 1, { socioComercialOrigenNombre: 'Panadería Lucero', socioComercialOrigenDireccion: '  ' }),
+    )
+    renderConQuery(<DepositoCheques />)
+
+    expect(await screen.findByText('De Kiosco Chela', {}, ESPERA)).toBeTruthy()
+    expect(screen.getByText('De Panadería Lucero')).toBeTruthy()
+    expect(screen.getByRole('checkbox', { name: /^Banco Nación/ }).props.accessibilityLabel).toMatch(/, de Kiosco Chela$/)
+    expect(screen.getByRole('checkbox', { name: /^Banco Macro/ }).props.accessibilityLabel).toMatch(/, de Panadería Lucero$/)
+    // Nada de «Sin dirección cargada» ni líneas vacías: sin dirección no hay segunda línea.
+    expect(screen.queryByText(/Sin dirección/)).toBeNull()
+    expect(within(screen.getByRole('checkbox', { name: /^Banco Nación/ })).getAllByText(/./)).toHaveLength(4)
+  })
+
+  it('con un servidor anterior (sin los campos) o un cheque sin cliente de origen, la fila queda como hoy', async () => {
+    conCheques(
+      cheque('k1', 'Banco Nación', '00871234', 86400),
+      cheque('k2', 'Banco Macro', '12093345', 1, { socioComercialOrigenNombre: null, socioComercialOrigenDireccion: null }),
+    )
+    renderConQuery(<DepositoCheques />)
+
+    const fila = await screen.findByRole('checkbox', { name: /^Banco Nación/ }, ESPERA)
+    expect(screen.queryByText(/^De /)).toBeNull()
+    // Banco y número, titular con la fecha, e importe: nada más.
+    expect(within(fila).getAllByText(/./)).toHaveLength(3)
+    expect(fila.props.accessibilityLabel).toMatch(/^Banco Nación · N\.º 00871234, .+, (Al día|Pago diferido) · [^,]+$/)
+    expect(within(screen.getByRole('checkbox', { name: /^Banco Macro/ })).getAllByText(/./)).toHaveLength(3)
+  })
 })
