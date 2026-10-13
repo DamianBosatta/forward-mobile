@@ -536,6 +536,42 @@ export type EstadoCuentaDto           = components['schemas']['EstadoCuentaDto']
 }
 export type MovimientoPendienteDto    = components['schemas']['MovimientoPendienteDto']
 
+// Movimientos del socio con las dos cuentas (forward-system #905), tipados a mano hasta regenerar el schema.
+
+/** A qué comprobante se aplicó un crédito: el código de la venta (A00409) o el concepto de la deuda. */
+export interface ImputacionMovimientoDto {
+  comprobante: string
+  monto: number
+}
+
+/** Un asiento del socio en la cuenta TST o en la Normal — GET /cuentas-corrientes/socios/{id}/movimientos. */
+export interface MovimientoSocioDto {
+  id: string
+  fecha: string
+  /** Origen del asiento: Deuda, Pago, NotaCredito, ReversionAnulacion... */
+  tipo: string
+  cuenta: TipoCuentaSocio
+  referencia: string
+  /** Código visible de la venta que originó la deuda; null si no nace de una venta. */
+  comprobante?: string | null
+  debe: number
+  haber: number
+  /** Saldo de ESA cuenta justo después del asiento. */
+  saldoHistorico: number
+  /** Día (AAAA-MM-DD) en que vence una deuda impaga; null si no es una deuda, ya se saldó o no se puede derivar. */
+  vencimiento?: string | null
+  imputadoA: ImputacionMovimientoDto[]
+}
+
+export interface MovimientoSocioDtoPaginatedResponse {
+  page?: number
+  pageSize?: number
+  totalCount?: number
+  totalPages?: number
+  hasNextPage?: boolean
+  items?: MovimientoSocioDto[] | null
+}
+
 // Payload for creating a new cuenta corriente.
 export interface CreateCuentaCorrientePayload {
   nombre: string
