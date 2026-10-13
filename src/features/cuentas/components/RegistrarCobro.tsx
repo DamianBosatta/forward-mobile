@@ -7,9 +7,10 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { diaArgentina } from '@/src/utils/date'
 import { useEstadoCuentaSocio } from '../api/queries'
-import { useCajasAbiertas, useMediosDeCobro, useRegistrarCobro, type CobroRegistrado } from '../api/cobros'
+import { claveDeOtroSocio, useCajasAbiertas, useMediosDeCobro, useRegistrarCobro, type CobroRegistrado } from '../api/cobros'
 import { armarCobro, mostrarFecha, type FormCobro } from '../lib/cobro'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
+import { nuevaClaveIdempotencia } from '@/features/venta-nueva/lib/payload'
 import { CobroListo } from './CobroListo'
 import { ElegirChip } from './ElegirChip'
 
@@ -35,6 +36,12 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
   const medios = useMediosDeCobro()
   const registrar = useRegistrarCobro()
   const [f, setF] = useState<FormCobro>(formVacio)
+  // Una clave por cobro, la misma en cada reintento (tocar de nuevo tras un corte no lo carga dos veces);
+  // «Registrar otro cobro» arranca otra. Un cobro duplicado es peor que perder una edición: se edite lo que se
+  // edite del formulario (monto, medio, cheque, referencia) la clave NO cambia, y si el cobro anterior sí se había
+  // grabado el servidor lo dice con un 409 y lo nuevo no se guarda. Solo se cambia si el servidor dice que la
+  // clave era de otro socio.
+  const [clave, setClave] = useState(nuevaClaveIdempotencia)
   const cajas = useCajasAbiertas(f.requiereCaja)
   const [aviso, setAviso] = useState<string | null>(null)
   const [cobro, setCobro] = useState<CobroRegistrado | null>(null)
@@ -54,7 +61,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
         monto={monto ?? 0}
         medio={medio?.nombre ?? ''}
         onVolver={onVolver}
-        onOtro={() => { setCobro(null); setF(formVacio()); registrar.reset() }}
+        onOtro={() => { setCobro(null); setF(formVacio()); setClave(nuevaClaveIdempotencia()); registrar.reset() }}
       />
     )
   }
@@ -71,10 +78,13 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
     const abiertas = cajas.data ?? []
     const depositoId = f.depositoId ?? (abiertas.length === 1 ? abiertas[0].depositoId : null)
     if (f.requiereCaja && abiertas.length > 1 && !depositoId) return setAviso('Elegí en qué caja entra el efectivo.')
-    const r = armarCobro(socioId, { ...f, depositoId })
+    const r = armarCobro(socioId, { ...f, depositoId }, clave)
     if ('error' in r) return setAviso(r.error)
     setAviso(null)
-    registrar.mutate(r.payload, { onSuccess: setCobro })
+    registrar.mutate(r.payload, {
+      onSuccess: setCobro,
+      onError: e => { if (claveDeOtroSocio(e)) setClave(nuevaClaveIdempotencia()) },
+    })
   }
 
   return (

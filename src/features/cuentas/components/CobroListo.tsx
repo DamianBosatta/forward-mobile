@@ -8,6 +8,9 @@ import { useEstadoCuentaSocio } from '../api/queries'
 import { useCuentaDelPago, type CobroRegistrado } from '../api/cobros'
 
 export const SIN_CUENTA_CONFIRMADA = 'No se pudo confirmar en qué cuenta quedó: fijate en los movimientos de la cuenta corriente.'
+export const COBRO_YA_ESTABA = 'Este cobro ya estaba registrado: no se cargó de nuevo.'
+export const COBRO_CON_LO_DE_ANTES =
+  'Este cobro ya se había registrado con los datos de antes. Los datos nuevos que cargaste NO se guardaron. Revisá el cobro que quedó registrado: si tenía que ser distinto, pedí que lo anulen y registrá uno nuevo.'
 
 interface Props {
   cliente: SocioDetailDto
@@ -21,16 +24,21 @@ interface Props {
 /** Cobro registrado (lámina CobroListo): en qué cuenta quedó según el servidor y el saldo nuevo. */
 export function CobroListo({ cliente, cobro, monto, medio, onVolver, onOtro }: Props) {
   const c = useColors()
-  const { cuenta, buscando } = useCuentaDelPago(cobro, cliente)
+  // Un cobro anulado ya no está en ninguna cuenta: no se busca dónde quedó.
+  const { cuenta, buscando } = useCuentaDelPago(cobro.anulado ? { ...cobro, pagoId: null } : cobro, cliente)
   const estado = useEstadoCuentaSocio(cliente.id, !!cliente.puedeVerCuentaCorriente)
 
   return (
     <ScrollView contentContainerStyle={{ padding: space[4] }}>
       <FormContainer style={{ gap: space[4] }}>
-        <Notice tone="exito" title="Cobro registrado">{`${direccionDeEntrega(cliente)} · ${nombreDelCliente(cliente)}`}</Notice>
-        <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[2] }}>
-          <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(monto)}</Text>
-          {medio ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{medio}</Text> : null}
+        <Notice tone={cobro.anulado ? 'advertencia' : 'exito'} title={cobro.anulado ? 'Cobro anulado' : cobro.conLoDeAntes ? 'Cobro ya registrado' : 'Cobro registrado'}>{`${direccionDeEntrega(cliente)} · ${nombreDelCliente(cliente)}`}</Notice>
+        {cobro.yaEstaba ? <Notice tone="info">{COBRO_YA_ESTABA}</Notice> : null}
+        {cobro.conLoDeAntes ? <Notice tone="advertencia">{COBRO_CON_LO_DE_ANTES}</Notice> : null}
+        {cobro.anulado ? <Notice tone="advertencia">{cobro.aviso ?? "Este cobro se registró con esta clave y después se anuló."}</Notice> : null}
+        {cobro.anulado ? null : <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[2] }}>
+          {/* El monto y el medio del formulario no son los del cobro que quedó grabado con lo de antes. */}
+          {cobro.conLoDeAntes ? null : <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(monto)}</Text>}
+          {medio && !cobro.conLoDeAntes ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{medio}</Text> : null}
           {buscando ? <ActivityIndicator color={c.brandInk} /> : null}
           {cuenta ? (
             <>
@@ -43,7 +51,7 @@ export function CobroListo({ cliente, cobro, monto, medio, onVolver, onOtro }: P
             </>
           ) : null}
           {!buscando && !cuenta ? <Notice tone="advertencia">{SIN_CUENTA_CONFIRMADA}</Notice> : null}
-        </View>
+        </View>}
 
         {estado.data ? (
           <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[2] }}>

@@ -743,3 +743,16 @@ export type HojaDeRuta = HojaRutaDetalleDto
 
 // Backward-compatible alias for screens using ParadaHojaRuta.
 export type ParadaHojaRuta = ParadaDto
+// #region Cobros
+// Clave de idempotencia de los comandos de cobro (forward-system #906), tipada a mano hasta regenerar
+// el schema: opcional porque un servidor anterior la ignora. Una por cobro, la misma en cada reintento.
+interface ConClaveDeIdempotencia {
+  claveIdempotencia?: string
+}
+
+/** `POST /Pagos` y `POST /Finanzas/pagos`. */
+export type RegistrarPagoCommand = components['schemas']['RegistrarPagoCommand'] & ConClaveDeIdempotencia
+
+/** `POST /Finanzas/pagos/multilinea`. */
+export type RegistrarPagoMultilineaCommand = components['schemas']['RegistrarPagoMultilineaCommand'] & ConClaveDeIdempotencia
+// #endregion
