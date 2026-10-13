@@ -4,8 +4,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { FileText } from 'lucide-react-native'
 import { RequirePermission } from '@/core/ui'
-import { BottomSheet, Button, Notice, TopBar, useMenuLeading, type TopBarAction } from '@/core/ui/fw'
-import { radii, space, typeScale, useColors, useIsDark } from '@/libs/theme'
+import { BottomSheet, Button, Notice, formatImporte, TopBar, useMenuLeading, type TopBarAction } from '@/core/ui/fw'
+import { importe, radii, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { useFinalizarHojaRuta, useHojaRuta, useHojasDeRuta, useIniciarHojaRuta, useReportarParada } from '@/libs/api-client'
 import { getManifiestoUrl, logisticaKeys } from '@/libs/api-client/logistica'
 import { getNotaEntregaUrl } from '@/libs/api-client/ventas'
@@ -234,9 +234,18 @@ export default function ConsolaChoferScreen() {
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Hoja de ruta" subtitle={subtitulo || undefined} leading={leading} actions={acciones} />
         <View style={{ backgroundColor: c.topBar, paddingHorizontal: space[4], paddingBottom: space[4], gap: space[2] }}>
-          <Text style={{ ...typeScale.cuerpoDestacado, color: c.onTopBarStrong }}>
-            {`${resumen.hechas} de ${resumen.total} paradas`}
-          </Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
+            <Text style={{ ...typeScale.cuerpoDestacado, color: c.onTopBarStrong }}>
+              {`${resumen.hechas} de ${resumen.total} paradas`}
+            </Text>
+            {/* Lo calcula el servidor; un servidor anterior no lo manda y no se muestra. */}
+            {viaje.totalMontoCobrar != null ? (
+              <Text style={{ ...typeScale.secundario, color: c.onTopBarStrong }}>
+                {'A cobrar hoy '}
+                <Text style={{ ...importe, fontWeight: '600' }}>{formatImporte(viaje.totalMontoCobrar)}</Text>
+              </Text>
+            ) : null}
+          </View>
           <View
             accessibilityRole="progressbar"
             accessibilityLabel="Paradas reportadas"

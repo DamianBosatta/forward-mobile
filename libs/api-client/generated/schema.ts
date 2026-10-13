@@ -17520,6 +17520,8 @@ export interface components {
             distanciaTotalMetros: number;
             rutaCalculada: boolean;
             detalles: components["schemas"]["ParadaDto"][];
+            /** Format: double */
+            totalMontoCobrar?: number | null;
         };
         HojaRutaListItemDto: {
             /** Format: uuid */
@@ -18199,6 +18201,12 @@ export interface components {
             montoTotal: number;
             motivoRechazo?: string | null;
             evidenciaUrl?: string | null;
+            tipoCobro?: components["schemas"]["TipoCobroParada"];
+            /** Format: double */
+            montoCobrar?: number | null;
+            /** Format: int32 */
+            numeroNotaEntrega?: number | null;
+            nombreContacto?: string | null;
         };
         ParadaRequest: {
             /** Format: uuid */
@@ -19552,6 +19560,8 @@ export interface components {
         TipoCheque: "Propio" | "Tercero";
         /** @enum {string} */
         TipoComprobanteEmitido: "FacturaA" | "NotaDebitoA" | "NotaCreditoA" | "FacturaB" | "NotaDebitoB" | "NotaCreditoB" | "FacturaC" | "NotaDebitoC" | "NotaCreditoC";
+        /** @enum {string} */
+        TipoCobroParada: "Contado" | "Saldo" | "Pagado" | "CuentaCorriente";
         /** @enum {string} */
         TipoComprobanteRecibido: "Factura" | "NotaCredito" | "NotaDebito" | "Recibo" | "Ticket" | "Otro";
         /** @enum {string} */
