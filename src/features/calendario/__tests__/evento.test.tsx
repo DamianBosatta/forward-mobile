@@ -93,7 +93,7 @@ describe('Detalle de un evento del calendario', () => {
     await userEvent.press(screen.getByLabelText('Borrar evento'))
     await userEvent.press(screen.getByLabelText('Sí, borrar'))
     expect(mockDelete).toHaveBeenCalledWith(`/api/v1/Calendario/eventos/${ID}`)
-    await waitFor(() => expect(screen.queryByLabelText('Sí, borrar')).toBeNull())
+    await waitFor(() => expect(screen.queryByLabelText('Sí, borrar') === null).toBe(true))
   })
 
   it('marca pagada la ocurrencia por su fecha ORIGINAL, aunque se haya movido de día', async () => {
@@ -138,11 +138,11 @@ describe('Detalle de un evento del calendario', () => {
     const qc = await abrir('Rendir la caja, Pendiente')
     await userEvent.press(await screen.findByLabelText('Borrar evento'))
     await userEvent.press(screen.getByLabelText('Sí, borrar'))
-    await waitFor(() => expect(screen.queryByLabelText('Sí, borrar')).toBeNull())
+    await waitFor(() => expect(screen.queryByLabelText('Sí, borrar') === null).toBe(true))
     expect(screen.queryByText('No se pudo cargar el evento.')).toBeNull()
     expect(urlsDelDetalle()).toHaveLength(1)
     // La tarjeta se va sin esperar el refetch: no se puede volver a abrir un evento que ya no existe.
-    await waitFor(() => expect(screen.queryByLabelText('Rendir la caja, Pendiente')).toBeNull())
+    await waitFor(() => expect(screen.queryByLabelText('Rendir la caja, Pendiente') === null).toBe(true))
     expect(screen.getByLabelText('Cheque de Del Sur, Vencido')).toBeTruthy()
     await waitFor(() => expect(qc.getQueryCache().find({ queryKey: calendarioKeys.evento(ID), exact: true })).toBeUndefined())
   })

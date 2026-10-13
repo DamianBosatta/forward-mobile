@@ -1,5 +1,9 @@
 import '@testing-library/jest-native/extend-expect'
 import * as Haptics from 'expo-haptics'
+import { configure } from '@testing-library/react-native'
+
+// findBy*/waitFor esperan 1 s por defecto: con la máquina cargada una pantalla tarda más en pintar.
+configure({ asyncUtilTimeout: 4000 })
 
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () =>

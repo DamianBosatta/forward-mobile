@@ -263,7 +263,7 @@ describe('detalle de compra', () => {
       mockGet.mockResolvedValue(compra({ estado: 'Cancelado' }))
       await enviar()
       expect(await screen.findByText('La compra no está en nota de pedido.')).toBeTruthy()
-      await waitFor(() => expect(screen.queryByLabelText('Confirmar y recibir la compra')).toBeNull())
+      await waitFor(() => expect(screen.queryByLabelText('Confirmar y recibir la compra') === null).toBe(true))
     })
 
     describe('al llegar desde la compra nueva', () => {

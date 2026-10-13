@@ -178,7 +178,7 @@ describe('tablet: el filtro que llega de Inicio cierra el detalle que ya no est√
 
     mockParams = { estado: 'NotaPedido' }
     rerender()
-    await waitFor(() => expect(screen.queryByText('detalle c2')).toBeNull(), { timeout: 5000 })
+    await waitFor(() => expect(screen.queryByText('detalle c2') === null).toBe(true), { timeout: 5000 })
     expect(screen.queryByText('Insumos del Sur')).toBeNull()
 
     await userEvent.press(screen.getByText('Gorri√≥n Mayorista'))
@@ -202,7 +202,7 @@ describe('tablet: el filtro que llega de Inicio cierra el detalle que ya no est√
 
     mockParams = { tipo: 'pedidos', estado: 'Confirmada' }
     rerender()
-    await waitFor(() => expect(screen.queryByText('detalle v2')).toBeNull(), { timeout: 5000 })
+    await waitFor(() => expect(screen.queryByText('detalle v2') === null).toBe(true), { timeout: 5000 })
     expect(screen.getByText('Almac√©n Luis')).toBeTruthy()
   })
 })

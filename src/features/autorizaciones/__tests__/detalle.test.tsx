@@ -342,7 +342,7 @@ describe('Autorizar venta: el detalle', () => {
         expect(await screen.findByText('Autorizar A00428')).toBeTruthy()
         expect(screen.getByText(/Falta stock/)).toBeTruthy()
         await botonesUsables()
-        await waitFor(() => expect(screen.queryByTestId('bloque-cliente')).toBeNull())
+        await waitFor(() => expect(screen.queryByTestId('bloque-cliente') === null).toBe(true))
         expect(screen.queryByText(mensaje)).toBeNull()
       },
     )
