@@ -135,10 +135,3 @@ export function useToggleActivo() {
     },
   })
 }
-
-export function useResetPassword() {
-  return useMutation({
-    mutationFn: (userId: string) =>
-      api.post<void>(`/api/v1/Users/${userId}/reset-password`, {}),
-  })
-}

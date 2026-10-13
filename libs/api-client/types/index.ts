@@ -581,21 +581,6 @@ export interface CreateCuentaCorrientePayload {
 
 // #endregion
 
-// #region Reportes
-// ── Reportes ─────────────────────────────────────────────────────────────────
-
-export interface ReporteDiario {
-  fecha: string
-  totalVentas: number
-  cantidadVentas: number
-  totalCobranzas: number
-  totalPagosProveedor: number
-  totalGastos: number
-  resultadoNeto: number
-}
-
-// #endregion
-
 // #region Usuarios y Permisos
 // ── Usuarios y Permisos ───────────────────────────────────────────────────────
 // Types derived from the generated OpenAPI schema — do not hand-edit these aliases.
