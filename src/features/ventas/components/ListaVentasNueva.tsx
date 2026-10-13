@@ -7,12 +7,13 @@ import {
   DocumentCard, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, useMenuLeading,
   type SegmentedOption,
 } from '@/core/ui/fw'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import type { Venta } from '@/libs/api-client'
 import type { BorradorVenta } from '@/libs/api-client/ventas'
 import type { FiltroVentasRuta } from '@/features/listas/lib/filtroDeRuta'
 import { agruparPorDia, entregaDe, horaDe, tituloDelDia } from '../lib/agruparPorDia'
+import { identidadDeBorrador } from '../lib/borradorCliente'
 import { motivosDe } from '@/features/autorizaciones/lib/motivos'
 import { useVentasListaNueva, type FiltroEstado, type PeriodoVentas, type PestanaVentas } from '../hooks/useVentasListaNueva'
 
@@ -85,7 +86,7 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
   // El borrador es siempre un presupuesto en el servidor: al retomarlo se elige qué va a ser.
   const retomar = (b: BorradorVenta) => {
     const ir = (tipo: 'Pedido' | 'Presupuesto') => router.push(`/(tabs)/ventas/nueva-v2?borrador=${b.id}&tipo=${tipo}` as never)
-    Alert.alert('Retomar borrador', b.clienteNombre, [
+    Alert.alert('Retomar borrador', identidadDeBorrador(b).titulo, [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Como presupuesto', onPress: () => ir('Presupuesto') },
       { text: 'Como pedido', onPress: () => ir('Pedido') },
@@ -161,13 +162,24 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
       keyExtractor={(b) => b.id}
       contentContainerStyle={{ padding: space[4], gap: space[3] }}
       ListHeaderComponent={<Notice tone="info">Los borradores se guardan solos y se descartan a las 48 h sin cambios. Tocá uno para seguirlo.</Notice>}
-      renderItem={({ item: b }) => (
-        <Pressable accessibilityRole="button" accessibilityHint="Retomar el borrador" onPress={() => retomar(b)}
-          style={{ minHeight: 48, padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[1] }}>
-          <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{b.clienteNombre}</Text>
-          <Text style={secundario}>{`${b.cantidadLineas} ${b.cantidadLineas === 1 ? 'línea' : 'líneas'} · Guardado ${tituloDelDia(new Date(b.fechaModificacion)).toLowerCase()} ${horaDe(b.fechaModificacion)}`}</Text>
-        </Pressable>
-      )}
+      renderItem={({ item: b }) => {
+        const { titulo, subtitulo, total } = identidadDeBorrador(b)
+        const guardado = <Text style={secundario}>{`${b.cantidadLineas} ${b.cantidadLineas === 1 ? 'línea' : 'líneas'} · Guardado ${tituloDelDia(new Date(b.fechaModificacion)).toLowerCase()} ${horaDe(b.fechaModificacion)}`}</Text>
+        return (
+          <Pressable accessibilityRole="button" accessibilityHint="Retomar el borrador" onPress={() => retomar(b)}
+            style={{ minHeight: 48, padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[1] }}>
+            <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{titulo}</Text>
+            {subtitulo ? <Text style={[typeScale.secundario, { color: c.text }]}>{subtitulo}</Text> : null}
+            {/* Sin importe (servidor anterior a forward-system #898) la fila queda como siempre: solo el texto. */}
+            {total === null ? guardado : (
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
+                {guardado}
+                <Text style={[typeScale.titulo, cifras, { color: c.text, textAlign: 'right' }]}>{total}</Text>
+              </View>
+            )}
+          </Pressable>
+        )
+      }}
       ListEmptyComponent={
         l.borradoresQuery.isLoading ? <ActivityIndicator color={c.brand} />
           : l.borradoresQuery.isError ? <Notice tone="peligro">No se pudieron cargar los borradores.</Notice>

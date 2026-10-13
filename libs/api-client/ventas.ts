@@ -16,8 +16,16 @@ import type {
 } from './types'
 import type { components } from './generated/schema'
 
-/** `tipoOperacion` llegó con forward-system #883 (enum por nombre): un servidor anterior no lo manda. */
-export type BorradorVenta = components['schemas']['BorradorVentaDto'] & { tipoOperacion?: 'Pedido' | 'Presupuesto' }
+/**
+ * `tipoOperacion` llegó con forward-system #883 (enum por nombre); `clienteDireccion` (null si el cliente no
+ * tiene), `totalAmount` y `totalCurrency` con forward-system #898: un servidor anterior no los manda.
+ */
+export type BorradorVenta = components['schemas']['BorradorVentaDto'] & {
+  tipoOperacion?: 'Pedido' | 'Presupuesto'
+  clienteDireccion?: string | null
+  totalAmount?: number
+  totalCurrency?: string
+}
 /** Número, cliente por partes y `version` (xmin) llegaron con forward-system #884: un servidor anterior no los manda. */
 export type VentaPendienteAutorizacion = components['schemas']['VentaPendienteAutorizacionDto'] & {
   numeroPedido?: number | null
