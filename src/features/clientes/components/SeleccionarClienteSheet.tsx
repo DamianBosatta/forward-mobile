@@ -2,14 +2,14 @@ import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native'
 import { Plus, Search } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
-import { fetchSocio, sociosKeys } from '@/libs/api-client/socios'
+import { fetchSocio, sociosKeys, useClientesRecientes } from '@/libs/api-client/socios'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Notice, Segmented, StatusChip } from '@/core/ui/fw'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useCartera } from '../hooks/useCartera'
 import { direccionDeEntrega, inicialesDeDireccion, nombreDelCliente } from '../lib/cliente'
-import { aElegido, guardarReciente, leerRecientes, quitarReciente, type ClienteElegido } from '../lib/recientes'
+import { aElegido, fusionarRecientes, guardarReciente, leerRecientes, quitarReciente, type ClienteElegido } from '../lib/recientes'
 
 export type TipoDocumento = 'Presupuesto' | 'Pedido'
 
@@ -69,6 +69,8 @@ function Titulo({ children }: { children: string }) {
 /**
  * Hoja "¿A quién le vendés?" (láminas Cliente y TabCliente): tipo de documento, búsqueda en el
  * servidor sobre la cartera, recientes de este usuario y alta. Devuelve el cliente y el tipo.
+ * Los recientes son los del servidor (viajan entre dispositivos) mezclados con los del teléfono;
+ * si el servidor no los da, quedan solo los del teléfono.
  */
 export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCliente, tipoInicial = 'Pedido' }: SeleccionarClienteSheetProps) {
   const c = useColors()
@@ -82,12 +84,16 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
   // Los recientes se leen una vez por apertura, no en cada render.
   const [guardados, setGuardados] = useState(() => leerRecientes(usuarioId))
   const [aviso, setAviso] = useState<string | null>(null)
+  // Ids que el servidor negó o dio de baja al elegirlos: no vuelven a salir de la lista del servidor.
+  const [noDisponibles, setNoDisponibles] = useState<string[]>([])
+  const delServidor = useClientesRecientes(visible)
   useEffect(() => {
     if (!visible) return
     setGuardados(leerRecientes(usuarioId))
+    setNoDisponibles([])
     setAviso(null)
   }, [visible, usuarioId])
-  const recientes = buscando ? [] : guardados
+  const recientes = buscando ? [] : fusionarRecientes(delServidor.data, guardados, noDisponibles)
   // Lo informa el servidor por cliente (redactado como el saldo); los recientes no lo guardan.
   const avisoVencida = tipo === 'Pedido'
     ? avisoDeudaVencida(clientes.filter(x => x.tieneDeudaVencida === true).map(direccionDeEntrega))
@@ -113,6 +119,7 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
       if (e instanceof ClienteNoDisponible || [403, 404].includes((e as { status?: number })?.status ?? 0)) {
         quitarReciente(usuarioId, reciente.id)
         setGuardados(leerRecientes(usuarioId))
+        setNoDisponibles(ids => [...ids, reciente.id])
         setAviso('Ese cliente ya no está disponible en tu cartera.')
       } else {
         setAviso('No se pudo verificar el cliente. Probá de nuevo.')
