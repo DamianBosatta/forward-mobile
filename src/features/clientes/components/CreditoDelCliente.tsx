@@ -6,10 +6,12 @@ import type { EstadoCuentaDto } from '@/libs/api-client/types'
 
 export const AVISO_DEUDA_VENCIDA = 'Tiene deuda vencida de más de 30 días: los pedidos nuevos van a quedar por autorizar.'
 
-/** Los datos de crédito que usa la tarjeta: los trae el estado de cuenta y, armados a mano, la ficha del socio. */
-export type DatosDeCredito = Pick<
-  EstadoCuentaDto,
-  'tieneDeudaVencida' | 'deudaVencida' | 'deudaVencidaTst' | 'deudaVencidaNormal' | 'creditoDisponible'
+/**
+ * Los datos de crédito que usa la tarjeta: los trae el estado de cuenta y, armados a mano, la ficha del socio.
+ * Opcionales: un servidor anterior a forward-system #882 no los manda, y la tarjeta ya lo contempla.
+ */
+export type DatosDeCredito = Partial<
+  Pick<EstadoCuentaDto, 'tieneDeudaVencida' | 'deudaVencida' | 'deudaVencidaTst' | 'deudaVencidaNormal' | 'creditoDisponible'>
 >
 
 export function Fila({ etiqueta, valor, alerta = false }: { etiqueta: string; valor: string; alerta?: boolean }) {
