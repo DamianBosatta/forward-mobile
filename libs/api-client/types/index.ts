@@ -208,6 +208,37 @@ export type Venta = components['schemas']['VentaDtoList'] & {
 export type VentaDetalleDto = Omit<components['schemas']['VentaDetalleDto'], 'venta' | 'detalles'> & {
   venta: VentaHeaderDto
   detalles: VentaDetalleItemDto[]
+  /**
+   * Por qué espera autorización, motivo por motivo (forward-system #907). Solo viene para quien puede autorizar y
+   * con la venta pendiente; un servidor anterior (o cualquier otro caso) no lo manda y queda el número de banderas.
+   */
+  detalleMotivos?: MotivoAutorizacionDetalle[] | null
+}
+
+/**
+ * Un motivo de autorización con los números que lo justifican (forward-system #907). `motivo` es el nombre del enum
+ * del servidor (`SuperaTopeCredito`, `DescuentoExcedeTope`…); un motivo puede venir en varios ítems (uno por línea).
+ * Los números son opcionales: si el servidor no pudo reproducirlos con los datos de hoy, viene solo el `texto`.
+ */
+export interface MotivoAutorizacionDetalle {
+  motivo: string
+  texto: string
+  productoNombre?: string | null
+  topeCredito?: number | null
+  saldoDeudor?: number | null
+  comprometido?: number | null
+  montoVenta?: number | null
+  montoVencido?: number | null
+  porcentajeDescuento?: number | null
+  topeDescuento?: number | null
+  precioEfectivo?: number | null
+  /** Solo con CAP_VER_COSTOS (sale del costo actual): sin ella viene null y el `texto` no lo trae. */
+  precioMinimo?: number | null
+  /** Solo con CAP_VER_COSTOS. */
+  aporteOverhead?: number | null
+  cantidadFaltante?: number | null
+  porcentajeComisionCedido?: number | null
+  porcentajeComisionConfigurado?: number | null
 }
 
 /** Venta header — nested inside VentaDetalleDto. `motivoAnulacion` llegó con #884: opcional. */
