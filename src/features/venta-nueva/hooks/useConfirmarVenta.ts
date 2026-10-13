@@ -29,6 +29,15 @@ interface Datos {
 const pideMotivo = (e: unknown) => /justificaci[oó]n/i.test(mensajeDelServidor(e, ''))
 /** El servidor devolvió la venta que ya existía con esa clave (CreateVentaCommandHandler, operación repetida). */
 const yaExistia = (r: VentaActionResponseDto) => /ya hab[ií]a sido creada/i.test(r.message ?? '')
+/**
+ * Estado y motivos que el servidor nuevo manda en la respuesta del alta (forward-system #916), leídos de la venta
+ * grabada. Sin `estado` es el servidor viejo; un pedido por autorizar sin sus motivos tampoco alcanza: se lee la venta.
+ */
+const resultadoDelAlta = (r: VentaActionResponseDto) => {
+  if (typeof r.estado !== 'number') return null
+  if (r.estado === ESTADO_PENDIENTE_AUTORIZACION && typeof r.motivoPendienteAutorizacion !== 'number') return null
+  return { estado: r.estado, motivos: r.motivoPendienteAutorizacion }
+}
 /** La clave ya grabó otro pedido: 409 con la venta que quedó en `data` (forward-system #867, CreateVentaCommandHandler). */
 const ventaConOtroCuerpo = (e: unknown): VentaActionResponseDto | null => {
   if (!(e instanceof ApiError) || e.status !== 409 || e.codigo !== 'ClaveIdempotenciaConOtroCuerpo') return null
@@ -107,9 +116,13 @@ export function useConfirmarVenta(d: Datos) {
     // Reintento idéntico: el texto del servidor («…clave de idempotencia (operación repetida)») es técnico.
     let mensaje = yaExistia(r) ? 'El pedido ya estaba grabado.' : r.message
     if (d.esPedido) {
-      const detalle = await api.get<VentaDetalleDto>(`/api/v1/Ventas/${r.ventaId}`).catch(() => null)
-      const motivos = motivosAutorizacion(detalle?.venta.motivoPendienteAutorizacion)
-      if (detalle?.venta.estado === ESTADO_PENDIENTE_AUTORIZACION && motivos.length) {
+      // Servidor nuevo: el alta ya dice cómo quedó. Viejo (o editar): se lee la venta, como antes.
+      const resultado = resultadoDelAlta(r)
+        ?? await api.get<VentaDetalleDto>(`/api/v1/Ventas/${r.ventaId}`)
+          .then((detalle) => ({ estado: detalle.venta.estado, motivos: detalle.venta.motivoPendienteAutorizacion }))
+          .catch(() => null)
+      const motivos = motivosAutorizacion(resultado?.motivos)
+      if (resultado?.estado === ESTADO_PENDIENTE_AUTORIZACION && motivos.length) {
         mensaje = `Quedó por autorizar porque ${motivos.join(', ')}. Te avisamos cuando lo resuelvan.`
       }
     }
