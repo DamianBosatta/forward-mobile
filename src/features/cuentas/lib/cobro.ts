@@ -1,3 +1,4 @@
+import type { components } from '@/libs/api-client/generated/schema'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
 
 /** "7/10/2026" o "07/10/2026" → "2026-10-07" (día argentino, como lo interpreta el servidor). */
@@ -45,17 +46,26 @@ export interface CobroPayload {
   referencia?: string
   /** Depósito de la caja que recibe el efectivo; con 2+ cajas abiertas el servidor no lo adivina (#699). */
   depositoId?: string
+  /**
+   * Clave de idempotencia del cobro (forward-system, `RegistrarPagoMultilineaCommand.claveIdempotencia`): una
+   * por cobro, la misma en cada reintento. Un servidor anterior la ignora.
+   */
+  claveIdempotencia?: components['schemas']['RegistrarPagoMultilineaCommand']['claveIdempotencia']
   lineas: { medioPagoId: string; monto: number; chequesRecibidos?: ChequeRecibido[] }[]
 }
 
-/** Lo mínimo para no mandar algo que el servidor va a rechazar seguro; el resto lo valida él. */
-export function armarCobro(socioId: string, f: FormCobro): { payload: CobroPayload } | { error: string } {
+/**
+ * Lo mínimo para no mandar algo que el servidor va a rechazar seguro; el resto lo valida él. Con
+ * `claveIdempotencia`, el cuerpo la lleva: la misma clave en cada reintento del mismo cobro.
+ */
+export function armarCobro(socioId: string, f: FormCobro, claveIdempotencia?: string): { payload: CobroPayload } | { error: string } {
   const monto = leerNumero(f.monto)
   if (monto === null || monto <= 0) return { error: 'Ingresá el monto del cobro.' }
   if (!f.medioPagoId) return { error: 'Elegí el medio de pago.' }
   const referencia = f.referencia.trim() || undefined
   const caja = f.requiereCaja && f.depositoId ? { depositoId: f.depositoId } : {}
-  if (!f.esCheque) return { payload: { socioComercialId: socioId, referencia, ...caja, lineas: [{ medioPagoId: f.medioPagoId, monto }] } }
+  const clave = claveIdempotencia ? { claveIdempotencia } : {}
+  if (!f.esCheque) return { payload: { socioComercialId: socioId, referencia, ...caja, ...clave, lineas: [{ medioPagoId: f.medioPagoId, monto }] } }
 
   const { numero, banco, titular } = f.cheque
   if (!numero.trim() || !banco.trim() || !titular.trim()) return { error: 'Completá número, banco y titular del cheque.' }
@@ -63,5 +73,5 @@ export function armarCobro(socioId: string, f: FormCobro): { payload: CobroPaylo
   const fechaPago = leerFecha(f.cheque.pago)
   if (!fechaEmision || !fechaPago) return { error: 'Las fechas del cheque van como dd/mm/aaaa.' }
   const cheque = { numero: numero.trim(), banco: banco.trim(), titular: titular.trim(), fechaEmision, fechaPago, monto }
-  return { payload: { socioComercialId: socioId, referencia, ...caja, lineas: [{ medioPagoId: f.medioPagoId, monto, chequesRecibidos: [cheque] }] } }
+  return { payload: { socioComercialId: socioId, referencia, ...caja, ...clave, lineas: [{ medioPagoId: f.medioPagoId, monto, chequesRecibidos: [cheque] }] } }
 }

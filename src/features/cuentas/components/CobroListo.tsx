@@ -8,6 +8,9 @@ import { useEstadoCuentaSocio } from '../api/queries'
 import { useCuentaDelPago, type CobroRegistrado } from '../api/cobros'
 
 export const SIN_CUENTA_CONFIRMADA = 'No se pudo confirmar en qué cuenta quedó: fijate en los movimientos de la cuenta corriente.'
+export const COBRO_YA_ESTABA = 'Este cobro ya estaba registrado: no se cargó de nuevo.'
+export const COBRO_CON_LO_DE_ANTES =
+  'Este cobro ya se había registrado antes con otros datos. No se cargó uno nuevo: revisá el que quedó grabado y, si hace falta, registrá otro.'
 
 interface Props {
   cliente: SocioDetailDto
@@ -27,10 +30,13 @@ export function CobroListo({ cliente, cobro, monto, medio, onVolver, onOtro }: P
   return (
     <ScrollView contentContainerStyle={{ padding: space[4] }}>
       <FormContainer style={{ gap: space[4] }}>
-        <Notice tone="exito" title="Cobro registrado">{`${direccionDeEntrega(cliente)} · ${nombreDelCliente(cliente)}`}</Notice>
+        <Notice tone="exito" title={cobro.conLoDeAntes ? 'Cobro ya registrado' : 'Cobro registrado'}>{`${direccionDeEntrega(cliente)} · ${nombreDelCliente(cliente)}`}</Notice>
+        {cobro.yaEstaba ? <Notice tone="info">{COBRO_YA_ESTABA}</Notice> : null}
+        {cobro.conLoDeAntes ? <Notice tone="advertencia">{COBRO_CON_LO_DE_ANTES}</Notice> : null}
         <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[2] }}>
-          <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(monto)}</Text>
-          {medio ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{medio}</Text> : null}
+          {/* El monto y el medio del formulario no son los del cobro que quedó grabado con lo de antes. */}
+          {cobro.conLoDeAntes ? null : <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(monto)}</Text>}
+          {medio && !cobro.conLoDeAntes ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{medio}</Text> : null}
           {buscando ? <ActivityIndicator color={c.brandInk} /> : null}
           {cuenta ? (
             <>
