@@ -142,7 +142,10 @@ function Fila({ n, ultima, onPress }: { n: ParadaNumerada; ultima: boolean; onPr
             ? `${parada.clienteNombre} · ${parada.motivoRechazo}`
             : parada.clienteNombre}
         </Text>
-        {leyendaSinCobro(parada) && parada.estado === EstadoParada.Pendiente ? (
+        {/* Las ya reportadas (Hechas) muestran el total del pedido como antes: no hay nada que cobrar. */}
+        {parada.estado !== EstadoParada.Pendiente ? (
+          <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(parada.montoTotal)}</Text>
+        ) : leyendaSinCobro(parada) ? (
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
             {[etiquetaNota(parada), leyendaSinCobro(parada)].filter(Boolean).join(' · ')}
           </Text>

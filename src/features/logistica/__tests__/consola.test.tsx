@@ -310,10 +310,10 @@ describe('Consola del chofer: hoja de ruta', () => {
 describe('Consola del chofer: qué cobrar (fila 70)', () => {
   const conCobro = {
     ...HOJA,
-    totalMontoCobrar: 160000,
+    totalMontoCobrar: 130000,
     detalles: [
       parada({ id: 'p4', orden: 4, direccion: 'Juan B. Justo 6376', clienteNombre: 'Carlos', montoTotal: 214560, cantidadBultos: 3, tipoCobro: 'Contado', montoCobrar: 100000, numeroNotaEntrega: 16918 }),
-      parada({ id: 'p5', orden: 5, direccion: 'Av. del Valle 89', clienteNombre: 'Chela', montoTotal: 59566.01, tipoCobro: 'Saldo', montoCobrar: 60000, numeroNotaEntrega: 16916 }),
+      parada({ id: 'p5', orden: 5, direccion: 'Av. del Valle 89', clienteNombre: 'Chela', montoTotal: 59566.01, tipoCobro: 'Saldo', montoCobrar: 30000, numeroNotaEntrega: 16916 }),
       parada({ id: 'p6', orden: 6, direccion: 'Luis Balcarce 312', clienteNombre: 'Almacén Luis', montoTotal: 1000, tipoCobro: 'Pagado', montoCobrar: 0, numeroNotaEntrega: 16915 }),
       parada({ id: 'p7', orden: 7, direccion: 'Tarantino 1898', clienteNombre: 'Abel', montoTotal: 5000, tipoCobro: 'CuentaCorriente', montoCobrar: 5000, numeroNotaEntrega: 16914 }),
     ],
@@ -328,7 +328,7 @@ describe('Consola del chofer: qué cobrar (fila 70)', () => {
     expect(within(proxima).getByText('$ 100.000,00')).toBeTruthy()
     expect(within(proxima).queryByText('Total del pedido')).toBeNull()
     expect(within(proxima).getByText('Parada 1 · NTE16918 · 3 bultos')).toBeTruthy()
-    expect(screen.getByText('$ 160.000,00')).toBeTruthy()
+    expect(screen.getByText('$ 130.000,00')).toBeTruthy()
     expect(screen.getByText(/A cobrar hoy/)).toBeTruthy()
   })
 
@@ -337,7 +337,7 @@ describe('Consola del chofer: qué cobrar (fila 70)', () => {
     await screen.findByLabelText('Próxima parada')
     const saldo = screen.getByLabelText('Parada 2: Av. del Valle 89')
     expect(within(saldo).getByLabelText('Estado: Cobrar saldo')).toBeTruthy()
-    expect(within(saldo).getByText('$ 60.000,00')).toBeTruthy()
+    expect(within(saldo).getByText('$ 30.000,00')).toBeTruthy()
     const pagado = screen.getByLabelText('Parada 3: Luis Balcarce 312')
     expect(within(pagado).getByLabelText('Estado: Pagado')).toBeTruthy()
     expect(within(pagado).getByText('NTE16915 · nada que cobrar')).toBeTruthy()
@@ -345,6 +345,20 @@ describe('Consola del chofer: qué cobrar (fila 70)', () => {
     expect(within(cc).getByLabelText('Estado: Cuenta corriente')).toBeTruthy()
     expect(within(cc).getByText('NTE16914 · no se cobra')).toBeTruthy()
     expect(within(cc).queryByText('$ 5.000,00')).toBeNull()
+  })
+
+  it('las paradas hechas vuelven a mostrar el total del pedido, no el monto a cobrar', async () => {
+    pintar({
+      ...conCobro,
+      detalles: [
+        parada({ id: 'p1', orden: 1, direccion: 'Hecha 1', clienteNombre: 'H', montoTotal: 9000, estado: 2, tipoCobro: 'Contado', montoCobrar: 4000 }),
+        ...conCobro.detalles,
+      ],
+    })
+    const hecha = await screen.findByLabelText('Parada 1: Hecha 1')
+    expect(within(hecha).getByText('$ 9.000,00')).toBeTruthy()
+    expect(within(hecha).queryByText('$ 4.000,00')).toBeNull()
+    expect(within(hecha).queryByLabelText('Estado: Cobrar contado')).toBeNull()
   })
 
   it('con un servidor anterior (sin los campos) se ve como hoy: total del pedido, sin chip ni total', async () => {

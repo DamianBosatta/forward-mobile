@@ -23,7 +23,7 @@ import { sharePdf } from '@/features/pedidos/lib/sharePdf'
 import { diaArgentina, parseDateSafe } from '@/src/utils/date'
 import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
 
-/** Consola del chofer (plan §11, lámina ChoferRuta). Sin foto ni cobro: llegan con 5.1b/c/d. */
+/** Consola del chofer (plan §11, lámina ChoferRuta). Muestra qué cobrar por parada y el total del día (lo decide el servidor); la foto del remito y el cobro en la entrega llegan con 5.1b/c/d. */
 export default function ConsolaChoferScreen() {
   const c = useColors()
   const oscuro = useIsDark()
