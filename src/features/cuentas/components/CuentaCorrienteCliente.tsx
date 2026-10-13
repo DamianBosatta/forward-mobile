@@ -140,7 +140,12 @@ export function CuentaCorrienteCliente({ socioId }: { socioId: string }) {
             <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>No hay movimientos en esta cuenta.</Text>
           ) : null}
           {movs.movimientos.map(m => <Movimiento key={`${m.cuenta}-${m.id}`} m={m} />)}
-          {movs.hayMas ? (
+          {movs.errorPaginaSiguiente ? (
+            <>
+              <Notice tone="peligro">{mensajeDelServidor(movs.errorPaginaSiguiente, 'No se pudieron cargar los movimientos anteriores.')}</Notice>
+              <Button label="Reintentar" variant="secundario" loading={movs.cargandoMas} onPress={movs.reintentar} />
+            </>
+          ) : movs.hayMas ? (
             <Button label="Ver movimientos anteriores" variant="secundario" loading={movs.cargandoMas} onPress={movs.cargarMas} />
           ) : null}
         </Tarjeta>

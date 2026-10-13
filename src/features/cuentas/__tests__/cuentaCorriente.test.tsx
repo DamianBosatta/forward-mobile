@@ -293,15 +293,101 @@ describe('movimientos de las dos cuentas en un solo endpoint (servidor con PR #9
     expect(pedidasPorCuenta()).toEqual([])
   })
 
-  it('un rechazo del servidor (403) se muestra y no vuelve a pedir cuenta por cuenta', async () => {
+  it('si la primera página falla con un 500, la pantalla cae al camino de antes y no vuelve a probar el endpoint nuevo', async () => {
+    servidor({ socioMovs: () => { throw Object.assign(new Error('Error interno del servidor.'), { status: 500 }) } })
+    renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+
+    expect(await screen.findByLabelText(/Venta A00409 entregada/, {}, ESPERA)).toBeTruthy()
+    expect(screen.getByLabelText(/Cobro/)).toBeTruthy()
+    expect(screen.queryByText('Error interno del servidor.')).toBeNull()
+
+    await userEvent.press(screen.getByRole('radio', { name: 'TST' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Normal' }))
+
+    expect(pedidasAlSocio()).toHaveLength(1)
+    expect(pedidasPorCuenta().length).toBeGreaterThan(0)
+  })
+
+  it('si la primera página falla por la red, la pantalla cae al camino de antes', async () => {
+    servidor({ socioMovs: () => { throw new TypeError('Network request failed') } })
+    renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+
+    expect(await screen.findByLabelText(/Venta A00409 entregada/, {}, ESPERA)).toBeTruthy()
+    expect(screen.queryByText(/Network request failed/)).toBeNull()
+  })
+
+  it('un 403 del endpoint nuevo también cae al camino de antes, que muestra el motivo si lo rechaza igual', async () => {
     get.mockImplementation(async (url: string) => {
-      if (url.startsWith(RUTA)) throw Object.assign(new Error('No tenés permisos para ver la cuenta corriente de este socio.'), { status: 403 })
+      if (url.includes('/movimientos')) throw Object.assign(new Error('No tenés permisos para ver la cuenta corriente de este socio.'), { status: 403 })
       return url.endsWith('/estado-cuenta') ? estadoDeCuenta() : fichaConCuentas()
     })
     renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
 
     expect(await screen.findByText('No tenés permisos para ver la cuenta corriente de este socio.', {}, ESPERA)).toBeTruthy()
-    expect(pedidasPorCuenta()).toEqual([])
+    expect(pedidasPorCuenta().length).toBeGreaterThan(0)
+  })
+
+  describe('cuando falla la página siguiente', () => {
+    let falla = true
+    const conFallaEnLaSegunda = (url: string) => {
+      if (url.includes('pageNumber=2')) {
+        if (falla) throw Object.assign(new Error('Sin conexión.'), { status: 500 })
+        return paginaDeMovimientosSocio([movSocio('t0', '2026-08-01T12:00:00Z', { referencia: 'Venta vieja', debe: 5000 })], 2, 2)
+      }
+      return primera()
+    }
+    beforeEach(() => { falla = true })
+
+    it('se conserva la lista, se ofrece Reintentar y el desplazamiento no insiste', async () => {
+      servidor({ socioMovs: conFallaEnLaSegunda })
+      renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+      await screen.findByLabelText(/Cobro/, {}, ESPERA)
+      const lista = screen.getByTestId('cuenta-corriente-scroll')
+
+      fireEvent.scroll(lista, cerca)
+
+      expect(await screen.findByRole('button', { name: 'Reintentar' }, ESPERA)).toBeTruthy()
+      expect(screen.getByLabelText(/Entrega de Venta/)).toBeTruthy()
+      expect(screen.queryByRole('button', { name: 'Ver movimientos anteriores' })).toBeNull()
+      const antes = pedidasAlSocio().length
+
+      fireEvent.scroll(lista, cerca)
+      fireEvent.scroll(lista, cerca)
+
+      expect(pedidasAlSocio()).toHaveLength(antes)
+    })
+
+    it('Reintentar vuelve a pedir la página y, si anda, la suma', async () => {
+      servidor({ socioMovs: conFallaEnLaSegunda })
+      renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+      await screen.findByLabelText(/Cobro/, {}, ESPERA)
+      fireEvent.scroll(screen.getByTestId('cuenta-corriente-scroll'), cerca)
+      const reintentar = await screen.findByRole('button', { name: 'Reintentar' }, ESPERA)
+      falla = false
+
+      await userEvent.press(reintentar)
+
+      expect(await screen.findByLabelText(/Venta vieja/, {}, ESPERA)).toBeTruthy()
+      expect(screen.queryByRole('button', { name: 'Reintentar' })).toBeNull()
+    })
+  })
+
+  it('un movimiento repetido por el corrimiento del offset aparece una sola vez', async () => {
+    servidor({
+      socioMovs: url => url.includes('pageNumber=2')
+        ? paginaDeMovimientosSocio([
+            movSocio('t1', '2026-09-30T12:00:00Z', { tipo: 'Pago', referencia: 'Cobro', haber: 66940 }),
+            movSocio('t0', '2026-08-01T12:00:00Z', { referencia: 'Venta vieja', debe: 5000 }),
+          ], 2, 2)
+        : primera(),
+    })
+    renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+    await screen.findByLabelText(/Cobro/, {}, ESPERA)
+
+    await userEvent.press(screen.getByRole('button', { name: 'Ver movimientos anteriores' }))
+
+    expect(await screen.findByLabelText(/Venta vieja/, {}, ESPERA)).toBeTruthy()
+    expect(screen.getAllByLabelText(/Cobro/)).toHaveLength(1)
   })
 
   it('si el servidor no deja ver la cuenta, no se pide el endpoint nuevo', async () => {

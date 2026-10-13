@@ -13,9 +13,10 @@ interface CuentasDelCliente {
  * Movimientos de la cuenta corriente de un cliente, las dos cuentas (TST y Normal) juntas o una sola.
  *
  * Con el servidor nuevo (forward-system #905) sale de UN endpoint paginado por el socio, con el
- * vencimiento y a qué se aplicó cada crédito. Si el servidor todavía no lo tiene (404), cada cuenta
- * se pide a su endpoint de movimientos —los ids salen de la ficha del cliente— y se unen por fecha,
- * como antes. Esas dos pedidas no arrancan hasta saber que el endpoint nuevo no está.
+ * vencimiento y a qué se aplicó cada crédito. Si la primera página falla por lo que sea (404 de un
+ * servidor sin el endpoint, 500, sin red), cada cuenta se pide a su endpoint de movimientos —los ids
+ * salen de la ficha del cliente— y se unen por fecha, como antes; y no se vuelve a probar el nuevo
+ * hasta que se reabra la pantalla. Esas dos pedidas no arrancan hasta saber que el nuevo no sirve.
  */
 export function useMovimientosDeCliente(socioId: string, cuentas: CuentasDelCliente, filtro: FiltroCuenta, habilitado = true) {
   // Una vez que el servidor dijo que no tiene el endpoint, no se vuelve a preguntar al cambiar de cuenta.
@@ -31,17 +32,27 @@ export function useMovimientosDeCliente(socioId: string, cuentas: CuentasDelClie
   const normal = useCuentaMovimientos(cuentas.cuentaNormalId, habilitado && sinServidorNuevo && filtro !== 'Tst')
 
   if (!sinServidorNuevo) {
+    // El corrimiento del offset (un movimiento nuevo entre dos páginas) puede repetir un asiento: una sola vez cada id.
+    const vistos = new Map<string, MovimientoConCuenta>()
+    for (const p of nuevo.data?.pages ?? []) for (const m of p?.items ?? []) if (!vistos.has(m.id)) vistos.set(m.id, m)
+    const falloPaginaSiguiente = nuevo.isFetchNextPageError
+    // cancelRefetch: false — el desplazamiento dispara varias veces seguidas: mientras una página viaja, las demás no hacen nada.
+    const pedirSiguiente = () => {
+      if (nuevo.hasNextPage) nuevo.fetchNextPage({ cancelRefetch: false })
+    }
     return {
-      movimientos: (nuevo.data?.pages ?? []).flatMap(p => p?.items ?? []) as MovimientoConCuenta[],
+      movimientos: [...vistos.values()],
       hayMas: !!nuevo.hasNextPage,
       cargando: nuevo.isLoading,
       cargandoMas: nuevo.isFetchingNextPage,
-      error: nuevo.error ?? null,
+      error: falloPaginaSiguiente ? null : nuevo.error ?? null,
+      errorPaginaSiguiente: falloPaginaSiguiente ? nuevo.error : null,
       conServidorNuevo,
-      // cancelRefetch: false — el desplazamiento dispara varias veces seguidas: mientras una página viaja, las demás no hacen nada.
+      // Con la página siguiente fallida el desplazamiento no insiste: solo "Reintentar".
       cargarMas: () => {
-        if (nuevo.hasNextPage) nuevo.fetchNextPage({ cancelRefetch: false })
+        if (!falloPaginaSiguiente) pedirSiguiente()
       },
+      reintentar: pedirSiguiente,
     }
   }
 
@@ -62,9 +73,11 @@ export function useMovimientosDeCliente(socioId: string, cuentas: CuentasDelClie
     cargando: activas.some(f => f.q.isLoading),
     cargandoMas: activas.some(f => f.q.isFetchingNextPage),
     error: activas.find(f => f.q.error)?.q.error ?? null,
+    errorPaginaSiguiente: null,
     conServidorNuevo,
     cargarMas: () => {
       for (const f of activas) if (f.q.hasNextPage && !f.q.isFetchingNextPage) f.q.fetchNextPage()
     },
+    reintentar: () => {},
   }
 }

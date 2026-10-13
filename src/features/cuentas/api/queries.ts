@@ -80,15 +80,14 @@ export function useCuentaMovimientos(cuentaId: string | null | undefined, enable
   })
 }
 
-/** Un 404 del servidor: ni el endpoint ni el recurso existen. Se mira el status y no la clase para no depender de cómo se importó el cliente. */
-const esNoEncontrado = (e: unknown) => typeof e === 'object' && e !== null && (e as { status?: unknown }).status === 404
-
 /**
  * Movimientos de las DOS cuentas de un socio en una sola lista paginada (forward-system #905): del más
  * nuevo al más viejo, de a 20, con el vencimiento y a qué se aplicó cada crédito. `cuenta` deja una sola.
- * Cada página es la respuesta del servidor, o `null` si el servidor no tiene el endpoint todavía (404,
- * esperado: no se registra como error) o contestó algo que no es una página; la pantalla vuelve entonces
- * a pedir cada cuenta por separado. Cualquier otro error (403, 500) queda como error.
+ *
+ * La primera página es la que decide si el endpoint sirve: cualquier falla (404 de un servidor que no lo
+ * tiene, 500, sin red, timeout) o una respuesta que no es una página da `null` y la pantalla vuelve a
+ * pedir cada cuenta por separado, así que un problema de este endpoint nunca rompe la cuenta corriente.
+ * Una falla en la página 2 o posterior sí es un error: la lista ya mostrada se conserva y se puede reintentar.
  */
 export function useMovimientosSocio(socioId: string, cuenta: 'ambas' | TipoCuentaSocio, enabled = true) {
   return useInfiniteQuery({
@@ -100,10 +99,12 @@ export function useMovimientosSocio(socioId: string, cuenta: 'ambas' | TipoCuent
           `/api/v1/cuentas-corrientes/socios/${socioId}/movimientos?pageNumber=${pageParam}&pageSize=20${filtro}`,
           { estadosEsperados: [404] },
         )
-        return Array.isArray(res?.items) ? res : null
+        if (Array.isArray(res?.items)) return res
+        if (pageParam > 1) throw new Error('Respuesta inesperada del servidor.')
+        return null
       } catch (e) {
-        if (esNoEncontrado(e)) return null
-        throw e
+        if (pageParam > 1) throw e
+        return null
       }
     },
     getNextPageParam: (lastPage) => {
