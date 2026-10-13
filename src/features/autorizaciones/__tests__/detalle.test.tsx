@@ -55,6 +55,61 @@ describe('Autorizar venta: el detalle', () => {
     expect(screen.getByLabelText('Flete: $ 4.287,15')).toBeTruthy()
   })
 
+  describe('detalle de cada motivo (forward-system #907)', () => {
+    const CON_DETALLE = {
+      ...VENTA,
+      venta: { ...VENTA.venta, motivoPendienteAutorizacion: 32 | 4 | 16 },
+      detalleMotivos: [
+        { motivo: 'DescuentoExcedeTope', texto: 'Detergente Magistral con descuento de 15 % (tope 10 %)', productoNombre: 'Detergente Magistral', porcentajeDescuento: 15, topeDescuento: 10 },
+        { motivo: 'DescuentoExcedeTope', texto: 'Lavandina Ayudín con descuento de 20 % (tope 10 %)', productoNombre: 'Lavandina Ayudín', porcentajeDescuento: 20, topeDescuento: 10 },
+        { motivo: 'ClienteConDeudaVencida', texto: 'El cliente tiene deuda vencida de más de 30 días ($125.000,00 vencidos)', montoVencido: 125000 },
+        { motivo: 'SuperaTopeCredito', texto: 'Supera el tope de crédito del cliente (tope $1.000.000,00; saldo $600.000,00 + comprometido $300.000,00 + esta venta $450.000,00)' },
+      ],
+    }
+
+    it('con un servidor nuevo muestra el texto de cada motivo, con sus montos y productos', async () => {
+      permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+      pintar(CON_DETALLE)
+      expect(await screen.findByText('• Detergente Magistral con descuento de 15 % (tope 10 %)')).toBeTruthy()
+      expect(screen.getByText('• Lavandina Ayudín con descuento de 20 % (tope 10 %)')).toBeTruthy()
+      expect(screen.getByText(/\$125\.000,00 vencidos/)).toBeTruthy()
+      expect(screen.getByText(/Supera el tope de crédito del cliente \(tope \$1\.000\.000,00/)).toBeTruthy()
+      // Las frases genéricas de las banderas ya no se repiten.
+      expect(screen.queryByText('• Supera el tope de descuento del vendedor')).toBeNull()
+      expect(screen.queryByText('• Supera el tope de crédito del cliente')).toBeNull()
+    })
+
+    it('con un servidor anterior (sin detalleMotivos) se queda con las frases de las banderas', async () => {
+      permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+      pintar({ ...CON_DETALLE, detalleMotivos: undefined })
+      expect(await screen.findByText('• Supera el tope de descuento del vendedor')).toBeTruthy()
+      expect(screen.getByText('• El cliente tiene deuda vencida de más de 30 días')).toBeTruthy()
+      expect(screen.getByText('• Supera el tope de crédito del cliente')).toBeTruthy()
+    })
+
+    it('con detalleMotivos en null o vacío (quien no puede autorizar) también usa las banderas', async () => {
+      permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+      pintar({ ...CON_DETALLE, detalleMotivos: [] })
+      expect(await screen.findByText('• Supera el tope de crédito del cliente')).toBeTruthy()
+    })
+
+    it('el motivo del vendedor por falta de stock sigue debajo, y la razón obligatoria sigue saliendo de las banderas', async () => {
+      permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+      pintar({
+        ...VENTA,
+        detalleMotivos: [
+          { motivo: 'MargenPorDebajoDelMinimo', texto: 'Detergente Magistral: precio $2.323,20, por debajo del mínimo rentable $2.420,00' },
+          { motivo: 'StockInsuficiente', texto: 'Sin stock: Saphirus Textil (faltan 24 u.)' },
+        ],
+      })
+      expect(await screen.findByText('• Sin stock: Saphirus Textil (faltan 24 u.)')).toBeTruthy()
+      expect(screen.getByText('Motivo del vendedor: «Entra el martes»')).toBeTruthy()
+      await userEvent.press(screen.getByRole('button', { name: 'Autorizar' }))
+      const hoja = within(screen.getByLabelText('Autorizar venta'))
+      expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBe(true)
+    })
+  })
+
   it('sin CAP_VER_COSTOS no hay costos ni se pide la vista previa', async () => {
     permisos('MOD_VENTAS', 'MOD_REPORTES', 'CAP_AUTORIZAR_VENTA')
     pintar()

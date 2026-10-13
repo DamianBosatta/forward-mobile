@@ -1,3 +1,5 @@
+import type { MotivoAutorizacionDetalle } from '@/libs/api-client/types'
+
 /**
  * Por qué una venta espera autorización. Espejo de `Domain.Enum.MotivoPendienteAutorizacion`
  * del servidor: es un [Flags], así que una venta puede esperar por más de un motivo a la vez
@@ -26,6 +28,20 @@ const MOTIVOS: (Motivo & { bit: number })[] = [
 export function motivosDe(flags: number | null | undefined): Motivo[] {
   const n = flags ?? 0
   return MOTIVOS.filter((m) => (n & m.bit) !== 0).map(({ bit: _bit, ...m }) => m)
+}
+
+/**
+ * Las frases de por qué espera la venta. Con `detalleMotivos` (forward-system #907) son las del servidor, una por
+ * motivo y por línea, ya con los montos y productos; sin él (servidor anterior, o quien no puede autorizar) son las
+ * frases genéricas de cada bandera, todas las que trae el número.
+ */
+export function textosDeMotivos(
+  flags: number | null | undefined,
+  detalle?: MotivoAutorizacionDetalle[] | null,
+): { clave: string; texto: string }[] {
+  const delServidor = (detalle ?? []).filter((d) => d.texto?.trim())
+  if (delServidor.length > 0) return delServidor.map((d, i) => ({ clave: `${d.motivo}:${i}`, texto: d.texto }))
+  return motivosDe(flags).map(({ clave, texto }) => ({ clave, texto }))
 }
 
 /**

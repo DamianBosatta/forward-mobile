@@ -7,7 +7,7 @@ import { useAutorizacionPreview, useVenta } from '@/libs/api-client/ventas'
 import { useSocio } from '@/libs/api-client/socios'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { motivosDe, pideRazon } from '../lib/motivos'
+import { pideRazon, textosDeMotivos } from '../lib/motivos'
 import { ClienteParaAutorizar } from './ClienteParaAutorizar'
 import { DecisionSheet, type Decision } from './DecisionSheet'
 
@@ -67,7 +67,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
     )
   }
 
-  const motivos = motivosDe(venta.motivoPendienteAutorizacion)
+  const motivos = textosDeMotivos(venta.motivoPendienteAutorizacion, q.data?.detalleMotivos)
   const chip = chipForEstado('venta', venta.estado)
 
   return (
