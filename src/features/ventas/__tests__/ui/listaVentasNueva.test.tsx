@@ -241,3 +241,56 @@ describe('lista de ventas nueva: total del filtro (GET /Ventas/resumen)', () => 
     expect(screen.queryByText(/999\.999/)).toBeNull()
   })
 })
+
+describe('lista de ventas nueva: borradores por dirección y total (forward-system #898)', () => {
+  const borrador = (o: Record<string, unknown> = {}) => ({
+    id: 'b1', version: 1, clienteId: 'c', clienteNombre: 'Almacén Luis SRL', depositoId: 'd',
+    fechaModificacion: ahora.toISOString(), cantidadLineas: 3, ...o,
+  })
+  async function conBorradores(items: unknown[]) {
+    mockGet.mockImplementation((url: string) => Promise.resolve(url.includes('borradores/mios') ? items : pagina([], 0)))
+    pantalla()
+    await userEvent.press(screen.getByRole('tab', { name: 'Borradores' }))
+  }
+
+  it('servidor nuevo: la dirección identifica al cliente, la razón social va debajo y se ve el total', async () => {
+    await conBorradores([borrador({ clienteDireccion: 'Brandsen 3314', totalAmount: 15250.5, totalCurrency: 'ARS' })])
+    const tarjeta = await screen.findByRole('button', { name: /Brandsen 3314/ })
+    expect(within(tarjeta).getByText('Brandsen 3314')).toBeTruthy()
+    expect(within(tarjeta).getByText('Almacén Luis SRL')).toBeTruthy()
+    expect(within(tarjeta).getByText('$ 15.250,50')).toBeTruthy()
+    expect(within(tarjeta).getByText(/3 líneas · Guardado hoy/)).toBeTruthy()
+  })
+
+  it('servidor nuevo: un total en otra moneda lleva su código', async () => {
+    await conBorradores([borrador({ clienteDireccion: 'Brandsen 3314', totalAmount: 80, totalCurrency: 'USD' })])
+    expect(await screen.findByText('USD 80,00')).toBeTruthy()
+  })
+
+  it('servidor nuevo: un cliente sin dirección queda con la razón social sola, y el total igual', async () => {
+    await conBorradores([borrador({ clienteDireccion: null, totalAmount: 0, totalCurrency: 'ARS' }), borrador({ id: 'b2', clienteDireccion: '  ', clienteNombre: 'Kiosco Ana', totalAmount: 1200, totalCurrency: 'ARS' })])
+    const sinDireccion = await screen.findByRole('button', { name: /Almacén Luis SRL/ })
+    expect(within(sinDireccion).getAllByText('Almacén Luis SRL')).toHaveLength(1)
+    expect(within(sinDireccion).getByText('$ 0,00')).toBeTruthy()
+    const vacia = screen.getByRole('button', { name: /Kiosco Ana/ })
+    expect(within(vacia).getAllByText('Kiosco Ana')).toHaveLength(1)
+    expect(within(vacia).getByText('$ 1.200,00')).toBeTruthy()
+  })
+
+  it('servidor anterior (sin dirección ni total): la tarjeta queda como siempre, sin importe', async () => {
+    await conBorradores([borrador()])
+    const tarjeta = await screen.findByRole('button', { name: /Almacén Luis SRL/ })
+    expect(within(tarjeta).getByText('Almacén Luis SRL')).toBeTruthy()
+    expect(within(tarjeta).getByText(/3 líneas · Guardado hoy/)).toBeTruthy()
+    expect(within(tarjeta).queryByText(/\$|USD/)).toBeNull()
+  })
+
+  it('tocar un borrador con dirección la usa para preguntar cómo seguirlo', async () => {
+    const alerta = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, botones) => botones?.find((b) => b.text === 'Como presupuesto')?.onPress?.())
+    await conBorradores([borrador({ clienteDireccion: 'Brandsen 3314', totalAmount: 100, totalCurrency: 'ARS' })])
+    await userEvent.press(await screen.findByRole('button', { name: /Brandsen 3314/ }))
+    expect(alerta).toHaveBeenCalledWith('Retomar borrador', 'Brandsen 3314', expect.any(Array))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva-v2?borrador=b1&tipo=Presupuesto')
+    alerta.mockRestore()
+  })
+})
