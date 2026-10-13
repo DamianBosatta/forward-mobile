@@ -215,17 +215,41 @@ describe('Mi cuenta: sesiones abiertas', () => {
     pintar()
     expect(await screen.findByText('Sesiones abiertas (2)')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/v1/Sessions')
-    expect(screen.getByText('okhttp/4.12.0')).toBeTruthy()
     expect(screen.getByText('IP 181.45.12.33')).toBeTruthy()
     expect(screen.getByText('Inició el 9 oct, 07:58 · Vence el 8 nov')).toBeTruthy()
     expect(screen.queryByText(/este dispositivo|activa ahora|última actividad/i)).toBeNull()
+  })
+
+  it('muestra cada dispositivo con un nombre legible y no el User-Agent crudo', async () => {
+    usuario()
+    mockGet.mockResolvedValue(SESIONES)
+    pintar()
+    expect(await screen.findByText('Android · App Forward')).toBeTruthy()
+    expect(screen.getByText('Windows · Chrome')).toBeTruthy()
+    expect(screen.queryByText('okhttp/4.12.0')).toBeNull()
+    expect(screen.queryByText('Mozilla/5.0 (Windows NT 10.0) Chrome/129')).toBeNull()
+    // El User-Agent crudo queda disponible para lectores de pantalla.
+    expect(screen.getByLabelText('Cerrar la sesión de Android · App Forward')).toBeTruthy()
+    expect(screen.getByText('Android · App Forward').props.accessibilityHint).toBe('User-Agent: okhttp/4.12.0')
+  })
+
+  it('si no reconoce el dispositivo lo dice y deja el User-Agent a la vista para identificarlo', async () => {
+    usuario()
+    mockGet.mockResolvedValue([
+      { id: 't3', createdAt: '2026-10-09T10:58:00Z', expiresAt: '2026-11-08T10:58:00Z', device: 'curl/8.4.0', ip: '10.0.0.5' },
+      { id: 't4', createdAt: null, expiresAt: null, device: '', ip: '10.0.0.6' },
+    ])
+    pintar()
+    expect(await screen.findByText('Sesiones abiertas (2)')).toBeTruthy()
+    expect(screen.getAllByText('Dispositivo desconocido')).toHaveLength(2)
+    expect(screen.getByText('curl/8.4.0')).toBeTruthy()
   })
 
   it('cerrar una sesión la revoca en el servidor y vuelve a pedir la lista', async () => {
     usuario()
     mockGet.mockResolvedValueOnce(SESIONES).mockResolvedValueOnce([SESIONES[0]])
     pintar()
-    await userEvent.press(await screen.findByLabelText('Cerrar la sesión de Mozilla/5.0 (Windows NT 10.0) Chrome/129'))
+    await userEvent.press(await screen.findByLabelText('Cerrar la sesión de Windows · Chrome'))
     expect(mockDelete).toHaveBeenCalledWith('/api/v1/Sessions/t%202')
     expect(await screen.findByText('Sesiones abiertas (1)')).toBeTruthy()
   })
