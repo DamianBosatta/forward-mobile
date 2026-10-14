@@ -1,6 +1,7 @@
 import {
   BookOpen,
   CalendarDays,
+  ChartColumn,
   CircleUser,
   House,
   Landmark,
@@ -51,10 +52,7 @@ export function puedeVerVentas(canDo: CanDo): boolean {
   return !chofer && (canDo('MOD_VENTAS', 'read') || canDo('MOD_PEDIDOS', 'read'))
 }
 
-/**
- * Módulos del alcance (plan §3), en el orden de la lámina Menu. Reportes todavía
- * no tiene pantalla: no se lista hasta que la tenga.
- */
+/** Módulos del alcance (plan §3), en el orden de la lámina Menu. */
 export const MENU: MenuGroup[] = [
   {
     items: [
@@ -78,7 +76,11 @@ export const MENU: MenuGroup[] = [
   },
   {
     // El calendario no es un módulo en el servidor: cada uno ve el suyo (CalendarioController).
-    items: [{ id: 'calendario', label: 'Calendario', icon: CalendarDays, href: '/(tabs)/calendario', routeName: 'calendario/index' }],
+    items: [
+      { id: 'calendario', label: 'Calendario', icon: CalendarDays, href: '/(tabs)/calendario', routeName: 'calendario/index' },
+      // El servidor pide Ventas:Read y acota el alcance (el vendedor ve lo suyo); el chofer lee ventas pero no vende.
+      { id: 'reportes', label: 'Reportes', icon: ChartColumn, href: '/(tabs)/reportes', routeName: 'reportes/index', visibleSi: (canDo) => canDo('MOD_VENTAS', 'read') && puedeVerVentas(canDo) },
+    ],
   },
   {
     title: 'Logística',

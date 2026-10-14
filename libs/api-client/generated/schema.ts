@@ -3466,6 +3466,215 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/comprobantes/resumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Periodo?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResumenComprobantesDtoResponse"];
+                        "application/json": components["schemas"]["ResumenComprobantesDtoResponse"];
+                        "text/json": components["schemas"]["ResumenComprobantesDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comprobantes/recibidos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Periodo?: number;
+                    Tipo?: components["schemas"]["TipoComprobanteRecibido"];
+                    Search?: string;
+                    PageNumber?: number;
+                    PageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ComprobanteRecibidoResumenDtoPaginatedResponseResponse"];
+                        "application/json": components["schemas"]["ComprobanteRecibidoResumenDtoPaginatedResponseResponse"];
+                        "text/json": components["schemas"]["ComprobanteRecibidoResumenDtoPaginatedResponseResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comprobantes/recibidos/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ComprobanteRecibidoDetalleDtoResponse"];
+                        "application/json": components["schemas"]["ComprobanteRecibidoDetalleDtoResponse"];
+                        "text/json": components["schemas"]["ComprobanteRecibidoDetalleDtoResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comprobantes/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Pestana?: components["schemas"]["PestanaComprobantes"];
+                    Periodo?: number;
+                    Clase?: components["schemas"]["ClaseComprobanteEmitido"];
+                    Estado?: components["schemas"]["EstadoFactura"];
+                    Tipo?: components["schemas"]["TipoComprobanteRecibido"];
+                    Search?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Configuracion/margen-minimo": {
         parameters: {
             query?: never;
@@ -3906,6 +4115,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Configuracion/exigir-foto-remito-al-entregar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ExigirFotoRemitoAlEntregarDto"];
+                        "application/json": components["schemas"]["ExigirFotoRemitoAlEntregarDto"];
+                        "text/json": components["schemas"]["ExigirFotoRemitoAlEntregarDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateExigirFotoRemitoAlEntregarCommand"];
+                    "text/json": components["schemas"]["UpdateExigirFotoRemitoAlEntregarCommand"];
+                    "application/*+json": components["schemas"]["UpdateExigirFotoRemitoAlEntregarCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ExigirFotoRemitoAlEntregarDto"];
+                        "application/json": components["schemas"]["ExigirFotoRemitoAlEntregarDto"];
+                        "text/json": components["schemas"]["ExigirFotoRemitoAlEntregarDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Configuracion/etiqueta-pieza": {
         parameters: {
             query?: never;
@@ -4130,6 +4403,81 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/configuracion/facturacion/arca": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConfiguracionArcaDtoResponse"];
+                        "application/json": components["schemas"]["ConfiguracionArcaDtoResponse"];
+                        "text/json": components["schemas"]["ConfiguracionArcaDtoResponse"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ActualizarConfiguracionArcaCommand"];
+                    "text/json": components["schemas"]["ActualizarConfiguracionArcaCommand"];
+                    "application/*+json": components["schemas"]["ActualizarConfiguracionArcaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConfiguracionArcaDtoResponse"];
+                        "application/json": components["schemas"]["ConfiguracionArcaDtoResponse"];
+                        "text/json": components["schemas"]["ConfiguracionArcaDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -4622,6 +4970,92 @@ export interface paths {
             };
         };
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/configuracion/facturacion/cot/umbrales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UmbralesCotDtoResponse"];
+                        "application/json": components["schemas"]["UmbralesCotDtoResponse"];
+                        "text/json": components["schemas"]["UmbralesCotDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CrearUmbralCotCommand"];
+                    "text/json": components["schemas"]["CrearUmbralCotCommand"];
+                    "application/*+json": components["schemas"]["CrearUmbralCotCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UmbralesCotDtoResponse"];
+                        "application/json": components["schemas"]["UmbralesCotDtoResponse"];
+                        "text/json": components["schemas"]["UmbralesCotDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -5653,7 +6087,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    incluirFacturas?: boolean;
+                };
                 header?: never;
                 path: {
                     socioId: string;
@@ -5671,6 +6107,328 @@ export interface paths {
                         "text/plain": components["schemas"]["DocumentoPendienteDto"][];
                         "application/json": components["schemas"]["DocumentoPendienteDto"][];
                         "text/json": components["schemas"]["DocumentoPendienteDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/devoluciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SolicitarDevolucionCommand"];
+                    "text/json": components["schemas"]["SolicitarDevolucionCommand"];
+                    "application/*+json": components["schemas"]["SolicitarDevolucionCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/devoluciones/pendientes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DevolucionPendienteDtoIEnumerableResponse"];
+                        "application/json": components["schemas"]["DevolucionPendienteDtoIEnumerableResponse"];
+                        "text/json": components["schemas"]["DevolucionPendienteDtoIEnumerableResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/devoluciones/{id}/autorizar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/devoluciones/{id}/rechazar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RechazarDevolucionRequest"];
+                    "text/json": components["schemas"]["RechazarDevolucionRequest"];
+                    "application/*+json": components["schemas"]["RechazarDevolucionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturacion/arca/estado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ArcaEstadoDtoResponse"];
+                        "application/json": components["schemas"]["ArcaEstadoDtoResponse"];
+                        "text/json": components["schemas"]["ArcaEstadoDtoResponse"];
                     };
                 };
             };
@@ -5856,6 +6614,520 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/facturacion/posicion-iva": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Periodo?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PosicionIvaDtoResponse"];
+                        "application/json": components["schemas"]["PosicionIvaDtoResponse"];
+                        "text/json": components["schemas"]["PosicionIvaDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturacion/posicion-iva/evolucion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Meses?: number;
+                    Hasta?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PosicionIvaMesDtoListResponse"];
+                        "application/json": components["schemas"]["PosicionIvaMesDtoListResponse"];
+                        "text/json": components["schemas"]["PosicionIvaMesDtoListResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturacion/libro-iva": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Periodo?: number;
+                    Tipo?: components["schemas"]["TipoLibroIva"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturacion/posicion-iva/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Periodo?: number;
+                    Formato?: components["schemas"]["FormatoExport"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturacion/stock-fiscal/export-mes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Periodo?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturacion/periodos/{periodo}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    periodo: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PeriodoFiscalDtoResponse"];
+                        "application/json": components["schemas"]["PeriodoFiscalDtoResponse"];
+                        "text/json": components["schemas"]["PeriodoFiscalDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturacion/periodos/{periodo}/cerrar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    periodo: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PeriodoFiscalDtoResponse"];
+                        "application/json": components["schemas"]["PeriodoFiscalDtoResponse"];
+                        "text/json": components["schemas"]["PeriodoFiscalDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturacion/periodos/{periodo}/reabrir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    periodo: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ReabrirPeriodoFiscalCommand"];
+                    "text/json": components["schemas"]["ReabrirPeriodoFiscalCommand"];
+                    "application/*+json": components["schemas"]["ReabrirPeriodoFiscalCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PeriodoFiscalDtoResponse"];
+                        "application/json": components["schemas"]["PeriodoFiscalDtoResponse"];
+                        "text/json": components["schemas"]["PeriodoFiscalDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturacion/indicadores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Periodo?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["IndicadoresFacturacionDtoResponse"];
+                        "application/json": components["schemas"]["IndicadoresFacturacionDtoResponse"];
+                        "text/json": components["schemas"]["IndicadoresFacturacionDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/facturas": {
         parameters: {
             query?: never;
@@ -5872,6 +7144,9 @@ export interface paths {
                     PuntoVentaId?: string;
                     Desde?: string;
                     Hasta?: string;
+                    Periodo?: number;
+                    Clase?: components["schemas"]["ClaseComprobanteEmitido"];
+                    OcultarCanceladas?: boolean;
                     Search?: string;
                     PageNumber?: number;
                     PageSize?: number;
@@ -5924,6 +7199,151 @@ export interface paths {
                 };
                 /** @description Bad Request */
                 400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturas/pedidos-sin-factura": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    FueraDeTermino?: boolean;
+                    ClienteId?: string;
+                    Desde?: string;
+                    Hasta?: string;
+                    Search?: string;
+                    PageNumber?: number;
+                    PageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PedidoSinFacturaDtoPaginatedResponseResponse"];
+                        "application/json": components["schemas"]["PedidoSinFacturaDtoPaginatedResponseResponse"];
+                        "text/json": components["schemas"]["PedidoSinFacturaDtoPaginatedResponseResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ventas/{ventaId}/factura": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    ventaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["FacturarAPedidoCommand"];
+                    "text/json": components["schemas"]["FacturarAPedidoCommand"];
+                    "application/*+json": components["schemas"]["FacturarAPedidoCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FacturaAPedidoDtoResponse"];
+                        "application/json": components["schemas"]["FacturaAPedidoDtoResponse"];
+                        "text/json": components["schemas"]["FacturaAPedidoDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Unauthorized */
+                401: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6066,6 +7486,193 @@ export interface paths {
                 };
                 /** @description Conflict */
                 409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturas/por-concepto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CrearFacturaPorConceptoCommand"];
+                    "text/json": components["schemas"]["CrearFacturaPorConceptoCommand"];
+                    "application/*+json": components["schemas"]["CrearFacturaPorConceptoCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FacturaDtoResponse"];
+                        "application/json": components["schemas"]["FacturaDtoResponse"];
+                        "text/json": components["schemas"]["FacturaDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturas/{id}/emitir-arca": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EmisionArcaDtoResponse"];
+                        "application/json": components["schemas"]["EmisionArcaDtoResponse"];
+                        "text/json": components["schemas"]["EmisionArcaDtoResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturas/{id}/arca": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EmisionArcaDtoResponse"];
+                        "application/json": components["schemas"]["EmisionArcaDtoResponse"];
+                        "text/json": components["schemas"]["EmisionArcaDtoResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6241,6 +7848,173 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/facturas/{id}/cancelar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CancelarFacturaCommand"];
+                    "text/json": components["schemas"]["CancelarFacturaCommand"];
+                    "application/*+json": components["schemas"]["CancelarFacturaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FacturaDtoResponse"];
+                        "application/json": components["schemas"]["FacturaDtoResponse"];
+                        "text/json": components["schemas"]["FacturaDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturas/{id}/nota-credito-descuento": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CrearNotaCreditoDescuentoCommand"];
+                    "text/json": components["schemas"]["CrearNotaCreditoDescuentoCommand"];
+                    "application/*+json": components["schemas"]["CrearNotaCreditoDescuentoCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FacturaDtoResponse"];
+                        "application/json": components["schemas"]["FacturaDtoResponse"];
+                        "text/json": components["schemas"]["FacturaDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Finanzas/pagos": {
         parameters: {
             query?: never;
@@ -6267,6 +8041,17 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PagoRegistradoResponse"];
+                        "application/json": components["schemas"]["PagoRegistradoResponse"];
+                        "text/json": components["schemas"]["PagoRegistradoResponse"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6310,6 +8095,17 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PagoRegistradoResponse"];
+                        "application/json": components["schemas"]["PagoRegistradoResponse"];
+                        "text/json": components["schemas"]["PagoRegistradoResponse"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6849,6 +8645,71 @@ export interface paths {
                         "text/plain": components["schemas"]["PagedFilasPreviewDto"];
                         "application/json": components["schemas"]["PagedFilasPreviewDto"];
                         "text/json": components["schemas"]["PagedFilasPreviewDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/importaciones/{id}/preview/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    ImportacionJobId?: string;
+                    Resultado?: string;
+                    Formato?: components["schemas"]["FormatoExport"];
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
                     };
                 };
             };
@@ -7863,6 +9724,309 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Logistica/hojas-ruta/{id}/paradas/{ventaId}/sale-sin-factura": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    ventaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SalidaSinFacturaRequest"];
+                    "text/json": components["schemas"]["SalidaSinFacturaRequest"];
+                    "application/*+json": components["schemas"]["SalidaSinFacturaRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentacionViajeDtoResponse"];
+                        "application/json": components["schemas"]["DocumentacionViajeDtoResponse"];
+                        "text/json": components["schemas"]["DocumentacionViajeDtoResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    ventaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentacionViajeDtoResponse"];
+                        "application/json": components["schemas"]["DocumentacionViajeDtoResponse"];
+                        "text/json": components["schemas"]["DocumentacionViajeDtoResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/hojas-ruta/{id}/cot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CargarCodigoCotRequest"];
+                    "text/json": components["schemas"]["CargarCodigoCotRequest"];
+                    "application/*+json": components["schemas"]["CargarCodigoCotRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentacionViajeDtoResponse"];
+                        "application/json": components["schemas"]["DocumentacionViajeDtoResponse"];
+                        "text/json": components["schemas"]["DocumentacionViajeDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/hojas-ruta/{id}/cot/peso-incompleto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AutorizarCotPesoIncompletoRequest"];
+                    "text/json": components["schemas"]["AutorizarCotPesoIncompletoRequest"];
+                    "application/*+json": components["schemas"]["AutorizarCotPesoIncompletoRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentacionViajeDtoResponse"];
+                        "application/json": components["schemas"]["DocumentacionViajeDtoResponse"];
+                        "text/json": components["schemas"]["DocumentacionViajeDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Logistica/hojas-ruta/{id}/paquete-pdf": {
         parameters: {
             query?: never;
@@ -8765,6 +10929,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Media/upload-entrega": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        file?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/medios-pago": {
         parameters: {
             query?: never;
@@ -9461,6 +11665,17 @@ export interface paths {
             responses: {
                 /** @description OK */
                 200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PagoRegistradoResponse"];
+                        "application/json": components["schemas"]["PagoRegistradoResponse"];
+                        "text/json": components["schemas"]["PagoRegistradoResponse"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -11300,6 +13515,69 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Reportes/mobile/resumen-vendedor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Anio?: number;
+                    Mes?: number;
+                    VendedorId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResumenVendedorDtoResponse"];
+                        "application/json": components["schemas"]["ResumenVendedorDtoResponse"];
+                        "text/json": components["schemas"]["ResumenVendedorDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Roles": {
         parameters: {
             query?: never;
@@ -12986,6 +15264,173 @@ export interface paths {
                         "text/plain": components["schemas"]["GuidResponse"];
                         "application/json": components["schemas"]["GuidResponse"];
                         "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/transferencias/{id}/cot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CargarCodigoCotTransferenciaCommand"];
+                    "text/json": components["schemas"]["CargarCodigoCotTransferenciaCommand"];
+                    "application/*+json": components["schemas"]["CargarCodigoCotTransferenciaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TransferenciaStockDtoResponse"];
+                        "application/json": components["schemas"]["TransferenciaStockDtoResponse"];
+                        "text/json": components["schemas"]["TransferenciaStockDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/transferencias/{id}/cot/peso-incompleto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AutorizarCotPesoIncompletoTransferenciaCommand"];
+                    "text/json": components["schemas"]["AutorizarCotPesoIncompletoTransferenciaCommand"];
+                    "application/*+json": components["schemas"]["AutorizarCotPesoIncompletoTransferenciaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TransferenciaStockDtoResponse"];
+                        "application/json": components["schemas"]["TransferenciaStockDtoResponse"];
+                        "text/json": components["schemas"]["TransferenciaStockDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
                     };
                 };
                 /** @description Forbidden */
@@ -15118,7 +17563,7 @@ export interface components {
             moneda?: string | null;
         };
         /** @enum {string} */
-        AccionDestino: "Cheques" | "Venta" | "VentasPendientesAutorizacion" | "Caja" | "Socios" | "SolicitudesSocio" | "Importaciones" | "Picking" | "Compra" | "Calendario" | "Inventario" | "ConfiguracionFacturacion";
+        AccionDestino: "Cheques" | "Venta" | "VentasPendientesAutorizacion" | "Caja" | "Socios" | "SolicitudesSocio" | "Importaciones" | "Picking" | "Compra" | "Calendario" | "Inventario" | "ConfiguracionFacturacion" | "PosicionIva";
         /** @enum {string} */
         AccionMasivaProducto: "Activar" | "Desactivar" | "AjustarMarkup";
         AccionSugeridaDto: {
@@ -15189,6 +17634,14 @@ export interface components {
             diasAvisoCai?: number;
             /** Format: int32 */
             porcentajeAvisoRangoCai?: number;
+        };
+        ActualizarConfiguracionArcaCommand: {
+            ambiente?: components["schemas"]["AmbienteArca"];
+            cuit?: string | null;
+            /** Format: uuid */
+            puntoVentaId?: string | null;
+            certificadoRuta?: string | null;
+            habilitada?: boolean;
         };
         ActualizarMisPreferenciasCommand: {
             temaPreferido?: string | null;
@@ -15297,6 +17750,8 @@ export interface components {
             /** Format: double */
             disponible: number;
         };
+        /** @enum {string} */
+        AmbienteArca: "Homologacion" | "Produccion";
         AnalizarImportacionCommand: {
             /** Format: uuid */
             importacionJobId?: string;
@@ -15373,6 +17828,36 @@ export interface components {
             /** Format: double */
             markupPorcentaje?: number | null;
         };
+        ArcaEstadoDto: {
+            ambiente: string;
+            /** Format: int64 */
+            cuit: number;
+            /** Format: int32 */
+            puntoVentaElectronico?: number | null;
+            habilitada: boolean;
+            certificadoConfigurado: boolean;
+            certificadoSujeto?: string | null;
+            /** Format: date-time */
+            certificadoVenceUtc?: string | null;
+            /** Format: int32 */
+            certificadoDiasParaVencer?: number | null;
+            certificadoError?: string | null;
+            ticketVigente: boolean;
+            /** Format: date-time */
+            ticketVenceUtc?: string | null;
+            servicioOk?: boolean | null;
+            servicioDetalle?: string | null;
+        };
+        ArcaEstadoDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ArcaEstadoDto"];
+            codigo?: string | null;
+        };
         AsignarComprobantePagoCommand: {
             /** Format: uuid */
             pagoId?: string;
@@ -15423,6 +17908,14 @@ export interface components {
             /** Format: double */
             sacrificio?: number | null;
             desglosePiso: components["schemas"]["PisoDesgloseDto"];
+        };
+        AutorizarCotPesoIncompletoRequest: {
+            motivo?: string | null;
+        };
+        AutorizarCotPesoIncompletoTransferenciaCommand: {
+            motivo?: string | null;
+            /** Format: int32 */
+            version?: number | null;
         };
         AutorizarVentaCommand: {
             /** Format: uuid */
@@ -15624,10 +18117,23 @@ export interface components {
             compraId?: string;
             motivoAnulacion?: string | null;
         };
+        CancelarFacturaCommand: {
+            /** Format: uuid */
+            id?: string;
+            motivo?: string | null;
+        };
         CancelarTransferenciaStockCommand: {
             /** Format: int32 */
             version?: number | null;
             motivo?: string | null;
+        };
+        CargarCodigoCotRequest: {
+            codigo?: string | null;
+        };
+        CargarCodigoCotTransferenciaCommand: {
+            codigo?: string | null;
+            /** Format: int32 */
+            version?: number | null;
         };
         CargarNotaCreditoDevolucionCommand: {
             /** Format: uuid */
@@ -15956,6 +18462,16 @@ export interface components {
         };
         /** @enum {string} */
         ClaseAbc: "A" | "B" | "C";
+        /** @enum {string} */
+        ClaseComprobanteEmitido: "FacturaA" | "FacturaB" | "FacturaC" | "NotaCredito" | "NotaDebito";
+        ClienteConDeudaDto: {
+            /** Format: uuid */
+            socioId: string;
+            cliente: string;
+            razonSocial: string;
+            /** Format: double */
+            deuda: number;
+        };
         ClienteEnRiesgoDto: {
             /** Format: uuid */
             id?: string;
@@ -15999,6 +18515,13 @@ export interface components {
             data?: components["schemas"]["ClienteRecienteDto"][] | null;
             codigo?: string | null;
         };
+        CobrosPendientesDto: {
+            /** Format: double */
+            total: number;
+            /** Format: int32 */
+            clientes: number;
+            detalle: components["schemas"]["ClienteConDeudaDto"][];
+        };
         ComisionGeneradoVsPagadoDto: {
             /** Format: uuid */
             vendedorId?: string;
@@ -16025,6 +18548,18 @@ export interface components {
             reversiones: number;
             /** Format: double */
             neto: number;
+        };
+        ComisionesDelMesDto: {
+            /** Format: double */
+            devengado: number;
+            /** Format: double */
+            reversiones: number;
+            /** Format: double */
+            neto: number;
+            /** Format: double */
+            pagado: number;
+            /** Format: double */
+            saldoActual: number;
         };
         ComisionesPorLineaDto: {
             agruparPor: components["schemas"]["AgrupacionComisionPorLinea"];
@@ -16247,6 +18782,23 @@ export interface components {
             alicuotas?: components["schemas"]["AlicuotaComprobanteInput"][] | null;
             tributos?: components["schemas"]["TributoComprobanteInput"][] | null;
         };
+        ComprobanteRecibidoDetalleDto: {
+            comprobante: components["schemas"]["ComprobanteRecibidoDto"];
+            origen: components["schemas"]["OrigenComprobanteRecibido"];
+            /** Format: uuid */
+            origenId: string;
+            vigente: boolean;
+        };
+        ComprobanteRecibidoDetalleDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ComprobanteRecibidoDetalleDto"];
+            codigo?: string | null;
+        };
         ComprobanteRecibidoDto: {
             /** Format: uuid */
             id: string;
@@ -16289,10 +18841,59 @@ export interface components {
             data?: components["schemas"]["ComprobanteRecibidoDto"];
             codigo?: string | null;
         };
+        ComprobanteRecibidoResumenDto: {
+            /** Format: uuid */
+            id: string;
+            tipo: components["schemas"]["TipoComprobanteRecibido"];
+            letra: components["schemas"]["LetraComprobante"];
+            numeroImpreso: string;
+            /** Format: date */
+            fecha: string;
+            cuitEmisor: string;
+            razonSocialEmisor: string;
+            origen: components["schemas"]["OrigenComprobanteRecibido"];
+            /** Format: uuid */
+            origenId: string;
+            /** Format: double */
+            netoGravado: number;
+            /** Format: double */
+            iva: number;
+            /** Format: double */
+            noGravado: number;
+            /** Format: double */
+            exento: number;
+            /** Format: double */
+            tributos: number;
+            /** Format: double */
+            total: number;
+            readonly discriminaIva: boolean;
+        };
+        ComprobanteRecibidoResumenDtoPaginatedResponse: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            readonly hasNextPage?: boolean;
+            items?: components["schemas"]["ComprobanteRecibidoResumenDto"][] | null;
+        };
+        ComprobanteRecibidoResumenDtoPaginatedResponseResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ComprobanteRecibidoResumenDtoPaginatedResponse"];
+            codigo?: string | null;
+        };
         /** @enum {string} */
         ComprobanteStockFiscal: "AjusteManual" | "ComprobanteRecibido" | "Factura" | "NotaCredito" | "NotaDebito" | "DevolucionProveedor";
         /** @enum {string} */
-        ConceptoFactura: "Productos" | "ProductosYServicios";
+        ConceptoFactura: "Productos" | "Servicios" | "ProductosYServicios";
         ConciliacionDto: {
             /** Format: uuid */
             movimientoCuentaId?: string;
@@ -16337,6 +18938,25 @@ export interface components {
             /** Format: int32 */
             diaDelMes?: number | null;
             descripcion?: string | null;
+        };
+        ConfiguracionArcaDto: {
+            configurada: boolean;
+            ambiente: components["schemas"]["AmbienteArca"];
+            cuit?: string | null;
+            /** Format: uuid */
+            puntoVentaId?: string | null;
+            certificadoRuta?: string | null;
+            habilitada: boolean;
+        };
+        ConfiguracionArcaDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ConfiguracionArcaDto"];
+            codigo?: string | null;
         };
         ConfirmarCompraCommand: {
             /** Format: uuid */
@@ -16395,6 +19015,37 @@ export interface components {
             /** Format: double */
             nuevoPorcentaje?: number | null;
         };
+        CotDto: {
+            estado: components["schemas"]["EstadoCot"];
+            frenaLaSalida: boolean;
+            aviso?: string | null;
+            motivos: components["schemas"]["MotivoCot"][];
+            /** Format: double */
+            valorNeto: number;
+            /** Format: double */
+            pesoKg: number;
+            /** Format: double */
+            umbralImporteNeto: number;
+            /** Format: double */
+            umbralPesoKg: number;
+            /** Format: date */
+            umbralVigenteDesde: string;
+            /** Format: date-time */
+            evaluadoEn: string;
+            productosConUmbralPropio: components["schemas"]["ProductoUmbralPropioCot"][];
+            productosSinPeso: components["schemas"]["ProductoSinPesoCot"][];
+            productosSinCosto: components["schemas"]["ProductoSinCostoCot"][];
+            avisoValorEstimado?: string | null;
+            codigo?: string | null;
+            /** Format: date-time */
+            codigoCargadoEn?: string | null;
+            pesoIncompletoAutorizado: boolean;
+            pesoIncompletoMotivo?: string | null;
+            /** Format: date-time */
+            pesoIncompletoAutorizadoEn?: string | null;
+            /** Format: uuid */
+            pesoIncompletoAutorizadoPorId?: string | null;
+        };
         CrearEventoCommand: {
             tipo: components["schemas"]["TipoEventoCalendario"];
             subtipo?: string | null;
@@ -16417,6 +19068,13 @@ export interface components {
             /** Format: uuid */
             puntoVentaId?: string;
         };
+        CrearFacturaPorConceptoCommand: {
+            /** Format: uuid */
+            clienteId?: string;
+            /** Format: uuid */
+            puntoVentaId?: string;
+            lineas?: components["schemas"]["LineaConceptoDto"][] | null;
+        };
         CrearFeriadoCommand: {
             /** Format: date */
             fecha?: string;
@@ -16434,6 +19092,13 @@ export interface components {
             usuarioGeneradorId?: string;
             /** Format: uuid */
             depositoId?: string | null;
+        };
+        CrearNotaCreditoDescuentoCommand: {
+            /** Format: uuid */
+            facturaId?: string;
+            /** Format: double */
+            importe?: number;
+            motivo?: string | null;
         };
         CrearOfertaCommand: {
             /** Format: uuid */
@@ -16488,6 +19153,14 @@ export interface components {
             depositoDestinoId?: string;
             observacion?: string | null;
             items?: components["schemas"]["LineaTransferenciaInput"][] | null;
+        };
+        CrearUmbralCotCommand: {
+            /** Format: double */
+            importeNeto?: number;
+            /** Format: double */
+            pesoKg?: number;
+            /** Format: date */
+            vigenteDesde?: string | null;
         };
         CreateCategoriaCommand: {
             nombre?: string | null;
@@ -16854,6 +19527,8 @@ export interface components {
         };
         /** @enum {string} */
         DestinoNotaCredito: "SaldoAFavor" | "DevolucionDinero";
+        /** @enum {string} */
+        DesvioStockFiscal: "Ninguno" | "SuperaAlReal" | "Negativo";
         DeudaSocioDto: {
             /** Format: uuid */
             socioId: string;
@@ -16894,6 +19569,48 @@ export interface components {
             pagina?: components["schemas"]["DeudaSocioDtoPaginatedResponse"];
             /** Format: double */
             deudaTotal?: number;
+        };
+        DevolucionPendienteDto: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            ventaId?: string;
+            codigoVenta?: string | null;
+            /** Format: uuid */
+            clienteId?: string;
+            clienteRazonSocial?: string | null;
+            /** Format: uuid */
+            depositoId?: string;
+            depositoNombre?: string | null;
+            /** Format: date-time */
+            fecha?: string;
+            /** Format: double */
+            montoTotal?: number;
+            moneda?: string | null;
+            motivo?: string | null;
+            solicitadaPor?: string | null;
+            items?: components["schemas"]["DevolucionPendienteItemDto"][] | null;
+        };
+        DevolucionPendienteDtoIEnumerableResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["DevolucionPendienteDto"][] | null;
+            codigo?: string | null;
+        };
+        DevolucionPendienteItemDto: {
+            /** Format: uuid */
+            productoId?: string;
+            productoNombre?: string | null;
+            /** Format: double */
+            cantidad?: number;
+            /** Format: double */
+            precioUnitario?: number;
+            /** Format: double */
+            subtotal?: number;
         };
         DevolucionProveedorDto: {
             /** Format: uuid */
@@ -16968,6 +19685,13 @@ export interface components {
             salidaExigeDocumentacion: boolean;
             /** Format: int32 */
             remitosEmitidos: number;
+            /** Format: int32 */
+            facturasEmitidas: number;
+            /** Format: int32 */
+            facturasPendientes: number;
+            /** Format: int32 */
+            salidasSinFactura: number;
+            cot?: components["schemas"]["CotDto"];
             paradas: components["schemas"]["ParadaDocumentacionDto"][];
         };
         DocumentacionViajeDtoResponse: {
@@ -16996,6 +19720,8 @@ export interface components {
             /** Format: double */
             saldoPendiente: number;
             tipoCuenta: components["schemas"]["TipoCuentaSocio"];
+            tipo?: components["schemas"]["TipoDocumentoPendiente"];
+            numeroFactura?: string | null;
         };
         EdicionVentaDto: {
             /** Format: uuid */
@@ -17036,6 +19762,27 @@ export interface components {
             motivo?: string | null;
             /** Format: int32 */
             version?: number | null;
+        };
+        EmisionArcaDto: {
+            estado: string;
+            /** Format: int64 */
+            numero?: number | null;
+            cae?: string | null;
+            /** Format: date */
+            caeVencimiento?: string | null;
+            detalle?: string | null;
+            /** Format: int32 */
+            intentos: number;
+        };
+        EmisionArcaDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["EmisionArcaDto"];
+            codigo?: string | null;
         };
         EmitirNotaCreditoCommand: {
             /** Format: uuid */
@@ -17094,6 +19841,8 @@ export interface components {
         EstadoCheque: "EnCartera" | "Depositado" | "Acreditado" | "Rechazado" | "Endosado" | "Entregado";
         /** @enum {string} */
         EstadoCompra: "NotaPedido" | "Confirmado" | "Entregado" | "Cancelada" | "Anulada";
+        /** @enum {string} */
+        EstadoCot: "NoRequiere" | "Requiere" | "PesoIncompleto";
         EstadoCuentaDto: {
             /** Format: uuid */
             socioComercialId: string;
@@ -17139,6 +19888,8 @@ export interface components {
         EstadoTransferenciaStock: "Borrador" | "Despachada" | "Recibida" | "Cancelada";
         /** @enum {string} */
         EstadoVenta: "Pendiente" | "Confirmada" | "EnPreparacion" | "Empacada" | "EnRuta" | "Entregada" | "NoEntregada" | "Anulada" | "PendienteAutorizacion" | "Vencido" | "RechazadaAutorizacion";
+        /** @enum {string} */
+        EstadoVigenciaCot: "Anterior" | "Vigente" | "Programada";
         /** @enum {string} */
         EstadoVigenciaRegla: "Todas" | "Vigentes" | "Historicas" | "Futuras";
         EtiquetaDto: {
@@ -17204,12 +19955,43 @@ export interface components {
             newPassword?: string | null;
             confirmNewPassword?: string | null;
         };
+        ExigirFotoRemitoAlEntregarDto: {
+            exigirFotoRemitoAlEntregar: boolean;
+        };
+        FacturaAPedidoDto: {
+            factura: components["schemas"]["FacturaDto"];
+            cuentaMudada: boolean;
+            /** Format: double */
+            deudaMudada: number;
+            /** Format: double */
+            cobrosMudados: number;
+            /** Format: int32 */
+            cantidadCobrosMudados: number;
+            productosSinStockFiscal: string[];
+        };
+        FacturaAPedidoDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["FacturaAPedidoDto"];
+            codigo?: string | null;
+        };
         FacturaAlicuotaDto: {
             alicuota: components["schemas"]["AlicuotaIva"];
             /** Format: double */
             baseImponible: number;
             /** Format: double */
             iva: number;
+        };
+        FacturaCubiertaFichaDto: {
+            /** Format: uuid */
+            facturaId: string;
+            /** Format: double */
+            monto: number;
+            numeroFactura?: string | null;
         };
         FacturaDto: {
             /** Format: uuid */
@@ -17228,6 +20010,12 @@ export interface components {
             origen: components["schemas"]["OrigenFactura"];
             /** Format: date */
             fechaEmision: string;
+            /** Format: date */
+            fechaServicioDesde?: string | null;
+            /** Format: date */
+            fechaServicioHasta?: string | null;
+            /** Format: date */
+            fechaVencimientoPago?: string | null;
             /** Format: int32 */
             periodoFiscal: number;
             /** Format: uuid */
@@ -17243,6 +20031,8 @@ export interface components {
             facturaAsociadaId?: string | null;
             /** Format: uuid */
             notaCreditoId?: string | null;
+            /** Format: uuid */
+            dadaDeBajaPorNotaCreditoId?: string | null;
             receptorRazonSocial: string;
             receptorDomicilio: string;
             condicionIvaReceptor: components["schemas"]["CondicionIvaReceptor"];
@@ -17261,6 +20051,8 @@ export interface components {
             /** Format: date */
             caeVencimiento?: string | null;
             motivoBaja?: string | null;
+            fueraDeTermino: boolean;
+            motivoFueraDeTermino?: string | null;
             items: components["schemas"]["FacturaItemDto"][];
             alicuotas: components["schemas"]["FacturaAlicuotaDto"][];
         };
@@ -17310,13 +20102,27 @@ export interface components {
             /** Format: date */
             fechaEmision: string;
             receptorRazonSocial: string;
+            docTipo: components["schemas"]["TipoDocumentoReceptor"];
+            /** Format: int64 */
+            docNro: number;
+            /** Format: double */
+            netoGravado: number;
+            /** Format: double */
+            iva: number;
             /** Format: double */
             total: number;
+            readonly discriminaIva: boolean;
+            cae?: string | null;
             /** Format: uuid */
             ventaId?: string | null;
+            /** Format: uuid */
+            hojaDeRutaId?: string | null;
+            readonly hojaDeRutaCodigo?: string | null;
             esNotaCredito: boolean;
             /** Format: uuid */
             facturaAsociadaId?: string | null;
+            /** Format: uuid */
+            dadaDeBajaPorNotaCreditoId?: string | null;
         };
         FacturaResumenDtoPaginatedResponse: {
             /** Format: int32 */
@@ -17339,6 +20145,10 @@ export interface components {
             errors?: string[] | null;
             data?: components["schemas"]["FacturaResumenDtoPaginatedResponse"];
             codigo?: string | null;
+        };
+        FacturarAPedidoCommand: {
+            confirmarFueraDeTermino?: boolean;
+            motivo?: string | null;
         };
         FaltanteStockFiscalDto: {
             /** Format: uuid */
@@ -17582,6 +20392,7 @@ export interface components {
             detalles: components["schemas"]["ParadaDto"][];
             /** Format: double */
             totalMontoCobrar?: number | null;
+            exigeFotoRemitoAlEntregar: boolean;
         };
         HojaRutaListItemDto: {
             /** Format: uuid */
@@ -17653,6 +20464,47 @@ export interface components {
         };
         /** @enum {string} */
         ImputacionOrigen: "AutomaticaFifo" | "SaldoAFavor" | "Manual" | "NotaCredito";
+        IndicadorFacturadoDto: {
+            /** Format: int32 */
+            cantidadEntregadas: number;
+            /** Format: double */
+            importeEntregado: number;
+            /** Format: int32 */
+            cantidadFacturadas: number;
+            /** Format: double */
+            importeFacturado: number;
+            /** Format: double */
+            porcentaje?: number | null;
+        };
+        IndicadorFiscalRealDto: {
+            /** Format: double */
+            unidadesFiscales: number;
+            /** Format: double */
+            unidadesReales: number;
+            /** Format: double */
+            porcentaje?: number | null;
+            /** Format: int32 */
+            productosFiscalSobreReal: number;
+            /** Format: int32 */
+            productosFiscalNegativo: number;
+        };
+        IndicadoresFacturacionDto: {
+            /** Format: int32 */
+            periodo: number;
+            mes: components["schemas"]["IndicadorFacturadoDto"];
+            acumulado: components["schemas"]["IndicadorFacturadoDto"];
+            fiscalReal: components["schemas"]["IndicadorFiscalRealDto"];
+        };
+        IndicadoresFacturacionDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["IndicadoresFacturacionDto"];
+            codigo?: string | null;
+        };
         IniciarPreparacionMasivaRequest: {
             ventaIds?: string[] | null;
         };
@@ -17732,6 +20584,14 @@ export interface components {
         };
         /** @enum {string} */
         LetraComprobante: "A" | "B" | "C";
+        LineaConceptoDto: {
+            descripcion?: string | null;
+            /** Format: double */
+            cantidad?: number;
+            /** Format: double */
+            precioUnitario?: number;
+            alicuota?: components["schemas"]["AlicuotaIva"];
+        };
         LineaDevolucionInput: {
             /** Format: uuid */
             compraDetalleId?: string;
@@ -17855,6 +20715,8 @@ export interface components {
             porcentajeComisionConfigurado?: number | null;
         };
         /** @enum {string} */
+        MotivoCot: "Importe" | "Peso" | "UmbralPropio";
+        /** @enum {string} */
         MotivoRiesgo: "SinCompras" | "Caida";
         MovimientoCajaDto: {
             /** Format: uuid */
@@ -17933,6 +20795,13 @@ export interface components {
             /** Format: double */
             saldoPendiente: number;
             tipoCuenta: components["schemas"]["TipoCuentaSocio"];
+        };
+        MovimientoPeriodoFiscalDto: {
+            tipo: components["schemas"]["TipoMovimientoPeriodoFiscal"];
+            /** Format: date-time */
+            fecha: string;
+            usuario: string;
+            motivo?: string | null;
         };
         MovimientoSocioDto: {
             /** Format: uuid */
@@ -18140,6 +21009,8 @@ export interface components {
             piso?: components["schemas"]["PisoVerdict"];
         };
         /** @enum {string} */
+        OrigenComprobanteRecibido: "Compra" | "Gasto" | "DevolucionProveedor";
+        /** @enum {string} */
         OrigenEventoCalendario: "Automatico" | "Manual";
         /** @enum {string} */
         OrigenFactura: "Viaje" | "Despacho" | "APedido" | "PorConcepto";
@@ -18181,6 +21052,7 @@ export interface components {
             montoTotalMoneda?: string | null;
             medioPago: string;
             ventasCubiertas: components["schemas"]["VentaCubiertaFichaDto"][];
+            facturasCubiertas?: components["schemas"]["FacturaCubiertaFichaDto"][] | null;
         };
         PagoFichaResumenDto: {
             /** Format: uuid */
@@ -18238,6 +21110,18 @@ export interface components {
             remitoId?: string | null;
             remitoNumero?: string | null;
             estadoRemito?: components["schemas"]["EstadoRemito"];
+            /** Format: uuid */
+            facturaId?: string | null;
+            facturaLetra?: components["schemas"]["LetraComprobante"];
+            facturaTipo?: components["schemas"]["TipoComprobanteEmitido"];
+            facturaNumero?: string | null;
+            estadoFactura?: components["schemas"]["EstadoFactura"];
+            saleSinFacturaAutorizada: boolean;
+            saleSinFacturaMotivo?: string | null;
+            /** Format: date-time */
+            saleSinFacturaAutorizadaEn?: string | null;
+            /** Format: uuid */
+            saleSinFacturaAutorizadaPorId?: string | null;
         };
         ParadaDto: {
             /** Format: uuid */
@@ -18277,12 +21161,76 @@ export interface components {
             /** Format: double */
             longitud?: number;
         };
+        PedidoSinFacturaDto: {
+            /** Format: uuid */
+            ventaId: string;
+            /** Format: int64 */
+            numeroPedido?: number | null;
+            readonly codigoPedido?: string | null;
+            /** Format: uuid */
+            clienteId: string;
+            cliente: string;
+            /** Format: double */
+            total: number;
+            /** Format: double */
+            montoPagado?: number | null;
+            conFactura: boolean;
+            /** Format: date */
+            fechaEntrega: string;
+            /** Format: date */
+            venceEl: string;
+            fueraDeTermino: boolean;
+            /** Format: uuid */
+            remitoId?: string | null;
+            remitoNumero?: string | null;
+        };
+        PedidoSinFacturaDtoPaginatedResponse: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            readonly hasNextPage?: boolean;
+            items?: components["schemas"]["PedidoSinFacturaDto"][] | null;
+        };
+        PedidoSinFacturaDtoPaginatedResponseResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["PedidoSinFacturaDtoPaginatedResponse"];
+            codigo?: string | null;
+        };
         PeriodoDto: {
             /** Format: date */
             desde?: string;
             /** Format: date */
             hasta?: string;
         };
+        PeriodoFiscalDto: {
+            /** Format: int32 */
+            periodo: number;
+            cerrado: boolean;
+            puedeCerrarse: boolean;
+            historial: components["schemas"]["MovimientoPeriodoFiscalDto"][];
+        };
+        PeriodoFiscalDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["PeriodoFiscalDto"];
+            codigo?: string | null;
+        };
+        /** @enum {string} */
+        PestanaComprobantes: "Emitidos" | "Recibidos";
         PisoDesgloseDto: {
             /** Format: double */
             costo?: number | null;
@@ -18306,6 +21254,64 @@ export interface components {
         PisoVerdict: "Rojo" | "Amarillo" | "Verde";
         /** @enum {string} */
         PoliticaDuplicados: "Omitir" | "Actualizar" | "CrearIgual";
+        PosicionIvaAlicuotaDto: {
+            alicuota: components["schemas"]["AlicuotaIva"];
+            /** Format: double */
+            porcentaje: number;
+            /** Format: double */
+            netoVentas: number;
+            /** Format: double */
+            debito: number;
+            /** Format: double */
+            netoCompras: number;
+            /** Format: double */
+            credito: number;
+            /** Format: double */
+            saldo: number;
+        };
+        PosicionIvaDto: {
+            /** Format: int32 */
+            periodo: number;
+            /** Format: double */
+            debito: number;
+            /** Format: double */
+            credito: number;
+            /** Format: double */
+            saldo: number;
+            alicuotas: components["schemas"]["PosicionIvaAlicuotaDto"][];
+            /** Format: int32 */
+            facturasSinRegistrar: number;
+        };
+        PosicionIvaDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["PosicionIvaDto"];
+            codigo?: string | null;
+        };
+        PosicionIvaMesDto: {
+            /** Format: int32 */
+            periodo: number;
+            /** Format: double */
+            debito: number;
+            /** Format: double */
+            credito: number;
+            /** Format: double */
+            saldo: number;
+        };
+        PosicionIvaMesDtoListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["PosicionIvaMesDto"][] | null;
+            codigo?: string | null;
+        };
         PreferenciaNotificacionDto: {
             tipo: components["schemas"]["TipoNotificacion"];
             severidad: components["schemas"]["SeveridadNotificacion"];
@@ -18369,6 +21375,7 @@ export interface components {
             markupPorcentaje?: number | null;
             /** Format: double */
             margenBrutoPorcentaje?: number | null;
+            ultimaCompra?: components["schemas"]["UltimaCompraProductoDto"];
             imageUrl?: string | null;
             imageUrlLinea?: string | null;
             unidadMedida: string;
@@ -18436,6 +21443,11 @@ export interface components {
             pesoKg?: number | null;
             /** Format: double */
             cotUmbralPropioKg?: number | null;
+            hayDisponible?: boolean | null;
+            /** Format: int32 */
+            cantidadFragancias?: number | null;
+            /** Format: double */
+            ventaMinimaUnidades?: number | null;
         };
         ProductoDtoPaginatedResponse: {
             /** Format: int32 */
@@ -18477,6 +21489,25 @@ export interface components {
             errors?: string[] | null;
             data?: components["schemas"]["ProductoProveedorDto"][] | null;
             codigo?: string | null;
+        };
+        ProductoSinCostoCot: {
+            /** Format: uuid */
+            productoId?: string;
+            producto?: string | null;
+        };
+        ProductoSinPesoCot: {
+            /** Format: uuid */
+            productoId?: string;
+            producto?: string | null;
+        };
+        ProductoUmbralPropioCot: {
+            /** Format: uuid */
+            productoId?: string;
+            producto?: string | null;
+            /** Format: double */
+            pesoKg?: number;
+            /** Format: double */
+            umbralKg?: number;
         };
         PuestoDetalleDto: {
             /** Format: uuid */
@@ -18577,6 +21608,11 @@ export interface components {
             data?: components["schemas"]["RankingVentasDto"];
             codigo?: string | null;
         };
+        ReabrirPeriodoFiscalCommand: {
+            /** Format: int32 */
+            periodo?: number;
+            motivo?: string | null;
+        };
         ReactivarSocioCommand: {
             /** Format: uuid */
             socioId?: string;
@@ -18621,6 +21657,9 @@ export interface components {
         RechazarChequeCommand: {
             /** Format: uuid */
             chequeId?: string;
+            motivo?: string | null;
+        };
+        RechazarDevolucionRequest: {
             motivo?: string | null;
         };
         RecibirCompraCommand: {
@@ -18770,6 +21809,7 @@ export interface components {
             chequesPropiosEntregados?: components["schemas"]["ChequeDetalleItem"][] | null;
             chequesAEndosar?: string[] | null;
             tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
+            claveIdempotencia?: string | null;
             /**
              * Format: uuid
              * @deprecated
@@ -18785,6 +21825,7 @@ export interface components {
             fechaOperacion?: string | null;
             imputaciones?: components["schemas"]["ImputacionManualItem"][] | null;
             tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
+            claveIdempotencia?: string | null;
             comprobanteUrl?: string | null;
             /** Format: uuid */
             depositoId?: string | null;
@@ -19051,10 +22092,51 @@ export interface components {
             /** Format: double */
             participacionPorcentaje?: number;
         };
+        ResumenComprobantesDto: {
+            /** Format: int32 */
+            periodo: number;
+            emitidos: components["schemas"]["TotalesComprobantesDto"];
+            recibidos: components["schemas"]["TotalesComprobantesDto"];
+            /** Format: int32 */
+            pendientesCae: number;
+        };
+        ResumenComprobantesDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ResumenComprobantesDto"];
+            codigo?: string | null;
+        };
         ResumenNivelDto: {
             nivel?: string | null;
             /** Format: int32 */
             cantidad?: number;
+        };
+        ResumenVendedorDto: {
+            /** Format: int32 */
+            anio: number;
+            /** Format: int32 */
+            mes: number;
+            periodo: components["schemas"]["PeriodoDto"];
+            /** Format: uuid */
+            vendedorId?: string | null;
+            puedeElegirVendedor: boolean;
+            ventas: components["schemas"]["VentasDelMesDto"];
+            comisiones: components["schemas"]["ComisionesDelMesDto"];
+            cobrosPendientes: components["schemas"]["CobrosPendientesDto"];
+        };
+        ResumenVendedorDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ResumenVendedorDto"];
+            codigo?: string | null;
         };
         ResumenVentasDto: {
             periodo?: components["schemas"]["PeriodoDto"];
@@ -19105,6 +22187,9 @@ export interface components {
             pagoId?: string;
             motivo?: string | null;
             confirmaRecuperoFisico?: boolean;
+        };
+        SalidaSinFacturaRequest: {
+            motivo?: string | null;
         };
         SaludRentabilidadDto: {
             /** Format: double */
@@ -19348,6 +22433,12 @@ export interface components {
             direccion?: string | null;
             motivo?: string | null;
         };
+        SolicitarDevolucionCommand: {
+            /** Format: uuid */
+            ventaId?: string;
+            motivo?: string | null;
+            items?: components["schemas"]["NotaCreditoItemInput"][] | null;
+        };
         SolicitudCambioDto: {
             /** Format: uuid */
             id: string;
@@ -19376,6 +22467,8 @@ export interface components {
             activo: boolean;
             /** Format: double */
             stockRealTotal: number;
+            desvio: components["schemas"]["DesvioStockFiscal"];
+            tieneComprasConFactura: boolean;
         };
         StockFiscalProductoDtoPaginatedResponse: {
             /** Format: int32 */
@@ -19450,6 +22543,7 @@ export interface components {
             stockRealTotal: number;
             fiscalSuperaReal: boolean;
             fiscalNegativo: boolean;
+            puedeVenderse: boolean;
         };
         StockListResponsePaginatedResponse: {
             /** Format: int32 */
@@ -19642,6 +22736,8 @@ export interface components {
             variacion?: number | null;
         };
         /** @enum {string} */
+        TipoDocumentoPendiente: "Venta" | "Compra" | "FacturaPorConcepto";
+        /** @enum {string} */
         TipoDocumentoReceptor: "Cuit" | "Dni" | "SinIdentificar";
         /** @enum {string} */
         TipoEventoCalendario: "VencimientoCompra" | "ChequeEmitido" | "ChequeRecibido" | "ServicioRecurrente" | "ObligacionPeriodica" | "Manual";
@@ -19654,6 +22750,8 @@ export interface components {
         /** @enum {string} */
         TipoImportacion: "Socios" | "Productos" | "Compras" | "Ventas" | "Categorias" | "ReglasComision";
         /** @enum {string} */
+        TipoLibroIva: "Ventas" | "Compras";
+        /** @enum {string} */
         TipoMovimientoCaja: "Ingreso" | "Egreso";
         /** @enum {string} */
         TipoMovimientoCuenta: "Deuda" | "Pago" | "ReversionAnulacion" | "Gasto" | "MovimientoInterno" | "TransaccionTesoreria" | "Apertura" | "Cheque" | "TarjetaAcreditacion" | "NotaCredito" | "NotaCreditoDevolucion" | "PagoLineaCuentaPropia" | "CierreCaja" | "AperturaCaja" | "ChequeCartera" | "MovimientoManualVendedor" | "DevengoComisionVendedor" | "ReversionComisionVendedor" | "PagoComisionVendedor" | "ReclasificacionCuenta" | "DevolucionProveedor" | "AjusteDevolucionProveedor";
@@ -19664,11 +22762,13 @@ export interface components {
             activo?: boolean;
         };
         /** @enum {string} */
+        TipoMovimientoPeriodoFiscal: "Cierre" | "Reapertura";
+        /** @enum {string} */
         TipoMovimientoStock: "Compra" | "Venta" | "Transferencia" | "Ajuste";
         /** @enum {string} */
         TipoMovimientoStockFiscal: "CompraFacturada" | "AnulacionCompra" | "DevolucionProveedor" | "VentaFacturada" | "AnulacionFactura" | "NotaCredito" | "NotaDebito" | "AjusteManual" | "AnulacionDevolucionProveedor" | "AnulacionNotaCredito";
         /** @enum {string} */
-        TipoNotificacion: "CajaSinCerrar" | "PedidoEditadoPorDeposito" | "SocioProvisorioPorVencer" | "SocioDesactivadoAutomaticamente" | "SolicitudCambioSocio" | "SolicitudCambioResuelta" | "ImportacionCompletada" | "VentaNoEntregada" | "PresupuestoPorVencer" | "ChequePorVencer" | "VentaRechazadaAutorizacion" | "VentaPendienteAutorizacion" | "VentaAutorizada" | "PagoProveedorPorVencer" | "PagoProveedorVencido" | "VentaRegularizadaPorCobro" | "VencimientoCalendario" | "RecordatorioPersonal" | "ResumenSemanal" | "ResumenMensual" | "EntregasPasadasAlProximoDia" | "FiscalSuperaStockReal" | "TalonarioRemitoPorVencer" | "TalonarioRemitoPorAgotarse";
+        TipoNotificacion: "CajaSinCerrar" | "PedidoEditadoPorDeposito" | "SocioProvisorioPorVencer" | "SocioDesactivadoAutomaticamente" | "SolicitudCambioSocio" | "SolicitudCambioResuelta" | "ImportacionCompletada" | "VentaNoEntregada" | "PresupuestoPorVencer" | "ChequePorVencer" | "VentaRechazadaAutorizacion" | "VentaPendienteAutorizacion" | "VentaAutorizada" | "PagoProveedorPorVencer" | "PagoProveedorVencido" | "VentaRegularizadaPorCobro" | "VencimientoCalendario" | "RecordatorioPersonal" | "ResumenSemanal" | "ResumenMensual" | "EntregasPasadasAlProximoDia" | "FiscalSuperaStockReal" | "TalonarioRemitoPorVencer" | "TalonarioRemitoPorAgotarse" | "RemitosSinFacturaAntesDelCierre" | "RemitosEntregadosSinFactura" | "RemitosSinFacturaAlCierre";
         /** @enum {string} */
         TipoOferta: "Porcentaje" | "PrecioFijo";
         /** @enum {string} */
@@ -19696,6 +22796,12 @@ export interface components {
         TopeCreditoDto: {
             /** Format: double */
             monto?: number | null;
+        };
+        TotalesComprobantesDto: {
+            /** Format: int32 */
+            cantidad: number;
+            /** Format: double */
+            total: number;
         };
         TotalesDescuentoDto: {
             /** Format: double */
@@ -19746,6 +22852,7 @@ export interface components {
             /** Format: int32 */
             version: number;
             items: components["schemas"]["TransferenciaStockItemDto"][];
+            cot?: components["schemas"]["CotDto"];
         };
         TransferenciaStockDtoResponse: {
             /** Format: int32 */
@@ -19840,6 +22947,44 @@ export interface components {
             /** Format: double */
             importe?: number;
         };
+        UltimaCompraProductoDto: {
+            /** Format: date */
+            fecha: string;
+            proveedorNombre?: string | null;
+            /** Format: double */
+            costoUnitario: number;
+            /** Format: double */
+            variacionCostoPorcentaje?: number | null;
+        };
+        UmbralCotDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: double */
+            importeNeto: number;
+            /** Format: double */
+            pesoKg: number;
+            /** Format: date */
+            vigenteDesde: string;
+            /** Format: date */
+            vigenteHasta?: string | null;
+            estado: components["schemas"]["EstadoVigenciaCot"];
+            /** Format: date-time */
+            fechaCreacion: string;
+        };
+        UmbralesCotDto: {
+            vigente?: components["schemas"]["UmbralCotDto"];
+            historial: components["schemas"]["UmbralCotDto"][];
+        };
+        UmbralesCotDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["UmbralesCotDto"];
+            codigo?: string | null;
+        };
         /** @enum {string} */
         UnidadCompra: "Unidad" | "Bulto" | "BultoMadre";
         UpdateCategoriaCommand: {
@@ -19918,6 +23063,9 @@ export interface components {
             /** Format: double */
             altoMm?: number;
             conLineaDeCorte?: boolean;
+        };
+        UpdateExigirFotoRemitoAlEntregarCommand: {
+            exigirFotoRemitoAlEntregar?: boolean | null;
         };
         UpdateFraganciaCommand: {
             /** Format: uuid */
@@ -20558,6 +23706,18 @@ export interface components {
             /** Format: uuid */
             hojaRutaId?: string | null;
             readonly hojaRutaCodigo?: string | null;
+        };
+        VentasDelMesDto: {
+            /** Format: double */
+            facturado: number;
+            /** Format: int32 */
+            operaciones: number;
+            /** Format: double */
+            ticketPromedio: number;
+            /** Format: double */
+            cobrado: number;
+            /** Format: double */
+            margenBrutoPorcentaje?: number | null;
         };
         VentasResumenDto: {
             /** Format: double */

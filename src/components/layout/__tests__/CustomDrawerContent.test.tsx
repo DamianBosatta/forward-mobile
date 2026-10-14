@@ -49,7 +49,7 @@ const comoAdmin = () => {
 const FUERA_DE_ALCANCE = ['Usuarios', 'Depósitos', 'Proveedores', 'Cargas masivas', 'Viajes', 'Vehículos', 'Picking', 'Perfiles', 'Roles']
 
 // Sin pantalla todavía: no se ofrecen enlaces a pantallas que no existen.
-const SIN_PANTALLA = ['Reportes']
+const SIN_PANTALLA: string[] = []
 
 const APROBADOS = [
   'Inicio',
@@ -60,6 +60,7 @@ const APROBADOS = [
   'Cuentas corrientes',
   'Transferencias y cheques',
   'Calendario',
+  'Reportes',
   'Consola del chofer',
   'Pedidos por preparar',
   'Mi cuenta y contraseña',
@@ -124,7 +125,7 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     conPermisos('MOD_VENTAS:read', 'MOD_VENTAS:create', 'MOD_CLIENTES:read', 'MOD_STOCK:read', 'MOD_CC:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Ventas', 'Clientes', 'Catálogo y stock', 'Cuentas corrientes', 'Calendario', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Ventas', 'Clientes', 'Catálogo y stock', 'Cuentas corrientes', 'Calendario', 'Reportes', 'Mi cuenta y contraseña'])
     expect(screen.getByText('Tesorería')).toBeTruthy()
     // Un grupo sin entradas visibles no deja su título colgado.
     expect(screen.queryByText('Logística')).toBeNull()
@@ -134,7 +135,7 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     conPermisos('MOD_VENTAS:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Ventas', 'Calendario', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Ventas', 'Calendario', 'Reportes', 'Mi cuenta y contraseña'])
   })
 
   it('un chofer (lee ventas pero no las crea) ve su consola y no el módulo de ventas', () => {

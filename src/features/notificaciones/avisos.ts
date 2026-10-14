@@ -38,6 +38,9 @@ export const AVISO_POR_TIPO: Record<TipoNotificacion, { etiqueta: string; Icono:
   FiscalSuperaStockReal: { etiqueta: 'Stock fiscal por encima del real', Icono: FileWarning },
   TalonarioRemitoPorVencer: { etiqueta: 'CAI de remitos por vencer', Icono: Receipt },
   TalonarioRemitoPorAgotarse: { etiqueta: 'Talonario de remitos por agotarse', Icono: Receipt },
+  RemitosSinFacturaAntesDelCierre: { etiqueta: 'Remitos por facturar antes del cierre', Icono: Receipt },
+  RemitosEntregadosSinFactura: { etiqueta: 'Remitos entregados sin factura', Icono: Receipt },
+  RemitosSinFacturaAlCierre: { etiqueta: 'Remitos sin facturar al cierre del mes', Icono: FileWarning },
 }
 
 /**
@@ -58,6 +61,7 @@ export const RUTA_POR_DESTINO: Record<AccionDestino, (id: string | null) => stri
   Calendario: () => '/calendario',
   Inventario: () => '/inventario',
   ConfiguracionFacturacion: () => null, // Talonarios y CAI se cargan desde la web.
+  PosicionIva: () => null, // La posición de IVA es de la web.
 }
 
 export function rutaDeAccion(accion: AccionSugerida | null | undefined): string | null {
