@@ -10,6 +10,8 @@ export interface TopBarAction {
   icon: LucideIcon
   accessibilityLabel: string
   onPress: () => void
+  /** Se ve atenuada y no responde (p. ej. "Mes siguiente" en el mes en curso). */
+  disabled?: boolean
 }
 
 export interface TopBarTab {
@@ -75,13 +77,15 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, tabs
             <Text style={{ ...typeScale.secundario, color: colors.onTopBar }}>{syncLabel}</Text>
           </View>
         ) : null}
-        {actions.map(({ icon: Icono, accessibilityLabel, onPress }) => (
+        {actions.map(({ icon: Icono, accessibilityLabel, onPress, disabled = false }) => (
           <Pressable
             key={accessibilityLabel}
             onPress={onPress}
+            disabled={disabled}
             accessibilityRole="button"
             accessibilityLabel={accessibilityLabel}
-            style={{ width: TOCABLE, height: TOCABLE, alignItems: 'center', justifyContent: 'center' }}
+            accessibilityState={{ disabled }}
+            style={{ width: TOCABLE, height: TOCABLE, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.4 : 1 }}
           >
             <Icono size={22} color={colors.onTopBarStrong} strokeWidth={2} />
           </Pressable>
