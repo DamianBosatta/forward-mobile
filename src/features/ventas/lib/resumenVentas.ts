@@ -2,7 +2,8 @@ import { formatImporte } from '@/core/ui/fw/formatImporte'
 import { textoContador } from '@/features/listas/lib/contador'
 import type { EstadoVentaServidor, VentasResumen } from '@/libs/api-client/ventas'
 
-/** TipoOperacionVenta del servidor: 2 = Pedido. */
+/** TipoOperacionVenta del servidor: 1 = Presupuesto, 2 = Pedido. */
+const PRESUPUESTO = 1
 const PEDIDO = 2
 /** Estados que nunca son plata: `totalVendido` los deja afuera. */
 const SIN_IMPORTE: readonly EstadoVentaServidor[] = ['Anulada', 'RechazadaAutorizacion']
@@ -16,14 +17,17 @@ export function resumenFiltrado(r: VentasResumen | undefined): r is VentasResume
 }
 
 /**
- * Importe del filtro para el contador. `totalVendido` suma solo pedidos sin anuladas ni rechazadas:
- * en presupuestos o mirando solo anuladas daría $ 0 al lado de ventas con importe, así que no se
- * muestra (el servidor no da otro importe para esos casos).
+ * Importe del filtro para el contador. `totalVendido` suma solo pedidos y `totalPresupuestado` solo
+ * presupuestos, los dos sin anuladas ni rechazadas: mirando solo anuladas darían $ 0 al lado de ventas
+ * con importe, así que no se muestran. Sin `totalPresupuestado` (servidor anterior a la prioridad 3
+ * del bloque 9) los presupuestos van sin importe.
  */
 function importeDelFiltro(r: VentasResumen | undefined, tipoOperacion: number, estados: readonly string[]): string | null {
-  if (!resumenFiltrado(r) || tipoOperacion !== PEDIDO || typeof r.totalVendido !== 'number') return null
+  if (!resumenFiltrado(r)) return null
+  const total = tipoOperacion === PEDIDO ? r.totalVendido : tipoOperacion === PRESUPUESTO ? r.totalPresupuestado : undefined
+  if (typeof total !== 'number') return null
   if (estados.length > 0 && estados.every((e) => SIN_IMPORTE.includes(e as EstadoVentaServidor))) return null
-  return formatImporte(r.totalVendido)
+  return formatImporte(total)
 }
 
 /**

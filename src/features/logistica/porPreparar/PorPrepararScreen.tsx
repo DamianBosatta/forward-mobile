@@ -92,7 +92,12 @@ export function PorPrepararScreen() {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2], marginTop: space[1] }}>
           <Text style={{ ...typeScale.secundario, color: c.text, flex: 1 }}>{v.metodoEntregaNombre}</Text>
           <Text style={{ ...typeScale.secundario, ...semibold, color: c.text }}>
-            {[plural(v.itemsCount, 'línea', 'líneas'), v.piezasCount > 0 ? plural(v.piezasCount, 'bulto', 'bultos') : null].filter(Boolean).join(' · ')}
+            {[
+              plural(v.itemsCount, 'línea', 'líneas'),
+              // La suma la da el servidor (9B, prioridad 3); uno anterior no la manda.
+              typeof v.unidadesCount === 'number' ? `${v.unidadesCount} u.` : null,
+              v.piezasCount > 0 ? plural(v.piezasCount, 'bulto', 'bultos') : null,
+            ].filter(Boolean).join(' · ')}
           </Text>
         </View>
       </Pressable>

@@ -168,3 +168,23 @@ describe('detalle de la venta: motivo de anulación y fragancias (forward-system
     expect(screen.queryByText(/· fragancias/)).toBeNull()
   })
 })
+
+describe('detalle de la venta: vencimiento del saldo (forward-system, 9B prioridad 3)', () => {
+  function conPagos(extra: object) {
+    const base = mockGet.getMockImplementation()!
+    mockGet.mockImplementation((url: string) => (url === '/api/v1/Ventas/v9/pagos' ? Promise.resolve({ ...pagos, ...extra }) : base(url)))
+  }
+
+  it('bajo el saldo dice cuándo vence y el plazo, los dos del servidor', async () => {
+    conPagos({ vencimientoSaldo: '2026-11-07', plazoVencimientoDias: 30 })
+    pantalla()
+    expect(await screen.findByText('Vence el 7 de noviembre (30 días)')).toBeTruthy()
+  })
+
+  it('sin vencimiento (servidor anterior o venta sin deuda) no dice nada nuevo', async () => {
+    conPagos({ vencimientoSaldo: null })
+    pantalla()
+    expect(await screen.findByText('Saldo del pedido')).toBeTruthy()
+    expect(screen.queryByText(/Vence/)).toBeNull()
+  })
+})

@@ -4,8 +4,30 @@ import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, StatusChip, chipForEstado } from '@/core/ui/fw'
 import { useVenta } from '@/libs/api-client'
 import type { VentaPreparacion } from '@/libs/api-client/logistica'
+import type { VentaDetalleItemDto } from '@/libs/api-client/types'
 import { tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { parseDateSafe } from '@/src/utils/date'
+
+type Empaque = NonNullable<VentaDetalleItemDto['empaque']>
+
+const enBultos = (n: number, de: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios} de ${de}`
+
+/**
+ * "48 u. · 4 bultos de 12" (lámina PedidosPorPreparar). El desglose lo arma el servidor (9B,
+ * prioridad 3); sin empaque (producto sin bulto o servidor anterior) solo las unidades.
+ */
+function textoCantidad(cantidad: number, empaque: Empaque | null | undefined): string {
+  if (!empaque) return `${cantidad} u.`
+  const partes = [
+    empaque.bultosMadre > 0 && empaque.unidadesPorBultoMadre
+      ? enBultos(empaque.bultosMadre, empaque.unidadesPorBultoMadre, 'bulto madre', 'bultos madre') : null,
+    empaque.bultos > 0 ? enBultos(empaque.bultos, empaque.unidadesPorBulto, 'bulto', 'bultos') : null,
+    empaque.unidadesSueltas > 0 ? `${empaque.unidadesSueltas} u.` : null,
+  ].filter(Boolean)
+  if (partes.length === 0) return `${cantidad} u.`
+  const desglose = partes.length === 1 ? partes[0] : `${partes.slice(0, -1).join(', ')} y ${partes[partes.length - 1]}`
+  return `${cantidad} u. · ${desglose}`
+}
 
 /** Panel de detalle de la lámina TabPedidosPorPreparar: qué sale, cuándo y qué hay que preparar. */
 export function PedidoPorPrepararDetalle({ pedido }: { pedido: VentaPreparacion }) {
@@ -58,7 +80,7 @@ export function PedidoPorPrepararDetalle({ pedido }: { pedido: VentaPreparacion 
               }}
             >
               <Text style={{ ...typeScale.cuerpo, color: c.text, flex: 1 }}>{l.productoNombre}</Text>
-              <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{`${l.cantidad} u.`}</Text>
+              <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{textoCantidad(l.cantidad, l.empaque)}</Text>
             </View>
           ))}
         </View>

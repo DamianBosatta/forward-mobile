@@ -19,14 +19,15 @@ export function fechaSesion(iso: string | null | undefined, conHora = true): str
 }
 
 /**
- * Sesiones abiertas (lámina MiCuenta). Muestra lo que manda el servidor, sin estados
- * inventados: no hay forma de saber cuál es la de este teléfono, así que no se marca.
+ * Sesiones abiertas (lámina MiCuenta). Muestra lo que manda el servidor, sin estados inventados:
+ * "Este dispositivo" y la última actividad solo si el servidor los da (9B, prioridad 3); la actual
+ * va primero.
  */
 export function SesionesAbiertas() {
   const c = useColors()
   const q = useSesiones()
   const cerrar = useCerrarSesionAbierta()
-  const sesiones = q.data ?? []
+  const sesiones = [...(q.data ?? [])].sort((a, b) => Number(!!b.esActual) - Number(!!a.esActual))
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
 
   return (
@@ -54,9 +55,11 @@ export function SesionesAbiertas() {
                 {dispositivo}
               </Text>
               {/* Si no se reconoce, el User-Agent crudo es lo único que queda para identificarlo. */}
+              {s.esActual ? <Text style={[typeScale.secundario, { color: c.brand }]}>Este dispositivo</Text> : null}
               {dispositivo === DISPOSITIVO_DESCONOCIDO && crudo ? <Text numberOfLines={1} style={secundario}>{crudo}</Text> : null}
               <Text style={secundario}>{`IP ${s.ip}`}</Text>
-              <Text style={secundario}>{`Inició el ${fechaSesion(s.createdAt)} · Vence el ${fechaSesion(s.expiresAt, false)}`}</Text>
+              <Text style={secundario}>{`Inició el ${fechaSesion(s.iniciadaEn ?? s.createdAt)} · Vence el ${fechaSesion(s.expiresAt, false)}`}</Text>
+              {s.ultimaActividad ? <Text style={secundario}>{`Última actividad: ${fechaSesion(s.ultimaActividad)}`}</Text> : null}
             </View>
             <Button
               label="Cerrar"

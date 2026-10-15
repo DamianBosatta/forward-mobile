@@ -43,6 +43,12 @@ export interface SesionAbierta {
   expiresAt: string | null
   device: string
   ip: string
+  /** La sesión del token de este teléfono (9B, prioridad 3). Un servidor anterior no lo manda. */
+  esActual?: boolean
+  /** El login que abrió la sesión; `createdAt` es el último canje del refresh. */
+  iniciadaEn?: string | null
+  /** Último canje del refresh: la app canjea cada 30 min de uso. */
+  ultimaActividad?: string | null
 }
 
 const sesionesKey = ['cuenta', 'sesiones'] as const

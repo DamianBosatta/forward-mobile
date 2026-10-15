@@ -37,6 +37,12 @@ export interface ComprasResumenDto {
    * la pestaña: el resumen no filtra por estado. Llegó con forward-system #873; antes no viene.
    */
   totalesPorMoneda?: { moneda: string; total: number }[]
+  /**
+   * Los estados con que el servidor recortó `totalesPorMoneda` (9B, prioridad 3): los de la pestaña
+   * que se pidieron en `Estados`. Ausente o null = no recortó (servidor anterior o sin `Estados`), y
+   * `totalesPorMoneda` cubre las dos pestañas.
+   */
+  estadosTotalesPorMoneda?: string[] | null
   notasPedido: number
   confirmadas: number
   entregadas: number
@@ -114,10 +120,15 @@ export function useInfiniteCompras(params: ComprasListParams = {}, options: { en
  * Totales del servidor para el mismo filtro de la lista (total comprado sin canceladas ni
  * anuladas, y contadores por estado). Mobile no suma las páginas cargadas.
  */
-export function useComprasResumen(params: ComprasFiltroParams = {}) {
+export function useComprasResumen(params: ComprasFiltroParams & { estados?: EstadoCompra[] } = {}) {
   return useQuery({
     queryKey: comprasKeys.resumen(params),
-    queryFn: () => api.get<ComprasResumenDto>(`/api/v1/Compras/resumen?${filtroQuery(params)}`),
+    queryFn: () => {
+      const sp = filtroQuery(params)
+      // Recortan solo el importe por moneda; los contadores siguen siendo de todos los estados.
+      for (const e of params.estados ?? []) sp.append('Estados', e)
+      return api.get<ComprasResumenDto>(`/api/v1/Compras/resumen?${sp}`)
+    },
     staleTime: 30_000,
     placeholderData: (prev, prevQuery) =>
       mismoRango(prevQuery?.queryKey[2], params) ? prev : undefined,
