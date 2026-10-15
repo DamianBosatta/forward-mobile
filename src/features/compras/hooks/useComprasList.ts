@@ -16,6 +16,9 @@ const ESTADOS: Record<Exclude<PestanaCompras, 'borradores'>, EstadoCompra[]> = {
 }
 const ESPERA_BUSQUEDA_MS = 300
 
+const mismosEstados = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && a.every((e) => b.includes(e))
+
 /** Los pesos con el signo, como el resto de la app; otra moneda con su código (`USD 1.200,00`). */
 const importeEn = (moneda: string, total: number) =>
   moneda === 'ARS' ? formatImporte(total) : formatImporte(total).replace('$', moneda)
@@ -51,15 +54,20 @@ export function useComprasList(estadoDeRuta: EstadoCompraRuta | null = null) {
   const fechaDesde = fechaDesdePeriodo(periodo)
   const searchTerm = busquedaEnviada.length >= 2 ? busquedaEnviada : undefined
 
-  const compras = useInfiniteCompras(
-    { pageSize: 20, estados: pestana === 'pendientes' && soloEstado ? [soloEstado] : ESTADOS[esBorradores ? 'pendientes' : pestana], fechaDesde, searchTerm },
-    { enabled: !esBorradores },
-  )
-  const { data: resumen, refetch: refetchResumen } = useComprasResumen({ fechaDesde, searchTerm })
+  const estados = pestana === 'pendientes' && soloEstado ? [soloEstado] : ESTADOS[esBorradores ? 'pendientes' : pestana]
+  const compras = useInfiniteCompras({ pageSize: 20, estados, fechaDesde, searchTerm }, { enabled: !esBorradores })
+  const { data: resumen, refetch: refetchResumen } = useComprasResumen({ fechaDesde, searchTerm, estados })
   const borradores = useBorradoresCompraMios(esBorradores)
 
   const items = useMemo(() => itemsCargados<CompraDtoList>(compras.data?.pages), [compras.data])
-  const contador = textoContador(items.length, totalDelServidor(compras.data?.pages))
+  const porMoneda = resumen?.totalesPorMoneda
+  const importesTexto = porMoneda?.length ? porMoneda.map((t) => importeEn(t.moneda, t.total)).join(' · ') : null
+  // El servidor nuevo dice con qué estados recortó el importe: si son los de la pestaña, va junto
+  // al contador (9B, prioridad 3). El anterior ignora `Estados` y no lo dice.
+  const recortadoPorPestana = !!resumen?.estadosTotalesPorMoneda && mismosEstados(resumen.estadosTotalesPorMoneda, estados)
+  const contador = textoContador(
+    items.length, totalDelServidor(compras.data?.pages), recortadoPorPestana ? (importesTexto ?? formatImporte(0)) : null,
+  )
 
   // Del servidor o nada: sin resumen no se muestra un número que podría estar mal.
   const resumenTexto = !resumen ? null
@@ -67,11 +75,10 @@ export function useComprasList(estadoDeRuta: EstadoCompraRuta | null = null) {
     : pestana === 'recibidas' ? `${resumen.entregadas} recibidas`
     : null
 
-  // El total comprado, una cifra por moneda. Cubre las dos pestañas (el resumen no filtra por
-  // estado), así que no va junto al contador. El servidor viejo no lo separa: no se muestra.
-  const porMoneda = resumen?.totalesPorMoneda
-  const compradoTexto = porMoneda?.length
-    ? `Comprado (pendientes y recibidas): ${porMoneda.map((t) => importeEn(t.moneda, t.total)).join(' · ')}`
+  // Servidor que no recorta por pestaña: el total comprado cubre las dos pestañas, así que va en
+  // otra línea. El que no lo separa por moneda tampoco: no se muestra.
+  const compradoTexto = !recortadoPorPestana && importesTexto
+    ? `Comprado (pendientes y recibidas): ${importesTexto}`
     : null
 
   return {

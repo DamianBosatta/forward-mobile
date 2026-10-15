@@ -3359,6 +3359,7 @@ export interface paths {
                     FechaDesde?: string;
                     FechaHasta?: string;
                     SearchTerm?: string;
+                    Estados?: components["schemas"]["EstadoCompra"][];
                 };
                 header?: never;
                 path?: never;
@@ -10211,6 +10212,100 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Logistica/hojas-ruta/{id}/paradas/{paradaId}/entregar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    paradaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EntregarParadaCommand"];
+                    "text/json": components["schemas"]["EntregarParadaCommand"];
+                    "application/*+json": components["schemas"]["EntregarParadaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EntregaParadaResultadoDtoResponse"];
+                        "application/json": components["schemas"]["EntregaParadaResultadoDtoResponse"];
+                        "text/json": components["schemas"]["EntregaParadaResultadoDtoResponse"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EntregaParadaResultadoDtoResponse"];
+                        "application/json": components["schemas"]["EntregaParadaResultadoDtoResponse"];
+                        "text/json": components["schemas"]["EntregaParadaResultadoDtoResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/medios-cobro": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MedioCobroChoferDtoListResponse"];
+                        "application/json": components["schemas"]["MedioCobroChoferDtoListResponse"];
+                        "text/json": components["schemas"]["MedioCobroChoferDtoListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Logistica/{id}/empacar": {
         parameters: {
             query?: never;
@@ -13703,7 +13798,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["SesionActivaDto"][];
+                        "application/json": components["schemas"]["SesionActivaDto"][];
+                        "text/json": components["schemas"]["SesionActivaDto"][];
+                    };
                 };
             };
         };
@@ -18515,6 +18614,10 @@ export interface components {
             data?: components["schemas"]["ClienteRecienteDto"][] | null;
             codigo?: string | null;
         };
+        CobroEnEntregaInput: {
+            imputacion?: components["schemas"]["ImputacionCobroChofer"];
+            lineas?: components["schemas"]["LineaCobroEntregaInput"][] | null;
+        };
         CobrosPendientesDto: {
             /** Format: double */
             total: number;
@@ -18746,6 +18849,7 @@ export interface components {
             /** Format: double */
             totalComprado: number;
             totalesPorMoneda: components["schemas"]["ComprasTotalPorMonedaDto"][];
+            estadosTotalesPorMoneda?: components["schemas"]["EstadoCompra"][] | null;
             /** Format: int32 */
             notasPedido: number;
             /** Format: int32 */
@@ -19570,6 +19674,10 @@ export interface components {
             /** Format: double */
             deudaTotal?: number;
         };
+        DevolucionEnEntregaInput: {
+            motivo?: string | null;
+            items?: components["schemas"]["NotaCreditoItemInput"][] | null;
+        };
         DevolucionPendienteDto: {
             /** Format: uuid */
             id?: string;
@@ -19813,6 +19921,53 @@ export interface components {
             motivoPendienteAutorizacion?: number | null;
             etiquetas: components["schemas"]["EtiquetaDto"][];
             imprimirNotaEntrega: boolean;
+        };
+        EmpaqueLineaDto: {
+            /** Format: double */
+            unidadesPorBulto: number;
+            /** Format: double */
+            unidadesPorBultoMadre?: number | null;
+            /** Format: double */
+            bultosMadre: number;
+            /** Format: double */
+            bultos: number;
+            /** Format: double */
+            unidadesSueltas: number;
+        };
+        EntregaParadaResultadoDto: {
+            /** Format: uuid */
+            paradaId?: string;
+            /** Format: uuid */
+            ventaId?: string;
+            /** Format: uuid */
+            pagoId?: string | null;
+            /** Format: double */
+            montoCobrado?: number;
+            /** Format: uuid */
+            notaCreditoId?: string | null;
+            /** Format: double */
+            montoFirmado?: number | null;
+            marcasFirma?: string[] | null;
+            repetida?: boolean;
+        };
+        EntregaParadaResultadoDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["EntregaParadaResultadoDto"];
+            codigo?: string | null;
+        };
+        EntregarParadaCommand: {
+            claveIdempotencia?: string | null;
+            nombreReceptor?: string | null;
+            evidenciaUrl?: string | null;
+            observaciones?: string | null;
+            devolucion?: components["schemas"]["DevolucionEnEntregaInput"];
+            cobro?: components["schemas"]["CobroEnEntregaInput"];
+            firma?: components["schemas"]["FirmaEnEntregaInput"];
         };
         EntregarVentaCommand: {
             /** Format: uuid */
@@ -20232,6 +20387,9 @@ export interface components {
             /** Format: double */
             inmovilizadoPorcentaje?: number;
         };
+        FirmaEnEntregaInput: {
+            fotoUrl?: string | null;
+        };
         /** @enum {string} */
         FormatoExport: "Excel" | "Pdf";
         FraganciaResponse: {
@@ -20437,6 +20595,8 @@ export interface components {
             motivoFallo?: string | null;
             puedeRevertirse?: boolean;
         };
+        /** @enum {string} */
+        ImputacionCobroChofer: "PedidoActual" | "DeudaAnterior";
         ImputacionDetalleDto: {
             /** Format: uuid */
             pagoId?: string | null;
@@ -20584,6 +20744,14 @@ export interface components {
         };
         /** @enum {string} */
         LetraComprobante: "A" | "B" | "C";
+        LineaCobroEntregaInput: {
+            /** Format: uuid */
+            medioPagoId?: string;
+            /** Format: double */
+            monto?: number;
+            fotoUrl?: string | null;
+            cheques?: components["schemas"]["ChequeDetalleItem"][] | null;
+        };
         LineaConceptoDto: {
             descripcion?: string | null;
             /** Format: double */
@@ -20634,11 +20802,28 @@ export interface components {
             /** Format: double */
             montoReal?: number | null;
         };
+        MedioCobroChoferDto: {
+            /** Format: uuid */
+            id: string;
+            nombre: string;
+            tipo: string;
+        };
+        MedioCobroChoferDtoListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["MedioCobroChoferDto"][] | null;
+            codigo?: string | null;
+        };
         MedioPagoLineaDto: {
             nombre: string;
             /** Format: double */
             monto: number;
             esCheque: boolean;
+            comprobanteUrl?: string | null;
             /** Format: int32 */
             chequesCount: number;
             chequeEstado?: components["schemas"]["EstadoCheque"];
@@ -20795,6 +20980,8 @@ export interface components {
             /** Format: double */
             saldoPendiente: number;
             tipoCuenta: components["schemas"]["TipoCuentaSocio"];
+            /** Format: date */
+            vencimiento?: string | null;
         };
         MovimientoPeriodoFiscalDto: {
             tipo: components["schemas"]["TipoMovimientoPeriodoFiscal"];
@@ -21079,6 +21266,7 @@ export interface components {
             chequesRecibidos?: components["schemas"]["ChequeDetalleItem"][] | null;
             chequesPropiosEntregados?: components["schemas"]["ChequeDetalleItem"][] | null;
             chequesAEndosar?: string[] | null;
+            comprobanteUrl?: string | null;
         };
         PagoPorCuentaDeTercerosDto: {
             /** Format: uuid */
@@ -21145,6 +21333,15 @@ export interface components {
             montoTotal: number;
             motivoRechazo?: string | null;
             evidenciaUrl?: string | null;
+            /** Format: uuid */
+            pagoEntregaId?: string | null;
+            /** Format: uuid */
+            notaCreditoEntregaId?: string | null;
+            firmaFotoUrl?: string | null;
+            /** Format: double */
+            montoFirmado?: number | null;
+            /** Format: int32 */
+            marcaFirma?: number;
             tipoCobro?: components["schemas"]["TipoCobroParada"];
             /** Format: double */
             montoCobrar?: number | null;
@@ -22226,6 +22423,20 @@ export interface components {
             errors?: string[] | null;
             data?: components["schemas"]["SerieVentasDto"];
             codigo?: string | null;
+        };
+        SesionActivaDto: {
+            id: string;
+            /** Format: date-time */
+            createdAt?: string | null;
+            /** Format: date-time */
+            expiresAt?: string | null;
+            device: string;
+            ip: string;
+            esActual: boolean;
+            /** Format: date-time */
+            iniciadaEn?: string | null;
+            /** Format: date-time */
+            ultimaActividad?: string | null;
         };
         SetPasswordRequestDto: {
             newPassword?: string | null;
@@ -23475,6 +23686,7 @@ export interface components {
             /** Format: double */
             precioMinimoRentable?: number | null;
             desglosePiso?: components["schemas"]["PisoDesgloseDto"];
+            empaque?: components["schemas"]["EmpaqueLineaDto"];
         };
         VentaDtoList: {
             /** Format: uuid */
@@ -23507,6 +23719,7 @@ export interface components {
             fechaEntrega?: string | null;
             /** Format: int32 */
             motivoPendienteAutorizacion?: number | null;
+            motivoAnulacion?: string | null;
             conFactura: boolean;
             /** Format: int32 */
             itemsCount: number;
@@ -23654,6 +23867,10 @@ export interface components {
             /** Format: double */
             saldoPendiente?: number | null;
             estadoPago: string;
+            /** Format: date */
+            vencimientoSaldo?: string | null;
+            /** Format: int32 */
+            plazoVencimientoDias?: number | null;
             imputaciones: components["schemas"]["ImputacionDetalleDto"][];
         };
         VentaPendienteAutorizacionDto: {
@@ -23699,6 +23916,8 @@ export interface components {
             vendedorNombre: string;
             /** Format: int32 */
             itemsCount: number;
+            /** Format: double */
+            unidadesCount: number;
             /** Format: int32 */
             piezasCount: number;
             /** Format: int32 */
@@ -23722,6 +23941,8 @@ export interface components {
         VentasResumenDto: {
             /** Format: double */
             totalVendido?: number;
+            /** Format: double */
+            totalPresupuestado: number;
             /** Format: int32 */
             pendientes?: number;
             /** Format: int32 */

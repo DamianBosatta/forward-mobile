@@ -254,6 +254,23 @@ describe('Mi cuenta: sesiones abiertas', () => {
     expect(await screen.findByText('Sesiones abiertas (1)')).toBeTruthy()
   })
 
+  it('con el servidor nuevo marca este dispositivo primero, con su inicio y su última actividad (9B prioridad 3)', async () => {
+    usuario()
+    mockGet.mockResolvedValue([
+      { ...SESIONES[1], esActual: false, iniciadaEn: '2026-10-06T21:20:00Z', ultimaActividad: '2026-10-06T21:20:00Z' },
+      { ...SESIONES[0], createdAt: '2026-10-14T18:30:00Z', esActual: true, iniciadaEn: '2026-10-09T10:58:00Z', ultimaActividad: '2026-10-14T18:30:00Z' },
+    ])
+    pintar()
+    expect(await screen.findByText('Sesiones abiertas (2)')).toBeTruthy()
+    const marcas = screen.getAllByText('Este dispositivo')
+    expect(marcas).toHaveLength(1)
+    expect(screen.getByText('Inició el 9 oct, 07:58 · Vence el 8 nov')).toBeTruthy()
+    expect(screen.getByText('Última actividad: 14 oct, 15:30')).toBeTruthy()
+    // La actual va primero.
+    const nombres = screen.getAllByText(/Android · App Forward|Windows · Chrome/).map((t) => t.props.children)
+    expect(nombres).toEqual(['Android · App Forward', 'Windows · Chrome'])
+  })
+
   it('si no se pueden cargar, lo dice con el mensaje del servidor', async () => {
     usuario()
     mockGet.mockRejectedValue(new Error('Servicio no disponible'))

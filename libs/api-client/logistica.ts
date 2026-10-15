@@ -82,6 +82,8 @@ export interface VentaPreparacion {
   /** MetodoEntrega int: 1=LogisticaPropia, 2=RetiroEnLocal. Required: NOT NULL en la BD. */
   metodoEntrega: number
   itemsCount: number
+  /** Suma de las cantidades de las líneas, en unidades (9B, prioridad 3). Un servidor anterior no la manda. */
+  unidadesCount?: number
   /** Concurrency token (xmin). Used by Empacar for optimistic concurrency. */
   version: number
   /** Hoja de ruta Programada (todavía sin salir) en la que ya está la venta; null si está libre. */

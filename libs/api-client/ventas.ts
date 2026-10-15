@@ -45,7 +45,11 @@ export type EstadoVentaServidor = components['schemas']['EstadoVenta']
  * estados: si no viene, el servidor es anterior, ignoró esos filtros y su `totalVendido` no es el
  * de la lista.
  */
-export type VentasResumen = Omit<components['schemas']['VentasResumenDto'], 'cantidad'> & { cantidad?: number }
+/** `cantidad` llegó con forward-system #873 y `totalPresupuestado` con la prioridad 3 del bloque 9: un servidor anterior no los manda. */
+export type VentasResumen = Omit<components['schemas']['VentasResumenDto'], 'cantidad' | 'totalPresupuestado'> & {
+  cantidad?: number
+  totalPresupuestado?: number
+}
 
 // #region Query Keys
 export const ventasKeys = {

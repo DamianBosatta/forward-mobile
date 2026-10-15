@@ -46,10 +46,14 @@ function clienteDe(v: Venta): { direccion: string; nombre: string | null } {
 }
 
 /**
- * Lo que va al lado de la hora: por autorizar, el motivo (el primero y cuántos más); si no, el día
- * de entrega. Un servidor anterior a forward-system #884 no manda ninguno de los dos: solo la hora.
+ * Lo que va al lado de la hora: anulada, el motivo de anulación; por autorizar, el motivo (el
+ * primero y cuántos más); si no, el día de entrega. Un servidor anterior no manda los motivos: el
+ * día de entrega o solo la hora.
  */
 function detalleDe(v: Venta): string | undefined {
+  // El servidor solo lo manda con la venta anulada (9B, prioridad 3).
+  const anulacion = v.motivoAnulacion?.trim()
+  if (anulacion) return anulacion
   // El servidor solo lo manda mientras la venta espera autorización.
   const motivos = motivosDe(v.motivoPendienteAutorizacion)
   if (motivos.length) return `${motivos[0]!.texto}${motivos.length > 1 ? ` (+${motivos.length - 1})` : ''}`

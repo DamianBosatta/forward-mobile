@@ -21,6 +21,17 @@ import { codigoDeVenta, rotuloCliente, tipoDeVenta } from '../lib/ventaGuardada'
 import { AccionesVenta } from './AccionesVenta'
 
 type Pagos = components['schemas']['VentaPagosDto']
+
+/**
+ * "Vence el 7 de noviembre (30 días)": el día (AAAA-MM-DD) y el plazo los da el servidor; el teléfono
+ * no calcula vencimientos. El día se arma sin pasar por un instante, para que no lo corra el huso.
+ */
+function textoVencimientoSaldo(dia: string | null | undefined, plazo: number | null | undefined): string | null {
+  const [anio, mes, d] = (dia ?? '').split('-').map(Number)
+  if (!anio || !mes || !d) return null
+  const texto = `Vence el ${format(new Date(anio, mes - 1, d), "d 'de' MMMM", { locale: es })}`
+  return plazo ? `${texto} (${plazo} días)` : texto
+}
 type Simulacion = components['schemas']['SimulacionComisionDto']
 const ENTREGA: Record<string, string> = { LogisticaPropia: 'Logística propia', RetiroEnLocal: 'Retiro en el local', Expreso: 'Expreso' }
 const ESTADO_RECHAZADA = 11
@@ -63,6 +74,7 @@ export function DetalleVentaNueva({ id, onVolver }: Props) {
   })
   const volver = { kind: 'atras' as const, onPress: onVolver ?? (() => router.back()) }
   const sec = { ...typeScale.secundario, color: c.textSecondary }
+  const vencimiento = textoVencimientoSaldo(pagos.data?.vencimientoSaldo, pagos.data?.plazoVencimientoDias)
   const tarjeta = { padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[2] }
   const titulo = (t: string) => <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{t}</Text>
   const fila = (k: string, v: string) => (
@@ -174,6 +186,7 @@ export function DetalleVentaNueva({ id, onVolver }: Props) {
           {pagos.data && pagos.data.imputaciones.length === 0 ? <Text style={sec}>Todavía no tiene cobros.</Text> : null}
           {pagos.data?.montoPagado != null ? <TotalsRow label="Cobrado" importe={pagos.data.montoPagado} /> : null}
           {pagos.data?.saldoPendiente != null ? <TotalsRow label={`Saldo del ${tipoDeVenta(h).toLowerCase()}`} importe={pagos.data.saldoPendiente} destacado /> : null}
+          {vencimiento ? <Text style={sec}>{vencimiento}</Text> : null}
         </View>
       </ScrollView>
     </View>

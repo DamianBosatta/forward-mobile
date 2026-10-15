@@ -156,6 +156,14 @@ describe('lista de ventas nueva: entrega y motivo en la tarjeta (forward-system 
     expect(within(tarjeta).getByText(/ · Supera el tope de descuento del vendedor \(\+1\)$/)).toBeTruthy()
   })
 
+  it('una venta anulada dice el motivo de anulación al lado de la hora (9B prioridad 3)', async () => {
+    conVentas([venta({ estado: 'Anulada', fechaEntrega: ahora.toISOString(), motivoAnulacion: 'Anulado por el cliente' })])
+    pantalla()
+    const tarjeta = await screen.findByRole('button', { name: /A00418/ })
+    expect(within(tarjeta).getByText(/ · Anulado por el cliente$/)).toBeTruthy()
+    expect(within(tarjeta).queryByText(/Entrega/)).toBeNull()
+  })
+
   it('con un servidor anterior (sin esos campos) la tarjeta muestra solo la hora', async () => {
     conVentas([venta({ estado: 'PendienteAutorizacion' })])
     pantalla()
@@ -209,6 +217,16 @@ describe('lista de ventas nueva: total del filtro (GET /Ventas/resumen)', () => 
     await waitFor(() => expect(ultimoResumen().get('tipoOperacion')).toBe('1'))
     expect(await screen.findByText('Mostrando 2 de 61')).toBeTruthy()
     expect(screen.queryByText(/6\.860\.919/)).toBeNull()
+  })
+
+  it('en Presupuestos suma el importe de presupuestos del servidor (totalPresupuestado)', async () => {
+    conResumen({ ...servidorNuevo, totalPresupuestado: 1250000 })
+    pantalla()
+    await screen.findByText('Mostrando 2 de 61 · $ 6.860.919,00')
+    await userEvent.press(screen.getByRole('tab', { name: 'Presupuestos' }))
+    expect(await screen.findByText('Mostrando 2 de 61 · $ 1.250.000,00')).toBeTruthy()
+    await userEvent.press(screen.getByRole('radio', { name: 'Anulado' }))
+    expect(await screen.findByText('Mostrando 2 de 61')).toBeTruthy()
   })
 
   it('con el resumen listo y la lista cargando no hay contador (nada de "Mostrando 0 de M")', async () => {

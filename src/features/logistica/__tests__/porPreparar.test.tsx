@@ -88,6 +88,32 @@ describe('Pedidos por preparar (solo lectura)', () => {
     expect(urls().some((u) => u.includes('FechaDesde=2026-10-09') && u.includes('FechaHasta=2026-10-09'))).toBe(true)
   })
 
+  it('con unidades del servidor la tarjeta dice líneas, unidades y bultos; el detalle, el empaque de cada línea (9B prioridad 3)', async () => {
+    mockAncho.mockReturnValue(1100)
+    const servido = mockGet.getMockImplementation()!
+    mockGet.mockImplementation((url: string) =>
+      url.includes('ventas-para-preparacion') ? Promise.resolve([{ ...PEDIDOS[0], unidadesCount: 288 }, PEDIDOS[1]])
+        : url.endsWith('/Ventas/v1') ? Promise.resolve({
+          venta: { id: 'v1' },
+          detalles: [
+            { id: 'd1', productoNombre: 'Lavandina Ayudín Clásica 2 L', cantidad: 48, empaque: { unidadesPorBulto: 12, unidadesPorBultoMadre: null, bultosMadre: 0, bultos: 4, unidadesSueltas: 0 } },
+            { id: 'd2', productoNombre: 'Esponja', cantidad: 15, empaque: { unidadesPorBulto: 12, unidadesPorBultoMadre: 48, bultosMadre: 0, bultos: 1, unidadesSueltas: 3 } },
+            { id: 'd3', productoNombre: 'Trapo', cantidad: 5, empaque: null },
+          ],
+          bultos: [],
+        })
+        : servido(url))
+    pintar()
+    const tarjeta = await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376')
+    expect(within(tarjeta).getByText('5 líneas · 288 u. · 3 bultos')).toBeTruthy()
+    // Servidor anterior (sin unidades): como antes.
+    expect(within(screen.getByLabelText('Pedido A00424: Brandsen 3314')).getByText('3 líneas')).toBeTruthy()
+    await userEvent.press(tarjeta)
+    expect(await screen.findByText('48 u. · 4 bultos de 12')).toBeTruthy()
+    expect(screen.getByText('15 u. · 1 bulto de 12 y 3 u.')).toBeTruthy()
+    expect(screen.getByText('5 u.')).toBeTruthy()
+  })
+
   it('el pedido que ya está en una hoja de ruta muestra su número; el que no, no', async () => {
     const servido = mockGet.getMockImplementation()!
     mockGet.mockImplementation((url: string) =>

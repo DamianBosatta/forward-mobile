@@ -113,6 +113,27 @@ describe('lista de compras', () => {
     expect(new URLSearchParams(resumenes.at(-1)!.split('?')[1]).get('FechaDesde')).toBe(ultimaConsulta().get('FechaDesde'))
   })
 
+  it('con el servidor que recorta por pestaña, el importe de la pestaña va junto al contador (9B prioridad 3)', async () => {
+    const base = mockGet.getMockImplementation()!
+    mockGet.mockImplementation((url: string) => {
+      if (!url.startsWith('/api/v1/Compras/resumen?')) return base(url)
+      const estados = new URLSearchParams(url.split('?')[1]).getAll('Estados')
+      const total = estados.includes('Entregado') ? 500 : 2118577
+      return Promise.resolve({
+        totalComprado: 999, totalesPorMoneda: [{ moneda: 'ARS', total }], estadosTotalesPorMoneda: estados,
+        notasPedido: 4, confirmadas: 1, entregadas: 7, canceladas: 0, anuladas: 0,
+      })
+    })
+    pantalla()
+    expect(await screen.findByText('Mostrando 2 de 5 · $ 2.118.577,00')).toBeTruthy()
+    expect(screen.queryByText(/Comprado \(pendientes y recibidas\)/)).toBeNull()
+    const resumenes = () => mockGet.mock.calls.map(([u]) => String(u)).filter((u) => u.startsWith('/api/v1/Compras/resumen?'))
+    expect(new URLSearchParams(resumenes().at(-1)!.split('?')[1]).getAll('Estados')).toEqual(['NotaPedido', 'Confirmado'])
+    await userEvent.press(screen.getByRole('tab', { name: 'Recibidas' }))
+    expect(await screen.findByText('Mostrando 2 de 5 · $ 500,00')).toBeTruthy()
+    expect(new URLSearchParams(resumenes().at(-1)!.split('?')[1]).getAll('Estados')).toEqual(['Entregado'])
+  })
+
   it('Recibidas y el período van como filtros al servidor', async () => {
     pantalla()
     await screen.findByText('Mostrando 2 de 5')
