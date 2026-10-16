@@ -74,6 +74,12 @@ describe('Mi cuenta', () => {
     expect(screen.getByRole('button', { name: 'Abrir menú' })).toBeTruthy()
   })
 
+  it('no muestra el puesto, aunque llegara (decisión del dueño del 16-10: "Sacarlo de la pantalla")', () => {
+    usuario({ puesto: 'Depósito' })
+    pintar()
+    expect(screen.queryByText(/Puesto|Depósito/)).toBeNull()
+  })
+
   it('no muestra estados de seguridad inventados y la pantalla vieja ya no existe', () => {
     usuario()
     pintar()
