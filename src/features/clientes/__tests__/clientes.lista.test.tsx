@@ -189,3 +189,11 @@ describe('localidad y filtros (9C)', () => {
     expect(await screen.findByText('Ningún cliente coincide con los filtros.')).toBeTruthy()
   })
 })
+
+it('con un servidor sin el endpoint de localidades (responde 400 por la ruta {id}, o 404) no lo registra como error', async () => {
+  renderConQuery(<ClientesScreen />)
+  await screen.findByText('Av. del Valle 89')
+
+  const llamada = get.mock.calls.find(([url]) => url === '/api/v1/socios-comerciales/localidades')
+  expect(llamada?.[1]).toEqual(expect.objectContaining({ estadosEsperados: expect.arrayContaining([400, 404]) }))
+})

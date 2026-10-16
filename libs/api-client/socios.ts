@@ -32,12 +32,13 @@ export const sociosKeys = {
 
 /**
  * Las localidades de la cartera, sin repetir, para el filtro (forward-system 9C). Un servidor que
- * todavía no tiene el endpoint responde 404: sin reintentos, el filtro de localidad no aparece.
+ * todavía no tiene el endpoint responde 400 (la ruta cae en `{id}` y "localidades" no es un Guid)
+ * o 404: sin reintentos, el filtro de localidad no aparece.
  */
 export function useLocalidades() {
   return useQuery({
     queryKey: sociosKeys.localidades(),
-    queryFn: () => api.get<string[]>('/api/v1/socios-comerciales/localidades', { estadosEsperados: [404] }),
+    queryFn: () => api.get<string[]>('/api/v1/socios-comerciales/localidades', { estadosEsperados: [400, 404] }),
     retry: false,
     staleTime: 10 * 60_000,
   })
