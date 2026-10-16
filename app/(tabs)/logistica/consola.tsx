@@ -327,11 +327,11 @@ export default function ConsolaChoferScreen() {
         {reportando ? (
           <ReportarParada
             key={reportando.parada.id}
+            hojaDeRutaId={viaje.id}
             parada={reportando.parada}
             numero={reportando.numero}
             enviando={reportar.isPending || entregar.isPending}
             exigeFotoRemito={viaje.exigeFotoRemitoAlEntregar === true}
-            puedeDevolver={isAdmin() || isSuperAdmin() || canDo('MOD_VENTAS', 'read')}
             error={errorReporte}
             onCerrar={() => setReportando(null)}
             onConfirmar={confirmarReporte}

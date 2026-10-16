@@ -32,7 +32,7 @@ export const logisticaKeys = {
   hojasRuta: () => [...logisticaKeys.all, 'hojas-ruta'] as const,
   hojaRuta: (id: string) => [...logisticaKeys.all, 'hojas-ruta', id] as const,
   mediosCobro: () => [...logisticaKeys.all, 'medios-cobro'] as const,
-  devolucionesPosibles: (ventaId: string) => [...logisticaKeys.all, 'devoluciones-posibles', ventaId] as const,
+  lineasParada: (hojaDeRutaId: string, paradaId: string) => [...logisticaKeys.all, 'lineas-parada', hojaDeRutaId, paradaId] as const,
 }
 
 /** Isolated query-key namespace for the picking board. Keeps picking invalidations
@@ -273,7 +273,8 @@ export type CuerpoEntregaParada = components['schemas']['EntregarParadaCommand']
 export type EntregaParadaResultado = components['schemas']['EntregaParadaResultadoDto']
 /** Medio con el que cobra el chofer: `tipo` es Efectivo, Transferencia (foto obligatoria) o Cheque. */
 export type MedioCobroChofer = components['schemas']['MedioCobroChoferDto']
-export type RenglonDevolvible = components['schemas']['RenglonDevolvibleDto']
+/** Una línea de la venta de la parada con lo que todavía se puede devolver, sin precios. */
+export type LineaParada = components['schemas']['LineaParadaDto']
 
 /**
  * La operación única del chofer: entrega, devolución, cobro mixto y firma en una sola transacción.
@@ -303,14 +304,15 @@ export function useMediosCobroChofer(enabled: boolean) {
 }
 
 /**
- * Renglones que el cliente puede devolver en la entrega (`GET /Ventas/{id}/devoluciones-posibles`).
- * Pide Ventas:Read: el chofer que solo tiene viajes no lo puede leer, y la pantalla no lo pide.
+ * Lo que el cliente puede devolver en la entrega: las líneas de la venta de la parada
+ * (`GET /Logistica/hojas-ruta/{id}/paradas/{paradaId}/lineas`, forward-system #971). Alcanza con
+ * poder ver la hoja (el chofer asignado o quien arma viajes): no pide Ventas:Read.
  */
-export function useDevolucionesPosibles(ventaId: string, enabled: boolean) {
+export function useLineasParada(hojaDeRutaId: string, paradaId: string, enabled: boolean) {
   return useQuery({
-    queryKey: logisticaKeys.devolucionesPosibles(ventaId),
-    queryFn: () => api.get<RenglonDevolvible[]>(`/api/v1/Ventas/${ventaId}/devoluciones-posibles`),
-    enabled: enabled && !!ventaId,
+    queryKey: logisticaKeys.lineasParada(hojaDeRutaId, paradaId),
+    queryFn: () => api.get<LineaParada[]>(`/api/v1/Logistica/hojas-ruta/${hojaDeRutaId}/paradas/${paradaId}/lineas`),
+    enabled: enabled && !!hojaDeRutaId && !!paradaId,
     staleTime: 0,
   })
 }

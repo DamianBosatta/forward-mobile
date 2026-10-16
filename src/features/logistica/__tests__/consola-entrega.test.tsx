@@ -67,7 +67,7 @@ function pintar(hoja: Record<string, unknown> = HOJA, permissions: unknown[] = [
     url.endsWith('/hojas-ruta/h1') ? Promise.resolve(hojaServidor)
       : url.includes('hojas-ruta?') ? Promise.resolve([{ id: 'h1' }])
       : url.endsWith('/medios-cobro') ? Promise.resolve(MEDIOS)
-      : url.endsWith('/Ventas/v1/devoluciones-posibles') ? Promise.resolve(RENGLONES)
+      : url.endsWith('/hojas-ruta/h1/paradas/p1/lineas') ? Promise.resolve(RENGLONES)
       : Promise.reject(new Error(`sin respuesta: ${url}`)),
   )
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -213,20 +213,23 @@ describe('Consola del chofer: entrega con la operación única', () => {
     expect(segundo[1].claveIdempotencia).not.toBe(primero[1].claveIdempotencia)
   })
 
-  it('con permiso de ventas, la devolución manda los renglones devueltos; sin él no se ofrece ni se consulta', async () => {
+  // Cierre del bloque 9 (L5): el chofer solo tiene MOD_VIAJES; las líneas devolvibles salen de la
+  // parada de su hoja (forward-system #971), no de Ventas.
+  it('el chofer con solo viajes devuelve con las líneas de la parada y la entrega manda los renglones devueltos', async () => {
     mockPost.mockResolvedValue({ paradaId: 'p1' })
-    pintar(HOJA, [{ module: 'MOD_VIAJES', canRead: true, canUpdate: true }, { module: 'MOD_VENTAS', canRead: true }])
+    pintar()
     await abrirEntrega()
     await userEvent.type(await screen.findByLabelText('Devuelve: Aceite 900 ml'), '2')
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
     expect(llamadasA(ENTREGAR)[0][1]).toMatchObject({ devolucion: { items: [{ ventaDetalleId: 'd1', cantidad: 2 }] } })
+    expect(mockGet).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/paradas/p1/lineas')
   })
 
-  it('el chofer sin permiso de ventas no ve la devolución', async () => {
-    pintar()
+  it('con permiso de ventas también usa las líneas de la parada: nunca pide devoluciones-posibles', async () => {
+    pintar(HOJA, [{ module: 'MOD_VIAJES', canRead: true, canUpdate: true }, { module: 'MOD_VENTAS', canRead: true }])
     await abrirEntrega()
-    expect(screen.queryByText('Devuelve mercadería')).toBeNull()
+    expect(await screen.findByLabelText('Devuelve: Aceite 900 ml')).toBeTruthy()
     expect(mockGet.mock.calls.some(([u]) => String(u).includes('devoluciones-posibles'))).toBe(false)
   })
 

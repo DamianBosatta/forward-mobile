@@ -2,10 +2,10 @@ import React from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Field, Notice } from '@/core/ui/fw'
-import type { RenglonDevolvible } from '@/libs/api-client/logistica'
+import type { LineaParada } from '@/libs/api-client/logistica'
 
 interface Props {
-  renglones: RenglonDevolvible[] | undefined
+  renglones: LineaParada[] | undefined
   cargando: boolean
   conError: boolean
   /** Cantidad devuelta por renglón (`ventaDetalleId` → texto del campo). */

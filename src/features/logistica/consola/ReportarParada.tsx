@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Field, Notice, Segmented, TopBar } from '@/core/ui/fw'
 import type { ParadaDto } from '@/libs/api-client/types'
-import { useDevolucionesPosibles, useMediosCobroChofer } from '@/libs/api-client/logistica'
+import { useLineasParada, useMediosCobroChofer } from '@/libs/api-client/logistica'
 import { mostrarFecha } from '@/features/cuentas/lib/cobro'
 import { diaArgentina } from '@/src/utils/date'
 import { MOTIVOS_NO_ENTREGA } from './hojaDeRuta'
@@ -18,14 +18,14 @@ export type ReporteParada =
   | { entregado: false; motivoRechazo?: string; observaciones?: string }
 
 interface Props {
+  /** La hoja de la parada: las líneas a devolver se piden por la hoja, no por la venta. */
+  hojaDeRutaId: string
   parada: ParadaDto
   numero: number
   enviando: boolean
   error: string | null
   /** El interruptor `ExigirFotoRemitoAlEntregar` del servidor (viene en la hoja). */
   exigeFotoRemito: boolean
-  /** Devolver pide leer los renglones de la venta (Ventas:Read): el chofer con solo viajes no lo tiene. */
-  puedeDevolver: boolean
   onCerrar: () => void
   onConfirmar: (r: ReporteParada) => void
 }
@@ -41,7 +41,7 @@ const formVacio = (): FormEntrega => ({
  * remito (obligatoria si el servidor la exige), el cobro mixto, la firma y la devolución.
  * Monta una vez por parada: el estado arranca limpio.
  */
-export function ReportarParada({ parada, numero, enviando, error, exigeFotoRemito, puedeDevolver, onCerrar, onConfirmar }: Props) {
+export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, exigeFotoRemito, onCerrar, onConfirmar }: Props) {
   const c = useColors()
   const { bottom } = useSafeAreaInsets()
   const [resultado, setResultado] = useState<Resultado>('entregado')
@@ -51,7 +51,8 @@ export function ReportarParada({ parada, numero, enviando, error, exigeFotoRemit
   const [errorForm, setErrorForm] = useState<string | null>(null)
   const entregado = resultado === 'entregado'
   const medios = useMediosCobroChofer(entregado)
-  const renglones = useDevolucionesPosibles(parada.ventaId, entregado && puedeDevolver)
+  // Quien ve la hoja ve las líneas de sus paradas: el chofer con solo viajes también devuelve.
+  const renglones = useLineasParada(hojaDeRutaId, parada.id, entregado)
 
   const cambiar = (cambio: Partial<FormEntrega>) => setF((p) => ({ ...p, ...cambio }))
   const alSubir = (s: boolean) => setSubiendo((n) => n + (s ? 1 : -1))
@@ -120,15 +121,13 @@ export function ReportarParada({ parada, numero, enviando, error, exigeFotoRemit
                 onUrl={(url) => cambiar({ firmaUrl: url })}
                 onSubiendo={alSubir}
               />
-              {puedeDevolver ? (
-                <DevolucionEnEntrega
-                  renglones={renglones.data}
-                  cargando={renglones.isLoading}
-                  conError={renglones.isError}
-                  valores={f.devolucion}
-                  onCambio={(id, v) => cambiar({ devolucion: { ...f.devolucion, [id]: v } })}
-                />
-              ) : null}
+              <DevolucionEnEntrega
+                renglones={renglones.data}
+                cargando={renglones.isLoading}
+                conError={renglones.isError}
+                valores={f.devolucion}
+                onCambio={(id, v) => cambiar({ devolucion: { ...f.devolucion, [id]: v } })}
+              />
             </>
           ) : (
             <View accessibilityLabel="Motivo" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[2] }}>
