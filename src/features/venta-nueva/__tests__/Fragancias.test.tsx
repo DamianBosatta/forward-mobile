@@ -108,7 +108,7 @@ describe('elegir fragancias (PR 2.4)', () => {
   })
 
   it('no deja pedir más que el stock disponible de cada fragancia (como la web)', async () => {
-    useAuthStore.setState({ user: { roles: ['Gerencia'], permissions: [] } as never })
+    useAuthStore.setState({ user: { roles: ['Vendedor'], permissions: [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }] } as never })
     mockGet.mockResolvedValue([
       { id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, stockDisponible: 8, activo: true },
       { id: 'pv2', fraganciaNombre: 'Coco Vainilla', puedeVenderse: false, stockDisponible: 0, activo: true },
@@ -127,7 +127,7 @@ describe('elegir fragancias (PR 2.4)', () => {
   })
 
   it('al confirmar vuelve a acotar lo que traía el carrito al stock disponible, en cajas enteras', async () => {
-    useAuthStore.setState({ user: { roles: ['Gerencia'], permissions: [] } as never })
+    useAuthStore.setState({ user: { roles: ['Vendedor'], permissions: [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }] } as never })
     useCarritoVenta.setState({ lineas: [
       { productoId: 'pv1', producto: lavanda, cantidad: 12, descuentoPct: 0 },
       { productoId: 'pv2', producto: coco, cantidad: 6, descuentoPct: 0 },

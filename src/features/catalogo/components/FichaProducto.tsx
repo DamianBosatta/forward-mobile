@@ -9,7 +9,6 @@ import { useDisponibilidad, useStock } from '@/libs/api-client/stock'
 import { getFullImageUrl } from '@/libs/api-client/media'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
-import { canViewStock } from '@/features/ventas/lib/descuentos'
 import { useDepositoDeConsulta } from '../hooks/useDepositoDeConsulta'
 import { chipDeStock, formatPorcentaje, formatVariacion, redondearVariacion, textoUltimaCompra, textoUnidadDeVenta } from '../lib/presentacion'
 
@@ -62,14 +61,14 @@ function Seccion({ titulo, aviso, children }: { titulo: string; aviso?: string; 
 /**
  * Ficha de producto (lámina FichaProducto). Todo lo sensible lo decide el servidor:
  * costo y margen llegan null sin CAP_VER_COSTOS y además no se dibujan sin la capacidad;
- * las cantidades por depósito solo se piden y se dibujan con un rol que puede verlas
- * (espejo de AppRoles.StockViewingRoles, como la web).
+ * las cantidades por depósito solo se piden y se dibujan con CAP_VER_CANTIDADES_STOCK, la
+ * misma capacidad con la que el servidor las redacta (forward-system #900).
  */
 export function FichaProducto({ productoId }: { productoId: string }) {
   const c = useColors()
   const user = useAuthStore((s) => s.user)
   const veCostos = hasCapability(user?.permissions, 'CAP_VER_COSTOS')
-  const veCantidades = canViewStock((user?.roles ?? []) as string[])
+  const veCantidades = hasCapability(user?.permissions, 'CAP_VER_CANTIDADES_STOCK')
 
   const { data: p, isLoading, isError } = useProducto(productoId)
   const { data: variantes } = useVariantesProducto(productoId, !!p?.esPadreDeVariantes)

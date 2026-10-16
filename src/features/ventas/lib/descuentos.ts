@@ -109,19 +109,6 @@ export function canViewCost(permissions: ModulePermission[] | null | undefined):
   return hasCapability(permissions, 'CAP_VER_COSTOS')
 }
 
-/**
- * Client-side UX mirror of AppRoles.StockViewingRoles (igual que canViewStock en la web).
- * Decide quién ve el desglose de stock (depósito / reservado) y la variante de gestión de
- * la carga de venta. Deliberadamente SEPARADA de canViewCost: ver stock no es ver costos.
- *
- * @param roles - Array of role name strings from the mobile auth store
- */
-const STOCK_VIEWING_ROLES = new Set(['Administrador', 'AdministradorSistemas', 'Gerencia'])
-
-export function canViewStock(roles: string[]): boolean {
-  return roles.some((r) => STOCK_VIEWING_ROLES.has(r))
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Compound floor guard — single server floor for every role
 // ─────────────────────────────────────────────────────────────────────────────

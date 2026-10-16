@@ -4,7 +4,7 @@ import { Search } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { canViewStock } from '@/features/ventas/lib/descuentos'
+import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useCatalogoVenta } from '../hooks/useCatalogoVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { cantidadEn } from '../lib/carrito'
@@ -33,7 +33,7 @@ export function CatalogoVenta({ onVerVenta }: CatalogoVentaProps) {
   const { lineas, agregar, sumar, restar, quitar, reemplazar } = useCarritoVenta()
   const [editando, setEditando] = useState<string | null>(null)
   const [fragancias, setFragancias] = useState<string | null>(null)
-  const verCantidades = canViewStock((useAuthStore((s) => s.user?.roles) ?? []) as string[])
+  const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
   const columnas = formFactor === 'tabletLandscape' ? 3 : formFactor === 'tabletPortrait' ? 2 : 1
 
   const lista = (

@@ -19,11 +19,11 @@ jest.mock('../hooks/useCatalogoVenta', () => ({
   useCatalogoVenta: () => ({ productos: mockProductos, isLoading: false }),
 }))
 
-const conRoles = (roles: string[]) => useAuthStore.setState({ user: { roles, permissions: [] } as never })
+const conUsuario = (roles: string[], permissions: { module: string; canRead: boolean }[] = []) => useAuthStore.setState({ user: { roles, permissions } as never })
 
 beforeEach(() => {
   conAncho(390)
-  conRoles(['Vendedor'])
+  conUsuario(['Vendedor'])
   useCarritoVenta.setState({ lineas: [] })
 })
 
@@ -48,10 +48,17 @@ describe('CatalogoVenta (agregar productos)', () => {
     expect(screen.queryByText(/37/)).toBeNull()
   })
 
-  it('con permiso de ver stock ve la cantidad que manda el servidor', () => {
-    conRoles(['Gerencia'])
+  it('con CAP_VER_CANTIDADES_STOCK ve la cantidad que manda el servidor, aunque el rol sea Vendedor (forward-system #900)', () => {
+    conUsuario(['Vendedor'], [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }])
     render(<CatalogoVenta onVerVenta={jest.fn()} />)
     expect(within(screen.getByTestId('producto-p1')).getByText('Stock: 37')).toBeTruthy()
+  })
+
+  it('sin CAP_VER_CANTIDADES_STOCK ve solo "Hay stock", aunque el rol sea Gerencia', () => {
+    conUsuario(['Gerencia'])
+    render(<CatalogoVenta onVerVenta={jest.fn()} />)
+    expect(within(screen.getByTestId('producto-p1')).getByText('Hay stock')).toBeTruthy()
+    expect(screen.queryByText(/37/)).toBeNull()
   })
 
   it('el carrito flotante muestra los ítems y el total estimado (precio del servidor × cantidad)', async () => {

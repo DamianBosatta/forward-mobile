@@ -6,7 +6,6 @@ import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useVariantesProducto } from '@/libs/api-client/productos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
-import { canViewStock } from '@/features/ventas/lib/descuentos'
 import { useCatalogoVenta } from '../hooks/useCatalogoVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { leyendaMultiplo, multiploDe, precioServidor } from '../lib/carrito'
@@ -37,7 +36,7 @@ function Contenido({ padreId, onClose }: { padreId: string; onClose: () => void 
   const { productos, isLoading } = useCatalogoVenta('')
   const { lineas, repartirFragancias } = useCarritoVenta()
   const user = useAuthStore((s) => s.user)
-  const verCantidades = canViewStock((user?.roles ?? []) as string[])
+  const verCantidades = hasCapability(user?.permissions, 'CAP_VER_CANTIDADES_STOCK')
   const servidor = useVariantesProducto(padreId, true, DEPOSITO_CENTRAL_ID)
   const padre = productos.find((p) => p.id === padreId)
   const variantes = useMemo(() => productos.filter((p) => p.productoPadreId === padreId), [productos, padreId])

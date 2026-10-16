@@ -10,7 +10,7 @@ interface ProductoCatalogoCardProps {
   producto: CatalogoStockItem
   /** Cantidad en el carrito (0 = no está). */
   cantidad: number
-  /** Ve cantidades de stock (regla canViewStock); si no, solo "Hay stock / Sin stock". */
+  /** Ve cantidades de stock (capacidad CAP_VER_CANTIDADES_STOCK); si no, solo "Hay stock / Sin stock". */
   verCantidades: boolean
   onAgregar: () => void
   onSumar: () => void

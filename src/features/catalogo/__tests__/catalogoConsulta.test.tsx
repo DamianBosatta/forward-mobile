@@ -204,13 +204,23 @@ describe('Catálogo de consulta', () => {
     expect(llamadasGet().some((u) => u.startsWith('/api/v1/Stocks?'))).toBe(false)
   })
 
-  it('con un rol que ve cantidades muestra real, reservado y disponible por depósito', async () => {
-    conUsuario(['Gerencia'])
+  it('con CAP_VER_CANTIDADES_STOCK muestra real, reservado y disponible por depósito, aunque el rol sea Vendedor (forward-system #900)', async () => {
+    conUsuario(['Vendedor'], [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }])
     renderPantalla()
     await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
 
     expect(await screen.findByText('184 · 36 · 148')).toBeTruthy()
     expect(screen.getByText('Central')).toBeTruthy()
+  })
+
+  it('sin CAP_VER_CANTIDADES_STOCK no pide ni dibuja cantidades, aunque el rol sea Gerencia', async () => {
+    conUsuario(['Gerencia'])
+    renderPantalla()
+    await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
+    await screen.findByText('Precio de lista por unidad')
+
+    expect(screen.queryByText('Stock por depósito')).toBeNull()
+    expect(llamadasGet().some((u) => u.startsWith('/api/v1/Stocks?'))).toBe(false)
   })
 
   it('desde 900 px la grilla y la ficha van en dos paneles', async () => {
