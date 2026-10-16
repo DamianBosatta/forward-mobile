@@ -93,6 +93,19 @@ it('con un servidor anterior deposita de a uno y, si uno falla, dice cuál no se
   expect(screen.queryByText('Cheques depositados')).toBeNull()
 })
 
+it('con el servidor nuevo, un 404 del lote (un cheque o la cuenta ya no existen) no deposita de a uno: muestra el motivo', async () => {
+  // El 404 del servidor que sí tiene la ruta viene con el sobre de error (`errors`); el de un
+  // servidor que no la tiene llega sin cuerpo.
+  post.mockRejectedValue(new ApiError(404, 'No se encontró el cheque k2.', []))
+  renderConQuery(<DepositoCheques />)
+  await elegirYDepositar(/^Banco Nación/, /^Banco Macro/)
+
+  expect(await screen.findByText('No se depositó ningún cheque', {}, ESPERA)).toBeTruthy()
+  expect(screen.getByText(/No se encontró el cheque k2/)).toBeTruthy()
+  expect(post.mock.calls).toEqual([[LOTE, { chequeIds: ['k1', 'k2'], cuentaDestinoId: 'gal' }]])
+  expect(screen.queryByText('Sí se depositaron')).toBeNull()
+})
+
 it('sin cuenta elegida no se manda nada', async () => {
   renderConQuery(<DepositoCheques />)
   await userEvent.press(await screen.findByRole('checkbox', { name: /^Banco Nación/ }, ESPERA))

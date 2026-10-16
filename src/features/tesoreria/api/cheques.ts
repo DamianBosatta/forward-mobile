@@ -26,8 +26,14 @@ export interface ResultadoDeposito {
   error: unknown | null
 }
 
-/** Un servidor anterior al depósito por lote no tiene la ruta: 404 (o 405 si la toma por otra). */
-const sinDepositoPorLote = (e: unknown) => e instanceof ApiError && (e.status === 404 || e.status === 405)
+/**
+ * Un servidor anterior al depósito por lote no tiene la ruta: 404 (o 405 si la toma por otra), sin
+ * cuerpo. El servidor nuevo también contesta 404 cuando un cheque o la cuenta ya no existen, pero con
+ * su sobre de error (`errors` siempre viene): eso es un rechazo del lote, no un servidor viejo, y
+ * depositar de a uno dejaría depositados unos sí y otros no.
+ */
+const sinDepositoPorLote = (e: unknown) =>
+  e instanceof ApiError && (e.status === 404 || e.status === 405) && e.errors === undefined && e.codigo === undefined
 
 /** El camino viejo: una llamada por cheque, en serie, sin cortar a la mitad. */
 async function depositarDeAUno(cheques: ChequeEnCartera[], cuentaDestinoId: string) {
@@ -46,7 +52,7 @@ async function depositarDeAUno(cheques: ChequeEnCartera[], cuentaDestinoId: stri
 /**
  * Deposita los cheques elegidos en una sola llamada (`POST /cheques/depositar`): todo o nada. Si el
  * servidor rechaza el lote (409, con cuál cheque y por qué), no se depositó ninguno y todos llevan
- * ese mismo error. Con un servidor anterior, cae al depósito de a uno. Nunca tira.
+ * ese mismo error. Solo con un servidor que no tiene la ruta cae al depósito de a uno. Nunca tira.
  */
 export function useDepositarCheques() {
   const qc = useQueryClient()

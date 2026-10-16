@@ -62,7 +62,7 @@ export function AccionesVenta({ venta, rotulo }: Props) {
     const nombre = `${tipoDeVenta(h).toUpperCase()}-${codigoDeVenta(h)}.pdf`
     let r = await sharePdf(getVentaPdfUrl(h.id), nombre)
     // Un servidor anterior no tiene el PDF comercial (404): se comparte la Nota de Entrega, como antes.
-    if (!r.ok && r.message.includes('(404)')) r = await sharePdf(getNotaEntregaUrl(h.id), nombre)
+    if (!r.ok && r.status === 404) r = await sharePdf(getNotaEntregaUrl(h.id), nombre)
     setPdf(false)
     if (!r.ok) Alert.alert('No se pudo compartir el PDF', r.message)
   }

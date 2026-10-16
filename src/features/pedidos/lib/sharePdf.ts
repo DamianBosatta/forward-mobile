@@ -35,7 +35,7 @@ function getSharing(): SharingModule | null {
 
 export type SharePdfResult =
   | { ok: true }
-  | { ok: false; reason: 'auth' | 'network' | 'unavailable' | 'unknown'; message: string }
+  | { ok: false; reason: 'auth' | 'network' | 'unavailable' | 'unknown'; message: string; status?: number }
 
 export interface SharePdfOptions {
   /**
@@ -119,6 +119,7 @@ export async function sharePdf(url: string, fileName: string, options?: SharePdf
     return {
       ok: false,
       reason: 'network',
+      status: response.status,
       message: `Error al descargar el archivo (${response.status}).`,
     }
   }

@@ -113,6 +113,16 @@ describe('sharePdf — 401 auth error', () => {
   })
 })
 
+describe('sharePdf — HTTP error status', () => {
+  it('returns the HTTP status so callers can branch on it (404)', async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(404))
+    const result = await sharePdf('https://api.example.com/pdf', 'test.pdf')
+    expect(result).toEqual(
+      expect.objectContaining({ ok: false, reason: 'network', status: 404, message: 'Error al descargar el archivo (404).' }),
+    )
+  })
+})
+
 describe('sharePdf — network error', () => {
   it('returns { ok: false, reason: "network" } when fetch throws', async () => {
     mockFetch.mockRejectedValueOnce(new Error('Network request failed'))

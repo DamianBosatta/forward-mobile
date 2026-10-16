@@ -30,8 +30,12 @@ export function useCajasAbiertas(enabled: boolean) {
   })
 }
 
-/** Una cuenta propia como opción del selector, sin saldo (`CuentaPropiaOpcionDto`). */
+/**
+ * Una cuenta propia como opción del selector, sin saldo (`CuentaPropiaOpcionDto`). `saldoActual` solo
+ * viene con un servidor anterior, que contesta con la lista completa de `GET /cuentas-corrientes/propias`.
+ */
 export type CuentaParaCobrar = Pick<CuentaCorrienteResumenDto, 'id' | 'nombre' | 'esCuentaCajaEfectivo' | 'esCuentaCarteraCheques'>
+  & Partial<Pick<CuentaCorrienteResumenDto, 'saldoActual'>>
 
 const sinCajaNiCartera = (cuentas: CuentaParaCobrar[]) => cuentas.filter(c => !c.esCuentaCajaEfectivo && !c.esCuentaCarteraCheques)
 
@@ -173,9 +177,9 @@ export function useCuentaDelPago(cobro: CobroRegistrado, cuentas: { cuentaId?: s
   return { cuenta: tipoCuenta ?? buscada.data ?? null, buscando: !tipoCuenta && buscada.isLoading }
 }
 
-/** Lo que `GET /Pagos/{id}` dice de un cobro: a qué ventas se imputó. `PagoDto` no está en el contrato generado. */
-interface PagoConImputaciones {
-  imputaciones?: { ventaId: string; codigoVenta: string; montoAmount: number }[]
+/** Lo que `GET /Pagos/{id}` dice de un cobro. `imputaciones` es opcional: un servidor anterior a #905 no la manda. */
+type PagoConImputaciones = Omit<components['schemas']['PagoDto'], 'imputaciones'> & {
+  imputaciones?: components['schemas']['ImputacionDelPagoDto'][]
 }
 
 /**
@@ -195,7 +199,8 @@ export function useImputadoDelPago(
     enabled: !!pagoId,
     retry: false,
     queryFn: async (): Promise<ImputacionMovimientoDto[] | null> => {
-      const pago = await api.get<PagoConImputaciones>(`/api/v1/Pagos/${pagoId}`).catch(() => null)
+      // Quien cobra puede no tener MOD_PAGOS:Read: ese 403 es esperado y no va a Sentry.
+      const pago = await api.get<PagoConImputaciones>(`/api/v1/Pagos/${pagoId}`, { estadosEsperados: [403] }).catch(() => null)
       if (pago?.imputaciones) return pago.imputaciones.map(i => ({ comprobante: i.codigoVenta, monto: i.montoAmount }))
       if (!cuentaId || !cliente.puedeVerCuentaCorriente) return null
       const deLaCuenta = await api.get<GetMovimientosCuentaDto>(`/api/v1/cuentas-corrientes/${cuentaId}/movimientos?pageNumber=1&pageSize=20`)
