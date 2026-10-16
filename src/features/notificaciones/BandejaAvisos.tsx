@@ -6,7 +6,7 @@ import { space, typeScale, useColors } from '@/libs/theme'
 import { Button, FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
 import { useBandejaAvisos, useMarcarAvisosLeidos, type Aviso } from '@/libs/api-client/notificaciones'
 import { AvisoFila } from './AvisoFila'
-import { cuandoFue, destinoDelAviso } from './bandeja'
+import { cuandoFue, destinoDelAviso, rutaAlTocarAviso } from './bandeja'
 
 const mensajeDe = (e: unknown, porDefecto: string) => (e instanceof Error && e.message ? e.message : porDefecto)
 
@@ -24,8 +24,8 @@ export function BandejaAvisos() {
 
   const abrir = (aviso: Aviso) => {
     if (!aviso.leida) marcar.mutate([aviso.id])
-    const destino = destinoDelAviso(aviso.accion)
-    if (destino.tipo === 'ruta') router.push(destino.ruta as never)
+    const ruta = rutaAlTocarAviso(aviso.accion)
+    if (ruta) router.push(ruta as never)
   }
 
   const vacio = q.isLoading ? (

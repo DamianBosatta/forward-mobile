@@ -11747,6 +11747,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Notificaciones/dispositivos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegistrarDispositivoPushCommand"];
+                    "text/json": components["schemas"]["RegistrarDispositivoPushCommand"];
+                    "application/*+json": components["schemas"]["RegistrarDispositivoPushCommand"];
+                };
+            };
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EliminarDispositivoPushCommand"];
+                    "text/json": components["schemas"]["EliminarDispositivoPushCommand"];
+                    "application/*+json": components["schemas"]["EliminarDispositivoPushCommand"];
+                };
+            };
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Ofertas": {
         parameters: {
             query?: never;
@@ -20284,6 +20368,9 @@ export interface components {
             /** Format: int32 */
             version?: number | null;
         };
+        EliminarDispositivoPushCommand: {
+            token?: string | null;
+        };
         EmisionArcaDto: {
             estado: string;
             /** Format: int64 */
@@ -22399,6 +22486,10 @@ export interface components {
             motivo?: string | null;
             items?: components["schemas"]["LineaDevolucionInput"][] | null;
             notaCredito?: components["schemas"]["ComprobanteCompraInput"];
+        };
+        RegistrarDispositivoPushCommand: {
+            token?: string | null;
+            plataforma?: string | null;
         };
         RegistrarGastoCommand: {
             descripcion?: string | null;

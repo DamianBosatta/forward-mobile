@@ -21,6 +21,15 @@ export function destinoDelAviso(accion: AccionSugerida | null | undefined): Dest
   return { tipo: 'web', etiqueta: accion.etiqueta }
 }
 
+/**
+ * Adónde lleva tocar un aviso, desde la bandeja o desde un push: la pantalla de mobile de su
+ * acción, o `null` si no hay (informativo, de la web o una ficha sin id).
+ */
+export function rutaAlTocarAviso(accion: AccionSugerida | null | undefined): string | null {
+  const destino = destinoDelAviso(accion)
+  return destino.tipo === 'ruta' ? destino.ruta : null
+}
+
 const MS_POR_DIA = 24 * 60 * 60 * 1000
 const dos = (n: number) => String(n).padStart(2, '0')
 
