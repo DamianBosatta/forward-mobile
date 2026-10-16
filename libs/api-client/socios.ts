@@ -11,6 +11,10 @@ export interface SociosParams {
   search?:     string
   /** Cartera propia: el servidor acota a los clientes del vendedor y a los "de la casa" (management ve todo). */
   agenda?:     boolean
+  /** Solo los de esa localidad (el servidor ignora mayúsculas y tildes). */
+  localidad?:  string
+  /** Solo los clientes con deuda vencida, entre los que el usuario puede ver el saldo. */
+  conDeudaVencida?: boolean
   pageNumber?: number
   pageSize?:   number
 }
@@ -23,6 +27,21 @@ export const sociosKeys = {
   infinite: (params: SociosParams) => [...sociosKeys.all, 'infinite', params] as const,
   detail: (id: string) => [...sociosKeys.all, 'detail', id] as const,
   recientes: () => [...sociosKeys.all, 'recientes'] as const,
+  localidades: () => [...sociosKeys.all, 'localidades'] as const,
+}
+
+/**
+ * Las localidades de la cartera, sin repetir, para el filtro (forward-system 9C). Un servidor que
+ * todavía no tiene el endpoint responde 400 (la ruta cae en `{id}` y "localidades" no es un Guid)
+ * o 404: sin reintentos, el filtro de localidad no aparece.
+ */
+export function useLocalidades() {
+  return useQuery({
+    queryKey: sociosKeys.localidades(),
+    queryFn: () => api.get<string[]>('/api/v1/socios-comerciales/localidades', { estadosEsperados: [400, 404] }),
+    retry: false,
+    staleTime: 10 * 60_000,
+  })
 }
 
 export function useClientes() {
@@ -109,6 +128,8 @@ export function useInfiniteSocios(params: SociosParams = {}) {
       if (params.activo !== undefined && params.activo !== null) sp.append('activo', String(params.activo))
       if (params.search) sp.append('searchTerm', params.search)
       if (params.agenda) sp.append('agenda', 'true')
+      if (params.localidad) sp.append('localidad', params.localidad)
+      if (params.conDeudaVencida) sp.append('conDeudaVencida', 'true')
 
       // `saldoTotal` (PR #882): la suma de todo el filtro, solo en la página 1; null si no se puede dar.
       return api.get<PagedResult<SocioComercial> & { saldoTotal?: number | null }>(`/api/v1/socios-comerciales?${sp}`)

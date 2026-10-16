@@ -107,6 +107,53 @@ describe('Calendario', () => {
     expect(await screen.findByText('El título no puede superar los 200 caracteres.')).toBeTruthy()
   })
 
+  it('"Agendar" desde una venta guardada vincula el evento a la venta y guarda la hora', async () => {
+    mockPost.mockResolvedValue('nuevo-id')
+    pintar({ titulo: 'Seguir el pedido A00341', origen: 'A00341', ventaId: 'venta-341' })
+    expect(await screen.findByText('Queda agendado desde la venta A00341: el título y la descripción ya están cargados.')).toBeTruthy()
+
+    await userEvent.type(screen.getByLabelText('Hora (opcional)'), '09:30')
+    await userEvent.press(screen.getByLabelText('Guardar evento'))
+
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Calendario/eventos', expect.objectContaining({ ventaId: 'venta-341', hora: '09:30' }))
+  })
+
+  it('una hora mal escrita no deja guardar y lo dice', async () => {
+    pintar()
+    await screen.findByText('Rendir la caja de la semana')
+    await userEvent.press(screen.getByLabelText('Nuevo evento'))
+    await userEvent.type(screen.getByLabelText('Título'), 'Pasar a cobrar')
+
+    await userEvent.type(screen.getByLabelText('Hora (opcional)'), '9:3')
+
+    expect(screen.getByText('Escribí la hora como 09:30.')).toBeTruthy()
+    expect(screen.getByLabelText('Guardar evento').props.accessibilityState.disabled).toBe(true)
+  })
+
+  it('"Todas las semanas" arranca en el día del evento, suma días y manda la recurrencia semanal', async () => {
+    mockPost.mockResolvedValue('nuevo-id')
+    pintar()
+    await screen.findByText('Rendir la caja de la semana')
+    await userEvent.press(screen.getByLabelText('Nuevo evento'))
+    await userEvent.type(screen.getByLabelText('Título'), 'Rendir la caja')
+
+    await userEvent.press(screen.getByLabelText('Todas las semanas'))
+    expect(screen.getByText('Se repite todos los viernes')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Lunes'))
+    expect(screen.getByText('Se repite todos los lunes y viernes')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Guardar evento'))
+
+    expect(mockPost.mock.calls[0][1].recurrencia).toEqual({ frecuencia: 'Semanal', intervalo: 1, diasSemana: [5, 1] })
+  })
+
+  it('el renglón muestra la hora y la venta desde la que se agendó', async () => {
+    mockGet.mockResolvedValue([evento({ clave: 'h', fecha: '2026-10-09', titulo: 'Llamar a Marta', hora: '09:30', ventaId: 'v1', ventaCodigo: 'A00341' })])
+    pintar()
+
+    expect(await screen.findByText('09:30 · Recordatorio')).toBeTruthy()
+    expect(screen.getByText('Agendado desde la venta A00341')).toBeTruthy()
+  })
+
   it('el título de una semana que cruza de mes nombra los dos meses', () => {
     expect(tituloSemana(semanaDe(Date.parse('2026-10-01T15:00:00Z')))).toBe('Semana del 28 de septiembre al 4 de octubre')
   })

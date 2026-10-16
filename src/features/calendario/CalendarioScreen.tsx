@@ -11,7 +11,7 @@ import { EventoSheet } from './EventoSheet'
 import { chipDe, TIPO } from './presentacion'
 
 /** Lámina Calendario: la semana de lunes a domingo (días argentinos) y los eventos del día elegido. */
-export function CalendarioScreen({ precarga }: { precarga?: Precarga | null }) {
+export function CalendarioScreen({ precarga, onAbrirVenta }: { precarga?: Precarga | null; onAbrirVenta?: (ventaId: string) => void }) {
   const c = useColors()
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const menu = useMenuLeading()
@@ -92,8 +92,11 @@ export function CalendarioScreen({ precarga }: { precarga?: Precarga | null }) {
                     {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
                   </View>
                   <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-                    {[TIPO[e.tipo] ?? e.tipo, e.descripcion, e.monto != null ? formatImporte(e.monto) : null].filter(Boolean).join(' · ')}
+                    {[e.hora, TIPO[e.tipo] ?? e.tipo, e.descripcion, e.monto != null ? formatImporte(e.monto) : null].filter(Boolean).join(' · ')}
                   </Text>
+                  {e.ventaCodigo ? (
+                    <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Agendado desde la venta ${e.ventaCodigo}`}</Text>
+                  ) : null}
                 </Pressable>
               )
             })
@@ -121,6 +124,7 @@ export function CalendarioScreen({ precarga }: { precarga?: Precarga | null }) {
           evento={abierto}
           onCerrar={() => setAbierto(null)}
           onMovido={(fecha) => { setAbierto(null); irADia(fecha) }}
+          onAbrirVenta={onAbrirVenta}
         />
       ) : null}
     </View>

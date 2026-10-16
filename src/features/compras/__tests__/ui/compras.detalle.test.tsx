@@ -59,6 +59,11 @@ const conCapacidad = () => useAuthStore.setState({
 })
 
 describe('detalle de compra', () => {
+  it('con el número del servidor (9C), el subtítulo lo muestra como C-00232', async () => {
+    abrir({ numero: 232 })
+    expect(await screen.findByText('C-00232 · 07/10/2026')).toBeTruthy()
+  })
+
   it('nota de pedido: muestra líneas y total, y confirma; si el servidor rechaza, el motivo queda a la vista', async () => {
     abrir({})
     expect(await screen.findByText('Balde Nuvia 10L')).toBeTruthy()

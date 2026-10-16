@@ -88,4 +88,18 @@ describe('useAuth Hook', () => {
 
     expect(queryClient.getQueryCache().getAll()).toHaveLength(0);
   });
+
+  it('guarda el depósito del usuario que manda GET /users/me (9C): la disponibilidad se consulta ahí', async () => {
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'u1', email: 'v@x.com', roles: ['Empleado'], depositoId: 'dep-haedo' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ permissions: [] }) });
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      expect(await result.current.refreshPermissions('tok')).toBe(true);
+    });
+
+    const setUser = (useAuthStore as unknown as jest.Mock)().setUser as jest.Mock;
+    expect(setUser).toHaveBeenCalledWith(expect.objectContaining({ id: 'u1', depositoId: 'dep-haedo' }));
+  });
 });

@@ -14093,6 +14093,8 @@ export interface paths {
                     LastModified?: string;
                     Agenda?: boolean;
                     SoloIncompletos?: boolean;
+                    Localidad?: string;
+                    ConDeudaVencida?: boolean;
                     PageNumber?: number;
                     PageSize?: number;
                 };
@@ -14144,6 +14146,43 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/socios-comerciales/localidades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string[];
+                        "application/json": string[];
+                        "text/json": string[];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -19038,6 +19077,8 @@ export interface components {
         CompraDto: {
             /** Format: uuid */
             id: string;
+            /** Format: int64 */
+            numero: number;
             /** Format: int32 */
             version: number;
             /** Format: uuid */
@@ -19091,6 +19132,8 @@ export interface components {
         CompraDtoList: {
             /** Format: uuid */
             id: string;
+            /** Format: int64 */
+            numero: number;
             /** Format: uuid */
             proveedorId: string;
             razonSocialProveedor: string;
@@ -19479,7 +19522,10 @@ export interface components {
             socioComercialId?: string | null;
             /** Format: int32 */
             avisarDiasAntes: number;
+            hora?: string | null;
             visibilidad: components["schemas"]["VisibilidadEvento"];
+            /** Format: uuid */
+            ventaId?: string | null;
         };
         CrearFacturaDeVentaCommand: {
             /** Format: uuid */
@@ -19697,6 +19743,7 @@ export interface components {
             direccion?: string | null;
             nombreFantasia?: string | null;
             nombreContacto?: string | null;
+            localidad?: string | null;
             horario?: components["schemas"]["FranjaHorariaDto"][] | null;
             condicionPago?: components["schemas"]["CondicionPagoDto"];
             franjaEntrega?: components["schemas"]["FranjaHorariaDto"][] | null;
@@ -20184,6 +20231,7 @@ export interface components {
             socioComercialId?: string | null;
             /** Format: int32 */
             avisarDiasAntes: number;
+            hora?: string | null;
         };
         EditarVentaDepositoCommand: {
             /** Format: uuid */
@@ -20405,6 +20453,10 @@ export interface components {
             descripcion?: string | null;
             /** Format: date */
             fechaInicio: string;
+            hora?: string | null;
+            /** Format: uuid */
+            ventaId?: string | null;
+            ventaCodigo?: string | null;
             recurrencia?: components["schemas"]["RecurrenciaDto"];
             /** Format: double */
             montoEstimado?: number | null;
@@ -20421,6 +20473,10 @@ export interface components {
             origenId: string;
             /** Format: date */
             fecha: string;
+            hora?: string | null;
+            /** Format: uuid */
+            ventaId?: string | null;
+            ventaCodigo?: string | null;
             tipo: components["schemas"]["TipoEventoCalendario"];
             origen: components["schemas"]["OrigenEventoCalendario"];
             estado: components["schemas"]["EstadoEventoCalendario"];
@@ -20739,7 +20795,7 @@ export interface components {
             readonly esValida?: boolean;
         };
         /** @enum {string} */
-        FrecuenciaRecurrencia: "Mensual" | "Anual" | "CadaNDias" | "CadaNMeses";
+        FrecuenciaRecurrencia: "Mensual" | "Anual" | "CadaNDias" | "CadaNMeses" | "Semanal";
         GastoListDto: {
             /** Format: uuid */
             id: string;
@@ -22228,6 +22284,7 @@ export interface components {
             diaDelMes?: number | null;
             /** Format: date */
             fechaFin?: string | null;
+            diasSemana?: number[] | null;
         };
         ReemplazarReglaComisionCommand: {
             /** Format: uuid */
@@ -22885,6 +22942,7 @@ export interface components {
             direccion: string;
             nombreFantasia?: string | null;
             nombreContacto?: string | null;
+            localidad?: string | null;
             displayName: string;
             horario?: components["schemas"]["FranjaHorariaDto"][] | null;
             condicionPago?: components["schemas"]["CondicionPagoDto"];
@@ -22951,6 +23009,7 @@ export interface components {
             direccion: string;
             nombreFantasia?: string | null;
             nombreContacto?: string | null;
+            localidad?: string | null;
             displayName: string;
             esProvisorio: boolean;
             requiereCompletar: boolean;
@@ -23793,6 +23852,7 @@ export interface components {
             direccion?: string | null;
             nombreFantasia?: string | null;
             nombreContacto?: string | null;
+            localidad?: string | null;
             horario?: components["schemas"]["FranjaHorariaDto"][] | null;
             condicionPago?: components["schemas"]["CondicionPagoDto"];
             franjaEntrega?: components["schemas"]["FranjaHorariaDto"][] | null;
@@ -23822,6 +23882,9 @@ export interface components {
             apellido?: string | null;
             email?: string | null;
             role?: string | null;
+            /** Format: uuid */
+            depositoId?: string | null;
+            quitarDeposito?: boolean;
         };
         UpdateVehiculoCommand: {
             /** Format: uuid */
@@ -23897,6 +23960,8 @@ export interface components {
             /** Format: uuid */
             puestoId?: string | null;
             puestoNombre?: string | null;
+            /** Format: uuid */
+            depositoId?: string | null;
             permissions?: components["schemas"]["ModulePermissionDto"][] | null;
         };
         UserListDto: {

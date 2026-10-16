@@ -103,6 +103,17 @@ describe('lista de compras', () => {
     expect(within(tarjeta).getByText(/8 productos · Llega jue 8$/)).toBeTruthy()
   })
 
+  it('con el número correlativo del servidor (9C), la tarjeta dice C-00232 en vez del id', async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('borradores/mios')) return Promise.resolve([])
+      if (url.includes('/resumen')) return Promise.resolve({ totalComprado: 0, notasPedido: 1, confirmadas: 0, entregadas: 0, canceladas: 0, anuladas: 0 })
+      return Promise.resolve(pagina([compra({ numero: 232, creadoPor: 'Nacho Damiano' })], 1))
+    })
+    pantalla()
+    const tarjeta = await screen.findByRole('button', { name: /C-00232/ })
+    expect(within(tarjeta).getByText('C-00232 · Nacho Damiano')).toBeTruthy()
+  })
+
   it('con el servidor anterior (sin creadoPor) la tarjeta sigue mostrando el depósito al lado del número', async () => {
     pantalla()
     const tarjeta = await screen.findByRole('button', { name: /AAAA1111/ })

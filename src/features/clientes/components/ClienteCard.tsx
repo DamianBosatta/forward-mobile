@@ -24,11 +24,12 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
   const nombre = nombreDelCliente(cliente)
   const saldo = cliente.puedeVerSaldo ? formatImporte(cliente.saldoAmount) : null
   const vencida = cliente.tieneDeudaVencida === true
+  const localidad = cliente.localidad?.trim() || null
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={[direccion, vencida && 'deuda vencida', nombre, saldo && `saldo ${saldo}`].filter(Boolean).join(', ')}
+      accessibilityLabel={[direccion, vencida && 'deuda vencida', nombre, localidad, saldo && `saldo ${saldo}`].filter(Boolean).join(', ')}
       accessibilityState={{ selected: seleccionado }}
       onPress={onPress}
       style={({ pressed }) => [
@@ -71,6 +72,11 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
         {nombre ? (
           <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.textSecondary }}>
             {nombre}
+          </Text>
+        ) : null}
+        {localidad ? (
+          <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.textSecondary }}>
+            {localidad}
           </Text>
         ) : null}
         {saldo ? (

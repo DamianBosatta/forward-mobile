@@ -13,7 +13,7 @@ jest.mock('@react-navigation/native', () => ({
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, []),
 }))
 let mockParams: Record<string, string> = {}
-jest.mock('expo-router', () => ({ useLocalSearchParams: () => mockParams }))
+jest.mock('expo-router', () => ({ useLocalSearchParams: () => mockParams, useRouter: () => ({ push: jest.fn() }) }))
 
 const venta = { titulo: 'Seguir el pedido A00421', descripcion: 'Pedido A00421', origen: 'A00421' }
 const tree = () => (

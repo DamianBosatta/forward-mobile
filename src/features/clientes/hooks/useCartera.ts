@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useInfiniteSocios } from '@/libs/api-client/socios'
 import type { SocioListDto } from '@/libs/api-client/types'
+import type { FiltrosDeCartera } from '../components/FiltrosCartera'
 
 /** Espera entre la última tecla y el pedido al servidor. */
 export const ESPERA_BUSQUEDA_MS = 300
@@ -18,11 +19,20 @@ export function useValorDiferido<T>(valor: T, ms = ESPERA_BUSQUEDA_MS): T {
 /**
  * Cartera de clientes activos, paginada y buscada EN EL SERVIDOR (dirección, nombre de fantasía,
  * contacto, razón social o CUIT). Con `agenda` el servidor acota al vendedor sin gestión de cartera
- * a sus clientes y a los "de la casa": mobile no filtra nada por su cuenta.
+ * a sus clientes y a los "de la casa": mobile no filtra nada por su cuenta. Los filtros de localidad
+ * y deuda vencida también los aplica el servidor, antes de paginar.
  */
-export function useCartera(busqueda: string) {
+export function useCartera(busqueda: string, filtros?: FiltrosDeCartera) {
   const texto = useValorDiferido(busqueda.trim())
-  const query = useInfiniteSocios({ tipo: 1, activo: true, agenda: true, search: texto, pageSize: 20 })
+  const query = useInfiniteSocios({
+    tipo: 1,
+    activo: true,
+    agenda: true,
+    search: texto,
+    pageSize: 20,
+    ...(filtros?.localidad ? { localidad: filtros.localidad } : {}),
+    ...(filtros?.conDeudaVencida ? { conDeudaVencida: true } : {}),
+  })
   const pages = query.data?.pages
 
   const clientes = useMemo<SocioListDto[]>(() => (pages ?? []).flatMap(p => p?.items ?? []), [pages])

@@ -405,7 +405,7 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
                 </TouchableOpacity>
               </RequirePermission>
 
-              {/* Agendar (PR 5.3): el calendario no vincula el evento a la venta; solo precarga el texto. */}
+              {/* Agendar (PR 5.3; 9C): precarga el texto y el evento queda vinculado a la venta. */}
               <TouchableOpacity
                 onPress={() => {
                   const numero = venta.codigoPedido ?? venta.id.slice(0, 8).toUpperCase()
@@ -416,6 +416,7 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
                       titulo: `Seguir el ${doc}${socio?.direccion ? ` · ${socio.direccion}` : ''}`,
                       descripcion: [`${isPresupuesto ? 'Presupuesto' : 'Pedido'} ${numero}`, venta.clienteNombre, venta.totalAmount != null ? formatImporte(venta.totalAmount) : null].filter(Boolean).join(' · '),
                       origen: numero,
+                      ventaId: venta.id,
                       // Cada "Agendar" es una navegación nueva: la pantalla del Drawer sigue montada y reabre la hoja.
                       nonce: String(Date.now()),
                     },

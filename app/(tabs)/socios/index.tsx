@@ -9,6 +9,7 @@ import { usePermissions } from '@/core/auth/RequirePermission'
 import { useCartera } from '@/features/clientes/hooks/useCartera'
 import { ClienteCard } from '@/features/clientes/components/ClienteCard'
 import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
+import { FiltrosCartera, SIN_FILTROS, type FiltrosDeCartera } from '@/features/clientes/components/FiltrosCartera'
 import { textoMostrando } from '@/features/clientes/lib/cliente'
 import { FichaCliente } from '@/features/clientes/components/FichaCliente'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -27,7 +28,9 @@ export default function ClientesScreen() {
   const { canCreate } = usePermissions()
   const [busqueda, setBusqueda] = useState('')
   const [abierto, setAbierto] = useState<string | null>(null)
-  const { clientes, totalCount, saldoTotal, isLoading, isRefetching, error, refetch, cargarMas } = useCartera(busqueda)
+  const [filtros, setFiltros] = useState<FiltrosDeCartera>(SIN_FILTROS)
+  const { clientes, totalCount, saldoTotal, isLoading, isRefetching, error, refetch, cargarMas } = useCartera(busqueda, filtros)
+  const filtrando = filtros.conDeudaVencida || !!filtros.localidad
   const dosPaneles = width >= ANCHO_DOS_PANELES
 
   const abrir = (id: string) => {
@@ -73,7 +76,11 @@ export default function ClientesScreen() {
             <ActivityIndicator color={c.brandInk} style={{ marginTop: space[8] }} />
           ) : error ? null : (
             <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center', marginTop: space[8] }}>
-              {busqueda.trim() ? 'Ningún cliente coincide con la búsqueda.' : 'Todavía no hay clientes en tu cartera.'}
+              {busqueda.trim()
+                ? 'Ningún cliente coincide con la búsqueda.'
+                : filtrando
+                  ? 'Ningún cliente coincide con los filtros.'
+                  : 'Todavía no hay clientes en tu cartera.'}
             </Text>
           )
         }
@@ -89,6 +96,7 @@ export default function ClientesScreen() {
         leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
       />
       <BuscadorCartera valor={busqueda} onCambio={setBusqueda} />
+      <FiltrosCartera valor={filtros} onCambio={setFiltros} />
 
       {dosPaneles ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>
