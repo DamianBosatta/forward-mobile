@@ -87,9 +87,11 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
     else router.push(`/(tabs)/ventas/${id}` as never)
   }
 
-  // El borrador es siempre un presupuesto en el servidor: al retomarlo se elige qué va a ser.
+  // Desde forward-system #883 el borrador guarda si se armaba un pedido o un presupuesto y se retoma
+  // como tal. Un servidor anterior no lo manda (todo borrador es presupuesto ahí): se pregunta.
   const retomar = (b: BorradorVenta) => {
     const ir = (tipo: 'Pedido' | 'Presupuesto') => router.push(`/(tabs)/ventas/nueva-v2?borrador=${b.id}&tipo=${tipo}` as never)
+    if (b.tipoOperacion === 'Pedido' || b.tipoOperacion === 'Presupuesto') return ir(b.tipoOperacion)
     Alert.alert('Retomar borrador', identidadDeBorrador(b).titulo, [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Como presupuesto', onPress: () => ir('Presupuesto') },
