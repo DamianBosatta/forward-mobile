@@ -83,7 +83,7 @@ describe('venta guardada (PR 2.9)', () => {
 
   it('con un servidor sin el PDF comercial (404) comparte la Nota de Entrega, como antes', async () => {
     mockShare
-      .mockResolvedValueOnce({ ok: false, reason: 'network', message: 'Error al descargar el archivo (404).' })
+      .mockResolvedValueOnce({ ok: false, reason: 'network', status: 404, message: 'No encontrado' })
       .mockResolvedValueOnce({ ok: true })
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: 'Compartir PDF con el cliente' }))
@@ -92,6 +92,14 @@ describe('venta guardada (PR 2.9)', () => {
       ['https://api/api/v1/Logistica/v9/nota-entrega-pdf', 'PEDIDO-A00419.pdf'],
     ])
     expect(Alert.alert).not.toHaveBeenCalledWith('No se pudo compartir el PDF', expect.anything())
+  })
+
+  it('otro error del PDF comercial (500) no cae a la Nota de Entrega y se avisa', async () => {
+    mockShare.mockResolvedValueOnce({ ok: false, reason: 'network', status: 500, message: 'Error al descargar el archivo (500).' })
+    pantalla()
+    await userEvent.press(await screen.findByRole('button', { name: 'Compartir PDF con el cliente' }))
+    expect(mockShare).toHaveBeenCalledTimes(1)
+    expect(Alert.alert).toHaveBeenCalledWith('No se pudo compartir el PDF', 'Error al descargar el archivo (500).')
   })
 
   it('un presupuesto pendiente se convierte en pedido con su versión y se dice cómo quedó', async () => {
