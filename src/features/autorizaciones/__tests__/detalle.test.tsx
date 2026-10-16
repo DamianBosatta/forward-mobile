@@ -136,8 +136,30 @@ describe('Autorizar venta: el detalle', () => {
     const piso = await screen.findByTestId('bloque-piso')
     expect(within(piso).getByText('Aporte — · Sacrificio $ 96,80')).toBeTruthy()
     const bloque = screen.getByTestId('bloque-costos')
-    expect(within(bloque).getAllByText('—')).toHaveLength(2) // ganancia y margen de la venta
+    expect(within(bloque).getAllByText('—')).toHaveLength(3) // costo, ganancia y margen de la venta
     expect(within(bloque).queryByText(/\$ 0,00/)).toBeNull()
+    expect(within(piso).getByText('Margen — · Piso —')).toBeTruthy()
+  })
+
+  it('con CAP_VER_COSTOS muestra el costo de la venta y el margen y el piso de cada línea del servidor (cierre del bloque 9)', async () => {
+    permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA', 'CAP_VER_COSTOS')
+    const conMargen = { ...PREVIEW, costoTotal: 48000, items: [{ ...PREVIEW.items[0], margenPorcentaje: 13.9, pisoPorcentaje: 17.36 }] }
+    mockGet.mockImplementation((url: string) => Promise.resolve(url.endsWith('autorizacion-preview') ? conMargen : VENTA))
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={qc}><DetalleAutorizacion id="v1" /></QueryClientProvider>)
+    const piso = await screen.findByTestId('bloque-piso')
+    expect(within(piso).getByText('Margen 13,9 % · Piso 17,4 %')).toBeTruthy()
+    expect(within(screen.getByTestId('bloque-costos')).getByText('$ 48.000,00')).toBeTruthy()
+  })
+
+  it('sin CAP_VER_COSTOS no dibuja margen ni piso de la línea aunque lleguen', async () => {
+    permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+    const conMargen = { ...PREVIEW, items: [{ ...PREVIEW.items[0], margenPorcentaje: 13.9, pisoPorcentaje: 17.36 }] }
+    mockGet.mockImplementation((url: string) => Promise.resolve(url.endsWith('autorizacion-preview') ? conMargen : VENTA))
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={qc}><DetalleAutorizacion id="v1" /></QueryClientProvider>)
+    await screen.findByTestId('bloque-piso')
+    expect(screen.queryByText(/Margen 13,9/)).toBeNull()
   })
 
   it('con CAP_AUTORIZAR_VENTA y costos pero sin Reportes también pide la vista previa', async () => {

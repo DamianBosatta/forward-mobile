@@ -253,6 +253,30 @@ describe('pestaña Líneas', () => {
     })), ESPERA)
   })
 
+  it('el banner dice los motivos del servidor (deuda vencida y tope de crédito incluidos) antes de guardar', async () => {
+    const original = mockPost.getMockImplementation()
+    mockPost.mockImplementation((url: string, body: unknown) => url === '/api/v1/Ventas/vista-previa'
+      ? Promise.resolve({ requiereAutorizacion: true, estadoResultante: 'PendienteAutorizacion', motivoPendienteAutorizacion: 48,
+        motivos: ['cliente con deuda de más de 30 días', 'supera el tope de venta del cliente'], rechazos: [], productosSinStock: [], total: 100, lineas: [] })
+      : original!(url, body))
+    await elegirCliente()
+    conLineas(5, 12)
+    expect(await screen.findByText(/Porque cliente con deuda de más de 30 días, supera el tope de venta del cliente/, {}, ESPERA)).toBeTruthy()
+    const pedido = mockPost.mock.calls.find(([u]) => u === '/api/v1/Ventas/vista-previa')![1]
+    expect(pedido).toMatchObject({ clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 5 }] })
+  })
+
+  it('un rechazo del servidor se muestra antes de guardar', async () => {
+    const original = mockPost.getMockImplementation()
+    mockPost.mockImplementation((url: string, body: unknown) => url === '/api/v1/Ventas/vista-previa'
+      ? Promise.resolve({ requiereAutorizacion: false, estadoResultante: null, motivos: [], productosSinStock: [], total: null, lineas: [],
+        rechazos: ['No se puede crear la venta: el precio de los siguientes productos es inferior al costo directo (piso absoluto): Pala.'] })
+      : original!(url, body))
+    await elegirCliente()
+    conLineas(5, 12)
+    expect(await screen.findByText(/inferior al costo directo \(piso absoluto\): Pala\./, {}, ESPERA)).toBeTruthy()
+  })
+
   it('sin stock suficiente también avisa; dentro del tope y con stock, no hay banner', async () => {
     await elegirCliente()
     conLineas(5, 12)

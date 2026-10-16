@@ -19,6 +19,12 @@ jest.mock('../hooks/useCatalogoVenta', () => ({
   useCatalogoVenta: () => ({ productos: mockProductos, isLoading: false }),
 }))
 
+// La vista previa de la línea (servidor) tiene sus propios tests en EditarLineaSheet.test.tsx.
+jest.mock('@/libs/api-client/ventas', () => ({
+  ...jest.requireActual('@/libs/api-client/ventas'),
+  useVistaPreviaLinea: () => ({ data: undefined }),
+}))
+
 const conUsuario = (roles: string[], permissions: { module: string; canRead: boolean }[] = []) => useAuthStore.setState({ user: { roles, permissions } as never })
 
 beforeEach(() => {

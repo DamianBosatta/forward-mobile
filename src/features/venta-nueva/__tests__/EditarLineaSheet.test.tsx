@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { pctFromPrecio, precioFromPct } from '@/features/ventas/lib/descuentos'
@@ -9,9 +9,10 @@ import type { LineaCarrito } from '../lib/carrito'
 import { cajaDe6, producto } from '../__testing__/producto'
 
 const mockGet = jest.fn()
+const mockPost = jest.fn()
 jest.mock('@/core/api/client', () => ({
   ...jest.requireActual('@/core/api/client'),
-  api: { get: (...a: unknown[]) => mockGet(...a) },
+  api: { get: (...a: unknown[]) => mockGet(...a), post: (...a: unknown[]) => mockPost(...a) },
 }))
 
 const VER_COSTOS = { module: 'CAP_VER_COSTOS', canRead: true }
@@ -24,8 +25,9 @@ const linea = (over: Partial<LineaCarrito> = {}): LineaCarrito => {
   return { productoId: p.id, producto: p, cantidad: 12, descuentoPct: 0, ...over }
 }
 
-function abrir(l = linea(), onConfirm = jest.fn()) {
-  render(<EditarLineaSheet linea={l} onClose={jest.fn()} onConfirm={onConfirm} onQuitar={jest.fn()} />)
+function abrir(l = linea(), onConfirm = jest.fn(), descuentoGeneral?: number) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(<QueryClientProvider client={qc}><EditarLineaSheet linea={l} onClose={jest.fn()} onConfirm={onConfirm} onQuitar={jest.fn()} descuentoGeneral={descuentoGeneral} /></QueryClientProvider>)
   return onConfirm
 }
 const escribir = async (campo: string, texto: string) => {
@@ -35,7 +37,11 @@ const escribir = async (campo: string, texto: string) => {
 }
 const valor = (campo: string) => leerNumero(screen.getByLabelText(campo).props.value)
 
-beforeEach(() => { conUsuario(10); mockGet.mockReset().mockResolvedValue(undefined) })
+beforeEach(() => {
+  conUsuario(10)
+  mockGet.mockReset().mockResolvedValue(undefined)
+  mockPost.mockReset().mockResolvedValue(undefined)
+})
 
 describe('EditarLineaSheet: descuento % ↔ precio con descuento (descuentos.ts)', () => {
   it('el % calcula el precio igual que precioFromPct', async () => {
@@ -137,9 +143,10 @@ describe('EditarLineaSheet: entradas inválidas (es-AR)', () => {
   it('si cambia el objeto de la línea con la hoja abierta, no pisa lo que se tipeó', async () => {
     const l = linea()
     const props = { onClose: jest.fn(), onConfirm: jest.fn(), onQuitar: jest.fn() }
-    const { rerender } = render(<EditarLineaSheet linea={l} {...props} />)
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const { rerender } = render(<QueryClientProvider client={qc}><EditarLineaSheet linea={l} {...props} /></QueryClientProvider>)
     await escribir('Descuento (%)', '7')
-    rerender(<EditarLineaSheet linea={{ ...l }} {...props} />)
+    rerender(<QueryClientProvider client={qc}><EditarLineaSheet linea={{ ...l }} {...props} /></QueryClientProvider>)
     expect(screen.getByLabelText('Descuento (%)').props.value).toBe('7')
   })
 })
@@ -229,5 +236,38 @@ describe('EditarLineaSheet: fragancias no pasan su stock disponible', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Sumar' }))
     await userEvent.press(screen.getByRole('button', { name: 'Sumar' }))
     expect(screen.getByLabelText('Unidades: 12')).toBeTruthy()
+  })
+})
+
+describe('EditarLineaSheet: vista previa del servidor (cierre del bloque 9)', () => {
+  const VISTA = { productoId: 'p1', productoNombre: 'X', cantidad: 12, precioLista: 2496, precioBase: 2496, conOferta: false, precioEfectivo: 2496 }
+
+  it('pide la vista previa con la cantidad, el descuento de la línea y el general de la venta', async () => {
+    abrir(linea(), jest.fn(), 5)
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/vista-previa-linea',
+      expect.objectContaining({ cantidad: 12, descuentoPorcentaje: 0, descuentoGeneral: 5 })))
+  })
+
+  it('sin CAP_VER_COSTOS, el rojo del servidor se avisa antes de guardar y no se dibuja margen', async () => {
+    mockPost.mockResolvedValue({ ...VISTA, veredicto: 'Rojo', precioMinimoRentable: 2000, margenPorcentaje: null })
+    abrir()
+    expect(await screen.findByText('Debajo del costo.')).toBeTruthy()
+    expect(within(screen.getByTestId('semaforo-linea')).getByText('Debajo del costo')).toBeTruthy()
+    expect(screen.queryByTestId('costos-linea')).toBeNull()
+  })
+
+  it('con CAP_VER_COSTOS muestra el margen y el semáforo del servidor', async () => {
+    conUsuario(10, [VER_COSTOS])
+    mockPost.mockResolvedValue({ ...VISTA, veredicto: 'Amarillo', precioMinimoRentable: 2600, margenPorcentaje: 43.51 })
+    abrir()
+    expect(await screen.findByText('43,51 % · en amarillo')).toBeTruthy()
+    expect(screen.getByText('Debajo del precio mínimo ($ 2.600,00).')).toBeTruthy()
+  })
+
+  it('sin respuesta del servidor quedan los avisos locales de siempre', async () => {
+    mockPost.mockRejectedValue(new Error('sin red'))
+    abrir()
+    await waitFor(() => expect(mockPost).toHaveBeenCalled())
+    expect(screen.queryByTestId('semaforo-linea')).toBeNull()
   })
 })
