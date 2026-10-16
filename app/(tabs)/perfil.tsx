@@ -12,6 +12,7 @@ import { useVentaNuevaStore, usePuedeProbarVentaNueva } from '@/features/ventas/
 import { CambiarContrasena } from '@/features/cuenta/components/CambiarContrasena'
 import { AVISO_SESION_NO_CERRADA_EN_TODOS, cerrarSesionEnElServidor } from '@/features/cuenta/api/cuenta'
 import { SesionesAbiertas } from '@/features/cuenta/components/SesionesAbiertas'
+import { darDeBajaPushAntesDeSalir } from '@/features/notificaciones'
 
 const THEME_OPTIONS: SegmentedOption<ThemeMode>[] = [
   { value: 'light', label: 'Claro' },
@@ -45,8 +46,12 @@ export default function PerfilScreen() {
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
   const titulo = (t: string) => <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>{t}</Text>
 
-  /** Revoca en el servidor (mejor esfuerzo); si no se pudo, lo dice: no queda la sensación de haber cerrado todo. */
+  /**
+   * Revoca en el servidor (mejor esfuerzo); si no se pudo, lo dice: no queda la sensación de haber cerrado todo.
+   * Antes da de baja el celular para push: después de revocar, el token de acceso ya no vale.
+   */
   const revocarEnElServidor = async () => {
+    await darDeBajaPushAntesDeSalir()
     const ok = await cerrarSesionEnElServidor()
     if (!ok) Alert.alert('Sesión cerrada solo aquí', AVISO_SESION_NO_CERRADA_EN_TODOS)
   }
