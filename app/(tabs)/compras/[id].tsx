@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react'
 import { AccessibilityInfo, ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { comprasKeys, useAnularRecepcionCompra, useCompra, useCancelarCompra, useConfirmarCompra, useRecibirCompra } from '@/libs/api-client/compras'
+import { comprasKeys, useAnularRecepcionCompra, useCompra, useCancelarCompra, useConfirmarCompra, useGuardarComprobanteCompra, useRecibirCompra } from '@/libs/api-client/compras'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import type { CompraDto } from '@/libs/api-client'
+import { useSocio } from '@/libs/api-client/socios'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { BottomSheet, Button, Field, Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
@@ -15,6 +16,8 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { ddmmaaaa, fechaIso, hoyTexto } from '@/features/compras/lib/fecha'
 import { confirmarYRecibir, tomarAviso, type Aviso } from '@/features/compras/lib/confirmar-y-recibir'
 import { ConfirmarYRecibirSheet } from '@/features/compras/components/ConfirmarYRecibirSheet'
+import { ComprobanteCampos } from '@/features/compras/components/ComprobanteCampos'
+import { armarComprobante, formDesdeComprobante, formNuevo, resumenComprobante, seCorrigeEnLaWeb, type ComprobanteCompraInput, type FormComprobante } from '@/features/compras/lib/comprobante'
 import { inicioKeys } from '@/core/query/queryClient'
 
 /** Ruta `compras/[id]`: el id viene de la URL. */
@@ -26,7 +29,7 @@ export default function CompraDetailScreen() {
   return <CompraDetalle id={id ?? ''} aviso={inicial ?? undefined} />
 }
 
-type Hoja = 'recibir' | 'cancelar' | 'anularRecepcion' | 'confirmarYRecibir' | null
+type Hoja = 'recibir' | 'cancelar' | 'anularRecepcion' | 'confirmarYRecibir' | 'comprobante' | null
 
 /**
  * Detalle de una compra con el formato nuevo (Bloque 9A, PR 3.5). Los botones dependen del estado
@@ -53,6 +56,14 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
   const [versionVista, setVersionVista] = useState(0)
   const [aviso, setAviso] = useState<Aviso | null>(avisoInicial ?? null)
   const [recibiendo, setRecibiendo] = useState(false)
+  // El comprobante del proveedor que se está cargando (al recibir o después); null: no se carga.
+  const [comprobante, setComprobante] = useState<FormComprobante | null>(null)
+  const guardarComprobante = useGuardarComprobanteCompra()
+  // El CUIT del proveedor para precargar el comprobante: se pide solo con esas hojas abiertas.
+  const socio = useSocio(hoja === 'recibir' || hoja === 'comprobante' ? q.data?.proveedorId ?? '' : '')
+  useEffect(() => {
+    if (comprobante && !comprobante.cuit && socio.data?.cuit) setComprobante({ ...comprobante, cuit: socio.data.cuit })
+  }, [comprobante, socio.data])
   const queryClient = useQueryClient()
   useEffect(() => { if (aviso) AccessibilityInfo.announceForAccessibility(aviso.texto) }, [aviso])
   const volver = onVolver ?? (() => router.back())
@@ -75,13 +86,23 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
   const abierta = estado === 'NotaPedido' || estado === 'Confirmado'
   const pideFactura = compra.condicionPago?.tipo === 'DiasDesdeFactura'
   const fechaLeida = fechaIso(fechaFactura)
-  const ocupado = recibiendo || confirmar.isPending || recibir.isPending || cancelar.isPending || anularRecepcion.isPending
+  const ocupado = recibiendo || guardarComprobante.isPending || confirmar.isPending || recibir.isPending || cancelar.isPending || anularRecepcion.isPending
   // Mismo permiso que el servidor: MOD_COMPRAS:Delete y CAP_ANULAR_RECEPCION_COMPRAS.
   const puedeAnularRecepcion = estado === 'Entregado' && canDo('MOD_COMPRAS', 'delete') && hasCapability(permisos, 'CAP_ANULAR_RECEPCION_COMPRAS')
   const puedeEditar = canDo('MOD_COMPRAS', 'update')
 
   // Cada hoja arranca limpia: ni el motivo ni el error de otra quedan a la vista.
-  const abrirHoja = (h: Hoja) => { setError(null); setAviso(null); setMotivo(''); if (h === 'anularRecepcion' || h === 'confirmarYRecibir') setVersionVista(compra.version); if (h === 'confirmarYRecibir') setFechaFactura(hoyTexto()); setHoja(h) }
+  const abrirHoja = (h: Hoja) => { setError(null); setAviso(null); setMotivo(''); if (h === 'anularRecepcion' || h === 'confirmarYRecibir') setVersionVista(compra.version); if (h === 'confirmarYRecibir') setFechaFactura(hoyTexto()); setComprobante(h === 'comprobante' ? formComprobante() : null); setHoja(h) }
+  const formComprobante = () => (compra.comprobante
+    ? formDesdeComprobante(compra.comprobante)
+    : formNuevo(socio.data ?? { razonSocial: compra.razonSocialProveedor }, hoyTexto()))
+  // Arma el comprobante cargado (o deja a la vista qué falta) y recién ahí llama al servidor.
+  const conComprobante = (accion: (c?: ComprobanteCompraInput) => Promise<unknown>, titulo: string) => {
+    if (!comprobante) return void correr(() => accion(), titulo)
+    const armado = armarComprobante(comprobante)
+    if ('error' in armado) return void setError(armado.error)
+    return void correr(() => accion(armado.comprobante), titulo)
+  }
   const cerrarHoja = () => { setError(null); setMotivo(''); setHoja(null) }
 
   const correr = async (accion: () => Promise<unknown>, titulo: string) => {
@@ -157,8 +178,17 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
           <TotalsRow label="Gastos operativos" importe={compra.gastosOperativos} />
           <TotalsRow label="Total" importe={compra.totalAmount} destacado />
         </View>
+        {compra.descuentoPorcentaje ? <Text style={secundario}>{`Descuento general: ${mostrarNumero(compra.descuentoPorcentaje)} %`}</Text> : null}
         {compra.condicionPago?.descripcion ? <Text style={secundario}>{`Condición de pago: ${compra.condicionPago.descripcion}`}</Text> : null}
         {compra.fechaVencimientoPago ? <Text style={secundario}>{`Vence el ${ddmmaaaa(compra.fechaVencimientoPago)}`}</Text> : null}
+        {compra.comprobante ? (
+          <Text style={secundario}>{resumenComprobante(compra.comprobante)}</Text>
+        ) : null}
+        {estado === 'Entregado' && puedeEditar ? (
+          compra.comprobante && seCorrigeEnLaWeb(compra.comprobante)
+            ? <Text style={secundario}>Tiene varias alícuotas: se corrige en la web.</Text>
+            : <Button label={compra.comprobante ? 'Corregir el comprobante' : 'Cargar el comprobante'} variant="secundario" disabled={ocupado} onPress={() => abrirHoja('comprobante')} />
+        ) : null}
       </ScrollView>
       {abierta ? (
         <View style={{ gap: space[2], padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
@@ -197,9 +227,28 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
           <Field label="Fecha de la factura" placeholder="dd/mm/aaaa" value={fechaFactura} onChangeText={setFechaFactura} keyboardType="numbers-and-punctuation"
             help="La condición de pago se cuenta desde la factura." error={fechaLeida ? undefined : 'Escribí la fecha como dd/mm/aaaa.'} />
         ) : null}
+        {comprobante ? (
+          <ScrollView style={{ maxHeight: 420 }} keyboardShouldPersistTaps="handled">
+            <ComprobanteCampos form={comprobante} onCambio={setComprobante} />
+          </ScrollView>
+        ) : (
+          <Button label="Cargar el comprobante del proveedor" variant="secundario" onPress={() => setComprobante(formComprobante())} />
+        )}
         {error ? <Notice tone="peligro">{error}</Notice> : null}
         <Button label="Recibir" loading={recibir.isPending} disabled={pideFactura && !fechaLeida}
-          onPress={() => { void correr(() => recibir.mutateAsync({ id: compra.id, fechaFacturaProveedor: pideFactura ? fechaLeida! : undefined }), 'No se recibió la compra') }} />
+          onPress={() => conComprobante((c) => recibir.mutateAsync({ id: compra.id, fechaFacturaProveedor: pideFactura ? fechaLeida! : undefined, comprobante: c }), 'No se recibió la compra')} />
+      </BottomSheet>
+      <BottomSheet visible={hoja === 'comprobante'} onClose={cerrarHoja} accessibilityLabel="Comprobante del proveedor">
+        <Text style={[typeScale.titulo, { color: c.text }]}>Comprobante del proveedor</Text>
+        <Text style={secundario}>Como figura en el papel. Las percepciones y varias alícuotas se cargan en la web.</Text>
+        {comprobante ? (
+          <ScrollView style={{ maxHeight: 420 }} keyboardShouldPersistTaps="handled">
+            <ComprobanteCampos form={comprobante} onCambio={setComprobante} />
+          </ScrollView>
+        ) : null}
+        {error ? <Notice tone="peligro">{error}</Notice> : null}
+        <Button label="Guardar comprobante" loading={guardarComprobante.isPending}
+          onPress={() => conComprobante((c) => guardarComprobante.mutateAsync({ id: compra.id, comprobante: c! }), 'No se guardó el comprobante')} />
       </BottomSheet>
       <ConfirmarYRecibirSheet visible={hoja === 'confirmarYRecibir'} onClose={cerrarHoja} pideFactura={pideFactura}
         ocupado={recibiendo} fecha={fechaFactura} onFecha={setFechaFactura} error={hoja === 'confirmarYRecibir' ? error : null} onConfirmar={(f) => { void confirmarYRecibirAhora(f) }} />

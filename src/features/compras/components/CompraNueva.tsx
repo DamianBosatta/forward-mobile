@@ -62,7 +62,8 @@ export function CompraNueva({ borradorId, editarId }: Props) {
     return () => clearTimeout(t)
   }, [busqueda])
   useEffect(() => { setGastosTexto(b.gastos ? mostrarNumero(b.gastos) : '') }, [b.compraId, b.cargando]) // eslint-disable-line react-hooks/exhaustive-deps
-  const productos = useInfiniteProductos({ pageSize: 30, search: enviada })
+  // Lo comprable: comunes y fragancias (variantes), sin la línea, que el servidor no deja comprar.
+  const productos = useInfiniteProductos({ pageSize: 30, search: enviada, soloComprables: true })
   const { data: depositos } = useDepositos()
 
   const volver = () => {

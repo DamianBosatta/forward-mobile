@@ -13,3 +13,16 @@ export function fechaIso(texto: string): string | null {
 /** "aaaa-mm-dd" → "dd/mm/aaaa". */
 export const ddmmaaaa = (iso: string) => iso.slice(0, 10).split('-').reverse().join('/')
 export const hoyTexto = () => ddmmaaaa(diaArgentina(Date.now()))
+
+const DIAS_CORTOS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
+
+/**
+ * "aaaa-mm-dd" (`fechaEsperadaRecepcion` del servidor, día calendario) → "Llega jue 8".
+ * Null sin fecha: servidor anterior, compra que no está por recibir o proveedor sin franja.
+ */
+export function llegaTexto(iso: string | null | undefined): string | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso ?? '')
+  if (!m) return null
+  const dia = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])))
+  return `Llega ${DIAS_CORTOS[dia.getUTCDay()]} ${dia.getUTCDate()}`
+}

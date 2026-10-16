@@ -12,10 +12,11 @@ jest.setTimeout(15000)
 const mockGet = jest.fn()
 const mockPost = jest.fn()
 const mockDelete = jest.fn()
+const mockPut = jest.fn()
 const mockPostConSobre = jest.fn()
 jest.mock('@/core/api/client', () => ({
   api: {
-    get: (...a: unknown[]) => mockGet(...a), post: (...a: unknown[]) => mockPost(...a), delete: (...a: unknown[]) => mockDelete(...a),
+    get: (...a: unknown[]) => mockGet(...a), post: (...a: unknown[]) => mockPost(...a), put: (...a: unknown[]) => mockPut(...a), delete: (...a: unknown[]) => mockDelete(...a),
     postConSobre: (...a: unknown[]) => mockPostConSobre(...a),
   },
   API_URL: 'x',
@@ -69,6 +70,17 @@ describe('detalle de compra', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar compra' }))
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/confirmar', {})
     expect(await screen.findByText(/No se confirmó la compra: No se le puede comprar/)).toBeTruthy()
+  })
+
+  it('con el servidor que manda el descuento global, lo muestra debajo de los totales', async () => {
+    abrir({ descuentoPorcentaje: 12.5, descuentoTotalAmount: 6900 })
+    expect(await screen.findByText('Descuento general: 12,5 %')).toBeTruthy()
+  })
+
+  it('sin descuento global (o servidor anterior) no muestra la línea del descuento', async () => {
+    abrir({ descuentoPorcentaje: 0 })
+    expect(await screen.findByText('Balde Nuvia 10L')).toBeTruthy()
+    expect(screen.queryByText(/Descuento general/)).toBeNull()
   })
 
   it('confirmada con condición por días desde la factura: recibir pide la fecha de la factura', async () => {
@@ -128,6 +140,75 @@ describe('detalle de compra', () => {
     fireEvent.press(screen.getByLabelText('Cerrar', { includeHiddenElements: true }))
     await userEvent.press(screen.getAllByRole('button', { name: 'Cancelar compra' })[0])
     expect(screen.getByLabelText('Motivo').props.value).toBe('')
+  })
+
+  describe('comprobante del proveedor', () => {
+    const SOCIO = { id: 'p1', razonSocial: 'Insumos del Sur SA', cuit: '30-71234567-8' }
+    const CARGADO = {
+      id: 'k1', tipo: 'Factura', letra: 'A', puntoVenta: 2, numero: 55, fecha: '2026-10-01', periodoFiscal: 202610,
+      cuitEmisor: '30712345678', razonSocialEmisor: 'Insumos del Sur SA', noGravado: 0, exento: 0, total: 1210,
+      alicuotas: [{ alicuota: 'Veintiuno', netoGravado: 1000, iva: 210 }], tributos: [],
+    }
+    const conSocio = (datos: Record<string, unknown>) => {
+      abrir(datos)
+      mockGet.mockImplementation((url: string) =>
+        Promise.resolve(url.startsWith('/api/v1/socios-comerciales/') ? SOCIO : compra(datos)))
+    }
+
+    it('al recibir se puede cargar el comprobante: va en el mismo POST, con el CUIT del proveedor precargado', async () => {
+      conSocio({ estado: 'Confirmado' })
+      await userEvent.press(await screen.findByRole('button', { name: 'Recibir' }))
+      await userEvent.press(screen.getByRole('button', { name: 'Cargar el comprobante del proveedor' }))
+      await waitFor(() => expect(screen.getByLabelText('CUIT del proveedor').props.value).toBe('30-71234567-8'))
+      await userEvent.press(screen.getByRole('radio', { name: 'B' }))
+      fireEvent.changeText(screen.getByLabelText('Punto de venta'), '3')
+      fireEvent.changeText(screen.getByLabelText('Número'), '1234')
+      fireEvent.changeText(screen.getByLabelText('Fecha del comprobante'), '08/10/2026')
+      fireEvent.changeText(screen.getByLabelText('Total'), '55.200')
+      await userEvent.press(screen.getAllByRole('button', { name: 'Recibir' }).at(-1)!)
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', {
+        compraId: 'aaaa1111-0000', fechaFacturaProveedor: null,
+        comprobante: {
+          tipo: 'Factura', letra: 'B', puntoVenta: 3, numero: 1234, fecha: '2026-10-08', cuitEmisor: '30712345678',
+          razonSocialEmisor: 'Insumos del Sur SA', noGravado: 0, exento: 0, total: 55200, alicuotas: [], tributos: [],
+        },
+      })
+    })
+
+    it('con el comprobante a medio cargar no se recibe: dice qué falta', async () => {
+      conSocio({ estado: 'Confirmado' })
+      await userEvent.press(await screen.findByRole('button', { name: 'Recibir' }))
+      await userEvent.press(screen.getByRole('button', { name: 'Cargar el comprobante del proveedor' }))
+      await userEvent.press(screen.getAllByRole('button', { name: 'Recibir' }).at(-1)!)
+      expect(await screen.findByText('Falta el punto de venta.')).toBeTruthy()
+      expect(mockPost).not.toHaveBeenCalled()
+    })
+
+    it('una recibida muestra su comprobante y se corrige con un PUT', async () => {
+      mockPut.mockResolvedValue(CARGADO)
+      conSocio({ estado: 'Entregado', conFactura: true, comprobante: CARGADO })
+      expect(await screen.findByText('Factura A 00002-00000055')).toBeTruthy()
+      await userEvent.press(screen.getByRole('button', { name: 'Corregir el comprobante' }))
+      expect(screen.getByLabelText('Neto gravado').props.value).toBe('1000')
+      fireEvent.changeText(screen.getByLabelText('Número'), '56')
+      await userEvent.press(screen.getByRole('button', { name: 'Guardar comprobante' }))
+      await waitFor(() => expect(mockPut).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/comprobante', expect.objectContaining({
+        letra: 'A', puntoVenta: 2, numero: 56, fecha: '2026-10-01', total: 1210,
+        alicuotas: [{ alicuota: 'Veintiuno', netoGravado: 1000, iva: 210 }],
+      })))
+    })
+
+    it('una recibida sin comprobante ofrece cargarlo; sin permiso de modificar, no', async () => {
+      conSocio({ estado: 'Entregado' })
+      expect(await screen.findByRole('button', { name: 'Cargar el comprobante' })).toBeTruthy()
+    })
+
+    it('sin permiso de modificar no se carga ni se corrige', async () => {
+      mockPermisos = []
+      conSocio({ estado: 'Entregado', conFactura: true, comprobante: CARGADO })
+      expect(await screen.findByText('Factura A 00002-00000055')).toBeTruthy()
+      expect(screen.queryByRole('button', { name: /comprobante/ })).toBeNull()
+    })
   })
 
   it('una compra recibida no se edita, no se confirma ni se cancela', async () => {

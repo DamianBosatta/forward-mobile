@@ -2,6 +2,9 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tansta
 import { api } from './client'
 import { buildAnularCompraPayload } from './anular-compra'
 import type { Compra, CompraDtoList, CompraDto, PagedResult, CreateCompraRequest, EstadoCompra } from './types'
+import type { components } from './generated/schema'
+
+type ComprobanteCompraInput = components['schemas']['ComprobanteCompraInput']
 
 /** Filtros que comparten la lista y el resumen: el servidor los interpreta igual en los dos. */
 export interface ComprasFiltroParams {
@@ -202,9 +205,26 @@ export function useConfirmarCompra() {
 export function useRecibirCompra() {
   const queryClient = useQueryClient()
   return useMutation({
-    /** `fechaFacturaProveedor` (yyyy-MM-dd) es obligatoria si la condición de pago es por días desde la factura. */
-    mutationFn: ({ id, fechaFacturaProveedor }: { id: string; fechaFacturaProveedor?: string }) =>
-      api.post<void>(`/api/v1/Compras/${id}/recibir`, { compraId: id, fechaFacturaProveedor: fechaFacturaProveedor ?? null }),
+    /**
+     * `fechaFacturaProveedor` (yyyy-MM-dd) es obligatoria si la condición de pago es por días desde la factura.
+     * `comprobante`: el del proveedor, si se carga al recibir (va en la misma transacción).
+     */
+    mutationFn: ({ id, fechaFacturaProveedor, comprobante }: { id: string; fechaFacturaProveedor?: string; comprobante?: ComprobanteCompraInput }) =>
+      api.post<void>(`/api/v1/Compras/${id}/recibir`, {
+        compraId: id, fechaFacturaProveedor: fechaFacturaProveedor ?? null, ...(comprobante ? { comprobante } : {}),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: comprasKeys.all })
+    },
+  })
+}
+
+/** Carga o corrige el comprobante del proveedor de una compra recibida (PUT /Compras/{id}/comprobante). */
+export function useGuardarComprobanteCompra() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, comprobante }: { id: string; comprobante: ComprobanteCompraInput }) =>
+      api.put<components['schemas']['ComprobanteRecibidoDto']>(`/api/v1/Compras/${id}/comprobante`, comprobante),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: comprasKeys.all })
     },

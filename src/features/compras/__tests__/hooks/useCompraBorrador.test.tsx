@@ -97,6 +97,15 @@ describe('useCompraBorrador', () => {
     expect(mockPut).not.toHaveBeenCalled()
   })
 
+  it('retomar un borrador usa el descuento global que manda el servidor (descuentoPorcentaje)', async () => {
+    const prev = mockGet.getMockImplementation()!
+    mockGet.mockImplementation((url: string) =>
+      url === '/api/v1/Compras/b9' ? Promise.resolve({ ...BORRADOR, descuentoPorcentaje: 12.5 }) : prev(url))
+    const { result } = usar('b9')
+    await waitFor(() => expect(result.current.cargando).toBe(false))
+    expect(result.current.descuentoPorcentaje).toBe(12.5)
+  })
+
   it('un 409 (otro usuario cambió el borrador) frena el autoguardado', async () => {
     mockPut.mockRejectedValue(Object.assign(new Error('Error de concurrencia'), { status: 409 }))
     const { result } = usar()

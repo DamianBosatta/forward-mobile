@@ -12,6 +12,7 @@ import type { CompraDtoList } from '@/libs/api-client'
 import type { BorradorCompra } from '@/libs/api-client/compras'
 import { agruparPorDia, horaDe, tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { useComprasList, type PeriodoCompras, type PestanaCompras } from '../hooks/useComprasList'
+import { llegaTexto } from '../lib/fecha'
 import type { EstadoCompraRuta } from '@/features/listas/lib/filtroDeRuta'
 
 const PESTANAS: { key: PestanaCompras; label: string }[] = [
@@ -108,7 +109,7 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
             avatar={x.razonSocialProveedor}
             direccion={x.razonSocialProveedor}
             hora={horaDe(x.fecha)}
-            detalle={x.creadoPor ? [productos(x.itemsCount ?? 0), x.nombreDeposito].filter(Boolean).join(' · ') : productos(x.itemsCount ?? 0)}
+            detalle={[productos(x.itemsCount ?? 0), x.creadoPor ? x.nombreDeposito : null, llegaTexto(x.fechaEsperadaRecepcion)].filter(Boolean).join(' · ')}
             importe={x.totalAmount}
             chip={chipForEstado('compra', x.estado)}
             onPress={() => abrir(x.id)}

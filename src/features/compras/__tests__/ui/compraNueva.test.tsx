@@ -195,6 +195,18 @@ describe('pantalla de compra nueva', () => {
     await waitFor(() => expect(puts().at(-1)?.detalles[0]).toMatchObject({ cantidad: 4, costoUnitario: 1150.5, unidadCompra: 'Bulto' }), ESPERA)
   })
 
+  it('el buscador de productos pide al servidor lo comprable: fragancias incluidas, sin la línea', async () => {
+    pantalla()
+    await userEvent.press(await screen.findByRole('button', { name: 'Insumos del Sur SA' }))
+    await screen.findByText('Insumos del Sur SA · 30 días')
+    await userEvent.press(screen.getByRole('button', { name: '+ Agregar productos' }))
+    await waitFor(() => {
+      const urls = mockGet.mock.calls.map(([u]) => String(u)).filter((u) => u.startsWith('/api/v1/Productos?'))
+      expect(urls.length).toBeGreaterThan(0)
+      expect(urls.every((u) => new URLSearchParams(u.split('?')[1]).get('soloComprables') === 'true')).toBe(true)
+    })
+  })
+
   it('confirmar guarda lo pendiente y después confirma; abre la compra', async () => {
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: 'Insumos del Sur SA' }))

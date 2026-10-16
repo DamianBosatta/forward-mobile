@@ -90,8 +90,9 @@ export function useCompraBorrador(borradorInicial?: string, opciones: { edicion?
     setDepositoId(c.depositoId)
     setLineas(c.detalles.map(lineaDesdeDetalle))
     setGastos(c.gastosOperativos)
-    // El porcentaje que guardó el servidor (el mismo en todas las líneas), no uno recalculado desde importes redondeados.
-    setDescuento(c.detalles[0]?.descuentoPorcentaje ?? 0)
+    // El descuento global que devuelve el servidor (descuentoPorcentaje); con el servidor anterior,
+    // el de la primera línea (es el mismo en todas), no uno recalculado desde importes redondeados.
+    setDescuento(c.descuentoPorcentaje ?? c.detalles[0]?.descuentoPorcentaje ?? 0)
   }, [])
 
   const cargar = useCallback(async (id: string) => {

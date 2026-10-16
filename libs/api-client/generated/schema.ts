@@ -908,6 +908,9 @@ export interface paths {
                     CategoriaId?: string;
                     SearchTerm?: string;
                     SoloDisponibles?: boolean;
+                    ConOferta?: boolean;
+                    OrdenarPor?: components["schemas"]["CatalogoOrdenarPor"];
+                    Desc?: boolean;
                     PageNumber?: number;
                     PageSize?: number;
                 };
@@ -9099,6 +9102,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Logistica/resumen-inicio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResumenInicioLogisticaDto"];
+                        "application/json": components["schemas"]["ResumenInicioLogisticaDto"];
+                        "text/json": components["schemas"]["ResumenInicioLogisticaDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Logistica/ventas-para-preparacion": {
         parameters: {
             query?: never;
@@ -12016,6 +12056,7 @@ export interface paths {
                     PageSize?: number;
                     SoloPadres?: boolean;
                     SinPeso?: boolean;
+                    SoloComprables?: boolean;
                 };
                 header?: never;
                 path?: never;
@@ -14637,15 +14678,20 @@ export interface paths {
         get: {
             parameters: {
                 query?: {
+                    OrdenarPor?: components["schemas"]["StockOrdenarPor"];
+                    Desc?: boolean;
+                    PageNumber?: number;
+                    PageSize?: number;
                     DepositoId?: string;
+                    DepositoIds?: string[];
                     ProductoId?: string;
                     Activo?: boolean;
                     SearchTerm?: string;
                     LastModified?: string;
                     Marca?: string;
                     CategoriaId?: string;
-                    PageNumber?: number;
-                    PageSize?: number;
+                    EstadoStock?: components["schemas"]["EstadoStock"][];
+                    SinPeso?: boolean;
                 };
                 header?: never;
                 path?: never;
@@ -14662,6 +14708,54 @@ export interface paths {
                         "text/plain": components["schemas"]["StockListResponsePaginatedResponse"];
                         "application/json": components["schemas"]["StockListResponsePaginatedResponse"];
                         "text/json": components["schemas"]["StockListResponsePaginatedResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Stocks/resumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    DepositoId?: string;
+                    DepositoIds?: string[];
+                    ProductoId?: string;
+                    Activo?: boolean;
+                    SearchTerm?: string;
+                    LastModified?: string;
+                    Marca?: string;
+                    CategoriaId?: string;
+                    EstadoStock?: components["schemas"]["EstadoStock"][];
+                    SinPeso?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StockResumenResponseResponse"];
+                        "application/json": components["schemas"]["StockResumenResponseResponse"];
+                        "text/json": components["schemas"]["StockResumenResponseResponse"];
                     };
                 };
             };
@@ -18295,6 +18389,8 @@ export interface components {
             categoriaId?: string | null;
             searchTerm?: string | null;
         };
+        /** @enum {string} */
+        CatalogoOrdenarPor: "Nombre" | "Codigo" | "Marca" | "Stock" | "Precio";
         CatalogoStockRealDto: {
             /** Format: uuid */
             id: string;
@@ -18743,6 +18839,8 @@ export interface components {
             /** Format: double */
             descuentoTotalAmount: number;
             /** Format: double */
+            descuentoPorcentaje?: number | null;
+            /** Format: double */
             gastosOperativos: number;
             /** Format: double */
             totalAmount: number;
@@ -18796,6 +18894,8 @@ export interface components {
             /** Format: date */
             fechaVencimientoPago?: string | null;
             creadoPor?: string | null;
+            /** Format: date */
+            fechaEsperadaRecepcion?: string | null;
         };
         CompraDtoListPaginatedResponse: {
             /** Format: int32 */
@@ -20039,6 +20139,8 @@ export interface components {
         EstadoRemito: "Emitido" | "Entregado" | "NoEntregado" | "Anulado";
         /** @enum {string} */
         EstadoSolicitudCambio: "Pendiente" | "Aprobada" | "Rechazada";
+        /** @enum {string} */
+        EstadoStock: "SinStock" | "EnAlerta" | "ConStock";
         /** @enum {string} */
         EstadoTransferenciaStock: "Borrador" | "Despachada" | "Recibida" | "Cancelada";
         /** @enum {string} */
@@ -21426,6 +21528,14 @@ export interface components {
             data?: components["schemas"]["PeriodoFiscalDto"];
             codigo?: string | null;
         };
+        PesoEmpacadoDto: {
+            /** Format: uuid */
+            ventaId: string;
+            /** Format: double */
+            pesoKg: number;
+            /** Format: int32 */
+            lineasSinPeso: number;
+        };
         /** @enum {string} */
         PestanaComprobantes: "Emitidos" | "Recibidos";
         PisoDesgloseDto: {
@@ -22307,6 +22417,10 @@ export interface components {
             data?: components["schemas"]["ResumenComprobantesDto"];
             codigo?: string | null;
         };
+        ResumenInicioLogisticaDto: {
+            empacados: components["schemas"]["PesoEmpacadoDto"][];
+            ultimoViaje?: components["schemas"]["UltimoViajeDto"];
+        };
         ResumenNivelDto: {
             nivel?: string | null;
             /** Format: int32 */
@@ -22668,6 +22782,24 @@ export interface components {
             fechaResolucion?: string | null;
             comentarioResolucion?: string | null;
         };
+        StockFacetaEstado: {
+            estado: components["schemas"]["EstadoStock"];
+            /** Format: int32 */
+            cantidad: number;
+        };
+        StockFacetaMarca: {
+            marca: string;
+            nombre: string;
+            /** Format: int32 */
+            cantidad: number;
+        };
+        StockFacetaOpcion: {
+            /** Format: uuid */
+            id: string;
+            nombre: string;
+            /** Format: int32 */
+            cantidad: number;
+        };
         StockFiscalProductoDto: {
             /** Format: uuid */
             productoId: string;
@@ -22767,6 +22899,39 @@ export interface components {
             totalPages?: number;
             readonly hasNextPage?: boolean;
             items?: components["schemas"]["StockListResponse"][] | null;
+        };
+        /** @enum {string} */
+        StockOrdenarPor: "Nombre" | "Codigo" | "Marca" | "StockReal" | "Precio";
+        StockResumenResponse: {
+            totales: components["schemas"]["StockResumenTotales"];
+            estados?: components["schemas"]["StockFacetaEstado"][] | null;
+            depositos: components["schemas"]["StockFacetaOpcion"][];
+            lineas: components["schemas"]["StockFacetaOpcion"][];
+            marcas: components["schemas"]["StockFacetaMarca"][];
+        };
+        StockResumenResponseResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["StockResumenResponse"];
+            codigo?: string | null;
+        };
+        StockResumenTotales: {
+            /** Format: int32 */
+            filas: number;
+            /** Format: int32 */
+            articulos: number;
+            /** Format: int32 */
+            sinStock?: number | null;
+            /** Format: int32 */
+            enAlerta?: number | null;
+            /** Format: int32 */
+            conStock?: number | null;
+            /** Format: int32 */
+            sinPeso: number;
         };
         StockValorizadoDto: {
             /** Format: int32 */
@@ -23166,6 +23331,20 @@ export interface components {
             costoUnitario: number;
             /** Format: double */
             variacionCostoPorcentaje?: number | null;
+        };
+        UltimoViajeDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            fechaSalida: string;
+            /** Format: int32 */
+            estado: number;
+            /** Format: int32 */
+            paradas: number;
+            /** Format: int32 */
+            entregadas: number;
+            /** Format: int32 */
+            noEntregadas: number;
         };
         UmbralCotDto: {
             /** Format: uuid */
