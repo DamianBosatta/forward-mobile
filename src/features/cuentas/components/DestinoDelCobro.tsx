@@ -17,13 +17,13 @@ interface Props {
 }
 
 /**
- * Transferencia o depósito: en qué cuenta propia entró y la foto del comprobante. Listar las cuentas pide
- * MOD_CC:Read; sin ese permiso (o si la lista falla) no se elige y el servidor usa la cuenta del medio.
+ * Transferencia o depósito: en qué cuenta propia entró y la foto del comprobante. Las cuentas las lista quien
+ * puede cobrar (MOD_PAGOS:Create, sin saldos); si la lista falla, no se elige y el servidor usa la cuenta del medio.
  */
 export function DestinoDelCobro({ medio, cuentaPropiaId, comprobanteUrl, onCuenta, onComprobante, onSubiendo }: Props) {
   const c = useColors()
-  const { canRead } = usePermissions()
-  const cuentas = useCuentasPropias(canRead('MOD_CC'))
+  const { canRead, canDo } = usePermissions()
+  const cuentas = useCuentasPropias(canDo('MOD_PAGOS', 'create'), canRead('MOD_CC'))
   const opciones = cuentas.error ? [] : (cuentas.data ?? []).map(k => ({ id: k.id, label: k.nombre }))
 
   return (

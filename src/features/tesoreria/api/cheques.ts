@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '@/core/api/client'
+import { api, ApiError } from '@/core/api/client'
 import type { ChequeListDto, ChequeListDtoPaginatedResponse } from '@/libs/api-client/types'
 import { cuentasKeys } from '@/features/cuentas/api/queries'
 
@@ -26,25 +26,40 @@ export interface ResultadoDeposito {
   error: unknown | null
 }
 
+/** Un servidor anterior al depósito por lote no tiene la ruta: 404 (o 405 si la toma por otra). */
+const sinDepositoPorLote = (e: unknown) => e instanceof ApiError && (e.status === 404 || e.status === 405)
+
+/** El camino viejo: una llamada por cheque, en serie, sin cortar a la mitad. */
+async function depositarDeAUno(cheques: ChequeEnCartera[], cuentaDestinoId: string) {
+  const resultados: ResultadoDeposito[] = []
+  for (const cheque of cheques) {
+    try {
+      await api.post(`/api/v1/cheques/${cheque.id}/depositar`, { chequeId: cheque.id, cuentaDestinoId })
+      resultados.push({ cheque, error: null })
+    } catch (error) {
+      resultados.push({ cheque, error })
+    }
+  }
+  return resultados
+}
+
 /**
- * El servidor deposita de a un cheque: una llamada por cheque, una detrás de otra. Nunca corta a
- * la mitad ni tira: devuelve cuáles se depositaron y cuáles no, con el motivo de cada uno.
+ * Deposita los cheques elegidos en una sola llamada (`POST /cheques/depositar`): todo o nada. Si el
+ * servidor rechaza el lote (409, con cuál cheque y por qué), no se depositó ninguno y todos llevan
+ * ese mismo error. Con un servidor anterior, cae al depósito de a uno. Nunca tira.
  */
 export function useDepositarCheques() {
   const qc = useQueryClient()
   return useMutation({
     retry: false,
     mutationFn: async ({ cheques, cuentaDestinoId }: { cheques: ChequeEnCartera[]; cuentaDestinoId: string }) => {
-      const resultados: ResultadoDeposito[] = []
-      for (const cheque of cheques) {
-        try {
-          await api.post(`/api/v1/cheques/${cheque.id}/depositar`, { chequeId: cheque.id, cuentaDestinoId })
-          resultados.push({ cheque, error: null })
-        } catch (error) {
-          resultados.push({ cheque, error })
-        }
+      try {
+        await api.post('/api/v1/cheques/depositar', { chequeIds: cheques.map(k => k.id), cuentaDestinoId })
+        return cheques.map((cheque): ResultadoDeposito => ({ cheque, error: null }))
+      } catch (error) {
+        if (sinDepositoPorLote(error)) return depositarDeAUno(cheques, cuentaDestinoId)
+        return cheques.map((cheque): ResultadoDeposito => ({ cheque, error }))
       }
-      return resultados
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: chequesKeys.cartera })

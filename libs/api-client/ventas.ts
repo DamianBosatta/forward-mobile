@@ -419,6 +419,14 @@ export function useEmpacarVenta() {
   })
 }
 
+/**
+ * PDF comercial de la venta para el cliente (`GET /Ventas/{id}/pdf`): PRESUPUESTO o PEDIDO, sin
+ * costos. No es la Nota de Entrega, que es el documento logístico.
+ */
+export function getVentaPdfUrl(id: string) {
+  return `${API_URL}/api/v1/Ventas/${id}/pdf`
+}
+
 export function getNotaEntregaUrl(id: string) {
   return `${API_URL}/api/v1/Logistica/${id}/nota-entrega-pdf`
 }

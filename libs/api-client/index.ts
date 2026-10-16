@@ -80,6 +80,7 @@ export {
   useAutorizarVenta,
   useEmpacarVenta,
   getNotaEntregaUrl,
+  getVentaPdfUrl,
   getEtiquetasUrl
 } from './ventas'
 

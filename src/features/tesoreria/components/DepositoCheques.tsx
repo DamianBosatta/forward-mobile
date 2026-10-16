@@ -29,6 +29,10 @@ function Resultado({ resultados }: { resultados: ResultadoDeposito[] }) {
   const ok = resultados.filter(r => !r.error)
   const mal = resultados.filter(r => r.error)
   if (mal.length === 0) return <Notice tone="exito" title="Cheques depositados">{ok.map(r => nombreCheque(r.cheque)).join('\n')}</Notice>
+  // El lote se rechazó entero (todo o nada): un solo motivo del servidor, que ya dice qué cheque falló.
+  if (ok.length === 0 && mal.every(r => r.error === mal[0].error)) {
+    return <Notice tone="peligro" title="No se depositó ningún cheque">{mensajeDelServidor(mal[0].error, 'no se pudo depositar.')}</Notice>
+  }
   return (
     <View style={{ gap: space[2] }}>
       <Notice tone="peligro" title={`No se depositaron ${mal.length} de ${resultados.length}`}>

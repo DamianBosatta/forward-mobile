@@ -2,7 +2,7 @@ import React from 'react'
 import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { RegistrarCobro, AVISO_IMPUTACION } from '../components/RegistrarCobro'
 import { IMPUTADO_DE_MAS } from '../lib/cobro'
-import { api } from '@/core/api/client'
+import { api, ApiError } from '@/core/api/client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { conPermisos, renderConQuery } from '@/features/clientes/__testing__/ayuda'
 import { estadoDeCuenta, fichaConCuentas, mov, movSocio, paginaDeMovimientos, paginaDeMovimientosSocio } from '../__testing__/servidor'
@@ -46,9 +46,27 @@ const PENDIENTES = [
 
 const pidio = (parte: string) => get.mock.calls.some(([url]) => String(url).includes(parte))
 
-function servidor({ propias = PROPIAS as unknown, imputadoA = [] as { comprobante: string; monto: number }[] } = {}) {
+/** La lista liviana (`propias/para-cobrar`): sin saldos. */
+const PARA_COBRAR = PROPIAS.map(({ id, nombre, esPrincipal, esCuentaCajaEfectivo, esCuentaCarteraCheques }) =>
+  ({ id, nombre, moneda: 'ARS', esPrincipal, esCuentaCajaEfectivo, esCuentaCarteraCheques }))
+const VIEJO = new ApiError(404, 'No encontrado')
+
+function servidor({
+  propias = PROPIAS as unknown,
+  paraCobrar = PARA_COBRAR as unknown,
+  imputadoA = [] as { comprobante: string; monto: number }[],
+  pago = null as unknown,
+} = {}) {
   get.mockImplementation(async (url: string) => {
     if (url === '/api/v1/gastos/medios-pago') return MEDIOS
+    if (url === '/api/v1/cuentas-corrientes/propias/para-cobrar') {
+      if (paraCobrar instanceof Error) throw paraCobrar
+      return paraCobrar
+    }
+    if (url === '/api/v1/Pagos/p1') {
+      if (!pago) throw VIEJO
+      return pago
+    }
     if (url === '/api/v1/cuentas-corrientes/propias') {
       if (propias instanceof Error) throw propias
       return propias
@@ -84,8 +102,7 @@ beforeEach(() => {
 })
 
 describe('cuenta donde entró', () => {
-  it('con MOD_CC:Read elige la cuenta propia de la transferencia y la manda en la línea', async () => {
-    conPermisos([PAGOS, CC])
+  it('quien cobra (MOD_PAGOS:Create, sin MOD_CC:Read) elige la cuenta propia de la lista liviana y la manda en la línea', async () => {
     renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
     await cargarMontoYMedio('86.400', 'Transferencia')
 
@@ -98,25 +115,41 @@ describe('cuenta donde entró', () => {
 
     await waitFor(() => expect(registrar).toHaveBeenCalledTimes(1))
     expect(cuerpo().lineas).toEqual([{ medioPagoId: 'm-tr', monto: 86400, cuentaPropiaId: 'cp-mp' }])
+    expect(pidio('/api/v1/cuentas-corrientes/propias/para-cobrar')).toBe(true)
+    expect(get.mock.calls.some(([url]) => url === '/api/v1/cuentas-corrientes/propias')).toBe(false)
   })
 
-  it('sin MOD_CC:Read no pide las cuentas ni manda cuenta: el servidor usa la del medio, como antes', async () => {
+  it('con un servidor anterior (404) y MOD_CC:Read usa la lista de cuentas propias de siempre', async () => {
+    conPermisos([PAGOS, CC])
+    servidor({ paraCobrar: VIEJO })
     renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
     await cargarMontoYMedio('86.400', 'Transferencia')
+    await userEvent.press(await screen.findByRole('radio', { name: 'Mercado Pago' }, ESPERA))
+    expect(screen.queryByRole('radio', { name: 'Caja central' })).toBeNull()
     await tocarRegistrar()
 
     await waitFor(() => expect(registrar).toHaveBeenCalledTimes(1))
-    expect(pidio('/cuentas-corrientes/propias')).toBe(false)
+    expect(cuerpo().lineas).toEqual([{ medioPagoId: 'm-tr', monto: 86400, cuentaPropiaId: 'cp-mp' }])
+  })
+
+  it('con un servidor anterior y sin MOD_CC:Read no hay lista ni cuenta: el servidor usa la del medio, como antes', async () => {
+    servidor({ paraCobrar: VIEJO })
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+    await cargarMontoYMedio('86.400', 'Transferencia')
+    await waitFor(() => expect(pidio('/propias/para-cobrar')).toBe(true))
+    await tocarRegistrar()
+
+    await waitFor(() => expect(registrar).toHaveBeenCalledTimes(1))
+    expect(get.mock.calls.some(([url]) => url === '/api/v1/cuentas-corrientes/propias')).toBe(false)
     expect(screen.queryByText('Cuenta donde entró')).toBeNull()
     expect(cuerpo().lineas).toEqual([{ medioPagoId: 'm-tr', monto: 86400 }])
   })
 
   it('si la lista de cuentas falla, no se elige y el cobro sale igual', async () => {
-    conPermisos([PAGOS, CC])
-    servidor({ propias: new Error('No tenés permiso.') })
+    servidor({ paraCobrar: new Error('No tenés permiso.') })
     renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
     await cargarMontoYMedio('86.400', 'Transferencia')
-    await waitFor(() => expect(pidio('/cuentas-corrientes/propias')).toBe(true))
+    await waitFor(() => expect(pidio('/propias/para-cobrar')).toBe(true))
     await tocarRegistrar()
 
     await waitFor(() => expect(registrar).toHaveBeenCalledTimes(1))
@@ -154,12 +187,13 @@ describe('fotos', () => {
     expect(cuerpo().lineas[0].chequesRecibidos[0].imagenUrl).toBe('https://r2.forward/upload-cheque/foto.jpg')
   })
 
-  it('un vendedor no ve la foto del cheque: el servidor solo deja subirla a gestión', async () => {
+  it('quien cobra (MOD_PAGOS:Create), aunque no sea gestión, sube la foto del cheque a upload-cheque', async () => {
     renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
     await cargarMontoYMedio('30.000', 'Cheque')
+    await userEvent.press(await screen.findByRole('button', { name: 'Sacar foto del cheque' }, ESPERA))
+    expect(await screen.findByText('Foto del cheque cargada', {}, ESPERA)).toBeTruthy()
 
-    expect(screen.getByLabelText('N.º de cheque')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Sacar foto del cheque' })).toBeNull()
+    expect(subir.mock.calls[0][0]).toBe('/api/v1/Media/upload-cheque')
   })
 })
 
@@ -207,5 +241,19 @@ describe('imputación', () => {
 
     expect(await screen.findByText('Imputado a A00409, A00410', {}, ESPERA)).toBeTruthy()
     expect(pidio('/api/v1/cuentas-corrientes/socios/c1/movimientos?pageNumber=1&pageSize=20&cuenta=Tst')).toBe(true)
+  })
+
+  it('con el servidor nuevo, "imputado a" sale de las imputaciones de GET /Pagos/{id}, sin cruzar movimientos', async () => {
+    servidor({ pago: { id: 'p1', imputaciones: [
+      { ventaId: 'v-409', codigoVenta: 'A00409', montoAmount: 50000 },
+      { ventaId: 'v-410', codigoVenta: 'A00410', montoAmount: 36400 },
+    ] } })
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+    await cargarMontoYMedio('86.400', 'Transferencia')
+    await tocarRegistrar()
+
+    expect(await screen.findByText('Imputado a A00409, A00410', {}, ESPERA)).toBeTruthy()
+    expect(pidio('/api/v1/Pagos/p1')).toBe(true)
+    expect(pidio('/api/v1/cuentas-corrientes/socios/c1/movimientos')).toBe(false)
   })
 })
