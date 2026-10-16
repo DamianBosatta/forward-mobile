@@ -4,20 +4,23 @@ import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { formatImporte } from '@/core/ui/fw'
 import type { CuentaCorrienteResumenDto } from '@/libs/api-client/types'
 
+/** Lo que el selector necesita de una cuenta: el saldo es opcional (la lista liviana no lo trae). */
+type CuentaElegible = Pick<CuentaCorrienteResumenDto, 'id' | 'nombre'> & { saldoActual?: number | null }
+
 interface Props {
   titulo: string
-  cuentas: CuentaCorrienteResumenDto[]
+  cuentas: CuentaElegible[]
   valor: string | null
   onCambio: (id: string) => void
   /** Opción extra al final (p. ej. "Ninguna: la plata sale"), con su valor. */
   extra?: { valor: string; label: string }
 }
 
-/** Lista de cuentas propias para elegir una, con el saldo que informa el servidor (lámina Transferencia). */
+/** Lista de cuentas propias para elegir una, con el saldo que informa el servidor cuando lo manda (lámina Transferencia). */
 export function ElegirCuenta({ titulo, cuentas, valor, onCambio, extra }: Props) {
   const c = useColors()
   const opciones = [
-    ...cuentas.map(k => ({ id: k.id, label: k.nombre, saldo: formatImporte(k.saldoActual) })),
+    ...cuentas.map(k => ({ id: k.id, label: k.nombre, saldo: k.saldoActual == null ? '' : formatImporte(k.saldoActual) })),
     ...(extra ? [{ id: extra.valor, label: extra.label, saldo: '' }] : []),
   ]
   return (

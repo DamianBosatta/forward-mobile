@@ -30,8 +30,12 @@ export function useCajasAbiertas(enabled: boolean) {
   })
 }
 
-/** Una cuenta propia como opción del selector, sin saldo (`CuentaPropiaOpcionDto`). */
+/**
+ * Una cuenta propia como opción del selector, sin saldo (`CuentaPropiaOpcionDto`). `saldoActual` solo
+ * viene con un servidor anterior, que contesta con la lista completa de `GET /cuentas-corrientes/propias`.
+ */
 export type CuentaParaCobrar = Pick<CuentaCorrienteResumenDto, 'id' | 'nombre' | 'esCuentaCajaEfectivo' | 'esCuentaCarteraCheques'>
+  & Partial<Pick<CuentaCorrienteResumenDto, 'saldoActual'>>
 
 const sinCajaNiCartera = (cuentas: CuentaParaCobrar[]) => cuentas.filter(c => !c.esCuentaCajaEfectivo && !c.esCuentaCarteraCheques)
 

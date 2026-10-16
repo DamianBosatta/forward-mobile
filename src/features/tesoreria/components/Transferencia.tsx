@@ -1,25 +1,32 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, ScrollView, View } from 'react-native'
 import { space, useColors } from '@/libs/theme'
-import { Button, Field, FormContainer, Notice } from '@/core/ui/fw'
+import { Button, Field, FormContainer, Notice, formatImporte } from '@/core/ui/fw'
+import { usePermissions } from '@/core/auth/RequirePermission'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
-import { useCuentasPropias } from '@/features/cuentas/api/queries'
-import { useRegistrarMovimientoInterno, useTiposMovimientoInterno } from '../api/movimientosInternos'
+import { useCuentasPropias, type CuentaParaCobrar } from '@/features/cuentas/api/cobros'
+import { useRegistrarMovimientoInterno, useSaldoRestante, useTiposMovimientoInterno, type SaldoRestante } from '../api/movimientosInternos'
 import { ElegirChip } from '@/features/cuentas/components/ElegirChip'
 import { ElegirCuenta } from './ElegirCuenta'
 
 /** Valor de "Hacia" cuando la plata sale del sistema (un retiro): el servidor no recibe destino. */
 export const SIN_DESTINO = 'sin-destino'
 
+/** Espera antes de preguntar el saldo que queda, para no pedirlo con cada tecla del monto. */
+const ESPERA_SALDO_MS = 400
+
 /**
  * Movimiento entre cuentas propias (lámina Transferencia): tipo del catálogo, desde, hacia, monto
  * y observaciones. Sin destino la plata sale del sistema y hay que decir quién se la lleva.
+ * Las cuentas salen de la lista liviana (`propias/para-cobrar`, sin saldos; con un servidor anterior,
+ * de `propias` con su saldo) y lo que queda en la de origen lo calcula el servidor (`saldo-restante`).
  */
 export function Transferencia({ onListo }: { onListo: () => void }) {
   const c = useColors()
   const tipos = useTiposMovimientoInterno()
-  const cuentas = useCuentasPropias()
+  const { canRead, canDo } = usePermissions()
+  const cuentas = useCuentasPropias(canDo('MOD_PAGOS', 'create'), canRead('MOD_CC'))
   const registrar = useRegistrarMovimientoInterno()
   const [tipoId, setTipoId] = useState<string | null>(null)
   const [origen, setOrigen] = useState<string | null>(null)
@@ -29,6 +36,12 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
   const [retira, setRetira] = useState('')
   const [aviso, setAviso] = useState<string | null>(null)
   const [hecho, setHecho] = useState(false)
+  const [montoConsultado, setMontoConsultado] = useState<number | null>(null)
+  useEffect(() => {
+    const t = setTimeout(() => setMontoConsultado(leerNumero(monto)), ESPERA_SALDO_MS)
+    return () => clearTimeout(t)
+  }, [monto])
+  const restante = useSaldoRestante(origen, montoConsultado)
 
   if (hecho) {
     return (
@@ -65,8 +78,10 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
     )
   }
 
-  // El servidor no acepta la cartera de cheques ni la caja de efectivo en una transferencia.
-  const propias = (cuentas.data ?? []).filter(k => !k.esCuentaCarteraCheques && !k.esCuentaCajaEfectivo)
+  // El servidor no acepta la cartera de cheques ni la caja de efectivo en una transferencia
+  // (useCuentasPropias ya las saca).
+  const propias: CuentaParaCobrar[] = cuentas.data ?? []
+  const nombreOrigen = propias.find(k => k.id === origen)?.nombre
   return (
     <ScrollView contentContainerStyle={{ padding: space[4] }}>
       <FormContainer style={{ gap: space[4] }}>
@@ -92,6 +107,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
         {destino === SIN_DESTINO ? <Field label="Quién se la lleva" value={retira} onChangeText={setRetira} /> : null}
 
         <Field label="Monto" value={monto} onChangeText={setMonto} keyboardType="decimal-pad" alignRight />
+        {restante.data && nombreOrigen && restante.data.monto === leerNumero(monto) ? <SaldoQueQueda saldo={restante.data} cuenta={nombreOrigen} /> : null}
         <Field label="Observaciones (opcional)" value={observaciones} onChangeText={setObservaciones} />
 
         {aviso ? <Notice tone="advertencia">{aviso}</Notice> : null}
@@ -100,4 +116,12 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
       </FormContainer>
     </ScrollView>
   )
+}
+
+/** "Te quedan $ X en la caja", o el aviso si la cuenta queda en negativo. */
+function SaldoQueQueda({ saldo, cuenta }: { saldo: SaldoRestante; cuenta: string }) {
+  const importe = formatImporte(saldo.saldoRestante, { moneda: saldo.moneda })
+  return saldo.saldoRestante < 0
+    ? <Notice tone="advertencia">{`${cuenta} queda en ${importe}.`}</Notice>
+    : <Notice tone="info">{`Te quedan ${importe} en ${cuenta}.`}</Notice>
 }

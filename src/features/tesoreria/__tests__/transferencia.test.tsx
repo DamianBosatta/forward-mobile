@@ -1,14 +1,18 @@
 import React from 'react'
-import { fireEvent, screen, userEvent, within } from '@testing-library/react-native'
+import { fireEvent, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { Transferencia } from '../components/Transferencia'
 import TesoreriaScreen from '../../../../app/(tabs)/tesoreria/index'
-import { api } from '@/core/api/client'
+import { api, ApiError } from '@/core/api/client'
 import { conPermisos, renderConQuery } from '@/features/clientes/__testing__/ayuda'
 
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, back: jest.fn() }) }))
 jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
-jest.mock('@/core/api/client', () => ({ api: { get: jest.fn(), post: jest.fn() }, API_URL: '' }))
+jest.mock('@/core/api/client', () => ({
+  ...jest.requireActual('@/core/api/client'),
+  api: { get: jest.fn(), post: jest.fn() },
+  API_URL: '',
+}))
 
 const get = api.get as jest.Mock
 const post = api.post as jest.Mock
@@ -30,6 +34,75 @@ beforeEach(() => {
 })
 
 const radio = (grupo: string, nombre: RegExp) => within(screen.getByLabelText(grupo)).getByRole('radio', { name: nombre })
+
+const PARA_COBRAR = '/api/v1/cuentas-corrientes/propias/para-cobrar'
+const VIEJO = new ApiError(404, 'No encontrado')
+/** La lista liviana (`propias/para-cobrar`): sin saldos. */
+const liviana = (id: string, nombre: string) => ({ id, nombre, moneda: 'ARS', esPrincipal: false, esCuentaCajaEfectivo: false, esCuentaCarteraCheques: false })
+
+/** Servidor con la lista liviana y `saldo-restante`; `viejo` = anterior a los dos (404). */
+function servidorNuevo({ viejo = false } = {}) {
+  get.mockImplementation(async (url: string) => {
+    if (url === '/api/v1/movimientos-internos/tipos') return [{ id: 't-tr', nombre: 'Transferencia', activo: true }]
+    if (url === PARA_COBRAR) {
+      if (viejo) throw VIEJO
+      return [liviana('caja', 'Caja de Emanuel'), liviana('gal', 'Banco Galicia')]
+    }
+    if (url === '/api/v1/cuentas-corrientes/propias') return [cuenta('caja', 'Caja de Emanuel', 412300), cuenta('gal', 'Banco Galicia', 2184950.4)]
+    const restante = url.match(/^\/api\/v1\/cuentas-corrientes\/propias\/([^/]+)\/saldo-restante\?monto=(.+)$/)
+    if (restante) {
+      if (viejo) throw VIEJO
+      const monto = Number(restante[2])
+      return { cuentaId: restante[1], moneda: 'ARS', saldoActual: 412300, monto, saldoRestante: 412300 - monto }
+    }
+    throw new Error(`sin respuesta para ${url}`)
+  })
+}
+
+describe('cuentas y saldo que queda', () => {
+  it('las cuentas salen de la lista liviana (para-cobrar), sin pedir los saldos de todas', async () => {
+    servidorNuevo()
+    renderConQuery(<Transferencia onListo={jest.fn()} />)
+    await screen.findAllByRole('radio', { name: /^Banco Galicia/ }, ESPERA)
+
+    expect(get).toHaveBeenCalledWith(PARA_COBRAR, { estadosEsperados: [404] })
+    expect(get.mock.calls.some(([u]) => u === '/api/v1/cuentas-corrientes/propias')).toBe(false)
+  })
+
+  it('con origen y monto, dice cuánto queda en la cuenta de origen según el servidor', async () => {
+    servidorNuevo()
+    renderConQuery(<Transferencia onListo={jest.fn()} />)
+    await userEvent.press(await screen.findByRole('radio', { name: 'Transferencia' }, ESPERA))
+    await userEvent.press(radio('Desde', /^Caja de Emanuel/))
+    fireEvent.changeText(screen.getByLabelText('Monto'), '350.000')
+
+    expect(await screen.findByText('Te quedan $ 62.300,00 en Caja de Emanuel.', {}, ESPERA)).toBeTruthy()
+    expect(get).toHaveBeenCalledWith('/api/v1/cuentas-corrientes/propias/caja/saldo-restante?monto=350000', { estadosEsperados: [404] })
+  })
+
+  it('si el monto deja la cuenta en negativo, lo avisa', async () => {
+    servidorNuevo()
+    renderConQuery(<Transferencia onListo={jest.fn()} />)
+    await userEvent.press(await screen.findByRole('radio', { name: 'Transferencia' }, ESPERA))
+    await userEvent.press(radio('Desde', /^Caja de Emanuel/))
+    fireEvent.changeText(screen.getByLabelText('Monto'), '500.000')
+
+    expect(await screen.findByText('Caja de Emanuel queda en -$ 87.700,00.', {}, ESPERA)).toBeTruthy()
+  })
+
+  it('con un servidor anterior usa las cuentas propias con su saldo y no muestra lo que queda', async () => {
+    servidorNuevo({ viejo: true })
+    renderConQuery(<Transferencia onListo={jest.fn()} />)
+    await userEvent.press(await screen.findByRole('radio', { name: 'Transferencia' }, ESPERA))
+    await screen.findAllByRole('radio', { name: /^Caja de Emanuel, saldo \$ 412\.300,00/ }, ESPERA)
+    await userEvent.press(radio('Desde', /^Caja de Emanuel, saldo/))
+    fireEvent.changeText(screen.getByLabelText('Monto'), '350.000')
+
+    await waitFor(() => expect(get.mock.calls.some(([u]) => String(u).includes('/saldo-restante'))).toBe(true), ESPERA)
+    expect(screen.queryByText(/Te quedan/)).toBeNull()
+    expect(screen.queryByText(/No se pudo/)).toBeNull()
+  })
+})
 
 it('registra el movimiento entre dos cuentas propias con el tipo del catálogo', async () => {
   renderConQuery(<Transferencia onListo={jest.fn()} />)

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '@/core/api/client'
+import { api, ApiError } from '@/core/api/client'
 import type { components } from '@/libs/api-client/generated/schema'
 import { cuentasKeys } from '@/features/cuentas/api/queries'
 import { tesoreriaKeys } from '@/libs/api-client/tesoreria'
@@ -25,6 +25,32 @@ export function useRegistrarMovimientoInterno() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: cuentasKeys.all })
       qc.invalidateQueries({ queryKey: tesoreriaKeys.all })
+    },
+  })
+}
+
+export type SaldoRestante = components['schemas']['SaldoRestanteCuentaDto']
+
+/**
+ * Cuánto queda en la cuenta de origen si sale `monto` ("Te quedan $ X en la caja"), calculado por el
+ * servidor (`GET /cuentas-corrientes/propias/{id}/saldo-restante`, MOD_CC:Read). No registra nada.
+ * Null con un servidor anterior (404, esperado) o si la cuenta no es una propia activa.
+ */
+export function useSaldoRestante(cuentaId: string | null, monto: number | null) {
+  return useQuery({
+    queryKey: [...cuentasKeys.all, 'saldo-restante', cuentaId, monto],
+    enabled: !!cuentaId && monto != null && monto > 0,
+    retry: false,
+    queryFn: async (): Promise<SaldoRestante | null> => {
+      try {
+        return await api.get<SaldoRestante>(
+          `/api/v1/cuentas-corrientes/propias/${cuentaId}/saldo-restante?monto=${monto}`,
+          { estadosEsperados: [404] },
+        )
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404) return null
+        throw e
+      }
     },
   })
 }
