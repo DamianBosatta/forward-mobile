@@ -13,7 +13,6 @@ import {
   pctFromPrecio,
   precioFromPct,
   canViewCost,
-  canViewStock,
   esDescuentoValidoCompuesto,
   computeModalFloor,
   derivarFloorBroken,
@@ -131,8 +130,7 @@ describe('precioFromPct', () => {
 })
 
 // ─── canViewCost ─────────────────────────────────────────────────────────────
-// Desde 0.2c decide la capacidad CAP_VER_COSTOS (user.permissions), no el rol: los casos
-// por rol que vivían acá pasaron a canViewStock, que conserva esa regla.
+// Desde 0.2c decide la capacidad CAP_VER_COSTOS (user.permissions), no el rol.
 
 const CAP = (module: string, canRead = true) => ({ module, canRead })
 
@@ -161,33 +159,6 @@ describe('canViewCost', () => {
 
   it('matches the capability case-insensitively, like the backend', () => {
     expect(canViewCost([CAP('cap_ver_costos')])).toBe(true)
-  })
-})
-
-// ─── canViewStock ────────────────────────────────────────────────────────────
-
-describe('canViewStock', () => {
-  it('returns true for Administrador, AdministradorSistemas and Gerencia', () => {
-    expect(canViewStock(['Administrador'])).toBe(true)
-    expect(canViewStock(['AdministradorSistemas'])).toBe(true)
-    expect(canViewStock(['Gerencia'])).toBe(true)
-  })
-
-  it('returns false for non-management roles', () => {
-    expect(canViewStock(['Vendedor', 'Logistica'])).toBe(false)
-  })
-
-  it('returns true when array contains at least one management role', () => {
-    expect(canViewStock(['Vendedor', 'Gerencia'])).toBe(true)
-  })
-
-  it('returns false for empty array', () => {
-    expect(canViewStock([])).toBe(false)
-  })
-
-  it('is case-sensitive (wrong case returns false)', () => {
-    expect(canViewStock(['administrador'])).toBe(false)
-    expect(canViewStock(['GERENCIA'])).toBe(false)
   })
 })
 

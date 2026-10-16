@@ -312,3 +312,18 @@ describe('lista de ventas nueva: borradores por dirección y total (forward-syst
     alerta.mockRestore()
   })
 })
+
+describe('lista de ventas nueva: el borrador recuerda si era pedido o presupuesto (forward-system #883)', () => {
+  it.each(['Pedido', 'Presupuesto'] as const)('servidor nuevo: un borrador de %s se retoma como tal, sin preguntar', async (tipo) => {
+    const alerta = jest.spyOn(Alert, 'alert')
+    mockGet.mockImplementation((url: string) => Promise.resolve(url.includes('borradores/mios')
+      ? [{ id: 'b1', version: 1, clienteId: 'c', clienteNombre: 'Almacén Luis', depositoId: 'd', fechaModificacion: ahora.toISOString(), cantidadLineas: 3, tipoOperacion: tipo }]
+      : pagina([], 0)))
+    pantalla()
+    await userEvent.press(screen.getByRole('tab', { name: 'Borradores' }))
+    await userEvent.press(await screen.findByRole('button', { name: /Almacén Luis/ }))
+    expect(alerta).not.toHaveBeenCalled()
+    expect(mockPush).toHaveBeenCalledWith(`/(tabs)/ventas/nueva-v2?borrador=b1&tipo=${tipo}`)
+    alerta.mockRestore()
+  })
+})

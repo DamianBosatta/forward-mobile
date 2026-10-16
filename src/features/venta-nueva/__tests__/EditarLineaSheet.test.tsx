@@ -212,7 +212,7 @@ describe('EditarLineaSheet: fragancias no pasan su stock disponible', () => {
 
   it('con stock 8 y cajas de 6, + llega a 6 y ahí queda (el stock es el del servidor, no el del catálogo)', async () => {
     conUsuario(10)
-    useAuthStore.setState({ user: { roles: ['Gerencia'], permissions: [], maxDescuentoPorcentaje: 10 } as never })
+    useAuthStore.setState({ user: { roles: ['Vendedor'], permissions: [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }], maxDescuentoPorcentaje: 10 } as never })
     mockGet.mockResolvedValue([{ id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, stockDisponible: 8, activo: true }])
     abrirFragancia(6)
     await waitFor(() => expect(screen.getByRole('button', { name: 'Sumar' })).toBeDisabled())
@@ -221,7 +221,7 @@ describe('EditarLineaSheet: fragancias no pasan su stock disponible', () => {
   })
 
   it('con stock para dos cajas, + suma una caja y se detiene en 12', async () => {
-    useAuthStore.setState({ user: { roles: ['Gerencia'], permissions: [], maxDescuentoPorcentaje: 10 } as never })
+    useAuthStore.setState({ user: { roles: ['Vendedor'], permissions: [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }], maxDescuentoPorcentaje: 10 } as never })
     mockGet.mockResolvedValue([{ id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, stockDisponible: 12, activo: true }])
     abrirFragancia(6)
     await waitFor(() => expect(mockGet).toHaveBeenCalled())

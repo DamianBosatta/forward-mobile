@@ -6,7 +6,7 @@ import { useResponsive } from '@/libs/useResponsive'
 import { Button, Field, Notice, StatusChip, formatImporte } from '@/core/ui/fw'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
-import { calcularSubtotalConDescuento, canViewCost, canViewStock, pctFromPrecio, precioFromPct } from '@/features/ventas/lib/descuentos'
+import { calcularSubtotalConDescuento, canViewCost, pctFromPrecio, precioFromPct } from '@/features/ventas/lib/descuentos'
 import { calcularRentabilidadVenta } from '@/features/ventas/lib/rentabilidad-venta'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useVariantesProducto } from '@/libs/api-client/productos'
@@ -44,7 +44,7 @@ function ConStockDeFragancia(props: EditarLineaSheetProps & { linea: LineaCarrit
   const user = useAuthStore((s) => s.user)
   const p = props.linea.producto
   const servidor = useVariantesProducto(p.productoPadreId ?? '', true, DEPOSITO_CENTRAL_ID)
-  const maxCantidad = stockDeFragancia(p, servidor.data?.find((s) => s.id === p.id), canViewStock((user?.roles ?? []) as string[]))
+  const maxCantidad = stockDeFragancia(p, servidor.data?.find((s) => s.id === p.id), hasCapability(user?.permissions, 'CAP_VER_CANTIDADES_STOCK'))
   return <EditarLineaContenido {...props} maxCantidad={maxCantidad} />
 }
 
@@ -69,7 +69,7 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
   const tope = avisoTope(pct, user?.maxDescuentoPorcentaje ?? 0, hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO'))
   const piso = avisoPiso(p, base, pct)
   const verCosto = canViewCost(user?.permissions)
-  const verStock = canViewStock((user?.roles ?? []) as string[])
+  const verStock = hasCapability(user?.permissions, 'CAP_VER_CANTIDADES_STOCK')
   const margen = calcularRentabilidadVenta({
     detalles: [{ precioUnitario: precioFinal, precioCostoSnapshot: p.precioCompraBase, cantidad }],
     subtotalBruto: precioFinal * cantidad,

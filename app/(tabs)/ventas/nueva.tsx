@@ -36,7 +36,8 @@ import { getFullImageUrl } from '@/libs/api-client'
 import type { ClienteLightDto, CreateVentaRequest } from '@/libs/api-client'
 import type { CreateVentaFormData } from '@/libs/validations'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { esPrecioValido, pctFromPrecio, precioFromPct, canViewCost, canViewStock, calcularSubtotalConDescuento, derivarFloorBroken, computeModalFloor } from '@/features/ventas/lib/descuentos'
+import { hasCapability } from '@/features/auth/lib/capabilities'
+import { esPrecioValido, pctFromPrecio, precioFromPct, canViewCost, calcularSubtotalConDescuento, derivarFloorBroken, computeModalFloor } from '@/features/ventas/lib/descuentos'
 import { BandChip } from '@/features/ventas/components/BandChip'
 import { CarritoSemaforo } from '@/features/ventas/components/CarritoSemaforo'
 import { METODO_ENTREGA, isProductAddable, requiereFechaEntrega, esFechaEntregaValida, buildVentaPayload } from '@/features/ventas/lib/venta-form-retiro'
@@ -127,7 +128,7 @@ function makeDetalleFromProducto(prod: any, cantidad: number, descuentoPorcentaj
 }
 
 function ProductCatalogItem({
-  item, cartQuantity, originalQuantity, onUpdate, onDiscountChange, cartDiscount, userRoles, puedeVerCostos, maxDescuento,
+  item, cartQuantity, originalQuantity, onUpdate, onDiscountChange, cartDiscount, veCantidadesStock, puedeVerCostos, maxDescuento,
 }: {
   item: any
   cartQuantity: number
@@ -137,8 +138,8 @@ function ProductCatalogItem({
   onDiscountChange: (prod: any, pct: number) => void
   /** Current discount % for this item in the cart (reflects existing cart state) */
   cartDiscount: number
-  /** Roles — solo deciden el desglose de stock (canViewStock), nunca costos. */
-  userRoles: string[]
+  /** CAP_VER_CANTIDADES_STOCK — decide el desglose de stock, nunca costos. */
+  veCantidadesStock: boolean
   /** CAP_VER_COSTOS — gatea las bandas de precio. */
   puedeVerCostos: boolean
   /** Seller's max discount % cap (0 = no cap). The inline discount input is clamped to this. */
@@ -152,7 +153,7 @@ function ProductCatalogItem({
   const [infoOpen, setInfoOpen] = useState(false)
   // Inline discount input draft (keeps text while user types, syncs on blur)
   const [discDraft, setDiscDraft] = useState<string | null>(null)
-  const isVendedor = !canViewStock(userRoles)
+  const isVendedor = !veCantidadesStock
 
   // Shown value in the inline discount field
   const discDisplayValue = discDraft !== null ? discDraft : (cartDiscount > 0 ? String(cartDiscount) : '')
@@ -851,11 +852,12 @@ export default function NuevaVentaMobileScreen() {
   // Non-cost roles receive 403 — disable the query for them to avoid retry spam.
   // PR-2e-a: floor computation no longer uses margenGlobal client-side (server floor).
   // The query is kept for cost roles who may display cost info in the modal.
-  const userRoles = (user?.roles ?? []) as string[]
-  // Costos y márgenes: CAP_VER_COSTOS (capacidad otorgable). La variante "vendedor" de la
-  // pantalla (stock simplificado, entrega fija) sigue el rol, como canViewStock en la web.
+  // Costos y márgenes: CAP_VER_COSTOS. La variante "vendedor" de la pantalla (stock
+  // simplificado, entrega fija) sigue a CAP_VER_CANTIDADES_STOCK, la capacidad con la que el
+  // servidor redacta las cantidades (forward-system #900): sin ella llegarían en 0.
   const puedeVerCostos = canViewCost(user?.permissions)
-  const isVendedor = !canViewStock(userRoles)
+  const veCantidadesStock = hasCapability(user?.permissions, 'CAP_VER_CANTIDADES_STOCK')
+  const isVendedor = !veCantidadesStock
   const { data: configuracion } = useConfiguracionSistema({ enabled: puedeVerCostos })
   const queryClient = useQueryClient()
 
@@ -2467,7 +2469,7 @@ export default function NuevaVentaMobileScreen() {
                     onUpdate={addable ? setProductoCantidad : () => {}}
                     onDiscountChange={applyInlineCatalogDiscount}
                     cartDiscount={det?.descuentoPorcentaje || 0}
-                    userRoles={userRoles}
+                    veCantidadesStock={veCantidadesStock}
                     puedeVerCostos={puedeVerCostos}
                     maxDescuento={maxDescuentoVendedor}
                   />
