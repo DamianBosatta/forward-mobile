@@ -6,7 +6,7 @@ import { FileText } from 'lucide-react-native'
 import { RequirePermission } from '@/core/ui'
 import { BottomSheet, Button, Notice, formatImporte, TopBar, useMenuLeading, type TopBarAction } from '@/core/ui/fw'
 import { importe, radii, space, typeScale, useColors, useIsDark } from '@/libs/theme'
-import { useFinalizarHojaRuta, useHojaRuta, useHojasDeRuta, useIniciarHojaRuta, useReportarParada } from '@/libs/api-client'
+import { useEntregarParada, useFinalizarHojaRuta, useHojaRuta, useHojasDeRuta, useIniciarHojaRuta, useReportarParada } from '@/libs/api-client'
 import { getManifiestoUrl, logisticaKeys } from '@/libs/api-client/logistica'
 import { getNotaEntregaUrl } from '@/libs/api-client/ventas'
 import { EstadoHojaRuta, type ParadaDto } from '@/libs/api-client/types'
@@ -17,13 +17,19 @@ import { PedidoDetalleModal } from '@/features/logistica/components/PedidoDetall
 import { HojaDeRutaVista } from '@/features/logistica/consola/HojaDeRutaVista'
 import { ReportarParada, type ReporteParada } from '@/features/logistica/consola/ReportarParada'
 import { resumenRuta, urlComoLlegar, urlLlamar } from '@/features/logistica/consola/hojaDeRuta'
+import { clasificarFalloEntrega, formatDistancia } from '@/features/logistica/consola/entrega'
+import { nuevaClaveIdempotencia } from '@/features/venta-nueva/lib/payload'
 import { tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { sharePdf } from '@/features/pedidos/lib/sharePdf'
 import { diaArgentina, parseDateSafe } from '@/src/utils/date'
 import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
 
-/** Consola del chofer (plan §11, lámina ChoferRuta). Muestra qué cobrar por parada y el total del día (lo decide el servidor); la foto del remito y el cobro en la entrega llegan con 5.1b/c/d. */
+/**
+ * Consola del chofer (plan §11, lámina ChoferRuta). Muestra qué cobrar por parada y el total del día (lo decide
+ * el servidor). La entrega va por la operación única `entregar` (cobro mixto, fotos, firma, devolución); un
+ * "no se pudo entregar" sigue por `reportar-parada`.
+ */
 export default function ConsolaChoferScreen() {
   const c = useColors()
   const oscuro = useIsDark()
@@ -84,6 +90,17 @@ export default function ConsolaChoferScreen() {
   }, [remota.data, setActiveTrip])
 
   const reportar = useReportarParada()
+  const entregar = useEntregarParada()
+  // Una clave por parada, la misma en cada reintento (también si se cierra y reabre la entrega):
+  // si la respuesta se perdió, el servidor contesta lo que ya registró en vez de cargarlo dos veces.
+  const claves = useRef(new Map<string, string>())
+  const claveDe = (paradaId: string) => {
+    const guardada = claves.current.get(paradaId)
+    if (guardada) return guardada
+    const nueva = nuevaClaveIdempotencia()
+    claves.current.set(paradaId, nueva)
+    return nueva
+  }
   // Guarda síncrona: un doble toque llega antes de que `isPending` se vea en pantalla.
   const reportandoYa = useRef(false)
   const iniciar = useIniciarHojaRuta()
@@ -174,16 +191,38 @@ export default function ConsolaChoferScreen() {
     if (!reportando || reportandoYa.current) return
     reportandoYa.current = true
     setErrorReporte(null)
+    const { parada } = reportando
+    if (r.entregado) {
+      try {
+        const cuerpo = { ...r.entrega, claveIdempotencia: claveDe(parada.id) }
+        await entregar.mutateAsync({ hojaDeRutaId: viaje.id, paradaId: parada.id, cuerpo })
+        updateStopStatus(parada.id, { delivered: true, observations: r.entrega.observaciones ?? undefined })
+        setReportando(null)
+      } catch (e) {
+        const fallo = clasificarFalloEntrega(e)
+        if (fallo.tipo === 'claveUsada') claves.current.set(parada.id, nuevaClaveIdempotencia())
+        if (fallo.tipo === 'yaRegistrada') {
+          // Un intento anterior ya la registró (quizás con otros datos): manda lo que guardó el servidor.
+          setReportando(null)
+          setAviso(fallo.mensaje)
+          remota.refetch()
+        } else {
+          setErrorReporte(fallo.mensaje)
+        }
+      } finally {
+        reportandoYa.current = false
+      }
+      return
+    }
     try {
       await reportar.mutateAsync({
         hojaDeRutaId: viaje.id,
         paradaId: reportando.parada.id,
-        entregado: r.entregado,
+        entregado: false,
         motivoRechazo: r.motivoRechazo,
-        nombreReceptor: r.nombreReceptor,
         observaciones: r.observaciones,
       })
-      updateStopStatus(reportando.parada.id, { delivered: r.entregado, observations: r.observaciones, reason: r.motivoRechazo })
+      updateStopStatus(parada.id, { delivered: false, observations: r.observaciones, reason: r.motivoRechazo })
       setReportando(null)
     } catch (e) {
       setErrorReporte(mensajeDelServidor(e, 'No se pudo reportar la parada.'))
@@ -246,6 +285,10 @@ export default function ConsolaChoferScreen() {
               </Text>
             ) : null}
           </View>
+          {/* Los km son de la última ruta calculada: sin recalcular serían los del plan anterior. */}
+          {viaje.rutaCalculada === true && viaje.distanciaTotalMetros > 0 ? (
+            <Text style={{ ...typeScale.secundario, color: c.onTopBarStrong }}>{`Recorrido ${formatDistancia(viaje.distanciaTotalMetros)}`}</Text>
+          ) : null}
           <View
             accessibilityRole="progressbar"
             accessibilityLabel="Paradas reportadas"
@@ -259,6 +302,10 @@ export default function ConsolaChoferScreen() {
           {soloLectura ? <Notice tone="info">Esta hoja de ruta es de otro chofer: solo podés verla.</Notice> : null}
           {finalizada ? <Notice tone="exito" title="Viaje finalizado.">Quedó cerrado en el sistema.</Notice> : null}
           {cancelada ? <Notice tone="info" title="Hoja cancelada.">La oficina canceló esta hoja de ruta antes de salir.</Notice> : null}
+          {/* `=== false`: un servidor anterior no manda el campo y no se avisa nada. */}
+          {viaje.rutaCalculada === false && !finalizada && !cancelada ? (
+            <Notice tone="info" title="Ruta sin recalcular.">La oficina cambió las paradas: el orden puede no ser el más corto.</Notice>
+          ) : null}
           {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
         </View>
         <HojaDeRutaVista
@@ -282,7 +329,9 @@ export default function ConsolaChoferScreen() {
             key={reportando.parada.id}
             parada={reportando.parada}
             numero={reportando.numero}
-            enviando={reportar.isPending}
+            enviando={reportar.isPending || entregar.isPending}
+            exigeFotoRemito={viaje.exigeFotoRemitoAlEntregar === true}
+            puedeDevolver={isAdmin() || isSuperAdmin() || canDo('MOD_VENTAS', 'read')}
             error={errorReporte}
             onCerrar={() => setReportando(null)}
             onConfirmar={confirmarReporte}

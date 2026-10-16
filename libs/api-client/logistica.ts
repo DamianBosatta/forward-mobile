@@ -18,6 +18,7 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
 import { api, API_URL } from './client'
 import type { Vehiculo as VehiculoDto, VentaEmpacada, Chofer, Vehiculo, HojaDeRuta, HojaRutaListItemDto } from './types'
+import type { components } from './generated/schema'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Query Keys
@@ -30,6 +31,8 @@ export const logisticaKeys = {
   vehiculos: () => [...logisticaKeys.all, 'vehiculos'] as const,
   hojasRuta: () => [...logisticaKeys.all, 'hojas-ruta'] as const,
   hojaRuta: (id: string) => [...logisticaKeys.all, 'hojas-ruta', id] as const,
+  mediosCobro: () => [...logisticaKeys.all, 'medios-cobro'] as const,
+  devolucionesPosibles: (ventaId: string) => [...logisticaKeys.all, 'devoluciones-posibles', ventaId] as const,
 }
 
 /** Isolated query-key namespace for the picking board. Keeps picking invalidations
@@ -262,6 +265,53 @@ export function useReportarParada() {
     onSuccess: (_, { hojaDeRutaId }) => {
       queryClient.invalidateQueries({ queryKey: logisticaKeys.hojaRuta(hojaDeRutaId) })
     }
+  })
+}
+
+/** Cuerpo de `POST hojas-ruta/{id}/paradas/{paradaId}/entregar` (forward-system #956). */
+export type CuerpoEntregaParada = components['schemas']['EntregarParadaCommand']
+export type EntregaParadaResultado = components['schemas']['EntregaParadaResultadoDto']
+/** Medio con el que cobra el chofer: `tipo` es Efectivo, Transferencia (foto obligatoria) o Cheque. */
+export type MedioCobroChofer = components['schemas']['MedioCobroChoferDto']
+export type RenglonDevolvible = components['schemas']['RenglonDevolvibleDto']
+
+/**
+ * La operación única del chofer: entrega, devolución, cobro mixto y firma en una sola transacción.
+ * `claveIdempotencia` va en el cuerpo y se repite en cada reintento: con la misma clave y el mismo
+ * cuerpo el servidor devuelve lo que ya registró (`repetida`). Sin reintentos automáticos, como el cobro.
+ */
+export function useEntregarParada() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ hojaDeRutaId, paradaId, cuerpo }: { hojaDeRutaId: string; paradaId: string; cuerpo: CuerpoEntregaParada }) =>
+      api.post<EntregaParadaResultado>(`/api/v1/Logistica/hojas-ruta/${hojaDeRutaId}/paradas/${paradaId}/entregar`, cuerpo),
+    retry: false,
+    onSuccess: (_, { hojaDeRutaId }) => {
+      queryClient.invalidateQueries({ queryKey: logisticaKeys.hojaRuta(hojaDeRutaId) })
+    },
+  })
+}
+
+/** Medios de cobro del chofer (`GET /Logistica/medios-cobro`, con MOD_VIAJES: el catálogo completo pide configuración). */
+export function useMediosCobroChofer(enabled: boolean) {
+  return useQuery({
+    queryKey: logisticaKeys.mediosCobro(),
+    queryFn: () => api.get<MedioCobroChofer[]>('/api/v1/Logistica/medios-cobro'),
+    enabled,
+    staleTime: 10 * 60_000,
+  })
+}
+
+/**
+ * Renglones que el cliente puede devolver en la entrega (`GET /Ventas/{id}/devoluciones-posibles`).
+ * Pide Ventas:Read: el chofer que solo tiene viajes no lo puede leer, y la pantalla no lo pide.
+ */
+export function useDevolucionesPosibles(ventaId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: logisticaKeys.devolucionesPosibles(ventaId),
+    queryFn: () => api.get<RenglonDevolvible[]>(`/api/v1/Ventas/${ventaId}/devoluciones-posibles`),
+    enabled: enabled && !!ventaId,
+    staleTime: 0,
   })
 }
 
