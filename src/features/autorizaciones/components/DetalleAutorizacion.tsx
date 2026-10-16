@@ -114,6 +114,10 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
           <View style={tarjeta} testID="bloque-costos">
             <Text style={secundario}>Solo con permiso de ver costos</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={secundario}>Costo de la venta</Text>
+              <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(preview.data?.costoTotal)}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Text style={secundario}>Ganancia bruta</Text>
               <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(venta.gananciaBrutaAmount)}</Text>
             </View>
@@ -134,6 +138,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
                 <Text style={secundario}>
                   {veCostos ? `Aporte ${formatImporte(it.aporteOverhead)} · Sacrificio ${formatImporte(it.sacrificio)}` : `Sacrificio ${formatImporte(it.sacrificio)}`}
                 </Text>
+                {veCostos ? <Text style={secundario}>{`Margen ${formatPorcentaje(it.margenPorcentaje)} · Piso ${formatPorcentaje(it.pisoPorcentaje)}`}</Text> : null}
               </View>
             ))}
           </View>

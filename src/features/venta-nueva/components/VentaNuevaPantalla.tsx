@@ -15,7 +15,10 @@ import { useConfirmarVenta } from '../hooks/useConfirmarVenta'
 import { useResponsive } from '@/libs/useResponsive'
 import { useBorradorVenta } from '../hooks/useBorradorVenta'
 import { useComisionEstimada } from '../hooks/useComisionEstimada'
-import { aAutoguardado } from '../lib/payload'
+import { aAlta, aAutoguardado } from '../lib/payload'
+import { useVistaPreviaVenta } from '@/libs/api-client/ventas'
+import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
+import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { avisosVenta, totalesEstimados } from '../lib/avisos'
 import { leerNumero, mostrarNumero } from '../lib/linea'
 import type { LineaCarrito } from '../lib/carrito'
@@ -70,6 +73,13 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
     clienteId: cliente?.id ?? '', esPedido: tipo === 'Pedido', lineas, descuentoGeneral: descuentoValido, cabecera: cab.cabecera,
     porcentajeCedido: cab.porcentajeCedido, borrador: b, alGuardar: vaciar, edicion,
   })
+  const cuerpoVistaPrevia = useDebouncedValue(cliente && tipo === 'Pedido' && !edicion && lineas.length > 0
+    ? aAlta(lineas, descuentoValido, cab.cabecera, {
+      clienteId: cliente.id, depositoId: DEPOSITO_CENTRAL_ID, esPedido: true, claveIdempotencia: '',
+      motivoVentaSinStock: 'Vista previa', porcentajeComisionCedido: cab.porcentajeCedido,
+    })
+    : null)
+  const vistaPrevia = useVistaPreviaVenta(cuerpoVistaPrevia, !cab.fleteInvalido && !cab.cesionError)
   const [catalogo, setCatalogo] = useState(false)
   const [editando, setEditando] = useState<LineaCarrito | null>(null)
   const [fragancias, setFragancias] = useState<string | null>(null)
@@ -164,6 +174,14 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
   const { total } = totalesEstimados(lineas, descuentoValido, cab.cabecera.flete)
   // La cesión no viaja en el autoguardado (el borrador es Presupuesto); va al confirmar, y siempre a autorización.
   if (cab.porcentajeCedido) avisos.porAutorizar.push('cediste parte de tu comisión')
+  // El servidor dice con las reglas del alta si el pedido queda por autorizar y por qué (los 6 motivos,
+  // deuda vencida y tope de crédito incluidos) o qué rechazaría (cierre del bloque 9). Sin respuesta,
+  // quedan los avisos locales. Mientras se arma no hay justificación de falta de stock: se manda una
+  // provisoria para que la falta salga como motivo; la de verdad se pide al confirmar.
+  if (Array.isArray(vistaPrevia.data?.motivos) && Array.isArray(vistaPrevia.data?.rechazos) && !edicion && tipo === 'Pedido') {
+    avisos.porAutorizar = vistaPrevia.data!.motivos
+    avisos.rechazos = vistaPrevia.data!.rechazos
+  }
   const rotulo = nombre ? `${direccionDeEntrega(cliente)} · ${nombre}` : direccionDeEntrega(cliente)
   const lineasVista = (
     <LineasVenta lineas={lineas} {...avisos} tope={tope}
@@ -233,7 +251,7 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
           <Button label="Confirmar con este motivo" disabled={!motivo.trim() || conf.enviando} loading={conf.enviando} onPress={() => void conf.confirmar(motivo)} />
         </View>
       </BottomSheet>
-      <EditarLineaSheet linea={editando} onClose={() => setEditando(null)}
+      <EditarLineaSheet linea={editando} onClose={() => setEditando(null)} descuentoGeneral={descuentoValido}
         onConfirm={(l) => { reemplazar(l); setEditando(null) }} onQuitar={(id) => { quitar(id); setEditando(null) }} />
       <FraganciasSheet padreId={fragancias} onClose={() => setFragancias(null)} />
     </View>

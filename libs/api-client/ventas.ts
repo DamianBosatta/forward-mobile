@@ -216,6 +216,45 @@ export function useAutorizacionPreview(id: string, enabled: boolean) {
   })
 }
 
+export type VistaPreviaLinea = components['schemas']['VistaPreviaLineaDto']
+export type VistaPreviaVenta = components['schemas']['VistaPreviaVentaDto']
+export type VistaPreviaLineaParams = {
+  productoId: string
+  cantidad: number
+  descuentoPorcentaje: number
+  descuentoGeneral: number
+}
+
+/**
+ * Vista previa de una línea sin grabar (`POST /Ventas/vista-previa-linea`, cierre del bloque 9): precio
+ * efectivo, semáforo y, con CAP_VER_COSTOS, margen. Lo calcula el servidor con las reglas del alta.
+ */
+export function useVistaPreviaLinea(params: VistaPreviaLineaParams, enabled: boolean) {
+  return useQuery({
+    queryKey: [...ventasKeys.all, 'vista-previa-linea', params] as const,
+    queryFn: () => api.post<VistaPreviaLinea>('/api/v1/Ventas/vista-previa-linea', params),
+    enabled: !!params.productoId && enabled,
+    placeholderData: (anterior) => anterior,
+    staleTime: 30_000,
+    retry: false,
+  })
+}
+
+/**
+ * Vista previa de una venta sin grabar (`POST /Ventas/vista-previa`, cierre del bloque 9): con el mismo
+ * cuerpo que el alta, los motivos por los que quedaría a autorizar y los rechazos del guardado.
+ */
+export function useVistaPreviaVenta(cuerpo: object | null, enabled: boolean) {
+  return useQuery({
+    queryKey: [...ventasKeys.all, 'vista-previa', cuerpo] as const,
+    queryFn: () => api.post<VistaPreviaVenta>('/api/v1/Ventas/vista-previa', cuerpo),
+    enabled: !!cuerpo && enabled,
+    placeholderData: (anterior) => anterior,
+    staleTime: 30_000,
+    retry: false,
+  })
+}
+
 /**
  * Bandeja de ventas frenadas por autorización: GET /api/v1/Ventas/pendientes-autorizacion.
  * Lista completa (sin paginar), la que más espera primero. Sin CAP_AUTORIZAR_VENTA el servidor

@@ -10,6 +10,8 @@ import { calcularSubtotalConDescuento, canViewCost, pctFromPrecio, precioFromPct
 import { calcularRentabilidadVenta } from '@/features/ventas/lib/rentabilidad-venta'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useVariantesProducto } from '@/libs/api-client/productos'
+import { useVistaPreviaLinea } from '@/libs/api-client/ventas'
+import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { multiploDe, precioServidor, type LineaCarrito } from '../lib/carrito'
 import { stockDeFragancia } from '../lib/fragancias'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoPiso, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
@@ -21,9 +23,13 @@ interface EditarLineaSheetProps {
   onClose: () => void
   onConfirm: (linea: LineaCarrito) => void
   onQuitar: (productoId: string) => void
+  /** Descuento general de la venta: la vista previa del servidor lo compone con el de la línea. */
+  descuentoGeneral?: number
 }
 
 const BANDA = { rojo: 'en rojo', amarillo: 'en amarillo', verde: 'en verde' } as const
+const CHIP_BANDA = { rojo: 'anulado', amarillo: 'porAutorizar', verde: 'entregado' } as const
+const ROTULO_BANDA = { rojo: 'Debajo del costo', amarillo: 'Por autorizar', verde: 'En precio' } as const
 
 /**
  * Editar línea (lámina Linea, plan 9 §2.1). Teléfono: pantalla completa. Tablet: panel
@@ -48,7 +54,7 @@ function ConStockDeFragancia(props: EditarLineaSheetProps & { linea: LineaCarrit
   return <EditarLineaContenido {...props} maxCantidad={maxCantidad} />
 }
 
-function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad }: EditarLineaSheetProps & { linea: LineaCarrito; maxCantidad: number }) {
+function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad, descuentoGeneral = 0 }: EditarLineaSheetProps & { linea: LineaCarrito; maxCantidad: number }) {
   const c = useColors()
   const { isTablet } = useResponsive()
   const user = useAuthStore((s) => s.user)
@@ -67,7 +73,13 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
   const pct = pctLeido !== null && !pctInvalido ? pctLeido : 0
   const precioFinal = precioFromPct(base, pct)
   const tope = avisoTope(pct, user?.maxDescuentoPorcentaje ?? 0, hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO'))
-  const piso = avisoPiso(p, base, pct)
+  // El servidor dice el semáforo y el margen con las reglas del alta (cierre del bloque 9). Mientras
+  // no contesta (o sin conexión), queda el aviso local de siempre.
+  const pedido = useDebouncedValue({ productoId: p.id, cantidad, descuentoPorcentaje: pct, descuentoGeneral })
+  const vista = useVistaPreviaLinea(pedido, !invalido)
+  const servidor = vista.data && typeof vista.data.veredicto === 'string' ? vista.data : undefined
+  const piso = servidor ? (servidor.veredicto.toLowerCase() as 'rojo' | 'amarillo' | 'verde') : avisoPiso(p, base, pct)
+  const minimo = servidor?.precioMinimoRentable ?? p.precioMinimoRentable
   const verCosto = canViewCost(user?.permissions)
   const verStock = hasCapability(user?.permissions, 'CAP_VER_CANTIDADES_STOCK')
   const margen = calcularRentabilidadVenta({
@@ -75,6 +87,7 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
     subtotalBruto: precioFinal * cantidad,
     montoDescuento: 0,
   })
+  const margenPct = servidor?.margenPorcentaje ?? margen?.margenPct ?? null
   const texto = (extra = {}) => ({ ...typeScale.cuerpoDestacado, color: c.text, ...extra })
 
   return (
@@ -141,10 +154,16 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
             {tope === 'sinConfigurar' && <Notice tone="peligro">{MENSAJE_TOPE_SIN_CONFIGURAR}</Notice>}
             {piso === 'rojo' && <Notice tone="peligro" title="Debajo del costo.">El sistema no deja guardar la venta con este precio.</Notice>}
             {piso === 'amarillo' && (
-              <Notice tone="advertencia" title={`Debajo del precio mínimo (${formatImporte(p.precioMinimoRentable)}).`}>
+              <Notice tone="advertencia" title={`Debajo del precio mínimo (${formatImporte(minimo)}).`}>
                 Va a quedar por autorizar.
               </Notice>
             )}
+            {servidor && piso ? (
+              <View testID="semaforo-linea" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={texto()}>Precio para el sistema</Text>
+                <StatusChip estado={CHIP_BANDA[piso]} label={ROTULO_BANDA[piso]} />
+              </View>
+            ) : null}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
               <View>
                 <Text style={texto()}>Stock</Text>
@@ -165,7 +184,7 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                   <Text style={{ ...typeScale.secundario, color: c.text }}>Margen de la línea</Text>
                   <Text style={{ ...typeScale.secundario, ...importe, color: c.text }}>
-                    {margen ? `${mostrarNumero(margen.margenPct)} % · ${BANDA[piso ?? 'verde']}` : '—'}
+                    {margenPct !== null ? `${mostrarNumero(margenPct)} % · ${BANDA[piso ?? 'verde']}` : '—'}
                   </Text>
                 </View>
               </View>

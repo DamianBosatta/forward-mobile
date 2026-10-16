@@ -10463,6 +10463,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Logistica/hojas-ruta/{id}/paradas/{paradaId}/lineas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    paradaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["LineaParadaDtoListResponse"];
+                        "application/json": components["schemas"]["LineaParadaDtoListResponse"];
+                        "text/json": components["schemas"]["LineaParadaDtoListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Logistica/medios-cobro": {
         parameters: {
             query?: never;
@@ -17152,6 +17192,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Ventas/vista-previa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CreateVentaCommand"];
+                    "text/json": components["schemas"]["CreateVentaCommand"];
+                    "application/*+json": components["schemas"]["CreateVentaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VistaPreviaVentaDtoResponse"];
+                        "application/json": components["schemas"]["VistaPreviaVentaDtoResponse"];
+                        "text/json": components["schemas"]["VistaPreviaVentaDtoResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/vista-previa-linea": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VistaPreviaLineaQuery"];
+                    "text/json": components["schemas"]["VistaPreviaLineaQuery"];
+                    "application/*+json": components["schemas"]["VistaPreviaLineaQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VistaPreviaLineaDtoResponse"];
+                        "application/json": components["schemas"]["VistaPreviaLineaDtoResponse"];
+                        "text/json": components["schemas"]["VistaPreviaLineaDtoResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Ventas/borradores": {
         parameters: {
             query?: never;
@@ -18447,6 +18573,8 @@ export interface components {
             totalSacrificio: number;
             /** Format: double */
             valorStockLiberado: number;
+            /** Format: double */
+            costoTotal?: number | null;
         };
         AutorizacionPreviewItemDto: {
             /** Format: uuid */
@@ -18464,6 +18592,10 @@ export interface components {
             aporteOverhead?: number | null;
             /** Format: double */
             sacrificio?: number | null;
+            /** Format: double */
+            margenPorcentaje?: number | null;
+            /** Format: double */
+            pisoPorcentaje?: number | null;
             desglosePiso: components["schemas"]["PisoDesgloseDto"];
         };
         AutorizarCotPesoIncompletoRequest: {
@@ -21288,6 +21420,29 @@ export interface components {
             compraDetalleId?: string;
             /** Format: double */
             cantidad?: number;
+        };
+        LineaParadaDto: {
+            /** Format: uuid */
+            ventaDetalleId: string;
+            /** Format: uuid */
+            productoId: string;
+            productoNombre: string;
+            /** Format: double */
+            cantidadVendida: number;
+            /** Format: double */
+            cantidadDevuelta: number;
+            /** Format: double */
+            cantidadDisponible: number;
+        };
+        LineaParadaDtoListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["LineaParadaDto"][] | null;
+            codigo?: string | null;
         };
         LineaTransferenciaInput: {
             /** Format: uuid */
@@ -24612,6 +24767,50 @@ export interface components {
         };
         /** @enum {string} */
         VisibilidadEvento: "Personal" | "Administracion";
+        VistaPreviaLineaDto: {
+            /** Format: uuid */
+            productoId: string;
+            productoNombre: string;
+            /** Format: double */
+            cantidad: number;
+            /** Format: double */
+            precioLista: number;
+            /** Format: double */
+            precioBase: number;
+            conOferta: boolean;
+            /** Format: double */
+            precioEfectivo: number;
+            veredicto: components["schemas"]["PisoVerdict"];
+            /** Format: double */
+            precioMinimoRentable?: number | null;
+            /** Format: double */
+            costoDirecto?: number | null;
+            /** Format: double */
+            margenPorcentaje?: number | null;
+            /** Format: double */
+            pisoPorcentaje?: number | null;
+            mensajeCantidad?: string | null;
+        };
+        VistaPreviaLineaDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["VistaPreviaLineaDto"];
+            codigo?: string | null;
+        };
+        VistaPreviaLineaQuery: {
+            /** Format: uuid */
+            productoId?: string;
+            /** Format: double */
+            cantidad?: number;
+            /** Format: double */
+            descuentoPorcentaje?: number;
+            /** Format: double */
+            descuentoGeneral?: number;
+        };
         VistaPreviaPrecioDto: {
             /** Format: double */
             precioVenta: number;
@@ -24644,6 +24843,28 @@ export interface components {
             gananciaMonto?: number | null;
             /** Format: double */
             margenBrutoPorcentaje?: number | null;
+        };
+        VistaPreviaVentaDto: {
+            estadoResultante?: components["schemas"]["EstadoVenta"];
+            requiereAutorizacion: boolean;
+            /** Format: int32 */
+            motivoPendienteAutorizacion?: number | null;
+            motivos: string[];
+            rechazos: string[];
+            productosSinStock: string[];
+            /** Format: double */
+            total?: number | null;
+            lineas: components["schemas"]["VistaPreviaLineaDto"][];
+        };
+        VistaPreviaVentaDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["VistaPreviaVentaDto"];
+            codigo?: string | null;
         };
     };
     responses: never;

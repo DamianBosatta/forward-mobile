@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { useInfiniteProductos } from '@/libs/api-client/productos'
 import { useDisponibilidadPorLotes } from '@/libs/api-client/stock'
 import { useDepositoDeConsulta } from './useDepositoDeConsulta'
@@ -15,12 +16,7 @@ const TAMANO_PAGINA = 20
 export function useCatalogoConsulta() {
   const depositoId = useDepositoDeConsulta()
   const [busqueda, setBusqueda] = useState('')
-  const [termino, setTermino] = useState('')
-
-  useEffect(() => {
-    const t = setTimeout(() => setTermino(busqueda.trim()), DEBOUNCE_BUSQUEDA_MS)
-    return () => clearTimeout(t)
-  }, [busqueda])
+  const termino = useDebouncedValue(busqueda.trim(), DEBOUNCE_BUSQUEDA_MS)
 
   const query = useInfiniteProductos(
     { search: termino || undefined, pageSize: TAMANO_PAGINA, soloActivos: true },
