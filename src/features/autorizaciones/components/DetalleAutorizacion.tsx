@@ -27,15 +27,17 @@ interface Props {
 
 /**
  * Detalle para autorizar (láminas AutorizarVenta y TabAutorizaciones). Los números de costo
- * y margen solo con CAP_VER_COSTOS: el servidor igual los manda en null sin el permiso.
+ * y margen solo con CAP_VER_COSTOS: el servidor igual los manda en null sin el permiso. Precio,
+ * mínimo y sacrificio de las líneas debajo del piso son del lado del precio: los ve quien autoriza.
  */
 export function DetalleAutorizacion({ id, onVolver }: Props) {
   const c = useColors()
   const router = useRouter()
   const veCostos = useAuthStore((s) => s.hasCapability('CAP_VER_COSTOS'))
-  // La vista previa la abre Reportes:Read en el servidor; sin ese permiso daría 403.
-  const vePreview = useAuthStore((s) => veCostos && s.canDo('MOD_REPORTES', 'read'))
   const puedeAutorizar = useAuthStore((s) => s.hasCapability('CAP_AUTORIZAR_VENTA'))
+  // Igual que el servidor (forward-system #951): la vista previa la abren Ventas:Read y
+  // CAP_AUTORIZAR_VENTA. Sin CAP_VER_COSTOS llega igual, pero con el aporte en null.
+  const vePreview = useAuthStore((s) => puedeAutorizar && s.canDo('MOD_VENTAS', 'read'))
   // La ficha del cliente la abre Clientes:Read en el servidor; sin ese permiso daría 403 (y quedaría logueado).
   const veClientes = useAuthStore((s) => s.canDo('MOD_CLIENTES', 'read'))
   const q = useVenta(id)
@@ -67,6 +69,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
     )
   }
 
+  const debajoDelMinimo = preview.data?.items ?? []
   const motivos = textosDeMotivos(venta.motivoPendienteAutorizacion, q.data?.detalleMotivos)
   const chip = chipForEstado('venta', venta.estado)
 
@@ -118,11 +121,19 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
               <Text style={secundario}>Margen de la venta</Text>
               <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatPorcentaje(venta.margenBrutoPorcentaje)}</Text>
             </View>
-            {(preview.data?.items ?? []).map((it) => (
+          </View>
+        ) : null}
+
+        {debajoDelMinimo.length > 0 ? (
+          <View style={tarjeta} testID="bloque-piso">
+            <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Debajo del mínimo</Text>
+            {debajoDelMinimo.map((it) => (
               <View key={it.detalleId} accessible style={{ gap: space[1], paddingTop: space[2], borderTopWidth: 1, borderTopColor: c.border }}>
                 <Text style={[typeScale.secundario, { color: c.text }]}>{it.productoNombre}</Text>
                 <Text style={secundario}>{`Precio ${formatImporte(it.precioEfectivo)} · Mínimo ${formatImporte(it.precioMinimoRentable)}`}</Text>
-                <Text style={secundario}>{`Aporte ${formatImporte(it.aporteOverhead)} · Sacrificio ${formatImporte(it.sacrificio)}`}</Text>
+                <Text style={secundario}>
+                  {veCostos ? `Aporte ${formatImporte(it.aporteOverhead)} · Sacrificio ${formatImporte(it.sacrificio)}` : `Sacrificio ${formatImporte(it.sacrificio)}`}
+                </Text>
               </View>
             ))}
           </View>

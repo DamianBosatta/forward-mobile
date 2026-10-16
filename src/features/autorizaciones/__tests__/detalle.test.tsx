@@ -110,29 +110,41 @@ describe('Autorizar venta: el detalle', () => {
     })
   })
 
-  it('sin CAP_VER_COSTOS no hay costos ni se pide la vista previa', async () => {
-    permisos('MOD_VENTAS', 'MOD_REPORTES', 'CAP_AUTORIZAR_VENTA')
+  const pidioPreview = () => mockGet.mock.calls.some(([u]) => String(u).includes('autorizacion-preview'))
+
+  it('sin CAP_VER_COSTOS quien autoriza ve precio, mínimo y sacrificio de la línea, pero ningún costo (forward-system #951)', async () => {
+    permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
     pintar()
-    await screen.findByText('Autorizar A00428')
+    const piso = await screen.findByTestId('bloque-piso')
+    expect(within(piso).getByText('Precio $ 2.323,20 · Mínimo $ 2.420,00')).toBeTruthy()
+    expect(within(piso).getByText('Sacrificio $ 96,80')).toBeTruthy()
     expect(screen.queryByTestId('bloque-costos')).toBeNull()
-    expect(screen.queryByText(/Ganancia bruta|Aporte|Sacrificio/)).toBeNull()
-    expect(mockGet.mock.calls.some(([u]) => String(u).includes('autorizacion-preview'))).toBe(false)
+    expect(screen.queryByText(/Ganancia bruta|Aporte/)).toBeNull()
+  })
+
+  it('sin CAP_AUTORIZAR_VENTA no pide la vista previa aunque tenga Reportes y costos (el servidor daría 403)', async () => {
+    permisos('MOD_VENTAS', 'MOD_REPORTES', 'CAP_VER_COSTOS')
+    pintar()
+    await screen.findByTestId('bloque-costos')
+    expect(pidioPreview()).toBe(false)
+    expect(screen.queryByTestId('bloque-piso')).toBeNull()
   })
 
   it('con CAP_VER_COSTOS, lo que el servidor manda en null se ve "—", nunca "$ 0"', async () => {
     permisos('MOD_VENTAS', 'MOD_REPORTES', 'CAP_AUTORIZAR_VENTA', 'CAP_VER_COSTOS')
     pintar()
-    const bloque = await screen.findByTestId('bloque-costos')
-    expect(await within(bloque).findByText('Aporte — · Sacrificio $ 96,80')).toBeTruthy()
+    const piso = await screen.findByTestId('bloque-piso')
+    expect(within(piso).getByText('Aporte — · Sacrificio $ 96,80')).toBeTruthy()
+    const bloque = screen.getByTestId('bloque-costos')
     expect(within(bloque).getAllByText('—')).toHaveLength(2) // ganancia y margen de la venta
     expect(within(bloque).queryByText(/\$ 0,00/)).toBeNull()
   })
 
-  it('con CAP_VER_COSTOS pero sin Reportes no pide la vista previa (el servidor daría 403)', async () => {
+  it('con CAP_AUTORIZAR_VENTA y costos pero sin Reportes también pide la vista previa', async () => {
     permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA', 'CAP_VER_COSTOS')
     pintar()
-    await screen.findByTestId('bloque-costos')
-    expect(mockGet.mock.calls.some(([u]) => String(u).includes('autorizacion-preview'))).toBe(false)
+    expect(await screen.findByTestId('bloque-piso')).toBeTruthy()
+    expect(pidioPreview()).toBe(true)
   })
 
   it('con margen en amarillo autorizar exige la razón y la manda con la versión del detalle', async () => {
