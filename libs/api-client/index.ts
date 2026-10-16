@@ -147,7 +147,7 @@ export {
   useReportarParada,
   useEntregarParada,
   useMediosCobroChofer,
-  useDevolucionesPosibles,
+  useLineasParada,
   // Picking board (Batch 1)
   useVentasParaPreparacion,
   useIniciarPreparacion,
@@ -174,5 +174,5 @@ export type {
   CuerpoEntregaParada,
   EntregaParadaResultado,
   MedioCobroChofer,
-  RenglonDevolvible,
+  LineaParada,
 } from './logistica'
