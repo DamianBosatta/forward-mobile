@@ -57,8 +57,8 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
   const [aviso, setAviso] = useState<string | null>(null)
   const [cobro, setCobro] = useState<CobroRegistrado | null>(null)
   const [subiendo, setSubiendo] = useState(false)
-  const { hasRole } = usePermissions()
-  const subeFotoCheque = ROLES_FOTO_CHEQUE.some(r => hasRole(r))
+  const { hasRole, canDo } = usePermissions()
+  const subeFotoCheque = canDo('MOD_PAGOS', 'create') || ROLES_FOTO_CHEQUE.some(r => hasRole(r))
   const cheque = (campo: keyof FormCobro['cheque']) => (v: string) => setF(p => ({ ...p, cheque: { ...p.cheque, [campo]: v } }))
 
   if (socio.isLoading) return <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />

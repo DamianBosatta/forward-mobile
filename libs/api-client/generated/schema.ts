@@ -1281,6 +1281,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cheques/depositar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DepositarChequesCommand"];
+                    "text/json": components["schemas"]["DepositarChequesCommand"];
+                    "application/*+json": components["schemas"]["DepositarChequesCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string[];
+                        "application/json": string[];
+                        "text/json": string[];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cheques/{id}/acreditar": {
         parameters: {
             query?: never;
@@ -5093,6 +5158,95 @@ export interface paths {
                         "text/plain": components["schemas"]["CuentaCorrienteResumenDto"][];
                         "application/json": components["schemas"]["CuentaCorrienteResumenDto"][];
                         "text/json": components["schemas"]["CuentaCorrienteResumenDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cuentas-corrientes/propias/para-cobrar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CuentaPropiaOpcionDto"][];
+                        "application/json": components["schemas"]["CuentaPropiaOpcionDto"][];
+                        "text/json": components["schemas"]["CuentaPropiaOpcionDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cuentas-corrientes/propias/{id}/saldo-restante": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    monto?: number;
+                };
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SaldoRestanteCuentaDto"];
+                        "application/json": components["schemas"]["SaldoRestanteCuentaDto"];
+                        "text/json": components["schemas"]["SaldoRestanteCuentaDto"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
                     };
                 };
             };
@@ -17524,6 +17678,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Ventas/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Ventas/{id}/pagos": {
         parameters: {
             query?: never;
@@ -19618,6 +19833,15 @@ export interface components {
             esCuentaCarteraCheques: boolean;
             puedeVerMovimientos: boolean;
         };
+        CuentaPropiaOpcionDto: {
+            /** Format: uuid */
+            id: string;
+            nombre: string;
+            moneda: string;
+            esPrincipal: boolean;
+            esCuentaCajaEfectivo: boolean;
+            esCuentaCarteraCheques: boolean;
+        };
         DashboardSummaryDto: {
             /** Format: double */
             salesToday?: number | null;
@@ -19662,6 +19886,11 @@ export interface components {
         DepositarChequeCommand: {
             /** Format: uuid */
             chequeId?: string;
+            /** Format: uuid */
+            cuentaDestinoId?: string;
+        };
+        DepositarChequesCommand: {
+            chequeIds?: string[] | null;
             /** Format: uuid */
             cuentaDestinoId?: string;
         };
@@ -22498,6 +22727,17 @@ export interface components {
             pagoId?: string;
             motivo?: string | null;
             confirmaRecuperoFisico?: boolean;
+        };
+        SaldoRestanteCuentaDto: {
+            /** Format: uuid */
+            cuentaId: string;
+            moneda: string;
+            /** Format: double */
+            saldoActual: number;
+            /** Format: double */
+            monto: number;
+            /** Format: double */
+            saldoRestante: number;
         };
         SalidaSinFacturaRequest: {
             motivo?: string | null;

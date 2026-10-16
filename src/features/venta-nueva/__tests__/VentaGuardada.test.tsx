@@ -72,12 +72,26 @@ describe('venta guardada (PR 2.9)', () => {
     expect(mockReplace).toHaveBeenCalledWith('/(tabs)/ventas')
   })
 
-  it('compartir manda la nota del servidor al panel de compartir y avisa si falla', async () => {
+  it('compartir manda el PDF comercial del servidor (PEDIDO) al panel de compartir y avisa si falla', async () => {
     mockShare.mockResolvedValue({ ok: false, reason: 'network', message: 'No se pudo conectar al servidor.' })
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: 'Compartir PDF con el cliente' }))
-    expect(mockShare).toHaveBeenCalledWith('https://api/api/v1/Logistica/v9/nota-entrega-pdf', 'A00419.pdf')
+    expect(mockShare).toHaveBeenCalledTimes(1)
+    expect(mockShare).toHaveBeenCalledWith('https://api/api/v1/Ventas/v9/pdf', 'PEDIDO-A00419.pdf')
     expect(Alert.alert).toHaveBeenCalledWith('No se pudo compartir el PDF', 'No se pudo conectar al servidor.')
+  })
+
+  it('con un servidor sin el PDF comercial (404) comparte la Nota de Entrega, como antes', async () => {
+    mockShare
+      .mockResolvedValueOnce({ ok: false, reason: 'network', message: 'Error al descargar el archivo (404).' })
+      .mockResolvedValueOnce({ ok: true })
+    pantalla()
+    await userEvent.press(await screen.findByRole('button', { name: 'Compartir PDF con el cliente' }))
+    expect(mockShare.mock.calls).toEqual([
+      ['https://api/api/v1/Ventas/v9/pdf', 'PEDIDO-A00419.pdf'],
+      ['https://api/api/v1/Logistica/v9/nota-entrega-pdf', 'PEDIDO-A00419.pdf'],
+    ])
+    expect(Alert.alert).not.toHaveBeenCalledWith('No se pudo compartir el PDF', expect.anything())
   })
 
   it('un presupuesto pendiente se convierte en pedido con su versión y se dice cómo quedó', async () => {

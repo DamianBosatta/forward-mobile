@@ -2,14 +2,25 @@ import React from 'react'
 import { screen, userEvent, within } from '@testing-library/react-native'
 import { DepositoCheques } from '../components/DepositoCheques'
 import TesoreriaScreen from '../../../../app/(tabs)/tesoreria/index'
-import { api } from '@/core/api/client'
+import { api, ApiError } from '@/core/api/client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import type { AppRole } from '@/libs/api-client/types'
 import { conPermisos, pagina, renderConQuery } from '@/features/clientes/__testing__/ayuda'
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), back: jest.fn() }) }))
 jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
-jest.mock('@/core/api/client', () => ({ api: { get: jest.fn(), post: jest.fn() }, API_URL: '' }))
+jest.mock('@/core/api/client', () => ({
+  ...jest.requireActual('@/core/api/client'),
+  api: { get: jest.fn(), post: jest.fn() },
+  API_URL: '',
+}))
+const LOTE = '/api/v1/cheques/depositar'
+/** Un servidor anterior al depósito por lote: la ruta no existe y se deposita de a uno. */
+const servidorViejo = (fallaUno?: { id: string; motivo: string }) => post.mockImplementation(async (url: string) => {
+  if (url === LOTE) throw new ApiError(404, 'No encontrado')
+  if (fallaUno && url.includes(fallaUno.id)) throw new Error(fallaUno.motivo)
+  return 'ok'
+})
 
 const get = api.get as jest.Mock
 const post = api.post as jest.Mock
@@ -44,27 +55,38 @@ beforeEach(() => {
   post.mockResolvedValue('ok')
 })
 
-it('pide solo los cheques de terceros en cartera y deposita cada elegido con su propia llamada', async () => {
+it('pide solo los cheques de terceros en cartera y deposita los elegidos en una sola llamada', async () => {
   renderConQuery(<DepositoCheques />)
   await elegirYDepositar(/^Banco Nación/, /^Banco Macro/)
 
   expect(get.mock.calls.map(([u]) => u)).toContain('/api/v1/cheques?Estado=EnCartera&Tipo=Tercero&PageNumber=1&PageSize=100')
-  expect(post.mock.calls).toEqual([
-    ['/api/v1/cheques/k1/depositar', { chequeId: 'k1', cuentaDestinoId: 'gal' }],
-    ['/api/v1/cheques/k2/depositar', { chequeId: 'k2', cuentaDestinoId: 'gal' }],
-  ])
   expect(await screen.findByText('Cheques depositados', {}, ESPERA)).toBeTruthy()
+  expect(post.mock.calls).toEqual([[LOTE, { chequeIds: ['k1', 'k2'], cuentaDestinoId: 'gal' }]])
 })
 
-it('si uno falla, dice exactamente cuál no se depositó (con el motivo) y cuál sí', async () => {
-  post.mockImplementation(async (url: string) => {
-    if (url.includes('k2')) throw new Error('El cheque tiene fecha de pago diferida al 20/10/2026; no puede depositarse antes de esa fecha.')
-    return 'ok'
-  })
+it('si el servidor rechaza el lote, no se depositó ninguno: muestra su motivo y los cheques siguen elegidos', async () => {
+  post.mockRejectedValue(new ApiError(409, 'No se depositó ningún cheque. N.º 12093345 (Banco Macro): tiene fecha de pago diferida al 20/10/2026.'))
+  renderConQuery(<DepositoCheques />)
+  await elegirYDepositar(/^Banco Nación/, /^Banco Macro/)
+
+  expect(await screen.findByText('No se depositó ningún cheque', {}, ESPERA)).toBeTruthy()
+  expect(screen.getByText(/N\.º 12093345 \(Banco Macro\): tiene fecha de pago diferida/)).toBeTruthy()
+  expect(screen.queryByText('Cheques depositados')).toBeNull()
+  expect(post).toHaveBeenCalledTimes(1)
+  expect(screen.getByRole('button', { name: 'Depositar 2 cheques' })).toBeTruthy()
+})
+
+it('con un servidor anterior deposita de a uno y, si uno falla, dice cuál no se depositó (con el motivo) y cuál sí', async () => {
+  servidorViejo({ id: 'k2', motivo: 'El cheque tiene fecha de pago diferida al 20/10/2026; no puede depositarse antes de esa fecha.' })
   renderConQuery(<DepositoCheques />)
   await elegirYDepositar(/^Banco Nación/, /^Banco Macro/)
 
   expect(await screen.findByText('No se depositaron 1 de 2', {}, ESPERA)).toBeTruthy()
+  expect(post.mock.calls).toEqual([
+    [LOTE, { chequeIds: ['k1', 'k2'], cuentaDestinoId: 'gal' }],
+    ['/api/v1/cheques/k1/depositar', { chequeId: 'k1', cuentaDestinoId: 'gal' }],
+    ['/api/v1/cheques/k2/depositar', { chequeId: 'k2', cuentaDestinoId: 'gal' }],
+  ])
   expect(screen.getByText(/Banco Macro · N\.º 12093345: El cheque tiene fecha de pago diferida/)).toBeTruthy()
   expect(screen.getByText('Sí se depositaron')).toBeTruthy()
   expect(screen.getByText('Banco Nación · N.º 00871234')).toBeTruthy()
@@ -122,11 +144,8 @@ it('si hay más cheques que una página, dice cuántos muestra de cuántos y dej
   expect(screen.queryByRole('button', { name: 'Cargar más cheques' })).toBeNull()
 })
 
-it('tras depositar, los cheques que fallaron siguen elegidos y los depositados no', async () => {
-  post.mockImplementation(async (url: string) => {
-    if (url.includes('k2')) throw new Error('No se puede depositar.')
-    return 'ok'
-  })
+it('con un servidor anterior, tras depositar, los cheques que fallaron siguen elegidos y los depositados no', async () => {
+  servidorViejo({ id: 'k2', motivo: 'No se puede depositar.' })
   renderConQuery(<DepositoCheques />)
   await elegirYDepositar(/^Banco Nación/, /^Banco Macro/)
   await screen.findByText('No se depositaron 1 de 2', {}, ESPERA)
