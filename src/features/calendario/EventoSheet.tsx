@@ -8,7 +8,7 @@ import {
   type EventoCalendario, type EventoDetalle,
 } from '@/libs/api-client/calendario'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { chipDe, esRecordatorio, TIPO } from './presentacion'
+import { chipDe, esHoraValida, esRecordatorio, textoSemanal, TIPO } from './presentacion'
 import { moverDia, nombreLargo } from './semana'
 import { SelectorDia } from './SelectorDia'
 
@@ -21,6 +21,8 @@ interface Props {
   onCerrar: () => void
   /** Se guardó un evento que no se repite: el calendario pasa a su día (puede haber cambiado). */
   onMovido: (fecha: string) => void
+  /** Abre la venta desde la que se agendó el evento. Sin él, el vínculo solo se nombra. */
+  onAbrirVenta?: (ventaId: string) => void
 }
 
 /** La ocurrencia se identifica por su fecha ORIGINAL (la de la clave): no cambia al reprogramarla. */
@@ -31,7 +33,7 @@ const fechaOriginalDe = (e: EventoCalendario) => /:(\d{4}-\d{2}-\d{2})$/.exec(e.
  * editan, se borran y se marcan: el DTO no dice si es editable, y el servidor ya filtró que solo
  * lleguen los que el usuario puede ver (y, por eso, tocar). Cheques y compras son automáticos.
  */
-export function EventoSheet({ evento, onCerrar, onMovido }: Props) {
+export function EventoSheet({ evento, onCerrar, onMovido, onAbrirVenta }: Props) {
   const c = useColors()
   const { height } = useWindowDimensions()
   const chip = chipDe(evento)
@@ -45,8 +47,20 @@ export function EventoSheet({ evento, onCerrar, onMovido }: Props) {
             {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
           </View>
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-            {`${nombreLargo(moverDia(evento.fecha, 0))} · ${TIPO[evento.tipo] ?? evento.tipo}`}
+            {[nombreLargo(moverDia(evento.fecha, 0)), evento.hora, TIPO[evento.tipo] ?? evento.tipo].filter(Boolean).join(' · ')}
           </Text>
+          {evento.ventaId && onAbrirVenta ? (
+            <Button
+              label={`Agendado desde la venta ${evento.ventaCodigo ?? ''}`.trim()}
+              variant="secundario"
+              onPress={() => {
+                onCerrar()
+                onAbrirVenta(evento.ventaId!)
+              }}
+            />
+          ) : evento.ventaCodigo ? (
+            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Agendado desde la venta ${evento.ventaCodigo}`}</Text>
+          ) : null}
           {original !== evento.fecha ? (
             <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
               {`Reprogramado: el original era el ${nombreLargo(moverDia(original, 0)).toLowerCase()}.`}
@@ -97,6 +111,8 @@ function Formulario({ d, evento, onCerrar, onMovido, onBorrado }: Props & { d: E
   const [titulo, setTitulo] = useState(d.titulo)
   const [descripcion, setDescripcion] = useState(d.descripcion ?? '')
   const [fecha, setFecha] = useState(d.fechaInicio)
+  const [hora, setHora] = useState(d.hora ?? '')
+  const horaValida = esHoraValida(hora.trim())
   const [confirmando, setConfirmando] = useState<'borrar' | 'mover' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const ocupado = editar.isPending || borrar.isPending || pagar.isPending
@@ -130,6 +146,8 @@ function Formulario({ d, evento, onCerrar, onMovido, onBorrado }: Props & { d: E
       titulo: titulo.trim(),
       descripcion: descripcion.trim() || null,
       fechaInicio: fecha,
+      // Solo si cambió: sin el campo el servidor la conserva; vacía la quita (todo el día).
+      ...(hora.trim() !== (d.hora ?? '') ? { hora: hora.trim() } : {}),
       recurrencia: d.recurrencia ?? undefined,
       montoEstimado: d.montoEstimado ?? null,
       socioComercialId: d.socioComercialId ?? null,
@@ -153,6 +171,19 @@ function Formulario({ d, evento, onCerrar, onMovido, onBorrado }: Props & { d: E
       ) : (
         <SelectorDia fecha={fecha} onCambiar={setFecha} />
       )}
+      <Field
+        label="Hora (opcional)"
+        value={hora}
+        onChangeText={setHora}
+        placeholder="09:30"
+        keyboardType="numbers-and-punctuation"
+        maxLength={5}
+        help="Sin hora, es de todo el día."
+        error={horaValida ? undefined : 'Escribí la hora como 09:30.'}
+      />
+      {d.recurrencia?.frecuencia === 'Semanal' ? (
+        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{textoSemanal(d.recurrencia.diasSemana ?? [])}</Text>
+      ) : null}
       <Field label="Descripción (opcional)" value={descripcion} onChangeText={setDescripcion} maxLength={MAX_DESCRIPCION} />
       <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
         {d.visibilidad === 'Personal' ? 'Lo ves solo vos.' : 'Lo ve Administración.'}
@@ -172,12 +203,12 @@ function Formulario({ d, evento, onCerrar, onMovido, onBorrado }: Props & { d: E
               ? `Tiene ${marcas}. Al cambiar el primer día se pierden las que ya no caigan en la serie.`
               : n === 1 ? 'Se pierde su marca (pagada u omitida).' : `Se pierden sus ${marcas}.`}
           </Notice>
-          <Button label="Sí, guardar" disabled={!titulo.trim() || ocupado} loading={editar.isPending} onPress={guardar} />
+          <Button label="Sí, guardar" disabled={!titulo.trim() || !horaValida || ocupado} loading={editar.isPending} onPress={guardar} />
           <Button label="No guardar" variant="secundario" disabled={ocupado} onPress={() => setConfirmando(null)} />
         </>
       ) : (
         <>
-          <Button label="Guardar cambios" disabled={!titulo.trim() || ocupado} loading={editar.isPending} onPress={guardar} />
+          <Button label="Guardar cambios" disabled={!titulo.trim() || !horaValida || ocupado} loading={editar.isPending} onPress={guardar} />
           <Button label="Borrar evento" variant="secundario" disabled={ocupado} onPress={() => setConfirmando('borrar')} />
         </>
       )}

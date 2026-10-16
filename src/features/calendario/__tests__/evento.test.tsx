@@ -38,10 +38,11 @@ const DETALLE = {
 
 let eventos: unknown[] = []
 let detalle: Record<string, unknown> = DETALLE
+const mockAbrirVenta = jest.fn()
 function pintar(antes?: (qc: QueryClient) => void) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   antes?.(qc)
-  render(<QueryClientProvider client={qc}><CalendarioScreen /></QueryClientProvider>)
+  render(<QueryClientProvider client={qc}><CalendarioScreen onAbrirVenta={mockAbrirVenta} /></QueryClientProvider>)
   return qc
 }
 
@@ -234,5 +235,27 @@ describe('Detalle de un evento del calendario', () => {
     await userEvent.press(await screen.findByLabelText('Guardar cambios'))
     expect(await screen.findByText('El título del evento es requerido.')).toBeTruthy()
     expect(screen.getByLabelText('Borrar evento')).toBeTruthy()
+  })
+
+  it('un evento agendado desde una venta la nombra y vuelve a ella', async () => {
+    eventos = [{ ...CAJA, hora: '18:15', ventaId: 'venta-341', ventaCodigo: 'A00341' }]
+    detalle = { ...DETALLE, hora: '18:15', ventaId: 'venta-341', ventaCodigo: 'A00341' }
+    await abrir('Rendir la caja, Pendiente')
+
+    await userEvent.press(await screen.findByLabelText('Agendado desde la venta A00341'))
+
+    expect(mockAbrirVenta).toHaveBeenCalledWith('venta-341')
+  })
+
+  it('cambiar la hora la manda; dejarla como estaba no la toca, y vacía la quita', async () => {
+    detalle = { ...DETALLE, hora: '18:15' }
+    await abrir('Rendir la caja, Pendiente')
+    const campo = await screen.findByLabelText('Hora (opcional)')
+    expect(campo.props.value).toBe('18:15')
+
+    await userEvent.clear(campo)
+    await userEvent.press(screen.getByLabelText('Guardar cambios'))
+
+    expect(mockPut.mock.calls[0][1]).toEqual(expect.objectContaining({ hora: '' }))
   })
 })

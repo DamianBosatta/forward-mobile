@@ -19,6 +19,7 @@ import { ConfirmarYRecibirSheet } from '@/features/compras/components/ConfirmarY
 import { ComprobanteCampos } from '@/features/compras/components/ComprobanteCampos'
 import { armarComprobante, formDesdeComprobante, formNuevo, resumenComprobante, seCorrigeEnLaWeb, type ComprobanteCompraInput, type FormComprobante } from '@/features/compras/lib/comprobante'
 import { inicioKeys } from '@/core/query/queryClient'
+import { numeroDeCompra } from '@/features/compras/lib/numero'
 
 /** Ruta `compras/[id]`: el id viene de la URL. */
 export default function CompraDetailScreen() {
@@ -150,7 +151,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
         title={compra.razonSocialProveedor}
-        subtitle={`${compra.id.slice(0, 8).toUpperCase()} · ${ddmmaaaa(diaArgentina(Date.parse(compra.fecha)))}`}
+        subtitle={`${numeroDeCompra(compra)} · ${ddmmaaaa(diaArgentina(Date.parse(compra.fecha)))}`}
         leading={{ kind: 'atras', onPress: volver }}
       />
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] * 2 }}>

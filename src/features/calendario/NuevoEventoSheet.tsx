@@ -1,16 +1,19 @@
 import React, { useState } from 'react'
-import { Text } from 'react-native'
-import { FONT, typeScale, useColors } from '@/libs/theme'
+import { Pressable, Text, View } from 'react-native'
+import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, Segmented } from '@/core/ui/fw'
 import { useCrearEvento } from '@/libs/api-client/calendario'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { SelectorDia } from './SelectorDia'
+import { DIAS_SEMANA, diaDeLaSemana, esHoraValida, textoSemanal } from './presentacion'
 
 export interface Precarga {
   titulo: string
   descripcion?: string
   /** Número de la venta de la que viene ("A00421"). */
   origen?: string
+  /** Id de esa venta: el evento queda vinculado ("agendado desde la venta A00421"). */
+  ventaId?: string
 }
 
 interface Props {
@@ -26,10 +29,12 @@ const MAX_TITULO = 150
 const MAX_DESCRIPCION = 500
 
 type Aviso = '0' | '1' | '3'
+type Repite = 'no' | 'semanal'
 
 /**
- * Lámina CalendarioEvento. El servidor guarda el día (sin hora) y no vincula el evento a la
- * venta: "Agendar" desde una venta solo precarga el título y la descripción. Es personal.
+ * Lámina CalendarioEvento. Es personal. Con hora opcional ("HH:mm", sin hora = todo el día) y
+ * "Se repite" semanal por días de la semana. "Agendar" desde una venta precarga el texto y deja el
+ * evento vinculado a la venta (el servidor verifica que el usuario la pueda ver).
  */
 export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado }: Props) {
   const c = useColors()
@@ -38,7 +43,16 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
   const [descripcion, setDescripcion] = useState((precarga?.descripcion ?? '').slice(0, MAX_DESCRIPCION))
   const [fecha, setFecha] = useState(inicial)
   const [aviso, setAviso] = useState<Aviso>('1')
+  const [hora, setHora] = useState('')
+  const [repite, setRepite] = useState<Repite>('no')
+  const [dias, setDias] = useState<number[]>([])
   const [error, setError] = useState<string | null>(null)
+  const horaValida = esHoraValida(hora.trim())
+  // Sin días elegidos, el del primer día del evento (lo mismo que hace el servidor).
+  const diasElegidos = dias.length > 0 ? dias : [diaDeLaSemana(fecha)]
+
+  const alternarDia = (valor: number) =>
+    setDias(diasElegidos.includes(valor) ? diasElegidos.filter((d) => d !== valor) : [...diasElegidos, valor])
 
   const guardar = async () => {
     setError(null)
@@ -50,6 +64,11 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
         fechaInicio: fecha,
         avisarDiasAntes: Number(aviso),
         visibilidad: 'Personal',
+        ...(hora.trim() ? { hora: hora.trim() } : {}),
+        ...(precarga?.ventaId ? { ventaId: precarga.ventaId } : {}),
+        ...(repite === 'semanal'
+          ? { recurrencia: { frecuencia: 'Semanal' as const, intervalo: 1, diasSemana: diasElegidos } }
+          : {}),
       })
       onCreado(fecha)
     } catch (e) {
@@ -61,10 +80,65 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
     <BottomSheet visible onClose={onCerrar} accessibilityLabel="Nuevo evento">
       <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>Agendar</Text>
       {precarga?.origen ? (
-        <Notice tone="info">{`Viene de la venta ${precarga.origen}: el título y la descripción ya están cargados.`}</Notice>
+        <Notice tone="info">
+          {precarga.ventaId
+            ? `Queda agendado desde la venta ${precarga.origen}: el título y la descripción ya están cargados.`
+            : `Viene de la venta ${precarga.origen}: el título y la descripción ya están cargados.`}
+        </Notice>
       ) : null}
       <Field label="Título" value={titulo} onChangeText={setTitulo} maxLength={MAX_TITULO} />
       <SelectorDia fecha={fecha} onCambiar={setFecha} />
+      <Field
+        label="Hora (opcional)"
+        value={hora}
+        onChangeText={setHora}
+        placeholder="09:30"
+        keyboardType="numbers-and-punctuation"
+        maxLength={5}
+        help="Sin hora, es de todo el día."
+        error={horaValida ? undefined : 'Escribí la hora como 09:30.'}
+      />
+      <Text style={{ ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600', color: c.text }}>Se repite</Text>
+      <Segmented<Repite>
+        accessibilityLabel="Se repite"
+        value={repite}
+        onChange={setRepite}
+        options={[
+          { value: 'no', label: 'Una vez' },
+          { value: 'semanal', label: 'Todas las semanas' },
+        ]}
+      />
+      {repite === 'semanal' ? (
+        <>
+          <View accessibilityLabel="Días de la semana" style={{ flexDirection: 'row', gap: space[1] }}>
+            {DIAS_SEMANA.map((d) => {
+              const activo = diasElegidos.includes(d.valor)
+              return (
+                <Pressable
+                  key={d.valor}
+                  accessibilityRole="checkbox"
+                  accessibilityLabel={d.largo}
+                  accessibilityState={{ checked: activo }}
+                  onPress={() => alternarDia(d.valor)}
+                  style={{
+                    flex: 1,
+                    minHeight: 44,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: radii.campo,
+                    borderWidth: activo ? 2 : 1,
+                    borderColor: activo ? c.brand : c.border,
+                    backgroundColor: activo ? c.brandSoft : c.surface,
+                  }}
+                >
+                  <Text style={{ ...typeScale.cuerpoDestacado, color: activo ? c.brandInk : c.text }}>{d.corto}</Text>
+                </Pressable>
+              )
+            })}
+          </View>
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{textoSemanal(diasElegidos)}</Text>
+        </>
+      ) : null}
       <Text style={{ ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600', color: c.text }}>Avisarme</Text>
       <Segmented<Aviso>
         accessibilityLabel="Avisarme"
@@ -79,7 +153,7 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
       <Field label="Descripción (opcional)" value={descripcion} onChangeText={setDescripcion} maxLength={MAX_DESCRIPCION} />
       <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Lo ves solo vos.</Text>
       {error ? <Notice tone="peligro">{error}</Notice> : null}
-      <Button label="Guardar evento" disabled={!titulo.trim()} loading={crear.isPending} onPress={guardar} />
+      <Button label="Guardar evento" disabled={!titulo.trim() || !horaValida} loading={crear.isPending} onPress={guardar} />
     </BottomSheet>
   )
 }

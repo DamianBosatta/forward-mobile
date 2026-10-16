@@ -14,6 +14,7 @@ import { agruparPorDia, horaDe, tituloDelDia } from '@/features/ventas/lib/agrup
 import { useComprasList, type PeriodoCompras, type PestanaCompras } from '../hooks/useComprasList'
 import { llegaTexto } from '../lib/fecha'
 import type { EstadoCompraRuta } from '@/features/listas/lib/filtroDeRuta'
+import { numeroDeCompra } from '../lib/numero'
 
 const PESTANAS: { key: PestanaCompras; label: string }[] = [
   { key: 'pendientes', label: 'Pendientes' },
@@ -104,7 +105,7 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
       renderItem={({ item: x }: { item: CompraDtoList }) => (
         <View style={{ marginBottom: space[3] }}>
           <DocumentCard
-            numero={x.id.slice(0, 8).toUpperCase()}
+            numero={numeroDeCompra(x)}
             vendedor={x.creadoPor ?? x.nombreDeposito}
             avatar={x.razonSocialProveedor}
             direccion={x.razonSocialProveedor}

@@ -147,3 +147,45 @@ describe('deuda vencida y saldo de la cartera (servidor con PR #882)', () => {
     expect(screen.queryByText('Deuda vencida')).toBeNull()
   })
 })
+
+describe('localidad y filtros (9C)', () => {
+  it('la tarjeta muestra la localidad en una línea aparte', async () => {
+    get.mockResolvedValue(pagina([clienteDeLista({ localidad: 'Ramos Mejía' })], 1))
+    renderConQuery(<ClientesScreen />)
+
+    expect(await screen.findByText('Ramos Mejía')).toBeTruthy()
+  })
+
+  it('"Con deuda vencida" le pide el filtro al servidor, y tocarlo de nuevo lo saca', async () => {
+    renderConQuery(<ClientesScreen />)
+    await screen.findByText('Av. del Valle 89')
+
+    await userEvent.press(screen.getByRole('button', { name: 'Con deuda vencida' }))
+    await waitFor(() => expect(urlsDeLista().some(u => u.includes('conDeudaVencida=true'))).toBe(true))
+    expect(screen.getByRole('button', { name: 'Con deuda vencida', selected: true })).toBeTruthy()
+
+    await userEvent.press(screen.getByRole('button', { name: 'Con deuda vencida' }))
+    expect(screen.getByRole('button', { name: 'Con deuda vencida', selected: false })).toBeTruthy()
+  })
+
+  it('las localidades salen del servidor y elegir una filtra por ella', async () => {
+    get.mockImplementation(async (url: string) =>
+      url === '/api/v1/socios-comerciales/localidades' ? ['Castelar', 'Haedo'] : pagina([clienteDeLista()], 1),
+    )
+    renderConQuery(<ClientesScreen />)
+
+    await userEvent.press(await screen.findByRole('button', { name: 'Haedo' }))
+
+    await waitFor(() => expect(urlsDeLista().some(u => u.includes('localidad=Haedo'))).toBe(true))
+  })
+
+  it('con filtros y sin resultados, lo dice', async () => {
+    get.mockResolvedValue(pagina([], 0))
+    renderConQuery(<ClientesScreen />)
+    await screen.findByText('Todavía no hay clientes en tu cartera.')
+
+    await userEvent.press(screen.getByRole('button', { name: 'Con deuda vencida' }))
+
+    expect(await screen.findByText('Ningún cliente coincide con los filtros.')).toBeTruthy()
+  })
+})

@@ -163,6 +163,7 @@ export function FichaCliente({ id }: { id: string }) {
 
       <Seccion titulo="Datos">
         <Dato etiqueta="Dirección de entrega" valor={cliente.direccion} />
+        <Dato etiqueta="Localidad" valor={cliente.localidad} />
         <Dato etiqueta="Contacto" valor={cliente.nombreContacto} />
         <Dato etiqueta="Teléfono" valor={cliente.telefono} />
         <Dato etiqueta="Razón social" valor={cliente.razonSocial} />
