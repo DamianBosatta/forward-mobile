@@ -10,6 +10,7 @@ import { usePermissions } from '@/core/auth/RequirePermission'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
+import { useAvisosNoLeidos } from '@/features/notificaciones'
 import { MENU, MI_CUENTA, esRutaActiva, menuVisible, type MenuItem } from './menuModules'
 
 const iniciales = (nombre?: string, apellido?: string) =>
@@ -34,6 +35,7 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
     if (isDrawerOpen && isAuthenticated) refreshPermissions()
   }, [isDrawerOpen, isAuthenticated])
 
+  const noLeidas = useAvisosNoLeidos()
   const rutaActual = props.state.routeNames[props.state.index]
   const grupos = menuVisible(MENU, {
     canDo,
@@ -49,11 +51,12 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
     const activa = esRutaActiva(item, rutaActual)
     const color = activa ? (isTablet ? c.onAction : c.brandInk) : texto
     const Icono = item.icon
+    const contador = item.id === 'avisos' && noLeidas > 0 ? noLeidas : 0
     return (
       <Pressable
         key={item.id}
         accessibilityRole="button"
-        accessibilityLabel={item.label}
+        accessibilityLabel={contador ? `${item.label}, ${contador} sin leer` : item.label}
         accessibilityState={{ selected: activa }}
         onPress={() => {
           safeHaptics.impact('light')
@@ -72,6 +75,11 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
         {isTablet ? null : <Icono size={22} color={color} strokeWidth={2} />}
         <Text style={{ ...(activa ? typeScale.cuerpoDestacado : typeScale.cuerpo), color, flex: 1 }}>{item.label}</Text>
         {item.hint ? <Text style={{ ...typeScale.secundario, color: activa ? color : secundario }}>{item.hint}</Text> : null}
+        {contador ? (
+          <View style={{ minWidth: 24, height: 24, paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.dangerStrong, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ ...typeScale.etiqueta, color: c.onDangerStrong }}>{contador > 99 ? '99+' : String(contador)}</Text>
+          </View>
+        ) : null}
       </Pressable>
     )
   }

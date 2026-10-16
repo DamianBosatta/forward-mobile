@@ -26,6 +26,8 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
 jest.mock('@/core/utils/haptics', () => ({
   safeHaptics: { impact: jest.fn(), notification: jest.fn() },
 }))
+let mockNoLeidos = 0
+jest.mock('@/features/notificaciones', () => ({ useAvisosNoLeidos: () => mockNoLeidos }))
 jest.mock('@/core/auth/RequirePermission', () => ({
   usePermissions: () => ({ canDo: mockCanDo }),
 }))
@@ -60,6 +62,7 @@ const APROBADOS = [
   'Cuentas corrientes',
   'Transferencias y cheques',
   'Calendario',
+  'Avisos',
   'Reportes',
   'Consola del chofer',
   'Pedidos por preparar',
@@ -105,6 +108,19 @@ describe('CustomDrawerContent — recorte al alcance aprobado', () => {
     }
   })
 
+  it('Avisos muestra cuántos quedan sin leer y lleva a la bandeja', async () => {
+    mockNoLeidos = 3
+    render(<CustomDrawerContent {...props()} />)
+    const avisos = screen.getByRole('button', { name: 'Avisos, 3 sin leer' })
+    expect(screen.getByText('3')).toBeTruthy()
+    await userEvent.press(avisos)
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/avisos')
+    mockNoLeidos = 120
+    screen.rerender(<CustomDrawerContent {...props()} />)
+    expect(screen.getByText('99+')).toBeTruthy()
+    mockNoLeidos = 0
+  })
+
   it('marca la entrada de la pantalla actual, también en sus pantallas hijas', () => {
     render(<CustomDrawerContent {...props('ventas/nueva')} />)
 
@@ -125,7 +141,7 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     conPermisos('MOD_VENTAS:read', 'MOD_VENTAS:create', 'MOD_CLIENTES:read', 'MOD_STOCK:read', 'MOD_CC:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Ventas', 'Clientes', 'Catálogo y stock', 'Cuentas corrientes', 'Calendario', 'Reportes', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Ventas', 'Clientes', 'Catálogo y stock', 'Cuentas corrientes', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'])
     expect(screen.getByText('Tesorería')).toBeTruthy()
     // Un grupo sin entradas visibles no deja su título colgado.
     expect(screen.queryByText('Logística')).toBeNull()
@@ -135,22 +151,22 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     conPermisos('MOD_VENTAS:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Ventas', 'Calendario', 'Reportes', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Ventas', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'])
   })
 
   it('un chofer (lee ventas pero no las crea) ve su consola y no el módulo de ventas', () => {
     conPermisos('MOD_VENTAS:read', 'MOD_VIAJES:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Consola del chofer', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Mi cuenta y contraseña'])
     expect(screen.queryByText('Tesorería')).toBeNull()
   })
 
-  it('sin ningún permiso quedan Inicio, Calendario (el servidor no lo gatea por módulo) y Mi cuenta', () => {
+  it('sin ningún permiso quedan Inicio, Calendario y Avisos (el servidor no los gatea por módulo) y Mi cuenta', () => {
     conPermisos()
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Mi cuenta y contraseña'])
     expect(screen.queryByText('Tesorería')).toBeNull()
     expect(screen.queryByText('Logística')).toBeNull()
   })

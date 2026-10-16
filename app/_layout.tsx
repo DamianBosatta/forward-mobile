@@ -27,6 +27,7 @@ import { MotiView, AnimatePresence } from 'moti'
 import '../global.css'
 import { loadSavedApiUrl } from '@/core/api/client'
 import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
+import { AvisosAlVolver } from '@/features/notificaciones'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -116,6 +117,7 @@ function RootLayoutNav() {
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <OfflineBanner />
       <AuthGuardHandler />
+      <AvisosAlVolver />
       <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.bg } }}>
         <Stack.Screen name="login" options={{ gestureEnabled: false }} />
         <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
