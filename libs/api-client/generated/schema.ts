@@ -12046,7 +12046,33 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["PagoDtoResponse"];
+                        "application/json": components["schemas"]["PagoDtoResponse"];
+                        "text/json": components["schemas"]["PagoDtoResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
                 };
             };
         };
@@ -19356,6 +19382,16 @@ export interface components {
         ComprobanteStockFiscal: "AjusteManual" | "ComprobanteRecibido" | "Factura" | "NotaCredito" | "NotaDebito" | "DevolucionProveedor";
         /** @enum {string} */
         ConceptoFactura: "Productos" | "Servicios" | "ProductosYServicios";
+        ConciliacionDelPagoDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            movimientoCuentaId: string;
+            referenciaMovimiento: string;
+            /** Format: double */
+            montoAplicadoAmount: number;
+            montoAplicadoMoneda?: string | null;
+        };
         ConciliacionDto: {
             /** Format: uuid */
             movimientoCuentaId?: string;
@@ -20984,6 +21020,19 @@ export interface components {
         };
         /** @enum {string} */
         ImputacionCobroChofer: "PedidoActual" | "DeudaAnterior";
+        ImputacionDelPagoDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            ventaId: string;
+            codigoVenta: string;
+            /** Format: double */
+            montoAmount: number;
+            montoMoneda?: string | null;
+            origen: components["schemas"]["ImputacionOrigen"];
+            /** Format: date-time */
+            fechaImputacion: string;
+        };
         ImputacionDetalleDto: {
             /** Format: uuid */
             pagoId?: string | null;
@@ -21627,6 +21676,37 @@ export interface components {
             medioPago: string;
             ventasCubiertas: components["schemas"]["VentaCubiertaFichaDto"][];
             facturasCubiertas?: components["schemas"]["FacturaCubiertaFichaDto"][] | null;
+        };
+        PagoDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            socioComercialId: string;
+            razonSocialSocio?: string | null;
+            tipoSocio?: string | null;
+            /** Format: date-time */
+            fecha: string;
+            /** Format: date-time */
+            fechaOperacion: string;
+            /** Format: double */
+            montoAmount: number;
+            montoMoneda?: string | null;
+            medioPago: string;
+            activo: boolean;
+            /** Format: uuid */
+            pagoVinculadoId?: string | null;
+            conciliaciones: components["schemas"]["ConciliacionDelPagoDto"][];
+            imputaciones: components["schemas"]["ImputacionDelPagoDto"][];
+        };
+        PagoDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["PagoDto"];
+            codigo?: string | null;
         };
         PagoFichaResumenDto: {
             /** Format: uuid */
