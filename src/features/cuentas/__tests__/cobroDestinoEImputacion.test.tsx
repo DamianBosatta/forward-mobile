@@ -65,6 +65,7 @@ function servidor({
     }
     if (url === '/api/v1/Pagos/p1') {
       if (!pago) throw VIEJO
+      if (pago instanceof Error) throw pago
       return pago
     }
     if (url === '/api/v1/cuentas-corrientes/propias') {
@@ -255,5 +256,16 @@ describe('imputación', () => {
     expect(await screen.findByText('Imputado a A00409, A00410', {}, ESPERA)).toBeTruthy()
     expect(pidio('/api/v1/Pagos/p1')).toBe(true)
     expect(pidio('/api/v1/cuentas-corrientes/socios/c1/movimientos')).toBe(false)
+  })
+
+  it('el 403 de GET /Pagos/{id} (quien cobra sin MOD_PAGOS:Read) es esperado: no se registra como error y cae a los movimientos', async () => {
+    conPermisos([PAGOS, CC])
+    servidor({ pago: new ApiError(403, 'No tenés permiso.'), imputadoA: [{ comprobante: 'A00409', monto: 86400 }] })
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+    await cargarMontoYMedio('86.400', 'Transferencia')
+    await tocarRegistrar()
+
+    expect(await screen.findByText('Imputado a A00409', {}, ESPERA)).toBeTruthy()
+    expect(get).toHaveBeenCalledWith('/api/v1/Pagos/p1', { estadosEsperados: [403] })
   })
 })
