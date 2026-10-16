@@ -1,4 +1,5 @@
 import {
+  Bell,
   BookOpen,
   CalendarDays,
   ChartColumn,
@@ -78,6 +79,8 @@ export const MENU: MenuGroup[] = [
     // El calendario no es un módulo en el servidor: cada uno ve el suyo (CalendarioController).
     items: [
       { id: 'calendario', label: 'Calendario', icon: CalendarDays, href: '/(tabs)/calendario', routeName: 'calendario/index' },
+      // Cada uno ve sus avisos (el destinatario sale del token); el número de no leídas va al lado.
+      { id: 'avisos', label: 'Avisos', icon: Bell, href: '/(tabs)/avisos', routeName: 'avisos/index' },
       // El servidor pide Ventas:Read y acota el alcance (el vendedor ve lo suyo); el chofer lee ventas pero no vende.
       { id: 'reportes', label: 'Reportes', icon: ChartColumn, href: '/(tabs)/reportes', routeName: 'reportes/index', visibleSi: (canDo) => canDo('MOD_VENTAS', 'read') && puedeVerVentas(canDo) },
     ],
