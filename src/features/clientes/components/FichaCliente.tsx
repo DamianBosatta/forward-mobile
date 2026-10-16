@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Lock, MapPin, Pencil, Phone, type LucideIcon } from 'lucide-react-native'
+import { FilePen, Lock, MapPin, Pencil, Phone, type LucideIcon } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, StatusChip, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
@@ -12,6 +12,7 @@ import { usePermissions } from '@/core/auth/RequirePermission'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { formatToLocalTime } from '@/src/utils/date'
 import { CreditoDelCliente } from './CreditoDelCliente'
+import { SolicitudCambio } from './SolicitudCambio'
 import { direccionDeEntrega, nombreDelCliente, textoCondicionPago } from '../lib/cliente'
 
 export const AVISO_CONDICION_PAGO = 'Solo la cambia quien puede autorizar ventas'
@@ -67,7 +68,8 @@ function Seccion({ titulo, children }: { titulo: string; children: React.ReactNo
 export function FichaCliente({ id }: { id: string }) {
   const c = useColors()
   const router = useRouter()
-  const { canUpdate } = usePermissions()
+  const { canUpdate, isAdmin } = usePermissions()
+  const [pidiendoCambio, setPidiendoCambio] = useState(false)
   const puedeAutorizar = useAuthStore(s => s.hasCapability('CAP_AUTORIZAR_VENTA'))
   const { data: cliente, isLoading, error } = useSocio(id)
   const verCuenta = !!cliente?.puedeVerCuentaCorriente
@@ -87,6 +89,7 @@ export function FichaCliente({ id }: { id: string }) {
   const nombre = nombreDelCliente(cliente)
   const telefono = cliente.telefono?.trim()
   const ultimas = ventas.data?.items ?? []
+  const puedeEditar = cliente.puedeEditar && canUpdate('MOD_CLIENTES')
 
   return (
     <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }}>
@@ -104,10 +107,14 @@ export function FichaCliente({ id }: { id: string }) {
             onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cliente.direccion)}`)}
           />
         ) : null}
-        {cliente.puedeEditar && canUpdate('MOD_CLIENTES') ? (
+        {puedeEditar ? (
           <Accion icono={Pencil} label="Editar" onPress={() => router.push({ pathname: '/(tabs)/socios/nuevo', params: { id } })} />
         ) : null}
+        {/* La dirección, la razón social y el CUIT solo los cambia un administrador; el resto los pide. */}
+        {puedeEditar && !isAdmin() ? <Accion icono={FilePen} label="Pedir cambio" onPress={() => setPidiendoCambio(true)} /> : null}
       </View>
+
+      {pidiendoCambio ? <SolicitudCambio cliente={cliente} onCerrar={() => setPidiendoCambio(false)} /> : null}
 
       {verCuenta ? (
         <Seccion titulo="Cuenta corriente">

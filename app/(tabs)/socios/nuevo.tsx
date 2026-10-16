@@ -2,9 +2,10 @@ import React, { useCallback, useRef, useState } from 'react'
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useFocusEffect } from '@react-navigation/native'
-import { Lock } from 'lucide-react-native'
+import { Check, Lock } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Field, Notice, TopBar } from '@/core/ui/fw'
+import { usePermissions } from '@/core/auth/RequirePermission'
 import { useClienteForm } from '@/features/clientes/hooks/useClienteForm'
 import { AVISO_CONDICION_PAGO } from '@/features/clientes/components/FichaCliente'
 import { textoCondicionPago, type TipoCondicionPago } from '@/features/clientes/lib/cliente'
@@ -47,11 +48,37 @@ function Opciones<T extends string>({ titulo, opciones, valor, onChange }: {
   )
 }
 
+export const AYUDA_PROVISORIA = 'Para no perder la venta: el CUIT y los datos que falten se completan después. Mientras tanto el cliente queda provisorio.'
+export const AVISO_CAMPOS_SENSIBLES = 'La dirección, la razón social y el CUIT los cambia un administrador: pedilo con «Pedir cambio» en la ficha del cliente.'
+
+function Casilla({ label, ayuda, valor, onChange }: { label: string; ayuda: string; valor: boolean; onChange: (v: boolean) => void }) {
+  const c = useColors()
+  return (
+    <Pressable
+      accessibilityRole="checkbox"
+      accessibilityLabel={label}
+      accessibilityHint={ayuda}
+      accessibilityState={{ checked: valor }}
+      onPress={() => onChange(!valor)}
+      style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: space[3] }}
+    >
+      <View style={{ width: 24, height: 24, borderRadius: radii.campo, borderWidth: 2, borderColor: valor ? c.brand : c.border, backgroundColor: valor ? c.brandSoft : c.surface, alignItems: 'center', justifyContent: 'center' }}>
+        {valor ? <Check size={16} color={c.brandInk} /> : null}
+      </View>
+      <View style={{ flex: 1, gap: space[1] }}>
+        <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{label}</Text>
+        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{ayuda}</Text>
+      </View>
+    </Pressable>
+  )
+}
+
 function ClienteForm({ id }: { id?: string }) {
   const c = useColors()
   const router = useRouter()
   const alGuardar = (nuevoId: string) => router.replace({ pathname: '/(tabs)/socios/[id]', params: { id: nuevoId } })
   const { datos, cambiar, guardar, error, editando, puedeCambiarPago, cargando, guardando, errorDeCarga, reintentar } = useClienteForm(id, alGuardar)
+  const { isAdmin } = usePermissions()
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -66,6 +93,10 @@ function ClienteForm({ id }: { id?: string }) {
       ) : (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], width: '100%', maxWidth: 640, alignSelf: 'center' }}>
+            {editando && !isAdmin() ? <Notice tone="info">{AVISO_CAMPOS_SENSIBLES}</Notice> : null}
+            {!editando ? (
+              <Casilla label="Alta provisoria" ayuda={AYUDA_PROVISORIA} valor={datos.altaProvisoria} onChange={v => cambiar('altaProvisoria', v)} />
+            ) : null}
             <Field label="Dirección de entrega" value={datos.direccion} onChangeText={v => cambiar('direccion', v)} help="Identifica al cliente: es donde se entrega." />
             <Field label="Nombre del local" value={datos.nombreFantasia} onChangeText={v => cambiar('nombreFantasia', v)} />
             <Field label="Contacto" value={datos.nombreContacto} onChangeText={v => cambiar('nombreContacto', v)} help="A quién preguntar al llegar." />
@@ -91,6 +122,7 @@ function ClienteForm({ id }: { id?: string }) {
                     keyboardType="number-pad"
                   />
                 ) : null}
+                <Field label="Tope de crédito" value={datos.tope} onChangeText={v => cambiar('tope', v)} keyboardType="decimal-pad" help="En pesos. Vacío: sin tope." />
               </>
             ) : (
               <View accessible accessibilityLabel={`Condición de pago: ${textoCondicionPago({ tipo: datos.tipoPago })}. ${AVISO_CONDICION_PAGO}`} style={{ gap: space[1] }}>

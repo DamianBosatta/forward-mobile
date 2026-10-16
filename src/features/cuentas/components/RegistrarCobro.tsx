@@ -11,8 +11,13 @@ import { claveDeOtroSocio, useCajasAbiertas, useMediosDeCobro, useRegistrarCobro
 import { armarCobro, mostrarFecha, type FormCobro } from '../lib/cobro'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
 import { nuevaClaveIdempotencia } from '@/features/venta-nueva/lib/payload'
+import { usePermissions } from '@/core/auth/RequirePermission'
+import { ROLES_FOTO_CHEQUE, subirFotoCheque } from '../api/fotos'
 import { CobroListo } from './CobroListo'
+import { DestinoDelCobro } from './DestinoDelCobro'
 import { ElegirChip } from './ElegirChip'
+import { ElegirComprobantes } from './ElegirComprobantes'
+import { FotoDelCobro } from './FotoDelCobro'
 
 export const AVISO_IMPUTACION =
   'Imputación automática: el servidor lo aplica a la deuda más vieja y te dice en qué cuenta (TST o Normal) quedó.'
@@ -26,7 +31,13 @@ const formVacio = (): FormCobro => ({
   depositoId: null,
   referencia: '',
   cheque: { numero: '', banco: '', titular: '', emision: hoy(), pago: hoy() },
+  cuentaPropiaId: null,
+  comprobanteUrl: null,
+  chequeFotoUrl: null,
+  imputaciones: null,
 })
+
+const IMPUTACION = [{ id: 'automatica', label: 'Automática' }, { id: 'manual', label: 'Elegir comprobantes' }]
 
 /** Registrar un cobro (láminas Cobro y CobroListo). La cuenta TST / Normal la elige el servidor. */
 export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolver: () => void }) {
@@ -45,6 +56,9 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
   const cajas = useCajasAbiertas(f.requiereCaja)
   const [aviso, setAviso] = useState<string | null>(null)
   const [cobro, setCobro] = useState<CobroRegistrado | null>(null)
+  const [subiendo, setSubiendo] = useState(false)
+  const { hasRole } = usePermissions()
+  const subeFotoCheque = ROLES_FOTO_CHEQUE.some(r => hasRole(r))
   const cheque = (campo: keyof FormCobro['cheque']) => (v: string) => setF(p => ({ ...p, cheque: { ...p.cheque, [campo]: v } }))
 
   if (socio.isLoading) return <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
@@ -60,6 +74,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
         cobro={cobro}
         monto={monto ?? 0}
         medio={medio?.nombre ?? ''}
+        imputacionManual={!!f.imputaciones}
         onVolver={onVolver}
         onOtro={() => { setCobro(null); setF(formVacio()); setClave(nuevaClaveIdempotencia()); registrar.reset() }}
       />
@@ -71,7 +86,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
   const sinCajaUtil = f.requiereCaja && (!cajas.data || !!cajas.error || cajas.data.length === 0)
 
   const enviar = () => {
-    if (registrar.isPending) return
+    if (registrar.isPending || subiendo) return
     // Con caja, sin las cajas abiertas no se sabe en cuál entra el efectivo: no se manda incompleto.
     if (sinCajaUtil) return
     // Con una sola caja abierta se manda esa; con varias, la elige quien cobra.
@@ -103,7 +118,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
           titulo="Medio"
           opciones={(medios.data ?? []).filter(m => m.activo && m.id).map(m => ({ id: m.id!, label: m.nombre ?? '' }))}
           valor={f.medioPagoId}
-          onCambio={id => setF(p => ({ ...p, medioPagoId: id, esCheque: !!medios.data?.find(m => m.id === id)?.esCheque, requiereCaja: !!medios.data?.find(m => m.id === id)?.requiereCaja }))}
+          onCambio={id => setF(p => ({ ...p, medioPagoId: id, cuentaPropiaId: null, esCheque: !!medios.data?.find(m => m.id === id)?.esCheque, requiereCaja: !!medios.data?.find(m => m.id === id)?.requiereCaja }))}
         />
         {f.requiereCaja && (cajas.data?.length ?? 0) > 1 ? (
           <ElegirChip
@@ -130,15 +145,38 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
             <Field label="Titular" value={f.cheque.titular} onChangeText={cheque('titular')} />
             <Field label="Fecha de emisión" value={f.cheque.emision} onChangeText={cheque('emision')} help="dd/mm/aaaa" />
             <Field label="Fecha de pago" value={f.cheque.pago} onChangeText={cheque('pago')} help="dd/mm/aaaa" />
+            {subeFotoCheque ? (
+              <FotoDelCobro que="del cheque" url={f.chequeFotoUrl} subir={subirFotoCheque} onUrl={u => setF(p => ({ ...p, chequeFotoUrl: u }))} onSubiendo={setSubiendo} />
+            ) : null}
           </>
+        ) : null}
+        {medio && !f.requiereCaja && !f.esCheque ? (
+          <DestinoDelCobro
+            medio={medio}
+            cuentaPropiaId={f.cuentaPropiaId}
+            comprobanteUrl={f.comprobanteUrl}
+            onCuenta={id => setF(p => ({ ...p, cuentaPropiaId: id }))}
+            onComprobante={u => setF(p => ({ ...p, comprobanteUrl: u }))}
+            onSubiendo={setSubiendo}
+          />
         ) : null}
 
         <Field label="Referencia (opcional)" value={f.referencia} onChangeText={v => setF(p => ({ ...p, referencia: v }))} help="Por ejemplo, el N.º de operación" />
-        <Notice tone="info">{AVISO_IMPUTACION}</Notice>
+        <ElegirChip
+          titulo="Imputación"
+          opciones={IMPUTACION}
+          valor={f.imputaciones ? 'manual' : 'automatica'}
+          onCambio={id => setF(p => ({ ...p, imputaciones: id === 'manual' ? (p.imputaciones ?? {}) : null }))}
+        />
+        {f.imputaciones ? (
+          <ElegirComprobantes socioId={socioId} valor={f.imputaciones} onCambio={v => setF(p => ({ ...p, imputaciones: v }))} />
+        ) : (
+          <Notice tone="info">{AVISO_IMPUTACION}</Notice>
+        )}
 
         {aviso ? <Notice tone="advertencia">{aviso}</Notice> : null}
         {registrar.error ? <Notice tone="peligro">{mensajeDelServidor(registrar.error, 'No se pudo registrar el cobro.')}</Notice> : null}
-        <Button label={monto && monto > 0 ? `Registrar cobro de ${formatImporte(monto)}` : 'Registrar cobro'} loading={registrar.isPending} disabled={registrar.isPending || sinCajaUtil} onPress={enviar} />
+        <Button label={monto && monto > 0 ? `Registrar cobro de ${formatImporte(monto)}` : 'Registrar cobro'} loading={registrar.isPending} disabled={registrar.isPending || sinCajaUtil || subiendo} onPress={enviar} />
       </FormContainer>
     </ScrollView>
   )
