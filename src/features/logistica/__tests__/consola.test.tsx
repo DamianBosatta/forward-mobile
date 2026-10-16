@@ -92,7 +92,7 @@ describe('Consola del chofer: hoja de ruta', () => {
     expect(abrir).toHaveBeenLastCalledWith('tel:1145678900')
   })
 
-  it('entregado: no confirma sin quién recibió y manda el resultado con el comando actual', async () => {
+  it('entregado: no confirma sin quién recibió y manda la entrega por la operación única (entregar)', async () => {
     // El servidor, después del reporte, devuelve la parada entregada.
     mockPost.mockImplementation(async () => {
       hojaServidor = { ...HOJA, detalles: HOJA.detalles.map((d) => (d.id === 'p4' ? { ...d, estado: 2 } : d)) }
@@ -104,8 +104,8 @@ describe('Consola del chofer: hoja de ruta', () => {
     expect(confirmar.props.accessibilityState.disabled).toBe(true)
     await userEvent.type(screen.getByLabelText('Quién recibió'), 'Carlos')
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/reportar-parada', {
-      hojaDeRutaId: 'h1', paradaId: 'p4', entregado: true, nombreReceptor: 'Carlos', observaciones: undefined,
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/paradas/p4/entregar', {
+      claveIdempotencia: expect.any(String), nombreReceptor: 'Carlos',
     })
     expect(await screen.findByText('2 de 4 paradas')).toBeTruthy()
     expect(screen.queryByLabelText('Confirmar entrega')).toBeNull()

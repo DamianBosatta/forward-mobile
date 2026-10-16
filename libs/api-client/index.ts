@@ -144,6 +144,9 @@ export {
   useIniciarHojaRuta,
   useFinalizarHojaRuta,
   useReportarParada,
+  useEntregarParada,
+  useMediosCobroChofer,
+  useDevolucionesPosibles,
   // Picking board (Batch 1)
   useVentasParaPreparacion,
   useIniciarPreparacion,
@@ -167,4 +170,8 @@ export type {
   SkippedItem,
   VehiculoCrudPayload,
   VehiculoCrudResult,
+  CuerpoEntregaParada,
+  EntregaParadaResultado,
+  MedioCobroChofer,
+  RenglonDevolvible,
 } from './logistica'

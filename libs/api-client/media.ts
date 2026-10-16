@@ -40,3 +40,21 @@ export async function uploadProductImage(uri: string): Promise<string> {
 
   return response.url
 }
+
+/**
+ * Sube una foto de la entrega (remito firmado, comprobante, firma) a la carpeta de entregas
+ * (`POST /Media/upload-entrega`, MOD_VIAJES:Update, hasta 2 MB). Devuelve la URL que va en el cuerpo
+ * de la entrega: el servidor solo acepta fotos de su propio storage.
+ */
+export async function uploadFotoEntrega(uri: string): Promise<string> {
+  const formData = new FormData()
+  const filename = uri.split('/').pop() ?? 'entrega.jpg'
+  const match = /\.(\w+)$/.exec(filename)
+  const type = match ? `image/${match[1].toLowerCase() === 'jpg' ? 'jpeg' : match[1].toLowerCase()}` : 'image/jpeg'
+  // @ts-expect-error FormData de React Native acepta {uri, name, type}
+  formData.append('file', { uri, name: filename, type })
+  const r = await api.post<UploadResult>('/api/v1/Media/upload-entrega', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return r.url
+}
