@@ -24,6 +24,11 @@ jest.mock('@/core/api/client', () => ({
     delete: (url: string) => mockDelete(url),
   },
 }))
+const mockBajaPush = jest.fn()
+jest.mock('@/features/notificaciones', () => ({
+  ...jest.requireActual('@/features/notificaciones'),
+  darDeBajaPushAntesDeSalir: () => mockBajaPush(),
+}))
 const mockReplace = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: mockReplace }) }))
 jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), DrawerActions: { openDrawer: jest.fn() } }))
@@ -62,6 +67,7 @@ beforeEach(() => {
   mockPost.mockResolvedValue(true)
   mockGet.mockReset().mockResolvedValue([])
   mockDelete.mockResolvedValue(undefined)
+  mockBajaPush.mockResolvedValue(undefined)
 })
 
 describe('Mi cuenta', () => {
@@ -152,6 +158,27 @@ describe('Mi cuenta', () => {
     expect(alerta).not.toHaveBeenCalled()
   })
 
+  it('cerrar sesión da de baja el celular para push antes de revocar la sesión en el servidor', async () => {
+    usuario()
+    pintar()
+    await userEvent.press(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    await userEvent.press(screen.getByLabelText('Confirmar: Cerrar sesión'))
+
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
+    expect(mockBajaPush).toHaveBeenCalledTimes(1)
+    expect(mockBajaPush.mock.invocationCallOrder[0]).toBeLessThan(mockPost.mock.invocationCallOrder[0])
+  })
+
+  it('cambiar de servidor también da de baja el push antes de revocar la sesión', async () => {
+    usuario()
+    pintar()
+    await userEvent.press(screen.getByRole('radio', { name: 'Local' }))
+    await userEvent.press(screen.getByLabelText('Confirmar: Cambiar y salir'))
+
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
+    expect(mockBajaPush.mock.invocationCallOrder[0]).toBeLessThan(mockPost.mock.invocationCallOrder[0])
+  })
+
   it('el texto no promete cerrar la web al instante', () => {
     usuario()
     pintar()
@@ -182,7 +209,7 @@ describe('Mi cuenta', () => {
 
     // El logout todavía no terminó y la confirmación ya no está.
     expect(screen.queryByLabelText('Confirmar: Cambiar y salir')).toBeNull()
-    expect(mockPost).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1))
     terminar(true)
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
     expect(mockPost).toHaveBeenCalledTimes(1)

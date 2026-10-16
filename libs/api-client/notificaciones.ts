@@ -90,3 +90,31 @@ export function useActualizarPreferenciasAvisos() {
     meta: { noRefrescaInicio: true },
   })
 }
+
+// ── Push (9B, T9) ─────────────────────────────────────────────────────────────────────────────
+
+export type RegistrarDispositivoPush = components['schemas']['RegistrarDispositivoPushCommand']
+
+const DISPOSITIVOS_PUSH = '/api/v1/Notificaciones/dispositivos'
+
+/**
+ * Lo que un servidor anterior al push responde: 404/405 sin el endpoint, 400 si no reconoce el
+ * cuerpo. Es lo esperado mientras ese servidor siga en pie, no una falla (no va a Sentry).
+ */
+export const ESTADOS_ESPERADOS_PUSH = [400, 404, 405]
+
+/** POST /Notificaciones/dispositivos: idempotente; si el token era de otro usuario, pasa a este. */
+export function registrarDispositivoPush(cuerpo: RegistrarDispositivoPush): Promise<void> {
+  return api.post<void>(DISPOSITIVOS_PUSH, cuerpo, { estadosEsperados: ESTADOS_ESPERADOS_PUSH } as RequestInit)
+}
+
+/**
+ * DELETE /Notificaciones/dispositivos: borra solo un token propio (uno ajeno o desconocido es 204).
+ * `accessToken` permite mandarlo con la sesión que se está cerrando, cuando el store ya la borró.
+ */
+export function eliminarDispositivoPush(token: string, accessToken?: string | null): Promise<void> {
+  return api.delete<void>(DISPOSITIVOS_PUSH, { token }, {
+    estadosEsperados: ESTADOS_ESPERADOS_PUSH,
+    ...(accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : {}),
+  } as RequestInit)
+}
