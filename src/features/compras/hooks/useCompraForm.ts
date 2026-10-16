@@ -49,7 +49,7 @@ export function useCompraForm(editId?: string) {
     hasNextPage: hayMasProductos,
     fetchNextPage,
     isFetchingNextPage,
-  } = useInfiniteProductos({ pageSize: 30, search: busquedaServidor })
+  } = useInfiniteProductos({ pageSize: 30, search: busquedaServidor, soloComprables: true })
   const { data: proveedoresResponse } = useProveedores()
   const { data: depositosResponse } = useDepositos()
 
@@ -131,7 +131,7 @@ export function useCompraForm(editId?: string) {
       cantidad: d.cantidad ?? 0,
     })) ?? [])
     setGastosStr(String(compraEdit.gastosOperativos || ''))
-    setDescuentoStr(String((compraEdit as typeof compraEdit & { descuentoPorcentaje?: number }).descuentoPorcentaje || ''))
+    setDescuentoStr(String(compraEdit.descuentoPorcentaje || ''))
 
     const s = String(compraEdit.estado)
     if (s === 'Presupuesto' || s === '1' || s === 'NotaPedido') setEstadoOrden('Presupuesto')

@@ -92,6 +92,17 @@ describe('lista de compras', () => {
     expect(within(tarjeta).getByText(/8 productos · Depósito Central/)).toBeTruthy()
   })
 
+  it('con el servidor que dice cuándo llega, la compra por recibir lo muestra en el pie', async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('borradores/mios')) return Promise.resolve([])
+      if (url.includes('/resumen')) return Promise.resolve({ totalComprado: 0, notasPedido: 0, confirmadas: 1, entregadas: 0, canceladas: 0, anuladas: 0 })
+      return Promise.resolve(pagina([compra({ estado: 'Confirmado', fechaEsperadaRecepcion: '2026-10-08' })], 1))
+    })
+    pantalla()
+    const tarjeta = await screen.findByRole('button', { name: /AAAA1111/ })
+    expect(within(tarjeta).getByText(/8 productos · Llega jue 8$/)).toBeTruthy()
+  })
+
   it('con el servidor anterior (sin creadoPor) la tarjeta sigue mostrando el depósito al lado del número', async () => {
     pantalla()
     const tarjeta = await screen.findByRole('button', { name: /AAAA1111/ })

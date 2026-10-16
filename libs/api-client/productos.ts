@@ -16,6 +16,8 @@ export interface ProductoParams {
   pageSize?: number
   search?: string
   soloActivos?: boolean
+  /** Buscador de la compra: comunes y fragancias (variantes), sin las líneas. Un servidor anterior lo ignora. */
+  soloComprables?: boolean
 }
 
 // CatalogoStockItem derived from generated OpenAPI schema — do not hand-edit.
@@ -82,6 +84,7 @@ export function useProductos(params: ProductoParams = {}) {
   if (params.pageSize) searchParams.set('pageSize', String(params.pageSize))
   if (params.search) searchParams.set('searchTerm', params.search)
   if (params.soloActivos !== undefined) searchParams.set('soloActivos', String(params.soloActivos))
+  if (params.soloComprables) searchParams.set('soloComprables', 'true')
 
   return useQuery({
     queryKey: productosKeys.list(params),
@@ -105,6 +108,7 @@ export function useInfiniteProductos(params: ProductoParams = {}, { mantenerAnte
       searchParams.set('pageSize', String(params.pageSize ?? 20))
       if (params.search) searchParams.set('searchTerm', params.search)
       if (params.soloActivos !== undefined) searchParams.set('soloActivos', String(params.soloActivos))
+      if (params.soloComprables) searchParams.set('soloComprables', 'true')
 
       return api.get<PagedResult<Producto>>(`/api/v1/Productos?${searchParams}`)
     },
