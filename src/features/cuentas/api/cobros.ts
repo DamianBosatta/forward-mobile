@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '@/core/api/client'
 import { sociosKeys } from '@/libs/api-client/socios'
-import type { GetMovimientosCuentaDto, TipoCuentaSocio } from '@/libs/api-client/types'
+import type {
+  CuentaCorrienteResumenDto, GetMovimientosCuentaDto, ImputacionMovimientoDto, MovimientoSocioDtoPaginatedResponse, SocioDetailDto, TipoCuentaSocio,
+} from '@/libs/api-client/types'
 import type { components } from '@/libs/api-client/generated/schema'
 import { cuentasKeys } from './queries'
 import type { CobroPayload } from '../lib/cobro'
@@ -25,6 +27,31 @@ export function useCajasAbiertas(enabled: boolean) {
     queryKey: ['cajas', 'abiertas-estado'],
     enabled,
     queryFn: () => api.get<CajaAbierta[]>('/api/v1/Cajas/abiertas/estado'),
+  })
+}
+
+/**
+ * Cuentas propias donde puede entrar una transferencia o un depósito (`GET /cuentas-corrientes/propias`,
+ * pide MOD_CC:Read). Ni la caja de efectivo ni la cartera de cheques: esos medios tienen su propio camino.
+ */
+export function useCuentasPropias(enabled: boolean) {
+  return useQuery({
+    queryKey: [...cuentasKeys.all, 'propias'],
+    enabled,
+    queryFn: () => api.get<CuentaCorrienteResumenDto[]>('/api/v1/cuentas-corrientes/propias'),
+    select: (cuentas: CuentaCorrienteResumenDto[]) => cuentas.filter(c => c.activo && !c.esCuentaCajaEfectivo && !c.esCuentaCarteraCheques),
+    staleTime: 10 * 60_000,
+  })
+}
+
+export type DocumentoPendiente = components['schemas']['DocumentoPendienteDto']
+
+/** Ventas y facturas con saldo del cliente, para la imputación manual (`GET /deudas/socios/{id}/pendientes`, MOD_PAGOS:Read). */
+export function useDocumentosPendientes(socioId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: [...cuentasKeys.all, 'pendientes', socioId],
+    enabled,
+    queryFn: () => api.get<DocumentoPendiente[]>(`/api/v1/deudas/socios/${socioId}/pendientes?incluirFacturas=true`),
   })
 }
 
@@ -129,4 +156,33 @@ export function useCuentaDelPago(cobro: CobroRegistrado, cuentas: { cuentaId?: s
     },
   })
   return { cuenta: tipoCuenta ?? buscada.data ?? null, buscando: !tipoCuenta && buscada.isLoading }
+}
+
+/**
+ * A qué comprobantes se aplicó el cobro, según el servidor. `GET /Pagos/{id}` no sirve para un cobro a
+ * ventas (sus conciliaciones no incluyen `ImputacionesPago`), así que se cruza el movimiento del pago en
+ * su cuenta (que trae `pagoId`) con el mismo asiento de los movimientos del cliente (que trae `imputadoA`).
+ * Null si no se puede saber (servidor anterior a #905, sin acceso o el asiento no está en la primera página).
+ */
+export function useImputadoDelPago(
+  pagoId: string | null,
+  cuenta: TipoCuentaSocio | null,
+  cliente: Pick<SocioDetailDto, 'id' | 'cuentaId' | 'cuentaNormalId' | 'puedeVerCuentaCorriente'>,
+) {
+  const cuentaId = cuenta === 'Tst' ? cliente.cuentaId : cuenta === 'Normal' ? cliente.cuentaNormalId : null
+  return useQuery({
+    queryKey: [...cuentasKeys.all, 'imputado-del-pago', pagoId, cuenta],
+    enabled: !!pagoId && !!cuentaId && !!cliente.puedeVerCuentaCorriente,
+    retry: false,
+    queryFn: async (): Promise<ImputacionMovimientoDto[] | null> => {
+      const deLaCuenta = await api.get<GetMovimientosCuentaDto>(`/api/v1/cuentas-corrientes/${cuentaId}/movimientos?pageNumber=1&pageSize=20`)
+      const asiento = deLaCuenta.movimientos.items?.find(m => m.pagoId === pagoId)
+      if (!asiento) return null
+      const delCliente = await api.get<MovimientoSocioDtoPaginatedResponse>(
+        `/api/v1/cuentas-corrientes/socios/${cliente.id}/movimientos?pageNumber=1&pageSize=20&cuenta=${cuenta}`,
+        { estadosEsperados: [404] },
+      )
+      return delCliente.items?.find(m => m.id === asiento.id)?.imputadoA ?? null
+    },
+  })
 }

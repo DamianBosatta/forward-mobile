@@ -5,7 +5,8 @@ import { Button, FormContainer, Notice, TotalsRow, formatImporte } from '@/core/
 import type { SocioDetailDto } from '@/libs/api-client/types'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { useEstadoCuentaSocio } from '../api/queries'
-import { useCuentaDelPago, type CobroRegistrado } from '../api/cobros'
+import { useCuentaDelPago, useImputadoDelPago, type CobroRegistrado } from '../api/cobros'
+import { textoImputacion } from '../lib/movimientos'
 
 export const SIN_CUENTA_CONFIRMADA = 'No se pudo confirmar en qué cuenta quedó: fijate en los movimientos de la cuenta corriente.'
 export const COBRO_YA_ESTABA = 'Este cobro ya estaba registrado: no se cargó de nuevo.'
@@ -17,15 +18,19 @@ interface Props {
   cobro: CobroRegistrado
   monto: number
   medio: string
+  /** Se eligieron los comprobantes: la cuenta es la de ellos, no la de la deuda más vieja. */
+  imputacionManual?: boolean
   onVolver: () => void
   onOtro: () => void
 }
 
 /** Cobro registrado (lámina CobroListo): en qué cuenta quedó según el servidor y el saldo nuevo. */
-export function CobroListo({ cliente, cobro, monto, medio, onVolver, onOtro }: Props) {
+export function CobroListo({ cliente, cobro, monto, medio, imputacionManual, onVolver, onOtro }: Props) {
   const c = useColors()
   // Un cobro anulado ya no está en ninguna cuenta: no se busca dónde quedó.
   const { cuenta, buscando } = useCuentaDelPago(cobro.anulado ? { ...cobro, pagoId: null } : cobro, cliente)
+  const imputado = useImputadoDelPago(cobro.anulado ? null : cobro.pagoId, cuenta, cliente)
+  const textoImputado = textoImputacion(imputado.data)
   const estado = useEstadoCuentaSocio(cliente.id, !!cliente.puedeVerCuentaCorriente)
 
   return (
@@ -46,8 +51,11 @@ export function CobroListo({ cliente, cobro, monto, medio, onVolver, onOtro }: P
                 {`Quedó en la cuenta ${cuenta === 'Tst' ? 'TST' : 'Normal'}`}
               </Text>
               <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-                La eligió el servidor: la cuenta de la deuda más vieja del cliente (sin deuda, la TST).
+                {imputacionManual && !cobro.conLoDeAntes
+                  ? 'La de los comprobantes que elegiste.'
+                  : 'La eligió el servidor: la cuenta de la deuda más vieja del cliente (sin deuda, la TST).'}
               </Text>
+              {textoImputado ? <Text style={{ ...typeScale.cuerpo, color: c.text }}>{textoImputado}</Text> : null}
             </>
           ) : null}
           {!buscando && !cuenta ? <Notice tone="advertencia">{SIN_CUENTA_CONFIRMADA}</Notice> : null}

@@ -285,7 +285,8 @@ it('servidor nuevo: dice la cuenta que trae la respuesta del cobro, sin buscarla
   expect(await screen.findByRole('header', { name: 'Quedó en la cuenta TST' }, ESPERA)).toBeTruthy()
   expect(screen.getByText('Saldo nuevo')).toBeTruthy()
   expect(screen.queryByText(SIN_CUENTA_CONFIRMADA)).toBeNull()
-  expect(pidioMovimientos()).toEqual([])
+  // Solo se leen los movimientos de la cuenta TST para saber a qué se imputó; la Normal no se mira.
+  expect(pidioMovimientos().some(url => url.includes('/cNor/') || url.includes('cuenta=Normal'))).toBe(false)
 })
 
 it.each([
