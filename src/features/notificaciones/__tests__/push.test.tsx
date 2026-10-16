@@ -10,7 +10,9 @@ import { render, waitFor } from '@testing-library/react-native'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { ESTADOS_ESPERADOS_PUSH } from '@/libs/api-client/notificaciones'
 import { PushDeAvisos } from '../PushDeAvisos'
-import { darDeBajaPushAntesDeSalir, leerDatosPush, registrarPush, reiniciarEstadoPush } from '../push'
+import {
+  TOPE_BAJA_ANTES_DE_SALIR_MS, bajaDePushAlCerrarSesion, darDeBajaPushAntesDeSalir, leerDatosPush, registrarPush, reiniciarEstadoPush,
+} from '../push'
 
 const mockPost = jest.fn()
 const mockDelete = jest.fn()
@@ -185,6 +187,55 @@ describe('Baja al cerrar sesión', () => {
     await registrarPush()
 
     await expect(darDeBajaPushAntesDeSalir()).resolves.toBeUndefined()
+  })
+})
+
+describe('Baja: tope y sesión nueva', () => {
+  afterEach(() => jest.useRealTimers())
+
+  it('con la baja colgada, "Salir" espera como mucho el tope y no manda una segunda baja', async () => {
+    iniciarSesion()
+    await registrarPush()
+    mockDelete.mockReturnValue(new Promise(() => {}))
+    jest.useFakeTimers()
+    const desuscribir = bajaDePushAlCerrarSesion()
+
+    let listo = false
+    void darDeBajaPushAntesDeSalir().then(() => { listo = true })
+    await act(async () => { await jest.advanceTimersByTimeAsync(TOPE_BAJA_ANTES_DE_SALIR_MS - 1) })
+    expect(listo).toBe(false)
+    await act(async () => { await jest.advanceTimersByTimeAsync(1) })
+    expect(listo).toBe(true)
+    expect(TOPE_BAJA_ANTES_DE_SALIR_MS).toBeLessThanOrEqual(3000)
+
+    act(() => useAuthStore.getState().logout())
+    await act(async () => { await jest.advanceTimersByTimeAsync(10) })
+    expect(mockDelete).toHaveBeenCalledTimes(1)
+    desuscribir()
+  })
+
+  it('la baja de respaldo no sale si al enviarla ya hay otra sesión iniciada', async () => {
+    iniciarSesion('acceso-de-ana')
+    const desuscribir = bajaDePushAlCerrarSesion()
+
+    act(() => useAuthStore.getState().logout())
+    iniciarSesion('acceso-de-beto')
+    await act(async () => {})
+
+    expect(mockToken).toHaveBeenCalled()
+    expect(mockDelete).not.toHaveBeenCalled()
+    desuscribir()
+  })
+
+  it('sin otra sesión, la baja de respaldo sale con el token de la sesión que se cerró', async () => {
+    iniciarSesion('acceso-de-ana')
+    const desuscribir = bajaDePushAlCerrarSesion()
+
+    act(() => useAuthStore.getState().logout())
+    await waitFor(() => expect(mockDelete).toHaveBeenCalledTimes(1))
+
+    expect(mockDelete.mock.calls[0][2]).toMatchObject({ headers: { Authorization: 'Bearer acceso-de-ana' } })
+    desuscribir()
   })
 })
 

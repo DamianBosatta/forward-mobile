@@ -18,11 +18,13 @@ export const CANAL_AVISOS = 'default'
 
 let tokenRegistrado: string | null = null
 let bajaEnviada = false
+let bajaEnCurso: Promise<void> | null = null
 
 /** Solo para los tests: el estado del módulo vuelve a cero. */
 export function reiniciarEstadoPush(): void {
   tokenRegistrado = null
   bajaEnviada = false
+  bajaEnCurso = null
 }
 
 /** El `projectId` de EAS con el que Expo emite el token, o `null` si el build no lo trae. */
@@ -72,15 +74,31 @@ export async function registrarPush(): Promise<void> {
   }
 }
 
+/** Tope de la baja que se hace antes de salir: una red colgada no demora "Salir" más que esto. */
+export const TOPE_BAJA_ANTES_DE_SALIR_MS = 3000
+
 /**
  * Da de baja el token de este celular con la sesión `accessToken`, que puede ser la que se está
  * cerrando (el store ya la borró). Nunca tira. Si la sesión ya se revocó en el servidor, el DELETE
  * vuelve 401 y el token queda hasta que otro usuario lo registre o Expo lo dé por muerto.
+ *
+ * Con `soloSinSesion` (la suscripción de respaldo) no manda nada si al momento de enviar ya hay
+ * otra sesión iniciada: el 401 del token viejo dispararía el refresh de la sesión nueva.
  */
-export async function darDeBajaPush(accessToken: string | null): Promise<void> {
-  if (bajaEnviada || !accessToken) return
+export function darDeBajaPush(accessToken: string | null, { soloSinSesion = false } = {}): Promise<void> {
+  if (bajaEnviada || !accessToken) return Promise.resolve()
+  // Una baja en curso (la de "Salir", que siguió sola después del tope) no se duplica.
+  if (bajaEnCurso) return bajaEnCurso
+  bajaEnCurso = enviarBaja(accessToken, soloSinSesion).finally(() => {
+    bajaEnCurso = null
+  })
+  return bajaEnCurso
+}
+
+async function enviarBaja(accessToken: string, soloSinSesion: boolean): Promise<void> {
   const token = tokenRegistrado ?? (await tokenDePush({ pedirPermiso: false }))
   if (!token) return
+  if (soloSinSesion && useAuthStore.getState().isAuthenticated) return
   try {
     await eliminarDispositivoPush(token, accessToken)
     tokenRegistrado = null
@@ -92,10 +110,15 @@ export async function darDeBajaPush(accessToken: string | null): Promise<void> {
 
 /**
  * La baja antes de cerrar la sesión en el servidor: mientras el token de acceso todavía vale. La
- * llama quien cierra la sesión, antes de revocarla.
+ * llama quien cierra la sesión, antes de revocarla. Espera como mucho
+ * {@link TOPE_BAJA_ANTES_DE_SALIR_MS}: si la red no responde, la baja sigue sola y "Salir" no espera.
  */
 export function darDeBajaPushAntesDeSalir(): Promise<void> {
-  return darDeBajaPush(useAuthStore.getState().accessToken)
+  let tope: ReturnType<typeof setTimeout> | undefined
+  const vencido = new Promise<void>((resolver) => {
+    tope = setTimeout(resolver, TOPE_BAJA_ANTES_DE_SALIR_MS)
+  })
+  return Promise.race([darDeBajaPush(useAuthStore.getState().accessToken), vencido]).finally(() => clearTimeout(tope))
 }
 
 /**
@@ -104,7 +127,7 @@ export function darDeBajaPushAntesDeSalir(): Promise<void> {
  */
 export function bajaDePushAlCerrarSesion(): () => void {
   return useAuthStore.subscribe((estado, antes) => {
-    if (antes.isAuthenticated && !estado.isAuthenticated) void darDeBajaPush(antes.accessToken)
+    if (antes.isAuthenticated && !estado.isAuthenticated) void darDeBajaPush(antes.accessToken, { soloSinSesion: true })
   })
 }
 
