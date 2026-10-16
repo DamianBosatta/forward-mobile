@@ -41,7 +41,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
     const t = setTimeout(() => setMontoConsultado(leerNumero(monto)), ESPERA_SALDO_MS)
     return () => clearTimeout(t)
   }, [monto])
-  const restante = useSaldoRestante(origen, montoConsultado)
+  const restante = useSaldoRestante(origen, montoConsultado, canRead('MOD_CC'))
 
   if (hecho) {
     return (

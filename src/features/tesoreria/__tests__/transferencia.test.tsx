@@ -90,6 +90,20 @@ describe('cuentas y saldo que queda', () => {
     expect(await screen.findByText('Caja de Emanuel queda en -$ 87.700,00.', {}, ESPERA)).toBeTruthy()
   })
 
+  it('sin MOD_CC:Read no pide el saldo que queda (el servidor contestaría 403)', async () => {
+    conPermisos([{ module: 'MOD_PAGOS', canRead: true, canCreate: true }])
+    servidorNuevo()
+    renderConQuery(<Transferencia onListo={jest.fn()} />)
+    await userEvent.press(await screen.findByRole('radio', { name: 'Transferencia' }, ESPERA))
+    await userEvent.press(radio('Desde', /^Caja de Emanuel/))
+    fireEvent.changeText(screen.getByLabelText('Monto'), '350.000')
+
+    // Pasa la espera de 400 ms del monto y se da tiempo a que salga cualquier pedido.
+    await new Promise(r => setTimeout(r, 800))
+    expect(get.mock.calls.some(([u]) => String(u).includes('/saldo-restante'))).toBe(false)
+    expect(screen.queryByText(/Te quedan/)).toBeNull()
+  })
+
   it('con un servidor anterior usa las cuentas propias con su saldo y no muestra lo que queda', async () => {
     servidorNuevo({ viejo: true })
     renderConQuery(<Transferencia onListo={jest.fn()} />)

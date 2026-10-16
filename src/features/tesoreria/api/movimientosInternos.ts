@@ -34,12 +34,13 @@ export type SaldoRestante = components['schemas']['SaldoRestanteCuentaDto']
 /**
  * Cuánto queda en la cuenta de origen si sale `monto` ("Te quedan $ X en la caja"), calculado por el
  * servidor (`GET /cuentas-corrientes/propias/{id}/saldo-restante`, MOD_CC:Read). No registra nada.
- * Null con un servidor anterior (404, esperado) o si la cuenta no es una propia activa.
+ * Null con un servidor anterior (404, esperado) o si la cuenta no es una propia activa. Sin
+ * `conCuentasCorrientes` (MOD_CC:Read) no se pide: el servidor contestaría 403.
  */
-export function useSaldoRestante(cuentaId: string | null, monto: number | null) {
+export function useSaldoRestante(cuentaId: string | null, monto: number | null, conCuentasCorrientes: boolean) {
   return useQuery({
     queryKey: [...cuentasKeys.all, 'saldo-restante', cuentaId, monto],
-    enabled: !!cuentaId && monto != null && monto > 0,
+    enabled: conCuentasCorrientes && !!cuentaId && monto != null && monto > 0,
     retry: false,
     queryFn: async (): Promise<SaldoRestante | null> => {
       try {
