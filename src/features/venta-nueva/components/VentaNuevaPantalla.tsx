@@ -17,7 +17,7 @@ import { useBorradorVenta } from '../hooks/useBorradorVenta'
 import { useComisionEstimada } from '../hooks/useComisionEstimada'
 import { aAlta, aAutoguardado } from '../lib/payload'
 import { useVistaPreviaVenta } from '@/libs/api-client/ventas'
-import { useDebounced } from '../hooks/useDebounced'
+import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { avisosVenta, totalesEstimados } from '../lib/avisos'
 import { leerNumero, mostrarNumero } from '../lib/linea'
@@ -73,7 +73,7 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
     clienteId: cliente?.id ?? '', esPedido: tipo === 'Pedido', lineas, descuentoGeneral: descuentoValido, cabecera: cab.cabecera,
     porcentajeCedido: cab.porcentajeCedido, borrador: b, alGuardar: vaciar, edicion,
   })
-  const cuerpoVistaPrevia = useDebounced(cliente && tipo === 'Pedido' && !edicion && lineas.length > 0
+  const cuerpoVistaPrevia = useDebouncedValue(cliente && tipo === 'Pedido' && !edicion && lineas.length > 0
     ? aAlta(lineas, descuentoValido, cab.cabecera, {
       clienteId: cliente.id, depositoId: DEPOSITO_CENTRAL_ID, esPedido: true, claveIdempotencia: '',
       motivoVentaSinStock: 'Vista previa', porcentajeComisionCedido: cab.porcentajeCedido,

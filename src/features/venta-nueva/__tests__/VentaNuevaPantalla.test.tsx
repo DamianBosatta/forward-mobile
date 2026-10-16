@@ -460,6 +460,13 @@ describe('confirmar', () => {
   }
   const confirmar = () => userEvent.press(screen.getByRole('button', { name: 'Confirmar pedido' }))
   const guardada = (id: string, mensaje: string) => ({ pathname: '/(tabs)/ventas/guardada', params: { id, mensaje } })
+  // La vista previa de la venta también hace POST: las respuestas de prueba se encolan solo para el
+  // alta (`/api/v1/Ventas`), así una vista previa nunca se queda con la respuesta que era del alta.
+  const alAlta = (...respuestas: Array<() => Promise<unknown>>) => {
+    const antes = mockPost.getMockImplementation()
+    mockPost.mockImplementation((url: string, ...resto: unknown[]) =>
+      url === '/api/v1/Ventas' && respuestas.length > 0 ? respuestas.shift()!() : antes?.(url, ...resto))
+  }
 
   it('pedido: manda el alta como CreateVentaCommand con clave de idempotencia, descarta el borrador y va a la venta guardada', async () => {
     await armar()
@@ -475,7 +482,7 @@ describe('confirmar', () => {
 
   it('un reintento tras un corte reusa la misma clave de idempotencia (no duplica el pedido)', async () => {
     await armar()
-    mockPost.mockImplementationOnce(() => Promise.reject(new TypeError('Network request failed')))
+    alAlta(() => Promise.reject(new TypeError('Network request failed')))
     await confirmar()
     expect(await screen.findByText('Network request failed')).toBeTruthy()
     expect(mockReplace).not.toHaveBeenCalled()
@@ -489,8 +496,7 @@ describe('confirmar', () => {
   // Tras un corte la clave se reusa siempre: un pedido duplicado es peor que perder ediciones.
   const cortarYReintentar = async (editar: boolean, mensaje: string, corte: unknown = new TypeError('Network request failed'), textoCorte = 'Network request failed') => {
     await armar()
-    mockPost.mockImplementationOnce(() => Promise.reject(corte))
-      .mockImplementationOnce(() => Promise.resolve({ ventaId: 'v9', version: 1, message: mensaje }))
+    alAlta(() => Promise.reject(corte), () => Promise.resolve({ ventaId: 'v9', version: 1, message: mensaje }))
     await confirmar()
     expect(await screen.findByText(textoCorte)).toBeTruthy()
     if (editar) act(() => useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: pala, cantidad: 13, descuentoPct: 0 }] }))
@@ -530,8 +536,7 @@ describe('confirmar', () => {
 
   it('servidor nuevo: si tras el corte se cambió el pedido, el 409 con la venta grabada lleva a ella con el aviso y descarta el borrador', async () => {
     await armar()
-    mockPost.mockImplementationOnce(() => Promise.reject(new TypeError('Network request failed')))
-      .mockImplementationOnce(() => Promise.reject(otroCuerpo()))
+    alAlta(() => Promise.reject(new TypeError('Network request failed')), () => Promise.reject(otroCuerpo()))
     await confirmar()
     expect(await screen.findByText('Network request failed')).toBeTruthy()
     act(() => useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: pala, cantidad: 13, descuentoPct: 0 }] }))
@@ -546,13 +551,13 @@ describe('confirmar', () => {
 
   it('un 409 sin código (la clave ya se estaba grabando) no cambia la clave: avisa y el reintento la reusa', async () => {
     await armar()
-    mockPost.mockImplementationOnce(() => Promise.reject(new ApiError(409, 'Ya existe un registro con datos duplicados.')))
+    alAlta(() => Promise.reject(new ApiError(409, 'Ya existe un registro con datos duplicados.')))
     await confirmar()
     expect(await screen.findByText(/Este pedido ya se estaba grabando/)).toBeTruthy()
     expect(screen.queryByText(/datos duplicados/)).toBeNull()
     expect(mockReplace).not.toHaveBeenCalled()
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador')
-    mockPost.mockImplementationOnce(() => Promise.resolve({ ventaId: 'v9', version: 1, message: REPETIDA }))
+    alAlta(() => Promise.resolve({ ventaId: 'v9', version: 1, message: REPETIDA }))
     await confirmar()
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', YA_GRABADO)))
     expect(altas()[1][1].claveIdempotencia).toBe(altas()[0][1].claveIdempotencia)
@@ -560,7 +565,7 @@ describe('confirmar', () => {
 
   it('otro 409 sin código (clave foránea, concurrencia) muestra el mensaje del servidor, no el de la clave en curso', async () => {
     await armar()
-    mockPost.mockImplementationOnce(() => Promise.reject(new ApiError(409, 'Operación bloqueada por restricciones de integridad (clave foránea).')))
+    alAlta(() => Promise.reject(new ApiError(409, 'Operación bloqueada por restricciones de integridad (clave foránea).')))
     await confirmar()
     expect(await screen.findByText('Operación bloqueada por restricciones de integridad (clave foránea).')).toBeTruthy()
     expect(screen.queryByText(/ya se estaba grabando/)).toBeNull()
@@ -569,7 +574,7 @@ describe('confirmar', () => {
 
   it('un 409 con el código pero sin la venta en data muestra el mensaje del servidor', async () => {
     await armar()
-    mockPost.mockImplementationOnce(() => Promise.reject(Object.assign(otroCuerpo(), { data: undefined })))
+    alAlta(() => Promise.reject(Object.assign(otroCuerpo(), { data: undefined })))
     await confirmar()
     expect(await screen.findByText(/Esta clave de idempotencia ya se usó/)).toBeTruthy()
     expect(screen.queryByText(/ya se estaba grabando/)).toBeNull()

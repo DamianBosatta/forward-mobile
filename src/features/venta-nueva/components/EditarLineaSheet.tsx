@@ -11,7 +11,7 @@ import { calcularRentabilidadVenta } from '@/features/ventas/lib/rentabilidad-ve
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useVariantesProducto } from '@/libs/api-client/productos'
 import { useVistaPreviaLinea } from '@/libs/api-client/ventas'
-import { useDebounced } from '../hooks/useDebounced'
+import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { multiploDe, precioServidor, type LineaCarrito } from '../lib/carrito'
 import { stockDeFragancia } from '../lib/fragancias'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoPiso, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
@@ -75,7 +75,7 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
   const tope = avisoTope(pct, user?.maxDescuentoPorcentaje ?? 0, hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO'))
   // El servidor dice el semáforo y el margen con las reglas del alta (cierre del bloque 9). Mientras
   // no contesta (o sin conexión), queda el aviso local de siempre.
-  const pedido = useDebounced({ productoId: p.id, cantidad, descuentoPorcentaje: pct, descuentoGeneral })
+  const pedido = useDebouncedValue({ productoId: p.id, cantidad, descuentoPorcentaje: pct, descuentoGeneral })
   const vista = useVistaPreviaLinea(pedido, !invalido)
   const servidor = vista.data && typeof vista.data.veredicto === 'string' ? vista.data : undefined
   const piso = servidor ? (servidor.veredicto.toLowerCase() as 'rojo' | 'amarillo' | 'verde') : avisoPiso(p, base, pct)

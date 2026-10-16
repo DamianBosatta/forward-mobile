@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { api, productosKeys, type CatalogoStockItem, type PagedResult } from '@/libs/api-client'
 
 export const DEBOUNCE_BUSQUEDA_MS = 300
@@ -50,12 +51,7 @@ function fetchBusqueda(termino: string) {
  * devuelve todo, es la que filtra.
  */
 export function useCatalogoVenta(busqueda: string) {
-  const [termino, setTermino] = useState(busqueda.trim())
-
-  useEffect(() => {
-    const t = setTimeout(() => setTermino(busqueda.trim()), DEBOUNCE_BUSQUEDA_MS)
-    return () => clearTimeout(t)
-  }, [busqueda])
+  const termino = useDebouncedValue(busqueda.trim(), DEBOUNCE_BUSQUEDA_MS)
 
   const query = useQuery<Catalogo | CatalogoStockItem[], Error, Catalogo>({
     queryKey: [...productosKeys.all, 'catalogoVenta', 'completo'],

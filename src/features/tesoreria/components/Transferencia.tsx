@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { ActivityIndicator, ScrollView, View } from 'react-native'
+import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { space, useColors } from '@/libs/theme'
 import { Button, Field, FormContainer, Notice, formatImporte } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -36,11 +37,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
   const [retira, setRetira] = useState('')
   const [aviso, setAviso] = useState<string | null>(null)
   const [hecho, setHecho] = useState(false)
-  const [montoConsultado, setMontoConsultado] = useState<number | null>(null)
-  useEffect(() => {
-    const t = setTimeout(() => setMontoConsultado(leerNumero(monto)), ESPERA_SALDO_MS)
-    return () => clearTimeout(t)
-  }, [monto])
+  const montoConsultado = useDebouncedValue(leerNumero(monto), ESPERA_SALDO_MS)
   const restante = useSaldoRestante(origen, montoConsultado, canRead('MOD_CC'))
 
   if (hecho) {
