@@ -78,7 +78,9 @@ function ClienteForm({ id }: { id?: string }) {
   const router = useRouter()
   const alGuardar = (nuevoId: string) => router.replace({ pathname: '/(tabs)/socios/[id]', params: { id: nuevoId } })
   const { datos, cambiar, guardar, error, editando, puedeCambiarPago, cargando, guardando, errorDeCarga, reintentar } = useClienteForm(id, alGuardar)
-  const { isAdmin } = usePermissions()
+  const { hasCapability } = usePermissions()
+  // Los campos sensibles los edita directo quien aprueba cambios de socio (UpdateSocioCommandHandler).
+  const editaSensibles = hasCapability('CAP_APROBAR_CAMBIOS_SOCIO')
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -93,7 +95,7 @@ function ClienteForm({ id }: { id?: string }) {
       ) : (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], width: '100%', maxWidth: 640, alignSelf: 'center' }}>
-            {editando && !isAdmin() ? <Notice tone="info">{AVISO_CAMPOS_SENSIBLES}</Notice> : null}
+            {editando && !editaSensibles ? <Notice tone="info">{AVISO_CAMPOS_SENSIBLES}</Notice> : null}
             {!editando ? (
               <Casilla label="Alta provisoria" ayuda={AYUDA_PROVISORIA} valor={datos.altaProvisoria} onChange={v => cambiar('altaProvisoria', v)} />
             ) : null}

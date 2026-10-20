@@ -6,9 +6,6 @@ import { cuentasKeys } from '@/features/cuentas/api/queries'
 export type ChequeEnCartera = ChequeListDto
 type Pagina = ChequeListDtoPaginatedResponse
 
-/** Roles que operan la cartera de cheques en el servidor (además de MOD_PAGOS:Update). */
-export const ROLES_CARTERA = ['Administrador', 'AdministradorSistemas', 'Gerencia'] as const
-
 const chequesKeys = { cartera: ['cheques', 'cartera'] as const }
 
 /** Cheques de terceros en cartera, de a 100 por página (los que se pueden depositar). */

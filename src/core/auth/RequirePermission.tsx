@@ -3,7 +3,7 @@ import { View, Text } from 'react-native'
 import { ShieldOff } from 'lucide-react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useColors, BRAND } from '@/libs/theme'
-import type { AppModule, AppRole } from '@/libs/api-client/types'
+import type { AppModule } from '@/libs/api-client/types'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RequirePermission — Autorización declarativa en el frontend
@@ -19,8 +19,10 @@ import type { AppModule, AppRole } from '@/libs/api-client/types'
 //   </RequirePermission>
 //
 // Uso imperativo (hook):
-//   const { canDo, isAdmin } = usePermissions()
+//   const { canDo, hasCapability } = usePermissions()
 //   if (canDo('MOD_VENTAS', 'create')) { ... }
+//
+// Decide solo con los módulos y capacidades que manda el backend, nunca con el rol (C-004, L-12).
 // ─────────────────────────────────────────────────────────────────────────────
 
 type Action = 'read' | 'create' | 'update' | 'delete'
@@ -38,8 +40,6 @@ interface RequirePermissionProps {
    * - 'screen': Muestra pantalla completa de "Sin permisos" 
    */
   mode?: Mode
-  /** Roles que tienen acceso directo sin verificar permisos granulares */
-  allowRoles?: AppRole[]
   /** Children a renderizar si tiene permiso */
   children: React.ReactNode
 }
@@ -48,21 +48,10 @@ export function RequirePermission({
   module, 
   action, 
   mode = 'hide',
-  allowRoles,
   children 
 }: RequirePermissionProps) {
-  const { canDo, hasRole, isAdmin } = useAuthStore()
+  const { canDo } = useAuthStore()
   const colors = useColors()
-
-  // Admin siempre tiene acceso
-  if (isAdmin()) {
-    return <>{children}</>
-  }
-
-  // Check role-based bypass
-  if (allowRoles?.some(role => hasRole(role))) {
-    return <>{children}</>
-  }
 
   // Check granular RCUD permission
   const modules = Array.isArray(module) ? module : [module]
@@ -123,26 +112,26 @@ export function RequirePermission({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function usePermissions() {
-  const { canDo, hasRole, isAdmin, isSuperAdmin, user } = useAuthStore()
+  const { canDo, hasCapability, isAdmin, isSuperAdmin, user } = useAuthStore()
 
   return {
     /** Verifica permiso granular RCUD para un módulo */
     canDo,
-    /** Verifica si el usuario tiene un rol específico */
-    hasRole,
-    /** True si es Admin o SuperAdmin */
+    /** ¿Tiene la capacidad CAP_*? */
+    hasCapability,
+    /** True si es Admin o SuperAdmin. No autoriza nada: solo la prueba de la venta nueva (ventaNueva.ts). */
     isAdmin,
-    /** True solo si es AdministradorSistemas */
+    /** True solo si es AdministradorSistemas: el backend lo deja operar hojas ajenas (AlcanceDeLaHoja). */
     isSuperAdmin,
-    /** Roles del usuario actual */
+    /** Roles del usuario actual, para mostrarlos */
     roles: user?.roles ?? [],
     /** Acceso rápido: ¿puede ver este módulo? */
-    canRead: (mod: AppModule) => isAdmin() || canDo(mod, 'read'),
+    canRead: (mod: AppModule) => canDo(mod, 'read'),
     /** Acceso rápido: ¿puede crear en este módulo? */
-    canCreate: (mod: AppModule) => isAdmin() || canDo(mod, 'create'),
+    canCreate: (mod: AppModule) => canDo(mod, 'create'),
     /** Acceso rápido: ¿puede editar en este módulo? */
-    canUpdate: (mod: AppModule) => isAdmin() || canDo(mod, 'update'),
+    canUpdate: (mod: AppModule) => canDo(mod, 'update'),
     /** Acceso rápido: ¿puede eliminar en este módulo? */
-    canDelete: (mod: AppModule) => isAdmin() || canDo(mod, 'delete'),
+    canDelete: (mod: AppModule) => canDo(mod, 'delete'),
   }
 }

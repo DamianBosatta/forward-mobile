@@ -12,7 +12,7 @@ import { armarCobro, mostrarFecha, type FormCobro } from '../lib/cobro'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
 import { nuevaClaveIdempotencia } from '@/features/venta-nueva/lib/payload'
 import { usePermissions } from '@/core/auth/RequirePermission'
-import { ROLES_FOTO_CHEQUE, subirFotoCheque } from '../api/fotos'
+import { subirFotoCheque } from '../api/fotos'
 import { CobroListo } from './CobroListo'
 import { DestinoDelCobro } from './DestinoDelCobro'
 import { ElegirChip } from './ElegirChip'
@@ -57,8 +57,9 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
   const [aviso, setAviso] = useState<string | null>(null)
   const [cobro, setCobro] = useState<CobroRegistrado | null>(null)
   const [subiendo, setSubiendo] = useState(false)
-  const { hasRole, canDo } = usePermissions()
-  const subeFotoCheque = canDo('MOD_PAGOS', 'create') || ROLES_FOTO_CHEQUE.some(r => hasRole(r))
+  const { hasCapability, canDo } = usePermissions()
+  // POST Media/upload-cheque: quien cobra (MOD_PAGOS:Create) o quien gestiona cheques (MediaController).
+  const subeFotoCheque = canDo('MOD_PAGOS', 'create') || hasCapability('CAP_GESTIONAR_CHEQUES')
   const cheque = (campo: keyof FormCobro['cheque']) => (v: string) => setF(p => ({ ...p, cheque: { ...p.cheque, [campo]: v } }))
 
   if (socio.isLoading) return <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />

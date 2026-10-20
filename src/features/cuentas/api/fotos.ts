@@ -1,12 +1,6 @@
 import { api } from '@/core/api/client'
 import type { UploadResult } from '@/libs/api-client/media'
 
-/**
- * Roles que suben la foto de un cheque en el servidor sin permiso de módulo (`ChequesController.RolesDeGestion`).
- * Además la sube quien puede cobrar (MOD_PAGOS:Create), desde el cierre del bloque 9.
- */
-export const ROLES_FOTO_CHEQUE = ['Administrador', 'AdministradorSistemas', 'Gerencia'] as const
-
 /** Sube una imagen (hasta 2 MB) y devuelve la URL de nuestro storage, la única que el cobro acepta. */
 async function subirImagen(endpoint: string, uri: string): Promise<string> {
   const formData = new FormData()

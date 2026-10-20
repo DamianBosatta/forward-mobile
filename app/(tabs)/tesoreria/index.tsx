@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { Button, FormContainer, TopBar, useMenuLeading } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
-import { ROLES_CARTERA } from '@/features/tesoreria/api/cheques'
 
 /**
  * Tesorería en mobile (plan §3, recortada a acciones): transferencias entre cuentas propias y, con
@@ -14,13 +13,13 @@ export default function TesoreriaScreen() {
   const c = useColors()
   const router = useRouter()
   const menu = useMenuLeading()
-  const { canCreate, canRead, canUpdate, hasRole } = usePermissions()
+  const { canCreate, canRead, canUpdate, hasCapability } = usePermissions()
   // Las dos pantallas listan las cuentas propias (MOD_CC:Read); la transferencia además pide los tipos
   // de movimiento (GET /movimientos-internos/tipos, MOD_PAGOS:Read) y la cartera también MOD_PAGOS:Read.
   const verCuentas = canRead('MOD_CC')
   const transferir = canCreate('MOD_PAGOS') && canRead('MOD_PAGOS') && verCuentas
-  // El servidor deja operar la cartera de cheques solo a estos roles y con MOD_PAGOS:Update.
-  const depositar = ROLES_CARTERA.some(r => hasRole(r)) && canUpdate('MOD_PAGOS') && canRead('MOD_PAGOS') && verCuentas
+  // La cartera de cheques pide CAP_GESTIONAR_CHEQUES y MOD_PAGOS:Update (ChequesController).
+  const depositar = hasCapability('CAP_GESTIONAR_CHEQUES') && canUpdate('MOD_PAGOS') && canRead('MOD_PAGOS') && verCuentas
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>

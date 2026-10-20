@@ -8,6 +8,7 @@
 import React from 'react'
 import { render, screen, userEvent } from '@testing-library/react-native'
 import CustomDrawerContent from '../CustomDrawerContent'
+import { permisosDesde } from '@/features/auth/lib/permisos'
 
 const mockPush = jest.fn()
 const mockCanDo = jest.fn()
@@ -158,7 +159,7 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     conPermisos('MOD_VENTAS:read', 'MOD_VIAJES:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos por preparar', 'Mi cuenta y contraseña'])
     expect(screen.queryByText('Tesorería')).toBeNull()
   })
 
@@ -181,5 +182,84 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     render(<CustomDrawerContent {...props()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Autorizaciones' }))
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/autorizaciones')
+  })
+})
+
+/**
+ * C-004, lote L-12: el menú sale de las filas que manda el backend para cada puesto sembrado
+ * (PuestoSeeder) y de las capacidades que implica su clave (AppCapabilities.CapacidadesQueImplicaElPuesto),
+ * nunca del rol del usuario.
+ */
+describe('CustomDrawerContent — por puesto sembrado (C-004, L-12)', () => {
+  type Fila = { module: string; canRead: boolean; canCreate: boolean; canUpdate: boolean; canDelete: boolean }
+
+  /** Una fila del perfil: `rcud` con las iniciales de las acciones otorgadas. */
+  const fila = (module: string, rcud = 'R'): Fila => ({
+    module,
+    canRead: rcud.includes('R'),
+    canCreate: rcud.includes('C'),
+    canUpdate: rcud.includes('U'),
+    canDelete: rcud.includes('D'),
+  })
+
+  const conFilas = (filas: Fila[]) => {
+    mockPermisos = filas
+    const { puede } = permisosDesde(filas)
+    mockCanDo.mockImplementation((m: string, a: 'read' | 'create' | 'update' | 'delete') => puede(m as never, a))
+  }
+
+  const PUESTOS: Record<string, Fila[]> = {
+    Vendedor: [fila('MOD_VENTAS', 'RCUD'), fila('MOD_CLIENTES', 'RC')],
+    Depósito: [fila('MOD_VIAJES', 'RU'), fila('MOD_STOCK', 'RCU'), fila('MOD_PEDIDOS', 'RU'), fila('CAP_OPERAR_DEPOSITO')],
+    Chofer: [fila('MOD_VIAJES', 'RU')],
+    'Gerente de depósito': [
+      fila('MOD_VIAJES', 'RU'),
+      fila('MOD_STOCK', 'RCU'),
+      fila('MOD_PEDIDOS', 'RU'),
+      fila('CAP_OPERAR_DEPOSITO'),
+      fila('CAP_VER_STOCK_OTROS_DEPOSITOS'),
+      fila('CAP_PEDIR_TRANSFERENCIAS'),
+    ],
+  }
+
+  const ESPERADO: Record<string, string[]> = {
+    Vendedor: ['Inicio', 'Ventas', 'Clientes', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'],
+    // Lee viajes y no crea ventas: el menú lo trata como al chofer, más el catálogo de su stock.
+    Depósito: ['Inicio', 'Catálogo y stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos por preparar', 'Mi cuenta y contraseña'],
+    Chofer: ['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos por preparar', 'Mi cuenta y contraseña'],
+    'Gerente de depósito': ['Inicio', 'Catálogo y stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos por preparar', 'Mi cuenta y contraseña'],
+  }
+
+  const visibles = () => APROBADOS.filter((n) => screen.queryByText(n) !== null)
+
+  beforeEach(() => {
+    mockRoles = ['Empleado']
+  })
+
+  it.each(Object.keys(PUESTOS))('el puesto %s ve lo que sus filas le dejan usar', (puesto) => {
+    conFilas(PUESTOS[puesto])
+    render(<CustomDrawerContent {...props()} />)
+
+    expect(visibles()).toEqual(ESPERADO[puesto])
+  })
+
+  it('el rol no abre nada: un Administrador sin filas ve solo lo que el servidor no gatea', () => {
+    mockRoles = ['Administrador', 'AdministradorSistemas', 'Gerencia']
+    conFilas([])
+    render(<CustomDrawerContent {...props()} />)
+
+    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Mi cuenta y contraseña'])
+  })
+
+  it('AdministradorSistemas ve todo el alcance porque el backend le manda el catálogo completo como filas', () => {
+    mockRoles = ['AdministradorSistemas']
+    conFilas([
+      ...['MOD_VENTAS', 'MOD_COMPRAS', 'MOD_CLIENTES', 'MOD_STOCK', 'MOD_CC', 'MOD_PAGOS', 'MOD_VIAJES', 'MOD_PEDIDOS'].map((m) => fila(m, 'RCUD')),
+      fila('CAP_AUTORIZAR_VENTA'),
+    ])
+    render(<CustomDrawerContent {...props()} />)
+
+    expect(visibles()).toEqual(APROBADOS)
+    expect(screen.getByText('Autorizaciones')).toBeTruthy()
   })
 })

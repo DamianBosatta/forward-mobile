@@ -11,6 +11,7 @@ import { getManifiestoUrl, logisticaKeys } from '@/libs/api-client/logistica'
 import { getNotaEntregaUrl } from '@/libs/api-client/ventas'
 import { EstadoHojaRuta, type ParadaDto } from '@/libs/api-client/types'
 import { useAuthStore } from '@/libs/store'
+import { esChofer } from '@/src/components/layout/menuModules'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { RouteSelector } from '@/features/logistica/components/RouteSelector'
 import { PedidoDetalleModal } from '@/features/logistica/components/PedidoDetalleModal'
@@ -36,12 +37,12 @@ export default function ConsolaChoferScreen() {
   const router = useRouter()
   const menu = useMenuLeading()
   const { id } = useLocalSearchParams<{ id?: string }>()
-  const { user, canDo, isAdmin, isSuperAdmin } = useAuthStore()
-  // El chofer lee viajes y no crea ventas: su "inicio" es su propio tablero, no el hub de logística.
-  const esChofer = !isAdmin() && !isSuperAdmin() && canDo('MOD_VIAJES', 'read') && !canDo('MOD_VENTAS', 'create')
-  // Sin permiso de viajes no se consulta nada: el servidor respondería 403.
-  const puedeVerViajes = isAdmin() || isSuperAdmin() || canDo('MOD_VIAJES', 'read')
-  const volverA = esChofer ? '/(tabs)' : '/(tabs)/logistica'
+  const { user, canDo, hasCapability, isSuperAdmin } = useAuthStore()
+  // Sin permiso de viajes no se consulta nada: el servidor respondería 403. La oficina que arma
+  // viajes (CAP_ARMAR_VIAJES) también abre una hoja (GET hojas-ruta/{id}).
+  const puedeVerViajes = canDo('MOD_VIAJES', 'read') || hasCapability('CAP_ARMAR_VIAJES')
+  // El "inicio" del chofer es su propio tablero, no el hub de logística.
+  const volverA = esChofer(canDo) ? '/(tabs)' : '/(tabs)/logistica'
   const { activeTrip, setActiveTrip, clearActiveTrip, updateStopStatus } = useLogisticaStore()
   const [rutaElegida, setRutaElegida] = useState<string | null>(null)
   // La hoja que el chofer acaba de dejar con "Cambiar de ruta": la lista vieja no la vuelve a elegir sola.

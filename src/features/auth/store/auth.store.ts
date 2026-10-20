@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { zustandStorage } from '@/core/utils/storage'
 import type { AppRole, AppModule, ModulePermission } from '@/libs/api-client/types'
 import { hasCapability, type AppCapability } from '../lib/capabilities'
+import { permisosDesde } from '../lib/permisos'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Auth Store — JWT tokens + user profile + permisos RCUD del token
@@ -45,7 +46,6 @@ interface AuthState {
   getToken:    () => string | null
 
   // Permission helpers
-  hasRole:  (role: AppRole) => boolean
   canDo:    (module: AppModule, action: 'read' | 'create' | 'update' | 'delete') => boolean
   isAdmin:  () => boolean
   isSuperAdmin: () => boolean
@@ -82,8 +82,6 @@ export const useAuthStore = create<AuthState>()(
       setHydrated: () => set({ isHydrated: true }),
       getToken:    () => get().accessToken,
 
-      hasRole: (role) => get().user?.roles.includes(role) ?? false,
-
       isSuperAdmin: () => get().user?.roles.includes('AdministradorSistemas') ?? false,
 
       isAdmin: () => {
@@ -95,20 +93,8 @@ export const useAuthStore = create<AuthState>()(
 
       canSeeCosts: () => get().hasCapability('CAP_VER_COSTOS'),
 
-      canDo: (module, action) => {
-        if (get().isSuperAdmin()) return true
-
-        const perm = get().user?.permissions.find(p => p.module === module)
-        if (!perm) return false
-
-        switch (action) {
-          case 'read':   return perm.canRead   ?? false
-          case 'create': return perm.canCreate ?? false
-          case 'update': return perm.canUpdate ?? false
-          case 'delete': return perm.canDelete ?? false
-          default:       return false
-        }
-      },
+      // Sin atajo por rol: el catálogo de AdministradorSistemas llega como filas (C-004, L-12).
+      canDo: (module, action) => permisosDesde(get().user?.permissions).puede(module, action),
     }),
     {
       name:    'forward-auth-secure-v2', // Incrementamos versión por cambio de storage
