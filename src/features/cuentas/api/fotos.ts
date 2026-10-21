@@ -16,5 +16,5 @@ async function subirImagen(endpoint: string, uri: string): Promise<string> {
 /** Comprobante del cobro: la captura de la transferencia o el ticket del depósito (cualquier usuario). */
 export const subirComprobanteCobro = (uri: string) => subirImagen('/api/v1/Media/upload-comprobante', uri)
 
-/** Foto del cheque recibido: la sube quien cobra (MOD_PAGOS:Create) o gestión (`ROLES_FOTO_CHEQUE`). */
+/** Foto del cheque recibido: la sube quien cobra (MOD_PAGOS:Create) o quien gestiona cheques (`CAP_GESTIONAR_CHEQUES`). */
 export const subirFotoCheque = (uri: string) => subirImagen('/api/v1/Media/upload-cheque', uri)
