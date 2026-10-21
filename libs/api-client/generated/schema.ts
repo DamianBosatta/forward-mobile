@@ -256,85 +256,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/Cajas/{cajaId}/movimientos": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    cajaId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["MovimientoCajaDto"][];
-                        "application/json": components["schemas"]["MovimientoCajaDto"][];
-                        "text/json": components["schemas"]["MovimientoCajaDto"][];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProblemDetails"];
-                        "application/json": components["schemas"]["ProblemDetails"];
-                        "text/json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    cajaId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["RegistrarMovimientoCajaCommand"];
-                    "text/json": components["schemas"]["RegistrarMovimientoCajaCommand"];
-                    "application/*+json": components["schemas"]["RegistrarMovimientoCajaCommand"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": string;
-                        "application/json": string;
-                        "text/json": string;
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/Cajas/activa": {
         parameters: {
             query?: never;
@@ -436,6 +357,56 @@ export interface paths {
                         "text/plain": components["schemas"]["CajaAbiertaEstadoDto"][];
                         "application/json": components["schemas"]["CajaAbiertaEstadoDto"][];
                         "text/json": components["schemas"]["CajaAbiertaEstadoDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Cajas/{cajaId}/movimientos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cajaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MovimientoCajaDto"][];
+                        "application/json": components["schemas"]["MovimientoCajaDto"][];
+                        "text/json": components["schemas"]["MovimientoCajaDto"][];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
                     };
                 };
             };
@@ -991,6 +962,8 @@ export interface paths {
                     Marca?: string;
                     CategoriaId?: string;
                     SearchTerm?: string;
+                    SoloDisponibles?: boolean;
+                    ConOferta?: boolean;
                 };
                 header?: never;
                 path?: never;
@@ -7329,78 +7302,7 @@ export interface paths {
             };
         };
         put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["CrearFacturaDeVentaCommand"];
-                    "text/json": components["schemas"]["CrearFacturaDeVentaCommand"];
-                    "application/*+json": components["schemas"]["CrearFacturaDeVentaCommand"];
-                };
-            };
-            responses: {
-                /** @description Created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["FacturaDtoResponse"];
-                        "application/json": components["schemas"]["FacturaDtoResponse"];
-                        "text/json": components["schemas"]["FacturaDtoResponse"];
-                    };
-                };
-                /** @description Bad Request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProblemDetails"];
-                        "application/json": components["schemas"]["ProblemDetails"];
-                        "text/json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Forbidden */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProblemDetails"];
-                        "application/json": components["schemas"]["ProblemDetails"];
-                        "text/json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Not Found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProblemDetails"];
-                        "application/json": components["schemas"]["ProblemDetails"];
-                        "text/json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-                /** @description Conflict */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["ProblemDetails"];
-                        "application/json": components["schemas"]["ProblemDetails"];
-                        "text/json": components["schemas"]["ProblemDetails"];
-                    };
-                };
-            };
-        };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -10102,6 +10004,17 @@ export interface paths {
                         "text/json": components["schemas"]["ProblemDetails"];
                     };
                 };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
                 /** @description Not Found */
                 404: {
                     headers: {
@@ -12343,6 +12256,236 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pedidos-transferencia": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Estado?: components["schemas"]["EstadoPedidoTransferencia"];
+                    PageNumber?: number;
+                    PageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PedidoTransferenciaDtoPaginatedResponseResponse"];
+                        "application/json": components["schemas"]["PedidoTransferenciaDtoPaginatedResponseResponse"];
+                        "text/json": components["schemas"]["PedidoTransferenciaDtoPaginatedResponseResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CrearPedidoTransferenciaCommand"];
+                    "text/json": components["schemas"]["CrearPedidoTransferenciaCommand"];
+                    "application/*+json": components["schemas"]["CrearPedidoTransferenciaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pedidos-transferencia/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PedidoTransferenciaDtoResponse"];
+                        "application/json": components["schemas"]["PedidoTransferenciaDtoResponse"];
+                        "text/json": components["schemas"]["PedidoTransferenciaDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pedidos-transferencia/{id}/autorizar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pedidos-transferencia/{id}/rechazar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RechazarPedidoTransferenciaCommand"];
+                    "text/json": components["schemas"]["RechazarPedidoTransferenciaCommand"];
+                    "application/*+json": components["schemas"]["RechazarPedidoTransferenciaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BooleanResponse"];
+                        "application/json": components["schemas"]["BooleanResponse"];
+                        "text/json": components["schemas"]["BooleanResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pedidos-transferencia/{id}/cancelar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BooleanResponse"];
+                        "application/json": components["schemas"]["BooleanResponse"];
+                        "text/json": components["schemas"]["BooleanResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Productos": {
         parameters: {
             query?: never;
@@ -12431,6 +12574,10 @@ export interface paths {
                     PageSize?: number;
                     SearchTerm?: string;
                     CodigoBarra?: string;
+                    Ids?: string[];
+                    FamiliasCompletas?: boolean;
+                    SoloComprables?: boolean;
+                    SinVariantes?: boolean;
                 };
                 header?: never;
                 path?: never;
@@ -12472,6 +12619,8 @@ export interface paths {
                     Marca?: string;
                     CategoriaId?: string;
                     SearchTerm?: string;
+                    SoloDisponibles?: boolean;
+                    ConOferta?: boolean;
                 };
                 header?: never;
                 path?: never;
@@ -12550,7 +12699,19 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    ProductoIds?: string[];
+                    DepositoId?: string;
+                    DepositoIds?: string[];
+                    ProductoId?: string;
+                    Activo?: boolean;
+                    SearchTerm?: string;
+                    LastModified?: string;
+                    Marca?: string;
+                    CategoriaId?: string;
+                    EstadoStock?: components["schemas"]["EstadoStock"][];
+                    SinPeso?: boolean;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -12589,6 +12750,7 @@ export interface paths {
             parameters: {
                 query?: {
                     IncluirInactivos?: boolean;
+                    ContarFichas?: boolean;
                 };
                 header?: never;
                 path?: never;
@@ -12760,6 +12922,51 @@ export interface paths {
                         "text/plain": string;
                         "application/json": string;
                         "text/json": string;
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Productos/{id}/depositos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AsignarDepositosProductoCommand"];
+                    "text/json": components["schemas"]["AsignarDepositosProductoCommand"];
+                    "application/*+json": components["schemas"]["AsignarDepositosProductoCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BooleanResponse"];
+                        "application/json": components["schemas"]["BooleanResponse"];
+                        "text/json": components["schemas"]["BooleanResponse"];
                     };
                 };
             };
@@ -14086,42 +14293,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/Roles/{roleName}/assign/{userId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    roleName: string;
-                    userId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/Sessions": {
         parameters: {
             query?: never;
@@ -14859,6 +15030,51 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/api/v1/socios-comerciales/{id}/depositos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AsignarDepositosSocioCommand"];
+                    "text/json": components["schemas"]["AsignarDepositosSocioCommand"];
+                    "application/*+json": components["schemas"]["AsignarDepositosSocioCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BooleanResponse"];
+                        "application/json": components["schemas"]["BooleanResponse"];
+                        "text/json": components["schemas"]["BooleanResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/socios-comerciales/vendedor-responsable/masivo": {
@@ -16655,7 +16871,22 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["SesionActivaDto"][];
+                        "application/json": components["schemas"]["SesionActivaDto"][];
+                        "text/json": components["schemas"]["SesionActivaDto"][];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
                 };
             };
         };
@@ -18248,7 +18479,7 @@ export interface components {
         /** @enum {string} */
         AccionDestino: "Cheques" | "Venta" | "VentasPendientesAutorizacion" | "Caja" | "Socios" | "SolicitudesSocio" | "Importaciones" | "Picking" | "Compra" | "Calendario" | "Inventario" | "ConfiguracionFacturacion" | "PosicionIva";
         /** @enum {string} */
-        AccionMasivaProducto: "Activar" | "Desactivar" | "AjustarMarkup";
+        AccionMasivaProducto: "Activar" | "Desactivar" | "AjustarMarkup" | "AumentarCosto";
         AccionSugeridaDto: {
             destino: components["schemas"]["AccionDestino"];
             /** Format: uuid */
@@ -18510,6 +18741,8 @@ export interface components {
             accion?: components["schemas"]["AccionMasivaProducto"];
             /** Format: double */
             markupPorcentaje?: number | null;
+            /** Format: double */
+            aumentoCostoPorcentaje?: number | null;
         };
         ArcaEstadoDto: {
             ambiente: string;
@@ -18545,6 +18778,16 @@ export interface components {
             /** Format: uuid */
             pagoId?: string;
             comprobanteUrl?: string | null;
+        };
+        AsignarDepositosProductoCommand: {
+            /** Format: uuid */
+            productoId?: string;
+            depositoIds?: string[] | null;
+        };
+        AsignarDepositosSocioCommand: {
+            /** Format: uuid */
+            socioId?: string;
+            depositoIds?: string[] | null;
         };
         AsignarImagenChequeCommand: {
             /** Format: uuid */
@@ -18735,7 +18978,7 @@ export interface components {
             saldoInicialAmount: number;
             saldoInicialMoneda?: string | null;
             /** Format: double */
-            saldoSistemaAmount: number;
+            saldoSistemaAmount?: number | null;
             saldoSistemaMoneda?: string | null;
             abierta: boolean;
             /** Format: uuid */
@@ -18864,6 +19107,7 @@ export interface components {
             disponible: boolean;
             /** Format: double */
             precioConOferta?: number | null;
+            fragancias: string[];
         };
         CatalogoComercialItemDtoPaginatedResponse: {
             /** Format: int32 */
@@ -18907,6 +19151,8 @@ export interface components {
             reservado: number;
             /** Format: double */
             real: number;
+            /** Format: double */
+            disponible: number;
             /** Format: double */
             virtual: number;
             /** Format: double */
@@ -19715,6 +19961,7 @@ export interface components {
             ventaId?: string;
             /** Format: int32 */
             version?: number;
+            motivoVentaSinStock?: string | null;
             /**
              * Format: uuid
              * @deprecated
@@ -19779,12 +20026,6 @@ export interface components {
             /** Format: uuid */
             ventaId?: string | null;
         };
-        CrearFacturaDeVentaCommand: {
-            /** Format: uuid */
-            ventaId?: string;
-            /** Format: uuid */
-            puntoVentaId?: string;
-        };
         CrearFacturaPorConceptoCommand: {
             /** Format: uuid */
             clienteId?: string;
@@ -19828,6 +20069,12 @@ export interface components {
             /** Format: date-time */
             hasta?: string | null;
             nota?: string | null;
+        };
+        CrearPedidoTransferenciaCommand: {
+            /** Format: uuid */
+            depositoOrigenId?: string;
+            observacion?: string | null;
+            items?: components["schemas"]["LineaTransferenciaInput"][] | null;
         };
         CrearPuntoVentaCommand: {
             /** Format: int32 */
@@ -20667,6 +20914,8 @@ export interface components {
         EstadoOcurrenciaEvento: "Pagado" | "Omitido";
         /** @enum {string} */
         EstadoPagoVenta: "Historica" | "Pendiente" | "Parcial" | "Pagada" | "Saldada";
+        /** @enum {string} */
+        EstadoPedidoTransferencia: "Pendiente" | "Autorizado" | "Rechazado" | "Cancelado";
         /** @enum {string} */
         EstadoRemito: "Emitido" | "Entregado" | "NoEntregado" | "Anulado";
         /** @enum {string} */
@@ -21804,6 +22053,7 @@ export interface components {
             motivoRechazo?: string | null;
             /** Format: int32 */
             cantidadItems?: number;
+            tieneComprobanteFiscal?: boolean;
         };
         NotaCreditoListDtoIEnumerableResponse: {
             /** Format: int32 */
@@ -22112,6 +22362,70 @@ export interface components {
             data?: components["schemas"]["PedidoSinFacturaDtoPaginatedResponse"];
             codigo?: string | null;
         };
+        PedidoTransferenciaDto: {
+            /** Format: uuid */
+            id: string;
+            estado: components["schemas"]["EstadoPedidoTransferencia"];
+            /** Format: uuid */
+            depositoOrigenId: string;
+            depositoOrigen: string;
+            /** Format: uuid */
+            depositoDestinoId: string;
+            depositoDestino: string;
+            observacion?: string | null;
+            /** Format: uuid */
+            solicitadoPorId: string;
+            /** Format: date-time */
+            fechaCreacion: string;
+            /** Format: uuid */
+            usuarioResolucionId?: string | null;
+            /** Format: date-time */
+            fechaResolucion?: string | null;
+            motivoRechazo?: string | null;
+            /** Format: uuid */
+            transferenciaStockId?: string | null;
+            items: components["schemas"]["PedidoTransferenciaItemDto"][];
+        };
+        PedidoTransferenciaDtoPaginatedResponse: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            readonly hasNextPage?: boolean;
+            items?: components["schemas"]["PedidoTransferenciaDto"][] | null;
+        };
+        PedidoTransferenciaDtoPaginatedResponseResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["PedidoTransferenciaDtoPaginatedResponse"];
+            codigo?: string | null;
+        };
+        PedidoTransferenciaDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["PedidoTransferenciaDto"];
+            codigo?: string | null;
+        };
+        PedidoTransferenciaItemDto: {
+            /** Format: uuid */
+            productoId: string;
+            producto: string;
+            codigoPropio: string;
+            /** Format: double */
+            cantidad: number;
+        };
         PeriodoDto: {
             /** Format: date */
             desde?: string;
@@ -22320,6 +22634,7 @@ export interface components {
             /** Format: uuid */
             fraganciaId?: string | null;
             fraganciaNombre?: string | null;
+            depositoIds: string[];
             /** Format: double */
             precioMinimoRentable?: number | null;
             desglosePiso?: components["schemas"]["PisoDesgloseDto"];
@@ -22576,6 +22891,11 @@ export interface components {
         RechazarDevolucionRequest: {
             motivo?: string | null;
         };
+        RechazarPedidoTransferenciaCommand: {
+            /** Format: uuid */
+            pedidoId?: string;
+            motivo?: string | null;
+        };
         RecibirCompraCommand: {
             /** Format: uuid */
             compraId?: string;
@@ -22670,23 +22990,6 @@ export interface components {
              */
             usuarioId?: string;
         };
-        RegistrarMovimientoCajaCommand: {
-            /** Format: uuid */
-            cajaId?: string;
-            tipo?: components["schemas"]["TipoMovimientoCaja"];
-            /** Format: double */
-            monto?: number;
-            moneda?: string | null;
-            medioPago?: string | null;
-            referencia?: string | null;
-            /** Format: uuid */
-            referenciaId?: string | null;
-            /**
-             * Format: uuid
-             * @deprecated
-             */
-            usuarioId?: string;
-        };
         RegistrarMovimientoEntreCuentasCommand: {
             /** Format: double */
             monto?: number;
@@ -22765,6 +23068,7 @@ export interface components {
             imputacionesCompra?: components["schemas"]["ImputacionManualItem"][] | null;
             tipoCuentaCliente?: components["schemas"]["TipoCuentaSocio"];
             tipoCuentaProveedor?: components["schemas"]["TipoCuentaSocio"];
+            claveIdempotencia?: string | null;
         };
         RegistroEntregaDto: {
             /** Format: uuid */
@@ -23305,6 +23609,7 @@ export interface components {
             deudaVencidaNormalAmount?: number;
             /** Format: double */
             creditoDisponible?: number | null;
+            depositoIds: string[];
         };
         SocioDuplicadoDto: {
             /** Format: uuid */
