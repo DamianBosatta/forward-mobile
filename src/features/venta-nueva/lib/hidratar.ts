@@ -27,7 +27,7 @@ function productoDesdeItem(it: VentaDetalleItemDto): CatalogoStockItem {
   return {
     id: it.productoId, nombre: it.productoNombre, precioVenta: it.precioUnitario, precioConOferta: null,
     precioCompraBase: it.precioCostoSnapshot ?? null, precioMinimoRentable: it.precioMinimoRentable ?? null, costoDirecto: null,
-    deposito: it.stockDeposito, reservado: it.stockReservado, real: it.stockDisponible, virtual: it.stockVirtual, stockMinimo: 0,
+    deposito: it.stockDeposito, reservado: it.stockReservado, real: it.stockDisponible, disponible: it.stockDisponible, virtual: it.stockVirtual, stockMinimo: 0,
     puedeVenderse: it.stockDisponible > 0, esPadreDeVariantes: false, unidadMedida: 'Unidad', bultoContenido: 1,
     fraccionMinimaVenta: 'Unidad', ventaMinimaUnidades: 1, almacenes: [],
   }

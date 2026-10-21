@@ -14,6 +14,7 @@ export function producto(over: Partial<CatalogoStockItem> = {}): CatalogoStockIt
     deposito: 0,
     reservado: 0,
     real: 0,
+    disponible: 0,
     virtual: 0,
     stockMinimo: 0,
     puedeVenderse: true,
