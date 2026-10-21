@@ -4,7 +4,6 @@ import { DepositoCheques } from '../components/DepositoCheques'
 import TesoreriaScreen from '../../../../app/(tabs)/tesoreria/index'
 import { api, ApiError } from '@/core/api/client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import type { AppRole } from '@/libs/api-client/types'
 import { conPermisos, pagina, renderConQuery } from '@/features/clientes/__testing__/ayuda'
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), back: jest.fn() }) }))
@@ -33,9 +32,12 @@ const cheque = (id: string, banco: string, numero: string, montoAmount: number, 
 })
 const galicia = { id: 'gal', nombre: 'Banco Galicia', saldoActual: 0, esPrincipal: false, activo: true, esCuentaCajaEfectivo: false, esCuentaCarteraCheques: false, puedeVerMovimientos: true }
 
-function comoRol(rol: AppRole, pagos: { canRead?: boolean; canUpdate?: boolean; canCreate?: boolean }) {
-  conPermisos([{ module: 'MOD_PAGOS', ...pagos }, { module: 'MOD_CC', canRead: true }])
-  useAuthStore.setState(s => ({ user: { ...s.user!, roles: [rol] } }))
+/** La cartera de cheques la opera quien tiene CAP_GESTIONAR_CHEQUES (ChequesController), nunca un rol. */
+const GESTIONA_CHEQUES = { module: 'CAP_GESTIONAR_CHEQUES', canRead: true }
+
+function comoUsuario(gestionaCheques: boolean, pagos: { canRead?: boolean; canUpdate?: boolean; canCreate?: boolean }) {
+  conPermisos([{ module: 'MOD_PAGOS', ...pagos }, { module: 'MOD_CC', canRead: true }, ...(gestionaCheques ? [GESTIONA_CHEQUES] : [])])
+  useAuthStore.setState(s => ({ user: { ...s.user!, roles: ['Empleado'] } }))
 }
 
 async function elegirYDepositar(...nombres: RegExp[]) {
@@ -46,7 +48,7 @@ async function elegirYDepositar(...nombres: RegExp[]) {
 
 beforeEach(() => {
   jest.clearAllMocks()
-  comoRol('Gerencia', { canRead: true, canUpdate: true })
+  comoUsuario(true, { canRead: true, canUpdate: true })
   get.mockImplementation(async (url: string) => {
     if (url.startsWith('/api/v1/cheques?')) return pagina([cheque('k1', 'Banco Nación', '00871234', 86400), cheque('k2', 'Banco Macro', '12093345', 128760.5)], 2)
     if (url.startsWith('/api/v1/cuentas-corrientes/propias')) return [galicia]
@@ -114,27 +116,25 @@ it('sin cuenta elegida no se manda nada', async () => {
   expect(post).not.toHaveBeenCalled()
 })
 
-it('Depositar cheques se ofrece solo a los roles de la cartera con permiso para modificar pagos', async () => {
-  comoRol('Empleado', { canRead: true, canUpdate: true, canCreate: true })
+it('Depositar cheques se ofrece solo a quien gestiona cheques y puede modificar pagos', async () => {
+  comoUsuario(false, { canRead: true, canUpdate: true, canCreate: true })
   const { unmount } = renderConQuery(<TesoreriaScreen />)
   expect(await screen.findByRole('button', { name: 'Transferencia entre cuentas' }, ESPERA)).toBeTruthy()
   expect(screen.queryByRole('button', { name: 'Depositar cheques' })).toBeNull()
   unmount()
 
-  comoRol('Gerencia', { canRead: true, canUpdate: true })
+  comoUsuario(true, { canRead: true, canUpdate: true })
   renderConQuery(<TesoreriaScreen />)
   expect(await screen.findByRole('button', { name: 'Depositar cheques' }, ESPERA)).toBeTruthy()
 })
 
 it('Depositar cheques exige también poder leer pagos y cuentas corrientes', async () => {
-  conPermisos([{ module: 'MOD_PAGOS', canUpdate: true }, { module: 'MOD_CC', canRead: true }])
-  useAuthStore.setState(s => ({ user: { ...s.user!, roles: ['Gerencia'] } }))
+  conPermisos([{ module: 'MOD_PAGOS', canUpdate: true }, { module: 'MOD_CC', canRead: true }, GESTIONA_CHEQUES])
   const { unmount } = renderConQuery(<TesoreriaScreen />)
   expect(await screen.findByText('No tenés acciones de tesorería habilitadas.', {}, ESPERA)).toBeTruthy()
   unmount()
 
-  conPermisos([{ module: 'MOD_PAGOS', canRead: true, canUpdate: true }])
-  useAuthStore.setState(s => ({ user: { ...s.user!, roles: ['Gerencia'] } }))
+  conPermisos([{ module: 'MOD_PAGOS', canRead: true, canUpdate: true }, GESTIONA_CHEQUES])
   renderConQuery(<TesoreriaScreen />)
   expect(await screen.findByText('No tenés acciones de tesorería habilitadas.', {}, ESPERA)).toBeTruthy()
 })

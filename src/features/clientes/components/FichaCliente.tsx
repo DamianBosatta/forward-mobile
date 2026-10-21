@@ -68,7 +68,7 @@ function Seccion({ titulo, children }: { titulo: string; children: React.ReactNo
 export function FichaCliente({ id }: { id: string }) {
   const c = useColors()
   const router = useRouter()
-  const { canUpdate, isAdmin } = usePermissions()
+  const { canUpdate, hasCapability } = usePermissions()
   const [pidiendoCambio, setPidiendoCambio] = useState(false)
   const puedeAutorizar = useAuthStore(s => s.hasCapability('CAP_AUTORIZAR_VENTA'))
   const { data: cliente, isLoading, error } = useSocio(id)
@@ -111,7 +111,7 @@ export function FichaCliente({ id }: { id: string }) {
           <Accion icono={Pencil} label="Editar" onPress={() => router.push({ pathname: '/(tabs)/socios/nuevo', params: { id } })} />
         ) : null}
         {/* La dirección, la razón social y el CUIT solo los cambia un administrador; el resto los pide. */}
-        {puedeEditar && !isAdmin() ? <Accion icono={FilePen} label="Pedir cambio" onPress={() => setPidiendoCambio(true)} /> : null}
+        {puedeEditar && !hasCapability('CAP_APROBAR_CAMBIOS_SOCIO') ? <Accion icono={FilePen} label="Pedir cambio" onPress={() => setPidiendoCambio(true)} /> : null}
       </View>
 
       {pidiendoCambio ? <SolicitudCambio cliente={cliente} onCerrar={() => setPidiendoCambio(false)} /> : null}

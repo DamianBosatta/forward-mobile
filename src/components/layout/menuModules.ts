@@ -15,7 +15,7 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react-native'
-import type { AppModule, AppRole } from '@/libs/api-client/types'
+import type { AppModule } from '@/libs/api-client/types'
 import type { AppCapability } from '@/features/auth/lib/capabilities'
 
 type Accion = 'read' | 'create' | 'update' | 'delete'
@@ -32,7 +32,6 @@ export interface MenuItem {
   appModule?: AppModule
   /** Acción que tiene que tener sobre el módulo (por defecto 'read'). */
   appAction?: Accion
-  requiredRoles?: AppRole[]
   /** Capacidad otorgable que tiene que tener (p. ej. CAP_AUTORIZAR_VENTA). */
   capacidad?: AppCapability
   /** Condición propia que se suma a las anteriores (p. ej. varios módulos o un corte por perfil). */
@@ -47,10 +46,18 @@ export interface MenuGroup {
 
 type CanDo = (module: AppModule, action: Accion) => boolean
 
-/** Entra a Ventas como la pantalla (leer ventas o pedidos); el chofer (lee viajes y no crea ventas) queda afuera. */
+/**
+ * El chofer lee viajes y no crea ventas: eso lo distingue del vendedor y de la oficina. No hay
+ * capacidad de "chofer" en el servidor (su alcance es la hoja propia, `AlcanceDeLaHoja`), así que
+ * mobile lo reconoce por sus permisos, nunca por su rol.
+ */
+export function esChofer(canDo: CanDo): boolean {
+  return canDo('MOD_VIAJES', 'read') && !canDo('MOD_VENTAS', 'create')
+}
+
+/** Entra a Ventas como la pantalla (leer ventas o pedidos); el chofer queda afuera. */
 export function puedeVerVentas(canDo: CanDo): boolean {
-  const chofer = canDo('MOD_VIAJES', 'read') && !canDo('MOD_VENTAS', 'create')
-  return !chofer && (canDo('MOD_VENTAS', 'read') || canDo('MOD_PEDIDOS', 'read'))
+  return !esChofer(canDo) && (canDo('MOD_VENTAS', 'read') || canDo('MOD_PEDIDOS', 'read'))
 }
 
 /** Módulos del alcance (plan §3), en el orden de la lámina Menu. */
@@ -89,8 +96,9 @@ export const MENU: MenuGroup[] = [
     title: 'Logística',
     items: [
       { id: 'consola', label: 'Consola del chofer', icon: Navigation, href: '/(tabs)/logistica/consola', routeName: 'logistica/consola', appModule: 'MOD_VIAJES' },
-      // Solo lectura; el mismo corte por rol que tenía el hub de logística.
-      { id: 'por-preparar', label: 'Pedidos por preparar', icon: PackageCheck, href: '/(tabs)/logistica/pedidos', routeName: 'logistica/pedidos', appModule: 'MOD_VIAJES', requiredRoles: ['Administrador', 'AdministradorSistemas', 'Gerencia'] },
+      // Solo lectura. GET /Logistica/ventas-para-preparacion pide MOD_VIAJES:Read y recorta por depósito
+      // (AlcanceDelDespacho); la web abre el tablero de picking con el mismo módulo (REGLAS_DE_RUTA).
+      { id: 'por-preparar', label: 'Pedidos por preparar', icon: PackageCheck, href: '/(tabs)/logistica/pedidos', routeName: 'logistica/pedidos', appModule: 'MOD_VIAJES' },
     ],
   },
 ]
@@ -100,15 +108,13 @@ export const MI_CUENTA: MenuItem = { id: 'cuenta', label: 'Mi cuenta y contrase�
 
 interface Acceso {
   canDo: (module: AppModule, action: Accion) => boolean
-  roles: readonly string[]
   tieneCapacidad: (capacidad: AppCapability) => boolean
 }
 
 /** Deja solo lo que el usuario puede usar; un grupo sin ítems visibles desaparece con su título. */
-export function menuVisible(menu: MenuGroup[], { canDo, roles, tieneCapacidad }: Acceso): MenuGroup[] {
+export function menuVisible(menu: MenuGroup[], { canDo, tieneCapacidad }: Acceso): MenuGroup[] {
   const puede = (it: MenuItem) =>
     (!it.capacidad || tieneCapacidad(it.capacidad)) &&
-    (!it.requiredRoles || it.requiredRoles.some((r) => roles.includes(r))) &&
     (!it.appModule || canDo(it.appModule, it.appAction ?? 'read')) &&
     (!it.visibleSi || it.visibleSi(canDo))
   return menu

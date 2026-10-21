@@ -1,4 +1,5 @@
 import type { ModulePermission } from '@/libs/api-client/types'
+import { permisosDesde } from './permisos'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Capacidades otorgables (CAP_*) — espejo de Domain.Constants.AppCapabilities
@@ -9,8 +10,8 @@ import type { ModulePermission } from '@/libs/api-client/types'
 // El super-admin las recibe igual: el backend le agrega el catálogo completo en esa misma
 // respuesta, así que acá no hay bypass por rol.
 //
-// UX solamente (defensa en profundidad): el servidor ya redacta costos y márgenes a quien
-// no tiene la capacidad. Fail-closed: sin la fila con canRead=true, no hay capacidad.
+// UX solamente (defensa en profundidad): el servidor decide igual. Fail-closed: sin la fila con
+// canRead=true, no hay capacidad (permisosDesde, C-004).
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Las que mobile consulta hoy; el catálogo completo vive en AppCapabilities.cs. */
@@ -20,16 +21,14 @@ export type AppCapability =
   | 'CAP_EXENTO_TOPE_DESCUENTO'
   | 'CAP_ANULAR_RECEPCION_COMPRAS'
   | 'CAP_VER_CANTIDADES_STOCK'
+  | 'CAP_GESTIONAR_CHEQUES'
+  | 'CAP_APROBAR_CAMBIOS_SOCIO'
+  | 'CAP_ARMAR_VIAJES'
 
-/**
- * ¿`permissions` incluye la capacidad? Compara sin distinguir mayúsculas, igual que
- * `PermissionService.HasPermissionAsync` (OrdinalIgnoreCase) en el backend.
- */
+/** ¿`permissions` incluye la capacidad? */
 export function hasCapability(
   permissions: ModulePermission[] | null | undefined,
   capability: AppCapability,
 ): boolean {
-  return (permissions ?? []).some(
-    (p) => p.module?.toUpperCase() === capability && p.canRead === true,
-  )
+  return permisosDesde(permissions).tiene(capability)
 }

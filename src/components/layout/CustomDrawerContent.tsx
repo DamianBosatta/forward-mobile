@@ -39,7 +39,6 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
   const rutaActual = props.state.routeNames[props.state.index]
   const grupos = menuVisible(MENU, {
     canDo,
-    roles: user?.roles ?? [],
     tieneCapacidad: (cap) => hasCapability(user?.permissions, cap),
   })
 

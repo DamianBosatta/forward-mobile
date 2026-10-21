@@ -20,6 +20,7 @@ import { safeHaptics } from '@/core/utils/haptics'
 import { useVentasEmpacadas, useHojasDeRuta } from '@/libs/api-client/logistica'
 import { useLogisticaStore } from '@/src/features/logistica/store/logistica.store'
 import { useAuthStore } from '@/libs/store/auth.store'
+import { esChofer } from '@/src/components/layout/menuModules'
 import { EstadoHojaRuta } from '@/libs/api-client/types'
 import { DataList } from '@/core/ui/DataList'
 import { RouteCardSkeleton } from '@/src/features/logistica/components/RouteCardSkeleton'
@@ -36,7 +37,7 @@ export default function LogisticaScreen() {
   const { user, canDo } = useAuthStore()
   const { activeTrip, clearActiveTrip } = useLogisticaStore()
 
-  const isDriver = !!user?.roles?.includes('Empleado') && canDo('MOD_VIAJES', 'read')
+  const isDriver = esChofer(canDo)
 
   // A finished/cancelled trip persisted in AsyncStorage must not surface as an
   // "ongoing" shortcut — tapping it would drop the driver on the finalized summary.

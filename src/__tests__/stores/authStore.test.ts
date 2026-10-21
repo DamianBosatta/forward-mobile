@@ -75,6 +75,7 @@ describe('parsePermissionsFromArray', () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tests de lógica del store (in-memory, sin persist)
+// canDo sin atajo por rol, sobre el store real: features/auth/__tests__/permisos-sin-rol.test.tsx (L-12).
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface SimpleAuthState {
@@ -83,7 +84,6 @@ interface SimpleAuthState {
   setTokens: (t: { accessToken: string; refreshToken: string }) => void
   setUser: (u: SimpleAuthState['user']) => void
   logout: () => void
-  hasRole: (r: AppRole) => boolean
   isAdmin: () => boolean
   isSuperAdmin: () => boolean
   canDo: (m: AppModule, a: 'read' | 'create' | 'update' | 'delete') => boolean
@@ -96,14 +96,12 @@ function buildTestStore() {
     setTokens: (t) => set({ isAuthenticated: true }),
     setUser: (u) => set({ user: u }),
     logout: () => set({ isAuthenticated: false, user: null }),
-    hasRole: (role) => get().user?.roles.includes(role) ?? false,
     isAdmin: () => {
       const roles = get().user?.roles ?? []
       return roles.includes('AdministradorSistemas') || roles.includes('Administrador')
     },
     isSuperAdmin: () => get().user?.roles.includes('AdministradorSistemas') ?? false,
     canDo: (module, action) => {
-      if (get().isSuperAdmin()) return true
       const perm = get().user?.permissions.find(p => p.module === module)
       if (!perm) return false
       switch (action) {
@@ -142,15 +140,6 @@ describe('AuthStore — lógica de permisos', () => {
     expect(useStore.getState().user).toBeNull()
   })
 
-  it('hasRole retorna true si el usuario tiene el rol', () => {
-    const useStore = buildTestStore()
-    act(() => {
-      useStore.getState().setUser({ roles: ['Empleado'], permissions: [] })
-    })
-    expect(useStore.getState().hasRole('Empleado')).toBe(true)
-    expect(useStore.getState().hasRole('Administrador')).toBe(false)
-  })
-
   it('isAdmin retorna true para Administrador y AdministradorSistemas', () => {
     const useStore = buildTestStore()
     act(() => {
@@ -170,14 +159,6 @@ describe('AuthStore — lógica de permisos', () => {
       useStore.getState().setUser({ roles: ['Administrador'], permissions: [] })
     })
     expect(useStore.getState().isSuperAdmin()).toBe(false)
-  })
-
-  it('canDo retorna true para SuperAdmin sin importar el permiso', () => {
-    const useStore = buildTestStore()
-    act(() => {
-      useStore.getState().setUser({ roles: ['AdministradorSistemas'], permissions: [] })
-    })
-    expect(useStore.getState().canDo('MOD_VENTAS', 'delete')).toBe(true)
   })
 
   it('canDo respeta los permisos del usuario normal', () => {
