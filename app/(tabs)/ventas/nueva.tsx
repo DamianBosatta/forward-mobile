@@ -40,7 +40,7 @@ import { hasCapability } from '@/features/auth/lib/capabilities'
 import { esPrecioValido, pctFromPrecio, precioFromPct, canViewCost, calcularSubtotalConDescuento, derivarFloorBroken, computeModalFloor } from '@/features/ventas/lib/descuentos'
 import { BandChip } from '@/features/ventas/components/BandChip'
 import { CarritoSemaforo } from '@/features/ventas/components/CarritoSemaforo'
-import { METODO_ENTREGA, isProductAddable, requiereFechaEntrega, esFechaEntregaValida, buildVentaPayload } from '@/features/ventas/lib/venta-form-retiro'
+import { METODO_ENTREGA, isCatalogItemAddable, requiereFechaEntrega, esFechaEntregaValida, buildVentaPayload } from '@/features/ventas/lib/venta-form-retiro'
 import type { VentaFormData } from '@/features/ventas/lib/venta-form-retiro'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -65,6 +65,8 @@ interface DetalleItem {
   descuentoPorcentaje: number
   stockDeposito: number
   stockReservado: number
+  /** Backend `disponible` (C-017); in edit mode includes the line's original quantity. */
+  stockDisponible: number
   stockVirtual: number
   stockReal: number
   originalQuantity: number // Cantidad que tenía antes de editar
@@ -122,6 +124,7 @@ function makeDetalleFromProducto(prod: any, cantidad: number, descuentoPorcentaj
     originalQuantity: 0,
     stockDeposito: prod.deposito ?? 0,
     stockReservado: prod.reservado ?? 0,
+    stockDisponible: prod.disponible ?? 0,
     stockVirtual: prod.virtual ?? 0,
     stockReal: prod.real ?? 0,
   }
@@ -381,10 +384,8 @@ interface DescuentoItemModalRNProps {
    * When null, the projection section is hidden.
    */
   stockReal?: number | null
-  /**
-   * Reserved stock quantity — disponible = stockReal - stockReservado
-   */
-  stockReservado?: number | null
+  /** Backend `disponible` (C-017) — the clients never subtract reservado. */
+  stockDisponible?: number | null
   /** Current quantity in the cart line — used for projection */
   cantidad?: number
   onApply: (pct: number) => void
@@ -403,7 +404,7 @@ function DescuentoItemModalRN({
   maxDescuentoVendedor,
   puedeVerCostos = false,
   stockReal,
-  stockReservado,
+  stockDisponible: stockDisponibleProp,
   cantidad = 0,
   onApply,
   onClose,
@@ -437,7 +438,7 @@ function DescuentoItemModalRN({
   const { piso, floorUnknown } = computeModalFloor({ precioMinimo, descuentoGeneral })
 
   // Stock projection (S3b)
-  const stockDisponible = (stockReal ?? 0) - (stockReservado ?? 0)
+  const stockDisponible = stockDisponibleProp ?? 0
   const postSaleStock = stockDisponible - cantidad
   const projectionNegative = postSaleStock < 0
   const showProjection = stockReal != null
@@ -1028,6 +1029,7 @@ export default function NuevaVentaMobileScreen() {
             originalQuantity: originalQty,
             stockDeposito: prodCatalog?.deposito ?? 0,
             stockReservado: prodCatalog?.reservado ?? 0,
+            stockDisponible: (prodCatalog?.disponible ?? 0) + originalQty,
             stockVirtual: prodCatalog?.virtual ?? 0,
             stockReal: realBaseInCatalog + originalQty,
           }
@@ -1089,8 +1091,7 @@ export default function NuevaVentaMobileScreen() {
   // ─── Handlers ───────────────────────────────────────────────────────────────
   const addProducto = (prod: typeof productos[0]) => {
     // When entregaInmediata is ON, block products with no available stock (spec S3, D4, D8)
-    const stockDisponible = (prod.real ?? 0) - (prod.reservado ?? 0)
-    if (!isProductAddable(entregaInmediata, stockDisponible)) {
+    if (!isCatalogItemAddable(entregaInmediata, prod)) {
       return // silently blocked — product row is already visually disabled
     }
 
@@ -1125,6 +1126,7 @@ export default function NuevaVentaMobileScreen() {
           originalQuantity: 0,
           stockDeposito: prod.deposito ?? 0,
           stockReservado: prod.reservado ?? 0,
+          stockDisponible: prod.disponible ?? 0,
           stockVirtual: prod.virtual ?? 0,
           stockReal: prod.real ?? 0,
         },
@@ -2446,8 +2448,7 @@ export default function NuevaVentaMobileScreen() {
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 60 }}
             renderItem={({ item }) => {
               const det = detalles.find(d => d.productoId === item.id)
-              const stockDisponible = (item.real ?? 0) - (item.reservado ?? 0)
-              const addable = isProductAddable(entregaInmediata, stockDisponible)
+              const addable = isCatalogItemAddable(entregaInmediata, item)
               return (
                 <View style={{ opacity: addable ? 1 : 0.4 }} pointerEvents={addable ? 'auto' : 'none'}>
                   {entregaInmediata && !addable && (
@@ -2515,7 +2516,7 @@ export default function NuevaVentaMobileScreen() {
             maxDescuentoVendedor={maxDescuentoVendedor}
             puedeVerCostos={puedeVerCostos}
             stockReal={item.stockReal}
-            stockReservado={item.stockReservado}
+            stockDisponible={item.stockDisponible}
             cantidad={item.cantidad}
             onApply={(pct) => applyItemDescuento(discountModalItem.productoId, pct)}
             onClose={() => setDiscountModalItem(null)}

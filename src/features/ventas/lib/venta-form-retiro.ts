@@ -68,13 +68,24 @@ export function resolveMetodoEntrega(
  * (normal path: server may create a PendienteAutorizacion sale without stock).
  *
  * @param entregaInmediata - whether the "venta directa" counter-sale toggle is active
- * @param stockDisponible  - available stock (real - reserved)
+ * @param stockDisponible  - available stock, as computed by the backend (`disponible`)
  */
 export function isProductAddable(entregaInmediata: boolean, stockDisponible: number): boolean {
   if (entregaInmediata) {
     return stockDisponible > 0
   }
   return true
+}
+
+/**
+ * Same rule for a catalog row. Availability is the backend `disponible` (C-017):
+ * clients never subtract `reservado` from `real` themselves.
+ */
+export function isCatalogItemAddable<T extends { disponible?: number | null }>(
+  entregaInmediata: boolean,
+  item: T,
+): boolean {
+  return isProductAddable(entregaInmediata, item.disponible ?? 0)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

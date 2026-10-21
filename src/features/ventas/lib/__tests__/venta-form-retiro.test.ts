@@ -16,6 +16,7 @@ import {
   METODO_ENTREGA,
   resolveMetodoEntrega,
   isProductAddable,
+  isCatalogItemAddable,
   requiereFechaEntrega,
   esFechaEntregaValida,
   buildVentaPayload,
@@ -309,5 +310,25 @@ describe('buildVentaPayload', () => {
         items: [{ productoId: 'p2', cantidad: 1, descuentoPorcentaje: 0 }],
       })
     })
+  })
+})
+
+// ─── isCatalogItemAddable (C-017: availability comes from the backend `disponible`) ───
+
+describe('isCatalogItemAddable', () => {
+  it('uses disponible, never real - reservado (real 10, reservado 3, disponible 5 -> addable)', () => {
+    expect(isCatalogItemAddable(true, { real: 10, reservado: 3, disponible: 5 })).toBe(true)
+  })
+
+  it('blocks with entregaInmediata ON when disponible is 0 even if real > reservado', () => {
+    expect(isCatalogItemAddable(true, { real: 10, reservado: 3, disponible: 0 })).toBe(false)
+  })
+
+  it('allows with entregaInmediata ON when disponible > 0 even if real - reservado <= 0', () => {
+    expect(isCatalogItemAddable(true, { real: 3, reservado: 3, disponible: 2 })).toBe(true)
+  })
+
+  it('keeps allowing any item when entregaInmediata is OFF (previous behavior)', () => {
+    expect(isCatalogItemAddable(false, { real: 10, reservado: 3, disponible: 0 })).toBe(true)
   })
 })
