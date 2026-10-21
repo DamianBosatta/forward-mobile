@@ -80,12 +80,29 @@ export function isProductAddable(entregaInmediata: boolean, stockDisponible: num
 /**
  * Same rule for a catalog row. Availability is the backend `disponible` (C-017):
  * clients never subtract `reservado` from `real` themselves.
+ *
+ * Users without CAP_VER_CANTIDADES_STOCK receive `disponible` redacted to 0, so for them
+ * (`veCantidades = false`) the decision is the backend yes/no `puedeVenderse` (L8); no quantity is shown.
  */
-export function isCatalogItemAddable<T extends { disponible?: number | null }>(
+export function isCatalogItemAddable<T extends { disponible?: number | null; puedeVenderse?: boolean | null }>(
   entregaInmediata: boolean,
   item: T,
+  veCantidades = true,
 ): boolean {
+  if (!veCantidades) return isProductAddable(entregaInmediata, item.puedeVenderse ? 1 : 0)
   return isProductAddable(entregaInmediata, item.disponible ?? 0)
+}
+
+/**
+ * Whether a cart line asks for more than can be sold. Uses the backend `disponible`
+ * (never raw `real`); when quantities are redacted, the backend `puedeVenderse`.
+ */
+export function isLineaSinStock(
+  linea: { cantidad: number; stockDisponible: number; puedeVenderse?: boolean | null },
+  veCantidades = true,
+): boolean {
+  if (!veCantidades) return !linea.puedeVenderse
+  return linea.cantidad > linea.stockDisponible
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

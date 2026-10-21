@@ -17,6 +17,7 @@ import {
   resolveMetodoEntrega,
   isProductAddable,
   isCatalogItemAddable,
+  isLineaSinStock,
   requiereFechaEntrega,
   esFechaEntregaValida,
   buildVentaPayload,
@@ -330,5 +331,37 @@ describe('isCatalogItemAddable', () => {
 
   it('keeps allowing any item when entregaInmediata is OFF (previous behavior)', () => {
     expect(isCatalogItemAddable(false, { real: 10, reservado: 3, disponible: 0 })).toBe(true)
+  })
+})
+
+// ─── Cantidades ocultas: decide puedeVenderse (bloque 11, T13 d, L8) ───
+
+describe('isCatalogItemAddable sin ver cantidades', () => {
+  it('permite con entregaInmediata ON si puedeVenderse=true aunque disponible llegue redactado en 0', () => {
+    expect(isCatalogItemAddable(true, { disponible: 0, puedeVenderse: true }, false)).toBe(true)
+  })
+
+  it('bloquea con entregaInmediata ON si puedeVenderse=false', () => {
+    expect(isCatalogItemAddable(true, { disponible: 0, puedeVenderse: false }, false)).toBe(false)
+  })
+
+  it('quien ve cantidades sigue decidiendo por disponible, ignorando puedeVenderse (comportamiento previo)', () => {
+    expect(isCatalogItemAddable(true, { disponible: 5, puedeVenderse: false }, true)).toBe(true)
+    expect(isCatalogItemAddable(true, { disponible: 0, puedeVenderse: true })).toBe(false)
+  })
+})
+
+describe('isLineaSinStock', () => {
+  it('usa disponible y no stockReal: real alcanza pero disponible no -> sin stock', () => {
+    expect(isLineaSinStock({ cantidad: 5, stockDisponible: 2 })).toBe(true)
+  })
+
+  it('con disponible suficiente no reporta sin stock', () => {
+    expect(isLineaSinStock({ cantidad: 2, stockDisponible: 2 })).toBe(false)
+  })
+
+  it('sin ver cantidades decide puedeVenderse', () => {
+    expect(isLineaSinStock({ cantidad: 5, stockDisponible: 0, puedeVenderse: true }, false)).toBe(false)
+    expect(isLineaSinStock({ cantidad: 5, stockDisponible: 0, puedeVenderse: false }, false)).toBe(true)
   })
 })
