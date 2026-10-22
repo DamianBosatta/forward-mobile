@@ -241,7 +241,7 @@ describe('Consola del chofer: hoja de ruta', () => {
 
   it('sin permiso de viajes muestra la pantalla de permiso y no consulta al servidor', async () => {
     pintar(HOJA, 'u1', [])
-    expect(await screen.findByText('Sin permisos')).toBeTruthy()
+    expect(await screen.findByText('No tenés acceso a esta sección')).toBeTruthy()
     expect(screen.queryByLabelText('Cargando la hoja de ruta')).toBeNull()
     expect(mockGet).not.toHaveBeenCalled()
   })
