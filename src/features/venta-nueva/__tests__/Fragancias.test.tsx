@@ -51,7 +51,7 @@ describe('elegir fragancias (PR 2.4)', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Sumar Lavanda' }))
     await userEvent.press(screen.getByRole('button', { name: 'Sumar Coco Vainilla' }))
     expect(screen.getByLabelText('Lavanda: 12')).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Listo · 18 unidades' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
     expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad])).toEqual([['pv1', 12], ['pv2', 6]])
     // La línea padre no viaja: cada fragancia es un ítem propio, como en la web.
     expect(aAutoguardado(useCarritoVenta.getState().lineas).items.map((i) => i.productoId)).toEqual(['pv1', 'pv2'])
@@ -80,7 +80,7 @@ describe('elegir fragancias (PR 2.4)', () => {
       const { FraganciasSheet } = require('../components/FraganciasSheet')
       return (
         <>
-          <LineasVenta lineas={lineas} porAutorizar={[]} rechazos={[]} descuentoTexto="0" descuentoGeneral={0} onDescuento={jest.fn()} tope={10}
+          <LineasVenta lineas={lineas} porAutorizar={[]} rechazos={[]} descuentoGeneral={0} onDescuentoGeneral={jest.fn()} onSumar={jest.fn()} onRestar={jest.fn()} tope={10}
             onAgregar={jest.fn()} onEditar={jest.fn()} onElegirFragancias={setAbierta} nombrePadre={(id) => (id === 'pf' ? 'Saphirus Aerosol' : undefined)} />
           <FraganciasSheet padreId={abierta} onClose={() => setAbierta(null)} />
         </>
@@ -93,7 +93,7 @@ describe('elegir fragancias (PR 2.4)', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias de Saphirus Aerosol' }))
     expect(screen.getByLabelText('Lavanda: 12')).toBeTruthy()
     await userEvent.press(screen.getByRole('button', { name: 'Sumar Coco Vainilla' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Listo · 18 unidades' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
     // La fragancia nueva toma el descuento que ya tenía la línea.
     expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad, l.descuentoPct])).toEqual([['p1', 1, 0], ['pv1', 12, 5], ['pv2', 6, 5]])
     expect(within(screen.getByTestId('fragancias-pf')).getByText('Coco Vainilla 6')).toBeTruthy()
@@ -122,7 +122,7 @@ describe('elegir fragancias (PR 2.4)', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Sumar Coco Vainilla' }))
     expect(screen.getByLabelText('Lavanda: 6')).toBeTruthy()
     expect(screen.getByLabelText('Coco Vainilla: 0')).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Listo · 6 unidades' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
     expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad])).toEqual([['pv1', 6]])
   })
 
@@ -139,7 +139,7 @@ describe('elegir fragancias (PR 2.4)', () => {
     conQuery(<CatalogoVenta onVerVenta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
     await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText('Stock: 8')).toBeTruthy())
-    await userEvent.press(screen.getByRole('button', { name: 'Listo · 18 unidades' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
     expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad])).toEqual([['pv1', 6]])
   })
 
@@ -152,7 +152,7 @@ describe('elegir fragancias (PR 2.4)', () => {
     await userEvent.clear(campo)
     await userEvent.type(campo, '8')
     await userEvent.press(screen.getByRole('button', { name: 'Sumar Coco Vainilla' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Listo · 12 unidades' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
     expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.descuentoPct])).toEqual([['pv1', 8], ['pv2', 8]])
     // Editar el descuento de una sola fragancia lo cambia en toda su línea, sin tocar otros productos.
     const [l1, l2] = useCarritoVenta.getState().lineas
@@ -160,3 +160,29 @@ describe('elegir fragancias (PR 2.4)', () => {
     expect(reemplazar([l1, l2, otra], { ...l2, descuentoPct: 10 }).map((l) => l.descuentoPct)).toEqual([10, 10, 3])
   })
 })
+
+describe('R5 Elegir fragancias: la venta y la última vez', () => {
+  it('muestra las unidades y lo que suman con el descuento de la línea', async () => {
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Sumar Lavanda' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Sumar Coco Vainilla' }))
+    expect(screen.getByText('12 unidades')).toBeTruthy()
+    expect(screen.getByTestId('fragancias-subtotal')).toHaveTextContent('$ 12.000,00')
+  })
+
+  it('"Como la última vez" pone lo que llevó de cada fragancia; sin último pedido no se ofrece', async () => {
+    const { unmount } = conQuery(<CatalogoVenta onVerVenta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
+    expect(screen.queryByRole('button', { name: 'Como la última vez' })).toBeNull()
+    unmount()
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} llevo={new Map([['pv1', 6], ['pv2', 12], ['p1', 3]])} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Como la última vez' }))
+    expect(screen.getByLabelText('Lavanda: 6')).toBeTruthy()
+    expect(screen.getByLabelText('Coco Vainilla: 12')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
+    expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad])).toEqual([['pv1', 6], ['pv2', 12]])
+  })
+})
+

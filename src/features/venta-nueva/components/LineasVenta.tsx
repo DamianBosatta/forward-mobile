@@ -2,20 +2,22 @@ import React from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { Plus } from 'lucide-react-native'
 import { radii, space, typeScale, importe, useColors } from '@/libs/theme'
-import { Field, Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { precioServidor, subtotalLinea, type LineaCarrito } from '../lib/carrito'
 import { avisoTope, mostrarNumero } from '../lib/linea'
 import { totalesEstimados } from '../lib/avisos'
 import { agruparLineas, nombreFragancia } from '../lib/fragancias'
+import { Redondo } from './ProductoCatalogoCard'
 
 interface Props {
   lineas: LineaCarrito[]
   porAutorizar: string[]
   rechazos: string[]
-  /** Texto tal como lo tipea el vendedor; `descuentoGeneral` es el número ya leído. */
-  descuentoTexto: string
+  /** Descuento general vigente (%); se cambia en la hoja "Descuento a toda la venta" (R6). */
   descuentoGeneral: number | null
-  onDescuento: (texto: string) => void
+  onDescuentoGeneral: () => void
+  onSumar: (productoId: string) => void
+  onRestar: (productoId: string) => void
   tope: number
   flete?: number
   onAgregar: () => void
@@ -29,14 +31,14 @@ interface Props {
 }
 
 /** Pestaña Líneas (lámina Venta): las líneas, el banner de autorización y los totales estimados. */
-export function LineasVenta({ lineas, porAutorizar, rechazos, descuentoTexto, descuentoGeneral, onDescuento, tope, flete = 0, onAgregar, onEditar, onElegirFragancias, nombrePadre, nota }: Props) {
+export function LineasVenta({ lineas, porAutorizar, rechazos, descuentoGeneral, onDescuentoGeneral, onSumar, onRestar, tope, flete = 0, onAgregar, onEditar, onElegirFragancias, nombrePadre, nota }: Props) {
   const c = useColors()
   const t = totalesEstimados(lineas, descuentoGeneral ?? 0, flete)
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
   return (
     <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3] }}>
       {agruparLineas(lineas).map((g) => {
-        if (g.tipo === 'producto') return <LineaProducto key={g.linea.productoId} linea={g.linea} tope={tope} onEditar={onEditar} />
+        if (g.tipo === 'producto') return <LineaProducto key={g.linea.productoId} linea={g.linea} tope={tope} onEditar={onEditar} onSumar={onSumar} onRestar={onRestar} />
         const padre = nombrePadre(g.padreId) ?? g.lineas[0].producto.nombre.split(' - ')[0]
         const unidades = g.lineas.reduce((a, l) => a + l.cantidad, 0)
         return (
@@ -77,8 +79,11 @@ export function LineasVenta({ lineas, porAutorizar, rechazos, descuentoTexto, de
       {nota ? <Text style={secundario}>{nota}</Text> : null}
       <View style={{ gap: space[2], paddingTop: space[2] }}>
         <TotalsRow label="Subtotal" importe={t.subtotal} />
-        <Field label="Descuento general (%)" keyboardType="decimal-pad" alignRight value={descuentoTexto} onChangeText={onDescuento}
-          error={descuentoGeneral === null ? 'Ingresá un descuento entre 0 y 100.' : undefined} />
+        <Pressable accessibilityRole="button" accessibilityLabel="Descuento a toda la venta" accessibilityHint="Cambiar el descuento general" onPress={onDescuentoGeneral}
+          style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], paddingHorizontal: space[3], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
+          <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Descuento a toda la venta</Text>
+          <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.brandInk }}>{`${mostrarNumero(descuentoGeneral ?? 0)} %`}</Text>
+        </Pressable>
         <TotalsRow label="Descuento general" importe={-t.descuento} />
         {flete > 0 ? <TotalsRow label="Flete (logística propia)" importe={t.flete} /> : null}
         <Text style={secundario}>Los totales son estimados: el total final lo calcula el sistema al guardar.</Text>
@@ -87,26 +92,31 @@ export function LineasVenta({ lineas, porAutorizar, rechazos, descuentoTexto, de
   )
 }
 
-function LineaProducto({ linea: l, tope, onEditar }: { linea: LineaCarrito; tope: number; onEditar: (l: LineaCarrito) => void }) {
+function LineaProducto({ linea: l, tope, onEditar, onSumar, onRestar }: {
+  linea: LineaCarrito; tope: number; onEditar: (l: LineaCarrito) => void; onSumar: (id: string) => void; onRestar: (id: string) => void
+}) {
   const c = useColors()
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
+  const nombre = l.producto.nombre
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityHint="Editar la línea"
-      onPress={() => onEditar(l)}
-      style={{ minHeight: 56, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[1] }}
-    >
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-        <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }}>{l.producto.nombre}</Text>
-        <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(subtotalLinea(l))}</Text>
+    <View style={{ minHeight: 56, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[2] }}>
+      <Pressable accessibilityRole="button" accessibilityHint="Editar la línea" onPress={() => onEditar(l)} style={{ gap: space[1] }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
+          <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }}>{nombre}</Text>
+          <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(subtotalLinea(l))}</Text>
+        </View>
+        <Text style={{ ...secundario, ...importe }}>{`${l.cantidad} × ${formatImporte(precioServidor(l.producto))}`}</Text>
+        {l.descuentoPct > 0 ? (
+          <Text style={secundario}>
+            {`Desc. ${mostrarNumero(l.descuentoPct)} %${avisoTope(l.descuentoPct, tope, false) === 'porAutorizar' ? ' · sobre tu tope' : ''}`}
+          </Text>
+        ) : null}
+      </Pressable>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: space[1] }}>
+        <Redondo c={c} label="−" a11y={`Restar ${nombre}`} onPress={() => onRestar(l.productoId)} />
+        <Text accessibilityLabel={`Cantidad: ${l.cantidad}`} style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text, minWidth: 40, textAlign: 'center' }}>{l.cantidad}</Text>
+        <Redondo c={c} label="+" a11y={`Sumar ${nombre}`} onPress={() => onSumar(l.productoId)} />
       </View>
-      <Text style={{ ...secundario, ...importe }}>{`${l.cantidad} × ${formatImporte(precioServidor(l.producto))}`}</Text>
-      {l.descuentoPct > 0 ? (
-        <Text style={secundario}>
-          {`Desc. ${mostrarNumero(l.descuentoPct)} %${avisoTope(l.descuentoPct, tope, false) === 'porAutorizar' ? ' · sobre tu tope' : ''}`}
-        </Text>
-      ) : null}
-    </Pressable>
+    </View>
   )
 }
