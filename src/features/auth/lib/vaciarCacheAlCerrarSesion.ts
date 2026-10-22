@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query'
 import type { Persister } from '@tanstack/react-query-persist-client'
 import { useAuthStore } from '../store/auth.store'
+import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 
 /**
  * Al cerrarse la sesión por cualquier camino (Salir, o el cierre forzado cuando el servidor rechaza
@@ -22,5 +23,7 @@ export function vaciarCacheAlCerrarSesion(queryClient: QueryClient, persister: P
     if (!antes.isAuthenticated || estado.isAuthenticated) return
     queryClient.clear()
     void persister.removeClient()
+    // El viaje activo del chofer se guarda aparte (AsyncStorage): tampoco pasa al próximo usuario (A-905).
+    useLogisticaStore.getState().reset()
   })
 }

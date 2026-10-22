@@ -4,6 +4,7 @@ import { crearQueryClient, opcionesDePersistencia } from '@/core/query/queryClie
 import { mmkvPersister } from '@/core/query/persistConfig'
 import { useAuthStore } from '../store/auth.store'
 import { vaciarCacheAlCerrarSesion } from '../lib/vaciarCacheAlCerrarSesion'
+import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 
 const mockFetch = jest.fn()
 const responder = (status: number, body: unknown) =>
@@ -46,6 +47,16 @@ describe('cerrar la sesión vacía la caché: el próximo usuario del teléfono 
     expect(qc.getQueryCache().getAll()).toHaveLength(0)
     // El disco queda sin nada (no un cliente vacío) aunque la app muera enseguida.
     expect(await mmkvPersister.restoreClient()).toBeUndefined()
+    soltar()
+  })
+
+  it('el viaje guardado del chofer también se borra: otro usuario del teléfono no lo hereda (A-905)', async () => {
+    const { soltar } = await conSesion()
+    useLogisticaStore.getState().setActiveTrip({ id: 'h1', detalles: [] } as never)
+
+    useAuthStore.getState().logout()
+
+    expect(useLogisticaStore.getState().activeTrip).toBeNull()
     soltar()
   })
 

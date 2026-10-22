@@ -134,6 +134,20 @@ describe('Consola del chofer: hoja de ruta', () => {
     }))
   })
 
+  it('no se pudo entregar con 409 (ya reportada o la hoja cambió): cierra el reporte, avisa y vuelve a pedir la hoja (E2-15)', async () => {
+    mockPost.mockRejectedValue(Object.assign(new Error('La parada ya fue reportada.'), { status: 409, codigo: 'Conflicto', errors: [] }))
+    pintar()
+    await userEvent.press(await screen.findByLabelText('Reportar entrega'))
+    await userEvent.press(screen.getByLabelText('No se pudo entregar'))
+    await userEvent.press(screen.getByLabelText('Dirección incorrecta'))
+    const pedidosAntes = mockGet.mock.calls.filter(([url]) => /hojas-ruta\/h1$/.test(url)).length
+    await userEvent.press(screen.getByLabelText('Confirmar: no se entregó'))
+
+    expect(await screen.findByText('La parada ya fue reportada.')).toBeTruthy()
+    expect(screen.queryByLabelText('Confirmar: no se entregó')).toBeNull()
+    await waitFor(() => expect(mockGet.mock.calls.filter(([url]) => /hojas-ruta\/h1$/.test(url)).length).toBeGreaterThan(pedidosAntes))
+  })
+
   it('si el servidor rechaza, el motivo queda a la vista y el reporte sigue abierto', async () => {
     mockPost.mockRejectedValue(Object.assign(new Error('La venta ya no está en ruta.'), { errors: [] }))
     pintar()

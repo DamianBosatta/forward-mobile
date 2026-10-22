@@ -227,7 +227,16 @@ export default function ConsolaChoferScreen() {
       updateStopStatus(parada.id, { delivered: false, observations: r.observaciones, reason: r.motivoRechazo })
       setReportando(null)
     } catch (e) {
-      setErrorReporte(mensajeDelServidor(e, 'No se pudo reportar la parada.'))
+      const mensaje = mensajeDelServidor(e, 'No se pudo reportar la parada.')
+      if ((e as { status?: number } | null)?.status === 409) {
+        // E2-15: ya reportada, el viaje no está en curso o la hoja cambió. En todos los casos manda
+        // lo que tiene el servidor: se cierra el reporte, se avisa y se vuelve a pedir la hoja.
+        setReportando(null)
+        setAviso(mensaje)
+        remota.refetch()
+      } else {
+        setErrorReporte(mensaje)
+      }
     } finally {
       reportandoYa.current = false
     }

@@ -230,7 +230,6 @@ export function useCrearHojaRuta() {
       choferId: string
       vehiculoId: string
       fechaSalida: string
-      usuarioGeneradorId: string
       depositoId?: string | null
       paradas: { ventaId: string; latitud?: number; longitud?: number; direccionDestino?: string | null }[]
     }) => api.post<string>('/api/v1/Logistica/hojas-ruta', payload),
