@@ -78,8 +78,9 @@ export const MENU: MenuGroup[] = [
     title: 'Tesorería',
     items: [
       { id: 'cuentas', label: 'Cuentas corrientes', icon: Landmark, href: '/(tabs)/cuentas', routeName: 'cuentas/index', appModule: 'MOD_CC' },
-      // Transferencias y depósito de cheques; los cobros se registran desde la cuenta corriente del cliente.
-      { id: 'movimientos', label: 'Transferencias y cheques', icon: Wallet, href: '/(tabs)/tesoreria', routeName: 'tesoreria/index', appModule: 'MOD_PAGOS' },
+      // Transferencias entre cuentas propias; los cobros se registran desde la cuenta corriente del cliente.
+      // Los cheques se operan en la web (bloque 12, D10).
+      { id: 'movimientos', label: 'Transferencias', icon: Wallet, href: '/(tabs)/tesoreria', routeName: 'tesoreria/index', appModule: 'MOD_PAGOS' },
     ],
   },
   {
