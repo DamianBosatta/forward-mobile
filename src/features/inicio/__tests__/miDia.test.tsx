@@ -16,6 +16,9 @@ jest.mock('@/core/api/client', () => ({
 }))
 const { ApiError } = jest.requireActual('@/core/api/client')
 
+let mockVentaNueva = false
+jest.mock('@/features/ventas/lib/ventaNueva', () => ({ ...jest.requireActual('@/features/ventas/lib/ventaNueva'), useVentaNueva: () => mockVentaNueva }))
+
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
@@ -64,6 +67,7 @@ beforeEach(() => {
   jest.clearAllMocks()
   mockAncho.mockReturnValue(390)
   useVentaNuevaStore.setState({ activa: false } as never)
+  mockVentaNueva = false
   useAuthStore.setState({
     user: { id: 'u1', username: 'emanuel', nombre: 'Emanuel', apellido: 'P', roles: [], permissions: [{ module: 'MOD_VENTAS', canRead: true }] },
   } as never)
@@ -117,6 +121,30 @@ describe('MiDiaScreen', () => {
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/socios/[id]', params: { id: 'c1' } })
     await user.press(screen.getByLabelText('Todos los clientes'))
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/socios')
+  })
+
+  describe('Vender de nuevo con el cliente elegido (T4c)', () => {
+    const conVender = (create: boolean) => useAuthStore.setState({
+      user: { id: 'u1', username: 'emanuel', nombre: 'Emanuel', apellido: 'P', roles: [], permissions: [{ module: 'MOD_VENTAS', canRead: true, canCreate: create }] },
+    } as never)
+
+    it('con la venta nueva prendida, tocar un reciente abre la venta nueva con ese cliente', async () => {
+      mockVentaNueva = true
+      conVender(true)
+      guardarReciente('u1', { id: 'c1', direccion: 'Tarantino 1898' })
+      pintar()
+      await userEvent.setup().press(await screen.findByLabelText('Tarantino 1898'))
+      expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva-v2?clienteId=c1')
+    })
+
+    it('con la venta nueva prendida pero sin permiso para crear ventas, sigue abriendo la ficha', async () => {
+      mockVentaNueva = true
+      conVender(false)
+      guardarReciente('u1', { id: 'c1', direccion: 'Tarantino 1898' })
+      pintar()
+      await userEvent.setup().press(await screen.findByLabelText('Tarantino 1898'))
+      expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/socios/[id]', params: { id: 'c1' } })
+    })
   })
 
   it('"Nueva venta" abre la venta de hoy, o la nueva con el switch prendido', async () => {

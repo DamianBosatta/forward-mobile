@@ -14,6 +14,7 @@ import { partesArgentina } from '@/src/utils/date'
 import { direccionDeEntrega, inicialesDeDireccion } from '@/features/clientes/lib/cliente'
 import { fusionarRecientes, leerRecientes } from '@/features/clientes/lib/recientes'
 import { useVentaNueva } from '@/features/ventas/lib/ventaNueva'
+import { useVenderA } from '@/features/venta-nueva/hooks/useVenderA'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
@@ -44,6 +45,8 @@ export function MiDiaScreen() {
     [recientesServidor.data, user?.id, ahora],
   )
   const rutaVenta = useVentaNueva() ? '/(tabs)/ventas/nueva-v2' : '/(tabs)/ventas/nueva'
+  // Con la venta nueva, un reciente abre la venta con ese cliente; si no, su ficha (como hasta ahora).
+  const venderA = useVenderA()
   const nombre = user?.nombre || user?.username || ''
 
   const [refrescando, setRefrescando] = useState(false)
@@ -99,7 +102,7 @@ export function MiDiaScreen() {
                 key={r.id}
                 accessibilityRole="button"
                 accessibilityLabel={direccion}
-                onPress={() => router.push({ pathname: '/(tabs)/socios/[id]', params: { id: r.id } })}
+                onPress={() => (venderA ? router.push(venderA(r.id) as never) : router.push({ pathname: '/(tabs)/socios/[id]', params: { id: r.id } }))}
                 style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[3], borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}
               >
                 <View style={{ width: 28, height: 28, borderRadius: radii.pastilla, backgroundColor: c.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
