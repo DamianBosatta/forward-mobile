@@ -3,7 +3,7 @@ import { useCreateSocio, useSocio, useUpdateSocio } from '@/libs/api-client/soci
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { leerNumero, mostrarNumero } from '@/src/utils/numero'
-import type { TipoCondicionPago } from '../lib/cliente'
+import { condicionPagoParaEnviar, type TipoCondicionPago } from '../lib/cliente'
 
 export interface DatosCliente {
   direccion: string
@@ -38,13 +38,6 @@ function cambioDeTope(texto: string, actual: number | null | undefined): { topeC
   const monto = texto.trim() === '' ? null : leerNumero(texto)
   if (texto.trim() !== '' && monto === null) return { error: TOPE_INVALIDO }
   return monto === (actual ?? null) ? {} : { topeCredito: { monto } }
-}
-
-function condicionPago(d: DatosCliente) {
-  const n = d.plazo.trim() === '' ? null : Number(d.plazo)
-  if (d.tipoPago === 'DiaFijoDelMes') return { tipo: d.tipoPago, diaDelMes: n }
-  if (d.tipoPago === 'Contado') return { tipo: d.tipoPago }
-  return { tipo: d.tipoPago, dias: n }
 }
 
 /**
@@ -104,7 +97,7 @@ export function useClienteForm(id: string | undefined, alGuardar: (id: string) =
       cuit: datos.cuit.trim(),
       condicionIva: datos.condicionIva,
       email: datos.email.trim(),
-      condicionPago: puedeCambiarPago ? condicionPago(datos) : undefined,
+      condicionPago: puedeCambiarPago ? condicionPagoParaEnviar(datos.tipoPago, datos.plazo) : undefined,
       ...tope,
     }
     try {

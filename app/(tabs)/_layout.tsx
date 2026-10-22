@@ -24,6 +24,7 @@ export default function DrawerLayout() {
       <Drawer.Screen name="ventas/index" />
       <Drawer.Screen name="inventario/index" />
       <Drawer.Screen name="compras/index" />
+      <Drawer.Screen name="proveedores/index" />
       <Drawer.Screen name="socios/index" />
       <Drawer.Screen name="autorizaciones/index" />
       <Drawer.Screen name="cuentas/index" />
@@ -41,6 +42,8 @@ export default function DrawerLayout() {
       <Drawer.Screen name="ventas/nueva-v2" />
       <Drawer.Screen name="compras/nueva" />
       <Drawer.Screen name="socios/nuevo" />
+      <Drawer.Screen name="proveedores/nuevo" />
+      <Drawer.Screen name="proveedores/[id]" />
       <Drawer.Screen name="cuentas/[id]" />
       <Drawer.Screen name="cuentas/cobro" />
       <Drawer.Screen name="compras/[id]" />

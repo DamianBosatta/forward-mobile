@@ -4,7 +4,7 @@ import { Search } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 
 /** Buscador de la cartera, pegado a la barra superior (láminas Clientes y TabCuentaCorriente). */
-export function BuscadorCartera({ valor, onCambio }: { valor: string; onCambio: (texto: string) => void }) {
+export function BuscadorCartera({ valor, onCambio, etiqueta = 'Buscar cliente', placeholder = 'Dirección, nombre o CUIT' }: { valor: string; onCambio: (texto: string) => void; etiqueta?: string; placeholder?: string }) {
   const c = useColors()
   return (
     <View style={{ backgroundColor: c.topBar, paddingHorizontal: space[4], paddingBottom: space[3] }}>
@@ -21,8 +21,8 @@ export function BuscadorCartera({ valor, onCambio }: { valor: string; onCambio: 
       >
         <Search size={20} color={c.textSecondary} />
         <TextInput
-          accessibilityLabel="Buscar cliente"
-          placeholder="Dirección, nombre o CUIT"
+          accessibilityLabel={etiqueta}
+          placeholder={placeholder}
           placeholderTextColor={c.textSecondary}
           value={valor}
           onChangeText={onCambio}

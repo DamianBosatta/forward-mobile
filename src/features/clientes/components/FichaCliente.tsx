@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { FilePen, Lock, MapPin, MessageCircle, Pencil, Phone, type LucideIcon } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { FilePen, Lock, MapPin, MessageCircle, Pencil, Phone } from 'lucide-react-native'
+import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, Segmented, StatusChip, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
 import { useVentas } from '@/libs/api-client/ventas'
@@ -14,82 +14,13 @@ import { puedePedirCambio } from '@/features/socios/lib/camposSensibles'
 import { formatToLocalTime } from '@/src/utils/date'
 import { CreditoDelCliente } from './CreditoDelCliente'
 import { SolicitudCambio } from './SolicitudCambio'
+import { Accion, Cifra, Dato, Seccion } from '@/features/socios/components/PiezasDeFicha'
 import { urlLlamar, urlWhatsApp } from '../lib/contacto'
 import { direccionDeEntrega, nombreDelCliente, textoCondicionPago } from '../lib/cliente'
 
 export const AVISO_CONDICION_PAGO = 'Solo la cambia quien puede autorizar ventas'
 
 type Solapa = 'compras' | 'cuenta' | 'datos'
-
-function Dato({ etiqueta, valor }: { etiqueta: string; valor?: string | null }) {
-  const c = useColors()
-  if (!valor?.trim()) return null
-  return (
-    <View style={{ gap: space[1] }}>
-      <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{etiqueta}</Text>
-      <Text style={{ ...typeScale.cuerpo, color: c.text }}>{valor}</Text>
-    </View>
-  )
-}
-
-function Accion({ icono: Icono, label, onPress }: { icono: LucideIcon; label: string; onPress: () => void }) {
-  const c = useColors()
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      style={({ pressed }) => ({
-        flex: 1,
-        minWidth: 72,
-        minHeight: 64,
-        borderRadius: radii.campo,
-        backgroundColor: c.surface,
-        borderWidth: 1,
-        borderColor: c.border,
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: space[1],
-        opacity: pressed ? 0.85 : 1,
-      })}
-    >
-      <Icono size={22} color={c.brandInk} />
-      <Text style={{ ...typeScale.secundario, color: c.text }}>{label}</Text>
-    </Pressable>
-  )
-}
-
-function Seccion({ titulo, children }: { titulo?: string; children: React.ReactNode }) {
-  const c = useColors()
-  return (
-    <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[3] }}>
-      {titulo ? <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>{titulo}</Text> : null}
-      {children}
-    </View>
-  )
-}
-
-/** Cifra del resumen de la ficha: saldo, vencido y crédito libre, como los dice el servidor. */
-function Cifra({ etiqueta, valor, alerta = false }: { etiqueta: string; valor: string; alerta?: boolean }) {
-  const c = useColors()
-  return (
-    <View
-      style={{
-        flex: 1,
-        minWidth: 0,
-        paddingVertical: space[2],
-        paddingHorizontal: space[3],
-        borderRadius: radii.tarjeta,
-        backgroundColor: alerta ? c.chip.anulado.bg : c.surface,
-        borderWidth: alerta ? 0 : 1,
-        borderColor: c.border,
-      }}
-    >
-      <Text style={{ ...typeScale.secundario, color: alerta ? c.chip.anulado.text : c.textSecondary }}>{etiqueta}</Text>
-      <Text numberOfLines={1} style={[typeScale.cuerpoDestacado, importe, { color: alerta ? c.chip.anulado.text : c.text }]}>{valor}</Text>
-    </View>
-  )
-}
 
 /**
  * Ficha de un cliente (láminas Ficha del cliente y TabClientes): dirección como título, nombre aparte,
