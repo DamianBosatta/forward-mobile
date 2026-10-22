@@ -52,3 +52,36 @@ export function nombreLargo(d: DiaSemana): string {
 export function moverDia(fecha: string, dias: number): DiaSemana {
   return diaDe(Date.parse(`${fecha}T15:00:00Z`), dias)
 }
+
+/** Un mes mostrado en grilla: sus semanas de lunes a domingo, con los días de los meses vecinos que completan la primera y la última. */
+export interface MesGrilla {
+  titulo: string
+  /** Primer y último día de la grilla (YYYY-MM-DD), para pedir el rango al servidor. */
+  desde: string
+  hasta: string
+  /** `delMes` es false en los días de relleno. */
+  semanas: (DiaSemana & { delMes: boolean })[][]
+}
+
+/** El mes de `ms` corrido `meses` meses (días argentinos). "Octubre 2026" empieza un jueves: la grilla arranca el lunes 28 de septiembre. */
+export function mesDe(ms: number, meses = 0): MesGrilla {
+  const hoy = partesArgentina(ms)
+  const total = hoy.anio * 12 + hoy.mes + meses
+  const anio = Math.floor(total / 12)
+  const mes = total - anio * 12
+  const primero = `${anio}-${dos(mes + 1)}-01`
+  const diasDelMes = new Date(Date.UTC(anio, mes + 1, 0)).getUTCDate()
+  const arranque = (new Date(`${primero}T12:00:00Z`).getUTCDay() + 6) % 7
+  const cantidad = Math.ceil((arranque + diasDelMes) / 7) * 7
+  const base = Date.parse(`${primero}T15:00:00Z`)
+  const dias = Array.from({ length: cantidad }, (_, i) => {
+    const d = diaDe(base, i - arranque)
+    return { ...d, delMes: d.mes === mes }
+  })
+  return {
+    titulo: `${MESES[mes][0].toUpperCase()}${MESES[mes].slice(1)} ${anio}`,
+    desde: dias[0].fecha,
+    hasta: dias[dias.length - 1].fecha,
+    semanas: Array.from({ length: cantidad / 7 }, (_, i) => dias.slice(i * 7, i * 7 + 7)),
+  }
+}

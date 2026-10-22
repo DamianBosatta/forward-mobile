@@ -18,3 +18,11 @@ describe('presentación del calendario (9C)', () => {
     expect(textoSemanal([])).toBe('Se repite todas las semanas')
   })
 })
+
+describe('tipos de evento nuevo (T11)', () => {
+  it('se ofrecen los mismos tres que la web, para todos', () => {
+    const { TIPOS_MANUALES } = require('../presentacion')
+    expect(TIPOS_MANUALES.map((t: { value: string }) => t.value)).toEqual(['ServicioRecurrente', 'ObligacionPeriodica', 'Manual'])
+    expect(TIPOS_MANUALES.map((t: { label: string }) => t.label)).toEqual(['Servicio (luz, gas, internet…)', 'Obligación periódica (VTV, impuestos…)', 'Otro evento'])
+  })
+})
