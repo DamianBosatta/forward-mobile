@@ -2853,7 +2853,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["RespuestaCompra"];
+                        "application/json": components["schemas"]["RespuestaCompra"];
+                        "text/json": components["schemas"]["RespuestaCompra"];
+                    };
                 };
             };
         };
@@ -2894,7 +2898,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["RespuestaCompra"];
+                        "application/json": components["schemas"]["RespuestaCompra"];
+                        "text/json": components["schemas"]["RespuestaCompra"];
+                    };
                 };
             };
         };
@@ -2936,9 +2944,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["GuidResponse"];
-                        "application/json": components["schemas"]["GuidResponse"];
-                        "text/json": components["schemas"]["GuidResponse"];
+                        "text/plain": components["schemas"]["RespuestaCompra"];
+                        "application/json": components["schemas"]["RespuestaCompra"];
+                        "text/json": components["schemas"]["RespuestaCompra"];
                     };
                 };
                 /** @description Bad Request */
@@ -3197,9 +3205,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["GuidResponse"];
-                        "application/json": components["schemas"]["GuidResponse"];
-                        "text/json": components["schemas"]["GuidResponse"];
+                        "text/plain": components["schemas"]["RespuestaCompra"];
+                        "application/json": components["schemas"]["RespuestaCompra"];
+                        "text/json": components["schemas"]["RespuestaCompra"];
                     };
                 };
                 /** @description Bad Request */
@@ -3274,9 +3282,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": string;
-                        "application/json": string;
-                        "text/json": string;
+                        "text/plain": components["schemas"]["RespuestaCompra"];
+                        "application/json": components["schemas"]["RespuestaCompra"];
+                        "text/json": components["schemas"]["RespuestaCompra"];
                     };
                 };
             };
@@ -8485,9 +8493,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": string;
-                        "application/json": string;
-                        "text/json": string;
+                        "text/plain": components["schemas"]["RespuestaGasto"];
+                        "application/json": components["schemas"]["RespuestaGasto"];
+                        "text/json": components["schemas"]["RespuestaGasto"];
                     };
                 };
             };
@@ -17278,6 +17286,12 @@ export interface paths {
                     TipoOperacion?: components["schemas"]["TipoOperacionVenta"];
                     Estado?: components["schemas"]["EstadoVenta"];
                     Estados?: components["schemas"]["EstadoVenta"][];
+                    Cliente?: string;
+                    VendedorId?: string;
+                    MontoMin?: number;
+                    MontoMax?: number;
+                    Moneda?: string;
+                    EstadoPago?: components["schemas"]["EstadoPagoVenta"];
                 };
                 header?: never;
                 path?: never;
@@ -19780,6 +19794,7 @@ export interface components {
             creditoFiscal: number;
             /** Format: double */
             baseCostoMercaderia: number;
+            aviso?: string | null;
         };
         ComprobanteRecibidoDtoResponse: {
             /** Format: int32 */
@@ -23294,6 +23309,34 @@ export interface components {
             aprobar?: boolean;
             comentario?: string | null;
         };
+        RespuestaCompra: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            /** Format: uuid */
+            data?: string;
+            codigo?: string | null;
+            advertenciaCambioCosto?: string | null;
+            comprobanteGuardado?: boolean;
+            avisoComprobante?: string | null;
+            costoSinRestaurar?: string | null;
+        };
+        RespuestaGasto: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            /** Format: uuid */
+            data?: string;
+            codigo?: string | null;
+            facturaGuardada?: boolean;
+            avisoFactura?: string | null;
+        };
         ResultadoAccionMasivaItemDto: {
             /** Format: uuid */
             productoId: string;
@@ -24902,6 +24945,7 @@ export interface components {
             estado: number;
             /** Format: int32 */
             tipoOperacion: number;
+            tipoOperacionBorrador?: components["schemas"]["TipoOperacionVenta"];
             activo: boolean;
             /** Format: int64 */
             version: number;
