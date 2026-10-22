@@ -5,7 +5,7 @@
 const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
-const { listar, hashDe } = require('./reglas-hash');
+const { listar, hashDe, REGLAS_DATOS } = require('./reglas-hash');
 
 const repo = process.env.FORWARD_SYSTEM_REPO || path.join('..', 'fs-combo');
 const ref = process.env.FORWARD_SYSTEM_REF || 'origin/main';
@@ -13,7 +13,7 @@ const fuente = 'forward-frontend/packages/reglas/src';
 const carpeta = path.join('libs', 'reglas');
 
 let fallo = false;
-const archivos = listar(carpeta);
+const archivos = listar(carpeta, carpeta, ['.ts', '.json']);
 const local = hashDe(archivos, (rel) => fs.readFileSync(path.join(carpeta, rel), 'utf8'));
 const guardado = fs.readFileSync(path.join(carpeta, 'reglas.hash'), 'utf8').trim();
 if (local !== guardado) {
@@ -48,7 +48,10 @@ if (!existe) {
     .split('\n')
     .filter((f) => f.endsWith('.ts') && !f.endsWith('.test.ts'))
     .map((f) => f.slice(fuente.length + 1));
-  const remoto = hashDe(rels, (rel) => git(['show', `${ref}:${fuente}/${rel}`]).stdout);
+  const remoto = hashDe(
+    [...rels, ...Object.keys(REGLAS_DATOS)],
+    (rel) => git(['show', `${ref}:${REGLAS_DATOS[rel] ?? `${fuente}/${rel}`}`]).stdout,
+  );
   if (remoto !== guardado) {
     console.error(`libs/reglas está desactualizada respecto de forward-system ${ref}.\nCopiala de nuevo: npm run sync:reglas`);
     fallo = true;
