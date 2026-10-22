@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
@@ -13,7 +13,7 @@ import { diaArgentina } from '@/src/utils/date'
 import { MOTIVOS_NO_ENTREGA } from './hojaDeRuta'
 import { etiquetaNota, importeParada } from './cobroParada'
 import { armarEntrega, razonPendiente, type EntregaArmada, type FormEntrega } from './entrega'
-import { pasosDeEntrega, razonCobro, razonDevolucion, razonReporte, textoRepartido, comparacionDeCobro, type ContextoCobro, type Paso } from './pasosEntrega'
+import { pasosDeEntrega, razonCobro, razonDevolucion, razonReporte, textoRepartido, avisoDeCobro, comparacionDeCobro, type ContextoCobro, type Paso } from './pasosEntrega'
 import { FotoEntrega } from './FotoEntrega'
 import { CobroEnEntrega } from './CobroEnEntrega'
 import { DevolucionEnEntrega } from './DevolucionEnEntrega'
@@ -68,6 +68,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
   const [f, setF] = useState<FormEntrega>(formVacio)
   const [hayDevolucion, setHayDevolucion] = useState<boolean | null>(null)
   const [firmar, setFirmar] = useState(false)
+  const firmarRef = useRef(false)
   const [motivo, setMotivo] = useState<string | null>(null)
   const [subiendo, setSubiendo] = useState(0)
   const [errorForm, setErrorForm] = useState<string | null>(null)
@@ -81,12 +82,13 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
   const aCobrar = importeParada(parada)
   const disponibles = Object.fromEntries((renglones.data ?? []).map((r) => [r.ventaDetalleId ?? '', r.cantidadDisponible ?? 0]))
   // Con "No, recibió todo" las cantidades que se hayan cargado antes no viajan (pero se conservan por si vuelve).
-  const form: FormEntrega = hayDevolucion ? f : { ...f, devolucion: {} }
+  // La firma solo viaja con la casilla tildada (una foto que termina de subir tarde no la reactiva).
+  const form: FormEntrega = { ...f, devolucion: hayDevolucion ? f.devolucion : {}, firmaUrl: firmar ? f.firmaUrl : null }
 
   const pasos = pasosDeEntrega(hayDevolucion)
   const indice = Math.max(0, pasos.indexOf(paso))
   const ctxCobro: ContextoCobro = {
-    lineas: f.lineas, imputacion: f.imputacion, firmar, firmaUrl: f.firmaUrl,
+    lineas: f.lineas, imputacion: f.imputacion, firmar, firmaUrl: form.firmaUrl,
     aCobrar: aCobrar.aCobrar ? aCobrar.valor : null, hayDevolucion: hayDevolucion === true, subiendo: subiendo > 0,
   }
   let razon: string | null
@@ -230,6 +232,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
                 aCobrar={aCobrar.aCobrar ? aCobrar.valor : null}
                 hoy={mostrarFecha(diaArgentina(Date.now()))}
                 repartido={f.lineas.length > 0 ? textoRepartido(ctxCobro) : undefined}
+                aviso={avisoDeCobro(ctxCobro)}
                 porDeudaAnterior={porDeudaAnterior}
               />
               {cmp && hayDevolucion ? (
@@ -238,11 +241,12 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
               <FirmaEnEntrega
                 firmar={firmar}
                 onFirmar={(v) => {
+                  firmarRef.current = v
                   setFirmar(v)
                   if (!v) cambiar({ firmaUrl: null })
                 }}
                 url={f.firmaUrl}
-                onUrl={(url) => cambiar({ firmaUrl: url })}
+                onUrl={(url) => firmarRef.current && cambiar({ firmaUrl: url })}
                 onSubiendo={alSubir}
               />
             </>
@@ -256,7 +260,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
                   .map((r) => ({ nombre: r.productoNombre ?? 'Producto', cantidad: leerNumero(form.devolucion[r.ventaDetalleId ?? ''] ?? '') ?? 0 }))
                   .filter((x) => x.cantidad > 0),
                 cobros: f.lineas.map((l) => ({ medio: l.medio?.nombre ?? '', monto: leerNumero(l.monto) ?? 0, conFoto: !!l.fotoUrl })),
-                firmada: !!f.firmaUrl,
+                firmada: !!form.firmaUrl,
                 aDeudaAnterior: porDeudaAnterior,
               }}
             />

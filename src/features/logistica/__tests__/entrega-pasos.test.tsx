@@ -83,6 +83,7 @@ async function hastaElResumen(receptor = 'Abel') {
   await hastaElCobro(receptor)
   await userEvent.press(continuar())
 }
+const CHEQUE_VACIO = { numero: '', banco: '', titular: '', emision: '', pago: '' }
 const deshabilitado =(el: { props: { accessibilityState?: { disabled?: boolean } } }) => el.props.accessibilityState?.disabled === true
 
 beforeEach(() => {
@@ -180,22 +181,64 @@ describe('E3 Cobro mixto', () => {
     await userEvent.type(screen.getByLabelText(`Monto del cobro ${n}`), monto)
   }
 
-  it('lo cobrado tiene que sumar "A cobrar hoy": faltan y sobran se dicen y frenan', async () => {
+  it('lo cobrado que no suma "A cobrar hoy" avisa en rojo (Faltan / Sobran) y deja continuar', async () => {
     pintar(hoja(P1_CONTADO))
     await abrir()
     await hastaElCobro()
     expect(within(screen.getByLabelText('A cobrar hoy')).getByText('$ 1.000,00')).toBeTruthy()
     await cargarEfectivo('600')
-    expect(deshabilitado(continuar())).toBe(true)
+    expect(deshabilitado(continuar())).toBe(false)
     expect(screen.getByText('Faltan $ 400,00')).toBeTruthy()
     await userEvent.clear(screen.getByLabelText('Monto del cobro 1'))
     await userEvent.type(screen.getByLabelText('Monto del cobro 1'), '1200')
-    expect(deshabilitado(continuar())).toBe(true)
+    expect(deshabilitado(continuar())).toBe(false)
     expect(screen.getByText('Sobran $ 200,00')).toBeTruthy()
     await userEvent.clear(screen.getByLabelText('Monto del cobro 1'))
     await userEvent.type(screen.getByLabelText('Monto del cobro 1'), '1000')
     expect(deshabilitado(continuar())).toBe(false)
+    expect(screen.queryByText(/^(Faltan|Sobran)/)).toBeNull()
     expect(screen.getByText('$ 1.000,00 de $ 1.000,00 ✓')).toBeTruthy()
+  })
+
+  it('cobro parcial sin firma (600 de 1000): se confirma y el cuerpo es el de armarEntrega', async () => {
+    pintar(hoja(P1_CONTADO))
+    await abrir()
+    await hastaElCobro()
+    await cargarEfectivo('600')
+    await userEvent.press(continuar())
+    await userEvent.press(screen.getByLabelText('Confirmar entrega'))
+    await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
+    const esperado = armarEntrega(
+      { receptor: 'Abel', observaciones: '', remitoUrl: null, imputacion: 'PedidoActual', devolucion: {}, firmaUrl: null,
+        lineas: [{ medio: MEDIOS[0] as never, monto: '600', fotoUrl: null, cheque: CHEQUE_VACIO }] },
+      { exigeFotoRemito: false, disponibles: { d1: 6 } },
+    )
+    if (!('entrega' in esperado)) throw new Error(esperado.error)
+    expect(llamadasA(ENTREGAR)[0][1]).toEqual({ claveIdempotencia: expect.stringMatching(/\S{8,}/), ...esperado.entrega })
+  })
+
+  it('cobrar de más (1500 de 1000, al pedido actual): avisa Sobran, deja continuar y el cuerpo es el de armarEntrega', async () => {
+    pintar(hoja(P1_CONTADO))
+    await abrir()
+    await hastaElCobro()
+    await cargarEfectivo('1500')
+    expect(screen.getByText('Sobran $ 500,00')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Firma del cliente'))
+    await userEvent.press(screen.getByLabelText('Sacar foto de la firma del cliente'))
+    await screen.findByText('Foto de la firma del cliente cargada')
+    expect(screen.getByText('Sobran $ 500,00')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Firma del cliente'))
+    expect(deshabilitado(continuar())).toBe(false)
+    await userEvent.press(continuar())
+    await userEvent.press(screen.getByLabelText('Confirmar entrega'))
+    await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
+    const esperado = armarEntrega(
+      { receptor: 'Abel', observaciones: '', remitoUrl: null, imputacion: 'PedidoActual', devolucion: {}, firmaUrl: null,
+        lineas: [{ medio: MEDIOS[0] as never, monto: '1500', fotoUrl: null, cheque: CHEQUE_VACIO }] },
+      { exigeFotoRemito: false, disponibles: { d1: 6 } },
+    )
+    if (!('entrega' in esperado)) throw new Error(esperado.error)
+    expect(llamadasA(ENTREGAR)[0][1]).toEqual({ claveIdempotencia: expect.stringMatching(/\S{8,}/), ...esperado.entrega })
   })
 
   it('con firma, lo que falta queda en la cuenta corriente: alcanza con cobrar menos', async () => {
@@ -207,21 +250,32 @@ describe('E3 Cobro mixto', () => {
     // La firma va siempre con su foto.
     expect(deshabilitado(continuar())).toBe(true)
     expect(screen.getByText('Falta la foto de la firma')).toBeTruthy()
+    expect(screen.queryByText(/^Faltan/)).toBeNull()
     await userEvent.press(screen.getByLabelText('Sacar foto de la firma del cliente'))
     await screen.findByText('Foto de la firma del cliente cargada')
     expect(deshabilitado(continuar())).toBe(false)
   })
 
-  it('con firma tampoco se puede cobrar más que lo de hoy', async () => {
+  it('si se destilda la firma con su foto subiendo, la foto tardía no viaja', async () => {
+    let soltar: (v: { url: string }) => void = () => {}
     pintar(hoja(P1_CONTADO))
     await abrir()
     await hastaElCobro()
-    await cargarEfectivo('1500')
+    await cargarEfectivo('1000')
+    mockPost.mockImplementation((url: string) =>
+      url === '/api/v1/Media/upload-entrega' ? new Promise((r) => { soltar = r }) : Promise.resolve({ paradaId: 'p1' }),
+    )
     await userEvent.press(screen.getByLabelText('Firma del cliente'))
     await userEvent.press(screen.getByLabelText('Sacar foto de la firma del cliente'))
-    await screen.findByText('Foto de la firma del cliente cargada')
-    expect(deshabilitado(continuar())).toBe(true)
-    expect(screen.getByText('Sobran $ 500,00')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Firma del cliente'))
+    await act(async () => { soltar({ url: 'https://r2.test/entregas/tarde.jpg' }) })
+    await waitFor(() => expect(deshabilitado(continuar())).toBe(false))
+    await userEvent.press(continuar())
+    await userEvent.press(screen.getByLabelText('Confirmar entrega'))
+    await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
+    const cuerpo = llamadasA(ENTREGAR)[0][1] as Record<string, unknown>
+    expect(cuerpo.firma).toBeUndefined()
+    expect(JSON.stringify(cuerpo)).not.toContain('tarde.jpg')
   })
 
   it('la transferencia no sigue sin la foto del comprobante', async () => {
@@ -250,8 +304,9 @@ describe('E3 Cobro mixto', () => {
     await abrir()
     await hastaElCobro()
     await cargarEfectivo('8500')
-    expect(deshabilitado(continuar())).toBe(true)
+    expect(screen.getByText('Sobran $ 7.500,00')).toBeTruthy()
     await userEvent.press(screen.getByLabelText('A la deuda anterior'))
+    expect(screen.queryByText(/^(Faltan|Sobran)/)).toBeNull()
     expect(screen.getByText('Paga lo anterior y firma lo actual')).toBeTruthy()
     expect(deshabilitado(continuar())).toBe(false)
   })

@@ -21,12 +21,14 @@ interface Props {
   aCobrar?: number | null
   /** Lámina Cobro: lo repartido entre los medios ("$ 600,00 de $ 1.000,00 ✓"), si hay algo que mostrar. */
   repartido?: string
+  /** "Faltan $ X" / "Sobran $ X" en rojo bajo lo repartido: avisa, no frena. */
+  aviso?: string | null
   /** Paso E4 ("paga lo anterior y firma lo actual"): el cobro va a la deuda vieja. */
   porDeudaAnterior?: boolean
 }
 
 /** Lo que cobró el chofer: una o varias líneas (efectivo, transferencia, cheque). El servidor imputa y valida. */
-export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLineas, onImputacion, onSubiendo, hoy, aCobrar, repartido, porDeudaAnterior }: Props) {
+export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLineas, onImputacion, onSubiendo, hoy, aCobrar, repartido, aviso, porDeudaAnterior }: Props) {
   const c = useColors()
   const cambiar = (i: number, cambio: Partial<LineaCobroForm>) => onLineas(lineas.map((l, j) => (j === i ? { ...l, ...cambio } : l)))
   const cambiarCheque = (i: number, campo: keyof ChequeForm) => (v: string) =>
@@ -89,6 +91,7 @@ export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLine
           <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{repartido}</Text>
         </View>
       ) : null}
+      {aviso ? <Text style={{ ...typeScale.cuerpoDestacado, color: c.danger, textAlign: 'right' }}>{aviso}</Text> : null}
       {lineas.length > 0 && porDeudaAnterior ? (
         <Notice tone="info">El cobro va a la deuda más vieja del cliente. Lo de hoy se firma abajo y queda en su cuenta corriente.</Notice>
       ) : null}

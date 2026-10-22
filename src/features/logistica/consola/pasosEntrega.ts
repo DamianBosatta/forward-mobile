@@ -65,14 +65,23 @@ export interface ContextoCobro {
 
 /**
  * Si el cobro se compara con "A cobrar hoy" y cómo. Sin importe del servidor o con el cobro a la deuda
- * anterior (cuyo saldo la app no recibe) no se compara. Con devolución el servidor descuenta un monto
- * que la app no conoce: solo se frena lo que sobra. Con firma, lo que falta queda en la cuenta corriente.
+ * anterior (cuyo saldo la app no recibe) no se compara. Solo avisa, nunca frena (decisión del dueño, 22-10):
+ * lo que sobra va a la deuda más vieja y lo que falta lo valida el servidor. Con firma o devolución,
+ * que falte es lo esperado (queda en la cuenta o lo descuenta el servidor): no se avisa.
  */
-export function comparacionDeCobro(c: ContextoCobro): { total: number; resto: number; frenaSobra: boolean; frenaFalta: boolean } | null {
+export function comparacionDeCobro(c: ContextoCobro): { total: number; resto: number; avisaSobra: boolean; avisaFalta: boolean } | null {
   if (c.aCobrar == null || c.lineas.length === 0 || c.imputacion === 'DeudaAnterior') return null
   const total = c.aCobrar
   const resto = (centavos(total) - centavos(totalRepartido(c.lineas))) / 100
-  return { total, resto, frenaSobra: resto < 0, frenaFalta: resto > 0 && !c.firmar && !c.hayDevolucion }
+  return { total, resto, avisaSobra: resto < 0, avisaFalta: resto > 0 && !c.firmar && !c.hayDevolucion }
+}
+
+/** "Faltan $ X" / "Sobran $ X" para mostrar en rojo; no impide continuar. */
+export function avisoDeCobro(c: ContextoCobro): string | null {
+  const cmp = comparacionDeCobro(c)
+  if (cmp?.avisaSobra) return `Sobran ${formatImporte(-cmp.resto)}`
+  if (cmp?.avisaFalta) return `Faltan ${formatImporte(cmp.resto)}`
+  return null
 }
 
 export function razonCobro(c: ContextoCobro): string | null {
@@ -82,9 +91,6 @@ export function razonCobro(c: ContextoCobro): string | null {
     if ('error' in r) return r.error
   }
   if (c.firmar && !c.firmaUrl) return 'Falta la foto de la firma'
-  const cmp = comparacionDeCobro(c)
-  if (cmp?.frenaSobra) return `Sobran ${formatImporte(-cmp.resto)}`
-  if (cmp?.frenaFalta) return `Faltan ${formatImporte(cmp.resto)}`
   return null
 }
 
