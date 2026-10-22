@@ -75,11 +75,20 @@ describe('Reportes', () => {
 
     const ventas = await screen.findByTestId('reporte-ventas')
     expect(screen.getByText('Octubre 2026')).toBeTruthy()
+    expect(screen.getByText('Mis números')).toBeTruthy()
     expect(resumenUrls()).toEqual(['/api/v1/Reportes/mobile/resumen-vendedor?anio=2026&mes=10'])
 
-    expect(within(ventas).getByText('$ 1.250.000,00')).toBeTruthy()
-    expect(within(ventas).getByText('5 ventas · ticket promedio $ 250.000,00')).toBeTruthy()
-    expect(within(ventas).getByLabelText('Cobrado de estas ventas: $ 400.000,00')).toBeTruthy()
+    // Las cuatro cifras de la lámina M20, todas del servidor.
+    expect(screen.getByLabelText('Vendido: $ 1.250.000,00, 5 ventas')).toBeTruthy()
+    expect(screen.getByLabelText('Tu comisión: $ 55.000,00, neto del mes')).toBeTruthy()
+    expect(screen.getByLabelText('Cobrado: $ 400.000,00, de estas ventas')).toBeTruthy()
+    expect(screen.getByLabelText('Por cobrar: $ 830.000,00, 2 clientes con deuda')).toBeTruthy()
+    expect(within(ventas).getByText('Ticket promedio $ 250.000,00')).toBeTruthy()
+    // Lo que el servidor no da no se inventa: ni vencido, ni ventas por semana, ni ranking de compradores.
+    expect(screen.queryByText(/vencido/i)).toBeNull()
+    expect(screen.queryByText(/por semana/i)).toBeNull()
+    expect(screen.queryByText(/más te compraron/i)).toBeNull()
+    expect(screen.getByText('Reporte básico del vendedor. Los reportes de gestión se ven en la web.')).toBeTruthy()
     // Sin CAP_VER_COSTOS el servidor no manda margen: no se muestra la fila.
     expect(within(ventas).queryByText(/Margen/)).toBeNull()
 
@@ -91,8 +100,7 @@ describe('Reportes', () => {
     expect(within(comisiones).getByLabelText('A cobrar hoy: $ 41.000,00')).toBeTruthy()
 
     const cobros = screen.getByTestId('reporte-cobros')
-    expect(within(cobros).getByText('$ 830.000,00')).toBeTruthy()
-    expect(within(cobros).getByText('2 clientes con deuda')).toBeTruthy()
+    expect(within(cobros).getByText('Total $ 830.000,00')).toBeTruthy()
     // El cliente se identifica por la dirección; la razón social va aparte.
     const homero = within(cobros).getByLabelText('Av. Siempreviva 742 - Kiosco Homero, debe $ 500.000,00')
     expect(within(homero).getByText('Simpson SRL')).toBeTruthy()
@@ -101,12 +109,13 @@ describe('Reportes', () => {
     expect(urls().some((u) => u.includes('/Ventas/vendedores'))).toBe(false)
   })
 
-  it('Mes anterior pide el mes que corresponde, y Mes siguiente no pasa del actual', async () => {
+  it('el período ofrece el mes en curso y el anterior, y el anterior pide el mes que corresponde', async () => {
     pintar()
     await screen.findByText('Octubre 2026')
-    expect(screen.getByLabelText('Mes siguiente').props.accessibilityState).toMatchObject({ disabled: true })
+    expect(screen.getByRole('radio', { name: 'Octubre' }).props.accessibilityState).toMatchObject({ checked: true })
+    expect(screen.queryByRole('radio', { name: 'Semana' })).toBeNull()
 
-    await userEvent.press(screen.getByLabelText('Mes anterior'))
+    await userEvent.press(screen.getByRole('radio', { name: 'Septiembre' }))
 
     expect(await screen.findByText('Septiembre 2026')).toBeTruthy()
     expect(resumenUrls()).toContain('/api/v1/Reportes/mobile/resumen-vendedor?anio=2026&mes=9')
