@@ -42,7 +42,7 @@ export type EntregaArmada = Omit<CuerpoEntregaParada, 'claveIdempotencia'>
 type LineaCobro = components['schemas']['LineaCobroEntregaInput']
 type RenglonDevuelto = components['schemas']['NotaCreditoItemInput']
 
-function armarLinea(l: LineaCobroForm, n: number): { linea: LineaCobro } | { error: string } {
+export function armarLinea(l: LineaCobroForm, n: number): { linea: LineaCobro } | { error: string } {
   if (!l.medio) return { error: `Elegí el medio del cobro ${n}.` }
   const monto = leerNumero(l.monto)
   if (monto == null || monto <= 0) return { error: `El monto del cobro ${n} tiene que ser mayor a cero.` }
