@@ -1,3 +1,4 @@
+import { diaArgentina, formatToLocalTime, inicioDeDiaArgentinaMs, primerDiaDelMesArgentina } from '@/src/utils/date'
 import React, { useMemo } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native'
 import { useRouter, useNavigation } from 'expo-router'
@@ -16,15 +17,13 @@ import type { HojaRutaListItemDto } from '@/libs/api-client/types'
 
 // ─── Date helpers (memoized at module level — never recomputed per render) ─────
 
+// Días calendario de Argentina (YYYY-MM-DD): el servidor los toma como inicio/fin de día argentino.
 function firstDayOfCurrentMonth(): string {
-  const d = new Date()
-  d.setDate(1)
-  d.setHours(0, 0, 0, 0)
-  return d.toISOString()
+  return primerDiaDelMesArgentina(Date.now())
 }
 
-function nowIso(): string {
-  return new Date().toISOString()
+function today(): string {
+  return diaArgentina(Date.now())
 }
 
 // ─── Estado badge config ───────────────────────────────────────────────────────
@@ -76,7 +75,7 @@ export function ChoferDashboard() {
   const { fechaDesde, fechaHasta } = useMemo(
     () => ({
       fechaDesde: firstDayOfCurrentMonth(),
-      fechaHasta: nowIso(),
+      fechaHasta: today(),
     }),
     [],
   )
@@ -114,7 +113,7 @@ export function ChoferDashboard() {
   const { viajesDelMes, totalProgramados, paradasActivas } = useMemo(() => {
     if (!hojas) return { viajesDelMes: 0, totalProgramados: 0, paradasActivas: 0 }
 
-    const mesStart = new Date(fechaDesde).getTime()
+    const mesStart = inicioDeDiaArgentinaMs(fechaDesde)
 
     const viajesDelMes = hojas.filter(h => {
       const t = h.fechaSalida ? new Date(h.fechaSalida).getTime() : 0
@@ -548,11 +547,7 @@ export function ChoferDashboard() {
                 const badge = getEstadoBadge(hoja.estado, colors)
                 const code = `HR-${hoja.id.slice(0, 8).toUpperCase()}`
                 const fecha = hoja.fechaSalida
-                  ? new Date(hoja.fechaSalida).toLocaleDateString('es-AR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: '2-digit',
-                    })
+                  ? formatToLocalTime(hoja.fechaSalida, 'dd/MM/yy')
                   : '—'
                 const paradas = hoja.cantidadParadas
 

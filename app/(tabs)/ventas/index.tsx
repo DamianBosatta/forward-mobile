@@ -1,3 +1,4 @@
+import { formatToLocalTime, partesArgentina } from '@/src/utils/date'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import {
   View,
@@ -69,10 +70,10 @@ function MonthPicker({
   const colors = useColors()
   const isDark = useIsDark()
   const { width } = useResponsive()
-  const now    = new Date()
-  const [pickerYear, setPickerYear] = useState(selected?.year ?? now.getFullYear())
+  const now    = partesArgentina(Date.now())
+  const [pickerYear, setPickerYear] = useState(selected?.year ?? now.anio)
 
-  const canGoNext = pickerYear < now.getFullYear()
+  const canGoNext = pickerYear < now.anio
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -143,8 +144,8 @@ function MonthPicker({
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
                   {MONTHS_SHORT.map((m, mi) => {
                     const isSelected = selected?.month === mi && selected?.year === pickerYear
-                    const isToday    = mi === now.getMonth() && pickerYear === now.getFullYear()
-                    const isFuture   = pickerYear === now.getFullYear() && mi > now.getMonth()
+                    const isToday    = mi === now.mes && pickerYear === now.anio
+                    const isFuture   = pickerYear === now.anio && mi > now.mes
 
                     return (
                       <TouchableOpacity
@@ -299,7 +300,7 @@ const VentaCard = React.memo(({ item, index }: { item: Venta, index: number }) =
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Clock size={14} color={colors.textMuted} />
                 <Text style={[styles.cardFooterDate, { color: colors.textMuted }]}>
-                  Entrega: {new Date(deliveryDate).toLocaleDateString('es-AR')}
+                  Entrega: {formatToLocalTime(deliveryDate, 'dd/MM/yyyy')}
                 </Text>
               </View>
               {!esEstadoVenta(item.estado, 'Anulada') && (

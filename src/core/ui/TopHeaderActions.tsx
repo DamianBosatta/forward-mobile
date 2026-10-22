@@ -1,3 +1,4 @@
+import { formatToLocalTime } from '@/src/utils/date'
 import React, { useState } from 'react'
 import { View, Pressable, Text, Modal, StyleSheet, ScrollView, Platform, useWindowDimensions } from 'react-native'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -147,7 +148,7 @@ export function TopHeaderActions() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                     <Clock size={12} color={colors.textDisabled} />
                     <Text style={{ color: colors.textDisabled, fontSize: 10, fontWeight: '800' }}>
-                      {new Date(venta.fecha ?? '').toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })}
+                      {formatToLocalTime(venta.fecha, 'dd/MM/yy HH:mm')}
                     </Text>
                   </View>
 

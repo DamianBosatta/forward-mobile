@@ -1,3 +1,4 @@
+import { formatToLocalTime } from '@/src/utils/date'
 import {
   View, Text, ScrollView, Pressable, Alert, ActivityIndicator,
   Modal, StyleSheet, Platform, TouchableOpacity
@@ -64,7 +65,7 @@ function formatMoney(val: number) {
 
 function formatDate(iso: string) {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  return formatToLocalTime(iso, 'dd/MM/yy')
 }
 
 function getInitials(name?: string) {

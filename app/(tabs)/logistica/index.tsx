@@ -1,3 +1,4 @@
+import { formatToLocalTime, parseDateSafe } from '@/src/utils/date'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useRouter, useNavigation } from 'expo-router'
@@ -87,12 +88,8 @@ export default function LogisticaScreen() {
   const rutas = useMemo(() => data ?? [], [data])
 
   const formatDate = (dateStr: string) => {
-    try {
-      const d = new Date(dateStr)
-      return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-    } catch {
-      return dateStr
-    }
+    const f = parseDateSafe(dateStr)
+    return f ? formatToLocalTime(dateStr, 'dd/MM/yyyy') : dateStr
   }
 
   const getStatusDetails = (estado: number) => detalleEstadoHoja(estado, colors)

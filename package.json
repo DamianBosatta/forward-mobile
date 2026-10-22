@@ -11,6 +11,7 @@
     "ios": "expo run:ios",
     "lint": "tsc --noEmit",
     "test": "jest --forceExit",
+    "gate:multi-tz": "node scripts/gate-multi-tz.mjs",
     "test:unit": "jest --testPathPattern='__tests__' --forceExit",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",

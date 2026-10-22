@@ -1,3 +1,4 @@
+import { diaCalendarioAMs, sumarDiasADia } from '@/src/utils/date'
 /**
  * Reglas del detalle de compra y de la recepción. Son el espejo de la web
  * (forward-frontend/apps/web/src/features/compras): `lib/acciones-compra.ts`, `ui/AccionesBajaCompra.tsx`,
@@ -67,25 +68,18 @@ export interface CondicionParaVencimiento { tipo?: string | null; dias?: number 
 export type ProblemaFechaFactura = 'falta' | 'fuera-de-rango' | null
 
 const requiereFechaFactura = (c: CondicionParaVencimiento | null | undefined) => c?.tipo === 'DiasDesdeFactura'
-const aMs = (iso: string) => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
-  if (!m) return null
-  const ms = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
-  return new Date(ms).toISOString().slice(0, 10) === iso ? ms : null
-}
-const sumarDias = (iso: string, dias: number) => new Date((aMs(iso) ?? 0) + dias * 86_400_000).toISOString().slice(0, 10)
 const diasEnMes = (anio: number, mes: number) => new Date(Date.UTC(anio, mes, 0)).getUTCDate()
 const pad = (n: number, largo = 2) => String(n).padStart(largo, '0')
 
 /** Fecha de factura admitida: desde hace un año (un 29 de febrero cae el 28) hasta mañana. */
 export function rangoFechaFactura(hoy: string): { min: string; max: string } {
   const [anio, mes, dia] = hoy.split('-').map(Number)
-  return { min: `${pad(anio - 1, 4)}-${pad(mes)}-${pad(Math.min(dia, diasEnMes(anio - 1, mes)))}`, max: sumarDias(hoy, 1) }
+  return { min: `${pad(anio - 1, 4)}-${pad(mes)}-${pad(Math.min(dia, diasEnMes(anio - 1, mes)))}`, max: sumarDiasADia(hoy, 1) }
 }
 
 export function problemaFechaFactura(condicion: CondicionParaVencimiento | null | undefined, fecha: string, hoy: string): ProblemaFechaFactura {
   if (!fecha) return requiereFechaFactura(condicion) ? 'falta' : null
-  if (aMs(fecha) === null) return 'fuera-de-rango'
+  if (diaCalendarioAMs(fecha) === null) return 'fuera-de-rango'
   const { min, max } = rangoFechaFactura(hoy)
   return fecha < min || fecha > max ? 'fuera-de-rango' : null
 }
@@ -104,15 +98,15 @@ export function calcularVencimiento(
   fechaEntrega: string,
   fechaFactura: string | null | undefined,
 ): string | null {
-  if (!condicion || aMs(fechaEntrega) === null) return null
+  if (!condicion || diaCalendarioAMs(fechaEntrega) === null) return null
   switch (condicion.tipo) {
     case 'Contado':
       return fechaEntrega
     case 'DiasDesdeEntrega':
-      return esEnteroEntre(condicion.dias, 1, 365) ? sumarDias(fechaEntrega, condicion.dias) : null
+      return esEnteroEntre(condicion.dias, 1, 365) ? sumarDiasADia(fechaEntrega, condicion.dias) : null
     case 'DiasDesdeFactura':
-      if (!fechaFactura || aMs(fechaFactura) === null) return null
-      return esEnteroEntre(condicion.dias, 1, 365) ? sumarDias(fechaFactura, condicion.dias) : null
+      if (!fechaFactura || diaCalendarioAMs(fechaFactura) === null) return null
+      return esEnteroEntre(condicion.dias, 1, 365) ? sumarDiasADia(fechaFactura, condicion.dias) : null
     case 'DiaFijoDelMes': {
       if (!esEnteroEntre(condicion.diaDelMes, 1, 31)) return null
       const [anio, mes] = fechaEntrega.split('-').map(Number)

@@ -6,6 +6,7 @@ import { itemsCargados, totalDelServidor } from '@/features/listas/lib/contador'
 import { contadorVentas, resumenFiltrado } from '../lib/resumenVentas'
 import { useAlLlegarFiltro, type FiltroVentasRuta } from '@/features/listas/lib/filtroDeRuta'
 import type { Venta } from '@/libs/api-client'
+import { partesArgentina, rangoDelMes } from '@/src/utils/date'
 
 export type SelectedMonth = { year: number; month: number }
 type FiltroVentas = 'Todas' | 'Pendiente' | 'Confirmada' | 'Preparando' | 'En Ruta' | 'Entregada' | 'Anulada' | 'Por Autorizar'
@@ -37,13 +38,14 @@ const tipoDeRuta = (f: FiltroVentasRuta) => (f.tipo === 'presupuestos' ? 1 : 2)
  */
 export function useVentasList(filtroDeRuta: FiltroVentasRuta | null = null) {
   const colors = useColors()
-  const now = new Date()
+  // Mes en curso según el calendario de Argentina, no el del teléfono (X9).
+  const hoyAr = partesArgentina(Date.now())
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filter, setFilter] = useState<FiltroVentas>(filtroDeRuta ? CHIP_DE_RUTA[filtroDeRuta.estado] : 'Todas')
   const [pickerOpen, setPickerOpen] = useState(false)
   // null = sin filtro de mes (lo que cuenta Inicio); elegir un mes en el selector lo vuelve a poner.
-  const [selected, setSelected] = useState<SelectedMonth | null>(filtroDeRuta ? null : { year: now.getFullYear(), month: now.getMonth() })
+  const [selected, setSelected] = useState<SelectedMonth | null>(filtroDeRuta ? null : { year: hoyAr.anio, month: hoyAr.mes })
   const [tipoOperacion, setTipoOperacion] = useState<number>(filtroDeRuta ? tipoDeRuta(filtroDeRuta) : 2) // 2 = Pedido, 1 = Presupuesto
   useAlLlegarFiltro(filtroDeRuta, (f) => {
     setTipoOperacion(tipoDeRuta(f))
@@ -52,10 +54,12 @@ export function useVentasList(filtroDeRuta: FiltroVentasRuta | null = null) {
     setSearchTerm('')
   })
 
-  const isCurrentMonth = selected?.year === now.getFullYear() && selected?.month === now.getMonth()
+  const isCurrentMonth = selected?.year === hoyAr.anio && selected?.month === hoyAr.mes
 
-  const fechaDesde = selected ? new Date(selected.year, selected.month, 1).toISOString() : undefined
-  const fechaHasta = selected ? new Date(selected.year, selected.month + 1, 0, 23, 59, 59).toISOString() : undefined
+  // Días calendario argentinos (YYYY-MM-DD): el servidor toma el día y aplica inicio/fin de día de Argentina.
+  const rangoMes = selected ? rangoDelMes(selected.year, selected.month) : undefined
+  const fechaDesde = rangoMes?.desde
+  const fechaHasta = rangoMes?.hasta
 
   // Búsqueda y estado van al servidor; el resumen se pide con los mismos filtros.
   const estados = ESTADOS_DEL_FILTRO[filter]
@@ -120,7 +124,6 @@ export function useVentasList(filtroDeRuta: FiltroVentasRuta | null = null) {
     selected, setSelected,
     tipoOperacion, setTipoOperacion,
     isCurrentMonth,
-    now,
     // Sin filas todavía, también en pausa sin conexión: se ve la carga, no "No hay operaciones".
     isLoading: isPending,
     // La vista previa también "trae datos": no es deslizar para actualizar.
