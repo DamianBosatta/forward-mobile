@@ -15,6 +15,7 @@ import { direccionDeEntrega, inicialesDeDireccion } from '@/features/clientes/li
 import { fusionarRecientes, leerRecientes } from '@/features/clientes/lib/recientes'
 import { useVentaNueva } from '@/features/ventas/lib/ventaNueva'
 import { useVenderA } from '@/features/venta-nueva/hooks/useVenderA'
+import { usePermissions } from '@/core/auth/RequirePermission'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
@@ -47,6 +48,9 @@ export function MiDiaScreen() {
   const rutaVenta = useVentaNueva() ? '/(tabs)/ventas/nueva-v2' : '/(tabs)/ventas/nueva'
   // Con la venta nueva, un reciente abre la venta con ese cliente; si no, su ficha (como hasta ahora).
   const venderA = useVenderA()
+  // "Nueva venta" pide lo mismo que el "+" de la barra: poder crear ventas (decisión del dueño 22-10).
+  const { canDo } = usePermissions()
+  const puedeVender = canDo('MOD_VENTAS', 'create')
   const nombre = user?.nombre || user?.username || ''
 
   const [refrescando, setRefrescando] = useState(false)
@@ -166,7 +170,7 @@ export function MiDiaScreen() {
     </View>
   )
 
-  const nuevaVenta = <Button label="Nueva venta" onPress={aVender} />
+  const nuevaVenta = puedeVender ? <Button label="Nueva venta" onPress={aVender} /> : null
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
