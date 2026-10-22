@@ -143,37 +143,27 @@ describe('R1 · detalle del pedido (ResVentaDetalle, TV7)', () => {
   })
 })
 
-describe('R4 · anular con motivo (ResAnular)', () => {
-  it('el motivo es obligatorio: sin elegir uno no se puede anular', async () => {
+describe('R4 · anular igual que la web (sin motivo)', () => {
+  it('muestra la confirmación de la web y no pide motivo', async () => {
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: 'Anular' }))
-    expect(await screen.findByText('Se libera el stock que tenía reservado.')).toBeTruthy()
-    expect(screen.getByText('No se puede deshacer. Un pedido en ruta no se puede anular.')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Anular pedido' })).toBeDisabled()
+    expect(await screen.findByText('¿Deseas anular esta venta? Se liberará el stock reservado.')).toBeTruthy()
+    expect(screen.queryByText('¿Por qué? (obligatorio)')).toBeNull()
+    expect(screen.queryByRole('radio')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Anular Venta' })).toBeEnabled()
   })
 
-  it('con un motivo elegido manda el motivo y la versión', async () => {
+  it('al confirmar manda "Cancelación manual" y la versión', async () => {
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: 'Anular' }))
-    await userEvent.press(await screen.findByRole('radio', { name: 'Error de carga' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Anular pedido' }))
-    await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/v1/Ventas/v9', { version: 3, motivoAnulacion: 'Error de carga' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Anular Venta' }))
+    await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/v1/Ventas/v9', { version: 3, motivoAnulacion: 'Cancelación manual' }))
   })
 
-  it('"Otro" pide el texto', async () => {
+  it('"Cancelar" cierra sin anular', async () => {
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: 'Anular' }))
-    await userEvent.press(await screen.findByRole('radio', { name: 'Otro' }))
-    expect(screen.getByRole('button', { name: 'Anular pedido' })).toBeDisabled()
-    await userEvent.type(screen.getByLabelText('Contanos el motivo'), 'Se cayó el trato')
-    await userEvent.press(screen.getByRole('button', { name: 'Anular pedido' }))
-    await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('/api/v1/Ventas/v9', { version: 3, motivoAnulacion: 'Se cayó el trato' }))
-  })
-
-  it('"No, volver" cierra sin anular', async () => {
-    pantalla()
-    await userEvent.press(await screen.findByRole('button', { name: 'Anular' }))
-    await userEvent.press(await screen.findByRole('button', { name: 'No, volver' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Cancelar' }))
     expect(mockDelete).not.toHaveBeenCalled()
   })
 })

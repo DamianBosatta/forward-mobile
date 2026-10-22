@@ -1,4 +1,4 @@
-import { accionesDeVenta, MOTIVO_ANULAR_EN_RUTA, MOTIVO_ANULACION_OTRO, motivoDeAnulacion, MOTIVOS_DE_ANULACION } from '../accionesVenta'
+import { accionesDeVenta, MOTIVO_ANULAR_EN_RUTA, MOTIVO_ANULACION_WEB } from '../accionesVenta'
 
 type Permisos = Partial<Record<string, boolean>>
 const con = (p: Permisos) => (modulo: string, accion: string) => !!p[`${modulo}:${accion}`]
@@ -67,19 +67,8 @@ describe('acciones de una venta (reglas de la web, PermMatriz "2 · Ventas")', (
   })
 })
 
-describe('motivo de la anulación (obligatorio)', () => {
-  it('los motivos del lienzo y "Otro"', () => {
-    expect(MOTIVOS_DE_ANULACION).toEqual(['El cliente se arrepintió', 'Error de carga', 'Duplicado'])
-    expect(MOTIVO_ANULACION_OTRO).toBe('Otro')
-  })
-  it('un motivo elegido vale tal cual', () => {
-    expect(motivoDeAnulacion('Duplicado', '')).toBe('Duplicado')
-  })
-  it('"Otro" exige texto', () => {
-    expect(motivoDeAnulacion('Otro', '   ')).toBeNull()
-    expect(motivoDeAnulacion('Otro', ' Se cayó el trato ')).toBe('Se cayó el trato')
-  })
-  it('sin elegir no hay motivo', () => {
-    expect(motivoDeAnulacion(null, 'algo')).toBeNull()
+describe('motivo de la anulación (igual que la web)', () => {
+  it('es el fijo de la web, nunca elegido', () => {
+    expect(MOTIVO_ANULACION_WEB).toBe('Cancelación manual')
   })
 })

@@ -70,13 +70,5 @@ export function accionesDeVenta(
   }
 }
 
-/** Motivos de anulación de la lámina ResAnular; el servidor guarda el texto. */
-export const MOTIVOS_DE_ANULACION = ['El cliente se arrepintió', 'Error de carga', 'Duplicado'] as const
-export const MOTIVO_ANULACION_OTRO = 'Otro'
-
-/** El motivo que se manda, o null si falta: "Otro" exige texto. */
-export function motivoDeAnulacion(elegido: string | null, otro: string): string | null {
-  if (!elegido) return null
-  if (elegido === MOTIVO_ANULACION_OTRO) return otro.trim() || null
-  return elegido
-}
+/** La web anula siempre con este motivo fijo y nunca lo pide (VentaOperacionDetail, VentaGestionDetail, VentaDetalleSheet). */
+export const MOTIVO_ANULACION_WEB = 'Cancelación manual'
