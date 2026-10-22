@@ -2,6 +2,7 @@ import type { TokenResponse, UserProfile } from '@/libs/api-client/types'
 import { logger } from '@/src/core/utils/logger'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { mmkvPersister } from '@/core/query/persistConfig'
+import { CATALOGO_DE_ERRORES, type CodigoError } from '@/libs/api-client/generated/codigos-error'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // API Client Base
@@ -60,8 +61,12 @@ class ApiError extends Error {
     public status: number,
     public message: string,
     public errors?: string[],
-    /** Código estable del error que manda el servidor en el sobre (`Response.Codigo`), p. ej. `ClaveIdempotenciaConOtroCuerpo`. */
-    public codigo?: string,
+    /**
+     * Código estable del catálogo de errores del servidor (`codigo` del ProblemDetails), p. ej. `ClaveIdempotenciaConOtroCuerpo`.
+     * Es lo que decide qué hace una pantalla; el texto puede cambiar. `Desconocido`: el servidor mandó un código que este
+     * build no conoce; vacío: el error no trae código.
+     */
+    public codigo?: CodigoError | 'Desconocido',
     /** `data` del sobre de error: lo que el servidor adjunta al rechazo (p. ej. la venta ya grabada en un 409). */
     public data?: unknown,
   ) {
@@ -211,7 +216,7 @@ function unwrapApiResponse<T>(result: unknown, httpStatus: number): T {
   if (result && typeof result === 'object' && 'succeeded' in result) {
     const env = result as { succeeded: boolean; statusCode?: number; data?: unknown }
     if (env.succeeded === false) {
-      throw errorDelSobre(result, typeof env.statusCode === 'number' ? env.statusCode : httpStatus)
+      throw leerError(result, typeof env.statusCode === 'number' ? env.statusCode : httpStatus)
     }
     return ('data' in env ? env.data : undefined) as T
   }
@@ -231,17 +236,41 @@ function unwrapConSobre<T, S>(result: unknown, httpStatus: number): RespuestaCon
   return { data, sobre: esSobre ? (result as S) : null }
 }
 
-/** ApiError con el mensaje (saneado), los errores, el código y los datos del sobre de error, con cualquier status. */
-function errorDelSobre(body: unknown, status: number): ApiError {
-  const env = (body && typeof body === 'object' ? body : {}) as {
-    message?: unknown; errors?: unknown; codigo?: unknown; data?: unknown
-  }
+const esCodigoConocido = (c: string): c is CodigoError => Object.prototype.hasOwnProperty.call(CATALOGO_DE_ERRORES, c)
+
+/** El texto del servidor tal cual vino (sin sanear): para el registro, nunca para la pantalla. */
+const textoCrudo = (cuerpo: unknown): string => {
+  const c = (cuerpo && typeof cuerpo === 'object' ? cuerpo : {}) as Record<string, unknown>
+  return texto(c.message) ?? texto(c.detail) ?? 'Unknown error'
+}
+
+const texto = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() !== '' ? v : undefined)
+
+/**
+ * `errors` del cuerpo como lista de textos. El ProblemDetails nuevo lo manda como diccionario
+ * campo → mensajes (`general` para lo que no es de un campo); el sobre viejo, como lista.
+ */
+function mensajesDe(errors: unknown): string[] | undefined {
+  const valores = Array.isArray(errors)
+    ? errors
+    : errors && typeof errors === 'object' ? Object.values(errors).flat() : undefined
+  return valores ? valores.filter((m): m is string => typeof m === 'string' && m !== '') : undefined
+}
+
+/**
+ * El único lector de cuerpos de error y el único lugar que arma un {@link ApiError}. Lee el
+ * ProblemDetails de la API (`codigo`, `detail`, `errors` como diccionario), el sobre viejo (`message`,
+ * `errors` como lista) y lo que venga con cualquier status. El texto se sanea según el status.
+ */
+export function leerError(cuerpo: unknown, status: number): ApiError {
+  const c = (cuerpo && typeof cuerpo === 'object' ? cuerpo : {}) as Record<string, unknown>
+  const codigo = texto(c.codigo)
   return new ApiError(
     status,
-    sanitizeErrorMessage(status, typeof env.message === 'string' ? env.message : undefined),
-    Array.isArray(env.errors) ? env.errors : undefined,
-    typeof env.codigo === 'string' ? env.codigo : undefined,
-    env.data ?? undefined,
+    sanitizeErrorMessage(status, texto(c.message) ?? texto(c.detail)),
+    mensajesDe(c.errors),
+    codigo === undefined ? undefined : esCodigoConocido(codigo) ? codigo : 'Desconocido',
+    c.data ?? undefined,
   )
 }
 
@@ -298,7 +327,7 @@ async function fetchWithAuth<T>(
 
       if (!retryResponse.ok) {
         const errorData = await retryResponse.json().catch(() => ({}))
-        throw errorDelSobre(errorData, retryResponse.status)
+        throw leerError(errorData, retryResponse.status)
       }
 
       if (retryResponse.status === 204) return undefined as T
@@ -310,15 +339,15 @@ async function fetchWithAuth<T>(
   }
 
     if (!response.ok) {
-      let errorData: { message?: string } = {}
+      let errorData: unknown = null
       try {
         errorData = await response.json()
       } catch {}
-      
+      const error = leerError(errorData, response.status)
       if (estadosEsperados?.includes(response.status)) logger.info(`API [${response.status}] esperado ${endpoint}`)
-      else logger.error(`API Error [${response.status}] ${endpoint}:`, errorData.message || 'Unknown error')
+      else logger.error(`API Error [${response.status}] ${endpoint}:`, textoCrudo(errorData))
       
-      throw errorDelSobre(errorData, response.status)
+      throw error
     }
 
   // 204 No Content
