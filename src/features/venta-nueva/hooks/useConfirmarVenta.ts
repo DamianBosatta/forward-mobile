@@ -87,6 +87,8 @@ export function useConfirmarVenta(d: Datos) {
         ...aAutoguardado(d.lineas, d.descuentoGeneral, d.cabecera), id: d.edicion.ventaId, version: d.edicion.version,
         ...(motivo?.trim() ? { motivoVentaSinStock: motivo.trim() } : {}),
         ...(d.esPedido && d.porcentajeCedido ? { porcentajeComisionCedido: d.porcentajeCedido } : {}),
+        // buildUpdateVentaPayload de la web: el tilde viaja si ya tiene valor; ausente = no tocar.
+        ...(d.cabecera.conFactura !== undefined ? { conFactura: d.cabecera.conFactura } : {}),
       })
     } else if (!d.esPedido && b.borrador) {
       r = await api.post<VentaActionResponseDto>(`/api/v1/Ventas/${b.borrador.id}/guardar-presupuesto`, { ventaId: b.borrador.id, version: await b.flush() })
