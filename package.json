@@ -19,6 +19,8 @@
     "check:types": "node scripts/check-types.js",
     "sync:reglas": "node scripts/sync-reglas.js",
     "check:reglas": "node scripts/check-reglas.js",
+    "sync:validaciones": "node scripts/sync-validaciones.js",
+    "check:validaciones": "node scripts/check-validaciones.js",
     "knip": "knip"
   },
   "dependencies": {
