@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react'
 import { AccessibilityInfo, ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { comprasKeys, useAnularRecepcionCompra, useCompra, useCancelarCompra, useConfirmarCompra, useGuardarComprobanteCompra, useRecibirCompra } from '@/libs/api-client/compras'
+import { comprasKeys, useAnularRecepcionCompra, useCompra, useCancelarCompra, useConfirmarCompra, useGuardarComprobanteCompra } from '@/libs/api-client/compras'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import type { CompraDto } from '@/libs/api-client'
 import { useSocio } from '@/libs/api-client/socios'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { BottomSheet, Button, Field, Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
+import { PasosDeEstado } from '@/core/ui/fw/PasosDeEstado'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { diaArgentina } from '@/src/utils/date'
 import { mostrarNumero } from '@/src/utils/numero'
@@ -21,6 +22,8 @@ import { armarComprobante, formDesdeComprobante, formNuevo, resumenComprobante, 
 import { inicioKeys } from '@/core/query/queryClient'
 import { numeroDeCompra } from '@/features/compras/lib/numero'
 import { esEstadoCompra } from '@/core/constants/estados'
+import { RecibirCompra } from '@/features/compras/components/RecibirCompra'
+import { CONSECUENCIA, accionesDeDetalle, pasosDeCompra } from '@/features/compras/lib/recepcion'
 
 /** Ruta `compras/[id]`: el id viene de la URL. */
 export default function CompraDetailScreen() {
@@ -31,7 +34,7 @@ export default function CompraDetailScreen() {
   return <CompraDetalle id={id ?? ''} aviso={inicial ?? undefined} />
 }
 
-type Hoja = 'recibir' | 'cancelar' | 'anularRecepcion' | 'confirmarYRecibir' | 'comprobante' | null
+type Hoja = 'cancelar' | 'anularRecepcion' | 'confirmarYRecibir' | 'comprobante' | null
 
 /**
  * Detalle de una compra con el formato nuevo (Bloque 9A, PR 3.5). Los botones dependen del estado
@@ -46,13 +49,14 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
   const { canDo } = usePermissions()
   const q = useCompra(id)
   const confirmar = useConfirmarCompra()
-  const recibir = useRecibirCompra()
   const cancelar = useCancelarCompra()
   const anularRecepcion = useAnularRecepcionCompra()
   const permisos = useAuthStore((s) => s.user?.permissions)
   const [hoja, setHoja] = useState<Hoja>(null)
   const [error, setError] = useState<string | null>(null)
   const [fechaFactura, setFechaFactura] = useState(hoyTexto)
+  // La recepción (lienzo M11) es una pantalla propia dentro del detalle.
+  const [recibiendoMercaderia, setRecibiendoMercaderia] = useState(false)
   const [motivo, setMotivo] = useState('')
   // La versión que el usuario estaba mirando al abrir la hoja: si cambió después, el servidor da 409.
   const [versionVista, setVersionVista] = useState(0)
@@ -62,7 +66,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
   const [comprobante, setComprobante] = useState<FormComprobante | null>(null)
   const guardarComprobante = useGuardarComprobanteCompra()
   // El CUIT del proveedor para precargar el comprobante: se pide solo con esas hojas abiertas.
-  const socio = useSocio(hoja === 'recibir' || hoja === 'comprobante' ? q.data?.proveedorId ?? '' : '')
+  const socio = useSocio(hoja === 'comprobante' ? q.data?.proveedorId ?? '' : '')
   useEffect(() => {
     if (comprobante && !comprobante.cuit && socio.data?.cuit) setComprobante({ ...comprobante, cuit: socio.data.cuit })
   }, [comprobante, socio.data])
@@ -84,14 +88,30 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
     )
   }
 
+  // Recibir mercadería (M11): pantalla propia; al volver o al terminar se vuelve al detalle.
+  if (recibiendoMercaderia) {
+    return (
+      <RecibirCompra
+        compra={compra}
+        onVolver={() => setRecibiendoMercaderia(false)}
+        onHecho={() => { setRecibiendoMercaderia(false); setAviso(null); queryClient.invalidateQueries({ queryKey: inicioKeys.all }) }}
+        onConflicto={() => { void q.refetch() }}
+      />
+    )
+  }
+
   const estado = String(compra.estado)
-  const abierta = esEstadoCompra(estado, 'NotaPedido', 'Confirmado')
   const pideFactura = compra.condicionPago?.tipo === 'DiasDesdeFactura'
-  const fechaLeida = fechaIso(fechaFactura)
-  const ocupado = recibiendo || guardarComprobante.isPending || confirmar.isPending || recibir.isPending || cancelar.isPending || anularRecepcion.isPending
-  // Mismo permiso que el servidor: MOD_COMPRAS:Delete y CAP_ANULAR_RECEPCION_COMPRAS.
-  const puedeAnularRecepcion = esEstadoCompra(estado, 'Entregado') && canDo('MOD_COMPRAS', 'delete') && hasCapability(permisos, 'CAP_ANULAR_RECEPCION_COMPRAS')
+  const ocupado = recibiendo || guardarComprobante.isPending || confirmar.isPending || cancelar.isPending || anularRecepcion.isPending
+  // Mismos permisos que la web y el servidor: MOD_COMPRAS modificar / borrar y CAP_ANULAR_RECEPCION_COMPRAS.
   const puedeEditar = canDo('MOD_COMPRAS', 'update')
+  const acciones = accionesDeDetalle({
+    estado, eliminada: !!compra.eliminada, cantidadLineas: compra.detalles.length,
+    puedeModificar: puedeEditar, puedeBorrar: canDo('MOD_COMPRAS', 'delete'),
+    tieneCapAnular: hasCapability(permisos, 'CAP_ANULAR_RECEPCION_COMPRAS'),
+  })
+  const pasos = pasosDeCompra(estado)
+  const hayBarra = acciones.confirmar || acciones.recibir || acciones.editar || acciones.cancelar
 
   // Cada hoja arranca limpia: ni el motivo ni el error de otra quedan a la vista.
   const abrirHoja = (h: Hoja) => { setError(null); setAviso(null); setMotivo(''); if (h === 'anularRecepcion' || h === 'confirmarYRecibir') setVersionVista(compra.version); if (h === 'confirmarYRecibir') setFechaFactura(hoyTexto()); setComprobante(h === 'comprobante' ? formComprobante() : null); setHoja(h) }
@@ -151,16 +171,18 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
-        title={compra.razonSocialProveedor}
-        subtitle={`${numeroDeCompra(compra)} · ${ddmmaaaa(diaArgentina(Date.parse(compra.fecha)))}`}
+        title={`Compra ${numeroDeCompra(compra)}`}
+        subtitle={`${compra.razonSocialProveedor} · ${compra.nombreDeposito}`}
         leading={{ kind: 'atras', onPress: volver }}
       />
+      {pasos ? <PasosDeEstado pasos={pasos} accessibilityLabel="Estado de la compra" /> : null}
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] * 2 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={secundario}>{`${compra.nombreDeposito} · ${compra.detalles.length} ${compra.detalles.length === 1 ? 'producto' : 'productos'}`}</Text>
+          <Text style={secundario}>{`${ddmmaaaa(diaArgentina(Date.parse(compra.fecha)))} · ${compra.detalles.length} ${compra.detalles.length === 1 ? 'producto' : 'productos'}`}</Text>
           {(() => { const chip = chipForEstado('compra', compra.estado); return chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null })()}
         </View>
         {aviso ? <Notice tone={aviso.tono}>{aviso.texto}</Notice> : null}
+        {esEstadoCompra(estado, 'Confirmado') && !compra.eliminada ? <Notice tone="info">Ya cuenta como stock por ingresar. Cuando llegue, marcala recibida.</Notice> : null}
         {error && hoja === null ? <Notice tone="peligro">{error}</Notice> : null}
         {compra.motivoCancelacion ? <Notice tone="info" title="Cancelada.">{compra.motivoCancelacion}</Notice> : null}
         {compra.motivoAnulacion ? <Notice tone="info" title="Recepción anulada.">{compra.motivoAnulacion}</Notice> : null}
@@ -192,53 +214,32 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
             : <Button label={compra.comprobante ? 'Corregir el comprobante' : 'Cargar el comprobante'} variant="secundario" disabled={ocupado} onPress={() => abrirHoja('comprobante')} />
         ) : null}
       </ScrollView>
-      {abierta ? (
+      {hayBarra ? (
         <View style={{ gap: space[2], padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
-          <View style={{ flexDirection: 'row', gap: space[2] }}>
-            {canDo('MOD_COMPRAS', 'delete') ? <Button label="Cancelar compra" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('cancelar')} /> : null}
-            {puedeEditar ? (
-              <View style={{ flex: 1 }}>
-                {esEstadoCompra(estado, 'NotaPedido')
-                  ? <Button label="Confirmar compra" loading={confirmar.isPending} disabled={ocupado} onPress={() => { void correr(() => confirmar.mutateAsync(compra.id), 'No se confirmó la compra') }} />
-                  : <Button label="Recibir" disabled={ocupado} onPress={() => abrirHoja('recibir')} />}
-              </View>
-            ) : null}
-          </View>
-          {puedeEditar && esEstadoCompra(estado, 'NotaPedido')
-            ? <Button label="Confirmar y recibir" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('confirmarYRecibir')} /> : null}
-          {puedeEditar
-            ? <Button label="Editar la compra" variant="secundario" disabled={ocupado} onPress={() => router.push(`/(tabs)/compras/nueva?edit=${compra.id}` as never)} /> : null}
+          {acciones.recibir ? <Button label="Recibir mercadería" disabled={ocupado} onPress={() => { setError(null); setAviso(null); setRecibiendoMercaderia(true) }} /> : null}
+          {acciones.confirmar ? (
+            <Button label="Confirmar compra" loading={confirmar.isPending} disabled={ocupado} onPress={() => { void correr(() => confirmar.mutateAsync(compra.id), 'No se confirmó la compra') }} />
+          ) : null}
+          {acciones.confirmar ? <Button label="Confirmar y recibir" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('confirmarYRecibir')} /> : null}
+          {acciones.editar || acciones.cancelar ? (
+            <View style={{ flexDirection: 'row', gap: space[2] }}>
+              {acciones.editar ? <View style={{ flex: 1 }}><Button label="Editar la compra" variant="secundario" disabled={ocupado} onPress={() => router.push(`/(tabs)/compras/nueva?edit=${compra.id}` as never)} /></View> : null}
+              {acciones.cancelar ? <View style={{ flex: 1 }}><Button label="Cancelar compra" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('cancelar')} /></View> : null}
+            </View>
+          ) : null}
         </View>
-      ) : puedeAnularRecepcion ? (
+      ) : acciones.anularRecepcion ? (
         <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
           <Button label="Anular recepción" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('anularRecepcion')} />
         </View>
       ) : null}
       <BottomSheet visible={hoja === 'anularRecepcion'} onClose={cerrarHoja} accessibilityLabel="Anular la recepción">
         <Text style={[typeScale.titulo, { color: c.text }]}>Anular la recepción</Text>
-        <Text style={secundario}>Descuenta del stock lo que ingresó y revierte la deuda con el proveedor. No se puede deshacer.</Text>
+        <Text style={secundario}>{CONSECUENCIA.anularRecepcion}</Text>
         <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Por qué se anula" />
         {error ? <Notice tone="peligro">{error}</Notice> : null}
         <Button label="Anular recepción" variant="peligro" loading={anularRecepcion.isPending} disabled={!motivo.trim()}
           onPress={() => { void correr(() => anularRecepcion.mutateAsync({ id: compra.id, motivo: motivo.trim(), version: versionVista }), 'No se anuló la recepción') }} />
-      </BottomSheet>
-      <BottomSheet visible={hoja === 'recibir'} onClose={cerrarHoja} accessibilityLabel="Recibir la compra">
-        <Text style={[typeScale.titulo, { color: c.text }]}>Recibir la mercadería</Text>
-        <Text style={secundario}>Ingresa el stock real y genera la deuda con el proveedor.</Text>
-        {pideFactura ? (
-          <Field label="Fecha de la factura" placeholder="dd/mm/aaaa" value={fechaFactura} onChangeText={setFechaFactura} keyboardType="numbers-and-punctuation"
-            help="La condición de pago se cuenta desde la factura." error={fechaLeida ? undefined : 'Escribí la fecha como dd/mm/aaaa.'} />
-        ) : null}
-        {comprobante ? (
-          <ScrollView style={{ maxHeight: 420 }} keyboardShouldPersistTaps="handled">
-            <ComprobanteCampos form={comprobante} onCambio={setComprobante} />
-          </ScrollView>
-        ) : (
-          <Button label="Cargar el comprobante del proveedor" variant="secundario" onPress={() => setComprobante(formComprobante())} />
-        )}
-        {error ? <Notice tone="peligro">{error}</Notice> : null}
-        <Button label="Recibir" loading={recibir.isPending} disabled={pideFactura && !fechaLeida}
-          onPress={() => conComprobante((c) => recibir.mutateAsync({ id: compra.id, fechaFacturaProveedor: pideFactura ? fechaLeida! : undefined, comprobante: c }), 'No se recibió la compra')} />
       </BottomSheet>
       <BottomSheet visible={hoja === 'comprobante'} onClose={cerrarHoja} accessibilityLabel="Comprobante del proveedor">
         <Text style={[typeScale.titulo, { color: c.text }]}>Comprobante del proveedor</Text>
@@ -256,7 +257,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
         ocupado={recibiendo} fecha={fechaFactura} onFecha={setFechaFactura} error={hoja === 'confirmarYRecibir' ? error : null} onConfirmar={(f) => { void confirmarYRecibirAhora(f) }} />
       <BottomSheet visible={hoja === 'cancelar'} onClose={cerrarHoja} accessibilityLabel="Cancelar la compra">
         <Text style={[typeScale.titulo, { color: c.text }]}>Cancelar la compra</Text>
-        <Text style={secundario}>No se recibió: si estaba confirmada, se libera el stock que se esperaba.</Text>
+        <Text style={secundario}>{esEstadoCompra(estado, 'Confirmado') ? CONSECUENCIA.cancelarConfirmada : CONSECUENCIA.cancelarNotaPedido}</Text>
         <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Por qué se cancela" />
         {error ? <Notice tone="peligro">{error}</Notice> : null}
         <Button label="Cancelar compra" variant="peligro" loading={cancelar.isPending} disabled={!motivo.trim()}
