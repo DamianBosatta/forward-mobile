@@ -5,6 +5,8 @@ import { DrawerActions } from '@react-navigation/native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Button, Notice, TopBar } from '@/core/ui/fw'
+import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { esFallaDeRed } from '@/core/api/errores'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -26,7 +28,9 @@ export default function ProveedoresScreen() {
   const { canCreate } = usePermissions()
   const [busqueda, setBusqueda] = useState('')
   const [abierto, setAbierto] = useState<string | null>(null)
-  const { proveedores, totalCount, isLoading, isRefetching, error, refetch, cargarMas } = useProveedores(busqueda)
+  const { proveedores, totalCount, isLoading, isRefetching, error, dataUpdatedAt, refetch, cargarMas } = useProveedores(busqueda)
+  const sinRed = esFallaDeRed(error)
+  const hayDatos = proveedores.length > 0
   const dosPaneles = width >= ANCHO_DOS_PANELES
 
   const abrir = (id: string) => {
@@ -50,9 +54,13 @@ export default function ProveedoresScreen() {
           <Text accessibilityLiveRegion="polite" style={{ ...textoDestacado, color: c.text }}>{`${proveedores.length} de ${totalCount}`}</Text>
         </View>
       ) : null}
-      {error ? (
+      {error && !(sinRed && !hayDatos) ? (
         <View style={{ padding: space[4] }}>
-          <Notice tone="peligro">{mensajeDelServidor(error, 'No se pudo cargar la lista de proveedores.')}</Notice>
+          {sinRed ? (
+            <Notice tone="advertencia">{textoSinConexion(dataUpdatedAt || undefined)}</Notice>
+          ) : (
+            <Notice tone="peligro">{mensajeDelServidor(error, 'No se pudo cargar la lista de proveedores.')}</Notice>
+          )}
         </View>
       ) : null}
       <FlatList
@@ -68,10 +76,15 @@ export default function ProveedoresScreen() {
         ListEmptyComponent={
           isLoading ? (
             <ActivityIndicator color={c.brandInk} style={{ marginTop: space[8] }} />
-          ) : error ? null : (
-            <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center', marginTop: space[8] }}>
-              {busqueda.trim() ? 'Ningún proveedor coincide con la búsqueda.' : 'Todavía no hay proveedores cargados.'}
-            </Text>
+          ) : error ? (
+            sinRed ? (
+              <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los proveedores" accion={{ label: 'Reintentar', onPress: () => void refetch() }} />
+            ) : null
+          ) : (
+            <EstadoDePantalla
+              tipo="vacio"
+              titulo={busqueda.trim() ? 'Ningún proveedor coincide con la búsqueda.' : 'Todavía no hay proveedores cargados.'}
+            />
           )
         }
       />

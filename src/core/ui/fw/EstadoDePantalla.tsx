@@ -19,14 +19,17 @@ interface EstadoDePantallaProps {
 
 const ICONO: Record<TipoEstadoDePantalla, LucideIcon> = { vacio: Inbox, sinConexion: WifiOff, sinPermiso: Lock }
 
+/** La frase de "sin conexión" (lienzo R16): sirve a la pantalla entera y a un aviso sobre lo ya guardado. Sin hora no se inventa. */
+export function textoSinConexion(guardadoA?: number): string {
+  if (!guardadoA) return 'Parece que no hay señal. Probá de nuevo en un rato.'
+  const p = partesArgentina(guardadoA)
+  const dos = (n: number) => String(n).padStart(2, '0')
+  return `Parece que no hay señal. Mostramos lo último que guardó el teléfono a las ${dos(p.hora)}:${dos(p.minuto)}.`
+}
+
 function textoDeSiempre(tipo: TipoEstadoDePantalla, guardadoA?: number): string | null {
   if (tipo === 'sinPermiso') return 'Si lo necesitás, pedíselo a quien administra los usuarios en la web.'
-  if (tipo === 'sinConexion') {
-    if (guardadoA == null) return 'Parece que no hay señal. Probá de nuevo en un rato.'
-    const p = partesArgentina(guardadoA)
-    const dos = (n: number) => String(n).padStart(2, '0')
-    return `Parece que no hay señal. Mostramos lo último que guardó el teléfono a las ${dos(p.hora)}:${dos(p.minuto)}.`
-  }
+  if (tipo === 'sinConexion') return textoSinConexion(guardadoA)
   return null
 }
 

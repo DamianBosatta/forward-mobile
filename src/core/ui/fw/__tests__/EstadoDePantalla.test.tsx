@@ -4,7 +4,7 @@
  */
 import React from 'react'
 import { render, screen, userEvent } from '@testing-library/react-native'
-import { EstadoDePantalla } from '../EstadoDePantalla'
+import { EstadoDePantalla, textoSinConexion } from '../EstadoDePantalla'
 
 describe('EstadoDePantalla', () => {
   it('lista vacía: dice qué pasa, qué va a aparecer y ofrece la acción', async () => {
@@ -44,5 +44,12 @@ describe('EstadoDePantalla', () => {
     render(<EstadoDePantalla tipo="sinPermiso" titulo="No tenés acceso" texto="Hablalo con gestión." />)
     expect(screen.getByText('Hablalo con gestión.')).toBeTruthy()
     expect(screen.queryByText(/administra los usuarios/)).toBeNull()
+  })
+
+  it('textoSinConexion es la misma frase de la pantalla, para un aviso sobre lo guardado', () => {
+    expect(textoSinConexion(Date.UTC(2026, 9, 22, 11, 12))).toBe('Parece que no hay señal. Mostramos lo último que guardó el teléfono a las 08:12.')
+    expect(textoSinConexion()).toBe('Parece que no hay señal. Probá de nuevo en un rato.')
+    // react-query usa 0 cuando nunca guardó nada: tampoco se inventa la hora.
+    expect(textoSinConexion(0)).toBe('Parece que no hay señal. Probá de nuevo en un rato.')
   })
 })

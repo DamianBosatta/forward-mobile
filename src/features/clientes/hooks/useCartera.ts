@@ -49,6 +49,7 @@ export function useCartera(busqueda: string, filtros?: FiltrosDeCartera) {
     isLoading: query.isLoading,
     isRefetching: query.isRefetching,
     error: query.error,
+    dataUpdatedAt: query.dataUpdatedAt,
     refetch: query.refetch,
     cargarMas: () => {
       if (query.hasNextPage && !query.isFetchingNextPage) query.fetchNextPage()

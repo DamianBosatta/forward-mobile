@@ -70,6 +70,9 @@ export function useStockPorDeposito({ conCantidades, busqueda }: { conCantidades
     filas,
     isLoading: lista.isLoading,
     isError: lista.isError,
+    error: lista.error,
+    dataUpdatedAt: lista.dataUpdatedAt,
+    refetch: lista.refetch,
     cargarMas: () => {
       if (lista.hasNextPage && !lista.isFetchingNextPage) lista.fetchNextPage()
     },
