@@ -40,7 +40,7 @@ function Pastilla({ label, activa, onPress }: { label: string; activa: boolean; 
  * servidor antes de paginar; acá solo se eligen. Sin localidades cargadas (o con un servidor que
  * todavía no las informa) queda solo "Con deuda vencida".
  */
-export function FiltrosCartera({ valor, onCambio }: { valor: FiltrosDeCartera; onCambio: (f: FiltrosDeCartera) => void }) {
+export function FiltrosCartera({ valor, onCambio, totalCartera }: { valor: FiltrosDeCartera; onCambio: (f: FiltrosDeCartera) => void; totalCartera?: number }) {
   const c = useColors()
   const { data } = useLocalidades()
   const localidades = Array.isArray(data) ? data : []
@@ -53,6 +53,8 @@ export function FiltrosCartera({ valor, onCambio }: { valor: FiltrosDeCartera; o
       style={{ flexGrow: 0, backgroundColor: c.topBar }}
       contentContainerStyle={{ gap: space[2], paddingHorizontal: space[4], paddingBottom: space[3] }}
     >
+      {/* La lista es siempre la cartera del vendedor: la pastilla dice cuántos son, no filtra. */}
+      {totalCartera !== undefined ? <Pastilla label={`Mi cartera · ${totalCartera}`} activa onPress={() => onCambio(SIN_FILTROS)} /> : null}
       <Pastilla
         label="Con deuda vencida"
         activa={valor.conDeudaVencida}

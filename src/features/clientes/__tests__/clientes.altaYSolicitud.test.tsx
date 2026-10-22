@@ -153,12 +153,19 @@ describe('solicitud de cambio desde la ficha', () => {
     expect(screen.queryByText(SOLICITUD_ENVIADA)).toBeNull()
   })
 
-  it('quien aprueba cambios de socio edita directo: no ve Pedir cambio', async () => {
-    useAuthStore.setState({ user: { id: 'u1', username: 'a', email: 'a@x.com', roles: ['Empleado'], permissions: [...SIN_CAP, { module: 'CAP_APROBAR_CAMBIOS_SOCIO', canRead: true }] } as never })
+  it('un administrador edita directo (regla de la web): no ve Pedir cambio', async () => {
+    useAuthStore.setState({ user: { id: 'u1', username: 'a', email: 'a@x.com', roles: ['Administrador'], permissions: SIN_CAP } as never })
     renderConQuery(<FichaCliente id="c1" />)
 
     expect(await screen.findByRole('button', { name: 'Editar' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Pedir cambio' })).toBeNull()
+  })
+
+  it('tener CAP_APROBAR_CAMBIOS_SOCIO sin ser administrador no alcanza: la web decide por administrador', async () => {
+    useAuthStore.setState({ user: { id: 'u1', username: 'a', email: 'a@x.com', roles: ['Empleado'], permissions: [...SIN_CAP, { module: 'CAP_APROBAR_CAMBIOS_SOCIO', canRead: true }] } as never })
+    renderConQuery(<FichaCliente id="c1" />)
+
+    expect(await screen.findByRole('button', { name: 'Pedir cambio' })).toBeTruthy()
   })
 
   it('sin poder editar el cliente (otro dueño) tampoco puede pedir cambios', async () => {

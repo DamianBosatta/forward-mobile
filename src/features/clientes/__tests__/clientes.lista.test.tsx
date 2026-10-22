@@ -1,5 +1,5 @@
 import React from 'react'
-import { FlatList } from 'react-native'
+import { FlatList, Linking } from 'react-native'
 import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native'
 import ClientesScreen from '../../../../app/(tabs)/socios/index'
 import { api } from '@/core/api/client'
@@ -93,7 +93,7 @@ it('en tablet ancha, la ficha se abre al lado de la lista', async () => {
   await userEvent.press(await screen.findByRole('button', { name: /Av\. del Valle 89/ }))
 
   expect(mockPush).not.toHaveBeenCalled()
-  expect(await screen.findByText('Monotributo')).toBeTruthy()
+  expect(await screen.findByRole('radio', { name: 'Datos' })).toBeTruthy()
 })
 
 it('sin permiso de alta no hay botón de nuevo cliente', async () => {
@@ -196,4 +196,50 @@ it('con un servidor sin el endpoint de localidades (responde 400 por la ruta {id
 
   const llamada = get.mock.calls.find(([url]) => url === '/api/v1/socios-comerciales/localidades')
   expect(llamada?.[1]).toEqual(expect.objectContaining({ estadosEsperados: expect.arrayContaining([400, 404]) }))
+})
+
+describe('lámina Clientes (bloque 12, T7)', () => {
+  it('con permiso de alta, el botón fijo "Nuevo cliente" abre el alta', async () => {
+    renderConQuery(<ClientesScreen />)
+
+    await userEvent.press(await screen.findByRole('button', { name: 'Nuevo cliente' }))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/socios/nuevo')
+  })
+
+  it('la pastilla "Mi cartera" dice cuántos son; con una búsqueda o un filtro ya no (el total sería otro)', async () => {
+    renderConQuery(<ClientesScreen />)
+
+    expect(await screen.findByRole('button', { name: 'Mi cartera · 142' })).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Con deuda vencida' }))
+    await waitFor(() => expect(screen.queryByRole('button', { name: /Mi cartera/ })).toBeNull())
+  })
+
+  it('cada tarjeta con teléfono tiene Llamar, que marca sin abrir la ficha', async () => {
+    const abrir = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+    renderConQuery(<ClientesScreen />)
+
+    await screen.findByText('Av. del Valle 89')
+    await userEvent.press(screen.getByLabelText('Llamar'))
+    expect(abrir).toHaveBeenCalledWith('tel:1146582291')
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('sin teléfono no hay Llamar', async () => {
+    get.mockResolvedValue(pagina([clienteDeLista({ telefono: '' })], 1))
+    renderConQuery(<ClientesScreen />)
+
+    await screen.findByText('Av. del Valle 89')
+    expect(screen.queryByRole('button', { name: 'Llamar' })).toBeNull()
+  })
+
+  it('el cliente con deuda vencida muestra cuánto, solo si el servidor deja ver el saldo', async () => {
+    get.mockResolvedValue(pagina([
+      clienteDeLista({ tieneDeudaVencida: true, deudaVencidaAmount: 84300 }),
+      clienteDeLista({ id: 'c2', direccion: 'Brandsen 3314', tieneDeudaVencida: true, deudaVencidaAmount: 500, puedeVerSaldo: false }),
+    ], 2))
+    renderConQuery(<ClientesScreen />)
+
+    expect(await screen.findByText('Vencido $ 84.300,00')).toBeTruthy()
+    expect(screen.queryByText(/Vencido \$ 500/)).toBeNull()
+  })
 })
