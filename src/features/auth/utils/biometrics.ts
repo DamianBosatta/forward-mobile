@@ -32,6 +32,22 @@ export async function clearSavedCredentials() {
   await SecureStore.deleteItemAsync(BIOMETRIC_CREDENTIALS_KEY);
 }
 
+const BIOMETRIC_ENABLED_KEY = 'forward_biometric_enabled';
+
+/**
+ * "Entrar con huella" de Mi cuenta (bloque 12, T2). Sin elección guardada está prendida: es lo que
+ * hacía la app antes de tener el interruptor (siempre guardaba las credenciales al ingresar).
+ */
+export async function isBiometricLoginEnabled(): Promise<boolean> {
+  return (await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY)) !== 'false';
+}
+
+/** Apagarla borra el usuario y la contraseña guardados; prenderla los guarda en el próximo ingreso. */
+export async function setBiometricLoginEnabled(enabled: boolean) {
+  await SecureStore.setItemAsync(BIOMETRIC_ENABLED_KEY, enabled ? 'true' : 'false');
+  if (!enabled) await clearSavedCredentials();
+}
+
 export async function authenticateWithBiometrics(): Promise<BiometricCredentials | null> {
   const available = await isBiometricsAvailable();
   if (!available) return null;

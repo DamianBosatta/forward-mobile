@@ -16,7 +16,7 @@ const DESTINOS = Array.from(
 )
 
 const ESPERADO: Record<AccionDestino, string> = {
-  Cheques: '/tesoreria/cheques',
+  Cheques: 'web',
   Venta: '/ventas/id-1',
   VentasPendientesAutorizacion: '/autorizaciones',
   Caja: 'web',

@@ -264,12 +264,12 @@ describe('Tocar un push', () => {
   })
 
   it('el push que abrió la app se atiende una sola vez', async () => {
-    const abrio = respuesta('p3', { notificacionId: 'n-3', accion: { destino: 'Cheques', entidadId: null, etiqueta: 'Ver cheques' } })
+    const abrio = respuesta('p3', { notificacionId: 'n-3', accion: { destino: 'Calendario', entidadId: null, etiqueta: 'Ver calendario' } })
     mockUltimaRespuesta.mockResolvedValue(abrio)
     iniciarSesion()
     pintar()
 
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/tesoreria/cheques'))
+    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/calendario'))
     act(() => mockAlTocar!(abrio))
 
     expect(mockPush).toHaveBeenCalledTimes(1)

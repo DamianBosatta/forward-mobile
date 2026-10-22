@@ -22,7 +22,9 @@ describe('rutas del cajón', () => {
     render(<DrawerLayout />)
     expect(mockPantallas).toEqual(expect.arrayContaining(['avisos/index', 'avisos/preferencias']))
     expect(mockPantallas).toEqual(expect.arrayContaining([
-      'index', 'ventas/index', 'calendario/index', 'tesoreria/cheques', 'autorizaciones/index', 'compras/[id]', 'perfil',
+      'index', 'ventas/index', 'calendario/index', 'autorizaciones/index', 'compras/[id]', 'perfil',
     ]))
+    // El depósito de cheques salió de la app (bloque 12, D10): se hace en la web.
+    expect(mockPantallas).not.toContain('tesoreria/cheques')
   })
 })
