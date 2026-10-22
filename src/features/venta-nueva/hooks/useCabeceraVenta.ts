@@ -19,7 +19,7 @@ import type { VentaCargada } from '../lib/hidratar'
  * `fechaEntregaPorDefecto`) hasta que el vendedor elija otra. Sin calendario (cargando o con
  * error) no se propone ninguna: no se adivina un día hábil.
  */
-export function useCabeceraVenta(tipo: TipoDocumento) {
+export function useCabeceraVenta(tipo: TipoDocumento, pedirDefectoConFactura = true) {
   const [metodoEntrega, setMetodoEntrega] = useState<MetodoEntregaValue>(METODO_ENTREGA.Logistica)
   const [fechaElegida, setFecha] = useState<string | null>(null)
   // Al editar una venta sin fecha guardada no se propone ninguna: queda vacía hasta que el vendedor elija.
@@ -33,6 +33,8 @@ export function useCabeceraVenta(tipo: TipoDocumento) {
     queryKey: [...ventasKeys.all, 'con-factura-por-defecto'] as const,
     queryFn: () => api.get<components['schemas']['VentaConFacturaPorDefectoDto']>('/api/v1/Ventas/con-factura-por-defecto'),
     staleTime: 60_000,
+    // Como la web (venta-form.tsx:275): al editar el tilde sale de la venta y no se pide el default.
+    enabled: pedirDefectoConFactura,
   })
   const conFactura = conFacturaElegido ?? conFacturaDefecto.data?.ventaConFacturaPorDefecto
   const [ahora] = useState(() => Date.now())
@@ -64,12 +66,14 @@ export function useCabeceraVenta(tipo: TipoDocumento) {
     conFactura,
   }
   /** Carga la cabecera de una venta del servidor; sin fecha, `proponerFecha` decide si se propone la del servidor. */
-  const hidratar = (h: VentaCargada['cabecera'], proponerFecha = true) => {
+  const hidratar = (h: VentaCargada['cabecera'], proponerFecha = true, conFacturaDeLaVenta = false) => {
     setProponer(proponerFecha)
     setMetodoEntrega(h.metodoEntrega)
     setFecha(h.fecha)
     setFleteTexto(h.flete > 0 ? mostrarNumero(h.flete) : '')
     setObservaciones(h.observaciones)
+    // Editar y retomar traen el tilde de la venta (web: setConFacturaElegido(hydration.conFactura)); duplicar parte del default.
+    if (conFacturaDeLaVenta) setConFactura(h.conFactura)
   }
   return {
     cabecera, tira, hidratar, setConFactura,

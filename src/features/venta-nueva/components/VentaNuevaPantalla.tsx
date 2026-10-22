@@ -86,7 +86,7 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
     preseleccionado.current = true
     setElegido(aElegido(preseleccion.data))
   }, [preseleccion.data])
-  const cab = useCabeceraVenta(tipo)
+  const cab = useCabeceraVenta(tipo, abrir?.modo !== 'editar')
   const tope = user?.maxDescuentoPorcentaje ?? 0
   const exento = hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO')
   const paraGuardar = aAutoguardado(lineas, descuentoValido, cab.cabecera)
@@ -125,10 +125,10 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
   const [abierta, setAbierta] = useState(false)
   const cargada = useVentaCargada(abrirEf?.ventaId, !abierta)
   const [aDuplicar, setADuplicar] = useState<VentaCargada | null>(null)
-  const aplicar = (d: VentaCargada, cabecera = d.cabecera, proponerFecha = true) => {
+  const aplicar = (d: VentaCargada, cabecera = d.cabecera, proponerFecha = true, conFacturaDeLaVenta = false) => {
     useCarritoVenta.setState({ lineas: d.lineas })
     setDescuentoValido(d.descuentoGeneral)
-    cab.hidratar(cabecera, proponerFecha)
+    cab.hidratar(cabecera, proponerFecha, conFacturaDeLaVenta)
   }
   useEffect(() => {
     const d = cargada.datos
@@ -146,7 +146,7 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
       b.retomar(abrirEf.ventaId, d.version)
     } else if (abrirEf.modo === 'editar') {
       // Una venta guardada sin fecha no recibe una que el vendedor no eligió.
-      aplicar(d, d.cabecera, false)
+      aplicar(d, d.cabecera, false, true)
       setTipo(d.tipo)
       setEdicion({ ventaId: abrirEf.ventaId, version: d.version, codigo: d.codigo })
     } else {
@@ -296,6 +296,7 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
         tipo={tipo}
         edicion={!!edicion}
         cab={cab}
+        lineas={lineas}
         productos={lineas.length}
         unidades={unidades}
         total={total}

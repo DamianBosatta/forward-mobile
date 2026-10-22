@@ -83,6 +83,8 @@ describe('editar y duplicar (PR 2.9b)', () => {
     expect(mockPut.mock.calls[0][1]).toEqual({
       id: 'v9', version: 4, descuentoGeneral: 5, metodoEntrega: 1, fechaEntrega: '2026-01-02', cargoFlete: 0,
       items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 0 }],
+      // T4d: como la web, el PUT de la edición manda el tilde de la venta (esta no lo trae: `?? false`); lo demás igual.
+      conFactura: false,
     })
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas/borradores', expect.anything())
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas', expect.anything())
