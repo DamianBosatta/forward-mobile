@@ -67,7 +67,7 @@ const APROBADOS = [
   'Avisos',
   'Reportes',
   'Consola del chofer',
-  'Pedidos por preparar',
+  'Pedidos de logística',
   'Mi cuenta y contraseña',
 ]
 
@@ -176,7 +176,7 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     conPermisos('MOD_VENTAS:read', 'MOD_VIAJES:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos por preparar', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Mi cuenta y contraseña'])
     expect(screen.queryByText('Tesorería')).toBeNull()
   })
 
@@ -242,9 +242,9 @@ describe('CustomDrawerContent — por puesto sembrado (C-004, L-12)', () => {
   const ESPERADO: Record<string, string[]> = {
     Vendedor: ['Inicio', 'Ventas', 'Clientes', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'],
     // Lee viajes y no crea ventas: el menú lo trata como al chofer, más el catálogo de su stock.
-    Depósito: ['Inicio', 'Catálogo y stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos por preparar', 'Mi cuenta y contraseña'],
-    Chofer: ['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos por preparar', 'Mi cuenta y contraseña'],
-    'Gerente de depósito': ['Inicio', 'Catálogo y stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos por preparar', 'Mi cuenta y contraseña'],
+    Depósito: ['Inicio', 'Catálogo y stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Mi cuenta y contraseña'],
+    Chofer: ['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Mi cuenta y contraseña'],
+    'Gerente de depósito': ['Inicio', 'Catálogo y stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Mi cuenta y contraseña'],
   }
 
   const visibles = () => APROBADOS.filter((n) => screen.queryByText(n) !== null)

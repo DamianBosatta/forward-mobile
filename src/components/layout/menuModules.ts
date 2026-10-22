@@ -99,9 +99,9 @@ export const MENU: MenuGroup[] = [
     title: 'Logística',
     items: [
       { id: 'consola', label: 'Consola del chofer', icon: Navigation, href: '/(tabs)/logistica/consola', routeName: 'logistica/consola', appModule: 'MOD_VIAJES' },
-      // Solo lectura. GET /Logistica/ventas-para-preparacion pide MOD_VIAJES:Read y recorta por depósito
+      // Solo ver (D6): pendientes y no entregados. GET /Logistica/ventas-para-preparacion pide MOD_VIAJES:Read y recorta por depósito
       // (AlcanceDelDespacho); la web abre el tablero de picking con el mismo módulo (REGLAS_DE_RUTA).
-      { id: 'por-preparar', label: 'Pedidos por preparar', icon: PackageCheck, href: '/(tabs)/logistica/pedidos', routeName: 'logistica/pedidos', appModule: 'MOD_VIAJES' },
+      { id: 'por-preparar', label: 'Pedidos de logística', icon: PackageCheck, href: '/(tabs)/logistica/pedidos', routeName: 'logistica/pedidos', appModule: 'MOD_VIAJES' },
     ],
   },
 ]

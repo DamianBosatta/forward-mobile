@@ -29,7 +29,7 @@ function textoCantidad(cantidad: number, empaque: Empaque | null | undefined): s
   return `${cantidad} u. · ${desglose}`
 }
 
-/** Panel de detalle de la lámina TabPedidosPorPreparar: qué sale, cuándo y qué hay que preparar. */
+/** Panel de detalle de las láminas ModPreparar y TabLogistica: qué sale y cuándo, solo para ver. */
 export function PedidoPorPrepararDetalle({ pedido }: { pedido: VentaPreparacion }) {
   const c = useColors()
   const q = useVenta(pedido.id)
@@ -61,10 +61,7 @@ export function PedidoPorPrepararDetalle({ pedido }: { pedido: VentaPreparacion 
         {dato('Cómo', pedido.metodoEntregaNombre)}
         {dato('Lugar', pedido.direccion)}
       </View>
-      <Notice tone="info" title="Solo lectura:">
-        la preparación y el empaque se registran en el depósito. Acá ves qué sale y cuándo.
-      </Notice>
-      <Text style={{ ...typeScale.seccion, color: c.text }}>{`Qué preparar (${pedido.itemsCount} ${pedido.itemsCount === 1 ? 'línea' : 'líneas'})`}</Text>
+      <Text style={{ ...typeScale.seccion, color: c.text }}>{`Productos (${pedido.itemsCount})`}</Text>
       {q.isLoading ? (
         <ActivityIndicator color={c.brand} accessibilityLabel="Cargando las líneas" />
       ) : q.isError ? (
@@ -91,6 +88,7 @@ export function PedidoPorPrepararDetalle({ pedido }: { pedido: VentaPreparacion 
           <Text style={{ ...typeScale.cuerpo, color: c.text }}>{observaciones}</Text>
         </View>
       ) : null}
+      <Notice tone="info">Solo para ver cómo va. Preparar y armar la ruta se hace en la web.</Notice>
     </ScrollView>
   )
 }
