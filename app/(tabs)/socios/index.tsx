@@ -4,7 +4,7 @@ import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Fab, Notice, TopBar } from '@/core/ui/fw'
+import { Button, Notice, TopBar } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useCartera } from '@/features/clientes/hooks/useCartera'
 import { ClienteCard } from '@/features/clientes/components/ClienteCard'
@@ -67,7 +67,7 @@ export default function ClientesScreen() {
         renderItem={({ item }) => (
           <ClienteCard cliente={item} seleccionado={dosPaneles && item.id === abierto} onPress={() => abrir(item.id)} />
         )}
-        contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: 96 }}
+        contentContainerStyle={{ padding: space[4], gap: space[3] }}
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.brandInk} />}
@@ -85,6 +85,11 @@ export default function ClientesScreen() {
           )
         }
       />
+      {canCreate('MOD_CLIENTES') ? (
+        <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+          <Button label="Nuevo cliente" onPress={() => router.push('/(tabs)/socios/nuevo')} />
+        </View>
+      ) : null}
     </View>
   )
 
@@ -96,7 +101,7 @@ export default function ClientesScreen() {
         leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
       />
       <BuscadorCartera valor={busqueda} onCambio={setBusqueda} />
-      <FiltrosCartera valor={filtros} onCambio={setFiltros} />
+      <FiltrosCartera valor={filtros} onCambio={setFiltros} totalCartera={filtrando || busqueda.trim() ? undefined : totalCount} />
 
       {dosPaneles ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>
@@ -115,9 +120,6 @@ export default function ClientesScreen() {
         lista
       )}
 
-      {canCreate('MOD_CLIENTES') ? (
-        <Fab accessibilityLabel="Nuevo cliente" onPress={() => router.push('/(tabs)/socios/nuevo')} />
-      ) : null}
     </View>
   )
 }

@@ -127,5 +127,7 @@ export function useClienteForm(id: string | undefined, alGuardar: (id: string) =
     errorDeCarga: editando && !cargado && errorDeCarga ? mensajeDelServidor(errorDeCarga, 'No se pudo cargar el cliente.') : null,
     reintentar: () => { void refetch() },
     guardando: crear.isPending || actualizar.isPending,
+    /** El detalle tal como está guardado: de ahí sale qué campos sensibles ya tienen valor (y se bloquean). */
+    guardado: editando ? actual : undefined,
   }
 }
