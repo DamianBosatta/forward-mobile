@@ -1,16 +1,13 @@
 import React from 'react'
 import { ActivityIndicator, Image, ScrollView, Text, View } from 'react-native'
-import { Package, Lock } from 'lucide-react-native'
+import { Package } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Notice, StatusChip, formatImporte } from '@/core/ui/fw'
-import type { UltimaCompraProducto } from '@/libs/api-client/types'
+import { Button, Notice, StatusChip, formatImporte } from '@/core/ui/fw'
 import { useProducto, useVariantesProducto } from '@/libs/api-client/productos'
-import { useDisponibilidad, useStock } from '@/libs/api-client/stock'
+import { useDisponibilidad } from '@/libs/api-client/stock'
 import { getFullImageUrl } from '@/libs/api-client/media'
-import { useAuthStore } from '@/features/auth/store/auth.store'
-import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useDepositoDeConsulta } from '../hooks/useDepositoDeConsulta'
-import { chipDeStock, formatPorcentaje, formatVariacion, redondearVariacion, textoUltimaCompra, textoUnidadDeVenta } from '../lib/presentacion'
+import { chipDeStock, textoUnidadDeVenta } from '../lib/presentacion'
 
 function Fila({ label, valor, fuerte }: { label: string; valor: string; fuerte?: boolean }) {
   const c = useColors()
@@ -22,36 +19,10 @@ function Fila({ label, valor, fuerte }: { label: string; valor: string; fuerte?:
   )
 }
 
-/**
- * Última compra del producto, en el bloque de costos (forward-system #894). La variación contra la compra
- * anterior lleva signo y color: subir el costo es malo (rojo), bajarlo es bueno (verde); sin variación, sin renglón.
- * El color sale del valor redondeado que se escribe: "0,0 %" siempre va neutro.
- */
-function UltimaCompra({ compra }: { compra: UltimaCompraProducto }) {
-  const c = useColors()
-  const variacion = compra.variacionCostoPorcentaje
-  const redondeada = variacion == null ? 0 : redondearVariacion(variacion)
-  const color = redondeada === 0 ? c.textSecondary : redondeada > 0 ? c.chip.anulado.text : c.chip.entregado.text
-  return (
-    <View style={{ gap: space[1], paddingVertical: space[1] }}>
-      <Text style={[typeScale.cuerpo, { color: c.text }]}>{textoUltimaCompra(compra)}</Text>
-      {variacion != null ? (
-        <Text style={[typeScale.secundario, importe, { color }]}>{`${formatVariacion(variacion)} respecto de la compra anterior`}</Text>
-      ) : null}
-    </View>
-  )
-}
-
-function Seccion({ titulo, aviso, children }: { titulo: string; aviso?: string; children: React.ReactNode }) {
+function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   const c = useColors()
   return (
     <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[2] }}>
-      {aviso ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
-          <Lock size={14} color={c.textSecondary} />
-          <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{aviso}</Text>
-        </View>
-      ) : null}
       <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>{titulo}</Text>
       {children}
     </View>
@@ -59,20 +30,14 @@ function Seccion({ titulo, aviso, children }: { titulo: string; aviso?: string; 
 }
 
 /**
- * Ficha de producto (lámina FichaProducto). Todo lo sensible lo decide el servidor:
- * costo y margen llegan null sin CAP_VER_COSTOS y además no se dibujan sin la capacidad;
- * las cantidades por depósito solo se piden y se dibujan con CAP_VER_CANTIDADES_STOCK, la
- * misma capacidad con la que el servidor las redacta (forward-system #900).
+ * Ficha de producto (láminas FichaProducto y ModProducto). Como en la web, el catálogo no muestra cantidades ni
+ * costos: solo si hay stock. Las cantidades por depósito viven en la vista Stock, a la que lleva `onVerStock`.
  */
-export function FichaProducto({ productoId }: { productoId: string }) {
+export function FichaProducto({ productoId, onVerStock }: { productoId: string; onVerStock?: (codigo: string) => void }) {
   const c = useColors()
-  const user = useAuthStore((s) => s.user)
-  const veCostos = hasCapability(user?.permissions, 'CAP_VER_COSTOS')
-  const veCantidades = hasCapability(user?.permissions, 'CAP_VER_CANTIDADES_STOCK')
 
   const { data: p, isLoading, isError } = useProducto(productoId)
   const { data: variantes } = useVariantesProducto(productoId, !!p?.esPadreDeVariantes)
-  const { data: stock } = useStock({ productoId }, { enabled: veCantidades && !!productoId })
 
   // El chip usa cantidad 1, igual que la tarjeta: la misma respuesta en todas partes.
   // Aparte, si se vende por caja, un segundo chequeo con la venta mínima avisa si no alcanza.
@@ -99,10 +64,6 @@ export function FichaProducto({ productoId }: { productoId: string }) {
     ventaMinima > 1 && chip?.estado === 'entregado' && !!disponibilidadCaja && !disponibilidadCaja.some((d) => d.disponible)
   const foto = getFullImageUrl(p.imageUrl ?? p.imageUrlLinea)
   const encabezado = [p.codigoPropio, p.marca, p.categoriaPathCompleto].filter(Boolean).join(' · ')
-  const depositos = stock?.items ?? []
-  // Sin CAP_VER_COSTOS el servidor manda null; aunque llegara, no se dibuja. Un servidor anterior a #894 no la manda.
-  const ultimaCompra = veCostos ? p.ultimaCompra : null
-  const hayCostos = veCostos && (p.precioCompraBase != null || p.margenBrutoPorcentaje != null || !!ultimaCompra)
 
   return (
     <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }}>
@@ -125,14 +86,6 @@ export function FichaProducto({ productoId }: { productoId: string }) {
       <View style={{ gap: space[1] }}>
         <Fila label="Precio de lista por unidad" valor={formatImporte(p.precioVenta)} fuerte />
         {p.precioConOferta != null ? <Fila label="Precio de oferta" valor={formatImporte(p.precioConOferta)} fuerte /> : null}
-        {p.precioMinimoRentable != null ? (
-          <>
-            <Fila label="Precio mínimo" valor={formatImporte(p.precioMinimoRentable)} />
-            <Text style={[typeScale.secundario, { color: c.textSecondary }]}>
-              Por debajo del precio mínimo, la venta queda por autorizar.
-            </Text>
-          </>
-        ) : null}
       </View>
 
       <Notice tone="info">{textoUnidadDeVenta(p.ventaMinimaUnidades)}</Notice>
@@ -152,27 +105,8 @@ export function FichaProducto({ productoId }: { productoId: string }) {
         </Seccion>
       ) : null}
 
-      {veCantidades && depositos.length > 0 ? (
-        <Seccion titulo="Stock por depósito" aviso="Solo con permiso de ver cantidades">
-          <Fila label="Depósito" valor="Real · Reserv. · Dispon." />
-          {depositos.map((d) => (
-            <Fila
-              key={d.id}
-              label={d.deposito}
-              valor={`${d.cantidadActual} · ${d.cantidadReservada} · ${d.cantidadDisponible}`}
-            />
-          ))}
-        </Seccion>
-      ) : null}
-
-      {hayCostos ? (
-        <Seccion titulo="Costo y margen" aviso="Solo con permiso de ver costos">
-          {p.precioCompraBase != null ? <Fila label="Costo por unidad" valor={formatImporte(p.precioCompraBase)} /> : null}
-          {p.margenBrutoPorcentaje != null ? (
-            <Fila label="Margen bruto" valor={formatPorcentaje(p.margenBrutoPorcentaje)} />
-          ) : null}
-          {ultimaCompra ? <UltimaCompra compra={ultimaCompra} /> : null}
-        </Seccion>
+      {onVerStock ? (
+        <Button label="Ver stock por depósito" variant="secundario" onPress={() => onVerStock(p.codigoPropio)} />
       ) : null}
 
       <Seccion titulo="Datos">
@@ -180,6 +114,7 @@ export function FichaProducto({ productoId }: { productoId: string }) {
         {p.codigoBarra ? <Fila label="Código de barras" valor={p.codigoBarra} /> : null}
         {p.marca ? <Fila label="Marca" valor={p.marca} /> : null}
         {p.categoriaPathCompleto ? <Fila label="Categoría" valor={p.categoriaPathCompleto} /> : null}
+        <Fila label="Estado" valor={p.activo ? 'Activo' : 'Inactivo'} />
       </Seccion>
     </ScrollView>
   )

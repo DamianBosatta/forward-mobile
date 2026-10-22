@@ -1,11 +1,9 @@
 import React from 'react'
-import { StyleSheet } from 'react-native'
 import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import CatalogoConsultaScreen from '../../../../app/(tabs)/inventario/index'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { themeColors } from '@/libs/theme'
 
 // PR 1.1 — catálogo de consulta. Se renderiza la pantalla real con react-query real;
 // solo se reemplaza el transporte HTTP (api.get / api.post) por respuestas del servidor.
@@ -173,28 +171,24 @@ describe('Catálogo de consulta', () => {
     })
   })
 
-  it('sin CAP_VER_COSTOS la ficha no dibuja costo ni margen, aunque llegaran', async () => {
+  it('el catálogo no muestra costos ni margen ni precio mínimo, ni con CAP_VER_COSTOS (S6, como la web)', async () => {
+    conUsuario(['Vendedor'], [{ module: 'CAP_VER_COSTOS', canRead: true }])
     renderPantalla()
     await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
 
     expect(await screen.findByText('Precio de lista por unidad')).toBeTruthy()
     expect(screen.getByText('Se vende por caja de 12')).toBeTruthy()
+    expect(screen.queryByText('Costo y margen')).toBeNull()
     expect(screen.queryByText('Costo por unidad')).toBeNull()
     expect(screen.queryByText('Margen bruto')).toBeNull()
+    expect(screen.queryByText('Precio mínimo')).toBeNull()
     expect(screen.queryByText(/1\.846,71/)).toBeNull()
+    expect(screen.queryByText(/2\.585,39/)).toBeNull()
     expect(screen.queryByText('40,0 %')).toBeNull()
   })
 
-  it('con CAP_VER_COSTOS la ficha muestra costo y margen', async () => {
-    conUsuario(['Vendedor'], [{ module: 'CAP_VER_COSTOS', canRead: true }])
-    renderPantalla()
-    await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
-
-    expect(await screen.findByText('$ 1.846,71')).toBeTruthy()
-    expect(screen.getByText('40,0 %')).toBeTruthy()
-  })
-
-  it('sin un rol que vea cantidades no se piden ni se dibujan las cantidades por depósito', async () => {
+  it('el catálogo no muestra cantidades ni pide el stock por depósito, ni con CAP_VER_CANTIDADES_STOCK (S6)', async () => {
+    conUsuario(['Vendedor'], [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }])
     renderPantalla()
     await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
     await screen.findByText('Precio de lista por unidad')
@@ -204,23 +198,34 @@ describe('Catálogo de consulta', () => {
     expect(llamadasGet().some((u) => u.startsWith('/api/v1/Stocks?'))).toBe(false)
   })
 
-  it('con CAP_VER_CANTIDADES_STOCK muestra real, reservado y disponible por depósito, aunque el rol sea Vendedor (forward-system #900)', async () => {
-    conUsuario(['Vendedor'], [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }])
+  it('la ficha dice el estado del producto', async () => {
     renderPantalla()
-    await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
-
-    expect(await screen.findByText('184 · 36 · 148')).toBeTruthy()
-    expect(screen.getByText('Central')).toBeTruthy()
+    await abrirFichaDeAer()
+    expect(await screen.findByText('Activo')).toBeTruthy()
   })
 
-  it('sin CAP_VER_CANTIDADES_STOCK no pide ni dibuja cantidades, aunque el rol sea Gerencia', async () => {
-    conUsuario(['Gerencia'])
+  it('el filtro "Con stock" deja solo lo que el servidor dice que se puede vender, y al apagarlo vuelve todo', async () => {
     renderPantalla()
-    await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
-    await screen.findByText('Precio de lista por unidad')
+    await screen.findByText(AER.nombre)
+    const tarjetaAer = screen.getByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`)
+    await waitFor(() => expect(within(tarjetaAer).getByText('Hay stock')).toBeTruthy())
 
-    expect(screen.queryByText('Stock por depósito')).toBeNull()
-    expect(llamadasGet().some((u) => u.startsWith('/api/v1/Stocks?'))).toBe(false)
+    await userEvent.press(screen.getByRole('button', { name: 'Con stock', selected: false }))
+    expect(screen.queryByText(TEX.nombre)).toBeNull()
+    expect(screen.getByText(AER.nombre)).toBeTruthy()
+    expect(screen.getByText('MOSTRANDO 1 DE 57')).toBeTruthy()
+
+    await userEvent.press(screen.getByRole('button', { name: 'Con stock', selected: true }))
+    expect(screen.getByText(TEX.nombre)).toBeTruthy()
+  })
+
+  it('"Ver stock por depósito" lleva a la vista Stock buscando ese código', async () => {
+    renderPantalla()
+    await abrirFichaDeAer()
+    await userEvent.press(await screen.findByLabelText('Ver stock por depósito'))
+
+    expect(screen.getByRole('radio', { name: 'Stock', checked: true })).toBeTruthy()
+    expect(screen.getByLabelText('Buscar por código o nombre').props.value).toBe(AER.codigoPropio)
   })
 
   it('desde 900 px la grilla y la ficha van en dos paneles', async () => {
@@ -263,10 +268,6 @@ function servidorCon(items: object[], detalle: object = DETALLE) {
 
 const consultasDeDisponibilidad = () => api.post.mock.calls.filter(([url]) => url === '/api/v1/Stocks/disponibilidad')
 const abrirFichaDeAer = async () => userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
-const colorDe = (texto: string): string => StyleSheet.flatten(screen.getByText(texto).props.style).color
-const rojo = [themeColors.light.chip.anulado.text, themeColors.dark.chip.anulado.text]
-const verde = [themeColors.light.chip.entregado.text, themeColors.dark.chip.entregado.text]
-const neutro = [themeColors.light.textSecondary, themeColors.dark.textSecondary]
 
 const ULTIMA = {
   // 01:30 UTC del 11 es la noche del 10 en Argentina (UTC-3).
@@ -354,103 +355,8 @@ describe('Catálogo con servidor nuevo (forward-system #894)', () => {
     })
   })
 
-  describe('última compra en el bloque de costos', () => {
-    beforeEach(() => conUsuario(['Vendedor'], [{ module: 'CAP_VER_COSTOS', canRead: true }]))
-
-    it('con CAP_VER_COSTOS muestra el día argentino, el proveedor, el costo y la variación con signo', async () => {
-      api.get.mockImplementation(servidorCon([AER, TEX], { ...DETALLE, ultimaCompra: ULTIMA }))
-      renderPantalla()
-      await abrirFichaDeAer()
-
-      expect(await screen.findByText('Última compra: 10/10/2026 · Distribuidora Norte S.A. · $ 1.846,71')).toBeTruthy()
-      expect(screen.getByText('+5,2 % respecto de la compra anterior')).toBeTruthy()
-      // Sigue el costo por unidad y el margen de antes.
-      expect(screen.getByText('Costo por unidad')).toBeTruthy()
-      expect(screen.getByText('40,0 %')).toBeTruthy()
-    })
-
-    it('si el costo sube la variación va en rojo y si baja, en verde', async () => {
-      api.get.mockImplementation(servidorCon([AER, TEX], { ...DETALLE, ultimaCompra: ULTIMA }))
-      const { unmount } = renderPantalla()
-      await abrirFichaDeAer()
-      await screen.findByText('+5,2 % respecto de la compra anterior')
-      expect(rojo).toContain(colorDe('+5,2 % respecto de la compra anterior'))
-      unmount()
-
-      api.get.mockImplementation(
-        servidorCon([AER, TEX], { ...DETALLE, ultimaCompra: { ...ULTIMA, variacionCostoPorcentaje: -3.04 } }),
-      )
-      renderPantalla()
-      await abrirFichaDeAer()
-      await screen.findByText('-3,0 % respecto de la compra anterior')
-      expect(verde).toContain(colorDe('-3,0 % respecto de la compra anterior'))
-    })
-
-    // El color sale del valor redondeado que se escribe: "0,0 %" nunca va en rojo ni en verde, y ±0,05 redondean para el mismo lado.
-    it.each([
-      [0.05, '+0,1 % respecto de la compra anterior', rojo],
-      [-0.05, '-0,1 % respecto de la compra anterior', verde],
-      [0, '0,0 % respecto de la compra anterior', neutro],
-      [0.04, '0,0 % respecto de la compra anterior', neutro],
-      [-0.04, '0,0 % respecto de la compra anterior', neutro],
-    ])('la variación %p se escribe "%s" y toma el color de ese valor', async (variacion, texto, colores) => {
-      api.get.mockImplementation(
-        servidorCon([AER, TEX], { ...DETALLE, ultimaCompra: { ...ULTIMA, variacionCostoPorcentaje: variacion } }),
-      )
-      renderPantalla()
-      await abrirFichaDeAer()
-
-      await screen.findByText(texto)
-      expect(colores).toContain(colorDe(texto))
-    })
-
-    it('la primera compra (sin variación) no dibuja el renglón de la variación', async () => {
-      api.get.mockImplementation(
-        servidorCon([AER, TEX], {
-          ...DETALLE,
-          ultimaCompra: { ...ULTIMA, proveedorNombre: null, variacionCostoPorcentaje: null },
-        }),
-      )
-      renderPantalla()
-      await abrirFichaDeAer()
-
-      // Sin proveedor, esa parte se omite.
-      expect(await screen.findByText('Última compra: 10/10/2026 · $ 1.846,71')).toBeTruthy()
-      expect(screen.queryByText(/respecto de la compra anterior/)).toBeNull()
-    })
-
-    it('la medianoche argentina cambia el día: 03:00 UTC ya es el 11', async () => {
-      api.get.mockImplementation(
-        servidorCon([AER, TEX], { ...DETALLE, ultimaCompra: { ...ULTIMA, fecha: '2026-10-11T03:00:00Z' } }),
-      )
-      renderPantalla()
-      await abrirFichaDeAer()
-
-      expect(await screen.findByText(/^Última compra: 11\/10\/2026/)).toBeTruthy()
-    })
-
-    it('si solo hay última compra (sin costo ni margen) el bloque de costos aparece igual', async () => {
-      api.get.mockImplementation(
-        servidorCon([AER, TEX], { ...DETALLE, precioCompraBase: null, margenBrutoPorcentaje: null, ultimaCompra: ULTIMA }),
-      )
-      renderPantalla()
-      await abrirFichaDeAer()
-
-      expect(await screen.findByText('Costo y margen')).toBeTruthy()
-      expect(screen.getByText(/^Última compra:/)).toBeTruthy()
-    })
-
-    it('con ultimaCompra null no hay nada nuevo: se ve costo y margen como antes', async () => {
-      api.get.mockImplementation(servidorCon([AER, TEX], { ...DETALLE, ultimaCompra: null }))
-      renderPantalla()
-      await abrirFichaDeAer()
-
-      expect(await screen.findByText('$ 1.846,71')).toBeTruthy()
-      expect(screen.queryByText(/Última compra/)).toBeNull()
-    })
-  })
-
-  it('sin CAP_VER_COSTOS la ficha no dibuja la última compra, aunque llegara', async () => {
+  it('aunque el servidor mande la última compra y los costos, la ficha no los dibuja (S6)', async () => {
+    conUsuario(['Vendedor'], [{ module: 'CAP_VER_COSTOS', canRead: true }])
     api.get.mockImplementation(servidorCon([AER, TEX], { ...DETALLE, ultimaCompra: ULTIMA }))
     renderPantalla()
     await abrirFichaDeAer()
@@ -483,15 +389,5 @@ describe('Catálogo con servidor anterior a #894', () => {
         { productoId: TEX.id, cantidad: 1 },
       ],
     })
-  })
-
-  it('la ficha con CAP_VER_COSTOS muestra costo y margen y nada de última compra', async () => {
-    conUsuario(['Vendedor'], [{ module: 'CAP_VER_COSTOS', canRead: true }])
-    renderPantalla()
-    await abrirFichaDeAer()
-
-    expect(await screen.findByText('$ 1.846,71')).toBeTruthy()
-    expect(screen.getByText('40,0 %')).toBeTruthy()
-    expect(screen.queryByText(/Última compra/)).toBeNull()
   })
 })
