@@ -38,9 +38,9 @@ jest.mock('../../../../app/(tabs)/compras/[id]', () => {
   const { Text: T } = require('react-native')
   return { CompraDetalle: ({ id }: { id: string }) => <T>{`detalle ${id}`}</T> }
 })
-jest.mock('@/features/venta-nueva/components/DetalleVentaNueva', () => {
+jest.mock('@/features/ventas/components/DetalleVenta', () => {
   const { Text: T } = require('react-native')
-  return { DetalleVentaNueva: ({ id }: { id: string }) => <T>{`detalle ${id}`}</T> }
+  return { DetalleVenta: ({ id }: { id: string }) => <T>{`detalle ${id}`}</T> }
 })
 
 import VentasRoute from '../../../../app/(tabs)/ventas/index'

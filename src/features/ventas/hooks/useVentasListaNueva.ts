@@ -76,7 +76,7 @@ export function useVentasListaNueva(filtroDeRuta: FiltroVentasRuta | null = null
     ventasQuery: ventas,
     /** Deslizar para actualizar trae de nuevo la lista y su resumen, para que el contador no quede viejo. */
     refrescar: () => Promise.all([ventas.refetch(), resumen.refetch()]),
-    borradores: borradores.data ?? [],
+    borradores: Array.isArray(borradores.data) ? borradores.data : [],
     borradoresQuery: borradores,
   }
 }
