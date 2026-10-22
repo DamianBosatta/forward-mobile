@@ -11,6 +11,10 @@ jest.mock('@/core/api/client', () => ({
   API_URL: 'http://api.test',
   api: { get: (url: string) => mockGet(url), post: (url: string, body?: unknown) => mockPost(url, body) },
 }))
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
+jest.mock('@/libs/useResponsive', () => ({
+  useResponsive: () => ({ width: 390, isTablet: false, isTabletLandscape: false }),
+}))
 let mockAlEnfocar: (() => void) | undefined
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ dispatch: jest.fn() }),
@@ -94,6 +98,29 @@ describe('Calendario', () => {
       tipo: 'Manual', titulo: 'Pasar a cobrar', descripcion: null, fechaInicio: '2026-10-10', avisarDiasAntes: 3, visibilidad: 'Personal',
     })
     expect(await screen.findByText('Sábado 10')).toBeTruthy()
+  })
+
+  it('en teléfono, el selector "Calendario | Avisos (n)" lleva a la bandeja', async () => {
+    const irAAvisos = jest.fn()
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={qc}><CalendarioScreen avisosSinLeer={5} onIrAAvisos={irAAvisos} /></QueryClientProvider>)
+    await screen.findByText('Rendir la caja de la semana')
+    await userEvent.press(screen.getByLabelText('Avisos (5)'))
+    expect(irAAvisos).toHaveBeenCalledTimes(1)
+  })
+
+  it('ofrece los tres tipos de la web a cualquier usuario y guarda el elegido', async () => {
+    mockPost.mockResolvedValue('nuevo-id')
+    pintar()
+    await screen.findByText('Rendir la caja de la semana')
+    await userEvent.press(screen.getByLabelText('Nuevo evento'))
+    expect(screen.getByLabelText('Otro evento').props.accessibilityState.checked).toBe(true)
+    expect(screen.getByLabelText('Servicio (luz, gas, internet…)')).toBeTruthy()
+    expect(screen.getByLabelText('Obligación periódica (VTV, impuestos…)')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Obligación periódica (VTV, impuestos…)'))
+    await userEvent.type(screen.getByLabelText('Título'), 'VTV de la camioneta')
+    await userEvent.press(screen.getByLabelText('Guardar evento'))
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Calendario/eventos', expect.objectContaining({ tipo: 'ObligacionPeriodica', titulo: 'VTV de la camioneta', visibilidad: 'Personal' }))
   })
 
   it('"Agendar" desde una venta abre el evento con el título y la descripción cargados', async () => {

@@ -30,6 +30,18 @@ export const TIPO: Record<EventoCalendario['tipo'], string> = {
   Manual: 'Recordatorio',
 }
 
+/**
+ * Tipos que se ofrecen al crear un evento: los mismos tres para todos, como la web
+ * (`TIPOS_MANUALES` de forward-frontend/apps/web/src/features/calendario/core/domain/presentacion.ts).
+ * La web no filtra los tipos por rol; solo la visibilidad "Administración" depende del puesto.
+ */
+export type TipoManual = Extract<EventoCalendario['tipo'], 'ServicioRecurrente' | 'ObligacionPeriodica' | 'Manual'>
+export const TIPOS_MANUALES: { value: TipoManual; label: string }[] = [
+  { value: 'ServicioRecurrente', label: 'Servicio (luz, gas, internet…)' },
+  { value: 'ObligacionPeriodica', label: 'Obligación periódica (VTV, impuestos…)' },
+  { value: 'Manual', label: 'Otro evento' },
+]
+
 /** "HH:mm" de 00:00 a 23:59, como lo pide el servidor (9C). Vacía = todo el día. */
 export const esHoraValida = (hora: string) => hora === '' || /^([01]\d|2[0-3]):[0-5]\d$/.test(hora)
 

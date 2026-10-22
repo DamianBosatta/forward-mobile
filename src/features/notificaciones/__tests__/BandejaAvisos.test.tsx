@@ -15,6 +15,9 @@ jest.mock('@/core/api/client', () => ({
 }))
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
+jest.mock('@/libs/useResponsive', () => ({
+  useResponsive: () => ({ width: 390, isTablet: false, isTabletLandscape: false }),
+}))
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ dispatch: jest.fn() }),
   DrawerActions: { openDrawer: jest.fn() },
@@ -123,5 +126,15 @@ describe('Bandeja de avisos', () => {
     await screen.findByText('Venta A00421 autorizada')
     await userEvent.press(screen.getByLabelText('Preferencias de avisos'))
     expect(mockPush).toHaveBeenCalledWith('/avisos/preferencias')
+  })
+
+  it('los avisos salen de eventos: no hay "crear aviso", hay "Nuevo evento" que abre el calendario con la hoja', async () => {
+    pintar()
+    await screen.findByText('Venta A00421 autorizada')
+    expect(screen.queryByLabelText('Crear aviso')).toBeNull()
+    await userEvent.press(screen.getByLabelText('Nuevo evento'))
+    expect(mockPush).toHaveBeenCalledWith('/calendario?nuevo=1')
+    await userEvent.press(screen.getByLabelText('Calendario'))
+    expect(mockPush).toHaveBeenCalledWith('/calendario')
   })
 })
