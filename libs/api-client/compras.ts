@@ -32,26 +32,7 @@ export interface BorradorCompra {
 }
 
 /** GET /api/v1/Compras/resumen — ComprasResumenDto. */
-export interface ComprasResumenDto {
-  /** Suma monedas distintas: no es plata de ninguna. Usar `totalesPorMoneda`. */
-  totalComprado: number
-  /**
-   * Total por moneda de NotaPedido, Confirmado y Entregado (sin canceladas ni anuladas), sin importar
-   * la pestaña: el resumen no filtra por estado. Llegó con forward-system #873; antes no viene.
-   */
-  totalesPorMoneda?: { moneda: string; total: number }[]
-  /**
-   * Los estados con que el servidor recortó `totalesPorMoneda` (9B, prioridad 3): los de la pestaña
-   * que se pidieron en `Estados`. Ausente o null = no recortó (servidor anterior o sin `Estados`), y
-   * `totalesPorMoneda` cubre las dos pestañas.
-   */
-  estadosTotalesPorMoneda?: string[] | null
-  notasPedido: number
-  confirmadas: number
-  entregadas: number
-  canceladas: number
-  anuladas: number
-}
+export type ComprasResumenDto = components['schemas']['ComprasResumenDto']
 
 function filtroQuery(params: ComprasFiltroParams): URLSearchParams {
   const sp = new URLSearchParams()
@@ -250,11 +231,7 @@ export function useAnularRecepcionCompra() {
 // ── Borrador con autoguardado (Bloque 9A, PR 3.2) ──────────────────────────────
 
 /** CompraActionResponseDto: lo que devuelven crear borrador, editar y guardar la nota. */
-export interface CompraActionResponse {
-  compraId: string
-  version: number
-  message: string
-}
+export type CompraActionResponse = components['schemas']['CompraActionResponseDto']
 
 /** Cuerpo de PUT /Compras/{id} (UpdateCompraCommand). */
 export interface GuardarCompraBody {

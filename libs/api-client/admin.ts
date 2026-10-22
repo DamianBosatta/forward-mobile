@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
+import type { components } from './generated/schema'
 import type {
   PagedResult,
   UserListDto,
@@ -32,20 +33,13 @@ export interface GetUsuariosParams {
   pageSize?:   number
 }
 
-/**
- * UserSessionDto — matches the backend /sessions anonymous projection.
- * Fields: id (tokenId), createdAt, expiresAt, device (User-Agent), ip.
- */
-export interface UserSessionDto {
-  id: string
-  createdAt?: string
-  expiresAt?: string
-  device?: string
-  ip?: string
-}
+/** /sessions: SesionActivaDto del contrato (id, createdAt, expiresAt, device, ip, esActual). */
+export type UserSessionDto = components['schemas']['SesionActivaDto']
 
 /**
  * AuditLogDto — matches the backend UserAuditLogDto response.
+ * A mano a propósito (C-021): GET /Users/{id}/audit-logs no publica esquema de respuesta en openapi.json
+ * (`content?: never`), así que no hay de dónde derivarlo hasta que el backend lo declare.
  * Returned by GET /api/v1/Users/{id}/audit-logs.
  */
 export interface AuditLogDto {

@@ -9,6 +9,7 @@ import { api } from './client'
  * Response DTO for GET /api/v1/Configuracion/margen-minimo.
  * The api client unwraps ApiResponse<T>, so consumers receive this directly.
  */
+// A mano (C-021): GET /Configuracion/margen-minimo no publica esquema de respuesta en openapi.json.
 export interface MargenMinimoResponse {
   margenMinimoGlobal: number
 }
