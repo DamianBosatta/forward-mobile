@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
-import { Text, View } from 'react-native'
+import { Image, Text, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
-import { space, typeScale, useColors } from '@/libs/theme'
+import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice } from '@/core/ui/fw'
 import { uploadFotoEntrega } from '@/libs/api-client/media'
+import { partesArgentina } from '@/src/utils/date'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
 interface Props {
@@ -14,13 +15,26 @@ interface Props {
   /** Avisa mientras sube: la entrega no se confirma con una foto a medio subir. */
   onSubiendo: (subiendo: boolean) => void
   ayuda?: string
+  /** Lámina ChoferCamara: cómo encuadrar. Se muestra mientras no hay foto. */
+  guia?: string
+  /** Lámina ChoferEntrega/ChoferListo: título de la sección con su estado (Obligatoria, Opcional, Lista). */
+  titulo?: string
+  obligatoria?: boolean
+  /** Lámina ChoferListo: qué foto es ("Remito NTE16918"). */
+  referencia?: string
+}
+
+const hhmm = (ms: number) => {
+  const p = partesArgentina(ms)
+  return `${String(p.hora).padStart(2, '0')}:${String(p.minuto).padStart(2, '0')}`
 }
 
 /** Foto con la cámara del teléfono, subida en el acto a `upload-entrega`: el reintento de la entrega reusa la misma URL. */
-export function FotoEntrega({ que, url, onUrl, onSubiendo, ayuda }: Props) {
+export function FotoEntrega({ que, url, onUrl, onSubiendo, ayuda, guia, titulo, obligatoria, referencia }: Props) {
   const c = useColors()
   const [subiendo, setSubiendo] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [sacadaA, setSacadaA] = useState<number | null>(null)
 
   const sacar = async () => {
     setError(null)
@@ -37,6 +51,7 @@ export function FotoEntrega({ que, url, onUrl, onSubiendo, ayuda }: Props) {
     onSubiendo(true)
     try {
       onUrl(await uploadFotoEntrega(foto.uri))
+      setSacadaA(Date.now())
     } catch (e) {
       setError(mensajeDelServidor(e, 'No se pudo subir la foto. Probá de nuevo.'))
     } finally {
@@ -45,10 +60,34 @@ export function FotoEntrega({ que, url, onUrl, onSubiendo, ayuda }: Props) {
     }
   }
 
+  const estado = url ? 'Lista' : obligatoria ? 'Obligatoria' : 'Opcional'
   return (
-    <View style={{ gap: space[2] }}>
+    <View accessibilityLabel={titulo} style={{ gap: space[2] }}>
+      {titulo ? (
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <Text style={{ ...typeScale.seccion, color: c.text }}>{titulo}</Text>
+          <Text style={{ ...typeScale.secundario, color: url ? c.brandInk : c.textSecondary }}>{estado}</Text>
+        </View>
+      ) : null}
       {ayuda ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{ayuda}</Text> : null}
-      {url ? <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{`Foto ${que} cargada`}</Text> : null}
+      {!url && guia ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{guia}</Text> : null}
+      {url ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
+          <Image
+            source={{ uri: url }}
+            accessibilityLabel={`Miniatura de la foto ${que}`}
+            style={{ width: 56, height: 72, borderRadius: radii.campo, backgroundColor: c.border }}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{`Foto ${que} cargada`}</Text>
+            {referencia || sacadaA ? (
+              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
+                {[referencia, sacadaA ? `Sacada a las ${hhmm(sacadaA)}` : null, 'se adjunta a la venta'].filter(Boolean).join(' · ')}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+      ) : null}
       <Button
         label={url ? `Volver a sacar la foto ${que}` : `Sacar foto ${que}`}
         variant="secundario"

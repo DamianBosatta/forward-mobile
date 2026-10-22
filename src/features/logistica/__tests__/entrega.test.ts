@@ -1,4 +1,4 @@
-import { armarEntrega, formatDistancia, type FormEntrega, type LineaCobroForm } from '../consola/entrega'
+import { armarEntrega, formatDistancia, razonPendiente, type FormEntrega, type LineaCobroForm } from '../consola/entrega'
 
 const CHEQUE = { id: 'm-ch', nombre: 'Cheque', tipo: 'Cheque' }
 const base: FormEntrega = {
@@ -46,5 +46,20 @@ describe('formatDistancia', () => {
   it('metros por debajo del kilómetro y km con un decimal', () => {
     expect(formatDistancia(850)).toBe('850 m')
     expect(formatDistancia(12345)).toBe('12,3 km')
+  })
+})
+
+describe('razonPendiente', () => {
+  const ok = { entregado: true, receptor: 'Abel', motivo: null, subiendo: false }
+  it('entrega: sin quién recibió se explica; con nombre no hay razón', () => {
+    expect(razonPendiente({ ...ok, receptor: '  ' })).toBe('Falta quién recibió')
+    expect(razonPendiente(ok)).toBeNull()
+  })
+  it('no entrega: pide el motivo', () => {
+    expect(razonPendiente({ ...ok, entregado: false })).toBe('Falta elegir el motivo')
+    expect(razonPendiente({ ...ok, entregado: false, motivo: 'Dirección incorrecta' })).toBeNull()
+  })
+  it('con una foto subiendo espera, aunque el resto esté completo', () => {
+    expect(razonPendiente({ ...ok, subiendo: true })).toBe('Subiendo la foto: esperá un momento')
   })
 })

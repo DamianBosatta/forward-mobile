@@ -123,9 +123,17 @@ describe('Consola del chofer: entrega con la operación única', () => {
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
     expect(await screen.findByText(/Falta la foto del remito firmado/)).toBeTruthy()
     expect(llamadasA(ENTREGAR)).toHaveLength(0)
+    // Lámina ChoferEntrega: el pie dice qué falta y la sección marca la foto como obligatoria.
+    expect(screen.getByText('Falta la foto del remito')).toBeTruthy()
+    expect(within(screen.getByLabelText('Foto del remito')).getByText('Obligatoria')).toBeTruthy()
 
     await userEvent.press(screen.getByLabelText('Sacar foto del remito firmado'))
     expect(await screen.findByText('Foto del remito firmado cargada')).toBeTruthy()
+    // Lámina ChoferListo: miniatura, hora de la foto y sección en Lista.
+    expect(screen.getByLabelText('Miniatura de la foto del remito firmado')).toBeTruthy()
+    expect(screen.getByText(/Sacada a las \d{2}:\d{2} · se adjunta a la venta/)).toBeTruthy()
+    expect(within(screen.getByLabelText('Foto del remito')).getByText('Lista')).toBeTruthy()
+    expect(screen.queryByText('Falta la foto del remito')).toBeNull()
     const [[, form]] = llamadasA('/api/v1/Media/upload-entrega')
     expect(form).toBeInstanceOf(FormData)
 
