@@ -5,7 +5,7 @@ import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { useVenta } from '@/libs/api-client/ventas'
 import { useSocio } from '@/libs/api-client/socios'
-import { ESTADO_PENDIENTE_AUTORIZACION } from '../lib/motivosAutorizacion'
+import { esEstadoVenta } from '@/core/constants/estados'
 import { codigoDeVenta, rotuloCliente, tipoDeVenta } from '../lib/ventaGuardada'
 import { AccionesVenta } from './AccionesVenta'
 
@@ -40,7 +40,7 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
     )
   }
   const rotulo = socio.data ? rotuloCliente(socio.data) : (h.clienteNombre ?? '')
-  const porAutorizar = h.estado === ESTADO_PENDIENTE_AUTORIZACION
+  const porAutorizar = esEstadoVenta(h.estado, 'PendienteAutorizacion')
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>

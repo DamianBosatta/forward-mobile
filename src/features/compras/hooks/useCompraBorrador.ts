@@ -8,6 +8,7 @@ import { useDepositoDeConsulta } from '@/features/catalogo/hooks/useDepositoDeCo
 import { mensajeDelServidor } from '../lib/mensaje-error'
 import { confirmarYRecibir } from '../lib/confirmar-y-recibir'
 import { detallesParaServidor, lineaDesdeDetalle, type LineaCompra } from '../lib/lineaCompra'
+import { esEstadoCompra } from '@/core/constants/estados'
 
 export interface ProveedorCompra {
   id: string
@@ -25,7 +26,6 @@ const ESPERA_AUTOGUARDADO_MS = 800
 const esConflicto = (e: unknown) => (e as { status?: number })?.status === 409
 /** 409 del servidor al editar una compra en estado final (no es un choque de versión). */
 const esCerrada = (e: unknown, msg: string) => esConflicto(e) && /No se puede editar una compra en estado/.test(msg)
-const ESTADOS_EDITABLES = ['NotaPedido', 'Confirmado']
 
 /** Guardados de salida todavía en camino, por compra: reabrir el mismo borrador espera a que lleguen antes de pedirlo. */
 const salidasPendientes = new Map<string, Promise<unknown>>()
@@ -102,7 +102,7 @@ export function useCompraBorrador(borradorInicial?: string, opciones: { edicion?
       const c = await api.get<CompraDto>(`/api/v1/Compras/${id}`)
       const { proveedor: p } = await proveedorDesdeServidor(c.proveedorId)
       hidratar(c)
-      setNoEditable(edicion && !ESTADOS_EDITABLES.includes(String(c.estado)))
+      setNoEditable(edicion && !esEstadoCompra(String(c.estado), 'NotaPedido', 'Confirmado'))
       setProveedor(p)
       guardado.current = null
       setEstado('guardado')
