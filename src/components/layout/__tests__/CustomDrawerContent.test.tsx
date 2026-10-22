@@ -49,7 +49,7 @@ const comoAdmin = () => {
   mockRoles = ['Administrador', 'AdministradorSistemas', 'Gerencia', 'Empleado']
 }
 
-const FUERA_DE_ALCANCE = ['Usuarios', 'Depósitos', 'Proveedores', 'Cargas masivas', 'Viajes', 'Vehículos', 'Picking', 'Perfiles', 'Roles']
+const FUERA_DE_ALCANCE = ['Usuarios', 'Depósitos', 'Cargas masivas', 'Viajes', 'Vehículos', 'Picking', 'Perfiles', 'Roles']
 
 // Sin pantalla todavía: no se ofrecen enlaces a pantallas que no existen.
 const SIN_PANTALLA: string[] = []
@@ -58,6 +58,7 @@ const APROBADOS = [
   'Inicio',
   'Ventas',
   'Compras',
+  'Proveedores',
   'Clientes',
   'Catálogo y stock',
   'Cuentas corrientes',
@@ -146,6 +147,22 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     expect(screen.getByText('Tesorería')).toBeTruthy()
     // Un grupo sin entradas visibles no deja su título colgado.
     expect(screen.queryByText('Logística')).toBeNull()
+  })
+
+  it('Proveedores sale con MOD_PROVEEDORES:read, junto a Compras, y no depende de Clientes ni de Compras', async () => {
+    conPermisos('MOD_PROVEEDORES:read')
+    render(<CustomDrawerContent {...props()} />)
+
+    expect(visibles()).toEqual(['Inicio', 'Proveedores', 'Calendario', 'Avisos', 'Mi cuenta y contraseña'])
+    await userEvent.press(screen.getByRole('button', { name: 'Proveedores' }))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/proveedores')
+  })
+
+  it('con Clientes y Compras pero sin MOD_PROVEEDORES no aparece Proveedores', () => {
+    conPermisos('MOD_CLIENTES:read', 'MOD_COMPRAS:read')
+    render(<CustomDrawerContent {...props()} />)
+
+    expect(visibles()).toEqual(['Inicio', 'Compras', 'Clientes', 'Calendario', 'Avisos', 'Mi cuenta y contraseña'])
   })
 
   it('un vendedor de solo lectura ve el módulo de ventas', () => {
@@ -254,7 +271,7 @@ describe('CustomDrawerContent — por puesto sembrado (C-004, L-12)', () => {
   it('AdministradorSistemas ve todo el alcance porque el backend le manda el catálogo completo como filas', () => {
     mockRoles = ['AdministradorSistemas']
     conFilas([
-      ...['MOD_VENTAS', 'MOD_COMPRAS', 'MOD_CLIENTES', 'MOD_STOCK', 'MOD_CC', 'MOD_PAGOS', 'MOD_VIAJES', 'MOD_PEDIDOS'].map((m) => fila(m, 'RCUD')),
+      ...['MOD_VENTAS', 'MOD_COMPRAS', 'MOD_PROVEEDORES', 'MOD_CLIENTES', 'MOD_STOCK', 'MOD_CC', 'MOD_PAGOS', 'MOD_VIAJES', 'MOD_PEDIDOS'].map((m) => fila(m, 'RCUD')),
       fila('CAP_AUTORIZAR_VENTA'),
     ])
     render(<CustomDrawerContent {...props()} />)

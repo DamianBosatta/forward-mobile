@@ -32,6 +32,15 @@ export function inicialesDeDireccion(direccion: string): string {
 }
 
 export type TipoCondicionPago = 'Contado' | 'DiasDesdeEntrega' | 'DiasDesdeFactura' | 'DiaFijoDelMes'
+export const CONDICIONES_IVA = ['Responsable Inscripto', 'Monotributista', 'Exento', 'Consumidor Final']
+
+export const TIPOS_PAGO: { value: TipoCondicionPago; label: string }[] = [
+  { value: 'Contado', label: 'Contado' },
+  { value: 'DiasDesdeEntrega', label: 'Días desde la entrega' },
+  { value: 'DiasDesdeFactura', label: 'Días desde la factura' },
+  { value: 'DiaFijoDelMes', label: 'Día fijo del mes' },
+]
+
 export interface CondicionPago {
   tipo?: TipoCondicionPago
   dias?: number | null
@@ -54,4 +63,12 @@ export function textoCondicionPago(cp?: CondicionPago | null): string {
 export function textoMostrando(cantidad: number, total: number, saldoTotal?: number): string {
   const saldo = saldoTotal !== undefined ? ` · Saldo ${formatImporte(saldoTotal, { centavos: false })}` : ''
   return `Mostrando ${cantidad} de ${total}${saldo}`
+}
+
+/** La condición que viaja al servidor, a partir del tipo elegido y el plazo tipeado (días o día del mes). */
+export function condicionPagoParaEnviar(tipo: TipoCondicionPago, plazo: string) {
+  const n = plazo.trim() === '' ? null : Number(plazo)
+  if (tipo === 'DiaFijoDelMes') return { tipo, diaDelMes: n }
+  if (tipo === 'Contado') return { tipo }
+  return { tipo, dias: n }
 }

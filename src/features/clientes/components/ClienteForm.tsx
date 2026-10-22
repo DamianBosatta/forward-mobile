@@ -12,15 +12,8 @@ import { PieDeFormulario } from '@/features/socios/components/PieDeFormulario'
 import { sensiblesBloqueados } from '@/features/socios/lib/camposSensibles'
 import { useClienteForm } from '../hooks/useClienteForm'
 import { AVISO_CONDICION_PAGO } from './FichaCliente'
-import { textoCondicionPago, type TipoCondicionPago } from '../lib/cliente'
+import { CONDICIONES_IVA, TIPOS_PAGO, textoCondicionPago } from '../lib/cliente'
 
-const CONDICIONES_IVA = ['Responsable Inscripto', 'Monotributista', 'Exento', 'Consumidor Final']
-const TIPOS_PAGO: { value: TipoCondicionPago; label: string }[] = [
-  { value: 'Contado', label: 'Contado' },
-  { value: 'DiasDesdeEntrega', label: 'Días desde la entrega' },
-  { value: 'DiasDesdeFactura', label: 'Días desde la factura' },
-  { value: 'DiaFijoDelMes', label: 'Día fijo del mes' },
-]
 
 export const AYUDA_PROVISORIA = 'Para no perder la venta: el CUIT y los datos que falten se completan después. Mientras tanto el cliente queda provisorio.'
 export const AVISO_CAMPOS_SENSIBLES = 'La dirección, la razón social y el CUIT los cambia un administrador: pedilo con «Pedir cambio» en la ficha del cliente.'
