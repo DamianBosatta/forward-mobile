@@ -69,7 +69,7 @@ beforeEach(() => {
   useVentaNuevaStore.setState({ activa: false } as never)
   mockVentaNueva = false
   useAuthStore.setState({
-    user: { id: 'u1', username: 'emanuel', nombre: 'Emanuel', apellido: 'P', roles: [], permissions: [{ module: 'MOD_VENTAS', canRead: true }] },
+    user: { id: 'u1', username: 'emanuel', nombre: 'Emanuel', apellido: 'P', roles: [], permissions: [{ module: 'MOD_VENTAS', canRead: true, canCreate: true }] },
   } as never)
   responder()
   jest.spyOn(Date, 'now').mockReturnValue(new Date('2026-10-17T15:00:00Z').getTime())
@@ -152,6 +152,15 @@ describe('MiDiaScreen', () => {
     const user = userEvent.setup()
     await user.press(screen.getByLabelText('Nueva venta'))
     expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas/nueva')
+  })
+
+  it('sin permiso para crear ventas no ofrece "Nueva venta", igual que el "+" de la barra (decisión del dueño 22-10)', async () => {
+    useAuthStore.setState({
+      user: { id: 'u1', username: 'emanuel', nombre: 'Emanuel', apellido: 'P', roles: [], permissions: [{ module: 'MOD_VENTAS', canRead: true }] },
+    } as never)
+    pintar()
+    await waitFor(() => expect(screen.getByText(ars('171.000,00'))).toBeTruthy())
+    expect(screen.queryByLabelText('Nueva venta')).toBeNull()
   })
 
   it('ofrece Buscar en el encabezado', async () => {
