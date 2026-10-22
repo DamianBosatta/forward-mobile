@@ -4,6 +4,8 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { leerNumero, mostrarNumero } from '@/src/utils/numero'
 import { condicionPagoParaEnviar, type TipoCondicionPago } from '../lib/cliente'
+import { errorDeCuit } from '@/features/socios/lib/cuit'
+import { sensiblesBloqueados } from '@/features/socios/lib/camposSensibles'
 
 export interface DatosCliente {
   direccion: string
@@ -48,6 +50,7 @@ function cambioDeTope(texto: string, actual: number | null | undefined): { topeC
 export function useClienteForm(id: string | undefined, alGuardar: (id: string) => void) {
   const editando = !!id
   const puedeCambiarPago = useAuthStore(s => s.hasCapability('CAP_AUTORIZAR_VENTA'))
+  const esAdmin = useAuthStore(s => s.isAdmin())
   const { data: actual, isFetchedAfterMount, isSuccess, error: errorDeCarga, refetch } = useSocio(id ?? '', { fresco: true })
   const crear = useCreateSocio()
   const actualizar = useUpdateSocio()
@@ -88,6 +91,11 @@ export function useClienteForm(id: string | undefined, alGuardar: (id: string) =
     // El tope lo fija solo quien autoriza ventas (el servidor lo exige): sin la capacidad no se manda.
     const tope = puedeCambiarPago ? cambioDeTope(datos.tope, actual?.topeCredito) : {}
     if ('error' in tope) return setError(tope.error)
+    // Un CUIT que este usuario no puede cambiar no le frena el resto (lo corrige un administrador).
+    const cuit = sensiblesBloqueados(esAdmin, editando, actual).cuit
+      ? null
+      : errorDeCuit(datos.cuit, { esAltaNueva: !editando, altaProvisoria: datos.altaProvisoria })
+    if (cuit) return setError(cuit)
     const comun = {
       direccion: datos.direccion.trim(),
       nombreFantasia: datos.nombreFantasia.trim(),

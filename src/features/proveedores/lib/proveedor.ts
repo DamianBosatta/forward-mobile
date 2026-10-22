@@ -25,6 +25,5 @@ export const AVISO_FALTAN_DATOS = 'Faltan datos para comprarle: la condición de
 export const AVISO_CAMPOS_SENSIBLES_PROVEEDOR = 'La razón social y el CUIT los cambia un administrador: pedilo con «Pedir cambio» en la ficha del proveedor.'
 export const AVISO_EDICION_PROVEEDOR = 'No se dan de baja desde la app.'
 export const RAZON_SOCIAL_CORTA = 'La razón social necesita al menos 3 caracteres.'
-export const CUIT_INVALIDO = 'El CUIT no es válido: revisá los números.'
 export const PLAZO_FALTANTE = 'Indicá los días de la condición de pago.'
 export const DIA_DEL_MES_FALTANTE = 'Indicá el día del mes de la condición de pago.'

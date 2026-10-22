@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { sociosKeys } from '@/libs/api-client/socios'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { clienteDeLista, conPermisos, renderConQuery } from '../__testing__/ayuda'
+import { CUIT_INVALIDO, CUIT_REQUERIDO } from '@/features/socios/lib/cuit'
 
 const mockReplace = jest.fn()
 let mockId: string | undefined
@@ -23,8 +24,10 @@ const post = api.post as jest.Mock
 const put = api.put as jest.Mock
 const SIN_CAP = [{ module: 'MOD_CLIENTES', canRead: true, canCreate: true, canUpdate: true }]
 const CON_CAP = [...SIN_CAP, { module: 'CAP_AUTORIZAR_VENTA', canRead: true }]
+const CUIT_OK = '30-70999888-5'
 
-async function completarAlta() {
+async function completarAlta({ cuit = CUIT_OK }: { cuit?: string } = {}) {
+  fireEvent.changeText(screen.getByLabelText('CUIT'), cuit)
   fireEvent.changeText(screen.getByLabelText('Dirección de entrega'), 'Av. del Valle 89')
   fireEvent.changeText(screen.getByLabelText('Nombre del local'), 'Kiosco Chela')
   fireEvent.changeText(screen.getByLabelText('Contacto'), 'Chela')
@@ -72,6 +75,7 @@ it('si el servidor rechaza, se ve su mensaje con el detalle', async () => {
   post.mockRejectedValue(Object.assign(new Error('Datos inválidos.'), { errors: ['El teléfono es obligatorio en clientes.'] }))
   renderConQuery(<ClienteFormScreen />)
 
+  await completarAlta()
   await userEvent.press(screen.getByRole('button', { name: 'Crear cliente' }))
 
   expect(await screen.findByText('Datos inválidos.\nEl teléfono es obligatorio en clientes.')).toBeTruthy()
@@ -208,5 +212,29 @@ describe('D7: dirección, razón social y CUIT solo los cambia un administrador 
     expect(editable('CUIT')).toBe(true)
     expect(editable('Razón social')).toBe(true)
     expect(screen.queryByText(AVISO)).toBeNull()
+  })
+})
+
+describe('L-35: el CUIT del cliente con la regla de la web (buildSocioSchema)', () => {
+  beforeEach(() => conPermisos(SIN_CAP))
+
+  it('un alta que no es provisoria sin CUIT no se manda y pide el CUIT', async () => {
+    renderConQuery(<ClienteFormScreen />)
+
+    await completarAlta({ cuit: '' })
+    await userEvent.press(screen.getByRole('button', { name: 'Crear cliente' }))
+
+    expect(await screen.findByText(CUIT_REQUERIDO)).toBeTruthy()
+    expect(post).not.toHaveBeenCalled()
+  })
+
+  it('un CUIT con el dígito verificador mal no se manda', async () => {
+    renderConQuery(<ClienteFormScreen />)
+
+    await completarAlta({ cuit: '30-70999888-1' })
+    await userEvent.press(screen.getByRole('button', { name: 'Crear cliente' }))
+
+    expect(await screen.findByText(CUIT_INVALIDO)).toBeTruthy()
+    expect(post).not.toHaveBeenCalled()
   })
 })

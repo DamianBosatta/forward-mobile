@@ -4,6 +4,7 @@ import ProveedorFormScreen from '../../../../app/(tabs)/proveedores/nuevo'
 import { api } from '@/core/api/client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { clienteDeLista, conPermisos, renderConQuery } from '../../clientes/__testing__/ayuda'
+import { CUIT_INVALIDO, CUIT_REQUERIDO } from '@/features/socios/lib/cuit'
 
 const mockReplace = jest.fn()
 let mockId: string | undefined
@@ -77,7 +78,7 @@ it('un CUIT con dígito verificador inválido no se manda', async () => {
   completarAlta({ cuit: '30-70999888-1' })
   await userEvent.press(screen.getByRole('button', { name: 'Guardar proveedor' }))
 
-  expect(await screen.findByText('El CUIT no es válido: revisá los números.')).toBeTruthy()
+  expect(await screen.findByText(CUIT_INVALIDO)).toBeTruthy()
   expect(post).not.toHaveBeenCalled()
 })
 
@@ -173,4 +174,14 @@ describe('edición', () => {
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Guardar cambios' })).toBeNull()
   })
+})
+
+it('L-35: un alta sin CUIT no se manda y pide el CUIT, como la web', async () => {
+  renderConQuery(<ProveedorFormScreen />)
+
+  completarAlta({ cuit: '' })
+  await userEvent.press(screen.getByRole('button', { name: 'Guardar proveedor' }))
+
+  expect(await screen.findByText(CUIT_REQUERIDO)).toBeTruthy()
+  expect(post).not.toHaveBeenCalled()
 })

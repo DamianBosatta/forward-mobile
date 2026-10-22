@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useCreateSocio, useSocio, useUpdateSocio } from '@/libs/api-client/socios'
-import { cuitEsValido } from '@/libs/reglas'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { sensiblesBloqueados } from '@/features/socios/lib/camposSensibles'
+import { errorDeCuit } from '@/features/socios/lib/cuit'
 import { condicionPagoParaEnviar, type TipoCondicionPago } from '@/features/clientes/lib/cliente'
-import { CUIT_INVALIDO, DIA_DEL_MES_FALTANTE, PLAZO_FALTANTE, RAZON_SOCIAL_CORTA } from '../lib/proveedor'
+import { DIA_DEL_MES_FALTANTE, PLAZO_FALTANTE, RAZON_SOCIAL_CORTA } from '../lib/proveedor'
 
 export interface DatosProveedor {
   razonSocial: string
@@ -22,9 +22,10 @@ const VACIO: DatosProveedor = {
 }
 
 /** Lo que el servidor rechazaría igual, dicho antes de mandar (X5). Null si está bien. */
-function errorDe(d: DatosProveedor, bloqueo: { razonSocial: boolean; cuit: boolean }): string | null {
+function errorDe(d: DatosProveedor, bloqueo: { razonSocial: boolean; cuit: boolean }, esAltaNueva: boolean): string | null {
   if (!bloqueo.razonSocial && d.razonSocial.trim().length < 3) return RAZON_SOCIAL_CORTA
-  if (!bloqueo.cuit && d.cuit.trim() && !cuitEsValido(d.cuit)) return CUIT_INVALIDO
+  const cuit = bloqueo.cuit ? null : errorDeCuit(d.cuit, { esAltaNueva, altaProvisoria: false })
+  if (cuit) return cuit
   if (d.tipoPago !== 'Contado' && !(Number(d.plazo) > 0)) return d.tipoPago === 'DiaFijoDelMes' ? DIA_DEL_MES_FALTANTE : PLAZO_FALTANTE
   return null
 }
@@ -71,7 +72,7 @@ export function useProveedorForm(id: string | undefined, alGuardar: (id: string)
   const guardar = async () => {
     if (editando && !cargado) return
     setError(null)
-    const invalido = errorDe(datos, bloqueo)
+    const invalido = errorDe(datos, bloqueo, !editando)
     if (invalido) return setError(invalido)
     const comun = {
       razonSocial: datos.razonSocial.trim(),

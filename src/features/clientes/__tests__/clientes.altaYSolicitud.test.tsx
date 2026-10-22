@@ -30,6 +30,7 @@ async function completarAlta() {
   fireEvent.changeText(screen.getByLabelText('Nombre del local'), 'Kiosco Chela')
   fireEvent.changeText(screen.getByLabelText('Contacto'), 'Chela')
   fireEvent.changeText(screen.getByLabelText('Teléfono'), '1146582291')
+  fireEvent.changeText(screen.getByLabelText('CUIT'), '30-70999888-5')
 }
 const cuerpoAlta = () => post.mock.calls[0][1]
 
