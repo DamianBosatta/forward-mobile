@@ -45,6 +45,8 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
   const leading = useMenuLeading()
   const { isTabletLandscape } = useResponsive()
   const puede = useAuthStore((s) => s.hasCapability('CAP_AUTORIZAR_VENTA'))
+  // La web solo deja decidir con la capacidad Y modificar Ventas (VentaGestionDetail.tsx:146-149).
+  const puedeDecidir = useAuthStore((s) => s.hasCapability('CAP_AUTORIZAR_VENTA') && s.canDo('MOD_VENTAS', 'update'))
   const q = usePendientesAutorizacion(puede)
   const [filtro, setFiltro] = useState<ClaveMotivo | 'todas'>('todas')
   const [elegida, setElegida] = useState<string | null>(null)
@@ -88,7 +90,9 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
         </Text>
       ) : null}
       {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
-      <Text style={secundario}>La que más espera, primero. «Autorizar» pide confirmación; «Rechazar» pide el motivo.</Text>
+      <Text style={secundario}>
+        {puedeDecidir ? 'La que más espera, primero. «Autorizar» pide confirmación; «Rechazar» pide el motivo.' : 'La que más espera, primero. Para decidir necesitás el permiso de modificar ventas.'}
+      </Text>
     </View>
   )
 
@@ -111,6 +115,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
             <Text key={m.clave} style={[typeScale.secundario, { color: c.text }]}>{`• ${m.texto}`}</Text>
           ))}
         </Pressable>
+        {puedeDecidir ? (
         <View style={{ flexDirection: 'row', gap: space[3] }}>
           <View style={{ flex: 1 }}><Button label="Rechazar" variant="secundario" accessibilityLabel={`Rechazar la venta de ${v.clienteDisplayName}`} onPress={() => { setAviso(null); setDecidiendo({ venta: v, decision: 'rechazar' }) }} /></View>
           <View style={{ flex: 1 }}>
@@ -119,6 +124,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
               : <Button label="Autorizar" accessibilityLabel={`Autorizar la venta de ${v.clienteDisplayName}`} onPress={() => { setAviso(null); setDecidiendo({ venta: v, decision: 'autorizar' }) }} />}
           </View>
         </View>
+        ) : null}
       </View>
     )
   }

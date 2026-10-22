@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Button, Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
@@ -35,6 +35,9 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
   const router = useRouter()
   const veCostos = useAuthStore((s) => s.hasCapability('CAP_VER_COSTOS'))
   const puedeAutorizar = useAuthStore((s) => s.hasCapability('CAP_AUTORIZAR_VENTA'))
+  // Como la web (VentaGestionDetail.tsx:146-149): decidir pide la capacidad Y modificar Ventas.
+  const puedeDecidir = useAuthStore((s) => s.hasCapability('CAP_AUTORIZAR_VENTA') && s.canDo('MOD_VENTAS', 'update'))
+  const veCuenta = useAuthStore((s) => s.canDo('MOD_CC', 'read'))
   // Igual que el servidor (forward-system #951): la vista previa la abren Ventas:Read y
   // CAP_AUTORIZAR_VENTA. Sin CAP_VER_COSTOS llega igual, pero con el aporte en null.
   const vePreview = useAuthStore((s) => puedeAutorizar && s.canDo('MOD_VENTAS', 'read'))
@@ -96,19 +99,33 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
               {motivos.map((m) => <Text key={m.clave} style={[typeScale.secundario, { color: c.text }]}>{`• ${m.texto}`}</Text>)}
               {venta.motivoVentaSinStock ? <Text style={secundario}>{`Motivo del vendedor: «${venta.motivoVentaSinStock}»`}</Text> : null}
             </View>
-            {puedeAutorizar ? (
+            {puedeDecidir ? (
               <View style={{ flexDirection: 'row', gap: space[3] }}>
                 <View style={{ flex: 1 }}><Button label="Rechazar" variant="secundario" onPress={() => abrirDecision('rechazar')} /></View>
                 <View style={{ flex: 1 }}><Button label="Autorizar" onPress={() => abrirDecision('autorizar')} /></View>
               </View>
             ) : (
-              <Notice tone="info">Para autorizar o rechazar necesitás el permiso de autorizar ventas. Pedíselo a un administrador.</Notice>
+              <Notice tone="info">
+                {puedeAutorizar
+                  ? 'Para autorizar o rechazar necesitás el permiso de modificar ventas. Pedíselo a un administrador.'
+                  : 'Para autorizar o rechazar necesitás el permiso de autorizar ventas. Pedíselo a un administrador.'}
+              </Notice>
             )}
           </>
         )}
 
         {/* Debajo de los botones: si la ficha llega tarde, no los corre de lugar. */}
         <ClienteParaAutorizar socio={socio.isError ? null : socio.data} />
+        {veCuenta && venta.clienteId ? (
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Ver cuenta corriente del cliente"
+            onPress={() => router.push({ pathname: '/(tabs)/cuentas/[id]', params: { id: venta.clienteId! } })}
+            style={{ minHeight: 44, justifyContent: 'center' }}
+          >
+            <Text style={[typeScale.cuerpoDestacado, { color: c.brandInk }]}>Ver cuenta corriente del cliente</Text>
+          </Pressable>
+        ) : null}
 
         {veCostos ? (
           <View style={tarjeta} testID="bloque-costos">
