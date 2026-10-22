@@ -1,13 +1,13 @@
 import { format, formatDistanceToNow, isValid, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+/** Argentina no tiene horario de verano: UTC-3 fijo. No se usa Intl (Hermes no garantiza timeZone). */
+const OFFSET_ARGENTINA_MS = -3 * 60 * 60 * 1000;
+
 /**
  * Convierte un string de fecha (generalmente UTC del backend) a un objeto Date seguro.
  * Si la fecha no es válida, devuelve null.
  */
-/** Argentina no tiene horario de verano: UTC-3 fijo. No se usa Intl (Hermes no garantiza timeZone). */
-const OFFSET_ARGENTINA_MS = -3 * 60 * 60 * 1000;
-
 export function parseDateSafe(dateString: string | null | undefined): Date | null {
   if (!dateString) return null;
   const parsed = parseISO(dateString);
