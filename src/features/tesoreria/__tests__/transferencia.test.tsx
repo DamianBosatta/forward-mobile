@@ -171,11 +171,19 @@ it('si el servidor rechaza, se ve su motivo', async () => {
   expect(screen.queryByText('Movimiento registrado')).toBeNull()
 })
 
-it('en Tesorería, la transferencia solo se ofrece con permiso para crear pagos', async () => {
+/** Como la web (L13): sin permiso la transferencia se ve deshabilitada con el motivo y no navega. */
+async function transferenciaDeshabilitada() {
+  const boton = await screen.findByRole('button', { name: 'Transferencia entre cuentas' }, ESPERA)
+  expect(boton.props.accessibilityState.disabled).toBe(true)
+  expect(screen.getByText(MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA)).toBeTruthy()
+  await userEvent.press(boton)
+  expect(mockPush).not.toHaveBeenCalled()
+}
+
+it('en Tesorería, la transferencia solo se habilita con permiso para crear pagos', async () => {
   conPermisos([{ module: 'MOD_PAGOS', canRead: true }])
   const { unmount } = renderConQuery(<TesoreriaScreen />)
-  expect(await screen.findByText('No tenés acciones de tesorería habilitadas.', {}, ESPERA)).toBeTruthy()
-  expect(screen.queryByRole('button', { name: 'Transferencia entre cuentas' })).toBeNull()
+  await transferenciaDeshabilitada()
   unmount()
 
   conPermisos([{ module: 'MOD_PAGOS', canRead: true, canCreate: true }, { module: 'MOD_CC', canRead: true }])
@@ -184,20 +192,16 @@ it('en Tesorería, la transferencia solo se ofrece con permiso para crear pagos'
   expect(mockPush).toHaveBeenCalledWith('/(tabs)/tesoreria/transferencia')
 })
 
-it('sin permiso para ver cuentas corrientes no se ofrece la transferencia: su pantalla lista las cuentas propias', async () => {
+it('sin permiso para ver cuentas corrientes la transferencia queda deshabilitada: su pantalla lista las cuentas propias', async () => {
   conPermisos([{ module: 'MOD_PAGOS', canRead: true, canCreate: true }])
   renderConQuery(<TesoreriaScreen />)
-
-  expect(await screen.findByText('No tenés acciones de tesorería habilitadas.', {}, ESPERA)).toBeTruthy()
-  expect(screen.queryByRole('button', { name: 'Transferencia entre cuentas' })).toBeNull()
+  await transferenciaDeshabilitada()
 })
 
-it('sin permiso para leer pagos no se ofrece la transferencia: su pantalla pide los tipos de movimiento (MOD_PAGOS:Read)', async () => {
+it('sin permiso para leer pagos la transferencia queda deshabilitada: su pantalla pide los tipos de movimiento (MOD_PAGOS:Read)', async () => {
   conPermisos([{ module: 'MOD_PAGOS', canCreate: true }, { module: 'MOD_CC', canRead: true }])
   renderConQuery(<TesoreriaScreen />)
-
-  expect(await screen.findByText('No tenés acciones de tesorería habilitadas.', {}, ESPERA)).toBeTruthy()
-  expect(screen.queryByRole('button', { name: 'Transferencia entre cuentas' })).toBeNull()
+  await transferenciaDeshabilitada()
 })
 
 it('la cartera de cheques y la caja de efectivo no se ofrecen ni de origen ni de destino', async () => {

@@ -127,7 +127,8 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
         </View>
         {deudaVencida > 0 ? (
           // Solo carga el monto: el cobro se arma y se manda igual, con lo que quede en el campo.
-          <Button label="Todo lo vencido" variant="secundario" onPress={() => setF(p => ({ ...p, monto: mostrarNumero(deudaVencida) }))} />
+          // Mientras se manda, el monto queda fijo: lo que se ve es lo que se registra.
+          <Button label="Todo lo vencido" variant="secundario" disabled={registrar.isPending || subiendo} onPress={() => setF(p => ({ ...p, monto: mostrarNumero(deudaVencida) }))} />
         ) : null}
       </View>
     </>

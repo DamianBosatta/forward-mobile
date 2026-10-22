@@ -493,6 +493,18 @@ describe('R11 cobro: resumen "Cobrás" y "Todo lo vencido" (solo pantalla: el co
     expect(post.mock.calls[0][1]).toEqual({ socioComercialId: 'c1', claveIdempotencia: expect.stringMatching(/^mobile-/), lineas: [{ medioPagoId: 'm-tr', monto: 84300 }] })
   })
 
+  it('mientras se manda el cobro, "Todo lo vencido" no cambia el monto que se está registrando', async () => {
+    conVencido(84300)
+    post.mockReturnValueOnce(new Promise(() => {}))
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+
+    fireEvent.changeText(await screen.findByLabelText('Monto', {}, ESPERA), '1.000')
+    await userEvent.press(await screen.findByRole('radio', { name: 'Transferencia' }, ESPERA))
+    await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+
+    expect(screen.getByRole('button', { name: 'Todo lo vencido' }).props.accessibilityState.disabled).toBe(true)
+  })
+
   it('sin deuda vencida no hay "Todo lo vencido"', async () => {
     conVencido(0)
     renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)

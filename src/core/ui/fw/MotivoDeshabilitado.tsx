@@ -3,10 +3,12 @@ import { Text, View } from 'react-native'
 import { Lock } from 'lucide-react-native'
 import { space, useColors } from '@/libs/theme'
 
-/** Por qué no hay permiso para registrar cobros: la web lo dice en el panel y el lienzo (PermPatrones, panel 2) lo muestra bajo el botón. */
-export const MOTIVO_SIN_PERMISO_DE_COBRO = 'Para registrar cobros necesitás el permiso de Pagos. Pedíselo a quien administra los usuarios.'
-/** Idem para la transferencia entre cuentas propias (movimiento interno). */
-export const MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA = 'Para registrar transferencias necesitás el permiso de Pagos. Pedíselo a quien administra los usuarios.'
+/** Por qué no hay permiso para registrar cobros: el mismo texto de la web (finanzas/_components/cobro-pago-panel.tsx). */
+export const MOTIVO_SIN_PERMISO_DE_COBRO =
+  'No tenés permiso para registrar cobros ni pagos. Pedile a un administrador que te asigne el permiso de alta en el módulo Pagos.'
+/** Idem para la transferencia entre cuentas propias (finanzas/_components/movimiento-interno-tab.tsx). */
+export const MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA =
+  'No tenés permiso para registrar movimientos entre cuentas. Pedile a un administrador que te asigne el permiso de alta en el módulo Pagos.'
 
 /** Motivo de un botón deshabilitado (patrón 2 de PermPatrones): candado y texto 13/18 en color secundario, justo debajo del botón. */
 export function MotivoDeshabilitado({ children, testID }: { children: string; testID?: string }) {

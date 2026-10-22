@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { Button, FormContainer, TopBar, useMenuLeading } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
+import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 
 /**
  * Tesorería en mobile (plan §3, recortada a acciones): transferencias entre cuentas propias. Los
@@ -22,12 +23,9 @@ export default function TesoreriaScreen() {
       <TopBar title="Tesorería" subtitle="Transferencias" leading={menu} />
       <ScrollView contentContainerStyle={{ padding: space[4] }}>
         <FormContainer style={{ gap: space[4] }}>
-          {transferir ? (
-            <Button label="Transferencia entre cuentas" onPress={() => router.push('/(tabs)/tesoreria/transferencia')} />
-          ) : null}
-          {!transferir ? (
-            <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>No tenés acciones de tesorería habilitadas.</Text>
-          ) : null}
+          {/* Como la web (L13): sin permiso el botón se ve deshabilitado con el motivo, no se oculta. */}
+          <Button label="Transferencia entre cuentas" disabled={!transferir} onPress={() => router.push('/(tabs)/tesoreria/transferencia')} />
+          {!transferir ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}</MotivoDeshabilitado> : null}
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
             Los cobros se registran desde la cuenta corriente de cada cliente.
           </Text>
