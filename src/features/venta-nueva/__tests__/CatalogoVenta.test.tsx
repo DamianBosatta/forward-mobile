@@ -19,6 +19,15 @@ jest.mock('../hooks/useCatalogoVenta', () => ({
   useCatalogoVenta: () => ({ productos: mockProductos, isLoading: false }),
 }))
 
+// El escáner real usa la cámara: acá lee los códigos que se le tocan.
+jest.mock('@/features/catalogo/components/EscanerCodigo', () => ({
+  EscanerCodigo: ({ visible, onLeido }: { visible: boolean; onLeido: (c: string) => void }) => {
+    if (!visible) return null
+    const { Pressable: P, Text: T } = require('react-native')
+    return <>{['7790001112223', '0000'].map((c) => <P key={c} accessibilityRole="button" onPress={() => onLeido(c)}><T>{`Leer ${c}`}</T></P>)}</>
+  },
+}))
+
 // La vista previa de la línea (servidor) tiene sus propios tests en EditarLineaSheet.test.tsx.
 jest.mock('@/libs/api-client/ventas', () => ({
   ...jest.requireActual('@/libs/api-client/ventas'),
@@ -79,14 +88,17 @@ describe('CatalogoVenta (agregar productos)', () => {
     expect(onVerVenta).toHaveBeenCalled()
   })
 
-  it('"Descuento y detalle de la línea" abre Editar línea y lo confirmado vuelve al carrito', async () => {
+  it('tocar el número abre Cantidad y descuento y lo confirmado vuelve al carrito', async () => {
     render(<CatalogoVenta onVerVenta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Añadir Pala c/Cabo Fija LP' }))
-    await userEvent.press(screen.getByRole('link', { name: 'Descuento y detalle de la línea' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Cantidad: 1' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Borrar todo' }))
+    await userEvent.press(screen.getByRole('button', { name: '4' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Otro descuento' }))
     await userEvent.type(screen.getByLabelText('Descuento (%)'), '5')
-    await userEvent.press(screen.getByRole('button', { name: 'Confirmar' }))
-    expect(useCarritoVenta.getState().lineas[0]).toMatchObject({ cantidad: 1, descuentoPct: 5 })
-    expect(screen.queryByTestId('editar-linea')).toBeNull()
+    await userEvent.press(screen.getByRole('button', { name: 'Listo' }))
+    expect(useCarritoVenta.getState().lineas[0]).toMatchObject({ cantidad: 4, descuentoPct: 5 })
+    expect(screen.queryByLabelText('Cantidad y descuento')).toBeNull()
   })
 
   it('las variantes de una línea no se ofrecen como productos sueltos; el contador no las cuenta', () => {
@@ -99,10 +111,19 @@ describe('CatalogoVenta (agregar productos)', () => {
   it('el total del carrito aplica el descuento de la línea', async () => {
     render(<CatalogoVenta onVerVenta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Añadir Pala c/Cabo Fija LP' }))
-    await userEvent.press(screen.getByRole('link', { name: 'Descuento y detalle de la línea' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Cantidad: 1' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Otro descuento' }))
     await userEvent.type(screen.getByLabelText('Descuento (%)'), '10')
-    await userEvent.press(screen.getByRole('button', { name: 'Confirmar' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Listo' }))
     expect(screen.getByTestId('carrito-total')).toHaveTextContent('$ 900,00')
+  })
+
+  it('desde Cantidad y descuento se llega al detalle de la línea (precio, stock y margen)', async () => {
+    render(<CatalogoVenta onVerVenta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Añadir Pala c/Cabo Fija LP' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Cantidad: 1' }))
+    await userEvent.press(screen.getByRole('link', { name: 'Ver precio, stock y margen' }))
+    expect(screen.getByTestId('editar-linea')).toBeTruthy()
   })
 
   it('tablet horizontal: el carrito queda fijo a la derecha', () => {
@@ -112,3 +133,54 @@ describe('CatalogoVenta (agregar productos)', () => {
     expect(screen.getByText('Todavía no agregaste productos.')).toBeTruthy()
   })
 })
+
+describe('CatalogoVenta: filtros y escáner (V4)', () => {
+  it('"Con oferta" deja los que tienen precio con oferta; "Hay stock", los que se pueden vender', async () => {
+    mockProductos.push(producto({ id: 'po', nombre: 'Make Lavajean', precioConOferta: 90 }))
+    render(<CatalogoVenta onVerVenta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Con oferta' }))
+    expect(screen.getByTestId('producto-po')).toBeTruthy()
+    expect(screen.queryByTestId('producto-p1')).toBeNull()
+    await userEvent.press(screen.getByRole('button', { name: 'Con oferta' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Hay stock' }))
+    expect(screen.queryByTestId('producto-p6')).toBeNull()
+    expect(screen.getByTestId('producto-p1')).toBeTruthy()
+    mockProductos.pop()
+  })
+
+  it('"Del último pedido" solo se ofrece si hay último pedido, y deja lo que llevó con la pista de cuánto', async () => {
+    const { unmount } = render(<CatalogoVenta onVerVenta={jest.fn()} />)
+    expect(screen.queryByRole('button', { name: 'Del último pedido' })).toBeNull()
+    unmount()
+    render(<CatalogoVenta onVerVenta={jest.fn()} llevo={new Map([['p1', 12]])} />)
+    expect(screen.getByText('Llevó 12 la última vez')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Del último pedido' }))
+    expect(screen.getByTestId('producto-p1')).toBeTruthy()
+    expect(screen.queryByTestId('producto-p6')).toBeNull()
+  })
+
+  it('escanear un código que está en el catálogo suma el producto al carrito', async () => {
+    mockProductos[0] = producto({ precioVenta: 1000, real: 37, codigoBarra: '7790001112223' })
+    render(<CatalogoVenta onVerVenta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Escanear código de barras' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Leer 7790001112223' }))
+    expect(useCarritoVenta.getState().lineas).toHaveLength(1)
+    expect(useCarritoVenta.getState().lineas[0].productoId).toBe('p1')
+    expect(screen.getByText('Sumaste Pala c/Cabo Fija LP.')).toBeTruthy()
+  })
+
+  it('un código que no está en el catálogo se deja en la búsqueda y lo dice', async () => {
+    render(<CatalogoVenta onVerVenta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Escanear código de barras' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Leer 0000' }))
+    expect(useCarritoVenta.getState().lineas).toEqual([])
+    expect(screen.getByText(/No encontramos ese código/)).toBeTruthy()
+    expect(screen.getByLabelText('Buscar por código o nombre').props.value).toBe('0000')
+  })
+
+  it('"Escanear en la góndola" abre el escáner al entrar', () => {
+    render(<CatalogoVenta onVerVenta={jest.fn()} escanearAlAbrir />)
+    expect(screen.getByRole('button', { name: 'Leer 7790001112223' })).toBeTruthy()
+  })
+})
+

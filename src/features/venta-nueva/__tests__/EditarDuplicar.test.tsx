@@ -8,6 +8,7 @@ import { VentaNuevaPantalla, type AbrirVenta } from '../components/VentaNuevaPan
 import { AccionesVenta } from '../components/AccionesVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { producto } from '../__testing__/producto'
+import { aplicarDescuentoGeneral } from '../__testing__/descuentoGeneral'
 
 const mockGet = jest.fn()
 const mockPost = jest.fn()
@@ -72,10 +73,10 @@ describe('editar y duplicar (PR 2.9b)', () => {
   it('editar carga la venta sin autoguardar y "Guardar cambios" la manda con PUT y su versión', async () => {
     abrir({ modo: 'editar', ventaId: 'v9' })
     expect(await screen.findByText('Editar pedido A00419')).toBeTruthy()
-    await userEvent.clear(screen.getByLabelText('Descuento general (%)'))
-    await userEvent.type(screen.getByLabelText('Descuento general (%)'), '5')
+    await aplicarDescuentoGeneral(5)
     await new Promise((r) => setTimeout(r, 1200))
     expect(mockPut).not.toHaveBeenCalled()
+    await userEvent.press(screen.getByRole('button', { name: 'Seguir' }))
     await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1))
     expect(mockPut.mock.calls[0][0]).toBe('/api/v1/Ventas/v9')
@@ -99,6 +100,7 @@ describe('editar y duplicar (PR 2.9b)', () => {
       return Promise.resolve(undefined)
     })
     abrir({ modo: 'editar', ventaId: 'v9' }, qc)
+    await userEvent.press(await screen.findByRole('button', { name: 'Seguir' }))
     await userEvent.press(await screen.findByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1))
     expect(mockPut.mock.calls[0][1]).toMatchObject({ version: 7, items: [{ productoId: 'p1', cantidad: 20, descuentoPorcentaje: 0 }] })
@@ -110,8 +112,7 @@ describe('editar y duplicar (PR 2.9b)', () => {
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     qc.setQueryData(ventasKeys.detail('b1'), venta)
     expect(qc.getQueryState(ventasKeys.detail('b1'))?.isInvalidated).toBe(false)
-    await userEvent.clear(screen.getByLabelText('Descuento general (%)'))
-    await userEvent.type(screen.getByLabelText('Descuento general (%)'), '3')
+    await aplicarDescuentoGeneral(3)
     await waitFor(() => expect(mockPut.mock.calls.length).toBeGreaterThan(1), ESPERA)
     await waitFor(() => expect(qc.getQueryState(ventasKeys.detail('b1'))?.isInvalidated).toBe(true), ESPERA)
   })
@@ -119,6 +120,7 @@ describe('editar y duplicar (PR 2.9b)', () => {
   it('si otro la cambió (409), se ve el mensaje del servidor y no sale de la pantalla', async () => {
     mockPut.mockRejectedValue(new ApiError(409, 'Error de concurrencia: la venta fue modificada.'))
     abrir({ modo: 'editar', ventaId: 'v9' })
+    await userEvent.press(await screen.findByRole('button', { name: 'Seguir' }))
     await userEvent.press(await screen.findByRole('button', { name: 'Guardar cambios' }))
     expect(await screen.findByText('Error de concurrencia: la venta fue modificada.')).toBeTruthy()
     expect(mockReplace).not.toHaveBeenCalled()
@@ -138,6 +140,7 @@ describe('editar y duplicar (PR 2.9b)', () => {
     const dias = screen.getAllByRole('radio', { name: /^(dom|lun|mar|mié|jue|vie|sáb) \d+/ })
     expect(dias.length).toBeGreaterThan(0)
     expect(dias.some((r) => r.props.accessibilityState?.selected)).toBe(false)
+    await userEvent.press(await screen.findByRole('button', { name: 'Seguir' }))
     await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1))
     expect(mockPut.mock.calls[0][1]).not.toHaveProperty('fechaEntrega')

@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { VentaNuevaPantalla } from '../components/VentaNuevaPantalla'
@@ -59,7 +59,7 @@ describe('retomar un borrador (PR 2.2b)', () => {
     // La línea toma el precio del catálogo de hoy, con la cantidad y el descuento del borrador.
     expect(useCarritoVenta.getState().lineas).toEqual([{ productoId: 'p1', producto: pala, cantidad: 3, descuentoPct: 10 }])
     expect(screen.getByText('3 × $ 2.600,00')).toBeTruthy()
-    expect(screen.getByLabelText('Descuento general (%)').props.value).toBe('5')
+    expect(within(screen.getByRole('button', { name: 'Descuento a toda la venta' })).getByText('5 %')).toBeTruthy()
     await new Promise((r) => setTimeout(r, 1000))
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas/borradores', expect.anything())
     expect(mockPut).not.toHaveBeenCalled()

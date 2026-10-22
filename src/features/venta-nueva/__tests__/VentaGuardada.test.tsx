@@ -1,5 +1,5 @@
 import React from 'react'
-import { Alert } from 'react-native'
+import { Alert, Linking } from 'react-native'
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -22,7 +22,8 @@ jest.mock('@/core/api/client', () => ({
 const mockShare = jest.fn()
 jest.mock('@/features/pedidos/lib/sharePdf', () => ({ sharePdf: (...a: unknown[]) => mockShare(...a) }))
 const mockReplace = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn(), back: jest.fn() }) }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: mockPush, back: jest.fn() }) }))
 const mockDims = jest.fn()
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => mockDims() }))
 
@@ -54,7 +55,7 @@ beforeEach(() => {
   mockVenta = { ...mockVenta, venta: cabecera() }
   mockGet.mockReset().mockImplementation((url: string) =>
     Promise.resolve(url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? socio : undefined))
-  for (const m of [mockPost, mockPut, mockDelete, mockShare, mockReplace]) m.mockReset()
+  for (const m of [mockPost, mockPut, mockDelete, mockShare, mockReplace, mockPush]) m.mockReset()
 })
 afterEach(() => jest.restoreAllMocks())
 
@@ -164,5 +165,85 @@ describe('venta guardada (PR 2.9)', () => {
       socioComercialId: 'c7', avisarDiasAntes: 0, visibilidad: 'Personal',
     })
     expect(Alert.alert).toHaveBeenCalledWith('Agendado', 'Quedó en tu calendario.')
+  })
+})
+
+describe('V8 listo (CalleListo / TabCalleListo)', () => {
+  const conEntrega = () => { mockVenta = { ...mockVenta, venta: cabecera({ fechaEntrega: '2026-10-22T00:00:00' }) } }
+
+  it('dice que el pedido se envió, para quién y cuándo se entrega, qué pasó con la autorización y el resumen', async () => {
+    conEntrega()
+    mockVenta = { ...mockVenta, detalles: [{ id: 'i1', productoNombre: 'Pala c/Cabo Fija LP', cantidad: 12, subtotal: 26112 }, { id: 'i2', productoNombre: 'Make', cantidad: 6, subtotal: 100 }] }
+    pantalla()
+    expect(await screen.findByText('Pedido A00419 enviado')).toBeTruthy()
+    expect(screen.getByText('Tarantino 1898 · entrega el jueves 22/10')).toBeTruthy()
+    expect(screen.getByText('Por autorizar · te avisamos')).toBeTruthy()
+    expect(screen.getByText('2 productos · 18 unidades')).toBeTruthy()
+  })
+
+  it('un pedido que no queda por autorizar no dice que haya que esperar', async () => {
+    conEntrega()
+    mockVenta = { ...mockVenta, venta: cabecera({ estado: 2, fechaEntrega: '2026-10-22T00:00:00' }) }
+    pantalla()
+    expect(await screen.findByText('Pedido A00419 enviado')).toBeTruthy()
+    expect(screen.queryByText('Por autorizar · te avisamos')).toBeNull()
+  })
+
+  it('"Vender a otro cliente" abre una venta nueva y "Volver a Mi día" va al inicio', async () => {
+    pantalla()
+    await userEvent.press(await screen.findByRole('button', { name: 'Vender a otro cliente' }))
+    expect(mockReplace).toHaveBeenLastCalledWith('/(tabs)/ventas/nueva-v2')
+    await userEvent.press(screen.getByRole('button', { name: 'Volver a Mi día' }))
+    expect(mockReplace).toHaveBeenLastCalledWith('/(tabs)')
+  })
+
+  it('"Mandar por WhatsApp" abre el chat del cliente con el pedido; sin teléfono no se ofrece', async () => {
+    const abrirUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+    mockGet.mockImplementation((url: string) =>
+      Promise.resolve(url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? { ...socio, telefono: '11 5555-0000' } : undefined))
+    pantalla()
+    await userEvent.press(await screen.findByRole('button', { name: 'Mandar por WhatsApp' }))
+    expect(abrirUrl).toHaveBeenCalledTimes(1)
+    const url = abrirUrl.mock.calls[0][0]
+    expect(url.startsWith('https://wa.me/541155550000?text=')).toBe(true)
+    expect(decodeURIComponent(url)).toContain('pedido A00419')
+  })
+
+  it('sin teléfono del cliente no hay WhatsApp', async () => {
+    pantalla()
+    await screen.findByText('Pedido A00419 enviado')
+    expect(screen.queryByRole('button', { name: 'Mandar por WhatsApp' })).toBeNull()
+  })
+
+  it('"Cobrar ahora" solo con permiso de cobros y de ver la cuenta del cliente; lleva al cobro de ese cliente', async () => {
+    useAuthStore.setState({ user: { id: 'u1', roles: ['Vendedor'], permissions: [{ module: 'MOD_VENTAS', canRead: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }] } as never })
+    mockGet.mockImplementation((url: string) =>
+      Promise.resolve(url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? { ...socio, puedeVerCuentaCorriente: true } : undefined))
+    pantalla()
+    await userEvent.press(await screen.findByRole('button', { name: 'Cobrar ahora' }))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: 'c7' } })
+  })
+
+  it('sin permiso de cobros, o sin poder ver la cuenta del cliente, no se ofrece cobrar', async () => {
+    permisos({ canUpdate: true })
+    mockGet.mockImplementation((url: string) =>
+      Promise.resolve(url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? { ...socio, puedeVerCuentaCorriente: true } : undefined))
+    const r = pantalla()
+    await screen.findByText('Pedido A00419 enviado')
+    expect(screen.queryByRole('button', { name: 'Cobrar ahora' })).toBeNull()
+    r.unmount()
+    useAuthStore.setState({ user: { id: 'u1', roles: ['Vendedor'], permissions: [{ module: 'MOD_VENTAS', canRead: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }] } as never })
+    mockGet.mockImplementation((url: string) =>
+      Promise.resolve(url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? { ...socio, puedeVerCuentaCorriente: false } : undefined))
+    pantalla()
+    await screen.findByText('Pedido A00419 enviado')
+    expect(screen.queryByRole('button', { name: 'Cobrar ahora' })).toBeNull()
+  })
+
+  it('un presupuesto guardado dice "guardado" y no ofrece cobrar', async () => {
+    mockVenta = { ...mockVenta, venta: cabecera({ tipoOperacion: 1, estado: 1 }) }
+    pantalla()
+    expect(await screen.findByText('Presupuesto A00419 guardado')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Cobrar ahora' })).toBeNull()
   })
 })
