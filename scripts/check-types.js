@@ -7,10 +7,12 @@ const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { renderCodigosError } = require('./codigos-error');
 
 const repo = process.env.FORWARD_SYSTEM_REPO || path.join('..', 'fs-combo');
 const ref = process.env.FORWARD_SYSTEM_REF || 'origin/main';
 const committed = path.join('libs', 'api-client', 'generated', 'schema.ts');
+const committedErrores = path.join('libs', 'api-client', 'generated', 'codigos-error.ts');
 const bin = path.join(__dirname, '..', 'node_modules', 'openapi-typescript', 'bin', 'cli.js');
 
 function git(args) {
@@ -38,14 +40,29 @@ try {
   }
 
   const normalize = (s) => s.replace(/\r\n/g, '\n');
+  let fallo = false;
   if (normalize(fs.readFileSync(generated, 'utf8')) !== normalize(fs.readFileSync(committed, 'utf8'))) {
     console.error(
       `${committed} is out of date with forward-system ${ref} (${sha}).\n` +
         `Regenerate it: OPENAPI_PATH=<forward-system>/Forward-Api/openapi.json npm run generate:types`,
     );
-    process.exit(1);
+    fallo = true;
+  } else {
+    console.log(`${committed} matches forward-system ${ref} (${sha}).`);
   }
-  console.log(`${committed} matches forward-system ${ref} (${sha}).`);
+
+  // Catálogo de códigos de error (C-007): la copia commiteada tiene que ser lo que genera errores.json.
+  const esperado = renderCodigosError(JSON.parse(git(['show', `${ref}:Forward-Api/errores.json`])));
+  if (normalize(esperado) !== normalize(fs.readFileSync(committedErrores, 'utf8'))) {
+    console.error(
+      `${committedErrores} is out of date with forward-system ${ref} (${sha}).\n` +
+        `Regenerate it: ERRORES_PATH=<forward-system>/Forward-Api/errores.json npm run generate:errores`,
+    );
+    fallo = true;
+  } else {
+    console.log(`${committedErrores} matches forward-system ${ref} (${sha}).`);
+  }
+  if (fallo) process.exit(1);
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
 }
