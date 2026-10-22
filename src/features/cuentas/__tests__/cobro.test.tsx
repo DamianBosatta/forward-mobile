@@ -464,3 +464,41 @@ it('con efectivo y ninguna caja abierta, avisa y no manda el cobro', async () =>
   await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
   expect(post).not.toHaveBeenCalled()
 })
+
+describe('R11 cobro: resumen "Cobrás" y "Todo lo vencido" (solo pantalla: el cobro se manda igual)', () => {
+  const conVencido = (deudaVencida: number) => {
+    servidor()
+    const base = get.getMockImplementation()!
+    get.mockImplementation(async (url: string) => (url.endsWith('/estado-cuenta') ? estadoDeCuenta({ tieneDeudaVencida: deudaVencida > 0, deudaVencida }) : base(url)))
+  }
+
+  it('Cobrás muestra lo que se tipea en el monto', async () => {
+    servidor()
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+
+    fireEvent.changeText(await screen.findByLabelText('Monto', {}, ESPERA), '84.300')
+
+    expect(await screen.findByLabelText('Cobrás: $ 84.300,00', {}, ESPERA)).toBeTruthy()
+  })
+
+  it('Todo lo vencido carga la deuda vencida en el monto y el cobro se manda con ese monto, sin campos nuevos', async () => {
+    conVencido(84300)
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+
+    await userEvent.press(await screen.findByRole('button', { name: 'Todo lo vencido' }, ESPERA))
+    await userEvent.press(await screen.findByRole('radio', { name: 'Transferencia' }, ESPERA))
+    await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+
+    expect(post).toHaveBeenCalledTimes(1)
+    expect(post.mock.calls[0][1]).toEqual({ socioComercialId: 'c1', claveIdempotencia: expect.stringMatching(/^mobile-/), lineas: [{ medioPagoId: 'm-tr', monto: 84300 }] })
+  })
+
+  it('sin deuda vencida no hay "Todo lo vencido"', async () => {
+    conVencido(0)
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+    await screen.findByLabelText('Monto', {}, ESPERA)
+    await screen.findByLabelText(/^Saldo del cliente/, {}, ESPERA)
+
+    expect(screen.queryByRole('button', { name: 'Todo lo vencido' })).toBeNull()
+  })
+})

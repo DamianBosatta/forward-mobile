@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { ActivityIndicator, ScrollView, View } from 'react-native'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { space, useColors } from '@/libs/theme'
+import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { Button, Field, FormContainer, Notice, formatImporte } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -13,6 +14,9 @@ import { ElegirCuenta } from './ElegirCuenta'
 
 /** Valor de "Hacia" cuando la plata sale del sistema (un retiro): el servidor no recibe destino. */
 export const SIN_DESTINO = 'sin-destino'
+
+/** Aclaración de la lámina ModTransferencia: un cliente que paga por transferencia se carga como cobro. */
+export const AVISO_COBRO_DE_CLIENTE = 'Igual que en la web. Si un cliente te pagó por transferencia, eso se carga en "Registrar cobro".'
 
 /** Espera antes de preguntar el saldo que queda, para no pedirlo con cada tecla del monto. */
 const ESPERA_SALDO_MS = 400
@@ -27,7 +31,9 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
   const c = useColors()
   const tipos = useTiposMovimientoInterno()
   const { canRead, canDo } = usePermissions()
-  const cuentas = useCuentasPropias(canDo('MOD_PAGOS', 'create'), canRead('MOD_CC'))
+  // Como la web: sin MOD_PAGOS:Create el botón no desaparece, se deshabilita y dice por qué.
+  const puedeRegistrar = canDo('MOD_PAGOS', 'create')
+  const cuentas = useCuentasPropias(puedeRegistrar, canRead('MOD_CC'))
   const registrar = useRegistrarMovimientoInterno()
   const [tipoId, setTipoId] = useState<string | null>(null)
   const [origen, setOrigen] = useState<string | null>(null)
@@ -86,6 +92,8 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
         {tipos.error ? <Notice tone="peligro">{mensajeDelServidor(tipos.error, 'No se pudieron cargar los tipos.')}</Notice> : null}
         {cuentas.error ? <Notice tone="peligro">{mensajeDelServidor(cuentas.error, 'No se pudieron cargar las cuentas.')}</Notice> : null}
 
+        <Field label="Monto" value={monto} onChangeText={setMonto} keyboardType="decimal-pad" alignRight />
+
         <ElegirChip
           titulo="Tipo"
           opciones={(tipos.data ?? []).filter(t => t.activo && t.id).map(t => ({ id: t.id!, label: t.nombre ?? '' }))}
@@ -103,13 +111,14 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
         />
         {destino === SIN_DESTINO ? <Field label="Quién se la lleva" value={retira} onChangeText={setRetira} /> : null}
 
-        <Field label="Monto" value={monto} onChangeText={setMonto} keyboardType="decimal-pad" alignRight />
         {restante.data && nombreOrigen && restante.data.monto === leerNumero(monto) ? <SaldoQueQueda saldo={restante.data} cuenta={nombreOrigen} /> : null}
         <Field label="Observaciones (opcional)" value={observaciones} onChangeText={setObservaciones} />
 
         {aviso ? <Notice tone="advertencia">{aviso}</Notice> : null}
         {registrar.error ? <Notice tone="peligro">{mensajeDelServidor(registrar.error, 'No se pudo registrar el movimiento.')}</Notice> : null}
-        <Button label="Registrar movimiento" loading={registrar.isPending} disabled={registrar.isPending} onPress={enviar} />
+        <Notice tone="info">{AVISO_COBRO_DE_CLIENTE}</Notice>
+        <Button label="Registrar movimiento" loading={registrar.isPending} disabled={registrar.isPending || !puedeRegistrar} onPress={enviar} />
+        {!puedeRegistrar ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}</MotivoDeshabilitado> : null}
       </FormContainer>
     </ScrollView>
   )

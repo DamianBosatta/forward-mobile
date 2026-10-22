@@ -3,6 +3,8 @@ import { ActivityIndicator, ScrollView, Text, View, type NativeScrollEvent, type
 import { useRouter } from 'expo-router'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, Segmented, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { MOTIVO_SIN_PERMISO_DE_COBRO, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
+import { useResponsive } from '@/libs/useResponsive'
 import { useSocio } from '@/libs/api-client/socios'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -35,7 +37,7 @@ function Tarjeta({ titulo, children }: { titulo?: string; children: React.ReactN
   )
 }
 
-function Movimiento({ m }: { m: MovimientoConCuenta }) {
+function Movimiento({ m, tabla }: { m: MovimientoConCuenta; tabla?: boolean }) {
   const c = useColors()
   const fecha = formatToLocalTime(m.fecha, 'EEE d MMM')
   const monto = m.debe > 0 ? `+ ${formatImporte(m.debe)}` : `− ${formatImporte(m.haber)}`
@@ -50,13 +52,16 @@ function Movimiento({ m }: { m: MovimientoConCuenta }) {
       accessibilityLabel={[fecha, NOMBRE_CUENTA[m.cuenta], descripcion, detalle, vence, imputado, monto, saldo].filter(Boolean).join(', ')}
       style={{ flexDirection: 'row', gap: space[3], paddingVertical: space[2], borderTopWidth: 1, borderTopColor: c.border }}
     >
+      {/* Tablet (TabCuentas): tabla Fecha / Movimiento / Vence / Importe. */}
+      {tabla ? <Text style={{ ...typeScale.secundario, color: c.textSecondary, width: 96 }}>{fecha}</Text> : null}
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
-        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`${fecha} · ${NOMBRE_CUENTA[m.cuenta]}`}</Text>
+        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{tabla ? NOMBRE_CUENTA[m.cuenta] : `${fecha} · ${NOMBRE_CUENTA[m.cuenta]}`}</Text>
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{descripcion}</Text>
         {detalle ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{detalle}</Text> : null}
-        {vence ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{vence}</Text> : null}
+        {tabla ? null : vence ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{vence}</Text> : null}
         {imputado ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{imputado}</Text> : null}
       </View>
+      {tabla ? <Text style={{ ...typeScale.secundario, color: c.textSecondary, width: 120 }}>{vence ?? '—'}</Text> : null}
       <View style={{ alignItems: 'flex-end', gap: space[1] }}>
         <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{monto}</Text>
         <Text style={[typeScale.secundario, importe, { color: c.textSecondary }]}>{saldo}</Text>
@@ -68,12 +73,14 @@ function Movimiento({ m }: { m: MovimientoConCuenta }) {
 /**
  * Cuenta corriente de un cliente (láminas CuentaCorriente y TabCuentaCorriente): saldo con el
  * desglose TST / Normal que da el servidor y los movimientos de las dos cuentas. Qué se puede ver
- * lo decide el servidor (`puedeVerCuentaCorriente` y los permisos de cada endpoint).
+ * lo decide el servidor (`puedeVerCuentaCorriente` y los permisos de cada endpoint). Con `onRegistrarCobro` (tablet)
+ * el cobro se abre en el panel y no en otra pantalla.
  */
-export function CuentaCorrienteCliente({ socioId }: { socioId: string }) {
+export function CuentaCorrienteCliente({ socioId, onRegistrarCobro }: { socioId: string; onRegistrarCobro?: () => void }) {
   const c = useColors()
   const router = useRouter()
   const { canCreate, canRead } = usePermissions()
+  const { isTabletLandscape } = useResponsive()
   const [filtro, setFiltro] = useState<FiltroCuenta>('ambas')
   const socio = useSocio(socioId)
   const verCuenta = !!socio.data?.puedeVerCuentaCorriente
@@ -99,12 +106,28 @@ export function CuentaCorrienteCliente({ socioId }: { socioId: string }) {
   const nombre = nombreDelCliente(cliente)
   const e = estado.data
 
+  // La pantalla de cobro pide los medios y las cajas abiertas: MOD_PAGOS:Read además de Create. Como en la web, el
+  // botón no desaparece: sin permiso se ve deshabilitado y dice por qué.
+  const puedeCobrar = canCreate('MOD_PAGOS') && canRead('MOD_PAGOS')
+  const registrarCobro = (
+    <View style={{ gap: space[2] }}>
+      <Button
+        label="Registrar cobro"
+        disabled={!puedeCobrar}
+        onPress={() => (onRegistrarCobro ? onRegistrarCobro() : router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId } }))}
+      />
+      {!puedeCobrar ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_COBRO}</MotivoDeshabilitado> : null}
+    </View>
+  )
+
   return (
+    <View style={{ flex: 1 }}>
     <ScrollView testID="cuenta-corriente-scroll" onScroll={alDesplazar} scrollEventThrottle={200} contentContainerStyle={{ padding: space[4], gap: space[4] }}>
       <View style={{ gap: space[1] }}>
         <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
         {nombre ? <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{nombre}</Text> : null}
       </View>
+      {verCuenta && isTabletLandscape ? registrarCobro : null}
 
       {!verCuenta ? <Notice tone="info">No tenés acceso a la cuenta corriente de este cliente.</Notice> : null}
 
@@ -122,10 +145,6 @@ export function CuentaCorrienteCliente({ socioId }: { socioId: string }) {
               <CreditoDelCliente estado={e} />
             </>
           ) : null}
-          {/* La pantalla de cobro pide los medios y las cajas abiertas: MOD_PAGOS:Read además de Create. */}
-          {canCreate('MOD_PAGOS') && canRead('MOD_PAGOS') ? (
-            <Button label="Registrar cobro" onPress={() => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId } })} />
-          ) : null}
         </Tarjeta>
       ) : null}
 
@@ -139,7 +158,7 @@ export function CuentaCorrienteCliente({ socioId }: { socioId: string }) {
           {!movs.cargando && !movs.error && movs.movimientos.length === 0 ? (
             <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>No hay movimientos en esta cuenta.</Text>
           ) : null}
-          {movs.movimientos.map(m => <Movimiento key={`${m.cuenta}-${m.id}`} m={m} />)}
+          {movs.movimientos.map(m => <Movimiento key={`${m.cuenta}-${m.id}`} m={m} tabla={isTabletLandscape} />)}
           {movs.errorPaginaSiguiente ? (
             <>
               <Notice tone="peligro">{mensajeDelServidor(movs.errorPaginaSiguiente, 'No se pudieron cargar los movimientos anteriores.')}</Notice>
@@ -151,5 +170,9 @@ export function CuentaCorrienteCliente({ socioId }: { socioId: string }) {
         </Tarjeta>
       ) : null}
     </ScrollView>
+    {verCuenta && !isTabletLandscape ? (
+      <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>{registrarCobro}</View>
+    ) : null}
+    </View>
   )
 }

@@ -1,6 +1,7 @@
 import React from 'react'
 import { fireEvent, screen, userEvent, waitFor, within } from '@testing-library/react-native'
-import { Transferencia } from '../components/Transferencia'
+import { AVISO_COBRO_DE_CLIENTE, Transferencia } from '../components/Transferencia'
+import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA } from '@/core/ui/fw/MotivoDeshabilitado'
 import TesoreriaScreen from '../../../../app/(tabs)/tesoreria/index'
 import { api, ApiError } from '@/core/api/client'
 import { conPermisos, renderConQuery } from '@/features/clientes/__testing__/ayuda'
@@ -218,4 +219,25 @@ it('la cartera de cheques y la caja de efectivo no se ofrecen ni de origen ni de
     expect(within(screen.getByLabelText(grupo)).queryByRole('radio', { name: /^Cartera de cheques/ })).toBeNull()
     expect(within(screen.getByLabelText(grupo)).queryByRole('radio', { name: /^Caja efectivo/ })).toBeNull()
   }
+})
+
+describe('M15 Transferencia: permiso y aclaración (web)', () => {
+  it('sin MOD_PAGOS:Create el botón se ve deshabilitado con el motivo y no manda nada', async () => {
+    conPermisos([{ module: 'MOD_PAGOS', canRead: true }, { module: 'MOD_CC', canRead: true }])
+    renderConQuery(<Transferencia onListo={jest.fn()} />)
+
+    const boton = await screen.findByRole('button', { name: 'Registrar movimiento' }, ESPERA)
+    expect(boton.props.accessibilityState?.disabled).toBe(true)
+    expect(screen.getByText(MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA)).toBeTruthy()
+    await userEvent.press(boton)
+    expect(post).not.toHaveBeenCalled()
+  })
+
+  it('con permiso no hay motivo, y se aclara que el cobro de un cliente va en Registrar cobro', async () => {
+    renderConQuery(<Transferencia onListo={jest.fn()} />)
+
+    expect(await screen.findByText(AVISO_COBRO_DE_CLIENTE, {}, ESPERA)).toBeTruthy()
+    expect(screen.queryByText(MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA)).toBeNull()
+    expect(screen.getByRole('button', { name: 'Registrar movimiento' }).props.accessibilityState?.disabled).toBe(false)
+  })
 })

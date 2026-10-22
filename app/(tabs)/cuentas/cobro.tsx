@@ -13,7 +13,7 @@ export default function RegistrarCobroScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar title="Registrar cobro" leading={{ kind: 'atras', onPress: () => router.back() }} />
+      <TopBar title="Registrar cobro" subtitle="Cuenta corriente del cliente" leading={{ kind: 'atras', onPress: () => router.back() }} />
       {socioId ? <RegistrarCobro socioId={socioId} onVolver={() => router.back()} /> : null}
     </View>
   )

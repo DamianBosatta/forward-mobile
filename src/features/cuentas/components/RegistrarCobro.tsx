@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
-import { space, typeScale, useColors } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { useResponsive } from '@/libs/useResponsive'
+import { mostrarNumero } from '@/src/utils/numero'
 import { Button, Field, FormContainer, Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -39,9 +41,13 @@ const formVacio = (): FormCobro => ({
 
 const IMPUTACION = [{ id: 'automatica', label: 'Automática' }, { id: 'manual', label: 'Elegir comprobantes' }]
 
-/** Registrar un cobro (láminas Cobro y CobroListo). La cuenta TST / Normal la elige el servidor. */
+/**
+ * Registrar un cobro (láminas ResCobro, TabCobro y CobroListo). La cuenta TST / Normal la elige el servidor.
+ * En tablet horizontal van dos columnas: qué se cobra (imputación) a la izquierda y cómo pagó a la derecha.
+ */
 export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolver: () => void }) {
   const c = useColors()
+  const { isTabletLandscape } = useResponsive()
   const socio = useSocio(socioId)
   const estado = useEstadoCuentaSocio(socioId, !!socio.data?.puedeVerCuentaCorriente)
   const medios = useMediosDeCobro()
@@ -103,17 +109,49 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
     })
   }
 
-  return (
-    <ScrollView contentContainerStyle={{ padding: space[4] }}>
-      <FormContainer style={{ gap: space[4] }}>
-        <View style={{ gap: space[1] }}>
-          <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
-          <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{nombreDelCliente(cliente)}</Text>
+  const deudaVencida = estado.data?.deudaVencida ?? 0
+
+  const encabezado = (
+    <>
+      <View style={{ gap: space[1] }}>
+        <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
+        <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{nombreDelCliente(cliente)}</Text>
+      </View>
+      {estado.data ? <TotalsRow label="Saldo del cliente" importe={estado.data.saldoActual} /> : null}
+      <View
+        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3], backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4] }}
+      >
+        <View accessible accessibilityLabel={`Cobrás: ${formatImporte(monto ?? 0)}`}>
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Cobrás</Text>
+          <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(monto ?? 0)}</Text>
         </View>
-        {estado.data ? <TotalsRow label="Saldo del cliente" importe={estado.data.saldoActual} /> : null}
+        {deudaVencida > 0 ? (
+          // Solo carga el monto: el cobro se arma y se manda igual, con lo que quede en el campo.
+          <Button label="Todo lo vencido" variant="secundario" onPress={() => setF(p => ({ ...p, monto: mostrarNumero(deudaVencida) }))} />
+        ) : null}
+      </View>
+    </>
+  )
 
-        <Field label="Monto" value={f.monto} onChangeText={v => setF(p => ({ ...p, monto: v }))} keyboardType="decimal-pad" alignRight />
+  const imputacion = (
+    <>
+      <ElegirChip
+        titulo="Imputación"
+        opciones={IMPUTACION}
+        valor={f.imputaciones ? 'manual' : 'automatica'}
+        onCambio={id => setF(p => ({ ...p, imputaciones: id === 'manual' ? (p.imputaciones ?? {}) : null }))}
+      />
+      {f.imputaciones ? (
+        <ElegirComprobantes socioId={socioId} valor={f.imputaciones} onCambio={v => setF(p => ({ ...p, imputaciones: v }))} />
+      ) : (
+        <Notice tone="info">{AVISO_IMPUTACION}</Notice>
+      )}
+    </>
+  )
 
+  const pago = (
+    <>
+      <Field label="Monto" value={f.monto} onChangeText={v => setF(p => ({ ...p, monto: v }))} keyboardType="decimal-pad" alignRight />
         {medios.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
         <ElegirChip
           titulo="Medio"
@@ -163,22 +201,48 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
         ) : null}
 
         <Field label="Referencia (opcional)" value={f.referencia} onChangeText={v => setF(p => ({ ...p, referencia: v }))} help="Por ejemplo, el N.º de operación" />
-        <ElegirChip
-          titulo="Imputación"
-          opciones={IMPUTACION}
-          valor={f.imputaciones ? 'manual' : 'automatica'}
-          onCambio={id => setF(p => ({ ...p, imputaciones: id === 'manual' ? (p.imputaciones ?? {}) : null }))}
-        />
-        {f.imputaciones ? (
-          <ElegirComprobantes socioId={socioId} valor={f.imputaciones} onCambio={v => setF(p => ({ ...p, imputaciones: v }))} />
-        ) : (
-          <Notice tone="info">{AVISO_IMPUTACION}</Notice>
-        )}
+    </>
+  )
 
+  const avisos = (
+    <>
         {aviso ? <Notice tone="advertencia">{aviso}</Notice> : null}
         {registrar.error ? <Notice tone="peligro">{mensajeDelServidor(registrar.error, 'No se pudo registrar el cobro.')}</Notice> : null}
-        <Button label={monto && monto > 0 ? `Registrar cobro de ${formatImporte(monto)}` : 'Registrar cobro'} loading={registrar.isPending} disabled={registrar.isPending || sinCajaUtil || subiendo} onPress={enviar} />
-      </FormContainer>
-    </ScrollView>
+    </>
+  )
+
+  const pie = (
+    <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+      <Button label={monto && monto > 0 ? `Registrar cobro de ${formatImporte(monto)}` : 'Registrar cobro'} loading={registrar.isPending} disabled={registrar.isPending || sinCajaUtil || subiendo} onPress={enviar} />
+    </View>
+  )
+
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={{ padding: space[4] }}>
+        <FormContainer style={{ gap: space[4] }}>
+          {encabezado}
+          {isTabletLandscape ? (
+            <View style={{ flexDirection: 'row', gap: space[6], alignItems: 'flex-start' }}>
+              <View style={{ flex: 1, minWidth: 0, gap: space[4] }}>
+                <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>¿Qué cobrás?</Text>
+                {imputacion}
+              </View>
+              <View style={{ flex: 1, minWidth: 0, gap: space[4] }}>
+                <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>¿Cómo te pagó?</Text>
+                {pago}
+              </View>
+            </View>
+          ) : (
+            <>
+              {pago}
+              {imputacion}
+            </>
+          )}
+          {avisos}
+        </FormContainer>
+      </ScrollView>
+      {pie}
+    </View>
   )
 }

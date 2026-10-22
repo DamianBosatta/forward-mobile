@@ -3,12 +3,16 @@ import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-n
 import { useRouter } from 'expo-router'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Notice, TopBar, TwoPane, useMenuLeading } from '@/core/ui/fw'
+import { FiltroChip } from '@/core/ui/fw/FiltroChip'
+import { Button, Notice, TopBar, TwoPane, useMenuLeading } from '@/core/ui/fw'
+import { usePermissions } from '@/core/auth/RequirePermission'
 import { useCartera } from '@/features/clientes/hooks/useCartera'
 import { ClienteCard } from '@/features/clientes/components/ClienteCard'
 import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { textoMostrando } from '@/features/clientes/lib/cliente'
 import { CuentaCorrienteCliente } from '@/features/cuentas/components/CuentaCorrienteCliente'
+import { RegistrarCobro } from '@/features/cuentas/components/RegistrarCobro'
+import { ResumenDeCuentas } from '@/features/cuentas/components/ResumenDeCuentas'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
 /**
@@ -22,10 +26,19 @@ export default function CuentasCorrientesScreen() {
   const { isTabletLandscape } = useResponsive()
   const [busqueda, setBusqueda] = useState('')
   const [abierto, setAbierto] = useState<string | null>(null)
-  const { clientes, totalCount, saldoTotal, isLoading, isRefetching, error, refetch, cargarMas } = useCartera(busqueda)
+  // TM9: en tablet horizontal el cobro se abre en el mismo panel, sin salir de la lista.
+  const [cobrando, setCobrando] = useState(false)
+  const [soloVencidas, setSoloVencidas] = useState(false)
+  const { canCreate, canRead } = usePermissions()
+  // Misma regla que Tesorería: la pantalla pide los tipos (MOD_PAGOS:Read) y las cuentas propias (MOD_CC:Read).
+  const puedeTransferir = canCreate('MOD_PAGOS') && canRead('MOD_PAGOS') && canRead('MOD_CC')
+  const { clientes, totalCount, saldoTotal, isLoading, isRefetching, error, refetch, cargarMas } = useCartera(
+    busqueda,
+    soloVencidas ? { conDeudaVencida: true } : undefined,
+  )
 
   const abrir = (id: string) => {
-    if (isTabletLandscape) setAbierto(id)
+    if (isTabletLandscape) { setAbierto(id); setCobrando(false) }
     else router.push({ pathname: '/(tabs)/cuentas/[id]', params: { id } })
   }
 
@@ -70,10 +83,27 @@ export default function CuentasCorrientesScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Cuentas corrientes" subtitle="Tu cartera, por dirección de entrega" leading={menu} />
+      <ResumenDeCuentas saldoTotal={saldoTotal} puedeTransferir={puedeTransferir} onTransferir={() => router.push('/(tabs)/tesoreria/transferencia')} />
       <BuscadorCartera valor={busqueda} onCambio={setBusqueda} />
+      <View style={{ flexDirection: 'row', paddingHorizontal: space[4], paddingTop: space[3] }}>
+        <FiltroChip label="Con deuda vencida" activo={soloVencidas} onPress={() => setSoloVencidas(v => !v)} />
+      </View>
       <TwoPane
         list={lista}
-        detail={isTabletLandscape && abierto ? <CuentaCorrienteCliente key={abierto} socioId={abierto} /> : null}
+        detail={
+          isTabletLandscape && abierto ? (
+            cobrando ? (
+              <View style={{ flex: 1 }}>
+                <View style={{ padding: space[4], paddingBottom: 0, alignItems: 'flex-start' }}>
+                  <Button label="Volver a la cuenta" variant="secundario" onPress={() => setCobrando(false)} />
+                </View>
+                <RegistrarCobro key={abierto} socioId={abierto} onVolver={() => setCobrando(false)} />
+              </View>
+            ) : (
+              <CuentaCorrienteCliente key={abierto} socioId={abierto} onRegistrarCobro={() => setCobrando(true)} />
+            )
+          ) : null
+        }
         emptyDetail={
           <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center', marginTop: space[12] }}>
             Elegí un cliente para ver su cuenta.

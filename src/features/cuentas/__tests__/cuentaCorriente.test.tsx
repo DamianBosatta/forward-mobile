@@ -3,6 +3,7 @@ import { fireEvent, screen, userEvent, within } from '@testing-library/react-nat
 import { CuentaCorrienteCliente } from '../components/CuentaCorrienteCliente'
 import { api } from '@/core/api/client'
 import { formatImporte as $ } from '@/core/ui/fw'
+import { MOTIVO_SIN_PERMISO_DE_COBRO } from '@/core/ui/fw/MotivoDeshabilitado'
 import { conPermisos, renderConQuery } from '@/features/clientes/__testing__/ayuda'
 import { estadoDeCuenta, fichaConCuentas, mov, movSocio, noEncontrado, paginaDeMovimientos, paginaDeMovimientosSocio } from '../__testing__/servidor'
 
@@ -105,10 +106,14 @@ it('si el servidor rechaza los movimientos, se ve su mensaje', async () => {
   expect(await screen.findByText('No tenés permisos para esta acción.', {}, ESPERA)).toBeTruthy()
 })
 
-it('Registrar cobro aparece solo con permiso para crear pagos y abre el cobro de este cliente', async () => {
+it('Registrar cobro con permiso para crear pagos abre el cobro de este cliente; sin él se ve deshabilitado con el motivo (como la web)', async () => {
   const { unmount } = renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
   await screen.findByLabelText(`Saldo: ${$(186420)}`, {}, ESPERA)
-  expect(screen.queryByRole('button', { name: 'Registrar cobro' })).toBeNull()
+  const sinPermiso = screen.getByRole('button', { name: 'Registrar cobro' })
+  expect(sinPermiso.props.accessibilityState?.disabled).toBe(true)
+  expect(screen.getByText(MOTIVO_SIN_PERMISO_DE_COBRO)).toBeTruthy()
+  await userEvent.press(sinPermiso)
+  expect(mockPush).not.toHaveBeenCalled()
   unmount()
 
   conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }])
@@ -118,17 +123,26 @@ it('Registrar cobro aparece solo con permiso para crear pagos y abre el cobro de
   expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: 'c1' } })
 })
 
-it('Registrar cobro no se ofrece sin MOD_PAGOS:Read ni sin MOD_PAGOS:Create: la pantalla de cobro pide medios y cajas', async () => {
+it('Registrar cobro queda deshabilitado, con el motivo, sin MOD_PAGOS:Read o sin MOD_PAGOS:Create: la pantalla de cobro pide medios y cajas', async () => {
   conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canCreate: true }])
   const a = renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
   await screen.findByLabelText(`Saldo: ${$(186420)}`, {}, ESPERA)
-  expect(screen.queryByRole('button', { name: 'Registrar cobro' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Registrar cobro' }).props.accessibilityState?.disabled).toBe(true)
+  expect(screen.getByText(MOTIVO_SIN_PERMISO_DE_COBRO)).toBeTruthy()
   a.unmount()
 
   conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true }])
   renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
   await screen.findByLabelText(`Saldo: ${$(186420)}`, {}, ESPERA)
-  expect(screen.queryByRole('button', { name: 'Registrar cobro' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Registrar cobro' }).props.accessibilityState?.disabled).toBe(true)
+  expect(screen.getByText(MOTIVO_SIN_PERMISO_DE_COBRO)).toBeTruthy()
+})
+
+it('con permiso de cobro no se muestra ningún motivo', async () => {
+  conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }])
+  renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+  await screen.findByLabelText(`Saldo: ${$(186420)}`, {}, ESPERA)
+  expect(screen.queryByText(MOTIVO_SIN_PERMISO_DE_COBRO)).toBeNull()
 })
 
 describe('vencido y disponible (servidor con PR #882)', () => {
