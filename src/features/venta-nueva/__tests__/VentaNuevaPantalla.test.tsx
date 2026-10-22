@@ -549,9 +549,9 @@ describe('confirmar', () => {
     expect(useCarritoVenta.getState().lineas).toEqual([])
   })
 
-  it('un 409 sin código (la clave ya se estaba grabando) no cambia la clave: avisa y el reintento la reusa', async () => {
+  it('un 409 con el código Duplicado (la clave ya se estaba grabando) no cambia la clave: avisa y el reintento la reusa', async () => {
     await armar()
-    alAlta(() => Promise.reject(new ApiError(409, 'Ya existe un registro con datos duplicados.')))
+    alAlta(() => Promise.reject(new ApiError(409, 'Ya existe un registro con datos duplicados.', undefined, 'Duplicado')))
     await confirmar()
     expect(await screen.findByText(/Este pedido ya se estaba grabando/)).toBeTruthy()
     expect(screen.queryByText(/datos duplicados/)).toBeNull()
@@ -563,7 +563,7 @@ describe('confirmar', () => {
     expect(altas()[1][1].claveIdempotencia).toBe(altas()[0][1].claveIdempotencia)
   })
 
-  it('otro 409 sin código (clave foránea, concurrencia) muestra el mensaje del servidor, no el de la clave en curso', async () => {
+  it('otro 409 (clave foránea, concurrencia) muestra el mensaje del servidor, no el de la clave en curso, aunque el texto diga «duplicados»', async () => {
     await armar()
     alAlta(() => Promise.reject(new ApiError(409, 'Operación bloqueada por restricciones de integridad (clave foránea).')))
     await confirmar()
@@ -592,14 +592,24 @@ describe('confirmar', () => {
     expect(altas()[0][1]).toMatchObject({ motivoVentaSinStock: 'Repone el lunes' })
   })
 
-  it('si el servidor pide justificación por stock, se ve su motivo y se abre el pedido de motivo', async () => {
+  it('si el servidor pide justificación por stock (código VentaFaltaStockSinJustificacion), se ve su motivo y se abre el pedido de motivo', async () => {
     mockPost.mockImplementation((u: string) => u === '/api/v1/Ventas'
-      ? Promise.reject(new ApiError(400, 'Stock insuficiente para los siguientes productos en el depósito seleccionado: Pala. Debe proporcionar una justificación.'))
+      ? Promise.reject(new ApiError(400, 'Stock insuficiente para los siguientes productos en el depósito seleccionado: Pala. Debe proporcionar una justificación.', undefined, 'VentaFaltaStockSinJustificacion'))
       : Promise.resolve({ ventaId: 'b1', version: 7, message: '' }))
     await armar()
     await confirmar()
     expect(await screen.findByText(/Debe proporcionar una justificación/)).toBeTruthy()
     expect(screen.getByLabelText('Motivo')).toBeTruthy()
+  })
+
+  it('un rechazo cuyo texto menciona la justificación pero trae otro código no abre el pedido de motivo', async () => {
+    mockPost.mockImplementation((u: string) => u === '/api/v1/Ventas'
+      ? Promise.reject(new ApiError(400, 'La justificación del descuento no es válida.', undefined, 'VentaDescuentoSuperaElTope'))
+      : Promise.resolve({ ventaId: 'b1', version: 7, message: '' }))
+    await armar()
+    await confirmar()
+    expect(await screen.findByText(/La justificación del descuento no es válida/)).toBeTruthy()
+    expect(screen.queryByLabelText('Motivo')).toBeNull()
   })
 
   it('por autorizar: muestra los motivos que dice el servidor', async () => {
