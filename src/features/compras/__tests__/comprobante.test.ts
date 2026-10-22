@@ -39,13 +39,13 @@ describe('comprobante del proveedor', () => {
       id: 'k1', tipo: 'Factura', letra: 'A', puntoVenta: 2, numero: 55, fecha: '2026-10-01', periodoFiscal: 202610,
       cuitEmisor: '30712345671', razonSocialEmisor: 'Insumos del Sur SA', noGravado: 10, exento: 5, total: 1255,
       alicuotas: [{ alicuota: 'Veintiuno', netoGravado: 1000, iva: 210 }],
-      tributos: [{ tipo: 'PercepcionIibb', jurisdiccion: 'Buenos Aires', importe: 30 }],
+      tributos: [{ tipo: 'PercepcionIibb', jurisdiccion: '902', importe: 30 }],
     } as never
     const f = formDesdeComprobante(cargado)
     expect(f).toMatchObject({ letra: 'A', puntoVenta: '2', numero: '55', fecha: '01/10/2026', total: '1255', neto: '1000', iva: '210' })
     const r = armarComprobante({ ...f, numero: '56' })
     expect('comprobante' in r && r.comprobante).toMatchObject({
-      numero: 56, noGravado: 10, exento: 5, tributos: [{ tipo: 'PercepcionIibb', jurisdiccion: 'Buenos Aires', importe: 30 }],
+      numero: 56, noGravado: 10, exento: 5, tributos: [{ tipo: 'PercepcionIibb', jurisdiccion: '902', importe: 30 }],
     })
   })
 
@@ -57,5 +57,24 @@ describe('comprobante del proveedor', () => {
 
   it('resume el comprobante cargado como en el papel', () => {
     expect(resumenComprobante({ tipo: 'Factura', letra: 'A', puntoVenta: 2, numero: 55 } as never)).toBe('Factura A 00002-00000055')
+  })
+})
+
+// C-010 / L-26: el comprobante corre el esquema generado desde el contrato (ComprobanteCompraInput).
+describe('comprobante: límites del contrato', () => {
+  const base = { ...formNuevo(PROVEEDOR, '08/10/2026'), letra: 'B' as const, puntoVenta: '1', numero: '1', total: '100' }
+
+  it('un número de más de 8 dígitos no se manda (máximo 99999999)', () => {
+    expect('error' in armarComprobante({ ...base, numero: '100000000' })).toBe(true)
+    expect('comprobante' in armarComprobante({ ...base, numero: '99999999' })).toBe(true)
+  })
+
+  it('un punto de venta de más de 5 dígitos no se manda (máximo 99999)', () => {
+    expect('error' in armarComprobante({ ...base, puntoVenta: '100000' })).toBe(true)
+  })
+
+  it('una razón social de más de 200 caracteres no se manda', () => {
+    expect('error' in armarComprobante({ ...base, razonSocial: 'x'.repeat(201) })).toBe(true)
+    expect('comprobante' in armarComprobante({ ...base, razonSocial: 'x'.repeat(200) })).toBe(true)
   })
 })

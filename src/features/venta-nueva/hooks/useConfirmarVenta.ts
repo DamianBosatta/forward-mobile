@@ -8,7 +8,7 @@ import { ventasKeys } from '@/libs/api-client/ventas'
 import { inicioKeys } from '@/core/query/queryClient'
 import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { aAlta, aAutoguardado, nuevaClaveIdempotencia, type Cabecera } from '../lib/payload'
+import { aAlta, aAutoguardado, errorDeAltaVenta, nuevaClaveIdempotencia, type Cabecera } from '../lib/payload'
 import { ESTADO_PENDIENTE_AUTORIZACION, motivosAutorizacion } from '../lib/motivosAutorizacion'
 import type { LineaCarrito } from '../lib/carrito'
 import type { useBorradorVenta } from './useBorradorVenta'
@@ -94,6 +94,8 @@ export function useConfirmarVenta(d: Datos) {
         clienteId: d.clienteId, depositoId: DEPOSITO_CENTRAL_ID, esPedido: d.esPedido, claveIdempotencia,
         motivoVentaSinStock: motivo, porcentajeComisionCedido: d.porcentajeCedido,
       })
+      const invalido = errorDeAltaVenta(cuerpo(clave))
+      if (invalido) throw new Error(invalido)
       const firma = JSON.stringify(cuerpo(''))
       try {
         r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', cuerpo(clave))
