@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react-native'
+import { ChevronDown } from 'lucide-react-native'
 import { FONT, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
-import { BottomSheet, FormContainer, Notice, TopBar, TotalsRow, formatImporte, useMenuLeading } from '@/core/ui/fw'
+import { BottomSheet, FormContainer, Notice, Segmented, TopBar, TotalsRow, formatImporte, useMenuLeading } from '@/core/ui/fw'
+import { useResponsive } from '@/libs/useResponsive'
 import { useResumenVendedor, type ResumenVendedor } from '@/libs/api-client/reportes'
 import { useVendedores } from '@/libs/api-client/ventas'
 import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
-import { mesDe, mismoMes, moverMes, tituloMes, type Mes } from './mes'
+import { mesDe, moverMes, nombreMes, tituloMes, type Mes } from './mes'
 
 type Vendedor = { id: string; nombre: string }
 
@@ -21,11 +22,12 @@ const porcentaje = (n: number) => `${String(Math.round(n * 10) / 10).replace('.'
  */
 export function ReportesScreen() {
   const c = useColors()
+  const { isTablet } = useResponsive()
   const menu = useMenuLeading()
   const actual = mesDe(useAhoraArgentina())
-  const [elegido, setElegido] = useState<Mes | null>(null)
-  const mes = elegido ?? actual
-  const enCurso = mismoMes(mes, actual)
+  const anterior = moverMes(actual, -1)
+  const [periodo, setPeriodo] = useState<'actual' | 'anterior'>('actual')
+  const mes = periodo === 'actual' ? actual : anterior
   const [vendedor, setVendedor] = useState<Vendedor | null>(null)
   const [eligiendo, setEligiendo] = useState(false)
   const q = useResumenVendedor(mes.anio, mes.mes, vendedor?.id ?? null)
@@ -35,17 +37,22 @@ export function ReportesScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
-        title="Reportes"
+        title="Mis números"
         subtitle={tituloMes(mes)}
         leading={menu}
-        actions={[
-          { icon: ChevronLeft, accessibilityLabel: 'Mes anterior', onPress: () => setElegido(moverMes(mes, -1)) },
-          // No hay reportes del futuro: el mes en curso es el último.
-          { icon: ChevronRight, accessibilityLabel: 'Mes siguiente', onPress: () => setElegido(moverMes(mes, 1)), disabled: enCurso },
-        ]}
       />
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] }}>
-        <FormContainer style={{ gap: space[3] }}>
+        <FormContainer style={{ gap: space[3], ...(isTablet ? { maxWidth: 960 } : null) }}>
+          {/* Lámina M20: el período es el mes en curso o el anterior. "Semana" necesita un reporte por semana que el servidor no da. */}
+          <Segmented
+            accessibilityLabel="Período"
+            value={periodo}
+            onChange={setPeriodo}
+            options={[
+              { value: 'actual', label: nombreMes(actual) },
+              { value: 'anterior', label: nombreMes(anterior) },
+            ]}
+          />
           {puedeElegir ? (
             <Pressable
               accessibilityRole="button"
@@ -64,8 +71,11 @@ export function ReportesScreen() {
           ) : q.isError || !q.data ? (
             <Notice tone="peligro">No se pudieron cargar los reportes.</Notice>
           ) : (
-            <Secciones r={q.data} />
+            <Secciones r={q.data} tablet={isTablet} />
           )}
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary, textAlign: 'center' }}>
+            Reporte básico del vendedor. Los reportes de gestión se ven en la web.
+          </Text>
         </FormContainer>
       </ScrollView>
       <BottomSheet visible={eligiendo} onClose={() => setEligiendo(false)} accessibilityLabel="Elegir vendedor">
@@ -104,17 +114,42 @@ function Tarjeta({ titulo, testID, children }: { titulo: string; testID: string;
   )
 }
 
-function Secciones({ r }: { r: ResumenVendedor }) {
+/** Tarjeta de cifra de la lámina M20: etiqueta, importe y una línea de apoyo. */
+function Cifra({ etiqueta, importe, apoyo, testID, ancho }: { etiqueta: string; importe: number; apoyo?: string; testID: string; ancho: '45%' | '22%' }) {
+  const c = useColors()
+  const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
+  const monto = formatImporte(importe)
+  return (
+    <View
+      testID={testID}
+      accessible
+      accessibilityLabel={[`${etiqueta}: ${monto}`, apoyo].filter(Boolean).join(', ')}
+      style={{ flexGrow: 1, flexBasis: ancho, backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[1], ...sombra }}
+    >
+      <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{etiqueta}</Text>
+      <Text style={{ ...typeScale.titulo, color: c.text }}>{monto}</Text>
+      {apoyo ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{apoyo}</Text> : null}
+    </View>
+  )
+}
+
+function Secciones({ r, tablet }: { r: ResumenVendedor; tablet: boolean }) {
   const c = useColors()
   const { ventas, comisiones, cobrosPendientes: cobros } = r
+  const ancho = tablet ? '22%' : '45%'
   return (
     <>
+      {/* Vendido / Tu comisión / Cobrado / Por cobrar: dos por fila en teléfono, cuatro en tablet. */}
+      <View testID="reporte-cifras" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[3] }}>
+        <Cifra ancho={ancho} testID="cifra-vendido" etiqueta="Vendido" importe={ventas.facturado} apoyo={plural(ventas.operaciones, 'venta', 'ventas')} />
+        <Cifra ancho={ancho} testID="cifra-comision" etiqueta="Tu comisión" importe={comisiones.neto} apoyo="neto del mes" />
+        <Cifra ancho={ancho} testID="cifra-cobrado" etiqueta="Cobrado" importe={ventas.cobrado} apoyo="de estas ventas" />
+        <Cifra ancho={ancho} testID="cifra-por-cobrar" etiqueta="Por cobrar" importe={cobros.total} apoyo={plural(cobros.clientes, 'cliente con deuda', 'clientes con deuda')} />
+      </View>
       <Tarjeta titulo="Ventas del mes" testID="reporte-ventas">
-        <Text style={{ ...typeScale.titulo, color: c.text }}>{formatImporte(ventas.facturado)}</Text>
         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-          {`${plural(ventas.operaciones, 'venta', 'ventas')} · ticket promedio ${formatImporte(ventas.ticketPromedio)}`}
+          {`Ticket promedio ${formatImporte(ventas.ticketPromedio)}`}
         </Text>
-        <TotalsRow label="Cobrado de estas ventas" importe={ventas.cobrado} />
         {/* Sin CAP_VER_COSTOS el servidor no lo manda: el margen revela el costo. */}
         {ventas.margenBrutoPorcentaje != null ? (
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Margen bruto ${porcentaje(ventas.margenBrutoPorcentaje)}`}</Text>
@@ -129,12 +164,11 @@ function Secciones({ r }: { r: ResumenVendedor }) {
         <TotalsRow label="A cobrar hoy" importe={comisiones.saldoActual} />
       </Tarjeta>
       <Tarjeta titulo="Cobros pendientes de la cartera" testID="reporte-cobros">
-        <Text style={{ ...typeScale.titulo, color: c.text }}>{formatImporte(cobros.total)}</Text>
         {cobros.clientes === 0 ? (
           <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Ningún cliente de la cartera debe.</Text>
         ) : (
           <>
-            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{plural(cobros.clientes, 'cliente con deuda', 'clientes con deuda')}</Text>
+            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Total ${formatImporte(cobros.total)}`}</Text>
             {cobros.detalle.map((d) => (
               <View
                 key={d.socioId}
