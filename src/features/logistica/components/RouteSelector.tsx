@@ -6,7 +6,8 @@ import { ChevronRight, MapPin, Truck } from 'lucide-react-native'
 import { GlassCard } from '@/core/ui'
 import { useColors, BRAND } from '@/libs/theme'
 import type { HojaRutaListItemDto } from '@/libs/api-client/types'
-import { EstadoHojaRuta } from '@/libs/api-client/types'
+import type { EstadoHojaRutaNombre } from '@/core/constants/estados'
+import { resolverEstadoHojaRuta } from '@/libs/reglas/estados'
 
 const FlashListCast = FlashList as any
 
@@ -17,25 +18,23 @@ interface RouteSelectorProps {
   onSelect: (id: string) => void
 }
 
-function estatoLabel(estado: number | undefined): string {
-  switch (estado) {
-    case EstadoHojaRuta.Programada: return 'PROGRAMADA'
-    case EstadoHojaRuta.Documentada: return 'DOCUMENTADA'
-    case EstadoHojaRuta.EnCurso:    return 'EN RUTA'
-    case EstadoHojaRuta.Finalizada: return 'FINALIZADA'
-    case EstadoHojaRuta.Cancelada:  return 'CANCELADA'
-    default: return 'DESCONOCIDO'
-  }
+/** Etiqueta y color de cada estado en el selector de rutas (exhaustivo por nombre del enum). */
+const ESTADO_SELECTOR = {
+  Programada: { label: 'PROGRAMADA', color: (_p: string) => BRAND.orange },
+  Documentada: { label: 'DOCUMENTADA', color: (_p: string) => BRAND.blue },
+  EnCurso: { label: 'EN RUTA', color: (p: string) => p },
+  Finalizada: { label: 'FINALIZADA', color: (_p: string) => BRAND.green },
+  Cancelada: { label: 'CANCELADA', color: (_p: string) => BRAND.red },
+} satisfies Record<EstadoHojaRutaNombre, { label: string; color: (primary: string) => string }>
+
+export function estatoLabel(estado: number | undefined): string {
+  const r = resolverEstadoHojaRuta(estado)
+  return r ? ESTADO_SELECTOR[r.nombre].label : 'DESCONOCIDO'
 }
 
-function estadoColor(estado: number | undefined, primary: string): string {
-  switch (estado) {
-    case EstadoHojaRuta.Documentada: return BRAND.blue
-    case EstadoHojaRuta.EnCurso:    return primary
-    case EstadoHojaRuta.Finalizada: return BRAND.green
-    case EstadoHojaRuta.Cancelada:  return BRAND.red
-    default: return BRAND.orange
-  }
+export function estadoColor(estado: number | undefined, primary: string): string {
+  const r = resolverEstadoHojaRuta(estado)
+  return r ? ESTADO_SELECTOR[r.nombre].color(primary) : BRAND.orange
 }
 
 /**

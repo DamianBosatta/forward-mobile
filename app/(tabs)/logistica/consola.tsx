@@ -10,6 +10,7 @@ import { useEntregarParada, useFinalizarHojaRuta, useHojaRuta, useHojasDeRuta, u
 import { getManifiestoUrl, logisticaKeys } from '@/libs/api-client/logistica'
 import { getNotaEntregaUrl } from '@/libs/api-client/ventas'
 import { EstadoHojaRuta, type ParadaDto } from '@/libs/api-client/types'
+import { esEstadoHojaRuta } from '@/core/constants/estados'
 import { useAuthStore } from '@/libs/store'
 import { esChofer } from '@/src/components/layout/menuModules'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
@@ -58,7 +59,7 @@ export default function ConsolaChoferScreen() {
   // Sin id de navegación, un viaje cerrado que quedó guardado no secuestra la consola.
   useEffect(() => {
     const guardado = useLogisticaStore.getState().activeTrip
-    const cerrado = guardado?.estado === EstadoHojaRuta.Finalizada || guardado?.estado === EstadoHojaRuta.Cancelada
+    const cerrado = esEstadoHojaRuta(guardado?.estado, 'Finalizada', 'Cancelada')
     if (!id && cerrado) clearActiveTrip()
   }, [id, clearActiveTrip])
 
@@ -72,7 +73,7 @@ export default function ConsolaChoferScreen() {
   const rutasDeHoy = useMemo(() => {
     const vistas = new Set<string>()
     return [...(enCurso.data ?? []), ...(rutas.data ?? [])].filter((r) => {
-      if (r.estado === EstadoHojaRuta.Cancelada || vistas.has(r.id)) return false
+      if (esEstadoHojaRuta(r.estado, 'Cancelada') || vistas.has(r.id)) return false
       vistas.add(r.id)
       return true
     })
@@ -80,7 +81,7 @@ export default function ConsolaChoferScreen() {
   useEffect(() => {
     if (id || activeTrip?.id) return
     // Un viaje en curso manda: hay que cerrarlo antes de arrancar otro.
-    const abiertas = rutasDeHoy.filter((r) => r.estado === EstadoHojaRuta.EnCurso)
+    const abiertas = rutasDeHoy.filter((r) => esEstadoHojaRuta(r.estado, 'EnCurso'))
     const unica = abiertas.length === 1 ? abiertas[0] : rutasDeHoy.length === 1 ? rutasDeHoy[0] : null
     if (unica && unica.id !== descartada) setRutaElegida(unica.id ?? null)
   }, [rutasDeHoy, id, activeTrip?.id, descartada])
@@ -153,17 +154,17 @@ export default function ConsolaChoferScreen() {
 
   const detalles = (viaje.detalles ?? []) as ParadaDto[]
   const resumen = resumenRuta(detalles)
-  const finalizada = viaje.estado === EstadoHojaRuta.Finalizada
+  const finalizada = esEstadoHojaRuta(viaje.estado, 'Finalizada')
   // Documentada (confirmada con remitos, sin salir) se inicia igual que Programada.
-  const programada = viaje.estado === EstadoHojaRuta.Programada || viaje.estado === EstadoHojaRuta.Documentada
+  const programada = esEstadoHojaRuta(viaje.estado, 'Programada', 'Documentada')
   // La oficina puede cancelar una hoja mientras no salió (#860): ya no se inicia ni se reporta.
-  const cancelada = viaje.estado === EstadoHojaRuta.Cancelada
+  const cancelada = esEstadoHojaRuta(viaje.estado, 'Cancelada')
   // Solo el chofer asignado (o el administrador de sistemas) reporta; el servidor lo exige igual.
   const soloLectura = !isSuperAdmin() && viaje.choferId !== user?.id
   const fecha = parseDateSafe(viaje.fechaSalida)
   const subtitulo = [fecha ? tituloDelDia(fecha) : null, viaje.vehiculoPatente].filter(Boolean).join(' · ')
   // El manifiesto existe desde que el viaje arranca; antes daría 404.
-  const conManifiesto = viaje.estado === EstadoHojaRuta.EnCurso || finalizada
+  const conManifiesto = esEstadoHojaRuta(viaje.estado, 'EnCurso') || finalizada
 
   const compartirManifiesto = async () => {
     setAviso(null)
@@ -265,7 +266,7 @@ export default function ConsolaChoferScreen() {
         qc.invalidateQueries({ queryKey: logisticaKeys.hojasRuta() })
       }} />
     ) : null
-  ) : viaje.estado === EstadoHojaRuta.EnCurso && todasReportadas ? (
+  ) : esEstadoHojaRuta(viaje.estado, 'EnCurso') && todasReportadas ? (
     <Button label="Finalizar viaje" onPress={() => setFinalizando(true)} />
   ) : null
 
@@ -312,7 +313,7 @@ export default function ConsolaChoferScreen() {
         <HojaDeRutaVista
           resumen={resumen}
           soloLectura={soloLectura}
-          puedeReportar={viaje.estado === EstadoHojaRuta.EnCurso}
+          puedeReportar={esEstadoHojaRuta(viaje.estado, 'EnCurso')}
           onReportar={(p) => {
             setErrorReporte(null)
             setReportando({ parada: p, numero: resumen.proxima?.numero ?? 0 })

@@ -20,6 +20,7 @@ import { ComprobanteCampos } from '@/features/compras/components/ComprobanteCamp
 import { armarComprobante, formDesdeComprobante, formNuevo, resumenComprobante, seCorrigeEnLaWeb, type ComprobanteCompraInput, type FormComprobante } from '@/features/compras/lib/comprobante'
 import { inicioKeys } from '@/core/query/queryClient'
 import { numeroDeCompra } from '@/features/compras/lib/numero'
+import { esEstadoCompra } from '@/core/constants/estados'
 
 /** Ruta `compras/[id]`: el id viene de la URL. */
 export default function CompraDetailScreen() {
@@ -84,12 +85,12 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
   }
 
   const estado = String(compra.estado)
-  const abierta = estado === 'NotaPedido' || estado === 'Confirmado'
+  const abierta = esEstadoCompra(estado, 'NotaPedido', 'Confirmado')
   const pideFactura = compra.condicionPago?.tipo === 'DiasDesdeFactura'
   const fechaLeida = fechaIso(fechaFactura)
   const ocupado = recibiendo || guardarComprobante.isPending || confirmar.isPending || recibir.isPending || cancelar.isPending || anularRecepcion.isPending
   // Mismo permiso que el servidor: MOD_COMPRAS:Delete y CAP_ANULAR_RECEPCION_COMPRAS.
-  const puedeAnularRecepcion = estado === 'Entregado' && canDo('MOD_COMPRAS', 'delete') && hasCapability(permisos, 'CAP_ANULAR_RECEPCION_COMPRAS')
+  const puedeAnularRecepcion = esEstadoCompra(estado, 'Entregado') && canDo('MOD_COMPRAS', 'delete') && hasCapability(permisos, 'CAP_ANULAR_RECEPCION_COMPRAS')
   const puedeEditar = canDo('MOD_COMPRAS', 'update')
 
   // Cada hoja arranca limpia: ni el motivo ni el error de otra quedan a la vista.
@@ -139,7 +140,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
           const n = await q.refetch()
           if (n.data) setVersionVista(n.data.version)
           // Ya no es nota de pedido: la hoja no sirve más; el motivo queda en la pantalla.
-          if (n.data && String(n.data.estado) !== 'NotaPedido') setHoja(null)
+          if (n.data && !esEstadoCompra(String(n.data.estado), 'NotaPedido')) setHoja(null)
         } catch { /* queda el error del servidor */ }
       }
     } finally {
@@ -185,7 +186,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
         {compra.comprobante ? (
           <Text style={secundario}>{resumenComprobante(compra.comprobante)}</Text>
         ) : null}
-        {estado === 'Entregado' && puedeEditar ? (
+        {esEstadoCompra(estado, 'Entregado') && puedeEditar ? (
           compra.comprobante && seCorrigeEnLaWeb(compra.comprobante)
             ? <Text style={secundario}>Tiene varias alícuotas: se corrige en la web.</Text>
             : <Button label={compra.comprobante ? 'Corregir el comprobante' : 'Cargar el comprobante'} variant="secundario" disabled={ocupado} onPress={() => abrirHoja('comprobante')} />
@@ -197,13 +198,13 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
             {canDo('MOD_COMPRAS', 'delete') ? <Button label="Cancelar compra" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('cancelar')} /> : null}
             {puedeEditar ? (
               <View style={{ flex: 1 }}>
-                {estado === 'NotaPedido'
+                {esEstadoCompra(estado, 'NotaPedido')
                   ? <Button label="Confirmar compra" loading={confirmar.isPending} disabled={ocupado} onPress={() => { void correr(() => confirmar.mutateAsync(compra.id), 'No se confirmó la compra') }} />
                   : <Button label="Recibir" disabled={ocupado} onPress={() => abrirHoja('recibir')} />}
               </View>
             ) : null}
           </View>
-          {puedeEditar && estado === 'NotaPedido'
+          {puedeEditar && esEstadoCompra(estado, 'NotaPedido')
             ? <Button label="Confirmar y recibir" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('confirmarYRecibir')} /> : null}
           {puedeEditar
             ? <Button label="Editar la compra" variant="secundario" disabled={ocupado} onPress={() => router.push(`/(tabs)/compras/nueva?edit=${compra.id}` as never)} /> : null}

@@ -7,13 +7,11 @@
 
 import type { ModulePermission } from '@/libs/api-client/types'
 import { hasCapability } from '@/features/auth/lib/capabilities'
+import { esEstadoVenta } from '@/core/constants/estados'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // canAuthorizeVenta — combined estado + CAP_AUTORIZAR_VENTA gate
 // ─────────────────────────────────────────────────────────────────────────────
-
-/** Estado values that require authorization (numeric string from backend). */
-const AUTHORIZATION_STATES = new Set(['9', 'PendienteAutorizacion'])
 
 /**
  * Returns true when the user is allowed to see and trigger the Autorizar action.
@@ -30,7 +28,7 @@ export function canAuthorizeVenta(
   estado: string | number,
   permissions: ModulePermission[] | null | undefined,
 ): boolean {
-  return AUTHORIZATION_STATES.has(String(estado)) && hasCapability(permissions, 'CAP_AUTORIZAR_VENTA')
+  return esEstadoVenta(estado, 'PendienteAutorizacion') && hasCapability(permissions, 'CAP_AUTORIZAR_VENTA')
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

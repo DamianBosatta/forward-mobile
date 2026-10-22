@@ -12,7 +12,6 @@ const MOTIVOS: [number, string][] = [
   [32, 'supera el tope de venta del cliente'],
 ]
 
-export const ESTADO_PENDIENTE_AUTORIZACION = 9
 
 export function motivosAutorizacion(flags: number | null | undefined): string[] {
   return MOTIVOS.filter(([bit]) => ((flags ?? 0) & bit) === bit).map(([, texto]) => texto)

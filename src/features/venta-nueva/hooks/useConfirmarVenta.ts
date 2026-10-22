@@ -9,7 +9,8 @@ import { inicioKeys } from '@/core/query/queryClient'
 import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { aAlta, aAutoguardado, errorDeAltaVenta, nuevaClaveIdempotencia, type Cabecera } from '../lib/payload'
-import { ESTADO_PENDIENTE_AUTORIZACION, motivosAutorizacion } from '../lib/motivosAutorizacion'
+import { motivosAutorizacion } from '../lib/motivosAutorizacion'
+import { esEstadoVenta } from '@/core/constants/estados'
 import type { LineaCarrito } from '../lib/carrito'
 import type { useBorradorVenta } from './useBorradorVenta'
 
@@ -36,7 +37,7 @@ const yaExistia = (r: VentaActionResponseDto) => /ya hab[ií]a sido creada/i.tes
  */
 const resultadoDelAlta = (r: VentaActionResponseDto) => {
   if (typeof r.estado !== 'number') return null
-  if (r.estado === ESTADO_PENDIENTE_AUTORIZACION && typeof r.motivoPendienteAutorizacion !== 'number') return null
+  if (esEstadoVenta(r.estado, 'PendienteAutorizacion') && typeof r.motivoPendienteAutorizacion !== 'number') return null
   return { estado: r.estado, motivos: r.motivoPendienteAutorizacion }
 }
 /** La clave ya grabó otro pedido: 409 con la venta que quedó en `data` (forward-system #867, CreateVentaCommandHandler). */
@@ -125,7 +126,7 @@ export function useConfirmarVenta(d: Datos) {
           .then((detalle) => ({ estado: detalle.venta.estado, motivos: detalle.venta.motivoPendienteAutorizacion }))
           .catch(() => null)
       const motivos = motivosAutorizacion(resultado?.motivos)
-      if (resultado?.estado === ESTADO_PENDIENTE_AUTORIZACION && motivos.length) {
+      if (esEstadoVenta(resultado?.estado, 'PendienteAutorizacion') && motivos.length) {
         mensaje = `Quedó por autorizar porque ${motivos.join(', ')}. Te avisamos cuando lo resuelvan.`
       }
     }

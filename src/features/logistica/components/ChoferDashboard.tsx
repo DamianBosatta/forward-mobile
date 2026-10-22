@@ -5,7 +5,8 @@ import { DrawerActions } from '@react-navigation/native'
 import { useColors, tokens, BRAND } from '@/libs/theme'
 import { KpiCardMobile, BentoGrid, BentoItem, GlassCard, Skeleton, ForwardLogo, TopHeaderActions } from '@/core/ui'
 import { useHojasDeRuta } from '@/libs/api-client/logistica'
-import { EstadoHojaRuta } from '@/libs/api-client/types'
+import { esEstadoHojaRuta, type EstadoHojaRutaNombre } from '@/core/constants/estados'
+import { resolverEstadoHojaRuta } from '@/libs/reglas/estados'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { Truck, MapPin, CheckCircle2, Clock, ChevronRight, Navigation } from 'lucide-react-native'
 import { MotiView } from 'moti'
@@ -33,21 +34,18 @@ interface BadgeConfig {
   color: string
 }
 
-function getEstadoBadge(estado: number | undefined, colors: ReturnType<typeof useColors>): BadgeConfig {
-  switch (estado) {
-    case EstadoHojaRuta.Programada:
-      return { label: 'PROGRAMADA', color: BRAND.orange }
-    case EstadoHojaRuta.Documentada:
-      return { label: 'DOCUMENTADA', color: BRAND.blue }
-    case EstadoHojaRuta.EnCurso:
-      return { label: 'EN CURSO', color: colors.primary }
-    case EstadoHojaRuta.Finalizada:
-      return { label: 'FINALIZADA', color: colors.success }
-    case EstadoHojaRuta.Cancelada:
-      return { label: 'CANCELADA', color: colors.danger }
-    default:
-      return { label: 'DESCONOCIDA', color: colors.textMuted }
-  }
+/** Cómo muestra mobile cada estado de hoja de ruta; exhaustivo (un estado nuevo sin entrada no compila). */
+const BADGE_HOJA = {
+  Programada: (_c) => ({ label: 'PROGRAMADA', color: BRAND.orange }),
+  Documentada: (_c) => ({ label: 'DOCUMENTADA', color: BRAND.blue }),
+  EnCurso: (c) => ({ label: 'EN CURSO', color: c.primary }),
+  Finalizada: (c) => ({ label: 'FINALIZADA', color: c.success }),
+  Cancelada: (c) => ({ label: 'CANCELADA', color: c.danger }),
+} satisfies Record<EstadoHojaRutaNombre, (c: ReturnType<typeof useColors>) => BadgeConfig>
+
+export function getEstadoBadge(estado: number | undefined, colors: ReturnType<typeof useColors>): BadgeConfig {
+  const r = resolverEstadoHojaRuta(estado)
+  return r ? BADGE_HOJA[r.nombre](colors) : { label: 'DESCONOCIDA', color: colors.textMuted }
 }
 
 // ─── Skeleton row ──────────────────────────────────────────────────────────────
@@ -101,12 +99,12 @@ export function ChoferDashboard() {
   }, [hojas])
 
   const activo = useMemo(
-    () => sorted.find(h => h.estado === EstadoHojaRuta.EnCurso),
+    () => sorted.find(h => esEstadoHojaRuta(h.estado, 'EnCurso')),
     [sorted],
   )
 
   const programado = useMemo(
-    () => sorted.find(h => h.estado === EstadoHojaRuta.Programada || h.estado === EstadoHojaRuta.Documentada),
+    () => sorted.find(h => esEstadoHojaRuta(h.estado, 'Programada', 'Documentada')),
     [sorted],
   )
 
@@ -120,10 +118,10 @@ export function ChoferDashboard() {
 
     const viajesDelMes = hojas.filter(h => {
       const t = h.fechaSalida ? new Date(h.fechaSalida).getTime() : 0
-      return h.estado === EstadoHojaRuta.Finalizada && t >= mesStart
+      return esEstadoHojaRuta(h.estado, 'Finalizada') && t >= mesStart
     }).length
 
-    const totalProgramados = hojas.filter(h => h.estado === EstadoHojaRuta.Programada || h.estado === EstadoHojaRuta.Documentada).length
+    const totalProgramados = hojas.filter(h => esEstadoHojaRuta(h.estado, 'Programada', 'Documentada')).length
 
     // The list endpoint returns HojaRutaListItemDto; cantidadParadas is required in the contract.
     const paradasActivas = heroHoja?.cantidadParadas ?? 0
