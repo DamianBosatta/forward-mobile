@@ -1,6 +1,7 @@
 import type { components } from '@/libs/api-client/generated/schema'
 import { leerNumero, numeroCompleto } from '@/src/utils/numero'
 import { ddmmaaaa, fechaIso } from './fecha'
+import { cuitEsValido } from '@/libs/reglas'
 
 export type ComprobanteCompraInput = components['schemas']['ComprobanteCompraInput']
 export type ComprobanteRecibido = components['schemas']['ComprobanteRecibidoDto']
@@ -75,7 +76,7 @@ export function armarComprobante(f: FormComprobante): { comprobante: Comprobante
   const fecha = fechaIso(f.fecha)
   if (!fecha) return { error: 'Escribí la fecha como dd/mm/aaaa.' }
   const cuit = f.cuit.replace(/\D/g, '')
-  if (cuit.length !== 11) return { error: 'El CUIT del proveedor tiene 11 números.' }
+  if (!cuitEsValido(cuit)) return { error: 'El CUIT del proveedor tiene 11 números.' }
   if (!f.razonSocial.trim()) return { error: 'Falta la razón social del proveedor.' }
   const total = leerNumero(f.total)
   if (!total) return { error: 'Falta el total del comprobante.' }

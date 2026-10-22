@@ -17,6 +17,8 @@
     "generate:types": "node scripts/generate-types.js",
     "generate:errores": "node scripts/generate-codigos-error.js",
     "check:types": "node scripts/check-types.js",
+    "sync:reglas": "node scripts/sync-reglas.js",
+    "check:reglas": "node scripts/check-reglas.js",
     "knip": "knip"
   },
   "dependencies": {
