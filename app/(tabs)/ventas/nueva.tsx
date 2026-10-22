@@ -35,6 +35,7 @@ import { Image as ExpoImage } from 'expo-image'
 import { getFullImageUrl } from '@/libs/api-client'
 import type { ClienteLightDto, CreateVentaRequest } from '@/libs/api-client'
 import type { CreateVentaFormData } from '@/libs/validations'
+import { fleteDeLaVenta } from '@/features/venta-nueva/lib/flete'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { esPrecioValido, pctFromPrecio, precioFromPct, canViewCost, calcularSubtotalConDescuento, derivarFloorBroken, computeModalFloor } from '@/features/ventas/lib/descuentos'
@@ -876,7 +877,6 @@ export default function NuevaVentaMobileScreen() {
   const [detalles, setDetalles] = useState<DetalleItem[]>([])
   const [descuentoGeneral, setDescuentoGeneral] = useState('')
   const [cargoFleteInput, setCargoFleteInput] = useState<string>('')
-  const [isFleteManual, setIsFleteManual] = useState(false)
   const [isFleteFocused, setIsFleteFocused] = useState(false)
   const [fechaEntrega, setFechaEntrega] = useState<Date | null>(null)
   const [metodoEntrega, setMetodoEntrega] = useState<1 | 2 | 3>(1) // 1=Logística 2=Retiro 3=Expreso
@@ -894,11 +894,6 @@ export default function NuevaVentaMobileScreen() {
     setTempFecha(fechaEntrega || new Date())
     setShowDatePicker(true)
   }
-
-  // Reset flete manual when delivery method changes
-  useEffect(() => {
-    setIsFleteManual(false)
-  }, [metodoEntrega])
 
   // #region ── State Lifecycle: Focus Key ──────────────────────────────────────
   /// <summary>
@@ -921,7 +916,6 @@ export default function NuevaVentaMobileScreen() {
     setDetalles([])
     setDescuentoGeneral('')
     setCargoFleteInput('')
-    setIsFleteManual(false)
     setMotivo('')
     setTipoOperacion(2)
     setFechaEntrega(null)
@@ -1004,10 +998,8 @@ export default function NuevaVentaMobileScreen() {
         setVentaVersion(venta.version ?? 0)
         if (venta.cargoFleteAmount !== undefined && venta.cargoFleteAmount !== null) {
           setCargoFleteInput(String(venta.cargoFleteAmount))
-          setIsFleteManual(true)
         } else {
           setCargoFleteInput('')
-          setIsFleteManual(false)
         }
         setDetalles(items.map((i: any) => {
           const prodCatalog = productos.find((p: any) => p.id === i.productoId)
@@ -1061,21 +1053,8 @@ export default function NuevaVentaMobileScreen() {
   // descGeneralMonto is applied on top of the already-discounted subtotal
   const descGeneralMonto = subtotalSinDesc * (descGeneral / 100)
 
-  const fleteMonto = useMemo(() => {
-    if (isFleteManual) {
-      return parseFloat(cargoFleteInput) || 0
-    }
-    if (metodoEntrega === 1) { // Envío
-      return Math.round((subtotalSinDesc - descGeneralMonto) * 0.05)
-    }
-    return 0
-  }, [isFleteManual, cargoFleteInput, metodoEntrega, subtotalSinDesc, descGeneralMonto])
-
-  useEffect(() => {
-    if (!isFleteManual) {
-      setCargoFleteInput(fleteMonto > 0 ? String(fleteMonto) : '')
-    }
-  }, [fleteMonto, isFleteManual])
+  // D-025: el flete es lo que se escribe (sin 5 % automático: no existe en la web ni en el backend).
+  const fleteMonto = fleteDeLaVenta(metodoEntrega, cargoFleteInput)
 
   const total = subtotalSinDesc - descGeneralMonto + fleteMonto
 
@@ -2107,25 +2086,9 @@ export default function NuevaVentaMobileScreen() {
                         <Text style={{ color: colors.text, fontWeight: '700', fontSize: 15, fontFamily: 'Outfit_700Bold' }}>
                           Cargo por Flete
                         </Text>
-                        {metodoEntrega === 1 && !isFleteManual && (
-                          <View style={{ backgroundColor: `${colors.primary}15`, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-                            <Text style={{ color: colors.primary, fontSize: 9, fontWeight: '800', fontFamily: 'Outfit_700Bold' }}>AUTO (5%)</Text>
-                          </View>
-                        )}
-                        {isFleteManual && (
-                          <TouchableOpacity 
-                            onPress={() => {
-                              setIsFleteManual(false)
-                              safeHaptics.impact('light')
-                            }}
-                            style={{ backgroundColor: `${colors.warning}15`, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}
-                          >
-                            <Text style={{ color: colors.warning, fontSize: 9, fontWeight: '800', fontFamily: 'Outfit_700Bold' }}>MANUAL ✕</Text>
-                          </TouchableOpacity>
-                        )}
                       </View>
                       <Text style={{ color: colors.textMuted, fontSize: 11, fontFamily: 'Outfit_500Medium', marginTop: 2 }}>
-                        {metodoEntrega === 1 ? 'Por defecto es el 5% de la orden' : 'Solo aplicable para envíos'}
+                        {metodoEntrega === 1 ? 'Escribí el importe del flete' : 'Solo aplicable para envíos'}
                       </Text>
                     </View>
                   </View>
@@ -2157,10 +2120,7 @@ export default function NuevaVentaMobileScreen() {
                       placeholder="0"
                       placeholderTextColor={colors.textDisabled}
                       value={cargoFleteInput}
-                      onChangeText={(val) => {
-                        setCargoFleteInput(val)
-                        setIsFleteManual(true)
-                      }}
+                      onChangeText={setCargoFleteInput}
                       onFocus={() => setIsFleteFocused(true)}
                       onBlur={() => setIsFleteFocused(false)}
                       editable={metodoEntrega === 1}
