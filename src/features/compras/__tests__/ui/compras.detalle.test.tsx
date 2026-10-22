@@ -148,10 +148,10 @@ describe('detalle de compra', () => {
   })
 
   describe('comprobante del proveedor', () => {
-    const SOCIO = { id: 'p1', razonSocial: 'Insumos del Sur SA', cuit: '30-71234567-8' }
+    const SOCIO = { id: 'p1', razonSocial: 'Insumos del Sur SA', cuit: '30-71234567-1' }
     const CARGADO = {
       id: 'k1', tipo: 'Factura', letra: 'A', puntoVenta: 2, numero: 55, fecha: '2026-10-01', periodoFiscal: 202610,
-      cuitEmisor: '30712345678', razonSocialEmisor: 'Insumos del Sur SA', noGravado: 0, exento: 0, total: 1210,
+      cuitEmisor: '30712345671', razonSocialEmisor: 'Insumos del Sur SA', noGravado: 0, exento: 0, total: 1210,
       alicuotas: [{ alicuota: 'Veintiuno', netoGravado: 1000, iva: 210 }], tributos: [],
     }
     const conSocio = (datos: Record<string, unknown>) => {
@@ -164,7 +164,7 @@ describe('detalle de compra', () => {
       conSocio({ estado: 'Confirmado' })
       await userEvent.press(await screen.findByRole('button', { name: 'Recibir' }))
       await userEvent.press(screen.getByRole('button', { name: 'Cargar el comprobante del proveedor' }))
-      await waitFor(() => expect(screen.getByLabelText('CUIT del proveedor').props.value).toBe('30-71234567-8'))
+      await waitFor(() => expect(screen.getByLabelText('CUIT del proveedor').props.value).toBe('30-71234567-1'))
       await userEvent.press(screen.getByRole('radio', { name: 'B' }))
       fireEvent.changeText(screen.getByLabelText('Punto de venta'), '3')
       fireEvent.changeText(screen.getByLabelText('Número'), '1234')
@@ -174,7 +174,7 @@ describe('detalle de compra', () => {
       expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', {
         compraId: 'aaaa1111-0000', fechaFacturaProveedor: null,
         comprobante: {
-          tipo: 'Factura', letra: 'B', puntoVenta: 3, numero: 1234, fecha: '2026-10-08', cuitEmisor: '30712345678',
+          tipo: 'Factura', letra: 'B', puntoVenta: 3, numero: 1234, fecha: '2026-10-08', cuitEmisor: '30712345671',
           razonSocialEmisor: 'Insumos del Sur SA', noGravado: 0, exento: 0, total: 55200, alicuotas: [], tributos: [],
         },
       })
