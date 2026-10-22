@@ -12,7 +12,7 @@ import { sharePdf } from '@/features/pedidos/lib/sharePdf'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { codigoDeVenta, tipoDeVenta } from '@/features/venta-nueva/lib/ventaGuardada'
 import { useReabrirPresupuesto } from '../hooks/useReabrirPresupuesto'
-import { DIAS_VIGENCIA_PRESUPUESTO, type AccionesDeVenta as Acciones } from '../lib/accionesVenta'
+import { DIAS_VIGENCIA_PRESUPUESTO, MOTIVO_ANULACION_WEB, type AccionesDeVenta as Acciones } from '../lib/accionesVenta'
 import { mensajeWhatsAppVenta, urlWhatsAppVenta } from '../lib/whatsappVenta'
 import { AnularVentaSheet } from './AnularVentaSheet'
 
@@ -38,7 +38,6 @@ export function AccionesDeVenta({ venta, acciones, onAnulada }: Props) {
   const anular = useAnularVenta()
   const [hoja, setHoja] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const esPresupuesto = h.tipoOperacion === 1
 
   const aPedido = () => Alert.alert('Pasar a pedido', MSG_CONVERTIR, [
     { text: 'Cancelar', style: 'cancel' },
@@ -51,10 +50,10 @@ export function AccionesDeVenta({ venta, acciones, onAnulada }: Props) {
     },
   ])
 
-  const confirmarAnular = async (motivo: string) => {
+  const confirmarAnular = async () => {
     setError(null)
     try {
-      await anular.mutateAsync({ id: h.id, version: h.version, motivoAnulacion: motivo })
+      await anular.mutateAsync({ id: h.id, version: h.version, motivoAnulacion: MOTIVO_ANULACION_WEB })
       setHoja(false)
       onAnulada()
     } catch (e) {
@@ -74,11 +73,10 @@ export function AccionesDeVenta({ venta, acciones, onAnulada }: Props) {
       {a.visible && !a.habilitado && a.motivo ? <MotivoDeshabilitado>{a.motivo}</MotivoDeshabilitado> : null}
       <AnularVentaSheet
         visible={hoja}
-        esPresupuesto={esPresupuesto}
         cargando={anular.isPending}
         error={error}
         onClose={() => setHoja(false)}
-        onConfirmar={(m) => void confirmarAnular(m)}
+        onConfirmar={() => void confirmarAnular()}
       />
     </View>
   )

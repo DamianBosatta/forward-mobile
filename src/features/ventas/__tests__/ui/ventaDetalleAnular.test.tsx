@@ -46,11 +46,11 @@ jest.mock('expo-blur', () => {
 })
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
 
-// Anular pide un motivo (S6): se elige uno de la hoja y se confirma.
+// Anular = la confirmación de la web, sin pedir motivo.
 async function anular() {
   await userEvent.press(screen.getByText('Anular'))
-  await userEvent.press(await screen.findByRole('radio', { name: 'Error de carga' }))
-  await userEvent.press(screen.getByRole('button', { name: 'Anular pedido' }))
+  expect(await screen.findByText('¿Deseas anular esta venta? Se liberará el stock reservado.')).toBeTruthy()
+  await userEvent.press(screen.getByRole('button', { name: 'Anular Venta' }))
 }
 
 beforeEach(() => {
@@ -76,7 +76,7 @@ describe('anular desde el detalle de venta', () => {
     render(<VentaDetalle id="v1" onVolver={onVolver} />)
     await anular()
     await waitFor(() => expect(onVolver).toHaveBeenCalledTimes(1))
-    expect(mockAnular).toHaveBeenCalledWith({ id: 'v1', version: 3, motivoAnulacion: 'Error de carga' })
+    expect(mockAnular).toHaveBeenCalledWith({ id: 'v1', version: 3, motivoAnulacion: 'Cancelación manual' })
     expect(mockReplace).not.toHaveBeenCalled()
   })
 
@@ -96,10 +96,12 @@ describe('anular desde el detalle de venta', () => {
 })
 
 describe('anular según la web (PermMatriz "2 · Ventas")', () => {
-  it('sin elegir un motivo no se puede anular', async () => {
+  it('no pide motivo y "Cancelar" cierra sin anular', async () => {
     render(<VentaDetalle id="v1" />)
     await userEvent.press(screen.getByText('Anular'))
-    expect(await screen.findByRole('button', { name: 'Anular pedido' })).toBeDisabled()
+    expect(await screen.findByText('¿Deseas anular esta venta? Se liberará el stock reservado.')).toBeTruthy()
+    expect(screen.queryByRole('radio')).toBeNull()
+    await userEvent.press(screen.getByRole('button', { name: 'Cancelar' }))
     expect(mockAnular).not.toHaveBeenCalled()
   })
 

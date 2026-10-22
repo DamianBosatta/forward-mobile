@@ -35,7 +35,7 @@ import { ForwardLogo, GlassCard, AuroraGlow } from '@/core/ui'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { AnularVentaSheet } from '@/features/ventas/components/AnularVentaSheet'
-import { accionesDeVenta } from '@/features/ventas/lib/accionesVenta'
+import { accionesDeVenta, MOTIVO_ANULACION_WEB } from '@/features/ventas/lib/accionesVenta'
 import { esEstadoVenta } from '@/core/constants/estados'
 import { estaCancelada, pasoDeVenta } from '@/features/ventas/lib/estadoVenta'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -136,12 +136,12 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
   const statusColor = isCancelled ? colors.danger : (steps[currentIdx]?.color ?? BRAND.blue)
 
   // ── Handlers ────────────────────────────────────────────────────────────────
-  // Anular pide un motivo (S6) y sigue las reglas de la web: ver `accionesDeVenta`.
-  const handleAnular = async (motivo: string) => {
+  // Anular igual que la web: confirmación sin motivo y `motivoAnulacion` fijo; reglas en `accionesDeVenta`.
+  const handleAnular = async () => {
     if (!venta) return
     setErrorAnular(null)
     try {
-      await anular({ id: id!, version: venta.version ?? 0, motivoAnulacion: motivo })
+      await anular({ id: id!, version: venta.version ?? 0, motivoAnulacion: MOTIVO_ANULACION_WEB })
       setAnulando(false)
       // Embebido (tablet) el panel cierra; la lista se refresca por la invalidación de useAnularVenta.
       if (onVolver) onVolver()
@@ -919,11 +919,10 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
 
       <AnularVentaSheet
         visible={anulando}
-        esPresupuesto={isPresupuesto}
         cargando={canceling}
         error={errorAnular}
         onClose={() => setAnulando(false)}
-        onConfirmar={(m) => void handleAnular(m)}
+        onConfirmar={() => void handleAnular()}
       />
     </View>
   )
