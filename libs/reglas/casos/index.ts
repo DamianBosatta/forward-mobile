@@ -30,6 +30,24 @@ export const CASOS: Readonly<Record<string, readonly Caso[]>> = {
     { nombre: 'empate 2,535 va al par (2,54)', entrada: [2.535], esperado: 2.54 },
     { nombre: 'cero queda en cero', entrada: [0], esperado: 0 },
   ],
+  redondear2: [
+    { nombre: '1,005 sube a 1,01 (no 1,00 como Math.round)', entrada: [1.005], esperado: 1.01 },
+    { nombre: '2,675 sube a 2,68', entrada: [2.675], esperado: 2.68 },
+    {
+      nombre: 'el medio también se aleja del cero en negativos',
+      entrada: [-1.005],
+      esperado: -1.01,
+    },
+    { nombre: 'el medio NO va al par (2,525 → 2,53)', entrada: [2.525], esperado: 2.53 },
+    { nombre: 'dos decimales quedan igual', entrada: [10.25], esperado: 10.25 },
+  ],
+  formatearMonto: [
+    { nombre: 'punto de miles y coma decimal', entrada: [1234567.891], esperado: '1.234.567,89' },
+    { nombre: 'siempre dos decimales', entrada: [10], esperado: '10,00' },
+    { nombre: 'redondea 1,005 a 1,01', entrada: [1.005], esperado: '1,01' },
+    { nombre: 'pesos lleva el símbolo', entrada: [1234.5, 'ARS'], esperado: '$ 1.234,50' },
+    { nombre: 'dólares lleva US$', entrada: [1234.5, 'USD'], esperado: 'US$ 1.234,50' },
+  ],
   pisoCesionComision: [
     { nombre: 'es la mitad del configurado', entrada: [5], esperado: 2.5 },
     { nombre: 'la mitad cruda 2,525 se redondea a 2,52', entrada: [5.05], esperado: 2.52 },

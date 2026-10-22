@@ -5,7 +5,7 @@
 const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
-const { hashDe } = require('./reglas-hash');
+const { hashDe, REGLAS_DATOS } = require('./reglas-hash');
 
 const repo = process.env.FORWARD_SYSTEM_REPO || path.join('..', 'fs-combo');
 const ref = process.env.FORWARD_SYSTEM_REF || 'origin/main';
@@ -33,6 +33,7 @@ if (archivos.length === 0) {
 }
 
 const contenidos = new Map(archivos.map((rel) => [rel, git(['show', `${ref}:${fuente}/${rel}`])]));
+for (const [rel, origen] of Object.entries(REGLAS_DATOS)) contenidos.set(rel, git(['show', `${ref}:${origen}`]));
 
 // Se reemplaza la carpeta entera: un archivo que ya no existe en la fuente no sobrevive.
 fs.rmSync(destino, { recursive: true, force: true });
@@ -41,6 +42,6 @@ for (const [rel, texto] of contenidos) {
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, texto.replace(/\r\n/g, '\n'));
 }
-const hash = hashDe(archivos, (rel) => contenidos.get(rel));
+const hash = hashDe([...contenidos.keys()], (rel) => contenidos.get(rel));
 fs.writeFileSync(path.join(destino, 'reglas.hash'), hash + '\n');
-console.log(`libs/reglas copiado de forward-system ${ref} (${sha}): ${archivos.length} archivos, sha256 ${hash}.`);
+console.log(`libs/reglas copiado de forward-system ${ref} (${sha}): ${contenidos.size} archivos, sha256 ${hash}.`);

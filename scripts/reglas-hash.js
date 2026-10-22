@@ -5,13 +5,13 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 
-function listar(dir, base = dir) {
+function listar(dir, base = dir, extensiones = ['.ts']) {
   return fs
     .readdirSync(dir, { withFileTypes: true })
     .flatMap((e) =>
       e.isDirectory()
-        ? listar(path.join(dir, e.name), base)
-        : e.name.endsWith('.ts')
+        ? listar(path.join(dir, e.name), base, extensiones)
+        : extensiones.some((x) => e.name.endsWith(x))
           ? [path.relative(base, path.join(dir, e.name)).split(path.sep).join('/')]
           : [],
     )
@@ -41,4 +41,10 @@ const VALIDACIONES = {
     "export { cuitEsValido } from '../../reglas/cuit';\n",
 };
 
-module.exports = { listar, hashDe, VALIDACIONES };
+// Datos que acompañan a libs/reglas (L-32): el fixture que corren C# y TS para el redondeo y el formato
+// de montos. Ruta en la copia -> ruta en forward-system. Entran al hash de reglas.hash.
+const REGLAS_DATOS = {
+  'fixtures/redondeo-y-formato.json': 'Forward-Api/contrato/reglas/dinero/redondeo-y-formato.json',
+};
+
+module.exports = { listar, hashDe, VALIDACIONES, REGLAS_DATOS };

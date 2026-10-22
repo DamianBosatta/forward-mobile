@@ -1,0 +1,27 @@
+{
+  "regla": "dinero/redondeo-y-formato",
+  "descripcion": "Redondeo a 2 decimales con el medio hacia afuera del cero (como el numeric(18,2) de Postgres) y formato argentino de un monto. Lo corren Dinero.Redondear y Dinero.Formatear (C#) y redondear2 y formatearMonto de @forward/reglas/dinero (TS) con estas mismas entradas. Las entradas son texto: el decimal de C# y el número de TS tienen que partir del mismo valor escrito.",
+  "casos": [
+    { "nombre": "1,005 sube a 1,01", "entrada": "1.005", "redondear": "1.01", "formatear": "1,01" },
+    { "nombre": "2,675 sube a 2,68", "entrada": "2.675", "redondear": "2.68", "formatear": "2,68" },
+    { "nombre": "1,015 sube a 1,02", "entrada": "1.015", "redondear": "1.02", "formatear": "1,02" },
+    { "nombre": "2,525 sube a 2,53 (no va al par)", "entrada": "2.525", "redondear": "2.53", "formatear": "2,53" },
+    { "nombre": "0,125 sube a 0,13", "entrada": "0.125", "redondear": "0.13", "formatear": "0,13" },
+    { "nombre": "baja lo que está debajo de la mitad", "entrada": "2.504", "redondear": "2.5", "formatear": "2,50" },
+    { "nombre": "4,999 sube a 5", "entrada": "4.999", "redondear": "5", "formatear": "5,00" },
+    { "nombre": "dos decimales quedan igual", "entrada": "10.25", "redondear": "10.25", "formatear": "10,25" },
+    { "nombre": "entero", "entrada": "10", "redondear": "10", "formatear": "10,00" },
+    { "nombre": "cero", "entrada": "0", "redondear": "0", "formatear": "0,00" },
+    { "nombre": "negativo: el medio también se aleja del cero", "entrada": "-1.005", "redondear": "-1.01", "formatear": "-1,01" },
+    { "nombre": "negativo: 2,675 baja a -2,68", "entrada": "-2.675", "redondear": "-2.68", "formatear": "-2,68" },
+    { "nombre": "un negativo que redondea a cero no lleva signo", "entrada": "-0.001", "redondear": "0", "formatear": "0,00" },
+    { "nombre": "miles con punto", "entrada": "1234567.891", "redondear": "1234567.89", "formatear": "1.234.567,89" },
+    { "nombre": "999,995 sube a 1.000,00", "entrada": "999.995", "redondear": "1000", "formatear": "1.000,00" },
+    { "nombre": "mil exacto", "entrada": "1000", "redondear": "1000", "formatear": "1.000,00" }
+  ],
+  "conMoneda": [
+    { "nombre": "pesos", "entrada": "1234.5", "moneda": "ARS", "formatear": "$ 1.234,50" },
+    { "nombre": "dólares", "entrada": "1234.5", "moneda": "USD", "formatear": "US$ 1.234,50" },
+    { "nombre": "pesos con 1,005", "entrada": "1.005", "moneda": "ARS", "formatear": "$ 1,01" }
+  ]
+}
