@@ -1,4 +1,6 @@
-import { renderHook } from '@testing-library/react-native'
+import React from 'react'
+import { renderHook as renderizar } from '@testing-library/react-native'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useCabeceraVenta } from '../hooks/useCabeceraVenta'
 
 const mockDias = jest.fn()
@@ -7,6 +9,13 @@ jest.mock('@/libs/api-client/configuracion', () => ({
   useDiasEntrega: () => mockDias(),
   useFeriados: () => mockFeriados(),
 }))
+
+// El hook ahora también trae el default de "Con factura" (useQuery): necesita el proveedor.
+jest.mock('@/core/api/client', () => ({ ...jest.requireActual('@/core/api/client'), api: { get: jest.fn().mockResolvedValue({ ventaConFacturaPorDefecto: true }) } }))
+const renderHook = <T,>(f: () => T) => renderizar(f, {
+  wrapper: ({ children }: { children: React.ReactNode }) =>
+    React.createElement(QueryClientProvider, { client: new QueryClient({ defaultOptions: { queries: { retry: false } } }) }, children),
+})
 
 const TODOS = { lunes: true, martes: true, miercoles: true, jueves: true, viernes: true, sabado: true, domingo: true }
 const consulta = (data: unknown, error: boolean) => ({ data, isSuccess: !error && data !== undefined, isError: error, refetch: jest.fn() })

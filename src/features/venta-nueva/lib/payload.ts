@@ -7,7 +7,11 @@ import type { LineaCarrito } from './carrito'
 export interface ItemVenta { productoId: string; cantidad: number; descuentoPorcentaje: number }
 
 /** Cabecera elegida en la pestaña Cabecera. `fecha` es un día "YYYY-MM-DD" de Argentina. */
-export interface Cabecera { metodoEntrega: MetodoEntregaValue; fecha: string | null; flete: number; observaciones: string }
+export interface Cabecera {
+  metodoEntrega: MetodoEntregaValue; fecha: string | null; flete: number; observaciones: string
+  /** Tilde "Con factura" (solo el alta lo manda, como la web). Sin valor: todavía no se conoce el default y se omite. */
+  conFactura?: boolean
+}
 
 /** Cuerpo del autoguardado (UpdateVentaCommand; el id y la versión los pone la llamada). */
 export interface AutoguardadoVenta {
@@ -85,6 +89,8 @@ export function aAlta(lineas: LineaCarrito[], descuentoGeneral: number, cab: Cab
   if (cargoFlete) p.cargoFlete = cargoFlete
   if (d.motivoVentaSinStock?.trim()) p.motivoVentaSinStock = d.motivoVentaSinStock.trim()
   if (d.esPedido && d.porcentajeComisionCedido) p.porcentajeComisionCedido = d.porcentajeComisionCedido
+  // buildVentaPayload de la web: solo si el tilde ya tiene valor; si no, el servidor aplica el default de Configuración.
+  if (cab.conFactura !== undefined) p.conFactura = cab.conFactura
   return p
 }
 

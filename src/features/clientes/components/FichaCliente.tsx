@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { FilePen, Lock, MapPin, MessageCircle, Pencil, Phone } from 'lucide-react-native'
+import { FilePen, Lock, MapPin, MessageCircle, Pencil, Phone, Tag } from 'lucide-react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, Segmented, StatusChip, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
@@ -15,6 +15,7 @@ import { formatToLocalTime } from '@/src/utils/date'
 import { CreditoDelCliente } from './CreditoDelCliente'
 import { SolicitudCambio } from './SolicitudCambio'
 import { Accion, Cifra, Dato, Seccion } from '@/features/socios/components/PiezasDeFicha'
+import { useVenderA } from '@/features/venta-nueva/hooks/useVenderA'
 import { urlLlamar, urlWhatsApp } from '../lib/contacto'
 import { direccionDeEntrega, nombreDelCliente, textoCondicionPago } from '../lib/cliente'
 
@@ -32,6 +33,7 @@ export function FichaCliente({ id }: { id: string }) {
   const c = useColors()
   const router = useRouter()
   const { canUpdate, canCreate, canRead } = usePermissions()
+  const venderA = useVenderA()
   const [pidiendoCambio, setPidiendoCambio] = useState(false)
   const [solapa, setSolapa] = useState<Solapa>('compras')
   const puedeAutorizar = useAuthStore(s => s.hasCapability('CAP_AUTORIZAR_VENTA'))
@@ -78,6 +80,7 @@ export function FichaCliente({ id }: { id: string }) {
         </View>
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+          {venderA ? <Accion icono={Tag} label="Vender" onPress={() => router.push(venderA(id) as never)} /> : null}
           {telefono ? <Accion icono={Phone} label="Llamar" onPress={() => Linking.openURL(urlLlamar(telefono))} /> : null}
           {whatsapp ? <Accion icono={MessageCircle} label="WhatsApp" onPress={() => Linking.openURL(whatsapp)} /> : null}
           {cliente.direccion?.trim() ? (

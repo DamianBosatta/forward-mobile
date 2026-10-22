@@ -10,6 +10,9 @@ jest.mock('@/core/api/client', () => ({
   api: { get: (url: string) => mockGet(url) },
 }))
 
+let mockVentaNueva = false
+jest.mock('@/features/ventas/lib/ventaNueva', () => ({ ...jest.requireActual('@/features/ventas/lib/ventaNueva'), useVentaNueva: () => mockVentaNueva }))
+
 const mockPush = jest.fn()
 const mockBack = jest.fn()
 jest.mock('expo-router', () => ({
@@ -59,6 +62,7 @@ const urls = () => mockGet.mock.calls.map(([u]) => String(u))
 beforeEach(() => {
   jest.clearAllMocks()
   mockPermisos = ['MOD_CLIENTES', 'MOD_VENTAS', 'MOD_CC']
+  mockVentaNueva = false
   mockGet.mockImplementation((url: string) =>
     Promise.resolve(url.includes('/Ventas?') ? paginado([VENTA]) : paginado([CLIENTE])))
 })
@@ -116,6 +120,33 @@ describe('Buscar', () => {
     expect(within(cuentas).getByText('Vencido $ 84.300,00')).toBeTruthy()
     await userEvent.press(within(cuentas).getByRole('button', { name: /Cuenta de Tarantino 1898/ }))
     expect(mockPush).toHaveBeenLastCalledWith({ pathname: '/(tabs)/cuentas/[id]', params: { id: 'c1' } })
+  })
+
+  describe('Vender al cliente encontrado (T4c, lienzo ResBuscar)', () => {
+    it('con la venta nueva prendida y permiso para crear, la fila del cliente ofrece Vender con ese cliente', async () => {
+      mockVentaNueva = true
+      mockPermisos = ['MOD_CLIENTES', 'MOD_VENTAS', 'MOD_VENTAS:create']
+      pintar()
+      await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')
+      const clientes = await screen.findByTestId('buscar-clientes')
+      await userEvent.press(await within(clientes).findByRole('button', { name: 'Vender a Tarantino 1898' }))
+      expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas/nueva-v2?clienteId=c1')
+    })
+
+    it.each([
+      ['con el switch apagado', false, ['MOD_CLIENTES', 'MOD_VENTAS', 'MOD_VENTAS:create']],
+      ['sin permiso para crear ventas', true, ['MOD_CLIENTES', 'MOD_VENTAS']],
+    ])('%s no hay Vender y la fila sigue abriendo la ficha', async (_n, switchPrendido, permisos) => {
+      mockVentaNueva = switchPrendido
+      mockPermisos = permisos
+      pintar()
+      await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')
+      const clientes = await screen.findByTestId('buscar-clientes')
+      await within(clientes).findByText('CLIENTES · 1')
+      expect(within(clientes).queryByRole('button', { name: /^Vender/ })).toBeNull()
+      await userEvent.press(within(clientes).getByRole('button', { name: 'Tarantino 1898, Autoservicio Abel' }))
+      expect(mockPush).toHaveBeenLastCalledWith({ pathname: '/(tabs)/socios/[id]', params: { id: 'c1' } })
+    })
   })
 
   it('sin Cuentas corrientes esa sección no aparece ni se consulta', async () => {

@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router'
 import { Search } from 'lucide-react-native'
 import { radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Notice, StatusChip, TopBar, chipForEstado, formatImporte, iniciales } from '@/core/ui/fw'
+import { Button, Notice, StatusChip, TopBar, chipForEstado, formatImporte, iniciales } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useInfiniteVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client'
@@ -13,6 +13,7 @@ import { useCartera, useValorDiferido } from '@/features/clientes/hooks/useCarte
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { parseDateSafe } from '@/src/utils/date'
+import { useVenderA } from '@/features/venta-nueva/hooks/useVenderA'
 import { MINIMO_BUSQUEDA, clientesConCuenta, seccionesVisibles } from './lib/secciones'
 
 const MAX_POR_SECCION = 5
@@ -149,6 +150,7 @@ function useClientesEncontrados(termino: string) {
 
 function SeccionClientes({ termino, columna }: { termino: string; columna: boolean }) {
   const router = useRouter()
+  const venderA = useVenderA()
   const q = useClientesEncontrados(termino)
   const lista = q.clientes.slice(0, MAX_POR_SECCION)
   const espera = q.isLoading || q.pendiente
@@ -157,7 +159,7 @@ function SeccionClientes({ termino, columna }: { termino: string; columna: boole
       {lista.map((cl) => {
         const direccion = direccionDeEntrega(cl)
         const nombre = nombreDelCliente(cl)
-        return (
+        const fila = (
           <Fila
             key={cl.id}
             etiqueta={[direccion, nombre].filter(Boolean).join(', ')}
@@ -167,6 +169,13 @@ function SeccionClientes({ termino, columna }: { termino: string; columna: boole
             onPress={() => router.push({ pathname: '/(tabs)/socios/[id]', params: { id: cl.id } })}
           />
         )
+        // Lienzo ResBuscar: la fila lleva su botón "Vender" (solo con la venta nueva y permiso para crear ventas).
+        return venderA ? (
+          <View key={cl.id} style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+            <View style={{ flex: 1, minWidth: 0 }}>{fila}</View>
+            <Button label="Vender" accessibilityLabel={`Vender a ${direccion}`} onPress={() => router.push(venderA(cl.id) as never)} />
+          </View>
+        ) : fila
       })}
     </Seccion>
   )

@@ -1,4 +1,8 @@
 import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@/core/api/client'
+import { ventasKeys } from '@/libs/api-client/ventas'
+import type { components } from '@/libs/api-client/generated/schema'
 import { useDiasEntrega, useFeriados } from '@/libs/api-client/configuracion'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { METODO_ENTREGA, type MetodoEntregaValue } from '@/features/ventas/lib/venta-form-retiro'
@@ -23,6 +27,14 @@ export function useCabeceraVenta(tipo: TipoDocumento) {
   const [fleteTexto, setFleteTexto] = useState('')
   const [observaciones, setObservaciones] = useState('')
   const [cesionTexto, setCesionTexto] = useState('')
+  // Con factura (venta-form.tsx de la web): nace con el default de ventas; lo elegido gana; sin default no hay valor.
+  const [conFacturaElegido, setConFactura] = useState<boolean | null>(null)
+  const conFacturaDefecto = useQuery({
+    queryKey: [...ventasKeys.all, 'con-factura-por-defecto'] as const,
+    queryFn: () => api.get<components['schemas']['VentaConFacturaPorDefectoDto']>('/api/v1/Ventas/con-factura-por-defecto'),
+    staleTime: 60_000,
+  })
+  const conFactura = conFacturaElegido ?? conFacturaDefecto.data?.ventaConFacturaPorDefecto
   const [ahora] = useState(() => Date.now())
   const dias = useDiasEntrega()
   const feriados = useFeriados(diaArgentina(ahora))
@@ -49,6 +61,7 @@ export function useCabeceraVenta(tipo: TipoDocumento) {
     fecha: fechaElegida ?? (proponer ? propuesta : null),
     flete: metodoEntrega === METODO_ENTREGA.Logistica && fleteLeido !== null ? fleteLeido : 0,
     observaciones,
+    conFactura,
   }
   /** Carga la cabecera de una venta del servidor; sin fecha, `proponerFecha` decide si se propone la del servidor. */
   const hidratar = (h: VentaCargada['cabecera'], proponerFecha = true) => {
@@ -59,7 +72,7 @@ export function useCabeceraVenta(tipo: TipoDocumento) {
     setObservaciones(h.observaciones)
   }
   return {
-    cabecera, tira, hidratar,
+    cabecera, tira, hidratar, setConFactura,
     calendarioError: (dias.isError && dias.data === undefined) || (feriados.isError && feriados.data === undefined),
     reintentarCalendario: () => { if (dias.isError) void dias.refetch(); if (feriados.isError) void feriados.refetch() }, setMetodoEntrega, setFecha, fleteTexto, setFleteTexto, fleteInvalido, observaciones, setObservaciones,
     comision, puedeCeder, cesionTexto, setCesionTexto, cesionError,
