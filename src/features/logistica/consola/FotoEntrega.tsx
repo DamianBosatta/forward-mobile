@@ -24,6 +24,9 @@ interface Props {
   referencia?: string
 }
 
+/** Lámina Camara (E5): solo la cámara del teléfono, nunca la galería. */
+const SIN_GALERIA = 'Sin galería: la foto se saca ahora, para que no se pueda usar una vieja.'
+
 const hhmm = (ms: number) => {
   const p = partesArgentina(ms)
   return `${String(p.hora).padStart(2, '0')}:${String(p.minuto).padStart(2, '0')}`
@@ -71,6 +74,7 @@ export function FotoEntrega({ que, url, onUrl, onSubiendo, ayuda, guia, titulo, 
       ) : null}
       {ayuda ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{ayuda}</Text> : null}
       {!url && guia ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{guia}</Text> : null}
+      {!url ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{SIN_GALERIA}</Text> : null}
       {url ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
           <Image

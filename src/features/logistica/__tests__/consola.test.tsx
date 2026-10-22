@@ -45,6 +45,13 @@ const HOJA = {
 let hojaServidor: unknown = HOJA
 let listaServidor: (url: string) => unknown = () => [{ id: 'h1' }]
 
+/** La entrega va en pasos (bloque 12, T12c): sin devolución y sin cobro, hasta el resumen donde está "Confirmar entrega". */
+async function alResumen() {
+  await userEvent.press(screen.getByLabelText('No, recibió todo'))
+  await userEvent.press(screen.getByLabelText('Continuar'))
+  await userEvent.press(screen.getByLabelText('Continuar'))
+}
+
 function pintar(hoja: unknown = HOJA, choferId = 'u1', permissions: unknown[] = [{ module: 'MOD_VIAJES', canRead: true }]) {
   hojaServidor = hoja
   useAuthStore.setState({
@@ -100,9 +107,12 @@ describe('Consola del chofer: hoja de ruta', () => {
     })
     pintar()
     await userEvent.press(await screen.findByLabelText('Reportar entrega'))
-    const confirmar = screen.getByLabelText('Confirmar entrega')
-    expect(confirmar.props.accessibilityState.disabled).toBe(true)
+    // Pasos de la entrega (T12c): sin quién recibió no se sigue; recién el último paso confirma.
+    expect(screen.getByLabelText('Continuar').props.accessibilityState.disabled).toBe(true)
+    await userEvent.press(screen.getByLabelText('No, recibió todo'))
+    expect(screen.getByLabelText('Continuar').props.accessibilityState.disabled).toBe(true)
     await userEvent.type(screen.getByLabelText('Quién recibió'), 'Carlos')
+    await alResumen()
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/paradas/p4/entregar', {
       claveIdempotencia: expect.any(String), nombreReceptor: 'Carlos',
@@ -129,6 +139,7 @@ describe('Consola del chofer: hoja de ruta', () => {
     pintar()
     await userEvent.press(await screen.findByLabelText('Reportar entrega'))
     await userEvent.type(screen.getByLabelText('Quién recibió'), 'Carlos')
+    await alResumen()
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
     expect(await screen.findByText('La venta ya no está en ruta.')).toBeTruthy()
     expect(screen.getByLabelText('Confirmar entrega')).toBeTruthy()
@@ -251,6 +262,7 @@ describe('Consola del chofer: hoja de ruta', () => {
     pintar()
     await userEvent.press(await screen.findByLabelText('Reportar entrega'))
     await userEvent.type(screen.getByLabelText('Quién recibió'), 'Carlos')
+    await alResumen()
     const confirmar = screen.getByLabelText('Confirmar entrega')
     act(() => {
       fireEvent.press(confirmar)
