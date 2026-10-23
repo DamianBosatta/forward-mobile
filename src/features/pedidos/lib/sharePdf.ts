@@ -22,7 +22,7 @@ import { useAuthStore } from '@/libs/store/auth.store'
 // an "unavailable" result instead of taking unrelated screens down with it.
 type SharingModule = typeof import('expo-sharing')
 let sharingModuleCache: SharingModule | null | undefined
-function getSharing(): SharingModule | null {
+export function getSharing(): SharingModule | null {
   if (sharingModuleCache === undefined) {
     try {
       sharingModuleCache = require('expo-sharing') as SharingModule

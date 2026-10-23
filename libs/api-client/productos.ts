@@ -1,5 +1,5 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { api } from './client'
+import { api, API_URL } from './client'
 import type { Producto, ProductoDetailDto, PagedResult, CreateProductoRequest, UpdateProductoRequest } from './types'
 import type { components } from './generated/schema'
 
@@ -18,6 +18,10 @@ export interface ProductoParams {
   soloActivos?: boolean
   /** Buscador de la compra: comunes y fragancias (variantes), sin las líneas. Un servidor anterior lo ignora. */
   soloComprables?: boolean
+  // R19: Línea o Familia (trae su subárbol) y solo con oferta vigente. Todavía no están en el schema generado:
+  // se tipan con `components` cuando se regenere con el backend de R19; mientras tanto se mandan a mano.
+  categoriaId?: string
+  conOferta?: boolean
 }
 
 // CatalogoStockItem derived from generated OpenAPI schema — do not hand-edit.
@@ -109,6 +113,8 @@ export function useInfiniteProductos(params: ProductoParams = {}, { mantenerAnte
       if (params.search) searchParams.set('searchTerm', params.search)
       if (params.soloActivos !== undefined) searchParams.set('soloActivos', String(params.soloActivos))
       if (params.soloComprables) searchParams.set('soloComprables', 'true')
+      if (params.categoriaId) searchParams.set('categoriaId', params.categoriaId)
+      if (params.conOferta) searchParams.set('conOferta', 'true')
 
       return api.get<PagedResult<Producto>>(`/api/v1/Productos?${searchParams}`)
     },
@@ -237,4 +243,22 @@ export function useToggleProductoStatus() {
       queryClient.invalidateQueries({ queryKey: ['stock'] })
     },
   })
+}
+
+export interface CatalogoPdfFiltros {
+  search?: string
+  soloDisponibles?: boolean
+  conOferta?: boolean
+  categoriaId?: string
+}
+
+/** URL del PDF del catálogo con los mismos filtros que la pantalla (GET /Productos/catalogo-pdf). */
+export function getCatalogoPdfUrl({ search, soloDisponibles, conOferta, categoriaId }: CatalogoPdfFiltros): string {
+  const params = new URLSearchParams()
+  if (search?.trim()) params.set('SearchTerm', search.trim())
+  if (soloDisponibles) params.set('SoloDisponibles', 'true')
+  if (conOferta) params.set('ConOferta', 'true')
+  if (categoriaId) params.set('CategoriaId', categoriaId)
+  const query = params.toString()
+  return `${API_URL}/api/v1/Productos/catalogo-pdf${query ? `?${query}` : ''}`
 }

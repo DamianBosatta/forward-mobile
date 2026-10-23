@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { ActivityIndicator, Image, ScrollView, Text, View } from 'react-native'
 import { Package } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
@@ -8,6 +8,7 @@ import { useDisponibilidad } from '@/libs/api-client/stock'
 import { getFullImageUrl } from '@/libs/api-client/media'
 import { useDepositoDeConsulta } from '../hooks/useDepositoDeConsulta'
 import { chipDeStock, textoUnidadDeVenta } from '../lib/presentacion'
+import { compartirFoto } from '../lib/compartirFoto'
 
 function Fila({ label, valor, fuerte }: { label: string; valor: string; fuerte?: boolean }) {
   const c = useColors()
@@ -35,6 +36,7 @@ function Seccion({ titulo, children }: { titulo: string; children: React.ReactNo
  */
 export function FichaProducto({ productoId, onVerStock }: { productoId: string; onVerStock?: (codigo: string) => void }) {
   const c = useColors()
+  const [errorFoto, setErrorFoto] = useState<string | null>(null)
 
   const { data: p, isLoading, isError } = useProducto(productoId)
   const { data: variantes } = useVariantesProducto(productoId, !!p?.esPadreDeVariantes)
@@ -74,6 +76,17 @@ export function FichaProducto({ productoId, onVerStock }: { productoId: string; 
           <Package size={56} color={c.textSecondary} strokeWidth={1.4} />
         )}
       </View>
+
+      {foto ? (
+        <View style={{ gap: space[2] }}>
+          <Button
+            label="Mandar foto"
+            variant="secundario"
+            onPress={() => { void compartirFoto(foto, p.codigoPropio).then((r) => setErrorFoto(r.ok ? null : r.message)) }}
+          />
+          {errorFoto ? <Notice tone="peligro">{errorFoto}</Notice> : null}
+        </View>
+      ) : null}
 
       <View style={{ gap: space[1] }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>

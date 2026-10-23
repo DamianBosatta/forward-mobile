@@ -17,6 +17,8 @@ import { useCatalogoConsulta } from '@/features/catalogo/hooks/useCatalogoConsul
 import { ProductoCard } from '@/features/catalogo/components/ProductoCard'
 import { FichaProducto } from '@/features/catalogo/components/FichaProducto'
 import { EscanerCodigo } from '@/features/catalogo/components/EscanerCodigo'
+import { SelectorLineaFamilia } from '@/features/catalogo/components/SelectorLineaFamilia'
+import { BotonCatalogoPdf } from '@/features/catalogo/components/BotonCatalogoPdf'
 import { filtrarPorStock } from '@/features/catalogo/lib/presentacion'
 import { StockPorDeposito } from '@/features/inventario/components/StockPorDeposito'
 
@@ -185,8 +187,11 @@ export default function CatalogoConsultaScreen() {
           </View>
         </View>
         {vista === 'catalogo' ? (
-          <View style={{ flexDirection: 'row', gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }}>
             <FiltroChip label="Con stock" activo={soloConStock} onPress={() => setSoloConStock((v) => !v)} />
+            <FiltroChip label="Con oferta" activo={cat.soloConOferta} onPress={() => cat.setSoloConOferta((v) => !v)} />
+            <SelectorLineaFamilia categoriaId={cat.categoriaId} onChange={cat.setCategoriaId} />
+            <BotonCatalogoPdf busqueda={cat.busqueda} soloConStock={soloConStock} conOferta={cat.soloConOferta} categoriaId={cat.categoriaId} />
           </View>
         ) : null}
         {vista === 'catalogo' && avisoEscaneo ? (
