@@ -16,7 +16,7 @@ export interface VentaCargada {
   cliente: ClienteElegido
   lineas: LineaCarrito[]
   descuentoGeneral: number
-  cabecera: { metodoEntrega: MetodoEntregaValue; fecha: string | null; flete: number; observaciones: string }
+  cabecera: { metodoEntrega: MetodoEntregaValue; fecha: string | null; flete: number; observaciones: string; conFactura: boolean }
   version: number
   tipo: 'Pedido' | 'Presupuesto'
   /** A00001 (o el comienzo del id si no tiene número). */
@@ -53,7 +53,9 @@ export function cabeceraDesdeVenta(h: VentaHeaderDto): VentaCargada['cabecera'] 
   const metodo = (h.metodoEntregaNombre ? POR_NOMBRE[h.metodoEntregaNombre] : undefined)
     ?? (METODOS.includes(h.metodoEntrega ?? -1) ? (h.metodoEntrega as MetodoEntregaValue) : METODO_ENTREGA.Logistica)
   const dia = h.fechaEntrega?.match(/^\d{4}-\d{2}-\d{2}/)?.[0] ?? null
-  return { metodoEntrega: metodo, fecha: dia, flete: h.cargoFleteAmount ?? 0, observaciones: h.observaciones ?? '' }
+  return { metodoEntrega: metodo, fecha: dia, flete: h.cargoFleteAmount ?? 0, observaciones: h.observaciones ?? '',
+    // Como la web (buildEditHydration): una venta sin el dato se toma como sin factura.
+    conFactura: h.conFactura ?? false }
 }
 
 /** Lo que el servidor tiene de la venta, en la misma forma que el snapshot del autoguardado (para compararlos). */

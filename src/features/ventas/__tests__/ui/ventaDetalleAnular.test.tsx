@@ -29,16 +29,12 @@ jest.mock('@/libs/api-client', () => ({
 }))
 jest.mock('@/core/auth/RequirePermission', () => ({
   RequirePermission: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  usePermissions: () => ({ canUpdate: () => true }),
+  usePermissions: () => ({ canDo: () => true }),
 }))
 jest.mock('@/core/ui', () => {
   const { View } = require('react-native')
   const Pasa = ({ children }: { children?: React.ReactNode }) => <View>{children}</View>
   return { ForwardLogo: Pasa, RequirePermission: Pasa, GlassCard: Pasa, AuroraGlow: Pasa }
-})
-jest.mock('@/core/ui/ConfirmModal', () => {
-  const { Pressable, Text } = require('react-native')
-  return { ConfirmModal: ({ onConfirm }: { onConfirm: () => void }) => <Pressable accessibilityRole="button" onPress={onConfirm}><Text>Sí, anular</Text></Pressable> }
 })
 jest.mock('moti', () => ({
   MotiView: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -50,9 +46,11 @@ jest.mock('expo-blur', () => {
 })
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
 
+// Anular = la confirmación de la web, sin pedir motivo.
 async function anular() {
   await userEvent.press(screen.getByText('Anular'))
-  await userEvent.press(screen.getByText('Sí, anular'))
+  expect(await screen.findByText('¿Deseas anular esta venta? Se liberará el stock reservado.')).toBeTruthy()
+  await userEvent.press(screen.getByRole('button', { name: 'Anular Venta' }))
 }
 
 beforeEach(() => {
@@ -94,6 +92,37 @@ describe('anular desde el detalle de venta', () => {
     embebido.unmount()
     const ruta = render(<VentaDetalle id="v1" />)
     expect(JSON.stringify(ruta.toJSON())).toContain('"paddingTop":50')
+  })
+})
+
+describe('anular según la web (PermMatriz "2 · Ventas")', () => {
+  it('no pide motivo y "Cancelar" cierra sin anular', async () => {
+    render(<VentaDetalle id="v1" />)
+    await userEvent.press(screen.getByText('Anular'))
+    expect(await screen.findByText('¿Deseas anular esta venta? Se liberará el stock reservado.')).toBeTruthy()
+    expect(screen.queryByRole('radio')).toBeNull()
+    await userEvent.press(screen.getByRole('button', { name: 'Cancelar' }))
+    expect(mockAnular).not.toHaveBeenCalled()
+  })
+
+  it('en ruta queda deshabilitado y dice por qué', () => {
+    mockEstado = 'EnRuta'
+    render(<VentaDetalle id="v1" />)
+    expect(screen.getByText('No se puede anular: el pedido está en ruta.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Anular' })).toBeDisabled()
+  })
+
+  it('rechazada no se anula ni se edita', () => {
+    mockEstado = 11
+    render(<VentaDetalle id="v1" />)
+    expect(screen.queryByText('Anular')).toBeNull()
+    expect(screen.queryByText('Modificar')).toBeNull()
+  })
+
+  it('por autorizar no se modifica (la web edita solo Pendiente o Confirmada)', () => {
+    mockEstado = 9
+    render(<VentaDetalle id="v1" />)
+    expect(screen.queryByText('Modificar')).toBeNull()
   })
 })
 

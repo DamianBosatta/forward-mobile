@@ -17,6 +17,11 @@ export interface ContextoAvisos {
 /** Descuento compuesto de la línea con el general: (1 − ítem) × (1 − general), como el servidor. */
 export const pctCompuesto = (item: number, general: number) => 100 * (1 - (1 - item / 100) * (1 - general / 100))
 
+/** Alguna línea o el descuento general pasan el tope de descuento del vendedor (con tope configurado). */
+export function superaElTope(lineas: LineaCarrito[], descuentoGeneral: number, tope: number, exento: boolean): boolean {
+  return [...lineas.map((l) => l.descuentoPct), descuentoGeneral].some((p) => avisoTope(p, tope, exento) === 'porAutorizar')
+}
+
 export function avisosVenta(lineas: LineaCarrito[], ctx: ContextoAvisos): { porAutorizar: string[]; rechazos: string[] } {
   const topes = [...lineas.map((l) => l.descuentoPct), ctx.descuentoGeneral].map((p) => avisoTope(p, ctx.tope, ctx.exento))
   const pisos = lineas.map((l) => avisoPiso(l.producto, precioServidor(l.producto), pctCompuesto(l.descuentoPct, ctx.descuentoGeneral)))

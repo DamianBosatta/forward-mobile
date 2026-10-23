@@ -19,10 +19,16 @@ interface Props {
   hoy: string
   /** Lámina ChoferEntrega: lo que hay que cobrar en la parada (lo decide el servidor). */
   aCobrar?: number | null
+  /** Lámina Cobro: lo repartido entre los medios ("$ 600,00 de $ 1.000,00 ✓"), si hay algo que mostrar. */
+  repartido?: string
+  /** "Faltan $ X" / "Sobran $ X" en rojo bajo lo repartido: avisa, no frena. */
+  aviso?: string | null
+  /** Paso E4 ("paga lo anterior y firma lo actual"): el cobro va a la deuda vieja. */
+  porDeudaAnterior?: boolean
 }
 
 /** Lo que cobró el chofer: una o varias líneas (efectivo, transferencia, cheque). El servidor imputa y valida. */
-export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLineas, onImputacion, onSubiendo, hoy, aCobrar }: Props) {
+export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLineas, onImputacion, onSubiendo, hoy, aCobrar, repartido, aviso, porDeudaAnterior }: Props) {
   const c = useColors()
   const cambiar = (i: number, cambio: Partial<LineaCobroForm>) => onLineas(lineas.map((l, j) => (j === i ? { ...l, ...cambio } : l)))
   const cambiarCheque = (i: number, campo: keyof ChequeForm) => (v: string) =>
@@ -35,8 +41,8 @@ export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLine
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <Text style={{ ...typeScale.seccion, color: c.text }}>Cobro</Text>
         {aCobrar != null ? (
-          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-            {'A cobrar '}
+          <Text accessibilityLabel="A cobrar hoy" style={{ ...typeScale.secundario, color: c.textSecondary }}>
+            {'A cobrar hoy '}
             <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{formatImporte(aCobrar)}</Text>
           </Text>
         ) : null}
@@ -79,6 +85,16 @@ export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLine
         )
       })}
       <Button label="Agregar cobro" variant="secundario" onPress={agregar} />
+      {repartido ? (
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Repartido</Text>
+          <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{repartido}</Text>
+        </View>
+      ) : null}
+      {aviso ? <Text style={{ ...typeScale.cuerpoDestacado, color: c.danger, textAlign: 'right' }}>{aviso}</Text> : null}
+      {lineas.length > 0 && porDeudaAnterior ? (
+        <Notice tone="info">El cobro va a la deuda más vieja del cliente. Lo de hoy se firma abajo y queda en su cuenta corriente.</Notice>
+      ) : null}
       {lineas.length > 0 ? (
         <Segmented<Imputacion>
           accessibilityLabel="A qué deuda va el cobro"

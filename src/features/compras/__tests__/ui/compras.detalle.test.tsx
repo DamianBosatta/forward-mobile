@@ -5,6 +5,8 @@ import CompraDetailScreen, { CompraDetalle } from '../../../../../app/(tabs)/com
 import { AccessibilityInfo } from 'react-native'
 import { confirmarYRecibir, dejarAviso } from '../../lib/confirmar-y-recibir'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { hoyTexto } from '../../lib/fecha'
+import { diaArgentina } from '@/src/utils/date'
 
 // Tipear fechas y motivos con userEvent es lento en una corrida completa: margen para no dar falsos rojos.
 jest.setTimeout(15000)
@@ -59,9 +61,10 @@ const conCapacidad = () => useAuthStore.setState({
 })
 
 describe('detalle de compra', () => {
-  it('con el número del servidor (9C), el subtítulo lo muestra como C-00232', async () => {
+  it('con el número del servidor (9C), el título lo muestra como C-00232 y la fecha va en el cuerpo', async () => {
     abrir({ numero: 232 })
-    expect(await screen.findByText('C-00232 · 07/10/2026')).toBeTruthy()
+    expect(await screen.findByText('Compra C-00232')).toBeTruthy()
+    expect(screen.getByText('07/10/2026 · 1 producto')).toBeTruthy()
   })
 
   it('nota de pedido: muestra líneas y total, y confirma; si el servidor rechaza, el motivo queda a la vista', async () => {
@@ -69,7 +72,8 @@ describe('detalle de compra', () => {
     expect(await screen.findByText('Balde Nuvia 10L')).toBeTruthy()
     expect(screen.getByText('Pendiente')).toBeTruthy()
     // 01:30 UTC del 8 es el 7 en Argentina: el día es el del servidor, no el del teléfono.
-    expect(screen.getByText('AAAA1111 · 07/10/2026')).toBeTruthy()
+    expect(screen.getByText('Compra AAAA1111')).toBeTruthy()
+    expect(screen.getByText('07/10/2026 · 1 producto')).toBeTruthy()
     expect(screen.getByLabelText('Total: $ 55.200,00')).toBeTruthy()
     mockPost.mockRejectedValueOnce(Object.assign(new Error('No se le puede comprar a Insumos del Sur SA'), { status: 400 }))
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar compra' }))
@@ -90,22 +94,22 @@ describe('detalle de compra', () => {
 
   it('confirmada con condición por días desde la factura: recibir pide la fecha de la factura', async () => {
     abrir({ estado: 'Confirmado', condicionPago: { tipo: 'DiasDesdeFactura', dias: 30, descripcion: '30 días desde la factura' } })
-    await userEvent.press(await screen.findByRole('button', { name: 'Recibir' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Recibir mercadería' }))
     const fecha = screen.getByLabelText('Fecha de la factura')
     await userEvent.clear(fecha)
     await userEvent.type(fecha, '31/02/2026')
-    expect(screen.getAllByRole('button', { name: 'Recibir' }).at(-1)).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Confirmar recepción' })).toBeDisabled()
     await userEvent.clear(fecha)
-    await userEvent.type(fecha, '05/10/2026')
-    await userEvent.press(screen.getAllByRole('button', { name: 'Recibir' }).at(-1)!)
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', { compraId: 'aaaa1111-0000', fechaFacturaProveedor: '2026-10-05' })
+    await userEvent.type(fecha, hoyTexto())
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', { compraId: 'aaaa1111-0000', fechaFacturaProveedor: diaArgentina(Date.now()) })
   })
 
   it('confirmada al contado: recibir no pide fecha de factura', async () => {
     abrir({ estado: 'Confirmado' })
-    await userEvent.press(await screen.findByRole('button', { name: 'Recibir' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Recibir mercadería' }))
     expect(screen.queryByLabelText('Fecha de la factura')).toBeNull()
-    await userEvent.press(screen.getAllByRole('button', { name: 'Recibir' }).at(-1)!)
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', { compraId: 'aaaa1111-0000', fechaFacturaProveedor: null })
   })
 
@@ -140,9 +144,9 @@ describe('detalle de compra', () => {
     // El error se ve una sola vez, dentro de la hoja.
     expect(await screen.findAllByText(/No se canceló la compra: Ya no se puede/)).toHaveLength(1)
     fireEvent.press(screen.getByLabelText('Cerrar', { includeHiddenElements: true }))
-    await userEvent.press(screen.getByRole('button', { name: 'Recibir' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Recibir mercadería' }))
     expect(screen.queryByText(/No se canceló la compra/)).toBeNull()
-    fireEvent.press(screen.getByLabelText('Cerrar', { includeHiddenElements: true }))
+    await userEvent.press(screen.getByLabelText('Volver'))
     await userEvent.press(screen.getAllByRole('button', { name: 'Cancelar compra' })[0])
     expect(screen.getByLabelText('Motivo').props.value).toBe('')
   })
@@ -162,7 +166,7 @@ describe('detalle de compra', () => {
 
     it('al recibir se puede cargar el comprobante: va en el mismo POST, con el CUIT del proveedor precargado', async () => {
       conSocio({ estado: 'Confirmado' })
-      await userEvent.press(await screen.findByRole('button', { name: 'Recibir' }))
+      await userEvent.press(await screen.findByRole('button', { name: 'Recibir mercadería' }))
       await userEvent.press(screen.getByRole('button', { name: 'Cargar el comprobante del proveedor' }))
       await waitFor(() => expect(screen.getByLabelText('CUIT del proveedor').props.value).toBe('30-71234567-1'))
       await userEvent.press(screen.getByRole('radio', { name: 'B' }))
@@ -170,7 +174,7 @@ describe('detalle de compra', () => {
       fireEvent.changeText(screen.getByLabelText('Número'), '1234')
       fireEvent.changeText(screen.getByLabelText('Fecha del comprobante'), '08/10/2026')
       fireEvent.changeText(screen.getByLabelText('Total'), '55.200')
-      await userEvent.press(screen.getAllByRole('button', { name: 'Recibir' }).at(-1)!)
+      await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
       expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', {
         compraId: 'aaaa1111-0000', fechaFacturaProveedor: null,
         comprobante: {
@@ -182,9 +186,9 @@ describe('detalle de compra', () => {
 
     it('con el comprobante a medio cargar no se recibe: dice qué falta', async () => {
       conSocio({ estado: 'Confirmado' })
-      await userEvent.press(await screen.findByRole('button', { name: 'Recibir' }))
+      await userEvent.press(await screen.findByRole('button', { name: 'Recibir mercadería' }))
       await userEvent.press(screen.getByRole('button', { name: 'Cargar el comprobante del proveedor' }))
-      await userEvent.press(screen.getAllByRole('button', { name: 'Recibir' }).at(-1)!)
+      await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
       expect(await screen.findByText('Falta el punto de venta.')).toBeTruthy()
       expect(mockPost).not.toHaveBeenCalled()
     })
@@ -277,7 +281,7 @@ describe('detalle de compra', () => {
     it('una compra por recibir no se anula: se cancela', async () => {
       conCapacidad()
       abrir({ estado: 'Confirmado' })
-      await screen.findByRole('button', { name: 'Recibir' })
+      await screen.findByRole('button', { name: 'Recibir mercadería' })
       expect(screen.queryByRole('button', { name: 'Anular recepción' })).toBeNull()
     })
   })
@@ -380,7 +384,7 @@ describe('detalle de compra', () => {
 
     it('una compra ya confirmada no la ofrece: se recibe', async () => {
       abrir({ estado: 'Confirmado' })
-      await screen.findByRole('button', { name: 'Recibir' })
+      await screen.findByRole('button', { name: 'Recibir mercadería' })
       expect(screen.queryByRole('button', { name: 'Confirmar y recibir' })).toBeNull()
     })
 

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, StatusChip, formatImporte } from '@/core/ui/fw'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
@@ -8,7 +8,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useCatalogoVenta } from '../hooks/useCatalogoVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
-import { leyendaMultiplo, multiploDe, precioServidor } from '../lib/carrito'
+import { leyendaMultiplo, multiploDe, precioServidor, subtotalLinea } from '../lib/carrito'
 import { descuentoDeFragancias, nombreFragancia, stockDeFragancia } from '../lib/fragancias'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
 import { Redondo } from './ProductoCatalogoCard'
@@ -17,6 +17,8 @@ interface Props {
   /** Línea padre a repartir; null = cerrada. */
   padreId: string | null
   onClose: () => void
+  /** Lo que el cliente llevó en su último pedido (producto → cantidad): habilita "Como la última vez". */
+  llevo?: Map<string, number> | null
 }
 
 /**
@@ -26,12 +28,12 @@ interface Props {
  * la web (DistribucionFraganciasModal): no se pide más que el stock disponible de cada fragancia y
  * el descuento es UNO para toda la línea.
  */
-export function FraganciasSheet({ padreId, onClose }: Props) {
+export function FraganciasSheet({ padreId, onClose, llevo = null }: Props) {
   if (!padreId) return null
-  return <Contenido key={padreId} padreId={padreId} onClose={onClose} />
+  return <Contenido key={padreId} padreId={padreId} onClose={onClose} llevo={llevo} />
 }
 
-function Contenido({ padreId, onClose }: { padreId: string; onClose: () => void }) {
+function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () => void; llevo: Map<string, number> | null }) {
   const c = useColors()
   const { productos, isLoading } = useCatalogoVenta('')
   const { lineas, repartirFragancias } = useCarritoVenta()
@@ -54,12 +56,25 @@ function Contenido({ padreId, onClose }: { padreId: string; onClose: () => void 
     return [v.id, Math.min(cantidades[v.id] ?? 0, Math.floor(disponible / m) * m)]
   }))
   const cambiar = (id: string, n: number) => setCantidades((s) => ({ ...s, [id]: Math.max(0, n) }))
+  // "Como la última vez": las cantidades que llevó de cada fragancia; al agregar se acotan al stock como todo lo demás.
+  const delUltimo = Object.fromEntries(variantes.flatMap((v) => (llevo?.get(v.id) ? [[v.id, llevo.get(v.id)!]] : [])))
+  const hayUltimo = Object.keys(delUltimo).length > 0
+  const subtotal = variantes.reduce((a, v) => a + subtotalLinea({ productoId: v.id, producto: v, cantidad: cantidades[v.id] ?? 0, descuentoPct: pctInvalido ? 0 : pctLeido }), 0)
 
   return (
     <BottomSheet visible onClose={onClose} accessibilityLabel="Elegir fragancias">
-      <View style={{ gap: space[1] }}>
-        <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{padre?.nombre ?? 'Fragancias'}</Text>
-        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Elegí cuántas de cada fragancia.</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: space[2] }}>
+        <View style={{ flex: 1, gap: space[1] }}>
+          <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{padre?.nombre ?? 'Fragancias'}</Text>
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
+            {padre ? `${formatImporte(precioServidor(padre))} c/u · ${variantes.length} fragancias` : 'Elegí cuántas de cada fragancia.'}
+          </Text>
+        </View>
+        {hayUltimo ? (
+          <Pressable accessibilityRole="button" accessibilityLabel="Como la última vez" onPress={() => setCantidades(delUltimo)} style={{ minHeight: 44, justifyContent: 'center' }}>
+            <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Como la última vez</Text>
+          </Pressable>
+        ) : null}
       </View>
       {isLoading ? <ActivityIndicator color={c.brand} /> : null}
       {!isLoading && variantes.length === 0 ? (
@@ -97,8 +112,12 @@ function Contenido({ padreId, onClose }: { padreId: string; onClose: () => void 
         <Notice tone="advertencia" title={`Tu tope de descuento es ${user?.maxDescuentoPorcentaje} %.`}>Podés guardar el pedido, pero va a quedar por autorizar.</Notice>
       ) : null}
       {tope === 'sinConfigurar' ? <Notice tone="peligro">{MENSAJE_TOPE_SIN_CONFIGURAR}</Notice> : null}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`${total} ${total === 1 ? 'unidad' : 'unidades'}`}</Text>
+        <Text testID="fragancias-subtotal" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(subtotal)}</Text>
+      </View>
       <Button
-        label={total > 0 ? `Listo · ${total} unidades` : 'Listo'}
+        label={total > 0 ? 'Agregar a la venta' : 'Listo'}
         disabled={variantes.length === 0 || pctInvalido}
         onPress={() => { repartirFragancias(padreId, variantes, aDisponible(), pctLeido ?? 0); onClose() }}
       />

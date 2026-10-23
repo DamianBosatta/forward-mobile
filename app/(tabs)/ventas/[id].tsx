@@ -3,7 +3,7 @@ import {
   Modal, StyleSheet, Platform, TouchableOpacity
 } from 'react-native'
 import { useVentaNueva } from '@/features/ventas/lib/ventaNueva'
-import { DetalleVentaNueva } from '@/features/venta-nueva/components/DetalleVentaNueva'
+import { DetalleVenta } from '@/features/ventas/components/DetalleVenta'
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
 import { useState, useMemo } from 'react'
@@ -18,6 +18,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { canAuthorizeVenta } from '@/features/ventas/lib/authorization'
 import { canViewCost } from '@/features/ventas/lib/descuentos'
 import { Linking } from 'react-native'
+import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useColors, useIsDark, BRAND, tokens } from '@/libs/theme'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
@@ -30,9 +31,11 @@ import {
 } from 'lucide-react-native'
 import { BlurView } from 'expo-blur'
 import { MotiView, AnimatePresence } from 'moti'
-import { ForwardLogo, RequirePermission, GlassCard, AuroraGlow } from '@/core/ui'
+import { ForwardLogo, GlassCard, AuroraGlow } from '@/core/ui'
 import { usePermissions } from '@/core/auth/RequirePermission'
-import { ConfirmModal } from '@/core/ui/ConfirmModal'
+import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
+import { AnularVentaSheet } from '@/features/ventas/components/AnularVentaSheet'
+import { accionesDeVenta, MOTIVO_ANULACION_WEB } from '@/features/ventas/lib/accionesVenta'
 import { esEstadoVenta } from '@/core/constants/estados'
 import { estaCancelada, pasoDeVenta } from '@/features/ventas/lib/estadoVenta'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -77,7 +80,7 @@ export default function VentaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   // Con el switch de la venta nueva, el detalle con el formato nuevo (PR 2.10).
   const ventaNueva = useVentaNueva()
-  return ventaNueva && id ? <DetalleVentaNueva id={id} /> : <VentaDetalle id={id} />
+  return ventaNueva && id ? <DetalleVenta id={id} /> : <VentaDetalle id={id} />
 }
 
 /**
@@ -91,7 +94,8 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
   const isDark = useIsDark()
   const insets = useSafeAreaInsets()
   
-  const [modalState, setModalState] = useState<{ visible: boolean; title: string; message: string; variant: 'success' | 'danger' | 'warning' | 'info' | 'primary'; onConfirm: () => void; onCancel?: () => void } | null>(null)
+  const [anulando, setAnulando] = useState(false)
+  const [errorAnular, setErrorAnular] = useState<string | null>(null)
 
   // Premium UI & interaction state hooks
   const [clientExpanded, setClientExpanded] = useState(false)
@@ -103,8 +107,7 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
   const { mutateAsync: convertir, isPending: converting } = useConvertirPresupuesto()
   const { mutateAsync: anular, isPending: canceling } = useAnularVenta()
 
-  const { canUpdate } = usePermissions()
-  const canModify = canUpdate('MOD_VENTAS')
+  const { canDo } = usePermissions()
 
   const isChangingStatus = converting
 
@@ -127,30 +130,25 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
   const isCancelled = useMemo(() => !venta?.activo || estaCancelada(venta?.estado), [venta])
   const isPresupuesto = venta?.tipoOperacion === 1
   const isFinal = currentIdx === 3 || isCancelled
+  const rechazada = esEstadoVenta(venta?.estado, 'RechazadaAutorizacion')
+  const acciones = accionesDeVenta({ estado: venta?.estado, tipoOperacion: venta?.tipoOperacion }, canDo)
 
   const statusColor = isCancelled ? colors.danger : (steps[currentIdx]?.color ?? BRAND.blue)
 
   // ── Handlers ────────────────────────────────────────────────────────────────
-  const handleAnular = () => {
+  // Anular igual que la web: confirmación sin motivo y `motivoAnulacion` fijo; reglas en `accionesDeVenta`.
+  const handleAnular = async () => {
     if (!venta) return
-    safeHaptics.impact('medium')
-    setModalState({
-      visible: true,
-      title: 'Anular Venta',
-      message: '¿Deseas cancelar esta venta? Se liberará el stock reservado.',
-      variant: 'danger',
-      onConfirm: async () => {
-        try {
-          await anular({ id: id!, version: venta.version ?? 0, motivoAnulacion: 'Cancelación manual' })
-          setModalState(null)
-          // Embebido (tablet) el panel cierra; la lista se refresca por la invalidación de useAnularVenta.
-          if (onVolver) onVolver()
-          else router.replace('/(tabs)/ventas')
-        } catch (e: any) {
-          Alert.alert('Error', 'No se pudo anular la venta.')
-        }
-      }
-    })
+    setErrorAnular(null)
+    try {
+      await anular({ id: id!, version: venta.version ?? 0, motivoAnulacion: MOTIVO_ANULACION_WEB })
+      setAnulando(false)
+      // Embebido (tablet) el panel cierra; la lista se refresca por la invalidación de useAnularVenta.
+      if (onVolver) onVolver()
+      else router.replace('/(tabs)/ventas')
+    } catch (e) {
+      setErrorAnular(mensajeDelServidor(e, 'No se pudo anular.'))
+    }
   }
 
   const handleConvertir = async () => {
@@ -369,33 +367,34 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
         </MotiView>
 
         {/* ── Action Buttons Hero ── */}
-        {!isFinal && !isCancelled && (
+        {!isCancelled && !rechazada && (
           <MotiView from={{ opacity: 0, translateY: 10 }} animate={{ opacity: 1, translateY: 0 }} transition={{ delay: 100 }}>
             <View style={styles.heroQuickActions}>
-              <RequirePermission module={["MOD_VENTAS", "MOD_PEDIDOS"]} action="update">
-                {esEstadoVenta(venta.estado, 'Pendiente', 'Confirmada', 'PendienteAutorizacion') && (
-                  <TouchableOpacity 
-                    onPress={() => router.push(`/(tabs)/ventas/nueva?editId=${venta.id}`)} 
-                    style={[styles.heroActionBtn, {
-                      backgroundColor: colors.surface2,
-                      borderColor: colors.border
-                    }]}
-                  >
-                    <Pencil size={18} color={colors.text} />
-                    <Text style={[styles.heroActionBtnText, { color: colors.text }]} maxFontSizeMultiplier={1.3}>Modificar</Text>
-                  </TouchableOpacity>
-                )}
-              </RequirePermission>
+              {acciones.editar && (
+                <TouchableOpacity
+                  onPress={() => router.push(`/(tabs)/ventas/nueva?editId=${venta.id}`)}
+                  style={[styles.heroActionBtn, {
+                    backgroundColor: colors.surface2,
+                    borderColor: colors.border
+                  }]}
+                >
+                  <Pencil size={18} color={colors.text} />
+                  <Text style={[styles.heroActionBtnText, { color: colors.text }]} maxFontSizeMultiplier={1.3}>Modificar</Text>
+                </TouchableOpacity>
+              )}
 
-              <RequirePermission module="MOD_VENTAS" action="delete">
-                <TouchableOpacity 
-                  onPress={handleAnular} 
-                  style={[styles.heroActionBtn, { backgroundColor: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.2)' }]}
+              {acciones.anular.visible && (
+                <TouchableOpacity
+                  onPress={() => { setErrorAnular(null); setAnulando(true) }}
+                  disabled={!acciones.anular.habilitado}
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: !acciones.anular.habilitado }}
+                  style={[styles.heroActionBtn, { backgroundColor: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.2)', opacity: acciones.anular.habilitado ? 1 : 0.5 }]}
                 >
                   <XCircle size={18} color={colors.danger} />
                   <Text style={[styles.heroActionBtnText, { color: colors.danger }]} maxFontSizeMultiplier={1.3}>Anular</Text>
                 </TouchableOpacity>
-              </RequirePermission>
+              )}
 
               {/* Agendar (PR 5.3; 9C): precarga el texto y el evento queda vinculado a la venta. */}
               <TouchableOpacity
@@ -422,6 +421,9 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
                 <Text style={[styles.heroActionBtnText, { color: colors.text }]} maxFontSizeMultiplier={1.3}>Agendar</Text>
               </TouchableOpacity>
             </View>
+            {acciones.anular.visible && !acciones.anular.habilitado && acciones.anular.motivo ? (
+              <View style={{ marginTop: 8 }}><MotivoDeshabilitado>{acciones.anular.motivo}</MotivoDeshabilitado></View>
+            ) : null}
           </MotiView>
         )}
 
@@ -857,6 +859,8 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
         let actionLabel = '', IconComponent: any = null, actionColor = colors.primary, actionFn: (() => any) = () => {}, actionVisible = true
 
         if (isPresupuesto) {
+          // La web: solo un presupuesto Pendiente y con MOD_VENTAS modificar.
+          if (!acciones.pasarAPedido) return null
           actionLabel = 'Convertir a Pedido';
           actionColor = '#6366f1';
           actionFn = handleConvertir;
@@ -913,16 +917,13 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
       })()}
 
 
-      {modalState && (
-        <ConfirmModal
-          visible={modalState.visible}
-          title={modalState.title}
-          message={modalState.message}
-          variant={modalState.variant}
-          onConfirm={modalState.onConfirm}
-          onCancel={modalState.onCancel || (() => setModalState(null))}
-        />
-      )}
+      <AnularVentaSheet
+        visible={anulando}
+        cargando={canceling}
+        error={errorAnular}
+        onClose={() => setAnulando(false)}
+        onConfirmar={() => void handleAnular()}
+      />
     </View>
   )
 }

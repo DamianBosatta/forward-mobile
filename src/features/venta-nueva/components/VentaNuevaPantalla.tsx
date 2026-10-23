@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, Alert, Modal, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Trash2 } from 'lucide-react-native'
@@ -6,9 +6,10 @@ import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, TopBar, formatImporte } from '@/core/ui/fw'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
-import { SeleccionarClienteSheet, type TipoDocumento } from '@/features/clientes/components/SeleccionarClienteSheet'
+import type { TipoDocumento } from '@/features/clientes/components/SeleccionarClienteSheet'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
-import type { ClienteElegido } from '@/features/clientes/lib/recientes'
+import { aElegido, type ClienteElegido } from '@/features/clientes/lib/recientes'
+import { useSocio } from '@/libs/api-client/socios'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { useCabeceraVenta } from '../hooks/useCabeceraVenta'
 import { useConfirmarVenta } from '../hooks/useConfirmarVenta'
@@ -19,10 +20,17 @@ import { aAlta, aAutoguardado } from '../lib/payload'
 import { useVistaPreviaVenta } from '@/libs/api-client/ventas'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
-import { avisosVenta, totalesEstimados } from '../lib/avisos'
-import { leerNumero, mostrarNumero } from '../lib/linea'
+import { avisosVenta, superaElTope, totalesEstimados } from '../lib/avisos'
+import { mostrarNumero } from '../lib/linea'
 import type { LineaCarrito } from '../lib/carrito'
+import { useLoQueLlevo } from '../hooks/useLoQueLlevo'
 import { CatalogoVenta } from './CatalogoVenta'
+import { CantidadSheet } from './CantidadSheet'
+import { ConfirmarVentaSheet } from './ConfirmarVentaSheet'
+import { DescuentoGeneralSheet } from './DescuentoGeneralSheet'
+import { NuevaVentaInicio } from './NuevaVentaInicio'
+import type { ViaDeArranque } from './ArranqueVenta'
+import type { Venta } from '@/libs/api-client/types'
 import { EditarLineaSheet } from './EditarLineaSheet'
 import { LineasVenta } from './LineasVenta'
 import { CabeceraVenta } from './CabeceraVenta'
@@ -41,23 +49,44 @@ export type AbrirVenta =
 
 interface Props {
   abrir?: AbrirVenta
+  /** `?clienteId=`: el cliente ya elegido (Vender de nuevo, Buscar, la ficha): se salta V2 y se llega a V3. */
+  clienteId?: string
 }
 
-/** Venta nueva (plan 9, fase 2): elegir cliente crea el borrador en el servidor y desde ahí se autoguarda. */
-export function VentaNuevaPantalla({ abrir }: Props = {}) {
+/** Repetir el último pedido arranca como un duplicado, pero con el cliente y el tipo que se acaban de elegir. */
+type AbrirEfectivo = AbrirVenta | { modo: 'repetir'; ventaId: string }
+
+/**
+ * Venta nueva (plan 9, fase 2; bloque 12 T4b): V2 elegir cliente, V3 cómo arrancar (crea el borrador en el
+ * servidor y desde ahí se autoguarda), V4 catálogo rápido y V5 cantidad, V6 la venta, V7 confirmar y V8 listo
+ * (la pantalla de venta guardada).
+ */
+export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
   const c = useColors()
   const router = useRouter()
+  // `elegido`: el cliente de V2/V3; `cliente`: el de la venta, desde que se arranca (o se abre una venta).
+  const [elegido, setElegido] = useState<ClienteElegido | null>(null)
   const [cliente, setCliente] = useState<ClienteElegido | null>(null)
   const [tipo, setTipo] = useState<TipoDocumento>('Pedido')
-  const { lineas, vaciar, reemplazar, quitar } = useCarritoVenta()
+  const [repetirId, setRepetirId] = useState<string | null>(null)
+  const { lineas, vaciar, reemplazar, quitar, sumar, restar } = useCarritoVenta()
   const user = useAuthStore((s) => s.user)
-  const [descuentoTexto, setDescuentoTexto] = useState('0')
-  const leido = leerNumero(descuentoTexto)
-  const descuentoGeneral = leido !== null && leido >= 0 && leido <= 100 ? leido : null
-  // Un descuento a medio tipear o inválido no viaja: se guarda el último válido.
+  // El descuento general siempre es un número válido (0 a 100): se cambia en la hoja "Descuento a toda la venta".
   const [descuentoValido, setDescuentoValido] = useState(0)
-  useEffect(() => { if (descuentoGeneral !== null) setDescuentoValido(descuentoGeneral) }, [descuentoGeneral])
-  const cab = useCabeceraVenta(tipo)
+  const descuentoGeneral = descuentoValido
+  const [descGeneral, setDescGeneral] = useState(false)
+  const [confirmando, setConfirmando] = useState(false)
+  const [escanear, setEscanear] = useState(false)
+  // Preselección por `?clienteId=`: se trae la ficha una vez y se llega a V3 con ese cliente.
+  const preseleccion = useSocio(abrir ? '' : clienteId ?? '')
+  // Una sola vez: si después vuelve a la lista con la flecha, no se la elige de nuevo.
+  const preseleccionado = useRef(false)
+  useEffect(() => {
+    if (!preseleccion.data || preseleccionado.current) return
+    preseleccionado.current = true
+    setElegido(aElegido(preseleccion.data))
+  }, [preseleccion.data])
+  const cab = useCabeceraVenta(tipo, abrir?.modo !== 'editar')
   const tope = user?.maxDescuentoPorcentaje ?? 0
   const exento = hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO')
   const paraGuardar = aAutoguardado(lineas, descuentoValido, cab.cabecera)
@@ -69,6 +98,7 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
   const [pestana, setPestana] = useState<'lineas' | 'cabecera'>('lineas')
   const [motivo, setMotivo] = useState('')
   const [edicion, setEdicion] = useState<{ ventaId: string; version: number; codigo: string } | null>(null)
+  const abrirEf: AbrirEfectivo | undefined = abrir ?? (repetirId ? { modo: 'repetir', ventaId: repetirId } : undefined)
   const conf = useConfirmarVenta({
     clienteId: cliente?.id ?? '', esPedido: tipo === 'Pedido', lineas, descuentoGeneral: descuentoValido, cabecera: cab.cabecera,
     porcentajeCedido: cab.porcentajeCedido, borrador: b, alGuardar: vaciar, edicion,
@@ -82,8 +112,10 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
   const vistaPrevia = useVistaPreviaVenta(cuerpoVistaPrevia, !cab.fleteInvalido && !cab.cesionError)
   const [catalogo, setCatalogo] = useState(false)
   const [editando, setEditando] = useState<LineaCarrito | null>(null)
+  const [detalleLinea, setDetalleLinea] = useState<LineaCarrito | null>(null)
   const [fragancias, setFragancias] = useState<string | null>(null)
   const { productos: catalogoVenta } = useCatalogoVenta('')
+  const llevo = useLoQueLlevo(cliente?.id)
   const volver = { kind: 'atras' as const, onPress: () => router.back() }
 
   // Cada venta nueva arranca con el carrito vacío.
@@ -91,28 +123,32 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
 
   // Abrir una venta del servidor (retomar, editar o duplicar): lo que tiene pasa a la pantalla.
   const [abierta, setAbierta] = useState(false)
-  const cargada = useVentaCargada(abrir?.ventaId, !abierta)
+  const cargada = useVentaCargada(abrirEf?.ventaId, !abierta)
   const [aDuplicar, setADuplicar] = useState<VentaCargada | null>(null)
-  const aplicar = (d: VentaCargada, cabecera = d.cabecera, proponerFecha = true) => {
+  const aplicar = (d: VentaCargada, cabecera = d.cabecera, proponerFecha = true, conFacturaDeLaVenta = false) => {
     useCarritoVenta.setState({ lineas: d.lineas })
-    setDescuentoTexto(mostrarNumero(d.descuentoGeneral))
     setDescuentoValido(d.descuentoGeneral)
-    cab.hidratar(cabecera, proponerFecha)
+    cab.hidratar(cabecera, proponerFecha, conFacturaDeLaVenta)
   }
   useEffect(() => {
     const d = cargada.datos
-    if (!abrir || !d || abierta) return
+    if (!abrirEf || !d || abierta) return
     setAbierta(true)
+    if (abrirEf.modo === 'repetir') {
+      // El cliente y el tipo ya están elegidos y el borrador se pidió al arrancar: entran las líneas con los precios de hoy.
+      setADuplicar(d)
+      return
+    }
     setCliente(d.cliente)
-    if (abrir.modo === 'retomar') {
+    if (abrirEf.modo === 'retomar') {
       aplicar(d)
-      setTipo(abrir.tipo)
-      b.retomar(abrir.ventaId, d.version)
-    } else if (abrir.modo === 'editar') {
+      setTipo(abrirEf.tipo)
+      b.retomar(abrirEf.ventaId, d.version)
+    } else if (abrirEf.modo === 'editar') {
       // Una venta guardada sin fecha no recibe una que el vendedor no eligió.
-      aplicar(d, d.cabecera, false)
+      aplicar(d, d.cabecera, false, true)
       setTipo(d.tipo)
-      setEdicion({ ventaId: abrir.ventaId, version: d.version, codigo: d.codigo })
+      setEdicion({ ventaId: abrirEf.ventaId, version: d.version, codigo: d.codigo })
     } else {
       // Duplicar: primero el borrador nuevo; las líneas entran cuando existe, así se autoguardan en él.
       setTipo(d.tipo)
@@ -127,15 +163,17 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
     setADuplicar(null)
   })
 
-  if (abrir && !abierta) {
+  if (abrirEf && !abierta) {
+    const titulo = abrirEf.modo === 'retomar' ? 'Retomar borrador' : abrirEf.modo === 'editar' ? 'Editar venta' : abrirEf.modo === 'repetir' ? 'Repetir el último pedido' : 'Duplicar venta'
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <TopBar title={abrir.modo === 'retomar' ? 'Retomar borrador' : abrir.modo === 'editar' ? 'Editar venta' : 'Duplicar venta'} leading={volver} />
+        <TopBar title={titulo} leading={volver} />
         <View style={{ padding: space[4] }}>
           {cargada.error ? (
             <View style={{ gap: space[3] }}>
               <Notice tone="peligro">{cargada.error}</Notice>
               <Button label="Reintentar" variant="secundario" onPress={cargada.reintentar} />
+              {abrirEf.modo === 'repetir' ? <Button label="Armar la venta de cero" variant="secundario" onPress={() => setRepetirId(null)} /> : null}
             </View>
           ) : <ActivityIndicator color={c.brand} />}
         </View>
@@ -144,16 +182,26 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
   }
 
   if (!cliente) {
+    // Arrancar crea el borrador del tipo elegido y abre la forma de empezar que se tocó.
+    const arrancar = (via: ViaDeArranque, ultimo?: Venta) => {
+      if (!elegido) return
+      setCliente(elegido)
+      void b.crear(elegido.id, tipo)
+      if (via === 'repetir' && ultimo) setRepetirId(ultimo.id)
+      if (via === 'catalogo') setCatalogo(true)
+      if (via === 'escanear') { setCatalogo(true); setEscanear(true) }
+    }
     return (
-      <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <TopBar title="Nueva venta" leading={volver} />
-        <SeleccionarClienteSheet
-          visible
-          onClose={() => router.back()}
-          onSelect={(elegido, t) => { setCliente(elegido); setTipo(t); void b.crear(elegido.id, t) }}
-          onNuevoCliente={() => router.push('/(tabs)/socios/nuevo' as never)}
-        />
-      </View>
+      <NuevaVentaInicio
+        elegido={elegido}
+        cargandoCliente={!!clienteId && !preseleccionado.current && !elegido && !preseleccion.isError}
+        tipo={tipo}
+        onElegir={setElegido}
+        onTipo={setTipo}
+        onArrancar={arrancar}
+        onNuevoCliente={() => router.push('/(tabs)/socios/nuevo' as never)}
+        onVolver={() => router.back()}
+      />
     )
   }
 
@@ -185,15 +233,19 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
   const rotulo = nombre ? `${direccionDeEntrega(cliente)} · ${nombre}` : direccionDeEntrega(cliente)
   const lineasVista = (
     <LineasVenta lineas={lineas} {...avisos} tope={tope}
-      nota={b.retenido && b.borrador ? `El borrador guarda los descuentos hasta tu tope (${mostrarNumero(tope)} %); el resto se guarda al confirmar el pedido.` : null} descuentoTexto={descuentoTexto} descuentoGeneral={descuentoGeneral} flete={cab.cabecera.flete}
-      onDescuento={setDescuentoTexto} onAgregar={() => setCatalogo(true)} onEditar={setEditando}
+      nota={b.retenido && b.borrador ? `El borrador guarda los descuentos hasta tu tope (${mostrarNumero(tope)} %); el resto se guarda al confirmar el pedido.` : null} descuentoGeneral={descuentoGeneral} flete={cab.cabecera.flete}
+      onDescuentoGeneral={() => setDescGeneral(true)} onSumar={sumar} onRestar={restar} onAgregar={() => setCatalogo(true)} onEditar={setEditando}
       onElegirFragancias={setFragancias} nombrePadre={(id) => catalogoVenta.find((p) => p.id === id)?.nombre} />
   )
   const cabeceraVista = <CabeceraVenta clienteId={cliente.id} rotuloCliente={rotulo} cab={cab} />
+  const superaTope = superaElTope(lineas, descuentoValido, tope, exento)
+  const sheetConfirmar = confirmando && !conf.pedirMotivo
+  const unidades = lineas.reduce((n, l) => n + l.cantidad, 0)
+  // V6: el total con flete, la comisión y "Seguir" (que abre V7 Confirmar).
   const franjaTotal = (
     <View style={{ padding: space[4], gap: space[1], borderColor: c.border, borderTopWidth: isTabletLandscape ? 0 : 1, borderBottomWidth: isTabletLandscape ? 1 : 0, backgroundColor: c.surface }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Total estimado</Text>
+        <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{cab.cabecera.flete > 0 ? 'Total con flete' : 'Total estimado'}</Text>
         <Text testID="venta-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(total)}</Text>
       </View>
       {comision !== null ? (
@@ -201,13 +253,8 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
           {`Tu comisión estimada ${formatImporte(comision)}`}
         </Text>
       ) : null}
-      {conf.error ? <Notice tone="peligro">{conf.error}</Notice> : null}
-      <Button
-        label={edicion ? 'Guardar cambios' : tipo === 'Pedido' ? 'Confirmar pedido' : 'Guardar presupuesto'}
-        onPress={() => void conf.confirmar()}
-        loading={conf.enviando}
-        disabled={lineas.length === 0 || descuentoGeneral === null || cab.fleteInvalido || !!cab.cesionError || conf.enviando}
-      />
+      {conf.error && !sheetConfirmar ? <Notice tone="peligro">{conf.error}</Notice> : null}
+      <Button label="Seguir" onPress={() => setConfirmando(true)} disabled={lineas.length === 0} />
     </View>
   )
 
@@ -240,9 +287,35 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
       ) : <View style={{ flex: 1 }}>{pestana === 'lineas' ? lineasVista : cabeceraVista}</View>}
       {isTabletLandscape ? null : franjaTotal}
       <Modal visible={catalogo} animationType="slide" onRequestClose={() => setCatalogo(false)}>
-        <TopBar title="Agregar productos" leading={{ kind: 'atras', onPress: () => setCatalogo(false) }} />
-        <CatalogoVenta onVerVenta={() => setCatalogo(false)} />
+        <TopBar title={`${tipo} · ${direccionDeEntrega(cliente)}`} subtitle="Tocá + para sumar · tocá el número para tipear" leading={{ kind: 'atras', onPress: () => setCatalogo(false) }} />
+        <CatalogoVenta onVerVenta={() => setCatalogo(false)} llevo={llevo} escanearAlAbrir={escanear} />
       </Modal>
+      <ConfirmarVentaSheet
+        visible={sheetConfirmar}
+        onClose={() => setConfirmando(false)}
+        tipo={tipo}
+        edicion={!!edicion}
+        cab={cab}
+        lineas={lineas}
+        productos={lineas.length}
+        unidades={unidades}
+        total={total}
+        porAutorizar={avisos.porAutorizar}
+        rechazos={avisos.rechazos}
+        superaTope={superaTope}
+        descuentoValido
+        error={conf.error}
+        enviando={conf.enviando}
+        onConfirmar={() => void conf.confirmar()}
+      />
+      <DescuentoGeneralSheet
+        visible={descGeneral}
+        valor={descuentoValido}
+        lineas={lineas}
+        flete={cab.cabecera.flete}
+        onClose={() => setDescGeneral(false)}
+        onAplicar={(pct) => { setDescuentoValido(pct); setDescGeneral(false) }}
+      />
       <BottomSheet visible={conf.pedirMotivo} onClose={conf.cerrarMotivo} accessibilityLabel="Motivo sin stock">
         <View style={{ gap: space[3] }}>
           <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>Falta stock</Text>
@@ -251,9 +324,13 @@ export function VentaNuevaPantalla({ abrir }: Props = {}) {
           <Button label="Confirmar con este motivo" disabled={!motivo.trim() || conf.enviando} loading={conf.enviando} onPress={() => void conf.confirmar(motivo)} />
         </View>
       </BottomSheet>
-      <EditarLineaSheet linea={editando} onClose={() => setEditando(null)} descuentoGeneral={descuentoValido}
-        onConfirm={(l) => { reemplazar(l); setEditando(null) }} onQuitar={(id) => { quitar(id); setEditando(null) }} />
-      <FraganciasSheet padreId={fragancias} onClose={() => setFragancias(null)} />
+      <CantidadSheet linea={editando && !editando.producto.productoPadreId ? editando : null} onClose={() => setEditando(null)}
+        onConfirm={(l) => { reemplazar(l); setEditando(null) }} onQuitar={(id) => { quitar(id); setEditando(null) }}
+        onDetalle={(l) => { setEditando(null); setDetalleLinea(l) }} />
+      {/* Una fragancia suelta se edita en el detalle (tope por stock disponible); el resto, en el teclado rápido. */}
+      <EditarLineaSheet linea={editando?.producto.productoPadreId ? editando : detalleLinea} onClose={() => { setEditando(null); setDetalleLinea(null) }} descuentoGeneral={descuentoValido}
+        onConfirm={(l) => { reemplazar(l); setEditando(null); setDetalleLinea(null) }} onQuitar={(id) => { quitar(id); setEditando(null); setDetalleLinea(null) }} />
+      <FraganciasSheet padreId={fragancias} onClose={() => setFragancias(null)} llevo={llevo} />
     </View>
   )
 }
