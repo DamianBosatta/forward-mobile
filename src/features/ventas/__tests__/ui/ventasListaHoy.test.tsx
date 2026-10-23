@@ -6,6 +6,8 @@ import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 
 // Lista de ventas de hoy (switch de la venta nueva apagado) con su hook y su DataList de verdad.
 const mockGet = jest.fn()
+// El bloque Pendientes de enviar (V9) mira la conexión.
+jest.mock('@react-native-community/netinfo', () => ({ addEventListener: jest.fn(() => () => undefined) }))
 jest.mock('@/core/api/client', () => ({ api: { get: (...a: unknown[]) => mockGet(...a) }, API_URL: 'x' }))
 jest.mock('expo-haptics', () => ({ selectionAsync: jest.fn(), impactAsync: jest.fn(), ImpactFeedbackStyle: {} }))
 jest.mock('expo-secure-store', () => ({ setItemAsync: jest.fn(), getItemAsync: jest.fn() }))

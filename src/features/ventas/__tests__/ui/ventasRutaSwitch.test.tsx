@@ -4,6 +4,8 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 
 // La ruta ventas/index elige entre la lista de hoy y la nueva según el switch (PR 2.0).
+// El bloque Pendientes de enviar (V9) mira la conexión.
+jest.mock('@react-native-community/netinfo', () => ({ addEventListener: jest.fn(() => () => undefined) }))
 jest.mock('expo-secure-store', () => ({ setItemAsync: jest.fn(), getItemAsync: jest.fn() }))
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn() }), useNavigation: () => ({ dispatch: jest.fn() }), useLocalSearchParams: () => ({}) }))
 jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() }, useNavigation: () => ({ dispatch: jest.fn() }) }))

@@ -13,12 +13,15 @@ import { VentasSinSenalLista } from './VentasSinSenalLista'
  * Solo lee: el envío lo hace EnvioVentasSinSenal (montado una vez en la app).
  */
 export function PendientesDeEnviar() {
+  const items = useColaDelUsuario()
+  return items.length === 0 ? null : <Bloque items={items} />
+}
+
+function Bloque({ items }: { items: VentaEnCola[] }) {
   const c = useColors()
   const router = useRouter()
-  const items = useColaDelUsuario()
   const { isConnected } = useNetworkStatus()
   const horaCatalogo = useHoraDelCatalogo()
-  if (items.length === 0) return null
 
   // Enviada o en Borradores: la venta ya existe en el servidor. Las rechazadas no tienen a dónde ir.
   const abrir = (v: VentaEnCola) => {

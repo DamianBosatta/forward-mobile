@@ -6,6 +6,8 @@ import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 
 // Las filas de Inicio abren Ventas y Compras con el filtro en la ruta (?tipo=…&estado=…).
 const mockGet = jest.fn()
+// El bloque Pendientes de enviar (V9) mira la conexión.
+jest.mock('@react-native-community/netinfo', () => ({ addEventListener: jest.fn(() => () => undefined) }))
 jest.mock('@/core/api/client', () => ({ api: { get: (...a: unknown[]) => mockGet(...a) }, API_URL: 'x' }))
 let mockParams: Record<string, string | undefined> = {}
 const mockSetParams = jest.fn((p: Record<string, string | undefined>) => { mockParams = { ...mockParams, ...p } })
