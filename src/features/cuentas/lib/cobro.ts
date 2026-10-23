@@ -1,4 +1,5 @@
 import type { RegistrarPagoMultilineaCommand } from '@/libs/api-client/types'
+import { formatImporte } from '@/core/ui/fw/formatImporte'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
 
 /** "7/10/2026" o "07/10/2026" → "2026-10-07" (día argentino, como lo interpreta el servidor). */
@@ -168,4 +169,21 @@ export function armarCobro(socioId: string, f: FormCobro, claveIdempotencia?: st
       lineas: [linea, ...otros.lineas],
     },
   }
+}
+
+export const NO_ES_FISCAL = 'Constancia de cobro, no es un comprobante fiscal.'
+
+export interface LineaDeRecibo { medio: string; monto: number }
+
+/** Texto plano del recibo que se manda por el menú de compartir; no es un comprobante fiscal. */
+export function textoDeRecibo(r: { cliente: string; fecha: string; total: number; lineas: LineaDeRecibo[]; cuenta?: string | null }): string {
+  const medios = r.lineas.map(l => `${l.medio} ${formatImporte(l.monto)}`).join(' + ')
+  return [
+    `Recibo de cobro - ${r.cliente}`,
+    `Fecha: ${r.fecha}`,
+    `Total: ${formatImporte(r.total)}`,
+    medios ? `Medios: ${medios}` : null,
+    r.cuenta ? `Cuenta: ${r.cuenta}` : null,
+    NO_ES_FISCAL,
+  ].filter(Boolean).join('\n')
 }

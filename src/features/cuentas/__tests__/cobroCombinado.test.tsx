@@ -1,4 +1,5 @@
 import React from 'react'
+import { Share } from 'react-native'
 import { fireEvent, screen, userEvent } from '@testing-library/react-native'
 import { RegistrarCobro } from '../components/RegistrarCobro'
 import { CHEQUE_SOLO_EN_UN_MEDIO, LINEA_INCOMPLETA } from '../lib/cobro'
@@ -107,4 +108,36 @@ it('cobro combinado: una línea sin medio o sin monto no se manda; quitarla vuel
   await registrar()
 
   expect(post.mock.calls[0][1].lineas).toEqual([{ medioPagoId: 'm-tr', monto: 50000 }])
+})
+
+describe('Mandar recibo', () => {
+  async function cobroHecho() {
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+    await primerMedio('50.000', 'Efectivo')
+    await otroMedio(2, '34.300', 'Transferencia')
+    await registrar()
+    return screen.findByRole('button', { name: 'Mandar recibo' }, ESPERA)
+  }
+
+  it('abre el menú de compartir con el total, los medios y la aclaración de que no es fiscal', async () => {
+    const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' })
+    await userEvent.press(await cobroHecho())
+
+    expect(share).toHaveBeenCalledTimes(1)
+    // formatImporte separa el símbolo con un espacio no cortante.
+    const message = (share.mock.calls[0][0] as { message: string }).message.replace(/ /g, ' ')
+    expect(message).toContain('$ 84.300,00')
+    expect(message).toContain('Efectivo $ 50.000,00 + Transferencia $ 34.300,00')
+    expect(message).toContain('Constancia de cobro, no es un comprobante fiscal.')
+    share.mockRestore()
+  })
+
+  it('si compartir falla no se rompe: muestra un aviso en la pantalla', async () => {
+    const share = jest.spyOn(Share, 'share').mockRejectedValue(new Error('sin app'))
+    await userEvent.press(await cobroHecho())
+
+    expect(await screen.findByText('No se pudo abrir el menú de compartir. Probá de nuevo.', {}, ESPERA)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Mandar recibo' })).toBeTruthy()
+    share.mockRestore()
+  })
 })

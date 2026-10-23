@@ -89,6 +89,10 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
         cobro={cobro}
         monto={total}
         medio={[f.medioPagoId, ...f.otrosMedios.map(o => o.medioPagoId)].map(nombreMedio).filter(Boolean).join(' + ')}
+        lineas={[{ medioPagoId: f.medioPagoId, monto: f.monto }, ...f.otrosMedios].flatMap(l => {
+          const m = leerNumero(l.monto)
+          return l.medioPagoId && m ? [{ medio: nombreMedio(l.medioPagoId), monto: m }] : []
+        })}
         imputacionManual={!!f.imputaciones}
         onVolver={onVolver}
         onOtro={() => { setCobro(null); setF(formVacio()); setClave(nuevaClaveIdempotencia()); registrar.reset() }}
