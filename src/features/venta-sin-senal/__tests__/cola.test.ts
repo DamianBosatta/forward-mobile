@@ -11,6 +11,9 @@ jest.mock('@/core/utils/storage', () => ({
   },
 }))
 
+const mockAviso = jest.fn()
+jest.mock('@/core/utils/logger', () => ({ logger: { warn: (...a: unknown[]) => mockAviso(...a), error: jest.fn(), log: jest.fn() } }))
+
 type Cola = typeof import('../lib/cola')
 const cargarCola = (): Cola => {
   let m: Cola | undefined
@@ -18,9 +21,10 @@ const cargarCola = (): Cola => {
   return m!
 }
 
+let seq = 0
 const alta = (extra: Partial<AltaVenta> = {}): AltaVenta => ({
   clienteId: 'c1', depositoId: 'd1', tipoOperacion: 2, metodoEntrega: 1, entregaInmediata: false,
-  descuentoGeneral: 0, items: [{ productoId: 'p1', cantidad: 6, descuentoPorcentaje: 0 }], claveIdempotencia: '', ...extra,
+  descuentoGeneral: 0, items: [{ productoId: 'p1', cantidad: 6, descuentoPorcentaje: 0 }], claveIdempotencia: `mobile-k${++seq}`, ...extra,
 })
 const datos = (extra: Partial<AltaVenta> = {}) => ({
   alta: alta(extra),
@@ -28,7 +32,7 @@ const datos = (extra: Partial<AltaVenta> = {}) => ({
   visto: { total: 61204.1, precios: { p1: 10200.68 } },
 })
 
-beforeEach(() => mockDisco.clear())
+beforeEach(() => { mockDisco.clear(); mockAviso.mockClear() })
 
 describe('cola de ventas sin señal (V9, D4)', () => {
   it('sobrevive a reiniciar la app: lo encolado se lee de nuevo del teléfono', () => {
@@ -43,15 +47,6 @@ describe('cola de ventas sin señal (V9, D4)', () => {
       visto: { total: 61204.1, precios: { p1: 10200.68 } },
       estado: { tipo: 'esperando', fase: { paso: 'nueva' } },
     })
-  })
-
-  it('genera la clave de idempotencia una sola vez, al encolar, y la guarda en el cuerpo del POST', () => {
-    const { encolarVenta, leerCola } = cargarCola()
-    const v = encolarVenta('u1', datos())
-    expect(v.clave).toMatch(/^mobile-/)
-    expect(v.alta.claveIdempotencia).toBe(v.clave)
-    expect(leerCola('u1')[0].alta.claveIdempotencia).toBe(v.clave)
-    expect(leerCola('u1')[0].clave).toBe(v.clave)
   })
 
   it('conserva la clave de un intento que quedó sin respuesta, y ese no vuelve a la vista previa', () => {
@@ -115,5 +110,61 @@ describe('loQueVio: el precio y el total que el vendedor tenía en pantalla', ()
       { productoId: 'p2', producto: producto({ id: 'p2', precioVenta: 50, precioConOferta: 40 }), cantidad: 1, descuentoPct: 0 },
     ]
     expect(loQueVio(lineas, 10, 30)).toEqual({ precios: { p1: 100, p2: 40 }, total: 240 - 24 + 30 })
+  })
+})
+
+describe('T5b: arreglos del verificador de T5a', () => {
+  it('(b) toda venta encolada trae su clave de idempotencia: sin clave no se guarda', () => {
+    const { encolarVenta, leerCola } = cargarCola()
+    expect(() => encolarVenta('u1', datos({ claveIdempotencia: '' }))).toThrow(/clave/i)
+    expect(() => encolarVenta('u1', datos({ claveIdempotencia: '   ' }))).toThrow(/clave/i)
+    expect(leerCola('u1')).toEqual([])
+  })
+
+  it('(b) la misma clave dos veces no duplica la venta, aunque el segundo intento traiga otro total', () => {
+    const { encolarVenta, leerCola } = cargarCola()
+    const a = encolarVenta('u1', datos({ claveIdempotencia: 'mobile-x' }), 1_000)
+    const b = encolarVenta('u1', { ...datos({ claveIdempotencia: 'mobile-x' }), visto: { total: 1, precios: {} } }, 2_000)
+    expect(b).toEqual(a)
+    expect(leerCola('u1')).toEqual([a])
+  })
+
+  it('la venta lleva el total que vio el vendedor como totalEsperado, con 2 decimales', () => {
+    const { encolarVenta, leerCola } = cargarCola()
+    encolarVenta('u1', { ...datos(), visto: { total: 570.005, precios: { p1: 100 } } })
+    expect(leerCola('u1')[0].alta.totalEsperado).toBe(570.01)
+  })
+
+  it('(c) un texto roto no rompe: se respalda con aviso y la cola nueva sigue andando', () => {
+    mockDisco.set('ventas-sin-senal:u1', '{no es json')
+    const { encolarVenta, leerCola } = cargarCola()
+    expect(leerCola('u1')).toEqual([])
+    const v = encolarVenta('u1', datos())
+    expect(leerCola('u1')).toEqual([v])
+    expect(mockDisco.get('ventas-sin-senal:u1:rotas')).toContain('{no es json')
+    expect(mockAviso).toHaveBeenCalled()
+  })
+
+  it('(c) en una cola con entradas rotas se conservan las válidas y las rotas se respaldan', () => {
+    const { encolarVenta, leerCola } = cargarCola()
+    const buena = encolarVenta('u1', datos({ claveIdempotencia: 'mobile-ok' }), 1_000)
+    const sinFase = { ...buena, clave: 'mobile-rota', alta: { ...buena.alta, claveIdempotencia: 'mobile-rota' }, estado: { tipo: 'esperando', intentos: 0 } }
+    mockDisco.set('ventas-sin-senal:u1', JSON.stringify([sinFase, buena, 42, null]))
+    expect(leerCola('u1')).toEqual([buena])
+    encolarVenta('u1', datos({ claveIdempotencia: 'mobile-otra' }), 2_000)
+    expect(leerCola('u1').map((v) => v.clave)).toEqual(['mobile-ok', 'mobile-otra'])
+    expect(mockDisco.get('ventas-sin-senal:u1:rotas')).toContain('mobile-rota')
+    expect(mockAviso).toHaveBeenCalled()
+  })
+
+  it('(d) las que quedaron en Borradores y ya no están (confirmadas o descartadas) salen de la cola', () => {
+    const { encolarVenta, cambiarEstado, limpiarBorradoresResueltos, leerCola } = cargarCola()
+    const a = encolarVenta('u1', datos({ claveIdempotencia: 'mobile-a' }))
+    const b = encolarVenta('u1', datos({ claveIdempotencia: 'mobile-b' }))
+    const c = encolarVenta('u1', datos({ claveIdempotencia: 'mobile-c' }))
+    cambiarEstado('u1', a.clave, { tipo: 'enBorradores', ventaId: 'b1', totalServidor: 1 })
+    cambiarEstado('u1', b.clave, { tipo: 'enBorradores', ventaId: 'b2', totalServidor: 1 })
+    limpiarBorradoresResueltos('u1', ['b1'])
+    expect(leerCola('u1').map((v) => v.clave)).toEqual([a.clave, c.clave])
   })
 })

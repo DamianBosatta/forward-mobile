@@ -1,6 +1,8 @@
 import { storage } from '@/core/utils/storage'
+import { logger } from '@/core/utils/logger'
 import { diaArgentina } from '@/src/utils/date'
-import { errorDeAltaVenta, nuevaClaveIdempotencia, type AltaVenta } from '@/features/venta-nueva/lib/payload'
+import { redondear2 } from '@/libs/reglas/dinero'
+import { errorDeAltaVenta, type AltaVenta } from '@/features/venta-nueva/lib/payload'
 import { precioServidor, type LineaCarrito } from '@/features/venta-nueva/lib/carrito'
 import { totalesEstimados } from '@/features/venta-nueva/lib/avisos'
 import type { ClienteNombrable } from '@/features/clientes/lib/cliente'
@@ -52,10 +54,17 @@ export function loQueVio(lineas: LineaCarrito[], descuentoGeneral: number, flete
   }
 }
 
+/**
+ * Lo que viaja en POST /Ventas desde la cola: el alta más `totalEsperado` (el total que vio el vendedor), que el
+ * servidor compara si la clave es nueva y responde 409 `TotalCambiado` si difiere. Todavía no está en el esquema
+ * generado (`CreateVentaCommand`): se declara acá hasta regenerar el contrato.
+ */
+export type AltaEnCola = AltaVenta & { totalEsperado?: number }
+
 export interface VentaEnCola {
   /** = `alta.claveIdempotencia`; identifica la venta en la cola. */
   clave: string
-  alta: AltaVenta
+  alta: AltaEnCola
   encoladaEn: number
   cliente: ClienteNombrable
   visto: LoQueVio
@@ -63,7 +72,7 @@ export interface VentaEnCola {
 }
 
 export interface DatosParaEncolar {
-  /** Si trae `claveIdempotencia` (un intento de alta que quedó sin respuesta) se conserva; si no, se genera. */
+  /** Con su `claveIdempotencia` (obligatoria): la misma venta es siempre la misma clave, y encolarla dos veces no la duplica. */
   alta: AltaVenta
   cliente: ClienteNombrable
   visto: LoQueVio
@@ -74,8 +83,18 @@ export interface DatosParaEncolar {
 const claveDeCola = (usuarioId: string) => `ventas-sin-senal:${usuarioId}`
 const oyentes = new Set<() => void>()
 
-const esVentaEnCola = (v: unknown): v is VentaEnCola =>
-  typeof (v as VentaEnCola)?.clave === 'string' && typeof (v as VentaEnCola)?.estado?.tipo === 'string' && !!(v as VentaEnCola).alta
+const PASOS: ReadonlySet<string> = new Set(['nueva', 'altaEnviada', 'creandoBorrador', 'borradorCreado'])
+const TIPOS: ReadonlySet<string> = new Set(['esperando', 'enviada', 'enBorradores', 'revisar'])
+const esObjeto = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
+
+/** Una entrada guardada que se puede mandar sin romper: con clave, cuerpo, y un estado que el envío sabe leer. */
+const esVentaEnCola = (v: unknown): v is VentaEnCola => {
+  if (!esObjeto(v) || typeof v.clave !== 'string' || !v.clave || typeof v.encoladaEn !== 'number') return false
+  if (!esObjeto(v.alta) || !esObjeto(v.cliente) || !esObjeto(v.visto) || !esObjeto(v.estado)) return false
+  if (typeof v.estado.tipo !== 'string' || !TIPOS.has(v.estado.tipo)) return false
+  if (v.estado.tipo !== 'esperando') return true
+  return typeof v.estado.intentos === 'number' && esObjeto(v.estado.fase) && PASOS.has(v.estado.fase.paso as string)
+}
 
 /** El texto guardado tal cual (para `useSyncExternalStore`: cambia solo si cambió la cola). */
 export function textoDeCola(usuarioId: string | undefined): string | undefined {
@@ -97,7 +116,34 @@ export function leerCola(usuarioId: string | undefined): VentaEnCola[] {
   return parsearCola(textoDeCola(usuarioId))
 }
 
+const claveDeRotas = (usuarioId: string) => `${claveDeCola(usuarioId)}:rotas`
+
+/**
+ * Antes de pisar la cola, lo que no se puede leer (texto roto o entradas inválidas) se guarda aparte y se avisa:
+ * la cola sigue andando con lo válido y lo roto queda para revisarlo, en vez de perderse en silencio.
+ */
+function respaldarLoRoto(usuarioId: string): void {
+  const texto = textoDeCola(usuarioId)
+  if (texto === undefined) return
+  let rotas: unknown[]
+  try {
+    const lista: unknown = JSON.parse(texto)
+    rotas = Array.isArray(lista) ? lista.filter((v) => !esVentaEnCola(v)) : [texto]
+  } catch {
+    rotas = [texto]
+  }
+  if (rotas.length === 0) return
+  let previas: unknown[] = []
+  try {
+    const p: unknown = JSON.parse(storage.getString(claveDeRotas(usuarioId)) ?? '[]')
+    if (Array.isArray(p)) previas = p
+  } catch { /* el respaldo anterior también estaba roto: se reemplaza */ }
+  storage.set(claveDeRotas(usuarioId), JSON.stringify([...previas, ...rotas]))
+  logger.warn('Cola de ventas sin señal: se respaldaron entradas ilegibles', { cantidad: rotas.length })
+}
+
 function escribir(usuarioId: string, lista: VentaEnCola[]): void {
+  respaldarLoRoto(usuarioId)
   storage.set(claveDeCola(usuarioId), JSON.stringify(lista))
   oyentes.forEach((o) => o())
 }
@@ -115,14 +161,15 @@ export function suscribirCola(oyente: () => void): () => void {
  */
 export function encolarVenta(usuarioId: string, d: DatosParaEncolar, ahora = Date.now()): VentaEnCola {
   const lista = leerCola(usuarioId)
-  const clave = d.alta.claveIdempotencia?.trim() || nuevaClaveIdempotencia()
+  const clave = d.alta.claveIdempotencia?.trim()
+  if (!clave) throw new Error('La venta no tiene clave de idempotencia: sin ella un reintento podría grabarla dos veces.')
   const ya = lista.find((v) => v.clave === clave)
   if (ya) return ya
   const invalido = errorDeAltaVenta({ ...d.alta, claveIdempotencia: clave })
   if (invalido) throw new Error(invalido)
   const venta: VentaEnCola = {
     clave,
-    alta: { ...d.alta, claveIdempotencia: clave },
+    alta: { ...d.alta, claveIdempotencia: clave, totalEsperado: redondear2(d.visto.total) },
     encoladaEn: ahora,
     cliente: d.cliente,
     visto: d.visto,
@@ -147,5 +194,15 @@ export function limpiarEnviadasViejas(usuarioId: string, ahora = Date.now()): vo
   const hoy = diaArgentina(ahora)
   const lista = leerCola(usuarioId)
   const quedan = lista.filter((v) => (v.estado.tipo !== 'enviada' && v.estado.tipo !== 'enBorradores') || diaArgentina(v.encoladaEn) === hoy)
+  if (quedan.length !== lista.length) escribir(usuarioId, quedan)
+}
+
+/**
+ * Las que quedaron en Borradores y ya no están (el vendedor las confirmó o las descartó) salen de la cola.
+ * `vigentes`: los ids de los borradores que el servidor todavía tiene.
+ */
+export function limpiarBorradoresResueltos(usuarioId: string, vigentes: readonly string[]): void {
+  const lista = leerCola(usuarioId)
+  const quedan = lista.filter((v) => v.estado.tipo !== 'enBorradores' || vigentes.includes(v.estado.ventaId))
   if (quedan.length !== lista.length) escribir(usuarioId, quedan)
 }
