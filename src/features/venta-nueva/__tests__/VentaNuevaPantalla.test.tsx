@@ -4,6 +4,8 @@ import { act, fireEvent, render, screen, userEvent, waitFor, within } from '@tes
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { storage } from '@/core/utils/storage'
+import { leerCola } from '@/features/venta-sin-senal'
 import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 import { VentaNuevaPantalla } from '../components/VentaNuevaPantalla'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
@@ -494,9 +496,9 @@ describe('confirmar', () => {
 
   it('un reintento tras un corte reusa la misma clave de idempotencia (no duplica el pedido)', async () => {
     await armar()
-    alAlta(() => Promise.reject(new TypeError('Network request failed')))
+    alAlta(() => Promise.reject(new ApiError(504, 'Gateway Timeout')))
     await confirmar()
-    expect(await screen.findByText('Network request failed')).toBeTruthy()
+    expect(await screen.findByText('Gateway Timeout')).toBeTruthy()
     expect(mockReplace).not.toHaveBeenCalled()
     await confirmar()
     await waitFor(() => expect(mockReplace).toHaveBeenCalled())
@@ -504,9 +506,38 @@ describe('confirmar', () => {
     expect(altas()[1][1].claveIdempotencia).toBe(altas()[0][1].claveIdempotencia)
   })
 
+  describe('sin señal (V9, T5b): el alta no llegó', () => {
+    const sinRed = () => Promise.reject(new TypeError('Network request failed'))
+    beforeEach(() => storage.remove('ventas-sin-senal:u'))
+
+    it('queda en el teléfono con su clave y el total que vio el vendedor, vacía el carrito y avisa; no muestra error', async () => {
+      await armar()
+      alAlta(sinRed)
+      await confirmar()
+      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)/ventas'))
+      const cola = leerCola('u')
+      expect(cola).toHaveLength(1)
+      expect(cola[0].clave).toBe(altas()[0][1].claveIdempotencia)
+      expect(cola[0].alta).toMatchObject({ claveIdempotencia: cola[0].clave, totalEsperado: expect.any(Number) })
+      expect(cola[0].estado).toMatchObject({ tipo: 'esperando', fase: { paso: 'altaEnviada' } })
+      expect(useCarritoVenta.getState().lineas).toEqual([])
+      expect(alerta).toHaveBeenCalledWith(expect.any(String), expect.stringMatching(/queda en el teléfono/i))
+      expect(screen.queryByText('Network request failed')).toBeNull()
+    })
+
+    it('un error del servidor (400) no se encola: se ve en la venta', async () => {
+      await armar()
+      alAlta(() => Promise.reject(new ApiError(400, 'Cliente inválido')))
+      await confirmar()
+      expect(await screen.findByText('Cliente inválido')).toBeTruthy()
+      expect(leerCola('u')).toEqual([])
+      expect(mockReplace).not.toHaveBeenCalled()
+    })
+  })
+
   const REPETIDA = 'La venta ya había sido creada con esta clave de idempotencia (operación repetida).'
   // Tras un corte la clave se reusa siempre: un pedido duplicado es peor que perder ediciones.
-  const cortarYReintentar = async (editar: boolean, mensaje: string, corte: unknown = new TypeError('Network request failed'), textoCorte = 'Network request failed') => {
+  const cortarYReintentar = async (editar: boolean, mensaje: string, corte: unknown = new ApiError(504, 'Gateway Timeout'), textoCorte = 'Gateway Timeout') => {
     await armar()
     alAlta(() => Promise.reject(corte), () => Promise.resolve({ ventaId: 'v9', version: 1, message: mensaje }))
     await confirmar()
@@ -548,9 +579,9 @@ describe('confirmar', () => {
 
   it('servidor nuevo: si tras el corte se cambió el pedido, el 409 con la venta grabada lleva a ella con el aviso y descarta el borrador', async () => {
     await armar()
-    alAlta(() => Promise.reject(new TypeError('Network request failed')), () => Promise.reject(otroCuerpo()))
+    alAlta(() => Promise.reject(new ApiError(504, 'Gateway Timeout')), () => Promise.reject(otroCuerpo()))
     await confirmar()
-    expect(await screen.findByText('Network request failed')).toBeTruthy()
+    expect(await screen.findByText('Gateway Timeout')).toBeTruthy()
     act(() => useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: pala, cantidad: 13, descuentoPct: 0 }] }))
     await confirmar()
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', CON_LO_DE_ANTES)))

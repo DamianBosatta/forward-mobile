@@ -34,6 +34,19 @@ function ventaYaGrabada(e: unknown): VentaActionResponseDto | null {
   return typeof v?.ventaId === 'string' && v.ventaId ? (v as VentaActionResponseDto) : null
 }
 
+/**
+ * 409 `TotalCambiado` (forward-system, bloque 12 T5): el precio cambió desde que el vendedor vio el total y la venta NO se grabó.
+ * Devuelve el total de hoy. El catálogo generado todavía no trae el código (llega como 'Desconocido'): se reconoce
+ * también por la forma de su `data` (`{ total, lineas[] }`), que ningún otro 409 de POST /Ventas tiene.
+ */
+function totalCambiado(e: unknown): { total: number | null } | null {
+  if (!(e instanceof ApiError) || e.status !== 409) return null
+  const d = e.data as { total?: unknown; lineas?: unknown } | undefined
+  const conForma = typeof d?.total === 'number' && Array.isArray(d.lineas)
+  if ((e.codigo as string | undefined) !== 'TotalCambiado' && !(e.codigo === 'Desconocido' && conForma)) return null
+  return { total: typeof d?.total === 'number' ? d.total : null }
+}
+
 /** ¿Algún precio del servidor no es el que vio el vendedor? Un producto sin precio visto también cuenta. */
 export function cambioElPrecio(precios: Record<string, number>, lineas: VistaPreviaLineaDto[]): boolean {
   return lineas.some((l) => {
@@ -120,6 +133,14 @@ class Envio {
     try {
       r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', this.venta.alta)
     } catch (e) {
+      const cambiado = totalCambiado(e)
+      if (cambiado) {
+        // No se grabó: queda en Borradores con el precio de hoy, igual que si la vista previa hubiera avisado.
+        const desde = Date.now()
+        this.pasar({ paso: 'creandoBorrador', desde, totalServidor: cambiado.total })
+        await this.crearBorrador(desde, cambiado.total, false)
+        return
+      }
       const grabada = ventaYaGrabada(e)
       if (!grabada) throw e
       r = grabada

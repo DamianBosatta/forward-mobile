@@ -14,6 +14,7 @@ import { DrawerActions } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics'
 import { safeHaptics } from '@/core/utils/haptics'
 import React from 'react'
+import { PendientesDeEnviar } from '@/features/venta-sin-senal'
 
 import type { Venta } from '@/libs/api-client'
 import {
@@ -368,6 +369,7 @@ function VentasListScreen({ filtroDeRuta }: { filtroDeRuta: FiltroVentasRuta | n
 
   const headerComponent = useMemo(() => (
     <View style={{ paddingBottom: 10 }}>
+      <PendientesDeEnviar />
       <VentasKpiGrid
         ordersCount={ordenes}
         currentMonth={selected ? MONTHS_SHORT[selected.month] : 'TOTALES'}

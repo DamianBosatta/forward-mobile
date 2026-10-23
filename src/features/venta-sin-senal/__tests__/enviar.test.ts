@@ -22,9 +22,10 @@ const post = api.post as jest.Mock
 const get = api.get as jest.Mock
 const put = api.put as jest.Mock
 
+let seq = 0
 const alta = (extra: Partial<AltaVenta> = {}): AltaVenta => ({
   clienteId: 'c1', depositoId: 'd1', tipoOperacion: 2, metodoEntrega: 1, entregaInmediata: false,
-  descuentoGeneral: 5, items: [{ productoId: 'p1', cantidad: 6, descuentoPorcentaje: 0 }], claveIdempotencia: '', ...extra,
+  descuentoGeneral: 5, items: [{ productoId: 'p1', cantidad: 6, descuentoPorcentaje: 0 }], claveIdempotencia: `mobile-k${++seq}`, ...extra,
 })
 const encolar = (extra: Partial<AltaVenta> = {}, encoladaEn = 1_000, precios: Record<string, number> = { p1: 100 }) =>
   encolarVenta('u1', { alta: alta(extra), cliente: { direccion: 'Alem 3669' }, visto: { total: 570, precios } }, encoladaEn)
@@ -193,6 +194,47 @@ describe('enviar las ventas guardadas en el teléfono (V9, D4)', () => {
     encolar()
     await expect(enviarPendientes('u1')).resolves.toBe('sinSenal')
     expect(leerCola('u1')[0].estado).toEqual({ tipo: 'esperando', fase: { paso: 'nueva' }, intentos: 1 })
+  })
+
+  describe('T5b: total esperado (POST /Ventas, 409 TotalCambiado)', () => {
+    const totalCambiado = (total = 600) => new ApiError(409, 'El precio cambió desde que se cargó la venta.', [], 'Desconocido', { total, lineas: [{ productoId: 'p1', precioBase: 110 }] })
+
+    it('el alta viaja con el total que vio el vendedor, y en cada reintento con la misma clave', async () => {
+      servidor({ alta: tira(sinRed()) })
+      const v = encolar()
+      await enviarPendientes('u1')
+      servidor()
+      await enviarPendientes('u1')
+      const altas = llamadas('/api/v1/Ventas')
+      expect(altas).toHaveLength(2)
+      for (const [, cuerpo] of altas) expect(cuerpo).toMatchObject({ totalEsperado: 570, claveIdempotencia: v.clave })
+    })
+
+    it('409 TotalCambiado: la venta pasa a Borradores (Para revisar) con el total de hoy y no se reintenta', async () => {
+      servidor({ alta: tira(totalCambiado(600)) })
+      encolar({}, 1_000, { p1: 100 })
+      await expect(enviarPendientes('u1')).resolves.toBe('completa')
+      expect(llamadas('/api/v1/Ventas/borradores')).toHaveLength(1)
+      expect(put).toHaveBeenCalledTimes(1)
+      expect(leerCola('u1')[0].estado).toEqual({ tipo: 'enBorradores', ventaId: 'b1', totalServidor: 600 })
+      await expect(enviarPendientes('u1')).resolves.toBe('vacia')
+      expect(llamadas('/api/v1/Ventas')).toHaveLength(1)
+    })
+
+    it('el código ya conocido por el catálogo (TotalCambiado) también cuenta', async () => {
+      servidor({ alta: tira(new ApiError(409, 'x', [], 'TotalCambiado' as never, { total: 601, lineas: [] })) })
+      encolar()
+      await enviarPendientes('u1')
+      expect(leerCola('u1')[0].estado).toMatchObject({ tipo: 'enBorradores', totalServidor: 601 })
+    })
+
+    it('otro 409 sin esa forma sigue siendo un error de la venta: para revisar', async () => {
+      servidor({ alta: tira(new ApiError(409, 'otro', [], 'Desconocido', { algo: 1 })) })
+      encolar()
+      await enviarPendientes('u1')
+      expect(leerCola('u1')[0].estado).toMatchObject({ tipo: 'revisar' })
+      expect(llamadas('/api/v1/Ventas/borradores')).toHaveLength(0)
+    })
   })
 
   describe('si el precio cambió, la venta queda en Borradores para que la revises', () => {
