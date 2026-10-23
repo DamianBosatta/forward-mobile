@@ -102,6 +102,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Audit/permisos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    PageNumber?: number;
+                    PageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RegistroAuditoriaPermisoDtoPaginatedResponseResponse"];
+                        "application/json": components["schemas"]["RegistroAuditoriaPermisoDtoPaginatedResponseResponse"];
+                        "text/json": components["schemas"]["RegistroAuditoriaPermisoDtoPaginatedResponseResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Audit/logs": {
         parameters: {
             query?: never;
@@ -125,7 +165,11 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "text/plain": components["schemas"]["UserAuditLogDto"][];
+                        "application/json": components["schemas"]["UserAuditLogDto"][];
+                        "text/json": components["schemas"]["UserAuditLogDto"][];
+                    };
                 };
             };
         };
@@ -2912,6 +2956,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Compras/{id}/recibir-parcial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RecibirParcialCompraCommand"];
+                    "text/json": components["schemas"]["RecibirParcialCompraCommand"];
+                    "application/*+json": components["schemas"]["RecibirParcialCompraCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RespuestaCompra"];
+                        "application/json": components["schemas"]["RespuestaCompra"];
+                        "text/json": components["schemas"]["RespuestaCompra"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Compras/{id}/confirmar-y-recibir": {
         parameters: {
             query?: never;
@@ -5265,6 +5387,45 @@ export interface paths {
                         "text/plain": components["schemas"]["LiquidezConsolidadaDto"];
                         "application/json": components["schemas"]["LiquidezConsolidadaDto"];
                         "text/json": components["schemas"]["LiquidezConsolidadaDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cuentas-corrientes/resumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    soloActivos?: boolean;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DeudasResumenDto"];
+                        "application/json": components["schemas"]["DeudasResumenDto"];
+                        "text/json": components["schemas"]["DeudasResumenDto"];
                     };
                 };
             };
@@ -9003,6 +9164,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/importaciones/{id}/reporte": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/importaciones/{id}/revertir": {
         parameters: {
             query?: never;
@@ -9029,9 +9240,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["ReversionImportacionDto"];
-                        "application/json": components["schemas"]["ReversionImportacionDto"];
-                        "text/json": components["schemas"]["ReversionImportacionDto"];
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
                     };
                 };
             };
@@ -16551,84 +16762,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/Users/request-password-reset": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["RequestPasswordResetCommand"];
-                    "text/json": components["schemas"]["RequestPasswordResetCommand"];
-                    "application/*+json": components["schemas"]["RequestPasswordResetCommand"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/Users/reset-password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["ExecutePasswordResetCommand"];
-                    "text/json": components["schemas"]["ExecutePasswordResetCommand"];
-                    "application/*+json": components["schemas"]["ExecutePasswordResetCommand"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/Users/{userId}/assign-role": {
         parameters: {
             query?: never;
@@ -19142,6 +19275,7 @@ export interface components {
             /** Format: uuid */
             categoriaId?: string | null;
             searchTerm?: string | null;
+            productoIds?: string[] | null;
         };
         /** @enum {string} */
         CatalogoOrdenarPor: "Nombre" | "Codigo" | "Marca" | "Stock" | "Precio";
@@ -20062,8 +20196,6 @@ export interface components {
             fechaSalida?: string;
             paradas?: components["schemas"]["ParadaRequest"][] | null;
             /** Format: uuid */
-            usuarioGeneradorId?: string;
-            /** Format: uuid */
             depositoId?: string | null;
         };
         CrearNotaCreditoDescuentoCommand: {
@@ -20335,6 +20467,8 @@ export interface components {
             /** Format: double */
             porcentajeComisionCedido?: number | null;
             conFactura?: boolean | null;
+            /** Format: double */
+            totalEsperado?: number | null;
         };
         CreateVentaCommandItemDto: {
             /** Format: uuid */
@@ -20493,6 +20627,8 @@ export interface components {
             /** Format: int32 */
             version?: number;
             transportista?: string | null;
+            transportistaCuit?: string | null;
+            transportistaDomicilio?: string | null;
             numeroGuia?: string | null;
             observacion?: string | null;
         };
@@ -20554,10 +20690,14 @@ export interface components {
             clientesConDeuda: number;
             /** Format: double */
             totalDeudaClientes: number;
+            /** Format: double */
+            totalDeudaBrutaClientes?: number | null;
             /** Format: int32 */
             proveedoresConDeuda: number;
             /** Format: double */
             totalDeudaProveedores: number;
+            /** Format: double */
+            totalComisionesVendedores?: number | null;
         };
         DeudasSocioPagedResult: {
             pagina?: components["schemas"]["DeudaSocioDtoPaginatedResponse"];
@@ -20811,6 +20951,7 @@ export interface components {
             message: string;
             /** Format: int32 */
             estado?: number | null;
+            repetida: boolean;
             /** Format: int32 */
             motivoPendienteAutorizacion?: number | null;
             etiquetas: components["schemas"]["EtiquetaDto"][];
@@ -21009,12 +21150,6 @@ export interface components {
             avisarDiasAntes?: number | null;
             /** Format: uuid */
             propietarioId?: string | null;
-        };
-        ExecutePasswordResetCommand: {
-            email?: string | null;
-            token?: string | null;
-            newPassword?: string | null;
-            confirmNewPassword?: string | null;
         };
         ExigirFotoRemitoAlEntregarDto: {
             exigirFotoRemitoAlEntregar: boolean;
@@ -21497,9 +21632,12 @@ export interface components {
             fechaCreacion?: string;
             /** Format: date-time */
             fechaFin?: string | null;
+            /** @deprecated */
             reporteUrl?: string | null;
+            tieneReporte?: boolean;
             motivoFallo?: string | null;
             puedeRevertirse?: boolean;
+            reversion?: components["schemas"]["ReversionImportacionDto"];
         };
         /** @enum {string} */
         ImputacionCobroChofer: "PedidoActual" | "DeudaAnterior";
@@ -21708,6 +21846,12 @@ export interface components {
             data?: components["schemas"]["LineaParadaDto"][] | null;
             codigo?: string | null;
         };
+        LineaRecibida: {
+            /** Format: uuid */
+            detalleId?: string;
+            /** Format: double */
+            cantidadRecibida?: number;
+        };
         LineaTransferenciaInput: {
             /** Format: uuid */
             productoId?: string;
@@ -21874,6 +22018,8 @@ export interface components {
             medioPagoNombre?: string | null;
             /** Format: uuid */
             pagoId?: string | null;
+            comprobanteUrl?: string | null;
+            pagoActivo?: boolean | null;
             mediosPago?: components["schemas"]["MedioPagoLineaDto"][] | null;
             detalle?: string | null;
         };
@@ -22157,6 +22303,8 @@ export interface components {
             numeroComprobante?: string | null;
             comprobanteUrl?: string | null;
             observaciones?: string | null;
+            /** Format: uuid */
+            depositoId?: string | null;
         };
         PagedFilasPreviewDto: {
             items?: components["schemas"]["FilaPreviewDto"][] | null;
@@ -22259,6 +22407,7 @@ export interface components {
             data?: string;
             codigo?: string | null;
             tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
+            repetida?: boolean;
         };
         ParadaDocumentacionDto: {
             /** Format: int32 */
@@ -22300,9 +22449,9 @@ export interface components {
             /** Format: int32 */
             cantidadBultos: number;
             /** Format: double */
-            latitud: number;
+            latitud?: number | null;
             /** Format: double */
-            longitud: number;
+            longitud?: number | null;
             /** Format: double */
             montoTotal: number;
             motivoRechazo?: string | null;
@@ -22923,6 +23072,12 @@ export interface components {
             fechaFacturaProveedor?: string | null;
             comprobante?: components["schemas"]["ComprobanteCompraInput"];
         };
+        RecibirParcialCompraCommand: {
+            lineas?: components["schemas"]["LineaRecibida"][] | null;
+            /** Format: date */
+            fechaFacturaProveedor?: string | null;
+            comprobante?: components["schemas"]["ComprobanteCompraInput"];
+        };
         RecibirTransferenciaStockCommand: {
             /** Format: int32 */
             version?: number | null;
@@ -23084,6 +23239,45 @@ export interface components {
             tipoCuentaCliente?: components["schemas"]["TipoCuentaSocio"];
             tipoCuentaProveedor?: components["schemas"]["TipoCuentaSocio"];
             claveIdempotencia?: string | null;
+        };
+        RegistroAuditoriaPermisoDto: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: date-time */
+            fecha?: string;
+            /** Format: uuid */
+            usuarioAfectadoId?: string;
+            usuarioAfectado?: string | null;
+            /** Format: uuid */
+            cambiadoPorId?: string;
+            cambiadoPor?: string | null;
+            modulo?: string | null;
+            accion?: string | null;
+            estadoAnterior?: string | null;
+            estadoNuevo?: string | null;
+            motivo?: string | null;
+        };
+        RegistroAuditoriaPermisoDtoPaginatedResponse: {
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            pageSize?: number;
+            /** Format: int32 */
+            totalCount?: number;
+            /** Format: int32 */
+            totalPages?: number;
+            readonly hasNextPage?: boolean;
+            items?: components["schemas"]["RegistroAuditoriaPermisoDto"][] | null;
+        };
+        RegistroAuditoriaPermisoDtoPaginatedResponseResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["RegistroAuditoriaPermisoDtoPaginatedResponse"];
+            codigo?: string | null;
         };
         RegistroEntregaDto: {
             /** Format: uuid */
@@ -23294,9 +23488,6 @@ export interface components {
             /** Format: date-time */
             nuevaFechaEntrega?: string;
         };
-        RequestPasswordResetCommand: {
-            email?: string | null;
-        };
         ResolverNotaCreditoCommand: {
             /** Format: uuid */
             notaCreditoId?: string;
@@ -23323,6 +23514,10 @@ export interface components {
             comprobanteGuardado?: boolean;
             avisoComprobante?: string | null;
             costoSinRestaurar?: string | null;
+            /** Format: uuid */
+            compraFaltanteId?: string | null;
+            /** Format: int64 */
+            compraFaltanteNumero?: number | null;
         };
         RespuestaGasto: {
             /** Format: int32 */
@@ -24113,7 +24308,7 @@ export interface components {
         /** @enum {string} */
         TipoMovimientoPeriodoFiscal: "Cierre" | "Reapertura";
         /** @enum {string} */
-        TipoMovimientoStock: "Compra" | "Venta" | "Transferencia" | "Ajuste";
+        TipoMovimientoStock: "Compra" | "Venta" | "Transferencia" | "Ajuste" | "Reserva" | "LiberacionReserva" | "ReversionVenta";
         /** @enum {string} */
         TipoMovimientoStockFiscal: "CompraFacturada" | "AnulacionCompra" | "DevolucionProveedor" | "VentaFacturada" | "AnulacionFactura" | "NotaCredito" | "NotaDebito" | "AjusteManual" | "AnulacionDevolucionProveedor" | "AnulacionNotaCredito";
         /** @enum {string} */
@@ -24621,6 +24816,17 @@ export interface components {
             porcentajeComision?: number;
             comisionActiva?: boolean;
         };
+        UserAuditLogDto: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: date-time */
+            fechaAcceso?: string;
+            ipAddress?: string | null;
+            userAgent?: string | null;
+            exitoso?: boolean;
+            ubicacionEstimada?: string | null;
+            deviceInfo?: string | null;
+        };
         UserDetailDto: {
             /** Format: uuid */
             id?: string;
@@ -24781,6 +24987,7 @@ export interface components {
             message: string;
             /** Format: int32 */
             estado?: number | null;
+            repetida: boolean;
             /** Format: int32 */
             motivoPendienteAutorizacion?: number | null;
         };

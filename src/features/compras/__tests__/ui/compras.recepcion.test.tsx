@@ -149,6 +149,46 @@ describe('recibir mercadería (M11)', () => {
     expect(await screen.findByRole('button', { name: 'Recibir mercadería' })).toBeTruthy()
   })
 
+  it('cada línea trae cuánto llegó, de entrada lo pedido; si llegó todo es la recepción de siempre', async () => {
+    await abrirRecepcion()
+    expect(screen.getByLabelText('Llegó de Balde Nuvia 10L').props.value).toBe('24')
+    expect(screen.getByLabelText('Llegó de Ocean Toalla Rollo').props.value).toBe('40')
+    expect(screen.queryByText(/pasa a una compra nueva/)).toBeNull()
+  })
+
+  it('llegó una parte: dice qué pasa a la compra nueva y manda lo que llegó a recibir-parcial', async () => {
+    await abrirRecepcion()
+    fireEvent.changeText(screen.getByLabelText('Llegó de Ocean Toalla Rollo'), '30')
+    fireEvent.changeText(screen.getByLabelText('Llegó de Make Lavajean'), '0')
+
+    expect(screen.getByText('Lo que falta pasa a una compra nueva del mismo proveedor, confirmada y con los mismos costos: 10 de Ocean Toalla Rollo, 12 de Make Lavajean.')).toBeTruthy()
+    expect(screen.getByText('Suma 54 unidades al stock y genera la deuda con el proveedor')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir-parcial', {
+      fechaFacturaProveedor: null,
+      lineas: [
+        { detalleId: 'l1', cantidadRecibida: 24 },
+        { detalleId: 'l2', cantidadRecibida: 30 },
+        { detalleId: 'l3', cantidadRecibida: 0 },
+      ],
+    })
+  })
+
+  it('más de lo pedido en una línea: lo marca y no deja confirmar', async () => {
+    await abrirRecepcion()
+    fireEvent.changeText(screen.getByLabelText('Llegó de Ocean Toalla Rollo'), '41')
+    expect(screen.getByText('No puede llegar más de lo pedido.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Confirmar recepción' })).toBeDisabled()
+  })
+
+  it('no llegó nada: lo dice y no deja confirmar', async () => {
+    await abrirRecepcion()
+    for (const nombre of ['Balde Nuvia 10L', 'Ocean Toalla Rollo', 'Make Lavajean']) fireEvent.changeText(screen.getByLabelText(`Llegó de ${nombre}`), '0')
+    expect(screen.getByText('No llegó nada: para recibir tiene que haber llegado al menos una línea.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Confirmar recepción' })).toBeDisabled()
+    expect(mockPost).not.toHaveBeenCalled()
+  })
+
   it('tablet: la misma recepción, con las líneas en tabla (Producto, Pedidas, Costo, Subtotal)', async () => {
     await abrirRecepcion({}, 1194)
     expect(screen.getByText('Subtotal')).toBeTruthy()

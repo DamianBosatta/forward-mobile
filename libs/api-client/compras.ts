@@ -189,11 +189,20 @@ export function useRecibirCompra() {
     /**
      * `fechaFacturaProveedor` (yyyy-MM-dd) es obligatoria si la condición de pago es por días desde la factura.
      * `comprobante`: el del proveedor, si se carga al recibir (va en la misma transacción).
+     * `lineas` (R22): lo que llegó de cada línea cuando no llegó todo. Va a `recibir-parcial`, que recibe eso
+     * y pasa lo que falta a una compra nueva confirmada, en una sola transacción. Sin `lineas`, la de siempre.
      */
-    mutationFn: ({ id, fechaFacturaProveedor, comprobante }: { id: string; fechaFacturaProveedor?: string; comprobante?: ComprobanteCompraInput }) =>
-      api.post<void>(`/api/v1/Compras/${id}/recibir`, {
-        compraId: id, fechaFacturaProveedor: fechaFacturaProveedor ?? null, ...(comprobante ? { comprobante } : {}),
-      }),
+    mutationFn: ({ id, fechaFacturaProveedor, comprobante, lineas }: {
+      id: string; fechaFacturaProveedor?: string; comprobante?: ComprobanteCompraInput
+      lineas?: components['schemas']['LineaRecibida'][] | null
+    }) =>
+      lineas
+        ? api.post<void>(`/api/v1/Compras/${id}/recibir-parcial`, {
+          fechaFacturaProveedor: fechaFacturaProveedor ?? null, ...(comprobante ? { comprobante } : {}), lineas,
+        })
+        : api.post<void>(`/api/v1/Compras/${id}/recibir`, {
+          compraId: id, fechaFacturaProveedor: fechaFacturaProveedor ?? null, ...(comprobante ? { comprobante } : {}),
+        }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: comprasKeys.all })
     },
