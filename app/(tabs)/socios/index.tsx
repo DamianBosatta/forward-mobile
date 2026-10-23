@@ -5,6 +5,8 @@ import { DrawerActions } from '@react-navigation/native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Button, Notice, TopBar } from '@/core/ui/fw'
+import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { esFallaDeRed } from '@/core/api/errores'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useCartera } from '@/features/clientes/hooks/useCartera'
 import { ClienteCard } from '@/features/clientes/components/ClienteCard'
@@ -29,7 +31,9 @@ export default function ClientesScreen() {
   const [busqueda, setBusqueda] = useState('')
   const [abierto, setAbierto] = useState<string | null>(null)
   const [filtros, setFiltros] = useState<FiltrosDeCartera>(SIN_FILTROS)
-  const { clientes, totalCount, saldoTotal, isLoading, isRefetching, error, refetch, cargarMas } = useCartera(busqueda, filtros)
+  const { clientes, totalCount, saldoTotal, isLoading, isRefetching, error, dataUpdatedAt, refetch, cargarMas } = useCartera(busqueda, filtros)
+  const sinRed = esFallaDeRed(error)
+  const hayDatos = clientes.length > 0
   const filtrando = filtros.conDeudaVencida || !!filtros.localidad
   const dosPaneles = width >= ANCHO_DOS_PANELES
 
@@ -56,9 +60,13 @@ export default function ClientesScreen() {
           </Text>
         </View>
       ) : null}
-      {error ? (
+      {error && !(sinRed && !hayDatos) ? (
         <View style={{ padding: space[4] }}>
-          <Notice tone="peligro">{mensajeDelServidor(error, 'No se pudo cargar la cartera.')}</Notice>
+          {sinRed ? (
+            <Notice tone="advertencia">{textoSinConexion(dataUpdatedAt || undefined)}</Notice>
+          ) : (
+            <Notice tone="peligro">{mensajeDelServidor(error, 'No se pudo cargar la cartera.')}</Notice>
+          )}
         </View>
       ) : null}
       <FlatList
@@ -74,14 +82,21 @@ export default function ClientesScreen() {
         ListEmptyComponent={
           isLoading ? (
             <ActivityIndicator color={c.brandInk} style={{ marginTop: space[8] }} />
-          ) : error ? null : (
-            <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center', marginTop: space[8] }}>
-              {busqueda.trim()
-                ? 'Ningún cliente coincide con la búsqueda.'
-                : filtrando
-                  ? 'Ningún cliente coincide con los filtros.'
-                  : 'Todavía no hay clientes en tu cartera.'}
-            </Text>
+          ) : error ? (
+            sinRed ? (
+              <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los clientes" accion={{ label: 'Reintentar', onPress: () => void refetch() }} />
+            ) : null
+          ) : (
+            <EstadoDePantalla
+              tipo="vacio"
+              titulo={
+                busqueda.trim()
+                  ? 'Ningún cliente coincide con la búsqueda.'
+                  : filtrando
+                    ? 'Ningún cliente coincide con los filtros.'
+                    : 'Todavía no hay clientes en tu cartera.'
+              }
+            />
           )
         }
       />

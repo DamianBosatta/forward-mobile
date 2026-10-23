@@ -125,3 +125,13 @@ export function formatDistancia(metros: number): string {
   if (metros < 1000) return `${Math.round(metros)} m`
   return `${(metros / 1000).toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`
 }
+
+/**
+ * Por qué el botón de confirmar está apagado (patrón "deshabilitado con la razón", PermPatrones panel 2).
+ * La foto del remito exigida no apaga el botón: al tocarlo `armarEntrega` explica el faltante, como siempre.
+ */
+export function razonPendiente(ctx: { entregado: boolean; receptor: string; motivo: string | null; subiendo: boolean }): string | null {
+  if (ctx.subiendo) return 'Subiendo la foto: esperá un momento'
+  if (ctx.entregado) return ctx.receptor.trim() ? null : 'Falta quién recibió'
+  return ctx.motivo ? null : 'Falta elegir el motivo'
+}

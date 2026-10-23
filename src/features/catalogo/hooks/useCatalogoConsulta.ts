@@ -51,6 +51,9 @@ export function useCatalogoConsulta() {
     disponible,
     isLoading: query.isLoading,
     isError: query.isError,
+    error: query.error,
+    /** Cuándo llegó lo que se muestra (0 = nunca): para "sin conexión" con lo guardado. */
+    dataUpdatedAt: query.dataUpdatedAt,
     refetch: query.refetch,
     cargarMas: () => {
       if (query.hasNextPage && !query.isFetchingNextPage) query.fetchNextPage()

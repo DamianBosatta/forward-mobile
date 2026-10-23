@@ -3,6 +3,8 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-nati
 import { ChevronDown } from 'lucide-react-native'
 import { FONT, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { BottomSheet, FormContainer, Notice, Segmented, TopBar, TotalsRow, formatImporte, useMenuLeading } from '@/core/ui/fw'
+import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { esFallaDeRed } from '@/core/api/errores'
 import { useResponsive } from '@/libs/useResponsive'
 import { useResumenVendedor, type ResumenVendedor } from '@/libs/api-client/reportes'
 import { useVendedores } from '@/libs/api-client/ventas'
@@ -68,6 +70,15 @@ export function ReportesScreen() {
           ) : null}
           {q.isLoading ? (
             <ActivityIndicator color={c.brand} accessibilityLabel="Cargando los reportes" />
+          ) : q.isError && esFallaDeRed(q.error) ? (
+            q.data ? (
+              <>
+                <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice>
+                <Secciones r={q.data} tablet={isTablet} />
+              </>
+            ) : (
+              <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los reportes" accion={{ label: 'Reintentar', onPress: () => void q.refetch() }} />
+            )
           ) : q.isError || !q.data ? (
             <Notice tone="peligro">No se pudieron cargar los reportes.</Notice>
           ) : (

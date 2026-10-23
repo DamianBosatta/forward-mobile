@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
+import { Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Field, Notice, Segmented, TopBar } from '@/core/ui/fw'
@@ -8,7 +8,8 @@ import { useLineasParada, useMediosCobroChofer } from '@/libs/api-client/logisti
 import { mostrarFecha } from '@/features/cuentas/lib/cobro'
 import { diaArgentina } from '@/src/utils/date'
 import { MOTIVOS_NO_ENTREGA } from './hojaDeRuta'
-import { armarEntrega, type EntregaArmada, type FormEntrega } from './entrega'
+import { etiquetaNota, importeParada } from './cobroParada'
+import { armarEntrega, razonPendiente, type EntregaArmada, type FormEntrega } from './entrega'
 import { FotoEntrega } from './FotoEntrega'
 import { CobroEnEntrega } from './CobroEnEntrega'
 import { DevolucionEnEntrega } from './DevolucionEnEntrega'
@@ -44,6 +45,9 @@ const formVacio = (): FormEntrega => ({
 export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, exigeFotoRemito, onCerrar, onConfirmar }: Props) {
   const c = useColors()
   const { bottom } = useSafeAreaInsets()
+  // Tablet: el formulario no se estira a todo el ancho.
+  const { width } = useWindowDimensions()
+  const columna = width >= 768 ? { maxWidth: 640, width: '100%' as const, alignSelf: 'center' as const } : null
   const [resultado, setResultado] = useState<Resultado>('entregado')
   const [f, setF] = useState<FormEntrega>(formVacio)
   const [motivo, setMotivo] = useState<string | null>(null)
@@ -58,7 +62,10 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
   const alSubir = (s: boolean) => setSubiendo((n) => n + (s ? 1 : -1))
   // Quién recibió es obligatorio siempre (decisión del dueño del 16-10), con o sin la foto del remito.
   // Con una foto subiendo tampoco: se confirmaría sin ella.
-  const listo = (entregado ? f.receptor.trim().length > 0 : motivo !== null) && subiendo === 0
+  const razon = razonPendiente({ entregado, receptor: f.receptor, motivo, subiendo: subiendo > 0 })
+  const listo = razon === null
+  const faltaFoto = entregado && exigeFotoRemito && !f.remitoUrl
+  const aCobrar = importeParada(parada)
 
   const confirmar = () => {
     if (!listo || enviando) return
@@ -84,7 +91,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
           subtitle={`Parada ${numero} · ${parada.direccion} · ${parada.clienteNombre}`}
           leading={{ kind: 'atras', onPress: onCerrar }}
         />
-        <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], ...columna }} keyboardShouldPersistTaps="handled">
           <Segmented<Resultado>
             accessibilityLabel="Resultado"
             value={resultado}
@@ -96,14 +103,6 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
           />
           {entregado ? (
             <>
-              <Field label="Quién recibió" value={f.receptor} onChangeText={(v) => cambiar({ receptor: v })} placeholder="Nombre de quien firma" />
-              <FotoEntrega
-                que="del remito firmado"
-                ayuda={exigeFotoRemito ? 'Sin la foto del remito firmado no se confirma la entrega.' : undefined}
-                url={f.remitoUrl}
-                onUrl={(url) => cambiar({ remitoUrl: url })}
-                onSubiendo={alSubir}
-              />
               <CobroEnEntrega
                 medios={medios.data}
                 mediosError={medios.isError}
@@ -112,7 +111,20 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
                 onLineas={(lineas) => cambiar({ lineas })}
                 onImputacion={(imputacion) => cambiar({ imputacion })}
                 onSubiendo={alSubir}
+                aCobrar={aCobrar.aCobrar ? aCobrar.valor : null}
                 hoy={mostrarFecha(diaArgentina(Date.now()))}
+              />
+              <Field label="Quién recibió" value={f.receptor} onChangeText={(v) => cambiar({ receptor: v })} placeholder="Nombre de quien firma" />
+              <FotoEntrega
+                que="del remito firmado"
+                titulo="Foto del remito"
+                obligatoria={exigeFotoRemito}
+                guia="Encuadrá el remito entero, con la firma y la aclaración a la vista"
+                referencia={etiquetaNota(parada) ? `Remito ${etiquetaNota(parada)}` : undefined}
+                ayuda={exigeFotoRemito ? 'Sin la foto del remito firmado no se confirma la entrega.' : undefined}
+                url={f.remitoUrl}
+                onUrl={(url) => cambiar({ remitoUrl: url })}
+                onSubiendo={alSubir}
               />
               <FotoEntrega
                 que="de la firma del cliente"
@@ -163,7 +175,12 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
           {errorForm ? <Notice tone="peligro">{errorForm}</Notice> : null}
           {error ? <Notice tone="peligro">{error}</Notice> : null}
         </ScrollView>
-        <View style={{ backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border, padding: space[4], paddingBottom: space[4] + bottom }}>
+        <View style={{ backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border, padding: space[4], paddingBottom: space[4] + bottom, gap: space[2] }}>
+          {razon || faltaFoto ? (
+            <Text style={{ ...typeScale.secundario, color: c.textSecondary, textAlign: 'center' }}>
+              {razon ?? 'Falta la foto del remito'}
+            </Text>
+          ) : null}
           <Button
             label={entregado ? 'Confirmar entrega' : 'Confirmar: no se entregó'}
             variant={entregado ? 'primario' : 'peligro'}

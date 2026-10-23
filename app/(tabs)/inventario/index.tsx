@@ -8,6 +8,8 @@ import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Notice, Segmented, TopBar } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
+import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { esFallaDeRed } from '@/core/api/errores'
 import { RequirePermission } from '@/core/ui'
 import { ApiError } from '@/core/api/client'
 import { buscarPorCodigoBarra } from '@/libs/api-client/productos'
@@ -41,6 +43,8 @@ export default function CatalogoConsultaScreen() {
   const grilla = dosPaneles || grillaElegida
   const [seleccion, setSeleccion] = useState<string | null>(null)
   const cat = useCatalogoConsulta()
+  // Sin señal: con lo guardado se sigue mostrando la lista y un aviso; sin nada, el estado "sin conexión" (R16).
+  const catSinRed = cat.isError && esFallaDeRed(cat.error)
   const [vista, setVista] = useState<Vista>('catalogo')
   const [soloConStock, setSoloConStock] = useState(false)
   const [stockBusqueda, setStockBusqueda] = useState('')
@@ -95,12 +99,15 @@ export default function CatalogoConsultaScreen() {
       </View>
       {cat.isLoading ? (
         <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
-      ) : cat.isError ? (
+      ) : catSinRed && cat.productos.length === 0 ? (
+        <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar el catálogo" accion={{ label: 'Reintentar', onPress: () => { void cat.refetch() } }} />
+      ) : cat.isError && !catSinRed ? (
         <View style={{ padding: space[4] }}>
           <Notice tone="peligro">No se pudo cargar el catálogo. Revisá la conexión y volvé a intentar.</Notice>
         </View>
       ) : (
         <FlatList
+          ListHeaderComponent={catSinRed ? <Notice tone="advertencia">{textoSinConexion(cat.dataUpdatedAt)}</Notice> : null}
           key={`columnas-${columnas}`}
           data={productos}
           numColumns={columnas}
@@ -109,11 +116,7 @@ export default function CatalogoConsultaScreen() {
           contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] }}
           onEndReached={cat.cargarMas}
           onEndReachedThreshold={0.5}
-          ListEmptyComponent={
-            <Text style={[typeScale.cuerpo, { color: c.textSecondary, textAlign: 'center', marginTop: space[8] }]}>
-              No hay productos que coincidan con la búsqueda.
-            </Text>
-          }
+          ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan con la búsqueda." />}
           ListFooterComponent={cat.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : null}
           renderItem={({ item }) => (
             <ProductoCard

@@ -31,9 +31,10 @@ const venta = (id: string, motivo: number, total: number, extra: object = {}) =>
   ...extra,
 })
 
+/** Como en la web: decidir pide CAP_AUTORIZAR_VENTA y modificar Ventas. */
 function conCapacidades(...caps: string[]) {
   useAuthStore.setState({
-    user: { id: 'u1', username: 'marina', roles: [], permissions: ['MOD_VENTAS', ...caps].map((module) => ({ module, canRead: true })) },
+    user: { id: 'u1', username: 'marina', roles: [], permissions: ['MOD_VENTAS', ...caps].map((module) => ({ module, canRead: true, canUpdate: module === 'MOD_VENTAS' })) },
   } as never)
 }
 
@@ -117,6 +118,18 @@ describe('Autorizaciones: la bandeja', () => {
 
     expect(mockGet).toHaveBeenCalledWith('/api/v1/Ventas/a')
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/a/rechazar-autorizacion', { ventaId: 'a', version: 7, motivoRechazo: 'Sin margen' })
+  })
+
+  it('con la capacidad pero Ventas solo en lectura ve la bandeja y puede abrir la venta, sin Autorizar ni Rechazar', async () => {
+    useAuthStore.setState({
+      user: { id: 'u1', username: 'marina', roles: [], permissions: ['MOD_VENTAS', 'CAP_AUTORIZAR_VENTA'].map((module) => ({ module, canRead: true })) },
+    } as never)
+    bandeja([venta('a', 4, 100)])
+    pintar()
+
+    expect(await screen.findByLabelText('Ver la venta de Dirección a - Cliente a')).toBeTruthy()
+    expect(screen.queryByLabelText('Autorizar la venta de Dirección a - Cliente a')).toBeNull()
+    expect(screen.queryByLabelText('Rechazar la venta de Dirección a - Cliente a')).toBeNull()
   })
 
   it('si la venta cambió desde que se cargó la lista, no decide y lo avisa', async () => {

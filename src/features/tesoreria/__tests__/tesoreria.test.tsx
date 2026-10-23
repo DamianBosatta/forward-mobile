@@ -30,10 +30,13 @@ describe('Tesorería sin cheques', () => {
     expect(screen.queryByText(/cheques/i)).toBeNull()
   })
 
-  it('sin permiso para transferir dice que no hay acciones, aunque gestione cheques', async () => {
+  it('sin permiso para transferir muestra el botón deshabilitado con el motivo de la web (L13), aunque gestione cheques', async () => {
     conPermisos([{ module: 'MOD_PAGOS', canRead: true, canUpdate: true }, { module: 'MOD_CC', canRead: true }, { module: 'CAP_GESTIONAR_CHEQUES', canRead: true }])
     renderConQuery(<TesoreriaScreen />)
-    expect(await screen.findByText('No tenés acciones de tesorería habilitadas.', {}, ESPERA)).toBeTruthy()
+    const boton = await screen.findByRole('button', { name: 'Transferencia entre cuentas' }, ESPERA)
+    expect(boton.props.accessibilityState.disabled).toBe(true)
+    expect(screen.getByText('No tenés permiso para registrar movimientos entre cuentas. Pedile a un administrador que te asigne el permiso de alta en el módulo Pagos.')).toBeTruthy()
+    expect(screen.queryByText('No tenés acciones de tesorería habilitadas.')).toBeNull()
   })
 
   it('la pantalla de depósito de cheques ya no existe', () => {

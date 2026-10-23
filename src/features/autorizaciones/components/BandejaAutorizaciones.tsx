@@ -7,6 +7,8 @@ import { useResponsive } from '@/libs/useResponsive'
 import { usePendientesAutorizacion, type VentaPendienteAutorizacion } from '@/libs/api-client/ventas'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { formatRelativeTime } from '@/src/utils/date'
+import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { esFallaDeRed } from '@/core/api/errores'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { filtrosConConteo, motivosDe, pideRazon, tieneMotivo, type ClaveMotivo } from '../lib/motivos'
 import { DecisionSheet, type Decision } from './DecisionSheet'
@@ -45,6 +47,8 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
   const leading = useMenuLeading()
   const { isTabletLandscape } = useResponsive()
   const puede = useAuthStore((s) => s.hasCapability('CAP_AUTORIZAR_VENTA'))
+  // La web solo deja decidir con la capacidad Y modificar Ventas (VentaGestionDetail.tsx:146-149).
+  const puedeDecidir = useAuthStore((s) => s.hasCapability('CAP_AUTORIZAR_VENTA') && s.canDo('MOD_VENTAS', 'update'))
   const q = usePendientesAutorizacion(puede)
   const [filtro, setFiltro] = useState<ClaveMotivo | 'todas'>('todas')
   const [elegida, setElegida] = useState<string | null>(null)
@@ -53,6 +57,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
   const [aviso, setAviso] = useState<string | null>(null)
 
   const lista = q.data ?? []
+  const sinRed = q.isError && esFallaDeRed(q.error)
   const visibles = lista.filter((v) => tieneMotivo(v.motivoPendienteAutorizacion, filtro))
   const total = totalDeBandeja(visibles)
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
@@ -88,7 +93,10 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
         </Text>
       ) : null}
       {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
-      <Text style={secundario}>La que más espera, primero. «Autorizar» pide confirmación; «Rechazar» pide el motivo.</Text>
+      {sinRed && lista.length > 0 ? <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice> : null}
+      <Text style={secundario}>
+        {puedeDecidir ? 'La que más espera, primero. «Autorizar» pide confirmación; «Rechazar» pide el motivo.' : 'La que más espera, primero. Para decidir necesitás el permiso de modificar ventas.'}
+      </Text>
     </View>
   )
 
@@ -111,6 +119,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
             <Text key={m.clave} style={[typeScale.secundario, { color: c.text }]}>{`• ${m.texto}`}</Text>
           ))}
         </Pressable>
+        {puedeDecidir ? (
         <View style={{ flexDirection: 'row', gap: space[3] }}>
           <View style={{ flex: 1 }}><Button label="Rechazar" variant="secundario" accessibilityLabel={`Rechazar la venta de ${v.clienteDisplayName}`} onPress={() => { setAviso(null); setDecidiendo({ venta: v, decision: 'rechazar' }) }} /></View>
           <View style={{ flex: 1 }}>
@@ -119,6 +128,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
               : <Button label="Autorizar" accessibilityLabel={`Autorizar la venta de ${v.clienteDisplayName}`} onPress={() => { setAviso(null); setDecidiendo({ venta: v, decision: 'autorizar' }) }} />}
           </View>
         </View>
+        ) : null}
       </View>
     )
   }
@@ -136,8 +146,9 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
       onRefresh={() => { setAviso(null); void q.refetch() }}
       ListEmptyComponent={
         q.isLoading ? <ActivityIndicator color={c.brand} />
-          : q.isError ? <Notice tone="peligro">{mensajeDelServidor(q.error, 'No se pudo cargar la bandeja. Deslizá hacia abajo para reintentar.')}</Notice>
-          : <Text style={secundario}>No hay ventas por autorizar.</Text>
+          : q.isError && sinRed && lista.length === 0 ? <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar las autorizaciones" accion={{ label: 'Reintentar', onPress: () => void q.refetch() }} />
+          : q.isError && !sinRed ? <Notice tone="peligro">{mensajeDelServidor(q.error, 'No se pudo cargar la bandeja. Deslizá hacia abajo para reintentar.')}</Notice>
+          : <EstadoDePantalla tipo="vacio" titulo="No hay ventas por autorizar." />
       }
     />
   )

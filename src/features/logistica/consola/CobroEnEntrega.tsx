@@ -1,7 +1,7 @@
 import React from 'react'
 import { Text, View } from 'react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Field, Notice, Segmented } from '@/core/ui/fw'
+import { Button, formatImporte, Field, Notice, Segmented } from '@/core/ui/fw'
 import type { MedioCobroChofer } from '@/libs/api-client/logistica'
 import { ElegirChip } from '@/features/cuentas/components/ElegirChip'
 import { FotoEntrega } from './FotoEntrega'
@@ -17,10 +17,12 @@ interface Props {
   onSubiendo: (subiendo: boolean) => void
   /** dd/mm/aaaa de hoy, para precargar las fechas del cheque. */
   hoy: string
+  /** Lámina ChoferEntrega: lo que hay que cobrar en la parada (lo decide el servidor). */
+  aCobrar?: number | null
 }
 
 /** Lo que cobró el chofer: una o varias líneas (efectivo, transferencia, cheque). El servidor imputa y valida. */
-export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLineas, onImputacion, onSubiendo, hoy }: Props) {
+export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLineas, onImputacion, onSubiendo, hoy, aCobrar }: Props) {
   const c = useColors()
   const cambiar = (i: number, cambio: Partial<LineaCobroForm>) => onLineas(lineas.map((l, j) => (j === i ? { ...l, ...cambio } : l)))
   const cambiarCheque = (i: number, campo: keyof ChequeForm) => (v: string) =>
@@ -30,7 +32,15 @@ export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLine
 
   return (
     <View accessibilityLabel="Cobro" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[3] }}>
-      <Text style={{ ...typeScale.seccion, color: c.text }}>Cobro</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <Text style={{ ...typeScale.seccion, color: c.text }}>Cobro</Text>
+        {aCobrar != null ? (
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
+            {'A cobrar '}
+            <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{formatImporte(aCobrar)}</Text>
+          </Text>
+        ) : null}
+      </View>
       {lineas.length === 0 ? (
         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Sin cobro: el pedido queda en la cuenta del cliente.</Text>
       ) : null}

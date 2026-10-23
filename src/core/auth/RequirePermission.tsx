@@ -1,8 +1,9 @@
 import React from 'react'
-import { View, Text } from 'react-native'
-import { ShieldOff } from 'lucide-react-native'
+import { View } from 'react-native'
+import { useRouter } from 'expo-router'
 import { useAuthStore } from '@/libs/store/auth.store'
-import { useColors, BRAND } from '@/libs/theme'
+import { useColors } from '@/libs/theme'
+import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
 import type { AppModule } from '@/libs/api-client/types'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,6 +41,8 @@ interface RequirePermissionProps {
    * - 'screen': Muestra pantalla completa de "Sin permisos" 
    */
   mode?: Mode
+  /** Modo pantalla: nombre de la sección para "No tenés acceso a …" (p. ej. "Compras"). */
+  seccion?: string
   /** Children a renderizar si tiene permiso */
   children: React.ReactNode
 }
@@ -48,7 +51,8 @@ export function RequirePermission({
   module, 
   action, 
   mode = 'hide',
-  children 
+  seccion,
+  children
 }: RequirePermissionProps) {
   const { canDo } = useAuthStore()
   const colors = useColors()
@@ -74,35 +78,19 @@ export function RequirePermission({
   }
 
   // mode === 'screen'
+  return <SinPermiso seccion={seccion} fondo={colors.bg} />
+}
+
+/** Pantalla sin permiso (lienzo R16). Aparte para que el router se pida solo en el modo pantalla. */
+function SinPermiso({ seccion, fondo }: { seccion?: string; fondo: string }) {
+  const router = useRouter()
   return (
-    <View style={{ 
-      flex: 1, 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      backgroundColor: colors.bg,
-      paddingHorizontal: 40 
-    }}>
-      <View style={{
-        width: 80, height: 80, borderRadius: 24,
-        backgroundColor: `${BRAND.blue}15`,
-        alignItems: 'center', justifyContent: 'center',
-        marginBottom: 20, borderWidth: 1, borderColor: `${BRAND.blue}30`,
-      }}>
-        <ShieldOff size={36} color={BRAND.blue} />
-      </View>
-      <Text style={{ 
-        fontSize: 18, fontWeight: '800', color: colors.text, 
-        textAlign: 'center', marginBottom: 8 
-      }}>
-        Sin permisos
-      </Text>
-      <Text style={{ 
-        fontSize: 14, fontWeight: '500', color: colors.textMuted, 
-        textAlign: 'center', lineHeight: 20 
-      }}>
-        No tenés acceso a esta sección.{'\n'}
-        Contactá al administrador del sistema.
-      </Text>
+    <View style={{ flex: 1, backgroundColor: fondo }}>
+      <EstadoDePantalla
+        tipo="sinPermiso"
+        titulo={`No tenés acceso a ${seccion ?? 'esta sección'}`}
+        accion={{ label: 'Volver al inicio', onPress: () => router.replace('/(tabs)') }}
+      />
     </View>
   )
 }

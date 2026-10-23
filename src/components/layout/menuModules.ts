@@ -72,8 +72,8 @@ export const MENU: MenuGroup[] = [
       { id: 'proveedores', label: 'Proveedores', icon: Building2, href: '/(tabs)/proveedores', routeName: 'proveedores/index', appModule: 'MOD_PROVEEDORES' },
       { id: 'clientes', label: 'Clientes', icon: CircleUser, href: '/(tabs)/socios', routeName: 'socios/index', appModule: 'MOD_CLIENTES' },
       { id: 'catalogo', label: 'Catálogo y stock', hint: 'Consulta', icon: BookOpen, href: '/(tabs)/inventario', routeName: 'inventario/index', appModule: 'MOD_STOCK' },
-      // La bandeja exige Ventas:Read (ruta) y CAP_AUTORIZAR_VENTA (handler); sin la capacidad, 403.
-      { id: 'autorizaciones', label: 'Autorizaciones', icon: ShieldCheck, href: '/(tabs)/autorizaciones', routeName: 'autorizaciones/index', appModule: 'MOD_VENTAS', capacidad: 'CAP_AUTORIZAR_VENTA' },
+      // Igual que la web (sidebar.tsx, "Autorizaciones pendientes"): se muestra solo por CAP_AUTORIZAR_VENTA.
+      { id: 'autorizaciones', label: 'Autorizaciones', icon: ShieldCheck, href: '/(tabs)/autorizaciones', routeName: 'autorizaciones/index', capacidad: 'CAP_AUTORIZAR_VENTA' },
     ],
   },
   {
@@ -99,9 +99,9 @@ export const MENU: MenuGroup[] = [
     title: 'Logística',
     items: [
       { id: 'consola', label: 'Consola del chofer', icon: Navigation, href: '/(tabs)/logistica/consola', routeName: 'logistica/consola', appModule: 'MOD_VIAJES' },
-      // Solo lectura. GET /Logistica/ventas-para-preparacion pide MOD_VIAJES:Read y recorta por depósito
+      // Solo ver (D6): pendientes y no entregados. GET /Logistica/ventas-para-preparacion pide MOD_VIAJES:Read y recorta por depósito
       // (AlcanceDelDespacho); la web abre el tablero de picking con el mismo módulo (REGLAS_DE_RUTA).
-      { id: 'por-preparar', label: 'Pedidos por preparar', icon: PackageCheck, href: '/(tabs)/logistica/pedidos', routeName: 'logistica/pedidos', appModule: 'MOD_VIAJES' },
+      { id: 'por-preparar', label: 'Pedidos de logística', icon: PackageCheck, href: '/(tabs)/logistica/pedidos', routeName: 'logistica/pedidos', appModule: 'MOD_VIAJES' },
     ],
   },
 ]

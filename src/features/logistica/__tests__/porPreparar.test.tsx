@@ -76,15 +76,18 @@ beforeEach(() => {
 })
 afterEach(() => { jest.useRealTimers(); jest.restoreAllMocks() })
 
-describe('Pedidos por preparar (solo lectura)', () => {
+describe('Pedidos de logística (solo ver)', () => {
   it('pide el día argentino de hoy y lista por dirección, sin contar los no entregados en el día', async () => {
     pintar()
     const tarjeta = await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376')
     expect(within(tarjeta).getByText('Autoservicio Carlos')).toBeTruthy()
-    expect(within(tarjeta).getByText('5 líneas · 3 bultos')).toBeTruthy()
+    expect(within(tarjeta).getByText('5 productos · 3 bultos')).toBeTruthy()
     expect(within(tarjeta).getByLabelText('Estado: En preparación')).toBeTruthy()
-    expect(screen.getByText('Hoy · 2 pedidos · 8 líneas')).toBeTruthy()
-    expect(screen.getByText('No entregados, para reprogramar · 1')).toBeTruthy()
+    expect(screen.getByText('Hoy · 2 pedidos · 8 productos')).toBeTruthy()
+    expect(screen.getByLabelText('No entregados (1)')).toBeTruthy()
+    expect(screen.getByLabelText('Pendientes (2)')).toBeTruthy()
+    // Los no entregados tienen su pestaña: no se mezclan con los pendientes.
+    expect(screen.queryByLabelText('Pedido A00399: Tarantino 1898')).toBeNull()
     expect(urls().some((u) => u.includes('FechaDesde=2026-10-09') && u.includes('FechaHasta=2026-10-09'))).toBe(true)
   })
 
@@ -105,9 +108,9 @@ describe('Pedidos por preparar (solo lectura)', () => {
         : servido(url))
     pintar()
     const tarjeta = await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376')
-    expect(within(tarjeta).getByText('5 líneas · 288 u. · 3 bultos')).toBeTruthy()
+    expect(within(tarjeta).getByText('5 productos · 288 u. · 3 bultos')).toBeTruthy()
     // Servidor anterior (sin unidades): como antes.
-    expect(within(screen.getByLabelText('Pedido A00424: Brandsen 3314')).getByText('3 líneas')).toBeTruthy()
+    expect(within(screen.getByLabelText('Pedido A00424: Brandsen 3314')).getByText('3 productos')).toBeTruthy()
     await userEvent.press(tarjeta)
     expect(await screen.findByText('48 u. · 4 bultos de 12')).toBeTruthy()
     expect(screen.getByText('15 u. · 1 bulto de 12 y 3 u.')).toBeTruthy()
@@ -144,7 +147,7 @@ describe('Pedidos por preparar (solo lectura)', () => {
   it('en tablet horizontal el detalle se abre al lado de la lista con lo que hay que preparar', async () => {
     mockAncho.mockReturnValue(1100)
     pintar()
-    expect(await screen.findByText('Elegí un pedido para ver qué hay que preparar.')).toBeTruthy()
+    expect(await screen.findByText('Elegí un pedido para verlo.')).toBeTruthy()
     await userEvent.press(await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376'))
     expect(await screen.findByText('Lavandina Ayudín Clásica 2 L')).toBeTruthy()
     expect(screen.getByText('60 u.')).toBeTruthy()
@@ -226,6 +229,59 @@ describe('Pedidos por preparar (solo lectura)', () => {
     expect(screen.queryByText('Portón negro del depósito, antes de las 12.')).toBeNull()
   })
 
+  describe('pendientes y no entregados, solo ver (D6)', () => {
+    it('no ofrece ninguna acción de preparar, empacar, marcar ni armar ruta; avisa que se hace en la web', async () => {
+      mockAncho.mockReturnValue(1100)
+      pintar()
+      await userEvent.press(await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376'))
+      await screen.findByText('Lavandina Ayudín Clásica 2 L')
+      expect(screen.getByText('Desde el teléfono solo se ven. Preparar y armar rutas se hace en la web.')).toBeTruthy()
+      expect(screen.getByText('Solo para ver cómo va. Preparar y armar la ruta se hace en la web.')).toBeTruthy()
+      expect(screen.queryAllByRole('button').map((b) => b.props.accessibilityLabel).filter((l) => /prepar|empac|marcar|armar|asignar|reprogramar|iniciar/i.test(String(l)))).toEqual([])
+    })
+
+    it('la pestaña No entregados lista los pedidos que volvieron con motivo, observaciones y chofer del servidor', async () => {
+      const servido = mockGet.getMockImplementation()!
+      mockGet.mockImplementation((url: string) =>
+        url.includes('ventas-para-preparacion') ? Promise.resolve([PEDIDOS[0], { ...PEDIDOS[2], hojaRutaId: 'h9' }])
+          : url.endsWith('/Logistica/hojas-ruta/h9') ? Promise.resolve({
+            id: 'h9', choferNombre: 'Nacho Ríos',
+            detalles: [{ id: 'p1', ventaId: 'v3', motivoRechazo: 'Local cerrado', estado: 4 }, { id: 'p2', ventaId: 'otro', motivoRechazo: 'No va' }],
+          })
+          : url.endsWith('/Ventas/v3') ? Promise.resolve({ venta: { id: 'v3', observaciones: 'Toqué timbre dos veces' }, detalles: [], bultos: [] })
+          : servido(url))
+      pintar()
+      await userEvent.press(await screen.findByLabelText('No entregados (1)'))
+      const tarjeta = await screen.findByLabelText('Pedido A00399: Tarantino 1898')
+      expect(within(tarjeta).getByLabelText('Estado: No entregado')).toBeTruthy()
+      expect(await within(tarjeta).findByText('Motivo: Local cerrado')).toBeTruthy()
+      expect(within(tarjeta).getByText('Observaciones: Toqué timbre dos veces')).toBeTruthy()
+      expect(within(tarjeta).getByText('Nacho Ríos (chofer)')).toBeTruthy()
+      expect(within(tarjeta).queryByText(/No va/)).toBeNull()
+      expect(screen.getByText('Desde el teléfono solo se ven. Reprogramar o anular se hace en la web.')).toBeTruthy()
+      expect(screen.queryByLabelText('Pedido A00417: Juan B. Justo 6376')).toBeNull()
+      // La tira de fechas es de los pendientes.
+      expect(screen.queryByLabelText('Fecha de entrega')).toBeNull()
+      expect(screen.queryByRole('button', { name: /reprogramar|anular/i })).toBeNull()
+    })
+
+    it('un no entregado sin hoja de ruta ni observaciones no inventa motivo ni chofer', async () => {
+      pintar()
+      await userEvent.press(await screen.findByLabelText('No entregados (1)'))
+      const tarjeta = await screen.findByLabelText('Pedido A00399: Tarantino 1898')
+      expect(within(tarjeta).queryByText(/Motivo|chofer/)).toBeNull()
+    })
+
+    it('"Todas" pide los pedidos sin límite de fecha', async () => {
+      pintar()
+      await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376')
+      await userEvent.press(screen.getByLabelText('Todas las fechas'))
+      await screen.findByText('Todas las fechas · 2 pedidos · 8 productos')
+      const ultima = urls().filter((u) => u.includes('ventas-para-preparacion')).at(-1)!
+      expect(ultima).not.toMatch(/FechaDesde|FechaHasta/)
+    })
+  })
+
   describe('filtros (logística, vendedor, estado)', () => {
     const pedidosPedidos = () => urls().filter((u) => u.includes('ventas-para-preparacion'))
     async function abrirFiltros() {
@@ -251,16 +307,16 @@ describe('Pedidos por preparar (solo lectura)', () => {
       const hoja = await abrirFiltros()
       await userEvent.press(hoja.getByRole('radio', { name: 'Confirmado' }))
       await userEvent.press(hoja.getByRole('button', { name: 'Listo' }))
-      expect(screen.getByText('Hoy · 1 pedido · 3 líneas')).toBeTruthy()
+      expect(screen.getByText('Hoy · 1 pedido · 3 productos')).toBeTruthy()
       expect(screen.queryByLabelText('Pedido A00417: Juan B. Justo 6376')).toBeNull()
       expect(screen.getByLabelText('Pedido A00424: Brandsen 3314')).toBeTruthy()
       // Los no entregados no son "Confirmado": con el filtro no se muestran.
-      expect(screen.queryByText(/No entregados/)).toBeNull()
+      expect(screen.getByLabelText('No entregados (0)')).toBeTruthy()
       expect(pedidosPedidos().some((u) => /estado/i.test(u.split('?')[1] ?? ''))).toBe(false)
       expect(screen.getByText('Filtros: Confirmado')).toBeTruthy()
 
       await userEvent.press(screen.getByRole('button', { name: 'Quitar filtros' }))
-      expect(screen.getByText('Hoy · 2 pedidos · 8 líneas')).toBeTruthy()
+      expect(screen.getByText('Hoy · 2 pedidos · 8 productos')).toBeTruthy()
       expect(screen.queryByText(/^Filtros:/)).toBeNull()
     })
 
@@ -324,7 +380,7 @@ describe('Pedidos por preparar (solo lectura)', () => {
       hoja = await abrirFiltros()
       await userEvent.press(hoja.getByRole('radio', { name: 'En preparación' }))
       await userEvent.press(hoja.getByRole('button', { name: 'Listo' }))
-      expect(await screen.findByText('Elegí un pedido para ver qué hay que preparar.')).toBeTruthy()
+      expect(await screen.findByText('Elegí un pedido para verlo.')).toBeTruthy()
       expect(screen.queryByText('Pedido A00424')).toBeNull()
     })
 

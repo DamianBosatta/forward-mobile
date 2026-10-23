@@ -3,6 +3,8 @@ import { ActivityIndicator, FlatList, ScrollView, Text, View } from 'react-nativ
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, StatusChip } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
+import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { esFallaDeRed } from '@/core/api/errores'
 import { mostrarNumero } from '@/src/utils/numero'
 import type { StockItem } from '@/libs/api-client/types'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -111,7 +113,11 @@ function StockSinCantidades({ busqueda }: { busqueda: string }) {
   // La búsqueda de esta vista vive en la pantalla; el hook la espera ~300 ms como en el catálogo.
   React.useEffect(() => { setBusqueda(busqueda) }, [busqueda, setBusqueda])
   if (cat.isLoading) return <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
-  if (cat.isError) return <View style={{ padding: space[4] }}><Notice tone="peligro">No se pudo cargar el stock. Revisá la conexión y volvé a intentar.</Notice></View>
+  const sinRed = cat.isError && esFallaDeRed(cat.error)
+  if (sinRed && cat.productos.length === 0) {
+    return <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar el stock" accion={{ label: 'Reintentar', onPress: () => { void cat.refetch() } }} />
+  }
+  if (cat.isError && !sinRed) return <View style={{ padding: space[4] }}><Notice tone="peligro">No se pudo cargar el stock. Revisá la conexión y volvé a intentar.</Notice></View>
   return (
     <FlatList
       data={cat.productos}
@@ -119,12 +125,13 @@ function StockSinCantidades({ busqueda }: { busqueda: string }) {
       onEndReached={cat.cargarMas}
       onEndReachedThreshold={0.5}
       contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] }}
-      ListHeaderComponent={<Notice tone="info">Tu perfil no ve cantidades: se muestra solo si hay o no hay stock.</Notice>}
-      ListEmptyComponent={
-        <Text style={[typeScale.cuerpo, { color: c.textSecondary, textAlign: 'center', marginTop: space[8] }]}>
-          No hay productos que coincidan con la búsqueda.
-        </Text>
+      ListHeaderComponent={
+        <View style={{ gap: space[2] }}>
+          {sinRed ? <Notice tone="advertencia">{textoSinConexion(cat.dataUpdatedAt)}</Notice> : null}
+          <Notice tone="info">Tu perfil no ve cantidades: se muestra solo si hay o no hay stock.</Notice>
+        </View>
       }
+      ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan con la búsqueda." />}
       renderItem={({ item }) => {
         const chip = chipDeStock(cat.disponible.get(item.id))
         return (
@@ -147,6 +154,7 @@ function StockSinCantidades({ busqueda }: { busqueda: string }) {
 function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: boolean }) {
   const c = useColors()
   const s = useStockPorDeposito({ conCantidades: true, busqueda })
+  const sinRed = s.isError && esFallaDeRed(s.error)
   return (
     <View style={{ flex: 1 }}>
       {s.depositos.length > 1 ? (
@@ -168,8 +176,12 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
       </View>
       {s.isLoading ? (
         <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
-      ) : s.isError ? (
-        <View style={{ padding: space[4] }}><Notice tone="peligro">No se pudo cargar el stock. Revisá la conexión y volvé a intentar.</Notice></View>
+      ) : s.isError && !(sinRed && s.filas.length > 0) ? (
+        sinRed ? (
+          <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar el stock" accion={{ label: 'Reintentar', onPress: () => void s.refetch() }} />
+        ) : (
+          <View style={{ padding: space[4] }}><Notice tone="peligro">No se pudo cargar el stock. Revisá la conexión y volvé a intentar.</Notice></View>
+        )
       ) : (
         <FlatList
           data={s.filas}
@@ -177,12 +189,13 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
           onEndReached={s.cargarMas}
           onEndReachedThreshold={0.5}
           contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] }}
-          ListHeaderComponent={tablet ? <CabeceraTablet /> : null}
-          ListEmptyComponent={
-            <Text style={[typeScale.cuerpo, { color: c.textSecondary, textAlign: 'center', marginTop: space[8] }]}>
-              No hay productos que coincidan.
-            </Text>
+          ListHeaderComponent={
+            <>
+              {sinRed ? <Notice tone="advertencia">{textoSinConexion(s.dataUpdatedAt || undefined)}</Notice> : null}
+              {tablet ? <CabeceraTablet /> : null}
+            </>
           }
+          ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan." />}
           ListFooterComponent={s.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : null}
           renderItem={({ item }) => (tablet ? <FilaTablet f={item} /> : <FilaTelefono f={item} />)}
         />

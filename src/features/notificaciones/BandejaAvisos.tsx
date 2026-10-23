@@ -4,6 +4,8 @@ import { useRouter } from 'expo-router'
 import { CheckCheck, Settings } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { Button, FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
+import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { esFallaDeRed } from '@/core/api/errores'
 import { CalendarioAvisosTabs } from '@/core/ui/fw/CalendarioAvisosTabs'
 import { useBandejaAvisos } from '@/libs/api-client/notificaciones'
 import { AvisoFila } from './AvisoFila'
@@ -23,16 +25,21 @@ export function BandejaAvisos() {
   const avisos = q.data?.pages.flatMap((p) => p.items) ?? []
   const noLeidas = q.data?.pages[0]?.noLeidas ?? 0
   const ahora = Date.now()
+  const sinRed = q.isError && esFallaDeRed(q.error)
+  // Sin conexión con avisos ya guardados: se siguen viendo, con un aviso; cualquier otro error los oculta como siempre.
+  const verAvisos = !q.isError || (sinRed && avisos.length > 0)
 
   const vacio = q.isLoading ? (
     <ActivityIndicator color={c.brand} accessibilityLabel="Cargando los avisos" />
+  ) : q.isError && sinRed ? (
+    <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los avisos" accion={{ label: 'Reintentar', onPress: () => void q.refetch() }} />
   ) : q.isError ? (
     <View style={{ gap: space[3] }}>
       <Notice tone="peligro">{mensajeDe(q.error, 'No se pudieron cargar los avisos.')}</Notice>
       <Button label="Reintentar" variant="secundario" onPress={() => void q.refetch()} />
     </View>
   ) : (
-    <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{soloNoLeidas ? 'No tenés avisos sin leer.' : 'No tenés avisos.'}</Text>
+    <EstadoDePantalla tipo="vacio" titulo={soloNoLeidas ? 'No tenés avisos sin leer.' : 'No tenés avisos.'} />
   )
 
   return (
@@ -52,11 +59,16 @@ export function BandejaAvisos() {
       />
       <CalendarioAvisosTabs actual="avisos" sinLeer={noLeidas} onElegir={() => router.push('/calendario' as never)} />
       <FlatList
-        data={q.isError ? [] : avisos}
+        data={verAvisos ? avisos : []}
         keyExtractor={(a) => a.id}
         contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] }}
         refreshControl={<RefreshControl refreshing={q.isRefetching && !q.isFetchingNextPage} onRefresh={() => void q.refetch()} />}
-        ListHeaderComponent={marcar.isError ? <Notice tone="peligro">{mensajeDe(marcar.error, 'No se pudo marcar como leído.')}</Notice> : null}
+        ListHeaderComponent={
+          <>
+            {sinRed && verAvisos ? <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice> : null}
+            {marcar.isError ? <Notice tone="peligro">{mensajeDe(marcar.error, 'No se pudo marcar como leído.')}</Notice> : null}
+          </>
+        }
         ListEmptyComponent={<FormContainer>{vacio}</FormContainer>}
         renderItem={({ item }) => (
           <FormContainer>

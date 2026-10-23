@@ -12,7 +12,8 @@ jest.mock('@/core/api/client', () => ({
   api: { get: (url: string) => mockGet(url), post: (url: string, body: unknown) => mockPost(url, body) },
 }))
 const mockBack = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), back: mockBack }) }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, back: mockBack }) }))
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390, isTablet: false, isTabletLandscape: false, isLarge: false }) }))
 
 const VENTA = {
@@ -28,7 +29,11 @@ const PREVIEW = {
   items: [{ detalleId: 'd1', productoId: 'p1', productoNombre: 'Detergente Magistral', cantidad: 24, precioEfectivo: 2323.2, precioMinimoRentable: 2420, aporteOverhead: null, sacrificio: 96.8 }],
 }
 
+/** Como en la web: decidir pide CAP_AUTORIZAR_VENTA y modificar Ventas (canUpdate), no solo leerlo. */
 function permisos(...modulos: string[]) {
+  useAuthStore.setState({ user: { id: 'u1', username: 'marina', roles: [], permissions: modulos.map((module) => ({ module, canRead: true, canUpdate: module === 'MOD_VENTAS' })) } } as never)
+}
+function permisosSoloLecturaDeVentas(...modulos: string[]) {
   useAuthStore.setState({ user: { id: 'u1', username: 'marina', roles: [], permissions: modulos.map((module) => ({ module, canRead: true })) } } as never)
 }
 
@@ -243,6 +248,29 @@ describe('Autorizar venta: el detalle', () => {
     expect(await screen.findByText(/necesitás el permiso de autorizar ventas/)).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Autorizar' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Rechazar' })).toBeNull()
+  })
+
+  it('con CAP_AUTORIZAR_VENTA pero Ventas solo en lectura no decide (igual que la web: capacidad + modificar Ventas)', async () => {
+    permisosSoloLecturaDeVentas('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+    pintar()
+    expect(await screen.findByText(/Quedó por autorizar porque/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Autorizar' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Rechazar' })).toBeNull()
+    expect(screen.getByText(/permiso de modificar ventas/)).toBeTruthy()
+  })
+
+  it('"Ver cuenta corriente del cliente" lleva a la cuenta del cliente, solo con Cuentas corrientes', async () => {
+    permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA', 'MOD_CC')
+    pintar({ ...VENTA, venta: { ...VENTA.venta, clienteId: 'c9' } })
+    await userEvent.press(await screen.findByRole('link', { name: 'Ver cuenta corriente del cliente' }))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/cuentas/[id]', params: { id: 'c9' } })
+  })
+
+  it('sin Cuentas corrientes no ofrece el enlace a la cuenta', async () => {
+    permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+    pintar({ ...VENTA, venta: { ...VENTA.venta, clienteId: 'c9' } })
+    await screen.findByText(/Quedó por autorizar porque/)
+    expect(screen.queryByRole('link', { name: 'Ver cuenta corriente del cliente' })).toBeNull()
   })
 
   it('al abrir la decisión vuelve a pedir la venta y manda la versión nueva, no la cacheada', async () => {
