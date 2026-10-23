@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '@/core/api/client'
@@ -7,6 +8,9 @@ import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { ventasKeys } from '@/libs/api-client/ventas'
 import { inicioKeys } from '@/core/query/queryClient'
 import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
+import { useAuthStore } from '@/features/auth/store/auth.store'
+import type { ClienteNombrable } from '@/features/clientes/lib/cliente'
+import { encolarSiFaltaSenal, loQueVio } from '@/features/venta-sin-senal'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { aAlta, aAutoguardado, errorDeAltaVenta, nuevaClaveIdempotencia, type Cabecera } from '../lib/payload'
 import { motivosAutorizacion } from '../lib/motivosAutorizacion'
@@ -16,6 +20,8 @@ import type { useBorradorVenta } from './useBorradorVenta'
 
 interface Datos {
   clienteId: string
+  /** Para mostrarlo en Pendientes si la venta queda en el teléfono (V9). */
+  cliente?: ClienteNombrable | null
   esPedido: boolean
   lineas: LineaCarrito[]
   descuentoGeneral: number
@@ -66,6 +72,7 @@ const CLAVE_EN_CURSO = 'Este pedido ya se estaba grabando. Tocá Confirmar de nu
 export function useConfirmarVenta(d: Datos) {
   const router = useRouter()
   const qc = useQueryClient()
+  const usuarioId = useAuthStore((s) => s.user?.id)
   const [clave] = useState(nuevaClaveIdempotencia)
   // Cuerpos (sin la clave) de los intentos de alta que quedaron sin respuesta: alguno pudo grabarse.
   const sinRespuesta = useRef(new Set<string>())
@@ -109,6 +116,15 @@ export function useConfirmarVenta(d: Datos) {
         if (!grabada) {
           // Sin respuesta: no llegó (red) o un gateway cortó (5xx); el alta pudo haberse grabado igual.
           if (!(e instanceof ApiError) || e.status >= 500) sinRespuesta.current.add(firma)
+          // Sin señal (V9): la venta queda en el teléfono con esta misma clave y se manda sola al volver la red.
+          const enCola = encolarSiFaltaSenal(usuarioId, e, { alta: cuerpo(clave), cliente: d.cliente ?? {}, visto: loQueVio(d.lineas, d.descuentoGeneral, d.cabecera.flete) })
+          if (enCola) {
+            b.cerrar()
+            d.alGuardar()
+            Alert.alert('Sin señal', 'La venta queda en el teléfono y se manda sola cuando vuelva la señal. La ves en Pendientes.')
+            router.replace('/(tabs)/ventas' as never)
+            return
+          }
           // La clave sigue siendo la misma: el reintento devuelve la venta o el 409 con código.
           if (claveEnCurso(e)) throw new Error(CLAVE_EN_CURSO)
           throw e

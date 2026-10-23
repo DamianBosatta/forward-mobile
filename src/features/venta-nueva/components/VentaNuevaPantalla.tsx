@@ -100,7 +100,7 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
   const [edicion, setEdicion] = useState<{ ventaId: string; version: number; codigo: string } | null>(null)
   const abrirEf: AbrirEfectivo | undefined = abrir ?? (repetirId ? { modo: 'repetir', ventaId: repetirId } : undefined)
   const conf = useConfirmarVenta({
-    clienteId: cliente?.id ?? '', esPedido: tipo === 'Pedido', lineas, descuentoGeneral: descuentoValido, cabecera: cab.cabecera,
+    clienteId: cliente?.id ?? '', cliente, esPedido: tipo === 'Pedido', lineas, descuentoGeneral: descuentoValido, cabecera: cab.cabecera,
     porcentajeCedido: cab.porcentajeCedido, borrador: b, alGuardar: vaciar, edicion,
   })
   const cuerpoVistaPrevia = useDebouncedValue(cliente && tipo === 'Pedido' && !edicion && lineas.length > 0
