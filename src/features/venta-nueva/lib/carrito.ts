@@ -1,4 +1,5 @@
 import type { CatalogoStockItem } from '@/libs/api-client'
+import { redondear2 } from '@/libs/reglas/dinero'
 import { calcularSubtotalConDescuento } from '@/features/ventas/lib/descuentos'
 
 /**
@@ -81,5 +82,5 @@ export function subtotalLinea(l: LineaCarrito): number {
  * descuento de cada línea). No suma impuestos ni flete: el total real lo calcula el servidor al guardar.
  */
 export function totalEstimado(lineas: LineaCarrito[]): number {
-  return lineas.reduce((acc, l) => acc + subtotalLinea(l), 0)
+  return redondear2(lineas.reduce((acc, l) => acc + subtotalLinea(l), 0))
 }

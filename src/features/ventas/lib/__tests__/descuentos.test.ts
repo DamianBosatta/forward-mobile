@@ -42,6 +42,23 @@ describe('esPrecioValido', () => {
 // ─── calcularSubtotalConDescuento ────────────────────────────────────────────
 
 describe('calcularSubtotalConDescuento', () => {
+  // Bloque 13 (R15): el unitario se redondea a 2 decimales antes del subtotal (espejo de VentaDetalle).
+  it('unitario 8,7598 → 8,76 y el renglón ×1000 es 8760,00', () => {
+    expect(calcularSubtotalConDescuento(8.7598, 1000, 0)).toBe(8760)
+  })
+
+  it('unitario 6,667 → 6,67 y ×3 es 20,01', () => {
+    expect(calcularSubtotalConDescuento(6.667, 3, 0)).toBe(20.01)
+  })
+
+  it('6,67 × 1,5 es 10,01 (en centavos: en binario daría 10,004999…)', () => {
+    expect(calcularSubtotalConDescuento(6.67, 1.5, 0)).toBe(10.01)
+  })
+
+  it('precio entero sin descuento no cambia', () => {
+    expect(calcularSubtotalConDescuento(100, 3, 0)).toBe(300)
+  })
+
   it('0% discount: subtotal equals price * quantity', () => {
     expect(calcularSubtotalConDescuento(100, 3, 0)).toBe(300)
   })
