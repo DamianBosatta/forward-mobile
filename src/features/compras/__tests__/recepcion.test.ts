@@ -1,6 +1,6 @@
 import {
   accionesDeDetalle, calcularVencimiento, CONSECUENCIA, mensajeProblemaFecha, pasosDeCompra, problemaFechaFactura,
-  rangoFechaFactura, textoSuma, unidadesAIngresar,
+  rangoFechaFactura, textoSuma, unidadesAIngresar, llegadasIniciales, MENSAJE_RECEPCION, planDeRecepcion, problemaLlegada, textoFaltante,
 } from '../lib/recepcion'
 
 const todo = { eliminada: false, cantidadLineas: 3, puedeModificar: true, puedeBorrar: true, tieneCapAnular: true }
@@ -110,5 +110,55 @@ describe('consecuencias (texto de la web antes de ejecutar)', () => {
   it('cancelar según el estado', () => {
     expect(CONSECUENCIA.cancelarNotaPedido).toBe('La orden queda cancelada. No tocó stock ni cuenta corriente.')
     expect(CONSECUENCIA.cancelarConfirmada).toMatch(/^Se libera el stock virtual/)
+  })
+})
+
+describe('recepción parcial (R22: lo que falta pasa a una compra nueva)', () => {
+  const detalles = [
+    { id: 'l1', nombreProducto: 'Balde Nuvia 10L', cantidad: 24 },
+    { id: 'l2', nombreProducto: 'Ocean Toalla Rollo', cantidad: 40 },
+  ]
+
+  it('cada línea arranca con lo pedido', () => {
+    expect(llegadasIniciales(detalles)).toEqual({ l1: '24', l2: '40' })
+  })
+
+  it('llegó todo: recepción común, sin líneas y sin nada que pase a otra compra', () => {
+    expect(planDeRecepcion(detalles, llegadasIniciales(detalles))).toEqual({ problema: null, unidades: 64, lineas: null, faltan: [] })
+  })
+
+  it('llegó una parte: manda lo que llegó de cada línea y dice qué falta', () => {
+    expect(planDeRecepcion(detalles, { l1: '24', l2: '30' })).toEqual({
+      problema: null,
+      unidades: 54,
+      lineas: [{ detalleId: 'l1', cantidadRecibida: 24 }, { detalleId: 'l2', cantidadRecibida: 30 }],
+      faltan: [{ nombreProducto: 'Ocean Toalla Rollo', cantidad: 10 }],
+    })
+  })
+
+  it('una línea que no llegó va con 0 y pasa entera a la compra nueva', () => {
+    const plan = planDeRecepcion(detalles, { l1: '0', l2: '40' })
+    expect(plan).toMatchObject({ unidades: 40, lineas: [{ detalleId: 'l1', cantidadRecibida: 0 }, { detalleId: 'l2', cantidadRecibida: 40 }] })
+    expect(plan.problema === null && plan.faltan).toEqual([{ nombreProducto: 'Balde Nuvia 10L', cantidad: 24 }])
+  })
+
+  it('lee la coma decimal', () => {
+    expect(planDeRecepcion([{ id: 'l1', nombreProducto: 'Cera', cantidad: 2.5 }], { l1: '1,5' }))
+      .toMatchObject({ problema: null, lineas: [{ detalleId: 'l1', cantidadRecibida: 1.5 }], faltan: [{ nombreProducto: 'Cera', cantidad: 1 }] })
+  })
+
+  it.each([['', 'invalida'], ['abc', 'invalida'], ['-1', 'invalida'], ['41', 'mas-de-lo-pedido']])('"%s" en una línea: %s', (texto, problema) => {
+    expect(problemaLlegada(texto, 40)).toBe(problema)
+    expect(planDeRecepcion(detalles, { l1: '24', l2: texto })).toEqual({ problema: 'linea' })
+  })
+
+  it('no llegó nada: no hay recepción', () => {
+    expect(planDeRecepcion(detalles, { l1: '0', l2: '0' })).toEqual({ problema: 'nada' })
+    expect(MENSAJE_RECEPCION.nada).toBe('No llegó nada: para recibir tiene que haber llegado al menos una línea.')
+  })
+
+  it('el resumen de lo que pasa a la compra nueva', () => {
+    expect(textoFaltante([{ nombreProducto: 'Ocean Toalla Rollo', cantidad: 10 }, { nombreProducto: 'Make Lavajean', cantidad: 1 }]))
+      .toBe('Lo que falta pasa a una compra nueva del mismo proveedor, confirmada y con los mismos costos: 10 de Ocean Toalla Rollo, 1 de Make Lavajean.')
   })
 })

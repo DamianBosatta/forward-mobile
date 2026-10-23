@@ -10,6 +10,8 @@ export interface DatosResumen {
   cobros: { medio: string; monto: number; conFoto: boolean }[]
   firmada: boolean
   aDeudaAnterior: boolean
+  /** "No cobré: <motivo>" (C2), si el chofer no cobró lo que había para cobrar. */
+  noCobro?: string | null
 }
 
 function Fila({ izq, der, fuerte }: { izq: string; der?: string; fuerte?: boolean }) {
@@ -48,6 +50,7 @@ export function ResumenEntrega({ d }: { d: DatosResumen }) {
       ) : null}
       <View style={bloque}>
         <Text style={{ ...typeScale.seccion, color: c.text }}>Cobro</Text>
+        {d.noCobro ? <Fila izq={d.noCobro} fuerte /> : null}
         {d.cobros.length === 0 ? <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Sin cobro: el pedido queda en la cuenta del cliente.</Text> : null}
         {d.cobros.map((x, i) => (
           <Fila key={i} izq={x.medio} der={formatImporte(x.monto)} />

@@ -4,6 +4,7 @@
  * `ui/CompraDetalle.tsx`, `core/domain/fecha-factura.ts` y `core/domain/vencimiento-estimado.ts`.
  * Deciden qué se ofrece; el servidor vuelve a chequear cada transición y es el que manda.
  */
+import { leerNumero, mostrarNumero, numeroCompleto } from '@/src/utils/numero'
 
 export interface PasoCompra { label: string; estado: 'hecho' | 'actual' | 'pendiente' }
 
@@ -57,6 +58,53 @@ export const CONSECUENCIA = {
 /** Unidades que entran al stock al recibir: `cantidad` ya viene en unidades (un bulto de 12 pedido x2 es 24). */
 export const unidadesAIngresar = (detalles: readonly { cantidad: number }[]) =>
   detalles.reduce((suma, d) => suma + d.cantidad, 0)
+
+// ── Recepción parcial (R22): lo que llegó se recibe, lo que falta pasa a una compra nueva ───────────
+// El servidor (POST /Compras/{id}/recibir-parcial, Compra.SepararFaltante) vuelve a chequear el rango
+// y que algo haya llegado; acá se dice antes de mandar. Las cantidades van en unidades, como `cantidad`.
+
+interface LineaPedida { id: string; nombreProducto: string; cantidad: number }
+/** Lo que el usuario escribió en "Llegó", por id de línea. */
+export type Llegadas = Record<string, string>
+export interface LineaRecibida { detalleId: string; cantidadRecibida: number }
+export interface Faltante { nombreProducto: string; cantidad: number }
+export type PlanDeRecepcion =
+  | { problema: 'linea' | 'nada' }
+  | { problema: null; unidades: number; lineas: LineaRecibida[] | null; faltan: Faltante[] }
+
+export const MENSAJE_LLEGADA = {
+  invalida: 'Escribí cuánto llegó (0 si no llegó nada).',
+  'mas-de-lo-pedido': 'No puede llegar más de lo pedido.',
+} as const
+export const MENSAJE_RECEPCION = {
+  nada: 'No llegó nada: para recibir tiene que haber llegado al menos una línea.',
+} as const
+
+/** Cada línea arranca con lo pedido. */
+export const llegadasIniciales = (detalles: readonly LineaPedida[]): Llegadas =>
+  Object.fromEntries(detalles.map((d) => [d.id, numeroCompleto(d.cantidad)]))
+
+export function problemaLlegada(texto: string, pedido: number): keyof typeof MENSAJE_LLEGADA | null {
+  const n = leerNumero(texto)
+  if (n === null) return 'invalida'
+  return n > pedido ? 'mas-de-lo-pedido' : null
+}
+
+/** Qué se manda: nada de líneas si llegó todo (la recepción de siempre), o lo que llegó de cada línea. */
+export function planDeRecepcion(detalles: readonly LineaPedida[], llegadas: Llegadas): PlanDeRecepcion {
+  if (detalles.some((d) => problemaLlegada(llegadas[d.id] ?? '', d.cantidad))) return { problema: 'linea' }
+  const lineas = detalles.map((d) => ({ detalleId: d.id, cantidadRecibida: leerNumero(llegadas[d.id])! }))
+  const unidades = lineas.reduce((suma, l) => suma + l.cantidadRecibida, 0)
+  if (unidades === 0) return { problema: 'nada' }
+  const faltan = detalles
+    .map((d, i) => ({ nombreProducto: d.nombreProducto, cantidad: Math.round((d.cantidad - lineas[i].cantidadRecibida) * 1e6) / 1e6 }))
+    .filter((f) => f.cantidad > 0)
+  return { problema: null, unidades, lineas: faltan.length ? lineas : null, faltan }
+}
+
+export const textoFaltante = (faltan: readonly Faltante[]) =>
+  `Lo que falta pasa a una compra nueva del mismo proveedor, confirmada y con los mismos costos: ${faltan
+    .map((f) => `${mostrarNumero(f.cantidad)} de ${f.nombreProducto}`).join(', ')}.`
 
 export const textoSuma = (unidades: number) =>
   `Suma ${unidades} ${unidades === 1 ? 'unidad' : 'unidades'} al stock y genera la deuda con el proveedor`

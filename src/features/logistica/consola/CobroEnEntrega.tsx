@@ -5,7 +5,7 @@ import { Button, formatImporte, Field, Notice, Segmented } from '@/core/ui/fw'
 import type { MedioCobroChofer } from '@/libs/api-client/logistica'
 import { ElegirChip } from '@/features/cuentas/components/ElegirChip'
 import { FotoEntrega } from './FotoEntrega'
-import type { ChequeForm, Imputacion, LineaCobroForm } from './entrega'
+import { MAX_OTRO_NO_COBRO, MOTIVOS_NO_COBRO, type ChequeForm, type Imputacion, type LineaCobroForm, type MotivoNoCobro, type NoCobroForm } from './entrega'
 
 interface Props {
   medios: MedioCobroChofer[] | undefined
@@ -25,11 +25,35 @@ interface Props {
   aviso?: string | null
   /** Paso E4 ("paga lo anterior y firma lo actual"): el cobro va a la deuda vieja. */
   porDeudaAnterior?: boolean
+  /** Lámina ChoferEntrega (C2): "No cobré" con su motivo. Solo se ofrece si hay algo para cobrar (`aCobrar`). */
+  noCobro?: NoCobroForm | null
+  onNoCobro?: (n: NoCobroForm | null) => void
 }
 
+type Cobro = 'cobre' | 'noCobre'
+
 /** Lo que cobró el chofer: una o varias líneas (efectivo, transferencia, cheque). El servidor imputa y valida. */
-export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLineas, onImputacion, onSubiendo, hoy, aCobrar, repartido, aviso, porDeudaAnterior }: Props) {
+export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLineas, onImputacion, onSubiendo, hoy, aCobrar, repartido, aviso, porDeudaAnterior, noCobro, onNoCobro }: Props) {
   const c = useColors()
+  const ofreceNoCobre = aCobrar != null && !!onNoCobro
+  if (ofreceNoCobre && noCobro) {
+    return (
+      <View accessibilityLabel="Cobro" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[3] }}>
+        <EncabezadoCobro aCobrar={aCobrar} />
+        <ElegirCobro valor="noCobre" onCambio={(v) => onNoCobro(v === 'noCobre' ? noCobro : null)} />
+        <ElegirChip
+          titulo="Por qué no cobró"
+          opciones={MOTIVOS_NO_COBRO.map((m) => ({ id: m, label: m }))}
+          valor={noCobro.motivo}
+          onCambio={(id) => onNoCobro({ ...noCobro, motivo: id as MotivoNoCobro })}
+        />
+        {noCobro.motivo === 'Otro' ? (
+          <Field label="Por qué no cobraste" value={noCobro.otro} onChangeText={(otro) => onNoCobro({ ...noCobro, otro })} maxLength={MAX_OTRO_NO_COBRO} />
+        ) : null}
+        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>El motivo queda en las observaciones de la entrega y el pedido, en la cuenta del cliente.</Text>
+      </View>
+    )
+  }
   const cambiar = (i: number, cambio: Partial<LineaCobroForm>) => onLineas(lineas.map((l, j) => (j === i ? { ...l, ...cambio } : l)))
   const cambiarCheque = (i: number, campo: keyof ChequeForm) => (v: string) =>
     cambiar(i, { cheque: { ...lineas[i].cheque, [campo]: v } })
@@ -38,15 +62,8 @@ export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLine
 
   return (
     <View accessibilityLabel="Cobro" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[3] }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <Text style={{ ...typeScale.seccion, color: c.text }}>Cobro</Text>
-        {aCobrar != null ? (
-          <Text accessibilityLabel="A cobrar hoy" style={{ ...typeScale.secundario, color: c.textSecondary }}>
-            {'A cobrar hoy '}
-            <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{formatImporte(aCobrar)}</Text>
-          </Text>
-        ) : null}
-      </View>
+      <EncabezadoCobro aCobrar={aCobrar} />
+      {ofreceNoCobre ? <ElegirCobro valor="cobre" onCambio={(v) => v === 'noCobre' && onNoCobro({ motivo: null, otro: '' })} /> : null}
       {lineas.length === 0 ? (
         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Sin cobro: el pedido queda en la cuenta del cliente.</Text>
       ) : null}
@@ -107,5 +124,34 @@ export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLine
         />
       ) : null}
     </View>
+  )
+}
+
+function EncabezadoCobro({ aCobrar }: { aCobrar?: number | null }) {
+  const c = useColors()
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+      <Text style={{ ...typeScale.seccion, color: c.text }}>Cobro</Text>
+      {aCobrar != null ? (
+        <Text accessibilityLabel="A cobrar hoy" style={{ ...typeScale.secundario, color: c.textSecondary }}>
+          {'A cobrar hoy '}
+          <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{formatImporte(aCobrar)}</Text>
+        </Text>
+      ) : null}
+    </View>
+  )
+}
+
+function ElegirCobro({ valor, onCambio }: { valor: Cobro; onCambio: (v: Cobro) => void }) {
+  return (
+    <Segmented<Cobro>
+      accessibilityLabel="¿Cobró?"
+      value={valor}
+      onChange={onCambio}
+      options={[
+        { value: 'cobre', label: 'Cobré' },
+        { value: 'noCobre', label: 'No cobré' },
+      ]}
+    />
   )
 }

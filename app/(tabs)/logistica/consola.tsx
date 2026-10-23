@@ -223,6 +223,7 @@ export default function ConsolaChoferScreen() {
         entregado: false,
         motivoRechazo: r.motivoRechazo,
         observaciones: r.observaciones,
+        evidenciaUrl: r.evidenciaUrl,
       })
       updateStopStatus(parada.id, { delivered: false, observations: r.observaciones, reason: r.motivoRechazo })
       setReportando(null)

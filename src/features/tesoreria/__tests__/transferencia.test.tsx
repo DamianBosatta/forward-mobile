@@ -245,3 +245,27 @@ describe('M15 Transferencia: permiso y aclaración (web)', () => {
     expect(screen.getByRole('button', { name: 'Registrar movimiento' }).props.accessibilityState?.disabled).toBe(false)
   })
 })
+
+describe('N.º de operación (opcional): viaja dentro de observaciones', () => {
+  async function registrarCon(numero: string, nota: string) {
+    renderConQuery(<Transferencia onListo={jest.fn()} />)
+    await userEvent.press(await screen.findByRole('radio', { name: 'Transferencia' }, ESPERA))
+    await userEvent.press(radio('Desde', /^Caja de Emanuel/))
+    await userEvent.press(radio('Hacia', /^Banco Galicia/))
+    fireEvent.changeText(screen.getByLabelText('Monto'), '1000')
+    if (numero) fireEvent.changeText(screen.getByLabelText('N.º de operación (opcional)'), numero)
+    if (nota) fireEvent.changeText(screen.getByLabelText('Observaciones (opcional)'), nota)
+    await userEvent.press(screen.getByRole('button', { name: 'Registrar movimiento' }))
+    return post.mock.calls[0][1].observaciones
+  }
+
+  it('con número y nota manda "Op. <número> · <nota>"', async () => {
+    expect(await registrarCon('12345', 'Pago a proveedor')).toBe('Op. 12345 · Pago a proveedor')
+  })
+  it('con solo el número manda "Op. <número>"', async () => {
+    expect(await registrarCon(' 12345 ', '')).toBe('Op. 12345')
+  })
+  it('con solo la nota manda la nota', async () => {
+    expect(await registrarCon('', 'Pago a proveedor')).toBe('Pago a proveedor')
+  })
+})

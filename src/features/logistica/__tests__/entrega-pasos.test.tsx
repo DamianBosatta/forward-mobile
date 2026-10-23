@@ -4,6 +4,7 @@ import { render, screen, userEvent, waitFor, within, act, fireEvent } from '@tes
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { conTema } from '@/core/ui/fw/__testing__/tema'
+import { reiniciarCamara, sacarFoto } from '@/features/logistica/__testing__/camara'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
 import { armarEntrega } from '../consola/entrega'
 
@@ -29,11 +30,7 @@ jest.mock('@react-navigation/native', () => ({
 }))
 jest.mock('@/features/logistica/components/PedidoDetalleModal', () => ({ PedidoDetalleModal: () => null }))
 jest.mock('@/features/pedidos/lib/sharePdf', () => ({ sharePdf: jest.fn() }))
-const mockCamara = jest.fn()
-jest.mock('expo-image-picker', () => ({
-  requestCameraPermissionsAsync: () => Promise.resolve({ granted: true }),
-  launchCameraAsync: () => mockCamara(),
-}))
+jest.mock('expo-camera', () => require('@/features/logistica/__testing__/camara').expoCameraSimulada)
 
 const parada = (o: { id: string } & Record<string, unknown>) => ({
   ventaId: 'v', telefono: '', cantidadBultos: 1, latitud: 0, longitud: 0, estado: 1, montoTotal: 1000, ...o,
@@ -90,9 +87,8 @@ beforeEach(() => {
   jest.clearAllMocks()
   useLogisticaStore.setState({ activeTrip: null })
   conTema('light')
-  let n = 0
+  reiniciarCamara()
   let subidas = 0
-  mockCamara.mockImplementation(() => Promise.resolve({ canceled: false, assets: [{ uri: `file:///foto-${++n}.jpg` }] }))
   mockPost.mockImplementation(async (url: string) => {
     if (url === '/api/v1/Media/upload-entrega') return { url: `https://r2.test/entregas/up-${++subidas}.jpg` }
     return { paradaId: 'p1' }
@@ -127,7 +123,7 @@ describe('E1 Reportar entrega', () => {
     await userEvent.press(screen.getByLabelText('No, recibió todo'))
     expect(deshabilitado(continuar())).toBe(true)
     expect(screen.getByText('Falta la foto del remito')).toBeTruthy()
-    await userEvent.press(screen.getByLabelText('Sacar foto del remito firmado'))
+    await sacarFoto('Sacar foto del remito firmado')
     await screen.findByText('Foto del remito firmado cargada')
     expect(deshabilitado(continuar())).toBe(false)
   })
@@ -224,7 +220,7 @@ describe('E3 Cobro mixto', () => {
     await cargarEfectivo('1500')
     expect(screen.getByText('Sobran $ 500,00')).toBeTruthy()
     await userEvent.press(screen.getByLabelText('Firma del cliente'))
-    await userEvent.press(screen.getByLabelText('Sacar foto de la firma del cliente'))
+    await sacarFoto('Sacar foto de la firma del cliente')
     await screen.findByText('Foto de la firma del cliente cargada')
     expect(screen.getByText('Sobran $ 500,00')).toBeTruthy()
     await userEvent.press(screen.getByLabelText('Firma del cliente'))
@@ -251,7 +247,7 @@ describe('E3 Cobro mixto', () => {
     expect(deshabilitado(continuar())).toBe(true)
     expect(screen.getByText('Falta la foto de la firma')).toBeTruthy()
     expect(screen.queryByText(/^Faltan/)).toBeNull()
-    await userEvent.press(screen.getByLabelText('Sacar foto de la firma del cliente'))
+    await sacarFoto('Sacar foto de la firma del cliente')
     await screen.findByText('Foto de la firma del cliente cargada')
     expect(deshabilitado(continuar())).toBe(false)
   })
@@ -266,7 +262,7 @@ describe('E3 Cobro mixto', () => {
       url === '/api/v1/Media/upload-entrega' ? new Promise((r) => { soltar = r }) : Promise.resolve({ paradaId: 'p1' }),
     )
     await userEvent.press(screen.getByLabelText('Firma del cliente'))
-    await userEvent.press(screen.getByLabelText('Sacar foto de la firma del cliente'))
+    await sacarFoto('Sacar foto de la firma del cliente')
     await userEvent.press(screen.getByLabelText('Firma del cliente'))
     await act(async () => { soltar({ url: 'https://r2.test/entregas/tarde.jpg' }) })
     await waitFor(() => expect(deshabilitado(continuar())).toBe(false))
@@ -287,7 +283,7 @@ describe('E3 Cobro mixto', () => {
     await userEvent.type(screen.getByLabelText('Monto del cobro 1'), '1000')
     expect(deshabilitado(continuar())).toBe(true)
     expect(screen.getByText('Falta la foto del comprobante de la transferencia (cobro 1).')).toBeTruthy()
-    await userEvent.press(screen.getByLabelText('Sacar foto del comprobante del cobro 1'))
+    await sacarFoto('Sacar foto del comprobante del cobro 1')
     await screen.findByText('Foto del comprobante del cobro 1 cargada')
     expect(deshabilitado(continuar())).toBe(false)
   })
@@ -395,10 +391,10 @@ describe('E6 Confirmar entrega', () => {
     await userEvent.press(screen.getByLabelText('Agregar cobro'))
     await userEvent.press(within(screen.getByLabelText('Medio del cobro 2')).getByLabelText('Transferencia'))
     await userEvent.type(screen.getByLabelText('Monto del cobro 2'), '100')
-    await userEvent.press(screen.getByLabelText('Sacar foto del comprobante del cobro 2'))
+    await sacarFoto('Sacar foto del comprobante del cobro 2')
     await screen.findByText('Foto del comprobante del cobro 2 cargada')
     await userEvent.press(screen.getByLabelText('Firma del cliente'))
-    await userEvent.press(screen.getByLabelText('Sacar foto de la firma del cliente'))
+    await sacarFoto('Sacar foto de la firma del cliente')
     await screen.findByText('Foto de la firma del cliente cargada')
     await userEvent.press(continuar())
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))

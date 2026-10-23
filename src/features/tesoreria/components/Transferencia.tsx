@@ -21,6 +21,13 @@ export const AVISO_COBRO_DE_CLIENTE = 'Igual que en la web. Si un cliente te pag
 /** Espera antes de preguntar el saldo que queda, para no pedirlo con cada tecla del monto. */
 const ESPERA_SALDO_MS = 400
 
+/** El N.º de operación no tiene campo en el servidor: viaja delante de la nota, como "Op. 123 · nota". */
+export function observacionesConOperacion(operacion: string, nota: string): string | null {
+  const op = operacion.trim()
+  const texto = nota.trim()
+  return [op ? `Op. ${op}` : '', texto].filter(Boolean).join(' · ') || null
+}
+
 /**
  * Movimiento entre cuentas propias (lámina Transferencia): tipo del catálogo, desde, hacia, monto
  * y observaciones. Sin destino la plata sale del sistema y hay que decir quién se la lleva.
@@ -40,6 +47,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
   const [destino, setDestino] = useState<string | null>(null)
   const [monto, setMonto] = useState('')
   const [observaciones, setObservaciones] = useState('')
+  const [operacion, setOperacion] = useState('')
   const [retira, setRetira] = useState('')
   const [aviso, setAviso] = useState<string | null>(null)
   const [hecho, setHecho] = useState(false)
@@ -74,7 +82,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
         cuentaOrigenId: origen,
         cuentaDestinoId: sale ? null : destino,
         monto: n,
-        observaciones: observaciones.trim() || null,
+        observaciones: observacionesConOperacion(operacion, observaciones),
         retiradoPorNombre: sale ? retira.trim() : null,
       },
       { onSuccess: () => setHecho(true) },
@@ -112,6 +120,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
         {destino === SIN_DESTINO ? <Field label="Quién se la lleva" value={retira} onChangeText={setRetira} /> : null}
 
         {restante.data && nombreOrigen && restante.data.monto === leerNumero(monto) ? <SaldoQueQueda saldo={restante.data} cuenta={nombreOrigen} /> : null}
+        <Field label="N.º de operación (opcional)" value={operacion} onChangeText={setOperacion} />
         <Field label="Observaciones (opcional)" value={observaciones} onChangeText={setObservaciones} />
 
         {aviso ? <Notice tone="advertencia">{aviso}</Notice> : null}

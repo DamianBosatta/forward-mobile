@@ -1,4 +1,5 @@
 import type { RegistrarPagoMultilineaCommand } from '@/libs/api-client/types'
+import { formatImporte } from '@/core/ui/fw/formatImporte'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
 
 /** "7/10/2026" o "07/10/2026" → "2026-10-07" (día argentino, como lo interpreta el servidor). */
@@ -34,6 +35,19 @@ export interface FormCobro {
   chequeFotoUrl: string | null
   /** Imputación manual: id del comprobante → monto tipeado, en el orden en que se eligieron. Null = automática. */
   imputaciones: Record<string, string> | null
+  /**
+   * Cobro combinado (lámina ResCobro, "Podés combinar"): los medios que se suman al primero, cada uno con su
+   * monto. Vacío = cobro de un medio. Sin cheque (el servidor no acepta cheques en un cobro de varias líneas)
+   * ni cuenta propia elegida: la cuenta la pone el servidor según el medio.
+   */
+  otrosMedios: OtroMedio[]
+}
+
+export interface OtroMedio {
+  medioPagoId: string | null
+  monto: string
+  esCheque: boolean
+  requiereCaja: boolean
 }
 
 export interface ChequeRecibido {
@@ -59,7 +73,7 @@ interface LineaCobro {
 }
 
 /**
- * Cuerpo de `POST /Finanzas/pagos/multilinea` con una sola línea. No lleva `tipoCuenta`: sin
+ * Cuerpo de `POST /Finanzas/pagos/multilinea`: una línea por medio (una sola, salvo el cobro combinado). No lleva `tipoCuenta`: sin
  * `imputaciones`, el servidor elige la cuenta de la deuda más vieja e imputa solo (FIFO); con ellas,
  * usa la cuenta de los comprobantes elegidos.
  */
@@ -81,6 +95,21 @@ export interface CobroPayload {
 export const SIN_COMPROBANTES = 'Elegí al menos un comprobante o volvé a la imputación automática.'
 export const MONTO_IMPUTADO_INVALIDO = 'Revisá el monto a imputar de cada comprobante.'
 export const IMPUTADO_DE_MAS = 'Lo imputado no puede superar el monto del cobro.'
+/** Mismos textos que la web (`validar-registro-pago.ts`, validarLineasMultilinea). */
+export const LINEA_INCOMPLETA = 'Hay líneas incompletas: completá el medio y el monto, o quitalas.'
+export const CHEQUE_SOLO_EN_UN_MEDIO = 'El cheque se carga en un cobro de un solo medio: sacá esa línea o usá el cobro simple.'
+
+/** Alguna línea del cobro (la primera o las otras) entra a una caja de efectivo. */
+export const entraACaja = (f: Pick<FormCobro, 'requiereCaja' | 'otrosMedios'>) => f.requiereCaja || f.otrosMedios.some(o => o.requiereCaja)
+
+/** Las otras líneas del cobro combinado, validadas; el cheque no se combina (A-1114 en el servidor). */
+function armarOtrosMedios(f: FormCobro): { lineas: LineaCobro[] } | { error: string } {
+  if (f.otrosMedios.length === 0) return { lineas: [] }
+  const lineas = f.otrosMedios.map(o => ({ medioPagoId: o.medioPagoId, monto: leerNumero(o.monto) }))
+  if (lineas.some(l => !l.medioPagoId || l.monto === null || l.monto <= 0)) return { error: LINEA_INCOMPLETA }
+  if (f.esCheque || f.otrosMedios.some(o => o.esCheque)) return { error: CHEQUE_SOLO_EN_UN_MEDIO }
+  return { lineas: lineas.map(l => ({ medioPagoId: l.medioPagoId!, monto: l.monto! })) }
+}
 
 /** Las imputaciones manuales elegidas; `undefined` con la automática. Cuánto se puede imputar a cada uno lo valida el servidor. */
 function armarImputaciones(elegidas: FormCobro['imputaciones'], total: number): { imputaciones?: ImputacionCobro[] } | { error: string } {
@@ -115,7 +144,10 @@ export function armarCobro(socioId: string, f: FormCobro, claveIdempotencia?: st
   const monto = leerNumero(f.monto)
   if (monto === null || monto <= 0) return { error: 'Ingresá el monto del cobro.' }
   if (!f.medioPagoId) return { error: 'Elegí el medio de pago.' }
-  const imputacion = armarImputaciones(f.imputaciones, monto)
+  const otros = armarOtrosMedios(f)
+  if ('error' in otros) return otros
+  const total = otros.lineas.reduce((s, l) => s + l.monto, monto)
+  const imputacion = armarImputaciones(f.imputaciones, total)
   if ('error' in imputacion) return imputacion
   const cheque = f.esCheque ? armarCheque(f, monto) : null
   if (cheque && 'error' in cheque) return cheque
@@ -130,11 +162,28 @@ export function armarCobro(socioId: string, f: FormCobro, claveIdempotencia?: st
     payload: {
       socioComercialId: socioId,
       referencia: f.referencia.trim() || undefined,
-      ...(f.requiereCaja && f.depositoId ? { depositoId: f.depositoId } : {}),
+      ...(entraACaja(f) && f.depositoId ? { depositoId: f.depositoId } : {}),
       ...(claveIdempotencia ? { claveIdempotencia } : {}),
       ...(f.comprobanteUrl ? { comprobanteUrl: f.comprobanteUrl } : {}),
       ...imputacion,
-      lineas: [linea],
+      lineas: [linea, ...otros.lineas],
     },
   }
+}
+
+export const NO_ES_FISCAL = 'Constancia de cobro, no es un comprobante fiscal.'
+
+export interface LineaDeRecibo { medio: string; monto: number }
+
+/** Texto plano del recibo que se manda por el menú de compartir; no es un comprobante fiscal. */
+export function textoDeRecibo(r: { cliente: string; fecha: string; total: number; lineas: LineaDeRecibo[]; cuenta?: string | null }): string {
+  const medios = r.lineas.map(l => `${l.medio} ${formatImporte(l.monto)}`).join(' + ')
+  return [
+    `Recibo de cobro - ${r.cliente}`,
+    `Fecha: ${r.fecha}`,
+    `Total: ${formatImporte(r.total)}`,
+    medios ? `Medios: ${medios}` : null,
+    r.cuenta ? `Cuenta: ${r.cuenta}` : null,
+    NO_ES_FISCAL,
+  ].filter(Boolean).join('\n')
 }

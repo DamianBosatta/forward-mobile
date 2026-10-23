@@ -4,6 +4,7 @@ import { render, screen, userEvent, waitFor, within } from '@testing-library/rea
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { conTema } from '@/core/ui/fw/__testing__/tema'
+import { reiniciarCamara, sacarFoto } from '@/features/logistica/__testing__/camara'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
 
 /**
@@ -29,11 +30,7 @@ jest.mock('@react-navigation/native', () => ({
 }))
 jest.mock('@/features/logistica/components/PedidoDetalleModal', () => ({ PedidoDetalleModal: () => null }))
 jest.mock('@/features/pedidos/lib/sharePdf', () => ({ sharePdf: jest.fn() }))
-const mockCamara = jest.fn()
-jest.mock('expo-image-picker', () => ({
-  requestCameraPermissionsAsync: () => Promise.resolve({ granted: true }),
-  launchCameraAsync: () => mockCamara(),
-}))
+jest.mock('expo-camera', () => require('@/features/logistica/__testing__/camara').expoCameraSimulada)
 
 const parada = (o: { id: string } & Record<string, unknown>) => ({
   ventaId: 'v', telefono: '', cantidadBultos: 1, latitud: 0, longitud: 0, estado: 1, montoTotal: 1000, ...o,
@@ -94,8 +91,7 @@ beforeEach(() => {
   jest.clearAllMocks()
   useLogisticaStore.setState({ activeTrip: null })
   conTema('light')
-  let n = 0
-  mockCamara.mockImplementation(() => Promise.resolve({ canceled: false, assets: [{ uri: `file:///foto-${++n}.jpg` }] }))
+  reiniciarCamara()
 })
 
 describe('Consola del chofer: entrega con la operación única', () => {
@@ -138,7 +134,7 @@ describe('Consola del chofer: entrega con la operación única', () => {
     expect(screen.getByText('Falta la foto del remito')).toBeTruthy()
     expect(within(screen.getByLabelText('Foto del remito')).getByText('Obligatoria')).toBeTruthy()
 
-    await userEvent.press(screen.getByLabelText('Sacar foto del remito firmado'))
+    await sacarFoto('Sacar foto del remito firmado')
     expect(await screen.findByText('Foto del remito firmado cargada')).toBeTruthy()
     // Lámina ChoferListo: miniatura, hora de la foto y sección en Lista.
     expect(screen.getByLabelText('Miniatura de la foto del remito firmado')).toBeTruthy()
@@ -176,11 +172,11 @@ describe('Consola del chofer: entrega con la operación única', () => {
     expect(await screen.findByText(/Falta la foto del comprobante de la transferencia \(cobro 2\)/)).toBeTruthy()
     expect(llamadasA(ENTREGAR)).toHaveLength(0)
 
-    await userEvent.press(screen.getByLabelText('Sacar foto del comprobante del cobro 2'))
+    await sacarFoto('Sacar foto del comprobante del cobro 2')
     await screen.findByText('Foto del comprobante del cobro 2 cargada')
     await userEvent.press(screen.getByLabelText('A la deuda anterior'))
     await userEvent.press(screen.getByLabelText('Firma del cliente'))
-    await userEvent.press(screen.getByLabelText('Sacar foto de la firma del cliente'))
+    await sacarFoto('Sacar foto de la firma del cliente')
     await screen.findByText('Foto de la firma del cliente cargada')
     await continuar()
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))

@@ -1,5 +1,5 @@
-import React from 'react'
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import React, { useState } from 'react'
+import { ActivityIndicator, ScrollView, Share, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, FormContainer, Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
 import type { SocioDetailDto } from '@/libs/api-client/types'
@@ -7,6 +7,8 @@ import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cl
 import { useEstadoCuentaSocio } from '../api/queries'
 import { useCuentaDelPago, useImputadoDelPago, type CobroRegistrado } from '../api/cobros'
 import { textoImputacion } from '../lib/movimientos'
+import { textoDeRecibo, type LineaDeRecibo } from '../lib/cobro'
+import { hoyTexto } from '@/features/compras/lib/fecha'
 
 export const SIN_CUENTA_CONFIRMADA = 'No se pudo confirmar en qué cuenta quedó: fijate en los movimientos de la cuenta corriente.'
 export const COBRO_YA_ESTABA = 'Este cobro ya estaba registrado: no se cargó de nuevo.'
@@ -18,6 +20,8 @@ interface Props {
   cobro: CobroRegistrado
   monto: number
   medio: string
+  /** Monto de cada medio cobrado, para el recibo que se manda. */
+  lineas?: LineaDeRecibo[]
   /** Se eligieron los comprobantes: la cuenta es la de ellos, no la de la deuda más vieja. */
   imputacionManual?: boolean
   onVolver: () => void
@@ -25,13 +29,30 @@ interface Props {
 }
 
 /** Cobro registrado (lámina CobroListo): en qué cuenta quedó según el servidor y el saldo nuevo. */
-export function CobroListo({ cliente, cobro, monto, medio, imputacionManual, onVolver, onOtro }: Props) {
+export function CobroListo({ cliente, cobro, monto, medio, lineas, imputacionManual, onVolver, onOtro }: Props) {
   const c = useColors()
   // Un cobro anulado ya no está en ninguna cuenta: no se busca dónde quedó.
   const { cuenta, buscando } = useCuentaDelPago(cobro.anulado ? { ...cobro, pagoId: null } : cobro, cliente)
   const imputado = useImputadoDelPago(cobro.anulado ? null : cobro.pagoId, cuenta, cliente)
   const textoImputado = textoImputacion(imputado.data)
   const estado = useEstadoCuentaSocio(cliente.id, !!cliente.puedeVerCuentaCorriente)
+  const [falloRecibo, setFalloRecibo] = useState(false)
+
+  const mandarRecibo = async () => {
+    setFalloRecibo(false)
+    try {
+      const message = textoDeRecibo({
+        cliente: `${nombreDelCliente(cliente)} (${direccionDeEntrega(cliente)})`,
+        fecha: hoyTexto(),
+        total: monto,
+        lineas: lineas?.length ? lineas : [{ medio: medio || 'Cobro', monto }],
+        cuenta: cuenta ? (cuenta === 'Tst' ? 'TST' : 'Normal') : null,
+      })
+      await Share.share({ message })
+    } catch {
+      setFalloRecibo(true)
+    }
+  }
 
   return (
     <ScrollView contentContainerStyle={{ padding: space[4] }}>
@@ -70,6 +91,8 @@ export function CobroListo({ cliente, cobro, monto, medio, imputacionManual, onV
           </View>
         ) : null}
 
+        {cobro.anulado || cobro.conLoDeAntes ? null : <Button label="Mandar recibo" variant="secundario" onPress={mandarRecibo} />}
+        {falloRecibo ? <Notice tone="advertencia">No se pudo abrir el menú de compartir. Probá de nuevo.</Notice> : null}
         <Button label="Volver a la cuenta corriente" onPress={onVolver} />
         <Button label="Registrar otro cobro" variant="secundario" onPress={onOtro} />
       </FormContainer>
