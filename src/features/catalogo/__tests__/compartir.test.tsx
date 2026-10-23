@@ -10,7 +10,10 @@ jest.mock('expo-file-system/legacy', () => ({ cacheDirectory: 'file:///cache/', 
 const mockShare = jest.fn()
 jest.mock('expo-sharing', () => ({ isAvailableAsync: () => Promise.resolve(true), shareAsync: (...a: unknown[]) => mockShare(...a) }))
 const mockSharePdf = jest.fn()
-jest.mock('@/features/pedidos/lib/sharePdf', () => ({ sharePdf: (...a: unknown[]) => mockSharePdf(...a) }))
+jest.mock('@/features/pedidos/lib/sharePdf', () => ({
+  sharePdf: (...a: unknown[]) => mockSharePdf(...a),
+  getSharing: () => jest.requireMock('expo-sharing'),
+}))
 
 const { api } = jest.requireMock('@/core/api/client') as { api: { get: jest.Mock; post: jest.Mock } }
 

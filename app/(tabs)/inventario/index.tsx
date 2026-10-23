@@ -17,6 +17,7 @@ import { useCatalogoConsulta } from '@/features/catalogo/hooks/useCatalogoConsul
 import { ProductoCard } from '@/features/catalogo/components/ProductoCard'
 import { FichaProducto } from '@/features/catalogo/components/FichaProducto'
 import { EscanerCodigo } from '@/features/catalogo/components/EscanerCodigo'
+import { BotonCatalogoPdf } from '@/features/catalogo/components/BotonCatalogoPdf'
 import { filtrarPorStock } from '@/features/catalogo/lib/presentacion'
 import { StockPorDeposito } from '@/features/inventario/components/StockPorDeposito'
 
@@ -187,6 +188,7 @@ export default function CatalogoConsultaScreen() {
         {vista === 'catalogo' ? (
           <View style={{ flexDirection: 'row', gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }}>
             <FiltroChip label="Con stock" activo={soloConStock} onPress={() => setSoloConStock((v) => !v)} />
+            <BotonCatalogoPdf busqueda={cat.busqueda} soloConStock={soloConStock} />
           </View>
         ) : null}
         {vista === 'catalogo' && avisoEscaneo ? (

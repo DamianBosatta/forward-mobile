@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy'
+import { getSharing } from '@/features/pedidos/lib/sharePdf'
 
 export type CompartirFotoResultado = { ok: true } | { ok: false; message: string }
 
@@ -12,10 +13,8 @@ const MIME = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' } as cons
 /** Baja la foto del producto al caché y abre el panel de compartir. Nunca lanza. */
 export async function compartirFoto(url: string, codigo: string): Promise<CompartirFotoResultado> {
   // Lazy: un build sin el módulo nativo de expo-sharing no debe tirar abajo la pantalla (ver sharePdf).
-  let Sharing: typeof import('expo-sharing')
-  try {
-    Sharing = require('expo-sharing') as typeof import('expo-sharing')
-  } catch {
+  const Sharing = getSharing()
+  if (!Sharing) {
     return { ok: false, message: 'La función de compartir no está disponible en esta versión de la app.' }
   }
   if (!(await Sharing.isAvailableAsync().catch(() => false))) {
