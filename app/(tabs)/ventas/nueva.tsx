@@ -40,7 +40,7 @@ import { hasCapability } from '@/features/auth/lib/capabilities'
 import { esPrecioValido, pctFromPrecio, precioFromPct, canViewCost, calcularSubtotalConDescuento, derivarFloorBroken, computeModalFloor } from '@/features/ventas/lib/descuentos'
 import { BandChip } from '@/features/ventas/components/BandChip'
 import { CarritoSemaforo } from '@/features/ventas/components/CarritoSemaforo'
-import { METODO_ENTREGA, isCatalogItemAddable, requiereFechaEntrega, esFechaEntregaValida, buildVentaPayload } from '@/features/ventas/lib/venta-form-retiro'
+import { METODO_ENTREGA, isCatalogItemAddable, isLineaSinStock, requiereFechaEntrega, esFechaEntregaValida, buildVentaPayload } from '@/features/ventas/lib/venta-form-retiro'
 import type { VentaFormData } from '@/features/ventas/lib/venta-form-retiro'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -69,6 +69,8 @@ interface DetalleItem {
   stockDisponible: number
   stockVirtual: number
   stockReal: number
+  /** Backend yes/no; decides the line when quantities are redacted (L8). */
+  puedeVenderse?: boolean
   originalQuantity: number // Cantidad que tenía antes de editar
 }
 
@@ -127,6 +129,7 @@ function makeDetalleFromProducto(prod: any, cantidad: number, descuentoPorcentaj
     stockDisponible: prod.disponible ?? 0,
     stockVirtual: prod.virtual ?? 0,
     stockReal: prod.real ?? 0,
+    puedeVenderse: prod.puedeVenderse,
   }
 }
 
@@ -1032,6 +1035,7 @@ export default function NuevaVentaMobileScreen() {
             stockDisponible: (prodCatalog?.disponible ?? 0) + originalQty,
             stockVirtual: prodCatalog?.virtual ?? 0,
             stockReal: realBaseInCatalog + originalQty,
+            puedeVenderse: prodCatalog?.puedeVenderse,
           }
         }))
       }
@@ -1091,7 +1095,7 @@ export default function NuevaVentaMobileScreen() {
   // ─── Handlers ───────────────────────────────────────────────────────────────
   const addProducto = (prod: typeof productos[0]) => {
     // When entregaInmediata is ON, block products with no available stock (spec S3, D4, D8)
-    if (!isCatalogItemAddable(entregaInmediata, prod)) {
+    if (!isCatalogItemAddable(entregaInmediata, prod, veCantidadesStock)) {
       return // silently blocked — product row is already visually disabled
     }
 
@@ -1129,6 +1133,7 @@ export default function NuevaVentaMobileScreen() {
           stockDisponible: prod.disponible ?? 0,
           stockVirtual: prod.virtual ?? 0,
           stockReal: prod.real ?? 0,
+          puedeVenderse: prod.puedeVenderse,
         },
       ]
     })
@@ -1252,7 +1257,7 @@ export default function NuevaVentaMobileScreen() {
       return
     }
 
-    const hasItemsSinStock = detalles.some(d => d.cantidad > d.stockReal)
+    const hasItemsSinStock = detalles.some(d => isLineaSinStock(d, veCantidadesStock))
     if (hasItemsSinStock && !motivo) {
       setShowMotivoModal(true)
       return
@@ -2448,7 +2453,7 @@ export default function NuevaVentaMobileScreen() {
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 60 }}
             renderItem={({ item }) => {
               const det = detalles.find(d => d.productoId === item.id)
-              const addable = isCatalogItemAddable(entregaInmediata, item)
+              const addable = isCatalogItemAddable(entregaInmediata, item, veCantidadesStock)
               return (
                 <View style={{ opacity: addable ? 1 : 0.4 }} pointerEvents={addable ? 'auto' : 'none'}>
                   {entregaInmediata && !addable && (
