@@ -192,17 +192,37 @@ export function useRecibirCompra() {
      * `lineas` (R22): lo que llegó de cada línea cuando no llegó todo. Va a `recibir-parcial`, que recibe eso
      * y pasa lo que falta a una compra nueva confirmada, en una sola transacción. Sin `lineas`, la de siempre.
      */
-    mutationFn: ({ id, fechaFacturaProveedor, comprobante, lineas }: {
+    mutationFn: async ({ id, fechaFacturaProveedor, comprobante, lineas }: {
       id: string; fechaFacturaProveedor?: string; comprobante?: ComprobanteCompraInput
       lineas?: components['schemas']['LineaRecibida'][] | null
-    }) =>
-      lineas
-        ? api.post<void>(`/api/v1/Compras/${id}/recibir-parcial`, {
-          fechaFacturaProveedor: fechaFacturaProveedor ?? null, ...(comprobante ? { comprobante } : {}), lineas,
-        })
-        : api.post<void>(`/api/v1/Compras/${id}/recibir`, {
+    }): Promise<CompraFaltante> => {
+      if (!lineas) {
+        await api.post<void>(`/api/v1/Compras/${id}/recibir`, {
           compraId: id, fechaFacturaProveedor: fechaFacturaProveedor ?? null, ...(comprobante ? { comprobante } : {}),
-        }),
+        })
+        return {}
+      }
+      // El número de la compra nueva viene al lado de `data` (R22b): se lee del sobre.
+      const { sobre } = await api.postConSobre<string, CompraFaltante>(`/api/v1/Compras/${id}/recibir-parcial`, {
+        fechaFacturaProveedor: fechaFacturaProveedor ?? null, ...(comprobante ? { comprobante } : {}), lineas,
+      })
+      return { compraFaltanteId: sobre?.compraFaltanteId ?? null, compraFaltanteNumero: sobre?.compraFaltanteNumero ?? null }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: comprasKeys.all })
+    },
+  })
+}
+
+/** La compra nueva con lo que faltó, si la recepción parcial la creó (RespuestaCompra, R22b). */
+export type CompraFaltante = Pick<components['schemas']['RespuestaCompra'], 'compraFaltanteId' | 'compraFaltanteNumero'>
+
+/** Adjunta (o quita, con `null`) la foto de la factura del proveedor (PUT /Compras/{id}/foto-factura, R22b). */
+export function useAsignarFotoFacturaCompra() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, fotoUrl }: { id: string; fotoUrl: string | null }) =>
+      api.put<string>(`/api/v1/Compras/${id}/foto-factura`, { fotoUrl }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: comprasKeys.all })
     },

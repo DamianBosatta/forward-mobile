@@ -23,7 +23,7 @@ interface Props {
   compra: CompraDto
   onVolver: () => void
   /** La recepción quedó hecha en el servidor. */
-  onHecho: () => void
+  onHecho: (compraFaltanteNumero?: number | null) => void
   /** El servidor dio 409: la compra cambió; quien la muestra la recarga. */
   onConflicto?: () => void
 }
@@ -75,13 +75,13 @@ export function RecibirCompra({ compra, onVolver, onHecho, onConflicto }: Props)
       if ('error' in armado) return void setError(armado.error)
     }
     try {
-      await recibir.mutateAsync({
+      const r = await recibir.mutateAsync({
         id: compra.id,
         fechaFacturaProveedor: pideFactura ? fechaLeida! : undefined,
         comprobante: armado && 'comprobante' in armado ? armado.comprobante : undefined,
         lineas: plan.problema === null ? plan.lineas : null,
       })
-      onHecho()
+      onHecho(r.compraFaltanteNumero)
     } catch (e) {
       setError(`No se recibió la compra: ${mensajeDelServidor(e)}`)
       if ((e as { status?: number })?.status === 409) onConflicto?.()

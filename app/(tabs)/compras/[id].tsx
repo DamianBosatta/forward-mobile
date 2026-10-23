@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { AccessibilityInfo, ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { AccessibilityInfo, ActivityIndicator, Image, ScrollView, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { comprasKeys, useAnularRecepcionCompra, useCompra, useCancelarCompra, useConfirmarCompra, useGuardarComprobanteCompra } from '@/libs/api-client/compras'
+import { comprasKeys, useAnularRecepcionCompra, useCompra, useCancelarCompra, useConfirmarCompra, useGuardarComprobanteCompra, useAsignarFotoFacturaCompra } from '@/libs/api-client/compras'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import type { CompraDto } from '@/libs/api-client'
@@ -15,13 +15,15 @@ import { diaArgentina } from '@/src/utils/date'
 import { mostrarNumero } from '@/src/utils/numero'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { ddmmaaaa, fechaIso, hoyTexto } from '@/features/compras/lib/fecha'
-import { confirmarYRecibir, tomarAviso, type Aviso } from '@/features/compras/lib/confirmar-y-recibir'
+import { avisoCompraFaltante, confirmarYRecibir, tomarAviso, type Aviso } from '@/features/compras/lib/confirmar-y-recibir'
 import { ConfirmarYRecibirSheet } from '@/features/compras/components/ConfirmarYRecibirSheet'
 import { ComprobanteCampos } from '@/features/compras/components/ComprobanteCampos'
 import { armarComprobante, formDesdeComprobante, formNuevo, resumenComprobante, seCorrigeEnLaWeb, type ComprobanteCompraInput, type FormComprobante } from '@/features/compras/lib/comprobante'
 import { inicioKeys } from '@/core/query/queryClient'
 import { numeroDeCompra } from '@/features/compras/lib/numero'
 import { esEstadoCompra } from '@/core/constants/estados'
+import { FotoDelCobro } from '@/features/cuentas/components/FotoDelCobro'
+import { subirComprobanteCobro } from '@/features/cuentas/api/fotos'
 import { RecibirCompra } from '@/features/compras/components/RecibirCompra'
 import { CONSECUENCIA, accionesDeDetalle, pasosDeCompra } from '@/features/compras/lib/recepcion'
 
@@ -65,6 +67,9 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
   // El comprobante del proveedor que se está cargando (al recibir o después); null: no se carga.
   const [comprobante, setComprobante] = useState<FormComprobante | null>(null)
   const guardarComprobante = useGuardarComprobanteCompra()
+  const asignarFoto = useAsignarFotoFacturaCompra()
+  const [errorFoto, setErrorFoto] = useState<string | null>(null)
+  const [subiendoFoto, setSubiendoFoto] = useState(false)
   // El CUIT del proveedor para precargar el comprobante: se pide solo con esas hojas abiertas.
   const socio = useSocio(hoja === 'comprobante' ? q.data?.proveedorId ?? '' : '')
   useEffect(() => {
@@ -94,7 +99,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
       <RecibirCompra
         compra={compra}
         onVolver={() => setRecibiendoMercaderia(false)}
-        onHecho={() => { setRecibiendoMercaderia(false); setAviso(null); queryClient.invalidateQueries({ queryKey: inicioKeys.all }) }}
+        onHecho={(faltante) => { setRecibiendoMercaderia(false); setAviso(faltante ? avisoCompraFaltante(faltante) : null); queryClient.invalidateQueries({ queryKey: inicioKeys.all }) }}
         onConflicto={() => { void q.refetch() }}
       />
     )
@@ -102,7 +107,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
 
   const estado = String(compra.estado)
   const pideFactura = compra.condicionPago?.tipo === 'DiasDesdeFactura'
-  const ocupado = recibiendo || guardarComprobante.isPending || confirmar.isPending || cancelar.isPending || anularRecepcion.isPending
+  const ocupado = recibiendo || guardarComprobante.isPending || asignarFoto.isPending || subiendoFoto || confirmar.isPending || cancelar.isPending || anularRecepcion.isPending
   // Mismos permisos que la web y el servidor: MOD_COMPRAS modificar / borrar y CAP_ANULAR_RECEPCION_COMPRAS.
   const puedeEditar = canDo('MOD_COMPRAS', 'update')
   const acciones = accionesDeDetalle({
@@ -124,6 +129,12 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
     const armado = armarComprobante(comprobante)
     if ('error' in armado) return void setError(armado.error)
     return void correr(() => accion(armado.comprobante), titulo)
+  }
+  // Foto de la factura del proveedor (R22b): la ve quien ve la compra; cambiarla, quien puede modificar (y la compra no está cancelada).
+  const puedeCambiarFoto = puedeEditar && !compra.eliminada
+  const guardarFoto = async (fotoUrl: string | null) => {
+    setErrorFoto(null)
+    try { await asignarFoto.mutateAsync({ id: compra.id, fotoUrl }) } catch (e) { setErrorFoto(`No se guardó la foto: ${mensajeDelServidor(e)}`) }
   }
   const cerrarHoja = () => { setError(null); setMotivo(''); setHoja(null) }
 
@@ -212,6 +223,33 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
           compra.comprobante && seCorrigeEnLaWeb(compra.comprobante)
             ? <Text style={secundario}>Tiene varias alícuotas: se corrige en la web.</Text>
             : <Button label={compra.comprobante ? 'Corregir el comprobante' : 'Cargar el comprobante'} variant="secundario" disabled={ocupado} onPress={() => abrirHoja('comprobante')} />
+        ) : null}
+        {compra.compraOrigenId ? (
+          <Button label={`Salió de la compra ${numeroDeCompra({ id: compra.compraOrigenId, numero: compra.compraOrigenNumero })}`} variant="secundario"
+            onPress={() => router.push(`/(tabs)/compras/${compra.compraOrigenId}` as never)} />
+        ) : null}
+        {compra.compraFaltanteId ? (
+          <Button label={`Lo que faltó pasó a la compra ${numeroDeCompra({ id: compra.compraFaltanteId, numero: compra.compraFaltanteNumero })}`} variant="secundario"
+            onPress={() => router.push(`/(tabs)/compras/${compra.compraFaltanteId}` as never)} />
+        ) : null}
+        {compra.fotoFacturaProveedorUrl || puedeCambiarFoto ? (
+          <View style={{ gap: space[2], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+            <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Factura del proveedor</Text>
+            {compra.fotoFacturaProveedorUrl ? (
+              <Image source={{ uri: compra.fotoFacturaProveedorUrl }} accessibilityLabel="Foto de la factura del proveedor"
+                style={{ width: '100%', height: 220, borderRadius: radii.campo, backgroundColor: c.border }} resizeMode="contain" />
+            ) : null}
+            {puedeCambiarFoto ? (
+              <>
+                <FotoDelCobro que="de la factura" url={compra.fotoFacturaProveedorUrl ?? null} subir={subirComprobanteCobro}
+                  onUrl={(u) => { void guardarFoto(u) }} onSubiendo={setSubiendoFoto} />
+                {compra.fotoFacturaProveedorUrl ? (
+                  <Button label="Quitar la foto de la factura" variant="secundario" disabled={ocupado} onPress={() => { void guardarFoto(null) }} />
+                ) : null}
+              </>
+            ) : null}
+            {errorFoto ? <Notice tone="peligro">{errorFoto}</Notice> : null}
+          </View>
         ) : null}
       </ScrollView>
       {hayBarra ? (
