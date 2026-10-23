@@ -1,6 +1,6 @@
 import { formatImporte } from '@/core/ui/fw/formatImporte'
 import { leerNumero } from '@/src/utils/numero'
-import { armarLinea, type Imputacion, type LineaCobroForm } from './entrega'
+import { armarLinea, razonNoCobro, type Imputacion, type LineaCobroForm, type NoCobroForm } from './entrega'
 
 /**
  * Los pasos de la entrega del chofer (lienzo de entrega): E1 reportar, E2 devolución, E3/E4 cobro y
@@ -61,6 +61,8 @@ export interface ContextoCobro {
   aCobrar: number | null
   hayDevolucion: boolean
   subiendo: boolean
+  /** "No cobré" (C2): pide el motivo en lugar de las líneas. */
+  noCobro?: NoCobroForm | null
 }
 
 /**
@@ -86,7 +88,11 @@ export function avisoDeCobro(c: ContextoCobro): string | null {
 
 export function razonCobro(c: ContextoCobro): string | null {
   if (c.subiendo) return 'Subiendo la foto: esperá un momento'
-  for (const [i, l] of c.lineas.entries()) {
+  if (c.noCobro) {
+    const falta = razonNoCobro(c.noCobro)
+    if (falta) return falta
+  }
+  for (const [i, l] of (c.noCobro ? [] : c.lineas).entries()) {
     const r = armarLinea(l, i + 1)
     if ('error' in r) return r.error
   }

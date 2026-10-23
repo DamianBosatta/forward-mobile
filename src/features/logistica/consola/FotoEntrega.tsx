@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { Image, Text, View } from 'react-native'
-import * as ImagePicker from 'expo-image-picker'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice } from '@/core/ui/fw'
 import { uploadFotoEntrega } from '@/libs/api-client/media'
 import { partesArgentina } from '@/src/utils/date'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
+import { CamaraChofer } from './CamaraChofer'
 
 interface Props {
   /** "del remito firmado", "del comprobante del cobro 2"… arma "Sacar foto …" y "Foto … cargada". */
@@ -22,6 +22,8 @@ interface Props {
   obligatoria?: boolean
   /** Lámina ChoferListo: qué foto es ("Remito NTE16918"). */
   referencia?: string
+  /** Lámina ChoferCamara: dónde (la dirección de la parada), en el subtítulo de la cámara. */
+  lugar?: string
 }
 
 /** Lámina Camara (E5): solo la cámara del teléfono, nunca la galería. */
@@ -32,28 +34,26 @@ const hhmm = (ms: number) => {
   return `${String(p.hora).padStart(2, '0')}:${String(p.minuto).padStart(2, '0')}`
 }
 
-/** Foto con la cámara del teléfono, subida en el acto a `upload-entrega`: el reintento de la entrega reusa la misma URL. */
-export function FotoEntrega({ que, url, onUrl, onSubiendo, ayuda, guia, titulo, obligatoria, referencia }: Props) {
+/** Foto con la cámara propia de la app (lámina ChoferCamara), subida en el acto a `upload-entrega`: el reintento de la entrega reusa la misma URL. */
+export function FotoEntrega({ que, url, onUrl, onSubiendo, ayuda, guia, titulo, obligatoria, referencia, lugar }: Props) {
   const c = useColors()
   const [subiendo, setSubiendo] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sacadaA, setSacadaA] = useState<number | null>(null)
 
-  const sacar = async () => {
+  const [camara, setCamara] = useState(false)
+
+  const sacar = () => {
     setError(null)
-    const permiso = await ImagePicker.requestCameraPermissionsAsync()
-    if (!permiso.granted) {
-      setError('La app necesita la cámara para la foto. Habilitala en los ajustes del teléfono.')
-      return
-    }
-    // Calidad baja: el servidor acepta hasta 2 MB por foto.
-    const r = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.4 })
-    const foto = r.canceled ? null : r.assets?.[0]
-    if (!foto) return
+    setCamara(true)
+  }
+
+  const subir = async (uri: string) => {
+    setCamara(false)
     setSubiendo(true)
     onSubiendo(true)
     try {
-      onUrl(await uploadFotoEntrega(foto.uri))
+      onUrl(await uploadFotoEntrega(uri))
       setSacadaA(Date.now())
     } catch (e) {
       setError(mensajeDelServidor(e, 'No se pudo subir la foto. Probá de nuevo.'))
@@ -99,6 +99,14 @@ export function FotoEntrega({ que, url, onUrl, onSubiendo, ayuda, guia, titulo, 
         onPress={sacar}
       />
       {error ? <Notice tone="peligro">{error}</Notice> : null}
+      <CamaraChofer
+        visible={camara}
+        titulo={titulo ?? `Foto ${que}`}
+        subtitulo={[referencia, lugar].filter(Boolean).join(' · ') || undefined}
+        guia={guia}
+        onCerrar={() => setCamara(false)}
+        onFoto={(uri) => void subir(uri)}
+      />
     </View>
   )
 }

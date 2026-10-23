@@ -12,7 +12,7 @@ import { leerNumero } from '@/src/utils/numero'
 import { diaArgentina } from '@/src/utils/date'
 import { MOTIVOS_NO_ENTREGA } from './hojaDeRuta'
 import { etiquetaNota, importeParada } from './cobroParada'
-import { armarEntrega, razonPendiente, type EntregaArmada, type FormEntrega } from './entrega'
+import { armarEntrega, observacionesDeEntrega, razonPendiente, type EntregaArmada, type FormEntrega } from './entrega'
 import { pasosDeEntrega, razonCobro, razonDevolucion, razonReporte, textoRepartido, avisoDeCobro, comparacionDeCobro, type ContextoCobro, type Paso } from './pasosEntrega'
 import { FotoEntrega } from './FotoEntrega'
 import { CobroEnEntrega } from './CobroEnEntrega'
@@ -22,7 +22,7 @@ import { ResumenEntrega } from './ResumenEntrega'
 
 export type ReporteParada =
   | { entregado: true; entrega: EntregaArmada }
-  | { entregado: false; motivoRechazo?: string; observaciones?: string }
+  | { entregado: false; motivoRechazo?: string; observaciones?: string; evidenciaUrl?: string }
 
 interface Props {
   /** La hoja de la parada: las líneas a devolver se piden por la hoja, no por la venta. */
@@ -70,6 +70,8 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
   const [firmar, setFirmar] = useState(false)
   const firmarRef = useRef(false)
   const [motivo, setMotivo] = useState<string | null>(null)
+  /** Lámina ChoferNoEntrega (C5): foto del lugar, opcional, ya subida. */
+  const [lugarUrl, setLugarUrl] = useState<string | null>(null)
   const [subiendo, setSubiendo] = useState(0)
   const [errorForm, setErrorForm] = useState<string | null>(null)
   const entregado = resultado === 'entregado'
@@ -83,12 +85,14 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
   const disponibles = Object.fromEntries((renglones.data ?? []).map((r) => [r.ventaDetalleId ?? '', r.cantidadDisponible ?? 0]))
   // Con "No, recibió todo" las cantidades que se hayan cargado antes no viajan (pero se conservan por si vuelve).
   // La firma solo viaja con la casilla tildada (una foto que termina de subir tarde no la reactiva).
-  const form: FormEntrega = { ...f, devolucion: hayDevolucion ? f.devolucion : {}, firmaUrl: firmar ? f.firmaUrl : null }
+  // Con "No cobré" las líneas cargadas no viajan (se conservan por si vuelve a "Cobré").
+  const lineas = f.noCobro ? [] : f.lineas
+  const form: FormEntrega = { ...f, lineas, devolucion: hayDevolucion ? f.devolucion : {}, firmaUrl: firmar ? f.firmaUrl : null }
 
   const pasos = pasosDeEntrega(hayDevolucion)
   const indice = Math.max(0, pasos.indexOf(paso))
   const ctxCobro: ContextoCobro = {
-    lineas: f.lineas, imputacion: f.imputacion, firmar, firmaUrl: form.firmaUrl,
+    lineas, imputacion: f.imputacion, firmar, firmaUrl: form.firmaUrl, noCobro: f.noCobro,
     aCobrar: aCobrar.aCobrar ? aCobrar.valor : null, hayDevolucion: hayDevolucion === true, subiendo: subiendo > 0,
   }
   let razon: string | null
@@ -111,7 +115,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
     if (!listo || enviando) return
     setErrorForm(null)
     if (!entregado) {
-      onConfirmar({ entregado: false, motivoRechazo: motivo ?? undefined, observaciones: f.observaciones.trim() || undefined })
+      onConfirmar({ entregado: false, motivoRechazo: motivo ?? undefined, observaciones: f.observaciones.trim() || undefined, evidenciaUrl: lugarUrl ?? undefined })
       return
     }
     const r = armarEntrega(form, { exigeFotoRemito, disponibles })
@@ -122,7 +126,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
     onConfirmar({ entregado: true, entrega: r.entrega })
   }
 
-  const porDeudaAnterior = f.imputacion === 'DeudaAnterior' && f.lineas.length > 0
+  const porDeudaAnterior = f.imputacion === 'DeudaAnterior' && lineas.length > 0
   const tituloPaso = paso === 'cobro' && porDeudaAnterior ? 'Paga lo anterior y firma lo actual' : TITULO[paso]
   const cmp = comparacionDeCobro(ctxCobro)
 
@@ -170,6 +174,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
                 obligatoria={exigeFotoRemito}
                 guia="Encuadrá el remito entero, con la firma y la aclaración a la vista"
                 referencia={etiquetaNota(parada) ? `Remito ${etiquetaNota(parada)}` : undefined}
+                lugar={parada.direccion}
                 ayuda={exigeFotoRemito ? 'Sin la foto del remito firmado no se confirma la entrega.' : undefined}
                 url={f.remitoUrl}
                 onUrl={(url) => cambiar({ remitoUrl: url })}
@@ -207,6 +212,17 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
               })}
             </View>
           ) : null}
+          {!entregado && paso === 'reporte' ? (
+            <FotoEntrega
+              que="del lugar"
+              titulo="Foto del lugar"
+              guia="Encuadrá el frente del lugar, con la puerta y el número a la vista"
+              lugar={parada.direccion}
+              url={lugarUrl}
+              onUrl={setLugarUrl}
+              onSubiendo={alSubir}
+            />
+          ) : null}
           {paso === 'reporte' ? (
             <Field label="Observaciones" value={f.observaciones} onChangeText={(v) => cambiar({ observaciones: v })} placeholder="Algo que la oficina tenga que saber" />
           ) : null}
@@ -231,9 +247,11 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
                 onSubiendo={alSubir}
                 aCobrar={aCobrar.aCobrar ? aCobrar.valor : null}
                 hoy={mostrarFecha(diaArgentina(Date.now()))}
-                repartido={f.lineas.length > 0 ? textoRepartido(ctxCobro) : undefined}
+                repartido={lineas.length > 0 ? textoRepartido(ctxCobro) : undefined}
                 aviso={avisoDeCobro(ctxCobro)}
                 porDeudaAnterior={porDeudaAnterior}
+                noCobro={f.noCobro}
+                onNoCobro={(noCobro) => cambiar({ noCobro })}
               />
               {cmp && hayDevolucion ? (
                 <Notice tone="info">La devolución se descuenta de lo que hay que cobrar: el servidor hace la cuenta cuando la autoriza el depósito.</Notice>
@@ -259,9 +277,10 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
                 devueltos: (renglones.data ?? [])
                   .map((r) => ({ nombre: r.productoNombre ?? 'Producto', cantidad: leerNumero(form.devolucion[r.ventaDetalleId ?? ''] ?? '') ?? 0 }))
                   .filter((x) => x.cantidad > 0),
-                cobros: f.lineas.map((l) => ({ medio: l.medio?.nombre ?? '', monto: leerNumero(l.monto) ?? 0, conFoto: !!l.fotoUrl })),
+                cobros: lineas.map((l) => ({ medio: l.medio?.nombre ?? '', monto: leerNumero(l.monto) ?? 0, conFoto: !!l.fotoUrl })),
                 firmada: !!form.firmaUrl,
                 aDeudaAnterior: porDeudaAnterior,
+                noCobro: observacionesDeEntrega('', f.noCobro) ?? null,
               }}
             />
           ) : null}

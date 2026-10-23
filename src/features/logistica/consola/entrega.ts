@@ -23,6 +23,33 @@ export interface LineaCobroForm {
   cheque: ChequeForm
 }
 
+/** Lámina ChoferEntrega (C2): por qué no cobró. Lista fija del dueño (23-10); "Otro" pide un texto corto. */
+export const MOTIVOS_NO_COBRO = ['No estaba', 'No tenía plata', 'Paga en el local', 'Otro'] as const
+export type MotivoNoCobro = (typeof MOTIVOS_NO_COBRO)[number]
+/** Largo del texto de "Otro": cabe en las observaciones de la entrega (el servidor acepta hasta 1000). */
+export const MAX_OTRO_NO_COBRO = 80
+
+export interface NoCobroForm {
+  motivo: MotivoNoCobro | null
+  otro: string
+}
+
+/** Por qué no se puede seguir con "No cobré"; `null` si está completo. */
+export function razonNoCobro(n: NoCobroForm): string | null {
+  if (!n.motivo) return 'Elegí por qué no cobraste'
+  if (n.motivo === 'Otro' && !n.otro.trim()) return 'Escribí por qué no cobraste'
+  return null
+}
+
+/**
+ * Las observaciones de la entrega: "No cobré: <motivo>" adelante de lo que escribió el chofer. El motivo
+ * no tiene columna propia (decisión del dueño, 23-10): viaja en el campo de observaciones de siempre.
+ */
+export function observacionesDeEntrega(observaciones: string, noCobro: NoCobroForm | null | undefined): string | undefined {
+  const motivo = noCobro?.motivo ? (noCobro.motivo === 'Otro' ? noCobro.otro.trim() : noCobro.motivo) : null
+  return [motivo ? `No cobré: ${motivo}` : null, observaciones.trim()].filter(Boolean).join(' · ') || undefined
+}
+
 export interface FormEntrega {
   receptor: string
   observaciones: string
@@ -34,6 +61,8 @@ export interface FormEntrega {
   firmaUrl: string | null
   /** Cantidad devuelta por renglón (`ventaDetalleId` → texto del campo). */
   devolucion: Record<string, string>
+  /** "No cobré" (C2): con valor, las líneas de cobro no viajan y el motivo va en las observaciones. */
+  noCobro?: NoCobroForm | null
 }
 
 /** El cuerpo sin la clave: la clave la pone la consola, una por parada, para que los reintentos la repitan. */
@@ -71,8 +100,12 @@ export function armarEntrega(
   if (!receptor) return { error: 'Falta quién recibió.' }
   if (ctx.exigeFotoRemito && !f.remitoUrl) return { error: 'Falta la foto del remito firmado: sin ella no se confirma la entrega.' }
 
+  const noCobro = f.noCobro ?? null
+  const faltaMotivo = noCobro ? razonNoCobro(noCobro) : null
+  if (faltaMotivo) return { error: faltaMotivo }
+
   const lineas: LineaCobro[] = []
-  for (const [i, l] of f.lineas.entries()) {
+  for (const [i, l] of (noCobro ? [] : f.lineas).entries()) {
     const r = armarLinea(l, i + 1)
     if ('error' in r) return r
     lineas.push(r.linea)
@@ -92,7 +125,7 @@ export function armarEntrega(
     entrega: {
       nombreReceptor: receptor,
       evidenciaUrl: f.remitoUrl ?? undefined,
-      observaciones: f.observaciones.trim() || undefined,
+      observaciones: observacionesDeEntrega(f.observaciones, noCobro),
       cobro: lineas.length > 0 ? { imputacion: f.imputacion, lineas } : undefined,
       firma: f.firmaUrl ? { fotoUrl: f.firmaUrl } : undefined,
       devolucion: items.length > 0 ? { items } : undefined,
