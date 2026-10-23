@@ -16,10 +16,12 @@ const TAMANO_PAGINA = 20
 export function useCatalogoConsulta() {
   const depositoId = useDepositoDeConsulta()
   const [busqueda, setBusqueda] = useState('')
+  const [soloConOferta, setSoloConOferta] = useState(false)
+  const [categoriaId, setCategoriaId] = useState<string | undefined>(undefined)
   const termino = useDebouncedValue(busqueda.trim(), DEBOUNCE_BUSQUEDA_MS)
 
   const query = useInfiniteProductos(
-    { search: termino || undefined, pageSize: TAMANO_PAGINA, soloActivos: true },
+    { search: termino || undefined, pageSize: TAMANO_PAGINA, soloActivos: true, conOferta: soloConOferta || undefined, categoriaId },
     { mantenerAnterior: true },
   )
 
@@ -46,6 +48,10 @@ export function useCatalogoConsulta() {
   return {
     busqueda,
     setBusqueda,
+    soloConOferta,
+    setSoloConOferta,
+    categoriaId,
+    setCategoriaId,
     productos,
     totalCount,
     disponible,
