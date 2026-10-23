@@ -1,8 +1,10 @@
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Linking, Pressable, Text, View } from 'react-native'
+import { Phone } from 'lucide-react-native'
 import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { StatusChip, formatImporte } from '@/core/ui/fw'
 import type { SocioListDto } from '@/libs/api-client/types'
+import { urlLlamar } from '../lib/contacto'
 import { direccionDeEntrega, inicialesDeDireccion, nombreDelCliente } from '../lib/cliente'
 
 interface ClienteCardProps {
@@ -25,6 +27,9 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
   const saldo = cliente.puedeVerSaldo ? formatImporte(cliente.saldoAmount) : null
   const vencida = cliente.tieneDeudaVencida === true
   const localidad = cliente.localidad?.trim() || null
+  const telefono = cliente.telefono?.trim() || null
+  // La deuda vencida solo se dice con importe a quien el servidor deja ver el saldo.
+  const vencido = vencida && cliente.puedeVerSaldo ? formatImporte(cliente.deudaVencidaAmount) : null
 
   return (
     <Pressable
@@ -79,6 +84,9 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
             {localidad}
           </Text>
         ) : null}
+        {vencido ? (
+          <Text style={{ ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: c.chip.anulado.text }}>{`Vencido ${vencido}`}</Text>
+        ) : null}
         {saldo ? (
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Saldo</Text>
@@ -86,6 +94,17 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
           </View>
         ) : null}
       </View>
+      {telefono ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Llamar"
+          accessibilityHint={direccion}
+          onPress={() => Linking.openURL(urlLlamar(telefono))}
+          style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' }}
+        >
+          <Phone size={20} color={c.brandInk} />
+        </Pressable>
+      ) : null}
     </Pressable>
   )
 }

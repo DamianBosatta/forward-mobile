@@ -4,9 +4,11 @@ import { useRouter } from 'expo-router'
 import { CheckCheck, Settings } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { Button, FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
-import { useBandejaAvisos, useMarcarAvisosLeidos, type Aviso } from '@/libs/api-client/notificaciones'
+import { CalendarioAvisosTabs } from '@/core/ui/fw/CalendarioAvisosTabs'
+import { useBandejaAvisos } from '@/libs/api-client/notificaciones'
 import { AvisoFila } from './AvisoFila'
-import { cuandoFue, destinoDelAviso, rutaAlTocarAviso } from './bandeja'
+import { cuandoFue, destinoDelAviso } from './bandeja'
+import { useAbrirAviso } from './useAbrirAviso'
 
 const mensajeDe = (e: unknown, porDefecto: string) => (e instanceof Error && e.message ? e.message : porDefecto)
 
@@ -17,16 +19,10 @@ export function BandejaAvisos() {
   const menu = useMenuLeading()
   const [soloNoLeidas, setSoloNoLeidas] = useState(false)
   const q = useBandejaAvisos(soloNoLeidas)
-  const marcar = useMarcarAvisosLeidos()
+  const { abrir, marcar } = useAbrirAviso()
   const avisos = q.data?.pages.flatMap((p) => p.items) ?? []
   const noLeidas = q.data?.pages[0]?.noLeidas ?? 0
   const ahora = Date.now()
-
-  const abrir = (aviso: Aviso) => {
-    if (!aviso.leida) marcar.mutate([aviso.id])
-    const ruta = rutaAlTocarAviso(aviso.accion)
-    if (ruta) router.push(ruta as never)
-  }
 
   const vacio = q.isLoading ? (
     <ActivityIndicator color={c.brand} accessibilityLabel="Cargando los avisos" />
@@ -54,6 +50,7 @@ export function BandejaAvisos() {
           { label: 'Sin leer', selected: soloNoLeidas, onPress: () => setSoloNoLeidas(true) },
         ]}
       />
+      <CalendarioAvisosTabs actual="avisos" sinLeer={noLeidas} onElegir={() => router.push('/calendario' as never)} />
       <FlatList
         data={q.isError ? [] : avisos}
         keyExtractor={(a) => a.id}
@@ -67,11 +64,17 @@ export function BandejaAvisos() {
           </FormContainer>
         )}
         ListFooterComponent={
-          q.hasNextPage ? (
-            <FormContainer>
-              <Button label="Ver avisos anteriores" variant="secundario" loading={q.isFetchingNextPage} onPress={() => void q.fetchNextPage()} />
+          <>
+            {q.hasNextPage ? (
+              <FormContainer>
+                <Button label="Ver avisos anteriores" variant="secundario" loading={q.isFetchingNextPage} onPress={() => void q.fetchNextPage()} />
+              </FormContainer>
+            ) : null}
+            {/* Los avisos salen de los eventos del calendario: no hay "crear aviso". */}
+            <FormContainer style={{ marginTop: space[4] }}>
+              <Button label="Nuevo evento" variant="secundario" onPress={() => router.push('/calendario?nuevo=1' as never)} />
             </FormContainer>
-          ) : null
+          </>
         }
       />
     </View>

@@ -3,7 +3,7 @@ import { AppState, Pressable, RefreshControl, ScrollView, Text, View } from 'rea
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ShoppingBag, Tag } from 'lucide-react-native'
+import { Search, ShoppingBag, Tag } from 'lucide-react-native'
 import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { useAuthStore } from '@/libs/store/auth.store'
@@ -100,6 +100,7 @@ export function InicioScreen() {
       <TopBar
         title="Inicio"
         leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
+        actions={[{ icon: Search, accessibilityLabel: 'Buscar', onPress: () => router.push('/buscar') }]}
       />
       <ScrollView
         testID="inicio-scroll"

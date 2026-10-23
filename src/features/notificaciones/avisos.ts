@@ -49,7 +49,7 @@ export const AVISO_POR_TIPO: Record<TipoNotificacion, { etiqueta: string; Icono:
  * ficha sin id): el aviso se muestra sin botón, nunca con una navegación rota.
  */
 export const RUTA_POR_DESTINO: Record<AccionDestino, (id: string | null) => string | null> = {
-  Cheques: () => '/tesoreria/cheques',
+  Cheques: () => null, // Los cheques se operan en la web (bloque 12, D10).
   Venta: (id) => (id ? `/ventas/${encodeURIComponent(id)}` : null),
   VentasPendientesAutorizacion: () => '/autorizaciones',
   Caja: () => null, // La caja del día es de la web.

@@ -30,7 +30,16 @@ jest.mock('@/features/notificaciones', () => ({
   darDeBajaPushAntesDeSalir: () => mockBajaPush(),
 }))
 const mockReplace = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: mockReplace }) }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: mockReplace }) }))
+jest.mock('expo-constants', () => ({ __esModule: true, default: { expoConfig: { version: '1.4.0' } } }))
+const mockHuella = { disponible: true, prendida: true }
+const mockSetHuella = jest.fn()
+jest.mock('@/features/auth/utils/biometrics', () => ({
+  isBiometricsAvailable: async () => mockHuella.disponible,
+  isBiometricLoginEnabled: async () => mockHuella.prendida,
+  setBiometricLoginEnabled: (v: boolean) => mockSetHuella(v),
+}))
 jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), DrawerActions: { openDrawer: jest.fn() } }))
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390, isTablet: false, isTabletLandscape: false, isLarge: false }) }))
 jest.mock('@/core/utils/haptics', () => ({ safeHaptics: { impact: jest.fn(), notification: jest.fn() } }))
@@ -68,6 +77,73 @@ beforeEach(() => {
   mockGet.mockReset().mockResolvedValue([])
   mockDelete.mockResolvedValue(undefined)
   mockBajaPush.mockResolvedValue(undefined)
+  mockSetHuella.mockResolvedValue(undefined)
+  mockHuella.disponible = true
+  mockHuella.prendida = true
+  ;(globalThis as { __DEV__?: boolean }).__DEV__ = true
+})
+
+describe('Mi cuenta reducida (bloque 12, T2: R15 y reglas mobile §14)', () => {
+  it('la cabecera muestra el nombre, el rol y el usuario', () => {
+    usuario()
+    pintar()
+    expect(screen.getByText('Emanuel Parraquini')).toBeTruthy()
+    expect(screen.getByText('Vendedor · eparraquini')).toBeTruthy()
+  })
+
+  it('apagar "Entrar con huella" lo guarda y borra la contraseña del teléfono', async () => {
+    usuario()
+    pintar()
+    const huella = await screen.findByRole('switch', { name: 'Entrar con huella' })
+    await waitFor(() => expect(screen.getByRole('switch', { name: 'Entrar con huella' }).props.accessibilityState.checked).toBe(true))
+    await userEvent.press(huella)
+    expect(mockSetHuella).toHaveBeenCalledWith(false)
+    await waitFor(() => expect(screen.getByRole('switch', { name: 'Entrar con huella' }).props.accessibilityState.checked).toBe(false))
+  })
+
+  it('prenderla avisa que vale desde el próximo ingreso con contraseña', async () => {
+    mockHuella.prendida = false
+    usuario()
+    pintar()
+    await waitFor(() => expect(screen.getByRole('switch', { name: 'Entrar con huella' }).props.accessibilityState.checked).toBe(false))
+    await userEvent.press(screen.getByRole('switch', { name: 'Entrar con huella' }))
+    expect(mockSetHuella).toHaveBeenCalledWith(true)
+    expect(await screen.findByText('La próxima vez que entres con tu contraseña queda lista la huella.')).toBeTruthy()
+  })
+
+  it('sin huella en el teléfono no ofrece el interruptor', async () => {
+    mockHuella.disponible = false
+    usuario()
+    pintar()
+    await waitFor(() => expect(screen.queryByRole('switch', { name: 'Entrar con huella' })).toBeNull())
+  })
+
+  it('"Avisos en el teléfono" lleva a las preferencias de avisos', async () => {
+    usuario()
+    pintar()
+    await userEvent.press(screen.getByRole('button', { name: 'Avisos en el teléfono' }))
+    expect(mockPush).toHaveBeenCalledWith('/avisos/preferencias')
+  })
+
+  it('no muestra las sesiones abiertas (quedan en la web)', () => {
+    usuario()
+    pintar()
+    expect(screen.queryByText(/Sesiones abiertas/i)).toBeNull()
+    expect(mockGet).not.toHaveBeenCalledWith('/api/v1/Sessions')
+  })
+
+  it('dice la versión y a qué servidor está conectada', () => {
+    usuario()
+    pintar()
+    expect(screen.getByText('Forward Mobile 1.4.0 · conectado a producción')).toBeTruthy()
+  })
+
+  it('en las builds que van a los teléfonos no hay selector de servidor', () => {
+    ;(globalThis as { __DEV__?: boolean }).__DEV__ = false
+    usuario()
+    pintar()
+    expect(screen.queryByLabelText('Servidor')).toBeNull()
+  })
 })
 
 describe('Mi cuenta', () => {
@@ -75,7 +151,6 @@ describe('Mi cuenta', () => {
     usuario()
     pintar()
     expect(screen.getByText('Emanuel Parraquini')).toBeTruthy()
-    expect(screen.getByLabelText('Correo: ep@forward.com.ar')).toBeTruthy()
     expect(screen.getByLabelText('Tema')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Abrir menú' })).toBeTruthy()
   })
@@ -233,81 +308,5 @@ describe('Mi cuenta', () => {
     await userEvent.press(screen.getByLabelText('Confirmar: Cambiar y salir'))
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
     alerta.mockRestore()
-  })
-})
-
-const SESIONES = [
-  { id: 't1', createdAt: '2026-10-09T10:58:00Z', expiresAt: '2026-11-08T10:58:00Z', device: 'okhttp/4.12.0', ip: '181.45.12.33' },
-  { id: 't 2', createdAt: '2026-10-06T21:20:00Z', expiresAt: '2026-11-05T21:20:00Z', device: 'Mozilla/5.0 (Windows NT 10.0) Chrome/129', ip: '200.68.141.7' },
-]
-
-describe('Mi cuenta: sesiones abiertas', () => {
-  it('lista lo que manda el servidor, en hora argentina y sin estados inventados', async () => {
-    usuario()
-    mockGet.mockResolvedValue(SESIONES)
-    pintar()
-    expect(await screen.findByText('Sesiones abiertas (2)')).toBeTruthy()
-    expect(mockGet).toHaveBeenCalledWith('/api/v1/Sessions')
-    expect(screen.getByText('IP 181.45.12.33')).toBeTruthy()
-    expect(screen.getByText('Inició el 9 oct, 07:58 · Vence el 8 nov')).toBeTruthy()
-    expect(screen.queryByText(/este dispositivo|activa ahora|última actividad/i)).toBeNull()
-  })
-
-  it('muestra cada dispositivo con un nombre legible y no el User-Agent crudo', async () => {
-    usuario()
-    mockGet.mockResolvedValue(SESIONES)
-    pintar()
-    expect(await screen.findByText('Android · App Forward')).toBeTruthy()
-    expect(screen.getByText('Windows · Chrome')).toBeTruthy()
-    expect(screen.queryByText('okhttp/4.12.0')).toBeNull()
-    expect(screen.queryByText('Mozilla/5.0 (Windows NT 10.0) Chrome/129')).toBeNull()
-    // El User-Agent crudo queda disponible para lectores de pantalla.
-    expect(screen.getByLabelText('Cerrar la sesión de Android · App Forward')).toBeTruthy()
-    expect(screen.getByText('Android · App Forward').props.accessibilityHint).toBe('User-Agent: okhttp/4.12.0')
-  })
-
-  it('si no reconoce el dispositivo lo dice y deja el User-Agent a la vista para identificarlo', async () => {
-    usuario()
-    mockGet.mockResolvedValue([
-      { id: 't3', createdAt: '2026-10-09T10:58:00Z', expiresAt: '2026-11-08T10:58:00Z', device: 'curl/8.4.0', ip: '10.0.0.5' },
-      { id: 't4', createdAt: null, expiresAt: null, device: '', ip: '10.0.0.6' },
-    ])
-    pintar()
-    expect(await screen.findByText('Sesiones abiertas (2)')).toBeTruthy()
-    expect(screen.getAllByText('Dispositivo desconocido')).toHaveLength(2)
-    expect(screen.getByText('curl/8.4.0')).toBeTruthy()
-  })
-
-  it('cerrar una sesión la revoca en el servidor y vuelve a pedir la lista', async () => {
-    usuario()
-    mockGet.mockResolvedValueOnce(SESIONES).mockResolvedValueOnce([SESIONES[0]])
-    pintar()
-    await userEvent.press(await screen.findByLabelText('Cerrar la sesión de Windows · Chrome'))
-    expect(mockDelete).toHaveBeenCalledWith('/api/v1/Sessions/t%202')
-    expect(await screen.findByText('Sesiones abiertas (1)')).toBeTruthy()
-  })
-
-  it('con el servidor nuevo marca este dispositivo primero, con su inicio y su última actividad (9B prioridad 3)', async () => {
-    usuario()
-    mockGet.mockResolvedValue([
-      { ...SESIONES[1], esActual: false, iniciadaEn: '2026-10-06T21:20:00Z', ultimaActividad: '2026-10-06T21:20:00Z' },
-      { ...SESIONES[0], createdAt: '2026-10-14T18:30:00Z', esActual: true, iniciadaEn: '2026-10-09T10:58:00Z', ultimaActividad: '2026-10-14T18:30:00Z' },
-    ])
-    pintar()
-    expect(await screen.findByText('Sesiones abiertas (2)')).toBeTruthy()
-    const marcas = screen.getAllByText('Este dispositivo')
-    expect(marcas).toHaveLength(1)
-    expect(screen.getByText('Inició el 9 oct, 07:58 · Vence el 8 nov')).toBeTruthy()
-    expect(screen.getByText('Última actividad: 14 oct, 15:30')).toBeTruthy()
-    // La actual va primero.
-    const nombres = screen.getAllByText(/Android · App Forward|Windows · Chrome/).map((t) => t.props.children)
-    expect(nombres).toEqual(['Android · App Forward', 'Windows · Chrome'])
-  })
-
-  it('si no se pueden cargar, lo dice con el mensaje del servidor', async () => {
-    usuario()
-    mockGet.mockRejectedValue(new Error('Servicio no disponible'))
-    pintar()
-    expect(await screen.findByText('Servicio no disponible')).toBeTruthy()
   })
 })

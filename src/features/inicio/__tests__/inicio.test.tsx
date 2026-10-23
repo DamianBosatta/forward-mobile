@@ -120,6 +120,17 @@ beforeEach(() => {
   mockAncho.mockReturnValue(390)
 })
 
+describe('Inicio: acción Buscar (bloque 12, R14)', () => {
+  it('la barra ofrece Buscar, que abre la búsqueda', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    pintar()
+
+    await userEvent.press(screen.getByRole('button', { name: 'Buscar' }))
+    expect(mockPush).toHaveBeenCalledWith('/buscar')
+  })
+})
+
 describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
   it('cada fila trae cantidad e importe; varias monedas van una por línea y una fila en 0 queda sin importe', async () => {
     conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')

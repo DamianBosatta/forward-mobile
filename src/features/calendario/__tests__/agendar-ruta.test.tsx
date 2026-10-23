@@ -3,6 +3,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, userEvent } from '@testing-library/react-native'
 import CalendarioRoute from '../../../../app/(tabs)/calendario/index'
 
+jest.mock('@/libs/useResponsive', () => ({
+  useResponsive: () => ({ width: 390, isTablet: false, isTabletLandscape: false }),
+}))
 jest.mock('@/core/api/client', () => ({
   API_URL: 'http://api.test',
   api: { get: () => Promise.resolve([]), post: jest.fn() },

@@ -1,6 +1,7 @@
 import {
   Bell,
   BookOpen,
+  Building2,
   CalendarDays,
   ChartColumn,
   CircleUser,
@@ -68,6 +69,7 @@ export const MENU: MenuGroup[] = [
       // Mismo criterio que la pantalla (leer ventas o pedidos), menos el chofer: lee ventas (el pedido de una parada) y no debe ver el módulo.
       { id: 'ventas', label: 'Ventas', icon: Tag, href: '/(tabs)/ventas', routeName: 'ventas/index', visibleSi: puedeVerVentas },
       { id: 'compras', label: 'Compras', icon: ShoppingBag, href: '/(tabs)/compras', routeName: 'compras/index', appModule: 'MOD_COMPRAS' },
+      { id: 'proveedores', label: 'Proveedores', icon: Building2, href: '/(tabs)/proveedores', routeName: 'proveedores/index', appModule: 'MOD_PROVEEDORES' },
       { id: 'clientes', label: 'Clientes', icon: CircleUser, href: '/(tabs)/socios', routeName: 'socios/index', appModule: 'MOD_CLIENTES' },
       { id: 'catalogo', label: 'Catálogo y stock', hint: 'Consulta', icon: BookOpen, href: '/(tabs)/inventario', routeName: 'inventario/index', appModule: 'MOD_STOCK' },
       // La bandeja exige Ventas:Read (ruta) y CAP_AUTORIZAR_VENTA (handler); sin la capacidad, 403.
@@ -78,8 +80,9 @@ export const MENU: MenuGroup[] = [
     title: 'Tesorería',
     items: [
       { id: 'cuentas', label: 'Cuentas corrientes', icon: Landmark, href: '/(tabs)/cuentas', routeName: 'cuentas/index', appModule: 'MOD_CC' },
-      // Transferencias y depósito de cheques; los cobros se registran desde la cuenta corriente del cliente.
-      { id: 'movimientos', label: 'Transferencias y cheques', icon: Wallet, href: '/(tabs)/tesoreria', routeName: 'tesoreria/index', appModule: 'MOD_PAGOS' },
+      // Transferencias entre cuentas propias; los cobros se registran desde la cuenta corriente del cliente.
+      // Los cheques se operan en la web (bloque 12, D10).
+      { id: 'movimientos', label: 'Transferencias', icon: Wallet, href: '/(tabs)/tesoreria', routeName: 'tesoreria/index', appModule: 'MOD_PAGOS' },
     ],
   },
   {

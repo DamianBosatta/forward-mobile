@@ -5,7 +5,7 @@ import { BottomSheet, Button, Field, Notice, Segmented } from '@/core/ui/fw'
 import { useCrearEvento } from '@/libs/api-client/calendario'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { SelectorDia } from './SelectorDia'
-import { DIAS_SEMANA, diaDeLaSemana, esHoraValida, textoSemanal } from './presentacion'
+import { DIAS_SEMANA, TIPOS_MANUALES, diaDeLaSemana, esHoraValida, textoSemanal, type TipoManual } from './presentacion'
 
 export interface Precarga {
   titulo: string
@@ -39,6 +39,7 @@ type Repite = 'no' | 'semanal'
 export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado }: Props) {
   const c = useColors()
   const crear = useCrearEvento()
+  const [tipo, setTipo] = useState<TipoManual>('Manual')
   const [titulo, setTitulo] = useState((precarga?.titulo ?? '').slice(0, MAX_TITULO))
   const [descripcion, setDescripcion] = useState((precarga?.descripcion ?? '').slice(0, MAX_DESCRIPCION))
   const [fecha, setFecha] = useState(inicial)
@@ -58,7 +59,7 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
     setError(null)
     try {
       await crear.mutateAsync({
-        tipo: 'Manual',
+        tipo,
         titulo: titulo.trim(),
         descripcion: descripcion.trim() || null,
         fechaInicio: fecha,
@@ -86,6 +87,24 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
             : `Viene de la venta ${precarga.origen}: el título y la descripción ya están cargados.`}
         </Notice>
       ) : null}
+      <Text style={{ ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600', color: c.text }}>Tipo de evento</Text>
+      <View accessibilityRole="radiogroup" accessibilityLabel="Tipo de evento" style={{ gap: space[2] }}>
+        {TIPOS_MANUALES.map((t) => {
+          const activo = t.value === tipo
+          return (
+            <Pressable
+              key={t.value}
+              onPress={() => setTipo(t.value)}
+              accessibilityRole="radio"
+              accessibilityLabel={t.label}
+              accessibilityState={{ checked: activo }}
+              style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: space[3], borderRadius: radii.campo, borderWidth: activo ? 2 : 1, borderColor: activo ? c.brand : c.border, backgroundColor: activo ? c.brandSoft : c.surface }}
+            >
+              <Text style={{ ...typeScale.cuerpoDestacado, color: activo ? c.brandInk : c.text }}>{t.label}</Text>
+            </Pressable>
+          )
+        })}
+      </View>
       <Field label="Título" value={titulo} onChangeText={setTitulo} maxLength={MAX_TITULO} />
       <SelectorDia fecha={fecha} onCambiar={setFecha} />
       <Field
