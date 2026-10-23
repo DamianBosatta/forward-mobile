@@ -82,6 +82,9 @@ let _getRefreshToken: () => string | null = () => null
 let _onTokensRefreshed: ((tokens: { accessToken: string; refreshToken: string }) => void) | null = null
 let _onUnauthorized: (() => void) | null = null
 
+/** El token de acceso vigente (el mismo que usan las requests): lo lee el hub de stock en cada (re)conexión. */
+export const tokenActual = (): string | null => _getToken()
+
 // Mutex para prevenir refresh concurrentes
 let _isRefreshing = false
 let _refreshPromise: Promise<boolean> | null = null

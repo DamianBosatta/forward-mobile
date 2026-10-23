@@ -31,6 +31,16 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => mockParams,
   Redirect: ({ href }: { href: string }) => mockBoton(`redirige a ${href}`, jest.fn()),
 }))
+// El stock en vivo no abre una conexión de verdad: el test dispara los avisos a mano.
+const mockHub: { oyentes: Set<{ alConectar: () => void; alCambio: (m: unknown) => void; alEstado: (v: boolean) => void }> } = { oyentes: new Set() }
+jest.mock('@/core/realtime/stockEnVivo', () => ({
+  ...jest.requireActual('@/core/realtime/stockEnVivo'),
+  gestorStock: {
+    suscribir: (_ids: string[], o: never) => { mockHub.oyentes.add(o); return () => mockHub.oyentes.delete(o) },
+    reintentar: jest.fn(),
+    enVivo: () => false,
+  },
+}))
 jest.mock('expo-secure-store', () => ({ setItemAsync: jest.fn(), getItemAsync: jest.fn() }))
 // La lista de clientes y el catálogo tienen sus tests: acá solo se elige y se agrega.
 const mockBoton = (label: string, onPress: () => void) => {
@@ -95,6 +105,28 @@ beforeEach(() => {
   mockGet.mockReset().mockImplementation((url: string) => Promise.resolve(calendario(url)))
   mockDims.mockReturnValue({ width: 390, height: 800, scale: 2, fontScale: 1 })
   useCarritoVenta.setState({ lineas: [] })
+})
+
+describe('venta nueva: stock en vivo (S2)', () => {
+  it('si cambia el stock de una línea, la marca y avisa, pero deja seguir', async () => {
+    await elegirCliente()
+    await anadir()
+    await userEvent.press(screen.getByRole('button', { name: 'Ver venta' }))
+    expect(screen.getByText('Sin conexión')).toBeTruthy()
+    act(() => { mockHub.oyentes.forEach((o) => { o.alEstado(true); o.alCambio({ depositoId: DEPOSITO_CENTRAL_ID, productos: [{ productoId: 'p1', estado: 'SinStock', disponible: 0, stockMinimo: 5 }] }) }) })
+    expect(screen.getByText('Stock en vivo')).toBeTruthy()
+    expect(screen.getByText('Pala c/Cabo Fija LP se quedó sin stock: la venta va a ir a autorización')).toBeTruthy()
+    expect(screen.getByTestId('linea-stock-p1')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Seguir' })).toBeEnabled()
+  })
+
+  it('un usuario sin cantidades ve el aviso sin números', async () => {
+    await elegirCliente()
+    await anadir()
+    await userEvent.press(screen.getByRole('button', { name: 'Ver venta' }))
+    act(() => { mockHub.oyentes.forEach((o) => o.alCambio({ depositoId: DEPOSITO_CENTRAL_ID, productos: [{ productoId: 'p1', estado: 'EnAlerta' }] })) })
+    expect(screen.getByText('Queda poco de Pala c/Cabo Fija LP')).toBeTruthy()
+  })
 })
 
 describe('venta nueva: cliente, borrador y autoguardado', () => {

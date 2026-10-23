@@ -36,6 +36,7 @@ import { LineasVenta } from './LineasVenta'
 import { CabeceraVenta } from './CabeceraVenta'
 import { FraganciasSheet } from './FraganciasSheet'
 import { useCatalogoVenta } from '../hooks/useCatalogoVenta'
+import { useStockVivoVenta } from '../hooks/useStockVivoVenta'
 import { useVentaCargada } from '../hooks/useVentaCargada'
 import type { VentaCargada } from '../lib/hidratar'
 
@@ -115,6 +116,7 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
   const [detalleLinea, setDetalleLinea] = useState<LineaCarrito | null>(null)
   const [fragancias, setFragancias] = useState<string | null>(null)
   const { productos: catalogoVenta } = useCatalogoVenta('')
+  const stockVivo = useStockVivoVenta(lineas)
   const llevo = useLoQueLlevo(cliente?.id)
   const volver = { kind: 'atras' as const, onPress: () => router.back() }
 
@@ -232,7 +234,7 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
   }
   const rotulo = nombre ? `${direccionDeEntrega(cliente)} · ${nombre}` : direccionDeEntrega(cliente)
   const lineasVista = (
-    <LineasVenta lineas={lineas} {...avisos} tope={tope}
+    <LineasVenta lineas={lineas} {...avisos} tope={tope} avisosStock={stockVivo.avisos} enVivo={stockVivo.enVivo}
       nota={b.retenido && b.borrador ? `El borrador guarda los descuentos hasta tu tope (${mostrarNumero(tope)} %); el resto se guarda al confirmar el pedido.` : null} descuentoGeneral={descuentoGeneral} flete={cab.cabecera.flete}
       onDescuentoGeneral={() => setDescGeneral(true)} onSumar={sumar} onRestar={restar} onAgregar={() => setCatalogo(true)} onEditar={setEditando}
       onElegirFragancias={setFragancias} nombrePadre={(id) => catalogoVenta.find((p) => p.id === id)?.nombre} />

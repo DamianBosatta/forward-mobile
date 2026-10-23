@@ -19,6 +19,9 @@ interface Catalogo {
 // actualizar. `useToggleProductoStatus` y `useAjustarStock` (reescriben cachés) no se usan en mobile.
 const aCatalogo = (d: Catalogo | CatalogoStockItem[]): Catalogo => (Array.isArray(d) ? { items: d, truncado: false } : d)
 
+/** La clave del catálogo completo de la venta: la usa también el stock en vivo para refrescarlo. */
+export const CLAVE_CATALOGO = [...productosKeys.all, 'catalogoVenta', 'completo'] as const
+
 /**
  * Catálogo completo de venta: páginas de 1000 hasta que no haya más.
  * TODO: unificar con `fetchCatalogoStockCompleto` (libs/api-client/productos.ts, PR #28) cuando se mergee.
@@ -54,7 +57,7 @@ export function useCatalogoVenta(busqueda: string) {
   const termino = useDebouncedValue(busqueda.trim(), DEBOUNCE_BUSQUEDA_MS)
 
   const query = useQuery<Catalogo | CatalogoStockItem[], Error, Catalogo>({
-    queryKey: [...productosKeys.all, 'catalogoVenta', 'completo'],
+    queryKey: CLAVE_CATALOGO,
     queryFn: fetchCatalogoCompleto,
     select: aCatalogo,
     staleTime: 60_000,

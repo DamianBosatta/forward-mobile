@@ -2,7 +2,7 @@ import React from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { Plus } from 'lucide-react-native'
 import { radii, space, typeScale, importe, useColors } from '@/libs/theme'
-import { Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { Notice, StatusChip, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { precioServidor, subtotalLinea, type LineaCarrito } from '../lib/carrito'
 import { avisoTope, mostrarNumero } from '../lib/linea'
 import { totalesEstimados } from '../lib/avisos'
@@ -28,17 +28,23 @@ interface Props {
   nombrePadre: (padreId: string) => string | undefined
   /** Aclaración bajo los avisos (p. ej., qué guarda el borrador y qué se guarda al confirmar). */
   nota?: string | null
+  /** Stock en vivo: productoId → aviso de lo que cambió en una línea (avisa y deja seguir). */
+  avisosStock?: Record<string, string>
+  /** Stock en vivo: hay conexión. Sin este dato no se muestra el indicador. */
+  enVivo?: boolean
 }
 
 /** Pestaña Líneas (lámina Venta): las líneas, el banner de autorización y los totales estimados. */
-export function LineasVenta({ lineas, porAutorizar, rechazos, descuentoGeneral, onDescuentoGeneral, onSumar, onRestar, tope, flete = 0, onAgregar, onEditar, onElegirFragancias, nombrePadre, nota }: Props) {
+export function LineasVenta({ lineas, porAutorizar, rechazos, descuentoGeneral, onDescuentoGeneral, onSumar, onRestar, tope, flete = 0, onAgregar, onEditar, onElegirFragancias, nombrePadre, nota, avisosStock, enVivo }: Props) {
   const c = useColors()
   const t = totalesEstimados(lineas, descuentoGeneral ?? 0, flete)
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
   return (
     <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3] }}>
+      {enVivo === undefined ? null : <StatusChip estado={enVivo ? 'entregado' : 'pendiente'} label={enVivo ? 'Stock en vivo' : 'Sin conexión'} />}
+      {Object.entries(avisosStock ?? {}).map(([id, texto]) => <Notice key={id} tone="advertencia" testID={`aviso-stock-${id}`}>{texto}</Notice>)}
       {agruparLineas(lineas).map((g) => {
-        if (g.tipo === 'producto') return <LineaProducto key={g.linea.productoId} linea={g.linea} tope={tope} onEditar={onEditar} onSumar={onSumar} onRestar={onRestar} />
+        if (g.tipo === 'producto') return <LineaProducto key={g.linea.productoId} linea={g.linea} marcada={!!avisosStock?.[g.linea.productoId]} tope={tope} onEditar={onEditar} onSumar={onSumar} onRestar={onRestar} />
         const padre = nombrePadre(g.padreId) ?? g.lineas[0].producto.nombre.split(' - ')[0]
         const unidades = g.lineas.reduce((a, l) => a + l.cantidad, 0)
         return (
@@ -92,14 +98,15 @@ export function LineasVenta({ lineas, porAutorizar, rechazos, descuentoGeneral, 
   )
 }
 
-function LineaProducto({ linea: l, tope, onEditar, onSumar, onRestar }: {
-  linea: LineaCarrito; tope: number; onEditar: (l: LineaCarrito) => void; onSumar: (id: string) => void; onRestar: (id: string) => void
+function LineaProducto({ linea: l, marcada, tope, onEditar, onSumar, onRestar }: {
+  linea: LineaCarrito; marcada: boolean; tope: number; onEditar: (l: LineaCarrito) => void; onSumar: (id: string) => void; onRestar: (id: string) => void
 }) {
   const c = useColors()
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
   const nombre = l.producto.nombre
   return (
-    <View style={{ minHeight: 56, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[2] }}>
+    <View testID={marcada ? `linea-stock-${l.productoId}` : undefined}
+      style={{ minHeight: 56, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[2], ...(marcada ? { borderWidth: 2, borderColor: c.chip.porAutorizar.text } : null) }}>
       <Pressable accessibilityRole="button" accessibilityHint="Editar la línea" onPress={() => onEditar(l)} style={{ gap: space[1] }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
           <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }}>{nombre}</Text>
