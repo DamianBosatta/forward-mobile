@@ -14,6 +14,13 @@ export function esperaDeReintento(intento: number): number {
   return Math.min(PRIMERA_ESPERA_MS * 2 ** Math.max(0, intento - 1), ESPERA_MAXIMA_MS)
 }
 
+/** Solo lectura: las ventas guardadas en el teléfono del usuario logueado (sin enviar nada: eso lo hace useVentasSinSenal). */
+export function useColaDelUsuario(): VentaEnCola[] {
+  const usuarioId = useAuthStore((s) => s.user?.id)
+  const texto = useSyncExternalStore(suscribirCola, () => textoDeCola(usuarioId))
+  return useMemo(() => parsearCola(texto), [texto])
+}
+
 /**
  * Las ventas guardadas en el teléfono del usuario logueado (V9), y su envío: cuando hay señal
  * (`useNetworkStatus`, NetInfo) manda lo que espera; si se corta, reintenta más tarde, cada vez
@@ -22,8 +29,7 @@ export function esperaDeReintento(intento: number): number {
 export function useVentasSinSenal() {
   const usuarioId = useAuthStore((s) => s.user?.id)
   const { isConnected } = useNetworkStatus()
-  const texto = useSyncExternalStore(suscribirCola, () => textoDeCola(usuarioId))
-  const items = useMemo(() => parsearCola(texto), [texto])
+  const items = useColaDelUsuario()
   const grupos = useMemo(() => agrupar(items), [items])
 
   const conSenal = useRef(isConnected)

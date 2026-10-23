@@ -9,3 +9,4 @@ export { enviarPendientes, cambioElPrecio, type ResultadoRonda } from './lib/env
 export { useVentasSinSenal, esperaDeReintento, agrupar } from './hooks/useVentasSinSenal'
 export { useHoraDelCatalogo, CLAVE_CATALOGO_VENTA } from './hooks/useHoraDelCatalogo'
 export { VentasSinSenalLista, avisoSinSenal } from './components/VentasSinSenalLista'
+export { PendientesDeEnviar } from './components/PendientesDeEnviar'
