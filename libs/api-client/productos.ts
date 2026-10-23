@@ -1,5 +1,5 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { api } from './client'
+import { api, API_URL } from './client'
 import type { Producto, ProductoDetailDto, PagedResult, CreateProductoRequest, UpdateProductoRequest } from './types'
 import type { components } from './generated/schema'
 
@@ -237,4 +237,20 @@ export function useToggleProductoStatus() {
       queryClient.invalidateQueries({ queryKey: ['stock'] })
     },
   })
+}
+
+export interface CatalogoPdfFiltros {
+  search?: string
+  soloDisponibles?: boolean
+  conOferta?: boolean
+}
+
+/** URL del PDF del catálogo con los mismos filtros que la pantalla (GET /Productos/catalogo-pdf). */
+export function getCatalogoPdfUrl({ search, soloDisponibles, conOferta }: CatalogoPdfFiltros): string {
+  const params = new URLSearchParams()
+  if (search?.trim()) params.set('SearchTerm', search.trim())
+  if (soloDisponibles) params.set('SoloDisponibles', 'true')
+  if (conOferta) params.set('ConOferta', 'true')
+  const query = params.toString()
+  return `${API_URL}/api/v1/Productos/catalogo-pdf${query ? `?${query}` : ''}`
 }
