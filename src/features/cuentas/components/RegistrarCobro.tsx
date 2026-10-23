@@ -10,7 +10,7 @@ import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cl
 import { diaArgentina } from '@/src/utils/date'
 import { useEstadoCuentaSocio } from '../api/queries'
 import { claveDeOtroSocio, useCajasAbiertas, useMediosDeCobro, useRegistrarCobro, type CobroRegistrado } from '../api/cobros'
-import { armarCobro, mostrarFecha, type FormCobro } from '../lib/cobro'
+import { armarCobro, entraACaja, mostrarFecha, type FormCobro } from '../lib/cobro'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
 import { nuevaClaveIdempotencia } from '@/features/venta-nueva/lib/payload'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -20,6 +20,7 @@ import { DestinoDelCobro } from './DestinoDelCobro'
 import { ElegirChip } from './ElegirChip'
 import { ElegirComprobantes } from './ElegirComprobantes'
 import { FotoDelCobro } from './FotoDelCobro'
+import { OtrosMediosDelCobro } from './OtrosMediosDelCobro'
 
 export const AVISO_IMPUTACION =
   'Imputación automática: el servidor lo aplica a la deuda más vieja y te dice en qué cuenta (TST o Normal) quedó.'
@@ -37,6 +38,7 @@ const formVacio = (): FormCobro => ({
   comprobanteUrl: null,
   chequeFotoUrl: null,
   imputaciones: null,
+  otrosMedios: [],
 })
 
 const IMPUTACION = [{ id: 'automatica', label: 'Automática' }, { id: 'manual', label: 'Elegir comprobantes' }]
@@ -59,7 +61,9 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
   // grabado el servidor lo dice con un 409 y lo nuevo no se guarda. Solo se cambia si el servidor dice que la
   // clave era de otro socio.
   const [clave, setClave] = useState(nuevaClaveIdempotencia)
-  const cajas = useCajasAbiertas(f.requiereCaja)
+  // Con el cobro combinado, cualquiera de las líneas puede ser efectivo.
+  const conCaja = entraACaja(f)
+  const cajas = useCajasAbiertas(conCaja)
   const [aviso, setAviso] = useState<string | null>(null)
   const [cobro, setCobro] = useState<CobroRegistrado | null>(null)
   const [subiendo, setSubiendo] = useState(false)
@@ -73,14 +77,18 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
   const cliente = socio.data
   const medio = medios.data?.find(m => m.id === f.medioPagoId)
   const monto = leerNumero(f.monto)
+  const otros = f.otrosMedios.reduce((s, o) => s + Math.max(leerNumero(o.monto) ?? 0, 0), 0)
+  // Lo que se cobra en total: el primer medio más los que se combinan.
+  const total = (monto ?? 0) + otros
+  const nombreMedio = (id: string | null) => medios.data?.find(m => m.id === id)?.nombre ?? ''
 
   if (cobro) {
     return (
       <CobroListo
         cliente={cliente}
         cobro={cobro}
-        monto={monto ?? 0}
-        medio={medio?.nombre ?? ''}
+        monto={total}
+        medio={[f.medioPagoId, ...f.otrosMedios.map(o => o.medioPagoId)].map(nombreMedio).filter(Boolean).join(' + ')}
         imputacionManual={!!f.imputaciones}
         onVolver={onVolver}
         onOtro={() => { setCobro(null); setF(formVacio()); setClave(nuevaClaveIdempotencia()); registrar.reset() }}
@@ -89,8 +97,8 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
   }
 
   // Con caja: sin lista cargada, con error (aunque haya datos viejos) o sin ninguna abierta, no se cobra.
-  const sinCajas = f.requiereCaja && !!cajas.data && !cajas.error && cajas.data.length === 0
-  const sinCajaUtil = f.requiereCaja && (!cajas.data || !!cajas.error || cajas.data.length === 0)
+  const sinCajas = conCaja && !!cajas.data && !cajas.error && cajas.data.length === 0
+  const sinCajaUtil = conCaja && (!cajas.data || !!cajas.error || cajas.data.length === 0)
 
   const enviar = () => {
     if (registrar.isPending || subiendo) return
@@ -99,7 +107,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
     // Con una sola caja abierta se manda esa; con varias, la elige quien cobra.
     const abiertas = cajas.data ?? []
     const depositoId = f.depositoId ?? (abiertas.length === 1 ? abiertas[0].depositoId : null)
-    if (f.requiereCaja && abiertas.length > 1 && !depositoId) return setAviso('Elegí en qué caja entra el efectivo.')
+    if (conCaja && abiertas.length > 1 && !depositoId) return setAviso('Elegí en qué caja entra el efectivo.')
     const r = armarCobro(socioId, { ...f, depositoId }, clave)
     if ('error' in r) return setAviso(r.error)
     setAviso(null)
@@ -121,14 +129,14 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
       <View
         style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3], backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4] }}
       >
-        <View accessible accessibilityLabel={`Cobrás: ${formatImporte(monto ?? 0)}`}>
+        <View accessible accessibilityLabel={`Cobrás: ${formatImporte(total)}`}>
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Cobrás</Text>
-          <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(monto ?? 0)}</Text>
+          <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(total)}</Text>
         </View>
         {deudaVencida > 0 ? (
-          // Solo carga el monto: el cobro se arma y se manda igual, con lo que quede en el campo.
-          // Mientras se manda, el monto queda fijo: lo que se ve es lo que se registra.
-          <Button label="Todo lo vencido" variant="secundario" disabled={registrar.isPending || subiendo} onPress={() => setF(p => ({ ...p, monto: mostrarNumero(deudaVencida) }))} />
+          // Solo carga el monto del primer medio (lo vencido menos lo que ya llevan los otros): el cobro se arma y
+          // se manda igual, con lo que quede en los campos. Mientras se manda, el monto queda fijo.
+          <Button label="Todo lo vencido" variant="secundario" disabled={registrar.isPending || subiendo} onPress={() => setF(p => ({ ...p, monto: mostrarNumero(Math.max(deudaVencida - otros, 0)) }))} />
         ) : null}
       </View>
     </>
@@ -160,7 +168,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
           valor={f.medioPagoId}
           onCambio={id => setF(p => ({ ...p, medioPagoId: id, cuentaPropiaId: null, esCheque: !!medios.data?.find(m => m.id === id)?.esCheque, requiereCaja: !!medios.data?.find(m => m.id === id)?.requiereCaja }))}
         />
-        {f.requiereCaja && (cajas.data?.length ?? 0) > 1 ? (
+        {conCaja && (cajas.data?.length ?? 0) > 1 ? (
           <ElegirChip
             titulo="Caja"
             opciones={(cajas.data ?? []).map(k => ({ id: k.depositoId, label: k.depositoNombre ?? 'Caja' }))}
@@ -168,14 +176,14 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
             onCambio={id => setF(p => ({ ...p, depositoId: id }))}
           />
         ) : null}
-        {f.requiereCaja && cajas.error ? (
+        {conCaja && cajas.error ? (
           <>
             <Notice tone="peligro">{mensajeDelServidor(cajas.error, 'No se pudieron cargar las cajas abiertas.')}</Notice>
             <Button label="Reintentar" variant="secundario" onPress={() => { void cajas.refetch() }} />
           </>
         ) : null}
         {sinCajas ? <Notice tone="advertencia">No hay ninguna caja abierta. Abrí una caja para registrar cobros en efectivo.</Notice> : null}
-        {f.requiereCaja && cajas.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
+        {conCaja && cajas.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
         {medios.error ? <Notice tone="peligro">{mensajeDelServidor(medios.error, 'No se pudieron cargar los medios de pago.')}</Notice> : null}
 
         {f.esCheque ? (
@@ -201,6 +209,13 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
           />
         ) : null}
 
+        <OtrosMediosDelCobro
+          medios={medios.data ?? []}
+          valor={f.otrosMedios}
+          onCambio={otrosMedios => setF(p => ({ ...p, otrosMedios }))}
+          disabled={registrar.isPending || subiendo}
+        />
+
         <Field label="Referencia (opcional)" value={f.referencia} onChangeText={v => setF(p => ({ ...p, referencia: v }))} help="Por ejemplo, el N.º de operación" />
     </>
   )
@@ -214,7 +229,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
 
   const pie = (
     <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
-      <Button label={monto && monto > 0 ? `Registrar cobro de ${formatImporte(monto)}` : 'Registrar cobro'} loading={registrar.isPending} disabled={registrar.isPending || sinCajaUtil || subiendo} onPress={enviar} />
+      <Button label={total > 0 ? `Registrar cobro de ${formatImporte(total)}` : 'Registrar cobro'} loading={registrar.isPending} disabled={registrar.isPending || sinCajaUtil || subiendo} onPress={enviar} />
     </View>
   )
 
