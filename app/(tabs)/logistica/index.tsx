@@ -21,12 +21,34 @@ import { useVentasEmpacadas, useHojasDeRuta } from '@/libs/api-client/logistica'
 import { useLogisticaStore } from '@/src/features/logistica/store/logistica.store'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { esChofer } from '@/src/components/layout/menuModules'
-import { EstadoHojaRuta } from '@/libs/api-client/types'
+import { esEstadoHojaRuta, type EstadoHojaRutaNombre } from '@/core/constants/estados'
+import { resolverEstadoHojaRuta } from '@/libs/reglas/estados'
 import { DataList } from '@/core/ui/DataList'
 import { RouteCardSkeleton } from '@/src/features/logistica/components/RouteCardSkeleton'
 import { HubNavCard } from '@/src/features/logistica/components/hub/HubNavCard'
 import { ActiveHojasList } from '@/src/features/logistica/components/hub/ActiveHojasList'
 import React, { useMemo, useCallback, useEffect } from 'react'
+
+/** Etiqueta y color de cada estado de hoja de ruta en la lista de logística (exhaustivo por nombre). */
+export function detalleEstadoHoja(estado: number, colors: ReturnType<typeof useColors>) {
+  const r = resolverEstadoHojaRuta(estado)
+  if (!r) return { label: 'DESCONOCIDO', color: colors.textDisabled, bgColor: colors.surface2 }
+  const color = {
+    Programada: BRAND.violet,
+    Documentada: BRAND.blue,
+    EnCurso: colors.primary,
+    Finalizada: BRAND.green,
+    Cancelada: BRAND.red,
+  } satisfies Record<EstadoHojaRutaNombre, string>
+  const label = {
+    Programada: 'PROGRAMADA',
+    Documentada: 'DOCUMENTADA',
+    EnCurso: 'EN CURSO',
+    Finalizada: 'FINALIZADA',
+    Cancelada: 'CANCELADA',
+  } satisfies Record<EstadoHojaRutaNombre, string>
+  return { label: label[r.nombre], color: color[r.nombre], bgColor: color[r.nombre] + '15' }
+}
 
 export default function LogisticaScreen() {
   const navigation = useNavigation()
@@ -43,8 +65,7 @@ export default function LogisticaScreen() {
   // "ongoing" shortcut — tapping it would drop the driver on the finalized summary.
   // Clear it proactively so the list resolves a fresh route.
   const isActiveTripClosed =
-    activeTrip?.estado === EstadoHojaRuta.Finalizada ||
-    activeTrip?.estado === EstadoHojaRuta.Cancelada
+    esEstadoHojaRuta(activeTrip?.estado, 'Finalizada', 'Cancelada')
 
   useEffect(() => {
     if (isActiveTripClosed) clearActiveTrip()
@@ -74,22 +95,7 @@ export default function LogisticaScreen() {
     }
   }
 
-  const getStatusDetails = (estado: number) => {
-    switch (estado) {
-      case EstadoHojaRuta.Programada:
-        return { label: 'PROGRAMADA', color: BRAND.violet, bgColor: BRAND.violet + '15' }
-      case EstadoHojaRuta.Documentada:
-        return { label: 'DOCUMENTADA', color: BRAND.blue, bgColor: BRAND.blue + '15' }
-      case EstadoHojaRuta.EnCurso:
-        return { label: 'EN CURSO', color: colors.primary, bgColor: colors.primary + '15' }
-      case EstadoHojaRuta.Finalizada:
-        return { label: 'FINALIZADA', color: BRAND.green, bgColor: BRAND.green + '15' }
-      case EstadoHojaRuta.Cancelada:
-        return { label: 'CANCELADA', color: BRAND.red, bgColor: BRAND.red + '15' }
-      default:
-        return { label: 'DESCONOCIDO', color: colors.textDisabled, bgColor: colors.surface2 }
-    }
-  }
+  const getStatusDetails = (estado: number) => detalleEstadoHoja(estado, colors)
 
   const renderItem = useCallback(({ item: ruta }: { item: any }) => {
     const status = getStatusDetails(ruta.estado)
@@ -111,9 +117,9 @@ export default function LogisticaScreen() {
         <GlassCard
           style={{
             padding: 0, overflow: 'hidden',
-            borderColor: ruta.estado === EstadoHojaRuta.EnCurso ? colors.primary : colors.border,
-            borderWidth: ruta.estado === EstadoHojaRuta.EnCurso ? 1.5 : 1,
-            ...(ruta.estado === EstadoHojaRuta.EnCurso
+            borderColor: esEstadoHojaRuta(ruta.estado, 'EnCurso') ? colors.primary : colors.border,
+            borderWidth: esEstadoHojaRuta(ruta.estado, 'EnCurso') ? 1.5 : 1,
+            ...(esEstadoHojaRuta(ruta.estado, 'EnCurso')
               ? { shadowColor: colors.primary, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 6 }
               : {})
           }}
@@ -237,7 +243,7 @@ export default function LogisticaScreen() {
             </View>
             <View>
               <Text style={{ fontSize: 28, fontWeight: '900', color: colors.text }}>
-                {rutas.filter(r => r.estado === EstadoHojaRuta.EnCurso).length}
+                {rutas.filter(r => esEstadoHojaRuta(r.estado, 'EnCurso')).length}
               </Text>
               <Text style={{ fontSize: 10, color: colors.textSecondary, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 }}>En Tránsito</Text>
             </View>

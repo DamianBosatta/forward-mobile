@@ -1,4 +1,9 @@
 import type { ChipEstado } from '@/libs/theme'
+import {
+  resolverEstadoVenta,
+  type EstadoCompraNombre,
+  type EstadoVentaNombre,
+} from '@/libs/reglas/estados'
 
 export interface ChipInfo {
   estado: ChipEstado
@@ -16,34 +21,48 @@ export const CHIP_LABEL: Record<ChipEstado, string> = {
 
 const chip = (estado: ChipEstado, label = CHIP_LABEL[estado]): ChipInfo => ({ estado, label })
 
-// Mapeo ÚNICO estado del backend → chip. Clave: nombre del enum; el número es
-// el valor del enum en Domain/Enum (el servidor manda uno u otro según el endpoint).
+// Mapeo ÚNICO estado del backend → chip. Clave: nombre del enum (exhaustivo: un estado nuevo sin
+// chip no compila); el número lo resuelve resolverEstadoVenta (libs/reglas/estados), porque el
+// servidor manda uno u otro según el endpoint.
 // Casos sin chip obvio en la lámina F4 (decisión documentada):
 //   NoEntregada           → porAutorizar: no es terminal y pide que alguien actúe.
 //   Vencido               → pendiente: presupuesto viejo que se puede reabrir.
 //   RechazadaAutorizacion → anulado: terminal, pero con su propia etiqueta.
-const VENTA: Record<string, [number, ChipInfo]> = {
-  Pendiente: [1, chip('pendiente')],
-  Confirmada: [2, chip('confirmado')],
-  EnPreparacion: [3, chip('enCurso', 'En preparación')],
-  Empacada: [4, chip('enCurso', 'Empacado')],
-  EnRuta: [5, chip('enCurso', 'En ruta')],
-  Entregada: [6, chip('entregado')],
-  NoEntregada: [7, chip('porAutorizar', 'No entregado')],
-  Anulada: [8, chip('anulado')],
-  PendienteAutorizacion: [9, chip('porAutorizar')],
-  Vencido: [10, chip('pendiente', 'Vencido')],
-  RechazadaAutorizacion: [11, chip('anulado', 'Rechazado')],
-}
+const VENTA = {
+  Pendiente: chip('pendiente'),
+  Confirmada: chip('confirmado'),
+  EnPreparacion: chip('enCurso', 'En preparación'),
+  Empacada: chip('enCurso', 'Empacado'),
+  EnRuta: chip('enCurso', 'En ruta'),
+  Entregada: chip('entregado'),
+  NoEntregada: chip('porAutorizar', 'No entregado'),
+  Anulada: chip('anulado'),
+  PendienteAutorizacion: chip('porAutorizar'),
+  Vencido: chip('pendiente', 'Vencido'),
+  RechazadaAutorizacion: chip('anulado', 'Rechazado'),
+} satisfies Record<EstadoVentaNombre, ChipInfo>
 
 // Lámina F4: la nota de pedido usa "Pendiente" y lo que espera llegar, "Por recibir".
-const COMPRA: Record<string, [number, ChipInfo]> = {
-  NotaPedido: [1, chip('pendiente')],
-  Confirmado: [2, chip('enCurso', 'Por recibir')],
-  Entregado: [3, chip('entregado', 'Recibido')],
-  Cancelada: [4, chip('anulado', 'Cancelado')],
-  Anulada: [5, chip('anulado')],
-}
+const COMPRA = {
+  NotaPedido: chip('pendiente'),
+  Confirmado: chip('enCurso', 'Por recibir'),
+  Entregado: chip('entregado', 'Recibido'),
+  Cancelada: chip('anulado', 'Cancelado'),
+  Anulada: chip('anulado'),
+} satisfies Record<EstadoCompraNombre, ChipInfo>
+
+// Valor de Domain/Enum/EstadoCompra.cs: la tabla compartida todavía no lo trae (solo el de venta y
+// hoja de ruta). Exhaustivo igual, así un estado nuevo no se cuela sin número.
+const CODIGO_COMPRA = {
+  NotaPedido: 1,
+  Confirmado: 2,
+  Entregado: 3,
+  Cancelada: 4,
+  Anulada: 5,
+} satisfies Record<EstadoCompraNombre, number>
+
+const esNombreDeCompra = (s: string): s is EstadoCompraNombre =>
+  Object.prototype.hasOwnProperty.call(COMPRA, s)
 
 /** Chip de un estado de venta o compra. `null` si el estado no se conoce: no se inventa. */
 export function chipForEstado(
@@ -51,9 +70,14 @@ export function chipForEstado(
   estado: string | number | null | undefined,
 ): ChipInfo | null {
   if (estado == null) return null
-  const tabla = tipo === 'venta' ? VENTA : COMPRA
+  if (tipo === 'venta') {
+    const r = resolverEstadoVenta(estado)
+    return r ? VENTA[r.nombre] : null
+  }
   const s = String(estado)
-  const porNombre = Object.prototype.hasOwnProperty.call(tabla, s) ? tabla[s] : undefined
-  const fila = porNombre ?? Object.values(tabla).find(([codigo]) => String(codigo) === s)
-  return fila ? fila[1] : null
+  if (esNombreDeCompra(s)) return COMPRA[s]
+  const porCodigo = (Object.keys(CODIGO_COMPRA) as EstadoCompraNombre[]).find(
+    (n) => String(CODIGO_COMPRA[n]) === s,
+  )
+  return porCodigo ? COMPRA[porCodigo] : null
 }

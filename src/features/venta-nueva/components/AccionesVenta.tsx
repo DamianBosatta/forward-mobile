@@ -11,10 +11,10 @@ import type { VentaDetalleDto } from '@/libs/api-client/types'
 import { sharePdf } from '@/features/pedidos/lib/sharePdf'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { diaArgentina } from '@/src/utils/date'
-import { ESTADO_PENDIENTE_AUTORIZACION, motivosAutorizacion } from '../lib/motivosAutorizacion'
+import { motivosAutorizacion } from '../lib/motivosAutorizacion'
+import { esEstadoVenta } from '@/core/constants/estados'
 import { codigoDeVenta, tipoDeVenta } from '../lib/ventaGuardada'
 
-const ESTADO = { Pendiente: 1, Confirmada: 2, EnRuta: 5, Anulada: 8 }
 const DIA_MS = 86_400_000
 const CUANDO = [
   { value: '1', label: 'Mañana' },
@@ -48,11 +48,11 @@ export function AccionesVenta({ venta, rotulo }: Props) {
   const [cuando, setCuando] = useState<Cuando>('1')
   const [agendando, setAgendando] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const esPresupuestoPendiente = h.tipoOperacion === 1 && h.estado === ESTADO.Pendiente
+  const esPresupuestoPendiente = h.tipoOperacion === 1 && esEstadoVenta(h.estado, 'Pendiente')
   const puedeConvertir = esPresupuestoPendiente && canDo('MOD_VENTAS', 'update')
-  const puedeAnular = canDo('MOD_VENTAS', 'delete') && h.estado !== ESTADO.Anulada && h.estado !== ESTADO.EnRuta
+  const puedeAnular = canDo('MOD_VENTAS', 'delete') && !esEstadoVenta(h.estado, 'Anulada', 'EnRuta')
   // UpdateVentaCommandHandler: solo se editan ventas Pendiente o Confirmada.
-  const puedeEditar = canDo('MOD_VENTAS', 'update') && (h.estado === ESTADO.Pendiente || h.estado === ESTADO.Confirmada)
+  const puedeEditar = canDo('MOD_VENTAS', 'update') && esEstadoVenta(h.estado, 'Pendiente', 'Confirmada')
   const puedeDuplicar = canDo('MOD_VENTAS', 'create')
   const router = useRouter()
   const ir = (param: 'editar' | 'duplicar') => router.push(`/(tabs)/ventas/nueva-v2?${param}=${h.id}` as never)
@@ -74,7 +74,7 @@ export function AccionesVenta({ venta, rotulo }: Props) {
       onPress: () => void convertir.mutateAsync({ id: h.id, version: h.version, usuarioGeneradorId: userId }).then(async () => {
         const d = await api.get<VentaDetalleDto>(`/api/v1/Ventas/${h.id}`).catch(() => null)
         const motivos = motivosAutorizacion(d?.venta.motivoPendienteAutorizacion)
-        if (d?.venta.estado === ESTADO_PENDIENTE_AUTORIZACION) {
+        if (esEstadoVenta(d?.venta.estado, 'PendienteAutorizacion')) {
           Alert.alert('Quedó por autorizar', motivos.length ? `Porque ${motivos.join(', ')}. Te avisamos cuando lo resuelvan.` : 'Te avisamos cuando lo resuelvan.')
         } else Alert.alert('Ahora es un pedido', 'El presupuesto pasó a pedido.')
       }, (e) => Alert.alert('No se pudo convertir', mensajeDelServidor(e))),

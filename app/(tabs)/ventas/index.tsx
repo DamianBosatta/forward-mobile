@@ -33,6 +33,7 @@ import { MotiView } from 'moti'
 import { useVentasList, SelectedMonth } from '@/features/ventas/hooks/useVentasList'
 import { useFiltroVentasDeRuta, type FiltroVentasRuta } from '@/features/listas/lib/filtroDeRuta'
 import { getVentaStatusConfig } from '@/core/constants/status'
+import { esEstadoVenta } from '@/core/constants/estados'
 import { getNotaEntregaUrl } from '@/libs/api-client'
 import { sharePdf } from '@/features/pedidos/lib/sharePdf'
 import { PremiumInput } from '@/core/ui/PremiumInput'
@@ -218,7 +219,7 @@ const VentaCard = React.memo(({ item, index }: { item: Venta, index: number }) =
   // Share the order note (nota de pedido) PDF so the vendedor can send it to the client.
   const [notaLoading, setNotaLoading] = useState(false)
   const handleSharePedido = useCallback(async () => {
-    if (notaLoading || !item.id || item.estado === 'Anulada') return
+    if (notaLoading || !item.id || esEstadoVenta(item.estado, 'Anulada')) return
     safeHaptics.impact('light')
     setNotaLoading(true)
     const res = await sharePdf(getNotaEntregaUrl(item.id), `nota-pedido-${(item.id).slice(0, 8)}.pdf`)
@@ -301,7 +302,7 @@ const VentaCard = React.memo(({ item, index }: { item: Venta, index: number }) =
                   Entrega: {new Date(deliveryDate).toLocaleDateString('es-AR')}
                 </Text>
               </View>
-              {item.estado !== 'Anulada' && (
+              {!esEstadoVenta(item.estado, 'Anulada') && (
                 <Pressable
                   onPress={handleSharePedido}
                   disabled={notaLoading}

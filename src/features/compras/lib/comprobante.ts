@@ -1,6 +1,8 @@
 import type { components } from '@/libs/api-client/generated/schema'
 import { leerNumero, numeroCompleto } from '@/src/utils/numero'
 import { ddmmaaaa, fechaIso } from './fecha'
+import { cuitEsValido } from '@/libs/reglas'
+import { ComprobanteCompraInputConReglasSchema } from '@/libs/validations/generated/reglas'
 
 export type ComprobanteCompraInput = components['schemas']['ComprobanteCompraInput']
 export type ComprobanteRecibido = components['schemas']['ComprobanteRecibidoDto']
@@ -75,7 +77,7 @@ export function armarComprobante(f: FormComprobante): { comprobante: Comprobante
   const fecha = fechaIso(f.fecha)
   if (!fecha) return { error: 'Escribí la fecha como dd/mm/aaaa.' }
   const cuit = f.cuit.replace(/\D/g, '')
-  if (cuit.length !== 11) return { error: 'El CUIT del proveedor tiene 11 números.' }
+  if (!cuitEsValido(cuit)) return { error: 'El CUIT del proveedor tiene 11 números.' }
   if (!f.razonSocial.trim()) return { error: 'Falta la razón social del proveedor.' }
   const total = leerNumero(f.total)
   if (!total) return { error: 'Falta el total del comprobante.' }
@@ -90,11 +92,13 @@ export function armarComprobante(f: FormComprobante): { comprobante: Comprobante
     alicuotas = [{ alicuota: f.alicuota, netoGravado: neto, iva }]
   }
 
-  return {
-    comprobante: {
-      tipo: f.base?.tipo ?? 'Factura', letra: f.letra, puntoVenta, numero, fecha,
-      cuitEmisor: cuit, razonSocialEmisor: f.razonSocial.trim(),
-      noGravado: f.base?.noGravado ?? 0, exento: f.base?.exento ?? 0, total, alicuotas, tributos: f.base?.tributos ?? [],
-    },
+  const comprobante: ComprobanteCompraInput = {
+    tipo: f.base?.tipo ?? 'Factura', letra: f.letra, puntoVenta, numero, fecha,
+    cuitEmisor: cuit, razonSocialEmisor: f.razonSocial.trim(),
+    noGravado: f.base?.noGravado ?? 0, exento: f.base?.exento ?? 0, total, alicuotas, tributos: f.base?.tributos ?? [],
   }
+  // Límites del contrato (C-010, L-26): los mismos que el backend, sin copias propias.
+  const contrato = ComprobanteCompraInputConReglasSchema.safeParse(comprobante)
+  if (!contrato.success) return { error: contrato.error.issues[0]?.message ?? 'El comprobante no es válido.' }
+  return { comprobante }
 }

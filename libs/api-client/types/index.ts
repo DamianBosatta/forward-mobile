@@ -15,6 +15,7 @@ export interface PagedResult<T> {
   hasNextPage: boolean
 }
 
+// A mano (C-021): genérico de transporte del cliente HTTP; no es un esquema del contrato.
 export interface ApiResponse<T> {
   succeeded: boolean
   message: string
@@ -32,11 +33,13 @@ export type Money = {
 // #region Auth
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
+// A mano (C-021): el login es POST /connect/token (OAuth) y openapi.json no le publica cuerpo ni respuesta.
 export interface LoginRequest {
   username: string
   password: string
 }
 
+// A mano (C-021): respuesta de /connect/token (login y refresh), sin esquema en openapi.json.
 export interface TokenResponse {
   accessToken: string
   refreshToken: string
@@ -115,6 +118,7 @@ export type Deposito             = components['schemas']['DepositoResponse']
 export type CreateDepositoRequest = components['schemas']['CreateDepositoCommand']
 export type UpdateDepositoRequest = components['schemas']['UpdateDepositoCommand']
 
+// A mano (C-021): la desactivación no publica comando con cuerpo en openapi.json (el id va en la ruta).
 export interface DeactivateDepositoRequest {
   id: string
   targetDepositoId?: string
@@ -156,33 +160,9 @@ export interface MovimientoStock {
 export type TipoMovimientoStock = 'Compra' | 'Venta' | 'Transferencia' | 'Ajuste'
 
 /**
- * Single movement entry returned by GET /api/v1/stocks/movimientos.
- * All fields mapped 1:1 to MovimientoStockDto on the backend.
+ * Single movement entry returned by GET /api/v1/stocks/movimientos (MovimientoStockDto).
  */
-export interface MovimientoStockHistorialDto {
-  id: string
-  /** UTC ISO timestamp. */
-  fecha: string
-  /** Numeric enum: 1=Compra, 2=Venta, 3=Transferencia, 4=Ajuste. */
-  tipoMovimiento: number
-  /** Human-readable label resolved server-side. */
-  tipoLabel: string
-  /**
-   * Signed delta: positive for inbound movements, negative for outbound.
-   * The backend applies semantic sign correction (e.g. Venta rows that SPs
-   * stored as absolute positive are negated before returning to the client).
-   */
-  cantidad: number
-  /**
-   * Semantic direction derived from the signed Cantidad.
-   * "Entrada" = stock increased, "Salida" = stock decreased, "Neutro" = no net change.
-   */
-  direccion: 'Entrada' | 'Salida' | 'Neutro'
-  observacion?: string
-  /** Full name of the user who created the movement (or "Sistema"). */
-  usuarioNombre: string
-  referenciaId?: string
-}
+export type MovimientoStockHistorialDto = components['schemas']['MovimientoStockDto']
 
 // #endregion
 
@@ -283,6 +263,8 @@ export type EstadoVenta = 'Pendiente' | 'Confirmada' | 'Empacada' | 'EnRuta' | '
 
 export type TipoOperacionVenta = 'Presupuesto' | 'Pedido'
 
+// A mano (C-021): manda `tipoOperacion` y `metodoEntrega` como número y el contrato los publica como nombre
+// (TipoOperacionVenta / MetodoEntrega); pasarlos a alias cambiaría lo que se envía.
 export interface CreateVentaRequest {
   clienteId: string
   vendedorId?: string
@@ -328,6 +310,8 @@ export type EmpacarVentaResponseDto = components['schemas']['EmpacarVentaRespons
  * The backend Dapper handler composes { venta, detalles, bultos };
  * the ApiResponse<T> envelope is unwrapped by the HTTP client.
  */
+// A mano (C-021): GET /Ventas/{id} compone { venta, detalles, bultos } con Dapper y no tiene esquema propio;
+// sus tres partes sí son alias del contrato.
 export interface VentaDetailResponse {
   venta: VentaHeaderDto
   detalles: VentaDetalleItemDto[]
@@ -407,6 +391,8 @@ export type EstadoCompra = components['schemas']['EstadoCompra']
 export type Compra = CompraDtoList
 export type CompraDetalle = CompraDetalleResponseDto
 
+// A mano (C-021): manda `descuentoPorcentaje` por renglón y `CompraDetalleDto` del contrato no lo tiene
+// (CreateCompraCommand solo lo publica a nivel compra). Pendiente: confirmar con backend si lo ignora.
 export interface CreateCompraRequest {
   proveedorId: string
   depositoId: string
@@ -547,38 +533,12 @@ export type MovimientoPendienteDto    = components['schemas']['MovimientoPendien
 // Movimientos del socio con las dos cuentas (forward-system #905), tipados a mano hasta regenerar el schema.
 
 /** A qué comprobante se aplicó un crédito: el código de la venta (A00409) o el concepto de la deuda. */
-export interface ImputacionMovimientoDto {
-  comprobante: string
-  monto: number
-}
+export type ImputacionMovimientoDto = components['schemas']['ImputacionMovimientoDto']
 
 /** Un asiento del socio en la cuenta TST o en la Normal — GET /cuentas-corrientes/socios/{id}/movimientos. */
-export interface MovimientoSocioDto {
-  id: string
-  fecha: string
-  /** Origen del asiento: Deuda, Pago, NotaCredito, ReversionAnulacion... */
-  tipo: string
-  cuenta: TipoCuentaSocio
-  referencia: string
-  /** Código visible de la venta que originó la deuda; null si no nace de una venta. */
-  comprobante?: string | null
-  debe: number
-  haber: number
-  /** Saldo de ESA cuenta justo después del asiento. */
-  saldoHistorico: number
-  /** Día (AAAA-MM-DD) en que vence una deuda impaga; null si no es una deuda, ya se saldó o no se puede derivar. */
-  vencimiento?: string | null
-  imputadoA: ImputacionMovimientoDto[]
-}
+export type MovimientoSocioDto = components['schemas']['MovimientoSocioDto']
 
-export interface MovimientoSocioDtoPaginatedResponse {
-  page?: number
-  pageSize?: number
-  totalCount?: number
-  totalPages?: number
-  hasNextPage?: boolean
-  items?: MovimientoSocioDto[] | null
-}
+export type MovimientoSocioDtoPaginatedResponse = components['schemas']['MovimientoSocioDtoPaginatedResponse']
 
 // Payload for creating a new cuenta corriente.
 export interface CreateCuentaCorrientePayload {
@@ -625,27 +585,6 @@ export type AppModule =
   | 'MOD_USUARIOS'
   | 'MOD_CONFIGURACION'
 
-export interface CreateUserRequest {
-  nombre:      string
-  apellido:    string
-  email:       string
-  password:    string
-  role:        AppRole
-  permissions: ModulePermissionDto[]
-}
-
-export interface UpdateUserRequest {
-  nombre:      string
-  apellido:    string
-  email:       string
-  role:        AppRole
-  password?:   string
-}
-
-export interface UpdatePermissionsRequest {
-  permissions: ModulePermissionDto[]
-}
-
 // #endregion
 
 // #region Finanzas: Tesorería
@@ -658,20 +597,7 @@ export type TesoreriaListDto = components['schemas']['TesoreriaListDto']
 /** Tesorería movement type — matches GET /api/v1/tesoreria/tipos shape. */
 export type TesoreriaTipoDto = components['schemas']['TesoreriaTipoDto']
 
-export interface RegistrarTransaccionRequest {
-  monto: number
-  moneda: string
-  tipoMovimientoId: string
-  cuentaOrigenId: string
-  cuentaDestinoId?: string
-  socioComercialId?: string
-  observaciones: string
-}
-
-export interface AnularTransaccionRequest {
-  transaccionId: string
-  motivo: string
-}
+export type AnularTransaccionRequest = components['schemas']['AnularTransaccionCommand']
 
 // Cliente de origen del cheque (forward-system #897), tipado a mano hasta regenerar el schema:
 // opcional porque un servidor anterior no lo manda.

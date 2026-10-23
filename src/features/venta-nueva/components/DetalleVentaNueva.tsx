@@ -16,7 +16,8 @@ import { direccionDeEntrega, nombreDelCliente, textoCondicionPago, type Condicio
 import { horaDe, tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { mostrarNumero } from '../lib/linea'
 import { agruparPorPadre, nombreFragancia } from '../lib/fragancias'
-import { ESTADO_PENDIENTE_AUTORIZACION, motivosAutorizacion } from '../lib/motivosAutorizacion'
+import { motivosAutorizacion } from '../lib/motivosAutorizacion'
+import { esEstadoVenta } from '@/core/constants/estados'
 import { codigoDeVenta, rotuloCliente, tipoDeVenta } from '../lib/ventaGuardada'
 import { AccionesVenta } from './AccionesVenta'
 
@@ -120,7 +121,7 @@ export function DetalleVentaNueva({ id, onVolver }: Props) {
           ) : null}
         </View>
         <AccionesVenta venta={q.data} rotulo={cliente ? rotuloCliente(cliente) : direccion} />
-        {h.estado === ESTADO_PENDIENTE_AUTORIZACION ? (
+        {esEstadoVenta(h.estado, 'PendienteAutorizacion') ? (
           <Notice tone="advertencia" title="Quedó por autorizar porque:">
             {`${motivos.map((m) => `• ${m.charAt(0).toUpperCase()}${m.slice(1)}.`).join('\n')}${motivos.length ? '\n' : ''}Te avisamos cuando lo resuelvan.`}
           </Notice>

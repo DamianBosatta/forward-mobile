@@ -1,3 +1,5 @@
+import { CreateVentaCommandSchema } from '@/libs/validations/generated/generated/esquemas'
+import { PorcentajeComisionCedidoSchema } from '@/libs/validations/generated/reglas'
 import { METODO_ENTREGA, type MetodoEntregaValue } from '@/features/ventas/lib/venta-form-retiro'
 import type { LineaCarrito } from './carrito'
 
@@ -84,6 +86,24 @@ export function aAlta(lineas: LineaCarrito[], descuentoGeneral: number, cab: Cab
   if (d.motivoVentaSinStock?.trim()) p.motivoVentaSinStock = d.motivoVentaSinStock.trim()
   if (d.esPedido && d.porcentajeComisionCedido) p.porcentajeComisionCedido = d.porcentajeComisionCedido
   return p
+}
+
+// tipoOperacion y metodoEntrega viajan como número (lo dice AltaVenta), el contrato los publica como texto.
+const AltaVentaSchema = CreateVentaCommandSchema.omit({ tipoOperacion: true, metodoEntrega: true })
+
+/**
+ * Valida el alta con el esquema generado desde el contrato (C-010, L-26): los mismos límites que el
+ * backend, así el error sale antes del POST. Devuelve el primer mensaje, o null si el alta es válida.
+ * La cesión de comisión usa su regla compartida (venta/comision-cedida-rango-condicional).
+ */
+export function errorDeAltaVenta(alta: AltaVenta): string | null {
+  const r = AltaVentaSchema.safeParse(alta)
+  if (!r.success) return r.error.issues[0]?.message ?? 'Datos inválidos'
+  if (alta.porcentajeComisionCedido != null) {
+    const c = PorcentajeComisionCedidoSchema.safeParse(alta.porcentajeComisionCedido)
+    if (!c.success) return c.error.issues[0]?.message ?? 'Datos inválidos'
+  }
+  return null
 }
 
 /** Clave de idempotencia de un alta (A.4 del servidor): única por venta, < 200 caracteres. */

@@ -33,6 +33,8 @@ import { MotiView, AnimatePresence } from 'moti'
 import { ForwardLogo, RequirePermission, GlassCard, AuroraGlow } from '@/core/ui'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { ConfirmModal } from '@/core/ui/ConfirmModal'
+import { esEstadoVenta } from '@/core/constants/estados'
+import { estaCancelada, pasoDeVenta } from '@/features/ventas/lib/estadoVenta'
 import { LinearGradient } from 'expo-linear-gradient'
 import { formatImporte } from '@/core/ui/fw'
 import {
@@ -53,16 +55,6 @@ type StateStep = {
 
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-function getStepIndex(estado: any): number {
-  const s = String(estado)
-  if (s === '2' || s === 'Confirmada') return 0
-  if (s === '3' || s === 'EnPreparacion') return 1
-  if (s === '4' || s === 'Empacada') return 1
-  if (s === '5' || s === 'EnRuta') return 2
-  if (s === '6' || s === 'Entregada') return 3
-  return -1
-}
-
 function formatMoney(val: number) {
   return `$ ${val.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
@@ -131,8 +123,8 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
     { key: 'Entregada',     label: 'Entregado',       desc: 'Venta finalizada. Impacto en CC del cliente.',       Icon: Truck,         color: colors.primary },
   ], [colors])
 
-  const currentIdx = useMemo(() => getStepIndex(venta?.estado), [venta])
-  const isCancelled = useMemo(() => !venta?.activo || String(venta?.estado) === '8' || String(venta?.estado) === '7', [venta])
+  const currentIdx = useMemo(() => pasoDeVenta(venta?.estado), [venta])
+  const isCancelled = useMemo(() => !venta?.activo || estaCancelada(venta?.estado), [venta])
   const isPresupuesto = venta?.tipoOperacion === 1
   const isFinal = currentIdx === 3 || isCancelled
 
@@ -381,7 +373,7 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
           <MotiView from={{ opacity: 0, translateY: 10 }} animate={{ opacity: 1, translateY: 0 }} transition={{ delay: 100 }}>
             <View style={styles.heroQuickActions}>
               <RequirePermission module={["MOD_VENTAS", "MOD_PEDIDOS"]} action="update">
-                {(String(venta.estado) === '1' || String(venta.estado) === 'Pendiente' || String(venta.estado) === '2' || String(venta.estado) === 'Confirmada' || String(venta.estado) === '9' || String(venta.estado) === 'PendienteAutorizacion') && (
+                {esEstadoVenta(venta.estado, 'Pendiente', 'Confirmada', 'PendienteAutorizacion') && (
                   <TouchableOpacity 
                     onPress={() => router.push(`/(tabs)/ventas/nueva?editId=${venta.id}`)} 
                     style={[styles.heroActionBtn, {
@@ -684,8 +676,7 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
         </View>
 
         {detalles.map((item: any, idx: number) => {
-          const s = String(venta.estado)
-          const needsStockPanel = s === '9' || s === 'PendienteAutorizacion' || s === '1' || s === 'Pendiente'
+          const needsStockPanel = esEstadoVenta(venta.estado, 'PendienteAutorizacion', 'Pendiente')
           const stockDisponible = Number(item.stockDisponible) || 0
           const faltante = Math.max(0, item.cantidad - stockDisponible)
           
@@ -863,7 +854,6 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
       {/* ── Floating Action Bar Premium ── */}
       {(() => {
         if (isCancelled || isFinal) return null
-        const s = String(venta.estado)
         let actionLabel = '', IconComponent: any = null, actionColor = colors.primary, actionFn: (() => any) = () => {}, actionVisible = true
 
         if (isPresupuesto) {
@@ -871,7 +861,7 @@ export function VentaDetalle({ id, onVolver }: { id: string | undefined; onVolve
           actionColor = '#6366f1';
           actionFn = handleConvertir;
         }
-        else if (canAuthorizeVenta(s, user?.permissions)) {
+        else if (canAuthorizeVenta(venta.estado, user?.permissions)) {
           actionLabel = 'Autorizar Pedido';
           actionColor = BRAND.orange;
           // Se decide en el detalle para autorizar (fase 4.1): motivos, razón y costos con permiso.

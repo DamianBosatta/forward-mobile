@@ -2,13 +2,15 @@ import { useRef, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '@/core/api/client'
+import { esError } from '@/core/api/errores'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { ventasKeys } from '@/libs/api-client/ventas'
 import { inicioKeys } from '@/core/query/queryClient'
 import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { aAlta, aAutoguardado, nuevaClaveIdempotencia, type Cabecera } from '../lib/payload'
-import { ESTADO_PENDIENTE_AUTORIZACION, motivosAutorizacion } from '../lib/motivosAutorizacion'
+import { aAlta, aAutoguardado, errorDeAltaVenta, nuevaClaveIdempotencia, type Cabecera } from '../lib/payload'
+import { motivosAutorizacion } from '../lib/motivosAutorizacion'
+import { esEstadoVenta } from '@/core/constants/estados'
 import type { LineaCarrito } from '../lib/carrito'
 import type { useBorradorVenta } from './useBorradorVenta'
 
@@ -26,7 +28,7 @@ interface Datos {
 }
 
 /** El servidor pide justificación cuando un Pedido no tiene stock (CreateVentaCommandHandler). */
-const pideMotivo = (e: unknown) => /justificaci[oó]n/i.test(mensajeDelServidor(e, ''))
+const pideMotivo = (e: unknown) => esError(e, 'VentaFaltaStockSinJustificacion')
 /** El servidor devolvió la venta que ya existía con esa clave (CreateVentaCommandHandler, operación repetida). */
 const yaExistia = (r: VentaActionResponseDto) => /ya hab[ií]a sido creada/i.test(r.message ?? '')
 /**
@@ -35,20 +37,20 @@ const yaExistia = (r: VentaActionResponseDto) => /ya hab[ií]a sido creada/i.tes
  */
 const resultadoDelAlta = (r: VentaActionResponseDto) => {
   if (typeof r.estado !== 'number') return null
-  if (r.estado === ESTADO_PENDIENTE_AUTORIZACION && typeof r.motivoPendienteAutorizacion !== 'number') return null
+  if (esEstadoVenta(r.estado, 'PendienteAutorizacion') && typeof r.motivoPendienteAutorizacion !== 'number') return null
   return { estado: r.estado, motivos: r.motivoPendienteAutorizacion }
 }
 /** La clave ya grabó otro pedido: 409 con la venta que quedó en `data` (forward-system #867, CreateVentaCommandHandler). */
 const ventaConOtroCuerpo = (e: unknown): VentaActionResponseDto | null => {
-  if (!(e instanceof ApiError) || e.status !== 409 || e.codigo !== 'ClaveIdempotenciaConOtroCuerpo') return null
+  if (!esError(e, 'ClaveIdempotenciaConOtroCuerpo')) return null
   const v = e.data as Partial<VentaActionResponseDto> | undefined
   return typeof v?.ventaId === 'string' && v.ventaId ? (v as VentaActionResponseDto) : null
 }
 /**
- * 409 sin código por la restricción única (ErrorHandlerMiddleware, 23505 «datos duplicados»): otro intento
- * con la misma clave se estaba grabando. Los demás 409 sin código (clave foránea, concurrencia) no son eso.
+ * 409 `Duplicado` por la restricción única (ErrorHandlerMiddleware, 23505): otro intento con la misma clave
+ * se estaba grabando. Los demás 409 (clave foránea, concurrencia) llevan otro código y no son eso.
  */
-const claveEnCurso = (e: unknown) => e instanceof ApiError && e.status === 409 && !e.codigo && /duplicad/i.test(e.message)
+const claveEnCurso = (e: unknown) => esError(e, 'Duplicado')
 const CLAVE_EN_CURSO = 'Este pedido ya se estaba grabando. Tocá Confirmar de nuevo para ver cómo quedó: no se va a duplicar.'
 
 /**
@@ -93,6 +95,8 @@ export function useConfirmarVenta(d: Datos) {
         clienteId: d.clienteId, depositoId: DEPOSITO_CENTRAL_ID, esPedido: d.esPedido, claveIdempotencia,
         motivoVentaSinStock: motivo, porcentajeComisionCedido: d.porcentajeCedido,
       })
+      const invalido = errorDeAltaVenta(cuerpo(clave))
+      if (invalido) throw new Error(invalido)
       const firma = JSON.stringify(cuerpo(''))
       try {
         r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', cuerpo(clave))
@@ -122,7 +126,7 @@ export function useConfirmarVenta(d: Datos) {
           .then((detalle) => ({ estado: detalle.venta.estado, motivos: detalle.venta.motivoPendienteAutorizacion }))
           .catch(() => null)
       const motivos = motivosAutorizacion(resultado?.motivos)
-      if (resultado?.estado === ESTADO_PENDIENTE_AUTORIZACION && motivos.length) {
+      if (esEstadoVenta(resultado?.estado, 'PendienteAutorizacion') && motivos.length) {
         mensaje = `Quedó por autorizar porque ${motivos.join(', ')}. Te avisamos cuando lo resuelvan.`
       }
     }
