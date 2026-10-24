@@ -8,8 +8,9 @@ jest.setTimeout(15000)
 
 const mockGet = jest.fn()
 const mockPost = jest.fn()
+const mockPostConSobre = jest.fn()
 jest.mock('@/core/api/client', () => ({
-  api: { get: (...a: unknown[]) => mockGet(...a), post: (...a: unknown[]) => mockPost(...a), put: jest.fn(), delete: jest.fn(), postConSobre: jest.fn() },
+  api: { get: (...a: unknown[]) => mockGet(...a), post: (...a: unknown[]) => mockPost(...a), put: jest.fn(), delete: jest.fn(), postConSobre: (...a: unknown[]) => mockPostConSobre(...a) },
   API_URL: 'x',
 }))
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }), useLocalSearchParams: () => ({}) }))
@@ -41,6 +42,7 @@ beforeEach(() => {
   jest.clearAllMocks()
   mockPermisos = ['update', 'delete']
   mockPost.mockResolvedValue(undefined)
+  mockPostConSobre.mockResolvedValue({ data: 'aaaa1111-0000', sobre: { succeeded: true } })
   useAuthStore.setState({ user: null })
 })
 
@@ -164,7 +166,7 @@ describe('recibir mercadería (M11)', () => {
     expect(screen.getByText('Lo que falta pasa a una compra nueva del mismo proveedor, confirmada y con los mismos costos: 10 de Ocean Toalla Rollo, 12 de Make Lavajean.')).toBeTruthy()
     expect(screen.getByText('Suma 54 unidades al stock y genera la deuda con el proveedor')).toBeTruthy()
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir-parcial', {
+    expect(mockPostConSobre).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir-parcial', {
       fechaFacturaProveedor: null,
       lineas: [
         { detalleId: 'l1', cantidadRecibida: 24 },
@@ -172,6 +174,21 @@ describe('recibir mercadería (M11)', () => {
         { detalleId: 'l3', cantidadRecibida: 0 },
       ],
     })
+  })
+
+  it('llegó una parte: al terminar muestra el número de la compra nueva (R22b)', async () => {
+    mockPostConSobre.mockResolvedValueOnce({ data: 'aaaa1111-0000', sobre: { succeeded: true, compraFaltanteId: 'bbbb2222-0000', compraFaltanteNumero: 1790 } })
+    await abrirRecepcion()
+    fireEvent.changeText(screen.getByLabelText('Llegó de Ocean Toalla Rollo'), '30')
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
+    expect(await screen.findByText('Lo que faltó pasó a la compra C-01790, confirmada y pendiente de recibir.')).toBeTruthy()
+  })
+
+  it('llegó todo: no hay aviso de compra nueva', async () => {
+    await abrirRecepcion()
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
+    await screen.findByLabelText('Estado de la compra')
+    expect(screen.queryByText(/Lo que faltó pasó a la compra/)).toBeNull()
   })
 
   it('más de lo pedido en una línea: lo marca y no deja confirmar', async () => {

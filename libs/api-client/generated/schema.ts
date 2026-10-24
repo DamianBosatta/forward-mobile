@@ -3157,6 +3157,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Compras/{id}/foto-factura": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AsignarFotoFacturaProveedorCommand"];
+                    "text/json": components["schemas"]["AsignarFotoFacturaProveedorCommand"];
+                    "application/*+json": components["schemas"]["AsignarFotoFacturaProveedorCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Compras/{id}/devoluciones": {
         parameters: {
             query?: never;
@@ -12723,6 +12768,8 @@ export interface paths {
                     SoloPadres?: boolean;
                     SinPeso?: boolean;
                     SoloComprables?: boolean;
+                    CategoriaId?: string;
+                    ConOferta?: boolean;
                 };
                 header?: never;
                 path?: never;
@@ -18936,6 +18983,9 @@ export interface components {
             socioId?: string;
             depositoIds?: string[] | null;
         };
+        AsignarFotoFacturaProveedorCommand: {
+            fotoUrl?: string | null;
+        };
         AsignarImagenChequeCommand: {
             /** Format: uuid */
             chequeId?: string;
@@ -19704,6 +19754,8 @@ export interface components {
             /** Format: double */
             subtotalAmount: number;
             moneda?: string | null;
+            /** Format: double */
+            costoAnteriorHeredado?: number | null;
             unidadCompra: components["schemas"]["UnidadCompra"];
             /** Format: double */
             cantidadIngresada: number;
@@ -19762,6 +19814,15 @@ export interface components {
             franjaEntregaProveedor?: components["schemas"]["FranjaHorariaDto"][] | null;
             conFactura: boolean;
             comprobante?: components["schemas"]["ComprobanteRecibidoDto"];
+            fotoFacturaProveedorUrl?: string | null;
+            /** Format: uuid */
+            compraOrigenId?: string | null;
+            /** Format: int64 */
+            compraOrigenNumero?: number | null;
+            /** Format: uuid */
+            compraFaltanteId?: string | null;
+            /** Format: int64 */
+            compraFaltanteNumero?: number | null;
             detalles: components["schemas"]["CompraDetalleResponseDto"][];
             devoluciones: components["schemas"]["DevolucionProveedorDto"][];
         };
