@@ -15,6 +15,8 @@
  * or any other context without side effects.
  */
 
+import { redondear2 } from '@/libs/reglas/dinero'
+
 import type { ModulePermission } from '@/libs/api-client/types'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 
@@ -45,6 +47,9 @@ export function esPrecioValido(precioFinal: number, precioMinimo: number): boole
 /**
  * Calculates a cart line's subtotal applying a per-item percentage discount.
  *
+ * Espejo de `VentaDetalle` y de la web (Bloque 13, R15): el unitario se redondea a 2 decimales
+ * ANTES del subtotal y el subtotal se redondea medio hacia afuera del cero (`redondear2`).
+ *
  * @param precioVenta     - Unit selling price (base, before discount)
  * @param cantidad        - Quantity
  * @param descuentoPct    - Per-item discount percentage (0–100)
@@ -54,8 +59,11 @@ export function calcularSubtotalConDescuento(
   cantidad: number,
   descuentoPct: number,
 ): number {
-  const precioFinal = precioVenta * (1 - descuentoPct / 100)
-  return precioFinal * cantidad
+  const precioFinal = redondear2(precioVenta * (1 - descuentoPct / 100))
+  // En centavos enteros: 6,67 × 1,5 en binario da 10,004999… y bajaría a 10,00; 667 × 1,5 = 1000,5
+  // es exacto y llega a redondear2 como 10,005.
+  const centavos = Math.round(precioFinal * 100)
+  return redondear2((centavos * cantidad) / 100)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

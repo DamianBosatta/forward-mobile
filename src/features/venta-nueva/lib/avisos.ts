@@ -1,3 +1,4 @@
+import { redondear2 } from '@/libs/reglas/dinero'
 import type { TipoDocumento } from '@/features/clientes/components/SeleccionarClienteSheet'
 import { precioServidor, totalEstimado, type LineaCarrito } from './carrito'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoPiso, avisoTope } from './linea'
@@ -42,6 +43,7 @@ export function avisosVenta(lineas: LineaCarrito[], ctx: ContextoAvisos): { porA
 /** Totales ESTIMADOS (el real lo calcula el servidor al guardar). */
 export function totalesEstimados(lineas: LineaCarrito[], descuentoGeneral: number, flete = 0) {
   const subtotal = totalEstimado(lineas)
-  const descuento = subtotal * (descuentoGeneral / 100)
-  return { subtotal, descuento, flete, total: subtotal - descuento + flete }
+  // Bloque 13 (R15): la cabecera sale de los subtotales redondeados; descuento y total, a 2 decimales.
+  const descuento = redondear2(subtotal * (descuentoGeneral / 100))
+  return { subtotal, descuento, flete, total: redondear2(subtotal - descuento + flete) }
 }
