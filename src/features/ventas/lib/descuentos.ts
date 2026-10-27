@@ -253,7 +253,7 @@ export interface DerivarFloorBrokenInput extends EsDescuentoValidoCompuestoInput
  * Floor-unknown policy (REQ-BANDS-03, unified): when `precioMinimo` is null/undefined
  * the floor is UNKNOWN and the line is NOT flagged (fail-OPEN — no red border). The cart
  * is UX-only and the server is authoritative at submit (it routes/rejects). This agrees
- * with CarritoSemaforo, which renders a neutral indicator on an unknown floor, so a
+ * with the line semáforo, which renders a neutral indicator on an unknown floor, so a
  * no-cost product never shows a contradictory red-border-plus-neutral-semáforo signal.
  *
  * This is the UX live-warning helper: it does NOT block form submission — the server

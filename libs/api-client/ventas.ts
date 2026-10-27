@@ -1,7 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { api, API_URL } from './client'
 import { buildAnularVentaPayload } from './anular-venta'
-import { buildAutorizarPayload } from '@/features/ventas/lib/authorization'
+import { buildAutorizarPayload } from './autorizar-venta'
 import type {
   Venta,
   VentaDetailResponse,

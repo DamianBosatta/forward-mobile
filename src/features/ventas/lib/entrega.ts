@@ -4,7 +4,7 @@ import { parseDateSafe, partesArgentina } from '@/src/utils/date'
 
 /**
  * "Jueves 22/10": la fecha de entrega llega como instante UTC y el día es el argentino (X9), igual que en la
- * tarjeta de la lista. Misma cuenta que `diaDeEntrega` de venta-nueva/DetalleVentaNueva, que sale con ese detalle.
+ * tarjeta de la lista. Es el único cálculo del día de entrega.
  */
 export function diaDeEntregaCorto(fecha: string | null | undefined): string | null {
   const instante = parseDateSafe(fecha)
