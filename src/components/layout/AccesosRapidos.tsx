@@ -8,7 +8,7 @@ import { safeHaptics } from '@/core/utils/haptics'
 import { puedeVerVentas } from './menuModules'
 import { BottomBar, type BottomBarItem } from '@/core/ui/fw'
 
-type Activa = 'inicio' | 'ventas' | 'compras'
+type Activa = 'inicio' | 'ventas' | 'compras' | 'clientes' | 'cobros'
 
 /**
  * Barra inferior de accesos rápidos (lámina CalleMiDia, D2): Mi día, Ventas, Clientes y Cobros.
@@ -35,7 +35,7 @@ function AccesosRapidos({ activa }: { activa: Activa }) {
   return <BottomBar items={items} activeKey={activa} />
 }
 
-/** Envuelve una pantalla principal (Inicio, Ventas, Compras) y le suma la barra en teléfono. */
+/** Envuelve una pantalla principal (Inicio, Ventas, Clientes, Cobros, Compras) y le suma la barra en teléfono. */
 export function ConAccesosRapidos({ activa, children }: { activa: Activa; children: React.ReactNode }) {
   const { isTablet } = useResponsive()
   return (

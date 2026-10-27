@@ -115,3 +115,10 @@ describe('TM9 cobro en el panel (tablet)', () => {
     expect(await screen.findByLabelText(`Cuenta TST: ${$(132020)}`, {}, ESPERA)).toBeTruthy()
   })
 })
+
+it('en el teléfono la barra de abajo sigue a la vista en Cobros (lámina CalleMiDia)', async () => {
+  renderConQuery(<CuentasCorrientesScreen />)
+
+  expect(await screen.findByRole('button', { name: /^Av\. del Valle 89/ }, ESPERA)).toBeTruthy()
+  expect(screen.getByText('Mi día')).toBeTruthy()
+})

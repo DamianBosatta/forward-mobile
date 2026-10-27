@@ -243,3 +243,10 @@ describe('lámina Clientes (bloque 12, T7)', () => {
     expect(screen.queryByText(/Vencido \$ 500/)).toBeNull()
   })
 })
+
+it('en el teléfono la barra de abajo sigue a la vista en Clientes (lámina CalleMiDia)', async () => {
+  renderConQuery(<ClientesScreen />)
+
+  expect(await screen.findByText('Av. del Valle 89')).toBeTruthy()
+  expect(screen.getByText('Mi día')).toBeTruthy()
+})

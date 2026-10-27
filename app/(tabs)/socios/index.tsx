@@ -14,6 +14,7 @@ import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { FiltrosCartera, SIN_FILTROS, type FiltrosDeCartera } from '@/features/clientes/components/FiltrosCartera'
 import { textoMostrando } from '@/features/clientes/lib/cliente'
 import { FichaCliente } from '@/features/clientes/components/FichaCliente'
+import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
 /** Desde este ancho la lista y la ficha van lado a lado (plan §8). */
@@ -22,7 +23,7 @@ const ANCHO_DOS_PANELES = 900
 const textoDestacado = { ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600' as const }
 
 /** Clientes (láminas Clientes y TabClientes): la cartera del vendedor, por dirección de entrega. */
-export default function ClientesScreen() {
+function ClientesScreen() {
   const c = useColors()
   const router = useRouter()
   const navigation = useNavigation()
@@ -136,5 +137,13 @@ export default function ClientesScreen() {
       )}
 
     </View>
+  )
+}
+
+export default function ClientesScreenConBarra() {
+  return (
+    <ConAccesosRapidos activa="clientes">
+      <ClientesScreen />
+    </ConAccesosRapidos>
   )
 }
