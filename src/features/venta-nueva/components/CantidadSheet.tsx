@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
+import { X } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, formatImporte } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
@@ -65,6 +66,9 @@ function Contenido({ linea, onClose, onConfirm, onQuitar, onDetalle }: Props & {
     backgroundColor: activo ? c.action : c.surface, borderWidth: activo ? 0 : 1, borderColor: c.border,
   })
 
+  // Grilla de cuatro columnas de la lámina CalleCantidad (0 / 5 / tope / Otro).
+  const celda = (activo: boolean) => ({ ...chip(activo), width: '23%' as const, flexGrow: 1, alignItems: 'center' as const, paddingHorizontal: space[2] })
+
   return (
     <BottomSheet visible onClose={onClose} accessibilityLabel="Cantidad y descuento">
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[2] }}>
@@ -74,6 +78,9 @@ function Contenido({ linea, onClose, onConfirm, onQuitar, onDetalle }: Props & {
         </View>
         <Pressable accessibilityRole="button" accessibilityLabel="Quitar la línea" onPress={() => onQuitar(p.id)} style={{ minHeight: 44, justifyContent: 'center' }}>
           <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Quitar</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Cerrar" onPress={onClose} style={{ width: 44, height: 44, borderRadius: radii.pastilla, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface2 }}>
+          <X size={20} color={c.text} />
         </Pressable>
       </View>
 
@@ -105,17 +112,17 @@ function Contenido({ linea, onClose, onConfirm, onQuitar, onDetalle }: Props & {
 
       <View style={{ gap: space[2] }}>
         <Text style={secundario}>{tope > 0 ? `Descuento · tu tope ${mostrarNumero(tope)} %` : 'Descuento'}</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+        <View testID="cantidad-descuentos" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
           {opciones.map((o) => {
             const activo = !enOtro && pct === o
             return (
               <Pressable key={o} accessibilityRole="button" accessibilityLabel={`${mostrarNumero(o)} %`} accessibilityState={{ selected: activo }}
-                onPress={() => { setOtro(false); setPctTexto(mostrarNumero(o)) }} style={chip(activo)}>
+                onPress={() => { setOtro(false); setPctTexto(mostrarNumero(o)) }} style={celda(activo)}>
                 <Text style={{ ...typeScale.cuerpoDestacado, color: activo ? c.onAction : c.text }}>{o === tope && o > 5 ? `${mostrarNumero(o)} % tope` : `${mostrarNumero(o)} %`}</Text>
               </Pressable>
             )
           })}
-          <Pressable accessibilityRole="button" accessibilityLabel="Otro descuento" accessibilityState={{ selected: enOtro }} onPress={() => setOtro(true)} style={chip(enOtro)}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Otro descuento" accessibilityState={{ selected: enOtro }} onPress={() => setOtro(true)} style={celda(enOtro)}>
             <Text style={{ ...typeScale.cuerpoDestacado, color: enOtro ? c.onAction : c.text }}>Otro</Text>
           </Pressable>
         </View>

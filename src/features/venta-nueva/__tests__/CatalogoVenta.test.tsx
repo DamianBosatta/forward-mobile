@@ -95,10 +95,21 @@ describe('CatalogoVenta (agregar productos)', () => {
     expect(within(screen.getByTestId('catalogo-encabezado')).getByRole('button', { name: 'Hay stock' })).toBeTruthy()
   })
 
-  it('V4: la barra del carrito fija abajo aparece con el primer producto, dice cuántos y el total, y sigue a la venta', async () => {
+  it('V4: la barra del carrito se ve siempre: sin productos dice 0 y "Ver venta" no responde', async () => {
     const onVerVenta = jest.fn()
     render(<CatalogoVenta onVerVenta={onVerVenta} />)
-    expect(screen.queryByTestId('carrito-barra')).toBeNull()
+    const barra = screen.getByTestId('carrito-barra')
+    expect(within(barra).getByText('0 productos')).toBeTruthy()
+    expect(within(barra).getByTestId('carrito-total')).toHaveTextContent('$ 0,00')
+    const boton = within(barra).getByRole('button', { name: /^Ver venta/ })
+    expect(boton).toBeDisabled()
+    await userEvent.press(boton)
+    expect(onVerVenta).not.toHaveBeenCalled()
+  })
+
+  it('V4: la barra del carrito fija abajo muestra el primer producto, dice cuántos y el total, y sigue a la venta', async () => {
+    const onVerVenta = jest.fn()
+    render(<CatalogoVenta onVerVenta={onVerVenta} />)
     await userEvent.press(screen.getByRole('button', { name: 'Añadir Pala c/Cabo Fija LP' }))
     const barra = screen.getByTestId('carrito-barra')
     expect(within(barra).getByText('1 producto')).toBeTruthy()

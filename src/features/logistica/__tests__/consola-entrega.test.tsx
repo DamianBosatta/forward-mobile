@@ -104,7 +104,7 @@ describe('Consola del chofer: entrega con la operación única', () => {
     const [[url, cuerpo]] = mockPost.mock.calls
     expect(url).toBe(ENTREGAR)
     expect(cuerpo).toEqual({ claveIdempotencia: expect.stringMatching(/\S{8,}/), nombreReceptor: 'Abel' })
-    expect(await screen.findByText('1 de 2 paradas')).toBeTruthy()
+    expect(await screen.findByText('1 de 2 entregas')).toBeTruthy()
     expect(llamadasA('/api/v1/Logistica/hojas-ruta/h1/reportar-parada')).toHaveLength(0)
   })
 
@@ -203,7 +203,7 @@ describe('Consola del chofer: entrega con la operación única', () => {
     expect(await screen.findByText('Network request failed')).toBeTruthy()
     mockPost.mockImplementation(async () => { entregada(); return { paradaId: 'p1', repetida: true } })
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
-    expect(await screen.findByText('1 de 2 paradas')).toBeTruthy()
+    expect(await screen.findByText('1 de 2 entregas')).toBeTruthy()
     const [primero, segundo] = llamadasA(ENTREGAR)
     expect(segundo[1]).toEqual(primero[1])
   })
@@ -219,7 +219,7 @@ describe('Consola del chofer: entrega con la operación única', () => {
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
     expect(await screen.findByText('Esta entrega ya se había registrado antes con otros datos.')).toBeTruthy()
     expect(screen.queryByLabelText('Confirmar entrega')).toBeNull()
-    expect(await screen.findByText('1 de 2 paradas')).toBeTruthy()
+    expect(await screen.findByText('1 de 2 entregas')).toBeTruthy()
   })
 
   it('si la clave ya se usó en otra parada, la cambia: el próximo intento va con otra clave', async () => {

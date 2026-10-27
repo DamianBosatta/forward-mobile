@@ -82,7 +82,7 @@ describe('Consola del chofer: hoja de ruta', () => {
     expect(within(proxima).getByText('Parada 2 · 3 bultos')).toBeTruthy()
     // El importe es el total que manda el servidor, sin inventar el tipo de cobro.
     expect(within(proxima).getByText('$ 214.560,00')).toBeTruthy()
-    expect(screen.getByText('1 de 4 paradas')).toBeTruthy()
+    expect(screen.getByText('1 de 4 entregas')).toBeTruthy()
     expect(screen.getByLabelText('Parada 3: Av. del Valle 89')).toBeTruthy()
     expect(screen.getByLabelText('Parada 4: Luis Balcarce 312')).toBeTruthy()
     expect(within(screen.getByLabelText('Parada 1: Tarantino 1898')).getByLabelText('Estado: Entregado')).toBeTruthy()
@@ -117,7 +117,7 @@ describe('Consola del chofer: hoja de ruta', () => {
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/paradas/p4/entregar', {
       claveIdempotencia: expect.any(String), nombreReceptor: 'Carlos',
     })
-    expect(await screen.findByText('2 de 4 paradas')).toBeTruthy()
+    expect(await screen.findByText('2 de 4 entregas')).toBeTruthy()
     expect(screen.queryByLabelText('Confirmar entrega')).toBeNull()
   })
 
@@ -143,7 +143,7 @@ describe('Consola del chofer: hoja de ruta', () => {
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
     expect(await screen.findByText('La venta ya no está en ruta.')).toBeTruthy()
     expect(screen.getByLabelText('Confirmar entrega')).toBeTruthy()
-    expect(screen.getByText('1 de 4 paradas')).toBeTruthy()
+    expect(screen.getByText('1 de 4 entregas')).toBeTruthy()
   })
 
   it('antes de iniciar no se reporta; la hoja de otro chofer es solo lectura', async () => {
