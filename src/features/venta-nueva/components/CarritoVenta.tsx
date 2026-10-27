@@ -15,7 +15,8 @@ const ROTULO = 'Total estimado'
 /** Teléfono: barra fija abajo con la cantidad de productos, el total estimado y "Ver venta" (lámina CalleCatalogo). */
 export function CarritoFlotante({ lineas, onVerVenta }: CarritoProps) {
   const c = useColors()
-  if (lineas.length === 0) return null
+  // La lámina la dibuja siempre: sin productos queda en 0 y "Ver venta" no responde.
+  const vacio = lineas.length === 0
   const total = formatImporte(totalEstimado(lineas))
   const productos = lineas.length === 1 ? '1 producto' : `${lineas.length} productos`
   return (
@@ -23,8 +24,10 @@ export function CarritoFlotante({ lineas, onVerVenta }: CarritoProps) {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Ver venta: ${lineas.length} ítems, ${ROTULO.toLowerCase()} ${total}`}
+        disabled={vacio}
+        accessibilityState={{ disabled: vacio }}
         onPress={onVerVenta}
-        style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingLeft: space[4], paddingRight: space[2], borderRadius: radii.tarjeta, backgroundColor: c.topBar }}
+        style={{ opacity: vacio ? 0.6 : 1, minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingLeft: space[4], paddingRight: space[2], borderRadius: radii.tarjeta, backgroundColor: c.topBar }}
       >
         <View>
           <ShoppingCart size={24} color={c.onTopBarStrong} />

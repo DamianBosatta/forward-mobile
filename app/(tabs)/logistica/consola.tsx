@@ -278,7 +278,7 @@ export default function ConsolaChoferScreen() {
         <View style={{ backgroundColor: c.topBar, paddingHorizontal: space[4], paddingBottom: space[4], gap: space[2] }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
             <Text style={{ ...typeScale.cuerpoDestacado, color: c.onTopBarStrong }}>
-              {`${resumen.hechas} de ${resumen.total} paradas`}
+              {`${resumen.hechas} de ${resumen.total} entregas`}
             </Text>
             {/* Lo calcula el servidor; un servidor anterior no lo manda y no se muestra. */}
             {viaje.totalMontoCobrar != null ? (
@@ -294,7 +294,7 @@ export default function ConsolaChoferScreen() {
           ) : null}
           <View
             accessibilityRole="progressbar"
-            accessibilityLabel="Paradas reportadas"
+            accessibilityLabel="Entregas hechas"
             accessibilityValue={{ min: 0, max: resumen.total, now: resumen.hechas }}
             style={{ height: space[2], borderRadius: radii.pastilla, overflow: 'hidden', backgroundColor: oscuro ? c.border : c.textSecondary }}
           >

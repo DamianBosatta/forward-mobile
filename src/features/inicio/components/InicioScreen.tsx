@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Search, ShoppingBag, Tag } from 'lucide-react-native'
 import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
+import { puedeVerVentas } from '@/src/components/layout/menuModules'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client/types'
@@ -156,13 +157,16 @@ export function InicioScreen() {
           <View style={{ paddingHorizontal: space[4], gap: space[3] }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>Reciente · Hoy</Text>
-              <Pressable
-                accessibilityRole="link"
-                onPress={aVentas}
-                style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}
-              >
-                <Text style={[typeScale.secundario, { color: c.brandInk, fontFamily: FONT.semibold, fontWeight: '600' }]}>Ver todo</Text>
-              </Pressable>
+              {/* Mismo criterio que la pantalla de Ventas: el chofer lee ventas pero ahí lo bloquean. */}
+              {puedeVerVentas(canDo) ? (
+                <Pressable
+                  accessibilityRole="link"
+                  onPress={aVentas}
+                  style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}
+                >
+                  <Text style={[typeScale.secundario, { color: c.brandInk, fontFamily: FONT.semibold, fontWeight: '600' }]}>Ver todo</Text>
+                </Pressable>
+              ) : null}
             </View>
             {recientes.isError && !recientes.data ? (
               <View style={{ gap: space[2], alignItems: 'flex-start' }}>

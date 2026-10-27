@@ -15,12 +15,31 @@ const linea = (over: Partial<LineaCarrito> = {}): LineaCarrito => ({ productoId:
 function abrir(l = linea()) {
   const onConfirm = jest.fn()
   const onQuitar = jest.fn()
-  render(<CantidadSheet linea={l} onClose={jest.fn()} onConfirm={onConfirm} onQuitar={onQuitar} />)
-  return { onConfirm, onQuitar }
+  const onClose = jest.fn()
+  render(<CantidadSheet linea={l} onClose={onClose} onConfirm={onConfirm} onQuitar={onQuitar} />)
+  return { onConfirm, onQuitar, onClose }
 }
 const teclas = async (digitos: string) => { for (const d of digitos) await userEvent.press(screen.getByRole('button', { name: d })) }
 
 beforeEach(() => conUsuario(10))
+
+describe('V5 Cantidad y descuento: cierre y grilla de descuentos', () => {
+  it('V5: la X "Cerrar" cierra la hoja sin confirmar ni quitar la línea', async () => {
+    const { onClose, onConfirm, onQuitar } = abrir()
+    await userEvent.press(screen.getByRole('button', { name: 'Cerrar' }))
+    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(onConfirm).not.toHaveBeenCalled()
+    expect(onQuitar).not.toHaveBeenCalled()
+  })
+
+  it('V5: los descuentos van en una grilla de cuatro columnas, con los mismos valores', () => {
+    abrir()
+    const grilla = screen.getByTestId('cantidad-descuentos')
+    const botones = within(grilla).getAllByRole('button')
+    expect(botones.map((b) => b.props.accessibilityLabel)).toEqual(['0 %', '5 %', '10 %', 'Otro descuento'])
+    botones.forEach((b) => expect(b).toHaveStyle({ width: '23%' }))
+  })
+})
 
 describe('V5 Cantidad y descuento: el teclado', () => {
   it('se tipea la cantidad y el subtotal sale del precio del servidor', async () => {

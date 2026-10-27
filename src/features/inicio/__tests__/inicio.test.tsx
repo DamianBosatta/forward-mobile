@@ -131,6 +131,26 @@ describe('Inicio: acción Buscar (bloque 12, R14)', () => {
   })
 })
 
+describe('Inicio: "Ver todo" de lo reciente', () => {
+  it('quien entra a Ventas lo ve y abre la lista', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    pintar()
+
+    await userEvent.press(await screen.findByRole('link', { name: 'Ver todo' }))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas')
+  })
+
+  it('el chofer lee ventas (el pedido de su parada) pero Ventas lo bloquea: no se le ofrece un enlace muerto', async () => {
+    conPermisos('MOD_VIAJES', 'MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    pintar()
+
+    expect(await screen.findByText('Reciente · Hoy')).toBeTruthy()
+    expect(screen.queryByRole('link', { name: 'Ver todo' })).toBeNull()
+  })
+})
+
 describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
   it('cada fila trae cantidad e importe; varias monedas van una por línea y una fila en 0 queda sin importe', async () => {
     conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
