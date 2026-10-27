@@ -8,6 +8,7 @@ jest.mock('@/core/utils/storage', () => ({
     getString: (k: string) => mockDisco.get(k),
     remove: (k: string) => mockDisco.delete(k),
   },
+  zustandStorage: { setItem: () => undefined, getItem: () => null, removeItem: () => undefined },
 }))
 jest.mock('@/core/api/client', () => ({
   ...jest.requireActual('@/core/api/client'),
@@ -17,6 +18,7 @@ jest.mock('@/core/api/client', () => ({
 
 import { encolarVenta, leerCola, cambiarEstado } from '../lib/cola'
 import { enviarPendientes } from '../lib/enviar'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 
 const post = api.post as jest.Mock
 const get = api.get as jest.Mock
@@ -60,9 +62,13 @@ function servidor(h: { vista?: () => unknown; alta?: (cuerpo: AltaVenta) => unkn
 const llamadas = (url: string) => post.mock.calls.filter(([u]) => u === url)
 const tira = (e: unknown) => () => { throw e }
 
+const iniciarSesion = (id: string) =>
+  useAuthStore.setState({ user: { id, username: id, roles: [], permissions: [] } as never })
+
 beforeEach(() => {
   mockDisco.clear()
   jest.clearAllMocks()
+  iniciarSesion('u1')
 })
 
 describe('enviar las ventas guardadas en el teléfono (V9, D4)', () => {
@@ -318,6 +324,27 @@ describe('enviar las ventas guardadas en el teléfono (V9, D4)', () => {
       expect(put).toHaveBeenLastCalledWith('/api/v1/Ventas/b1', expect.objectContaining({ version: 2 }))
       expect(leerCola('u1')[0].estado).toMatchObject({ tipo: 'enBorradores', ventaId: 'b1' })
     })
+  })
+
+  it('si en medio del envío entra otro usuario, no se manda nada más de la cola anterior con su sesión', async () => {
+    servidor({ alta: () => { iniciarSesion('u2'); return alta200() } })
+    encolar()
+    encolar()
+    await expect(enviarPendientes('u1')).resolves.toBe('sinSenal')
+    expect(llamadas('/api/v1/Ventas')).toHaveLength(1)
+    expect(llamadas('/api/v1/Ventas/vista-previa')).toHaveLength(1)
+    const [primera, segunda] = leerCola('u1')
+    expect(primera.estado.tipo).toBe('enviada')
+    expect(segunda.estado).toEqual({ tipo: 'esperando', fase: { paso: 'nueva' }, intentos: 0 })
+  })
+
+  it('sin sesión del dueño de la cola no se manda nada y la cola queda igual', async () => {
+    servidor()
+    encolar()
+    iniciarSesion('u2')
+    await expect(enviarPendientes('u1')).resolves.toBe('sinSenal')
+    expect(post).not.toHaveBeenCalled()
+    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'esperando', fase: { paso: 'nueva' }, intentos: 0 })
   })
 
   it('lo que ya está para revisar, en Borradores o enviado no se vuelve a mandar', async () => {
