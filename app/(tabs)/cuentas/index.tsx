@@ -72,7 +72,6 @@ function CuentasCorrientesScreen() {
         renderItem={({ item }) => (
           <ClienteCard cliente={item} seleccionado={isTabletLandscape && item.id === abierto} onPress={() => abrir(item.id)} />
         )}
-        contentContainerStyle={{ padding: space[4], gap: space[3] }}
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.brandInk} />}

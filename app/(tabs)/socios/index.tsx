@@ -12,7 +12,7 @@ import { useCartera } from '@/features/clientes/hooks/useCartera'
 import { ClienteCard } from '@/features/clientes/components/ClienteCard'
 import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { FiltrosCartera, SIN_FILTROS, type FiltrosDeCartera } from '@/features/clientes/components/FiltrosCartera'
-import { textoMostrando } from '@/features/clientes/lib/cliente'
+import { textoContador } from '@/features/clientes/lib/cliente'
 import { FichaCliente } from '@/features/clientes/components/FichaCliente'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -45,22 +45,6 @@ function ClientesScreen() {
 
   const lista = (
     <View style={{ flex: 1 }}>
-      {totalCount !== undefined ? (
-        <View
-          style={{
-            minHeight: 52,
-            justifyContent: 'center',
-            paddingHorizontal: space[4],
-            backgroundColor: c.surface,
-            borderBottomWidth: 1,
-            borderBottomColor: c.border,
-          }}
-        >
-          <Text accessibilityLiveRegion="polite" style={{ ...textoDestacado, color: c.text }}>
-            {textoMostrando(clientes.length, totalCount, saldoTotal)}
-          </Text>
-        </View>
-      ) : null}
       {error && !(sinRed && !hayDatos) ? (
         <View style={{ padding: space[4] }}>
           {sinRed ? (
@@ -76,7 +60,7 @@ function ClientesScreen() {
         renderItem={({ item }) => (
           <ClienteCard cliente={item} seleccionado={dosPaneles && item.id === abierto} onPress={() => abrir(item.id)} />
         )}
-        contentContainerStyle={{ padding: space[4], gap: space[3] }}
+        
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.brandInk} />}
@@ -101,9 +85,29 @@ function ClientesScreen() {
           )
         }
       />
-      {canCreate('MOD_CLIENTES') ? (
-        <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
-          <Button label="Nuevo cliente" onPress={() => router.push('/(tabs)/socios/nuevo')} />
+      {totalCount !== undefined || canCreate('MOD_CLIENTES') ? (
+        <View
+          testID="pie-clientes"
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: space[3],
+            paddingHorizontal: space[4],
+            paddingVertical: space[3],
+            backgroundColor: c.surface,
+            borderTopWidth: 1,
+            borderTopColor: c.border,
+          }}
+        >
+          {totalCount !== undefined ? (
+            <Text accessibilityLiveRegion="polite" style={{ ...textoDestacado, color: c.textSecondary, flexShrink: 1 }}>
+              {textoContador(clientes.length, totalCount, saldoTotal)}
+            </Text>
+          ) : (
+            <View />
+          )}
+          {canCreate('MOD_CLIENTES') ? <Button label="Nuevo cliente" onPress={() => router.push('/(tabs)/socios/nuevo')} /> : null}
         </View>
       ) : null}
     </View>
