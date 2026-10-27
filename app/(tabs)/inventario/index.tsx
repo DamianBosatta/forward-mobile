@@ -1,12 +1,12 @@
 import React, { useCallback, useRef, useState } from 'react'
-import { ActivityIndicator, FlatList, Modal, Text, TextInput, View } from 'react-native'
-import { useNavigation } from 'expo-router'
+import { ActivityIndicator, FlatList, Modal, Text, View } from 'react-native'
+import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions, useFocusEffect } from '@react-navigation/native'
 import { useMutation } from '@tanstack/react-query'
-import { LayoutGrid, List, ScanBarcode, Search } from 'lucide-react-native'
-import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
+import { LayoutGrid, List, ScanBarcode } from 'lucide-react-native'
+import { FONT, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Notice, Segmented, TopBar } from '@/core/ui/fw'
+import { Notice, TopBar } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
@@ -20,24 +20,20 @@ import { EscanerCodigo } from '@/features/catalogo/components/EscanerCodigo'
 import { SelectorLineaFamilia } from '@/features/catalogo/components/SelectorLineaFamilia'
 import { BotonCatalogoPdf } from '@/features/catalogo/components/BotonCatalogoPdf'
 import { filtrarPorStock } from '@/features/catalogo/lib/presentacion'
-import { StockPorDeposito } from '@/features/inventario/components/StockPorDeposito'
+import { CampoBusqueda } from '@/features/catalogo/components/CampoBusqueda'
 
 /** Ancho desde el que la grilla y la ficha van lado a lado (plan §8, lámina TabCatalogoConsulta). */
 const ANCHO_DOS_PANELES = 900
-/** Desde acá el stock se ve como tabla (lámina TabStock). */
-const ANCHO_TABLET = 600
-
-type Vista = 'catalogo' | 'stock'
-
 /** El aviso de un escaneo que falló: sin red (no llegó respuesta), código rechazado (400) u otro error. */
 function falloDelEscaneo(error: Error, codigo?: string): string {
   if (!(error instanceof ApiError)) return `Sin conexión: no se pudo buscar el código ${codigo}. Volvé a escanear cuando haya señal.`
   return error.status === 400 ? `El código ${codigo} no es válido.` : `No se pudo buscar el código ${codigo}. Volvé a intentar.`
 }
 
-/** Catálogo y stock, solo consulta (láminas CatalogoConsulta, FichaProducto y TabCatalogoConsulta). */
+/** Catálogo, solo consulta (láminas CatalogoConsulta, FichaProducto y TabCatalogoConsulta). */
 export default function CatalogoConsultaScreen() {
   const navigation = useNavigation()
+  const router = useRouter()
   const c = useColors()
   const { width } = useResponsive()
   const dosPaneles = width >= ANCHO_DOS_PANELES
@@ -47,9 +43,7 @@ export default function CatalogoConsultaScreen() {
   const cat = useCatalogoConsulta()
   // Sin señal: con lo guardado se sigue mostrando la lista y un aviso; sin nada, el estado "sin conexión" (R16).
   const catSinRed = cat.isError && esFallaDeRed(cat.error)
-  const [vista, setVista] = useState<Vista>('catalogo')
   const [soloConStock, setSoloConStock] = useState(false)
-  const [stockBusqueda, setStockBusqueda] = useState('')
   const productos = filtrarPorStock(cat.productos, cat.disponible, soloConStock)
   const columnas = grilla ? 2 : 1
   const [escaneando, setEscaneando] = useState(false)
@@ -76,11 +70,10 @@ export default function CatalogoConsultaScreen() {
     : escaneo.error ? { tone: 'peligro' as const, texto: falloDelEscaneo(escaneo.error, codigo) }
     : escaneo.isSuccess && !escaneo.data ? { tone: 'advertencia' as const, texto: `No hay ningún producto con el código ${codigo}.` } : null
 
-  // "Ver stock por depósito" de la ficha: pasa a Stock buscando ese producto por código.
+  // "Ver stock por depósito" de la ficha: abre la pantalla Stock buscando ese producto por código.
   const verStock = (codigoProducto: string) => {
     setSeleccion(null)
-    setStockBusqueda(codigoProducto)
-    setVista('stock')
+    router.push({ pathname: '/(tabs)/inventario/stock', params: { busqueda: codigoProducto } })
   }
 
   const lista = (
@@ -138,10 +131,10 @@ export default function CatalogoConsultaScreen() {
     <RequirePermission module="MOD_STOCK" action="read" mode="screen">
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar
-          title={vista === 'catalogo' ? 'Catálogo' : 'Stock'}
+          title="Catálogo"
           subtitle="Solo consulta"
           leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
-          actions={vista === 'stock' ? [] : [
+          actions={[
             { icon: ScanBarcode, accessibilityLabel: 'Escanear código de barras', onPress: () => { cancelarEscaneo(); setEscaneando(true) } },
             ...(dosPaneles
               ? []
@@ -154,55 +147,20 @@ export default function CatalogoConsultaScreen() {
                 ]),
           ]}
         />
-        <View style={{ backgroundColor: c.topBar, paddingHorizontal: space[4], paddingBottom: space[3], gap: space[3] }}>
-          <Segmented
-            accessibilityLabel="Vista"
-            value={vista}
-            onChange={(v) => { cancelarEscaneo(); setVista(v) }}
-            options={[{ value: 'catalogo', label: 'Catálogo' }, { value: 'stock', label: 'Stock' }]}
-          />
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: space[2],
-              height: space[12],
-              borderRadius: radii.campo,
-              backgroundColor: c.surface,
-              paddingHorizontal: space[3],
-            }}
-          >
-            <Search size={20} color={c.textSecondary} />
-            <TextInput
-              value={vista === 'catalogo' ? cat.busqueda : stockBusqueda}
-              onChangeText={(texto) => { cancelarEscaneo(); if (vista === 'catalogo') cat.setBusqueda(texto); else setStockBusqueda(texto) }}
-              placeholder="Buscar por código o nombre"
-              placeholderTextColor={c.textSecondary}
-              accessibilityLabel="Buscar por código o nombre"
-              autoCorrect={false}
-              autoCapitalize="none"
-              returnKeyType="search"
-              style={[typeScale.cuerpo, { flex: 1, color: c.text, paddingVertical: 0 }]}
-            />
-          </View>
+        <CampoBusqueda value={cat.busqueda} onChangeText={(texto) => { cancelarEscaneo(); cat.setBusqueda(texto) }} />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }}>
+          <FiltroChip label="Con stock" activo={soloConStock} onPress={() => setSoloConStock((v) => !v)} />
+          <FiltroChip label="Con oferta" activo={cat.soloConOferta} onPress={() => cat.setSoloConOferta((v) => !v)} />
+          <SelectorLineaFamilia categoriaId={cat.categoriaId} onChange={cat.setCategoriaId} />
+          <BotonCatalogoPdf busqueda={cat.busqueda} soloConStock={soloConStock} conOferta={cat.soloConOferta} categoriaId={cat.categoriaId} />
         </View>
-        {vista === 'catalogo' ? (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }}>
-            <FiltroChip label="Con stock" activo={soloConStock} onPress={() => setSoloConStock((v) => !v)} />
-            <FiltroChip label="Con oferta" activo={cat.soloConOferta} onPress={() => cat.setSoloConOferta((v) => !v)} />
-            <SelectorLineaFamilia categoriaId={cat.categoriaId} onChange={cat.setCategoriaId} />
-            <BotonCatalogoPdf busqueda={cat.busqueda} soloConStock={soloConStock} conOferta={cat.soloConOferta} categoriaId={cat.categoriaId} />
-          </View>
-        ) : null}
-        {vista === 'catalogo' && avisoEscaneo ? (
+        {avisoEscaneo ? (
           <View style={{ padding: space[4], paddingBottom: 0 }}>
             <Notice tone={avisoEscaneo.tone}>{avisoEscaneo.texto}</Notice>
           </View>
         ) : null}
 
-        {vista === 'stock' ? (
-          <StockPorDeposito busqueda={stockBusqueda} tablet={width >= ANCHO_TABLET} />
-        ) : dosPaneles ? (
+        {dosPaneles ? (
           <View style={{ flex: 1, flexDirection: 'row' }}>
             <View style={{ flex: 1, borderRightWidth: 1, borderRightColor: c.border }}>{lista}</View>
             <View testID="panel-ficha" style={{ flex: 1 }}>

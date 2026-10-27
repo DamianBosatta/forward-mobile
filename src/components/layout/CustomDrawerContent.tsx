@@ -10,6 +10,7 @@ import { usePermissions } from '@/core/auth/RequirePermission'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
+import { useCerrarSesion } from '@/features/cuenta/hooks/useCerrarSesion'
 import { useAvisosNoLeidos } from '@/features/notificaciones'
 import { MENU, MI_CUENTA, esRutaActiva, menuVisible, type MenuItem } from './menuModules'
 
@@ -17,8 +18,9 @@ const iniciales = (nombre?: string, apellido?: string) =>
   `${nombre?.[0] ?? ''}${apellido?.[0] ?? ''}`.toUpperCase() || '·'
 
 /**
- * Menú lateral (Bloque 9A, PR 0.3). En teléfono es la lámina Menu: panel claro
- * con cabecera oscura, filas de 48 con ícono. En tablet queda fijo y sigue la
+ * Menú lateral (Bloque 9A, PR 0.3; D2). En teléfono es la lámina Menu: panel claro
+ * con cabecera oscura, secciones VENDER / COMPRAR / GESTIÓN / LOGÍSTICA, filas de 48 con ícono y
+ * "Cerrar sesión" al pie. En tablet queda fijo y sigue la
  * lámina TabInicio: panel oscuro, filas de 44 y la activa en color de acción.
  */
 export default function CustomDrawerContent(props: DrawerContentComponentProps) {
@@ -29,6 +31,7 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
   const { canDo } = usePermissions()
   const { refreshPermissions } = useAuth()
   const { isAuthenticated, user } = useAuthStore()
+  const { cerrarSesion } = useCerrarSesion()
   const isDrawerOpen = useDrawerStatus() === 'open'
 
   React.useEffect(() => {
@@ -124,7 +127,7 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
             {g.title ? (
               <Text
                 accessibilityRole="header"
-                style={{ ...typeScale.secundario, color: secundario, paddingHorizontal: isTablet ? space[3] : space[4], paddingTop: space[3], paddingBottom: space[1] }}
+                style={{ ...typeScale.etiqueta, letterSpacing: 0.5, color: secundario, paddingHorizontal: isTablet ? space[3] : space[4], paddingTop: space[3], paddingBottom: space[1] }}
               >
                 {g.title}
               </Text>
@@ -143,6 +146,17 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
         }}
       >
         {fila(MI_CUENTA)}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar sesión"
+          onPress={() => {
+            safeHaptics.impact('light')
+            void cerrarSesion()
+          }}
+          style={{ minHeight: isTablet ? 44 : 48, flexDirection: 'row', alignItems: 'center', paddingHorizontal: isTablet ? space[3] : space[4] }}
+        >
+          <Text style={{ ...typeScale.cuerpoDestacado, color: isTablet ? texto : c.dangerStrong }}>Cerrar sesión</Text>
+        </Pressable>
       </View>
     </View>
   )

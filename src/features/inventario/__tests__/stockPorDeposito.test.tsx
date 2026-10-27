@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import CatalogoConsultaScreen from '../../../../app/(tabs)/inventario/index'
+import StockScreen from '../../../../app/(tabs)/inventario/stock'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 
@@ -9,7 +9,8 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 
 let mockAncho = 390
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: mockAncho }) }))
-jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }) }))
+let mockParams: { busqueda?: string } = {}
+jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), useLocalSearchParams: () => mockParams }))
 jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() }, useFocusEffect: jest.fn() }))
 jest.mock('@/core/api/client', () => ({
   API_URL: 'http://api.test',
@@ -68,17 +69,18 @@ function renderPantalla() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })
   return render(
     <QueryClientProvider client={client}>
-      <CatalogoConsultaScreen />
+      <StockScreen />
     </QueryClientProvider>,
   )
 }
 
 const llamadasGet = () => api.get.mock.calls.map(([url]) => url as string)
-const abrirStock = async () => userEvent.press(await screen.findByRole('radio', { name: 'Stock' }))
+const abrirStock = async () => { await screen.findByLabelText('Buscar por código o nombre') }
 const CON_CANTIDADES = [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }]
 
 beforeEach(() => {
   mockAncho = 390
+  mockParams = {}
   api.get.mockReset().mockImplementation(servidor)
   api.post.mockReset().mockResolvedValue([{ productoId: PRODUCTO.id, disponible: false }])
   conUsuario()
@@ -164,5 +166,22 @@ describe('Stock por depósito, sin CAP_VER_CANTIDADES_STOCK', () => {
     expect(llamadasGet().some((u) => u.startsWith('/api/v1/Stocks'))).toBe(false)
     expect(screen.queryByText('Reservado')).toBeNull()
     expect(screen.queryByText('Artículos')).toBeNull()
+  })
+})
+
+describe('Pantalla Stock separada del catálogo', () => {
+  beforeEach(() => conUsuario(CON_CANTIDADES))
+
+  it('se abre sin selector Catálogo/Stock y con el título Stock', async () => {
+    renderPantalla()
+    await abrirStock()
+    expect(screen.queryByRole('radio', { name: 'Catálogo' })).toBeNull()
+    expect(screen.getByText('Stock')).toBeTruthy()
+  })
+
+  it('viene de la ficha con ?busqueda=: la pantalla abre buscando ese código', async () => {
+    mockParams = { busqueda: 'SAP-AER-250' }
+    renderPantalla()
+    expect((await screen.findByLabelText('Buscar por código o nombre')).props.value).toBe('SAP-AER-250')
   })
 })

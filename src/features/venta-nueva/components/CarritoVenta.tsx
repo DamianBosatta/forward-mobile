@@ -12,30 +12,35 @@ interface CarritoProps {
 
 const ROTULO = 'Total estimado'
 
-/** Teléfono: franja con el carrito, la cantidad de ítems y el total estimado (lámina Catalogo). */
+/** Teléfono: barra fija abajo con la cantidad de productos, el total estimado y "Ver venta" (lámina CalleCatalogo). */
 export function CarritoFlotante({ lineas, onVerVenta }: CarritoProps) {
   const c = useColors()
   if (lineas.length === 0) return null
   const total = formatImporte(totalEstimado(lineas))
+  const productos = lineas.length === 1 ? '1 producto' : `${lineas.length} productos`
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Ver venta: ${lineas.length} ítems, ${ROTULO.toLowerCase()} ${total}`}
-      onPress={onVerVenta}
-      style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], borderRadius: radii.campo, backgroundColor: c.action }}
-    >
-      <View>
-        <ShoppingCart size={22} color={c.onAction} />
-        <View style={{ position: 'absolute', top: -8, right: -10, paddingHorizontal: 6, borderRadius: radii.pastilla, backgroundColor: c.topBar }}>
-          <Text testID="carrito-items" style={{ ...typeScale.etiqueta, color: c.onTopBarStrong }}>{lineas.length}</Text>
+    <View testID="carrito-barra" style={{ paddingHorizontal: space[3], paddingTop: space[3], paddingBottom: space[3], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Ver venta: ${lineas.length} ítems, ${ROTULO.toLowerCase()} ${total}`}
+        onPress={onVerVenta}
+        style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingLeft: space[4], paddingRight: space[2], borderRadius: radii.tarjeta, backgroundColor: c.topBar }}
+      >
+        <View>
+          <ShoppingCart size={24} color={c.onTopBarStrong} />
+          <View style={{ position: 'absolute', top: -8, right: -10, paddingHorizontal: 6, borderRadius: radii.pastilla, backgroundColor: c.action }}>
+            <Text testID="carrito-items" style={{ ...typeScale.etiqueta, color: c.onAction }}>{lineas.length}</Text>
+          </View>
         </View>
-      </View>
-      <Text style={{ ...typeScale.cuerpoDestacado, color: c.onAction, flex: 1 }}>Ver venta</Text>
-      <View style={{ alignItems: 'flex-end' }}>
-        <Text style={{ ...typeScale.etiqueta, color: c.onAction }}>{ROTULO}</Text>
-        <Text testID="carrito-total" style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.onAction }}>{total}</Text>
-      </View>
-    </Pressable>
+        <View style={{ flex: 1, marginLeft: space[2] }}>
+          <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>{productos}</Text>
+          <Text testID="carrito-total" style={{ ...typeScale.titulo, ...importe, color: c.onTopBarStrong }}>{total}</Text>
+        </View>
+        <View style={{ minHeight: 44, paddingHorizontal: space[4], justifyContent: 'center', borderRadius: radii.campo, backgroundColor: c.action }}>
+          <Text style={{ ...typeScale.cuerpoDestacado, color: c.onAction }}>Ver venta</Text>
+        </View>
+      </Pressable>
+    </View>
   )
 }
 

@@ -10,8 +10,6 @@ jest.mock('@/core/api/client', () => ({
   api: { get: (url: string) => mockGet(url) },
 }))
 
-let mockVentaNueva = false
-jest.mock('@/features/ventas/lib/ventaNueva', () => ({ ...jest.requireActual('@/features/ventas/lib/ventaNueva'), useVentaNueva: () => mockVentaNueva }))
 
 const mockPush = jest.fn()
 const mockBack = jest.fn()
@@ -62,7 +60,6 @@ const urls = () => mockGet.mock.calls.map(([u]) => String(u))
 beforeEach(() => {
   jest.clearAllMocks()
   mockPermisos = ['MOD_CLIENTES', 'MOD_VENTAS', 'MOD_CC']
-  mockVentaNueva = false
   mockGet.mockImplementation((url: string) =>
     Promise.resolve(url.includes('/Ventas?') ? paginado([VENTA]) : paginado([CLIENTE])))
 })
@@ -123,21 +120,18 @@ describe('Buscar', () => {
   })
 
   describe('Vender al cliente encontrado (T4c, lienzo ResBuscar)', () => {
-    it('con la venta nueva prendida y permiso para crear, la fila del cliente ofrece Vender con ese cliente', async () => {
-      mockVentaNueva = true
+    it('con permiso para crear, la fila del cliente ofrece Vender con ese cliente', async () => {
       mockPermisos = ['MOD_CLIENTES', 'MOD_VENTAS', 'MOD_VENTAS:create']
       pintar()
       await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')
       const clientes = await screen.findByTestId('buscar-clientes')
       await userEvent.press(await within(clientes).findByRole('button', { name: 'Vender a Tarantino 1898' }))
-      expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas/nueva-v2?clienteId=c1')
+      expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas/nueva?clienteId=c1')
     })
 
     it.each([
-      ['con el switch apagado', false, ['MOD_CLIENTES', 'MOD_VENTAS', 'MOD_VENTAS:create']],
-      ['sin permiso para crear ventas', true, ['MOD_CLIENTES', 'MOD_VENTAS']],
-    ])('%s no hay Vender y la fila sigue abriendo la ficha', async (_n, switchPrendido, permisos) => {
-      mockVentaNueva = switchPrendido
+      ['sin permiso para crear ventas', ['MOD_CLIENTES', 'MOD_VENTAS']],
+    ])('%s no hay Vender y la fila sigue abriendo la ficha', async (_n, permisos) => {
       mockPermisos = permisos
       pintar()
       await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')

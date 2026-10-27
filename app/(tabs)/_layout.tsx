@@ -23,6 +23,7 @@ export default function DrawerLayout() {
       <Drawer.Screen name="index" />
       <Drawer.Screen name="ventas/index" />
       <Drawer.Screen name="inventario/index" />
+      <Drawer.Screen name="inventario/stock" />
       <Drawer.Screen name="compras/index" />
       <Drawer.Screen name="proveedores/index" />
       <Drawer.Screen name="socios/index" />
@@ -32,14 +33,12 @@ export default function DrawerLayout() {
       <Drawer.Screen name="calendario/index" />
       <Drawer.Screen name="avisos/index" />
       <Drawer.Screen name="reportes/index" />
-      <Drawer.Screen name="logistica/index" />
       <Drawer.Screen name="logistica/consola" />
 
       {/* Rutas ocultas o secundarias (no aparecen en el drawer per se, pero se registran en el router) */}
       <Drawer.Screen name="perfil" />
       <Drawer.Screen name="tesoreria/transferencia" />
       <Drawer.Screen name="ventas/nueva" />
-      <Drawer.Screen name="ventas/nueva-v2" />
       <Drawer.Screen name="compras/nueva" />
       <Drawer.Screen name="socios/nuevo" />
       <Drawer.Screen name="proveedores/nuevo" />

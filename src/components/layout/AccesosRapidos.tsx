@@ -1,33 +1,24 @@
 import React from 'react'
 import { View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { DrawerActions, useNavigation } from '@react-navigation/native'
-import { House, Menu, ShoppingBag, Tag } from 'lucide-react-native'
+import { Banknote, FileText, House, User } from 'lucide-react-native'
 import { useResponsive } from '@/libs/useResponsive'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { safeHaptics } from '@/core/utils/haptics'
 import { puedeVerVentas } from './menuModules'
-import { useVentaNueva } from '@/features/ventas/lib/ventaNueva'
-import { BottomBar, Fab, type BottomBarItem } from '@/core/ui/fw'
+import { BottomBar, type BottomBarItem } from '@/core/ui/fw'
 
-type Activa = 'inicio' | 'ventas' | 'compras'
+type Activa = 'inicio' | 'ventas' | 'compras' | 'clientes' | 'cobros'
 
 /**
- * Barra inferior de accesos rápidos (lámina Main): Inicio, Ventas, "+" para una
- * venta nueva, Compras y Menú. Solo en teléfono: en tablet el menú está fijo.
- * Ventas pide lo mismo que el menú (leer ventas o pedidos, sin el chofer); el "+"
- * es contextual: en Compras crea una compra, en el resto una venta; Compras pide
- * leer compras.
+ * Barra inferior de accesos rápidos (lámina CalleMiDia, D2): Mi día, Ventas, Clientes y Cobros.
+ * Solo en teléfono: en tablet el menú está fijo. Cada acceso pide lo mismo que su entrada del menú
+ * lateral (Ventas: leer ventas o pedidos, sin el chofer; Clientes: MOD_CLIENTES; Cobros, que abre
+ * las cuentas corrientes: MOD_CC). Lo demás (nueva venta, nueva compra, menú) está en cada pantalla.
  */
 function AccesosRapidos({ activa }: { activa: Activa }) {
   const router = useRouter()
-  const navigation = useNavigation()
   const { canDo } = usePermissions()
-  const venta = canDo('MOD_VENTAS', 'create')
-  const compra = canDo('MOD_COMPRAS', 'create')
-  const nuevaCompra = activa === 'compras'
-  // Con el switch de la venta nueva prendido, el "+" abre la venta nueva; si no, la de hoy.
-  const rutaVenta = useVentaNueva() ? '/(tabs)/ventas/nueva-v2' : '/(tabs)/ventas/nueva'
 
   const ir = (ruta: string) => () => {
     safeHaptics.impact('light')
@@ -35,29 +26,16 @@ function AccesosRapidos({ activa }: { activa: Activa }) {
   }
 
   const items: BottomBarItem[] = [
-    { key: 'inicio', label: 'Inicio', icon: House, onPress: ir('/(tabs)/') },
-    ...(puedeVerVentas(canDo) ? [{ key: 'ventas', label: 'Ventas', icon: Tag, onPress: ir('/(tabs)/ventas') }] : []),
-    ...(canDo('MOD_COMPRAS', 'read') ? [{ key: 'compras', label: 'Compras', icon: ShoppingBag, onPress: ir('/(tabs)/compras') }] : []),
-    { key: 'menu', label: 'Menú', icon: Menu, onPress: () => navigation.dispatch(DrawerActions.openDrawer()) },
+    { key: 'inicio', label: 'Mi día', icon: House, onPress: ir('/(tabs)/') },
+    ...(puedeVerVentas(canDo) ? [{ key: 'ventas', label: 'Ventas', icon: FileText, onPress: ir('/(tabs)/ventas') }] : []),
+    ...(canDo('MOD_CLIENTES', 'read') ? [{ key: 'clientes', label: 'Clientes', icon: User, onPress: ir('/(tabs)/socios') }] : []),
+    ...(canDo('MOD_CC', 'read') ? [{ key: 'cobros', label: 'Cobros', icon: Banknote, onPress: ir('/(tabs)/cuentas') }] : []),
   ]
 
-  return (
-    <BottomBar
-      items={items}
-      activeKey={activa}
-      center={
-        (nuevaCompra ? compra : venta) ? (
-          <Fab
-            accessibilityLabel={nuevaCompra ? 'Nueva compra' : 'Nueva venta'}
-            onPress={ir(nuevaCompra ? '/(tabs)/compras/nueva' : rutaVenta)}
-            style={{ position: 'relative', right: 0, bottom: 0 }} />
-        ) : undefined
-      }
-    />
-  )
+  return <BottomBar items={items} activeKey={activa} />
 }
 
-/** Envuelve una pantalla principal (Inicio, Ventas, Compras) y le suma la barra en teléfono. */
+/** Envuelve una pantalla principal (Inicio, Ventas, Clientes, Cobros, Compras) y le suma la barra en teléfono. */
 export function ConAccesosRapidos({ activa, children }: { activa: Activa; children: React.ReactNode }) {
   const { isTablet } = useResponsive()
   return (

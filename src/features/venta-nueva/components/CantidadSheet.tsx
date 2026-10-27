@@ -77,14 +77,14 @@ function Contenido({ linea, onClose, onConfirm, onQuitar, onDetalle }: Props & {
         </Pressable>
       </View>
 
-      <View style={{ flexDirection: 'row', gap: space[3] }}>
-        <View style={{ flex: 1, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface2 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface2 }}>
+        <View>
           <Text style={secundario}>Cantidad</Text>
-          <Text accessibilityLabel={`Cantidad: ${cantidad}`} style={{ ...typeScale.titulo, ...importe, color: c.text }}>{texto || '0'}</Text>
+          <Text accessibilityLabel={`Cantidad: ${cantidad}`} style={{ ...typeScale.titulo, ...importe, fontSize: 40, lineHeight: 48, fontWeight: '700', color: c.text }}>{texto || '0'}</Text>
         </View>
-        <View style={{ flex: 1, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface2 }}>
+        <View style={{ alignItems: 'flex-end' }}>
           <Text style={secundario}>Subtotal</Text>
-          <Text testID="cantidad-subtotal" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(calcularSubtotalConDescuento(base, cantidad, pct))}</Text>
+          <Text testID="cantidad-subtotal" style={{ ...typeScale.titulo, ...importe, fontWeight: '700', color: c.text }}>{formatImporte(calcularSubtotalConDescuento(base, cantidad, pct))}</Text>
           <Text style={{ ...secundario, ...importe }}>{`${formatImporte(precioFromPct(base, pct))} c/u`}</Text>
         </View>
       </View>
@@ -129,12 +129,12 @@ function Contenido({ linea, onClose, onConfirm, onQuitar, onDetalle }: Props & {
         {aviso === 'sinConfigurar' ? <Notice tone="peligro">{MENSAJE_TOPE_SIN_CONFIGURAR}</Notice> : null}
       </View>
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+      <View testID="cantidad-teclado" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
         {TECLAS.map((t) => (
           <Pressable key={t} accessibilityRole="button" accessibilityLabel={t in ARIA_TECLA ? ARIA_TECLA[t as keyof typeof ARIA_TECLA] : t}
             onPress={() => setTexto((a) => teclear(a, t))}
-            style={{ width: '31%', flexGrow: 1, minHeight: 52, borderRadius: radii.campo, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface2 }}>
-            <Text style={{ ...typeScale.titulo, color: c.text }}>{t in ROTULO_TECLA ? ROTULO_TECLA[t as keyof typeof ROTULO_TECLA] : t}</Text>
+            style={{ width: '31%', flexGrow: 1, minHeight: 56, borderRadius: radii.tarjeta, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface2 }}>
+            <Text style={{ ...typeScale.titulo, fontSize: 24, fontWeight: '600', color: c.text }}>{t in ROTULO_TECLA ? ROTULO_TECLA[t as keyof typeof ROTULO_TECLA] : t}</Text>
           </Pressable>
         ))}
       </View>

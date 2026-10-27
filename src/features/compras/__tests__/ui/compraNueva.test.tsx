@@ -74,7 +74,9 @@ beforeEach(() => {
 
 async function agregarBalde(cantidad: string) {
   await userEvent.press(screen.getByRole('button', { name: '+ Agregar productos' }))
-  await userEvent.type(await screen.findByPlaceholderText('0'), cantidad)
+  await userEvent.press(await screen.findByRole('button', { name: 'Añadir Balde Nuvia 10L' }))
+  const campo = await screen.findByLabelText('Cantidad de Balde Nuvia 10L')
+  fireEvent.changeText(campo, cantidad)
 }
 
 describe('editar una compra guardada', () => {
@@ -212,7 +214,7 @@ describe('pantalla de compra nueva', () => {
     await userEvent.press(await screen.findByRole('button', { name: 'Insumos del Sur SA' }))
     await screen.findByText('Insumos del Sur SA · 30 días')
     await agregarBalde('3')
-    await userEvent.press(screen.getByRole('button', { name: 'Cerrar' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Listo' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar compra' })).toBeEnabled())
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar compra' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/c1/confirmar', { compraId: 'c1' }), ESPERA)
@@ -226,7 +228,7 @@ describe('pantalla de compra nueva', () => {
       pantalla()
       await userEvent.press(await screen.findByRole('button', { name: proveedor }))
       await agregarBalde('3')
-      await userEvent.press(screen.getByRole('button', { name: 'Cerrar' }))
+      await userEvent.press(screen.getByRole('button', { name: 'Listo' }))
       await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar y recibir' })).toBeEnabled())
       await userEvent.press(screen.getByRole('button', { name: 'Confirmar y recibir' }))
     }

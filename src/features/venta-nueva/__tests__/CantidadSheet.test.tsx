@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, userEvent } from '@testing-library/react-native'
+import { render, screen, userEvent, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { CantidadSheet, opcionesDeDescuento } from '../components/CantidadSheet'
 import { DescuentoGeneralSheet } from '../components/DescuentoGeneralSheet'
@@ -31,6 +31,23 @@ describe('V5 Cantidad y descuento: el teclado', () => {
     expect(screen.getByTestId('cantidad-subtotal')).toHaveTextContent('$ 29.952,00')
     await userEvent.press(screen.getByRole('button', { name: 'Listo' }))
     expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ cantidad: 12, descuentoPct: 0 }))
+  })
+
+  it('V5: la cantidad se ve grande y las teclas son grandes (3 columnas, 12 teclas)', () => {
+    abrir()
+    expect(screen.getByLabelText('Cantidad: 1')).toHaveStyle({ fontSize: 40 })
+    const teclado = screen.getByTestId('cantidad-teclado')
+    expect(within(teclado).getAllByRole('button')).toHaveLength(12)
+    expect(within(teclado).getByRole('button', { name: '5' })).toHaveStyle({ minHeight: 56 })
+  })
+
+  it('V5: con el teclado se arma 1204 y no deja pasar de cuatro dígitos; Listo confirma ese valor', async () => {
+    const { onConfirm } = abrir()
+    await userEvent.press(screen.getByRole('button', { name: 'Borrar todo' }))
+    await teclas('12045')
+    expect(screen.getByLabelText('Cantidad: 1204')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Listo' }))
+    expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ cantidad: 1204 }))
   })
 
   it('"Borrar" saca el último dígito', async () => {

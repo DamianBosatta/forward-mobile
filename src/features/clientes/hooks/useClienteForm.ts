@@ -45,7 +45,9 @@ function cambioDeTope(texto: string, actual: number | null | undefined): { topeC
  * La condición de pago solo se manda con CAP_AUTORIZAR_VENTA; sin ella va ausente, que en el
  * servidor es "no tocar".
  */
-export function useClienteForm(id: string | undefined, alGuardar: (id: string) => void) {
+export type DestinoAlGuardar = 'ficha' | 'vender'
+
+export function useClienteForm(id: string | undefined, alGuardar: (id: string, destino: DestinoAlGuardar) => void) {
   const editando = !!id
   const puedeCambiarPago = useAuthStore(s => s.hasCapability('CAP_AUTORIZAR_VENTA'))
   const { data: actual, isFetchedAfterMount, isSuccess, error: errorDeCarga, refetch } = useSocio(id ?? '', { fresco: true })
@@ -82,7 +84,8 @@ export function useClienteForm(id: string | undefined, alGuardar: (id: string) =
   const cambiar = <K extends keyof DatosCliente>(campo: K, valor: DatosCliente[K]) =>
     setDatos(d => ({ ...d, [campo]: valor }))
 
-  const guardar = async () => {
+  /** `destino` solo cambia a dónde se va después de guardar: el pedido es el mismo. */
+  const guardar = async (destino: DestinoAlGuardar = 'ficha') => {
     if (editando && !cargado) return
     setError(null)
     // El tope lo fija solo quien autoriza ventas (el servidor lo exige): sin la capacidad no se manda.
@@ -104,9 +107,9 @@ export function useClienteForm(id: string | undefined, alGuardar: (id: string) =
       if (editando && id) {
         // El horario no se edita acá, pero el servidor lo pisa con lo que llegue: se devuelve el actual.
         await actualizar.mutateAsync({ ...comun, id, horario: actual?.horario })
-        alGuardar(id)
+        alGuardar(id, destino)
       } else {
-        alGuardar(await crear.mutateAsync({ ...comun, tipoRaw: 0, altaProvisoria: datos.altaProvisoria, saldoInicial: 0 }))
+        alGuardar(await crear.mutateAsync({ ...comun, tipoRaw: 0, altaProvisoria: datos.altaProvisoria, saldoInicial: 0 }), destino)
       }
     } catch (e) {
       setError(mensajeDelServidor(e, 'No se pudo guardar el cliente.'))

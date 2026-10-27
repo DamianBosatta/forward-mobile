@@ -1,6 +1,6 @@
 import React from 'react'
 import { Alert, Linking } from 'react-native'
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { diaArgentina } from '@/src/utils/date'
@@ -181,6 +181,18 @@ describe('V8 listo (CalleListo / TabCalleListo)', () => {
     expect(screen.getByText('2 productos · 18 unidades')).toBeTruthy()
   })
 
+  it('es oscura como CalleListo: fondo de la barra, marca de éxito, total y acciones', async () => {
+    conEntrega()
+    pantalla()
+    await screen.findByText('Pedido A00419 enviado')
+    expect(screen.getByTestId('venta-guardada')).toHaveStyle({ backgroundColor: '#0E1514' })
+    expect(screen.getByTestId('venta-guardada-marca')).toHaveStyle({ width: 88, height: 88, backgroundColor: '#2BD4BD' })
+    expect(within(screen.getByTestId('venta-guardada-resumen')).getByText('$ 51.350,13')).toBeTruthy()
+    for (const nombre of ['Compartir PDF con el cliente', 'Vender a otro cliente', 'Volver a Mi día']) {
+      expect(screen.getByRole('button', { name: nombre })).toBeTruthy()
+    }
+  })
+
   it('un pedido que no queda por autorizar no dice que haya que esperar', async () => {
     conEntrega()
     mockVenta = { ...mockVenta, venta: cabecera({ estado: 2, fechaEntrega: '2026-10-22T00:00:00' }) }
@@ -192,7 +204,7 @@ describe('V8 listo (CalleListo / TabCalleListo)', () => {
   it('"Vender a otro cliente" abre una venta nueva y "Volver a Mi día" va al inicio', async () => {
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: 'Vender a otro cliente' }))
-    expect(mockReplace).toHaveBeenLastCalledWith('/(tabs)/ventas/nueva-v2')
+    expect(mockReplace).toHaveBeenLastCalledWith('/(tabs)/ventas/nueva')
     await userEvent.press(screen.getByRole('button', { name: 'Volver a Mi día' }))
     expect(mockReplace).toHaveBeenLastCalledWith('/(tabs)')
   })

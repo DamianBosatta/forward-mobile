@@ -2,7 +2,6 @@ import React from 'react'
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 
 // Las filas de Inicio abren Ventas y Compras con el filtro en la ruta (?tipo=…&estado=…).
 const mockGet = jest.fn()
@@ -29,13 +28,10 @@ jest.mock('@/core/ui', () => {
   return { ForwardLogo: Pasa, TopHeaderActions: Pasa, RequirePermission: Pasa, GlassCard: Pasa, AuroraGlow: Pasa, SegmentedControl: Pasa }
 })
 jest.mock('@/core/ui/PremiumInput', () => ({ PremiumInput: () => null }))
-jest.mock('@/features/ventas/components/VentasKpiGrid', () => ({ VentasKpiGrid: () => null }))
-jest.mock('@/features/ventas/components/VentaCardSkeleton', () => ({ VentaCardSkeleton: () => null }))
 jest.mock('moti', () => ({ MotiView: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
 jest.mock('expo-blur', () => ({ BlurView: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
 let mockAncho = 390
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => ({ width: mockAncho, height: 800, scale: 2, fontScale: 1 }) }))
-jest.mock('../../../../app/(tabs)/ventas/[id]', () => ({ VentaDetalle: () => null }))
 jest.mock('../../../../app/(tabs)/compras/[id]', () => {
   const { Text: T } = require('react-native')
   return { CompraDetalle: ({ id }: { id: string }) => <T>{`detalle ${id}`}</T> }
@@ -82,50 +78,9 @@ beforeEach(() => {
   })
 })
 
-describe('Ventas (lista de hoy) con el filtro de Inicio', () => {
-  beforeEach(() => { loguear(['Vendedor']); useVentaNuevaStore.setState({ activa: false }) })
-
-  it('pide tipo y estado al servidor sin el filtro del mes, y se saca el filtro de la ruta', async () => {
-    mockParams = { tipo: 'presupuestos', estado: 'Pendiente' }
-    pintar(VentasRoute)
-
-    await screen.findByText('Almacén Luis')
-    const q = ultimaConsulta('/api/v1/Ventas?')
-    expect(q.get('tipoOperacion')).toBe('1')
-    expect(q.getAll('estados')).toEqual(['Pendiente'])
-    // Inicio cuenta sin fecha: la lista tampoco filtra por mes.
-    expect(q.get('fechaDesde')).toBeNull()
-    expect(mockSetParams).toHaveBeenCalledWith({ tipo: undefined, estado: undefined })
-  })
-
-  it('la misma fila vuelve a aplicar el filtro aunque se haya cambiado a mano', async () => {
-    mockParams = { tipo: 'pedidos', estado: 'PendienteAutorizacion' }
-    const { rerender } = pintar(VentasRoute)
-    await screen.findByText('Kiosco Ana')
-    expect(ultimaConsulta('/api/v1/Ventas?').getAll('estados')).toEqual(['PendienteAutorizacion'])
-
-    rerender() // la ruta ya sin el filtro
-    await userEvent.press(screen.getByText('Todas'))
-    await screen.findByText('Almacén Luis')
-
-    mockParams = { tipo: 'pedidos', estado: 'PendienteAutorizacion' }
-    rerender()
-    await screen.findByText('Kiosco Ana')
-    expect(screen.queryByText('Almacén Luis')).toBeNull()
-  })
-
-  it('sin filtro en la ruta sigue arrancando en el mes actual', async () => {
-    pintar(VentasRoute)
-    await screen.findByText('Almacén Luis')
-    expect(ultimaConsulta('/api/v1/Ventas?').get('fechaDesde')).not.toBeNull()
-    expect(mockSetParams).not.toHaveBeenCalled()
-  })
-})
-
-describe('Ventas (lista nueva) con el filtro de Inicio', () => {
+describe('Ventas con el filtro de Inicio', () => {
   it('abre la pestaña y el estado pedidos, en "Todo" el período', async () => {
     loguear(['Administrador'])
-    useVentaNuevaStore.setState({ activa: true })
     mockParams = { tipo: 'presupuestos', estado: 'Pendiente' }
     pintar(VentasRoute)
 
@@ -189,9 +144,8 @@ describe('tablet: el filtro que llega de Inicio cierra el detalle que ya no est�
     expect(await screen.findByText('detalle c1')).toBeTruthy()
   })
 
-  it('Ventas (lista nueva): igual con la venta abierta', async () => {
+  it('Ventas: igual con la venta abierta', async () => {
     loguear(['Administrador'])
-    useVentaNuevaStore.setState({ activa: true })
     mockGet.mockImplementation((url: string) => {
       if (url.includes('/resumen')) return Promise.resolve({ cantidad: 1 })
       const estado = new URLSearchParams(url.split('?')[1]).get('estado')

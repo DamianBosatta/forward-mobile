@@ -67,7 +67,12 @@ export default function ProveedoresScreen() {
         data={proveedores}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <ProveedorCard proveedor={item} seleccionado={dosPaneles && item.id === abierto} onPress={() => abrir(item.id)} />
+          <ProveedorCard
+            proveedor={item}
+            seleccionado={dosPaneles && item.id === abierto}
+            onPress={() => abrir(item.id)}
+            onNuevaCompra={canCreate('MOD_COMPRAS') ? () => router.push('/(tabs)/compras/nueva' as never) : undefined}
+          />
         )}
         contentContainerStyle={{ padding: space[4], gap: space[3] }}
         onEndReached={cargarMas}

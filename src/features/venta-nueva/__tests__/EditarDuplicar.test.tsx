@@ -62,9 +62,9 @@ describe('editar y duplicar (PR 2.9b)', () => {
   it('Editar solo en Pendiente o Confirmada y con permiso; Duplicar con permiso de crear', async () => {
     const r = conQuery(<AccionesVenta venta={venta as never} rotulo="Tarantino 1898" />)
     await userEvent.press(screen.getByRole('button', { name: 'Editar' }))
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva-v2?editar=v9')
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva?editar=v9')
     await userEvent.press(screen.getByRole('button', { name: 'Duplicar' }))
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva-v2?duplicar=v9')
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva?duplicar=v9')
     r.unmount()
     conQuery(<AccionesVenta venta={{ ...venta, venta: cabecera({ estado: 5 }) } as never} rotulo="Tarantino 1898" />)
     expect(screen.queryByRole('button', { name: 'Editar' })).toBeNull()

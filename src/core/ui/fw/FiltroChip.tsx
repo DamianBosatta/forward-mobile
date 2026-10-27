@@ -6,10 +6,12 @@ interface FiltroChipProps {
   label: string
   activo: boolean
   onPress: () => void
+  /** Sobre un encabezado oscuro (barra superior): activo en color de acción, inactivo con borde tenue. */
+  oscuro?: boolean
 }
 
 /** Chip de filtro de los lienzos de catálogo y stock (Hay stock, En alerta, depósito): activo en color de marca. */
-export function FiltroChip({ label, activo, onPress }: FiltroChipProps) {
+export function FiltroChip({ label, activo, onPress, oscuro = false }: FiltroChipProps) {
   const c = useColors()
   return (
     <Pressable
@@ -23,11 +25,11 @@ export function FiltroChip({ label, activo, onPress }: FiltroChipProps) {
         paddingHorizontal: space[3],
         borderRadius: radii.pastilla,
         borderWidth: 1,
-        borderColor: activo ? c.brand : c.border,
-        backgroundColor: activo ? c.brandSoft : c.surface,
+        borderColor: oscuro ? (activo ? c.action : c.topBarBorder) : activo ? c.brand : c.border,
+        backgroundColor: oscuro ? (activo ? c.action : 'transparent') : activo ? c.brandSoft : c.surface,
       }}
     >
-      <Text style={[typeScale.secundario, { color: activo ? c.brandInk : c.text }]}>{label}</Text>
+      <Text style={[typeScale.secundario, { color: oscuro ? (activo ? c.onAction : c.onTopBarStrong) : activo ? c.brandInk : c.text }]}>{label}</Text>
     </Pressable>
   )
 }

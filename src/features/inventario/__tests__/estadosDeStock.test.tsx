@@ -5,12 +5,13 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, screen, userEvent } from '@testing-library/react-native'
-import CatalogoConsultaScreen from '../../../../app/(tabs)/inventario/index'
+import CatalogoScreen from '../../../../app/(tabs)/inventario/index'
+import StockScreen from '../../../../app/(tabs)/inventario/stock'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390 }) }))
-jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }) }))
+jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), useLocalSearchParams: () => ({}), useRouter: () => ({ push: jest.fn() }) }))
 jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() }, useFocusEffect: jest.fn() }))
 jest.mock('@/core/api/client', () => ({ API_URL: 'http://api.test', api: { get: jest.fn(), post: jest.fn() } }))
 
@@ -42,12 +43,12 @@ function conUsuario(conCantidades: boolean) {
   })
 }
 
-function pintar() {
+function pintar(Pantalla: React.ComponentType = StockScreen) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })
-  render(<QueryClientProvider client={qc}><CatalogoConsultaScreen /></QueryClientProvider>)
+  render(<QueryClientProvider client={qc}><Pantalla /></QueryClientProvider>)
   return qc
 }
-const abrirStock = async () => userEvent.press(await screen.findByRole('radio', { name: 'Stock' }))
+const abrirStock = async () => { await screen.findByLabelText('Buscar por código o nombre') }
 const SIN_RED = () => new TypeError('Network request failed')
 
 beforeEach(() => {
@@ -62,13 +63,13 @@ const PRODUCTO = { id: 'p1', nombre: 'Make Lavajean', codigoPropio: 'PRO06787', 
 
 describe('Catálogo', () => {
   it('sin productos: estado "vacío" con la frase de siempre', async () => {
-    pintar()
+    pintar(CatalogoScreen)
     expect(await screen.findByRole('header', { name: 'No hay productos que coincidan con la búsqueda.' })).toBeTruthy()
   })
 
   it('sin conexión y sin nada guardado: estado "sin conexión" con Reintentar, que vuelve a pedir', async () => {
     productos = () => Promise.reject(SIN_RED())
-    pintar()
+    pintar(CatalogoScreen)
 
     expect(await screen.findByRole('header', { name: 'No pudimos cargar el catálogo' })).toBeTruthy()
     productos = () => Promise.resolve(pagina([PRODUCTO]))
@@ -78,7 +79,7 @@ describe('Catálogo', () => {
 
   it('con lo guardado y sin conexión: la lista sigue y un aviso dice a qué hora se guardó', async () => {
     productos = () => Promise.resolve(pagina([PRODUCTO]))
-    const qc = pintar()
+    const qc = pintar(CatalogoScreen)
     await screen.findByText('Make Lavajean')
 
     productos = () => Promise.reject(SIN_RED())
@@ -90,7 +91,7 @@ describe('Catálogo', () => {
 
   it('otro error sin datos sigue siendo el aviso de siempre', async () => {
     productos = () => Promise.reject(new Error('boom'))
-    pintar()
+    pintar(CatalogoScreen)
     expect(await screen.findByText('No se pudo cargar el catálogo. Revisá la conexión y volvé a intentar.')).toBeTruthy()
   })
 })

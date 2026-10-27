@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { ChevronRight, Search } from 'lucide-react-native'
-import { FONT, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
+import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useResumenVendedor } from '@/libs/api-client/reportes'
@@ -13,7 +13,6 @@ import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
 import { partesArgentina } from '@/src/utils/date'
 import { direccionDeEntrega, inicialesDeDireccion } from '@/features/clientes/lib/cliente'
 import { fusionarRecientes, leerRecientes } from '@/features/clientes/lib/recientes'
-import { useVentaNueva } from '@/features/ventas/lib/ventaNueva'
 import { useVenderA } from '@/features/venta-nueva/hooks/useVenderA'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
@@ -21,6 +20,7 @@ import { usePendientesInicio } from '../hooks/usePendientesInicio'
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 const semibold = { fontFamily: FONT.semibold, fontWeight: '600' as const }
+const TINTES = ['confirmado', 'enCurso', 'porAutorizar', 'pendiente'] as const
 const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`
 
 /**
@@ -45,8 +45,8 @@ export function MiDiaScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [recientesServidor.data, user?.id, ahora],
   )
-  const rutaVenta = useVentaNueva() ? '/(tabs)/ventas/nueva-v2' : '/(tabs)/ventas/nueva'
-  // Con la venta nueva, un reciente abre la venta con ese cliente; si no, su ficha (como hasta ahora).
+  const rutaVenta = '/(tabs)/ventas/nueva'
+  // Un reciente abre la venta con ese cliente; sin permiso para vender, su ficha.
   const venderA = useVenderA()
   // "Nueva venta" pide lo mismo que el "+" de la barra: poder crear ventas (decisión del dueño 22-10).
   const { canDo } = usePermissions()
@@ -63,56 +63,51 @@ export function MiDiaScreen() {
   const ir = (ruta: string) => () => router.push(ruta as never)
   const aVender = ir(rutaVenta)
 
-  const cabecera = (
-    <View style={{ gap: space[1] }}>
-      <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{`${DIAS[hoy.diaSemana]} ${hoy.dia} de ${MESES[hoy.mes]}`}</Text>
-      <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>{`Hola, ${nombre}`.trim()}</Text>
-    </View>
-  )
-
   const cifras = resumen.isLoading ? (
-    <ActivityIndicator color={c.brand} accessibilityLabel="Cargando tus números" />
+    <ActivityIndicator color={c.action} accessibilityLabel="Cargando tus números" />
   ) : resumen.isError || !resumen.data ? (
     <View style={{ gap: space[2], alignItems: 'flex-start' }}>
       <Notice tone="peligro">No se pudieron cargar tus números del mes.</Notice>
       <Pressable accessibilityRole="button" accessibilityLabel="Reintentar números" onPress={() => resumen.refetch()} style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}>
-        <Text style={[typeScale.secundario, semibold, { color: c.brandInk }]}>Reintentar</Text>
+        <Text style={[typeScale.secundario, semibold, { color: c.action }]}>Reintentar</Text>
       </Pressable>
     </View>
   ) : (
-    <View testID="mi-dia-cifras" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[3] }}>
+    <View testID="mi-dia-cifras" style={{ flexDirection: 'row', gap: space[2] }}>
       <Cifra etiqueta={`Vendido en ${nombreMes(mes).toLowerCase()}`} importe={resumen.data.ventas.facturado} />
-      <Cifra etiqueta="Tu comisión" importe={resumen.data.comisiones.neto} />
+      <Cifra etiqueta="Tu comisión" importe={resumen.data.comisiones.neto} resaltada />
       <Cifra etiqueta="Por cobrar" importe={resumen.data.cobrosPendientes.total} />
     </View>
   )
 
   const venderDeNuevo = (
     <View style={{ gap: space[2] }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: space[4] }}>
         <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>Vender de nuevo</Text>
         <Pressable accessibilityRole="link" accessibilityLabel="Todos los clientes" onPress={ir('/(tabs)/socios')} style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}>
           <Text style={[typeScale.secundario, semibold, { color: c.brandInk }]}>Todos los clientes</Text>
         </Pressable>
       </View>
       {recientes.length === 0 ? (
-        <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Todavía no vendiste a ningún cliente desde acá.</Text>
+        <Text style={[typeScale.secundario, { color: c.textSecondary, paddingHorizontal: space[4] }]}>Todavía no vendiste a ningún cliente desde acá.</Text>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space[2] }}>
-          {recientes.map((r) => {
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space[3], paddingHorizontal: space[4] }}>
+          {recientes.map((r, i) => {
             const direccion = direccionDeEntrega(r)
+            const tinte = c.chip[TINTES[i % TINTES.length]]
             return (
               <Pressable
                 key={r.id}
+                testID={`reciente-${r.id}`}
                 accessibilityRole="button"
                 accessibilityLabel={direccion}
                 onPress={() => (venderA ? router.push(venderA(r.id) as never) : router.push({ pathname: '/(tabs)/socios/[id]', params: { id: r.id } }))}
-                style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[3], borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}
+                style={{ width: 72, minHeight: 44, alignItems: 'center', gap: 6 }}
               >
-                <View style={{ width: 28, height: 28, borderRadius: radii.pastilla, backgroundColor: c.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={[typeScale.secundario, semibold, { color: c.brandInk }]}>{inicialesDeDireccion(direccion)}</Text>
+                <View testID={`reciente-circulo-${r.id}`} style={{ width: 60, height: 60, borderRadius: radii.pastilla, backgroundColor: tinte.bg, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ ...typeScale.cuerpoDestacado, ...semibold, color: tinte.text }}>{inicialesDeDireccion(direccion)}</Text>
                 </View>
-                <Text style={[typeScale.cuerpo, { color: c.text }]} numberOfLines={1}>{direccion}</Text>
+                <Text style={[typeScale.etiqueta, { color: c.text, textAlign: 'center' }]} numberOfLines={2}>{direccion}</Text>
               </Pressable>
             )
           })}
@@ -172,35 +167,38 @@ export function MiDiaScreen() {
 
   const nuevaVenta = puedeVender ? <Button label="Nueva venta" onPress={aVender} /> : null
 
+  const fecha = `${DIAS[hoy.diaSemana]} ${hoy.dia} de ${MESES[hoy.mes]}`
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar
-        title="Mi día"
-        leading={menu}
-        actions={[{ icon: Search, accessibilityLabel: 'Buscar', onPress: () => router.push('/buscar') }]}
-      />
+      <View testID="mi-dia-encabezado" style={{ backgroundColor: c.topBar }}>
+        <TopBar
+          title={`Hola, ${nombre}`.trim()}
+          subtitle={fecha}
+          leading={menu}
+          actions={[{ icon: Search, accessibilityLabel: 'Buscar', onPress: () => router.push('/buscar') }]}
+        />
+        <View style={{ paddingHorizontal: space[3], paddingBottom: space[5] }}>{cifras}</View>
+      </View>
       <ScrollView
         testID="mi-dia-scroll"
-        contentContainerStyle={{ padding: space[4], gap: space[4], paddingBottom: space[12] }}
+        contentContainerStyle={{ paddingVertical: space[5], gap: space[5], paddingBottom: space[12] }}
         refreshControl={<RefreshControl refreshing={refrescando} onRefresh={refrescar} tintColor={c.brand} />}
       >
         {isTablet ? (
           <View style={{ flexDirection: 'row', gap: space[6], alignItems: 'flex-start' }}>
             <View style={{ flex: 1, gap: space[4] }}>
-              {cabecera}
-              {cifras}
               {venderDeNuevo}
-              {nuevaVenta}
+              <View style={{ paddingHorizontal: space[4] }}>{nuevaVenta}</View>
             </View>
-            <View style={{ flex: 1, gap: space[4] }}>{resolver}</View>
+            <View style={{ flex: 1, gap: space[4], paddingRight: space[4] }}>{resolver}</View>
           </View>
         ) : (
           <>
-            {cabecera}
-            {cifras}
             {venderDeNuevo}
-            {resolver}
-            {nuevaVenta}
+            <View style={{ paddingHorizontal: space[4], gap: space[4] }}>
+              {resolver}
+              {nuevaVenta}
+            </View>
           </>
         )}
       </ScrollView>
@@ -208,17 +206,16 @@ export function MiDiaScreen() {
   )
 }
 
-function Cifra({ etiqueta, importe }: { etiqueta: string; importe: number }) {
+function Cifra({ etiqueta, importe, resaltada }: { etiqueta: string; importe: number; resaltada?: boolean }) {
   const c = useColors()
-  const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   return (
     <View
       accessible
       accessibilityLabel={`${etiqueta}: ${formatImporte(importe)}`}
-      style={{ flexGrow: 1, flexBasis: '28%', minWidth: 96, backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[3], gap: space[1], ...sombra }}
+      style={{ flex: 1, minWidth: 0, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: radii.tarjeta, padding: space[3], gap: 2 }}
     >
-      <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{etiqueta}</Text>
-      <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{formatImporte(importe)}</Text>
+      <Text style={[typeScale.etiqueta, { color: c.onTopBar }]} numberOfLines={1}>{etiqueta}</Text>
+      <Text style={[typeScale.cuerpoDestacado, { ...semibold, color: resaltada ? c.action : c.onTopBarStrong }]} numberOfLines={1} adjustsFontSizeToFit>{formatImporte(importe)}</Text>
     </View>
   )
 }

@@ -9,12 +9,9 @@ import { useThemeStore, useColors, radii, space, typeScale, type ThemeMode } fro
 import { ConfirmModal } from '@/core/ui'
 import { Button, Notice, Segmented, TopBar, useMenuLeading, type SegmentedOption } from '@/core/ui/fw'
 import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
-import { safeHaptics } from '@/core/utils/haptics'
-import { useVentaNuevaStore, usePuedeProbarVentaNueva } from '@/features/ventas/lib/ventaNueva'
 import { CambiarContrasena } from '@/features/cuenta/components/CambiarContrasena'
-import { AVISO_SESION_NO_CERRADA_EN_TODOS, cerrarSesionEnElServidor } from '@/features/cuenta/api/cuenta'
+import { useCerrarSesion } from '@/features/cuenta/hooks/useCerrarSesion'
 import { isBiometricLoginEnabled, isBiometricsAvailable, setBiometricLoginEnabled } from '@/features/auth/utils/biometrics'
-import { darDeBajaPushAntesDeSalir } from '@/features/notificaciones'
 
 const THEME_OPTIONS: SegmentedOption<ThemeMode>[] = [
   { value: 'light', label: 'Claro' },
@@ -40,9 +37,7 @@ export default function PerfilScreen() {
   const queryClient = useQueryClient()
   const { user, logout } = useAuthStore()
   const { mode, setMode } = useThemeStore()
-  const ventaNueva = useVentaNuevaStore((s) => s.activa)
-  const setVentaNueva = useVentaNuevaStore((s) => s.setActiva)
-  const puedeProbarVentaNueva = usePuedeProbarVentaNueva()
+  const { cerrarSesion, revocarEnElServidor } = useCerrarSesion()
   const [saliendo, setSaliendo] = useState(false)
   const [confirmarSalida, setConfirmarSalida] = useState(false)
   const [entornoPendiente, setEntornoPendiente] = useState<string | null>(null)
@@ -91,23 +86,9 @@ export default function PerfilScreen() {
     setAvisoHuella(prendida ? AVISO_HUELLA_PRENDIDA : null)
   }
 
-  /**
-   * Revoca en el servidor (mejor esfuerzo); si no se pudo, lo dice: no queda la sensación de haber cerrado todo.
-   * Antes da de baja el celular para push: después de revocar, el token de acceso ya no vale.
-   */
-  const revocarEnElServidor = async () => {
-    await darDeBajaPushAntesDeSalir()
-    const ok = await cerrarSesionEnElServidor()
-    if (!ok) Alert.alert('Sesión cerrada solo aquí', AVISO_SESION_NO_CERRADA_EN_TODOS)
-  }
-
   const salir = async () => {
     setSaliendo(true)
-    await revocarEnElServidor()
-    safeHaptics.notification('success')
-    queryClient.clear()
-    logout()
-    router.replace('/login')
+    await cerrarSesion()
   }
 
   const cambiandoEntorno = useRef(false)
@@ -169,14 +150,6 @@ export default function PerfilScreen() {
         <View style={[tarjeta, { padding: space[4], gap: space[3] }]}>
           <CambiarContrasena email={user?.email} />
         </View>
-
-        {/* Pruebas: la venta nueva convive con la vieja hasta T3 del bloque 12 (D9), que la prende para todos. */}
-        {puedeProbarVentaNueva ? (
-          <View style={[tarjeta, { paddingTop: space[3] }]}>
-            <View style={{ paddingHorizontal: space[4] }}>{titulo('Pruebas')}</View>
-            {filaInterruptor('Usar la venta nueva (en prueba)', ventaNueva, () => { void setVentaNueva(!ventaNueva) }, false)}
-          </View>
-        ) : null}
 
         {__DEV__ ? (
           <View style={[tarjeta, { padding: space[4], gap: space[3] }]}>

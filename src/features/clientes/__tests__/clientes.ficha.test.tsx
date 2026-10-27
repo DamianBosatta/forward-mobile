@@ -9,8 +9,6 @@ const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, back: jest.fn() }) }))
 jest.mock('@/core/api/client', () => ({ api: { get: jest.fn() }, API_URL: '' }))
 
-let mockVentaNueva = false
-jest.mock('@/features/ventas/lib/ventaNueva', () => ({ ...jest.requireActual('@/features/ventas/lib/ventaNueva'), useVentaNueva: () => mockVentaNueva }))
 
 const get = api.get as jest.Mock
 const detalle = (extra = {}) => ({
@@ -33,7 +31,6 @@ const abrir = async (solapa: string) => userEvent.press(await screen.findByRole(
 
 beforeEach(() => {
   jest.clearAllMocks()
-  mockVentaNueva = false
   jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
   conPermisos([{ module: 'MOD_CLIENTES', canRead: true, canUpdate: true }])
   servidor(detalle())
@@ -239,25 +236,15 @@ describe('láminas Ficha del cliente y TabClientes (bloque 12, T7)', () => {
 })
 
 describe('Vender desde la ficha (T4c)', () => {
-  it('con la venta nueva prendida y permiso para crear ventas, Vender abre la venta nueva con este cliente', async () => {
-    mockVentaNueva = true
+  it('con permiso para crear ventas, Vender abre la venta nueva con este cliente', async () => {
     conPermisos([{ module: 'MOD_CLIENTES', canRead: true }, { module: 'MOD_VENTAS', canRead: true, canCreate: true }])
     renderConQuery(<FichaCliente id="c1" />)
 
     await userEvent.press(await screen.findByRole('button', { name: 'Vender' }))
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva-v2?clienteId=c1')
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva?clienteId=c1')
   })
 
-  it('con el switch apagado no hay Vender', async () => {
-    conPermisos([{ module: 'MOD_CLIENTES', canRead: true }, { module: 'MOD_VENTAS', canRead: true, canCreate: true }])
-    renderConQuery(<FichaCliente id="c1" />)
-
-    await screen.findByRole('button', { name: 'Llamar' })
-    expect(screen.queryByRole('button', { name: 'Vender' })).toBeNull()
-  })
-
-  it('con el switch prendido pero sin permiso para crear ventas no hay Vender', async () => {
-    mockVentaNueva = true
+  it('sin permiso para crear ventas no hay Vender', async () => {
     renderConQuery(<FichaCliente id="c1" />)
 
     await screen.findByRole('button', { name: 'Llamar' })

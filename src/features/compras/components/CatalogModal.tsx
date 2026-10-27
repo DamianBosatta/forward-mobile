@@ -1,73 +1,61 @@
 import React from 'react'
-import { View, Text, Pressable, FlatList, TextInput, ActivityIndicator } from 'react-native'
-import { Tag, Minus, Plus } from 'lucide-react-native'
+import { ActivityIndicator, FlatList, Modal, Text, TextInput, View } from 'react-native'
+import { Package } from 'lucide-react-native'
 import { Image as ExpoImage } from 'expo-image'
-import { ModalHeader, SearchBar } from './SharedModalComponents'
+import { Button, Field, TopBar } from '@/core/ui/fw'
+import { Redondo } from '@/features/venta-nueva/components/ProductoCatalogoCard'
 import { getFullImageUrl } from '@/libs/api-client'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 
-function ProductCatalogItem({
-  item, cantidadActual, onUpdate, colors
-}: {
-  item: any
-  cantidadActual: number
-  onUpdate: (prod: any, qty: number) => void
-  colors: any
-}) {
-  const imgUrl = getFullImageUrl(item.imageUrl)
+interface ProductoElegible {
+  id: string
+  nombre: string
+  codigoPropio?: string | null
+  imageUrl?: string | null
+}
+
+/** Fila del selector (lámina CompraLinea): foto, código, nombre y "+ Añadir" o −/cantidad/+; la cantidad se puede tipear. */
+function FilaProducto({ item, cantidad, onCambiar }: { item: ProductoElegible; cantidad: number; onCambiar: (prod: any, qty: number) => void }) {
+  const c = useColors()
+  const imgUrl = getFullImageUrl(item.imageUrl ?? undefined)
+  const enCompra = cantidad > 0
 
   return (
-    <View style={{ marginBottom: 16 }}>
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: cantidadActual > 0 ? `${colors.primary}05` : colors.surface,
-        borderRadius: 20,
-        padding: 12,
-      }}>
-        <View style={{
-          width: 56, height: 56, borderRadius: 14,
-          backgroundColor: colors.surface2,
-          overflow: 'hidden',
-          alignItems: 'center', justifyContent: 'center',
-        }}>
-          {imgUrl
-            ? <ExpoImage source={imgUrl} style={{ width: '100%', height: '100%' }} contentFit="cover" />
-            : <Tag size={24} color={colors.textDisabled} />
-          }
-        </View>
-
-        <View style={{ flex: 1, marginHorizontal: 12 }}>
-          <Text style={{ fontSize: 14, fontWeight: '800', color: colors.text }} numberOfLines={2}>
-            {item.nombre}
-          </Text>
-          {!!item.codigoPropio && (
-            <Text style={{ fontSize: 12, fontWeight: '700', color: colors.textMuted, marginTop: 4 }}>
-              {item.codigoPropio}
-            </Text>
-          )}
-        </View>
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface2, borderRadius: 14 }}>
-          <Pressable onPress={() => onUpdate(item, (cantidadActual || 0) - 1)} style={{ padding: 12 }}>
-            <Minus size={16} color={cantidadActual > 0 ? colors.text : colors.textDisabled} strokeWidth={3} />
-          </Pressable>
-          <TextInput 
-            style={{ color: cantidadActual > 0 ? colors.text : colors.textDisabled, fontWeight: '900', fontSize: 16, minWidth: 24, textAlign: 'center', padding: 0 }}
-            keyboardType="number-pad"
-            value={cantidadActual > 0 ? String(cantidadActual) : ''}
-            placeholder="0"
-            placeholderTextColor={colors.textDisabled}
-            onChangeText={v => {
-              const num = parseInt(v, 10)
-              if (!isNaN(num)) onUpdate(item, num)
-              else if (v === '') onUpdate(item, 0)
-            }}
-          />
-          <Pressable onPress={() => onUpdate(item, (cantidadActual || 0) + 1)} style={{ padding: 12 }}>
-            <Plus size={16} color={colors.primary} strokeWidth={3} />
-          </Pressable>
-        </View>
+    <View
+      testID={`producto-${item.id}`}
+      style={{
+        flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radii.tarjeta,
+        backgroundColor: enCompra ? c.brandSoft : c.surface, borderWidth: 2, borderColor: enCompra ? c.brand : c.surface,
+      }}
+    >
+      <View style={{ width: 56, height: 56, borderRadius: radii.campo, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        {imgUrl ? <ExpoImage source={imgUrl} style={{ width: 56, height: 56 }} contentFit="cover" /> : <Package size={28} color={c.textSecondary} />}
       </View>
+      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+        {!!item.codigoPropio && <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{item.codigoPropio}</Text>}
+        <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }} numberOfLines={2}>{item.nombre}</Text>
+      </View>
+      {enCompra ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
+          <Redondo c={c} label="−" a11y={`Restar ${item.nombre}`} onPress={() => onCambiar(item, cantidad - 1)} />
+          <TextInput
+            accessibilityLabel={`Cantidad de ${item.nombre}`}
+            keyboardType="number-pad"
+            value={String(cantidad)}
+            onChangeText={(v) => {
+              const num = parseInt(v, 10)
+              if (!isNaN(num)) onCambiar(item, num)
+              else if (v === '') onCambiar(item, 0)
+            }}
+            style={{ ...typeScale.cuerpoDestacado, ...importe, minWidth: 48, minHeight: 44, textAlign: 'center', paddingVertical: 0, borderRadius: radii.campo, backgroundColor: c.action, color: c.onAction }}
+          />
+          <Redondo c={c} label="+" a11y={`Sumar ${item.nombre}`} onPress={() => onCambiar(item, cantidad + 1)} />
+        </View>
+      ) : (
+        <View style={{ minWidth: 112 }}>
+          <Button label="+ Añadir" variant="secundario" accessibilityLabel={`Añadir ${item.nombre}`} onPress={() => onCambiar(item, 1)} />
+        </View>
+      )}
     </View>
   )
 }
@@ -75,7 +63,6 @@ function ProductCatalogItem({
 interface CatalogModalProps {
   visible: boolean
   onClose: () => void
-  colors: any
   productSearch: string
   setProductSearch: (s: string) => void
   loadingProds: boolean
@@ -86,36 +73,37 @@ interface CatalogModalProps {
   setProductoCantidad: (prod: any, qty: number) => void
 }
 
-export function CatalogModal({ visible, onClose, colors, productSearch, setProductSearch, loadingProds, productosFiltrados, hayMasProductos, cargarMasProductos, detalles, setProductoCantidad }: CatalogModalProps) {
+/** Selector de productos de la compra (láminas Compra y CompraLinea), con el kit de `core/ui/fw`. */
+export function CatalogModal({ visible, onClose, productSearch, setProductSearch, loadingProds, productosFiltrados, hayMasProductos, cargarMasProductos, detalles, setProductoCantidad }: CatalogModalProps) {
+  const c = useColors()
   if (!visible) return null
 
   return (
-    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1001, backgroundColor: colors.bg }}>
-      <ModalHeader title="Catálogo Maestro" onClose={onClose} colors={colors} />
-      <View style={{ padding: 16 }}>
-        <SearchBar value={productSearch} onChangeText={setProductSearch} placeholder="BUSCAR POR NOMBRE O CÓDIGO..." colors={colors} autoFocus />
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <View accessibilityLabel="Agregar productos" style={{ flex: 1, backgroundColor: c.bg }}>
+        <TopBar title="Agregar productos" leading={{ kind: 'atras', onPress: onClose }} />
+        <View style={{ padding: space[4] }}>
+          <Field label="Buscar producto" placeholder="Nombre o código" value={productSearch} onChangeText={setProductSearch} autoFocus autoCorrect={false} />
+        </View>
+        {loadingProds ? <ActivityIndicator style={{ marginTop: space[10] }} color={c.brand} /> : (
+          <FlatList
+            data={productosFiltrados}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: space[4], gap: space[2] }}
+            onEndReached={cargarMasProductos}
+            onEndReachedThreshold={0.5}
+            keyboardShouldPersistTaps="handled"
+            ListEmptyComponent={<Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center', marginTop: space[6] }}>No hay productos con esa búsqueda</Text>}
+            ListFooterComponent={hayMasProductos ? <ActivityIndicator style={{ marginVertical: space[4] }} color={c.brand} /> : null}
+            renderItem={({ item }) => (
+              <FilaProducto item={item} cantidad={detalles.find((d) => d.productoId === item.id)?.cantidad || 0} onCambiar={setProductoCantidad} />
+            )}
+          />
+        )}
+        <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+          <Button label="Listo" onPress={onClose} />
+        </View>
       </View>
-      {loadingProds ? <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} /> : (
-        <FlatList
-          data={productosFiltrados}
-          keyExtractor={item => item.id}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 60 }}
-          onEndReached={cargarMasProductos}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={hayMasProductos ? <ActivityIndicator style={{ marginVertical: 16 }} color={colors.primary} /> : null}
-          renderItem={({ item }) => {
-            const det = detalles.find(d => d.productoId === item.id)
-            return (
-              <ProductCatalogItem 
-                item={item} 
-                cantidadActual={det?.cantidad || 0} 
-                onUpdate={setProductoCantidad}
-                colors={colors}
-              />
-            )
-          }}
-        />
-      )}
-    </View>
+    </Modal>
   )
 }

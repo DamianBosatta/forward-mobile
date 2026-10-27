@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
 import InicioRoute from '../../../../app/(tabs)/index'
 
-jest.mock('@/features/logistica/components/ChoferDashboard', () => ({ ChoferDashboard: () => require('react').createElement(require('react-native').Text, null, 'CHOFER') }))
+jest.mock('../../../../app/(tabs)/logistica/consola', () => ({ __esModule: true, default: () => require('react').createElement(require('react-native').Text, null, 'RUTA_DEL_DIA') }))
 jest.mock('@/features/inicio/components/InicioScreen', () => ({ InicioScreen: () => require('react').createElement(require('react-native').Text, null, 'GESTION') }))
 jest.mock('@/features/inicio/components/MiDiaScreen', () => ({ MiDiaScreen: () => require('react').createElement(require('react-native').Text, null, 'MIDIA') }))
 jest.mock('@/src/components/layout/AccesosRapidos', () => ({ ConAccesosRapidos: ({ children }: { children: React.ReactNode }) => children }))
@@ -24,11 +24,13 @@ describe('inicio por capacidad (D12)', () => {
     conPermisos('MOD_VENTAS')
     render(<InicioRoute />)
     expect(screen.getByText('MIDIA')).toBeTruthy()
+    expect(screen.queryByText('RUTA_DEL_DIA')).toBeNull()
   })
-  it('el chofer va a su consola aunque tenga CAP_VER_COSTOS', () => {
+  it('el chofer entra a la pantalla de su ruta (no al tablero viejo) aunque tenga CAP_VER_COSTOS', () => {
     mockChofer.mockReturnValue(true)
     conPermisos('CAP_VER_COSTOS')
     render(<InicioRoute />)
-    expect(screen.getByText('CHOFER')).toBeTruthy()
+    expect(screen.getByText('RUTA_DEL_DIA')).toBeTruthy()
+    expect(screen.queryByText('MIDIA')).toBeNull()
   })
 })

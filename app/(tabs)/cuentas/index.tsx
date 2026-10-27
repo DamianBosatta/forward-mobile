@@ -15,13 +15,14 @@ import { textoMostrando } from '@/features/clientes/lib/cliente'
 import { CuentaCorrienteCliente } from '@/features/cuentas/components/CuentaCorrienteCliente'
 import { RegistrarCobro } from '@/features/cuentas/components/RegistrarCobro'
 import { ResumenDeCuentas } from '@/features/cuentas/components/ResumenDeCuentas'
+import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
 /**
  * Cuentas corrientes (láminas CuentaCorriente y TabCuentaCorriente): la cartera por dirección de
  * entrega; tocar un cliente abre su cuenta (en tablet horizontal, en el panel de la derecha).
  */
-export default function CuentasCorrientesScreen() {
+function CuentasCorrientesScreen() {
   const c = useColors()
   const router = useRouter()
   const menu = useMenuLeading()
@@ -124,5 +125,13 @@ export default function CuentasCorrientesScreen() {
         }
       />
     </View>
+  )
+}
+
+export default function CuentasCorrientesScreenConBarra() {
+  return (
+    <ConAccesosRapidos activa="cobros">
+      <CuentasCorrientesScreen />
+    </ConAccesosRapidos>
   )
 }

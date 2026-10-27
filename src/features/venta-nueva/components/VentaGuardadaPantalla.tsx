@@ -1,9 +1,10 @@
 import React from 'react'
-import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import { CheckCircle2 } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { Check } from 'lucide-react-native'
+import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { Button, Notice, TopBar, formatImporte } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { urlWhatsApp } from '@/features/clientes/lib/contacto'
 import { direccionDeEntrega } from '@/features/clientes/lib/cliente'
@@ -25,6 +26,7 @@ interface Props {
  */
 export function VentaGuardadaPantalla({ id, mensaje }: Props) {
   const c = useColors()
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const { canCreate, canRead } = usePermissions()
   // Recién guardada: el caché trae la versión de antes del guardado; las acciones (convertir, anular, editar) usan la vigente.
@@ -34,7 +36,9 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
   const vigente = q.isFetchedAfterMount && q.isSuccess ? q.data : undefined
   const h = vigente?.venta
   const tipo = h ? tipoDeVenta(h) : 'Venta'
-  const secundario = { ...typeScale.secundario, color: c.textSecondary }
+  const secundario = { ...typeScale.secundario, color: c.onTopBar }
+  const blanco = { color: c.onTopBarStrong }
+  const negrita = { fontFamily: FONT.semibold, fontWeight: '600' as const }
 
   if (!vigente || !h) {
     return (
@@ -61,39 +65,60 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar title={`${tipo} guardado`} />
-      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }}>
-        <View style={{ alignItems: 'center', gap: space[1], paddingVertical: space[2] }}>
-          <CheckCircle2 size={48} color={c.chip.entregado.text} />
-          <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text, textAlign: 'center' }}>
+    <View testID="venta-guardada" style={{ flex: 1, backgroundColor: c.topBar }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + space[8], paddingHorizontal: space[5], paddingBottom: space[6], gap: space[4] }}>
+        <View style={{ alignItems: 'center', gap: space[2] }}>
+          <View testID="venta-guardada-marca" style={{ width: 88, height: 88, borderRadius: radii.pastilla, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
+            <Check size={44} color={c.onAction} strokeWidth={2.5} />
+          </View>
+          <Text accessibilityRole="header" style={{ ...typeScale.titulo, ...negrita, ...blanco, fontSize: 26, lineHeight: 32, textAlign: 'center', marginTop: space[2] }}>
             {`${tipo} ${codigoDeVenta(h)} ${esPedido ? 'enviado' : 'guardado'}`}
           </Text>
           <Text style={{ ...secundario, textAlign: 'center' }}>{[socio.data ? direccionDeEntrega(socio.data) : h.clienteNombre, entrega].filter(Boolean).join(' · ')}</Text>
-          {porAutorizar ? <Text style={{ ...typeScale.cuerpoDestacado, color: c.chip.porAutorizar.text }}>Por autorizar · te avisamos</Text> : null}
-          <Text style={{ ...secundario, textAlign: 'center' }}>{resumenDeLineas(vigente.detalles)}</Text>
+          {porAutorizar ? (
+            <View style={{ paddingHorizontal: space[3], paddingVertical: space[1], borderRadius: radii.pastilla, backgroundColor: c.chip.porAutorizar.bg }}>
+              <Text style={{ ...typeScale.etiqueta, color: c.chip.porAutorizar.text }}>Por autorizar · te avisamos</Text>
+            </View>
+          ) : null}
         </View>
-        <View style={{ padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[2] }}>
-          <Text style={{ ...typeScale.titulo, color: c.text }}>{`${tipo} ${codigoDeVenta(h)}`}</Text>
+        <View testID="venta-guardada-resumen" style={{ padding: space[4], borderRadius: radii.tarjeta, backgroundColor: 'rgba(255,255,255,0.08)', gap: space[2] }}>
+          <Text style={{ ...typeScale.cuerpoDestacado, ...blanco }}>{`${tipo} ${codigoDeVenta(h)}`}</Text>
+          <Text style={secundario}>{resumenDeLineas(vigente.detalles)}</Text>
           <Text style={secundario}>{rotulo}</Text>
           {vigente.detalles.map((d) => (
             <View key={d.id} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-              <Text style={{ ...typeScale.cuerpo, color: c.text, flex: 1 }}>{`${d.productoNombre} × ${d.cantidad}`}</Text>
-              <Text style={{ ...typeScale.cuerpo, ...importe, color: c.text }}>{formatImporte(d.subtotal)}</Text>
+              <Text style={{ ...typeScale.cuerpo, ...blanco, flex: 1 }}>{`${d.productoNombre} × ${d.cantidad}`}</Text>
+              <Text style={{ ...typeScale.cuerpo, ...importe, ...blanco }}>{formatImporte(d.subtotal)}</Text>
             </View>
           ))}
-          <TotalsRow label="Total" importe={h.totalAmount} destacado />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <Text style={secundario}>Total</Text>
+            <Text style={{ ...typeScale.titulo, ...importe, ...negrita, ...blanco }}>{formatImporte(h.totalAmount)}</Text>
+          </View>
         </View>
         <Notice tone={porAutorizar ? 'advertencia' : 'exito'}>
           {mensaje ?? (porAutorizar ? 'Quedó por autorizar. Te avisamos cuando lo resuelvan.' : 'Quedó guardado.')}
         </Notice>
         {whatsapp ? <Button label="Mandar por WhatsApp" onPress={mandarPorWhatsApp} /> : null}
-        {puedeCobrar ? <Button label="Cobrar ahora" variant="secundario" onPress={() => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: h.clienteId } } as never)} /> : null}
+        {puedeCobrar ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Cobrar ahora"
+            onPress={() => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: h.clienteId } } as never)}
+            style={{ height: 48, borderRadius: radii.campo, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Text style={{ ...typeScale.cuerpoDestacado, ...blanco }}>Cobrar ahora</Text>
+          </Pressable>
+        ) : null}
         <AccionesVenta venta={vigente} rotulo={rotulo} />
         <Text style={secundario}>La factura no se hace desde el teléfono: va por la pestaña Facturación de la web.</Text>
-        <Button label="Vender a otro cliente" variant="secundario" onPress={() => router.replace('/(tabs)/ventas/nueva-v2' as never)} />
-        <Button label="Volver a Mi día" variant="secundario" onPress={() => router.replace('/(tabs)' as never)} />
-        <Button label="Listo" variant="secundario" onPress={listo} />
+        <Button label="Vender a otro cliente" variant="secundario" onPress={() => router.replace('/(tabs)/ventas/nueva' as never)} />
+        <Pressable accessibilityRole="button" accessibilityLabel="Volver a Mi día" onPress={() => router.replace('/(tabs)' as never)} style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ ...typeScale.cuerpoDestacado, color: c.onTopBar }}>Volver a Mi día</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Listo" onPress={listo} style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ ...typeScale.cuerpoDestacado, color: c.onTopBar }}>Listo</Text>
+        </Pressable>
       </ScrollView>
     </View>
   )

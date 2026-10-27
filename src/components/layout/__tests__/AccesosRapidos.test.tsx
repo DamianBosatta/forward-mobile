@@ -1,14 +1,12 @@
 /**
- * Bloque 9A (PR 0.3) — barra inferior de accesos rápidos (lámina Main):
- * Inicio, Ventas, "+" (nueva venta), Compras y Menú. Solo en teléfono; en
- * tablet el menú está fijo y la barra no aparece. Respeta los permisos.
+ * Barra inferior de accesos rápidos (lámina CalleMiDia, D2): Mi día, Ventas, Clientes y Cobros.
+ * Solo en teléfono; en tablet el menú está fijo y la barra no aparece. Cada acceso pide el mismo
+ * permiso que su entrada del menú lateral.
  */
 import React from 'react'
 import { Text } from 'react-native'
 import { render, screen, userEvent } from '@testing-library/react-native'
 import { ConAccesosRapidos } from '../AccesosRapidos'
-import { useAuthStore } from '@/features/auth/store/auth.store'
-import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 
 const mockPush = jest.fn()
 const mockDispatch = jest.fn()
@@ -33,7 +31,7 @@ jest.mock('@/core/auth/RequirePermission', () => ({ usePermissions: () => ({ can
 
 const conAncho = (width: number) => mockDims.mockReturnValue({ width, height: 800, scale: 2, fontScale: 1 })
 const conPermisos = (...pares: string[]) => mockCanDo.mockImplementation((m: string, a: string) => pares.includes(`${m}:${a}`))
-const VENDEDOR_Y_COMPRADOR = ['MOD_VENTAS:read', 'MOD_VENTAS:create', 'MOD_COMPRAS:read']
+const VENDEDOR = ['MOD_VENTAS:read', 'MOD_VENTAS:create', 'MOD_CLIENTES:read', 'MOD_CC:read', 'MOD_COMPRAS:read']
 
 const pantalla = (activa: 'inicio' | 'ventas' | 'compras' = 'inicio') =>
   render(
@@ -42,76 +40,79 @@ const pantalla = (activa: 'inicio' | 'ventas' | 'compras' = 'inicio') =>
     </ConAccesosRapidos>,
   )
 
+const nombresDeLaBarra = () => screen.getAllByRole('button').map((b) => b.props.accessibilityLabel)
+
 describe('ConAccesosRapidos', () => {
   beforeEach(() => {
     mockPush.mockClear()
     mockDispatch.mockClear()
   })
 
-  it('en teléfono muestra la barra con Inicio, Ventas, Nueva venta, Compras y Menú', () => {
+  it('en teléfono muestra la barra del diseño: Mi día, Ventas, Clientes y Cobros, en ese orden y nada más', () => {
     conAncho(390)
-    conPermisos(...VENDEDOR_Y_COMPRADOR)
+    conPermisos(...VENDEDOR)
     pantalla()
 
     expect(screen.getByText('Contenido de la pantalla')).toBeTruthy()
-    for (const nombre of ['Inicio', 'Ventas', 'Nueva venta', 'Compras', 'Menú']) {
-      expect(screen.getByRole('button', { name: nombre })).toBeTruthy()
-    }
+    expect(nombresDeLaBarra()).toEqual(['Mi día', 'Ventas', 'Clientes', 'Cobros'])
   })
 
   it.each([600, 1194])('con %i px (tablet) no hay barra: el menú está fijo', (ancho) => {
     conAncho(ancho)
-    conPermisos(...VENDEDOR_Y_COMPRADOR)
+    conPermisos(...VENDEDOR)
     pantalla()
 
     expect(screen.getByText('Contenido de la pantalla')).toBeTruthy()
-    expect(screen.queryByLabelText('Acciones rápidas')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Cobros' })).toBeNull()
   })
 
-  it('cada acceso lleva a su pantalla y Menú abre el menú lateral', async () => {
+  it('cada acceso lleva a su pantalla: Cobros abre las cuentas corrientes', async () => {
     conAncho(390)
-    conPermisos(...VENDEDOR_Y_COMPRADOR)
+    conPermisos(...VENDEDOR)
     const user = userEvent.setup()
     pantalla()
 
     await user.press(screen.getByRole('button', { name: 'Ventas' }))
-    await user.press(screen.getByRole('button', { name: 'Nueva venta' }))
-    await user.press(screen.getByRole('button', { name: 'Compras' }))
-    await user.press(screen.getByRole('button', { name: 'Inicio' }))
-    await user.press(screen.getByRole('button', { name: 'Menú' }))
+    await user.press(screen.getByRole('button', { name: 'Clientes' }))
+    await user.press(screen.getByRole('button', { name: 'Cobros' }))
+    await user.press(screen.getByRole('button', { name: 'Mi día' }))
 
-    expect(mockPush.mock.calls.map(([r]) => r)).toEqual(['/(tabs)/ventas', '/(tabs)/ventas/nueva', '/(tabs)/compras', '/(tabs)/'])
-    expect(mockDispatch).toHaveBeenCalledWith({ type: 'OPEN_DRAWER' })
+    expect(mockPush.mock.calls.map(([r]) => r)).toEqual(['/(tabs)/ventas', '/(tabs)/socios', '/(tabs)/cuentas', '/(tabs)/'])
+    expect(mockDispatch).not.toHaveBeenCalled()
   })
 
   it('marca la pantalla en la que está', () => {
     conAncho(390)
-    conPermisos(...VENDEDOR_Y_COMPRADOR)
+    conPermisos(...VENDEDOR)
+    pantalla('ventas')
+
+    expect(screen.getByRole('button', { name: 'Ventas' }).props.accessibilityState).toMatchObject({ selected: true })
+    expect(screen.getByRole('button', { name: 'Mi día' }).props.accessibilityState).toMatchObject({ selected: false })
+  })
+
+  it('en Compras no hay acceso marcado ni "+": la lista de compras trae el suyo', () => {
+    conAncho(390)
+    conPermisos(...VENDEDOR, 'MOD_COMPRAS:create')
     pantalla('compras')
 
-    expect(screen.getByRole('button', { name: 'Compras' }).props.accessibilityState).toMatchObject({ selected: true })
-    expect(screen.getByRole('button', { name: 'Ventas' }).props.accessibilityState).toMatchObject({ selected: false })
+    expect(nombresDeLaBarra()).toEqual(['Mi día', 'Ventas', 'Clientes', 'Cobros'])
+    for (const b of screen.getAllByRole('button')) expect(b.props.accessibilityState).toMatchObject({ selected: false })
   })
 
-  it('sin permiso para crear ventas ni ver compras quedan solo Inicio y Menú', () => {
+  it('un chofer (lee ventas, no las crea) ve solo Mi día', () => {
     conAncho(390)
-    conPermisos('MOD_VENTAS:read', 'MOD_VIAJES:read') // chofer
+    conPermisos('MOD_VENTAS:read', 'MOD_VIAJES:read')
     pantalla()
 
-    expect(screen.getByRole('button', { name: 'Inicio' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Menú' })).toBeTruthy()
-    for (const nombre of ['Ventas', 'Nueva venta', 'Compras']) {
-      expect(screen.queryByRole('button', { name: nombre })).toBeNull()
-    }
+    expect(nombresDeLaBarra()).toEqual(['Mi día'])
   })
 
-  it('un vendedor de solo lectura ve Ventas en la barra, pero no el "+"', () => {
+  it('sin permisos queda solo Mi día', () => {
     conAncho(390)
-    conPermisos('MOD_VENTAS:read')
+    conPermisos()
     pantalla()
 
-    expect(screen.getByRole('button', { name: 'Ventas' })).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
+    expect(nombresDeLaBarra()).toEqual(['Mi día'])
   })
 
   it('con solo lectura de pedidos también ve Ventas, como la pantalla', () => {
@@ -119,48 +120,18 @@ describe('ConAccesosRapidos', () => {
     conPermisos('MOD_PEDIDOS:read')
     pantalla()
 
-    expect(screen.getByRole('button', { name: 'Ventas' })).toBeTruthy()
+    expect(nombresDeLaBarra()).toEqual(['Mi día', 'Ventas'])
   })
 
-  it('en Compras el "+" es uno solo y crea una compra', async () => {
+  it('Clientes pide MOD_CLIENTES y Cobros pide MOD_CC, como el menú lateral', () => {
     conAncho(390)
-    conPermisos(...VENDEDOR_Y_COMPRADOR, 'MOD_COMPRAS:create')
-    const user = userEvent.setup()
-    pantalla('compras')
+    conPermisos('MOD_CLIENTES:read')
+    const { unmount } = pantalla()
+    expect(nombresDeLaBarra()).toEqual(['Mi día', 'Clientes'])
+    unmount()
 
-    expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
-    await user.press(screen.getByRole('button', { name: 'Nueva compra' }))
-    expect(mockPush.mock.calls.map(([r]) => r)).toEqual(['/(tabs)/compras/nueva'])
-  })
-
-  it('en Compras sin permiso para crear compras no hay "+"', () => {
-    conAncho(390)
-    conPermisos(...VENDEDOR_Y_COMPRADOR)
-    pantalla('compras')
-
-    expect(screen.queryByRole('button', { name: 'Nueva compra' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
-  })
-
-  it('en Ventas el "+" sigue creando una venta', async () => {
-    conAncho(390)
-    conPermisos(...VENDEDOR_Y_COMPRADOR, 'MOD_COMPRAS:create')
-    const user = userEvent.setup()
-    pantalla('ventas')
-
-    expect(screen.queryByRole('button', { name: 'Nueva compra' })).toBeNull()
-    await user.press(screen.getByRole('button', { name: 'Nueva venta' }))
-    expect(mockPush.mock.calls.map(([r]) => r)).toEqual(['/(tabs)/ventas/nueva'])
-  })
-
-  it.each([[false, '/(tabs)/ventas/nueva'], [true, '/(tabs)/ventas/nueva-v2']])('con el switch de la venta nueva en %s, el "+" del administrador lleva a %s', async (activa, ruta) => {
-    conAncho(390)
-    conPermisos(...VENDEDOR_Y_COMPRADOR)
-    useAuthStore.setState({ user: { id: 'u', username: 'u', roles: ['Administrador'] as never, permissions: [] } })
-    useVentaNuevaStore.setState({ activa })
-    pantalla('ventas')
-
-    await userEvent.press(screen.getByRole('button', { name: 'Nueva venta' }))
-    expect(mockPush.mock.calls.map(([r]) => r)).toEqual([ruta])
+    conPermisos('MOD_CC:read')
+    pantalla()
+    expect(nombresDeLaBarra()).toEqual(['Mi día', 'Cobros'])
   })
 })

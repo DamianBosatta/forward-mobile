@@ -6,7 +6,6 @@ import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { storage } from '@/core/utils/storage'
 import { leerCola } from '@/features/venta-sin-senal'
-import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 import { VentaNuevaPantalla } from '../components/VentaNuevaPantalla'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { producto } from '../__testing__/producto'
@@ -834,13 +833,15 @@ describe('confirmar', () => {
   })
 })
 
-describe('ruta ventas/nueva-v2', () => {
-  const Ruta = require('../../../../app/(tabs)/ventas/nueva-v2').default
-  it('con el switch apagado lleva a la venta de hoy', () => {
-    useAuthStore.setState({ user: { id: 'u', username: 'u', roles: ['Administrador'] as never, permissions: [] } })
-    useVentaNuevaStore.setState({ activa: false })
-    render(<Ruta />)
-    expect(screen.getByText('redirige a /(tabs)/ventas/nueva')).toBeTruthy()
+describe('ruta ventas/nueva', () => {
+  const Ruta = require('../../../../app/(tabs)/ventas/nueva').default
+  it('un vendedor (no administrador) abre la venta nueva, no una redirección', async () => {
+    useAuthStore.setState({ user: { id: 'u', username: 'u', roles: ['Vendedor'] as never, permissions: [] } })
+    mockGet.mockImplementation((url: string) => Promise.resolve(calendario(url)))
+    const qcRuta = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={qcRuta}><Ruta /></QueryClientProvider>)
+    expect(await screen.findByText('¿A quién le vendés?')).toBeTruthy()
+    expect(screen.queryByText('redirige a /(tabs)/ventas/nueva')).toBeNull()
   })
 })
 
@@ -1039,11 +1040,10 @@ describe('V7 Confirmar', () => {
   })
 })
 
-describe('ruta ventas/nueva-v2 con ?clienteId=', () => {
-  const Ruta = require('../../../../app/(tabs)/ventas/nueva-v2').default
+describe('ruta ventas/nueva con ?clienteId=', () => {
+  const Ruta = require('../../../../app/(tabs)/ventas/nueva').default
   it('le pasa el cliente a la pantalla y no abre ninguna venta existente', async () => {
     useAuthStore.setState({ user: { id: 'u', username: 'u', roles: ['Administrador'] as never, permissions: [] } })
-    useVentaNuevaStore.setState({ activa: true })
     mockParams = { clienteId: 'c1' }
     mockGet.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/socios-comerciales/c1' ? { id: 'c1', direccion: 'Tarantino 1898' } : calendario(url)))
     const qcRuta = new QueryClient({ defaultOptions: { queries: { retry: false } } })

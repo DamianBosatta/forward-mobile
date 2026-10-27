@@ -119,3 +119,21 @@ it('sin resultados lo dice', async () => {
   renderConQuery(<ProveedoresScreen />)
   expect(await screen.findByText('Todavía no hay proveedores cargados.')).toBeTruthy()
 })
+
+describe('Nueva compra en la tarjeta (ModProveedores)', () => {
+  it('con MOD_COMPRAS:create la tarjeta trae "Nueva compra" y abre la compra nueva sin abrir la ficha', async () => {
+    conPermisos([{ module: 'MOD_PROVEEDORES', canRead: true, canCreate: true }, { module: 'MOD_COMPRAS', canRead: true, canCreate: true }])
+    renderConQuery(<ProveedoresScreen />)
+
+    await userEvent.press(await screen.findByLabelText('Nueva compra'))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/compras/nueva')
+    expect(mockPush).not.toHaveBeenCalledWith(expect.objectContaining({ pathname: '/(tabs)/proveedores/[id]' }))
+  })
+
+  it('sin MOD_COMPRAS:create la tarjeta no la ofrece', async () => {
+    renderConQuery(<ProveedoresScreen />)
+
+    await screen.findByText('Insumos del Sur SA')
+    expect(screen.queryByLabelText('Nueva compra')).toBeNull()
+  })
+})
