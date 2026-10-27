@@ -115,9 +115,22 @@ describe('ConAccesosRapidos', () => {
     expect(nombresDeLaBarra()).toEqual(['Mi día'])
   })
 
-  it('con solo lectura de pedidos también ve Ventas, como la pantalla', () => {
+  // S8 (T1): como la web (sidebar.tsx, entrada "Ventas / Presupuestos" con MOD_VENTAS:create), leer no alcanza.
+  it('con Ventas o Pedidos solo en lectura no aparece Ventas: la web pide crear ventas', () => {
     conAncho(390)
     conPermisos('MOD_PEDIDOS:read')
+    const { unmount } = pantalla()
+    expect(nombresDeLaBarra()).toEqual(['Mi día'])
+    unmount()
+
+    conPermisos('MOD_VENTAS:read')
+    pantalla()
+    expect(nombresDeLaBarra()).toEqual(['Mi día'])
+  })
+
+  it('con crear ventas aparece Ventas', () => {
+    conAncho(390)
+    conPermisos('MOD_VENTAS:create')
     pantalla()
 
     expect(nombresDeLaBarra()).toEqual(['Mi día', 'Ventas'])

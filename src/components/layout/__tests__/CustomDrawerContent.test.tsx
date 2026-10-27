@@ -195,11 +195,20 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     expect(visibles()).toEqual(['Inicio', 'Compras', 'Clientes', 'Calendario', 'Avisos', 'Mi cuenta y contraseña'])
   })
 
-  it('un vendedor de solo lectura ve el módulo de ventas', () => {
+  // S8 (T1): la web muestra "Ventas / Presupuestos" con MOD_VENTAS:create (sidebar.tsx); leer no alcanza.
+  // Reportes no cambia: sigue pidiendo leer ventas.
+  it('con Ventas solo en lectura no aparece la entrada Ventas, como en la web', () => {
     conPermisos('MOD_VENTAS:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Ventas', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'])
+  })
+
+  it('con solo lectura de pedidos tampoco aparece Ventas', () => {
+    conPermisos('MOD_PEDIDOS:read')
+    render(<CustomDrawerContent {...props()} />)
+
+    expect(screen.queryByText('Ventas')).toBeNull()
   })
 
   it('un chofer (lee ventas pero no las crea) ve su consola y no el módulo de ventas', () => {
