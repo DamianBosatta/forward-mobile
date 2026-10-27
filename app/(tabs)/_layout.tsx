@@ -32,7 +32,6 @@ export default function DrawerLayout() {
       <Drawer.Screen name="calendario/index" />
       <Drawer.Screen name="avisos/index" />
       <Drawer.Screen name="reportes/index" />
-      <Drawer.Screen name="logistica/index" />
       <Drawer.Screen name="logistica/consola" />
 
       {/* Rutas ocultas o secundarias (no aparecen en el drawer per se, pero se registran en el router) */}
