@@ -168,7 +168,7 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
   const visibles = () => APROBADOS.filter((n) => screen.queryByText(n) !== null)
 
   it('un vendedor ve ventas, clientes, catálogo y su cuenta corriente; no compras, cobros ni logística', () => {
-    conPermisos('MOD_VENTAS:read', 'MOD_VENTAS:create', 'MOD_CLIENTES:read', 'MOD_STOCK:read', 'MOD_CC:read')
+    conPermisos('MOD_VENTAS:read', 'MOD_VENTAS:create', 'MOD_CLIENTES:read', 'MOD_CATALOGO:read', 'MOD_STOCK:read', 'MOD_CC:read')
     render(<CustomDrawerContent {...props()} />)
 
     expect(visibles()).toEqual(['Inicio', 'Ventas', 'Clientes', 'Catálogo', 'Stock', 'Cuentas corrientes', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'])
@@ -195,11 +195,20 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     expect(visibles()).toEqual(['Inicio', 'Compras', 'Clientes', 'Calendario', 'Avisos', 'Mi cuenta y contraseña'])
   })
 
-  it('un vendedor de solo lectura ve el módulo de ventas', () => {
+  // S8 (T1): la web muestra "Ventas / Presupuestos" con MOD_VENTAS:create (sidebar.tsx); leer no alcanza.
+  // Reportes no cambia: sigue pidiendo leer ventas.
+  it('con Ventas solo en lectura no aparece la entrada Ventas, como en la web', () => {
     conPermisos('MOD_VENTAS:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Ventas', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'])
+  })
+
+  it('con solo lectura de pedidos tampoco aparece Ventas', () => {
+    conPermisos('MOD_PEDIDOS:read')
+    render(<CustomDrawerContent {...props()} />)
+
+    expect(screen.queryByText('Ventas')).toBeNull()
   })
 
   it('un chofer (lee ventas pero no las crea) ve su consola y no el módulo de ventas', () => {
@@ -272,10 +281,10 @@ describe('CustomDrawerContent — por puesto sembrado (C-004, L-12)', () => {
 
   const ESPERADO: Record<string, string[]> = {
     Vendedor: ['Inicio', 'Ventas', 'Clientes', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'],
-    // Lee viajes y no crea ventas: el menú lo trata como al chofer, más el catálogo de su stock.
-    Depósito: ['Inicio', 'Catálogo', 'Stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Mi cuenta y contraseña'],
+    // Lee viajes y no crea ventas: el menú lo trata como al chofer, más su stock. El Catálogo es otro módulo (MOD_CATALOGO), que el puesto sembrado no trae.
+    Depósito: ['Inicio', 'Stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Mi cuenta y contraseña'],
     Chofer: ['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Mi cuenta y contraseña'],
-    'Gerente de depósito': ['Inicio', 'Catálogo', 'Stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Mi cuenta y contraseña'],
+    'Gerente de depósito': ['Inicio', 'Stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Mi cuenta y contraseña'],
   }
 
   const visibles = () => APROBADOS.filter((n) => screen.queryByText(n) !== null)
@@ -302,7 +311,7 @@ describe('CustomDrawerContent — por puesto sembrado (C-004, L-12)', () => {
   it('AdministradorSistemas ve todo el alcance porque el backend le manda el catálogo completo como filas', () => {
     mockRoles = ['AdministradorSistemas']
     conFilas([
-      ...['MOD_VENTAS', 'MOD_COMPRAS', 'MOD_PROVEEDORES', 'MOD_CLIENTES', 'MOD_STOCK', 'MOD_CC', 'MOD_PAGOS', 'MOD_VIAJES', 'MOD_PEDIDOS'].map((m) => fila(m, 'RCUD')),
+      ...['MOD_VENTAS', 'MOD_COMPRAS', 'MOD_PROVEEDORES', 'MOD_CLIENTES', 'MOD_CATALOGO', 'MOD_STOCK', 'MOD_CC', 'MOD_PAGOS', 'MOD_VIAJES', 'MOD_PEDIDOS'].map((m) => fila(m, 'RCUD')),
       fila('CAP_AUTORIZAR_VENTA'),
     ])
     render(<CustomDrawerContent {...props()} />)

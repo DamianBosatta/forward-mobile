@@ -31,7 +31,7 @@ function falloDelEscaneo(error: Error, codigo?: string): string {
 }
 
 /** Catálogo, solo consulta (láminas CatalogoConsulta, FichaProducto y TabCatalogoConsulta). */
-export default function CatalogoConsultaScreen() {
+function CatalogoConsulta() {
   const navigation = useNavigation()
   const router = useRouter()
   const c = useColors()
@@ -128,76 +128,83 @@ export default function CatalogoConsultaScreen() {
   )
 
   return (
-    <RequirePermission module="MOD_STOCK" action="read" mode="screen">
-      <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <TopBar
-          title="Catálogo"
-          subtitle="Solo consulta"
-          leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
-          actions={[
-            { icon: ScanBarcode, accessibilityLabel: 'Escanear código de barras', onPress: () => { cancelarEscaneo(); setEscaneando(true) } },
-            ...(dosPaneles
-              ? []
-              : [
-                  {
-                    icon: grilla ? List : LayoutGrid,
-                    accessibilityLabel: grilla ? 'Ver como lista' : 'Ver como grilla',
-                    onPress: () => setGrilla((g) => !g),
-                  },
-                ]),
-          ]}
-        />
-        <CampoBusqueda value={cat.busqueda} onChangeText={(texto) => { cancelarEscaneo(); cat.setBusqueda(texto) }} />
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }}>
-          <FiltroChip label="Con stock" activo={soloConStock} onPress={() => setSoloConStock((v) => !v)} />
-          <FiltroChip label="Con oferta" activo={cat.soloConOferta} onPress={() => cat.setSoloConOferta((v) => !v)} />
-          <SelectorLineaFamilia categoriaId={cat.categoriaId} onChange={cat.setCategoriaId} />
-          <BotonCatalogoPdf busqueda={cat.busqueda} soloConStock={soloConStock} conOferta={cat.soloConOferta} categoriaId={cat.categoriaId} />
-        </View>
-        {avisoEscaneo ? (
-          <View style={{ padding: space[4], paddingBottom: 0 }}>
-            <Notice tone={avisoEscaneo.tone}>{avisoEscaneo.texto}</Notice>
-          </View>
-        ) : null}
-
-        {dosPaneles ? (
-          <View style={{ flex: 1, flexDirection: 'row' }}>
-            <View style={{ flex: 1, borderRightWidth: 1, borderRightColor: c.border }}>{lista}</View>
-            <View testID="panel-ficha" style={{ flex: 1 }}>
-              {seleccion ? (
-                <FichaProducto productoId={seleccion} onVerStock={verStock} />
-              ) : (
-                <Text style={[typeScale.cuerpo, { color: c.textSecondary, textAlign: 'center', marginTop: space[8] }]}>
-                  Elegí un producto para ver su ficha.
-                </Text>
-              )}
-            </View>
-          </View>
-        ) : (
-          lista
-        )}
-
-        <EscanerCodigo
-          visible={escaneando}
-          onClose={() => setEscaneando(false)}
-          onLeido={(leido) => {
-            setEscaneando(false)
-            setSeleccion(null)
-            escaneo.mutate(leido, { onSuccess: (p) => { if (p) setSeleccion(p.productoPadreId ?? p.id) } })
-          }}
-        />
-
-        <Modal
-          visible={!dosPaneles && seleccion !== null}
-          animationType="slide"
-          onRequestClose={() => setSeleccion(null)}
-        >
-          <View style={{ flex: 1, backgroundColor: c.bg }}>
-            <TopBar title="Ficha de producto" leading={{ kind: 'atras', onPress: () => setSeleccion(null) }} />
-            {seleccion ? <FichaProducto productoId={seleccion} onVerStock={verStock} /> : null}
-          </View>
-        </Modal>
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <TopBar
+        title="Catálogo"
+        subtitle="Solo consulta"
+        leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
+        actions={[
+          { icon: ScanBarcode, accessibilityLabel: 'Escanear código de barras', onPress: () => { cancelarEscaneo(); setEscaneando(true) } },
+          ...(dosPaneles
+            ? []
+            : [
+                {
+                  icon: grilla ? List : LayoutGrid,
+                  accessibilityLabel: grilla ? 'Ver como lista' : 'Ver como grilla',
+                  onPress: () => setGrilla((g) => !g),
+                },
+              ]),
+        ]}
+      />
+      <CampoBusqueda value={cat.busqueda} onChangeText={(texto) => { cancelarEscaneo(); cat.setBusqueda(texto) }} />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }}>
+        <FiltroChip label="Con stock" activo={soloConStock} onPress={() => setSoloConStock((v) => !v)} />
+        <FiltroChip label="Con oferta" activo={cat.soloConOferta} onPress={() => cat.setSoloConOferta((v) => !v)} />
+        <SelectorLineaFamilia categoriaId={cat.categoriaId} onChange={cat.setCategoriaId} />
+        <BotonCatalogoPdf busqueda={cat.busqueda} soloConStock={soloConStock} conOferta={cat.soloConOferta} categoriaId={cat.categoriaId} />
       </View>
+      {avisoEscaneo ? (
+        <View style={{ padding: space[4], paddingBottom: 0 }}>
+          <Notice tone={avisoEscaneo.tone}>{avisoEscaneo.texto}</Notice>
+        </View>
+      ) : null}
+
+      {dosPaneles ? (
+        <View style={{ flex: 1, flexDirection: 'row' }}>
+          <View style={{ flex: 1, borderRightWidth: 1, borderRightColor: c.border }}>{lista}</View>
+          <View testID="panel-ficha" style={{ flex: 1 }}>
+            {seleccion ? (
+              <FichaProducto productoId={seleccion} onVerStock={verStock} />
+            ) : (
+              <Text style={[typeScale.cuerpo, { color: c.textSecondary, textAlign: 'center', marginTop: space[8] }]}>
+                Elegí un producto para ver su ficha.
+              </Text>
+            )}
+          </View>
+        </View>
+      ) : (
+        lista
+      )}
+
+      <EscanerCodigo
+        visible={escaneando}
+        onClose={() => setEscaneando(false)}
+        onLeido={(leido) => {
+          setEscaneando(false)
+          setSeleccion(null)
+          escaneo.mutate(leido, { onSuccess: (p) => { if (p) setSeleccion(p.productoPadreId ?? p.id) } })
+        }}
+      />
+
+      <Modal
+        visible={!dosPaneles && seleccion !== null}
+        animationType="slide"
+        onRequestClose={() => setSeleccion(null)}
+      >
+        <View style={{ flex: 1, backgroundColor: c.bg }}>
+          <TopBar title="Ficha de producto" leading={{ kind: 'atras', onPress: () => setSeleccion(null) }} />
+          {seleccion ? <FichaProducto productoId={seleccion} onVerStock={verStock} /> : null}
+        </View>
+      </Modal>
+    </View>
+  )
+}
+
+/** El catálogo se habilita con MOD_CATALOGO (no con Stock). La consulta vive adentro: sin permiso no se pide nada. */
+export default function CatalogoConsultaScreen() {
+  return (
+    <RequirePermission module="MOD_CATALOGO" action="read" mode="screen">
+      <CatalogoConsulta />
     </RequirePermission>
   )
 }

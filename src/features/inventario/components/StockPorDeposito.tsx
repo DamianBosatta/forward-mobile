@@ -9,7 +9,7 @@ import { mostrarNumero } from '@/src/utils/numero'
 import type { StockItem } from '@/libs/api-client/types'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
-import { useCatalogoConsulta } from '@/features/catalogo/hooks/useCatalogoConsulta'
+import { useProductosDeStockConsulta } from '../hooks/useProductosDeStockConsulta'
 import { chipDeStock } from '@/features/catalogo/lib/presentacion'
 import { useStockPorDeposito } from '../hooks/useStockPorDeposito'
 import { chipDeFilaStock, textoMinimo, textoReservadas, type FiltroEstadoStock } from '../lib/stock-presentacion'
@@ -108,7 +108,7 @@ function CabeceraTablet() {
 /** Sin CAP_VER_CANTIDADES_STOCK: el mismo catálogo, solo con "Hay stock / Sin stock" que decide el servidor. */
 function StockSinCantidades({ busqueda }: { busqueda: string }) {
   const c = useColors()
-  const cat = useCatalogoConsulta()
+  const cat = useProductosDeStockConsulta()
   const { setBusqueda } = cat
   // La búsqueda de esta vista vive en la pantalla; el hook la espera ~300 ms como en el catálogo.
   React.useEffect(() => { setBusqueda(busqueda) }, [busqueda, setBusqueda])

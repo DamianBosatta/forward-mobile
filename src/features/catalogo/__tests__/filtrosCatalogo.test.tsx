@@ -3,6 +3,7 @@ import { render, screen, userEvent, waitFor } from '@testing-library/react-nativ
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import CatalogoConsultaScreen from '../../../../app/(tabs)/inventario/index'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { fichaDeCatalogo, paginaDeCatalogo } from '../testing/fichasDeCatalogo'
 
 // R19: filtros "Con oferta" y "Línea / Familia" del catálogo. Pantalla real, react-query real,
 // solo el transporte HTTP mockeado.
@@ -24,9 +25,7 @@ const CATEGORIAS = [
 ]
 
 function servidor(url: string) {
-  if (url.startsWith('/api/v1/Productos?')) {
-    return Promise.resolve({ items: [AER], page: 1, pageSize: 20, totalCount: 1, totalPages: 1, hasNextPage: false })
-  }
+  if (url.startsWith('/api/v1/catalogo?')) return Promise.resolve(paginaDeCatalogo([fichaDeCatalogo(AER)]))
   if (url === '/api/v1/Categorias') return Promise.resolve(CATEGORIAS)
   return Promise.reject(new Error(`sin respuesta para ${url}`))
 }
@@ -43,7 +42,7 @@ function renderPantalla() {
 const productosPedidos = () =>
   api.get.mock.calls
     .map(([u]) => u as string)
-    .filter((u) => u.startsWith('/api/v1/Productos?'))
+    .filter((u) => u.startsWith('/api/v1/catalogo?'))
     .map((u) => new URLSearchParams(u.split('?')[1]))
 const ultimoPedido = () => productosPedidos().at(-1)!
 
@@ -52,7 +51,7 @@ beforeEach(() => {
   api.post.mockReset().mockResolvedValue([{ productoId: AER.id, disponible: true }])
   mockSharePdf.mockReset().mockResolvedValue({ ok: true })
   useAuthStore.setState({
-    user: { id: 'u1', username: 'u', roles: ['Vendedor'] as never, permissions: [{ module: 'MOD_STOCK', canRead: true }] as never },
+    user: { id: 'u1', username: 'u', roles: ['Vendedor'] as never, permissions: [{ module: 'MOD_CATALOGO', canRead: true }] as never },
   })
 })
 
@@ -60,8 +59,8 @@ describe('Catálogo: filtros de oferta y Línea / Familia', () => {
   it('sin elegir nada no manda conOferta ni categoriaId', async () => {
     renderPantalla()
     await screen.findByText(AER.nombre)
-    expect(ultimoPedido().has('conOferta')).toBe(false)
-    expect(ultimoPedido().has('categoriaId')).toBe(false)
+    expect(ultimoPedido().has('ConOferta')).toBe(false)
+    expect(ultimoPedido().has('CategoriaId')).toBe(false)
   })
 
   it('"Con oferta" manda conOferta=true y vuelve a la página 1; al apagarlo deja de mandarlo', async () => {
@@ -71,13 +70,13 @@ describe('Catálogo: filtros de oferta y Línea / Familia', () => {
 
     await userEvent.press(screen.getByLabelText('Con oferta'))
     await waitFor(() => expect(productosPedidos().length).toBeGreaterThan(antes))
-    expect(ultimoPedido().get('conOferta')).toBe('true')
-    expect(ultimoPedido().get('pageNumber')).toBe('1')
+    expect(ultimoPedido().get('ConOferta')).toBe('true')
+    expect(ultimoPedido().get('PageNumber')).toBe('1')
 
     // Apagado vuelve a la consulta sin filtro (ya guardada): el chip se apaga y no sale ningún pedido nuevo con conOferta.
     await userEvent.press(screen.getByLabelText('Con oferta'))
     await waitFor(() => expect(screen.getByLabelText('Con oferta').props.accessibilityState).toMatchObject({ selected: false }))
-    expect(productosPedidos().filter((p) => p.has('conOferta'))).toHaveLength(1)
+    expect(productosPedidos().filter((p) => p.has('ConOferta'))).toHaveLength(1)
   })
 
   it('el selector lista las Líneas con sus Familias y manda categoriaId al elegir una', async () => {
@@ -90,8 +89,8 @@ describe('Catálogo: filtros de oferta y Línea / Familia', () => {
     expect(screen.getByLabelText('Auto')).toBeTruthy()
 
     await userEvent.press(screen.getByLabelText('Aerosoles'))
-    await waitFor(() => expect(ultimoPedido().get('categoriaId')).toBe('f-aero'))
-    expect(ultimoPedido().get('pageNumber')).toBe('1')
+    await waitFor(() => expect(ultimoPedido().get('CategoriaId')).toBe('f-aero'))
+    expect(ultimoPedido().get('PageNumber')).toBe('1')
     // El chip muestra lo elegido.
     expect(screen.getByLabelText('Línea / Familia: Aerosoles')).toBeTruthy()
   })
@@ -101,12 +100,12 @@ describe('Catálogo: filtros de oferta y Línea / Familia', () => {
     await screen.findByText(AER.nombre)
     await userEvent.press(screen.getByLabelText('Línea / Familia'))
     await userEvent.press(await screen.findByLabelText('Auto'))
-    await waitFor(() => expect(ultimoPedido().get('categoriaId')).toBe('l-auto'))
+    await waitFor(() => expect(ultimoPedido().get('CategoriaId')).toBe('l-auto'))
 
     await userEvent.press(screen.getByLabelText('Línea / Familia: Auto'))
     await userEvent.press(await screen.findByLabelText('Todas'))
     await waitFor(() => expect(screen.getByLabelText('Línea / Familia').props.accessibilityState).toMatchObject({ selected: false }))
-    expect(productosPedidos().filter((p) => p.has('categoriaId'))).toHaveLength(1)
+    expect(productosPedidos().filter((p) => p.has('CategoriaId'))).toHaveLength(1)
   })
 
   it('combina oferta, categoría y búsqueda en el mismo pedido', async () => {
@@ -118,10 +117,9 @@ describe('Catálogo: filtros de oferta y Línea / Familia', () => {
     await userEvent.press(await screen.findByLabelText('Hogar'))
     await userEvent.type(screen.getByLabelText('Buscar por código o nombre'), 'sap')
 
-    await waitFor(() => expect(ultimoPedido().get('searchTerm')).toBe('sap'))
-    expect(ultimoPedido().get('conOferta')).toBe('true')
-    expect(ultimoPedido().get('categoriaId')).toBe('l-hogar')
-    expect(ultimoPedido().get('soloActivos')).toBe('true')
+    await waitFor(() => expect(ultimoPedido().get('SearchTerm')).toBe('sap'))
+    expect(ultimoPedido().get('ConOferta')).toBe('true')
+    expect(ultimoPedido().get('CategoriaId')).toBe('l-hogar')
   })
 
   it('no rompe "Con stock" ni la búsqueda: siguen funcionando con los filtros nuevos', async () => {
@@ -130,7 +128,7 @@ describe('Catálogo: filtros de oferta y Línea / Familia', () => {
     await userEvent.press(screen.getByLabelText('Con stock'))
     expect(screen.getByLabelText('Con stock').props.accessibilityState).toMatchObject({ selected: true })
     await userEvent.type(screen.getByLabelText('Buscar por código o nombre'), 'sap')
-    await waitFor(() => expect(ultimoPedido().get('searchTerm')).toBe('sap'))
+    await waitFor(() => expect(ultimoPedido().get('SearchTerm')).toBe('sap'))
   })
 
   it('el PDF lleva la categoría, la oferta y "Con stock"', async () => {

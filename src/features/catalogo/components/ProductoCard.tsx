@@ -4,11 +4,10 @@ import { Package } from 'lucide-react-native'
 import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { StatusChip, formatImporte } from '@/core/ui/fw'
 import { getFullImageUrl } from '@/libs/api-client/media'
-import type { Producto } from '@/libs/api-client/types'
-import { chipDeStock, detalleDeTarjeta } from '../lib/presentacion'
+import { chipDeStock, detalleDeTarjeta, type ProductoDeTarjeta } from '../lib/presentacion'
 
 interface ProductoCardProps {
-  producto: Producto
+  producto: ProductoDeTarjeta
   /** Lo decide el servidor; undefined = sin dato (líneas o sin depósito): sin chip. */
   disponible?: boolean
   grilla?: boolean

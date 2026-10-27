@@ -11,10 +11,10 @@ import { BlurView } from 'expo-blur'
 import { MotiView } from 'moti'
 
 export function TopHeaderActions() {
-  const { user, canDo, isAdmin } = useAuthStore()
-  // The "requiere autorización" badge only matters to users who can see ventas. A chofer (no
-  // MOD_VENTAS) would otherwise get a 403 from this poll on every screen header.
-  const canSeeVentas = !!(isAdmin?.() || canDo?.('MOD_VENTAS', 'read'))
+  const { user, canDo } = useAuthStore()
+  // La campana consulta ventas: pide Ventas: leer, como GET /api/v1/Ventas. Sin atajo por isAdmin(), igual que
+  // la web (RequirePermission.tsx, #620/#688): un Administrador común sin la fila recibiría 403.
+  const canSeeVentas = !!canDo?.('MOD_VENTAS', 'read')
   const colors = useColors()
   const router = useRouter()
   const insets = useSafeAreaInsets()

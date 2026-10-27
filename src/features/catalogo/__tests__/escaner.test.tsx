@@ -3,6 +3,7 @@ import { Linking } from 'react-native'
 import { act, render, screen, userEvent } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
 import CatalogoConsultaScreen from '../../../../app/(tabs)/inventario/index'
+import { fichaDeCatalogo } from '../testing/fichasDeCatalogo'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 
 // PR 1.2 — escáner. La cámara está simulada: un botón que "lee" mockCodigos, uno tras otro
@@ -67,7 +68,7 @@ function servidor(url: string) {
     const leido = CATALOGO.find((p) => p.codigoBarra === codigo)
     return Promise.resolve(pagina(!mockFiltraCodigo ? CATALOGO : leido ? CATALOGO.filter((p) => familia(p) === familia(leido)) : []))
   }
-  if (url.startsWith('/api/v1/Productos?')) return Promise.resolve(pagina([UNICO, OTRO]))
+  if (url.startsWith('/api/v1/catalogo?')) return Promise.resolve(pagina([fichaDeCatalogo(UNICO), fichaDeCatalogo(OTRO)]))
   const detalle = [UNICO, OTRO].find((p) => url === `/api/v1/Productos/${p.id}`)
   if (detalle) return Promise.resolve({ ...detalle, ventaMinimaUnidades: 1, puedeVenderse: true })
   if (url === `/api/v1/Productos/${LINEA.id}`) return Promise.resolve({ ...LINEA, precioVenta: 1000, ventaMinimaUnidades: 1, activo: true })
@@ -107,7 +108,7 @@ beforeEach(() => {
   api.get.mockReset().mockImplementation(servidor)
   api.post.mockReset().mockResolvedValue([])
   useAuthStore.setState({
-    user: { id: 'u1', username: 'u', roles: ['Vendedor'] as never, permissions: [{ module: 'MOD_STOCK', canRead: true }] as never },
+    user: { id: 'u1', username: 'u', roles: ['Vendedor'] as never, permissions: [{ module: 'MOD_CATALOGO', canRead: true }, { module: 'MOD_STOCK', canRead: true }] as never },
   })
 })
 

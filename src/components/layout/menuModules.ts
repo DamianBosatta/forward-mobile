@@ -57,6 +57,14 @@ export function esChofer(canDo: CanDo): boolean {
   return canDo('MOD_VIAJES', 'read') && !canDo('MOD_VENTAS', 'create')
 }
 
+/**
+ * La entrada "Ventas" del menú y de la barra de abajo: como la web (sidebar.tsx, "Ventas / Presupuestos"),
+ * pide crear ventas. Leer no alcanza: el chofer lee ventas (el pedido de una parada) y no debe ver el módulo.
+ */
+export function veEntradaDeVentas(canDo: CanDo): boolean {
+  return canDo('MOD_VENTAS', 'create')
+}
+
 /** Entra a Ventas como la pantalla (leer ventas o pedidos); el chofer queda afuera. */
 export function puedeVerVentas(canDo: CanDo): boolean {
   return !esChofer(canDo) && (canDo('MOD_VENTAS', 'read') || canDo('MOD_PEDIDOS', 'read'))
@@ -74,10 +82,10 @@ export const MENU: MenuGroup[] = [
   {
     title: 'VENDER',
     items: [
-      // Mismo criterio que la pantalla (leer ventas o pedidos), menos el chofer: lee ventas (el pedido de una parada) y no debe ver el módulo.
-      { id: 'ventas', label: 'Ventas', icon: Tag, href: '/(tabs)/ventas', routeName: 'ventas/index', visibleSi: puedeVerVentas },
+      // Como la web: la entrada pide crear ventas (S8); la pantalla sigue abriendo con leer.
+      { id: 'ventas', label: 'Ventas', icon: Tag, href: '/(tabs)/ventas', routeName: 'ventas/index', visibleSi: veEntradaDeVentas },
       { id: 'clientes', label: 'Clientes', icon: CircleUser, href: '/(tabs)/socios', routeName: 'socios/index', appModule: 'MOD_CLIENTES' },
-      { id: 'catalogo', label: 'Catálogo', hint: 'Solo ver', icon: BookOpen, href: '/(tabs)/inventario', routeName: 'inventario/index', appModule: 'MOD_STOCK' },
+      { id: 'catalogo', label: 'Catálogo', hint: 'Solo ver', icon: BookOpen, href: '/(tabs)/inventario', routeName: 'inventario/index', appModule: 'MOD_CATALOGO' },
       { id: 'stock', label: 'Stock', hint: 'Solo ver', icon: Boxes, href: '/(tabs)/inventario/stock', routeName: 'inventario/stock', appModule: 'MOD_STOCK' },
     ],
   },

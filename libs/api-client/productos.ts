@@ -252,7 +252,7 @@ export interface CatalogoPdfFiltros {
   categoriaId?: string
 }
 
-/** URL del PDF del catálogo con los mismos filtros que la pantalla (GET /Productos/catalogo-pdf). */
+/** URL del PDF del catálogo con los mismos filtros que la pantalla (GET /catalogo/pdf, MOD_CATALOGO). */
 export function getCatalogoPdfUrl({ search, soloDisponibles, conOferta, categoriaId }: CatalogoPdfFiltros): string {
   const params = new URLSearchParams()
   if (search?.trim()) params.set('SearchTerm', search.trim())
@@ -260,5 +260,5 @@ export function getCatalogoPdfUrl({ search, soloDisponibles, conOferta, categori
   if (conOferta) params.set('ConOferta', 'true')
   if (categoriaId) params.set('CategoriaId', categoriaId)
   const query = params.toString()
-  return `${API_URL}/api/v1/Productos/catalogo-pdf${query ? `?${query}` : ''}`
+  return `${API_URL}/api/v1/catalogo/pdf${query ? `?${query}` : ''}`
 }

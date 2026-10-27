@@ -1,49 +1,46 @@
 import { useMemo, useState } from 'react'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
-import { useInfiniteProductos } from '@/libs/api-client/productos'
-import { useDisponibilidadPorLotes } from '@/libs/api-client/stock'
-import { useDepositoDeConsulta } from './useDepositoDeConsulta'
+import { useInfiniteCatalogo, type CatalogoComercialItem } from '@/libs/api-client/catalogo'
+import type { ProductoDeTarjeta } from '../lib/presentacion'
 
 const DEBOUNCE_BUSQUEDA_MS = 300
 const TAMANO_PAGINA = 20
 
+/** La ficha del catálogo comercial con la forma que dibuja la tarjeta. Una línea se reconoce por sus fragancias. */
+export function aTarjeta(item: CatalogoComercialItem): ProductoDeTarjeta {
+  const fragancias = item.fragancias?.length ?? 0
+  return {
+    id: item.productoId,
+    nombre: item.nombre,
+    codigoPropio: item.codigoPropio,
+    precioVenta: item.precioVenta,
+    imageUrl: item.imageUrl,
+    esPadreDeVariantes: fragancias > 0,
+    cantidadFragancias: fragancias > 0 ? fragancias : undefined,
+  }
+}
+
 /**
- * Catálogo de consulta: busca por código o nombre EN EL SERVIDOR (GET /Productos, paginado),
- * con el término esperado ~300 ms. Mientras llega la búsqueda nueva se ven los resultados
- * anteriores. El chip de stock sale de POST /Stocks/disponibilidad (un booleano por producto,
- * descontando lo reservado, en el depósito del usuario o el Central): las líneas no tienen stock propio, así que no llevan chip.
+ * Catálogo de consulta: busca por código o nombre EN EL SERVIDOR (GET /catalogo, paginado, MOD_CATALOGO),
+ * con el término esperado ~300 ms. Mientras llega la búsqueda nueva se ven los resultados anteriores.
+ * El chip de stock sale del `disponible` que ya manda cada ficha (el servidor descuenta lo reservado, en el
+ * alcance de depósitos del usuario): no hay un pedido aparte a Stock, que un vendedor sin ese módulo no puede hacer.
  */
 export function useCatalogoConsulta() {
-  const depositoId = useDepositoDeConsulta()
   const [busqueda, setBusqueda] = useState('')
   const [soloConOferta, setSoloConOferta] = useState(false)
   const [categoriaId, setCategoriaId] = useState<string | undefined>(undefined)
   const termino = useDebouncedValue(busqueda.trim(), DEBOUNCE_BUSQUEDA_MS)
 
-  const query = useInfiniteProductos(
-    { search: termino || undefined, pageSize: TAMANO_PAGINA, soloActivos: true, conOferta: soloConOferta || undefined, categoriaId },
+  const query = useInfiniteCatalogo(
+    { search: termino || undefined, pageSize: TAMANO_PAGINA, conOferta: soloConOferta || undefined, categoriaId },
     { mantenerAnterior: true },
   )
 
-  const productos = useMemo(() => query.data?.pages.flatMap((p) => p?.items ?? []) ?? [], [query.data])
+  const items = useMemo(() => query.data?.pages.flatMap((p) => p?.items ?? []) ?? [], [query.data])
+  const productos = useMemo(() => items.map(aTarjeta), [items])
+  const disponible = useMemo(() => new Map(items.map((i) => [i.productoId, i.disponible] as const)), [items])
   const totalCount = query.data?.pages[0]?.totalCount
-
-  // Un pedido por página: al cargar otra solo se consultan los ids nuevos.
-  const lotes = useMemo(
-    () =>
-      (query.data?.pages ?? []).map((pag) =>
-        (pag?.items ?? [])
-          .filter((p) => !p.esPadreDeVariantes)
-          .map((p) => ({ productoId: p.id, cantidad: 1 })),
-      ),
-    [query.data],
-  )
-  const resultados = useDisponibilidadPorLotes(depositoId, lotes)
-  const disponible = useMemo(
-    () => new Map(resultados.flatMap((r) => (r.data ?? []).map((d) => [d.productoId, d.disponible] as const))),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [resultados.map((r) => r.dataUpdatedAt).join(',')],
-  )
 
   return {
     busqueda,

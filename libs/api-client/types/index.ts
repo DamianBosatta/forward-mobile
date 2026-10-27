@@ -574,6 +574,7 @@ export type AppModule =
   | 'MOD_VENTAS'
   | 'MOD_COMPRAS'
   | 'MOD_STOCK'
+  | 'MOD_CATALOGO'
   | 'MOD_PEDIDOS'
   | 'MOD_VIAJES'
   | 'MOD_CC'
