@@ -277,7 +277,6 @@ Recargala para ver la versión actual antes de seguir.` : 'Recargala para ver la
       <CatalogModal
         visible={catalogo}
         onClose={() => setCatalogo(false)}
-        colors={c}
         productSearch={busqueda}
         setProductSearch={setBusqueda}
         loadingProds={productos.isLoading}
