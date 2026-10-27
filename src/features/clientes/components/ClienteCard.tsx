@@ -1,11 +1,11 @@
 import React from 'react'
 import { Linking, Pressable, Text, View } from 'react-native'
 import { Phone } from 'lucide-react-native'
-import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
+import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { StatusChip, formatImporte } from '@/core/ui/fw'
 import type { SocioListDto } from '@/libs/api-client/types'
 import { urlLlamar } from '../lib/contacto'
-import { direccionDeEntrega, inicialesDeDireccion, nombreDelCliente } from '../lib/cliente'
+import { direccionDeEntrega, nombreDelCliente } from '../lib/cliente'
 
 interface ClienteCardProps {
   cliente: SocioListDto
@@ -15,13 +15,12 @@ interface ClienteCardProps {
 }
 
 /**
- * Tarjeta de cliente (lámina Clientes): la dirección de entrega es el título y el nombre va
+ * Fila plana de cliente (lámina ModClientes): sin tarjeta, con una línea abajo. La dirección de entrega es el título y el nombre va
  * debajo, aparte. El saldo se muestra solo si el servidor dice que este usuario puede verlo; la
  * deuda vencida, solo si el servidor la informa (la redacta igual que el saldo).
  */
 export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteCardProps) {
   const c = useColors()
-  const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const direccion = direccionDeEntrega(cliente)
   const nombre = nombreDelCliente(cliente)
   const saldo = cliente.puedeVerSaldo ? formatImporte(cliente.saldoAmount) : null
@@ -37,36 +36,20 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
       accessibilityLabel={[direccion, vencida && 'deuda vencida', nombre, localidad, saldo && `saldo ${saldo}`].filter(Boolean).join(', ')}
       accessibilityState={{ selected: seleccionado }}
       onPress={onPress}
-      style={({ pressed }) => [
-        {
-          flexDirection: 'row',
-          gap: space[3],
-          padding: space[4],
-          borderRadius: radii.tarjeta,
-          backgroundColor: seleccionado ? c.brandSoft : c.surface,
-          borderWidth: seleccionado ? 2 : 0,
-          borderColor: c.brand,
-          opacity: pressed ? 0.85 : 1,
-        },
-        sombra,
-      ]}
+      style={({ pressed }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: space[3],
+        minHeight: 64,
+        paddingVertical: space[3],
+        paddingLeft: space[4],
+        paddingRight: space[2],
+        backgroundColor: seleccionado ? c.brandSoft : c.surface,
+        borderBottomWidth: 1,
+        borderBottomColor: c.border,
+        opacity: pressed ? 0.85 : 1,
+      })}
     >
-      <View
-        importantForAccessibility="no-hide-descendants"
-        accessibilityElementsHidden
-        style={{
-          width: 44,
-          height: 44,
-          borderRadius: radii.pastilla,
-          backgroundColor: c.brandSoft,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text style={{ ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: c.brandInk }}>
-          {inicialesDeDireccion(direccion)}
-        </Text>
-      </View>
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
           <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text, flexShrink: 1 }}>
@@ -100,7 +83,7 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
           accessibilityLabel="Llamar"
           accessibilityHint={direccion}
           onPress={() => Linking.openURL(urlLlamar(telefono))}
-          style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' }}
+          style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', }}
         >
           <Phone size={20} color={c.brandInk} />
         </Pressable>

@@ -1,6 +1,6 @@
 import React from 'react'
-import { FlatList, Linking } from 'react-native'
-import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { FlatList, Linking, StyleSheet } from 'react-native'
+import { fireEvent, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import ClientesScreen from '../../../../app/(tabs)/socios/index'
 import { api } from '@/core/api/client'
 import { clienteDeLista, conPermisos, pagina, renderConQuery } from '../__testing__/ayuda'
@@ -36,10 +36,10 @@ it('la dirección es el título y el nombre va en una línea aparte, nunca pegad
   expect(screen.queryByText(/Av\. del Valle 89.*Kiosco/)).toBeNull()
 })
 
-it('pide la cartera al servidor (solo clientes, activos, agenda) y muestra "Mostrando N de M" con su total', async () => {
+it('pide la cartera al servidor (solo clientes, activos, agenda) y muestra "N de M" con su total', async () => {
   renderConQuery(<ClientesScreen />)
 
-  expect(await screen.findByText('Mostrando 1 de 142')).toBeTruthy()
+  expect(await screen.findByText('1 de 142')).toBeTruthy()
   const url = urlsDeLista()[0]
   expect(url).toContain('tipo=1')
   expect(url).toContain('activo=true')
@@ -121,7 +121,7 @@ describe('deuda vencida y saldo de la cartera (servidor con PR #882)', () => {
     get.mockResolvedValue({ ...pagina([clienteDeLista()], 142), saldoTotal: 4812330 })
     renderConQuery(<ClientesScreen />)
 
-    expect(await screen.findByText('Mostrando 1 de 142 · Saldo $ 4.812.330')).toBeTruthy()
+    expect(await screen.findByText('1 de 142 · Saldo $ 4.812.330')).toBeTruthy()
   })
 
   it('el saldo total llega solo en la página 1: al cargar más se mantiene', async () => {
@@ -131,18 +131,18 @@ describe('deuda vencida y saldo de la cartera (servidor con PR #882)', () => {
         : { ...pagina([clienteDeLista()], 142), hasNextPage: true, saldoTotal: 4812330 },
     )
     renderConQuery(<ClientesScreen />)
-    await screen.findByText('Mostrando 1 de 142 · Saldo $ 4.812.330')
+    await screen.findByText('1 de 142 · Saldo $ 4.812.330')
 
     fireEvent(screen.UNSAFE_getByType(FlatList), 'onEndReached')
 
-    expect(await screen.findByText('Mostrando 2 de 142 · Saldo $ 4.812.330')).toBeTruthy()
+    expect(await screen.findByText('2 de 142 · Saldo $ 4.812.330')).toBeTruthy()
   })
 
-  it('si el servidor no da el saldo total (null) o es un servidor anterior, queda "Mostrando N de M" y sin chips', async () => {
+  it('si el servidor no da el saldo total (null) o es un servidor anterior, queda "N de M" y sin chips', async () => {
     get.mockResolvedValue({ ...pagina([clienteDeLista()], 142), saldoTotal: null })
     renderConQuery(<ClientesScreen />)
 
-    expect(await screen.findByText('Mostrando 1 de 142')).toBeTruthy()
+    expect(await screen.findByText('1 de 142')).toBeTruthy()
     expect(screen.queryByText(/Saldo \$ /)).toBeNull()
     expect(screen.queryByText('Deuda vencida')).toBeNull()
   })
@@ -241,6 +241,36 @@ describe('lámina Clientes (bloque 12, T7)', () => {
 
     expect(await screen.findByText('Vencido $ 84.300,00')).toBeTruthy()
     expect(screen.queryByText(/Vencido \$ 500/)).toBeNull()
+  })
+})
+
+describe('lista de clientes como el diseño (D6c)', () => {
+  it('la fila es plana: sin borde redondeado ni sombra, con una línea abajo', async () => {
+    renderConQuery(<ClientesScreen />)
+
+    const fila = await screen.findByRole('button', { name: /Av\. del Valle 89/ })
+    const estilo = StyleSheet.flatten(fila.props.style)
+    expect(estilo.borderBottomWidth).toBe(1)
+    expect(estilo.borderRadius).toBeUndefined()
+    expect(estilo.shadowOpacity).toBeUndefined()
+    expect(estilo.elevation).toBeUndefined()
+  })
+
+  it('el contador "N de M" va abajo, junto al botón "Nuevo cliente", y no arriba', async () => {
+    renderConQuery(<ClientesScreen />)
+
+    await screen.findByText('1 de 142')
+    const pie = screen.getByTestId('pie-clientes')
+    expect(within(pie).getByText('1 de 142')).toBeTruthy()
+    expect(within(pie).getByRole('button', { name: 'Nuevo cliente' })).toBeTruthy()
+  })
+
+  it('sin permiso de alta el contador sigue abajo y no hay botón', async () => {
+    conPermisos([{ module: 'MOD_CLIENTES', canRead: true, canCreate: false }])
+    renderConQuery(<ClientesScreen />)
+
+    expect(await screen.findByText('1 de 142')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Nuevo cliente' })).toBeNull()
   })
 })
 
