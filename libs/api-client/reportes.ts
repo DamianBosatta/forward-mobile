@@ -11,15 +11,22 @@ export type ResumenVendedor = components['schemas']['ResumenVendedorDto']
 
 const reportesKeys = {
   all: ['reportes'] as const,
-  resumenVendedor: (anio: number, mes: number, vendedorId: string | null) =>
-    [...reportesKeys.all, 'resumen-vendedor', anio, mes, vendedorId] as const,
+  resumenVendedor: (periodo: PeriodoResumen, vendedorId: string | null) =>
+    [...reportesKeys.all, 'resumen-vendedor', periodo, vendedorId] as const,
 }
 
-export function useResumenVendedor(anio: number, mes: number, vendedorId: string | null) {
+/**
+ * Un mes (`anio` y `mes` 1-12) o una semana: `semana` es cualquier día AAAA-MM-DD de la semana pedida
+ * (lunes a domingo argentino); con `semana` el servidor ignora año y mes.
+ */
+export type PeriodoResumen = { anio: number; mes: number } | { semana: string }
+
+export function useResumenVendedor(periodo: PeriodoResumen, vendedorId: string | null) {
+  const filtro = 'semana' in periodo ? `semana=${periodo.semana}` : `anio=${periodo.anio}&mes=${periodo.mes}`
   return useQuery({
-    queryKey: reportesKeys.resumenVendedor(anio, mes, vendedorId),
+    queryKey: reportesKeys.resumenVendedor(periodo, vendedorId),
     queryFn: () => api.get<ResumenVendedor>(
-      `/api/v1/Reportes/mobile/resumen-vendedor?anio=${anio}&mes=${mes}${vendedorId ? `&vendedorId=${vendedorId}` : ''}`,
+      `/api/v1/Reportes/mobile/resumen-vendedor?${filtro}${vendedorId ? `&vendedorId=${vendedorId}` : ''}`,
     ),
   })
 }

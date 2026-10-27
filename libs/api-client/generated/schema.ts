@@ -4700,6 +4700,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/configuracion/facturacion/arca/solicitudes/{id}/resolver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ResolverSolicitudArcaCommand"];
+                    "text/json": components["schemas"]["ResolverSolicitudArcaCommand"];
+                    "application/*+json": components["schemas"]["ResolverSolicitudArcaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ReconciliacionArcaDtoResponse"];
+                        "application/json": components["schemas"]["ReconciliacionArcaDtoResponse"];
+                        "text/json": components["schemas"]["ReconciliacionArcaDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/configuracion/facturacion/puntos-venta": {
         parameters: {
             query?: never;
@@ -7916,6 +7994,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/facturas/{id}/arca/reconciliar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ReconciliacionArcaDtoResponse"];
+                        "application/json": components["schemas"]["ReconciliacionArcaDtoResponse"];
+                        "text/json": components["schemas"]["ReconciliacionArcaDtoResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/facturas/{id}/arca": {
         parameters: {
             query?: never;
@@ -8874,9 +9013,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "text/plain": components["schemas"]["PreviewImportacionDto"];
-                        "application/json": components["schemas"]["PreviewImportacionDto"];
-                        "text/json": components["schemas"]["PreviewImportacionDto"];
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
                     };
                 };
             };
@@ -14440,6 +14579,7 @@ export interface paths {
                 query?: {
                     Anio?: number;
                     Mes?: number;
+                    Semana?: string;
                     VendedorId?: string;
                 };
                 header?: never;
@@ -14682,6 +14822,8 @@ export interface paths {
                     SoloIncompletos?: boolean;
                     Localidad?: string;
                     ConDeudaVencida?: boolean;
+                    OrdenarPor?: components["schemas"]["SociosOrdenarPor"];
+                    Desc?: boolean;
                     PageNumber?: number;
                     PageSize?: number;
                 };
@@ -21089,6 +21231,8 @@ export interface components {
         /** @enum {string} */
         EstadoAcreditacionTarjeta: "Pendiente" | "Acreditada";
         /** @enum {string} */
+        EstadoArcaSolicitud: "Pendiente" | "Enviada" | "Autorizada" | "Rechazada" | "EnDuda" | "Liberada";
+        /** @enum {string} */
         EstadoCheque: "EnCartera" | "Depositado" | "Acreditado" | "Rechazado" | "Endosado" | "Entregado";
         /** @enum {string} */
         EstadoCompra: "NotaPedido" | "Confirmado" | "Entregado" | "Cancelada" | "Anulada";
@@ -21698,7 +21842,8 @@ export interface components {
             tieneReporte?: boolean;
             motivoFallo?: string | null;
             puedeRevertirse?: boolean;
-            reversion?: components["schemas"]["ReversionImportacionDto"];
+            reversion?: components["schemas"]["ReversionImportacionDto"] | null;
+            analisis?: components["schemas"]["PreviewImportacionDto"] | null;
         };
         /** @enum {string} */
         ImputacionCobroChofer: "PedidoActual" | "DeudaAnterior";
@@ -22542,6 +22687,19 @@ export interface components {
             /** Format: double */
             longitud?: number;
         };
+        PedidoCaeArcaDto: {
+            /** Format: uuid */
+            solicitudId: string;
+            estado: components["schemas"]["EstadoArcaSolicitud"];
+            /** Format: int32 */
+            puntoVenta: number;
+            /** Format: int64 */
+            numero: number;
+            cae?: string | null;
+            /** Format: date */
+            caeVencimiento?: string | null;
+            detalle?: string | null;
+        };
         PedidoSinFacturaDto: {
             /** Format: uuid */
             ventaId: string;
@@ -23143,6 +23301,20 @@ export interface components {
             /** Format: int32 */
             version?: number | null;
         };
+        ReconciliacionArcaDto: {
+            pedidos: components["schemas"]["PedidoCaeArcaDto"][];
+            quedanVivos: boolean;
+        };
+        ReconciliacionArcaDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ReconciliacionArcaDto"];
+            codigo?: string | null;
+        };
         RecordsDto: {
             mejorDia?: components["schemas"]["MejorDiaDto"];
             mejorDiaAnterior?: components["schemas"]["MejorDiaDto"];
@@ -23549,11 +23721,19 @@ export interface components {
             /** Format: date-time */
             nuevaFechaEntrega?: string;
         };
+        /** @enum {string} */
+        ResolucionSolicitudArca: "Vincular" | "Ajeno";
         ResolverNotaCreditoCommand: {
             /** Format: uuid */
             notaCreditoId?: string;
             aprobar?: boolean;
             motivoRechazo?: string | null;
+        };
+        ResolverSolicitudArcaCommand: {
+            /** Format: uuid */
+            solicitudId?: string;
+            resolucion?: components["schemas"]["ResolucionSolicitudArca"];
+            motivo?: string | null;
         };
         ResolverSolicitudCambioCommand: {
             /** Format: uuid */
@@ -23979,6 +24159,8 @@ export interface components {
             /** Format: double */
             saldoTotal?: number | null;
         };
+        /** @enum {string} */
+        SociosOrdenarPor: "RazonSocial" | "Direccion";
         SolicitarCambioSocioCommand: {
             /** Format: uuid */
             socioId?: string;

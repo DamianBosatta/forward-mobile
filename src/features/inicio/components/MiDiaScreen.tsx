@@ -36,7 +36,7 @@ export function MiDiaScreen() {
   const ahora = useAhoraArgentina()
   const hoy = partesArgentina(ahora)
   const mes = mesDe(ahora)
-  const resumen = useResumenVendedor(mes.anio, mes.mes, null)
+  const resumen = useResumenVendedor({ anio: mes.anio, mes: mes.mes }, null)
   const pendientes = usePendientesInicio()
   const recientesServidor = useClientesRecientes(true)
   const recientes = useMemo(

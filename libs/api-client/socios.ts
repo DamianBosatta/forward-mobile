@@ -15,6 +15,9 @@ export interface SociosParams {
   localidad?:  string
   /** Solo los clientes con deuda vencida, entre los que el usuario puede ver el saldo. */
   conDeudaVencida?: boolean
+  /** Orden de la lista (default del servidor: `RazonSocial`); `Direccion` deja los sin dirección al final. */
+  ordenarPor?: 'RazonSocial' | 'Direccion'
+  desc?:       boolean
   pageNumber?: number
   pageSize?:   number
 }
@@ -130,6 +133,8 @@ export function useInfiniteSocios(params: SociosParams = {}) {
       if (params.agenda) sp.append('agenda', 'true')
       if (params.localidad) sp.append('localidad', params.localidad)
       if (params.conDeudaVencida) sp.append('conDeudaVencida', 'true')
+      if (params.ordenarPor) sp.append('OrdenarPor', params.ordenarPor)
+      if (params.desc) sp.append('Desc', 'true')
 
       // `saldoTotal` (PR #882): la suma de todo el filtro, solo en la página 1; null si no se puede dar.
       return api.get<PagedResult<SocioComercial> & { saldoTotal?: number | null }>(`/api/v1/socios-comerciales?${sp}`)

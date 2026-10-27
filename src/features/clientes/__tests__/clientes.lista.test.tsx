@@ -1,5 +1,5 @@
 import React from 'react'
-import { FlatList, Linking, StyleSheet } from 'react-native'
+import { SectionList, Linking, StyleSheet } from 'react-native'
 import { fireEvent, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import ClientesScreen from '../../../../app/(tabs)/socios/index'
 import { api } from '@/core/api/client'
@@ -133,7 +133,7 @@ describe('deuda vencida y saldo de la cartera (servidor con PR #882)', () => {
     renderConQuery(<ClientesScreen />)
     await screen.findByText('1 de 142 · Saldo $ 4.812.330')
 
-    fireEvent(screen.UNSAFE_getByType(FlatList), 'onEndReached')
+    fireEvent(screen.UNSAFE_getByType(SectionList), 'onEndReached')
 
     expect(await screen.findByText('2 de 142 · Saldo $ 4.812.330')).toBeTruthy()
   })
@@ -279,4 +279,29 @@ it('en el teléfono la barra de abajo sigue a la vista en Clientes (lámina Call
 
   expect(await screen.findByText('Av. del Valle 89')).toBeTruthy()
   expect(screen.getByText('Mi día')).toBeTruthy()
+})
+
+it('pide la cartera ordenada por dirección', async () => {
+  renderConQuery(<ClientesScreen />)
+
+  await screen.findByText('Av. del Valle 89')
+  expect(urlsDeLista()[0]).toContain('OrdenarPor=Direccion')
+  expect(urlsDeLista()[0]).not.toContain('Desc=')
+})
+
+it('muestra un encabezado por letra de la dirección (sin tildes, "#" para lo que no empieza con letra) y los sin dirección al final', async () => {
+  get.mockResolvedValue(pagina([
+    clienteDeLista({ id: 'a', direccion: 'Álvarez 12' }),
+    clienteDeLista({ id: 'b', direccion: 'Belgrano 1' }),
+    clienteDeLista({ id: 'n', direccion: '25 de Mayo 5' }),
+    clienteDeLista({ id: 's', direccion: undefined }),
+  ], 4))
+  renderConQuery(<ClientesScreen />)
+
+  await screen.findByText('Álvarez 12')
+  expect(screen.getByTestId('encabezado-letra-A')).toBeTruthy()
+  expect(screen.getByTestId('encabezado-letra-B')).toBeTruthy()
+  expect(screen.getByTestId('encabezado-letra-#')).toBeTruthy()
+  expect(screen.getByTestId('encabezado-letra-Sin dirección')).toBeTruthy()
+  expect(screen.getByText('4 de 4')).toBeTruthy()
 })
