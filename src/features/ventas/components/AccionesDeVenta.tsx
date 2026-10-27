@@ -68,7 +68,7 @@ export function AccionesDeVenta({ venta, acciones, onAnulada }: Props) {
       {acciones.reabrir ? (
         <Button label="Reabrir" loading={reabrir.isPending} onPress={() => void reabrir.mutateAsync(h.id).catch((e) => Alert.alert('No se pudo reabrir', mensajeDelServidor(e)))} />
       ) : null}
-      {acciones.editar ? <Button label="Editar" variant="secundario" onPress={() => router.push(`/(tabs)/ventas/nueva-v2?editar=${h.id}` as never)} /> : null}
+      {acciones.editar ? <Button label="Editar" variant="secundario" onPress={() => router.push(`/(tabs)/ventas/nueva?editar=${h.id}` as never)} /> : null}
       {a.visible ? <Button label="Anular" variant="secundario" disabled={!a.habilitado} onPress={() => { setError(null); setHoja(true) }} /> : null}
       {a.visible && !a.habilitado && a.motivo ? <MotivoDeshabilitado>{a.motivo}</MotivoDeshabilitado> : null}
       <AnularVentaSheet

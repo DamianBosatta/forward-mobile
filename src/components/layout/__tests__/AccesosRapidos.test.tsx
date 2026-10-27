@@ -8,7 +8,6 @@ import { Text } from 'react-native'
 import { render, screen, userEvent } from '@testing-library/react-native'
 import { ConAccesosRapidos } from '../AccesosRapidos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 
 const mockPush = jest.fn()
 const mockDispatch = jest.fn()
@@ -153,14 +152,13 @@ describe('ConAccesosRapidos', () => {
     expect(mockPush.mock.calls.map(([r]) => r)).toEqual(['/(tabs)/ventas/nueva'])
   })
 
-  it.each([[false, '/(tabs)/ventas/nueva'], [true, '/(tabs)/ventas/nueva-v2']])('con el switch de la venta nueva en %s, el "+" del administrador lleva a %s', async (activa, ruta) => {
+  it('el "+" del vendedor (no administrador) abre la venta nueva', async () => {
     conAncho(390)
     conPermisos(...VENDEDOR_Y_COMPRADOR)
-    useAuthStore.setState({ user: { id: 'u', username: 'u', roles: ['Administrador'] as never, permissions: [] } })
-    useVentaNuevaStore.setState({ activa })
+    useAuthStore.setState({ user: { id: 'u', username: 'u', roles: ['Vendedor'] as never, permissions: [] } })
     pantalla('ventas')
 
     await userEvent.press(screen.getByRole('button', { name: 'Nueva venta' }))
-    expect(mockPush.mock.calls.map(([r]) => r)).toEqual([ruta])
+    expect(mockPush.mock.calls.map(([r]) => r)).toEqual(['/(tabs)/ventas/nueva'])
   })
 })

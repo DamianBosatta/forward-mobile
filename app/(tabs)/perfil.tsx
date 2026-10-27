@@ -10,7 +10,6 @@ import { ConfirmModal } from '@/core/ui'
 import { Button, Notice, Segmented, TopBar, useMenuLeading, type SegmentedOption } from '@/core/ui/fw'
 import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
 import { safeHaptics } from '@/core/utils/haptics'
-import { useVentaNuevaStore, usePuedeProbarVentaNueva } from '@/features/ventas/lib/ventaNueva'
 import { CambiarContrasena } from '@/features/cuenta/components/CambiarContrasena'
 import { AVISO_SESION_NO_CERRADA_EN_TODOS, cerrarSesionEnElServidor } from '@/features/cuenta/api/cuenta'
 import { isBiometricLoginEnabled, isBiometricsAvailable, setBiometricLoginEnabled } from '@/features/auth/utils/biometrics'
@@ -40,9 +39,6 @@ export default function PerfilScreen() {
   const queryClient = useQueryClient()
   const { user, logout } = useAuthStore()
   const { mode, setMode } = useThemeStore()
-  const ventaNueva = useVentaNuevaStore((s) => s.activa)
-  const setVentaNueva = useVentaNuevaStore((s) => s.setActiva)
-  const puedeProbarVentaNueva = usePuedeProbarVentaNueva()
   const [saliendo, setSaliendo] = useState(false)
   const [confirmarSalida, setConfirmarSalida] = useState(false)
   const [entornoPendiente, setEntornoPendiente] = useState<string | null>(null)
@@ -169,14 +165,6 @@ export default function PerfilScreen() {
         <View style={[tarjeta, { padding: space[4], gap: space[3] }]}>
           <CambiarContrasena email={user?.email} />
         </View>
-
-        {/* Pruebas: la venta nueva convive con la vieja hasta T3 del bloque 12 (D9), que la prende para todos. */}
-        {puedeProbarVentaNueva ? (
-          <View style={[tarjeta, { paddingTop: space[3] }]}>
-            <View style={{ paddingHorizontal: space[4] }}>{titulo('Pruebas')}</View>
-            {filaInterruptor('Usar la venta nueva (en prueba)', ventaNueva, () => { void setVentaNueva(!ventaNueva) }, false)}
-          </View>
-        ) : null}
 
         {__DEV__ ? (
           <View style={[tarjeta, { padding: space[4], gap: space[3] }]}>

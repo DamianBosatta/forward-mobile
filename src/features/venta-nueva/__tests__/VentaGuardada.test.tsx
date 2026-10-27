@@ -192,7 +192,7 @@ describe('V8 listo (CalleListo / TabCalleListo)', () => {
   it('"Vender a otro cliente" abre una venta nueva y "Volver a Mi día" va al inicio', async () => {
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: 'Vender a otro cliente' }))
-    expect(mockReplace).toHaveBeenLastCalledWith('/(tabs)/ventas/nueva-v2')
+    expect(mockReplace).toHaveBeenLastCalledWith('/(tabs)/ventas/nueva')
     await userEvent.press(screen.getByRole('button', { name: 'Volver a Mi día' }))
     expect(mockReplace).toHaveBeenLastCalledWith('/(tabs)')
   })

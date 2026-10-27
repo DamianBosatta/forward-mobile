@@ -39,7 +39,6 @@ export default function DrawerLayout() {
       <Drawer.Screen name="perfil" />
       <Drawer.Screen name="tesoreria/transferencia" />
       <Drawer.Screen name="ventas/nueva" />
-      <Drawer.Screen name="ventas/nueva-v2" />
       <Drawer.Screen name="compras/nueva" />
       <Drawer.Screen name="socios/nuevo" />
       <Drawer.Screen name="proveedores/nuevo" />

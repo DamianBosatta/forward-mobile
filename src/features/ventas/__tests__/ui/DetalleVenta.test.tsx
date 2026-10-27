@@ -93,7 +93,7 @@ describe('R1 · detalle del pedido (ResVentaDetalle, TV7)', () => {
     venta({ estado: 2 })
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: 'Editar' }))
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva-v2?editar=v9')
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva?editar=v9')
   })
 
   it('En ruta: Anular queda deshabilitado con el motivo a la vista', async () => {
@@ -232,7 +232,7 @@ describe('R3 · rechazado (ResRechazada, TV8)', () => {
     await userEvent.press(await screen.findByRole('button', { name: /Cobrar lo vencido/ }))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: 'c7' } })
     await userEvent.press(screen.getByRole('button', { name: /Armar uno nuevo igual/ }))
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva-v2?duplicar=v9')
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva?duplicar=v9')
     await userEvent.press(screen.getByRole('button', { name: /Llamar al cliente/ }))
     expect(abrir).toHaveBeenCalledWith('tel:2215550182')
     abrir.mockRestore()

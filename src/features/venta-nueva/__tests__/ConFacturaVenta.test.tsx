@@ -4,7 +4,6 @@ import { act, fireEvent, render, screen, userEvent, waitFor, within } from '@tes
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 import { VentaNuevaPantalla } from '../components/VentaNuevaPantalla'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { producto } from '../__testing__/producto'

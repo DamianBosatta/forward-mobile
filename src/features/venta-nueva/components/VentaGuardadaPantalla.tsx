@@ -91,7 +91,7 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
         {puedeCobrar ? <Button label="Cobrar ahora" variant="secundario" onPress={() => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: h.clienteId } } as never)} /> : null}
         <AccionesVenta venta={vigente} rotulo={rotulo} />
         <Text style={secundario}>La factura no se hace desde el teléfono: va por la pestaña Facturación de la web.</Text>
-        <Button label="Vender a otro cliente" variant="secundario" onPress={() => router.replace('/(tabs)/ventas/nueva-v2' as never)} />
+        <Button label="Vender a otro cliente" variant="secundario" onPress={() => router.replace('/(tabs)/ventas/nueva' as never)} />
         <Button label="Volver a Mi día" variant="secundario" onPress={() => router.replace('/(tabs)' as never)} />
         <Button label="Listo" variant="secundario" onPress={listo} />
       </ScrollView>

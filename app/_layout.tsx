@@ -26,7 +26,6 @@ import { WifiOff } from 'lucide-react-native'
 import { MotiView, AnimatePresence } from 'moti'
 import '../global.css'
 import { loadSavedApiUrl } from '@/core/api/client'
-import { useVentaNuevaStore } from '@/features/ventas/lib/ventaNueva'
 import { AvisosAlVolver, PushDeAvisos } from '@/features/notificaciones'
 import { EnvioVentasSinSenal } from '@/features/venta-sin-senal'
 
@@ -68,8 +67,6 @@ function RootLayoutNav() {
   const isThemeHydrated = useThemeStore(state => state.isHydrated)
   useEffect(() => {
     useThemeStore.getState().hydrate()
-    // Switch de la venta nueva (Mi cuenta → Pruebas); arranca apagado hasta leerlo.
-    useVentaNuevaStore.getState().hydrate()
   }, [])
 
   // Inter sola (plan §7). Los nombres Outfit_* son legados: las pantallas viejas

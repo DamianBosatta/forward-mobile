@@ -13,7 +13,6 @@ import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
 import { partesArgentina } from '@/src/utils/date'
 import { direccionDeEntrega, inicialesDeDireccion } from '@/features/clientes/lib/cliente'
 import { fusionarRecientes, leerRecientes } from '@/features/clientes/lib/recientes'
-import { useVentaNueva } from '@/features/ventas/lib/ventaNueva'
 import { useVenderA } from '@/features/venta-nueva/hooks/useVenderA'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
@@ -45,8 +44,8 @@ export function MiDiaScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [recientesServidor.data, user?.id, ahora],
   )
-  const rutaVenta = useVentaNueva() ? '/(tabs)/ventas/nueva-v2' : '/(tabs)/ventas/nueva'
-  // Con la venta nueva, un reciente abre la venta con ese cliente; si no, su ficha (como hasta ahora).
+  const rutaVenta = '/(tabs)/ventas/nueva'
+  // Un reciente abre la venta con ese cliente; sin permiso para vender, su ficha.
   const venderA = useVenderA()
   // "Nueva venta" pide lo mismo que el "+" de la barra: poder crear ventas (decisión del dueño 22-10).
   const { canDo } = usePermissions()

@@ -55,7 +55,7 @@ export function AccionesVenta({ venta, rotulo }: Props) {
   const puedeEditar = canDo('MOD_VENTAS', 'update') && esEstadoVenta(h.estado, 'Pendiente', 'Confirmada')
   const puedeDuplicar = canDo('MOD_VENTAS', 'create')
   const router = useRouter()
-  const ir = (param: 'editar' | 'duplicar') => router.push(`/(tabs)/ventas/nueva-v2?${param}=${h.id}` as never)
+  const ir = (param: 'editar' | 'duplicar') => router.push(`/(tabs)/ventas/nueva?${param}=${h.id}` as never)
 
   const compartir = async () => {
     setPdf(true)

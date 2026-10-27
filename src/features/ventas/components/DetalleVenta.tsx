@@ -121,7 +121,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
             deudaVencida={cliente?.deudaVencidaAmount ?? null}
             telefono={telefono}
             onCobrar={acciones.cobrar ? cobrar : null}
-            onArmarIgual={canDo('MOD_VENTAS', 'create') ? () => router.push(`/(tabs)/ventas/nueva-v2?duplicar=${h.id}` as never) : null}
+            onArmarIgual={canDo('MOD_VENTAS', 'create') ? () => router.push(`/(tabs)/ventas/nueva?duplicar=${h.id}` as never) : null}
             onLlamar={telefono ? () => void Linking.openURL(urlLlamar(telefono)) : null}
           />
         ) : (

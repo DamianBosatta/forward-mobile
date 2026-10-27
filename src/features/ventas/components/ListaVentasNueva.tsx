@@ -91,7 +91,7 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
   // Desde forward-system #883 el borrador guarda si se armaba un pedido o un presupuesto y se retoma
   // como tal. Un servidor anterior no lo manda (todo borrador es presupuesto ahí): se pregunta.
   const retomar = (b: BorradorVenta) => {
-    const ir = (tipo: 'Pedido' | 'Presupuesto') => router.push(`/(tabs)/ventas/nueva-v2?borrador=${b.id}&tipo=${tipo}` as never)
+    const ir = (tipo: 'Pedido' | 'Presupuesto') => router.push(`/(tabs)/ventas/nueva?borrador=${b.id}&tipo=${tipo}` as never)
     if (b.tipoOperacion === 'Pedido' || b.tipoOperacion === 'Presupuesto') return ir(b.tipoOperacion)
     Alert.alert('Retomar borrador', identidadDeBorrador(b).titulo, [
       { text: 'Cancelar', style: 'cancel' },
@@ -179,7 +179,7 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
         leading={leading}
         // En tablet no hay barra inferior con el "+": la venta nueva se abre desde acá.
         actions={isTablet && canDo('MOD_VENTAS', 'create')
-          ? [{ icon: Plus, accessibilityLabel: 'Nueva venta', onPress: () => router.push('/(tabs)/ventas/nueva-v2' as never) }]
+          ? [{ icon: Plus, accessibilityLabel: 'Nueva venta', onPress: () => router.push('/(tabs)/ventas/nueva' as never) }]
           : []}
         tabs={PESTANAS.map((p) => ({ label: p.label, selected: p.key === l.pestana, onPress: () => { l.setPestana(p.key); setElegida(null) } }))}
       />
