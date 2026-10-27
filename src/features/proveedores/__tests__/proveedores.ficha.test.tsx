@@ -130,12 +130,12 @@ it('si el servidor rechaza, muestra su mensaje', async () => {
 })
 
 describe('Nueva compra desde el proveedor (ResFichaProveedor)', () => {
-  it('con MOD_COMPRAS:create aparece y abre la compra nueva', async () => {
+  it('con MOD_COMPRAS:create aparece y abre la compra nueva con ese proveedor', async () => {
     conPermisos([...PERMISOS, { module: 'MOD_COMPRAS', canRead: true, canCreate: true }])
     renderConQuery(<FichaProveedor id="p1" />)
 
     await userEvent.press(await screen.findByRole('button', { name: 'Nueva compra' }))
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/compras/nueva')
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/compras/nueva', params: { proveedor: 'p1' } })
   })
 
   it('sin MOD_COMPRAS:create no aparece', async () => {

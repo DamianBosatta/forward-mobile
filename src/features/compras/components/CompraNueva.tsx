@@ -34,13 +34,15 @@ interface Props {
   borradorId?: string
   /** Compra ya guardada (nota de pedido o confirmada) a editar: no autoguarda, un solo "Guardar cambios". */
   editarId?: string
+  /** Proveedor ya elegido (viene de su ficha): se crea el borrador con él sin pasar por la lista. */
+  proveedorId?: string
 }
 
 /**
  * Compra nueva con el formato nuevo (láminas Compra y TabCompra), como borrador con autoguardado.
  * Con `editarId` edita una compra ya guardada con el mismo formulario, sin autoguardado.
  */
-export function CompraNueva({ borradorId, editarId }: Props) {
+export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
   const c = useColors()
   const router = useRouter()
   const { isTablet } = useResponsive()
@@ -56,7 +58,13 @@ export function CompraNueva({ borradorId, editarId }: Props) {
   const [recibir, setRecibir] = useState<{ error: string | null } | null>(null)
   const [fechaFactura, setFechaFactura] = useState(hoyTexto)
   const guardando = useRef(false)
+  const preseleccionado = useRef(false)
   const puedeRecibir = usePermissions().canDo('MOD_COMPRAS', 'update')
+  useEffect(() => {
+    if (!proveedorId || borradorId || editarId || preseleccionado.current) return
+    preseleccionado.current = true
+    void b.elegirProveedor(proveedorId)
+  }, [proveedorId, borradorId, editarId]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const t = setTimeout(() => setEnviada(busqueda.trim()), 300)
     return () => clearTimeout(t)

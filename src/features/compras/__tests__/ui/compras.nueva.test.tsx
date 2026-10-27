@@ -22,6 +22,12 @@ describe('ruta compras/nueva', () => {
     expect(mockCompraNueva).toHaveBeenCalledWith({ borradorId: 'b9' })
   })
 
+  it('con ?proveedor= (desde la ficha del proveedor) lo preselecciona', () => {
+    mockParams = { proveedor: 'p7' }
+    render(<NuevaCompraScreen />)
+    expect(mockCompraNueva).toHaveBeenCalledWith({ proveedorId: 'p7' })
+  })
+
   it('sin parámetros abre la compra nueva', () => {
     render(<NuevaCompraScreen />)
     expect(mockCompraNueva).toHaveBeenCalledWith({ borradorId: undefined })

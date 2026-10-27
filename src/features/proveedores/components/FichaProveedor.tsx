@@ -58,8 +58,8 @@ export function FichaProveedor({ id }: { id: string }) {
         </View>
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
-          {/* Mismo permiso que el "+" de la lista de compras (MOD_COMPRAS crear). La compra nueva todavía no recibe el proveedor: se elige adentro. */}
-          {canCreate('MOD_COMPRAS') ? <Accion icono={Plus} label="Nueva compra" onPress={() => router.push('/(tabs)/compras/nueva' as never)} /> : null}
+          {/* Mismo permiso que el "+" de la lista de compras (MOD_COMPRAS crear). La compra nueva arranca con este proveedor ya elegido. */}
+          {canCreate('MOD_COMPRAS') ? <Accion icono={Plus} label="Nueva compra" onPress={() => router.push({ pathname: '/(tabs)/compras/nueva', params: { proveedor: id } } as never)} /> : null}
           {telefono ? <Accion icono={Phone} label="Llamar" onPress={() => Linking.openURL(urlLlamar(telefono))} /> : null}
           {whatsapp ? <Accion icono={MessageCircle} label="WhatsApp" onPress={() => Linking.openURL(whatsapp)} /> : null}
           {puedeEditar ? (
