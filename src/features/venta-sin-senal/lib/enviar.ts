@@ -6,6 +6,7 @@ import type { components } from '@/libs/api-client/generated/schema'
 import { resolverEstadoVenta } from '@/libs/reglas/estados'
 import { redondear2 } from '@/libs/reglas/dinero'
 import type { AltaVenta, AutoguardadoVenta } from '@/features/venta-nueva/lib/payload'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { cambiarEstado, leerCola, type FaseEnvio, type VentaEnCola } from './cola'
 
 type VistaPreviaLineaDto = components['schemas']['VistaPreviaLineaDto']
@@ -26,6 +27,15 @@ function esTransitoria(e: unknown): boolean {
   if (!(e instanceof ApiError)) return true
   return e.status === 401 || e.status === 408 || e.status === 429 || e.status >= 500 || esError(e, 'Duplicado')
 }
+
+/**
+ * La cola es de un usuario y `api` manda el token de quien está en sesión ahora: si entró otro en el
+ * mismo teléfono, no se manda nada más de esta cola hasta que vuelva el dueño.
+ */
+const enSesion = (usuarioId: string) => useAuthStore.getState().user?.id === usuarioId
+
+/** Cortó porque cambió el usuario: la venta queda como estaba, sin contar un intento. */
+class SesionCambiada extends Error {}
 
 /** La clave ya grabó una venta (409 con la venta en `data`, forward-system #867): cuenta como enviada. */
 function ventaYaGrabada(e: unknown): VentaActionResponseDto | null {
@@ -78,6 +88,10 @@ class Envio {
     return leerCola(this.usuarioId).find((v) => v.clave === this.venta.clave)
   }
 
+  private exigirSesion() {
+    if (!enSesion(this.usuarioId)) throw new SesionCambiada()
+  }
+
   /** Guarda el paso ANTES de la llamada que lo sigue: si la app muere en el medio, se retoma de acá. */
   private pasar(fase: FaseEnvio) {
     const a = this.actual()
@@ -96,6 +110,7 @@ class Envio {
       }
       return true
     } catch (e) {
+      if (e instanceof SesionCambiada) return false
       if (esTransitoria(e)) {
         const a = this.actual()
         if (a?.estado.tipo === 'esperando') {
@@ -111,6 +126,7 @@ class Envio {
 
   /** Lo decide el servidor: si rechazaría la venta, para revisar; si el precio cambió, a Borradores; si no, el alta. */
   private async conVistaPrevia() {
+    this.exigirSesion()
     const vp = await api.post<VistaPreviaVenta>('/api/v1/Ventas/vista-previa', this.venta.alta)
     if (vp.rechazos?.length) {
       cambiarEstado(this.usuarioId, this.venta.clave, { tipo: 'revisar', mensaje: vp.rechazos.join('\n') })
@@ -130,6 +146,7 @@ class Envio {
   /** POST /Ventas, siempre con la misma clave: con ella el servidor devuelve la venta que ya existe. */
   private async darDeAlta() {
     let r: VentaActionResponseDto
+    this.exigirSesion()
     try {
       r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', this.venta.alta)
     } catch (e) {
@@ -146,7 +163,9 @@ class Envio {
       r = grabada
     }
     // El código (A00419) no viene en la respuesta del alta: se lee la venta; si no se puede, queda sin código.
-    const detalle = await api.get<VentaDetalleDto>(`/api/v1/Ventas/${r.ventaId}`).catch(() => null)
+    const detalle = enSesion(this.usuarioId)
+      ? await api.get<VentaDetalleDto>(`/api/v1/Ventas/${r.ventaId}`).catch(() => null)
+      : null
     const estado = resolverEstadoVenta(r.estado ?? detalle?.venta?.estado)?.nombre ?? null
     cambiarEstado(this.usuarioId, this.venta.clave, {
       tipo: 'enviada', ventaId: r.ventaId, codigo: detalle?.venta?.codigoPedido ?? null, estado,
@@ -163,6 +182,7 @@ class Envio {
     const tipo = tipoDeBorrador(alta)
     let creado: { ventaId: string; version: number } | undefined
     if (buscarAntes) {
+      this.exigirSesion()
       const mios = await api.get<BorradorVenta[]>('/api/v1/Ventas/borradores/mios')
       const previo = (Array.isArray(mios) ? mios : []).find((b) =>
         b.clienteId === alta.clienteId && b.cantidadLineas === 0 && (b.tipoOperacion ?? tipo) === tipo
@@ -170,6 +190,7 @@ class Envio {
       if (previo) creado = { ventaId: previo.id, version: previo.version }
     }
     if (!creado) {
+      this.exigirSesion()
       creado = await api.post<VentaActionResponseDto>('/api/v1/Ventas/borradores', {
         clienteId: alta.clienteId, depositoId: alta.depositoId, tipoOperacion: tipo,
       })
@@ -181,10 +202,12 @@ class Envio {
   /** PUT de las líneas. El cuerpo es siempre el mismo: si la versión cambió (un PUT anterior sin respuesta), se relee y se repite. */
   private async cargarBorrador(ventaId: string, version: number, totalServidor: number | null) {
     const cuerpo = { ...aBorrador(this.venta.alta) }
+    this.exigirSesion()
     try {
       await guardarBorradorVenta(ventaId, version, cuerpo)
     } catch (e) {
       if (!esError(e, 'Concurrencia')) throw e
+      this.exigirSesion()
       const detalle = await api.get<VentaDetalleDto>(`/api/v1/Ventas/${ventaId}`)
       await guardarBorradorVenta(ventaId, detalle.venta.version, cuerpo)
     }
@@ -198,6 +221,7 @@ async function ronda(usuarioId: string): Promise<ResultadoRonda> {
   for (;;) {
     const sig = leerCola(usuarioId).find((v) => v.estado.tipo === 'esperando' && !vistas.has(v.clave))
     if (!sig || sig.estado.tipo !== 'esperando') return vistas.size ? 'completa' : 'vacia'
+    if (!enSesion(usuarioId)) return 'sinSenal'
     vistas.add(sig.clave)
     // Sin señal se corta acá: las de atrás esperan su turno, para no adelantarse a la que no salió.
     if (!(await new Envio(usuarioId, sig).ejecutar(sig.estado.fase))) return 'sinSenal'
