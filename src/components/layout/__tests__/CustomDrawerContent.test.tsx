@@ -2,7 +2,7 @@
  * Bloque 9A — el menú lateral.
  *
  * PR 0.4: solo ofrece los módulos del alcance aprobado, ni siquiera a un administrador.
- * PR 0.3: los nombres siguen la lámina Menu ("Ventas", "Catálogo y stock",
+ * PR 0.3: los nombres siguen la lámina Menu ("Ventas", "Catálogo" y "Stock",
  * "Cuentas corrientes"...) y cada usuario ve solo lo que sus permisos le dejan usar.
  */
 import React from 'react'
@@ -64,7 +64,8 @@ const APROBADOS = [
   'Compras',
   'Proveedores',
   'Clientes',
-  'Catálogo y stock',
+  'Catálogo',
+  'Stock',
   'Cuentas corrientes',
   'Transferencias',
   'Calendario',
@@ -107,7 +108,7 @@ describe('CustomDrawerContent — recorte al alcance aprobado', () => {
     expect(titulos).toEqual(SECCIONES)
     const texto = JSON.stringify(screen.toJSON())
     const posicion = (t: string) => texto.indexOf(JSON.stringify(t))
-    const orden = ['Inicio', 'VENDER', 'Ventas', 'Clientes', 'Catálogo y stock', 'COMPRAR', 'Compras', 'Proveedores', 'GESTIÓN', 'Cuentas corrientes', 'Calendario', 'LOGÍSTICA', 'Pedidos de logística', 'Consola del chofer', 'Reportes']
+    const orden = ['Inicio', 'VENDER', 'Ventas', 'Clientes', 'Catálogo', 'Stock', 'COMPRAR', 'Compras', 'Proveedores', 'GESTIÓN', 'Cuentas corrientes', 'Calendario', 'LOGÍSTICA', 'Pedidos de logística', 'Consola del chofer', 'Reportes']
     const posiciones = orden.map(posicion)
     expect(orden.filter((t, i) => posiciones[i] < 0)).toEqual([])
     expect([...posiciones].sort((a, b) => a - b)).toEqual(posiciones)
@@ -170,7 +171,7 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     conPermisos('MOD_VENTAS:read', 'MOD_VENTAS:create', 'MOD_CLIENTES:read', 'MOD_STOCK:read', 'MOD_CC:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Ventas', 'Clientes', 'Catálogo y stock', 'Cuentas corrientes', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Ventas', 'Clientes', 'Catálogo', 'Stock', 'Cuentas corrientes', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'])
     expect(screen.getByText('VENDER')).toBeTruthy()
     expect(screen.getByText('GESTIÓN')).toBeTruthy()
     // Un grupo sin entradas visibles no deja su título colgado.
@@ -272,9 +273,9 @@ describe('CustomDrawerContent — por puesto sembrado (C-004, L-12)', () => {
   const ESPERADO: Record<string, string[]> = {
     Vendedor: ['Inicio', 'Ventas', 'Clientes', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'],
     // Lee viajes y no crea ventas: el menú lo trata como al chofer, más el catálogo de su stock.
-    Depósito: ['Inicio', 'Catálogo y stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Mi cuenta y contraseña'],
+    Depósito: ['Inicio', 'Catálogo', 'Stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Mi cuenta y contraseña'],
     Chofer: ['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Mi cuenta y contraseña'],
-    'Gerente de depósito': ['Inicio', 'Catálogo y stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Mi cuenta y contraseña'],
+    'Gerente de depósito': ['Inicio', 'Catálogo', 'Stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Mi cuenta y contraseña'],
   }
 
   const visibles = () => APROBADOS.filter((n) => screen.queryByText(n) !== null)

@@ -1,6 +1,7 @@
 import {
   Bell,
   BookOpen,
+  Boxes,
   Building2,
   CalendarDays,
   ChartColumn,
@@ -76,7 +77,8 @@ export const MENU: MenuGroup[] = [
       // Mismo criterio que la pantalla (leer ventas o pedidos), menos el chofer: lee ventas (el pedido de una parada) y no debe ver el módulo.
       { id: 'ventas', label: 'Ventas', icon: Tag, href: '/(tabs)/ventas', routeName: 'ventas/index', visibleSi: puedeVerVentas },
       { id: 'clientes', label: 'Clientes', icon: CircleUser, href: '/(tabs)/socios', routeName: 'socios/index', appModule: 'MOD_CLIENTES' },
-      { id: 'catalogo', label: 'Catálogo y stock', hint: 'Consulta', icon: BookOpen, href: '/(tabs)/inventario', routeName: 'inventario/index', appModule: 'MOD_STOCK' },
+      { id: 'catalogo', label: 'Catálogo', hint: 'Solo ver', icon: BookOpen, href: '/(tabs)/inventario', routeName: 'inventario/index', appModule: 'MOD_STOCK' },
+      { id: 'stock', label: 'Stock', hint: 'Solo ver', icon: Boxes, href: '/(tabs)/inventario/stock', routeName: 'inventario/stock', appModule: 'MOD_STOCK' },
     ],
   },
   {
@@ -141,5 +143,7 @@ export function menuVisible(menu: MenuGroup[], { canDo, tieneCapacidad }: Acceso
 export function esRutaActiva(item: MenuItem, rutaActual: string | undefined): boolean {
   if (!rutaActual) return false
   if (rutaActual === item.routeName) return true
+  // Una pantalla hermana con entrada propia (Stock dentro de inventario/) no resalta a la de índice.
+  if (MENU.some((g) => g.items.some((i) => i.routeName === rutaActual))) return false
   return item.routeName.endsWith('/index') && rutaActual.startsWith(item.routeName.slice(0, -'index'.length))
 }

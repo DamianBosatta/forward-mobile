@@ -23,6 +23,7 @@ export default function DrawerLayout() {
       <Drawer.Screen name="index" />
       <Drawer.Screen name="ventas/index" />
       <Drawer.Screen name="inventario/index" />
+      <Drawer.Screen name="inventario/stock" />
       <Drawer.Screen name="compras/index" />
       <Drawer.Screen name="proveedores/index" />
       <Drawer.Screen name="socios/index" />

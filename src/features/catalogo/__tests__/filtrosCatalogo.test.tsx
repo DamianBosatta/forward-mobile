@@ -8,7 +8,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 // solo el transporte HTTP mockeado.
 
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390, isLarge: false }) }))
-jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }) }))
+jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), useRouter: () => ({ push: jest.fn() }) }))
 jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() }, useFocusEffect: jest.fn() }))
 jest.mock('@/core/api/client', () => ({ API_URL: 'http://api.test', api: { get: jest.fn(), post: jest.fn() } }))
 const mockSharePdf = jest.fn()

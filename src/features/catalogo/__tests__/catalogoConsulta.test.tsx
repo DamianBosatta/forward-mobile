@@ -10,7 +10,8 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 
 let mockAncho = 390
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: mockAncho }) }))
-jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }) }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), useRouter: () => ({ push: mockPush }) }))
 jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() }, useFocusEffect: jest.fn() }))
 jest.mock('@/core/api/client', () => ({
   API_URL: 'http://api.test',
@@ -219,13 +220,19 @@ describe('Catálogo de consulta', () => {
     expect(screen.getByText(TEX.nombre)).toBeTruthy()
   })
 
-  it('"Ver stock por depósito" lleva a la vista Stock buscando ese código', async () => {
+  it('no tiene el selector Catálogo/Stock: el stock es otra pantalla', async () => {
+    renderPantalla()
+    await screen.findByText(AER.nombre)
+    expect(screen.queryByRole('radio', { name: 'Stock' })).toBeNull()
+  })
+
+  it('"Ver stock por depósito" lleva a la pantalla Stock buscando ese código', async () => {
+    mockPush.mockClear()
     renderPantalla()
     await abrirFichaDeAer()
     await userEvent.press(await screen.findByLabelText('Ver stock por depósito'))
 
-    expect(screen.getByRole('radio', { name: 'Stock', checked: true })).toBeTruthy()
-    expect(screen.getByLabelText('Buscar por código o nombre').props.value).toBe(AER.codigoPropio)
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/inventario/stock', params: { busqueda: AER.codigoPropio } })
   })
 
   it('desde 900 px la grilla y la ficha van en dos paneles', async () => {

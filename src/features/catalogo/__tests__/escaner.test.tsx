@@ -21,7 +21,7 @@ jest.mock('expo-camera', () => {
   }
 })
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390 }) }))
-jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }) }))
+jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), useRouter: () => ({ push: jest.fn() }) }))
 // El menú lateral deja la pantalla montada: `salir()` simula el blur, no el desmontaje.
 const mockAlSalir = new Set<() => void>()
 jest.mock('@react-navigation/native', () => {
