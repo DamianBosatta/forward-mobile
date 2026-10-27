@@ -58,7 +58,7 @@ describe('Catálogo en PDF', () => {
     await userEvent.setup().press(screen.getByText('Compartir catálogo en PDF'))
     await waitFor(() => expect(mockSharePdf).toHaveBeenCalledTimes(1))
     const url = new URL(mockSharePdf.mock.calls[0][0] as string)
-    expect(url.pathname).toBe('/api/v1/Productos/catalogo-pdf')
+    expect(url.pathname).toBe('/api/v1/catalogo/pdf')
     expect(url.searchParams.get('SearchTerm')).toBe('sap')
     expect(url.searchParams.get('SoloDisponibles')).toBe('true')
     expect(url.searchParams.get('ConOferta')).toBe('true')

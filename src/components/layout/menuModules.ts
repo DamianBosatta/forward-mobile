@@ -85,7 +85,7 @@ export const MENU: MenuGroup[] = [
       // Como la web: la entrada pide crear ventas (S8); la pantalla sigue abriendo con leer.
       { id: 'ventas', label: 'Ventas', icon: Tag, href: '/(tabs)/ventas', routeName: 'ventas/index', visibleSi: veEntradaDeVentas },
       { id: 'clientes', label: 'Clientes', icon: CircleUser, href: '/(tabs)/socios', routeName: 'socios/index', appModule: 'MOD_CLIENTES' },
-      { id: 'catalogo', label: 'Catálogo', hint: 'Solo ver', icon: BookOpen, href: '/(tabs)/inventario', routeName: 'inventario/index', appModule: 'MOD_STOCK' },
+      { id: 'catalogo', label: 'Catálogo', hint: 'Solo ver', icon: BookOpen, href: '/(tabs)/inventario', routeName: 'inventario/index', appModule: 'MOD_CATALOGO' },
       { id: 'stock', label: 'Stock', hint: 'Solo ver', icon: Boxes, href: '/(tabs)/inventario/stock', routeName: 'inventario/stock', appModule: 'MOD_STOCK' },
     ],
   },

@@ -9,6 +9,7 @@ import CatalogoScreen from '../../../../app/(tabs)/inventario/index'
 import StockScreen from '../../../../app/(tabs)/inventario/stock'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { fichaDeCatalogo } from '@/features/catalogo/testing/fichasDeCatalogo'
 
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390 }) }))
 jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), useLocalSearchParams: () => ({}), useRouter: () => ({ push: jest.fn() }) }))
@@ -27,10 +28,12 @@ const RESUMEN = { totales: { filas: 1, articulos: 1, sinStock: 0, enAlerta: 0, c
 
 let stocks: () => Promise<unknown>
 let productos: () => Promise<unknown>
+let catalogo: () => Promise<unknown>
 function servidor(url: string) {
   if (url.startsWith('/api/v1/Stocks/resumen')) return Promise.resolve(RESUMEN)
   if (url.startsWith('/api/v1/Stocks?')) return stocks()
   if (url.startsWith('/api/v1/Productos?')) return productos()
+  if (url.startsWith('/api/v1/catalogo?')) return catalogo()
   return Promise.reject(new Error(`sin respuesta para ${url}`))
 }
 
@@ -38,7 +41,7 @@ function conUsuario(conCantidades: boolean) {
   useAuthStore.setState({
     user: {
       id: 'u1', username: 'u', roles: ['Vendedor'] as never,
-      permissions: [{ module: 'MOD_STOCK', canRead: true }, ...(conCantidades ? [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }] : [])] as never,
+      permissions: [{ module: 'MOD_CATALOGO', canRead: true }, { module: 'MOD_STOCK', canRead: true }, ...(conCantidades ? [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }] : [])] as never,
     },
   })
 }
@@ -56,10 +59,11 @@ beforeEach(() => {
   api.post.mockReset().mockResolvedValue([])
   stocks = () => Promise.resolve(pagina([FILA]))
   productos = () => Promise.resolve(pagina([]))
+  catalogo = () => Promise.resolve(pagina([]))
   conUsuario(true)
 })
 
-const PRODUCTO = { id: 'p1', nombre: 'Make Lavajean', codigoPropio: 'PRO06787', esPadreDeVariantes: false, activo: true }
+const PRODUCTO = { id: 'p1', nombre: 'Make Lavajean', codigoPropio: 'PRO06787', precioVenta: 1000, esPadreDeVariantes: false, activo: true }
 
 describe('Catálogo', () => {
   it('sin productos: estado "vacío" con la frase de siempre', async () => {
@@ -68,21 +72,21 @@ describe('Catálogo', () => {
   })
 
   it('sin conexión y sin nada guardado: estado "sin conexión" con Reintentar, que vuelve a pedir', async () => {
-    productos = () => Promise.reject(SIN_RED())
+    catalogo = () => Promise.reject(SIN_RED())
     pintar(CatalogoScreen)
 
     expect(await screen.findByRole('header', { name: 'No pudimos cargar el catálogo' })).toBeTruthy()
-    productos = () => Promise.resolve(pagina([PRODUCTO]))
+    catalogo = () => Promise.resolve(pagina([fichaDeCatalogo(PRODUCTO)]))
     await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
     expect(await screen.findByText('Make Lavajean')).toBeTruthy()
   })
 
   it('con lo guardado y sin conexión: la lista sigue y un aviso dice a qué hora se guardó', async () => {
-    productos = () => Promise.resolve(pagina([PRODUCTO]))
+    catalogo = () => Promise.resolve(pagina([fichaDeCatalogo(PRODUCTO)]))
     const qc = pintar(CatalogoScreen)
     await screen.findByText('Make Lavajean')
 
-    productos = () => Promise.reject(SIN_RED())
+    catalogo = () => Promise.reject(SIN_RED())
     await act(async () => { await qc.refetchQueries() })
 
     expect(await screen.findByText(/^Parece que no hay señal\. Mostramos lo último que guardó el teléfono a las \d\d:\d\d\.$/)).toBeTruthy()
@@ -90,7 +94,7 @@ describe('Catálogo', () => {
   })
 
   it('otro error sin datos sigue siendo el aviso de siempre', async () => {
-    productos = () => Promise.reject(new Error('boom'))
+    catalogo = () => Promise.reject(new Error('boom'))
     pintar(CatalogoScreen)
     expect(await screen.findByText('No se pudo cargar el catálogo. Revisá la conexión y volvé a intentar.')).toBeTruthy()
   })

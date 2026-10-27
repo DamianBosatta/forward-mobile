@@ -4,11 +4,11 @@ const items = MENU.flatMap((g) => g.items)
 const porId = (id: string) => items.find((i) => i.id === id) as MenuItem
 
 describe('Catálogo y Stock como entradas separadas (lámina ModMenu)', () => {
-  it('son dos entradas con el mismo módulo que tenía la pantalla unificada, sin módulos ni capacidades nuevos', () => {
+  it('son dos entradas: Catálogo con MOD_CATALOGO y Stock con MOD_STOCK, sin capacidades', () => {
     const catalogo = porId('catalogo')
     const stock = porId('stock')
     expect([catalogo.label, stock.label]).toEqual(['Catálogo', 'Stock'])
-    expect(catalogo.appModule).toBe('MOD_STOCK')
+    expect(catalogo.appModule).toBe('MOD_CATALOGO')
     expect(stock.appModule).toBe('MOD_STOCK')
     expect(catalogo.capacidad).toBeUndefined()
     expect(stock.capacidad).toBeUndefined()

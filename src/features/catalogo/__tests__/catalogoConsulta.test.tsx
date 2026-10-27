@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import CatalogoConsultaScreen from '../../../../app/(tabs)/inventario/index'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { fichaDeCatalogo, paginaDeCatalogo } from '../testing/fichasDeCatalogo'
 
 // PR 1.1 — catálogo de consulta. Se renderiza la pantalla real con react-query real;
 // solo se reemplaza el transporte HTTP (api.get / api.post) por respuestas del servidor.
@@ -37,8 +38,9 @@ const DETALLE = {
 }
 
 function servidor(url: string) {
-  if (url.startsWith('/api/v1/Productos?')) {
-    return Promise.resolve({ items: [AER, TEX], page: 1, pageSize: 20, totalCount: 57, totalPages: 3, hasNextPage: true })
+  if (url.startsWith('/api/v1/catalogo?')) {
+    // Lo que el servidor decide por ficha (descontando lo reservado): AER hay, TEX no.
+    return Promise.resolve(paginaDeCatalogo([fichaDeCatalogo(AER), fichaDeCatalogo(TEX, { disponible: false })], 57, true))
   }
   if (url === `/api/v1/Productos/${AER.id}`) return Promise.resolve(DETALLE)
   if (url.startsWith('/api/v1/Stocks?')) {
@@ -55,7 +57,7 @@ function conUsuario(roles: string[], permissions: { module: string; canRead: boo
       id: 'u1',
       username: 'u',
       roles: roles as never,
-      permissions: [{ module: 'MOD_STOCK', canRead: true }, ...permissions] as never,
+      permissions: [{ module: 'MOD_CATALOGO', canRead: true }, { module: 'MOD_STOCK', canRead: true }, ...permissions] as never,
     },
   })
 }
@@ -88,43 +90,46 @@ describe('Catálogo de consulta', () => {
 
     await userEvent.type(screen.getByLabelText('Buscar por código o nombre'), 'sap')
     // Recién tipeado: todavía no salió ninguna búsqueda.
-    expect(llamadasGet().some((u) => u.includes('searchTerm='))).toBe(false)
+    expect(llamadasGet().some((u) => u.includes('SearchTerm='))).toBe(false)
 
-    await waitFor(() => expect(llamadasGet().some((u) => u.includes('searchTerm=sap&'))).toBe(true))
+    await waitFor(() => expect(llamadasGet().some((u) => u.includes('SearchTerm=sap'))).toBe(true))
     // Ni "s" ni "sa": una sola búsqueda con el término final.
-    expect(llamadasGet().filter((u) => u.includes('searchTerm='))).toHaveLength(1)
+    expect(llamadasGet().filter((u) => u.includes('SearchTerm='))).toHaveLength(1)
   })
 
-  it('muestra "Mostrando N de M" con el total del servidor y el chip de stock que decide el servidor', async () => {
+  it('muestra "Mostrando N de M" con el total del servidor y el chip de stock que decide cada ficha del catálogo', async () => {
     renderPantalla()
     expect(await screen.findByText('MOSTRANDO 2 DE 57')).toBeTruthy()
     expect(await screen.findByText('Hay stock')).toBeTruthy()
     expect(screen.getByText('Sin stock')).toBeTruthy()
-    expect(api.post).toHaveBeenCalledWith('/api/v1/Stocks/disponibilidad', {
-      depositoId: DEPOSITO_CENTRAL_ID,
-      items: [
-        { productoId: AER.id, cantidad: 1 },
-        { productoId: TEX.id, cantidad: 1 },
-      ],
-    })
+    // La tarjeta no pide nada a Stock: el vendedor sin ese módulo no recibe 403.
+    expect(api.post).not.toHaveBeenCalled()
+    expect(llamadasGet().some((u) => u.startsWith('/api/v1/Productos') || u.startsWith('/api/v1/Stocks'))).toBe(false)
   })
 
-  it('con un perfil sin depósito usa el Depósito Central y el chip aparece igual', async () => {
+  it('la ficha, sin depósito en el perfil, consulta la disponibilidad del Depósito Central', async () => {
     expect(useAuthStore.getState().user?.depositoId).toBeUndefined()
     renderPantalla()
-    expect(await screen.findByText('Hay stock')).toBeTruthy()
+    await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
+    await waitFor(() => expect(api.post).toHaveBeenCalled())
     expect(api.post.mock.calls[0][1].depositoId).toBe(DEPOSITO_CENTRAL_ID)
   })
 
-  it('con depósito en el perfil, usa ese', async () => {
+  it('la ficha, con depósito en el perfil, consulta ese', async () => {
     useAuthStore.setState({ user: { ...useAuthStore.getState().user!, depositoId: 'dep-1' } })
     renderPantalla()
-    await screen.findByText('Hay stock')
+    await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
+    await waitFor(() => expect(api.post).toHaveBeenCalled())
     expect(api.post.mock.calls[0][1].depositoId).toBe('dep-1')
   })
 
   it('un producto totalmente reservado dice "Sin stock" en la tarjeta y en la ficha, aunque tenga stock físico', async () => {
     // El servidor descuenta lo reservado: disponible=false para el producto, pero el detalle dice puedeVenderse.
+    api.get.mockImplementation((url: string) =>
+      url.startsWith('/api/v1/catalogo?')
+        ? Promise.resolve(paginaDeCatalogo([fichaDeCatalogo(AER, { disponible: false }), fichaDeCatalogo(TEX, { disponible: false })]))
+        : servidor(url),
+    )
     api.post.mockResolvedValue([{ productoId: AER.id, disponible: false }])
     renderPantalla()
     await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
@@ -254,147 +259,45 @@ describe('Catálogo de consulta', () => {
   })
 })
 
-// ── Adopción de forward-system #894 ──────────────────────────────────────────
-// Servidor nuevo: el listado trae hayDisponible, cantidadFragancias y ventaMinimaUnidades, y el detalle la
-// última compra. Mobile usa fragancias, venta mínima y última compra; NO usa hayDisponible (es de todos los
-// depósitos y la ficha usa el del usuario): el chip sigue saliendo de POST /Stocks/disponibilidad con cantidad 1.
-// Servidor anterior: nada de eso, y la pantalla se comporta como antes.
+const abrirFichaDeAer = async () => userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
+const LINEA = { id: 'p-lin', nombre: 'Saphirus Difusor', codigoPropio: 'SAP-DIF', precioVenta: 5200 }
 
-const LINEA = { id: 'p-lin', nombre: 'Saphirus Difusor', codigoPropio: 'SAP-DIF', precioVenta: 5200, esPadreDeVariantes: true, activo: true }
-
-/** El servidor con otra lista de productos (y, si se quiere, otro detalle de AER). */
+/** El servidor con otra lista del catálogo (y, si se quiere, otro detalle de AER). */
 function servidorCon(items: object[], detalle: object = DETALLE) {
   return (url: string) => {
-    if (url.startsWith('/api/v1/Productos?')) {
-      return Promise.resolve({ items, page: 1, pageSize: 20, totalCount: items.length, totalPages: 1, hasNextPage: false })
-    }
+    if (url.startsWith('/api/v1/catalogo?')) return Promise.resolve(paginaDeCatalogo(items))
     if (url === `/api/v1/Productos/${AER.id}`) return Promise.resolve(detalle)
     return servidor(url)
   }
 }
 
-const consultasDeDisponibilidad = () => api.post.mock.calls.filter(([url]) => url === '/api/v1/Stocks/disponibilidad')
-const abrirFichaDeAer = async () => userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
-
-const ULTIMA = {
-  // 01:30 UTC del 11 es la noche del 10 en Argentina (UTC-3).
-  fecha: '2026-10-11T01:30:00Z',
-  proveedorNombre: 'Distribuidora Norte S.A.',
-  costoUnitario: 1846.71,
-  variacionCostoPorcentaje: 5.2,
-}
-
-describe('Catálogo con servidor nuevo (forward-system #894)', () => {
-  it('el chip sigue saliendo de la disponibilidad del depósito del usuario, con cantidad 1: hayDisponible no lo cambia', async () => {
-    // hayDisponible (todos los depósitos) contradice a propósito la consulta por depósito.
-    api.get.mockImplementation(
-      servidorCon([
-        { ...AER, hayDisponible: false, ventaMinimaUnidades: 12 },
-        { ...TEX, hayDisponible: true, ventaMinimaUnidades: 6 },
-      ]),
-    )
+describe('Catálogo: fichas de /catalogo', () => {
+  it('una línea muestra cuántas fragancias tiene y el chip de si alguna tiene stock', async () => {
+    api.get.mockImplementation(servidorCon([fichaDeCatalogo(LINEA, { fragancias: ['Coco', 'Vainilla', 'Lavanda'], disponible: true })]))
     renderPantalla()
 
-    const tarjetaAer = await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`)
-    await waitFor(() => expect(within(tarjetaAer).getByText('Hay stock')).toBeTruthy())
-    const tarjetaTex = screen.getByLabelText(`${TEX.nombre}, código ${TEX.codigoPropio}`)
-    expect(within(tarjetaTex).getByText('Sin stock')).toBeTruthy()
-    expect(api.post).toHaveBeenCalledTimes(1)
-    expect(api.post).toHaveBeenCalledWith('/api/v1/Stocks/disponibilidad', {
-      depositoId: DEPOSITO_CENTRAL_ID,
-      items: [
-        { productoId: AER.id, cantidad: 1 },
-        { productoId: TEX.id, cantidad: 1 },
-      ],
-    })
+    expect(await screen.findByText('3 fragancias')).toBeTruthy()
+    expect(screen.getByText('Hay stock')).toBeTruthy()
   })
 
-  it('una línea muestra "12 fragancias · caja de 12" y sigue sin chip, aunque traiga hayDisponible', async () => {
-    api.get.mockImplementation(
-      servidorCon([{ ...LINEA, hayDisponible: true, cantidadFragancias: 12, ventaMinimaUnidades: 12 }]),
-    )
+  it('un producto suelto no dice "fragancias"', async () => {
+    api.get.mockImplementation(servidorCon([fichaDeCatalogo(AER)]))
     renderPantalla()
 
-    expect(await screen.findByText('12 fragancias · caja de 12')).toBeTruthy()
-    expect(screen.queryByText('Con fragancias')).toBeNull()
-    expect(screen.queryByText('Hay stock')).toBeNull()
-    expect(screen.queryByText('Sin stock')).toBeNull()
-    expect(consultasDeDisponibilidad()).toHaveLength(0)
+    await screen.findByText(AER.nombre)
+    expect(screen.queryByText(/fragancia/)).toBeNull()
   })
 
-  it('un producto que se vende por caja dice "caja de N"; por unidad no dice nada', async () => {
-    api.get.mockImplementation(
-      servidorCon([
-        { ...AER, ventaMinimaUnidades: 6 },
-        { ...TEX, ventaMinimaUnidades: 1 },
-      ]),
-    )
-    renderPantalla()
-
-    expect(await screen.findByText('caja de 6')).toBeTruthy()
-    expect(screen.getAllByText(/caja de/)).toHaveLength(1)
-  })
-
-  describe('stock 5 con venta mínima 12 en el listado', () => {
-    // El servidor responde según la cantidad pedida: alcanza para 1, no para 12.
-    const stockCinco = (_url: string, body: { items: { productoId: string; cantidad: number }[] }) =>
-      Promise.resolve(body.items.map((i) => ({ productoId: i.productoId, disponible: i.cantidad <= 5 })))
-
-    it('la tarjeta consulta con cantidad 1 y dice lo mismo que la ficha, que aparte avisa que no alcanza la caja', async () => {
-      api.get.mockImplementation(servidorCon([{ ...AER, ventaMinimaUnidades: 12 }, TEX]))
-      api.post.mockReset().mockImplementation(stockCinco)
-      renderPantalla()
-
-      const tarjeta = await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`)
-      await waitFor(() => expect(within(tarjeta).getByText('Hay stock')).toBeTruthy())
-      expect(api.post).toHaveBeenCalledWith('/api/v1/Stocks/disponibilidad', {
-        depositoId: DEPOSITO_CENTRAL_ID,
-        items: [
-          { productoId: AER.id, cantidad: 1 },
-          { productoId: TEX.id, cantidad: 1 },
-        ],
-      })
-
-      await userEvent.press(tarjeta)
-      expect(await screen.findByText('No alcanza para la venta mínima (caja de 12)')).toBeTruthy()
-      // Tarjeta (AER) y ficha: ambas "Hay stock"; nunca "Sin stock" para AER.
-      await waitFor(() => expect(screen.getAllByText('Hay stock').length).toBeGreaterThanOrEqual(2))
-    })
-  })
-
-  it('aunque el servidor mande la última compra y los costos, la ficha no los dibuja (S6)', async () => {
+  it('aunque el detalle mande la última compra y los costos, la ficha no los dibuja (S6)', async () => {
     conUsuario(['Vendedor'], [{ module: 'CAP_VER_COSTOS', canRead: true }])
-    api.get.mockImplementation(servidorCon([AER, TEX], { ...DETALLE, ultimaCompra: ULTIMA }))
+    const ultima = { fecha: '2026-10-11T01:30:00Z', proveedorNombre: 'Distribuidora Norte S.A.', costoUnitario: 1846.71, variacionCostoPorcentaje: 5.2 }
+    api.get.mockImplementation(servidorCon([fichaDeCatalogo(AER), fichaDeCatalogo(TEX)], { ...DETALLE, ultimaCompra: ultima }))
     renderPantalla()
     await abrirFichaDeAer()
 
     expect(await screen.findByText('Precio de lista por unidad')).toBeTruthy()
     expect(screen.queryByText(/Última compra/)).toBeNull()
     expect(screen.queryByText(/Distribuidora Norte/)).toBeNull()
-    expect(screen.queryByText(/respecto de la compra anterior/)).toBeNull()
     expect(screen.queryByText('Costo y margen')).toBeNull()
-  })
-})
-
-describe('Catálogo con servidor anterior a #894', () => {
-  it('sigue como hoy: chip por consulta con cantidad 1, la línea sin chip y "Con fragancias", sin "caja de"', async () => {
-    api.get.mockImplementation(servidorCon([AER, TEX, LINEA]))
-    renderPantalla()
-
-    expect(await screen.findByText('Hay stock')).toBeTruthy()
-    expect(screen.getByText('Sin stock')).toBeTruthy()
-    // La línea no tiene stock propio: solo AER y TEX, y solo uno de cada chip.
-    expect(screen.getAllByText('Hay stock')).toHaveLength(1)
-    expect(screen.getAllByText('Sin stock')).toHaveLength(1)
-    expect(screen.getByText('Con fragancias')).toBeTruthy()
-    expect(screen.queryByText(/caja de/)).toBeNull()
-    expect(consultasDeDisponibilidad()).toHaveLength(1)
-    expect(api.post).toHaveBeenCalledWith('/api/v1/Stocks/disponibilidad', {
-      depositoId: DEPOSITO_CENTRAL_ID,
-      items: [
-        { productoId: AER.id, cantidad: 1 },
-        { productoId: TEX.id, cantidad: 1 },
-      ],
-    })
   })
 })

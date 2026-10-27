@@ -1,6 +1,10 @@
 import type { ChipInfo } from '@/core/ui/fw'
 import type { Producto } from '@/libs/api-client/types'
 
+/** Lo que dibuja la tarjeta del catálogo: sale de la ficha de /catalogo (no hay venta mínima ahí). */
+export type ProductoDeTarjeta = Pick<Producto, 'id' | 'nombre' | 'codigoPropio' | 'precioVenta' | 'imageUrl'> &
+  Partial<Pick<Producto, 'esPadreDeVariantes' | 'cantidadFragancias' | 'ventaMinimaUnidades'>>
+
 /** Hay stock / Sin stock, con el booleano que decide el servidor. Sin dato, sin chip: no se inventa. */
 export function chipDeStock(puedeVenderse: boolean | null | undefined): ChipInfo | null {
   if (puedeVenderse == null) return null
@@ -18,7 +22,7 @@ export function textoUnidadDeVenta(ventaMinimaUnidades: number | null | undefine
  * (uno anterior a forward-system #894) no se inventan: una línea sin la cantidad sigue diciendo "Con fragancias" y
  * sin la venta mínima, o con venta por unidad, no hay "caja de N". null si no hay nada que mostrar.
  */
-export function detalleDeTarjeta(p: Pick<Producto, 'esPadreDeVariantes' | 'cantidadFragancias' | 'ventaMinimaUnidades'>): string | null {
+export function detalleDeTarjeta(p: Partial<Pick<Producto, 'esPadreDeVariantes' | 'cantidadFragancias' | 'ventaMinimaUnidades'>>): string | null {
   const partes: string[] = []
   if (p.esPadreDeVariantes) {
     partes.push(p.cantidadFragancias == null ? 'Con fragancias' : `${p.cantidadFragancias} ${p.cantidadFragancias === 1 ? 'fragancia' : 'fragancias'}`)
