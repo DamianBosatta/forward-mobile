@@ -19,6 +19,9 @@ const renderLogin = () => {
   );
 };
 
+// El ingreso usa la marca del diseño (flecha sobre el círculo verde): si renderiza el logo viejo, falla.
+jest.mock('@/core/ui/ForwardLogo', () => ({ ForwardLogo: () => { throw new Error('ForwardLogo viejo'); } }));
+
 const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({
   useRouter: () => ({ replace: mockReplace })
@@ -68,6 +71,14 @@ beforeEach(() => {
 });
 
 describe('Ingreso', () => {
+  it('muestra el encabezado del diseño (marca con flecha, "Forward" y la frase) y no el logo viejo', () => {
+    auth();
+    renderLogin();
+    expect(screen.getByRole('header', { name: 'Forward' })).toBeTruthy();
+    expect(screen.getByText('Entrá con el mismo usuario de la web.')).toBeTruthy();
+    expect(screen.getByTestId('login-marca', { includeHiddenElements: true })).toBeTruthy();
+  });
+
   it('pide usuario o email y contraseña, y dice a quién pedir la contraseña olvidada', () => {
     auth();
     renderLogin();

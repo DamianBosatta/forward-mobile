@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { FilePen, MessageCircle, Pencil, Phone } from 'lucide-react-native'
+import { FilePen, MessageCircle, Pencil, Phone, Plus } from 'lucide-react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, StatusChip, chipForEstado, formatImporte } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
@@ -25,7 +25,7 @@ import { AVISO_FALTAN_DATOS, condicionBreve, saldoDelProveedor } from '../lib/pr
 export function FichaProveedor({ id }: { id: string }) {
   const c = useColors()
   const router = useRouter()
-  const { canUpdate, canRead } = usePermissions()
+  const { canUpdate, canRead, canCreate } = usePermissions()
   const [pidiendoCambio, setPidiendoCambio] = useState(false)
   const esAdmin = useAuthStore(s => s.isAdmin())
   const { data: proveedor, isLoading, error } = useSocio(id)
@@ -58,6 +58,8 @@ export function FichaProveedor({ id }: { id: string }) {
         </View>
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+          {/* Mismo permiso que el "+" de la lista de compras (MOD_COMPRAS crear). La compra nueva todavía no recibe el proveedor: se elige adentro. */}
+          {canCreate('MOD_COMPRAS') ? <Accion icono={Plus} label="Nueva compra" onPress={() => router.push('/(tabs)/compras/nueva' as never)} /> : null}
           {telefono ? <Accion icono={Phone} label="Llamar" onPress={() => Linking.openURL(urlLlamar(telefono))} /> : null}
           {whatsapp ? <Accion icono={MessageCircle} label="WhatsApp" onPress={() => Linking.openURL(whatsapp)} /> : null}
           {puedeEditar ? (

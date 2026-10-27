@@ -128,3 +128,21 @@ it('si el servidor rechaza, muestra su mensaje', async () => {
   renderConQuery(<FichaProveedor id="p1" />)
   expect(await screen.findByText('No tenés acceso a este proveedor.')).toBeTruthy()
 })
+
+describe('Nueva compra desde el proveedor (ResFichaProveedor)', () => {
+  it('con MOD_COMPRAS:create aparece y abre la compra nueva', async () => {
+    conPermisos([...PERMISOS, { module: 'MOD_COMPRAS', canRead: true, canCreate: true }])
+    renderConQuery(<FichaProveedor id="p1" />)
+
+    await userEvent.press(await screen.findByRole('button', { name: 'Nueva compra' }))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/compras/nueva')
+  })
+
+  it('sin MOD_COMPRAS:create no aparece', async () => {
+    conPermisos([...PERMISOS, { module: 'MOD_COMPRAS', canRead: true }])
+    renderConQuery(<FichaProveedor id="p1" />)
+
+    await screen.findByRole('header', { name: 'Insumos del Sur SA' })
+    expect(screen.queryByRole('button', { name: 'Nueva compra' })).toBeNull()
+  })
+})

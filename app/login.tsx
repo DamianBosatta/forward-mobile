@@ -2,10 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { Eye, EyeOff, Fingerprint } from 'lucide-react-native'
+import { ArrowRight, Eye, EyeOff, Fingerprint } from 'lucide-react-native'
 import { useColors, space, typeScale } from '../libs/theme'
 import { useResponsive } from '../libs/useResponsive'
-import { ForwardLogo } from '@/core/ui'
 import { Button, Notice, Segmented, type SegmentedOption } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import { useAuth } from '@/features/auth/hooks/useAuth'
@@ -230,8 +229,8 @@ export default function LoginScreen() {
   )
 
   const logo = (tam: number) => (
-    <View style={{ width: tam, height: tam, borderRadius: tam * 0.28, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
-      <ForwardLogo size={tam * 0.62} showText={false} />
+    <View testID="login-marca" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: tam, height: tam, borderRadius: tam * 0.28, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
+      <ArrowRight size={tam * 0.53} strokeWidth={2.4} color={c.onAction} />
     </View>
   )
 
