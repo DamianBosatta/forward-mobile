@@ -113,12 +113,33 @@ describe('Reportes', () => {
     pintar()
     await screen.findByText('Octubre 2026')
     expect(screen.getByRole('radio', { name: 'Octubre' }).props.accessibilityState).toMatchObject({ checked: true })
-    expect(screen.queryByRole('radio', { name: 'Semana' })).toBeNull()
 
     await userEvent.press(screen.getByRole('radio', { name: 'Septiembre' }))
 
     expect(await screen.findByText('Septiembre 2026')).toBeTruthy()
     expect(resumenUrls()).toContain('/api/v1/Reportes/mobile/resumen-vendedor?anio=2026&mes=9')
+  })
+
+  it('"Semana" pide la semana de hoy (lunes a domingo argentino) y la nombra', async () => {
+    pintar()
+    await screen.findByText('Octubre 2026')
+
+    await userEvent.press(screen.getByRole('radio', { name: 'Semana' }))
+
+    expect(await screen.findByText('Semana del 26/10 al 1/11')).toBeTruthy()
+    expect(resumenUrls()).toContain('/api/v1/Reportes/mobile/resumen-vendedor?semana=2026-10-31')
+  })
+
+  it('"Semana" respeta el filtro de vendedor', async () => {
+    mockGet.mockImplementation((url: string) => Promise.resolve(
+      url.includes('/Ventas/vendedores') ? VENDEDORES : { ...RESUMEN, puedeElegirVendedor: true }))
+    pintar()
+    await userEvent.press(await screen.findByRole('radio', { name: 'Semana' }))
+    await userEvent.press(await screen.findByLabelText('Vendedor: Todos'))
+    await userEvent.press(await screen.findByRole('radio', { name: 'Bruno Díaz' }))
+
+    await screen.findByLabelText('Vendedor: Bruno Díaz')
+    expect(resumenUrls()).toContain('/api/v1/Reportes/mobile/resumen-vendedor?semana=2026-10-31&vendedorId=v2')
   })
 
   it('Gerencia ve a todos y puede filtrar por un vendedor', async () => {

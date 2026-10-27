@@ -10,6 +10,7 @@ import { useResumenVendedor, type ResumenVendedor } from '@/libs/api-client/repo
 import { useVendedores } from '@/libs/api-client/ventas'
 import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
 import { mesDe, moverMes, nombreMes, tituloMes, type Mes } from './mes'
+import { diaDeLaSemana, tituloSemana } from './semana'
 
 type Vendedor = { id: string; nombre: string }
 
@@ -26,13 +27,17 @@ export function ReportesScreen() {
   const c = useColors()
   const { isTablet } = useResponsive()
   const menu = useMenuLeading()
-  const actual = mesDe(useAhoraArgentina())
+  const ahora = useAhoraArgentina()
+  const actual = mesDe(ahora)
   const anterior = moverMes(actual, -1)
-  const [periodo, setPeriodo] = useState<'actual' | 'anterior'>('actual')
+  const [periodo, setPeriodo] = useState<'semana' | 'actual' | 'anterior'>('actual')
   const mes = periodo === 'actual' ? actual : anterior
   const [vendedor, setVendedor] = useState<Vendedor | null>(null)
   const [eligiendo, setEligiendo] = useState(false)
-  const q = useResumenVendedor(mes.anio, mes.mes, vendedor?.id ?? null)
+  const q = useResumenVendedor(
+    periodo === 'semana' ? { semana: diaDeLaSemana(ahora) } : { anio: mes.anio, mes: mes.mes },
+    vendedor?.id ?? null,
+  )
   const puedeElegir = q.data?.puedeElegirVendedor === true
   const vendedores = useVendedores(puedeElegir && eligiendo)
 
@@ -40,17 +45,18 @@ export function ReportesScreen() {
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
         title="Mis números"
-        subtitle={tituloMes(mes)}
+        subtitle={periodo === 'semana' ? tituloSemana(ahora) : tituloMes(mes)}
         leading={menu}
       />
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] }}>
         <FormContainer style={{ gap: space[3], ...(isTablet ? { maxWidth: 960 } : null) }}>
-          {/* Lámina M20: el período es el mes en curso o el anterior. "Semana" necesita un reporte por semana que el servidor no da. */}
+          {/* Lámina M20: el período es la semana de hoy (lunes a domingo), el mes en curso o el anterior. */}
           <Segmented
             accessibilityLabel="Período"
             value={periodo}
             onChange={setPeriodo}
             options={[
+              { value: 'semana', label: 'Semana' },
               { value: 'actual', label: nombreMes(actual) },
               { value: 'anterior', label: nombreMes(anterior) },
             ]}

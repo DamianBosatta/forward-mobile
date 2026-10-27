@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useInfiniteSocios } from '@/libs/api-client/socios'
+import { useInfiniteSocios, type SociosParams } from '@/libs/api-client/socios'
 import type { SocioListDto } from '@/libs/api-client/types'
 import type { FiltrosDeCartera } from '../components/FiltrosCartera'
 
@@ -22,7 +22,7 @@ export function useValorDiferido<T>(valor: T, ms = ESPERA_BUSQUEDA_MS): T {
  * a sus clientes y a los "de la casa": mobile no filtra nada por su cuenta. Los filtros de localidad
  * y deuda vencida también los aplica el servidor, antes de paginar.
  */
-export function useCartera(busqueda: string, filtros?: FiltrosDeCartera) {
+export function useCartera(busqueda: string, filtros?: FiltrosDeCartera, orden?: Pick<SociosParams, 'ordenarPor' | 'desc'>) {
   const texto = useValorDiferido(busqueda.trim())
   const query = useInfiniteSocios({
     tipo: 1,
@@ -32,6 +32,8 @@ export function useCartera(busqueda: string, filtros?: FiltrosDeCartera) {
     pageSize: 20,
     ...(filtros?.localidad ? { localidad: filtros.localidad } : {}),
     ...(filtros?.conDeudaVencida ? { conDeudaVencida: true } : {}),
+    ...(orden?.ordenarPor ? { ordenarPor: orden.ordenarPor } : {}),
+    ...(orden?.desc ? { desc: true } : {}),
   })
   const pages = query.data?.pages
 

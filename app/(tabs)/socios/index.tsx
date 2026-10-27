@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native'
+import React, { useMemo, useState } from 'react'
+import { ActivityIndicator, RefreshControl, SectionList, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
 import { space, typeScale, useColors } from '@/libs/theme'
@@ -13,6 +13,7 @@ import { ClienteCard } from '@/features/clientes/components/ClienteCard'
 import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { FiltrosCartera, SIN_FILTROS, type FiltrosDeCartera } from '@/features/clientes/components/FiltrosCartera'
 import { textoContador } from '@/features/clientes/lib/cliente'
+import { seccionesPorLetra } from '@/features/clientes/lib/secciones'
 import { FichaCliente } from '@/features/clientes/components/FichaCliente'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -32,7 +33,8 @@ function ClientesScreen() {
   const [busqueda, setBusqueda] = useState('')
   const [abierto, setAbierto] = useState<string | null>(null)
   const [filtros, setFiltros] = useState<FiltrosDeCartera>(SIN_FILTROS)
-  const { clientes, totalCount, saldoTotal, isLoading, isRefetching, error, dataUpdatedAt, refetch, cargarMas } = useCartera(busqueda, filtros)
+  const { clientes, totalCount, saldoTotal, isLoading, isRefetching, error, dataUpdatedAt, refetch, cargarMas } = useCartera(busqueda, filtros, { ordenarPor: 'Direccion' })
+  const secciones = useMemo(() => seccionesPorLetra(clientes), [clientes])
   const sinRed = esFallaDeRed(error)
   const hayDatos = clientes.length > 0
   const filtrando = filtros.conDeudaVencida || !!filtros.localidad
@@ -54,9 +56,15 @@ function ClientesScreen() {
           )}
         </View>
       ) : null}
-      <FlatList
-        data={clientes}
+      <SectionList
+        sections={secciones}
         keyExtractor={item => item.id}
+        stickySectionHeadersEnabled={false}
+        renderSectionHeader={({ section }) => (
+          <View testID={`encabezado-letra-${section.title}`} accessibilityRole="header" style={{ paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[1], backgroundColor: c.bg }}>
+            <Text style={{ ...textoDestacado, color: c.textSecondary }}>{section.title}</Text>
+          </View>
+        )}
         renderItem={({ item }) => (
           <ClienteCard cliente={item} seleccionado={dosPaneles && item.id === abierto} onPress={() => abrir(item.id)} />
         )}
