@@ -27,6 +27,8 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
 jest.mock('@/core/utils/haptics', () => ({
   safeHaptics: { impact: jest.fn(), notification: jest.fn() },
 }))
+const mockCerrarSesion = jest.fn()
+jest.mock('@/features/cuenta/hooks/useCerrarSesion', () => ({ useCerrarSesion: () => ({ cerrarSesion: mockCerrarSesion }) }))
 let mockNoLeidos = 0
 jest.mock('@/features/notificaciones', () => ({ useAvisosNoLeidos: () => mockNoLeidos }))
 jest.mock('@/core/auth/RequirePermission', () => ({
@@ -48,6 +50,8 @@ const comoAdmin = () => {
   mockCanDo.mockImplementation(() => true)
   mockRoles = ['Administrador', 'AdministradorSistemas', 'Gerencia', 'Empleado']
 }
+
+const SECCIONES = ['VENDER', 'COMPRAR', 'GESTIÓN', 'LOGÍSTICA']
 
 const FUERA_DE_ALCANCE = ['Usuarios', 'Depósitos', 'Cargas masivas', 'Viajes', 'Vehículos', 'Picking', 'Perfiles', 'Roles']
 
@@ -87,12 +91,35 @@ describe('CustomDrawerContent — recorte al alcance aprobado', () => {
     }
   })
 
-  it('ofrece los módulos aprobados, con Tesorería y Logística agrupadas', () => {
+  it('ofrece los módulos aprobados, en las secciones del diseño', () => {
     render(<CustomDrawerContent {...props()} />)
 
-    for (const nombre of [...APROBADOS, 'Tesorería', 'Logística']) {
+    for (const nombre of [...APROBADOS, ...SECCIONES]) {
       expect(screen.getByText(nombre)).toBeTruthy()
     }
+    expect(screen.queryByText('Tesorería')).toBeNull()
+  })
+
+  it('las secciones salen en el orden del diseño y cada entrada cae en la suya', () => {
+    render(<CustomDrawerContent {...props()} />)
+
+    const titulos = screen.getAllByRole('header').map((h) => h.props.children)
+    expect(titulos).toEqual(SECCIONES)
+    const texto = JSON.stringify(screen.toJSON())
+    const posicion = (t: string) => texto.indexOf(JSON.stringify(t))
+    const orden = ['Inicio', 'VENDER', 'Ventas', 'Clientes', 'Catálogo y stock', 'COMPRAR', 'Compras', 'Proveedores', 'GESTIÓN', 'Cuentas corrientes', 'Calendario', 'LOGÍSTICA', 'Pedidos de logística', 'Consola del chofer', 'Reportes']
+    const posiciones = orden.map(posicion)
+    expect(orden.filter((t, i) => posiciones[i] < 0)).toEqual([])
+    expect([...posiciones].sort((a, b) => a - b)).toEqual(posiciones)
+  })
+
+  it('"Cerrar sesión" va al pie y cierra la sesión con la función de siempre', async () => {
+    mockCerrarSesion.mockClear()
+    render(<CustomDrawerContent {...props()} />)
+
+    await userEvent.press(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    expect(mockCerrarSesion).toHaveBeenCalledTimes(1)
+    expect(mockPush).not.toHaveBeenCalled()
   })
 
   it('ninguna entrada del menú navega a una ruta fuera de alcance', async () => {
@@ -144,9 +171,11 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     render(<CustomDrawerContent {...props()} />)
 
     expect(visibles()).toEqual(['Inicio', 'Ventas', 'Clientes', 'Catálogo y stock', 'Cuentas corrientes', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'])
-    expect(screen.getByText('Tesorería')).toBeTruthy()
+    expect(screen.getByText('VENDER')).toBeTruthy()
+    expect(screen.getByText('GESTIÓN')).toBeTruthy()
     // Un grupo sin entradas visibles no deja su título colgado.
-    expect(screen.queryByText('Logística')).toBeNull()
+    expect(screen.queryByText('COMPRAR')).toBeNull()
+    expect(screen.queryByText('LOGÍSTICA')).toBeNull()
   })
 
   it('Proveedores sale con MOD_PROVEEDORES:read, junto a Compras, y no depende de Clientes ni de Compras', async () => {
@@ -177,7 +206,7 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     render(<CustomDrawerContent {...props()} />)
 
     expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Mi cuenta y contraseña'])
-    expect(screen.queryByText('Tesorería')).toBeNull()
+    expect(screen.queryByText('VENDER')).toBeNull()
   })
 
   it('sin ningún permiso quedan Inicio, Calendario y Avisos (el servidor no los gatea por módulo) y Mi cuenta', () => {
@@ -185,8 +214,9 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     render(<CustomDrawerContent {...props()} />)
 
     expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Mi cuenta y contraseña'])
-    expect(screen.queryByText('Tesorería')).toBeNull()
-    expect(screen.queryByText('Logística')).toBeNull()
+    expect(screen.queryByText('VENDER')).toBeNull()
+    expect(screen.queryByText('COMPRAR')).toBeNull()
+    expect(screen.queryByText('LOGÍSTICA')).toBeNull()
   })
 
   it('Autorizaciones aparece solo con la capacidad de autorizar ventas, aunque lea ventas', async () => {

@@ -61,47 +61,59 @@ export function puedeVerVentas(canDo: CanDo): boolean {
   return !esChofer(canDo) && (canDo('MOD_VENTAS', 'read') || canDo('MOD_PEDIDOS', 'read'))
 }
 
-/** Módulos del alcance (plan §3), en el orden de la lámina Menu. */
+/**
+ * Módulos del alcance, en las secciones de la lámina ModMenu: Inicio suelto, VENDER, COMPRAR,
+ * GESTIÓN, LOGÍSTICA y Reportes suelto al final. Quién ve cada entrada no cambia: lo deciden
+ * `appModule`, `capacidad` y `visibleSi`, no la sección.
+ */
 export const MENU: MenuGroup[] = [
   {
+    items: [{ id: 'inicio', label: 'Inicio', icon: House, href: '/(tabs)/', routeName: 'index' }],
+  },
+  {
+    title: 'VENDER',
     items: [
-      { id: 'inicio', label: 'Inicio', icon: House, href: '/(tabs)/', routeName: 'index' },
       // Mismo criterio que la pantalla (leer ventas o pedidos), menos el chofer: lee ventas (el pedido de una parada) y no debe ver el módulo.
       { id: 'ventas', label: 'Ventas', icon: Tag, href: '/(tabs)/ventas', routeName: 'ventas/index', visibleSi: puedeVerVentas },
-      { id: 'compras', label: 'Compras', icon: ShoppingBag, href: '/(tabs)/compras', routeName: 'compras/index', appModule: 'MOD_COMPRAS' },
-      { id: 'proveedores', label: 'Proveedores', icon: Building2, href: '/(tabs)/proveedores', routeName: 'proveedores/index', appModule: 'MOD_PROVEEDORES' },
       { id: 'clientes', label: 'Clientes', icon: CircleUser, href: '/(tabs)/socios', routeName: 'socios/index', appModule: 'MOD_CLIENTES' },
       { id: 'catalogo', label: 'Catálogo y stock', hint: 'Consulta', icon: BookOpen, href: '/(tabs)/inventario', routeName: 'inventario/index', appModule: 'MOD_STOCK' },
-      // Igual que la web (sidebar.tsx, "Autorizaciones pendientes"): se muestra solo por CAP_AUTORIZAR_VENTA.
-      { id: 'autorizaciones', label: 'Autorizaciones', icon: ShieldCheck, href: '/(tabs)/autorizaciones', routeName: 'autorizaciones/index', capacidad: 'CAP_AUTORIZAR_VENTA' },
     ],
   },
   {
-    title: 'Tesorería',
+    title: 'COMPRAR',
     items: [
+      { id: 'compras', label: 'Compras', icon: ShoppingBag, href: '/(tabs)/compras', routeName: 'compras/index', appModule: 'MOD_COMPRAS' },
+      { id: 'proveedores', label: 'Proveedores', icon: Building2, href: '/(tabs)/proveedores', routeName: 'proveedores/index', appModule: 'MOD_PROVEEDORES' },
+    ],
+  },
+  {
+    title: 'GESTIÓN',
+    items: [
+      // Igual que la web (sidebar.tsx, "Autorizaciones pendientes"): se muestra solo por CAP_AUTORIZAR_VENTA.
+      { id: 'autorizaciones', label: 'Autorizaciones', icon: ShieldCheck, href: '/(tabs)/autorizaciones', routeName: 'autorizaciones/index', capacidad: 'CAP_AUTORIZAR_VENTA' },
       { id: 'cuentas', label: 'Cuentas corrientes', icon: Landmark, href: '/(tabs)/cuentas', routeName: 'cuentas/index', appModule: 'MOD_CC' },
       // Transferencias entre cuentas propias; los cobros se registran desde la cuenta corriente del cliente.
       // Los cheques se operan en la web (bloque 12, D10).
       { id: 'movimientos', label: 'Transferencias', icon: Wallet, href: '/(tabs)/tesoreria', routeName: 'tesoreria/index', appModule: 'MOD_PAGOS' },
-    ],
-  },
-  {
-    // El calendario no es un módulo en el servidor: cada uno ve el suyo (CalendarioController).
-    items: [
+      // El calendario no es un módulo en el servidor: cada uno ve el suyo (CalendarioController).
       { id: 'calendario', label: 'Calendario', icon: CalendarDays, href: '/(tabs)/calendario', routeName: 'calendario/index' },
       // Cada uno ve sus avisos (el destinatario sale del token); el número de no leídas va al lado.
       { id: 'avisos', label: 'Avisos', icon: Bell, href: '/(tabs)/avisos', routeName: 'avisos/index' },
-      // El servidor pide Ventas:Read y acota el alcance (el vendedor ve lo suyo); el chofer lee ventas pero no vende.
-      { id: 'reportes', label: 'Reportes', icon: ChartColumn, href: '/(tabs)/reportes', routeName: 'reportes/index', visibleSi: (canDo) => canDo('MOD_VENTAS', 'read') && puedeVerVentas(canDo) },
     ],
   },
   {
-    title: 'Logística',
+    title: 'LOGÍSTICA',
     items: [
-      { id: 'consola', label: 'Consola del chofer', icon: Navigation, href: '/(tabs)/logistica/consola', routeName: 'logistica/consola', appModule: 'MOD_VIAJES' },
       // Solo ver (D6): pendientes y no entregados. GET /Logistica/ventas-para-preparacion pide MOD_VIAJES:Read y recorta por depósito
       // (AlcanceDelDespacho); la web abre el tablero de picking con el mismo módulo (REGLAS_DE_RUTA).
       { id: 'por-preparar', label: 'Pedidos de logística', icon: PackageCheck, href: '/(tabs)/logistica/pedidos', routeName: 'logistica/pedidos', appModule: 'MOD_VIAJES' },
+      { id: 'consola', label: 'Consola del chofer', icon: Navigation, href: '/(tabs)/logistica/consola', routeName: 'logistica/consola', appModule: 'MOD_VIAJES' },
+    ],
+  },
+  {
+    items: [
+      // El servidor pide Ventas:Read y acota el alcance (el vendedor ve lo suyo); el chofer lee ventas pero no vende.
+      { id: 'reportes', label: 'Reportes', icon: ChartColumn, href: '/(tabs)/reportes', routeName: 'reportes/index', visibleSi: (canDo) => canDo('MOD_VENTAS', 'read') && puedeVerVentas(canDo) },
     ],
   },
 ]

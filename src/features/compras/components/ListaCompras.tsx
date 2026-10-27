@@ -48,7 +48,7 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
   const c = useColors()
   const router = useRouter()
   const leading = useMenuLeading()
-  const { isTablet, isTabletLandscape } = useResponsive()
+  const { isTabletLandscape } = useResponsive()
   const { canDo } = usePermissions()
   const [elegida, setElegida] = useState<string | null>(null)
   const l = useComprasList(estadoDeRuta)
@@ -169,8 +169,8 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
         list={
           <View style={{ flex: 1 }}>
             {l.pestana === 'borradores' ? listaBorradores : listaCompras}
-            {/* En teléfono la compra nueva sale del "+" de la barra de accesos rápidos. */}
-            {isTablet && canDo('MOD_COMPRAS', 'create') ? (
+            {/* La barra de accesos rápidos ya no trae el "+" (lámina CalleMiDia): la compra nueva sale de acá, en teléfono y en tablet. */}
+            {canDo('MOD_COMPRAS', 'create') ? (
               <Fab accessibilityLabel="Nueva compra" onPress={() => router.push('/(tabs)/compras/nueva' as never)} />
             ) : null}
           </View>

@@ -188,7 +188,7 @@ describe('lista de compras', () => {
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/compras/nueva?borrador=b1')
   })
 
-  it('en el teléfono tocar una tarjeta abre el detalle y el "+" es el de la barra (uno solo)', async () => {
+  it('en el teléfono tocar una tarjeta abre el detalle y el "+" de la lista es uno solo', async () => {
     pantalla(390)
     await userEvent.press(await screen.findByRole('button', { name: /BBBB2222/ }))
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/compras/bbbb2222-0000-0000-0000-000000000000')
