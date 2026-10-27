@@ -37,7 +37,7 @@ function socio(id: string) {
     : { id, razonSocial: 'Insumos del Sur SA', condicionPago: mockCondicion, condicionesDeCompraFaltantes: [] }
 }
 
-function pantalla(props: { borradorId?: string; editarId?: string } = {}) {
+function pantalla(props: { borradorId?: string; editarId?: string; proveedorId?: string } = {}) {
   mockDims.mockReturnValue({ width: 390, height: 800, scale: 2, fontScale: 1 })
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(<QueryClientProvider client={qc}><CompraNueva {...props} /></QueryClientProvider>)
@@ -313,5 +313,20 @@ describe('pantalla de compra nueva', () => {
       await screen.findByRole('button', { name: 'Confirmar compra' })
       expect(screen.queryByRole('button', { name: 'Confirmar y recibir' })).toBeNull()
     })
+  })
+})
+
+describe('proveedor preseleccionado (desde la ficha del proveedor)', () => {
+  it('con proveedorId crea el borrador de ese proveedor sin pasar por la lista', async () => {
+    pantalla({ proveedorId: 'p1' })
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/borradores', expect.objectContaining({ proveedorId: 'p1' })), ESPERA)
+    expect(await screen.findByText(/Insumos del Sur SA/, {}, ESPERA)).toBeTruthy()
+    expect(screen.queryByText('Gorrión Mayorista')).toBeNull()
+  })
+
+  it('si al proveedor le faltan datos de compra, avisa y no crea el borrador', async () => {
+    pantalla({ proveedorId: 'p2' })
+    await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/v1/socios-comerciales/p2'), ESPERA)
+    expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Compras/borradores', expect.anything())
   })
 })
