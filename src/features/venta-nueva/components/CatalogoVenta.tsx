@@ -73,8 +73,8 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
 
   const lista = (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <View style={{ padding: space[4], gap: space[2] }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: 48, borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, paddingLeft: space[3] }}>
+      <View testID="catalogo-encabezado" style={{ paddingHorizontal: space[3], paddingBottom: space[3], gap: space[3], backgroundColor: c.topBar }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: 48, borderRadius: radii.campo, backgroundColor: c.surface, paddingLeft: space[3] }}>
           <Search size={20} color={c.textSecondary} />
           <TextInput
             value={busqueda}
@@ -90,13 +90,13 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
           </Pressable>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space[2] }} style={{ flexGrow: 0 }}>
-          {llevo ? <FiltroChip label="Del último pedido" activo={filtros.delUltimo} onPress={() => alternar('delUltimo')} /> : null}
-          <FiltroChip label="Con oferta" activo={filtros.conOferta} onPress={() => alternar('conOferta')} />
-          <FiltroChip label="Hay stock" activo={filtros.hayStock} onPress={() => alternar('hayStock')} />
+          {llevo ? <FiltroChip oscuro label="Del último pedido" activo={filtros.delUltimo} onPress={() => alternar('delUltimo')} /> : null}
+          <FiltroChip oscuro label="Con oferta" activo={filtros.conOferta} onPress={() => alternar('conOferta')} />
+          <FiltroChip oscuro label="Hay stock" activo={filtros.hayStock} onPress={() => alternar('hayStock')} />
         </ScrollView>
         {avisoEscaneo ? <Notice tone="advertencia">{avisoEscaneo}</Notice> : null}
-        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`${productos.length} resultados`}</Text>
       </View>
+      <Text style={{ ...typeScale.secundario, color: c.textSecondary, paddingHorizontal: space[4], paddingVertical: space[2] }}>{`${productos.length} resultados`}</Text>
       <FlatList
         key={columnas}
         data={productos}
@@ -121,11 +121,7 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
           />
         )}
       />
-      {!isTabletLandscape && (
-        <View style={{ padding: space[4], paddingTop: 0 }}>
-          <CarritoFlotante lineas={lineas} onVerVenta={onVerVenta} />
-        </View>
-      )}
+      {!isTabletLandscape && <CarritoFlotante lineas={lineas} onVerVenta={onVerVenta} />}
     </View>
   )
 

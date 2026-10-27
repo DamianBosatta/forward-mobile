@@ -82,10 +82,30 @@ describe('CatalogoVenta (agregar productos)', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Añadir Pala c/Cabo Fija LP' }))
     await userEvent.press(screen.getByRole('button', { name: 'Añadir Bettanin Pala Rebatible' }))
     expect(screen.getByTestId('carrito-items')).toHaveTextContent('2')
-    expect(screen.getByText('Total estimado')).toBeTruthy()
+    expect(screen.getByText('2 productos')).toBeTruthy()
     expect(screen.getByTestId('carrito-total')).toHaveTextContent('$ 4.000,00')
     await userEvent.press(screen.getByRole('button', { name: /^Ver venta/ }))
     expect(onVerVenta).toHaveBeenCalled()
+  })
+
+  it('V4: el encabezado con la búsqueda y los filtros es oscuro (color de la barra superior)', () => {
+    render(<CatalogoVenta onVerVenta={jest.fn()} />)
+    expect(screen.getByTestId('catalogo-encabezado')).toHaveStyle({ backgroundColor: '#0E1514' })
+    expect(within(screen.getByTestId('catalogo-encabezado')).getByLabelText('Buscar por código o nombre')).toBeTruthy()
+    expect(within(screen.getByTestId('catalogo-encabezado')).getByRole('button', { name: 'Hay stock' })).toBeTruthy()
+  })
+
+  it('V4: la barra del carrito fija abajo aparece con el primer producto, dice cuántos y el total, y sigue a la venta', async () => {
+    const onVerVenta = jest.fn()
+    render(<CatalogoVenta onVerVenta={onVerVenta} />)
+    expect(screen.queryByTestId('carrito-barra')).toBeNull()
+    await userEvent.press(screen.getByRole('button', { name: 'Añadir Pala c/Cabo Fija LP' }))
+    const barra = screen.getByTestId('carrito-barra')
+    expect(within(barra).getByText('1 producto')).toBeTruthy()
+    expect(within(barra).getByTestId('carrito-total')).toHaveTextContent('$ 1.000,00')
+    expect(within(barra).getByRole('button', { name: /^Ver venta/ })).toHaveStyle({ backgroundColor: '#0E1514' })
+    await userEvent.press(within(barra).getByText('Ver venta'))
+    expect(onVerVenta).toHaveBeenCalledTimes(1)
   })
 
   it('tocar el número abre Cantidad y descuento y lo confirmado vuelve al carrito', async () => {
