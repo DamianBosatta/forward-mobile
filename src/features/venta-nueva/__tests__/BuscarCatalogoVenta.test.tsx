@@ -30,7 +30,7 @@ async function buscar(texto: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(<QueryClientProvider client={qc}><CatalogoVenta onVerVenta={jest.fn()} /></QueryClientProvider>)
   await act(async () => {})
-  await userEvent.setup({ advanceTimers: jest.advanceTimersByTime }).type(screen.getByLabelText('Buscar por código o nombre'), texto)
+  await userEvent.setup({ advanceTimers: jest.advanceTimersByTime }).type(screen.getByLabelText('Producto, marca o código'), texto)
   await act(async () => jest.advanceTimersByTime(DEBOUNCE_BUSQUEDA_MS))
   await act(async () => {})
 }
@@ -42,7 +42,7 @@ describe('buscar en el catálogo de venta', () => {
     mockGet.mockReset().mockResolvedValue(pagina([pala, ...familia]))
     await buscar('lavanda')
 
-    expect(await screen.findByText('1 resultados')).toBeTruthy()
+    expect(await screen.findByText('Mostrando 1 de 2')).toBeTruthy()
     expect(screen.getByTestId('producto-pf')).toBeTruthy()
     expect(screen.queryByTestId('producto-p1')).toBeNull()
     expect(pidioBusqueda()).toBe(false)

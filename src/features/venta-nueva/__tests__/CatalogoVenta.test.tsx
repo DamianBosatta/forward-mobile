@@ -45,7 +45,7 @@ beforeEach(() => {
 describe('CatalogoVenta (agregar productos)', () => {
   it('"+ Añadir" en una caja de 6 pasa a − 6 +; restar la saca del carrito', async () => {
     render(<CatalogoVenta onVerVenta={jest.fn()} />)
-    expect(screen.getByText('Se vende por caja de 6')).toBeTruthy()
+    expect(screen.getByText('Bulto x 6 u')).toBeTruthy()
     await userEvent.press(screen.getByRole('button', { name: 'Añadir Bettanin Pala Rebatible' }))
     expect(within(screen.getByTestId('producto-p6')).getByLabelText('Cantidad: 6')).toBeTruthy()
     await userEvent.press(screen.getByRole('button', { name: 'Sumar Bettanin Pala Rebatible' }))
@@ -66,7 +66,7 @@ describe('CatalogoVenta (agregar productos)', () => {
   it('con CAP_VER_CANTIDADES_STOCK ve la cantidad que manda el servidor, aunque el rol sea Vendedor (forward-system #900)', () => {
     conUsuario(['Vendedor'], [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }])
     render(<CatalogoVenta onVerVenta={jest.fn()} />)
-    expect(within(screen.getByTestId('producto-p1')).getByText('Stock: 37')).toBeTruthy()
+    expect(within(screen.getByTestId('producto-p1')).getByText('Quedan 37 u')).toBeTruthy()
   })
 
   it('sin CAP_VER_CANTIDADES_STOCK ve solo "Hay stock", aunque el rol sea Gerencia', () => {
@@ -82,7 +82,7 @@ describe('CatalogoVenta (agregar productos)', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Añadir Pala c/Cabo Fija LP' }))
     await userEvent.press(screen.getByRole('button', { name: 'Añadir Bettanin Pala Rebatible' }))
     expect(screen.getByTestId('carrito-items')).toHaveTextContent('2')
-    expect(screen.getByText('2 productos')).toBeTruthy()
+    expect(screen.getByText('2 productos · 1 bulto · 1 u')).toBeTruthy()
     expect(screen.getByTestId('carrito-total')).toHaveTextContent('$ 4.000,00')
     await userEvent.press(screen.getByRole('button', { name: /^Ver venta/ }))
     expect(onVerVenta).toHaveBeenCalled()
@@ -91,7 +91,7 @@ describe('CatalogoVenta (agregar productos)', () => {
   it('V4: el encabezado con la búsqueda y los filtros es oscuro (color de la barra superior)', () => {
     render(<CatalogoVenta onVerVenta={jest.fn()} />)
     expect(screen.getByTestId('catalogo-encabezado')).toHaveStyle({ backgroundColor: '#0E1514' })
-    expect(within(screen.getByTestId('catalogo-encabezado')).getByLabelText('Buscar por código o nombre')).toBeTruthy()
+    expect(within(screen.getByTestId('catalogo-encabezado')).getByLabelText('Producto, marca o código')).toBeTruthy()
     expect(within(screen.getByTestId('catalogo-encabezado')).getByRole('button', { name: 'Hay stock' })).toBeTruthy()
   })
 
@@ -112,9 +112,9 @@ describe('CatalogoVenta (agregar productos)', () => {
     render(<CatalogoVenta onVerVenta={onVerVenta} />)
     await userEvent.press(screen.getByRole('button', { name: 'Añadir Pala c/Cabo Fija LP' }))
     const barra = screen.getByTestId('carrito-barra')
-    expect(within(barra).getByText('1 producto')).toBeTruthy()
+    expect(within(barra).getByText('1 producto · 1 u')).toBeTruthy()
     expect(within(barra).getByTestId('carrito-total')).toHaveTextContent('$ 1.000,00')
-    expect(within(barra).getByRole('button', { name: /^Ver venta/ })).toHaveStyle({ backgroundColor: '#0E1514' })
+    expect(within(barra).getByRole('button', { name: /^Ver venta/ })).toHaveStyle({ backgroundColor: '#2BD4BD' })
     await userEvent.press(within(barra).getByText('Ver venta'))
     expect(onVerVenta).toHaveBeenCalledTimes(1)
   })
@@ -136,7 +136,7 @@ describe('CatalogoVenta (agregar productos)', () => {
     render(<CatalogoVenta onVerVenta={jest.fn()} />)
     expect(screen.queryByText('Saphirus Aerosol Lavanda')).toBeNull()
     expect(screen.queryByTestId('producto-pv')).toBeNull()
-    expect(screen.getByText('3 resultados')).toBeTruthy()
+    expect(screen.getByText('Mostrando 3 de 3')).toBeTruthy()
   })
 
   it('el total del carrito aplica el descuento de la línea', async () => {
@@ -206,7 +206,7 @@ describe('CatalogoVenta: filtros y escáner (V4)', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Leer 0000' }))
     expect(useCarritoVenta.getState().lineas).toEqual([])
     expect(screen.getByText(/No encontramos ese código/)).toBeTruthy()
-    expect(screen.getByLabelText('Buscar por código o nombre').props.value).toBe('0000')
+    expect(screen.getByLabelText('Producto, marca o código').props.value).toBe('0000')
   })
 
   it('"Escanear en la góndola" abre el escáner al entrar', () => {
@@ -215,3 +215,35 @@ describe('CatalogoVenta: filtros y escáner (V4)', () => {
   })
 })
 
+describe('CatalogoVenta (propuesta T3)', () => {
+  it('la barra del carrito dice productos y bultos: una caja de 6 cargada a 12 son 2 bultos', async () => {
+    render(<CatalogoVenta onVerVenta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Añadir Bettanin Pala Rebatible' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Sumar Bettanin Pala Rebatible' }))
+    expect(within(screen.getByTestId('carrito-barra')).getByText('1 producto · 2 bultos')).toBeTruthy()
+  })
+
+  it('el pie dice cuántos muestra de cuántos tiene el catálogo, y el filtro lo achica', async () => {
+    render(<CatalogoVenta onVerVenta={jest.fn()} />)
+    expect(screen.getByText('Mostrando 3 de 3')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Hay stock' }))
+    expect(screen.getByText('Mostrando 2 de 3')).toBeTruthy()
+  })
+
+  it('con la señal en vivo muestra el chip "Stock en vivo"; sin conexión, "Sin conexión"; sin señal, nada', () => {
+    const r = render(<CatalogoVenta onVerVenta={jest.fn()} enVivo />)
+    expect(screen.getByText('Stock en vivo')).toBeTruthy()
+    r.rerender(<CatalogoVenta onVerVenta={jest.fn()} enVivo={false} />)
+    expect(screen.getByText('Sin conexión')).toBeTruthy()
+    r.rerender(<CatalogoVenta onVerVenta={jest.fn()} />)
+    expect(screen.queryByText('Stock en vivo')).toBeNull()
+  })
+
+  it('con onAbrirOferta, Agregar la abre con el producto y no toca el carrito', async () => {
+    const onAbrirOferta = jest.fn()
+    render(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={onAbrirOferta} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Añadir Bettanin Pala Rebatible' }))
+    expect(onAbrirOferta).toHaveBeenCalledWith(expect.objectContaining({ id: 'p6' }))
+    expect(useCarritoVenta.getState().lineas).toHaveLength(0)
+  })
+})

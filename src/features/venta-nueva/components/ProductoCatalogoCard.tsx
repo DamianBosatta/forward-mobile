@@ -4,35 +4,42 @@ import { Package } from 'lucide-react-native'
 import { radii, space, typeScale, importe, useColors, type ForwardColors } from '@/libs/theme'
 import { formatImporte } from '@/core/ui/fw'
 import type { CatalogoStockItem } from '@/libs/api-client'
-import { leyendaMultiplo, precioServidor } from '../lib/carrito'
+import { cantidadEnPresentacion, multiploDe, presentacionDe, precioServidor, stockDeTarjeta, vendePorBulto } from '../lib/carrito'
 
 interface ProductoCatalogoCardProps {
   producto: CatalogoStockItem
-  /** Cantidad en el carrito (0 = no está). */
+  /** Cantidad en el carrito, en unidades (0 = no está). */
   cantidad: number
   /** Ve cantidades de stock (capacidad CAP_VER_CANTIDADES_STOCK); si no, solo "Hay stock / Sin stock". */
   verCantidades: boolean
   /** Lo que llevó la última vez (unidades), si la última venta lo tenía. */
   llevoAntes?: number
+  /** Hay conexión al stock en vivo: la línea de stock agrega "· ahora". */
+  enVivo?: boolean
   onAgregar: () => void
   onSumar: () => void
   onRestar: () => void
   onElegirFragancias?: () => void
   /** Abre "Cantidad y descuento" (el número tipeable); solo cuando ya está en el carrito. */
   onEditar?: () => void
+  /** Abre la pantalla de cantidad y oferta. Si viene, "Agregar" y el chip de edición la abren; si no, queda el −/+ de siempre. */
+  onAbrirOferta?: (producto: CatalogoStockItem) => void
 }
 
 /**
- * Fila del catálogo rápido de venta (lámina CalleCatalogo): foto, código, disponibilidad, pista, precio y
- * "+ Añadir" o −/número/+ (el número se toca para tipear la cantidad). Sin stock se puede pedir: queda por autorizar.
+ * Tarjeta del catálogo de venta (propuesta Catálogo): foto, marca, nombre, presentación, oferta, stock en vivo,
+ * precio (por bulto y por unidad) y "Agregar" o el chip de edición. Sin stock se puede pedir: queda por autorizar.
  */
 export function ProductoCatalogoCard({
-  producto: p, cantidad, verCantidades, llevoAntes, onAgregar, onSumar, onRestar, onElegirFragancias, onEditar,
+  producto: p, cantidad, verCantidades, llevoAntes, enVivo, onAgregar, onSumar, onRestar, onElegirFragancias, onEditar, onAbrirOferta,
 }: ProductoCatalogoCardProps) {
   const c = useColors()
-  const stock = p.puedeVenderse ? c.chip.entregado.text : c.chip.anulado.text
-  const leyenda = leyendaMultiplo(p)
-  const pistas = [leyenda, llevoAntes ? `Llevó ${llevoAntes} la última vez` : null, !p.puedeVenderse ? 'Se puede pedir: queda por autorizar' : null].filter((t): t is string => !!t)
+  const stock = stockDeTarjeta(p, verCantidades, enVivo)
+  const colorStock = stock.nivel === 'hay' ? c.success : stock.nivel === 'poco' ? c.warning : c.danger
+  const porBulto = vendePorBulto(p)
+  const unitario = precioServidor(p)
+  const pistas = [llevoAntes ? `Llevó ${llevoAntes} la última vez` : null].filter((t): t is string => !!t)
+  const abrir = onAbrirOferta ? () => onAbrirOferta(p) : onAgregar
 
   return (
     <View
@@ -42,29 +49,41 @@ export function ProductoCatalogoCard({
         backgroundColor: cantidad > 0 ? c.brandSoft : c.surface, borderWidth: 2, borderColor: cantidad > 0 ? c.brand : c.surface,
       }}
     >
-      <View style={{ width: 56, height: 56, borderRadius: radii.campo, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <View style={{ width: 76, height: 76, borderRadius: radii.campo, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         {p.imageUrl ? (
-          <Image source={{ uri: p.imageUrl }} style={{ width: 56, height: 56 }} accessibilityIgnoresInvertColors />
+          <Image source={{ uri: p.imageUrl }} style={{ width: 76, height: 76 }} accessibilityIgnoresInvertColors />
         ) : (
           <Package size={28} color={c.textSecondary} />
         )}
       </View>
-      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{p.codigoPropio ?? ''}</Text>
-          <Text style={{ ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: stock }}>
-            {verCantidades ? `Stock: ${p.disponible}` : p.puedeVenderse ? 'Hay stock' : 'Sin stock'}
-          </Text>
-        </View>
+      <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
+        {p.marca ? <Text style={{ ...typeScale.etiqueta, color: c.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8 }}>{p.marca}</Text> : null}
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{p.nombre}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], flexWrap: 'wrap' }}>
+          <Chip c={c} texto={presentacionDe(p)} />
+          {p.precioConOferta != null ? <Chip c={c} texto="Oferta" tono="oferta" /> : null}
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+          <View testID={`stock-punto-${p.id}`} style={{ width: 8, height: 8, borderRadius: radii.pastilla, backgroundColor: colorStock }} />
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{stock.texto}</Text>
+        </View>
         {pistas.map((t) => <Text key={t} style={{ ...typeScale.secundario, color: c.textSecondary }}>{t}</Text>)}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2], marginTop: space[1] }}>
           <View>
-            <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(precioServidor(p))}</Text>
-            {p.precioConOferta != null ? <Text style={{ ...typeScale.etiqueta, color: c.chip.porAutorizar.text }}>Oferta</Text> : null}
+            <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(unitario * multiploDe(p))}</Text>
+            {porBulto ? <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{`${formatImporte(unitario)} por unidad`}</Text> : null}
           </View>
           {p.esPadreDeVariantes ? (
             <Accion c={c} label="Elegir fragancias" onPress={onElegirFragancias} />
+          ) : cantidad > 0 && onAbrirOferta ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Editar ${p.nombre}`}
+              onPress={abrir}
+              style={{ minHeight: 44, paddingHorizontal: space[4], borderRadius: radii.campo, backgroundColor: c.brandSoft, borderWidth: 1, borderColor: c.brand, justifyContent: 'center' }}
+            >
+              <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{`${cantidadEnPresentacion(p, cantidad)} ✎`}</Text>
+            </Pressable>
           ) : cantidad > 0 ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
               <Redondo c={c} label="−" a11y={`Restar ${p.nombre}`} onPress={onRestar} />
@@ -80,10 +99,19 @@ export function ProductoCatalogoCard({
               <Redondo c={c} label="+" a11y={`Sumar ${p.nombre}`} onPress={onSumar} />
             </View>
           ) : (
-            <Accion c={c} label="+ Añadir" a11y={`Añadir ${p.nombre}`} onPress={onAgregar} />
+            <Accion c={c} label={stock.nivel === 'sin' ? 'Sin stock' : 'Agregar'} a11y={`Añadir ${p.nombre}`} onPress={abrir} />
           )}
         </View>
       </View>
+    </View>
+  )
+}
+
+function Chip({ c, texto, tono }: { c: ForwardColors; texto: string; tono?: 'oferta' }) {
+  const colores = tono === 'oferta' ? c.chip.porAutorizar : { bg: c.surface2, text: c.text }
+  return (
+    <View style={{ paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radii.campo, backgroundColor: colores.bg }}>
+      <Text style={{ ...typeScale.etiqueta, color: colores.text }}>{texto}</Text>
     </View>
   )
 }

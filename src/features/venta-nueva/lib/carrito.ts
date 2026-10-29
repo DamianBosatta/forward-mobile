@@ -29,6 +29,48 @@ export function leyendaMultiplo(producto: Pick<CatalogoStockItem, 'ventaMinimaUn
   return `Se vende por ${producto.fraccionMinimaVenta === 'Bulto' ? 'caja' : 'pack'} de ${m}`
 }
 
+/** Se vende por bulto (caja o pack cerrado) cuando el múltiplo es mayor que 1. */
+export const vendePorBulto = (producto: Pick<CatalogoStockItem, 'ventaMinimaUnidades'>): boolean => multiploDe(producto) > 1
+
+/** Pastilla de la tarjeta: "Bulto x 6 u" o "Unidad". */
+export function presentacionDe(producto: Pick<CatalogoStockItem, 'ventaMinimaUnidades'>): string {
+  return vendePorBulto(producto) ? `Bulto x ${multiploDe(producto)} u` : 'Unidad'
+}
+
+/** "3 bultos" / "1 bulto" si se vende por bulto; "12 u" si no. `unidades` siempre viene en unidades. */
+export function cantidadEnPresentacion(producto: Pick<CatalogoStockItem, 'ventaMinimaUnidades'>, unidades: number): string {
+  if (!vendePorBulto(producto)) return `${unidades} u`
+  const bultos = Math.floor(unidades / multiploDe(producto))
+  return bultos === 1 ? '1 bulto' : `${bultos} bultos`
+}
+
+export type NivelStock = 'hay' | 'poco' | 'sin'
+
+/**
+ * Disponibilidad de la tarjeta. Con `verCantidades` sale del `disponible` del servidor (nunca de `real`);
+ * sin esa capacidad el servidor manda `disponible = 0` y solo vale `puedeVenderse`, sin números.
+ * `poco` = queda stock pero no más que el mínimo del producto. `enVivo` agrega " · ahora".
+ */
+export function stockDeTarjeta(
+  p: Pick<CatalogoStockItem, 'disponible' | 'puedeVenderse' | 'stockMinimo' | 'ventaMinimaUnidades'>,
+  verCantidades: boolean,
+  enVivo = false,
+): { nivel: NivelStock; texto: string } {
+  if (!verCantidades) return p.puedeVenderse ? { nivel: 'hay', texto: 'Hay stock' } : { nivel: 'sin', texto: 'Sin stock · se puede pedir' }
+  if (p.disponible <= 0) return { nivel: 'sin', texto: 'Sin stock · se puede pedir' }
+  const poco = (p.stockMinimo ?? 0) > 0 && p.disponible <= (p.stockMinimo ?? 0)
+  const queda = multiploDe(p) > 1 && p.disponible < multiploDe(p) ? `${p.disponible} u` : cantidadEnPresentacion(p, p.disponible)
+  return { nivel: poco ? 'poco' : 'hay', texto: `Quedan ${queda}${enVivo ? ' · ahora' : ''}` }
+}
+
+/** Resumen de la barra del carrito: productos y bultos (las líneas por unidad suman "u"). */
+export function resumenCarrito(lineas: LineaCarrito[]): string {
+  const productos = lineas.length === 1 ? '1 producto' : `${lineas.length} productos`
+  const bultos = lineas.filter((l) => vendePorBulto(l.producto)).reduce((a, l) => a + l.cantidad / multiploDe(l.producto), 0)
+  const sueltas = lineas.filter((l) => !vendePorBulto(l.producto)).reduce((a, l) => a + l.cantidad, 0)
+  return [productos, bultos > 0 ? (bultos === 1 ? '1 bulto' : `${bultos} bultos`) : null, sueltas > 0 ? `${sueltas} u` : null].filter(Boolean).join(' · ')
+}
+
 /** Precio que muestra el servidor: la oferta vigente si la hay, si no la lista. */
 export function precioServidor(producto: Pick<CatalogoStockItem, 'precioVenta' | 'precioConOferta'>): number {
   return producto.precioConOferta ?? producto.precioVenta
