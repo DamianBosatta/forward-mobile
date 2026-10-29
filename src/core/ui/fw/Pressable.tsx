@@ -11,7 +11,7 @@ import { Pressable as RNPressable, type GestureResponderEvent, type PressablePro
  */
 export const Pressable = forwardRef<View, PressableProps>(function Pressable({ style, onPressIn, onPressOut, ...props }, ref) {
   const [pressed, setPressed] = useState(false)
-  const resolved = typeof style === 'function' ? style({ pressed }) : style
+  const resolved = typeof style === 'function' ? style({ pressed, hovered: false }) : style
   return (
     <RNPressable
       ref={ref}
