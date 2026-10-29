@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { View, Pressable, Text, Modal, StyleSheet, ScrollView, Platform, useWindowDimensions } from 'react-native'
+import { View, Text, Modal, StyleSheet, ScrollView, Platform, useWindowDimensions } from 'react-native'
+import { Pressable } from '@/core/ui/fw/Pressable'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useColors } from '@/libs/theme'
 import { Bell, AlertCircle, ChevronRight, Lock, Clock } from 'lucide-react-native'

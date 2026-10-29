@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native'
+import { Pressable } from '@/core/ui/fw/Pressable'
 import { useRouter } from 'expo-router'
 import { Search } from 'lucide-react-native'
 import { radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'

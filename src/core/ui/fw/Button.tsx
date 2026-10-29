@@ -1,5 +1,6 @@
 import React from 'react'
-import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import { ActivityIndicator, Text, View } from 'react-native'
+import { Pressable } from './Pressable'
 import { radii, space, typeScale, useColors, type ForwardColors } from '@/libs/theme'
 
 export type ButtonVariant = 'primario' | 'secundario' | 'peligro'

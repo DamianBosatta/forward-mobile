@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { Pressable } from '@/core/ui/fw/Pressable'
 import { ChevronLeft, ChevronRight } from 'lucide-react-native'
 import { radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { Button, Fab, FormContainer, Notice, StatusChip, TopBar, formatImporte, useMenuLeading } from '@/core/ui/fw'

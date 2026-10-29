@@ -1,5 +1,6 @@
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
+import { Pressable } from '@/core/ui/fw/Pressable'
 import { Bell, ChevronRight, Monitor } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import type { Aviso } from '@/libs/api-client/notificaciones'

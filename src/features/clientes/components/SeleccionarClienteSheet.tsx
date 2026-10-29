@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native'
+import { ActivityIndicator, FlatList, Text, TextInput, View, useWindowDimensions } from 'react-native'
+import { Pressable } from '@/core/ui/fw/Pressable'
 import { Plus, Search } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import { fetchSocio, sociosKeys, useClientesRecientes } from '@/libs/api-client/socios'

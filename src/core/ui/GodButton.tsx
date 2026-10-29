@@ -1,13 +1,13 @@
 import React from 'react'
-import { 
-  Text, 
-  Pressable, 
-  StyleSheet, 
-  ActivityIndicator, 
+import {
+  Text,
+  StyleSheet,
+  ActivityIndicator,
   View,
   ViewStyle,
-  TextStyle
+  TextStyle,
 } from 'react-native'
+import { Pressable } from '@/core/ui/fw/Pressable'
 import { LinearGradient } from 'expo-linear-gradient'
 import { MotiView } from 'moti'
 import { safeHaptics } from '@/core/utils/haptics'

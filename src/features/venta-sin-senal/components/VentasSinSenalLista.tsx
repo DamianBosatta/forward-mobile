@@ -1,5 +1,6 @@
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
+import { Pressable } from '@/core/ui/fw/Pressable'
 import { Clock } from 'lucide-react-native'
 import { FONT, importe as cifras, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { Notice, StatusChip, chipForEstado, formatImporte, type ChipInfo } from '@/core/ui/fw'
