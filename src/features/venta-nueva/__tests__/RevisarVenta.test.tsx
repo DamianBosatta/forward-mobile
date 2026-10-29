@@ -1,6 +1,7 @@
 import React from 'react'
 import { act, fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
+import { api } from '@/libs/api-client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { CLAVE_CATALOGO } from '../hooks/useCatalogoVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
@@ -10,7 +11,7 @@ import { producto } from '../__testing__/producto'
 const CAP = { module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }
 let qc: QueryClient
 let catalogoServidor: ReturnType<typeof producto>[]
-const queryFn = jest.fn(async () => ({ items: catalogoServidor, truncado: false }))
+let queryFn: jest.SpyInstance
 const cliente = { direccion: 'Tarantino 1898', nombreFantasia: 'Autoservicio Abel' }
 
 const rollo = (over = {}) => producto({ id: 'p1', nombre: 'Rollo 90x120', marca: 'Maxi Bag', precioVenta: 1000, disponible: 10, ...over })
@@ -28,10 +29,9 @@ function revisar(props: Partial<React.ComponentProps<typeof RevisarVenta>> = {})
 }
 
 beforeEach(() => {
-  queryFn.mockClear()
+  queryFn = jest.spyOn(api, 'get').mockImplementation(async () => ({ items: catalogoServidor, hasNextPage: false }) as never)
   useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [CAP] } as never })
   qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  qc.setQueryDefaults(CLAVE_CATALOGO, { queryFn })
   const vistos = [rollo(), esponja()]
   qc.setQueryData(CLAVE_CATALOGO, { items: vistos, truncado: false })
   useCarritoVenta.setState({ lineas: [
@@ -41,7 +41,10 @@ beforeEach(() => {
   catalogoServidor = [rollo(), esponja()]
 })
 
-afterEach(() => { onlineManager.setOnline(true) })
+afterEach(() => {
+  queryFn.mockRestore()
+  onlineManager.setOnline(true)
+})
 
 describe('RevisarVenta (S5, S6, S7)', () => {
   it('muestra el cliente (dirección y nombre), las líneas con su subtotal y el total', async () => {
@@ -144,7 +147,7 @@ describe('RevisarVenta (S5, S6, S7)', () => {
     const { alConfirmar } = revisar()
     await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(2))
     let soltar: () => void = () => {}
-    queryFn.mockImplementationOnce(() => new Promise((res) => { soltar = () => res({ items: catalogoServidor, truncado: false }) }))
+    queryFn.mockImplementationOnce(() => new Promise((res) => { soltar = () => res({ items: catalogoServidor, hasNextPage: false }) }))
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeDisabled())
     expect(alConfirmar).not.toHaveBeenCalled()

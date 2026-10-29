@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
+import { ActivityIndicator, FlatList, Text, View } from 'react-native'
+import { Pressable } from '@/core/ui/fw/Pressable'
 import { Field, FormContainer, Notice } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useSocios } from '@/libs/api-client/socios'

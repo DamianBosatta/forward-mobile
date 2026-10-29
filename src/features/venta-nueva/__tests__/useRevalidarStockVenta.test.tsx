@@ -1,6 +1,7 @@
 import React from 'react'
 import { act, renderHook, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
+import { api } from '@/libs/api-client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { CLAVE_CATALOGO } from '../hooks/useCatalogoVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
@@ -9,14 +10,14 @@ import { producto } from '../__testing__/producto'
 
 let qc: QueryClient
 let catalogoServidor: ReturnType<typeof producto>[]
-const queryFn = jest.fn(async () => ({ items: catalogoServidor, truncado: false }))
+// The catalog request the hook makes on its own (GET catalogo-stock, one page).
+let queryFn: jest.SpyInstance
 const wrapper = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
 const CAP = { module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }
 
 beforeEach(() => {
-  queryFn.mockClear()
+  queryFn = jest.spyOn(api, 'get').mockImplementation(async () => ({ items: catalogoServidor, hasNextPage: false }) as never)
   qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  qc.setQueryDefaults(CLAVE_CATALOGO, { queryFn })
   // Lo que se vio al cargar: p1 con 9, p2 con 4.
   const vistos = [producto({ id: 'p1', disponible: 9 }), producto({ id: 'p2', disponible: 4 })]
   qc.setQueryData(CLAVE_CATALOGO, { items: vistos, truncado: false })
@@ -25,7 +26,10 @@ beforeEach(() => {
   useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [CAP] } as never })
 })
 
-afterEach(() => { onlineManager.setOnline(true) })
+afterEach(() => {
+  onlineManager.setOnline(true)
+  queryFn.mockRestore()
+})
 
 describe('useRevalidarStockVenta (S6: al revisar se vuelve a chequear)', () => {
   it('al abrir la revisión vuelve a pedir el catálogo y marca lo que cambió contra lo que se vio al cargar', async () => {
@@ -68,5 +72,13 @@ describe('useRevalidarStockVenta (S6: al revisar se vuelve a chequear)', () => {
     expect(queryFn).not.toHaveBeenCalled()
     expect(result.current.confirmado).toBe(false)
     expect(result.current.sinConexion).toBe(true)
+  })
+
+  it('alone on the screen (no catalog hook mounted) it still knows how to fetch the catalog', async () => {
+    qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const { result } = renderHook(() => useRevalidarStockVenta(), { wrapper })
+    await waitFor(() => expect(result.current.confirmado).toBe(true))
+    expect(queryFn).toHaveBeenCalledWith('/api/v1/Productos/catalogo-stock?PageNumber=1&PageSize=1000')
+    expect(qc.getQueryState(CLAVE_CATALOGO)?.error).toBeNull()
   })
 })

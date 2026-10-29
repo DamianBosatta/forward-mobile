@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native'
+import { Pressable } from '@/core/ui/fw/Pressable'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, Eye, EyeOff, Fingerprint } from 'lucide-react-native'

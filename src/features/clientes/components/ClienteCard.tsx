@@ -1,5 +1,6 @@
 import React from 'react'
-import { Linking, Pressable, Text, View } from 'react-native'
+import { Linking, Text, View } from 'react-native'
+import { Pressable } from '@/core/ui/fw/Pressable'
 import { Phone } from 'lucide-react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { StatusChip, formatImporte } from '@/core/ui/fw'

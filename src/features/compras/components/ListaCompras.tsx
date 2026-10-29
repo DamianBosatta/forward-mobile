@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { ActivityIndicator, FlatList, Pressable, SectionList, Text, View } from 'react-native'
+import { ActivityIndicator, FlatList, SectionList, Text, View } from 'react-native'
+import { Pressable } from '@/core/ui/fw/Pressable'
 import { useRouter } from 'expo-router'
 import {
   DocumentCard, Fab, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, useMenuLeading,
