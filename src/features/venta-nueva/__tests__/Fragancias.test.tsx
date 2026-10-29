@@ -45,7 +45,7 @@ beforeEach(() => {
 
 describe('elegir fragancias (PR 2.4)', () => {
   it('desde el catálogo reparte la línea en variantes, de a la caja de cada una', async () => {
-    conQuery(<CatalogoVenta onVerVenta={jest.fn()} />)
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
     await userEvent.press(screen.getByRole('button', { name: 'Sumar Lavanda' }))
     await userEvent.press(screen.getByRole('button', { name: 'Sumar Lavanda' }))
@@ -62,7 +62,7 @@ describe('elegir fragancias (PR 2.4)', () => {
       { id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, activo: true },
       { id: 'pv2', fraganciaNombre: 'Coco Vainilla', puedeVenderse: false, activo: true },
     ])
-    conQuery(<CatalogoVenta onVerVenta={jest.fn()} />)
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
     await waitFor(() => expect(within(screen.getByTestId('fragancia-pv2')).getByText('Sin stock')).toBeTruthy())
     expect(within(screen.getByTestId('fragancia-pv1')).getByText('Hay stock')).toBeTruthy()
@@ -113,7 +113,7 @@ describe('elegir fragancias (PR 2.4)', () => {
       { id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, stockDisponible: 8, activo: true },
       { id: 'pv2', fraganciaNombre: 'Coco Vainilla', puedeVenderse: false, stockDisponible: 0, activo: true },
     ])
-    conQuery(<CatalogoVenta onVerVenta={jest.fn()} />)
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
     await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText('Stock: 8')).toBeTruthy())
     expect(within(screen.getByTestId('fragancia-pv2')).getByText('Sin stock')).toBeTruthy()
@@ -136,7 +136,7 @@ describe('elegir fragancias (PR 2.4)', () => {
       { id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, stockDisponible: 8, activo: true },
       { id: 'pv2', fraganciaNombre: 'Coco Vainilla', puedeVenderse: false, stockDisponible: 0, activo: true },
     ])
-    conQuery(<CatalogoVenta onVerVenta={jest.fn()} />)
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
     await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText('Stock: 8')).toBeTruthy())
     await userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
@@ -145,7 +145,7 @@ describe('elegir fragancias (PR 2.4)', () => {
 
   it('el descuento es uno solo para toda la línea de fragancias', async () => {
     useCarritoVenta.setState({ lineas: [{ productoId: 'pv1', producto: lavanda, cantidad: 6, descuentoPct: 5 }] })
-    conQuery(<CatalogoVenta onVerVenta={jest.fn()} />)
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
     const campo = screen.getByLabelText('Descuento (%)')
     expect(campo.props.value).toBe('5')
@@ -163,7 +163,7 @@ describe('elegir fragancias (PR 2.4)', () => {
 
 describe('R5 Elegir fragancias: la venta y la última vez', () => {
   it('muestra las unidades y lo que suman con el descuento de la línea', async () => {
-    conQuery(<CatalogoVenta onVerVenta={jest.fn()} />)
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
     await userEvent.press(screen.getByRole('button', { name: 'Sumar Lavanda' }))
     await userEvent.press(screen.getByRole('button', { name: 'Sumar Coco Vainilla' }))
@@ -172,11 +172,11 @@ describe('R5 Elegir fragancias: la venta y la última vez', () => {
   })
 
   it('"Como la última vez" pone lo que llevó de cada fragancia; sin último pedido no se ofrece', async () => {
-    const { unmount } = conQuery(<CatalogoVenta onVerVenta={jest.fn()} />)
+    const { unmount } = conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
     expect(screen.queryByRole('button', { name: 'Como la última vez' })).toBeNull()
     unmount()
-    conQuery(<CatalogoVenta onVerVenta={jest.fn()} llevo={new Map([['pv1', 6], ['pv2', 12], ['p1', 3]])} />)
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} llevo={new Map([['pv1', 6], ['pv2', 12], ['p1', 3]])} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
     await userEvent.press(screen.getByRole('button', { name: 'Como la última vez' }))
     expect(screen.getByLabelText('Lavanda: 6')).toBeTruthy()

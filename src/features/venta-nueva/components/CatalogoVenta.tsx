@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { ScanBarcode, Search } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Notice } from '@/core/ui/fw'
+import { Notice, StatusChip } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { useResponsive } from '@/libs/useResponsive'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -10,13 +10,12 @@ import { hasCapability } from '@/features/auth/lib/capabilities'
 import { EscanerCodigo } from '@/features/catalogo/components/EscanerCodigo'
 import { useCatalogoVenta } from '../hooks/useCatalogoVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
-import { cantidadEn, type LineaCarrito } from '../lib/carrito'
+import type { CatalogoStockItem } from '@/libs/api-client'
+import { cantidadEn } from '../lib/carrito'
 import { resolverCodigo } from '../lib/escaneo'
 import { FILTROS_VACIOS, filtrarCatalogo } from '../lib/filtrosCatalogo'
 import { ProductoCatalogoCard } from './ProductoCatalogoCard'
 import { CarritoFlotante, CarritoPanel } from './CarritoVenta'
-import { CantidadSheet } from './CantidadSheet'
-import { EditarLineaSheet } from './EditarLineaSheet'
 import { FraganciasSheet } from './FraganciasSheet'
 import { cantidadDeFragancias } from '../lib/fragancias'
 
@@ -26,6 +25,10 @@ interface CatalogoVentaProps {
   llevo?: Map<string, number> | null
   /** Arrancar con el escáner abierto ("Escanear en la góndola"). */
   escanearAlAbrir?: boolean
+  /** Señal del stock en vivo (`useStockVivoVenta`): chip "Stock en vivo" / "Sin conexión"; sin ella no hay chip. */
+  enVivo?: boolean
+  /** Abre la pantalla de cantidad y oferta del producto ("Agregar" y el chip de edición de la tarjeta). */
+  onAbrirOferta: (producto: CatalogoStockItem) => void
 }
 
 /**
@@ -33,7 +36,7 @@ interface CatalogoVentaProps {
  * Tablet vertical: dos columnas. Tablet horizontal (≥ 900): grilla de 3 con la venta en curso fija a la derecha.
  * Filtros con lo que ya manda el servidor (oferta, stock) y con el último pedido; escáner de código de barras.
  */
-export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = false }: CatalogoVentaProps) {
+export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = false, enVivo, onAbrirOferta }: CatalogoVentaProps) {
   const c = useColors()
   const { formFactor, isTabletLandscape } = useResponsive()
   const [busqueda, setBusqueda] = useState('')
@@ -46,14 +49,15 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
     () => filtrarCatalogo(todos, filtros, idsDelUltimo).filter((p) => !p.productoPadreId),
     [todos, filtros, idsDelUltimo],
   )
-  const { lineas, agregar, sumar, restar, quitar, reemplazar } = useCarritoVenta()
-  const [editando, setEditando] = useState<string | null>(null)
-  const [detalle, setDetalle] = useState<LineaCarrito | null>(null)
+  const { lineas, agregar } = useCarritoVenta()
   const [fragancias, setFragancias] = useState<string | null>(null)
   const [escaneando, setEscaneando] = useState(escanearAlAbrir)
   const [avisoEscaneo, setAvisoEscaneo] = useState<string | null>(null)
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
   const columnas = formFactor === 'tabletLandscape' ? 3 : formFactor === 'tabletPortrait' ? 2 : 1
+  // El pie cuenta lo vendible del catálogo: las variantes no se venden sueltas.
+  const totalVendible = useMemo(() => completo.filter((p) => !p.productoPadreId).length, [completo])
+  const sinFiltros = !filtros.delUltimo && !filtros.conOferta && !filtros.hayStock
   const alternar = (k: keyof typeof filtros) => setFiltros((f) => ({ ...f, [k]: !f[k] }))
 
   const alLeer = (codigo: string) => {
@@ -79,9 +83,9 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
           <TextInput
             value={busqueda}
             onChangeText={setBusqueda}
-            placeholder="Buscar por código o nombre"
+            placeholder="Producto, marca o código"
             placeholderTextColor={c.textSecondary}
-            accessibilityLabel="Buscar por código o nombre"
+            accessibilityLabel="Producto, marca o código"
             autoCorrect={false}
             style={{ ...typeScale.cuerpo, flex: 1, color: c.text, paddingVertical: 0 }}
           />
@@ -90,13 +94,18 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
           </Pressable>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space[2] }} style={{ flexGrow: 0 }}>
+          <FiltroChip oscuro label="Todos" activo={sinFiltros} onPress={() => setFiltros(FILTROS_VACIOS)} />
           {llevo ? <FiltroChip oscuro label="Del último pedido" activo={filtros.delUltimo} onPress={() => alternar('delUltimo')} /> : null}
           <FiltroChip oscuro label="Con oferta" activo={filtros.conOferta} onPress={() => alternar('conOferta')} />
           <FiltroChip oscuro label="Hay stock" activo={filtros.hayStock} onPress={() => alternar('hayStock')} />
         </ScrollView>
+        {enVivo === undefined ? null : (
+          <View style={{ alignSelf: 'flex-start' }}>
+            <StatusChip estado={enVivo ? 'entregado' : 'pendiente'} label={enVivo ? 'Stock en vivo' : 'Sin conexión'} />
+          </View>
+        )}
         {avisoEscaneo ? <Notice tone="advertencia">{avisoEscaneo}</Notice> : null}
       </View>
-      <Text style={{ ...typeScale.secundario, color: c.textSecondary, paddingHorizontal: space[4], paddingVertical: space[2] }}>{`${productos.length} resultados`}</Text>
       <FlatList
         key={columnas}
         data={productos}
@@ -104,6 +113,9 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
         keyExtractor={(p) => p.id}
         columnWrapperStyle={columnas > 1 ? { gap: space[3] } : undefined}
         contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: space[4], gap: space[3] }}
+        ListFooterComponent={
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary, textAlign: 'center' }}>{`Mostrando ${productos.length} de ${Math.max(totalVendible, productos.length)}`}</Text>
+        }
         ListEmptyComponent={
           isLoading ? <ActivityIndicator color={c.brand} /> : <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>No hay productos que coincidan.</Text>
         }
@@ -112,12 +124,10 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
             producto={item}
             cantidad={item.esPadreDeVariantes ? cantidadDeFragancias(lineas, item.id) : cantidadEn(lineas, item.id)}
             verCantidades={verCantidades}
+            enVivo={enVivo}
+            onAbrirOferta={onAbrirOferta}
             llevoAntes={llevo?.get(item.id)}
-            onAgregar={() => agregar(item)}
-            onSumar={() => sumar(item.id)}
-            onRestar={() => restar(item.id)}
             onElegirFragancias={() => setFragancias(item.id)}
-            onEditar={item.esPadreDeVariantes ? undefined : () => setEditando(item.id)}
           />
         )}
       />
@@ -125,24 +135,10 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
     </View>
   )
 
-  const linea = lineas.find((l) => l.productoId === editando) ?? null
   return (
     <View style={{ flex: 1, flexDirection: 'row' }}>
       {lista}
       {isTabletLandscape && <CarritoPanel lineas={lineas} onVerVenta={onVerVenta} />}
-      <CantidadSheet
-        linea={linea}
-        onClose={() => setEditando(null)}
-        onConfirm={(l) => { reemplazar(l); setEditando(null) }}
-        onQuitar={(id) => { quitar(id); setEditando(null) }}
-        onDetalle={(l) => { setEditando(null); setDetalle(l) }}
-      />
-      <EditarLineaSheet
-        linea={detalle}
-        onClose={() => setDetalle(null)}
-        onConfirm={(l) => { reemplazar(l); setDetalle(null) }}
-        onQuitar={(id) => { quitar(id); setDetalle(null) }}
-      />
       <FraganciasSheet padreId={fragancias} onClose={() => setFragancias(null)} llevo={llevo} />
       {escaneando ? <EscanerCodigo visible onClose={() => setEscaneando(false)} onLeido={alLeer} /> : null}
     </View>

@@ -106,7 +106,7 @@ const describirFaltanteFiscal = (f: FaltanteStockFiscal) =>
  * tilde puesto consulta POST /Ventas/stock-fiscal/verificar y avisa; nunca bloquea (K12). Sin valor (el default no llegó)
  * queda apagado y deshabilitado.
  */
-function ConFactura({ conFactura, onChange, lineas }: { conFactura: boolean | undefined; onChange: (v: boolean) => void; lineas: LineaCarrito[] }) {
+export function ConFactura({ conFactura, onChange, lineas }: { conFactura: boolean | undefined; onChange: (v: boolean) => void; lineas: LineaCarrito[] }) {
   const c = useColors()
   const valor = conFactura ?? false
   const items = useMemo(() => itemsParaVerificar(lineas), [lineas])

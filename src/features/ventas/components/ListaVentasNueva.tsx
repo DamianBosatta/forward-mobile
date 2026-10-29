@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Pressable, ScrollView, SectionList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Plus } from 'lucide-react-native'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import {
   DocumentCard, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, useMenuLeading,
@@ -15,6 +14,7 @@ import type { FiltroVentasRuta } from '@/features/listas/lib/filtroDeRuta'
 import { agruparPorDia, entregaDe, horaDe } from '../lib/agruparPorDia'
 import { identidadDeBorrador } from '../lib/borradorCliente'
 import { ListaBorradores } from './ListaBorradores'
+import { Fab } from '@/core/ui/fw/Fab'
 import { motivosDe } from '@/features/autorizaciones/lib/motivos'
 import { useVentasListaNueva, type FiltroEstado, type PeriodoVentas, type PestanaVentas } from '../hooks/useVentasListaNueva'
 
@@ -73,7 +73,7 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
   const c = useColors()
   const router = useRouter()
   const leading = useMenuLeading()
-  const { isTablet, isTabletLandscape } = useResponsive()
+  const { isTabletLandscape } = useResponsive()
   const { canDo } = usePermissions()
   const [elegida, setElegida] = useState<string | null>(null)
   const l = useVentasListaNueva(filtroDeRuta)
@@ -177,10 +177,6 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
       <TopBar
         title="Ventas"
         leading={leading}
-        // En tablet no hay barra inferior con el "+": la venta nueva se abre desde acá.
-        actions={isTablet && canDo('MOD_VENTAS', 'create')
-          ? [{ icon: Plus, accessibilityLabel: 'Nueva venta', onPress: () => router.push('/(tabs)/ventas/nueva' as never) }]
-          : []}
         tabs={PESTANAS.map((p) => ({ label: p.label, selected: p.key === l.pestana, onPress: () => { l.setPestana(p.key); setElegida(null) } }))}
       />
       <TwoPane
@@ -188,6 +184,8 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
         detail={isTabletLandscape && elegida ? detalle(elegida, () => setElegida(null)) : null}
         emptyDetail={<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: space[6] }}><Text style={secundario}>Elegí una venta para ver el detalle.</Text></View>}
       />
+      {/* La venta nueva sale de este botón, en teléfono y en tablet; pide elegir el cliente primero. */}
+      {canDo('MOD_VENTAS', 'create') ? <Fab accessibilityLabel="Nueva venta" label="Nueva venta" onPress={() => router.push('/(tabs)/ventas/nueva' as never)} /> : null}
     </View>
   )
 }

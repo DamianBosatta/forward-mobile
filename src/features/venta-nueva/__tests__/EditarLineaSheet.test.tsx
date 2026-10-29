@@ -211,7 +211,7 @@ describe('EditarLineaSheet: costos solo con CAP_VER_COSTOS', () => {
 })
 
 describe('EditarLineaSheet: fragancias no pasan su stock disponible', () => {
-  const lavanda = producto({ id: 'pv1', nombre: 'Saphirus - Lavanda', productoPadreId: 'pf', ventaMinimaUnidades: 6, fraccionMinimaVenta: 'Bulto', real: 100 })
+  const lavanda = producto({ id: 'pv1', nombre: 'Saphirus - Lavanda', productoPadreId: 'pf', ventaMinimaUnidades: 6, fraccionMinimaVenta: 'Bulto', real: 100, disponible: 100 })
   const abrirFragancia = (cantidad: number) => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(<QueryClientProvider client={qc}><EditarLineaSheet linea={{ productoId: 'pv1', producto: lavanda, cantidad, descuentoPct: 0 }} onClose={jest.fn()} onConfirm={jest.fn()} onQuitar={jest.fn()} /></QueryClientProvider>)

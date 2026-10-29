@@ -52,5 +52,13 @@ describe('Fab', () => {
     expect(onPress).toHaveBeenCalledTimes(1)
     expect(flat(fab.props.style)).toMatchObject({ width: 56, height: 56 })
   })
+  it('con label es una pastilla de 56 de alto con el texto, sin ancho fijo', () => {
+    render(<Fab accessibilityLabel="Nueva venta" label="Nueva venta" onPress={() => {}} />)
+    const fab = screen.getByRole('button', { name: 'Nueva venta' })
+    expect(screen.getByText('Nueva venta')).toBeTruthy()
+    const st = flat(fab.props.style)
+    expect(st.height).toBe(56)
+    expect(st.width).toBeUndefined()
+  })
 })
 

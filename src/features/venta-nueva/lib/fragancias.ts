@@ -45,12 +45,12 @@ export const cantidadDeFragancias = (lineas: LineaCarrito[], padreId: string) =>
  * (sin dato = 0, falla cerrado); quien no, sin límite si el servidor dice que puede venderse y 0 si no.
  */
 export function stockDeFragancia(
-  variante: Pick<CatalogoStockItem, 'real' | 'puedeVenderse'>,
+  variante: Pick<CatalogoStockItem, 'disponible' | 'puedeVenderse'>,
   delServidor: { stockDisponible?: number | null; puedeVenderse?: boolean | null } | undefined,
   verCantidades: boolean,
 ): number {
   if (!verCantidades) return (delServidor?.puedeVenderse ?? variante.puedeVenderse) ? Number.POSITIVE_INFINITY : 0
-  return Math.max(0, Math.floor(delServidor ? (delServidor.stockDisponible ?? 0) : variante.real))
+  return Math.max(0, Math.floor(delServidor ? (delServidor.stockDisponible ?? 0) : variante.disponible))
 }
 
 /** El descuento de la línea de fragancias: es uno solo para todas sus variantes (como en la web). */

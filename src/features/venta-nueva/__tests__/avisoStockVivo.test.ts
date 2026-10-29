@@ -1,4 +1,4 @@
-import { aplicarCambiosAlCatalogo, avisoDeStock } from '../lib/avisoStockVivo'
+import { aplicarCambiosAlCatalogo, avisoDeStock, stockCambiado } from '../lib/avisoStockVivo'
 import { producto } from '../__testing__/producto'
 import type { LineaCarrito } from '../lib/carrito'
 
@@ -51,5 +51,34 @@ describe('aplicarCambiosAlCatalogo', () => {
   it('acepta el catálogo guardado como arreglo (versión anterior)', () => {
     const r = aplicarCambiosAlCatalogo([producto({ id: 'p1', disponible: 9 })], [{ productoId: 'p1', estado: 'SinStock', disponible: 0, stockMinimo: 5 }])
     expect(r.items[0].disponible).toBe(0)
+  })
+})
+
+describe('aplicarCambiosAlCatalogo: puedeVenderse (S6)', () => {
+  const cambio = (disponible: number) => [{ productoId: 'p1', estado: 'ConStock' as const, disponible, stockMinimo: 0 }]
+  it('deriva puedeVenderse de disponible > 0, igual que el servidor', () => {
+    const items = [producto({ id: 'p1', disponible: 5, puedeVenderse: true })]
+    expect(aplicarCambiosAlCatalogo({ items, truncado: false }, cambio(0)).items[0].puedeVenderse).toBe(false)
+    const sin = [producto({ id: 'p1', disponible: 0, puedeVenderse: false })]
+    expect(aplicarCambiosAlCatalogo({ items: sin, truncado: false }, cambio(2)).items[0].puedeVenderse).toBe(true)
+  })
+})
+
+describe('stockCambiado (S6: al revisar se marca lo que cambió)', () => {
+  const lineaCon = (id: string, disponible: number, cantidad = 4, puedeVenderse = disponible > 0): LineaCarrito => ({
+    productoId: id, producto: producto({ id, disponible, puedeVenderse }), cantidad, descuentoPct: 0,
+  })
+  it('con cantidades marca solo las líneas cuyo disponible cambió contra el que se vio al cargar', () => {
+    const lineas = [lineaCon('p1', 9), lineaCon('p2', 4)]
+    const catalogo = [producto({ id: 'p1', disponible: 3 }), producto({ id: 'p2', disponible: 4 })]
+    expect(stockCambiado(lineas, catalogo, true)).toEqual([{ productoId: 'p1', antes: 9, ahora: 3, puedeVenderse: true }])
+  })
+  it('sin cantidades (disponible llega en 0) compara puedeVenderse, no el número', () => {
+    const lineas = [lineaCon('p1', 0, 4, true), lineaCon('p2', 0, 4, true)]
+    const catalogo = [producto({ id: 'p1', disponible: 0, puedeVenderse: true }), producto({ id: 'p2', disponible: 0, puedeVenderse: false })]
+    expect(stockCambiado(lineas, catalogo, false).map((c) => c.productoId)).toEqual(['p2'])
+  })
+  it('un producto que ya no está en el catálogo no se marca', () => {
+    expect(stockCambiado([lineaCon('p9', 3)], [producto({ id: 'p1' })], true)).toEqual([])
   })
 })

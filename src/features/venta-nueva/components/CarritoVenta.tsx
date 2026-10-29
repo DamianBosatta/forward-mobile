@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ShoppingCart } from 'lucide-react-native'
 import { radii, space, typeScale, importe, useColors } from '@/libs/theme'
 import { Button, formatImporte } from '@/core/ui/fw'
-import { precioServidor, subtotalLinea, totalEstimado, type LineaCarrito } from '../lib/carrito'
+import { precioServidor, resumenCarrito, subtotalLinea, totalEstimado, type LineaCarrito } from '../lib/carrito'
 
 interface CarritoProps {
   lineas: LineaCarrito[]
@@ -12,13 +12,12 @@ interface CarritoProps {
 
 const ROTULO = 'Total estimado'
 
-/** Teléfono: barra fija abajo con la cantidad de productos, el total estimado y "Ver venta" (lámina CalleCatalogo). */
+/** Teléfono: barra fija abajo con el total estimado, productos y bultos, y "Ver venta" (lámina CalleCatalogo). */
 export function CarritoFlotante({ lineas, onVerVenta }: CarritoProps) {
   const c = useColors()
   // La lámina la dibuja siempre: sin productos queda en 0 y "Ver venta" no responde.
   const vacio = lineas.length === 0
   const total = formatImporte(totalEstimado(lineas))
-  const productos = lineas.length === 1 ? '1 producto' : `${lineas.length} productos`
   return (
     <View testID="carrito-barra" style={{ paddingHorizontal: space[3], paddingTop: space[3], paddingBottom: space[3], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
       <Pressable
@@ -27,20 +26,20 @@ export function CarritoFlotante({ lineas, onVerVenta }: CarritoProps) {
         disabled={vacio}
         accessibilityState={{ disabled: vacio }}
         onPress={onVerVenta}
-        style={{ opacity: vacio ? 0.6 : 1, minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingLeft: space[4], paddingRight: space[2], borderRadius: radii.tarjeta, backgroundColor: c.topBar }}
+        style={{ opacity: vacio ? 0.6 : 1, minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingLeft: space[4], paddingRight: space[2], borderRadius: radii.tarjeta, backgroundColor: c.action }}
       >
         <View>
-          <ShoppingCart size={24} color={c.onTopBarStrong} />
-          <View style={{ position: 'absolute', top: -8, right: -10, paddingHorizontal: 6, borderRadius: radii.pastilla, backgroundColor: c.action }}>
-            <Text testID="carrito-items" style={{ ...typeScale.etiqueta, color: c.onAction }}>{lineas.length}</Text>
+          <ShoppingCart size={24} color={c.onAction} />
+          <View style={{ position: 'absolute', top: -8, right: -10, paddingHorizontal: 6, borderRadius: radii.pastilla, backgroundColor: c.bg }}>
+            <Text testID="carrito-items" style={{ ...typeScale.etiqueta, color: c.action }}>{lineas.length}</Text>
           </View>
         </View>
         <View style={{ flex: 1, marginLeft: space[2] }}>
-          <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>{productos}</Text>
-          <Text testID="carrito-total" style={{ ...typeScale.titulo, ...importe, color: c.onTopBarStrong }}>{total}</Text>
+          <Text testID="carrito-total" style={{ ...typeScale.titulo, ...importe, color: c.onAction }}>{total}</Text>
+          <Text style={{ ...typeScale.secundario, color: c.onAction }}>{resumenCarrito(lineas)}</Text>
         </View>
-        <View style={{ minHeight: 44, paddingHorizontal: space[4], justifyContent: 'center', borderRadius: radii.campo, backgroundColor: c.action }}>
-          <Text style={{ ...typeScale.cuerpoDestacado, color: c.onAction }}>Ver venta</Text>
+        <View style={{ minHeight: 44, paddingHorizontal: space[4], justifyContent: 'center', borderRadius: radii.campo, backgroundColor: c.bg }}>
+          <Text style={{ ...typeScale.cuerpoDestacado, color: c.action }}>Ver venta</Text>
         </View>
       </Pressable>
     </View>

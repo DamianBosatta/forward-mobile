@@ -1,6 +1,10 @@
 import type { CatalogoStockItem } from '@/libs/api-client'
 import { redondear2 } from '@/libs/reglas/dinero'
 import { calcularSubtotalConDescuento } from '@/features/ventas/lib/descuentos'
+import { bultosExactos, multiploDe, presentacionDe, unidadesDeBulto } from './presentacion'
+
+export { multiploDe }
+type DatosDeBulto = Pick<CatalogoStockItem, 'ventaMinimaUnidades' | 'fraccionMinimaVenta' | 'bultoContenido'>
 
 /**
  * Carrito de la venta nueva (plan 9 §2.1). Funciones puras: el teléfono no pone
@@ -16,17 +20,54 @@ export interface LineaCarrito {
   descuentoPct: number
 }
 
-/** Unidades por venta del producto: la cantidad va de a este múltiplo (6 → 6, 12, 18…). */
-export function multiploDe(producto: Pick<CatalogoStockItem, 'ventaMinimaUnidades'>): number {
-  const m = producto.ventaMinimaUnidades
-  return m && m > 1 ? m : 1
-}
-
 /** "Se vende por caja de 6"; null si se vende por unidad. "Bulto" es la caja cerrada. */
 export function leyendaMultiplo(producto: Pick<CatalogoStockItem, 'ventaMinimaUnidades' | 'fraccionMinimaVenta'>): string | null {
   const m = multiploDe(producto)
   if (m === 1) return null
   return `Se vende por ${producto.fraccionMinimaVenta === 'Bulto' ? 'caja' : 'pack'} de ${m}`
+}
+
+/** Unidades del bulto del producto (la regla única está en `presentacion.ts`); 1 si se vende por unidad. */
+export const unidadesPorBultoDe = (producto: DatosDeBulto): number => unidadesDeBulto(presentacionDe(producto))
+
+/** Se vende por bulto (caja o pack cerrado) cuando el bulto tiene más de una unidad. */
+export const vendePorBulto = (producto: DatosDeBulto): boolean => unidadesPorBultoDe(producto) > 1
+
+const rotuloBultos = (n: number): string => (n === 1 ? '1 bulto' : `${n} bultos`)
+
+/** "3 bultos" / "1 bulto" si son bultos cerrados; si no, "12 u". `unidades` siempre viene en unidades. */
+export function cantidadEnPresentacion(producto: DatosDeBulto, unidades: number): string {
+  const bultos = bultosExactos(presentacionDe(producto), unidades)
+  return bultos === null ? `${unidades} u` : rotuloBultos(bultos)
+}
+
+export type NivelStock = 'hay' | 'poco' | 'sin'
+
+/**
+ * Disponibilidad de la tarjeta. Con `verCantidades` sale del `disponible` del servidor (nunca de `real`);
+ * sin esa capacidad el servidor manda `disponible = 0` y solo vale `puedeVenderse`, sin números.
+ * `poco` = queda stock pero no más que el mínimo del producto. `enVivo` agrega " · ahora".
+ */
+export function stockDeTarjeta(
+  p: Pick<CatalogoStockItem, 'disponible' | 'puedeVenderse' | 'stockMinimo'> & DatosDeBulto,
+  verCantidades: boolean,
+  enVivo = false,
+): { nivel: NivelStock; texto: string } {
+  if (!verCantidades) return p.puedeVenderse ? { nivel: 'hay', texto: 'Hay stock' } : { nivel: 'sin', texto: 'Sin stock · se puede pedir' }
+  if (p.disponible <= 0) return { nivel: 'sin', texto: 'Sin stock · se puede pedir' }
+  const poco = (p.stockMinimo ?? 0) > 0 && p.disponible <= (p.stockMinimo ?? 0)
+  const porBulto = unidadesPorBultoDe(p)
+  const queda = porBulto > 1 && p.disponible >= porBulto ? rotuloBultos(Math.floor(p.disponible / porBulto)) : `${p.disponible} u`
+  return { nivel: poco ? 'poco' : 'hay', texto: `Quedan ${queda}${enVivo ? ' · ahora' : ''}` }
+}
+
+/** Resumen de la barra del carrito: productos y bultos (las líneas por unidad suman "u"). */
+export function resumenCarrito(lineas: LineaCarrito[]): string {
+  const productos = lineas.length === 1 ? '1 producto' : `${lineas.length} productos`
+  const exactos = lineas.map((l) => bultosExactos(presentacionDe(l.producto), l.cantidad))
+  const bultos = exactos.reduce<number>((a, n) => a + (n ?? 0), 0)
+  const sueltas = lineas.reduce((a, l, i) => a + (exactos[i] === null ? l.cantidad : 0), 0)
+  return [productos, bultos > 0 ? rotuloBultos(bultos) : null, sueltas > 0 ? `${sueltas} u` : null].filter(Boolean).join(' · ')
 }
 
 /** Precio que muestra el servidor: la oferta vigente si la hay, si no la lista. */

@@ -1,6 +1,7 @@
 import { redondear2 } from '@/libs/reglas/dinero'
 import type { TipoDocumento } from '@/features/clientes/components/SeleccionarClienteSheet'
 import { precioServidor, totalEstimado, type LineaCarrito } from './carrito'
+import { isLineaSinStock } from '@/features/ventas/lib/venta-form-retiro'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoPiso, avisoTope } from './linea'
 
 /**
@@ -13,7 +14,16 @@ export interface ContextoAvisos {
   tope: number
   exento: boolean
   descuentoGeneral: number
+  /**
+   * Ve cantidades de stock (`CAP_VER_CANTIDADES_STOCK`). Sin la capacidad el servidor manda `disponible = 0` y la
+   * falta de stock sale de `puedeVenderse`. Sin indicar, se compara contra `disponible`.
+   */
+  verCantidades?: boolean
 }
+
+/** La línea pide más de lo que se puede vender: con cantidades, contra `disponible`; sin ellas, `puedeVenderse`. */
+export const faltaStock = (l: LineaCarrito, verCantidades = true): boolean =>
+  isLineaSinStock({ cantidad: l.cantidad, stockDisponible: l.producto.disponible, puedeVenderse: l.producto.puedeVenderse }, verCantidades)
 
 /** Descuento compuesto de la línea con el general: (1 − ítem) × (1 − general), como el servidor. */
 export const pctCompuesto = (item: number, general: number) => 100 * (1 - (1 - item / 100) * (1 - general / 100))
@@ -36,7 +46,7 @@ export function avisosVenta(lineas: LineaCarrito[], ctx: ContextoAvisos): { porA
   if (!esPedido) return { porAutorizar, rechazos }
   if (superaTope) porAutorizar.push('un descuento supera tu tope')
   if (pisos.includes('amarillo')) porAutorizar.push('un precio queda debajo del mínimo')
-  if (lineas.some((l) => l.cantidad > l.producto.real)) porAutorizar.push('falta stock')
+  if (lineas.some((l) => faltaStock(l, ctx.verCantidades))) porAutorizar.push('falta stock')
   return { porAutorizar, rechazos }
 }
 

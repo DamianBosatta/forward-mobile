@@ -38,12 +38,12 @@ jest.mock('../components/ElegirClienteVenta', () => ({
   ElegirClienteVenta: ({ onElegir }: { onElegir: (c: object) => void }) =>
     mockBoton('Elegir Tarantino', () => onElegir({ id: 'c1', direccion: 'Tarantino 1898', nombreFantasia: 'Autoservicio Abel' })),
 }))
-jest.mock('../components/CatalogoVenta', () => ({ CatalogoVenta: () => null }))
+jest.mock('../components/CatalogoVenta', () => ({ CatalogoVenta: ({ onVerVenta }: { onVerVenta: () => void }) => mockBoton('Ver venta', onVerVenta) }))
 
 const TODOS = { lunes: true, martes: true, miercoles: true, jueves: true, viernes: true, sabado: true, domingo: true }
 const URL_DEFECTO = '/api/v1/Ventas/con-factura-por-defecto'
 let porDefecto: unknown
-const pala = producto({ real: 100 })
+const pala = producto({ real: 100, disponible: 100 })
 
 function pantalla() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
@@ -52,10 +52,10 @@ function pantalla() {
 async function abrirConfirmar() {
   pantalla()
   await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
-  await userEvent.press(screen.getByRole('button', { name: 'Buscar en el catálogo' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Ver venta' }))
   useCarritoVenta.setState({ lineas: [{ productoId: pala.id, producto: pala, cantidad: 12, descuentoPct: 0 }] })
   await waitFor(() => expect(mockGet).toHaveBeenCalledWith(URL_DEFECTO))
-  await userEvent.press(screen.getByRole('button', { name: 'Seguir' }))
+  await screen.findByRole('switch', { name: 'Con factura' })
 }
 const cuerpoDelAlta = () => mockPost.mock.calls.find((c) => c[0] === '/api/v1/Ventas')?.[1]
 
@@ -78,7 +78,7 @@ describe('V7 Confirmar: Con factura', () => {
     const sw = await screen.findByRole('switch', { name: 'Con factura' })
     await waitFor(() => expect(screen.getByRole('switch', { name: 'Con factura' })).toBeChecked())
     expect(sw).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Confirmar pedido' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(cuerpoDelAlta()).toBeDefined())
     expect(cuerpoDelAlta().conFactura).toBe(true)
   })
@@ -88,7 +88,7 @@ describe('V7 Confirmar: Con factura', () => {
     await waitFor(() => expect(screen.getByRole('switch', { name: 'Con factura' })).toBeChecked())
     await userEvent.press(screen.getByRole('switch', { name: 'Con factura' }))
     expect(screen.getByRole('switch', { name: 'Con factura' })).not.toBeChecked()
-    await userEvent.press(screen.getByRole('button', { name: 'Confirmar pedido' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(cuerpoDelAlta()).toBeDefined())
     expect(cuerpoDelAlta().conFactura).toBe(false)
   })
@@ -98,7 +98,7 @@ describe('V7 Confirmar: Con factura', () => {
     await abrirConfirmar()
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith(URL_DEFECTO))
     expect(await screen.findByRole('switch', { name: 'Con factura' })).not.toBeChecked()
-    await userEvent.press(screen.getByRole('button', { name: 'Confirmar pedido' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(cuerpoDelAlta()).toBeDefined())
     expect(cuerpoDelAlta().conFactura).toBe(false)
   })
@@ -108,7 +108,7 @@ describe('V7 Confirmar: Con factura', () => {
       : Promise.resolve(url.includes('dias-entrega') ? TODOS : url.includes('feriados') ? [] : undefined))
     await abrirConfirmar()
     expect(screen.getByRole('switch', { name: 'Con factura' })).toBeDisabled()
-    await userEvent.press(screen.getByRole('button', { name: 'Confirmar pedido' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(cuerpoDelAlta()).toBeDefined())
     expect(cuerpoDelAlta()).not.toHaveProperty('conFactura')
   })

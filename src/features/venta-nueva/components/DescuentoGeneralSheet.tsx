@@ -7,7 +7,7 @@ import { hasCapability } from '@/features/auth/lib/capabilities'
 import type { LineaCarrito } from '../lib/carrito'
 import { totalesEstimados } from '../lib/avisos'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
-import { opcionesDeDescuento } from './CantidadSheet'
+import { chipsDeDescuento } from '../lib/presentacion'
 
 interface Props {
   visible: boolean
@@ -30,7 +30,7 @@ function Contenido({ valor, lineas, flete, onClose, onAplicar }: Props) {
   const user = useAuthStore((s) => s.user)
   const tope = user?.maxDescuentoPorcentaje ?? 0
   const exento = hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO')
-  const opciones = opcionesDeDescuento(tope, exento)
+  const opciones = chipsDeDescuento(tope, exento)
   const [texto, setTexto] = useState(mostrarNumero(valor))
   const [otro, setOtro] = useState(() => !opciones.includes(valor))
   const leido = leerNumero(texto)

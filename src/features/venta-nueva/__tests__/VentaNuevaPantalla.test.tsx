@@ -11,6 +11,7 @@ import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { producto } from '../__testing__/producto'
 import { avisosVenta } from '../lib/avisos'
 import { aplicarDescuentoGeneral } from '../__testing__/descuentoGeneral'
+import { AVISO_DEUDA_VENCIDA } from '@/features/clientes/components/CreditoDelCliente'
 
 const mockPost = jest.fn()
 const mockGet = jest.fn()
@@ -51,8 +52,9 @@ jest.mock('../components/ElegirClienteVenta', () => ({
     mockBoton('Elegir Tarantino', () => onElegir({ id: 'c1', direccion: 'Tarantino 1898', nombreFantasia: 'Autoservicio Abel' })),
 }))
 jest.mock('../components/CatalogoVenta', () => ({
-  CatalogoVenta: ({ onVerVenta }: { onVerVenta: () => void }) => (
+  CatalogoVenta: ({ onVerVenta, onAbrirOferta }: { onVerVenta: () => void; onAbrirOferta: (p: object) => void }) => (
     <>
+      {mockBoton('Agregar pala', () => onAbrirOferta(require('../__testing__/producto').producto({ real: 100, disponible: 100 })))}
       {mockBoton('Añadir pala', () => require('../hooks/useCarritoVenta').useCarritoVenta.getState().agregar(require('../__testing__/producto').producto()))}
       {mockBoton('Ver venta', onVerVenta)}
     </>
@@ -67,12 +69,11 @@ function pantalla(props: React.ComponentProps<typeof VentaNuevaPantalla> = {}) {
   return render(<QueryClientProvider client={qc}><VentaNuevaPantalla {...props} /></QueryClientProvider>)
 }
 const sync = () => screen.getByText(/Guardado|Guardando…|Sin guardar|Creando borrador…|Sin autoguardado/)
-// V2 elegir cliente y V3 cómo arrancar (con el tipo que se elige ahí); arrancar crea el borrador y abre el catálogo.
-async function arrancar(como = 'Buscar en el catálogo') {
+// Cliente primero: el tipo (si no es Pedido) se elige antes del cliente; elegirlo crea el borrador y abre el catálogo.
+async function arrancar() {
   pantalla()
-  await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
   if (mockTipo === 'Presupuesto') await userEvent.press(screen.getByRole('radio', { name: 'Presupuesto' }))
-  await userEvent.press(screen.getByRole('button', { name: como }))
+  await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
 }
 async function elegirCliente() {
   await arrancar()
@@ -80,11 +81,9 @@ async function elegirCliente() {
   await userEvent.press(screen.getByRole('button', { name: 'Ver venta' }))
   await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
 }
-// V6 "Seguir" abre V7 Confirmar; ahí está el botón que guarda.
-const abrirConfirmacion = () => userEvent.press(screen.getByRole('button', { name: 'Seguir' }))
-async function seguirYPresionar(nombre: string) {
-  await abrirConfirmacion()
-  await userEvent.press(screen.getByRole('button', { name: nombre }))
+// La revisión (lámina Carrito) tiene un solo "Confirmar venta": vuelve a chequear el stock y manda la venta.
+async function confirmarVenta() {
+  await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
 }
 async function anadir() {
   if (!screen.queryByRole('button', { name: 'Añadir pala' })) await userEvent.press(screen.getByRole('button', { name: 'Agregar productos' }))
@@ -111,12 +110,10 @@ describe('venta nueva: stock en vivo (S2)', () => {
     await elegirCliente()
     await anadir()
     await userEvent.press(screen.getByRole('button', { name: 'Ver venta' }))
-    expect(screen.getByText('Sin conexión')).toBeTruthy()
     act(() => { mockHub.oyentes.forEach((o) => { o.alEstado(true); o.alCambio({ depositoId: DEPOSITO_CENTRAL_ID, productos: [{ productoId: 'p1', estado: 'SinStock', disponible: 0, stockMinimo: 5 }] }) }) })
-    expect(screen.getByText('Stock en vivo')).toBeTruthy()
     expect(screen.getByText('Pala c/Cabo Fija LP se quedó sin stock: la venta va a ir a autorización')).toBeTruthy()
-    expect(screen.getByTestId('linea-stock-p1')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Seguir' })).toBeEnabled()
+    expect(screen.getByTestId('aviso-stock-p1')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeEnabled()
   })
 
   it('un usuario sin cantidades ve el aviso sin números', async () => {
@@ -185,7 +182,7 @@ describe('venta nueva: cliente, borrador y autoguardado', () => {
     await arrancar()
     expect(await screen.findByText(/Cliente no encontrado.*no se guarda sola/s)).toBeTruthy()
     expect(sync()).toHaveTextContent('Sin autoguardado')
-    expect(screen.getByRole('button', { name: 'Agregar productos' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Añadir pala' })).toBeTruthy()
   })
 
   it('descartar borra el borrador en el servidor y vuelve', async () => {
@@ -199,14 +196,14 @@ describe('venta nueva: cliente, borrador y autoguardado', () => {
 })
 
 describe('pestaña Líneas', () => {
-  const pala = producto({ real: 100 })
+  const pala = producto({ real: 100, disponible: 100 })
   const conLineas = (descuentoPct = 0, cantidad = 12, p = pala) => useCarritoVenta.setState({ lineas: [{ productoId: p.id, producto: p, cantidad, descuentoPct }] })
   beforeEach(() => useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10 } as never }))
 
   it('una línea sobre el tope lo marca y avisa que el pedido va a quedar por autorizar', async () => {
     await elegirCliente()
     conLineas(12.82)
-    expect(await screen.findByText('Desc. 12,82 % · sobre tu tope')).toBeTruthy()
+    expect(await screen.findByText('−12,82 %')).toBeTruthy()
     expect(screen.getByText('Este pedido va a quedar por autorizar')).toBeTruthy()
     expect(screen.getByText(/Porque un descuento supera tu tope/)).toBeTruthy()
   })
@@ -269,7 +266,7 @@ describe('pestaña Líneas', () => {
     expect(mockPut.mock.calls.at(-1)[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 10 }])
     expect(await screen.findByText(/el resto se guarda al confirmar el pedido/)).toBeTruthy()
     await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
-    await seguirYPresionar('Confirmar pedido')
+    await confirmarVenta()
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas', expect.objectContaining({
       tipoOperacion: 2, items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 12.82 }],
     })))
@@ -290,7 +287,7 @@ describe('pestaña Líneas', () => {
   ] as const)('borrador: %s', async (_nombre, tipo, permissions, maxDescuentoPorcentaje, descuentos, general, items, descuentoGeneral) => {
     useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions, maxDescuentoPorcentaje } as never })
     mockTipo = tipo
-    const otra = producto({ id: 'p2', real: 100 })
+    const otra = producto({ id: 'p2', real: 100, disponible: 100 })
     await elegirCliente()
     useCarritoVenta.setState({ lineas: descuentos.map((descuentoPct, i) => ({ productoId: i ? 'p2' : 'p1', producto: i ? otra : pala, cantidad: 12, descuentoPct })) })
     if (general) await aplicarDescuentoGeneral(general)
@@ -326,8 +323,9 @@ describe('pestaña Líneas', () => {
 
   it('sin stock suficiente también avisa; dentro del tope y con stock, no hay banner', async () => {
     await elegirCliente()
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }], maxDescuentoPorcentaje: 10 } as never })
     conLineas(5, 12)
-    expect(await screen.findByText('Desc. 5 %')).toBeTruthy()
+    expect(await screen.findByText('−5 %')).toBeTruthy()
     expect(screen.queryByText('Este pedido va a quedar por autorizar')).toBeNull()
     conLineas(5, 120)
     expect(await screen.findByText(/Porque falta stock/)).toBeTruthy()
@@ -338,7 +336,7 @@ describe('pestaña Líneas', () => {
     conLineas(0, 10)
     await aplicarDescuentoGeneral(10)
     await waitFor(() => expect(mockPut).toHaveBeenLastCalledWith('/api/v1/Ventas/b1', expect.objectContaining({ descuentoGeneral: 10 })), ESPERA)
-    expect(screen.getByTestId('venta-total')).toHaveTextContent('$ 22.464,00') // 10 × 2.496 − 10 %
+    expect(screen.getByTestId('revisar-total')).toHaveTextContent('$ 22.464,00') // 10 × 2.496 − 10 %
   })
 
   it('muestra la comisión estimada que calcula el servidor, solo con comisión activa', async () => {
@@ -366,8 +364,8 @@ describe('pestaña Cabecera', () => {
   const ultimoPut = () => mockPut.mock.calls[mockPut.mock.calls.length - 1][1]
   async function enCabecera() {
     await elegirCliente()
-    useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: producto({ real: 100 }), cantidad: 10, descuentoPct: 0 }] })
-    await userEvent.press(screen.getByRole('tab', { name: 'Cabecera' }))
+    useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: producto({ real: 100, disponible: 100 }), cantidad: 10, descuentoPct: 0 }] })
+    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
   }
 
   it('retiro: sin fecha ni flete en el autoguardado y sin tira de días', async () => {
@@ -422,7 +420,7 @@ describe('pestaña Cabecera', () => {
     await userEvent.type(screen.getByLabelText('Flete ($)'), '3300')
     await userEvent.type(screen.getByLabelText('Observaciones'), ' Por la puerta de atrás ')
     await waitFor(() => expect(ultimoPut()).toMatchObject({ cargoFlete: 3300, observaciones: 'Por la puerta de atrás' }), ESPERA)
-    expect(screen.getByTestId('venta-total')).toHaveTextContent('$ 28.260,00') // 10 × 2.496 + 3.300
+    expect(screen.getByTestId('revisar-total')).toHaveTextContent('$ 28.260,00') // 10 × 2.496 + 3.300
   })
 
   describe('crédito disponible del cliente', () => {
@@ -471,23 +469,23 @@ describe('pestaña Cabecera', () => {
     expect(screen.getByText('Podés ceder desde 2,5 % hasta menos de 5 %.')).toBeTruthy()
     await userEvent.clear(campo)
     await userEvent.type(campo, '3')
-    await userEvent.press(screen.getByRole('tab', { name: 'Líneas (1)' }))
     expect(screen.getByText(/cediste parte de tu comisión/)).toBeTruthy()
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     expect(ultimoPut()).not.toHaveProperty('porcentajeComisionCedido')
   })
 
-  it('tablet horizontal: Líneas y Cabecera lado a lado, sin pestañas', async () => {
+  it('tablet horizontal: la revisión de una venta nueva sigue siendo una columna, sin pestañas, con la entrega a un toque', async () => {
     mockDims.mockReturnValue({ width: 1194, height: 834, scale: 2, fontScale: 1 })
     await elegirCliente()
     expect(screen.queryByRole('tab', { name: 'Cabecera' })).toBeNull()
     expect(screen.getByText('Agregar productos')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
     expect(screen.getByText('Fecha de entrega')).toBeTruthy()
   })
 })
 
 describe('confirmar', () => {
-  const pala = producto({ real: 100 })
+  const pala = producto({ real: 100, disponible: 100 })
   const altas = () => mockPost.mock.calls.filter(([u]) => u === '/api/v1/Ventas')
   let alerta: jest.SpyInstance
   beforeEach(() => {
@@ -503,7 +501,7 @@ describe('confirmar', () => {
     useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: pala, cantidad, descuentoPct: 0 }] })
     await screen.findByText('Pala c/Cabo Fija LP')
   }
-  const confirmar = () => seguirYPresionar('Confirmar pedido')
+  const confirmar = confirmarVenta
   const guardada = (id: string, mensaje: string) => ({ pathname: '/(tabs)/ventas/guardada', params: { id, mensaje } })
   // La vista previa de la venta también hace POST: las respuestas de prueba se encolan solo para el
   // alta (`/api/v1/Ventas`), así una vista previa nunca se queda con la respuesta que era del alta.
@@ -539,7 +537,11 @@ describe('confirmar', () => {
 
   describe('sin señal (V9, T5b): el alta no llegó', () => {
     const sinRed = () => Promise.reject(new TypeError('Network request failed'))
-    beforeEach(() => storage.remove('ventas-sin-senal:u'))
+    // La cola se guarda por usuario (`ventas-sin-senal:<id>`): el test arma su propio usuario, no depende de otro describe.
+    beforeEach(() => {
+      useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10 } as never })
+      storage.remove('ventas-sin-senal:u')
+    })
 
     it('queda en el teléfono con su clave y el total que vio el vendedor, vacía el carrito y avisa; no muestra error', async () => {
       await armar()
@@ -656,6 +658,8 @@ describe('confirmar', () => {
   })
 
   it('sin stock pide el motivo antes de mandar y lo manda en el alta', async () => {
+    // Quien ve cantidades compara contra `disponible`; quien no, decide `puedeVenderse` (L6).
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }], maxDescuentoPorcentaje: 10 } as never })
     await armar(120)
     await confirmar()
     expect(screen.getByText('Falta stock')).toBeTruthy()
@@ -757,7 +761,7 @@ describe('confirmar', () => {
     await armar()
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
-    await seguirYPresionar('Guardar presupuesto')
+    await confirmarVenta()
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/guardar-presupuesto', { ventaId: 'b1', version: 8 }))
     expect(altas()).toHaveLength(0)
     expect(mockReplace).toHaveBeenCalledWith(guardada('b1', ''))
@@ -770,7 +774,7 @@ describe('confirmar', () => {
     mockPost.mockImplementation((url: string) => url.endsWith('guardar-presupuesto')
       ? Promise.reject(new ApiError(400, 'Un presupuesto no admite descuentos sobre tu tope.'))
       : Promise.resolve({ ventaId: 'b1', version: 7, message: '' }))
-    await seguirYPresionar('Guardar presupuesto')
+    await confirmarVenta()
     expect(await screen.findByText(/Un presupuesto no admite descuentos sobre tu tope\./, {}, ESPERA)).toBeTruthy()
     expect(mockReplace).not.toHaveBeenCalled()
   })
@@ -780,7 +784,7 @@ describe('confirmar', () => {
     await armar()
     qc.setQueryData(['inicio', 'resumen'], { ventas: null, compras: null, autorizacionesPendientes: null })
     await waitFor(() => expect(sync()).toHaveTextContent('Guardado'), ESPERA)
-    await seguirYPresionar('Guardar presupuesto')
+    await confirmarVenta()
     await waitFor(() => expect(mockReplace).toHaveBeenCalled())
     expect(qc.getQueryState(['inicio', 'resumen'])?.isInvalidated).toBe(true)
   })
@@ -789,8 +793,7 @@ describe('confirmar', () => {
     mockTipo = 'Presupuesto'
     await armar()
     await waitFor(() => expect(sync()).toHaveTextContent('Guardado'), ESPERA)
-    await abrirConfirmacion()
-    const boton = screen.getByRole('button', { name: 'Guardar presupuesto' })
+    const boton = screen.getByRole('button', { name: 'Confirmar venta' })
     // Mismo tick: ningún re-render entre un toque y el otro.
     act(() => { fireEvent.press(boton); fireEvent.press(boton) })
     await waitFor(() => expect(mockReplace).toHaveBeenCalled())
@@ -800,8 +803,7 @@ describe('confirmar', () => {
 
   it('dos toques en el mismo instante mandan un solo pedido', async () => {
     await armar()
-    await abrirConfirmacion()
-    const boton = screen.getByRole('button', { name: 'Confirmar pedido' })
+    const boton = screen.getByRole('button', { name: 'Confirmar venta' })
     // Mismo tick: ningún re-render entre un toque y el otro.
     act(() => { fireEvent.press(boton); fireEvent.press(boton) })
     await waitFor(() => expect(mockReplace).toHaveBeenCalled())
@@ -814,7 +816,7 @@ describe('confirmar', () => {
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
     const antes = mockPut.mock.calls.length
-    await seguirYPresionar(tipo === 'Pedido' ? 'Confirmar pedido' : 'Guardar presupuesto')
+    await confirmarVenta()
     await waitFor(() => expect(mockReplace).toHaveBeenCalled())
     await new Promise((r) => setTimeout(r, 1200))
     screen.unmount()
@@ -825,7 +827,7 @@ describe('confirmar', () => {
   it('la cesión viaja en el alta del pedido', async () => {
     useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10, comisionActiva: true, porcentajeComision: 5 } as never })
     await armar()
-    await userEvent.press(screen.getByRole('tab', { name: 'Cabecera' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
     await userEvent.type(screen.getByLabelText('Ceder parte de mi comisión (%)'), '3')
     await confirmar()
     await waitFor(() => expect(altas()).toHaveLength(1))
@@ -845,160 +847,138 @@ describe('ruta ventas/nueva', () => {
   })
 })
 
-describe('V2 y V3: elegir cliente y cómo arrancar', () => {
-  const pala = producto({ real: 100, precioVenta: 2600 })
-  const pedidoViejo = { id: 'v2', fecha: '2026-10-11T15:00:00Z', estado: 'Entregada', tipoOperacion: 2, itemsCount: 1, totalAmount: 31200 }
-  const detalleViejo = {
-    venta: { id: 'v2', codigoPedido: 'A00300', clienteId: 'c1', version: 4, estado: 6, tipoOperacion: 2, porcentajeDescuento: 0, metodoEntregaNombre: 'LogisticaPropia', metodoEntrega: 1, fechaEntrega: '2026-10-12T00:00:00', cargoFleteAmount: 0, observaciones: null },
-    detalles: [{ id: 'i1', productoId: 'p1', productoNombre: 'Pala', cantidad: 12, porcentajeDescuentoItem: 5, precioUnitario: 2000, stockDisponible: 100 }],
-    bultos: [],
-  }
+describe('cliente primero, catálogo después', () => {
+  const pala = producto({ real: 100, disponible: 100, precioVenta: 2600 })
   const socioC1 = { id: 'c1', direccion: 'Tarantino 1898', nombreFantasia: 'Autoservicio Abel' }
   const conHistorial = () => mockGet.mockImplementation((url: string) => {
-    if (url.startsWith('/api/v1/Ventas?')) return Promise.resolve({ items: [pedidoViejo], hasNextPage: false })
-    if (url === '/api/v1/Ventas/v2') return Promise.resolve(detalleViejo)
     if (url === '/api/v1/socios-comerciales/c1') return Promise.resolve(socioC1)
     if (url.startsWith('/api/v1/Productos/catalogo-stock')) return Promise.resolve({ items: [pala], hasNextPage: false })
     return Promise.resolve(calendario(url))
   })
   beforeEach(() => useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10 } as never }))
 
-  it('?clienteId= salta la lista: llega a "¿Cómo arrancás?" con ese cliente y arrancar crea el borrador para él', async () => {
-    conHistorial()
-    pantalla({ clienteId: 'c1' })
-    expect(await screen.findByText('¿Cómo arrancás?')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Elegir Tarantino' })).toBeNull()
-    expect(screen.getByText('Tarantino 1898')).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Buscar en el catálogo' }))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
-  })
-
-  it('sin ?clienteId= se elige de la lista (V2) y recién después se elige el tipo (V3)', async () => {
+  it('sin cliente no hay catálogo: pide elegir a quién se le vende y no crea nada', async () => {
     conHistorial()
     pantalla()
+    expect(screen.getByText('¿A quién le vendés?')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Añadir pala' })).toBeNull()
+    expect(screen.queryByText('¿Cómo arrancás?')).toBeNull()
     expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  it('al elegir el cliente se crea el borrador y se muestra el catálogo, sin pasar por "¿Cómo arrancás?"', async () => {
+    conHistorial()
+    pantalla()
     await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
-    expect(await screen.findByText('¿Cómo arrancás?')).toBeTruthy()
-    // Elegir el cliente no crea nada: el borrador nace con el tipo que se elige acá.
-    expect(mockPost).not.toHaveBeenCalled()
+    expect(await screen.findByRole('button', { name: 'Añadir pala' })).toBeTruthy()
+    expect(screen.queryByText('¿Cómo arrancás?')).toBeNull()
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
+    // El cliente se identifica por la dirección; el nombre va en otra línea.
+    expect(screen.getByText('Tarantino 1898')).toBeTruthy()
+    expect(screen.getByText('Autoservicio Abel')).toBeTruthy()
+  })
+
+  it('el tipo se elige antes que el cliente: un Presupuesto viaja al crear el borrador', async () => {
+    conHistorial()
+    pantalla()
     await userEvent.press(screen.getByRole('radio', { name: 'Presupuesto' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Buscar en el catálogo' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Presupuesto' }))
   })
 
-  it('la flecha de V3 vuelve a la lista de clientes', async () => {
-    conHistorial()
-    pantalla()
-    await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
-    await screen.findByText('¿Cómo arrancás?')
-    await userEvent.press(screen.getByRole('button', { name: 'Volver' }))
-    expect(screen.getByRole('button', { name: 'Elegir Tarantino' })).toBeTruthy()
-  })
-
-  it('con ?clienteId= la flecha de V3 lleva a la lista y no vuelve a elegir sola al mismo cliente', async () => {
+  it('?clienteId= salta la lista: llega directo al catálogo con el borrador de ese cliente', async () => {
     conHistorial()
     pantalla({ clienteId: 'c1' })
-    await screen.findByText('¿Cómo arrancás?')
+    expect(await screen.findByRole('button', { name: 'Añadir pala' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Elegir Tarantino' })).toBeNull()
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
+  })
+
+  it('"Ver venta" lleva a revisar la venta y la flecha vuelve al catálogo', async () => {
+    conHistorial()
+    pantalla()
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Ver venta' }))
+    expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Añadir pala' })).toBeNull()
     await userEvent.press(screen.getByRole('button', { name: 'Volver' }))
-    expect(await screen.findByRole('button', { name: 'Elegir Tarantino' })).toBeTruthy()
-    await new Promise((r) => setTimeout(r, 200))
-    expect(screen.queryByText('¿Cómo arrancás?')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Añadir pala' })).toBeTruthy()
+    expect(mockBack).not.toHaveBeenCalled()
   })
 
-  it('tablet horizontal (TV2): la lista y el cliente con las formas de arrancar quedan juntos', async () => {
-    mockDims.mockReturnValue({ width: 1194, height: 834, scale: 2, fontScale: 1 })
-    conHistorial()
-    pantalla()
-    expect(screen.getByText('Elegí un cliente para empezar la venta.')).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
-    expect(await screen.findByText('¿Cómo arrancás?')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Elegir Tarantino' })).toBeTruthy()
-    expect(screen.queryByText('Elegí un cliente para empezar la venta.')).toBeNull()
-  })
-
-  it('Repetir el último pedido: crea el borrador y carga las líneas con los precios y el stock de hoy', async () => {
+  it('la flecha del catálogo sale de la venta nueva', async () => {
     conHistorial()
     pantalla()
     await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
-    await userEvent.press(await screen.findByRole('button', { name: 'Repetir el último pedido' }))
-    expect(await screen.findByText('Nuevo pedido', {}, ESPERA)).toBeTruthy()
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' })
-    // La fila del catálogo de hoy (2.600), no el precio de aquel pedido (2.000); la cantidad y el descuento son los del pedido.
-    await waitFor(() => expect(useCarritoVenta.getState().lineas).toEqual([{ productoId: 'p1', producto: pala, cantidad: 12, descuentoPct: 5 }]), ESPERA)
-    expect(screen.getByText('12 × $ 2.600,00')).toBeTruthy()
-    await waitFor(() => expect(mockPut.mock.calls.at(-1)?.[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 5 }]), ESPERA)
-    // El pedido que se repite no se toca.
-    expect(mockPut.mock.calls.every(([u]) => u === '/api/v1/Ventas/b1')).toBe(true)
+    await screen.findByRole('button', { name: 'Añadir pala' })
+    await userEvent.press(screen.getByRole('button', { name: 'Volver' }))
+    expect(mockBack).toHaveBeenCalled()
   })
 
-  it('Repetir con un servidor que falla deja armar la venta de cero', async () => {
+  it('al volver con la flecha desde la lista de clientes se sale de la venta nueva', async () => {
     conHistorial()
-    const base = mockGet.getMockImplementation()!
-    mockGet.mockImplementation((url: string) => url === '/api/v1/Ventas/v2' ? Promise.reject(new ApiError(500, 'Error del servidor')) : base(url))
     pantalla()
-    await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
-    await userEvent.press(await screen.findByRole('button', { name: 'Repetir el último pedido' }))
-    await userEvent.press(await screen.findByRole('button', { name: 'Armar la venta de cero' }, ESPERA))
-    expect(await screen.findByText('Nuevo pedido')).toBeTruthy()
-    expect(useCarritoVenta.getState().lineas).toEqual([])
-  })
-
-  it('Escanear en la góndola abre el catálogo con el escáner', async () => {
-    conHistorial()
-    pantalla({ clienteId: 'c1' })
-    await userEvent.press(await screen.findByRole('button', { name: 'Escanear en la góndola' }))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', expect.objectContaining({ clienteId: 'c1' })))
-    expect(screen.getByRole('button', { name: 'Ver venta' })).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Volver' }))
+    expect(mockBack).toHaveBeenCalled()
   })
 })
 
 describe('V7 Confirmar', () => {
-  const pala = producto({ real: 100 })
+  const pala = producto({ real: 100, disponible: 100 })
   beforeEach(() => useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10 } as never }))
   const conLinea = async (descuentoPct: number, cantidad = 12) => {
     act(() => useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: pala, cantidad, descuentoPct }] }))
     await screen.findByText('Pala c/Cabo Fija LP')
   }
 
-  it('"Seguir" abre Confirmar con el resumen, la fecha de entrega y la nota; todavía no se manda nada', async () => {
-    await elegirCliente()
-    await conLinea(0)
-    await abrirConfirmacion()
-    expect(screen.getByText('¿Cuándo se entrega?')).toBeTruthy()
-    expect(screen.getByText('1 producto · 12 unidades')).toBeTruthy()
-    expect(screen.getByTestId('confirmar-total')).toHaveTextContent('$ 29.952,00')
-    expect(screen.getByLabelText('Nota para el depósito y el chofer')).toBeTruthy()
-    expect(mockPost.mock.calls.filter(([u]) => u === '/api/v1/Ventas')).toHaveLength(0)
-  })
-
-  it('la nota de V7 es la observación de la venta y viaja con el pedido', async () => {
+  const alta = () => mockPost.mock.calls.find(([u]) => u === '/api/v1/Ventas')?.[1]
+  const respuestaDelAlta = () => {
     mockPost.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas' ? { ventaId: 'v9', version: 1, message: 'ok' } : { ventaId: 'b1', version: 7, message: '' }))
     mockGet.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas/v9' ? { venta: { estado: 2 }, detalles: [] } : calendario(url)))
+  }
+
+  it('la revisión trae la fecha, la nota y Con factura; no hay segunda confirmación y no se manda nada hasta tocar Confirmar venta', async () => {
     await elegirCliente()
     await conLinea(0)
-    await abrirConfirmacion()
-    await userEvent.type(screen.getByLabelText('Nota para el depósito y el chofer'), 'Entrar por el portón de atrás')
-    await userEvent.press(screen.getByRole('button', { name: 'Confirmar pedido' }))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas', expect.objectContaining({ observaciones: 'Entrar por el portón de atrás' })))
+    expect(screen.getByRole('button', { name: 'Datos de la entrega' })).toBeTruthy()
+    expect(screen.getByRole('switch', { name: 'Con factura' })).toBeTruthy()
+    expect(screen.getByTestId('revisar-total')).toHaveTextContent('$ 29.952,00')
+    expect(alta()).toBeUndefined()
+    expect(screen.queryByRole('button', { name: /^(Confirmar pedido|Guardar presupuesto)/ })).toBeNull()
   })
 
-  it('un descuento sobre el tope avisa en V7 que el pedido queda por autorizar, y se puede confirmar', async () => {
+  it('un toque en Confirmar venta manda el pedido con la fecha y la nota que se eligieron en la revisión', async () => {
+    respuestaDelAlta()
+    await elegirCliente()
+    await conLinea(0)
+    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
+    const propuesta = mockPut.mock.calls[0][1].fechaEntrega
+    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
+    const dias = screen.getAllByRole('radio')
+    await userEvent.press(dias[dias.length - 1])
+    await userEvent.type(screen.getByLabelText('Observaciones'), 'Entrar por el portón de atrás')
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
+    await waitFor(() => expect(alta()).toBeDefined())
+    expect(alta().observaciones).toBe('Entrar por el portón de atrás')
+    expect(alta().fechaEntrega).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    expect(alta().fechaEntrega).not.toBe(propuesta)
+  })
+
+  it('un descuento sobre el tope avisa en la revisión que el pedido queda por autorizar, y se puede confirmar', async () => {
     await elegirCliente()
     await conLinea(15)
-    await abrirConfirmacion()
-    expect(await screen.findByText('Queda por autorizar')).toBeTruthy()
-    expect(within(screen.getByLabelText('Confirmar venta')).getByText(/Porque un descuento supera tu tope/)).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Confirmar pedido' })).toBeEnabled()
+    expect(await screen.findByText('Este pedido va a quedar por autorizar')).toBeTruthy()
+    expect(screen.getByText(/Porque un descuento supera tu tope/)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeEnabled()
   })
 
   it('un presupuesto con un descuento sobre el tope no se puede guardar: botón deshabilitado y el motivo', async () => {
     mockTipo = 'Presupuesto'
     await elegirCliente()
     await conLinea(15)
-    await abrirConfirmacion()
-    expect(screen.getByRole('button', { name: 'Guardar presupuesto' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeDisabled()
     expect(screen.getByText('Un presupuesto no puede pasar tu tope de descuento')).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Guardar presupuesto' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     expect(mockPost.mock.calls.filter(([u]) => String(u).endsWith('guardar-presupuesto'))).toHaveLength(0)
   })
 
@@ -1006,8 +986,7 @@ describe('V7 Confirmar', () => {
     mockTipo = 'Presupuesto'
     await elegirCliente()
     await conLinea(10)
-    await abrirConfirmacion()
-    expect(screen.getByRole('button', { name: 'Guardar presupuesto' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeEnabled()
     expect(screen.queryByText('Un presupuesto no puede pasar tu tope de descuento')).toBeNull()
   })
 
@@ -1016,8 +995,7 @@ describe('V7 Confirmar', () => {
     await elegirCliente()
     await conLinea(0)
     await aplicarDescuentoGeneral(12)
-    await abrirConfirmacion()
-    expect(screen.getByRole('button', { name: 'Guardar presupuesto' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeDisabled()
   })
 
   it('el descuento general se cambia desde la hoja y baja el total', async () => {
@@ -1026,17 +1004,7 @@ describe('V7 Confirmar', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Descuento a toda la venta' }))
     await userEvent.press(screen.getByRole('button', { name: '5 %' }))
     await userEvent.press(screen.getByRole('button', { name: 'Aplicar' }))
-    expect(screen.getByTestId('venta-total')).toHaveTextContent('$ 23.712,00') // 10 × 2.496 − 5 %
-  })
-
-  it('en Líneas, + y − suman o restan un múltiplo y la línea sale de la venta al llegar a cero', async () => {
-    await elegirCliente()
-    await conLinea(0, 1)
-    await userEvent.press(screen.getByRole('button', { name: 'Sumar Pala c/Cabo Fija LP' }))
-    expect(useCarritoVenta.getState().lineas[0].cantidad).toBe(2)
-    await userEvent.press(screen.getByRole('button', { name: 'Restar Pala c/Cabo Fija LP' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Restar Pala c/Cabo Fija LP' }))
-    expect(useCarritoVenta.getState().lineas).toEqual([])
+    expect(screen.getByTestId('revisar-total')).toHaveTextContent('$ 23.712,00') // 10 × 2.496 − 5 %
   })
 })
 
@@ -1048,7 +1016,66 @@ describe('ruta ventas/nueva con ?clienteId=', () => {
     mockGet.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/socios-comerciales/c1' ? { id: 'c1', direccion: 'Tarantino 1898' } : calendario(url)))
     const qcRuta = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(<QueryClientProvider client={qcRuta}><Ruta /></QueryClientProvider>)
-    expect(await screen.findByText('¿Cómo arrancás?')).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'Añadir pala' }, ESPERA)).toBeTruthy()
     mockParams = {}
+  })
+})
+
+describe('integración del flujo: cliente → productos → oferta → confirmar (T6a)', () => {
+  const socio = (extra: object) => mockGet.mockImplementation((url: string) =>
+    Promise.resolve(url.includes('socios-comerciales') ? { condicionPago: { tipo: 'DiasDesdeEntrega', dias: 30 }, ...extra } : calendario(url)))
+
+  it('Agregar en el catálogo abre Cantidad y oferta; Listo deja la línea en el carrito y vuelve al catálogo', async () => {
+    await arrancar()
+    await userEvent.press(screen.getByRole('button', { name: 'Agregar pala' }))
+    expect(await screen.findByText('Cantidad y oferta')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Listo, seguir cargando' }))
+    expect(useCarritoVenta.getState().lineas.map((l) => l.productoId)).toEqual(['p1'])
+    expect(screen.queryByText('Cantidad y oferta')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Ver venta' })).toBeTruthy()
+  })
+
+  it('"Ver venta" muestra Revisar venta (no las pestañas Líneas y Cabecera)', async () => {
+    await elegirCliente()
+    expect(screen.getByText('Revisar venta')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeTruthy()
+    expect(screen.queryByRole('tab', { name: 'Cabecera' })).toBeNull()
+  })
+
+  it('tocar una línea de la revisión abre Cantidad y oferta para esa línea, y se puede quitar', async () => {
+    await elegirCliente()
+    useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: producto({ real: 100, disponible: 100 }), cantidad: 12, descuentoPct: 0 }] })
+    await userEvent.press(await screen.findByText('Pala c/Cabo Fija LP'))
+    expect(await screen.findByText('Cantidad y oferta')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Quitar la línea' }))
+    expect(useCarritoVenta.getState().lineas).toEqual([])
+  })
+
+  it('con deuda vencida, elegir el cliente avisa en el catálogo (pedido) y muestra su crédito y su deuda', async () => {
+    socio({ puedeVerSaldo: true, creditoDisponible: 125000, tieneDeudaVencida: true, deudaVencidaAmount: 4000 })
+    await arrancar()
+    expect(await screen.findByText(AVISO_DEUDA_VENCIDA)).toBeTruthy()
+    expect(screen.getByLabelText('Crédito disponible: $ 125.000,00')).toBeTruthy()
+    expect(screen.getByLabelText('Deuda vencida: $ 4.000,00')).toBeTruthy()
+  })
+
+  it('un presupuesto con deuda vencida no muestra el aviso (solo el pedido lo lleva)', async () => {
+    mockTipo = 'Presupuesto'
+    socio({ puedeVerSaldo: true, creditoDisponible: 1, tieneDeudaVencida: true })
+    await arrancar()
+    expect(await screen.findByLabelText(/^Deuda vencida/)).toBeTruthy()
+    expect(screen.queryByText(AVISO_DEUDA_VENCIDA)).toBeNull()
+  })
+
+  it('la barra de pasos marca el paso actual: Productos en el catálogo, Confirmar en la revisión', async () => {
+    await arrancar()
+    expect(screen.getByLabelText('Paso 2 de 3: Productos')).toHaveProp('accessibilityState', { selected: true })
+    await userEvent.press(screen.getByRole('button', { name: 'Ver venta' }))
+    expect(screen.getByLabelText('Paso 3 de 3: Confirmar')).toHaveProp('accessibilityState', { selected: true })
+  })
+
+  it('el primer paso muestra la barra con Cliente marcado', () => {
+    pantalla()
+    expect(screen.getByLabelText('Paso 1 de 3: Cliente')).toHaveProp('accessibilityState', { selected: true })
   })
 })
