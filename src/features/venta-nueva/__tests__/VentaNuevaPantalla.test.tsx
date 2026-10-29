@@ -67,12 +67,11 @@ function pantalla(props: React.ComponentProps<typeof VentaNuevaPantalla> = {}) {
   return render(<QueryClientProvider client={qc}><VentaNuevaPantalla {...props} /></QueryClientProvider>)
 }
 const sync = () => screen.getByText(/Guardado|Guardando…|Sin guardar|Creando borrador…|Sin autoguardado/)
-// V2 elegir cliente y V3 cómo arrancar (con el tipo que se elige ahí); arrancar crea el borrador y abre el catálogo.
-async function arrancar(como = 'Buscar en el catálogo') {
+// Cliente primero: el tipo (si no es Pedido) se elige antes del cliente; elegirlo crea el borrador y abre el catálogo.
+async function arrancar() {
   pantalla()
-  await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
   if (mockTipo === 'Presupuesto') await userEvent.press(screen.getByRole('radio', { name: 'Presupuesto' }))
-  await userEvent.press(screen.getByRole('button', { name: como }))
+  await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
 }
 async function elegirCliente() {
   await arrancar()
@@ -185,7 +184,7 @@ describe('venta nueva: cliente, borrador y autoguardado', () => {
     await arrancar()
     expect(await screen.findByText(/Cliente no encontrado.*no se guarda sola/s)).toBeTruthy()
     expect(sync()).toHaveTextContent('Sin autoguardado')
-    expect(screen.getByRole('button', { name: 'Agregar productos' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Añadir pala' })).toBeTruthy()
   })
 
   it('descartar borra el borrador en el servidor y vuelve', async () => {
@@ -845,110 +844,79 @@ describe('ruta ventas/nueva', () => {
   })
 })
 
-describe('V2 y V3: elegir cliente y cómo arrancar', () => {
+describe('cliente primero, catálogo después', () => {
   const pala = producto({ real: 100, disponible: 100, precioVenta: 2600 })
-  const pedidoViejo = { id: 'v2', fecha: '2026-10-11T15:00:00Z', estado: 'Entregada', tipoOperacion: 2, itemsCount: 1, totalAmount: 31200 }
-  const detalleViejo = {
-    venta: { id: 'v2', codigoPedido: 'A00300', clienteId: 'c1', version: 4, estado: 6, tipoOperacion: 2, porcentajeDescuento: 0, metodoEntregaNombre: 'LogisticaPropia', metodoEntrega: 1, fechaEntrega: '2026-10-12T00:00:00', cargoFleteAmount: 0, observaciones: null },
-    detalles: [{ id: 'i1', productoId: 'p1', productoNombre: 'Pala', cantidad: 12, porcentajeDescuentoItem: 5, precioUnitario: 2000, stockDisponible: 100 }],
-    bultos: [],
-  }
   const socioC1 = { id: 'c1', direccion: 'Tarantino 1898', nombreFantasia: 'Autoservicio Abel' }
   const conHistorial = () => mockGet.mockImplementation((url: string) => {
-    if (url.startsWith('/api/v1/Ventas?')) return Promise.resolve({ items: [pedidoViejo], hasNextPage: false })
-    if (url === '/api/v1/Ventas/v2') return Promise.resolve(detalleViejo)
     if (url === '/api/v1/socios-comerciales/c1') return Promise.resolve(socioC1)
     if (url.startsWith('/api/v1/Productos/catalogo-stock')) return Promise.resolve({ items: [pala], hasNextPage: false })
     return Promise.resolve(calendario(url))
   })
   beforeEach(() => useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10 } as never }))
 
-  it('?clienteId= salta la lista: llega a "¿Cómo arrancás?" con ese cliente y arrancar crea el borrador para él', async () => {
-    conHistorial()
-    pantalla({ clienteId: 'c1' })
-    expect(await screen.findByText('¿Cómo arrancás?')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Elegir Tarantino' })).toBeNull()
-    expect(screen.getByText('Tarantino 1898')).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Buscar en el catálogo' }))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
-  })
-
-  it('sin ?clienteId= se elige de la lista (V2) y recién después se elige el tipo (V3)', async () => {
+  it('sin cliente no hay catálogo: pide elegir a quién se le vende y no crea nada', async () => {
     conHistorial()
     pantalla()
+    expect(screen.getByText('¿A quién le vendés?')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Añadir pala' })).toBeNull()
+    expect(screen.queryByText('¿Cómo arrancás?')).toBeNull()
     expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  it('al elegir el cliente se crea el borrador y se muestra el catálogo, sin pasar por "¿Cómo arrancás?"', async () => {
+    conHistorial()
+    pantalla()
     await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
-    expect(await screen.findByText('¿Cómo arrancás?')).toBeTruthy()
-    // Elegir el cliente no crea nada: el borrador nace con el tipo que se elige acá.
-    expect(mockPost).not.toHaveBeenCalled()
+    expect(await screen.findByRole('button', { name: 'Añadir pala' })).toBeTruthy()
+    expect(screen.queryByText('¿Cómo arrancás?')).toBeNull()
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
+    // El cliente se identifica por la dirección; el nombre va en otra línea.
+    expect(screen.getByText('Tarantino 1898')).toBeTruthy()
+    expect(screen.getByText('Autoservicio Abel')).toBeTruthy()
+  })
+
+  it('el tipo se elige antes que el cliente: un Presupuesto viaja al crear el borrador', async () => {
+    conHistorial()
+    pantalla()
     await userEvent.press(screen.getByRole('radio', { name: 'Presupuesto' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Buscar en el catálogo' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Presupuesto' }))
   })
 
-  it('la flecha de V3 vuelve a la lista de clientes', async () => {
-    conHistorial()
-    pantalla()
-    await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
-    await screen.findByText('¿Cómo arrancás?')
-    await userEvent.press(screen.getByRole('button', { name: 'Volver' }))
-    expect(screen.getByRole('button', { name: 'Elegir Tarantino' })).toBeTruthy()
-  })
-
-  it('con ?clienteId= la flecha de V3 lleva a la lista y no vuelve a elegir sola al mismo cliente', async () => {
+  it('?clienteId= salta la lista: llega directo al catálogo con el borrador de ese cliente', async () => {
     conHistorial()
     pantalla({ clienteId: 'c1' })
-    await screen.findByText('¿Cómo arrancás?')
+    expect(await screen.findByRole('button', { name: 'Añadir pala' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Elegir Tarantino' })).toBeNull()
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
+  })
+
+  it('"Ver venta" lleva a revisar la venta y la flecha vuelve al catálogo', async () => {
+    conHistorial()
+    pantalla()
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Ver venta' }))
+    expect(screen.getByRole('button', { name: 'Seguir' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Añadir pala' })).toBeNull()
     await userEvent.press(screen.getByRole('button', { name: 'Volver' }))
-    expect(await screen.findByRole('button', { name: 'Elegir Tarantino' })).toBeTruthy()
-    await new Promise((r) => setTimeout(r, 200))
-    expect(screen.queryByText('¿Cómo arrancás?')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Añadir pala' })).toBeTruthy()
+    expect(mockBack).not.toHaveBeenCalled()
   })
 
-  it('tablet horizontal (TV2): la lista y el cliente con las formas de arrancar quedan juntos', async () => {
-    mockDims.mockReturnValue({ width: 1194, height: 834, scale: 2, fontScale: 1 })
-    conHistorial()
-    pantalla()
-    expect(screen.getByText('Elegí un cliente para empezar la venta.')).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
-    expect(await screen.findByText('¿Cómo arrancás?')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Elegir Tarantino' })).toBeTruthy()
-    expect(screen.queryByText('Elegí un cliente para empezar la venta.')).toBeNull()
-  })
-
-  it('Repetir el último pedido: crea el borrador y carga las líneas con los precios y el stock de hoy', async () => {
+  it('la flecha del catálogo sale de la venta nueva', async () => {
     conHistorial()
     pantalla()
     await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
-    await userEvent.press(await screen.findByRole('button', { name: 'Repetir el último pedido' }))
-    expect(await screen.findByText('Nuevo pedido', {}, ESPERA)).toBeTruthy()
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' })
-    // La fila del catálogo de hoy (2.600), no el precio de aquel pedido (2.000); la cantidad y el descuento son los del pedido.
-    await waitFor(() => expect(useCarritoVenta.getState().lineas).toEqual([{ productoId: 'p1', producto: pala, cantidad: 12, descuentoPct: 5 }]), ESPERA)
-    expect(screen.getByText('12 × $ 2.600,00')).toBeTruthy()
-    await waitFor(() => expect(mockPut.mock.calls.at(-1)?.[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 5 }]), ESPERA)
-    // El pedido que se repite no se toca.
-    expect(mockPut.mock.calls.every(([u]) => u === '/api/v1/Ventas/b1')).toBe(true)
+    await screen.findByRole('button', { name: 'Añadir pala' })
+    await userEvent.press(screen.getByRole('button', { name: 'Volver' }))
+    expect(mockBack).toHaveBeenCalled()
   })
 
-  it('Repetir con un servidor que falla deja armar la venta de cero', async () => {
+  it('al volver con la flecha desde la lista de clientes se sale de la venta nueva', async () => {
     conHistorial()
-    const base = mockGet.getMockImplementation()!
-    mockGet.mockImplementation((url: string) => url === '/api/v1/Ventas/v2' ? Promise.reject(new ApiError(500, 'Error del servidor')) : base(url))
     pantalla()
-    await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
-    await userEvent.press(await screen.findByRole('button', { name: 'Repetir el último pedido' }))
-    await userEvent.press(await screen.findByRole('button', { name: 'Armar la venta de cero' }, ESPERA))
-    expect(await screen.findByText('Nuevo pedido')).toBeTruthy()
-    expect(useCarritoVenta.getState().lineas).toEqual([])
-  })
-
-  it('Escanear en la góndola abre el catálogo con el escáner', async () => {
-    conHistorial()
-    pantalla({ clienteId: 'c1' })
-    await userEvent.press(await screen.findByRole('button', { name: 'Escanear en la góndola' }))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', expect.objectContaining({ clienteId: 'c1' })))
-    expect(screen.getByRole('button', { name: 'Ver venta' })).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Volver' }))
+    expect(mockBack).toHaveBeenCalled()
   })
 })
 
@@ -1048,7 +1016,7 @@ describe('ruta ventas/nueva con ?clienteId=', () => {
     mockGet.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/socios-comerciales/c1' ? { id: 'c1', direccion: 'Tarantino 1898' } : calendario(url)))
     const qcRuta = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(<QueryClientProvider client={qcRuta}><Ruta /></QueryClientProvider>)
-    expect(await screen.findByText('¿Cómo arrancás?')).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'Añadir pala' }, ESPERA)).toBeTruthy()
     mockParams = {}
   })
 })

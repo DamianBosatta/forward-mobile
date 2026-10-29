@@ -4,6 +4,7 @@ import { act, render, screen, userEvent, waitFor, within } from '@testing-librar
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { subDays } from 'date-fns'
 import { diaArgentina } from '@/src/utils/date'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { ListaVentasNueva } from '../../components/ListaVentasNueva'
 
 const mockGet = jest.fn()
@@ -325,5 +326,30 @@ describe('lista de ventas nueva: el borrador recuerda si era pedido o presupuest
     expect(alerta).not.toHaveBeenCalled()
     expect(mockPush).toHaveBeenCalledWith(`/(tabs)/ventas/nueva?borrador=b1&tipo=${tipo}`)
     alerta.mockRestore()
+  })
+})
+
+describe('lista de ventas nueva: botón "Nueva venta" (S1)', () => {
+  const conPermiso = (canCreate: boolean) =>
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [{ module: 'MOD_VENTAS', canRead: true, canCreate }] } as never })
+
+  it('con permiso de crear ventas hay un botón flotante que abre ventas/nueva, en teléfono y en tablet', async () => {
+    conPermiso(true)
+    for (const ancho of [390, 1194]) {
+      mockPush.mockReset()
+      const { unmount } = pantalla(ancho)
+      await screen.findByText('Mostrando 2 de 61')
+      expect(screen.getAllByRole('button', { name: 'Nueva venta' })).toHaveLength(1)
+      await userEvent.press(screen.getByRole('button', { name: 'Nueva venta' }))
+      expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva')
+      unmount()
+    }
+  })
+
+  it('sin permiso de crear ventas no hay botón', async () => {
+    conPermiso(false)
+    pantalla()
+    await screen.findByText('Mostrando 2 de 61')
+    expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
   })
 })

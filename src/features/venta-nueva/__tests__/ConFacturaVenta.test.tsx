@@ -38,7 +38,7 @@ jest.mock('../components/ElegirClienteVenta', () => ({
   ElegirClienteVenta: ({ onElegir }: { onElegir: (c: object) => void }) =>
     mockBoton('Elegir Tarantino', () => onElegir({ id: 'c1', direccion: 'Tarantino 1898', nombreFantasia: 'Autoservicio Abel' })),
 }))
-jest.mock('../components/CatalogoVenta', () => ({ CatalogoVenta: () => null }))
+jest.mock('../components/CatalogoVenta', () => ({ CatalogoVenta: ({ onVerVenta }: { onVerVenta: () => void }) => mockBoton('Ver venta', onVerVenta) }))
 
 const TODOS = { lunes: true, martes: true, miercoles: true, jueves: true, viernes: true, sabado: true, domingo: true }
 const URL_DEFECTO = '/api/v1/Ventas/con-factura-por-defecto'
@@ -52,7 +52,7 @@ function pantalla() {
 async function abrirConfirmar() {
   pantalla()
   await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
-  await userEvent.press(screen.getByRole('button', { name: 'Buscar en el catálogo' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Ver venta' }))
   useCarritoVenta.setState({ lineas: [{ productoId: pala.id, producto: pala, cantidad: 12, descuentoPct: 0 }] })
   await waitFor(() => expect(mockGet).toHaveBeenCalledWith(URL_DEFECTO))
   await userEvent.press(screen.getByRole('button', { name: 'Seguir' }))
