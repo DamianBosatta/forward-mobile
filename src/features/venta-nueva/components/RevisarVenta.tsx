@@ -1,4 +1,4 @@
-import React, { type ReactNode } from 'react'
+import React, { useState, type ReactNode } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
@@ -7,7 +7,7 @@ import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { direccionDeEntrega, nombreDelCliente, type ClienteNombrable } from '@/features/clientes/lib/cliente'
 import { useRevalidarStockVenta } from '../hooks/useRevalidarStockVenta'
-import { multiploDe, precioServidor, subtotalLinea, type LineaCarrito } from '../lib/carrito'
+import { precioServidor, subtotalLinea, unidadesPorBultoDe, type LineaCarrito } from '../lib/carrito'
 import { faltaStock, totalesEstimados } from '../lib/avisos'
 import { mostrarNumero } from '../lib/linea'
 
@@ -34,7 +34,7 @@ interface Props {
 
 /** "2 bultos × $ 1.720,50" si la cantidad es de cajas cerradas; si no, "4 u × $ 400,56". */
 function detalleDe(l: LineaCarrito): string {
-  const m = multiploDe(l.producto)
+  const m = unidadesPorBultoDe(l.producto)
   const precio = precioServidor(l.producto)
   if (m > 1 && l.cantidad % m === 0) {
     const bultos = l.cantidad / m
@@ -51,7 +51,8 @@ function detalleDe(l: LineaCarrito): string {
 export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, deshabilitado = false, motivoDeshabilitado, onEditarLinea, ajustes }: Props) {
   const c = useColors()
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
-  const { lineas, cambios, confirmado, revalidando, revalidar } = useRevalidarStockVenta()
+  const { lineas, cambios, confirmado, sinConexion, revalidando, revalidar } = useRevalidarStockVenta()
+  const [confirmando, setConfirmando] = useState(false)
   const t = totalesEstimados(lineas, descuentoGeneral, flete)
   const lista = lineas.reduce((a, l) => a + l.producto.precioVenta * l.cantidad, 0)
   const ofertas = lista - t.subtotal
@@ -59,11 +60,18 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
 
   const confirmar = async () => {
     // El stock se vuelve a chequear justo antes: confirmar decide con lo que haya en ese momento.
-    await revalidar()
+    // Sin señal `revalidar` vuelve enseguida (no espera a la red) y la venta sigue a la cola sin señal.
+    setConfirmando(true)
+    try {
+      await revalidar()
+    } finally {
+      setConfirmando(false)
+    }
     await onConfirmar()
   }
 
   function estadoDeStock(l: LineaCarrito, cambio: boolean): { texto: string; alerta: boolean } {
+    if (sinConexion) return { texto: 'Sin conexión: el stock se revisa al enviar', alerta: false }
     if (!confirmado) return { texto: revalidando ? 'Revisando el stock…' : 'No se pudo confirmar el stock', alerta: !revalidando }
     if (faltaStock(l, verCantidades)) {
       return { alerta: true, texto: verCantidades ? `Quedan ${mostrarNumero(Math.max(l.producto.disponible, 0))}, pediste ${mostrarNumero(l.cantidad)}: tocá para ajustar` : 'Sin stock ahora: tocá para ajustar' }
@@ -141,7 +149,7 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
           <Text style={secundario}>Total estimado</Text>
           <Text testID="revisar-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(t.total)}</Text>
         </View>
-        <Button label="Confirmar venta" onPress={() => { void confirmar() }} loading={enviando} disabled={enviando || deshabilitado || lineas.length === 0} />
+        <Button label="Confirmar venta" onPress={() => { void confirmar() }} loading={enviando || confirmando} disabled={enviando || confirmando || deshabilitado || lineas.length === 0} />
         {motivoDeshabilitado ? <MotivoDeshabilitado>{motivoDeshabilitado}</MotivoDeshabilitado> : null}
       </View>
     </View>

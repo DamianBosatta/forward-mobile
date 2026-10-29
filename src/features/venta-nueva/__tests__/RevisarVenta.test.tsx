@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { CLAVE_CATALOGO } from '../hooks/useCatalogoVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
@@ -40,6 +40,8 @@ beforeEach(() => {
   ] })
   catalogoServidor = [rollo(), esponja()]
 })
+
+afterEach(() => { onlineManager.setOnline(true) })
 
 describe('RevisarVenta (S5, S6, S7)', () => {
   it('muestra el cliente (dirección y nombre), las líneas con su subtotal y el total', async () => {
@@ -106,5 +108,27 @@ describe('RevisarVenta (S5, S6, S7)', () => {
     revisar({ error: 'No se pudo guardar la venta.', enviando: true })
     expect(screen.getByText('No se pudo guardar la venta.')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeDisabled()
+  })
+
+  it('sin conexión no marca "Stock confirmado ahora" y confirmar sigue de inmediato (cola sin señal)', async () => {
+    onlineManager.setOnline(false)
+    const { alConfirmar } = revisar()
+    expect(await screen.findAllByText('Sin conexión: el stock se revisa al enviar')).toHaveLength(2)
+    expect(screen.queryByText('Stock confirmado ahora')).toBeNull()
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
+    await waitFor(() => expect(alConfirmar).toHaveBeenCalledTimes(1))
+    expect(queryFn).not.toHaveBeenCalled()
+  })
+
+  it('mientras revalida al confirmar, el botón queda deshabilitado y no se confirma dos veces', async () => {
+    const { alConfirmar } = revisar()
+    await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(2))
+    let soltar: () => void = () => {}
+    queryFn.mockImplementationOnce(() => new Promise((res) => { soltar = () => res({ items: catalogoServidor, truncado: false }) }))
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeDisabled())
+    expect(alConfirmar).not.toHaveBeenCalled()
+    soltar()
+    await waitFor(() => expect(alConfirmar).toHaveBeenCalledTimes(1))
   })
 })

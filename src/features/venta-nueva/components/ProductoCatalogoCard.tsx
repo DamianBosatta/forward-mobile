@@ -4,7 +4,7 @@ import { Package } from 'lucide-react-native'
 import { radii, space, typeScale, importe, useColors, type ForwardColors } from '@/libs/theme'
 import { formatImporte } from '@/core/ui/fw'
 import type { CatalogoStockItem } from '@/libs/api-client'
-import { cantidadEnPresentacion, multiploDe, precioServidor, stockDeTarjeta, vendePorBulto } from '../lib/carrito'
+import { cantidadEnPresentacion, precioServidor, stockDeTarjeta, unidadesPorBultoDe, vendePorBulto } from '../lib/carrito'
 import { presentacionDe, rotuloPresentacion } from '../lib/presentacion'
 
 interface ProductoCatalogoCardProps {
@@ -66,7 +66,7 @@ export function ProductoCatalogoCard({
         {pistas.map((t) => <Text key={t} style={{ ...typeScale.secundario, color: c.textSecondary }}>{t}</Text>)}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2], marginTop: space[1] }}>
           <View>
-            <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(unitario * multiploDe(p))}</Text>
+            <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(unitario * unidadesPorBultoDe(p))}</Text>
             {porBulto ? <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{`${formatImporte(unitario)} por unidad`}</Text> : null}
           </View>
           {p.esPadreDeVariantes ? (

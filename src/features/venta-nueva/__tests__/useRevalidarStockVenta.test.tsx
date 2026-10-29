@@ -1,6 +1,6 @@
 import React from 'react'
 import { act, renderHook, waitFor } from '@testing-library/react-native'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { CLAVE_CATALOGO } from '../hooks/useCatalogoVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
@@ -24,6 +24,8 @@ beforeEach(() => {
   catalogoServidor = [producto({ id: 'p1', disponible: 3 }), producto({ id: 'p2', disponible: 4 })]
   useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [CAP] } as never })
 })
+
+afterEach(() => { onlineManager.setOnline(true) })
 
 describe('useRevalidarStockVenta (S6: al revisar se vuelve a chequear)', () => {
   it('al abrir la revisión vuelve a pedir el catálogo y marca lo que cambió contra lo que se vio al cargar', async () => {
@@ -57,5 +59,14 @@ describe('useRevalidarStockVenta (S6: al revisar se vuelve a chequear)', () => {
     const { result } = renderHook(() => useRevalidarStockVenta(), { wrapper })
     await waitFor(() => expect(result.current.revalidando).toBe(false))
     expect(result.current.confirmado).toBe(false)
+  })
+
+  it('sin conexión no llega al servidor: no se dice que el stock está confirmado y se avisa que falta la señal', async () => {
+    onlineManager.setOnline(false)
+    const { result } = renderHook(() => useRevalidarStockVenta(), { wrapper })
+    await waitFor(() => expect(result.current.revalidando).toBe(false))
+    expect(queryFn).not.toHaveBeenCalled()
+    expect(result.current.confirmado).toBe(false)
+    expect(result.current.sinConexion).toBe(true)
   })
 })

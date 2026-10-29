@@ -1,5 +1,10 @@
 import type { CatalogoStockItem } from '@/libs/api-client'
-import { multiploDe } from './carrito'
+
+/** Unidades por venta del producto: la cantidad va de a este múltiplo (6 → 6, 12, 18…). */
+export function multiploDe(producto: Pick<CatalogoStockItem, 'ventaMinimaUnidades'>): number {
+  const m = producto.ventaMinimaUnidades
+  return m && m > 1 ? m : 1
+}
 
 /**
  * Cómo se puede pedir un producto en "Cantidad y oferta" (decisión del 28-10, "Respetar la regla").
@@ -29,10 +34,26 @@ export function presentacionDe(p: Pick<CatalogoStockItem, 'ventaMinimaUnidades' 
   return { modos: hayBulto ? ['bultos', 'unidades'] : ['unidades'], unidadesPorBulto: bulto, soloBultos: false, paso: { bultos: 1, unidades: minimo } }
 }
 
+/**
+ * LA definición de "bulto" para mostrar y calcular precios (pastilla, precio por bulto de la tarjeta, resumen del
+ * carrito, detalle de la revisión, pantalla de oferta): cuántas unidades tiene el bulto que ve el vendedor; 1 si el
+ * producto se vende por unidad. Es el bulto que ofrece el selector de la oferta; si el bulto no se puede pedir
+ * cerrado, el bulto es la venta mínima.
+ */
+export function unidadesDeBulto(pr: Presentacion): number {
+  return pr.modos.includes('bultos') ? pr.unidadesPorBulto : pr.paso.unidades
+}
+
+/** Los bultos cerrados que hay en `unidades`, o null si no es un número exacto de bultos (o no hay bulto). */
+export function bultosExactos(pr: Presentacion, unidades: number): number | null {
+  const n = unidadesDeBulto(pr)
+  return n > 1 && unidades > 0 && unidades % n === 0 ? unidades / n : null
+}
+
 /** La pastilla de la tarjeta del catálogo: "Bulto x 6 u" si hay bulto o múltiplo de venta, "Unidad" si no. */
 export function rotuloPresentacion(pr: Presentacion): string {
-  if (pr.modos.includes('bultos')) return `Bulto x ${pr.unidadesPorBulto} u`
-  return pr.paso.unidades > 1 ? `Bulto x ${pr.paso.unidades} u` : 'Unidad'
+  const n = unidadesDeBulto(pr)
+  return n > 1 ? `Bulto x ${n} u` : 'Unidad'
 }
 
 /** Lo ingresado en un modo, en unidades (Bultos × N). */

@@ -11,8 +11,8 @@ import { calcularSubtotalConDescuento, canViewCost, pctFromPrecio, precioFromPct
 import { calcularRentabilidadVenta } from '@/features/ventas/lib/rentabilidad-venta'
 import { multiploDe, precioServidor, type LineaCarrito } from '../lib/carrito'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoPiso, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
-import { errorDeCantidad } from '../lib/teclado'
-import { chipsDeDescuento, presentacionDe, unidadesDe, valorEn, convertirModo, type ModoCantidad } from '../lib/presentacion'
+import { MAX_DIGITOS, TOPE_CANTIDAD, errorDeCantidad, limitarDigitos } from '../lib/teclado'
+import { chipsDeDescuento, presentacionDe, rotuloPresentacion, unidadesDe, valorEn, convertirModo, type ModoCantidad } from '../lib/presentacion'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 
 interface Props {
@@ -91,7 +91,7 @@ function Contenido({ producto: p, linea, enVivo, onClose, onListo }: Props) {
     setPctTexto(mostrarNumero(nuevoPct))
     setPrecioTexto(mostrarNumero(precioFromPct(base, nuevoPct)))
   }
-  const mover = (delta: number) => setTexto(String(Math.max(pr.paso[modo], valor + delta * pr.paso[modo])))
+  const mover = (delta: number) => setTexto(String(Math.min(TOPE_CANTIDAD, Math.max(pr.paso[modo], valor + delta * pr.paso[modo]))))
   const cambiarModo = (m: ModoCantidad) => {
     if (m === modo) return
     setModo(m)
@@ -130,7 +130,7 @@ function Contenido({ producto: p, linea, enVivo, onClose, onListo }: Props) {
             <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
               <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{[p.marca, p.codigoPropio].filter(Boolean).join(' · ')}</Text>
               <Text style={{ ...typeScale.titulo, color: c.text }}>{p.nombre}</Text>
-              <Text style={secundario}>{`${pr.unidadesPorBulto > 1 ? `Bulto x ${pr.unidadesPorBulto} u` : 'Unidad'} · lista ${formatImporte(base)}`}</Text>
+              <Text style={secundario}>{`${rotuloPresentacion(pr)} · lista ${formatImporte(base)}`}</Text>
             </View>
           </View>
 
@@ -177,7 +177,7 @@ function Contenido({ producto: p, linea, enVivo, onClose, onListo }: Props) {
                 <Pressable accessibilityRole="button" accessibilityLabel="Uno menos" onPress={() => mover(-1)} style={{ width: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ ...typeScale.titulo, color: c.text }}>−</Text>
                 </Pressable>
-                <TextInput accessibilityLabel="Cantidad" keyboardType="number-pad" value={texto} onChangeText={setTexto} selectTextOnFocus
+                <TextInput accessibilityLabel="Cantidad" keyboardType="number-pad" value={texto} onChangeText={(t) => setTexto(limitarDigitos(t))} maxLength={MAX_DIGITOS} selectTextOnFocus
                   style={{ ...typeScale.titulo, ...importe, color: c.text, minWidth: 56, textAlign: 'center' }} />
                 <Pressable accessibilityRole="button" accessibilityLabel="Uno más" onPress={() => mover(1)} style={{ width: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ ...typeScale.titulo, color: c.brandInk }}>+</Text>

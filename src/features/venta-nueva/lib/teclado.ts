@@ -1,7 +1,13 @@
 /** Teclado numérico de "Cantidad y descuento" (lámina CalleCantidad): hasta cuatro dígitos. */
 export type Tecla = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | 'del' | 'clr'
 
-const MAX_DIGITOS = 4
+export const MAX_DIGITOS = 4
+
+/** El número más grande que entra en esos dígitos (9999). */
+export const TOPE_CANTIDAD = 10 ** MAX_DIGITOS - 1
+
+/** Lo tipeado en un campo de cantidad (no por teclas): mismo tope de dígitos que `teclear`. */
+export const limitarDigitos = (texto: string): string => texto.slice(0, MAX_DIGITOS)
 
 export function teclear(actual: string, tecla: Tecla | string): string {
   if (tecla === 'del') return actual.slice(0, -1)

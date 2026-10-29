@@ -94,6 +94,12 @@ describe('Cantidad y oferta: Bultos / Unidades (decisión L4)', () => {
     expect(screen.getByText('6 unidades en total')).toBeTruthy()
   })
 
+  it('la cantidad tipeada tiene tope de dígitos (como el teclado): no acepta 123456', () => {
+    abrir()
+    escribir('Cantidad', '123456')
+    expect(valorCampo('Cantidad')).toBe('1234')
+  })
+
   it('se puede tipear la cantidad', () => {
     abrir()
     escribir('Cantidad', '25')
