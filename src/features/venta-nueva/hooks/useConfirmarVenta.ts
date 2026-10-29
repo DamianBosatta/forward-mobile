@@ -7,8 +7,10 @@ import { esError } from '@/core/api/errores'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { ventasKeys } from '@/libs/api-client/ventas'
 import { inicioKeys } from '@/core/query/queryClient'
+import type { CatalogoStockItem } from '@/libs/api-client'
 import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { hasCapability } from '@/features/auth/lib/capabilities'
 import type { ClienteNombrable } from '@/features/clientes/lib/cliente'
 import { encolarSiFaltaSenal, loQueVio } from '@/features/venta-sin-senal'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -16,6 +18,9 @@ import { aAlta, aAutoguardado, errorDeAltaVenta, nuevaClaveIdempotencia, type Ca
 import { motivosAutorizacion } from '../lib/motivosAutorizacion'
 import { esEstadoVenta } from '@/core/constants/estados'
 import type { LineaCarrito } from '../lib/carrito'
+import { conStockFresco } from '../lib/avisoStockVivo'
+import { faltaStock } from '../lib/avisos'
+import { CLAVE_CATALOGO } from './useCatalogoVenta'
 import type { useBorradorVenta } from './useBorradorVenta'
 
 interface Datos {
@@ -81,8 +86,16 @@ export function useConfirmarVenta(d: Datos) {
   const enVuelo = useRef(false)
   const [error, setError] = useState<string | null>(null)
   const [pedirMotivo, setPedirMotivo] = useState(false)
+  const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
   // Al editar, el stock del catálogo no cuenta lo que esta venta ya reservó: el motivo lo pide el servidor si hace falta.
-  const sinStock = !d.edicion && d.esPedido && d.lineas.some((l) => l.cantidad > l.producto.disponible)
+  // Se decide al confirmar, con el catálogo que haya en ese momento (la revisión lo acaba de volver a pedir). Quien
+  // no ve cantidades recibe `disponible = 0`: para él decide `puedeVenderse`.
+  const sinStock = () => {
+    if (d.edicion || !d.esPedido) return false
+    const cache = qc.getQueryData<{ items: CatalogoStockItem[] } | CatalogoStockItem[]>(CLAVE_CATALOGO)
+    const catalogo = Array.isArray(cache) ? cache : cache?.items ?? []
+    return conStockFresco(d.lineas, catalogo).some((l) => faltaStock(l, verCantidades))
+  }
 
   async function enviar(motivo?: string) {
     const { borrador: b } = d
@@ -161,7 +174,7 @@ export function useConfirmarVenta(d: Datos) {
 
   async function confirmar(motivo?: string) {
     if (enVuelo.current) return
-    if (sinStock && !motivo) return setPedirMotivo(true)
+    if (!motivo && sinStock()) return setPedirMotivo(true)
     enVuelo.current = true
     setEnviando(true)
     setError(null)

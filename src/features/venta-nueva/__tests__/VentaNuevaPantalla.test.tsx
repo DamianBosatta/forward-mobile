@@ -655,6 +655,8 @@ describe('confirmar', () => {
   })
 
   it('sin stock pide el motivo antes de mandar y lo manda en el alta', async () => {
+    // Quien ve cantidades compara contra `disponible`; quien no, decide `puedeVenderse` (L6).
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }], maxDescuentoPorcentaje: 10 } as never })
     await armar(120)
     await confirmar()
     expect(screen.getByText('Falta stock')).toBeTruthy()
