@@ -89,15 +89,6 @@ export function sumar(lineas: LineaCarrito[], productoId: string): LineaCarrito[
   return lineas.map((l) => (l.productoId === productoId ? { ...l, cantidad: l.cantidad + multiploDe(l.producto) } : l))
 }
 
-/** Resta un múltiplo; si queda en 0 o menos, la línea sale del carrito. */
-export function restar(lineas: LineaCarrito[], productoId: string): LineaCarrito[] {
-  return lineas.flatMap((l) => {
-    if (l.productoId !== productoId) return [l]
-    const cantidad = l.cantidad - multiploDe(l.producto)
-    return cantidad > 0 ? [{ ...l, cantidad }] : []
-  })
-}
-
 export function quitar(lineas: LineaCarrito[], productoId: string): LineaCarrito[] {
   return lineas.filter((l) => l.productoId !== productoId)
 }
