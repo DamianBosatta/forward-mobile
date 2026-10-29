@@ -44,7 +44,10 @@ export function Button({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: inactivo, busy: loading }}
-      style={({ pressed }) => ({
+      // Estilo fijo y no una función de `pressed`: con NativeWind 4 la función se pierde y el botón queda sin
+      // fondo ni alto. El toque se marca con el ripple nativo.
+      android_ripple={inactivo ? undefined : { color: p.borde }}
+      style={{
         height: space[12],
         paddingHorizontal: space[5],
         borderRadius: radii.campo,
@@ -53,8 +56,8 @@ export function Button({
         backgroundColor: p.fondo,
         alignItems: 'center',
         justifyContent: 'center',
-        opacity: pressed && !inactivo ? 0.85 : 1,
-      })}
+        overflow: 'hidden',
+      }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
         {loading && <ActivityIndicator size="small" color={p.texto} />}

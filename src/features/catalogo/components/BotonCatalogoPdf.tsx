@@ -59,7 +59,7 @@ export function BotonCatalogoPdf({ busqueda, soloConStock, conOferta, categoriaI
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
 
   return (
-    <View style={{ gap: space[2] }}>
+    <>
       <Button label="Compartir catálogo en PDF" variant="secundario" onPress={() => setAbierta(true)} />
       <BottomSheet visible={abierta} onClose={() => setAbierta(false)} accessibilityLabel="Exportar el catálogo a PDF">
         <Text style={[typeScale.titulo, { color: c.text }]}>Exportar a PDF</Text>
@@ -81,6 +81,6 @@ export function BotonCatalogoPdf({ busqueda, soloConStock, conOferta, categoriaI
         {error ? <Notice tone="peligro">{error}</Notice> : null}
         <Button label={`Generar PDF en ${formato.toLowerCase()}`} loading={generando} onPress={() => { void compartir() }} />
       </BottomSheet>
-    </View>
+    </>
   )
 }
