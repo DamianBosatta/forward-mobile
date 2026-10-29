@@ -95,7 +95,7 @@ export function RouteSelector({ routes, onSelect }: RouteSelectorProps) {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <MapPin size={14} color={colors.textSecondary} />
                         <Text style={{ fontSize: 13, color: colors.textSecondary }}>
-                          {stopCount} parada{stopCount !== 1 ? 's' : ''}
+                          {`${stopCount} ${stopCount === 1 ? 'entrega' : 'entregas'}`}
                         </Text>
                       </View>
                     </View>
