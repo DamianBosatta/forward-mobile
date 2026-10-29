@@ -5,6 +5,7 @@ import CatalogoConsultaScreen from '../../../../app/(tabs)/inventario/index'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { fichaDeCatalogo, paginaDeCatalogo } from '../testing/fichasDeCatalogo'
+import { novedadesDesde } from '../lib/presentacion'
 
 // PR 1.1 — catálogo de consulta. Se renderiza la pantalla real con react-query real;
 // solo se reemplaza el transporte HTTP (api.get / api.post) por respuestas del servidor.
@@ -293,5 +294,29 @@ describe('Catálogo: fichas de /catalogo', () => {
     expect(screen.queryByText(/Última compra/)).toBeNull()
     expect(screen.queryByText(/Distribuidora Norte/)).toBeNull()
     expect(screen.queryByText('Costo y margen')).toBeNull()
+  })
+})
+
+describe('Catálogo: novedades', () => {
+  it('pide las novedades de los últimos 30 días y pinta cada tarjeta con la marca del servidor', async () => {
+    const NUE = { id: 'p-nue', nombre: 'Balde 10 L con tapa', codigoPropio: 'NUV-BAL-10', precioVenta: 4850 }
+    api.get.mockImplementation((url: string) =>
+      url.startsWith('/api/v1/catalogo?')
+        ? Promise.resolve(paginaDeCatalogo([
+            fichaDeCatalogo(AER, { novedad: 'PrecioNuevo', precioAnterior: 2836.73, variacionPorcentaje: 8.5 }),
+            fichaDeCatalogo(TEX, { disponible: false, novedad: 'SinStock' }),
+            fichaDeCatalogo(NUE, { novedad: 'Nuevo' }),
+          ]))
+        : servidor(url),
+    )
+    renderPantalla()
+
+    expect(await screen.findByLabelText('Saphirus Aerosol 250 ml, código SAP-AER-250, Precio nuevo, ▲ 8,5 %')).toBeTruthy()
+    expect(screen.getByText('$ 2.836,73')).toBeTruthy()
+    expect(screen.getByLabelText('Saphirus Textil 250 ml, código SAP-TEX-250, Sin stock')).toBeTruthy()
+    expect(screen.getByLabelText('Balde 10 L con tapa, código NUV-BAL-10, Nuevo')).toBeTruthy()
+
+    const pedido = new URL(`http://x${llamadasGet().find((u) => u.startsWith('/api/v1/catalogo?'))}`)
+    expect(pedido.searchParams.get('NovedadesDesde')).toBe(novedadesDesde(30))
   })
 })

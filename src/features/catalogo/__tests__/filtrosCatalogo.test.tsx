@@ -139,6 +139,7 @@ describe('Catálogo: filtros de oferta y Línea / Familia', () => {
     await userEvent.press(screen.getByLabelText('Línea / Familia'))
     await userEvent.press(await screen.findByLabelText('Hogar'))
     await userEvent.press(screen.getByText('Compartir catálogo en PDF'))
+    await userEvent.press(await screen.findByText('Generar PDF en tarjeta'))
 
     await waitFor(() => expect(mockSharePdf).toHaveBeenCalledTimes(1))
     const url = new URL(mockSharePdf.mock.calls[0][0] as string)

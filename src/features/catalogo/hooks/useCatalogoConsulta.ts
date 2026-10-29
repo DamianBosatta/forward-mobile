@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { useInfiniteCatalogo, type CatalogoComercialItem } from '@/libs/api-client/catalogo'
-import type { ProductoDeTarjeta } from '../lib/presentacion'
+import { DIAS_DE_NOVEDADES, novedadesDesde, type ProductoDeTarjeta } from '../lib/presentacion'
 
 const DEBOUNCE_BUSQUEDA_MS = 300
 const TAMANO_PAGINA = 20
@@ -17,6 +17,9 @@ export function aTarjeta(item: CatalogoComercialItem): ProductoDeTarjeta {
     imageUrl: item.imageUrl,
     esPadreDeVariantes: fragancias > 0,
     cantidadFragancias: fragancias > 0 ? fragancias : undefined,
+    novedad: item.novedad,
+    precioAnterior: item.precioAnterior,
+    variacionPorcentaje: item.variacionPorcentaje,
   }
 }
 
@@ -25,15 +28,18 @@ export function aTarjeta(item: CatalogoComercialItem): ProductoDeTarjeta {
  * con el término esperado ~300 ms. Mientras llega la búsqueda nueva se ven los resultados anteriores.
  * El chip de stock sale del `disponible` que ya manda cada ficha (el servidor descuenta lo reservado, en el
  * alcance de depósitos del usuario): no hay un pedido aparte a Stock, que un vendedor sin ese módulo no puede hacer.
+ * Pide las novedades de los últimos 30 días: el color de cada tarjeta (nuevo, precio nuevo, sin stock) viene del servidor.
  */
 export function useCatalogoConsulta() {
   const [busqueda, setBusqueda] = useState('')
   const [soloConOferta, setSoloConOferta] = useState(false)
   const [categoriaId, setCategoriaId] = useState<string | undefined>(undefined)
   const termino = useDebouncedValue(busqueda.trim(), DEBOUNCE_BUSQUEDA_MS)
+  // Fijo al montar: si cambiara en cada render, la clave de la consulta también.
+  const [desde] = useState(() => novedadesDesde(DIAS_DE_NOVEDADES))
 
   const query = useInfiniteCatalogo(
-    { search: termino || undefined, pageSize: TAMANO_PAGINA, conOferta: soloConOferta || undefined, categoriaId },
+    { search: termino || undefined, pageSize: TAMANO_PAGINA, conOferta: soloConOferta || undefined, categoriaId, novedadesDesde: desde },
     { mantenerAnterior: true },
   )
 

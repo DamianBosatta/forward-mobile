@@ -15,6 +15,8 @@ export interface CatalogoParams {
   search?: string
   categoriaId?: string
   conOferta?: boolean
+  /** YYYY-MM-DD (día argentino): con esto cada ficha trae su marca de novedad, precio anterior y variación. */
+  novedadesDesde?: string
 }
 
 export const catalogoKeys = {
@@ -38,6 +40,7 @@ export function useInfiniteCatalogo(params: CatalogoParams = {}, { mantenerAnter
       if (params.search) searchParams.set('SearchTerm', params.search)
       if (params.categoriaId) searchParams.set('CategoriaId', params.categoriaId)
       if (params.conOferta) searchParams.set('ConOferta', 'true')
+      if (params.novedadesDesde) searchParams.set('NovedadesDesde', params.novedadesDesde)
       return api.get<CatalogoPage>(`/api/v1/catalogo?${searchParams}`)
     },
     initialPageParam: 1,
