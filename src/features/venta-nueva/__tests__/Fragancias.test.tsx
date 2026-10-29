@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { CatalogoVenta } from '../components/CatalogoVenta'
-import { LineasVenta } from '../components/LineasVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { producto } from '../__testing__/producto'
 import { aAutoguardado } from '../lib/payload'
@@ -67,36 +66,6 @@ describe('elegir fragancias (PR 2.4)', () => {
     await waitFor(() => expect(within(screen.getByTestId('fragancia-pv2')).getByText('Sin stock')).toBeTruthy())
     expect(within(screen.getByTestId('fragancia-pv1')).getByText('Hay stock')).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith(`/api/v1/Productos/pf/variantes?depositoId=${DEPOSITO_CENTRAL_ID}`)
-  })
-
-  it('en Líneas las fragancias van juntas bajo su línea y "Elegir fragancias" vuelve a repartir', async () => {
-    useCarritoVenta.setState({ lineas: [
-      { productoId: 'p1', producto: pala, cantidad: 1, descuentoPct: 0 },
-      { productoId: 'pv1', producto: lavanda, cantidad: 12, descuentoPct: 5 },
-    ] })
-    const Pantalla = () => {
-      const { lineas } = useCarritoVenta()
-      const [abierta, setAbierta] = React.useState<string | null>(null)
-      const { FraganciasSheet } = require('../components/FraganciasSheet')
-      return (
-        <>
-          <LineasVenta lineas={lineas} porAutorizar={[]} rechazos={[]} descuentoGeneral={0} onDescuentoGeneral={jest.fn()} onSumar={jest.fn()} onRestar={jest.fn()} tope={10}
-            onAgregar={jest.fn()} onEditar={jest.fn()} onElegirFragancias={setAbierta} nombrePadre={(id) => (id === 'pf' ? 'Saphirus Aerosol' : undefined)} />
-          <FraganciasSheet padreId={abierta} onClose={() => setAbierta(null)} />
-        </>
-      )
-    }
-    conQuery(<Pantalla />)
-    const grupo = screen.getByTestId('fragancias-pf')
-    expect(within(grupo).getByText('Saphirus Aerosol · fragancias')).toBeTruthy()
-    expect(within(grupo).getByText('Lavanda 12')).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias de Saphirus Aerosol' }))
-    expect(screen.getByLabelText('Lavanda: 12')).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Sumar Coco Vainilla' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
-    // La fragancia nueva toma el descuento que ya tenía la línea.
-    expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad, l.descuentoPct])).toEqual([['p1', 1, 0], ['pv1', 12, 5], ['pv2', 6, 5]])
-    expect(within(screen.getByTestId('fragancias-pf')).getByText('Coco Vainilla 6')).toBeTruthy()
   })
 
   it('dejar una fragancia en 0 la saca de la venta sin tocar las demás líneas', () => {

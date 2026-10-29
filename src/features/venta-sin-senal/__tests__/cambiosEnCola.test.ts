@@ -29,6 +29,20 @@ describe('lineasQueCambiaron (S3)', () => {
     expect(lineasQueCambiaron([venta('v1', [{ productoId: 'zzz', cantidad: 5 }])], catalogo)).toEqual([])
   })
 
+  it('quien no ve cantidades (disponible = 0) se guía por puedeVenderse, no por disponible', () => {
+    const sinCantidades = [
+      producto({ id: 'p1', nombre: 'Producto X', disponible: 0, puedeVenderse: true }),
+      producto({ id: 'p2', nombre: 'Producto Y', disponible: 0, puedeVenderse: false }),
+    ]
+    const r = lineasQueCambiaron([venta('v1', [{ productoId: 'p1', cantidad: 5 }, { productoId: 'p2', cantidad: 5 }])], sinCantidades, false)
+    expect(r.map((l) => l.productoId)).toEqual(['p2'])
+  })
+
+  it('quien ve cantidades sigue decidiendo por disponible aunque puedeVenderse diga otra cosa', () => {
+    const c = [producto({ id: 'p1', nombre: 'Producto X', disponible: 3, puedeVenderse: true })]
+    expect(lineasQueCambiaron([venta('v1', [{ productoId: 'p1', cantidad: 5 }])], c, true)).toHaveLength(1)
+  })
+
   it('el texto dice cuánto queda y cuánto lleva la venta', () => {
     expect(textoDeLineaCambiada({ clave: 'v1', productoId: 'p1', nombre: 'Producto X', disponible: 3, cantidad: 5 }))
       .toBe('Quedan 3 de Producto X (la venta guardada lleva 5)')

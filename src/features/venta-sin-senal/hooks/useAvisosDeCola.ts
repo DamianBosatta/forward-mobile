@@ -18,7 +18,7 @@ export function useAvisosDeCola(cola: VentaEnCola[], gestor: GestorStock = gesto
   const { productos } = useCatalogoVenta('')
   const alRefrescar = useCallback(() => { void qc.invalidateQueries({ queryKey: CLAVE_CATALOGO }) }, [qc])
   const { enVivo } = useStockEnVivo({ depositoIds: DEPOSITOS, alRefrescar, alCambio: alRefrescar, gestor })
-  // Sin cantidades (sin la capacidad) el catálogo trae ceros: no hay con qué comparar.
-  const compara = enVivo && gestor.veCantidades()
-  return useMemo(() => (compara ? lineasQueCambiaron(cola, productos) : []), [compara, cola, productos])
+  // Sin cantidades (sin la capacidad) el catálogo trae ceros: se compara por `puedeVenderse`.
+  const verCantidades = gestor.veCantidades()
+  return useMemo(() => (enVivo ? lineasQueCambiaron(cola, productos, verCantidades) : []), [enVivo, verCantidades, cola, productos])
 }

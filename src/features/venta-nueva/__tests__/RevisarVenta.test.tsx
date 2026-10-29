@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { CLAVE_CATALOGO } from '../hooks/useCatalogoVenta'
@@ -75,6 +75,26 @@ describe('RevisarVenta (S5, S6, S7)', () => {
     expect(screen.queryByTestId('linea-cambio-p1')).toBeNull()
   })
 
+  it('editando, lo que la venta ya tenía se suma al disponible: no marca falta donde alcanza (S9)', async () => {
+    // Quedan 3 en el catálogo sin la 1 u. que esta venta ya tenía: la línea de 4 alcanza.
+    catalogoServidor = [rollo(), esponja({ disponible: 3 })]
+    revisar({ yaReservadas: { p2: 1 } })
+    expect(await screen.findByText('Stock actualizado: quedan 4')).toBeTruthy()
+    expect(screen.queryByText(/Quedan 3, pediste 4/)).toBeNull()
+  })
+
+  it('editando, si pide más que disponible + lo que ya tenía, sigue marcando la falta con el disponible real', async () => {
+    catalogoServidor = [rollo(), esponja({ disponible: 2 })]
+    revisar({ yaReservadas: { p2: 1 } })
+    expect(await screen.findByText('Quedan 3, pediste 4: tocá para ajustar')).toBeTruthy()
+  })
+
+  it('el botón puede llevar otra etiqueta (editar: "Guardar cambios")', () => {
+    revisar({ etiquetaConfirmar: 'Guardar cambios' })
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Confirmar venta' })).toBeNull()
+  })
+
   it('con dos productos cambiados el banner habla en plural', async () => {
     catalogoServidor = [rollo({ disponible: 1 }), esponja({ disponible: 3 })]
     revisar()
@@ -130,5 +150,53 @@ describe('RevisarVenta (S5, S6, S7)', () => {
     expect(alConfirmar).not.toHaveBeenCalled()
     soltar()
     await waitFor(() => expect(alConfirmar).toHaveBeenCalledTimes(1))
+  })
+  it('dos toques seguidos en Confirmar venta (antes de re-renderizar) confirman una sola vez', async () => {
+    const { alConfirmar } = revisar()
+    await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(2))
+    const boton = screen.getByRole('button', { name: 'Confirmar venta' })
+    // Dos toques en el mismo cuadro: el segundo llega antes de que el botón se apague.
+    await act(async () => { fireEvent.press(boton); fireEvent.press(boton) })
+    await waitFor(() => expect(alConfirmar).toHaveBeenCalledTimes(1))
+    await new Promise((r) => setTimeout(r, 50))
+    expect(alConfirmar).toHaveBeenCalledTimes(1)
+  })
+
+  it('si el envío falla, se puede volver a confirmar', async () => {
+    const { alConfirmar } = revisar()
+    await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(2))
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
+    await waitFor(() => expect(alConfirmar).toHaveBeenCalledTimes(1))
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
+    await waitFor(() => expect(alConfirmar).toHaveBeenCalledTimes(2))
+  })
+
+  describe('fragancias (S9)', () => {
+    const variante = (id: string, nombre: string) => producto({ id, nombre, marca: 'Lysoform', precioVenta: 300, disponible: 10, productoPadreId: 'padre1' })
+    beforeEach(() => {
+      const a = variante('v1', 'Desodorante - Lavanda')
+      const b = variante('v2', 'Desodorante - Pino')
+      qc.setQueryData(CLAVE_CATALOGO, { items: [a, b, rollo()], truncado: false })
+      catalogoServidor = [a, b, rollo()]
+      useCarritoVenta.setState({ lineas: [
+        { productoId: 'v1', producto: a, cantidad: 2, descuentoPct: 0 },
+        { productoId: 'v2', producto: b, cantidad: 3, descuentoPct: 0 },
+        { productoId: 'p1', producto: rollo(), cantidad: 1, descuentoPct: 0 },
+      ] })
+    })
+
+    it('una línea con fragancias ofrece "Elegir fragancias" una sola vez por producto padre y abre la elección', async () => {
+      const alElegir = jest.fn()
+      revisar({ onElegirFragancias: alElegir })
+      const botones = screen.getAllByRole('button', { name: 'Elegir fragancias de Desodorante' })
+      expect(botones).toHaveLength(1)
+      await userEvent.press(botones[0])
+      expect(alElegir).toHaveBeenCalledWith('padre1')
+    })
+
+    it('un producto sin fragancias no ofrece elegirlas', () => {
+      revisar({ onElegirFragancias: jest.fn() })
+      expect(screen.queryByRole('button', { name: /Elegir fragancias de Rollo/ })).toBeNull()
+    })
   })
 })

@@ -76,7 +76,6 @@ describe('editar y duplicar (PR 2.9b)', () => {
     await aplicarDescuentoGeneral(5)
     await new Promise((r) => setTimeout(r, 1200))
     expect(mockPut).not.toHaveBeenCalled()
-    await userEvent.press(screen.getByRole('button', { name: 'Seguir' }))
     await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1))
     expect(mockPut.mock.calls[0][0]).toBe('/api/v1/Ventas/v9')
@@ -102,7 +101,6 @@ describe('editar y duplicar (PR 2.9b)', () => {
       return Promise.resolve(undefined)
     })
     abrir({ modo: 'editar', ventaId: 'v9' }, qc)
-    await userEvent.press(await screen.findByRole('button', { name: 'Seguir' }))
     await userEvent.press(await screen.findByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1))
     expect(mockPut.mock.calls[0][1]).toMatchObject({ version: 7, items: [{ productoId: 'p1', cantidad: 20, descuentoPorcentaje: 0 }] })
@@ -122,7 +120,6 @@ describe('editar y duplicar (PR 2.9b)', () => {
   it('si otro la cambió (409), se ve el mensaje del servidor y no sale de la pantalla', async () => {
     mockPut.mockRejectedValue(new ApiError(409, 'Error de concurrencia: la venta fue modificada.'))
     abrir({ modo: 'editar', ventaId: 'v9' })
-    await userEvent.press(await screen.findByRole('button', { name: 'Seguir' }))
     await userEvent.press(await screen.findByRole('button', { name: 'Guardar cambios' }))
     expect(await screen.findByText('Error de concurrencia: la venta fue modificada.')).toBeTruthy()
     expect(mockReplace).not.toHaveBeenCalled()
@@ -137,12 +134,11 @@ describe('editar y duplicar (PR 2.9b)', () => {
       return Promise.resolve(undefined)
     })
     abrir({ modo: 'editar', ventaId: 'v9' })
-    await userEvent.press(await screen.findByRole('tab', { name: 'Cabecera' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Datos de la entrega' }))
     expect(screen.getByText('Sin fecha: elegí el día de entrega.')).toBeTruthy()
     const dias = screen.getAllByRole('radio', { name: /^(dom|lun|mar|mié|jue|vie|sáb) \d+/ })
     expect(dias.length).toBeGreaterThan(0)
     expect(dias.some((r) => r.props.accessibilityState?.selected)).toBe(false)
-    await userEvent.press(await screen.findByRole('button', { name: 'Seguir' }))
     await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1))
     expect(mockPut.mock.calls[0][1]).not.toHaveProperty('fechaEntrega')
@@ -177,5 +173,62 @@ describe('editar y duplicar (PR 2.9b)', () => {
     expect(mockPut.mock.calls[0][0]).toBe('/api/v1/Ventas/b1')
     expect(mockPut.mock.calls[0][1]).toMatchObject({ id: 'b1', version: 1, items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 0 }] })
     expect(mockPut.mock.calls[0][1].fechaEntrega).not.toBe('2026-01-02')
+  })
+})
+
+describe('editar, retomar y duplicar usan la revisión nueva (S9)', () => {
+  const CAP = { module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }
+
+  it('editar abre "Revisar venta", sin la revisión vieja (Seguir, pestañas), y el botón dice Guardar cambios', async () => {
+    abrir({ modo: 'editar', ventaId: 'v9' })
+    expect(await screen.findByText('Revisar venta')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Seguir' })).toBeNull()
+    expect(screen.queryByRole('tab', { name: 'Cabecera' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Confirmar venta' })).toBeNull()
+  })
+
+  it('editar no avisa de falta de stock por lo que la venta ya tenía (disponible 5 + 12 de la venta)', async () => {
+    permisos({ canCreate: true, canUpdate: true, canRead: true })
+    useAuthStore.setState({ user: { ...useAuthStore.getState().user, permissions: [{ module: 'MOD_VENTAS', canRead: true, canCreate: true, canUpdate: true }, CAP] } as never })
+    const escaso = producto({ real: 5, disponible: 5 })
+    mockGet.mockImplementation((url: string) => {
+      if (url === '/api/v1/Ventas/v9') return Promise.resolve(venta)
+      if (url === '/api/v1/socios-comerciales/c7') return Promise.resolve(socio)
+      if (url.startsWith('/api/v1/Productos/catalogo-stock')) return Promise.resolve({ items: [escaso], hasNextPage: false })
+      return Promise.resolve(undefined)
+    })
+    abrir({ modo: 'editar', ventaId: 'v9' })
+    expect(await screen.findByText('Stock confirmado ahora')).toBeTruthy()
+    expect(screen.queryByText(/Quedan 5, pediste 12/)).toBeNull()
+    expect(screen.queryByText('Este pedido va a quedar por autorizar')).toBeNull()
+  })
+
+  it('editar sí avisa si pide más que lo disponible más lo que la venta ya tenía', async () => {
+    useAuthStore.setState({ user: { ...useAuthStore.getState().user, permissions: [{ module: 'MOD_VENTAS', canRead: true, canCreate: true, canUpdate: true }, CAP] } as never })
+    const escaso = producto({ real: 0, disponible: 0 })
+    mockGet.mockImplementation((url: string) => {
+      if (url === '/api/v1/Ventas/v9') return Promise.resolve({ ...venta, detalles: [{ ...venta.detalles[0], cantidad: 12 }] })
+      if (url === '/api/v1/socios-comerciales/c7') return Promise.resolve(socio)
+      if (url.startsWith('/api/v1/Productos/catalogo-stock')) return Promise.resolve({ items: [escaso], hasNextPage: false })
+      return Promise.resolve(undefined)
+    })
+    abrir({ modo: 'editar', ventaId: 'v9' })
+    await screen.findByText('Revisar venta')
+    await userEvent.press(await screen.findByRole('button', { name: /Pala/ }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Uno más' }))
+    expect(await screen.findByText('Pediste más de lo disponible: la venta va a autorización')).toBeTruthy()
+  })
+
+  it('duplicar abre "Revisar venta" y "Confirmar venta" crea una venta nueva (POST /Ventas), no pisa la original', async () => {
+    mockPost.mockImplementation((url: string) => Promise.resolve(
+      url === '/api/v1/Ventas/borradores' ? { ventaId: 'b1', version: 1, message: '' } : { ventaId: 'v10', version: 1, message: 'Venta creada.', estado: 1 }))
+    abrir({ modo: 'duplicar', ventaId: 'v9' })
+    expect(await screen.findByText('Revisar venta')).toBeTruthy()
+    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
+    await userEvent.press(await screen.findByRole('button', { name: 'Confirmar venta' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas', expect.objectContaining({ clienteId: 'c7', items: [expect.objectContaining({ productoId: 'p1', cantidad: 12 })] })))
+    expect(mockPut.mock.calls.every(([u]: [string]) => u !== '/api/v1/Ventas/v9')).toBe(true)
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(tabs)/ventas/guardada', params: { id: 'v10', mensaje: 'Venta creada.' } }))
   })
 })
