@@ -11,13 +11,11 @@ import { EscanerCodigo } from '@/features/catalogo/components/EscanerCodigo'
 import { useCatalogoVenta } from '../hooks/useCatalogoVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import type { CatalogoStockItem } from '@/libs/api-client'
-import { cantidadEn, type LineaCarrito } from '../lib/carrito'
+import { cantidadEn } from '../lib/carrito'
 import { resolverCodigo } from '../lib/escaneo'
 import { FILTROS_VACIOS, filtrarCatalogo } from '../lib/filtrosCatalogo'
 import { ProductoCatalogoCard } from './ProductoCatalogoCard'
 import { CarritoFlotante, CarritoPanel } from './CarritoVenta'
-import { CantidadSheet } from './CantidadSheet'
-import { EditarLineaSheet } from './EditarLineaSheet'
 import { FraganciasSheet } from './FraganciasSheet'
 import { cantidadDeFragancias } from '../lib/fragancias'
 
@@ -29,8 +27,8 @@ interface CatalogoVentaProps {
   escanearAlAbrir?: boolean
   /** Señal del stock en vivo (`useStockVivoVenta`): chip "Stock en vivo" / "Sin conexión"; sin ella no hay chip. */
   enVivo?: boolean
-  /** Abre la pantalla de cantidad y oferta del producto; sin ella, las tarjetas suman con −/+ como siempre. */
-  onAbrirOferta?: (producto: CatalogoStockItem) => void
+  /** Abre la pantalla de cantidad y oferta del producto ("Agregar" y el chip de edición de la tarjeta). */
+  onAbrirOferta: (producto: CatalogoStockItem) => void
 }
 
 /**
@@ -51,9 +49,7 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
     () => filtrarCatalogo(todos, filtros, idsDelUltimo).filter((p) => !p.productoPadreId),
     [todos, filtros, idsDelUltimo],
   )
-  const { lineas, agregar, sumar, restar, quitar, reemplazar } = useCarritoVenta()
-  const [editando, setEditando] = useState<string | null>(null)
-  const [detalle, setDetalle] = useState<LineaCarrito | null>(null)
+  const { lineas, agregar } = useCarritoVenta()
   const [fragancias, setFragancias] = useState<string | null>(null)
   const [escaneando, setEscaneando] = useState(escanearAlAbrir)
   const [avisoEscaneo, setAvisoEscaneo] = useState<string | null>(null)
@@ -131,11 +127,7 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
             enVivo={enVivo}
             onAbrirOferta={onAbrirOferta}
             llevoAntes={llevo?.get(item.id)}
-            onAgregar={() => agregar(item)}
-            onSumar={() => sumar(item.id)}
-            onRestar={() => restar(item.id)}
             onElegirFragancias={() => setFragancias(item.id)}
-            onEditar={item.esPadreDeVariantes ? undefined : () => setEditando(item.id)}
           />
         )}
       />
@@ -143,24 +135,10 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
     </View>
   )
 
-  const linea = lineas.find((l) => l.productoId === editando) ?? null
   return (
     <View style={{ flex: 1, flexDirection: 'row' }}>
       {lista}
       {isTabletLandscape && <CarritoPanel lineas={lineas} onVerVenta={onVerVenta} />}
-      <CantidadSheet
-        linea={linea}
-        onClose={() => setEditando(null)}
-        onConfirm={(l) => { reemplazar(l); setEditando(null) }}
-        onQuitar={(id) => { quitar(id); setEditando(null) }}
-        onDetalle={(l) => { setEditando(null); setDetalle(l) }}
-      />
-      <EditarLineaSheet
-        linea={detalle}
-        onClose={() => setDetalle(null)}
-        onConfirm={(l) => { reemplazar(l); setDetalle(null) }}
-        onQuitar={(id) => { quitar(id); setDetalle(null) }}
-      />
       <FraganciasSheet padreId={fragancias} onClose={() => setFragancias(null)} llevo={llevo} />
       {escaneando ? <EscanerCodigo visible onClose={() => setEscaneando(false)} onLeido={alLeer} /> : null}
     </View>

@@ -5,6 +5,7 @@ import { Segmented, TopBar } from '@/core/ui/fw'
 import type { TipoDocumento } from '@/features/clientes/components/SeleccionarClienteSheet'
 import type { ClienteElegido } from '@/features/clientes/lib/recientes'
 import { ElegirClienteVenta } from './ElegirClienteVenta'
+import { PasosVenta } from './PasosVenta'
 
 interface Props {
   /** La ficha del cliente que vino por `?clienteId=` todavía se está trayendo. */
@@ -38,7 +39,8 @@ export function NuevaVentaInicio({ cargandoCliente, tipo, onTipo, onElegir, onNu
   }
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar title="¿A quién le vendés?" subtitle="Paso 1 de 3 · Cliente" leading={{ kind: 'atras', onPress: onVolver }} />
+      <TopBar title="¿A quién le vendés?" leading={{ kind: 'atras', onPress: onVolver }} />
+      <PasosVenta paso={1} />
       <View style={{ paddingHorizontal: space[4], paddingTop: space[3], gap: space[2] }}>
         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Elegí el cliente para ver sus precios y el stock.</Text>
         <Segmented options={TIPOS} value={tipo} onChange={onTipo} accessibilityLabel="Tipo de venta" />

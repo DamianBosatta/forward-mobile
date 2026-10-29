@@ -24,7 +24,7 @@ const ctx = { tipo: 'Pedido' as const, tope: 10, exento: false, descuentoGeneral
 
 describe('stock disponible de la venta (S6, S7)', () => {
   it('la tarjeta del catálogo muestra el disponible, no el real', () => {
-    render(<ProductoCatalogoCard producto={producto({ real: 100, disponible: 2 })} cantidad={0} verCantidades onAgregar={noop} onSumar={noop} onRestar={noop} />)
+    render(<ProductoCatalogoCard producto={producto({ real: 100, disponible: 2 })} cantidad={0} verCantidades onAbrirOferta={noop} />)
     expect(screen.getByText('Quedan 2 u')).toBeTruthy()
   })
 

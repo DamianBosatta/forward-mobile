@@ -29,6 +29,12 @@ export function presentacionDe(p: Pick<CatalogoStockItem, 'ventaMinimaUnidades' 
   return { modos: hayBulto ? ['bultos', 'unidades'] : ['unidades'], unidadesPorBulto: bulto, soloBultos: false, paso: { bultos: 1, unidades: minimo } }
 }
 
+/** La pastilla de la tarjeta del catálogo: "Bulto x 6 u" si hay bulto o múltiplo de venta, "Unidad" si no. */
+export function rotuloPresentacion(pr: Presentacion): string {
+  if (pr.modos.includes('bultos')) return `Bulto x ${pr.unidadesPorBulto} u`
+  return pr.paso.unidades > 1 ? `Bulto x ${pr.paso.unidades} u` : 'Unidad'
+}
+
 /** Lo ingresado en un modo, en unidades (Bultos × N). */
 export function unidadesDe(pr: Presentacion, modo: ModoCantidad, valor: number): number {
   return modo === 'bultos' ? valor * pr.unidadesPorBulto : valor
@@ -45,7 +51,11 @@ export function convertirModo(pr: Presentacion, modo: ModoCantidad, unidades: nu
   return Math.max(1, Math.ceil(unidades / pr.unidadesPorBulto)) * pr.unidadesPorBulto
 }
 
-/** Descuentos de un toque: 0 / 5 / 10 / 15 % sin pasarse del tope del vendedor (quien está exento no tiene tope). */
+/**
+ * Descuentos de un toque (por línea y a toda la venta): 0 / 5 / 10 / 15 % más el tope del vendedor, sin pasarse de él
+ * (quien está exento no tiene tope). Para otro valor está "Otro", que sí deja pasarse y avisa que queda por autorizar.
+ */
 export function chipsDeDescuento(tope: number, exento: boolean): number[] {
-  return [0, 5, 10, 15].filter((p) => exento || p <= tope)
+  const base = [0, 5, 10, 15].filter((p) => exento || p <= tope)
+  return exento || tope <= 0 || base.includes(tope) ? base : [...base, tope].sort((a, b) => a - b)
 }

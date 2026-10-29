@@ -1,5 +1,17 @@
 import { cajaDe6, producto } from '../__testing__/producto'
-import { chipsDeDescuento, convertirModo, presentacionDe, unidadesDe, valorEn } from '../lib/presentacion'
+import { chipsDeDescuento, convertirModo, presentacionDe, rotuloPresentacion, unidadesDe, valorEn } from '../lib/presentacion'
+
+describe('rotuloPresentacion: la pastilla de la tarjeta sale de la misma regla que la pantalla de oferta', () => {
+  it('una caja cerrada o un bulto que se puede abrir dicen "Bulto x N u"', () => {
+    expect(rotuloPresentacion(presentacionDe(cajaDe6()))).toBe('Bulto x 6 u')
+    expect(rotuloPresentacion(presentacionDe(producto({ bultoContenido: 10 })))).toBe('Bulto x 10 u')
+  })
+
+  it('un pack que no es bulto cerrado se vende de a su múltiplo; sin nada de eso es Unidad', () => {
+    expect(rotuloPresentacion(presentacionDe(producto({ bultoContenido: 10, ventaMinimaUnidades: 6, fraccionMinimaVenta: 'Pack' })))).toBe('Bulto x 6 u')
+    expect(rotuloPresentacion(presentacionDe(producto()))).toBe('Unidad')
+  })
+})
 
 describe('presentacionDe: cómo se puede pedir un producto (decisión L4, "Respetar la regla")', () => {
   it('un producto que se vende solo por caja ofrece solo Bultos', () => {
@@ -57,5 +69,11 @@ describe('chipsDeDescuento: 0 / 5 / 10 / 15 hasta el tope del vendedor', () => {
 
   it('quien está exento del tope ve todos', () => {
     expect(chipsDeDescuento(0, true)).toEqual([0, 5, 10, 15])
+  })
+
+  it('suma el tope del vendedor si no cae en la grilla', () => {
+    expect(chipsDeDescuento(12, false)).toEqual([0, 5, 10, 12])
+    expect(chipsDeDescuento(3, false)).toEqual([0, 3])
+    expect(chipsDeDescuento(20, false)).toEqual([0, 5, 10, 15, 20])
   })
 })

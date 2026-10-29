@@ -5,7 +5,7 @@ import { cajaDe6, producto } from '../__testing__/producto'
 
 const noop = () => {}
 const pintar = (cantidad: number, extra: Record<string, unknown> = {}) =>
-  render(<ProductoCatalogoCard producto={producto(extra)} cantidad={cantidad} verCantidades={false} onAgregar={noop} onSumar={noop} onRestar={noop} />)
+  render(<ProductoCatalogoCard producto={producto(extra)} cantidad={cantidad} verCantidades={false} onAbrirOferta={noop} />)
 
 describe('ProductoCatalogoCard (CalleCatalogo)', () => {
   it('lo que ya está en el carrito se marca con el fondo y el borde de la marca; lo que no, queda liso', () => {
@@ -26,7 +26,7 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
 
   describe('tarjeta de la propuesta (T3)', () => {
     const tarjeta = (p = producto(), props: Record<string, unknown> = {}) =>
-      render(<ProductoCatalogoCard producto={p} cantidad={0} verCantidades onAgregar={noop} onSumar={noop} onRestar={noop} {...props} />)
+      render(<ProductoCatalogoCard producto={p} cantidad={0} verCantidades onAbrirOferta={noop} {...props} />)
 
     it('la presentación: "Bulto x N u" si se vende por bulto, "Unidad" si no; y la marca arriba', () => {
       tarjeta(cajaDe6({ marca: 'Bettanin' }))
@@ -52,11 +52,11 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
     })
 
     it('sin stock se rotula "Sin stock" pero se puede agregar igual (queda por autorizar)', async () => {
-      const onAgregar = jest.fn()
-      tarjeta(producto({ disponible: 0, puedeVenderse: false }), { onAgregar })
+      const onAbrirOferta = jest.fn()
+      tarjeta(producto({ disponible: 0, puedeVenderse: false }), { onAbrirOferta })
       await userEvent.press(screen.getByRole('button', { name: 'Añadir Pala c/Cabo Fija LP' }))
       expect(screen.getByText('Sin stock')).toBeTruthy()
-      expect(onAgregar).toHaveBeenCalledTimes(1)
+      expect(onAbrirOferta).toHaveBeenCalledTimes(1)
     })
 
     it('precio por bulto y por unidad, y chip "Oferta" cuando el servidor manda precio con oferta', () => {
@@ -66,16 +66,14 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
       expect(screen.getByText('$ 90,00 por unidad')).toBeTruthy()
     })
 
-    it('con onAbrirOferta, Agregar y el chip de edición la abren en vez de sumar a mano', async () => {
+    it('Agregar y el chip de edición abren la pantalla de cantidad y oferta', async () => {
       const onAbrirOferta = jest.fn()
-      const onAgregar = jest.fn()
       const p = cajaDe6()
-      const r = tarjeta(p, { onAbrirOferta, onAgregar })
+      const r = tarjeta(p, { onAbrirOferta })
       await userEvent.press(screen.getByRole('button', { name: `Añadir ${p.nombre}` }))
       expect(onAbrirOferta).toHaveBeenCalledWith(p)
-      expect(onAgregar).not.toHaveBeenCalled()
       r.unmount()
-      render(<ProductoCatalogoCard producto={p} cantidad={12} verCantidades onAgregar={onAgregar} onSumar={noop} onRestar={noop} onAbrirOferta={onAbrirOferta} />)
+      render(<ProductoCatalogoCard producto={p} cantidad={12} verCantidades onAbrirOferta={onAbrirOferta} />)
       await userEvent.press(screen.getByText('2 bultos ✎'))
       expect(onAbrirOferta).toHaveBeenCalledTimes(2)
     })

@@ -32,11 +32,6 @@ export function leyendaMultiplo(producto: Pick<CatalogoStockItem, 'ventaMinimaUn
 /** Se vende por bulto (caja o pack cerrado) cuando el múltiplo es mayor que 1. */
 export const vendePorBulto = (producto: Pick<CatalogoStockItem, 'ventaMinimaUnidades'>): boolean => multiploDe(producto) > 1
 
-/** Pastilla de la tarjeta: "Bulto x 6 u" o "Unidad". */
-export function presentacionDe(producto: Pick<CatalogoStockItem, 'ventaMinimaUnidades'>): string {
-  return vendePorBulto(producto) ? `Bulto x ${multiploDe(producto)} u` : 'Unidad'
-}
-
 /** "3 bultos" / "1 bulto" si se vende por bulto; "12 u" si no. `unidades` siempre viene en unidades. */
 export function cantidadEnPresentacion(producto: Pick<CatalogoStockItem, 'ventaMinimaUnidades'>, unidades: number): string {
   if (!vendePorBulto(producto)) return `${unidades} u`

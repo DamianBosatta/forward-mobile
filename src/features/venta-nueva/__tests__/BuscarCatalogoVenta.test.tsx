@@ -28,7 +28,7 @@ afterEach(() => jest.useRealTimers())
 
 async function buscar(texto: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(<QueryClientProvider client={qc}><CatalogoVenta onVerVenta={jest.fn()} /></QueryClientProvider>)
+  render(<QueryClientProvider client={qc}><CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} /></QueryClientProvider>)
   await act(async () => {})
   await userEvent.setup({ advanceTimers: jest.advanceTimersByTime }).type(screen.getByLabelText('Producto, marca o código'), texto)
   await act(async () => jest.advanceTimersByTime(DEBOUNCE_BUSQUEDA_MS))

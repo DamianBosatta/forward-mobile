@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { type ReactNode } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
@@ -23,6 +23,8 @@ interface Props {
   onConfirmar: () => void | Promise<void>
   /** Tocar una línea: abre la pantalla de cantidad y oferta. */
   onEditarLinea: (linea: LineaCarrito) => void
+  /** Lo que la venta nueva ajusta desde acá y no es una línea: datos de la entrega, descuento general, avisos, comisión. */
+  ajustes?: ReactNode
 }
 
 /** "2 bultos × $ 1.720,50" si la cantidad es de cajas cerradas; si no, "4 u × $ 400,56". */
@@ -41,7 +43,7 @@ function detalleDe(l: LineaCarrito): string {
  * tocar "Confirmar venta"; lo que cambió desde que se cargó queda marcado y el banner lo cuenta. Si falta stock
  * no se bloquea: el flujo de confirmar pide el motivo y la venta va a autorización.
  */
-export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, onEditarLinea }: Props) {
+export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, onEditarLinea, ajustes }: Props) {
   const c = useColors()
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
   const { lineas, cambios, confirmado, revalidando, revalidar } = useRevalidarStockVenta()
@@ -113,6 +115,7 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
             </Pressable>
           )
         })}
+        {ajustes}
         <View style={{ gap: space[2], paddingTop: space[2] }}>
           <TotalsRow label="Subtotal de lista" importe={lista} />
           {ofertas > 0 ? <TotalsRow label="Ofertas" importe={-ofertas} /> : null}

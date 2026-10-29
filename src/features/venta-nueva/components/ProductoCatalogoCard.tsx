@@ -4,7 +4,8 @@ import { Package } from 'lucide-react-native'
 import { radii, space, typeScale, importe, useColors, type ForwardColors } from '@/libs/theme'
 import { formatImporte } from '@/core/ui/fw'
 import type { CatalogoStockItem } from '@/libs/api-client'
-import { cantidadEnPresentacion, multiploDe, presentacionDe, precioServidor, stockDeTarjeta, vendePorBulto } from '../lib/carrito'
+import { cantidadEnPresentacion, multiploDe, precioServidor, stockDeTarjeta, vendePorBulto } from '../lib/carrito'
+import { presentacionDe, rotuloPresentacion } from '../lib/presentacion'
 
 interface ProductoCatalogoCardProps {
   producto: CatalogoStockItem
@@ -16,14 +17,9 @@ interface ProductoCatalogoCardProps {
   llevoAntes?: number
   /** Hay conexión al stock en vivo: la línea de stock agrega "· ahora". */
   enVivo?: boolean
-  onAgregar: () => void
-  onSumar: () => void
-  onRestar: () => void
   onElegirFragancias?: () => void
-  /** Abre "Cantidad y descuento" (el número tipeable); solo cuando ya está en el carrito. */
-  onEditar?: () => void
-  /** Abre la pantalla de cantidad y oferta. Si viene, "Agregar" y el chip de edición la abren; si no, queda el −/+ de siempre. */
-  onAbrirOferta?: (producto: CatalogoStockItem) => void
+  /** Abre la pantalla de cantidad y oferta: "Agregar" y, si ya está en el carrito, el chip de edición. */
+  onAbrirOferta: (producto: CatalogoStockItem) => void
 }
 
 /**
@@ -31,7 +27,7 @@ interface ProductoCatalogoCardProps {
  * precio (por bulto y por unidad) y "Agregar" o el chip de edición. Sin stock se puede pedir: queda por autorizar.
  */
 export function ProductoCatalogoCard({
-  producto: p, cantidad, verCantidades, llevoAntes, enVivo, onAgregar, onSumar, onRestar, onElegirFragancias, onEditar, onAbrirOferta,
+  producto: p, cantidad, verCantidades, llevoAntes, enVivo, onElegirFragancias, onAbrirOferta,
 }: ProductoCatalogoCardProps) {
   const c = useColors()
   const stock = stockDeTarjeta(p, verCantidades, enVivo)
@@ -39,7 +35,7 @@ export function ProductoCatalogoCard({
   const porBulto = vendePorBulto(p)
   const unitario = precioServidor(p)
   const pistas = [llevoAntes ? `Llevó ${llevoAntes} la última vez` : null].filter((t): t is string => !!t)
-  const abrir = onAbrirOferta ? () => onAbrirOferta(p) : onAgregar
+  const abrir = () => onAbrirOferta(p)
 
   return (
     <View
@@ -60,7 +56,7 @@ export function ProductoCatalogoCard({
         {p.marca ? <Text style={{ ...typeScale.etiqueta, color: c.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8 }}>{p.marca}</Text> : null}
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{p.nombre}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], flexWrap: 'wrap' }}>
-          <Chip c={c} texto={presentacionDe(p)} />
+          <Chip c={c} texto={rotuloPresentacion(presentacionDe(p))} />
           {p.precioConOferta != null ? <Chip c={c} texto="Oferta" tono="oferta" /> : null}
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
@@ -75,7 +71,7 @@ export function ProductoCatalogoCard({
           </View>
           {p.esPadreDeVariantes ? (
             <Accion c={c} label="Elegir fragancias" onPress={onElegirFragancias} />
-          ) : cantidad > 0 && onAbrirOferta ? (
+          ) : cantidad > 0 ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Editar ${p.nombre}`}
@@ -84,20 +80,6 @@ export function ProductoCatalogoCard({
             >
               <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{`${cantidadEnPresentacion(p, cantidad)} ✎`}</Text>
             </Pressable>
-          ) : cantidad > 0 ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
-              <Redondo c={c} label="−" a11y={`Restar ${p.nombre}`} onPress={onRestar} />
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Cantidad: ${cantidad}`}
-                accessibilityHint="Escribir la cantidad"
-                onPress={onEditar}
-                style={{ minWidth: 48, minHeight: 44, borderRadius: radii.campo, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[2] }}
-              >
-                <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.onAction }}>{cantidad}</Text>
-              </Pressable>
-              <Redondo c={c} label="+" a11y={`Sumar ${p.nombre}`} onPress={onSumar} />
-            </View>
           ) : (
             <Accion c={c} label={stock.nivel === 'sin' ? 'Sin stock' : 'Agregar'} a11y={`Añadir ${p.nombre}`} onPress={abrir} />
           )}

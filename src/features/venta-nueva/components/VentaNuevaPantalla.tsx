@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Trash2 } from 'lucide-react-native'
+import { Plus, Trash2 } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, TopBar, formatImporte } from '@/core/ui/fw'
+import type { CatalogoStockItem } from '@/libs/api-client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import type { TipoDocumento } from '@/features/clientes/components/SeleccionarClienteSheet'
@@ -25,7 +26,10 @@ import { mostrarNumero } from '../lib/linea'
 import type { LineaCarrito } from '../lib/carrito'
 import { useLoQueLlevo } from '../hooks/useLoQueLlevo'
 import { CatalogoVenta } from './CatalogoVenta'
-import { CantidadSheet } from './CantidadSheet'
+import { CantidadOfertaPantalla } from './CantidadOfertaPantalla'
+import { CreditoDeudaVenta } from './CreditoDeudaVenta'
+import { PasosVenta } from './PasosVenta'
+import { RevisarVenta } from './RevisarVenta'
 import { ConfirmarVentaSheet } from './ConfirmarVentaSheet'
 import { DescuentoGeneralSheet } from './DescuentoGeneralSheet'
 import { NuevaVentaInicio } from './NuevaVentaInicio'
@@ -70,6 +74,7 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
   // Una venta nueva se arma en el catálogo; las que se abren arrancan en la revisión.
   const [vista, setVista] = useState<VistaVenta>(abrir ? 'revision' : 'catalogo')
   const { lineas: lineasCarrito, vaciar, reemplazar, quitar, sumar, restar } = useCarritoVenta()
+  const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
   // Las líneas guardan la fila del catálogo de cuando se cargaron: lo que se ve y se confirma lleva el stock vivo.
   const { productos: catalogoVenta } = useCatalogoVenta('')
   const lineas = useMemo(() => conStockFresco(lineasCarrito, catalogoVenta), [lineasCarrito, catalogoVenta])
@@ -107,11 +112,17 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
     })
     : null)
   const vistaPrevia = useVistaPreviaVenta(cuerpoVistaPrevia, !cab.fleteInvalido && !cab.cesionError)
+  // `editando`: una fragancia suelta, que se edita en el detalle (tope por stock); el resto va a la pantalla de oferta.
   const [editando, setEditando] = useState<LineaCarrito | null>(null)
-  const [detalleLinea, setDetalleLinea] = useState<LineaCarrito | null>(null)
+  // `oferta`: el producto abierto en "Cantidad y oferta"; con línea en el carrito es una edición, sin ella un alta.
+  const [oferta, setOferta] = useState<CatalogoStockItem | null>(null)
+  const [verCabecera, setVerCabecera] = useState(false)
   const [fragancias, setFragancias] = useState<string | null>(null)
   const stockVivo = useStockVivoVenta(lineas)
   const conLoVivo = (l: LineaCarrito | null) => (l ? lineas.find((x) => x.productoId === l.productoId) ?? l : null)
+  // Una fragancia suelta se edita en el detalle; cualquier otra línea o producto, en la pantalla de oferta.
+  const editarLinea = (l: LineaCarrito) => (l.producto.productoPadreId ? setEditando(l) : setOferta(l.producto))
+  const ofertaVivo = oferta ? catalogoVenta.find((p) => p.id === oferta.id) ?? oferta : null
   const llevo = useLoQueLlevo(cliente?.id)
   const volver = { kind: 'atras' as const, onPress: () => router.back() }
 
@@ -210,7 +221,7 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
     : b.estado === 'error' || b.estado === 'conflicto' ? b.motivo : null
   // El cliente se identifica por la dirección; el nombre va aparte.
   const nombre = nombreDelCliente(cliente)
-  const avisos = avisosVenta(lineas, { tipo, tope, exento, descuentoGeneral: descuentoValido })
+  const avisos = avisosVenta(lineas, { tipo, tope, exento, descuentoGeneral: descuentoValido, verCantidades })
   const { total } = totalesEstimados(lineas, descuentoValido, cab.cabecera.flete)
   // La cesión no viaja en el autoguardado (el borrador es Presupuesto); va al confirmar, y siempre a autorización.
   if (cab.porcentajeCedido) avisos.porAutorizar.push('cediste parte de tu comisión')
@@ -226,7 +237,7 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
   const lineasVista = (
     <LineasVenta lineas={lineas} {...avisos} tope={tope} avisosStock={stockVivo.avisos} enVivo={stockVivo.enVivo}
       nota={b.retenido && b.borrador ? `El borrador guarda los descuentos hasta tu tope (${mostrarNumero(tope)} %); el resto se guarda al confirmar el pedido.` : null} descuentoGeneral={descuentoGeneral} flete={cab.cabecera.flete}
-      onDescuentoGeneral={() => setDescGeneral(true)} onSumar={sumar} onRestar={restar} onAgregar={() => setVista('catalogo')} onEditar={setEditando}
+      onDescuentoGeneral={() => setDescGeneral(true)} onSumar={sumar} onRestar={restar} onAgregar={() => setVista('catalogo')} onEditar={editarLinea}
       onElegirFragancias={setFragancias} nombrePadre={(id) => catalogoVenta.find((p) => p.id === id)?.nombre} />
   )
   const cabeceraVista = <CabeceraVenta clienteId={cliente.id} rotuloCliente={rotulo} cab={cab} />
@@ -288,6 +299,64 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
     </>
   )
 
+  // Revisión de una venta nueva (lámina Carrito): las líneas con el stock vuelto a chequear; lo que no es una línea
+  // (entrega, descuento general, avisos, comisión) se ajusta desde `ajustes`. "Confirmar venta" abre la hoja Confirmar,
+  // que conserva la fecha, la nota, Con factura y las guardas de siempre.
+  const filaAjuste = (rotuloFila: string, valor: string | null, onPress: () => void) => (
+    <Pressable accessibilityRole="button" accessibilityLabel={rotuloFila} onPress={onPress}
+      style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], paddingHorizontal: space[3], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
+      <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{rotuloFila}</Text>
+      {valor ? <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.brandInk }}>{valor}</Text> : null}
+    </Pressable>
+  )
+  const ajustesRevision = (
+    <View style={{ gap: space[2] }}>
+      <Pressable accessibilityRole="button" onPress={() => setVista('catalogo')}
+        style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, borderStyle: 'dashed' }}>
+        <Plus size={20} color={c.brandInk} />
+        <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Agregar productos</Text>
+      </Pressable>
+      {Object.entries(stockVivo.avisos).map(([id, texto]) => <Notice key={id} tone="advertencia" testID={`aviso-stock-${id}`}>{texto}</Notice>)}
+      {avisos.rechazos.map((r) => <Notice key={r} tone="peligro">{r}</Notice>)}
+      {avisos.porAutorizar.length > 0 ? (
+        <Notice tone="advertencia" title="Este pedido va a quedar por autorizar">
+          {`Porque ${avisos.porAutorizar.join(', ')}. El sistema lo confirma al guardar.`}
+        </Notice>
+      ) : null}
+      {b.retenido && b.borrador ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`El borrador guarda los descuentos hasta tu tope (${mostrarNumero(tope)} %); el resto se guarda al confirmar el pedido.`}</Text> : null}
+      {filaAjuste('Descuento a toda la venta', `${mostrarNumero(descuentoValido)} %`, () => setDescGeneral(true))}
+      {filaAjuste('Datos de la entrega', null, () => setVerCabecera(true))}
+      {comision !== null ? (
+        <Text style={{ ...typeScale.secundario, alignSelf: 'flex-start', paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.brandSoft, color: c.brandInk }}>
+          {`Tu comisión estimada ${formatImporte(comision)}`}
+        </Text>
+      ) : null}
+    </View>
+  )
+  const vistaRevisarNueva = (
+    <>
+      <TopBar
+        title={tipo === 'Pedido' ? 'Nuevo pedido' : 'Nuevo presupuesto'}
+        subtitle={rotulo}
+        leading={volverDeRevision}
+        syncLabel={b.etiqueta}
+        actions={b.borrador ? [{ icon: Trash2, accessibilityLabel: 'Descartar borrador', onPress: descartar }] : []}
+      />
+      <PasosVenta paso={3} />
+      {avisoDelBorrador}
+      <RevisarVenta
+        cliente={cliente}
+        descuentoGeneral={descuentoValido}
+        flete={cab.cabecera.flete}
+        enviando={conf.enviando}
+        error={sheetConfirmar ? null : conf.error}
+        onConfirmar={() => setConfirmando(true)}
+        onEditarLinea={editarLinea}
+        ajustes={ajustesRevision}
+      />
+    </>
+  )
+
   // Vista de catálogo: donde se arma la venta de una venta nueva. Con la flecha se sale de la venta.
   // "Ver venta" (la barra del carrito) lleva a la revisión.
   const vistaCatalogo = (
@@ -298,14 +367,16 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
         leading={abrir ? { kind: 'atras', onPress: () => setVista('revision') } : volver}
         syncLabel={b.etiqueta}
       />
+      <PasosVenta paso={2} />
+      <CreditoDeudaVenta clienteId={cliente.id} tipo={tipo} />
       {avisoDelBorrador}
-      <CatalogoVenta onVerVenta={() => setVista('revision')} llevo={llevo} />
+      <CatalogoVenta onVerVenta={() => setVista('revision')} llevo={llevo} enVivo={stockVivo.enVivo} onAbrirOferta={setOferta} />
     </>
   )
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      {vista === 'catalogo' ? vistaCatalogo : vistaRevision}
+      {vista === 'catalogo' ? vistaCatalogo : abrir ? vistaRevision : vistaRevisarNueva}
       <ConfirmarVentaSheet
         visible={sheetConfirmar}
         onClose={() => setConfirmando(false)}
@@ -340,12 +411,16 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
           <Button label="Confirmar con este motivo" disabled={!motivo.trim() || conf.enviando} loading={conf.enviando} onPress={() => void conf.confirmar(motivo)} />
         </View>
       </BottomSheet>
-      <CantidadSheet linea={editando && !editando.producto.productoPadreId ? editando : null} onClose={() => setEditando(null)}
-        onConfirm={(l) => { reemplazar(l); setEditando(null) }} onQuitar={(id) => { quitar(id); setEditando(null) }}
-        onDetalle={(l) => { setEditando(null); setDetalleLinea(l) }} />
-      {/* Una fragancia suelta se edita en el detalle (tope por stock disponible); el resto, en el teclado rápido. */}
-      <EditarLineaSheet linea={conLoVivo(editando?.producto.productoPadreId ? editando : detalleLinea)} onClose={() => { setEditando(null); setDetalleLinea(null) }} descuentoGeneral={descuentoValido}
-        onConfirm={(l) => { reemplazar(l); setEditando(null); setDetalleLinea(null) }} onQuitar={(id) => { quitar(id); setEditando(null); setDetalleLinea(null) }} />
+      {ofertaVivo ? (
+        <CantidadOfertaPantalla visible producto={ofertaVivo} linea={lineas.find((l) => l.productoId === ofertaVivo.id) ?? null}
+          enVivo={stockVivo.enVivo} onClose={() => setOferta(null)} onListo={() => setOferta(null)} />
+      ) : null}
+      {/* Una fragancia suelta se edita en el detalle (tope por stock disponible). */}
+      <EditarLineaSheet linea={conLoVivo(editando)} onClose={() => setEditando(null)} descuentoGeneral={descuentoValido}
+        onConfirm={(l) => { reemplazar(l); setEditando(null) }} onQuitar={(id) => { quitar(id); setEditando(null) }} />
+      <BottomSheet visible={verCabecera} onClose={() => setVerCabecera(false)} accessibilityLabel="Datos de la entrega">
+        <CabeceraVenta clienteId={cliente.id} rotuloCliente={rotulo} cab={cab} />
+      </BottomSheet>
       <FraganciasSheet padreId={fragancias} onClose={() => setFragancias(null)} llevo={llevo} />
     </View>
   )

@@ -55,7 +55,8 @@ async function abrirConfirmar() {
   await userEvent.press(screen.getByRole('button', { name: 'Ver venta' }))
   useCarritoVenta.setState({ lineas: [{ productoId: pala.id, producto: pala, cantidad: 12, descuentoPct: 0 }] })
   await waitFor(() => expect(mockGet).toHaveBeenCalledWith(URL_DEFECTO))
-  await userEvent.press(screen.getByRole('button', { name: 'Seguir' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
+  await screen.findByRole('button', { name: /^(Confirmar pedido|Guardar presupuesto)/ }, { timeout: 3000 })
 }
 const cuerpoDelAlta = () => mockPost.mock.calls.find((c) => c[0] === '/api/v1/Ventas')?.[1]
 

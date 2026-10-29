@@ -14,7 +14,7 @@ import type { FiltroVentasRuta } from '@/features/listas/lib/filtroDeRuta'
 import { agruparPorDia, entregaDe, horaDe } from '../lib/agruparPorDia'
 import { identidadDeBorrador } from '../lib/borradorCliente'
 import { ListaBorradores } from './ListaBorradores'
-import { BotonNuevaVenta } from './BotonNuevaVenta'
+import { Fab } from '@/core/ui/fw/Fab'
 import { motivosDe } from '@/features/autorizaciones/lib/motivos'
 import { useVentasListaNueva, type FiltroEstado, type PeriodoVentas, type PestanaVentas } from '../hooks/useVentasListaNueva'
 
@@ -185,7 +185,7 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
         emptyDetail={<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: space[6] }}><Text style={secundario}>Elegí una venta para ver el detalle.</Text></View>}
       />
       {/* La venta nueva sale de este botón, en teléfono y en tablet; pide elegir el cliente primero. */}
-      {canDo('MOD_VENTAS', 'create') ? <BotonNuevaVenta onPress={() => router.push('/(tabs)/ventas/nueva' as never)} /> : null}
+      {canDo('MOD_VENTAS', 'create') ? <Fab accessibilityLabel="Nueva venta" label="Nueva venta" onPress={() => router.push('/(tabs)/ventas/nueva' as never)} /> : null}
     </View>
   )
 }
