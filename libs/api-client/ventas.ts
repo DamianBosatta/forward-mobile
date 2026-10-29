@@ -249,7 +249,8 @@ export function useVistaPreviaVenta(cuerpo: object | null, enabled: boolean) {
     queryKey: [...ventasKeys.all, 'vista-previa', cuerpo] as const,
     queryFn: () => api.post<VistaPreviaVenta>('/api/v1/Ventas/vista-previa', cuerpo),
     enabled: !!cuerpo && enabled,
-    placeholderData: (anterior) => anterior,
+    // While typing, the previous answer stays on screen; without a body (empty cart) there is no preview at all.
+    placeholderData: (anterior) => (cuerpo ? anterior : undefined),
     staleTime: 30_000,
     retry: false,
   })

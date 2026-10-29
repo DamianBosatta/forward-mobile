@@ -310,6 +310,19 @@ describe('pestaña Líneas', () => {
     expect(pedido).toMatchObject({ clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 5 }] })
   })
 
+  it('si se vacía el carrito, el banner deja de decir los motivos del pedido anterior', async () => {
+    const original = mockPost.getMockImplementation()
+    mockPost.mockImplementation((url: string, body: unknown) => url === '/api/v1/Ventas/vista-previa'
+      ? Promise.resolve({ requiereAutorizacion: true, estadoResultante: 'PendienteAutorizacion', motivoPendienteAutorizacion: 1,
+        motivos: ['stock insuficiente'], rechazos: [], productosSinStock: [], total: 100, lineas: [] })
+      : original!(url, body))
+    await elegirCliente()
+    conLineas(0, 120)
+    expect(await screen.findByText(/Porque stock insuficiente/, {}, ESPERA)).toBeTruthy()
+    act(() => { useCarritoVenta.setState({ lineas: [] }) })
+    await waitFor(() => expect(screen.queryByText('Este pedido va a quedar por autorizar')).toBeNull(), ESPERA)
+  })
+
   it('un rechazo del servidor se muestra antes de guardar', async () => {
     const original = mockPost.getMockImplementation()
     mockPost.mockImplementation((url: string, body: unknown) => url === '/api/v1/Ventas/vista-previa'

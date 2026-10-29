@@ -5,7 +5,7 @@ import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { conStockFresco, stockCambiado, type CambioDeStock } from '../lib/avisoStockVivo'
 import { useCarritoVenta } from './useCarritoVenta'
-import { CLAVE_CATALOGO } from './useCatalogoVenta'
+import { CLAVE_CATALOGO, fetchCatalogoCompleto } from './useCatalogoVenta'
 
 type Cache = { items: CatalogoStockItem[] } | CatalogoStockItem[]
 const SIN_CATALOGO: CatalogoStockItem[] = []
@@ -29,8 +29,9 @@ export function useRevalidarStockVenta() {
   const [confirmado, setConfirmado] = useState(false)
   const [sinConexion, setSinConexion] = useState(false)
   // Observa la caché del catálogo: `staleTime` infinito para no pedirlo por su cuenta (lo hace `revalidar`). Tiene que
-  // estar activo: `refetchQueries` se salta las consultas cuyos observadores están todos desactivados.
-  const { data } = useQuery<Cache, Error, CatalogoStockItem[]>({ queryKey: CLAVE_CATALOGO, staleTime: Infinity, select: itemsDe })
+  // estar activo: `refetchQueries` se salta las consultas cuyos observadores están todos desactivados. Lleva su `queryFn`:
+  // en la pantalla de revisión puede no haber otro observador del catálogo que lo traiga.
+  const { data } = useQuery<Cache, Error, CatalogoStockItem[]>({ queryKey: CLAVE_CATALOGO, queryFn: fetchCatalogoCompleto, staleTime: Infinity, select: itemsDe })
   const catalogo = data ?? SIN_CATALOGO
 
   const cambios = useMemo(() => stockCambiado(lineasCarrito, catalogo, verCantidades), [lineasCarrito, catalogo, verCantidades])

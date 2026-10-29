@@ -26,7 +26,7 @@ export const CLAVE_CATALOGO = [...productosKeys.all, 'catalogoVenta', 'completo'
  * Catálogo completo de venta: páginas de 1000 hasta que no haya más.
  * TODO: unificar con `fetchCatalogoStockCompleto` (libs/api-client/productos.ts, PR #28) cuando se mergee.
  */
-async function fetchCatalogoCompleto(): Promise<Catalogo> {
+export async function fetchCatalogoCompleto(): Promise<Catalogo> {
   const items: CatalogoStockItem[] = []
   for (let pagina = 1; pagina <= MAX_PAGES; pagina++) {
     const params = new URLSearchParams({ PageNumber: String(pagina), PageSize: String(PAGE_SIZE) })
