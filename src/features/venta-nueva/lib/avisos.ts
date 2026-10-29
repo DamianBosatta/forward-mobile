@@ -19,11 +19,26 @@ export interface ContextoAvisos {
    * falta de stock sale de `puedeVenderse`. Sin indicar, se compara contra `disponible`.
    */
   verCantidades?: boolean
+  /** Editar una venta: lo que ya tenía por producto (`productoId` → unidades). Ya está descontado del `disponible`. */
+  yaReservadas?: YaReservadas
 }
 
-/** La línea pide más de lo que se puede vender: con cantidades, contra `disponible`; sin ellas, `puedeVenderse`. */
-export const faltaStock = (l: LineaCarrito, verCantidades = true): boolean =>
-  isLineaSinStock({ cantidad: l.cantidad, stockDisponible: l.producto.disponible, puedeVenderse: l.producto.puedeVenderse }, verCantidades)
+/** Unidades que la venta que se edita ya tenía, por `productoId`: el servidor ya las descontó del `disponible`. */
+export type YaReservadas = Readonly<Record<string, number>>
+
+/**
+ * Lo que se puede vender de la línea: el `disponible`, más lo que esta venta ya tenía si se está editando (el servidor
+ * ya lo descontó). Una sola cuenta para la advertencia de la oferta, la revisión y los avisos.
+ */
+export const disponibleParaLinea = (l: LineaCarrito, yaReservadas?: YaReservadas): number =>
+  l.producto.disponible + (yaReservadas?.[l.productoId] ?? 0)
+
+/**
+ * La línea pide más de lo que se puede vender: con cantidades, contra `disponible` (más lo que la venta editada ya
+ * tenía); sin ellas, `puedeVenderse`.
+ */
+export const faltaStock = (l: LineaCarrito, verCantidades = true, yaReservadas?: YaReservadas): boolean =>
+  isLineaSinStock({ cantidad: l.cantidad, stockDisponible: disponibleParaLinea(l, yaReservadas), puedeVenderse: l.producto.puedeVenderse }, verCantidades)
 
 /** Descuento compuesto de la línea con el general: (1 − ítem) × (1 − general), como el servidor. */
 export const pctCompuesto = (item: number, general: number) => 100 * (1 - (1 - item / 100) * (1 - general / 100))
@@ -46,7 +61,7 @@ export function avisosVenta(lineas: LineaCarrito[], ctx: ContextoAvisos): { porA
   if (!esPedido) return { porAutorizar, rechazos }
   if (superaTope) porAutorizar.push('un descuento supera tu tope')
   if (pisos.includes('amarillo')) porAutorizar.push('un precio queda debajo del mínimo')
-  if (lineas.some((l) => faltaStock(l, ctx.verCantidades))) porAutorizar.push('falta stock')
+  if (lineas.some((l) => faltaStock(l, ctx.verCantidades, ctx.yaReservadas))) porAutorizar.push('falta stock')
   return { porAutorizar, rechazos }
 }
 

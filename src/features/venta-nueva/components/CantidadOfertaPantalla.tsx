@@ -10,6 +10,7 @@ import { hasCapability } from '@/features/auth/lib/capabilities'
 import { calcularSubtotalConDescuento, canViewCost, pctFromPrecio, precioFromPct } from '@/features/ventas/lib/descuentos'
 import { calcularRentabilidadVenta } from '@/features/ventas/lib/rentabilidad-venta'
 import { multiploDe, precioServidor, type LineaCarrito } from '../lib/carrito'
+import { disponibleParaLinea, faltaStock } from '../lib/avisos'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoPiso, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
 import { MAX_DIGITOS, TOPE_CANTIDAD, errorDeCantidad, limitarDigitos } from '../lib/teclado'
 import { chipsDeDescuento, presentacionDe, rotuloPresentacion, unidadesDe, valorEn, convertirModo, type ModoCantidad } from '../lib/presentacion'
@@ -24,6 +25,8 @@ interface Props {
   linea?: LineaCarrito | null
   /** Señal de stock en vivo (`useStockVivoVenta().enVivo`); sin dato no se dibuja el indicador. */
   enVivo?: boolean
+  /** Editando una venta: las unidades que ya tenía de este producto (ya descontadas del `disponible`). */
+  yaReservada?: number
   /** Vuelve sin cambios, o después de quitar la línea. */
   onClose: () => void
   /** "Listo, seguir cargando": la línea ya quedó en el carrito; el padre cierra la pantalla. */
@@ -43,7 +46,7 @@ export function CantidadOfertaPantalla(props: Props) {
   return <Contenido key={props.producto.id} {...props} />
 }
 
-function Contenido({ producto: p, linea, enVivo, onClose, onListo }: Props) {
+function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }: Props) {
   const c = useColors()
   const user = useAuthStore((s) => s.user)
   const reemplazar = useCarritoVenta((s) => s.reemplazar)
@@ -75,9 +78,12 @@ function Contenido({ producto: p, linea, enVivo, onClose, onListo }: Props) {
   const deshabilitado = errorCantidad !== null || pctInvalido || precioInvalido
   const avisoDeTope = avisoTope(pct, tope, exento)
   const piso = avisoPiso(p, base, pct)
-  const restan = p.disponible - unidades
-  // Sin CAP_VER_CANTIDADES_STOCK el servidor manda disponible = 0: no se compara contra números, solo contra `puedeVenderse`.
-  const deMas = verStock ? unidades > p.disponible : !p.puedeVenderse
+  // Lo que se tipea es la línea: la misma regla de falta de stock que la revisión (sin CAP_VER_CANTIDADES_STOCK decide `puedeVenderse`).
+  const lineaTipeada: LineaCarrito = { productoId: p.id, producto: p, cantidad: unidades, descuentoPct: pct }
+  const yaReservadas = yaReservada ? { [p.id]: yaReservada } : undefined
+  const disponible = disponibleParaLinea(lineaTipeada, yaReservadas)
+  const restan = disponible - unidades
+  const deMas = faltaStock(lineaTipeada, verStock, yaReservadas)
   const margen = verCosto
     ? calcularRentabilidadVenta({ detalles: [{ precioUnitario: precioFinal, precioCostoSnapshot: p.precioCompraBase, cantidad: unidades }], subtotalBruto: precioFinal * unidades, montoDescuento: 0 })
     : null
@@ -137,9 +143,9 @@ function Contenido({ producto: p, linea, enVivo, onClose, onListo }: Props) {
           <View testID="oferta-stock" style={{ ...tarjeta, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] }}>
             {verStock ? (
               <>
-                <View accessible accessibilityLabel={`Disponible: ${p.disponible}`}>
+                <View accessible accessibilityLabel={`Disponible: ${disponible}`}>
                   <Text style={secundario}>Disponible</Text>
-                  <Text style={{ ...typeScale.titulo, ...importe, color: c.text }}>{p.disponible}</Text>
+                  <Text style={{ ...typeScale.titulo, ...importe, color: c.text }}>{disponible}</Text>
                 </View>
                 <View accessible accessibilityLabel={`Te quedan: ${restan}`}>
                   <Text style={secundario}>Te quedan</Text>

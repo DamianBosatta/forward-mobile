@@ -75,6 +75,26 @@ describe('RevisarVenta (S5, S6, S7)', () => {
     expect(screen.queryByTestId('linea-cambio-p1')).toBeNull()
   })
 
+  it('editando, lo que la venta ya tenía se suma al disponible: no marca falta donde alcanza (S9)', async () => {
+    // Quedan 3 en el catálogo sin la 1 u. que esta venta ya tenía: la línea de 4 alcanza.
+    catalogoServidor = [rollo(), esponja({ disponible: 3 })]
+    revisar({ yaReservadas: { p2: 1 } })
+    expect(await screen.findByText('Stock actualizado: quedan 4')).toBeTruthy()
+    expect(screen.queryByText(/Quedan 3, pediste 4/)).toBeNull()
+  })
+
+  it('editando, si pide más que disponible + lo que ya tenía, sigue marcando la falta con el disponible real', async () => {
+    catalogoServidor = [rollo(), esponja({ disponible: 2 })]
+    revisar({ yaReservadas: { p2: 1 } })
+    expect(await screen.findByText('Quedan 3, pediste 4: tocá para ajustar')).toBeTruthy()
+  })
+
+  it('el botón puede llevar otra etiqueta (editar: "Guardar cambios")', () => {
+    revisar({ etiquetaConfirmar: 'Guardar cambios' })
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Confirmar venta' })).toBeNull()
+  })
+
   it('con dos productos cambiados el banner habla en plural', async () => {
     catalogoServidor = [rollo({ disponible: 1 }), esponja({ disponible: 3 })]
     revisar()

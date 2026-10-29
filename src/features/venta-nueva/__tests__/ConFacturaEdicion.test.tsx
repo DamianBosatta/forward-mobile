@@ -39,7 +39,7 @@ const abrir = (a: AbrirVenta) => render(
 )
 async function editarYAbrirConfirmar() {
   abrir({ modo: 'editar', ventaId: 'v9' })
-  await userEvent.press(await screen.findByRole('button', { name: 'Seguir' }))
+  await screen.findByRole('button', { name: 'Guardar cambios' })
 }
 
 beforeEach(() => {
@@ -104,7 +104,6 @@ describe('T4d Con factura al editar', () => {
     ventaServidor = { venta: cabecera({ conFactura: true }), detalles, bultos: [] }
     abrir({ modo: 'duplicar', ventaId: 'v9' })
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith(URL_DEFECTO))
-    await userEvent.press(await screen.findByRole('button', { name: 'Seguir' }))
     await waitFor(() => expect(screen.getByRole('switch', { name: 'Con factura' })).not.toBeChecked())
   })
 })

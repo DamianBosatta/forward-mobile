@@ -8,7 +8,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { direccionDeEntrega, nombreDelCliente, type ClienteNombrable } from '@/features/clientes/lib/cliente'
 import { useRevalidarStockVenta } from '../hooks/useRevalidarStockVenta'
 import { precioServidor, subtotalLinea, unidadesPorBultoDe, type LineaCarrito } from '../lib/carrito'
-import { faltaStock, totalesEstimados } from '../lib/avisos'
+import { disponibleParaLinea, faltaStock, totalesEstimados, type YaReservadas } from '../lib/avisos'
 import { mostrarNumero } from '../lib/linea'
 
 interface Props {
@@ -30,6 +30,10 @@ interface Props {
   onEditarLinea: (linea: LineaCarrito) => void
   /** Abre "Elegir fragancias" del producto padre (`FraganciasSheet`); sin esto la revisión no las ofrece. */
   onElegirFragancias?: (padreId: string) => void
+  /** Editando una venta: lo que ya tenía por producto; el servidor ya lo descontó del `disponible`. */
+  yaReservadas?: YaReservadas
+  /** Texto del botón; sin esto, "Confirmar venta". Editar usa "Guardar cambios". */
+  etiquetaConfirmar?: string
   /** Lo que la venta nueva ajusta desde acá y no es una línea: datos de la entrega, descuento general, avisos, comisión. */
   ajustes?: ReactNode
 }
@@ -50,7 +54,7 @@ function detalleDe(l: LineaCarrito): string {
  * tocar "Confirmar venta" (que manda la venta: no hay segunda confirmación); lo que cambió desde que se cargó queda marcado y el banner lo cuenta. Si falta stock
  * no se bloquea: el flujo de confirmar pide el motivo y la venta va a autorización.
  */
-export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, deshabilitado = false, motivoDeshabilitado, onEditarLinea, onElegirFragancias, ajustes }: Props) {
+export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, deshabilitado = false, motivoDeshabilitado, onEditarLinea, onElegirFragancias, ajustes, yaReservadas, etiquetaConfirmar = 'Confirmar venta' }: Props) {
   const c = useColors()
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
   const { lineas, cambios, confirmado, sinConexion, revalidando, revalidar } = useRevalidarStockVenta()
@@ -83,10 +87,10 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
   function estadoDeStock(l: LineaCarrito, cambio: boolean): { texto: string; alerta: boolean } {
     if (sinConexion) return { texto: 'Sin conexión: el stock se revisa al enviar', alerta: false }
     if (!confirmado) return { texto: revalidando ? 'Revisando el stock…' : 'No se pudo confirmar el stock', alerta: !revalidando }
-    if (faltaStock(l, verCantidades)) {
-      return { alerta: true, texto: verCantidades ? `Quedan ${mostrarNumero(Math.max(l.producto.disponible, 0))}, pediste ${mostrarNumero(l.cantidad)}: tocá para ajustar` : 'Sin stock ahora: tocá para ajustar' }
+    if (faltaStock(l, verCantidades, yaReservadas)) {
+      return { alerta: true, texto: verCantidades ? `Quedan ${mostrarNumero(Math.max(disponibleParaLinea(l, yaReservadas), 0))}, pediste ${mostrarNumero(l.cantidad)}: tocá para ajustar` : 'Sin stock ahora: tocá para ajustar' }
     }
-    if (cambio) return { alerta: false, texto: verCantidades ? `Stock actualizado: quedan ${mostrarNumero(l.producto.disponible)}` : 'Hay stock ahora' }
+    if (cambio) return { alerta: false, texto: verCantidades ? `Stock actualizado: quedan ${mostrarNumero(disponibleParaLinea(l, yaReservadas))}` : 'Hay stock ahora' }
     return { alerta: false, texto: 'Stock confirmado ahora' }
   }
 
@@ -172,7 +176,7 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
           <Text style={secundario}>Total estimado</Text>
           <Text testID="revisar-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(t.total)}</Text>
         </View>
-        <Button label="Confirmar venta" onPress={() => { void confirmar() }} loading={enviando || confirmando} disabled={enviando || confirmando || deshabilitado || lineas.length === 0} />
+        <Button label={etiquetaConfirmar} onPress={() => { void confirmar() }} loading={enviando || confirmando} disabled={enviando || confirmando || deshabilitado || lineas.length === 0} />
         {motivoDeshabilitado ? <MotivoDeshabilitado>{motivoDeshabilitado}</MotivoDeshabilitado> : null}
       </View>
     </View>

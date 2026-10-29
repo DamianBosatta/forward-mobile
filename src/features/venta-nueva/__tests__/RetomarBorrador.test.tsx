@@ -58,7 +58,7 @@ describe('retomar un borrador (PR 2.2b)', () => {
     expect(screen.getByText('Tarantino 1898 · Autoservicio Abel')).toBeTruthy()
     // La línea toma el precio del catálogo de hoy, con la cantidad y el descuento del borrador.
     expect(useCarritoVenta.getState().lineas).toEqual([{ productoId: 'p1', producto: pala, cantidad: 3, descuentoPct: 10 }])
-    expect(screen.getByText('3 × $ 2.600,00')).toBeTruthy()
+    expect(screen.getByText('3 u × $ 2.600,00')).toBeTruthy()
     expect(within(screen.getByRole('button', { name: 'Descuento a toda la venta' })).getByText('5 %')).toBeTruthy()
     await new Promise((r) => setTimeout(r, 1000))
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas/borradores', expect.anything())
@@ -68,7 +68,7 @@ describe('retomar un borrador (PR 2.2b)', () => {
   it('lo que se cambia se autoguarda sobre ese borrador y con su versión', async () => {
     pantalla()
     await screen.findByText('Nuevo presupuesto')
-    await userEvent.press(screen.getByRole('tab', { name: 'Cabecera' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
     expect(screen.getByDisplayValue('Portón negro')).toBeTruthy()
     await userEvent.type(screen.getByLabelText('Observaciones'), ', antes de las 12')
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), { timeout: 3000 })
@@ -92,7 +92,7 @@ describe('retomar un borrador (PR 2.2b)', () => {
       pantalla(undefined, 'Pedido')
       await screen.findByText('Nuevo pedido')
       await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/v1/Ventas/borradores/mios'))
-      await userEvent.press(screen.getByRole('tab', { name: 'Cabecera' }))
+      await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
       await userEvent.type(screen.getByLabelText('Observaciones'), ' y más')
       await waitFor(() => expect(mockPut).toHaveBeenCalled(), { timeout: 3000 })
       expect(mockPut.mock.calls.at(-1)[1].items).toEqual([{ productoId: 'p1', cantidad: 3, descuentoPorcentaje: esperado }])
@@ -105,7 +105,7 @@ describe('retomar un borrador (PR 2.2b)', () => {
     const primera = pantalla(qc)
     await screen.findByText('Nuevo presupuesto')
     expect(detalles()).toBe(1)
-    await userEvent.press(screen.getByRole('tab', { name: 'Cabecera' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
     await userEvent.type(screen.getByLabelText('Observaciones'), ' uno')
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1), { timeout: 3000 })
     await userEvent.type(screen.getByLabelText('Observaciones'), ' dos')
@@ -124,5 +124,17 @@ describe('retomar un borrador (PR 2.2b)', () => {
       : Promise.resolve(undefined)))
     pantalla()
     expect(await screen.findByText('Venta no encontrada.')).toBeTruthy()
+  })
+})
+
+describe('retomar usa la revisión nueva (S9)', () => {
+  it('abre "Revisar venta" y "Confirmar venta" guarda ese mismo presupuesto con su versión', async () => {
+    mockPost.mockImplementation(() => Promise.resolve({ ventaId: 'b9', version: 5, message: 'Presupuesto guardado.' }))
+    pantalla()
+    expect(await screen.findByText('Revisar venta')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Seguir' })).toBeNull()
+    await userEvent.press(await screen.findByRole('button', { name: 'Confirmar venta' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b9/guardar-presupuesto', { ventaId: 'b9', version: expect.any(Number) }))
+    expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas', expect.anything())
   })
 })

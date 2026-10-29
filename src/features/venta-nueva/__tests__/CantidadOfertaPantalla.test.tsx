@@ -14,10 +14,10 @@ const conUsuario = (maxDescuentoPorcentaje: number, permissions: object[] = []) 
 
 const bulto10 = (over: Partial<CatalogoStockItem> = {}) => producto({ marca: 'Maxi Bag', bultoContenido: 10, disponible: 18, ...over })
 
-function abrir(p: CatalogoStockItem = bulto10(), extra: { linea?: LineaCarrito; enVivo?: boolean } = {}) {
+function abrir(p: CatalogoStockItem = bulto10(), extra: { linea?: LineaCarrito; enVivo?: boolean; yaReservada?: number } = {}) {
   const onListo = jest.fn()
   const onClose = jest.fn()
-  render(<CantidadOfertaPantalla visible producto={p} linea={extra.linea} enVivo={extra.enVivo} onClose={onClose} onListo={onListo} />)
+  render(<CantidadOfertaPantalla visible producto={p} linea={extra.linea} enVivo={extra.enVivo} yaReservada={extra.yaReservada} onClose={onClose} onListo={onListo} />)
   return { onListo, onClose }
 }
 const escribir = (campo: string, texto: string) => fireEvent.changeText(screen.getByLabelText(campo), texto)
@@ -127,6 +127,22 @@ describe('Cantidad y oferta: stock en vivo y más de lo disponible (S6, S7)', ()
     expect(screen.getByText('Pediste más de lo disponible: la venta va a autorización')).toBeTruthy()
     expect(screen.getByLabelText('Te quedan: -5')).toBeTruthy()
     expect(listo()).toBeEnabled()
+  })
+
+  it('editando, lo que la venta ya tenía se suma al disponible: no avisa de más y "Te quedan" cuenta con eso (S9)', async () => {
+    // Disponible 5 sin las 10 que esta venta ya tenía; pide 1 bulto (10 u): alcanza.
+    abrir(bulto10({ disponible: 5 }), { yaReservada: 10 })
+    await userEvent.press(screen.getByRole('button', { name: 'Bultos' }))
+    expect(screen.queryByText(/Pediste más de lo disponible/)).toBeNull()
+    expect(screen.getByLabelText('Disponible: 15')).toBeTruthy()
+    expect(screen.getByLabelText('Te quedan: 5')).toBeTruthy()
+  })
+
+  it('editando, si pide más que disponible + lo que ya tenía, sigue avisando', async () => {
+    abrir(bulto10({ disponible: 5 }), { yaReservada: 10 })
+    await userEvent.press(screen.getByRole('button', { name: 'Bultos' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Uno más' }))
+    expect(screen.getByText('Pediste más de lo disponible: la venta va a autorización')).toBeTruthy()
   })
 
   it('sin pedir de más no hay advertencia', () => {
