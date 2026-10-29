@@ -30,18 +30,16 @@ export function ProveedorCard({ proveedor, onPress, seleccionado = false, onNuev
       accessibilityLabel={[proveedor.razonSocial, proveedor.requiereCompletar && 'faltan datos', saldo && `${saldo.etiqueta} ${formatImporte(saldo.monto)}`].filter(Boolean).join(', ')}
       accessibilityState={{ selected: seleccionado }}
       onPress={onPress}
-      style={({ pressed }) => [
-        {
+      android_ripple={{ color: c.surface2 }}
+      style={{
           gap: space[1],
           padding: space[4],
           borderRadius: radii.tarjeta,
           backgroundColor: seleccionado ? c.brandSoft : c.surface,
           borderWidth: seleccionado ? 2 : 0,
           borderColor: c.brand,
-          opacity: pressed ? 0.85 : 1,
-        },
-        sombra,
-      ]}
+          ...sombra,
+      }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
         <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text, flexShrink: 1 }}>{proveedor.razonSocial}</Text>

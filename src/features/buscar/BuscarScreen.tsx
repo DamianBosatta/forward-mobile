@@ -113,10 +113,8 @@ function Fila({ etiqueta, avatar, titulo, detalle, derecha, chip, onPress }: {
       accessibilityRole="button"
       accessibilityLabel={etiqueta}
       onPress={onPress}
-      style={({ pressed }) => [
-        { flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 44, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: pressed ? c.surface2 : c.surface },
-        sombra,
-      ]}
+      android_ripple={{ color: c.surface2 }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 44, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, ...sombra }}
     >
       {avatar ? (
         <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ width: 40, height: 40, borderRadius: radii.pastilla, backgroundColor: c.brandSoft, alignItems: 'center', justifyContent: 'center' }}>

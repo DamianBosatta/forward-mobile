@@ -143,7 +143,8 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
             accessibilityRole="button"
             accessibilityLabel={`${b.proveedorNombre}, ${pie}`}
             onPress={() => router.push(`/(tabs)/compras/nueva?borrador=${b.id}` as never)}
-            style={({ pressed }) => ({ minHeight: 44, padding: space[4], borderRadius: radii.tarjeta, backgroundColor: pressed ? c.surface2 : c.surface, gap: space[1] })}
+            android_ripple={{ color: c.surface2 }}
+            style={{ minHeight: 44, padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[1], overflow: 'hidden' }}
           >
             <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{b.proveedorNombre}</Text>
             <Text style={secundario}>{pie}</Text>

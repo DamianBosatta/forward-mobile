@@ -135,7 +135,7 @@ function Fila({ v, separada = false, onAbrir }: { v: VentaEnCola; separada?: boo
   }
   if (!onAbrir) return <View accessible accessibilityLabel={etiqueta} style={estilo}>{contenido}</View>
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={etiqueta} onPress={() => onAbrir(v)} style={({ pressed }) => [estilo, pressed && { backgroundColor: c.surface2 }]}>
+    <Pressable accessibilityRole="button" accessibilityLabel={etiqueta} onPress={() => onAbrir(v)} android_ripple={{ color: c.surface2 }} style={estilo}>
       {contenido}
     </Pressable>
   )

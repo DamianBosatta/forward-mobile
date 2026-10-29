@@ -126,14 +126,15 @@ export function TopHeaderActions() {
                     setShowDropdown(false)
                     router.push(`/(tabs)/ventas/${venta.id}`)
                   }}
-                  style={({ pressed }) => ({
+                  android_ripple={{ color: colors.border }}
+                  style={{
                     backgroundColor: colors.surface2,
                     borderRadius: 16,
                     padding: 14,
                     borderWidth: 1,
                     borderColor: colors.border,
-                    transform: [{ scale: pressed ? 0.98 : 1 }]
-                  })}
+                    overflow: 'hidden',
+                  }}
                 >
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                     <Text style={{ color: colors.text, fontSize: 14, fontWeight: '900', flex: 1, marginRight: 8 }} numberOfLines={1}>

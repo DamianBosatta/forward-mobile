@@ -36,7 +36,8 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
       accessibilityLabel={[direccion, vencida && 'deuda vencida', nombre, localidad, saldo && `saldo ${saldo}`].filter(Boolean).join(', ')}
       accessibilityState={{ selected: seleccionado }}
       onPress={onPress}
-      style={({ pressed }) => ({
+      android_ripple={{ color: c.surface2 }}
+      style={{
         flexDirection: 'row',
         alignItems: 'center',
         gap: space[3],
@@ -47,8 +48,7 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
         backgroundColor: seleccionado ? c.brandSoft : c.surface,
         borderBottomWidth: 1,
         borderBottomColor: c.border,
-        opacity: pressed ? 0.85 : 1,
-      })}
+      }}
     >
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>

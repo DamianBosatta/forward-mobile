@@ -22,7 +22,8 @@ export function Fab({ accessibilityLabel, onPress, label, style }: FabProps) {
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      style={({ pressed }) => [
+      android_ripple={{ color: c.surface2, foreground: true }}
+      style={[
         {
           position: 'absolute',
           right: space[4],
@@ -33,7 +34,7 @@ export function Fab({ accessibilityLabel, onPress, label, style }: FabProps) {
           backgroundColor: c.action,
           alignItems: 'center',
           justifyContent: 'center',
-          opacity: pressed ? 0.85 : 1,
+          overflow: 'hidden',
         },
         sombra,
         style,

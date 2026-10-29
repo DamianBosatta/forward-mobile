@@ -63,10 +63,8 @@ export const GodButton = ({
       <Pressable
         onPress={handlePress}
         disabled={disabled || isLoading}
-        style={({ pressed }) => [
-          styles.pressable,
-          pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }
-        ]}
+        android_ripple={{ color: 'rgba(255,255,255,0.2)', foreground: true }}
+        style={styles.pressable}
       >
         <LinearGradient
           colors={getGradientColors()}

@@ -22,7 +22,8 @@ export function Accion({ icono: Icono, label, onPress }: { icono: LucideIcon; la
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      style={({ pressed }) => ({
+      android_ripple={{ color: c.surface2 }}
+      style={{
         flex: 1,
         minWidth: 72,
         minHeight: 64,
@@ -33,8 +34,8 @@ export function Accion({ icono: Icono, label, onPress }: { icono: LucideIcon; la
         alignItems: 'center',
         justifyContent: 'center',
         gap: space[1],
-        opacity: pressed ? 0.85 : 1,
-      })}
+        overflow: 'hidden',
+      }}
     >
       <Icono size={22} color={c.brandInk} />
       <Text style={{ ...typeScale.secundario, color: c.text }}>{label}</Text>

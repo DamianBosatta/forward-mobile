@@ -68,7 +68,8 @@ export function TarjetaPendientes({ titulo, icono: Icono, filas, ancho }: Tarjet
             accessibilityRole="button"
             accessibilityLabel={`${f.label}: ${f.cantidad == null ? 'sin dato' : [texto, ...montos.map((m) => m.texto)].join(', ')}`}
             onPress={f.onPress}
-            style={({ pressed }) => ({
+            android_ripple={{ color: c.surface2 }}
+            style={{
               minHeight: 44,
               paddingVertical: space[1],
               flexDirection: 'row',
@@ -77,8 +78,7 @@ export function TarjetaPendientes({ titulo, icono: Icono, filas, ancho }: Tarjet
               columnGap: space[2],
               borderBottomWidth: i < filas.length - 1 ? 1 : 0,
               borderBottomColor: c.border,
-              backgroundColor: pressed ? c.surface2 : 'transparent',
-            })}
+            }}
           >
             <Text style={[typeScale.secundario, { color: c.text }]}>{f.label}</Text>
             {/* marginLeft auto: a la derecha, también si un importe largo la baja de renglón. */}

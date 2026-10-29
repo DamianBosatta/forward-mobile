@@ -45,7 +45,8 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
             accessibilityRole="button"
             accessibilityLabel={p.requiereCompletar ? `${p.razonSocial}, faltan datos de compra` : p.razonSocial}
             onPress={() => onElegir(p.id)}
-            style={({ pressed }) => ({ minHeight: 56, justifyContent: 'center', padding: space[4], borderRadius: radii.tarjeta, backgroundColor: pressed ? c.surface2 : c.surface, gap: space[1] })}
+            android_ripple={{ color: c.surface2 }}
+            style={{ minHeight: 56, justifyContent: 'center', padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[1], overflow: 'hidden' }}
           >
             <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{p.razonSocial}</Text>
             {p.requiereCompletar ? <Text style={secundario}>Faltan datos de compra: se completan en la web</Text> : null}

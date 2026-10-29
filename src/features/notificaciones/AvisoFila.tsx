@@ -24,7 +24,8 @@ export function AvisoFila({ aviso, destino, cuando, onPress }: AvisoFilaProps) {
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={aviso.leida ? aviso.titulo : `${aviso.titulo}, sin leer`}
-      style={({ pressed }) => ({
+      android_ripple={{ color: c.surface2 }}
+      style={{
         flexDirection: 'row',
         gap: space[3],
         padding: space[4],
@@ -32,8 +33,9 @@ export function AvisoFila({ aviso, destino, cuando, onPress }: AvisoFilaProps) {
         borderRadius: radii.tarjeta,
         borderWidth: 1,
         borderColor: aviso.leida ? c.border : c.brand,
-        backgroundColor: pressed ? c.surface2 : aviso.leida ? c.surface : c.brandSoft,
-      })}
+        backgroundColor: aviso.leida ? c.surface : c.brandSoft,
+        overflow: 'hidden',
+      }}
     >
       <Icono size={22} color={critico ? c.danger : c.brandInk} strokeWidth={2} />
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
