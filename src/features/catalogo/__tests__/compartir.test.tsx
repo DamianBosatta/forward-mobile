@@ -30,10 +30,10 @@ beforeEach(() => {
 })
 
 describe('Mandar foto', () => {
-  const producto = { id: 'p1', nombre: 'Saphirus Aerosol', codigoPropio: 'SAP-AER-250', precioVenta: 100, esPadreDeVariantes: false, activo: true, ventaMinimaUnidades: 1, imageUrl: 'http://img.test/aer.jpg' }
+  const producto = { productoId: 'p1', nombre: 'Saphirus Aerosol', codigoPropio: 'SAP-AER-250', precioVenta: 100, esPadreDeVariantes: false, ventaMinimaUnidades: 1, disponible: true, disponibleVentaMinima: true, variantes: [], imageUrl: 'http://img.test/aer.jpg' }
 
   it('baja la foto y abre el panel para compartirla', async () => {
-    api.get.mockImplementation((url: string) => (url.startsWith('/api/v1/Productos/p1') ? Promise.resolve(producto) : Promise.resolve([])))
+    api.get.mockImplementation((url: string) => (url.startsWith('/api/v1/catalogo/p1?') ? Promise.resolve(producto) : Promise.resolve([])))
     api.post.mockResolvedValue([])
     conCliente(<FichaProducto productoId="p1" />)
     await userEvent.setup().press(await screen.findByText('Mandar foto'))
@@ -44,7 +44,7 @@ describe('Mandar foto', () => {
   })
 
   it('sin foto no ofrece el botón', async () => {
-    api.get.mockImplementation((url: string) => (url.startsWith('/api/v1/Productos/p1') ? Promise.resolve({ ...producto, imageUrl: null }) : Promise.resolve([])))
+    api.get.mockImplementation((url: string) => (url.startsWith('/api/v1/catalogo/p1?') ? Promise.resolve({ ...producto, imageUrl: null }) : Promise.resolve([])))
     api.post.mockResolvedValue([])
     conCliente(<FichaProducto productoId="p1" />)
     await screen.findByText('Saphirus Aerosol')
