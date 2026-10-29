@@ -199,7 +199,7 @@ describe('venta nueva: cliente, borrador y autoguardado', () => {
 })
 
 describe('pestaña Líneas', () => {
-  const pala = producto({ real: 100 })
+  const pala = producto({ real: 100, disponible: 100 })
   const conLineas = (descuentoPct = 0, cantidad = 12, p = pala) => useCarritoVenta.setState({ lineas: [{ productoId: p.id, producto: p, cantidad, descuentoPct }] })
   beforeEach(() => useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10 } as never }))
 
@@ -290,7 +290,7 @@ describe('pestaña Líneas', () => {
   ] as const)('borrador: %s', async (_nombre, tipo, permissions, maxDescuentoPorcentaje, descuentos, general, items, descuentoGeneral) => {
     useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions, maxDescuentoPorcentaje } as never })
     mockTipo = tipo
-    const otra = producto({ id: 'p2', real: 100 })
+    const otra = producto({ id: 'p2', real: 100, disponible: 100 })
     await elegirCliente()
     useCarritoVenta.setState({ lineas: descuentos.map((descuentoPct, i) => ({ productoId: i ? 'p2' : 'p1', producto: i ? otra : pala, cantidad: 12, descuentoPct })) })
     if (general) await aplicarDescuentoGeneral(general)
@@ -366,7 +366,7 @@ describe('pestaña Cabecera', () => {
   const ultimoPut = () => mockPut.mock.calls[mockPut.mock.calls.length - 1][1]
   async function enCabecera() {
     await elegirCliente()
-    useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: producto({ real: 100 }), cantidad: 10, descuentoPct: 0 }] })
+    useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: producto({ real: 100, disponible: 100 }), cantidad: 10, descuentoPct: 0 }] })
     await userEvent.press(screen.getByRole('tab', { name: 'Cabecera' }))
   }
 
@@ -487,7 +487,7 @@ describe('pestaña Cabecera', () => {
 })
 
 describe('confirmar', () => {
-  const pala = producto({ real: 100 })
+  const pala = producto({ real: 100, disponible: 100 })
   const altas = () => mockPost.mock.calls.filter(([u]) => u === '/api/v1/Ventas')
   let alerta: jest.SpyInstance
   beforeEach(() => {
@@ -846,7 +846,7 @@ describe('ruta ventas/nueva', () => {
 })
 
 describe('V2 y V3: elegir cliente y cómo arrancar', () => {
-  const pala = producto({ real: 100, precioVenta: 2600 })
+  const pala = producto({ real: 100, disponible: 100, precioVenta: 2600 })
   const pedidoViejo = { id: 'v2', fecha: '2026-10-11T15:00:00Z', estado: 'Entregada', tipoOperacion: 2, itemsCount: 1, totalAmount: 31200 }
   const detalleViejo = {
     venta: { id: 'v2', codigoPedido: 'A00300', clienteId: 'c1', version: 4, estado: 6, tipoOperacion: 2, porcentajeDescuento: 0, metodoEntregaNombre: 'LogisticaPropia', metodoEntrega: 1, fechaEntrega: '2026-10-12T00:00:00', cargoFleteAmount: 0, observaciones: null },
@@ -953,7 +953,7 @@ describe('V2 y V3: elegir cliente y cómo arrancar', () => {
 })
 
 describe('V7 Confirmar', () => {
-  const pala = producto({ real: 100 })
+  const pala = producto({ real: 100, disponible: 100 })
   beforeEach(() => useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10 } as never }))
   const conLinea = async (descuentoPct: number, cantidad = 12) => {
     act(() => useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: pala, cantidad, descuentoPct }] }))

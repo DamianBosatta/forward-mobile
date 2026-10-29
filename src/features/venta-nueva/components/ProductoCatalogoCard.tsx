@@ -53,7 +53,7 @@ export function ProductoCatalogoCard({
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{p.codigoPropio ?? ''}</Text>
           <Text style={{ ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: stock }}>
-            {verCantidades ? `Stock: ${p.real}` : p.puedeVenderse ? 'Hay stock' : 'Sin stock'}
+            {verCantidades ? `Stock: ${p.disponible}` : p.puedeVenderse ? 'Hay stock' : 'Sin stock'}
           </Text>
         </View>
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{p.nombre}</Text>

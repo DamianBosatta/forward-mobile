@@ -30,3 +30,22 @@ export function aplicarCambiosAlCatalogo(datos: Catalogo | CatalogoStockItem[], 
   if (nuevos.size === 0) return catalogo
   return { ...catalogo, items: catalogo.items.map((p) => (nuevos.has(p.id) ? { ...p, disponible: nuevos.get(p.id) as number } : p)) }
 }
+
+const CAMPOS_STOCK = ['deposito', 'reservado', 'real', 'disponible', 'virtual', 'puedeVenderse'] as const
+
+/**
+ * Las líneas con el stock del catálogo vivo (el que refresca `useStockVivoVenta`): la línea guarda la fila del
+ * momento en que se cargó, y el editor y el confirmar leerían un disponible viejo. Solo se toma el stock; el
+ * precio y lo demás quedan como se cargaron. Sin cambios devuelve las mismas líneas (no re-renderiza).
+ */
+export function conStockFresco(lineas: LineaCarrito[], catalogo: CatalogoStockItem[]): LineaCarrito[] {
+  const porId = new Map(catalogo.map((p) => [p.id, p]))
+  let cambio = false
+  const nuevas = lineas.map((l) => {
+    const fresco = porId.get(l.productoId)
+    if (!fresco || CAMPOS_STOCK.every((k) => fresco[k] === l.producto[k])) return l
+    cambio = true
+    return { ...l, producto: { ...l.producto, ...Object.fromEntries(CAMPOS_STOCK.map((k) => [k, fresco[k]])) } }
+  })
+  return cambio ? nuevas : lineas
+}

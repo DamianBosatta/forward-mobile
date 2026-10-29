@@ -167,10 +167,10 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
               <View>
                 <Text style={texto()}>Stock</Text>
-                {verStock && <Text style={{ ...typeScale.secundario, ...importe, color: c.textSecondary }}>{`Real ${p.real} · Virtual ${p.virtual}`}</Text>}
+                {verStock && <Text style={{ ...typeScale.secundario, ...importe, color: c.textSecondary }}>{`Disponible ${p.disponible} · Virtual ${p.virtual}`}</Text>}
               </View>
               {verStock ? (
-                <StatusChip estado={p.real >= cantidad ? 'entregado' : 'anulado'} label={p.real >= cantidad ? 'Alcanza' : 'No alcanza'} />
+                <StatusChip estado={p.disponible >= cantidad ? 'entregado' : 'anulado'} label={p.disponible >= cantidad ? 'Alcanza' : 'No alcanza'} />
               ) : (
                 <StatusChip estado={p.puedeVenderse ? 'entregado' : 'anulado'} label={p.puedeVenderse ? 'Hay stock' : 'Sin stock'} />
               )}

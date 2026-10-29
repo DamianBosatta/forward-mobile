@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Alert, Modal, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Trash2 } from 'lucide-react-native'
@@ -37,6 +37,7 @@ import { CabeceraVenta } from './CabeceraVenta'
 import { FraganciasSheet } from './FraganciasSheet'
 import { useCatalogoVenta } from '../hooks/useCatalogoVenta'
 import { useStockVivoVenta } from '../hooks/useStockVivoVenta'
+import { conStockFresco } from '../lib/avisoStockVivo'
 import { useVentaCargada } from '../hooks/useVentaCargada'
 import type { VentaCargada } from '../lib/hidratar'
 
@@ -70,7 +71,10 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
   const [cliente, setCliente] = useState<ClienteElegido | null>(null)
   const [tipo, setTipo] = useState<TipoDocumento>('Pedido')
   const [repetirId, setRepetirId] = useState<string | null>(null)
-  const { lineas, vaciar, reemplazar, quitar, sumar, restar } = useCarritoVenta()
+  const { lineas: lineasCarrito, vaciar, reemplazar, quitar, sumar, restar } = useCarritoVenta()
+  // Las líneas guardan la fila del catálogo de cuando se cargaron: lo que se ve y se confirma lleva el stock vivo.
+  const { productos: catalogoVenta } = useCatalogoVenta('')
+  const lineas = useMemo(() => conStockFresco(lineasCarrito, catalogoVenta), [lineasCarrito, catalogoVenta])
   const user = useAuthStore((s) => s.user)
   // El descuento general siempre es un número válido (0 a 100): se cambia en la hoja "Descuento a toda la venta".
   const [descuentoValido, setDescuentoValido] = useState(0)
@@ -115,8 +119,8 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
   const [editando, setEditando] = useState<LineaCarrito | null>(null)
   const [detalleLinea, setDetalleLinea] = useState<LineaCarrito | null>(null)
   const [fragancias, setFragancias] = useState<string | null>(null)
-  const { productos: catalogoVenta } = useCatalogoVenta('')
   const stockVivo = useStockVivoVenta(lineas)
+  const conLoVivo = (l: LineaCarrito | null) => (l ? lineas.find((x) => x.productoId === l.productoId) ?? l : null)
   const llevo = useLoQueLlevo(cliente?.id)
   const volver = { kind: 'atras' as const, onPress: () => router.back() }
 
@@ -330,7 +334,7 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
         onConfirm={(l) => { reemplazar(l); setEditando(null) }} onQuitar={(id) => { quitar(id); setEditando(null) }}
         onDetalle={(l) => { setEditando(null); setDetalleLinea(l) }} />
       {/* Una fragancia suelta se edita en el detalle (tope por stock disponible); el resto, en el teclado rápido. */}
-      <EditarLineaSheet linea={editando?.producto.productoPadreId ? editando : detalleLinea} onClose={() => { setEditando(null); setDetalleLinea(null) }} descuentoGeneral={descuentoValido}
+      <EditarLineaSheet linea={conLoVivo(editando?.producto.productoPadreId ? editando : detalleLinea)} onClose={() => { setEditando(null); setDetalleLinea(null) }} descuentoGeneral={descuentoValido}
         onConfirm={(l) => { reemplazar(l); setEditando(null); setDetalleLinea(null) }} onQuitar={(id) => { quitar(id); setEditando(null); setDetalleLinea(null) }} />
       <FraganciasSheet padreId={fragancias} onClose={() => setFragancias(null)} llevo={llevo} />
     </View>

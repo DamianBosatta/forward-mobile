@@ -22,7 +22,7 @@ jest.setTimeout(20000)
 const URL_DEFECTO = '/api/v1/Ventas/con-factura-por-defecto'
 const URL_FISCAL = '/api/v1/Ventas/stock-fiscal/verificar'
 const TODOS = { lunes: true, martes: true, miercoles: true, jueves: true, viernes: true, sabado: true, domingo: true }
-const pala = producto({ real: 100 })
+const pala = producto({ real: 100, disponible: 100 })
 const cabecera = (o: Record<string, unknown> = {}) => ({
   id: 'v9', codigoPedido: 'A00419', clienteId: 'c7', version: 4, estado: 2, tipoOperacion: 2, porcentajeDescuento: 0,
   metodoEntregaNombre: 'LogisticaPropia', metodoEntrega: 1, fechaEntrega: '2026-01-02T00:00:00', cargoFleteAmount: 0, observaciones: null, ...o,

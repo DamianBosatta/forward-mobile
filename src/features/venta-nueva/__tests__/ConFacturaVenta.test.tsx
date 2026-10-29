@@ -43,7 +43,7 @@ jest.mock('../components/CatalogoVenta', () => ({ CatalogoVenta: () => null }))
 const TODOS = { lunes: true, martes: true, miercoles: true, jueves: true, viernes: true, sabado: true, domingo: true }
 const URL_DEFECTO = '/api/v1/Ventas/con-factura-por-defecto'
 let porDefecto: unknown
-const pala = producto({ real: 100 })
+const pala = producto({ real: 100, disponible: 100 })
 
 function pantalla() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })

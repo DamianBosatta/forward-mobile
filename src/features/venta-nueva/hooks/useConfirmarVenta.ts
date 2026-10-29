@@ -82,7 +82,7 @@ export function useConfirmarVenta(d: Datos) {
   const [error, setError] = useState<string | null>(null)
   const [pedirMotivo, setPedirMotivo] = useState(false)
   // Al editar, el stock del catálogo no cuenta lo que esta venta ya reservó: el motivo lo pide el servidor si hace falta.
-  const sinStock = !d.edicion && d.esPedido && d.lineas.some((l) => l.cantidad > l.producto.real)
+  const sinStock = !d.edicion && d.esPedido && d.lineas.some((l) => l.cantidad > l.producto.disponible)
 
   async function enviar(motivo?: string) {
     const { borrador: b } = d

@@ -10,7 +10,7 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esM
 const conAncho = (width: number) => mockDims.mockReturnValue({ width, height: 800, scale: 2, fontScale: 1 })
 
 const mockProductos = [
-  producto({ precioVenta: 1000, real: 37 }),
+  producto({ precioVenta: 1000, real: 37, disponible: 37 }),
   cajaDe6({ precioVenta: 500, puedeVenderse: false }),
   producto({ id: 'pf', nombre: 'Saphirus Aerosol', esPadreDeVariantes: true }),
   producto({ id: 'pv', nombre: 'Saphirus Aerosol Lavanda', productoPadreId: 'pf' }),
@@ -191,7 +191,7 @@ describe('CatalogoVenta: filtros y escáner (V4)', () => {
   })
 
   it('escanear un código que está en el catálogo suma el producto al carrito', async () => {
-    mockProductos[0] = producto({ precioVenta: 1000, real: 37, codigoBarra: '7790001112223' })
+    mockProductos[0] = producto({ precioVenta: 1000, real: 37, disponible: 37, codigoBarra: '7790001112223' })
     render(<CatalogoVenta onVerVenta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Escanear código de barras' }))
     await userEvent.press(screen.getByRole('button', { name: 'Leer 7790001112223' }))

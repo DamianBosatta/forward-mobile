@@ -36,7 +36,7 @@ export function avisosVenta(lineas: LineaCarrito[], ctx: ContextoAvisos): { porA
   if (!esPedido) return { porAutorizar, rechazos }
   if (superaTope) porAutorizar.push('un descuento supera tu tope')
   if (pisos.includes('amarillo')) porAutorizar.push('un precio queda debajo del mínimo')
-  if (lineas.some((l) => l.cantidad > l.producto.real)) porAutorizar.push('falta stock')
+  if (lineas.some((l) => l.cantidad > l.producto.disponible)) porAutorizar.push('falta stock')
   return { porAutorizar, rechazos }
 }
 
