@@ -10,14 +10,16 @@ import { CATALOGO_DE_ERRORES, type CodigoError } from '@/libs/api-client/generat
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const ENV_PROD = 'https://api.forward-gestion.com.ar'
-// The old dev server (api-dev, port 8443) no longer exists: a URL saved for it falls back to production.
+// The old dev server (api-dev, port 8443) no longer exists: a URL saved for it, or a local .env that
+// still points to it, falls back to production.
 const ENV_DEV_RETIRADO = 'https://api-dev.forward-gestion.com.ar:8443'
 // Local docker API. From the Android emulator, 10.0.2.2 maps to the host machine's localhost.
 export const ENV_LOCAL = 'http://10.0.2.2:5000'
 const STORAGE_KEY = 'forward_api_url'
 
 /** Single source of truth para la URL del API (live binding mutable) */
-export let API_URL = process.env.EXPO_PUBLIC_API_URL || ENV_PROD
+const ENV_DEL_BUILD = process.env.EXPO_PUBLIC_API_URL
+export let API_URL = ENV_DEL_BUILD && ENV_DEL_BUILD !== ENV_DEV_RETIRADO ? ENV_DEL_BUILD : ENV_PROD
 
 export async function loadSavedApiUrl(): Promise<string> {
   try {
