@@ -2,6 +2,7 @@ import React, { type ReactNode } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { direccionDeEntrega, nombreDelCliente, type ClienteNombrable } from '@/features/clientes/lib/cliente'
@@ -19,8 +20,12 @@ interface Props {
   /** El envío en curso (deshabilita el botón). */
   enviando: boolean
   error: string | null
-  /** Confirmar: el flujo existente (`useConfirmarVenta().confirmar`), que pide el motivo si falta stock. */
+  /** Confirmar: el flujo existente (`useConfirmarVenta().confirmar`), que manda la venta y pide el motivo si falta stock. */
   onConfirmar: () => void | Promise<void>
+  /** Algo de la venta impide guardarla (flete o cesión inválidos, presupuesto sobre el tope): el botón queda apagado. */
+  deshabilitado?: boolean
+  /** Por qué no se puede confirmar, si es algo que el vendedor puede corregir. */
+  motivoDeshabilitado?: string
   /** Tocar una línea: abre la pantalla de cantidad y oferta. */
   onEditarLinea: (linea: LineaCarrito) => void
   /** Lo que la venta nueva ajusta desde acá y no es una línea: datos de la entrega, descuento general, avisos, comisión. */
@@ -40,10 +45,10 @@ function detalleDe(l: LineaCarrito): string {
 
 /**
  * Revisar y confirmar (lámina Carrito, S5/S6/S7): las líneas con el stock vuelto a chequear al abrir y otra vez al
- * tocar "Confirmar venta"; lo que cambió desde que se cargó queda marcado y el banner lo cuenta. Si falta stock
+ * tocar "Confirmar venta" (que manda la venta: no hay segunda confirmación); lo que cambió desde que se cargó queda marcado y el banner lo cuenta. Si falta stock
  * no se bloquea: el flujo de confirmar pide el motivo y la venta va a autorización.
  */
-export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, onEditarLinea, ajustes }: Props) {
+export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, deshabilitado = false, motivoDeshabilitado, onEditarLinea, ajustes }: Props) {
   const c = useColors()
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
   const { lineas, cambios, confirmado, revalidando, revalidar } = useRevalidarStockVenta()
@@ -136,7 +141,8 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
           <Text style={secundario}>Total estimado</Text>
           <Text testID="revisar-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(t.total)}</Text>
         </View>
-        <Button label="Confirmar venta" onPress={() => { void confirmar() }} loading={enviando} disabled={enviando || lineas.length === 0} />
+        <Button label="Confirmar venta" onPress={() => { void confirmar() }} loading={enviando} disabled={enviando || deshabilitado || lineas.length === 0} />
+        {motivoDeshabilitado ? <MotivoDeshabilitado>{motivoDeshabilitado}</MotivoDeshabilitado> : null}
       </View>
     </View>
   )

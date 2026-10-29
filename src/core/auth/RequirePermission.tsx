@@ -107,7 +107,7 @@ export function usePermissions() {
     canDo,
     /** ¿Tiene la capacidad CAP_*? */
     hasCapability,
-    /** True si es Admin o SuperAdmin. No autoriza nada: solo la prueba de la venta nueva (ventaNueva.ts). */
+    /** True si es Admin o SuperAdmin. Es solo el rol: no autoriza nada, para eso están `canDo` y `hasCapability`. */
     isAdmin,
     /** True solo si es AdministradorSistemas: el backend lo deja operar hojas ajenas (AlcanceDeLaHoja). */
     isSuperAdmin,

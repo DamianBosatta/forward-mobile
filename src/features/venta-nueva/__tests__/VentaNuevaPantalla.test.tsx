@@ -81,14 +81,9 @@ async function elegirCliente() {
   await userEvent.press(screen.getByRole('button', { name: 'Ver venta' }))
   await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
 }
-// La revisión (lámina Carrito) tiene "Confirmar venta": vuelve a chequear el stock y abre V7 Confirmar, donde está el botón que guarda.
-async function abrirConfirmacion() {
+// La revisión (lámina Carrito) tiene un solo "Confirmar venta": vuelve a chequear el stock y manda la venta.
+async function confirmarVenta() {
   await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
-  await screen.findByRole('button', { name: /^(Confirmar pedido|Guardar presupuesto)/ }, ESPERA)
-}
-async function seguirYPresionar(nombre: string) {
-  await abrirConfirmacion()
-  await userEvent.press(screen.getByRole('button', { name: nombre }))
 }
 async function anadir() {
   if (!screen.queryByRole('button', { name: 'Añadir pala' })) await userEvent.press(screen.getByRole('button', { name: 'Agregar productos' }))
@@ -271,7 +266,7 @@ describe('pestaña Líneas', () => {
     expect(mockPut.mock.calls.at(-1)[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 10 }])
     expect(await screen.findByText(/el resto se guarda al confirmar el pedido/)).toBeTruthy()
     await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
-    await seguirYPresionar('Confirmar pedido')
+    await confirmarVenta()
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas', expect.objectContaining({
       tipoOperacion: 2, items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 12.82 }],
     })))
@@ -506,7 +501,7 @@ describe('confirmar', () => {
     useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: pala, cantidad, descuentoPct: 0 }] })
     await screen.findByText('Pala c/Cabo Fija LP')
   }
-  const confirmar = () => seguirYPresionar('Confirmar pedido')
+  const confirmar = confirmarVenta
   const guardada = (id: string, mensaje: string) => ({ pathname: '/(tabs)/ventas/guardada', params: { id, mensaje } })
   // La vista previa de la venta también hace POST: las respuestas de prueba se encolan solo para el
   // alta (`/api/v1/Ventas`), así una vista previa nunca se queda con la respuesta que era del alta.
@@ -542,7 +537,11 @@ describe('confirmar', () => {
 
   describe('sin señal (V9, T5b): el alta no llegó', () => {
     const sinRed = () => Promise.reject(new TypeError('Network request failed'))
-    beforeEach(() => storage.remove('ventas-sin-senal:u'))
+    // La cola se guarda por usuario (`ventas-sin-senal:<id>`): el test arma su propio usuario, no depende de otro describe.
+    beforeEach(() => {
+      useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10 } as never })
+      storage.remove('ventas-sin-senal:u')
+    })
 
     it('queda en el teléfono con su clave y el total que vio el vendedor, vacía el carrito y avisa; no muestra error', async () => {
       await armar()
@@ -762,7 +761,7 @@ describe('confirmar', () => {
     await armar()
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
-    await seguirYPresionar('Guardar presupuesto')
+    await confirmarVenta()
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/guardar-presupuesto', { ventaId: 'b1', version: 8 }))
     expect(altas()).toHaveLength(0)
     expect(mockReplace).toHaveBeenCalledWith(guardada('b1', ''))
@@ -775,7 +774,7 @@ describe('confirmar', () => {
     mockPost.mockImplementation((url: string) => url.endsWith('guardar-presupuesto')
       ? Promise.reject(new ApiError(400, 'Un presupuesto no admite descuentos sobre tu tope.'))
       : Promise.resolve({ ventaId: 'b1', version: 7, message: '' }))
-    await seguirYPresionar('Guardar presupuesto')
+    await confirmarVenta()
     expect(await screen.findByText(/Un presupuesto no admite descuentos sobre tu tope\./, {}, ESPERA)).toBeTruthy()
     expect(mockReplace).not.toHaveBeenCalled()
   })
@@ -785,7 +784,7 @@ describe('confirmar', () => {
     await armar()
     qc.setQueryData(['inicio', 'resumen'], { ventas: null, compras: null, autorizacionesPendientes: null })
     await waitFor(() => expect(sync()).toHaveTextContent('Guardado'), ESPERA)
-    await seguirYPresionar('Guardar presupuesto')
+    await confirmarVenta()
     await waitFor(() => expect(mockReplace).toHaveBeenCalled())
     expect(qc.getQueryState(['inicio', 'resumen'])?.isInvalidated).toBe(true)
   })
@@ -794,8 +793,7 @@ describe('confirmar', () => {
     mockTipo = 'Presupuesto'
     await armar()
     await waitFor(() => expect(sync()).toHaveTextContent('Guardado'), ESPERA)
-    await abrirConfirmacion()
-    const boton = screen.getByRole('button', { name: 'Guardar presupuesto' })
+    const boton = screen.getByRole('button', { name: 'Confirmar venta' })
     // Mismo tick: ningún re-render entre un toque y el otro.
     act(() => { fireEvent.press(boton); fireEvent.press(boton) })
     await waitFor(() => expect(mockReplace).toHaveBeenCalled())
@@ -805,8 +803,7 @@ describe('confirmar', () => {
 
   it('dos toques en el mismo instante mandan un solo pedido', async () => {
     await armar()
-    await abrirConfirmacion()
-    const boton = screen.getByRole('button', { name: 'Confirmar pedido' })
+    const boton = screen.getByRole('button', { name: 'Confirmar venta' })
     // Mismo tick: ningún re-render entre un toque y el otro.
     act(() => { fireEvent.press(boton); fireEvent.press(boton) })
     await waitFor(() => expect(mockReplace).toHaveBeenCalled())
@@ -819,7 +816,7 @@ describe('confirmar', () => {
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
     const antes = mockPut.mock.calls.length
-    await seguirYPresionar(tipo === 'Pedido' ? 'Confirmar pedido' : 'Guardar presupuesto')
+    await confirmarVenta()
     await waitFor(() => expect(mockReplace).toHaveBeenCalled())
     await new Promise((r) => setTimeout(r, 1200))
     screen.unmount()
@@ -934,45 +931,54 @@ describe('V7 Confirmar', () => {
     await screen.findByText('Pala c/Cabo Fija LP')
   }
 
-  it('"Seguir" abre Confirmar con el resumen, la fecha de entrega y la nota; todavía no se manda nada', async () => {
-    await elegirCliente()
-    await conLinea(0)
-    await abrirConfirmacion()
-    expect(screen.getByText('¿Cuándo se entrega?')).toBeTruthy()
-    expect(screen.getByText('1 producto · 12 unidades')).toBeTruthy()
-    expect(screen.getByTestId('confirmar-total')).toHaveTextContent('$ 29.952,00')
-    expect(screen.getByLabelText('Nota para el depósito y el chofer')).toBeTruthy()
-    expect(mockPost.mock.calls.filter(([u]) => u === '/api/v1/Ventas')).toHaveLength(0)
-  })
-
-  it('la nota de V7 es la observación de la venta y viaja con el pedido', async () => {
+  const alta = () => mockPost.mock.calls.find(([u]) => u === '/api/v1/Ventas')?.[1]
+  const respuestaDelAlta = () => {
     mockPost.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas' ? { ventaId: 'v9', version: 1, message: 'ok' } : { ventaId: 'b1', version: 7, message: '' }))
     mockGet.mockImplementation((url: string) => Promise.resolve(url === '/api/v1/Ventas/v9' ? { venta: { estado: 2 }, detalles: [] } : calendario(url)))
+  }
+
+  it('la revisión trae la fecha, la nota y Con factura; no hay segunda confirmación y no se manda nada hasta tocar Confirmar venta', async () => {
     await elegirCliente()
     await conLinea(0)
-    await abrirConfirmacion()
-    await userEvent.type(screen.getByLabelText('Nota para el depósito y el chofer'), 'Entrar por el portón de atrás')
-    await userEvent.press(screen.getByRole('button', { name: 'Confirmar pedido' }))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas', expect.objectContaining({ observaciones: 'Entrar por el portón de atrás' })))
+    expect(screen.getByRole('button', { name: 'Datos de la entrega' })).toBeTruthy()
+    expect(screen.getByRole('switch', { name: 'Con factura' })).toBeTruthy()
+    expect(screen.getByTestId('revisar-total')).toHaveTextContent('$ 29.952,00')
+    expect(alta()).toBeUndefined()
+    expect(screen.queryByRole('button', { name: /^(Confirmar pedido|Guardar presupuesto)/ })).toBeNull()
   })
 
-  it('un descuento sobre el tope avisa en V7 que el pedido queda por autorizar, y se puede confirmar', async () => {
+  it('un toque en Confirmar venta manda el pedido con la fecha y la nota que se eligieron en la revisión', async () => {
+    respuestaDelAlta()
+    await elegirCliente()
+    await conLinea(0)
+    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
+    const propuesta = mockPut.mock.calls[0][1].fechaEntrega
+    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
+    const dias = screen.getAllByRole('radio')
+    await userEvent.press(dias[dias.length - 1])
+    await userEvent.type(screen.getByLabelText('Observaciones'), 'Entrar por el portón de atrás')
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
+    await waitFor(() => expect(alta()).toBeDefined())
+    expect(alta().observaciones).toBe('Entrar por el portón de atrás')
+    expect(alta().fechaEntrega).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    expect(alta().fechaEntrega).not.toBe(propuesta)
+  })
+
+  it('un descuento sobre el tope avisa en la revisión que el pedido queda por autorizar, y se puede confirmar', async () => {
     await elegirCliente()
     await conLinea(15)
-    await abrirConfirmacion()
-    expect(await screen.findByText('Queda por autorizar')).toBeTruthy()
-    expect(screen.getAllByLabelText('Confirmar venta').some((el) => within(el).queryByText(/Porque un descuento supera tu tope/))).toBe(true)
-    expect(screen.getByRole('button', { name: 'Confirmar pedido' })).toBeEnabled()
+    expect(await screen.findByText('Este pedido va a quedar por autorizar')).toBeTruthy()
+    expect(screen.getByText(/Porque un descuento supera tu tope/)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeEnabled()
   })
 
   it('un presupuesto con un descuento sobre el tope no se puede guardar: botón deshabilitado y el motivo', async () => {
     mockTipo = 'Presupuesto'
     await elegirCliente()
     await conLinea(15)
-    await abrirConfirmacion()
-    expect(screen.getByRole('button', { name: 'Guardar presupuesto' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeDisabled()
     expect(screen.getByText('Un presupuesto no puede pasar tu tope de descuento')).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Guardar presupuesto' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     expect(mockPost.mock.calls.filter(([u]) => String(u).endsWith('guardar-presupuesto'))).toHaveLength(0)
   })
 
@@ -980,8 +986,7 @@ describe('V7 Confirmar', () => {
     mockTipo = 'Presupuesto'
     await elegirCliente()
     await conLinea(10)
-    await abrirConfirmacion()
-    expect(screen.getByRole('button', { name: 'Guardar presupuesto' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeEnabled()
     expect(screen.queryByText('Un presupuesto no puede pasar tu tope de descuento')).toBeNull()
   })
 
@@ -990,8 +995,7 @@ describe('V7 Confirmar', () => {
     await elegirCliente()
     await conLinea(0)
     await aplicarDescuentoGeneral(12)
-    await abrirConfirmacion()
-    expect(screen.getByRole('button', { name: 'Guardar presupuesto' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeDisabled()
   })
 
   it('el descuento general se cambia desde la hoja y baja el total', async () => {

@@ -1,7 +1,7 @@
 /** Teclado numérico de "Cantidad y descuento" (lámina CalleCantidad): hasta cuatro dígitos. */
 export type Tecla = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | 'del' | 'clr'
 
-export const MAX_DIGITOS = 4
+const MAX_DIGITOS = 4
 
 export function teclear(actual: string, tecla: Tecla | string): string {
   if (tecla === 'del') return actual.slice(0, -1)

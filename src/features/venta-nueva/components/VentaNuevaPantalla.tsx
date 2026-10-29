@@ -5,6 +5,7 @@ import { Plus, Trash2 } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, TopBar, formatImporte } from '@/core/ui/fw'
 import type { CatalogoStockItem } from '@/libs/api-client'
+import { METODO_ENTREGA } from '@/features/ventas/lib/venta-form-retiro'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import type { TipoDocumento } from '@/features/clientes/components/SeleccionarClienteSheet'
@@ -30,7 +31,7 @@ import { CantidadOfertaPantalla } from './CantidadOfertaPantalla'
 import { CreditoDeudaVenta } from './CreditoDeudaVenta'
 import { PasosVenta } from './PasosVenta'
 import { RevisarVenta } from './RevisarVenta'
-import { ConfirmarVentaSheet } from './ConfirmarVentaSheet'
+import { ConFactura, ConfirmarVentaSheet, MOTIVO_PRESUPUESTO_SOBRE_TOPE } from './ConfirmarVentaSheet'
 import { DescuentoGeneralSheet } from './DescuentoGeneralSheet'
 import { NuevaVentaInicio } from './NuevaVentaInicio'
 import { EditarLineaSheet } from './EditarLineaSheet'
@@ -300,8 +301,14 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
   )
 
   // Revisión de una venta nueva (lámina Carrito): las líneas con el stock vuelto a chequear; lo que no es una línea
-  // (entrega, descuento general, avisos, comisión) se ajusta desde `ajustes`. "Confirmar venta" abre la hoja Confirmar,
-  // que conserva la fecha, la nota, Con factura y las guardas de siempre.
+  // (entrega, descuento general, avisos, comisión) se ajusta desde `ajustes`: la fecha y la nota en "Datos de la
+  // entrega", Con factura en su interruptor. "Confirmar venta" manda la venta (sin segunda hoja); la hoja del motivo
+  // sale solo si falta stock, y el botón queda apagado con las mismas guardas de siempre.
+  const fechaEntrega = cab.cabecera.fecha
+  const diaEntrega = cab.tira.find((d) => d.dia === fechaEntrega)
+  const textoEntrega = cab.cabecera.metodoEntrega === METODO_ENTREGA.RetiroEnLocal ? 'Retira en el local'
+    : diaEntrega ? `${diaEntrega.nombre} ${diaEntrega.numero}` : fechaEntrega ? fechaEntrega.split('-').reverse().join('/') : 'Sin fecha'
+  const presupuestoSobreTope = tipo === 'Presupuesto' && superaTope
   const filaAjuste = (rotuloFila: string, valor: string | null, onPress: () => void) => (
     <Pressable accessibilityRole="button" accessibilityLabel={rotuloFila} onPress={onPress}
       style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], paddingHorizontal: space[3], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
@@ -325,7 +332,8 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
       ) : null}
       {b.retenido && b.borrador ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`El borrador guarda los descuentos hasta tu tope (${mostrarNumero(tope)} %); el resto se guarda al confirmar el pedido.`}</Text> : null}
       {filaAjuste('Descuento a toda la venta', `${mostrarNumero(descuentoValido)} %`, () => setDescGeneral(true))}
-      {filaAjuste('Datos de la entrega', null, () => setVerCabecera(true))}
+      {filaAjuste('Datos de la entrega', textoEntrega, () => setVerCabecera(true))}
+      <ConFactura conFactura={cab.cabecera.conFactura} onChange={cab.setConFactura} lineas={lineas} />
       {comision !== null ? (
         <Text style={{ ...typeScale.secundario, alignSelf: 'flex-start', paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.brandSoft, color: c.brandInk }}>
           {`Tu comisión estimada ${formatImporte(comision)}`}
@@ -349,8 +357,10 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
         descuentoGeneral={descuentoValido}
         flete={cab.cabecera.flete}
         enviando={conf.enviando}
-        error={sheetConfirmar ? null : conf.error}
-        onConfirmar={() => setConfirmando(true)}
+        error={conf.error}
+        onConfirmar={() => conf.confirmar()}
+        deshabilitado={cab.fleteInvalido || !!cab.cesionError || presupuestoSobreTope}
+        motivoDeshabilitado={presupuestoSobreTope ? MOTIVO_PRESUPUESTO_SOBRE_TOPE : undefined}
         onEditarLinea={editarLinea}
         ajustes={ajustesRevision}
       />
