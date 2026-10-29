@@ -1,4 +1,4 @@
-import React, { useState, type ReactNode } from 'react'
+import React, { useRef, useState, type ReactNode } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
@@ -28,6 +28,8 @@ interface Props {
   motivoDeshabilitado?: string
   /** Tocar una línea: abre la pantalla de cantidad y oferta. */
   onEditarLinea: (linea: LineaCarrito) => void
+  /** Abre "Elegir fragancias" del producto padre (`FraganciasSheet`); sin esto la revisión no las ofrece. */
+  onElegirFragancias?: (padreId: string) => void
   /** Lo que la venta nueva ajusta desde acá y no es una línea: datos de la entrega, descuento general, avisos, comisión. */
   ajustes?: ReactNode
 }
@@ -48,11 +50,13 @@ function detalleDe(l: LineaCarrito): string {
  * tocar "Confirmar venta" (que manda la venta: no hay segunda confirmación); lo que cambió desde que se cargó queda marcado y el banner lo cuenta. Si falta stock
  * no se bloquea: el flujo de confirmar pide el motivo y la venta va a autorización.
  */
-export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, deshabilitado = false, motivoDeshabilitado, onEditarLinea, ajustes }: Props) {
+export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, deshabilitado = false, motivoDeshabilitado, onEditarLinea, onElegirFragancias, ajustes }: Props) {
   const c = useColors()
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
   const { lineas, cambios, confirmado, sinConexion, revalidando, revalidar } = useRevalidarStockVenta()
   const [confirmando, setConfirmando] = useState(false)
+  // El estado no alcanza como guardia: dos toques antes del re-render leen el mismo `confirmando`.
+  const enCurso = useRef(false)
   const t = totalesEstimados(lineas, descuentoGeneral, flete)
   const lista = lineas.reduce((a, l) => a + l.producto.precioVenta * l.cantidad, 0)
   const ofertas = lista - t.subtotal
@@ -61,13 +65,19 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
   const confirmar = async () => {
     // El stock se vuelve a chequear justo antes: confirmar decide con lo que haya en ese momento.
     // Sin señal `revalidar` vuelve enseguida (no espera a la red) y la venta sigue a la cola sin señal.
+    if (enCurso.current) return
+    enCurso.current = true
     setConfirmando(true)
     try {
-      await revalidar()
+      try {
+        await revalidar()
+      } finally {
+        setConfirmando(false)
+      }
+      await onConfirmar()
     } finally {
-      setConfirmando(false)
+      enCurso.current = false
     }
-    await onConfirmar()
   }
 
   function estadoDeStock(l: LineaCarrito, cambio: boolean): { texto: string; alerta: boolean } {
@@ -95,37 +105,50 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
             {`El stock cambió mientras cargabas: revisá ${cambios.length} ${cambios.length === 1 ? 'producto' : 'productos'}.`}
           </Notice>
         ) : null}
-        {lineas.map((l) => {
+        {lineas.map((l, i) => {
+          const padreId = l.producto.productoPadreId
+          // Una sola vez por producto padre: sus variantes se reparten juntas en `FraganciasSheet`.
+          const ofreceFragancias = !!onElegirFragancias && !!padreId && lineas.findIndex((x) => x.producto.productoPadreId === padreId) === i
           const cambio = cambios.some((x) => x.productoId === l.productoId)
           const { texto, alerta } = estadoDeStock(l, cambio)
           const color = alerta ? c.chip.porAutorizar.text : c.chip.entregado.text
           return (
-            <Pressable
+            <View
               key={l.productoId}
               testID={cambio ? `linea-cambio-${l.productoId}` : undefined}
-              accessibilityRole="button"
-              accessibilityHint="Ajustar cantidad y oferta"
-              onPress={() => onEditarLinea(l)}
               style={{ padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[1], borderWidth: 2, borderColor: cambio ? c.chip.porAutorizar.text : c.surface }}
             >
-              {l.producto.marca ? <Text style={secundario}>{l.producto.marca}</Text> : null}
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-                <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }}>{l.producto.nombre}</Text>
-                <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(subtotalLinea(l))}</Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-                <Text style={{ ...secundario, ...importe }}>{detalleDe(l)}</Text>
-                {l.descuentoPct > 0 ? (
-                  <View style={{ paddingHorizontal: space[2], borderRadius: radii.campo, backgroundColor: c.brandSoft }}>
-                    <Text style={{ ...typeScale.secundario, color: c.brandInk }}>{`−${mostrarNumero(l.descuentoPct)} %`}</Text>
-                  </View>
-                ) : null}
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-                <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color }} />
-                <Text style={{ ...typeScale.secundario, color }}>{texto}</Text>
-              </View>
-            </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityHint="Ajustar cantidad y oferta"
+                onPress={() => onEditarLinea(l)}
+                style={{ gap: space[1] }}
+              >
+                {l.producto.marca ? <Text style={secundario}>{l.producto.marca}</Text> : null}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
+                  <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }}>{l.producto.nombre}</Text>
+                  <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(subtotalLinea(l))}</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+                  <Text style={{ ...secundario, ...importe }}>{detalleDe(l)}</Text>
+                  {l.descuentoPct > 0 ? (
+                    <View style={{ paddingHorizontal: space[2], borderRadius: radii.campo, backgroundColor: c.brandSoft }}>
+                      <Text style={{ ...typeScale.secundario, color: c.brandInk }}>{`−${mostrarNumero(l.descuentoPct)} %`}</Text>
+                    </View>
+                  ) : null}
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+                  <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color }} />
+                  <Text style={{ ...typeScale.secundario, color }}>{texto}</Text>
+                </View>
+              </Pressable>
+              {ofreceFragancias ? (
+                <Pressable accessibilityRole="button" accessibilityLabel={`Elegir fragancias de ${l.producto.nombre.split(' - ')[0]}`} onPress={() => onElegirFragancias?.(padreId!)}
+                  style={{ minHeight: 44, justifyContent: 'center' }}>
+                  <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Elegir fragancias</Text>
+                </Pressable>
+              ) : null}
+            </View>
           )
         })}
         {ajustes}

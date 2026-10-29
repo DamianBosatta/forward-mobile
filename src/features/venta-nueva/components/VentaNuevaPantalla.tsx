@@ -362,6 +362,7 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
         deshabilitado={cab.fleteInvalido || !!cab.cesionError || presupuestoSobreTope}
         motivoDeshabilitado={presupuestoSobreTope ? MOTIVO_PRESUPUESTO_SOBRE_TOPE : undefined}
         onEditarLinea={editarLinea}
+        onElegirFragancias={setFragancias}
         ajustes={ajustesRevision}
       />
     </>

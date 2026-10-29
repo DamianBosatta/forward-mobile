@@ -97,6 +97,15 @@ describe('al reconectar: líneas de la cola que cambiaron (S3)', () => {
     expect(screen.queryByText(/stock/i)).toBeNull()
   })
 
+  it('un usuario que no ve cantidades y no puede vender el producto recibe el aviso, sin cantidades', async () => {
+    mockHub.cantidades = false
+    mockGet.mockResolvedValue({ items: [producto({ id: 'p1', nombre: 'Producto X', disponible: 0, puedeVenderse: false })], hasNextPage: false })
+    encolar()
+    montar()
+    conectar()
+    expect(await screen.findByText(/Producto X se quedó sin stock \(la venta guardada lleva 6\)/)).toBeTruthy()
+  })
+
   it('al (re)conectar vuelve a pedir el catálogo para comparar con el stock de ahora', async () => {
     encolar()
     montar()
