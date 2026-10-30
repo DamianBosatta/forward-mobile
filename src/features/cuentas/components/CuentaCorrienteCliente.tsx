@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native'
 import { useRouter } from 'expo-router'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, Segmented, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { Button, Notice, Segmented, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { MOTIVO_SIN_PERMISO_DE_COBRO, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { useResponsive } from '@/libs/useResponsive'
 import { useSocio } from '@/libs/api-client/socios'
@@ -40,7 +40,8 @@ function Tarjeta({ titulo, children }: { titulo?: string; children: React.ReactN
 function Movimiento({ m, tabla }: { m: MovimientoConCuenta; tabla?: boolean }) {
   const c = useColors()
   const fecha = formatToLocalTime(m.fecha, 'EEE d MMM')
-  const monto = m.debe > 0 ? `+ ${formatImporte(m.debe)}` : `− ${formatImporte(m.haber)}`
+  const esDebe = m.debe > 0
+  const monto = esDebe ? `+ ${formatImporte(m.debe)}` : `− ${formatImporte(m.haber)}`
   const saldo = `Saldo ${formatImporte(m.saldoHistorico)}`
   const detalle = m.medioPagoNombre?.trim()
   const descripcion = descripcionDe(m)
@@ -50,20 +51,21 @@ function Movimiento({ m, tabla }: { m: MovimientoConCuenta; tabla?: boolean }) {
     <View
       accessible
       accessibilityLabel={[fecha, NOMBRE_CUENTA[m.cuenta], descripcion, detalle, vence, imputado, monto, saldo].filter(Boolean).join(', ')}
-      style={{ flexDirection: 'row', gap: space[3], paddingVertical: space[2], borderTopWidth: 1, borderTopColor: c.border }}
+      style={{ flexDirection: 'row', gap: space[3], paddingVertical: space[3], paddingHorizontal: space[4], backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.border }}
     >
-      {/* Tablet (TabCuentas): tabla Fecha / Movimiento / Vence / Importe. */}
-      {tabla ? <Text style={{ ...typeScale.secundario, color: c.textSecondary, width: 96 }}>{fecha}</Text> : null}
+      {/* Teléfono: día/mes a la izquierda. Tablet (TabCuentas): tabla Fecha / Movimiento / Vence / Importe. */}
+      <Text style={{ ...typeScale.secundario, color: c.textSecondary, width: tabla ? 96 : 44 }}>{tabla ? fecha : formatToLocalTime(m.fecha, 'dd/MM')}</Text>
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
-        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{tabla ? NOMBRE_CUENTA[m.cuenta] : `${fecha} · ${NOMBRE_CUENTA[m.cuenta]}`}</Text>
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{descripcion}</Text>
+        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{NOMBRE_CUENTA[m.cuenta]}</Text>
         {detalle ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{detalle}</Text> : null}
         {tabla ? null : vence ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{vence}</Text> : null}
         {imputado ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{imputado}</Text> : null}
       </View>
       {tabla ? <Text style={{ ...typeScale.secundario, color: c.textSecondary, width: 120 }}>{vence ?? '—'}</Text> : null}
       <View style={{ alignItems: 'flex-end', gap: space[1] }}>
-        <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{monto}</Text>
+        {/* El signo va siempre con el color: lo cobrado en verde, lo que se debe en el color base. */}
+        <Text style={[typeScale.cuerpoDestacado, importe, { color: esDebe ? c.text : c.chip.entregado.text }]}>{monto}</Text>
         <Text style={[typeScale.secundario, importe, { color: c.textSecondary }]}>{saldo}</Text>
       </View>
     </View>
@@ -76,7 +78,7 @@ function Movimiento({ m, tabla }: { m: MovimientoConCuenta; tabla?: boolean }) {
  * lo decide el servidor (`puedeVerCuentaCorriente` y los permisos de cada endpoint). Con `onRegistrarCobro` (tablet)
  * el cobro se abre en el panel y no en otra pantalla.
  */
-export function CuentaCorrienteCliente({ socioId, onRegistrarCobro }: { socioId: string; onRegistrarCobro?: () => void }) {
+export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = false }: { socioId: string; onRegistrarCobro?: () => void; conBarra?: boolean }) {
   const c = useColors()
   const router = useRouter()
   const { canCreate, canRead } = usePermissions()
@@ -94,11 +96,22 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro }: { socioId:
     if (layoutMeasurement.height + contentOffset.y >= contentSize.height - DISTANCIA_PARA_CARGAR_MAS) movs.cargarMas()
   }
 
-  if (socio.isLoading) return <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
+  const barraSimple = conBarra ? <TopBar title="Cuenta corriente" leading={{ kind: 'atras', onPress: () => router.back() }} /> : null
+  if (socio.isLoading) {
+    return (
+      <View style={{ flex: 1 }}>
+        {barraSimple}
+        <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
+      </View>
+    )
+  }
   if (socio.error || !socio.data) {
     return (
-      <View style={{ padding: space[4] }}>
-        <Notice tone="peligro">{mensajeDelServidor(socio.error, 'No se pudo abrir el cliente.')}</Notice>
+      <View style={{ flex: 1 }}>
+        {barraSimple}
+        <View style={{ padding: space[4] }}>
+          <Notice tone="peligro">{mensajeDelServidor(socio.error, 'No se pudo abrir el cliente.')}</Notice>
+        </View>
       </View>
     )
   }
@@ -112,7 +125,7 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro }: { socioId:
   const registrarCobro = (
     <View style={{ gap: space[2] }}>
       <Button
-        label="Registrar cobro"
+        label="Cobrar"
         disabled={!puedeCobrar}
         onPress={() => (onRegistrarCobro ? onRegistrarCobro() : router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId } }))}
       />
@@ -120,13 +133,17 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro }: { socioId:
     </View>
   )
 
+  const subtitulo = nombre ? `Cuenta corriente · ${nombre}` : 'Cuenta corriente'
   return (
     <View style={{ flex: 1 }}>
+    {conBarra ? <TopBar title={direccionDeEntrega(cliente)} subtitle={subtitulo} leading={{ kind: 'atras', onPress: () => router.back() }} /> : null}
     <ScrollView testID="cuenta-corriente-scroll" onScroll={alDesplazar} scrollEventThrottle={200} contentContainerStyle={{ padding: space[4], gap: space[4] }}>
-      <View style={{ gap: space[1] }}>
-        <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
-        {nombre ? <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{nombre}</Text> : null}
-      </View>
+      {!conBarra ? (
+        <View style={{ gap: space[1] }}>
+          <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
+          {nombre ? <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{nombre}</Text> : null}
+        </View>
+      ) : null}
       {verCuenta && isTabletLandscape ? registrarCobro : null}
 
       {!verCuenta ? <Notice tone="info">No tenés acceso a la cuenta corriente de este cliente.</Notice> : null}
@@ -137,9 +154,20 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro }: { socioId:
           {estado.error ? <Notice tone="peligro">{mensajeDelServidor(estado.error, 'No se pudo cargar la cuenta.')}</Notice> : null}
           {e ? (
             <>
-              <TotalsRow label="Saldo" importe={e.saldoActual} destacado />
-              <TotalsRow label="Cuenta TST" importe={e.saldoTst} />
-              <TotalsRow label="Cuenta Normal (con factura)" importe={e.saldoNormal} />
+              <View accessible accessibilityLabel={`Saldo: ${formatImporte(e.saldoActual)}`} style={{ gap: space[1] }}>
+                <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Saldo</Text>
+                <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(e.saldoActual)}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: space[4] }}>
+                <View accessible accessibilityLabel={`Cuenta TST: ${formatImporte(e.saldoTst)}`} style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>TST</Text>
+                  <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(e.saldoTst)}</Text>
+                </View>
+                <View accessible accessibilityLabel={`Cuenta Normal (con factura): ${formatImporte(e.saldoNormal)}`} style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Normal (con factura)</Text>
+                  <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(e.saldoNormal)}</Text>
+                </View>
+              </View>
               {e.saldoAFavor > 0 ? <TotalsRow label="A favor" importe={e.saldoAFavor} /> : null}
               {cliente.topeCredito != null ? <TotalsRow label="Tope de crédito" importe={cliente.topeCredito} /> : null}
               <CreditoDelCliente estado={e} />
@@ -151,8 +179,10 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro }: { socioId:
       {verCuenta ? <Notice tone="info">{AVISO_CADA_COBRO}</Notice> : null}
 
       {verCuenta ? (
-        <Tarjeta titulo="Movimientos">
+        <View style={{ gap: space[3] }}>
+          <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Movimientos</Text>
           <Segmented options={FILTROS} value={filtro} onChange={setFiltro} accessibilityLabel="Cuenta" />
+          {/* TODO API: filtro por período (Octubre, Septiembre, Últimos 90 días…), "Saldo al 01/10" inicial y PDF del estado. */}
           {movs.cargando ? <ActivityIndicator color={c.brandInk} /> : null}
           {movs.error ? <Notice tone="peligro">{mensajeDelServidor(movs.error, 'No se pudieron cargar los movimientos.')}</Notice> : null}
           {!movs.cargando && !movs.error && movs.movimientos.length === 0 ? (
@@ -167,7 +197,7 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro }: { socioId:
           ) : movs.hayMas ? (
             <Button label="Ver movimientos anteriores" variant="secundario" loading={movs.cargandoMas} onPress={movs.cargarMas} />
           ) : null}
-        </Tarjeta>
+        </View>
       ) : null}
     </ScrollView>
     {verCuenta && !isTabletLandscape ? (
