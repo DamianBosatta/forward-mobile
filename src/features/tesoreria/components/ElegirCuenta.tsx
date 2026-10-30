@@ -14,17 +14,19 @@ interface Props {
   onCambio: (id: string) => void
   /** Opción extra al final (p. ej. "Ninguna: la plata sale"), con su valor. */
   extra?: { valor: string; label: string }
+  /** Dentro de la tarjeta conectada Desde → Hacia: las opciones sin elegir van sin marco propio. */
+  plano?: boolean
 }
 
 /** Lista de cuentas propias para elegir una, con el saldo que informa el servidor cuando lo manda (lámina Transferencia). */
-export function ElegirCuenta({ titulo, cuentas, valor, onCambio, extra }: Props) {
+export function ElegirCuenta({ titulo, cuentas, valor, onCambio, extra, plano = false }: Props) {
   const c = useColors()
   const opciones = [
     ...cuentas.map(k => ({ id: k.id, label: k.nombre, saldo: k.saldoActual == null ? '' : formatImporte(k.saldoActual) })),
     ...(extra ? [{ id: extra.valor, label: extra.label, saldo: '' }] : []),
   ]
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={titulo} style={{ gap: space[2] }}>
+    <View accessibilityRole="radiogroup" accessibilityLabel={titulo} style={{ gap: space[1], padding: plano ? space[2] : 0 }}>
       <Text style={{ ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: c.text }}>{titulo}</Text>
       {opciones.map(o => {
         const elegida = o.id === valor
@@ -42,9 +44,9 @@ export function ElegirCuenta({ titulo, cuentas, valor, onCambio, extra }: Props)
               gap: space[3],
               paddingHorizontal: space[3],
               borderRadius: radii.campo,
-              backgroundColor: elegida ? c.brandSoft : c.surface,
+              backgroundColor: elegida ? c.brandSoft : plano ? 'transparent' : c.surface,
               borderWidth: elegida ? 2 : 1,
-              borderColor: elegida ? c.brand : c.border,
+              borderColor: elegida ? c.brand : plano ? 'transparent' : c.border,
             }}
           >
             <Text style={{ ...typeScale.cuerpo, flex: 1, color: c.text }}>{o.label}</Text>
