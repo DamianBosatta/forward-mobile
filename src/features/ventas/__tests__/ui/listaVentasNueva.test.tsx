@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { subDays } from 'date-fns'
 import { diaArgentina } from '@/src/utils/date'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { formatImporte } from '@/core/ui/fw'
 import { ListaVentasNueva } from '../../components/ListaVentasNueva'
 
 const mockGet = jest.fn()
@@ -61,7 +62,7 @@ describe('lista de ventas nueva', () => {
     expect(q.get('tipoOperacion')).toBe('2')
     expect(q.get('fechaDesde')).toBe(diaArgentina(subDays(ahora, 29).getTime()))
     expect(q.get('estado')).toBeNull()
-    expect(screen.getByRole('tab', { name: 'Pedidos' })).toBeSelected()
+    expect(screen.getByRole('radio', { name: 'Pedidos' })).toBeSelected()
     expect(screen.getByRole('header', { name: 'Hoy' })).toBeTruthy()
     expect(screen.getByRole('header', { name: 'Ayer' })).toBeTruthy()
     // La dirección identifica al cliente; el nombre va en línea aparte.
@@ -74,11 +75,11 @@ describe('lista de ventas nueva', () => {
   it('Presupuestos, estado y período van como filtros al servidor', async () => {
     pantalla()
     await screen.findByText('Mostrando 2 de 61')
-    await userEvent.press(screen.getByRole('tab', { name: 'Presupuestos' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Presupuestos' }))
     await waitFor(() => expect(ultimaConsulta().get('tipoOperacion')).toBe('1'))
     await userEvent.press(screen.getByRole('radio', { name: 'Por autorizar' }))
     await waitFor(() => expect(ultimaConsulta().get('estado')).toBe('PendienteAutorizacion'))
-    await userEvent.press(screen.getByRole('radio', { name: 'Todo' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Todo' }))
     await waitFor(() => expect(ultimaConsulta().get('fechaDesde')).toBeNull())
     expect(ultimaConsulta().get('tipoOperacion')).toBe('1')
     // Con estado elegido el contador sigue siendo el del servidor.
@@ -97,7 +98,7 @@ describe('lista de ventas nueva', () => {
 
   it('Borradores muestra los del usuario que devuelve el servidor', async () => {
     pantalla()
-    await userEvent.press(screen.getByRole('tab', { name: 'Borradores' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Borradores' }))
     expect(await screen.findByText('Almacén Luis')).toBeTruthy()
     expect(screen.getByText(/3 líneas · Guardado hoy/)).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/v1/Ventas/borradores/mios')
@@ -106,7 +107,7 @@ describe('lista de ventas nueva', () => {
   it('tocar un borrador pregunta si sigue como pedido o presupuesto y lo abre en la venta nueva', async () => {
     const alerta = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, botones) => botones?.find((b) => b.text === 'Como pedido')?.onPress?.())
     pantalla()
-    await userEvent.press(screen.getByRole('tab', { name: 'Borradores' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Borradores' }))
     await userEvent.press(await screen.findByRole('button', { name: /Almacén Luis/ }))
     expect(alerta).toHaveBeenCalledWith('Retomar borrador', 'Almacén Luis', expect.any(Array))
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva?borrador=b1&tipo=Pedido')
@@ -193,6 +194,15 @@ describe('lista de ventas nueva: total del filtro (GET /Ventas/resumen)', () => 
   /** Deja correr las respuestas ya resueltas (react-query avisa en un timeout). */
   const procesar = () => act(() => new Promise((r) => setTimeout(r, 50)))
 
+  it('la tarjeta de totales dice lo vendido sin anuladas y cuántas esperan autorización', async () => {
+    conResumen(servidorNuevo)
+    pantalla()
+    const tarjeta = await screen.findByTestId('totales-lista')
+    expect(within(tarjeta).getByText('Vendido · sin anuladas')).toBeTruthy()
+    expect(within(tarjeta).getByText(formatImporte(6860919))).toBeTruthy()
+    expect(within(tarjeta).getByText('1 por autorizar')).toBeTruthy()
+  })
+
   it('en Pedidos suma el importe del servidor, pedido con los mismos filtros que la lista', async () => {
     conResumen(servidorNuevo)
     pantalla()
@@ -214,7 +224,7 @@ describe('lista de ventas nueva: total del filtro (GET /Ventas/resumen)', () => 
     expect(await screen.findByText('Mostrando 2 de 61')).toBeTruthy()
     await userEvent.press(screen.getByRole('radio', { name: 'Todos' }))
     await screen.findByText('Mostrando 2 de 61 · $ 6.860.919,00')
-    await userEvent.press(screen.getByRole('tab', { name: 'Presupuestos' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Presupuestos' }))
     await waitFor(() => expect(ultimoResumen().get('tipoOperacion')).toBe('1'))
     expect(await screen.findByText('Mostrando 2 de 61')).toBeTruthy()
     expect(screen.queryByText(/6\.860\.919/)).toBeNull()
@@ -224,7 +234,7 @@ describe('lista de ventas nueva: total del filtro (GET /Ventas/resumen)', () => 
     conResumen({ ...servidorNuevo, totalPresupuestado: 1250000 })
     pantalla()
     await screen.findByText('Mostrando 2 de 61 · $ 6.860.919,00')
-    await userEvent.press(screen.getByRole('tab', { name: 'Presupuestos' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Presupuestos' }))
     expect(await screen.findByText('Mostrando 2 de 61 · $ 1.250.000,00')).toBeTruthy()
     await userEvent.press(screen.getByRole('radio', { name: 'Anulado' }))
     expect(await screen.findByText('Mostrando 2 de 61')).toBeTruthy()
@@ -269,7 +279,7 @@ describe('lista de ventas nueva: borradores por dirección y total (forward-syst
   async function conBorradores(items: unknown[]) {
     mockGet.mockImplementation((url: string) => Promise.resolve(url.includes('borradores/mios') ? items : pagina([], 0)))
     pantalla()
-    await userEvent.press(screen.getByRole('tab', { name: 'Borradores' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Borradores' }))
   }
 
   it('servidor nuevo: la dirección identifica al cliente, la razón social va debajo y se ve el total', async () => {
@@ -321,7 +331,7 @@ describe('lista de ventas nueva: el borrador recuerda si era pedido o presupuest
       ? [{ id: 'b1', version: 1, clienteId: 'c', clienteNombre: 'Almacén Luis', depositoId: 'd', fechaModificacion: ahora.toISOString(), cantidadLineas: 3, tipoOperacion: tipo }]
       : pagina([], 0)))
     pantalla()
-    await userEvent.press(screen.getByRole('tab', { name: 'Borradores' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Borradores' }))
     await userEvent.press(await screen.findByRole('button', { name: /Almacén Luis/ }))
     expect(alerta).not.toHaveBeenCalled()
     expect(mockPush).toHaveBeenCalledWith(`/(tabs)/ventas/nueva?borrador=b1&tipo=${tipo}`)

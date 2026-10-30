@@ -18,13 +18,13 @@ interface Props {
   onAbrir?: (v: VentaEnCola) => void
 }
 
-const EN_EL_TELEFONO: ChipInfo = { estado: 'porAutorizar', label: 'En el teléfono' }
-const PARA_REVISAR: ChipInfo = { estado: 'anulado', label: 'Para revisar' }
+const EN_EL_TELEFONO: ChipInfo = { estado: 'pendiente', label: 'En cola' }
+const PARA_REVISAR: ChipInfo = { estado: 'porAutorizar', label: 'Revisar' }
 const EN_BORRADORES: ChipInfo = { estado: 'pendiente', label: 'En Borradores' }
 const PIE = 'Si el precio cambió al enviarse, la venta queda en Borradores para que la revises.'
 
 export function avisoSinSenal(horaCatalogo: string | null): string {
-  const base = 'Podés seguir vendiendo. Las ventas quedan guardadas en el teléfono y se mandan solas cuando vuelva la señal.'
+  const base = 'Sin señal. Podés seguir vendiendo: las ventas quedan en el teléfono y se mandan solas cuando vuelva la conexión.'
   return horaCatalogo ? `${base} Precios y stock de las ${horaCatalogo}.` : base
 }
 
@@ -57,7 +57,7 @@ export function VentasSinSenalLista({ items, sinSenal, horaCatalogo, onAbrir }: 
 
   return (
     <View style={{ gap: space[3] }}>
-      {sinSenal && <Notice tone="advertencia">{avisoSinSenal(horaCatalogo)}</Notice>}
+      {sinSenal && <Notice tone="info">{avisoSinSenal(horaCatalogo)}</Notice>}
 
       {items.length === 0 && (
         <Text style={[typeScale.secundario, { color: c.textSecondary, textAlign: 'center' }]}>No hay ventas guardadas en el teléfono.</Text>

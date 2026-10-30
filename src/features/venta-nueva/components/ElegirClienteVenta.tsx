@@ -4,7 +4,8 @@ import { Plus, Search } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import { fetchSocio, sociosKeys, useClientesRecientes } from '@/libs/api-client/socios'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Notice, StatusChip } from '@/core/ui/fw'
+import { Notice, StatusChip, formatImporte } from '@/core/ui/fw'
+import { partesArgentina, parseDateSafe } from '@/src/utils/date'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { FiltrosCartera, SIN_FILTROS, type FiltrosDeCartera } from '@/features/clientes/components/FiltrosCartera'
@@ -17,9 +18,19 @@ interface Props {
   onNuevoCliente: () => void
   /** Tablet: el cliente que ya está abierto en el panel de la derecha. */
   seleccionadoId?: string
+  /** El último pedido del cliente elegido: su fila lo dice ("Último pedido 24/10 · $ 161.200,00"). */
+  ultimoPedido?: { fecha: string; total: number } | null
 }
 
 class ClienteNoDisponible extends Error {}
+
+/** "Último pedido 24/10 · $ 161.200,00": el día es el argentino (X9). */
+function textoUltimoPedido(u: { fecha: string; total: number }): string {
+  const d = parseDateSafe(u.fecha)
+  const f = d ? partesArgentina(d.getTime()) : null
+  const dia = f ? `${String(f.dia).padStart(2, '0')}/${String(f.mes + 1).padStart(2, '0')}` : null
+  return ['Último pedido', dia].filter(Boolean).join(' ') + ` · ${formatImporte(u.total)}`
+}
 
 /**
  * V2 "¿A quién le vendés?" (CalleCliente / TabCalleCliente): búsqueda en el servidor sobre la cartera del vendedor,
@@ -30,7 +41,7 @@ class ClienteNoDisponible extends Error {}
  * La verificación de un reciente es la de `SeleccionarClienteSheet`, que queda sin uso en la app cuando se
  * borre la venta vieja (T3): ahí se borra la hoja y esta copia es la única.
  */
-export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId }: Props) {
+export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, ultimoPedido }: Props) {
   const c = useColors()
   const usuarioId = useAuthStore((s) => s.user?.id)
   const [busqueda, setBusqueda] = useState('')
@@ -126,7 +137,13 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId }:
                 </View>
               </>
             ) : null}
-            {titulo(buscando ? 'Resultados' : 'Tu cartera')}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              {titulo(buscando ? 'Resultados' : 'Tu cartera')}
+              <Pressable accessibilityRole="button" accessibilityLabel="Nuevo cliente" onPress={onNuevoCliente} style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: space[1], justifyContent: 'center' }}>
+                <Plus size={18} color={c.brandInk} />
+                <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Nuevo cliente</Text>
+              </Pressable>
+            </View>
           </View>
         }
         renderItem={({ item }) => {
@@ -145,6 +162,7 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId }:
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{direccion}</Text>
                 {nombre ? <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.textSecondary }}>{nombre}</Text> : null}
+                {sel && ultimoPedido ? <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.brandInk }}>{textoUltimoPedido(ultimoPedido)}</Text> : null}
               </View>
               {vencida ? <StatusChip estado="anulado" label="Deuda vencida" /> : null}
             </Pressable>
@@ -158,15 +176,6 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId }:
           )
         }
       />
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Nuevo cliente"
-        onPress={onNuevoCliente}
-        style={{ minHeight: 48, margin: space[4], flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border }}
-      >
-        <Plus size={20} color={c.brandInk} />
-        <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Nuevo cliente</Text>
-      </Pressable>
     </View>
   )
 }

@@ -200,7 +200,7 @@ describe('Cantidad y oferta: descuento y precio con descuento', () => {
     conUsuario(10, [VER_STOCK])
     abrir()
     escribir('Descuento (%)', '12')
-    expect(screen.getByText('Supera tu tope de 10 %: el pedido queda por autorizar.')).toBeTruthy()
+    expect(screen.getByText('Tu tope de descuento es 10 %. Con 12 % la venta va a necesitar autorización.')).toBeTruthy()
     expect(listo()).toBeEnabled()
   })
 

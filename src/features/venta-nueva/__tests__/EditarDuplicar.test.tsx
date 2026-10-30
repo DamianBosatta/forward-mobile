@@ -134,8 +134,7 @@ describe('editar y duplicar (PR 2.9b)', () => {
       return Promise.resolve(undefined)
     })
     abrir({ modo: 'editar', ventaId: 'v9' })
-    await userEvent.press(await screen.findByRole('button', { name: 'Datos de la entrega' }))
-    expect(screen.getByText('Sin fecha: elegí el día de entrega.')).toBeTruthy()
+    expect(await screen.findByText('Sin fecha: elegí el día de entrega.')).toBeTruthy()
     const dias = screen.getAllByRole('radio', { name: /^(dom|lun|mar|mié|jue|vie|sáb) \d+/ })
     expect(dias.length).toBeGreaterThan(0)
     expect(dias.some((r) => r.props.accessibilityState?.selected)).toBe(false)
@@ -201,7 +200,7 @@ describe('editar, retomar y duplicar usan la revisión nueva (S9)', () => {
     abrir({ modo: 'editar', ventaId: 'v9' })
     expect(await screen.findByText('Stock confirmado ahora')).toBeTruthy()
     expect(screen.queryByText(/Quedan 5, pediste 12/)).toBeNull()
-    expect(screen.queryByText('Este pedido va a quedar por autorizar')).toBeNull()
+    expect(screen.queryByText('Esta venta necesita autorización')).toBeNull()
   })
 
   it('editar sí avisa si pide más que lo disponible más lo que la venta ya tenía', async () => {

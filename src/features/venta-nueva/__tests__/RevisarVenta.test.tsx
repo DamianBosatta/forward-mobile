@@ -199,4 +199,21 @@ describe('RevisarVenta (S5, S6, S7)', () => {
       expect(screen.queryByRole('button', { name: /Elegir fragancias de Rollo/ })).toBeNull()
     })
   })
+
+  it('abre con el aviso de autorización arriba, la sección Productos con Editar y los descuentos de línea', async () => {
+    const alEditarProductos = jest.fn()
+    revisar({ autorizacion: ['un descuento supera tu tope', 'el cliente tiene deuda de más de 30 días'], onEditarProductos: alEditarProductos })
+    expect(screen.getByText('Esta venta necesita autorización')).toBeTruthy()
+    expect(screen.getByText(/Un descuento supera tu tope\./)).toBeTruthy()
+    expect(screen.getByText(/Podés confirmarla igual: queda en Por autorizar\./)).toBeTruthy()
+    expect(screen.getByText('Productos')).toBeTruthy()
+    expect(screen.getByText('Descuentos de línea')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Editar productos' }))
+    expect(alEditarProductos).toHaveBeenCalledTimes(1)
+  })
+
+  it('sin motivos de autorización no hay aviso', () => {
+    revisar()
+    expect(screen.queryByText('Esta venta necesita autorización')).toBeNull()
+  })
 })

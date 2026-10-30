@@ -1,5 +1,5 @@
 import React from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Field, Notice, Segmented, type SegmentedOption } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
@@ -11,14 +11,14 @@ import { TiraDeDias } from './TiraDeDias'
 
 const ENTREGAS: SegmentedOption<'1' | '2' | '3'>[] = [
   { value: '1', label: 'Logística' },
-  { value: '2', label: 'Retiro' },
   { value: '3', label: 'Expreso' },
+  { value: '2', label: 'Retiro en el local' },
 ]
 
-interface Props { clienteId: string; rotuloCliente: string; cab: CabeceraVentaEstado }
+interface Props { clienteId: string; cab: CabeceraVentaEstado }
 
-/** Pestaña Cabecera (lámina Cabecera): cliente, entrega, fecha, flete, observaciones y cesión de comisión. */
-export function CabeceraVenta({ clienteId, rotuloCliente, cab }: Props) {
+/** Entrega de la revisión (mockup ventas-nueva-3-revisar), en línea: cliente, fecha, logística, flete, observaciones y cesión de comisión. */
+export function CabeceraVenta({ clienteId, cab }: Props) {
   const c = useColors()
   const socio = useSocio(clienteId)
   const { metodoEntrega, fecha } = cab.cabecera
@@ -29,19 +29,12 @@ export function CabeceraVenta({ clienteId, rotuloCliente, cab }: Props) {
   const titulo = (t: string) => <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{t}</Text>
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
   return (
-    <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }}>
+    <View style={{ gap: space[4] }}>
       <View style={{ gap: space[1], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
         {titulo('Cliente')}
-        <Text style={{ ...typeScale.cuerpo, color: c.text }}>{rotuloCliente}</Text>
         {/* Solo lectura: la condición de pago se cambia con permiso de autorizar ventas, no acá. */}
         <Text style={secundario}>{socio.data ? textoCondicionPago(socio.data.condicionPago) : 'Condición de pago…'}</Text>
         {disponible !== null ? <Fila etiqueta="Crédito disponible" valor={textoDisponible(disponible)} alerta={disponible < 0} /> : null}
-      </View>
-      <View style={{ gap: space[2] }}>
-        {titulo('Entrega')}
-        <Segmented accessibilityLabel="Entrega" options={ENTREGAS} value={String(metodoEntrega) as '1'}
-          onChange={(v) => cab.setMetodoEntrega(Number(v) as MetodoEntregaValue)} />
-        {metodoEntrega === METODO_ENTREGA.RetiroEnLocal ? <Text style={secundario}>Retira en el local: sin flete.</Text> : null}
       </View>
       {metodoEntrega !== METODO_ENTREGA.RetiroEnLocal ? (
         <View style={{ gap: space[2] }}>
@@ -56,6 +49,12 @@ export function CabeceraVenta({ clienteId, rotuloCliente, cab }: Props) {
           <TiraDeDias cab={cab} />
         </View>
       ) : null}
+      <View style={{ gap: space[2] }}>
+        {titulo('Logística')}
+        <Segmented accessibilityLabel="Entrega" options={ENTREGAS} value={String(metodoEntrega) as '1'}
+          onChange={(v) => cab.setMetodoEntrega(Number(v) as MetodoEntregaValue)} />
+        {metodoEntrega === METODO_ENTREGA.RetiroEnLocal ? <Text style={secundario}>Retira en el local: sin flete.</Text> : null}
+      </View>
       {metodoEntrega === METODO_ENTREGA.Logistica ? (
         <Field label="Flete ($)" keyboardType="decimal-pad" alignRight value={cab.fleteTexto} onChangeText={cab.setFleteTexto}
           placeholder="0" error={cab.fleteInvalido ? 'Ingresá un importe válido.' : undefined} />
@@ -67,6 +66,6 @@ export function CabeceraVenta({ clienteId, rotuloCliente, cab }: Props) {
           onChangeText={cab.setCesionTexto} error={cab.cesionError ?? undefined}
           help={`Opcional · el pedido queda por autorizar. Tu comisión es ${cab.comision} %.`} />
       ) : null}
-    </ScrollView>
+    </View>
   )
 }

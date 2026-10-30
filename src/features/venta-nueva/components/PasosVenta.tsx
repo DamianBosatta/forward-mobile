@@ -1,5 +1,6 @@
 import React from 'react'
 import { Text, View } from 'react-native'
+import { Check } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 
 const PASOS = ['Cliente', 'Productos', 'Confirmar'] as const
@@ -10,26 +11,35 @@ interface Props {
 }
 
 /**
- * Barra de pasos de la venta nueva (láminas Cliente, Catálogo y Carrito): "1 · Cliente / 2 · Productos / 3 · Confirmar".
- * Va debajo de la barra superior en las tres pantallas; el paso actual se marca con el color de la marca.
+ * Barra de pasos de la venta nueva (mockups ventas-nueva-1/2/3): un punto por paso con su número, tilde en los
+ * hechos y una barra entre punto y punto. Va debajo de la barra superior en las tres pantallas; el paso actual
+ * va en color de acción. El color nunca va solo: el hecho lleva tilde y el actual, número.
  */
 export function PasosVenta({ paso }: Props) {
   const c = useColors()
   return (
-    <View accessibilityRole="list" accessibilityLabel="Pasos" style={{ flexDirection: 'row', gap: space[2], paddingHorizontal: space[4], paddingTop: space[1], paddingBottom: space[3], backgroundColor: c.topBar }}>
+    <View accessibilityRole="list" accessibilityLabel="Pasos" style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], paddingTop: space[1], paddingBottom: space[3], backgroundColor: c.topBar }}>
       {PASOS.map((nombre, i) => {
-        const actual = i + 1 === paso
+        const n = i + 1
+        const actual = n === paso
+        const hecho = n < paso
         return (
-          <View
-            key={nombre}
-            accessible
-            accessibilityLabel={`Paso ${i + 1} de 3: ${nombre}`}
-            accessibilityState={{ selected: actual }}
-            style={{ flex: 1, gap: space[1] }}
-          >
-            <View style={{ height: 4, borderRadius: 2, backgroundColor: actual ? c.brand : c.border }} />
-            <Text style={{ ...typeScale.etiqueta, color: actual ? c.brand : c.onTopBar, fontWeight: actual ? '600' : '400' }}>{`${i + 1} · ${nombre}`}</Text>
-          </View>
+          <React.Fragment key={nombre}>
+            {i > 0 ? <View style={{ flex: 1, height: 2, borderRadius: 1, backgroundColor: n <= paso ? c.action : c.topBarBorder }} /> : null}
+            <View
+              accessible
+              accessibilityLabel={`Paso ${n} de 3: ${nombre}`}
+              accessibilityState={{ selected: actual }}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}
+            >
+              <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: actual || hecho ? c.action : 'transparent', borderWidth: actual || hecho ? 0 : 1, borderColor: c.onTopBar }}>
+                {hecho ? <Check size={14} color={c.onAction} strokeWidth={3} /> : (
+                  <Text style={{ ...typeScale.etiqueta, color: actual ? c.onAction : c.onTopBar, fontWeight: '600' }}>{n}</Text>
+                )}
+              </View>
+              <Text style={{ ...typeScale.etiqueta, color: actual ? c.onTopBarStrong : c.onTopBar, fontWeight: actual ? '600' : '400' }}>{nombre}</Text>
+            </View>
+          </React.Fragment>
         )
       })}
     </View>

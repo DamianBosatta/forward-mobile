@@ -2,6 +2,7 @@ import React from 'react'
 import { Alert, Linking } from 'react-native'
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { formatImporte } from '@/core/ui/fw'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { DetalleVenta } from '../../components/DetalleVenta'
 
@@ -73,12 +74,39 @@ describe('R1 · detalle del pedido (ResVentaDetalle, TV7)', () => {
     expect(screen.getByLabelText('Estado del pedido')).toBeTruthy()
     expect(screen.getByText('Preparando')).toBeTruthy()
     expect(screen.getByText('Entrega')).toBeTruthy()
-    expect(screen.getByText('Factura')).toBeTruthy()
+    expect(screen.getByText('Con factura')).toBeTruthy()
+    expect(screen.getByRole('header', { name: 'Productos' })).toBeTruthy()
+    expect(screen.getByRole('header', { name: 'Entrega y factura' })).toBeTruthy()
     expect(screen.getByText('Pala c/Cabo Fija LP')).toBeTruthy()
     expect(screen.getByText('12 × $ 2.496,00')).toBeTruthy()
     expect(screen.getByText('$ 29.952,00')).toBeTruthy()
     expect(screen.getByText('Flete')).toBeTruthy()
     expect(screen.getByLabelText(/^Total: /)).toBeTruthy()
+  })
+
+  it('sin cobros no hay tarjeta "Cobro"', async () => {
+    pantalla()
+    await screen.findByText('Pedido A00419')
+    expect(screen.queryByRole('header', { name: 'Cobro' })).toBeNull()
+  })
+
+  it('con cobros muestra la tarjeta "Cobro": fecha y medio, importe y saldo; las notas de crédito no son cobros', async () => {
+    const pagos = {
+      ventaId: 'v9', total: 88738.89, montoPagado: 40000, saldoPendiente: 48738.89, estadoPago: 'Parcial',
+      imputaciones: [
+        { numeroPago: 'P-1', medioPago: 'Transferencia', monto: 40000, fechaImputacion: '2026-10-30T15:00:00Z', origen: 'AutomaticaFifo' },
+        { numeroPago: 'NC-1', medioPago: 'NotaCredito', monto: 500, fechaImputacion: '2026-10-30T15:00:00Z', origen: 'NotaCredito' },
+      ],
+    }
+    mockGet.mockImplementation((url: string) => Promise.resolve(
+      url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? socio : url === '/api/v1/Ventas/v9/pagos' ? pagos : undefined))
+    pantalla()
+    expect(await screen.findByRole('header', { name: 'Cobro' })).toBeTruthy()
+    expect(screen.getByText('Cobrado 30/10 · Transferencia')).toBeTruthy()
+    expect(screen.getByText(formatImporte(40000))).toBeTruthy()
+    expect(screen.queryByText(/NotaCredito/)).toBeNull()
+    expect(screen.getByText('Saldo')).toBeTruthy()
+    expect(screen.getByText(formatImporte(48738.89))).toBeTruthy()
   })
 
   it('un pedido que ya se prepara no se edita y dice por qué; anular sigue disponible', async () => {
