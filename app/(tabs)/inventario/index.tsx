@@ -20,7 +20,7 @@ import { EscanerCodigo } from '@/features/catalogo/components/EscanerCodigo'
 import { SelectorLineaFamilia } from '@/features/catalogo/components/SelectorLineaFamilia'
 import { BotonCatalogoPdf } from '@/features/catalogo/components/BotonCatalogoPdf'
 import { DIAS_DE_NOVEDADES, filtrarPorStock } from '@/features/catalogo/lib/presentacion'
-import { CampoBusqueda } from '@/features/catalogo/components/CampoBusqueda'
+import { BusquedaBajoBarra } from '@/features/inventario/components/BusquedaBajoBarra'
 
 /** Ancho desde el que la grilla y la ficha van lado a lado (plan §8, lámina TabCatalogoConsulta). */
 const ANCHO_DOS_PANELES = 900
@@ -150,7 +150,7 @@ function CatalogoConsulta() {
               ]),
         ]}
       />
-      <CampoBusqueda value={cat.busqueda} onChangeText={(texto) => { cancelarEscaneo(); cat.setBusqueda(texto) }} />
+      <BusquedaBajoBarra value={cat.busqueda} onChangeText={(texto) => { cancelarEscaneo(); cat.setBusqueda(texto) }} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }}>
         <FiltroChip label="Con stock" activo={soloConStock} onPress={() => setSoloConStock((v) => !v)} />
         <FiltroChip label="Con oferta" activo={cat.soloConOferta} onPress={() => cat.setSoloConOferta((v) => !v)} />
