@@ -1,7 +1,7 @@
 import React from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import type { LucideIcon } from 'lucide-react-native'
-import { radii, space, typeScale, useColors, type ForwardColors } from '@/libs/theme'
+import { radii, space, typeScale, useColors, useIsDark, type ForwardColors } from '@/libs/theme'
 
 export type ButtonVariant = 'primario' | 'secundario' | 'peligro'
 /** `xl` es la escala de la consola del chofer: 72 de alto, texto 19 y borde de 2 px (se lee al sol, con una mano). */
@@ -40,6 +40,7 @@ export function Button({
   testID,
 }: ButtonProps) {
   const colors = useColors()
+  const oscuro = useIsDark()
   const inactivo = disabled || loading
   // Cargando conserva el color de la variante; solo deshabilitado se apaga.
   const xl = size === 'xl'
@@ -48,8 +49,8 @@ export function Button({
   return (
     <Pressable
       // Con `android_ripple`, Android conserva el fondo nativo viejo cuando el tema cambia en vivo: el texto se
-      // repinta y el fondo no. Remontar cuando cambia el color lo corrige.
-      key={p.fondo}
+      // repinta y el fondo no. Remontar cuando cambia el tema lo corrige.
+      key={oscuro ? 'oscuro' : 'claro'}
       testID={testID}
       onPress={inactivo ? undefined : onPress}
       disabled={inactivo}
