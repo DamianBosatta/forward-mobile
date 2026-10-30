@@ -28,3 +28,19 @@ export const RAZON_SOCIAL_CORTA = 'La razón social necesita al menos 3 caracter
 export const CUIT_INVALIDO = 'El CUIT no es válido: revisá los números.'
 export const PLAZO_FALTANTE = 'Indicá los días de la condición de pago.'
 export const DIA_DEL_MES_FALTANTE = 'Indicá el día del mes de la condición de pago.'
+
+/** Pie de la lista: cuántos proveedores se cargaron de cuántos hay. */
+export function textoCantidadProveedores(cantidad: number, total: number): string {
+  return `${cantidad} de ${total} proveedores`
+}
+
+export interface TramoDeEntrega { dias: string; horario: string }
+
+/**
+ * Horarios de entrega del proveedor por tramo (lámina proveedores-ficha, D10). Hoy el servidor no los manda
+ * (no se sabe si el campo `horario` del socio cubre varios tramos): la ficha dice "A confirmar".
+ * TODO API: leerlos del socio cuando el endpoint los traiga por tramo y devolver `confirmados: true`.
+ */
+export function horariosDeEntrega(_proveedor: unknown): { tramos: TramoDeEntrega[]; confirmados: boolean } {
+  return { tramos: [], confirmados: false }
+}

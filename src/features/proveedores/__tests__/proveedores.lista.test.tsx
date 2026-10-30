@@ -25,7 +25,7 @@ const proveedor = (extra = {}) =>
 beforeEach(() => {
   jest.clearAllMocks()
   mockAncho.mockReturnValue(390)
-  conPermisos([{ module: 'MOD_PROVEEDORES', canRead: true, canCreate: true }])
+  conPermisos([{ module: 'MOD_PROVEEDORES', canRead: true, canCreate: true }, { module: 'MOD_CC', canRead: true }])
   get.mockResolvedValue(pagina([proveedor()], 48))
 })
 
@@ -33,7 +33,7 @@ it('pide al servidor solo proveedores activos (tipo=2), sin agenda, y muestra "N
   renderConQuery(<ProveedoresScreen />)
 
   expect(await screen.findByText('Insumos del Sur SA')).toBeTruthy()
-  expect(screen.getByText('1 de 48')).toBeTruthy()
+  expect(screen.getByText('1 de 48 proveedores')).toBeTruthy()
   const url = urlsDeLista()[0]
   expect(url).toContain('tipo=2')
   expect(url).toContain('activo=true')
@@ -46,6 +46,14 @@ it('la tarjeta dice el CUIT y cuánto se le debe, si el servidor deja ver el sal
   expect(await screen.findByText('CUIT 30-70999888-5')).toBeTruthy()
   expect(screen.getByText('Le debemos')).toBeTruthy()
   expect(screen.getByText(/710\.430/)).toBeTruthy()
+})
+
+it('sin MOD_CC:read la fila no muestra el saldo aunque el servidor lo mande', async () => {
+  conPermisos([{ module: 'MOD_PROVEEDORES', canRead: true }])
+  renderConQuery(<ProveedoresScreen />)
+
+  await screen.findByText('Insumos del Sur SA')
+  expect(screen.queryByText('Le debemos')).toBeNull()
 })
 
 it('si el servidor no deja ver el saldo, no se muestra', async () => {

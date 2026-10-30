@@ -1,8 +1,8 @@
 import React from 'react'
-import { Linking, Pressable, Text, View } from 'react-native'
+import { Linking, Text, View } from 'react-native'
 import { Lock, Phone } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { StatusChip, formatImporte } from '@/core/ui/fw'
+import { FilaDeSocio, StatusChip, formatImporte } from '@/core/ui/fw'
 import type { SocioListDto } from '@/libs/api-client/types'
 import { urlLlamar } from '../lib/contacto'
 import { direccionDeEntrega, nombreDelCliente } from '../lib/cliente'
@@ -41,62 +41,33 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
   const linea2 = [nombre, localidad].filter(Boolean).join(' · ')
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={[direccion, vencida && 'deuda vencida', nombre, localidad, saldo && `saldo ${saldo}`, !verSaldo && TAG_CARTERA_AJENA].filter(Boolean).join(', ')}
-      accessibilityState={{ selected: seleccionado }}
+    <FilaDeSocio
+      titulo={direccion}
+      linea2={linea2}
+      seleccionado={seleccionado}
       onPress={onPress}
-      android_ripple={{ color: c.surface2 }}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: space[3],
-        minHeight: 64,
-        paddingVertical: space[3],
-        paddingLeft: space[4],
-        paddingRight: space[2],
-        backgroundColor: seleccionado ? c.brandSoft : c.surface,
-        borderBottomWidth: 1,
-        borderBottomColor: c.border,
-      }}
-    >
-      <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
-        <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space[2] }}>
-          <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text, flexShrink: 1 }}>
-            {direccion}
-          </Text>
-          {saldo && !sinDeuda ? (
-            <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{saldo}</Text>
-          ) : sinDeuda ? (
-            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Sin deuda</Text>
-          ) : (
-            <Lock size={16} color={c.textSecondary} accessibilityLabel="Saldo reservado" />
-          )}
-        </View>
-        {linea2 ? (
-          <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.textSecondary }}>
-            {linea2}
-          </Text>
-        ) : null}
-        {vencido ? <StatusChip estado="anulado" label={`Vencido ${vencido}`} /> : null}
-        {!verSaldo ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space[1], backgroundColor: c.surface2, borderRadius: radii.pastilla, paddingVertical: space[1], paddingHorizontal: 10 }}>
-            <Lock size={12} color={c.textSecondary} />
-            <Text style={[typeScale.etiqueta, { color: c.textSecondary }]}>{TAG_CARTERA_AJENA}</Text>
-          </View>
-        ) : null}
-      </View>
-      {telefono ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Llamar"
-          accessibilityHint={direccion}
-          onPress={() => Linking.openURL(urlLlamar(telefono))}
-          style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Phone size={20} color={c.brandInk} />
-        </Pressable>
-      ) : null}
-    </Pressable>
+      accessibilityLabel={[direccion, vencida && 'deuda vencida', nombre, localidad, saldo && `saldo ${saldo}`, !verSaldo && TAG_CARTERA_AJENA].filter(Boolean).join(', ')}
+      derecha={
+        saldo && !sinDeuda ? (
+          <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{saldo}</Text>
+        ) : sinDeuda ? (
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Sin deuda</Text>
+        ) : (
+          <Lock size={16} color={c.textSecondary} accessibilityLabel="Saldo reservado" />
+        )
+      }
+      extra={
+        <>
+          {vencido ? <StatusChip estado="anulado" label={`Vencido ${vencido}`} /> : null}
+          {!verSaldo ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space[1], backgroundColor: c.surface2, borderRadius: radii.pastilla, paddingVertical: space[1], paddingHorizontal: 10 }}>
+              <Lock size={12} color={c.textSecondary} />
+              <Text style={[typeScale.etiqueta, { color: c.textSecondary }]}>{TAG_CARTERA_AJENA}</Text>
+            </View>
+          ) : null}
+        </>
+      }
+      accion={telefono ? { icono: Phone, label: 'Llamar', hint: direccion, onPress: () => Linking.openURL(urlLlamar(telefono)) } : undefined}
+    />
   )
 }
