@@ -146,3 +146,16 @@ describe('Nueva compra desde el proveedor (ResFichaProveedor)', () => {
     expect(screen.queryByRole('button', { name: 'Nueva compra' })).toBeNull()
   })
 })
+
+describe('ficha en teléfono con barra (proveedores-ficha)', () => {
+  it('muestra las condiciones de compra con los horarios "A confirmar" y "Nueva compra" en la barra fija', async () => {
+    conPermisos([...PERMISOS, { module: 'MOD_COMPRAS', canRead: true, canCreate: true }])
+    renderConQuery(<FichaProveedor id="p1" conBarra />)
+
+    expect(await screen.findByText('Condiciones de compra')).toBeTruthy()
+    expect(screen.getByText('30 días de factura')).toBeTruthy()
+    expect(screen.getByText('A confirmar')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Nueva compra' }))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/compras/nueva', params: { proveedor: 'p1' } })
+  })
+})

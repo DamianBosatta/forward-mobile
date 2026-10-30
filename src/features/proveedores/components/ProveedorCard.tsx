@@ -1,7 +1,9 @@
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
-import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
-import { Button, StatusChip, formatImporte } from '@/core/ui/fw'
+import { Text, View } from 'react-native'
+import { ShoppingCart } from 'lucide-react-native'
+import { importe, space, typeScale, useColors } from '@/libs/theme'
+import { FilaDeSocio, StatusChip, formatImporte } from '@/core/ui/fw'
+import { usePermissions } from '@/core/auth/RequirePermission'
 import type { SocioListDto } from '@/libs/api-client/types'
 import { saldoDelProveedor } from '../lib/proveedor'
 
@@ -10,54 +12,42 @@ interface ProveedorCardProps {
   onPress: () => void
   /** En tablet, el proveedor abierto en el panel de la derecha. */
   seleccionado?: boolean
-  /** Si viene, la tarjeta ofrece "Nueva compra" (el padre decide con el permiso de MOD_COMPRAS). */
+  /** Si viene, la fila ofrece "Nueva compra" (el padre decide con el permiso de MOD_COMPRAS). */
   onNuevaCompra?: () => void
 }
 
 /**
- * Tarjeta de proveedor (lámina Proveedores): razón social como título, CUIT debajo y, si el
- * servidor deja ver el saldo, cuánto se le debe. "Faltan datos" cuando el servidor lo marca para completar.
+ * Fila de proveedor (lámina proveedores, deltas contra clientes): razón social en la línea 1 con el saldo a la
+ * derecha ("Le debemos $ X", "A favor $ X" o "Al día"), CUIT en la línea 2, chip "Faltan datos" si el servidor lo
+ * marca y "Nueva compra" como acción rápida. El saldo solo con `puedeVerSaldo` y MOD_CC:read.
  */
 export function ProveedorCard({ proveedor, onPress, seleccionado = false, onNuevaCompra }: ProveedorCardProps) {
   const c = useColors()
-  const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
+  const { canRead } = usePermissions()
   const cuit = proveedor.cuit?.trim() ? `CUIT ${proveedor.cuit.trim()}` : 'Sin CUIT cargado'
-  const saldo = proveedor.puedeVerSaldo ? saldoDelProveedor(proveedor.saldoAmount) : null
+  const saldo = proveedor.puedeVerSaldo && canRead('MOD_CC') ? saldoDelProveedor(proveedor.saldoAmount) : null
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={[proveedor.razonSocial, proveedor.requiereCompletar && 'faltan datos', saldo && `${saldo.etiqueta} ${formatImporte(saldo.monto)}`].filter(Boolean).join(', ')}
-      accessibilityState={{ selected: seleccionado }}
+    <FilaDeSocio
+      titulo={proveedor.razonSocial}
+      linea2={cuit}
+      seleccionado={seleccionado}
       onPress={onPress}
-      android_ripple={{ color: c.surface2 }}
-      style={{
-          gap: space[1],
-          padding: space[4],
-          borderRadius: radii.tarjeta,
-          backgroundColor: seleccionado ? c.brandSoft : c.surface,
-          borderWidth: seleccionado ? 2 : 0,
-          borderColor: c.brand,
-          ...sombra,
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-        <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text, flexShrink: 1 }}>{proveedor.razonSocial}</Text>
-        {proveedor.requiereCompletar ? <StatusChip estado="pendiente" label="Faltan datos" /> : null}
-      </View>
-      <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.textSecondary }}>{cuit}</Text>
-      {saldo ? (
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{saldo.etiqueta}</Text>
-          <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(saldo.monto)}</Text>
-        </View>
-      ) : null}
-      {onNuevaCompra ? (
-        <View style={{ flexDirection: 'row', gap: space[2], marginTop: space[1] }}>
-          <View style={{ flex: 1 }}><Button label="Nueva compra" onPress={onNuevaCompra} /></View>
-          <View style={{ flex: 1 }}><Button label="Ver ficha" variant="secundario" onPress={onPress} /></View>
-        </View>
-      ) : null}
-    </Pressable>
+      accessibilityLabel={[proveedor.razonSocial, proveedor.requiereCompletar && 'faltan datos', saldo && `${saldo.etiqueta} ${formatImporte(saldo.monto)}`].filter(Boolean).join(', ')}
+      derecha={
+        saldo ? (
+          saldo.etiqueta === 'Al día' ? (
+            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{saldo.etiqueta}</Text>
+          ) : (
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space[1] }}>
+              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{saldo.etiqueta}</Text>
+              <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(saldo.monto)}</Text>
+            </View>
+          )
+        ) : undefined
+      }
+      extra={proveedor.requiereCompletar ? <StatusChip estado="pendiente" label="Faltan datos" /> : null}
+      accion={onNuevaCompra ? { icono: ShoppingCart, label: 'Nueva compra', hint: proveedor.razonSocial, onPress: onNuevaCompra } : undefined}
+    />
   )
 }

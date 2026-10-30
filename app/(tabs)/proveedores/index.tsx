@@ -4,20 +4,19 @@ import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Button, Notice, TopBar } from '@/core/ui/fw'
+import { Fab, Notice, TopBar } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useProveedores } from '@/features/proveedores/hooks/useProveedores'
+import { textoCantidadProveedores } from '@/features/proveedores/lib/proveedor'
 import { ProveedorCard } from '@/features/proveedores/components/ProveedorCard'
 import { FichaProveedor } from '@/features/proveedores/components/FichaProveedor'
 
 /** Desde este ancho la lista y la ficha van lado a lado (plan §8). */
 const ANCHO_DOS_PANELES = 900
-
-const textoDestacado = { ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600' as const }
 
 /** Proveedores (láminas Proveedores y Tablet · Proveedores): lista buscable y ficha; alta y edición con los permisos de la web. */
 export default function ProveedoresScreen() {
@@ -40,20 +39,6 @@ export default function ProveedoresScreen() {
 
   const lista = (
     <View style={{ flex: 1 }}>
-      {totalCount !== undefined ? (
-        <View
-          style={{
-            minHeight: 52,
-            justifyContent: 'center',
-            paddingHorizontal: space[4],
-            backgroundColor: c.surface,
-            borderBottomWidth: 1,
-            borderBottomColor: c.border,
-          }}
-        >
-          <Text accessibilityLiveRegion="polite" style={{ ...textoDestacado, color: c.text }}>{`${proveedores.length} de ${totalCount}`}</Text>
-        </View>
-      ) : null}
       {error && !(sinRed && !hayDatos) ? (
         <View style={{ padding: space[4] }}>
           {sinRed ? (
@@ -61,6 +46,13 @@ export default function ProveedoresScreen() {
           ) : (
             <Notice tone="peligro">{mensajeDelServidor(error, 'No se pudo cargar la lista de proveedores.')}</Notice>
           )}
+        </View>
+      ) : null}
+      {totalCount !== undefined ? (
+        <View style={{ paddingHorizontal: space[4], paddingBottom: space[2] }}>
+          <Text accessibilityLiveRegion="polite" style={{ ...typeScale.secundario, color: c.textSecondary }}>
+            {textoCantidadProveedores(proveedores.length, totalCount)}
+          </Text>
         </View>
       ) : null}
       <FlatList
@@ -74,7 +66,7 @@ export default function ProveedoresScreen() {
             onNuevaCompra={canCreate('MOD_COMPRAS') ? () => router.push('/(tabs)/compras/nueva' as never) : undefined}
           />
         )}
-        contentContainerStyle={{ padding: space[4], gap: space[3] }}
+        contentContainerStyle={{ paddingBottom: 88 }}
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.brandInk} />}
@@ -94,9 +86,7 @@ export default function ProveedoresScreen() {
         }
       />
       {canCreate('MOD_PROVEEDORES') ? (
-        <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
-          <Button label="Nuevo proveedor" onPress={() => router.push('/(tabs)/proveedores/nuevo')} />
-        </View>
+        <Fab label="Nuevo proveedor" accessibilityLabel="Nuevo proveedor" onPress={() => router.push('/(tabs)/proveedores/nuevo')} />
       ) : null}
     </View>
   )
@@ -108,7 +98,7 @@ export default function ProveedoresScreen() {
         subtitle="A quién le compramos"
         leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
       />
-      <BuscadorCartera valor={busqueda} onCambio={setBusqueda} etiqueta="Buscar proveedor" placeholder="Nombre o CUIT" />
+      <BuscadorCartera sobre="pantalla" valor={busqueda} onCambio={setBusqueda} etiqueta="Buscar proveedor" placeholder="Nombre o CUIT" />
 
       {dosPaneles ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>
