@@ -42,3 +42,27 @@ describe('Inicio general: accesos rápidos', () => {
     expect(ir.mock.calls.map((c) => c[0])).toEqual(['/(tabs)/ventas/nueva', '/(tabs)/inventario', '/(tabs)/inventario/stock'])
   })
 })
+
+describe('Inicio general: la tarjeta de ventas del día en cada tema', () => {
+  const { StyleSheet } = require('react-native')
+  const { useThemeStore, themeColors } = require('@/libs/theme')
+  afterEach(() => useThemeStore.setState({ mode: 'system' }))
+
+  const estiloHero = () => StyleSheet.flatten(screen.getByTestId('pulso-hero').props.style)
+  const pintar = () =>
+    render(<PulsoDelNegocio ventasDelDia={100} cantidadVentas={2} pedidosPendientes={0} rutasActivas={0} meDeben={null} debo={null} />)
+
+  it('en oscuro usa la superficie con borde, no el fondo de la página', () => {
+    useThemeStore.setState({ mode: 'dark' })
+    pintar()
+    expect(estiloHero().backgroundColor).toBe(themeColors.dark.surface)
+    expect(estiloHero().borderColor).toBe(themeColors.dark.border)
+    expect(estiloHero().backgroundColor).not.toBe(themeColors.dark.bg)
+  })
+
+  it('en claro sigue siendo la tarjeta oscura de la barra', () => {
+    useThemeStore.setState({ mode: 'light' })
+    pintar()
+    expect(estiloHero().backgroundColor).toBe(themeColors.light.topBar)
+  })
+})

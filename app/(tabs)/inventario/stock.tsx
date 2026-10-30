@@ -6,7 +6,7 @@ import { useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { TopBar } from '@/core/ui/fw'
 import { RequirePermission } from '@/core/ui'
-import { CampoBusqueda } from '@/features/catalogo/components/CampoBusqueda'
+import { BusquedaBajoBarra } from '@/features/inventario/components/BusquedaBajoBarra'
 import { StockPorDeposito } from '@/features/inventario/components/StockPorDeposito'
 
 /** Desde acá el stock se ve como tabla (lámina TabStock). */
@@ -28,7 +28,7 @@ export default function StockScreen() {
           subtitle="Solo consulta"
           leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
         />
-        <CampoBusqueda value={busqueda} onChangeText={setBusqueda} />
+        <BusquedaBajoBarra value={busqueda} onChangeText={setBusqueda} />
         <StockPorDeposito busqueda={busqueda} tablet={width >= ANCHO_TABLET} />
       </View>
     </RequirePermission>
