@@ -3,8 +3,7 @@ import { ActivityIndicator, Image, ScrollView, Text, View } from 'react-native'
 import { Package } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, StatusChip, formatImporte } from '@/core/ui/fw'
-import { useProducto, useVariantesProducto } from '@/libs/api-client/productos'
-import { useDisponibilidad } from '@/libs/api-client/stock'
+import { useFichaCatalogo } from '@/libs/api-client/catalogo'
 import { getFullImageUrl } from '@/libs/api-client/media'
 import { useDepositoDeConsulta } from '../hooks/useDepositoDeConsulta'
 import { chipDeStock, textoUnidadDeVenta } from '../lib/presentacion'
@@ -38,33 +37,18 @@ export function FichaProducto({ productoId, onVerStock }: { productoId: string; 
   const c = useColors()
   const [errorFoto, setErrorFoto] = useState<string | null>(null)
 
-  const { data: p, isLoading, isError } = useProducto(productoId)
-  const { data: variantes } = useVariantesProducto(productoId, !!p?.esPadreDeVariantes)
-
-  // El chip usa cantidad 1, igual que la tarjeta: la misma respuesta en todas partes.
-  // Aparte, si se vende por caja, un segundo chequeo con la venta mínima avisa si no alcanza.
+  // The chip answers for one unit, same as the card. The server also tells whether the minimum sale (a box) fits.
   const depositoId = useDepositoDeConsulta()
-  const ventaMinima = p?.ventaMinimaUnidades ?? 1
-  const idsAConsultar = p ? (p.esPadreDeVariantes ? (variantes ?? []).map((v) => v.id) : [p.id]) : []
-  const { data: disponibilidad } = useDisponibilidad(
-    depositoId,
-    idsAConsultar.map((id) => ({ productoId: id, cantidad: 1 })),
-  )
-  const { data: disponibilidadCaja } = useDisponibilidad(
-    depositoId,
-    ventaMinima > 1 ? idsAConsultar.map((id) => ({ productoId: id, cantidad: ventaMinima })) : [],
-  )
-  const hay = (id: string) => disponibilidad?.find((d) => d.productoId === id)?.disponible
+  const { data: p, isLoading, isError } = useFichaCatalogo(productoId, depositoId)
+  const variantes = p?.variantes ?? []
 
   if (isLoading) return <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
   if (isError || !p) return <View style={{ padding: space[4] }}><Notice tone="peligro">No se pudo cargar el producto.</Notice></View>
 
-  const chip = chipDeStock(
-    p.esPadreDeVariantes ? (disponibilidad ? disponibilidad.some((d) => d.disponible) : undefined) : hay(p.id),
-  )
-  const noAlcanzaCaja =
-    ventaMinima > 1 && chip?.estado === 'entregado' && !!disponibilidadCaja && !disponibilidadCaja.some((d) => d.disponible)
-  const foto = getFullImageUrl(p.imageUrl ?? p.imageUrlLinea)
+  const ventaMinima = p.ventaMinimaUnidades
+  const chip = chipDeStock(p.disponible)
+  const noAlcanzaCaja = ventaMinima > 1 && p.disponible && !p.disponibleVentaMinima
+  const foto = getFullImageUrl(p.imageUrl)
   const encabezado = [p.codigoPropio, p.marca, p.categoriaPathCompleto].filter(Boolean).join(' · ')
 
   return (
@@ -104,12 +88,12 @@ export function FichaProducto({ productoId, onVerStock }: { productoId: string; 
       <Notice tone="info">{textoUnidadDeVenta(p.ventaMinimaUnidades)}</Notice>
       {noAlcanzaCaja ? <Notice tone="advertencia">{`No alcanza para la venta mínima (caja de ${ventaMinima})`}</Notice> : null}
 
-      {p.esPadreDeVariantes && variantes ? (
+      {p.esPadreDeVariantes && variantes.length > 0 ? (
         <Seccion titulo={`Fragancias (${variantes.length})`}>
           {variantes.map((v) => {
-            const cv = chipDeStock(hay(v.id))
+            const cv = chipDeStock(v.disponible)
             return (
-              <View key={v.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 44, gap: space[2] }}>
+              <View key={v.productoId} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 44, gap: space[2] }}>
                 <Text style={[typeScale.cuerpo, { color: c.text, flexShrink: 1 }]}>{v.fraganciaNombre ?? v.nombre}</Text>
                 {cv ? <StatusChip estado={cv.estado} label={cv.label} /> : null}
               </View>
@@ -127,7 +111,6 @@ export function FichaProducto({ productoId, onVerStock }: { productoId: string; 
         {p.codigoBarra ? <Fila label="Código de barras" valor={p.codigoBarra} /> : null}
         {p.marca ? <Fila label="Marca" valor={p.marca} /> : null}
         {p.categoriaPathCompleto ? <Fila label="Categoría" valor={p.categoriaPathCompleto} /> : null}
-        <Fila label="Estado" valor={p.activo ? 'Activo' : 'Inactivo'} />
       </Seccion>
     </ScrollView>
   )

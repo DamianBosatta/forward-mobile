@@ -69,11 +69,23 @@ function servidor(url: string) {
     return Promise.resolve(pagina(!mockFiltraCodigo ? CATALOGO : leido ? CATALOGO.filter((p) => familia(p) === familia(leido)) : []))
   }
   if (url.startsWith('/api/v1/catalogo?')) return Promise.resolve(pagina([fichaDeCatalogo(UNICO), fichaDeCatalogo(OTRO)]))
-  const detalle = [UNICO, OTRO].find((p) => url === `/api/v1/Productos/${p.id}`)
-  if (detalle) return Promise.resolve({ ...detalle, ventaMinimaUnidades: 1, puedeVenderse: true })
-  if (url === `/api/v1/Productos/${LINEA.id}`) return Promise.resolve({ ...LINEA, precioVenta: 1000, ventaMinimaUnidades: 1, activo: true })
-  if (url === `/api/v1/Productos/${LINEA.id}/variantes`) return Promise.resolve([])
+  const detalle = [UNICO, OTRO, LINEA].find((p) => url.startsWith(`/api/v1/catalogo/${p.id}?`))
+  if (detalle) return Promise.resolve(fichaDe(detalle))
   return Promise.reject(new Error(`sin respuesta para ${url}`))
+}
+/** What GET /api/v1/catalogo/{id} answers for a product of this catalog. */
+function fichaDe(p: { id: string; nombre: string; codigoPropio?: string; esPadreDeVariantes: boolean }) {
+  return {
+    productoId: p.id,
+    nombre: p.nombre,
+    codigoPropio: p.codigoPropio ?? p.id,
+    precioVenta: 1000,
+    esPadreDeVariantes: p.esPadreDeVariantes,
+    ventaMinimaUnidades: 1,
+    disponible: true,
+    disponibleVentaMinima: true,
+    variantes: [],
+  }
 }
 const pidio = (texto: string) => api.get.mock.calls.some(([u]) => String(u).includes(texto))
 /** La búsqueda por código responde `respuesta`; lo demás, el servidor de siempre. */
@@ -120,7 +132,7 @@ describe('Escáner del catálogo', () => {
 
     expect(await screen.findByText('Precio de lista por unidad')).toBeTruthy()
     expect(pidio('/api/v1/Productos/catalogo-stock?CodigoBarra=7798114820536&')).toBe(true)
-    expect(api.get).toHaveBeenCalledWith(`/api/v1/Productos/${UNICO.id}`)
+    expect(pidio(`/api/v1/catalogo/${UNICO.id}?`)).toBe(true)
   })
 
   it('el código de una fragancia abre la ficha de su línea', async () => {
@@ -129,8 +141,8 @@ describe('Escáner del catálogo', () => {
     await escanear('7790000000024')
 
     expect(await screen.findByText('Precio de lista por unidad')).toBeTruthy()
-    expect(api.get).toHaveBeenCalledWith(`/api/v1/Productos/${LINEA.id}`)
-    expect(pidio('/api/v1/Productos/f-2')).toBe(false)
+    expect(pidio(`/api/v1/catalogo/${LINEA.id}?`)).toBe(true)
+    expect(pidio('/api/v1/catalogo/f-2')).toBe(false)
   })
 
   it('servidor viejo (ignora CodigoBarra y devuelve todo): abre el producto que tiene ese código exacto', async () => {
@@ -140,8 +152,8 @@ describe('Escáner del catálogo', () => {
     await escanear('7798114820536')
 
     expect(await screen.findByText('Precio de lista por unidad')).toBeTruthy()
-    expect(api.get).toHaveBeenCalledWith(`/api/v1/Productos/${UNICO.id}`)
-    expect(pidio(`/api/v1/Productos/${OTRO.id}`)).toBe(false)
+    expect(pidio(`/api/v1/catalogo/${UNICO.id}?`)).toBe(true)
+    expect(pidio(`/api/v1/catalogo/${OTRO.id}`)).toBe(false)
   })
 
   it('un código que no está: avisa y no abre ninguna ficha', async () => {
@@ -151,7 +163,7 @@ describe('Escáner del catálogo', () => {
 
     expect(await screen.findByText('No hay ningún producto con el código 779811.')).toBeTruthy()
     expect(screen.queryByText('Precio de lista por unidad')).toBeNull()
-    expect(pidio('/api/v1/Productos/p-')).toBe(false)
+    expect(pidio('/api/v1/catalogo/p-')).toBe(false)
     // Al tipear otra búsqueda, el aviso se va.
     await userEvent.type(screen.getByLabelText('Buscar por código o nombre'), 'a')
     expect(screen.queryByText('No hay ningún producto con el código 779811.')).toBeNull()
@@ -168,7 +180,7 @@ describe('Escáner del catálogo', () => {
     api.get.mockImplementation(servidor)
     await act(async () => onlineManager.setOnline(true))
     expect(screen.queryByText('Precio de lista por unidad')).toBeNull()
-    expect(pidio(`/api/v1/Productos/${UNICO.id}`)).toBe(false)
+    expect(pidio(`/api/v1/catalogo/${UNICO.id}`)).toBe(false)
   })
 
   it.each([
@@ -194,7 +206,7 @@ describe('Escáner del catálogo', () => {
     await userEvent.press(screen.getByRole('button', { name: `${OTRO.nombre}, código ${OTRO.codigoPropio}` }))
     await act(async () => codigo.responder(pagina([SUELTO])))
     expect(await screen.findByText('Precio de lista por unidad')).toBeTruthy()
-    expect(pidio(`/api/v1/Productos/${UNICO.id}`)).toBe(false)
+    expect(pidio(`/api/v1/catalogo/${UNICO.id}`)).toBe(false)
     expect(screen.queryByText(/Buscando el código/)).toBeNull()
   })
 
@@ -218,7 +230,7 @@ describe('Escáner del catálogo', () => {
     await escanear('7798114820536')
     salir()
     await act(async () => codigo.responder(pagina([SUELTO])))
-    expect(pidio(`/api/v1/Productos/${UNICO.id}`)).toBe(false)
+    expect(pidio(`/api/v1/catalogo/${UNICO.id}`)).toBe(false)
     expect(screen.queryByText('Precio de lista por unidad')).toBeNull()
   })
 
@@ -231,7 +243,7 @@ describe('Escáner del catálogo', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Escanear código de barras' }))
     expect(screen.queryByText(/Buscando el código/)).toBeNull()
     await act(async () => codigo.responder(pagina([SUELTO])))
-    expect(pidio(`/api/v1/Productos/${UNICO.id}`)).toBe(false)
+    expect(pidio(`/api/v1/catalogo/${UNICO.id}`)).toBe(false)
   })
 
   it('si la cámara lee varias veces seguidas, vale solo la primera lectura', async () => {

@@ -27,22 +27,29 @@ const TEX = { id: 'p-tex', nombre: 'Saphirus Textil 250 ml', codigoPropio: 'SAP-
 // Lo que manda el servidor A QUIEN TIENE la capacidad. Sin ella los manda null; acá se
 // mandan igual para probar que la pantalla tampoco los dibuja sin la capacidad.
 const DETALLE = {
-  ...AER,
+  productoId: AER.id,
+  nombre: AER.nombre,
+  codigoPropio: AER.codigoPropio,
+  precioVenta: AER.precioVenta,
+  esPadreDeVariantes: false,
   precioMinimoRentable: 2585.39,
   precioCompraBase: 1846.71,
   margenBrutoPorcentaje: 40,
   ventaMinimaUnidades: 12,
-  puedeVenderse: true,
+  disponible: true,
+  disponibleVentaMinima: true,
   codigoBarra: '7798114820536',
   marca: 'Saphirus',
+  variantes: [],
 }
+const fichaDeAer = (url: string) => url.startsWith(`/api/v1/catalogo/${AER.id}?`)
 
 function servidor(url: string) {
   if (url.startsWith('/api/v1/catalogo?')) {
     // Lo que el servidor decide por ficha (descontando lo reservado): AER hay, TEX no.
     return Promise.resolve(paginaDeCatalogo([fichaDeCatalogo(AER), fichaDeCatalogo(TEX, { disponible: false })], 57, true))
   }
-  if (url === `/api/v1/Productos/${AER.id}`) return Promise.resolve(DETALLE)
+  if (fichaDeAer(url)) return Promise.resolve(DETALLE)
   if (url.startsWith('/api/v1/Stocks?')) {
     return Promise.resolve({
       items: [{ id: 's1', deposito: 'Central', cantidadActual: 184, cantidadReservada: 36, cantidadDisponible: 148 }],
@@ -111,26 +118,38 @@ describe('Catálogo de consulta', () => {
     expect(useAuthStore.getState().user?.depositoId).toBeUndefined()
     renderPantalla()
     await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
-    await waitFor(() => expect(api.post).toHaveBeenCalled())
-    expect(api.post.mock.calls[0][1].depositoId).toBe(DEPOSITO_CENTRAL_ID)
+    await waitFor(() => expect(llamadasGet()).toContain(`/api/v1/catalogo/${AER.id}?depositoId=${DEPOSITO_CENTRAL_ID}`))
   })
 
   it('la ficha, con depósito en el perfil, consulta ese', async () => {
     useAuthStore.setState({ user: { ...useAuthStore.getState().user!, depositoId: 'dep-1' } })
     renderPantalla()
     await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
-    await waitFor(() => expect(api.post).toHaveBeenCalled())
-    expect(api.post.mock.calls[0][1].depositoId).toBe('dep-1')
+    await waitFor(() => expect(llamadasGet()).toContain(`/api/v1/catalogo/${AER.id}?depositoId=dep-1`))
+  })
+
+  it('un usuario con solo el catálogo abre la ficha sin pedirle nada a Productos ni a Stock', async () => {
+    useAuthStore.setState({
+      user: { id: 'u1', username: 'u', roles: ['Vendedor'] as never, permissions: [{ module: 'MOD_CATALOGO', canRead: true }] as never },
+    })
+    renderPantalla()
+    await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
+
+    expect(await screen.findByText('Precio de lista por unidad')).toBeTruthy()
+    await waitFor(() => expect(screen.getAllByText('Hay stock').length).toBeGreaterThanOrEqual(2))
+    expect(api.post).not.toHaveBeenCalled()
+    expect(llamadasGet().some((u) => u.startsWith('/api/v1/Productos') || u.startsWith('/api/v1/Stocks'))).toBe(false)
   })
 
   it('un producto totalmente reservado dice "Sin stock" en la tarjeta y en la ficha, aunque tenga stock físico', async () => {
-    // El servidor descuenta lo reservado: disponible=false para el producto, pero el detalle dice puedeVenderse.
-    api.get.mockImplementation((url: string) =>
-      url.startsWith('/api/v1/catalogo?')
-        ? Promise.resolve(paginaDeCatalogo([fichaDeCatalogo(AER, { disponible: false }), fichaDeCatalogo(TEX, { disponible: false })]))
-        : servidor(url),
+    // El servidor descuenta lo reservado: disponible=false en la tarjeta y en la ficha.
+    api.get.mockImplementation(
+      servidorCon([fichaDeCatalogo(AER, { disponible: false }), fichaDeCatalogo(TEX, { disponible: false })], {
+        ...DETALLE,
+        disponible: false,
+        disponibleVentaMinima: false,
+      }),
     )
-    api.post.mockResolvedValue([{ productoId: AER.id, disponible: false }])
     renderPantalla()
     await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
     await screen.findByText('Precio de lista por unidad')
@@ -138,25 +157,10 @@ describe('Catálogo de consulta', () => {
     expect(screen.queryByText('Hay stock')).toBeNull()
   })
 
-  it('la ficha también pide la disponibilidad con la venta mínima, aparte del chip', async () => {
-    renderPantalla()
-    await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
-    await screen.findByText('Se vende por caja de 12')
-    await waitFor(() =>
-      expect(api.post).toHaveBeenCalledWith('/api/v1/Stocks/disponibilidad', {
-        depositoId: DEPOSITO_CENTRAL_ID,
-        items: [{ productoId: AER.id, cantidad: 12 }],
-      }),
-    )
-  })
-
   describe('stock 5 con venta mínima 12', () => {
-    // El servidor responde según la cantidad pedida: alcanza para 1, no para 12.
-    const stockCinco = (_url: string, body: { items: { productoId: string; cantidad: number }[] }) =>
-      Promise.resolve(body.items.map((i) => ({ productoId: i.productoId, disponible: i.cantidad <= 5 })))
-
+    // El servidor resuelve los dos chequeos: alcanza para 1, no para la caja de 12.
     it('la tarjeta y la ficha dicen lo mismo y la ficha avisa que no alcanza la caja', async () => {
-      api.post.mockReset().mockImplementation(stockCinco)
+      api.get.mockImplementation(servidorCon([fichaDeCatalogo(AER), fichaDeCatalogo(TEX)], { ...DETALLE, disponibleVentaMinima: false }))
       renderPantalla()
       await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
       await screen.findByText('Se vende por caja de 12')
@@ -166,13 +170,9 @@ describe('Catálogo de consulta', () => {
     })
 
     it('con stock de sobra no hay aviso de venta mínima', async () => {
-      api.post.mockReset().mockImplementation((_u: string, body: { items: { productoId: string }[] }) =>
-        Promise.resolve(body.items.map((i) => ({ productoId: i.productoId, disponible: true }))),
-      )
       renderPantalla()
       await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
       await screen.findByText('Se vende por caja de 12')
-      await waitFor(() => expect(api.post.mock.calls.some(([, b]) => b.items[0]?.cantidad === 12)).toBe(true))
       expect(screen.queryByText(/No alcanza para la venta mínima/)).toBeNull()
     })
   })
@@ -202,12 +202,6 @@ describe('Catálogo de consulta', () => {
     expect(screen.queryByText('Stock por depósito')).toBeNull()
     expect(screen.queryByText('184 · 36 · 148')).toBeNull()
     expect(llamadasGet().some((u) => u.startsWith('/api/v1/Stocks?'))).toBe(false)
-  })
-
-  it('la ficha dice el estado del producto', async () => {
-    renderPantalla()
-    await abrirFichaDeAer()
-    expect(await screen.findByText('Activo')).toBeTruthy()
   })
 
   it('el filtro "Con stock" deja solo lo que el servidor dice que se puede vender, y al apagarlo vuelve todo', async () => {
@@ -266,7 +260,7 @@ const LINEA = { id: 'p-lin', nombre: 'Saphirus Difusor', codigoPropio: 'SAP-DIF'
 function servidorCon(items: object[], detalle: object = DETALLE) {
   return (url: string) => {
     if (url.startsWith('/api/v1/catalogo?')) return Promise.resolve(paginaDeCatalogo(items))
-    if (url === `/api/v1/Productos/${AER.id}`) return Promise.resolve(detalle)
+    if (fichaDeAer(url)) return Promise.resolve(detalle)
     return servidor(url)
   }
 }

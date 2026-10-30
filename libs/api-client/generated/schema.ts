@@ -956,6 +956,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/catalogo/{productoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    depositoId?: string;
+                };
+                header?: never;
+                path: {
+                    productoId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FichaCatalogoDtoResponse"];
+                        "application/json": components["schemas"]["FichaCatalogoDtoResponse"];
+                        "text/json": components["schemas"]["FichaCatalogoDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/catalogo/marcas": {
         parameters: {
             query?: never;
@@ -1008,6 +1049,8 @@ export interface paths {
                     SearchTerm?: string;
                     SoloDisponibles?: boolean;
                     ConOferta?: boolean;
+                    Formato?: components["schemas"]["FormatoCatalogoPdf"];
+                    NovedadesDesde?: string;
                 };
                 header?: never;
                 path?: never;
@@ -6627,7 +6670,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    hojaRutaId?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -13026,6 +13071,8 @@ export interface paths {
                     SearchTerm?: string;
                     SoloDisponibles?: boolean;
                     ConOferta?: boolean;
+                    Formato?: components["schemas"]["FormatoCatalogoPdf"];
+                    NovedadesDesde?: string;
                 };
                 header?: never;
                 path?: never;
@@ -14061,6 +14108,362 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rendiciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    choferId?: string;
+                    estado?: components["schemas"]["EstadoRendicionDelViaje"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RendicionViajeListadoDtoListResponse"];
+                        "application/json": components["schemas"]["RendicionViajeListadoDtoListResponse"];
+                        "text/json": components["schemas"]["RendicionViajeListadoDtoListResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RendirCobrosChoferCommand"];
+                    "text/json": components["schemas"]["RendirCobrosChoferCommand"];
+                    "application/*+json": components["schemas"]["RendirCobrosChoferCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RendicionChoferDtoResponse"];
+                        "application/json": components["schemas"]["RendicionChoferDtoResponse"];
+                        "text/json": components["schemas"]["RendicionChoferDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rendiciones/{id}/aprobar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RendicionChoferDtoResponse"];
+                        "application/json": components["schemas"]["RendicionChoferDtoResponse"];
+                        "text/json": components["schemas"]["RendicionChoferDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rendiciones/{id}/pendientes/{lineaId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    lineaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CompletarPendienteRendicionRequest"];
+                    "text/json": components["schemas"]["CompletarPendienteRendicionRequest"];
+                    "application/*+json": components["schemas"]["CompletarPendienteRendicionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RendicionChoferDtoResponse"];
+                        "application/json": components["schemas"]["RendicionChoferDtoResponse"];
+                        "text/json": components["schemas"]["RendicionChoferDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rendiciones/viajes/{hojaRutaId}/resumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    hojaRutaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ResumenRendicionViajeDtoResponse"];
+                        "application/json": components["schemas"]["ResumenRendicionViajeDtoResponse"];
+                        "text/json": components["schemas"]["ResumenRendicionViajeDtoResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -17058,6 +17461,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Users/opciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UsuarioOpcionDtoListResponse"];
+                        "application/json": components["schemas"]["UsuarioOpcionDtoListResponse"];
+                        "text/json": components["schemas"]["UsuarioOpcionDtoListResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Users/totales": {
         parameters: {
             query?: never;
@@ -19232,6 +19683,12 @@ export interface components {
             /** Format: int32 */
             remaining?: number;
         };
+        BilleteContado: {
+            /** Format: double */
+            denominacion?: number;
+            /** Format: int32 */
+            cantidad?: number;
+        };
         BooleanResponse: {
             /** Format: int32 */
             statusCode?: number;
@@ -19599,6 +20056,19 @@ export interface components {
             newPassword?: string | null;
             confirmNewPassword?: string | null;
         };
+        ChequeCobroParadaDto: {
+            /** Format: uuid */
+            chequeId?: string;
+            numero?: string | null;
+            banco?: string | null;
+            titular?: string | null;
+            /** Format: date */
+            fechaPago?: string;
+            /** Format: double */
+            importe?: number;
+            fotoUrl?: string | null;
+            enManosDelChofer?: boolean;
+        };
         ChequeDetalleItem: {
             numero?: string | null;
             banco?: string | null;
@@ -19732,6 +20202,11 @@ export interface components {
             readonly hasNextPage?: boolean;
             items?: components["schemas"]["ChequeListDto"][] | null;
         };
+        ChequeRendidoInput: {
+            /** Format: uuid */
+            chequeId?: string;
+            recibido?: boolean;
+        };
         ChoferDto: {
             /** Format: uuid */
             id: string;
@@ -19795,6 +20270,22 @@ export interface components {
         CobroEnEntregaInput: {
             imputacion?: components["schemas"]["ImputacionCobroChofer"];
             lineas?: components["schemas"]["LineaCobroEntregaInput"][] | null;
+        };
+        CobroParadaDto: {
+            /** Format: uuid */
+            pagoId?: string;
+            activo?: boolean;
+            rendido?: boolean;
+            /** Format: double */
+            montoTotal?: number;
+            /** Format: double */
+            aplicadoAlPedido?: number;
+            /** Format: double */
+            aplicadoADeudaAnterior?: number;
+            /** Format: double */
+            sinImputar?: number;
+            lineas?: components["schemas"]["LineaCobroParadaDto"][] | null;
+            cheques?: components["schemas"]["ChequeCobroParadaDto"][] | null;
         };
         CobrosPendientesDto: {
             /** Format: double */
@@ -19861,6 +20352,10 @@ export interface components {
             errors?: string[] | null;
             data?: components["schemas"]["ComisionesPorLineaDto"];
             codigo?: string | null;
+        };
+        CompletarPendienteRendicionRequest: {
+            /** Format: uuid */
+            cuentaPropiaId?: string | null;
         };
         CompraActionResponseDto: {
             /** Format: uuid */
@@ -20907,6 +21402,20 @@ export interface components {
             /** Format: double */
             deudaTotal?: number;
         };
+        DevolucionDelViajeDto: {
+            /** Format: uuid */
+            notaCreditoId?: string;
+            /** Format: uuid */
+            paradaId?: string;
+            /** Format: uuid */
+            ventaId?: string | null;
+            /** Format: date-time */
+            fecha?: string;
+            estado?: components["schemas"]["EstadoNotaCredito"];
+            /** Format: double */
+            montoTotal?: number;
+            motivo?: string | null;
+        };
         DevolucionEnEntregaInput: {
             motivo?: string | null;
             items?: components["schemas"]["NotaCreditoItemInput"][] | null;
@@ -21268,7 +21777,7 @@ export interface components {
         /** @enum {string} */
         EstadoFactura: "Pendiente" | "Registrada" | "Cancelada" | "Anulada";
         /** @enum {string} */
-        EstadoHojaRuta: "Programada" | "EnCurso" | "Finalizada" | "Cancelada" | "Documentada";
+        EstadoHojaRuta: "Programada" | "EnCurso" | "Finalizada" | "Cancelada" | "Documentada" | "Rendida";
         /** @enum {string} */
         EstadoNotaCredito: "Solicitada" | "Emitida" | "Rechazada";
         /** @enum {string} */
@@ -21276,9 +21785,15 @@ export interface components {
         /** @enum {string} */
         EstadoPagoVenta: "Historica" | "Pendiente" | "Parcial" | "Pagada" | "Saldada";
         /** @enum {string} */
+        EstadoParada: "Pendiente" | "Entregado" | "NoEntregado";
+        /** @enum {string} */
         EstadoPedidoTransferencia: "Pendiente" | "Autorizado" | "Rechazado" | "Cancelado";
         /** @enum {string} */
         EstadoRemito: "Emitido" | "Entregado" | "NoEntregado" | "Anulado";
+        /** @enum {string} */
+        EstadoRendicionChofer: "Borrador" | "EnAprobacion" | "Aprobada" | "ConPendientes";
+        /** @enum {string} */
+        EstadoRendicionDelViaje: "SinRendir" | "EnAprobacion" | "ConPendientes" | "Aprobada";
         /** @enum {string} */
         EstadoSolicitudCambio: "Pendiente" | "Aprobada" | "Rechazada";
         /** @enum {string} */
@@ -21567,6 +22082,43 @@ export interface components {
             fecha?: string;
             descripcion?: string | null;
         };
+        FichaCatalogoDto: {
+            /** Format: uuid */
+            productoId: string;
+            nombre: string;
+            codigoPropio: string;
+            codigoBarra?: string | null;
+            marca?: string | null;
+            categoriaPathCompleto?: string | null;
+            imageUrl?: string | null;
+            /** Format: double */
+            precioVenta: number;
+            /** Format: double */
+            precioConOferta?: number | null;
+            /** Format: int32 */
+            ventaMinimaUnidades: number;
+            esPadreDeVariantes: boolean;
+            disponible: boolean;
+            disponibleVentaMinima: boolean;
+            variantes: components["schemas"]["FichaCatalogoVarianteDto"][];
+        };
+        FichaCatalogoDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["FichaCatalogoDto"];
+            codigo?: string | null;
+        };
+        FichaCatalogoVarianteDto: {
+            /** Format: uuid */
+            productoId: string;
+            nombre: string;
+            fraganciaNombre?: string | null;
+            disponible: boolean;
+        };
         FilaAbcDto: {
             /** Format: uuid */
             productoId?: string;
@@ -21636,6 +22188,14 @@ export interface components {
         FirmaEnEntregaInput: {
             fotoUrl?: string | null;
         };
+        FirmaParadaDto: {
+            /** Format: double */
+            montoFirmado?: number;
+            fotoUrl?: string | null;
+            marcas?: string[] | null;
+        };
+        /** @enum {string} */
+        FormatoCatalogoPdf: "Lista" | "Tarjeta";
         /** @enum {string} */
         FormatoExport: "Excel" | "Pdf";
         FraganciaResponse: {
@@ -22015,6 +22575,20 @@ export interface components {
             fotoUrl?: string | null;
             cheques?: components["schemas"]["ChequeDetalleItem"][] | null;
         };
+        LineaCobroParadaDto: {
+            /** Format: uuid */
+            pagoLineaId?: string;
+            tipo?: components["schemas"]["TipoLineaRendicion"];
+            /** Format: uuid */
+            medioPagoId?: string | null;
+            medioPago?: string | null;
+            /** Format: double */
+            monto?: number;
+            comprobanteUrl?: string | null;
+            /** Format: uuid */
+            cuentaPropiaId?: string | null;
+            cuentaPropia?: string | null;
+        };
         LineaConceptoDto: {
             descripcion?: string | null;
             /** Format: double */
@@ -22057,6 +22631,22 @@ export interface components {
             detalleId?: string;
             /** Format: double */
             cantidadRecibida?: number;
+        };
+        LineaRendicionDto: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            pagoId?: string;
+            /** Format: uuid */
+            pagoLineaId?: string | null;
+            /** Format: uuid */
+            chequeId?: string | null;
+            tipo?: components["schemas"]["TipoLineaRendicion"];
+            /** Format: double */
+            monto?: number;
+            verificada?: boolean | null;
+            /** Format: uuid */
+            cuentaPropiaId?: string | null;
         };
         LineaTransferenciaInput: {
             /** Format: uuid */
@@ -22678,6 +23268,29 @@ export interface components {
             numeroNotaEntrega?: number | null;
             nombreContacto?: string | null;
         };
+        ParadaRendicionDto: {
+            /** Format: uuid */
+            paradaId?: string;
+            /** Format: int32 */
+            orden?: number;
+            /** Format: uuid */
+            ventaId?: string;
+            codigoVenta?: string | null;
+            /** Format: uuid */
+            clienteId?: string;
+            direccion?: string | null;
+            cliente?: string | null;
+            nombreFantasia?: string | null;
+            estado?: components["schemas"]["EstadoParada"];
+            entregada?: boolean;
+            motivoNoEntrega?: string | null;
+            firma?: components["schemas"]["FirmaParadaDto"];
+            /** Format: double */
+            saldoCliente?: number;
+            /** Format: uuid */
+            notaCreditoId?: string | null;
+            cobros?: components["schemas"]["CobroParadaDto"][] | null;
+        };
         ParadaRequest: {
             /** Format: uuid */
             ventaId?: string;
@@ -22699,6 +23312,12 @@ export interface components {
             /** Format: date */
             caeVencimiento?: string | null;
             detalle?: string | null;
+            /** Format: uuid */
+            resueltaPorUsuarioId?: string | null;
+            /** Format: date-time */
+            resueltaUtc?: string | null;
+            resolucion?: components["schemas"]["ResolucionSolicitudArca"];
+            motivoResolucion?: string | null;
         };
         PedidoSinFacturaDto: {
             /** Format: uuid */
@@ -23679,6 +24298,112 @@ export interface components {
             data?: components["schemas"]["RemitoResumenDtoPaginatedResponse"];
             codigo?: string | null;
         };
+        RendicionChoferDto: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            hojaRutaId?: string;
+            /** Format: uuid */
+            choferId?: string;
+            /** Format: uuid */
+            depositoId?: string;
+            estado?: components["schemas"]["EstadoRendicionChofer"];
+            moneda?: string | null;
+            /** Format: double */
+            efectivoEsperado?: number;
+            /** Format: double */
+            efectivoContado?: number;
+            /** Format: double */
+            diferenciaEfectivo?: number;
+            motivoDiferencia?: string | null;
+            /** Format: double */
+            transferenciasEsperado?: number;
+            /** Format: double */
+            transferenciasVerificado?: number;
+            /** Format: double */
+            diferenciaTransferencias?: number;
+            /** Format: double */
+            chequesTotal?: number;
+            /** Format: double */
+            chequesRecibido?: number;
+            tienePendientes?: boolean;
+            /** Format: uuid */
+            cajaId?: string | null;
+            /** Format: uuid */
+            usuarioAprobadorId?: string | null;
+            /** Format: date-time */
+            fechaAprobacion?: string | null;
+            conteoEfectivo?: components["schemas"]["BilleteContado"][] | null;
+            /** Format: double */
+            otrosEfectivo?: number | null;
+        };
+        RendicionChoferDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["RendicionChoferDto"];
+            codigo?: string | null;
+        };
+        RendicionDelViajeDto: {
+            datos?: components["schemas"]["RendicionChoferDto"];
+            lineas?: components["schemas"]["LineaRendicionDto"][] | null;
+        };
+        RendicionViajeListadoDto: {
+            /** Format: uuid */
+            hojaRutaId?: string;
+            /** Format: uuid */
+            choferId?: string;
+            chofer?: string | null;
+            /** Format: uuid */
+            depositoId?: string;
+            /** Format: date-time */
+            fechaSalida?: string;
+            estadoViaje?: components["schemas"]["EstadoHojaRuta"];
+            estado?: components["schemas"]["EstadoRendicionDelViaje"];
+            /** Format: uuid */
+            rendicionId?: string | null;
+            /** Format: int32 */
+            paradas?: number;
+            /** Format: double */
+            efectivo?: number;
+            /** Format: double */
+            transferencias?: number;
+            /** Format: double */
+            cheques?: number;
+            /** Format: double */
+            firmado?: number;
+            /** Format: int32 */
+            devolucionesPendientes?: number;
+        };
+        RendicionViajeListadoDtoListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["RendicionViajeListadoDto"][] | null;
+            codigo?: string | null;
+        };
+        RendirCobrosChoferCommand: {
+            /** Format: uuid */
+            hojaRutaId?: string;
+            /** Format: uuid */
+            depositoId?: string | null;
+            pagoIds?: string[] | null;
+            /** Format: double */
+            efectivoContado?: number;
+            conteoEfectivo?: components["schemas"]["BilleteContado"][] | null;
+            /** Format: double */
+            otrosEfectivo?: number;
+            motivoDiferencia?: string | null;
+            transferencias?: components["schemas"]["TransferenciaRendidaInput"][] | null;
+            cheques?: components["schemas"]["ChequeRendidoInput"][] | null;
+            observaciones?: string | null;
+        };
         RenglonDevolvibleDto: {
             /** Format: uuid */
             ventaDetalleId?: string;
@@ -23820,6 +24545,35 @@ export interface components {
             nivel?: string | null;
             /** Format: int32 */
             cantidad?: number;
+        };
+        ResumenRendicionViajeDto: {
+            /** Format: uuid */
+            hojaRutaId?: string;
+            estadoViaje?: components["schemas"]["EstadoHojaRuta"];
+            /** Format: uuid */
+            choferId?: string;
+            chofer?: string | null;
+            /** Format: uuid */
+            depositoId?: string;
+            /** Format: date-time */
+            fechaSalida?: string;
+            paradas?: components["schemas"]["ParadaRendicionDto"][] | null;
+            devoluciones?: components["schemas"]["DevolucionDelViajeDto"][] | null;
+            /** Format: int32 */
+            devolucionesPendientes?: number;
+            totales?: components["schemas"]["TotalesResumenRendicionDto"];
+            rendicion?: components["schemas"]["RendicionDelViajeDto"];
+            anteriorAlCorte?: boolean;
+        };
+        ResumenRendicionViajeDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ResumenRendicionViajeDto"];
+            codigo?: string | null;
         };
         ResumenVendedorDto: {
             /** Format: int32 */
@@ -24539,6 +25293,8 @@ export interface components {
         /** @enum {string} */
         TipoLibroIva: "Ventas" | "Compras";
         /** @enum {string} */
+        TipoLineaRendicion: "Efectivo" | "Transferencia" | "Cheque";
+        /** @enum {string} */
         TipoMovimientoCaja: "Ingreso" | "Egreso";
         /** @enum {string} */
         TipoMovimientoCuenta: "Deuda" | "Pago" | "ReversionAnulacion" | "Gasto" | "MovimientoInterno" | "TransaccionTesoreria" | "Apertura" | "Cheque" | "TarjetaAcreditacion" | "NotaCredito" | "NotaCreditoDevolucion" | "PagoLineaCuentaPropia" | "CierreCaja" | "AperturaCaja" | "ChequeCartera" | "MovimientoManualVendedor" | "DevengoComisionVendedor" | "ReversionComisionVendedor" | "PagoComisionVendedor" | "ReclasificacionCuenta" | "DevolucionProveedor" | "AjusteDevolucionProveedor";
@@ -24607,6 +25363,25 @@ export interface components {
             operaciones?: number;
             /** Format: int32 */
             ventasConDescuento?: number;
+        };
+        TotalesResumenRendicionDto: {
+            /** Format: double */
+            efectivo?: number;
+            /** Format: double */
+            transferencias?: number;
+            /** Format: double */
+            cheques?: number;
+            /** Format: double */
+            firmado?: number;
+            /** Format: double */
+            deudaAnterior?: number;
+        };
+        TransferenciaRendidaInput: {
+            /** Format: uuid */
+            pagoLineaId?: string;
+            verificada?: boolean;
+            /** Format: uuid */
+            cuentaPropiaId?: string | null;
         };
         TransferenciaStockDto: {
             /** Format: uuid */
@@ -25115,6 +25890,21 @@ export interface components {
         };
         /** @enum {string} */
         UsoPuntoVenta: "RemitosCai" | "FacturasManuales" | "FacturasElectronicas" | "FacturasAPedido";
+        UsuarioOpcionDto: {
+            /** Format: uuid */
+            id: string;
+            nombre: string;
+        };
+        UsuarioOpcionDtoListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["UsuarioOpcionDto"][] | null;
+            codigo?: string | null;
+        };
         UsuariosTotalesDto: {
             /** Format: int32 */
             colaboradores?: number;
