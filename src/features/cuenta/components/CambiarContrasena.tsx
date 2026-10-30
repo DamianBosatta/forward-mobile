@@ -6,7 +6,7 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useCambiarContrasena } from '../api/cuenta'
 
 /**
- * Cambiar la contraseña propia (lámina MiCuenta). Las reglas las valida el servidor.
+ * Cambiar la contraseña propia (lámina perfil--clave; la pantalla es `perfil/clave`). Las reglas las valida el servidor.
  * TODO: la lista viva de reglas (✓/✗ + cumple/falta) sale de `@forward/reglas` (forward-system #1046, S6): no se copia la regla acá.
  */
 export function CambiarContrasena({ email }: { email: string | undefined }) {
@@ -28,7 +28,6 @@ export function CambiarContrasena({ email }: { email: string | undefined }) {
 
   return (
     <View style={{ gap: space[3] }}>
-      <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>Cambiar contraseña</Text>
       {!email ? <Notice tone="info">No tenemos tu correo en este teléfono. Cerrá sesión y volvé a entrar para cambiar la contraseña.</Notice> : null}
       <Field label="Contraseña actual" value={actual} onChangeText={(t) => { setActual(t); m.reset() }} secureTextEntry autoCapitalize="none" autoComplete="current-password" />
       <Field
