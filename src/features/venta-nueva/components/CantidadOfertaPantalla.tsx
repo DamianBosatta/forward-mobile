@@ -233,7 +233,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
               </View>
             </View>
             <Text style={secundario}>Cambiás uno y el otro se recalcula solo.</Text>
-            {avisoDeTope === 'porAutorizar' ? <Notice tone="advertencia">{`Supera tu tope de ${mostrarNumero(tope)} %: el pedido queda por autorizar.`}</Notice> : null}
+            {avisoDeTope === 'porAutorizar' ? <Notice tone="advertencia">{`Tu tope de descuento es ${mostrarNumero(tope)} %. Con ${mostrarNumero(pct)} % la venta va a necesitar autorización.`}</Notice> : null}
             {avisoDeTope === 'sinConfigurar' ? <Notice tone="peligro">{MENSAJE_TOPE_SIN_CONFIGURAR}</Notice> : null}
             {piso === 'rojo' ? <Notice tone="peligro" title="Debajo del costo.">El sistema no deja guardar la venta con este precio.</Notice> : null}
             {piso === 'amarillo' ? <Notice tone="advertencia" title={`Debajo del precio mínimo (${formatImporte(p.precioMinimoRentable)}).`}>Va a quedar por autorizar.</Notice> : null}
