@@ -69,9 +69,13 @@ describe('Autorizaciones: la bandeja', () => {
     bandeja([venta('a', 32 | 4, 1000.5), venta('b', 2, 500)])
     pintar()
 
-    expect(await screen.findByText('• Supera el tope de crédito del cliente')).toBeTruthy()
-    expect(screen.getByText('• Supera el tope de descuento del vendedor')).toBeTruthy()
-    expect(screen.getByText(/margen en amarillo/)).toBeTruthy()
+    // Cada motivo es una pastilla corta con texto (la lámina); la frase entera queda para el detalle.
+    expect(await screen.findByLabelText('Estado: Crédito')).toBeTruthy()
+    expect(screen.getByLabelText('Estado: Descuento')).toBeTruthy()
+    expect(screen.getByLabelText('Estado: Margen')).toBeTruthy()
+    expect(screen.queryByText(/Supera el tope/)).toBeNull()
+    expect(screen.getByText('Más antiguas primero')).toBeTruthy()
+    expect(screen.getByLabelText('Total: $ 1.000,50')).toBeTruthy()
     expect(screen.getByLabelText('Todas: 2')).toBeTruthy()
     expect(screen.getByLabelText('Crédito: 1')).toBeTruthy()
     expect(screen.queryByLabelText(/Sin stock/)).toBeNull()
