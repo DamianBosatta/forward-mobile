@@ -39,7 +39,7 @@ it('la dirección es el título y el nombre va en una línea aparte, nunca pegad
 it('pide la cartera al servidor (solo clientes, activos, agenda) y muestra "N de M" con su total', async () => {
   renderConQuery(<ClientesScreen />)
 
-  expect(await screen.findByText('1 de 142')).toBeTruthy()
+  expect(await screen.findByText('1 de 142 clientes')).toBeTruthy()
   const url = urlsDeLista()[0]
   expect(url).toContain('tipo=1')
   expect(url).toContain('activo=true')
@@ -114,14 +114,15 @@ describe('deuda vencida y saldo de la cartera (servidor con PR #882)', () => {
 
     expect(await screen.findByRole('button', { name: /Av\. del Valle 89.*deuda vencida/ })).toBeTruthy()
     expect(screen.getByRole('button', { name: /Brandsen 3314/ }).props.accessibilityLabel).not.toMatch(/deuda vencida/)
-    expect(screen.getAllByText('Deuda vencida')).toHaveLength(1)
+    expect(screen.getAllByText('Vencido $ 86.400,00')).toHaveLength(1)
   })
 
   it('con el saldo total del servidor, el contador lo muestra; nunca lo suma el teléfono', async () => {
     get.mockResolvedValue({ ...pagina([clienteDeLista()], 142), saldoTotal: 4812330 })
     renderConQuery(<ClientesScreen />)
 
-    expect(await screen.findByText('1 de 142 · Saldo $ 4.812.330')).toBeTruthy()
+    expect(await screen.findByText('1 de 142 clientes')).toBeTruthy()
+    expect(await screen.findByText(/Saldo total \$ 4\.812\.330/)).toBeTruthy()
   })
 
   it('el saldo total llega solo en la página 1: al cargar más se mantiene', async () => {
@@ -131,20 +132,21 @@ describe('deuda vencida y saldo de la cartera (servidor con PR #882)', () => {
         : { ...pagina([clienteDeLista()], 142), hasNextPage: true, saldoTotal: 4812330 },
     )
     renderConQuery(<ClientesScreen />)
-    await screen.findByText('1 de 142 · Saldo $ 4.812.330')
+    await screen.findByText(/Saldo total \$ 4\.812\.330/)
 
     fireEvent(screen.UNSAFE_getByType(SectionList), 'onEndReached')
 
-    expect(await screen.findByText('2 de 142 · Saldo $ 4.812.330')).toBeTruthy()
+    expect(await screen.findByText('2 de 142 clientes')).toBeTruthy()
+    expect(screen.getByText(/Saldo total \$ 4\.812\.330/)).toBeTruthy()
   })
 
   it('si el servidor no da el saldo total (null) o es un servidor anterior, queda "N de M" y sin chips', async () => {
     get.mockResolvedValue({ ...pagina([clienteDeLista()], 142), saldoTotal: null })
     renderConQuery(<ClientesScreen />)
 
-    expect(await screen.findByText('1 de 142')).toBeTruthy()
-    expect(screen.queryByText(/Saldo \$ /)).toBeNull()
-    expect(screen.queryByText('Deuda vencida')).toBeNull()
+    expect(await screen.findByText('1 de 142 clientes')).toBeTruthy()
+    expect(screen.queryByText(/Saldo total/)).toBeNull()
+    expect(screen.queryByText(/^Vencido \$/)).toBeNull()
   })
 })
 
@@ -153,7 +155,7 @@ describe('localidad y filtros (9C)', () => {
     get.mockResolvedValue(pagina([clienteDeLista({ localidad: 'Ramos Mejía' })], 1))
     renderConQuery(<ClientesScreen />)
 
-    expect(await screen.findByText('Ramos Mejía')).toBeTruthy()
+    expect(await screen.findByText('Chela · Kiosco Chela · Ramos Mejía')).toBeTruthy()
   })
 
   it('"Con deuda vencida" le pide el filtro al servidor, y tocarlo de nuevo lo saca', async () => {
@@ -256,21 +258,37 @@ describe('lista de clientes como el diseño (D6c)', () => {
     expect(estilo.elevation).toBeUndefined()
   })
 
-  it('el contador "N de M" va abajo, junto al botón "Nuevo cliente", y no arriba', async () => {
+  it('el contador "N de M clientes" va arriba de la lista y "Nuevo cliente" es el botón flotante', async () => {
     renderConQuery(<ClientesScreen />)
 
-    await screen.findByText('1 de 142')
-    const pie = screen.getByTestId('pie-clientes')
-    expect(within(pie).getByText('1 de 142')).toBeTruthy()
-    expect(within(pie).getByRole('button', { name: 'Nuevo cliente' })).toBeTruthy()
+    await screen.findByText('1 de 142 clientes')
+    const cabecera = screen.getByTestId('pie-clientes')
+    expect(within(cabecera).getByText('1 de 142 clientes')).toBeTruthy()
+    expect(within(cabecera).queryByRole('button', { name: 'Nuevo cliente' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Nuevo cliente' })).toBeTruthy()
   })
 
-  it('sin permiso de alta el contador sigue abajo y no hay botón', async () => {
+  it('sin permiso de alta el contador sigue y no hay botón', async () => {
     conPermisos([{ module: 'MOD_CLIENTES', canRead: true, canCreate: false }])
     renderConQuery(<ClientesScreen />)
 
-    expect(await screen.findByText('1 de 142')).toBeTruthy()
+    expect(await screen.findByText('1 de 142 clientes')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Nuevo cliente' })).toBeNull()
+  })
+
+  it('el cliente que el servidor no deja ver lleva candado y el tag de cartera ajena, en vez de saldo', async () => {
+    get.mockResolvedValue(pagina([clienteDeLista({ puedeVerSaldo: false, saldoAmount: 0 })], 1))
+    renderConQuery(<ClientesScreen />)
+
+    expect(await screen.findByText('Cartera de otro vendedor')).toBeTruthy()
+    expect(screen.queryByText('Sin deuda')).toBeNull()
+  })
+
+  it('el cliente sin saldo pendiente dice "Sin deuda"', async () => {
+    get.mockResolvedValue(pagina([clienteDeLista({ saldoAmount: 0 })], 1))
+    renderConQuery(<ClientesScreen />)
+
+    expect(await screen.findByText('Sin deuda')).toBeTruthy()
   })
 })
 
@@ -303,5 +321,5 @@ it('muestra un encabezado por letra de la dirección (sin tildes, "#" para lo qu
   expect(screen.getByTestId('encabezado-letra-B')).toBeTruthy()
   expect(screen.getByTestId('encabezado-letra-#')).toBeTruthy()
   expect(screen.getByTestId('encabezado-letra-Sin dirección')).toBeTruthy()
-  expect(screen.getByText('4 de 4')).toBeTruthy()
+  expect(screen.getByText('4 de 4 clientes')).toBeTruthy()
 })
