@@ -493,6 +493,17 @@ describe('R11 cobro: resumen "Cobrás" y "Todo lo vencido" (solo pantalla: el co
     expect(post.mock.calls[0][1]).toEqual({ socioComercialId: 'c1', claveIdempotencia: expect.stringMatching(/^mobile-/), lineas: [{ medioPagoId: 'm-tr', monto: 84300 }] })
   })
 
+  it('con un objetivo elegido la tira muestra cuánto falta y el cobro se manda igual', async () => {
+    conVencido(84300)
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+
+    await userEvent.press(await screen.findByRole('button', { name: 'Todo lo vencido' }, ESPERA))
+    expect(await screen.findByLabelText('Cubre el objetivo', {}, ESPERA)).toBeTruthy()
+    fireEvent.changeText(screen.getByLabelText('Monto'), '40.000')
+
+    expect(await screen.findByLabelText('Falta: $ 44.300,00', {}, ESPERA)).toBeTruthy()
+  })
+
   it('mientras se manda el cobro, "Todo lo vencido" no cambia el monto que se está registrando', async () => {
     conVencido(84300)
     post.mockReturnValueOnce(new Promise(() => {}))

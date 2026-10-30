@@ -3,6 +3,7 @@ import { screen, userEvent, waitFor } from '@testing-library/react-native'
 import CuentasCorrientesScreen from '../../../../app/(tabs)/cuentas/index'
 import { api } from '@/core/api/client'
 import { formatImporte as $ } from '@/core/ui/fw'
+import { AVISO_DEBO_SIN_API } from '../../../../app/(tabs)/cuentas/index'
 import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA } from '@/core/ui/fw/MotivoDeshabilitado'
 import { clienteDeLista, conPermisos, pagina, renderConQuery } from '@/features/clientes/__testing__/ayuda'
 import { estadoDeCuenta, fichaConCuentas, paginaDeMovimientos } from '../__testing__/servidor'
@@ -70,7 +71,7 @@ describe('R10 Cuentas corrientes: resumen y transferencia', () => {
     conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }])
     renderConQuery(<CuentasCorrientesScreen />)
 
-    await userEvent.press(await screen.findByRole('button', { name: 'Transferencia' }, ESPERA))
+    await userEvent.press(await screen.findByRole('button', { name: 'Transferir' }, ESPERA))
 
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/tesoreria/transferencia')
     expect(screen.queryByText(MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA)).toBeNull()
@@ -79,7 +80,7 @@ describe('R10 Cuentas corrientes: resumen y transferencia', () => {
   it('Transferencia sin permiso se ve deshabilitada, con el motivo, y no navega', async () => {
     renderConQuery(<CuentasCorrientesScreen />)
 
-    const boton = await screen.findByRole('button', { name: 'Transferencia' }, ESPERA)
+    const boton = await screen.findByRole('button', { name: 'Transferir' }, ESPERA)
     expect(boton.props.accessibilityState?.disabled).toBe(true)
     expect(screen.getByText(MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA)).toBeTruthy()
     await userEvent.press(boton)
@@ -105,7 +106,7 @@ describe('TM9 cobro en el panel (tablet)', () => {
     renderConQuery(<CuentasCorrientesScreen />)
     await userEvent.press(await screen.findByRole('button', { name: /^Av\. del Valle 89/ }, ESPERA))
 
-    await userEvent.press(await screen.findByRole('button', { name: 'Registrar cobro' }, ESPERA))
+    await userEvent.press(await screen.findByRole('button', { name: 'Cobrar' }, ESPERA))
 
     expect(await screen.findByLabelText('Monto', {}, ESPERA)).toBeTruthy()
     expect(mockPush).not.toHaveBeenCalled()
@@ -121,4 +122,14 @@ it('en el teléfono la barra de abajo sigue a la vista en Cobros (lámina CalleM
 
   expect(await screen.findByRole('button', { name: /^Av\. del Valle 89/ }, ESPERA)).toBeTruthy()
   expect(screen.getByText('Mi día')).toBeTruthy()
+})
+
+it('el lado "Debo" todavía no tiene API: avisa en vez de mostrar una lista inventada', async () => {
+  renderConQuery(<CuentasCorrientesScreen />)
+  await screen.findByText('Mostrando 1 de 142', {}, ESPERA)
+
+  await userEvent.press(screen.getByRole('radio', { name: 'Debo' }))
+
+  expect(screen.getByText(AVISO_DEBO_SIN_API)).toBeTruthy()
+  expect(screen.queryByText('Mostrando 1 de 142')).toBeNull()
 })
