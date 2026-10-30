@@ -49,6 +49,26 @@ beforeEach(() => {
 })
 
 describe('Autorizar venta: el detalle', () => {
+  it('la tarjeta de arriba lleva la dirección como título y "cliente · vendedor · hace N" (lámina AutorizarVenta)', async () => {
+    permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+    const hace3h = new Date(Date.now() - 3 * 3600_000).toISOString()
+    const PENDIENTES = [{ id: 'v1', direccionCliente: 'Gral. Paz 10450', nombreFantasiaCliente: 'Limpieza Total', fechaPendiente: hace3h }]
+    mockGet.mockImplementation((url: string) =>
+      Promise.resolve(url.endsWith('autorizacion-preview') ? PREVIEW : url.endsWith('pendientes-autorizacion') ? PENDIENTES : VENTA))
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={qc}><DetalleAutorizacion id="v1" /></QueryClientProvider>)
+
+    expect(await screen.findByText('Gral. Paz 10450')).toBeTruthy()
+    expect(screen.getByText(/^Limpieza Total · Lucía Ferreyra · hace/)).toBeTruthy()
+  })
+
+  it('sin la fila de la bandeja, el título es el nombre del cliente y no se inventa la dirección', async () => {
+    permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+    pintar()
+    expect(await screen.findByText('Gral. Paz 10450 - Limpieza Total')).toBeTruthy()
+    expect(screen.getByText('Lucía Ferreyra')).toBeTruthy()
+  })
+
   it('muestra todos los motivos y el del vendedor, las líneas y los totales', async () => {
     permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
     pintar()
@@ -277,7 +297,7 @@ describe('Autorizar venta: el detalle', () => {
     permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
     let pedidos = 0
     mockGet.mockImplementation((url: string) =>
-      Promise.resolve(url.endsWith('autorizacion-preview') ? PREVIEW : { ...VENTA, venta: { ...VENTA.venta, version: 42 + pedidos++ } }))
+      Promise.resolve(url.endsWith('autorizacion-preview') ? PREVIEW : url.endsWith('pendientes-autorizacion') ? [] : { ...VENTA, venta: { ...VENTA.venta, version: 42 + pedidos++ } }))
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(<QueryClientProvider client={qc}><DetalleAutorizacion id="v1" /></QueryClientProvider>)
     await userEvent.press(await screen.findByRole('button', { name: 'Revisar y autorizar' }))

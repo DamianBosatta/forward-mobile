@@ -4,12 +4,14 @@ import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button, Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, formatPorcentaje } from '@/core/ui/fw'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
-import { useAutorizacionPreview, useVenta } from '@/libs/api-client/ventas'
+import { useAutorizacionPreview, usePendientesAutorizacion, useVenta } from '@/libs/api-client/ventas'
 import { useSocio } from '@/libs/api-client/socios'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
+import { formatRelativeTime } from '@/src/utils/date'
 import { pideRazon, textosDeMotivos } from '../lib/motivos'
 import { ClienteParaAutorizar } from './ClienteParaAutorizar'
+import { clienteDeBandeja } from './BandejaAutorizaciones'
 import { DecisionSheet, type Decision } from './DecisionSheet'
 
 /** El servidor manda el estado como número o como nombre según el endpoint. */
@@ -47,6 +49,9 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
   // Saldo y condición de pago del cliente: es información de apoyo, así que ni la carga ni un error
   // (403, 404, sin red) tocan los botones. `fresco`: para decidir sobre plata no sirve un saldo de hace 5 minutos.
   const socio = useSocio(veClientes ? (venta?.clienteId ?? '') : '', { fresco: true })
+  // La dirección y desde cuándo espera no vienen en el detalle de la venta: salen de su fila en la bandeja (misma consulta, en caché).
+  const pendientes = usePendientesAutorizacion(puedeAutorizar && porAutorizar)
+  const fila = Array.isArray(pendientes.data) ? pendientes.data.find((p) => p.id === id) : undefined
   const [decision, setDecision] = useState<Decision | null>(null)
   // La versión cacheada puede tener hasta 60 s: al decidir se vuelve a pedir la venta.
   const [aviso, setAviso] = useState<string | null>(null)
@@ -72,6 +77,9 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
   const debajoDelMinimo = preview.data?.items ?? []
   const motivos = textosDeMotivos(venta.motivoPendienteAutorizacion, q.data?.detalleMotivos)
   const chip = chipForEstado('venta', venta.estado)
+  const cliente = fila ? clienteDeBandeja(fila) : { titulo: venta.clienteNombre ?? '—', nombre: null }
+  const desde = fila?.fechaPendiente ?? (porAutorizar ? venta.fechaModificacion : null)
+  const lineaDeApoyo = [cliente.nombre, venta.vendedorNombre, desde ? formatRelativeTime(desde) : null].filter(Boolean).join(' · ')
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -79,10 +87,10 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], paddingBottom: space[12] }}>
         <View style={tarjeta}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-            <Text style={[typeScale.cuerpoDestacado, { color: c.text, flex: 1 }]}>{venta.clienteNombre ?? '—'}</Text>
+            <Text style={[typeScale.cuerpoDestacado, { color: c.text, flex: 1 }]}>{cliente.titulo}</Text>
             {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
           </View>
-          <Text style={secundario}>{venta.vendedorNombre ?? ''}</Text>
+          <Text style={secundario}>{lineaDeApoyo}</Text>
           <TotalsRow label="Total" importe={venta.totalAmount} destacado />
         </View>
 
