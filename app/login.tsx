@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useRouter } from 'expo-router'
+import NetInfo from '@react-native-community/netinfo'
 import { useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, Eye, EyeOff, Fingerprint } from 'lucide-react-native'
 import { useColors, space, typeScale } from '../libs/theme'
@@ -48,6 +49,7 @@ export default function LoginScreen() {
   const [currentUrl, setCurrentUrl] = useState(API_URL)
   const [foco, setFoco] = useState<'usuario' | 'contrasena' | null>(null)
   const contrasenaRef = useRef<TextInput>(null)
+  const [sinConexion, setSinConexion] = useState(false)
 
   const entrar = () => {
     safeHaptics.notification('success')
@@ -79,6 +81,11 @@ export default function LoginScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Solo "sin red" cuando NetInfo lo afirma: un valor desconocido no apaga el ingreso.
+  useEffect(() => NetInfo.addEventListener((estado) => {
+    setSinConexion(estado.isConnected === false || estado.isInternetReachable === false)
+  }), [])
+
   useEffect(() => {
     if (error) safeHaptics.notification('error')
   }, [error])
@@ -107,11 +114,13 @@ export default function LoginScreen() {
 
   const quedan = INTENTOS_ANTES_DEL_BLOQUEO - failedAttempts
   const etiqueta = [typeScale.secundario, { fontWeight: '600' as const, color: c.onTopBar }]
+  // Los dos campos se marcan en error: el servidor no distingue cuál falló.
+  const conError = !!error && !faltanDatos
   const campo = (enfocado: boolean) => ({
     height: isTablet ? 56 : 52,
     borderRadius: 12,
-    borderWidth: enfocado ? 2 : 1,
-    borderColor: enfocado ? c.action : CAMPO.borde,
+    borderWidth: enfocado || conError ? 2 : 1,
+    borderColor: conError ? c.chip.anulado.text : enfocado ? c.action : CAMPO.borde,
     backgroundColor: CAMPO.fondo,
     paddingHorizontal: space[4],
     flexDirection: 'row' as const,
@@ -177,6 +186,8 @@ export default function LoginScreen() {
         </View>
       </View>
 
+      {/* PROPUESTA de la lámina: sin red el ingreso y la huella quedan apagados (ambos necesitan al servidor). */}
+      {sinConexion ? <Notice tone="advertencia">Sin conexión. Conectate a internet para ingresar; se reintenta solo.</Notice> : null}
       {faltanDatos ? <Notice tone="advertencia">Completá tu usuario y tu contraseña.</Notice> : null}
       {error && !faltanDatos ? <Notice tone="peligro">{error}</Notice> : null}
       {!isLocked && failedAttempts > 0 && quedan > 0 ? (
@@ -197,16 +208,19 @@ export default function LoginScreen() {
           label={isLocked ? 'Acceso bloqueado' : 'Ingresar'}
           onPress={() => { void ingresar() }}
           loading={isLoading}
-          disabled={isLocked}
+          disabled={isLocked || sinConexion}
         />
         {ofrecerHuella ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Entrar con huella"
+            disabled={sinConexion}
+            accessibilityState={{ disabled: sinConexion }}
             onPress={() => { void entrarConHuella() }}
             android_ripple={{ color: CAMPO.borde }}
             style={{
               height: 52,
+              opacity: sinConexion ? 0.4 : 1,
               borderRadius: 14,
               borderWidth: 1,
               borderColor: CAMPO.borde,
