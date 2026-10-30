@@ -11,10 +11,18 @@ import { compartirFoto } from '../lib/compartirFoto'
 
 function Fila({ label, valor, fuerte }: { label: string; valor: string; fuerte?: boolean }) {
   const c = useColors()
+  // A long value (a category path) pushed the label down to one letter per line on Android; it stacks instead.
+  const apilada = valor.length > 24
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2], minHeight: 28 }}>
-      <Text style={[typeScale.secundario, { color: c.textSecondary, flexShrink: 1 }]}>{label}</Text>
-      <Text style={[fuerte ? typeScale.cuerpoDestacado : typeScale.cuerpo, importe, { color: c.text }]}>{valor}</Text>
+    <View
+      style={
+        apilada
+          ? { gap: space[1], minHeight: 28 }
+          : { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2], minHeight: 28 }
+      }
+    >
+      <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{label}</Text>
+      <Text style={[fuerte ? typeScale.cuerpoDestacado : typeScale.cuerpo, importe, { color: c.text, flexShrink: 1 }]}>{valor}</Text>
     </View>
   )
 }
