@@ -15,7 +15,9 @@ import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { multiploDe, precioServidor, type LineaCarrito } from '../lib/carrito'
 import { stockDeFragancia } from '../lib/fragancias'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoPiso, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
+import { convertirModo, modoDeCantidad, presentacionDe, unidadesDe, type ModoCantidad } from '../lib/presentacion'
 import { Redondo } from './ProductoCatalogoCard'
+import { SeVendePor } from './SeVendePor'
 
 interface EditarLineaSheetProps {
   /** Línea a editar; null = cerrado. */
@@ -65,6 +67,10 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
   const [precioTexto, setPrecioTexto] = useState(mostrarNumero(precioFromPct(base, linea.descuentoPct)))
 
   const m = multiploDe(p)
+  const pr = presentacionDe(p)
+  const [modo, setModo] = useState<ModoCantidad>(() => modoDeCantidad(pr, linea.cantidad))
+  // Lo que suman "+" y "−" en el modo elegido, en unidades (Pack = la venta mínima, Bulto = la caja cerrada).
+  const paso = unidadesDe(pr, modo, pr.paso[modo])
   const pctLeido = leerNumero(pctTexto)
   const precioLeido = leerNumero(precioTexto)
   const pctInvalido = pctLeido === null || pctLeido < 0 || pctLeido > 100
@@ -108,12 +114,18 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
             </Pressable>
           </View>
           <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }}>
+            {pr.modos.length > 1 ? (
+              <View style={{ gap: space[2] }}>
+                <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Se vende por</Text>
+                <SeVendePor presentacion={pr} modo={modo} onCambiar={(mo) => { setModo(mo); setCantidad((n) => convertirModo(pr, mo, n)) }} />
+              </View>
+            ) : null}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={texto()}>Unidades</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-                <Redondo c={c} label="−" a11y="Restar" onPress={() => setCantidad((n) => Math.max(m, n - m))} />
+                <Redondo c={c} label="−" a11y="Restar" onPress={() => setCantidad((n) => (n - paso >= m ? n - paso : n))} />
                 <Text accessibilityLabel={`Unidades: ${cantidad}`} style={texto({ ...importe, minWidth: 48, textAlign: 'center' })}>{cantidad}</Text>
-                <Redondo c={c} label="+" a11y="Sumar" disabled={cantidad + m > maxCantidad} onPress={() => setCantidad((n) => n + m)} />
+                <Redondo c={c} label="+" a11y="Sumar" disabled={cantidad + paso > maxCantidad} onPress={() => setCantidad((n) => n + paso)} />
               </View>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: c.border, paddingBottom: space[3] }}>

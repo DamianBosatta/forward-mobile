@@ -1,14 +1,17 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Button, Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, formatPorcentaje } from '@/core/ui/fw'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
-import { useAutorizacionPreview, useVenta } from '@/libs/api-client/ventas'
+import { useAutorizacionPreview, usePendientesAutorizacion, useVenta } from '@/libs/api-client/ventas'
 import { useSocio } from '@/libs/api-client/socios'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
+import { formatRelativeTime } from '@/src/utils/date'
 import { pideRazon, textosDeMotivos } from '../lib/motivos'
 import { ClienteParaAutorizar } from './ClienteParaAutorizar'
+import { clienteDeBandeja } from './BandejaAutorizaciones'
 import { DecisionSheet, type Decision } from './DecisionSheet'
 
 /** El servidor manda el estado como número o como nombre según el endpoint. */
@@ -28,6 +31,7 @@ interface Props {
 export function DetalleAutorizacion({ id, onVolver }: Props) {
   const c = useColors()
   const router = useRouter()
+  const insets = useSafeAreaInsets()
   const veCostos = useAuthStore((s) => s.hasCapability('CAP_VER_COSTOS'))
   const puedeAutorizar = useAuthStore((s) => s.hasCapability('CAP_AUTORIZAR_VENTA'))
   // Como la web (VentaGestionDetail.tsx:146-149): decidir pide la capacidad Y modificar Ventas.
@@ -45,6 +49,9 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
   // Saldo y condición de pago del cliente: es información de apoyo, así que ni la carga ni un error
   // (403, 404, sin red) tocan los botones. `fresco`: para decidir sobre plata no sirve un saldo de hace 5 minutos.
   const socio = useSocio(veClientes ? (venta?.clienteId ?? '') : '', { fresco: true })
+  // La dirección y desde cuándo espera no vienen en el detalle de la venta: salen de su fila en la bandeja (misma consulta, en caché).
+  const pendientes = usePendientesAutorizacion(puedeAutorizar && porAutorizar)
+  const fila = Array.isArray(pendientes.data) ? pendientes.data.find((p) => p.id === id) : undefined
   const [decision, setDecision] = useState<Decision | null>(null)
   // La versión cacheada puede tener hasta 60 s: al decidir se vuelve a pedir la venta.
   const [aviso, setAviso] = useState<string | null>(null)
@@ -53,8 +60,8 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
   const tarjeta = { padding: space[4], gap: space[2], borderRadius: radii.tarjeta, backgroundColor: c.surface }
 
-  const titulo = venta?.codigoPedido ? `Autorizar ${venta.codigoPedido}` : 'Autorizar venta'
-  const barra = <TopBar title={titulo} leading={{ kind: 'atras', onPress: volver }} />
+  const titulo = venta?.codigoPedido ?? 'Autorizar venta'
+  const barra = <TopBar title={titulo} subtitle={venta ? chipForEstado('venta', venta.estado)?.label : undefined} leading={{ kind: 'atras', onPress: volver }} />
 
   if (!venta) {
     return (
@@ -70,6 +77,9 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
   const debajoDelMinimo = preview.data?.items ?? []
   const motivos = textosDeMotivos(venta.motivoPendienteAutorizacion, q.data?.detalleMotivos)
   const chip = chipForEstado('venta', venta.estado)
+  const cliente = fila ? clienteDeBandeja(fila) : { titulo: venta.clienteNombre ?? '—', nombre: null }
+  const desde = fila?.fechaPendiente ?? (porAutorizar ? venta.fechaModificacion : null)
+  const lineaDeApoyo = [cliente.nombre, venta.vendedorNombre, desde ? formatRelativeTime(desde) : null].filter(Boolean).join(' · ')
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -77,10 +87,10 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], paddingBottom: space[12] }}>
         <View style={tarjeta}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-            <Text style={[typeScale.cuerpoDestacado, { color: c.text, flex: 1 }]}>{venta.clienteNombre ?? '—'}</Text>
+            <Text style={[typeScale.cuerpoDestacado, { color: c.text, flex: 1 }]}>{cliente.titulo}</Text>
             {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
           </View>
-          <Text style={secundario}>{venta.vendedorNombre ?? ''}</Text>
+          <Text style={secundario}>{lineaDeApoyo}</Text>
           <TotalsRow label="Total" importe={venta.totalAmount} destacado />
         </View>
 
@@ -90,16 +100,11 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
         ) : (
           <>
             <View style={tarjeta}>
-              <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Quedó por autorizar porque:</Text>
+              <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Por qué espera</Text>
               {motivos.map((m) => <Text key={m.clave} style={[typeScale.secundario, { color: c.text }]}>{`• ${m.texto}`}</Text>)}
               {venta.motivoVentaSinStock ? <Text style={secundario}>{`Motivo del vendedor: «${venta.motivoVentaSinStock}»`}</Text> : null}
             </View>
-            {puedeDecidir ? (
-              <View style={{ flexDirection: 'row', gap: space[3] }}>
-                <View style={{ flex: 1 }}><Button label="Rechazar" variant="secundario" onPress={() => abrirDecision('rechazar')} /></View>
-                <View style={{ flex: 1 }}><Button label="Autorizar" onPress={() => abrirDecision('autorizar')} /></View>
-              </View>
-            ) : (
+            {puedeDecidir ? null : (
               <Notice tone="info">
                 {puedeAutorizar
                   ? 'Para autorizar o rechazar necesitás el permiso de modificar ventas. Pedíselo a un administrador.'
@@ -124,7 +129,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
 
         {veCostos ? (
           <View style={tarjeta} testID="bloque-costos">
-            <Text style={secundario}>Solo con permiso de ver costos</Text>
+            <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Rentabilidad</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Text style={secundario}>Costo de la venta</Text>
               <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(preview.data?.costoTotal)}</Text>
@@ -175,6 +180,13 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
           <TotalsRow label="Total" importe={venta.totalAmount} destacado />
         </View>
       </ScrollView>
+      {/* Barra fija como la lámina: decidir siempre a mano, con el margen en amarillo pide motivo. */}
+      {porAutorizar && puedeDecidir ? (
+        <View style={{ flexDirection: 'row', gap: space[3], padding: space[4], paddingBottom: Math.max(insets.bottom, space[4]), borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
+          <View style={{ flex: 1 }}><Button label="Rechazar" variant="secundario" onPress={() => abrirDecision('rechazar')} /></View>
+          <View style={{ flex: 1.4 }}><Button label={pideRazon(venta.motivoPendienteAutorizacion) ? 'Revisar y autorizar' : 'Autorizar'} onPress={() => abrirDecision('autorizar')} /></View>
+        </View>
+      ) : null}
       <DecisionSheet
         decision={decision}
         ventaId={id}

@@ -15,11 +15,11 @@ jest.mock('@/core/utils/haptics', () => ({ safeHaptics: {} }))
 import { estadoColor, estatoLabel } from '../components/RouteSelector'
 
 describe('hoja de ruta: RouteSelector', () => {
-  it.each([[1, 'PROGRAMADA'], [5, 'DOCUMENTADA'], [2, 'EN RUTA'], [3, 'FINALIZADA'], [4, 'CANCELADA'], [99, 'DESCONOCIDO'], [undefined, 'DESCONOCIDO']])(
+  it.each([[1, 'PROGRAMADA'], [5, 'DOCUMENTADA'], [2, 'EN RUTA'], [3, 'FINALIZADA'], [4, 'CANCELADA'], [6, 'RENDIDA'], [99, 'DESCONOCIDO'], [undefined, 'DESCONOCIDO']])(
     'etiqueta %s -> %s',
     (estado, label) => expect(estatoLabel(estado)).toBe(label),
   )
-  it.each([[1, 'O'], [5, 'B'], [2, 'P'], [3, 'G'], [4, 'R'], [99, 'O']])('color %s -> %s', (estado, color) =>
+  it.each([[1, 'O'], [5, 'B'], [2, 'P'], [3, 'G'], [4, 'R'], [6, 'G'], [99, 'O']])('color %s -> %s', (estado, color) =>
     expect(estadoColor(estado, 'P')).toBe(color),
   )
 })

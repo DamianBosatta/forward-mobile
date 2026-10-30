@@ -34,17 +34,21 @@ interface Props {
   yaReservadas?: YaReservadas
   /** Texto del botón; sin esto, "Confirmar venta". Editar usa "Guardar cambios". */
   etiquetaConfirmar?: string
+  /** Por qué la venta va a quedar por autorizar (lo calcula `avisos`); sin motivos no hay aviso. */
+  autorizacion?: string[]
+  /** "Editar" de la sección Productos: vuelve al catálogo a sumar o sacar productos. */
+  onEditarProductos?: () => void
   /** Lo que la venta nueva ajusta desde acá y no es una línea: datos de la entrega, descuento general, avisos, comisión. */
   ajustes?: ReactNode
 }
 
-/** "2 bultos × $ 1.720,50" si la cantidad es de cajas cerradas; si no, "4 u × $ 400,56". */
+/** "2 bultos × 12 = 24 u" si la cantidad es de cajas cerradas; si no, "4 u × $ 400,56". */
 function detalleDe(l: LineaCarrito): string {
   const m = unidadesPorBultoDe(l.producto)
   const precio = precioServidor(l.producto)
   if (m > 1 && l.cantidad % m === 0) {
     const bultos = l.cantidad / m
-    return `${mostrarNumero(bultos)} ${bultos === 1 ? 'bulto' : 'bultos'} × ${formatImporte(precio * m)}`
+    return `${mostrarNumero(bultos)} ${bultos === 1 ? 'bulto' : 'bultos'} × ${mostrarNumero(m)} = ${mostrarNumero(l.cantidad)} u`
   }
   return `${mostrarNumero(l.cantidad)} u × ${formatImporte(precio)}`
 }
@@ -54,7 +58,7 @@ function detalleDe(l: LineaCarrito): string {
  * tocar "Confirmar venta" (que manda la venta: no hay segunda confirmación); lo que cambió desde que se cargó queda marcado y el banner lo cuenta. Si falta stock
  * no se bloquea: el flujo de confirmar pide el motivo y la venta va a autorización.
  */
-export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, deshabilitado = false, motivoDeshabilitado, onEditarLinea, onElegirFragancias, ajustes, yaReservadas, etiquetaConfirmar = 'Confirmar venta' }: Props) {
+export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, deshabilitado = false, motivoDeshabilitado, onEditarLinea, onElegirFragancias, ajustes, autorizacion = [], onEditarProductos, yaReservadas, etiquetaConfirmar = 'Confirmar venta' }: Props) {
   const c = useColors()
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
   const { lineas, cambios, confirmado, sinConexion, revalidando, revalidar } = useRevalidarStockVenta()
@@ -109,6 +113,19 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
             {`El stock cambió mientras cargabas: revisá ${cambios.length} ${cambios.length === 1 ? 'producto' : 'productos'}.`}
           </Notice>
         ) : null}
+        {autorizacion.length > 0 ? (
+          <Notice tone="advertencia" title="Esta venta necesita autorización" testID="revisar-autorizacion">
+            {`${autorizacion.map((m) => `• ${m.charAt(0).toUpperCase()}${m.slice(1)}.`).join('\n')}\nPodés confirmarla igual: queda en Por autorizar.`}
+          </Notice>
+        ) : null}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Productos</Text>
+          {onEditarProductos ? (
+            <Pressable accessibilityRole="button" accessibilityLabel="Editar productos" onPress={onEditarProductos} style={{ minHeight: 44, justifyContent: 'center' }}>
+              <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Editar</Text>
+            </Pressable>
+          ) : null}
+        </View>
         {lineas.map((l, i) => {
           const padreId = l.producto.productoPadreId
           // Una sola vez por producto padre: sus variantes se reparten juntas en `FraganciasSheet`.
@@ -158,7 +175,7 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
         {ajustes}
         <View style={{ gap: space[2], paddingTop: space[2] }}>
           <TotalsRow label="Subtotal de lista" importe={lista} />
-          {ofertas > 0 ? <TotalsRow label="Ofertas" importe={-ofertas} /> : null}
+          {ofertas > 0 ? <TotalsRow label="Descuentos de línea" importe={-ofertas} /> : null}
           {t.descuento > 0 ? <TotalsRow label="Descuento general" importe={-t.descuento} /> : null}
           {flete > 0 ? <TotalsRow label="Flete (logística propia)" importe={flete} /> : null}
           {entrega ? (

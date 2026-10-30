@@ -13,7 +13,7 @@ import { multiploDe, precioServidor, type LineaCarrito } from '../lib/carrito'
 import { disponibleParaLinea, faltaStock } from '../lib/avisos'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoPiso, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
 import { MAX_DIGITOS, TOPE_CANTIDAD, errorDeCantidad, limitarDigitos } from '../lib/teclado'
-import { chipsDeDescuento, presentacionDe, rotuloPresentacion, unidadesDe, valorEn, convertirModo, type ModoCantidad } from '../lib/presentacion'
+import { chipsDeDescuento, presentacionDe, rotuloPresentacion, unidadesDe, valorEn, convertirModo, modoDeCantidad, type ModoCantidad } from '../lib/presentacion'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 
 interface Props {
@@ -60,7 +60,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
   const verCosto = canViewCost(user?.permissions)
 
   const unidadesIniciales = linea?.cantidad ?? minimo
-  const modoInicial: ModoCantidad = pr.modos.includes('bultos') && unidadesIniciales % pr.unidadesPorBulto === 0 ? 'bultos' : 'unidades'
+  const modoInicial: ModoCantidad = modoDeCantidad(pr, unidadesIniciales)
   const [modo, setModo] = useState<ModoCantidad>(modoInicial)
   const [texto, setTexto] = useState(String(valorEn(pr, modoInicial, unidadesIniciales)))
   const [pctTexto, setPctTexto] = useState(mostrarNumero(linea?.descuentoPct ?? 0))
@@ -233,7 +233,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
               </View>
             </View>
             <Text style={secundario}>Cambiás uno y el otro se recalcula solo.</Text>
-            {avisoDeTope === 'porAutorizar' ? <Notice tone="advertencia">{`Supera tu tope de ${mostrarNumero(tope)} %: el pedido queda por autorizar.`}</Notice> : null}
+            {avisoDeTope === 'porAutorizar' ? <Notice tone="advertencia">{`Tu tope de descuento es ${mostrarNumero(tope)} %. Con ${mostrarNumero(pct)} % la venta va a necesitar autorización.`}</Notice> : null}
             {avisoDeTope === 'sinConfigurar' ? <Notice tone="peligro">{MENSAJE_TOPE_SIN_CONFIGURAR}</Notice> : null}
             {piso === 'rojo' ? <Notice tone="peligro" title="Debajo del costo.">El sistema no deja guardar la venta con este precio.</Notice> : null}
             {piso === 'amarillo' ? <Notice tone="advertencia" title={`Debajo del precio mínimo (${formatImporte(p.precioMinimoRentable)}).`}>Va a quedar por autorizar.</Notice> : null}

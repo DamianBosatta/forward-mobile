@@ -66,7 +66,7 @@ describe('lista de compras', () => {
     expect(await screen.findByText('Mostrando 2 de 5')).toBeTruthy()
     expect(ultimaConsulta().getAll('Estados')).toEqual(['NotaPedido', 'Confirmado'])
     expect(ultimaConsulta().get('FechaDesde')).toBeNull()
-    expect(screen.getByRole('tab', { name: 'Pendientes' })).toBeSelected()
+    expect(screen.getByRole('radio', { name: 'Pendientes' })).toBeSelected()
     expect(await screen.findByText('4 notas de pedido · 1 por recibir')).toBeTruthy()
     // No se muestra el total comprado: el servidor suma monedas distintas.
     expect(screen.queryByText(/999/)).toBeNull()
@@ -89,7 +89,7 @@ describe('lista de compras', () => {
     pantalla()
     const tarjeta = await screen.findByRole('button', { name: /AAAA1111/ })
     expect(within(tarjeta).getByText('AAAA1111 · Nacho Damiano')).toBeTruthy()
-    expect(within(tarjeta).getByText(/8 productos · Depósito Central/)).toBeTruthy()
+    expect(within(tarjeta).getByText(/8 productos/)).toBeTruthy()
   })
 
   it('con el servidor que dice cuándo llega, la compra por recibir lo muestra en el pie', async () => {
@@ -100,7 +100,7 @@ describe('lista de compras', () => {
     })
     pantalla()
     const tarjeta = await screen.findByRole('button', { name: /AAAA1111/ })
-    expect(within(tarjeta).getByText(/8 productos · Llega jue 8$/)).toBeTruthy()
+    expect(within(tarjeta).getByText(/Llega jue 8$/)).toBeTruthy()
   })
 
   it('con el número correlativo del servidor (9C), la tarjeta dice C-00232 en vez del id', async () => {
@@ -129,7 +129,7 @@ describe('lista de compras', () => {
     pantalla()
     expect(await screen.findByText('Comprado (pendientes y recibidas): $ 998,00 · USD 1,00')).toBeTruthy()
     expect(screen.queryByText(/999/)).toBeNull()
-    await userEvent.press(screen.getByRole('radio', { name: '7 días' }))
+    await userEvent.press(screen.getByRole('button', { name: '7 días' }))
     await waitFor(() => expect(ultimaConsulta().get('FechaDesde')).toMatch(/^\d{4}-\d{2}-\d{2}$/))
     const resumenes = mockGet.mock.calls.map(([u]) => String(u)).filter((u) => u.startsWith('/api/v1/Compras/resumen?'))
     expect(new URLSearchParams(resumenes.at(-1)!.split('?')[1]).get('FechaDesde')).toBe(ultimaConsulta().get('FechaDesde'))
@@ -147,22 +147,25 @@ describe('lista de compras', () => {
       })
     })
     pantalla()
-    expect(await screen.findByText('Mostrando 2 de 5 · $ 2.118.577,00')).toBeTruthy()
+    expect(await screen.findByText('Mostrando 2 de 5')).toBeTruthy()
+    const totales = await screen.findByTestId('totales-lista')
+    expect(within(totales).getByText('Pendientes de recibir')).toBeTruthy()
+    expect(within(totales).getByText('$ 2.118.577,00')).toBeTruthy()
     expect(screen.queryByText(/Comprado \(pendientes y recibidas\)/)).toBeNull()
     const resumenes = () => mockGet.mock.calls.map(([u]) => String(u)).filter((u) => u.startsWith('/api/v1/Compras/resumen?'))
     expect(new URLSearchParams(resumenes().at(-1)!.split('?')[1]).getAll('Estados')).toEqual(['NotaPedido', 'Confirmado'])
-    await userEvent.press(screen.getByRole('tab', { name: 'Recibidas' }))
-    expect(await screen.findByText('Mostrando 2 de 5 · $ 500,00')).toBeTruthy()
+    await userEvent.press(screen.getByRole('radio', { name: 'Recibidas' }))
+    expect(await within(await screen.findByTestId('totales-lista')).findByText('$ 500,00')).toBeTruthy()
     expect(new URLSearchParams(resumenes().at(-1)!.split('?')[1]).getAll('Estados')).toEqual(['Entregado'])
   })
 
   it('Recibidas y el período van como filtros al servidor', async () => {
     pantalla()
     await screen.findByText('Mostrando 2 de 5')
-    await userEvent.press(screen.getByRole('tab', { name: 'Recibidas' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Recibidas' }))
     await waitFor(() => expect(ultimaConsulta().getAll('Estados')).toEqual(['Entregado']))
     expect(await screen.findByText('7 recibidas')).toBeTruthy()
-    await userEvent.press(screen.getByRole('radio', { name: '7 días' }))
+    await userEvent.press(screen.getByRole('button', { name: '7 días' }))
     await waitFor(() => expect(ultimaConsulta().get('FechaDesde')).toMatch(/^\d{4}-\d{2}-\d{2}$/))
     expect(ultimaConsulta().getAll('Estados')).toEqual(['Entregado'])
   })
@@ -179,7 +182,7 @@ describe('lista de compras', () => {
 
   it('Borradores muestra los del usuario que devuelve el servidor y se retoman al tocarlos', async () => {
     pantalla()
-    await userEvent.press(screen.getByRole('tab', { name: 'Borradores' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Borradores' }))
     expect(await screen.findByText('Gorrión Mayorista')).toBeTruthy()
     expect(screen.getByText(/3 líneas · Guardado hoy/)).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/v1/Compras/borradores/mios')

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import { ActivityIndicator, FlatList, Pressable, SectionList, Text, View } from 'react-native'
+import { ActivityIndicator, FlatList, Pressable, ScrollView, SectionList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import {
   DocumentCard, Fab, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, useMenuLeading,
   type SegmentedOption,
 } from '@/core/ui/fw'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { FiltroChip } from '@/core/ui/fw/FiltroChip'
+import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import type { CompraDtoList } from '@/libs/api-client'
@@ -16,10 +17,10 @@ import { llegaTexto } from '../lib/fecha'
 import type { EstadoCompraRuta } from '@/features/listas/lib/filtroDeRuta'
 import { numeroDeCompra } from '../lib/numero'
 
-const PESTANAS: { key: PestanaCompras; label: string }[] = [
-  { key: 'pendientes', label: 'Pendientes' },
-  { key: 'recibidas', label: 'Recibidas' },
-  { key: 'borradores', label: 'Borradores' },
+const PESTANAS: SegmentedOption<PestanaCompras>[] = [
+  { value: 'pendientes', label: 'Pendientes' },
+  { value: 'recibidas', label: 'Recibidas' },
+  { value: 'borradores', label: 'Borradores' },
 ]
 const PERIODOS: SegmentedOption<PeriodoCompras>[] = [
   { value: 'hoy', label: 'Hoy' },
@@ -68,9 +69,11 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
   const filtros = (
     <View style={{ gap: space[3], paddingBottom: space[2] }}>
       <Field label="Buscar" placeholder="Proveedor o número" value={l.busqueda} onChangeText={l.setBusqueda} autoCorrect={false} />
-      <Segmented accessibilityLabel="Período" options={PERIODOS} value={l.periodo} onChange={l.setPeriodo} />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityLabel="Período" contentContainerStyle={{ gap: space[2] }}>
+        {PERIODOS.map((p) => <FiltroChip key={p.value} label={p.label} activo={p.value === l.periodo} onPress={() => l.setPeriodo(p.value)} />)}
+      </ScrollView>
       {l.pestana === 'pendientes' ? (
-        <View accessibilityRole="radiogroup" accessibilityLabel="Estado" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" accessibilityLabel="Estado" contentContainerStyle={{ gap: space[2] }}>
           {ESTADOS_PENDIENTES.map((e) => {
             const sel = e.value === l.soloEstado
             return (
@@ -85,6 +88,15 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
               </Pressable>
             )
           })}
+        </ScrollView>
+      ) : null}
+      {l.tarjeta ? (
+        <View testID="totales-lista" style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space[3], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+          <View style={{ flexShrink: 1 }}>
+            <Text style={secundario}>{l.tarjeta.rotulo}</Text>
+            <Text style={[typeScale.titulo, cifras, { color: c.text }]}>{l.tarjeta.importe}</Text>
+          </View>
+          <Text style={[typeScale.etiqueta, { color: c.textSecondary, paddingHorizontal: space[2], paddingVertical: space[1], borderRadius: radii.pastilla, backgroundColor: c.surface2 }]}>{l.tarjeta.cuenta}</Text>
         </View>
       ) : null}
       {l.contador ? <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{l.contador}</Text> : null}
@@ -105,12 +117,13 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
       renderItem={({ item: x }: { item: CompraDtoList }) => (
         <View style={{ marginBottom: space[3] }}>
           <DocumentCard
+            plano
             numero={numeroDeCompra(x)}
             vendedor={x.creadoPor ?? x.nombreDeposito}
-            avatar={x.razonSocialProveedor}
             direccion={x.razonSocialProveedor}
+            nombre={[`${numeroDeCompra(x)} · ${x.creadoPor ?? x.nombreDeposito}`, llegaTexto(x.fechaEsperadaRecepcion)].filter(Boolean).join(' · ')}
             hora={horaDe(x.fecha)}
-            detalle={[productos(x.itemsCount ?? 0), x.creadoPor ? x.nombreDeposito : null, llegaTexto(x.fechaEsperadaRecepcion)].filter(Boolean).join(' · ')}
+            detalle={productos(x.itemsCount ?? 0)}
             importe={x.totalAmount}
             chip={chipForEstado('compra', x.estado)}
             onPress={() => abrir(x.id)}
@@ -161,18 +174,17 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar
-        title="Compras"
-        leading={leading}
-        tabs={PESTANAS.map((p) => ({ label: p.label, selected: p.key === l.pestana, onPress: () => { l.setPestana(p.key); setElegida(null) } }))}
-      />
+      <TopBar title="Compras" leading={leading} />
+      <View style={{ paddingHorizontal: space[4], paddingTop: space[3] }}>
+        <Segmented accessibilityLabel="Pestaña" options={PESTANAS} value={l.pestana} onChange={(p) => { l.setPestana(p); setElegida(null) }} />
+      </View>
       <TwoPane
         list={
           <View style={{ flex: 1 }}>
             {l.pestana === 'borradores' ? listaBorradores : listaCompras}
             {/* La barra de accesos rápidos ya no trae el "+" (lámina CalleMiDia): la compra nueva sale de acá, en teléfono y en tablet. */}
             {canDo('MOD_COMPRAS', 'create') ? (
-              <Fab accessibilityLabel="Nueva compra" onPress={() => router.push('/(tabs)/compras/nueva' as never)} />
+              <Fab accessibilityLabel="Nueva compra" label="Nueva compra" onPress={() => router.push('/(tabs)/compras/nueva' as never)} />
             ) : null}
           </View>
         }

@@ -73,7 +73,7 @@ function Contenido({ valor, lineas, flete, onClose, onAplicar }: Props) {
       <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
         Se suma al descuento de cada línea. Si en alguna pasa tu tope, el pedido queda por autorizar.
       </Text>
-      {aviso === 'porAutorizar' ? <Notice tone="advertencia">{`Supera tu tope de ${mostrarNumero(tope)} %: el pedido queda por autorizar.`}</Notice> : null}
+      {aviso === 'porAutorizar' ? <Notice tone="advertencia">{`Tu tope de descuento es ${mostrarNumero(tope)} %. Con ${mostrarNumero(pct)} % la venta va a necesitar autorización.`}</Notice> : null}
       {aviso === 'sinConfigurar' ? <Notice tone="peligro">{MENSAJE_TOPE_SIN_CONFIGURAR}</Notice> : null}
       <Button label="Aplicar" disabled={invalido} onPress={() => onAplicar(pct)} />
     </BottomSheet>

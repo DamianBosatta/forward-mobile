@@ -87,7 +87,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
   const form: FormEntrega = { ...f, lineas, devolucion: hayDevolucion ? f.devolucion : {}, firmaUrl: firmar ? f.firmaUrl : null }
 
   const eligiendo = entregado && paso === 'devolucion' && hayDevolucion !== true
-  const pos = posicionDePaso(paso, hayDevolucion)
+  const pos = posicionDePaso(paso)
   const ctxCobro: ContextoCobro = {
     lineas, imputacion: f.imputacion, noCobro: f.noCobro,
     aCobrar: aCobrar.aCobrar ? aCobrar.valor : null, hayDevolucion: hayDevolucion === true, subiendo: subiendo > 0,
