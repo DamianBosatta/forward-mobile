@@ -3,6 +3,7 @@ import { render, screen, userEvent, waitFor } from '@testing-library/react-nativ
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { storage } from '@/core/utils/storage'
+import { formatImporte } from '@/core/ui/fw'
 import { ElegirClienteVenta } from '../components/ElegirClienteVenta'
 
 const mockCartera = jest.fn()
@@ -95,5 +96,17 @@ describe('V2 ¿A quién le vendés?', () => {
     expect(screen.getByText('Todavía no hay clientes en tu cartera.')).toBeTruthy()
     await userEvent.type(screen.getByLabelText('Buscar cliente'), 'zzz')
     expect(screen.getByText('Ningún cliente coincide con la búsqueda.')).toBeTruthy()
+  })
+
+  it('la fila del cliente elegido dice su último pedido (día argentino e importe); las demás no', () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={qc}><ElegirClienteVenta onElegir={jest.fn()} onNuevoCliente={jest.fn()} seleccionadoId="c1" ultimoPedido={{ fecha: '2026-10-25T01:30:00Z', total: 161200 }} /></QueryClientProvider>)
+    expect(screen.getAllByText(`Último pedido 24/10 · ${formatImporte(161200)}`)).toHaveLength(1)
+  })
+
+  it('"Nuevo cliente" está en el encabezado de Tu cartera', () => {
+    abrir()
+    expect(screen.getByRole('header', { name: 'Tu cartera' })).toBeTruthy()
+    expect(screen.getAllByRole('button', { name: 'Nuevo cliente' })).toHaveLength(1)
   })
 })

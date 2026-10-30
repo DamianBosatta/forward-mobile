@@ -49,7 +49,7 @@ export function NuevaVentaInicio({ cargandoCliente, tipo, onTipo, onElegir, onNu
         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Elegí el cliente para ver sus precios y el stock.</Text>
         <Segmented options={TIPOS} value={tipo} onChange={onTipo} accessibilityLabel="Tipo de venta" />
       </View>
-      <ElegirClienteVenta onElegir={setElegido} onNuevoCliente={onNuevoCliente} seleccionadoId={elegido?.id} />
+      <ElegirClienteVenta onElegir={setElegido} onNuevoCliente={onNuevoCliente} seleccionadoId={elegido?.id} ultimoPedido={ultimo ? { fecha: ultimo.fecha, total: ultimo.totalAmount } : null} />
       <View style={{ padding: space[4], gap: space[2], borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
         <Button label="Continuar a productos" disabled={!elegido} onPress={() => elegido && onElegir(elegido)}
           accessibilityLabel={elegido ? `Continuar a productos con ${direccionDeEntrega(elegido)}` : 'Continuar a productos'} />
