@@ -44,3 +44,26 @@ export function contadorVentas(
 ): string | null {
   return textoContador(cargados, totalLista, importeDelFiltro(r, filtro.tipoOperacion, filtro.estados))
 }
+
+export interface TotalesDeLaLista {
+  rotulo: string
+  importe: string
+  /** Cuántas del filtro esperan autorización (0 si el servidor no lo manda). */
+  porAutorizar: number
+}
+
+/**
+ * Tarjeta de totales de la lista (mockup ventas-lista): lo vendido (o presupuestado) del filtro, sin anuladas
+ * ni rechazadas, y cuántas esperan autorización. Sin resumen filtrado (servidor anterior a #873) no hay tarjeta.
+ */
+export function totalesDeLaLista(r: VentasResumen | undefined, tipoOperacion: number): TotalesDeLaLista | null {
+  if (!resumenFiltrado(r)) return null
+  const esPedido = tipoOperacion === PEDIDO
+  const total = esPedido ? r.totalVendido : r.totalPresupuestado
+  if (typeof total !== 'number') return null
+  return {
+    rotulo: esPedido ? 'Vendido · sin anuladas' : 'Presupuestado · sin anuladas',
+    importe: formatImporte(total),
+    porAutorizar: typeof r.porAutorizar === 'number' ? r.porAutorizar : 0,
+  }
+}

@@ -1,7 +1,9 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
-import { Segmented, TopBar } from '@/core/ui/fw'
+import { Button, Segmented, TopBar } from '@/core/ui/fw'
+import { useUltimoPedido } from '../hooks/useUltimoPedido'
+import { direccionDeEntrega } from '@/features/clientes/lib/cliente'
 import type { TipoDocumento } from '@/features/clientes/components/SeleccionarClienteSheet'
 import type { ClienteElegido } from '@/features/clientes/lib/recientes'
 import { ElegirClienteVenta } from './ElegirClienteVenta'
@@ -12,15 +14,15 @@ interface Props {
   cargandoCliente?: boolean
   tipo: TipoDocumento
   onTipo: (t: TipoDocumento) => void
-  /** Elegir el cliente arranca la venta: crea el borrador y abre el catálogo. */
-  onElegir: (c: ClienteElegido) => void
+  /** "Continuar a productos" arranca la venta: crea el borrador y abre el catálogo (con `delUltimo`, ya filtrado). */
+  onElegir: (c: ClienteElegido, opciones?: { delUltimo?: boolean }) => void
   onNuevoCliente: () => void
   onVolver: () => void
 }
 
 const TIPOS = [
-  { value: 'Presupuesto' as const, label: 'Presupuesto' },
   { value: 'Pedido' as const, label: 'Pedido' },
+  { value: 'Presupuesto' as const, label: 'Presupuesto' },
 ]
 
 /**
@@ -29,6 +31,8 @@ const TIPOS = [
  */
 export function NuevaVentaInicio({ cargandoCliente, tipo, onTipo, onElegir, onNuevoCliente, onVolver }: Props) {
   const c = useColors()
+  const [elegido, setElegido] = useState<ClienteElegido | null>(null)
+  const { ultimo } = useUltimoPedido(elegido?.id)
   if (cargandoCliente) {
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -39,13 +43,18 @@ export function NuevaVentaInicio({ cargandoCliente, tipo, onTipo, onElegir, onNu
   }
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar title="¿A quién le vendés?" leading={{ kind: 'atras', onPress: onVolver }} />
+      <TopBar title="Nueva venta" subtitle="Paso 1 de 3" leading={{ kind: 'atras', onPress: onVolver }} />
       <PasosVenta paso={1} />
       <View style={{ paddingHorizontal: space[4], paddingTop: space[3], gap: space[2] }}>
         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Elegí el cliente para ver sus precios y el stock.</Text>
         <Segmented options={TIPOS} value={tipo} onChange={onTipo} accessibilityLabel="Tipo de venta" />
       </View>
-      <ElegirClienteVenta onElegir={onElegir} onNuevoCliente={onNuevoCliente} />
+      <ElegirClienteVenta onElegir={setElegido} onNuevoCliente={onNuevoCliente} seleccionadoId={elegido?.id} ultimoPedido={ultimo ? { fecha: ultimo.fecha, total: ultimo.totalAmount } : null} />
+      <View style={{ padding: space[4], gap: space[2], borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
+        <Button label="Continuar a productos" disabled={!elegido} onPress={() => elegido && onElegir(elegido)}
+          accessibilityLabel={elegido ? `Continuar a productos con ${direccionDeEntrega(elegido)}` : 'Continuar a productos'} />
+        {elegido && ultimo ? <Button variant="secundario" label="Repetir el último pedido" onPress={() => onElegir(elegido, { delUltimo: true })} /> : null}
+      </View>
     </View>
   )
 }

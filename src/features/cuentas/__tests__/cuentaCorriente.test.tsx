@@ -109,7 +109,7 @@ it('si el servidor rechaza los movimientos, se ve su mensaje', async () => {
 it('Registrar cobro con permiso para crear pagos abre el cobro de este cliente; sin él se ve deshabilitado con el motivo (como la web)', async () => {
   const { unmount } = renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
   await screen.findByLabelText(`Saldo: ${$(186420)}`, {}, ESPERA)
-  const sinPermiso = screen.getByRole('button', { name: 'Registrar cobro' })
+  const sinPermiso = screen.getByRole('button', { name: 'Cobrar' })
   expect(sinPermiso.props.accessibilityState?.disabled).toBe(true)
   expect(screen.getByText(MOTIVO_SIN_PERMISO_DE_COBRO)).toBeTruthy()
   await userEvent.press(sinPermiso)
@@ -118,7 +118,7 @@ it('Registrar cobro con permiso para crear pagos abre el cobro de este cliente; 
 
   conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }])
   renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
-  await userEvent.press(await screen.findByRole('button', { name: 'Registrar cobro' }, ESPERA))
+  await userEvent.press(await screen.findByRole('button', { name: 'Cobrar' }, ESPERA))
 
   expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: 'c1' } })
 })
@@ -127,14 +127,14 @@ it('Registrar cobro queda deshabilitado, con el motivo, sin MOD_PAGOS:Read o sin
   conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canCreate: true }])
   const a = renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
   await screen.findByLabelText(`Saldo: ${$(186420)}`, {}, ESPERA)
-  expect(screen.getByRole('button', { name: 'Registrar cobro' }).props.accessibilityState?.disabled).toBe(true)
+  expect(screen.getByRole('button', { name: 'Cobrar' }).props.accessibilityState?.disabled).toBe(true)
   expect(screen.getByText(MOTIVO_SIN_PERMISO_DE_COBRO)).toBeTruthy()
   a.unmount()
 
   conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true }])
   renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
   await screen.findByLabelText(`Saldo: ${$(186420)}`, {}, ESPERA)
-  expect(screen.getByRole('button', { name: 'Registrar cobro' }).props.accessibilityState?.disabled).toBe(true)
+  expect(screen.getByRole('button', { name: 'Cobrar' }).props.accessibilityState?.disabled).toBe(true)
   expect(screen.getByText(MOTIVO_SIN_PERMISO_DE_COBRO)).toBeTruthy()
 })
 

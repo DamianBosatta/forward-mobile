@@ -3,7 +3,8 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import type { LucideIcon } from 'lucide-react-native'
 import { radii, space, typeScale, useColors, useIsDark, type ForwardColors } from '@/libs/theme'
 
-export type ButtonVariant = 'primario' | 'secundario' | 'peligro'
+/** `peligroContorno`: destructivo que no compite con nada (cerrar sesión); el sólido queda para confirmar. */
+export type ButtonVariant = 'primario' | 'secundario' | 'peligro' | 'peligroContorno'
 /** `xl` es la escala de la consola del chofer: 72 de alto, texto 19 y borde de 2 px (se lee al sol, con una mano). */
 export type ButtonSize = 'md' | 'xl'
 
@@ -23,6 +24,7 @@ interface ButtonProps {
 function paleta(c: ForwardColors, variant: ButtonVariant, inactivo: boolean, xl: boolean) {
   if (inactivo) return { fondo: c.surface2, texto: c.textSecondary, borde: c.surface2 }
   if (variant === 'peligro') return { fondo: c.dangerStrong, texto: c.onDangerStrong, borde: c.dangerStrong }
+  if (variant === 'peligroContorno') return { fondo: c.surface, texto: c.chip.anulado.text, borde: c.chip.anulado.text }
   if (variant === 'secundario') return { fondo: c.surface, texto: c.text, borde: xl ? c.textSecondary : c.border }
   return { fondo: c.action, texto: c.onAction, borde: c.action }
 }

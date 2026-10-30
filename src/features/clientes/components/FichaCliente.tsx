@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { FilePen, Lock, MapPin, MessageCircle, Pencil, Phone, Tag } from 'lucide-react-native'
-import { importe, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, Segmented, StatusChip, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
+import { AlertCircle, FilePen, HandCoins, Lock, MapPin, MessageCircle, Pencil, Phone, ShoppingCart } from 'lucide-react-native'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { Button, Notice, Progress, Segmented, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
+import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { useSocio } from '@/libs/api-client/socios'
 import { useVentas } from '@/libs/api-client/ventas'
 import { useEstadoCuentaSocio } from '@/features/cuentas/api/queries'
@@ -14,7 +15,7 @@ import { puedePedirCambio } from '@/features/socios/lib/camposSensibles'
 import { formatToLocalTime } from '@/src/utils/date'
 import { CreditoDelCliente } from './CreditoDelCliente'
 import { SolicitudCambio } from './SolicitudCambio'
-import { Accion, Cifra, Dato, Seccion } from '@/features/socios/components/PiezasDeFicha'
+import { Accion, Dato, Seccion } from '@/features/socios/components/PiezasDeFicha'
 import { useVenderA } from '@/features/venta-nueva/hooks/useVenderA'
 import { urlLlamar, urlWhatsApp } from '../lib/contacto'
 import { direccionDeEntrega, nombreDelCliente, textoCondicionPago } from '../lib/cliente'
@@ -29,7 +30,13 @@ type Solapa = 'compras' | 'cuenta' | 'datos'
  * cuenta solo si el servidor la deja ver, Editar si el servidor dice que es de tu cartera, dirección,
  * razón social y CUIT solo por administrador (los demás piden el cambio).
  */
-export function FichaCliente({ id }: { id: string }) {
+export const MOTIVO_SIN_COBRO = 'No tenés permiso para cobrar'
+
+/**
+ * `conBarra`: en teléfono la ficha pone su propia barra superior (dirección y nombre en el título, lápiz de
+ * editar); en el panel de la tablet la barra es la de la lista.
+ */
+export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: boolean }) {
   const c = useColors()
   const router = useRouter()
   const { canUpdate, canCreate, canRead } = usePermissions()
@@ -43,11 +50,22 @@ export function FichaCliente({ id }: { id: string }) {
   const cuenta = useEstadoCuentaSocio(id, verCuenta)
   const ventas = useVentas({ clienteId: id, pageSize: 3 }, { enabled: !!cliente })
 
-  if (isLoading) return <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
+  const barraSimple = conBarra ? <TopBar title="Cliente" leading={{ kind: 'atras', onPress: () => router.back() }} /> : null
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1 }}>
+        {barraSimple}
+        <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
+      </View>
+    )
+  }
   if (error || !cliente) {
     return (
-      <View style={{ padding: space[4] }}>
-        <Notice tone="peligro">{mensajeDelServidor(error, 'No se pudo abrir el cliente.')}</Notice>
+      <View style={{ flex: 1 }}>
+        {barraSimple}
+        <View style={{ padding: space[4] }}>
+          <Notice tone="peligro">{mensajeDelServidor(error, 'No se pudo abrir el cliente.')}</Notice>
+        </View>
       </View>
     )
   }
@@ -63,7 +81,12 @@ export function FichaCliente({ id }: { id: string }) {
   const disponible = typeof estado?.creditoDisponible === 'number' ? estado.creditoDisponible : null
   // La pantalla de cobro pide los medios y las cajas abiertas: MOD_PAGOS:Read además de Create.
   const puedeCobrar = verCuenta && canCreate('MOD_PAGOS') && canRead('MOD_PAGOS')
-  const subtitulo = [cliente.localidad?.trim(), cliente.cuit?.trim() ? `CUIT ${cliente.cuit.trim()}` : null].filter(Boolean).join(' · ')
+  const subtitulo = [nombre, cliente.localidad?.trim()].filter(Boolean).join(' · ')
+  const tope = cliente.topeCredito != null && cliente.topeCredito > 0 ? cliente.topeCredito : null
+  // Con deuda vencida la acción primaria es cobrar; si no, vender (lámina clientes-ficha).
+  const cobrarPrimario = vencido !== null && vencido > 0
+  const alVender = venderA ? () => router.push(venderA(id) as never) : null
+  const alCobrar = () => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: id } })
   const solapas = [
     { value: 'compras' as const, label: 'Compras' },
     ...(verCuenta ? [{ value: 'cuenta' as const, label: 'Cuenta' }] : []),
@@ -72,15 +95,23 @@ export function FichaCliente({ id }: { id: string }) {
 
   return (
     <View style={{ flex: 1 }}>
+      {conBarra ? (
+        <TopBar
+          title={direccion}
+          subtitle={subtitulo || undefined}
+          leading={{ kind: 'atras', onPress: () => router.back() }}
+          actions={puedeEditar ? [{ icon: Pencil, accessibilityLabel: 'Editar', onPress: () => router.push({ pathname: '/(tabs)/socios/nuevo', params: { id } }) }] : []}
+        />
+      ) : null}
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }}>
-        <View style={{ gap: space[1] }}>
-          <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccion}</Text>
-          {nombre ? <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{nombre}</Text> : null}
-          {subtitulo ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{subtitulo}</Text> : null}
-        </View>
+        {!conBarra ? (
+          <View style={{ gap: space[1] }}>
+            <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccion}</Text>
+            {subtitulo ? <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{subtitulo}</Text> : null}
+          </View>
+        ) : null}
 
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
-          {venderA ? <Accion icono={Tag} label="Vender" onPress={() => router.push(venderA(id) as never)} /> : null}
+        <View style={{ flexDirection: 'row', gap: space[2] }}>
           {telefono ? <Accion icono={Phone} label="Llamar" onPress={() => Linking.openURL(urlLlamar(telefono))} /> : null}
           {whatsapp ? <Accion icono={MessageCircle} label="WhatsApp" onPress={() => Linking.openURL(whatsapp)} /> : null}
           {cliente.direccion?.trim() ? (
@@ -90,25 +121,44 @@ export function FichaCliente({ id }: { id: string }) {
               onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cliente.direccion)}`)}
             />
           ) : null}
-          {puedeEditar ? (
+          {!conBarra && puedeEditar ? (
             <Accion icono={Pencil} label="Editar" onPress={() => router.push({ pathname: '/(tabs)/socios/nuevo', params: { id } })} />
           ) : null}
-          {/* La dirección, la razón social y el CUIT solo los cambia un administrador (regla de la web); el resto los pide. */}
-          {puedePedirCambio(esAdmin, puedeEditar) ? <Accion icono={FilePen} label="Pedir cambio" onPress={() => setPidiendoCambio(true)} /> : null}
         </View>
 
         {pidiendoCambio ? <SolicitudCambio cliente={cliente} onCerrar={() => setPidiendoCambio(false)} /> : null}
 
         {estado ? (
-          <View style={{ flexDirection: 'row', gap: space[2] }}>
-            <Cifra etiqueta="Saldo" valor={formatImporte(estado.saldoActual)} />
-            {vencido !== null ? <Cifra etiqueta="Vencido" valor={formatImporte(vencido)} alerta /> : null}
+          <View accessible accessibilityLabel={`Saldo ${formatImporte(estado.saldoActual)}`} style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, padding: space[4], gap: space[3] }}>
+            <View style={{ gap: space[1] }}>
+              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Saldo</Text>
+              <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(estado.saldoActual)}</Text>
+            </View>
+            {vencido !== null && vencido > 0 ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space[1], backgroundColor: c.chip.anulado.bg, borderRadius: radii.pastilla, paddingVertical: space[1], paddingHorizontal: 10 }}>
+                <AlertCircle size={14} color={c.chip.anulado.text} />
+                {/* TODO API: "días de la deuda más vieja" (hoy el servidor da el vencido sin días). */}
+                <Text style={[typeScale.etiqueta, { color: c.chip.anulado.text }]}>{`Vencido ${formatImporte(vencido)}`}</Text>
+              </View>
+            ) : null}
+            <View style={{ flexDirection: 'row', gap: space[4] }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Cuenta TST</Text>
+                <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(estado.saldoTst)}</Text>
+              </View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Normal (con factura)</Text>
+                <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(estado.saldoNormal)}</Text>
+              </View>
+            </View>
             {disponible !== null ? (
-              <Cifra
-                etiqueta={disponible < 0 ? 'Pasado del tope' : 'Crédito libre'}
-                valor={formatImporte(Math.abs(disponible))}
-                alerta={disponible < 0}
-              />
+              <View style={{ gap: space[2] }}>
+                {tope !== null ? <Progress value={Math.min(tope, Math.max(0, tope - disponible))} max={tope} accessibilityLabel="Crédito usado" /> : null}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <Text style={{ ...typeScale.cuerpo, color: disponible < 0 ? c.chip.anulado.text : c.text }}>{disponible < 0 ? 'Pasado del tope' : 'Crédito libre'}</Text>
+                  <Text style={[typeScale.cuerpoDestacado, importe, { color: disponible < 0 ? c.chip.anulado.text : c.text }]}>{formatImporte(Math.abs(disponible))}</Text>
+                </View>
+              </View>
             ) : null}
           </View>
         ) : null}
@@ -135,7 +185,7 @@ export function FichaCliente({ id }: { id: string }) {
                 >
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{v.codigoPedido ?? '—'}</Text>
-                    <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`${formatToLocalTime(v.fecha, 'EEE d MMM')} · ${tipo}`}</Text>
+                    <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`${formatToLocalTime(v.fecha, 'EEE d/M')} · ${tipo}`}</Text>
                   </View>
                   <View style={{ alignItems: 'flex-end', gap: space[1] }}>
                     <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(v.totalAmount)}</Text>
@@ -174,6 +224,10 @@ export function FichaCliente({ id }: { id: string }) {
             <Dato etiqueta="Email" valor={cliente.email} />
             {/* Solo con el servidor nuevo (forward-system #896): uno anterior no manda el nombre y no se muestra nada. */}
             <Dato etiqueta="Vendedor" valor={cliente.vendedorResponsableNombre} />
+            {/* La dirección, la razón social y el CUIT solo los cambia un administrador (regla de la web); el resto los pide. */}
+            {puedePedirCambio(esAdmin, puedeEditar) ? (
+              <Button label="Pedir cambio" variant="secundario" icon={FilePen} onPress={() => setPidiendoCambio(true)} />
+            ) : null}
             <View style={{ gap: space[1] }}>
               <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Condición de pago</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
@@ -188,9 +242,21 @@ export function FichaCliente({ id }: { id: string }) {
         ) : null}
       </ScrollView>
 
-      {puedeCobrar ? (
-        <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
-          <Button label="Registrar cobro" onPress={() => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: id } })} />
+      {alVender || verCuenta ? (
+        <View style={{ padding: space[4], gap: space[2], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+          <View style={{ flexDirection: 'row', gap: space[2] }}>
+            {alVender ? (
+              <View style={{ flex: 1 }}>
+                <Button label="Nueva venta" icon={ShoppingCart} variant={cobrarPrimario ? 'secundario' : 'primario'} onPress={alVender} />
+              </View>
+            ) : null}
+            {verCuenta ? (
+              <View style={{ flex: 1 }}>
+                <Button label="Cobrar" icon={HandCoins} variant={cobrarPrimario || !alVender ? 'primario' : 'secundario'} disabled={!puedeCobrar} onPress={alCobrar} />
+              </View>
+            ) : null}
+          </View>
+          {verCuenta && !puedeCobrar ? <MotivoDeshabilitado>{MOTIVO_SIN_COBRO}</MotivoDeshabilitado> : null}
         </View>
       ) : null}
     </View>

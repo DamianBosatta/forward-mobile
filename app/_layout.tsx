@@ -8,7 +8,7 @@ import { StatusBar } from 'expo-status-bar'
 import { useAuthGuard } from '../hooks/useAuthGuard'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { vaciarCacheAlCerrarSesion } from '@/features/auth/lib/vaciarCacheAlCerrarSesion'
-import { View, ActivityIndicator, Text, StyleSheet } from 'react-native'
+import { View } from 'react-native'
 import {
   useFonts,
   Inter_400Regular,
@@ -21,9 +21,7 @@ import {
 import { colorScheme } from 'nativewind'
 import { useColors, useIsDark, useThemeStore } from '@/libs/theme'
 import * as SplashScreen from 'expo-splash-screen'
-import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
-import { WifiOff } from 'lucide-react-native'
-import { MotiView, AnimatePresence } from 'moti'
+import { OfflineBanner } from '@/core/ui/OfflineBanner'
 import '../global.css'
 import { loadSavedApiUrl } from '@/core/api/client'
 import { AvisosAlVolver, PushDeAvisos } from '@/features/notificaciones'
@@ -34,26 +32,6 @@ SplashScreen.preventAutoHideAsync()
 
 const queryClient = crearQueryClient()
 vaciarCacheAlCerrarSesion(queryClient, asyncStoragePersister)
-
-function OfflineBanner() {
-  const { isConnected } = useNetworkStatus()
-
-  return (
-    <AnimatePresence>
-      {!isConnected && (
-        <MotiView
-          from={{ translateY: -100, opacity: 0 }}
-          animate={{ translateY: 0, opacity: 1 }}
-          exit={{ translateY: -100, opacity: 0 }}
-          style={styles.offlineBanner}
-        >
-          <WifiOff size={16} color="#fff" />
-          <Text style={styles.offlineText}>Sin conexión - Modo lectura (Cache)</Text>
-        </MotiView>
-      )}
-    </AnimatePresence>
-  )
-}
 
 function AuthGuardHandler() {
   useAuthGuard()
@@ -116,7 +94,6 @@ function RootLayoutNav() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      <OfflineBanner />
       <AuthGuardHandler />
       <AvisosAlVolver />
       <PushDeAvisos />
@@ -126,6 +103,7 @@ function RootLayoutNav() {
         <Stack.Screen name="login" options={{ gestureEnabled: false }} />
         <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
       </Stack>
+      <OfflineBanner />
     </View>
   )
 }
@@ -173,26 +151,3 @@ function RootLayout() {
 }
 
 export default Sentry.wrap(RootLayout)
-
-const styles = StyleSheet.create({
-  offlineBanner: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    right: 20,
-    backgroundColor: '#ef4444',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    zIndex: 9999,
-  },
-  offlineText: {
-    color: '#fff',
-    fontSize: 12,
-    fontFamily: 'Inter_700Bold',
-  }
-})

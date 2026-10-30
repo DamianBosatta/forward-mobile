@@ -125,12 +125,22 @@ describe('Paso 2: devoluciones', () => {
     expect(screen.getByText(/Paso 2 de 4/)).toBeTruthy()
   })
 
-  it('"No, todo bien" salta al cobro y los pasos pasan a 3', async () => {
+  it('"No, todo bien" salta al cobro y el total sigue en 4: el contador no retrocede', async () => {
     pintar(hoja(P1))
     await abrir()
     await hastaElCobro()
     expect(screen.getByLabelText('Cobro')).toBeTruthy()
-    expect(screen.getByText(/Paso 2 de 3/)).toBeTruthy()
+    expect(screen.getByText(/Paso 3 de 4 · Cobro/)).toBeTruthy()
+  })
+
+  it('el contador recorre 2, 3, 4 de 4 sin repetir número ni cambiar el total, con o sin devolución', async () => {
+    pintar(hoja(P1))
+    await abrir()
+    expect(screen.getByText(/Paso 2 de 4 · Devoluciones/)).toBeTruthy()
+    await hastaElCobro()
+    expect(screen.getByText(/Paso 3 de 4 · Cobro/)).toBeTruthy()
+    await aConfirmar()
+    expect(screen.getByText(/Paso 4 de 4 · Confirmar/)).toBeTruthy()
   })
 
   it('"Sí, devuelve algo" muestra los productos y pide al menos una unidad', async () => {

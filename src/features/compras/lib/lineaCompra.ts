@@ -1,4 +1,5 @@
 import type { CompraDetalle } from '@/libs/api-client'
+import { mostrarNumero } from '@/src/utils/numero'
 
 /** UnidadCompra del servidor: en qué nivel de empaque viene la cantidad. */
 export type UnidadCompra = 'Unidad' | 'Bulto' | 'BultoMadre'
@@ -31,6 +32,30 @@ export function unidadesDe(l: LineaCompra): number {
 /** Subtotal sin descuento global; null si la línea no tiene costo. */
 export function subtotalDe(l: LineaCompra): number | null {
   return sinCosto(l) ? null : unidadesDe(l) * l.costoUnitario!
+}
+
+/** Nombre de cada empaque, en singular y plural (la compra sí habla de bultos: es la unidad de compra). */
+const EMPAQUE: Record<UnidadCompra, { singular: string; plural: string }> = {
+  Unidad: { singular: 'Unidad', plural: 'Unidades' },
+  Bulto: { singular: 'Bulto', plural: 'Bultos' },
+  BultoMadre: { singular: 'Bulto madre', plural: 'Bultos madre' },
+}
+
+export function nombreDeEmpaque(unidad: UnidadCompra, plural = false): string {
+  return plural ? EMPAQUE[unidad].plural : EMPAQUE[unidad].singular
+}
+
+/** "20 bultos × 12 = 240 u": lo pedido en la unidad de compra y lo que son en unidades; "240 u" si va por unidad. */
+export function textoDeLinea(l: Pick<LineaCompra, 'cantidad' | 'unidad' | 'unidadesPorUnidad'>): string {
+  const unidades = mostrarNumero(l.cantidad * l.unidadesPorUnidad)
+  if (l.unidad === 'Unidad' || l.unidadesPorUnidad === 1) return `${unidades} u`
+  return `${mostrarNumero(l.cantidad)} ${EMPAQUE[l.unidad].plural.toLowerCase()} × ${mostrarNumero(l.unidadesPorUnidad)} = ${unidades} u`
+}
+
+/** "Bulto ×12 = 240 u" (paso Productos); "240 u" si va por unidad. */
+export function textoDeEmpaque(l: Pick<LineaCompra, 'cantidad' | 'unidad' | 'unidadesPorUnidad'>): string {
+  const unidades = `${mostrarNumero(l.cantidad * l.unidadesPorUnidad)} u`
+  return l.unidad === 'Unidad' ? unidades : `${EMPAQUE[l.unidad].singular} ×${mostrarNumero(l.unidadesPorUnidad)} = ${unidades}`
 }
 
 /** Total con la misma cuenta que el servidor (TotalesCompra): bruto con descuento más gastos. */
@@ -90,5 +115,21 @@ export function unidadesDisponibles(ficha: { bultoContenido?: number | null; bul
   const opciones: { unidad: UnidadCompra; unidades: number }[] = [{ unidad: 'Unidad', unidades: 1 }]
   if (porBulto > 1) opciones.push({ unidad: 'Bulto', unidades: porBulto })
   if (ficha?.bultoMadreContenido && ficha.bultoMadreContenido > 0) opciones.push({ unidad: 'BultoMadre', unidades: porBulto * ficha.bultoMadreContenido })
+  return opciones
+}
+
+/** "Costo +4,5 % sobre la última compra ($ 710,00)." El importe del último costo llega ya formateado. */
+export function textoDeCambioDeCosto(cambio: { pct: number; fuerte: boolean }, ultimoTexto: string): string {
+  const signo = cambio.pct > 0 ? '+' : '−'
+  return `Costo ${signo}${mostrarNumero(Math.round(Math.abs(cambio.pct) * 10) / 10)} % sobre la última compra (${ultimoTexto}).${cambio.fuerte ? ' Cambia más del 50 %: revisalo.' : ''} Al confirmar la compra, este pasa a ser el costo del producto.`
+}
+
+/** Empaques en los que se compra el producto; la línea suma el suyo si la ficha no lo trae (compra ya guardada). */
+export function opcionesDeCompra(
+  ficha: Parameters<typeof unidadesDisponibles>[0],
+  linea: Pick<LineaCompra, 'unidad' | 'unidadesPorUnidad'>,
+) {
+  const opciones = unidadesDisponibles(ficha)
+  if (!opciones.some((o) => o.unidad === linea.unidad)) opciones.push({ unidad: linea.unidad, unidades: linea.unidadesPorUnidad })
   return opciones
 }

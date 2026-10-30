@@ -4,14 +4,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Check } from 'lucide-react-native'
 import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, TopBar, formatImporte } from '@/core/ui/fw'
+import { Button, Notice, StatusChip, TopBar, chipForEstado, formatImporte } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { urlWhatsApp } from '@/features/clientes/lib/contacto'
-import { direccionDeEntrega } from '@/features/clientes/lib/cliente'
+import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { useVenta } from '@/libs/api-client/ventas'
 import { useSocio } from '@/libs/api-client/socios'
 import { esEstadoVenta } from '@/core/constants/estados'
-import { codigoDeVenta, entregaTexto, resumenDeLineas, rotuloCliente, tipoDeVenta } from '../lib/ventaGuardada'
+import { diaDeEntregaCorto } from '@/features/ventas/lib/entrega'
+import { codigoDeVenta, resumenDeLineas, rotuloCliente, tipoDeVenta } from '../lib/ventaGuardada'
 import { AccionesVenta } from './AccionesVenta'
 
 interface Props {
@@ -36,8 +37,7 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
   const vigente = q.isFetchedAfterMount && q.isSuccess ? q.data : undefined
   const h = vigente?.venta
   const tipo = h ? tipoDeVenta(h) : 'Venta'
-  const secundario = { ...typeScale.secundario, color: c.onTopBar }
-  const blanco = { color: c.onTopBarStrong }
+  const secundario = { ...typeScale.secundario, color: c.textSecondary }
   const negrita = { fontFamily: FONT.semibold, fontWeight: '600' as const }
 
   if (!vigente || !h) {
@@ -54,70 +54,61 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
   const rotulo = socio.data ? rotuloCliente(socio.data) : (h.clienteNombre ?? '')
   const porAutorizar = esEstadoVenta(h.estado, 'PendienteAutorizacion')
   const esPedido = tipo === 'Pedido'
-  const entrega = entregaTexto(h.fechaEntrega)
+  const confirmada = esEstadoVenta(h.estado, 'Confirmada')
+  const entrega = h.metodoEntregaNombre === 'RetiroEnLocal' ? 'Retiro en el local' : diaDeEntregaCorto(h.fechaEntrega)
+  const chip = chipForEstado('venta', h.estado)
   const whatsapp = urlWhatsApp(socio.data?.telefono)
-  // Cobrar: la misma regla que la ficha del cliente (cobros del módulo Pagos y cuenta del cliente a la vista).
-  const puedeCobrar = esPedido && socio.data?.puedeVerCuentaCorriente === true && canCreate('MOD_PAGOS') && canRead('MOD_PAGOS')
+  // Cobrar: la misma regla que la ficha del cliente (cobros del módulo Pagos y cuenta del cliente a la vista); una venta por autorizar todavía no se cobra (S5).
+  const puedeCobrar = esPedido && !porAutorizar && socio.data?.puedeVerCuentaCorriente === true && canCreate('MOD_PAGOS') && canRead('MOD_PAGOS')
   const mandarPorWhatsApp = () => {
     if (!whatsapp) return
     const texto = `Hola, te paso el ${tipo.toLowerCase()} ${codigoDeVenta(h)} por ${formatImporte(h.totalAmount)}.`
     void Linking.openURL(`${whatsapp}?text=${encodeURIComponent(texto)}`)
   }
 
+  const direccion = socio.data ? direccionDeEntrega(socio.data) : (h.clienteNombre ?? '')
+  const nombre = socio.data ? nombreDelCliente(socio.data) : ''
+  const fila = (k: string, v: React.ReactNode, ultima = false) => (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 40, borderBottomWidth: ultima ? 0 : 1, borderBottomColor: c.border }}>
+      <Text style={secundario}>{k}</Text>
+      {v}
+    </View>
+  )
+
   return (
-    <View testID="venta-guardada" style={{ flex: 1, backgroundColor: c.topBar }}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + space[8], paddingHorizontal: space[5], paddingBottom: space[6], gap: space[4] }}>
-        <View style={{ alignItems: 'center', gap: space[2] }}>
-          <View testID="venta-guardada-marca" style={{ width: 88, height: 88, borderRadius: radii.pastilla, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
-            <Check size={44} color={c.onAction} strokeWidth={2.5} />
-          </View>
-          <Text accessibilityRole="header" style={{ ...typeScale.titulo, ...negrita, ...blanco, fontSize: 26, lineHeight: 32, textAlign: 'center', marginTop: space[2] }}>
-            {`${tipo} ${codigoDeVenta(h)} ${esPedido ? 'enviado' : 'guardado'}`}
-          </Text>
-          <Text style={{ ...secundario, textAlign: 'center' }}>{[socio.data ? direccionDeEntrega(socio.data) : h.clienteNombre, entrega].filter(Boolean).join(' · ')}</Text>
-          {porAutorizar ? (
-            <View style={{ paddingHorizontal: space[3], paddingVertical: space[1], borderRadius: radii.pastilla, backgroundColor: c.chip.porAutorizar.bg }}>
-              <Text style={{ ...typeScale.etiqueta, color: c.chip.porAutorizar.text }}>Por autorizar · te avisamos</Text>
+    <View testID="venta-guardada" style={{ flex: 1, backgroundColor: c.bg }}>
+      <TopBar title="Venta guardada" />
+      <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: insets.bottom + space[6], gap: space[4] }}>
+        <View testID="venta-guardada-resumen" style={{ padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: space[2] }}>
+          <View style={{ alignItems: 'center', gap: space[1], paddingBottom: space[2] }}>
+            <View testID="venta-guardada-marca" style={{ width: 56, height: 56, borderRadius: radii.pastilla, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
+              <Check size={30} color={c.onAction} strokeWidth={2.5} />
             </View>
-          ) : null}
-        </View>
-        <View testID="venta-guardada-resumen" style={{ padding: space[4], borderRadius: radii.tarjeta, backgroundColor: 'rgba(255,255,255,0.08)', gap: space[2] }}>
-          <Text style={{ ...typeScale.cuerpoDestacado, ...blanco }}>{`${tipo} ${codigoDeVenta(h)}`}</Text>
-          <Text style={secundario}>{resumenDeLineas(vigente.detalles)}</Text>
-          <Text style={secundario}>{rotulo}</Text>
-          {vigente.detalles.map((d) => (
-            <View key={d.id} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-              <Text style={{ ...typeScale.cuerpo, ...blanco, flex: 1 }}>{`${d.productoNombre} × ${d.cantidad}`}</Text>
-              <Text style={{ ...typeScale.cuerpo, ...importe, ...blanco }}>{formatImporte(d.subtotal)}</Text>
-            </View>
-          ))}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <Text style={secundario}>Total</Text>
-            <Text style={{ ...typeScale.titulo, ...importe, ...negrita, ...blanco }}>{formatImporte(h.totalAmount)}</Text>
+            <Text accessibilityRole="header" style={{ ...typeScale.titulo, ...negrita, color: c.text, textAlign: 'center', marginTop: space[2] }}>
+              {`${tipo === 'Pedido' ? 'Venta' : tipo} ${codigoDeVenta(h)} ${esPedido && confirmada ? 'confirmada' : esPedido ? 'guardada' : 'guardado'}`}
+            </Text>
+            <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, textAlign: 'center' }}>{direccion}</Text>
+            {nombre ? <Text style={{ ...secundario, textAlign: 'center' }}>{nombre}</Text> : null}
+            <Text style={{ ...secundario, textAlign: 'center' }}>{resumenDeLineas(vigente.detalles)}</Text>
           </View>
+          {fila('Estado', chip ? <StatusChip estado={chip.estado} label={chip.label} /> : <Text style={{ ...typeScale.cuerpo, color: c.text }}>{rotulo}</Text>)}
+          {entrega ? fila('Entrega', <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{entrega}</Text>) : null}
+          {fila('Total', <Text style={{ ...typeScale.titulo, ...importe, ...negrita, color: c.text }}>{formatImporte(h.totalAmount)}</Text>, true)}
         </View>
         <Notice tone={porAutorizar ? 'advertencia' : 'exito'}>
-          {mensaje ?? (porAutorizar ? 'Quedó por autorizar. Te avisamos cuando lo resuelvan.' : 'Quedó guardado.')}
+          {mensaje ?? (porAutorizar ? 'Falta que la autoricen. Hasta entonces no sale a reparto. Te avisamos cuando la resuelvan.' : 'Quedó guardado.')}
         </Notice>
-        {whatsapp ? <Button label="Mandar por WhatsApp" onPress={mandarPorWhatsApp} /> : null}
-        {puedeCobrar ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Cobrar ahora"
-            onPress={() => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: h.clienteId } } as never)}
-            style={{ height: 48, borderRadius: radii.campo, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}
-          >
-            <Text style={{ ...typeScale.cuerpoDestacado, ...blanco }}>Cobrar ahora</Text>
-          </Pressable>
-        ) : null}
+        {!porAutorizar ? <Text style={secundario}>La factura no se hace desde el teléfono: la emite la oficina.</Text> : null}
+        <Button label="Ver la venta" onPress={() => router.push({ pathname: '/(tabs)/ventas/[id]', params: { id } } as never)} />
+        {puedeCobrar ? <Button label="Cobrar ahora" onPress={() => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: h.clienteId } } as never)} /> : null}
+        {whatsapp ? <Button label={porAutorizar ? 'Avisar al cliente por WhatsApp' : 'Mandar por WhatsApp'} variant="secundario" onPress={mandarPorWhatsApp} /> : null}
         <AccionesVenta venta={vigente} rotulo={rotulo} />
-        <Text style={secundario}>La factura no se hace desde el teléfono: va por la pestaña Facturación de la web.</Text>
         <Button label="Vender a otro cliente" variant="secundario" onPress={() => router.replace('/(tabs)/ventas/nueva' as never)} />
         <Pressable accessibilityRole="button" accessibilityLabel="Volver a Mi día" onPress={() => router.replace('/(tabs)' as never)} style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ ...typeScale.cuerpoDestacado, color: c.onTopBar }}>Volver a Mi día</Text>
+          <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Volver a Mi día</Text>
         </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="Listo" onPress={listo} style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ ...typeScale.cuerpoDestacado, color: c.onTopBar }}>Listo</Text>
+          <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Listo</Text>
         </Pressable>
       </ScrollView>
     </View>

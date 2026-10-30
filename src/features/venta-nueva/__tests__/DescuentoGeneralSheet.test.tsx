@@ -30,7 +30,7 @@ describe('R6 Descuento a toda la venta', () => {
     const onAplicar = abrirGeneral()
     await userEvent.press(screen.getByRole('button', { name: 'Otro porcentaje' }))
     await userEvent.type(screen.getByLabelText('Descuento general (%)'), '12')
-    expect(screen.getByText('Supera tu tope de 10 %: el pedido queda por autorizar.')).toBeTruthy()
+    expect(screen.getByText('Tu tope de descuento es 10 %. Con 12 % la venta va a necesitar autorización.')).toBeTruthy()
     await userEvent.press(screen.getByRole('button', { name: 'Aplicar' }))
     expect(onAplicar).toHaveBeenCalledWith(12)
   })

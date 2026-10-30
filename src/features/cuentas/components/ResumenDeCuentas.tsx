@@ -1,39 +1,29 @@
 import React from 'react'
 import { Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, formatImporte } from '@/core/ui/fw'
-import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
+import { formatImporte } from '@/core/ui/fw'
 
 interface Props {
   /** Suma de todo el filtro que da el servidor (solo en la página 1); sin ella no hay resumen: no se suma en el teléfono. */
   saldoTotal?: number
-  puedeTransferir: boolean
-  onTransferir: () => void
 }
 
-/** Encabezado de Cuentas corrientes (lámina ResCuentas): lo que te deben y la transferencia entre cuentas propias. */
-export function ResumenDeCuentas({ saldoTotal, puedeTransferir, onTransferir }: Props) {
+/**
+ * Tarjeta "Te deben" de Cuentas (lámina cuentas-lista). La transferencia entre cuentas propias vive en la barra superior.
+ * TODO API: total vencido agregado de la cartera (chip "Vencido $ X") y cantidad de clientes con deuda; hoy el servidor
+ * no los informa y no se suman en el teléfono.
+ */
+export function ResumenDeCuentas({ saldoTotal }: Props) {
   const c = useColors()
+  if (saldoTotal === undefined) return null
   return (
-    <View style={{ backgroundColor: c.topBar, paddingHorizontal: space[4], paddingBottom: space[3], gap: space[2] }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-        {saldoTotal !== undefined ? (
-          <View
-            accessible
-            accessibilityLabel={`Te deben: ${formatImporte(saldoTotal)}`}
-            style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: radii.tarjeta, padding: space[3] }}
-          >
-            <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>Te deben</Text>
-            <Text style={[typeScale.titulo, importe, { color: c.onTopBarStrong }]}>{formatImporte(saldoTotal)}</Text>
-          </View>
-        ) : (
-          <View style={{ flex: 1 }} />
-        )}
-        <View style={{ minWidth: 150 }}>
-          <Button label="Transferencia" variant="secundario" disabled={!puedeTransferir} onPress={onTransferir} />
-        </View>
-      </View>
-      {!puedeTransferir ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}</MotivoDeshabilitado> : null}
+    <View
+      accessible
+      accessibilityLabel={`Te deben: ${formatImporte(saldoTotal)}`}
+      style={{ marginHorizontal: space[4], marginTop: space[3], backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, padding: space[4], gap: space[1] }}
+    >
+      <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Te deben</Text>
+      <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(saldoTotal)}</Text>
     </View>
   )
 }

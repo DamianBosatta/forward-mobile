@@ -11,7 +11,7 @@ export default function TransferenciaScreen() {
   const router = useRouter()
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar title="Transferencia" subtitle="Movimiento entre cuentas propias" leading={{ kind: 'atras', onPress: () => router.back() }} />
+      <TopBar title="Transferencia" subtitle="Entre cuentas propias" leading={{ kind: 'atras', onPress: () => router.back() }} />
       <Transferencia onListo={() => router.back()} />
     </View>
   )

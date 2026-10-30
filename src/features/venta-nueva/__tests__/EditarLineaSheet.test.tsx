@@ -270,4 +270,33 @@ describe('EditarLineaSheet: vista previa del servidor (cierre del bloque 9)', ()
     await waitFor(() => expect(mockPost).toHaveBeenCalled())
     expect(screen.queryByTestId('semaforo-linea')).toBeNull()
   })
+
+describe('EditarLineaSheet: Se vende por (ventas-nueva-2-productos--linea)', () => {
+  const pack = () => producto({ id: 'pk', ventaMinimaUnidades: 6, bultoContenido: 12, fraccionMinimaVenta: 'Unidad', precioCompraBase: 1410, precioMinimoRentable: 2000 })
+
+  it('sin Pack ni Bulto no hay selector', () => {
+    abrir()
+    expect(screen.queryByRole('radiogroup', { name: 'Se vende por' })).toBeNull()
+  })
+
+  it('con Pack y Bulto marca el modo de la cantidad; "+" suma un pack y en Bulto suma un bulto', async () => {
+    const p = pack()
+    const onConfirm = abrir({ productoId: p.id, producto: p, cantidad: 6, descuentoPct: 0 })
+    expect(screen.getByRole('button', { name: 'Pack · 6' })).toHaveAccessibilityState({ selected: true })
+    await userEvent.press(screen.getByRole('button', { name: 'Sumar' }))
+    expect(screen.getByLabelText('Unidades: 12')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Bulto · 12' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Sumar' }))
+    expect(screen.getByLabelText('Unidades: 24')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Confirmar' }))
+    expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ cantidad: 24 }))
+  })
+
+  it('pasar a Bulto redondea al próximo bulto cerrado', async () => {
+    const p = pack()
+    abrir({ productoId: p.id, producto: p, cantidad: 18, descuentoPct: 0 })
+    await userEvent.press(screen.getByRole('button', { name: 'Bulto · 12' }))
+    expect(screen.getByLabelText('Unidades: 24')).toBeTruthy()
+  })
+})
 })

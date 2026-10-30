@@ -89,9 +89,9 @@ describe('Ventas con el filtro de Inicio', () => {
     expect(q.get('tipoOperacion')).toBe('1')
     expect(q.get('estado')).toBe('Pendiente')
     expect(q.get('fechaDesde')).toBeNull()
-    expect(screen.getByRole('tab', { name: 'Presupuestos' })).toBeSelected()
+    expect(screen.getByRole('radio', { name: 'Presupuestos' })).toBeSelected()
     expect(screen.getByRole('radio', { name: 'Pendiente' })).toBeSelected()
-    expect(screen.getByRole('radio', { name: 'Todo' })).toBeSelected()
+    expect(screen.getByRole('button', { name: 'Todo' })).toBeSelected()
   })
 })
 

@@ -1,6 +1,7 @@
 import React from 'react'
-import { Pressable, ScrollView, Text } from 'react-native'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { ScrollView } from 'react-native'
+import { space, useColors } from '@/libs/theme'
+import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { useLocalidades } from '@/libs/api-client/socios'
 
 export interface FiltrosDeCartera {
@@ -12,35 +13,23 @@ export interface FiltrosDeCartera {
 
 export const SIN_FILTROS: FiltrosDeCartera = { conDeudaVencida: false }
 
-function Pastilla({ label, activa, onPress }: { label: string; activa: boolean; onPress: () => void }) {
-  const c = useColors()
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ selected: activa }}
-      onPress={onPress}
-      style={{
-        minHeight: 36,
-        justifyContent: 'center',
-        paddingHorizontal: space[3],
-        borderRadius: radii.pastilla,
-        backgroundColor: activa ? c.brandSoft : c.surface,
-        borderWidth: 1,
-        borderColor: activa ? c.brand : c.border,
-      }}
-    >
-      <Text style={{ ...typeScale.secundario, color: activa ? c.brandInk : c.text }}>{label}</Text>
-    </Pressable>
-  )
-}
-
 /**
  * Filtros de la cartera (lámina Clientes, botón de filtro): deuda vencida y localidad. Los decide el
  * servidor antes de paginar; acá solo se eligen. Sin localidades cargadas (o con un servidor que
  * todavía no las informa) queda solo "Con deuda vencida".
  */
-export function FiltrosCartera({ valor, onCambio, totalCartera }: { valor: FiltrosDeCartera; onCambio: (f: FiltrosDeCartera) => void; totalCartera?: number }) {
+export function FiltrosCartera({
+  valor,
+  onCambio,
+  totalCartera,
+  sobre = 'barra',
+}: {
+  valor: FiltrosDeCartera
+  onCambio: (f: FiltrosDeCartera) => void
+  totalCartera?: number
+  /** 'barra' (por defecto): sobre el color de la barra superior; 'pantalla': sobre el fondo. */
+  sobre?: 'barra' | 'pantalla'
+}) {
   const c = useColors()
   const { data } = useLocalidades()
   const localidades = Array.isArray(data) ? data : []
@@ -50,21 +39,21 @@ export function FiltrosCartera({ valor, onCambio, totalCartera }: { valor: Filtr
       horizontal
       showsHorizontalScrollIndicator={false}
       accessibilityLabel="Filtros de la cartera"
-      style={{ flexGrow: 0, backgroundColor: c.topBar }}
-      contentContainerStyle={{ gap: space[2], paddingHorizontal: space[4], paddingBottom: space[3] }}
+      style={{ flexGrow: 0, backgroundColor: sobre === 'barra' ? c.topBar : c.bg }}
+      contentContainerStyle={{ gap: space[2], paddingHorizontal: space[4], paddingBottom: space[3], paddingTop: sobre === 'barra' ? 0 : space[1] }}
     >
       {/* La lista es siempre la cartera del vendedor: la pastilla dice cuántos son, no filtra. */}
-      {totalCartera !== undefined ? <Pastilla label={`Mi cartera · ${totalCartera}`} activa onPress={() => onCambio(SIN_FILTROS)} /> : null}
-      <Pastilla
+      {totalCartera !== undefined ? <FiltroChip label={`Mi cartera · ${totalCartera}`} activo onPress={() => onCambio(SIN_FILTROS)} /> : null}
+      <FiltroChip
         label="Con deuda vencida"
-        activa={valor.conDeudaVencida}
+        activo={valor.conDeudaVencida}
         onPress={() => onCambio({ ...valor, conDeudaVencida: !valor.conDeudaVencida })}
       />
       {localidades.map(localidad => (
-        <Pastilla
+        <FiltroChip
           key={localidad}
           label={localidad}
-          activa={valor.localidad === localidad}
+          activo={valor.localidad === localidad}
           onPress={() => onCambio({ ...valor, localidad: valor.localidad === localidad ? undefined : localidad })}
         />
       ))}

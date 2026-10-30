@@ -57,6 +57,13 @@ describe('CatalogoVenta (agregar productos)', () => {
     expect(onAbrirOferta).toHaveBeenCalledTimes(2)
   })
 
+  it('el "+" de la tarjeta suma un bulto a la línea del carrito', async () => {
+    render(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={abrirYAgregar} />)
+    act(() => useCarritoVenta.getState().agregar(mockProductos[1]))
+    await userEvent.press(screen.getByRole('button', { name: 'Sumar Bettanin Pala Rebatible' }))
+    expect(useCarritoVenta.getState().lineas.find((l) => l.productoId === 'p6')?.cantidad).toBe(12)
+  })
+
   it('el vendedor ve "Hay stock / Sin stock" y no la cantidad', () => {
     render(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={abrirYAgregar} />)
     expect(within(screen.getByTestId('producto-p1')).getByText('Hay stock')).toBeTruthy()

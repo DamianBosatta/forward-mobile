@@ -94,6 +94,6 @@ describe('estados compartidos (L-33)', () => {
   it('las tablas traen los estados que mobile usa', () => {
     expect(Object.keys(ESTADO_VENTA)).toContain('PendienteAutorizacion')
     expect(Object.keys(ESTADO_COMPRA)).toEqual(['NotaPedido', 'Confirmado', 'Entregado', 'Cancelada', 'Anulada'])
-    expect(Object.keys(ESTADO_HOJA_RUTA)).toHaveLength(5)
+    expect(Object.keys(ESTADO_HOJA_RUTA)).toEqual(['Programada', 'EnCurso', 'Finalizada', 'Cancelada', 'Documentada', 'Rendida'])
   })
 })

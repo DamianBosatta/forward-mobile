@@ -35,6 +35,18 @@ beforeEach(() => {
 })
 
 describe('Preferencias de avisos', () => {
+  it('agrupa por tema y dice en palabras si salta o queda en la bandeja', async () => {
+    pintar()
+    await screen.findByLabelText('Venta autorizada')
+    expect(screen.getByRole('header', { name: 'Ventas' })).toBeTruthy()
+    expect(screen.getByRole('header', { name: 'Cobros y pagos' })).toBeTruthy()
+    expect(screen.getByRole('header', { name: 'Calendario' })).toBeTruthy()
+    expect(screen.queryByRole('header', { name: 'Facturación y stock' })).toBeNull()
+    expect(screen.getByText('Salta apenas llega')).toBeTruthy()
+    expect(screen.getByText('Solo en la bandeja')).toBeTruthy()
+  })
+
+
   it('lista cada tipo que el servidor le manda al usuario con su estado', async () => {
     pintar()
     const venta = await screen.findByLabelText('Venta autorizada')

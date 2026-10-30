@@ -63,14 +63,6 @@ function pintar() {
   return render(<QueryClientProvider client={qc}><PerfilScreen /></QueryClientProvider>)
 }
 
-async function completar(actual: string, nueva: string, repetida: string) {
-  await userEvent.type(screen.getByLabelText('Contraseña actual'), actual)
-  await userEvent.type(screen.getByLabelText('Contraseña nueva'), nueva)
-  await userEvent.type(screen.getByLabelText('Repetir la contraseña nueva'), repetida)
-}
-
-const botonCambiar = () => screen.getByRole('button', { name: 'Cambiar contraseña' })
-
 beforeEach(() => {
   jest.clearAllMocks()
   mockPost.mockResolvedValue(true)
@@ -89,6 +81,26 @@ describe('Mi cuenta reducida (bloque 12, T2: R15 y reglas mobile §14)', () => {
     pintar()
     expect(screen.getByText('Emanuel Parraquini')).toBeTruthy()
     expect(screen.getByText('Vendedor · eparraquini')).toBeTruthy()
+  })
+
+  it('la franja de identidad suma el correo en su propia línea', () => {
+    usuario()
+    pintar()
+    expect(screen.getByText('ep@forward.com.ar')).toBeTruthy()
+  })
+
+  it('la huella dice su estado en palabras debajo del nombre', async () => {
+    usuario()
+    pintar()
+    expect(await screen.findByText('Prendida')).toBeTruthy()
+    await userEvent.press(screen.getByRole('switch', { name: 'Entrar con huella' }))
+    expect(await screen.findByText('Apagada')).toBeTruthy()
+  })
+
+  it('agrupa las filas con encabezados: Seguridad, En este teléfono y Equipo (solo con permiso)', () => {
+    usuario({ permissions: [{ module: 'MOD_USUARIOS', canRead: true }] })
+    pintar()
+    for (const t of ['Seguridad', 'En este teléfono', 'Equipo']) expect(screen.getByRole('header', { name: t })).toBeTruthy()
   })
 
   it('apagar "Entrar con huella" lo guarda y borra la contraseña del teléfono', async () => {
@@ -123,6 +135,27 @@ describe('Mi cuenta reducida (bloque 12, T2: R15 y reglas mobile §14)', () => {
     pintar()
     await userEvent.press(screen.getByRole('button', { name: 'Avisos en el teléfono' }))
     expect(mockPush).toHaveBeenCalledWith('/avisos/preferencias')
+  })
+
+  it('"Cambiar contraseña" lleva a su propia pantalla y el formulario ya no está acá', async () => {
+    usuario()
+    pintar()
+    expect(screen.queryByLabelText('Contraseña actual')).toBeNull()
+    await userEvent.press(screen.getByRole('button', { name: 'Cambiar contraseña' }))
+    expect(mockPush).toHaveBeenCalledWith('/perfil/clave')
+  })
+
+  it('"Usuarios" (solo consulta) aparece solo con MOD_USUARIOS:Read y lleva a la lista', async () => {
+    usuario({ permissions: [{ module: 'MOD_USUARIOS', canRead: true }] })
+    pintar()
+    await userEvent.press(screen.getByRole('button', { name: 'Usuarios' }))
+    expect(mockPush).toHaveBeenCalledWith('/perfil/usuarios')
+  })
+
+  it('sin MOD_USUARIOS:Read no se ofrece "Usuarios"', () => {
+    usuario({ permissions: [{ module: 'MOD_VENTAS', canRead: true }] })
+    pintar()
+    expect(screen.queryByRole('button', { name: 'Usuarios' })).toBeNull()
   })
 
   it('no muestra las sesiones abiertas (quedan en la web)', () => {
@@ -166,37 +199,6 @@ describe('Mi cuenta', () => {
     pintar()
     expect(screen.queryByText(/MFA|Biométrica|meses|Alertas de Inicio/i)).toBeNull()
     expect(fs.existsSync(path.join(__dirname, '../../../../app/security.tsx'))).toBe(false)
-  })
-
-  it('cambia la contraseña con el correo del usuario y limpia el formulario', async () => {
-    usuario()
-    pintar()
-    expect(botonCambiar().props.accessibilityState.disabled).toBe(true)
-
-    await completar('Vieja#2025', 'Nueva#20260', 'Nueva#20260')
-    await userEvent.press(botonCambiar())
-
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Users/change-password', {
-      email: 'ep@forward.com.ar', currentPassword: 'Vieja#2025', newPassword: 'Nueva#20260', confirmNewPassword: 'Nueva#20260',
-    })
-    expect(await screen.findByText(/la contraseña nueva ya vale/)).toBeTruthy()
-    expect(screen.getByLabelText('Contraseña actual').props.value).toBe('')
-  })
-
-  it('si no coinciden no deja enviar; los errores del servidor se muestran tal cual', async () => {
-    usuario()
-    pintar()
-    await completar('Vieja#2025', 'corta', 'otra')
-    expect(screen.getByText('Las contraseñas no coinciden.')).toBeTruthy()
-    expect(botonCambiar().props.accessibilityState.disabled).toBe(true)
-    // El botón apagado dice por qué, en una línea (lámina perfil--clave).
-    expect(screen.getByText('Se habilita cuando todo está completo y las dos nuevas coinciden.')).toBeTruthy()
-
-    await userEvent.clear(screen.getByLabelText('Repetir la contraseña nueva'))
-    await userEvent.type(screen.getByLabelText('Repetir la contraseña nueva'), 'corta')
-    mockPost.mockRejectedValueOnce(new Error('Passwords must be at least 10 characters.'))
-    await userEvent.press(botonCambiar())
-    expect(await screen.findByText('Passwords must be at least 10 characters.')).toBeTruthy()
   })
 
   it('cerrar sesión revoca las sesiones en el servidor y sale, aunque el servidor no responda', async () => {
