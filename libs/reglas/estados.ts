@@ -90,6 +90,7 @@ export type EstadoHojaRutaNombre =
   | 'Finalizada'
   | 'Cancelada'
   | 'Documentada'
+  | 'Rendida'
 
 export interface EstadoHojaRutaInfo extends EstadoInfo {
   /** Valor numérico del enum de C#: `HojaRuta*Dto.estado` llega así. */
@@ -102,6 +103,8 @@ export const ESTADO_HOJA_RUTA = {
   Finalizada: { valor: 3, etiqueta: 'Finalizada', tono: 'entregada' },
   Cancelada: { valor: 4, etiqueta: 'Cancelada', tono: 'anulada' },
   Documentada: { valor: 5, etiqueta: 'Documentada', tono: 'pendiente' },
+  // Finalizada y con la rendición del chofer aprobada (rendición del chofer, S7).
+  Rendida: { valor: 6, etiqueta: 'Rendida', tono: 'entregada' },
 } as const satisfies Record<EstadoHojaRutaNombre, EstadoHojaRutaInfo>
 
 // ── Búsqueda tolerante ───────────────────────────────────────────────────────

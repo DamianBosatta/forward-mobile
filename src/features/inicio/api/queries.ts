@@ -54,3 +54,19 @@ export function useComprasResumenInicio(enabled: boolean) {
     enabled,
   })
 }
+
+/** Cifras de negocio de Inicio que la web calcula y la app todavía no puede pedir. `null` = sin dato: la pantalla muestra "—". */
+export interface CifrasGenerales {
+  ventasDelDia: number | null
+  meDeben: number | null
+  debo: number | null
+}
+
+/**
+ * TODO API: no hay endpoint móvil con el total vendido del día, lo que deben los clientes ni lo que se debe a
+ * proveedores (la web los arma con varias consultas). Hasta que forward-system lo exponga (pedido en
+ * docs/coordinacion.md) este adaptador devuelve todo en `null`; al llegar el endpoint solo cambia acá.
+ */
+export function useCifrasGenerales(_enabled: boolean): CifrasGenerales {
+  return { ventasDelDia: null, meDeben: null, debo: null }
+}

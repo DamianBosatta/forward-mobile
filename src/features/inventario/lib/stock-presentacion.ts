@@ -10,24 +10,23 @@ export interface FilaDeStock {
 }
 
 /**
- * Chip del renglón con cantidades: "Sin stock" si no queda disponible, "Poco stock" si el servidor lo marca en alerta
- * (disponible <= mínimo; la web usa el mismo `enAlerta`, no se recalcula acá). Con stock de sobra, sin chip.
+ * Chip del renglón con cantidades: "Sin stock" si no queda disponible, "En alerta" si el servidor lo marca así
+ * (disponible <= mínimo; la web usa el mismo `enAlerta`, no se recalcula acá) y "Hay stock" con stock de sobra.
  */
 export function chipDeFilaStock(f: Pick<FilaDeStock, 'cantidadDisponible' | 'enAlerta'>): ChipInfo | null {
   if (f.cantidadDisponible <= 0) return { estado: 'anulado', label: 'Sin stock' }
-  if (f.enAlerta) return { estado: 'pendiente', label: 'Poco stock' }
-  return null
+  if (f.enAlerta) return { estado: 'porAutorizar', label: 'En alerta' }
+  return { estado: 'entregado', label: 'Hay stock' }
 }
 
-/** "mínimo 24" o nada si el producto no tiene mínimo. */
+/** "Mín. 24" o nada si el producto no tiene mínimo. */
 export function textoMinimo(stockMinimo: number): string | null {
-  return stockMinimo > 0 ? `mínimo ${stockMinimo}` : null
+  return stockMinimo > 0 ? `Mín. ${stockMinimo}` : null
 }
 
-/** "6 reservadas" / "1 reservada" / "sin reservas"; "+40 por ingresar" se agrega aparte. */
-export function textoReservadas(reservadas: number): string {
-  if (reservadas <= 0) return 'sin reservas'
-  return reservadas === 1 ? '1 reservada' : `${reservadas} reservadas`
+/** "Reservado 96 · Por ingresar 0": las dos cantidades van siempre, aunque sean 0 (lámina Stock). */
+export function textoReservadas(reservadas: number, porIngresar: number): string {
+  return `Reservado ${reservadas} · Por ingresar ${porIngresar}`
 }
 
 export type FiltroEstadoStock = 'todos' | 'EnAlerta' | 'SinStock'

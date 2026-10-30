@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, Image, ScrollView, Text, View } from 'react-native'
-import { Package } from 'lucide-react-native'
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native'
+import { ChevronRight, Package } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, StatusChip, formatImporte } from '@/core/ui/fw'
 import { useFichaCatalogo } from '@/libs/api-client/catalogo'
 import { getFullImageUrl } from '@/libs/api-client/media'
 import { useDepositoDeConsulta } from '../hooks/useDepositoDeConsulta'
-import { chipDeStock, textoUnidadDeVenta } from '../lib/presentacion'
+import { chipDeStock, chipDeTarjeta, formasDeVenta, textoVariacion, type ProductoDeTarjeta } from '../lib/presentacion'
 import { compartirFoto } from '../lib/compartirFoto'
 
 function Fila({ label, valor, fuerte }: { label: string; valor: string; fuerte?: boolean }) {
@@ -41,7 +41,16 @@ function Seccion({ titulo, children }: { titulo: string; children: React.ReactNo
  * Ficha de producto (láminas FichaProducto y ModProducto). Como en la web, el catálogo no muestra cantidades ni
  * costos: solo si hay stock. Las cantidades por depósito viven en la vista Stock, a la que lleva `onVerStock`.
  */
-export function FichaProducto({ productoId, onVerStock }: { productoId: string; onVerStock?: (codigo: string) => void }) {
+export function FichaProducto({
+  productoId,
+  onVerStock,
+  novedad,
+}: {
+  productoId: string
+  onVerStock?: (codigo: string) => void
+  /** La marca de novedad y el precio anterior vienen de la tarjeta del listado: la ficha del producto no los trae. */
+  novedad?: Pick<ProductoDeTarjeta, 'novedad' | 'precioAnterior' | 'variacionPorcentaje'>
+}) {
   const c = useColors()
   const [errorFoto, setErrorFoto] = useState<string | null>(null)
 
@@ -54,7 +63,8 @@ export function FichaProducto({ productoId, onVerStock }: { productoId: string; 
   if (isError || !p) return <View style={{ padding: space[4] }}><Notice tone="peligro">No se pudo cargar el producto.</Notice></View>
 
   const ventaMinima = p.ventaMinimaUnidades
-  const chip = chipDeStock(p.disponible)
+  const chip = chipDeTarjeta(novedad?.novedad, p.disponible)
+  const variacion = textoVariacion(novedad?.variacionPorcentaje)
   const noAlcanzaCaja = ventaMinima > 1 && p.disponible && !p.disponibleVentaMinima
   const foto = getFullImageUrl(p.imageUrl)
   const encabezado = [p.codigoPropio, p.marca, p.categoriaPathCompleto].filter(Boolean).join(' · ')
@@ -90,10 +100,41 @@ export function FichaProducto({ productoId, onVerStock }: { productoId: string; 
 
       <View style={{ gap: space[1] }}>
         <Fila label="Precio de lista por unidad" valor={formatImporte(p.precioVenta)} fuerte />
+        {variacion ? (
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'baseline', gap: space[2] }}>
+            {novedad?.precioAnterior != null ? (
+              <Text style={[typeScale.secundario, importe, { color: c.textSecondary }]}>{`antes ${formatImporte(novedad.precioAnterior)}`}</Text>
+            ) : null}
+            <Text style={[typeScale.etiqueta, { color: c.chip.porAutorizar.text }]}>{variacion}</Text>
+          </View>
+        ) : null}
         {p.precioConOferta != null ? <Fila label="Precio de oferta" valor={formatImporte(p.precioConOferta)} fuerte /> : null}
       </View>
 
-      <Notice tone="info">{textoUnidadDeVenta(p.ventaMinimaUnidades)}</Notice>
+      <Seccion titulo="Cómo se vende">
+        <View style={{ borderRadius: radii.campo, overflow: 'hidden', borderWidth: 1, borderColor: c.border }}>
+          {formasDeVenta(p).map((f, i) => (
+            <View
+              key={f.clave}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: space[2],
+                minHeight: 48,
+                paddingHorizontal: space[3],
+                paddingVertical: space[2],
+                backgroundColor: f.destacada ? c.brandSoft : 'transparent',
+                borderTopWidth: i === 0 ? 0 : 1,
+                borderTopColor: c.border,
+              }}
+            >
+              <Text style={[f.destacada ? typeScale.cuerpoDestacado : typeScale.cuerpo, { flex: 1, color: f.destacada ? c.brandInk : c.text }]}>{f.label}</Text>
+              <Text style={[typeScale.secundario, importe, { color: f.destacada ? c.brandInk : c.textSecondary }]}>{`${f.unidades} u.`}</Text>
+              <Text style={[typeScale.cuerpoDestacado, importe, { minWidth: 104, textAlign: 'right', color: c.text }]}>{formatImporte(f.precio)}</Text>
+            </View>
+          ))}
+        </View>
+      </Seccion>
       {noAlcanzaCaja ? <Notice tone="advertencia">{`No alcanza para la venta mínima (caja de ${ventaMinima})`}</Notice> : null}
 
       {p.esPadreDeVariantes && variantes.length > 0 ? (
@@ -111,7 +152,16 @@ export function FichaProducto({ productoId, onVerStock }: { productoId: string; 
       ) : null}
 
       {onVerStock ? (
-        <Button label="Ver stock por depósito" variant="secundario" onPress={() => onVerStock(p.codigoPropio)} />
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel="Ver stock en vivo de este producto"
+          onPress={() => onVerStock(p.codigoPropio)}
+          android_ripple={{ color: c.surface2 }}
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 }}
+        >
+          <Text style={[typeScale.cuerpoDestacado, { color: c.brandInk }]}>Ver stock en vivo de este producto</Text>
+          <ChevronRight size={20} color={c.brandInk} />
+        </Pressable>
       ) : null}
 
       <Seccion titulo="Datos">

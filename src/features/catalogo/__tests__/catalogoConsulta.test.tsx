@@ -6,6 +6,7 @@ import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { fichaDeCatalogo, paginaDeCatalogo } from '../testing/fichasDeCatalogo'
 import { novedadesDesde } from '../lib/presentacion'
+import { formatImporte } from '@/core/ui/fw'
 
 // PR 1.1 — catálogo de consulta. Se renderiza la pantalla real con react-query real;
 // solo se reemplaza el transporte HTTP (api.get / api.post) por respuestas del servidor.
@@ -107,7 +108,7 @@ describe('Catálogo de consulta', () => {
 
   it('muestra "Mostrando N de M" con el total del servidor y el chip de stock que decide cada ficha del catálogo', async () => {
     renderPantalla()
-    expect(await screen.findByText('MOSTRANDO 2 DE 57')).toBeTruthy()
+    expect(await screen.findByText('2 de 57 productos')).toBeTruthy()
     expect(await screen.findByText('Hay stock')).toBeTruthy()
     expect(screen.getByText('Sin stock')).toBeTruthy()
     // La tarjeta no pide nada a Stock: el vendedor sin ese módulo no recibe 403.
@@ -164,7 +165,7 @@ describe('Catálogo de consulta', () => {
       api.get.mockImplementation(servidorCon([fichaDeCatalogo(AER), fichaDeCatalogo(TEX)], { ...DETALLE, disponibleVentaMinima: false }))
       renderPantalla()
       await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
-      await screen.findByText('Se vende por caja de 12')
+      await screen.findByText('Bulto · venta mínima')
       expect(await screen.findByText('No alcanza para la venta mínima (caja de 12)')).toBeTruthy()
       // Tarjeta (AER) y ficha: ambas "Hay stock"; nunca "Sin stock" para AER.
       await waitFor(() => expect(screen.getAllByText('Hay stock').length).toBeGreaterThanOrEqual(2))
@@ -173,7 +174,7 @@ describe('Catálogo de consulta', () => {
     it('con stock de sobra no hay aviso de venta mínima', async () => {
       renderPantalla()
       await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
-      await screen.findByText('Se vende por caja de 12')
+      await screen.findByText('Bulto · venta mínima')
       expect(screen.queryByText(/No alcanza para la venta mínima/)).toBeNull()
     })
   })
@@ -184,7 +185,7 @@ describe('Catálogo de consulta', () => {
     await userEvent.press(await screen.findByLabelText(`${AER.nombre}, código ${AER.codigoPropio}`))
 
     expect(await screen.findByText('Precio de lista por unidad')).toBeTruthy()
-    expect(screen.getByText('Se vende por caja de 12')).toBeTruthy()
+    expect(screen.getByText('Bulto · venta mínima')).toBeTruthy()
     expect(screen.queryByText('Costo y margen')).toBeNull()
     expect(screen.queryByText('Costo por unidad')).toBeNull()
     expect(screen.queryByText('Margen bruto')).toBeNull()
@@ -214,7 +215,7 @@ describe('Catálogo de consulta', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Con stock', selected: false }))
     expect(screen.queryByText(TEX.nombre)).toBeNull()
     expect(screen.getByText(AER.nombre)).toBeTruthy()
-    expect(screen.getByText('MOSTRANDO 1 DE 57')).toBeTruthy()
+    expect(screen.getByText('1 de 57 productos')).toBeTruthy()
 
     await userEvent.press(screen.getByRole('button', { name: 'Con stock', selected: true }))
     expect(screen.getByText(TEX.nombre)).toBeTruthy()
@@ -226,11 +227,11 @@ describe('Catálogo de consulta', () => {
     expect(screen.queryByRole('radio', { name: 'Stock' })).toBeNull()
   })
 
-  it('"Ver stock por depósito" lleva a la pantalla Stock buscando ese código', async () => {
+  it('"Ver stock en vivo de este producto" lleva a la pantalla Stock buscando ese código', async () => {
     mockPush.mockClear()
     renderPantalla()
     await abrirFichaDeAer()
-    await userEvent.press(await screen.findByLabelText('Ver stock por depósito'))
+    await userEvent.press(await screen.findByLabelText('Ver stock en vivo de este producto'))
 
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/inventario/stock', params: { busqueda: AER.codigoPropio } })
   })
@@ -318,5 +319,43 @@ describe('Catálogo: novedades', () => {
 
     const pedido = new URL(`http://x${llamadasGet().find((u) => u.startsWith('/api/v1/catalogo?'))}`)
     expect(pedido.searchParams.get('NovedadesDesde')).toBe(novedadesDesde(30))
+  })
+})
+
+describe('Catálogo: ficha, "Cómo se vende"', () => {
+  it('lista la unidad y el bulto de venta mínima con su precio; sin pack porque la API no lo manda', async () => {
+    renderPantalla()
+    await abrirFichaDeAer()
+
+    expect(await screen.findByText('Cómo se vende')).toBeTruthy()
+    expect(screen.getByText('Unidad')).toBeTruthy()
+    expect(screen.getByText('1 u.')).toBeTruthy()
+    expect(screen.getByText('Bulto · venta mínima')).toBeTruthy()
+    expect(screen.getByText('12 u.')).toBeTruthy()
+    expect(screen.getByText(formatImporte(AER.precioVenta * 12))).toBeTruthy()
+    expect(screen.queryByText('Pack')).toBeNull()
+  })
+
+  it('un producto que se vende por unidad solo tiene la fila Unidad', async () => {
+    api.get.mockImplementation(servidorCon([fichaDeCatalogo(AER), fichaDeCatalogo(TEX)], { ...DETALLE, ventaMinimaUnidades: 1 }))
+    renderPantalla()
+    await abrirFichaDeAer()
+
+    await screen.findByText('Cómo se vende')
+    expect(screen.getByText('Unidad')).toBeTruthy()
+    expect(screen.queryByText(/Bulto/)).toBeNull()
+  })
+
+  it('un precio que cambió muestra el precio anterior y la variación también en la ficha', async () => {
+    api.get.mockImplementation((url: string) =>
+      url.startsWith('/api/v1/catalogo?')
+        ? Promise.resolve(paginaDeCatalogo([fichaDeCatalogo(AER, { novedad: 'PrecioNuevo', precioAnterior: 2836.73, variacionPorcentaje: 8.5 })]))
+        : servidor(url),
+    )
+    renderPantalla()
+    await userEvent.press(await screen.findByLabelText('Saphirus Aerosol 250 ml, código SAP-AER-250, Precio nuevo, ▲ 8,5 %'))
+
+    expect(await screen.findByText(`antes ${formatImporte(2836.73)}`)).toBeTruthy()
+    expect(screen.getAllByText('▲ 8,5 %').length).toBeGreaterThanOrEqual(2)
   })
 })

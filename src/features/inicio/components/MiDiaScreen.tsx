@@ -160,7 +160,7 @@ export function MiDiaScreen() {
       ) : filas.length > 0 ? (
         <View testID="mi-dia-resolver" style={{ gap: space[2] }}>{filas}</View>
       ) : (
-        <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{v ? 'Nada pendiente por ahora.' : 'Cargando…'}</Text>
+        <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{v ? 'Todo al día.' : 'Cargando…'}</Text>
       )}
     </View>
   )
@@ -197,11 +197,14 @@ export function MiDiaScreen() {
             {venderDeNuevo}
             <View style={{ paddingHorizontal: space[4], gap: space[4] }}>
               {resolver}
-              {nuevaVenta}
             </View>
           </>
         )}
       </ScrollView>
+      {/* Barra fija como la lámina: un solo botón principal siempre a mano (en tablet va junto a los recientes). */}
+      {!isTablet && nuevaVenta ? (
+        <View style={{ padding: space[4], borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>{nuevaVenta}</View>
+      ) : null}
     </View>
   )
 }
