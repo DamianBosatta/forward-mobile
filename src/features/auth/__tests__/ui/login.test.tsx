@@ -3,6 +3,7 @@
  * huella, y el selector de servidor solo en la build de desarrollo.
  */
 import React from 'react';
+import { act } from '@testing-library/react-native';
 import { render, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import LoginScreen from '../../../../../app/login';
@@ -30,6 +31,12 @@ jest.mock('@/core/utils/haptics', () => ({ safeHaptics: { impact: jest.fn(), not
 
 let mockResponsive = { isTablet: false };
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => mockResponsive }));
+
+let mockRed: (e: { isConnected: boolean | null; isInternetReachable: boolean | null }) => void = () => {};
+jest.mock('@react-native-community/netinfo', () => ({
+  __esModule: true,
+  default: { addEventListener: (cb: typeof mockRed) => { mockRed = cb; return () => {}; } },
+}));
 
 jest.mock('../../hooks/useAuth', () => ({
   useAuth: jest.fn()
@@ -196,5 +203,38 @@ describe('Ingreso', () => {
     expect(screen.getByText('Vendé, cobrá y seguí tus pedidos desde la calle, con los mismos datos que la web.')).toBeTruthy();
     expect(screen.getByRole('header', { name: 'Ingresá' })).toBeTruthy();
     expect(ingresar()).toBeTruthy();
+  });
+  it('sin conexión avisa y apaga "Ingresar" y la huella; al volver la red se reactivan', async () => {
+    mockBio.available = true;
+    mockBio.saved = { username: 'ana', password: 'x' };
+    auth();
+    renderLogin();
+    const huella = await screen.findByRole('button', { name: 'Entrar con huella' });
+    act(() => mockRed({ isConnected: false, isInternetReachable: false }));
+    expect(screen.getByText('Sin conexión. Conectate a internet para ingresar; se reintenta solo.')).toBeTruthy();
+    expect(ingresar().props.accessibilityState).toMatchObject({ disabled: true });
+    expect(huella.props.accessibilityState).toMatchObject({ disabled: true });
+    act(() => mockRed({ isConnected: true, isInternetReachable: true }));
+    expect(screen.queryByText(/Sin conexión/)).toBeNull();
+    expect(ingresar().props.accessibilityState).not.toMatchObject({ disabled: true });
+  });
+
+  it('un estado de red desconocido no apaga el ingreso', () => {
+    auth();
+    renderLogin();
+    act(() => mockRed({ isConnected: true, isInternetReachable: null }));
+    expect(screen.queryByText(/Sin conexión/)).toBeNull();
+  });
+
+  it('con error del servidor marca los dos campos en rojo', () => {
+    auth({ error: 'Usuario o contraseña incorrectos' });
+    renderLogin();
+    const borde = (el: { parent: any }) => {
+      let n = el.parent;
+      while (n && !(n.props.style && [].concat(n.props.style).flat().some((x: any) => x && x.borderWidth))) n = n.parent;
+      return [].concat(n.props.style).flat().find((x: any) => x && x.borderWidth);
+    };
+    expect(borde(usuario())).toMatchObject({ borderWidth: 2, borderColor: '#A90F0F' });
+    expect(borde(contrasena())).toMatchObject({ borderWidth: 2, borderColor: '#A90F0F' });
   });
 });
