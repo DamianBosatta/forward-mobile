@@ -2,6 +2,7 @@ import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Bell, ChevronRight, Monitor } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { StatusChip } from '@/core/ui/fw'
 import type { Aviso } from '@/libs/api-client/notificaciones'
 import { avisoDeTipo } from './avisos'
 import type { DestinoAviso } from './bandeja'
@@ -13,7 +14,7 @@ interface AvisoFilaProps {
   onPress: () => void
 }
 
-/** Una fila de la bandeja: tipo y hora, título, mensaje y adónde lleva (o que es de la web). */
+/** Una fila de la bandeja (lámina M17): etiquetas "Sin leer" y "Crítico" en texto, tipo y hora, título, mensaje y adónde lleva (o que es de la web). */
 export function AvisoFila({ aviso, destino, cuando, onPress }: AvisoFilaProps) {
   const c = useColors()
   const tipo = avisoDeTipo(aviso.tipo)
@@ -37,8 +38,20 @@ export function AvisoFila({ aviso, destino, cuando, onPress }: AvisoFilaProps) {
         overflow: 'hidden',
       }}
     >
-      <Icono size={22} color={critico ? c.danger : c.brandInk} strokeWidth={2} />
+      <View style={{ width: 40, height: 40, borderRadius: radii.pastilla, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
+        <Icono size={22} color={critico ? c.danger : c.brandInk} strokeWidth={2} />
+      </View>
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
+        {!aviso.leida || critico ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space[2] }}>
+            {!aviso.leida ? (
+              <View style={{ alignSelf: 'flex-start', backgroundColor: c.action, borderRadius: radii.pastilla, paddingVertical: space[1], paddingHorizontal: 10 }}>
+                <Text style={{ ...typeScale.etiqueta, color: c.onAction }}>Sin leer</Text>
+              </View>
+            ) : null}
+            {critico ? <StatusChip estado="anulado" label="Crítico" /> : null}
+          </View>
+        ) : null}
         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
           {[tipo?.etiqueta, cuando].filter(Boolean).join(' · ')}
         </Text>

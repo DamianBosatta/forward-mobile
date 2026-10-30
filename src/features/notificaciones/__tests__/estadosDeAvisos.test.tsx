@@ -39,7 +39,7 @@ describe('Avisos: estados de la bandeja', () => {
   it('sin avisos sin leer: la frase de "Sin leer"', async () => {
     pintar()
     await screen.findByRole('header', { name: 'No tenés avisos.' })
-    await userEvent.press(screen.getByText('Sin leer'))
+    await userEvent.press(screen.getByLabelText('Sin leer'))
     expect(await screen.findByRole('header', { name: 'No tenés avisos sin leer.' })).toBeTruthy()
   })
 
