@@ -45,11 +45,11 @@ const HOJA = {
 let hojaServidor: unknown = HOJA
 let listaServidor: (url: string) => unknown = () => [{ id: 'h1' }]
 
-/** La entrega va en pasos (bloque 12, T12c): sin devolución y sin cobro, hasta el resumen donde está "Confirmar entrega". */
-async function alResumen() {
-  await userEvent.press(screen.getByLabelText('No, recibió todo'))
+/** La entrega va en pasos: sin devolución y sin cobro, hasta el paso Confirmar con quién recibió escrito. */
+async function alResumen(receptor = 'Carlos') {
+  await userEvent.press(screen.getByLabelText('No, todo bien'))
   await userEvent.press(screen.getByLabelText('Continuar'))
-  await userEvent.press(screen.getByLabelText('Continuar'))
+  await userEvent.type(screen.getByLabelText('Quién recibió'), receptor)
 }
 
 function pintar(hoja: unknown = HOJA, choferId = 'u1', permissions: unknown[] = [{ module: 'MOD_VIAJES', canRead: true }]) {
@@ -108,16 +108,16 @@ describe('Consola del chofer: hoja de ruta', () => {
     pintar()
     await userEvent.press(await screen.findByLabelText('¡Llegué!'))
     await userEvent.press(await screen.findByLabelText('Entregué todo'))
-    // Pasos de la entrega (T12c): sin quién recibió no se sigue; recién el último paso confirma.
-    expect(screen.getByLabelText('Continuar').props.accessibilityState.disabled).toBe(true)
-    await userEvent.press(screen.getByLabelText('No, recibió todo'))
-    expect(screen.getByLabelText('Continuar').props.accessibilityState.disabled).toBe(true)
+    // Pasos de la entrega: sin quién recibió no se confirma; recién el último paso confirma.
+    await alResumen('')
+    expect(screen.getByLabelText('Confirmar entrega').props.accessibilityState.disabled).toBe(true)
     await userEvent.type(screen.getByLabelText('Quién recibió'), 'Carlos')
-    await alResumen()
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/paradas/p4/entregar', {
       claveIdempotencia: expect.any(String), nombreReceptor: 'Carlos',
     })
+    expect(await screen.findByLabelText('Entrega lista')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Siguiente entrega'))
     expect(await screen.findByText('2 de 4 entregadas')).toBeTruthy()
     expect(screen.queryByLabelText('Confirmar entrega')).toBeNull()
   })
@@ -140,7 +140,6 @@ describe('Consola del chofer: hoja de ruta', () => {
     pintar()
     await userEvent.press(await screen.findByLabelText('¡Llegué!'))
     await userEvent.press(await screen.findByLabelText('Entregué todo'))
-    await userEvent.type(screen.getByLabelText('Quién recibió'), 'Carlos')
     await alResumen()
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
     expect(await screen.findByText('La venta ya no está en ruta.')).toBeTruthy()
@@ -151,12 +150,12 @@ describe('Consola del chofer: hoja de ruta', () => {
   it('antes de iniciar no se reporta; la hoja de otro chofer es solo lectura', async () => {
     pintar({ ...HOJA, estado: 1 })
     expect(await screen.findByLabelText('Iniciar recorrido')).toBeTruthy()
-    expect(screen.queryByLabelText('Reportar entrega')).toBeNull()
+    expect(screen.queryByLabelText('¡Llegué!')).toBeNull()
     screen.unmount()
     useLogisticaStore.setState({ activeTrip: null })
     pintar(HOJA, 'otro')
     expect(await screen.findByText(/es de otro chofer/)).toBeTruthy()
-    expect(screen.queryByLabelText('Reportar entrega')).toBeNull()
+    expect(screen.queryByLabelText('¡Llegué!')).toBeNull()
   })
 
   it('si la oficina cancela la hoja que el chofer tenía abierta, lo dice y no ofrece reportar ni iniciar', async () => {
@@ -164,7 +163,7 @@ describe('Consola del chofer: hoja de ruta', () => {
     useLogisticaStore.setState({ activeTrip: { ...HOJA, estado: 1 } as never })
     pintar({ ...HOJA, estado: 4 })
     expect(await screen.findByText(/cancelada/i)).toBeTruthy()
-    expect(screen.queryByLabelText('Reportar entrega')).toBeNull()
+    expect(screen.queryByLabelText('¡Llegué!')).toBeNull()
     expect(screen.queryByLabelText('Iniciar recorrido')).toBeNull()
     // No queda trabado en una hoja muerta.
     expect(screen.getByLabelText('Cambiar de ruta')).toBeTruthy()
@@ -264,7 +263,6 @@ describe('Consola del chofer: hoja de ruta', () => {
     pintar()
     await userEvent.press(await screen.findByLabelText('¡Llegué!'))
     await userEvent.press(await screen.findByLabelText('Entregué todo'))
-    await userEvent.type(screen.getByLabelText('Quién recibió'), 'Carlos')
     await alResumen()
     const confirmar = screen.getByLabelText('Confirmar entrega')
     act(() => {
@@ -308,7 +306,7 @@ describe('Consola del chofer: hoja de ruta', () => {
       return true
     })
     pintar({ ...HOJA, estado: 5 })
-    expect(screen.queryByLabelText('Reportar entrega')).toBeNull()
+    expect(screen.queryByLabelText('¡Llegué!')).toBeNull()
     await userEvent.press(await screen.findByLabelText('Iniciar recorrido'))
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/iniciar', undefined)
   })

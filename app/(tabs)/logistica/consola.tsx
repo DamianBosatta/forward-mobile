@@ -20,6 +20,8 @@ import { PedidoDetalleModal } from '@/features/logistica/components/PedidoDetall
 import { HojaDeRutaVista } from '@/features/logistica/consola/HojaDeRutaVista'
 import { ReportarParada, type Resultado, type ReporteParada } from '@/features/logistica/consola/ReportarParada'
 import { LlegueParada } from '@/features/logistica/consola/LlegueParada'
+import { EntregaLista } from '@/features/logistica/consola/EntregaLista'
+import { piezasDeParada } from '@/features/logistica/consola/piezasParada'
 import { resumenRuta, urlComoLlegar, urlLlamar } from '@/features/logistica/consola/hojaDeRuta'
 import { clasificarFalloEntrega, formatDistancia } from '@/features/logistica/consola/entrega'
 import { nuevaClaveIdempotencia } from '@/features/venta-nueva/lib/payload'
@@ -64,6 +66,8 @@ export default function ConsolaChoferScreen() {
     () => onlineManager.isOnline(),
   )
   const [revisadoA, setRevisadoA] = useState(() => Date.now())
+  /** Lámina chofer-06: la entrega que acaba de quedar registrada. */
+  const [lista, setLista] = useState<{ parada: ParadaDto; cobrado: number; piezas: number } | null>(null)
   const [errorReporte, setErrorReporte] = useState<string | null>(null)
   const [pedido, setPedido] = useState<ParadaDto | null>(null)
   const [finalizando, setFinalizando] = useState(false)
@@ -244,6 +248,7 @@ export default function ConsolaChoferScreen() {
         const cuerpo = { ...r.entrega, claveIdempotencia: claveDe(parada.id) }
         await entregar.mutateAsync({ hojaDeRutaId: viaje.id, paradaId: parada.id, cuerpo })
         updateStopStatus(parada.id, { delivered: true, observations: r.entrega.observaciones ?? undefined })
+        setLista({ parada, cobrado: (r.entrega.cobro?.lineas ?? []).reduce((t, l) => t + (l.monto ?? 0), 0), piezas: piezasDeParada(parada).total })
         setReportando(null)
       } catch (e) {
         const fallo = clasificarFalloEntrega(e)
@@ -300,15 +305,15 @@ export default function ConsolaChoferScreen() {
     }
   }
 
-  const porcentaje = resumen.total > 0 ? Math.round((resumen.hechas / resumen.total) * 100) : 0
+  const porcentaje = resumen.total > 0 ? Math.round((resumen.entregadas / resumen.total) * 100) : 0
   // chofer-01-viaje: progreso y total a cobrar del día arriba de la próxima parada.
   const cabecera = (
     <View style={{ gap: space[2] }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
-        <Text style={{ ...typeScale.seccion, color: c.text }}>{`${resumen.hechas} de ${resumen.total} entregadas`}</Text>
+        <Text style={{ ...typeScale.seccion, color: c.text }}>{`${resumen.entregadas} de ${resumen.total} entregadas`}</Text>
         <Text style={{ ...typeScale.secundario, ...importe, color: c.textSecondary }}>{`${porcentaje} %`}</Text>
       </View>
-      <Progress value={resumen.hechas} max={resumen.total} accessibilityLabel="Entregas hechas" />
+      <Progress value={resumen.entregadas} max={resumen.total} accessibilityLabel="Entregas hechas" />
       {/* Lo calcula el servidor; un servidor anterior no lo manda y no se muestra. */}
       {viaje.totalMontoCobrar != null ? (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
@@ -404,6 +409,21 @@ export default function ConsolaChoferScreen() {
             error={errorReporte}
             onCerrar={() => setReportando(null)}
             onConfirmar={confirmarReporte}
+          />
+        ) : null}
+        {lista ? (
+          <EntregaLista
+            parada={lista.parada}
+            cobrado={lista.cobrado}
+            piezas={lista.piezas}
+            hechas={resumen.entregadas}
+            total={resumen.total}
+            siguiente={resumen.proxima}
+            onSiguiente={() => setLista(null)}
+            onTermine={() => {
+              setLista(null)
+              setFinalizando(true)
+            }}
           />
         ) : null}
         <BottomSheet visible={finalizando} onClose={() => setFinalizando(false)} accessibilityLabel="Finalizar viaje">
