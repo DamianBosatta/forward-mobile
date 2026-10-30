@@ -470,7 +470,7 @@ describe('pestaña Cabecera', () => {
     expect(screen.getByText('Podés ceder desde 2,5 % hasta menos de 5 %.')).toBeTruthy()
     await userEvent.clear(campo)
     await userEvent.type(campo, '3')
-    expect(screen.getByText(/cediste parte de tu comisión/)).toBeTruthy()
+    expect(screen.getByText(/Cediste parte de tu comisión/)).toBeTruthy()
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     expect(ultimoPut()).not.toHaveProperty('porcentajeComisionCedido')
   })
