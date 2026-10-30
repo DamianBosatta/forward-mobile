@@ -47,6 +47,9 @@ export function Button({
 
   return (
     <Pressable
+      // Con `android_ripple`, Android conserva el fondo nativo viejo cuando el tema cambia en vivo: el texto se
+      // repinta y el fondo no. Remontar cuando cambia el color lo corrige.
+      key={p.fondo}
       testID={testID}
       onPress={inactivo ? undefined : onPress}
       disabled={inactivo}
