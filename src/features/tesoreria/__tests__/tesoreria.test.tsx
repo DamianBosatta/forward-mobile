@@ -30,6 +30,16 @@ describe('Tesorería sin cheques', () => {
     expect(screen.queryByText(/cheques/i)).toBeNull()
   })
 
+  it('muestra la fila de transferencia con su subtítulo y el aviso de que los cobros van con "Cobrar" (lámina tesoreria-inicio)', async () => {
+    conPermisos([{ module: 'MOD_PAGOS', canRead: true, canCreate: true }, { module: 'MOD_CC', canRead: true }])
+    renderConQuery(<TesoreriaScreen />)
+    expect(await screen.findByRole('button', { name: 'Transferencia entre cuentas' }, ESPERA)).toBeTruthy()
+    expect(screen.getByText('Mové plata entre tus cuentas')).toBeTruthy()
+    expect(screen.getByText('Los cobros de clientes se cargan desde la ficha del cliente, con "Cobrar".')).toBeTruthy()
+    // TODO API: las filas "Pagar un servicio" y "Cargar un cheque" no se ofrecen hasta tener permiso confirmado y POST /cheques.
+    expect(screen.queryByText('Pagar un servicio')).toBeNull()
+  })
+
   it('sin permiso para transferir muestra el botón deshabilitado con el motivo de la web (L13), aunque gestione cheques', async () => {
     conPermisos([{ module: 'MOD_PAGOS', canRead: true, canUpdate: true }, { module: 'MOD_CC', canRead: true }, { module: 'CAP_GESTIONAR_CHEQUES', canRead: true }])
     renderConQuery(<TesoreriaScreen />)

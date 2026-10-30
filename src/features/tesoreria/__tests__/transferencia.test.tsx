@@ -81,6 +81,25 @@ describe('cuentas y saldo que queda', () => {
     expect(get).toHaveBeenCalledWith('/api/v1/cuentas-corrientes/propias/caja/saldo-restante?monto=350000', { estadosEsperados: [404] })
   })
 
+  it('lámina tesoreria-transferencia: lo que queda se dice en un aviso de éxito y en rojo (peligro) si no alcanza', async () => {
+    servidorNuevo()
+    renderConQuery(<Transferencia onListo={jest.fn()} />)
+    await userEvent.press(await screen.findByRole('radio', { name: 'Transferencia' }, ESPERA))
+    await userEvent.press(radio('Desde', /^Caja de Emanuel/))
+    fireEvent.changeText(screen.getByLabelText('Monto'), '350.000')
+    const ok = await screen.findByText('Te quedan $ 62.300,00 en Caja de Emanuel.', {}, ESPERA)
+    expect(ok.parent?.parent?.props.accessibilityRole).toBe('text')
+    fireEvent.changeText(screen.getByLabelText('Monto'), '500.000')
+    const rojo = await screen.findByText('Caja de Emanuel queda en -$ 87.700,00.', {}, ESPERA)
+    expect(rojo.parent?.parent?.props.accessibilityRole).toBe('alert')
+  })
+
+  it('lámina tesoreria-transferencia: dice por qué solo hay cuentas propias y que el cobro de un cliente va con "Cobrar"', async () => {
+    renderConQuery(<Transferencia onListo={jest.fn()} />)
+    expect(await screen.findByText('Solo se eligen cuentas propias: los clientes y la cartera de cheques no aparecen.', {}, ESPERA)).toBeTruthy()
+    expect(screen.getByText('Si un cliente te transfirió, cargalo con "Cobrar" desde su ficha.')).toBeTruthy()
+  })
+
   it('si el monto deja la cuenta en negativo, lo avisa', async () => {
     servidorNuevo()
     renderConQuery(<Transferencia onListo={jest.fn()} />)
