@@ -17,7 +17,7 @@ const venta = (clave: string, estado: EstadoEnCola, extra: Partial<VentaEnCola> 
   ...extra,
 })
 const esperando: EstadoEnCola = { tipo: 'esperando', fase: { paso: 'nueva' }, intentos: 0 }
-const AVISO = 'Podés seguir vendiendo. Las ventas quedan guardadas en el teléfono y se mandan solas cuando vuelva la señal. Precios y stock de las 08:12.'
+const AVISO = 'Sin señal. Podés seguir vendiendo: las ventas quedan en el teléfono y se mandan solas cuando vuelva la conexión. Precios y stock de las 08:12.'
 const PIE = 'Si el precio cambió al enviarse, la venta queda en Borradores para que la revises.'
 
 describe('VentasSinSenalLista (V9)', () => {
@@ -31,7 +31,7 @@ describe('VentasSinSenalLista (V9)', () => {
     const { rerender } = render(<VentasSinSenalLista items={[]} sinSenal={false} horaCatalogo="08:12" />)
     expect(screen.queryByText(/Podés seguir vendiendo/)).toBeNull()
     rerender(<VentasSinSenalLista items={[]} sinSenal horaCatalogo={null} />)
-    expect(screen.getByText('Podés seguir vendiendo. Las ventas quedan guardadas en el teléfono y se mandan solas cuando vuelva la señal.')).toBeTruthy()
+    expect(screen.getByText('Sin señal. Podés seguir vendiendo: las ventas quedan en el teléfono y se mandan solas cuando vuelva la conexión.')).toBeTruthy()
   })
 
   it('agrupa: esperando para enviarse (con cuántas), para revisar y enviadas', () => {
@@ -49,7 +49,7 @@ describe('VentasSinSenalLista (V9)', () => {
       />,
     )
     expect(screen.getByText('Esperando para enviarse · 2')).toBeTruthy()
-    expect(screen.getAllByText('En el teléfono')).toHaveLength(2)
+    expect(screen.getAllByText('En cola')).toHaveLength(2)
     expect(screen.getAllByText('Pedido · 11:40').length).toBeGreaterThan(0)
     expect(screen.getByText('Presupuesto · 11:58')).toBeTruthy()
     expect(screen.getByText('Jara 1643')).toBeTruthy()
