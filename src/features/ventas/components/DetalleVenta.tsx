@@ -17,6 +17,7 @@ import { motivosAutorizacion } from '@/features/venta-nueva/lib/motivosAutorizac
 import { mostrarNumero } from '@/features/venta-nueva/lib/linea'
 import { codigoDeVenta, tipoDeVenta } from '@/features/venta-nueva/lib/ventaGuardada'
 import { accionesDeVenta, DIAS_VIGENCIA_PRESUPUESTO } from '../lib/accionesVenta'
+import { cobroDeLaVenta } from '../lib/cobro'
 import { diaDeEntregaCorto } from '../lib/entrega'
 import { pasosDeLaVenta } from '../lib/lineaDeTiempo'
 import { horaDe, tituloDelDia } from '../lib/agruparPorDia'
@@ -94,6 +95,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
   const chip = chipForEstado('venta', h.estado)
   const motivos = motivosAutorizacion(h.motivoPendienteAutorizacion)
   const sim = comision.data
+  const cobro = esPresupuesto ? null : cobroDeLaVenta(pagos.data)
   const entrega = h.metodoEntregaNombre === 'RetiroEnLocal' ? 'Retiro en el local' : diaDeEntregaCorto(h.fechaEntrega)
   const telefono = cliente?.telefono ?? h.clienteTelefono ?? null
   const cobrar = () => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: h.clienteId } } as never)
@@ -142,6 +144,15 @@ export function DetalleVenta({ id, onVolver }: Props) {
               </Notice>
             ) : null}
             {h.motivoAnulacion ? <Notice tone="peligro" title="Se anuló">{h.motivoAnulacion}</Notice> : null}
+            {cobro ? (
+              <View style={{ gap: space[2] }}>
+                <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Cobro</Text>
+                <View style={{ gap: space[1], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
+                  {cobro.filas.map((f) => <TotalsRow key={f.clave} label={f.texto} importe={f.monto} />)}
+                  {cobro.saldo !== null ? <TotalsRow label="Saldo" importe={cobro.saldo} destacado /> : null}
+                </View>
+              </View>
+            ) : null}
             <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Productos</Text>
             <LineasDeLaVenta detalles={q.data.detalles} />
             <View style={{ gap: space[1] }}>
@@ -153,8 +164,6 @@ export function DetalleVenta({ id, onVolver }: Props) {
                   {`Tu comisión estimada${sim.montoCobro < h.totalAmount ? ' sobre lo pendiente de cobro' : ''} ${formatImporte(sim.montoComision)}`}
                 </Text>
               ) : null}
-              {!esPresupuesto && pagos.data?.montoPagado != null ? <TotalsRow label="Cobrado" importe={pagos.data.montoPagado} /> : null}
-              {!esPresupuesto && pagos.data?.saldoPendiente != null ? <TotalsRow label="Saldo del pedido" importe={pagos.data.saldoPendiente} /> : null}
             </View>
             {h.observaciones ? <Text style={sec}>{`Observaciones: ${h.observaciones}`}</Text> : null}
             {acciones.motivoNoEditable ? <Notice tone="info">{acciones.motivoNoEditable}</Notice> : null}
