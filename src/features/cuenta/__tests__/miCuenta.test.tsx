@@ -189,6 +189,8 @@ describe('Mi cuenta', () => {
     await completar('Vieja#2025', 'corta', 'otra')
     expect(screen.getByText('Las contraseñas no coinciden.')).toBeTruthy()
     expect(botonCambiar().props.accessibilityState.disabled).toBe(true)
+    // El botón apagado dice por qué, en una línea (lámina perfil--clave).
+    expect(screen.getByText('Se habilita cuando todo está completo y las dos nuevas coinciden.')).toBeTruthy()
 
     await userEvent.clear(screen.getByLabelText('Repetir la contraseña nueva'))
     await userEvent.type(screen.getByLabelText('Repetir la contraseña nueva'), 'corta')
