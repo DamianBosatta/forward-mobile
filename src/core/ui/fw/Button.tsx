@@ -1,23 +1,29 @@
 import React from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import type { LucideIcon } from 'lucide-react-native'
 import { radii, space, typeScale, useColors, type ForwardColors } from '@/libs/theme'
 
 export type ButtonVariant = 'primario' | 'secundario' | 'peligro'
+/** `xl` es la escala de la consola del chofer: 72 de alto, texto 19 y borde de 2 px (se lee al sol, con una mano). */
+export type ButtonSize = 'md' | 'xl'
 
 interface ButtonProps {
   label: string
   onPress: () => void
   variant?: ButtonVariant
+  size?: ButtonSize
+  /** Ícono a la izquierda del texto (el estado nunca va solo en el color). */
+  icon?: LucideIcon
   disabled?: boolean
   loading?: boolean
   accessibilityLabel?: string
   testID?: string
 }
 
-function paleta(c: ForwardColors, variant: ButtonVariant, inactivo: boolean) {
+function paleta(c: ForwardColors, variant: ButtonVariant, inactivo: boolean, xl: boolean) {
   if (inactivo) return { fondo: c.surface2, texto: c.textSecondary, borde: c.surface2 }
   if (variant === 'peligro') return { fondo: c.dangerStrong, texto: c.onDangerStrong, borde: c.dangerStrong }
-  if (variant === 'secundario') return { fondo: c.surface, texto: c.text, borde: c.border }
+  if (variant === 'secundario') return { fondo: c.surface, texto: c.text, borde: xl ? c.textSecondary : c.border }
   return { fondo: c.action, texto: c.onAction, borde: c.action }
 }
 
@@ -26,6 +32,8 @@ export function Button({
   label,
   onPress,
   variant = 'primario',
+  size = 'md',
+  icon: Icono,
   disabled = false,
   loading = false,
   accessibilityLabel,
@@ -34,7 +42,8 @@ export function Button({
   const colors = useColors()
   const inactivo = disabled || loading
   // Cargando conserva el color de la variante; solo deshabilitado se apaga.
-  const p = paleta(colors, variant, disabled)
+  const xl = size === 'xl'
+  const p = paleta(colors, variant, disabled, xl)
 
   return (
     <Pressable
@@ -48,10 +57,10 @@ export function Button({
       // fondo ni alto. El toque se marca con el ripple nativo.
       android_ripple={inactivo ? undefined : { color: p.borde }}
       style={{
-        height: space[12],
+        height: xl ? 72 : space[12],
         paddingHorizontal: space[5],
-        borderRadius: radii.campo,
-        borderWidth: 1,
+        borderRadius: xl ? radii.tarjeta : radii.campo,
+        borderWidth: xl ? 2 : 1,
         borderColor: p.borde,
         backgroundColor: p.fondo,
         alignItems: 'center',
@@ -61,7 +70,8 @@ export function Button({
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
         {loading && <ActivityIndicator size="small" color={p.texto} />}
-        <Text style={{ ...typeScale.cuerpoDestacado, color: p.texto }}>{label}</Text>
+        {Icono ? <Icono size={xl ? 26 : 20} color={p.texto} strokeWidth={2.5} /> : null}
+        <Text style={{ ...typeScale.cuerpoDestacado, ...(xl ? { fontSize: 19, lineHeight: 26 } : null), color: p.texto }}>{label}</Text>
       </View>
     </Pressable>
   )

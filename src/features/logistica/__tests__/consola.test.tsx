@@ -79,10 +79,10 @@ describe('Consola del chofer: hoja de ruta', () => {
     const proxima = await screen.findByLabelText('Próxima parada')
     expect(within(proxima).getByText('Juan B. Justo 6376')).toBeTruthy()
     expect(within(proxima).getByText('Carlos')).toBeTruthy()
-    expect(within(proxima).getByText('Parada 2 · 3 bultos')).toBeTruthy()
+    expect(within(proxima).getByText('Parada 2 de 4')).toBeTruthy()
     // El importe es el total que manda el servidor, sin inventar el tipo de cobro.
     expect(within(proxima).getByText('$ 214.560,00')).toBeTruthy()
-    expect(screen.getByText('1 de 4 entregas')).toBeTruthy()
+    expect(screen.getByText('1 de 4 entregadas')).toBeTruthy()
     expect(screen.getByLabelText('Parada 3: Av. del Valle 89')).toBeTruthy()
     expect(screen.getByLabelText('Parada 4: Luis Balcarce 312')).toBeTruthy()
     expect(within(screen.getByLabelText('Parada 1: Tarantino 1898')).getByLabelText('Estado: Entregado')).toBeTruthy()
@@ -106,7 +106,8 @@ describe('Consola del chofer: hoja de ruta', () => {
       return true
     })
     pintar()
-    await userEvent.press(await screen.findByLabelText('Reportar entrega'))
+    await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+    await userEvent.press(await screen.findByLabelText('Entregué todo'))
     // Pasos de la entrega (T12c): sin quién recibió no se sigue; recién el último paso confirma.
     expect(screen.getByLabelText('Continuar').props.accessibilityState.disabled).toBe(true)
     await userEvent.press(screen.getByLabelText('No, recibió todo'))
@@ -117,18 +118,18 @@ describe('Consola del chofer: hoja de ruta', () => {
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/paradas/p4/entregar', {
       claveIdempotencia: expect.any(String), nombreReceptor: 'Carlos',
     })
-    expect(await screen.findByText('2 de 4 entregas')).toBeTruthy()
+    expect(await screen.findByText('2 de 4 entregadas')).toBeTruthy()
     expect(screen.queryByLabelText('Confirmar entrega')).toBeNull()
   })
 
   it('no se pudo entregar: pide el motivo y lo manda como motivoRechazo', async () => {
     mockPost.mockResolvedValue(true)
     pintar()
-    await userEvent.press(await screen.findByLabelText('Reportar entrega'))
-    await userEvent.press(screen.getByLabelText('No se pudo entregar'))
-    expect(screen.getByLabelText('Confirmar: no se entregó').props.accessibilityState.disabled).toBe(true)
+    await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+    await userEvent.press(await screen.findByLabelText('No pude entregar'))
+    expect(screen.getByLabelText('Avisar a Ventas').props.accessibilityState.disabled).toBe(true)
     await userEvent.press(screen.getByLabelText('Dirección incorrecta'))
-    await userEvent.press(screen.getByLabelText('Confirmar: no se entregó'))
+    await userEvent.press(screen.getByLabelText('Avisar a Ventas'))
     expect(mockPost).toHaveBeenCalledWith(expect.stringContaining('reportar-parada'), expect.objectContaining({
       paradaId: 'p4', entregado: false, motivoRechazo: 'Dirección incorrecta',
     }))
@@ -137,13 +138,14 @@ describe('Consola del chofer: hoja de ruta', () => {
   it('si el servidor rechaza, el motivo queda a la vista y el reporte sigue abierto', async () => {
     mockPost.mockRejectedValue(Object.assign(new Error('La venta ya no está en ruta.'), { errors: [] }))
     pintar()
-    await userEvent.press(await screen.findByLabelText('Reportar entrega'))
+    await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+    await userEvent.press(await screen.findByLabelText('Entregué todo'))
     await userEvent.type(screen.getByLabelText('Quién recibió'), 'Carlos')
     await alResumen()
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
     expect(await screen.findByText('La venta ya no está en ruta.')).toBeTruthy()
     expect(screen.getByLabelText('Confirmar entrega')).toBeTruthy()
-    expect(screen.getByText('1 de 4 entregas')).toBeTruthy()
+    expect(screen.getByText('1 de 4 entregadas')).toBeTruthy()
   })
 
   it('antes de iniciar no se reporta; la hoja de otro chofer es solo lectura', async () => {
@@ -260,7 +262,8 @@ describe('Consola del chofer: hoja de ruta', () => {
   it('un doble toque rápido en confirmar manda un solo reporte', async () => {
     mockPost.mockReturnValue(new Promise(() => {}))
     pintar()
-    await userEvent.press(await screen.findByLabelText('Reportar entrega'))
+    await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+    await userEvent.press(await screen.findByLabelText('Entregué todo'))
     await userEvent.type(screen.getByLabelText('Quién recibió'), 'Carlos')
     await alResumen()
     const confirmar = screen.getByLabelText('Confirmar entrega')
@@ -339,7 +342,7 @@ describe('Consola del chofer: qué cobrar (fila 70)', () => {
     // El monto a cobrar (100.000), no el total del pedido (214.560): el teléfono no calcula nada.
     expect(within(proxima).getByText('$ 100.000,00')).toBeTruthy()
     expect(within(proxima).queryByText('Total del pedido')).toBeNull()
-    expect(within(proxima).getByText('Parada 1 · NTE16918 · 3 bultos')).toBeTruthy()
+    expect(within(proxima).getByText('Parada 1 de 4')).toBeTruthy()
     expect(screen.getByText('$ 130.000,00')).toBeTruthy()
     expect(screen.getByText(/A cobrar hoy/)).toBeTruthy()
   })

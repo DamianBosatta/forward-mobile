@@ -76,7 +76,8 @@ const llamadasA = (url: string) => mockPost.mock.calls.filter(([u]) => u === url
 
 // La entrega va en pasos (bloque 12, T12c): E1 reportar, E2 devolución, E3 cobro y firma, E6 confirmar.
 async function abrirEntrega() {
-  await userEvent.press(await screen.findByLabelText('Reportar entrega'))
+  await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+  await userEvent.press(await screen.findByLabelText('Entregué todo'))
   await userEvent.type(screen.getByLabelText('Quién recibió'), 'Abel')
   await userEvent.press(screen.getByLabelText('No, recibió todo'))
 }
@@ -104,13 +105,14 @@ describe('Consola del chofer: entrega con la operación única', () => {
     const [[url, cuerpo]] = mockPost.mock.calls
     expect(url).toBe(ENTREGAR)
     expect(cuerpo).toEqual({ claveIdempotencia: expect.stringMatching(/\S{8,}/), nombreReceptor: 'Abel' })
-    expect(await screen.findByText('1 de 2 entregas')).toBeTruthy()
+    expect(await screen.findByText('1 de 2 entregadas')).toBeTruthy()
     expect(llamadasA('/api/v1/Logistica/hojas-ruta/h1/reportar-parada')).toHaveLength(0)
   })
 
   it('quién recibió es obligatorio siempre, aunque la foto del remito no se exija (decisión del dueño del 16-10)', async () => {
     pintar({ ...HOJA, exigeFotoRemitoAlEntregar: false })
-    await userEvent.press(await screen.findByLabelText('Reportar entrega'))
+    await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+    await userEvent.press(await screen.findByLabelText('Entregué todo'))
     await userEvent.press(screen.getByLabelText('No, recibió todo'))
     await userEvent.type(screen.getByLabelText('Quién recibió'), '   ')
     expect(screen.getByLabelText('Continuar').props.accessibilityState.disabled).toBe(true)
@@ -203,7 +205,7 @@ describe('Consola del chofer: entrega con la operación única', () => {
     expect(await screen.findByText('Network request failed')).toBeTruthy()
     mockPost.mockImplementation(async () => { entregada(); return { paradaId: 'p1', repetida: true } })
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
-    expect(await screen.findByText('1 de 2 entregas')).toBeTruthy()
+    expect(await screen.findByText('1 de 2 entregadas')).toBeTruthy()
     const [primero, segundo] = llamadasA(ENTREGAR)
     expect(segundo[1]).toEqual(primero[1])
   })
@@ -219,7 +221,7 @@ describe('Consola del chofer: entrega con la operación única', () => {
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
     expect(await screen.findByText('Esta entrega ya se había registrado antes con otros datos.')).toBeTruthy()
     expect(screen.queryByLabelText('Confirmar entrega')).toBeNull()
-    expect(await screen.findByText('1 de 2 entregas')).toBeTruthy()
+    expect(await screen.findByText('1 de 2 entregadas')).toBeTruthy()
   })
 
   it('si la clave ya se usó en otra parada, la cambia: el próximo intento va con otra clave', async () => {
@@ -264,10 +266,10 @@ describe('Consola del chofer: entrega con la operación única', () => {
   it('no se pudo entregar sigue por reportar-parada, sin clave ni cobro', async () => {
     mockPost.mockResolvedValue(true)
     pintar()
-    await userEvent.press(await screen.findByLabelText('Reportar entrega'))
-    await userEvent.press(screen.getByLabelText('No se pudo entregar'))
+    await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+    await userEvent.press(await screen.findByLabelText('No pude entregar'))
     await userEvent.press(screen.getByLabelText('Cerrado o sin nadie'))
-    await userEvent.press(screen.getByLabelText('Confirmar: no se entregó'))
+    await userEvent.press(screen.getByLabelText('Avisar a Ventas'))
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/reportar-parada', {
       hojaDeRutaId: 'h1', paradaId: 'p1', entregado: false, motivoRechazo: 'Cerrado o sin nadie', observaciones: undefined,
     })

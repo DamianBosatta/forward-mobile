@@ -1,11 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Linking, Text, View } from 'react-native'
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { Linking, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { useQueryClient } from '@tanstack/react-query'
-import { FileText } from 'lucide-react-native'
+import { onlineManager, useQueryClient } from '@tanstack/react-query'
+import { FileText, Phone, RefreshCw, WifiOff } from 'lucide-react-native'
 import { RequirePermission } from '@/core/ui'
 import { BottomSheet, Button, Notice, Progress, formatImporte, TopBar, useMenuLeading, type TopBarAction } from '@/core/ui/fw'
-import { importe, space, typeScale, useColors } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { safeHaptics } from '@/core/utils/haptics'
 import { useEntregarParada, useFinalizarHojaRuta, useHojaRuta, useHojasDeRuta, useIniciarHojaRuta, useReportarParada } from '@/libs/api-client'
 import { getManifiestoUrl, logisticaKeys } from '@/libs/api-client/logistica'
 import { getNotaEntregaUrl } from '@/libs/api-client/ventas'
@@ -17,15 +18,21 @@ import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { RouteSelector } from '@/features/logistica/components/RouteSelector'
 import { PedidoDetalleModal } from '@/features/logistica/components/PedidoDetalleModal'
 import { HojaDeRutaVista } from '@/features/logistica/consola/HojaDeRutaVista'
-import { ReportarParada, type ReporteParada } from '@/features/logistica/consola/ReportarParada'
+import { ReportarParada, type Resultado, type ReporteParada } from '@/features/logistica/consola/ReportarParada'
+import { LlegueParada } from '@/features/logistica/consola/LlegueParada'
 import { resumenRuta, urlComoLlegar, urlLlamar } from '@/features/logistica/consola/hojaDeRuta'
 import { clasificarFalloEntrega, formatDistancia } from '@/features/logistica/consola/entrega'
 import { nuevaClaveIdempotencia } from '@/features/venta-nueva/lib/payload'
 import { tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { sharePdf } from '@/features/pedidos/lib/sharePdf'
-import { diaArgentina, parseDateSafe } from '@/src/utils/date'
+import { diaArgentina, parseDateSafe, partesArgentina } from '@/src/utils/date'
 import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
+
+const horaDe = (ms: number) => {
+  const p = partesArgentina(ms)
+  return `${String(p.hora).padStart(2, '0')}:${String(p.minuto).padStart(2, '0')}`
+}
 
 /**
  * Consola del chofer (plan §11, lámina ChoferRuta). Muestra qué cobrar por parada y el total del día (lo decide
@@ -48,7 +55,15 @@ export default function ConsolaChoferScreen() {
   // La hoja que el chofer acaba de dejar con "Cambiar de ruta": la lista vieja no la vuelve a elegir sola.
   const [descartada, setDescartada] = useState<string | null>(null)
   const qc = useQueryClient()
-  const [reportando, setReportando] = useState<{ parada: ParadaDto; numero: number } | null>(null)
+  // "¡Llegué!" abre primero la pantalla de la parada; de ahí se pasa al reporte (entregué todo / no pude entregar).
+  const [llegue, setLlegue] = useState<{ parada: ParadaDto; numero: number } | null>(null)
+  const [reportando, setReportando] = useState<{ parada: ParadaDto; numero: number; resultado: Resultado } | null>(null)
+  // Sin señal: solo se avisa (la cola sin conexión de la consola es otra tarea). Lee el estado que ya mantiene useNetworkStatus.
+  const enLinea = useSyncExternalStore(
+    (cb) => onlineManager.subscribe(cb),
+    () => onlineManager.isOnline(),
+  )
+  const [revisadoA, setRevisadoA] = useState(() => Date.now())
   const [errorReporte, setErrorReporte] = useState<string | null>(null)
   const [pedido, setPedido] = useState<ParadaDto | null>(null)
   const [finalizando, setFinalizando] = useState(false)
@@ -118,10 +133,17 @@ export default function ConsolaChoferScreen() {
     )
   }
 
+  // chofer-07-estados: bloques con la forma real de la pantalla; el texto dice qué se espera.
   if ((remota.isLoading || ((rutas.isLoading || enCurso.isLoading) && !objetivo)) && !viaje) {
     return (
-      <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color={c.brand} accessibilityLabel="Cargando la hoja de ruta" />
+      <View accessibilityLabel="Cargando la hoja de ruta" accessibilityLiveRegion="polite" style={{ flex: 1, backgroundColor: c.bg }}>
+        <TopBar title="Viaje de hoy" leading={menu} />
+        <View style={{ padding: space[4], gap: space[3] }}>
+          <View style={{ height: 24, width: '60%', borderRadius: radii.campo, backgroundColor: c.surface2 }} />
+          <View style={{ height: 12, borderRadius: radii.pastilla, backgroundColor: c.surface2 }} />
+          <View style={{ height: 220, borderRadius: radii.tarjeta, backgroundColor: c.surface2 }} />
+          <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>Buscando tu viaje…</Text>
+        </View>
       </View>
     )
   }
@@ -140,13 +162,37 @@ export default function ConsolaChoferScreen() {
   const leading = id ? { kind: 'atras' as const, onPress: () => router.replace(volverA as never) } : menu
 
   if (!viaje) {
+    const conError = remota.isError || rutas.isError || enCurso.isError
+    const revisar = async () => {
+      safeHaptics.impact('light')
+      await Promise.all([rutas.refetch(), enCurso.refetch(), remota.refetch()])
+      setRevisadoA(Date.now())
+    }
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <TopBar title="Hoja de ruta" leading={leading} />
-        <View style={{ padding: space[4], gap: space[4] }}>
-          <Notice tone="info">No tenés una hoja de ruta para hoy ni en curso.</Notice>
-          <Button label="Volver" variant="secundario" onPress={() => router.replace(volverA as never)} />
-        </View>
+        <TopBar title="Viaje de hoy" leading={leading} />
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: space[4], gap: space[4] }}
+          refreshControl={<RefreshControl refreshing={rutas.isRefetching || enCurso.isRefetching} onRefresh={revisar} />}
+        >
+          <View accessibilityRole={conError ? 'alert' : undefined} style={{ alignItems: 'center', gap: space[3] }}>
+            <View style={{ width: 96, height: 96, borderRadius: radii.pastilla, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center' }}>
+              {conError || !enLinea ? <WifiOff size={40} color={c.textSecondary} /> : <Phone size={40} color={c.textSecondary} />}
+            </View>
+            <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text, textAlign: 'center' }}>
+              {conError ? 'No pudimos traer tu viaje' : 'Hoy no tenés viaje'}
+            </Text>
+            <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>
+              {conError ? 'Revisá la señal y probá de nuevo.' : 'No tenés una hoja de ruta para hoy ni en curso.'}
+            </Text>
+            {!conError ? (
+              <Text style={{ ...typeScale.secundario, color: c.textSecondary, textAlign: 'center' }}>{`Última revisión: ${horaDe(revisadoA)}`}</Text>
+            ) : null}
+          </View>
+          {/* TODO API: el número de Logística no tiene campo hoy; cuando llegue de la config va "Llamar a Logística" (urlLlamar). */}
+          <Button size="xl" icon={RefreshCw} label={conError ? 'Probar de nuevo' : 'Revisar de nuevo'} loading={rutas.isRefetching || enCurso.isRefetching} onPress={revisar} />
+          <Button size="xl" label="Volver" variant="secundario" onPress={() => router.replace(volverA as never)} />
+        </ScrollView>
       </View>
     )
   }
@@ -254,12 +300,51 @@ export default function ConsolaChoferScreen() {
     }
   }
 
+  const porcentaje = resumen.total > 0 ? Math.round((resumen.hechas / resumen.total) * 100) : 0
+  // chofer-01-viaje: progreso y total a cobrar del día arriba de la próxima parada.
+  const cabecera = (
+    <View style={{ gap: space[2] }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
+        <Text style={{ ...typeScale.seccion, color: c.text }}>{`${resumen.hechas} de ${resumen.total} entregadas`}</Text>
+        <Text style={{ ...typeScale.secundario, ...importe, color: c.textSecondary }}>{`${porcentaje} %`}</Text>
+      </View>
+      <Progress value={resumen.hechas} max={resumen.total} accessibilityLabel="Entregas hechas" />
+      {/* Lo calcula el servidor; un servidor anterior no lo manda y no se muestra. */}
+      {viaje.totalMontoCobrar != null ? (
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
+          <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>A cobrar hoy</Text>
+          <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.titulo, ...importe, fontSize: 28, lineHeight: 34, color: c.text }}>{formatImporte(viaje.totalMontoCobrar)}</Text>
+        </View>
+      ) : null}
+      {/* Los km son de la última ruta calculada: sin recalcular serían los del plan anterior. */}
+      {viaje.rutaCalculada === true && viaje.distanciaTotalMetros > 0 ? (
+        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Recorrido ${formatDistancia(viaje.distanciaTotalMetros)}`}</Text>
+      ) : null}
+    </View>
+  )
+  const avisos = (
+    <View style={{ gap: space[2] }}>
+      {/* Sin señal: el viaje se ve con lo guardado, pero entregar y cobrar necesitan conexión (la cola sin señal de la consola es otra tarea). */}
+      {!enLinea ? (
+        <Notice tone="advertencia" title="Sin señal.">Ves el viaje guardado en el teléfono. Para entregar o cobrar necesitás conexión.</Notice>
+      ) : null}
+      {soloLectura ? <Notice tone="info">Esta hoja de ruta es de otro chofer: solo podés verla.</Notice> : null}
+      {finalizada ? <Notice tone="exito" title="Viaje finalizado.">Quedó cerrado en el sistema.</Notice> : null}
+      {cancelada ? <Notice tone="info" title="Hoja cancelada.">La oficina canceló esta hoja de ruta antes de salir.</Notice> : null}
+      {/* `=== false`: un servidor anterior no manda el campo y no se avisa nada. */}
+      {viaje.rutaCalculada === false && !finalizada && !cancelada ? (
+        <Notice tone="info" title="Ruta sin recalcular.">La oficina cambió las paradas: el orden puede no ser el más corto.</Notice>
+      ) : null}
+      {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
+    </View>
+  )
+
   const todasReportadas = resumen.total > 0 && resumen.hechas === resumen.total
   const pie = soloLectura ? null : programada ? (
-    <Button label="Iniciar recorrido" loading={iniciar.isPending} onPress={() => accionViaje('iniciar')} />
+    <Button size="xl" label="Iniciar recorrido" loading={iniciar.isPending} onPress={() => accionViaje('iniciar')} />
   ) : finalizada || cancelada ? (
     !id ? (
-      <Button label="Cambiar de ruta" variant="secundario" onPress={() => {
+      <Button size="xl" label="Cambiar de ruta" variant="secundario" onPress={() => {
         setDescartada(viaje.id)
         clearActiveTrip()
         setRutaElegida(null)
@@ -267,49 +352,22 @@ export default function ConsolaChoferScreen() {
       }} />
     ) : null
   ) : esEstadoHojaRuta(viaje.estado, 'EnCurso') && todasReportadas ? (
-    <Button label="Finalizar viaje" onPress={() => setFinalizando(true)} />
+    <Button size="xl" label="Finalizar viaje" onPress={() => setFinalizando(true)} />
   ) : null
 
   return (
     <RequirePermission module="MOD_VIAJES" action="read" mode="screen">
       <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <TopBar title="Hoja de ruta" subtitle={subtitulo || undefined} leading={leading} actions={acciones} />
-        <View style={{ backgroundColor: c.topBar, paddingHorizontal: space[4], paddingBottom: space[4], gap: space[2] }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
-            <Text style={{ ...typeScale.cuerpoDestacado, color: c.onTopBarStrong }}>
-              {`${resumen.hechas} de ${resumen.total} entregas`}
-            </Text>
-            {/* Lo calcula el servidor; un servidor anterior no lo manda y no se muestra. */}
-            {viaje.totalMontoCobrar != null ? (
-              <Text style={{ ...typeScale.secundario, color: c.onTopBarStrong }}>
-                {'A cobrar hoy '}
-                <Text style={{ ...importe, fontWeight: '600' }}>{formatImporte(viaje.totalMontoCobrar)}</Text>
-              </Text>
-            ) : null}
-          </View>
-          {/* Los km son de la última ruta calculada: sin recalcular serían los del plan anterior. */}
-          {viaje.rutaCalculada === true && viaje.distanciaTotalMetros > 0 ? (
-            <Text style={{ ...typeScale.secundario, color: c.onTopBarStrong }}>{`Recorrido ${formatDistancia(viaje.distanciaTotalMetros)}`}</Text>
-          ) : null}
-          <Progress value={resumen.hechas} max={resumen.total} accessibilityLabel="Entregas hechas" sobreBarra />
-        </View>
-        <View style={{ paddingHorizontal: space[4], paddingTop: space[3], gap: space[2] }}>
-          {soloLectura ? <Notice tone="info">Esta hoja de ruta es de otro chofer: solo podés verla.</Notice> : null}
-          {finalizada ? <Notice tone="exito" title="Viaje finalizado.">Quedó cerrado en el sistema.</Notice> : null}
-          {cancelada ? <Notice tone="info" title="Hoja cancelada.">La oficina canceló esta hoja de ruta antes de salir.</Notice> : null}
-          {/* `=== false`: un servidor anterior no manda el campo y no se avisa nada. */}
-          {viaje.rutaCalculada === false && !finalizada && !cancelada ? (
-            <Notice tone="info" title="Ruta sin recalcular.">La oficina cambió las paradas: el orden puede no ser el más corto.</Notice>
-          ) : null}
-          {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
-        </View>
+        <TopBar title="Viaje de hoy" subtitle={subtitulo || undefined} leading={leading} actions={acciones} />
         <HojaDeRutaVista
           resumen={resumen}
           soloLectura={soloLectura}
           puedeReportar={esEstadoHojaRuta(viaje.estado, 'EnCurso')}
-          onReportar={(p) => {
+          cabecera={cabecera}
+          avisos={avisos}
+          onLlegue={(p) => {
             setErrorReporte(null)
-            setReportando({ parada: p, numero: resumen.proxima?.numero ?? 0 })
+            setLlegue({ parada: p, numero: resumen.proxima?.numero ?? 0 })
           }}
           onComoLlegar={(p) => abrir(urlComoLlegar(p.direccion))}
           onLlamar={(p) => abrir(urlLlamar(p.telefono))}
@@ -319,9 +377,25 @@ export default function ConsolaChoferScreen() {
           notaCargando={notaCargando}
           pie={pie}
         />
+        {llegue ? (
+          <LlegueParada
+            key={llegue.parada.id}
+            parada={llegue.parada}
+            onVolver={() => setLlegue(null)}
+            onEntregueTodo={() => {
+              setReportando({ ...llegue, resultado: 'entregado' })
+              setLlegue(null)
+            }}
+            onNoPudeEntregar={() => {
+              setReportando({ ...llegue, resultado: 'noEntregado' })
+              setLlegue(null)
+            }}
+          />
+        ) : null}
         {reportando ? (
           <ReportarParada
             key={reportando.parada.id}
+            resultadoInicial={reportando.resultado}
             hojaDeRutaId={viaje.id}
             parada={reportando.parada}
             numero={reportando.numero}

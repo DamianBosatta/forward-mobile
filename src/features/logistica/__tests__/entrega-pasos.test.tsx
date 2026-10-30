@@ -67,7 +67,10 @@ function pintar(h: Record<string, unknown>) {
 
 const ENTREGAR = '/api/v1/Logistica/hojas-ruta/h1/paradas/p1/entregar'
 const llamadasA = (url: string) => mockPost.mock.calls.filter(([u]) => u === url)
-const abrir = async () => userEvent.press(await screen.findByLabelText('Reportar entrega'))
+const abrir = async () => {
+  await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+  await userEvent.press(await screen.findByLabelText('Entregué todo'))
+}
 const continuar = () => screen.getByLabelText('Continuar')
 /** Entregado, sin devolución, hasta el paso de cobro (E3). */
 async function hastaElCobro(receptor = 'Abel') {
@@ -449,11 +452,11 @@ describe('E6 Confirmar entrega', () => {
 describe('No se pudo entregar', () => {
   it('se confirma desde el primer paso, sin pasar por devolución ni cobro', async () => {
     pintar(hoja(P1))
-    await abrir()
-    await userEvent.press(screen.getByLabelText('No se pudo entregar'))
+    await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+    await userEvent.press(await screen.findByLabelText('No pude entregar'))
     expect(screen.queryByLabelText('Continuar')).toBeNull()
     await userEvent.press(screen.getByLabelText('Cerrado o sin nadie'))
-    await userEvent.press(screen.getByLabelText('Confirmar: no se entregó'))
+    await userEvent.press(screen.getByLabelText('Avisar a Ventas'))
     await waitFor(() => expect(llamadasA('/api/v1/Logistica/hojas-ruta/h1/reportar-parada')).toHaveLength(1))
     expect(llamadasA(ENTREGAR)).toHaveLength(0)
   })

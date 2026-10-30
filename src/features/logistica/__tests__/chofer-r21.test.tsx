@@ -67,7 +67,10 @@ function pintar(h: Record<string, unknown>) {
 const ENTREGAR = '/api/v1/Logistica/hojas-ruta/h1/paradas/p1/entregar'
 const REPORTAR = '/api/v1/Logistica/hojas-ruta/h1/reportar-parada'
 const llamadasA = (url: string) => mockPost.mock.calls.filter(([u]) => u === url)
-const abrir = async () => userEvent.press(await screen.findByLabelText('Reportar entrega'))
+const abrir = async () => {
+  await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+  await userEvent.press(await screen.findByLabelText('Entregué todo'))
+}
 const continuar = () => screen.getByLabelText('Continuar')
 const deshabilitado = (el: { props: { accessibilityState?: { disabled?: boolean } } }) => el.props.accessibilityState?.disabled === true
 async function hastaElCobro(observaciones?: string) {
@@ -212,13 +215,13 @@ describe('C3 Cámara propia', () => {
 describe('C5 Foto del lugar al no entregar', () => {
   it('es opcional y viaja en evidenciaUrl del reporte', async () => {
     pintar(hoja(P1))
-    await abrir()
-    await userEvent.press(screen.getByLabelText('No se pudo entregar'))
+    await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+    await userEvent.press(await screen.findByLabelText('No pude entregar'))
     expect(screen.getByText('Opcional')).toBeTruthy()
     await userEvent.press(screen.getByLabelText('Cerrado o sin nadie'))
     await sacarFoto('Sacar foto del lugar')
     await screen.findByText('Foto del lugar cargada')
-    await userEvent.press(screen.getByLabelText('Confirmar: no se entregó'))
+    await userEvent.press(screen.getByLabelText('Avisar a Ventas'))
     await waitFor(() => expect(llamadasA(REPORTAR)).toHaveLength(1))
     expect(llamadasA(REPORTAR)[0][1]).toEqual({
       hojaDeRutaId: 'h1', paradaId: 'p1', entregado: false, motivoRechazo: 'Cerrado o sin nadie', observaciones: undefined,
@@ -229,10 +232,10 @@ describe('C5 Foto del lugar al no entregar', () => {
 
   it('antes: sin foto el reporte va sin evidenciaUrl', async () => {
     pintar(hoja(P1))
-    await abrir()
-    await userEvent.press(screen.getByLabelText('No se pudo entregar'))
+    await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+    await userEvent.press(await screen.findByLabelText('No pude entregar'))
     await userEvent.press(screen.getByLabelText('Dirección incorrecta'))
-    await userEvent.press(screen.getByLabelText('Confirmar: no se entregó'))
+    await userEvent.press(screen.getByLabelText('Avisar a Ventas'))
     await waitFor(() => expect(llamadasA(REPORTAR)).toHaveLength(1))
     expect((llamadasA(REPORTAR)[0][1] as Record<string, unknown>).evidenciaUrl).toBeUndefined()
   })

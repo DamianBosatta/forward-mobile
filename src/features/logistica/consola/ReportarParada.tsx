@@ -1,8 +1,10 @@
 import React, { useRef, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Check } from 'lucide-react-native'
 import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Field, Notice, Segmented, TopBar } from '@/core/ui/fw'
+import { Button, Field, Notice, TopBar } from '@/core/ui/fw'
+import { safeHaptics } from '@/core/utils/haptics'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import type { ParadaDto } from '@/libs/api-client/types'
 import { useLineasParada, useMediosCobroChofer } from '@/libs/api-client/logistica'
@@ -33,11 +35,13 @@ interface Props {
   error: string | null
   /** El interruptor `ExigirFotoRemitoAlEntregar` del servidor (viene en la hoja). */
   exigeFotoRemito: boolean
+  /** Lo decide la pantalla "Llegué": "Entregué todo" o "No pude entregar". */
+  resultadoInicial?: Resultado
   onCerrar: () => void
   onConfirmar: (r: ReporteParada) => void
 }
 
-type Resultado = 'entregado' | 'noEntregado'
+export type Resultado = 'entregado' | 'noEntregado'
 
 const formVacio = (): FormEntrega => ({
   receptor: '', observaciones: '', remitoUrl: null, lineas: [], imputacion: 'PedidoActual', firmaUrl: null, devolucion: {},
@@ -57,13 +61,13 @@ const TITULO: Record<Paso, string> = {
  * una sola vez, al final, con la misma operación única de siempre. "No se pudo entregar" se
  * confirma desde el primer paso. Monta una vez por parada: el estado arranca limpio.
  */
-export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, exigeFotoRemito, onCerrar, onConfirmar }: Props) {
+export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, exigeFotoRemito, resultadoInicial = 'entregado', onCerrar, onConfirmar }: Props) {
   const c = useColors()
   const { bottom } = useSafeAreaInsets()
   // Tablet: los pasos van en una columna centrada, no se estiran a todo el ancho.
   const { width } = useWindowDimensions()
   const columna = width >= 768 ? { maxWidth: 640, width: '100%' as const, alignSelf: 'center' as const } : null
-  const [resultado, setResultado] = useState<Resultado>('entregado')
+  const [resultado] = useState<Resultado>(resultadoInicial)
   const [paso, setPaso] = useState<Paso>('reporte')
   const [f, setF] = useState<FormEntrega>(formVacio)
   const [hayDevolucion, setHayDevolucion] = useState<boolean | null>(null)
@@ -115,7 +119,8 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
     if (!listo || enviando) return
     setErrorForm(null)
     if (!entregado) {
-      onConfirmar({ entregado: false, motivoRechazo: motivo ?? undefined, observaciones: f.observaciones.trim() || undefined, evidenciaUrl: lugarUrl ?? undefined })
+      safeHaptics.notification('warning')
+      onConfirmar({ entregado: false, motivoRechazo: motivo ?? undefined, observaciones: (motivo === 'Otro' ? f.observaciones.trim() : '') || undefined, evidenciaUrl: lugarUrl ?? undefined })
       return
     }
     const r = armarEntrega(form, { exigeFotoRemito, disponibles })
@@ -134,22 +139,11 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
     <Modal visible animationType="slide" onRequestClose={atras}>
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar
-          title={entregado ? tituloPaso : TITULO.reporte}
+          title={entregado ? tituloPaso : 'No pude entregar'}
           subtitle={`${entregado ? `Paso ${indice + 1} de ${pasos.length} · ` : ''}Parada ${numero} · ${parada.direccion} · ${parada.clienteNombre}`}
           leading={{ kind: 'atras', onPress: atras }}
         />
         <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], ...columna }} keyboardShouldPersistTaps="handled">
-          {paso === 'reporte' ? (
-            <Segmented<Resultado>
-              accessibilityLabel="Resultado"
-              value={resultado}
-              onChange={setResultado}
-              options={[
-                { value: 'entregado', label: 'Entregado' },
-                { value: 'noEntregado', label: 'No se pudo entregar' },
-              ]}
-            />
-          ) : null}
           {entregado && paso === 'reporte' ? (
             <>
               <View accessibilityLabel="¿Hay devolución?" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[3] }}>
@@ -183,8 +177,8 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
             </>
           ) : null}
           {!entregado && paso === 'reporte' ? (
-            <View accessibilityLabel="Motivo" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[2] }}>
-              <Text style={{ ...typeScale.seccion, color: c.text }}>Motivo</Text>
+            <View accessibilityLabel="Motivo" style={{ gap: space[3] }}>
+              <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>¿Qué pasó?</Text>
               {MOTIVOS_NO_ENTREGA.map((m) => {
                 const elegido = motivo === m
                 return (
@@ -195,21 +189,24 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
                     accessibilityLabel={m}
                     accessibilityState={{ checked: elegido }}
                     style={{
-                      minHeight: space[12],
-                      justifyContent: 'center',
-                      paddingHorizontal: space[3],
-                      borderRadius: radii.campo,
-                      borderWidth: elegido ? 2 : 1,
-                      borderColor: elegido ? c.brand : c.border,
+                      minHeight: 76,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: space[3],
+                      paddingHorizontal: space[4],
+                      borderRadius: radii.tarjeta,
+                      borderWidth: elegido ? 3 : 2,
+                      borderColor: elegido ? c.brandInk : c.textSecondary,
                       backgroundColor: elegido ? c.brandSoft : c.surface,
                     }}
                   >
-                    <Text style={{ ...typeScale.cuerpo, ...(elegido ? { fontFamily: FONT.semibold, fontWeight: '600' } : null), color: elegido ? c.brandInk : c.text }}>
-                      {m}
-                    </Text>
+                    <Text style={{ ...typeScale.seccion, fontSize: 19, lineHeight: 26, color: elegido ? c.brandInk : c.text, flex: 1 }}>{m}</Text>
+                    {/* La elección se ve por el tilde y el borde grueso, no solo por el color. */}
+                    {elegido ? <Check size={28} color={c.brandInk} strokeWidth={3} /> : null}
                   </Pressable>
                 )
               })}
+              <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Ventas reprograma la entrega. Vos seguís con la próxima parada.</Text>
             </View>
           ) : null}
           {!entregado && paso === 'reporte' ? (
@@ -223,7 +220,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
               onSubiendo={alSubir}
             />
           ) : null}
-          {paso === 'reporte' ? (
+          {paso === 'reporte' && (entregado || motivo === 'Otro') ? (
             <Field label="Observaciones" value={f.observaciones} onChangeText={(v) => cambiar({ observaciones: v })} placeholder="Algo que la oficina tenga que saber" />
           ) : null}
           {entregado && paso === 'devolucion' ? (
@@ -291,8 +288,8 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
           <View style={{ gap: space[2], ...columna }}>
             {razon ? <MotivoDeshabilitado>{razon}</MotivoDeshabilitado> : null}
             <Button
-              label={!entregado ? 'Confirmar: no se entregó' : ultimo ? 'Confirmar entrega' : 'Continuar'}
-              variant={entregado ? 'primario' : 'peligro'}
+              size={entregado ? 'md' : 'xl'}
+              label={!entregado ? 'Avisar a Ventas' : ultimo ? 'Confirmar entrega' : 'Continuar'}
               disabled={!listo}
               loading={ultimo && enviando}
               onPress={ultimo ? confirmar : seguir}
