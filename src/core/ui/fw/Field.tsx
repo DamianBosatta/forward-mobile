@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Text, TextInput, View, type TextInputProps } from 'react-native'
+import { Pressable, Text, TextInput, View, type TextInputProps } from 'react-native'
+import { Eye, EyeOff } from 'lucide-react-native'
 import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
 
 interface FieldProps extends Omit<TextInputProps, 'style' | 'placeholderTextColor'> {
@@ -8,22 +9,28 @@ interface FieldProps extends Omit<TextInputProps, 'style' | 'placeholderTextColo
   error?: string
   /** Importes: cifras alineadas a la derecha. */
   alignRight?: boolean
+  /** Con `secureTextEntry`: agrega el ojo para ver u ocultar el texto (lámina perfil--clave). */
+  verOcultar?: boolean
 }
 
 const etiqueta = { ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600' as const }
 
 /** Campo de la lámina F4: etiqueta 14/600, alto 48, relleno superficie-2, foco con la marca y error en rojo. */
-export function Field({ label, help, error, alignRight, onFocus, onBlur, ...input }: FieldProps) {
+export function Field({ label, help, error, alignRight, verOcultar, secureTextEntry, onFocus, onBlur, ...input }: FieldProps) {
   const colors = useColors()
   const [foco, setFoco] = useState(false)
   const colorError = colors.chip.anulado.text
+  const [visible, setVisible] = useState(false)
   const conMarca = foco || !!error
+  const ojo = !!verOcultar && !!secureTextEntry
 
   return (
     <View style={{ gap: space[1] }}>
       <Text style={{ ...etiqueta, color: colors.text }}>{label}</Text>
+      <View>
       <TextInput
         {...input}
+        secureTextEntry={ojo ? !visible : secureTextEntry}
         accessibilityLabel={label}
         accessibilityHint={error ?? help}
         onFocus={(e) => {
@@ -43,11 +50,23 @@ export function Field({ label, help, error, alignRight, onFocus, onBlur, ...inpu
           borderColor: error ? colorError : foco ? colors.brand : colors.border,
           backgroundColor: conMarca ? colors.surface : colors.surface2,
           paddingHorizontal: space[3] - (conMarca ? 1 : 0),
+          paddingRight: ojo ? space[12] : space[3] - (conMarca ? 1 : 0),
           paddingVertical: 0,
           color: colors.text,
           textAlign: alignRight ? 'right' : 'left',
         }}
       />
+      {ojo ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={visible ? `Ocultar ${label.toLowerCase()}` : `Mostrar ${label.toLowerCase()}`}
+          onPress={() => setVisible((v) => !v)}
+          style={{ position: 'absolute', right: 0, top: 0, width: space[12], height: space[12], alignItems: 'center', justifyContent: 'center' }}
+        >
+          {visible ? <EyeOff size={20} color={colors.textSecondary} /> : <Eye size={20} color={colors.textSecondary} />}
+        </Pressable>
+      ) : null}
+      </View>
       {error ? (
         <Text
           accessibilityRole="alert"

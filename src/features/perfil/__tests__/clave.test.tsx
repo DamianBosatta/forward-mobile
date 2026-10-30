@@ -50,16 +50,53 @@ describe('Cambiar contraseña (ruta propia)', () => {
     expect(screen.getByLabelText('Contraseña actual').props.value).toBe('')
   })
 
-  it('si no coinciden no deja enviar; los errores del servidor se muestran tal cual', async () => {
+  it('si no coinciden no deja enviar', async () => {
     pintar()
-    await completar('Vieja#2025', 'corta', 'otra')
+    await completar('Vieja#2025', 'Nueva#20260', 'otra')
     expect(screen.getByText('Las contraseñas no coinciden.')).toBeTruthy()
     expect(botonCambiar().props.accessibilityState.disabled).toBe(true)
     expect(screen.getByText('Se habilita cuando todo está completo y las dos nuevas coinciden.')).toBeTruthy()
-    await userEvent.clear(screen.getByLabelText('Repetir la contraseña nueva'))
-    await userEvent.type(screen.getByLabelText('Repetir la contraseña nueva'), 'corta')
-    mockPost.mockRejectedValueOnce(new Error('Passwords must be at least 10 characters.'))
+  })
+
+  it('los errores del servidor se muestran tal cual', async () => {
+    pintar()
+    await completar('Vieja#2025', 'Nueva#20260', 'Nueva#20260')
+    mockPost.mockRejectedValueOnce(new Error('La contraseña actual no es correcta.'))
     await userEvent.press(botonCambiar())
-    expect(await screen.findByText('Passwords must be at least 10 characters.')).toBeTruthy()
+    expect(await screen.findByText('La contraseña actual no es correcta.')).toBeTruthy()
+  })
+})
+
+describe('Reglas de la contraseña nueva en vivo (S6)', () => {
+  const regla = (nombre: string) => screen.getByLabelText(new RegExp(`^${nombre}`))
+
+  it('cada regla dice cumple o falta con texto, no solo con color, y se actualiza al escribir', async () => {
+    pintar()
+    const nueva = screen.getByLabelText('Contraseña nueva')
+    expect(screen.getAllByText(/· falta$/)).toHaveLength(5)
+    await userEvent.type(nueva, 'abcdefghij')
+    expect(screen.getByText('Mínimo 10 caracteres · cumple')).toBeTruthy()
+    expect(screen.getByText('Una minúscula · cumple')).toBeTruthy()
+    expect(screen.getByText('Una mayúscula · falta')).toBeTruthy()
+    expect(screen.getByText('Un número · falta')).toBeTruthy()
+    expect(screen.getByText('Un símbolo · falta')).toBeTruthy()
+    await userEvent.type(nueva, 'A1!')
+    expect(screen.queryAllByText(/· falta$/)).toHaveLength(0)
+    expect(screen.getAllByText(/· cumple$/)).toHaveLength(5)
+    await userEvent.clear(nueva)
+    await userEvent.type(nueva, 'corta')
+    expect(screen.getByText('Mínimo 10 caracteres · falta')).toBeTruthy()
+    expect(regla('Un símbolo').props.accessibilityLabel).toBe('Un símbolo · falta')
+  })
+
+  it('no deja enviar mientras la regla no pase, aunque las dos nuevas coincidan', async () => {
+    pintar()
+    await completar('Vieja#2025', 'corta', 'corta')
+    expect(botonCambiar().props.accessibilityState.disabled).toBe(true)
+    await userEvent.press(botonCambiar())
+    expect(mockPost).not.toHaveBeenCalled()
+    await userEvent.type(screen.getByLabelText('Contraseña nueva'), 'Larga#2026')
+    await userEvent.type(screen.getByLabelText('Repetir la contraseña nueva'), 'Larga#2026')
+    expect(botonCambiar().props.accessibilityState.disabled).toBe(false)
   })
 })
