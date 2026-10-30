@@ -1,6 +1,7 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, userEvent, within } from '@testing-library/react-native'
+import { RefreshControl } from 'react-native'
+import { act, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { ReportesScreen } from '../ReportesScreen'
 import { mesDe, moverMes, tituloMes } from '../mes'
 
@@ -80,21 +81,22 @@ describe('Reportes', () => {
 
     // Las cuatro cifras de la lámina M20, todas del servidor.
     expect(screen.getByLabelText('Vendido: $ 1.250.000,00, 5 ventas')).toBeTruthy()
-    expect(screen.getByLabelText('Tu comisión: $ 55.000,00, neto del mes')).toBeTruthy()
     expect(screen.getByLabelText('Cobrado: $ 400.000,00, de estas ventas')).toBeTruthy()
     expect(screen.getByLabelText('Por cobrar: $ 830.000,00, 2 clientes con deuda')).toBeTruthy()
-    expect(within(ventas).getByText('Ticket promedio $ 250.000,00')).toBeTruthy()
+    expect(within(ventas).getByText('5 ventas · Ticket promedio $ 250.000,00')).toBeTruthy()
     // Lo que el servidor no da no se inventa: ni vencido, ni ventas por semana, ni ranking de compradores.
     expect(screen.queryByText(/vencido/i)).toBeNull()
     expect(screen.queryByText(/por semana/i)).toBeNull()
     expect(screen.queryByText(/más te compraron/i)).toBeNull()
+    expect(screen.getByText('Mi cuenta de comisiones')).toBeTruthy()
+    expect(screen.getByText('Clientes que te deben')).toBeTruthy()
     expect(screen.getByText('Reporte básico del vendedor. Los reportes de gestión se ven en la web.')).toBeTruthy()
     // Sin CAP_VER_COSTOS el servidor no manda margen: no se muestra la fila.
     expect(within(ventas).queryByText(/Margen/)).toBeNull()
 
     const comisiones = screen.getByTestId('reporte-comisiones')
     expect(within(comisiones).getByLabelText('Generado: $ 60.000,00')).toBeTruthy()
-    expect(within(comisiones).getByLabelText('Reversiones: $ 5.000,00')).toBeTruthy()
+    expect(within(comisiones).getByLabelText('Reversiones: -$ 5.000,00')).toBeTruthy()
     expect(within(comisiones).getByLabelText('Neto del mes: $ 55.000,00')).toBeTruthy()
     expect(within(comisiones).getByLabelText('Pagado: $ 20.000,00')).toBeTruthy()
     expect(within(comisiones).getByLabelText('A cobrar hoy: $ 41.000,00')).toBeTruthy()
@@ -112,9 +114,9 @@ describe('Reportes', () => {
   it('el período ofrece el mes en curso y el anterior, y el anterior pide el mes que corresponde', async () => {
     pintar()
     await screen.findByText('Octubre 2026')
-    expect(screen.getByRole('radio', { name: 'Octubre' }).props.accessibilityState).toMatchObject({ checked: true })
+    expect(screen.getByRole('tab', { name: 'Octubre' }).props.accessibilityState).toMatchObject({ selected: true })
 
-    await userEvent.press(screen.getByRole('radio', { name: 'Septiembre' }))
+    await userEvent.press(screen.getByRole('tab', { name: 'Septiembre' }))
 
     expect(await screen.findByText('Septiembre 2026')).toBeTruthy()
     expect(resumenUrls()).toContain('/api/v1/Reportes/mobile/resumen-vendedor?anio=2026&mes=9')
@@ -124,7 +126,7 @@ describe('Reportes', () => {
     pintar()
     await screen.findByText('Octubre 2026')
 
-    await userEvent.press(screen.getByRole('radio', { name: 'Semana' }))
+    await userEvent.press(screen.getByRole('tab', { name: 'Semana' }))
 
     expect(await screen.findByText('Semana del 26/10 al 1/11')).toBeTruthy()
     expect(resumenUrls()).toContain('/api/v1/Reportes/mobile/resumen-vendedor?semana=2026-10-31')
@@ -134,7 +136,7 @@ describe('Reportes', () => {
     mockGet.mockImplementation((url: string) => Promise.resolve(
       url.includes('/Ventas/vendedores') ? VENDEDORES : { ...RESUMEN, puedeElegirVendedor: true }))
     pintar()
-    await userEvent.press(await screen.findByRole('radio', { name: 'Semana' }))
+    await userEvent.press(await screen.findByRole('tab', { name: 'Semana' }))
     await userEvent.press(await screen.findByLabelText('Vendedor: Todos'))
     await userEvent.press(await screen.findByRole('radio', { name: 'Bruno Díaz' }))
 
@@ -159,6 +161,16 @@ describe('Reportes', () => {
     await userEvent.press(screen.getByLabelText('Vendedor: Bruno Díaz'))
     await userEvent.press(await screen.findByRole('radio', { name: 'Todos' }))
     expect(await screen.findByLabelText('Vendedor: Todos')).toBeTruthy()
+  })
+
+  it('al tirar para refrescar vuelve a pedir el resumen', async () => {
+    pintar()
+    await screen.findByTestId('reporte-ventas')
+    const antes = resumenUrls().length
+
+    await act(async () => { screen.UNSAFE_getByType(RefreshControl).props.onRefresh() })
+
+    await waitFor(() => expect(resumenUrls().length).toBe(antes + 1))
   })
 
   it('con CAP_VER_COSTOS el servidor manda el margen y se muestra', async () => {
