@@ -41,10 +41,10 @@ describe('alta de cliente según el diseño (ModNuevoCliente)', () => {
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(tabs)/ventas/nueva', params: { clienteId: 'nuevo-id' } }))
   })
 
-  it('"Crear cliente" sigue abriendo la ficha, no la venta', async () => {
+  it('"Guardar" sigue abriendo la ficha, no la venta', async () => {
     renderConQuery(<ClienteFormScreen />)
     fireEvent.changeText(screen.getByLabelText('Dirección de entrega'), 'Av. del Valle 89')
-    await userEvent.press(screen.getByRole('button', { name: 'Crear cliente' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar' }))
 
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(tabs)/socios/[id]', params: { id: 'nuevo-id' } }))
   })
