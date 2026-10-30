@@ -9,7 +9,6 @@ import { useThemeStore, useColors, radii, space, typeScale, type ThemeMode } fro
 import { ConfirmModal } from '@/core/ui'
 import { Button, Notice, Segmented, TopBar, useMenuLeading, type SegmentedOption } from '@/core/ui/fw'
 import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
-import { CambiarContrasena } from '@/features/cuenta/components/CambiarContrasena'
 import { useCerrarSesion } from '@/features/cuenta/hooks/useCerrarSesion'
 import { isBiometricLoginEnabled, isBiometricsAvailable, setBiometricLoginEnabled } from '@/features/auth/utils/biometrics'
 
@@ -35,7 +34,7 @@ export default function PerfilScreen() {
   const router = useRouter()
   const leading = useMenuLeading()
   const queryClient = useQueryClient()
-  const { user, logout } = useAuthStore()
+  const { user, logout, canDo } = useAuthStore()
   const { mode, setMode } = useThemeStore()
   const { cerrarSesion, revocarEnElServidor } = useCerrarSesion()
   const [saliendo, setSaliendo] = useState(false)
@@ -61,6 +60,20 @@ export default function PerfilScreen() {
   const divisor = { borderBottomWidth: 1, borderBottomColor: c.border }
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
   const titulo = (t: string) => <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>{t}</Text>
+
+  const seccion = (t: string) => (
+    <Text accessibilityRole="header" style={[typeScale.etiqueta, { color: c.textSecondary, textTransform: 'uppercase', paddingHorizontal: space[1] }]}>{t}</Text>
+  )
+  /** Fila que lleva a otra pantalla: título, línea de apoyo y flecha (≥ 56 px). */
+  const filaEnlace = (etiqueta: string, apoyo: string, alTocar: () => void, conDivisor: boolean) => (
+    <Pressable accessibilityRole="button" accessibilityLabel={etiqueta} onPress={alTocar} style={[fila, conDivisor && divisor]}>
+      <View style={{ flex: 1 }}>
+        <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{etiqueta}</Text>
+        <Text style={secundario}>{apoyo}</Text>
+      </View>
+      <ChevronRight size={20} color={c.textSecondary} />
+    </Pressable>
+  )
 
   /** La fila entera es el control (≥ 56 px); el Switch es solo la marca visual. */
   const filaInterruptor = (etiqueta: string, prendido: boolean, alCambiar: () => void, conDivisor: boolean) => (
@@ -129,27 +142,30 @@ export default function PerfilScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], paddingBottom: space[12], width: '100%', maxWidth: 640, alignSelf: 'center' }}>
+        {seccion('Seguridad')}
         <View style={tarjeta}>
           {huella?.disponible ? filaInterruptor('Entrar con huella', huella.prendida, () => { void cambiarHuella() }, true) : null}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Avisos en el teléfono"
-            onPress={() => router.push('/avisos/preferencias')}
-            style={[fila, divisor]}
-          >
-            <Text style={[typeScale.cuerpoDestacado, { flex: 1, color: c.text }]}>Avisos en el teléfono</Text>
-            <ChevronRight size={20} color={c.textSecondary} />
-          </Pressable>
+          {filaEnlace('Cambiar contraseña', 'Pide la actual y una nueva', () => router.push('/perfil/clave'), false)}
+        </View>
+        {avisoHuella ? <Notice tone="info">{avisoHuella}</Notice> : null}
+
+        {seccion('En este teléfono')}
+        <View style={tarjeta}>
+          {filaEnlace('Avisos en el teléfono', 'Cuáles saltan apenas llegan', () => router.push('/avisos/preferencias'), true)}
           <View style={{ padding: space[4], paddingTop: space[3], gap: space[2] }}>
             <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Tema</Text>
             <Segmented accessibilityLabel="Tema" options={THEME_OPTIONS} value={mode} onChange={setMode} />
           </View>
         </View>
-        {avisoHuella ? <Notice tone="info">{avisoHuella}</Notice> : null}
 
-        <View style={[tarjeta, { padding: space[4], gap: space[3] }]}>
-          <CambiarContrasena email={user?.email} />
-        </View>
+        {canDo('MOD_USUARIOS', 'read') ? (
+          <>
+            {seccion('Equipo')}
+            <View style={tarjeta}>
+              {filaEnlace('Usuarios', 'Solo consulta', () => router.push('/perfil/usuarios'), false)}
+            </View>
+          </>
+        ) : null}
 
         {__DEV__ ? (
           <View style={[tarjeta, { padding: space[4], gap: space[3] }]}>

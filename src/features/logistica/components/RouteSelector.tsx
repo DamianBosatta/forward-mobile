@@ -25,6 +25,7 @@ const ESTADO_SELECTOR = {
   EnCurso: { label: 'EN RUTA', color: (p: string) => p },
   Finalizada: { label: 'FINALIZADA', color: (_p: string) => BRAND.green },
   Cancelada: { label: 'CANCELADA', color: (_p: string) => BRAND.red },
+  Rendida: { label: 'RENDIDA', color: (_p: string) => BRAND.green }, // tono 'entregada' de libs/reglas/estados: el mismo verde que Finalizada
 } satisfies Record<EstadoHojaRutaNombre, { label: string; color: (primary: string) => string }>
 
 export function estatoLabel(estado: number | undefined): string {
