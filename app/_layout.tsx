@@ -87,12 +87,14 @@ function RootLayoutNav() {
   })
   const colors = useColors()
   const isDark = useIsDark()
+  const modoTema = useThemeStore((state) => state.mode)
 
-  // NativeWind aplica las variables de .dark (global.css) según su propio esquema:
-  // se sincroniza con el tema resuelto del store, no con el del sistema.
+  // NativeWind aplica las variables de .dark (global.css) según su propio esquema. Con un modo fijo se
+  // sincroniza con el del store. Con "Como el teléfono" se le pasa 'system': fijarle 'dark' o 'light'
+  // congela el esquema de la app y un cambio del teléfono con la app abierta no la repinta hasta reiniciar.
   useEffect(() => {
-    colorScheme.set(isDark ? 'dark' : 'light')
-  }, [isDark])
+    colorScheme.set(modoTema === 'system' ? 'system' : isDark ? 'dark' : 'light')
+  }, [modoTema, isDark])
 
   useEffect(() => {
     loadSavedApiUrl().finally(() => {
