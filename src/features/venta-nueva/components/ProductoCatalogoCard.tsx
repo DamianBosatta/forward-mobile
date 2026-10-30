@@ -4,7 +4,8 @@ import { Package } from 'lucide-react-native'
 import { radii, space, typeScale, importe, useColors, type ForwardColors } from '@/libs/theme'
 import { formatImporte } from '@/core/ui/fw'
 import type { CatalogoStockItem } from '@/libs/api-client'
-import { cantidadEnPresentacion, precioServidor, stockDeTarjeta, unidadesPorBultoDe, vendePorBulto } from '../lib/carrito'
+import { cantidadEnPresentacion, precioServidor, stockDeTarjeta, subtotalLinea, unidadesPorBultoDe, vendePorBulto, type LineaCarrito } from '../lib/carrito'
+import { mostrarNumero } from '../lib/linea'
 import { presentacionDe, rotuloPresentacion } from '../lib/presentacion'
 
 interface ProductoCatalogoCardProps {
@@ -13,6 +14,8 @@ interface ProductoCatalogoCardProps {
   cantidad: number
   /** Ve cantidades de stock (capacidad CAP_VER_CANTIDADES_STOCK); si no, solo "Hay stock / Sin stock". */
   verCantidades: boolean
+  /** La línea del carrito de este producto: la tarjeta dice cuántas unidades lleva, cuánto suma y el descuento. */
+  linea?: LineaCarrito
   /** Lo que llevó la última vez (unidades), si la última venta lo tenía. */
   llevoAntes?: number
   /** Hay conexión al stock en vivo: la línea de stock agrega "· ahora". */
@@ -27,7 +30,7 @@ interface ProductoCatalogoCardProps {
  * precio (por bulto y por unidad) y "Agregar" o el chip de edición. Sin stock se puede pedir: queda por autorizar.
  */
 export function ProductoCatalogoCard({
-  producto: p, cantidad, verCantidades, llevoAntes, enVivo, onElegirFragancias, onAbrirOferta,
+  producto: p, cantidad, verCantidades, linea, llevoAntes, enVivo, onElegirFragancias, onAbrirOferta,
 }: ProductoCatalogoCardProps) {
   const c = useColors()
   const stock = stockDeTarjeta(p, verCantidades, enVivo)
@@ -63,6 +66,14 @@ export function ProductoCatalogoCard({
           <View testID={`stock-punto-${p.id}`} style={{ width: 8, height: 8, borderRadius: radii.pastilla, backgroundColor: colorStock }} />
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{stock.texto}</Text>
         </View>
+        {linea && linea.cantidad > 0 ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], flexWrap: 'wrap' }}>
+            <Text testID={`linea-resumen-${p.id}`} style={{ ...typeScale.secundario, ...importe, color: c.text }}>
+              {`${mostrarNumero(linea.cantidad)} ${linea.cantidad === 1 ? 'unidad' : 'unidades'} · ${formatImporte(subtotalLinea(linea))}`}
+            </Text>
+            {linea.descuentoPct > 0 ? <Chip c={c} texto={`Descuento ${mostrarNumero(linea.descuentoPct)} %`} tono="oferta" /> : null}
+          </View>
+        ) : null}
         {pistas.map((t) => <Text key={t} style={{ ...typeScale.secundario, color: c.textSecondary }}>{t}</Text>)}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2], marginTop: space[1] }}>
           <View>

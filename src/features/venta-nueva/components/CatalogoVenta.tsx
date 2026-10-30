@@ -131,6 +131,7 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
         renderItem={({ item }) => (
           <ProductoCatalogoCard
             producto={item}
+            linea={lineas.find((l) => l.productoId === item.id)}
             cantidad={item.esPadreDeVariantes ? cantidadDeFragancias(lineas, item.id) : cantidadEn(lineas, item.id)}
             verCantidades={verCantidades}
             enVivo={enVivo}

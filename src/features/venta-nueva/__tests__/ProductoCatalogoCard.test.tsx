@@ -1,5 +1,6 @@
 import React from 'react'
 import { render, screen, userEvent } from '@testing-library/react-native'
+import { formatImporte } from '@/core/ui/fw'
 import { ProductoCatalogoCard } from '../components/ProductoCatalogoCard'
 import { cajaDe6, producto } from '../__testing__/producto'
 
@@ -76,6 +77,28 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
       render(<ProductoCatalogoCard producto={p} cantidad={12} verCantidades onAbrirOferta={onAbrirOferta} />)
       await userEvent.press(screen.getByText('2 bultos ✎'))
       expect(onAbrirOferta).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('línea del carrito en la tarjeta (maqueta ventas-nueva-2-productos)', () => {
+    const conLinea = (cantidad: number, descuentoPct: number) => {
+      const p = producto({ precioVenta: 2340 })
+      return render(<ProductoCatalogoCard producto={p} cantidad={cantidad} linea={{ productoId: p.id, producto: p, cantidad, descuentoPct }} verCantidades onAbrirOferta={noop} />)
+    }
+
+    it('dice cuántas unidades lleva y cuánto suma, con el descuento si lo hay', () => {
+      conLinea(36, 12)
+      expect(screen.getByTestId('linea-resumen-p1').props.children).toBe(`36 unidades · ${formatImporte(36 * 2340 * 0.88)}`)
+      expect(screen.getByText('Descuento 12 %')).toBeTruthy()
+    })
+
+    it('sin descuento no hay chip y sin línea no hay resumen', () => {
+      const r = conLinea(1, 0)
+      expect(screen.getByTestId('linea-resumen-p1').props.children).toBe(`1 unidad · ${formatImporte(2340)}`)
+      expect(screen.queryByText(/Descuento/)).toBeNull()
+      r.unmount()
+      pintar(0)
+      expect(screen.queryByTestId('linea-resumen-p1')).toBeNull()
     })
   })
 })
