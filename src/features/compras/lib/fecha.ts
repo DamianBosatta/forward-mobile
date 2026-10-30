@@ -26,3 +26,9 @@ export function llegaTexto(iso: string | null | undefined): string | null {
   const dia = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])))
   return `Llega ${DIAS_CORTOS[dia.getUTCDay()]} ${dia.getUTCDate()}`
 }
+
+/** Franja de entrega del proveedor: "lun 08:00-12:00, jue 08:00-12:00". Día como el DayOfWeek de .NET (0 = domingo). */
+export function franjaTexto(f: ReadonlyArray<{ dia: number; desde: string; hasta: string }> | null | undefined): string | null {
+  if (!f || f.length === 0) return null
+  return f.map((x) => `${DIAS_CORTOS[x.dia] ?? x.dia} ${x.desde.slice(0, 5)}-${x.hasta.slice(0, 5)}`).join(', ')
+}

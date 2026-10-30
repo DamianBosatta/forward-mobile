@@ -14,7 +14,7 @@ import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/th
 import { diaArgentina } from '@/src/utils/date'
 import { mostrarNumero } from '@/src/utils/numero'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { ddmmaaaa, fechaIso, hoyTexto } from '@/features/compras/lib/fecha'
+import { ddmmaaaa, fechaIso, franjaTexto, hoyTexto } from '@/features/compras/lib/fecha'
 import { avisoCompraFaltante, confirmarYRecibir, tomarAviso, type Aviso } from '@/features/compras/lib/confirmar-y-recibir'
 import { ConfirmarYRecibirSheet } from '@/features/compras/components/ConfirmarYRecibirSheet'
 import { ComprobanteCampos } from '@/features/compras/components/ComprobanteCampos'
@@ -54,12 +54,6 @@ function textoDeLinea(d: CompraDto['detalles'][number]): string {
   if (String(d.unidadCompra) === 'Unidad' || porUnidad === 1) return `${mostrarNumero(d.cantidad)} u`
   const nombre = String(d.unidadCompra) === 'BultoMadre' ? 'bultos madre' : 'bultos'
   return `${mostrarNumero(ingresada)} ${nombre} × ${mostrarNumero(porUnidad)} = ${mostrarNumero(d.cantidad)} u`
-}
-
-/** Franja de entrega del proveedor (CompraDto no trae fecha esperada: TODO API). */
-function franjaTexto(f: CompraDto['franjaEntregaProveedor']): string | null {
-  if (!f || f.length === 0) return null
-  return f.map((x) => `${x.dia} ${x.desde}-${x.hasta}`).join(', ')
 }
 
 type Hoja = 'cancelar' | 'anularRecepcion' | 'confirmarYRecibir' | 'comprobante' | null

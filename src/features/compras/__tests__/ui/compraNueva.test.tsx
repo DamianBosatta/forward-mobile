@@ -173,6 +173,7 @@ describe('pantalla de compra nueva', () => {
   it('a un proveedor sin condición de pago o franja no se le compra: aviso y no se crea el borrador', async () => {
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: /Gorrión Mayorista/ }))
+    await userEvent.press(screen.getByRole('button', { name: 'Continuar a productos' }))
     expect(await screen.findByText(/le falta condición de pago y franja de entrega/)).toBeTruthy()
     expect(screen.getByText(/Completalo en la web para poder comprarle/)).toBeTruthy()
     expect(mockPost).not.toHaveBeenCalled()
@@ -187,12 +188,19 @@ describe('pantalla de compra nueva', () => {
     pantalla({ borradorId: 'b9' })
     expect(await screen.findByText('48 × — · Falta el costo')).toBeTruthy()
     expect(screen.getByText(/Una línea no tiene costo/)).toBeTruthy()
+    expect(screen.getByText('Subtotal (falta un costo)')).toBeTruthy()
+    // En la revisión se ve la línea sin costo y no se puede confirmar.
+    await userEvent.press(screen.getByRole('button', { name: 'Ver compra' }))
+    expect(screen.getByText('Falta el costo.')).toBeTruthy()
+    expect(screen.getByText('Sin costo')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Confirmar compra' })).toBeDisabled()
+    await userEvent.press(screen.getByRole('link', { name: 'Editar los productos' }))
     // Tocar la línea abre la edición: con el costo cargado deja de estar marcada y se puede confirmar.
     await userEvent.press(screen.getByRole('button', { name: /Balde Nuvia 10L, 48 × —/ }))
     await userEvent.type(screen.getByLabelText('Costo por unidad ($)'), '1.150,50')
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar' }))
     expect(await screen.findByText('48 × 1150,5 · 4 bultos de 12')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Ver compra' }))
     expect(screen.getByRole('button', { name: 'Confirmar compra' })).toBeEnabled()
     await waitFor(() => expect(puts().at(-1)?.detalles[0]).toMatchObject({ cantidad: 4, costoUnitario: 1150.5, unidadCompra: 'Bulto' }), ESPERA)
   })
@@ -200,6 +208,7 @@ describe('pantalla de compra nueva', () => {
   it('el buscador de productos pide al servidor lo comprable: fragancias incluidas, sin la línea', async () => {
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: 'Insumos del Sur SA' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Continuar a productos' }))
     await screen.findByText('Insumos del Sur SA · 30 días')
     await userEvent.press(screen.getByRole('button', { name: '+ Agregar productos' }))
     await waitFor(() => {
@@ -212,9 +221,11 @@ describe('pantalla de compra nueva', () => {
   it('confirmar guarda lo pendiente y después confirma; abre la compra', async () => {
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: 'Insumos del Sur SA' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Continuar a productos' }))
     await screen.findByText('Insumos del Sur SA · 30 días')
     await agregarBalde('3')
     await userEvent.press(screen.getByRole('button', { name: 'Listo' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Ver compra' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar compra' })).toBeEnabled())
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar compra' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/c1/confirmar', { compraId: 'c1' }), ESPERA)
@@ -227,8 +238,10 @@ describe('pantalla de compra nueva', () => {
     async function abrirHoja(proveedor = 'Insumos del Sur SA') {
       pantalla()
       await userEvent.press(await screen.findByRole('button', { name: proveedor }))
+      await userEvent.press(screen.getByRole('button', { name: 'Continuar a productos' }))
       await agregarBalde('3')
       await userEvent.press(screen.getByRole('button', { name: 'Listo' }))
+      await userEvent.press(screen.getByRole('button', { name: 'Ver compra' }))
       await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar y recibir' })).toBeEnabled())
       await userEvent.press(screen.getByRole('button', { name: 'Confirmar y recibir' }))
     }
@@ -310,6 +323,10 @@ describe('pantalla de compra nueva', () => {
       mockPuedeModificar = false
       pantalla()
       await userEvent.press(await screen.findByRole('button', { name: 'Insumos del Sur SA' }))
+      await userEvent.press(screen.getByRole('button', { name: 'Continuar a productos' }))
+      await agregarBalde('3')
+      await userEvent.press(screen.getByRole('button', { name: 'Listo' }))
+      await userEvent.press(screen.getByRole('button', { name: 'Ver compra' }))
       await screen.findByRole('button', { name: 'Confirmar compra' })
       expect(screen.queryByRole('button', { name: 'Confirmar y recibir' })).toBeNull()
     })
