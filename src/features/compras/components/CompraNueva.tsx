@@ -7,7 +7,7 @@ import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/th
 import { useDepositos, useInfiniteProductos } from '@/libs/api-client'
 import { leerNumero, mostrarNumero } from '@/src/utils/numero'
 import { mensajeDelServidor } from '../lib/mensaje-error'
-import { sinCosto, subtotalDe, totalCompra, unidadesDe, type LineaCompra } from '../lib/lineaCompra'
+import { sinCosto, subtotalDe, textoDeLinea, totalCompra, unidadesDe, type LineaCompra } from '../lib/lineaCompra'
 import { useCompraBorrador, type EstadoGuardado } from '../hooks/useCompraBorrador'
 import { ElegirProveedor, PASOS_COMPRA } from './ElegirProveedor'
 import { CatalogModal } from './CatalogModal'
@@ -210,7 +210,7 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
             <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{l.nombre}</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
               <View style={{ flexShrink: 1 }}>
-                <Text style={[typeScale.secundario, { color: c.text }]}>{l.unidad === 'Unidad' ? `${mostrarNumero(unidadesDe(l))} u` : `${mostrarNumero(l.cantidad)} ${UNIDAD[l.unidad].toLowerCase()} × ${mostrarNumero(l.unidadesPorUnidad)} = ${mostrarNumero(unidadesDe(l))} u`}</Text>
+                <Text style={[typeScale.secundario, { color: c.text }]}>{textoDeLinea(l)}</Text>
                 <Text style={[typeScale.secundario, cifras, { color: sinCosto(l) ? c.danger : c.textSecondary }]}>{sinCosto(l) ? 'Sin costo' : `${formatImporte(l.costoUnitario)} por unidad`}</Text>
               </View>
               <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(subtotalDe(l))}</Text>

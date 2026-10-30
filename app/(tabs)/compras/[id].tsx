@@ -20,6 +20,7 @@ import { ConfirmarYRecibirSheet } from '@/features/compras/components/ConfirmarY
 import { ComprobanteCampos } from '@/features/compras/components/ComprobanteCampos'
 import { armarComprobante, formDesdeComprobante, formNuevo, resumenComprobante, seCorrigeEnLaWeb, type ComprobanteCompraInput, type FormComprobante } from '@/features/compras/lib/comprobante'
 import { inicioKeys } from '@/core/query/queryClient'
+import { lineaDesdeDetalle, textoDeLinea } from '@/features/compras/lib/lineaCompra'
 import { numeroDeCompra } from '@/features/compras/lib/numero'
 import { esEstadoCompra } from '@/core/constants/estados'
 import { FotoDelCobro } from '@/features/cuentas/components/FotoDelCobro'
@@ -45,15 +46,6 @@ function FilaDato({ k, v }: { k: string; v: string }) {
       <Text style={[typeScale.secundario, { color: c.text, flexShrink: 1, textAlign: 'right' }]}>{v}</Text>
     </View>
   )
-}
-
-/** "20 Bulto × 12 = 240 u": lo pedido en la unidad de compra y lo que son en unidades. */
-function textoDeLinea(d: CompraDto['detalles'][number]): string {
-  const ingresada = d.cantidadIngresada > 0 ? d.cantidadIngresada : d.cantidad
-  const porUnidad = ingresada > 0 ? d.cantidad / ingresada : 1
-  if (String(d.unidadCompra) === 'Unidad' || porUnidad === 1) return `${mostrarNumero(d.cantidad)} u`
-  const nombre = String(d.unidadCompra) === 'BultoMadre' ? 'bultos madre' : 'bultos'
-  return `${mostrarNumero(ingresada)} ${nombre} × ${mostrarNumero(porUnidad)} = ${mostrarNumero(d.cantidad)} u`
 }
 
 type Hoja = 'cancelar' | 'anularRecepcion' | 'confirmarYRecibir' | 'comprobante' | null
@@ -237,7 +229,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
               <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{d.nombreProducto}</Text>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
                 <View style={{ flexShrink: 1 }}>
-                  <Text style={[typeScale.secundario, { color: c.text }]}>{textoDeLinea(d)}</Text>
+                  <Text style={[typeScale.secundario, { color: c.text }]}>{textoDeLinea(lineaDesdeDetalle(d))}</Text>
                   <Text style={[typeScale.secundario, cifras, { color: c.textSecondary }]}>{`${formatImporte(d.costoUnitarioBaseAmount)} por unidad`}</Text>
                 </View>
                 <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(d.subtotalAmount)}</Text>

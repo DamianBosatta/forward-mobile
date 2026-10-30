@@ -1,4 +1,5 @@
 import type { CompraDetalle } from '@/libs/api-client'
+import { mostrarNumero } from '@/src/utils/numero'
 
 /** UnidadCompra del servidor: en qué nivel de empaque viene la cantidad. */
 export type UnidadCompra = 'Unidad' | 'Bulto' | 'BultoMadre'
@@ -31,6 +32,24 @@ export function unidadesDe(l: LineaCompra): number {
 /** Subtotal sin descuento global; null si la línea no tiene costo. */
 export function subtotalDe(l: LineaCompra): number | null {
   return sinCosto(l) ? null : unidadesDe(l) * l.costoUnitario!
+}
+
+/** Nombre de cada empaque, en singular y plural (la compra sí habla de bultos: es la unidad de compra). */
+const EMPAQUE: Record<UnidadCompra, { singular: string; plural: string }> = {
+  Unidad: { singular: 'Unidad', plural: 'Unidades' },
+  Bulto: { singular: 'Bulto', plural: 'Bultos' },
+  BultoMadre: { singular: 'Bulto madre', plural: 'Bultos madre' },
+}
+
+export function nombreDeEmpaque(unidad: UnidadCompra, plural = false): string {
+  return plural ? EMPAQUE[unidad].plural : EMPAQUE[unidad].singular
+}
+
+/** "20 bultos × 12 = 240 u": lo pedido en la unidad de compra y lo que son en unidades; "240 u" si va por unidad. */
+export function textoDeLinea(l: Pick<LineaCompra, 'cantidad' | 'unidad' | 'unidadesPorUnidad'>): string {
+  const unidades = mostrarNumero(l.cantidad * l.unidadesPorUnidad)
+  if (l.unidad === 'Unidad' || l.unidadesPorUnidad === 1) return `${unidades} u`
+  return `${mostrarNumero(l.cantidad)} ${EMPAQUE[l.unidad].plural.toLowerCase()} × ${mostrarNumero(l.unidadesPorUnidad)} = ${unidades} u`
 }
 
 /** Total con la misma cuenta que el servidor (TotalesCompra): bruto con descuento más gastos. */
