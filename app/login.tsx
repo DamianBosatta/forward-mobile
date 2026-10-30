@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import NetInfo from '@react-native-community/netinfo'
+import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
 import { useQueryClient } from '@tanstack/react-query'
 import { ArrowRight, Eye, EyeOff, Fingerprint } from 'lucide-react-native'
 import { useColors, space, typeScale } from '../libs/theme'
@@ -49,7 +49,8 @@ export default function LoginScreen() {
   const [currentUrl, setCurrentUrl] = useState(API_URL)
   const [foco, setFoco] = useState<'usuario' | 'contrasena' | null>(null)
   const contrasenaRef = useRef<TextInput>(null)
-  const [sinConexion, setSinConexion] = useState(false)
+  // Alcanzabilidad desconocida no apaga el ingreso: solo "sin red" afirmado.
+  const sinConexion = !useNetworkStatus({ desconocidoCuentaComoSinRed: false }).isConnected
 
   const entrar = () => {
     safeHaptics.notification('success')
@@ -80,11 +81,6 @@ export default function LoginScreen() {
     // Solo al abrir la pantalla: la huella se ofrece una vez sola.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  // Solo "sin red" cuando NetInfo lo afirma: un valor desconocido no apaga el ingreso.
-  useEffect(() => NetInfo.addEventListener((estado) => {
-    setSinConexion(estado.isConnected === false || estado.isInternetReachable === false)
-  }), [])
 
   useEffect(() => {
     if (error) safeHaptics.notification('error')
