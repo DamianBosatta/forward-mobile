@@ -74,6 +74,7 @@ async function arrancar() {
   pantalla()
   if (mockTipo === 'Presupuesto') await userEvent.press(screen.getByRole('radio', { name: 'Presupuesto' }))
   await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
+  await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
 }
 async function elegirCliente() {
   await arrancar()
@@ -842,7 +843,7 @@ describe('ruta ventas/nueva', () => {
     mockGet.mockImplementation((url: string) => Promise.resolve(calendario(url)))
     const qcRuta = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(<QueryClientProvider client={qcRuta}><Ruta /></QueryClientProvider>)
-    expect(await screen.findByText('¿A quién le vendés?')).toBeTruthy()
+    expect(await screen.findByText('Paso 1 de 3')).toBeTruthy()
     expect(screen.queryByText('redirige a /(tabs)/ventas/nueva')).toBeNull()
   })
 })
@@ -860,7 +861,7 @@ describe('cliente primero, catálogo después', () => {
   it('sin cliente no hay catálogo: pide elegir a quién se le vende y no crea nada', async () => {
     conHistorial()
     pantalla()
-    expect(screen.getByText('¿A quién le vendés?')).toBeTruthy()
+    expect(screen.getByText('Paso 1 de 3')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Añadir pala' })).toBeNull()
     expect(screen.queryByText('¿Cómo arrancás?')).toBeNull()
     expect(mockPost).not.toHaveBeenCalled()
@@ -870,6 +871,7 @@ describe('cliente primero, catálogo después', () => {
     conHistorial()
     pantalla()
     await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
+    await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
     expect(await screen.findByRole('button', { name: 'Añadir pala' })).toBeTruthy()
     expect(screen.queryByText('¿Cómo arrancás?')).toBeNull()
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
@@ -883,6 +885,7 @@ describe('cliente primero, catálogo después', () => {
     pantalla()
     await userEvent.press(screen.getByRole('radio', { name: 'Presupuesto' }))
     await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
+    await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Presupuesto' }))
   })
 
@@ -898,6 +901,7 @@ describe('cliente primero, catálogo después', () => {
     conHistorial()
     pantalla()
     await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
+    await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
     await userEvent.press(await screen.findByRole('button', { name: 'Ver venta' }))
     expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Añadir pala' })).toBeNull()
@@ -910,6 +914,7 @@ describe('cliente primero, catálogo después', () => {
     conHistorial()
     pantalla()
     await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
+    await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
     await screen.findByRole('button', { name: 'Añadir pala' })
     await userEvent.press(screen.getByRole('button', { name: 'Volver' }))
     expect(mockBack).toHaveBeenCalled()

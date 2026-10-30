@@ -124,7 +124,9 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
   const volver = { kind: 'atras' as const, onPress: () => router.back() }
 
   // Elegir el cliente arranca la venta: crea el borrador del tipo elegido y abre el catálogo.
-  const empezar = (elegido: ClienteElegido) => {
+  const [arrancarDelUltimo, setArrancarDelUltimo] = useState(false)
+  const empezar = (elegido: ClienteElegido, opciones?: { delUltimo?: boolean }) => {
+    setArrancarDelUltimo(!!opciones?.delUltimo)
     setCliente(elegido)
     setVista('catalogo')
     void b.crear(elegido.id, tipo)
@@ -326,7 +328,7 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
       <PasosVenta paso={2} />
       <CreditoDeudaVenta clienteId={cliente.id} tipo={tipo} />
       {avisoDelBorrador}
-      <CatalogoVenta onVerVenta={() => setVista('revision')} llevo={llevo} enVivo={stockVivo.enVivo} onAbrirOferta={setOferta} />
+      <CatalogoVenta onVerVenta={() => setVista('revision')} llevo={llevo} filtroInicialDelUltimo={arrancarDelUltimo} enVivo={stockVivo.enVivo} onAbrirOferta={setOferta} />
     </>
   )
 

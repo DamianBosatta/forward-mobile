@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { ScanBarcode, Search } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
@@ -25,6 +25,8 @@ interface CatalogoVentaProps {
   llevo?: Map<string, number> | null
   /** Arrancar con el escáner abierto ("Escanear en la góndola"). */
   escanearAlAbrir?: boolean
+  /** Arrancar con "Del último pedido" prendido ("Repetir el último pedido" del paso 1). */
+  filtroInicialDelUltimo?: boolean
   /** Señal del stock en vivo (`useStockVivoVenta`): chip "Stock en vivo" / "Sin conexión"; sin ella no hay chip. */
   enVivo?: boolean
   /** Abre la pantalla de cantidad y oferta del producto ("Agregar" y el chip de edición de la tarjeta). */
@@ -36,11 +38,18 @@ interface CatalogoVentaProps {
  * Tablet vertical: dos columnas. Tablet horizontal (≥ 900): grilla de 3 con la venta en curso fija a la derecha.
  * Filtros con lo que ya manda el servidor (oferta, stock) y con el último pedido; escáner de código de barras.
  */
-export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = false, enVivo, onAbrirOferta }: CatalogoVentaProps) {
+export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = false, filtroInicialDelUltimo = false, enVivo, onAbrirOferta }: CatalogoVentaProps) {
   const c = useColors()
   const { formFactor, isTabletLandscape } = useResponsive()
   const [busqueda, setBusqueda] = useState('')
   const [filtros, setFiltros] = useState(FILTROS_VACIOS)
+  // El último pedido llega después de abrir el catálogo: se prende una sola vez, cuando está.
+  const prendido = useRef(false)
+  useEffect(() => {
+    if (!filtroInicialDelUltimo || !llevo || prendido.current) return
+    prendido.current = true
+    setFiltros((f) => ({ ...f, delUltimo: true }))
+  }, [filtroInicialDelUltimo, llevo])
   const { productos: todos, isLoading } = useCatalogoVenta(busqueda)
   const { productos: completo } = useCatalogoVenta('')
   const idsDelUltimo = useMemo(() => new Set(llevo?.keys() ?? []), [llevo])
