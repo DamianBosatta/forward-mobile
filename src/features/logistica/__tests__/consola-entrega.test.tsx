@@ -74,17 +74,22 @@ function pintar(hoja: Record<string, unknown> = HOJA, permissions: unknown[] = [
 const ENTREGAR = '/api/v1/Logistica/hojas-ruta/h1/paradas/p1/entregar'
 const llamadasA = (url: string) => mockPost.mock.calls.filter(([u]) => u === url)
 
-// La entrega va en pasos (bloque 12, T12c): E1 reportar, E2 devolución, E3 cobro y firma, E6 confirmar.
-async function abrirEntrega() {
-  await userEvent.press(await screen.findByLabelText('Reportar entrega'))
-  await userEvent.type(screen.getByLabelText('Quién recibió'), 'Abel')
-  await userEvent.press(screen.getByLabelText('No, recibió todo'))
+// La entrega va en pasos: llegué, devoluciones, cobro y confirmar. Por defecto "No, todo bien" (cae en el cobro).
+async function abrirEntrega(devuelve = false) {
+  await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+  await userEvent.press(await screen.findByLabelText('Entregué todo'))
+  if (!devuelve) await userEvent.press(screen.getByLabelText('No, todo bien'))
 }
 const continuar = () => userEvent.press(screen.getByLabelText('Continuar'))
-/** Sin cobro: del primer paso al resumen, donde está "Confirmar entrega". */
-async function alResumen() {
+/** Sin cobro: del cobro al paso Confirmar (quién recibió escrito), donde está "Confirmar entrega". */
+async function alResumen(receptor = 'Abel') {
   await continuar()
-  await continuar()
+  await userEvent.type(screen.getByLabelText('Quién recibió'), receptor)
+}
+/** La pantalla "Entrega lista" aparece al registrar la entrega; "Siguiente entrega" la cierra. */
+async function cerrarListo() {
+  await screen.findByLabelText('Entrega lista')
+  await userEvent.press(screen.getByLabelText('Siguiente entrega'))
 }
 
 beforeEach(() => {
@@ -104,18 +109,19 @@ describe('Consola del chofer: entrega con la operación única', () => {
     const [[url, cuerpo]] = mockPost.mock.calls
     expect(url).toBe(ENTREGAR)
     expect(cuerpo).toEqual({ claveIdempotencia: expect.stringMatching(/\S{8,}/), nombreReceptor: 'Abel' })
-    expect(await screen.findByText('1 de 2 entregas')).toBeTruthy()
+    await cerrarListo()
+    expect(await screen.findByText('1 de 2 entregadas')).toBeTruthy()
     expect(llamadasA('/api/v1/Logistica/hojas-ruta/h1/reportar-parada')).toHaveLength(0)
   })
 
   it('quién recibió es obligatorio siempre, aunque la foto del remito no se exija (decisión del dueño del 16-10)', async () => {
     pintar({ ...HOJA, exigeFotoRemitoAlEntregar: false })
-    await userEvent.press(await screen.findByLabelText('Reportar entrega'))
-    await userEvent.press(screen.getByLabelText('No, recibió todo'))
-    await userEvent.type(screen.getByLabelText('Quién recibió'), '   ')
-    expect(screen.getByLabelText('Continuar').props.accessibilityState.disabled).toBe(true)
-    await userEvent.press(screen.getByLabelText('Continuar'))
-    expect(screen.queryByLabelText('Confirmar entrega')).toBeNull()
+    await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+    await userEvent.press(await screen.findByLabelText('Entregué todo'))
+    await userEvent.press(screen.getByLabelText('No, todo bien'))
+    await alResumen('   ')
+    expect(screen.getByLabelText('Confirmar entrega').props.accessibilityState.disabled).toBe(true)
+    await userEvent.press(screen.getByLabelText('Confirmar entrega'))
     expect(llamadasA(ENTREGAR)).toHaveLength(0)
   })
 
@@ -127,8 +133,9 @@ describe('Consola del chofer: entrega con la operación única', () => {
     })
     pintar({ ...HOJA, exigeFotoRemitoAlEntregar: true })
     await abrirEntrega()
-    // Ahora el primer paso no deja seguir sin la foto exigida (antes lo decía al confirmar).
-    expect(screen.getByLabelText('Continuar').props.accessibilityState.disabled).toBe(true)
+    await alResumen()
+    // El paso Confirmar no deja confirmar sin la foto exigida.
+    expect(screen.getByLabelText('Confirmar entrega').props.accessibilityState.disabled).toBe(true)
     expect(llamadasA(ENTREGAR)).toHaveLength(0)
     // Lámina ChoferEntrega: el pie dice qué falta y la sección marca la foto como obligatoria.
     expect(screen.getByText('Falta la foto del remito')).toBeTruthy()
@@ -144,7 +151,6 @@ describe('Consola del chofer: entrega con la operación única', () => {
     const [[, form]] = llamadasA('/api/v1/Media/upload-entrega')
     expect(form).toBeInstanceOf(FormData)
 
-    await alResumen()
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
     expect(llamadasA(ENTREGAR)[0][1]).toMatchObject({ nombreReceptor: 'Abel', evidenciaUrl: 'https://r2.test/entregas/remito.jpg' })
@@ -159,12 +165,10 @@ describe('Consola del chofer: entrega con la operación única', () => {
     })
     pintar()
     await abrirEntrega()
-    await continuar()
-    await userEvent.press(screen.getByLabelText('Agregar cobro'))
-    await userEvent.press(within(await screen.findByLabelText('Medio del cobro 1')).getByLabelText('Efectivo'))
+    await userEvent.press(screen.getByLabelText('Efectivo'))
     await userEvent.type(screen.getByLabelText('Monto del cobro 1'), '600')
-    await userEvent.press(screen.getByLabelText('Agregar cobro'))
-    await userEvent.press(within(screen.getByLabelText('Medio del cobro 2')).getByLabelText('Transferencia'))
+    await userEvent.press(screen.getByLabelText('Sumar otro pago'))
+    await userEvent.press(screen.getByLabelText('Transferencia'))
     await userEvent.type(screen.getByLabelText('Monto del cobro 2'), '400,50')
 
     // Sin la foto del comprobante la transferencia no sale: el paso no deja seguir y lo dice.
@@ -175,10 +179,10 @@ describe('Consola del chofer: entrega con la operación única', () => {
     await sacarFoto('Sacar foto del comprobante del cobro 2')
     await screen.findByText('Foto del comprobante del cobro 2 cargada')
     await userEvent.press(screen.getByLabelText('A la deuda anterior'))
+    await alResumen()
     await userEvent.press(screen.getByLabelText('Firma del cliente'))
     await sacarFoto('Sacar foto de la firma del cliente')
     await screen.findByText('Foto de la firma del cliente cargada')
-    await continuar()
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
 
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
@@ -203,7 +207,8 @@ describe('Consola del chofer: entrega con la operación única', () => {
     expect(await screen.findByText('Network request failed')).toBeTruthy()
     mockPost.mockImplementation(async () => { entregada(); return { paradaId: 'p1', repetida: true } })
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
-    expect(await screen.findByText('1 de 2 entregas')).toBeTruthy()
+    await cerrarListo()
+    expect(await screen.findByText('1 de 2 entregadas')).toBeTruthy()
     const [primero, segundo] = llamadasA(ENTREGAR)
     expect(segundo[1]).toEqual(primero[1])
   })
@@ -219,7 +224,7 @@ describe('Consola del chofer: entrega con la operación única', () => {
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
     expect(await screen.findByText('Esta entrega ya se había registrado antes con otros datos.')).toBeTruthy()
     expect(screen.queryByLabelText('Confirmar entrega')).toBeNull()
-    expect(await screen.findByText('1 de 2 entregas')).toBeTruthy()
+    expect(await screen.findByText('1 de 2 entregadas')).toBeTruthy()
   })
 
   it('si la clave ya se usó en otra parada, la cambia: el próximo intento va con otra clave', async () => {
@@ -240,12 +245,12 @@ describe('Consola del chofer: entrega con la operación única', () => {
   it('el chofer con solo viajes devuelve con las líneas de la parada y la entrega manda los renglones devueltos', async () => {
     mockPost.mockResolvedValue({ paradaId: 'p1' })
     pintar()
-    await abrirEntrega()
-    await userEvent.press(screen.getByLabelText('Sí, devuelve'))
+    await abrirEntrega(true)
+    await userEvent.press(screen.getByLabelText('Sí, devuelve algo'))
+    await userEvent.press(await screen.findByLabelText('Sumar una de Aceite 900 ml'))
+    await userEvent.press(screen.getByLabelText('Sumar una de Aceite 900 ml'))
     await continuar()
-    await userEvent.type(await screen.findByLabelText('Devuelve: Aceite 900 ml'), '2')
-    await continuar()
-    await continuar()
+    await alResumen()
     await userEvent.press(screen.getByLabelText('Confirmar entrega'))
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
     expect(llamadasA(ENTREGAR)[0][1]).toMatchObject({ devolucion: { items: [{ ventaDetalleId: 'd1', cantidad: 2 }] } })
@@ -254,20 +259,19 @@ describe('Consola del chofer: entrega con la operación única', () => {
 
   it('con permiso de ventas también usa las líneas de la parada: nunca pide devoluciones-posibles', async () => {
     pintar(HOJA, [{ module: 'MOD_VIAJES', canRead: true, canUpdate: true }, { module: 'MOD_VENTAS', canRead: true }])
-    await abrirEntrega()
-    await userEvent.press(screen.getByLabelText('Sí, devuelve'))
-    await continuar()
-    expect(await screen.findByLabelText('Devuelve: Aceite 900 ml')).toBeTruthy()
+    await abrirEntrega(true)
+    await userEvent.press(screen.getByLabelText('Sí, devuelve algo'))
+    expect(await screen.findByLabelText('Sumar una de Aceite 900 ml')).toBeTruthy()
     expect(mockGet.mock.calls.some(([u]) => String(u).includes('devoluciones-posibles'))).toBe(false)
   })
 
   it('no se pudo entregar sigue por reportar-parada, sin clave ni cobro', async () => {
     mockPost.mockResolvedValue(true)
     pintar()
-    await userEvent.press(await screen.findByLabelText('Reportar entrega'))
-    await userEvent.press(screen.getByLabelText('No se pudo entregar'))
+    await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+    await userEvent.press(await screen.findByLabelText('No pude entregar'))
     await userEvent.press(screen.getByLabelText('Cerrado o sin nadie'))
-    await userEvent.press(screen.getByLabelText('Confirmar: no se entregó'))
+    await userEvent.press(screen.getByLabelText('Avisar a Ventas'))
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/reportar-parada', {
       hojaDeRutaId: 'h1', paradaId: 'p1', entregado: false, motivoRechazo: 'Cerrado o sin nadie', observaciones: undefined,
     })

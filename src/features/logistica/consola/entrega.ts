@@ -45,10 +45,13 @@ export function razonNoCobro(n: NoCobroForm): string | null {
  * Las observaciones de la entrega: "No cobré: <motivo>" adelante de lo que escribió el chofer. El motivo
  * no tiene columna propia (decisión del dueño, 23-10): viaja en el campo de observaciones de siempre.
  */
-export function observacionesDeEntrega(observaciones: string, noCobro: NoCobroForm | null | undefined): string | undefined {
+export function observacionesDeEntrega(observaciones: string, noCobro: NoCobroForm | null | undefined, motivoDevolucion?: string | null): string | undefined {
   const motivo = noCobro?.motivo ? (noCobro.motivo === 'Otro' ? noCobro.otro.trim() : noCobro.motivo) : null
-  return [motivo ? `No cobré: ${motivo}` : null, observaciones.trim()].filter(Boolean).join(' · ') || undefined
+  return [motivo ? `No cobré: ${motivo}` : null, motivoDevolucion ? `Devolución: ${motivoDevolucion}` : null, observaciones.trim()].filter(Boolean).join(' · ') || undefined
 }
+
+/** Chofer-03--productos: por qué vuelve la mercadería. TODO API: sin campo propio por devolución, viaja en las observaciones. */
+export const MOTIVOS_DEVOLUCION = ['Vencido', 'Roto o dañado', 'No lo pidió', 'Otro'] as const
 
 export interface FormEntrega {
   receptor: string
@@ -63,6 +66,8 @@ export interface FormEntrega {
   devolucion: Record<string, string>
   /** "No cobré" (C2): con valor, las líneas de cobro no viajan y el motivo va en las observaciones. */
   noCobro?: NoCobroForm | null
+  /** Solo viaja si hay devolución (observaciones, TODO API). */
+  motivoDevolucion?: string | null
 }
 
 /** El cuerpo sin la clave: la clave la pone la consola, una por parada, para que los reintentos la repitan. */
@@ -125,7 +130,7 @@ export function armarEntrega(
     entrega: {
       nombreReceptor: receptor,
       evidenciaUrl: f.remitoUrl ?? undefined,
-      observaciones: observacionesDeEntrega(f.observaciones, noCobro),
+      observaciones: observacionesDeEntrega(f.observaciones, noCobro, items.length > 0 ? f.motivoDevolucion : null),
       cobro: lineas.length > 0 ? { imputacion: f.imputacion, lineas } : undefined,
       firma: f.firmaUrl ? { fotoUrl: f.firmaUrl } : undefined,
       devolucion: items.length > 0 ? { items } : undefined,

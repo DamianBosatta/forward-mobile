@@ -11,6 +11,8 @@ export interface ResumenRuta {
   total: number
   /** Paradas ya reportadas: entregadas o no entregadas. */
   hechas: number
+  /** Solo las entregadas: es lo que dice "2 de 8 entregadas" (chofer-01-viaje). */
+  entregadas: number
   proxima: ParadaNumerada | null
   despues: ParadaNumerada[]
   reportadas: ParadaNumerada[]
@@ -28,6 +30,7 @@ export function resumenRuta(detalles: ParadaDto[]): ResumenRuta {
   return {
     total: numeradas.length,
     hechas: reportadas.length,
+    entregadas: reportadas.filter((n) => n.parada.estado === EstadoParada.Entregado).length,
     proxima: pendientes[0] ?? null,
     despues: pendientes.slice(1),
     reportadas,
@@ -55,3 +58,11 @@ export const MOTIVOS_NO_ENTREGA = [
   'Dirección incorrecta',
   'Otro',
 ] as const
+
+/** La línea de apoyo de cada motivo (chofer-02b-no-entregado). Los códigos que viajan al servidor son los de arriba. */
+export const DETALLE_MOTIVO_NO_ENTREGA: Record<(typeof MOTIVOS_NO_ENTREGA)[number], string> = {
+  'Cerrado o sin nadie': 'No había quién recibiera',
+  'El cliente rechazó la mercadería': 'No la quiso recibir',
+  'Dirección incorrecta': 'No encontraste el lugar',
+  Otro: 'Contanos qué pasó',
+}

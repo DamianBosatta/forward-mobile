@@ -13,8 +13,8 @@ interface Props {
 }
 
 /**
- * Lámina CobroFirma: la firma no es un medio de pago, es la parte que no se cobra y queda en la cuenta
- * corriente. Va siempre con su foto. Nunca frena la entrega (lo marca el servidor para administración).
+ * Lámina chofer-05: "Firmó el remito" con foto opcional. La firma nunca bloquea la entrega (S4); la foto
+ * del remito es la obligatoria.
  */
 export function FirmaEnEntrega({ firmar, onFirmar, url, onUrl, onSubiendo }: Props) {
   const c = useColors()
@@ -42,8 +42,8 @@ export function FirmaEnEntrega({ firmar, onFirmar, url, onUrl, onSubiendo }: Pro
           {firmar ? <Check size={16} color={c.surface} strokeWidth={3} /> : null}
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Firma</Text>
-          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Queda en su cuenta corriente · foto obligatoria</Text>
+          <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Firmó el remito</Text>
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Foto de la firma: opcional</Text>
         </View>
       </Pressable>
       {firmar ? (

@@ -127,7 +127,7 @@ export function PorPrepararScreen() {
               plural(v.itemsCount, 'producto', 'productos'),
               // La suma la da el servidor (9B, prioridad 3); uno anterior no la manda.
               typeof v.unidadesCount === 'number' ? `${v.unidadesCount} u.` : null,
-              v.piezasCount > 0 ? plural(v.piezasCount, 'bulto', 'bultos') : null,
+              v.piezasCount > 0 ? plural(v.piezasCount, 'pieza', 'piezas') : null,
             ].filter(Boolean).join(' · ')}
           </Text>
         </View>

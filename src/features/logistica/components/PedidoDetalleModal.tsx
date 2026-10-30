@@ -94,7 +94,7 @@ export const PedidoDetalleModal = ({ ventaId, clienteNombre, isVisible, onClose 
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <PackageCheck size={18} color={colors.primary} />
                   <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textSecondary }}>
-                    {bultos} {bultos === 1 ? 'bulto' : 'bultos'} · {totalUnidades} u.
+                    {bultos} {bultos === 1 ? 'pieza' : 'piezas'} · {totalUnidades} u.
                   </Text>
                 </View>
                 {total != null && (

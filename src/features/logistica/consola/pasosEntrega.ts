@@ -3,26 +3,32 @@ import { leerNumero } from '@/src/utils/numero'
 import { armarLinea, razonNoCobro, type Imputacion, type LineaCobroForm, type NoCobroForm } from './entrega'
 
 /**
- * Los pasos de la entrega del chofer (lienzo de entrega): E1 reportar, E2 devolución, E3/E4 cobro y
- * firma, E6 confirmar. La foto (E5) se saca dentro del paso que la pide. Cada regla de "Continuar"
- * vive acá y devuelve el motivo por el que está apagado; `armarEntrega` sigue siendo quien arma el
- * cuerpo, con las mismas validaciones de siempre.
+ * Los pasos de la entrega del chofer (lienzo de entrega, láminas chofer-03 a chofer-05): devolución,
+ * cobro y confirmar. "Llegué" es el paso 1 y vive afuera. La foto del remito, el receptor y la firma se
+ * piden al confirmar. Cada regla de "Continuar" vive acá y devuelve el motivo por el que está apagado;
+ * `armarEntrega` sigue siendo quien arma el cuerpo, con las mismas validaciones de siempre.
  */
-export type Paso = 'reporte' | 'devolucion' | 'cobro' | 'resumen'
+export type Paso = 'devolucion' | 'cobro' | 'confirmar'
 
-/** La devolución solo es un paso si el chofer dijo que hay. */
-export const pasosDeEntrega = (hayDevolucion: boolean | null): Paso[] =>
-  hayDevolucion ? ['reporte', 'devolucion', 'cobro', 'resumen'] : ['reporte', 'cobro', 'resumen']
+export const PASOS: readonly Paso[] = ['devolucion', 'cobro', 'confirmar']
 
-export function razonReporte(ctx: {
-  receptor: string
-  hayDevolucion: boolean | null
-  exigeFotoRemito: boolean
-  remitoUrl: string | null
-  subiendo: boolean
-}): string | null {
+/** "Paso 2 de 4": con "No, todo bien" la devolución no cuenta y los pasos pasan a 3 (llegué + cobro + confirmar). */
+export function posicionDePaso(paso: Paso, hayDevolucion: boolean | null): { numero: number; total: number } {
+  const sinDevolucion = hayDevolucion === false
+  const total = sinDevolucion ? 3 : 4
+  if (paso === 'confirmar') return { numero: total, total }
+  if (paso === 'cobro') return { numero: sinDevolucion ? 2 : 3, total }
+  return { numero: 2, total }
+}
+
+/** Paso de devolución: hay que haber elegido, y si devuelve, cargar algo válido. */
+export function razonDevolucionPaso(hayDevolucion: boolean | null, valores: Record<string, string>, disponibles: Record<string, number>): string | null {
+  if (hayDevolucion === null) return 'Elegí si hay devolución'
+  return hayDevolucion ? razonDevolucion(valores, disponibles) : null
+}
+
+export function razonConfirmar(ctx: { receptor: string; exigeFotoRemito: boolean; remitoUrl: string | null; subiendo: boolean }): string | null {
   if (ctx.subiendo) return 'Subiendo la foto: esperá un momento'
-  if (ctx.hayDevolucion === null) return 'Elegí si hay devolución'
   // Quién recibió es obligatorio siempre (decisión del dueño del 16-10), con o sin la foto del remito.
   if (!ctx.receptor.trim()) return 'Falta quién recibió'
   if (ctx.exigeFotoRemito && !ctx.remitoUrl) return 'Falta la foto del remito'
@@ -55,8 +61,6 @@ export function totalRepartido(lineas: LineaCobroForm[]): number {
 export interface ContextoCobro {
   lineas: LineaCobroForm[]
   imputacion: Imputacion
-  firmar: boolean
-  firmaUrl: string | null
   /** Lo que hay que cobrar en la parada (lo decide el servidor), si lo manda. */
   aCobrar: number | null
   hayDevolucion: boolean
@@ -68,22 +72,26 @@ export interface ContextoCobro {
 /**
  * Si el cobro se compara con "A cobrar hoy" y cómo. Sin importe del servidor o con el cobro a la deuda
  * anterior (cuyo saldo la app no recibe) no se compara. Solo avisa, nunca frena (decisión del dueño, 22-10):
- * lo que sobra va a la deuda más vieja y lo que falta lo valida el servidor. Con firma o devolución,
- * que falte es lo esperado (queda en la cuenta o lo descuenta el servidor): no se avisa.
+ * lo que sobra va a la deuda más vieja y lo que falta lo valida el servidor. Con devolución, que falte es
+ * lo esperado (lo descuenta el servidor): no se avisa. Lo que falta queda en la cuenta corriente.
  */
 export function comparacionDeCobro(c: ContextoCobro): { total: number; resto: number; avisaSobra: boolean; avisaFalta: boolean } | null {
   if (c.aCobrar == null || c.lineas.length === 0 || c.imputacion === 'DeudaAnterior') return null
   const total = c.aCobrar
   const resto = (centavos(total) - centavos(totalRepartido(c.lineas))) / 100
-  return { total, resto, avisaSobra: resto < 0, avisaFalta: resto > 0 && !c.firmar && !c.hayDevolucion }
+  return { total, resto, avisaSobra: resto < 0, avisaFalta: resto > 0 && !c.hayDevolucion }
 }
 
-/** "Faltan $ X" / "Sobran $ X" para mostrar en rojo; no impide continuar. */
+/** "Sobran $ X" para mostrar en rojo; no impide continuar. Lo que falta no es un error: queda en la cuenta (`faltaACuenta`). */
 export function avisoDeCobro(c: ContextoCobro): string | null {
   const cmp = comparacionDeCobro(c)
-  if (cmp?.avisaSobra) return `Sobran ${formatImporte(-cmp.resto)}`
-  if (cmp?.avisaFalta) return `Faltan ${formatImporte(cmp.resto)}`
-  return null
+  return cmp?.avisaSobra ? `Sobran ${formatImporte(-cmp.resto)}` : null
+}
+
+/** Lo que falta cobrar y queda como deuda en la cuenta corriente (chofer-04--mixto); `null` si no falta o no se compara. */
+export function faltaACuenta(c: ContextoCobro): number | null {
+  const cmp = comparacionDeCobro(c)
+  return cmp?.avisaFalta ? cmp.resto : null
 }
 
 export function razonCobro(c: ContextoCobro): string | null {
@@ -96,14 +104,5 @@ export function razonCobro(c: ContextoCobro): string | null {
     const r = armarLinea(l, i + 1)
     if ('error' in r) return r.error
   }
-  if (c.firmar && !c.firmaUrl) return 'Falta la foto de la firma'
   return null
-}
-
-/** "$ 600,00 de $ 1.000,00" y la tilde cuando cuadra. */
-export function textoRepartido(c: ContextoCobro): string {
-  const suma = totalRepartido(c.lineas)
-  const cmp = comparacionDeCobro(c)
-  if (!cmp) return formatImporte(suma)
-  return `${formatImporte(suma)} de ${formatImporte(cmp.total)}${cmp.resto === 0 ? ' ✓' : ''}`
 }
