@@ -131,7 +131,10 @@ export function DetalleVenta({ id, onVolver }: Props) {
                 ? `Venció. Reabrilo y vuelven a correr los ${DIAS_VIGENCIA_PRESUPUESTO} días. Un presupuesto no reserva stock.`
                 : `Vence a los ${DIAS_VIGENCIA_PRESUPUESTO} días de guardado. Si no lo pasás a pedido, queda vencido. Un presupuesto no reserva stock.`}</Notice>
             ) : (
-              <View style={{ flexDirection: 'row', gap: space[2] }}>{dato('Entrega', entrega ?? 'A coordinar')}{dato('Factura', h.conFactura ? 'Sí' : 'No')}</View>
+              <View style={{ gap: space[2] }}>
+                <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Entrega y factura</Text>
+                <View style={{ flexDirection: 'row', gap: space[2] }}>{dato('Entrega', entrega ?? 'A coordinar')}{dato('Con factura', h.conFactura ? 'Sí' : 'No')}</View>
+              </View>
             )}
             {esEstadoVenta(h.estado, 'PendienteAutorizacion') ? (
               <Notice tone="advertencia" title="Quedó por autorizar porque:">
@@ -139,6 +142,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
               </Notice>
             ) : null}
             {h.motivoAnulacion ? <Notice tone="peligro" title="Se anuló">{h.motivoAnulacion}</Notice> : null}
+            <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Productos</Text>
             <LineasDeLaVenta detalles={q.data.detalles} />
             <View style={{ gap: space[1] }}>
               {h.montoDescuentoAmount ? <TotalsRow label={`Descuento general ${mostrarNumero(h.porcentajeDescuento)} %`} importe={-h.montoDescuentoAmount} /> : null}
