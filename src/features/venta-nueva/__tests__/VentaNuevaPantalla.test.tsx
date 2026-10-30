@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen, userEvent, waitFor, within } from '@tes
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { formatImporte } from '@/core/ui/fw'
 import { storage } from '@/core/utils/storage'
 import { leerCola } from '@/features/venta-sin-senal'
 import { VentaNuevaPantalla } from '../components/VentaNuevaPantalla'
@@ -340,6 +341,16 @@ describe('pestaña Líneas', () => {
     expect(screen.getByTestId('revisar-total')).toHaveTextContent('$ 22.464,00') // 10 × 2.496 − 10 %
   })
 
+  it('la comisión estimada dice el porcentaje del vendedor entre paréntesis', async () => {
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10, comisionActiva: true, porcentajeComision: 3 } as never })
+    mockPost.mockImplementation((url: string) => Promise.resolve(url.includes('simulacion')
+      ? { comisionActiva: true, montoCobro: 29952, montoComision: 2567.5, porcentajePonderado: 5, esMixta: false, lineas: [] }
+      : { ventaId: 'b1', version: 7, message: '' }))
+    await elegirCliente()
+    conLineas()
+    expect(await screen.findByText(`Tu comisión estimada (3 %) ${formatImporte(2567.5)}`, {}, ESPERA)).toBeTruthy()
+  })
+
   it('muestra la comisión estimada que calcula el servidor, solo con comisión activa', async () => {
     mockPost.mockImplementation((url: string) => Promise.resolve(url.includes('simulacion')
       ? { comisionActiva: true, montoCobro: 29952, montoComision: 2567.5, porcentajePonderado: 5, esMixta: false, lineas: [] }
@@ -366,12 +377,11 @@ describe('pestaña Cabecera', () => {
   async function enCabecera() {
     await elegirCliente()
     useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: producto({ real: 100, disponible: 100 }), cantidad: 10, descuentoPct: 0 }] })
-    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
   }
 
   it('retiro: sin fecha ni flete en el autoguardado y sin tira de días', async () => {
     await enCabecera()
-    await userEvent.press(screen.getByRole('radio', { name: 'Retiro' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Retiro en el local' }))
     await waitFor(() => expect(ultimoPut()).toMatchObject({ metodoEntrega: 2 }), ESPERA)
     expect(ultimoPut()).not.toHaveProperty('fechaEntrega')
     expect(ultimoPut()).not.toHaveProperty('cargoFlete')
@@ -480,7 +490,6 @@ describe('pestaña Cabecera', () => {
     await elegirCliente()
     expect(screen.queryByRole('tab', { name: 'Cabecera' })).toBeNull()
     expect(screen.getByText('Agregar productos')).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
     expect(screen.getByText('Fecha de entrega')).toBeTruthy()
   })
 })
@@ -828,7 +837,6 @@ describe('confirmar', () => {
   it('la cesión viaja en el alta del pedido', async () => {
     useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10, comisionActiva: true, porcentajeComision: 5 } as never })
     await armar()
-    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
     await userEvent.type(screen.getByLabelText('Ceder parte de mi comisión (%)'), '3')
     await confirmar()
     await waitFor(() => expect(altas()).toHaveLength(1))
@@ -945,7 +953,8 @@ describe('V7 Confirmar', () => {
   it('la revisión trae la fecha, la nota y Con factura; no hay segunda confirmación y no se manda nada hasta tocar Confirmar venta', async () => {
     await elegirCliente()
     await conLinea(0)
-    expect(screen.getByRole('button', { name: 'Datos de la entrega' })).toBeTruthy()
+    expect(screen.getByText('Fecha de entrega')).toBeTruthy()
+    expect(screen.getByLabelText('Observaciones')).toBeTruthy()
     expect(screen.getByRole('switch', { name: 'Con factura' })).toBeTruthy()
     expect(screen.getByTestId('revisar-total')).toHaveTextContent('$ 29.952,00')
     expect(alta()).toBeUndefined()
@@ -958,8 +967,7 @@ describe('V7 Confirmar', () => {
     await conLinea(0)
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     const propuesta = mockPut.mock.calls[0][1].fechaEntrega
-    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
-    const dias = screen.getAllByRole('radio')
+    const dias = screen.getAllByRole('radio').filter((r) => !/Logística|Expreso|Retiro/.test(String(r.props.accessibilityLabel ?? '')))
     await userEvent.press(dias[dias.length - 1])
     await userEvent.type(screen.getByLabelText('Observaciones'), 'Entrar por el portón de atrás')
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))

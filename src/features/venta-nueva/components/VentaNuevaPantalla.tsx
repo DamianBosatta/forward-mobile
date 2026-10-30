@@ -5,7 +5,6 @@ import { Plus, Trash2 } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, TopBar, formatImporte } from '@/core/ui/fw'
 import type { CatalogoStockItem } from '@/libs/api-client'
-import { METODO_ENTREGA } from '@/features/ventas/lib/venta-form-retiro'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import type { TipoDocumento } from '@/features/clientes/components/SeleccionarClienteSheet'
@@ -113,7 +112,6 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
   const [editando, setEditando] = useState<LineaCarrito | null>(null)
   // `oferta`: el producto abierto en "Cantidad y oferta"; con línea en el carrito es una edición, sin ella un alta.
   const [oferta, setOferta] = useState<CatalogoStockItem | null>(null)
-  const [verCabecera, setVerCabecera] = useState(false)
   const [fragancias, setFragancias] = useState<string | null>(null)
   const stockVivo = useStockVivoVenta(lineas)
   const conLoVivo = (l: LineaCarrito | null) => (l ? lineas.find((x) => x.productoId === l.productoId) ?? l : null)
@@ -246,13 +244,9 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
   ) : null
 
   // Revisión de toda venta (nueva, retomada, duplicada o editada; lámina Carrito): las líneas con el stock vuelto a chequear; lo que no es una línea
-  // (entrega, descuento general, avisos, comisión) se ajusta desde `ajustes`: la fecha y la nota en "Datos de la
-  // entrega", Con factura en su interruptor. "Confirmar venta" manda la venta (sin segunda hoja); la hoja del motivo
+  // (entrega, descuento general, avisos, comisión) se ajusta desde `ajustes`: la entrega (fecha, logística,
+  // flete, nota y cesión) va en línea, Con factura en su interruptor. "Confirmar venta" manda la venta (sin segunda hoja); la hoja del motivo
   // sale solo si falta stock, y el botón queda apagado con las mismas guardas de siempre.
-  const fechaEntrega = cab.cabecera.fecha
-  const diaEntrega = cab.tira.find((d) => d.dia === fechaEntrega)
-  const textoEntrega = cab.cabecera.metodoEntrega === METODO_ENTREGA.RetiroEnLocal ? 'Retira en el local'
-    : diaEntrega ? `${diaEntrega.nombre} ${diaEntrega.numero}` : fechaEntrega ? fechaEntrega.split('-').reverse().join('/') : 'Sin fecha'
   const presupuestoSobreTope = tipo === 'Presupuesto' && superaTope
   const filaAjuste = (rotuloFila: string, valor: string | null, onPress: () => void) => (
     <Pressable accessibilityRole="button" accessibilityLabel={rotuloFila} onPress={onPress}
@@ -272,11 +266,11 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
       {avisos.rechazos.map((r) => <Notice key={r} tone="peligro">{r}</Notice>)}
       {b.retenido && b.borrador ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`El borrador guarda los descuentos hasta tu tope (${mostrarNumero(tope)} %); el resto se guarda al confirmar el pedido.`}</Text> : null}
       {filaAjuste('Descuento a toda la venta', `${mostrarNumero(descuentoValido)} %`, () => setDescGeneral(true))}
-      {filaAjuste('Datos de la entrega', textoEntrega, () => setVerCabecera(true))}
+      <CabeceraVenta clienteId={cliente.id} cab={cab} />
       <ConFactura conFactura={cab.cabecera.conFactura} onChange={cab.setConFactura} lineas={lineas} />
       {comision !== null ? (
         <Text style={{ ...typeScale.secundario, alignSelf: 'flex-start', paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.brandSoft, color: c.brandInk }}>
-          {`Tu comisión estimada ${formatImporte(comision)}`}
+          {`Tu comisión estimada${cab.comision > 0 ? ` (${mostrarNumero(cab.comision)} %)` : ''} ${formatImporte(comision)}`}
         </Text>
       ) : null}
     </View>
@@ -355,9 +349,6 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
       {/* Una fragancia suelta se edita en el detalle (tope por stock disponible). */}
       <EditarLineaSheet linea={conLoVivo(editando)} onClose={() => setEditando(null)} descuentoGeneral={descuentoValido}
         onConfirm={(l) => { reemplazar(l); setEditando(null) }} onQuitar={(id) => { quitar(id); setEditando(null) }} />
-      <BottomSheet visible={verCabecera} onClose={() => setVerCabecera(false)} accessibilityLabel="Datos de la entrega">
-        <CabeceraVenta clienteId={cliente.id} rotuloCliente={rotulo} cab={cab} />
-      </BottomSheet>
       <FraganciasSheet padreId={fragancias} onClose={() => setFragancias(null)} llevo={llevo} />
     </View>
   )
