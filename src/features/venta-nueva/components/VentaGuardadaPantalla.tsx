@@ -56,8 +56,8 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
   const esPedido = tipo === 'Pedido'
   const entrega = entregaTexto(h.fechaEntrega)
   const whatsapp = urlWhatsApp(socio.data?.telefono)
-  // Cobrar: la misma regla que la ficha del cliente (cobros del módulo Pagos y cuenta del cliente a la vista).
-  const puedeCobrar = esPedido && socio.data?.puedeVerCuentaCorriente === true && canCreate('MOD_PAGOS') && canRead('MOD_PAGOS')
+  // Cobrar: la misma regla que la ficha del cliente (cobros del módulo Pagos y cuenta del cliente a la vista); una venta por autorizar todavía no se cobra (S5).
+  const puedeCobrar = esPedido && !porAutorizar && socio.data?.puedeVerCuentaCorriente === true && canCreate('MOD_PAGOS') && canRead('MOD_PAGOS')
   const mandarPorWhatsApp = () => {
     if (!whatsapp) return
     const texto = `Hola, te paso el ${tipo.toLowerCase()} ${codigoDeVenta(h)} por ${formatImporte(h.totalAmount)}.`
@@ -97,7 +97,7 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
           </View>
         </View>
         <Notice tone={porAutorizar ? 'advertencia' : 'exito'}>
-          {mensaje ?? (porAutorizar ? 'Quedó por autorizar. Te avisamos cuando lo resuelvan.' : 'Quedó guardado.')}
+          {mensaje ?? (porAutorizar ? 'Falta que la autoricen. Hasta entonces no sale a reparto. Te avisamos cuando la resuelvan.' : 'Quedó guardado.')}
         </Notice>
         {whatsapp ? <Button label="Mandar por WhatsApp" onPress={mandarPorWhatsApp} /> : null}
         {puedeCobrar ? (
@@ -111,7 +111,7 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
           </Pressable>
         ) : null}
         <AccionesVenta venta={vigente} rotulo={rotulo} />
-        <Text style={secundario}>La factura no se hace desde el teléfono: va por la pestaña Facturación de la web.</Text>
+        <Text style={secundario}>La factura no se hace desde el teléfono: la emite la oficina.</Text>
         <Button label="Vender a otro cliente" variant="secundario" onPress={() => router.replace('/(tabs)/ventas/nueva' as never)} />
         <Pressable accessibilityRole="button" accessibilityLabel="Volver a Mi día" onPress={() => router.replace('/(tabs)' as never)} style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ ...typeScale.cuerpoDestacado, color: c.onTopBar }}>Volver a Mi día</Text>

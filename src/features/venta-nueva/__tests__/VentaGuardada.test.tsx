@@ -227,7 +227,17 @@ describe('V8 listo (CalleListo / TabCalleListo)', () => {
     expect(screen.queryByRole('button', { name: 'Mandar por WhatsApp' })).toBeNull()
   })
 
+  it('una venta por autorizar no ofrece "Cobrar ahora" aunque tenga todos los permisos (S5)', async () => {
+    useAuthStore.setState({ user: { id: 'u1', roles: ['Vendedor'], permissions: [{ module: 'MOD_VENTAS', canRead: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }] } as never })
+    mockGet.mockImplementation((url: string) =>
+      Promise.resolve(url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? { ...socio, puedeVerCuentaCorriente: true } : undefined))
+    pantalla()
+    await screen.findByText('Por autorizar · te avisamos')
+    expect(screen.queryByRole('button', { name: 'Cobrar ahora' })).toBeNull()
+  })
+
   it('"Cobrar ahora" solo con permiso de cobros y de ver la cuenta del cliente; lleva al cobro de ese cliente', async () => {
+    mockVenta = { ...mockVenta, venta: cabecera({ estado: 2 }) }
     useAuthStore.setState({ user: { id: 'u1', roles: ['Vendedor'], permissions: [{ module: 'MOD_VENTAS', canRead: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }] } as never })
     mockGet.mockImplementation((url: string) =>
       Promise.resolve(url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? { ...socio, puedeVerCuentaCorriente: true } : undefined))
