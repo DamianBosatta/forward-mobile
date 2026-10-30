@@ -43,17 +43,16 @@ export function DocumentCard(p: DocumentCardProps) {
       accessibilityRole="button"
       accessibilityLabel={etiqueta}
       onPress={p.onPress}
-      style={({ pressed }) => [
-        {
+      android_ripple={{ color: c.surface2 }}
+      style={{
           flexDirection: 'row',
           gap: space[3],
           minHeight: 44,
           padding: space[4],
           borderRadius: radii.tarjeta,
-          backgroundColor: pressed ? c.surface2 : c.surface,
-        },
-        sombra,
-      ]}
+          backgroundColor: c.surface,
+          ...sombra,
+      }}
     >
       <View
         style={{

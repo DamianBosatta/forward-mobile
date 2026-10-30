@@ -81,7 +81,7 @@ export function CalendarioScreen({ precarga, onAbrirVenta, nuevo, avisosSinLeer,
         eventos.map((e) => {
           const chip = chipDe(e)
           return (
-            <Pressable key={e.clave} onPress={() => setAbierto(e)} accessibilityRole="button" accessibilityLabel={`${e.titulo}, ${chip?.label ?? e.estado}`} accessibilityHint="Abre el detalle del evento" style={({ pressed }) => ({ backgroundColor: pressed ? c.surface2 : c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[1], ...sombra })}>
+            <Pressable key={e.clave} onPress={() => setAbierto(e)} accessibilityRole="button" accessibilityLabel={`${e.titulo}, ${chip?.label ?? e.estado}`} accessibilityHint="Abre el detalle del evento" android_ripple={{ color: c.surface2 }} style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[1], overflow: 'hidden', ...sombra }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
                 <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }}>{e.titulo}</Text>
                 {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}

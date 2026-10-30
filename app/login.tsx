@@ -204,7 +204,8 @@ export default function LoginScreen() {
             accessibilityRole="button"
             accessibilityLabel="Entrar con huella"
             onPress={() => { void entrarConHuella() }}
-            style={({ pressed }) => ({
+            android_ripple={{ color: CAMPO.borde }}
+            style={{
               height: 52,
               borderRadius: 14,
               borderWidth: 1,
@@ -213,8 +214,8 @@ export default function LoginScreen() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: space[2] + 2,
-              opacity: pressed ? 0.85 : 1,
-            })}
+              overflow: 'hidden',
+            }}
           >
             <Fingerprint size={22} color={c.onTopBarStrong} />
             <Text style={[typeScale.cuerpoDestacado, { color: c.onTopBarStrong }]}>Entrar con huella</Text>

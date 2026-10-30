@@ -45,7 +45,8 @@ function Fila({ cliente, onPress, vencida = false }: { cliente: ClienteElegido; 
       accessibilityRole="button"
       accessibilityLabel={[direccion, nombre, vencida && 'deuda vencida'].filter(Boolean).join(', ')}
       onPress={onPress}
-      style={({ pressed }) => ({ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space[3], opacity: pressed ? 0.85 : 1 })}
+      android_ripple={{ color: c.surface2 }}
+      style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space[3] }}
     >
       <View style={{ width: 40, height: 40, borderRadius: radii.pastilla, backgroundColor: c.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
         <Text style={{ ...typeScale.secundario, color: c.brandInk }}>{inicialesDeDireccion(direccion)}</Text>
