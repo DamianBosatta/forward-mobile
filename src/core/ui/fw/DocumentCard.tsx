@@ -20,6 +20,11 @@ interface DocumentCardProps {
   importe: number | null | undefined
   chip: ChipInfo | null
   onPress: () => void
+  /**
+   * Formato de las láminas de compras: sin avatar; título, una línea secundaria (el nombre, o el
+   * encabezado si no hay) y el pie con el chip, la hora y el importe.
+   */
+  plano?: boolean
 }
 
 /** Iniciales (dos letras) del vendedor para el avatar. */
@@ -37,6 +42,26 @@ export function DocumentCard(p: DocumentCardProps) {
   const total = formatImporte(p.importe)
   const etiqueta = [encabezado, p.direccion, p.nombre, p.chip?.label, pie, total].filter(Boolean).join(', ')
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
+
+  if (p.plano) {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={etiqueta}
+        onPress={p.onPress}
+        android_ripple={{ color: c.surface2 }}
+        style={{ minHeight: 44, padding: space[4], gap: space[1], borderRadius: radii.tarjeta, backgroundColor: c.surface, ...sombra }}
+      >
+        <Text numberOfLines={1} style={[typeScale.cuerpoDestacado, { color: c.text }]}>{p.direccion}</Text>
+        <Text numberOfLines={1} style={secundario}>{p.nombre || encabezado}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], paddingTop: space[1] }}>
+          {p.chip && <StatusChip estado={p.chip.estado} label={p.chip.label} />}
+          <Text numberOfLines={1} style={[secundario, { flexShrink: 1 }]}>{pie}</Text>
+          <Text style={[typeScale.titulo, cifras, { color: c.textSecondary, flex: 1, textAlign: 'right' }]}>{total}</Text>
+        </View>
+      </Pressable>
+    )
+  }
 
   return (
     <Pressable

@@ -65,12 +65,23 @@ export function useComprasList(estadoDeRuta: EstadoCompraRuta | null = null) {
   // El servidor nuevo dice con qué estados recortó el importe: si son los de la pestaña, va junto
   // al contador (9B, prioridad 3). El anterior ignora `Estados` y no lo dice.
   const recortadoPorPestana = !!resumen?.estadosTotalesPorMoneda && mismosEstados(resumen.estadosTotalesPorMoneda, estados)
+  // Tarjeta de arriba de la lámina: lo que falta recibir (o lo recibido) con su importe. Solo con el
+  // importe de la pestaña que dice el servidor (9B prioridad 3); sin él no hay cifra que mostrar.
+  const cuenta = !resumen ? null
+    : pestana === 'recibidas' ? resumen.entregadas
+    : soloEstado === 'NotaPedido' ? resumen.notasPedido
+    : soloEstado === 'Confirmado' ? resumen.confirmadas
+    : resumen.notasPedido + resumen.confirmadas
+  const tarjeta = !esBorradores && recortadoPorPestana && importesTexto && cuenta !== null
+    ? { rotulo: pestana === 'recibidas' ? 'Recibidas' : 'Pendientes de recibir', importe: importesTexto, cuenta: `${cuenta} ${cuenta === 1 ? 'compra' : 'compras'}` }
+    : null
+
   const contador = textoContador(
-    items.length, totalDelServidor(compras.data?.pages), recortadoPorPestana ? (importesTexto ?? formatImporte(0)) : null,
+    items.length, totalDelServidor(compras.data?.pages), recortadoPorPestana && !tarjeta ? (importesTexto ?? formatImporte(0)) : null,
   )
 
   // Del servidor o nada: sin resumen no se muestra un número que podría estar mal.
-  const resumenTexto = !resumen ? null
+  const resumenTexto = !resumen || tarjeta ? null
     : pestana === 'pendientes' ? `${resumen.notasPedido} notas de pedido · ${resumen.confirmadas} por recibir`
     : pestana === 'recibidas' ? `${resumen.entregadas} recibidas`
     : null
@@ -82,6 +93,7 @@ export function useComprasList(estadoDeRuta: EstadoCompraRuta | null = null) {
     : null
 
   return {
+    tarjeta,
     pestana, setPestana,
     soloEstado, setSoloEstado,
     periodo, setPeriodo,

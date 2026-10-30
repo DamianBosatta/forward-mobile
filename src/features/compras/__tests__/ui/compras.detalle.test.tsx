@@ -63,8 +63,8 @@ const conCapacidad = () => useAuthStore.setState({
 describe('detalle de compra', () => {
   it('con el número del servidor (9C), el título lo muestra como C-00232 y la fecha va en el cuerpo', async () => {
     abrir({ numero: 232 })
-    expect(await screen.findByText('Compra C-00232')).toBeTruthy()
-    expect(screen.getByText('07/10/2026 · 1 producto')).toBeTruthy()
+    expect(await screen.findByText('Compra #C-00232')).toBeTruthy()
+    expect(screen.getByText('07/10/2026')).toBeTruthy()
   })
 
   it('nota de pedido: muestra líneas y total, y confirma; si el servidor rechaza, el motivo queda a la vista', async () => {
@@ -72,8 +72,8 @@ describe('detalle de compra', () => {
     expect(await screen.findByText('Balde Nuvia 10L')).toBeTruthy()
     expect(screen.getByText('Pendiente')).toBeTruthy()
     // 01:30 UTC del 8 es el 7 en Argentina: el día es el del servidor, no el del teléfono.
-    expect(screen.getByText('Compra AAAA1111')).toBeTruthy()
-    expect(screen.getByText('07/10/2026 · 1 producto')).toBeTruthy()
+    expect(screen.getByText('Compra #AAAA1111')).toBeTruthy()
+    expect(screen.getByText('07/10/2026')).toBeTruthy()
     expect(screen.getByLabelText('Total: $ 55.200,00')).toBeTruthy()
     mockPost.mockRejectedValueOnce(Object.assign(new Error('No se le puede comprar a Insumos del Sur SA'), { status: 400 }))
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar compra' }))
