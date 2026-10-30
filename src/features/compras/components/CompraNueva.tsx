@@ -12,6 +12,7 @@ import { useCompraBorrador, type EstadoGuardado } from '../hooks/useCompraBorrad
 import { ElegirProveedor, PASOS_COMPRA } from './ElegirProveedor'
 import { CatalogModal } from './CatalogModal'
 import { CompraLineaSheet } from './CompraLineaSheet'
+import { LineaCompraCard } from './LineaCompraCard'
 import { ConfirmarYRecibirSheet } from './ConfirmarYRecibirSheet'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { dejarAviso } from '../lib/confirmar-y-recibir'
@@ -20,14 +21,6 @@ import { hoyTexto } from '../lib/fecha'
 const SYNC: Record<EstadoGuardado, string | undefined> = {
   nuevo: undefined, guardando: 'Guardando…', guardado: 'Guardado', error: 'Sin guardar', conflicto: 'Sin guardar',
 }
-const UNIDAD = { Unidad: 'Unidades', Bulto: 'Bultos', BultoMadre: 'Bultos madre' }
-
-function detalleLinea(l: LineaCompra): string {
-  const costo = sinCosto(l) ? '—' : mostrarNumero(l.costoUnitario!)
-  const empaque = l.unidad === 'Unidad' ? UNIDAD.Unidad : `${l.cantidad} ${UNIDAD[l.unidad].toLowerCase()} de ${l.unidadesPorUnidad}`
-  return `${unidadesDe(l)} × ${costo} · ${sinCosto(l) ? 'Falta el costo' : empaque}`
-}
-
 interface Props {
   /** Borrador a retomar (desde la pestaña Borradores). */
   borradorId?: string
@@ -54,6 +47,8 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
   const [gastosTexto, setGastosTexto] = useState('')
   const [ocupado, setOcupado] = useState(false)
   const [editando, setEditando] = useState<LineaCompra | null>(null)
+  // Sube cuando la hoja o el catálogo cambian líneas por fuera de las tarjetas: las tarjetas guardan lo tipeado y se rearman.
+  const [revision, setRevision] = useState(0)
   const [recibir, setRecibir] = useState<{ error: string | null } | null>(null)
   const [fechaFactura, setFechaFactura] = useState(hoyTexto)
   const guardando = useRef(false)
@@ -164,27 +159,10 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
   const lineas = (
     <View style={{ gap: space[3] }}>
       {b.lineas.length > 0 ? (
-        <View style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>
-          {b.lineas.map((l, i) => {
-            const falta = sinCosto(l)
-            const tono = falta ? c.chip.porAutorizar : null
-            return (
-              <Pressable
-                key={l.productoId}
-                accessibilityRole="button"
-                accessibilityLabel={`${l.nombre}, ${detalleLinea(l)}`}
-                onPress={() => setEditando(l)}
-                style={{ minHeight: 44, paddingHorizontal: space[4], paddingVertical: space[3], gap: space[1], backgroundColor: tono?.bg ?? c.surface, borderTopWidth: i ? 1 : 0, borderTopColor: c.border }}
-              >
-                <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{l.nombre}</Text>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-                  <Text style={[typeScale.secundario, { color: c.text, flexShrink: 1 }]}>{detalleLinea(l)}</Text>
-                  <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(subtotalDe(l))}</Text>
-                </View>
-              </Pressable>
-            )
-          })}
-        </View>
+        b.lineas.map((l) => (
+          <LineaCompraCard key={`${l.productoId}:${revision}`} linea={l} onEditar={setEditando}
+            onCambiar={(nueva) => b.setLineas((prev) => prev.map((x) => (x.productoId === nueva.productoId ? nueva : x)))} />
+        ))
       ) : <Text style={secundario}>Todavía no hay productos.</Text>}
       <Button label="+ Agregar productos" variant="secundario" onPress={() => setCatalogo(true)} />
       {faltanCostos > 0 ? (
@@ -311,12 +289,12 @@ Recargala para ver la versión actual antes de seguir.` : 'Recargala para ver la
       <CompraLineaSheet
         linea={editando}
         onClose={() => setEditando(null)}
-        onConfirm={(nueva) => { b.setLineas((prev) => prev.map((l) => (l.productoId === nueva.productoId ? nueva : l))); setEditando(null) }}
-        onQuitar={(id) => { b.setLineas((prev) => prev.filter((l) => l.productoId !== id)); setEditando(null) }}
+        onConfirm={(nueva) => { b.setLineas((prev) => prev.map((l) => (l.productoId === nueva.productoId ? nueva : l))); setRevision((r) => r + 1); setEditando(null) }}
+        onQuitar={(id) => { b.setLineas((prev) => prev.filter((l) => l.productoId !== id)); setRevision((r) => r + 1); setEditando(null) }}
       />
       <CatalogModal
         visible={catalogo}
-        onClose={() => setCatalogo(false)}
+        onClose={() => { setCatalogo(false); setRevision((r) => r + 1) }}
         productSearch={busqueda}
         setProductSearch={setBusqueda}
         loadingProds={productos.isLoading}

@@ -92,12 +92,10 @@ describe('editar una compra guardada', () => {
 
   it('carga la compra, no autoguarda y guarda los cambios con un solo PUT con la versión', async () => {
     pantalla({ editarId: 'c7' })
-    expect(await screen.findByText('48 × 100 · 4 bultos de 12')).toBeTruthy()
+    expect(await screen.findByText('Bulto ×12 = 48 u')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Confirmar compra' })).toBeNull()
     expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
-    await userEvent.press(screen.getByRole('button', { name: /Balde Nuvia 10L, 48 × 100/ }))
     await userEvent.type(screen.getByLabelText('Costo por unidad ($)'), '5')
-    await userEvent.press(screen.getByRole('button', { name: 'Confirmar' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeEnabled())
     await new Promise((r) => setTimeout(r, 1200))
     expect(mockPut).not.toHaveBeenCalled()
@@ -108,9 +106,7 @@ describe('editar una compra guardada', () => {
   })
 
   const cambiarCosto = async () => {
-    await userEvent.press(await screen.findByRole('button', { name: /Balde Nuvia 10L, 48 × 100/ }))
-    await userEvent.type(screen.getByLabelText('Costo por unidad ($)'), '5')
-    await userEvent.press(screen.getByRole('button', { name: 'Confirmar' }))
+    await userEvent.type(await screen.findByLabelText('Costo por unidad ($)'), '5')
   }
 
   it('un error que no es 409 no ofrece el Reintentar del autoguardado: Guardar cambios reintenta y navega', async () => {
@@ -159,9 +155,7 @@ describe('editar una compra guardada', () => {
   it('un 409 muestra el mensaje del servidor y ofrece recargar', async () => {
     mockPut.mockRejectedValueOnce(Object.assign(new Error('La compra ha sido modificada por otro usuario.'), { status: 409 }))
     pantalla({ editarId: 'c7' })
-    await userEvent.press(await screen.findByRole('button', { name: /Balde Nuvia 10L, 48 × 100/ }))
-    await userEvent.type(screen.getByLabelText('Costo por unidad ($)'), '5')
-    await userEvent.press(screen.getByRole('button', { name: 'Confirmar' }))
+    await userEvent.type(await screen.findByLabelText('Costo por unidad ($)'), '5')
     await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
     expect(await screen.findByText(/La compra ha sido modificada por otro usuario\./)).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Recargar' })).toBeTruthy()
@@ -186,7 +180,8 @@ describe('pantalla de compra nueva', () => {
             detalles: [{ productoId: 'pr1', nombreProducto: 'Balde Nuvia 10L', cantidad: 48, cantidadIngresada: 4, unidadCompra: 'Bulto', costoUnitarioBaseAmount: 0 }] })
         : url.startsWith('/api/v1/socios-comerciales/') ? Promise.resolve(socio('p1')) : Promise.resolve([]))
     pantalla({ borradorId: 'b9' })
-    expect(await screen.findByText('48 × — · Falta el costo')).toBeTruthy()
+    expect(await screen.findByText('Bulto ×12 = 48 u')).toBeTruthy()
+    expect(screen.getByText('obligatorio')).toBeTruthy()
     expect(screen.getByText(/Una línea no tiene costo/)).toBeTruthy()
     expect(screen.getByText('Subtotal (falta un costo)')).toBeTruthy()
     // En la revisión se ve la línea sin costo y no se puede confirmar.
@@ -195,11 +190,9 @@ describe('pantalla de compra nueva', () => {
     expect(screen.getByText('Sin costo')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Confirmar compra' })).toBeDisabled()
     await userEvent.press(screen.getByRole('link', { name: 'Editar los productos' }))
-    // Tocar la línea abre la edición: con el costo cargado deja de estar marcada y se puede confirmar.
-    await userEvent.press(screen.getByRole('button', { name: /Balde Nuvia 10L, 48 × —/ }))
+    // El costo se carga en la tarjeta: con él deja de estar marcada y se puede confirmar.
     await userEvent.type(screen.getByLabelText('Costo por unidad ($)'), '1.150,50')
-    await userEvent.press(screen.getByRole('button', { name: 'Confirmar' }))
-    expect(await screen.findByText('48 × 1150,5 · 4 bultos de 12')).toBeTruthy()
+    expect(screen.queryByText('obligatorio')).toBeNull()
     await userEvent.press(screen.getByRole('button', { name: 'Ver compra' }))
     expect(screen.getByRole('button', { name: 'Confirmar compra' })).toBeEnabled()
     await waitFor(() => expect(puts().at(-1)?.detalles[0]).toMatchObject({ cantidad: 4, costoUnitario: 1150.5, unidadCompra: 'Bulto' }), ESPERA)
