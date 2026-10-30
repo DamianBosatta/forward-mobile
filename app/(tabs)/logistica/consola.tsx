@@ -5,6 +5,8 @@ import { onlineManager, useQueryClient } from '@tanstack/react-query'
 import { FileText, Phone, RefreshCw, WifiOff } from 'lucide-react-native'
 import { RequirePermission } from '@/core/ui'
 import { BottomSheet, Button, Notice, Progress, formatImporte, TopBar, useMenuLeading, type TopBarAction } from '@/core/ui/fw'
+import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
+import { esFallaDeRed } from '@/core/api/errores'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { safeHaptics } from '@/core/utils/haptics'
 import { useEntregarParada, useFinalizarHojaRuta, useHojaRuta, useHojasDeRuta, useIniciarHojaRuta, useReportarParada } from '@/libs/api-client'
@@ -21,9 +23,12 @@ import { HojaDeRutaVista } from '@/features/logistica/consola/HojaDeRutaVista'
 import { ReportarParada, type Resultado, type ReporteParada } from '@/features/logistica/consola/ReportarParada'
 import { LlegueParada } from '@/features/logistica/consola/LlegueParada'
 import { EntregaLista } from '@/features/logistica/consola/EntregaLista'
+import { ColaConsola, encolarAccion, useColaConsola, type DatosAccion } from '@/features/logistica/cola'
+import { conAccionesEnCola } from '@/features/logistica/cola/conAccionesEnCola'
 import { piezasDeParada } from '@/features/logistica/consola/piezasParada'
 import { resumenRuta, urlComoLlegar, urlLlamar } from '@/features/logistica/consola/hojaDeRuta'
 import { clasificarFalloEntrega, formatDistancia } from '@/features/logistica/consola/entrega'
+import type { CuerpoEntregaParada } from '@/libs/api-client/logistica'
 import { nuevaClaveIdempotencia } from '@/features/venta-nueva/lib/payload'
 import { tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -60,18 +65,20 @@ export default function ConsolaChoferScreen() {
   // "¡Llegué!" abre primero la pantalla de la parada; de ahí se pasa al reporte (entregué todo / no pude entregar).
   const [llegue, setLlegue] = useState<{ parada: ParadaDto; numero: number } | null>(null)
   const [reportando, setReportando] = useState<{ parada: ParadaDto; numero: number; resultado: Resultado } | null>(null)
-  // Sin señal: solo se avisa (la cola sin conexión de la consola es otra tarea). Lee el estado que ya mantiene useNetworkStatus.
+  // Sin señal el chofer sigue trabajando: lo que reporta queda en la cola del teléfono y sale solo (EnvioConsolaSinSenal).
   const enLinea = useSyncExternalStore(
     (cb) => onlineManager.subscribe(cb),
     () => onlineManager.isOnline(),
   )
   const [revisadoA, setRevisadoA] = useState(() => Date.now())
   /** Lámina chofer-06: la entrega que acaba de quedar registrada. */
-  const [lista, setLista] = useState<{ parada: ParadaDto; cobrado: number; piezas: number } | null>(null)
+  const [lista, setLista] = useState<{ parada: ParadaDto; cobrado: number; piezas: number; guardada: boolean } | null>(null)
   const [errorReporte, setErrorReporte] = useState<string | null>(null)
   const [pedido, setPedido] = useState<ParadaDto | null>(null)
   const [finalizando, setFinalizando] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
+  /** chofer-07-estados, "Guardado sin señal": lo último que se reportó quedó en el teléfono. */
+  const [guardado, setGuardado] = useState(false)
   const [notaCargando, setNotaCargando] = useState(false)
 
   // Sin id de navegación, un viaje cerrado que quedó guardado no secuestra la consola.
@@ -109,6 +116,7 @@ export default function ConsolaChoferScreen() {
     if (remota.data) setActiveTrip(remota.data)
   }, [remota.data, setActiveTrip])
 
+  const cola = useColaConsola()
   const reportar = useReportarParada()
   const entregar = useEntregarParada()
   // Una clave por parada, la misma en cada reintento (también si se cierra y reabre la entrega):
@@ -201,7 +209,10 @@ export default function ConsolaChoferScreen() {
     )
   }
 
-  const detalles = (viaje.detalles ?? []) as ParadaDto[]
+  // Lo reportado sin señal que todavía no salió ya cuenta como hecho, aunque el servidor aún no lo sepa.
+  const deEsteViaje = cola.items.filter((a) => a.hojaDeRutaId === viaje.id)
+  const sinMandar = deEsteViaje.filter((a) => a.estado.tipo === 'esperando').length
+  const detalles = conAccionesEnCola((viaje.detalles ?? []) as ParadaDto[], deEsteViaje)
   const resumen = resumenRuta(detalles)
   const finalizada = esEstadoHojaRuta(viaje.estado, 'Finalizada')
   // Documentada (confirmada con remitos, sin salir) se inicia igual que Programada.
@@ -238,6 +249,13 @@ export default function ConsolaChoferScreen() {
     Linking.openURL(url).catch(() => setAviso('No se pudo abrir esa aplicación en el teléfono.'))
   }
 
+  const usuarioId = user?.id ?? ''
+  const guardarEntrega = (parada: ParadaDto, cuerpo: CuerpoEntregaParada, cobrado: number) =>
+    encolarAccion(usuarioId, {
+      clave: cuerpo.claveIdempotencia ?? nuevaClaveIdempotencia(), hojaDeRutaId: viaje.id, paradaId: parada.id, clienteNombre: parada.clienteNombre,
+      tipo: 'entrega', cuerpo, cobrado, conDevolucion: !!cuerpo.devolucion,
+    })
+
   const confirmarReporte = async (r: ReporteParada) => {
     if (!reportando || reportandoYa.current) return
     reportandoYa.current = true
@@ -246,11 +264,26 @@ export default function ConsolaChoferScreen() {
     if (r.entregado) {
       try {
         const cuerpo = { ...r.entrega, claveIdempotencia: claveDe(parada.id) }
-        await entregar.mutateAsync({ hojaDeRutaId: viaje.id, paradaId: parada.id, cuerpo })
+        const cobrado = (r.entrega.cobro?.lineas ?? []).reduce((t, l) => t + (l.monto ?? 0), 0)
+        const piezas = piezasDeParada(parada).total
+        // Sin señal no se llama al servidor: queda en el teléfono con la misma clave y sale sola al volver.
+        const guardada = !onlineManager.isOnline()
+        if (guardada) guardarEntrega(parada, cuerpo, cobrado)
+        else await entregar.mutateAsync({ hojaDeRutaId: viaje.id, paradaId: parada.id, cuerpo })
         updateStopStatus(parada.id, { delivered: true, observations: r.entrega.observaciones ?? undefined })
-        setLista({ parada, cobrado: (r.entrega.cobro?.lineas ?? []).reduce((t, l) => t + (l.monto ?? 0), 0), piezas: piezasDeParada(parada).total })
+        setLista({ parada, cobrado, piezas, guardada })
         setReportando(null)
       } catch (e) {
+        if (esFallaDeRed(e)) {
+          // El pedido no llegó aunque el teléfono creyera tener señal: igual que sin señal; la misma clave evita duplicar.
+          const cobrado = (r.entrega.cobro?.lineas ?? []).reduce((t, l) => t + (l.monto ?? 0), 0)
+          guardarEntrega(parada, { ...r.entrega, claveIdempotencia: claveDe(parada.id) }, cobrado)
+          updateStopStatus(parada.id, { delivered: true, observations: r.entrega.observaciones ?? undefined })
+          setLista({ parada, cobrado, piezas: piezasDeParada(parada).total, guardada: true })
+          setReportando(null)
+          reportandoYa.current = false
+          return
+        }
         const fallo = clasificarFalloEntrega(e)
         if (fallo.tipo === 'claveUsada') claves.current.set(parada.id, nuevaClaveIdempotencia())
         if (fallo.tipo === 'yaRegistrada') {
@@ -266,19 +299,28 @@ export default function ConsolaChoferScreen() {
       }
       return
     }
-    try {
-      await reportar.mutateAsync({
-        hojaDeRutaId: viaje.id,
-        paradaId: reportando.parada.id,
-        entregado: false,
-        motivoRechazo: r.motivoRechazo,
-        observaciones: r.observaciones,
-        evidenciaUrl: r.evidenciaUrl,
+    const cuerpo = { entregado: false as const, motivoRechazo: r.motivoRechazo, observaciones: r.observaciones, evidenciaUrl: r.evidenciaUrl }
+    const guardarNoEntrega = () => {
+      encolarAccion(usuarioId, {
+        clave: nuevaClaveIdempotencia(), hojaDeRutaId: viaje.id, paradaId: parada.id, clienteNombre: parada.clienteNombre,
+        tipo: 'noEntrega', cuerpo,
       })
       updateStopStatus(parada.id, { delivered: false, observations: r.observaciones, reason: r.motivoRechazo })
+      setGuardado(true)
+      setReportando(null)
+    }
+    try {
+      if (!onlineManager.isOnline()) {
+        guardarNoEntrega()
+        return
+      }
+      await reportar.mutateAsync({ hojaDeRutaId: viaje.id, paradaId: parada.id, ...cuerpo })
+      updateStopStatus(parada.id, { delivered: false, observations: r.observaciones, reason: r.motivoRechazo })
+      setGuardado(false)
       setReportando(null)
     } catch (e) {
-      setErrorReporte(mensajeDelServidor(e, 'No se pudo reportar la parada.'))
+      if (esFallaDeRed(e)) guardarNoEntrega()
+      else setErrorReporte(mensajeDelServidor(e, 'No se pudo reportar la parada.'))
     } finally {
       reportandoYa.current = false
     }
@@ -321,6 +363,7 @@ export default function ConsolaChoferScreen() {
           <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.titulo, ...importe, fontSize: 28, lineHeight: 34, color: c.text }}>{formatImporte(viaje.totalMontoCobrar)}</Text>
         </View>
       ) : null}
+      <ColaConsola acciones={deEsteViaje} />
       {/* Los km son de la última ruta calculada: sin recalcular serían los del plan anterior. */}
       {viaje.rutaCalculada === true && viaje.distanciaTotalMetros > 0 ? (
         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Recorrido ${formatDistancia(viaje.distanciaTotalMetros)}`}</Text>
@@ -329,10 +372,11 @@ export default function ConsolaChoferScreen() {
   )
   const avisos = (
     <View style={{ gap: space[2] }}>
-      {/* Sin señal: el viaje se ve con lo guardado, pero entregar y cobrar necesitan conexión (la cola sin señal de la consola es otra tarea). */}
+      {/* chofer-01-viaje--sin-senal: se sigue trabajando; lo reportado queda en el teléfono y sale solo al volver. */}
       {!enLinea ? (
-        <Notice tone="advertencia" title="Sin señal.">Ves el viaje guardado en el teléfono. Para entregar o cobrar necesitás conexión.</Notice>
+        <Notice tone="advertencia" title="Sin señal.">Seguí trabajando: se manda solo cuando vuelva.</Notice>
       ) : null}
+      {guardado && sinMandar > 0 ? <Notice tone="info" title="Guardado sin señal.">Se manda cuando haya señal.</Notice> : null}
       {soloLectura ? <Notice tone="info">Esta hoja de ruta es de otro chofer: solo podés verla.</Notice> : null}
       {finalizada ? <Notice tone="exito" title="Viaje finalizado.">Quedó cerrado en el sistema.</Notice> : null}
       {cancelada ? <Notice tone="info" title="Hoja cancelada.">La oficina canceló esta hoja de ruta antes de salir.</Notice> : null}
@@ -344,6 +388,7 @@ export default function ConsolaChoferScreen() {
     </View>
   )
 
+  const motivoSinMandar = `Falta mandar ${sinMandar} ${sinMandar === 1 ? 'acción' : 'acciones'}: esperá la señal para finalizar.`
   const todasReportadas = resumen.total > 0 && resumen.hechas === resumen.total
   const pie = soloLectura ? null : programada ? (
     <Button size="xl" label="Iniciar recorrido" loading={iniciar.isPending} onPress={() => accionViaje('iniciar')} />
@@ -357,7 +402,14 @@ export default function ConsolaChoferScreen() {
       }} />
     ) : null
   ) : esEstadoHojaRuta(viaje.estado, 'EnCurso') && todasReportadas ? (
-    <Button size="xl" label="Finalizar viaje" onPress={() => setFinalizando(true)} />
+    sinMandar > 0 ? (
+      <View style={{ gap: space[2] }}>
+        <Button size="xl" label="Finalizar viaje" disabled onPress={() => undefined} />
+        <MotivoDeshabilitado>{motivoSinMandar}</MotivoDeshabilitado>
+      </View>
+    ) : (
+      <Button size="xl" label="Finalizar viaje" onPress={() => setFinalizando(true)} />
+    )
   ) : null
 
   return (
@@ -420,9 +472,11 @@ export default function ConsolaChoferScreen() {
             total={resumen.total}
             siguiente={resumen.proxima}
             onSiguiente={() => setLista(null)}
+            sinSenal={lista.guardada}
             onTermine={() => {
               setLista(null)
-              setFinalizando(true)
+              // Con acciones sin mandar el servidor rechazaría el cierre: el pie muestra cuántas faltan.
+              if (sinMandar === 0) setFinalizando(true)
             }}
           />
         ) : null}

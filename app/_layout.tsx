@@ -28,6 +28,7 @@ import '../global.css'
 import { loadSavedApiUrl } from '@/core/api/client'
 import { AvisosAlVolver, PushDeAvisos } from '@/features/notificaciones'
 import { EnvioVentasSinSenal } from '@/features/venta-sin-senal'
+import { EnvioConsolaSinSenal } from '@/features/logistica/cola'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -120,6 +121,7 @@ function RootLayoutNav() {
       <AvisosAlVolver />
       <PushDeAvisos />
       <EnvioVentasSinSenal />
+      <EnvioConsolaSinSenal />
       <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.bg } }}>
         <Stack.Screen name="login" options={{ gestureEnabled: false }} />
         <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />

@@ -19,13 +19,15 @@ interface Props {
   siguiente: { parada: ParadaDto; numero: number } | null
   onSiguiente: () => void
   onTermine: () => void
+  /** La entrega quedó guardada en el teléfono (sin señal) y sale sola cuando vuelva (chofer-07-estados). */
+  sinSenal?: boolean
 }
 
 /**
  * Lámina chofer-06: la entrega quedó registrada. Muestra lo que se llevó la parada, el avance del
  * viaje y la próxima parada, con un solo botón grande. Vibra una vez al aparecer (éxito).
  */
-export function EntregaLista({ parada, cobrado, piezas, hechas, total, siguiente, onSiguiente, onTermine }: Props) {
+export function EntregaLista({ parada, cobrado, piezas, hechas, total, siguiente, onSiguiente, onTermine, sinSenal = false }: Props) {
   const c = useColors()
   const { bottom } = useSafeAreaInsets()
   const { width } = useWindowDimensions()
@@ -44,6 +46,11 @@ export function EntregaLista({ parada, cobrado, piezas, hechas, total, siguiente
             <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text, textAlign: 'center' }}>
               {`${textoPiezas(piezas)} · cobrado ${formatImporte(cobrado)}`}
             </Text>
+            {sinSenal ? (
+              <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>
+                Entrega guardada en el teléfono. Se manda sola cuando haya señal.
+              </Text>
+            ) : null}
           </View>
           <View style={{ gap: space[2] }}>
             <Text style={{ ...typeScale.seccion, color: c.text }}>{`${hechas} de ${total} entregadas`}</Text>
