@@ -4,8 +4,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { FileText } from 'lucide-react-native'
 import { RequirePermission } from '@/core/ui'
-import { BottomSheet, Button, Notice, formatImporte, TopBar, useMenuLeading, type TopBarAction } from '@/core/ui/fw'
-import { importe, radii, space, typeScale, useColors, useIsDark } from '@/libs/theme'
+import { BottomSheet, Button, Notice, Progress, formatImporte, TopBar, useMenuLeading, type TopBarAction } from '@/core/ui/fw'
+import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { useEntregarParada, useFinalizarHojaRuta, useHojaRuta, useHojasDeRuta, useIniciarHojaRuta, useReportarParada } from '@/libs/api-client'
 import { getManifiestoUrl, logisticaKeys } from '@/libs/api-client/logistica'
 import { getNotaEntregaUrl } from '@/libs/api-client/ventas'
@@ -34,7 +34,6 @@ import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
  */
 export default function ConsolaChoferScreen() {
   const c = useColors()
-  const oscuro = useIsDark()
   const router = useRouter()
   const menu = useMenuLeading()
   const { id } = useLocalSearchParams<{ id?: string }>()
@@ -292,14 +291,7 @@ export default function ConsolaChoferScreen() {
           {viaje.rutaCalculada === true && viaje.distanciaTotalMetros > 0 ? (
             <Text style={{ ...typeScale.secundario, color: c.onTopBarStrong }}>{`Recorrido ${formatDistancia(viaje.distanciaTotalMetros)}`}</Text>
           ) : null}
-          <View
-            accessibilityRole="progressbar"
-            accessibilityLabel="Entregas hechas"
-            accessibilityValue={{ min: 0, max: resumen.total, now: resumen.hechas }}
-            style={{ height: space[2], borderRadius: radii.pastilla, overflow: 'hidden', backgroundColor: oscuro ? c.border : c.textSecondary }}
-          >
-            <View style={{ height: space[2], width: `${resumen.total ? (resumen.hechas / resumen.total) * 100 : 0}%`, backgroundColor: c.brand }} />
-          </View>
+          <Progress value={resumen.hechas} max={resumen.total} accessibilityLabel="Entregas hechas" sobreBarra />
         </View>
         <View style={{ paddingHorizontal: space[4], paddingTop: space[3], gap: space[2] }}>
           {soloLectura ? <Notice tone="info">Esta hoja de ruta es de otro chofer: solo podés verla.</Notice> : null}
