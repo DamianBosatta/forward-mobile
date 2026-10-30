@@ -101,4 +101,50 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
       expect(screen.queryByTestId('linea-resumen-p1')).toBeNull()
     })
   })
+
+  describe('se vende por y cantidad en la tarjeta (ventas-nueva-2-productos)', () => {
+    const conLineaDe = (p: ReturnType<typeof producto>, cantidad: number, onCambiarCantidad = jest.fn()) => {
+      render(<ProductoCatalogoCard producto={p} cantidad={cantidad} verCantidades onAbrirOferta={noop}
+        linea={{ productoId: p.id, producto: p, cantidad, descuentoPct: 0 }} onCambiarCantidad={onCambiarCantidad} />)
+      return onCambiarCantidad
+    }
+    const pack = () => producto({ id: 'pk', ventaMinimaUnidades: 6, bultoContenido: 12, fraccionMinimaVenta: 'Unidad' })
+
+    it('sin la línea en el carrito no hay selector ni cantidad', () => {
+      render(<ProductoCatalogoCard producto={pack()} cantidad={0} verCantidades onAbrirOferta={noop} onCambiarCantidad={jest.fn()} />)
+      expect(screen.queryByRole('button', { name: /^Bulto/ })).toBeNull()
+      expect(screen.queryByRole('button', { name: /^Sumar / })).toBeNull()
+    })
+
+    it('un producto que se vende solo por unidad no tiene selector, pero sí la cantidad', async () => {
+      const onCambiar = conLineaDe(producto(), 3)
+      expect(screen.queryByRole('radiogroup', { name: 'Se vende por' })).toBeNull()
+      await userEvent.press(screen.getByRole('button', { name: /^Sumar / }))
+      expect(onCambiar).toHaveBeenCalledWith(4)
+    })
+
+    it('Pack y Bulto: marca el modo de la línea, "+" suma un pack y cambiar a Bulto redondea al próximo bulto', async () => {
+      const onCambiar = conLineaDe(pack(), 6)
+      expect(screen.getByRole('button', { name: 'Pack · 6' })).toHaveAccessibilityState({ selected: true })
+      expect(screen.getByRole('button', { name: 'Bulto · 12' })).toHaveAccessibilityState({ selected: false })
+      await userEvent.press(screen.getByRole('button', { name: /^Sumar / }))
+      expect(onCambiar).toHaveBeenLastCalledWith(12)
+      await userEvent.press(screen.getByRole('button', { name: 'Bulto · 12' }))
+      expect(onCambiar).toHaveBeenLastCalledWith(12)
+    })
+
+    it('en Bulto el "+" suma 12 unidades y "−" resta un bulto sin bajar del mínimo', async () => {
+      const onCambiar = conLineaDe(pack(), 24)
+      expect(screen.getByRole('button', { name: 'Bulto · 12' })).toHaveAccessibilityState({ selected: true })
+      await userEvent.press(screen.getByRole('button', { name: /^Sumar / }))
+      expect(onCambiar).toHaveBeenLastCalledWith(36)
+      await userEvent.press(screen.getByRole('button', { name: /^Restar / }))
+      expect(onCambiar).toHaveBeenLastCalledWith(12)
+    })
+
+    it('"−" está apagado en el mínimo de venta', () => {
+      conLineaDe(pack(), 6)
+      expect(screen.getByRole('button', { name: /^Restar / })).toBeDisabled()
+    })
+  })
 })

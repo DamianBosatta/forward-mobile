@@ -1,12 +1,14 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Image, Pressable, Text, View } from 'react-native'
 import { Package } from 'lucide-react-native'
 import { radii, space, typeScale, importe, useColors, type ForwardColors } from '@/libs/theme'
 import { formatImporte } from '@/core/ui/fw'
 import type { CatalogoStockItem } from '@/libs/api-client'
-import { cantidadEnPresentacion, precioServidor, stockDeTarjeta, subtotalLinea, unidadesPorBultoDe, vendePorBulto, type LineaCarrito } from '../lib/carrito'
+import { cantidadEnPresentacion, multiploDe, precioServidor, stockDeTarjeta, subtotalLinea, unidadesPorBultoDe, vendePorBulto, type LineaCarrito } from '../lib/carrito'
 import { mostrarNumero } from '../lib/linea'
-import { presentacionDe, rotuloPresentacion } from '../lib/presentacion'
+import { convertirModo, modoDeCantidad, presentacionDe, rotuloPresentacion, unidadesDe, valorEn, type ModoCantidad } from '../lib/presentacion'
+import { TOPE_CANTIDAD } from '../lib/teclado'
+import { SeVendePor } from './SeVendePor'
 
 interface ProductoCatalogoCardProps {
   producto: CatalogoStockItem
@@ -21,6 +23,8 @@ interface ProductoCatalogoCardProps {
   /** Hay conexión al stock en vivo: la línea de stock agrega "· ahora". */
   enVivo?: boolean
   onElegirFragancias?: () => void
+  /** Cambia la cantidad de la línea (en unidades) desde la tarjeta: selector "Se vende por" y "−" / "+". */
+  onCambiarCantidad?: (unidades: number) => void
   /** Abre la pantalla de cantidad y oferta: "Agregar" y, si ya está en el carrito, el chip de edición. */
   onAbrirOferta: (producto: CatalogoStockItem) => void
 }
@@ -30,7 +34,7 @@ interface ProductoCatalogoCardProps {
  * precio (por bulto y por unidad) y "Agregar" o el chip de edición. Sin stock se puede pedir: queda por autorizar.
  */
 export function ProductoCatalogoCard({
-  producto: p, cantidad, verCantidades, linea, llevoAntes, enVivo, onElegirFragancias, onAbrirOferta,
+  producto: p, cantidad, verCantidades, linea, llevoAntes, enVivo, onElegirFragancias, onCambiarCantidad, onAbrirOferta,
 }: ProductoCatalogoCardProps) {
   const c = useColors()
   const stock = stockDeTarjeta(p, verCantidades, enVivo)
@@ -39,6 +43,12 @@ export function ProductoCatalogoCard({
   const unitario = precioServidor(p)
   const pistas = [llevoAntes ? `Llevó ${llevoAntes} la última vez` : null].filter((t): t is string => !!t)
   const abrir = () => onAbrirOferta(p)
+  const pr = presentacionDe(p)
+  const enCarrito = !p.esPadreDeVariantes && !!linea && linea.cantidad > 0 && !!onCambiarCantidad
+  const [modoElegido, setModoElegido] = useState<ModoCantidad | null>(null)
+  const modo = modoElegido && pr.modos.includes(modoElegido) ? modoElegido : modoDeCantidad(pr, linea?.cantidad ?? 0)
+  // Lo que suma el "+" en este modo, en unidades (paso está en las unidades del modo).
+  const paso = unidadesDe(pr, modo, pr.paso[modo])
 
   return (
     <View
@@ -72,6 +82,19 @@ export function ProductoCatalogoCard({
               {`${mostrarNumero(linea.cantidad)} ${linea.cantidad === 1 ? 'unidad' : 'unidades'} · ${formatImporte(subtotalLinea(linea))}`}
             </Text>
             {linea.descuentoPct > 0 ? <Chip c={c} texto={`Descuento ${mostrarNumero(linea.descuentoPct)} %`} tono="oferta" /> : null}
+          </View>
+        ) : null}
+        {enCarrito && linea ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], flexWrap: 'wrap' }}>
+            <SeVendePor compacto presentacion={pr} modo={modo}
+              onCambiar={(m) => { setModoElegido(m); onCambiarCantidad?.(convertirModo(pr, m, linea.cantidad)) }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+              <Redondo c={c} label="−" a11y={`Restar ${p.nombre}`} disabled={linea.cantidad - paso < multiploDe(p)} onPress={() => onCambiarCantidad?.(linea.cantidad - paso)} />
+              <Text accessibilityLabel={`${modo === 'bultos' ? 'Bultos' : 'Unidades'}: ${valorEn(pr, modo, linea.cantidad)}`} style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text, minWidth: 28, textAlign: 'center' }}>
+                {mostrarNumero(valorEn(pr, modo, linea.cantidad))}
+              </Text>
+              <Redondo c={c} label="+" a11y={`Sumar ${p.nombre}`} disabled={linea.cantidad + paso > TOPE_CANTIDAD} onPress={() => onCambiarCantidad?.(linea.cantidad + paso)} />
+            </View>
           </View>
         ) : null}
         {pistas.map((t) => <Text key={t} style={{ ...typeScale.secundario, color: c.textSecondary }}>{t}</Text>)}

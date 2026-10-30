@@ -58,7 +58,7 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
     () => filtrarCatalogo(todos, filtros, idsDelUltimo).filter((p) => !p.productoPadreId),
     [todos, filtros, idsDelUltimo],
   )
-  const { lineas, agregar } = useCarritoVenta()
+  const { lineas, agregar, reemplazar } = useCarritoVenta()
   const [fragancias, setFragancias] = useState<string | null>(null)
   const [escaneando, setEscaneando] = useState(escanearAlAbrir)
   const [avisoEscaneo, setAvisoEscaneo] = useState<string | null>(null)
@@ -136,6 +136,10 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
             verCantidades={verCantidades}
             enVivo={enVivo}
             onAbrirOferta={onAbrirOferta}
+            onCambiarCantidad={(unidades) => {
+              const l = lineas.find((x) => x.productoId === item.id)
+              if (l) reemplazar({ ...l, cantidad: unidades })
+            }}
             llevoAntes={llevo?.get(item.id)}
             onElegirFragancias={() => setFragancias(item.id)}
           />

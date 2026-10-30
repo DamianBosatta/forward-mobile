@@ -56,6 +56,20 @@ export function rotuloPresentacion(pr: Presentacion): string {
   return n > 1 ? `Bulto x ${n} u` : 'Unidad'
 }
 
+/**
+ * Cómo dice el vendedor cada modo en "Se vende por": "Unid." si se pide de a una, "Pack · N" si la venta mínima es N,
+ * "Bulto · N" para la caja cerrada. Son los mismos modos Bultos/Unidades del carrito, con el nombre del mockup.
+ */
+export function rotuloDeModo(pr: Presentacion, modo: ModoCantidad): string {
+  if (modo === 'bultos') return `Bulto · ${pr.unidadesPorBulto}`
+  return pr.paso.unidades > 1 ? `Pack · ${pr.paso.unidades}` : 'Unid.'
+}
+
+/** El modo en que se muestra una cantidad: Bulto si es un número exacto de bultos y el producto lo ofrece; si no, unidades. */
+export function modoDeCantidad(pr: Presentacion, unidades: number): ModoCantidad {
+  return pr.modos.includes('bultos') && unidades % pr.unidadesPorBulto === 0 ? 'bultos' : 'unidades'
+}
+
 /** Lo ingresado en un modo, en unidades (Bultos × N). */
 export function unidadesDe(pr: Presentacion, modo: ModoCantidad, valor: number): number {
   return modo === 'bultos' ? valor * pr.unidadesPorBulto : valor
