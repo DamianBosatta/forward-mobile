@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Alert, Pressable, ScrollView, Switch, Text, View } from 'react-native'
+import { Alert, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import Constants from 'expo-constants'
-import { ChevronRight } from 'lucide-react-native'
+import { Bell, Fingerprint, Lock, LogOut, Users } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../../libs/store/auth.store'
 import { useThemeStore, useColors, radii, space, typeScale, type ThemeMode } from '../../libs/theme'
 import { ConfirmModal } from '@/core/ui'
-import { Button, Notice, Segmented, TopBar, useMenuLeading, type SegmentedOption } from '@/core/ui/fw'
+import { Button, FilaDeAjuste, FilaInterruptor, Notice, Segmented, TopBar, useMenuLeading, type SegmentedOption } from '@/core/ui/fw'
 import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
 import { useCerrarSesion } from '@/features/cuenta/hooks/useCerrarSesion'
 import { isBiometricLoginEnabled, isBiometricsAvailable, setBiometricLoginEnabled } from '@/features/auth/utils/biometrics'
@@ -56,41 +56,12 @@ export default function PerfilScreen() {
   const quien = [user?.roles?.join(' · '), user?.username].filter(Boolean).join(' · ')
   const version = Constants.expoConfig?.version
   const tarjeta = { borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }
-  const fila = { minHeight: 56, paddingHorizontal: space[4], flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const, gap: space[3] }
-  const divisor = { borderBottomWidth: 1, borderBottomColor: c.border }
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
   const titulo = (t: string) => <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>{t}</Text>
 
   const seccion = (t: string) => (
     <Text accessibilityRole="header" style={[typeScale.etiqueta, { color: c.textSecondary, textTransform: 'uppercase', paddingHorizontal: space[1] }]}>{t}</Text>
   )
-  /** Fila que lleva a otra pantalla: título, línea de apoyo y flecha (≥ 56 px). */
-  const filaEnlace = (etiqueta: string, apoyo: string, alTocar: () => void, conDivisor: boolean) => (
-    <Pressable accessibilityRole="button" accessibilityLabel={etiqueta} onPress={alTocar} style={[fila, conDivisor && divisor]}>
-      <View style={{ flex: 1 }}>
-        <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{etiqueta}</Text>
-        <Text style={secundario}>{apoyo}</Text>
-      </View>
-      <ChevronRight size={20} color={c.textSecondary} />
-    </Pressable>
-  )
-
-  /** La fila entera es el control (≥ 56 px); el Switch es solo la marca visual. */
-  const filaInterruptor = (etiqueta: string, prendido: boolean, alCambiar: () => void, conDivisor: boolean) => (
-    <Pressable
-      accessibilityRole="switch"
-      accessibilityLabel={etiqueta}
-      accessibilityState={{ checked: prendido }}
-      onPress={alCambiar}
-      style={[fila, conDivisor && divisor]}
-    >
-      <Text style={[typeScale.cuerpoDestacado, { flex: 1, color: c.text }]}>{etiqueta}</Text>
-      <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none">
-        <Switch value={prendido} trackColor={{ false: c.border, true: c.brand }} />
-      </View>
-    </Pressable>
-  )
-
   const cambiarHuella = async () => {
     if (!huella) return
     const prendida = !huella.prendida
@@ -137,6 +108,7 @@ export default function PerfilScreen() {
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={{ fontSize: 19, lineHeight: 26, fontWeight: '700', color: c.onTopBarStrong }}>{nombre}</Text>
             {quien ? <Text style={[typeScale.secundario, { color: c.onTopBar }]}>{quien}</Text> : null}
+            {user?.email ? <Text style={[typeScale.secundario, { color: c.onTopBar }]}>{user.email}</Text> : null}
           </View>
         </View>
       </View>
@@ -144,14 +116,16 @@ export default function PerfilScreen() {
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], paddingBottom: space[12], width: '100%', maxWidth: 640, alignSelf: 'center' }}>
         {seccion('Seguridad')}
         <View style={tarjeta}>
-          {huella?.disponible ? filaInterruptor('Entrar con huella', huella.prendida, () => { void cambiarHuella() }, true) : null}
-          {filaEnlace('Cambiar contraseña', 'Pide la actual y una nueva', () => router.push('/perfil/clave'), false)}
+          {huella?.disponible ? (
+            <FilaInterruptor icono={Fingerprint} titulo="Entrar con huella" apoyo={huella.prendida ? 'Prendida' : 'Apagada'} prendido={huella.prendida} onChange={() => { void cambiarHuella() }} conDivisor />
+          ) : null}
+          <FilaDeAjuste icono={Lock} titulo="Cambiar contraseña" apoyo="Pide la actual y una nueva" onPress={() => router.push('/perfil/clave')} />
         </View>
         {avisoHuella ? <Notice tone="info">{avisoHuella}</Notice> : null}
 
         {seccion('En este teléfono')}
         <View style={tarjeta}>
-          {filaEnlace('Avisos en el teléfono', 'Cuáles saltan apenas llegan', () => router.push('/avisos/preferencias'), true)}
+          <FilaDeAjuste icono={Bell} titulo="Avisos en el teléfono" apoyo="Cuáles saltan apenas llegan" onPress={() => router.push('/avisos/preferencias')} conDivisor />
           <View style={{ padding: space[4], paddingTop: space[3], gap: space[2] }}>
             <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Tema</Text>
             <Segmented accessibilityLabel="Tema" options={THEME_OPTIONS} value={mode} onChange={setMode} />
@@ -162,7 +136,8 @@ export default function PerfilScreen() {
           <>
             {seccion('Equipo')}
             <View style={tarjeta}>
-              {filaEnlace('Usuarios', 'Solo consulta', () => router.push('/perfil/usuarios'), false)}
+              {/* TODO API: el mockup suma "· 12 usuarios"; el conteo sale de la lista de usuarios, que acá no se carga. */}
+              <FilaDeAjuste icono={Users} titulo="Usuarios" apoyo="Solo consulta" onPress={() => router.push('/perfil/usuarios')} />
             </View>
           </>
         ) : null}
@@ -179,7 +154,7 @@ export default function PerfilScreen() {
         </Text>
 
         <View style={{ gap: space[2] }}>
-          <Button label="Cerrar sesión" variant="peligro" loading={saliendo} onPress={() => setConfirmarSalida(true)} />
+          <Button label="Cerrar sesión" variant="peligroContorno" icon={LogOut} loading={saliendo} onPress={() => setConfirmarSalida(true)} />
           <Text style={secundario}>Cierra tu sesión aquí y en los demás dispositivos; en la web puede seguir abierta unos minutos. Para volver a entrar vas a necesitar tu usuario y tu contraseña.</Text>
         </View>
       </ScrollView>
