@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import StockScreen from '../../../../app/(tabs)/inventario/stock'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
@@ -94,12 +94,12 @@ describe('Stock por depósito, con CAP_VER_CANTIDADES_STOCK', () => {
     await abrirStock()
 
     expect(await screen.findByText('Make Lavajean')).toBeTruthy()
-    expect(screen.getByText('PRO06787 · mínimo 24')).toBeTruthy()
-    expect(screen.getByText('6 reservadas · +48 por ingresar')).toBeTruthy()
+    expect(screen.getByText('PRO06787 · Mín. 24')).toBeTruthy()
+    expect(screen.getByText('Reservado 6 · Por ingresar 48')).toBeTruthy()
     expect(screen.getByLabelText('Disponible 8')).toBeTruthy()
-    expect(screen.getByText('Poco stock')).toBeTruthy()
-    // Sin disponible: "Sin stock", y sin reservas ni por ingresar.
-    expect(screen.getByText('sin reservas')).toBeTruthy()
+    expect(within(screen.getByLabelText('Make Lavajean, PRO06787')).getByText('En alerta')).toBeTruthy()
+    // Sin disponible: "Sin stock", y reservado / por ingresar en 0.
+    expect(screen.getByText('Reservado 0 · Por ingresar 0')).toBeTruthy()
     await waitFor(() => expect(screen.getByText('1703')).toBeTruthy())
     expect(screen.getByText('112')).toBeTruthy()
     expect(screen.getByText('34')).toBeTruthy()
