@@ -43,6 +43,15 @@ it('la dirección es el título y el nombre va aparte', async () => {
   expect(screen.getByText('Chela · Kiosco Chela')).toBeTruthy()
 })
 
+it('en teléfono la ficha pone su barra: dirección de título, nombre aparte y el lápiz de Editar', async () => {
+  renderConQuery(<FichaCliente id="c1" conBarra />)
+
+  expect(await screen.findByText('Av. del Valle 89')).toBeTruthy()
+  expect(screen.getByText('Chela · Kiosco Chela')).toBeTruthy()
+  await userEvent.press(screen.getByRole('button', { name: 'Editar' }))
+  expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/socios/nuevo', params: { id: 'c1' } })
+})
+
 it('Llamar marca el teléfono y Cómo llegar abre el mapa con la dirección', async () => {
   renderConQuery(<FichaCliente id="c1" />)
 
@@ -190,9 +199,10 @@ describe('láminas Ficha del cliente y TabClientes (bloque 12, T7)', () => {
 
     expect(await screen.findByText('Crédito libre')).toBeTruthy()
     expect(screen.getByText('$ 73.100,00')).toBeTruthy()
-    expect(screen.getByText('Vencido')).toBeTruthy()
-    expect(screen.getByText('$ 84.300,00')).toBeTruthy()
-    expect(screen.getByText('$ 186.420,00')).toBeTruthy()
+    expect(screen.getByText('Vencido $ 84.300,00')).toBeTruthy()
+    // El saldo grande y la columna Normal (con factura) valen lo mismo en este caso.
+    expect(screen.getAllByText('$ 186.420,00')).toHaveLength(2)
+    expect(screen.getByText('Cuenta TST')).toBeTruthy()
   })
 
   it('pasado del tope: la cifra lo dice en vez de "Crédito libre"', async () => {
@@ -219,35 +229,38 @@ describe('láminas Ficha del cliente y TabClientes (bloque 12, T7)', () => {
     expect(screen.queryByRole('button', { name: 'WhatsApp' })).toBeNull()
   })
 
-  it('Registrar cobro lleva a la pantalla de cobro con el cliente, solo con permiso de pagos y cuenta visible', async () => {
+  it('Cobrar lleva a la pantalla de cobro con el cliente, solo con permiso de pagos y cuenta visible', async () => {
     conPermisos([{ module: 'MOD_CLIENTES', canRead: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }])
     renderConQuery(<FichaCliente id="c1" />)
 
-    await userEvent.press(await screen.findByRole('button', { name: 'Registrar cobro' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Cobrar' }))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: 'c1' } })
   })
 
-  it('sin permiso de pagos no hay Registrar cobro', async () => {
+  it('sin permiso de pagos Cobrar se ve deshabilitado y dice por qué', async () => {
     renderConQuery(<FichaCliente id="c1" />)
 
-    await screen.findByRole('radio', { name: 'Datos' })
-    expect(screen.queryByRole('button', { name: 'Registrar cobro' })).toBeNull()
+    const cobrar = await screen.findByRole('button', { name: 'Cobrar' })
+    expect(cobrar.props.accessibilityState).toEqual(expect.objectContaining({ disabled: true }))
+    expect(screen.getByText('No tenés permiso para cobrar')).toBeTruthy()
+    await userEvent.press(cobrar)
+    expect(mockPush).not.toHaveBeenCalled()
   })
 })
 
 describe('Vender desde la ficha (T4c)', () => {
-  it('con permiso para crear ventas, Vender abre la venta nueva con este cliente', async () => {
+  it('con permiso para crear ventas, Nueva venta abre la venta nueva con este cliente', async () => {
     conPermisos([{ module: 'MOD_CLIENTES', canRead: true }, { module: 'MOD_VENTAS', canRead: true, canCreate: true }])
     renderConQuery(<FichaCliente id="c1" />)
 
-    await userEvent.press(await screen.findByRole('button', { name: 'Vender' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Nueva venta' }))
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva?clienteId=c1')
   })
 
-  it('sin permiso para crear ventas no hay Vender', async () => {
+  it('sin permiso para crear ventas no hay Nueva venta', async () => {
     renderConQuery(<FichaCliente id="c1" />)
 
     await screen.findByRole('button', { name: 'Llamar' })
-    expect(screen.queryByRole('button', { name: 'Vender' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
   })
 })

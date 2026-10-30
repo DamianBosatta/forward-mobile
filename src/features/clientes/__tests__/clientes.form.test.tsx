@@ -45,13 +45,35 @@ it('sin la capacidad de autorizar ventas, la condición de pago es de solo lectu
   expect(screen.getByText(AVISO_CONDICION_PAGO)).toBeTruthy()
   expect(screen.queryByRole('radio', { name: 'Días desde la entrega' })).toBeNull()
   await completarAlta()
-  await userEvent.press(screen.getByRole('button', { name: 'Crear cliente' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Guardar' }))
 
   await waitFor(() => expect(post).toHaveBeenCalled())
   const body = post.mock.calls[0][1]
   expect(body).toMatchObject({ tipoRaw: 0, direccion: 'Av. del Valle 89', nombreFantasia: 'Kiosco Chela', nombreContacto: 'Chela' })
   expect(body.condicionPago).toBeUndefined()
   expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(tabs)/socios/[id]', params: { id: 'nuevo-id' } })
+})
+
+it('un CUIT que no cierra se marca en el campo con la ayuda del alta provisoria, pero no frena el guardado', async () => {
+  conPermisos(SIN_CAP)
+  renderConQuery(<ClienteFormScreen />)
+
+  fireEvent.changeText(screen.getByLabelText('CUIT'), '30-7123456')
+  expect(screen.getByText('Revisá el CUIT: no es válido.')).toBeTruthy()
+  expect(screen.getByText('Si todavía no lo tenés, dejalo vacío y guardalo como alta provisoria.')).toBeTruthy()
+
+  await userEvent.press(screen.getByRole('button', { name: 'Guardar' }))
+  await waitFor(() => expect(post).toHaveBeenCalled())
+  expect(post.mock.calls[0][1].cuit).toBe('30-7123456')
+})
+
+it('un CUIT válido o vacío no muestra el error', async () => {
+  conPermisos(SIN_CAP)
+  renderConQuery(<ClienteFormScreen />)
+
+  expect(screen.queryByText('Revisá el CUIT: no es válido.')).toBeNull()
+  fireEvent.changeText(screen.getByLabelText('CUIT'), '20-12345678-6')
+  expect(screen.queryByText('Revisá el CUIT: no es válido.')).toBeNull()
 })
 
 it('con la capacidad, la condición de pago se elige y viaja al servidor', async () => {
@@ -61,7 +83,7 @@ it('con la capacidad, la condición de pago se elige y viaja al servidor', async
   await completarAlta()
   await userEvent.press(screen.getByRole('radio', { name: 'Días desde la entrega' }))
   fireEvent.changeText(screen.getByLabelText('Días'), '15')
-  await userEvent.press(screen.getByRole('button', { name: 'Crear cliente' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Guardar' }))
 
   await waitFor(() => expect(post).toHaveBeenCalled())
   expect(post.mock.calls[0][1].condicionPago).toEqual({ tipo: 'DiasDesdeEntrega', dias: 15 })
@@ -72,7 +94,7 @@ it('si el servidor rechaza, se ve su mensaje con el detalle', async () => {
   post.mockRejectedValue(Object.assign(new Error('Datos inválidos.'), { errors: ['El teléfono es obligatorio en clientes.'] }))
   renderConQuery(<ClienteFormScreen />)
 
-  await userEvent.press(screen.getByRole('button', { name: 'Crear cliente' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Guardar' }))
 
   expect(await screen.findByText('Datos inválidos.\nEl teléfono es obligatorio en clientes.')).toBeTruthy()
   expect(mockReplace).not.toHaveBeenCalled()

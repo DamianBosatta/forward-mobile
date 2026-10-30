@@ -46,7 +46,7 @@ describe('alta provisoria', () => {
     renderConQuery(<ClienteFormScreen />)
     fireEvent.changeText(screen.getByLabelText('Dirección de entrega'), 'Av. del Valle 89')
     await userEvent.press(screen.getByRole('checkbox', { name: 'Alta provisoria' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Crear cliente' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar' }))
 
     await waitFor(() => expect(post).toHaveBeenCalled())
     expect(cuerpoAlta()).toMatchObject({ tipoRaw: 0, altaProvisoria: true, direccion: 'Av. del Valle 89' })
@@ -56,7 +56,7 @@ describe('alta provisoria', () => {
     conPermisos(SIN_CAP)
     renderConQuery(<ClienteFormScreen />)
     await completarAlta()
-    await userEvent.press(screen.getByRole('button', { name: 'Crear cliente' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar' }))
 
     await waitFor(() => expect(post).toHaveBeenCalled())
     expect(cuerpoAlta().altaProvisoria).toBe(false)
@@ -79,7 +79,7 @@ describe('tope de crédito', () => {
     renderConQuery(<ClienteFormScreen />)
     await completarAlta()
     fireEvent.changeText(screen.getByLabelText('Tope de crédito'), '250.000')
-    await userEvent.press(screen.getByRole('button', { name: 'Crear cliente' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar' }))
 
     await waitFor(() => expect(post).toHaveBeenCalled())
     expect(cuerpoAlta().topeCredito).toEqual({ monto: 250000 })
@@ -90,7 +90,7 @@ describe('tope de crédito', () => {
     renderConQuery(<ClienteFormScreen />)
     expect(screen.queryByLabelText('Tope de crédito')).toBeNull()
     await completarAlta()
-    await userEvent.press(screen.getByRole('button', { name: 'Crear cliente' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar' }))
 
     await waitFor(() => expect(post).toHaveBeenCalled())
     expect(cuerpoAlta()).not.toHaveProperty('topeCredito')
@@ -130,6 +130,7 @@ describe('solicitud de cambio desde la ficha', () => {
   it('un vendedor dueño pide el cambio de dirección con su motivo y solo viaja lo que cambió', async () => {
     conPermisos(SIN_CAP)
     renderConQuery(<FichaCliente id="c1" />)
+    await userEvent.press(await screen.findByRole('radio', { name: 'Datos' }))
     await userEvent.press(await screen.findByRole('button', { name: 'Pedir cambio' }))
     fireEvent.changeText(screen.getByLabelText('Nueva dirección de entrega'), 'Av. del Valle 120')
     fireEvent.changeText(screen.getByLabelText('Motivo'), 'Se mudó a la esquina')
@@ -145,6 +146,7 @@ describe('solicitud de cambio desde la ficha', () => {
     conPermisos(SIN_CAP)
     post.mockRejectedValue(new Error('Indicá el motivo del cambio.'))
     renderConQuery(<FichaCliente id="c1" />)
+    await userEvent.press(await screen.findByRole('radio', { name: 'Datos' }))
     await userEvent.press(await screen.findByRole('button', { name: 'Pedir cambio' }))
     fireEvent.changeText(screen.getByLabelText('Nueva dirección de entrega'), 'Av. del Valle 120')
     await userEvent.press(screen.getByRole('button', { name: 'Enviar solicitud' }))
@@ -158,6 +160,7 @@ describe('solicitud de cambio desde la ficha', () => {
     renderConQuery(<FichaCliente id="c1" />)
 
     expect(await screen.findByRole('button', { name: 'Editar' })).toBeTruthy()
+    await userEvent.press(await screen.findByRole('radio', { name: 'Datos' }))
     expect(screen.queryByRole('button', { name: 'Pedir cambio' })).toBeNull()
   })
 
@@ -165,6 +168,7 @@ describe('solicitud de cambio desde la ficha', () => {
     useAuthStore.setState({ user: { id: 'u1', username: 'a', email: 'a@x.com', roles: ['Empleado'], permissions: [...SIN_CAP, { module: 'CAP_APROBAR_CAMBIOS_SOCIO', canRead: true }] } as never })
     renderConQuery(<FichaCliente id="c1" />)
 
+    await userEvent.press(await screen.findByRole('radio', { name: 'Datos' }))
     expect(await screen.findByRole('button', { name: 'Pedir cambio' })).toBeTruthy()
   })
 
@@ -174,6 +178,7 @@ describe('solicitud de cambio desde la ficha', () => {
     renderConQuery(<FichaCliente id="c1" />)
 
     expect(await screen.findByRole('header', { name: 'Av. del Valle 89' })).toBeTruthy()
+    await userEvent.press(await screen.findByRole('radio', { name: 'Datos' }))
     expect(screen.queryByRole('button', { name: 'Pedir cambio' })).toBeNull()
   })
 })
