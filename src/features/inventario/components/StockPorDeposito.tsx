@@ -35,9 +35,7 @@ function FilaTelefono({ f }: { f: StockItem }) {
   const c = useColors()
   const chip = chipDeFilaStock(f)
   const sub = [f.codigoPropio, textoMinimo(f.stockMinimo)].filter(Boolean).join(' · ')
-  const extra = [textoReservadas(f.cantidadReservada), f.cantidadVirtual > 0 ? `+${mostrarNumero(f.cantidadVirtual)} por ingresar` : null]
-    .filter(Boolean)
-    .join(' · ')
+  const extra = textoReservadas(f.cantidadReservada, f.cantidadVirtual)
   return (
     <View
       accessibilityLabel={`${f.producto}, ${f.codigoPropio}`}

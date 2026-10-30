@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen, userEvent, waitFor, within } from '@tes
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { formatImporte } from '@/core/ui/fw'
 import { storage } from '@/core/utils/storage'
 import { leerCola } from '@/features/venta-sin-senal'
 import { VentaNuevaPantalla } from '../components/VentaNuevaPantalla'
@@ -74,6 +75,7 @@ async function arrancar() {
   pantalla()
   if (mockTipo === 'Presupuesto') await userEvent.press(screen.getByRole('radio', { name: 'Presupuesto' }))
   await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
+  await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
 }
 async function elegirCliente() {
   await arrancar()
@@ -204,8 +206,8 @@ describe('pestaña Líneas', () => {
     await elegirCliente()
     conLineas(12.82)
     expect(await screen.findByText('−12,82 %')).toBeTruthy()
-    expect(screen.getByText('Este pedido va a quedar por autorizar')).toBeTruthy()
-    expect(screen.getByText(/Porque un descuento supera tu tope/)).toBeTruthy()
+    expect(screen.getByText('Esta venta necesita autorización')).toBeTruthy()
+    expect(screen.getByText(/Un descuento supera tu tope/)).toBeTruthy()
   })
 
   // Servidor con forward-system #883: el borrador recién creado vuelve en /borradores/mios con su tipo.
@@ -305,7 +307,7 @@ describe('pestaña Líneas', () => {
       : original!(url, body))
     await elegirCliente()
     conLineas(5, 12)
-    expect(await screen.findByText(/Porque cliente con deuda de más de 30 días, supera el tope de venta del cliente/, {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByText(/Cliente con deuda de más de 30 días/, {}, ESPERA)).toBeTruthy()
     const pedido = mockPost.mock.calls.find(([u]) => u === '/api/v1/Ventas/vista-previa')![1]
     expect(pedido).toMatchObject({ clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 5 }] })
   })
@@ -326,9 +328,9 @@ describe('pestaña Líneas', () => {
     useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }], maxDescuentoPorcentaje: 10 } as never })
     conLineas(5, 12)
     expect(await screen.findByText('−5 %')).toBeTruthy()
-    expect(screen.queryByText('Este pedido va a quedar por autorizar')).toBeNull()
+    expect(screen.queryByText('Esta venta necesita autorización')).toBeNull()
     conLineas(5, 120)
-    expect(await screen.findByText(/Porque falta stock/)).toBeTruthy()
+    expect(await screen.findByText(/Falta stock/)).toBeTruthy()
   })
 
   it('el descuento general viaja en el autoguardado y baja el total estimado', async () => {
@@ -337,6 +339,16 @@ describe('pestaña Líneas', () => {
     await aplicarDescuentoGeneral(10)
     await waitFor(() => expect(mockPut).toHaveBeenLastCalledWith('/api/v1/Ventas/b1', expect.objectContaining({ descuentoGeneral: 10 })), ESPERA)
     expect(screen.getByTestId('revisar-total')).toHaveTextContent('$ 22.464,00') // 10 × 2.496 − 10 %
+  })
+
+  it('la comisión estimada dice el porcentaje del vendedor entre paréntesis', async () => {
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10, comisionActiva: true, porcentajeComision: 3 } as never })
+    mockPost.mockImplementation((url: string) => Promise.resolve(url.includes('simulacion')
+      ? { comisionActiva: true, montoCobro: 29952, montoComision: 2567.5, porcentajePonderado: 5, esMixta: false, lineas: [] }
+      : { ventaId: 'b1', version: 7, message: '' }))
+    await elegirCliente()
+    conLineas()
+    expect(await screen.findByText(`Tu comisión estimada (3 %) ${formatImporte(2567.5)}`, {}, ESPERA)).toBeTruthy()
   })
 
   it('muestra la comisión estimada que calcula el servidor, solo con comisión activa', async () => {
@@ -365,12 +377,11 @@ describe('pestaña Cabecera', () => {
   async function enCabecera() {
     await elegirCliente()
     useCarritoVenta.setState({ lineas: [{ productoId: 'p1', producto: producto({ real: 100, disponible: 100 }), cantidad: 10, descuentoPct: 0 }] })
-    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
   }
 
   it('retiro: sin fecha ni flete en el autoguardado y sin tira de días', async () => {
     await enCabecera()
-    await userEvent.press(screen.getByRole('radio', { name: 'Retiro' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Retiro en el local' }))
     await waitFor(() => expect(ultimoPut()).toMatchObject({ metodoEntrega: 2 }), ESPERA)
     expect(ultimoPut()).not.toHaveProperty('fechaEntrega')
     expect(ultimoPut()).not.toHaveProperty('cargoFlete')
@@ -469,7 +480,7 @@ describe('pestaña Cabecera', () => {
     expect(screen.getByText('Podés ceder desde 2,5 % hasta menos de 5 %.')).toBeTruthy()
     await userEvent.clear(campo)
     await userEvent.type(campo, '3')
-    expect(screen.getByText(/cediste parte de tu comisión/)).toBeTruthy()
+    expect(screen.getByText(/Cediste parte de tu comisión/)).toBeTruthy()
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     expect(ultimoPut()).not.toHaveProperty('porcentajeComisionCedido')
   })
@@ -479,7 +490,6 @@ describe('pestaña Cabecera', () => {
     await elegirCliente()
     expect(screen.queryByRole('tab', { name: 'Cabecera' })).toBeNull()
     expect(screen.getByText('Agregar productos')).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
     expect(screen.getByText('Fecha de entrega')).toBeTruthy()
   })
 })
@@ -827,7 +837,6 @@ describe('confirmar', () => {
   it('la cesión viaja en el alta del pedido', async () => {
     useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [], maxDescuentoPorcentaje: 10, comisionActiva: true, porcentajeComision: 5 } as never })
     await armar()
-    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
     await userEvent.type(screen.getByLabelText('Ceder parte de mi comisión (%)'), '3')
     await confirmar()
     await waitFor(() => expect(altas()).toHaveLength(1))
@@ -842,7 +851,7 @@ describe('ruta ventas/nueva', () => {
     mockGet.mockImplementation((url: string) => Promise.resolve(calendario(url)))
     const qcRuta = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(<QueryClientProvider client={qcRuta}><Ruta /></QueryClientProvider>)
-    expect(await screen.findByText('¿A quién le vendés?')).toBeTruthy()
+    expect(await screen.findByText('Paso 1 de 3')).toBeTruthy()
     expect(screen.queryByText('redirige a /(tabs)/ventas/nueva')).toBeNull()
   })
 })
@@ -860,7 +869,7 @@ describe('cliente primero, catálogo después', () => {
   it('sin cliente no hay catálogo: pide elegir a quién se le vende y no crea nada', async () => {
     conHistorial()
     pantalla()
-    expect(screen.getByText('¿A quién le vendés?')).toBeTruthy()
+    expect(screen.getByText('Paso 1 de 3')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Añadir pala' })).toBeNull()
     expect(screen.queryByText('¿Cómo arrancás?')).toBeNull()
     expect(mockPost).not.toHaveBeenCalled()
@@ -870,6 +879,7 @@ describe('cliente primero, catálogo después', () => {
     conHistorial()
     pantalla()
     await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
+    await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
     expect(await screen.findByRole('button', { name: 'Añadir pala' })).toBeTruthy()
     expect(screen.queryByText('¿Cómo arrancás?')).toBeNull()
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
@@ -883,6 +893,7 @@ describe('cliente primero, catálogo después', () => {
     pantalla()
     await userEvent.press(screen.getByRole('radio', { name: 'Presupuesto' }))
     await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
+    await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Presupuesto' }))
   })
 
@@ -898,6 +909,7 @@ describe('cliente primero, catálogo después', () => {
     conHistorial()
     pantalla()
     await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
+    await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
     await userEvent.press(await screen.findByRole('button', { name: 'Ver venta' }))
     expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Añadir pala' })).toBeNull()
@@ -910,6 +922,7 @@ describe('cliente primero, catálogo después', () => {
     conHistorial()
     pantalla()
     await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
+    await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
     await screen.findByRole('button', { name: 'Añadir pala' })
     await userEvent.press(screen.getByRole('button', { name: 'Volver' }))
     expect(mockBack).toHaveBeenCalled()
@@ -940,7 +953,8 @@ describe('V7 Confirmar', () => {
   it('la revisión trae la fecha, la nota y Con factura; no hay segunda confirmación y no se manda nada hasta tocar Confirmar venta', async () => {
     await elegirCliente()
     await conLinea(0)
-    expect(screen.getByRole('button', { name: 'Datos de la entrega' })).toBeTruthy()
+    expect(screen.getByText('Fecha de entrega')).toBeTruthy()
+    expect(screen.getByLabelText('Observaciones')).toBeTruthy()
     expect(screen.getByRole('switch', { name: 'Con factura' })).toBeTruthy()
     expect(screen.getByTestId('revisar-total')).toHaveTextContent('$ 29.952,00')
     expect(alta()).toBeUndefined()
@@ -953,8 +967,7 @@ describe('V7 Confirmar', () => {
     await conLinea(0)
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     const propuesta = mockPut.mock.calls[0][1].fechaEntrega
-    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
-    const dias = screen.getAllByRole('radio')
+    const dias = screen.getAllByRole('radio').filter((r) => !/Logística|Expreso|Retiro/.test(String(r.props.accessibilityLabel ?? '')))
     await userEvent.press(dias[dias.length - 1])
     await userEvent.type(screen.getByLabelText('Observaciones'), 'Entrar por el portón de atrás')
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
@@ -967,8 +980,8 @@ describe('V7 Confirmar', () => {
   it('un descuento sobre el tope avisa en la revisión que el pedido queda por autorizar, y se puede confirmar', async () => {
     await elegirCliente()
     await conLinea(15)
-    expect(await screen.findByText('Este pedido va a quedar por autorizar')).toBeTruthy()
-    expect(screen.getByText(/Porque un descuento supera tu tope/)).toBeTruthy()
+    expect(await screen.findByText('Esta venta necesita autorización')).toBeTruthy()
+    expect(screen.getByText(/Un descuento supera tu tope/)).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeEnabled()
   })
 

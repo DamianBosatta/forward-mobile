@@ -14,12 +14,13 @@ import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/th
 import { diaArgentina } from '@/src/utils/date'
 import { mostrarNumero } from '@/src/utils/numero'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { ddmmaaaa, fechaIso, hoyTexto } from '@/features/compras/lib/fecha'
+import { ddmmaaaa, fechaIso, franjaTexto, hoyTexto } from '@/features/compras/lib/fecha'
 import { avisoCompraFaltante, confirmarYRecibir, tomarAviso, type Aviso } from '@/features/compras/lib/confirmar-y-recibir'
 import { ConfirmarYRecibirSheet } from '@/features/compras/components/ConfirmarYRecibirSheet'
 import { ComprobanteCampos } from '@/features/compras/components/ComprobanteCampos'
 import { armarComprobante, formDesdeComprobante, formNuevo, resumenComprobante, seCorrigeEnLaWeb, type ComprobanteCompraInput, type FormComprobante } from '@/features/compras/lib/comprobante'
 import { inicioKeys } from '@/core/query/queryClient'
+import { lineaDesdeDetalle, textoDeLinea } from '@/features/compras/lib/lineaCompra'
 import { numeroDeCompra } from '@/features/compras/lib/numero'
 import { esEstadoCompra } from '@/core/constants/estados'
 import { FotoDelCobro } from '@/features/cuentas/components/FotoDelCobro'
@@ -34,6 +35,17 @@ export default function CompraDetailScreen() {
   const { id, aviso } = useLocalSearchParams<{ id: string; aviso?: string }>()
   const [inicial] = useState(() => (id ? tomarAviso(id, aviso) : null))
   return <CompraDetalle id={id ?? ''} aviso={inicial ?? undefined} />
+}
+
+/** Una fila rótulo / valor de las tarjetas del detalle. */
+function FilaDato({ k, v }: { k: string; v: string }) {
+  const c = useColors()
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[3], paddingVertical: space[1] }}>
+      <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{k}</Text>
+      <Text style={[typeScale.secundario, { color: c.text, flexShrink: 1, textAlign: 'right' }]}>{v}</Text>
+    </View>
+  )
 }
 
 type Hoja = 'cancelar' | 'anularRecepcion' | 'confirmarYRecibir' | 'comprobante' | null
@@ -70,8 +82,8 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
   const asignarFoto = useAsignarFotoFacturaCompra()
   const [errorFoto, setErrorFoto] = useState<string | null>(null)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
-  // El CUIT del proveedor para precargar el comprobante: se pide solo con esas hojas abiertas.
-  const socio = useSocio(hoja === 'comprobante' ? q.data?.proveedorId ?? '' : '')
+  // El CUIT del proveedor: va en la tarjeta del proveedor y precarga el comprobante.
+  const socio = useSocio(q.data?.proveedorId ?? '')
   useEffect(() => {
     if (comprobante && !comprobante.cuit && socio.data?.cuit) setComprobante({ ...comprobante, cuit: socio.data.cuit })
   }, [comprobante, socio.data])
@@ -116,6 +128,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
     tieneCapAnular: hasCapability(permisos, 'CAP_ANULAR_RECEPCION_COMPRAS'),
   })
   const pasos = pasosDeCompra(estado)
+  const franja = franjaTexto(compra.franjaEntregaProveedor)
   const hayBarra = acciones.confirmar || acciones.recibir || acciones.editar || acciones.cancelar
 
   // Cada hoja arranca limpia: ni el motivo ni el error de otra quedan a la vista.
@@ -182,27 +195,43 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
-        title={`Compra ${numeroDeCompra(compra)}`}
-        subtitle={`${compra.razonSocialProveedor} · ${compra.nombreDeposito}`}
+        title={`Compra #${numeroDeCompra(compra)}`}
+        subtitle={ddmmaaaa(diaArgentina(Date.parse(compra.fecha)))}
         leading={{ kind: 'atras', onPress: volver }}
       />
       {pasos ? <PasosDeEstado pasos={pasos} accessibilityLabel="Estado de la compra" /> : null}
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] * 2 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={secundario}>{`${ddmmaaaa(diaArgentina(Date.parse(compra.fecha)))} · ${compra.detalles.length} ${compra.detalles.length === 1 ? 'producto' : 'productos'}`}</Text>
-          {(() => { const chip = chipForEstado('compra', compra.estado); return chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null })()}
+        <View style={{ gap: space[1], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
+            <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text, flexShrink: 1 }]}>{compra.razonSocialProveedor}</Text>
+            {(() => { const chip = chipForEstado('compra', compra.estado); return chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null })()}
+          </View>
+          {socio.data?.cuit ? <Text style={[secundario, cifras]}>{`CUIT ${socio.data.cuit}`}</Text> : null}
         </View>
         {aviso ? <Notice tone={aviso.tono}>{aviso.texto}</Notice> : null}
         {esEstadoCompra(estado, 'Confirmado') && !compra.eliminada ? <Notice tone="info">Ya cuenta como stock por ingresar. Cuando llegue, marcala recibida.</Notice> : null}
         {error && hoja === null ? <Notice tone="peligro">{error}</Notice> : null}
         {compra.motivoCancelacion ? <Notice tone="info" title="Cancelada.">{compra.motivoCancelacion}</Notice> : null}
         {compra.motivoAnulacion ? <Notice tone="info" title="Recepción anulada.">{compra.motivoAnulacion}</Notice> : null}
+        <View style={{ gap: space[1], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+          <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text }]}>Recepción</Text>
+          <FilaDato k="Depósito" v={compra.nombreDeposito} />
+          {franja ? <FilaDato k="Entrega esperada" v={franja} /> : null}
+          {compra.condicionPago?.descripcion ? <FilaDato k="Plazo de pago" v={compra.condicionPago.descripcion} /> : null}
+          <FilaDato k="Con factura" v={compra.conFactura ? 'Sí' : 'No'} />
+        </View>
         <View style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>
+          <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text, paddingHorizontal: space[4], paddingTop: space[3] }]}>
+            {`Productos · ${compra.detalles.length}`}
+          </Text>
           {compra.detalles.map((d, i) => (
             <View key={d.id} accessible style={{ paddingHorizontal: space[4], paddingVertical: space[3], gap: space[1], borderTopWidth: i ? 1 : 0, borderTopColor: c.border }}>
               <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{d.nombreProducto}</Text>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-                <Text style={[typeScale.secundario, { color: c.text, flexShrink: 1 }]}>{`${mostrarNumero(d.cantidad)} × ${mostrarNumero(d.costoUnitarioBaseAmount)}`}</Text>
+                <View style={{ flexShrink: 1 }}>
+                  <Text style={[typeScale.secundario, { color: c.text }]}>{textoDeLinea(lineaDesdeDetalle(d))}</Text>
+                  <Text style={[typeScale.secundario, cifras, { color: c.textSecondary }]}>{`${formatImporte(d.costoUnitarioBaseAmount)} por unidad`}</Text>
+                </View>
                 <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(d.subtotalAmount)}</Text>
               </View>
             </View>
@@ -214,7 +243,6 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
           <TotalsRow label="Total" importe={compra.totalAmount} destacado />
         </View>
         {compra.descuentoPorcentaje ? <Text style={secundario}>{`Descuento general: ${mostrarNumero(compra.descuentoPorcentaje)} %`}</Text> : null}
-        {compra.condicionPago?.descripcion ? <Text style={secundario}>{`Condición de pago: ${compra.condicionPago.descripcion}`}</Text> : null}
         {compra.fechaVencimientoPago ? <Text style={secundario}>{`Vence el ${ddmmaaaa(compra.fechaVencimientoPago)}`}</Text> : null}
         {compra.comprobante ? (
           <Text style={secundario}>{resumenComprobante(compra.comprobante)}</Text>

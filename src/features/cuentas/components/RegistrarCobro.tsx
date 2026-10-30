@@ -3,7 +3,7 @@ import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { mostrarNumero } from '@/src/utils/numero'
-import { Button, Field, FormContainer, Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { Button, Field, FormContainer, Notice, Progress, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
@@ -47,7 +47,7 @@ const IMPUTACION = [{ id: 'automatica', label: 'Automática' }, { id: 'manual', 
  * Registrar un cobro (láminas ResCobro, TabCobro y CobroListo). La cuenta TST / Normal la elige el servidor.
  * En tablet horizontal van dos columnas: qué se cobra (imputación) a la izquierda y cómo pagó a la derecha.
  */
-export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolver: () => void }) {
+export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioId: string; onVolver: () => void; conBarra?: boolean }) {
   const c = useColors()
   const { isTabletLandscape } = useResponsive()
   const socio = useSocio(socioId)
@@ -67,6 +67,8 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
   const [aviso, setAviso] = useState<string | null>(null)
   const [cobro, setCobro] = useState<CobroRegistrado | null>(null)
   const [subiendo, setSubiendo] = useState(false)
+  // Objetivo del cobro: solo una guía visual de cuánto falta; no entra al payload (ni a la clave de idempotencia).
+  const [objetivo, setObjetivo] = useState<'vencido' | 'saldo' | null>(null)
   const { hasCapability, canDo } = usePermissions()
   // POST Media/upload-cheque: quien cobra (MOD_PAGOS:Create) o quien gestiona cheques (MediaController).
   const subeFotoCheque = canDo('MOD_PAGOS', 'create') || hasCapability('CAP_GESTIONAR_CHEQUES')
@@ -123,25 +125,46 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
 
   const deudaVencida = estado.data?.deudaVencida ?? 0
 
+  const saldoActual = estado.data?.saldoActual ?? 0
+  const meta = objetivo === 'vencido' ? deudaVencida : objetivo === 'saldo' ? saldoActual : 0
+  const falta = Math.max(meta - total, 0)
+  const ocupado = registrar.isPending || subiendo
+  const fijarObjetivo = (o: 'vencido' | 'saldo') => {
+    setObjetivo(o)
+    // Solo carga el monto del primer medio (la meta menos lo que ya llevan los otros): el cobro se arma y
+    // se manda igual, con lo que quede en los campos. Mientras se manda, el monto queda fijo.
+    const m = o === 'vencido' ? deudaVencida : saldoActual
+    setF(p => ({ ...p, monto: mostrarNumero(Math.max(m - otros, 0)) }))
+  }
+
   const encabezado = (
     <>
-      <View style={{ gap: space[1] }}>
-        <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
-        <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{nombreDelCliente(cliente)}</Text>
-      </View>
-      {estado.data ? <TotalsRow label="Saldo del cliente" importe={estado.data.saldoActual} /> : null}
-      <View
-        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3], backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4] }}
-      >
-        <View accessible accessibilityLabel={`Cobrás: ${formatImporte(total)}`}>
-          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Cobrás</Text>
-          <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(total)}</Text>
+      {conBarra ? null : (
+        <View style={{ gap: space[1] }}>
+          <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
+          <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{nombreDelCliente(cliente)}</Text>
         </View>
-        {deudaVencida > 0 ? (
-          // Solo carga el monto del primer medio (lo vencido menos lo que ya llevan los otros): el cobro se arma y
-          // se manda igual, con lo que quede en los campos. Mientras se manda, el monto queda fijo.
-          <Button label="Todo lo vencido" variant="secundario" disabled={registrar.isPending || subiendo} onPress={() => setF(p => ({ ...p, monto: mostrarNumero(Math.max(deudaVencida - otros, 0)) }))} />
-        ) : null}
+      )}
+      {estado.data ? <TotalsRow label="Saldo del cliente" importe={estado.data.saldoActual} /> : null}
+      <View style={{ gap: space[3], backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, padding: space[4] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3] }}>
+          <View accessible accessibilityLabel={`Cobrás: ${formatImporte(total)}`}>
+            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Cobrás</Text>
+            <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(total)}</Text>
+          </View>
+          {objetivo ? (
+            <View accessible accessibilityLabel={falta > 0 ? `Falta: ${formatImporte(falta)}` : 'Cubre el objetivo'} style={{ alignItems: 'flex-end' }}>
+              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{falta > 0 ? 'Falta' : 'Cubierto'}</Text>
+              <Text style={[typeScale.cuerpoDestacado, importe, { color: falta > 0 ? c.chip.pendiente.text : c.chip.entregado.text }]}>{formatImporte(falta)}</Text>
+            </View>
+          ) : null}
+        </View>
+        {objetivo && meta > 0 ? <Progress value={Math.min(total, meta)} max={meta} accessibilityLabel={`Cobrado ${formatImporte(total)} de ${formatImporte(meta)}`} /> : null}
+        {/* TODO API: comisión, neto y fecha de acreditación por medio (lámina cuentas-cobro) no vienen en el DTO de cobro. */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+          {deudaVencida > 0 ? <Button label="Todo lo vencido" variant={objetivo === 'vencido' ? 'primario' : 'secundario'} disabled={ocupado} onPress={() => fijarObjetivo('vencido')} /> : null}
+          {saldoActual > 0 ? <Button label="Saldo total" variant={objetivo === 'saldo' ? 'primario' : 'secundario'} disabled={ocupado} onPress={() => fijarObjetivo('saldo')} /> : null}
+        </View>
       </View>
     </>
   )
@@ -192,6 +215,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
 
         {f.esCheque ? (
           <>
+            <Notice tone="info">El cheque se carga en un cobro de un solo medio.</Notice>
             <Field label="N.º de cheque" value={f.cheque.numero} onChangeText={cheque('numero')} />
             <Field label="Banco" value={f.cheque.banco} onChangeText={cheque('banco')} />
             <Field label="Titular" value={f.cheque.titular} onChangeText={cheque('titular')} />
@@ -239,6 +263,7 @@ export function RegistrarCobro({ socioId, onVolver }: { socioId: string; onVolve
 
   return (
     <View style={{ flex: 1 }}>
+      {conBarra ? <TopBar title="Cobrar" subtitle={`${direccionDeEntrega(cliente)} · ${nombreDelCliente(cliente)}`} leading={{ kind: 'atras', onPress: onVolver }} /> : null}
       <ScrollView contentContainerStyle={{ padding: space[4] }}>
         <FormContainer style={{ gap: space[4] }}>
           {encabezado}

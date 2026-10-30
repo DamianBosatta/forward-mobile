@@ -79,6 +79,23 @@ describe('Field', () => {
   })
 })
 
+describe('Field con ojo', () => {
+  it('verOcultar muestra el ojo y alterna ver/ocultar; sin la prop no hay ojo', async () => {
+    render(<Field label="Contraseña" secureTextEntry verOcultar />)
+    expect(screen.getByLabelText('Contraseña').props.secureTextEntry).toBe(true)
+    await userEvent.press(screen.getByLabelText('Mostrar contraseña'))
+    expect(screen.getByLabelText('Contraseña').props.secureTextEntry).toBe(false)
+    await userEvent.press(screen.getByLabelText('Ocultar contraseña'))
+    expect(screen.getByLabelText('Contraseña').props.secureTextEntry).toBe(true)
+  })
+
+  it('sin verOcultar no hay botón y secureTextEntry se respeta', () => {
+    render(<Field label="Contraseña" secureTextEntry />)
+    expect(screen.queryByRole('button')).toBeNull()
+    expect(screen.getByLabelText('Contraseña').props.secureTextEntry).toBe(true)
+  })
+})
+
 describe('Segmented', () => {
   const OPCIONES = [
     { value: 'logistica', label: 'Logística' },

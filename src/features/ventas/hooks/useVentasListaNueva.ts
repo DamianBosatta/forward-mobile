@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { diaArgentina } from '@/src/utils/date'
 import { useBorradoresVentaMios, useInfiniteVentas, useVentasResumen } from '@/libs/api-client/ventas'
 import { itemsCargados, totalDelServidor } from '@/features/listas/lib/contador'
-import { contadorVentas } from '../lib/resumenVentas'
+import { contadorVentas, totalesDeLaLista } from '../lib/resumenVentas'
 import { useAlLlegarFiltro, type FiltroVentasRuta } from '@/features/listas/lib/filtroDeRuta'
 import type { EstadoVenta, Venta } from '@/libs/api-client'
 
@@ -73,6 +73,8 @@ export function useVentasListaNueva(filtroDeRuta: FiltroVentasRuta | null = null
     busqueda, setBusqueda,
     ventas: items,
     contador,
+    /** Tarjeta de totales de la lista (vendido sin anuladas y por autorizar); null sin resumen filtrado. */
+    totales: esBorradores ? null : totalesDeLaLista(resumen.data, filtro.tipoOperacion),
     ventasQuery: ventas,
     /** Deslizar para actualizar trae de nuevo la lista y su resumen, para que el contador no quede viejo. */
     refrescar: () => Promise.all([ventas.refetch(), resumen.refetch()]),

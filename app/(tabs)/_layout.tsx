@@ -37,6 +37,8 @@ export default function DrawerLayout() {
 
       {/* Rutas ocultas o secundarias (no aparecen en el drawer per se, pero se registran en el router) */}
       <Drawer.Screen name="perfil" />
+      <Drawer.Screen name="perfil/clave" />
+      <Drawer.Screen name="perfil/usuarios" />
       <Drawer.Screen name="tesoreria/transferencia" />
       <Drawer.Screen name="ventas/nueva" />
       <Drawer.Screen name="compras/nueva" />

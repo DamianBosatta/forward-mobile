@@ -12,7 +12,11 @@ import { useVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client/types'
 import { DocumentCard, TopBar, chipForEstado, iniciales } from '@/core/ui/fw'
 import { diaArgentina, msHastaProximaMedianocheArgentina, partesArgentina } from '@/src/utils/date'
+import { useHojasDeRuta } from '@/libs/api-client/logistica'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
+import { useCifrasGenerales } from '../api/queries'
+import { PulsoDelNegocio } from './PulsoDelNegocio'
+import { AtajosDeInicio } from './AtajosDeInicio'
 import { TarjetaPendientes, type FilaPendiente } from './TarjetaPendientes'
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
@@ -51,6 +55,9 @@ export function InicioScreen() {
     { enabled: canDo('MOD_VENTAS', 'read') },
   )
   const ventasHoy: Venta[] = recientes.data?.items ?? []
+  const cifras = useCifrasGenerales(canDo('MOD_VENTAS', 'read'))
+  // Rutas activas: hojas de ruta En curso (EstadoHojaRuta.EnCurso = 2), solo con acceso a Viajes.
+  const rutas = useHojasDeRuta({ estado: 2 }, { enabled: canDo('MOD_VIAJES', 'read') })
   // Tablet: "Reciente" en dos columnas (plan §8), alternando para conservar el orden de lectura.
   const columnas = tablet ? [ventasHoy.filter((_, i) => i % 2 === 0), ventasHoy.filter((_, i) => i % 2 === 1)] : [ventasHoy]
 
@@ -119,6 +126,21 @@ export function InicioScreen() {
             <Text style={[typeScale.seccion, { color: c.text }]}>{`Hola, ${nombre.split(' ')[0] || ''}`.trim()}</Text>
           </View>
         </View>
+
+        {canDo('MOD_VENTAS', 'read') ? (
+          <PulsoDelNegocio
+            ventasDelDia={cifras.ventasDelDia}
+            cantidadVentas={recientes.data?.totalCount ?? null}
+            pedidosPendientes={pendientes.ventas?.pedidos.cantidad ?? null}
+            rutasActivas={rutas.data?.length ?? null}
+            meDeben={cifras.meDeben}
+            debo={cifras.debo}
+          />
+        ) : null}
+        <AtajosDeInicio
+          puede={{ vender: canDo('MOD_VENTAS', 'create'), cobrar: canDo('MOD_CC', 'read'), catalogo: canDo('MOD_CATALOGO', 'read'), stock: canDo('MOD_STOCK', 'read') }}
+          onIr={(ruta) => router.push(ruta as never)}
+        />
 
         {pendientes.error ? (
           <View style={{ paddingHorizontal: space[4], gap: space[2], alignItems: 'flex-start' }}>

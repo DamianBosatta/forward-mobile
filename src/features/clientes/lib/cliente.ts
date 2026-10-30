@@ -65,10 +65,9 @@ export function textoMostrando(cantidad: number, total: number, saldoTotal?: num
   return `Mostrando ${cantidad} de ${total}${saldo}`
 }
 
-/** "N de M" (lámina Clientes), con " · Saldo $ X" solo si el servidor dio el saldo de toda la cartera. */
-export function textoContador(cantidad: number, total: number, saldoTotal?: number): string {
-  const saldo = saldoTotal !== undefined ? ` · Saldo ${formatImporte(saldoTotal, { centavos: false })}` : ''
-  return `${cantidad} de ${total}${saldo}`
+/** "N de M clientes" (lámina clientes-lista). El saldo de toda la cartera va aparte, solo si el servidor lo dio. */
+export function textoCantidad(cantidad: number, total: number): string {
+  return `${cantidad} de ${total} clientes`
 }
 
 /** La condición que viaja al servidor, a partir del tipo elegido y el plazo tipeado (días o día del mes). */

@@ -49,13 +49,27 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks())
 
 describe('Bandeja de avisos', () => {
+  it('agrupa por día y marca en texto lo que no se leyó y lo crítico', async () => {
+    mockGet.mockResolvedValue({ items: [aviso({ id: 'c1', tipo: 'PagoProveedorVencido', severidad: 'Critica', titulo: 'Norte venció ayer', mensaje: 'Sin pagar.' }), LEIDO], noLeidas: 1, hayMas: false })
+    pintar()
+    expect(await screen.findByText('HOY · VIERNES 16/10')).toBeTruthy()
+    expect(screen.getByText('VIERNES 2/10')).toBeTruthy()
+    const critico = screen.getByLabelText('Norte venció ayer, sin leer')
+    expect(within(critico).getByText('Sin leer')).toBeTruthy()
+    expect(within(critico).getByText('Crítico')).toBeTruthy()
+    const leido = screen.getByLabelText('Tu semana')
+    expect(within(leido).queryByText('Sin leer')).toBeNull()
+    expect(screen.getByLabelText('Sin leer · 1')).toBeTruthy()
+  })
+
+
   it('muestra los avisos del servidor con su tipo, hora y cuántos quedan sin leer', async () => {
     pintar()
     expect(await screen.findByText('Venta A00421 autorizada')).toBeTruthy()
     expect(urls()).toContain('/api/v1/Notificaciones?SoloNoLeidas=false&Limite=30')
     expect(screen.getByText('2 sin leer')).toBeTruthy()
     const fila = screen.getByLabelText('Venta A00421 autorizada, sin leer')
-    expect(within(fila).getByText('Venta autorizada · Hoy 09:05')).toBeTruthy()
+    expect(within(fila).getByText('Venta autorizada · 09:05')).toBeTruthy()
     expect(within(fila).getByText('Ya podés prepararla.')).toBeTruthy()
     expect(screen.getByLabelText('Tu semana')).toBeTruthy()
   })
@@ -97,7 +111,7 @@ describe('Bandeja de avisos', () => {
   it('"Sin leer" pide solo las no leídas', async () => {
     pintar()
     await screen.findByText('Venta A00421 autorizada')
-    await userEvent.press(screen.getByText('Sin leer'))
+    await userEvent.press(screen.getByLabelText(/^Sin leer/))
     await waitFor(() => expect(urls()).toContain('/api/v1/Notificaciones?SoloNoLeidas=true&Limite=30'))
   })
 

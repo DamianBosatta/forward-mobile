@@ -6,7 +6,7 @@
  */
 import { readFileSync } from 'fs'
 import { join, resolve } from 'path'
-import { cuandoFue, destinoDelAviso } from '../bandeja'
+import { conEncabezadosDeDia, cuandoFue, destinoDelAviso, horaDelAviso } from '../bandeja'
 import type { AccionDestino } from '../avisos'
 
 const SCHEMA = readFileSync(join(resolve(__dirname, '../../../..'), 'libs/api-client/generated/schema.ts'), 'utf8')
@@ -76,5 +76,26 @@ describe('cuandoFue', () => {
 
   it('una fecha ilegible no rompe la fila', () => {
     expect(cuandoFue('no-es-fecha', AHORA)).toBe('')
+  })
+})
+
+describe('conEncabezadosDeDia', () => {
+  // Viernes 16 de octubre de 2026, 15:00 en Argentina.
+  const AHORA = Date.parse('2026-10-16T18:00:00Z')
+  const a = (id: string, fechaCreacion: string) => ({ id, fechaCreacion })
+
+  it('un encabezado por día argentino: hoy, ayer y los demás con su fecha', () => {
+    const filas = conEncabezadosDeDia(
+      [a('1', '2026-10-16T12:05:00Z'), a('2', '2026-10-16T11:00:00Z'), a('3', '2026-10-16T02:30:00Z'), a('4', '2026-10-13T15:00:00Z')],
+      AHORA,
+    )
+    expect(filas.map((f) => (f.tipo === 'dia' ? f.titulo : f.clave))).toEqual([
+      'HOY · VIERNES 16/10', '1', '2', 'AYER · JUEVES 15/10', '3', 'MARTES 13/10', '4',
+    ])
+  })
+
+  it('la hora del aviso es la argentina, sin el día', () => {
+    expect(horaDelAviso('2026-10-16T02:30:00Z')).toBe('23:30')
+    expect(horaDelAviso('no es una fecha')).toBe('')
   })
 })

@@ -3,6 +3,7 @@ import { Alert, Linking } from 'react-native'
 import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { formatImporte } from '@/core/ui/fw'
 import { diaArgentina } from '@/src/utils/date'
 import { ventasKeys } from '@/libs/api-client/ventas'
 import { VentaGuardadaPantalla } from '../components/VentaGuardadaPantalla'
@@ -60,12 +61,12 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks())
 
 describe('venta guardada (PR 2.9)', () => {
-  it('muestra el número, el cliente por dirección, las líneas, el total y lo que dijo el servidor; Listo vuelve a la lista', async () => {
+  it('muestra el número, el cliente por dirección, el resumen, el total y lo que dijo el servidor; Listo vuelve a la lista', async () => {
     pantalla('Quedó por autorizar porque un descuento supera tu tope. Te avisamos cuando lo resuelvan.')
-    expect(await screen.findByText('Pedido A00419')).toBeTruthy()
-    expect(await screen.findByText('Tarantino 1898 · Autoservicio Abel')).toBeTruthy()
-    expect(screen.getByText('Pala c/Cabo Fija LP × 12')).toBeTruthy()
-    expect(screen.getByText('$ 51.350,13')).toBeTruthy()
+    expect(await screen.findByText('Venta A00419 guardada')).toBeTruthy()
+    expect(await screen.findByText('Tarantino 1898')).toBeTruthy()
+    expect(screen.getByText('1 producto · 12 unidades')).toBeTruthy()
+    expect(screen.getByText(formatImporte(51350.13))).toBeTruthy()
     expect(screen.getByText(/Quedó por autorizar porque un descuento supera tu tope/)).toBeTruthy()
     // Un pedido no se convierte.
     expect(screen.queryByRole('button', { name: 'Convertir en pedido' })).toBeNull()
@@ -171,33 +172,51 @@ describe('venta guardada (PR 2.9)', () => {
 describe('V8 listo (CalleListo / TabCalleListo)', () => {
   const conEntrega = () => { mockVenta = { ...mockVenta, venta: cabecera({ fechaEntrega: '2026-10-22T00:00:00' }) } }
 
-  it('dice que el pedido se envió, para quién y cuándo se entrega, qué pasó con la autorización y el resumen', async () => {
+  it('dice que la venta quedó guardada, para quién, y la tarjeta trae Estado, Entrega y Total', async () => {
     conEntrega()
-    mockVenta = { ...mockVenta, detalles: [{ id: 'i1', productoNombre: 'Pala c/Cabo Fija LP', cantidad: 12, subtotal: 26112 }, { id: 'i2', productoNombre: 'Make', cantidad: 6, subtotal: 100 }] }
     pantalla()
-    expect(await screen.findByText('Pedido A00419 enviado')).toBeTruthy()
-    expect(screen.getByText('Tarantino 1898 · entrega el jueves 22/10')).toBeTruthy()
-    expect(screen.getByText('Por autorizar · te avisamos')).toBeTruthy()
-    expect(screen.getByText('2 productos · 18 unidades')).toBeTruthy()
+    expect(await screen.findByText('Venta A00419 guardada')).toBeTruthy()
+    expect(screen.getByText('Tarantino 1898')).toBeTruthy()
+    expect(screen.getByText('Autoservicio Abel')).toBeTruthy()
+    const tarjeta = within(screen.getByTestId('venta-guardada-resumen'))
+    expect(tarjeta.getByText('Estado')).toBeTruthy()
+    expect(tarjeta.getByText('Por autorizar')).toBeTruthy()
+    expect(tarjeta.getByText('Entrega')).toBeTruthy()
+    expect(tarjeta.getByText('Jueves 22/10')).toBeTruthy()
+    expect(tarjeta.getByText('Total')).toBeTruthy()
+    expect(tarjeta.getByText(formatImporte(51350.13))).toBeTruthy()
+    expect(screen.getByText(/Falta que la autoricen|Quedó por autorizar/)).toBeTruthy()
   })
 
-  it('es oscura como CalleListo: fondo de la barra, marca de éxito, total y acciones', async () => {
+  it('es clara como la maqueta: fondo de pantalla, marca de éxito y acciones', async () => {
     conEntrega()
     pantalla()
-    await screen.findByText('Pedido A00419 enviado')
-    expect(screen.getByTestId('venta-guardada')).toHaveStyle({ backgroundColor: '#0E1514' })
-    expect(screen.getByTestId('venta-guardada-marca')).toHaveStyle({ width: 88, height: 88, backgroundColor: '#2BD4BD' })
-    expect(within(screen.getByTestId('venta-guardada-resumen')).getByText('$ 51.350,13')).toBeTruthy()
-    for (const nombre of ['Compartir PDF con el cliente', 'Vender a otro cliente', 'Volver a Mi día']) {
+    await screen.findByText('Venta A00419 guardada')
+    expect(screen.getByTestId('venta-guardada')).not.toHaveStyle({ backgroundColor: '#0E1514' })
+    expect(screen.getByTestId('venta-guardada-marca')).toBeTruthy()
+    for (const nombre of ['Ver la venta', 'Compartir PDF con el cliente', 'Vender a otro cliente', 'Volver a Mi día']) {
       expect(screen.getByRole('button', { name: nombre })).toBeTruthy()
     }
+  })
+
+  it('"Ver la venta" abre el detalle de esa venta', async () => {
+    pantalla()
+    await userEvent.press(await screen.findByRole('button', { name: 'Ver la venta' }))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/ventas/[id]', params: { id: 'v9' } })
+  })
+
+  it('el pedido confirmado dice "confirmada" y no pide esperar', async () => {
+    mockVenta = { ...mockVenta, venta: cabecera({ estado: 2 }) }
+    pantalla()
+    expect(await screen.findByText('Venta A00419 confirmada')).toBeTruthy()
+    expect(within(screen.getByTestId('venta-guardada-resumen')).getByText('Confirmado')).toBeTruthy()
   })
 
   it('un pedido que no queda por autorizar no dice que haya que esperar', async () => {
     conEntrega()
     mockVenta = { ...mockVenta, venta: cabecera({ estado: 2, fechaEntrega: '2026-10-22T00:00:00' }) }
     pantalla()
-    expect(await screen.findByText('Pedido A00419 enviado')).toBeTruthy()
+    expect(await screen.findByText('Venta A00419 confirmada')).toBeTruthy()
     expect(screen.queryByText('Por autorizar · te avisamos')).toBeNull()
   })
 
@@ -209,7 +228,16 @@ describe('V8 listo (CalleListo / TabCalleListo)', () => {
     expect(mockReplace).toHaveBeenLastCalledWith('/(tabs)')
   })
 
+  it('una venta por autorizar ofrece "Avisar al cliente por WhatsApp"', async () => {
+    mockGet.mockImplementation((url: string) =>
+      Promise.resolve(url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? { ...socio, telefono: '11 5555-0000' } : undefined))
+    pantalla()
+    expect(await screen.findByRole('button', { name: 'Avisar al cliente por WhatsApp' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Mandar por WhatsApp' })).toBeNull()
+  })
+
   it('"Mandar por WhatsApp" abre el chat del cliente con el pedido; sin teléfono no se ofrece', async () => {
+    mockVenta = { ...mockVenta, venta: cabecera({ estado: 2 }) }
     const abrirUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
     mockGet.mockImplementation((url: string) =>
       Promise.resolve(url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? { ...socio, telefono: '11 5555-0000' } : undefined))
@@ -223,11 +251,21 @@ describe('V8 listo (CalleListo / TabCalleListo)', () => {
 
   it('sin teléfono del cliente no hay WhatsApp', async () => {
     pantalla()
-    await screen.findByText('Pedido A00419 enviado')
+    await screen.findByText('Venta A00419 guardada')
     expect(screen.queryByRole('button', { name: 'Mandar por WhatsApp' })).toBeNull()
   })
 
+  it('una venta por autorizar no ofrece "Cobrar ahora" aunque tenga todos los permisos (S5)', async () => {
+    useAuthStore.setState({ user: { id: 'u1', roles: ['Vendedor'], permissions: [{ module: 'MOD_VENTAS', canRead: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }] } as never })
+    mockGet.mockImplementation((url: string) =>
+      Promise.resolve(url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? { ...socio, puedeVerCuentaCorriente: true } : undefined))
+    pantalla()
+    await screen.findByText('Venta A00419 guardada')
+    expect(screen.queryByRole('button', { name: 'Cobrar ahora' })).toBeNull()
+  })
+
   it('"Cobrar ahora" solo con permiso de cobros y de ver la cuenta del cliente; lleva al cobro de ese cliente', async () => {
+    mockVenta = { ...mockVenta, venta: cabecera({ estado: 2 }) }
     useAuthStore.setState({ user: { id: 'u1', roles: ['Vendedor'], permissions: [{ module: 'MOD_VENTAS', canRead: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }] } as never })
     mockGet.mockImplementation((url: string) =>
       Promise.resolve(url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? { ...socio, puedeVerCuentaCorriente: true } : undefined))
@@ -241,14 +279,14 @@ describe('V8 listo (CalleListo / TabCalleListo)', () => {
     mockGet.mockImplementation((url: string) =>
       Promise.resolve(url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? { ...socio, puedeVerCuentaCorriente: true } : undefined))
     const r = pantalla()
-    await screen.findByText('Pedido A00419 enviado')
+    await screen.findByText('Venta A00419 guardada')
     expect(screen.queryByRole('button', { name: 'Cobrar ahora' })).toBeNull()
     r.unmount()
     useAuthStore.setState({ user: { id: 'u1', roles: ['Vendedor'], permissions: [{ module: 'MOD_VENTAS', canRead: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }] } as never })
     mockGet.mockImplementation((url: string) =>
       Promise.resolve(url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? { ...socio, puedeVerCuentaCorriente: false } : undefined))
     pantalla()
-    await screen.findByText('Pedido A00419 enviado')
+    await screen.findByText('Venta A00419 guardada')
     expect(screen.queryByRole('button', { name: 'Cobrar ahora' })).toBeNull()
   })
 

@@ -24,10 +24,34 @@ export function chipDeStock(puedeVenderse: boolean | null | undefined): ChipInfo
   return puedeVenderse ? { estado: 'entregado', label: 'Hay stock' } : { estado: 'anulado', label: 'Sin stock' }
 }
 
-/** "Se vende por caja de N" cuando la venta mínima es más de una unidad. */
-export function textoUnidadDeVenta(ventaMinimaUnidades: number | null | undefined): string {
-  const n = ventaMinimaUnidades ?? 1
-  return n > 1 ? `Se vende por caja de ${n}` : 'Se vende por unidad'
+/** Una forma de comprar el producto en "Cómo se vende": cuántas unidades trae y cuánto sale (precio de lista x unidades). */
+export interface FormaDeVenta {
+  clave: 'unidad' | 'pack' | 'bulto'
+  label: string
+  unidades: number
+  precio: number
+  /** La venta mínima: el renglón que se resalta. */
+  destacada: boolean
+}
+
+/**
+ * Unidades por pack que informa la ficha. TODO API: FichaCatalogoDto no trae el pack (solo `ventaMinimaUnidades`);
+ * mientras tanto no se inventa el renglón. Cuando el servidor lo mande, se lee acá y `formasDeVenta` lo muestra.
+ */
+export function unidadesPorPack(_ficha: { productoId: string }): number | null {
+  return null
+}
+
+/** "Cómo se vende" de la ficha (lámina FichaProducto): Unidad, Pack (si la API lo manda) y Bulto de venta mínima. */
+export function formasDeVenta(p: { productoId: string; precioVenta: number; ventaMinimaUnidades?: number | null }): FormaDeVenta[] {
+  const minima = p.ventaMinimaUnidades ?? 1
+  const formas: FormaDeVenta[] = [{ clave: 'unidad', label: 'Unidad', unidades: 1, precio: p.precioVenta, destacada: false }]
+  const pack = unidadesPorPack(p)
+  if (pack != null && pack > 1 && pack < minima) {
+    formas.push({ clave: 'pack', label: 'Pack', unidades: pack, precio: p.precioVenta * pack, destacada: false })
+  }
+  if (minima > 1) formas.push({ clave: 'bulto', label: 'Bulto · venta mínima', unidades: minima, precio: p.precioVenta * minima, destacada: true })
+  return formas
 }
 
 /**

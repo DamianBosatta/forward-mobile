@@ -2,9 +2,9 @@ import React, { useMemo, useState } from 'react'
 import { ActivityIndicator, RefreshControl, SectionList, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
-import { space, typeScale, useColors } from '@/libs/theme'
+import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Button, Notice, TopBar } from '@/core/ui/fw'
+import { Fab, Notice, TopBar, formatImporte } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -12,7 +12,7 @@ import { useCartera } from '@/features/clientes/hooks/useCartera'
 import { ClienteCard } from '@/features/clientes/components/ClienteCard'
 import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { FiltrosCartera, SIN_FILTROS, type FiltrosDeCartera } from '@/features/clientes/components/FiltrosCartera'
-import { textoContador } from '@/features/clientes/lib/cliente'
+import { textoCantidad } from '@/features/clientes/lib/cliente'
 import { seccionesPorLetra } from '@/features/clientes/lib/secciones'
 import { FichaCliente } from '@/features/clientes/components/FichaCliente'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
@@ -56,10 +56,24 @@ function ClientesScreen() {
           )}
         </View>
       ) : null}
+      {totalCount !== undefined ? (
+        <View testID="pie-clientes" style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space[3], paddingHorizontal: space[4], paddingBottom: space[2] }}>
+          <Text accessibilityLiveRegion="polite" style={{ ...typeScale.secundario, color: c.textSecondary, flexShrink: 1 }}>
+            {textoCantidad(clientes.length, totalCount)}
+          </Text>
+          {saldoTotal !== undefined ? (
+            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
+              {'Saldo total '}
+              <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(saldoTotal)}</Text>
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
       <SectionList
         sections={secciones}
         keyExtractor={item => item.id}
-        stickySectionHeadersEnabled={false}
+        stickySectionHeadersEnabled
+        contentContainerStyle={{ paddingBottom: 88 }}
         renderSectionHeader={({ section }) => (
           <View testID={`encabezado-letra-${section.title}`} accessibilityRole="header" style={{ paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[1], backgroundColor: c.bg }}>
             <Text style={{ ...textoDestacado, color: c.textSecondary }}>{section.title}</Text>
@@ -93,30 +107,8 @@ function ClientesScreen() {
           )
         }
       />
-      {totalCount !== undefined || canCreate('MOD_CLIENTES') ? (
-        <View
-          testID="pie-clientes"
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: space[3],
-            paddingHorizontal: space[4],
-            paddingVertical: space[3],
-            backgroundColor: c.surface,
-            borderTopWidth: 1,
-            borderTopColor: c.border,
-          }}
-        >
-          {totalCount !== undefined ? (
-            <Text accessibilityLiveRegion="polite" style={{ ...textoDestacado, color: c.textSecondary, flexShrink: 1 }}>
-              {textoContador(clientes.length, totalCount, saldoTotal)}
-            </Text>
-          ) : (
-            <View />
-          )}
-          {canCreate('MOD_CLIENTES') ? <Button label="Nuevo cliente" onPress={() => router.push('/(tabs)/socios/nuevo')} /> : null}
-        </View>
+      {canCreate('MOD_CLIENTES') ? (
+        <Fab label="Nuevo cliente" accessibilityLabel="Nuevo cliente" onPress={() => router.push('/(tabs)/socios/nuevo')} />
       ) : null}
     </View>
   )
@@ -125,11 +117,11 @@ function ClientesScreen() {
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
         title="Clientes"
-        subtitle="Tu cartera, por dirección de entrega"
+        subtitle="Mi cartera"
         leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
       />
-      <BuscadorCartera valor={busqueda} onCambio={setBusqueda} />
-      <FiltrosCartera valor={filtros} onCambio={setFiltros} totalCartera={filtrando || busqueda.trim() ? undefined : totalCount} />
+      <BuscadorCartera sobre="pantalla" valor={busqueda} onCambio={setBusqueda} />
+      <FiltrosCartera sobre="pantalla" valor={filtros} onCambio={setFiltros} totalCartera={filtrando || busqueda.trim() ? undefined : totalCount} />
 
       {dosPaneles ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>

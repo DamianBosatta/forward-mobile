@@ -52,6 +52,7 @@ function pantalla() {
 async function abrirConfirmar() {
   pantalla()
   await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
+  await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
   await userEvent.press(screen.getByRole('button', { name: 'Ver venta' }))
   useCarritoVenta.setState({ lineas: [{ productoId: pala.id, producto: pala, cantidad: 12, descuentoPct: 0 }] })
   await waitFor(() => expect(mockGet).toHaveBeenCalledWith(URL_DEFECTO))

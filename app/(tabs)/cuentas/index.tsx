@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
+import { ArrowLeftRight } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
-import { Button, Notice, TopBar, TwoPane, useMenuLeading } from '@/core/ui/fw'
+import { Button, Notice, Segmented, TopBar, TwoPane, useMenuLeading } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
+import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useCartera } from '@/features/clientes/hooks/useCartera'
 import { ClienteCard } from '@/features/clientes/components/ClienteCard'
@@ -18,8 +20,13 @@ import { ResumenDeCuentas } from '@/features/cuentas/components/ResumenDeCuentas
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
+type LadoDeCuentas = 'medeben' | 'debo'
+
+/** TODO API: el lado "Debo" (cuentas a pagar a proveedores) como lista; hoy el servidor no la ofrece y no se simula. */
+export const AVISO_DEBO_SIN_API = 'Las cuentas que le debés a tus proveedores todavía no están en la app. Mirá "Me deben" para cobrar.'
+
 /**
- * Cuentas corrientes (láminas CuentaCorriente y TabCuentaCorriente): la cartera por dirección de
+ * Cuentas (láminas cuentas-lista CuentaCorriente y TabCuentaCorriente): la cartera por dirección de
  * entrega; tocar un cliente abre su cuenta (en tablet horizontal, en el panel de la derecha).
  */
 function CuentasCorrientesScreen() {
@@ -32,6 +39,7 @@ function CuentasCorrientesScreen() {
   // TM9: en tablet horizontal el cobro se abre en el mismo panel, sin salir de la lista.
   const [cobrando, setCobrando] = useState(false)
   const [soloVencidas, setSoloVencidas] = useState(false)
+  const [lado, setLado] = useState<LadoDeCuentas>('medeben')
   const { canCreate, canRead } = usePermissions()
   // Misma regla que Tesorería: la pantalla pide los tipos (MOD_PAGOS:Read) y las cuentas propias (MOD_CC:Read).
   const puedeTransferir = canCreate('MOD_PAGOS') && canRead('MOD_PAGOS') && canRead('MOD_CC')
@@ -95,12 +103,38 @@ function CuentasCorrientesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar title="Cuentas corrientes" subtitle="Tu cartera, por dirección de entrega" leading={menu} />
-      <ResumenDeCuentas saldoTotal={saldoTotal} puedeTransferir={puedeTransferir} onTransferir={() => router.push('/(tabs)/tesoreria/transferencia')} />
-      <BuscadorCartera valor={busqueda} onCambio={setBusqueda} />
-      <View style={{ flexDirection: 'row', paddingHorizontal: space[4], paddingTop: space[3] }}>
-        <FiltroChip label="Con deuda vencida" activo={soloVencidas} onPress={() => setSoloVencidas(v => !v)} />
+      <TopBar
+        title="Cuentas"
+        leading={menu}
+        actions={[{ icon: ArrowLeftRight, accessibilityLabel: 'Transferir', disabled: !puedeTransferir, onPress: () => router.push('/(tabs)/tesoreria/transferencia') }]}
+      />
+      {!puedeTransferir ? (
+        <View style={{ paddingHorizontal: space[4], paddingTop: space[2] }}>
+          <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}</MotivoDeshabilitado>
+        </View>
+      ) : null}
+      <View style={{ paddingHorizontal: space[4], paddingTop: space[3] }}>
+        <Segmented
+          options={[
+            { value: 'medeben', label: totalCount !== undefined ? `Me deben · ${totalCount}` : 'Me deben' },
+            { value: 'debo', label: 'Debo' },
+          ]}
+          value={lado}
+          onChange={setLado}
+          accessibilityLabel="Lado de las cuentas"
+        />
       </View>
+      {lado === 'debo' ? (
+        <View style={{ padding: space[4] }}>
+          <Notice tone="info">{AVISO_DEBO_SIN_API}</Notice>
+        </View>
+      ) : (
+        <>
+          <ResumenDeCuentas saldoTotal={saldoTotal} />
+          <BuscadorCartera sobre="pantalla" valor={busqueda} onCambio={setBusqueda} />
+          <View style={{ flexDirection: 'row', paddingHorizontal: space[4], paddingBottom: space[1] }}>
+            <FiltroChip label="Con deuda vencida" activo={soloVencidas} onPress={() => setSoloVencidas(v => !v)} />
+          </View>
       <TwoPane
         list={lista}
         detail={
@@ -123,6 +157,8 @@ function CuentasCorrientesScreen() {
           </Text>
         }
       />
+        </>
+      )}
     </View>
   )
 }

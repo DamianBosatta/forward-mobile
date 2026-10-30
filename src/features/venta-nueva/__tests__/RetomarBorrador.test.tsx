@@ -68,7 +68,6 @@ describe('retomar un borrador (PR 2.2b)', () => {
   it('lo que se cambia se autoguarda sobre ese borrador y con su versión', async () => {
     pantalla()
     await screen.findByText('Nuevo presupuesto')
-    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
     expect(screen.getByDisplayValue('Portón negro')).toBeTruthy()
     await userEvent.type(screen.getByLabelText('Observaciones'), ', antes de las 12')
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), { timeout: 3000 })
@@ -92,7 +91,6 @@ describe('retomar un borrador (PR 2.2b)', () => {
       pantalla(undefined, 'Pedido')
       await screen.findByText('Nuevo pedido')
       await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/v1/Ventas/borradores/mios'))
-      await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
       await userEvent.type(screen.getByLabelText('Observaciones'), ' y más')
       await waitFor(() => expect(mockPut).toHaveBeenCalled(), { timeout: 3000 })
       expect(mockPut.mock.calls.at(-1)[1].items).toEqual([{ productoId: 'p1', cantidad: 3, descuentoPorcentaje: esperado }])
@@ -105,7 +103,6 @@ describe('retomar un borrador (PR 2.2b)', () => {
     const primera = pantalla(qc)
     await screen.findByText('Nuevo presupuesto')
     expect(detalles()).toBe(1)
-    await userEvent.press(screen.getByRole('button', { name: 'Datos de la entrega' }))
     await userEvent.type(screen.getByLabelText('Observaciones'), ' uno')
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1), { timeout: 3000 })
     await userEvent.type(screen.getByLabelText('Observaciones'), ' dos')

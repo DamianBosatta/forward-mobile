@@ -2,17 +2,17 @@ import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Trash2 } from 'lucide-react-native'
-import { Button, Field, Notice, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { Button, Field, Notice, PasosNumerados, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
-import { useResponsive } from '@/libs/useResponsive'
 import { useDepositos, useInfiniteProductos } from '@/libs/api-client'
 import { leerNumero, mostrarNumero } from '@/src/utils/numero'
 import { mensajeDelServidor } from '../lib/mensaje-error'
-import { sinCosto, subtotalDe, totalCompra, unidadesDe, type LineaCompra } from '../lib/lineaCompra'
+import { sinCosto, subtotalDe, textoDeLinea, totalCompra, unidadesDe, type LineaCompra } from '../lib/lineaCompra'
 import { useCompraBorrador, type EstadoGuardado } from '../hooks/useCompraBorrador'
-import { ElegirProveedor } from './ElegirProveedor'
+import { ElegirProveedor, PASOS_COMPRA } from './ElegirProveedor'
 import { CatalogModal } from './CatalogModal'
 import { CompraLineaSheet } from './CompraLineaSheet'
+import { LineaCompraCard } from './LineaCompraCard'
 import { ConfirmarYRecibirSheet } from './ConfirmarYRecibirSheet'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { dejarAviso } from '../lib/confirmar-y-recibir'
@@ -21,14 +21,6 @@ import { hoyTexto } from '../lib/fecha'
 const SYNC: Record<EstadoGuardado, string | undefined> = {
   nuevo: undefined, guardando: 'Guardando…', guardado: 'Guardado', error: 'Sin guardar', conflicto: 'Sin guardar',
 }
-const UNIDAD = { Unidad: 'Unidades', Bulto: 'Bultos', BultoMadre: 'Bultos madre' }
-
-function detalleLinea(l: LineaCompra): string {
-  const costo = sinCosto(l) ? '—' : mostrarNumero(l.costoUnitario!)
-  const empaque = l.unidad === 'Unidad' ? UNIDAD.Unidad : `${l.cantidad} ${UNIDAD[l.unidad].toLowerCase()} de ${l.unidadesPorUnidad}`
-  return `${unidadesDe(l)} × ${costo} · ${sinCosto(l) ? 'Falta el costo' : empaque}`
-}
-
 interface Props {
   /** Borrador a retomar (desde la pestaña Borradores). */
   borradorId?: string
@@ -45,16 +37,18 @@ interface Props {
 export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
   const c = useColors()
   const router = useRouter()
-  const { isTablet } = useResponsive()
   const edicion = !!editarId
   const b = useCompraBorrador(editarId ?? borradorId, { edicion })
-  const [pestana, setPestana] = useState<'lineas' | 'cabecera'>('lineas')
+  // 2 = productos, 3 = revisar. El paso 1 (proveedor) es mientras no haya proveedor.
+  const [paso, setPaso] = useState<2 | 3>(2)
   const [catalogo, setCatalogo] = useState(false)
   const [busqueda, setBusqueda] = useState('')
   const [enviada, setEnviada] = useState('')
   const [gastosTexto, setGastosTexto] = useState('')
   const [ocupado, setOcupado] = useState(false)
   const [editando, setEditando] = useState<LineaCompra | null>(null)
+  // Sube cuando la hoja o el catálogo cambian líneas por fuera de las tarjetas: las tarjetas guardan lo tipeado y se rearman.
+  const [revision, setRevision] = useState(0)
   const [recibir, setRecibir] = useState<{ error: string | null } | null>(null)
   const [fechaFactura, setFechaFactura] = useState(hoyTexto)
   const guardando = useRef(false)
@@ -98,7 +92,7 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
   if (!b.proveedor) {
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <TopBar title={edicion ? 'Editar compra' : 'Nueva compra'} leading={{ kind: 'atras', onPress: volver }} />
+        <TopBar title={edicion ? 'Editar compra' : 'Nueva compra'} subtitle={edicion ? undefined : 'Paso 1 de 3'} leading={{ kind: 'atras', onPress: volver }} />
         {b.error && (borradorId || editarId) ? <View style={{ padding: space[4] }}><Notice tone="peligro">{b.error}</Notice></View>
           : <ElegirProveedor onElegir={(id) => { void b.elegirProveedor(id) }} faltantes={b.faltantes} error={b.error} />}
       </View>
@@ -158,30 +152,17 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
     { text: 'Descartar', style: 'destructive', onPress: () => { b.descartar().then(volver, (e) => Alert.alert('No se descartó', mensajeDelServidor(e))) } },
   ])
 
+  const unidadesTotal = b.lineas.reduce((acc, l) => acc + unidadesDe(l), 0)
+  const subtotal = total - b.gastos
+  const resumenProductos = `${b.lineas.length} ${b.lineas.length === 1 ? 'producto' : 'productos'} · ${mostrarNumero(unidadesTotal)} ${unidadesTotal === 1 ? 'unidad' : 'unidades'}`
+
   const lineas = (
     <View style={{ gap: space[3] }}>
       {b.lineas.length > 0 ? (
-        <View style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>
-          {b.lineas.map((l, i) => {
-            const falta = sinCosto(l)
-            const tono = falta ? c.chip.porAutorizar : null
-            return (
-              <Pressable
-                key={l.productoId}
-                accessibilityRole="button"
-                accessibilityLabel={`${l.nombre}, ${detalleLinea(l)}`}
-                onPress={() => setEditando(l)}
-                style={{ minHeight: 44, paddingHorizontal: space[4], paddingVertical: space[3], gap: space[1], backgroundColor: tono?.bg ?? c.surface, borderTopWidth: i ? 1 : 0, borderTopColor: c.border }}
-              >
-                <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{l.nombre}</Text>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-                  <Text style={[typeScale.secundario, { color: c.text, flexShrink: 1 }]}>{detalleLinea(l)}</Text>
-                  <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(subtotalDe(l))}</Text>
-                </View>
-              </Pressable>
-            )
-          })}
-        </View>
+        b.lineas.map((l) => (
+          <LineaCompraCard key={`${l.productoId}:${revision}`} linea={l} onEditar={setEditando}
+            onCambiar={(nueva) => b.setLineas((prev) => prev.map((x) => (x.productoId === nueva.productoId ? nueva : x)))} />
+        ))
       ) : <Text style={secundario}>Todavía no hay productos.</Text>}
       <Button label="+ Agregar productos" variant="secundario" onPress={() => setCatalogo(true)} />
       {faltanCostos > 0 ? (
@@ -190,49 +171,74 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
     </View>
   )
 
-  const cabecera = (
+  const revisar = (
     <View style={{ gap: space[3] }}>
-      <View style={{ gap: space[1] }}>
-        <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{b.proveedor.nombre}</Text>
-        {b.proveedor.condicion ? <Text style={secundario}>{b.proveedor.condicion}</Text> : null}
+      {faltanCostos > 0 ? (
+        <Notice tone="peligro" title="Falta el costo.">{`${faltanCostos === 1 ? 'Una línea no tiene' : `${faltanCostos} líneas no tienen`} costo. El sistema nunca lo inventa: cargalo en los productos antes de confirmar.`}</Notice>
+      ) : null}
+      <View style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: space[4], paddingTop: space[3] }}>
+          <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text }]}>Productos</Text>
+          <Pressable accessibilityRole="link" accessibilityLabel="Editar los productos" onPress={() => setPaso(2)} style={{ minHeight: 44, justifyContent: 'center' }}>
+            <Text style={[typeScale.cuerpoDestacado, { color: c.brandInk }]}>Editar</Text>
+          </Pressable>
+        </View>
+        {b.lineas.map((l, i) => (
+          <View key={l.productoId} accessible style={{ paddingHorizontal: space[4], paddingVertical: space[3], gap: space[1], borderTopWidth: i ? 1 : 0, borderTopColor: c.border }}>
+            <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{l.nombre}</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
+              <View style={{ flexShrink: 1 }}>
+                <Text style={[typeScale.secundario, { color: c.text }]}>{textoDeLinea(l)}</Text>
+                <Text style={[typeScale.secundario, cifras, { color: sinCosto(l) ? c.danger : c.textSecondary }]}>{sinCosto(l) ? 'Sin costo' : `${formatImporte(l.costoUnitario)} por unidad`}</Text>
+              </View>
+              <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(subtotalDe(l))}</Text>
+            </View>
+          </View>
+        ))}
       </View>
-      <View accessibilityRole="radiogroup" accessibilityLabel="Depósito" style={{ gap: space[2] }}>
-        <Text style={[typeScale.secundario, { color: c.text }]}>Depósito</Text>
-        {(depositos ?? []).map((d) => {
-          const sel = d.id === b.depositoId
-          return (
-            <Pressable key={d.id ?? d.nombre} accessibilityRole="radio" accessibilityState={{ selected: sel, checked: sel }} onPress={() => { if (d.id) b.setDepositoId(d.id) }}
-              style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.campo, borderWidth: 1, borderColor: sel ? c.brand : c.border, backgroundColor: sel ? c.brandSoft : c.surface }}>
-              <Text style={[typeScale.cuerpo, { color: sel ? c.brandInk : c.text }]}>{d.nombre}</Text>
-            </Pressable>
-          )
-        })}
+      <View style={{ gap: space[3], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+        <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text }]}>Recepción</Text>
+        {/* El plazo de pago es del proveedor: acá va de solo lectura. */}
+        {b.proveedor.condicion ? <Text style={[typeScale.secundario, { color: c.text }]}>{`Plazo de pago: ${b.proveedor.condicion}`}</Text> : null}
+        <View accessibilityRole="radiogroup" accessibilityLabel="Depósito" style={{ gap: space[2] }}>
+          <Text style={[typeScale.secundario, { color: c.text }]}>Depósito</Text>
+          {(depositos ?? []).map((d) => {
+            const sel = d.id === b.depositoId
+            return (
+              <Pressable key={d.id ?? d.nombre} accessibilityRole="radio" accessibilityState={{ selected: sel, checked: sel }} onPress={() => { if (d.id) b.setDepositoId(d.id) }}
+                style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.campo, borderWidth: 1, borderColor: sel ? c.brand : c.border, backgroundColor: sel ? c.brandSoft : c.surface }}>
+                <Text style={[typeScale.cuerpo, { color: sel ? c.brandInk : c.text }]}>{d.nombre}</Text>
+              </Pressable>
+            )
+          })}
+        </View>
+        <Field label="Gastos operativos ($)" keyboardType="decimal-pad" alignRight value={gastosTexto}
+          error={gastosLeidos === null ? 'Escribí un importe válido, por ejemplo 1.500,50.' : undefined}
+          onChangeText={(t) => { setGastosTexto(t); const n = t.trim() === '' ? 0 : leerNumero(t); if (n !== null) b.setGastos(n) }} />
       </View>
-      <Field label="Gastos operativos ($)" keyboardType="decimal-pad" alignRight value={gastosTexto}
-        error={gastosLeidos === null ? 'Escribí un importe válido, por ejemplo 1.500,50.' : undefined}
-        onChangeText={(t) => { setGastosTexto(t); const n = t.trim() === '' ? 0 : leerNumero(t); if (n !== null) b.setGastos(n) }} />
-      <TotalsRow label="Subtotal" importe={total - b.gastos} />
-      <TotalsRow label="Gastos operativos" importe={b.gastos} />
-      <TotalsRow label="Total" importe={total} destacado />
+      <View style={{ gap: space[1], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+        <TotalsRow label="Subtotal" importe={subtotal} />
+        <TotalsRow label="Gastos operativos" importe={b.gastos} />
+      </View>
     </View>
+  )
+
+  const bloqueado = ocupado || b.lineas.length === 0 || faltanCostos > 0
+  const botonGuardarCambios = (
+    <Button label="Guardar cambios" loading={ocupado} disabled={ocupado || !puedeRecibir || !b.hayCambios || b.estado === 'conflicto' || b.lineas.length === 0 || faltanCostos > 0}
+      onPress={() => { void guardarCambios() }} />
   )
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
-        title={edicion ? 'Editar compra' : 'Nueva compra'}
-        subtitle={[b.proveedor.nombre, b.proveedor.condicion].filter(Boolean).join(' · ')}
-        leading={{ kind: 'atras', onPress: volver }}
+        title={edicion ? 'Editar compra' : paso === 2 ? 'Productos' : 'Revisar compra'}
+        subtitle={paso === 2 ? [b.proveedor.nombre, b.proveedor.condicion].filter(Boolean).join(' · ') : edicion ? b.proveedor.nombre : `Paso 3 de 3 · ${b.proveedor.nombre}`}
+        leading={{ kind: 'atras', onPress: paso === 3 ? () => setPaso(2) : volver }}
         syncLabel={edicion ? undefined : SYNC[b.estado]}
         actions={b.compraId && !edicion ? [{ icon: Trash2, accessibilityLabel: 'Descartar la compra', onPress: descartar }] : []}
-        tabs={isTablet ? undefined : [
-          { label: `Líneas (${b.lineas.length})`, selected: pestana === 'lineas', onPress: () => setPestana('lineas') },
-          { label: 'Cabecera', selected: pestana === 'cabecera', onPress: () => setPestana('cabecera') },
-        ]}
       />
-      <View style={{ padding: space[4], backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.border }}>
-        <TotalsRow label="Total" importe={total} destacado={false} />
-      </View>
+      {edicion ? null : <PasosNumerados nombres={PASOS_COMPRA} paso={paso} />}
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3] }}>
         {b.estado === 'conflicto' ? (
           <View style={{ gap: space[2] }}>
@@ -246,45 +252,49 @@ Recargala para ver la versión actual antes de seguir.` : 'Recargala para ver la
             {b.estado === 'error' && !edicion ? <Button label="Reintentar" variant="secundario" onPress={() => { void b.reintentar() }} /> : null}
           </View>
         ) : null}
-        {isTablet ? (
-          <View style={{ flexDirection: 'row', gap: space[6], alignItems: 'flex-start' }}>
-            <View style={{ flex: 3, gap: space[2] }}><Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text }]}>{`Líneas (${b.lineas.length})`}</Text>{lineas}</View>
-            <View style={{ flex: 2, gap: space[2] }}><Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text }]}>Cabecera</Text>{cabecera}</View>
-          </View>
-        ) : pestana === 'lineas' ? lineas : cabecera}
+        {paso === 2 ? lineas : revisar}
       </ScrollView>
-      {edicion ? (
-        <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
-          <Button label="Guardar cambios" loading={ocupado} disabled={ocupado || !puedeRecibir || !b.hayCambios || b.estado === 'conflicto' || b.lineas.length === 0 || faltanCostos > 0}
-            onPress={() => { void guardarCambios() }} />
-        </View>
-      ) : (
-      <View style={{ gap: space[2], padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
-        <View style={{ flexDirection: 'row', gap: space[2] }}>
-          <Button label="Guardar nota" variant="secundario" disabled={ocupado || b.lineas.length === 0 || faltanCostos > 0}
-            onPress={() => { void terminar(b.guardarNota, 'No se guardó la nota de pedido') }} />
-          <View style={{ flex: 1 }}>
-            <Button label="Confirmar compra" loading={ocupado} disabled={b.lineas.length === 0 || faltanCostos > 0}
-              onPress={() => { void terminar(b.confirmar, 'No se confirmó la compra') }} />
+      {paso === 2 ? (
+        <View style={{ gap: space[2], padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[3] }}>
+            <Text style={[typeScale.secundario, { color: c.textSecondary, flexShrink: 1 }]}>{resumenProductos}</Text>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={[typeScale.etiqueta, { color: c.textSecondary }]}>{faltanCostos > 0 ? 'Subtotal (falta un costo)' : 'Subtotal'}</Text>
+              <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{faltanCostos > 0 ? '—' : formatImporte(subtotal)}</Text>
+            </View>
           </View>
+          <Button label="Ver compra" variant={edicion ? 'secundario' : 'primario'} disabled={b.lineas.length === 0} onPress={() => setPaso(3)} />
+          {edicion ? botonGuardarCambios : null}
         </View>
-        {puedeRecibir ? (
-          <Button label="Confirmar y recibir" variant="secundario" disabled={ocupado || b.lineas.length === 0 || faltanCostos > 0}
-            onPress={() => { setFechaFactura(hoyTexto()); setRecibir({ error: null }) }} />
-        ) : null}
-      </View>
+      ) : edicion ? (
+        <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>{botonGuardarCambios}</View>
+      ) : (
+        <View style={{ gap: space[2], padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Total</Text>
+            <Text accessibilityLabel={faltanCostos > 0 ? 'Total sin calcular' : undefined} style={[typeScale.titulo, cifras, { color: c.text }]}>{faltanCostos > 0 ? '—' : formatImporte(total)}</Text>
+          </View>
+          <Button label="Confirmar compra" loading={ocupado} disabled={bloqueado}
+            onPress={() => { void terminar(b.confirmar, 'No se confirmó la compra') }} />
+          {puedeRecibir ? (
+            <Button label="Confirmar y recibir" variant="secundario" disabled={bloqueado}
+              onPress={() => { setFechaFactura(hoyTexto()); setRecibir({ error: null }) }} />
+          ) : null}
+          <Button label="Guardar nota de pedido" variant="secundario" disabled={bloqueado}
+            onPress={() => { void terminar(b.guardarNota, 'No se guardó la nota de pedido') }} />
+        </View>
       )}
       <ConfirmarYRecibirSheet visible={recibir !== null} onClose={() => setRecibir(null)} pideFactura={b.proveedor.pideFactura}
         ocupado={ocupado} fecha={fechaFactura} onFecha={setFechaFactura} error={recibir?.error ?? null} onConfirmar={(f) => { void confirmarYRecibir(f) }} />
       <CompraLineaSheet
         linea={editando}
         onClose={() => setEditando(null)}
-        onConfirm={(nueva) => { b.setLineas((prev) => prev.map((l) => (l.productoId === nueva.productoId ? nueva : l))); setEditando(null) }}
-        onQuitar={(id) => { b.setLineas((prev) => prev.filter((l) => l.productoId !== id)); setEditando(null) }}
+        onConfirm={(nueva) => { b.setLineas((prev) => prev.map((l) => (l.productoId === nueva.productoId ? nueva : l))); setRevision((r) => r + 1); setEditando(null) }}
+        onQuitar={(id) => { b.setLineas((prev) => prev.filter((l) => l.productoId !== id)); setRevision((r) => r + 1); setEditando(null) }}
       />
       <CatalogModal
         visible={catalogo}
-        onClose={() => setCatalogo(false)}
+        onClose={() => { setCatalogo(false); setRevision((r) => r + 1) }}
         productSearch={busqueda}
         setProductSearch={setBusqueda}
         loadingProds={productos.isLoading}

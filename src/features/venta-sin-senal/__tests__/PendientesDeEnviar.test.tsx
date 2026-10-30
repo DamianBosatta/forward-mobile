@@ -50,8 +50,8 @@ it('sin ventas en el teléfono no dibuja nada', () => {
 it('con ventas del usuario muestra el bloque "Pendientes de enviar" con la venta que espera', () => {
   encolarVenta('u1', { alta, cliente: { razonSocial: 'Almacén Luis' } as never, visto: { total: 600, precios: { p1: 100 } } })
   montar()
-  expect(screen.getByText('Pendientes de enviar')).toBeTruthy()
-  expect(screen.getByText('En el teléfono')).toBeTruthy()
+  expect(screen.getByText('Pendientes de enviar (1)')).toBeTruthy()
+  expect(screen.getByText('En cola')).toBeTruthy()
 })
 
 it('no muestra las ventas de otro usuario', () => {
@@ -76,7 +76,7 @@ describe('al reconectar: líneas de la cola que cambiaron (S3)', () => {
     montar()
     conectar()
     expect(await screen.findByText(/Quedan 2 de Producto X \(la venta guardada lleva 6\)/)).toBeTruthy()
-    expect(screen.getByText('En el teléfono')).toBeTruthy()
+    expect(screen.getByText('En cola')).toBeTruthy()
   })
 
   it('si el stock alcanza no avisa nada', async () => {

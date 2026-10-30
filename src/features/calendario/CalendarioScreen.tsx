@@ -1,18 +1,22 @@
 import React, { useMemo, useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
-import { ChevronLeft, ChevronRight } from 'lucide-react-native'
-import { radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
-import { Button, Fab, FormContainer, Notice, StatusChip, TopBar, formatImporte, useMenuLeading } from '@/core/ui/fw'
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { space, typeScale, useColors } from '@/libs/theme'
+import { Button, FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
+import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { esFallaDeRed } from '@/core/api/errores'
 import { CalendarioAvisosTabs } from '@/core/ui/fw/CalendarioAvisosTabs'
 import { useResponsive } from '@/libs/useResponsive'
 import { PanelAvisos } from '@/features/notificaciones/PanelAvisos'
 import { useCalendario, type EventoCalendario } from '@/libs/api-client/calendario'
 import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
-import { diaDe, mesDe, moverDia, nombreLargo, semanaDe, tituloSemana } from './semana'
+import { diaDe, mesDe, moverDia, nombreLargo, rangoCorto, semanaDe } from './semana'
 import { MesGrilla } from './MesGrilla'
 import { NuevoEventoSheet, type Precarga } from './NuevoEventoSheet'
 import { EventoSheet } from './EventoSheet'
-import { chipDe, TIPO } from './presentacion'
+import { EventoCard } from './EventoCard'
+import { FilaDeDias, textoEventos } from './FilaDeDias'
 
 /** Lámina Calendario: la semana de lunes a domingo (días argentinos) y los eventos del día elegido. */
 interface Props {
@@ -29,7 +33,7 @@ interface Props {
 export function CalendarioScreen({ precarga, onAbrirVenta, nuevo, avisosSinLeer, onIrAAvisos }: Props) {
   const { isTablet, isTabletLandscape } = useResponsive()
   const c = useColors()
-  const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
+  const insets = useSafeAreaInsets()
   const menu = useMenuLeading()
   const ahora = useAhoraArgentina()
   const hoy = useMemo(() => diaDe(ahora).fecha, [ahora])
@@ -66,35 +70,27 @@ export function CalendarioScreen({ precarga, onAbrirVenta, nuevo, avisosSinLeer,
     setElegido(fecha)
   }
 
+  const sinRed = q.isError && esFallaDeRed(q.error)
   const listaDelDia = (
     <FormContainer style={{ gap: space[3] }}>
-      <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>
-        {`${nombreLargo(dia).split(' de ')[0]}${dia.fecha === hoy ? ' · hoy' : ''}`}
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space[2] }}>
+        <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text, flexShrink: 1 }}>
+          {`${nombreLargo(dia).split(' de ')[0]}${dia.fecha === hoy ? ' · hoy' : ''}`}
+        </Text>
+        {q.data && eventos.length > 0 ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{textoEventos(eventos.length)}</Text> : null}
+      </View>
+      {sinRed && q.data ? <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice> : null}
       {q.isLoading ? (
         <ActivityIndicator color={c.brand} accessibilityLabel="Cargando el calendario" />
-      ) : q.isError ? (
-        <Notice tone="peligro">No se pudo cargar el calendario.</Notice>
+      ) : q.isError && !(sinRed && q.data) ? (
+        <View style={{ gap: space[3] }}>
+          <Notice tone="peligro">No se pudo cargar el calendario.</Notice>
+          <Button label="Reintentar" variant="secundario" onPress={() => void q.refetch()} />
+        </View>
       ) : eventos.length === 0 ? (
-        <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>No hay eventos este día.</Text>
+        <EstadoDePantalla tipo="vacio" titulo="No hay eventos este día." accion={{ label: 'Actualizar', onPress: () => void q.refetch() }} />
       ) : (
-        eventos.map((e) => {
-          const chip = chipDe(e)
-          return (
-            <Pressable key={e.clave} onPress={() => setAbierto(e)} accessibilityRole="button" accessibilityLabel={`${e.titulo}, ${chip?.label ?? e.estado}`} accessibilityHint="Abre el detalle del evento" android_ripple={{ color: c.surface2 }} style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[1], overflow: 'hidden', ...sombra }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
-                <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }}>{e.titulo}</Text>
-                {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
-              </View>
-              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-                {[e.hora, TIPO[e.tipo] ?? e.tipo, e.descripcion, e.monto != null ? formatImporte(e.monto) : null].filter(Boolean).join(' · ')}
-              </Text>
-              {e.ventaCodigo ? (
-                <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Agendado desde la venta ${e.ventaCodigo}`}</Text>
-              ) : null}
-            </Pressable>
-          )
-        })
+        eventos.map((e) => <EventoCard key={e.clave} evento={e} onPress={() => setAbierto(e)} />)
       )}
       <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
         Ves tus eventos personales. Los vencimientos de cheques y compras aparecen solo si tu puesto los puede ver.
@@ -108,7 +104,7 @@ export function CalendarioScreen({ precarga, onAbrirVenta, nuevo, avisosSinLeer,
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
         title="Calendario"
-        subtitle={isTablet ? mes.titulo : tituloSemana(dias)}
+        subtitle={isTablet ? mes.titulo : rangoCorto(dias)}
         leading={menu}
         actions={isTablet ? [
           { icon: ChevronLeft, accessibilityLabel: 'Mes anterior', onPress: () => irAMes(meses - 1) },
@@ -134,36 +130,17 @@ export function CalendarioScreen({ precarga, onAbrirVenta, nuevo, avisosSinLeer,
         </View>
       ) : (
         <>
-          <View accessibilityRole="radiogroup" accessibilityLabel="Día de la semana" style={{ flexDirection: 'row', gap: space[1], padding: space[3], backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.border }}>
-            {dias.map((d) => {
-              const activo = d.fecha === dia.fecha
-              const n = delDia(d.fecha).length
-              return (
-                <Pressable
-                  key={d.fecha}
-                  onPress={() => setElegido(d.fecha)}
-                  accessibilityRole="radio"
-                  accessibilityLabel={`${d.corto} ${d.numero}, ${n} ${n === 1 ? 'evento' : 'eventos'}`}
-                  accessibilityState={{ checked: activo }}
-                  style={{ flex: 1, minHeight: 64, alignItems: 'center', justifyContent: 'center', gap: 2, borderRadius: radii.campo, borderWidth: activo ? 2 : 0, borderColor: c.brand, backgroundColor: activo ? c.brandSoft : 'transparent' }}
-                >
-                  <Text style={{ ...typeScale.etiqueta, color: activo ? c.brandInk : c.textSecondary }}>{d.corto}</Text>
-                  <Text style={{ ...typeScale.cuerpoDestacado, color: activo ? c.brandInk : c.text }}>{d.numero}</Text>
-                  <View style={{ flexDirection: 'row', gap: 2, height: 6 }}>
-                    {Array.from({ length: Math.min(n, 3) }, (_, i) => (
-                      <View key={i} style={{ width: 6, height: 6, borderRadius: radii.pastilla, backgroundColor: c.brand }} />
-                    ))}
-                  </View>
-                </Pressable>
-              )
-            })}
-          </View>
+          <FilaDeDias dias={dias} elegido={dia.fecha} hoy={hoy} cantidadDelDia={(f) => delDia(f).length} onElegir={setElegido} />
           <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] * 2 }}>
             {listaDelDia}
           </ScrollView>
         </>
       )}
-      {!isTablet ? <Fab accessibilityLabel="Nuevo evento" onPress={() => setCreando(true)} /> : null}
+      {!isTablet ? (
+        <View style={{ padding: space[4], paddingBottom: space[4] + insets.bottom, backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+          <Button label="Nuevo evento" icon={Plus} onPress={() => setCreando(true)} />
+        </View>
+      ) : null}
       {creando ? (
         <NuevoEventoSheet
           fecha={dia.fecha}

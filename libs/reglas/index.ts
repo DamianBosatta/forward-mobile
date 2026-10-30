@@ -5,7 +5,9 @@
  * con `sync:reglas` y verifica el hash con `check:reglas`. Lo que deriva del backend (tipos,
  * esquemas, códigos de error) NO vive acá: se genera en cada repo desde `openapi.json`.
  */
-export { cuitEsValido } from './cuit'
+export { canonizarCuit, cuitEsValido, formatearCuit } from './cuit'
+export { CLAVE_LARGO_MINIMO, evaluarClave, mensajesDeClave } from './clave'
+export type { CodigoRequisitoClave, RequisitoClave } from './clave'
 export {
   tieneComoMuchoDosDecimales,
   redondearDosDecimales,

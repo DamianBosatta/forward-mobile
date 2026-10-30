@@ -2,7 +2,7 @@ import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, screen, userEvent, within } from '@testing-library/react-native'
 import { CalendarioScreen } from '../CalendarioScreen'
-import { semanaDe, tituloSemana } from '../semana'
+import { rangoCorto, semanaDe, tituloSemana } from '../semana'
 import type { Precarga } from '../NuevoEventoSheet'
 
 const mockGet = jest.fn()
@@ -52,11 +52,11 @@ describe('Calendario', () => {
   it('pide la semana argentina de lunes a domingo y muestra los eventos de hoy con su estado', async () => {
     pintar()
     expect(await screen.findByText('Rendir la caja de la semana')).toBeTruthy()
-    expect(screen.getByText('Semana del 5 al 11 de octubre')).toBeTruthy()
+    expect(screen.getByText('05/10 al 11/10')).toBeTruthy()
     expect(screen.getByText('Viernes 9 · hoy')).toBeTruthy()
     expect(urls()).toContain('/api/v1/Calendario?Desde=2026-10-05&Hasta=2026-10-11')
     const cheque = screen.getByLabelText('Cheque de Distribuidora Del Sur, Vencido')
-    expect(within(cheque).getByText('Cheque recibido · $ 59.566,01')).toBeTruthy()
+    expect(within(cheque).getByText('$ 59.566,01')).toBeTruthy()
     expect(screen.getByLabelText('vie 9, 2 eventos')).toBeTruthy()
     await userEvent.press(screen.getByLabelText('lun 5, 1 evento'))
     expect(screen.getByLabelText('Llamar a Sofía, Hecho')).toBeTruthy()
@@ -67,7 +67,7 @@ describe('Calendario', () => {
     pintar()
     await screen.findByText('Rendir la caja de la semana')
     await userEvent.press(screen.getByLabelText('Semana siguiente'))
-    expect(await screen.findByText('Semana del 12 al 18 de octubre')).toBeTruthy()
+    expect(await screen.findByText('12/10 al 18/10')).toBeTruthy()
     expect(urls()).toContain('/api/v1/Calendario?Desde=2026-10-12&Hasta=2026-10-18')
   })
 
@@ -177,8 +177,21 @@ describe('Calendario', () => {
     mockGet.mockResolvedValue([evento({ clave: 'h', fecha: '2026-10-09', titulo: 'Llamar a Marta', hora: '09:30', ventaId: 'v1', ventaCodigo: 'A00341' })])
     pintar()
 
-    expect(await screen.findByText('09:30 · Recordatorio')).toBeTruthy()
+    expect(await screen.findByText('09:30')).toBeTruthy()
+    expect(screen.getByText('Recordatorio')).toBeTruthy()
     expect(screen.getByText('Agendado desde la venta A00341')).toBeTruthy()
+  })
+
+  it('un evento sin hora dice "Todo el día", el día de hoy dice "Hoy" y el título cuenta los eventos', async () => {
+    pintar()
+    expect(await screen.findByText('Rendir la caja de la semana')).toBeTruthy()
+    expect(screen.getAllByText('Todo el día')).toHaveLength(2)
+    expect(screen.getByText('Hoy')).toBeTruthy()
+    expect(screen.getByText('2 eventos')).toBeTruthy()
+  })
+
+  it('el rango de la barra superior es "dd/mm al dd/mm" aunque cruce de mes', () => {
+    expect(rangoCorto(semanaDe(Date.parse('2026-10-01T15:00:00Z')))).toBe('28/09 al 04/10')
   })
 
   it('el título de una semana que cruza de mes nombra los dos meses', () => {
@@ -195,10 +208,10 @@ describe('Calendario', () => {
 
   it('al volver a la pantalla recalcula la semana de hoy', async () => {
     pintar()
-    expect(await screen.findByText('Semana del 5 al 11 de octubre')).toBeTruthy()
+    expect(await screen.findByText('05/10 al 11/10')).toBeTruthy()
     jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-13T15:00:00Z'))
     act(() => { mockAlEnfocar?.() })
-    expect(await screen.findByText('Semana del 12 al 18 de octubre')).toBeTruthy()
+    expect(await screen.findByText('12/10 al 18/10')).toBeTruthy()
     expect(screen.getByText('Martes 13 · hoy')).toBeTruthy()
   })
 })

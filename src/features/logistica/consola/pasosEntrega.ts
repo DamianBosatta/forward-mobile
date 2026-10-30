@@ -12,13 +12,12 @@ export type Paso = 'devolucion' | 'cobro' | 'confirmar'
 
 export const PASOS: readonly Paso[] = ['devolucion', 'cobro', 'confirmar']
 
-/** "Paso 2 de 4": con "No, todo bien" la devolución no cuenta y los pasos pasan a 3 (llegué + cobro + confirmar). */
-export function posicionDePaso(paso: Paso, hayDevolucion: boolean | null): { numero: number; total: number } {
-  const sinDevolucion = hayDevolucion === false
-  const total = sinDevolucion ? 3 : 4
-  if (paso === 'confirmar') return { numero: total, total }
-  if (paso === 'cobro') return { numero: sinDevolucion ? 2 : 3, total }
-  return { numero: 2, total }
+/**
+ * "Paso 2 de 4": llegué (1) + devolución (2) + cobro (3) + confirmar (4). Con "No, todo bien" el chofer igual pasó
+ * por la pregunta de devolución, así que el total y el número de cada paso no cambian a mitad de la parada.
+ */
+export function posicionDePaso(paso: Paso): { numero: number; total: number } {
+  return { numero: PASOS.indexOf(paso) + 2, total: PASOS.length + 1 }
 }
 
 /** Paso de devolución: hay que haber elegido, y si devuelve, cargar algo válido. */
