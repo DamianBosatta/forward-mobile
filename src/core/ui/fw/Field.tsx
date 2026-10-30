@@ -11,22 +11,29 @@ interface FieldProps extends Omit<TextInputProps, 'style' | 'placeholderTextColo
   alignRight?: boolean
   /** Con `secureTextEntry`: agrega el ojo para ver u ocultar el texto (lámina perfil--clave). */
   verOcultar?: boolean
+  /** Palabra en rojo junto a la etiqueta ("obligatorio"): el rojo nunca va solo. */
+  labelSuffix?: string
+  /** Borde rojo sin mensaje debajo (el motivo ya está en `labelSuffix`). */
+  invalid?: boolean
 }
 
 const etiqueta = { ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600' as const }
 
 /** Campo de la lámina F4: etiqueta 14/600, alto 48, relleno superficie-2, foco con la marca y error en rojo. */
-export function Field({ label, help, error, alignRight, verOcultar, secureTextEntry, onFocus, onBlur, ...input }: FieldProps) {
+export function Field({ label, help, error, alignRight, verOcultar, labelSuffix, invalid, secureTextEntry, onFocus, onBlur, ...input }: FieldProps) {
   const colors = useColors()
   const [foco, setFoco] = useState(false)
   const colorError = colors.chip.anulado.text
   const [visible, setVisible] = useState(false)
-  const conMarca = foco || !!error
+  const conMarca = foco || !!error || !!invalid
   const ojo = !!verOcultar && !!secureTextEntry
 
   return (
     <View style={{ gap: space[1] }}>
-      <Text style={{ ...etiqueta, color: colors.text }}>{label}</Text>
+      <Text style={{ ...etiqueta, color: colors.text }}>
+        {label}
+        {labelSuffix ? <Text style={{ color: colorError }}>{` ${labelSuffix}`}</Text> : null}
+      </Text>
       <View>
       <TextInput
         {...input}
@@ -47,7 +54,7 @@ export function Field({ label, help, error, alignRight, verOcultar, secureTextEn
           height: space[12],
           borderRadius: radii.campo,
           borderWidth: conMarca ? 2 : 1,
-          borderColor: error ? colorError : foco ? colors.brand : colors.border,
+          borderColor: error || invalid ? colorError : foco ? colors.brand : colors.border,
           backgroundColor: conMarca ? colors.surface : colors.surface2,
           paddingHorizontal: space[3] - (conMarca ? 1 : 0),
           paddingRight: ojo ? space[12] : space[3] - (conMarca ? 1 : 0),
