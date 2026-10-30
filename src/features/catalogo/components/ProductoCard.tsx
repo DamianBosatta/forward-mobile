@@ -4,7 +4,7 @@ import { Package } from 'lucide-react-native'
 import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { StatusChip, formatImporte } from '@/core/ui/fw'
 import { getFullImageUrl } from '@/libs/api-client/media'
-import { chipDeStock, detalleDeTarjeta, type ProductoDeTarjeta } from '../lib/presentacion'
+import { chipDeTarjeta, detalleDeTarjeta, textoVariacion, type ProductoDeTarjeta } from '../lib/presentacion'
 
 interface ProductoCardProps {
   producto: ProductoDeTarjeta
@@ -15,11 +15,17 @@ interface ProductoCardProps {
   onPress: () => void
 }
 
-/** Tarjeta del catálogo de consulta (lámina CatalogoConsulta): foto, código, chip, nombre y precio de lista. */
+/**
+ * Tarjeta del catálogo de consulta (lámina CatalogoConsulta): foto, código, chip, nombre y precio de lista. El chip lleva
+ * el color de la novedad (verde nuevo, ámbar precio nuevo, rojo sin stock) y un precio que cambió muestra la variación.
+ */
 export function ProductoCard({ producto, disponible, grilla, seleccionado, onPress }: ProductoCardProps) {
   const c = useColors()
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
-  const chip = chipDeStock(disponible)
+  const chip = chipDeTarjeta(producto.novedad, disponible)
+  const variacion = textoVariacion(producto.variacionPorcentaje)
+  const sinStock = producto.novedad === 'SinStock'
+  const conNovedad = !!producto.novedad && producto.novedad !== 'Ninguna'
   const detalle = detalleDeTarjeta(producto)
   const foto = getFullImageUrl(producto.imageUrl)
   const ladoFoto = grilla ? undefined : 72
@@ -28,9 +34,12 @@ export function ProductoCard({ producto, disponible, grilla, seleccionado, onPre
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${producto.nombre}, código ${producto.codigoPropio}`}
+      accessibilityLabel={[`${producto.nombre}, código ${producto.codigoPropio}`, conNovedad ? chip?.label : null, variacion].filter(Boolean).join(', ')}
       accessibilityState={{ selected: !!seleccionado }}
-      style={({ pressed }) => ({
+      // Estilo fijo y no una función de `pressed`: con NativeWind 4 la función se pierde (sin fila en la lista ni
+      // flex en la grilla). El toque se marca con el ripple nativo.
+      android_ripple={{ color: c.surface2 }}
+      style={{
         flex: grilla ? 1 : undefined,
         flexDirection: grilla ? 'column' : 'row',
         gap: space[3],
@@ -39,9 +48,8 @@ export function ProductoCard({ producto, disponible, grilla, seleccionado, onPre
         backgroundColor: seleccionado ? c.brandSoft : c.surface,
         borderWidth: 2,
         borderColor: seleccionado ? c.brand : c.surface,
-        opacity: pressed ? 0.85 : 1,
         ...sombra,
-      })}
+      }}
     >
       <View
         style={{
@@ -71,10 +79,21 @@ export function ProductoCard({ producto, disponible, grilla, seleccionado, onPre
           {producto.nombre}
         </Text>
         {detalle ? <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{detalle}</Text> : null}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
+        {/* wrap + marginLeft auto: en la grilla el importe baja de renglón y queda a la derecha. */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: space[2] }}>
           <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Precio de lista</Text>
-          <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(producto.precioVenta)}</Text>
+          <Text style={[typeScale.cuerpoDestacado, importe, { marginLeft: 'auto', color: sinStock ? c.textSecondary : c.text }]}>{formatImporte(producto.precioVenta)}</Text>
         </View>
+        {variacion ? (
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'baseline', gap: space[2] }}>
+            {producto.precioAnterior != null ? (
+              <Text style={[typeScale.secundario, importe, { color: c.textSecondary, textDecorationLine: 'line-through' }]}>
+                {formatImporte(producto.precioAnterior)}
+              </Text>
+            ) : null}
+            <Text style={[typeScale.etiqueta, { color: c.chip.porAutorizar.text }]}>{variacion}</Text>
+          </View>
+        ) : null}
       </View>
     </Pressable>
   )

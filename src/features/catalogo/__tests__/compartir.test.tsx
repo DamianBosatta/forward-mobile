@@ -3,6 +3,7 @@ import { render, screen, userEvent, waitFor } from '@testing-library/react-nativ
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { FichaProducto } from '../components/FichaProducto'
 import { BotonCatalogoPdf } from '../components/BotonCatalogoPdf'
+import { novedadesDesde } from '../lib/presentacion'
 
 jest.mock('@/core/api/client', () => ({ API_URL: 'http://api.test', api: { get: jest.fn(), post: jest.fn() } }))
 const mockDownload = jest.fn()
@@ -53,22 +54,42 @@ describe('Mandar foto', () => {
 })
 
 describe('Catálogo en PDF', () => {
-  it('pide el PDF con la búsqueda y los filtros de la pantalla', async () => {
+  it('pide el PDF con la búsqueda, los filtros de la pantalla y, por defecto, en tarjetas con novedades de 30 días', async () => {
+    const user = userEvent.setup()
     conCliente(<BotonCatalogoPdf busqueda=" sap " soloConStock conOferta />)
-    await userEvent.setup().press(screen.getByText('Compartir catálogo en PDF'))
+    await user.press(screen.getByText('Compartir catálogo en PDF'))
+    await user.press(await screen.findByText('Generar PDF en tarjeta'))
     await waitFor(() => expect(mockSharePdf).toHaveBeenCalledTimes(1))
     const url = new URL(mockSharePdf.mock.calls[0][0] as string)
     expect(url.pathname).toBe('/api/v1/catalogo/pdf')
     expect(url.searchParams.get('SearchTerm')).toBe('sap')
     expect(url.searchParams.get('SoloDisponibles')).toBe('true')
     expect(url.searchParams.get('ConOferta')).toBe('true')
+    expect(url.searchParams.get('Formato')).toBe('Tarjeta')
+    expect(url.searchParams.get('NovedadesDesde')).toBe(novedadesDesde(30))
     expect(mockSharePdf.mock.calls[0][1]).toMatch(/^catalogo-.*\.pdf$/)
+  })
+
+  it('en lista y con novedades de 7 días', async () => {
+    const user = userEvent.setup()
+    conCliente(<BotonCatalogoPdf busqueda="" soloConStock={false} />)
+    await user.press(screen.getByText('Compartir catálogo en PDF'))
+    await user.press(await screen.findByText('Lista'))
+    await user.press(screen.getByText('7 días'))
+    await user.press(screen.getByText('Generar PDF en lista'))
+    await waitFor(() => expect(mockSharePdf).toHaveBeenCalledTimes(1))
+    const url = new URL(mockSharePdf.mock.calls[0][0] as string)
+    expect(url.searchParams.get('Formato')).toBe('Lista')
+    expect(url.searchParams.get('NovedadesDesde')).toBe(novedadesDesde(7))
+    expect(url.searchParams.get('SoloDisponibles')).toBeNull()
   })
 
   it('avisa si no se pudo generar', async () => {
     mockSharePdf.mockResolvedValue({ ok: false, reason: 'network', message: 'Error al descargar el archivo (500).' })
+    const user = userEvent.setup()
     conCliente(<BotonCatalogoPdf busqueda="" soloConStock={false} />)
-    await userEvent.setup().press(screen.getByText('Compartir catálogo en PDF'))
+    await user.press(screen.getByText('Compartir catálogo en PDF'))
+    await user.press(await screen.findByText('Generar PDF en tarjeta'))
     expect(await screen.findByText('Error al descargar el archivo (500).')).toBeTruthy()
   })
 })

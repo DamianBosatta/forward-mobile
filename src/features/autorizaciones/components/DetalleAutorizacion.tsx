@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Button, Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
+import { Button, Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, formatPorcentaje } from '@/core/ui/fw'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useAutorizacionPreview, useVenta } from '@/libs/api-client/ventas'
 import { useSocio } from '@/libs/api-client/socios'
@@ -13,11 +13,6 @@ import { DecisionSheet, type Decision } from './DecisionSheet'
 
 /** El servidor manda el estado como número o como nombre según el endpoint. */
 const POR_AUTORIZAR = ['9', 'PendienteAutorizacion']
-
-/** "26,7 %"; sin dato, "—" (un margen que no llegó no es 0). */
-export function formatPorcentaje(valor: number | null | undefined): string {
-  return valor == null || !Number.isFinite(valor) ? '—' : `${valor.toFixed(1).replace('.', ',')} %`
-}
 
 interface Props {
   id: string

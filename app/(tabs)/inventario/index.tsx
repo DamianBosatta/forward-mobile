@@ -19,7 +19,7 @@ import { FichaProducto } from '@/features/catalogo/components/FichaProducto'
 import { EscanerCodigo } from '@/features/catalogo/components/EscanerCodigo'
 import { SelectorLineaFamilia } from '@/features/catalogo/components/SelectorLineaFamilia'
 import { BotonCatalogoPdf } from '@/features/catalogo/components/BotonCatalogoPdf'
-import { filtrarPorStock } from '@/features/catalogo/lib/presentacion'
+import { DIAS_DE_NOVEDADES, filtrarPorStock } from '@/features/catalogo/lib/presentacion'
 import { CampoBusqueda } from '@/features/catalogo/components/CampoBusqueda'
 
 /** Ancho desde el que la grilla y la ficha van lado a lado (plan §8, lámina TabCatalogoConsulta). */
@@ -91,6 +91,7 @@ function CatalogoConsulta() {
         <Text style={[typeScale.secundario, { color: c.text, fontFamily: FONT.semibold, fontWeight: '600' }]}>
           {cat.totalCount != null ? `MOSTRANDO ${productos.length} DE ${cat.totalCount}` : ' '}
         </Text>
+        <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{`Novedades de los últimos ${DIAS_DE_NOVEDADES} días`}</Text>
       </View>
       {cat.isLoading ? (
         <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />

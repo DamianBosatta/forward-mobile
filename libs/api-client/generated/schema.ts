@@ -926,6 +926,7 @@ export interface paths {
                     ConOferta?: boolean;
                     OrdenarPor?: components["schemas"]["CatalogoOrdenarPor"];
                     Desc?: boolean;
+                    NovedadesDesde?: string;
                     PageNumber?: number;
                     PageSize?: number;
                 };
@@ -19904,6 +19905,11 @@ export interface components {
             /** Format: double */
             precioConOferta?: number | null;
             fragancias: string[];
+            novedad: components["schemas"]["MarcaNovedad"];
+            /** Format: double */
+            precioAnterior?: number | null;
+            /** Format: double */
+            variacionPorcentaje?: number | null;
         };
         CatalogoComercialItemDtoPaginatedResponse: {
             /** Format: int32 */
@@ -22673,6 +22679,8 @@ export interface components {
             /** Format: int32 */
             cantidad?: number;
         };
+        /** @enum {string} */
+        MarcaNovedad: "Ninguna" | "PrecioNuevo" | "Nuevo" | "SinStock";
         MarcarNotificacionesLeidasCommand: {
             ids?: string[] | null;
             tipo?: components["schemas"]["TipoNotificacion"];

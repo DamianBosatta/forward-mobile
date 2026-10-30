@@ -1,9 +1,22 @@
-import type { ChipInfo } from '@/core/ui/fw'
+import { formatPorcentaje, type ChipInfo } from '@/core/ui/fw'
 import type { Producto } from '@/libs/api-client/types'
+import type { components } from '@/libs/api-client/generated/schema'
+import { diaArgentina } from '@/src/utils/date'
+
+/** La marca de color que decide el servidor (sin stock > nuevo > precio nuevo), la misma del PDF. */
+export type MarcaNovedad = components['schemas']['MarcaNovedad']
+
+/** Lo que dibuja la tarjeta además de la ficha: la marca de novedad y cuánto cambió el precio de lista. */
+export interface NovedadDeTarjeta {
+  novedad?: MarcaNovedad
+  precioAnterior?: number | null
+  variacionPorcentaje?: number | null
+}
 
 /** Lo que dibuja la tarjeta del catálogo: sale de la ficha de /catalogo (no hay venta mínima ahí). */
 export type ProductoDeTarjeta = Pick<Producto, 'id' | 'nombre' | 'codigoPropio' | 'precioVenta' | 'imageUrl'> &
-  Partial<Pick<Producto, 'esPadreDeVariantes' | 'cantidadFragancias' | 'ventaMinimaUnidades'>>
+  Partial<Pick<Producto, 'esPadreDeVariantes' | 'cantidadFragancias' | 'ventaMinimaUnidades'>> &
+  NovedadDeTarjeta
 
 /** Hay stock / Sin stock, con el booleano que decide el servidor. Sin dato, sin chip: no se inventa. */
 export function chipDeStock(puedeVenderse: boolean | null | undefined): ChipInfo | null {
@@ -41,4 +54,37 @@ export function filtrarPorStock<T extends { id: string }>(
   soloConStock: boolean,
 ): T[] {
   return soloConStock ? productos.filter((p) => disponible.get(p.id) === true) : productos
+}
+
+/** Ventana de novedades de la pantalla del catálogo: los últimos 30 días. */
+export const DIAS_DE_NOVEDADES = 30
+
+/** Ventanas que ofrece el PDF del catálogo. */
+export const VENTANAS_DE_NOVEDADES = [7, 30, 90] as const
+
+const MS_POR_DIA = 24 * 60 * 60 * 1000
+
+/** Primer día de las novedades (YYYY-MM-DD, día argentino): hoy menos `dias`. Argentina no tiene horario de verano. */
+export function novedadesDesde(dias: number, ahoraMs: number = Date.now()): string {
+  return diaArgentina(ahoraMs - dias * MS_POR_DIA)
+}
+
+const CHIP_DE_NOVEDAD: Partial<Record<MarcaNovedad, ChipInfo>> = {
+  Nuevo: { estado: 'entregado', label: 'Nuevo' },
+  PrecioNuevo: { estado: 'porAutorizar', label: 'Precio nuevo' },
+  SinStock: { estado: 'anulado', label: 'Sin stock' },
+}
+
+/**
+ * Chip de la tarjeta: verde nuevo, ámbar precio nuevo, rojo sin stock (lámina Catálogo · tarjetas). La prioridad
+ * la decide el servidor. Sin novedad, el chip de stock de siempre.
+ */
+export function chipDeTarjeta(novedad: MarcaNovedad | null | undefined, disponible: boolean | null | undefined): ChipInfo | null {
+  return (novedad && CHIP_DE_NOVEDAD[novedad]) || chipDeStock(disponible)
+}
+
+/** "▲ 8,5 %" o "▼ 3,2 %"; null si el precio de lista no cambió. */
+export function textoVariacion(variacionPorcentaje: number | null | undefined): string | null {
+  if (variacionPorcentaje == null || !Number.isFinite(variacionPorcentaje) || variacionPorcentaje === 0) return null
+  return `${variacionPorcentaje > 0 ? '▲' : '▼'} ${formatPorcentaje(Math.abs(variacionPorcentaje))}`
 }

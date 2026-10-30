@@ -245,20 +245,28 @@ export function useToggleProductoStatus() {
   })
 }
 
+/** Tarjeta (foto grande, para mostrar) o Lista (compacto, para precios). El servidor usa Lista si no viene. */
+export type FormatoCatalogoPdf = components['schemas']['FormatoCatalogoPdf']
+
 export interface CatalogoPdfFiltros {
   search?: string
   soloDisponibles?: boolean
   conOferta?: boolean
   categoriaId?: string
+  formato?: FormatoCatalogoPdf
+  /** YYYY-MM-DD (día argentino): el PDF marca nuevo, precio nuevo y sin stock desde ese día. */
+  novedadesDesde?: string
 }
 
 /** URL del PDF del catálogo con los mismos filtros que la pantalla (GET /catalogo/pdf, MOD_CATALOGO). */
-export function getCatalogoPdfUrl({ search, soloDisponibles, conOferta, categoriaId }: CatalogoPdfFiltros): string {
+export function getCatalogoPdfUrl({ search, soloDisponibles, conOferta, categoriaId, formato, novedadesDesde }: CatalogoPdfFiltros): string {
   const params = new URLSearchParams()
   if (search?.trim()) params.set('SearchTerm', search.trim())
   if (soloDisponibles) params.set('SoloDisponibles', 'true')
   if (conOferta) params.set('ConOferta', 'true')
   if (categoriaId) params.set('CategoriaId', categoriaId)
+  if (formato) params.set('Formato', formato)
+  if (novedadesDesde) params.set('NovedadesDesde', novedadesDesde)
   const query = params.toString()
   return `${API_URL}/api/v1/catalogo/pdf${query ? `?${query}` : ''}`
 }
