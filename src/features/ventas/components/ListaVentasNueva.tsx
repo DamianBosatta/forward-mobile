@@ -3,10 +3,11 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, SectionList, Text, Vie
 import { useRouter } from 'expo-router'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import {
-  DocumentCard, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, useMenuLeading,
+  DocumentCard, Field, Notice, Segmented, StatusChip, TopBar, TwoPane, chipForEstado, useMenuLeading,
   type SegmentedOption,
 } from '@/core/ui/fw'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { FiltroChip } from '@/core/ui/fw/FiltroChip'
+import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import type { Venta } from '@/libs/api-client'
 import type { BorradorVenta } from '@/libs/api-client/ventas'
@@ -18,12 +19,12 @@ import { Fab } from '@/core/ui/fw/Fab'
 import { motivosDe } from '@/features/autorizaciones/lib/motivos'
 import { useVentasListaNueva, type FiltroEstado, type PeriodoVentas, type PestanaVentas } from '../hooks/useVentasListaNueva'
 
-const PESTANAS: { key: PestanaVentas; label: string }[] = [
-  { key: 'presupuestos', label: 'Presupuestos' },
-  { key: 'pedidos', label: 'Pedidos' },
-  { key: 'borradores', label: 'Borradores' },
+const PESTANAS: SegmentedOption<PestanaVentas>[] = [
+  { value: 'pedidos', label: 'Pedidos' },
+  { value: 'presupuestos', label: 'Presupuestos' },
+  { value: 'borradores', label: 'Borradores' },
 ]
-const PERIODOS: SegmentedOption<PeriodoVentas>[] = [
+const PERIODOS: { value: PeriodoVentas; label: string }[] = [
   { value: 'hoy', label: 'Hoy' },
   { value: '7d', label: '7 días' },
   { value: '30d', label: '30 días' },
@@ -103,10 +104,13 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
   const esBorradores = l.pestana === 'borradores'
 
+  const contadorPorAutorizar = l.estado === 'todos' && l.totales && l.totales.porAutorizar > 0 ? l.totales.porAutorizar : null
   const filtros = (
     <View style={{ gap: space[3], paddingBottom: space[2] }}>
       <Field label="Buscar" placeholder="Cliente o número" value={l.busqueda} onChangeText={l.setBusqueda} autoCorrect={false} />
-      <Segmented accessibilityLabel="Período" options={PERIODOS} value={l.periodo} onChange={l.setPeriodo} />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityLabel="Período" contentContainerStyle={{ gap: space[2] }}>
+        {PERIODOS.map((p) => <FiltroChip key={p.value} label={p.label} activo={p.value === l.periodo} onPress={() => l.setPeriodo(p.value)} />)}
+      </ScrollView>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" accessibilityLabel="Estado" contentContainerStyle={{ gap: space[2] }}>
         {ESTADOS.map((e) => {
           const sel = e.value === l.estado
@@ -114,15 +118,28 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
             <Pressable
               key={e.value}
               accessibilityRole="radio"
+              accessibilityLabel={e.label}
               accessibilityState={{ selected: sel }}
               onPress={() => l.setEstado(e.value)}
-              style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: sel ? c.brand : c.border, backgroundColor: sel ? c.brandSoft : c.surface }}
+              style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: space[1], justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: sel ? c.brand : c.border, backgroundColor: sel ? c.brandSoft : c.surface }}
             >
               <Text style={[typeScale.secundario, { color: sel ? c.brandInk : c.text }]}>{e.label}</Text>
+              {e.value === 'PendienteAutorizacion' && contadorPorAutorizar ? (
+                <Text style={[typeScale.secundario, cifras, { color: c.textSecondary }]}>{contadorPorAutorizar}</Text>
+              ) : null}
             </Pressable>
           )
         })}
       </ScrollView>
+      {l.totales ? (
+        <View testID="totales-lista" style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space[3], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+          <View style={{ flexShrink: 1 }}>
+            <Text style={secundario}>{l.totales.rotulo}</Text>
+            <Text style={[typeScale.titulo, cifras, { color: c.text }]}>{l.totales.importe}</Text>
+          </View>
+          {l.totales.porAutorizar > 0 ? <StatusChip estado="porAutorizar" label={`${l.totales.porAutorizar} por autorizar`} /> : null}
+        </View>
+      ) : null}
       {l.contador ? <Text style={secundario}>{l.contador}</Text> : null}
     </View>
   )
@@ -174,11 +191,10 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar
-        title="Ventas"
-        leading={leading}
-        tabs={PESTANAS.map((p) => ({ label: p.label, selected: p.key === l.pestana, onPress: () => { l.setPestana(p.key); setElegida(null) } }))}
-      />
+      <TopBar title="Ventas" leading={leading} />
+      <View style={{ paddingHorizontal: space[4], paddingTop: space[3] }}>
+        <Segmented accessibilityLabel="Pestaña" options={PESTANAS} value={l.pestana} onChange={(p) => { l.setPestana(p); setElegida(null) }} />
+      </View>
       <TwoPane
         list={esBorradores ? listaBorradores : listaVentas}
         detail={isTabletLandscape && elegida ? detalle(elegida, () => setElegida(null)) : null}
