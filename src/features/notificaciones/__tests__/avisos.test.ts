@@ -5,7 +5,7 @@
  */
 import { existsSync, readdirSync, readFileSync } from 'fs'
 import { join, resolve } from 'path'
-import { RUTA_POR_DESTINO, avisoDeTipo, rutaDeAccion, type AccionDestino } from '../avisos'
+import { AVISO_POR_TIPO, GRUPOS_DE_AVISOS, RUTA_POR_DESTINO, avisoDeTipo, grupoDeTipo, rutaDeAccion, type AccionDestino } from '../avisos'
 
 const RAIZ = resolve(__dirname, '../../../..')
 const SCHEMA = readFileSync(join(RAIZ, 'libs/api-client/generated/schema.ts'), 'utf8')
@@ -68,5 +68,13 @@ describe('avisos del servidor', () => {
     expect(rutaDeAccion({ destino: 'constructor' as AccionDestino, etiqueta: 'Ver' })).toBeNull()
     expect(avisoDeTipo('toString')).toBeNull()
     expect(rutaDeAccion(null)).toBeNull()
+  })
+})
+
+describe('grupoDeTipo', () => {
+  it('cada tipo conocido cae en uno de los temas de las preferencias y uno desconocido va a "Otros"', () => {
+    for (const tipo of Object.keys(AVISO_POR_TIPO)) expect(GRUPOS_DE_AVISOS).toContain(grupoDeTipo(tipo))
+    expect(grupoDeTipo('TipoDeUnaVersionNueva')).toBe('Otros')
+    expect(grupoDeTipo('toString')).toBe('Otros')
   })
 })

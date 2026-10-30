@@ -85,3 +85,9 @@ export function mesDe(ms: number, meses = 0): MesGrilla {
     semanas: Array.from({ length: cantidad / 7 }, (_, i) => dias.slice(i * 7, i * 7 + 7)),
   }
 }
+
+/** "26/10 al 01/11": el rango de la semana en la barra superior (lámina M16). */
+export function rangoCorto(dias: DiaSemana[]): string {
+  const [a, b] = [dias[0], dias[dias.length - 1]]
+  return `${dos(a.numero)}/${dos(a.mes + 1)} al ${dos(b.numero)}/${dos(b.mes + 1)}`
+}

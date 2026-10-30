@@ -3,15 +3,16 @@ import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-n
 import { useRouter } from 'expo-router'
 import { CheckCheck, Settings } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
-import { Button, FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
+import { Button, FormContainer, Notice, Segmented, TopBar, useMenuLeading } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { CalendarioAvisosTabs } from '@/core/ui/fw/CalendarioAvisosTabs'
 import { useBandejaAvisos } from '@/libs/api-client/notificaciones'
 import { AvisoFila } from './AvisoFila'
-import { cuandoFue, destinoDelAviso } from './bandeja'
+import { conEncabezadosDeDia, destinoDelAviso, horaDelAviso } from './bandeja'
 import { useAbrirAviso } from './useAbrirAviso'
 
+type Filtro = 'todos' | 'sinLeer'
 const mensajeDe = (e: unknown, porDefecto: string) => (e instanceof Error && e.message ? e.message : porDefecto)
 
 /** Bandeja de avisos: lo que el servidor manda al usuario, más nuevo primero, de a páginas. */
@@ -25,6 +26,7 @@ export function BandejaAvisos() {
   const avisos = q.data?.pages.flatMap((p) => p.items) ?? []
   const noLeidas = q.data?.pages[0]?.noLeidas ?? 0
   const ahora = Date.now()
+  const filas = conEncabezadosDeDia(avisos, ahora)
   const sinRed = q.isError && esFallaDeRed(q.error)
   // Sin conexión con avisos ya guardados: se siguen viendo, con un aviso; cualquier otro error los oculta como siempre.
   const verAvisos = !q.isError || (sinRed && avisos.length > 0)
@@ -52,27 +54,38 @@ export function BandejaAvisos() {
           { icon: CheckCheck, accessibilityLabel: 'Marcar todas como leídas', onPress: () => marcar.mutate(undefined), disabled: noLeidas === 0 || marcar.isPending },
           { icon: Settings, accessibilityLabel: 'Preferencias de avisos', onPress: () => router.push('/avisos/preferencias' as never) },
         ]}
-        tabs={[
-          { label: 'Todos', selected: !soloNoLeidas, onPress: () => setSoloNoLeidas(false) },
-          { label: 'Sin leer', selected: soloNoLeidas, onPress: () => setSoloNoLeidas(true) },
-        ]}
       />
       <CalendarioAvisosTabs actual="avisos" sinLeer={noLeidas} onElegir={() => router.push('/calendario' as never)} />
       <FlatList
-        data={verAvisos ? avisos : []}
-        keyExtractor={(a) => a.id}
+        data={verAvisos ? filas : []}
+        keyExtractor={(f) => f.clave}
         contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] }}
         refreshControl={<RefreshControl refreshing={q.isRefetching && !q.isFetchingNextPage} onRefresh={() => void q.refetch()} />}
         ListHeaderComponent={
-          <>
+          <View style={{ gap: space[3] }}>
+            <FormContainer>
+              <Segmented<Filtro>
+                accessibilityLabel="Filtrar avisos"
+                value={soloNoLeidas ? 'sinLeer' : 'todos'}
+                onChange={(v) => setSoloNoLeidas(v === 'sinLeer')}
+                options={[
+                  { value: 'todos', label: 'Todos' },
+                  { value: 'sinLeer', label: noLeidas > 0 ? `Sin leer · ${noLeidas}` : 'Sin leer' },
+                ]}
+              />
+            </FormContainer>
             {sinRed && verAvisos ? <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice> : null}
             {marcar.isError ? <Notice tone="peligro">{mensajeDe(marcar.error, 'No se pudo marcar como leído.')}</Notice> : null}
-          </>
+          </View>
         }
         ListEmptyComponent={<FormContainer>{vacio}</FormContainer>}
         renderItem={({ item }) => (
           <FormContainer>
-            <AvisoFila aviso={item} destino={destinoDelAviso(item.accion)} cuando={cuandoFue(item.fechaCreacion, ahora)} onPress={() => abrir(item)} />
+            {item.tipo === 'dia' ? (
+              <Text accessibilityRole="header" style={{ ...typeScale.etiqueta, color: c.textSecondary, marginTop: space[2] }}>{item.titulo}</Text>
+            ) : (
+              <AvisoFila aviso={item.aviso} destino={destinoDelAviso(item.aviso.accion)} cuando={horaDelAviso(item.aviso.fechaCreacion)} onPress={() => abrir(item.aviso)} />
+            )}
           </FormContainer>
         )}
         ListFooterComponent={

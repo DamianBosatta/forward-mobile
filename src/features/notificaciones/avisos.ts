@@ -43,6 +43,48 @@ export const AVISO_POR_TIPO: Record<TipoNotificacion, { etiqueta: string; Icono:
   RemitosSinFacturaAlCierre: { etiqueta: 'Remitos sin facturar al cierre del mes', Icono: FileWarning },
 }
 
+export const GRUPOS_DE_AVISOS = ['Ventas', 'Cobros y pagos', 'Calendario', 'Facturación y stock', 'Clientes y cargas'] as const
+export type GrupoDeAvisos = (typeof GRUPOS_DE_AVISOS)[number]
+
+/**
+ * En qué tema se muestra cada tipo en las preferencias. El servidor no lo manda: es una tabla del cliente
+ * (lámina M18). `Record` exhaustivo: un tipo nuevo en el contrato sin grupo acá no compila.
+ */
+export const GRUPO_POR_TIPO: Record<TipoNotificacion, GrupoDeAvisos> = {
+  VentaPendienteAutorizacion: 'Ventas',
+  VentaAutorizada: 'Ventas',
+  VentaRechazadaAutorizacion: 'Ventas',
+  VentaNoEntregada: 'Ventas',
+  VentaRegularizadaPorCobro: 'Ventas',
+  PedidoEditadoPorDeposito: 'Ventas',
+  PresupuestoPorVencer: 'Ventas',
+  EntregasPasadasAlProximoDia: 'Ventas',
+  ChequePorVencer: 'Cobros y pagos',
+  PagoProveedorPorVencer: 'Cobros y pagos',
+  PagoProveedorVencido: 'Cobros y pagos',
+  CajaSinCerrar: 'Cobros y pagos',
+  VencimientoCalendario: 'Calendario',
+  RecordatorioPersonal: 'Calendario',
+  ResumenSemanal: 'Calendario',
+  ResumenMensual: 'Calendario',
+  FiscalSuperaStockReal: 'Facturación y stock',
+  TalonarioRemitoPorVencer: 'Facturación y stock',
+  TalonarioRemitoPorAgotarse: 'Facturación y stock',
+  RemitosSinFacturaAntesDelCierre: 'Facturación y stock',
+  RemitosEntregadosSinFactura: 'Facturación y stock',
+  RemitosSinFacturaAlCierre: 'Facturación y stock',
+  SocioProvisorioPorVencer: 'Clientes y cargas',
+  SocioDesactivadoAutomaticamente: 'Clientes y cargas',
+  SolicitudCambioSocio: 'Clientes y cargas',
+  SolicitudCambioResuelta: 'Clientes y cargas',
+  ImportacionCompletada: 'Clientes y cargas',
+}
+
+/** Tema de un tipo; un tipo que esta versión no conoce va a "Otros". */
+export function grupoDeTipo(tipo: string): GrupoDeAvisos | 'Otros' {
+  return Object.prototype.hasOwnProperty.call(GRUPO_POR_TIPO, tipo) ? GRUPO_POR_TIPO[tipo as TipoNotificacion] : 'Otros'
+}
+
 /**
  * La tabla única `AccionDestino → ruta de la app`. El servidor dice ADÓNDE en términos del
  * negocio y cada cliente decide cómo llegar. `null` = mobile no tiene esa pantalla (o es una
