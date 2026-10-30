@@ -1,6 +1,6 @@
 import React from 'react'
 import { Text, View } from 'react-native'
-import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
+import { importe as cifras, radii, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { formatImporte } from '@/core/ui/fw'
 
 interface PulsoProps {
@@ -18,6 +18,11 @@ const cantidad = (n: number | null) => (n == null ? '—' : String(n))
 /** El pulso del negocio en 5 segundos (lámina inicio-general): ventas del día en grande y cuatro cifras de apoyo. */
 export function PulsoDelNegocio({ ventasDelDia, cantidadVentas, pedidosPendientes, rutasActivas, meDeben, debo }: PulsoProps) {
   const c = useColors()
+  // Claro: tarjeta oscura (barra). Oscuro: la barra es del color del fondo y la tarjeta se perdía; usa la superficie con borde de la lámina.
+  const oscuro = useIsDark()
+  const hero = oscuro
+    ? { fondo: c.surface, borde: c.border, etiqueta: c.textSecondary, cifra: c.text }
+    : { fondo: c.topBar, borde: c.topBar, etiqueta: c.onTopBar, cifra: c.onTopBarStrong }
   const tarjeta = { padding: space[4], gap: space[1], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }
   const ventas = cantidadVentas == null ? null : `${cantidadVentas} ${cantidadVentas === 1 ? 'venta' : 'ventas'}`
   return (
@@ -25,11 +30,12 @@ export function PulsoDelNegocio({ ventasDelDia, cantidadVentas, pedidosPendiente
       <View
         accessible
         accessibilityLabel={`Ventas del día: ${formatImporte(ventasDelDia)}${ventas ? `, ${ventas}` : ''}`}
-        style={[tarjeta, { backgroundColor: c.topBar, borderColor: c.topBar }]}
+        testID="pulso-hero"
+        style={[tarjeta, { backgroundColor: hero.fondo, borderColor: hero.borde }]}
       >
-        <Text style={[typeScale.secundario, { color: c.onTopBar }]}>Ventas del día</Text>
-        <Text style={[typeScale.titulo, cifras, { color: c.onTopBarStrong }]} adjustsFontSizeToFit numberOfLines={1}>{formatImporte(ventasDelDia)}</Text>
-        {ventas ? <Text style={[typeScale.secundario, { color: c.onTopBar }]}>{ventas}</Text> : null}
+        <Text style={[typeScale.secundario, { color: hero.etiqueta }]}>Ventas del día</Text>
+        <Text style={[typeScale.titulo, cifras, { color: hero.cifra }]} adjustsFontSizeToFit numberOfLines={1}>{formatImporte(ventasDelDia)}</Text>
+        {ventas ? <Text style={[typeScale.secundario, { color: hero.etiqueta }]}>{ventas}</Text> : null}
       </View>
       <View style={{ flexDirection: 'row', gap: space[3] }}>
         <Cifra etiqueta="Pedidos pendientes" valor={cantidad(pedidosPendientes)} />
