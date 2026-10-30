@@ -49,10 +49,30 @@ beforeEach(() => {
 })
 
 describe('Autorizar venta: el detalle', () => {
+  it('la tarjeta de arriba lleva la dirección como título y "cliente · vendedor · hace N" (lámina AutorizarVenta)', async () => {
+    permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+    const hace3h = new Date(Date.now() - 3 * 3600_000).toISOString()
+    const PENDIENTES = [{ id: 'v1', direccionCliente: 'Gral. Paz 10450', nombreFantasiaCliente: 'Limpieza Total', fechaPendiente: hace3h }]
+    mockGet.mockImplementation((url: string) =>
+      Promise.resolve(url.endsWith('autorizacion-preview') ? PREVIEW : url.endsWith('pendientes-autorizacion') ? PENDIENTES : VENTA))
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={qc}><DetalleAutorizacion id="v1" /></QueryClientProvider>)
+
+    expect(await screen.findByText('Gral. Paz 10450')).toBeTruthy()
+    expect(screen.getByText(/^Limpieza Total · Lucía Ferreyra · hace/)).toBeTruthy()
+  })
+
+  it('sin la fila de la bandeja, el título es el nombre del cliente y no se inventa la dirección', async () => {
+    permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+    pintar()
+    expect(await screen.findByText('Gral. Paz 10450 - Limpieza Total')).toBeTruthy()
+    expect(screen.getByText('Lucía Ferreyra')).toBeTruthy()
+  })
+
   it('muestra todos los motivos y el del vendedor, las líneas y los totales', async () => {
     permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
     pintar()
-    expect(await screen.findByText('Autorizar A00428')).toBeTruthy()
+    expect(await screen.findByText('A00428')).toBeTruthy()
     expect(screen.getByText(/margen en amarillo/)).toBeTruthy()
     expect(screen.getByText(/Falta stock/)).toBeTruthy()
     expect(screen.getByText('Motivo del vendedor: «Entra el martes»')).toBeTruthy()
@@ -109,7 +129,7 @@ describe('Autorizar venta: el detalle', () => {
       })
       expect(await screen.findByText('• Sin stock: Saphirus Textil (faltan 24 u.)')).toBeTruthy()
       expect(screen.getByText('Motivo del vendedor: «Entra el martes»')).toBeTruthy()
-      await userEvent.press(screen.getByRole('button', { name: 'Autorizar' }))
+      await userEvent.press(screen.getByRole('button', { name: 'Revisar y autorizar' }))
       const hoja = within(screen.getByLabelText('Autorizar venta'))
       expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBe(true)
     })
@@ -177,7 +197,7 @@ describe('Autorizar venta: el detalle', () => {
   it('con margen en amarillo autorizar exige la razón y la manda con la versión del detalle', async () => {
     permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
     pintar()
-    await userEvent.press(await screen.findByRole('button', { name: 'Autorizar' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Revisar y autorizar' }))
     const hoja = within(screen.getByLabelText('Autorizar venta'))
     expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBe(true)
 
@@ -239,22 +259,22 @@ describe('Autorizar venta: el detalle', () => {
     permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
     pintar({ ...VENTA, venta: { ...VENTA.venta, estado: 2 } })
     expect(await screen.findByText('Esta venta ya no espera autorización.')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Autorizar' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Revisar y autorizar' })).toBeNull()
   })
 
   it('sin CAP_AUTORIZAR_VENTA (entrando por un enlace) el detalle es de solo lectura', async () => {
     permisos('MOD_VENTAS')
     pintar()
     expect(await screen.findByText(/necesitás el permiso de autorizar ventas/)).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Autorizar' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Revisar y autorizar' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Rechazar' })).toBeNull()
   })
 
   it('con CAP_AUTORIZAR_VENTA pero Ventas solo en lectura no decide (igual que la web: capacidad + modificar Ventas)', async () => {
     permisosSoloLecturaDeVentas('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
     pintar()
-    expect(await screen.findByText(/Quedó por autorizar porque/)).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Autorizar' })).toBeNull()
+    expect(await screen.findByText(/Por qué espera/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Revisar y autorizar' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Rechazar' })).toBeNull()
     expect(screen.getByText(/permiso de modificar ventas/)).toBeTruthy()
   })
@@ -269,7 +289,7 @@ describe('Autorizar venta: el detalle', () => {
   it('sin Cuentas corrientes no ofrece el enlace a la cuenta', async () => {
     permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
     pintar({ ...VENTA, venta: { ...VENTA.venta, clienteId: 'c9' } })
-    await screen.findByText(/Quedó por autorizar porque/)
+    await screen.findByText(/Por qué espera/)
     expect(screen.queryByRole('link', { name: 'Ver cuenta corriente del cliente' })).toBeNull()
   })
 
@@ -277,10 +297,10 @@ describe('Autorizar venta: el detalle', () => {
     permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
     let pedidos = 0
     mockGet.mockImplementation((url: string) =>
-      Promise.resolve(url.endsWith('autorizacion-preview') ? PREVIEW : { ...VENTA, venta: { ...VENTA.venta, version: 42 + pedidos++ } }))
+      Promise.resolve(url.endsWith('autorizacion-preview') ? PREVIEW : url.endsWith('pendientes-autorizacion') ? [] : { ...VENTA, venta: { ...VENTA.venta, version: 42 + pedidos++ } }))
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(<QueryClientProvider client={qc}><DetalleAutorizacion id="v1" /></QueryClientProvider>)
-    await userEvent.press(await screen.findByRole('button', { name: 'Autorizar' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Revisar y autorizar' }))
     const hoja = within(screen.getByLabelText('Autorizar venta'))
     await userEvent.type(hoja.getByLabelText('Razón para autorizar · obligatoria'), 'ok')
     await waitFor(() => expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBeFalsy())
@@ -296,7 +316,7 @@ describe('Autorizar venta: el detalle', () => {
     mockPost.mockRejectedValueOnce(Object.assign(new Error('Conflicto: el dato fue modificado por otro usuario.'), { status: 409 }))
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(<QueryClientProvider client={qc}><DetalleAutorizacion id="v1" /></QueryClientProvider>)
-    await userEvent.press(await screen.findByRole('button', { name: 'Autorizar' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Revisar y autorizar' }))
     const hoja = within(screen.getByLabelText('Autorizar venta'))
     await userEvent.type(hoja.getByLabelText('Razón para autorizar · obligatoria'), 'ok')
     await waitFor(() => expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBeFalsy())
@@ -307,7 +327,7 @@ describe('Autorizar venta: el detalle', () => {
     expect(screen.queryByLabelText('Autorizar venta')).toBeNull()
 
     await waitFor(() => expect(mockGet.mock.calls.filter(([u]) => u === '/api/v1/Ventas/v1').length).toBeGreaterThanOrEqual(3))
-    await userEvent.press(await screen.findByRole('button', { name: 'Autorizar' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Revisar y autorizar' }))
     const hoja2 = within(screen.getByLabelText('Autorizar venta'))
     await userEvent.type(hoja2.getByLabelText('Razón para autorizar · obligatoria'), 'ok')
     await waitFor(() => expect(hoja2.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBeFalsy())
@@ -336,7 +356,7 @@ describe('Autorizar venta: el detalle', () => {
       return render(<QueryClientProvider client={qc}><DetalleAutorizacion id="v1" /></QueryClientProvider>)
     }
     const botonesUsables = async () => {
-      for (const name of ['Autorizar', 'Rechazar']) {
+      for (const name of ['Revisar y autorizar', 'Rechazar']) {
         const boton = await screen.findByRole('button', { name })
         expect(boton.props.accessibilityState?.disabled).toBeFalsy()
       }
@@ -401,7 +421,7 @@ describe('Autorizar venta: el detalle', () => {
       async (status, mensaje) => {
         pintarConCliente(() => Promise.reject(Object.assign(new Error(mensaje), { status })))
         await waitFor(() => expect(pedidos(FICHA)).toHaveLength(1))
-        expect(await screen.findByText('Autorizar A00428')).toBeTruthy()
+        expect(await screen.findByText('A00428')).toBeTruthy()
         expect(screen.getByText(/Falta stock/)).toBeTruthy()
         await botonesUsables()
         await waitFor(() => expect(screen.queryByTestId('bloque-cliente') === null).toBe(true))
@@ -446,7 +466,7 @@ describe('Autorizar venta: el detalle', () => {
     mockPost.mockRejectedValueOnce(Object.assign(new Error('Conflicto'), { status: 409 }))
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(<QueryClientProvider client={qc}><DetalleAutorizacion id="v1" /></QueryClientProvider>)
-    await userEvent.press(await screen.findByRole('button', { name: 'Autorizar' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Revisar y autorizar' }))
     const hoja = within(screen.getByLabelText('Autorizar venta'))
     await userEvent.type(hoja.getByLabelText('Razón para autorizar · obligatoria'), 'ok')
     await waitFor(() => expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBeFalsy())
@@ -454,7 +474,7 @@ describe('Autorizar venta: el detalle', () => {
     await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
 
     expect(await screen.findByText('Esta venta ya no espera autorización.')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Autorizar' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Revisar y autorizar' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Rechazar' })).toBeNull()
   })
 })

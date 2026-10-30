@@ -5,7 +5,10 @@ import { space, typeScale, useColors } from '@/libs/theme'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useCambiarContrasena } from '../api/cuenta'
 
-/** Cambiar la contraseña propia (lámina MiCuenta). Las reglas las valida el servidor. */
+/**
+ * Cambiar la contraseña propia (lámina MiCuenta). Las reglas las valida el servidor.
+ * TODO: la lista viva de reglas (✓/✗ + cumple/falta) sale de `@forward/reglas` (forward-system #1046, S6): no se copia la regla acá.
+ */
 export function CambiarContrasena({ email }: { email: string | undefined }) {
   const c = useColors()
   const [actual, setActual] = useState('')
@@ -49,6 +52,7 @@ export function CambiarContrasena({ email }: { email: string | undefined }) {
       {m.isError ? <Notice tone="peligro">{mensajeDelServidor(m.error, 'No se pudo cambiar la contraseña.')}</Notice> : null}
       {m.isSuccess ? <Notice tone="exito">Listo: la contraseña nueva ya vale para entrar.</Notice> : null}
       <Button label="Cambiar contraseña" onPress={cambiar} disabled={!completo} loading={m.isPending} />
+      {completo ? null : <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Se habilita cuando todo está completo y las dos nuevas coinciden.</Text>}
     </View>
   )
 }

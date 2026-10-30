@@ -76,6 +76,9 @@ function CatalogoConsulta() {
     router.push({ pathname: '/(tabs)/inventario/stock', params: { busqueda: codigoProducto } })
   }
 
+  // La ficha del producto no trae la marca de novedad: sale de la tarjeta que se tocó.
+  const novedadDe = (id: string) => cat.productos.find((p) => p.id === id)
+
   const lista = (
     <View style={{ flex: 1 }}>
       <View
@@ -89,9 +92,9 @@ function CatalogoConsulta() {
         }}
       >
         <Text style={[typeScale.secundario, { color: c.text, fontFamily: FONT.semibold, fontWeight: '600' }]}>
-          {cat.totalCount != null ? `MOSTRANDO ${productos.length} DE ${cat.totalCount}` : ' '}
+          {cat.totalCount != null ? `${productos.length} de ${cat.totalCount} productos` : ' '}
         </Text>
-        <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{`Novedades de los últimos ${DIAS_DE_NOVEDADES} días`}</Text>
+        <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{`Novedades: ${DIAS_DE_NOVEDADES} días`}</Text>
       </View>
       {cat.isLoading ? (
         <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
@@ -165,7 +168,7 @@ function CatalogoConsulta() {
           <View style={{ flex: 1, borderRightWidth: 1, borderRightColor: c.border }}>{lista}</View>
           <View testID="panel-ficha" style={{ flex: 1 }}>
             {seleccion ? (
-              <FichaProducto productoId={seleccion} onVerStock={verStock} />
+              <FichaProducto productoId={seleccion} onVerStock={verStock} novedad={novedadDe(seleccion)} />
             ) : (
               <Text style={[typeScale.cuerpo, { color: c.textSecondary, textAlign: 'center', marginTop: space[8] }]}>
                 Elegí un producto para ver su ficha.
@@ -194,7 +197,7 @@ function CatalogoConsulta() {
       >
         <View style={{ flex: 1, backgroundColor: c.bg }}>
           <TopBar title="Ficha de producto" leading={{ kind: 'atras', onPress: () => setSeleccion(null) }} />
-          {seleccion ? <FichaProducto productoId={seleccion} onVerStock={verStock} /> : null}
+          {seleccion ? <FichaProducto productoId={seleccion} onVerStock={verStock} novedad={novedadDe(seleccion)} /> : null}
         </View>
       </Modal>
     </View>

@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Button, Notice, TopBar, TwoPane, formatImporte, useMenuLeading } from '@/core/ui/fw'
-import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
+import { Button, Notice, StatusChip, TopBar, TotalsRow, TwoPane, formatImporte, useMenuLeading } from '@/core/ui/fw'
+import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { usePendientesAutorizacion, type VentaPendienteAutorizacion } from '@/libs/api-client/ventas'
 import { useAuthStore } from '@/libs/store/auth.store'
@@ -94,9 +94,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
       ) : null}
       {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
       {sinRed && lista.length > 0 ? <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice> : null}
-      <Text style={secundario}>
-        {puedeDecidir ? 'La que más espera, primero. «Autorizar» pide confirmación; «Rechazar» pide el motivo.' : 'La que más espera, primero. Para decidir necesitás el permiso de modificar ventas.'}
-      </Text>
+      {puedeDecidir ? null : <Text style={secundario}>Para decidir necesitás el permiso de modificar ventas.</Text>}
     </View>
   )
 
@@ -112,12 +110,13 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
             <Text numberOfLines={2} style={[typeScale.cuerpoDestacado, { color: c.text, flex: 1 }]}>{cliente.titulo}</Text>
-            <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(v.totalAmount)}</Text>
           </View>
           {cliente.nombre ? <Text numberOfLines={1} style={[typeScale.secundario, { color: c.text }]}>{cliente.nombre}</Text> : null}
-          {motivosDe(v.motivoPendienteAutorizacion).map((m) => (
-            <Text key={m.clave} style={[typeScale.secundario, { color: c.text }]}>{`• ${m.texto}`}</Text>
-          ))}
+          {/* Pastillas cortas con texto (la lámina); la frase de cada motivo está en el detalle. */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+            {motivosDe(v.motivoPendienteAutorizacion).map((m) => <StatusChip key={m.clave} estado="porAutorizar" label={m.filtro} />)}
+          </View>
+          <TotalsRow label="Total" importe={v.totalAmount} />
         </Pressable>
         {puedeDecidir ? (
         <View style={{ flexDirection: 'row', gap: space[3] }}>
@@ -155,7 +154,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar title="Autorizaciones" subtitle="Ventas que esperan tu decisión" leading={leading} />
+      <TopBar title="Autorizaciones" subtitle="Más antiguas primero" leading={leading} />
       <TwoPane
         list={cuerpo}
         detail={isTabletLandscape && elegida ? detalle(elegida, () => setElegida(null)) : null}
