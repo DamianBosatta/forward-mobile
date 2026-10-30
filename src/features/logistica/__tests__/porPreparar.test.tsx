@@ -81,7 +81,7 @@ describe('Pedidos de logística (solo ver)', () => {
     pintar()
     const tarjeta = await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376')
     expect(within(tarjeta).getByText('Autoservicio Carlos')).toBeTruthy()
-    expect(within(tarjeta).getByText('5 productos · 3 bultos')).toBeTruthy()
+    expect(within(tarjeta).getByText('5 productos · 3 piezas')).toBeTruthy()
     expect(within(tarjeta).getByLabelText('Estado: En preparación')).toBeTruthy()
     expect(screen.getByText('Hoy · 2 pedidos · 8 productos')).toBeTruthy()
     expect(screen.getByLabelText('No entregados (1)')).toBeTruthy()
@@ -91,7 +91,7 @@ describe('Pedidos de logística (solo ver)', () => {
     expect(urls().some((u) => u.includes('FechaDesde=2026-10-09') && u.includes('FechaHasta=2026-10-09'))).toBe(true)
   })
 
-  it('con unidades del servidor la tarjeta dice líneas, unidades y bultos; el detalle, el empaque de cada línea (9B prioridad 3)', async () => {
+  it('con unidades del servidor la tarjeta dice líneas, unidades y piezas; el detalle, el empaque de cada línea (9B prioridad 3)', async () => {
     mockAncho.mockReturnValue(1100)
     const servido = mockGet.getMockImplementation()!
     mockGet.mockImplementation((url: string) =>
@@ -108,7 +108,7 @@ describe('Pedidos de logística (solo ver)', () => {
         : servido(url))
     pintar()
     const tarjeta = await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376')
-    expect(within(tarjeta).getByText('5 productos · 288 u. · 3 bultos')).toBeTruthy()
+    expect(within(tarjeta).getByText('5 productos · 288 u. · 3 piezas')).toBeTruthy()
     // Servidor anterior (sin unidades): como antes.
     expect(within(screen.getByLabelText('Pedido A00424: Brandsen 3314')).getByText('3 productos')).toBeTruthy()
     await userEvent.press(tarjeta)
