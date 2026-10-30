@@ -83,6 +83,26 @@ describe('Mi cuenta reducida (bloque 12, T2: R15 y reglas mobile §14)', () => {
     expect(screen.getByText('Vendedor · eparraquini')).toBeTruthy()
   })
 
+  it('la franja de identidad suma el correo en su propia línea', () => {
+    usuario()
+    pintar()
+    expect(screen.getByText('ep@forward.com.ar')).toBeTruthy()
+  })
+
+  it('la huella dice su estado en palabras debajo del nombre', async () => {
+    usuario()
+    pintar()
+    expect(await screen.findByText('Prendida')).toBeTruthy()
+    await userEvent.press(screen.getByRole('switch', { name: 'Entrar con huella' }))
+    expect(await screen.findByText('Apagada')).toBeTruthy()
+  })
+
+  it('agrupa las filas con encabezados: Seguridad, En este teléfono y Equipo (solo con permiso)', () => {
+    usuario({ permissions: [{ module: 'MOD_USUARIOS', canRead: true }] })
+    pintar()
+    for (const t of ['Seguridad', 'En este teléfono', 'Equipo']) expect(screen.getByRole('header', { name: t })).toBeTruthy()
+  })
+
   it('apagar "Entrar con huella" lo guarda y borra la contraseña del teléfono', async () => {
     usuario()
     pintar()
