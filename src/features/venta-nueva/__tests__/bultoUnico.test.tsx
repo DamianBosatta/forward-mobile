@@ -46,7 +46,7 @@ describe('una sola definición de bulto (bulto 12, venta mínima 6)', () => {
         <RevisarVenta cliente={null} descuentoGeneral={0} enviando={false} error={null} onConfirmar={noop} onEditarLinea={noop} />
       </QueryClientProvider>,
     )
-    expect(screen.getByText('1 bulto × $ 1.200,00')).toBeTruthy()
+    expect(screen.getByText('1 bulto × 12 = 12 u')).toBeTruthy()
   })
 
   it('oferta: el encabezado dice el mismo bulto que la pastilla', () => {

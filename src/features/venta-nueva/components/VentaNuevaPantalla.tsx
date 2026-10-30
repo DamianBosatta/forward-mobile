@@ -270,11 +270,6 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
       </Pressable>
       {Object.entries(stockVivo.avisos).map(([id, texto]) => <Notice key={id} tone="advertencia" testID={`aviso-stock-${id}`}>{texto}</Notice>)}
       {avisos.rechazos.map((r) => <Notice key={r} tone="peligro">{r}</Notice>)}
-      {avisos.porAutorizar.length > 0 ? (
-        <Notice tone="advertencia" title="Este pedido va a quedar por autorizar">
-          {`Porque ${avisos.porAutorizar.join(', ')}. El sistema lo confirma al guardar.`}
-        </Notice>
-      ) : null}
       {b.retenido && b.borrador ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`El borrador guarda los descuentos hasta tu tope (${mostrarNumero(tope)} %); el resto se guarda al confirmar el pedido.`}</Text> : null}
       {filaAjuste('Descuento a toda la venta', `${mostrarNumero(descuentoValido)} %`, () => setDescGeneral(true))}
       {filaAjuste('Datos de la entrega', textoEntrega, () => setVerCabecera(true))}
@@ -298,6 +293,8 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
       <PasosVenta paso={3} />
       {avisoDelBorrador}
       <RevisarVenta
+        autorizacion={avisos.porAutorizar}
+        onEditarProductos={() => setVista('catalogo')}
         cliente={cliente}
         descuentoGeneral={descuentoValido}
         flete={cab.cabecera.flete}

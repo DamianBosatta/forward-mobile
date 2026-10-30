@@ -205,8 +205,8 @@ describe('pestaña Líneas', () => {
     await elegirCliente()
     conLineas(12.82)
     expect(await screen.findByText('−12,82 %')).toBeTruthy()
-    expect(screen.getByText('Este pedido va a quedar por autorizar')).toBeTruthy()
-    expect(screen.getByText(/Porque un descuento supera tu tope/)).toBeTruthy()
+    expect(screen.getByText('Esta venta necesita autorización')).toBeTruthy()
+    expect(screen.getByText(/Un descuento supera tu tope/)).toBeTruthy()
   })
 
   // Servidor con forward-system #883: el borrador recién creado vuelve en /borradores/mios con su tipo.
@@ -306,7 +306,7 @@ describe('pestaña Líneas', () => {
       : original!(url, body))
     await elegirCliente()
     conLineas(5, 12)
-    expect(await screen.findByText(/Porque cliente con deuda de más de 30 días, supera el tope de venta del cliente/, {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByText(/Cliente con deuda de más de 30 días/, {}, ESPERA)).toBeTruthy()
     const pedido = mockPost.mock.calls.find(([u]) => u === '/api/v1/Ventas/vista-previa')![1]
     expect(pedido).toMatchObject({ clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 5 }] })
   })
@@ -327,9 +327,9 @@ describe('pestaña Líneas', () => {
     useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }], maxDescuentoPorcentaje: 10 } as never })
     conLineas(5, 12)
     expect(await screen.findByText('−5 %')).toBeTruthy()
-    expect(screen.queryByText('Este pedido va a quedar por autorizar')).toBeNull()
+    expect(screen.queryByText('Esta venta necesita autorización')).toBeNull()
     conLineas(5, 120)
-    expect(await screen.findByText(/Porque falta stock/)).toBeTruthy()
+    expect(await screen.findByText(/Falta stock/)).toBeTruthy()
   })
 
   it('el descuento general viaja en el autoguardado y baja el total estimado', async () => {
@@ -972,8 +972,8 @@ describe('V7 Confirmar', () => {
   it('un descuento sobre el tope avisa en la revisión que el pedido queda por autorizar, y se puede confirmar', async () => {
     await elegirCliente()
     await conLinea(15)
-    expect(await screen.findByText('Este pedido va a quedar por autorizar')).toBeTruthy()
-    expect(screen.getByText(/Porque un descuento supera tu tope/)).toBeTruthy()
+    expect(await screen.findByText('Esta venta necesita autorización')).toBeTruthy()
+    expect(screen.getByText(/Un descuento supera tu tope/)).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeEnabled()
   })
 

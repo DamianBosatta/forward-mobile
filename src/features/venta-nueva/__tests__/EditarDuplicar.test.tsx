@@ -201,7 +201,7 @@ describe('editar, retomar y duplicar usan la revisión nueva (S9)', () => {
     abrir({ modo: 'editar', ventaId: 'v9' })
     expect(await screen.findByText('Stock confirmado ahora')).toBeTruthy()
     expect(screen.queryByText(/Quedan 5, pediste 12/)).toBeNull()
-    expect(screen.queryByText('Este pedido va a quedar por autorizar')).toBeNull()
+    expect(screen.queryByText('Esta venta necesita autorización')).toBeNull()
   })
 
   it('editar sí avisa si pide más que lo disponible más lo que la venta ya tenía', async () => {
