@@ -10,6 +10,10 @@ export const MOTIVO_SIN_PERMISO_DE_COBRO =
 export const MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA =
   'No tenés permiso para registrar movimientos entre cuentas. Pedile a un administrador que te asigne el permiso de alta en el módulo Pagos.'
 
+/** Idem para pagar un servicio (`POST /gastos`: alta en el módulo Pagos; los conceptos piden además ver Tesorería). */
+export const MOTIVO_SIN_PERMISO_DE_SERVICIO =
+  'No tenés permiso para registrar pagos de servicios. Pedile a un administrador que te asigne el permiso de alta en el módulo Pagos y el de ver Tesorería.'
+
 /** Motivo de un botón deshabilitado (patrón 2 de PermPatrones): candado y texto 13/18 en color secundario, justo debajo del botón. */
 export function MotivoDeshabilitado({ children, testID }: { children: string; testID?: string }) {
   const c = useColors()

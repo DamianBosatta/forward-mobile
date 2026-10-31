@@ -3,6 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { screen } from '@testing-library/react-native'
 import TesoreriaScreen from '../../../../app/(tabs)/tesoreria/index'
+import { MOTIVO_SIN_PERMISO_DE_SERVICIO } from '@/core/ui/fw/MotivoDeshabilitado'
 import { conPermisos, renderConQuery } from '@/features/clientes/__testing__/ayuda'
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), back: jest.fn() }) }))
@@ -36,8 +37,22 @@ describe('Tesorería sin cheques', () => {
     expect(await screen.findByRole('button', { name: 'Transferencia entre cuentas' }, ESPERA)).toBeTruthy()
     expect(screen.getByText('Mové plata entre tus cuentas')).toBeTruthy()
     expect(screen.getByText('Los cobros de clientes se cargan desde la ficha del cliente, con "Cobrar".')).toBeTruthy()
-    // TODO API: las filas "Pagar un servicio" y "Cargar un cheque" no se ofrecen hasta tener permiso confirmado y POST /cheques.
-    expect(screen.queryByText('Pagar un servicio')).toBeNull()
+    // L22: "Servicio sí, cheque después": la fila de cheque no se ofrece hasta tener POST /cheques.
+    expect(screen.queryByText('Cargar un cheque')).toBeNull()
+  })
+
+  it('ofrece "Pagar un servicio" con el permiso del servidor y la deja deshabilitada, con motivo, sin él', async () => {
+    conPermisos([{ module: 'MOD_PAGOS', canRead: true, canCreate: true }, { module: 'CAP_VER_TESORERIA', canRead: true }])
+    const { unmount } = renderConQuery(<TesoreriaScreen />)
+    const fila = await screen.findByRole('button', { name: 'Pagar un servicio' }, ESPERA)
+    expect(fila.props.accessibilityState.disabled).toBe(false)
+    unmount()
+
+    conPermisos([{ module: 'MOD_PAGOS', canRead: true }])
+    renderConQuery(<TesoreriaScreen />)
+    const sin = await screen.findByRole('button', { name: 'Pagar un servicio' }, ESPERA)
+    expect(sin.props.accessibilityState.disabled).toBe(true)
+    expect(screen.getByText(MOTIVO_SIN_PERMISO_DE_SERVICIO)).toBeTruthy()
   })
 
   it('sin permiso para transferir muestra el botón deshabilitado con el motivo de la web (L13), aunque gestione cheques', async () => {
