@@ -63,6 +63,14 @@ describe('RevisarVenta (S5, S6, S7)', () => {
     await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(2))
   })
 
+  it('con sinEncabezado la barra superior ya dice "Revisar venta" y la dirección: el cuerpo no las repite', async () => {
+    revisar({ sinEncabezado: true })
+    expect(screen.queryByText('Revisar venta')).toBeNull()
+    expect(screen.queryByText('Tarantino 1898')).toBeNull()
+    expect(screen.getByText('Productos')).toBeTruthy()
+    await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(2))
+  })
+
   it('al abrir vuelve a pedir el stock; sin cambios no hay banner', async () => {
     revisar()
     await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(2))

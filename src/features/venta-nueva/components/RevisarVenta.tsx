@@ -40,6 +40,8 @@ interface Props {
   onEditarProductos?: () => void
   /** Lo que la venta nueva ajusta desde acá y no es una línea: datos de la entrega, descuento general, avisos, comisión. */
   ajustes?: ReactNode
+  /** La barra superior ya dice "Revisar venta" y la dirección (mockup ventas-nueva-3): el cuerpo no las repite. */
+  sinEncabezado?: boolean
 }
 
 /** "2 bultos × 12 = 24 u" si la cantidad es de cajas cerradas; si no, "4 u × $ 400,56". */
@@ -58,7 +60,7 @@ function detalleDe(l: LineaCarrito): string {
  * tocar "Confirmar venta" (que manda la venta: no hay segunda confirmación); lo que cambió desde que se cargó queda marcado y el banner lo cuenta. Si falta stock
  * no se bloquea: el flujo de confirmar pide el motivo y la venta va a autorización.
  */
-export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, deshabilitado = false, motivoDeshabilitado, onEditarLinea, onElegirFragancias, ajustes, autorizacion = [], onEditarProductos, yaReservadas, etiquetaConfirmar = 'Confirmar venta' }: Props) {
+export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, deshabilitado = false, motivoDeshabilitado, onEditarLinea, onElegirFragancias, ajustes, autorizacion = [], onEditarProductos, yaReservadas, sinEncabezado = false, etiquetaConfirmar = 'Confirmar venta' }: Props) {
   const c = useColors()
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
   const { lineas, cambios, confirmado, sinConexion, revalidando, revalidar } = useRevalidarStockVenta()
@@ -101,8 +103,8 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3] }}>
-        <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>Revisar venta</Text>
-        {cliente ? (
+        {sinEncabezado ? null : <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>Revisar venta</Text>}
+        {cliente && !sinEncabezado ? (
           <View style={{ gap: 2 }}>
             <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
             {nombreDelCliente(cliente) ? <Text style={secundario}>{nombreDelCliente(cliente)}</Text> : null}
@@ -118,8 +120,9 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
             {`${autorizacion.map((m) => `• ${m.charAt(0).toUpperCase()}${m.slice(1)}.`).join('\n')}\nPodés confirmarla igual: queda en Por autorizar.`}
           </Notice>
         ) : null}
+        <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, paddingHorizontal: space[3], paddingBottom: space[1] }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Productos</Text>
+          <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Productos</Text>
           {onEditarProductos ? (
             <Pressable accessibilityRole="button" accessibilityLabel="Editar productos" onPress={onEditarProductos} style={{ minHeight: 44, justifyContent: 'center' }}>
               <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Editar</Text>
@@ -137,7 +140,7 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
             <View
               key={l.productoId}
               testID={cambio ? `linea-cambio-${l.productoId}` : undefined}
-              style={{ padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[1], borderWidth: 2, borderColor: cambio ? c.chip.porAutorizar.text : c.surface }}
+              style={{ paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radii.campo, gap: space[1], borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.border, ...(cambio ? { borderWidth: 2, borderColor: c.chip.porAutorizar.text } : null) }}
             >
               <Pressable
                 accessibilityRole="button"
@@ -172,6 +175,7 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
             </View>
           )
         })}
+        </View>
         {ajustes}
         <View style={{ gap: space[2], paddingTop: space[2] }}>
           <TotalsRow label="Subtotal de lista" importe={lista} />

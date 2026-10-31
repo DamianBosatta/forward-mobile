@@ -9,6 +9,8 @@ interface Props {
   subtitle?: string
   icon: LucideIcon
   disabled?: boolean
+  /** Dentro de una tarjeta de lista: sin borde ni fondo propios y con ícono gris; la tarjeta y los divisores los pone quien agrupa. */
+  agrupada?: boolean
   onPress: () => void
 }
 
@@ -17,7 +19,7 @@ interface Props {
  * flecha. Alto mínimo 72. Deshabilitada baja la opacidad y avisa por `accessibilityState`; el motivo lo
  * pone quien la usa con MotivoDeshabilitado.
  */
-export function FilaDeAccion({ title, subtitle, icon: Icono, disabled = false, onPress }: Props) {
+export function FilaDeAccion({ title, subtitle, icon: Icono, disabled = false, agrupada = false, onPress }: Props) {
   const c = useColors()
   return (
     <Pressable
@@ -32,15 +34,12 @@ export function FilaDeAccion({ title, subtitle, icon: Icono, disabled = false, o
         alignItems: 'center',
         gap: space[3],
         paddingHorizontal: space[4],
-        borderRadius: radii.tarjeta,
-        borderWidth: 1,
-        borderColor: c.border,
-        backgroundColor: c.surface,
+        ...(agrupada ? {} : { borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }),
         opacity: disabled ? 0.55 : 1,
       }}
     >
-      <View style={{ width: 40, height: 40, borderRadius: radii.campo, alignItems: 'center', justifyContent: 'center', backgroundColor: c.brandSoft }}>
-        <Icono size={22} color={c.brandInk} strokeWidth={2} />
+      <View style={{ width: 40, height: 40, borderRadius: radii.campo, alignItems: 'center', justifyContent: 'center', backgroundColor: agrupada ? c.surface2 : c.brandSoft }}>
+        <Icono size={22} color={agrupada ? c.textSecondary : c.brandInk} strokeWidth={2} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{title}</Text>

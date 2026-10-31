@@ -176,7 +176,7 @@ describe('V8 listo (CalleListo / TabCalleListo)', () => {
     conEntrega()
     pantalla()
     expect(await screen.findByText('Venta A00419 guardada')).toBeTruthy()
-    expect(screen.getByText('Tarantino 1898')).toBeTruthy()
+    expect(await screen.findByText('Tarantino 1898')).toBeTruthy()
     expect(screen.getByText('Autoservicio Abel')).toBeTruthy()
     const tarjeta = within(screen.getByTestId('venta-guardada-resumen'))
     expect(tarjeta.getByText('Estado')).toBeTruthy()

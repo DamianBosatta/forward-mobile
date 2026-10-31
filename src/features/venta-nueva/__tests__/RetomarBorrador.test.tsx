@@ -53,7 +53,7 @@ beforeEach(() => {
 describe('retomar un borrador (PR 2.2b)', () => {
   it('abre el borrador con lo que tiene el servidor, sin crear otro ni guardar de más', async () => {
     pantalla()
-    expect(await screen.findByText('Nuevo presupuesto')).toBeTruthy()
+    expect(await screen.findByText('Revisar presupuesto')).toBeTruthy()
     // El cliente por la dirección; el nombre aparte.
     expect(screen.getByText('Tarantino 1898 · Autoservicio Abel')).toBeTruthy()
     // La línea toma el precio del catálogo de hoy, con la cantidad y el descuento del borrador.
@@ -67,7 +67,7 @@ describe('retomar un borrador (PR 2.2b)', () => {
 
   it('lo que se cambia se autoguarda sobre ese borrador y con su versión', async () => {
     pantalla()
-    await screen.findByText('Nuevo presupuesto')
+    await screen.findByText('Revisar presupuesto')
     expect(screen.getByDisplayValue('Portón negro')).toBeTruthy()
     await userEvent.type(screen.getByLabelText('Observaciones'), ', antes de las 12')
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), { timeout: 3000 })
@@ -89,7 +89,7 @@ describe('retomar un borrador (PR 2.2b)', () => {
       mockGet.mockImplementation((url: string) => url === '/api/v1/Ventas/b9' ? Promise.resolve({ ...venta, detalles: [{ ...venta.detalles[0], porcentajeDescuentoItem: 12.82 }] })
         : url === '/api/v1/Ventas/borradores/mios' ? Promise.resolve(mios) : base(url))
       pantalla(undefined, 'Pedido')
-      await screen.findByText('Nuevo pedido')
+      await screen.findByText('Revisar venta')
       await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/v1/Ventas/borradores/mios'))
       await userEvent.type(screen.getByLabelText('Observaciones'), ' y más')
       await waitFor(() => expect(mockPut).toHaveBeenCalled(), { timeout: 3000 })
@@ -101,7 +101,7 @@ describe('retomar un borrador (PR 2.2b)', () => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     const detalles = () => mockGet.mock.calls.filter(([u]) => u === '/api/v1/Ventas/b9').length
     const primera = pantalla(qc)
-    await screen.findByText('Nuevo presupuesto')
+    await screen.findByText('Revisar presupuesto')
     expect(detalles()).toBe(1)
     await userEvent.type(screen.getByLabelText('Observaciones'), ' uno')
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1), { timeout: 3000 })
@@ -128,7 +128,7 @@ describe('retomar usa la revisión nueva (S9)', () => {
   it('abre "Revisar venta" y "Confirmar venta" guarda ese mismo presupuesto con su versión', async () => {
     mockPost.mockImplementation(() => Promise.resolve({ ventaId: 'b9', version: 5, message: 'Presupuesto guardado.' }))
     pantalla()
-    expect(await screen.findByText('Revisar venta')).toBeTruthy()
+    expect(await screen.findByText('Revisar presupuesto')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Seguir' })).toBeNull()
     await userEvent.press(await screen.findByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b9/guardar-presupuesto', { ventaId: 'b9', version: expect.any(Number) }))
