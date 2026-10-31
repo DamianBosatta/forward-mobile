@@ -10,7 +10,8 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { FiltrosCartera, SIN_FILTROS, type FiltrosDeCartera } from '@/features/clientes/components/FiltrosCartera'
 import { useCartera } from '@/features/clientes/hooks/useCartera'
-import { direccionDeEntrega, inicialesDeDireccion, nombreDelCliente } from '@/features/clientes/lib/cliente'
+import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
+import { MarcaRadio } from './MarcaRadio'
 import { aElegido, fusionarRecientes, guardarReciente, leerRecientes, quitarReciente, type ClienteElegido } from '@/features/clientes/lib/recientes'
 
 interface Props {
@@ -92,9 +93,9 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <FiltrosCartera valor={filtros} onCambio={setFiltros} totalCartera={totalCount} />
+      <FiltrosCartera valor={filtros} onCambio={setFiltros} totalCartera={totalCount} sobre="pantalla" />
       <View style={{ padding: space[4], gap: space[3] }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: 52, borderRadius: radii.campo, backgroundColor: c.surface2, paddingHorizontal: space[3], borderWidth: 2, borderColor: c.brand }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: 52, borderRadius: radii.campo, backgroundColor: c.surface2, paddingHorizontal: space[3], borderWidth: 1, borderColor: c.border }}>
           <Search size={20} color={c.textSecondary} />
           <TextInput
             accessibilityLabel="Buscar cliente"
@@ -121,16 +122,20 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
             {recientes.length > 0 ? (
               <>
                 {titulo('Recientes')}
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
-                  {recientes.map((r) => {
+                <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, overflow: 'hidden' }}>
+                  {recientes.map((r, i) => {
                     const direccion = direccionDeEntrega(r)
+                    const nombre = nombreDelCliente(r)
+                    const sel = r.id === seleccionadoId
                     return (
-                      <Pressable key={`r-${r.id}`} accessibilityRole="button" accessibilityLabel={`Reciente: ${direccion}`} onPress={() => { void elegirReciente(r) }}
-                        style={{ width: '23%', minHeight: 44, alignItems: 'center', gap: 6 }}>
-                        <View style={{ width: 52, height: 52, borderRadius: radii.pastilla, backgroundColor: c.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
-                          <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>{inicialesDeDireccion(direccion)}</Text>
+                      <Pressable key={`r-${r.id}`} accessibilityRole="button" accessibilityLabel={`Reciente: ${direccion}`} accessibilityState={{ selected: sel }} onPress={() => { void elegirReciente(r) }}
+                        style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3], borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.border, backgroundColor: sel ? c.brandSoft : 'transparent' }}>
+                        <MarcaRadio elegido={sel} />
+                        <View style={{ flex: 1, minWidth: 0 }}>
+                          <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{direccion}</Text>
+                          {nombre ? <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.textSecondary }}>{nombre}</Text> : null}
+                          {sel && ultimoPedido ? <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.brandInk }}>{textoUltimoPedido(ultimoPedido)}</Text> : null}
                         </View>
-                        <Text numberOfLines={2} style={{ ...typeScale.etiqueta, color: c.text, textAlign: 'center' }}>{direccion}</Text>
                       </Pressable>
                     )
                   })}
@@ -159,6 +164,7 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
               onPress={() => elegir(item)}
               style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3], borderBottomWidth: 1, borderBottomColor: c.border, backgroundColor: sel ? c.brandSoft : 'transparent' }}
             >
+              <MarcaRadio elegido={sel} />
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{direccion}</Text>
                 {nombre ? <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.textSecondary }}>{nombre}</Text> : null}
