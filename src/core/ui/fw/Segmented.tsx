@@ -43,12 +43,13 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
             accessibilityLabel={op.label}
             accessibilityState={{ selected: elegido, checked: elegido }}
             style={{
-              flex: 1,
+              flexGrow: 1,
+              flexShrink: 0,
               minHeight: 44,
               borderRadius: radii.campo,
               alignItems: 'center',
               justifyContent: 'center',
-              paddingHorizontal: space[2],
+              paddingHorizontal: space[1],
               backgroundColor: elegido ? colors.surface : 'transparent',
               ...(elegido ? sombra : null),
             }}

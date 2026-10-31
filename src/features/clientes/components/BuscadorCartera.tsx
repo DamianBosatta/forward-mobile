@@ -8,7 +8,7 @@ export function BuscadorCartera({
   valor,
   onCambio,
   etiqueta = 'Buscar cliente',
-  placeholder = 'Dirección, nombre o CUIT',
+  placeholder = 'Buscar dirección, nombre o CUIT',
   sobre = 'barra',
 }: {
   valor: string

@@ -17,4 +17,18 @@ describe('FilaDeSocio', () => {
     expect(screen.getByText('Molinos SA')).toBeTruthy()
     expect(screen.getByText('CUIT 30-1-2')).toBeTruthy()
   })
+
+  it('chevron muestra la flecha al final; sin la prop no hay flecha', () => {
+    const { rerender } = render(<FilaDeSocio titulo="Molinos SA" accessibilityLabel="Molinos SA" onPress={jest.fn()} />)
+    expect(screen.queryByTestId('fila-de-socio-chevron')).toBeNull()
+    rerender(<FilaDeSocio titulo="Molinos SA" accessibilityLabel="Molinos SA" onPress={jest.fn()} chevron />)
+    expect(screen.getAllByTestId('fila-de-socio-chevron').length).toBeGreaterThan(0)
+  })
+
+  it('el título es de una línea por defecto y admite más con lineasTitulo', () => {
+    const { rerender } = render(<FilaDeSocio titulo="Av. del Valle 89" accessibilityLabel="x" onPress={jest.fn()} />)
+    expect(screen.getByText('Av. del Valle 89').props.numberOfLines).toBe(1)
+    rerender(<FilaDeSocio titulo="Av. del Valle 89" accessibilityLabel="x" onPress={jest.fn()} lineasTitulo={2} />)
+    expect(screen.getByText('Av. del Valle 89').props.numberOfLines).toBe(2)
+  })
 })

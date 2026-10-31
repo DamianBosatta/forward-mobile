@@ -1,6 +1,6 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
-import type { LucideIcon } from 'lucide-react-native'
+import { ChevronRight, type LucideIcon } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 
 interface FilaDeSocioProps {
@@ -18,13 +18,17 @@ interface FilaDeSocioProps {
   seleccionado?: boolean
   /** Sin `onPress` la fila es de solo lectura: no es un botón (sin rol ni ripple). */
   onPress?: () => void
+  /** Flecha al final de la fila: avisa que se abre el detalle (lista de cuentas). Por defecto, sin flecha. */
+  chevron?: boolean
+  /** Líneas máximas del título (por defecto 1; la ficha de cliente pide 2 para direcciones largas). */
+  lineasTitulo?: number
 }
 
 /**
  * Fila plana de un socio (láminas clientes-lista y proveedores): título con algo a la derecha, línea 2,
  * extras y una acción rápida. Es la pieza que comparten clientes y proveedores (y después cuentas).
  */
-export function FilaDeSocio({ titulo, derecha, linea2, extra, accion, accessibilityLabel, seleccionado = false, onPress }: FilaDeSocioProps) {
+export function FilaDeSocio({ titulo, derecha, linea2, extra, accion, accessibilityLabel, seleccionado = false, onPress, chevron = false, lineasTitulo = 1 }: FilaDeSocioProps) {
   const c = useColors()
   const estilo = {
         flexDirection: 'row',
@@ -42,7 +46,7 @@ export function FilaDeSocio({ titulo, derecha, linea2, extra, accion, accessibil
     <>
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space[2] }}>
-          <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text, flexShrink: 1 }}>
+          <Text numberOfLines={lineasTitulo} style={{ ...typeScale.cuerpoDestacado, color: c.text, flexShrink: 1 }}>
             {titulo}
           </Text>
           {derecha}
@@ -65,6 +69,7 @@ export function FilaDeSocio({ titulo, derecha, linea2, extra, accion, accessibil
           <accion.icono size={20} color={c.brandInk} />
         </Pressable>
       ) : null}
+      {chevron ? <ChevronRight testID="fila-de-socio-chevron" size={20} color={c.textSecondary} /> : null}
     </>
   )
   if (!onPress) {

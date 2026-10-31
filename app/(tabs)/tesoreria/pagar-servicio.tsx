@@ -11,7 +11,7 @@ export default function PagarServicioScreen() {
   const router = useRouter()
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar title="Pagar un servicio" leading={{ kind: 'atras', onPress: () => router.back() }} />
+      <TopBar title="Pagar un servicio" subtitle="Gasto" leading={{ kind: 'atras', onPress: () => router.back() }} />
       <PagarServicio onListo={() => router.back()} />
     </View>
   )

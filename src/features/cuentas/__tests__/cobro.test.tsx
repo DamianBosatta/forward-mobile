@@ -524,4 +524,41 @@ describe('R11 cobro: resumen "Cobrás" y "Todo lo vencido" (solo pantalla: el co
 
     expect(screen.queryByRole('button', { name: 'Todo lo vencido' })).toBeNull()
   })
+
+  it('la tira muestra la deuda vencida desde el principio, sin elegir un objetivo', async () => {
+    conVencido(84300)
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+
+    expect(await screen.findByLabelText('Vencido: $ 84.300,00', {}, ESPERA)).toBeTruthy()
+  })
+
+  it('"Otro monto" suelta el objetivo y deja el monto como estaba; el cobro se manda igual', async () => {
+    conVencido(84300)
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+
+    await userEvent.press(await screen.findByRole('button', { name: 'Todo lo vencido' }, ESPERA))
+    await userEvent.press(screen.getByRole('button', { name: 'Otro monto' }))
+    expect(screen.queryByLabelText('Cubre el objetivo')).toBeNull()
+    fireEvent.changeText(screen.getByLabelText('Monto'), '1.000')
+    await userEvent.press(await screen.findByRole('radio', { name: 'Transferencia' }, ESPERA))
+    await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
+
+    expect(post.mock.calls[0][1]).toEqual({ socioComercialId: 'c1', claveIdempotencia: expect.stringMatching(/^mobile-/), lineas: [{ medioPagoId: 'm-tr', monto: 1000 }] })
+  })
+})
+
+describe('el saldo del cliente no se repite', () => {
+  it('con barra, el saldo va en el subtítulo de la barra y no hay una fila "Saldo del cliente" en el cuerpo', async () => {
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} conBarra />)
+
+    await screen.findByLabelText('Monto', {}, ESPERA)
+    expect(screen.getByText(/ · Saldo /)).toBeTruthy()
+    expect(screen.queryByLabelText(/^Saldo del cliente/)).toBeNull()
+  })
+
+  it('sin barra, el saldo sigue en una fila del cuerpo', async () => {
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+
+    expect(await screen.findByLabelText(/^Saldo del cliente/, {}, ESPERA)).toBeTruthy()
+  })
 })
