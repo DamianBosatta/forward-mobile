@@ -37,6 +37,17 @@ export function cuitEsValido(valor: string): boolean {
 }
 
 /**
+ * Cuántos dígitos le faltan a lo escrito para llegar a los once de un CUIT; 0 si ya tiene once o
+ * más. Cuenta sólo dígitos: guiones, puntos y espacios no suman. Es para decirle a quien tipea
+ * "faltan 2 dígitos" en vez de un "CUIT inválido" a secas; que sobren o que el verificador no
+ * cierre lo dice {@link cuitEsValido}.
+ */
+export function cuitDigitosFaltantes(valor: string | null | undefined): number {
+  const escritos = (valor ?? '').replace(/\D/g, '').length
+  return Math.max(0, 11 - escritos)
+}
+
+/**
  * La forma con la que se GUARDA y viaja un CUIT: once dígitos, sin guiones (C-019, bloque 11).
  *
  * Espeja `Cuit.Canonizar` del backend; los dos lados prueban el mismo fixture
