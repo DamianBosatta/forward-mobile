@@ -136,6 +136,7 @@ export function InicioScreen() {
             meDeben={cifras.meDeben}
             debo={cifras.debo}
             deudaVencida={cifras.deudaVencida}
+            onRutas={canDo('MOD_VIAJES', 'read') ? () => router.push('/(tabs)/logistica/hojas' as never) : undefined}
           />
         ) : null}
         <AtajosDeInicio

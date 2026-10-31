@@ -6,7 +6,8 @@
  */
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, userEvent } from '@testing-library/react-native'
+import { Switch } from 'react-native'
+import { render, screen, userEvent, within } from '@testing-library/react-native'
 import { PreferenciasAvisos } from '../PreferenciasAvisos'
 
 const mockGet = jest.fn()
@@ -62,6 +63,12 @@ describe('Preferencias de avisos', () => {
     expect(screen.getByText('Crítico: no se puede silenciar')).toBeTruthy()
     await userEvent.press(caja)
     expect(mockPut).not.toHaveBeenCalled()
+  })
+
+  it('usa la fila de interruptor del sistema (FilaInterruptor): el Switch lleva el color del pulgar', async () => {
+    pintar()
+    const venta = await screen.findByLabelText('Venta autorizada')
+    expect(within(venta).UNSAFE_getByType(Switch).props.thumbColor).toBeTruthy()
   })
 
   it('apagar uno guarda solo ese tipo', async () => {
