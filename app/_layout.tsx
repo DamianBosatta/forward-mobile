@@ -93,7 +93,8 @@ function RootLayoutNav() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
+      {/* La barra superior es oscura en claro y en oscuro (theme.topBar): los íconos del sistema van siempre claros. */}
+      <StatusBar style="light" />
       <AuthGuardHandler />
       <AvisosAlVolver />
       <PushDeAvisos />
