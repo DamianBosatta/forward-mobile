@@ -536,3 +536,52 @@ describe('Inicio: tablet', () => {
     expect(flat(screen.getByLabelText('Ventas pendientes')).width).toBe(240)
   })
 })
+
+describe('Inicio: encabezado y "Para resolver" (lámina inicio-general)', () => {
+  const { useThemeStore, themeColors } = require('@/libs/theme')
+  afterEach(() => useThemeStore.setState({ mode: 'system' }))
+
+  it('el encabezado dice "Hola, <nombre>" con el día debajo, no "Inicio"', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    pintar()
+    expect(await screen.findByText('Hola, Emanuel')).toBeTruthy()
+    expect(screen.queryByText('Inicio')).toBeNull()
+  })
+
+  it('lista solo las filas que el usuario puede ver y que tienen dato, cada una con su destino', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'MOD_STOCK', 'CAP_AUTORIZAR_VENTA')
+    servidor({ resumen: { ...RESUMEN, compras: { ...RESUMEN.compras, porRecibir: pendiente(3) } }, hoy: pagina(0, []), dashboard: { salesToday: 1, lowStockAlerts: 18 } })
+    pintar()
+    const user = userEvent.setup()
+    expect(await screen.findByText('Para resolver')).toBeTruthy()
+    const lista = screen.getByTestId('para-resolver')
+    expect(within(lista).getByLabelText('Para resolver, Por autorizar: 2')).toBeTruthy()
+    expect(within(await within(lista).findByLabelText('Para resolver, Alertas de stock: 18')).getByText('18')).toBeTruthy()
+    expect(within(lista).getByLabelText('Para resolver, Por recibir: 3')).toBeTruthy()
+    await user.press(within(lista).getByLabelText('Para resolver, Alertas de stock: 18'))
+    expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/inventario/stock')
+    await user.press(within(lista).getByLabelText('Para resolver, Por autorizar: 2'))
+    expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/autorizaciones')
+  })
+
+  it('sin permiso de Stock o de Compras, o sin dato, la fila no aparece', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: { ...RESUMEN, compras: null, autorizacionesPendientes: null }, hoy: pagina(0, []), dashboard: { salesToday: 1, lowStockAlerts: 18 } })
+    pintar()
+    await screen.findByText('Hola, Emanuel')
+    expect(screen.queryByLabelText(/Para resolver, Alertas de stock/)).toBeNull()
+    expect(screen.queryByLabelText(/Para resolver, Por recibir/)).toBeNull()
+  })
+
+  it('"Nueva venta" es el botón relleno de color de marca', async () => {
+    useAuthStore.setState({
+      user: { id: 'u1', username: 'emanuel', nombre: 'Emanuel', roles: [], permissions: [{ module: 'MOD_VENTAS', canRead: true, canCreate: true }] },
+    } as never)
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    useThemeStore.setState({ mode: 'light' })
+    pintar()
+    const b = await screen.findByRole('button', { name: 'Nueva venta' })
+    expect(flat(b).backgroundColor).toBe(themeColors.light.action)
+  })
+})

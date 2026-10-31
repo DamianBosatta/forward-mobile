@@ -4,19 +4,20 @@ import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Search, ShoppingBag, Tag } from 'lucide-react-native'
-import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
+import { FONT, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { puedeVerVentas } from '@/src/components/layout/menuModules'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client/types'
-import { DocumentCard, TopBar, chipForEstado, iniciales } from '@/core/ui/fw'
+import { DocumentCard, TopBar, chipForEstado } from '@/core/ui/fw'
 import { diaArgentina, msHastaProximaMedianocheArgentina, partesArgentina } from '@/src/utils/date'
 import { useHojasDeRuta } from '@/libs/api-client/logistica'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
-import { useCifrasGenerales } from '../api/queries'
+import { useCifrasGenerales, useDashboardResumen } from '../api/queries'
 import { PulsoDelNegocio } from './PulsoDelNegocio'
 import { AtajosDeInicio } from './AtajosDeInicio'
+import { ParaResolver, type FilaParaResolver } from './ParaResolver'
 import { TarjetaPendientes, type FilaPendiente } from './TarjetaPendientes'
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
@@ -55,6 +56,8 @@ export function InicioScreen() {
     { enabled: canDo('MOD_VENTAS', 'read') },
   )
   const ventasHoy: Venta[] = recientes.data?.items ?? []
+  // Mismo GET /Dashboard/summary que las cifras (misma clave, una sola llamada); también lo pide quien solo ve Stock, por las alertas.
+  const alertasStock = useDashboardResumen(canDo('MOD_STOCK', 'read')).data?.lowStockAlerts ?? null
   const cifras = useCifrasGenerales(canDo('MOD_PAGOS', 'read'), canDo('MOD_VENTAS', 'read'))
   // Rutas activas: hojas de ruta En curso (EstadoHojaRuta.EnCurso = 2), solo con acceso a Viajes.
   const rutas = useHojasDeRuta({ estado: 2 }, { enabled: canDo('MOD_VIAJES', 'read') })
@@ -77,6 +80,25 @@ export function InicioScreen() {
   const ir = (ruta: string) => () => router.push(ruta as never)
   const aAutorizaciones = () => router.push('/(tabs)/autorizaciones')
   const nombre = [user?.nombre, user?.apellido].filter(Boolean).join(' ') || user?.username || ''
+
+  const porAutorizar = pendientes.ventas?.porAutorizar
+  const paraResolver: FilaParaResolver[] = [
+    ...(porAutorizar
+      ? [{
+          titulo: porAutorizar.propias ? 'Esperando autorización' : 'Por autorizar',
+          detalle: porAutorizar.propias ? 'Tus ventas esperando el OK' : 'Ventas esperando tu OK',
+          cantidad: porAutorizar.cantidad,
+          tono: 'porAutorizar' as const,
+          onPress: porAutorizar.propias ? ir('/(tabs)/ventas?tipo=pedidos&estado=PendienteAutorizacion') : aAutorizaciones,
+        }]
+      : []),
+    ...(canDo('MOD_STOCK', 'read')
+      ? [{ titulo: 'Alertas de stock', detalle: 'Productos bajo el mínimo', cantidad: alertasStock, tono: 'anulado' as const, onPress: ir('/(tabs)/inventario/stock') }]
+      : []),
+    ...(pendientes.compras
+      ? [{ titulo: 'Por recibir', detalle: 'Compras confirmadas', cantidad: pendientes.compras.porRecibir.cantidad, tono: 'enCurso' as const, onPress: ir('/(tabs)/compras?estado=Confirmado') }]
+      : []),
+  ]
 
   const tarjetas: React.ReactNode[] = []
   const ancho = tablet ? 'flex' : ANCHO_TARJETA_TELEFONO
@@ -106,7 +128,8 @@ export function InicioScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
-        title="Inicio"
+        title={`Hola, ${nombre.split(' ')[0] || ''}`.trim()}
+        subtitle={`${DIAS[hoy.diaSemana]} ${hoy.dia} de ${MESES[hoy.mes]}`}
         leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
         actions={[{ icon: Search, accessibilityLabel: 'Buscar', onPress: () => router.push('/buscar') }]}
       />
@@ -115,18 +138,6 @@ export function InicioScreen() {
         contentContainerStyle={{ paddingTop: space[4], gap: space[4], paddingBottom: (tablet ? insets.bottom : 0) + space[4] }}
         refreshControl={<RefreshControl refreshing={refrescando} onRefresh={refrescar} tintColor={c.brand} />}
       >
-        <View style={{ paddingHorizontal: space[4], flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
-          <View style={{ width: 44, height: 44, borderRadius: radii.pastilla, backgroundColor: c.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={[typeScale.cuerpoDestacado, { color: c.brandInk }]}>{iniciales(nombre || '?')}</Text>
-          </View>
-          <View>
-            <Text style={[typeScale.secundario, { color: c.textSecondary }]}>
-              {`${DIAS[hoy.diaSemana]} ${hoy.dia} de ${MESES[hoy.mes]}`}
-            </Text>
-            <Text style={[typeScale.seccion, { color: c.text }]}>{`Hola, ${nombre.split(' ')[0] || ''}`.trim()}</Text>
-          </View>
-        </View>
-
         {canDo('MOD_VENTAS', 'read') ? (
           <PulsoDelNegocio
             ventasDelDia={cifras.ventasDelDia}
@@ -143,6 +154,8 @@ export function InicioScreen() {
           puede={{ vender: canDo('MOD_VENTAS', 'create'), cobrar: canDo('MOD_CC', 'read'), catalogo: canDo('MOD_CATALOGO', 'read'), stock: canDo('MOD_STOCK', 'read') }}
           onIr={(ruta) => router.push(ruta as never)}
         />
+
+        <ParaResolver filas={paraResolver} />
 
         {pendientes.error ? (
           <View style={{ paddingHorizontal: space[4], gap: space[2], alignItems: 'flex-start' }}>
