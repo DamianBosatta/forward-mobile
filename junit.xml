@@ -1,47 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="21" failures="0" errors="0" time="12.338">
-  <testsuite name="R1 · detalle del pedido (ResVentaDetalle, TV7)" errors="0" failures="0" skipped="0" timestamp="2026-10-31T02:15:23" time="12.104" tests="21">
-    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) muestra número, cliente, línea de tiempo, entrega, factura, líneas, flete y total" name="R1 · detalle del pedido (ResVentaDetalle, TV7) muestra número, cliente, línea de tiempo, entrega, factura, líneas, flete y total" time="0.616">
+<testsuites name="jest tests" tests="15" failures="0" errors="0" time="11.48">
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2026-10-31T02:22:36" time="11.172" tests="15">
+    <testcase classname=" sin la capacidad de autorizar ventas, la condición de pago es de solo lectura y no se manda" name=" sin la capacidad de autorizar ventas, la condición de pago es de solo lectura y no se manda" time="0.904">
     </testcase>
-    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) sin cobros no hay tarjeta &quot;Cobro&quot;" name="R1 · detalle del pedido (ResVentaDetalle, TV7) sin cobros no hay tarjeta &quot;Cobro&quot;" time="0.07">
+    <testcase classname=" un CUIT que no cierra se marca en el campo con la ayuda del alta provisoria, pero no frena el guardado" name=" un CUIT que no cierra se marca en el campo con la ayuda del alta provisoria, pero no frena el guardado" time="0.252">
     </testcase>
-    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) con cobros muestra la tarjeta &quot;Cobro&quot;: fecha y medio, importe y saldo; las notas de crédito no son cobros" name="R1 · detalle del pedido (ResVentaDetalle, TV7) con cobros muestra la tarjeta &quot;Cobro&quot;: fecha y medio, importe y saldo; las notas de crédito no son cobros" time="0.079">
+    <testcase classname=" un CUIT incompleto dice cuántos dígitos faltan (regla compartida cuitDigitosFaltantes)" name=" un CUIT incompleto dice cuántos dígitos faltan (regla compartida cuitDigitosFaltantes)" time="0.082">
     </testcase>
-    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) un pedido que ya se prepara no se edita y dice por qué; anular sigue disponible" name="R1 · detalle del pedido (ResVentaDetalle, TV7) un pedido que ya se prepara no se edita y dice por qué; anular sigue disponible" time="0.064">
+    <testcase classname=" un CUIT de 11 dígitos que no cierra no dice &quot;faltan&quot;: ya tiene los once" name=" un CUIT de 11 dígitos que no cierra no dice &quot;faltan&quot;: ya tiene los once" time="0.052">
     </testcase>
-    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) confirmado con MOD_VENTAS modificar: se edita (venta nueva en modo editar)" name="R1 · detalle del pedido (ResVentaDetalle, TV7) confirmado con MOD_VENTAS modificar: se edita (venta nueva en modo editar)" time="0.246">
+    <testcase classname=" un CUIT válido o vacío no muestra el error" name=" un CUIT válido o vacío no muestra el error" time="0.072">
     </testcase>
-    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) En ruta: Anular queda deshabilitado con el motivo a la vista" name="R1 · detalle del pedido (ResVentaDetalle, TV7) En ruta: Anular queda deshabilitado con el motivo a la vista" time="0.068">
+    <testcase classname=" con la capacidad, la condición de pago se elige y viaja al servidor" name=" con la capacidad, la condición de pago se elige y viaja al servidor" time="0.599">
     </testcase>
-    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) sin MOD_VENTAS borrar no hay Anular ni motivo" name="R1 · detalle del pedido (ResVentaDetalle, TV7) sin MOD_VENTAS borrar no hay Anular ni motivo" time="0.06">
+    <testcase classname=" si el servidor rechaza, se ve su mensaje con el detalle" name=" si el servidor rechaza, se ve su mensaje con el detalle" time="0.214">
     </testcase>
-    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) Cobrar lleva al cobro del cliente (flujo de cuentas) y pide MOD_PAGOS leer y crear" name="R1 · detalle del pedido (ResVentaDetalle, TV7) Cobrar lleva al cobro del cliente (flujo de cuentas) y pide MOD_PAGOS leer y crear" time="0.292">
+    <testcase classname=" al editar, carga los datos y devuelve el horario que no se edita acá" name=" al editar, carga los datos y devuelve el horario que no se edita acá" time="0.245">
     </testcase>
-    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) PDF comparte el de la venta; WhatsApp abre el chat con el texto de la web" name="R1 · detalle del pedido (ResVentaDetalle, TV7) PDF comparte el de la venta; WhatsApp abre el chat con el texto de la web" time="0.405">
+    <testcase classname="edición: el detalle manda si el detalle no carga, muestra el error con Reintentar y no deja guardar en blanco" name="edición: el detalle manda si el detalle no carga, muestra el error con Reintentar y no deja guardar en blanco" time="0.3">
     </testcase>
-    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) embebido en la tablet, volver cierra el panel" name="R1 · detalle del pedido (ResVentaDetalle, TV7) embebido en la tablet, volver cierra el panel" time="0.215">
+    <testcase classname="edición: el detalle manda un refetch posterior no pisa lo que el usuario tipeó" name="edición: el detalle manda un refetch posterior no pisa lo que el usuario tipeó" time="0.14">
     </testcase>
-    <testcase classname="R4 · anular igual que la web (sin motivo) muestra la confirmación de la web y no pide motivo" name="R4 · anular igual que la web (sin motivo) muestra la confirmación de la web y no pide motivo" time="0.238">
+    <testcase classname="edición: el detalle manda al guardar manda el horario recién traído, no el del caché viejo" name="edición: el detalle manda al guardar manda el horario recién traído, no el del caché viejo" time="0.263">
     </testcase>
-    <testcase classname="R4 · anular igual que la web (sin motivo) al confirmar manda &quot;Cancelación manual&quot; y la versión" name="R4 · anular igual que la web (sin motivo) al confirmar manda &quot;Cancelación manual&quot; y la versión" time="0.399">
+    <testcase classname="edición: el detalle manda con detalle en caché y el refetch fallido, muestra el error con Reintentar y no deja guardar el viejo" name="edición: el detalle manda con detalle en caché y el refetch fallido, muestra el error con Reintentar y no deja guardar el viejo" time="0.064">
     </testcase>
-    <testcase classname="R4 · anular igual que la web (sin motivo) &quot;Cancelar&quot; cierra sin anular" name="R4 · anular igual que la web (sin motivo) &quot;Cancelar&quot; cierra sin anular" time="0.42">
+    <testcase classname="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) un no administrador edita el resto pero no los tres campos sensibles, y se le dice por qué" name="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) un no administrador edita el resto pero no los tres campos sensibles, y se le dice por qué" time="0.068">
     </testcase>
-    <testcase classname="R2 · presupuesto (ResPresupuesto) Pasar a pedido pide confirmación y convierte con la versión" name="R2 · presupuesto (ResPresupuesto) Pasar a pedido pide confirmación y convierte con la versión" time="0.411">
+    <testcase classname="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) un administrador edita todo y no ve el aviso" name="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) un administrador edita todo y no ve el aviso" time="0.065">
     </testcase>
-    <testcase classname="R2 · presupuesto (ResPresupuesto) avisa que no reserva stock, que vence a los 45 días y no ofrece cobrar" name="R2 · presupuesto (ResPresupuesto) avisa que no reserva stock, que vence a los 45 días y no ofrece cobrar" time="0.062">
-    </testcase>
-    <testcase classname="R2 · presupuesto (ResPresupuesto) sin MOD_VENTAS modificar no hay Pasar a pedido ni Editar" name="R2 · presupuesto (ResPresupuesto) sin MOD_VENTAS modificar no hay Pasar a pedido ni Editar" time="0.058">
-    </testcase>
-    <testcase classname="R2 · presupuesto (ResPresupuesto) vencido: el botón dice Reabrir y vuelve a correr los 45 días" name="R2 · presupuesto (ResPresupuesto) vencido: el botón dice Reabrir y vuelve a correr los 45 días" time="0.208">
-    </testcase>
-    <testcase classname="R3 · rechazado (ResRechazada, TV8) muestra el motivo del rechazo, quién lo decidió y por qué esperaba" name="R3 · rechazado (ResRechazada, TV8) muestra el motivo del rechazo, quién lo decidió y por qué esperaba" time="0.062">
-    </testcase>
-    <testcase classname="R3 · rechazado (ResRechazada, TV8) no se edita ni se anula, ni deshabilitado" name="R3 · rechazado (ResRechazada, TV8) no se edita ni se anula, ni deshabilitado" time="0.072">
-    </testcase>
-    <testcase classname="R3 · rechazado (ResRechazada, TV8) ¿Qué hacés ahora?: cobrar lo vencido, armar uno nuevo igual y llamar al cliente" name="R3 · rechazado (ResRechazada, TV8) ¿Qué hacés ahora?: cobrar lo vencido, armar uno nuevo igual y llamar al cliente" time="0.576">
-    </testcase>
-    <testcase classname="R3 · rechazado (ResRechazada, TV8) sin MOD_VENTAS crear no ofrece armar uno nuevo; sin MOD_PAGOS no ofrece cobrar" name="R3 · rechazado (ResRechazada, TV8) sin MOD_VENTAS crear no ofrece armar uno nuevo; sin MOD_PAGOS no ofrece cobrar" time="0.061">
+    <testcase classname="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) en el alta nadie tiene nada bloqueado" name="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) en el alta nadie tiene nada bloqueado" time="0.078">
     </testcase>
   </testsuite>
 </testsuites>
