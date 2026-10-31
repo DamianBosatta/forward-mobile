@@ -2,13 +2,14 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Alert, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import Constants from 'expo-constants'
-import { Bell, Fingerprint, Lock, LogOut, Users } from 'lucide-react-native'
+import { Bell, Fingerprint, Lock, LogOut } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../../libs/store/auth.store'
 import { useThemeStore, useColors, radii, space, typeScale, type ThemeMode } from '../../libs/theme'
 import { ConfirmModal } from '@/core/ui'
 import { Button, FilaDeAjuste, FilaInterruptor, Notice, Segmented, TopBar, useMenuLeading, type SegmentedOption } from '@/core/ui/fw'
 import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
+import { FilaDeUsuarios } from '@/features/perfil/components/FilaDeUsuarios'
 import { useCerrarSesion } from '@/features/cuenta/hooks/useCerrarSesion'
 import { isBiometricLoginEnabled, isBiometricsAvailable, setBiometricLoginEnabled } from '@/features/auth/utils/biometrics'
 
@@ -136,8 +137,7 @@ export default function PerfilScreen() {
           <>
             {seccion('Equipo')}
             <View style={tarjeta}>
-              {/* TODO API: el mockup suma "· 12 usuarios"; el conteo sale de la lista de usuarios, que acá no se carga. */}
-              <FilaDeAjuste icono={Users} titulo="Usuarios" apoyo="Solo consulta" onPress={() => router.push('/perfil/usuarios')} />
+              <FilaDeUsuarios onPress={() => router.push('/perfil/usuarios')} />
             </View>
           </>
         ) : null}

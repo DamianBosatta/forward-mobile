@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native'
 import { useRouter } from 'expo-router'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { Button, Notice, Segmented, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { MOTIVO_SIN_PERMISO_DE_COBRO, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { useResponsive } from '@/libs/useResponsive'
@@ -13,6 +14,7 @@ import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cl
 import { CreditoDelCliente } from '@/features/clientes/components/CreditoDelCliente'
 import { useEstadoCuentaSocio } from '../api/queries'
 import { useMovimientosDeCliente } from '../hooks/useMovimientosDeCliente'
+import { PERIODOS_DE_CUENTA, rangoDelPeriodo, type PeriodoDeCuenta } from '../lib/periodo'
 import { NOMBRE_CUENTA, descripcionDe, textoImputacion, textoVencimiento, type FiltroCuenta, type MovimientoConCuenta } from '../lib/movimientos'
 
 /** Cuánto antes del final de la lista se pide la página siguiente. */
@@ -84,10 +86,13 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
   const { canCreate, canRead } = usePermissions()
   const { isTabletLandscape } = useResponsive()
   const [filtro, setFiltro] = useState<FiltroCuenta>('ambas')
+  // Período elegido (null = todo el historial). El rango se fija al elegirlo: no se mueve con el reloj mientras se mira.
+  const [periodo, setPeriodo] = useState<PeriodoDeCuenta | null>(null)
+  const rango = useMemo(() => (periodo ? rangoDelPeriodo(periodo, Date.now()) : undefined), [periodo])
   const socio = useSocio(socioId)
   const verCuenta = !!socio.data?.puedeVerCuentaCorriente
   const estado = useEstadoCuentaSocio(socioId, verCuenta)
-  const movs = useMovimientosDeCliente(socioId, verCuenta ? socio.data ?? {} : {}, filtro, verCuenta)
+  const movs = useMovimientosDeCliente(socioId, verCuenta ? socio.data ?? {} : {}, filtro, verCuenta, rango)
 
   // Con el servidor nuevo la lista se completa sola al llegar cerca del final.
   const alDesplazar = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -182,11 +187,16 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
         <View style={{ gap: space[3] }}>
           <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Movimientos</Text>
           <Segmented options={FILTROS} value={filtro} onChange={setFiltro} accessibilityLabel="Cuenta" />
-          {/* TODO API: filtro por período (Octubre, Septiembre, Últimos 90 días…), "Saldo al 01/10" inicial y PDF del estado. */}
+          <View accessibilityRole="radiogroup" accessibilityLabel="Período" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+            {PERIODOS_DE_CUENTA.map(p => (
+              <FiltroChip key={p.valor} label={p.label} activo={periodo === p.valor} onPress={() => setPeriodo(periodo === p.valor ? null : p.valor)} />
+            ))}
+          </View>
+          {/* TODO API: "Saldo al 01/10" inicial y PDF del estado. */}
           {movs.cargando ? <ActivityIndicator color={c.brandInk} /> : null}
           {movs.error ? <Notice tone="peligro">{mensajeDelServidor(movs.error, 'No se pudieron cargar los movimientos.')}</Notice> : null}
           {!movs.cargando && !movs.error && movs.movimientos.length === 0 ? (
-            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>No hay movimientos en esta cuenta.</Text>
+            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{periodo ? 'No hay movimientos en este período.' : 'No hay movimientos en esta cuenta.'}</Text>
           ) : null}
           {movs.movimientos.map(m => <Movimiento key={`${m.cuenta}-${m.id}`} m={m} tabla={isTabletLandscape} />)}
           {movs.errorPaginaSiguiente ? (

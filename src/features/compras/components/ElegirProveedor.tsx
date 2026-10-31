@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
 import { Lock } from 'lucide-react-native'
-import { Button, Field, FormContainer, Notice, PasosNumerados } from '@/core/ui/fw'
+import { Button, Field, FormContainer, Notice, PasosNumerados, formatImporte } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useSocio, useSocios } from '@/libs/api-client/socios'
+import { usePermissions } from '@/core/auth/RequirePermission'
+import { useComprasDelProveedor } from '@/features/proveedores/hooks/useProveedores'
+import { formatToLocalDate } from '@/src/utils/date'
 import { franjaTexto } from '../lib/fecha'
 
 export const PASOS_COMPRA = ['Proveedor', 'Productos', 'Confirmar'] as const
@@ -25,6 +28,10 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
   const [enviada, setEnviada] = useState('')
   const [elegido, setElegido] = useState<string | null>(null)
   const ficha = useSocio(elegido ?? '')
+  // "Última compra": la compra más reciente del proveedor (GET /Compras?proveedorId=, MOD_COMPRAS:Read).
+  const puedeVerCompras = usePermissions().canDo('MOD_COMPRAS', 'read')
+  const ultimas = useComprasDelProveedor(elegido ?? '', puedeVerCompras, 1)
+  const ultima = ultimas.data?.items?.[0]
   useEffect(() => {
     const t = setTimeout(() => setEnviada(busqueda.trim()), 300)
     return () => clearTimeout(t)
@@ -43,6 +50,11 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
       </View>
     </View>
   )
+
+  const textoUltima = ultimas.isLoading ? 'Cargando…'
+    : ultimas.isError ? 'No se pudo cargar'
+    : ultima ? `${formatToLocalDate(ultima.fecha)} · ${formatImporte(ultima.totalAmount, { moneda: ultima.totalCurrency })}`
+    : 'Sin compras'
 
   return (
     <View style={{ flex: 1 }}>
@@ -89,12 +101,18 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
             : q.isError ? <Notice tone="peligro">No se pudieron cargar los proveedores.</Notice>
             : <View><Text style={secundario}>No hay proveedores con esa búsqueda.</Text></View>
         }
-        // TODO API: "Última compra" por proveedor y las condiciones editables no existen en el servidor; las condiciones van de solo lectura.
+        // TODO API: las condiciones editables no existen en el servidor; las condiciones van de solo lectura.
         ListFooterComponent={elegido ? (
           <FormContainer style={{ marginTop: space[3], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
             <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text }]}>Condiciones del proveedor</Text>
             {fila('Plazo de pago', condicion)}
             {fila('Franja horaria', franja)}
+            {puedeVerCompras ? (
+              <View accessible accessibilityLabel={`Última compra: ${textoUltima}`} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[3], paddingVertical: space[1] }}>
+                <Text style={secundario}>Última compra</Text>
+                <Text style={[typeScale.secundario, { color: c.text, flexShrink: 1, textAlign: 'right' }]}>{textoUltima}</Text>
+              </View>
+            ) : null}
             <Text style={secundario}>Se cambian en la ficha del proveedor, en la web.</Text>
           </FormContainer>
         ) : null}
