@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { Image, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import { ArrowLeft, Package, Trash2 } from 'lucide-react-native'
+import { Package, Trash2 } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, StatusChip, formatImporte } from '@/core/ui/fw'
+import { Button, Notice, StatusChip, TopBar, formatImporte } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import type { CatalogoStockItem } from '@/libs/api-client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -116,17 +116,11 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
       <View testID="cantidad-oferta" accessibilityLabel="Cantidad y oferta" style={{ flex: 1, backgroundColor: c.bg }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[2], paddingVertical: space[2], backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.border }}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Volver" onPress={onClose} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
-            <ArrowLeft size={22} color={c.text} />
-          </Pressable>
-          <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text, flex: 1 }}>Cantidad y oferta</Text>
-          {linea ? (
-            <Pressable accessibilityRole="button" accessibilityLabel="Quitar la línea" onPress={quitarLinea} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
-              <Trash2 size={22} color={c.textSecondary} />
-            </Pressable>
-          ) : null}
-        </View>
+        <TopBar
+          title="Cantidad y oferta"
+          leading={{ kind: 'atras', onPress: onClose }}
+          actions={linea ? [{ icon: Trash2, accessibilityLabel: 'Quitar la línea', onPress: quitarLinea }] : []}
+        />
 
         <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }} keyboardShouldPersistTaps="handled">
           <View style={{ flexDirection: 'row', gap: space[3], alignItems: 'center' }}>
