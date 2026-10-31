@@ -207,6 +207,21 @@ describe('Autorizar venta: el detalle', () => {
     expect(mockBack).toHaveBeenCalled()
   })
 
+  it('tras rechazar no vuelve a pedir la vista previa de esa venta (el servidor daría 400 y se vería el error)', async () => {
+    permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+    pintar()
+    const pedidosDeVistaPrevia = () => mockGet.mock.calls.filter(([u]) => String(u).endsWith('autorizacion-preview')).length
+    await userEvent.press(await screen.findByRole('button', { name: 'Rechazar' }))
+    await waitFor(() => expect(pedidosDeVistaPrevia()).toBe(1))
+    const hoja = within(screen.getByLabelText('Rechazar venta'))
+    await userEvent.type(hoja.getByLabelText('Motivo del rechazo · obligatorio'), 'Precio fuera de lista')
+    await userEvent.press(hoja.getByRole('button', { name: 'Rechazar' }))
+    await waitFor(() => expect(mockBack).toHaveBeenCalled())
+    // La venta pasó a otro estado: la invalidación del detalle no tiene que arrastrar la vista previa.
+    await new Promise((r) => setTimeout(r, 50))
+    expect(pedidosDeVistaPrevia()).toBe(1)
+  })
+
   describe('descuento adicional al autorizar (opcional)', () => {
     const SIN_AMARILLO = { ...VENTA, venta: { ...VENTA.venta, motivoPendienteAutorizacion: 1 } }
     async function abrirHoja() {
