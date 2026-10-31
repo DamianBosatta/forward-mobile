@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useCuentaMovimientos, useMovimientosSocio } from '../api/queries'
 import { unirMovimientos, type FiltroCuenta, type MovimientoConCuenta, type MovimientosDeCuenta } from '../lib/movimientos'
 import type { TipoCuentaSocio } from '@/libs/api-client/types'
+import type { RangoDeDias } from '../lib/periodo'
 
 interface CuentasDelCliente {
   /** La cuenta TST (la principal). El servidor la manda en null si el usuario no puede verla. */
@@ -18,18 +19,18 @@ interface CuentasDelCliente {
  * salen de la ficha del cliente— y se unen por fecha, como antes; y no se vuelve a probar el nuevo
  * hasta que se reabra la pantalla. Esas dos pedidas no arrancan hasta saber que el nuevo no sirve.
  */
-export function useMovimientosDeCliente(socioId: string, cuentas: CuentasDelCliente, filtro: FiltroCuenta, habilitado = true) {
+export function useMovimientosDeCliente(socioId: string, cuentas: CuentasDelCliente, filtro: FiltroCuenta, habilitado = true, rango?: RangoDeDias) {
   // Una vez que el servidor dijo que no tiene el endpoint, no se vuelve a preguntar al cambiar de cuenta.
   const [servidorSinEndpoint, setServidorSinEndpoint] = useState(false)
-  const nuevo = useMovimientosSocio(socioId, filtro, habilitado && !servidorSinEndpoint)
+  const nuevo = useMovimientosSocio(socioId, filtro, habilitado && !servidorSinEndpoint, rango)
   const conServidorNuevo = !servidorSinEndpoint && nuevo.isSuccess && nuevo.data.pages[0] != null
   const sinServidorNuevo = servidorSinEndpoint || (nuevo.isSuccess && !conServidorNuevo)
   useEffect(() => {
     if (sinServidorNuevo) setServidorSinEndpoint(true)
   }, [sinServidorNuevo])
 
-  const tst = useCuentaMovimientos(cuentas.cuentaId, habilitado && sinServidorNuevo && filtro !== 'Normal')
-  const normal = useCuentaMovimientos(cuentas.cuentaNormalId, habilitado && sinServidorNuevo && filtro !== 'Tst')
+  const tst = useCuentaMovimientos(cuentas.cuentaId, habilitado && sinServidorNuevo && filtro !== 'Normal', rango)
+  const normal = useCuentaMovimientos(cuentas.cuentaNormalId, habilitado && sinServidorNuevo && filtro !== 'Tst', rango)
 
   if (!sinServidorNuevo) {
     // El corrimiento del offset (un movimiento nuevo entre dos páginas) puede repetir un asiento: una sola vez cada id.

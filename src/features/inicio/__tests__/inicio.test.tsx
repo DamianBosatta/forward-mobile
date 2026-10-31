@@ -45,7 +45,7 @@ const VENTA_HOY = {
   totalAmount: 214560,
 }
 
-type Respuestas = Partial<Record<'resumen' | 'presupuestos' | 'pedidos' | 'porAutorizar' | 'compras' | 'hoy', unknown>>
+type Respuestas = Partial<Record<'resumen' | 'presupuestos' | 'pedidos' | 'porAutorizar' | 'compras' | 'hoy' | 'deudas', unknown>>
 
 /**
  * Responde según la URL, como el servidor. Un Error = la llamada falla con ese error. Sin `resumen`
@@ -53,7 +53,8 @@ type Respuestas = Partial<Record<'resumen' | 'presupuestos' | 'pedidos' | 'porAu
  */
 function servidor(r: Respuestas) {
   mockGet.mockImplementation((url: string) => {
-    const clave = url.includes('Inicio/resumen') ? 'resumen'
+    const clave = url.includes('deudas/resumen') ? 'deudas'
+      : url.includes('Inicio/resumen') ? 'resumen'
       : url.includes('pendientes-autorizacion') ? 'porAutorizar'
       : url.includes('Compras/resumen') ? 'compras'
       : url.includes('fechaDesde') ? 'hoy'
@@ -118,6 +119,37 @@ const flat = (el: { props: { style?: unknown } }): ViewStyle => StyleSheet.flatt
 beforeEach(() => {
   jest.clearAllMocks()
   mockAncho.mockReturnValue(390)
+})
+
+describe('Inicio: me deben y debo salen de /deudas/resumen (MOD_PAGOS:Read)', () => {
+  const DEUDAS = { clientesConDeuda: 7, totalDeudaClientes: 48920300, proveedoresConDeuda: 2, totalDeudaProveedores: 21150000 }
+
+  it('con MOD_PAGOS:Read muestra lo que deben los clientes y lo que se debe a proveedores', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_PAGOS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []), deudas: DEUDAS })
+    pintar()
+
+    expect(await screen.findByLabelText(`Me deben los clientes: ${ars('48.920.300,00')}`)).toBeTruthy()
+    expect(screen.getByLabelText(`Debo a proveedores: ${ars('21.150.000,00')}`)).toBeTruthy()
+  })
+
+  it('sin MOD_PAGOS:Read no pide el resumen y muestra "—"', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []), deudas: DEUDAS })
+    pintar()
+
+    expect(await screen.findByLabelText('Me deben los clientes: —')).toBeTruthy()
+    expect(screen.getByLabelText('Debo a proveedores: —')).toBeTruthy()
+    expect(mockGet.mock.calls.some(([u]) => String(u).includes('deudas/resumen'))).toBe(false)
+  })
+
+  it('si el resumen falla muestra "—", nunca 0', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_PAGOS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []), deudas: new Error('boom') })
+    pintar()
+
+    expect(await screen.findByLabelText('Me deben los clientes: —')).toBeTruthy()
+  })
 })
 
 describe('Inicio: acción Buscar (bloque 12, R14)', () => {

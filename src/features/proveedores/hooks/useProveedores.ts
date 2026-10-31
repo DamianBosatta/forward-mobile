@@ -39,11 +39,11 @@ export const COMPRAS_EN_FICHA = 5
  * Las últimas compras de un proveedor (`GET /Compras?proveedorId=`, como el historial de la web).
  * Va aparte de `useCompras` de libs porque ese hook todavía no acepta el filtro por proveedor.
  */
-export function useComprasDelProveedor(proveedorId: string, habilitado: boolean) {
+export function useComprasDelProveedor(proveedorId: string, habilitado: boolean, cantidad: number = COMPRAS_EN_FICHA) {
   return useQuery({
-    queryKey: [...comprasKeys.all, 'proveedor', proveedorId],
+    queryKey: [...comprasKeys.all, 'proveedor', proveedorId, cantidad],
     queryFn: () =>
-      api.get<PagedResult<CompraDtoList>>(`/api/v1/Compras?proveedorId=${encodeURIComponent(proveedorId)}&pageNumber=1&pageSize=${COMPRAS_EN_FICHA}`),
+      api.get<PagedResult<CompraDtoList>>(`/api/v1/Compras?proveedorId=${encodeURIComponent(proveedorId)}&pageNumber=1&pageSize=${cantidad}`),
     enabled: habilitado && !!proveedorId,
     staleTime: 30_000,
   })

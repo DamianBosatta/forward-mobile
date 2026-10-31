@@ -3,7 +3,7 @@ import { screen, userEvent, waitFor } from '@testing-library/react-native'
 import CuentasCorrientesScreen from '../../../../app/(tabs)/cuentas/index'
 import { api } from '@/core/api/client'
 import { formatImporte as $ } from '@/core/ui/fw'
-import { AVISO_DEBO_SIN_API } from '../../../../app/(tabs)/cuentas/index'
+import { AVISO_DEBO_SIN_PERMISO } from '../../../../app/(tabs)/cuentas/index'
 import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA } from '@/core/ui/fw/MotivoDeshabilitado'
 import { clienteDeLista, conPermisos, pagina, renderConQuery } from '@/features/clientes/__testing__/ayuda'
 import { estadoDeCuenta, fichaConCuentas, paginaDeMovimientos } from '../__testing__/servidor'
@@ -124,12 +124,84 @@ it('en el teléfono la barra de abajo sigue a la vista en Cobros (lámina CalleM
   expect(screen.getByText('Mi día')).toBeTruthy()
 })
 
-it('el lado "Debo" todavía no tiene API: avisa en vez de mostrar una lista inventada', async () => {
-  renderConQuery(<CuentasCorrientesScreen />)
-  await screen.findByText('Mostrando 1 de 142', {}, ESPERA)
+const RESUMEN_DEUDAS = { clientesConDeuda: 7, totalDeudaClientes: 640300, proveedoresConDeuda: 2, totalDeudaProveedores: 91000 }
+const proveedor = (socioId: string, razonSocial: string, saldoDeuda: number) => ({
+  socioId, razonSocial, cuit: '30-1-2', saldoDeuda, saldoTst: 0, saldoNormal: saldoDeuda, moneda: 'ARS', puedeVerCuentaCorriente: true,
+})
 
-  await userEvent.press(screen.getByRole('radio', { name: 'Debo' }))
+describe('Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read)', () => {
+  function servidorConDeudas(extra: Record<string, unknown> = {}) {
+    const base = get.getMockImplementation()!
+    get.mockImplementation(async (url: string) => {
+      if (url.includes('/deudas/resumen')) return extra.resumen ?? RESUMEN_DEUDAS
+      if (url.includes('/deudas/proveedores')) {
+        if (extra.proveedores instanceof Error) throw extra.proveedores
+        return extra.proveedores ?? {
+          pagina: { page: 1, pageSize: 20, totalCount: 2, totalPages: 1, hasNextPage: false, items: [proveedor('p1', 'Molinos SA', 61000), proveedor('p2', 'Lácteos SRL', 30000)] },
+          deudaTotal: 91000,
+        }
+      }
+      return base(url)
+    })
+  }
 
-  expect(screen.getByText(AVISO_DEBO_SIN_API)).toBeTruthy()
-  expect(screen.queryByText('Mostrando 1 de 142')).toBeNull()
+  it('con MOD_PAGOS:Read el lado "Debo" lista las deudas con proveedores y el total del servidor', async () => {
+    conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true }])
+    servidorConDeudas()
+    renderConQuery(<CuentasCorrientesScreen />)
+    await screen.findByText('Mostrando 1 de 142', {}, ESPERA)
+
+    await userEvent.press(screen.getByRole('radio', { name: 'Debo' }))
+
+    expect(await screen.findByLabelText(`Molinos SA, le debés ${$(61000)}`, {}, ESPERA)).toBeTruthy()
+    expect(screen.getByLabelText(`Lácteos SRL, le debés ${$(30000)}`)).toBeTruthy()
+    expect(screen.getByLabelText(`Debés: ${$(91000)}`)).toBeTruthy()
+    expect(screen.queryByText('Mostrando 1 de 142')).toBeNull()
+  })
+
+  it('sin proveedores con deuda dice que no se le debe a nadie', async () => {
+    conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true }])
+    servidorConDeudas({ proveedores: { pagina: { page: 1, totalCount: 0, totalPages: 0, hasNextPage: false, items: [] }, deudaTotal: 0 } })
+    renderConQuery(<CuentasCorrientesScreen />)
+    await userEvent.press(await screen.findByRole('radio', { name: 'Debo' }, ESPERA))
+
+    expect(await screen.findByText('No le debés a ningún proveedor.', {}, ESPERA)).toBeTruthy()
+  })
+
+  it('si el servidor falla muestra el error, no una lista vacía', async () => {
+    conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true }])
+    servidorConDeudas({ proveedores: new Error('El servidor no respondió.') })
+    renderConQuery(<CuentasCorrientesScreen />)
+    await userEvent.press(await screen.findByRole('radio', { name: 'Debo' }, ESPERA))
+
+    expect(await screen.findByText('El servidor no respondió.', {}, ESPERA)).toBeTruthy()
+  })
+
+  it('sin MOD_PAGOS:Read avisa y no pide las deudas', async () => {
+    servidorConDeudas()
+    renderConQuery(<CuentasCorrientesScreen />)
+    await screen.findByText('Mostrando 1 de 142', {}, ESPERA)
+
+    await userEvent.press(screen.getByRole('radio', { name: 'Debo' }))
+
+    expect(screen.getByText(AVISO_DEBO_SIN_PERMISO)).toBeTruthy()
+    expect(get.mock.calls.some(([u]) => String(u).includes('/deudas/'))).toBe(false)
+  })
+
+  it('Te deben suma la cantidad de clientes con deuda del resumen', async () => {
+    conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true }])
+    servidorConDeudas()
+    const base = get.getMockImplementation()!
+    get.mockImplementation(async (url: string) => (url.startsWith('/api/v1/socios-comerciales?') ? { ...pagina([clienteDeLista()], 142), saldoTotal: 640300 } : base(url)))
+    renderConQuery(<CuentasCorrientesScreen />)
+
+    expect(await screen.findByLabelText(`Te deben: ${$(640300)}, 7 clientes con deuda`, {}, ESPERA)).toBeTruthy()
+  })
+
+  it('sin MOD_PAGOS:Read Te deben no muestra clientes con deuda', async () => {
+    get.mockImplementation(async (url: string) => (url.startsWith('/api/v1/socios-comerciales?') ? { ...pagina([clienteDeLista()], 142), saldoTotal: 640300 } : fichaConCuentas()))
+    renderConQuery(<CuentasCorrientesScreen />)
+
+    expect(await screen.findByLabelText(`Te deben: ${$(640300)}`, {}, ESPERA)).toBeTruthy()
+  })
 })

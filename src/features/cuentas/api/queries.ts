@@ -1,5 +1,7 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { api } from '@/core/api/client'
+import type { components } from '@/libs/api-client/generated/schema'
+import type { RangoDeDias } from '../lib/periodo'
 import type {
   CuentaCorrienteResumenDto,
   MovimientoCuentaDto,
@@ -30,13 +32,47 @@ export const cuentasKeys = {
   all: ['cuentas-corrientes'] as const,
   lists: () => [...cuentasKeys.all, 'list'] as const,
   propias: (activo?: boolean) => [...cuentasKeys.lists(), 'propias', activo] as const,
-  movimientos: (id: string) => [...cuentasKeys.all, 'detail', id, 'movimientos'] as const,
-  movimientosSocio: (socioId: string, cuenta: 'ambas' | TipoCuentaSocio) =>
-    [...cuentasKeys.all, 'socio', socioId, 'movimientos', cuenta] as const,
+  movimientos: (id: string, rango?: RangoDeDias) => [...cuentasKeys.all, 'detail', id, 'movimientos', rango ?? null] as const,
+  movimientosSocio: (socioId: string, cuenta: 'ambas' | TipoCuentaSocio, rango?: RangoDeDias) =>
+    [...cuentasKeys.all, 'socio', socioId, 'movimientos', cuenta, rango ?? null] as const,
+  deudasResumen: () => [...cuentasKeys.all, 'deudas', 'resumen'] as const,
   estadoSocio: (socioId: string) => [...cuentasKeys.all, 'estado-cuenta', socioId] as const,
 }
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
+
+export type DeudasResumen = components['schemas']['DeudasResumenDto']
+
+/**
+ * Totales de deuda: lo que deben los clientes y lo que se debe a proveedores (`GET /deudas/resumen`, MOD_PAGOS:Read).
+ * Una sola consulta para Inicio y Cuentas; pedirla solo si el usuario tiene ese permiso (`enabled`).
+ */
+export function useDeudasResumen(enabled: boolean) {
+  return useQuery({
+    queryKey: cuentasKeys.deudasResumen(),
+    queryFn: () => api.get<DeudasResumen>('/api/v1/deudas/resumen'),
+    staleTime: 30_000,
+    enabled,
+  })
+}
+
+export type DeudaProveedor = components['schemas']['DeudaSocioDto']
+type DeudasProveedoresPagina = components['schemas']['DeudasSocioPagedResult']
+
+/**
+ * Lo que se le debe a cada proveedor, de a 20 (`GET /deudas/proveedores`, MOD_PAGOS:Read). `deudaTotal` viene en
+ * toda página: es la suma de todo el filtro, no de lo cargado; no se suma en el teléfono.
+ */
+export function useDeudasProveedores(enabled: boolean) {
+  return useInfiniteQuery({
+    queryKey: [...cuentasKeys.all, 'deudas', 'proveedores'] as const,
+    queryFn: ({ pageParam = 1 }) => api.get<DeudasProveedoresPagina>(`/api/v1/deudas/proveedores?PageNumber=${pageParam}&PageSize=20`),
+    getNextPageParam: (ultima) => (ultima?.pagina?.hasNextPage ? (ultima.pagina.page ?? 1) + 1 : undefined),
+    initialPageParam: 1,
+    staleTime: 30_000,
+    enabled,
+  })
+}
 
 /** Estado de cuenta de un socio (saldo actual, a favor y pendientes). Pedirlo solo si el servidor dijo que se puede ver. */
 export function useEstadoCuentaSocio(socioId: string, enabled = true) {
@@ -60,12 +96,12 @@ export function useCuentasPropias(activo: boolean = true) {
 }
 
 /** Movimientos de una cuenta, del más nuevo al más viejo, de a 20 (el servidor pagina y ordena). */
-export function useCuentaMovimientos(cuentaId: string | null | undefined, enabled = true) {
+export function useCuentaMovimientos(cuentaId: string | null | undefined, enabled = true, rango?: RangoDeDias) {
   return useInfiniteQuery({
-    queryKey: cuentasKeys.movimientos(cuentaId ?? ''),
+    queryKey: cuentasKeys.movimientos(cuentaId ?? '', rango),
     queryFn: async ({ pageParam = 1 }) => {
       const res = await api.get<GetMovimientosCuentaDto>(
-        `/api/v1/cuentas-corrientes/${cuentaId}/movimientos?pageNumber=${pageParam}&pageSize=20`
+        `/api/v1/cuentas-corrientes/${cuentaId}/movimientos?pageNumber=${pageParam}&pageSize=20${rango ? `&fechaDesde=${rango.desde}&fechaHasta=${rango.hasta}` : ''}`
       )
       return res
     },
@@ -89,11 +125,11 @@ export function useCuentaMovimientos(cuentaId: string | null | undefined, enable
  * pedir cada cuenta por separado, así que un problema de este endpoint nunca rompe la cuenta corriente.
  * Una falla en la página 2 o posterior sí es un error: la lista ya mostrada se conserva y se puede reintentar.
  */
-export function useMovimientosSocio(socioId: string, cuenta: 'ambas' | TipoCuentaSocio, enabled = true) {
+export function useMovimientosSocio(socioId: string, cuenta: 'ambas' | TipoCuentaSocio, enabled = true, rango?: RangoDeDias) {
   return useInfiniteQuery({
-    queryKey: cuentasKeys.movimientosSocio(socioId, cuenta),
+    queryKey: cuentasKeys.movimientosSocio(socioId, cuenta, rango),
     queryFn: async ({ pageParam = 1 }): Promise<MovimientoSocioDtoPaginatedResponse | null> => {
-      const filtro = cuenta === 'ambas' ? '' : `&cuenta=${cuenta}`
+      const filtro = (cuenta === 'ambas' ? '' : `&cuenta=${cuenta}`) + (rango ? `&desde=${rango.desde}&hasta=${rango.hasta}` : '')
       try {
         const res = await api.get<MovimientoSocioDtoPaginatedResponse>(
           `/api/v1/cuentas-corrientes/socios/${socioId}/movimientos?pageNumber=${pageParam}&pageSize=20${filtro}`,
