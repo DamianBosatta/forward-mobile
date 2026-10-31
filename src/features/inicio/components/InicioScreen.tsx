@@ -3,7 +3,7 @@ import { AppState, Pressable, RefreshControl, ScrollView, Text, View } from 'rea
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Search, ShoppingBag, Tag } from 'lucide-react-native'
+import { Search } from 'lucide-react-native'
 import { FONT, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { puedeVerVentas } from '@/src/components/layout/menuModules'
@@ -18,14 +18,12 @@ import { useCifrasGenerales, useDashboardResumen } from '../api/queries'
 import { PulsoDelNegocio } from './PulsoDelNegocio'
 import { AtajosDeInicio } from './AtajosDeInicio'
 import { ParaResolver, type FilaParaResolver } from './ParaResolver'
-import { TarjetaPendientes, type FilaPendiente } from './TarjetaPendientes'
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 const dos = (n: number) => String(n).padStart(2, '0')
-const ANCHO_TARJETA_TELEFONO = 240
 
-/** Inicio (láminas Main y TabInicio): pendientes por módulo y lo de hoy. */
+/** Inicio (láminas Main y TabInicio): el pulso del negocio, los pendientes en "Para resolver" y lo de hoy. */
 export function InicioScreen() {
   const c = useColors()
   const router = useRouter()
@@ -100,31 +98,6 @@ export function InicioScreen() {
       : []),
   ]
 
-  const tarjetas: React.ReactNode[] = []
-  const ancho = tablet ? 'flex' : ANCHO_TARJETA_TELEFONO
-  if (pendientes.ventas) {
-    const v = pendientes.ventas
-    const filas: FilaPendiente[] = [
-      { label: 'Presupuestos', ...v.presupuestos, onPress: ir('/(tabs)/ventas?tipo=presupuestos&estado=Pendiente') },
-      { label: 'Pedidos confirmados', ...v.pedidos, onPress: ir('/(tabs)/ventas?tipo=pedidos&estado=Confirmada') },
-    ]
-    // Sin CAP_AUTORIZAR_VENTA no hay bandeja: son las suyas que esperan, y se ven en Ventas.
-    if (v.porAutorizar) {
-      filas.push(v.porAutorizar.propias
-        ? { label: 'Esperando autorización', ...v.porAutorizar, alerta: true, onPress: ir('/(tabs)/ventas?tipo=pedidos&estado=PendienteAutorizacion') }
-        : { label: 'Por autorizar', ...v.porAutorizar, alerta: true, onPress: aAutorizaciones })
-    }
-    tarjetas.push(<TarjetaPendientes key="ventas" titulo="Ventas" icono={Tag} filas={filas} ancho={ancho} />)
-  }
-  if (pendientes.compras) {
-    const k = pendientes.compras
-    const filas: FilaPendiente[] = [
-      { label: 'Notas de pedido', ...k.notasPedido, onPress: ir('/(tabs)/compras?estado=NotaPedido') },
-      { label: 'Por recibir', ...k.porRecibir, onPress: ir('/(tabs)/compras?estado=Confirmado') },
-    ]
-    tarjetas.push(<TarjetaPendientes key="compras" titulo="Compras" icono={ShoppingBag} filas={filas} ancho={ancho} />)
-  }
-
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
@@ -173,22 +146,6 @@ export function InicioScreen() {
             </Pressable>
           </View>
         ) : null}
-
-        {tarjetas.length > 0 &&
-          (tablet ? (
-            <View testID="inicio-pendientes" style={{ flexDirection: 'row', gap: space[3], paddingHorizontal: space[4] }}>
-              {tarjetas}
-            </View>
-          ) : (
-            <ScrollView
-              testID="inicio-pendientes"
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: space[3], paddingHorizontal: space[4], paddingBottom: space[2] }}
-            >
-              {tarjetas}
-            </ScrollView>
-          ))}
 
         {canDo('MOD_VENTAS', 'read') && (
           <View style={{ paddingHorizontal: space[4], gap: space[3] }}>
