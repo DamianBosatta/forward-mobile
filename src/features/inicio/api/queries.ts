@@ -56,18 +56,36 @@ export function useComprasResumenInicio(enabled: boolean) {
   })
 }
 
+/** GET /Dashboard/summary: `salesToday` es `null` sin MOD_VENTAS:Read; el vendedor ve solo lo propio. */
+export function useDashboardResumen(enabled: boolean) {
+  return useQuery({
+    queryKey: [...inicioKeys.all, 'dashboard'] as const,
+    queryFn: () => api.get<Schemas['DashboardSummaryDto']>('/api/v1/Dashboard/summary'),
+    staleTime: 30_000,
+    enabled,
+  })
+}
+
 /** Cifras de negocio de Inicio. `null` = sin dato (sin permiso, cargando o error): la pantalla muestra "—", nunca 0. */
 export interface CifrasGenerales {
   ventasDelDia: number | null
   meDeben: number | null
   debo: number | null
+  /** Deuda de clientes vencida (FIFO > 30 días). `null` = no se muestra la cifra. */
+  deudaVencida: number | null
 }
 
 /**
- * `meDeben` y `debo` salen de `GET /deudas/resumen` (MOD_PAGOS:Read; `enabled` = el usuario lo tiene).
- * TODO API: `ventasDelDia` sigue en `null` hasta que forward-system exponga el total vendido del día (ola B).
+ * `meDeben`, `debo` y `deudaVencida` salen de `GET /deudas/resumen` (MOD_PAGOS:Read; `pagos` = el usuario lo tiene).
+ * `ventasDelDia` sale de `GET /Dashboard/summary` (`salesToday`; `ventas` = tiene MOD_VENTAS:Read).
  */
-export function useCifrasGenerales(enabled: boolean): CifrasGenerales {
-  const { data } = useDeudasResumen(enabled)
-  return { ventasDelDia: null, meDeben: data?.totalDeudaClientes ?? null, debo: data?.totalDeudaProveedores ?? null }
+export function useCifrasGenerales(pagos: boolean, ventas = false): CifrasGenerales {
+  const { data } = useDeudasResumen(pagos)
+  const dash = useDashboardResumen(ventas)
+  return {
+    ventasDelDia: dash.data?.salesToday ?? null,
+    meDeben: data?.totalDeudaClientes ?? null,
+    debo: data?.totalDeudaProveedores ?? null,
+    deudaVencida: data?.totalDeudaVencidaClientes ?? null,
+  }
 }

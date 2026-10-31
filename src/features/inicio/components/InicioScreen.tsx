@@ -55,7 +55,7 @@ export function InicioScreen() {
     { enabled: canDo('MOD_VENTAS', 'read') },
   )
   const ventasHoy: Venta[] = recientes.data?.items ?? []
-  const cifras = useCifrasGenerales(canDo('MOD_PAGOS', 'read'))
+  const cifras = useCifrasGenerales(canDo('MOD_PAGOS', 'read'), canDo('MOD_VENTAS', 'read'))
   // Rutas activas: hojas de ruta En curso (EstadoHojaRuta.EnCurso = 2), solo con acceso a Viajes.
   const rutas = useHojasDeRuta({ estado: 2 }, { enabled: canDo('MOD_VIAJES', 'read') })
   // Tablet: "Reciente" en dos columnas (plan §8), alternando para conservar el orden de lectura.
@@ -135,6 +135,7 @@ export function InicioScreen() {
             rutasActivas={rutas.data?.length ?? null}
             meDeben={cifras.meDeben}
             debo={cifras.debo}
+            deudaVencida={cifras.deudaVencida}
           />
         ) : null}
         <AtajosDeInicio
