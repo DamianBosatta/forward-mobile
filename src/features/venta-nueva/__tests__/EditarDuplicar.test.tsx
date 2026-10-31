@@ -155,17 +155,17 @@ describe('editar y duplicar (PR 2.9b)', () => {
     })
     abrir({ modo: 'duplicar', ventaId: 'v9' })
     expect(await screen.findByText('No se pudo traer el catálogo con los precios y el stock de hoy.')).toBeTruthy()
-    expect(screen.queryByText('Nuevo pedido')).toBeNull()
+    expect(screen.queryByText('Revisar venta')).toBeNull()
     expect(mockPost).not.toHaveBeenCalled()
     catalogoFalla = false
     await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
-    expect(await screen.findByText('Nuevo pedido')).toBeTruthy()
+    expect(await screen.findByText('Revisar venta')).toBeTruthy()
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c7', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
   })
 
   it('duplicar crea un borrador nuevo para el mismo cliente y le autoguarda las líneas, sin copiar la fecha', async () => {
     abrir({ modo: 'duplicar', ventaId: 'v9' })
-    expect(await screen.findByText('Nuevo pedido')).toBeTruthy()
+    expect(await screen.findByText('Revisar venta')).toBeTruthy()
     expect(screen.getByText('Tarantino 1898 · Autoservicio Abel')).toBeTruthy()
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c7', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
