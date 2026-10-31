@@ -131,7 +131,7 @@ describe('venta nueva: cliente, borrador y autoguardado', () => {
   it('al elegir el cliente crea el borrador para ese cliente, lo nombra por la dirección y le guarda la fecha propuesta', async () => {
     await elegirCliente()
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' })
-    expect(screen.getByText('Nuevo pedido')).toBeTruthy()
+    expect(screen.getByText('Revisar venta')).toBeTruthy()
     expect(screen.getByText('Tarantino 1898 · Autoservicio Abel')).toBeTruthy()
     // El borrador nace vacío en el servidor: la fecha propuesta viaja en el primer autoguardado.
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1), ESPERA)

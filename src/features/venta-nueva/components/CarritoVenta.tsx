@@ -1,7 +1,7 @@
 import React from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 import { ShoppingCart } from 'lucide-react-native'
-import { radii, space, typeScale, importe, useColors } from '@/libs/theme'
+import { space, typeScale, importe, useColors } from '@/libs/theme'
 import { Button, formatImporte } from '@/core/ui/fw'
 import { precioServidor, resumenCarrito, subtotalLinea, totalEstimado, type LineaCarrito } from '../lib/carrito'
 
@@ -19,29 +19,16 @@ export function CarritoFlotante({ lineas, onVerVenta }: CarritoProps) {
   const vacio = lineas.length === 0
   const total = formatImporte(totalEstimado(lineas))
   return (
-    <View testID="carrito-barra" style={{ paddingHorizontal: space[3], paddingTop: space[3], paddingBottom: space[3], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Ver venta: ${lineas.length} ítems, ${ROTULO.toLowerCase()} ${total}`}
-        disabled={vacio}
-        accessibilityState={{ disabled: vacio }}
-        onPress={onVerVenta}
-        style={{ opacity: vacio ? 0.6 : 1, minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingLeft: space[4], paddingRight: space[2], borderRadius: radii.tarjeta, backgroundColor: c.action }}
-      >
-        <View>
-          <ShoppingCart size={24} color={c.onAction} />
-          <View style={{ position: 'absolute', top: -8, right: -10, paddingHorizontal: 6, borderRadius: radii.pastilla, backgroundColor: c.bg }}>
-            <Text testID="carrito-items" style={{ ...typeScale.etiqueta, color: c.action }}>{lineas.length}</Text>
-          </View>
+    <View testID="carrito-barra" style={{ paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[3], gap: space[2], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3] }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{resumenCarrito(lineas)}</Text>
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{ROTULO}</Text>
         </View>
-        <View style={{ flex: 1, marginLeft: space[2] }}>
-          <Text testID="carrito-total" style={{ ...typeScale.titulo, ...importe, color: c.onAction }}>{total}</Text>
-          <Text style={{ ...typeScale.secundario, color: c.onAction }}>{resumenCarrito(lineas)}</Text>
-        </View>
-        <View style={{ minHeight: 44, paddingHorizontal: space[4], justifyContent: 'center', borderRadius: radii.campo, backgroundColor: c.bg }}>
-          <Text style={{ ...typeScale.cuerpoDestacado, color: c.action }}>Ver venta</Text>
-        </View>
-      </Pressable>
+        <Text testID="carrito-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{total}</Text>
+      </View>
+      {/* La lámina la dibuja siempre: sin productos queda en 0 y "Ver venta" no responde. */}
+      <Button icon={ShoppingCart} label="Ver venta" accessibilityLabel={`Ver venta: ${lineas.length} ítems, ${ROTULO.toLowerCase()} ${total}`} disabled={vacio} onPress={onVerVenta} />
     </View>
   )
 }

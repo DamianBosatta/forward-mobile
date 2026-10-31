@@ -89,16 +89,15 @@ describe('CatalogoVenta (agregar productos)', () => {
     render(<CatalogoVenta onVerVenta={onVerVenta} onAbrirOferta={abrirYAgregar} />)
     await userEvent.press(screen.getByRole('button', { name: 'Añadir Pala c/Cabo Fija LP' }))
     await userEvent.press(screen.getByRole('button', { name: 'Añadir Bettanin Pala Rebatible' }))
-    expect(screen.getByTestId('carrito-items')).toHaveTextContent('2')
     expect(screen.getByText('2 productos · 1 bulto · 1 u')).toBeTruthy()
     expect(screen.getByTestId('carrito-total')).toHaveTextContent('$ 4.000,00')
     await userEvent.press(screen.getByRole('button', { name: /^Ver venta/ }))
     expect(onVerVenta).toHaveBeenCalled()
   })
 
-  it('V4: el encabezado con la búsqueda y los filtros es oscuro (color de la barra superior)', () => {
+  it('V4: la búsqueda y los filtros van sobre el fondo claro de la pantalla, no sobre la barra oscura', () => {
     render(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={abrirYAgregar} />)
-    expect(screen.getByTestId('catalogo-encabezado')).toHaveStyle({ backgroundColor: '#0E1514' })
+    expect(screen.getByTestId('catalogo-encabezado')).not.toHaveStyle({ backgroundColor: '#0E1514' })
     expect(within(screen.getByTestId('catalogo-encabezado')).getByLabelText('Producto, marca o código')).toBeTruthy()
     expect(within(screen.getByTestId('catalogo-encabezado')).getByRole('button', { name: 'Hay stock' })).toBeTruthy()
   })
@@ -121,6 +120,7 @@ describe('CatalogoVenta (agregar productos)', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Añadir Pala c/Cabo Fija LP' }))
     const barra = screen.getByTestId('carrito-barra')
     expect(within(barra).getByText('1 producto · 1 u')).toBeTruthy()
+    expect(within(barra).getByText('Total estimado')).toBeTruthy()
     expect(within(barra).getByTestId('carrito-total')).toHaveTextContent('$ 1.000,00')
     expect(within(barra).getByRole('button', { name: /^Ver venta/ })).toHaveStyle({ backgroundColor: '#2BD4BD' })
     await userEvent.press(within(barra).getByText('Ver venta'))
