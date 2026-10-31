@@ -1,13 +1,10 @@
 import { useCallback, useSyncExternalStore } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { productosKeys } from '@/libs/api-client'
+import { CLAVE_CATALOGO } from '@/features/venta-nueva/hooks/useCatalogoVenta'
 import { horaDe } from '@/features/ventas/lib/agruparPorDia'
 
-/**
- * La clave del catálogo completo de la venta (`useCatalogoVenta`, venta-nueva). Está escrita igual
- * acá porque ese archivo no la exporta; el test de este hook carga los dos y se rompe si dejan de coincidir.
- */
-export const CLAVE_CATALOGO_VENTA = [...productosKeys.all, 'catalogoVenta', 'completo'] as const
+/** La clave del catálogo completo de la venta: la misma de `useCatalogoVenta` (una sola copia). */
+export const CLAVE_CATALOGO_VENTA = CLAVE_CATALOGO
 
 /**
  * "Precios y stock de las HH:MM" (V9): la hora argentina (X9) en que llegó el catálogo que está
