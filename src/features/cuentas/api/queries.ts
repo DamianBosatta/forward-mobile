@@ -1,5 +1,6 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { api } from '@/core/api/client'
+import type { components } from '@/libs/api-client/generated/schema'
 import type {
   CuentaCorrienteResumenDto,
   MovimientoCuentaDto,
@@ -33,10 +34,26 @@ export const cuentasKeys = {
   movimientos: (id: string) => [...cuentasKeys.all, 'detail', id, 'movimientos'] as const,
   movimientosSocio: (socioId: string, cuenta: 'ambas' | TipoCuentaSocio) =>
     [...cuentasKeys.all, 'socio', socioId, 'movimientos', cuenta] as const,
+  deudasResumen: () => [...cuentasKeys.all, 'deudas', 'resumen'] as const,
   estadoSocio: (socioId: string) => [...cuentasKeys.all, 'estado-cuenta', socioId] as const,
 }
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
+
+export type DeudasResumen = components['schemas']['DeudasResumenDto']
+
+/**
+ * Totales de deuda: lo que deben los clientes y lo que se debe a proveedores (`GET /deudas/resumen`, MOD_PAGOS:Read).
+ * Una sola consulta para Inicio y Cuentas; pedirla solo si el usuario tiene ese permiso (`enabled`).
+ */
+export function useDeudasResumen(enabled: boolean) {
+  return useQuery({
+    queryKey: cuentasKeys.deudasResumen(),
+    queryFn: () => api.get<DeudasResumen>('/api/v1/deudas/resumen'),
+    staleTime: 30_000,
+    enabled,
+  })
+}
 
 /** Estado de cuenta de un socio (saldo actual, a favor y pendientes). Pedirlo solo si el servidor dijo que se puede ver. */
 export function useEstadoCuentaSocio(socioId: string, enabled = true) {
