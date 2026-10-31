@@ -149,6 +149,7 @@ export default function PerfilScreen() {
 
         <View style={{ gap: space[2] }}>
           <Button label="Cerrar sesión" variant="peligroContorno" icon={LogOut} loading={saliendo} onPress={() => setConfirmarSalida(true)} />
+          <Text style={secundario}>Cierra tu sesión aquí y en los demás dispositivos; en la web puede seguir abierta unos minutos. Para volver a entrar vas a necesitar tu usuario y tu contraseña.</Text>
         </View>
 
         {__DEV__ ? (
