@@ -142,11 +142,13 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioI
 
   const encabezado = (
     <>
-      {/* La dirección va en el cuerpo, en las líneas que necesite: en la barra se cortaba a 360dp. */}
-      <View style={{ gap: space[1] }}>
-        <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
-        <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{nombreDelCliente(cliente)}</Text>
-      </View>
+      {/* Con barra, la dirección y el saldo van en el subtítulo de la barra (lámina cuentas-cobro). */}
+      {!conBarra ? (
+        <View style={{ gap: space[1] }}>
+          <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
+          <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{nombreDelCliente(cliente)}</Text>
+        </View>
+      ) : null}
       {estado.data ? <TotalsRow label="Saldo del cliente" importe={estado.data.saldoActual} /> : null}
       <View style={{ gap: space[3], backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, padding: space[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3] }}>
@@ -286,7 +288,7 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioI
 
   return (
     <View style={{ flex: 1 }}>
-      {conBarra ? <TopBar title="Cobrar" leading={{ kind: 'atras', onPress: onVolver }} /> : null}
+      {conBarra ? <TopBar lineasMultiples title="Cobrar" subtitle={estado.data ? `${direccionDeEntrega(cliente)} · Saldo ${formatImporte(estado.data.saldoActual)}` : direccionDeEntrega(cliente)} leading={{ kind: 'atras', onPress: onVolver }} /> : null}
       <ScrollView contentContainerStyle={{ padding: space[4] }}>
         <FormContainer style={{ gap: space[4] }}>
           {encabezado}

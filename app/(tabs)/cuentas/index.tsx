@@ -82,7 +82,7 @@ function CuentasCorrientesScreen() {
         data={clientes}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <ClienteCard cliente={item} seleccionado={isTabletLandscape && item.id === abierto} onPress={() => abrir(item.id)} />
+          <ClienteCard chevron cliente={item} seleccionado={isTabletLandscape && item.id === abierto} onPress={() => abrir(item.id)} />
         )}
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
@@ -110,7 +110,7 @@ function CuentasCorrientesScreen() {
       <TopBar
         title="Cuentas"
         leading={menu}
-        actions={[{ icon: ArrowLeftRight, accessibilityLabel: 'Transferir', disabled: !puedeTransferir, onPress: () => router.push('/(tabs)/tesoreria/transferencia') }]}
+        actions={[{ icon: ArrowLeftRight, accessibilityLabel: 'Transferir', label: 'Transferir', disabled: !puedeTransferir, onPress: () => router.push('/(tabs)/tesoreria/transferencia') }]}
       />
       {!puedeTransferir ? (
         <View style={{ paddingHorizontal: space[4], paddingTop: space[2] }}>
