@@ -10,6 +10,7 @@ import { ConfirmModal } from '@/core/ui'
 import { Button, FilaDeAjuste, FilaInterruptor, Notice, Segmented, TopBar, useMenuLeading, type SegmentedOption } from '@/core/ui/fw'
 import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
 import { FilaDeUsuarios } from '@/features/perfil/components/FilaDeUsuarios'
+import { lineasDeIdentidad } from '@/features/perfil/lib/identidad'
 import { useCerrarSesion } from '@/features/cuenta/hooks/useCerrarSesion'
 import { isBiometricLoginEnabled, isBiometricsAvailable, setBiometricLoginEnabled } from '@/features/auth/utils/biometrics'
 
@@ -54,7 +55,7 @@ export default function PerfilScreen() {
 
   const nombre = [user?.nombre, user?.apellido].filter(Boolean).join(' ') || user?.username || 'Usuario'
   const iniciales = `${user?.nombre?.[0] ?? ''}${user?.apellido?.[0] ?? ''}`.toUpperCase() || '·'
-  const quien = [user?.roles?.join(' · '), user?.username].filter(Boolean).join(' · ')
+  const { rol: quien, email } = lineasDeIdentidad(user)
   const version = Constants.expoConfig?.version
   const tarjeta = { borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
@@ -109,7 +110,7 @@ export default function PerfilScreen() {
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={{ fontSize: 19, lineHeight: 26, fontWeight: '700', color: c.onTopBarStrong }}>{nombre}</Text>
             {quien ? <Text style={[typeScale.secundario, { color: c.onTopBar }]}>{quien}</Text> : null}
-            {user?.email ? <Text style={[typeScale.secundario, { color: c.onTopBar }]}>{user.email}</Text> : null}
+            {email ? <Text style={[typeScale.secundario, { color: c.onTopBar }]}>{email}</Text> : null}
           </View>
         </View>
       </View>
@@ -142,21 +143,20 @@ export default function PerfilScreen() {
           </>
         ) : null}
 
-        {__DEV__ ? (
-          <View style={[tarjeta, { padding: space[4], gap: space[3] }]}>
-            {titulo('Servidor (solo en desarrollo)')}
-            <Segmented accessibilityLabel="Servidor" options={ENTORNOS} value={API_URL} onChange={(url) => { if (url !== API_URL) setEntornoPendiente(url) }} />
-          </View>
-        ) : null}
-
         <Text style={[secundario, { textAlign: 'center' }]}>
           {`Forward Mobile${version ? ` ${version}` : ''} · conectado a ${nombreEntorno(API_URL)}`}
         </Text>
 
         <View style={{ gap: space[2] }}>
           <Button label="Cerrar sesión" variant="peligroContorno" icon={LogOut} loading={saliendo} onPress={() => setConfirmarSalida(true)} />
-          <Text style={secundario}>Cierra tu sesión aquí y en los demás dispositivos; en la web puede seguir abierta unos minutos. Para volver a entrar vas a necesitar tu usuario y tu contraseña.</Text>
         </View>
+
+        {__DEV__ ? (
+          <View style={[tarjeta, { padding: space[4], gap: space[3] }]}>
+            {titulo('Servidor (solo en desarrollo)')}
+            <Segmented accessibilityLabel="Servidor" options={ENTORNOS} value={API_URL} onChange={(url) => { if (url !== API_URL) setEntornoPendiente(url) }} />
+          </View>
+        ) : null}
       </ScrollView>
 
       <ConfirmModal
