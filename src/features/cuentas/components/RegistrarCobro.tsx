@@ -3,7 +3,7 @@ import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { mostrarNumero } from '@/src/utils/numero'
-import { Button, Field, FormContainer, Notice, Progress, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { Button, Field, FormContainer, Notice, Progress, TopBar, TotalsRow, formatImporte, formatPorcentaje } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
@@ -21,6 +21,7 @@ import { ElegirChip } from './ElegirChip'
 import { ElegirComprobantes } from './ElegirComprobantes'
 import { FotoDelCobro } from './FotoDelCobro'
 import { OtrosMediosDelCobro } from './OtrosMediosDelCobro'
+import { condicionesDelMedio } from '../lib/condicionesMedio'
 
 export const AVISO_IMPUTACION =
   'Imputación automática: el servidor lo aplica a la deuda más vieja y te dice en qué cuenta (TST o Normal) quedó.'
@@ -79,6 +80,8 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioI
   const cliente = socio.data
   const medio = medios.data?.find(m => m.id === f.medioPagoId)
   const monto = leerNumero(f.monto)
+  // Solo informativo: lo que se manda al servidor es el monto cargado, no el neto.
+  const condiciones = condicionesDelMedio(medio, monto)
   const otros = f.otrosMedios.reduce((s, o) => s + Math.max(leerNumero(o.monto) ?? 0, 0), 0)
   // Lo que se cobra en total: el primer medio más los que se combinan.
   const total = (monto ?? 0) + otros
@@ -139,13 +142,14 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioI
 
   const encabezado = (
     <>
-      {conBarra ? null : (
+      {/* Con barra, la dirección y el saldo van en el subtítulo de la barra (lámina cuentas-cobro). */}
+      {!conBarra ? (
         <View style={{ gap: space[1] }}>
           <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
           <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{nombreDelCliente(cliente)}</Text>
         </View>
-      )}
-      {estado.data ? <TotalsRow label="Saldo del cliente" importe={estado.data.saldoActual} /> : null}
+      ) : null}
+      {estado.data && !conBarra ? <TotalsRow label="Saldo del cliente" importe={estado.data.saldoActual} /> : null}
       <View style={{ gap: space[3], backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, padding: space[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3] }}>
           <View accessible accessibilityLabel={`Cobrás: ${formatImporte(total)}`}>
@@ -157,13 +161,19 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioI
               <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{falta > 0 ? 'Falta' : 'Cubierto'}</Text>
               <Text style={[typeScale.cuerpoDestacado, importe, { color: falta > 0 ? c.chip.pendiente.text : c.chip.entregado.text }]}>{formatImporte(falta)}</Text>
             </View>
+          ) : deudaVencida > 0 ? (
+            // Sin objetivo elegido la tira ya dice cuánto hay vencido: es de donde sale "Todo lo vencido".
+            <View accessible accessibilityLabel={`Vencido: ${formatImporte(deudaVencida)}`} style={{ alignItems: 'flex-end' }}>
+              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Vencido</Text>
+              <Text style={[typeScale.cuerpoDestacado, importe, { color: c.chip.pendiente.text }]}>{formatImporte(deudaVencida)}</Text>
+            </View>
           ) : null}
         </View>
         {objetivo && meta > 0 ? <Progress value={Math.min(total, meta)} max={meta} accessibilityLabel={`Cobrado ${formatImporte(total)} de ${formatImporte(meta)}`} /> : null}
-        {/* TODO API: comisión, neto y fecha de acreditación por medio (lámina cuentas-cobro) no vienen en el DTO de cobro. */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
           {deudaVencida > 0 ? <Button label="Todo lo vencido" variant={objetivo === 'vencido' ? 'primario' : 'secundario'} disabled={ocupado} onPress={() => fijarObjetivo('vencido')} /> : null}
           {saldoActual > 0 ? <Button label="Saldo total" variant={objetivo === 'saldo' ? 'primario' : 'secundario'} disabled={ocupado} onPress={() => fijarObjetivo('saldo')} /> : null}
+          {deudaVencida > 0 || saldoActual > 0 ? <Button label="Otro monto" variant="secundario" disabled={ocupado} onPress={() => setObjetivo(null)} /> : null}
         </View>
       </View>
     </>
@@ -172,7 +182,7 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioI
   const imputacion = (
     <>
       <ElegirChip
-        titulo="Imputación"
+        titulo="Se aplica a"
         opciones={IMPUTACION}
         valor={f.imputaciones ? 'manual' : 'automatica'}
         onCambio={id => setF(p => ({ ...p, imputaciones: id === 'manual' ? (p.imputaciones ?? {}) : null }))}
@@ -212,6 +222,21 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioI
         {sinCajas ? <Notice tone="advertencia">No hay ninguna caja abierta. Abrí una caja para registrar cobros en efectivo.</Notice> : null}
         {conCaja && cajas.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
         {medios.error ? <Notice tone="peligro">{mensajeDelServidor(medios.error, 'No se pudieron cargar los medios de pago.')}</Notice> : null}
+        {condiciones ? (
+          <View
+            accessible
+            accessibilityLabel={`Condiciones del medio: Comisión ${formatPorcentaje(condiciones.comisionPorcentaje)}${condiciones.comision != null ? ` ${formatImporte(condiciones.comision)}` : ''}`}
+            style={{ gap: space[1] }}
+          >
+            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
+              {`Comisión ${formatPorcentaje(condiciones.comisionPorcentaje)}${condiciones.comision != null ? ` · ${formatImporte(condiciones.comision)}` : ''}`}
+            </Text>
+            {condiciones.neto != null ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Neto ${formatImporte(condiciones.neto)}`}</Text> : null}
+            {condiciones.diasAcreditacion > 0 ? (
+              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Se acredita en ${condiciones.diasAcreditacion} ${condiciones.diasAcreditacion === 1 ? 'día' : 'días'}`}</Text>
+            ) : null}
+          </View>
+        ) : null}
 
         {f.esCheque ? (
           <>
@@ -263,7 +288,7 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioI
 
   return (
     <View style={{ flex: 1 }}>
-      {conBarra ? <TopBar title="Cobrar" subtitle={`${direccionDeEntrega(cliente)} · ${nombreDelCliente(cliente)}`} leading={{ kind: 'atras', onPress: onVolver }} /> : null}
+      {conBarra ? <TopBar lineasMultiples title="Cobrar" subtitle={estado.data ? `${direccionDeEntrega(cliente)} · Saldo ${formatImporte(estado.data.saldoActual)}` : direccionDeEntrega(cliente)} leading={{ kind: 'atras', onPress: onVolver }} /> : null}
       <ScrollView contentContainerStyle={{ padding: space[4] }}>
         <FormContainer style={{ gap: space[4] }}>
           {encabezado}

@@ -67,6 +67,25 @@ it('un CUIT que no cierra se marca en el campo con la ayuda del alta provisoria,
   expect(post.mock.calls[0][1].cuit).toBe('30-7123456')
 })
 
+it('un CUIT incompleto dice cuántos dígitos faltan (regla compartida cuitDigitosFaltantes)', () => {
+  conPermisos(SIN_CAP)
+  renderConQuery(<ClienteFormScreen />)
+
+  fireEvent.changeText(screen.getByLabelText('CUIT'), '30-7123456')
+  expect(screen.getByText('El CUIT tiene 11 dígitos: faltan 2')).toBeTruthy()
+  fireEvent.changeText(screen.getByLabelText('CUIT'), '30-71234567')
+  expect(screen.getByText('El CUIT tiene 11 dígitos: falta 1')).toBeTruthy()
+})
+
+it('un CUIT de 11 dígitos que no cierra no dice "faltan": ya tiene los once', () => {
+  conPermisos(SIN_CAP)
+  renderConQuery(<ClienteFormScreen />)
+
+  fireEvent.changeText(screen.getByLabelText('CUIT'), '20-12345678-9')
+  expect(screen.getByText('Revisá el CUIT: no es válido.')).toBeTruthy()
+  expect(screen.queryByText(/El CUIT tiene 11 dígitos/)).toBeNull()
+})
+
 it('un CUIT válido o vacío no muestra el error', async () => {
   conPermisos(SIN_CAP)
   renderConQuery(<ClienteFormScreen />)

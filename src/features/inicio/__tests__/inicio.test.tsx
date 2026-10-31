@@ -45,7 +45,7 @@ const VENTA_HOY = {
   totalAmount: 214560,
 }
 
-type Respuestas = Partial<Record<'resumen' | 'presupuestos' | 'pedidos' | 'porAutorizar' | 'compras' | 'hoy' | 'deudas', unknown>>
+type Respuestas = Partial<Record<'resumen' | 'presupuestos' | 'pedidos' | 'porAutorizar' | 'compras' | 'hoy' | 'deudas' | 'dashboard', unknown>>
 
 /**
  * Responde según la URL, como el servidor. Un Error = la llamada falla con ese error. Sin `resumen`
@@ -54,6 +54,7 @@ type Respuestas = Partial<Record<'resumen' | 'presupuestos' | 'pedidos' | 'porAu
 function servidor(r: Respuestas) {
   mockGet.mockImplementation((url: string) => {
     const clave = url.includes('deudas/resumen') ? 'deudas'
+      : url.includes('Dashboard/summary') ? 'dashboard'
       : url.includes('Inicio/resumen') ? 'resumen'
       : url.includes('pendientes-autorizacion') ? 'porAutorizar'
       : url.includes('Compras/resumen') ? 'compras'
@@ -119,6 +120,23 @@ const flat = (el: { props: { style?: unknown } }): ViewStyle => StyleSheet.flatt
 beforeEach(() => {
   jest.clearAllMocks()
   mockAncho.mockReturnValue(390)
+})
+
+describe('Inicio: ola B (ventas del día y deuda vencida)', () => {
+  it('ventas del día sale de /Dashboard/summary.salesToday y la deuda vencida de /deudas/resumen', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_PAGOS')
+    servidor({ resumen: RESUMEN, hoy: pagina(3, []), dashboard: { salesToday: 1284500 }, deudas: { clientesConDeuda: 7, totalDeudaClientes: 100, totalDeudaVencidaClientes: 2500000, proveedoresConDeuda: 0, totalDeudaProveedores: 0 } })
+    pintar()
+    expect(await screen.findByLabelText(`Ventas del día: ${ars("1.284.500,00")}, 3 ventas`)).toBeTruthy()
+    expect(await screen.findByLabelText(`Vencido (más de 30 días): ${ars('2.500.000,00')}`)).toBeTruthy()
+  })
+
+  it('si salesToday viene null (sin dato) muestra "—"', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []), dashboard: { salesToday: null } })
+    pintar()
+    expect(await screen.findByLabelText('Ventas del día: —')).toBeTruthy()
+  })
 })
 
 describe('Inicio: me deben y debo salen de /deudas/resumen (MOD_PAGOS:Read)', () => {
@@ -218,7 +236,7 @@ describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
     expect(within(porRecibir).getByText('0')).toBeTruthy()
     expect(within(porRecibir).queryByText(/\$/)).toBeNull()
     // Las tarjetas salen de una sola llamada: ni listas para contar, ni la bandeja, ni el resumen de compras.
-    expect(mockGet.mock.calls.map(([u]) => String(u)).filter((u) => !u.includes('fechaDesde'))).toEqual(['/api/v1/Inicio/resumen'])
+    expect(mockGet.mock.calls.map(([u]) => String(u)).filter((u) => !u.includes('fechaDesde') && !u.includes('Dashboard/summary'))).toEqual(['/api/v1/Inicio/resumen'])
   })
 
   it('una sección que el servidor manda en null no se muestra, aunque el teléfono crea tener el módulo', async () => {

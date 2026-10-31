@@ -31,6 +31,18 @@ describe('Inicio general: el pulso del negocio (lámina inicio-general)', () => 
   })
 })
 
+describe('Inicio general: deuda vencida de los clientes', () => {
+  it('con el dato muestra la cifra de deuda vencida', () => {
+    render(<PulsoDelNegocio ventasDelDia={null} cantidadVentas={null} pedidosPendientes={0} rutasActivas={0} meDeben={100} debo={null} deudaVencida={2500000} />)
+    expect(screen.getByLabelText(`Vencido (más de 30 días): $${NBSP}2.500.000,00`)).toBeTruthy()
+  })
+
+  it('sin el dato no muestra la cifra', () => {
+    render(<PulsoDelNegocio ventasDelDia={null} cantidadVentas={null} pedidosPendientes={0} rutasActivas={0} meDeben={null} debo={null} />)
+    expect(screen.queryByLabelText(/Vencido/)).toBeNull()
+  })
+})
+
 describe('Inicio general: accesos rápidos', () => {
   it('cada atajo abre su pantalla y solo aparecen los que el usuario puede usar', async () => {
     const ir = jest.fn()

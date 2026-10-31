@@ -35,22 +35,25 @@ export interface FormaDeVenta {
 }
 
 /**
- * Unidades por pack que informa la ficha. TODO API: FichaCatalogoDto no trae el pack (solo `ventaMinimaUnidades`);
- * mientras tanto no se inventa el renglón. Cuando el servidor lo mande, se lee acá y `formasDeVenta` lo muestra.
+ * "Cómo se vende" de la ficha (lámina FichaProducto): Unidad, la venta mínima (`unidadesPorVenta`, igual a
+ * `ventaMinimaUnidades`) y, si el producto tiene nivel de bulto (`bultoContenido`, null si el bulto es de 1) y
+ * no coincide con la venta mínima, el bulto cerrado.
  */
-export function unidadesPorPack(_ficha: { productoId: string }): number | null {
-  return null
-}
-
-/** "Cómo se vende" de la ficha (lámina FichaProducto): Unidad, Pack (si la API lo manda) y Bulto de venta mínima. */
-export function formasDeVenta(p: { productoId: string; precioVenta: number; ventaMinimaUnidades?: number | null }): FormaDeVenta[] {
-  const minima = p.ventaMinimaUnidades ?? 1
+export function formasDeVenta(p: {
+  productoId: string
+  precioVenta: number
+  ventaMinimaUnidades?: number | null
+  unidadesPorVenta?: number | null
+  bultoContenido?: number | null
+}): FormaDeVenta[] {
+  const minima = p.unidadesPorVenta ?? p.ventaMinimaUnidades ?? 1
   const formas: FormaDeVenta[] = [{ clave: 'unidad', label: 'Unidad', unidades: 1, precio: p.precioVenta, destacada: false }]
-  const pack = unidadesPorPack(p)
-  if (pack != null && pack > 1 && pack < minima) {
-    formas.push({ clave: 'pack', label: 'Pack', unidades: pack, precio: p.precioVenta * pack, destacada: false })
-  }
   if (minima > 1) formas.push({ clave: 'bulto', label: 'Bulto · venta mínima', unidades: minima, precio: p.precioVenta * minima, destacada: true })
+  const bulto = p.bultoContenido
+  if (bulto != null && bulto > 1 && bulto !== minima) {
+    formas.push({ clave: 'pack', label: 'Bulto cerrado', unidades: bulto, precio: p.precioVenta * bulto, destacada: false })
+    formas.sort((x, y) => x.unidades - y.unidades)
+  }
   return formas
 }
 
