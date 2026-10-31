@@ -24,4 +24,11 @@ describe('FilaDeSocio', () => {
     rerender(<FilaDeSocio titulo="Molinos SA" accessibilityLabel="Molinos SA" onPress={jest.fn()} chevron />)
     expect(screen.getAllByTestId('fila-de-socio-chevron').length).toBeGreaterThan(0)
   })
+
+  it('el título es de una línea por defecto y admite más con lineasTitulo', () => {
+    const { rerender } = render(<FilaDeSocio titulo="Av. del Valle 89" accessibilityLabel="x" onPress={jest.fn()} />)
+    expect(screen.getByText('Av. del Valle 89').props.numberOfLines).toBe(1)
+    rerender(<FilaDeSocio titulo="Av. del Valle 89" accessibilityLabel="x" onPress={jest.fn()} lineasTitulo={2} />)
+    expect(screen.getByText('Av. del Valle 89').props.numberOfLines).toBe(2)
+  })
 })

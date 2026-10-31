@@ -43,6 +43,7 @@ export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = 
   return (
     <FilaDeSocio
       titulo={direccion}
+      lineasTitulo={2}
       linea2={linea2}
       seleccionado={seleccionado}
       onPress={onPress}
