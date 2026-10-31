@@ -230,7 +230,7 @@ describe('C5 Foto del lugar al no entregar', () => {
     await waitFor(() => expect(llamadasA(REPORTAR)).toHaveLength(1))
     expect(llamadasA(REPORTAR)[0][1]).toEqual({
       hojaDeRutaId: 'h1', paradaId: 'p1', entregado: false, motivoRechazo: 'Cerrado o sin nadie', observaciones: undefined,
-      evidenciaUrl: 'https://r2.test/entregas/up-1.jpg',
+      evidenciaUrl: 'https://r2.test/entregas/up-1.jpg', claveIdempotencia: expect.any(String),
     })
     expect(llamadasA(ENTREGAR)).toHaveLength(0)
   })

@@ -261,6 +261,8 @@ export function useReportarParada() {
       nombreReceptor?: string
       evidenciaUrl?: string
       observaciones?: string
+      /** Se genera una vez por reporte y se repite en cada reintento (misma clave y cuerpo = el servidor no duplica). */
+      claveIdempotencia?: string
     }) => api.post<void>(`/api/v1/Logistica/hojas-ruta/${payload.hojaDeRutaId}/reportar-parada`, payload),
     onSuccess: (_, { hojaDeRutaId }) => {
       queryClient.invalidateQueries({ queryKey: logisticaKeys.hojaRuta(hojaDeRutaId) })

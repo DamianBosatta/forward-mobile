@@ -265,7 +265,7 @@ describe('Consola del chofer: entrega con la operación única', () => {
     expect(mockGet.mock.calls.some(([u]) => String(u).includes('devoluciones-posibles'))).toBe(false)
   })
 
-  it('no se pudo entregar sigue por reportar-parada, sin clave ni cobro', async () => {
+  it('no se pudo entregar sigue por reportar-parada, con su clave y sin cobro', async () => {
     mockPost.mockResolvedValue(true)
     pintar()
     await userEvent.press(await screen.findByLabelText('¡Llegué!'))
@@ -273,9 +273,30 @@ describe('Consola del chofer: entrega con la operación única', () => {
     await userEvent.press(screen.getByLabelText('Cerrado o sin nadie'))
     await userEvent.press(screen.getByLabelText('Avisar a Ventas'))
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/reportar-parada', {
-      hojaDeRutaId: 'h1', paradaId: 'p1', entregado: false, motivoRechazo: 'Cerrado o sin nadie', observaciones: undefined,
+      hojaDeRutaId: 'h1', paradaId: 'p1', entregado: false, motivoRechazo: 'Cerrado o sin nadie', observaciones: undefined, claveIdempotencia: expect.stringMatching(/\S{8,}/),
     })
     expect(llamadasA(ENTREGAR)).toHaveLength(0)
+  })
+
+  it('el reintento del aviso repite la misma clave y un aviso nuevo (otra parada) usa otra; el 409 de la clave se muestra', async () => {
+    const REPORTAR = '/api/v1/Logistica/hojas-ruta/h1/reportar-parada'
+    mockPost.mockRejectedValueOnce(Object.assign(new Error('Falló el servidor.'), { status: 400, errors: [] }))
+    pintar()
+    await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+    await userEvent.press(await screen.findByLabelText('No pude entregar'))
+    await userEvent.press(screen.getByLabelText('Cerrado o sin nadie'))
+    await userEvent.press(screen.getByLabelText('Avisar a Ventas'))
+    expect(await screen.findByText('Falló el servidor.')).toBeTruthy()
+    mockPost.mockRejectedValueOnce(Object.assign(new Error('Este reporte ya se había registrado con otros datos.'), { status: 409, codigo: 'ClaveIdempotenciaConOtroCuerpo', errors: [] }))
+    await userEvent.press(screen.getByLabelText('Avisar a Ventas'))
+    expect(await screen.findByText('Este reporte ya se había registrado con otros datos.')).toBeTruthy()
+    const llamadas = llamadasA(REPORTAR)
+    expect(llamadas).toHaveLength(2)
+    expect(llamadas[1][1].claveIdempotencia).toBe(llamadas[0][1].claveIdempotencia)
+    mockPost.mockResolvedValue(true)
+    await userEvent.press(screen.getByLabelText('Avisar a Ventas'))
+    await waitFor(() => expect(llamadasA(REPORTAR)).toHaveLength(3))
+    expect(llamadasA(REPORTAR)[2][1].claveIdempotencia).not.toBe(llamadas[0][1].claveIdempotencia)
   })
 })
 
