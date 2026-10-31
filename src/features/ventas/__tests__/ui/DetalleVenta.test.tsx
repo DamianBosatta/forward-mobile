@@ -94,7 +94,8 @@ describe('R1 · detalle del pedido (ResVentaDetalle, TV7)', () => {
     const pagos = {
       ventaId: 'v9', total: 88738.89, montoPagado: 40000, saldoPendiente: 48738.89, estadoPago: 'Parcial',
       imputaciones: [
-        { numeroPago: 'P-1', medioPago: 'Transferencia', monto: 40000, fechaImputacion: '2026-10-30T15:00:00Z', origen: 'AutomaticaFifo' },
+        { numeroPago: 'P-1', medioPago: 'Transferencia', cuentaNombre: 'Banco Galicia', monto: 40000, fechaImputacion: '2026-10-30T15:00:00Z', origen: 'AutomaticaFifo' },
+        { numeroPago: 'P-2', medioPago: 'Efectivo', cuentaNombre: null, monto: 1000, fechaImputacion: '2026-10-30T15:00:00Z', origen: 'AutomaticaFifo' },
         { numeroPago: 'NC-1', medioPago: 'NotaCredito', monto: 500, fechaImputacion: '2026-10-30T15:00:00Z', origen: 'NotaCredito' },
       ],
     }
@@ -102,7 +103,8 @@ describe('R1 · detalle del pedido (ResVentaDetalle, TV7)', () => {
       url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? socio : url === '/api/v1/Ventas/v9/pagos' ? pagos : undefined))
     pantalla()
     expect(await screen.findByRole('header', { name: 'Cobro' })).toBeTruthy()
-    expect(screen.getByText('Cobrado 30/10 · Transferencia')).toBeTruthy()
+    expect(screen.getByText('Cobrado 30/10 · Transferencia · Banco Galicia')).toBeTruthy()
+    expect(screen.getByText('Cobrado 30/10 · Efectivo')).toBeTruthy()
     expect(screen.getByText(formatImporte(40000))).toBeTruthy()
     expect(screen.queryByText(/NotaCredito/)).toBeNull()
     expect(screen.getByText('Saldo')).toBeTruthy()
