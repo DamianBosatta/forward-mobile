@@ -1,69 +1,145 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="32" failures="0" errors="0" time="14.944">
-  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2026-10-31T02:11:51" time="14.597" tests="32">
-    <testcase classname=" la dirección es el título y el nombre va en una línea aparte, nunca pegados" name=" la dirección es el título y el nombre va en una línea aparte, nunca pegados" time="2.227">
+<testsuites name="jest tests" tests="65" failures="0" errors="0" time="47.321">
+  <testsuite name="detalleDeTarjeta" errors="0" failures="0" skipped="0" timestamp="2026-10-31T02:14:14" time="9.584" tests="14">
+    <testcase classname="detalleDeTarjeta una línea con la cantidad dice &quot;N fragancias&quot; y, si se vende por caja, &quot;caja de N&quot;" name="detalleDeTarjeta una línea con la cantidad dice &quot;N fragancias&quot; y, si se vende por caja, &quot;caja de N&quot;" time="0.01">
     </testcase>
-    <testcase classname=" muestra el vendedor responsable como línea secundaria cuando el servidor lo manda" name=" muestra el vendedor responsable como línea secundaria cuando el servidor lo manda" time="0.088">
+    <testcase classname="detalleDeTarjeta una sola fragancia va en singular" name="detalleDeTarjeta una sola fragancia va en singular" time="0.009">
     </testcase>
-    <testcase classname=" sin vendedor responsable (null) la tarjeta no dice nada de vendedor" name=" sin vendedor responsable (null) la tarjeta no dice nada de vendedor" time="0.076">
+    <testcase classname="detalleDeTarjeta una línea de un servidor anterior (sin cantidad) sigue diciendo &quot;Con fragancias&quot;" name="detalleDeTarjeta una línea de un servidor anterior (sin cantidad) sigue diciendo &quot;Con fragancias&quot;" time="0.001">
     </testcase>
-    <testcase classname=" pide la cartera al servidor (solo clientes, activos, agenda) y muestra &quot;N de M&quot; con su total" name=" pide la cartera al servidor (solo clientes, activos, agenda) y muestra &quot;N de M&quot; con su total" time="0.077">
+    <testcase classname="detalleDeTarjeta un producto común solo dice &quot;caja de N&quot; cuando la venta mínima es más de una unidad" name="detalleDeTarjeta un producto común solo dice &quot;caja de N&quot; cuando la venta mínima es más de una unidad" time="0.002">
     </testcase>
-    <testcase classname=" la búsqueda va al servidor una sola vez, después de dejar de tipear" name=" la búsqueda va al servidor una sola vez, después de dejar de tipear" time="0.525">
+    <testcase classname="filtrarPorStock con el filtro prendido deja solo lo que el servidor dijo que se puede vender" name="filtrarPorStock con el filtro prendido deja solo lo que el servidor dijo que se puede vender" time="0.002">
     </testcase>
-    <testcase classname=" sin permiso del servidor para ver el saldo, la tarjeta no lo muestra" name=" sin permiso del servidor para ver el saldo, la tarjeta no lo muestra" time="0.077">
+    <testcase classname="filtrarPorStock con el filtro apagado devuelve todo, en el mismo orden" name="filtrarPorStock con el filtro apagado devuelve todo, en el mismo orden" time="0">
     </testcase>
-    <testcase classname=" si el servidor rechaza, se ve su mensaje" name=" si el servidor rechaza, se ve su mensaje" time="0.075">
+    <testcase classname="chipDeTarjeta verde para nuevo, ámbar para precio nuevo y rojo para sin stock" name="chipDeTarjeta verde para nuevo, ámbar para precio nuevo y rojo para sin stock" time="0.001">
     </testcase>
-    <testcase classname=" en teléfono, tocar el cliente abre su ficha" name=" en teléfono, tocar el cliente abre su ficha" time="0.248">
+    <testcase classname="chipDeTarjeta sin novedad vuelve al chip de stock; sin dato de stock, sin chip" name="chipDeTarjeta sin novedad vuelve al chip de stock; sin dato de stock, sin chip" time="0">
     </testcase>
-    <testcase classname=" en tablet ancha, la ficha se abre al lado de la lista" name=" en tablet ancha, la ficha se abre al lado de la lista" time="0.285">
+    <testcase classname="textoVariacion flecha y porcentaje con coma; sin cambio, null" name="textoVariacion flecha y porcentaje con coma; sin cambio, null" time="0.001">
     </testcase>
-    <testcase classname=" sin permiso de alta no hay botón de nuevo cliente" name=" sin permiso de alta no hay botón de nuevo cliente" time="0.111">
+    <testcase classname="novedadesDesde cuenta los días hacia atrás en día argentino" name="novedadesDesde cuenta los días hacia atrás en día argentino" time="0.001">
     </testcase>
-    <testcase classname="deuda vencida y saldo de la cartera (servidor con PR #882) la tarjeta del cliente con deuda vencida lleva el chip; la del que no tiene, no" name="deuda vencida y saldo de la cartera (servidor con PR #882) la tarjeta del cliente con deuda vencida lleva el chip; la del que no tiene, no" time="0.087">
+    <testcase classname="formasDeVenta (FichaCatalogoDto.unidadesPorVenta / bultoContenido) con venta por unidad solo hay &quot;Unidad&quot;" name="formasDeVenta (FichaCatalogoDto.unidadesPorVenta / bultoContenido) con venta por unidad solo hay &quot;Unidad&quot;" time="0.001">
     </testcase>
-    <testcase classname="deuda vencida y saldo de la cartera (servidor con PR #882) con el saldo total del servidor, el contador lo muestra; nunca lo suma el teléfono" name="deuda vencida y saldo de la cartera (servidor con PR #882) con el saldo total del servidor, el contador lo muestra; nunca lo suma el teléfono" time="0.077">
+    <testcase classname="formasDeVenta (FichaCatalogoDto.unidadesPorVenta / bultoContenido) la venta mínima sale de unidadesPorVenta y destaca el renglón" name="formasDeVenta (FichaCatalogoDto.unidadesPorVenta / bultoContenido) la venta mínima sale de unidadesPorVenta y destaca el renglón" time="0">
     </testcase>
-    <testcase classname="deuda vencida y saldo de la cartera (servidor con PR #882) el saldo total llega solo en la página 1: al cargar más se mantiene" name="deuda vencida y saldo de la cartera (servidor con PR #882) el saldo total llega solo en la página 1: al cargar más se mantiene" time="0.139">
+    <testcase classname="formasDeVenta (FichaCatalogoDto.unidadesPorVenta / bultoContenido) con bultoContenido distinto de la venta mínima agrega el renglón &quot;Bulto cerrado&quot; con su precio" name="formasDeVenta (FichaCatalogoDto.unidadesPorVenta / bultoContenido) con bultoContenido distinto de la venta mínima agrega el renglón &quot;Bulto cerrado&quot; con su precio" time="0.002">
     </testcase>
-    <testcase classname="deuda vencida y saldo de la cartera (servidor con PR #882) si el servidor no da el saldo total (null) o es un servidor anterior, queda &quot;N de M&quot; y sin chips" name="deuda vencida y saldo de la cartera (servidor con PR #882) si el servidor no da el saldo total (null) o es un servidor anterior, queda &quot;N de M&quot; y sin chips" time="0.08">
+    <testcase classname="formasDeVenta (FichaCatalogoDto.unidadesPorVenta / bultoContenido) bultoContenido null o igual a la venta mínima no agrega renglón" name="formasDeVenta (FichaCatalogoDto.unidadesPorVenta / bultoContenido) bultoContenido null o igual a la venta mínima no agrega renglón" time="0.002">
     </testcase>
-    <testcase classname="localidad y filtros (9C) la tarjeta muestra la localidad en una línea aparte" name="localidad y filtros (9C) la tarjeta muestra la localidad en una línea aparte" time="0.09">
+  </testsuite>
+  <testsuite name="Mandar foto" errors="0" failures="0" skipped="0" timestamp="2026-10-31T02:14:14" time="13.064" tests="5">
+    <testcase classname="Mandar foto baja la foto y abre el panel para compartirla" name="Mandar foto baja la foto y abre el panel para compartirla" time="0.686">
     </testcase>
-    <testcase classname="localidad y filtros (9C) &quot;Con deuda vencida&quot; le pide el filtro al servidor, y tocarlo de nuevo lo saca" name="localidad y filtros (9C) &quot;Con deuda vencida&quot; le pide el filtro al servidor, y tocarlo de nuevo lo saca" time="0.435">
+    <testcase classname="Mandar foto sin foto no ofrece el botón" name="Mandar foto sin foto no ofrece el botón" time="0.066">
     </testcase>
-    <testcase classname="localidad y filtros (9C) las localidades salen del servidor y elegir una filtra por ella" name="localidad y filtros (9C) las localidades salen del servidor y elegir una filtra por ella" time="0.26">
+    <testcase classname="Catálogo en PDF pide el PDF con la búsqueda, los filtros de la pantalla y, por defecto, en tarjetas con novedades de 30 días" name="Catálogo en PDF pide el PDF con la búsqueda, los filtros de la pantalla y, por defecto, en tarjetas con novedades de 30 días" time="0.985">
     </testcase>
-    <testcase classname="localidad y filtros (9C) con filtros y sin resultados, lo dice" name="localidad y filtros (9C) con filtros y sin resultados, lo dice" time="0.274">
+    <testcase classname="Catálogo en PDF en lista y con novedades de 7 días" name="Catálogo en PDF en lista y con novedades de 7 días" time="0.729">
     </testcase>
-    <testcase classname=" con un servidor sin el endpoint de localidades (responde 400 por la ruta {id}, o 404) no lo registra como error" name=" con un servidor sin el endpoint de localidades (responde 400 por la ruta {id}, o 404) no lo registra como error" time="0.086">
+    <testcase classname="Catálogo en PDF avisa si no se pudo generar" name="Catálogo en PDF avisa si no se pudo generar" time="0.356">
     </testcase>
-    <testcase classname="lámina Clientes (bloque 12, T7) con permiso de alta, el botón fijo &quot;Nuevo cliente&quot; abre el alta" name="lámina Clientes (bloque 12, T7) con permiso de alta, el botón fijo &quot;Nuevo cliente&quot; abre el alta" time="0.198">
+  </testsuite>
+  <testsuite name="Catálogo con MOD_CATALOGO (S2)" errors="0" failures="0" skipped="0" timestamp="2026-10-31T02:14:14" time="38.534" tests="3">
+    <testcase classname="Catálogo con MOD_CATALOGO (S2) un vendedor con MOD_CATALOGO y sin Stock ve el catálogo, leído de /api/v1/catalogo" name="Catálogo con MOD_CATALOGO (S2) un vendedor con MOD_CATALOGO y sin Stock ve el catálogo, leído de /api/v1/catalogo" time="0.263">
     </testcase>
-    <testcase classname="lámina Clientes (bloque 12, T7) la pastilla &quot;Mi cartera&quot; dice cuántos son; con una búsqueda o un filtro ya no (el total sería otro)" name="lámina Clientes (bloque 12, T7) la pastilla &quot;Mi cartera&quot; dice cuántos son; con una búsqueda o un filtro ya no (el total sería otro)" time="0.264">
+    <testcase classname="Catálogo con MOD_CATALOGO (S2) sin MOD_CATALOGO no hay catálogo, aunque tenga Stock, y no se pide nada" name="Catálogo con MOD_CATALOGO (S2) sin MOD_CATALOGO no hay catálogo, aunque tenga Stock, y no se pide nada" time="0.008">
     </testcase>
-    <testcase classname="lámina Clientes (bloque 12, T7) cada tarjeta con teléfono tiene Llamar, que marca sin abrir la ficha" name="lámina Clientes (bloque 12, T7) cada tarjeta con teléfono tiene Llamar, que marca sin abrir la ficha" time="0.25">
+    <testcase classname="Stock sigue separado (S2) la pantalla Stock sigue pidiendo MOD_STOCK: con solo MOD_CATALOGO no entra" name="Stock sigue separado (S2) la pantalla Stock sigue pidiendo MOD_STOCK: con solo MOD_CATALOGO no entra" time="0.007">
     </testcase>
-    <testcase classname="lámina Clientes (bloque 12, T7) sin teléfono no hay Llamar" name="lámina Clientes (bloque 12, T7) sin teléfono no hay Llamar" time="0.095">
+  </testsuite>
+  <testsuite name="Catálogo: filtros de oferta y Línea / Familia" errors="0" failures="0" skipped="0" timestamp="2026-10-31T02:14:14" time="43.159" tests="7">
+    <testcase classname="Catálogo: filtros de oferta y Línea / Familia sin elegir nada no manda conOferta ni categoriaId" name="Catálogo: filtros de oferta y Línea / Familia sin elegir nada no manda conOferta ni categoriaId" time="0.276">
     </testcase>
-    <testcase classname="lámina Clientes (bloque 12, T7) el cliente con deuda vencida muestra cuánto, solo si el servidor deja ver el saldo" name="lámina Clientes (bloque 12, T7) el cliente con deuda vencida muestra cuánto, solo si el servidor deja ver el saldo" time="0.095">
+    <testcase classname="Catálogo: filtros de oferta y Línea / Familia &quot;Con oferta&quot; manda conOferta=true y vuelve a la página 1; al apagarlo deja de mandarlo" name="Catálogo: filtros de oferta y Línea / Familia &quot;Con oferta&quot; manda conOferta=true y vuelve a la página 1; al apagarlo deja de mandarlo" time="0.466">
     </testcase>
-    <testcase classname="lista de clientes como el diseño (D6c) la fila es plana: sin borde redondeado ni sombra, con una línea abajo" name="lista de clientes como el diseño (D6c) la fila es plana: sin borde redondeado ni sombra, con una línea abajo" time="0.108">
+    <testcase classname="Catálogo: filtros de oferta y Línea / Familia el selector lista las Líneas con sus Familias y manda categoriaId al elegir una" name="Catálogo: filtros de oferta y Línea / Familia el selector lista las Líneas con sus Familias y manda categoriaId al elegir una" time="0.496">
     </testcase>
-    <testcase classname="lista de clientes como el diseño (D6c) el contador &quot;N de M clientes&quot; va arriba de la lista y &quot;Nuevo cliente&quot; es el botón flotante" name="lista de clientes como el diseño (D6c) el contador &quot;N de M clientes&quot; va arriba de la lista y &quot;Nuevo cliente&quot; es el botón flotante" time="0.08">
+    <testcase classname="Catálogo: filtros de oferta y Línea / Familia &quot;Todas&quot; quita categoriaId" name="Catálogo: filtros de oferta y Línea / Familia &quot;Todas&quot; quita categoriaId" time="0.815">
     </testcase>
-    <testcase classname="lista de clientes como el diseño (D6c) sin permiso de alta el contador sigue y no hay botón" name="lista de clientes como el diseño (D6c) sin permiso de alta el contador sigue y no hay botón" time="0.075">
+    <testcase classname="Catálogo: filtros de oferta y Línea / Familia combina oferta, categoría y búsqueda en el mismo pedido" name="Catálogo: filtros de oferta y Línea / Familia combina oferta, categoría y búsqueda en el mismo pedido" time="1.176">
     </testcase>
-    <testcase classname="lista de clientes como el diseño (D6c) el cliente que el servidor no deja ver lleva candado y el tag de cartera ajena, en vez de saldo" name="lista de clientes como el diseño (D6c) el cliente que el servidor no deja ver lleva candado y el tag de cartera ajena, en vez de saldo" time="0.078">
+    <testcase classname="Catálogo: filtros de oferta y Línea / Familia no rompe &quot;Con stock&quot; ni la búsqueda: siguen funcionando con los filtros nuevos" name="Catálogo: filtros de oferta y Línea / Familia no rompe &quot;Con stock&quot; ni la búsqueda: siguen funcionando con los filtros nuevos" time="0.776">
     </testcase>
-    <testcase classname="lista de clientes como el diseño (D6c) el cliente sin saldo pendiente dice &quot;Sin deuda&quot;" name="lista de clientes como el diseño (D6c) el cliente sin saldo pendiente dice &quot;Sin deuda&quot;" time="0.093">
+    <testcase classname="Catálogo: filtros de oferta y Línea / Familia el PDF lleva la categoría, la oferta y &quot;Con stock&quot;" name="Catálogo: filtros de oferta y Línea / Familia el PDF lleva la categoría, la oferta y &quot;Con stock&quot;" time="1.209">
     </testcase>
-    <testcase classname=" en el teléfono la barra de abajo sigue a la vista en Clientes (lámina CalleMiDia)" name=" en el teléfono la barra de abajo sigue a la vista en Clientes (lámina CalleMiDia)" time="0.091">
+  </testsuite>
+  <testsuite name="Catálogo de consulta" errors="0" failures="0" skipped="0" timestamp="2026-10-31T02:14:14" time="44.357" tests="22">
+    <testcase classname="Catálogo de consulta busca en el servidor con el término, esperando a que se deje de tipear" name="Catálogo de consulta busca en el servidor con el término, esperando a que se deje de tipear" time="0.805">
     </testcase>
-    <testcase classname=" pide la cartera ordenada por dirección" name=" pide la cartera ordenada por dirección" time="0.104">
+    <testcase classname="Catálogo de consulta muestra &quot;Mostrando N de M&quot; con el total del servidor y el chip de stock que decide cada ficha del catálogo" name="Catálogo de consulta muestra &quot;Mostrando N de M&quot; con el total del servidor y el chip de stock que decide cada ficha del catálogo" time="0.096">
     </testcase>
-    <testcase classname=" muestra un encabezado por letra de la dirección (sin tildes, &quot;#&quot; para lo que no empieza con letra) y los sin dirección al final" name=" muestra un encabezado por letra de la dirección (sin tildes, &quot;#&quot; para lo que no empieza con letra) y los sin dirección al final" time="0.104">
+    <testcase classname="Catálogo de consulta la ficha, sin depósito en el perfil, consulta la disponibilidad del Depósito Central" name="Catálogo de consulta la ficha, sin depósito en el perfil, consulta la disponibilidad del Depósito Central" time="0.326">
+    </testcase>
+    <testcase classname="Catálogo de consulta la ficha, con depósito en el perfil, consulta ese" name="Catálogo de consulta la ficha, con depósito en el perfil, consulta ese" time="0.302">
+    </testcase>
+    <testcase classname="Catálogo de consulta un usuario con solo el catálogo abre la ficha sin pedirle nada a Productos ni a Stock" name="Catálogo de consulta un usuario con solo el catálogo abre la ficha sin pedirle nada a Productos ni a Stock" time="0.283">
+    </testcase>
+    <testcase classname="Catálogo de consulta un producto totalmente reservado dice &quot;Sin stock&quot; en la tarjeta y en la ficha, aunque tenga stock físico" name="Catálogo de consulta un producto totalmente reservado dice &quot;Sin stock&quot; en la tarjeta y en la ficha, aunque tenga stock físico" time="0.3">
+    </testcase>
+    <testcase classname="Catálogo de consulta stock 5 con venta mínima 12 la tarjeta y la ficha dicen lo mismo y la ficha avisa que no alcanza la caja" name="Catálogo de consulta stock 5 con venta mínima 12 la tarjeta y la ficha dicen lo mismo y la ficha avisa que no alcanza la caja" time="0.315">
+    </testcase>
+    <testcase classname="Catálogo de consulta stock 5 con venta mínima 12 con stock de sobra no hay aviso de venta mínima" name="Catálogo de consulta stock 5 con venta mínima 12 con stock de sobra no hay aviso de venta mínima" time="0.297">
+    </testcase>
+    <testcase classname="Catálogo de consulta el catálogo no muestra costos ni margen ni precio mínimo, ni con CAP_VER_COSTOS (S6, como la web)" name="Catálogo de consulta el catálogo no muestra costos ni margen ni precio mínimo, ni con CAP_VER_COSTOS (S6, como la web)" time="0.285">
+    </testcase>
+    <testcase classname="Catálogo de consulta el catálogo no muestra cantidades ni pide el stock por depósito, ni con CAP_VER_CANTIDADES_STOCK (S6)" name="Catálogo de consulta el catálogo no muestra cantidades ni pide el stock por depósito, ni con CAP_VER_CANTIDADES_STOCK (S6)" time="0.296">
+    </testcase>
+    <testcase classname="Catálogo de consulta el filtro &quot;Con stock&quot; deja solo lo que el servidor dice que se puede vender, y al apagarlo vuelve todo" name="Catálogo de consulta el filtro &quot;Con stock&quot; deja solo lo que el servidor dice que se puede vender, y al apagarlo vuelve todo" time="0.469">
+    </testcase>
+    <testcase classname="Catálogo de consulta no tiene el selector Catálogo/Stock: el stock es otra pantalla" name="Catálogo de consulta no tiene el selector Catálogo/Stock: el stock es otra pantalla" time="0.082">
+    </testcase>
+    <testcase classname="Catálogo de consulta &quot;Ver stock en vivo de este producto&quot; lleva a la pantalla Stock buscando ese código" name="Catálogo de consulta &quot;Ver stock en vivo de este producto&quot; lleva a la pantalla Stock buscando ese código" time="0.494">
+    </testcase>
+    <testcase classname="Catálogo de consulta desde 900 px la grilla y la ficha van en dos paneles" name="Catálogo de consulta desde 900 px la grilla y la ficha van en dos paneles" time="0.281">
+    </testcase>
+    <testcase classname="Catálogo de consulta debajo de 900 px no hay segundo panel" name="Catálogo de consulta debajo de 900 px no hay segundo panel" time="0.083">
+    </testcase>
+    <testcase classname="Catálogo: fichas de /catalogo una línea muestra cuántas fragancias tiene y el chip de si alguna tiene stock" name="Catálogo: fichas de /catalogo una línea muestra cuántas fragancias tiene y el chip de si alguna tiene stock" time="0.08">
+    </testcase>
+    <testcase classname="Catálogo: fichas de /catalogo un producto suelto no dice &quot;fragancias&quot;" name="Catálogo: fichas de /catalogo un producto suelto no dice &quot;fragancias&quot;" time="0.076">
+    </testcase>
+    <testcase classname="Catálogo: fichas de /catalogo aunque el detalle mande la última compra y los costos, la ficha no los dibuja (S6)" name="Catálogo: fichas de /catalogo aunque el detalle mande la última compra y los costos, la ficha no los dibuja (S6)" time="0.547">
+    </testcase>
+    <testcase classname="Catálogo: novedades pide las novedades de los últimos 30 días y pinta cada tarjeta con la marca del servidor" name="Catálogo: novedades pide las novedades de los últimos 30 días y pinta cada tarjeta con la marca del servidor" time="0.097">
+    </testcase>
+    <testcase classname="Catálogo: ficha, &quot;Cómo se vende&quot; lista la unidad y el bulto de venta mínima con su precio; sin pack porque la API no lo manda" name="Catálogo: ficha, &quot;Cómo se vende&quot; lista la unidad y el bulto de venta mínima con su precio; sin pack porque la API no lo manda" time="0.293">
+    </testcase>
+    <testcase classname="Catálogo: ficha, &quot;Cómo se vende&quot; un producto que se vende por unidad solo tiene la fila Unidad" name="Catálogo: ficha, &quot;Cómo se vende&quot; un producto que se vende por unidad solo tiene la fila Unidad" time="0.303">
+    </testcase>
+    <testcase classname="Catálogo: ficha, &quot;Cómo se vende&quot; un precio que cambió muestra el precio anterior y la variación también en la ficha" name="Catálogo: ficha, &quot;Cómo se vende&quot; un precio que cambió muestra el precio anterior y la variación también en la ficha" time="0.282">
+    </testcase>
+  </testsuite>
+  <testsuite name="Escáner del catálogo" errors="0" failures="0" skipped="0" timestamp="2026-10-31T02:14:14" time="45.717" tests="14">
+    <testcase classname="Escáner del catálogo un producto suelto: busca el código exacto en el catálogo de venta y abre su ficha" name="Escáner del catálogo un producto suelto: busca el código exacto en el catálogo de venta y abre su ficha" time="0.716">
+    </testcase>
+    <testcase classname="Escáner del catálogo el código de una fragancia abre la ficha de su línea" name="Escáner del catálogo el código de una fragancia abre la ficha de su línea" time="0.576">
+    </testcase>
+    <testcase classname="Escáner del catálogo servidor viejo (ignora CodigoBarra y devuelve todo): abre el producto que tiene ese código exacto" name="Escáner del catálogo servidor viejo (ignora CodigoBarra y devuelve todo): abre el producto que tiene ese código exacto" time="0.506">
+    </testcase>
+    <testcase classname="Escáner del catálogo un código que no está: avisa y no abre ninguna ficha" name="Escáner del catálogo un código que no está: avisa y no abre ninguna ficha" time="0.599">
+    </testcase>
+    <testcase classname="Escáner del catálogo sin conexión: avisa enseguida y no abre ninguna ficha cuando vuelve la red" name="Escáner del catálogo sin conexión: avisa enseguida y no abre ninguna ficha cuando vuelve la red" time="0.493">
+    </testcase>
+    <testcase classname="Escáner del catálogo si el servidor responde 400, lo dice" name="Escáner del catálogo si el servidor responde 400, lo dice" time="0.504">
+    </testcase>
+    <testcase classname="Escáner del catálogo si el servidor responde 500, lo dice" name="Escáner del catálogo si el servidor responde 500, lo dice" time="0.498">
+    </testcase>
+    <testcase classname="Escáner del catálogo tocar una tarjeta mientras se busca el código cancela el escaneo" name="Escáner del catálogo tocar una tarjeta mientras se busca el código cancela el escaneo" time="0.694">
+    </testcase>
+    <testcase classname="Escáner del catálogo otro escaneo corta el recorrido de páginas del anterior (servidor viejo)" name="Escáner del catálogo otro escaneo corta el recorrido de páginas del anterior (servidor viejo)" time="0.91">
+    </testcase>
+    <testcase classname="Escáner del catálogo si se va a otra pantalla mientras busca el código, no abre la ficha al llegar la respuesta" name="Escáner del catálogo si se va a otra pantalla mientras busca el código, no abre la ficha al llegar la respuesta" time="0.46">
+    </testcase>
+    <testcase classname="Escáner del catálogo abrir el escáner otra vez cancela el escaneo pendiente" name="Escáner del catálogo abrir el escáner otra vez cancela el escaneo pendiente" time="0.66">
+    </testcase>
+    <testcase classname="Escáner del catálogo si la cámara lee varias veces seguidas, vale solo la primera lectura" name="Escáner del catálogo si la cámara lee varias veces seguidas, vale solo la primera lectura" time="0.493">
+    </testcase>
+    <testcase classname="Escáner del catálogo sin permiso todavía, explica para qué es la cámara y lo pide" name="Escáner del catálogo sin permiso todavía, explica para qué es la cámara y lo pide" time="0.394">
+    </testcase>
+    <testcase classname="Escáner del catálogo con el permiso negado, dice cómo habilitarlo y ofrece la configuración" name="Escáner del catálogo con el permiso negado, dice cómo habilitarlo y ofrece la configuración" time="0.39">
     </testcase>
   </testsuite>
 </testsuites>
