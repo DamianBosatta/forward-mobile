@@ -72,10 +72,11 @@ describe('Inicio general: la tarjeta de ventas del día en cada tema', () => {
     expect(estiloHero().backgroundColor).not.toBe(themeColors.dark.bg)
   })
 
-  it('en claro sigue siendo la tarjeta oscura de la barra', () => {
+  it('en claro es una tarjeta blanca con borde, como la lámina', () => {
     useThemeStore.setState({ mode: 'light' })
     pintar()
-    expect(estiloHero().backgroundColor).toBe(themeColors.light.topBar)
+    expect(estiloHero().backgroundColor).toBe(themeColors.light.surface)
+    expect(estiloHero().borderColor).toBe(themeColors.light.border)
   })
 
   it('"Rutas activas" abre la lista de hojas de ruta; sin destino no es un botón', async () => {
