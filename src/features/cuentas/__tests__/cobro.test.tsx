@@ -546,3 +546,19 @@ describe('R11 cobro: resumen "Cobrás" y "Todo lo vencido" (solo pantalla: el co
     expect(post.mock.calls[0][1]).toEqual({ socioComercialId: 'c1', claveIdempotencia: expect.stringMatching(/^mobile-/), lineas: [{ medioPagoId: 'm-tr', monto: 1000 }] })
   })
 })
+
+describe('el saldo del cliente no se repite', () => {
+  it('con barra, el saldo va en el subtítulo de la barra y no hay una fila "Saldo del cliente" en el cuerpo', async () => {
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} conBarra />)
+
+    await screen.findByLabelText('Monto', {}, ESPERA)
+    expect(screen.getByText(/ · Saldo /)).toBeTruthy()
+    expect(screen.queryByLabelText(/^Saldo del cliente/)).toBeNull()
+  })
+
+  it('sin barra, el saldo sigue en una fila del cuerpo', async () => {
+    renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
+
+    expect(await screen.findByLabelText(/^Saldo del cliente/, {}, ESPERA)).toBeTruthy()
+  })
+})

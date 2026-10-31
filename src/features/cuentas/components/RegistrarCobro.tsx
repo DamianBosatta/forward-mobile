@@ -149,7 +149,7 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioI
           <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{nombreDelCliente(cliente)}</Text>
         </View>
       ) : null}
-      {estado.data ? <TotalsRow label="Saldo del cliente" importe={estado.data.saldoActual} /> : null}
+      {estado.data && !conBarra ? <TotalsRow label="Saldo del cliente" importe={estado.data.saldoActual} /> : null}
       <View style={{ gap: space[3], backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, padding: space[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3] }}>
           <View accessible accessibilityLabel={`Cobrás: ${formatImporte(total)}`}>
