@@ -23,10 +23,16 @@ const aCatalogo = (d: Catalogo | CatalogoStockItem[]): Catalogo => (Array.isArra
 export const CLAVE_CATALOGO = [...productosKeys.all, 'catalogoVenta', 'completo'] as const
 
 /**
+ * La clave y la `queryFn` del catálogo completo, juntas: todo observador de la clave las usa (un observador sin
+ * `queryFn` pisa la del primero y el refetch falla con «No queryFn was passed»).
+ */
+export const catalogoCompletoQuery = { queryKey: CLAVE_CATALOGO, queryFn: () => fetchCatalogoCompleto() }
+
+/**
  * Catálogo completo de venta: páginas de 1000 hasta que no haya más.
  * TODO: unificar con `fetchCatalogoStockCompleto` (libs/api-client/productos.ts, PR #28) cuando se mergee.
  */
-async function fetchCatalogoCompleto(): Promise<Catalogo> {
+export async function fetchCatalogoCompleto(): Promise<Catalogo> {
   const items: CatalogoStockItem[] = []
   for (let pagina = 1; pagina <= MAX_PAGES; pagina++) {
     const params = new URLSearchParams({ PageNumber: String(pagina), PageSize: String(PAGE_SIZE) })
@@ -57,8 +63,7 @@ export function useCatalogoVenta(busqueda: string) {
   const termino = useDebouncedValue(busqueda.trim(), DEBOUNCE_BUSQUEDA_MS)
 
   const query = useQuery<Catalogo | CatalogoStockItem[], Error, Catalogo>({
-    queryKey: CLAVE_CATALOGO,
-    queryFn: fetchCatalogoCompleto,
+    ...catalogoCompletoQuery,
     select: aCatalogo,
     staleTime: 60_000,
   })

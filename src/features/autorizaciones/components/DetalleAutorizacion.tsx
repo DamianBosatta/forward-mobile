@@ -45,18 +45,22 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
   const q = useVenta(id)
   const venta = q.data?.venta
   const porAutorizar = POR_AUTORIZAR.includes(String(venta?.estado))
-  const preview = useAutorizacionPreview(id, vePreview && porAutorizar)
+  // Decidir cambia el estado de la venta y el servidor responde 400 a la vista previa de una venta que ya no espera:
+  // mientras la hoja de decisión está abierta, y una vez resuelta, no se pide (la invalidación salta a las consultas apagadas).
+  const [decision, setDecision] = useState<Decision | null>(null)
+  const [resuelta, setResuelta] = useState(false)
+  const preview = useAutorizacionPreview(id, vePreview && porAutorizar && decision === null && !resuelta)
   // Saldo y condición de pago del cliente: es información de apoyo, así que ni la carga ni un error
   // (403, 404, sin red) tocan los botones. `fresco`: para decidir sobre plata no sirve un saldo de hace 5 minutos.
   const socio = useSocio(veClientes ? (venta?.clienteId ?? '') : '', { fresco: true })
   // La dirección y desde cuándo espera no vienen en el detalle de la venta: salen de su fila en la bandeja (misma consulta, en caché).
   const pendientes = usePendientesAutorizacion(puedeAutorizar && porAutorizar)
   const fila = Array.isArray(pendientes.data) ? pendientes.data.find((p) => p.id === id) : undefined
-  const [decision, setDecision] = useState<Decision | null>(null)
   // La versión cacheada puede tener hasta 60 s: al decidir se vuelve a pedir la venta.
   const [aviso, setAviso] = useState<string | null>(null)
   const abrirDecision = (d: Decision) => { setAviso(null); setDecision(d); void q.refetch() }
   const volver = onVolver ?? (() => router.back())
+  const alResolver = () => { setResuelta(true); volver() }
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
   const tarjeta = { padding: space[4], gap: space[2], borderRadius: radii.tarjeta, backgroundColor: c.surface }
 
@@ -197,7 +201,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
         ofrecerDescuento
         onConflicto={setAviso}
         onClose={() => setDecision(null)}
-        onHecho={volver}
+        onHecho={alResolver}
       />
     </View>
   )

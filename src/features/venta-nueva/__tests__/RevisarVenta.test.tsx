@@ -10,7 +10,12 @@ import { producto } from '../__testing__/producto'
 const CAP = { module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }
 let qc: QueryClient
 let catalogoServidor: ReturnType<typeof producto>[]
-const queryFn = jest.fn(async () => ({ items: catalogoServidor, truncado: false }))
+// El servidor: el catálogo se pide con la queryFn del propio hook (un `setQueryDefaults` taparía una consulta sin queryFn).
+const mockQueryFn = jest.fn(async () => ({ items: catalogoServidor, hasNextPage: false }))
+jest.mock('@/core/api/client', () => ({
+  ...jest.requireActual('@/core/api/client'),
+  api: { get: (...a: unknown[]) => mockQueryFn(...(a as [])), put: jest.fn(), post: jest.fn() },
+}))
 const cliente = { direccion: 'Tarantino 1898', nombreFantasia: 'Autoservicio Abel' }
 
 const rollo = (over = {}) => producto({ id: 'p1', nombre: 'Rollo 90x120', marca: 'Maxi Bag', precioVenta: 1000, disponible: 10, ...over })
@@ -28,10 +33,9 @@ function revisar(props: Partial<React.ComponentProps<typeof RevisarVenta>> = {})
 }
 
 beforeEach(() => {
-  queryFn.mockClear()
+  mockQueryFn.mockClear()
   useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [CAP] } as never })
   qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  qc.setQueryDefaults(CLAVE_CATALOGO, { queryFn })
   const vistos = [rollo(), esponja()]
   qc.setQueryData(CLAVE_CATALOGO, { items: vistos, truncado: false })
   useCarritoVenta.setState({ lineas: [
@@ -62,7 +66,7 @@ describe('RevisarVenta (S5, S6, S7)', () => {
   it('al abrir vuelve a pedir el stock; sin cambios no hay banner', async () => {
     revisar()
     await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(2))
-    expect(queryFn).toHaveBeenCalledTimes(1)
+    expect(mockQueryFn).toHaveBeenCalledTimes(1)
     expect(screen.queryByText(/El stock cambió mientras cargabas/)).toBeNull()
   })
 
@@ -118,10 +122,10 @@ describe('RevisarVenta (S5, S6, S7)', () => {
     catalogoServidor = [rollo(), esponja({ disponible: 3 })]
     const { alConfirmar } = revisar()
     await screen.findByText('Quedan 3, pediste 4: tocá para ajustar')
-    expect(queryFn).toHaveBeenCalledTimes(1)
+    expect(mockQueryFn).toHaveBeenCalledTimes(1)
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(alConfirmar).toHaveBeenCalledTimes(1))
-    expect(queryFn).toHaveBeenCalledTimes(2)
+    expect(mockQueryFn).toHaveBeenCalledTimes(2)
   })
 
   it('muestra el error del servidor y deshabilita el botón mientras envía', () => {
@@ -137,14 +141,14 @@ describe('RevisarVenta (S5, S6, S7)', () => {
     expect(screen.queryByText('Stock confirmado ahora')).toBeNull()
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(alConfirmar).toHaveBeenCalledTimes(1))
-    expect(queryFn).not.toHaveBeenCalled()
+    expect(mockQueryFn).not.toHaveBeenCalled()
   })
 
   it('mientras revalida al confirmar, el botón queda deshabilitado y no se confirma dos veces', async () => {
     const { alConfirmar } = revisar()
     await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(2))
     let soltar: () => void = () => {}
-    queryFn.mockImplementationOnce(() => new Promise((res) => { soltar = () => res({ items: catalogoServidor, truncado: false }) }))
+    mockQueryFn.mockImplementationOnce(() => new Promise((res) => { soltar = () => res({ items: catalogoServidor, hasNextPage: false }) }))
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeDisabled())
     expect(alConfirmar).not.toHaveBeenCalled()
