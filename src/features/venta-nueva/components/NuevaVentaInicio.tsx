@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
+import { ChevronRight } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { Button, Segmented, TopBar } from '@/core/ui/fw'
 import { useUltimoPedido } from '../hooks/useUltimoPedido'
@@ -43,7 +44,7 @@ export function NuevaVentaInicio({ cargandoCliente, tipo, onTipo, onElegir, onNu
   }
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar title="Nueva venta" subtitle="Paso 1 de 3" leading={{ kind: 'atras', onPress: onVolver }} />
+      <TopBar title="Nueva venta" textoDerecha="Paso 1 de 3" leading={{ kind: 'atras', onPress: onVolver }} />
       <PasosVenta paso={1} />
       <View style={{ paddingHorizontal: space[4], paddingTop: space[3], gap: space[2] }}>
         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Elegí el cliente para ver sus precios y el stock.</Text>
@@ -51,7 +52,7 @@ export function NuevaVentaInicio({ cargandoCliente, tipo, onTipo, onElegir, onNu
       </View>
       <ElegirClienteVenta onElegir={setElegido} onNuevoCliente={onNuevoCliente} seleccionadoId={elegido?.id} ultimoPedido={ultimo ? { fecha: ultimo.fecha, total: ultimo.totalAmount } : null} />
       <View style={{ padding: space[4], gap: space[2], borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
-        <Button label="Continuar a productos" disabled={!elegido} onPress={() => elegido && onElegir(elegido)}
+        <Button label="Continuar a productos" iconoFinal={ChevronRight} disabled={!elegido} onPress={() => elegido && onElegir(elegido)}
           accessibilityLabel={elegido ? `Continuar a productos con ${direccionDeEntrega(elegido)}` : 'Continuar a productos'} />
         {elegido && ultimo ? <Button variant="secundario" label="Repetir el último pedido" onPress={() => onElegir(elegido, { delUltimo: true })} /> : null}
       </View>
