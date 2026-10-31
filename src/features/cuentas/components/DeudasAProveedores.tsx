@@ -1,7 +1,7 @@
 import React from 'react'
 import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
-import { Notice, formatImporte } from '@/core/ui/fw'
+import { FilaDeSocio, Notice, formatImporte } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -66,13 +66,10 @@ function FilaDeDeuda({ deuda }: { deuda: DeudaProveedor }) {
   const c = useColors()
   const monto = formatImporte(deuda.saldoDeuda, { moneda: deuda.moneda })
   return (
-    <View
-      accessible
+    <FilaDeSocio
+      titulo={deuda.razonSocial}
+      derecha={<Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{monto}</Text>}
       accessibilityLabel={`${deuda.razonSocial}, le debés ${monto}`}
-      style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space[2], minHeight: 56, paddingVertical: space[3], paddingHorizontal: space[4], backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.border }}
-    >
-      <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text, flexShrink: 1 }}>{deuda.razonSocial}</Text>
-      <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{monto}</Text>
-    </View>
+    />
   )
 }
