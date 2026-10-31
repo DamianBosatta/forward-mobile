@@ -1,61 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="28" failures="0" errors="0" time="14.144">
-  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2026-10-31T02:09:39" time="13.835" tests="28">
-    <testcase classname=" la dirección es el título y el nombre va aparte" name=" la dirección es el título y el nombre va aparte" time="0.582">
+<testsuites name="jest tests" tests="32" failures="0" errors="0" time="14.944">
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2026-10-31T02:11:51" time="14.597" tests="32">
+    <testcase classname=" la dirección es el título y el nombre va en una línea aparte, nunca pegados" name=" la dirección es el título y el nombre va en una línea aparte, nunca pegados" time="2.227">
     </testcase>
-    <testcase classname=" en teléfono la ficha pone su barra: dirección de título, nombre aparte y el lápiz de Editar" name=" en teléfono la ficha pone su barra: dirección de título, nombre aparte y el lápiz de Editar" time="0.249">
+    <testcase classname=" muestra el vendedor responsable como línea secundaria cuando el servidor lo manda" name=" muestra el vendedor responsable como línea secundaria cuando el servidor lo manda" time="0.088">
     </testcase>
-    <testcase classname=" Llamar marca el teléfono y Cómo llegar abre el mapa con la dirección" name=" Llamar marca el teléfono y Cómo llegar abre el mapa con la dirección" time="0.407">
+    <testcase classname=" sin vendedor responsable (null) la tarjeta no dice nada de vendedor" name=" sin vendedor responsable (null) la tarjeta no dice nada de vendedor" time="0.076">
     </testcase>
-    <testcase classname=" la cuenta corriente sale del endpoint vigente de estado de cuenta" name=" la cuenta corriente sale del endpoint vigente de estado de cuenta" time="0.234">
+    <testcase classname=" pide la cartera al servidor (solo clientes, activos, agenda) y muestra &quot;N de M&quot; con su total" name=" pide la cartera al servidor (solo clientes, activos, agenda) y muestra &quot;N de M&quot; con su total" time="0.077">
     </testcase>
-    <testcase classname=" si el servidor no deja ver la cuenta, ni se pide ni se muestra" name=" si el servidor no deja ver la cuenta, ni se pide ni se muestra" time="0.06">
+    <testcase classname=" la búsqueda va al servidor una sola vez, después de dejar de tipear" name=" la búsqueda va al servidor una sola vez, después de dejar de tipear" time="0.525">
     </testcase>
-    <testcase classname=" sin la capacidad de autorizar ventas, la condición de pago se ve con candado y el aviso" name=" sin la capacidad de autorizar ventas, la condición de pago se ve con candado y el aviso" time="0.233">
+    <testcase classname=" sin permiso del servidor para ver el saldo, la tarjeta no lo muestra" name=" sin permiso del servidor para ver el saldo, la tarjeta no lo muestra" time="0.077">
     </testcase>
-    <testcase classname=" con la capacidad de autorizar ventas no hay aviso de candado" name=" con la capacidad de autorizar ventas no hay aviso de candado" time="0.25">
+    <testcase classname=" si el servidor rechaza, se ve su mensaje" name=" si el servidor rechaza, se ve su mensaje" time="0.075">
     </testcase>
-    <testcase classname=" Editar solo aparece si el servidor dice que este usuario puede editarlo" name=" Editar solo aparece si el servidor dice que este usuario puede editarlo" time="0.062">
+    <testcase classname=" en teléfono, tocar el cliente abre su ficha" name=" en teléfono, tocar el cliente abre su ficha" time="0.248">
     </testcase>
-    <testcase classname=" si el servidor rechaza, se ve su mensaje" name=" si el servidor rechaza, se ve su mensaje" time="0.061">
+    <testcase classname=" en tablet ancha, la ficha se abre al lado de la lista" name=" en tablet ancha, la ficha se abre al lado de la lista" time="0.285">
     </testcase>
-    <testcase classname="vendedor responsable (servidor con PR #896) muestra &quot;Vendedor&quot; con el nombre en Datos cuando el servidor lo manda" name="vendedor responsable (servidor con PR #896) muestra &quot;Vendedor&quot; con el nombre en Datos cuando el servidor lo manda" time="0.249">
+    <testcase classname=" sin permiso de alta no hay botón de nuevo cliente" name=" sin permiso de alta no hay botón de nuevo cliente" time="0.111">
     </testcase>
-    <testcase classname="vendedor responsable (servidor con PR #896) no muestra &quot;Vendedor&quot; sin vendedor (null)" name="vendedor responsable (servidor con PR #896) no muestra &quot;Vendedor&quot; sin vendedor (null)" time="0.266">
+    <testcase classname="deuda vencida y saldo de la cartera (servidor con PR #882) la tarjeta del cliente con deuda vencida lleva el chip; la del que no tiene, no" name="deuda vencida y saldo de la cartera (servidor con PR #882) la tarjeta del cliente con deuda vencida lleva el chip; la del que no tiene, no" time="0.087">
     </testcase>
-    <testcase classname="vendedor responsable (servidor con PR #896) no muestra &quot;Vendedor&quot; con el nombre vacío" name="vendedor responsable (servidor con PR #896) no muestra &quot;Vendedor&quot; con el nombre vacío" time="0.262">
+    <testcase classname="deuda vencida y saldo de la cartera (servidor con PR #882) con el saldo total del servidor, el contador lo muestra; nunca lo suma el teléfono" name="deuda vencida y saldo de la cartera (servidor con PR #882) con el saldo total del servidor, el contador lo muestra; nunca lo suma el teléfono" time="0.077">
     </testcase>
-    <testcase classname="vendedor responsable (servidor con PR #896) no muestra &quot;Vendedor&quot; con un servidor anterior, que no manda el campo" name="vendedor responsable (servidor con PR #896) no muestra &quot;Vendedor&quot; con un servidor anterior, que no manda el campo" time="0.25">
+    <testcase classname="deuda vencida y saldo de la cartera (servidor con PR #882) el saldo total llega solo en la página 1: al cargar más se mantiene" name="deuda vencida y saldo de la cartera (servidor con PR #882) el saldo total llega solo en la página 1: al cargar más se mantiene" time="0.139">
     </testcase>
-    <testcase classname="vencido y disponible (servidor con PR #882) muestra lo vencido con la cuenta, el disponible y el aviso de autorización" name="vencido y disponible (servidor con PR #882) muestra lo vencido con la cuenta, el disponible y el aviso de autorización" time="0.25">
+    <testcase classname="deuda vencida y saldo de la cartera (servidor con PR #882) si el servidor no da el saldo total (null) o es un servidor anterior, queda &quot;N de M&quot; y sin chips" name="deuda vencida y saldo de la cartera (servidor con PR #882) si el servidor no da el saldo total (null) o es un servidor anterior, queda &quot;N de M&quot; y sin chips" time="0.08">
     </testcase>
-    <testcase classname="vencido y disponible (servidor con PR #882) con deuda vencida dice los días hábiles de la deuda más vieja (SocioDetailDto.diasDeudaMasVieja)" name="vencido y disponible (servidor con PR #882) con deuda vencida dice los días hábiles de la deuda más vieja (SocioDetailDto.diasDeudaMasVieja)" time="0.066">
+    <testcase classname="localidad y filtros (9C) la tarjeta muestra la localidad en una línea aparte" name="localidad y filtros (9C) la tarjeta muestra la localidad en una línea aparte" time="0.09">
     </testcase>
-    <testcase classname="vencido y disponible (servidor con PR #882) 1 día va en singular; null o 0 no muestran la línea; sin deuda vencida tampoco" name="vencido y disponible (servidor con PR #882) 1 día va en singular; null o 0 no muestran la línea; sin deuda vencida tampoco" time="0.19">
+    <testcase classname="localidad y filtros (9C) &quot;Con deuda vencida&quot; le pide el filtro al servidor, y tocarlo de nuevo lo saca" name="localidad y filtros (9C) &quot;Con deuda vencida&quot; le pide el filtro al servidor, y tocarlo de nuevo lo saca" time="0.435">
     </testcase>
-    <testcase classname="vencido y disponible (servidor con PR #882) con el tope pasado, el disponible negativo se dice como &quot;Pasado del tope por&quot;" name="vencido y disponible (servidor con PR #882) con el tope pasado, el disponible negativo se dice como &quot;Pasado del tope por&quot;" time="0.259">
+    <testcase classname="localidad y filtros (9C) las localidades salen del servidor y elegir una filtra por ella" name="localidad y filtros (9C) las localidades salen del servidor y elegir una filtra por ella" time="0.26">
     </testcase>
-    <testcase classname="vencido y disponible (servidor con PR #882) sin tope (null) o con un servidor anterior, no hay vencido ni disponible" name="vencido y disponible (servidor con PR #882) sin tope (null) o con un servidor anterior, no hay vencido ni disponible" time="0.497">
+    <testcase classname="localidad y filtros (9C) con filtros y sin resultados, lo dice" name="localidad y filtros (9C) con filtros y sin resultados, lo dice" time="0.274">
     </testcase>
-    <testcase classname="láminas Ficha del cliente y TabClientes (bloque 12, T7) abre en Compras; Cuenta y Datos son solapas" name="láminas Ficha del cliente y TabClientes (bloque 12, T7) abre en Compras; Cuenta y Datos son solapas" time="0.248">
+    <testcase classname=" con un servidor sin el endpoint de localidades (responde 400 por la ruta {id}, o 404) no lo registra como error" name=" con un servidor sin el endpoint de localidades (responde 400 por la ruta {id}, o 404) no lo registra como error" time="0.086">
     </testcase>
-    <testcase classname="láminas Ficha del cliente y TabClientes (bloque 12, T7) sin permiso para ver la cuenta no hay solapa Cuenta ni cifras" name="láminas Ficha del cliente y TabClientes (bloque 12, T7) sin permiso para ver la cuenta no hay solapa Cuenta ni cifras" time="0.061">
+    <testcase classname="lámina Clientes (bloque 12, T7) con permiso de alta, el botón fijo &quot;Nuevo cliente&quot; abre el alta" name="lámina Clientes (bloque 12, T7) con permiso de alta, el botón fijo &quot;Nuevo cliente&quot; abre el alta" time="0.198">
     </testcase>
-    <testcase classname="láminas Ficha del cliente y TabClientes (bloque 12, T7) el resumen muestra saldo, vencido y crédito libre tal como los manda el servidor" name="láminas Ficha del cliente y TabClientes (bloque 12, T7) el resumen muestra saldo, vencido y crédito libre tal como los manda el servidor" time="0.067">
+    <testcase classname="lámina Clientes (bloque 12, T7) la pastilla &quot;Mi cartera&quot; dice cuántos son; con una búsqueda o un filtro ya no (el total sería otro)" name="lámina Clientes (bloque 12, T7) la pastilla &quot;Mi cartera&quot; dice cuántos son; con una búsqueda o un filtro ya no (el total sería otro)" time="0.264">
     </testcase>
-    <testcase classname="láminas Ficha del cliente y TabClientes (bloque 12, T7) pasado del tope: la cifra lo dice en vez de &quot;Crédito libre&quot;" name="láminas Ficha del cliente y TabClientes (bloque 12, T7) pasado del tope: la cifra lo dice en vez de &quot;Crédito libre&quot;" time="0.064">
+    <testcase classname="lámina Clientes (bloque 12, T7) cada tarjeta con teléfono tiene Llamar, que marca sin abrir la ficha" name="lámina Clientes (bloque 12, T7) cada tarjeta con teléfono tiene Llamar, que marca sin abrir la ficha" time="0.25">
     </testcase>
-    <testcase classname="láminas Ficha del cliente y TabClientes (bloque 12, T7) WhatsApp abre el chat con el prefijo del país" name="láminas Ficha del cliente y TabClientes (bloque 12, T7) WhatsApp abre el chat con el prefijo del país" time="0.226">
+    <testcase classname="lámina Clientes (bloque 12, T7) sin teléfono no hay Llamar" name="lámina Clientes (bloque 12, T7) sin teléfono no hay Llamar" time="0.095">
     </testcase>
-    <testcase classname="láminas Ficha del cliente y TabClientes (bloque 12, T7) sin teléfono no hay Llamar ni WhatsApp" name="láminas Ficha del cliente y TabClientes (bloque 12, T7) sin teléfono no hay Llamar ni WhatsApp" time="0.069">
+    <testcase classname="lámina Clientes (bloque 12, T7) el cliente con deuda vencida muestra cuánto, solo si el servidor deja ver el saldo" name="lámina Clientes (bloque 12, T7) el cliente con deuda vencida muestra cuánto, solo si el servidor deja ver el saldo" time="0.095">
     </testcase>
-    <testcase classname="láminas Ficha del cliente y TabClientes (bloque 12, T7) Cobrar lleva a la pantalla de cobro con el cliente, solo con permiso de pagos y cuenta visible" name="láminas Ficha del cliente y TabClientes (bloque 12, T7) Cobrar lleva a la pantalla de cobro con el cliente, solo con permiso de pagos y cuenta visible" time="0.226">
+    <testcase classname="lista de clientes como el diseño (D6c) la fila es plana: sin borde redondeado ni sombra, con una línea abajo" name="lista de clientes como el diseño (D6c) la fila es plana: sin borde redondeado ni sombra, con una línea abajo" time="0.108">
     </testcase>
-    <testcase classname="láminas Ficha del cliente y TabClientes (bloque 12, T7) sin permiso de pagos Cobrar se ve deshabilitado y dice por qué" name="láminas Ficha del cliente y TabClientes (bloque 12, T7) sin permiso de pagos Cobrar se ve deshabilitado y dice por qué" time="0.079">
+    <testcase classname="lista de clientes como el diseño (D6c) el contador &quot;N de M clientes&quot; va arriba de la lista y &quot;Nuevo cliente&quot; es el botón flotante" name="lista de clientes como el diseño (D6c) el contador &quot;N de M clientes&quot; va arriba de la lista y &quot;Nuevo cliente&quot; es el botón flotante" time="0.08">
     </testcase>
-    <testcase classname="Vender desde la ficha (T4c) con permiso para crear ventas, Nueva venta abre la venta nueva con este cliente" name="Vender desde la ficha (T4c) con permiso para crear ventas, Nueva venta abre la venta nueva con este cliente" time="0.232">
+    <testcase classname="lista de clientes como el diseño (D6c) sin permiso de alta el contador sigue y no hay botón" name="lista de clientes como el diseño (D6c) sin permiso de alta el contador sigue y no hay botón" time="0.075">
     </testcase>
-    <testcase classname="Vender desde la ficha (T4c) sin permiso para crear ventas no hay Nueva venta" name="Vender desde la ficha (T4c) sin permiso para crear ventas no hay Nueva venta" time="0.066">
+    <testcase classname="lista de clientes como el diseño (D6c) el cliente que el servidor no deja ver lleva candado y el tag de cartera ajena, en vez de saldo" name="lista de clientes como el diseño (D6c) el cliente que el servidor no deja ver lleva candado y el tag de cartera ajena, en vez de saldo" time="0.078">
+    </testcase>
+    <testcase classname="lista de clientes como el diseño (D6c) el cliente sin saldo pendiente dice &quot;Sin deuda&quot;" name="lista de clientes como el diseño (D6c) el cliente sin saldo pendiente dice &quot;Sin deuda&quot;" time="0.093">
+    </testcase>
+    <testcase classname=" en el teléfono la barra de abajo sigue a la vista en Clientes (lámina CalleMiDia)" name=" en el teléfono la barra de abajo sigue a la vista en Clientes (lámina CalleMiDia)" time="0.091">
+    </testcase>
+    <testcase classname=" pide la cartera ordenada por dirección" name=" pide la cartera ordenada por dirección" time="0.104">
+    </testcase>
+    <testcase classname=" muestra un encabezado por letra de la dirección (sin tildes, &quot;#&quot; para lo que no empieza con letra) y los sin dirección al final" name=" muestra un encabezado por letra de la dirección (sin tildes, &quot;#&quot; para lo que no empieza con letra) y los sin dirección al final" time="0.104">
     </testcase>
   </testsuite>
 </testsuites>
