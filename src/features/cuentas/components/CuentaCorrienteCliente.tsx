@@ -138,17 +138,17 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
     </View>
   )
 
-  const subtitulo = nombre ? `Cuenta corriente · ${nombre}` : 'Cuenta corriente'
   return (
     <View style={{ flex: 1 }}>
-    {conBarra ? <TopBar title={direccionDeEntrega(cliente)} subtitle={subtitulo} leading={{ kind: 'atras', onPress: () => router.back() }} /> : null}
+    {conBarra ? <TopBar title="Cuenta corriente" leading={{ kind: 'atras', onPress: () => router.back() }} /> : null}
     <ScrollView testID="cuenta-corriente-scroll" onScroll={alDesplazar} scrollEventThrottle={200} contentContainerStyle={{ padding: space[4], gap: space[4] }}>
-      {!conBarra ? (
+      {/* La dirección va en el cuerpo, en las líneas que necesite: en la barra se cortaba a 360dp. */}
+      {(
         <View style={{ gap: space[1] }}>
           <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
           {nombre ? <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{nombre}</Text> : null}
         </View>
-      ) : null}
+      )}
       {verCuenta && isTabletLandscape ? registrarCobro : null}
 
       {!verCuenta ? <Notice tone="info">No tenés acceso a la cuenta corriente de este cliente.</Notice> : null}
