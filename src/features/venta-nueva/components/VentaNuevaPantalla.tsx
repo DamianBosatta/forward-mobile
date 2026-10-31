@@ -53,6 +53,8 @@ interface Props {
   abrir?: AbrirVenta
   /** `?clienteId=`: el cliente ya elegido (Vender de nuevo, Buscar, la ficha): se salta la lista y se llega al catálogo. */
   clienteId?: string
+  /** La venta quedó grabada (o en la cola sin señal): la ruta descarta esta pantalla y abre una limpia para la siguiente. */
+  alTerminar?: () => void
 }
 
 /** Las dos vistas de la venta: el catálogo (donde se arma) y la revisión (líneas, cabecera, total y confirmar). */
@@ -63,7 +65,7 @@ type VistaVenta = 'catalogo' | 'revision'
  * catálogo, que es la vista principal; "Ver venta" lleva a revisar (líneas y cabecera), "Seguir" abre Confirmar y
  * de ahí a la pantalla de venta guardada. Una venta que se abre (retomar, editar, duplicar) arranca en la revisión.
  */
-export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
+export function VentaNuevaPantalla({ abrir, clienteId, alTerminar }: Props = {}) {
   const c = useColors()
   const router = useRouter()
   // `cliente`: el de la venta, desde que se elige (o se abre una venta); sin cliente no hay catálogo.
@@ -99,7 +101,7 @@ export function VentaNuevaPantalla({ abrir, clienteId }: Props = {}) {
   const abrirEf = abrir
   const conf = useConfirmarVenta({
     clienteId: cliente?.id ?? '', cliente, esPedido: tipo === 'Pedido', lineas, descuentoGeneral: descuentoValido, cabecera: cab.cabecera,
-    porcentajeCedido: cab.porcentajeCedido, borrador: b, alGuardar: vaciar, edicion,
+    porcentajeCedido: cab.porcentajeCedido, borrador: b, alGuardar: () => { vaciar(); alTerminar?.() }, edicion,
   })
   const cuerpoVistaPrevia = useDebouncedValue(cliente && tipo === 'Pedido' && !edicion && lineas.length > 0
     ? aAlta(lineas, descuentoValido, cab.cabecera, {

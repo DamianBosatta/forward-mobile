@@ -1,5 +1,5 @@
-import React from 'react'
-import { useLocalSearchParams } from 'expo-router'
+import React, { useState } from 'react'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { VentaNuevaPantalla, type AbrirVenta } from '@/features/venta-nueva/components/VentaNuevaPantalla'
 
 type Params = { borrador?: string; tipo?: string; editar?: string; duplicar?: string; clienteId?: string }
@@ -15,8 +15,19 @@ export function abrirDesdeParams(p: Params): AbrirVenta | undefined {
   return undefined
 }
 
-/** Venta nueva: la única venta, para todos. */
+/**
+ * Venta nueva: la única venta, para todos. La pantalla vive en el drawer y no se desmonta sola: cada venta
+ * (otros parámetros, o una grabada) se monta de cero con `key`, así no queda la anterior en Revisar ni su clave
+ * de idempotencia. Al terminar también se vacían los parámetros, para que "Nueva venta" no reabra un duplicado.
+ */
 export default function NuevaVentaRoute() {
   const params = useLocalSearchParams<Params>()
-  return <VentaNuevaPantalla abrir={abrirDesdeParams(params)} clienteId={params.clienteId} />
+  const router = useRouter()
+  const [vez, setVez] = useState(0)
+  const alTerminar = () => {
+    setVez((v) => v + 1)
+    router.setParams({ borrador: undefined, tipo: undefined, editar: undefined, duplicar: undefined, clienteId: undefined })
+  }
+  const clave = `${vez}:${params.borrador ?? ''}:${params.editar ?? ''}:${params.duplicar ?? ''}:${params.clienteId ?? ''}`
+  return <VentaNuevaPantalla key={clave} abrir={abrirDesdeParams(params)} clienteId={params.clienteId} alTerminar={alTerminar} />
 }

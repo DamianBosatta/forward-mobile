@@ -14,6 +14,11 @@ import { producto } from '../__testing__/producto'
 // muestra y con el que se calcula el precio es el mismo en la pastilla, la tarjeta, el resumen, la revisión y la oferta.
 const bulto12 = () => producto({ id: 'p12', nombre: 'Esponja x12', precioVenta: 100, bultoContenido: 12, ventaMinimaUnidades: 6, fraccionMinimaVenta: 'Unidad', disponible: 100 })
 const noop = () => {}
+// El servidor: el catálogo se pide con la queryFn del propio hook.
+jest.mock('@/core/api/client', () => ({
+  ...jest.requireActual('@/core/api/client'),
+  api: { get: jest.fn(async () => ({ items: [], hasNextPage: false })), put: jest.fn(), post: jest.fn() },
+}))
 
 describe('una sola definición de bulto (bulto 12, venta mínima 6)', () => {
   it('tarjeta: la pastilla dice 12 u y el precio por bulto es de 12 unidades', () => {
@@ -38,7 +43,6 @@ describe('una sola definición de bulto (bulto 12, venta mínima 6)', () => {
     const p = bulto12()
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     qc.setQueryData(CLAVE_CATALOGO, { items: [p], truncado: false })
-    qc.setQueryDefaults(CLAVE_CATALOGO, { queryFn: async () => ({ items: [p], truncado: false }) })
     useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [] } as never })
     useCarritoVenta.setState({ lineas: [{ productoId: p.id, producto: p, cantidad: 12, descuentoPct: 0 }] })
     render(

@@ -9,14 +9,18 @@ import { producto } from '../__testing__/producto'
 
 let qc: QueryClient
 let catalogoServidor: ReturnType<typeof producto>[]
-const queryFn = jest.fn(async () => ({ items: catalogoServidor, truncado: false }))
+// El servidor (no un `setQueryDefaults`, que taparía una consulta observada sin su propia mockQueryFn).
+const mockQueryFn = jest.fn(async () => ({ items: catalogoServidor, hasNextPage: false }))
+jest.mock('@/core/api/client', () => ({
+  ...jest.requireActual('@/core/api/client'),
+  api: { get: (...a: unknown[]) => mockQueryFn(...(a as [])), put: jest.fn(), post: jest.fn() },
+}))
 const wrapper = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
 const CAP = { module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }
 
 beforeEach(() => {
-  queryFn.mockClear()
+  mockQueryFn.mockClear()
   qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  qc.setQueryDefaults(CLAVE_CATALOGO, { queryFn })
   // Lo que se vio al cargar: p1 con 9, p2 con 4.
   const vistos = [producto({ id: 'p1', disponible: 9 }), producto({ id: 'p2', disponible: 4 })]
   qc.setQueryData(CLAVE_CATALOGO, { items: vistos, truncado: false })
@@ -31,7 +35,7 @@ describe('useRevalidarStockVenta (S6: al revisar se vuelve a chequear)', () => {
   it('al abrir la revisión vuelve a pedir el catálogo y marca lo que cambió contra lo que se vio al cargar', async () => {
     const { result } = renderHook(() => useRevalidarStockVenta(), { wrapper })
     await waitFor(() => expect(result.current.confirmado).toBe(true))
-    expect(queryFn).toHaveBeenCalledTimes(1)
+    expect(mockQueryFn).toHaveBeenCalledTimes(1)
     expect(result.current.cambios).toEqual([{ productoId: 'p1', antes: 9, ahora: 3, puedeVenderse: true }])
     // Las líneas que devuelve ya llevan el stock fresco.
     expect(result.current.lineas.find((l) => l.productoId === 'p1')!.producto.disponible).toBe(3)
@@ -43,7 +47,7 @@ describe('useRevalidarStockVenta (S6: al revisar se vuelve a chequear)', () => {
     catalogoServidor = [producto({ id: 'p1', disponible: 3 }), producto({ id: 'p2', disponible: 1 })]
     let cambios: { productoId: string }[] = []
     await act(async () => { cambios = await result.current.revalidar() })
-    expect(queryFn).toHaveBeenCalledTimes(2)
+    expect(mockQueryFn).toHaveBeenCalledTimes(2)
     expect(cambios.map((c) => c.productoId)).toEqual(['p1', 'p2'])
   })
 
@@ -55,7 +59,7 @@ describe('useRevalidarStockVenta (S6: al revisar se vuelve a chequear)', () => {
   })
 
   it('si no se pudo volver a pedir, no se dice que el stock está confirmado', async () => {
-    queryFn.mockRejectedValueOnce(new Error('sin red'))
+    mockQueryFn.mockRejectedValueOnce(new Error('sin red'))
     const { result } = renderHook(() => useRevalidarStockVenta(), { wrapper })
     await waitFor(() => expect(result.current.revalidando).toBe(false))
     expect(result.current.confirmado).toBe(false)
@@ -65,7 +69,7 @@ describe('useRevalidarStockVenta (S6: al revisar se vuelve a chequear)', () => {
     onlineManager.setOnline(false)
     const { result } = renderHook(() => useRevalidarStockVenta(), { wrapper })
     await waitFor(() => expect(result.current.revalidando).toBe(false))
-    expect(queryFn).not.toHaveBeenCalled()
+    expect(mockQueryFn).not.toHaveBeenCalled()
     expect(result.current.confirmado).toBe(false)
     expect(result.current.sinConexion).toBe(true)
   })
