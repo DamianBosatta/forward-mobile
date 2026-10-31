@@ -3,7 +3,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollVie
 import { useRouter } from 'expo-router'
 import { Crosshair, Lock } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
-import { cuitEsValido } from '@/libs/reglas'
+import { cuitDigitosFaltantes, cuitEsValido } from '@/libs/reglas'
 import { Button, FormContainer, Notice, TopBar } from '@/core/ui/fw'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { CampoDeSocio } from '@/features/socios/components/CampoDeSocio'
@@ -21,8 +21,8 @@ export const AYUDA_PROVISORIA = 'Para no perder la venta: el CUIT y los datos qu
 export const AVISO_CAMPOS_SENSIBLES = 'La dirección, la razón social y el CUIT los cambia un administrador: pedilo con «Pedir cambio» en la ficha del cliente.'
 export const ERROR_CUIT = 'Revisá el CUIT: no es válido.'
 export const AYUDA_CUIT_VACIO = 'Si todavía no lo tenés, dejalo vacío y guardalo como alta provisoria.'
-// TODO reglas: el mensaje "El CUIT tiene 11 dígitos: faltan N" de la lámina sale de @forward/reglas (forward-system #1046); hasta
-// entonces solo se dice que no es válido. El servidor sigue siendo el que manda y su mensaje se muestra tal cual.
+/** "El CUIT tiene 11 dígitos: faltan N" (lámina); la cuenta sale de `cuitDigitosFaltantes` de @forward/reglas. */
+export const avisoCuitIncompleto = (faltan: number) => `El CUIT tiene 11 dígitos: ${faltan === 1 ? 'falta 1' : `faltan ${faltan}`}`
 export const AVISO_ALTA = 'Queda en tu cartera. El tope de crédito y la condición de pago los define gestión.'
 export const AVISO_EDICION = 'Solo podés editar clientes de tu cartera. El crédito y la condición de pago los cambia quien autoriza ventas. No se dan de baja desde la app.'
 
@@ -62,6 +62,7 @@ export function ClienteForm({ id }: { id?: string }) {
   }
   // Aviso previo en el teléfono, con la regla de @forward/reglas; no frena el guardado: el servidor decide.
   const cuitInvalido = !bloqueo.cuit && datos.cuit.trim() !== '' && !cuitEsValido(datos.cuit)
+  const cuitFaltan = cuitInvalido ? cuitDigitosFaltantes(datos.cuit) : 0
   const hayBloqueo = bloqueo.razonSocial || bloqueo.cuit || bloqueo.direccion
 
   return (
@@ -117,6 +118,7 @@ export function ClienteForm({ id }: { id?: string }) {
                     placeholder="20-12345678-9"
                     error={cuitInvalido ? ERROR_CUIT : undefined}
                   />
+                  {cuitFaltan > 0 ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{avisoCuitIncompleto(cuitFaltan)}</Text> : null}
                   {cuitInvalido ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{AYUDA_CUIT_VACIO}</Text> : null}
                 </View>
                 <OpcionesRadio

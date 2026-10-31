@@ -21402,6 +21402,8 @@ export interface components {
             totalDeudaClientes: number;
             /** Format: double */
             totalDeudaBrutaClientes?: number | null;
+            /** Format: double */
+            totalDeudaVencidaClientes?: number;
             /** Format: int32 */
             proveedoresConDeuda: number;
             /** Format: double */
@@ -22109,6 +22111,10 @@ export interface components {
             precioConOferta?: number | null;
             /** Format: int32 */
             ventaMinimaUnidades: number;
+            /** Format: int32 */
+            unidadesPorVenta: number;
+            /** Format: int32 */
+            bultoContenido?: number | null;
             esPadreDeVariantes: boolean;
             disponible: boolean;
             disponibleVentaMinima: boolean;
@@ -22446,6 +22452,7 @@ export interface components {
             /** Format: date-time */
             fechaImputacion: string;
             origen: components["schemas"]["ImputacionOrigen"];
+            cuentaNombre?: string | null;
         };
         ImputacionManualItem: {
             /** Format: uuid */
@@ -24857,6 +24864,8 @@ export interface components {
             deudaVencidaTstAmount?: number;
             /** Format: double */
             deudaVencidaNormalAmount?: number;
+            /** Format: int32 */
+            diasDeudaMasVieja?: number | null;
             /** Format: double */
             creditoDisponible?: number | null;
             depositoIds: string[];
@@ -24907,6 +24916,7 @@ export interface components {
             cuentaId?: string | null;
             /** Format: uuid */
             vendedorResponsableId?: string | null;
+            vendedorResponsableNombre?: string | null;
             esPropio: boolean;
             puedeVerSaldo: boolean;
             puedeVerCuentaCorriente: boolean;

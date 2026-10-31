@@ -1,4 +1,4 @@
-import { chipDeTarjeta, detalleDeTarjeta, filtrarPorStock, novedadesDesde, textoVariacion } from '../lib/presentacion'
+import { chipDeTarjeta, detalleDeTarjeta, formasDeVenta, filtrarPorStock, novedadesDesde, textoVariacion } from '../lib/presentacion'
 
 describe('detalleDeTarjeta', () => {
   it('una línea con la cantidad dice "N fragancias" y, si se vende por caja, "caja de N"', () => {
@@ -64,5 +64,28 @@ describe('novedadesDesde', () => {
     const ms = Date.UTC(2026, 9, 29, 1, 0)
     expect(novedadesDesde(30, ms)).toBe('2026-09-28')
     expect(novedadesDesde(7, ms)).toBe('2026-10-21')
+  })
+})
+
+describe('formasDeVenta (FichaCatalogoDto.unidadesPorVenta / bultoContenido)', () => {
+  const base = { productoId: 'p', precioVenta: 100 }
+
+  it('con venta por unidad solo hay "Unidad"', () => {
+    expect(formasDeVenta({ ...base, unidadesPorVenta: 1, bultoContenido: null }).map((f) => f.clave)).toEqual(['unidad'])
+  })
+
+  it('la venta mínima sale de unidadesPorVenta y destaca el renglón', () => {
+    const formas = formasDeVenta({ ...base, unidadesPorVenta: 6, ventaMinimaUnidades: 6 })
+    expect(formas.at(-1)).toEqual({ clave: 'bulto', label: 'Bulto · venta mínima', unidades: 6, precio: 600, destacada: true })
+  })
+
+  it('con bultoContenido distinto de la venta mínima agrega el renglón "Bulto cerrado" con su precio', () => {
+    const formas = formasDeVenta({ ...base, unidadesPorVenta: 6, ventaMinimaUnidades: 6, bultoContenido: 24 })
+    expect(formas.map((f) => [f.clave, f.unidades, f.precio])).toEqual([['unidad', 1, 100], ['bulto', 6, 600], ['pack', 24, 2400]])
+  })
+
+  it('bultoContenido null o igual a la venta mínima no agrega renglón', () => {
+    expect(formasDeVenta({ ...base, unidadesPorVenta: 6, bultoContenido: null }).map((f) => f.clave)).toEqual(['unidad', 'bulto'])
+    expect(formasDeVenta({ ...base, unidadesPorVenta: 6, bultoContenido: 6 }).map((f) => f.clave)).toEqual(['unidad', 'bulto'])
   })
 })

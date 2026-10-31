@@ -3,28 +3,27 @@ import { AppState, Pressable, RefreshControl, ScrollView, Text, View } from 'rea
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from '@react-navigation/native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Search, ShoppingBag, Tag } from 'lucide-react-native'
-import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
+import { Search } from 'lucide-react-native'
+import { FONT, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { puedeVerVentas } from '@/src/components/layout/menuModules'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client/types'
-import { DocumentCard, TopBar, chipForEstado, iniciales } from '@/core/ui/fw'
+import { DocumentCard, TopBar, chipForEstado } from '@/core/ui/fw'
 import { diaArgentina, msHastaProximaMedianocheArgentina, partesArgentina } from '@/src/utils/date'
 import { useHojasDeRuta } from '@/libs/api-client/logistica'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
-import { useCifrasGenerales } from '../api/queries'
+import { useCifrasGenerales, useDashboardResumen } from '../api/queries'
 import { PulsoDelNegocio } from './PulsoDelNegocio'
 import { AtajosDeInicio } from './AtajosDeInicio'
-import { TarjetaPendientes, type FilaPendiente } from './TarjetaPendientes'
+import { ParaResolver, type FilaParaResolver } from './ParaResolver'
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 const dos = (n: number) => String(n).padStart(2, '0')
-const ANCHO_TARJETA_TELEFONO = 240
 
-/** Inicio (láminas Main y TabInicio): pendientes por módulo y lo de hoy. */
+/** Inicio (láminas Main y TabInicio): el pulso del negocio, los pendientes en "Para resolver" y lo de hoy. */
 export function InicioScreen() {
   const c = useColors()
   const router = useRouter()
@@ -55,7 +54,9 @@ export function InicioScreen() {
     { enabled: canDo('MOD_VENTAS', 'read') },
   )
   const ventasHoy: Venta[] = recientes.data?.items ?? []
-  const cifras = useCifrasGenerales(canDo('MOD_PAGOS', 'read'))
+  // Mismo GET /Dashboard/summary que las cifras (misma clave, una sola llamada); también lo pide quien solo ve Stock, por las alertas.
+  const alertasStock = useDashboardResumen(canDo('MOD_STOCK', 'read')).data?.lowStockAlerts ?? null
+  const cifras = useCifrasGenerales(canDo('MOD_PAGOS', 'read'), canDo('MOD_VENTAS', 'read'))
   // Rutas activas: hojas de ruta En curso (EstadoHojaRuta.EnCurso = 2), solo con acceso a Viajes.
   const rutas = useHojasDeRuta({ estado: 2 }, { enabled: canDo('MOD_VIAJES', 'read') })
   // Tablet: "Reciente" en dos columnas (plan §8), alternando para conservar el orden de lectura.
@@ -78,35 +79,30 @@ export function InicioScreen() {
   const aAutorizaciones = () => router.push('/(tabs)/autorizaciones')
   const nombre = [user?.nombre, user?.apellido].filter(Boolean).join(' ') || user?.username || ''
 
-  const tarjetas: React.ReactNode[] = []
-  const ancho = tablet ? 'flex' : ANCHO_TARJETA_TELEFONO
-  if (pendientes.ventas) {
-    const v = pendientes.ventas
-    const filas: FilaPendiente[] = [
-      { label: 'Presupuestos', ...v.presupuestos, onPress: ir('/(tabs)/ventas?tipo=presupuestos&estado=Pendiente') },
-      { label: 'Pedidos confirmados', ...v.pedidos, onPress: ir('/(tabs)/ventas?tipo=pedidos&estado=Confirmada') },
-    ]
-    // Sin CAP_AUTORIZAR_VENTA no hay bandeja: son las suyas que esperan, y se ven en Ventas.
-    if (v.porAutorizar) {
-      filas.push(v.porAutorizar.propias
-        ? { label: 'Esperando autorización', ...v.porAutorizar, alerta: true, onPress: ir('/(tabs)/ventas?tipo=pedidos&estado=PendienteAutorizacion') }
-        : { label: 'Por autorizar', ...v.porAutorizar, alerta: true, onPress: aAutorizaciones })
-    }
-    tarjetas.push(<TarjetaPendientes key="ventas" titulo="Ventas" icono={Tag} filas={filas} ancho={ancho} />)
-  }
-  if (pendientes.compras) {
-    const k = pendientes.compras
-    const filas: FilaPendiente[] = [
-      { label: 'Notas de pedido', ...k.notasPedido, onPress: ir('/(tabs)/compras?estado=NotaPedido') },
-      { label: 'Por recibir', ...k.porRecibir, onPress: ir('/(tabs)/compras?estado=Confirmado') },
-    ]
-    tarjetas.push(<TarjetaPendientes key="compras" titulo="Compras" icono={ShoppingBag} filas={filas} ancho={ancho} />)
-  }
+  const porAutorizar = pendientes.ventas?.porAutorizar
+  const paraResolver: FilaParaResolver[] = [
+    ...(porAutorizar
+      ? [{
+          titulo: porAutorizar.propias ? 'Esperando autorización' : 'Por autorizar',
+          detalle: porAutorizar.propias ? 'Tus ventas esperando el OK' : 'Ventas esperando tu OK',
+          cantidad: porAutorizar.cantidad,
+          tono: 'porAutorizar' as const,
+          onPress: porAutorizar.propias ? ir('/(tabs)/ventas?tipo=pedidos&estado=PendienteAutorizacion') : aAutorizaciones,
+        }]
+      : []),
+    ...(canDo('MOD_STOCK', 'read')
+      ? [{ titulo: 'Alertas de stock', detalle: 'Productos bajo el mínimo', cantidad: alertasStock, tono: 'anulado' as const, onPress: ir('/(tabs)/inventario/stock') }]
+      : []),
+    ...(pendientes.compras
+      ? [{ titulo: 'Por recibir', detalle: 'Compras confirmadas', cantidad: pendientes.compras.porRecibir.cantidad, tono: 'enCurso' as const, onPress: ir('/(tabs)/compras?estado=Confirmado') }]
+      : []),
+  ]
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
-        title="Inicio"
+        title={`Hola, ${nombre.split(' ')[0] || ''}`.trim()}
+        subtitle={`${DIAS[hoy.diaSemana]} ${hoy.dia} de ${MESES[hoy.mes]}`}
         leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
         actions={[{ icon: Search, accessibilityLabel: 'Buscar', onPress: () => router.push('/buscar') }]}
       />
@@ -115,18 +111,6 @@ export function InicioScreen() {
         contentContainerStyle={{ paddingTop: space[4], gap: space[4], paddingBottom: (tablet ? insets.bottom : 0) + space[4] }}
         refreshControl={<RefreshControl refreshing={refrescando} onRefresh={refrescar} tintColor={c.brand} />}
       >
-        <View style={{ paddingHorizontal: space[4], flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
-          <View style={{ width: 44, height: 44, borderRadius: radii.pastilla, backgroundColor: c.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={[typeScale.cuerpoDestacado, { color: c.brandInk }]}>{iniciales(nombre || '?')}</Text>
-          </View>
-          <View>
-            <Text style={[typeScale.secundario, { color: c.textSecondary }]}>
-              {`${DIAS[hoy.diaSemana]} ${hoy.dia} de ${MESES[hoy.mes]}`}
-            </Text>
-            <Text style={[typeScale.seccion, { color: c.text }]}>{`Hola, ${nombre.split(' ')[0] || ''}`.trim()}</Text>
-          </View>
-        </View>
-
         {canDo('MOD_VENTAS', 'read') ? (
           <PulsoDelNegocio
             ventasDelDia={cifras.ventasDelDia}
@@ -135,6 +119,7 @@ export function InicioScreen() {
             rutasActivas={rutas.data?.length ?? null}
             meDeben={cifras.meDeben}
             debo={cifras.debo}
+            deudaVencida={cifras.deudaVencida}
             onRutas={canDo('MOD_VIAJES', 'read') ? () => router.push('/(tabs)/logistica/hojas' as never) : undefined}
           />
         ) : null}
@@ -142,6 +127,8 @@ export function InicioScreen() {
           puede={{ vender: canDo('MOD_VENTAS', 'create'), cobrar: canDo('MOD_CC', 'read'), catalogo: canDo('MOD_CATALOGO', 'read'), stock: canDo('MOD_STOCK', 'read') }}
           onIr={(ruta) => router.push(ruta as never)}
         />
+
+        <ParaResolver filas={paraResolver} />
 
         {pendientes.error ? (
           <View style={{ paddingHorizontal: space[4], gap: space[2], alignItems: 'flex-start' }}>
@@ -159,22 +146,6 @@ export function InicioScreen() {
             </Pressable>
           </View>
         ) : null}
-
-        {tarjetas.length > 0 &&
-          (tablet ? (
-            <View testID="inicio-pendientes" style={{ flexDirection: 'row', gap: space[3], paddingHorizontal: space[4] }}>
-              {tarjetas}
-            </View>
-          ) : (
-            <ScrollView
-              testID="inicio-pendientes"
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: space[3], paddingHorizontal: space[4], paddingBottom: space[2] }}
-            >
-              {tarjetas}
-            </ScrollView>
-          ))}
 
         {canDo('MOD_VENTAS', 'read') && (
           <View style={{ paddingHorizontal: space[4], gap: space[3] }}>

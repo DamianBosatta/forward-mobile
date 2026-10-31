@@ -131,7 +131,7 @@ describe('venta nueva: cliente, borrador y autoguardado', () => {
   it('al elegir el cliente crea el borrador para ese cliente, lo nombra por la dirección y le guarda la fecha propuesta', async () => {
     await elegirCliente()
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' })
-    expect(screen.getByText('Nuevo pedido')).toBeTruthy()
+    expect(screen.getByText('Revisar venta')).toBeTruthy()
     expect(screen.getByText('Tarantino 1898 · Autoservicio Abel')).toBeTruthy()
     // El borrador nace vacío en el servidor: la fecha propuesta viaja en el primer autoguardado.
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1), ESPERA)
@@ -870,6 +870,7 @@ describe('cliente primero, catálogo después', () => {
     conHistorial()
     pantalla()
     expect(screen.getByText('Paso 1 de 3')).toBeTruthy()
+    expect(screen.getAllByTestId('icono-final').length).toBeGreaterThan(0)
     expect(screen.queryByRole('button', { name: 'Añadir pala' })).toBeNull()
     expect(screen.queryByText('¿Cómo arrancás?')).toBeNull()
     expect(mockPost).not.toHaveBeenCalled()
@@ -953,6 +954,7 @@ describe('V7 Confirmar', () => {
   it('la revisión trae la fecha, la nota y Con factura; no hay segunda confirmación y no se manda nada hasta tocar Confirmar venta', async () => {
     await elegirCliente()
     await conLinea(0)
+    expect(screen.getByRole('header', { name: 'Entrega' })).toBeTruthy()
     expect(screen.getByText('Fecha de entrega')).toBeTruthy()
     expect(screen.getByLabelText('Observaciones')).toBeTruthy()
     expect(screen.getByRole('switch', { name: 'Con factura' })).toBeTruthy()

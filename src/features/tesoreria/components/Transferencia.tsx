@@ -107,13 +107,14 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
           {tipos.error ? <Notice tone="peligro">{mensajeDelServidor(tipos.error, 'No se pudieron cargar los tipos.')}</Notice> : null}
           {cuentas.error ? <Notice tone="peligro">{mensajeDelServidor(cuentas.error, 'No se pudieron cargar las cuentas.')}</Notice> : null}
 
-          <Field label="Monto" value={monto} onChangeText={setMonto} keyboardType="decimal-pad" alignRight />
+          <Field label="Monto" value={monto} onChangeText={setMonto} keyboardType="decimal-pad" alignRight prefijo="$" />
 
           <ElegirChip
             titulo="Tipo"
             opciones={(tipos.data ?? []).filter(t => t.activo && t.id).map(t => ({ id: t.id!, label: t.nombre ?? '' }))}
             valor={tipoId}
             onCambio={setTipoId}
+            conTilde
           />
 
           {/* "Desde → Hacia" como una sola tarjeta conectada. TODO: el selector de cuenta pasa a BottomSheet y la flecha

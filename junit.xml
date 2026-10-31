@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="15" failures="0" errors="0" time="11.48">
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2026-10-31T02:22:36" time="11.172" tests="15">
+    <testcase classname=" sin la capacidad de autorizar ventas, la condición de pago es de solo lectura y no se manda" name=" sin la capacidad de autorizar ventas, la condición de pago es de solo lectura y no se manda" time="0.904">
+    </testcase>
+    <testcase classname=" un CUIT que no cierra se marca en el campo con la ayuda del alta provisoria, pero no frena el guardado" name=" un CUIT que no cierra se marca en el campo con la ayuda del alta provisoria, pero no frena el guardado" time="0.252">
+    </testcase>
+    <testcase classname=" un CUIT incompleto dice cuántos dígitos faltan (regla compartida cuitDigitosFaltantes)" name=" un CUIT incompleto dice cuántos dígitos faltan (regla compartida cuitDigitosFaltantes)" time="0.082">
+    </testcase>
+    <testcase classname=" un CUIT de 11 dígitos que no cierra no dice &quot;faltan&quot;: ya tiene los once" name=" un CUIT de 11 dígitos que no cierra no dice &quot;faltan&quot;: ya tiene los once" time="0.052">
+    </testcase>
+    <testcase classname=" un CUIT válido o vacío no muestra el error" name=" un CUIT válido o vacío no muestra el error" time="0.072">
+    </testcase>
+    <testcase classname=" con la capacidad, la condición de pago se elige y viaja al servidor" name=" con la capacidad, la condición de pago se elige y viaja al servidor" time="0.599">
+    </testcase>
+    <testcase classname=" si el servidor rechaza, se ve su mensaje con el detalle" name=" si el servidor rechaza, se ve su mensaje con el detalle" time="0.214">
+    </testcase>
+    <testcase classname=" al editar, carga los datos y devuelve el horario que no se edita acá" name=" al editar, carga los datos y devuelve el horario que no se edita acá" time="0.245">
+    </testcase>
+    <testcase classname="edición: el detalle manda si el detalle no carga, muestra el error con Reintentar y no deja guardar en blanco" name="edición: el detalle manda si el detalle no carga, muestra el error con Reintentar y no deja guardar en blanco" time="0.3">
+    </testcase>
+    <testcase classname="edición: el detalle manda un refetch posterior no pisa lo que el usuario tipeó" name="edición: el detalle manda un refetch posterior no pisa lo que el usuario tipeó" time="0.14">
+    </testcase>
+    <testcase classname="edición: el detalle manda al guardar manda el horario recién traído, no el del caché viejo" name="edición: el detalle manda al guardar manda el horario recién traído, no el del caché viejo" time="0.263">
+    </testcase>
+    <testcase classname="edición: el detalle manda con detalle en caché y el refetch fallido, muestra el error con Reintentar y no deja guardar el viejo" name="edición: el detalle manda con detalle en caché y el refetch fallido, muestra el error con Reintentar y no deja guardar el viejo" time="0.064">
+    </testcase>
+    <testcase classname="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) un no administrador edita el resto pero no los tres campos sensibles, y se le dice por qué" name="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) un no administrador edita el resto pero no los tres campos sensibles, y se le dice por qué" time="0.068">
+    </testcase>
+    <testcase classname="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) un administrador edita todo y no ve el aviso" name="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) un administrador edita todo y no ve el aviso" time="0.065">
+    </testcase>
+    <testcase classname="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) en el alta nadie tiene nada bloqueado" name="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) en el alta nadie tiene nada bloqueado" time="0.078">
+    </testcase>
+  </testsuite>
+</testsuites>

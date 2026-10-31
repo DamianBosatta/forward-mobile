@@ -280,7 +280,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar }: Props = {})
   const vistaRevision = (
     <>
       <TopBar
-        title={edicion ? `Editar ${tipo.toLowerCase()} ${edicion.codigo}` : tipo === 'Pedido' ? 'Nuevo pedido' : 'Nuevo presupuesto'}
+        title={edicion ? `Editar ${tipo.toLowerCase()} ${edicion.codigo}` : tipo === 'Pedido' ? 'Revisar venta' : 'Revisar presupuesto'}
         subtitle={rotulo}
         leading={volverDeRevision}
         syncLabel={b.etiqueta}
@@ -302,6 +302,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar }: Props = {})
         onEditarLinea={editarLinea}
         onElegirFragancias={setFragancias}
         ajustes={ajustesRevision}
+        sinEncabezado={!edicion}
         yaReservadas={yaReservadas}
         etiquetaConfirmar={edicion ? 'Guardar cambios' : undefined}
       />

@@ -3,6 +3,7 @@ import { Linking } from 'react-native'
 import { screen, userEvent } from '@testing-library/react-native'
 import { FichaCliente, AVISO_CONDICION_PAGO } from '../components/FichaCliente'
 import { api } from '@/core/api/client'
+import { themeColors } from '@/libs/theme'
 import { clienteDeLista, conPermisos, pagina, renderConQuery } from '../__testing__/ayuda'
 
 const mockPush = jest.fn()
@@ -148,6 +149,31 @@ describe('vencido y disponible (servidor con PR #882)', () => {
     expect(screen.getByText('Tiene deuda vencida de más de 30 días: los pedidos nuevos van a quedar por autorizar.')).toBeTruthy()
   })
 
+  it('con deuda vencida dice los días hábiles de la deuda más vieja (SocioDetailDto.diasDeudaMasVieja)', async () => {
+    servidor(detalle({ diasDeudaMasVieja: 45 }), { ...vencidaTst })
+    renderConQuery(<FichaCliente id="c1" />)
+
+    expect(await screen.findByText('Deuda más vieja: 45 días')).toBeTruthy()
+  })
+
+  it('1 día va en singular; null o 0 no muestran la línea; sin deuda vencida tampoco', async () => {
+    servidor(detalle({ diasDeudaMasVieja: 1 }), { ...vencidaTst })
+    const a = renderConQuery(<FichaCliente id="c1" />)
+    expect(await screen.findByText('Deuda más vieja: 1 día')).toBeTruthy()
+    a.unmount()
+
+    servidor(detalle({ diasDeudaMasVieja: 0 }), { ...vencidaTst })
+    const b = renderConQuery(<FichaCliente id="c1" />)
+    await screen.findByText(/^Vencido/)
+    expect(screen.queryByText(/Deuda más vieja/)).toBeNull()
+    b.unmount()
+
+    servidor(detalle({ diasDeudaMasVieja: 30 }), { tieneDeudaVencida: false, deudaVencida: 0 })
+    renderConQuery(<FichaCliente id="c1" />)
+    await screen.findByLabelText('Saldo $ 186.420,00')
+    expect(screen.queryByText(/Deuda más vieja/)).toBeNull()
+  })
+
   it('con el tope pasado, el disponible negativo se dice como "Pasado del tope por"', async () => {
     servidor(detalle(), { tieneDeudaVencida: false, deudaVencida: 0, creditoDisponible: -12000 })
     renderConQuery(<FichaCliente id="c1" />)
@@ -262,5 +288,26 @@ describe('Vender desde la ficha (T4c)', () => {
 
     await screen.findByRole('button', { name: 'Llamar' })
     expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
+  })
+})
+
+describe('jerarquía de botones de la ficha', () => {
+  const fondo = (el: { props: { style?: unknown } }) => Object.assign({}, ...[el.props.style].flat(Infinity as 1).filter(Boolean)).backgroundColor
+
+  it('Cobrar es el botón primario y Nueva venta el secundario, haya o no deuda vencida', async () => {
+    conPermisos([{ module: 'MOD_CLIENTES', canRead: true }, { module: 'MOD_VENTAS', canRead: true, canCreate: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }])
+    renderConQuery(<FichaCliente id="c1" />)
+
+    const cobrar = await screen.findByRole('button', { name: 'Cobrar' })
+    const vender = screen.getByRole('button', { name: 'Nueva venta' })
+    expect(fondo(cobrar)).not.toBe(fondo(vender))
+    expect(fondo(vender)).toBe(themeColors.light.surface)
+  })
+
+  it('con barra, el título de la barra admite dos líneas', async () => {
+    renderConQuery(<FichaCliente id="c1" conBarra />)
+
+    const titulo = await screen.findByRole('header', { name: 'Av. del Valle 89' })
+    expect(titulo.props.numberOfLines).toBe(2)
   })
 })

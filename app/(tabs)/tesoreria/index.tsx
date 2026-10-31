@@ -1,9 +1,9 @@
 import React from 'react'
 import { ScrollView, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { ArrowLeftRight, Receipt } from 'lucide-react-native'
+import { ArrowLeftRight, Zap } from 'lucide-react-native'
 import { usePuedePagarServicio } from '@/features/gastos/lib/permiso'
-import { space, useColors } from '@/libs/theme'
+import { radii, space, useColors } from '@/libs/theme'
 import { FilaDeAccion, FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { MOTIVO_SIN_PERMISO_DE_SERVICIO, MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
@@ -32,23 +32,29 @@ export default function TesoreriaScreen() {
       <TopBar title="Tesorería" leading={menu} />
       <ScrollView contentContainerStyle={{ padding: space[4] }}>
         <FormContainer style={{ gap: space[3] }}>
-          {/* Como la web (L13): sin permiso la fila se ve deshabilitada con el motivo, no se oculta. */}
-          <FilaDeAccion
-            icon={ArrowLeftRight}
-            title="Transferencia entre cuentas"
-            subtitle="Mové plata entre tus cuentas"
-            disabled={!transferir}
-            onPress={() => router.push('/(tabs)/tesoreria/transferencia')}
-          />
-          {!transferir ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}</MotivoDeshabilitado> : null}
-          <FilaDeAccion
-            icon={Receipt}
-            title="Pagar un servicio"
-            subtitle="Luz, gas, alquiler, flete y otros gastos"
-            disabled={!pagarServicio}
-            onPress={() => router.push('/(tabs)/tesoreria/pagar-servicio')}
-          />
-          {!pagarServicio ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_SERVICIO}</MotivoDeshabilitado> : null}
+          {/* Lámina tesoreria-inicio: una sola tarjeta con las acciones separadas por una línea. */}
+          <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, overflow: 'hidden' }}>
+            {/* Como la web (L13): sin permiso la fila se ve deshabilitada con el motivo, no se oculta. */}
+            <FilaDeAccion
+              agrupada
+              icon={ArrowLeftRight}
+              title="Transferencia entre cuentas"
+              subtitle="Mové plata entre tus cuentas"
+              disabled={!transferir}
+              onPress={() => router.push('/(tabs)/tesoreria/transferencia')}
+            />
+            {!transferir ? <View style={{ paddingHorizontal: space[4], paddingBottom: space[3] }}><MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}</MotivoDeshabilitado></View> : null}
+            <View style={{ height: 1, backgroundColor: c.border }} />
+            <FilaDeAccion
+              agrupada
+              icon={Zap}
+              title="Pagar un servicio"
+              subtitle="Luz, gas, alquiler, flete y otros gastos"
+              disabled={!pagarServicio}
+              onPress={() => router.push('/(tabs)/tesoreria/pagar-servicio')}
+            />
+            {!pagarServicio ? <View style={{ paddingHorizontal: space[4], paddingBottom: space[3] }}><MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_SERVICIO}</MotivoDeshabilitado></View> : null}
+          </View>
           <Notice tone="info">{AVISO_COBROS_DE_CLIENTES}</Notice>
         </FormContainer>
       </ScrollView>

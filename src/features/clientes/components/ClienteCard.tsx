@@ -12,12 +12,11 @@ interface ClienteCardProps {
   onPress: () => void
   /** En tablet, el cliente abierto en el panel de la derecha. */
   seleccionado?: boolean
+  /** Flecha al final de la fila (lista de cuentas). Por defecto, sin flecha. */
+  chevron?: boolean
 }
 
-/**
- * Cartera ajena: el servidor no manda el nombre del vendedor en el listado.
- * TODO API: `vendedorResponsableNombre` en SocioListDto para decir "Cartera de Lucía R."
- */
+/** Cartera ajena: el tag del candado; el nombre del vendedor (si viene) va en la línea "Vendedor: …". */
 export const TAG_CARTERA_AJENA = 'Cartera de otro vendedor'
 
 /**
@@ -26,7 +25,7 @@ export const TAG_CARTERA_AJENA = 'Cartera de otro vendedor'
  * este usuario puede verlo; sin permiso hay un candado y el tag de cartera ajena. La deuda vencida, solo si el
  * servidor la informa (la redacta igual que el saldo).
  */
-export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteCardProps) {
+export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = false }: ClienteCardProps) {
   const c = useColors()
   const direccion = direccionDeEntrega(cliente)
   const nombre = nombreDelCliente(cliente)
@@ -38,26 +37,30 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
   // La deuda vencida solo se dice con importe a quien el servidor deja ver el saldo.
   const vencida = cliente.tieneDeudaVencida === true && verSaldo
   const vencido = vencida ? formatImporte(cliente.deudaVencidaAmount) : null
+  const vendedor = cliente.vendedorResponsableNombre?.trim() || null
   const linea2 = [nombre, localidad].filter(Boolean).join(' · ')
 
   return (
     <FilaDeSocio
       titulo={direccion}
+      lineasTitulo={2}
       linea2={linea2}
       seleccionado={seleccionado}
       onPress={onPress}
+      chevron={chevron}
       accessibilityLabel={[direccion, vencida && 'deuda vencida', nombre, localidad, saldo && `saldo ${saldo}`, !verSaldo && TAG_CARTERA_AJENA].filter(Boolean).join(', ')}
       derecha={
         saldo && !sinDeuda ? (
           <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{saldo}</Text>
-        ) : sinDeuda ? (
-          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Sin deuda</Text>
-        ) : (
+        ) : sinDeuda ? null : (
           <Lock size={16} color={c.textSecondary} accessibilityLabel="Saldo reservado" />
         )
       }
       extra={
         <>
+          {/* "Sin deuda" va debajo y no junto al título: a 360dp le sacaba el lugar a la dirección. */}
+          {sinDeuda ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Sin deuda</Text> : null}
+          {vendedor ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Vendedor: ${vendedor}`}</Text> : null}
           {vencido ? <StatusChip estado="anulado" label={`Vencido ${vencido}`} /> : null}
           {!verSaldo ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space[1], backgroundColor: c.surface2, borderRadius: radii.pastilla, paddingVertical: space[1], paddingHorizontal: 10 }}>

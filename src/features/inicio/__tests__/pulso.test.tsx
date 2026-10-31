@@ -31,6 +31,18 @@ describe('Inicio general: el pulso del negocio (lámina inicio-general)', () => 
   })
 })
 
+describe('Inicio general: deuda vencida de los clientes', () => {
+  it('con el dato muestra la cifra de deuda vencida', () => {
+    render(<PulsoDelNegocio ventasDelDia={null} cantidadVentas={null} pedidosPendientes={0} rutasActivas={0} meDeben={100} debo={null} deudaVencida={2500000} />)
+    expect(screen.getByLabelText(`Vencido (más de 30 días): $${NBSP}2.500.000,00`)).toBeTruthy()
+  })
+
+  it('sin el dato no muestra la cifra', () => {
+    render(<PulsoDelNegocio ventasDelDia={null} cantidadVentas={null} pedidosPendientes={0} rutasActivas={0} meDeben={null} debo={null} />)
+    expect(screen.queryByLabelText(/Vencido/)).toBeNull()
+  })
+})
+
 describe('Inicio general: accesos rápidos', () => {
   it('cada atajo abre su pantalla y solo aparecen los que el usuario puede usar', async () => {
     const ir = jest.fn()
@@ -60,10 +72,11 @@ describe('Inicio general: la tarjeta de ventas del día en cada tema', () => {
     expect(estiloHero().backgroundColor).not.toBe(themeColors.dark.bg)
   })
 
-  it('en claro sigue siendo la tarjeta oscura de la barra', () => {
+  it('en claro es una tarjeta blanca con borde, como la lámina', () => {
     useThemeStore.setState({ mode: 'light' })
     pintar()
-    expect(estiloHero().backgroundColor).toBe(themeColors.light.topBar)
+    expect(estiloHero().backgroundColor).toBe(themeColors.light.surface)
+    expect(estiloHero().borderColor).toBe(themeColors.light.border)
   })
 
   it('"Rutas activas" abre la lista de hojas de ruta; sin destino no es un botón', async () => {

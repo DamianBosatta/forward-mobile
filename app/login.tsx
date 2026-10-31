@@ -9,6 +9,7 @@ import { useResponsive } from '../libs/useResponsive'
 import { Button, Notice, Segmented, type SegmentedOption } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { useTecladoVisible } from '@/features/auth/hooks/useTecladoVisible'
 import {
   authenticateWithBiometrics,
   getSavedCredentials,
@@ -38,6 +39,7 @@ export default function LoginScreen() {
   const router = useRouter()
   const c = useColors()
   const { isTablet } = useResponsive()
+  const teclado = useTecladoVisible()
   const queryClient = useQueryClient()
   const { login, isLoading, error, isLocked, failedAttempts } = useAuth()
 
@@ -266,16 +268,16 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: c.topBar }}>
+    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: c.topBar }}>
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, paddingHorizontal: space[6], paddingBottom: space[8], width: '100%', maxWidth: 480, alignSelf: 'center' }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ flex: 1, justifyContent: 'center', gap: space[3], paddingVertical: space[8] }}>
-          {logo(64)}
+        <View style={{ flex: 1, justifyContent: 'center', gap: space[3], paddingVertical: teclado ? space[4] : space[8] }}>
+          {logo(teclado ? 40 : 64)}
           <Text accessibilityRole="header" style={{ marginTop: space[3], fontSize: 32, lineHeight: 40, fontWeight: '700', color: c.onTopBarStrong }}>Forward</Text>
-          <Text style={[typeScale.cuerpo, { color: c.onTopBar }]}>Entrá con el mismo usuario de la web.</Text>
+          {teclado ? null : <Text style={[typeScale.cuerpo, { color: c.onTopBar }]}>Entrá con el mismo usuario de la web.</Text>}
         </View>
         {formulario}
       </ScrollView>

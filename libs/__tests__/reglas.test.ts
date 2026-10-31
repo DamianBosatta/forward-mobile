@@ -7,6 +7,7 @@ import {
   ESTADO_HOJA_RUTA,
   ESTADO_VENTA,
   MONEDAS_PERMITIDAS,
+  cuitDigitosFaltantes,
   cuitEsValido,
   ejecutarCasos,
   esCantidadEnteraSiEsBulto,
@@ -23,6 +24,7 @@ import {
 // son datos compartidos y corren en las dos plataformas.
 const REGLAS = {
   cuitEsValido,
+  cuitDigitosFaltantes,
   tieneComoMuchoDosDecimales,
   redondearDosDecimales,
   redondear2,

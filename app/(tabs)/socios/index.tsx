@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { ActivityIndicator, RefreshControl, SectionList, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { DrawerActions } from '@react-navigation/native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
@@ -20,12 +21,15 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
 /** Desde este ancho la lista y la ficha van lado a lado (plan §8). */
 const ANCHO_DOS_PANELES = 900
+/** Alto del `Fab` (src/core/ui/fw/Fab.tsx): la lista deja ese lugar libre abajo. */
+const ALTO_FAB = 56
 
 const textoDestacado = { ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600' as const }
 
 /** Clientes (láminas Clientes y TabClientes): la cartera del vendedor, por dirección de entrega. */
 function ClientesScreen() {
   const c = useColors()
+  const insets = useSafeAreaInsets()
   const router = useRouter()
   const navigation = useNavigation()
   const { width } = useResponsive()
@@ -73,7 +77,7 @@ function ClientesScreen() {
         sections={secciones}
         keyExtractor={item => item.id}
         stickySectionHeadersEnabled
-        contentContainerStyle={{ paddingBottom: 88 }}
+        contentContainerStyle={{ paddingBottom: ALTO_FAB + space[6] + insets.bottom + space[4] }}
         renderSectionHeader={({ section }) => (
           <View testID={`encabezado-letra-${section.title}`} accessibilityRole="header" style={{ paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[1], backgroundColor: c.bg }}>
             <Text style={{ ...textoDestacado, color: c.textSecondary }}>{section.title}</Text>

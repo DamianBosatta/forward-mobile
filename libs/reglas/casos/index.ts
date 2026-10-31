@@ -13,6 +13,15 @@ export const CASOS: Readonly<Record<string, readonly Caso[]>> = {
     { nombre: 'rechaza el prefijo de texto', entrada: ['CUIT 20123456786'], esperado: false },
     { nombre: 'rechaza el vacío', entrada: [''], esperado: false },
   ],
+  cuitDigitosFaltantes: [
+    { nombre: 'vacío: faltan los once', entrada: [''], esperado: 11 },
+    { nombre: 'diez dígitos: falta uno', entrada: ['2012345678'], esperado: 1 },
+    { nombre: 'los separadores no cuentan como dígitos', entrada: ['20-12345-'], esperado: 4 },
+    { nombre: 'once dígitos: no falta ninguno', entrada: ['20123456786'], esperado: 0 },
+    { nombre: 'con guiones y completo: no falta ninguno', entrada: ['20-12345678-6'], esperado: 0 },
+    { nombre: 'de más no es faltante', entrada: ['201234567860'], esperado: 0 },
+    { nombre: 'null cuenta como vacío', entrada: [null], esperado: 11 },
+  ],
   tieneComoMuchoDosDecimales: [
     { nombre: 'entero', entrada: [10], esperado: true },
     { nombre: 'un decimal', entrada: [10.5], esperado: true },

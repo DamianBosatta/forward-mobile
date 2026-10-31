@@ -1,6 +1,6 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { importe as cifras, radii, space, typeScale, useColors, useIsDark } from '@/libs/theme'
+import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { formatImporte } from '@/core/ui/fw'
 
 interface PulsoProps {
@@ -11,20 +11,17 @@ interface PulsoProps {
   rutasActivas: number | null
   meDeben: number | null
   debo: number | null
+  /** Deuda vencida de clientes (> 30 días). Sin dato (`null`/ausente) la cifra no se muestra. */
+  deudaVencida?: number | null
   /** Con destino, Rutas activas abre la lista de hojas de ruta; sin él (sin permiso de Viajes) es solo la cifra. */
   onRutas?: () => void
 }
 
 const cantidad = (n: number | null) => (n == null ? '—' : String(n))
 
-/** El pulso del negocio en 5 segundos (lámina inicio-general): ventas del día en grande y cuatro cifras de apoyo. */
-export function PulsoDelNegocio({ ventasDelDia, cantidadVentas, pedidosPendientes, rutasActivas, meDeben, debo, onRutas }: PulsoProps) {
+/** El pulso del negocio en 5 segundos (lámina inicio-general): ventas del día en grande (tarjeta blanca con borde en ambos temas) y cuatro cifras de apoyo. */
+export function PulsoDelNegocio({ ventasDelDia, cantidadVentas, pedidosPendientes, rutasActivas, meDeben, debo, deudaVencida = null, onRutas }: PulsoProps) {
   const c = useColors()
-  // Claro: tarjeta oscura (barra). Oscuro: la barra es del color del fondo y la tarjeta se perdía; usa la superficie con borde de la lámina.
-  const oscuro = useIsDark()
-  const hero = oscuro
-    ? { fondo: c.surface, borde: c.border, etiqueta: c.textSecondary, cifra: c.text }
-    : { fondo: c.topBar, borde: c.topBar, etiqueta: c.onTopBar, cifra: c.onTopBarStrong }
   const tarjeta = { padding: space[4], gap: space[1], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }
   const ventas = cantidadVentas == null ? null : `${cantidadVentas} ${cantidadVentas === 1 ? 'venta' : 'ventas'}`
   return (
@@ -33,11 +30,11 @@ export function PulsoDelNegocio({ ventasDelDia, cantidadVentas, pedidosPendiente
         accessible
         accessibilityLabel={`Ventas del día: ${formatImporte(ventasDelDia)}${ventas ? `, ${ventas}` : ''}`}
         testID="pulso-hero"
-        style={[tarjeta, { backgroundColor: hero.fondo, borderColor: hero.borde }]}
+        style={tarjeta}
       >
-        <Text style={[typeScale.secundario, { color: hero.etiqueta }]}>Ventas del día</Text>
-        <Text style={[typeScale.titulo, cifras, { color: hero.cifra }]} adjustsFontSizeToFit numberOfLines={1}>{formatImporte(ventasDelDia)}</Text>
-        {ventas ? <Text style={[typeScale.secundario, { color: hero.etiqueta }]}>{ventas}</Text> : null}
+        <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Ventas del día</Text>
+        <Text style={[typeScale.titulo, cifras, { color: c.text }]} adjustsFontSizeToFit numberOfLines={1}>{formatImporte(ventasDelDia)}</Text>
+        {ventas ? <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{ventas}</Text> : null}
       </View>
       <View style={{ flexDirection: 'row', gap: space[3] }}>
         <Cifra etiqueta="Pedidos pendientes" valor={cantidad(pedidosPendientes)} />
@@ -47,6 +44,11 @@ export function PulsoDelNegocio({ ventasDelDia, cantidadVentas, pedidosPendiente
         <Cifra etiqueta="Me deben los clientes" valor={formatImporte(meDeben)} />
         <Cifra etiqueta="Debo a proveedores" valor={formatImporte(debo)} />
       </View>
+      {deudaVencida != null ? (
+        <View style={{ flexDirection: 'row', gap: space[3] }}>
+          <Cifra etiqueta="Vencido (más de 30 días)" valor={formatImporte(deudaVencida)} />
+        </View>
+      ) : null}
     </View>
   )
 }
