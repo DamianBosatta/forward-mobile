@@ -63,9 +63,11 @@ export function PagarServicio({ onListo }: { onListo: () => void }) {
           {tipos.error ? <Notice tone="peligro">{mensajeDelServidor(tipos.error, 'No se pudieron cargar los conceptos.')}</Notice> : null}
           {medios.error ? <Notice tone="peligro">{mensajeDelServidor(medios.error, 'No se pudieron cargar los medios de pago.')}</Notice> : null}
 
-          <Field label="Monto" value={f.monto} onChangeText={monto => setF(p => ({ ...p, monto }))} keyboardType="decimal-pad" alignRight />
+          <Field label="Monto" value={f.monto} onChangeText={monto => setF(p => ({ ...p, monto }))} keyboardType="decimal-pad" alignRight prefijo="$" />
           <ElegirChip
             titulo="Concepto"
+            tituloVisible
+            conTilde
             opciones={conceptos.map(t => ({ id: t.id!, label: t.nombre ?? '' }))}
             valor={f.tipoGastoId}
             onCambio={tipoGastoId => setF(p => ({ ...p, tipoGastoId }))}
@@ -73,6 +75,8 @@ export function PagarServicio({ onListo }: { onListo: () => void }) {
           <Field label="Descripción (opcional)" value={f.descripcion} onChangeText={descripcion => setF(p => ({ ...p, descripcion }))} maxLength={200} />
           <ElegirChip
             titulo="Medio de pago"
+            tituloVisible
+            conTilde
             opciones={mediosDePago.map(m => ({ id: m.id!, label: m.nombre ?? '' }))}
             valor={f.medioPagoId}
             onCambio={id => setF(p => ({ ...p, medioPagoId: id, requiereCaja: !!mediosDePago.find(m => m.id === id)?.requiereCaja, cuentaOrigenId: null }))}

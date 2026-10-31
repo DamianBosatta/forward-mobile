@@ -15,12 +15,14 @@ interface FieldProps extends Omit<TextInputProps, 'style' | 'placeholderTextColo
   labelSuffix?: string
   /** Borde rojo sin mensaje debajo (el motivo ya está en `labelSuffix`). */
   invalid?: boolean
+  /** Signo fijo a la izquierda del texto ("$" en los importes de las láminas de Tesorería). Sin él, el campo es el de siempre. */
+  prefijo?: string
 }
 
 const etiqueta = { ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600' as const }
 
 /** Campo de la lámina F4: etiqueta 14/600, alto 48, relleno superficie-2, foco con la marca y error en rojo. */
-export function Field({ label, help, error, alignRight, verOcultar, labelSuffix, invalid, secureTextEntry, onFocus, onBlur, ...input }: FieldProps) {
+export function Field({ label, help, error, alignRight, verOcultar, labelSuffix, invalid, prefijo, secureTextEntry, onFocus, onBlur, ...input }: FieldProps) {
   const colors = useColors()
   const [foco, setFoco] = useState(false)
   const colorError = colors.chip.anulado.text
@@ -57,12 +59,22 @@ export function Field({ label, help, error, alignRight, verOcultar, labelSuffix,
           borderColor: error || invalid ? colorError : foco ? colors.brand : colors.border,
           backgroundColor: conMarca ? colors.surface : colors.surface2,
           paddingHorizontal: space[3] - (conMarca ? 1 : 0),
+          paddingLeft: prefijo ? space[8] : space[3] - (conMarca ? 1 : 0),
           paddingRight: ojo ? space[12] : space[3] - (conMarca ? 1 : 0),
           paddingVertical: 0,
           color: colors.text,
           textAlign: alignRight ? 'right' : 'left',
         }}
       />
+      {prefijo ? (
+        <Text
+          importantForAccessibility="no"
+          pointerEvents="none"
+          style={{ ...typeScale.cuerpoDestacado, position: 'absolute', left: space[4], top: 0, height: space[12], lineHeight: space[12], color: colors.textSecondary }}
+        >
+          {prefijo}
+        </Text>
+      ) : null}
       {ojo ? (
         <Pressable
           accessibilityRole="button"
