@@ -16,7 +16,8 @@ interface FilaDeSocioProps {
   accion?: { icono: LucideIcon; label: string; hint?: string; onPress: () => void }
   accessibilityLabel: string
   seleccionado?: boolean
-  onPress: () => void
+  /** Sin `onPress` la fila es de solo lectura: no es un botón (sin rol ni ripple). */
+  onPress?: () => void
 }
 
 /**
@@ -25,14 +26,7 @@ interface FilaDeSocioProps {
  */
 export function FilaDeSocio({ titulo, derecha, linea2, extra, accion, accessibilityLabel, seleccionado = false, onPress }: FilaDeSocioProps) {
   const c = useColors()
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ selected: seleccionado }}
-      onPress={onPress}
-      android_ripple={{ color: c.surface2 }}
-      style={{
+  const estilo = {
         flexDirection: 'row',
         alignItems: 'center',
         gap: space[3],
@@ -43,8 +37,9 @@ export function FilaDeSocio({ titulo, derecha, linea2, extra, accion, accessibil
         backgroundColor: seleccionado ? c.brandSoft : c.surface,
         borderBottomWidth: 1,
         borderBottomColor: c.border,
-      }}
-    >
+  } as const
+  const contenido = (
+    <>
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space[2] }}>
           <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text, flexShrink: 1 }}>
@@ -70,6 +65,21 @@ export function FilaDeSocio({ titulo, derecha, linea2, extra, accion, accessibil
           <accion.icono size={20} color={c.brandInk} />
         </Pressable>
       ) : null}
+    </>
+  )
+  if (!onPress) {
+    return <View accessible accessibilityLabel={accessibilityLabel} style={estilo}>{contenido}</View>
+  }
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ selected: seleccionado }}
+      onPress={onPress}
+      android_ripple={{ color: c.surface2 }}
+      style={estilo}
+    >
+      {contenido}
     </Pressable>
   )
 }

@@ -1,11 +1,12 @@
 import React from 'react'
 import { ScrollView, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { ArrowLeftRight } from 'lucide-react-native'
+import { ArrowLeftRight, Receipt } from 'lucide-react-native'
+import { usePuedePagarServicio } from '@/features/gastos/lib/permiso'
 import { space, useColors } from '@/libs/theme'
 import { FilaDeAccion, FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
-import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
+import { MOTIVO_SIN_PERMISO_DE_SERVICIO, MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 
 /** Aviso de la lámina tesoreria-inicio: el cobro de un cliente no se carga desde Tesorería. */
 const AVISO_COBROS_DE_CLIENTES = 'Los cobros de clientes se cargan desde la ficha del cliente, con "Cobrar".'
@@ -13,9 +14,8 @@ const AVISO_COBROS_DE_CLIENTES = 'Los cobros de clientes se cargan desde la fich
 /**
  * Tesorería en mobile (plan §3, recortada a acciones): transferencias entre cuentas propias. Los
  * cobros se registran desde la cuenta corriente del cliente; los cheques, en la web (bloque 12, D10).
- * Lámina tesoreria-inicio: las filas "Pagar un servicio" y "Cargar un cheque" no se muestran todavía.
- * TODO API: "Pagar un servicio" espera confirmar el permiso del módulo y el catálogo `tipoGastoId`;
- * "Cargar un cheque" espera `POST /cheques` (hoy solo GET en el schema) y la regla D10.
+ * Lámina tesoreria-inicio: "Pagar un servicio" va (L22, gastos); "Cargar un cheque" no se muestra todavía.
+ * TODO API: "Cargar un cheque" espera `POST /cheques` (hoy solo GET en el schema) y la regla D10.
  */
 export default function TesoreriaScreen() {
   const c = useColors()
@@ -24,6 +24,8 @@ export default function TesoreriaScreen() {
   const { canCreate, canRead } = usePermissions()
   // Lista las cuentas propias (MOD_CC:Read) y los tipos de movimiento (GET /movimientos-internos/tipos, MOD_PAGOS:Read).
   const transferir = canCreate('MOD_PAGOS') && canRead('MOD_PAGOS') && canRead('MOD_CC')
+  // POST /gastos (MOD_PAGOS:Create) y la lista de conceptos (MOD_PAGOS:Read + CAP_VER_TESORERIA).
+  const pagarServicio = usePuedePagarServicio()
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -39,6 +41,14 @@ export default function TesoreriaScreen() {
             onPress={() => router.push('/(tabs)/tesoreria/transferencia')}
           />
           {!transferir ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}</MotivoDeshabilitado> : null}
+          <FilaDeAccion
+            icon={Receipt}
+            title="Pagar un servicio"
+            subtitle="Luz, gas, alquiler, flete y otros gastos"
+            disabled={!pagarServicio}
+            onPress={() => router.push('/(tabs)/tesoreria/pagar-servicio')}
+          />
+          {!pagarServicio ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_SERVICIO}</MotivoDeshabilitado> : null}
           <Notice tone="info">{AVISO_COBROS_DE_CLIENTES}</Notice>
         </FormContainer>
       </ScrollView>

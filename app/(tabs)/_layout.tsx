@@ -40,6 +40,7 @@ export default function DrawerLayout() {
       <Drawer.Screen name="perfil/clave" />
       <Drawer.Screen name="perfil/usuarios" />
       <Drawer.Screen name="tesoreria/transferencia" />
+      <Drawer.Screen name="tesoreria/pagar-servicio" />
       <Drawer.Screen name="ventas/nueva" />
       <Drawer.Screen name="compras/nueva" />
       <Drawer.Screen name="socios/nuevo" />

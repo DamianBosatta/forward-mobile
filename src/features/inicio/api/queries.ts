@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api, ApiError } from '@/libs/api-client/client'
 import { comprasKeys } from '@/libs/api-client/compras'
 import { inicioKeys } from '@/core/query/queryClient'
+import { useDeudasResumen } from '@/features/cuentas/api/queries'
 import type { components } from '@/libs/api-client/generated/schema'
 
 type Schemas = components['schemas']
@@ -55,7 +56,7 @@ export function useComprasResumenInicio(enabled: boolean) {
   })
 }
 
-/** Cifras de negocio de Inicio que la web calcula y la app todavía no puede pedir. `null` = sin dato: la pantalla muestra "—". */
+/** Cifras de negocio de Inicio. `null` = sin dato (sin permiso, cargando o error): la pantalla muestra "—", nunca 0. */
 export interface CifrasGenerales {
   ventasDelDia: number | null
   meDeben: number | null
@@ -63,10 +64,10 @@ export interface CifrasGenerales {
 }
 
 /**
- * TODO API: no hay endpoint móvil con el total vendido del día, lo que deben los clientes ni lo que se debe a
- * proveedores (la web los arma con varias consultas). Hasta que forward-system lo exponga (pedido en
- * docs/coordinacion.md) este adaptador devuelve todo en `null`; al llegar el endpoint solo cambia acá.
+ * `meDeben` y `debo` salen de `GET /deudas/resumen` (MOD_PAGOS:Read; `enabled` = el usuario lo tiene).
+ * TODO API: `ventasDelDia` sigue en `null` hasta que forward-system exponga el total vendido del día (ola B).
  */
-export function useCifrasGenerales(_enabled: boolean): CifrasGenerales {
-  return { ventasDelDia: null, meDeben: null, debo: null }
+export function useCifrasGenerales(enabled: boolean): CifrasGenerales {
+  const { data } = useDeudasResumen(enabled)
+  return { ventasDelDia: null, meDeben: data?.totalDeudaClientes ?? null, debo: data?.totalDeudaProveedores ?? null }
 }
