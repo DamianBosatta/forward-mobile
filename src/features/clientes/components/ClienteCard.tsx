@@ -48,14 +48,14 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
       derecha={
         saldo && !sinDeuda ? (
           <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{saldo}</Text>
-        ) : sinDeuda ? (
-          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Sin deuda</Text>
-        ) : (
+        ) : sinDeuda ? null : (
           <Lock size={16} color={c.textSecondary} accessibilityLabel="Saldo reservado" />
         )
       }
       extra={
         <>
+          {/* "Sin deuda" va debajo y no junto al título: a 360dp le sacaba el lugar a la dirección. */}
+          {sinDeuda ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Sin deuda</Text> : null}
           {vendedor ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Vendedor: ${vendedor}`}</Text> : null}
           {vencido ? <StatusChip estado="anulado" label={`Vencido ${vencido}`} /> : null}
           {!verSaldo ? (
