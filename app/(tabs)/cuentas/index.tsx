@@ -16,14 +16,16 @@ import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { textoMostrando } from '@/features/clientes/lib/cliente'
 import { CuentaCorrienteCliente } from '@/features/cuentas/components/CuentaCorrienteCliente'
 import { RegistrarCobro } from '@/features/cuentas/components/RegistrarCobro'
+import { DeudasAProveedores } from '@/features/cuentas/components/DeudasAProveedores'
+import { useDeudasResumen } from '@/features/cuentas/api/queries'
 import { ResumenDeCuentas } from '@/features/cuentas/components/ResumenDeCuentas'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
 type LadoDeCuentas = 'medeben' | 'debo'
 
-/** TODO API: el lado "Debo" (cuentas a pagar a proveedores) como lista; hoy el servidor no la ofrece y no se simula. */
-export const AVISO_DEBO_SIN_API = 'Las cuentas que le debés a tus proveedores todavía no están en la app. Mirá "Me deben" para cobrar.'
+/** Sin MOD_PAGOS:Read el servidor no deja ver las deudas con proveedores (`GET /deudas/proveedores`). */
+export const AVISO_DEBO_SIN_PERMISO = 'Tu usuario no puede ver lo que se les debe a los proveedores.'
 
 /**
  * Cuentas (láminas cuentas-lista CuentaCorriente y TabCuentaCorriente): la cartera por dirección de
@@ -42,6 +44,8 @@ function CuentasCorrientesScreen() {
   const [lado, setLado] = useState<LadoDeCuentas>('medeben')
   const { canCreate, canRead } = usePermissions()
   // Misma regla que Tesorería: la pantalla pide los tipos (MOD_PAGOS:Read) y las cuentas propias (MOD_CC:Read).
+  const puedeVerDeudas = canRead('MOD_PAGOS')
+  const resumenDeudas = useDeudasResumen(puedeVerDeudas)
   const puedeTransferir = canCreate('MOD_PAGOS') && canRead('MOD_PAGOS') && canRead('MOD_CC')
   const { clientes, totalCount, saldoTotal, isLoading, isRefetching, error, dataUpdatedAt, refetch, cargarMas } = useCartera(
     busqueda,
@@ -125,12 +129,16 @@ function CuentasCorrientesScreen() {
         />
       </View>
       {lado === 'debo' ? (
-        <View style={{ padding: space[4] }}>
-          <Notice tone="info">{AVISO_DEBO_SIN_API}</Notice>
-        </View>
+        puedeVerDeudas ? (
+          <DeudasAProveedores />
+        ) : (
+          <View style={{ padding: space[4] }}>
+            <Notice tone="info">{AVISO_DEBO_SIN_PERMISO}</Notice>
+          </View>
+        )
       ) : (
         <>
-          <ResumenDeCuentas saldoTotal={saldoTotal} />
+          <ResumenDeCuentas saldoTotal={saldoTotal} clientesConDeuda={resumenDeudas.data?.clientesConDeuda} />
           <BuscadorCartera sobre="pantalla" valor={busqueda} onCambio={setBusqueda} />
           <View style={{ flexDirection: 'row', paddingHorizontal: space[4], paddingBottom: space[1] }}>
             <FiltroChip label="Con deuda vencida" activo={soloVencidas} onPress={() => setSoloVencidas(v => !v)} />

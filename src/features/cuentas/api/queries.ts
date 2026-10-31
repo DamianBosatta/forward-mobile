@@ -55,6 +55,24 @@ export function useDeudasResumen(enabled: boolean) {
   })
 }
 
+export type DeudaProveedor = components['schemas']['DeudaSocioDto']
+type DeudasProveedoresPagina = components['schemas']['DeudasSocioPagedResult']
+
+/**
+ * Lo que se le debe a cada proveedor, de a 20 (`GET /deudas/proveedores`, MOD_PAGOS:Read). `deudaTotal` viene en
+ * toda página: es la suma de todo el filtro, no de lo cargado; no se suma en el teléfono.
+ */
+export function useDeudasProveedores(enabled: boolean) {
+  return useInfiniteQuery({
+    queryKey: [...cuentasKeys.all, 'deudas', 'proveedores'] as const,
+    queryFn: ({ pageParam = 1 }) => api.get<DeudasProveedoresPagina>(`/api/v1/deudas/proveedores?PageNumber=${pageParam}&PageSize=20`),
+    getNextPageParam: (ultima) => (ultima?.pagina?.hasNextPage ? (ultima.pagina.page ?? 1) + 1 : undefined),
+    initialPageParam: 1,
+    staleTime: 30_000,
+    enabled,
+  })
+}
+
 /** Estado de cuenta de un socio (saldo actual, a favor y pendientes). Pedirlo solo si el servidor dijo que se puede ver. */
 export function useEstadoCuentaSocio(socioId: string, enabled = true) {
   return useQuery({
