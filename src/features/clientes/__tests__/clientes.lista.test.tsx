@@ -36,6 +36,21 @@ it('la dirección es el título y el nombre va en una línea aparte, nunca pegad
   expect(screen.queryByText(/Av\. del Valle 89.*Kiosco/)).toBeNull()
 })
 
+it('muestra el vendedor responsable como línea secundaria cuando el servidor lo manda', async () => {
+  get.mockResolvedValue(pagina([clienteDeLista({ vendedorResponsableNombre: 'Lucía R.' })], 1))
+  renderConQuery(<ClientesScreen />)
+
+  expect(await screen.findByText('Vendedor: Lucía R.')).toBeTruthy()
+})
+
+it('sin vendedor responsable (null) la tarjeta no dice nada de vendedor', async () => {
+  get.mockResolvedValue(pagina([clienteDeLista({ vendedorResponsableNombre: null })], 1))
+  renderConQuery(<ClientesScreen />)
+
+  await screen.findByText('Av. del Valle 89')
+  expect(screen.queryByText(/Vendedor/)).toBeNull()
+})
+
 it('pide la cartera al servidor (solo clientes, activos, agenda) y muestra "N de M" con su total', async () => {
   renderConQuery(<ClientesScreen />)
 

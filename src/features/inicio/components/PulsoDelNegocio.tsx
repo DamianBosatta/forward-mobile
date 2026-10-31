@@ -11,6 +11,8 @@ interface PulsoProps {
   rutasActivas: number | null
   meDeben: number | null
   debo: number | null
+  /** Deuda vencida de clientes (> 30 días). Sin dato (`null`/ausente) la cifra no se muestra. */
+  deudaVencida?: number | null
   /** Con destino, Rutas activas abre la lista de hojas de ruta; sin él (sin permiso de Viajes) es solo la cifra. */
   onRutas?: () => void
 }
@@ -18,7 +20,7 @@ interface PulsoProps {
 const cantidad = (n: number | null) => (n == null ? '—' : String(n))
 
 /** El pulso del negocio en 5 segundos (lámina inicio-general): ventas del día en grande y cuatro cifras de apoyo. */
-export function PulsoDelNegocio({ ventasDelDia, cantidadVentas, pedidosPendientes, rutasActivas, meDeben, debo, onRutas }: PulsoProps) {
+export function PulsoDelNegocio({ ventasDelDia, cantidadVentas, pedidosPendientes, rutasActivas, meDeben, debo, deudaVencida = null, onRutas }: PulsoProps) {
   const c = useColors()
   // Claro: tarjeta oscura (barra). Oscuro: la barra es del color del fondo y la tarjeta se perdía; usa la superficie con borde de la lámina.
   const oscuro = useIsDark()
@@ -47,6 +49,11 @@ export function PulsoDelNegocio({ ventasDelDia, cantidadVentas, pedidosPendiente
         <Cifra etiqueta="Me deben los clientes" valor={formatImporte(meDeben)} />
         <Cifra etiqueta="Debo a proveedores" valor={formatImporte(debo)} />
       </View>
+      {deudaVencida != null ? (
+        <View style={{ flexDirection: 'row', gap: space[3] }}>
+          <Cifra etiqueta="Vencido (más de 30 días)" valor={formatImporte(deudaVencida)} />
+        </View>
+      ) : null}
     </View>
   )
 }

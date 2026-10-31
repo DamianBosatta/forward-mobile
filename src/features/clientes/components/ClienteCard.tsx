@@ -14,10 +14,7 @@ interface ClienteCardProps {
   seleccionado?: boolean
 }
 
-/**
- * Cartera ajena: el servidor no manda el nombre del vendedor en el listado.
- * TODO API: `vendedorResponsableNombre` en SocioListDto para decir "Cartera de Lucía R."
- */
+/** Cartera ajena: el tag del candado; el nombre del vendedor (si viene) va en la línea "Vendedor: …". */
 export const TAG_CARTERA_AJENA = 'Cartera de otro vendedor'
 
 /**
@@ -38,6 +35,7 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
   // La deuda vencida solo se dice con importe a quien el servidor deja ver el saldo.
   const vencida = cliente.tieneDeudaVencida === true && verSaldo
   const vencido = vencida ? formatImporte(cliente.deudaVencidaAmount) : null
+  const vendedor = cliente.vendedorResponsableNombre?.trim() || null
   const linea2 = [nombre, localidad].filter(Boolean).join(' · ')
 
   return (
@@ -58,6 +56,7 @@ export function ClienteCard({ cliente, onPress, seleccionado = false }: ClienteC
       }
       extra={
         <>
+          {vendedor ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Vendedor: ${vendedor}`}</Text> : null}
           {vencido ? <StatusChip estado="anulado" label={`Vencido ${vencido}`} /> : null}
           {!verSaldo ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space[1], backgroundColor: c.surface2, borderRadius: radii.pastilla, paddingVertical: space[1], paddingHorizontal: 10 }}>

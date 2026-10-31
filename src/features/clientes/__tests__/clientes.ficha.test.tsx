@@ -148,6 +148,31 @@ describe('vencido y disponible (servidor con PR #882)', () => {
     expect(screen.getByText('Tiene deuda vencida de más de 30 días: los pedidos nuevos van a quedar por autorizar.')).toBeTruthy()
   })
 
+  it('con deuda vencida dice los días hábiles de la deuda más vieja (SocioDetailDto.diasDeudaMasVieja)', async () => {
+    servidor(detalle({ diasDeudaMasVieja: 45 }), { ...vencidaTst })
+    renderConQuery(<FichaCliente id="c1" />)
+
+    expect(await screen.findByText('Deuda más vieja: 45 días')).toBeTruthy()
+  })
+
+  it('1 día va en singular; null o 0 no muestran la línea; sin deuda vencida tampoco', async () => {
+    servidor(detalle({ diasDeudaMasVieja: 1 }), { ...vencidaTst })
+    const a = renderConQuery(<FichaCliente id="c1" />)
+    expect(await screen.findByText('Deuda más vieja: 1 día')).toBeTruthy()
+    a.unmount()
+
+    servidor(detalle({ diasDeudaMasVieja: 0 }), { ...vencidaTst })
+    const b = renderConQuery(<FichaCliente id="c1" />)
+    await screen.findByText(/^Vencido/)
+    expect(screen.queryByText(/Deuda más vieja/)).toBeNull()
+    b.unmount()
+
+    servidor(detalle({ diasDeudaMasVieja: 30 }), { tieneDeudaVencida: false, deudaVencida: 0 })
+    renderConQuery(<FichaCliente id="c1" />)
+    await screen.findByLabelText('Saldo $ 186.420,00')
+    expect(screen.queryByText(/Deuda más vieja/)).toBeNull()
+  })
+
   it('con el tope pasado, el disponible negativo se dice como "Pasado del tope por"', async () => {
     servidor(detalle(), { tieneDeudaVencida: false, deudaVencida: 0, creditoDisponible: -12000 })
     renderConQuery(<FichaCliente id="c1" />)

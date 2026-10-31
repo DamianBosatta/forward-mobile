@@ -135,10 +135,17 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
               <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(estado.saldoActual)}</Text>
             </View>
             {vencido !== null && vencido > 0 ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space[1], backgroundColor: c.chip.anulado.bg, borderRadius: radii.pastilla, paddingVertical: space[1], paddingHorizontal: 10 }}>
-                <AlertCircle size={14} color={c.chip.anulado.text} />
-                {/* TODO API: "días de la deuda más vieja" (hoy el servidor da el vencido sin días). */}
-                <Text style={[typeScale.etiqueta, { color: c.chip.anulado.text }]}>{`Vencido ${formatImporte(vencido)}`}</Text>
+              <View style={{ gap: space[1] }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space[1], backgroundColor: c.chip.anulado.bg, borderRadius: radii.pastilla, paddingVertical: space[1], paddingHorizontal: 10 }}>
+                  <AlertCircle size={14} color={c.chip.anulado.text} />
+                  <Text style={[typeScale.etiqueta, { color: c.chip.anulado.text }]}>{`Vencido ${formatImporte(vencido)}`}</Text>
+                </View>
+                {/* Días hábiles de la deuda más vieja (SocioDetailDto): null sin deuda o sin permiso de saldo. */}
+                {cliente.diasDeudaMasVieja ? (
+                  <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
+                    {`Deuda más vieja: ${cliente.diasDeudaMasVieja} ${cliente.diasDeudaMasVieja === 1 ? 'día' : 'días'}`}
+                  </Text>
+                ) : null}
               </View>
             ) : null}
             <View style={{ flexDirection: 'row', gap: space[4] }}>
