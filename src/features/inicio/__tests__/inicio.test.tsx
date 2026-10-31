@@ -183,6 +183,24 @@ describe('Inicio: "Ver todo" de lo reciente', () => {
   })
 })
 
+describe('Inicio: el cuadro "Rutas activas"', () => {
+  it('con MOD_VIAJES abre la lista de hojas de ruta; sin MOD_VIAJES no es un botón', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_VIAJES')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    pintar()
+    await userEvent.press(await screen.findByRole('button', { name: /^Rutas activas/ }))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/logistica/hojas')
+  })
+
+  it('sin MOD_VIAJES el cuadro no es un botón', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    pintar()
+    expect(await screen.findByLabelText(/^Rutas activas/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /^Rutas activas/ })).toBeNull()
+  })
+})
+
 describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
   it('cada fila trae cantidad e importe; varias monedas van una por línea y una fila en 0 queda sin importe', async () => {
     conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')

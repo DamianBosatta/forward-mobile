@@ -1,9 +1,8 @@
 import React from 'react'
-import { ActivityIndicator, Pressable, ScrollView, Switch, Text, View } from 'react-native'
-import { Lock } from 'lucide-react-native'
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { FormContainer, Notice, TopBar } from '@/core/ui/fw'
+import { FilaInterruptor, FormContainer, Notice, TopBar } from '@/core/ui/fw'
 import { useActualizarPreferenciasAvisos, usePreferenciasAvisos, type PreferenciaAviso } from '@/libs/api-client/notificaciones'
 import { GRUPOS_DE_AVISOS, avisoDeTipo, grupoDeTipo } from './avisos'
 
@@ -25,34 +24,19 @@ export function PreferenciasAvisos() {
     return pendiente?.toast ?? p.toast
   }
 
-  const fila = (p: PreferenciaAviso, primera: boolean) => {
+  const fila = (p: PreferenciaAviso, ultima: boolean) => {
     const etiqueta = avisoDeTipo(p.tipo)?.etiqueta ?? p.tipo
     const valor = !p.silenciable || prendido(p)
     return (
-      <Pressable
+      <FilaInterruptor
         key={p.tipo}
-        accessibilityRole="switch"
-        accessibilityLabel={etiqueta}
-        accessibilityState={{ checked: valor, disabled: !p.silenciable }}
+        titulo={etiqueta}
+        apoyo={p.silenciable ? (valor ? 'Salta apenas llega' : 'Solo en la bandeja') : 'Crítico: no se puede silenciar'}
+        prendido={valor}
         disabled={!p.silenciable}
-        onPress={() => guardar.mutate([{ tipo: p.tipo, toast: !valor }])}
-        style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[2], borderTopWidth: primera ? 0 : 1, borderTopColor: c.border }}
-      >
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={{ ...typeScale.cuerpo, color: c.text }}>{etiqueta}</Text>
-          {p.silenciable ? (
-            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{valor ? 'Salta apenas llega' : 'Solo en la bandeja'}</Text>
-          ) : (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
-              <Lock size={14} color={c.chip.anulado.text} />
-              <Text style={{ ...typeScale.secundario, color: c.chip.anulado.text }}>Crítico: no se puede silenciar</Text>
-            </View>
-          )}
-        </View>
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none">
-          <Switch value={valor} disabled={!p.silenciable} trackColor={{ false: c.border, true: c.action }} />
-        </View>
-      </Pressable>
+        onChange={() => guardar.mutate([{ tipo: p.tipo, toast: !valor }])}
+        conDivisor={!ultima}
+      />
     )
   }
 
@@ -79,7 +63,7 @@ export function PreferenciasAvisos() {
               <View key={tema} style={{ gap: space[2] }}>
                 <Text accessibilityRole="header" style={{ ...typeScale.etiqueta, color: c.textSecondary, paddingHorizontal: space[2], textTransform: 'uppercase' }}>{tema}</Text>
                 <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, overflow: 'hidden' }}>
-                  {filas.map((p, i) => fila(p, i === 0))}
+                  {filas.map((p, i) => fila(p, i === filas.length - 1))}
                 </View>
               </View>
             ))

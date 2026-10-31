@@ -65,4 +65,15 @@ describe('Inicio general: la tarjeta de ventas del día en cada tema', () => {
     pintar()
     expect(estiloHero().backgroundColor).toBe(themeColors.light.topBar)
   })
+
+  it('"Rutas activas" abre la lista de hojas de ruta; sin destino no es un botón', async () => {
+    const onRutas = jest.fn()
+    const { rerender } = render(
+      <PulsoDelNegocio ventasDelDia={0} cantidadVentas={0} pedidosPendientes={0} rutasActivas={3} meDeben={0} debo={0} onRutas={onRutas} />,
+    )
+    await userEvent.press(screen.getByRole('button', { name: 'Rutas activas: 3' }))
+    expect(onRutas).toHaveBeenCalledTimes(1)
+    rerender(<PulsoDelNegocio ventasDelDia={0} cantidadVentas={0} pedidosPendientes={0} rutasActivas={3} meDeben={0} debo={0} />)
+    expect(screen.queryByRole('button', { name: 'Rutas activas: 3' })).toBeNull()
+  })
 })
