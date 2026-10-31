@@ -86,8 +86,8 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
 
   const lista = (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <View testID="catalogo-encabezado" style={{ paddingHorizontal: space[3], paddingBottom: space[3], gap: space[3], backgroundColor: c.topBar }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: 48, borderRadius: radii.campo, backgroundColor: c.surface, paddingLeft: space[3] }}>
+      <View testID="catalogo-encabezado" style={{ paddingHorizontal: space[3], paddingTop: space[3], paddingBottom: space[2], gap: space[3], backgroundColor: c.bg }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: 52, borderRadius: radii.campo, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.border, paddingLeft: space[3] }}>
           <Search size={20} color={c.textSecondary} />
           <TextInput
             value={busqueda}
@@ -103,10 +103,10 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
           </Pressable>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space[2] }} style={{ flexGrow: 0 }}>
-          <FiltroChip oscuro label="Todos" activo={sinFiltros} onPress={() => setFiltros(FILTROS_VACIOS)} />
-          {llevo ? <FiltroChip oscuro label="Del último pedido" activo={filtros.delUltimo} onPress={() => alternar('delUltimo')} /> : null}
-          <FiltroChip oscuro label="Con oferta" activo={filtros.conOferta} onPress={() => alternar('conOferta')} />
-          <FiltroChip oscuro label="Hay stock" activo={filtros.hayStock} onPress={() => alternar('hayStock')} />
+          <FiltroChip label="Todos" activo={sinFiltros} onPress={() => setFiltros(FILTROS_VACIOS)} />
+          {llevo ? <FiltroChip label="Del último pedido" activo={filtros.delUltimo} onPress={() => alternar('delUltimo')} /> : null}
+          <FiltroChip label="Con oferta" activo={filtros.conOferta} onPress={() => alternar('conOferta')} />
+          <FiltroChip label="Hay stock" activo={filtros.hayStock} onPress={() => alternar('hayStock')} />
         </ScrollView>
         {enVivo === undefined ? null : (
           <View style={{ alignSelf: 'flex-start' }}>
