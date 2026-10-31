@@ -870,6 +870,7 @@ describe('cliente primero, catálogo después', () => {
     conHistorial()
     pantalla()
     expect(screen.getByText('Paso 1 de 3')).toBeTruthy()
+    expect(screen.getAllByTestId('icono-final').length).toBeGreaterThan(0)
     expect(screen.queryByRole('button', { name: 'Añadir pala' })).toBeNull()
     expect(screen.queryByText('¿Cómo arrancás?')).toBeNull()
     expect(mockPost).not.toHaveBeenCalled()
@@ -953,6 +954,7 @@ describe('V7 Confirmar', () => {
   it('la revisión trae la fecha, la nota y Con factura; no hay segunda confirmación y no se manda nada hasta tocar Confirmar venta', async () => {
     await elegirCliente()
     await conLinea(0)
+    expect(screen.getByRole('header', { name: 'Entrega' })).toBeTruthy()
     expect(screen.getByText('Fecha de entrega')).toBeTruthy()
     expect(screen.getByLabelText('Observaciones')).toBeTruthy()
     expect(screen.getByRole('switch', { name: 'Con factura' })).toBeTruthy()

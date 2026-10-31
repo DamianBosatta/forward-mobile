@@ -30,13 +30,15 @@ interface TopBarProps {
   actions?: TopBarAction[]
   /** Texto junto al punto de sincronizado (p. ej. "Guardado"). */
   syncLabel?: string
+  /** Texto suelto a la derecha de la fila del título (p. ej. "Paso 1 de 3"). */
+  textoDerecha?: string
   tabs?: TopBarTab[]
   /** El título y el subtítulo pueden ocupar hasta 2 líneas (p. ej. una dirección larga). Por defecto, 1. */
   lineasMultiples?: boolean
 }
 
 /** Barra superior de la lámina F4: alto 64, título 20/600, botones de 44 y pestañas de 48. */
-export function TopBar({ title, subtitle, leading, actions = [], syncLabel, tabs, lineasMultiples = false }: TopBarProps) {
+export function TopBar({ title, subtitle, leading, actions = [], syncLabel, textoDerecha, tabs, lineasMultiples = false }: TopBarProps) {
   const colors = useColors()
   const insets = useSafeAreaInsets()
   const Lead = leading?.kind === 'atras' ? ArrowLeft : Menu
@@ -72,6 +74,11 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, tabs
             </Text>
           ) : null}
         </View>
+        {textoDerecha ? (
+          <Text numberOfLines={1} style={{ ...typeScale.secundario, color: colors.onTopBar, paddingRight: space[3] }}>
+            {textoDerecha}
+          </Text>
+        ) : null}
         {syncLabel ? (
           <View
             accessible

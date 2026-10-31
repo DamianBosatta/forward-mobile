@@ -15,6 +15,8 @@ interface ButtonProps {
   size?: ButtonSize
   /** Ícono a la izquierda del texto (el estado nunca va solo en el color). */
   icon?: LucideIcon
+  /** Ícono a la derecha del texto (p. ej. un chevron en "Continuar"). */
+  iconoFinal?: LucideIcon
   disabled?: boolean
   loading?: boolean
   accessibilityLabel?: string
@@ -36,6 +38,7 @@ export function Button({
   variant = 'primario',
   size = 'md',
   icon: Icono,
+  iconoFinal: IconoFinal,
   disabled = false,
   loading = false,
   accessibilityLabel,
@@ -78,6 +81,7 @@ export function Button({
         {loading && <ActivityIndicator size="small" color={p.texto} />}
         {Icono ? <Icono size={xl ? 26 : 20} color={p.texto} strokeWidth={2.5} /> : null}
         <Text style={{ ...typeScale.cuerpoDestacado, ...(xl ? { fontSize: 19, lineHeight: 26 } : null), color: p.texto }}>{label}</Text>
+        {IconoFinal ? <IconoFinal testID="icono-final" size={xl ? 26 : 20} color={p.texto} strokeWidth={2.5} /> : null}
       </View>
     </Pressable>
   )

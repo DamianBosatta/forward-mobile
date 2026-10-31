@@ -36,6 +36,8 @@ export function CabeceraVenta({ clienteId, cab }: Props) {
         <Text style={secundario}>{socio.data ? textoCondicionPago(socio.data.condicionPago) : 'Condición de pago…'}</Text>
         {disponible !== null ? <Fila etiqueta="Crédito disponible" valor={textoDisponible(disponible)} alerta={disponible < 0} /> : null}
       </View>
+      <View style={{ gap: space[4], padding: space[3], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
+      {titulo('Entrega')}
       {metodoEntrega !== METODO_ENTREGA.RetiroEnLocal ? (
         <View style={{ gap: space[2] }}>
           {titulo('Fecha de entrega')}
@@ -59,6 +61,7 @@ export function CabeceraVenta({ clienteId, cab }: Props) {
         <Field label="Flete ($)" keyboardType="decimal-pad" alignRight value={cab.fleteTexto} onChangeText={cab.setFleteTexto}
           placeholder="0" error={cab.fleteInvalido ? 'Ingresá un importe válido.' : undefined} />
       ) : null}
+      </View>
       <Field label="Observaciones" multiline maxLength={500} value={cab.observaciones} onChangeText={cab.setObservaciones}
         placeholder="Ej.: entregar por la puerta de atrás antes de las 12." />
       {cab.puedeCeder ? (
