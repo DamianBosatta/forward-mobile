@@ -135,6 +135,7 @@ export function InicioScreen() {
             rutasActivas={rutas.data?.length ?? null}
             meDeben={cifras.meDeben}
             debo={cifras.debo}
+            onRutas={canDo('MOD_VIAJES', 'read') ? () => router.push('/(tabs)/logistica/hojas' as never) : undefined}
           />
         ) : null}
         <AtajosDeInicio

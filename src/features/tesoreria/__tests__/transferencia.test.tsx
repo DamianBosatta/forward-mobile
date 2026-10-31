@@ -288,3 +288,15 @@ describe('N.º de operación (opcional): viaja dentro de observaciones', () => {
     expect(await registrarCon('', 'Pago a proveedor')).toBe('Pago a proveedor')
   })
 })
+
+it('al elegir la cuenta, "Desde" se pliega a una sola fila con la elegida y se puede cambiar (lámina Transferencia)', async () => {
+  renderConQuery(<Transferencia onListo={jest.fn()} />)
+  await screen.findByRole('radio', { name: 'Transferencia' }, ESPERA)
+  await userEvent.press(radio('Desde', /^Caja de Emanuel/))
+
+  const desde = within(screen.getByLabelText('Desde'))
+  expect(desde.queryByRole('radio', { name: /^Banco Galicia/ })).toBeNull()
+  expect(desde.getByText('Caja de Emanuel')).toBeTruthy()
+  await userEvent.press(desde.getByRole('button', { name: /Cambiar Desde/ }))
+  expect(within(screen.getByLabelText('Desde')).getByRole('radio', { name: /^Banco Galicia/ })).toBeTruthy()
+})

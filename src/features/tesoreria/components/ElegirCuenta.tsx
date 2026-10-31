@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
+import { ChevronDown, Landmark } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { formatImporte } from '@/core/ui/fw'
 import type { CuentaCorrienteResumenDto } from '@/libs/api-client/types'
@@ -21,10 +22,35 @@ interface Props {
 /** Lista de cuentas propias para elegir una, con el saldo que informa el servidor cuando lo manda (lámina Transferencia). */
 export function ElegirCuenta({ titulo, cuentas, valor, onCambio, extra, plano = false }: Props) {
   const c = useColors()
+  // Elegida la cuenta, la tarjeta se pliega a una sola fila (lámina Transferencia); "Cambiar" vuelve a abrir la lista.
+  const [abierta, setAbierta] = useState(false)
   const opciones = [
     ...cuentas.map(k => ({ id: k.id, label: k.nombre, saldo: k.saldoActual == null ? '' : formatImporte(k.saldoActual) })),
     ...(extra ? [{ id: extra.valor, label: extra.label, saldo: '' }] : []),
   ]
+  const elegida = plano && !abierta ? opciones.find(o => o.id === valor) : undefined
+  if (elegida) {
+    return (
+      <View accessibilityRole="radiogroup" accessibilityLabel={titulo}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Cambiar ${titulo}: ${elegida.label}${elegida.saldo ? `, saldo ${elegida.saldo}` : ''}`}
+          onPress={() => setAbierta(true)}
+          style={{ minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[3], paddingVertical: space[2] }}
+        >
+          <View style={{ width: 40, height: 40, borderRadius: radii.campo, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface2 }}>
+            <Landmark size={20} color={c.textSecondary} />
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{titulo}</Text>
+            <Text style={[typeScale.cuerpoDestacado, { color: c.text }]} numberOfLines={1}>{elegida.label}</Text>
+            {elegida.saldo ? <Text style={[typeScale.secundario, importe, { color: c.textSecondary }]}>{`Saldo ${elegida.saldo}`}</Text> : null}
+          </View>
+          <ChevronDown size={20} color={c.textSecondary} />
+        </Pressable>
+      </View>
+    )
+  }
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={titulo} style={{ gap: space[1], padding: plano ? space[2] : 0 }}>
       <Text style={{ ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: c.text }}>{titulo}</Text>
@@ -36,7 +62,7 @@ export function ElegirCuenta({ titulo, cuentas, valor, onCambio, extra, plano = 
             accessibilityRole="radio"
             accessibilityLabel={o.saldo ? `${o.label}, saldo ${o.saldo}` : o.label}
             accessibilityState={{ checked: elegida, selected: elegida }}
-            onPress={() => onCambio(o.id)}
+            onPress={() => { setAbierta(false); onCambio(o.id) }}
             style={{
               minHeight: 48,
               flexDirection: 'row',
