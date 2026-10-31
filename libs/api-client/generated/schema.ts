@@ -19748,6 +19748,12 @@ export interface components {
             /** Format: date-time */
             fechaCreacion: string;
         };
+        BultoParadaDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: int32 */
+            numero: number;
+        };
         CajaAbiertaDto: {
             /** Format: uuid */
             id: string;
@@ -22363,6 +22369,7 @@ export interface components {
             /** Format: double */
             totalMontoCobrar?: number | null;
             exigeFotoRemitoAlEntregar: boolean;
+            telefonoEmpresa?: string | null;
         };
         HojaRutaListItemDto: {
             /** Format: uuid */
@@ -23252,6 +23259,7 @@ export interface components {
             estado: number;
             /** Format: int32 */
             cantidadBultos: number;
+            bultos: components["schemas"]["BultoParadaDto"][];
             /** Format: double */
             latitud?: number | null;
             /** Format: double */
@@ -24447,6 +24455,7 @@ export interface components {
             motivoRechazo?: string | null;
             evidenciaUrl?: string | null;
             observaciones?: string | null;
+            claveIdempotencia?: string | null;
         };
         ReprogramarEntregaCommand: {
             /** Format: uuid */

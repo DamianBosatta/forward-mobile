@@ -51,4 +51,22 @@ describe('Button size', () => {
     expect(StyleSheet.flatten(screen.getByLabelText('Normal').props.style).height).toBe(48)
     expect(StyleSheet.flatten(screen.getByLabelText('Grande').props.style).height).toBe(72)
   })
+
+  it('con bultos del servidor lista cada uno ("Bulto N") sin escanear; sin bultos no dice "Bulto"', () => {
+    const conBultos = { ...parada, bultos: [{ id: 'b1', numero: 1 }, { id: 'b2', numero: 2 }, { id: 'b3', numero: 3 }] } as ParadaDto
+    render(<LlegueParada parada={conBultos} onVolver={jest.fn()} onEntregueTodo={jest.fn()} onNoPudeEntregar={jest.fn()} />)
+    expect(screen.getByLabelText('Pieza 1 de 3 · Bulto 1')).toBeTruthy()
+    expect(screen.getByLabelText('Pieza 3 de 3 · Bulto 3')).toBeTruthy()
+    expect(screen.queryByLabelText('Escanear etiqueta')).toBeNull()
+  })
+
+  it('"Llamar a la empresa" aparece solo con teléfono y llama', async () => {
+    const onLlamar = jest.fn()
+    const { unmount } = render(<LlegueParada parada={parada} telefonoEmpresa="011 4555-1234" onLlamarEmpresa={onLlamar} onVolver={jest.fn()} onEntregueTodo={jest.fn()} onNoPudeEntregar={jest.fn()} />)
+    await userEvent.press(screen.getByLabelText('Llamar a la empresa'))
+    expect(onLlamar).toHaveBeenCalledTimes(1)
+    unmount()
+    render(<LlegueParada parada={parada} telefonoEmpresa={null} onLlamarEmpresa={onLlamar} onVolver={jest.fn()} onEntregueTodo={jest.fn()} onNoPudeEntregar={jest.fn()} />)
+    expect(screen.queryByLabelText('Llamar a la empresa')).toBeNull()
+  })
 })
