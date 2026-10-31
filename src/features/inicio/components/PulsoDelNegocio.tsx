@@ -1,5 +1,5 @@
 import React from 'react'
-import { Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { importe as cifras, radii, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { formatImporte } from '@/core/ui/fw'
 
@@ -11,12 +11,14 @@ interface PulsoProps {
   rutasActivas: number | null
   meDeben: number | null
   debo: number | null
+  /** Con destino, Rutas activas abre la lista de hojas de ruta; sin él (sin permiso de Viajes) es solo la cifra. */
+  onRutas?: () => void
 }
 
 const cantidad = (n: number | null) => (n == null ? '—' : String(n))
 
 /** El pulso del negocio en 5 segundos (lámina inicio-general): ventas del día en grande y cuatro cifras de apoyo. */
-export function PulsoDelNegocio({ ventasDelDia, cantidadVentas, pedidosPendientes, rutasActivas, meDeben, debo }: PulsoProps) {
+export function PulsoDelNegocio({ ventasDelDia, cantidadVentas, pedidosPendientes, rutasActivas, meDeben, debo, onRutas }: PulsoProps) {
   const c = useColors()
   // Claro: tarjeta oscura (barra). Oscuro: la barra es del color del fondo y la tarjeta se perdía; usa la superficie con borde de la lámina.
   const oscuro = useIsDark()
@@ -39,7 +41,7 @@ export function PulsoDelNegocio({ ventasDelDia, cantidadVentas, pedidosPendiente
       </View>
       <View style={{ flexDirection: 'row', gap: space[3] }}>
         <Cifra etiqueta="Pedidos pendientes" valor={cantidad(pedidosPendientes)} />
-        <Cifra etiqueta="Rutas activas" valor={cantidad(rutasActivas)} />
+        <Cifra etiqueta="Rutas activas" valor={cantidad(rutasActivas)} onPress={onRutas} />
       </View>
       <View style={{ flexDirection: 'row', gap: space[3] }}>
         <Cifra etiqueta="Me deben los clientes" valor={formatImporte(meDeben)} />
@@ -49,16 +51,25 @@ export function PulsoDelNegocio({ ventasDelDia, cantidadVentas, pedidosPendiente
   )
 }
 
-function Cifra({ etiqueta, valor }: { etiqueta: string; valor: string }) {
+function Cifra({ etiqueta, valor, onPress }: { etiqueta: string; valor: string; onPress?: () => void }) {
   const c = useColors()
-  return (
-    <View
-      accessible
-      accessibilityLabel={`${etiqueta}: ${valor}`}
-      style={{ flex: 1, minWidth: 0, padding: space[3], gap: space[1], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}
-    >
+  const estilo = { flex: 1, minWidth: 0, padding: space[3], gap: space[1], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }
+  const contenido = (
+    <>
       <Text style={[typeScale.secundario, { color: c.textSecondary }]} numberOfLines={1}>{etiqueta}</Text>
       <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]} numberOfLines={1} adjustsFontSizeToFit>{valor}</Text>
+    </>
+  )
+  if (onPress) {
+    return (
+      <Pressable accessibilityRole="button" accessibilityLabel={`${etiqueta}: ${valor}`} onPress={onPress} style={estilo}>
+        {contenido}
+      </Pressable>
+    )
+  }
+  return (
+    <View accessible accessibilityLabel={`${etiqueta}: ${valor}`} style={estilo}>
+      {contenido}
     </View>
   )
 }
