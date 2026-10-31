@@ -458,3 +458,53 @@ describe('servidor anterior, sin el endpoint de movimientos del socio (404)', ()
     expect(await screen.findByLabelText(/Cobro/, {}, ESPERA)).toBeTruthy()
   })
 })
+
+describe('Filtro por período de los movimientos', () => {
+  afterEach(() => jest.restoreAllMocks())
+  const fijarHoy = () => jest.spyOn(Date, 'now').mockReturnValue(Date.UTC(2026, 9, 30, 15, 0)) // 30/10/2026 12:00 en Argentina
+  const sinFiltro = (u: string) => u.includes('/movimientos') && !u.includes('desde')
+
+  it('sin elegir período no manda fechas', async () => {
+    renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+    await screen.findByText('Cobro', {}, ESPERA)
+
+    expect(urls().filter(u => u.includes('/movimientos')).every(sinFiltro)).toBe(true)
+  })
+
+  it('"Mes anterior" manda desde/hasta del mes pasado al endpoint del socio', async () => {
+    fijarHoy()
+    servidor({ socioMovs: () => paginaDeMovimientosSocio([movSocio('a1', '2026-09-30T12:00:00Z', { referencia: 'Cobro de septiembre' })]) })
+    renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+    await screen.findByText('Cobro de septiembre', {}, ESPERA)
+
+    await userEvent.press(screen.getByRole('button', { name: 'Mes anterior' }))
+
+    await screen.findByRole('button', { name: 'Mes anterior', selected: true }, ESPERA)
+    expect(urls()).toContain('/api/v1/cuentas-corrientes/socios/c1/movimientos?pageNumber=1&pageSize=20&desde=2026-09-01&hasta=2026-09-30')
+  })
+
+  it('"Últimos 90 días" manda el rango y tocarlo de nuevo vuelve a todo el historial', async () => {
+    fijarHoy()
+    servidor({ socioMovs: () => paginaDeMovimientosSocio([]) })
+    renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+    await screen.findByText('No hay movimientos en esta cuenta.', {}, ESPERA)
+
+    await userEvent.press(screen.getByRole('button', { name: 'Últimos 90 días' }))
+    expect(await screen.findByText('No hay movimientos en este período.', {}, ESPERA)).toBeTruthy()
+    expect(urls()).toContain('/api/v1/cuentas-corrientes/socios/c1/movimientos?pageNumber=1&pageSize=20&desde=2026-08-02&hasta=2026-10-30')
+
+    await userEvent.press(screen.getByRole('button', { name: 'Últimos 90 días' }))
+    expect(await screen.findByText('No hay movimientos en esta cuenta.', {}, ESPERA)).toBeTruthy()
+  })
+
+  it('con un servidor sin el endpoint nuevo, las cuentas se piden con fechaDesde/fechaHasta', async () => {
+    fijarHoy()
+    renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+    await screen.findByText('Cobro', {}, ESPERA)
+
+    await userEvent.press(screen.getByRole('button', { name: 'Este mes' }))
+
+    await screen.findByRole('button', { name: 'Este mes', selected: true }, ESPERA)
+    expect(urls()).toContain('/api/v1/cuentas-corrientes/cTst/movimientos?pageNumber=1&pageSize=20&fechaDesde=2026-10-01&fechaHasta=2026-10-30')
+  })
+})
