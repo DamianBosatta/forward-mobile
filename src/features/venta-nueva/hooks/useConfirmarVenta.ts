@@ -68,7 +68,7 @@ const CLAVE_EN_CURSO = 'Este pedido ya se estaba grabando. Tocá Confirmar de nu
  * Confirmar (plan 9 §2.1, igual que la web). Presupuesto: el borrador autoguardado YA es el
  * presupuesto → POST /Ventas/{id}/guardar-presupuesto. Pedido: POST /Ventas con una clave de
  * idempotencia por alta (un doble toque o un reintento sin señal no duplica el pedido) y después
- * se descarta el borrador. La clave se reusa SIEMPRE en la pantalla: un pedido duplicado es peor
+ * se descarta el borrador. La clave se reusa en la pantalla mientras el borrador no se confirme (y se renueva al grabar o encolar): un pedido duplicado es peor
  * que perder ediciones. Con la misma clave el servidor devuelve la venta que ya existe; si el pedido
  * cambió desde un intento sin respuesta, se avisa y se lleva a esa venta para revisarla. El servidor
  * nuevo lo dice con un 409 con código y la venta en `data`; el viejo (o los campos que no compara)
@@ -78,7 +78,8 @@ export function useConfirmarVenta(d: Datos) {
   const router = useRouter()
   const qc = useQueryClient()
   const usuarioId = useAuthStore((s) => s.user?.id)
-  const [clave] = useState(nuevaClaveIdempotencia)
+  // La clave es del borrador: se reusa en cada reintento de lo mismo y se renueva al terminar la venta (grabada o en la cola).
+  const claveRef = useRef(nuevaClaveIdempotencia())
   // Cuerpos (sin la clave) de los intentos de alta que quedaron sin respuesta: alguno pudo grabarse.
   const sinRespuesta = useRef(new Set<string>())
   const [enviando, setEnviando] = useState(false)
@@ -99,6 +100,8 @@ export function useConfirmarVenta(d: Datos) {
 
   async function enviar(motivo?: string) {
     const { borrador: b } = d
+    const clave = claveRef.current
+    const renovarClave = () => { claveRef.current = nuevaClaveIdempotencia(); sinRespuesta.current.clear() }
     let r: VentaActionResponseDto
     let conLoDeAntes = false
     if (d.edicion) {
@@ -132,6 +135,7 @@ export function useConfirmarVenta(d: Datos) {
           // Sin señal (V9): la venta queda en el teléfono con esta misma clave y se manda sola al volver la red.
           const enCola = encolarSiFaltaSenal(usuarioId, e, { alta: cuerpo(clave), cliente: d.cliente ?? {}, visto: loQueVio(d.lineas, d.descuentoGeneral, d.cabecera.flete) })
           if (enCola) {
+            renovarClave()
             b.cerrar()
             d.alGuardar()
             Alert.alert('Sin señal', 'La venta queda en el teléfono y se manda sola cuando vuelva la señal. La ves en Pendientes.')
@@ -166,6 +170,7 @@ export function useConfirmarVenta(d: Datos) {
     // No es una mutación de react-query: Inicio (que el QueryClient refresca tras cada mutación) se marca a mano.
     void qc.invalidateQueries({ queryKey: inicioKeys.all })
     // La venta ya está guardada: vaciar el carrito no puede disparar un PUT con items=[] al borrador.
+    renovarClave()
     b.cerrar()
     d.alGuardar()
     // Lámina Guardada: el resumen, lo que dijo el servidor y las acciones (compartir, convertir, agendar, anular).
