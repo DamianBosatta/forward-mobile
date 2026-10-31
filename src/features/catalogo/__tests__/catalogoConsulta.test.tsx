@@ -336,6 +336,16 @@ describe('Catálogo: ficha, "Cómo se vende"', () => {
     expect(screen.queryByText('Pack')).toBeNull()
   })
 
+  it('el precio de lista y "Cómo se vende" van juntos en una sola tarjeta', async () => {
+    renderPantalla()
+    await abrirFichaDeAer()
+
+    const tarjeta = await screen.findByTestId('ficha-precio-tarjeta')
+    expect(within(tarjeta).getByText('Precio de lista por unidad')).toBeTruthy()
+    expect(within(tarjeta).getByText('Cómo se vende')).toBeTruthy()
+    expect(within(tarjeta).getByText('Bulto · venta mínima')).toBeTruthy()
+  })
+
   it('un producto que se vende por unidad solo tiene la fila Unidad', async () => {
     api.get.mockImplementation(servidorCon([fichaDeCatalogo(AER), fichaDeCatalogo(TEX)], { ...DETALLE, ventaMinimaUnidades: 1 }))
     renderPantalla()

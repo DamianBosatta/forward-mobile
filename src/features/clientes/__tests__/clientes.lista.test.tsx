@@ -338,3 +338,25 @@ it('muestra un encabezado por letra de la dirección (sin tildes, "#" para lo qu
   expect(screen.getByTestId('encabezado-letra-Sin dirección')).toBeTruthy()
   expect(screen.getByText('4 de 4 clientes')).toBeTruthy()
 })
+
+it('el buscador dice por qué se puede buscar', async () => {
+  renderConQuery(<ClientesScreen />)
+  await screen.findByText('Av. del Valle 89')
+
+  expect(screen.getByPlaceholderText('Buscar dirección, nombre o CUIT')).toBeTruthy()
+})
+
+it('la lista deja espacio abajo para que el botón flotante no tape la última fila', async () => {
+  renderConQuery(<ClientesScreen />)
+  await screen.findByText('Av. del Valle 89')
+
+  const { paddingBottom } = screen.UNSAFE_getByType(SectionList).props.contentContainerStyle
+  // Fab: 56 de alto + space[6] de margen inferior + inset inferior (0 en tests) + un respiro.
+  expect(paddingBottom).toBeGreaterThanOrEqual(56 + 24 + 16)
+})
+
+it('la dirección de la fila admite dos líneas', async () => {
+  renderConQuery(<ClientesScreen />)
+
+  expect((await screen.findByText('Av. del Valle 89')).props.numberOfLines).toBe(2)
+})

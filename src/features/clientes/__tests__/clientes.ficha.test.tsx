@@ -3,6 +3,7 @@ import { Linking } from 'react-native'
 import { screen, userEvent } from '@testing-library/react-native'
 import { FichaCliente, AVISO_CONDICION_PAGO } from '../components/FichaCliente'
 import { api } from '@/core/api/client'
+import { themeColors } from '@/libs/theme'
 import { clienteDeLista, conPermisos, pagina, renderConQuery } from '../__testing__/ayuda'
 
 const mockPush = jest.fn()
@@ -287,5 +288,26 @@ describe('Vender desde la ficha (T4c)', () => {
 
     await screen.findByRole('button', { name: 'Llamar' })
     expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
+  })
+})
+
+describe('jerarquía de botones de la ficha', () => {
+  const fondo = (el: { props: { style?: unknown } }) => Object.assign({}, ...[el.props.style].flat(Infinity as 1).filter(Boolean)).backgroundColor
+
+  it('Cobrar es el botón primario y Nueva venta el secundario, haya o no deuda vencida', async () => {
+    conPermisos([{ module: 'MOD_CLIENTES', canRead: true }, { module: 'MOD_VENTAS', canRead: true, canCreate: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }])
+    renderConQuery(<FichaCliente id="c1" />)
+
+    const cobrar = await screen.findByRole('button', { name: 'Cobrar' })
+    const vender = screen.getByRole('button', { name: 'Nueva venta' })
+    expect(fondo(cobrar)).not.toBe(fondo(vender))
+    expect(fondo(vender)).toBe(themeColors.light.surface)
+  })
+
+  it('con barra, el título de la barra admite dos líneas', async () => {
+    renderConQuery(<FichaCliente id="c1" conBarra />)
+
+    const titulo = await screen.findByRole('header', { name: 'Av. del Valle 89' })
+    expect(titulo.props.numberOfLines).toBe(2)
   })
 })

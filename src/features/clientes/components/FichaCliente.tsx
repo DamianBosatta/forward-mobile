@@ -83,8 +83,7 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
   const puedeCobrar = verCuenta && canCreate('MOD_PAGOS') && canRead('MOD_PAGOS')
   const subtitulo = [nombre, cliente.localidad?.trim()].filter(Boolean).join(' · ')
   const tope = cliente.topeCredito != null && cliente.topeCredito > 0 ? cliente.topeCredito : null
-  // Con deuda vencida la acción primaria es cobrar; si no, vender (lámina clientes-ficha).
-  const cobrarPrimario = vencido !== null && vencido > 0
+  // Cobrar es siempre la acción primaria; Nueva venta, la secundaria (lámina clientes-ficha).
   const alVender = venderA ? () => router.push(venderA(id) as never) : null
   const alCobrar = () => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: id } })
   const solapas = [
@@ -97,6 +96,7 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
     <View style={{ flex: 1 }}>
       {conBarra ? (
         <TopBar
+          lineasMultiples
           title={direccion}
           subtitle={subtitulo || undefined}
           leading={{ kind: 'atras', onPress: () => router.back() }}
@@ -254,12 +254,12 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
           <View style={{ flexDirection: 'row', gap: space[2] }}>
             {alVender ? (
               <View style={{ flex: 1 }}>
-                <Button label="Nueva venta" icon={ShoppingCart} variant={cobrarPrimario ? 'secundario' : 'primario'} onPress={alVender} />
+                <Button label="Nueva venta" icon={ShoppingCart} variant="secundario" onPress={alVender} />
               </View>
             ) : null}
             {verCuenta ? (
               <View style={{ flex: 1 }}>
-                <Button label="Cobrar" icon={HandCoins} variant={cobrarPrimario || !alVender ? 'primario' : 'secundario'} disabled={!puedeCobrar} onPress={alCobrar} />
+                <Button label="Cobrar" icon={HandCoins} variant="primario" disabled={!puedeCobrar} onPress={alCobrar} />
               </View>
             ) : null}
           </View>

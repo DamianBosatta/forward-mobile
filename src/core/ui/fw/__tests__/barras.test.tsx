@@ -33,6 +33,25 @@ describe('TopBar', () => {
     expect(screen.getByLabelText('Guardado')).toBeTruthy()
   })
 
+  it('lineasMultiples deja el título y el subtítulo en hasta 2 líneas; por defecto, 1', () => {
+    const { rerender } = render(<TopBar title="Av. Rivadavia 4521, piso 3 depto B" subtitle="Cuenta corriente · Panadería" />)
+    expect(screen.getByText('Av. Rivadavia 4521, piso 3 depto B').props.numberOfLines).toBe(1)
+    expect(screen.getByText('Cuenta corriente · Panadería').props.numberOfLines).toBe(1)
+    rerender(<TopBar lineasMultiples title="Av. Rivadavia 4521, piso 3 depto B" subtitle="Cuenta corriente · Panadería" />)
+    expect(screen.getByText('Av. Rivadavia 4521, piso 3 depto B').props.numberOfLines).toBe(2)
+    expect(screen.getByText('Cuenta corriente · Panadería').props.numberOfLines).toBe(2)
+  })
+
+  it('una acción con label muestra el texto y responde; sin label no hay texto', async () => {
+    const transferir = jest.fn()
+    const { rerender } = render(<TopBar title="Cuentas" actions={[{ icon: Search, accessibilityLabel: 'Transferir', onPress: transferir }]} />)
+    expect(screen.queryByText('Transferir')).toBeNull()
+    rerender(<TopBar title="Cuentas" actions={[{ icon: Search, accessibilityLabel: 'Transferir', label: 'Transferir', onPress: transferir }]} />)
+    expect(screen.getByText('Transferir')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Transferir' }))
+    expect(transferir).toHaveBeenCalledTimes(1)
+  })
+
   it.each(TEMAS)('tema %s: barra, título y punto de sincronizado con los tokens', (tema) => {
     conTema(tema)
     const c = themeColors[tema]

@@ -98,20 +98,21 @@ export function FichaProducto({
         <Text style={[typeScale.titulo, { color: c.text }]}>{p.nombre}</Text>
       </View>
 
-      <View style={{ gap: space[1] }}>
-        <Fila label="Precio de lista por unidad" valor={formatImporte(p.precioVenta)} fuerte />
-        {variacion ? (
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'baseline', gap: space[2] }}>
-            {novedad?.precioAnterior != null ? (
-              <Text style={[typeScale.secundario, importe, { color: c.textSecondary }]}>{`antes ${formatImporte(novedad.precioAnterior)}`}</Text>
-            ) : null}
-            <Text style={[typeScale.etiqueta, { color: c.chip.porAutorizar.text }]}>{variacion}</Text>
-          </View>
-        ) : null}
-        {p.precioConOferta != null ? <Fila label="Precio de oferta" valor={formatImporte(p.precioConOferta)} fuerte /> : null}
-      </View>
-
-      <Seccion titulo="Cómo se vende">
+      {/* Lámina catalogo-ficha: el precio y "Cómo se vende" van juntos en una sola tarjeta. */}
+      <View testID="ficha-precio-tarjeta" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, padding: space[4], gap: space[3] }}>
+        <View style={{ gap: space[1] }}>
+          <Fila label="Precio de lista por unidad" valor={formatImporte(p.precioVenta)} fuerte />
+          {variacion ? (
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'baseline', gap: space[2] }}>
+              {novedad?.precioAnterior != null ? (
+                <Text style={[typeScale.secundario, importe, { color: c.textSecondary }]}>{`antes ${formatImporte(novedad.precioAnterior)}`}</Text>
+              ) : null}
+              <Text style={[typeScale.etiqueta, { color: c.chip.porAutorizar.text }]}>{variacion}</Text>
+            </View>
+          ) : null}
+          {p.precioConOferta != null ? <Fila label="Precio de oferta" valor={formatImporte(p.precioConOferta)} fuerte /> : null}
+        </View>
+        <Text accessibilityRole="header" style={[typeScale.secundario, { color: c.textSecondary }]}>Cómo se vende</Text>
         <View style={{ borderRadius: radii.campo, overflow: 'hidden', borderWidth: 1, borderColor: c.border }}>
           {formasDeVenta(p).map((f, i) => (
             <View
@@ -134,7 +135,7 @@ export function FichaProducto({
             </View>
           ))}
         </View>
-      </Seccion>
+      </View>
       {noAlcanzaCaja ? <Notice tone="advertencia">{`No alcanza para la venta mínima (caja de ${ventaMinima})`}</Notice> : null}
 
       {p.esPadreDeVariantes && variantes.length > 0 ? (

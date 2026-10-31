@@ -142,13 +142,14 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioI
 
   const encabezado = (
     <>
-      {conBarra ? null : (
+      {/* Con barra, la dirección y el saldo van en el subtítulo de la barra (lámina cuentas-cobro). */}
+      {!conBarra ? (
         <View style={{ gap: space[1] }}>
           <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
           <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{nombreDelCliente(cliente)}</Text>
         </View>
-      )}
-      {estado.data ? <TotalsRow label="Saldo del cliente" importe={estado.data.saldoActual} /> : null}
+      ) : null}
+      {estado.data && !conBarra ? <TotalsRow label="Saldo del cliente" importe={estado.data.saldoActual} /> : null}
       <View style={{ gap: space[3], backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, padding: space[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3] }}>
           <View accessible accessibilityLabel={`Cobrás: ${formatImporte(total)}`}>
@@ -160,12 +161,19 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioI
               <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{falta > 0 ? 'Falta' : 'Cubierto'}</Text>
               <Text style={[typeScale.cuerpoDestacado, importe, { color: falta > 0 ? c.chip.pendiente.text : c.chip.entregado.text }]}>{formatImporte(falta)}</Text>
             </View>
+          ) : deudaVencida > 0 ? (
+            // Sin objetivo elegido la tira ya dice cuánto hay vencido: es de donde sale "Todo lo vencido".
+            <View accessible accessibilityLabel={`Vencido: ${formatImporte(deudaVencida)}`} style={{ alignItems: 'flex-end' }}>
+              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Vencido</Text>
+              <Text style={[typeScale.cuerpoDestacado, importe, { color: c.chip.pendiente.text }]}>{formatImporte(deudaVencida)}</Text>
+            </View>
           ) : null}
         </View>
         {objetivo && meta > 0 ? <Progress value={Math.min(total, meta)} max={meta} accessibilityLabel={`Cobrado ${formatImporte(total)} de ${formatImporte(meta)}`} /> : null}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
           {deudaVencida > 0 ? <Button label="Todo lo vencido" variant={objetivo === 'vencido' ? 'primario' : 'secundario'} disabled={ocupado} onPress={() => fijarObjetivo('vencido')} /> : null}
           {saldoActual > 0 ? <Button label="Saldo total" variant={objetivo === 'saldo' ? 'primario' : 'secundario'} disabled={ocupado} onPress={() => fijarObjetivo('saldo')} /> : null}
+          {deudaVencida > 0 || saldoActual > 0 ? <Button label="Otro monto" variant="secundario" disabled={ocupado} onPress={() => setObjetivo(null)} /> : null}
         </View>
       </View>
     </>
@@ -174,7 +182,7 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioI
   const imputacion = (
     <>
       <ElegirChip
-        titulo="Imputación"
+        titulo="Se aplica a"
         opciones={IMPUTACION}
         valor={f.imputaciones ? 'manual' : 'automatica'}
         onCambio={id => setF(p => ({ ...p, imputaciones: id === 'manual' ? (p.imputaciones ?? {}) : null }))}
@@ -280,7 +288,7 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioI
 
   return (
     <View style={{ flex: 1 }}>
-      {conBarra ? <TopBar title="Cobrar" subtitle={`${direccionDeEntrega(cliente)} · ${nombreDelCliente(cliente)}`} leading={{ kind: 'atras', onPress: onVolver }} /> : null}
+      {conBarra ? <TopBar lineasMultiples title="Cobrar" subtitle={estado.data ? `${direccionDeEntrega(cliente)} · Saldo ${formatImporte(estado.data.saldoActual)}` : direccionDeEntrega(cliente)} leading={{ kind: 'atras', onPress: onVolver }} /> : null}
       <ScrollView contentContainerStyle={{ padding: space[4] }}>
         <FormContainer style={{ gap: space[4] }}>
           {encabezado}

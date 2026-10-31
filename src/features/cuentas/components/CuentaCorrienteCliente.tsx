@@ -138,10 +138,9 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
     </View>
   )
 
-  const subtitulo = nombre ? `Cuenta corriente · ${nombre}` : 'Cuenta corriente'
   return (
     <View style={{ flex: 1 }}>
-    {conBarra ? <TopBar title={direccionDeEntrega(cliente)} subtitle={subtitulo} leading={{ kind: 'atras', onPress: () => router.back() }} /> : null}
+    {conBarra ? <TopBar lineasMultiples title={direccionDeEntrega(cliente)} subtitle={nombre ? `Cuenta corriente · ${nombre}` : 'Cuenta corriente'} leading={{ kind: 'atras', onPress: () => router.back() }} /> : null}
     <ScrollView testID="cuenta-corriente-scroll" onScroll={alDesplazar} scrollEventThrottle={200} contentContainerStyle={{ padding: space[4], gap: space[4] }}>
       {!conBarra ? (
         <View style={{ gap: space[1] }}>
