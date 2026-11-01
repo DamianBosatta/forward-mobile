@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router'
 import { Check } from 'lucide-react-native'
 import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, StatusChip, TopBar, chipForEstado, formatImporte } from '@/core/ui/fw'
-import { usePermissions } from '@/core/auth/RequirePermission'
+import { usePuedeCobrar } from '@/features/cuentas/lib/permiso'
 import { urlWhatsApp } from '@/features/clientes/lib/contacto'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { useVenta } from '@/libs/api-client/ventas'
@@ -29,7 +29,7 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
   const c = useColors()
   const insets = useSafeAreaInsets()
   const router = useRouter()
-  const { canCreate, canRead } = usePermissions()
+  const puedeCobrarPagos = usePuedeCobrar()
   // Recién guardada: el caché trae la versión de antes del guardado; las acciones (convertir, anular, editar) usan la vigente.
   const q = useVenta(id, { fresco: true })
   const socio = useSocio(q.data?.venta.clienteId ?? '')
@@ -59,7 +59,7 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
   const chip = chipForEstado('venta', h.estado)
   const whatsapp = urlWhatsApp(socio.data?.telefono)
   // Cobrar: la misma regla que la ficha del cliente (cobros del módulo Pagos y cuenta del cliente a la vista); una venta por autorizar todavía no se cobra (S5).
-  const puedeCobrar = esPedido && !porAutorizar && socio.data?.puedeVerCuentaCorriente === true && canCreate('MOD_PAGOS') && canRead('MOD_PAGOS')
+  const puedeCobrar = esPedido && !porAutorizar && socio.data?.puedeVerCuentaCorriente === true && puedeCobrarPagos
   const mandarPorWhatsApp = () => {
     if (!whatsapp) return
     const texto = `Hola, te paso el ${tipo.toLowerCase()} ${codigoDeVenta(h)} por ${formatImporte(h.totalAmount)}.`

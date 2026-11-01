@@ -10,6 +10,7 @@ import { useVentas } from '@/libs/api-client/ventas'
 import { useEstadoCuentaSocio } from '@/features/cuentas/api/queries'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { usePermissions } from '@/core/auth/RequirePermission'
+import { usePuedeCobrar } from '@/features/cuentas/lib/permiso'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { puedePedirCambio } from '@/features/socios/lib/camposSensibles'
 import { formatToLocalTime } from '@/src/utils/date'
@@ -39,7 +40,8 @@ export const MOTIVO_SIN_COBRO = 'No tenés permiso para cobrar'
 export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: boolean }) {
   const c = useColors()
   const router = useRouter()
-  const { canUpdate, canCreate, canRead } = usePermissions()
+  const { canUpdate } = usePermissions()
+  const puedeCobrarPagos = usePuedeCobrar()
   const venderA = useVenderA()
   const [pidiendoCambio, setPidiendoCambio] = useState(false)
   const [solapa, setSolapa] = useState<Solapa>('compras')
@@ -80,7 +82,7 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
   const vencido = estado?.tieneDeudaVencida === true && typeof estado.deudaVencida === 'number' ? estado.deudaVencida : null
   const disponible = typeof estado?.creditoDisponible === 'number' ? estado.creditoDisponible : null
   // La pantalla de cobro pide los medios y las cajas abiertas: MOD_PAGOS:Read además de Create.
-  const puedeCobrar = verCuenta && canCreate('MOD_PAGOS') && canRead('MOD_PAGOS')
+  const puedeCobrar = verCuenta && puedeCobrarPagos
   const subtitulo = [nombre, cliente.localidad?.trim()].filter(Boolean).join(' · ')
   const tope = cliente.topeCredito != null && cliente.topeCredito > 0 ? cliente.topeCredito : null
   // Cobrar es siempre la acción primaria; Nueva venta, la secundaria (lámina clientes-ficha).

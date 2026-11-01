@@ -5,6 +5,7 @@ import { ArrowLeftRight, Landmark, Zap } from 'lucide-react-native'
 import { usePuedePagarServicio } from '@/features/gastos/lib/permiso'
 import { radii, space, useColors } from '@/libs/theme'
 import { FilaDeAccion, FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
+import { usePuedeCobrar } from '@/features/cuentas/lib/permiso'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { MOTIVO_SIN_PERMISO_DE_SERVICIO, MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 
@@ -30,7 +31,7 @@ export default function TesoreriaScreen() {
   // POST /gastos (MOD_PAGOS:Create) y la lista de conceptos (MOD_PAGOS:Read + CAP_VER_TESORERIA).
   const pagarServicio = usePuedePagarServicio()
   // Misma regla que el botón "Cobrar" de la cuenta del cliente (CuentaCorrienteCliente): sin ella no se ofrece.
-  const cargarCheque = canCreate('MOD_PAGOS') && canRead('MOD_PAGOS')
+  const cargarCheque = usePuedeCobrar()
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
