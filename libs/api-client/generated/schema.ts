@@ -9687,6 +9687,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Logistica/preparacion/conteos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    FechaDesde?: string;
+                    FechaHasta?: string;
+                    TicketId?: string;
+                    MetodoEntrega?: components["schemas"]["MetodoEntrega"];
+                    VendedorId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConteosPreparacionDto"];
+                        "application/json": components["schemas"]["ConteosPreparacionDto"];
+                        "text/json": components["schemas"]["ConteosPreparacionDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Logistica/hojas-ruta": {
         parameters: {
             query?: never;
@@ -20814,6 +20857,14 @@ export interface components {
             /** Format: int32 */
             numeroFila?: number;
             motivo?: string | null;
+        };
+        ConteoColumnaPreparacionDto: {
+            clave: string;
+            /** Format: int32 */
+            cantidad: number;
+        };
+        ConteosPreparacionDto: {
+            columnas: components["schemas"]["ConteoColumnaPreparacionDto"][];
         };
         ConvertirPresupuestoCommand: {
             /** Format: uuid */
