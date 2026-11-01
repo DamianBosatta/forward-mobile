@@ -14,6 +14,8 @@ export interface CuerpoNoEntrega {
   motivoRechazo?: string
   observaciones?: string
   evidenciaUrl?: string
+  /** La misma en cada reintento: con ella el servidor aplica el aviso una sola vez. */
+  claveIdempotencia?: string
 }
 
 interface Comun {

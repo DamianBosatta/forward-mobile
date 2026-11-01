@@ -10,12 +10,15 @@ export interface PiezasParada {
   total: number
   /** Una etiqueta por pieza, en orden; `null` mientras el servidor no las mande. */
   etiquetas: string[] | null
+  /** Número de cada bulto armado, en orden (lista informativa, sin escaneo); vacío si la venta no se armó. */
+  numeros: number[]
 }
 
 // TODO API: reemplazar por el campo de piezas de la parada cuando exista.
-export function piezasDeParada(p: Pick<ParadaDto, 'cantidadBultos'>): PiezasParada {
-  const total = Number.isFinite(p.cantidadBultos) ? Math.max(0, Math.trunc(p.cantidadBultos)) : 0
-  return { total, etiquetas: null }
+export function piezasDeParada(p: Pick<ParadaDto, 'cantidadBultos'> & { bultos?: ParadaDto['bultos'] | null }): PiezasParada {
+  const cantidad = Number.isFinite(p.cantidadBultos) ? Math.max(0, Math.trunc(p.cantidadBultos)) : 0
+  const numeros = (p.bultos ?? []).map((b) => b.numero)
+  return { total: Math.max(cantidad, numeros.length), etiquetas: null, numeros }
 }
 
 /** "1 pieza" / "3 piezas". El término de logística es "piezas", nunca "bultos" (S8). */

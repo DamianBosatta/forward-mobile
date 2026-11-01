@@ -129,6 +129,15 @@ export default function ConsolaChoferScreen() {
     claves.current.set(paradaId, nueva)
     return nueva
   }
+  // Aviso "No pude entregar": una clave por intento de reporte, la misma en cada reintento (misma regla que la entrega).
+  const clavesAviso = useRef(new Map<string, string>())
+  const claveAvisoDe = (paradaId: string) => {
+    const guardada = clavesAviso.current.get(paradaId)
+    if (guardada) return guardada
+    const nueva = nuevaClaveIdempotencia()
+    clavesAviso.current.set(paradaId, nueva)
+    return nueva
+  }
   // Guarda síncrona: un doble toque llega antes de que `isPending` se vea en pantalla.
   const reportandoYa = useRef(false)
   const iniciar = useIniciarHojaRuta()
@@ -299,10 +308,11 @@ export default function ConsolaChoferScreen() {
       }
       return
     }
-    const cuerpo = { entregado: false as const, motivoRechazo: r.motivoRechazo, observaciones: r.observaciones, evidenciaUrl: r.evidenciaUrl }
+    const claveAviso = claveAvisoDe(parada.id)
+    const cuerpo = { entregado: false as const, motivoRechazo: r.motivoRechazo, observaciones: r.observaciones, evidenciaUrl: r.evidenciaUrl, claveIdempotencia: claveAviso }
     const guardarNoEntrega = () => {
       encolarAccion(usuarioId, {
-        clave: nuevaClaveIdempotencia(), hojaDeRutaId: viaje.id, paradaId: parada.id, clienteNombre: parada.clienteNombre,
+        clave: claveAviso, hojaDeRutaId: viaje.id, paradaId: parada.id, clienteNombre: parada.clienteNombre,
         tipo: 'noEntrega', cuerpo,
       })
       updateStopStatus(parada.id, { delivered: false, observations: r.observaciones, reason: r.motivoRechazo })
@@ -315,12 +325,17 @@ export default function ConsolaChoferScreen() {
         return
       }
       await reportar.mutateAsync({ hojaDeRutaId: viaje.id, paradaId: parada.id, ...cuerpo })
+      clavesAviso.current.delete(parada.id)
       updateStopStatus(parada.id, { delivered: false, observations: r.observaciones, reason: r.motivoRechazo })
       setGuardado(false)
       setReportando(null)
     } catch (e) {
       if (esFallaDeRed(e)) guardarNoEntrega()
-      else setErrorReporte(mensajeDelServidor(e, 'No se pudo reportar la parada.'))
+      else {
+        // La clave ya quedó con otro cuerpo (o en otra parada): no se reintenta con ella, el error se muestra.
+        if ((e as { codigo?: string } | null)?.codigo === 'ClaveIdempotenciaConOtroCuerpo') clavesAviso.current.delete(parada.id)
+        setErrorReporte(mensajeDelServidor(e, 'No se pudo reportar la parada.'))
+      }
     } finally {
       reportandoYa.current = false
     }
@@ -438,6 +453,8 @@ export default function ConsolaChoferScreen() {
           <LlegueParada
             key={llegue.parada.id}
             parada={llegue.parada}
+            telefonoEmpresa={viaje.telefonoEmpresa}
+            onLlamarEmpresa={() => abrir(urlLlamar(viaje.telefonoEmpresa))}
             onVolver={() => setLlegue(null)}
             onEntregueTodo={() => {
               setReportando({ ...llegue, resultado: 'entregado' })

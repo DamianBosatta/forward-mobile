@@ -96,6 +96,25 @@ describe('envío de la cola de la consola', () => {
     expect(mockPost.mock.calls[1]).toEqual(mockPost.mock.calls[0])
   })
 
+  it('el aviso "No pude entregar" manda su claveIdempotencia y el reintento repite la misma', async () => {
+    encolarAccion(USUARIO, noEntrega({ cuerpo: { entregado: false, motivoRechazo: 'Cerrado', claveIdempotencia: 'k-2' } } as never))
+    mockPost.mockRejectedValueOnce(new TypeError('Network request failed'))
+    await enviarPendientesConsola(USUARIO)
+    mockPost.mockResolvedValue({})
+    await enviarPendientesConsola(USUARIO)
+    expect(mockPost.mock.calls[0][1]).toEqual(expect.objectContaining({ claveIdempotencia: 'k-2' }))
+    expect(mockPost.mock.calls[1]).toEqual(mockPost.mock.calls[0])
+  })
+
+  it('un aviso con clave ya usada con otro cuerpo (409) no cuenta como enviado ni se reintenta: queda para revisar', async () => {
+    encolarAccion(USUARIO, noEntrega({ cuerpo: { entregado: false, claveIdempotencia: 'k-2' } } as never))
+    mockPost.mockRejectedValueOnce(rechazo(409, 'Este reporte ya se había registrado con otros datos.', 'ClaveIdempotenciaConOtroCuerpo'))
+    expect(await enviarPendientesConsola(USUARIO)).toBe('completa')
+    expect(leerCola(USUARIO)).toEqual([expect.objectContaining({ clave: 'k-2', estado: expect.objectContaining({ tipo: 'revisar' }) })])
+    mockPost.mockClear()
+    expect(await enviarPendientesConsola(USUARIO)).toBe('vacia')
+  })
+
   it('"ya registrada" (409 de la clave o "ya fue reportada") cuenta como enviada', async () => {
     encolarAccion(USUARIO, entrega(), 1000)
     encolarAccion(USUARIO, noEntrega(), 2000)

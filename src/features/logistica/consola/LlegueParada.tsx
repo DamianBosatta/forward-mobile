@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Check, ScanLine } from 'lucide-react-native'
+import { Check, Phone, ScanLine } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, TopBar } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import type { ParadaDto } from '@/libs/api-client/types'
 import { EscanearEtiqueta } from './EscanearEtiqueta'
+import { urlLlamar } from './hojaDeRuta'
 import { piezasDeParada, textoPiezas, tituloPieza } from './piezasParada'
 
 interface Props {
@@ -15,13 +16,16 @@ interface Props {
   /** "Entregué todo": sigue al reporte de la entrega (quién recibió, remito, devolución, cobro). */
   onEntregueTodo: () => void
   onNoPudeEntregar: () => void
+  /** Teléfono de la empresa (`HojaRutaDetalleDto.telefonoEmpresa`); sin número válido no se ofrece llamar. */
+  telefonoEmpresa?: string | null
+  onLlamarEmpresa?: () => void
 }
 
 /**
  * Lámina chofer-02-llegue: qué se entrega acá. La lista de piezas es una ayuda visual: tildarlas o no
  * no cambia lo que se manda (el primario "Entregué todo" no pregunta por piezas sin tildar).
  */
-export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntregar }: Props) {
+export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntregar, telefonoEmpresa, onLlamarEmpresa }: Props) {
   const c = useColors()
   const { bottom } = useSafeAreaInsets()
   const { width } = useWindowDimensions()
@@ -55,7 +59,7 @@ export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntrega
               {Array.from({ length: piezas.total }, (_, i) => (
                 <PiezaFila
                   key={i}
-                  titulo={tituloPieza(i, piezas.total, piezas.etiquetas?.[i])}
+                  titulo={tituloPieza(i, piezas.total, piezas.etiquetas?.[i] ?? (piezas.numeros[i] != null ? `Bulto ${piezas.numeros[i]}` : null))}
                   marcada={marcadas.has(i)}
                   ultima={i === piezas.total - 1}
                   onPress={() => alternar(i)}
@@ -90,6 +94,9 @@ export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntrega
           <View style={{ gap: space[3], ...columna }}>
             <Button size="xl" icon={Check} label="Entregué todo" onPress={entregueTodo} />
             <Button size="xl" variant="secundario" label="No pude entregar" onPress={onNoPudeEntregar} />
+            {onLlamarEmpresa && urlLlamar(telefonoEmpresa) ? (
+              <Button size="xl" variant="secundario" icon={Phone} label="Llamar a la empresa" onPress={onLlamarEmpresa} />
+            ) : null}
           </View>
         </View>
       </View>

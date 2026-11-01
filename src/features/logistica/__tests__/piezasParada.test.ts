@@ -2,7 +2,7 @@ import { leerEtiqueta, piezasDeParada, textoPiezas, tituloPieza } from '../conso
 
 describe('piezas de la parada (adaptador TODO API)', () => {
   it('sin etiquetas del servidor no hay escaneo: etiquetas es null y el total sale del recuento', () => {
-    expect(piezasDeParada({ cantidadBultos: 3 })).toEqual({ total: 3, etiquetas: null })
+    expect(piezasDeParada({ cantidadBultos: 3 })).toEqual({ total: 3, etiquetas: null, numeros: [] })
   })
 
   it('un recuento inválido se degrada a 0 piezas', () => {

@@ -31,7 +31,6 @@ function esTransitoria(e: unknown): boolean {
 }
 
 function mandar(a: AccionEnCola): Promise<unknown> {
-  // TODO API: `reportar-parada` no recibe clave de idempotencia; un reintento ya grabado vuelve como 409 "ya fue reportada" y cuenta como enviado.
   return a.tipo === 'entrega'
     ? api.post(`${URL_HOJA(a.hojaDeRutaId)}/paradas/${a.paradaId}/entregar`, a.cuerpo)
     : api.post(`${URL_HOJA(a.hojaDeRutaId)}/reportar-parada`, { hojaDeRutaId: a.hojaDeRutaId, paradaId: a.paradaId, ...a.cuerpo })
@@ -64,7 +63,9 @@ async function ronda(usuarioId: string, deps: Dependencias): Promise<ResultadoRo
         return 'sinSenal'
       }
       // Ya estaba registrada (un intento anterior llegó, quizás sin que se viera la respuesta): cuenta como enviada.
-      if (clasificarFalloEntrega(e).tipo === 'yaRegistrada') {
+      // Un aviso con clave que el servidor ya tiene con otro cuerpo no es "enviado": se muestra para revisar.
+      const otroCuerpo = a.tipo === 'noEntrega' && (e as { codigo?: string }).codigo === 'ClaveIdempotenciaConOtroCuerpo'
+      if (!otroCuerpo && clasificarFalloEntrega(e).tipo === 'yaRegistrada') {
         quitarDeCola(usuarioId, a.clave)
         deps.alEnviar?.(a.hojaDeRutaId)
         continue
