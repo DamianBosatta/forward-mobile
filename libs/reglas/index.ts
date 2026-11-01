@@ -38,3 +38,4 @@ export type {
   EstadoHojaRutaNombre,
   EstadoHojaRutaInfo,
 } from './estados'
+export { DIA_ISO, diaAFecha, fechaADia, diaATexto, textoADia } from './fechas'
