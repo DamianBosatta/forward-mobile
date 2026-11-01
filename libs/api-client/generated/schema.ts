@@ -24664,6 +24664,10 @@ export interface components {
             ventas: components["schemas"]["VentasDelMesDto"];
             comisiones: components["schemas"]["ComisionesDelMesDto"];
             cobrosPendientes: components["schemas"]["CobrosPendientesDto"];
+            /** Format: int32 */
+            pedidosRechazados: number;
+            /** Format: int32 */
+            presupuestosPorVencer: number;
         };
         ResumenVendedorDtoResponse: {
             /** Format: int32 */
