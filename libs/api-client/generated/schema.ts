@@ -21382,6 +21382,8 @@ export interface components {
             saldoNormal: number;
             moneda?: string | null;
             puedeVerCuentaCorriente: boolean;
+            /** Format: int32 */
+            diasDeudaMasVieja?: number | null;
         };
         DeudaSocioDtoPaginatedResponse: {
             /** Format: int32 */

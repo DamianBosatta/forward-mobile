@@ -127,8 +127,8 @@ it('en el teléfono la barra de abajo sigue a la vista en Cobros (lámina CalleM
 })
 
 const RESUMEN_DEUDAS = { clientesConDeuda: 7, totalDeudaClientes: 640300, proveedoresConDeuda: 2, totalDeudaProveedores: 91000 }
-const proveedor = (socioId: string, razonSocial: string, saldoDeuda: number) => ({
-  socioId, razonSocial, cuit: '30-1-2', saldoDeuda, saldoTst: 0, saldoNormal: saldoDeuda, moneda: 'ARS', puedeVerCuentaCorriente: true,
+const proveedor = (socioId: string, razonSocial: string, saldoDeuda: number, diasDeudaMasVieja: number | null = null) => ({
+  socioId, razonSocial, cuit: '30-1-2', saldoDeuda, saldoTst: 0, saldoNormal: saldoDeuda, moneda: 'ARS', puedeVerCuentaCorriente: true, diasDeudaMasVieja,
 })
 
 describe('Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read)', () => {
@@ -139,7 +139,7 @@ describe('Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read)'
       if (url.includes('/deudas/proveedores')) {
         if (extra.proveedores instanceof Error) throw extra.proveedores
         return extra.proveedores ?? {
-          pagina: { page: 1, pageSize: 20, totalCount: 2, totalPages: 1, hasNextPage: false, items: [proveedor('p1', 'Molinos SA', 61000), proveedor('p2', 'Lácteos SRL', 30000)] },
+          pagina: { page: 1, pageSize: 20, totalCount: 2, totalPages: 1, hasNextPage: false, items: [proveedor('p1', 'Molinos SA', 61000, 49), proveedor('p2', 'Lácteos SRL', 30000, 27), proveedor('p3', 'Sin fecha SA', 5, null)] },
           deudaTotal: 91000,
         }
       }
@@ -155,10 +155,24 @@ describe('Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read)'
 
     await userEvent.press(screen.getByRole('radio', { name: 'Debo' }))
 
-    expect(await screen.findByLabelText(`Molinos SA, le debés ${$(61000)}`, {}, ESPERA)).toBeTruthy()
-    expect(screen.getByLabelText(`Lácteos SRL, le debés ${$(30000)}`)).toBeTruthy()
+    expect(await screen.findByLabelText(`Molinos SA, le debés ${$(61000)}, Vencida · 49 días`, {}, ESPERA)).toBeTruthy()
+    expect(screen.getByLabelText(`Lácteos SRL, le debés ${$(30000)}, Deuda de 27 días`)).toBeTruthy()
     expect(screen.getByLabelText(`Debés: ${$(91000)}`)).toBeTruthy()
     expect(screen.queryByText('Mostrando 1 de 142')).toBeNull()
+  })
+
+  it('cada proveedor dice la antigüedad de su deuda más vieja: vencida (>30) o deuda de N días; sin dato, sin chip', async () => {
+    conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true }])
+    servidorConDeudas()
+    renderConQuery(<CuentasCorrientesScreen />)
+    await screen.findByText('Mostrando 1 de 142', {}, ESPERA)
+
+    await userEvent.press(screen.getByRole('radio', { name: 'Debo' }))
+
+    expect(await screen.findByText('Vencida · 49 días', {}, ESPERA)).toBeTruthy()
+    expect(screen.getByText('Deuda de 27 días')).toBeTruthy()
+    expect(screen.queryByText(/Sin fecha SA.*días/)).toBeNull()
+    expect(screen.getAllByText(/días/)).toHaveLength(2)
   })
 
   it('sin proveedores con deuda dice que no se le debe a nadie', async () => {
