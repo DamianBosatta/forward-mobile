@@ -1,12 +1,13 @@
 import React from 'react'
 import fs from 'fs'
 import path from 'path'
-import { screen } from '@testing-library/react-native'
+import { screen, userEvent } from '@testing-library/react-native'
 import TesoreriaScreen from '../../../../app/(tabs)/tesoreria/index'
 import { MOTIVO_SIN_PERMISO_DE_SERVICIO } from '@/core/ui/fw/MotivoDeshabilitado'
 import { conPermisos, renderConQuery } from '@/features/clientes/__testing__/ayuda'
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), back: jest.fn() }) }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, back: jest.fn() }) }))
 jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
 jest.mock('@/core/api/client', () => ({
   ...jest.requireActual('@/core/api/client'),
@@ -28,7 +29,7 @@ describe('Tesorería sin cheques', () => {
     renderConQuery(<TesoreriaScreen />)
     expect(await screen.findByRole('button', { name: 'Transferencia entre cuentas' }, ESPERA)).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Depositar cheques' })).toBeNull()
-    expect(screen.queryByText(/cheques/i)).toBeNull()
+    expect(screen.queryByText(/depositar|endosar/i)).toBeNull()
   })
 
   it('muestra la fila de transferencia con su subtítulo y el aviso de que los cobros van con "Cobrar" (lámina tesoreria-inicio)', async () => {
@@ -37,8 +38,6 @@ describe('Tesorería sin cheques', () => {
     expect(await screen.findByRole('button', { name: 'Transferencia entre cuentas' }, ESPERA)).toBeTruthy()
     expect(screen.getByText('Mové plata entre tus cuentas')).toBeTruthy()
     expect(screen.getByText('Los cobros de clientes se cargan desde la ficha del cliente, con "Cobrar".')).toBeTruthy()
-    // L22: "Servicio sí, cheque después": la fila de cheque no se ofrece hasta tener POST /cheques.
-    expect(screen.queryByText('Cargar un cheque')).toBeNull()
   })
 
   it('ofrece "Pagar un servicio" con el permiso del servidor y la deja deshabilitada, con motivo, sin él', async () => {
@@ -67,5 +66,25 @@ describe('Tesorería sin cheques', () => {
   it('la pantalla de depósito de cheques ya no existe', () => {
     expect(fs.existsSync(path.join(__dirname, '../../../../app/(tabs)/tesoreria/cheques.tsx'))).toBe(false)
     expect(fs.existsSync(path.join(__dirname, '../components/DepositoCheques.tsx'))).toBe(false)
+  })
+})
+
+/** Mobile pendientes S2: el cheque no tiene POST /cheques; se carga como cobro de un cliente. */
+describe('Tesorería: cargar un cheque', () => {
+  beforeEach(() => mockPush.mockClear())
+
+  it('"Cargar un cheque" lleva a elegir el cliente del cobro con el cheque como medio, y avisa que es un cobro', async () => {
+    conPermisos([{ module: 'MOD_PAGOS', canRead: true, canCreate: true }])
+    renderConQuery(<TesoreriaScreen />)
+    await userEvent.press(await screen.findByRole('button', { name: 'Cargar un cheque' }, ESPERA))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/cuentas', params: { cobrar: 'cheque' } })
+    expect(screen.getByText('El cheque se carga como cobro de un cliente.')).toBeTruthy()
+  })
+
+  it('sin permiso de cobro la fila no se muestra', async () => {
+    conPermisos([{ module: 'MOD_PAGOS', canRead: true }])
+    renderConQuery(<TesoreriaScreen />)
+    await screen.findByRole('button', { name: 'Pagar un servicio' }, ESPERA)
+    expect(screen.queryByRole('button', { name: 'Cargar un cheque' })).toBeNull()
   })
 })

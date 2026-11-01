@@ -141,3 +141,10 @@ describe('Mandar recibo', () => {
     share.mockRestore()
   })
 })
+
+it('con el cheque como medio inicial, abre el cobro con el medio Cheque elegido y su hoja lista', async () => {
+  renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} medioInicial="cheque" />)
+
+  expect(await screen.findByLabelText('N.º de cheque', {}, ESPERA)).toBeTruthy()
+  expect((await screen.findAllByRole('radio', { name: 'Cheque' }, ESPERA))[0].props.accessibilityState.selected).toBe(true)
+})

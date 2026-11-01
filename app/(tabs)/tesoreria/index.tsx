@@ -1,7 +1,7 @@
 import React from 'react'
 import { ScrollView, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { ArrowLeftRight, Zap } from 'lucide-react-native'
+import { ArrowLeftRight, Landmark, Zap } from 'lucide-react-native'
 import { usePuedePagarServicio } from '@/features/gastos/lib/permiso'
 import { radii, space, useColors } from '@/libs/theme'
 import { FilaDeAccion, FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
@@ -11,11 +11,14 @@ import { MOTIVO_SIN_PERMISO_DE_SERVICIO, MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, Mo
 /** Aviso de la lámina tesoreria-inicio: el cobro de un cliente no se carga desde Tesorería. */
 const AVISO_COBROS_DE_CLIENTES = 'Los cobros de clientes se cargan desde la ficha del cliente, con "Cobrar".'
 
+/** El cheque no tiene alta propia: se carga como cobro de un cliente. */
+const AYUDA_CHEQUE_COMO_COBRO = 'El cheque se carga como cobro de un cliente.'
+
 /**
  * Tesorería en mobile (plan §3, recortada a acciones): transferencias entre cuentas propias. Los
  * cobros se registran desde la cuenta corriente del cliente; los cheques, en la web (bloque 12, D10).
- * Lámina tesoreria-inicio: "Pagar un servicio" va (L22, gastos); "Cargar un cheque" no se muestra todavía.
- * TODO API: "Cargar un cheque" espera `POST /cheques` (hoy solo GET en el schema) y la regla D10.
+ * Lámina tesoreria-inicio: "Pagar un servicio" va (L22, gastos). "Cargar un cheque" no tiene endpoint propio (no hay
+ * `POST /cheques`): lleva al cobro de un cliente con el medio Cheque (regla A-1114: el cheque va en un cobro de un solo medio).
  */
 export default function TesoreriaScreen() {
   const c = useColors()
@@ -26,6 +29,8 @@ export default function TesoreriaScreen() {
   const transferir = canCreate('MOD_PAGOS') && canRead('MOD_PAGOS') && canRead('MOD_CC')
   // POST /gastos (MOD_PAGOS:Create) y la lista de conceptos (MOD_PAGOS:Read + CAP_VER_TESORERIA).
   const pagarServicio = usePuedePagarServicio()
+  // Misma regla que el botón "Cobrar" de la cuenta del cliente (CuentaCorrienteCliente): sin ella no se ofrece.
+  const cargarCheque = canCreate('MOD_PAGOS') && canRead('MOD_PAGOS')
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -54,6 +59,18 @@ export default function TesoreriaScreen() {
               onPress={() => router.push('/(tabs)/tesoreria/pagar-servicio')}
             />
             {!pagarServicio ? <View style={{ paddingHorizontal: space[4], paddingBottom: space[3] }}><MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_SERVICIO}</MotivoDeshabilitado></View> : null}
+            {cargarCheque ? (
+              <>
+                <View style={{ height: 1, backgroundColor: c.border }} />
+                <FilaDeAccion
+                  agrupada
+                  icon={Landmark}
+                  title="Cargar un cheque"
+                  subtitle={AYUDA_CHEQUE_COMO_COBRO}
+                  onPress={() => router.push({ pathname: '/(tabs)/cuentas', params: { cobrar: 'cheque' } })}
+                />
+              </>
+            ) : null}
           </View>
           <Notice tone="info">{AVISO_COBROS_DE_CLIENTES}</Notice>
         </FormContainer>

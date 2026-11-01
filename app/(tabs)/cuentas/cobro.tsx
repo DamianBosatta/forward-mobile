@@ -8,11 +8,11 @@ import { RegistrarCobro } from '@/features/cuentas/components/RegistrarCobro'
 export default function RegistrarCobroScreen() {
   const c = useColors()
   const router = useRouter()
-  const { socioId } = useLocalSearchParams<{ socioId: string }>()
+  const { socioId, medio } = useLocalSearchParams<{ socioId: string; medio?: string }>()
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      {socioId ? <RegistrarCobro socioId={socioId} onVolver={() => router.back()} conBarra /> : null}
+      {socioId ? <RegistrarCobro socioId={socioId} medioInicial={medio === 'cheque' ? 'cheque' : undefined} onVolver={() => router.back()} conBarra /> : null}
     </View>
   )
 }

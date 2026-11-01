@@ -13,6 +13,7 @@ import { clienteDeLista, conPermisos, pagina } from '../__testing__/ayuda'
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn(), back: jest.fn(), replace: jest.fn() }),
+  useLocalSearchParams: () => ({}),
   useNavigation: () => ({ dispatch: jest.fn() }),
 }))
 jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
