@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
@@ -48,7 +48,7 @@ const IMPUTACION = [{ id: 'automatica', label: 'Automática' }, { id: 'manual', 
  * Registrar un cobro (láminas ResCobro, TabCobro y CobroListo). La cuenta TST / Normal la elige el servidor.
  * En tablet horizontal van dos columnas: qué se cobra (imputación) a la izquierda y cómo pagó a la derecha.
  */
-export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioId: string; onVolver: () => void; conBarra?: boolean }) {
+export function RegistrarCobro({ socioId, onVolver, conBarra = false, medioInicial }: { socioId: string; onVolver: () => void; conBarra?: boolean; medioInicial?: 'cheque' }) {
   const c = useColors()
   const { isTabletLandscape } = useResponsive()
   const socio = useSocio(socioId)
@@ -73,6 +73,15 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false }: { socioI
   const { hasCapability, canDo } = usePermissions()
   // POST Media/upload-cheque: quien cobra (MOD_PAGOS:Create) o quien gestiona cheques (MediaController).
   const subeFotoCheque = canDo('MOD_PAGOS', 'create') || hasCapability('CAP_GESTIONAR_CHEQUES')
+  // Tesorería > "Cargar un cheque": el cobro abre con el medio Cheque ya elegido (una sola vez, el usuario puede cambiarlo).
+  const medioInicialAplicado = useRef(false)
+  useEffect(() => {
+    if (medioInicial !== 'cheque' || medioInicialAplicado.current || !medios.data) return
+    const m = medios.data.find(x => x.activo && x.id && x.esCheque)
+    if (!m) return
+    medioInicialAplicado.current = true
+    setF(p => ({ ...p, medioPagoId: m.id!, esCheque: true, requiereCaja: !!m.requiereCaja }))
+  }, [medioInicial, medios.data])
   const cheque = (campo: keyof FormCobro['cheque']) => (v: string) => setF(p => ({ ...p, cheque: { ...p.cheque, [campo]: v } }))
 
   if (socio.isLoading) return <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />

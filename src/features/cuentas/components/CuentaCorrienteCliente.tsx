@@ -7,7 +7,7 @@ import { Button, Notice, Segmented, TopBar, TotalsRow, formatImporte } from '@/c
 import { MOTIVO_SIN_PERMISO_DE_COBRO, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { useResponsive } from '@/libs/useResponsive'
 import { useSocio } from '@/libs/api-client/socios'
-import { usePermissions } from '@/core/auth/RequirePermission'
+import { usePuedeCobrar } from '../lib/permiso'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { formatToLocalTime } from '@/src/utils/date'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
@@ -83,7 +83,7 @@ function Movimiento({ m, tabla }: { m: MovimientoConCuenta; tabla?: boolean }) {
 export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = false }: { socioId: string; onRegistrarCobro?: () => void; conBarra?: boolean }) {
   const c = useColors()
   const router = useRouter()
-  const { canCreate, canRead } = usePermissions()
+  const puedeCobrar = usePuedeCobrar()
   const { isTabletLandscape } = useResponsive()
   const [filtro, setFiltro] = useState<FiltroCuenta>('ambas')
   // Período elegido (null = todo el historial). El rango se fija al elegirlo: no se mueve con el reloj mientras se mira.
@@ -126,7 +126,6 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
 
   // La pantalla de cobro pide los medios y las cajas abiertas: MOD_PAGOS:Read además de Create. Como en la web, el
   // botón no desaparece: sin permiso se ve deshabilitado y dice por qué.
-  const puedeCobrar = canCreate('MOD_PAGOS') && canRead('MOD_PAGOS')
   const registrarCobro = (
     <View style={{ gap: space[2] }}>
       <Button

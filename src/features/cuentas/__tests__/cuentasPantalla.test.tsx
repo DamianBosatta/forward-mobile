@@ -9,7 +9,8 @@ import { clienteDeLista, conPermisos, pagina, renderConQuery } from '@/features/
 import { estadoDeCuenta, fichaConCuentas, paginaDeMovimientos } from '../__testing__/servidor'
 
 const mockPush = jest.fn()
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, back: jest.fn() }) }))
+const mockParams = jest.fn((): Record<string, string> => ({}))
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, back: jest.fn() }), useLocalSearchParams: () => mockParams() }))
 jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
 jest.mock('@/core/api/client', () => ({ api: { get: jest.fn() }, API_URL: '' }))
 const mockHorizontal = jest.fn(() => false)
@@ -23,6 +24,7 @@ jest.setTimeout(15_000)
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockParams.mockReturnValue({})
   mockHorizontal.mockReturnValue(false)
   conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_CLIENTES', canRead: true }])
   get.mockImplementation(async (url: string) => {
@@ -204,4 +206,14 @@ describe('Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read)'
 
     expect(await screen.findByLabelText(`Te deben: ${$(640300)}`, {}, ESPERA)).toBeTruthy()
   })
+})
+
+it('llegando desde Tesorería con "Cargar un cheque", tocar un cliente abre su cobro con el cheque como medio', async () => {
+  mockParams.mockReturnValue({ cobrar: 'cheque' })
+  renderConQuery(<CuentasCorrientesScreen />)
+
+  expect(await screen.findByText('Elegí el cliente que te dio el cheque.', {}, ESPERA)).toBeTruthy()
+  await userEvent.press(await screen.findByRole('button', { name: /^Av\. del Valle 89, Chela · Kiosco Chela/ }, ESPERA))
+
+  expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: 'c1', medio: 'cheque' } })
 })

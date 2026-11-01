@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native'
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftRight } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
@@ -36,6 +36,9 @@ function CuentasCorrientesScreen() {
   const router = useRouter()
   const menu = useMenuLeading()
   const { isTabletLandscape } = useResponsive()
+  // Tesorería > "Cargar un cheque" llega con `cobrar=cheque`: elegir el cliente abre su cobro con el medio Cheque.
+  const { cobrar } = useLocalSearchParams<{ cobrar?: string }>()
+  const cargandoCheque = cobrar === 'cheque'
   const [busqueda, setBusqueda] = useState('')
   const [abierto, setAbierto] = useState<string | null>(null)
   // TM9: en tablet horizontal el cobro se abre en el mismo panel, sin salir de la lista.
@@ -55,7 +58,8 @@ function CuentasCorrientesScreen() {
   const hayDatos = clientes.length > 0
 
   const abrir = (id: string) => {
-    if (isTabletLandscape) { setAbierto(id); setCobrando(false) }
+    if (isTabletLandscape) { setAbierto(id); setCobrando(cargandoCheque) }
+    else if (cargandoCheque) router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: id, medio: 'cheque' } })
     else router.push({ pathname: '/(tabs)/cuentas/[id]', params: { id } })
   }
 
@@ -117,6 +121,11 @@ function CuentasCorrientesScreen() {
           <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}</MotivoDeshabilitado>
         </View>
       ) : null}
+      {cargandoCheque ? (
+        <View style={{ paddingHorizontal: space[4], paddingTop: space[3] }}>
+          <Notice tone="info">Elegí el cliente que te dio el cheque.</Notice>
+        </View>
+      ) : null}
       <View style={{ paddingHorizontal: space[4], paddingTop: space[3] }}>
         <Segmented
           options={[
@@ -152,7 +161,7 @@ function CuentasCorrientesScreen() {
                 <View style={{ padding: space[4], paddingBottom: 0, alignItems: 'flex-start' }}>
                   <Button label="Volver a la cuenta" variant="secundario" onPress={() => setCobrando(false)} />
                 </View>
-                <RegistrarCobro key={abierto} socioId={abierto} onVolver={() => setCobrando(false)} />
+                <RegistrarCobro key={abierto} socioId={abierto} medioInicial={cargandoCheque ? 'cheque' : undefined} onVolver={() => setCobrando(false)} />
               </View>
             ) : (
               <CuentaCorrienteCliente key={abierto} socioId={abierto} onRegistrarCobro={() => setCobrando(true)} />
