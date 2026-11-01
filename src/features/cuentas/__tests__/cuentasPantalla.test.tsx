@@ -231,3 +231,24 @@ it('llegando desde Tesorería con "Cargar un cheque", tocar un cliente abre su c
 
   expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: 'c1', medio: 'cheque' } })
 })
+
+describe('Me deben: antigüedad de la deuda más vieja', () => {
+  const conDias = (diasDeudaMasVieja: number | null) =>
+    get.mockImplementation(async (url: string) => (url.startsWith('/api/v1/socios-comerciales?') ? pagina([clienteDeLista({ diasDeudaMasVieja })], 1) : fichaConCuentas()))
+
+  it('un cliente con deuda de 49 días muestra "Vencida · 49 días" y la dice en la etiqueta de la fila', async () => {
+    conDias(49)
+    renderConQuery(<CuentasCorrientesScreen />)
+
+    expect(await screen.findByText('Vencida · 49 días', {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByRole('button', { name: /, Vencida · 49 días$/ }, ESPERA)).toBeTruthy()
+  })
+
+  it('un cliente sin días de deuda (null) no muestra chip', async () => {
+    conDias(null)
+    renderConQuery(<CuentasCorrientesScreen />)
+
+    await screen.findByRole('button', { name: /^Av\. del Valle 89/ }, ESPERA)
+    expect(screen.queryByText(/Vencida ·|Deuda de/)).toBeNull()
+  })
+})

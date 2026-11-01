@@ -6,6 +6,8 @@ import { FilaDeSocio, StatusChip, formatImporte } from '@/core/ui/fw'
 import type { SocioListDto } from '@/libs/api-client/types'
 import { urlLlamar } from '../lib/contacto'
 import { direccionDeEntrega, nombreDelCliente } from '../lib/cliente'
+import { ChipAntiguedadDeuda } from '@/features/cuentas/components/ChipAntiguedadDeuda'
+import { chipAntiguedadDeuda } from '@/features/cuentas/lib/antiguedadDeuda'
 
 interface ClienteCardProps {
   cliente: SocioListDto
@@ -14,6 +16,8 @@ interface ClienteCardProps {
   seleccionado?: boolean
   /** Flecha al final de la fila (lista de cuentas). Por defecto, sin flecha. */
   chevron?: boolean
+  /** Chip con la antigüedad de la deuda más vieja (lista "Me deben" de Cuentas). Por defecto, sin chip. */
+  conAntiguedad?: boolean
 }
 
 /** Cartera ajena: el tag del candado; el nombre del vendedor (si viene) va en la línea "Vendedor: …". */
@@ -25,7 +29,7 @@ export const TAG_CARTERA_AJENA = 'Cartera de otro vendedor'
  * este usuario puede verlo; sin permiso hay un candado y el tag de cartera ajena. La deuda vencida, solo si el
  * servidor la informa (la redacta igual que el saldo).
  */
-export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = false }: ClienteCardProps) {
+export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = false, conAntiguedad = false }: ClienteCardProps) {
   const c = useColors()
   const direccion = direccionDeEntrega(cliente)
   const nombre = nombreDelCliente(cliente)
@@ -38,6 +42,9 @@ export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = 
   const vencida = cliente.tieneDeudaVencida === true && verSaldo
   const vencido = vencida ? formatImporte(cliente.deudaVencidaAmount) : null
   const vendedor = cliente.vendedorResponsableNombre?.trim() || null
+  // El servidor manda null sin permiso de saldo o sin deuda pendiente; sin dato, ni chip ni texto.
+  const dias = conAntiguedad && verSaldo ? cliente.diasDeudaMasVieja : null
+  const antiguedad = chipAntiguedadDeuda(dias)?.texto
   const linea2 = [nombre, localidad].filter(Boolean).join(' · ')
 
   return (
@@ -48,7 +55,7 @@ export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = 
       seleccionado={seleccionado}
       onPress={onPress}
       chevron={chevron}
-      accessibilityLabel={[direccion, vencida && 'deuda vencida', nombre, localidad, saldo && `saldo ${saldo}`, !verSaldo && TAG_CARTERA_AJENA].filter(Boolean).join(', ')}
+      accessibilityLabel={[direccion, vencida && 'deuda vencida', nombre, localidad, saldo && `saldo ${saldo}`, antiguedad, !verSaldo && TAG_CARTERA_AJENA].filter(Boolean).join(', ')}
       derecha={
         saldo && !sinDeuda ? (
           <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{saldo}</Text>
@@ -61,6 +68,7 @@ export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = 
           {/* "Sin deuda" va debajo y no junto al título: a 360dp le sacaba el lugar a la dirección. */}
           {sinDeuda ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Sin deuda</Text> : null}
           {vendedor ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Vendedor: ${vendedor}`}</Text> : null}
+          <ChipAntiguedadDeuda dias={dias} />
           {vencido ? <StatusChip estado="anulado" label={`Vencido ${vencido}`} /> : null}
           {!verSaldo ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space[1], backgroundColor: c.surface2, borderRadius: radii.pastilla, paddingVertical: space[1], paddingHorizontal: 10 }}>

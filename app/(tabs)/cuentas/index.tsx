@@ -86,7 +86,7 @@ function CuentasCorrientesScreen() {
         data={clientes}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <ClienteCard chevron cliente={item} seleccionado={isTabletLandscape && item.id === abierto} onPress={() => abrir(item.id)} />
+          <ClienteCard chevron conAntiguedad cliente={item} seleccionado={isTabletLandscape && item.id === abierto} onPress={() => abrir(item.id)} />
         )}
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
