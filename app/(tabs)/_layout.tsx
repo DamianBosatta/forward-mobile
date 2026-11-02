@@ -21,36 +21,25 @@ export default function DrawerLayout() {
       }}
     >
       <Drawer.Screen name="index" />
-      <Drawer.Screen name="ventas/index" />
-      <Drawer.Screen name="inventario/index" />
-      <Drawer.Screen name="inventario/stock" />
-      <Drawer.Screen name="compras/index" />
-      <Drawer.Screen name="proveedores/index" />
-      <Drawer.Screen name="socios/index" />
-      <Drawer.Screen name="autorizaciones/index" />
-      <Drawer.Screen name="cuentas/index" />
-      <Drawer.Screen name="tesoreria/index" />
+      {/* Secciones con su propio Stack (audit A-05): el cajón ve una ruta por carpeta y las pantallas internas
+          (nueva, [id], stock...) viven en el Stack de la sección, así "volver" regresa a la pantalla anterior. */}
+      <Drawer.Screen name="ventas" />
+      <Drawer.Screen name="inventario" />
+      <Drawer.Screen name="compras" />
+      <Drawer.Screen name="proveedores" />
+      <Drawer.Screen name="socios" />
+      <Drawer.Screen name="autorizaciones" />
+      <Drawer.Screen name="cuentas" />
+      <Drawer.Screen name="tesoreria" />
+      <Drawer.Screen name="avisos" />
+      <Drawer.Screen name="logistica" />
       <Drawer.Screen name="calendario/index" />
-      <Drawer.Screen name="avisos/index" />
       <Drawer.Screen name="reportes/index" />
-      <Drawer.Screen name="logistica/consola" />
 
       {/* Rutas ocultas o secundarias (no aparecen en el drawer per se, pero se registran en el router) */}
       <Drawer.Screen name="perfil" />
       <Drawer.Screen name="perfil/clave" />
       <Drawer.Screen name="perfil/usuarios" />
-      <Drawer.Screen name="tesoreria/transferencia" />
-      <Drawer.Screen name="tesoreria/pagar-servicio" />
-      <Drawer.Screen name="ventas/nueva" />
-      <Drawer.Screen name="compras/nueva" />
-      <Drawer.Screen name="socios/nuevo" />
-      <Drawer.Screen name="proveedores/nuevo" />
-      <Drawer.Screen name="proveedores/[id]" />
-      <Drawer.Screen name="cuentas/[id]" />
-      <Drawer.Screen name="cuentas/cobro" />
-      <Drawer.Screen name="compras/[id]" />
-      <Drawer.Screen name="autorizaciones/[id]" />
-      <Drawer.Screen name="avisos/preferencias" />
     </Drawer>
   )
 }

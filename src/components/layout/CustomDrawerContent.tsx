@@ -14,6 +14,21 @@ import { useCerrarSesion } from '@/features/cuenta/hooks/useCerrarSesion'
 import { useAvisosNoLeidos } from '@/features/notificaciones'
 import { MENU, MI_CUENTA, esRutaActiva, menuVisible, type MenuItem } from './menuModules'
 
+/**
+ * Each section is a Stack inside the Drawer (audit A-05), so the drawer route is the section ("ventas") and the
+ * screen is nested in its state. Rebuilds the "section/screen" name the menu entries are keyed by
+ * ("ventas/nueva"). Before the section's Stack has reported its state, the screen it was asked to open travels
+ * in the route params (`screen`).
+ */
+function rutaActualDelCajon(state: DrawerContentComponentProps['state']): string | undefined {
+  const ruta = state.routes?.[state.index]
+  const interna = ruta?.state
+    ? ruta.state.routes[ruta.state.index ?? ruta.state.routes.length - 1]?.name
+    : (ruta?.params as { screen?: unknown } | undefined)?.screen
+  if (ruta && typeof interna === 'string') return `${ruta.name}/${interna}`
+  return state.routeNames[state.index]
+}
+
 const iniciales = (nombre?: string, apellido?: string) =>
   `${nombre?.[0] ?? ''}${apellido?.[0] ?? ''}`.toUpperCase() || '·'
 
@@ -39,7 +54,7 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
   }, [isDrawerOpen, isAuthenticated])
 
   const noLeidas = useAvisosNoLeidos()
-  const rutaActual = props.state.routeNames[props.state.index]
+  const rutaActual = rutaActualDelCajon(props.state)
   const grupos = menuVisible(MENU, {
     canDo,
     tieneCapacidad: (cap) => hasCapability(user?.permissions, cap),
