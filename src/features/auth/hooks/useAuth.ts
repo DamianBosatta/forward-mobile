@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { useAuthStore, parsePermissionsFromArray } from '../store/auth.store';
-import { configureApiClient, API_URL } from '@/core/api/client';
+import { configureApiClient, fetchWithTimeout, API_URL } from '@/core/api/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { realtimeClient } from '@/libs/api-client/realtime';
 import { cerrarSesion } from '../lib/cerrarSesion';
@@ -38,14 +38,14 @@ export function useAuth() {
 
     try {
       const [profileRes, permissionsRes] = await Promise.all([
-        fetch(`${API_URL}/api/v1/users/me?t=${Date.now()}`, {
+        fetchWithTimeout(`${API_URL}/api/v1/users/me?t=${Date.now()}`, {
           headers: { 
             Authorization: `Bearer ${accessToken}`,
             'Cache-Control': 'no-cache',
             'Pragma': 'no-cache'
           },
         }),
-        fetch(`${API_URL}/api/v1/users/me/permissions?t=${Date.now()}`, {
+        fetchWithTimeout(`${API_URL}/api/v1/users/me/permissions?t=${Date.now()}`, {
           headers: { 
             Authorization: `Bearer ${accessToken}`,
             'Cache-Control': 'no-cache',
@@ -109,7 +109,7 @@ export function useAuth() {
         scope: 'openid profile email roles offline_access',
       }).toString();
 
-      const tokenRes = await fetch(`${API_URL}/connect/token`, {
+      const tokenRes = await fetchWithTimeout(`${API_URL}/connect/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body,
@@ -168,14 +168,21 @@ export function useAuth() {
         },
       });
 
-      // Cargar perfil y permisos inmediatamente
-      await refreshPermissions(tokens.access_token);
+      // Cargar perfil y permisos inmediatamente. Sin ellos no hay sesión usable: no se reporta éxito.
+      if (!(await refreshPermissions(tokens.access_token))) {
+        useAuthStore.getState().logout();
+        setIsLoading(false);
+        setError('No pudimos cargar tus permisos. Intentá de nuevo.');
+        return false;
+      }
 
       setIsLoading(false);
       return true;
     } catch (err: any) {
       setIsLoading(false);
-      setError(err?.message ?? 'No se pudo conectar al servidor.');
+      setError(err?.name === 'AbortError'
+        ? 'El servidor tardó demasiado en responder. Intentá de nuevo.'
+        : err?.message ?? 'No se pudo conectar al servidor.');
       return false;
     }
   }, [failedAttempts, isLocked, lockRemainingMs, setTokens, refreshPermissions, queryClient]);

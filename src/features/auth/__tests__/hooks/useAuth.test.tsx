@@ -26,6 +26,7 @@ jest.mock('../../store/auth.store', () => {
 
 jest.mock('@/core/api/client', () => ({
   configureApiClient: jest.fn(),
+  fetchWithTimeout: (url: string, init?: RequestInit) => fetch(url, init),
   API_URL: 'http://test-api.com'
 }));
 
@@ -78,7 +79,7 @@ describe('useAuth Hook', () => {
     queryClient.setQueryData(['inicio', 'resumen'], { ventas: null, compras: null, autorizacionesPendientes: null });
     (global.fetch as jest.Mock)
       .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: 'a', refresh_token: 'r' }) })
-      .mockResolvedValue({ ok: false, json: async () => ({}) });
+      .mockResolvedValue({ ok: true, json: async () => ({}) });
 
     const { result } = renderHook(() => useAuth(), { wrapper });
 
