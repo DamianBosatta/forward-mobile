@@ -1,4 +1,5 @@
 import { esEstadoVenta } from '@/core/constants/estados'
+import { ddmmaaaa } from '@/features/compras/lib/fecha'
 
 /**
  * Qué se puede hacer con una venta, con las reglas de la web (VentaGestionDetail / VentaOperacionDetail,
@@ -9,8 +10,13 @@ import { esEstadoVenta } from '@/core/constants/estados'
 /** Presupuestos: TipoOperacionVenta del servidor (1 = Presupuesto, 2 = Pedido). */
 const PRESUPUESTO = 1
 
-/** A los 45 días de guardado sin pasarlo a pedido ni volver a guardarlo, el servidor lo vence (`Venta.Vencer`). */
-export const DIAS_VIGENCIA_PRESUPUESTO = 45
+/** Aviso del presupuesto. El plazo lo calcula el servidor (`fechaVencimientoPresupuesto`): la app no conoce la regla. */
+export function avisoPresupuesto(vencido: boolean, fechaVencimiento: string | null | undefined): string {
+  const sinStock = 'Un presupuesto no reserva stock.'
+  if (vencido) return `Venció. Reabrilo y vuelve a correr el plazo. ${sinStock}`
+  if (!fechaVencimiento) return `Si no lo pasás a pedido, vence. ${sinStock}`
+  return `Vence el ${ddmmaaaa(fechaVencimiento)}. Si no lo pasás a pedido, queda vencido. ${sinStock}`
+}
 
 /** PermPatrones panel 3: el motivo que acompaña a "Anular" deshabilitado. Idem el título del botón de la web. */
 export const MOTIVO_ANULAR_EN_RUTA = 'No se puede anular: el pedido está en ruta.'

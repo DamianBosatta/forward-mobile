@@ -209,12 +209,21 @@ describe('R2 · presupuesto (ResPresupuesto)', () => {
     alerta.mockRestore()
   })
 
-  it('avisa que no reserva stock, que vence a los 45 días y no ofrece cobrar', async () => {
+  it('avisa que no reserva stock, que vence el día que manda el servidor y no ofrece cobrar', async () => {
+    venta({ estado: 1, tipoOperacion: 1, codigoPedido: null, fechaVencimientoPresupuesto: '2026-12-15T13:00:00Z' })
     pantalla()
     expect(await screen.findByText(/Un presupuesto no reserva stock/)).toBeTruthy()
-    expect(screen.getByText(/45 días/)).toBeTruthy()
+    expect(screen.getByText(/Vence el 15\/12\/2026\. Si no lo pasás a pedido, queda vencido\./)).toBeTruthy()
+    expect(screen.queryByText(/45/)).toBeNull()
     expect(screen.queryByRole('button', { name: 'Cobrar' })).toBeNull()
     expect(screen.getByRole('button', { name: 'Editar' })).toBeTruthy()
+  })
+
+  it('sin fecha del servidor (API vieja) avisa sin fecha ni número', async () => {
+    venta({ estado: 1, tipoOperacion: 1, codigoPedido: null, fechaVencimientoPresupuesto: null })
+    pantalla()
+    expect(await screen.findByText(/Si no lo pasás a pedido, vence\. Un presupuesto no reserva stock\./)).toBeTruthy()
+    expect(screen.queryByText(/Vence el/)).toBeNull()
   })
 
   it('sin MOD_VENTAS modificar no hay Pasar a pedido ni Editar', async () => {
@@ -225,9 +234,11 @@ describe('R2 · presupuesto (ResPresupuesto)', () => {
     expect(screen.queryByRole('button', { name: 'Editar' })).toBeNull()
   })
 
-  it('vencido: el botón dice Reabrir y vuelve a correr los 45 días', async () => {
+  it('vencido: el botón dice Reabrir y el aviso no repite el plazo', async () => {
     venta({ estado: 10, tipoOperacion: 1, codigoPedido: null })
     pantalla()
+    expect(await screen.findByText(/Venció\. Reabrilo y vuelve a correr el plazo\. Un presupuesto no reserva stock\./)).toBeTruthy()
+    expect(screen.queryByText(/45/)).toBeNull()
     await userEvent.press(await screen.findByRole('button', { name: 'Reabrir' }))
     expect(screen.queryByRole('button', { name: 'Pasar a pedido' })).toBeNull()
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v9/reabrir'))

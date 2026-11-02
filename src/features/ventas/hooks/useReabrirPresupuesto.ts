@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/core/api/client'
 import { ventasKeys } from '@/libs/api-client/ventas'
 
-/** POST Ventas/{id}/reabrir: un presupuesto Vencido vuelve a Pendiente y corren de nuevo los 45 días. */
+/** POST Ventas/{id}/reabrir: un presupuesto Vencido vuelve a Pendiente y el servidor recalcula el plazo. */
 export function useReabrirPresupuesto() {
   const queryClient = useQueryClient()
   return useMutation({

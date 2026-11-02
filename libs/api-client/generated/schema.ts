@@ -26309,6 +26309,8 @@ export interface components {
             modificadoPor?: string | null;
             /** Format: date-time */
             fechaModificacion?: string | null;
+            /** Format: date-time */
+            fechaVencimientoPresupuesto?: string | null;
             autorizadoPor?: string | null;
             motivoRechazoAutorizacion?: string | null;
             /** Format: int32 */
