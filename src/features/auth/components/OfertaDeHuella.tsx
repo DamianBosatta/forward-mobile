@@ -26,8 +26,9 @@ export function OfertaDeHuella() {
   }
 
   const rechazar = async () => {
+    if (!pendiente) return
     descartar()
-    await declineBiometricLogin()
+    await declineBiometricLogin(pendiente.username)
   }
 
   return (

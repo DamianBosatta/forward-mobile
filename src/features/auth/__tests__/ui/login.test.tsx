@@ -54,6 +54,7 @@ jest.mock('../../utils/biometrics', () => ({
   isBiometricsAvailable: async () => mockBio.available,
   hasSavedCredentials: async () => mockBio.saved,
   getBiometricChoice: async () => mockBio.choice,
+  getBiometricChoiceFor: async () => mockBio.choice,
   isBiometricLoginEnabled: async () => mockBio.choice === 'enabled',
   saveCredentials: (c: unknown) => mockSaveCredentials(c),
   authenticateWithBiometrics: () => mockAuthenticate(),

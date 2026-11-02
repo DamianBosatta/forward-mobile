@@ -6,14 +6,23 @@ import { useOfertaDeHuella } from '../store/ofertaDeHuella.store'
 import { forgetBiometricLogin } from '../utils/biometrics'
 
 /**
- * The one logout of the app (audit A-01 + M-02). Every path ends here: "Cerrar sesión" (Mi cuenta and the
- * side menu, through `useCerrarSesion`), changing server, and the forced logout when the server rejects the
- * refresh (`onUnauthorized`). Nothing of the previous session stays on the phone for the next user.
+ * The one logout of the app (audit A-01 + M-02). Every path ends here, in one of two kinds:
+ * - manual: "Cerrar sesión" (Mi cuenta and the side menu, through `useCerrarSesion`) and changing server. It also
+ *   deletes the fingerprint credential and its decision ("Se borra al cerrar sesión" is the person's own action).
+ * - forced: the server rejects the refresh (`onUnauthorized`), or a path only drops the tokens. It keeps the
+ *   fingerprint credential and decision, so the person re-enters with "Entrar con huella".
+ * Both empty the tokens, the react-query cache (memory and disk), the active trip and any unanswered fingerprint
+ * offer. A different person logging in afterwards is handled at login (`getBiometricChoiceFor`).
  *
  * What is NOT cleared on purpose: the per-user offline queues (`features/venta-sin-senal/lib/cola.ts`,
  * `features/logistica/cola/colaConsola.ts`). They hold sales and deliveries not yet sent; they are keyed by
  * user, so another user of the phone neither sees nor sends them.
  */
+
+export interface OpcionesDeCierre {
+  /** The session expired or was rejected (not the person's choice): the fingerprint stays. */
+  forzado?: boolean
+}
 
 interface CacheDeLaApp {
   queryClient: QueryClient
@@ -32,7 +41,7 @@ let cerrando = false
  * covers that changing: `MutationCache.clear()` notifies `removed` before emptying. It relies on a persister that
  * writes at once, like MMKV.
  */
-async function borrarDatosDeLaSesion(): Promise<void> {
+async function borrarDatosDeLaSesion({ forzado }: OpcionesDeCierre): Promise<void> {
   if (cacheDeLaApp) {
     cacheDeLaApp.queryClient.clear()
     await cacheDeLaApp.persister.removeClient()
@@ -40,35 +49,35 @@ async function borrarDatosDeLaSesion(): Promise<void> {
   useLogisticaStore.getState().reset()
   await useLogisticaStore.persist.clearStorage()
   useOfertaDeHuella.getState().descartar()
-  await forgetBiometricLogin()
+  if (!forzado) await forgetBiometricLogin()
 }
 
 /**
  * Closes the session on this phone: drops the tokens and empties the react-query cache (memory and disk), the
- * active trip (`forward-logistica-store`) and the fingerprint credential with its decision (S2: "Se borra al
- * cerrar sesión"). Callable outside React. Revoking on
+ * active trip (`forward-logistica-store`); a manual logout also deletes the fingerprint credential and its decision.
+ * Callable outside React. Revoking on
  * the server and navigating are the caller's job (`useCerrarSesion`).
  */
-export async function cerrarSesion(): Promise<void> {
+export async function cerrarSesion(opciones: OpcionesDeCierre = {}): Promise<void> {
   cerrando = true
   try {
     useAuthStore.getState().logout()
   } finally {
     cerrando = false
   }
-  await borrarDatosDeLaSesion()
+  await borrarDatosDeLaSesion(opciones)
 }
 
 /**
  * Connects the app's query client and persister (`app/_layout.tsx`). It also listens to the auth store: a path
- * that only drops the tokens (`useAuthStore.getState().logout()`, e.g. `hooks/useAuthGuard.ts`) still empties the
- * rest. Rehydrating the session on app start or authenticating again clears nothing. Returns how to disconnect.
+ * that only drops the tokens (`useAuthStore.getState().logout()`) still empties the rest, as a forced logout. It is a
+ * safety net: the known forced paths (`onUnauthorized`, `hooks/useAuthGuard.ts`) call `cerrarSesion({ forzado: true })`. Rehydrating the session on app start or authenticating again clears nothing. Returns how to disconnect.
  */
 export function conectarCierreDeSesion(queryClient: QueryClient, persister: Pick<Persister, 'removeClient'>): () => void {
   cacheDeLaApp = { queryClient, persister }
   const dejarDeEscuchar = useAuthStore.subscribe((estado, antes) => {
     if (cerrando || !antes.isAuthenticated || estado.isAuthenticated) return
-    void borrarDatosDeLaSesion()
+    void borrarDatosDeLaSesion({ forzado: true })
   })
   return () => {
     dejarDeEscuchar()

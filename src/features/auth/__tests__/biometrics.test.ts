@@ -24,6 +24,7 @@ import {
   declineBiometricLogin,
   forgetBiometricLogin,
   getBiometricChoice,
+  getBiometricChoiceFor,
   hasSavedCredentials,
   isBiometricLoginEnabled,
   setBiometricLoginEnabled,
@@ -31,6 +32,7 @@ import {
 
 const CREDENCIAL = 'forward_biometric_credentials'
 const CREDS = { username: 'emanuel.p', password: 'secreta' }
+const DECISION = 'forward_biometric_enabled'
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -46,7 +48,7 @@ describe('entrar con huella (opt-in)', () => {
   })
 
   it('declining stores no credential and records the decision', async () => {
-    await declineBiometricLogin()
+    await declineBiometricLogin(CREDS.username)
     expect(mockStore.has(CREDENCIAL)).toBe(false)
     expect(await hasSavedCredentials()).toBe(false)
     expect(await getBiometricChoice()).toBe('disabled')
@@ -79,6 +81,26 @@ describe('entrar con huella (opt-in)', () => {
     expect(mockStore.has(CREDENCIAL)).toBe(false)
     expect(await hasSavedCredentials()).toBe(false)
     expect(await getBiometricChoice()).toBeNull()
+  })
+
+  it('the decision belongs to the person who took it: another username forgets it and is asked again', async () => {
+    await acceptBiometricLogin(CREDS)
+    expect(await getBiometricChoiceFor('ana.g')).toBeNull()
+    expect(mockStore.has(CREDENCIAL)).toBe(false)
+    expect(mockStore.has(DECISION)).toBe(false)
+    expect(await hasSavedCredentials()).toBe(false)
+  })
+
+  it('the same username (any case or spaces) keeps the decision and the credential', async () => {
+    await acceptBiometricLogin(CREDS)
+    expect(await getBiometricChoiceFor(' Emanuel.P ')).toBe('enabled')
+    expect(await hasSavedCredentials()).toBe(true)
+  })
+
+  it('a decline by one person does not stop the offer for another', async () => {
+    await declineBiometricLogin('emanuel.p')
+    expect(await getBiometricChoiceFor('emanuel.p')).toBe('disabled')
+    expect(await getBiometricChoiceFor('ana.g')).toBeNull()
   })
 
   it('turning it off in Mi cuenta deletes the saved credential', async () => {

@@ -164,7 +164,7 @@ export function useAuth() {
           useAuthStore.getState().setTokens(newTokens);
         },
         onUnauthorized: () => {
-          void cerrarSesion();
+          void cerrarSesion({ forzado: true });
         },
       });
 

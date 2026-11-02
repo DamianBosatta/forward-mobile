@@ -31,9 +31,9 @@ beforeEach(() => {
 describe('MMKV encryption key', () => {
   it('the first start generates a random key, keeps it in SecureStore and encrypts with it', () => {
     const config = arrancarLaApp()
-    expect(mockRandomBytes).toHaveBeenCalledTimes(1)
+    expect(mockRandomBytes).toHaveBeenCalledWith(24)
     const guardada = mockSecure.get(CLAVE)
-    expect(guardada).toMatch(/^[0-9a-f]{32}$/)
+    expect(guardada).toMatch(/^[A-Za-z0-9+/]{32}$/)
     expect(config).toMatchObject({ id: 'forward-app-storage', encryptionKey: guardada, encryptionType: 'AES-256' })
     expect(config.encryptionKey).not.toBe('forward-mmkv-v1-3f9a8d7c2e1b6a5d')
   })
@@ -57,7 +57,7 @@ describe('MMKV encryption key', () => {
   it('if the Keystore fails, the app still starts encrypted with a fresh random key', () => {
     mockSetItem.mockImplementationOnce(() => { throw new Error('Keystore unavailable') })
     const config = arrancarLaApp()
-    expect(config.encryptionKey).toMatch(/^[0-9a-f]{32}$/)
+    expect(config.encryptionKey).toMatch(/^[A-Za-z0-9+/]{32}$/)
     expect(config.encryptionType).toBe('AES-256')
   })
 })

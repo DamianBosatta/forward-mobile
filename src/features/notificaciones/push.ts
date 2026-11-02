@@ -123,7 +123,7 @@ export function darDeBajaPushAntesDeSalir(): Promise<void> {
 
 /**
  * Al cerrarse la sesión por cualquier camino, intenta la baja con la sesión que se cerró (misma
- * suscripción que `vaciarCacheAlCerrarSesion`). Devuelve la función para dejar de escuchar.
+ * suscripción que `conectarCierreDeSesion` en `features/auth/lib/cerrarSesion.ts`). Devuelve la función para dejar de escuchar.
  */
 export function bajaDePushAlCerrarSesion(): () => void {
   return useAuthStore.subscribe((estado, antes) => {

@@ -13,6 +13,7 @@ import { useTecladoVisible } from '@/features/auth/hooks/useTecladoVisible'
 import {
   authenticateWithBiometrics,
   getBiometricChoice,
+  getBiometricChoiceFor,
   hasSavedCredentials,
   isBiometricsAvailable,
   saveCredentials,
@@ -94,7 +95,8 @@ export default function LoginScreen() {
     }
     if (!(await login(username, password))) return
     const creds = { username: username.trim(), password: password.trim() }
-    const [eleccion, disponible] = await Promise.all([getBiometricChoice(), isBiometricsAvailable()])
+    // Bound to the username: if someone else had decided, their decision and credential are deleted first.
+    const [eleccion, disponible] = await Promise.all([getBiometricChoiceFor(creds.username), isBiometricsAvailable()])
     if (eleccion === 'enabled') {
       // Turned on in Mi cuenta: saved now, behind device authentication. Cancelling it only skips the save.
       try {

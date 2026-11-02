@@ -12,7 +12,7 @@ const mockAccept = jest.fn()
 const mockDecline = jest.fn()
 jest.mock('../../utils/biometrics', () => ({
   acceptBiometricLogin: (c: unknown) => mockAccept(c),
-  declineBiometricLogin: () => mockDecline(),
+  declineBiometricLogin: (u: unknown) => mockDecline(u),
 }))
 
 const CREDS = { username: 'admin', password: 'secreta123' }
@@ -46,7 +46,7 @@ describe('oferta de entrar con huella', () => {
     render(<OfertaDeHuella />)
     expect(screen.getByText(PREGUNTA)).toBeTruthy()
     fireEvent.press(screen.getByText('Ahora no'))
-    await waitFor(() => expect(mockDecline).toHaveBeenCalled())
+    await waitFor(() => expect(mockDecline).toHaveBeenCalledWith('admin'))
     expect(mockAccept).not.toHaveBeenCalled()
     await waitFor(() => expect(useOfertaDeHuella.getState().pendiente).toBeNull())
   })
