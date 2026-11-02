@@ -7,43 +7,70 @@ import { createMMKV } from 'react-native-mmkv'
  *
  * The key is random, generated on the first start and kept in SecureStore (Keystore / Keychain), so it is not in
  * the binary. It is stored without `requireAuthentication`: the app needs it before anyone touches the screen.
- * There is no migration of the file encrypted with the old literal key (owner's decision "Cierre de sesión único al
- * actualizar"): with the new key that content does not decrypt and the person logs in once more.
+ * A phone updated from a build that used the old literal key keeps its data: the file opens with the old key and
+ * is re-encrypted in place with the new one (`recrypt`), so nobody is logged out and no offline queue is lost.
+ *
+ * Encryption type: MMKV's default (AES-128). `recrypt` always re-encrypts as AES-128 (react-native-mmkv 4.3.1,
+ * `HybridMMKV::recrypt` calls `encrypt(key, nullopt)`), so a file opened as AES-256 would not reopen after it.
+ * AES-128 takes at most 16 bytes of key, hence 12 random bytes written as 16 base64 characters: 96 bits.
  */
 const STORAGE_ID = 'forward-app-storage'
 const STORAGE_KEY_NAME = 'forward_mmkv_key'
+/** Migration only: the literal key builds before audit tranche 1 encrypted the file with. Never for new data. */
+const LEGACY_MIGRATION_ONLY_KEY = 'forward-mmkv-v1-3f9a8d7c2e1b6a5d'
 
-/**
- * 24 random bytes as 32 base64 characters (192 bits): the 32-byte key AES-256 accepts. If the Keystore cannot be read or written
- * (it happens on some Android phones), the app still starts with a fresh key: the stored data does not decrypt and
- * the person logs in again, the same as after this update.
- */
-function clavePorInstalacion(): string {
-  const guardada = leerClaveGuardada()
-  if (guardada) return guardada
-  const nueva = btoa(String.fromCharCode(...getRandomBytes(24)))
+type ClaveGuardada = { estado: 'guardada'; clave: string } | { estado: 'sin-clave' } | { estado: 'ilegible' }
+
+function leerClaveGuardada(): ClaveGuardada {
+  try {
+    const clave = SecureStore.getItem(STORAGE_KEY_NAME)
+    return clave ? { estado: 'guardada', clave } : { estado: 'sin-clave' }
+  } catch {
+    return { estado: 'ilegible' }
+  }
+}
+
+const claveNueva = () => btoa(String.fromCharCode(...getRandomBytes(12)))
+
+function guardarClave(clave: string): boolean {
   try {
     // AFTER_FIRST_UNLOCK: readable when the app wakes up in the background; THIS_DEVICE_ONLY: never leaves the phone.
-    SecureStore.setItem(STORAGE_KEY_NAME, nueva, { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY })
+    SecureStore.setItem(STORAGE_KEY_NAME, clave, { keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY })
+    return true
   } catch {
-    // Not saved: this run works; the next start generates another key.
+    return false
   }
-  return nueva
 }
 
-function leerClaveGuardada(): string | null {
+function abrirAlmacen() {
+  const guardada = leerClaveGuardada()
+  if (guardada.estado === 'guardada') return createMMKV({ id: STORAGE_ID, encryptionKey: guardada.clave })
+  if (guardada.estado === 'ilegible') {
+    // The Keystore fails on some Android phones: start encrypted with a fresh key. What was stored does not
+    // decrypt and the person logs in again; nothing is saved, so the next start tries the Keystore again.
+    return createMMKV({ id: STORAGE_ID, encryptionKey: claveNueva() })
+  }
+  // No key yet (update or fresh install): open with the old key and move the file to a new one.
+  const almacen = createMMKV({ id: STORAGE_ID, encryptionKey: LEGACY_MIGRATION_ONLY_KEY })
+  const nueva = claveNueva()
+  // The key is saved first: re-encrypting with a key that is not saved would lose the file at the next start.
+  // Not saved: this run keeps the old key and the next start retries.
+  if (!guardarClave(nueva)) return almacen
   try {
-    return SecureStore.getItem(STORAGE_KEY_NAME)
+    almacen.recrypt(nueva)
   } catch {
-    return null
+    // The file still has the old key: forget the new one so the next start migrates again.
+    // Starting the app never fails here, not even when the delete itself throws.
+    try {
+      void SecureStore.deleteItemAsync(STORAGE_KEY_NAME).catch(() => {})
+    } catch {
+      // Left saved: the next start opens with it and the old data does not decrypt (fail-closed, as an unreadable Keystore).
+    }
   }
+  return almacen
 }
 
-export const storage = createMMKV({
-  id: STORAGE_ID,
-  encryptionKey: clavePorInstalacion(),
-  encryptionType: 'AES-256',
-})
+export const storage = abrirAlmacen()
 
 /**
  * Adapter for Zustand/React-Query that expects synchronous Storage-like interface
