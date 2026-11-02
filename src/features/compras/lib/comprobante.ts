@@ -1,6 +1,7 @@
 import type { components } from '@/libs/api-client/generated/schema'
 import { leerNumero, numeroCompleto } from '@/src/utils/numero'
-import { ddmmaaaa, fechaIso } from './fecha'
+import { ddmmaaaa } from '@/core/utils/fecha'
+import { fechaIso } from './fecha'
 import { cuitEsValido } from '@/libs/reglas'
 import { ComprobanteCompraInputConReglasSchema } from '@/libs/validations/generated/reglas'
 

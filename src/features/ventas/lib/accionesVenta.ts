@@ -1,5 +1,5 @@
 import { esEstadoVenta } from '@/core/constants/estados'
-import { ddmmaaaa } from '@/features/compras/lib/fecha'
+import { ddmmaaaa } from '@/core/utils/fecha'
 
 /**
  * Qué se puede hacer con una venta, con las reglas de la web (VentaGestionDetail / VentaOperacionDetail,
