@@ -1,4 +1,4 @@
-import { diaArgentina } from '@/src/utils/date'
+import { diaArgentina } from '@/core/utils/fecha'
 
 /**
  * Días de entrega (plan 9 §2.1): los días de semana habilitados en Configuración menos los

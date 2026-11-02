@@ -5,8 +5,7 @@ import CompraDetailScreen, { CompraDetalle } from '../../../../../app/(tabs)/com
 import { AccessibilityInfo } from 'react-native'
 import { confirmarYRecibir, dejarAviso } from '../../lib/confirmar-y-recibir'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { hoyTexto } from '../../lib/fecha'
-import { diaArgentina } from '@/src/utils/date'
+import { diaArgentina, hoyTexto } from '@/core/utils/fecha'
 
 // Tipear fechas y motivos con userEvent es lento en una corrida completa: margen para no dar falsos rojos.
 jest.setTimeout(15000)

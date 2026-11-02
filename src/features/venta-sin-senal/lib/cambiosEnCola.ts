@@ -1,5 +1,5 @@
 import type { CatalogoStockItem } from '@/libs/api-client'
-import { mostrarNumero } from '@/src/utils/numero'
+import { mostrarNumero } from '@/core/utils/numero'
 import { faltaStock } from '@/features/venta-nueva/lib/avisos'
 import type { VentaEnCola } from './cola'
 

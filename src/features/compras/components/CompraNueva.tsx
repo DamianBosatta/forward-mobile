@@ -5,7 +5,7 @@ import { Trash2 } from 'lucide-react-native'
 import { Button, Field, Notice, PasosNumerados, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useDepositos, useInfiniteProductos } from '@/libs/api-client'
-import { leerNumero, mostrarNumero } from '@/src/utils/numero'
+import { leerNumero, mostrarNumero } from '@/core/utils/numero'
 import { mensajeDelServidor } from '../lib/mensaje-error'
 import { sinCosto, subtotalDe, textoDeLinea, totalCompra, unidadesDe, type LineaCompra } from '../lib/lineaCompra'
 import { useCompraBorrador, type EstadoGuardado } from '../hooks/useCompraBorrador'
@@ -16,7 +16,7 @@ import { LineaCompraCard } from './LineaCompraCard'
 import { ConfirmarYRecibirSheet } from './ConfirmarYRecibirSheet'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { dejarAviso } from '../lib/confirmar-y-recibir'
-import { hoyTexto } from '../lib/fecha'
+import { hoyTexto } from '@/core/utils/fecha'
 
 const SYNC: Record<EstadoGuardado, string | undefined> = {
   nuevo: undefined, guardando: 'Guardando…', guardado: 'Guardado', error: 'Sin guardar', conflicto: 'Sin guardar',

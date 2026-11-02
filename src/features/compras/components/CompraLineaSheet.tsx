@@ -5,7 +5,7 @@ import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Button, Field, Notice, Segmented, formatImporte } from '@/core/ui/fw'
 import { useProducto } from '@/libs/api-client/productos'
-import { leerNumero, mostrarNumero, numeroCompleto } from '@/src/utils/numero'
+import { leerNumero, mostrarNumero, numeroCompleto } from '@/core/utils/numero'
 import { cambioDeCosto, opcionesDeCompra, type LineaCompra, type UnidadCompra } from '../lib/lineaCompra'
 
 const NOMBRE: Record<UnidadCompra, [string, string]> = { Unidad: ['Unidad', 'Unidades'], Bulto: ['Bulto', 'Bultos'], BultoMadre: ['Bulto madre', 'Bultos madre'] }

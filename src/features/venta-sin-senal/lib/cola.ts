@@ -1,6 +1,6 @@
 import { storage } from '@/core/utils/storage'
 import { logger } from '@/core/utils/logger'
-import { diaArgentina } from '@/src/utils/date'
+import { diaArgentina } from '@/core/utils/fecha'
 import { redondear2 } from '@/libs/reglas/dinero'
 import { errorDeAltaVenta, type AltaVenta } from '@/features/venta-nueva/lib/payload'
 import { precioServidor, type LineaCarrito } from '@/features/venta-nueva/lib/carrito'

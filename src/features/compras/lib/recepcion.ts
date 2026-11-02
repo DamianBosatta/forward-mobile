@@ -4,7 +4,7 @@
  * `ui/CompraDetalle.tsx`, `core/domain/fecha-factura.ts` y `core/domain/vencimiento-estimado.ts`.
  * Deciden qué se ofrece; el servidor vuelve a chequear cada transición y es el que manda.
  */
-import { leerNumero, mostrarNumero, numeroCompleto } from '@/src/utils/numero'
+import { leerNumero, mostrarNumero, numeroCompleto } from '@/core/utils/numero'
 
 export interface PasoCompra { label: string; estado: 'hecho' | 'actual' | 'pendiente' }
 

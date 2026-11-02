@@ -1,5 +1,5 @@
 import { formatImporte } from '@/core/ui/fw/formatImporte'
-import { leerNumero } from '@/src/utils/numero'
+import { leerNumero } from '@/core/utils/numero'
 import { armarLinea, razonNoCobro, type Imputacion, type LineaCobroForm, type NoCobroForm } from './entrega'
 
 /**

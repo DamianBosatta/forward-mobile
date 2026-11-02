@@ -1,6 +1,6 @@
 import type { CatalogoStockItem } from '@/libs/api-client'
 import type { CambioProducto } from '@/core/realtime/stockEnVivo'
-import { mostrarNumero } from '@/src/utils/numero'
+import { mostrarNumero } from '@/core/utils/numero'
 import type { LineaCarrito } from './carrito'
 
 /**

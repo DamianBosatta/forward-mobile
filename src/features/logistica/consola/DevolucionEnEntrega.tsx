@@ -5,7 +5,7 @@ import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, OptionCard, Stepper } from '@/core/ui/fw'
 import type { LineaParada } from '@/libs/api-client/logistica'
 import { ElegirChip } from '@/features/cuentas/components/ElegirChip'
-import { leerNumero } from '@/src/utils/numero'
+import { leerNumero } from '@/core/utils/numero'
 import { MOTIVOS_DEVOLUCION } from './entrega'
 
 /** Lámina chofer-03-devoluciones: "¿Tiene devoluciones?". Tocar una opción avanza; la elegida se ve al volver. */

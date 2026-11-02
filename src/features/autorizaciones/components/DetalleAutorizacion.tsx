@@ -8,7 +8,7 @@ import { useAutorizacionPreview, usePendientesAutorizacion, useVenta } from '@/l
 import { useSocio } from '@/libs/api-client/socios'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { formatRelativeTime } from '@/src/utils/date'
+import { formatRelativeTime } from '@/core/utils/fecha'
 import { pideRazon, textosDeMotivos } from '../lib/motivos'
 import { ClienteParaAutorizar } from './ClienteParaAutorizar'
 import { clienteDeBandeja } from './BandejaAutorizaciones'

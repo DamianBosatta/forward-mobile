@@ -1,4 +1,4 @@
-import { msHastaProximaMedianocheArgentina } from '../date'
+import { msHastaProximaMedianocheArgentina } from '../fecha'
 
 describe('msHastaProximaMedianocheArgentina', () => {
   it('a las 23:59:30 hora argentina faltan 30 s', () => {

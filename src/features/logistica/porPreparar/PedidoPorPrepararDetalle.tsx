@@ -6,7 +6,7 @@ import { useVenta } from '@/libs/api-client'
 import type { VentaPreparacion } from '@/libs/api-client/logistica'
 import type { VentaDetalleItemDto } from '@/libs/api-client/types'
 import { tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
-import { parseDateSafe } from '@/src/utils/date'
+import { parseDateSafe } from '@/core/utils/fecha'
 
 type Empaque = NonNullable<VentaDetalleItemDto['empaque']>
 

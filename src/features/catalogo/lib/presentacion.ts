@@ -1,7 +1,7 @@
 import { formatPorcentaje, type ChipInfo } from '@/core/ui/fw'
 import type { Producto } from '@/libs/api-client/types'
 import type { components } from '@/libs/api-client/generated/schema'
-import { diaArgentina } from '@/src/utils/date'
+import { diaArgentina } from '@/core/utils/fecha'
 
 /** La marca de color que decide el servidor (sin stock > nuevo > precio nuevo), la misma del PDF. */
 export type MarcaNovedad = components['schemas']['MarcaNovedad']

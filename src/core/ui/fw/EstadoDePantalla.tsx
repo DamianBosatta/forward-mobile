@@ -2,7 +2,7 @@ import React from 'react'
 import { Text, View } from 'react-native'
 import { Inbox, Lock, WifiOff, type LucideIcon } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { partesArgentina } from '@/src/utils/date'
+import { partesArgentina } from '@/core/utils/fecha'
 import { Button } from './Button'
 
 export type TipoEstadoDePantalla = 'vacio' | 'sinConexion' | 'sinPermiso'

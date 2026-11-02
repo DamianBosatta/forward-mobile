@@ -1,4 +1,4 @@
-import { diaArgentina, partesArgentina } from '@/src/utils/date'
+import { diaArgentina, partesArgentina } from '@/core/utils/fecha'
 
 /** Período del filtro de movimientos de una cuenta corriente. `null` = sin filtro (todo el historial). */
 export type PeriodoDeCuenta = 'mesActual' | 'mesAnterior' | 'ultimos90'

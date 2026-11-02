@@ -1,6 +1,3 @@
-import { ddmmaaaa } from '@/core/utils/fecha'
-import { diaArgentina } from '@/src/utils/date'
-
 /** "dd/mm/aaaa" → "aaaa-mm-dd" (fecha calendario, sin zona); null si no es una fecha válida. */
 export function fechaIso(texto: string): string | null {
   const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(texto.trim())
@@ -10,8 +7,6 @@ export function fechaIso(texto: string): string | null {
   if (f.getUTCFullYear() !== a || f.getUTCMonth() !== mes - 1 || f.getUTCDate() !== d) return null
   return `${a}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 }
-
-export const hoyTexto = () => ddmmaaaa(diaArgentina(Date.now()))
 
 const DIAS_CORTOS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
 

@@ -12,7 +12,7 @@ import { puedePedirCambio } from '@/features/socios/lib/camposSensibles'
 import { Accion, Dato, Seccion } from '@/features/socios/components/PiezasDeFicha'
 import { SolicitudCambio } from '@/features/clientes/components/SolicitudCambio'
 import { urlLlamar, urlWhatsApp } from '@/features/clientes/lib/contacto'
-import { formatToLocalTime } from '@/src/utils/date'
+import { formatToLocalTime } from '@/core/utils/fecha'
 import { useComprasDelProveedor } from '../hooks/useProveedores'
 import { AVISO_FALTAN_DATOS, condicionBreve, horariosDeEntrega, saldoDelProveedor } from '../lib/proveedor'
 

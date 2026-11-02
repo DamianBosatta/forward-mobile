@@ -8,7 +8,7 @@ import { esFallaDeRed } from '@/core/api/errores'
 import { useResponsive } from '@/libs/useResponsive'
 import { useResumenVendedor, type ResumenVendedor } from '@/libs/api-client/reportes'
 import { useVendedores } from '@/libs/api-client/ventas'
-import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
+import { useAhoraArgentina } from '@/core/utils/useAhoraArgentina'
 import { mesDe, moverMes, nombreMes, tituloMes, type Mes } from './mes'
 import { diaDeLaSemana, tituloSemana } from './semana'
 

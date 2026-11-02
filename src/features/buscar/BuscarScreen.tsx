@@ -12,7 +12,7 @@ import type { SocioListDto } from '@/libs/api-client/types'
 import { useCartera, useValorDiferido } from '@/features/clientes/hooks/useCartera'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
-import { parseDateSafe } from '@/src/utils/date'
+import { parseDateSafe } from '@/core/utils/fecha'
 import { useVenderA } from '@/features/venta-nueva/hooks/useVenderA'
 import { MINIMO_BUSQUEDA, clientesConCuenta, seccionesVisibles } from './lib/secciones'
 

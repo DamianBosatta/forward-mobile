@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { diaArgentina } from '@/src/utils/date'
+import { diaArgentina } from '@/core/utils/fecha'
 import { useBorradoresVentaMios, useInfiniteVentas, useVentasResumen } from '@/libs/api-client/ventas'
 import { itemsCargados, totalDelServidor } from '@/features/listas/lib/contador'
 import { contadorVentas, totalesDeLaLista } from '../lib/resumenVentas'
