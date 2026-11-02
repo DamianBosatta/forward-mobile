@@ -8,6 +8,8 @@ import { StatusBar } from 'expo-status-bar'
 import { useAuthGuard } from '../hooks/useAuthGuard'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { conectarCierreDeSesion } from '@/features/auth/lib/cerrarSesion'
+import { hasSavedCredentials } from '@/features/auth/utils/biometrics'
+import { logger } from '@/core/utils/logger'
 import { OfertaDeHuella } from '@/features/auth/components/OfertaDeHuella'
 import { View } from 'react-native'
 import {
@@ -33,6 +35,8 @@ SplashScreen.preventAutoHideAsync()
 
 const queryClient = crearQueryClient()
 conectarCierreDeSesion(queryClient, asyncStoragePersister)
+// A fingerprint credential saved by an older build without the marker is deleted on the first start, not only when the login screen shows.
+hasSavedCredentials().catch((err) => logger.warn('Legacy fingerprint credential cleanup failed:', err))
 
 function AuthGuardHandler() {
   useAuthGuard()
