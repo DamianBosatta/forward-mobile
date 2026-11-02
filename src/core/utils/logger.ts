@@ -50,7 +50,8 @@ const reportToSentry = (args: unknown[]) => {
   const err = args.find((a) => a instanceof Error) ?? (typeof args[0] === 'object' && (args[0] as { message?: string } | null)?.message ? args[0] : null)
 
   if (err) {
-    if (isClientError(statusOf(err))) return
+    // A 4xx arrives as a numeric status or as the "API Error [4xx]" text, whether logged as a string or inside an Error.
+    if (isClientError(statusOf(err)) || API_ERROR_4XX.test(String((err as { message?: unknown }).message))) return
     Sentry.captureException(err instanceof Error ? scrubbedError(err) : err)
     return
   }
