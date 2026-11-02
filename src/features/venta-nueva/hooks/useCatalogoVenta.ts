@@ -94,6 +94,8 @@ export function useCatalogoVenta(busqueda: string) {
     isLoading: query.isLoading || (alServidor && (servidor.isLoading || servidor.isPlaceholderData)),
     cargado: query.data !== undefined,
     isError: query.data === undefined && query.isError,
+    /** Por qué falló el catálogo (sólo si `isError`): la pantalla lo pasa por `mensajeDeError`. */
+    error: query.error,
     reintentar: query.refetch,
   }
 }

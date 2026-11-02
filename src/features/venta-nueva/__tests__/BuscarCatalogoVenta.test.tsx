@@ -1,6 +1,7 @@
 import React from 'react'
 import { act, render, screen, userEvent } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ApiError } from '@/core/api/client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { CatalogoVenta } from '../components/CatalogoVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
@@ -46,5 +47,54 @@ describe('buscar en el catálogo de venta', () => {
     expect(screen.getByTestId('producto-pf')).toBeTruthy()
     expect(screen.queryByTestId('producto-p1')).toBeNull()
     expect(pidioBusqueda()).toBe(false)
+  })
+})
+
+async function abrirCatalogo() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(<QueryClientProvider client={qc}><CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} /></QueryClientProvider>)
+  await act(async () => {})
+}
+
+// El bug (A-18): un error al cargar el catálogo se veía como "No hay productos que coincidan".
+describe('catálogo de venta: estados de la lista', () => {
+  it('sin red muestra el error traducido y "Reintentar", nunca el texto de sin resultados; Reintentar vuelve a pedir', async () => {
+    mockGet.mockReset().mockRejectedValue(new TypeError('Network request failed'))
+    await abrirCatalogo()
+
+    expect(await screen.findByText('Sin conexión. Revisá tu red e intentá de nuevo.')).toBeTruthy()
+    expect(screen.queryByText('No hay productos que coincidan.')).toBeNull()
+
+    mockGet.mockReset().mockResolvedValue(pagina([pala]))
+    await userEvent.setup({ advanceTimers: jest.advanceTimersByTime }).press(screen.getByRole('button', { name: 'Reintentar' }))
+    await act(async () => {})
+    expect(mockGet).toHaveBeenCalled()
+    expect(await screen.findByTestId('producto-p1')).toBeTruthy()
+    expect(screen.queryByText('Sin conexión. Revisá tu red e intentá de nuevo.')).toBeNull()
+  })
+
+  it('un error del servidor también se ve como error con "Reintentar", no como sin resultados', async () => {
+    mockGet.mockReset().mockRejectedValue(new ApiError(409, 'No se pudo armar el catálogo.'))
+    await abrirCatalogo()
+
+    expect(await screen.findByText('No se pudo armar el catálogo.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeTruthy()
+    expect(screen.queryByText('No hay productos que coincidan.')).toBeNull()
+  })
+
+  it('con el catálogo vacío y sin error sigue diciendo que no hay productos', async () => {
+    mockGet.mockReset().mockResolvedValue(pagina([]))
+    await abrirCatalogo()
+
+    expect(await screen.findByText('No hay productos que coincidan.')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Reintentar' })).toBeNull()
+  })
+
+  it('con el catálogo cargado muestra los productos como siempre', async () => {
+    mockGet.mockReset().mockResolvedValue(pagina([pala]))
+    await abrirCatalogo()
+
+    expect(await screen.findByTestId('producto-p1')).toBeTruthy()
+    expect(screen.queryByText('No hay productos que coincidan.')).toBeNull()
   })
 })
