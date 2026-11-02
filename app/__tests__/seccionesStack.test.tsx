@@ -126,6 +126,26 @@ describe('Drawer sections keep their own back stack (A-05)', () => {
     expect(pantalla('perfil')).toBeTruthy()
   })
 
+  // Call sites that replace across sections (ClienteForm, RequirePermission, GlobalErrorBoundary).
+  it.each([
+    ['socios', 'nuevo', '/(tabs)/ventas/nueva', 'ventas/nueva'],
+    ['socios', 'nuevo', '/(tabs)/socios/[id]', 'socios/[id]'],
+    ['compras', 'nueva', '/(tabs)/compras/[id]', 'compras/[id]'],
+    ['ventas', 'nueva', '/(tabs)', 'index'],
+    ['ventas', 'nueva', '/', 'index'],
+  ])('router.replace from %s/%s to %s opens it', (seccion, interna, destino, pantallaEsperada) => {
+    let router!: ReturnType<typeof useRouter>
+    const mapa = arbol()
+    const Original = mapa[`(tabs)/${seccion}/${interna}`]
+    mapa[`(tabs)/${seccion}/${interna}`] = () => {
+      router = useRouter()
+      return <Original />
+    }
+    renderRouter(mapa, { initialUrl: `/${seccion}/${interna}` })
+    act(() => router.replace(destino.replace('[id]', '7') as never))
+    expect(pantalla(pantallaEsperada)).toBeTruthy()
+  })
+
   it('the menu button of an inner screen still opens the Drawer', () => {
     const mapa = arbol()
     let abrir!: () => void
