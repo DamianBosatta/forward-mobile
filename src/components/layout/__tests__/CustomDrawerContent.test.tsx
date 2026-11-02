@@ -182,6 +182,9 @@ describe('CustomDrawerContent — recorte al alcance aprobado', () => {
     ['inventario', 'stock', 'Stock'],
     ['logistica', 'consola', 'Consola del chofer'],
     ['logistica', 'pedidos', 'Pedidos de logística'],
+    ['perfil', 'clave', 'Mi cuenta y contraseña'],
+    ['perfil', 'usuarios', 'Mi cuenta y contraseña'],
+    ['perfil', 'index', 'Mi cuenta y contraseña'],
   ])('en %s/%s del Stack de la sección marca %s', (seccion, pantalla, entrada) => {
     render(<CustomDrawerContent {...conSeccion(seccion, pantalla)} />)
 

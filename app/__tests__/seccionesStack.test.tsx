@@ -53,6 +53,8 @@ const SECCIONES_CON_INTERNAS = [
   ['cuentas', 'cobro'],
   ['tesoreria', 'transferencia'],
   ['avisos', 'preferencias'],
+  ['perfil', 'clave'],
+  ['perfil', 'usuarios'],
 ] as const
 
 describe('Drawer sections keep their own back stack (A-05)', () => {
@@ -112,7 +114,7 @@ describe('Drawer sections keep their own back stack (A-05)', () => {
       return <Text>pantalla:(tabs)/index</Text>
     }
     renderRouter(mapa, { initialUrl: '/' })
-    for (const seccion of ['ventas', 'socios', 'inventario', 'compras', 'proveedores', 'autorizaciones', 'cuentas', 'tesoreria', 'calendario', 'avisos', 'reportes']) {
+    for (const seccion of ['ventas', 'socios', 'inventario', 'compras', 'proveedores', 'autorizaciones', 'cuentas', 'tesoreria', 'calendario', 'avisos', 'reportes', 'perfil']) {
       act(() => router.push(`/(tabs)/${seccion}` as never))
       expect(pantalla(`${seccion}/index`)).toBeTruthy()
     }
@@ -123,7 +125,7 @@ describe('Drawer sections keep their own back stack (A-05)', () => {
     act(() => router.push('/(tabs)/logistica/consola' as never))
     expect(pantalla('logistica/consola')).toBeTruthy()
     act(() => router.push('/(tabs)/perfil' as never))
-    expect(pantalla('perfil')).toBeTruthy()
+    expect(pantalla('perfil/index')).toBeTruthy()
   })
 
   // Call sites that replace across sections (ClienteForm, RequirePermission, GlobalErrorBoundary).
