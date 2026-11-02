@@ -3,6 +3,7 @@ import { useRouter, useSegments, useRootNavigationState } from 'expo-router'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { configureApiClient } from '@/core/api/client'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { cerrarSesion } from '@/features/auth/lib/cerrarSesion'
 
 /**
  * Auth Guard Hook
@@ -16,7 +17,7 @@ export function useAuthGuard() {
   const router = useRouter()
   const segments = useSegments()
   const rootNavigationState = useRootNavigationState()
-  const { isAuthenticated, isHydrated, accessToken, logout } = useAuthStore()
+  const { isAuthenticated, isHydrated, accessToken } = useAuthStore()
   const { refreshPermissions } = useAuth()
 
   // 1. API Client Configuration
@@ -29,7 +30,8 @@ export function useAuthGuard() {
           useAuthStore.getState().setTokens(tokens)
         },
         onUnauthorized: () => {
-          useAuthStore.getState().logout()
+          // Forced logout: everything goes except the fingerprint, so "Entrar con huella" still works.
+          void cerrarSesion({ forzado: true })
         },
       })
 
@@ -50,7 +52,7 @@ export function useAuthGuard() {
 
     if (!hasValidSession && !inLoginScreen) {
       // Force cleanup if state is inconsistent
-      if (isAuthenticated) logout()
+      if (isAuthenticated) void cerrarSesion({ forzado: true })
 
       // Navigate to login
       router.replace('/login')

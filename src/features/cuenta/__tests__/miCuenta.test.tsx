@@ -38,7 +38,8 @@ const mockSetHuella = jest.fn()
 jest.mock('@/features/auth/utils/biometrics', () => ({
   isBiometricsAvailable: async () => mockHuella.disponible,
   isBiometricLoginEnabled: async () => mockHuella.prendida,
-  setBiometricLoginEnabled: (v: boolean) => mockSetHuella(v),
+  setBiometricLoginEnabled: (v: boolean, u: string) => mockSetHuella(v, u),
+  forgetBiometricLogin: async () => {},
 }))
 jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), DrawerActions: { openDrawer: jest.fn() } }))
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390, isTablet: false, isTabletLandscape: false, isLarge: false }) }))
@@ -109,7 +110,7 @@ describe('Mi cuenta reducida (bloque 12, T2: R15 y reglas mobile §14)', () => {
     const huella = await screen.findByRole('switch', { name: 'Entrar con huella' })
     await waitFor(() => expect(screen.getByRole('switch', { name: 'Entrar con huella' }).props.accessibilityState.checked).toBe(true))
     await userEvent.press(huella)
-    expect(mockSetHuella).toHaveBeenCalledWith(false)
+    expect(mockSetHuella).toHaveBeenCalledWith(false, 'eparraquini')
     await waitFor(() => expect(screen.getByRole('switch', { name: 'Entrar con huella' }).props.accessibilityState.checked).toBe(false))
   })
 
@@ -119,7 +120,7 @@ describe('Mi cuenta reducida (bloque 12, T2: R15 y reglas mobile §14)', () => {
     pintar()
     await waitFor(() => expect(screen.getByRole('switch', { name: 'Entrar con huella' }).props.accessibilityState.checked).toBe(false))
     await userEvent.press(screen.getByRole('switch', { name: 'Entrar con huella' }))
-    expect(mockSetHuella).toHaveBeenCalledWith(true)
+    expect(mockSetHuella).toHaveBeenCalledWith(true, 'eparraquini')
     expect(await screen.findByText('La próxima vez que entres con tu contraseña queda lista la huella.')).toBeTruthy()
   })
 

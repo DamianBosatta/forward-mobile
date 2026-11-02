@@ -3,6 +3,7 @@ import { useAuthStore, parsePermissionsFromArray } from '../store/auth.store';
 import { configureApiClient, API_URL } from '@/core/api/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { realtimeClient } from '@/libs/api-client/realtime';
+import { cerrarSesion } from '../lib/cerrarSesion';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Login Rate Limiting — Previene ataques de fuerza bruta desde el cliente
@@ -13,7 +14,7 @@ const LOCKOUT_DURATION_MS = 30_000
 const BASE_DELAY_MS = 1000
 
 export function useAuth() {
-  const { setTokens, setUser, logout: clearAuth } = useAuthStore();
+  const { setTokens, setUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -163,7 +164,7 @@ export function useAuth() {
           useAuthStore.getState().setTokens(newTokens);
         },
         onUnauthorized: () => {
-          useAuthStore.getState().logout();
+          void cerrarSesion({ forzado: true });
         },
       });
 
@@ -179,11 +180,10 @@ export function useAuth() {
     }
   }, [failedAttempts, isLocked, lockRemainingMs, setTokens, refreshPermissions, queryClient]);
 
-  const logout = useCallback(() => {
-    clearAuth();
-    queryClient.clear();
+  const logout = useCallback(async () => {
+    await cerrarSesion();
     realtimeClient.disconnect().catch(() => {});
-  }, [clearAuth, queryClient]);
+  }, []);
 
   return {
     login,

@@ -7,7 +7,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { useAuthGuard } from '../hooks/useAuthGuard'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { vaciarCacheAlCerrarSesion } from '@/features/auth/lib/vaciarCacheAlCerrarSesion'
+import { conectarCierreDeSesion } from '@/features/auth/lib/cerrarSesion'
+import { OfertaDeHuella } from '@/features/auth/components/OfertaDeHuella'
 import { View } from 'react-native'
 import {
   useFonts,
@@ -31,7 +32,7 @@ import { EnvioConsolaSinSenal } from '@/features/logistica/cola'
 SplashScreen.preventAutoHideAsync()
 
 const queryClient = crearQueryClient()
-vaciarCacheAlCerrarSesion(queryClient, asyncStoragePersister)
+conectarCierreDeSesion(queryClient, asyncStoragePersister)
 
 function AuthGuardHandler() {
   useAuthGuard()
@@ -105,6 +106,7 @@ function RootLayoutNav() {
         <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
       </Stack>
       <OfflineBanner />
+      <OfertaDeHuella />
     </View>
   )
 }

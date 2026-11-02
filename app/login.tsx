@@ -12,11 +12,13 @@ import { useAuth } from '@/features/auth/hooks/useAuth'
 import { useTecladoVisible } from '@/features/auth/hooks/useTecladoVisible'
 import {
   authenticateWithBiometrics,
-  getSavedCredentials,
-  isBiometricLoginEnabled,
+  getBiometricChoice,
+  getBiometricChoiceFor,
+  hasSavedCredentials,
   isBiometricsAvailable,
   saveCredentials,
 } from '@/features/auth/utils/biometrics'
+import { useOfertaDeHuella } from '@/features/auth/store/ofertaDeHuella.store'
 import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
 
 /** El mismo tope que aplica `useAuth` antes de bloquear el ingreso. */
@@ -69,19 +71,16 @@ export default function LoginScreen() {
   useEffect(() => {
     let vivo = true
     void (async () => {
-      const [disponible, guardadas, prendida] = await Promise.all([
+      const [disponible, guardadas, eleccion] = await Promise.all([
         isBiometricsAvailable(),
-        getSavedCredentials(),
-        isBiometricLoginEnabled(),
+        hasSavedCredentials(),
+        getBiometricChoice(),
       ])
       if (!vivo) return
-      const ofrecer = disponible && !!guardadas && prendida
-      setOfrecerHuella(ofrecer)
-      if (ofrecer) void entrarConHuella()
+      // Only the button: the fingerprint is asked when it is pressed, never on its own (S2).
+      setOfrecerHuella(disponible && guardadas && eleccion === 'enabled')
     })()
     return () => { vivo = false }
-    // Solo al abrir la pantalla: la huella se ofrece una vez sola.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -95,8 +94,19 @@ export default function LoginScreen() {
       return
     }
     if (!(await login(username, password))) return
-    if (await isBiometricLoginEnabled()) {
-      await saveCredentials({ username: username.trim(), password: password.trim() })
+    const creds = { username: username.trim(), password: password.trim() }
+    // Bound to the username: if someone else had decided, their decision and credential are deleted first.
+    const [eleccion, disponible] = await Promise.all([getBiometricChoiceFor(creds.username), isBiometricsAvailable()])
+    if (eleccion === 'enabled') {
+      // Turned on in Mi cuenta: saved now, behind device authentication. Cancelling it only skips the save.
+      try {
+        await saveCredentials(creds)
+      } catch {
+        // The person cancelled the device authentication: the session stays open, nothing is saved.
+      }
+    } else if (eleccion === null && disponible) {
+      // Opt-in: asked once the session is open (`OfertaDeHuella`); nothing is saved until the person accepts.
+      useOfertaDeHuella.getState().ofrecer(creds)
     }
     entrar()
   }
