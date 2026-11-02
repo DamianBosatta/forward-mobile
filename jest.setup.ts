@@ -1,9 +1,24 @@
 import '@testing-library/jest-native/extend-expect'
 import * as Haptics from 'expo-haptics'
 import { configure } from '@testing-library/react-native'
+import { timeoutManager } from '@tanstack/react-query'
 
 // findBy*/waitFor esperan 1 s por defecto: con la máquina cargada una pantalla tarda más en pintar.
 configure({ asyncUtilTimeout: 4000 })
+
+// react-query keeps a gc timer (5 min by default) per unmounted query. A real timer keeps the Node process alive,
+// so a test file with a QueryClient never let jest exit (cobro.test.tsx looked hung for 5 minutes after passing).
+// Unref'd timers still fire, they just do not hold the process open.
+const sinBloquearSalida = <T extends ReturnType<typeof setTimeout>>(timer: T): T => {
+  ;(timer as { unref?: () => void }).unref?.()
+  return timer
+}
+timeoutManager.setTimeoutProvider({
+  setTimeout: (callback, delay) => sinBloquearSalida(setTimeout(callback, delay)),
+  clearTimeout: (id) => clearTimeout(id),
+  setInterval: (callback, delay) => sinBloquearSalida(setInterval(callback, delay)),
+  clearInterval: (id) => clearInterval(id),
+})
 
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () =>

@@ -1,121 +1,79 @@
-import * as FileSystem from 'expo-file-system/legacy';
-import * as Sentry from '@sentry/react-native';
+import * as Sentry from '@sentry/react-native'
 
 /**
- * Forward ERP – Centralized File Logger (SDK 54+ Optimized)
- * Captures system events, API requests, and errors into a persistent .log file.
- * Uses the legacy API from expo-file-system/legacy as recommended to avoid deprecation warnings.
+ * Forward ERP – centralized logger.
+ *
+ * Level by environment: development prints everything (log/info are the debug level);
+ * production prints and reports only warn and error. There is no file sink: nothing read it
+ * and it grew without a cap.
+ *
+ * Sentry rules: a 4xx is an expected business/validation answer, never reported; the query
+ * string (search terms typed by the user) is stripped from anything sent.
  */
 
-const LOG_FILE_PATH = `${FileSystem.documentDirectory}forward_app.log`;
-const isDev = __DEV__;
+// Read on every call (not at import) so the level always follows the current environment.
+const isDev = () => __DEV__
 
-// Basic lock/queue mechanism to prevent race conditions during file writes
-let isWriting = false;
-const writeQueue: string[] = [];
+const QUERY_STRING = /\?\S*/g
 
-/**
- * Processes the log queue sequentially.
- */
-const processQueue = async () => {
-  if (isWriting || writeQueue.length === 0) return;
-  
-  isWriting = true;
-  const entry = writeQueue.shift();
-  
-  if (entry) {
-    try {
-      // Append string to file using legacy API
-      await FileSystem.writeAsStringAsync(LOG_FILE_PATH, entry, {
-        append: true,
-        encoding: FileSystem.EncodingType?.UTF8 || 'utf8',
-      } as any);
-    } catch (err) {
-      console.warn('LOGGER_ERROR: Failed to write to log file:', err);
-    }
-  }
-  
-  isWriting = false;
-  // Trigger next item in queue
-  if (writeQueue.length > 0) {
-    processQueue();
-  }
-};
+const withoutQueryString = (text: string): string => text.replace(QUERY_STRING, '?<redacted>')
 
-/**
- * Appends a message to the local log file with a timestamp.
- */
-const appendToLogFile = (level: string, ...args: any[]) => {
+const API_ERROR_4XX = /API Error \[4\d\d\]/
+
+const statusOf = (value: unknown): number | null => {
+  const status = (value as { status?: unknown } | null)?.status
+  return typeof status === 'number' ? status : null
+}
+
+const isClientError = (status: number | null): boolean => status !== null && status >= 400 && status < 500
+
+const stringify = (arg: unknown): string => {
+  if (typeof arg !== 'object' || arg === null) return String(arg)
   try {
-    const timestamp = new Date().toISOString();
-    const message = args
-      .map(arg => {
-        try {
-          return typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg);
-        } catch (e) {
-          return '[Unserializable Object]';
-        }
-      })
-      .join(' ');
-    
-    const logEntry = `[${timestamp}] [${level}] ${message}\n`;
-    
-    // Add to queue and trigger processing
-    writeQueue.push(logEntry);
-    processQueue();
-  } catch (err) {
-    console.error('Logger encountered an internal error:', err);
+    return JSON.stringify(arg)
+  } catch {
+    return '[Unserializable Object]'
   }
-};
+}
+
+/** Same error with the query string removed from its message; keeps name and stack. */
+const scrubbedError = (err: Error): Error => {
+  const message = withoutQueryString(err.message)
+  if (message === err.message) return err
+  const copy = new Error(message)
+  copy.name = err.name
+  copy.stack = err.stack ? withoutQueryString(err.stack) : err.stack
+  return copy
+}
+
+const reportToSentry = (args: unknown[]) => {
+  const err = args.find((a) => a instanceof Error) ?? (typeof args[0] === 'object' && (args[0] as { message?: string } | null)?.message ? args[0] : null)
+
+  if (err) {
+    if (isClientError(statusOf(err))) return
+    Sentry.captureException(err instanceof Error ? scrubbedError(err) : err)
+    return
+  }
+
+  const text = args.map(stringify).join(' ')
+  if (API_ERROR_4XX.test(text)) return
+  Sentry.captureMessage(withoutQueryString(text))
+}
 
 export const logger = {
+  /** Debug level: development only. */
   log: (...args: any[]) => {
-    if (isDev) console.log('[LOG]', ...args);
-    appendToLogFile('LOG', ...args);
+    if (isDev()) console.log('[LOG]', ...args)
+  },
+  /** Debug level: development only. */
+  info: (...args: any[]) => {
+    if (isDev()) console.info('[INFO]', ...args)
   },
   warn: (...args: any[]) => {
-    if (isDev) console.warn('[WARN]', ...args);
-    appendToLogFile('WARN', ...args);
+    console.warn('[WARN]', ...args)
   },
-
   error: (...args: any[]) => {
-    console.error('[ERROR]', ...args);
-    appendToLogFile('ERROR', ...args);
-    
-    // Si el último argumento es un error o el primero, mandarlo a Sentry
-    const err = args.find(a => a instanceof Error) || (typeof args[0] === 'object' && args[0]?.message ? args[0] : null);
-    if (err) {
-        Sentry.captureException(err);
-    } else {
-        Sentry.captureMessage(args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' '));
-    }
+    console.error('[ERROR]', ...args)
+    reportToSentry(args)
   },
-  info: (...args: any[]) => {
-    if (isDev) console.info('[INFO]', ...args);
-    appendToLogFile('INFO', ...args);
-  },
-  
-  getLogFileUri: () => LOG_FILE_PATH,
-  
-  readLogs: async () => {
-    try {
-      const info = await FileSystem.getInfoAsync(LOG_FILE_PATH);
-      if (info.exists) {
-        return await FileSystem.readAsStringAsync(LOG_FILE_PATH);
-      }
-      return 'Log file is empty or does not exist.';
-    } catch (err) {
-      return `Error reading logs: ${err}`;
-    }
-  },
-  
-  clearLogs: async () => {
-    try {
-      await FileSystem.writeAsStringAsync(LOG_FILE_PATH, '');
-      console.log('Logs cleared.');
-    } catch (err) {
-      console.error('Failed to clear logs:', err);
-    }
-  }
-};
-
+}

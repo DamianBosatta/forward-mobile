@@ -178,7 +178,8 @@ async function attemptRefresh(): Promise<boolean> {
 
 // ── Fetch con timeout ────────────────────────────────────────────────────────
 
-function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
+/** The one fetch with timeout: every request of the app (login and permissions included) goes through it. */
+export function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 

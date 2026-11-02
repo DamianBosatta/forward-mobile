@@ -1,4 +1,5 @@
 import { MutationCache, QueryClient, type DefaultOptions, type Query } from '@tanstack/react-query'
+import { conectarFocoConAppState } from './focusManager'
 
 /**
  * Raíz de las consultas de Inicio: resumen de Ventas y Compras. Cada mutación la invalida al terminar
@@ -14,6 +15,8 @@ export const inicioKeys = {
  * configuración; `consultas` pisa los valores por defecto de las consultas (p. ej. `retry: false`).
  */
 export function crearQueryClient(consultas: DefaultOptions['queries'] = {}): QueryClient {
+  // El foco de react-query sigue a AppState: sin esto el polling sigue con la app en segundo plano.
+  conectarFocoConAppState()
   const queryClient: QueryClient = new QueryClient({
     // Inicio resume Ventas y Compras: cualquier mutación lo puede mover, también una que falló (un 409
     // al autorizar: la venta cambió). Una sola regla acá en vez de una invalidación en cada mutación.
