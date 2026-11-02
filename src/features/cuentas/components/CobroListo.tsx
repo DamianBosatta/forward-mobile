@@ -8,7 +8,7 @@ import { useEstadoCuentaSocio } from '../api/queries'
 import { useCuentaDelPago, useImputadoDelPago, type CobroRegistrado } from '../api/cobros'
 import { textoImputacion } from '../lib/movimientos'
 import { textoDeRecibo, type LineaDeRecibo } from '../lib/cobro'
-import { hoyTexto } from '@/features/compras/lib/fecha'
+import { hoyTexto } from '@/core/utils/fecha'
 
 export const SIN_CUENTA_CONFIRMADA = 'No se pudo confirmar en qué cuenta quedó: fijate en los movimientos de la cuenta corriente.'
 export const COBRO_YA_ESTABA = 'Este cobro ya estaba registrado: no se cargó de nuevo.'

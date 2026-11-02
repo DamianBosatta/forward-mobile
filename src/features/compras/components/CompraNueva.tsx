@@ -16,7 +16,7 @@ import { LineaCompraCard } from './LineaCompraCard'
 import { ConfirmarYRecibirSheet } from './ConfirmarYRecibirSheet'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { dejarAviso } from '../lib/confirmar-y-recibir'
-import { hoyTexto } from '../lib/fecha'
+import { hoyTexto } from '@/core/utils/fecha'
 
 const SYNC: Record<EstadoGuardado, string | undefined> = {
   nuevo: undefined, guardando: 'Guardando…', guardado: 'Guardado', error: 'Sin guardar', conflicto: 'Sin guardar',

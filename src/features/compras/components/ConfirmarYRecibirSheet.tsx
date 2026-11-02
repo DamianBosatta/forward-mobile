@@ -2,7 +2,8 @@ import React, { useState } from 'react'
 import { Text } from 'react-native'
 import { BottomSheet, Button, Field, Notice } from '@/core/ui/fw'
 import { typeScale, useColors } from '@/libs/theme'
-import { fechaIso, hoyTexto } from '../lib/fecha'
+import { hoyTexto } from '@/core/utils/fecha'
+import { fechaIso } from '../lib/fecha'
 
 interface Props {
   visible: boolean
