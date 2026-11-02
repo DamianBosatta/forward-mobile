@@ -8,6 +8,7 @@ import { StatusBar } from 'expo-status-bar'
 import { useAuthGuard } from '../hooks/useAuthGuard'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { conectarCierreDeSesion } from '@/features/auth/lib/cerrarSesion'
+import { OfertaDeHuella } from '@/features/auth/components/OfertaDeHuella'
 import { View } from 'react-native'
 import {
   useFonts,
@@ -105,6 +106,7 @@ function RootLayoutNav() {
         <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
       </Stack>
       <OfflineBanner />
+      <OfertaDeHuella />
     </View>
   )
 }

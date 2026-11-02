@@ -8,6 +8,7 @@ import { render, fireEvent, screen, waitFor } from '@testing-library/react-nativ
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import LoginScreen from '../../../../../app/login';
 import { useAuth } from '../../hooks/useAuth';
+import { useOfertaDeHuella } from '../../store/ofertaDeHuella.store';
 
 // LoginScreen uses useQueryClient() (to clear cache on API env switch), so it
 // must render inside a QueryClientProvider.
@@ -44,15 +45,16 @@ jest.mock('../../hooks/useAuth', () => ({
 
 const mockBio = {
   available: false,
-  saved: null as { username: string; password: string } | null,
-  enabled: true,
+  saved: false,
+  choice: null as 'enabled' | 'disabled' | null,
 };
 const mockSaveCredentials = jest.fn();
 const mockAuthenticate = jest.fn();
 jest.mock('../../utils/biometrics', () => ({
   isBiometricsAvailable: async () => mockBio.available,
-  getSavedCredentials: async () => mockBio.saved,
-  isBiometricLoginEnabled: async () => mockBio.enabled,
+  hasSavedCredentials: async () => mockBio.saved,
+  getBiometricChoice: async () => mockBio.choice,
+  isBiometricLoginEnabled: async () => mockBio.choice === 'enabled',
   saveCredentials: (c: unknown) => mockSaveCredentials(c),
   authenticateWithBiometrics: () => mockAuthenticate(),
 }));
@@ -70,8 +72,9 @@ const ingresar = () => screen.getByRole('button', { name: 'Ingresar' });
 beforeEach(() => {
   jest.clearAllMocks();
   mockBio.available = false;
-  mockBio.saved = null;
-  mockBio.enabled = true;
+  mockBio.saved = false;
+  mockBio.choice = null;
+  useOfertaDeHuella.getState().descartar();
   mockResponsive = { isTablet: false };
   mockAuthenticate.mockResolvedValue(null);
   (globalThis as { __DEV__?: boolean }).__DEV__ = true;
@@ -103,19 +106,35 @@ describe('Ingreso', () => {
     expect(login).not.toHaveBeenCalled();
   });
 
-  it('ingresa con lo escrito, guarda las credenciales para la huella y entra a la app', async () => {
+  it('ingresa con lo escrito y entra a la app; sin decisión no guarda la contraseña y ofrece la huella', async () => {
     const login = auth();
+    mockBio.available = true;
     renderLogin();
     fireEvent.changeText(usuario(), 'admin');
     fireEvent.changeText(contrasena(), 'secreta123');
     fireEvent.press(ingresar());
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)'));
     expect(login).toHaveBeenCalledWith('admin', 'secreta123');
-    expect(mockSaveCredentials).toHaveBeenCalledWith({ username: 'admin', password: 'secreta123' });
+    expect(mockSaveCredentials).not.toHaveBeenCalled();
+    expect(useOfertaDeHuella.getState().pendiente).toEqual({ username: 'admin', password: 'secreta123' });
   });
 
-  it('con la huella apagada en Mi cuenta no guarda la contraseña en el teléfono', async () => {
-    mockBio.enabled = false;
+  it('con la huella aceptada guarda las credenciales al ingresar con contraseña', async () => {
+    mockBio.available = true;
+    mockBio.choice = 'enabled';
+    auth();
+    renderLogin();
+    fireEvent.changeText(usuario(), 'admin');
+    fireEvent.changeText(contrasena(), 'secreta123');
+    fireEvent.press(ingresar());
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)'));
+    expect(mockSaveCredentials).toHaveBeenCalledWith({ username: 'admin', password: 'secreta123' });
+    expect(useOfertaDeHuella.getState().pendiente).toBeNull();
+  });
+
+  it('con la huella rechazada no guarda la contraseña ni vuelve a preguntar', async () => {
+    mockBio.available = true;
+    mockBio.choice = 'disabled';
     auth();
     renderLogin();
     fireEvent.changeText(usuario(), 'admin');
@@ -123,6 +142,17 @@ describe('Ingreso', () => {
     fireEvent.press(ingresar());
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)'));
     expect(mockSaveCredentials).not.toHaveBeenCalled();
+    expect(useOfertaDeHuella.getState().pendiente).toBeNull();
+  });
+
+  it('sin huella en el teléfono no pregunta', async () => {
+    auth();
+    renderLogin();
+    fireEvent.changeText(usuario(), 'admin');
+    fireEvent.changeText(contrasena(), 'secreta123');
+    fireEvent.press(ingresar());
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)'));
+    expect(useOfertaDeHuella.getState().pendiente).toBeNull();
   });
 
   it('si el ingreso falla no guarda la contraseña ni entra', async () => {
@@ -134,6 +164,7 @@ describe('Ingreso', () => {
     fireEvent.press(ingresar());
     await waitFor(() => expect(login).toHaveBeenCalledWith('admin', 'equivocada'));
     expect(mockSaveCredentials).not.toHaveBeenCalled();
+    expect(useOfertaDeHuella.getState().pendiente).toBeNull();
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
@@ -154,31 +185,50 @@ describe('Ingreso', () => {
     expect(screen.getByRole('button', { name: 'Acceso bloqueado' })).toBeDisabled();
   });
 
-  it('"Entrar con huella" aparece solo con huella disponible, prendida y credenciales guardadas', async () => {
+  it('"Entrar con huella" aparece con huella disponible, aceptada y guardada, y no se dispara sola', async () => {
     auth();
     mockBio.available = true;
-    mockBio.saved = { username: 'admin', password: 'secreta123' };
+    mockBio.saved = true;
+    mockBio.choice = 'enabled';
     renderLogin();
     expect(await screen.findByRole('button', { name: 'Entrar con huella' })).toBeTruthy();
+    expect(mockAuthenticate).not.toHaveBeenCalled();
   });
 
-  it('sin credenciales guardadas o con la huella apagada no ofrece la huella', async () => {
+  it('sin decisión, rechazada o sin credencial guardada no muestra el botón', async () => {
     auth();
     mockBio.available = true;
-    mockBio.saved = { username: 'admin', password: 'secreta123' };
-    mockBio.enabled = false;
-    renderLogin();
-    await waitFor(() => expect(mockAuthenticate).not.toHaveBeenCalled());
+    mockBio.saved = true;
+    mockBio.choice = null;
+    const { unmount } = renderLogin();
+    await act(async () => {});
     expect(screen.queryByRole('button', { name: 'Entrar con huella' })).toBeNull();
+    unmount();
+
+    mockBio.choice = 'disabled';
+    const otra = renderLogin();
+    await act(async () => {});
+    expect(screen.queryByRole('button', { name: 'Entrar con huella' })).toBeNull();
+    otra.unmount();
+
+    mockBio.choice = 'enabled';
+    mockBio.saved = false;
+    renderLogin();
+    await act(async () => {});
+    expect(screen.queryByRole('button', { name: 'Entrar con huella' })).toBeNull();
+    expect(mockAuthenticate).not.toHaveBeenCalled();
   });
 
-  it('entrar con huella ingresa con las credenciales guardadas', async () => {
+  it('tocar "Entrar con huella" pide la huella e ingresa con las credenciales guardadas', async () => {
     const login = auth();
     mockBio.available = true;
-    mockBio.saved = { username: 'admin', password: 'secreta123' };
+    mockBio.saved = true;
+    mockBio.choice = 'enabled';
     mockAuthenticate.mockResolvedValue({ username: 'admin', password: 'secreta123' });
     renderLogin();
+    fireEvent.press(await screen.findByRole('button', { name: 'Entrar con huella' }));
     await waitFor(() => expect(login).toHaveBeenCalledWith('admin', 'secreta123'));
+    expect(mockAuthenticate).toHaveBeenCalledTimes(1);
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)'));
   });
 
@@ -206,7 +256,8 @@ describe('Ingreso', () => {
   });
   it('sin conexión avisa y apaga "Ingresar" y la huella; al volver la red se reactivan', async () => {
     mockBio.available = true;
-    mockBio.saved = { username: 'ana', password: 'x' };
+    mockBio.saved = true;
+    mockBio.choice = 'enabled';
     auth();
     renderLogin();
     const huella = await screen.findByRole('button', { name: 'Entrar con huella' });

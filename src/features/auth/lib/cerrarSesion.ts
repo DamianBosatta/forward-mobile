@@ -2,7 +2,8 @@ import type { QueryClient } from '@tanstack/react-query'
 import type { Persister } from '@tanstack/react-query-persist-client'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { useAuthStore } from '../store/auth.store'
-import { clearSavedCredentials } from '../utils/biometrics'
+import { useOfertaDeHuella } from '../store/ofertaDeHuella.store'
+import { forgetBiometricLogin } from '../utils/biometrics'
 
 /**
  * The one logout of the app (audit A-01 + M-02). Every path ends here: "Cerrar sesión" (Mi cuenta and the
@@ -38,12 +39,14 @@ async function borrarDatosDeLaSesion(): Promise<void> {
   }
   useLogisticaStore.getState().reset()
   await useLogisticaStore.persist.clearStorage()
-  await clearSavedCredentials()
+  useOfertaDeHuella.getState().descartar()
+  await forgetBiometricLogin()
 }
 
 /**
  * Closes the session on this phone: drops the tokens and empties the react-query cache (memory and disk), the
- * active trip (`forward-logistica-store`) and the fingerprint credential. Callable outside React. Revoking on
+ * active trip (`forward-logistica-store`) and the fingerprint credential with its decision (S2: "Se borra al
+ * cerrar sesión"). Callable outside React. Revoking on
  * the server and navigating are the caller's job (`useCerrarSesion`).
  */
 export async function cerrarSesion(): Promise<void> {

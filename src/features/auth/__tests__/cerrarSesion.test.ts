@@ -19,9 +19,11 @@ import { crearQueryClient, opcionesDePersistencia } from '@/core/query/queryClie
 import { mmkvPersister } from '@/core/query/persistConfig'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { useAuthStore } from '../store/auth.store'
+import { useOfertaDeHuella } from '../store/ofertaDeHuella.store'
 import { cerrarSesion, conectarCierreDeSesion } from '../lib/cerrarSesion'
 
 const CREDENCIAL_HUELLA = 'forward_biometric_credentials'
+const DECISION_HUELLA = 'forward_biometric_enabled'
 const VIAJE = { id: 'hoja-1', detalles: [{ id: 'p1', clienteNombre: 'Almacén Don Pepe', direccion: 'Mitre 123' }] }
 
 const mockFetch = jest.fn()
@@ -42,6 +44,8 @@ async function conSesion() {
   qc.getMutationCache().build(qc, { mutationKey: ['cobro'] })
   useLogisticaStore.getState().setActiveTrip(VIAJE as never)
   mockSecure.set(CREDENCIAL_HUELLA, JSON.stringify({ username: 'chofer', password: 'secreta' }))
+  mockSecure.set(DECISION_HUELLA, 'true')
+  useOfertaDeHuella.getState().ofrecer({ username: 'chofer', password: 'secreta' })
   expect((await mmkvPersister.restoreClient())?.clientState.queries).toHaveLength(1)
   expect(await AsyncStorage.getItem('forward-logistica-store')).toContain('Almacén Don Pepe')
   return { qc, soltar: () => { dejarDeGuardar(); desconectar() } }
@@ -59,6 +63,9 @@ async function sinNadaDeLaSesion(qc: ReturnType<typeof crearQueryClient>) {
   expect(useLogisticaStore.getState().activeTrip).toBeNull()
   expect(await AsyncStorage.getItem('forward-logistica-store')).toBeNull()
   expect(mockSecure.has(CREDENCIAL_HUELLA)).toBe(false)
+  // S2: "Se borra al cerrar sesión"; the next user of the phone is asked again, and an unanswered offer goes too.
+  expect(mockSecure.has(DECISION_HUELLA)).toBe(false)
+  expect(useOfertaDeHuella.getState().pendiente).toBeNull()
 }
 
 beforeEach(async () => {

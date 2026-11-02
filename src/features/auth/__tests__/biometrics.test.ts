@@ -1,44 +1,91 @@
 /**
- * Bloque 12, T2 (D11, R15): "Entrar con huella" se prende y se apaga desde Mi cuenta.
- * Apagarla borra el usuario y la contraseña guardados en el teléfono.
+ * Audit tranche 1, S2: "Entrar con huella" is opt-in, owner's decision "Opt-in, con botón":
+ * "Después del primer login la app pregunta si querés entrar con huella la próxima vez. Solo si aceptás se guarda
+ * la credencial, protegida con autenticación del dispositivo. Al abrir la app aparece un botón "Entrar con huella",
+ * no se dispara sola. Se borra al cerrar sesión."
+ * Mi cuenta can still turn it off (bloque 12, T2): turning it off deletes the saved credential.
  */
 const mockStore = new Map<string, string>()
+const mockOptions = new Map<string, unknown>()
 jest.mock('expo-secure-store', () => ({
   getItemAsync: jest.fn(async (k: string) => mockStore.get(k) ?? null),
-  setItemAsync: jest.fn(async (k: string, v: string) => { mockStore.set(k, v) }),
-  deleteItemAsync: jest.fn(async (k: string) => { mockStore.delete(k) }),
+  setItemAsync: jest.fn(async (k: string, v: string, o?: unknown) => { mockStore.set(k, v); mockOptions.set(k, o) }),
+  deleteItemAsync: jest.fn(async (k: string) => { mockStore.delete(k); mockOptions.delete(k) }),
 }))
 jest.mock('expo-local-authentication', () => ({
   hasHardwareAsync: jest.fn(async () => true),
   isEnrolledAsync: jest.fn(async () => true),
-  authenticateAsync: jest.fn(async () => ({ success: true })),
 }))
 
+import * as SecureStore from 'expo-secure-store'
 import {
-  getSavedCredentials,
+  acceptBiometricLogin,
+  authenticateWithBiometrics,
+  declineBiometricLogin,
+  forgetBiometricLogin,
+  getBiometricChoice,
+  hasSavedCredentials,
   isBiometricLoginEnabled,
-  saveCredentials,
   setBiometricLoginEnabled,
 } from '../utils/biometrics'
 
-beforeEach(() => mockStore.clear())
+const CREDENCIAL = 'forward_biometric_credentials'
+const CREDS = { username: 'emanuel.p', password: 'secreta' }
 
-describe('entrar con huella', () => {
-  it('sin elección guardada está prendida, como antes del interruptor', async () => {
+beforeEach(() => {
+  jest.clearAllMocks()
+  mockStore.clear()
+  mockOptions.clear()
+})
+
+describe('entrar con huella (opt-in)', () => {
+  it('nothing decided: it is off and nothing is saved', async () => {
+    expect(await getBiometricChoice()).toBeNull()
+    expect(await isBiometricLoginEnabled()).toBe(false)
+    expect(await hasSavedCredentials()).toBe(false)
+  })
+
+  it('declining stores no credential and records the decision', async () => {
+    await declineBiometricLogin()
+    expect(mockStore.has(CREDENCIAL)).toBe(false)
+    expect(await hasSavedCredentials()).toBe(false)
+    expect(await getBiometricChoice()).toBe('disabled')
+  })
+
+  it('accepting stores the credential protected with device authentication', async () => {
+    expect(await acceptBiometricLogin(CREDS)).toBe(true)
+    expect(JSON.parse(mockStore.get(CREDENCIAL)!)).toEqual(CREDS)
+    expect(mockOptions.get(CREDENCIAL)).toMatchObject({ requireAuthentication: true })
+    expect(await hasSavedCredentials()).toBe(true)
     expect(await isBiometricLoginEnabled()).toBe(true)
   })
 
-  it('apagarla la deja apagada y borra el usuario y la contraseña guardados', async () => {
-    await saveCredentials({ username: 'emanuel.p', password: 'secreta' })
+  it('entering with the fingerprint reads the credential behind device authentication', async () => {
+    await acceptBiometricLogin(CREDS)
+    expect(await authenticateWithBiometrics()).toEqual(CREDS)
+    expect(SecureStore.getItemAsync).toHaveBeenCalledWith(CREDENCIAL, expect.objectContaining({ requireAuthentication: true }))
+  })
+
+  it('cancelling the device authentication while accepting enables nothing', async () => {
+    ;(SecureStore.setItemAsync as jest.Mock).mockImplementationOnce(async () => { throw new Error('cancelled') })
+    expect(await acceptBiometricLogin(CREDS)).toBe(false)
+    expect(await hasSavedCredentials()).toBe(false)
+    expect(await isBiometricLoginEnabled()).toBe(false)
+  })
+
+  it('forgetting it (logout) deletes the credential and the decision', async () => {
+    await acceptBiometricLogin(CREDS)
+    await forgetBiometricLogin()
+    expect(mockStore.has(CREDENCIAL)).toBe(false)
+    expect(await hasSavedCredentials()).toBe(false)
+    expect(await getBiometricChoice()).toBeNull()
+  })
+
+  it('turning it off in Mi cuenta deletes the saved credential', async () => {
+    await acceptBiometricLogin(CREDS)
     await setBiometricLoginEnabled(false)
     expect(await isBiometricLoginEnabled()).toBe(false)
-    expect(await getSavedCredentials()).toBeNull()
-  })
-
-  it('volver a prenderla no inventa credenciales: se guardan en el próximo ingreso con contraseña', async () => {
-    await setBiometricLoginEnabled(false)
-    await setBiometricLoginEnabled(true)
-    expect(await isBiometricLoginEnabled()).toBe(true)
-    expect(await getSavedCredentials()).toBeNull()
+    expect(mockStore.has(CREDENCIAL)).toBe(false)
+    expect(await hasSavedCredentials()).toBe(false)
   })
 })
