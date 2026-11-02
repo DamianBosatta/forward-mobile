@@ -3,7 +3,6 @@ import { Alert, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import Constants from 'expo-constants'
 import { Bell, Fingerprint, Lock, LogOut } from 'lucide-react-native'
-import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../../libs/store/auth.store'
 import { useThemeStore, useColors, radii, space, typeScale, type ThemeMode } from '../../libs/theme'
 import { ConfirmModal } from '@/core/ui'
@@ -12,6 +11,7 @@ import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
 import { FilaDeUsuarios } from '@/features/perfil/components/FilaDeUsuarios'
 import { lineasDeIdentidad } from '@/features/perfil/lib/identidad'
 import { useCerrarSesion } from '@/features/cuenta/hooks/useCerrarSesion'
+import { cerrarSesion as cerrarSesionEnElTelefono } from '@/features/auth/lib/cerrarSesion'
 import { isBiometricLoginEnabled, isBiometricsAvailable, setBiometricLoginEnabled } from '@/features/auth/utils/biometrics'
 
 const THEME_OPTIONS: SegmentedOption<ThemeMode>[] = [
@@ -35,8 +35,7 @@ export default function PerfilScreen() {
   const c = useColors()
   const router = useRouter()
   const leading = useMenuLeading()
-  const queryClient = useQueryClient()
-  const { user, logout, canDo } = useAuthStore()
+  const { user, canDo } = useAuthStore()
   const { mode, setMode } = useThemeStore()
   const { cerrarSesion, revocarEnElServidor } = useCerrarSesion()
   const [saliendo, setSaliendo] = useState(false)
@@ -89,8 +88,7 @@ export default function PerfilScreen() {
       // Antes de cambiar la URL: el logout tiene que ir al servidor donde está la sesión.
       await revocarEnElServidor()
       await setApiUrl(destino)
-      queryClient.clear()
-      logout()
+      await cerrarSesionEnElTelefono()
       router.replace('/login')
     } catch (e) {
       Alert.alert('No se pudo cambiar de servidor', e instanceof Error && e.message ? e.message : 'Probá de nuevo.')

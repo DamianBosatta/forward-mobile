@@ -1,20 +1,17 @@
 import { Alert } from 'react-native'
 import { useRouter } from 'expo-router'
-import { useQueryClient } from '@tanstack/react-query'
-import { useAuthStore } from '@/libs/store/auth.store'
 import { safeHaptics } from '@/core/utils/haptics'
+import { cerrarSesion as cerrarSesionEnElTelefono } from '@/features/auth/lib/cerrarSesion'
 import { darDeBajaPushAntesDeSalir } from '@/features/notificaciones'
 import { AVISO_SESION_NO_CERRADA_EN_TODOS, cerrarSesionEnElServidor } from '../api/cuenta'
 
 /**
- * Cerrar sesión, una sola copia (Mi cuenta y el menú lateral): da de baja el celular para push,
- * revoca en el servidor (mejor esfuerzo; si no se pudo, lo dice), vacía la caché, borra la sesión
- * local y vuelve al login.
+ * Cerrar sesión desde la pantalla (Mi cuenta y el menú lateral): da de baja el celular para push,
+ * revoca en el servidor (mejor esfuerzo; si no se pudo, lo dice), borra todo lo de la sesión en el
+ * teléfono con el único `cerrarSesion()` de auth y vuelve al login.
  */
 export function useCerrarSesion() {
   const router = useRouter()
-  const queryClient = useQueryClient()
-  const { logout } = useAuthStore()
 
   /** Antes da de baja el celular para push: después de revocar, el token de acceso ya no vale. */
   const revocarEnElServidor = async () => {
@@ -26,8 +23,7 @@ export function useCerrarSesion() {
   const cerrarSesion = async () => {
     await revocarEnElServidor()
     safeHaptics.notification('success')
-    queryClient.clear()
-    logout()
+    await cerrarSesionEnElTelefono()
     router.replace('/login')
   }
 
