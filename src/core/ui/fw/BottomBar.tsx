@@ -2,7 +2,7 @@ import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { LucideIcon } from 'lucide-react-native'
-import { space, typeScale, useColors } from '@/libs/theme'
+import { maxFontScale, space, typeScale, useColors } from '@/libs/theme'
 
 export interface BottomBarItem {
   key: string
@@ -50,7 +50,7 @@ export function BottomBar({ items, activeKey, center }: BottomBarProps) {
         }}
       >
         <Icono size={22} color={color} strokeWidth={2} />
-        <Text numberOfLines={1} style={{ ...typeScale.etiqueta, color }}>
+        <Text numberOfLines={1} maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.etiqueta, color }}>
           {label}
         </Text>
       </Pressable>

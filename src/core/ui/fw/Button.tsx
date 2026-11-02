@@ -1,7 +1,7 @@
 import React from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import type { LucideIcon } from 'lucide-react-native'
-import { radii, space, typeScale, useColors, useIsDark, type ForwardColors } from '@/libs/theme'
+import { maxFontScale, radii, space, typeScale, useColors, useIsDark, type ForwardColors } from '@/libs/theme'
 
 /** `peligroContorno`: destructivo que no compite con nada (cerrar sesión); el sólido queda para confirmar. */
 export type ButtonVariant = 'primario' | 'secundario' | 'peligro' | 'peligroContorno'
@@ -80,7 +80,7 @@ export function Button({
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
         {loading && <ActivityIndicator size="small" color={p.texto} />}
         {Icono ? <Icono size={xl ? 26 : 20} color={p.texto} strokeWidth={2.5} /> : null}
-        <Text style={{ ...typeScale.cuerpoDestacado, ...(xl ? { fontSize: 19, lineHeight: 26 } : null), color: p.texto }}>{label}</Text>
+        <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.cuerpoDestacado, ...(xl ? { fontSize: 19, lineHeight: 26 } : null), color: p.texto }}>{label}</Text>
         {IconoFinal ? <IconoFinal testID="icono-final" size={xl ? 26 : 20} color={p.texto} strokeWidth={2.5} /> : null}
       </View>
     </Pressable>

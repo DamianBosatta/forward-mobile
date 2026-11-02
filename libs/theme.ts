@@ -248,6 +248,13 @@ export const typeScale = {
   etiqueta: texto(12, 600, 16), // solo chips y barra inferior
 } as const
 
+/**
+ * Font scale cap for text inside fixed-height controls (Button, Fab, bars, Field...): the text follows
+ * the system font size up to this multiplier so it is never clipped. Single source of every
+ * `maxFontSizeMultiplier` in the app (forward-ui, references/mobile.md).
+ */
+export const maxFontScale = 1.3
+
 /** Importes: cifras tabulares (alinear a la derecha en la pantalla). */
 export const importe: TextStyle = { fontVariant: ['tabular-nums'] }
 

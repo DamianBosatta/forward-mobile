@@ -7,7 +7,7 @@ import { RequirePermission } from '@/core/ui'
 import { BottomSheet, Button, Notice, Progress, formatImporte, TopBar, useMenuLeading, type TopBarAction } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { esFallaDeRed } from '@/core/api/errores'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { importe, maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
 import { safeHaptics } from '@/core/utils/haptics'
 import { useEntregarParada, useFinalizarHojaRuta, useHojaRuta, useHojasDeRuta, useIniciarHojaRuta, useReportarParada } from '@/libs/api-client'
 import { getManifiestoUrl, logisticaKeys } from '@/libs/api-client/logistica'
@@ -375,7 +375,7 @@ export default function ConsolaChoferScreen() {
       {viaje.totalMontoCobrar != null ? (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
           <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>A cobrar hoy</Text>
-          <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.titulo, ...importe, fontSize: 28, lineHeight: 34, color: c.text }}>{formatImporte(viaje.totalMontoCobrar)}</Text>
+          <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.titulo, ...importe, fontSize: 28, lineHeight: 34, color: c.text }}>{formatImporte(viaje.totalMontoCobrar)}</Text>
         </View>
       ) : null}
       <ColaConsola acciones={deEsteViaje} />

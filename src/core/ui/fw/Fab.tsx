@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, Text, type StyleProp, type ViewStyle } from 'react-native'
 import { Plus } from 'lucide-react-native'
-import { radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
+import { maxFontScale, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 
 interface FabProps {
   /** Obligatorio: el botón es solo un ícono. */
@@ -41,7 +41,7 @@ export function Fab({ accessibilityLabel, onPress, label, style }: FabProps) {
       ]}
     >
       <Plus size={label ? 24 : 26} strokeWidth={2.5} color={c.onAction} />
-      {label ? <Text style={{ ...typeScale.cuerpoDestacado, color: c.onAction }}>{label}</Text> : null}
+      {label ? <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.cuerpoDestacado, color: c.onAction }}>{label}</Text> : null}
     </Pressable>
   )
 }
