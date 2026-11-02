@@ -6,6 +6,8 @@ import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantall
 import { esFallaDeRed } from '@/core/api/errores'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useDeudasProveedores, type DeudaProveedor } from '../api/queries'
+import { chipAntiguedadDeuda } from '../lib/antiguedadDeuda'
+import { ChipAntiguedadDeuda } from './ChipAntiguedadDeuda'
 
 /**
  * Lado "Debo" de Cuentas (lámina cuentas-lista): lo que se le debe a cada proveedor, con el total del servidor arriba.
@@ -65,11 +67,13 @@ export function DeudasAProveedores() {
 function FilaDeDeuda({ deuda }: { deuda: DeudaProveedor }) {
   const c = useColors()
   const monto = formatImporte(deuda.saldoDeuda, { moneda: deuda.moneda })
+  const antiguedad = chipAntiguedadDeuda(deuda.diasDeudaMasVieja)?.texto
   return (
     <FilaDeSocio
       titulo={deuda.razonSocial}
       derecha={<Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{monto}</Text>}
-      accessibilityLabel={`${deuda.razonSocial}, le debés ${monto}`}
+      extra={<ChipAntiguedadDeuda dias={deuda.diasDeudaMasVieja} />}
+      accessibilityLabel={`${deuda.razonSocial}, le debés ${monto}${antiguedad ? `, ${antiguedad}` : ''}`}
     />
   )
 }
