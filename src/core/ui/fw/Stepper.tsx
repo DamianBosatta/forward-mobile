@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Minus, Plus } from 'lucide-react-native'
-import { radii, space, typeScale, useColors, importe } from '@/libs/theme'
+import { maxFontScale, radii, space, typeScale, useColors, importe } from '@/libs/theme'
 
 interface Props {
   value: number
@@ -38,7 +38,7 @@ export function Stepper({ value, max, onChange, nombre }: Props) {
       >
         <Minus size={26} color={puedeBajar ? c.text : c.textSecondary} strokeWidth={3} />
       </Pressable>
-      <Text accessibilityLabel={`Cantidad de ${nombre}: ${value}`} style={{ ...typeScale.titulo, ...importe, fontSize: 26, lineHeight: 32, minWidth: 40, textAlign: 'center', color: c.text }}>{value}</Text>
+      <Text accessibilityLabel={`Cantidad de ${nombre}: ${value}`} maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.titulo, ...importe, fontSize: 26, lineHeight: 32, minWidth: 40, textAlign: 'center', color: c.text }}>{value}</Text>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Sumar una de ${nombre}`}

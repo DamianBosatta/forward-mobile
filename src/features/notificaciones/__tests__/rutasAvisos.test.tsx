@@ -18,11 +18,13 @@ jest.mock('expo-router/drawer', () => {
 jest.mock('@/src/components/layout/CustomDrawerContent', () => () => null)
 
 describe('rutas del cajón', () => {
-  it('registra la bandeja y las preferencias, y conserva las pantallas de antes', () => {
+  it('registra la sección de avisos y conserva las secciones y pantallas de antes', () => {
     render(<DrawerLayout />)
-    expect(mockPantallas).toEqual(expect.arrayContaining(['avisos/index', 'avisos/preferencias']))
+    // Each section with inner screens is a Stack (audit A-05): the Drawer registers the section, and the
+    // inbox and its preferences are screens of the "avisos" Stack.
+    expect(mockPantallas).toEqual(expect.arrayContaining(['avisos']))
     expect(mockPantallas).toEqual(expect.arrayContaining([
-      'index', 'ventas/index', 'calendario/index', 'autorizaciones/index', 'compras/[id]', 'perfil',
+      'index', 'ventas', 'calendario/index', 'autorizaciones', 'compras', 'perfil',
     ]))
     // El depósito de cheques salió de la app (bloque 12, D10): se hace en la web.
     expect(mockPantallas).not.toContain('tesoreria/cheques')

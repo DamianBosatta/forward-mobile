@@ -371,7 +371,7 @@ describe('detalle de compra', () => {
         mockGet.mockRejectedValue(new TypeError('Network request failed'))
         ruta('incierto')
         expect(await screen.findByText('No sabemos si se recibió; revisá la compra.')).toBeTruthy()
-        expect(await screen.findByText('Network request failed')).toBeTruthy()
+        expect(await screen.findByText('Sin conexión. Revisá tu red e intentá de nuevo.')).toBeTruthy()
       })
 
       it('un enlace con ?aviso= solo no muestra un éxito que no pasó', async () => {

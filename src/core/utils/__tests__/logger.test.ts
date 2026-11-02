@@ -81,6 +81,29 @@ describe('logger', () => {
       expect(Sentry.captureException).not.toHaveBeenCalled()
     })
 
+    it('never reports an Error whose message is a 4xx, even without a numeric status', () => {
+      setDev(false)
+      const logger = loadLogger()
+      logger.error(new Error('API Error [404] /x'))
+      expect(Sentry.captureException).not.toHaveBeenCalled()
+      expect(Sentry.captureMessage).not.toHaveBeenCalled()
+    })
+
+    it('still reports an Error whose message is a 5xx or unrelated', () => {
+      setDev(false)
+      const logger = loadLogger()
+      logger.error(new Error('API Error [500] /x'))
+      logger.error(new Error('boom'))
+      expect(Sentry.captureException).toHaveBeenCalledTimes(2)
+    })
+
+    it('still does not report the 4xx string', () => {
+      setDev(false)
+      const logger = loadLogger()
+      logger.error('API Error [404] /x')
+      expect(Sentry.captureMessage).not.toHaveBeenCalled()
+    })
+
     it('never sends the query string (search terms) to Sentry', () => {
       setDev(false)
       const logger = loadLogger()

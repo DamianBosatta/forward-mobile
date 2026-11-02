@@ -2,7 +2,7 @@ import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ArrowLeft, Menu, type LucideIcon } from 'lucide-react-native'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
 
 const TOCABLE = 44
 
@@ -65,7 +65,7 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
           </Pressable>
         ) : null}
         <View style={{ flex: 1, minWidth: 0, paddingLeft: leading ? 0 : space[3] }}>
-          <Text accessibilityRole="header" numberOfLines={maxLineas} style={{ ...typeScale.titulo, color: colors.onTopBarStrong }}>
+          <Text accessibilityRole="header" numberOfLines={maxLineas} maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.titulo, color: colors.onTopBarStrong }}>
             {title}
           </Text>
           {subtitle ? (
@@ -104,7 +104,7 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
             }
           >
             <Icono size={22} color={colors.onTopBarStrong} strokeWidth={2} />
-            {label ? <Text style={{ ...typeScale.cuerpoDestacado, color: colors.onTopBarStrong }}>{label}</Text> : null}
+            {label ? <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.cuerpoDestacado, color: colors.onTopBarStrong }}>{label}</Text> : null}
           </Pressable>
         ))}
       </View>
@@ -127,6 +127,7 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
               }}
             >
               <Text
+                maxFontSizeMultiplier={maxFontScale}
                 style={{
                   ...(tab.selected ? typeScale.cuerpoDestacado : typeScale.cuerpo),
                   color: tab.selected ? colors.onTopBarStrong : colors.onTopBar,

@@ -129,7 +129,7 @@ export const MENU: MenuGroup[] = [
 ]
 
 /** Va al pie del menú, separado. Todos pueden ver su cuenta. */
-export const MI_CUENTA: MenuItem = { id: 'cuenta', label: 'Mi cuenta y contraseña', icon: Lock, href: '/(tabs)/perfil', routeName: 'perfil' }
+export const MI_CUENTA: MenuItem = { id: 'cuenta', label: 'Mi cuenta y contraseña', icon: Lock, href: '/(tabs)/perfil', routeName: 'perfil/index' }
 
 interface Acceso {
   canDo: (module: AppModule, action: Accion) => boolean

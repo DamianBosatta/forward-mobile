@@ -93,7 +93,7 @@ describe('idempotencia del cobro (forward-system: claveIdempotencia)', () => {
     renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
     await cargarMontoYMedio('1.000', 'Transferencia')
     await registrar()
-    expect(await screen.findByText('Network request failed', {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByText('Sin conexión. Revisá tu red e intentá de nuevo.', {}, ESPERA)).toBeTruthy()
     expect(screen.queryByText('Saldo nuevo')).toBeNull()
 
     await registrar()
@@ -160,7 +160,7 @@ describe('idempotencia del cobro (forward-system: claveIdempotencia)', () => {
     renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
     await cargarMontoYMedio('1.000', 'Transferencia')
     await registrar()
-    expect(await screen.findByText('Network request failed', {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByText('Sin conexión. Revisá tu red e intentá de nuevo.', {}, ESPERA)).toBeTruthy()
     fireEvent.changeText(screen.getByLabelText('Monto'), '2.500')
     await registrar()
 
@@ -190,7 +190,7 @@ describe('idempotencia del cobro (forward-system: claveIdempotencia)', () => {
     renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
     await cargarMontoYMedio('1.000', 'Transferencia')
     await registrar()
-    expect(await screen.findByText('Network request failed', {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByText('Sin conexión. Revisá tu red e intentá de nuevo.', {}, ESPERA)).toBeTruthy()
 
     await editar()
     await registrar()
@@ -210,7 +210,7 @@ describe('idempotencia del cobro (forward-system: claveIdempotencia)', () => {
     fireEvent.changeText(screen.getByLabelText('Banco'), 'Banco Provincia')
     fireEvent.changeText(screen.getByLabelText('Titular'), 'Graciela Ruiz')
     await registrar()
-    expect(await screen.findByText('Network request failed', {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByText('Sin conexión. Revisá tu red e intentá de nuevo.', {}, ESPERA)).toBeTruthy()
 
     fireEvent.changeText(screen.getByLabelText('N.º de cheque'), '99999999')
     await registrar()

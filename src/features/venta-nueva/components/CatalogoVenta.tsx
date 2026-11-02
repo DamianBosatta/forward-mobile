@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { ScanBarcode, Search } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Notice, StatusChip } from '@/core/ui/fw'
+import { Button, Notice, StatusChip } from '@/core/ui/fw'
+import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
+import { esFallaDeRed, esTiempoAgotado, mensajeDeError } from '@/core/api/errores'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { useResponsive } from '@/libs/useResponsive'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -50,7 +52,7 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
     prendido.current = true
     setFiltros((f) => ({ ...f, delUltimo: true }))
   }, [filtroInicialDelUltimo, llevo])
-  const { productos: todos, isLoading } = useCatalogoVenta(busqueda)
+  const { productos: todos, isLoading, isError, error, reintentar } = useCatalogoVenta(busqueda)
   const { productos: completo } = useCatalogoVenta('')
   const idsDelUltimo = useMemo(() => new Set(llevo?.keys() ?? []), [llevo])
   // Las variantes (productoPadreId) vienen para resolverlas por id al elegir fragancias; no se venden sueltas.
@@ -126,7 +128,21 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
           <Text style={{ ...typeScale.secundario, color: c.textSecondary, textAlign: 'center' }}>{`Mostrando ${productos.length} de ${Math.max(totalVendible, productos.length)}`}</Text>
         }
         ListEmptyComponent={
-          isLoading ? <ActivityIndicator color={c.brand} /> : <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>No hay productos que coincidan.</Text>
+          isLoading ? (
+            <ActivityIndicator color={c.brand} />
+          ) : isError ? (
+            // Sin catálogo por un error: no es "sin resultados". Mismo criterio que el catálogo de consulta (inventario).
+            esFallaDeRed(error) || esTiempoAgotado(error) ? (
+              <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar el catálogo" texto={mensajeDeError(error)} accion={{ label: 'Reintentar', onPress: () => { void reintentar() } }} />
+            ) : (
+              <View style={{ gap: space[3] }}>
+                <Notice tone="peligro">{mensajeDeError(error, 'No se pudo cargar el catálogo. Revisá la conexión y volvé a intentar.')}</Notice>
+                <Button label="Reintentar" variant="secundario" onPress={() => { void reintentar() }} />
+              </View>
+            )
+          ) : (
+            <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>No hay productos que coincidan.</Text>
+          )
         }
         renderItem={({ item }) => (
           <ProductoCatalogoCard

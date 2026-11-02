@@ -157,6 +157,56 @@ describe('CustomDrawerContent — recorte al alcance aprobado', () => {
     expect(screen.getByRole('button', { name: 'Ventas' }).props.accessibilityState).toMatchObject({ selected: true })
     expect(screen.getByRole('button', { name: 'Inicio' }).props.accessibilityState).toMatchObject({ selected: false })
   })
+
+  // Sections are Stacks inside the Drawer (A-05): the drawer route is the section and the screen is nested.
+  const conSeccion = (seccion: string, pantalla?: string, comoParametro = false) =>
+    ({
+      state: {
+        routeNames: ['index', seccion],
+        index: 1,
+        routes: [
+          { name: 'index' },
+          {
+            name: seccion,
+            ...(pantalla && !comoParametro ? { state: { index: 1, routes: [{ name: 'index' }, { name: pantalla }] } } : {}),
+            ...(pantalla && comoParametro ? { params: { screen: pantalla } } : {}),
+          },
+        ],
+      },
+    }) as any
+  const seleccionada = (nombre: string) => screen.getByRole('button', { name: nombre }).props.accessibilityState.selected
+
+  it.each([
+    ['ventas', 'nueva', 'Ventas'],
+    ['ventas', '[id]', 'Ventas'],
+    ['inventario', 'stock', 'Stock'],
+    ['logistica', 'consola', 'Consola del chofer'],
+    ['logistica', 'pedidos', 'Pedidos de logística'],
+    ['perfil', 'clave', 'Mi cuenta y contraseña'],
+    ['perfil', 'usuarios', 'Mi cuenta y contraseña'],
+    ['perfil', 'index', 'Mi cuenta y contraseña'],
+  ])('en %s/%s del Stack de la sección marca %s', (seccion, pantalla, entrada) => {
+    render(<CustomDrawerContent {...conSeccion(seccion, pantalla)} />)
+
+    expect(seleccionada(entrada)).toBe(true)
+    expect(seleccionada('Inicio')).toBe(false)
+  })
+
+  it('en la pantalla de Stock no resalta Catálogo, y en el índice de inventario sí', () => {
+    const { unmount } = render(<CustomDrawerContent {...conSeccion('inventario', 'stock')} />)
+    expect(seleccionada('Catálogo')).toBe(false)
+    unmount()
+    render(<CustomDrawerContent {...conSeccion('inventario', 'index')} />)
+    expect(seleccionada('Catálogo')).toBe(true)
+    expect(seleccionada('Stock')).toBe(false)
+  })
+
+  it('antes de que el Stack de la sección tenga estado usa la pantalla pedida en los parámetros', () => {
+    render(<CustomDrawerContent {...conSeccion('inventario', 'stock', true)} />)
+
+    expect(seleccionada('Stock')).toBe(true)
+    expect(seleccionada('Catálogo')).toBe(false)
+  })
 })
 
 describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de administrador)', () => {

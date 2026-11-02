@@ -4,7 +4,7 @@ import {
   Dimensions, StyleSheet, ActivityIndicator
 } from 'react-native'
 import { AlertTriangle, CheckCircle2, Info } from 'lucide-react-native'
-import { useColors, useIsDark, BRAND } from '@/libs/theme'
+import { useColors, useIsDark, BRAND, maxFontScale } from '@/libs/theme'
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
@@ -155,7 +155,7 @@ export function ConfirmModal({
                     opacity: loading ? 0.5 : 1
                   }}
                 >
-                  <Text style={{ color: colors.textMuted, fontWeight: '900', fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }} maxFontSizeMultiplier={1.3}>
+                  <Text style={{ color: colors.textMuted, fontWeight: '900', fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }} maxFontSizeMultiplier={maxFontScale}>
                     {cancelLabel || 'Cancelar'}
                   </Text>
                 </Pressable>
@@ -180,7 +180,7 @@ export function ConfirmModal({
                   {loading ? (
                     <ActivityIndicator color="#FFF" size="small" />
                   ) : (
-                    <Text style={{ color: variant === 'success' || variant === 'primary' || variant === 'danger' ? '#fff' : '#000', fontWeight: '900', fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }} maxFontSizeMultiplier={1.3}>
+                    <Text style={{ color: variant === 'success' || variant === 'primary' || variant === 'danger' ? '#fff' : '#000', fontWeight: '900', fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }} maxFontSizeMultiplier={maxFontScale}>
                       {confirmLabel}
                     </Text>
                   )}

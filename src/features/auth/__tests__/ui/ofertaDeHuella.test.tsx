@@ -32,6 +32,13 @@ describe('oferta de entrar con huella', () => {
     expect(screen.queryByText(PREGUNTA)).toBeNull()
   })
 
+  it('says the credential is erased when the user logs out from the app (a forced logout keeps it)', () => {
+    useOfertaDeHuella.getState().ofrecer(CREDS)
+    render(<OfertaDeHuella />)
+    expect(screen.getByText(/Se borran cuando cerrás sesión desde la app\.$/)).toBeTruthy()
+    expect(screen.queryByText(/Al cerrar sesión se borran/)).toBeNull()
+  })
+
   it('accepting stores the credential and closes the question', async () => {
     useOfertaDeHuella.getState().ofrecer(CREDS)
     render(<OfertaDeHuella />)

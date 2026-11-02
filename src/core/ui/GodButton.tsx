@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import { MotiView } from 'moti'
 import { safeHaptics } from '@/core/utils/haptics'
+import { maxFontScale } from '@/libs/theme'
 interface GodButtonProps {
   label: string
   onPress: () => void
@@ -76,7 +77,7 @@ export const GodButton = ({
             <ActivityIndicator color="#fff" size="small" />
           ) : (
             <View style={styles.content}>
-              <Text style={[styles.text, textStyle, variant === 'secondary' && { color: '#b4c5ff' }]} maxFontSizeMultiplier={1.3}>
+              <Text style={[styles.text, textStyle, variant === 'secondary' && { color: '#b4c5ff' }]} maxFontSizeMultiplier={maxFontScale}>
                 {label?.toUpperCase() || ''}
               </Text>
               {icon && <View style={styles.iconContainer}>{icon}</View>}

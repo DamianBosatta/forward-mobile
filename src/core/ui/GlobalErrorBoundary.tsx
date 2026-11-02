@@ -2,7 +2,7 @@ import React from 'react'
 import { View, Text, StyleSheet, ScrollView, Platform, BackHandler, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import { useColors, useIsDark } from '@/libs/theme'
+import { maxFontScale, useColors, useIsDark } from '@/libs/theme'
 import { ForwardLogo } from './ForwardLogo'
 import { GlassCard } from './GlassCard'
 import { AlertOctagon, RefreshCcw, Home, LogOut, ChevronLeft } from 'lucide-react-native'
@@ -84,7 +84,7 @@ export function GlobalErrorBoundary({ error, retry }: GlobalErrorBoundaryProps) 
                   style={styles.primaryBtn}
                 >
                   <RefreshCcw size={18} color={colors.bg} />
-                  <Text style={[styles.primaryBtnText, { color: colors.bg }]} maxFontSizeMultiplier={1.3}>REINTENTAR MÓDULO</Text>
+                  <Text style={[styles.primaryBtnText, { color: colors.bg }]} maxFontSizeMultiplier={maxFontScale}>REINTENTAR MÓDULO</Text>
                 </LinearGradient>
               </TouchableOpacity>
 
@@ -94,7 +94,7 @@ export function GlobalErrorBoundary({ error, retry }: GlobalErrorBoundaryProps) 
                   style={[styles.secondaryBtn, { backgroundColor: colors.surface2, borderColor: colors.border }]}
                 >
                   <Home size={18} color={colors.text} />
-                  <Text style={[styles.secondaryBtnText, { color: colors.text }]} maxFontSizeMultiplier={1.3}>INICIO</Text>
+                  <Text style={[styles.secondaryBtnText, { color: colors.text }]} maxFontSizeMultiplier={maxFontScale}>INICIO</Text>
                 </TouchableOpacity>
 
                 {Platform.OS === 'android' && (
@@ -103,7 +103,7 @@ export function GlobalErrorBoundary({ error, retry }: GlobalErrorBoundaryProps) 
                     style={[styles.secondaryBtn, { backgroundColor: colors.surface2, borderColor: colors.border }]}
                   >
                     <LogOut size={18} color={colors.danger} />
-                    <Text style={[styles.secondaryBtnText, { color: colors.danger }]} maxFontSizeMultiplier={1.3}>SALIR</Text>
+                    <Text style={[styles.secondaryBtnText, { color: colors.danger }]} maxFontSizeMultiplier={maxFontScale}>SALIR</Text>
                   </TouchableOpacity>
                 )}
               </View>

@@ -2,7 +2,7 @@ import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Check } from 'lucide-react-native'
 import type { LucideIcon } from 'lucide-react-native'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
 
 interface Props {
   label: string
@@ -45,8 +45,8 @@ export function OptionCard({ label, detail, icon: Icono, selected = false, minHe
     >
       {Icono ? <Icono size={minHeight > 100 ? 40 : 28} color={selected ? c.brandInk : c.text} strokeWidth={2.5} /> : null}
       <View style={{ flex: 1 }}>
-        <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.seccion, fontSize: 19, lineHeight: 26, color: selected ? c.brandInk : c.text }}>{label}</Text>
-        {detail ? <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.secundario, color: c.textSecondary }}>{detail}</Text> : null}
+        <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.seccion, fontSize: 19, lineHeight: 26, color: selected ? c.brandInk : c.text }}>{label}</Text>
+        {detail ? <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.secundario, color: c.textSecondary }}>{detail}</Text> : null}
       </View>
       {selected ? <Check size={28} color={c.brandInk} strokeWidth={3} /> : null}
     </Pressable>

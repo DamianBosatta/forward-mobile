@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Pressable, Text, TextInput, View, type TextInputProps } from 'react-native'
 import { Eye, EyeOff } from 'lucide-react-native'
-import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
+import { FONT, maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
 
 interface FieldProps extends Omit<TextInputProps, 'style' | 'placeholderTextColor'> {
   label: string
@@ -51,6 +51,7 @@ export function Field({ label, help, error, alignRight, verOcultar, labelSuffix,
           onBlur?.(e)
         }}
         placeholderTextColor={colors.textSecondary}
+        maxFontSizeMultiplier={maxFontScale}
         style={{
           ...typeScale.cuerpo,
           height: space[12],
@@ -70,6 +71,7 @@ export function Field({ label, help, error, alignRight, verOcultar, labelSuffix,
         <Text
           importantForAccessibility="no"
           pointerEvents="none"
+          maxFontSizeMultiplier={maxFontScale}
           style={{ ...typeScale.cuerpoDestacado, position: 'absolute', left: space[4], top: 0, height: space[12], lineHeight: space[12], color: colors.textSecondary }}
         >
           {prefijo}
