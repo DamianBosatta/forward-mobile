@@ -1,5 +1,4 @@
-import { ddmmaaaa } from '@/core/utils/fecha'
-import { diaArgentina } from '@/src/utils/date'
+import { ddmmaaaa, diaArgentina } from '@/core/utils/fecha'
 
 /** "dd/mm/aaaa" → "aaaa-mm-dd" (fecha calendario, sin zona); null si no es una fecha válida. */
 export function fechaIso(texto: string): string | null {

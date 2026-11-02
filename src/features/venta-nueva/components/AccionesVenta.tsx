@@ -10,7 +10,7 @@ import { getNotaEntregaUrl, getVentaPdfUrl, useAnularVenta, useConvertirPresupue
 import type { VentaDetalleDto } from '@/libs/api-client/types'
 import { sharePdf } from '@/features/pedidos/lib/sharePdf'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { diaArgentina } from '@/src/utils/date'
+import { diaArgentina } from '@/core/utils/fecha'
 import { motivosAutorizacion } from '../lib/motivosAutorizacion'
 import { esEstadoVenta } from '@/core/constants/estados'
 import { codigoDeVenta, tipoDeVenta } from '../lib/ventaGuardada'

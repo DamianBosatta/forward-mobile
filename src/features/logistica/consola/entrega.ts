@@ -1,6 +1,6 @@
 import type { CuerpoEntregaParada, MedioCobroChofer } from '@/libs/api-client/logistica'
 import type { components } from '@/libs/api-client/generated/schema'
-import { leerNumero } from '@/src/utils/numero'
+import { leerNumero } from '@/core/utils/numero'
 import { leerFecha } from '@/features/cuentas/lib/cobro'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 

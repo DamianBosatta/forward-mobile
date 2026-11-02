@@ -4,7 +4,7 @@ import { render, screen, userEvent, waitFor, within } from '@testing-library/rea
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { formatImporte } from '@/core/ui/fw'
-import { diaArgentina } from '@/src/utils/date'
+import { diaArgentina } from '@/core/utils/fecha'
 import { ventasKeys } from '@/libs/api-client/ventas'
 import { VentaGuardadaPantalla } from '../components/VentaGuardadaPantalla'
 

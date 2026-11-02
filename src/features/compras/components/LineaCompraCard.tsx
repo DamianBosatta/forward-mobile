@@ -4,7 +4,7 @@ import { Notice, Segmented, Field, formatImporte } from '@/core/ui/fw'
 import { Redondo } from '@/features/venta-nueva/components/ProductoCatalogoCard'
 import { useProducto } from '@/libs/api-client/productos'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { leerNumero, mostrarNumero, numeroCompleto } from '@/src/utils/numero'
+import { leerNumero, mostrarNumero, numeroCompleto } from '@/core/utils/numero'
 import {
   cambioDeCosto, nombreDeEmpaque, opcionesDeCompra, sinCosto, subtotalDe, textoDeEmpaque, textoDeCambioDeCosto,
   type LineaCompra, type UnidadCompra,

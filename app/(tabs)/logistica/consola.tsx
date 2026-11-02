@@ -33,8 +33,8 @@ import { nuevaClaveIdempotencia } from '@/features/venta-nueva/lib/payload'
 import { tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { sharePdf } from '@/features/pedidos/lib/sharePdf'
-import { diaArgentina, parseDateSafe, partesArgentina } from '@/src/utils/date'
-import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
+import { diaArgentina, parseDateSafe, partesArgentina } from '@/core/utils/fecha'
+import { useAhoraArgentina } from '@/core/utils/useAhoraArgentina'
 
 const horaDe = (ms: number) => {
   const p = partesArgentina(ms)

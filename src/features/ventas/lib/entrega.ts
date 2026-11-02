@@ -1,6 +1,6 @@
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { parseDateSafe, partesArgentina } from '@/src/utils/date'
+import { parseDateSafe, partesArgentina } from '@/core/utils/fecha'
 
 /**
  * "Jueves 22/10": la fecha de entrega llega como instante UTC y el día es el argentino (X9), igual que en la

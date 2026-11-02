@@ -1,5 +1,5 @@
 import type { CompraDetalle } from '@/libs/api-client'
-import { mostrarNumero } from '@/src/utils/numero'
+import { mostrarNumero } from '@/core/utils/numero'
 
 /** UnidadCompra del servidor: en qué nivel de empaque viene la cantidad. */
 export type UnidadCompra = 'Unidad' | 'Bulto' | 'BultoMadre'

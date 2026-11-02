@@ -1,4 +1,4 @@
-import { partesArgentina } from '@/src/utils/date'
+import { partesArgentina } from '@/core/utils/fecha'
 
 export interface DiaEntrega {
   /** YYYY-MM-DD del calendario argentino: lo que interpreta el servidor. */

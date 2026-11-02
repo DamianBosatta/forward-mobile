@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native'
 import { RefreshCw } from 'lucide-react-native'
 import { BottomSheet, formatImporte } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { partesArgentina } from '@/src/utils/date'
+import { partesArgentina } from '@/core/utils/fecha'
 import type { AccionEnCola } from './colaConsola'
 
 const horaDe = (ms: number) => {

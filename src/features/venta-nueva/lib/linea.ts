@@ -42,5 +42,5 @@ export function avisoPiso(
   return roto ? 'amarillo' : null
 }
 
-// El parser es-AR vive en src/utils/numero (lo usan la venta y la compra).
-export { leerNumero, mostrarNumero } from '@/src/utils/numero'
+// El parser es-AR vive en src/core/utils/numero (lo usan la venta y la compra).
+export { leerNumero, mostrarNumero } from '@/core/utils/numero'

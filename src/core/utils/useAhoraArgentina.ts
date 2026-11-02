@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AppState } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
-import { msHastaProximaMedianocheArgentina } from './date'
+import { msHastaProximaMedianocheArgentina } from './fecha'
 
 /**
  * El instante "de hoy" para pantallas que el Drawer deja montadas: se recalcula al volver a

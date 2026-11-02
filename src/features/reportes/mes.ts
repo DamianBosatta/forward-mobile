@@ -1,4 +1,4 @@
-import { partesArgentina } from '@/src/utils/date'
+import { partesArgentina } from '@/core/utils/fecha'
 
 /** Un mes calendario; `mes` va de 1 a 12, como lo recibe el servidor. */
 export interface Mes {

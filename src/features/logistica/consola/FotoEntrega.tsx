@@ -3,7 +3,7 @@ import { Image, Text, View } from 'react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice } from '@/core/ui/fw'
 import { uploadFotoEntrega } from '@/libs/api-client/media'
-import { partesArgentina } from '@/src/utils/date'
+import { partesArgentina } from '@/core/utils/fecha'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { CamaraChofer } from './CamaraChofer'
 

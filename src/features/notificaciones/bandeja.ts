@@ -1,4 +1,4 @@
-import { diaArgentina, partesArgentina } from '@/src/utils/date'
+import { diaArgentina, partesArgentina } from '@/core/utils/fecha'
 import { diaDe } from '@/features/calendario/semana'
 import { RUTA_POR_DESTINO, rutaDeAccion, type AccionSugerida } from './avisos'
 

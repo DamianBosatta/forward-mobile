@@ -1,6 +1,6 @@
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { parseDateSafe, partesArgentina } from '@/src/utils/date'
+import { parseDateSafe, partesArgentina } from '@/core/utils/fecha'
 
 export interface SeccionDia<T> {
   titulo: string

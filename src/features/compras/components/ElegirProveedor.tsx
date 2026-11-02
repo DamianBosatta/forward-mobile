@@ -6,7 +6,7 @@ import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useSocio, useSocios } from '@/libs/api-client/socios'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useComprasDelProveedor } from '@/features/proveedores/hooks/useProveedores'
-import { formatToLocalDate } from '@/src/utils/date'
+import { formatToLocalDate } from '@/core/utils/fecha'
 import { franjaTexto } from '../lib/fecha'
 
 export const PASOS_COMPRA = ['Proveedor', 'Productos', 'Confirmar'] as const

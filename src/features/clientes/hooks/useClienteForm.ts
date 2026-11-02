@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useCreateSocio, useSocio, useUpdateSocio } from '@/libs/api-client/socios'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { leerNumero, mostrarNumero } from '@/src/utils/numero'
+import { leerNumero, mostrarNumero } from '@/core/utils/numero'
 import { condicionPagoParaEnviar, type TipoCondicionPago } from '../lib/cliente'
 
 export interface DatosCliente {

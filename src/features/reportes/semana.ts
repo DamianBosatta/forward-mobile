@@ -1,4 +1,4 @@
-import { diaArgentina, partesArgentina } from '@/src/utils/date'
+import { diaArgentina, partesArgentina } from '@/core/utils/fecha'
 
 const DIA_MS = 24 * 60 * 60 * 1000
 

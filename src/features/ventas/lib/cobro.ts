@@ -1,5 +1,5 @@
 import type { components } from '@/libs/api-client/generated/schema'
-import { partesArgentina, parseDateSafe } from '@/src/utils/date'
+import { partesArgentina, parseDateSafe } from '@/core/utils/fecha'
 
 type Pagos = components['schemas']['VentaPagosDto']
 
