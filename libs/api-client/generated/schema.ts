@@ -24927,6 +24927,8 @@ export interface components {
             tieneDeudaVencida: boolean;
             /** Format: double */
             deudaVencidaAmount: number;
+            /** Format: int32 */
+            diasDeudaMasVieja?: number | null;
         };
         SocioListDtoPaginatedResponse: {
             /** Format: int32 */
