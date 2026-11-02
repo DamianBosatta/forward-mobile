@@ -24,6 +24,8 @@ const config: ExpoConfig = {
       backgroundColor: '#0A0D14',
     },
     package: 'com.forward.erp',
+    // Audit tranche 1, S3: no Android backup of the app data (MMKV, AsyncStorage) to Google or adb.
+    allowBackup: false,
   },
   plugins: [
     'expo-router',

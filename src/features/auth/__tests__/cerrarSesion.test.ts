@@ -3,14 +3,19 @@
  * previous session stays on the phone: tokens, the react-query cache (memory and disk, mutations included),
  * the active trip of the driver console (`forward-logistica-store`) and the fingerprint credential.
  */
-const mockSecure = new Map<string, string>()
-jest.mock('expo-secure-store', () => ({
-  getItem: (k: string) => mockSecure.get(k) ?? null,
-  setItem: (k: string, v: string) => { mockSecure.set(k, v) },
-  getItemAsync: async (k: string) => mockSecure.get(k) ?? null,
-  setItemAsync: async (k: string, v: string) => { mockSecure.set(k, v) },
-  deleteItemAsync: async (k: string) => { mockSecure.delete(k) },
-}))
+// The store lives inside the factory: `core/utils/storage.ts` reads SecureStore while the imports load.
+jest.mock('expo-secure-store', () => {
+  const store = new Map<string, string>()
+  return {
+    __store: store,
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => { store.set(k, v) },
+    getItemAsync: async (k: string) => store.get(k) ?? null,
+    setItemAsync: async (k: string, v: string) => { store.set(k, v) },
+    deleteItemAsync: async (k: string) => { store.delete(k) },
+  }
+})
+const mockSecure: Map<string, string> = jest.requireMock('expo-secure-store').__store
 
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { persistQueryClientSubscribe } from '@tanstack/react-query-persist-client'
