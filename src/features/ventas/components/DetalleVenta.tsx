@@ -16,7 +16,7 @@ import { urlLlamar } from '@/features/clientes/lib/contacto'
 import { motivosAutorizacion } from '@/features/venta-nueva/lib/motivosAutorizacion'
 import { mostrarNumero } from '@/features/venta-nueva/lib/linea'
 import { codigoDeVenta, tipoDeVenta } from '@/features/venta-nueva/lib/ventaGuardada'
-import { accionesDeVenta, DIAS_VIGENCIA_PRESUPUESTO } from '../lib/accionesVenta'
+import { accionesDeVenta, avisoPresupuesto } from '../lib/accionesVenta'
 import { cobroDeLaVenta } from '../lib/cobro'
 import { diaDeEntregaCorto } from '../lib/entrega'
 import { pasosDeLaVenta } from '../lib/lineaDeTiempo'
@@ -129,9 +129,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
         ) : (
           <>
             {esPresupuesto ? (
-              <Notice tone="info">{esEstadoVenta(h.estado, 'Vencido')
-                ? `Venció. Reabrilo y vuelven a correr los ${DIAS_VIGENCIA_PRESUPUESTO} días. Un presupuesto no reserva stock.`
-                : `Vence a los ${DIAS_VIGENCIA_PRESUPUESTO} días de guardado. Si no lo pasás a pedido, queda vencido. Un presupuesto no reserva stock.`}</Notice>
+              <Notice tone="info">{avisoPresupuesto(esEstadoVenta(h.estado, 'Vencido'), h.fechaVencimientoPresupuesto)}</Notice>
             ) : (
               <View style={{ gap: space[2] }}>
                 <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Entrega y factura</Text>

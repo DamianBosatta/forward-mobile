@@ -147,6 +147,16 @@ export function MiDiaScreen() {
       )
     }
   }
+  // Del resumen del vendedor (mismo período que las cifras). Servidor anterior: el campo no viene → sin fila, nunca 0.
+  const cuenta = (n: unknown) => (typeof n === 'number' && Number.isFinite(n) && n > 0 ? n : 0)
+  const rechazados = cuenta(resumen.data?.pedidosRechazados)
+  if (rechazados) {
+    filas.push(<Fila key="rechazados" alerta titulo={plural(rechazados, 'pedido rechazado', 'pedidos rechazados')} apoyo="Rechazados por gestión este mes" />)
+  }
+  const porVencer = cuenta(resumen.data?.presupuestosPorVencer)
+  if (porVencer) {
+    filas.push(<Fila key="por-vencer" alerta titulo={plural(porVencer, 'presupuesto por vencer', 'presupuestos por vencer')} apoyo="Cerralos o reabrilos antes de que venzan" />)
+  }
   const resolver = (
     <View style={{ gap: space[2] }}>
       <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>Para resolver hoy</Text>
@@ -223,8 +233,18 @@ function Cifra({ etiqueta, importe, resaltada }: { etiqueta: string; importe: nu
   )
 }
 
-function Fila({ titulo, apoyo, alerta, onPress }: { titulo: string; apoyo: string; alerta?: boolean; onPress: () => void }) {
+function Fila({ titulo, apoyo, alerta, onPress }: { titulo: string; apoyo: string; alerta?: boolean; onPress?: () => void }) {
   const c = useColors()
+  const borde = { borderColor: alerta ? c.warning : c.border }
+  // Sin destino (todavía no hay lista filtrada para esto): se lee, no se toca.
+  if (!onPress) {
+    return (
+      <View accessible accessibilityLabel={`${titulo}. ${apoyo}`} style={{ minHeight: 56, justifyContent: 'center', padding: space[3], borderRadius: radii.tarjeta, borderWidth: 1, ...borde, backgroundColor: c.surface }}>
+        <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{titulo}</Text>
+        <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{apoyo}</Text>
+      </View>
+    )
+  }
   return (
     <Pressable
       accessibilityRole="button"

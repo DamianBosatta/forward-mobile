@@ -40,6 +40,7 @@ export const logisticaKeys = {
 export const pickingKeys = {
   all: ['picking', 'board'] as const,
   list: (params: VentasPreparacionParams) => [...pickingKeys.all, params] as const,
+  conteos: (params: VentasPreparacionParams) => [...pickingKeys.all, 'conteos', params] as const,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -63,6 +64,17 @@ export interface VentasPreparacionParams {
   metodoEntrega?: number
   ticketId?: string
   vendedorId?: string
+}
+
+/** Query string (PascalCase) compartido por la lista y los conteos del tablero: mismos filtros. */
+function preparacionSearchParams(params?: VentasPreparacionParams) {
+  const searchParams = new URLSearchParams()
+  if (params?.fechaDesde) searchParams.set('FechaDesde', params.fechaDesde)
+  if (params?.fechaHasta) searchParams.set('FechaHasta', params.fechaHasta)
+  if (params?.metodoEntrega != null) searchParams.set('MetodoEntrega', String(params.metodoEntrega))
+  if (params?.ticketId) searchParams.set('TicketId', params.ticketId)
+  if (params?.vendedorId) searchParams.set('VendedorId', params.vendedorId)
+  return searchParams
 }
 
 /**
@@ -197,12 +209,7 @@ export function useHojaRuta(id: string) {
  * Query params are PascalCase to match backend GetVentasParaPreparacionQuery.cs.
  */
 export function useVentasParaPreparacion(params?: VentasPreparacionParams, opciones?: { activa?: boolean; mantenerAlFiltrar?: boolean }) {
-  const searchParams = new URLSearchParams()
-  if (params?.fechaDesde) searchParams.set('FechaDesde', params.fechaDesde)
-  if (params?.fechaHasta) searchParams.set('FechaHasta', params.fechaHasta)
-  if (params?.metodoEntrega != null) searchParams.set('MetodoEntrega', String(params.metodoEntrega))
-  if (params?.ticketId) searchParams.set('TicketId', params.ticketId)
-  if (params?.vendedorId) searchParams.set('VendedorId', params.vendedorId)
+  const searchParams = preparacionSearchParams(params)
 
   return useQuery({
     queryKey: pickingKeys.list(params ?? {}),
@@ -215,6 +222,24 @@ export function useVentasParaPreparacion(params?: VentasPreparacionParams, opcio
       return opciones?.mantenerAlFiltrar && p?.fechaDesde === params?.fechaDesde && p?.fechaHasta === params?.fechaHasta ? anterior : undefined
     },
     // `activa: false` (pantalla fuera de foco) pausa el sondeo.
+    refetchInterval: opciones?.activa === false ? false : 30_000,
+  })
+}
+
+/** Cantidad de pedidos de cada columna del tablero (`clave` = nombre del EstadoVenta). */
+export type ConteosPreparacion = components['schemas']['ConteosPreparacionDto']
+
+/**
+ * Cuenta de cada columna del tablero de preparación en una sola llamada. Mismos filtros y mismo
+ * recorte que `useVentasParaPreparacion`; no los recibe el estado (ese filtro es del teléfono).
+ */
+export function useConteosPreparacion(params?: VentasPreparacionParams, opciones?: { activa?: boolean }) {
+  const searchParams = preparacionSearchParams(params)
+
+  return useQuery({
+    queryKey: pickingKeys.conteos(params ?? {}),
+    queryFn: () => api.get<ConteosPreparacion>(`/api/v1/Logistica/preparacion/conteos?${searchParams}`),
+    staleTime: 15_000,
     refetchInterval: opciones?.activa === false ? false : 30_000,
   })
 }

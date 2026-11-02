@@ -5,7 +5,7 @@ import { Filter } from 'lucide-react-native'
 import { FONT, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { Notice, StatusChip, TopBar, TwoPane, chipForEstado, useMenuLeading } from '@/core/ui/fw'
 import { useResponsive } from '@/libs/useResponsive'
-import { useHojaRuta, useVentasParaPreparacion, type VentaPreparacion } from '@/libs/api-client/logistica'
+import { useConteosPreparacion, useHojaRuta, useVentasParaPreparacion, type VentaPreparacion } from '@/libs/api-client/logistica'
 import { useVenta } from '@/libs/api-client'
 import { esEstadoVenta } from '@/core/constants/estados'
 import { useDiasEntrega, useFeriados } from '@/libs/api-client/configuracion'
@@ -14,6 +14,7 @@ import { useAuthStore } from '@/libs/store/auth.store'
 import { diaArgentina } from '@/src/utils/date'
 import { useAhoraArgentina } from '@/src/utils/useAhoraArgentina'
 import { nombreDelDia, proximosDiasDeEntrega } from './dias'
+import { conteosDePestanas, etiquetaConConteo } from './conteos'
 import { PedidoPorPrepararDetalle } from './PedidoPorPrepararDetalle'
 import { FiltrosPorPreparar, SIN_FILTROS, textoFiltros, type FiltrosPreparacion } from './FiltrosPorPreparar'
 
@@ -74,10 +75,12 @@ export function PorPrepararScreen() {
   const vendedores = useVendedores(veVendedores && filtrando)
   // La pantalla queda montada en el Drawer: fuera de foco no consulta cada 30 segundos.
   // Logística y vendedor los filtra el servidor; el estado, el teléfono (el endpoint no lo recibe).
-  const q = useVentasParaPreparacion(
-    { fechaDesde: todas ? undefined : dia.fecha, fechaHasta: todas ? undefined : dia.fecha, metodoEntrega: filtros.metodo ?? undefined, vendedorId: filtros.vendedor?.id },
-    { activa: useIsFocused(), mantenerAlFiltrar: true },
-  )
+  const activa = useIsFocused()
+  const params = { fechaDesde: todas ? undefined : dia.fecha, fechaHasta: todas ? undefined : dia.fecha, metodoEntrega: filtros.metodo ?? undefined, vendedorId: filtros.vendedor?.id }
+  const q = useVentasParaPreparacion(params, { activa, mantenerAlFiltrar: true })
+  // Los números de las pestañas los cuenta el servidor con los mismos filtros; sin respuesta, sin número.
+  const conteosQ = useConteosPreparacion(params, { activa })
+  const conteos = conteosQ.isError || conteosQ.isPlaceholderData ? null : conteosDePestanas(conteosQ.data, filtros.estado)
 
   const items = (q.data ?? []).filter((v) => filtros.estado === null || v.estado === filtros.estado)
   const resumenFiltros = textoFiltros(filtros)
@@ -225,8 +228,8 @@ export function PorPrepararScreen() {
         title="Pedidos de logística"
         leading={leading}
         tabs={[
-          { label: `Pendientes (${delDia.length})`, selected: enPendientes, onPress: () => { setPestana('pendientes'); setPedido(null) } },
-          { label: `No entregados (${noEntregados.length})`, selected: !enPendientes, onPress: () => { setPestana('noEntregados'); setPedido(null) } },
+          { label: etiquetaConConteo('Pendientes', conteos?.pendientes), selected: enPendientes, onPress: () => { setPestana('pendientes'); setPedido(null) } },
+          { label: etiquetaConConteo('No entregados', conteos?.noEntregados), selected: !enPendientes, onPress: () => { setPestana('noEntregados'); setPedido(null) } },
         ]}
       />
       <TwoPane

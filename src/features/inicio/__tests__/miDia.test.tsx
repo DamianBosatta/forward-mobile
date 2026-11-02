@@ -120,6 +120,40 @@ describe('MiDiaScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas?tipo=pedidos&estado=PendienteAutorizacion')
   })
 
+  it('"Para resolver hoy" suma pedidos rechazados y presupuestos por vencer del resumen del vendedor, sin navegar', async () => {
+    responder({ vendedor: { ...RESUMEN_VENDEDOR, pedidosRechazados: 1, presupuestosPorVencer: 4 } })
+    pintar()
+    expect(await screen.findByLabelText(/^1 pedido rechazado\./)).toBeTruthy()
+    expect(screen.getByLabelText(/^4 presupuestos por vencer\./)).toBeTruthy()
+    expect(screen.getByText('1 pedido rechazado')).toBeTruthy()
+    expect(screen.getByText('4 presupuestos por vencer')).toBeTruthy()
+  })
+
+  it('con 0 en los dos campos nuevos no hay filas nuevas', async () => {
+    responder({ vendedor: { ...RESUMEN_VENDEDOR, pedidosRechazados: 0, presupuestosPorVencer: 0 } })
+    pintar()
+    await screen.findByText(ars('3.420.000,00'))
+    expect(screen.queryByText(/rechazad/)).toBeNull()
+    expect(screen.queryByText(/por vencer/)).toBeNull()
+  })
+
+  it('si el servidor no manda los campos nuevos, no muestra filas (ni 0 ni NaN)', async () => {
+    pintar()
+    await screen.findByText(ars('3.420.000,00'))
+    expect(screen.queryByText(/rechazad/)).toBeNull()
+    expect(screen.queryByText(/por vencer/)).toBeNull()
+    expect(screen.queryByText(/NaN/)).toBeNull()
+  })
+
+  it('con todo en 0 y sin pendientes de Inicio sigue "Todo al día."', async () => {
+    responder({
+      inicio: { ventas: { presupuestosPendientes: pend(0), pedidosConfirmados: pend(0), porAutorizar: pend(0) }, compras: null, autorizacionesPendientes: null },
+      vendedor: { ...RESUMEN_VENDEDOR, pedidosRechazados: 0, presupuestosPorVencer: 0 },
+    })
+    pintar()
+    expect(await screen.findByText('Todo al día.')).toBeTruthy()
+  })
+
   it('si el resumen del vendedor falla, lo dice y no inventa cifras', async () => {
     responder({ vendedor: new Error('boom') })
     pintar()

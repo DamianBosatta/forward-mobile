@@ -12,7 +12,7 @@ import { sharePdf } from '@/features/pedidos/lib/sharePdf'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { codigoDeVenta, tipoDeVenta } from '@/features/venta-nueva/lib/ventaGuardada'
 import { useReabrirPresupuesto } from '../hooks/useReabrirPresupuesto'
-import { DIAS_VIGENCIA_PRESUPUESTO, MOTIVO_ANULACION_WEB, type AccionesDeVenta as Acciones } from '../lib/accionesVenta'
+import { MOTIVO_ANULACION_WEB, type AccionesDeVenta as Acciones } from '../lib/accionesVenta'
 import { mensajeWhatsAppVenta, urlWhatsAppVenta } from '../lib/whatsappVenta'
 import { AnularVentaSheet } from './AnularVentaSheet'
 

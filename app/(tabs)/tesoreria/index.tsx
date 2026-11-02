@@ -5,8 +5,7 @@ import { ArrowLeftRight, Landmark, Zap } from 'lucide-react-native'
 import { usePuedePagarServicio } from '@/features/gastos/lib/permiso'
 import { radii, space, useColors } from '@/libs/theme'
 import { FilaDeAccion, FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
-import { usePuedeCobrar } from '@/features/cuentas/lib/permiso'
-import { usePermissions } from '@/core/auth/RequirePermission'
+import { usePuedeCobrar, usePuedeTransferir } from '@/features/cuentas/lib/permiso'
 import { MOTIVO_SIN_PERMISO_DE_SERVICIO, MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 
 /** Aviso de la lámina tesoreria-inicio: el cobro de un cliente no se carga desde Tesorería. */
@@ -25,9 +24,7 @@ export default function TesoreriaScreen() {
   const c = useColors()
   const router = useRouter()
   const menu = useMenuLeading()
-  const { canCreate, canRead } = usePermissions()
-  // Lista las cuentas propias (MOD_CC:Read) y los tipos de movimiento (GET /movimientos-internos/tipos, MOD_PAGOS:Read).
-  const transferir = canCreate('MOD_PAGOS') && canRead('MOD_PAGOS') && canRead('MOD_CC')
+  const transferir = usePuedeTransferir()
   // POST /gastos (MOD_PAGOS:Create) y la lista de conceptos (MOD_PAGOS:Read + CAP_VER_TESORERIA).
   const pagarServicio = usePuedePagarServicio()
   // Misma regla que el botón "Cobrar" de la cuenta del cliente (CuentaCorrienteCliente): sin ella no se ofrece.

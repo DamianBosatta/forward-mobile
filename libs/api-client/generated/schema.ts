@@ -9687,6 +9687,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Logistica/preparacion/conteos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    FechaDesde?: string;
+                    FechaHasta?: string;
+                    TicketId?: string;
+                    MetodoEntrega?: components["schemas"]["MetodoEntrega"];
+                    VendedorId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConteosPreparacionDto"];
+                        "application/json": components["schemas"]["ConteosPreparacionDto"];
+                        "text/json": components["schemas"]["ConteosPreparacionDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Logistica/hojas-ruta": {
         parameters: {
             query?: never;
@@ -20815,6 +20858,14 @@ export interface components {
             numeroFila?: number;
             motivo?: string | null;
         };
+        ConteoColumnaPreparacionDto: {
+            clave: string;
+            /** Format: int32 */
+            cantidad: number;
+        };
+        ConteosPreparacionDto: {
+            columnas: components["schemas"]["ConteoColumnaPreparacionDto"][];
+        };
         ConvertirPresupuestoCommand: {
             /** Format: uuid */
             ventaId?: string;
@@ -24613,6 +24664,10 @@ export interface components {
             ventas: components["schemas"]["VentasDelMesDto"];
             comisiones: components["schemas"]["ComisionesDelMesDto"];
             cobrosPendientes: components["schemas"]["CobrosPendientesDto"];
+            /** Format: int32 */
+            pedidosRechazados: number;
+            /** Format: int32 */
+            presupuestosPorVencer: number;
         };
         ResumenVendedorDtoResponse: {
             /** Format: int32 */
@@ -26254,6 +26309,8 @@ export interface components {
             modificadoPor?: string | null;
             /** Format: date-time */
             fechaModificacion?: string | null;
+            /** Format: date-time */
+            fechaVencimientoPresupuesto?: string | null;
             autorizadoPor?: string | null;
             motivoRechazoAutorizacion?: string | null;
             /** Format: int32 */

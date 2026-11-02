@@ -15,6 +15,7 @@ import { ClienteCard } from '@/features/clientes/components/ClienteCard'
 import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { textoMostrando } from '@/features/clientes/lib/cliente'
 import { CuentaCorrienteCliente } from '@/features/cuentas/components/CuentaCorrienteCliente'
+import { usePuedeTransferir } from '@/features/cuentas/lib/permiso'
 import { RegistrarCobro } from '@/features/cuentas/components/RegistrarCobro'
 import { DeudasAProveedores } from '@/features/cuentas/components/DeudasAProveedores'
 import { useDeudasResumen } from '@/features/cuentas/api/queries'
@@ -45,11 +46,10 @@ function CuentasCorrientesScreen() {
   const [cobrando, setCobrando] = useState(false)
   const [soloVencidas, setSoloVencidas] = useState(false)
   const [lado, setLado] = useState<LadoDeCuentas>('medeben')
-  const { canCreate, canRead } = usePermissions()
-  // Misma regla que Tesorería: la pantalla pide los tipos (MOD_PAGOS:Read) y las cuentas propias (MOD_CC:Read).
+  const { canRead } = usePermissions()
   const puedeVerDeudas = canRead('MOD_PAGOS')
   const resumenDeudas = useDeudasResumen(puedeVerDeudas)
-  const puedeTransferir = canCreate('MOD_PAGOS') && canRead('MOD_PAGOS') && canRead('MOD_CC')
+  const puedeTransferir = usePuedeTransferir()
   const { clientes, totalCount, saldoTotal, isLoading, isRefetching, error, dataUpdatedAt, refetch, cargarMas } = useCartera(
     busqueda,
     soloVencidas ? { conDeudaVencida: true } : undefined,

@@ -42,9 +42,16 @@ const PEDIDOS = [
 
 let diasEntrega: unknown = { lunes: true, martes: true, miercoles: true, jueves: true, viernes: true }
 
+// Lo que cuenta el servidor (no lo que cargó el teléfono): difiere a propósito de PEDIDOS.
+const CONTEOS = { columnas: [
+  { clave: 'Confirmada', cantidad: 12 }, { clave: 'EnPreparacion', cantidad: 5 },
+  { clave: 'Empacada', cantidad: 3 }, { clave: 'NoEntregada', cantidad: 4 },
+] }
+
 function servidor() {
   mockGet.mockImplementation((url: string) =>
-    url.includes('ventas-para-preparacion') ? Promise.resolve(PEDIDOS)
+    url.includes('preparacion/conteos') ? Promise.resolve(CONTEOS)
+      : url.includes('ventas-para-preparacion') ? Promise.resolve(PEDIDOS)
       : url.includes('dias-entrega') ? Promise.resolve(diasEntrega)
       : url.endsWith('/Ventas/vendedores') ? Promise.resolve([{ id: 'u1', nombre: 'Emanuel Parraquini' }, { id: 'u2', nombre: 'Lucía Ferreyra' }])
       : url.includes('feriados') ? Promise.resolve([{ id: 'f', fecha: '2026-10-12', descripcion: 'Diversidad cultural' }])
@@ -84,11 +91,28 @@ describe('Pedidos de logística (solo ver)', () => {
     expect(within(tarjeta).getByText('5 productos · 3 piezas')).toBeTruthy()
     expect(within(tarjeta).getByLabelText('Estado: En preparación')).toBeTruthy()
     expect(screen.getByText('Hoy · 2 pedidos · 8 productos')).toBeTruthy()
-    expect(screen.getByLabelText('No entregados (1)')).toBeTruthy()
-    expect(screen.getByLabelText('Pendientes (2)')).toBeTruthy()
     // Los no entregados tienen su pestaña: no se mezclan con los pendientes.
     expect(screen.queryByLabelText('Pedido A00399: Tarantino 1898')).toBeNull()
     expect(urls().some((u) => u.includes('FechaDesde=2026-10-09') && u.includes('FechaHasta=2026-10-09'))).toBe(true)
+  })
+
+  it('las pestañas muestran los conteos del servidor, con los mismos filtros que la lista', async () => {
+    pintar()
+    expect(await screen.findByLabelText('Pendientes (20)')).toBeTruthy()
+    expect(screen.getByLabelText('No entregados (4)')).toBeTruthy()
+    const c = urls().find((u) => u.includes('preparacion/conteos'))!
+    expect(c).toContain('FechaDesde=2026-10-09')
+    expect(c).toContain('FechaHasta=2026-10-09')
+  })
+
+  it('si falla el conteo las pestañas van sin número, nunca con uno contado en el teléfono', async () => {
+    const servido = mockGet.getMockImplementation()!
+    mockGet.mockImplementation((url: string) => (url.includes('preparacion/conteos') ? Promise.reject(new Error('500')) : servido(url)))
+    pintar()
+    await screen.findByLabelText('Pedido A00417: Juan B. Justo 6376')
+    expect(await screen.findByLabelText('Pendientes')).toBeTruthy()
+    expect(screen.getByLabelText('No entregados')).toBeTruthy()
+    expect(screen.queryByLabelText(/Pendientes \(/)).toBeNull()
   })
 
   it('con unidades del servidor la tarjeta dice líneas, unidades y piezas; el detalle, el empaque de cada línea (9B prioridad 3)', async () => {
@@ -251,7 +275,7 @@ describe('Pedidos de logística (solo ver)', () => {
           : url.endsWith('/Ventas/v3') ? Promise.resolve({ venta: { id: 'v3', observaciones: 'Toqué timbre dos veces' }, detalles: [], bultos: [] })
           : servido(url))
       pintar()
-      await userEvent.press(await screen.findByLabelText('No entregados (1)'))
+      await userEvent.press(await screen.findByLabelText('No entregados (4)'))
       const tarjeta = await screen.findByLabelText('Pedido A00399: Tarantino 1898')
       expect(within(tarjeta).getByLabelText('Estado: No entregado')).toBeTruthy()
       expect(await within(tarjeta).findByText('Motivo: Local cerrado')).toBeTruthy()
@@ -267,7 +291,7 @@ describe('Pedidos de logística (solo ver)', () => {
 
     it('un no entregado sin hoja de ruta ni observaciones no inventa motivo ni chofer', async () => {
       pintar()
-      await userEvent.press(await screen.findByLabelText('No entregados (1)'))
+      await userEvent.press(await screen.findByLabelText('No entregados (4)'))
       const tarjeta = await screen.findByLabelText('Pedido A00399: Tarantino 1898')
       expect(within(tarjeta).queryByText(/Motivo|chofer/)).toBeNull()
     })
