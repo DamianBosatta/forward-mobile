@@ -64,9 +64,9 @@ export default function PerfilScreen() {
     <Text accessibilityRole="header" style={[typeScale.etiqueta, { color: c.textSecondary, textTransform: 'uppercase', paddingHorizontal: space[1] }]}>{t}</Text>
   )
   const cambiarHuella = async () => {
-    if (!huella) return
+    if (!huella || !user?.username) return
     const prendida = !huella.prendida
-    await setBiometricLoginEnabled(prendida)
+    await setBiometricLoginEnabled(prendida, user.username)
     setHuella({ ...huella, prendida })
     setAvisoHuella(prendida ? AVISO_HUELLA_PRENDIDA : null)
   }

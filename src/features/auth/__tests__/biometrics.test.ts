@@ -105,9 +105,29 @@ describe('entrar con huella (opt-in)', () => {
 
   it('turning it off in Mi cuenta deletes the saved credential', async () => {
     await acceptBiometricLogin(CREDS)
-    await setBiometricLoginEnabled(false)
+    await setBiometricLoginEnabled(false, 'emanuel.p')
     expect(await isBiometricLoginEnabled()).toBe(false)
     expect(mockStore.has(CREDENCIAL)).toBe(false)
     expect(await hasSavedCredentials()).toBe(false)
+  })
+
+  it('a decision with no owner (legacy "true") reads as nothing decided and the person is asked again', async () => {
+    mockStore.set(DECISION, 'true')
+    expect(await getBiometricChoice()).toBeNull()
+    expect(await isBiometricLoginEnabled()).toBe(false)
+    expect(await getBiometricChoiceFor('emanuel.p')).toBeNull()
+    expect(mockStore.has(DECISION)).toBe(false)
+  })
+
+  it('turning it on in Mi cuenta records who turned it on', async () => {
+    await setBiometricLoginEnabled(true, 'emanuel.p')
+    expect(await getBiometricChoiceFor('emanuel.p')).toBe('enabled')
+    expect(await getBiometricChoiceFor('ana.g')).toBeNull()
+  })
+
+  it('a credential with no saved marker (legacy, unprotected) is deleted', async () => {
+    mockStore.set(CREDENCIAL, JSON.stringify(CREDS))
+    expect(await hasSavedCredentials()).toBe(false)
+    expect(mockStore.has(CREDENCIAL)).toBe(false)
   })
 })

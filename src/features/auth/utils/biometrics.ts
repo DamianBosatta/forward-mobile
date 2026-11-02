@@ -39,11 +39,16 @@ export async function saveCredentials(creds: BiometricCredentials) {
     authenticationPrompt: 'Confirmá que sos vos para guardar la huella',
   });
   await SecureStore.setItemAsync(BIOMETRIC_SAVED_KEY, 'true');
+  await SecureStore.setItemAsync(BIOMETRIC_USER_KEY, creds.username);
 }
 
 /** True when a credential is saved; reads only the plain marker, so it never prompts. */
 export async function hasSavedCredentials(): Promise<boolean> {
-  return (await SecureStore.getItemAsync(BIOMETRIC_SAVED_KEY)) === 'true';
+  if ((await SecureStore.getItemAsync(BIOMETRIC_SAVED_KEY)) === 'true') return true;
+  // No marker: anything under the credential key predates the protected save (an older build stored it without
+  // device authentication). Deleting needs no authentication, so it goes without asking.
+  await SecureStore.deleteItemAsync(BIOMETRIC_CREDENTIALS_KEY);
+  return false;
 }
 
 /** Reads the credential; the system asks for the fingerprint (or the device lock) first. */
@@ -66,19 +71,23 @@ export async function clearSavedCredentials() {
 }
 
 /**
- * The decision for this username. If it was taken by someone else, the decision and the credential are deleted
- * and the person is asked again: another person's credential is never kept or overwritten silently.
+ * The decision for this username. If it was taken by someone else, or nobody is recorded as its owner (an older
+ * build saved it without one), the decision and the credential are deleted and the person is asked again:
+ * another person's credential is never kept or overwritten silently.
  */
 export async function getBiometricChoiceFor(username: string): Promise<BiometricChoice> {
+  await hasSavedCredentials();
   const duenio = await SecureStore.getItemAsync(BIOMETRIC_USER_KEY);
-  if (duenio && !mismaPersona(duenio, username)) {
+  if (!duenio || !mismaPersona(duenio, username)) {
     await forgetBiometricLogin();
     return null;
   }
   return getBiometricChoice();
 }
 
+/** The decision on this phone, whoever took it. A decision with no owner counts as nothing decided. */
 export async function getBiometricChoice(): Promise<BiometricChoice> {
+  if (!(await SecureStore.getItemAsync(BIOMETRIC_USER_KEY))) return null;
   const valor = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
   if (valor === 'true') return 'enabled';
   if (valor === 'false') return 'disabled';
@@ -90,9 +99,13 @@ export async function isBiometricLoginEnabled(): Promise<boolean> {
   return (await getBiometricChoice()) === 'enabled';
 }
 
-/** Turning it off deletes the saved credential; turning it on saves it at the next password login. */
-export async function setBiometricLoginEnabled(enabled: boolean) {
+/**
+ * Mi cuenta's switch, for the person logged in. Turning it off deletes the saved credential; turning it on saves
+ * it at that person's next password login.
+ */
+export async function setBiometricLoginEnabled(enabled: boolean, username: string) {
   await SecureStore.setItemAsync(BIOMETRIC_ENABLED_KEY, enabled ? 'true' : 'false');
+  await SecureStore.setItemAsync(BIOMETRIC_USER_KEY, username);
   if (!enabled) await clearSavedCredentials();
 }
 
@@ -104,15 +117,13 @@ export async function acceptBiometricLogin(creds: BiometricCredentials): Promise
     await clearSavedCredentials();
     return false;
   }
-  await setBiometricLoginEnabled(true);
-  await SecureStore.setItemAsync(BIOMETRIC_USER_KEY, creds.username);
+  await setBiometricLoginEnabled(true, creds.username);
   return true;
 }
 
 /** "Ahora no": stores no credential and does not ask this person again until a manual logout. */
 export async function declineBiometricLogin(username: string) {
-  await setBiometricLoginEnabled(false);
-  await SecureStore.setItemAsync(BIOMETRIC_USER_KEY, username);
+  await setBiometricLoginEnabled(false, username);
 }
 
 /** Manual logout or another person: deletes the credential and the decision, so the next login is asked again. */

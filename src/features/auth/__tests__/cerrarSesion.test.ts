@@ -23,6 +23,7 @@ import { persistQueryClientSubscribe } from '@tanstack/react-query-persist-clien
 import { api, configureApiClient } from '@/core/api/client'
 import { crearQueryClient, opcionesDePersistencia } from '@/core/query/queryClient'
 import { mmkvPersister } from '@/core/query/persistConfig'
+import { storage } from '@/core/utils/storage'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { useAuthStore } from '../store/auth.store'
 import { useOfertaDeHuella } from '../store/ofertaDeHuella.store'
@@ -127,4 +128,20 @@ describe('cerrarSesion(): the next user of the phone sees nothing of the previou
     expect(mockSecure.has(CREDENCIAL_HUELLA)).toBe(true)
     soltar()
   })
+
+  it.each([['manual', {}], ['forced', { forzado: true }]])(
+    '%s logout keeps the offline queues (sales and driver console) for when the signal comes back',
+    async (_tipo, opciones) => {
+      const { soltar } = await conSesion()
+      const colas = {
+        'ventas-sin-senal:u1': '[{"id":"venta-1"}]',
+        'ventas-sin-senal:u1:rotas': '[{"id":"venta-0"}]',
+        'consola-sin-senal:u1': '[{"id":"entrega-1"}]',
+      }
+      Object.entries(colas).forEach(([clave, valor]) => storage.set(clave, valor))
+      await cerrarSesion(opciones)
+      Object.entries(colas).forEach(([clave, valor]) => expect(storage.getString(clave)).toBe(valor))
+      soltar()
+    },
+  )
 })

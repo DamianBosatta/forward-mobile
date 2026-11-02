@@ -35,7 +35,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { cerrarSesion } from '../../lib/cerrarSesion'
 import { useAuthStore } from '../../store/auth.store'
 import { useOfertaDeHuella } from '../../store/ofertaDeHuella.store'
-import { acceptBiometricLogin, hasSavedCredentials } from '../../utils/biometrics'
+import { acceptBiometricLogin, hasSavedCredentials, setBiometricLoginEnabled } from '../../utils/biometrics'
 
 const CREDENCIAL = 'forward_biometric_credentials'
 
@@ -59,6 +59,29 @@ it('A accepted the fingerprint; after a forced logout B logs in with a password:
   fireEvent.changeText(screen.getByLabelText('Contraseña'), 'deBeto')
   fireEvent.press(screen.getByRole('button', { name: 'Ingresar' }))
 
+  await waitFor(() => expect(useOfertaDeHuella.getState().pendiente).toEqual({ username: 'beto.r', password: 'deBeto' }))
+  expect(mockSecure.has(CREDENCIAL)).toBe(false)
+  expect(await hasSavedCredentials()).toBe(false)
+})
+
+const entrarConContrasenia = async (usuario: string, clave: string) => {
+  const vista = render(<QueryClientProvider client={new QueryClient()}><LoginScreen /></QueryClientProvider>)
+  fireEvent.changeText(screen.getByLabelText('Usuario o email'), usuario)
+  fireEvent.changeText(screen.getByLabelText('Contraseña'), clave)
+  fireEvent.press(screen.getByRole('button', { name: 'Ingresar' }))
+  return vista
+}
+
+it('A turned it on in Mi cuenta and logged in; after a forced logout B logs in: A\'s credential goes, B is asked', async () => {
+  useAuthStore.setState({ isAuthenticated: true, accessToken: 't1', refreshToken: 'r1' })
+  await setBiometricLoginEnabled(true, 'ana.g')
+  const deAna = await entrarConContrasenia('ana.g', 'deAna')
+  await waitFor(() => expect(mockSecure.get(CREDENCIAL)).toBe(JSON.stringify({ username: 'ana.g', password: 'deAna' })))
+  expect(useOfertaDeHuella.getState().pendiente).toBeNull()
+  deAna.unmount()
+  await cerrarSesion({ forzado: true })
+
+  await entrarConContrasenia('beto.r', 'deBeto')
   await waitFor(() => expect(useOfertaDeHuella.getState().pendiente).toEqual({ username: 'beto.r', password: 'deBeto' }))
   expect(mockSecure.has(CREDENCIAL)).toBe(false)
   expect(await hasSavedCredentials()).toBe(false)
