@@ -71,3 +71,22 @@ describe('mensajeDeError: el texto que ve el usuario', () => {
     expect(mensajeDeError(new Error('falló algo'))).toBe('falló algo')
   })
 })
+
+describe('mensajeDeError: fallas de red y tiempo agotado', () => {
+  it('traduce el TypeError de red de fetch', () => {
+    expect(mensajeDeError(new TypeError('Network request failed'))).toBe('Sin conexión. Revisá tu red e intentá de nuevo.')
+  })
+
+  it('traduce el AbortError que tira fetchWithTimeout al vencer el plazo', () => {
+    const abort = new Error('Aborted')
+    abort.name = 'AbortError'
+    expect(mensajeDeError(abort)).toBe('La conexión tardó demasiado. Intentá de nuevo.')
+    expect(mensajeDeError(new DOMException('Aborted', 'AbortError'))).toBe('La conexión tardó demasiado. Intentá de nuevo.')
+  })
+
+  it('un error que no es de red conserva su texto de antes', () => {
+    expect(mensajeDeError(new ApiError(409, 'La clave ya existe.'))).toBe('La clave ya existe.')
+    expect(mensajeDeError(new Error('otro'))).toBe('otro')
+    expect(mensajeDeError(new TypeError('x is not a function'))).toBe('x is not a function')
+  })
+})

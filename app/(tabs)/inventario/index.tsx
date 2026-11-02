@@ -9,7 +9,7 @@ import { useResponsive } from '@/libs/useResponsive'
 import { Notice, TopBar } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
-import { esFallaDeRed } from '@/core/api/errores'
+import { esFallaDeRed, TEXTO_SIN_CONEXION } from '@/core/api/errores'
 import { RequirePermission } from '@/core/ui'
 import { ApiError } from '@/core/api/client'
 import { buscarPorCodigoBarra } from '@/libs/api-client/productos'
@@ -26,7 +26,7 @@ import { BusquedaBajoBarra } from '@/features/inventario/components/BusquedaBajo
 const ANCHO_DOS_PANELES = 900
 /** El aviso de un escaneo que falló: sin red (no llegó respuesta), código rechazado (400) u otro error. */
 function falloDelEscaneo(error: Error, codigo?: string): string {
-  if (!(error instanceof ApiError)) return `Sin conexión: no se pudo buscar el código ${codigo}. Volvé a escanear cuando haya señal.`
+  if (!(error instanceof ApiError)) return `${TEXTO_SIN_CONEXION}: no se pudo buscar el código ${codigo}. Volvé a escanear cuando haya señal.`
   return error.status === 400 ? `El código ${codigo} no es válido.` : `No se pudo buscar el código ${codigo}. Volvé a intentar.`
 }
 
