@@ -66,6 +66,21 @@ export function diaArgentina(ms: number): string {
   return `${p.anio}-${dos(p.mes + 1)}-${dos(p.dia)}`;
 }
 
+const SIN_OFFSET = /^(\d{4})-(\d{2})-(\d{2})(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)?$/;
+
+/**
+ * Business calendar day written in an offset-less string ("2026-10-22" or "2026-10-22T00:00:00"), read as
+ * written: it is not an instant, so the device time zone must not move it (X9). Null when the string has an
+ * offset (Z, ±hh:mm) or is not a date; those are instants and go through `partesArgentina`. mes: 0-11.
+ */
+export function diaCalendarioSinOffset(texto: string | null | undefined): Pick<PartesArgentina, 'anio' | 'mes' | 'dia'> | null {
+  const m = texto ? SIN_OFFSET.exec(texto.trim()) : null;
+  if (!m) return null;
+  const [anio, mes, dia] = [Number(m[1]), Number(m[2]) - 1, Number(m[3])];
+  const d = new Date(Date.UTC(anio, mes, dia));
+  return d.getUTCMonth() === mes && d.getUTCDate() === dia ? { anio, mes, dia } : null;
+}
+
 const MS_POR_DIA = 24 * 60 * 60 * 1000;
 
 /** Milisegundos hasta la próxima 00:00 de Argentina (a las 00:00:00 exactas falta un día entero). */

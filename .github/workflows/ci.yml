@@ -19,6 +19,10 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        tz: ['UTC', 'America/Argentina/Buenos_Aires', 'Asia/Tokyo']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,9 +32,11 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test -- --ci
+        env:
+          TZ: ${{ matrix.tz }}
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: junit
+          name: junit-${{ strategy.job-index }}
           path: junit.xml
           retention-days: 7

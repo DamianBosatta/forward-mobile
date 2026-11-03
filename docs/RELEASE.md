@@ -17,6 +17,8 @@ Un push nuevo a la misma pull request cancela la corrida anterior. El job tiene 
 - En la pestaña "Checks" de la pull request, o al pie de la pull request como el check `check`.
 - En la pestaña "Actions" del repositorio, para las corridas de `main`.
 
+Los tests corren en tres husos horarios (UTC, Argentina y Tokio) porque un error de fechas puede ser invisible en un solo huso; los checks requeridos son las tres entradas `check`.
+
 ### Si el check está en rojo
 
 La pull request no se mergea. Para ver qué test falló, abrir la corrida y descargar el artefacto `junit` (el `junit.xml` de jest), que se conserva 7 días y se sube también cuando la corrida falla.
