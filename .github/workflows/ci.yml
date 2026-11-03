@@ -1,5 +1,7 @@
-# CI for forward-mobile: one job (`check`) runs tsc and jest on every pull request to main and every push to main.
-# Making `check` a required status check on `main` is done by the repository owner in GitHub branch protection.
+# CI for forward-mobile: the `check` job runs tsc and jest on every pull request to main and every push to main,
+# as a matrix over three time zones, so the required status checks are `check (UTC)`,
+# `check (America/Argentina/Buenos_Aires)` and `check (Asia/Tokyo)`. The `publish-update` job only runs on push to main
+# and is not a required check. Making the `check` entries required on `main` is done by the repository owner in GitHub branch protection.
 name: ci
 
 on:

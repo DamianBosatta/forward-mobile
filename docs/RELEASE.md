@@ -1,10 +1,10 @@
 # Release de Forward Mobile
 
-Este documento describe cómo se verifica, se publica y se versiona la app: la integración continua (CI), las actualizaciones por aire (OTA), la construcción del APK y la numeración de versiones. La sección de build del APK se completa en la siguiente tarea de la tanda 4; hoy están escritas las secciones de CI, actualizaciones OTA y versión.
+Este documento describe cómo se verifica, se publica y se versiona la app: la integración continua (CI), las actualizaciones por aire (OTA), la construcción del APK y la numeración de versiones. Secciones: CI, actualizaciones OTA, build del APK y versión.
 
 ## CI
 
-En cada pull request hacia `main` y en cada push a `main`, GitHub Actions ejecuta el job `check` (archivo `.github/workflows/ci.yml`) con Node 24 y estos pasos, en este orden:
+En cada pull request hacia `main` y en cada push a `main`, GitHub Actions ejecuta el job `check` (archivo `.github/workflows/ci.yml`) con Node 24, una vez por huso horario (matriz de tres zonas), con estos pasos, en este orden:
 
 1. `npm ci`: instala exactamente lo que dice `package-lock.json`.
 2. `npm run lint`: ejecuta `tsc --noEmit` (chequeo de tipos).
@@ -14,10 +14,10 @@ Un push nuevo a la misma pull request cancela la corrida anterior. El job tiene 
 
 ### Dónde verlo
 
-- En la pestaña "Checks" de la pull request, o al pie de la pull request como el check `check`.
+- En la pestaña "Checks" de la pull request, o al pie de la pull request como los tres checks `check (UTC)`, `check (America/Argentina/Buenos_Aires)` y `check (Asia/Tokyo)`.
 - En la pestaña "Actions" del repositorio, para las corridas de `main`.
 
-Los tests corren en tres husos horarios (UTC, Argentina y Tokio) porque un error de fechas puede ser invisible en un solo huso; los checks requeridos son las tres entradas `check`.
+Los tests corren en tres husos horarios (UTC, Argentina y Tokio) porque un error de fechas puede ser invisible en un solo huso; los checks requeridos son las tres entradas `check (UTC)`, `check (America/Argentina/Buenos_Aires)` y `check (Asia/Tokyo)`. El job `publish-update` solo corre en push a `main` y no es un check requerido.
 
 ### Si el check está en rojo
 
@@ -25,7 +25,7 @@ La pull request no se mergea. Para ver qué test falló, abrir la corrida y desc
 
 ### Paso único del dueño del repositorio
 
-Para que GitHub impida mergear con el check en rojo: Settings → Branches → regla para `main` → "Require status checks to pass" → seleccionar `check`. Los agentes no pueden modificar la protección de rama.
+Para que GitHub impida mergear con el check en rojo: Settings → Branches → regla para `main` → "Require status checks to pass" → seleccionar los tres checks `check (UTC)`, `check (America/Argentina/Buenos_Aires)` y `check (Asia/Tokyo)`. Los agentes no pueden modificar la protección de rama.
 
 ### Equivalente local
 
@@ -108,7 +108,38 @@ Dos caminos, según la documentación de Expo (https://docs.expo.dev/eas-update/
 
 ## Build del APK
 
-Pendiente: tanda 4, T3.
+Los APK los construye EAS Build, no la máquina de nadie. Los dos perfiles (`preview` y `production` en `eas.json`) producen un APK instalable (`android.buildType: "apk"`). EAS instala las dependencias desde el lockfile con `npm ci`, así que el build sale de lo que está commiteado.
+
+### Comandos
+
+Los corre el dueño, después de iniciar sesión con `eas login`:
+
+```
+eas build -p android --profile preview
+eas build -p android --profile production
+```
+
+Cada build suma uno al `versionCode` (`autoIncrement`, ver "Versión"). El primer build `preview` y el primer `production` de esta tanda son builds nativos nuevos, porque `expo-updates` es un módulo nativo nuevo (ver "Actualizaciones OTA"). Cada corrida consume cuota del plan de Expo.
+
+### Dónde bajar el APK
+
+Al terminar, EAS muestra un enlace y un código QR en la terminal. El mismo build queda en expo.dev → proyecto → Builds: abrir la página del build y descargar el APK o escanear el QR desde el teléfono. Para instalarlo, el teléfono debe permitir instalar apps de orígenes desconocidos.
+
+### Keystore
+
+La firma usa un keystore administrado por Expo (credenciales administradas). Se crea en el primer build de Android y queda en los servidores de Expo; no vive en el repositorio ni hay que crearlo a mano. Todos los builds siguientes lo reutilizan: un APK firmado con otro keystore no se instala como actualización del anterior.
+
+Conviene bajar una copia de respaldo y guardarla fuera de git y fuera del repositorio (por ejemplo en un gestor de contraseñas o un disco cifrado):
+
+```
+eas credentials -p android
+```
+
+Elegir el perfil, luego "Keystore: Manage everything needed to build your project" y la opción de descargar el keystore. Si se pierde y Expo tampoco lo tiene, no se puede publicar una versión que reemplace a la instalada.
+
+### Historia: scripts locales eliminados
+
+Se borraron `docker_build.sh` (corría `npm install --legacy-peer-deps`, `expo prebuild --clean` y `gradlew assembleRelease` en un contenedor, sin keystore de firma) y `patch-prefab.ps1` (un bucle que parcheaba `graphicsConversions.h` en la caché de Gradle de una máquina puntual). Ninguno era reproducible ni firmaba; los reemplaza EAS Build.
 
 ## Versión
 
