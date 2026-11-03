@@ -21,7 +21,7 @@ Los tests corren en tres husos horarios (UTC, Argentina y Tokio) porque un error
 
 ### Si el check está en rojo
 
-La pull request no se mergea. Para ver qué test falló, abrir la corrida y descargar el artefacto `junit` (el `junit.xml` de jest), que se conserva 7 días y se sube también cuando la corrida falla.
+La pull request no se mergea. Para ver qué test falló, abrir la corrida y descargar el artefacto del huso que falló: `junit-0` (UTC), `junit-1` (America/Argentina/Buenos_Aires) o `junit-2` (Asia/Tokyo), cada uno con el `junit.xml` de jest de ese huso. Se conservan 7 días y se suben también cuando la corrida falla.
 
 ### Paso único del dueño del repositorio
 
@@ -76,6 +76,8 @@ eas update --channel production --environment production --message "<mensaje del
 
 Antes de publicar carga las variables `EXPO_PUBLIC_*` del perfil `production` de `eas.json` (URL de la API, de SignalR y Sentry), porque `eas update` no lee el `env` de los perfiles de build. Si en el futuro se crean variables de entorno en EAS (expo.dev → proyecto → Environment variables, entorno `production`) con el mismo nombre, esas tienen prioridad.
 
+El CI fija la versión de eas-cli en 27.2.0 (`eas-version` en `.github/workflows/ci.yml`). Para actualizarla, cambiar esa línea en una pull request y verificar que el job `publish-update` siga en verde.
+
 Mientras no exista el secreto `EXPO_TOKEN`, el job termina en verde con el aviso "EXPO_TOKEN is not set: no update was published" y no publica nada.
 
 ### Paso único del dueño: crear `EXPO_TOKEN`
@@ -120,6 +122,8 @@ eas build -p android --profile production
 ```
 
 Cada build suma uno al `versionCode` (`autoIncrement`, ver "Versión"). El primer build `preview` y el primer `production` de esta tanda son builds nativos nuevos, porque `expo-updates` es un módulo nativo nuevo (ver "Actualizaciones OTA"). Cada corrida consume cuota del plan de Expo.
+
+Los perfiles `preview` y `production` omiten la subida de source maps a Sentry (`SENTRY_DISABLE_AUTO_UPLOAD` en `eas.json`) porque no existe `SENTRY_AUTH_TOKEN`; sin esa omisión el build de Android falla en la tarea de Gradle de Sentry con "Auth token is required". Los errores siguen llegando a Sentry, pero sus stack traces muestran el bundle minificado. Para obtener trazas legibles más adelante, el dueño crea un auth token de Sentry, lo guarda como variable de entorno de EAS `SENTRY_AUTH_TOKEN` (visibilidad secret, entorno production) y quita el flag en una pull request. Los agentes nunca crean ni leen ese token.
 
 ### Dónde bajar el APK
 
