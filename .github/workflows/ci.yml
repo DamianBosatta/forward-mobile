@@ -10,7 +10,8 @@ on:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Only pull request runs are cancelled by a newer push; a run on main is never cut mid-publish.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -40,3 +41,61 @@ jobs:
           name: junit-${{ strategy.job-index }}
           path: junit.xml
           retention-days: 7
+
+  # Publishes the JS bundle of every merge to main as an EAS Update on the `production` channel.
+  # The fingerprint runtime version keeps it away from builds with different native code (docs/RELEASE.md).
+  publish-update:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    concurrency:
+      group: publish-update
+      cancel-in-progress: false
+    steps:
+      - name: Check EXPO_TOKEN
+        id: token
+        env:
+          HAS_TOKEN: ${{ secrets.EXPO_TOKEN != '' }}
+        run: |
+          if [ "$HAS_TOKEN" = "true" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::EXPO_TOKEN is not set: no update was published (see docs/RELEASE.md)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.token.outputs.ready == 'true'
+        uses: actions/checkout@v4
+      - if: steps.token.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - if: steps.token.outputs.ready == 'true'
+        run: npm ci
+      # `eas update --environment` reads EAS environment variables, not the build env of eas.json:
+      # load the production build env from eas.json so the bundle gets the same EXPO_PUBLIC_* values.
+      - name: Load production env from eas.json
+        if: steps.token.outputs.ready == 'true'
+        run: |
+          node -e '
+            const fs = require("fs")
+            const env = require("./eas.json").build.production.env
+            for (const [k, v] of Object.entries(env)) {
+              if (/[\r\n]/.test(v)) throw new Error("multi-line value in eas.json: " + k)
+              fs.appendFileSync(process.env.GITHUB_ENV, k + "=" + v + "\n")
+            }
+          '
+          test -n "$(grep '^EXPO_PUBLIC_API_URL=' "$GITHUB_ENV")"
+      - if: steps.token.outputs.ready == 'true'
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Publish update to production
+        if: steps.token.outputs.ready == 'true'
+        env:
+          MSG: ${{ github.event.head_commit.message }}
+        run: eas update --channel production --environment production --message "$MSG" --non-interactive
