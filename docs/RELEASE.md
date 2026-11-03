@@ -123,6 +123,8 @@ eas build -p android --profile production
 
 Cada build suma uno al `versionCode` (`autoIncrement`, ver "Versión"). El primer build `preview` y el primer `production` de esta tanda son builds nativos nuevos, porque `expo-updates` es un módulo nativo nuevo (ver "Actualizaciones OTA"). Cada corrida consume cuota del plan de Expo.
 
+Los perfiles `preview` y `production` omiten la subida de source maps a Sentry (`SENTRY_DISABLE_AUTO_UPLOAD` en `eas.json`) porque no existe `SENTRY_AUTH_TOKEN`; sin esa omisión el build de Android falla en la tarea de Gradle de Sentry con "Auth token is required". Los errores siguen llegando a Sentry, pero sus stack traces muestran el bundle minificado. Para obtener trazas legibles más adelante, el dueño crea un auth token de Sentry, lo guarda como variable de entorno de EAS `SENTRY_AUTH_TOKEN` (visibilidad secret, entorno production) y quita el flag en una pull request. Los agentes nunca crean ni leen ese token.
+
 ### Dónde bajar el APK
 
 Al terminar, EAS muestra un enlace y un código QR en la terminal. El mismo build queda en expo.dev → proyecto → Builds: abrir la página del build y descargar el APK o escanear el QR desde el teléfono. Para instalarlo, el teléfono debe permitir instalar apps de orígenes desconocidos.
