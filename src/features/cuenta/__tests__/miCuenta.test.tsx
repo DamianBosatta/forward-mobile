@@ -33,6 +33,17 @@ const mockReplace = jest.fn()
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: mockReplace }) }))
 jest.mock('expo-constants', () => ({ __esModule: true, default: { expoConfig: { version: '1.4.0' } } }))
+const mockBuild: { nativeBuildVersion: string | null } = { nativeBuildVersion: '12' }
+jest.mock('expo-application', () => ({ get nativeBuildVersion() { return mockBuild.nativeBuildVersion } }))
+const mockUpdates: { isEnabled: boolean; isEmbeddedLaunch: boolean; updateId: string | null; createdAt: Date | null } = {
+  isEnabled: false, isEmbeddedLaunch: true, updateId: null, createdAt: null,
+}
+jest.mock('expo-updates', () => ({
+  get isEnabled() { return mockUpdates.isEnabled },
+  get isEmbeddedLaunch() { return mockUpdates.isEmbeddedLaunch },
+  get updateId() { return mockUpdates.updateId },
+  get createdAt() { return mockUpdates.createdAt },
+}))
 const mockHuella = { disponible: true, prendida: true }
 const mockSetHuella = jest.fn()
 jest.mock('@/features/auth/utils/biometrics', () => ({
@@ -73,6 +84,8 @@ beforeEach(() => {
   mockSetHuella.mockResolvedValue(undefined)
   mockHuella.disponible = true
   mockHuella.prendida = true
+  mockBuild.nativeBuildVersion = '12'
+  Object.assign(mockUpdates, { isEnabled: false, isEmbeddedLaunch: true, updateId: null, createdAt: null })
   ;(globalThis as { __DEV__?: boolean }).__DEV__ = true
 })
 
@@ -166,10 +179,36 @@ describe('Mi cuenta reducida (bloque 12, T2: R15 y reglas mobile §14)', () => {
     expect(mockGet).not.toHaveBeenCalledWith('/api/v1/Sessions')
   })
 
-  it('dice la versión y a qué servidor está conectada', () => {
+  it('dice la versión, el build y a qué servidor está conectada (expo-updates apagado, como en Expo Go)', () => {
+    usuario()
+    pintar()
+    expect(screen.getByText('Forward Mobile 1.4.0 (build 12) · conectado a producción')).toBeTruthy()
+    expect(screen.queryByText(/^Actualización /)).toBeNull()
+  })
+
+  it('sin número de build muestra solo la versión', () => {
+    mockBuild.nativeBuildVersion = null
     usuario()
     pintar()
     expect(screen.getByText('Forward Mobile 1.4.0 · conectado a producción')).toBeTruthy()
+  })
+
+  it('con una actualización OTA corriendo muestra su id corto y su día', () => {
+    Object.assign(mockUpdates, {
+      isEnabled: true, isEmbeddedLaunch: false,
+      updateId: 'a1b2c3d4-e5f6-7890-abcd-ef0123456789', createdAt: new Date('2026-11-02T15:00:00Z'),
+    })
+    usuario()
+    pintar()
+    expect(screen.getByText('Forward Mobile 1.4.0 (build 12) · conectado a producción')).toBeTruthy()
+    expect(screen.getByText('Actualización a1b2c3d4 del 02/11/2026')).toBeTruthy()
+  })
+
+  it('con el bundle que vino en el build no muestra línea de actualización', () => {
+    Object.assign(mockUpdates, { isEnabled: true, isEmbeddedLaunch: true, updateId: 'e0e0e0e0-0000', createdAt: new Date('2026-11-02T15:00:00Z') })
+    usuario()
+    pintar()
+    expect(screen.queryByText(/^Actualización /)).toBeNull()
   })
 
   it('en las builds que van a los teléfonos no hay selector de servidor', () => {

@@ -1,5 +1,8 @@
 import { type ExpoConfig } from 'expo/config'
 
+/** EAS project id: used by `extra.eas` and by the EAS Update URL (single source). */
+const EAS_PROJECT_ID = '058596a1-a678-4d5a-917e-79f3a93abc67'
+
 const config: ExpoConfig = {
   name: 'Forward ERP',
   slug: 'forward-erp',
@@ -9,6 +12,11 @@ const config: ExpoConfig = {
   scheme: 'forward',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
+  // OTA updates (EAS Update). A native change means a new build before any update: see docs/RELEASE.md.
+  runtimeVersion: { policy: 'fingerprint' },
+  updates: {
+    url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
+  },
   splash: {
     image: './assets/splash.png',
     resizeMode: 'contain',
@@ -67,7 +75,7 @@ const config: ExpoConfig = {
     apiUrl: process.env.API_URL ?? 'http://10.0.2.2:5000',
     signalrUrl: process.env.SIGNALR_URL ?? 'http://10.0.2.2:5000/hubs/erp',
     eas: {
-      projectId: '058596a1-a678-4d5a-917e-79f3a93abc67',
+      projectId: EAS_PROJECT_ID,
     },
   },
 }

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Alert, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import Constants from 'expo-constants'
 import { Bell, Fingerprint, Lock, LogOut } from 'lucide-react-native'
 import { useAuthStore } from '../../../libs/store/auth.store'
 import { useThemeStore, useColors, radii, space, typeScale, type ThemeMode } from '../../../libs/theme'
@@ -10,6 +9,7 @@ import { Button, FilaDeAjuste, FilaInterruptor, Notice, Segmented, TopBar, useMe
 import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
 import { FilaDeUsuarios } from '@/features/perfil/components/FilaDeUsuarios'
 import { lineasDeIdentidad } from '@/features/perfil/lib/identidad'
+import { leerDatosDeVersion, lineasDeVersion } from '@/features/perfil/lib/version'
 import { useCerrarSesion } from '@/features/cuenta/hooks/useCerrarSesion'
 import { cerrarSesion as cerrarSesionEnElTelefono } from '@/features/auth/lib/cerrarSesion'
 import { isBiometricLoginEnabled, isBiometricsAvailable, setBiometricLoginEnabled } from '@/features/auth/utils/biometrics'
@@ -55,7 +55,7 @@ export default function PerfilScreen() {
   const nombre = [user?.nombre, user?.apellido].filter(Boolean).join(' ') || user?.username || 'Usuario'
   const iniciales = `${user?.nombre?.[0] ?? ''}${user?.apellido?.[0] ?? ''}`.toUpperCase() || '·'
   const { rol: quien, email } = lineasDeIdentidad(user)
-  const version = Constants.expoConfig?.version
+  const [version] = useState(() => lineasDeVersion(leerDatosDeVersion()))
   const tarjeta = { borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
   const titulo = (t: string) => <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>{t}</Text>
@@ -141,9 +141,12 @@ export default function PerfilScreen() {
           </>
         ) : null}
 
-        <Text style={[secundario, { textAlign: 'center' }]}>
-          {`Forward Mobile${version ? ` ${version}` : ''} · conectado a ${nombreEntorno(API_URL)}`}
-        </Text>
+        <View style={{ gap: space[1] }}>
+          <Text style={[secundario, { textAlign: 'center' }]}>
+            {`${version.version} · conectado a ${nombreEntorno(API_URL)}`}
+          </Text>
+          {version.actualizacion ? <Text style={[secundario, { textAlign: 'center' }]}>{version.actualizacion}</Text> : null}
+        </View>
 
         <View style={{ gap: space[2] }}>
           <Button label="Cerrar sesión" variant="peligroContorno" icon={LogOut} loading={saliendo} onPress={() => setConfirmarSalida(true)} />
