@@ -1,6 +1,6 @@
 # Release de Forward Mobile
 
-Este documento describe cómo se verifica, se publica y se versiona la app: la integración continua (CI), las actualizaciones por aire (OTA), la construcción del APK y la numeración de versiones. Las secciones de build y versión se completan en las siguientes tareas de la tanda 4; hoy están escritas las secciones de CI y de actualizaciones OTA.
+Este documento describe cómo se verifica, se publica y se versiona la app: la integración continua (CI), las actualizaciones por aire (OTA), la construcción del APK y la numeración de versiones. La sección de build del APK se completa en la siguiente tarea de la tanda 4; hoy están escritas las secciones de CI, actualizaciones OTA y versión.
 
 ## CI
 
@@ -112,4 +112,18 @@ Pendiente: tanda 4, T3.
 
 ## Versión
 
-Pendiente: tanda 4, T2/T3.
+La app tiene dos números:
+
+- **Versión** (`version` en `app.config.ts`, hoy `1.0.0`): la que ve la gente. Se sube a mano en cada release, en un commit propio, antes del build: `1.0.1` para correcciones, `1.1.0` para funciones nuevas.
+- **Build** (`versionCode` de Android): lo pone EAS. `eas.json` usa `cli.appVersionSource: "remote"` y `autoIncrement: true` en los perfiles `preview` y `production`, así que cada build suma uno al número guardado en EAS. No se edita a mano ni vive en el repositorio.
+
+Cambiar la versión en `app.config.ts` cambia la huella de runtime: los builds anteriores dejan de recibir las actualizaciones que se publiquen después, y hace falta un build nuevo.
+
+### Dónde verlas en la app
+
+Al pie de "Mi cuenta":
+
+- `Forward Mobile 1.0.0 (build 12) · conectado a producción`: versión y build.
+- `Actualización a1b2c3d4 del 02/11/2026`: solo cuando corre una actualización OTA; muestra los primeros 8 caracteres de su id (el mismo que figura en expo.dev → Updates) y el día en que se publicó, en hora de Argentina.
+
+En Expo Go o en el dev client puede faltar el build y no aparece la línea de actualización.
