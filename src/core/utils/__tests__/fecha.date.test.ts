@@ -1,4 +1,27 @@
-import { msHastaProximaMedianocheArgentina } from '../fecha'
+import { formatToLocalDate, formatToLocalTime, msHastaProximaMedianocheArgentina } from '../fecha'
+
+describe('formatToLocalTime / formatToLocalDate (X9: Argentina calendar and clock on any device)', () => {
+  it('a UTC instant renders the Argentina day', () => {
+    expect(formatToLocalDate('2026-10-12T15:00:00Z')).toBe('12/10/2026')
+  })
+
+  it('an instant just after midnight UTC is still the previous Argentina day and hour', () => {
+    expect(formatToLocalTime('2026-10-12T02:30:00Z')).toBe('11/10/2026 23:30')
+  })
+
+  it('an offset-less date-time is shown as written', () => {
+    expect(formatToLocalTime('2026-10-12T09:15:00')).toBe('12/10/2026 09:15')
+  })
+
+  it('an explicit offset is an instant too', () => {
+    expect(formatToLocalTime('2026-10-12T09:15:00-03:00')).toBe('12/10/2026 09:15')
+  })
+
+  it('null and invalid strings render "Sin registro"', () => {
+    expect(formatToLocalTime(null)).toBe('Sin registro')
+    expect(formatToLocalTime('no es fecha')).toBe('Sin registro')
+  })
+})
 
 describe('msHastaProximaMedianocheArgentina', () => {
   it('a las 23:59:30 hora argentina faltan 30 s', () => {

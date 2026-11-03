@@ -12,16 +12,17 @@ export function parseDateSafe(dateString: string | null | undefined): Date | nul
 }
 
 /**
- * Formatea una fecha UTC al huso horario local del dispositivo (Argentina o donde esté el usuario).
+ * Formatea una fecha con el calendario y el reloj de Argentina, sin importar el huso del teléfono (X9).
+ * Con offset (Z, ±hh:mm) es un instante y se convierte a hora argentina; sin offset se muestra tal cual está escrita.
  * Formato por defecto: dd/MM/yyyy HH:mm
  */
 export function formatToLocalTime(dateString: string | null | undefined, formatStr: string = 'dd/MM/yyyy HH:mm'): string {
   const date = parseDateSafe(dateString);
   if (!date) return 'Sin registro';
 
-  // Al pasarle un objeto Date (creado con parseISO) a la función format, 
-  // date-fns automáticamente utiliza la zona horaria del sistema local.
-  return format(date, formatStr, { locale: es });
+  const p = diaCalendarioSinOffset(dateString) ?? partesArgentina(date.getTime());
+  // Fecha con los campos de pared de Argentina en el huso del dispositivo: format los lee sin volver a convertir.
+  return format(new Date(p.anio, p.mes, p.dia, p.hora, p.minuto), formatStr, { locale: es });
 }
 
 /**
@@ -66,19 +67,22 @@ export function diaArgentina(ms: number): string {
   return `${p.anio}-${dos(p.mes + 1)}-${dos(p.dia)}`;
 }
 
-const SIN_OFFSET = /^(\d{4})-(\d{2})-(\d{2})(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)?$/;
+const SIN_OFFSET = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?)?$/;
 
 /**
- * Business calendar day written in an offset-less string ("2026-10-22" or "2026-10-22T00:00:00"), read as
- * written: it is not an instant, so the device time zone must not move it (X9). Null when the string has an
- * offset (Z, ±hh:mm) or is not a date; those are instants and go through `partesArgentina`. mes: 0-11.
+ * Business calendar day (and clock, when written) in an offset-less string ("2026-10-22" or
+ * "2026-10-22T09:15:00"), read as written: it is not an instant, so the device time zone must not move it (X9).
+ * Without a time part hora and minuto are 0. Null when the string has an offset (Z, ±hh:mm) or is not a date;
+ * those are instants and go through `partesArgentina`. mes: 0-11.
  */
-export function diaCalendarioSinOffset(texto: string | null | undefined): Pick<PartesArgentina, 'anio' | 'mes' | 'dia'> | null {
+export function diaCalendarioSinOffset(texto: string | null | undefined): Pick<PartesArgentina, 'anio' | 'mes' | 'dia' | 'hora' | 'minuto'> | null {
   const m = texto ? SIN_OFFSET.exec(texto.trim()) : null;
   if (!m) return null;
   const [anio, mes, dia] = [Number(m[1]), Number(m[2]) - 1, Number(m[3])];
+  const [hora, minuto] = [Number(m[4] ?? 0), Number(m[5] ?? 0)];
   const d = new Date(Date.UTC(anio, mes, dia));
-  return d.getUTCMonth() === mes && d.getUTCDate() === dia ? { anio, mes, dia } : null;
+  const diaValido = d.getUTCMonth() === mes && d.getUTCDate() === dia;
+  return diaValido && hora < 24 && minuto < 60 ? { anio, mes, dia, hora, minuto } : null;
 }
 
 const MS_POR_DIA = 24 * 60 * 60 * 1000;
