@@ -94,7 +94,8 @@ jobs:
       - if: steps.token.outputs.ready == 'true'
         uses: expo/expo-github-action@v8
         with:
-          eas-version: latest
+          # Pinned on purpose (last green publish run); bump it deliberately in a PR.
+          eas-version: 27.2.0
           token: ${{ secrets.EXPO_TOKEN }}
       - name: Publish update to production
         if: steps.token.outputs.ready == 'true'
