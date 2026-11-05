@@ -60,11 +60,24 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
       expect(onAbrirOferta).toHaveBeenCalledTimes(1)
     })
 
-    it('precio por bulto y por unidad, y chip "Oferta" cuando el servidor manda precio con oferta', () => {
+    it('precio por unidad y por bulto, y chip "Oferta" cuando el servidor manda precio con oferta', () => {
       tarjeta(cajaDe6({ precioVenta: 100, precioConOferta: 90 }))
       expect(screen.getByText('Oferta')).toBeTruthy()
-      expect(screen.getByText('$ 540,00')).toBeTruthy()
       expect(screen.getByText('$ 90,00 por unidad')).toBeTruthy()
+      expect(screen.getByText('$ 540,00 por bulto')).toBeTruthy()
+    })
+
+    it('el precio por unidad es el grande y el por bulto el chico (S7)', () => {
+      const { typeScale } = require('@/libs/theme')
+      tarjeta(cajaDe6({ precioVenta: 100 }))
+      expect(screen.getByText('$ 100,00 por unidad')).toHaveStyle({ fontSize: typeScale.cuerpoDestacado.fontSize })
+      expect(screen.getByText('$ 600,00 por bulto')).toHaveStyle({ fontSize: typeScale.etiqueta.fontSize })
+    })
+
+    it('un producto sin bulto muestra solo su precio, como siempre', () => {
+      tarjeta(producto({ precioVenta: 100 }))
+      expect(screen.getByText('$ 100,00')).toBeTruthy()
+      expect(screen.queryByText(/por unidad|por bulto/)).toBeNull()
     })
 
     it('Agregar y el chip de edición abren la pantalla de cantidad y oferta', async () => {

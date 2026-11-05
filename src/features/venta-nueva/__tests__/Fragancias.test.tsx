@@ -46,10 +46,9 @@ describe('elegir fragancias (PR 2.4)', () => {
   it('desde el catálogo reparte la línea en variantes, de a la caja de cada una', async () => {
     conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Sumar Lavanda' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Sumar Lavanda' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Sumar Coco Vainilla' }))
-    expect(screen.getByLabelText('Lavanda: 12')).toBeTruthy()
+    await userEvent.type(screen.getByLabelText('Lavanda'), '12')
+    await userEvent.type(screen.getByLabelText('Coco Vainilla'), '6')
+    expect(screen.getByLabelText('Lavanda').props.value).toBe('12')
     await userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
     expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad])).toEqual([['pv1', 12], ['pv2', 6]])
     // La línea padre no viaja: cada fragancia es un ítem propio, como en la web.
@@ -86,11 +85,10 @@ describe('elegir fragancias (PR 2.4)', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
     await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText('Stock: 8')).toBeTruthy())
     expect(within(screen.getByTestId('fragancia-pv2')).getByText('Sin stock')).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Sumar Lavanda' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Sumar Lavanda' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Sumar Coco Vainilla' }))
-    expect(screen.getByLabelText('Lavanda: 6')).toBeTruthy()
-    expect(screen.getByLabelText('Coco Vainilla: 0')).toBeTruthy()
+    await userEvent.type(screen.getByLabelText('Lavanda'), '12')
+    await userEvent.type(screen.getByLabelText('Coco Vainilla'), '6')
+    // Hoy: se deja tipear de más y al confirmar se acota al stock en múltiplos; no se avisa.
+    expect(screen.getByLabelText('Lavanda').props.value).toBe('12')
     await userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
     expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad])).toEqual([['pv1', 6]])
   })
@@ -120,7 +118,7 @@ describe('elegir fragancias (PR 2.4)', () => {
     expect(campo.props.value).toBe('5')
     await userEvent.clear(campo)
     await userEvent.type(campo, '8')
-    await userEvent.press(screen.getByRole('button', { name: 'Sumar Coco Vainilla' }))
+    await userEvent.type(screen.getByLabelText('Coco Vainilla'), '6')
     await userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
     expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.descuentoPct])).toEqual([['pv1', 8], ['pv2', 8]])
     // Editar el descuento de una sola fragancia lo cambia en toda su línea, sin tocar otros productos.
@@ -134,8 +132,8 @@ describe('R5 Elegir fragancias: la venta y la última vez', () => {
   it('muestra las unidades y lo que suman con el descuento de la línea', async () => {
     conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Sumar Lavanda' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Sumar Coco Vainilla' }))
+    await userEvent.type(screen.getByLabelText('Lavanda'), '6')
+    await userEvent.type(screen.getByLabelText('Coco Vainilla'), '6')
     expect(screen.getByText('12 unidades')).toBeTruthy()
     expect(screen.getByTestId('fragancias-subtotal')).toHaveTextContent('$ 12.000,00')
   })
@@ -148,10 +146,82 @@ describe('R5 Elegir fragancias: la venta y la última vez', () => {
     conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} llevo={new Map([['pv1', 6], ['pv2', 12], ['p1', 3]])} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
     await userEvent.press(screen.getByRole('button', { name: 'Como la última vez' }))
-    expect(screen.getByLabelText('Lavanda: 6')).toBeTruthy()
-    expect(screen.getByLabelText('Coco Vainilla: 12')).toBeTruthy()
+    expect(screen.getByLabelText('Lavanda').props.value).toBe('6')
+    expect(screen.getByLabelText('Coco Vainilla').props.value).toBe('12')
     await userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
     expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad])).toEqual([['pv1', 6], ['pv2', 12]])
   })
 })
 
+describe('S8 y S9: cantidad tipeada en cada fragancia', () => {
+  const abrir = async () => {
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
+  }
+  const agregar = () => userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
+  const cantidades = () => useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad])
+
+  it('no hay flechitas: ni − ni + ni botones de sumar o restar', async () => {
+    await abrir()
+    expect(screen.queryByRole('button', { name: /^(Sumar|Restar) / })).toBeNull()
+    expect(screen.queryByText('−')).toBeNull()
+    expect(screen.queryByText('+')).toBeNull()
+  })
+
+  it('cada fragancia es un campo numérico con su nombre, que al enfocar selecciona todo', async () => {
+    await abrir()
+    const campo = screen.getByLabelText('Lavanda')
+    expect(campo.props.keyboardType).toBe('number-pad')
+    expect(campo.props.selectTextOnFocus).toBe(true)
+  })
+
+  it('tipear 24 deja 24 y confirmar agrega 24; vacío cuenta como 0', async () => {
+    await abrir()
+    await userEvent.type(screen.getByLabelText('Lavanda'), '24')
+    expect(screen.getByLabelText('Lavanda').props.value).toBe('24')
+    expect(screen.queryByText(/Se vende de a/)).toBeNull()
+    await agregar()
+    expect(cantidades()).toEqual([['pv1', 24]])
+  })
+
+  it('tipear de nuevo sobre lo seleccionado reemplaza el valor (24 a 36)', async () => {
+    await abrir()
+    const campo = screen.getByLabelText('Lavanda')
+    await userEvent.type(campo, '24')
+    await userEvent.clear(campo)
+    await userEvent.type(campo, '36')
+    expect(screen.getByLabelText('Lavanda').props.value).toBe('36')
+  })
+
+  it('tipear 25 en un producto que se vende de a 6 avisa "Se vende de a 6" y no deja confirmar', async () => {
+    await abrir()
+    await userEvent.type(screen.getByLabelText('Lavanda'), '25')
+    expect(within(screen.getByTestId('fragancia-pv1')).getByText('Se vende de a 6')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Agregar a la venta' })).toBeDisabled()
+    await agregar()
+    expect(cantidades()).toEqual([])
+    // Nunca se baja solo: sigue valiendo 25 hasta que el vendedor lo arregle.
+    expect(screen.getByLabelText('Lavanda').props.value).toBe('25')
+  })
+
+  it('al corregir 25 a 24 el aviso se va y confirma con 24', async () => {
+    await abrir()
+    const campo = screen.getByLabelText('Lavanda')
+    await userEvent.type(campo, '25')
+    await userEvent.clear(campo)
+    await userEvent.type(campo, '24')
+    expect(screen.queryByText(/Se vende de a/)).toBeNull()
+    await agregar()
+    expect(cantidades()).toEqual([['pv1', 24]])
+  })
+
+  it('"Como la última vez" llena los campos con lo que llevó', async () => {
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} llevo={new Map([['pv1', 24], ['pv2', 36]])} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Como la última vez' }))
+    expect(screen.getByLabelText('Lavanda').props.value).toBe('24')
+    expect(screen.getByLabelText('Coco Vainilla').props.value).toBe('36')
+    await agregar()
+    expect(cantidades()).toEqual([['pv1', 24], ['pv2', 36]])
+  })
+})

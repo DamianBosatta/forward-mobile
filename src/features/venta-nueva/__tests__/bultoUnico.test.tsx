@@ -24,7 +24,7 @@ describe('una sola definición de bulto (bulto 12, venta mínima 6)', () => {
   it('tarjeta: la pastilla dice 12 u y el precio por bulto es de 12 unidades', () => {
     render(<ProductoCatalogoCard producto={bulto12()} cantidad={0} verCantidades onAbrirOferta={noop} />)
     expect(screen.getByText('Bulto x 12 u')).toBeTruthy()
-    expect(screen.getByText('$ 1.200,00')).toBeTruthy()
+    expect(screen.getByText('$ 1.200,00 por bulto')).toBeTruthy()
     expect(screen.getByText('$ 100,00 por unidad')).toBeTruthy()
   })
 

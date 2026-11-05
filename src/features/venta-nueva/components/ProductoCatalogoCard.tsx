@@ -100,8 +100,14 @@ export function ProductoCatalogoCard({
         {pistas.map((t) => <Text key={t} style={{ ...typeScale.secundario, color: c.textSecondary }}>{t}</Text>)}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2], marginTop: space[1] }}>
           <View>
-            <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(unitario * unidadesPorBultoDe(p))}</Text>
-            {porBulto ? <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{`${formatImporte(unitario)} por unidad`}</Text> : null}
+            {porBulto ? (
+              <>
+                <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{`${formatImporte(unitario)} por unidad`}</Text>
+                <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{`${formatImporte(unitario * unidadesPorBultoDe(p))} por bulto`}</Text>
+              </>
+            ) : (
+              <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(unitario)}</Text>
+            )}
           </View>
           {p.esPadreDeVariantes ? (
             <Accion c={c} label="Elegir fragancias" onPress={onElegirFragancias} />

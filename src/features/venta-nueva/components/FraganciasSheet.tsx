@@ -11,7 +11,7 @@ import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { leyendaMultiplo, multiploDe, precioServidor, subtotalLinea } from '../lib/carrito'
 import { descuentoDeFragancias, nombreFragancia, stockDeFragancia } from '../lib/fragancias'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
-import { Redondo } from './ProductoCatalogoCard'
+import { limitarDigitos } from '../lib/teclado'
 
 interface Props {
   /** Línea padre a repartir; null = cerrada. */
@@ -42,20 +42,29 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
   const servidor = useVariantesProducto(padreId, true, DEPOSITO_CENTRAL_ID)
   const padre = productos.find((p) => p.id === padreId)
   const variantes = useMemo(() => productos.filter((p) => p.productoPadreId === padreId), [productos, padreId])
-  const [cantidades, setCantidades] = useState<Record<string, number>>(() =>
-    Object.fromEntries(lineas.filter((l) => l.producto.productoPadreId === padreId).map((l) => [l.productoId, l.cantidad])))
+  // Lo que el vendedor tipea en cada fragancia (vacío = 0). La cantidad sale de acá; nunca se baja sola.
+  const [textos, setTextos] = useState<Record<string, string>>(() =>
+    Object.fromEntries(lineas.filter((l) => l.producto.productoPadreId === padreId).map((l) => [l.productoId, mostrarNumero(l.cantidad)])))
+  const cantidades = useMemo(() => Object.fromEntries(Object.entries(textos).map(([id, t]) => [id, t === '' ? 0 : Number(t)])) as Record<string, number>, [textos])
+  // S9: si el producto se vende de a m, una cantidad que no es múltiplo avisa y no deja confirmar.
+  const errorDeMultiplo = (v: (typeof variantes)[number]) => {
+    const m = multiploDe(v)
+    return m > 1 && (cantidades[v.id] ?? 0) % m !== 0 ? `Se vende de a ${m}` : undefined
+  }
+  const hayErrorDeMultiplo = variantes.some((v) => errorDeMultiplo(v) !== undefined)
   const [pctTexto, setPctTexto] = useState(() => mostrarNumero(descuentoDeFragancias(lineas, padreId)))
   const pctLeido = leerNumero(pctTexto)
   const pctInvalido = pctLeido === null || pctLeido < 0 || pctLeido > 100
   const tope = avisoTope(pctInvalido ? 0 : pctLeido, user?.maxDescuentoPorcentaje ?? 0, hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO'))
   const total = Object.values(cantidades).reduce((a, n) => a + n, 0)
   // Al confirmar se vuelve a acotar cada cantidad al stock disponible, en múltiplos de la venta mínima (como la web).
+  // Una cantidad que no es múltiplo nunca llega acá: el botón está bloqueado (S9).
   const aDisponible = () => Object.fromEntries(variantes.map((v) => {
     const disponible = stockDeFragancia(v, servidor.data?.find((s) => s.id === v.id), verCantidades)
     const m = multiploDe(v)
     return [v.id, Math.min(cantidades[v.id] ?? 0, Math.floor(disponible / m) * m)]
   }))
-  const cambiar = (id: string, n: number) => setCantidades((s) => ({ ...s, [id]: Math.max(0, n) }))
+  const escribir = (id: string, texto: string) => setTextos((s) => ({ ...s, [id]: limitarDigitos(texto.replace(/\D/g, '')) }))
   // "Como la última vez": las cantidades que llevó de cada fragancia; al agregar se acotan al stock como todo lo demás.
   const delUltimo = Object.fromEntries(variantes.flatMap((v) => (llevo?.get(v.id) ? [[v.id, llevo.get(v.id)!]] : [])))
   const hayUltimo = Object.keys(delUltimo).length > 0
@@ -71,7 +80,7 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
           </Text>
         </View>
         {hayUltimo ? (
-          <Pressable accessibilityRole="button" accessibilityLabel="Como la última vez" onPress={() => setCantidades(delUltimo)} style={{ minHeight: 44, justifyContent: 'center' }}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Como la última vez" onPress={() => setTextos(Object.fromEntries(Object.entries(delUltimo).map(([id, n]) => [id, mostrarNumero(n)])))} style={{ minHeight: 44, justifyContent: 'center' }}>
             <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Como la última vez</Text>
           </Pressable>
         ) : null}
@@ -86,21 +95,17 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
           const disponible = stockDeFragancia(v, delServidor, verCantidades)
           const hay = disponible > 0
           const nombre = delServidor?.fraganciaNombre ?? nombreFragancia(v, padre?.nombre)
-          const n = cantidades[v.id] ?? 0
-          const m = multiploDe(v)
           const leyenda = leyendaMultiplo(v)
           return (
-            <View key={v.id} testID={`fragancia-${v.id}`} style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-              <View style={{ flex: 1, gap: space[1] }}>
-                <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{nombre}</Text>
-                <Text style={{ ...typeScale.secundario, ...importe, color: c.textSecondary }}>
-                  {leyenda ? `${formatImporte(precioServidor(v))} · ${leyenda}` : formatImporte(precioServidor(v))}
-                </Text>
+            <View key={v.id} testID={`fragancia-${v.id}`} style={{ gap: space[1] }}>
+              <Text style={{ ...typeScale.secundario, ...importe, color: c.textSecondary }}>
+                {leyenda ? `${formatImporte(precioServidor(v))} · ${leyenda}` : formatImporte(precioServidor(v))}
+              </Text>
+              <View style={{ alignItems: 'flex-start' }}>
                 <StatusChip estado={hay ? 'entregado' : 'anulado'} label={!hay ? 'Sin stock' : verCantidades ? `Stock: ${disponible}` : 'Hay stock'} />
               </View>
-              <Redondo c={c} label="−" a11y={`Restar ${nombre}`} onPress={() => cambiar(v.id, n - m)} />
-              <Text accessibilityLabel={`${nombre}: ${n}`} style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text, minWidth: 32, textAlign: 'center' }}>{n}</Text>
-              <Redondo c={c} label="+" a11y={`Sumar ${nombre}`} disabled={n + m > disponible} onPress={() => cambiar(v.id, n + m)} />
+              <Field label={nombre} keyboardType="number-pad" alignRight selectTextOnFocus placeholder="0"
+                value={textos[v.id] ?? ''} onChangeText={(t) => escribir(v.id, t)} error={errorDeMultiplo(v)} />
             </View>
           )
         })}
@@ -118,7 +123,7 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
       </View>
       <Button
         label={total > 0 ? 'Agregar a la venta' : 'Listo'}
-        disabled={variantes.length === 0 || pctInvalido}
+        disabled={variantes.length === 0 || pctInvalido || hayErrorDeMultiplo}
         onPress={() => { repartirFragancias(padreId, variantes, aDisponible(), pctLeido ?? 0); onClose() }}
       />
     </BottomSheet>
