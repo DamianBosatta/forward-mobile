@@ -5,6 +5,7 @@ import { useAuthStore } from '@/libs/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { conTema } from '@/core/ui/fw/__testing__/tema'
 import { reiniciarCamara } from '@/features/logistica/__testing__/camara'
+import { confirmarEntrega } from '@/features/logistica/__testing__/confirmar'
 import { leerCola, quitarDeCola } from '../cola'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
 
@@ -74,7 +75,7 @@ const llamadasA = (url: string) => mockPost.mock.calls.filter(([u]) => u === url
 async function abrirEntrega(devuelve = false) {
   await userEvent.press(await screen.findByLabelText('¡Llegué!'))
   await userEvent.press(await screen.findByLabelText('Entregué todo'))
-  if (!devuelve) await userEvent.press(screen.getByLabelText('No, todo bien'))
+  if (!devuelve) await userEvent.press(screen.getByLabelText('No'))
 }
 const continuar = () => userEvent.press(screen.getByLabelText('Continuar'))
 /** Sin cobro: del cobro al paso Confirmar (quién recibió escrito), donde está "Confirmar entrega". */
@@ -109,7 +110,7 @@ describe('Consola del chofer sin señal', () => {
     await pintar()
     await abrirEntrega()
     await alResumen()
-    await userEvent.press(screen.getByLabelText('Confirmar entrega'))
+    await confirmarEntrega()
     await screen.findByLabelText('Entrega lista')
     expect(mockPost).not.toHaveBeenCalled()
     expect(screen.getByText('Entrega guardada en el teléfono. Se manda sola cuando haya señal.')).toBeTruthy()
@@ -125,7 +126,7 @@ describe('Consola del chofer sin señal', () => {
     await pintar()
     await abrirEntrega()
     await alResumen()
-    await userEvent.press(screen.getByLabelText('Confirmar entrega'))
+    await confirmarEntrega()
     await cerrarListo()
     expect(await screen.findByText('1 de 2 entregadas')).toBeTruthy()
     expect(screen.getByLabelText('1 acción esperando señal')).toBeTruthy()
@@ -139,15 +140,16 @@ describe('Consola del chofer sin señal', () => {
     // Renglones y medios de cobro se bajan con señal; la señal se corta antes de confirmar.
     await pintar(HOJA, false)
     await abrirEntrega(true)
-    await userEvent.press(screen.getByLabelText('Sí, devuelve algo'))
+    await userEvent.press(screen.getByLabelText('Sí'))
     await userEvent.press(await screen.findByLabelText('Sumar una de Aceite 900 ml'))
     await continuar()
+    await userEvent.press(await screen.findByLabelText('Seguir con el cobro'))
     await userEvent.press(await screen.findByLabelText('Efectivo'))
     act(() => onlineManager.setOnline(false))
     await userEvent.type(screen.getByLabelText('Monto del cobro 1'), '500')
     await continuar()
     await userEvent.type(screen.getByLabelText('Quién recibió'), 'Abel')
-    await userEvent.press(screen.getByLabelText('Confirmar entrega'))
+    await confirmarEntrega()
     await cerrarListo()
     await userEvent.press(await screen.findByLabelText('Ver las acciones esperando señal'))
     const hoja = await screen.findByLabelText('Acciones esperando señal')
@@ -176,7 +178,7 @@ describe('Consola del chofer sin señal', () => {
     await pintar(HOJA, false)
     await abrirEntrega()
     await alResumen()
-    await userEvent.press(screen.getByLabelText('Confirmar entrega'))
+    await confirmarEntrega()
     await cerrarListo()
     expect(llamadasA(ENTREGAR)).toHaveLength(1)
     expect(leerCola('u1')).toEqual([])
@@ -188,7 +190,7 @@ describe('Consola del chofer sin señal', () => {
     await pintar(HOJA, false)
     await abrirEntrega()
     await alResumen()
-    await userEvent.press(screen.getByLabelText('Confirmar entrega'))
+    await confirmarEntrega()
     await screen.findByLabelText('Entrega lista')
     expect(leerCola('u1')).toHaveLength(1)
     expect(screen.getByText('Entrega guardada en el teléfono. Se manda sola cuando haya señal.')).toBeTruthy()
@@ -198,7 +200,7 @@ describe('Consola del chofer sin señal', () => {
     await pintar({ ...HOJA, detalles: [HOJA.detalles[0]] })
     await abrirEntrega()
     await alResumen()
-    await userEvent.press(screen.getByLabelText('Confirmar entrega'))
+    await confirmarEntrega()
     await screen.findByLabelText('Entrega lista')
     await userEvent.press(screen.getByLabelText('Terminé el viaje'))
     expect(screen.queryByText('¿Finalizar el viaje?')).toBeNull()

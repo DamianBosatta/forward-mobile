@@ -1,8 +1,8 @@
-import { armarEntrega, formatDistancia, razonPendiente, type FormEntrega, type LineaCobroForm } from '../consola/entrega'
+import { armarEntrega, formatDistancia, mediosDelChofer, razonPendiente, type FormEntrega, type LineaCobroForm } from '../consola/entrega'
 
 const CHEQUE = { id: 'm-ch', nombre: 'Cheque', tipo: 'Cheque' }
 const base: FormEntrega = {
-  receptor: 'Abel', observaciones: '', remitoUrl: null, lineas: [], imputacion: 'PedidoActual', firmaUrl: null, devolucion: {},
+  receptor: 'Abel', observaciones: '', remitoUrl: null, lineas: [], firmaUrl: null, devolucion: {},
 }
 const ctx = { exigeFotoRemito: false, disponibles: { d1: 3 } }
 const lineaCheque = (cheque: Partial<LineaCobroForm['cheque']>): LineaCobroForm => ({
@@ -11,8 +11,28 @@ const lineaCheque = (cheque: Partial<LineaCobroForm['cheque']>): LineaCobroForm 
 })
 
 describe('armarEntrega', () => {
-  it('quién recibió es obligatorio aunque no se exija la foto', () => {
-    expect(armarEntrega({ ...base, receptor: '  ' }, ctx)).toEqual({ error: 'Falta quién recibió.' })
+  it('S15: quién recibió es opcional: sin nombre la entrega sale igual y no manda nombreReceptor', () => {
+    const r = armarEntrega({ ...base, receptor: '  ' }, ctx)
+    expect(r).toEqual({ entrega: { nombreReceptor: undefined, evidenciaUrl: undefined, observaciones: undefined, cobro: undefined, firma: undefined, devolucion: undefined } })
+  })
+
+  it('S15: con nombre sigue viajando recortado', () => {
+    expect(armarEntrega({ ...base, receptor: ' Abel ' }, ctx)).toMatchObject({ entrega: { nombreReceptor: 'Abel' } })
+  })
+
+  it('S17: el cobro siempre va con la imputación por defecto (el pedido de hoy)', () => {
+    const r = armarEntrega({ ...base, lineas: [{ medio: { id: 'm-ef', nombre: 'Efectivo', tipo: 'Efectivo' }, monto: '500', fotoUrl: null, cheque: { numero: '', banco: '', titular: '', emision: '', pago: '' } }] }, ctx)
+    expect(r).toMatchObject({ entrega: { cobro: { imputacion: 'PedidoActual', lineas: [{ medioPagoId: 'm-ef', monto: 500 }] } } })
+  })
+
+  it('S16: la devolución viaja con sus renglones tal cual, sin pasos extra', () => {
+    const r = armarEntrega({ ...base, devolucion: { d1: '2' } }, ctx)
+    expect(r).toMatchObject({ entrega: { devolucion: { items: [{ ventaDetalleId: 'd1', cantidad: 2 }] } } })
+  })
+
+  it('S14: lo que no se cobra no lleva motivo en las observaciones: solo lo que escribió el chofer y la devolución', () => {
+    const r = armarEntrega({ ...base, observaciones: ' dejó en portería ' }, ctx)
+    expect(r).toMatchObject({ entrega: { observaciones: 'dejó en portería' } })
   })
 
   it('un cheque viaja con sus datos y el monto de la línea, con las fechas como las lee el servidor', () => {
@@ -50,9 +70,8 @@ describe('formatDistancia', () => {
 })
 
 describe('razonPendiente', () => {
-  const ok = { entregado: true, receptor: 'Abel', motivo: null, subiendo: false }
-  it('entrega: sin quién recibió se explica; con nombre no hay razón', () => {
-    expect(razonPendiente({ ...ok, receptor: '  ' })).toBe('Falta quién recibió')
+  const ok = { entregado: true, motivo: null, subiendo: false }
+  it('S15: entrega: sin quién recibió no hay razón para frenar', () => {
     expect(razonPendiente(ok)).toBeNull()
   })
   it('no entrega: pide el motivo', () => {
@@ -61,5 +80,19 @@ describe('razonPendiente', () => {
   })
   it('con una foto subiendo espera, aunque el resto esté completo', () => {
     expect(razonPendiente({ ...ok, subiendo: true })).toBe('Subiendo la foto: esperá un momento')
+  })
+})
+
+describe('mediosDelChofer', () => {
+  it('S13: deja Efectivo, Transferencia y Cheque en ese orden y saca Tarjeta aunque un servidor viejo la mande', () => {
+    const lista = [
+      { id: 't', nombre: 'Tarjeta', tipo: 'Tarjeta' },
+      { id: 'c', nombre: 'Cheque', tipo: 'Cheque' },
+      { id: 'e', nombre: 'Efectivo', tipo: 'Efectivo' },
+      { id: 'x', nombre: 'Transferencia', tipo: 'Transferencia' },
+      { id: 'o', nombre: 'Otro', tipo: 'Billetera' },
+    ]
+    expect(mediosDelChofer(lista).map((m) => m.nombre)).toEqual(['Efectivo', 'Transferencia', 'Cheque'])
+    expect(mediosDelChofer(undefined)).toEqual([])
   })
 })

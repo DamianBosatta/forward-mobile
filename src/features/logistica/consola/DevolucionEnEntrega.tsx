@@ -1,22 +1,41 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
-import { PackageCheck, PackageX } from 'lucide-react-native'
+import { CircleCheck, PackageCheck, PackageX } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Notice, OptionCard, Stepper } from '@/core/ui/fw'
+import { Button, Field, Notice, OptionCard, Stepper } from '@/core/ui/fw'
 import type { LineaParada } from '@/libs/api-client/logistica'
 import { ElegirChip } from '@/features/cuentas/components/ElegirChip'
 import { leerNumero } from '@/core/utils/numero'
 import { MOTIVOS_DEVOLUCION } from './entrega'
 
-/** Lámina chofer-03-devoluciones: "¿Tiene devoluciones?". Tocar una opción avanza; la elegida se ve al volver. */
+/** Lámina chofer-03-devoluciones: "¿Tiene devoluciones?", Sí o No y nada más. Tocar una opción avanza; la elegida se ve al volver. */
 export function EleccionDevolucion({ valor, onElegir }: { valor: boolean | null; onElegir: (hay: boolean) => void }) {
   const c = useColors()
   return (
     <View accessibilityLabel="¿Hay devolución?" style={{ gap: space[3] }}>
       <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>¿Tiene devoluciones?</Text>
-      <OptionCard minHeight={132} icon={PackageCheck} label="No, todo bien" selected={valor === false} onPress={() => onElegir(false)} />
-      <OptionCard minHeight={132} icon={PackageX} label="Sí, devuelve algo" selected={valor === true} onPress={() => onElegir(true)} />
-      <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Tocá una y pasás al siguiente paso.</Text>
+      <OptionCard minHeight={132} icon={PackageCheck} label="No" selected={valor === false} onPress={() => onElegir(false)} />
+      <OptionCard minHeight={132} icon={PackageX} label="Sí" selected={valor === true} onPress={() => onElegir(true)} />
+    </View>
+  )
+}
+
+/** Desde cuántos renglones aparece el buscador de la devolución. */
+export const RENGLONES_PARA_BUSCAR = 8
+
+const marcaDe = (r: LineaParada) => r.marca ?? ''
+
+/** Lámina "Devolución enviada" (S19): lo marcado queda para que el depósito la autorice; el chofer sigue con el cobro. */
+export function DevolucionEnviada({ onSeguir }: { onSeguir: () => void }) {
+  const c = useColors()
+  return (
+    <View accessibilityLabel="Devolución enviada" style={{ gap: space[3], alignItems: 'center', paddingTop: space[6] }}>
+      <CircleCheck size={56} color={c.brandInk} strokeWidth={2.5} />
+      <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text, textAlign: 'center' }}>Devolución enviada</Text>
+      <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>Depósito la va a autorizar cuando reciba la mercadería. Seguí con el cobro.</Text>
+      <View style={{ alignSelf: 'stretch' }}>
+        <Button size="xl" label="Seguir con el cobro" onPress={onSeguir} />
+      </View>
     </View>
   )
 }
@@ -36,7 +55,14 @@ interface Props {
 /** Lo que el cliente devuelve en el momento (chofer-03--productos). Queda Solicitada: el depósito la autoriza después. */
 export function DevolucionEnEntrega({ renglones, cargando, conError, valores, onCambio, motivo, onMotivo }: Props) {
   const c = useColors()
+  const [busqueda, setBusqueda] = useState('')
   const disponibles = (renglones ?? []).filter((r) => (r.cantidadDisponible ?? 0) > 0)
+  // Con pocos renglones se ve todo de un vistazo; desde 8 se busca por nombre o marca (S12).
+  const conBuscador = disponibles.length >= RENGLONES_PARA_BUSCAR
+  const buscado = busqueda.trim().toLowerCase()
+  const visibles = conBuscador && buscado
+    ? disponibles.filter((r) => `${r.productoNombre ?? ''} ${marcaDe(r)}`.toLowerCase().includes(buscado))
+    : disponibles
   const cantidadDe = (id: string) => Math.max(0, leerNumero(valores[id] ?? '') ?? 0)
   const cargadas = disponibles.map((r) => cantidadDe(r.ventaDetalleId ?? '')).filter((n) => n > 0)
   const unidades = cargadas.reduce((t, n) => t + n, 0)
@@ -45,7 +71,8 @@ export function DevolucionEnEntrega({ renglones, cargando, conError, valores, on
       <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>¿Qué devuelve?</Text>
       {cargando ? <ActivityIndicator color={c.brand} accessibilityLabel="Cargando los productos del pedido" /> : null}
       {conError ? <Notice tone="peligro">No se pudieron cargar los productos del pedido.</Notice> : null}
-      {disponibles.map((r) => {
+      {conBuscador ? <Field label="Buscar producto o marca" value={busqueda} onChangeText={setBusqueda} autoCorrect={false} /> : null}
+      {visibles.map((r) => {
         const id = r.ventaDetalleId ?? ''
         const nombre = r.productoNombre ?? 'Producto'
         return (

@@ -551,8 +551,7 @@ describe('el saldo del cliente no se repite', () => {
   it('con barra, el saldo va en el subtítulo de la barra y no hay una fila "Saldo del cliente" en el cuerpo', async () => {
     renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} conBarra />)
 
-    await screen.findByLabelText('Monto', {}, ESPERA)
-    expect(screen.getByText(/ · Saldo /)).toBeTruthy()
+    expect(await screen.findByText(/ · Saldo /, {}, ESPERA)).toBeTruthy()
     expect(screen.queryByLabelText(/^Saldo del cliente/)).toBeNull()
   })
 
