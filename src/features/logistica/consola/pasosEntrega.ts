@@ -1,6 +1,6 @@
 import { formatImporte } from '@/core/ui/fw/formatImporte'
 import { leerNumero } from '@/core/utils/numero'
-import { armarLinea, razonNoCobro, type Imputacion, type LineaCobroForm, type NoCobroForm } from './entrega'
+import { armarLinea, type LineaCobroForm } from './entrega'
 
 /**
  * Los pasos de la entrega del chofer (lienzo de entrega, láminas chofer-03 a chofer-05): devolución,
@@ -26,10 +26,9 @@ export function razonDevolucionPaso(hayDevolucion: boolean | null, valores: Reco
   return hayDevolucion ? razonDevolucion(valores, disponibles) : null
 }
 
-export function razonConfirmar(ctx: { receptor: string; exigeFotoRemito: boolean; remitoUrl: string | null; subiendo: boolean }): string | null {
+/** Quién recibió es opcional (S15, dueño 05-11): solo frenan la foto del remito exigida y una foto subiendo. */
+export function razonConfirmar(ctx: { exigeFotoRemito: boolean; remitoUrl: string | null; subiendo: boolean }): string | null {
   if (ctx.subiendo) return 'Subiendo la foto: esperá un momento'
-  // Quién recibió es obligatorio siempre (decisión del dueño del 16-10), con o sin la foto del remito.
-  if (!ctx.receptor.trim()) return 'Falta quién recibió'
   if (ctx.exigeFotoRemito && !ctx.remitoUrl) return 'Falta la foto del remito'
   return null
 }
@@ -59,23 +58,22 @@ export function totalRepartido(lineas: LineaCobroForm[]): number {
 
 export interface ContextoCobro {
   lineas: LineaCobroForm[]
-  imputacion: Imputacion
   /** Lo que hay que cobrar en la parada (lo decide el servidor), si lo manda. */
   aCobrar: number | null
   hayDevolucion: boolean
   subiendo: boolean
-  /** "No cobré" (C2): pide el motivo en lugar de las líneas. */
-  noCobro?: NoCobroForm | null
+  /** "Firma" elegida como forma de pago: lo que no se paga queda como deuda y va la foto de la firma. */
+  firma?: boolean
+  firmaUrl?: string | null
 }
 
 /**
- * Si el cobro se compara con "A cobrar hoy" y cómo. Sin importe del servidor o con el cobro a la deuda
- * anterior (cuyo saldo la app no recibe) no se compara. Solo avisa, nunca frena (decisión del dueño, 22-10):
+ * Si el cobro se compara con "A cobrar hoy" y cómo. Sin importe del servidor no se compara. Solo avisa, nunca frena (decisión del dueño, 22-10):
  * lo que sobra va a la deuda más vieja y lo que falta lo valida el servidor. Con devolución, que falte es
- * lo esperado (lo descuenta el servidor): no se avisa. Lo que falta queda en la cuenta corriente.
+ * lo esperado (lo descuenta el servidor): no se avisa. Lo que falta queda como deuda.
  */
 export function comparacionDeCobro(c: ContextoCobro): { total: number; resto: number; avisaSobra: boolean; avisaFalta: boolean } | null {
-  if (c.aCobrar == null || c.lineas.length === 0 || c.imputacion === 'DeudaAnterior') return null
+  if (c.aCobrar == null || c.lineas.length === 0) return null
   const total = c.aCobrar
   const resto = (centavos(total) - centavos(totalRepartido(c.lineas))) / 100
   return { total, resto, avisaSobra: resto < 0, avisaFalta: resto > 0 && !c.hayDevolucion }
@@ -95,13 +93,10 @@ export function faltaACuenta(c: ContextoCobro): number | null {
 
 export function razonCobro(c: ContextoCobro): string | null {
   if (c.subiendo) return 'Subiendo la foto: esperá un momento'
-  if (c.noCobro) {
-    const falta = razonNoCobro(c.noCobro)
-    if (falta) return falta
-  }
-  for (const [i, l] of (c.noCobro ? [] : c.lineas).entries()) {
+  for (const [i, l] of c.lineas.entries()) {
     const r = armarLinea(l, i + 1)
     if ('error' in r) return r.error
   }
+  if (c.firma && !c.firmaUrl) return 'Falta la foto de la firma'
   return null
 }
