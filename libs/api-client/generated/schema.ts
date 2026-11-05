@@ -27130,6 +27130,7 @@ export interface components {
             /** Format: int32 */
             motivoPendienteAutorizacion?: number | null;
             motivoAnulacion?: string | null;
+            motivoAutorizacion?: string | null;
             /** Format: double */
             baseComision?: number | null;
             /** Format: double */
