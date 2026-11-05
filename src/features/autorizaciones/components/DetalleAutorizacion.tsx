@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Button, Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, formatPorcentaje } from '@/core/ui/fw'
+import { Button, Field, Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, formatPorcentaje } from '@/core/ui/fw'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useAutorizacionPreview, usePendientesAutorizacion, useVenta } from '@/libs/api-client/ventas'
 import { useSocio } from '@/libs/api-client/socios'
@@ -10,6 +10,7 @@ import { useAuthStore } from '@/libs/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { formatRelativeTime } from '@/core/utils/fecha'
 import { pideRazon, textosDeMotivos } from '../lib/motivos'
+import { leerAjustes } from '../lib/ajustes'
 import { ClienteParaAutorizar } from './ClienteParaAutorizar'
 import { clienteDeBandeja } from './BandejaAutorizaciones'
 import { DecisionSheet, type Decision } from './DecisionSheet'
@@ -58,6 +59,10 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
   const fila = Array.isArray(pendientes.data) ? pendientes.data.find((p) => p.id === id) : undefined
   // La versión cacheada puede tener hasta 60 s: al decidir se vuelve a pedir la venta.
   const [aviso, setAviso] = useState<string | null>(null)
+  // Cantidades que escribe quien autoriza por línea (id del detalle); vacío = sin cambio.
+  const [cantidades, setCantidades] = useState<Record<string, string>>({})
+  const edicion = leerAjustes(q.data?.detalles ?? [], cantidades)
+  const puedeEditar = porAutorizar && puedeDecidir
   const abrirDecision = (d: Decision) => { setAviso(null); setDecision(d); void q.refetch() }
   const volver = onVolver ?? (() => router.back())
   const alResolver = () => { setResuelta(true); volver() }
@@ -176,6 +181,19 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
               <Text style={secundario}>
                 {`${d.cantidad} × ${formatImporte(d.precioUnitario)}${d.porcentajeDescuentoItem > 0 ? ` · Desc. ${formatPorcentaje(d.porcentajeDescuentoItem)}` : ''}`}
               </Text>
+              {puedeEditar ? (
+                <Field
+                  label={`Cantidad de ${d.productoNombre}`}
+                  help="Podés bajarla o poner 0 para quitar la línea."
+                  error={edicion.errores[d.id]}
+                  keyboardType="decimal-pad"
+                  alignRight
+                  placeholder={String(d.cantidad).replace('.', ',')}
+                  value={cantidades[d.id] ?? ''}
+                  onChangeText={(t) => setCantidades((prev) => ({ ...prev, [d.id]: t }))}
+                  maxLength={9}
+                />
+              ) : null}
             </View>
           ))}
           <TotalsRow label="Subtotal" importe={venta.subtotalBrutoAmount} />
@@ -199,6 +217,9 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
         bloqueado={q.isFetching}
         razonObligatoria={pideRazon(venta.motivoPendienteAutorizacion)}
         ofrecerDescuento
+        ajustes={edicion.ajustes}
+        cambios={edicion.cambios}
+        bloqueoDeAjustes={edicion.bloqueo}
         onConflicto={setAviso}
         onClose={() => setDecision(null)}
         onHecho={alResolver}

@@ -257,7 +257,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/Cajas/cerrar": {
+    "/api/v1/Cajas/{cajaId}/arqueo": {
         parameters: {
             query?: never;
             header?: never;
@@ -270,14 +270,61 @@ export interface paths {
             parameters: {
                 query?: never;
                 header?: never;
-                path?: never;
+                path: {
+                    cajaId: string;
+                };
                 cookie?: never;
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["CerrarCajaCommand"];
-                    "text/json": components["schemas"]["CerrarCajaCommand"];
-                    "application/*+json": components["schemas"]["CerrarCajaCommand"];
+                    "application/json": components["schemas"]["ArquearCajaQuery"];
+                    "text/json": components["schemas"]["ArquearCajaQuery"];
+                    "application/*+json": components["schemas"]["ArquearCajaQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ArqueoCajaDto"];
+                        "application/json": components["schemas"]["ArqueoCajaDto"];
+                        "text/json": components["schemas"]["ArqueoCajaDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Cajas/{cajaId}/cerrar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cajaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CerrarCajaConArqueoRequest"];
+                    "text/json": components["schemas"]["CerrarCajaConArqueoRequest"];
+                    "application/*+json": components["schemas"]["CerrarCajaConArqueoRequest"];
                 };
             };
             responses: {
@@ -376,6 +423,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Cajas/efectivo-por-deposito": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EfectivoPorDepositoDtoResponse"];
+                        "application/json": components["schemas"]["EfectivoPorDepositoDtoResponse"];
+                        "text/json": components["schemas"]["EfectivoPorDepositoDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Cajas/abiertas/estado": {
         parameters: {
             query?: never;
@@ -456,7 +540,223 @@ export interface paths {
             };
         };
         put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cajaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegistrarMovimientoCajaCommand"];
+                    "text/json": components["schemas"]["RegistrarMovimientoCajaCommand"];
+                    "application/*+json": components["schemas"]["RegistrarMovimientoCajaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MovimientoCajaDto"];
+                        "application/json": components["schemas"]["MovimientoCajaDto"];
+                        "text/json": components["schemas"]["MovimientoCajaDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Cajas/{cajaId}/pendientes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cajaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MovimientoCajaPendienteDto"][];
+                        "application/json": components["schemas"]["MovimientoCajaPendienteDto"][];
+                        "text/json": components["schemas"]["MovimientoCajaPendienteDto"][];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Cajas/pendientes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MovimientoCajaPendienteDto"][];
+                        "application/json": components["schemas"]["MovimientoCajaPendienteDto"][];
+                        "text/json": components["schemas"]["MovimientoCajaPendienteDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Cajas/{cajaId}/pendientes/cargar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cajaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CargarPendientesCommand"];
+                    "text/json": components["schemas"]["CargarPendientesCommand"];
+                    "application/*+json": components["schemas"]["CargarPendientesCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MovimientoCajaDto"][];
+                        "application/json": components["schemas"]["MovimientoCajaDto"][];
+                        "text/json": components["schemas"]["MovimientoCajaDto"][];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -4068,66 +4368,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/Configuracion/cuenta-caja-efectivo": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["CuentaCajaEfectivoResponse"];
-                        "application/json": components["schemas"]["CuentaCajaEfectivoResponse"];
-                        "text/json": components["schemas"]["CuentaCajaEfectivoResponse"];
-                    };
-                };
-            };
-        };
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["UpdateCuentaCajaEfectivoCommand"];
-                    "text/json": components["schemas"]["UpdateCuentaCajaEfectivoCommand"];
-                    "application/*+json": components["schemas"]["UpdateCuentaCajaEfectivoCommand"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/Configuracion/cuenta-cartera-cheques": {
         parameters: {
             query?: never;
@@ -6255,7 +6495,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    depositoId?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -9659,6 +9901,7 @@ export interface paths {
                     TicketId?: string;
                     MetodoEntrega?: components["schemas"]["MetodoEntrega"];
                     VendedorId?: string;
+                    DepositoId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -9702,6 +9945,7 @@ export interface paths {
                     TicketId?: string;
                     MetodoEntrega?: components["schemas"]["MetodoEntrega"];
                     VendedorId?: string;
+                    DepositoId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -9718,6 +9962,45 @@ export interface paths {
                         "text/plain": components["schemas"]["ConteosPreparacionDto"];
                         "application/json": components["schemas"]["ConteosPreparacionDto"];
                         "text/json": components["schemas"]["ConteosPreparacionDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/preparacion/vendedores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    DepositoId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendedorListItemDto"][];
+                        "application/json": components["schemas"]["VendedorListItemDto"][];
+                        "text/json": components["schemas"]["VendedorListItemDto"][];
                     };
                 };
             };
@@ -9846,7 +10129,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    depositoId?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -10212,6 +10497,131 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/viajes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    estado?: string;
+                    desde?: string;
+                    hasta?: string;
+                    depositoId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ViajeResumenDtoListResponse"];
+                        "application/json": components["schemas"]["ViajeResumenDtoListResponse"];
+                        "text/json": components["schemas"]["ViajeResumenDtoListResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/viajes/{id}/seguimiento": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeguimientoViajeDtoResponse"];
+                        "application/json": components["schemas"]["SeguimientoViajeDtoResponse"];
+                        "text/json": components["schemas"]["SeguimientoViajeDtoResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -10756,6 +11166,106 @@ export interface paths {
                         "text/plain": boolean;
                         "application/json": boolean;
                         "text/json": boolean;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/hojas-ruta/{id}/posiciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegistrarPosicionesViajeCommand"];
+                    "text/json": components["schemas"]["RegistrarPosicionesViajeCommand"];
+                    "application/*+json": components["schemas"]["RegistrarPosicionesViajeCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PosicionesRegistradasDtoResponse"];
+                        "application/json": components["schemas"]["PosicionesRegistradasDtoResponse"];
+                        "text/json": components["schemas"]["PosicionesRegistradasDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Too Many Requests */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
                     };
                 };
             };
@@ -13072,6 +13582,11 @@ export interface paths {
                     FamiliasCompletas?: boolean;
                     SoloComprables?: boolean;
                     SinVariantes?: boolean;
+                    ConOferta?: boolean;
+                    HayStock?: boolean;
+                    BajoMinimo?: boolean;
+                    ConVentasDesdeUltimaCompra?: boolean;
+                    CompradoAlProveedorId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -15746,6 +16261,45 @@ export interface paths {
                         "text/plain": components["schemas"]["ClienteRecienteDtoListResponse"];
                         "application/json": components["schemas"]["ClienteRecienteDtoListResponse"];
                         "text/json": components["schemas"]["ClienteRecienteDtoListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/socios-comerciales/proveedores-recientes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Limite?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProveedorRecienteDtoListResponse"];
+                        "application/json": components["schemas"]["ProveedorRecienteDtoListResponse"];
+                        "text/json": components["schemas"]["ProveedorRecienteDtoListResponse"];
                     };
                 };
             };
@@ -19432,6 +19986,12 @@ export interface components {
             /** Format: double */
             costoUnitario?: number | null;
         };
+        AjusteLineaAutorizacionDto: {
+            /** Format: uuid */
+            ventaDetalleId?: string;
+            /** Format: double */
+            cantidadNueva?: number;
+        };
         AjusteStockFiscalDto: {
             /** Format: uuid */
             productoId: string;
@@ -19605,6 +20165,26 @@ export interface components {
             data?: components["schemas"]["ArcaEstadoDto"];
             codigo?: string | null;
         };
+        ArquearCajaQuery: {
+            /** Format: double */
+            saldoFinalDeclarado?: number;
+            moneda?: string | null;
+        };
+        ArqueoCajaDto: {
+            /** Format: uuid */
+            cajaId: string;
+            /** Format: double */
+            saldoDeclaradoAmount: number;
+            moneda: string;
+            /** Format: double */
+            diferenciaAmount: number;
+            /** Format: double */
+            saldoEsperadoAmount?: number | null;
+            /** Format: int32 */
+            pendientesCantidad: number;
+            /** Format: double */
+            pendientesMontoAmount: number;
+        };
         AsignarComprobantePagoCommand: {
             /** Format: uuid */
             pagoId?: string;
@@ -19698,6 +20278,7 @@ export interface components {
             razon?: string | null;
             /** Format: double */
             descuentoAdicionalPorcentaje?: number | null;
+            ajustes?: components["schemas"]["AjusteLineaAutorizacionDto"][] | null;
         };
         /** @enum {string} */
         AvisoTalonario: "CaiPorVencer" | "CaiVencido" | "RangoPorAgotarse" | "RangoAgotado";
@@ -19809,6 +20390,8 @@ export interface components {
             saldoSistemaAmount: number;
             saldoSistemaMoneda?: string | null;
             abiertaPor?: string | null;
+            /** Format: date-time */
+            abiertaEn: string;
         };
         CajaAbiertaEstadoDto: {
             /** Format: uuid */
@@ -19830,6 +20413,9 @@ export interface components {
             /** Format: uuid */
             depositoId: string;
             depositoNombre?: string | null;
+            abiertaPor?: string | null;
+            /** Format: date-time */
+            abiertaEn?: string | null;
         };
         CajaCerradaDto: {
             /** Format: uuid */
@@ -19853,6 +20439,7 @@ export interface components {
             /** Format: double */
             diferenciaAmount: number;
             diferenciaMoneda?: string | null;
+            motivoDiferencia?: string | null;
             cerradaPor?: string | null;
         };
         CajaCerradaDtoPaginatedResponse: {
@@ -19921,6 +20508,9 @@ export interface components {
             /** Format: int32 */
             version?: number | null;
             notaCredito?: components["schemas"]["ComprobanteCompraInput"];
+        };
+        CargarPendientesCommand: {
+            movimientoIds?: string[] | null;
         };
         CarteraChequesResumenDto: {
             /** Format: double */
@@ -20034,6 +20624,10 @@ export interface components {
             costoDirecto?: number | null;
             /** Format: double */
             costoRealPricing?: number | null;
+            /** Format: date */
+            fechaUltimaCompra?: string | null;
+            /** Format: double */
+            vendidoDesdeUltimaCompra?: number | null;
             almacenes: components["schemas"]["AlmacenStockDto"][];
         };
         CatalogoStockRealDtoPaginatedResponse: {
@@ -20069,17 +20663,13 @@ export interface components {
             /** Format: int32 */
             operaciones?: number;
         };
-        CerrarCajaCommand: {
-            /** Format: uuid */
-            cajaId?: string;
-            /**
-             * Format: uuid
-             * @deprecated
-             */
-            usuarioId?: string;
+        CerrarCajaConArqueoRequest: {
             /** Format: double */
             saldoFinalDeclarado?: number;
             moneda?: string | null;
+            /** Format: double */
+            diferenciaVista: number;
+            motivoDiferencia?: string | null;
         };
         CerrarCajaResponseDto: {
             /** Format: uuid */
@@ -20262,6 +20852,11 @@ export interface components {
             chequeId?: string;
             recibido?: boolean;
         };
+        ChoferDeViajeDto: {
+            /** Format: uuid */
+            id: string;
+            nombre: string;
+        };
         ChoferDto: {
             /** Format: uuid */
             id: string;
@@ -20311,6 +20906,8 @@ export interface components {
             displayName: string;
             /** Format: date-time */
             ultimoUso: string;
+            /** Format: date-time */
+            ultimaVenta?: string | null;
         };
         ClienteRecienteDtoListResponse: {
             /** Format: int32 */
@@ -20489,6 +21086,7 @@ export interface components {
             /** Format: date-time */
             fechaAnulacion?: string | null;
             usuarioAnulacionNombre?: string | null;
+            creadoPor?: string | null;
             eliminada: boolean;
             motivoEliminacion?: string | null;
             /** Format: date-time */
@@ -21257,12 +21855,6 @@ export interface components {
             data?: components["schemas"]["CuentaBancariaSocioResponse"][] | null;
             codigo?: string | null;
         };
-        CuentaCajaEfectivoResponse: {
-            /** Format: uuid */
-            cuentaCajaEfectivoId?: string | null;
-            nombre?: string | null;
-            activo?: boolean | null;
-        };
         CuentaCarteraChequesResponse: {
             /** Format: uuid */
             cuentaCarteraChequesId?: string | null;
@@ -21301,6 +21893,8 @@ export interface components {
         DashboardSummaryDto: {
             /** Format: double */
             salesToday?: number | null;
+            /** Format: double */
+            salesSameWeekdayLastWeek?: number | null;
             /** Format: int32 */
             pendingOrders?: number | null;
             /** Format: int32 */
@@ -21349,6 +21943,11 @@ export interface components {
             chequeIds?: string[] | null;
             /** Format: uuid */
             cuentaDestinoId?: string;
+        };
+        DepositoDeViajeDto: {
+            /** Format: uuid */
+            id: string;
+            nombre: string;
         };
         DepositoResponse: {
             /** Format: uuid */
@@ -21674,6 +22273,34 @@ export interface components {
             cambios?: components["schemas"]["CambioCantidadDto"][] | null;
             motivo?: string | null;
         };
+        EfectivoDeDepositoDto: {
+            /** Format: uuid */
+            depositoId: string;
+            depositoNombre: string;
+            /** Format: double */
+            efectivo: number;
+            /** Format: double */
+            efectivoTst: number;
+            /** Format: double */
+            efectivoSinCargar: number;
+            /** Format: double */
+            efectivoTstSinCargar: number;
+        };
+        EfectivoPorDepositoDto: {
+            depositos: components["schemas"]["EfectivoDeDepositoDto"][];
+            /** Format: double */
+            total?: number | null;
+        };
+        EfectivoPorDepositoDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["EfectivoPorDepositoDto"];
+            codigo?: string | null;
+        };
         EliminarCompraCommand: {
             /** Format: uuid */
             compraId?: string;
@@ -21782,6 +22409,8 @@ export interface components {
             devolucion?: components["schemas"]["DevolucionEnEntregaInput"];
             cobro?: components["schemas"]["CobroEnEntregaInput"];
             firma?: components["schemas"]["FirmaEnEntregaInput"];
+            /** Format: date-time */
+            resueltaEn?: string | null;
         };
         EntregarVentaCommand: {
             /** Format: uuid */
@@ -21854,6 +22483,8 @@ export interface components {
         /** @enum {string} */
         EstadoParada: "Pendiente" | "Entregado" | "NoEntregado";
         /** @enum {string} */
+        EstadoParadaViaje: "Pendiente" | "Entregada" | "NoEntregada";
+        /** @enum {string} */
         EstadoPedidoTransferencia: "Pendiente" | "Autorizado" | "Rechazado" | "Cancelado";
         /** @enum {string} */
         EstadoRemito: "Emitido" | "Entregado" | "NoEntregado" | "Anulado";
@@ -21869,6 +22500,8 @@ export interface components {
         EstadoTransferenciaStock: "Borrador" | "Despachada" | "Recibida" | "Cancelada";
         /** @enum {string} */
         EstadoVenta: "Pendiente" | "Confirmada" | "EnPreparacion" | "Empacada" | "EnRuta" | "Entregada" | "NoEntregada" | "Anulada" | "PendienteAutorizacion" | "Vencido" | "RechazadaAutorizacion";
+        /** @enum {string} */
+        EstadoViaje: "EnCurso" | "Realizado";
         /** @enum {string} */
         EstadoVigenciaCot: "Anterior" | "Vigente" | "Programada";
         /** @enum {string} */
@@ -22312,6 +22945,7 @@ export interface components {
             comprobantePuntoVenta?: number | null;
             /** Format: int64 */
             comprobanteNumero?: number | null;
+            creadoPorNombre?: string | null;
         };
         GastoListDtoPaginatedResponse: {
             /** Format: int32 */
@@ -22444,6 +23078,7 @@ export interface components {
             /** Format: double */
             distanciaTotalMetros: number;
             rutaCalculada: boolean;
+            creadoPorNombre?: string | null;
         };
         ImportacionResumenDto: {
             /** Format: uuid */
@@ -22688,6 +23323,7 @@ export interface components {
             cantidadDevuelta: number;
             /** Format: double */
             cantidadDisponible: number;
+            marca?: string | null;
         };
         LineaParadaDtoListResponse: {
             /** Format: int32 */
@@ -22859,6 +23495,8 @@ export interface components {
         /** @enum {string} */
         MotivoCot: "Importe" | "Peso" | "UmbralPropio";
         /** @enum {string} */
+        MotivoMovimientoCaja: "RetiroDelDueno" | "GastoChico" | "CambioVuelto" | "Aporte" | "Otro";
+        /** @enum {string} */
         MotivoRiesgo: "SinCompras" | "Caida";
         MovimientoCajaDto: {
             /** Format: uuid */
@@ -22873,10 +23511,53 @@ export interface components {
             referenciaId?: string | null;
             /** Format: date-time */
             fechaCreacion: string;
+            motivo?: components["schemas"]["MotivoMovimientoCaja"];
+            nota?: string | null;
+            /** Format: uuid */
+            cuentaEfectivoId?: string | null;
+            /** Format: uuid */
+            cargadoPorUsuarioId?: string | null;
+            /** Format: date-time */
+            cargadoEn?: string | null;
+            usuarioNombre: string;
+            cargadoPorNombre?: string | null;
+            cuentaEfectivoNombre?: string | null;
+            socioDireccion?: string | null;
+            socioNombre?: string | null;
+            comprobanteProveedor?: string | null;
+        };
+        MovimientoCajaPendienteDto: {
+            esDeOtroDeposito?: boolean;
+            depositoNombre?: string | null;
+            socioDireccion?: string | null;
+            socioNombre?: string | null;
+            comprobanteProveedor?: string | null;
+            /** Format: uuid */
+            id: string;
+            tipo: components["schemas"]["TipoMovimientoCaja"];
+            /** Format: double */
+            montoAmount: number;
+            montoMoneda?: string | null;
+            medioPago: string;
+            referencia: string;
+            /** Format: uuid */
+            referenciaId?: string | null;
+            /** Format: uuid */
+            depositoId?: string | null;
+            /** Format: uuid */
+            cuentaEfectivoId?: string | null;
+            cuentaEfectivoNombre?: string | null;
+            /** Format: uuid */
+            cobradoPorUsuarioId: string;
+            cobradoPor?: string | null;
+            /** Format: date-time */
+            fechaCreacion: string;
         };
         MovimientoCuentaDto: {
             /** Format: uuid */
             id: string;
+            creadoPorNombre?: string | null;
+            creadoPorOculto?: boolean;
             /** Format: date-time */
             fecha: string;
             referencia: string;
@@ -22952,6 +23633,8 @@ export interface components {
         MovimientoSocioDto: {
             /** Format: uuid */
             id: string;
+            creadoPorNombre?: string | null;
+            creadoPorOculto?: boolean;
             /** Format: date-time */
             fecha: string;
             tipo: components["schemas"]["TipoMovimientoCuenta"];
@@ -23086,6 +23769,7 @@ export interface components {
             /** Format: int32 */
             cantidadItems?: number;
             tieneComprobanteFiscal?: boolean;
+            creadoPorNombre?: string | null;
         };
         NotaCreditoListDtoIEnumerableResponse: {
             /** Format: int32 */
@@ -23176,6 +23860,7 @@ export interface components {
             observaciones?: string | null;
             /** Format: uuid */
             depositoId?: string | null;
+            tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
         };
         PagedFilasPreviewDto: {
             items?: components["schemas"]["FilaPreviewDto"][] | null;
@@ -23221,6 +23906,7 @@ export interface components {
             activo: boolean;
             /** Format: uuid */
             pagoVinculadoId?: string | null;
+            creadoPorNombre?: string | null;
             conciliaciones: components["schemas"]["ConciliacionDelPagoDto"][];
             imputaciones: components["schemas"]["ImputacionDelPagoDto"][];
         };
@@ -23279,6 +23965,20 @@ export interface components {
             codigo?: string | null;
             tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
             repetida?: boolean;
+        };
+        ParadaDeViajeDto: {
+            /** Format: int32 */
+            orden: number;
+            clienteNombre: string;
+            direccion?: string | null;
+            /** Format: double */
+            latitud?: number | null;
+            /** Format: double */
+            longitud?: number | null;
+            estado: components["schemas"]["EstadoParadaViaje"];
+            motivo?: string | null;
+            /** Format: date-time */
+            resueltaEn?: string | null;
         };
         ParadaDocumentacionDto: {
             /** Format: int32 */
@@ -23343,6 +24043,8 @@ export interface components {
             /** Format: int32 */
             numeroNotaEntrega?: number | null;
             nombreContacto?: string | null;
+            /** Format: double */
+            deudaAnterior?: number | null;
         };
         ParadaRendicionDto: {
             /** Format: uuid */
@@ -23560,6 +24262,16 @@ export interface components {
         PisoVerdict: "Rojo" | "Amarillo" | "Verde";
         /** @enum {string} */
         PoliticaDuplicados: "Omitir" | "Actualizar" | "CrearIgual";
+        PosicionDto: {
+            /** Format: double */
+            latitud: number;
+            /** Format: double */
+            longitud: number;
+            /** Format: date-time */
+            registradaEn: string;
+            /** Format: double */
+            velocidadKmh?: number | null;
+        };
         PosicionIvaAlicuotaDto: {
             alicuota: components["schemas"]["AlicuotaIva"];
             /** Format: double */
@@ -23616,6 +24328,34 @@ export interface components {
             traceId?: string | null;
             errors?: string[] | null;
             data?: components["schemas"]["PosicionIvaMesDto"][] | null;
+            codigo?: string | null;
+        };
+        PosicionViajeInput: {
+            /** Format: double */
+            latitud?: number;
+            /** Format: double */
+            longitud?: number;
+            /** Format: float */
+            precisionMetros?: number | null;
+            /** Format: float */
+            velocidadKmh?: number | null;
+            /** Format: date-time */
+            registradaEn?: string;
+        };
+        PosicionesRegistradasDto: {
+            /** Format: int32 */
+            recibidas?: number;
+            /** Format: int32 */
+            descartadas?: number;
+        };
+        PosicionesRegistradasDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["PosicionesRegistradasDto"];
             codigo?: string | null;
         };
         PreferenciaNotificacionDto: {
@@ -23815,6 +24555,27 @@ export interface components {
             pesoKg?: number;
             /** Format: double */
             umbralKg?: number;
+        };
+        ProveedorRecienteDto: {
+            /** Format: uuid */
+            id: string;
+            razonSocial: string;
+            cuit: string;
+            direccion?: string | null;
+            nombreFantasia?: string | null;
+            displayName: string;
+            /** Format: date-time */
+            ultimaCompra: string;
+        };
+        ProveedorRecienteDtoListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ProveedorRecienteDto"][] | null;
+            codigo?: string | null;
         };
         PuestoDetalleDto: {
             /** Format: uuid */
@@ -24077,6 +24838,7 @@ export interface components {
             medioPagoId?: string;
             /** Format: uuid */
             depositoId?: string | null;
+            tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
             comprobanteUrl?: string | null;
             observaciones?: string | null;
             /** Format: date-time */
@@ -24087,6 +24849,15 @@ export interface components {
              * @deprecated
              */
             usuarioId?: string;
+        };
+        RegistrarMovimientoCajaCommand: {
+            tipo?: components["schemas"]["TipoMovimientoCaja"];
+            /** Format: double */
+            monto?: number;
+            moneda?: string | null;
+            motivo?: components["schemas"]["MotivoMovimientoCaja"];
+            nota?: string | null;
+            tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
         };
         RegistrarMovimientoEntreCuentasCommand: {
             /** Format: double */
@@ -24167,6 +24938,9 @@ export interface components {
             tipoCuentaCliente?: components["schemas"]["TipoCuentaSocio"];
             tipoCuentaProveedor?: components["schemas"]["TipoCuentaSocio"];
             claveIdempotencia?: string | null;
+        };
+        RegistrarPosicionesViajeCommand: {
+            posiciones?: components["schemas"]["PosicionViajeInput"][] | null;
         };
         RegistroAuditoriaPermisoDto: {
             /** Format: uuid */
@@ -24313,6 +25087,7 @@ export interface components {
             transportistaCuit?: string | null;
             transportistaDomicilio?: string | null;
             items: components["schemas"]["RemitoItemDto"][];
+            creadoPorNombre?: string | null;
         };
         RemitoDtoResponse: {
             /** Format: int32 */
@@ -24351,6 +25126,7 @@ export interface components {
             ventaId?: string | null;
             /** Format: uuid */
             hojaDeRutaId?: string | null;
+            creadoPorNombre?: string | null;
         };
         RemitoResumenDtoPaginatedResponse: {
             /** Format: int32 */
@@ -24516,6 +25292,8 @@ export interface components {
             evidenciaUrl?: string | null;
             observaciones?: string | null;
             claveIdempotencia?: string | null;
+            /** Format: date-time */
+            resueltaEn?: string | null;
         };
         ReprogramarEntregaCommand: {
             /** Format: uuid */
@@ -24668,6 +25446,10 @@ export interface components {
             pedidosRechazados: number;
             /** Format: int32 */
             presupuestosPorVencer: number;
+            /** Format: int32 */
+            sinEntregarCantidad: number;
+            /** Format: date */
+            sinEntregarMasVieja?: string | null;
         };
         ResumenVendedorDtoResponse: {
             /** Format: int32 */
@@ -24757,6 +25539,22 @@ export interface components {
             /** Format: double */
             gastosMasMargenMinimoPorcentaje?: number;
             avisoPiso?: string | null;
+        };
+        SeguimientoViajeDto: {
+            viaje: components["schemas"]["ViajeResumenDto"];
+            depositoUbicacion?: components["schemas"]["UbicacionDeDepositoDto"];
+            paradas: components["schemas"]["ParadaDeViajeDto"][];
+            recorrido: components["schemas"]["PosicionDto"][];
+        };
+        SeguimientoViajeDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["SeguimientoViajeDto"];
+            codigo?: string | null;
         };
         SerieVentasDto: {
             periodo?: components["schemas"]["PeriodoDto"];
@@ -24923,6 +25721,8 @@ export interface components {
             deudaVencidaNormalAmount?: number;
             /** Format: int32 */
             diasDeudaMasVieja?: number | null;
+            /** Format: date-time */
+            ultimaCompra?: string | null;
             /** Format: double */
             creditoDisponible?: number | null;
             depositoIds: string[];
@@ -25315,6 +26115,7 @@ export interface components {
             sinMovimientoDeCaja: boolean;
             /** Format: uuid */
             pagoVinculadoId?: string | null;
+            creadoPorNombre?: string | null;
         };
         TesoreriaListDtoPaginatedResponse: {
             /** Format: int32 */
@@ -25499,6 +26300,9 @@ export interface components {
             unidadesTotales: number;
             /** Format: int32 */
             version: number;
+            creadoPorNombre?: string | null;
+            despachadoPorNombre?: string | null;
+            recibidoPorNombre?: string | null;
             items: components["schemas"]["TransferenciaStockItemDto"][];
             cot?: components["schemas"]["CotDto"];
         };
@@ -25550,6 +26354,9 @@ export interface components {
             unidadesTotales: number;
             /** Format: int32 */
             version: number;
+            creadoPorNombre?: string | null;
+            despachadoPorNombre?: string | null;
+            recibidoPorNombre?: string | null;
         };
         TransferenciaStockResumenDtoPaginatedResponse: {
             /** Format: int32 */
@@ -25594,6 +26401,12 @@ export interface components {
             jurisdiccion?: string | null;
             /** Format: double */
             importe?: number;
+        };
+        UbicacionDeDepositoDto: {
+            /** Format: double */
+            latitud: number;
+            /** Format: double */
+            longitud: number;
         };
         UltimaCompraProductoDto: {
             /** Format: date */
@@ -25677,10 +26490,6 @@ export interface components {
         };
         UpdateCondicionFiscalEmpresaCommand: {
             condicionFiscal?: components["schemas"]["CondicionFiscalEmpresa"];
-        };
-        UpdateCuentaCajaEfectivoCommand: {
-            /** Format: uuid */
-            cuentaCajaEfectivoId?: string | null;
         };
         UpdateCuentaCarteraChequesCommand: {
             /** Format: uuid */
@@ -26058,6 +26867,9 @@ export interface components {
             activo: boolean;
             puedeVenderse: boolean;
         };
+        VehiculoDeViajeDto: {
+            patente: string;
+        };
         VehiculoDto: {
             /** Format: uuid */
             id: string;
@@ -26209,6 +27021,8 @@ export interface components {
             itemsCount: number;
             /** Format: double */
             montoPagado?: number | null;
+            creadoPor?: string | null;
+            autorizadoPor?: string | null;
             /** Format: double */
             montoNotasCredito: number;
             /** Format: double */
@@ -26401,6 +27215,9 @@ export interface components {
             metodoEntrega: number;
             metodoEntregaNombre: string;
             vendedorNombre: string;
+            ultimoCambioPor?: string | null;
+            /** Format: date-time */
+            ultimoCambioEn?: string | null;
             /** Format: int32 */
             itemsCount: number;
             /** Format: double */
@@ -26441,6 +27258,44 @@ export interface components {
         };
         VerificarStockFiscalVentaQuery: {
             items?: components["schemas"]["ItemStockFiscalDto"][] | null;
+        };
+        ViajeResumenDto: {
+            /** Format: uuid */
+            id: string;
+            numero: string;
+            estado: components["schemas"]["EstadoViaje"];
+            chofer: components["schemas"]["ChoferDeViajeDto"];
+            vehiculo?: components["schemas"]["VehiculoDeViajeDto"];
+            deposito: components["schemas"]["DepositoDeViajeDto"];
+            /** Format: int32 */
+            paradasTotal: number;
+            /** Format: int32 */
+            entregadas: number;
+            /** Format: int32 */
+            noEntregadas: number;
+            /** Format: int32 */
+            pendientes: number;
+            /** Format: date-time */
+            salioEn?: string | null;
+            /** Format: date-time */
+            llegoEn?: string | null;
+            /** Format: double */
+            km?: number | null;
+            ultimaPosicion?: components["schemas"]["PosicionDto"];
+            /** Format: int32 */
+            demoraMin?: number | null;
+            /** Format: date-time */
+            llegadaEstimadaEn?: string | null;
+        };
+        ViajeResumenDtoListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ViajeResumenDto"][] | null;
+            codigo?: string | null;
         };
         /** @enum {string} */
         VisibilidadEvento: "Personal" | "Administracion";

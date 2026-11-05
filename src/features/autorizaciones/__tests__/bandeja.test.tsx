@@ -191,6 +191,17 @@ describe('Autorizaciones: la bandeja', () => {
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/a/autorizar', { ventaId: 'a', version: 7, razon: null })
   })
 
+  it('la autorización rápida de la bandeja no edita líneas: el pedido no lleva ajustes', async () => {
+    conCapacidades('CAP_AUTORIZAR_VENTA')
+    bandeja([venta('a', 1, 100)])
+    pintar()
+    await userEvent.press(await screen.findByLabelText('Autorizar la venta de Dirección a - Cliente a'))
+    expect(hoja('Autorizar venta').queryByText(/Cambios en el pedido/)).toBeNull()
+    await userEvent.press(hoja('Autorizar venta').getByRole('button', { name: 'Autorizar' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalled())
+    expect(mockPost.mock.calls[0][1]).not.toHaveProperty('ajustes')
+  })
+
   it('en teléfono, tocar la tarjeta abre el detalle', async () => {
     conCapacidades('CAP_AUTORIZAR_VENTA')
     bandeja([venta('a', 4, 100)])

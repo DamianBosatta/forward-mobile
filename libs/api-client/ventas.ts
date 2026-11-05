@@ -1,7 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { api, API_URL } from './client'
 import { buildAnularVentaPayload } from './anular-venta'
-import { buildAutorizarPayload } from './autorizar-venta'
+import { buildAutorizarPayload, type AjusteDeLinea } from './autorizar-venta'
 import type {
   Venta,
   VentaDetailResponse,
@@ -401,12 +401,12 @@ async function versionParaDecidir(id: string, fechaPendiente?: string): Promise<
 export function useAutorizarVenta() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, version, razon, fechaPendiente, descuentoAdicionalPorcentaje }: {
-      id: string; version?: number; razon?: string | null; fechaPendiente?: string; descuentoAdicionalPorcentaje?: number | null
+    mutationFn: async ({ id, version, razon, fechaPendiente, descuentoAdicionalPorcentaje, ajustes }: {
+      id: string; version?: number; razon?: string | null; fechaPendiente?: string; descuentoAdicionalPorcentaje?: number | null; ajustes?: AjusteDeLinea[]
     }) =>
       api.post<boolean>(
         `/api/v1/Ventas/${id}/autorizar`,
-        buildAutorizarPayload({ ventaId: id, version: version ?? (await versionParaDecidir(id, fechaPendiente)), razon, descuentoAdicionalPorcentaje }),
+        buildAutorizarPayload({ ventaId: id, version: version ?? (await versionParaDecidir(id, fechaPendiente)), razon, descuentoAdicionalPorcentaje, ajustes }),
       ),
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ventasKeys.detail(id) })

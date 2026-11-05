@@ -207,6 +207,67 @@ describe('Autorizar venta: el detalle', () => {
     expect(mockBack).toHaveBeenCalled()
   })
 
+  describe('editar las líneas al autorizar (solo bajar o quitar)', () => {
+    const DOS_LINEAS = {
+      venta: { ...VENTA.venta, motivoPendienteAutorizacion: 1 },
+      detalles: [
+        { id: 'd1', productoNombre: 'Detergente Magistral', cantidad: 10, precioUnitario: 100, subtotal: 1000, porcentajeDescuentoItem: 0 },
+        { id: 'd2', productoNombre: 'Lavandina Ayudín', cantidad: 4, precioUnitario: 50, subtotal: 200, porcentajeDescuentoItem: 0 },
+      ],
+    }
+    async function abrirConCantidades(cantidades: Record<string, string>) {
+      permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+      pintar(DOS_LINEAS)
+      await screen.findByText('Líneas (2)')
+      for (const [nombre, texto] of Object.entries(cantidades)) {
+        await userEvent.clear(screen.getByLabelText(`Cantidad de ${nombre}`))
+        await userEvent.type(screen.getByLabelText(`Cantidad de ${nombre}`), texto)
+      }
+      await userEvent.press(screen.getByRole('button', { name: 'Autorizar' }))
+      return within(screen.getByLabelText('Autorizar venta'))
+    }
+
+    it('bajar una cantidad manda el ajuste y muestra "10 → 9" antes de confirmar', async () => {
+      const hoja = await abrirConCantidades({ 'Detergente Magistral': '9' })
+      expect(hoja.getByText('Detergente Magistral: 10 → 9')).toBeTruthy()
+      await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', {
+        ventaId: 'v1', version: 42, razon: null, ajustes: [{ ventaDetalleId: 'd1', cantidadNueva: 9 }],
+      })
+    })
+
+    it('quitar una línea (cantidad 0) manda cantidadNueva 0 y muestra "quitado"', async () => {
+      const hoja = await abrirConCantidades({ 'Lavandina Ayudín': '0' })
+      expect(hoja.getByText('Lavandina Ayudín: quitado')).toBeTruthy()
+      await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', {
+        ventaId: 'v1', version: 42, razon: null, ajustes: [{ ventaDetalleId: 'd2', cantidadNueva: 0 }],
+      })
+    })
+
+    it('sin tocar las líneas no manda ajustes (igual que hoy)', async () => {
+      const hoja = await abrirConCantidades({})
+      await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 42, razon: null })
+    })
+
+    it('quitar todas las líneas no deja autorizar y manda a rechazar', async () => {
+      const hoja = await abrirConCantidades({ 'Detergente Magistral': '0', 'Lavandina Ayudín': '0' })
+      expect(hoja.getByText(/rechazá la venta/i)).toBeTruthy()
+      expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBe(true)
+      await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
+      expect(mockPost).not.toHaveBeenCalled()
+    })
+
+    it('una cantidad que no baja no deja autorizar y lo dice en la línea', async () => {
+      const hoja = await abrirConCantidades({ 'Detergente Magistral': '12' })
+      expect(screen.getByText(/Solo se puede bajar/)).toBeTruthy()
+      expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBe(true)
+      await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
+      expect(mockPost).not.toHaveBeenCalled()
+    })
+  })
+
   it('tras rechazar no vuelve a pedir la vista previa de esa venta (el servidor daría 400 y se vería el error)', async () => {
     permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
     pintar()
