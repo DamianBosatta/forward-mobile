@@ -42,12 +42,13 @@ const hoja = (p1: Record<string, unknown>, exigeFoto = false) => ({
   detalles: [p1, parada({ id: 'p2', ventaId: 'v2', orden: 2, direccion: 'Av. del Valle 89', clienteNombre: 'Chela' })],
 })
 // Un servidor viejo todavía manda Tarjeta: el chofer no la ve.
-const MEDIOS = [
+const MEDIOS_BASE = [
   { id: 'm-tj', nombre: 'Tarjeta', tipo: 'Tarjeta' },
   { id: 'm-ef', nombre: 'Efectivo', tipo: 'Efectivo' },
   { id: 'm-tr', nombre: 'Transferencia', tipo: 'Transferencia' },
   { id: 'm-ch', nombre: 'Cheque', tipo: 'Cheque' },
 ]
+let MEDIOS: Record<string, unknown>[] = MEDIOS_BASE
 let RENGLONES: Record<string, unknown>[] = [
   { ventaDetalleId: 'd1', productoId: 'pr1', productoNombre: 'Aceite 900 ml', cantidadVendida: 6, cantidadDevuelta: 0, cantidadDisponible: 6 },
 ]
@@ -109,6 +110,7 @@ beforeEach(() => {
   useLogisticaStore.setState({ activeTrip: null })
   conTema('light')
   reiniciarCamara()
+  MEDIOS = MEDIOS_BASE
   let subidas = 0
   mockPost.mockImplementation(async (url: string) => {
     if (url === '/api/v1/Media/upload-entrega') return { url: `https://r2.test/entregas/up-${++subidas}.jpg` }
@@ -232,6 +234,53 @@ describe('S13 formas de pago', () => {
     await sumarPago('Transferencia', '1000')
     expect(deshabilitado(continuar())).toBe(true)
     expect(screen.getByText('Falta la foto del comprobante de la transferencia (cobro 1).')).toBeTruthy()
+  })
+})
+
+describe('S13b un solo Transferencia aunque el servidor mande dos', () => {
+  // Servidor real: dos medios de tipo Transferencia, ordenados por nombre.
+  const MEDIOS_REALES = [
+    { id: 'm-tb', nombre: 'Tarjeta / Billetera virtual', tipo: 'Transferencia' },
+    { id: 'm-ef', nombre: 'Efectivo', tipo: 'Efectivo' },
+    { id: 'm-tr-banc', nombre: 'Transferencia bancaria', tipo: 'Transferencia' },
+    { id: 'm-ch', nombre: 'Cheque', tipo: 'Cheque' },
+  ]
+  const titulos = () => screen.getAllByRole('radio').map((r) => r.props.accessibilityLabel)
+  it('¿Cómo paga? ofrece cuatro opciones, sin Tarjeta ni Billetera virtual', async () => {
+    MEDIOS = MEDIOS_REALES
+    pintar(hoja(P1_CONTADO))
+    await abrir()
+    await hastaElCobro()
+    await screen.findByText('¿Cómo paga?')
+    expect(titulos()).toEqual(OPCIONES)
+    expect(screen.queryByText(/tarjeta|billetera virtual$/i)).toBeNull()
+    expect(screen.getByText('Bancaria o billetera · Foto del comprobante')).toBeTruthy()
+  })
+  it('Sumar otro pago ofrece las mismas cuatro', async () => {
+    MEDIOS = MEDIOS_REALES
+    pintar(hoja(P1_CONTADO))
+    await abrir()
+    await hastaElCobro()
+    await sumarPago('Efectivo', '400')
+    await userEvent.press(screen.getByLabelText('Sumar otro pago'))
+    expect(titulos()).toEqual(OPCIONES)
+  })
+  it('el pago viaja con el id de Transferencia bancaria, la tarjeta dice Transferencia y pide la foto', async () => {
+    MEDIOS = MEDIOS_REALES
+    pintar(hoja(P1_CONTADO))
+    await abrir()
+    await hastaElCobro()
+    await sumarPago('Transferencia', '1000')
+    expect(screen.queryByText(/tarjeta|billetera virtual$/i)).toBeNull()
+    expect(within(screen.getByLabelText('Medio del cobro 1')).getByText('Transferencia')).toBeTruthy()
+    expect(deshabilitado(continuar())).toBe(true)
+    expect(screen.getByText('Falta la foto del comprobante de la transferencia (cobro 1).')).toBeTruthy()
+    await sacarFoto('Sacar foto del comprobante del cobro 1')
+    await aConfirmar()
+    await confirmarEntrega()
+    await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
+    const cobro = cuerpoEntrega().cobro as { lineas: { medioPagoId: string }[] }
+    expect(cobro.lineas.map((l) => l.medioPagoId)).toEqual(['m-tr-banc'])
   })
 })
 

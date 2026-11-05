@@ -6,7 +6,7 @@ import { Button, formatImporte, Field, Notice, OptionCard } from '@/core/ui/fw'
 import type { MedioCobroChofer } from '@/libs/api-client/logistica'
 import { leerNumero } from '@/core/utils/numero'
 import { FotoEntrega } from './FotoEntrega'
-import { mediosDelChofer, type ChequeForm, type LineaCobroForm } from './entrega'
+import { mediosDelChofer, nombreDelMedio, type ChequeForm, type LineaCobroForm } from './entrega'
 
 interface Props {
   medios: MedioCobroChofer[] | undefined
@@ -32,7 +32,7 @@ interface Props {
 }
 
 /** Lo que se dice de cada forma de pago, en una línea (chofer-04). */
-const DETALLE_MEDIO: Partial<Record<string, string>> = { Transferencia: 'Foto del comprobante', Cheque: 'Foto y datos' }
+const DETALLE_MEDIO: Partial<Record<string, string>> = { Transferencia: 'Bancaria o billetera · Foto del comprobante', Cheque: 'Foto y datos' }
 
 /**
  * Lámina chofer-04: cómo paga el cliente. Cuatro opciones grandes de 76 px y no más: Efectivo, Transferencia y
@@ -76,7 +76,7 @@ export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubien
           <View key={i} accessibilityLabel={`Cobro ${n}`} style={{ gap: space[2], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 2, borderColor: c.border }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
               <View accessibilityLabel={`Medio del cobro ${n}`} style={{ flex: 1 }}>
-                <Text style={{ ...typeScale.seccion, color: c.text }}>{l.medio?.nombre ?? 'Sin medio'}</Text>
+                <Text style={{ ...typeScale.seccion, color: c.text }}>{l.medio ? nombreDelMedio(l.medio) : 'Sin medio'}</Text>
                 <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Pago ${n}`}</Text>
               </View>
               <BotonQuitar etiqueta={`Quitar cobro ${n}`} onPress={() => onLineas(lineas.filter((_, j) => j !== i))} />
@@ -135,7 +135,7 @@ export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubien
         <View accessibilityLabel={hayPagos ? 'Sumar otro pago' : '¿Cómo paga?'} style={{ gap: space[2] }}>
           <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>{hayPagos ? 'Sumar otro pago' : '¿Cómo paga?'}</Text>
           {mediosDelChofer(medios).map((m) => (
-            <OptionCard key={m.id} label={m.nombre} detail={DETALLE_MEDIO[m.tipo]} onPress={() => agregar(m)} />
+            <OptionCard key={m.id} label={nombreDelMedio(m)} detail={DETALLE_MEDIO[m.tipo]} onPress={() => agregar(m)} />
           ))}
           {firma ? null : <OptionCard icon={PenLine} label="Firma" detail="Queda como deuda, con foto de la firma" onPress={elegirFirma} />}
           {hayPagos ? <Button label="No sumo otro" variant="secundario" onPress={() => setAgregando(false)} /> : null}

@@ -31,9 +31,22 @@ export function observacionesDeEntrega(observaciones: string, motivoDevolucion?:
 /** Lo que el chofer puede elegir para cobrar (S13). La firma no es un medio del servidor: va aparte (`firmaUrl`). */
 const TIPOS_DEL_CHOFER = ['Efectivo', 'Transferencia', 'Cheque'] as const
 
-/** Los medios del servidor que ve el chofer, en orden fijo. Filtra también acá: un servidor viejo todavía puede mandar Tarjeta. */
+/**
+ * Los medios del servidor que ve el chofer: uno por tipo, en orden fijo. El servidor manda dos de tipo Transferencia
+ * ("Tarjeta / Billetera virtual" y "Transferencia bancaria"); el chofer ve una sola y viaja la bancaria (la billetera
+ * se distingue por la foto). Sin nombre que coincida, el primero del tipo. Un servidor viejo todavía puede mandar Tarjeta.
+ */
 export function mediosDelChofer(medios: MedioCobroChofer[] | undefined): MedioCobroChofer[] {
-  return TIPOS_DEL_CHOFER.flatMap((t) => (medios ?? []).filter((m) => m.tipo === t))
+  return TIPOS_DEL_CHOFER.flatMap((t) => {
+    const deTipo = (medios ?? []).filter((m) => m.tipo === t)
+    const elegido = t === 'Transferencia' ? deTipo.find((m) => /transferencia/i.test(m.nombre)) ?? deTipo[0] : deTipo[0]
+    return elegido ? [elegido] : []
+  })
+}
+
+/** Cómo lo ve el chofer: la transferencia se llama siempre "Transferencia", sea cual sea el nombre del servidor. */
+export function nombreDelMedio(m: Pick<MedioCobroChofer, 'nombre' | 'tipo'>): string {
+  return m.tipo === 'Transferencia' ? 'Transferencia' : m.nombre
 }
 
 /** Chofer-03--productos: por qué vuelve la mercadería. TODO API: sin campo propio por devolución, viaja en las observaciones. */
