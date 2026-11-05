@@ -260,10 +260,18 @@ describe('R3 · rechazado (ResRechazada, TV8)', () => {
     expect(screen.getByText('Un pedido rechazado ya no se puede editar: queda como registro para vos y para gestión.')).toBeTruthy()
   })
 
-  it('no se edita ni se anula, ni deshabilitado', async () => {
+  it('no se edita, pero se puede anular', async () => {
     pantalla()
     await screen.findByText('Rechazado por gestión')
     expect(screen.queryByRole('button', { name: 'Editar' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Anular' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Armar uno nuevo igual/ })).toBeTruthy()
+  })
+
+  it('sin MOD_VENTAS borrar no ofrece anular', async () => {
+    permisos({ ...TODOS, MOD_VENTAS: { canRead: true, canCreate: true, canUpdate: true } })
+    pantalla()
+    await screen.findByText('Rechazado por gestión')
     expect(screen.queryByRole('button', { name: 'Anular' })).toBeNull()
   })
 
@@ -285,5 +293,23 @@ describe('R3 · rechazado (ResRechazada, TV8)', () => {
     await screen.findByText('Rechazado por gestión')
     expect(screen.queryByRole('button', { name: /Armar uno nuevo igual/ })).toBeNull()
     expect(screen.queryByRole('button', { name: /Cobrar lo vencido/ })).toBeNull()
+  })
+})
+
+describe.each(['light', 'dark'])('R5 · motivo de la autorización en el detalle (%s)', () => {
+  const MOTIVO = 'Autorizada por Marta G. Deuda vencida. Cambios: Pala c/Cabo Fija LP 10 → 9'
+
+  it('lo muestra con su rótulo cuando viene con texto', async () => {
+    venta({ motivoAutorizacion: MOTIVO })
+    pantalla()
+    expect(await screen.findByText('Motivo de la autorización')).toBeTruthy()
+    expect(screen.getByText(MOTIVO)).toBeTruthy()
+  })
+
+  it.each([[null], [''], ['   ']])('no muestra el bloque con %p', async (motivo) => {
+    venta({ motivoAutorizacion: motivo })
+    pantalla()
+    await screen.findByText('Pedido A00419')
+    expect(screen.queryByText('Motivo de la autorización')).toBeNull()
   })
 })

@@ -6495,7 +6495,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    depositoId?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -9899,6 +9901,7 @@ export interface paths {
                     TicketId?: string;
                     MetodoEntrega?: components["schemas"]["MetodoEntrega"];
                     VendedorId?: string;
+                    DepositoId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -9942,6 +9945,7 @@ export interface paths {
                     TicketId?: string;
                     MetodoEntrega?: components["schemas"]["MetodoEntrega"];
                     VendedorId?: string;
+                    DepositoId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -9958,6 +9962,45 @@ export interface paths {
                         "text/plain": components["schemas"]["ConteosPreparacionDto"];
                         "application/json": components["schemas"]["ConteosPreparacionDto"];
                         "text/json": components["schemas"]["ConteosPreparacionDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/preparacion/vendedores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    DepositoId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendedorListItemDto"][];
+                        "application/json": components["schemas"]["VendedorListItemDto"][];
+                        "text/json": components["schemas"]["VendedorListItemDto"][];
                     };
                 };
             };
@@ -10454,6 +10497,131 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/viajes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    estado?: string;
+                    desde?: string;
+                    hasta?: string;
+                    depositoId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ViajeResumenDtoListResponse"];
+                        "application/json": components["schemas"]["ViajeResumenDtoListResponse"];
+                        "text/json": components["schemas"]["ViajeResumenDtoListResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/viajes/{id}/seguimiento": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SeguimientoViajeDtoResponse"];
+                        "application/json": components["schemas"]["SeguimientoViajeDtoResponse"];
+                        "text/json": components["schemas"]["SeguimientoViajeDtoResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -10998,6 +11166,106 @@ export interface paths {
                         "text/plain": boolean;
                         "application/json": boolean;
                         "text/json": boolean;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/hojas-ruta/{id}/posiciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegistrarPosicionesViajeCommand"];
+                    "text/json": components["schemas"]["RegistrarPosicionesViajeCommand"];
+                    "application/*+json": components["schemas"]["RegistrarPosicionesViajeCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PosicionesRegistradasDtoResponse"];
+                        "application/json": components["schemas"]["PosicionesRegistradasDtoResponse"];
+                        "text/json": components["schemas"]["PosicionesRegistradasDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Too Many Requests */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
                     };
                 };
             };
@@ -19718,6 +19986,12 @@ export interface components {
             /** Format: double */
             costoUnitario?: number | null;
         };
+        AjusteLineaAutorizacionDto: {
+            /** Format: uuid */
+            ventaDetalleId: string;
+            /** Format: double */
+            cantidadNueva: number;
+        };
         AjusteStockFiscalDto: {
             /** Format: uuid */
             productoId: string;
@@ -20004,6 +20278,7 @@ export interface components {
             razon?: string | null;
             /** Format: double */
             descuentoAdicionalPorcentaje?: number | null;
+            ajustes?: components["schemas"]["AjusteLineaAutorizacionDto"][] | null;
         };
         /** @enum {string} */
         AvisoTalonario: "CaiPorVencer" | "CaiVencido" | "RangoPorAgotarse" | "RangoAgotado";
@@ -20577,6 +20852,11 @@ export interface components {
             chequeId?: string;
             recibido?: boolean;
         };
+        ChoferDeViajeDto: {
+            /** Format: uuid */
+            id: string;
+            nombre: string;
+        };
         ChoferDto: {
             /** Format: uuid */
             id: string;
@@ -20806,6 +21086,7 @@ export interface components {
             /** Format: date-time */
             fechaAnulacion?: string | null;
             usuarioAnulacionNombre?: string | null;
+            creadoPor?: string | null;
             eliminada: boolean;
             motivoEliminacion?: string | null;
             /** Format: date-time */
@@ -21612,6 +21893,8 @@ export interface components {
         DashboardSummaryDto: {
             /** Format: double */
             salesToday?: number | null;
+            /** Format: double */
+            salesSameWeekdayLastWeek?: number | null;
             /** Format: int32 */
             pendingOrders?: number | null;
             /** Format: int32 */
@@ -21660,6 +21943,11 @@ export interface components {
             chequeIds?: string[] | null;
             /** Format: uuid */
             cuentaDestinoId?: string;
+        };
+        DepositoDeViajeDto: {
+            /** Format: uuid */
+            id: string;
+            nombre: string;
         };
         DepositoResponse: {
             /** Format: uuid */
@@ -22121,6 +22409,8 @@ export interface components {
             devolucion?: components["schemas"]["DevolucionEnEntregaInput"];
             cobro?: components["schemas"]["CobroEnEntregaInput"];
             firma?: components["schemas"]["FirmaEnEntregaInput"];
+            /** Format: date-time */
+            resueltaEn?: string | null;
         };
         EntregarVentaCommand: {
             /** Format: uuid */
@@ -22193,6 +22483,8 @@ export interface components {
         /** @enum {string} */
         EstadoParada: "Pendiente" | "Entregado" | "NoEntregado";
         /** @enum {string} */
+        EstadoParadaViaje: "Pendiente" | "Entregada" | "NoEntregada";
+        /** @enum {string} */
         EstadoPedidoTransferencia: "Pendiente" | "Autorizado" | "Rechazado" | "Cancelado";
         /** @enum {string} */
         EstadoRemito: "Emitido" | "Entregado" | "NoEntregado" | "Anulado";
@@ -22208,6 +22500,8 @@ export interface components {
         EstadoTransferenciaStock: "Borrador" | "Despachada" | "Recibida" | "Cancelada";
         /** @enum {string} */
         EstadoVenta: "Pendiente" | "Confirmada" | "EnPreparacion" | "Empacada" | "EnRuta" | "Entregada" | "NoEntregada" | "Anulada" | "PendienteAutorizacion" | "Vencido" | "RechazadaAutorizacion";
+        /** @enum {string} */
+        EstadoViaje: "EnCurso" | "Realizado";
         /** @enum {string} */
         EstadoVigenciaCot: "Anterior" | "Vigente" | "Programada";
         /** @enum {string} */
@@ -22651,6 +22945,7 @@ export interface components {
             comprobantePuntoVenta?: number | null;
             /** Format: int64 */
             comprobanteNumero?: number | null;
+            creadoPorNombre?: string | null;
         };
         GastoListDtoPaginatedResponse: {
             /** Format: int32 */
@@ -23028,6 +23323,7 @@ export interface components {
             cantidadDevuelta: number;
             /** Format: double */
             cantidadDisponible: number;
+            marca?: string | null;
         };
         LineaParadaDtoListResponse: {
             /** Format: int32 */
@@ -23260,6 +23556,8 @@ export interface components {
         MovimientoCuentaDto: {
             /** Format: uuid */
             id: string;
+            creadoPorNombre?: string | null;
+            creadoPorOculto?: boolean;
             /** Format: date-time */
             fecha: string;
             referencia: string;
@@ -23335,6 +23633,8 @@ export interface components {
         MovimientoSocioDto: {
             /** Format: uuid */
             id: string;
+            creadoPorNombre?: string | null;
+            creadoPorOculto?: boolean;
             /** Format: date-time */
             fecha: string;
             tipo: components["schemas"]["TipoMovimientoCuenta"];
@@ -23469,6 +23769,7 @@ export interface components {
             /** Format: int32 */
             cantidadItems?: number;
             tieneComprobanteFiscal?: boolean;
+            creadoPorNombre?: string | null;
         };
         NotaCreditoListDtoIEnumerableResponse: {
             /** Format: int32 */
@@ -23605,6 +23906,7 @@ export interface components {
             activo: boolean;
             /** Format: uuid */
             pagoVinculadoId?: string | null;
+            creadoPorNombre?: string | null;
             conciliaciones: components["schemas"]["ConciliacionDelPagoDto"][];
             imputaciones: components["schemas"]["ImputacionDelPagoDto"][];
         };
@@ -23663,6 +23965,20 @@ export interface components {
             codigo?: string | null;
             tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
             repetida?: boolean;
+        };
+        ParadaDeViajeDto: {
+            /** Format: int32 */
+            orden: number;
+            clienteNombre: string;
+            direccion?: string | null;
+            /** Format: double */
+            latitud?: number | null;
+            /** Format: double */
+            longitud?: number | null;
+            estado: components["schemas"]["EstadoParadaViaje"];
+            motivo?: string | null;
+            /** Format: date-time */
+            resueltaEn?: string | null;
         };
         ParadaDocumentacionDto: {
             /** Format: int32 */
@@ -23727,6 +24043,8 @@ export interface components {
             /** Format: int32 */
             numeroNotaEntrega?: number | null;
             nombreContacto?: string | null;
+            /** Format: double */
+            deudaAnterior?: number | null;
         };
         ParadaRendicionDto: {
             /** Format: uuid */
@@ -23944,6 +24262,16 @@ export interface components {
         PisoVerdict: "Rojo" | "Amarillo" | "Verde";
         /** @enum {string} */
         PoliticaDuplicados: "Omitir" | "Actualizar" | "CrearIgual";
+        PosicionDto: {
+            /** Format: double */
+            latitud: number;
+            /** Format: double */
+            longitud: number;
+            /** Format: date-time */
+            registradaEn: string;
+            /** Format: double */
+            velocidadKmh?: number | null;
+        };
         PosicionIvaAlicuotaDto: {
             alicuota: components["schemas"]["AlicuotaIva"];
             /** Format: double */
@@ -24000,6 +24328,34 @@ export interface components {
             traceId?: string | null;
             errors?: string[] | null;
             data?: components["schemas"]["PosicionIvaMesDto"][] | null;
+            codigo?: string | null;
+        };
+        PosicionViajeInput: {
+            /** Format: double */
+            latitud?: number;
+            /** Format: double */
+            longitud?: number;
+            /** Format: float */
+            precisionMetros?: number | null;
+            /** Format: float */
+            velocidadKmh?: number | null;
+            /** Format: date-time */
+            registradaEn?: string;
+        };
+        PosicionesRegistradasDto: {
+            /** Format: int32 */
+            recibidas?: number;
+            /** Format: int32 */
+            descartadas?: number;
+        };
+        PosicionesRegistradasDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["PosicionesRegistradasDto"];
             codigo?: string | null;
         };
         PreferenciaNotificacionDto: {
@@ -24583,6 +24939,9 @@ export interface components {
             tipoCuentaProveedor?: components["schemas"]["TipoCuentaSocio"];
             claveIdempotencia?: string | null;
         };
+        RegistrarPosicionesViajeCommand: {
+            posiciones?: components["schemas"]["PosicionViajeInput"][] | null;
+        };
         RegistroAuditoriaPermisoDto: {
             /** Format: uuid */
             id?: string;
@@ -24728,6 +25087,7 @@ export interface components {
             transportistaCuit?: string | null;
             transportistaDomicilio?: string | null;
             items: components["schemas"]["RemitoItemDto"][];
+            creadoPorNombre?: string | null;
         };
         RemitoDtoResponse: {
             /** Format: int32 */
@@ -24766,6 +25126,7 @@ export interface components {
             ventaId?: string | null;
             /** Format: uuid */
             hojaDeRutaId?: string | null;
+            creadoPorNombre?: string | null;
         };
         RemitoResumenDtoPaginatedResponse: {
             /** Format: int32 */
@@ -24931,6 +25292,8 @@ export interface components {
             evidenciaUrl?: string | null;
             observaciones?: string | null;
             claveIdempotencia?: string | null;
+            /** Format: date-time */
+            resueltaEn?: string | null;
         };
         ReprogramarEntregaCommand: {
             /** Format: uuid */
@@ -25083,6 +25446,10 @@ export interface components {
             pedidosRechazados: number;
             /** Format: int32 */
             presupuestosPorVencer: number;
+            /** Format: int32 */
+            sinEntregarCantidad: number;
+            /** Format: date */
+            sinEntregarMasVieja?: string | null;
         };
         ResumenVendedorDtoResponse: {
             /** Format: int32 */
@@ -25172,6 +25539,22 @@ export interface components {
             /** Format: double */
             gastosMasMargenMinimoPorcentaje?: number;
             avisoPiso?: string | null;
+        };
+        SeguimientoViajeDto: {
+            viaje: components["schemas"]["ViajeResumenDto"];
+            depositoUbicacion?: components["schemas"]["UbicacionDeDepositoDto"];
+            paradas: components["schemas"]["ParadaDeViajeDto"][];
+            recorrido: components["schemas"]["PosicionDto"][];
+        };
+        SeguimientoViajeDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["SeguimientoViajeDto"];
+            codigo?: string | null;
         };
         SerieVentasDto: {
             periodo?: components["schemas"]["PeriodoDto"];
@@ -25732,6 +26115,7 @@ export interface components {
             sinMovimientoDeCaja: boolean;
             /** Format: uuid */
             pagoVinculadoId?: string | null;
+            creadoPorNombre?: string | null;
         };
         TesoreriaListDtoPaginatedResponse: {
             /** Format: int32 */
@@ -25916,6 +26300,9 @@ export interface components {
             unidadesTotales: number;
             /** Format: int32 */
             version: number;
+            creadoPorNombre?: string | null;
+            despachadoPorNombre?: string | null;
+            recibidoPorNombre?: string | null;
             items: components["schemas"]["TransferenciaStockItemDto"][];
             cot?: components["schemas"]["CotDto"];
         };
@@ -25967,6 +26354,9 @@ export interface components {
             unidadesTotales: number;
             /** Format: int32 */
             version: number;
+            creadoPorNombre?: string | null;
+            despachadoPorNombre?: string | null;
+            recibidoPorNombre?: string | null;
         };
         TransferenciaStockResumenDtoPaginatedResponse: {
             /** Format: int32 */
@@ -26011,6 +26401,12 @@ export interface components {
             jurisdiccion?: string | null;
             /** Format: double */
             importe?: number;
+        };
+        UbicacionDeDepositoDto: {
+            /** Format: double */
+            latitud: number;
+            /** Format: double */
+            longitud: number;
         };
         UltimaCompraProductoDto: {
             /** Format: date */
@@ -26471,6 +26867,9 @@ export interface components {
             activo: boolean;
             puedeVenderse: boolean;
         };
+        VehiculoDeViajeDto: {
+            patente: string;
+        };
         VehiculoDto: {
             /** Format: uuid */
             id: string;
@@ -26622,6 +27021,8 @@ export interface components {
             itemsCount: number;
             /** Format: double */
             montoPagado?: number | null;
+            creadoPor?: string | null;
+            autorizadoPor?: string | null;
             /** Format: double */
             montoNotasCredito: number;
             /** Format: double */
@@ -26729,6 +27130,7 @@ export interface components {
             /** Format: int32 */
             motivoPendienteAutorizacion?: number | null;
             motivoAnulacion?: string | null;
+            motivoAutorizacion?: string | null;
             /** Format: double */
             baseComision?: number | null;
             /** Format: double */
@@ -26814,6 +27216,9 @@ export interface components {
             metodoEntrega: number;
             metodoEntregaNombre: string;
             vendedorNombre: string;
+            ultimoCambioPor?: string | null;
+            /** Format: date-time */
+            ultimoCambioEn?: string | null;
             /** Format: int32 */
             itemsCount: number;
             /** Format: double */
@@ -26854,6 +27259,44 @@ export interface components {
         };
         VerificarStockFiscalVentaQuery: {
             items?: components["schemas"]["ItemStockFiscalDto"][] | null;
+        };
+        ViajeResumenDto: {
+            /** Format: uuid */
+            id: string;
+            numero: string;
+            estado: components["schemas"]["EstadoViaje"];
+            chofer: components["schemas"]["ChoferDeViajeDto"];
+            vehiculo?: components["schemas"]["VehiculoDeViajeDto"];
+            deposito: components["schemas"]["DepositoDeViajeDto"];
+            /** Format: int32 */
+            paradasTotal: number;
+            /** Format: int32 */
+            entregadas: number;
+            /** Format: int32 */
+            noEntregadas: number;
+            /** Format: int32 */
+            pendientes: number;
+            /** Format: date-time */
+            salioEn?: string | null;
+            /** Format: date-time */
+            llegoEn?: string | null;
+            /** Format: double */
+            km?: number | null;
+            ultimaPosicion?: components["schemas"]["PosicionDto"];
+            /** Format: int32 */
+            demoraMin?: number | null;
+            /** Format: date-time */
+            llegadaEstimadaEn?: string | null;
+        };
+        ViajeResumenDtoListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ViajeResumenDto"][] | null;
+            codigo?: string | null;
         };
         /** @enum {string} */
         VisibilidadEvento: "Personal" | "Administracion";
