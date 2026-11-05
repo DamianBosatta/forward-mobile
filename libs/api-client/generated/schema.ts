@@ -19988,9 +19988,9 @@ export interface components {
         };
         AjusteLineaAutorizacionDto: {
             /** Format: uuid */
-            ventaDetalleId?: string;
+            ventaDetalleId: string;
             /** Format: double */
-            cantidadNueva?: number;
+            cantidadNueva: number;
         };
         AjusteStockFiscalDto: {
             /** Format: uuid */
