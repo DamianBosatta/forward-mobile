@@ -16,12 +16,12 @@ import { useRegistrarGasto, useTiposGasto } from '../api/gastos'
 import { usePuedePagarServicio } from '../lib/permiso'
 import { cuerpoDelGasto, validarServicio, type FormServicio } from '../lib/servicio'
 
-const VACIO: FormServicio = { monto: '', tipoGastoId: null, descripcion: '', medioPagoId: null, requiereCaja: false, cuentaOrigenId: null, comprobanteUrl: null }
+const VACIO: FormServicio = { monto: '', tipoGastoId: null, descripcion: '', medioPagoId: null, cuentaOrigenId: null, comprobanteUrl: null }
 
 /**
  * Pagar un servicio (lámina tesoreria-pagar-servicio): registra un gasto (luz, gas, alquiler, flete) con
  * `POST /gastos`. Concepto y medio salen de los catálogos del servidor; el cheque queda afuera (L22) y la
- * fecha es la de hoy (el servidor la pone). En efectivo no se elige cuenta: sale de la caja.
+ * fecha es la de hoy (el servidor la pone). Siempre se elige la cuenta de origen: la caja es solo web y el teléfono no ofrece efectivo.
  */
 export function PagarServicio({ onListo }: { onListo: () => void }) {
   const c = useColors()
@@ -38,8 +38,8 @@ export function PagarServicio({ onListo }: { onListo: () => void }) {
   const [aviso, setAviso] = useState<string | null>(null)
 
   const conceptos = (tipos.data ?? []).filter(t => t.activo && t.id)
-  // El cheque tiene su propio flujo (L22): acá solo efectivo, transferencia y similares.
-  const mediosDePago = (medios.data ?? []).filter(m => m.activo && m.id && !m.esCheque)
+  // El cheque tiene su propio flujo (L22) y la caja es solo web (decisión del dueño): acá solo transferencia y similares.
+  const mediosDePago = (medios.data ?? []).filter(m => m.activo && m.id && !m.esCheque && !m.requiereCaja)
 
   const enviar = () => {
     if (registrar.isPending || subiendo) return
@@ -79,9 +79,9 @@ export function PagarServicio({ onListo }: { onListo: () => void }) {
             conTilde
             opciones={mediosDePago.map(m => ({ id: m.id!, label: m.nombre ?? '' }))}
             valor={f.medioPagoId}
-            onCambio={id => setF(p => ({ ...p, medioPagoId: id, requiereCaja: !!mediosDePago.find(m => m.id === id)?.requiereCaja, cuentaOrigenId: null }))}
+            onCambio={id => setF(p => ({ ...p, medioPagoId: id, cuentaOrigenId: null }))}
           />
-          {f.medioPagoId && !f.requiereCaja ? (
+          {f.medioPagoId ? (
             <>
               {cuentas.error ? <Notice tone="peligro">{mensajeDelServidor(cuentas.error, 'No se pudieron cargar las cuentas.')}</Notice> : null}
               <ElegirCuenta titulo="Cuenta de origen" cuentas={cuentas.data ?? []} valor={f.cuentaOrigenId} onCambio={cuentaOrigenId => setF(p => ({ ...p, cuentaOrigenId }))} />

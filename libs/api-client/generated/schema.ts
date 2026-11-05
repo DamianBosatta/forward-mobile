@@ -257,7 +257,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/Cajas/cerrar": {
+    "/api/v1/Cajas/{cajaId}/arqueo": {
         parameters: {
             query?: never;
             header?: never;
@@ -270,14 +270,61 @@ export interface paths {
             parameters: {
                 query?: never;
                 header?: never;
-                path?: never;
+                path: {
+                    cajaId: string;
+                };
                 cookie?: never;
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["CerrarCajaCommand"];
-                    "text/json": components["schemas"]["CerrarCajaCommand"];
-                    "application/*+json": components["schemas"]["CerrarCajaCommand"];
+                    "application/json": components["schemas"]["ArquearCajaQuery"];
+                    "text/json": components["schemas"]["ArquearCajaQuery"];
+                    "application/*+json": components["schemas"]["ArquearCajaQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ArqueoCajaDto"];
+                        "application/json": components["schemas"]["ArqueoCajaDto"];
+                        "text/json": components["schemas"]["ArqueoCajaDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Cajas/{cajaId}/cerrar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cajaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CerrarCajaConArqueoRequest"];
+                    "text/json": components["schemas"]["CerrarCajaConArqueoRequest"];
+                    "application/*+json": components["schemas"]["CerrarCajaConArqueoRequest"];
                 };
             };
             responses: {
@@ -376,6 +423,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Cajas/efectivo-por-deposito": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["EfectivoPorDepositoDtoResponse"];
+                        "application/json": components["schemas"]["EfectivoPorDepositoDtoResponse"];
+                        "text/json": components["schemas"]["EfectivoPorDepositoDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Cajas/abiertas/estado": {
         parameters: {
             query?: never;
@@ -456,7 +540,223 @@ export interface paths {
             };
         };
         put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cajaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RegistrarMovimientoCajaCommand"];
+                    "text/json": components["schemas"]["RegistrarMovimientoCajaCommand"];
+                    "application/*+json": components["schemas"]["RegistrarMovimientoCajaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MovimientoCajaDto"];
+                        "application/json": components["schemas"]["MovimientoCajaDto"];
+                        "text/json": components["schemas"]["MovimientoCajaDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Cajas/{cajaId}/pendientes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cajaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MovimientoCajaPendienteDto"][];
+                        "application/json": components["schemas"]["MovimientoCajaPendienteDto"][];
+                        "text/json": components["schemas"]["MovimientoCajaPendienteDto"][];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Cajas/pendientes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MovimientoCajaPendienteDto"][];
+                        "application/json": components["schemas"]["MovimientoCajaPendienteDto"][];
+                        "text/json": components["schemas"]["MovimientoCajaPendienteDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Cajas/{cajaId}/pendientes/cargar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    cajaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CargarPendientesCommand"];
+                    "text/json": components["schemas"]["CargarPendientesCommand"];
+                    "application/*+json": components["schemas"]["CargarPendientesCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MovimientoCajaDto"][];
+                        "application/json": components["schemas"]["MovimientoCajaDto"][];
+                        "text/json": components["schemas"]["MovimientoCajaDto"][];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -4061,66 +4361,6 @@ export interface paths {
             };
         };
         put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/Configuracion/cuenta-caja-efectivo": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "text/plain": components["schemas"]["CuentaCajaEfectivoResponse"];
-                        "application/json": components["schemas"]["CuentaCajaEfectivoResponse"];
-                        "text/json": components["schemas"]["CuentaCajaEfectivoResponse"];
-                    };
-                };
-            };
-        };
-        put: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["UpdateCuentaCajaEfectivoCommand"];
-                    "text/json": components["schemas"]["UpdateCuentaCajaEfectivoCommand"];
-                    "application/*+json": components["schemas"]["UpdateCuentaCajaEfectivoCommand"];
-                };
-            };
-            responses: {
-                /** @description OK */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
         post?: never;
         delete?: never;
         options?: never;
@@ -9846,7 +10086,9 @@ export interface paths {
         };
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    depositoId?: string;
+                };
                 header?: never;
                 path?: never;
                 cookie?: never;
@@ -13072,6 +13314,11 @@ export interface paths {
                     FamiliasCompletas?: boolean;
                     SoloComprables?: boolean;
                     SinVariantes?: boolean;
+                    ConOferta?: boolean;
+                    HayStock?: boolean;
+                    BajoMinimo?: boolean;
+                    ConVentasDesdeUltimaCompra?: boolean;
+                    CompradoAlProveedorId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -15746,6 +15993,45 @@ export interface paths {
                         "text/plain": components["schemas"]["ClienteRecienteDtoListResponse"];
                         "application/json": components["schemas"]["ClienteRecienteDtoListResponse"];
                         "text/json": components["schemas"]["ClienteRecienteDtoListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/socios-comerciales/proveedores-recientes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    Limite?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProveedorRecienteDtoListResponse"];
+                        "application/json": components["schemas"]["ProveedorRecienteDtoListResponse"];
+                        "text/json": components["schemas"]["ProveedorRecienteDtoListResponse"];
                     };
                 };
             };
@@ -19605,6 +19891,26 @@ export interface components {
             data?: components["schemas"]["ArcaEstadoDto"];
             codigo?: string | null;
         };
+        ArquearCajaQuery: {
+            /** Format: double */
+            saldoFinalDeclarado?: number;
+            moneda?: string | null;
+        };
+        ArqueoCajaDto: {
+            /** Format: uuid */
+            cajaId: string;
+            /** Format: double */
+            saldoDeclaradoAmount: number;
+            moneda: string;
+            /** Format: double */
+            diferenciaAmount: number;
+            /** Format: double */
+            saldoEsperadoAmount?: number | null;
+            /** Format: int32 */
+            pendientesCantidad: number;
+            /** Format: double */
+            pendientesMontoAmount: number;
+        };
         AsignarComprobantePagoCommand: {
             /** Format: uuid */
             pagoId?: string;
@@ -19809,6 +20115,8 @@ export interface components {
             saldoSistemaAmount: number;
             saldoSistemaMoneda?: string | null;
             abiertaPor?: string | null;
+            /** Format: date-time */
+            abiertaEn: string;
         };
         CajaAbiertaEstadoDto: {
             /** Format: uuid */
@@ -19830,6 +20138,9 @@ export interface components {
             /** Format: uuid */
             depositoId: string;
             depositoNombre?: string | null;
+            abiertaPor?: string | null;
+            /** Format: date-time */
+            abiertaEn?: string | null;
         };
         CajaCerradaDto: {
             /** Format: uuid */
@@ -19853,6 +20164,7 @@ export interface components {
             /** Format: double */
             diferenciaAmount: number;
             diferenciaMoneda?: string | null;
+            motivoDiferencia?: string | null;
             cerradaPor?: string | null;
         };
         CajaCerradaDtoPaginatedResponse: {
@@ -19921,6 +20233,9 @@ export interface components {
             /** Format: int32 */
             version?: number | null;
             notaCredito?: components["schemas"]["ComprobanteCompraInput"];
+        };
+        CargarPendientesCommand: {
+            movimientoIds?: string[] | null;
         };
         CarteraChequesResumenDto: {
             /** Format: double */
@@ -20034,6 +20349,10 @@ export interface components {
             costoDirecto?: number | null;
             /** Format: double */
             costoRealPricing?: number | null;
+            /** Format: date */
+            fechaUltimaCompra?: string | null;
+            /** Format: double */
+            vendidoDesdeUltimaCompra?: number | null;
             almacenes: components["schemas"]["AlmacenStockDto"][];
         };
         CatalogoStockRealDtoPaginatedResponse: {
@@ -20069,17 +20388,13 @@ export interface components {
             /** Format: int32 */
             operaciones?: number;
         };
-        CerrarCajaCommand: {
-            /** Format: uuid */
-            cajaId?: string;
-            /**
-             * Format: uuid
-             * @deprecated
-             */
-            usuarioId?: string;
+        CerrarCajaConArqueoRequest: {
             /** Format: double */
             saldoFinalDeclarado?: number;
             moneda?: string | null;
+            /** Format: double */
+            diferenciaVista: number;
+            motivoDiferencia?: string | null;
         };
         CerrarCajaResponseDto: {
             /** Format: uuid */
@@ -20311,6 +20626,8 @@ export interface components {
             displayName: string;
             /** Format: date-time */
             ultimoUso: string;
+            /** Format: date-time */
+            ultimaVenta?: string | null;
         };
         ClienteRecienteDtoListResponse: {
             /** Format: int32 */
@@ -21257,12 +21574,6 @@ export interface components {
             data?: components["schemas"]["CuentaBancariaSocioResponse"][] | null;
             codigo?: string | null;
         };
-        CuentaCajaEfectivoResponse: {
-            /** Format: uuid */
-            cuentaCajaEfectivoId?: string | null;
-            nombre?: string | null;
-            activo?: boolean | null;
-        };
         CuentaCarteraChequesResponse: {
             /** Format: uuid */
             cuentaCarteraChequesId?: string | null;
@@ -21673,6 +21984,34 @@ export interface components {
             version?: number;
             cambios?: components["schemas"]["CambioCantidadDto"][] | null;
             motivo?: string | null;
+        };
+        EfectivoDeDepositoDto: {
+            /** Format: uuid */
+            depositoId: string;
+            depositoNombre: string;
+            /** Format: double */
+            efectivo: number;
+            /** Format: double */
+            efectivoTst: number;
+            /** Format: double */
+            efectivoSinCargar: number;
+            /** Format: double */
+            efectivoTstSinCargar: number;
+        };
+        EfectivoPorDepositoDto: {
+            depositos: components["schemas"]["EfectivoDeDepositoDto"][];
+            /** Format: double */
+            total?: number | null;
+        };
+        EfectivoPorDepositoDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["EfectivoPorDepositoDto"];
+            codigo?: string | null;
         };
         EliminarCompraCommand: {
             /** Format: uuid */
@@ -22444,6 +22783,7 @@ export interface components {
             /** Format: double */
             distanciaTotalMetros: number;
             rutaCalculada: boolean;
+            creadoPorNombre?: string | null;
         };
         ImportacionResumenDto: {
             /** Format: uuid */
@@ -22859,6 +23199,8 @@ export interface components {
         /** @enum {string} */
         MotivoCot: "Importe" | "Peso" | "UmbralPropio";
         /** @enum {string} */
+        MotivoMovimientoCaja: "RetiroDelDueno" | "GastoChico" | "CambioVuelto" | "Aporte" | "Otro";
+        /** @enum {string} */
         MotivoRiesgo: "SinCompras" | "Caida";
         MovimientoCajaDto: {
             /** Format: uuid */
@@ -22871,6 +23213,47 @@ export interface components {
             referencia: string;
             /** Format: uuid */
             referenciaId?: string | null;
+            /** Format: date-time */
+            fechaCreacion: string;
+            motivo?: components["schemas"]["MotivoMovimientoCaja"];
+            nota?: string | null;
+            /** Format: uuid */
+            cuentaEfectivoId?: string | null;
+            /** Format: uuid */
+            cargadoPorUsuarioId?: string | null;
+            /** Format: date-time */
+            cargadoEn?: string | null;
+            usuarioNombre: string;
+            cargadoPorNombre?: string | null;
+            cuentaEfectivoNombre?: string | null;
+            socioDireccion?: string | null;
+            socioNombre?: string | null;
+            comprobanteProveedor?: string | null;
+        };
+        MovimientoCajaPendienteDto: {
+            esDeOtroDeposito?: boolean;
+            depositoNombre?: string | null;
+            socioDireccion?: string | null;
+            socioNombre?: string | null;
+            comprobanteProveedor?: string | null;
+            /** Format: uuid */
+            id: string;
+            tipo: components["schemas"]["TipoMovimientoCaja"];
+            /** Format: double */
+            montoAmount: number;
+            montoMoneda?: string | null;
+            medioPago: string;
+            referencia: string;
+            /** Format: uuid */
+            referenciaId?: string | null;
+            /** Format: uuid */
+            depositoId?: string | null;
+            /** Format: uuid */
+            cuentaEfectivoId?: string | null;
+            cuentaEfectivoNombre?: string | null;
+            /** Format: uuid */
+            cobradoPorUsuarioId: string;
+            cobradoPor?: string | null;
             /** Format: date-time */
             fechaCreacion: string;
         };
@@ -23176,6 +23559,7 @@ export interface components {
             observaciones?: string | null;
             /** Format: uuid */
             depositoId?: string | null;
+            tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
         };
         PagedFilasPreviewDto: {
             items?: components["schemas"]["FilaPreviewDto"][] | null;
@@ -23816,6 +24200,27 @@ export interface components {
             /** Format: double */
             umbralKg?: number;
         };
+        ProveedorRecienteDto: {
+            /** Format: uuid */
+            id: string;
+            razonSocial: string;
+            cuit: string;
+            direccion?: string | null;
+            nombreFantasia?: string | null;
+            displayName: string;
+            /** Format: date-time */
+            ultimaCompra: string;
+        };
+        ProveedorRecienteDtoListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ProveedorRecienteDto"][] | null;
+            codigo?: string | null;
+        };
         PuestoDetalleDto: {
             /** Format: uuid */
             id?: string;
@@ -24077,6 +24482,7 @@ export interface components {
             medioPagoId?: string;
             /** Format: uuid */
             depositoId?: string | null;
+            tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
             comprobanteUrl?: string | null;
             observaciones?: string | null;
             /** Format: date-time */
@@ -24087,6 +24493,15 @@ export interface components {
              * @deprecated
              */
             usuarioId?: string;
+        };
+        RegistrarMovimientoCajaCommand: {
+            tipo?: components["schemas"]["TipoMovimientoCaja"];
+            /** Format: double */
+            monto?: number;
+            moneda?: string | null;
+            motivo?: components["schemas"]["MotivoMovimientoCaja"];
+            nota?: string | null;
+            tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
         };
         RegistrarMovimientoEntreCuentasCommand: {
             /** Format: double */
@@ -24923,6 +25338,8 @@ export interface components {
             deudaVencidaNormalAmount?: number;
             /** Format: int32 */
             diasDeudaMasVieja?: number | null;
+            /** Format: date-time */
+            ultimaCompra?: string | null;
             /** Format: double */
             creditoDisponible?: number | null;
             depositoIds: string[];
@@ -25677,10 +26094,6 @@ export interface components {
         };
         UpdateCondicionFiscalEmpresaCommand: {
             condicionFiscal?: components["schemas"]["CondicionFiscalEmpresa"];
-        };
-        UpdateCuentaCajaEfectivoCommand: {
-            /** Format: uuid */
-            cuentaCajaEfectivoId?: string | null;
         };
         UpdateCuentaCarteraChequesCommand: {
             /** Format: uuid */
