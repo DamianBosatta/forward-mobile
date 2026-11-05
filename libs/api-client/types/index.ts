@@ -651,8 +651,7 @@ export type HojaRutaDetalleDto = components['schemas']['HojaRutaDetalleDto']
 /**
  * Parada (stop) — nested inside HojaRutaDetalleDto.
  */
-/** `deudaAnterior`: lo que el cliente debía antes de este pedido (aditivo del servidor; un servidor anterior no lo manda). */
-export type ParadaDto = components['schemas']['ParadaDto'] & { deudaAnterior?: number | null }
+export type ParadaDto = components['schemas']['ParadaDto']
 
 // Must match backend Domain/Enum/EstadoParada.cs (1-based). The API returns these
 // numeric values on ParadaDto.estado; a 0-based enum mislabels Pendiente as Entregado.

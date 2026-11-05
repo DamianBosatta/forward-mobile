@@ -23,7 +23,7 @@ export function EleccionDevolucion({ valor, onElegir }: { valor: boolean | null;
 /** Desde cuántos renglones aparece el buscador de la devolución. */
 export const RENGLONES_PARA_BUSCAR = 8
 
-const marcaDe = (r: LineaParada) => (r as { marca?: string | null }).marca ?? ''
+const marcaDe = (r: LineaParada) => r.marca ?? ''
 
 /** Lámina "Devolución enviada" (S19): lo marcado queda para que el depósito la autorice; el chofer sigue con el cobro. */
 export function DevolucionEnviada({ onSeguir }: { onSeguir: () => void }) {
