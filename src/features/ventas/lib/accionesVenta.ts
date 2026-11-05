@@ -35,7 +35,7 @@ export interface AnularVisible {
 export interface AccionesDeVenta {
   /** Pendiente o Confirmada con MOD_VENTAS modificar (isVentaEditable). */
   editar: boolean
-  /** Con el permiso, se ve siempre menos en Anulada y Rechazada; en ruta, deshabilitado con el motivo. */
+  /** Con el permiso, se ve siempre menos en Anulada (la rechazada por autorización sí se anula); en ruta, deshabilitado con el motivo. */
   anular: AnularVisible
   /** Un presupuesto Pendiente con MOD_VENTAS modificar. */
   pasarAPedido: boolean
@@ -59,7 +59,7 @@ export function accionesDeVenta(
   const enRuta = esEstadoVenta(estado, 'EnRuta')
 
   const anular: AnularVisible =
-    !puedeAnular || anulada || esEstadoVenta(estado, 'RechazadaAutorizacion')
+    !puedeAnular || anulada
       ? { visible: false }
       : enRuta
         ? { visible: true, habilitado: false, motivo: MOTIVO_ANULAR_EN_RUTA }

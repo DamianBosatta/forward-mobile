@@ -118,6 +118,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
         </View>
 
         {rechazada ? (
+          <>
           <VentaRechazada
             venta={h}
             deudaVencida={cliente?.deudaVencidaAmount ?? null}
@@ -126,6 +127,8 @@ export function DetalleVenta({ id, onVolver }: Props) {
             onArmarIgual={canDo('MOD_VENTAS', 'create') ? () => router.push(`/(tabs)/ventas/nueva?duplicar=${h.id}` as never) : null}
             onLlamar={telefono ? () => void Linking.openURL(urlLlamar(telefono)) : null}
           />
+          <AccionesDeVenta venta={q.data} acciones={acciones} onAnulada={() => (onVolver ? onVolver() : router.back())} />
+          </>
         ) : (
           <>
             {esPresupuesto ? (

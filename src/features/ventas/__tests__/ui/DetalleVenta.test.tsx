@@ -260,10 +260,18 @@ describe('R3 · rechazado (ResRechazada, TV8)', () => {
     expect(screen.getByText('Un pedido rechazado ya no se puede editar: queda como registro para vos y para gestión.')).toBeTruthy()
   })
 
-  it('no se edita ni se anula, ni deshabilitado', async () => {
+  it('no se edita, pero se puede anular', async () => {
     pantalla()
     await screen.findByText('Rechazado por gestión')
     expect(screen.queryByRole('button', { name: 'Editar' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Anular' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /Armar uno nuevo igual/ })).toBeTruthy()
+  })
+
+  it('sin MOD_VENTAS borrar no ofrece anular', async () => {
+    permisos({ ...TODOS, MOD_VENTAS: { canRead: true, canCreate: true, canUpdate: true } })
+    pantalla()
+    await screen.findByText('Rechazado por gestión')
     expect(screen.queryByRole('button', { name: 'Anular' })).toBeNull()
   })
 

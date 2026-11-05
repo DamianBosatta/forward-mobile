@@ -19,7 +19,7 @@ describe('acciones de una venta (reglas de la web, PermMatriz "2 · Ventas")', (
 
   it('acepta el estado como número (el servidor manda uno u otro)', () => {
     expect(accionesDeVenta(pedido(2), TODO).editar).toBe(true)
-    expect(accionesDeVenta(pedido(11), TODO).anular.visible).toBe(false)
+    expect(accionesDeVenta(pedido(8), TODO).anular.visible).toBe(false)
   })
 
   it.each(['Pendiente', 'Confirmada', 'PendienteAutorizacion', 'EnPreparacion', 'Empacada', 'Entregada'])(
@@ -30,8 +30,13 @@ describe('acciones de una venta (reglas de la web, PermMatriz "2 · Ventas")', (
     },
   )
 
-  it.each(['Anulada', 'RechazadaAutorizacion'])('en %s no hay anular, ni deshabilitado', (e) => {
-    expect(accionesDeVenta(pedido(e), TODO).anular.visible).toBe(false)
+  it('en Anulada no hay anular, ni deshabilitado', () => {
+    expect(accionesDeVenta(pedido('Anulada'), TODO).anular.visible).toBe(false)
+  })
+
+  it('una rechazada por autorización se anula con MOD_VENTAS borrar y sin él no', () => {
+    expect(accionesDeVenta(pedido('RechazadaAutorizacion'), TODO).anular).toEqual({ visible: true, habilitado: true })
+    expect(accionesDeVenta(pedido('RechazadaAutorizacion'), con({ 'MOD_VENTAS:update': true })).anular.visible).toBe(false)
   })
 
   it('En ruta: anular queda deshabilitado con el motivo, solo a quien podría anular', () => {
