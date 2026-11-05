@@ -654,17 +654,11 @@ export type HojaRutaDetalleDto = components['schemas']['HojaRutaDetalleDto']
 export type ParadaDto = components['schemas']['ParadaDto']
 
 /**
- * Una entrada de `POST /api/v1/Logistica/hojas-ruta/{id}/posiciones` (`docs/api-contract.md`, consola de viajes).
- * Provisional hasta que el backend entre y se regenere `generated/schema.ts`.
+ * Una entrada de `POST /api/v1/Logistica/hojas-ruta/{id}/posiciones`. El esquema generado marca todo opcional;
+ * latitud, longitud y registradaEn son obligatorios en el contrato (`registradaEn`: instante UTC del celular, la hora de la lectura).
  */
-export interface PosicionViaje {
-  latitud: number
-  longitud: number
-  precisionMetros?: number
-  velocidadKmh?: number
-  /** Instante UTC del celular: la hora de la lectura, no la del envío. */
-  registradaEn: string
-}
+export type PosicionViaje = Required<Pick<components['schemas']['PosicionViajeInput'], 'latitud' | 'longitud' | 'registradaEn'>> &
+  Omit<components['schemas']['PosicionViajeInput'], 'latitud' | 'longitud' | 'registradaEn'>
 
 // Must match backend Domain/Enum/EstadoParada.cs (1-based). The API returns these
 // numeric values on ParadaDto.estado; a 0-based enum mislabels Pendiente as Entregado.
