@@ -30,10 +30,20 @@ function esTransitoria(e: unknown): boolean {
   return status === 401 || status === 408 || status === 429 || status >= 500
 }
 
+/**
+ * Hora en que el chofer resolvió la parada: la del celular al encolar (S6). Una acción guardada con una hora que no
+ * se puede escribir como fecha se manda sin ella y el servidor usa la suya. No toca el formato guardado de la cola.
+ */
+function resueltaEnDe(a: AccionEnCola): { resueltaEn?: string } {
+  const fecha = new Date(a.encoladaEn)
+  return Number.isNaN(fecha.getTime()) ? {} : { resueltaEn: fecha.toISOString() }
+}
+
 function mandar(a: AccionEnCola): Promise<unknown> {
+  const resuelta = resueltaEnDe(a)
   return a.tipo === 'entrega'
-    ? api.post(`${URL_HOJA(a.hojaDeRutaId)}/paradas/${a.paradaId}/entregar`, a.cuerpo)
-    : api.post(`${URL_HOJA(a.hojaDeRutaId)}/reportar-parada`, { hojaDeRutaId: a.hojaDeRutaId, paradaId: a.paradaId, ...a.cuerpo })
+    ? api.post(`${URL_HOJA(a.hojaDeRutaId)}/paradas/${a.paradaId}/entregar`, { ...a.cuerpo, ...resuelta })
+    : api.post(`${URL_HOJA(a.hojaDeRutaId)}/reportar-parada`, { hojaDeRutaId: a.hojaDeRutaId, paradaId: a.paradaId, ...a.cuerpo, ...resuelta })
 }
 
 let enCurso: Promise<ResultadoRonda> | null = null

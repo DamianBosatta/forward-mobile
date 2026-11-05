@@ -34,6 +34,8 @@ const config: ExpoConfig = {
     package: 'com.forward.erp',
     // Audit tranche 1, S3: no Android backup of the app data (MMKV, AsyncStorage) to Google or adb.
     allowBackup: false,
+    // Android 13+: sin este permiso la notificación del servicio de ubicación del viaje queda oculta.
+    permissions: ['android.permission.POST_NOTIFICATIONS'],
   },
   plugins: [
     'expo-router',

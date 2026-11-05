@@ -1,4 +1,5 @@
 import * as Location from 'expo-location'
+import * as Notifications from 'expo-notifications'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { logger } from '@/core/utils/logger'
 import { storage } from '@/core/utils/storage'
@@ -95,11 +96,24 @@ export function comenzarRegistroGps(hojaDeRutaId: string, usuarioId: string): Pr
   return comenzando
 }
 
+/**
+ * Android 13+: la notificación del servicio de ubicación necesita el permiso de notificaciones. Se pide sin esperar
+ * la respuesta y sin que una falla o un "no" toquen el viaje: el servicio corre igual, solo sin aviso visible.
+ */
+function pedirPermisoDeAvisos(): void {
+  Promise.resolve()
+    .then(() => Notifications.requestPermissionsAsync())
+    .catch((e) => logger.warn('No se pudo pedir el permiso de notificaciones', e))
+}
+
 /** El chofer leyó la explicación y aceptó: recién ahora sale el pedido del sistema. */
 export async function aceptarPermisoGps(hojaDeRutaId: string, usuarioId: string): Promise<ResultadoRegistro> {
   try {
     const permiso = await Location.requestForegroundPermissionsAsync()
-    if (permiso.granted) return await arrancarTarea(hojaDeRutaId, usuarioId)
+    if (permiso.granted) {
+      pedirPermisoDeAvisos()
+      return await arrancarTarea(hojaDeRutaId, usuarioId)
+    }
   } catch (e) {
     logger.warn('No se pudo pedir el permiso de ubicación', e)
   }

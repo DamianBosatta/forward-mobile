@@ -1,4 +1,5 @@
 import * as Location from 'expo-location'
+import * as Notifications from 'expo-notifications'
 import * as TaskManager from 'expo-task-manager'
 import { ApiError } from '@/core/api/client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -16,6 +17,7 @@ jest.mock('expo-location', () => ({
   stopLocationUpdatesAsync: jest.fn(),
   hasStartedLocationUpdatesAsync: jest.fn(),
 }))
+jest.mock('expo-notifications', () => ({ requestPermissionsAsync: jest.fn() }))
 jest.mock('expo-task-manager', () => ({ defineTask: jest.fn() }))
 const mockPost = jest.fn()
 jest.mock('@/core/api/client', () => ({
@@ -94,6 +96,21 @@ describe('al iniciar el recorrido', () => {
     await expect(aceptarPermisoGps(HOJA, USUARIO)).resolves.toBe('registrando')
     expect(loc.requestForegroundPermissionsAsync).toHaveBeenCalledTimes(1)
     expect(loc.startLocationUpdatesAsync).toHaveBeenCalledTimes(1)
+  })
+
+  it('Android 13+: al aceptar también se pide el permiso de notificaciones, sin frenar ni romper el viaje si falla o se niega', async () => {
+    const pedir = Notifications.requestPermissionsAsync as jest.Mock
+    pedir.mockReset()
+    pedir.mockRejectedValueOnce(new Error('sin servicio'))
+    await expect(aceptarPermisoGps(HOJA, USUARIO)).resolves.toBe('registrando')
+    await pasaUnTurno()
+    expect(pedir).toHaveBeenCalledTimes(1)
+    pedir.mockReturnValueOnce(new Promise(() => {}))
+    await expect(aceptarPermisoGps(HOJA, USUARIO)).resolves.toBe('registrando')
+    loc.requestForegroundPermissionsAsync.mockResolvedValue(permiso(false, false))
+    pedir.mockClear()
+    await expect(aceptarPermisoGps(HOJA, USUARIO)).resolves.toBe('sinPermiso')
+    expect(pedir).not.toHaveBeenCalled()
   })
 
   it('negar el pedido del sistema deja el viaje sin ubicación', async () => {
