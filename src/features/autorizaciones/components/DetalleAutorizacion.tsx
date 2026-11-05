@@ -10,7 +10,7 @@ import { useAuthStore } from '@/libs/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { formatRelativeTime } from '@/core/utils/fecha'
 import { pideRazon, textosDeMotivos } from '../lib/motivos'
-import { leerAjustes } from '../lib/ajustes'
+import { estimarTotales, leerAjustes } from '../lib/ajustes'
 import { ClienteParaAutorizar } from './ClienteParaAutorizar'
 import { clienteDeBandeja } from './BandejaAutorizaciones'
 import { DecisionSheet, type Decision } from './DecisionSheet'
@@ -62,6 +62,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
   // Cantidades que escribe quien autoriza por línea (id del detalle); vacío = sin cambio.
   const [cantidades, setCantidades] = useState<Record<string, string>>({})
   const edicion = leerAjustes(q.data?.detalles ?? [], cantidades)
+  const totales = q.data ? estimarTotales(q.data.venta, q.data.detalles, edicion) : null
   const puedeEditar = porAutorizar && puedeDecidir
   const abrirDecision = (d: Decision) => { setAviso(null); setDecision(d); void q.refetch() }
   const volver = onVolver ?? (() => router.back())
@@ -83,6 +84,9 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
     )
   }
 
+  // Con cantidades editadas el total es una estimación (la cuenta definitiva es la del servidor al confirmar).
+  const rotuloTotal = totales?.estimado ? 'Total estimado' : 'Total'
+  const totalMostrado = totales ? totales.total : venta.totalAmount
   const debajoDelMinimo = preview.data?.items ?? []
   const motivos = textosDeMotivos(venta.motivoPendienteAutorizacion, q.data?.detalleMotivos)
   const chip = chipForEstado('venta', venta.estado)
@@ -100,7 +104,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
             {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
           </View>
           <Text style={secundario}>{lineaDeApoyo}</Text>
-          <TotalsRow label="Total" importe={venta.totalAmount} destacado />
+          <TotalsRow label={rotuloTotal} importe={totalMostrado} destacado />
         </View>
 
         {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
@@ -176,7 +180,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
             <View key={d.id} style={{ gap: space[1], paddingVertical: space[1] }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
                 <Text style={[typeScale.secundario, { color: c.text, flex: 1 }]}>{d.productoNombre}</Text>
-                <Text style={[typeScale.secundario, cifras, { color: c.text }]}>{formatImporte(d.subtotal)}</Text>
+                <Text style={[typeScale.secundario, cifras, { color: c.text }]}>{formatImporte(totales?.subtotalDeLinea[d.id] ?? d.subtotal)}</Text>
               </View>
               <Text style={secundario}>
                 {`${d.cantidad} × ${formatImporte(d.precioUnitario)}${d.porcentajeDescuentoItem > 0 ? ` · Desc. ${formatPorcentaje(d.porcentajeDescuentoItem)}` : ''}`}
@@ -196,10 +200,10 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
               ) : null}
             </View>
           ))}
-          <TotalsRow label="Subtotal" importe={venta.subtotalBrutoAmount} />
-          {venta.montoDescuentoAmount > 0 ? <TotalsRow label="Descuento general" importe={-venta.montoDescuentoAmount} /> : null}
+          <TotalsRow label="Subtotal" importe={totales?.subtotalBruto ?? venta.subtotalBrutoAmount} />
+          {(totales?.montoDescuento ?? venta.montoDescuentoAmount) > 0 ? <TotalsRow label="Descuento general" importe={-(totales?.montoDescuento ?? venta.montoDescuentoAmount)} /> : null}
           <TotalsRow label="Flete" importe={venta.cargoFleteAmount} />
-          <TotalsRow label="Total" importe={venta.totalAmount} destacado />
+          <TotalsRow label={rotuloTotal} importe={totalMostrado} destacado />
         </View>
       </ScrollView>
       {/* Barra fija como la lámina: decidir siempre a mano, con el margen en amarillo pide motivo. */}
