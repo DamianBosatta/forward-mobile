@@ -167,6 +167,12 @@ export function DetalleVenta({ id, onVolver }: Props) {
               ) : null}
             </View>
             {h.observaciones ? <Text style={sec}>{`Observaciones: ${h.observaciones}`}</Text> : null}
+            {h.motivoAutorizacion?.trim() ? (
+              <View style={{ gap: space[1] }}>
+                <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Motivo de la autorización</Text>
+                <Text style={sec}>{h.motivoAutorizacion.trim()}</Text>
+              </View>
+            ) : null}
             {acciones.motivoNoEditable ? <Notice tone="info">{acciones.motivoNoEditable}</Notice> : null}
             <Pressable accessibilityRole="link" onPress={() => router.push(`/(tabs)/socios/${h.clienteId}` as never)} style={{ minHeight: 44, justifyContent: 'center' }}>
               <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Ver ficha del cliente</Text>

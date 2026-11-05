@@ -295,3 +295,21 @@ describe('R3 · rechazado (ResRechazada, TV8)', () => {
     expect(screen.queryByRole('button', { name: /Cobrar lo vencido/ })).toBeNull()
   })
 })
+
+describe.each(['light', 'dark'])('R5 · motivo de la autorización en el detalle (%s)', () => {
+  const MOTIVO = 'Autorizada por Marta G. Deuda vencida. Cambios: Pala c/Cabo Fija LP 10 → 9'
+
+  it('lo muestra con su rótulo cuando viene con texto', async () => {
+    venta({ motivoAutorizacion: MOTIVO })
+    pantalla()
+    expect(await screen.findByText('Motivo de la autorización')).toBeTruthy()
+    expect(screen.getByText(MOTIVO)).toBeTruthy()
+  })
+
+  it.each([[null], [''], ['   ']])('no muestra el bloque con %p', async (motivo) => {
+    venta({ motivoAutorizacion: motivo })
+    pantalla()
+    await screen.findByText('Pedido A00419')
+    expect(screen.queryByText('Motivo de la autorización')).toBeNull()
+  })
+})
