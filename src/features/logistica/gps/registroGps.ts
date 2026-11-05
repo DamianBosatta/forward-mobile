@@ -1,5 +1,4 @@
 import * as Location from 'expo-location'
-import * as TaskManager from 'expo-task-manager'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { logger } from '@/core/utils/logger'
 import { storage } from '@/core/utils/storage'
@@ -147,12 +146,7 @@ function aPosicion(hojaDeRutaId: string, { coords, timestamp }: Location.Locatio
   }
 }
 
-/*
- * Android y iOS exigen la definición al cargar el bundle, no dentro de un componente: si una lectura encuentra la
- * tarea sin definir, expo-task-manager la da de baja. Por eso este módulo se carga desde `app/_layout`
- * (`EnvioConsolaSinSenal`). Nunca se escriben coordenadas en el log.
- */
-TaskManager.defineTask<{ locations?: Location.LocationObject[] }>(TAREA_GPS, async ({ data, error }) => {
+async function alRecibirLecturas({ data, error }: { data?: { locations?: Location.LocationObject[] }; error: { message: string } | null }): Promise<void> {
   try {
     if (error) {
       logger.warn('El GPS del viaje informó una falla', error.message)
@@ -169,7 +163,22 @@ TaskManager.defineTask<{ locations?: Location.LocationObject[] }>(TAREA_GPS, asy
   } catch (e) {
     logger.warn('No se pudo guardar la lectura del GPS', e)
   }
-})
+}
+
+/*
+ * Android y iOS exigen la definición al cargar el bundle, no dentro de un componente: si una lectura encuentra la
+ * tarea sin definir, expo-task-manager la da de baja. Por eso este módulo se carga desde `app/_layout`
+ * (`EnvioConsolaSinSenal`). Nunca se escriben coordenadas en el log.
+ *
+ * `require` con try: importar expo-task-manager en un binario sin su módulo nativo tira error al cargar, y desde
+ * `app/_layout` eso sería no abrir la app. Sin la tarea, `startLocationUpdatesAsync` falla y el viaje sigue sin ubicación.
+ */
+try {
+  const TaskManager = require('expo-task-manager') as typeof import('expo-task-manager')
+  TaskManager.defineTask<{ locations?: Location.LocationObject[] }>(TAREA_GPS, alRecibirLecturas)
+} catch (e) {
+  logger.warn('El GPS del viaje no está disponible en esta versión de la app', e)
+}
 
 // Cualquier cierre de sesión (manual o forzado) frena el registro; la cola queda, como las otras colas por usuario.
 useAuthStore.subscribe((estado, antes) => {

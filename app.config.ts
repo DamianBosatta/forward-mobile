@@ -56,6 +56,11 @@ const config: ExpoConfig = {
       {
         locationAlwaysAndWhenInUsePermission:
           'Forward ERP necesita tu ubicación para registrar las entregas.',
+        locationWhenInUsePermission:
+          'Forward ERP usa tu ubicación para registrar las entregas y, mientras dura el viaje, para que la oficina vea por dónde va el camión.',
+        // GPS del viaje: servicio con notificación. No hace falta ACCESS_BACKGROUND_LOCATION.
+        isAndroidForegroundServiceEnabled: true,
+        isIosBackgroundLocationEnabled: true,
       },
     ],
     [

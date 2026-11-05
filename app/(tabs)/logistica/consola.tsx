@@ -26,6 +26,9 @@ import { EntregaLista } from '@/features/logistica/consola/EntregaLista'
 import { AvisadoVentas } from '@/features/logistica/consola/AvisadoVentas'
 import { ColaConsola, encolarAccion, useColaConsola, type DatosAccion } from '@/features/logistica/cola'
 import { conAccionesEnCola } from '@/features/logistica/cola/conAccionesEnCola'
+import { PermisoGps } from '@/features/logistica/gps/PermisoGps'
+import { terminarRegistroGps } from '@/features/logistica/gps/registroGps'
+import { useRegistroGps } from '@/features/logistica/gps/useRegistroGps'
 import { piezasDeParada } from '@/features/logistica/consola/piezasParada'
 import { resumenRuta, urlComoLlegar, urlLlamar } from '@/features/logistica/consola/hojaDeRuta'
 import { clasificarFalloEntrega, formatDistancia } from '@/features/logistica/consola/entrega'
@@ -148,6 +151,8 @@ export default function ConsolaChoferScreen() {
 
   // El guardado sirve sin señal, pero solo si es el viaje pedido; si no, manda el servidor.
   const viaje = activeTrip && activeTrip.id === objetivo ? activeTrip : remota.data ?? null
+  // El GPS es del viaje del chofer asignado: quien mira la hoja de otro no registra nada.
+  const gps = useRegistroGps(viaje && viaje.choferId === user?.id ? viaje.id : undefined, user?.id, !!viaje && esEstadoHojaRuta(viaje.estado, 'EnCurso'))
 
   if (!puedeVerViajes) {
     return (
@@ -351,10 +356,13 @@ export default function ConsolaChoferScreen() {
     try {
       if (accion === 'iniciar') {
         await iniciar.mutateAsync(viaje.id)
+        // Sin esperarlo: un permiso o el GPS nunca frenan el viaje.
+        void gps.alIniciar()
         remota.refetch()
         return
       }
       await finalizar.mutateAsync(viaje.id)
+      if (user?.id) void terminarRegistroGps(viaje.id, user.id)
       setFinalizando(false)
       clearActiveTrip()
       router.replace(volverA as never)
@@ -404,6 +412,7 @@ export default function ConsolaChoferScreen() {
       {viaje.rutaCalculada === false && !finalizada && !cancelada ? (
         <Notice tone="info" title="Ruta sin recalcular.">La oficina cambió las paradas: el orden puede no ser el más corto.</Notice>
       ) : null}
+      {gps.sinUbicacion ? <Notice tone="info" title="Viaje sin ubicación.">La oficina no ve el camión en el mapa. El viaje sigue igual.</Notice> : null}
       {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
     </View>
   )
@@ -509,6 +518,7 @@ export default function ConsolaChoferScreen() {
           <Button label="Finalizar viaje" loading={finalizar.isPending} onPress={() => accionViaje('finalizar')} />
           <Button label="Cancelar" variant="secundario" onPress={() => setFinalizando(false)} />
         </BottomSheet>
+        <PermisoGps visible={gps.preguntar} onAceptar={gps.aceptar} onRechazar={gps.rechazar} />
         <PedidoDetalleModal
           ventaId={pedido?.ventaId ?? null}
           clienteNombre={pedido?.clienteNombre}
