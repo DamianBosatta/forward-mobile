@@ -7,7 +7,6 @@ export interface LineaEditable {
   productoNombre: string
   cantidad: number
   precioUnitario?: number
-  porcentajeDescuentoItem?: number
   subtotal?: number
 }
 
@@ -83,7 +82,7 @@ export function leerAjustes(lineas: LineaEditable[], textos: Record<string, stri
  * Total de la venta con las cantidades que escribe quien autoriza, antes de confirmar. Espejo de
  * `Venta.RecalcularTotales` (el servidor es la autoridad y recalcula al confirmar): subtotal bruto = suma
  * de líneas, el descuento general vigente se aplica sobre ese subtotal y el flete se suma sin descontar.
- * Reusa `calcularSubtotalConDescuento` para la línea. Sin cambios devuelve los números del servidor tal cual.
+ * La línea es unitario neto × cantidad con el redondeo de `calcularSubtotalConDescuento` (descuento 0). Sin cambios devuelve los números del servidor tal cual.
  */
 export function estimarTotales(venta: TotalesDeVenta, lineas: LineaEditable[], lectura: LecturaDeAjustes): TotalesEstimados {
   const flete = venta.cargoFleteAmount ?? 0
@@ -100,7 +99,8 @@ export function estimarTotales(venta: TotalesDeVenta, lineas: LineaEditable[], l
   for (const l of lineas) {
     const nueva = nuevas.get(l.id)
     if (nueva === undefined) { subtotalBruto += l.subtotal ?? 0; continue }
-    subtotalDeLinea[l.id] = calcularSubtotalConDescuento(l.precioUnitario ?? 0, nueva, l.porcentajeDescuentoItem ?? 0)
+    // El unitario del detalle ya es neto (incluye el descuento de la línea, `VentaDetalle.cs:170`): no se descuenta de nuevo.
+    subtotalDeLinea[l.id] = calcularSubtotalConDescuento(l.precioUnitario ?? 0, nueva, 0)
     subtotalBruto += subtotalDeLinea[l.id]
   }
   subtotalBruto = redondear2(subtotalBruto)

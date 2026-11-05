@@ -282,6 +282,27 @@ describe('Autorizar venta: el detalle', () => {
         expect(screen.getByLabelText('Subtotal: $ 1.000,00')).toBeTruthy()
       })
 
+      it('con descuento por línea el unitario del servidor ya es neto: subtotal = neto × cantidad, sin descontar dos veces', async () => {
+        // 100 con 10 % de descuento: el servidor manda precioUnitario 90 y subtotal 900 (10 × 90).
+        const CON_DESCUENTO_DE_LINEA = {
+          venta: { ...CON_DESCUENTO_Y_FLETE.venta, subtotalBrutoAmount: 1080, porcentajeDescuento: 10, montoDescuentoAmount: 108, cargoFleteAmount: 30, totalAmount: 1002 },
+          detalles: [
+            { id: 'd1', productoNombre: 'Detergente Magistral', cantidad: 10, precioUnitario: 90, subtotal: 900, porcentajeDescuentoItem: 10 },
+            { id: 'd2', productoNombre: 'Lavandina Ayudín', cantidad: 4, precioUnitario: 45, subtotal: 180, porcentajeDescuentoItem: 10 },
+          ],
+        }
+        permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+        pintar(CON_DESCUENTO_DE_LINEA)
+        await screen.findByText('Líneas (2)')
+        await userEvent.clear(screen.getByLabelText('Cantidad de Detergente Magistral'))
+        await userEvent.type(screen.getByLabelText('Cantidad de Detergente Magistral'), '9')
+        // 9 × 90 = 810; subtotal 810 + 180 = 990; descuento 99; total 990 - 99 + 30 = 921.
+        expect(screen.getByText('$ 810,00')).toBeTruthy()
+        expect(screen.getByLabelText('Subtotal: $ 990,00')).toBeTruthy()
+        expect(screen.getByLabelText('Descuento general: -$ 99,00')).toBeTruthy()
+        expect(screen.getAllByLabelText('Total estimado: $ 921,00').length).toBe(2)
+      })
+
       it('con una cantidad inválida no muestra un total que parezca definitivo', async () => {
         await editar({ 'Detergente Magistral': '11' })
         expect(screen.queryByLabelText('Total: $ 1.110,00')).toBeNull()
