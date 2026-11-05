@@ -9,9 +9,6 @@ export interface DatosResumen {
   devueltos: { nombre: string; cantidad: number }[]
   cobros: { medio: string; monto: number; conFoto: boolean }[]
   firmada: boolean
-  aDeudaAnterior: boolean
-  /** "No cobré: <motivo>" (C2), si el chofer no cobró lo que había para cobrar. */
-  noCobro?: string | null
 }
 
 function Fila({ izq, der, fuerte }: { izq: string; der?: string; fuerte?: boolean }) {
@@ -33,7 +30,7 @@ export function ResumenEntrega({ d }: { d: DatosResumen }) {
     <View accessibilityLabel="Resumen de la entrega" style={{ gap: space[4] }}>
       <View style={bloque}>
         <Text style={{ ...typeScale.seccion, color: c.text }}>Entrega</Text>
-        <Fila izq="Recibió" der={d.receptor} />
+        {d.receptor ? <Fila izq="Recibió" der={d.receptor} /> : null}
         <Fila izq="Foto del remito" der={d.conFotoRemito ? 'Lista' : 'Sin foto'} />
       </View>
       {d.devueltos.length > 0 ? (
@@ -50,15 +47,14 @@ export function ResumenEntrega({ d }: { d: DatosResumen }) {
       ) : null}
       <View style={bloque}>
         <Text style={{ ...typeScale.seccion, color: c.text }}>Cobro</Text>
-        {d.noCobro ? <Fila izq={d.noCobro} fuerte /> : null}
-        {d.cobros.length === 0 ? <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Sin cobro: el pedido queda en la cuenta del cliente.</Text> : null}
+        {d.cobros.length === 0 && !d.firmada ? <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Sin cobro.</Text> : null}
         {d.cobros.map((x, i) => (
           <Fila key={i} izq={x.medio} der={formatImporte(x.monto)} />
         ))}
         {d.cobros.length > 1 ? <Fila izq="Total cobrado" der={formatImporte(total)} fuerte /> : null}
         {d.cobros.length > 0 ? (
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-            {d.aDeudaAnterior ? 'El cobro va a la deuda anterior del cliente. ' : ''}Lo cobrado queda a tu nombre hasta que lo rindas en el depósito.
+            Lo cobrado queda a tu nombre hasta que lo rindas en el depósito.
           </Text>
         ) : null}
         {d.firmada ? <Fila izq="Firma del cliente" der="Foto lista" /> : null}

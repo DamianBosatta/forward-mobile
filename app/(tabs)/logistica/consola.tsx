@@ -23,6 +23,7 @@ import { HojaDeRutaVista } from '@/features/logistica/consola/HojaDeRutaVista'
 import { ReportarParada, type Resultado, type ReporteParada } from '@/features/logistica/consola/ReportarParada'
 import { LlegueParada } from '@/features/logistica/consola/LlegueParada'
 import { EntregaLista } from '@/features/logistica/consola/EntregaLista'
+import { AvisadoVentas } from '@/features/logistica/consola/AvisadoVentas'
 import { ColaConsola, encolarAccion, useColaConsola, type DatosAccion } from '@/features/logistica/cola'
 import { conAccionesEnCola } from '@/features/logistica/cola/conAccionesEnCola'
 import { piezasDeParada } from '@/features/logistica/consola/piezasParada'
@@ -79,6 +80,8 @@ export default function ConsolaChoferScreen() {
   const [aviso, setAviso] = useState<string | null>(null)
   /** chofer-07-estados, "Guardado sin señal": lo último que se reportó quedó en el teléfono. */
   const [guardado, setGuardado] = useState(false)
+  /** Cierre de "No pude entregar": `guardado` si quedó en el teléfono por falta de señal. */
+  const [avisado, setAvisado] = useState<{ guardado: boolean } | null>(null)
   const [notaCargando, setNotaCargando] = useState(false)
 
   // Sin id de navegación, un viaje cerrado que quedó guardado no secuestra la consola.
@@ -317,6 +320,7 @@ export default function ConsolaChoferScreen() {
       })
       updateStopStatus(parada.id, { delivered: false, observations: r.observaciones, reason: r.motivoRechazo })
       setGuardado(true)
+      setAvisado({ guardado: true })
       setReportando(null)
     }
     try {
@@ -328,6 +332,7 @@ export default function ConsolaChoferScreen() {
       clavesAviso.current.delete(parada.id)
       updateStopStatus(parada.id, { delivered: false, observations: r.observaciones, reason: r.motivoRechazo })
       setGuardado(false)
+      setAvisado({ guardado: false })
       setReportando(null)
     } catch (e) {
       if (esFallaDeRed(e)) guardarNoEntrega()
@@ -497,6 +502,7 @@ export default function ConsolaChoferScreen() {
             }}
           />
         ) : null}
+        {avisado ? <AvisadoVentas guardado={avisado.guardado} onVolver={() => setAvisado(null)} /> : null}
         <BottomSheet visible={finalizando} onClose={() => setFinalizando(false)} accessibilityLabel="Finalizar viaje">
           <Text style={{ ...typeScale.seccion, color: c.text }}>¿Finalizar el viaje?</Text>
           <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Todas las paradas están reportadas. El viaje queda cerrado.</Text>

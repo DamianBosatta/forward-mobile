@@ -1,8 +1,8 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Modal, ScrollView, Text, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { space, typeScale, useColors } from '@/libs/theme'
-import { Button, Field, Notice, OptionCard, TopBar } from '@/core/ui/fw'
+import { BottomSheet, Button, Field, Notice, OptionCard, TopBar, formatImporte } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import type { ParadaDto } from '@/libs/api-client/types'
@@ -12,13 +12,12 @@ import { leerNumero } from '@/core/utils/numero'
 import { diaArgentina } from '@/core/utils/fecha'
 import { DETALLE_MOTIVO_NO_ENTREGA, MOTIVOS_NO_ENTREGA } from './hojaDeRuta'
 import { etiquetaNota, importeParada } from './cobroParada'
-import { armarEntrega, observacionesDeEntrega, razonPendiente, type EntregaArmada, type FormEntrega } from './entrega'
+import { armarEntrega, razonPendiente, type EntregaArmada, type FormEntrega } from './entrega'
 import { razonCobro, razonDevolucionPaso, razonConfirmar, avisoDeCobro, comparacionDeCobro, faltaACuenta, posicionDePaso, totalRepartido, type ContextoCobro, type Paso } from './pasosEntrega'
 import { FotoEntrega } from './FotoEntrega'
 import { CobroEnEntrega } from './CobroEnEntrega'
-import { DevolucionEnEntrega, EleccionDevolucion } from './DevolucionEnEntrega'
+import { DevolucionEnEntrega, DevolucionEnviada, EleccionDevolucion } from './DevolucionEnEntrega'
 import { ContadorCobro } from './ContadorCobro'
-import { FirmaEnEntrega } from './FirmaEnEntrega'
 import { ResumenEntrega } from './ResumenEntrega'
 
 export type ReporteParada =
@@ -43,7 +42,7 @@ interface Props {
 export type Resultado = 'entregado' | 'noEntregado'
 
 const formVacio = (): FormEntrega => ({
-  receptor: '', observaciones: '', remitoUrl: null, lineas: [], imputacion: 'PedidoActual', firmaUrl: null, devolucion: {},
+  receptor: '', observaciones: '', remitoUrl: null, lineas: [], firmaUrl: null, devolucion: {},
 })
 
 const TITULO_PASO: Record<Paso, string> = { devolucion: 'Devoluciones', cobro: 'Cobro', confirmar: 'Confirmar' }
@@ -65,6 +64,10 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
   const [f, setF] = useState<FormEntrega>(formVacio)
   const [hayDevolucion, setHayDevolucion] = useState<boolean | null>(null)
   const [firmar, setFirmar] = useState(false)
+  /** Pantalla "Devolución enviada": después de marcar lo que devuelve y antes del cobro. */
+  const [devEnviada, setDevEnviada] = useState(false)
+  /** Hoja "¿Confirmás la entrega?": la entrega no se manda hasta el "Sí, confirmar". */
+  const [confirmando, setConfirmando] = useState(false)
   const firmarRef = useRef(false)
   const [motivo, setMotivo] = useState<string | null>(null)
   /** Lámina ChoferNoEntrega (C5): foto del lugar, opcional, ya subida. */
@@ -81,22 +84,22 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
   const aCobrar = importeParada(parada)
   const disponibles = Object.fromEntries((renglones.data ?? []).map((r) => [r.ventaDetalleId ?? '', r.cantidadDisponible ?? 0]))
   // Con "No, todo bien" las cantidades que se hayan cargado antes no viajan (pero se conservan por si vuelve).
-  // La firma solo viaja con la casilla tildada y con foto: la foto es opcional y sin ella no se manda nada.
-  // Con "Cuenta corriente" las líneas cargadas no viajan (se conservan por si vuelve a cobrar).
-  const lineas = f.noCobro ? [] : f.lineas
+  // La firma solo viaja si eligió "Firma" (y la foto es obligatoria: `razonCobro` no deja seguir sin ella).
+  const lineas = f.lineas
   const form: FormEntrega = { ...f, lineas, devolucion: hayDevolucion ? f.devolucion : {}, firmaUrl: firmar ? f.firmaUrl : null }
 
   const eligiendo = entregado && paso === 'devolucion' && hayDevolucion !== true
+  const enviada = entregado && paso === 'devolucion' && hayDevolucion === true && devEnviada
   const pos = posicionDePaso(paso)
   const ctxCobro: ContextoCobro = {
-    lineas, imputacion: f.imputacion, noCobro: f.noCobro,
+    lineas, firma: firmar, firmaUrl: f.firmaUrl,
     aCobrar: aCobrar.aCobrar ? aCobrar.valor : null, hayDevolucion: hayDevolucion === true, subiendo: subiendo > 0,
   }
   let razon: string | null
-  if (!entregado) razon = razonPendiente({ entregado: false, receptor: '', motivo, subiendo: subiendo > 0 })
+  if (!entregado) razon = razonPendiente({ entregado: false, motivo, subiendo: subiendo > 0 })
   else if (paso === 'devolucion') razon = razonDevolucionPaso(hayDevolucion, f.devolucion, disponibles)
   else if (paso === 'cobro') razon = razonCobro(ctxCobro)
-  else razon = razonConfirmar({ receptor: f.receptor, exigeFotoRemito, remitoUrl: f.remitoUrl, subiendo: subiendo > 0 })
+  else razon = razonConfirmar({ exigeFotoRemito, remitoUrl: f.remitoUrl, subiendo: subiendo > 0 })
   const listo = razon === null
   const ultimo = !entregado || paso === 'confirmar'
 
@@ -104,21 +107,26 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
     if (!entregado) return onCerrar()
     if (paso === 'confirmar') return setPaso('cobro')
     if (paso === 'cobro') {
+      setDevEnviada(false)
       // Con "Sí, devuelve" se vuelve a los productos; con "No, todo bien", a la pregunta.
       if (hayDevolucion === false) setHayDevolucion(null)
       return setPaso('devolucion')
     }
+    if (devEnviada) return setDevEnviada(false)
     if (hayDevolucion === true) return setHayDevolucion(null)
     return onCerrar()
   }
   const seguir = () => {
     if (!listo) return
     setErrorForm(null)
-    setPaso(paso === 'devolucion' ? 'cobro' : 'confirmar')
+    // Marcó una devolución: se le dice que quedó enviada y de ahí sigue con el cobro.
+    if (paso === 'devolucion') return setDevEnviada(true)
+    setPaso('confirmar')
   }
   const elegirDevolucion = (hay: boolean) => {
     setHayDevolucion(hay)
     if (!hay) setPaso('cobro')
+    setDevEnviada(false)
   }
 
   const confirmar = () => {
@@ -131,16 +139,24 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
     }
     const r = armarEntrega(form, { exigeFotoRemito, disponibles })
     if ('error' in r) {
+      setConfirmando(false)
       setErrorForm(r.error)
       return
     }
     onConfirmar({ entregado: true, entrega: r.entrega })
   }
 
-  const porDeudaAnterior = f.imputacion === 'DeudaAnterior' && lineas.length > 0
+  // Un error del servidor se ve en la pantalla de confirmar, no detrás de la hoja.
+  useEffect(() => {
+    if (error) setConfirmando(false)
+  }, [error])
+
   const cmp = comparacionDeCobro(ctxCobro)
   const aCobrarHoy = aCobrar.aCobrar ? aCobrar.valor : null
   const cobrado = totalRepartido(lineas)
+  // "Recibió Marta · cobrado $ 1.000,00.": solo lo que hay; sin nombre y sin cobro no se agrega nada.
+  const partes = [f.receptor.trim() ? `Recibió ${f.receptor.trim()}` : null, cobrado > 0 ? `cobrado ${formatImporte(cobrado)}` : null].filter(Boolean).join(' · ')
+  const resumenDeConfirmacion = partes ? ` ${partes.charAt(0).toUpperCase()}${partes.slice(1)}.` : ''
 
   return (
     <Modal visible animationType="slide" onRequestClose={atras}>
@@ -182,7 +198,8 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
             </>
           ) : null}
           {eligiendo ? <EleccionDevolucion valor={hayDevolucion} onElegir={elegirDevolucion} /> : null}
-          {entregado && paso === 'devolucion' && hayDevolucion === true ? (
+          {enviada ? <DevolucionEnviada onSeguir={() => { setDevEnviada(false); setPaso('cobro') }} /> : null}
+          {entregado && paso === 'devolucion' && hayDevolucion === true && !devEnviada ? (
             <DevolucionEnEntrega
               renglones={renglones.data}
               cargando={renglones.isLoading}
@@ -199,17 +216,21 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
                 medios={medios.data}
                 mediosError={medios.isError}
                 lineas={f.lineas}
-                imputacion={f.imputacion}
                 onLineas={(l) => cambiar({ lineas: l })}
-                onImputacion={(imputacion) => cambiar({ imputacion })}
                 onSubiendo={alSubir}
                 aCobrar={aCobrarHoy}
                 hoy={mostrarFecha(diaArgentina(Date.now()))}
                 faltaACuenta={faltaACuenta(ctxCobro)}
                 aviso={avisoDeCobro(ctxCobro)}
-                porDeudaAnterior={porDeudaAnterior}
-                noCobro={f.noCobro}
-                onNoCobro={(noCobro) => cambiar({ noCobro })}
+                deudaAnterior={parada.deudaAnterior}
+                firma={firmar}
+                firmaUrl={f.firmaUrl}
+                onFirma={(v) => {
+                  firmarRef.current = v
+                  setFirmar(v)
+                  if (!v) cambiar({ firmaUrl: null })
+                }}
+                onFirmaUrl={(url) => firmarRef.current && cambiar({ firmaUrl: url })}
               />
               {cmp && hayDevolucion ? (
                 <Notice tone="info">La devolución se descuenta de lo que hay que cobrar: el servidor hace la cuenta cuando la autoriza el depósito.</Notice>
@@ -218,7 +239,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
           ) : null}
           {entregado && paso === 'confirmar' ? (
             <>
-              <Field label="Quién recibió" value={f.receptor} onChangeText={(v) => cambiar({ receptor: v })} placeholder="Nombre de quien firma" />
+              <Field label="Quién recibió" value={f.receptor} onChangeText={(v) => cambiar({ receptor: v })} placeholder="Opcional: nombre de quien recibe" />
               <FotoEntrega
                 que="del remito firmado"
                 titulo="Foto del remito"
@@ -231,17 +252,6 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
                 onUrl={(url) => cambiar({ remitoUrl: url })}
                 onSubiendo={alSubir}
               />
-              <FirmaEnEntrega
-                firmar={firmar}
-                onFirmar={(v) => {
-                  firmarRef.current = v
-                  setFirmar(v)
-                  if (!v) cambiar({ firmaUrl: null })
-                }}
-                url={f.firmaUrl}
-                onUrl={(url) => firmarRef.current && cambiar({ firmaUrl: url })}
-                onSubiendo={alSubir}
-              />
               <Field label="Observaciones" value={f.observaciones} onChangeText={(v) => cambiar({ observaciones: v })} placeholder="Algo que la oficina tenga que saber" />
               <ResumenEntrega
                 d={{
@@ -252,8 +262,6 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
                     .filter((x) => x.cantidad > 0),
                   cobros: lineas.map((l) => ({ medio: l.medio?.nombre ?? '', monto: leerNumero(l.monto) ?? 0, conFoto: !!l.fotoUrl })),
                   firmada: !!form.firmaUrl,
-                  aDeudaAnterior: porDeudaAnterior,
-                  noCobro: observacionesDeEntrega('', f.noCobro) ?? null,
                 }}
               />
             </>
@@ -261,7 +269,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
           {errorForm ? <Notice tone="peligro">{errorForm}</Notice> : null}
           {error && ultimo ? <Notice tone="peligro">{error}</Notice> : null}
         </ScrollView>
-        {eligiendo ? null : (
+        {eligiendo || enviada ? null : (
           <View style={{ backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border, padding: space[4], paddingBottom: space[4] + bottom, gap: space[2] }}>
             <View style={{ gap: space[2], ...columna }}>
               {razon ? <MotivoDeshabilitado>{razon}</MotivoDeshabilitado> : null}
@@ -270,12 +278,18 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
                 label={!entregado ? 'Avisar a Ventas' : ultimo ? 'Confirmar entrega' : 'Continuar'}
                 disabled={!listo}
                 loading={ultimo && enviando}
-                onPress={ultimo ? confirmar : seguir}
+                onPress={!ultimo ? seguir : entregado ? () => setConfirmando(true) : confirmar}
               />
             </View>
           </View>
         )}
       </View>
+      <BottomSheet visible={confirmando} onClose={() => setConfirmando(false)} accessibilityLabel="Confirmar la entrega">
+        <Text style={{ ...typeScale.seccion, color: c.text }}>¿Confirmás la entrega?</Text>
+        <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{`Después no se puede deshacer.${resumenDeConfirmacion}`}</Text>
+        <Button label="Sí, confirmar" loading={enviando} onPress={confirmar} />
+        <Button label="Revisar" variant="secundario" onPress={() => setConfirmando(false)} />
+      </BottomSheet>
     </Modal>
   )
 }

@@ -8,8 +8,7 @@ import { permisoCamara, reiniciarCamara, sacarFoto, tomarFoto } from '@/features
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
 
 /**
- * R21 (bloque 13, parcial de T12a): "No cobré" con motivo (C2, ChoferEntrega), cámara propia (C3,
- * ChoferCamara) y foto del lugar al no entregar (C5, ChoferNoEntrega).
+ * R21 (bloque 13, parcial de T12a): cámara propia (C3, ChoferCamara) y foto del lugar al no entregar (C5, ChoferNoEntrega).
  */
 
 const mockGet = jest.fn()
@@ -72,17 +71,8 @@ const abrir = async () => {
   await userEvent.press(await screen.findByLabelText('Entregué todo'))
 }
 const continuar = () => screen.getByLabelText('Continuar')
-const deshabilitado = (el: { props: { accessibilityState?: { disabled?: boolean } } }) => el.props.accessibilityState?.disabled === true
 async function hastaElCobro() {
-  await userEvent.press(screen.getByLabelText('No, todo bien'))
-}
-async function confirmarDesdeElCobro(observaciones?: string) {
-  await userEvent.press(continuar())
-  await userEvent.type(screen.getByLabelText('Quién recibió'), 'Abel')
-  if (observaciones) await userEvent.type(screen.getByLabelText('Observaciones'), observaciones)
-  await userEvent.press(screen.getByLabelText('Confirmar entrega'))
-  await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
-  return llamadasA(ENTREGAR)[0][1] as Record<string, unknown>
+  await userEvent.press(screen.getByLabelText('No'))
 }
 
 beforeEach(() => {
@@ -94,83 +84,6 @@ beforeEach(() => {
   mockPost.mockImplementation(async (url: string) => {
     if (url === '/api/v1/Media/upload-entrega') return { url: `https://r2.test/entregas/up-${++subidas}.jpg` }
     return { paradaId: 'p1' }
-  })
-})
-
-describe('C2 No cobré con motivo', () => {
-  it('con algo para cobrar ofrece Cobré / No cobré y la lista fija de motivos', async () => {
-    pintar(hoja(P1_CONTADO))
-    await abrir()
-    await hastaElCobro()
-    await userEvent.press(screen.getByLabelText('Cuenta corriente'))
-    for (const m of ['No estaba', 'No tenía plata', 'Paga en el local', 'Otro']) expect(screen.getByLabelText(m)).toBeTruthy()
-    expect(screen.queryByLabelText('Efectivo')).toBeNull()
-  })
-
-  it('sin elegir el motivo no sigue y lo dice', async () => {
-    pintar(hoja(P1_CONTADO))
-    await abrir()
-    await hastaElCobro()
-    await userEvent.press(screen.getByLabelText('Cuenta corriente'))
-    expect(deshabilitado(continuar())).toBe(true)
-    expect(screen.getByText('Elegí por qué no cobraste')).toBeTruthy()
-  })
-
-  it('el motivo viaja dentro de las observaciones de la entrega, sin cobro', async () => {
-    pintar(hoja(P1_CONTADO))
-    await abrir()
-    await hastaElCobro()
-    await userEvent.press(screen.getByLabelText('Cuenta corriente'))
-    await userEvent.press(screen.getByLabelText('No estaba'))
-    const cuerpo = await confirmarDesdeElCobro()
-    expect(cuerpo.observaciones).toBe('No cobré: No estaba')
-    expect(cuerpo.cobro).toBeUndefined()
-  })
-
-  it('va adelante de lo que escribió el chofer', async () => {
-    pintar(hoja(P1_CONTADO))
-    await abrir()
-    await hastaElCobro()
-    await userEvent.press(screen.getByLabelText('Cuenta corriente'))
-    await userEvent.press(screen.getByLabelText('Paga en el local'))
-    const cuerpo = await confirmarDesdeElCobro('Dejé el pedido en la puerta')
-    expect(cuerpo.observaciones).toBe('No cobré: Paga en el local · Dejé el pedido en la puerta')
-  })
-
-  it('"Otro" exige un texto corto y manda ese texto', async () => {
-    pintar(hoja(P1_CONTADO))
-    await abrir()
-    await hastaElCobro()
-    await userEvent.press(screen.getByLabelText('Cuenta corriente'))
-    await userEvent.press(screen.getByLabelText('Otro'))
-    expect(deshabilitado(continuar())).toBe(true)
-    expect(screen.getByText('Escribí por qué no cobraste')).toBeTruthy()
-    await userEvent.type(screen.getByLabelText('Por qué no cobraste'), 'Cobra el viajante')
-    const cuerpo = await confirmarDesdeElCobro()
-    expect(cuerpo.observaciones).toBe('No cobré: Cobra el viajante')
-  })
-
-  it('un cobro quitado no viaja si después eligió Cuenta corriente', async () => {
-    pintar(hoja(P1_CONTADO))
-    await abrir()
-    await hastaElCobro()
-    await userEvent.press(screen.getByLabelText('Efectivo'))
-    await userEvent.type(screen.getByLabelText('Monto del cobro 1'), '500')
-    await userEvent.press(screen.getByLabelText('Quitar cobro 1'))
-    await userEvent.press(screen.getByLabelText('Cuenta corriente'))
-    await userEvent.press(screen.getByLabelText('No tenía plata'))
-    const cuerpo = await confirmarDesdeElCobro()
-    expect(cuerpo.cobro).toBeUndefined()
-    expect(cuerpo.observaciones).toBe('No cobré: No tenía plata')
-  })
-
-  it('antes: sin nada para cobrar no aparece la opción y la entrega va igual que siempre', async () => {
-    pintar(hoja({ ...P1, tipoCobro: 'CuentaCorriente' }))
-    await abrir()
-    await hastaElCobro()
-    expect(screen.queryByLabelText('Cuenta corriente')).toBeNull()
-    const cuerpo = await confirmarDesdeElCobro('Todo ok')
-    expect(cuerpo.observaciones).toBe('Todo ok')
   })
 })
 

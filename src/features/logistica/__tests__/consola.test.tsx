@@ -7,6 +7,7 @@ import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { themeColors } from '@/libs/theme'
 import { conTema, estilo } from '@/core/ui/fw/__testing__/tema'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
+import { confirmarEntrega } from '@/features/logistica/__testing__/confirmar'
 
 const mockGet = jest.fn()
 const mockPost = jest.fn()
@@ -47,9 +48,9 @@ let listaServidor: (url: string) => unknown = () => [{ id: 'h1' }]
 
 /** La entrega va en pasos: sin devolución y sin cobro, hasta el paso Confirmar con quién recibió escrito. */
 async function alResumen(receptor = 'Carlos') {
-  await userEvent.press(screen.getByLabelText('No, todo bien'))
+  await userEvent.press(screen.getByLabelText('No'))
   await userEvent.press(screen.getByLabelText('Continuar'))
-  await userEvent.type(screen.getByLabelText('Quién recibió'), receptor)
+  if (receptor) await userEvent.type(screen.getByLabelText('Quién recibió'), receptor)
 }
 
 function pintar(hoja: unknown = HOJA, choferId = 'u1', permissions: unknown[] = [{ module: 'MOD_VIAJES', canRead: true }]) {
@@ -99,7 +100,7 @@ describe('Consola del chofer: hoja de ruta', () => {
     expect(abrir).toHaveBeenLastCalledWith('tel:1145678900')
   })
 
-  it('entregado: no confirma sin quién recibió y manda la entrega por la operación única (entregar)', async () => {
+  it('entregado: quién recibió es opcional y manda la entrega por la operación única (entregar)', async () => {
     // El servidor, después del reporte, devuelve la parada entregada.
     mockPost.mockImplementation(async () => {
       hojaServidor = { ...HOJA, detalles: HOJA.detalles.map((d) => (d.id === 'p4' ? { ...d, estado: 2 } : d)) }
@@ -108,13 +109,12 @@ describe('Consola del chofer: hoja de ruta', () => {
     pintar()
     await userEvent.press(await screen.findByLabelText('¡Llegué!'))
     await userEvent.press(await screen.findByLabelText('Entregué todo'))
-    // Pasos de la entrega: sin quién recibió no se confirma; recién el último paso confirma.
+    // Pasos de la entrega: sin quién recibió igual se confirma; recién el último paso confirma.
     await alResumen('')
-    expect(screen.getByLabelText('Confirmar entrega').props.accessibilityState.disabled).toBe(true)
-    await userEvent.type(screen.getByLabelText('Quién recibió'), 'Carlos')
-    await userEvent.press(screen.getByLabelText('Confirmar entrega'))
+    expect(screen.getByLabelText('Confirmar entrega').props.accessibilityState.disabled).toBeFalsy()
+    await confirmarEntrega()
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/paradas/p4/entregar', {
-      claveIdempotencia: expect.any(String), nombreReceptor: 'Carlos',
+      claveIdempotencia: expect.any(String),
     })
     expect(await screen.findByLabelText('Entrega lista')).toBeTruthy()
     await userEvent.press(screen.getByLabelText('Siguiente entrega'))
@@ -141,7 +141,7 @@ describe('Consola del chofer: hoja de ruta', () => {
     await userEvent.press(await screen.findByLabelText('¡Llegué!'))
     await userEvent.press(await screen.findByLabelText('Entregué todo'))
     await alResumen()
-    await userEvent.press(screen.getByLabelText('Confirmar entrega'))
+    await confirmarEntrega()
     expect(await screen.findByText('La venta ya no está en ruta.')).toBeTruthy()
     expect(screen.getByLabelText('Confirmar entrega')).toBeTruthy()
     expect(screen.getByText('1 de 4 entregadas')).toBeTruthy()
@@ -264,7 +264,8 @@ describe('Consola del chofer: hoja de ruta', () => {
     await userEvent.press(await screen.findByLabelText('¡Llegué!'))
     await userEvent.press(await screen.findByLabelText('Entregué todo'))
     await alResumen()
-    const confirmar = screen.getByLabelText('Confirmar entrega')
+    await userEvent.press(screen.getByLabelText('Confirmar entrega'))
+    const confirmar = await screen.findByLabelText('Sí, confirmar')
     act(() => {
       fireEvent.press(confirmar)
       fireEvent.press(confirmar)

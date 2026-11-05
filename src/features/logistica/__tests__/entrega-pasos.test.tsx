@@ -5,6 +5,7 @@ import { useAuthStore } from '@/libs/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { conTema } from '@/core/ui/fw/__testing__/tema'
 import { reiniciarCamara, sacarFoto } from '@/features/logistica/__testing__/camara'
+import { confirmarEntrega } from '@/features/logistica/__testing__/confirmar'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
 import { armarEntrega } from '../consola/entrega'
 
@@ -75,7 +76,7 @@ const continuar = () => screen.getByLabelText('Continuar')
 const confirmarBtn = () => screen.getByLabelText('Confirmar entrega')
 /** Entregado, "No, todo bien": cae directo en el cobro. */
 async function hastaElCobro() {
-  await userEvent.press(screen.getByLabelText('No, todo bien'))
+  await userEvent.press(screen.getByLabelText('No'))
 }
 /** Del cobro al paso Confirmar, con quién recibió escrito. */
 async function aConfirmar(receptor = 'Abel') {
@@ -89,10 +90,11 @@ async function hastaElResumen(receptor = 'Abel') {
 }
 /** "Sí, devuelve algo" y 2 unidades de aceite. */
 async function devolverDos() {
-  await userEvent.press(screen.getByLabelText('Sí, devuelve algo'))
+  await userEvent.press(screen.getByLabelText('Sí'))
   await userEvent.press(await screen.findByLabelText('Sumar una de Aceite 900 ml'))
   await userEvent.press(screen.getByLabelText('Sumar una de Aceite 900 ml'))
 }
+const seguirAlCobro = async () => userEvent.press(await screen.findByLabelText('Seguir con el cobro'))
 /** Un pago: la primera vez se elige el medio directo; las siguientes, con "Sumar otro pago". */
 async function sumarPago(medio: string, monto: string, n = 1) {
   if (n > 1) await userEvent.press(screen.getByLabelText('Sumar otro pago'))
@@ -119,8 +121,8 @@ describe('Paso 2: devoluciones', () => {
     pintar(hoja(P1))
     await abrir()
     expect(screen.getByText('¿Tiene devoluciones?')).toBeTruthy()
-    expect(screen.getByLabelText('No, todo bien')).toBeTruthy()
-    expect(screen.getByLabelText('Sí, devuelve algo')).toBeTruthy()
+    expect(screen.getByLabelText('No')).toBeTruthy()
+    expect(screen.getByLabelText('Sí')).toBeTruthy()
     expect(screen.queryByLabelText('Continuar')).toBeNull()
     expect(screen.getByText(/Paso 2 de 4/)).toBeTruthy()
   })
@@ -146,7 +148,7 @@ describe('Paso 2: devoluciones', () => {
   it('"Sí, devuelve algo" muestra los productos y pide al menos una unidad', async () => {
     pintar(hoja(P1))
     await abrir()
-    await userEvent.press(screen.getByLabelText('Sí, devuelve algo'))
+    await userEvent.press(screen.getByLabelText('Sí'))
     expect(screen.getByText('¿Qué devuelve?')).toBeTruthy()
     expect(deshabilitado(continuar())).toBe(true)
     expect(screen.getByText('Indicá qué devuelve')).toBeTruthy()
@@ -154,13 +156,14 @@ describe('Paso 2: devoluciones', () => {
     expect(deshabilitado(continuar())).toBe(false)
     expect(screen.getByText('Devuelve 1 unidad en 1 producto')).toBeTruthy()
     await userEvent.press(continuar())
+    await seguirAlCobro()
     expect(screen.getByLabelText('Cobro')).toBeTruthy()
   })
 
   it('el contador no deja devolver más de lo que se puede (tope en lo disponible)', async () => {
     pintar(hoja(P1))
     await abrir()
-    await userEvent.press(screen.getByLabelText('Sí, devuelve algo'))
+    await userEvent.press(screen.getByLabelText('Sí'))
     const mas = await screen.findByLabelText('Sumar una de Aceite 900 ml')
     for (let k = 0; k < 8; k++) await userEvent.press(mas)
     expect(screen.getByLabelText('Cantidad de Aceite 900 ml: 6')).toBeTruthy()
@@ -168,15 +171,13 @@ describe('Paso 2: devoluciones', () => {
 })
 
 describe('Paso Confirmar: quién recibió y foto del remito', () => {
-  it('quién recibió es obligatorio para confirmar', async () => {
+  it('quién recibió es opcional (S15): sin nombre se puede confirmar', async () => {
     pintar(hoja(P1))
     await abrir()
     await hastaElCobro()
     await aConfirmar('')
-    expect(deshabilitado(confirmarBtn())).toBe(true)
-    expect(screen.getByText('Falta quién recibió')).toBeTruthy()
-    await userEvent.type(screen.getByLabelText('Quién recibió'), '   ')
-    expect(deshabilitado(confirmarBtn())).toBe(true)
+    expect(deshabilitado(confirmarBtn())).toBe(false)
+    expect(screen.queryByText('Falta quién recibió')).toBeNull()
   })
 
   it('con la foto del remito exigida no confirma sin ella; al sacarla confirma', async () => {
@@ -235,10 +236,10 @@ describe('E3 Cobro mixto', () => {
     await hastaElCobro()
     await cargarEfectivo('600')
     await aConfirmar()
-    await userEvent.press(confirmarBtn())
+    await confirmarEntrega()
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
     const esperado = armarEntrega(
-      { receptor: 'Abel', observaciones: '', remitoUrl: null, imputacion: 'PedidoActual', devolucion: {}, firmaUrl: null,
+      { receptor: 'Abel', observaciones: '', remitoUrl: null, devolucion: {}, firmaUrl: null,
         lineas: [{ medio: MEDIOS[0] as never, monto: '600', fotoUrl: null, cheque: CHEQUE_VACIO }] },
       { exigeFotoRemito: false, disponibles: { d1: 6 } },
     )
@@ -254,10 +255,10 @@ describe('E3 Cobro mixto', () => {
     expect(screen.getByText('Sobran $ 500,00')).toBeTruthy()
     expect(deshabilitado(continuar())).toBe(false)
     await aConfirmar()
-    await userEvent.press(confirmarBtn())
+    await confirmarEntrega()
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
     const esperado = armarEntrega(
-      { receptor: 'Abel', observaciones: '', remitoUrl: null, imputacion: 'PedidoActual', devolucion: {}, firmaUrl: null,
+      { receptor: 'Abel', observaciones: '', remitoUrl: null, devolucion: {}, firmaUrl: null,
         lineas: [{ medio: MEDIOS[0] as never, monto: '1500', fotoUrl: null, cheque: CHEQUE_VACIO }] },
       { exigeFotoRemito: false, disponibles: { d1: 6 } },
     )
@@ -265,56 +266,27 @@ describe('E3 Cobro mixto', () => {
     expect(llamadasA(ENTREGAR)[0][1]).toEqual({ claveIdempotencia: expect.stringMatching(/\S{8,}/), ...esperado.entrega })
   })
 
-  it('S4: la firma nunca bloquea (se confirma sin su foto) pero la foto del remito exigida sí', async () => {
+  it('S13: con la foto del remito exigida no se confirma, aunque haya cobro cargado', async () => {
     pintar(hoja(P1_CONTADO, true))
     await abrir()
     await hastaElCobro()
     await cargarEfectivo('600')
     await aConfirmar()
-    await sacarFoto('Sacar foto del remito firmado')
-    await screen.findByText('Foto del remito firmado cargada')
-    await userEvent.press(screen.getByLabelText('Firma del cliente'))
-    // Firma tildada y sin foto: no frena ni avisa que falta la foto de la firma.
-    expect(deshabilitado(confirmarBtn())).toBe(false)
-    expect(screen.queryByText('Falta la foto de la firma')).toBeNull()
-    expect(screen.getByText('Foto de la firma: opcional')).toBeTruthy()
-    await userEvent.press(confirmarBtn())
-    await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
-    const cuerpo = llamadasA(ENTREGAR)[0][1] as Record<string, unknown>
-    expect(cuerpo.firma).toBeUndefined()
-    expect(cuerpo.evidenciaUrl).toMatch(/entregas\/up-/)
-  })
-
-  it('S4: sin la foto del remito exigida no se confirma, aunque la firma esté tildada', async () => {
-    pintar(hoja(P1_CONTADO, true))
-    await abrir()
-    await hastaElResumen()
-    await userEvent.press(screen.getByLabelText('Firma del cliente'))
     expect(deshabilitado(confirmarBtn())).toBe(true)
     expect(screen.getByText('Falta la foto del remito')).toBeTruthy()
     expect(llamadasA(ENTREGAR)).toHaveLength(0)
   })
 
-  it('si se destilda la firma con su foto subiendo, la foto tardía no viaja', async () => {
-    let soltar: (v: { url: string }) => void = () => {}
+  it('S13: Firma sin su foto frena el cobro; con la foto sigue', async () => {
     pintar(hoja(P1_CONTADO))
     await abrir()
     await hastaElCobro()
-    await cargarEfectivo('1000')
-    await aConfirmar()
-    mockPost.mockImplementation((url: string) =>
-      url === '/api/v1/Media/upload-entrega' ? new Promise((r) => { soltar = r }) : Promise.resolve({ paradaId: 'p1' }),
-    )
-    await userEvent.press(screen.getByLabelText('Firma del cliente'))
+    await userEvent.press(screen.getByLabelText('Firma'))
+    expect(deshabilitado(continuar())).toBe(true)
+    expect(screen.getByText('Falta la foto de la firma')).toBeTruthy()
     await sacarFoto('Sacar foto de la firma del cliente')
-    await userEvent.press(screen.getByLabelText('Firma del cliente'))
-    await act(async () => { soltar({ url: 'https://r2.test/entregas/tarde.jpg' }) })
-    await waitFor(() => expect(deshabilitado(confirmarBtn())).toBe(false))
-    await userEvent.press(confirmarBtn())
-    await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
-    const cuerpo = llamadasA(ENTREGAR)[0][1] as Record<string, unknown>
-    expect(cuerpo.firma).toBeUndefined()
-    expect(JSON.stringify(cuerpo)).not.toContain('tarde.jpg')
+    await screen.findByText('Foto de la firma del cliente cargada')
+    expect(deshabilitado(continuar())).toBe(false)
   })
 
   it('la transferencia no sigue sin la foto del comprobante', async () => {
@@ -335,18 +307,6 @@ describe('E3 Cobro mixto', () => {
     await hastaElCobro()
     expect(deshabilitado(continuar())).toBe(false)
   })
-
-  it('E4: pagar la deuda anterior lo avisa y no compara con lo de hoy', async () => {
-    pintar(hoja(P1_CONTADO))
-    await abrir()
-    await hastaElCobro()
-    await cargarEfectivo('8500')
-    expect(screen.getByText('Sobran $ 7.500,00')).toBeTruthy()
-    await userEvent.press(screen.getByLabelText('A la deuda anterior'))
-    expect(screen.queryByText(/^(Los .* que faltan|Sobran)/)).toBeNull()
-    expect(screen.getByText('El cobro va a la deuda más vieja del cliente. Lo de hoy queda en su cuenta corriente.')).toBeTruthy()
-    expect(deshabilitado(continuar())).toBe(false)
-  })
 })
 
 describe('Volver conserva lo cargado', () => {
@@ -355,6 +315,7 @@ describe('Volver conserva lo cargado', () => {
     await abrir()
     await devolverDos()
     await userEvent.press(continuar())
+    await seguirAlCobro()
     await sumarPago('Efectivo', '800')
     await aConfirmar()
 
@@ -364,9 +325,10 @@ describe('Volver conserva lo cargado', () => {
     expect(screen.getByLabelText('Cantidad de Aceite 900 ml: 2')).toBeTruthy()
     await userEvent.press(screen.getByLabelText('Volver'))
     expect(screen.getByText('¿Tiene devoluciones?')).toBeTruthy()
-    await userEvent.press(screen.getByLabelText('Sí, devuelve algo'))
+    await userEvent.press(screen.getByLabelText('Sí'))
     expect(screen.getByLabelText('Cantidad de Aceite 900 ml: 2')).toBeTruthy()
     await userEvent.press(continuar())
+    await seguirAlCobro()
     expect(screen.getByLabelText('Monto del cobro 1').props.value).toBe('800')
     expect(llamadasA(ENTREGAR)).toHaveLength(0)
   })
@@ -376,9 +338,9 @@ describe('Volver conserva lo cargado', () => {
     await abrir()
     await devolverDos()
     await userEvent.press(screen.getByLabelText('Volver'))
-    await userEvent.press(screen.getByLabelText('No, todo bien'))
+    await userEvent.press(screen.getByLabelText('No'))
     await aConfirmar()
-    await userEvent.press(confirmarBtn())
+    await confirmarEntrega()
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
     expect(llamadasA(ENTREGAR)[0][1].devolucion).toBeUndefined()
   })
@@ -397,6 +359,7 @@ describe('E6 Confirmar entrega', () => {
     await abrir()
     await devolverDos()
     await userEvent.press(continuar())
+    await seguirAlCobro()
     await sumarPago('Efectivo', '800')
     await aConfirmar('Graciela Ruiz')
     const r = screen.getByLabelText('Resumen de la entrega')
@@ -412,21 +375,23 @@ describe('E6 Confirmar entrega', () => {
     await abrir()
     await devolverDos()
     await userEvent.press(continuar())
+    await seguirAlCobro()
     await sumarPago('Efectivo', '700')
     await sumarPago('Transferencia', '100', 2)
     await sacarFoto('Sacar foto del comprobante del cobro 2')
     await screen.findByText('Foto del comprobante del cobro 2 cargada')
-    await aConfirmar()
-    await userEvent.press(screen.getByLabelText('Firma del cliente'))
+    await userEvent.press(screen.getByLabelText('Sumar otro pago'))
+    await userEvent.press(screen.getByLabelText('Firma'))
     await sacarFoto('Sacar foto de la firma del cliente')
     await screen.findByText('Foto de la firma del cliente cargada')
-    await userEvent.press(confirmarBtn())
+    await aConfirmar()
+    await confirmarEntrega()
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
 
     const cheque = { numero: '', banco: '', titular: '', emision: '', pago: '' }
     const esperado = armarEntrega(
       {
-        receptor: 'Abel', observaciones: '', remitoUrl: null, imputacion: 'PedidoActual', devolucion: { d1: '2' },
+        receptor: 'Abel', observaciones: '', remitoUrl: null, devolucion: { d1: '2' },
         firmaUrl: 'https://r2.test/entregas/up-2.jpg',
         lineas: [
           { medio: MEDIOS[0] as never, monto: '700', fotoUrl: null, cheque },
@@ -444,7 +409,8 @@ describe('E6 Confirmar entrega', () => {
     pintar(hoja(P1))
     await abrir()
     await hastaElResumen()
-    const confirmar = confirmarBtn()
+    await userEvent.press(confirmarBtn())
+    const confirmar = await screen.findByLabelText('Sí, confirmar')
     act(() => {
       fireEvent.press(confirmar)
       fireEvent.press(confirmar)
@@ -458,10 +424,10 @@ describe('E6 Confirmar entrega', () => {
     await abrir()
     await hastaElResumen()
     mockPost.mockRejectedValueOnce(new Error('Network request failed'))
-    await userEvent.press(confirmarBtn())
+    await confirmarEntrega()
     expect(await screen.findByText('Network request failed')).toBeTruthy()
     expect(screen.getByLabelText('Resumen de la entrega')).toBeTruthy()
-    await userEvent.press(confirmarBtn())
+    await confirmarEntrega()
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(2))
     const [primero, segundo] = llamadasA(ENTREGAR)
     expect(segundo[1]).toEqual(primero[1])

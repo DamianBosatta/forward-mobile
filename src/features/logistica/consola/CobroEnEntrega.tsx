@@ -1,65 +1,47 @@
 import React, { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { Landmark, X } from 'lucide-react-native'
+import { PenLine, X } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, formatImporte, Field, Notice, OptionCard, Segmented } from '@/core/ui/fw'
+import { Button, formatImporte, Field, Notice, OptionCard } from '@/core/ui/fw'
 import type { MedioCobroChofer } from '@/libs/api-client/logistica'
+import { leerNumero } from '@/core/utils/numero'
 import { FotoEntrega } from './FotoEntrega'
-import { MAX_OTRO_NO_COBRO, MOTIVOS_NO_COBRO, type ChequeForm, type Imputacion, type LineaCobroForm, type MotivoNoCobro, type NoCobroForm } from './entrega'
+import { mediosDelChofer, type ChequeForm, type LineaCobroForm } from './entrega'
 
 interface Props {
   medios: MedioCobroChofer[] | undefined
   mediosError: boolean
   lineas: LineaCobroForm[]
-  imputacion: Imputacion
   onLineas: (lineas: LineaCobroForm[]) => void
-  onImputacion: (i: Imputacion) => void
   onSubiendo: (subiendo: boolean) => void
   /** dd/mm/aaaa de hoy, para precargar las fechas del cheque. */
   hoy: string
   /** Lámina ChoferEntrega: lo que hay que cobrar en la parada (lo decide el servidor). */
   aCobrar?: number | null
-  /** Lo que falta cobrar y queda en la cuenta corriente (chofer-04--mixto), si hay algo que decir. */
+  /** Lo que falta cobrar y queda como deuda (chofer-04--mixto), si hay algo que decir. */
   faltaACuenta?: number | null
   /** "Sobran $ X" en rojo bajo los pagos: avisa, no frena. */
   aviso?: string | null
-  /** Paso E4 ("paga lo anterior y firma lo actual"): el cobro va a la deuda vieja. */
-  porDeudaAnterior?: boolean
-  /** Lámina ChoferEntrega (C2): "Cuenta corriente" con su motivo. Solo se ofrece si hay algo para cobrar (`aCobrar`). */
-  noCobro?: NoCobroForm | null
-  onNoCobro?: (n: NoCobroForm | null) => void
+  /** Lo que el cliente ya debía antes de este pedido: una línea roja que solo informa (S18). */
+  deudaAnterior?: number | null
+  /** "Firma" elegida: lo que no se paga queda como deuda y se saca la foto de la firma (S13). */
+  firma: boolean
+  firmaUrl: string | null
+  onFirma: (firma: boolean) => void
+  onFirmaUrl: (url: string) => void
 }
 
-/** Lo que se dice de cada medio, en una línea (chofer-04). El servidor decide qué medios hay y cómo se llaman. */
+/** Lo que se dice de cada forma de pago, en una línea (chofer-04). */
 const DETALLE_MEDIO: Partial<Record<string, string>> = { Transferencia: 'Foto del comprobante', Cheque: 'Foto y datos' }
 
 /**
- * Lámina chofer-04: cómo paga el cliente. Opciones grandes de 76 px (los medios del servidor más "Cuenta
- * corriente"), pagos ya cargados con su X de 44 px y "Sumar otro pago". El servidor imputa y valida.
+ * Lámina chofer-04: cómo paga el cliente. Cuatro opciones grandes de 76 px y no más: Efectivo, Transferencia y
+ * Cheque (del servidor) y Firma (queda como deuda, con foto). Pagos ya cargados con su X de 44 px y "Sumar
+ * otro pago". El servidor imputa y valida.
  */
-export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLineas, onImputacion, onSubiendo, hoy, aCobrar, faltaACuenta, aviso, porDeudaAnterior, noCobro, onNoCobro }: Props) {
+export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubiendo, hoy, aCobrar, faltaACuenta, aviso, deudaAnterior, firma, firmaUrl, onFirma, onFirmaUrl }: Props) {
   const c = useColors()
   const [agregando, setAgregando] = useState(false)
-  const ofreceNoCobre = aCobrar != null && !!onNoCobro
-  if (ofreceNoCobre && noCobro) {
-    return (
-      <View accessibilityLabel="Cobro" style={{ gap: space[3] }}>
-        <EncabezadoCobro aCobrar={aCobrar} />
-        <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>Queda en cuenta corriente</Text>
-        <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{`Se anotan ${formatImporte(aCobrar)} de deuda. ¿Por qué no cobraste?`}</Text>
-        <View accessibilityLabel="Por qué no cobró" style={{ gap: space[2] }}>
-          {MOTIVOS_NO_COBRO.map((m) => (
-            <OptionCard key={m} label={m} selected={noCobro.motivo === m} onPress={() => onNoCobro({ ...noCobro, motivo: m as MotivoNoCobro })} />
-          ))}
-        </View>
-        {noCobro.motivo === 'Otro' ? (
-          <Field label="Por qué no cobraste" value={noCobro.otro} onChangeText={(otro) => onNoCobro({ ...noCobro, otro })} maxLength={MAX_OTRO_NO_COBRO} />
-        ) : null}
-        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>El motivo queda en las observaciones de la entrega y el pedido, en la cuenta del cliente.</Text>
-        <Button label="Cobré algo" variant="secundario" onPress={() => onNoCobro(null)} />
-      </View>
-    )
-  }
   const cambiar = (i: number, cambio: Partial<LineaCobroForm>) => onLineas(lineas.map((l, j) => (j === i ? { ...l, ...cambio } : l)))
   const cambiarCheque = (i: number, campo: keyof ChequeForm) => (v: string) =>
     cambiar(i, { cheque: { ...lineas[i].cheque, [campo]: v } })
@@ -67,15 +49,29 @@ export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLine
     onLineas([...lineas, { medio, monto: '', fotoUrl: null, cheque: { numero: '', banco: '', titular: '', emision: hoy, pago: hoy } }])
     setAgregando(false)
   }
-  const elegirMedio = lineas.length === 0 || agregando
+  const elegirFirma = () => {
+    onFirma(true)
+    setAgregando(false)
+  }
+  const hayPagos = lineas.length > 0 || firma
+  const elegirMedio = !hayPagos || agregando
 
   return (
     <View accessibilityLabel="Cobro" style={{ gap: space[3] }}>
       <EncabezadoCobro aCobrar={aCobrar} />
+      {deudaAnterior != null && deudaAnterior > 0 ? (
+        <View accessibilityLabel="Deuda anterior">
+          <Text style={{ ...typeScale.cuerpoDestacado, color: c.danger }}>{`Deuda anterior ${formatImporte(deudaAnterior)}`}</Text>
+        </View>
+      ) : null}
       {mediosError ? <Notice tone="peligro">No se pudieron cargar los medios de cobro.</Notice> : null}
-      {lineas.length > 0 ? <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Pagos de hoy</Text> : null}
+      {hayPagos ? <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Pagos de hoy</Text> : null}
       {lineas.map((l, i) => {
         const n = i + 1
+        const efectivo = l.medio?.tipo === 'Efectivo'
+        const recibido = leerNumero(l.recibido ?? '')
+        const monto = leerNumero(l.monto)
+        const vuelto = efectivo && recibido != null && monto != null && recibido > monto ? Math.round((recibido - monto) * 100) / 100 : null
         return (
           <View key={i} accessibilityLabel={`Cobro ${n}`} style={{ gap: space[2], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 2, borderColor: c.border }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
@@ -83,16 +79,23 @@ export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLine
                 <Text style={{ ...typeScale.seccion, color: c.text }}>{l.medio?.nombre ?? 'Sin medio'}</Text>
                 <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Pago ${n}`}</Text>
               </View>
-              <Pressable
-                onPress={() => onLineas(lineas.filter((_, j) => j !== i))}
-                accessibilityRole="button"
-                accessibilityLabel={`Quitar cobro ${n}`}
-                style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radii.campo, borderWidth: 2, borderColor: c.textSecondary }}
-              >
-                <X size={22} color={c.text} strokeWidth={3} />
-              </Pressable>
+              <BotonQuitar etiqueta={`Quitar cobro ${n}`} onPress={() => onLineas(lineas.filter((_, j) => j !== i))} />
             </View>
             <Field label={`Monto del cobro ${n}`} value={l.monto} onChangeText={(v) => cambiar(i, { monto: v })} keyboardType="decimal-pad" alignRight />
+            {efectivo ? (
+              <>
+                <View style={{ flexDirection: 'row', gap: space[2] }}>
+                  <BotonCorto etiqueta="Te dio" activo={l.recibido !== undefined} onPress={() => cambiar(i, { recibido: l.recibido ?? '' })} />
+                  <BotonCorto etiqueta="Justo" activo={l.recibido === undefined} onPress={() => cambiar(i, { recibido: undefined })} />
+                </View>
+                {l.recibido !== undefined ? (
+                  <Field label={`Te dio (cobro ${n})`} value={l.recibido} onChangeText={(v) => cambiar(i, { recibido: v })} keyboardType="decimal-pad" alignRight />
+                ) : null}
+                {vuelto != null ? (
+                  <Text accessibilityLiveRegion="polite" style={{ ...typeScale.cuerpoDestacado, color: c.text, textAlign: 'right' }}>{`Su vuelto ${formatImporte(vuelto)}`}</Text>
+                ) : null}
+              </>
+            ) : null}
             {l.medio?.tipo === 'Cheque' ? (
               <>
                 <Field label={`N.º de cheque (cobro ${n})`} value={l.cheque.numero} onChangeText={cambiarCheque(i, 'numero')} />
@@ -102,7 +105,7 @@ export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLine
                 <Field label={`Fecha de pago (cobro ${n})`} value={l.cheque.pago} onChangeText={cambiarCheque(i, 'pago')} help="dd/mm/aaaa" />
               </>
             ) : null}
-            {l.medio ? (
+            {l.medio && !efectivo ? (
               <FotoEntrega
                 que={`${l.medio.tipo === 'Cheque' ? 'del cheque' : 'del comprobante'} del cobro ${n}`}
                 ayuda={l.medio.tipo === 'Transferencia' ? 'La transferencia necesita la captura del comprobante.' : undefined}
@@ -114,37 +117,65 @@ export function CobroEnEntrega({ medios, mediosError, lineas, imputacion, onLine
           </View>
         )
       })}
+      {firma ? (
+        <View accessibilityLabel="Firma" style={{ gap: space[2], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 2, borderColor: c.border }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ ...typeScale.seccion, color: c.text }}>Firma</Text>
+              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Lo que no paga queda como deuda</Text>
+            </View>
+            <BotonQuitar etiqueta="Quitar firma" onPress={() => onFirma(false)} />
+          </View>
+          <FotoEntrega que="de la firma del cliente" url={firmaUrl} onUrl={onFirmaUrl} onSubiendo={onSubiendo} />
+        </View>
+      ) : null}
       {aviso ? <Text style={{ ...typeScale.cuerpoDestacado, color: c.danger, textAlign: 'right' }}>{aviso}</Text> : null}
       {faltaACuenta ? <Notice tone="info">{`Los ${formatImporte(faltaACuenta)} que faltan quedan en su cuenta corriente.`}</Notice> : null}
-      {lineas.length > 0 && porDeudaAnterior ? (
-        <Notice tone="info">El cobro va a la deuda más vieja del cliente. Lo de hoy queda en su cuenta corriente.</Notice>
-      ) : null}
-      {lineas.length > 0 ? (
-        <Segmented<Imputacion>
-          accessibilityLabel="A qué deuda va el cobro"
-          value={imputacion}
-          onChange={onImputacion}
-          options={[
-            { value: 'PedidoActual', label: 'Al pedido de hoy' },
-            { value: 'DeudaAnterior', label: 'A la deuda anterior' },
-          ]}
-        />
-      ) : null}
       {elegirMedio ? (
-        <View accessibilityLabel={lineas.length === 0 ? '¿Cómo paga?' : 'Sumar otro pago'} style={{ gap: space[2] }}>
-          <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>{lineas.length === 0 ? '¿Cómo paga?' : 'Sumar otro pago'}</Text>
-          {(medios ?? []).map((m) => (
+        <View accessibilityLabel={hayPagos ? 'Sumar otro pago' : '¿Cómo paga?'} style={{ gap: space[2] }}>
+          <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>{hayPagos ? 'Sumar otro pago' : '¿Cómo paga?'}</Text>
+          {mediosDelChofer(medios).map((m) => (
             <OptionCard key={m.id} label={m.nombre} detail={DETALLE_MEDIO[m.tipo]} onPress={() => agregar(m)} />
           ))}
-          {ofreceNoCobre && lineas.length === 0 ? (
-            <OptionCard icon={Landmark} label="Cuenta corriente" detail="Queda como deuda" onPress={() => onNoCobro({ motivo: null, otro: '' })} />
-          ) : null}
-          {lineas.length > 0 ? <Button label="No sumo otro" variant="secundario" onPress={() => setAgregando(false)} /> : null}
+          {firma ? null : <OptionCard icon={PenLine} label="Firma" detail="Queda como deuda, con foto de la firma" onPress={elegirFirma} />}
+          {hayPagos ? <Button label="No sumo otro" variant="secundario" onPress={() => setAgregando(false)} /> : null}
         </View>
       ) : (
         <Button label="Sumar otro pago" variant="secundario" onPress={() => setAgregando(true)} />
       )}
     </View>
+  )
+}
+
+function BotonQuitar({ etiqueta, onPress }: { etiqueta: string; onPress: () => void }) {
+  const c = useColors()
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={etiqueta}
+      android_ripple={{ color: c.border }}
+      style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radii.campo, borderWidth: 2, borderColor: c.textSecondary }}
+    >
+      <X size={22} color={c.text} strokeWidth={3} />
+    </Pressable>
+  )
+}
+
+/** "Te dio" / "Justo": dos botones de 48 px, uno elegido (el vuelto es solo una cuenta en pantalla). */
+function BotonCorto({ etiqueta, activo, onPress }: { etiqueta: string; activo: boolean; onPress: () => void }) {
+  const c = useColors()
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={etiqueta}
+      accessibilityState={{ selected: activo }}
+      android_ripple={{ color: c.border }}
+      style={{ flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radii.campo, borderWidth: 2, borderColor: activo ? c.brand : c.border, backgroundColor: activo ? c.brandSoft : c.surface }}
+    >
+      <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{etiqueta}</Text>
+    </Pressable>
   )
 }
 
