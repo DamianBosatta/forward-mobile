@@ -42,7 +42,7 @@ beforeEach(() => {
   post.mockResolvedValue({ succeeded: true, data: 'g1' })
 })
 
-const vacio: FormServicio = { monto: '', tipoGastoId: null, descripcion: '', medioPagoId: null, requiereCaja: false, cuentaOrigenId: null, comprobanteUrl: null }
+const vacio: FormServicio = { monto: '', tipoGastoId: null, descripcion: '', medioPagoId: null, cuentaOrigenId: null, comprobanteUrl: null }
 const completo: FormServicio = { ...vacio, monto: '1.500,50', tipoGastoId: 'tg-luz', medioPagoId: 'm-tr', cuentaOrigenId: 'gal' }
 
 describe('validación', () => {
@@ -53,9 +53,8 @@ describe('validación', () => {
   it('el concepto es obligatorio', () => {
     expect(validarServicio({ ...completo, tipoGastoId: null })).toBe('Elegí el concepto.')
   })
-  it('un medio sin caja pide la cuenta de origen; en efectivo no', () => {
+  it('la cuenta de origen es siempre obligatoria (la caja es solo web)', () => {
     expect(validarServicio({ ...completo, cuentaOrigenId: null })).toBe('Elegí la cuenta de origen.')
-    expect(validarServicio({ ...completo, medioPagoId: 'm-ef', requiereCaja: true, cuentaOrigenId: null })).toBeNull()
   })
   it('un formulario completo es válido', () => {
     expect(validarServicio(completo)).toBeNull()
@@ -69,9 +68,9 @@ describe('cuerpo del gasto', () => {
       descripcion: 'Luz', monto: 1500.5, tipoGastoId: 'tg-luz', medioPagoId: 'm-tr', cuentaOrigenId: 'gal', comprobanteUrl: 'https://s/f.jpg',
     })
   })
-  it('con descripción la manda recortada; en efectivo no manda cuenta', () => {
-    expect(cuerpoDelGasto({ ...completo, descripcion: '  Factura mayo ', medioPagoId: 'm-ef', requiereCaja: true }, 'Luz')).toMatchObject({
-      descripcion: 'Factura mayo', cuentaOrigenId: null, comprobanteUrl: null,
+  it('con descripción la manda recortada y siempre manda la cuenta', () => {
+    expect(cuerpoDelGasto({ ...completo, descripcion: '  Factura mayo ' }, 'Luz')).toMatchObject({
+      descripcion: 'Factura mayo', cuentaOrigenId: 'gal', comprobanteUrl: null,
     })
   })
 })
@@ -99,6 +98,14 @@ describe('pantalla', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Registrar pago' }))
     expect(await screen.findByText('Elegí el concepto.')).toBeTruthy()
     expect(post).not.toHaveBeenCalled()
+  })
+
+  it('no ofrece el efectivo (la caja es solo web) y un medio sin caja manda su cuenta', async () => {
+    renderConQuery(<PagarServicio onListo={jest.fn()} />)
+    await screen.findByRole('radio', { name: 'Transferencia' }, ESPERA)
+    expect(screen.queryByRole('radio', { name: 'Efectivo' })).toBeNull()
+    await userEvent.press(screen.getByRole('radio', { name: 'Transferencia' }))
+    expect(await screen.findByRole('radio', { name: /^Banco Galicia/ }, ESPERA)).toBeTruthy()
   })
 
   it('no ofrece el cheque como medio de pago (queda para su propio endpoint)', async () => {
