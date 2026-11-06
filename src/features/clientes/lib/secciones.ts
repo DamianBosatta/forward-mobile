@@ -1,4 +1,5 @@
 import type { SocioListDto } from '@/libs/api-client/types'
+import { sinAcentos } from '@/core/utils/texto'
 
 export const SECCION_OTROS = '#'
 export const SECCION_SIN_DIRECCION = 'Sin dirección'
@@ -10,7 +11,7 @@ export interface SeccionDeClientes {
 
 /** Primera letra de la dirección, en mayúscula y sin tilde; "#" si no empieza con una letra. */
 export function letraDeDireccion(direccion?: string | null): string {
-  const inicial = (direccion ?? '').trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').charAt(0).toUpperCase()
+  const inicial = sinAcentos((direccion ?? '').trim()).charAt(0).toUpperCase()
   return /^[A-Z]$/.test(inicial) ? inicial : SECCION_OTROS
 }
 

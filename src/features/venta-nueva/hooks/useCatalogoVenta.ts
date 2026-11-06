@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
+import { normalizarBusqueda } from '@/core/utils/texto'
 import { api, productosKeys, type CatalogoStockItem, type PagedResult } from '@/libs/api-client'
 
 export const DEBOUNCE_BUSQUEDA_MS = 300
@@ -84,7 +85,7 @@ export function useCatalogoVenta(busqueda: string) {
     const todos = query.data?.items ?? []
     if (!termino) return todos
     // El catálogo completo manda; sin él, la respuesta del servidor; sin ella, lo que haya del catálogo.
-    return deFamiliasQueCoinciden(completo ?? servidor.data?.items ?? todos, normalizar(termino))
+    return deFamiliasQueCoinciden(completo ?? servidor.data?.items ?? todos, normalizarBusqueda(termino))
   }, [query.data, completo, servidor.data, termino])
 
   // `cargado`: hay un catálogo del servidor (aunque un refresco posterior haya fallado); `isError`: no lo hay.
@@ -100,12 +101,8 @@ export function useCatalogoVenta(busqueda: string) {
   }
 }
 
-function normalizar(texto: string): string {
-  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-}
-
 function coincide(p: CatalogoStockItem, termino: string): boolean {
-  return [p.nombre, p.marca, p.codigoPropio, p.codigoProveedor, p.codigoBarra].some((v) => v != null && normalizar(v).includes(termino))
+  return [p.nombre, p.marca, p.codigoPropio, p.codigoProveedor, p.codigoBarra].some((v) => v != null && normalizarBusqueda(v).includes(termino))
 }
 
 /** Como el servidor: la familia (la línea y sus fragancias) entera si coincide alguno de sus productos. */
