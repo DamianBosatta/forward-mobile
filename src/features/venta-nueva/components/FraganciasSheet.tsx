@@ -1,17 +1,18 @@
-import React, { useMemo, useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
-import { importe, space, typeScale, useColors } from '@/libs/theme'
-import { BottomSheet, Button, Field, Notice, StatusChip, formatImporte } from '@/core/ui/fw'
+import React, { useMemo, useRef, useState } from 'react'
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native'
+import { importe, maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
+import { BottomSheet, Button, Field, Notice, formatImporte } from '@/core/ui/fw'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useVariantesProducto } from '@/libs/api-client/productos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useCatalogoVenta } from '../hooks/useCatalogoVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
-import { leyendaMultiplo, multiploDe, precioServidor, subtotalLinea } from '../lib/carrito'
-import { descuentoDeFragancias, nombreFragancia, stockDeFragancia } from '../lib/fragancias'
+import { multiploDe, precioServidor, subtotalLinea } from '../lib/carrito'
+import { descuentoDeFragancias, errorDeCantidadFragancia, nombreFragancia, stockDeFragancia } from '../lib/fragancias'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
-import { Redondo } from './ProductoCatalogoCard'
+import { limitarDigitos } from '../lib/teclado'
+import { RENGLONES_PARA_BUSCAR, normalizarBusqueda } from '@/core/utils/texto'
 
 interface Props {
   /** Línea padre a repartir; null = cerrada. */
@@ -42,22 +43,39 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
   const servidor = useVariantesProducto(padreId, true, DEPOSITO_CENTRAL_ID)
   const padre = productos.find((p) => p.id === padreId)
   const variantes = useMemo(() => productos.filter((p) => p.productoPadreId === padreId), [productos, padreId])
-  const [cantidades, setCantidades] = useState<Record<string, number>>(() =>
-    Object.fromEntries(lineas.filter((l) => l.producto.productoPadreId === padreId).map((l) => [l.productoId, l.cantidad])))
+  // Lo que el vendedor tipea en cada fragancia (vacío = 0). La cantidad sale de acá; nunca se baja sola.
+  const [textos, setTextos] = useState<Record<string, string>>(() =>
+    Object.fromEntries(lineas.filter((l) => l.producto.productoPadreId === padreId).map((l) => [l.productoId, mostrarNumero(l.cantidad)])))
+  const cantidades = useMemo(() => Object.fromEntries(Object.entries(textos).map(([id, t]) => [id, t === '' ? 0 : Number(t)])) as Record<string, number>, [textos])
+  const disponibleDe = (v: (typeof variantes)[number]) => stockDeFragancia(v, servidor.data?.find((s) => s.id === v.id), verCantidades)
+  // S9: la regla vive en errorDeCantidadFragancia; nunca se baja lo que escribio el vendedor.
+  const errorDeCantidad = (v: (typeof variantes)[number]) => errorDeCantidadFragancia(cantidades[v.id] ?? 0, multiploDe(v), disponibleDe(v), verCantidades)
+  const hayErrorDeCantidad = variantes.some((v) => errorDeCantidad(v) !== undefined)
   const [pctTexto, setPctTexto] = useState(() => mostrarNumero(descuentoDeFragancias(lineas, padreId)))
   const pctLeido = leerNumero(pctTexto)
   const pctInvalido = pctLeido === null || pctLeido < 0 || pctLeido > 100
   const tope = avisoTope(pctInvalido ? 0 : pctLeido, user?.maxDescuentoPorcentaje ?? 0, hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO'))
+  const scrollRef = useRef<ScrollView>(null)
+  const campos = useRef<Record<string, TextInput | null>>({})
+  const filas = useRef<Record<string, number>>({})
+  // Desde 8 fragancias se busca por nombre, sin tildes ni mayúsculas (mismo umbral que la consola del chofer).
+  // Lo tipeado en las filas ocultas se conserva en `textos`, así que sigue sumando a las unidades y al total.
+  const [busqueda, setBusqueda] = useState('')
+  const conBuscador = variantes.length >= RENGLONES_PARA_BUSCAR
+  const nombreDe = (v: (typeof variantes)[number]) => servidor.data?.find((x) => x.id === v.id)?.fraganciaNombre ?? nombreFragancia(v, padre?.nombre)
+  const buscado = normalizarBusqueda(busqueda.trim())
+  const visibles = conBuscador && buscado ? variantes.filter((v) => normalizarBusqueda(nombreDe(v)).includes(buscado)) : variantes
   const total = Object.values(cantidades).reduce((a, n) => a + n, 0)
-  // Al confirmar se vuelve a acotar cada cantidad al stock disponible, en múltiplos de la venta mínima (como la web).
-  const aDisponible = () => Object.fromEntries(variantes.map((v) => {
-    const disponible = stockDeFragancia(v, servidor.data?.find((s) => s.id === v.id), verCantidades)
+  const escribir = (id: string, texto: string) => setTextos((s) => ({ ...s, [id]: limitarDigitos(texto.replace(/\D/g, '')) }))
+  // "Como la última vez": lo que llevó de cada fragancia, acotado al stock (en múltiplos) al llenar los campos: el
+  // vendedor ve el valor acotado en el campo antes de confirmar, no cambia al confirmar.
+  const delUltimo = Object.fromEntries(variantes.flatMap((v) => {
+    const llevado = llevo?.get(v.id)
+    if (!llevado) return []
     const m = multiploDe(v)
-    return [v.id, Math.min(cantidades[v.id] ?? 0, Math.floor(disponible / m) * m)]
+    const n = Math.min(llevado, Math.floor(disponibleDe(v) / m) * m)
+    return n > 0 ? [[v.id, n]] : []
   }))
-  const cambiar = (id: string, n: number) => setCantidades((s) => ({ ...s, [id]: Math.max(0, n) }))
-  // "Como la última vez": las cantidades que llevó de cada fragancia; al agregar se acotan al stock como todo lo demás.
-  const delUltimo = Object.fromEntries(variantes.flatMap((v) => (llevo?.get(v.id) ? [[v.id, llevo.get(v.id)!]] : [])))
   const hayUltimo = Object.keys(delUltimo).length > 0
   const subtotal = variantes.reduce((a, v) => a + subtotalLinea({ productoId: v.id, producto: v, cantidad: cantidades[v.id] ?? 0, descuentoPct: pctInvalido ? 0 : pctLeido }), 0)
 
@@ -71,7 +89,7 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
           </Text>
         </View>
         {hayUltimo ? (
-          <Pressable accessibilityRole="button" accessibilityLabel="Como la última vez" onPress={() => setCantidades(delUltimo)} style={{ minHeight: 44, justifyContent: 'center' }}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Como la última vez" onPress={() => setTextos(Object.fromEntries(Object.entries(delUltimo).map(([id, n]) => [id, mostrarNumero(n)])))} style={{ minHeight: 44, justifyContent: 'center' }}>
             <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Como la última vez</Text>
           </Pressable>
         ) : null}
@@ -80,34 +98,44 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
       {!isLoading && variantes.length === 0 ? (
         <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Esta línea no tiene fragancias a la venta.</Text>
       ) : null}
-      <ScrollView style={{ maxHeight: 420 }} contentContainerStyle={{ gap: space[3] }}>
-        {variantes.map((v) => {
+      {conBuscador ? <Field label="Buscar fragancia" value={busqueda} onChangeText={setBusqueda} autoCorrect={false} /> : null}
+      {conBuscador && buscado && visibles.length === 0 ? <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Ninguna fragancia coincide con la búsqueda.</Text> : null}
+      <ScrollView ref={scrollRef} style={{ maxHeight: 420 }} keyboardShouldPersistTaps="handled">
+        {visibles.map((v, i) => {
           const delServidor = servidor.data?.find((s) => s.id === v.id)
           const disponible = stockDeFragancia(v, delServidor, verCantidades)
-          const hay = disponible > 0
           const nombre = delServidor?.fraganciaNombre ?? nombreFragancia(v, padre?.nombre)
-          const n = cantidades[v.id] ?? 0
           const m = multiploDe(v)
-          const leyenda = leyendaMultiplo(v)
+          const error = errorDeCantidad(v)
+          const stock = disponible <= 0 ? 'Sin stock' : verCantidades ? `Stock: ${disponible}` : 'Hay stock'
+          // El precio va una sola vez en el encabezado; en la fila, solo si esta fragancia cuesta distinto.
+          const distinto = !padre || precioServidor(v) !== precioServidor(padre)
+          const detalle = [stock, m > 1 ? `de a ${m}` : null, distinto ? formatImporte(precioServidor(v)) : null].filter(Boolean).join(' · ')
+          const ultima = i === visibles.length - 1
           return (
-            <View key={v.id} testID={`fragancia-${v.id}`} style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-              <View style={{ flex: 1, gap: space[1] }}>
-                <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{nombre}</Text>
-                <Text style={{ ...typeScale.secundario, ...importe, color: c.textSecondary }}>
-                  {leyenda ? `${formatImporte(precioServidor(v))} · ${leyenda}` : formatImporte(precioServidor(v))}
-                </Text>
-                <StatusChip estado={hay ? 'entregado' : 'anulado'} label={!hay ? 'Sin stock' : verCantidades ? `Stock: ${disponible}` : 'Hay stock'} />
+            <View key={v.id} testID={`fragancia-${v.id}`} onLayout={(e) => { filas.current[v.id] = e.nativeEvent.layout.y }}
+              style={{ gap: space[1], paddingVertical: space[2], borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth, borderTopColor: c.border }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
+                <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }}>{nombre}</Text>
+                <CampoCantidad nombre={nombre} value={textos[v.id] ?? ''} onChangeText={(t) => escribir(v.id, t)} error={error}
+                  inputRef={(r) => { campos.current[v.id] = r }}
+                  returnKeyType={ultima ? 'done' : 'next'}
+                  onSubmitEditing={() => { if (!ultima) campos.current[visibles[i + 1].id]?.focus() }}
+                  onFocus={() => scrollRef.current?.scrollTo({ y: Math.max(0, (filas.current[v.id] ?? 0) - space[2]), animated: true })} />
               </View>
-              <Redondo c={c} label="−" a11y={`Restar ${nombre}`} onPress={() => cambiar(v.id, n - m)} />
-              <Text accessibilityLabel={`${nombre}: ${n}`} style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text, minWidth: 32, textAlign: 'center' }}>{n}</Text>
-              <Redondo c={c} label="+" a11y={`Sumar ${nombre}`} disabled={n + m > disponible} onPress={() => cambiar(v.id, n + m)} />
+              <Text style={{ ...typeScale.secundario, ...importe, color: disponible <= 0 ? c.chip.anulado.text : c.textSecondary }}>{detalle}</Text>
+              {error ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={{ ...typeScale.secundario, color: c.chip.anulado.text }}>{error}</Text> : null}
             </View>
           )
         })}
       </ScrollView>
-      <Field label="Descuento (%)" keyboardType="decimal-pad" alignRight value={pctTexto} onChangeText={setPctTexto}
-        error={pctInvalido ? 'Ingresá un descuento entre 0 y 100.' : undefined} />
-      <Text style={{ ...typeScale.secundario, color: c.textSecondary, marginTop: -space[2] }}>Se aplica a todas las fragancias de la línea.</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
+        <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }}>Descuento (%)</Text>
+        <CampoCantidad nombre="Descuento (%)" value={pctTexto} onChangeText={setPctTexto} keyboardType="decimal-pad"
+          error={pctInvalido ? 'Ingresá un descuento entre 0 y 100.' : undefined} />
+      </View>
+      {pctInvalido ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={{ ...typeScale.secundario, color: c.chip.anulado.text }}>Ingresá un descuento entre 0 y 100.</Text> : null}
+      <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Se aplica a todas las fragancias de la línea.</Text>
       {tope === 'porAutorizar' ? (
         <Notice tone="advertencia" title={`Tu tope de descuento es ${user?.maxDescuentoPorcentaje} %.`}>Podés guardar el pedido, pero va a quedar por autorizar.</Notice>
       ) : null}
@@ -118,9 +146,52 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
       </View>
       <Button
         label={total > 0 ? 'Agregar a la venta' : 'Listo'}
-        disabled={variantes.length === 0 || pctInvalido}
-        onPress={() => { repartirFragancias(padreId, variantes, aDisponible(), pctLeido ?? 0); onClose() }}
+        disabled={variantes.length === 0 || pctInvalido || hayErrorDeCantidad}
+        onPress={() => { repartirFragancias(padreId, variantes, Object.fromEntries(variantes.map((v) => [v.id, cantidades[v.id] ?? 0])), pctLeido ?? 0); onClose() }}
       />
     </BottomSheet>
+  )
+}
+
+/**
+ * Campo numérico compacto: el nombre ya está en la fila, así que no lleva etiqueta visible (Field la
+ * dibuja siempre). Mismo alto, radio, relleno y borde que Field.
+ */
+function CampoCantidad({ nombre, value, onChangeText, error, keyboardType = 'number-pad', inputRef, onFocus, ...resto }: {
+  nombre: string; value: string; onChangeText: (t: string) => void; error?: string
+  keyboardType?: 'number-pad' | 'decimal-pad'; inputRef?: (r: TextInput | null) => void
+} & Pick<TextInputProps, 'returnKeyType' | 'onSubmitEditing' | 'onFocus'>) {
+  const c = useColors()
+  const [foco, setFoco] = useState(false)
+  const conMarca = foco || !!error
+  return (
+    <TextInput
+      {...resto}
+      ref={inputRef}
+      accessibilityLabel={nombre}
+      accessibilityHint={error}
+      keyboardType={keyboardType}
+      selectTextOnFocus
+      submitBehavior={resto.returnKeyType === 'next' ? 'submit' : 'blurAndSubmit'}
+      placeholderTextColor={c.textSecondary}
+      maxFontSizeMultiplier={maxFontScale}
+      value={value}
+      onChangeText={onChangeText}
+      onFocus={(e) => { setFoco(true); onFocus?.(e) }}
+      onBlur={() => setFoco(false)}
+      style={{
+        ...typeScale.cuerpo,
+        width: 96,
+        height: space[12],
+        borderRadius: radii.campo,
+        borderWidth: conMarca ? 2 : 1,
+        borderColor: error ? c.chip.anulado.text : foco ? c.brand : c.border,
+        backgroundColor: conMarca ? c.surface : c.surface2,
+        paddingHorizontal: space[3] - (conMarca ? 1 : 0),
+        paddingVertical: 0,
+        color: c.text,
+        textAlign: 'right',
+      }}
+    />
   )
 }

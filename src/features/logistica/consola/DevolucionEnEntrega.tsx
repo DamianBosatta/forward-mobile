@@ -6,6 +6,7 @@ import { Button, Field, Notice, OptionCard, Stepper } from '@/core/ui/fw'
 import type { LineaParada } from '@/libs/api-client/logistica'
 import { ElegirChip } from '@/features/cuentas/components/ElegirChip'
 import { leerNumero } from '@/core/utils/numero'
+import { RENGLONES_PARA_BUSCAR } from '@/core/utils/texto'
 import { MOTIVOS_DEVOLUCION } from './entrega'
 
 /** Lámina chofer-03-devoluciones: "¿Tiene devoluciones?", Sí o No y nada más. Tocar una opción avanza; la elegida se ve al volver. */
@@ -19,9 +20,6 @@ export function EleccionDevolucion({ valor, onElegir }: { valor: boolean | null;
     </View>
   )
 }
-
-/** Desde cuántos renglones aparece el buscador de la devolución. */
-export const RENGLONES_PARA_BUSCAR = 8
 
 const marcaDe = (r: LineaParada) => r.marca ?? ''
 

@@ -1,6 +1,7 @@
 import React from 'react'
-import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
+import { render, renderHook, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useColors, useThemeStore } from '@/libs/theme'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { pctFromPrecio, precioFromPct } from '@/features/ventas/lib/descuentos'
 import { EditarLineaSheet } from '../components/EditarLineaSheet'
@@ -8,6 +9,16 @@ import { leerNumero } from '../lib/linea'
 import type { LineaCarrito } from '../lib/carrito'
 import { cajaDe6, producto } from '../__testing__/producto'
 
+let mockTop = 0
+let mockAncho: number | null = null
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => {
+  const real = jest.requireActual('react-native/Libraries/Utilities/useWindowDimensions').default
+  return { __esModule: true, default: () => (mockAncho ? { width: mockAncho, height: 800, scale: 2, fontScale: 1 } : real()) }
+})
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: mockTop, bottom: 0, left: 0, right: 0 }),
+  SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
 const mockGet = jest.fn()
 const mockPost = jest.fn()
 jest.mock('@/core/api/client', () => ({
@@ -38,6 +49,8 @@ const escribir = async (campo: string, texto: string) => {
 const valor = (campo: string) => leerNumero(screen.getByLabelText(campo).props.value)
 
 beforeEach(() => {
+  mockTop = 0
+  mockAncho = null
   conUsuario(10)
   mockGet.mockReset().mockResolvedValue(undefined)
   mockPost.mockReset().mockResolvedValue(undefined)
@@ -210,32 +223,84 @@ describe('EditarLineaSheet: costos solo con CAP_VER_COSTOS', () => {
   })
 })
 
-describe('EditarLineaSheet: fragancias no pasan su stock disponible', () => {
-  const lavanda = producto({ id: 'pv1', nombre: 'Saphirus - Lavanda', productoPadreId: 'pf', ventaMinimaUnidades: 6, fraccionMinimaVenta: 'Bulto', real: 100, disponible: 100 })
-  const abrirFragancia = (cantidad: number) => {
-    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    render(<QueryClientProvider client={qc}><EditarLineaSheet linea={{ productoId: 'pv1', producto: lavanda, cantidad, descuentoPct: 0 }} onClose={jest.fn()} onConfirm={jest.fn()} onQuitar={jest.fn()} /></QueryClientProvider>)
+describe('EditarLineaSheet: fragancia con cantidad tipeada (sin − ni +)', () => {
+  const lavanda = producto({ id: 'pv1', nombre: 'Saphirus - Lavanda', productoPadreId: 'pf', ventaMinimaUnidades: 12, fraccionMinimaVenta: 'Bulto', real: 100, disponible: 100 })
+  const conStock = (verCantidades: boolean, stockDisponible: number) => {
+    useAuthStore.setState({ user: { roles: ['Vendedor'], permissions: verCantidades ? [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }] : [], maxDescuentoPorcentaje: 10 } as never })
+    mockGet.mockResolvedValue([{ id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: stockDisponible > 0, stockDisponible, activo: true }])
   }
+  const abrirFragancia = async (cantidad = 12) => {
+    const onConfirm = jest.fn()
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={qc}><EditarLineaSheet linea={{ productoId: 'pv1', producto: lavanda, cantidad, descuentoPct: 0 }} onClose={jest.fn()} onConfirm={onConfirm} onQuitar={jest.fn()} /></QueryClientProvider>)
+    await waitFor(() => expect(mockGet).toHaveBeenCalled())
+    return onConfirm
+  }
+  const confirmar = () => screen.getByRole('button', { name: 'Confirmar' })
 
-  it('con stock 8 y cajas de 6, + llega a 6 y ahí queda (el stock es el del servidor, no el del catálogo)', async () => {
-    conUsuario(10)
-    useAuthStore.setState({ user: { roles: ['Vendedor'], permissions: [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }], maxDescuentoPorcentaje: 10 } as never })
-    mockGet.mockResolvedValue([{ id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, stockDisponible: 8, activo: true }])
-    abrirFragancia(6)
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Sumar' })).toBeDisabled())
-    await userEvent.press(screen.getByRole('button', { name: 'Sumar' }))
-    expect(screen.getByLabelText('Unidades: 6')).toBeTruthy()
+  it('muestra un campo de unidades y no hay Restar ni Sumar', async () => {
+    conStock(true, 100)
+    await abrirFragancia()
+    expect(screen.getByLabelText('Unidades').props.value).toBe('12')
+    expect(screen.queryByRole('button', { name: 'Restar' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Sumar' })).toBeNull()
   })
 
-  it('con stock para dos cajas, + suma una caja y se detiene en 12', async () => {
-    useAuthStore.setState({ user: { roles: ['Vendedor'], permissions: [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }], maxDescuentoPorcentaje: 10 } as never })
-    mockGet.mockResolvedValue([{ id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, stockDisponible: 12, activo: true }])
-    abrirFragancia(6)
-    await waitFor(() => expect(mockGet).toHaveBeenCalled())
-    await screen.findByLabelText('Unidades: 6')
-    await userEvent.press(screen.getByRole('button', { name: 'Sumar' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Sumar' }))
-    expect(screen.getByLabelText('Unidades: 12')).toBeTruthy()
+  it('25 con venta de a 12: avisa "Se vende de a 12", no deja confirmar y no baja lo tipeado', async () => {
+    conStock(true, 100)
+    await abrirFragancia()
+    await escribir('Unidades', '25')
+    expect(screen.getByText('Se vende de a 12')).toBeTruthy()
+    expect(confirmar()).toBeDisabled()
+    expect(screen.getByLabelText('Unidades').props.value).toBe('25')
+  })
+
+  it('por encima del stock con CAP_VER_CANTIDADES_STOCK: "Solo hay 24" y bloquea', async () => {
+    conStock(true, 24)
+    await abrirFragancia()
+    await escribir('Unidades', '36')
+    expect(await screen.findByText('Solo hay 24')).toBeTruthy()
+    expect(confirmar()).toBeDisabled()
+  })
+
+  it('por encima del stock sin ver cantidades: "No hay tanto stock" y bloquea', async () => {
+    conStock(false, 0)
+    mockGet.mockResolvedValue([{ id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: false, stockDisponible: 0, activo: true }])
+    await abrirFragancia()
+    await escribir('Unidades', '12')
+    expect(await screen.findByText('No hay tanto stock')).toBeTruthy()
+    expect(confirmar()).toBeDisabled()
+  })
+
+  it('el múltiplo gana sobre el stock', async () => {
+    conStock(true, 10)
+    await abrirFragancia()
+    await escribir('Unidades', '25')
+    expect(screen.getByText('Se vende de a 12')).toBeTruthy()
+    expect(screen.queryByText(/Solo hay/)).toBeNull()
+  })
+
+  it('un valor válido confirma exactamente lo tipeado', async () => {
+    conStock(true, 100)
+    const onConfirm = await abrirFragancia()
+    await escribir('Unidades', '24')
+    await userEvent.press(confirmar())
+    expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ productoId: 'pv1', cantidad: 24 }))
+  })
+
+  it('vacío o 0 no confirma (quitar la línea sigue siendo el tacho)', async () => {
+    conStock(true, 100)
+    await abrirFragancia()
+    await escribir('Unidades', '0')
+    expect(confirmar()).toBeDisabled()
+    await userEvent.clear(screen.getByLabelText('Unidades'))
+    expect(confirmar()).toBeDisabled()
+  })
+
+  it('una línea que no es fragancia conserva Restar y Sumar', () => {
+    abrir()
+    expect(screen.getByRole('button', { name: 'Restar' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Sumar' })).toBeTruthy()
   })
 })
 
@@ -299,4 +364,39 @@ describe('EditarLineaSheet: Se vende por (ventas-nueva-2-productos--linea)', () 
     expect(screen.getByLabelText('Unidades: 24')).toBeTruthy()
   })
 })
+})
+
+describe('EditarLineaSheet: la cabecera respeta la barra de estado', () => {
+  it.each([0, 24, 48])('con inset superior %i el código queda debajo', (top) => {
+    mockTop = top
+    abrir()
+    let nodo = screen.getByText('PRO11923').parent
+    let paddingTop: number | undefined
+    while (nodo && paddingTop === undefined) {
+      paddingTop = (Object.assign({}, ...[nodo.props.style].flat(Infinity).filter(Boolean)) as { paddingTop?: number }).paddingTop
+      nodo = nodo.parent
+    }
+    expect(paddingTop).toBe(16 + top)
+  })
+})
+
+describe.each(['light', 'dark'] as const)('EditarLineaSheet: franja bajo la barra de estado, tema %s', (modo) => {
+  afterEach(() => useThemeStore.setState({ mode: 'system' }))
+  const plano = (st: unknown) => Object.assign({}, ...[st].flat(Infinity).filter(Boolean)) as { height?: number; backgroundColor?: string }
+
+  it('en el teléfono mide el inset superior y lleva el color topBar', () => {
+    useThemeStore.setState({ mode: modo })
+    mockAncho = 390
+    mockTop = 32
+    abrir()
+    const st = plano(screen.getByTestId('franja-barra-estado').props.style)
+    expect(st.height).toBe(32)
+    expect(st.backgroundColor).toBe(renderHook(() => useColors()).result.current.topBar)
+  })
+})
+
+it('en tablet no hay franja: el panel es lateral', () => {
+  mockAncho = 800
+  abrir()
+  expect(screen.queryByTestId('franja-barra-estado')).toBeNull()
 })

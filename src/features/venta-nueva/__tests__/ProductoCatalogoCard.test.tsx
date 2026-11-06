@@ -8,6 +8,9 @@ const noop = () => {}
 const pintar = (cantidad: number, extra: Record<string, unknown> = {}) =>
   render(<ProductoCatalogoCard producto={producto(extra)} cantidad={cantidad} verCantidades={false} onAbrirOferta={noop} />)
 
+const tarjetaSimple = () =>
+  render(<ProductoCatalogoCard producto={producto()} cantidad={0} verCantidades onAbrirOferta={noop} />)
+
 describe('ProductoCatalogoCard (CalleCatalogo)', () => {
   it('lo que ya está en el carrito se marca con el fondo y el borde de la marca; lo que no, queda liso', () => {
     const r = pintar(6)
@@ -60,11 +63,24 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
       expect(onAbrirOferta).toHaveBeenCalledTimes(1)
     })
 
-    it('precio por bulto y por unidad, y chip "Oferta" cuando el servidor manda precio con oferta', () => {
+    it('precio por unidad y por bulto, y chip "Oferta" cuando el servidor manda precio con oferta', () => {
       tarjeta(cajaDe6({ precioVenta: 100, precioConOferta: 90 }))
       expect(screen.getByText('Oferta')).toBeTruthy()
-      expect(screen.getByText('$ 540,00')).toBeTruthy()
       expect(screen.getByText('$ 90,00 por unidad')).toBeTruthy()
+      expect(screen.getByText('$ 540,00 por bulto')).toBeTruthy()
+    })
+
+    it('el precio por unidad es el grande y el por bulto el chico (S7)', () => {
+      const { typeScale } = require('@/libs/theme')
+      tarjeta(cajaDe6({ precioVenta: 100 }))
+      expect(screen.getByText('$ 100,00 por unidad')).toHaveStyle({ fontSize: typeScale.cuerpoDestacado.fontSize })
+      expect(screen.getByText('$ 600,00 por bulto')).toHaveStyle({ fontSize: typeScale.etiqueta.fontSize })
+    })
+
+    it('un producto sin bulto muestra solo su precio, como siempre', () => {
+      tarjeta(producto({ precioVenta: 100 }))
+      expect(screen.getByText('$ 100,00')).toBeTruthy()
+      expect(screen.queryByText(/por unidad|por bulto/)).toBeNull()
     })
 
     it('Agregar y el chip de edición abren la pantalla de cantidad y oferta', async () => {
@@ -145,6 +161,31 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
     it('"−" está apagado en el mínimo de venta', () => {
       conLineaDe(pack(), 6)
       expect(screen.getByRole('button', { name: /^Restar / })).toBeDisabled()
+    })
+  })
+
+  describe('Elegir fragancias (S11)', () => {
+    const padre = () => render(
+      <ProductoCatalogoCard producto={producto({ esPadreDeVariantes: true })} cantidad={0} verCantidades onAbrirOferta={noop} onElegirFragancias={noop} />,
+    )
+
+    it('va en su propia fila, a todo el ancho, con el relleno de acción y alto de 48', () => {
+      padre()
+      const boton = screen.getByRole('button', { name: 'Elegir fragancias' })
+      expect(boton).toHaveStyle({ backgroundColor: '#2BD4BD', height: 48 })
+      // La fila del precio ya no comparte renglón con el botón: el contenedor del botón es columna (estira).
+      expect(screen.getByTestId('elegir-fragancias-p1')).toBe(boton)
+    })
+
+    it('el precio puede achicarse (flex 1, minWidth 0) para que ningún botón se salga de la tarjeta', () => {
+      tarjetaSimple()
+      const precio = screen.getByText('$ 2.496,00').parent?.parent
+      expect(precio).toHaveStyle({ flex: 1, minWidth: 0 })
+    })
+
+    it('Agregar y Sin stock siguen con su look liso (sin relleno de acción)', () => {
+      tarjetaSimple()
+      expect(screen.getByRole('button', { name: /Añadir/ })).not.toHaveStyle({ backgroundColor: '#2BD4BD' })
     })
   })
 })
