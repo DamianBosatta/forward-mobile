@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View, useWindowDimensions } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { space, typeScale, useColors } from '@/libs/theme'
+import { useTeclado } from '@/core/utils/useTecladoVisible'
 import { BottomSheet, Button, Field, Notice, StatusChip } from '@/core/ui/fw'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -15,6 +17,8 @@ import { SelectorDia } from './SelectorDia'
 /** Límites del servidor (EventoCalendario.MaxTitulo / MaxDescripcion). */
 const MAX_TITULO = 150
 const MAX_DESCRIPCION = 500
+/** Lo mínimo que se deja de scroll aunque el teclado y el pie ocupen casi todo. */
+const ALTO_MINIMO = 128
 
 interface Props {
   evento: EventoCalendario
@@ -35,47 +39,85 @@ const fechaOriginalDe = (e: EventoCalendario) => /:(\d{4}-\d{2}-\d{2})$/.exec(e.
  */
 export function EventoSheet({ evento, onCerrar, onMovido, onAbrirVenta }: Props) {
   const c = useColors()
-  const { height } = useWindowDimensions()
   const chip = chipDe(evento)
   const original = fechaOriginalDe(evento)
+  const cabecera = (
+    <>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
+        <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text, flex: 1 }}>{evento.titulo}</Text>
+        {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
+      </View>
+      <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
+        {[nombreLargo(moverDia(evento.fecha, 0)), evento.hora, TIPO[evento.tipo] ?? evento.tipo].filter(Boolean).join(' · ')}
+      </Text>
+      {evento.ventaId && onAbrirVenta ? (
+        <Button
+          label={`Agendado desde la venta ${evento.ventaCodigo ?? ''}`.trim()}
+          variant="secundario"
+          onPress={() => {
+            onCerrar()
+            onAbrirVenta(evento.ventaId!)
+          }}
+        />
+      ) : evento.ventaCodigo ? (
+        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Agendado desde la venta ${evento.ventaCodigo}`}</Text>
+      ) : null}
+      {original !== evento.fecha ? (
+        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
+          {`Reprogramado: el original era el ${nombreLargo(moverDia(original, 0)).toLowerCase()}.`}
+        </Text>
+      ) : null}
+    </>
+  )
   return (
     <BottomSheet visible onClose={onCerrar} accessibilityLabel={evento.titulo}>
-      <ScrollView style={{ maxHeight: height * 0.8 }} contentContainerStyle={{ gap: space[4] }} keyboardShouldPersistTaps="handled">
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
-          <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text, flex: 1 }}>{evento.titulo}</Text>
-          {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
-        </View>
-        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-          {[nombreLargo(moverDia(evento.fecha, 0)), evento.hora, TIPO[evento.tipo] ?? evento.tipo].filter(Boolean).join(' · ')}
-        </Text>
-        {evento.ventaId && onAbrirVenta ? (
-          <Button
-            label={`Agendado desde la venta ${evento.ventaCodigo ?? ''}`.trim()}
-            variant="secundario"
-            onPress={() => {
-              onCerrar()
-              onAbrirVenta(evento.ventaId!)
-            }}
-          />
-        ) : evento.ventaCodigo ? (
-          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Agendado desde la venta ${evento.ventaCodigo}`}</Text>
-        ) : null}
-        {original !== evento.fecha ? (
-          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-            {`Reprogramado: el original era el ${nombreLargo(moverDia(original, 0)).toLowerCase()}.`}
-          </Text>
-        ) : null}
-        {evento.origen === 'Manual' ? (
-          <Edicion evento={evento} onCerrar={onCerrar} onMovido={onMovido} />
-        ) : (
+      {evento.origen === 'Manual' ? (
+        <Edicion evento={evento} cabecera={cabecera} onCerrar={onCerrar} onMovido={onMovido} />
+      ) : (
+        <Cuerpo cabecera={cabecera}>
           <Notice tone="info">Es automático: sale de cheques y compras, y no se cambia desde acá.</Notice>
-        )}
-      </ScrollView>
+        </Cuerpo>
+      )}
     </BottomSheet>
   )
 }
 
-function Edicion({ evento, ...props }: Props) {
+/**
+ * Cuerpo de la hoja: lo que se lee y se completa hace scroll; `pie` (avisos y botones) queda fijo abajo,
+ * siempre a la vista. El scroll se encoge con el teclado abierto: la hoja sube sobre el teclado y su
+ * borde de arriba no tiene que salirse de la pantalla.
+ */
+function Cuerpo({ cabecera, children, pie }: { cabecera: React.ReactNode; children: React.ReactNode; pie?: React.ReactNode }) {
+  const c = useColors()
+  const { height } = useWindowDimensions()
+  const { top, bottom } = useSafeAreaInsets()
+  const teclado = useTeclado()
+  const [pieAlto, setPieAlto] = useState(0)
+  // Manija, relleno y huecos de la hoja que no son ni scroll ni pie (BottomSheet: manija 4, space[2] arriba, space[6] abajo, gap space[4]).
+  const reservado = 4 + space[2] + space[6] + space[4] * 2 + (teclado.visible ? 0 : bottom)
+  const disponible = (teclado.visible && teclado.arriba > 0 ? teclado.arriba : height) - top - reservado - pieAlto
+  const maximo = Math.min(height * 0.8, Math.max(ALTO_MINIMO, disponible))
+  return (
+    <>
+      <ScrollView style={{ maxHeight: maximo, flexGrow: 0 }} contentContainerStyle={{ gap: space[4] }} keyboardShouldPersistTaps="handled">
+        {cabecera}
+        {children}
+      </ScrollView>
+      {pie ? (
+        <View
+          onLayout={(e) => setPieAlto(Math.round(e.nativeEvent.layout.height))}
+          style={{ gap: space[2], paddingTop: space[3], borderTopWidth: 1, borderTopColor: c.border }}
+        >
+          {pie}
+        </View>
+      ) : null}
+    </>
+  )
+}
+
+type PropsEdicion = Props & { cabecera: React.ReactNode }
+
+function Edicion({ evento, cabecera, ...props }: PropsEdicion) {
   const c = useColors()
   const qc = useQueryClient()
   const detalle = useEventoCalendario(evento.origenId)
@@ -91,17 +133,17 @@ function Edicion({ evento, ...props }: Props) {
   if (!d && detalle.isSuccess && !detalle.isFetching) setD(detalle.data)
   if (!d && detalle.isError) {
     return (
-      <>
+      <Cuerpo cabecera={cabecera}>
         <Notice tone="peligro">{mensajeDelServidor(detalle.error, 'No se pudo cargar el evento.')}</Notice>
         <Button label="Cerrar" variant="secundario" onPress={props.onCerrar} />
-      </>
+      </Cuerpo>
     )
   }
-  if (!d) return <ActivityIndicator color={c.brand} accessibilityLabel="Cargando el evento" />
-  return <Formulario d={d} evento={evento} {...props} onBorrado={() => { borrado.current = true; props.onCerrar() }} />
+  if (!d) return <Cuerpo cabecera={cabecera}><ActivityIndicator color={c.brand} accessibilityLabel="Cargando el evento" /></Cuerpo>
+  return <Formulario d={d} evento={evento} cabecera={cabecera} {...props} onBorrado={() => { borrado.current = true; props.onCerrar() }} />
 }
 
-function Formulario({ d, evento, onCerrar, onMovido, onBorrado }: Props & { d: EventoDetalle; onBorrado: () => void }) {
+function Formulario({ d, evento, cabecera, onCerrar, onMovido, onBorrado }: PropsEdicion & { d: EventoDetalle; onBorrado: () => void }) {
   const c = useColors()
   const editar = useEditarEvento()
   const borrar = useBorrarEvento()
@@ -157,7 +199,37 @@ function Formulario({ d, evento, onCerrar, onMovido, onBorrado }: Props & { d: E
     correr(() => pagar.mutateAsync({ id: d.id, fecha: fechaOriginalDe(evento), pagado }), onCerrar, 'No se pudo marcar el evento.')
 
   return (
-    <>
+    <Cuerpo
+      cabecera={cabecera}
+      pie={(
+        <>
+          {error ? <Notice tone="peligro">{error}</Notice> : null}
+          {confirmando === 'borrar' ? (
+            <>
+              <Notice tone="advertencia">Se borra el evento y todas sus fechas. No se puede deshacer.</Notice>
+              <Button label="Sí, borrar" variant="peligro" disabled={ocupado} loading={borrar.isPending} onPress={() => void correr(() => borrar.mutateAsync(d.id), onBorrado, 'No se pudo borrar el evento.')} />
+              <Button label="No borrar" variant="secundario" disabled={ocupado} onPress={() => setConfirmando(null)} />
+            </>
+          ) : confirmando === 'mover' ? (
+            <>
+              {/* El servidor descarta solo las marcas que quedan fuera de la serie nueva. */}
+              <Notice tone="advertencia">
+                {d.recurrencia
+                  ? `Tiene ${marcas}. Al cambiar el primer día se pierden las que ya no caigan en la serie.`
+                  : n === 1 ? 'Se pierde su marca (pagada u omitida).' : `Se pierden sus ${marcas}.`}
+              </Notice>
+              <Button label="Sí, guardar" disabled={!titulo.trim() || !horaValida || ocupado} loading={editar.isPending} onPress={guardar} />
+              <Button label="No guardar" variant="secundario" disabled={ocupado} onPress={() => setConfirmando(null)} />
+            </>
+          ) : (
+            <>
+              <Button label="Guardar cambios" disabled={!titulo.trim() || !horaValida || ocupado} loading={editar.isPending} onPress={guardar} />
+              <Button label="Borrar evento" variant="secundario" disabled={ocupado} onPress={() => setConfirmando('borrar')} />
+            </>
+          )}
+        </>
+      )}
+    >
       {confirmando ? null : evento.estado === 'Pagado' ? (
         <Button label={`Desmarcar ${verbo}`} variant="secundario" disabled={ocupado} loading={pagar.isPending} onPress={() => void marcar(false)} />
       ) : evento.estado !== 'Cancelado' ? (
@@ -186,30 +258,6 @@ function Formulario({ d, evento, onCerrar, onMovido, onBorrado }: Props & { d: E
       <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
         {d.visibilidad === 'Personal' ? 'Lo ves solo vos.' : 'Lo ve Administración.'}
       </Text>
-      {error ? <Notice tone="peligro">{error}</Notice> : null}
-      {confirmando === 'borrar' ? (
-        <>
-          <Notice tone="advertencia">Se borra el evento y todas sus fechas. No se puede deshacer.</Notice>
-          <Button label="Sí, borrar" variant="peligro" disabled={ocupado} loading={borrar.isPending} onPress={() => void correr(() => borrar.mutateAsync(d.id), onBorrado, 'No se pudo borrar el evento.')} />
-          <Button label="No borrar" variant="secundario" disabled={ocupado} onPress={() => setConfirmando(null)} />
-        </>
-      ) : confirmando === 'mover' ? (
-        <>
-          {/* El servidor descarta solo las marcas que quedan fuera de la serie nueva. */}
-          <Notice tone="advertencia">
-            {d.recurrencia
-              ? `Tiene ${marcas}. Al cambiar el primer día se pierden las que ya no caigan en la serie.`
-              : n === 1 ? 'Se pierde su marca (pagada u omitida).' : `Se pierden sus ${marcas}.`}
-          </Notice>
-          <Button label="Sí, guardar" disabled={!titulo.trim() || !horaValida || ocupado} loading={editar.isPending} onPress={guardar} />
-          <Button label="No guardar" variant="secundario" disabled={ocupado} onPress={() => setConfirmando(null)} />
-        </>
-      ) : (
-        <>
-          <Button label="Guardar cambios" disabled={!titulo.trim() || !horaValida || ocupado} loading={editar.isPending} onPress={guardar} />
-          <Button label="Borrar evento" variant="secundario" disabled={ocupado} onPress={() => setConfirmando('borrar')} />
-        </>
-      )}
-    </>
+    </Cuerpo>
   )
 }
