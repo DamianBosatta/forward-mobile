@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Text, View, useWindowDimensions } from 'react-native'
+import { ActivityIndicator, ScrollView, Text, View, useWindowDimensions } from 'react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, StatusChip } from '@/core/ui/fw'
 import { useQueryClient } from '@tanstack/react-query'
@@ -40,39 +40,37 @@ export function EventoSheet({ evento, onCerrar, onMovido, onAbrirVenta }: Props)
   const original = fechaOriginalDe(evento)
   return (
     <BottomSheet visible onClose={onCerrar} accessibilityLabel={evento.titulo}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView style={{ maxHeight: height * 0.8 }} contentContainerStyle={{ gap: space[4] }} keyboardShouldPersistTaps="handled">
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
-            <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text, flex: 1 }}>{evento.titulo}</Text>
-            {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
-          </View>
+      <ScrollView style={{ maxHeight: height * 0.8 }} contentContainerStyle={{ gap: space[4] }} keyboardShouldPersistTaps="handled">
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
+          <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text, flex: 1 }}>{evento.titulo}</Text>
+          {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
+        </View>
+        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
+          {[nombreLargo(moverDia(evento.fecha, 0)), evento.hora, TIPO[evento.tipo] ?? evento.tipo].filter(Boolean).join(' · ')}
+        </Text>
+        {evento.ventaId && onAbrirVenta ? (
+          <Button
+            label={`Agendado desde la venta ${evento.ventaCodigo ?? ''}`.trim()}
+            variant="secundario"
+            onPress={() => {
+              onCerrar()
+              onAbrirVenta(evento.ventaId!)
+            }}
+          />
+        ) : evento.ventaCodigo ? (
+          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Agendado desde la venta ${evento.ventaCodigo}`}</Text>
+        ) : null}
+        {original !== evento.fecha ? (
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-            {[nombreLargo(moverDia(evento.fecha, 0)), evento.hora, TIPO[evento.tipo] ?? evento.tipo].filter(Boolean).join(' · ')}
+            {`Reprogramado: el original era el ${nombreLargo(moverDia(original, 0)).toLowerCase()}.`}
           </Text>
-          {evento.ventaId && onAbrirVenta ? (
-            <Button
-              label={`Agendado desde la venta ${evento.ventaCodigo ?? ''}`.trim()}
-              variant="secundario"
-              onPress={() => {
-                onCerrar()
-                onAbrirVenta(evento.ventaId!)
-              }}
-            />
-          ) : evento.ventaCodigo ? (
-            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Agendado desde la venta ${evento.ventaCodigo}`}</Text>
-          ) : null}
-          {original !== evento.fecha ? (
-            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-              {`Reprogramado: el original era el ${nombreLargo(moverDia(original, 0)).toLowerCase()}.`}
-            </Text>
-          ) : null}
-          {evento.origen === 'Manual' ? (
-            <Edicion evento={evento} onCerrar={onCerrar} onMovido={onMovido} />
-          ) : (
-            <Notice tone="info">Es automático: sale de cheques y compras, y no se cambia desde acá.</Notice>
-          )}
-        </ScrollView>
-      </KeyboardAvoidingView>
+        ) : null}
+        {evento.origen === 'Manual' ? (
+          <Edicion evento={evento} onCerrar={onCerrar} onMovido={onMovido} />
+        ) : (
+          <Notice tone="info">Es automático: sale de cheques y compras, y no se cambia desde acá.</Notice>
+        )}
+      </ScrollView>
     </BottomSheet>
   )
 }
