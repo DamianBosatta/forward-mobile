@@ -69,14 +69,14 @@ export default function ProveedoresScreen() {
         contentContainerStyle={{ paddingBottom: 88 }}
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.brandInk} />}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch() }} tintColor={c.brandInk} />}
         ListEmptyComponent={
           isLoading ? (
             <ActivityIndicator color={c.brandInk} style={{ marginTop: space[8] }} />
           ) : error ? (
             sinRed ? (
               <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los proveedores" accion={{ label: 'Reintentar', onPress: () => void refetch() }} />
-            ) : null
+            ) : undefined
           ) : (
             <EstadoDePantalla
               tipo="vacio"

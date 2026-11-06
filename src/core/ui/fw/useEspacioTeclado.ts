@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { View } from 'react-native'
+import type { ViewInstance } from 'react-native'
 import { useTeclado } from '@/core/utils/useTecladoVisible'
 import { espacioBajoTeclado } from './espacioTeclado'
 
@@ -10,7 +10,7 @@ import { espacioBajoTeclado } from './espacioTeclado'
  */
 export function useEspacioTeclado() {
   const teclado = useTeclado()
-  const ref = useRef<View>(null)
+  const ref = useRef<ViewInstance>(null)
   const [espacio, setEspacio] = useState(0)
 
   const medir = useCallback(() => {

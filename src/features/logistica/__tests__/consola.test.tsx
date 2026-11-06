@@ -90,7 +90,7 @@ describe('Consola del chofer: hoja de ruta', () => {
   })
 
   it('Cómo llegar abre el mapa con la dirección y Llamar marca el teléfono', async () => {
-    const abrir = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+    const abrir = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
     pintar()
     await userEvent.press(await screen.findByLabelText('Cómo llegar'))
     const mapa = String(abrir.mock.calls[0][0])

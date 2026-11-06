@@ -123,7 +123,7 @@ describe('solicitud de cambio desde la ficha', () => {
     })
   }
   beforeEach(() => {
-    jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+    jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
     servidorFicha(detalle())
   })
 

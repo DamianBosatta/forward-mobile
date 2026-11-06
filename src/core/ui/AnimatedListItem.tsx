@@ -1,5 +1,5 @@
 import React from 'react'
-import { MotiView } from 'moti'
+import { MotiView, type MotiTransitionProp } from 'moti'
 import { ViewStyle } from 'react-native'
 
 interface AnimatedListItemProps {
@@ -46,7 +46,7 @@ export const AnimatedListItem = ({
         delay: index * 50,
         damping: 20,
         stiffness: 90,
-      }}
+      } as MotiTransitionProp}
       style={style}
     >
       {children}

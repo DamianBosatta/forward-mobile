@@ -32,7 +32,7 @@ const abrir = async (solapa: string) => userEvent.press(await screen.findByRole(
 
 beforeEach(() => {
   jest.clearAllMocks()
-  jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+  jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
   conPermisos([{ module: 'MOD_CLIENTES', canRead: true, canUpdate: true }])
   servidor(detalle())
 })

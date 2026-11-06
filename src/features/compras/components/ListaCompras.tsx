@@ -139,7 +139,7 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
           : q.isError ? <Notice tone="peligro">No se pudieron cargar las compras. Deslizá hacia abajo para reintentar.</Notice>
           : <Text style={secundario}>No hay compras con estos filtros.</Text>
       }
-      ListFooterComponent={q.isFetchingNextPage ? <ActivityIndicator color={c.brand} /> : null}
+      ListFooterComponent={q.isFetchingNextPage ? <ActivityIndicator color={c.brand} /> : undefined}
     />
   )
 

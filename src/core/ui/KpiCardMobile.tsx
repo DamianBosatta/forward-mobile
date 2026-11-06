@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Text } from 'react-native'
 import { GlassCard } from './GlassCard'
-import { MotiView } from 'moti'
+import { MotiView, type MotiTransitionProp } from 'moti'
 import { useColors } from '@/libs/theme'
 
 interface KpiCardMobileProps {
@@ -31,7 +31,7 @@ export function KpiCardMobile({
         type: 'spring', 
         delay: index * 100,
         damping: 15
-      }}
+      } as MotiTransitionProp}
       style={{ flex: 1 }}
     >
       <GlassCard 

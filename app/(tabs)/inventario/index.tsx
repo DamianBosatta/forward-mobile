@@ -106,7 +106,7 @@ function CatalogoConsulta() {
         </View>
       ) : (
         <FlatList
-          ListHeaderComponent={catSinRed ? <Notice tone="advertencia">{textoSinConexion(cat.dataUpdatedAt)}</Notice> : null}
+          ListHeaderComponent={catSinRed ? <Notice tone="advertencia">{textoSinConexion(cat.dataUpdatedAt)}</Notice> : undefined}
           key={`columnas-${columnas}`}
           data={productos}
           numColumns={columnas}
@@ -116,7 +116,7 @@ function CatalogoConsulta() {
           onEndReached={cat.cargarMas}
           onEndReachedThreshold={0.5}
           ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan con la búsqueda." />}
-          ListFooterComponent={cat.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : null}
+          ListFooterComponent={cat.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : undefined}
           renderItem={({ item }) => (
             <ProductoCard
               producto={item}

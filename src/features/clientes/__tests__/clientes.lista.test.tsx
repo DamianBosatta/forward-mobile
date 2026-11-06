@@ -232,7 +232,7 @@ describe('lámina Clientes (bloque 12, T7)', () => {
   })
 
   it('cada tarjeta con teléfono tiene Llamar, que marca sin abrir la ficha', async () => {
-    const abrir = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+    const abrir = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
     renderConQuery(<ClientesScreen />)
 
     await screen.findByText('Av. del Valle 89')

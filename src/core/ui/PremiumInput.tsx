@@ -8,7 +8,7 @@ import {
   TextInputProps,
   ViewStyle
 } from 'react-native'
-import { MotiView } from 'moti'
+import { MotiView, type MotiTransitionProp } from 'moti'
 import { useColors, tokens, useIsDark } from '@/libs/theme'
 
 interface PremiumInputProps extends TextInputProps {
@@ -57,7 +57,7 @@ export const PremiumInput = ({
           shadowOpacity: isFocused && isDark ? 0.3 : 0,
           scale: isFocused ? 1.01 : 1,
         }}
-        transition={{ type: 'spring', damping: 15 }}
+        transition={{ type: 'spring', damping: 15 } as MotiTransitionProp}
         style={[
           styles.inputWrapper, 
           { height, borderColor: colors.glassBorder },

@@ -194,7 +194,7 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
             </>
           }
           ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan." />}
-          ListFooterComponent={s.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : null}
+          ListFooterComponent={s.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : undefined}
           renderItem={({ item }) => (tablet ? <FilaTablet f={item} /> : <FilaTelefono f={item} />)}
         />
       )}

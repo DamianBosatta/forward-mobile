@@ -58,7 +58,7 @@ const SECCIONES_CON_INTERNAS = [
 ] as const
 
 describe('Drawer sections keep their own back stack (A-05)', () => {
-  it.each(SECCIONES_CON_INTERNAS)('%s > %s: back lands on the section index, not on Inicio', (seccion, interna) => {
+  it.each(SECCIONES_CON_INTERNAS)('%s > %s: back lands on the section index, not on Inicio', async (seccion, interna) => {
     let router!: ReturnType<typeof useRouter>
     const mapa = arbol()
     const Original = mapa[`(tabs)/${seccion}/index`]
@@ -66,7 +66,7 @@ describe('Drawer sections keep their own back stack (A-05)', () => {
       router = useRouter()
       return <Original />
     }
-    const { getPathname } = renderRouter(mapa, { initialUrl: `/${seccion}` })
+    const { getPathname } = await renderRouter(mapa, { initialUrl: `/${seccion}` })
     expect(pantalla(`${seccion}/index`)).toBeTruthy()
 
     act(() => router.push(`/(tabs)/${seccion}/${interna}` as never))
@@ -78,7 +78,7 @@ describe('Drawer sections keep their own back stack (A-05)', () => {
     expect(getPathname()).toBe(`/${seccion}`)
   })
 
-  it('a deep link to an inner screen keeps the section index behind it', () => {
+  it('a deep link to an inner screen keeps the section index behind it', async () => {
     let router!: ReturnType<typeof useRouter>
     const mapa = arbol()
     const Original = mapa['(tabs)/ventas/nueva']
@@ -86,34 +86,34 @@ describe('Drawer sections keep their own back stack (A-05)', () => {
       router = useRouter()
       return <Original />
     }
-    const { getPathname } = renderRouter(mapa, { initialUrl: '/ventas/nueva' })
+    const { getPathname } = await renderRouter(mapa, { initialUrl: '/ventas/nueva' })
     expect(pantalla('ventas/nueva')).toBeTruthy()
     act(() => router.back())
     expect(getPathname()).toBe('/ventas')
   })
 
-  it('an inner screen opened from another section goes back to where the user came from', () => {
+  it('an inner screen opened from another section goes back to where the user came from', async () => {
     let router!: ReturnType<typeof useRouter>
     const mapa = arbol()
     mapa['(tabs)/index'] = () => {
       router = useRouter()
       return <Text>pantalla:(tabs)/index</Text>
     }
-    renderRouter(mapa, { initialUrl: '/' })
+    await renderRouter(mapa, { initialUrl: '/' })
     act(() => router.push('/(tabs)/ventas/nueva' as never))
     expect(pantalla('ventas/nueva')).toBeTruthy()
     act(() => router.back())
     expect(pantalla('index')).toBeTruthy()
   })
 
-  it('every section href the drawer uses still opens that section index', () => {
+  it('every section href the drawer uses still opens that section index', async () => {
     let router!: ReturnType<typeof useRouter>
     const mapa = arbol()
     mapa['(tabs)/index'] = () => {
       router = useRouter()
       return <Text>pantalla:(tabs)/index</Text>
     }
-    renderRouter(mapa, { initialUrl: '/' })
+    await renderRouter(mapa, { initialUrl: '/' })
     for (const seccion of ['ventas', 'socios', 'inventario', 'compras', 'proveedores', 'autorizaciones', 'cuentas', 'tesoreria', 'calendario', 'avisos', 'reportes', 'perfil']) {
       act(() => router.push(`/(tabs)/${seccion}` as never))
       expect(pantalla(`${seccion}/index`)).toBeTruthy()
@@ -135,7 +135,7 @@ describe('Drawer sections keep their own back stack (A-05)', () => {
     ['compras', 'nueva', '/(tabs)/compras/[id]', 'compras/[id]'],
     ['ventas', 'nueva', '/(tabs)', 'index'],
     ['ventas', 'nueva', '/', 'index'],
-  ])('router.replace from %s/%s to %s opens it', (seccion, interna, destino, pantallaEsperada) => {
+  ])('router.replace from %s/%s to %s opens it', async (seccion, interna, destino, pantallaEsperada) => {
     let router!: ReturnType<typeof useRouter>
     const mapa = arbol()
     const Original = mapa[`(tabs)/${seccion}/${interna}`]
@@ -143,12 +143,12 @@ describe('Drawer sections keep their own back stack (A-05)', () => {
       router = useRouter()
       return <Original />
     }
-    renderRouter(mapa, { initialUrl: `/${seccion}/${interna}` })
+    await renderRouter(mapa, { initialUrl: `/${seccion}/${interna}` })
     act(() => router.replace(destino.replace('[id]', '7') as never))
     expect(pantalla(pantallaEsperada)).toBeTruthy()
   })
 
-  it('the menu button of an inner screen still opens the Drawer', () => {
+  it('the menu button of an inner screen still opens the Drawer', async () => {
     const mapa = arbol()
     let abrir!: () => void
     mapa['(tabs)/ventas/index'] = () => {
@@ -156,7 +156,7 @@ describe('Drawer sections keep their own back stack (A-05)', () => {
       abrir = () => navigation.dispatch(DrawerActions.openDrawer())
       return <Text>pantalla:(tabs)/ventas/index</Text>
     }
-    renderRouter(mapa, { initialUrl: '/ventas' })
+    await renderRouter(mapa, { initialUrl: '/ventas' })
     expect(screen.getByText('cajon:closed')).toBeTruthy()
     act(() => abrir())
     expect(screen.getByText('cajon:open')).toBeTruthy()

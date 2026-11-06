@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native'
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type ScrollViewInstance, type TextInputInstance, type TextInputProps } from 'react-native'
 import { importe, maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, formatImporte } from '@/core/ui/fw'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
@@ -55,8 +55,8 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
   const pctLeido = leerNumero(pctTexto)
   const pctInvalido = pctLeido === null || pctLeido < 0 || pctLeido > 100
   const tope = avisoTope(pctInvalido ? 0 : pctLeido, user?.maxDescuentoPorcentaje ?? 0, hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO'))
-  const scrollRef = useRef<ScrollView>(null)
-  const campos = useRef<Record<string, TextInput | null>>({})
+  const scrollRef = useRef<ScrollViewInstance>(null)
+  const campos = useRef<Record<string, TextInputInstance | null>>({})
   const filas = useRef<Record<string, number>>({})
   // Desde 8 fragancias se busca por nombre, sin tildes ni mayúsculas (mismo umbral que la consola del chofer).
   // Lo tipeado en las filas ocultas se conserva en `textos`, así que sigue sumando a las unidades y al total.
@@ -159,7 +159,7 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
  */
 function CampoCantidad({ nombre, value, onChangeText, error, keyboardType = 'number-pad', inputRef, onFocus, ...resto }: {
   nombre: string; value: string; onChangeText: (t: string) => void; error?: string
-  keyboardType?: 'number-pad' | 'decimal-pad'; inputRef?: (r: TextInput | null) => void
+  keyboardType?: 'number-pad' | 'decimal-pad'; inputRef?: (r: TextInputInstance | null) => void
 } & Pick<TextInputProps, 'returnKeyType' | 'onSubmitEditing' | 'onFocus'>) {
   const c = useColors()
   const [foco, setFoco] = useState(false)

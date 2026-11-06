@@ -116,7 +116,7 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
             ) : null}
             <Text style={secundario}>Se cambian en la ficha del proveedor, en la web.</Text>
           </FormContainer>
-        ) : null}
+        ) : undefined}
       />
       <PieFijo>
         <Button label="Continuar a productos" disabled={!elegido} onPress={() => { if (elegido) onElegir(elegido) }} />

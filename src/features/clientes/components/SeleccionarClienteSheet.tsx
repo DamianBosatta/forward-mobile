@@ -171,7 +171,7 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
         }
         renderItem={({ item }) => <Fila cliente={item} vencida={item.tieneDeudaVencida === true} onPress={() => elegir(item)} />}
         ListEmptyComponent={
-          isLoading ? <ActivityIndicator color={c.brandInk} /> : error ? null : (
+          isLoading ? <ActivityIndicator color={c.brandInk} /> : error ? undefined : (
             <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
               {buscando ? 'Ningún cliente coincide con la búsqueda.' : 'Todavía no hay clientes en tu cartera.'}
             </Text>

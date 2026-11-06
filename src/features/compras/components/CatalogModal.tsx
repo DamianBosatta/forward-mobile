@@ -94,7 +94,7 @@ export function CatalogModal({ visible, onClose, productSearch, setProductSearch
             onEndReachedThreshold={0.5}
             keyboardShouldPersistTaps="handled"
             ListEmptyComponent={<Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center', marginTop: space[6] }}>No hay productos con esa búsqueda</Text>}
-            ListFooterComponent={hayMasProductos ? <ActivityIndicator style={{ marginVertical: space[4] }} color={c.brand} /> : null}
+            ListFooterComponent={hayMasProductos ? <ActivityIndicator style={{ marginVertical: space[4] }} color={c.brand} /> : undefined}
             renderItem={({ item }) => (
               <FilaProducto item={item} cantidad={detalles.find((d) => d.productoId === item.id)?.cantidad || 0} onCambiar={setProductoCantidad} />
             )}

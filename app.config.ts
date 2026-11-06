@@ -34,6 +34,9 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-secure-store',
+    // SDK 58 turns R8 on for release builds by default. Keep the SDK 57 behaviour until a release APK is tested with it:
+    // R8 can strip classes reached through reflection, and jest cannot see that.
+    ['expo-build-properties', { android: { enableMinifyInReleaseBuilds: false } }],
     [
       'expo-splash-screen',
       {

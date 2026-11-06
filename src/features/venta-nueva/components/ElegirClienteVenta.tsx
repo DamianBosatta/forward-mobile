@@ -175,7 +175,7 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
           )
         }}
         ListEmptyComponent={
-          isLoading ? <ActivityIndicator color={c.brandInk} /> : error ? null : (
+          isLoading ? <ActivityIndicator color={c.brandInk} /> : error ? undefined : (
             <Text style={{ ...typeScale.secundario, color: c.textSecondary, paddingHorizontal: space[4] }}>
               {buscando ? 'Ningún cliente coincide con la búsqueda.' : 'Todavía no hay clientes en tu cartera.'}
             </Text>

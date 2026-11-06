@@ -3,9 +3,13 @@ process.env.EXPO_PUBLIC_USE_RN_FETCH = '1'
 
 module.exports = {
   preset: 'jest-expo',
+  // Reanimated 4.7 needs its own resolver under Jest: importing it otherwise throws (JSReanimated has no setCSSEventHandler).
+  resolver: 'react-native-reanimated/jest/resolver',
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|standard-navigation|@unimodules/.*|unimodules|sentry-expo|@sentry/react-native|native-base|react-native-svg|zustand|immer|moti)'
+    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|standard-navigation|@unimodules/.*|unimodules|sentry-expo|@sentry/.*|@shopify/flash-list|native-base|react-native-svg|zustand|immer|moti)'
   ],
+  // Gesture Handler 3 calls its native module on import: its official Jest mocks replace that module.
+  setupFiles: ['react-native-gesture-handler/jestSetup.js'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
     '^@/core/(.*)$': '<rootDir>/src/core/$1',

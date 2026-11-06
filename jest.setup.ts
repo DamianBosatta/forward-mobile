@@ -20,7 +20,7 @@ timeoutManager.setTimeoutProvider({
   clearInterval: (id) => clearInterval(id),
 })
 
-// Worklets 0.10 reads its native module on import: tests use the package's own mock.
+// Worklets reads its native module on import: tests use the package's own mock.
 jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'))
 
 // Mock AsyncStorage

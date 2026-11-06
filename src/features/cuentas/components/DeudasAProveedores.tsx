@@ -47,14 +47,14 @@ export function DeudasAProveedores() {
         renderItem={({ item }) => <FilaDeDeuda deuda={item} />}
         onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) void q.fetchNextPage() }}
         onEndReachedThreshold={0.5}
-        refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={q.refetch} tintColor={c.brandInk} />}
+        refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => { void q.refetch() }} tintColor={c.brandInk} />}
         ListEmptyComponent={
           q.isLoading ? (
             <ActivityIndicator color={c.brandInk} style={{ marginTop: space[8] }} />
           ) : q.error ? (
             sinRed ? (
               <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar las deudas" accion={{ label: 'Reintentar', onPress: () => void q.refetch() }} />
-            ) : null
+            ) : undefined
           ) : (
             <EstadoDePantalla tipo="vacio" titulo="No le debés a ningún proveedor." />
           )

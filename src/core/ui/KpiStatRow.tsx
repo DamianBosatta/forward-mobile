@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import { MotiView } from 'moti'
+import { MotiView, type MotiTransitionProp } from 'moti'
 import { useColors, useIsDark } from '@/libs/theme'
 import { ResponsiveGrid, ResponsiveGridProps } from './ResponsiveGrid'
 
@@ -54,7 +54,7 @@ export function KpiStatRow({ stats, columns = DEFAULT_COLUMNS }: KpiStatRowProps
             key={stat.key}
             from={{ opacity: 0, translateY: 12 }}
             animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: 'spring', damping: 18, delay: index * 80 }}
+            transition={{ type: 'spring', damping: 18, delay: index * 80 } as MotiTransitionProp}
           >
             <View
               style={[
