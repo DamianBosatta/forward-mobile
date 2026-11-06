@@ -86,13 +86,20 @@ export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubien
               <>
                 <View style={{ flexDirection: 'row', gap: space[2] }}>
                   <BotonCorto etiqueta="Te dio" activo={l.recibido !== undefined} onPress={() => cambiar(i, { recibido: l.recibido ?? '' })} />
-                  <BotonCorto etiqueta="Justo" activo={l.recibido === undefined} onPress={() => cambiar(i, { recibido: undefined })} />
+                  <BotonCorto etiqueta="Justo" activo={l.recibido === undefined} onPress={() => cambiar(i, { recibido: undefined, sinVuelto: false })} />
                 </View>
                 {l.recibido !== undefined ? (
                   <Field label={`Te dio (cobro ${n})`} value={l.recibido} onChangeText={(v) => cambiar(i, { recibido: v })} keyboardType="decimal-pad" alignRight />
                 ) : null}
                 {vuelto != null ? (
-                  <Text accessibilityLiveRegion="polite" style={{ ...typeScale.cuerpoDestacado, color: c.text, textAlign: 'right' }}>{`Su vuelto ${formatImporte(vuelto)}`}</Text>
+                  <>
+                    <Text accessibilityLiveRegion="polite" style={{ ...typeScale.cuerpoDestacado, color: c.text, textAlign: 'right' }}>{`Su vuelto ${formatImporte(vuelto)}`}</Text>
+                    <View style={{ flexDirection: 'row', gap: space[2] }}>
+                      <BotonCorto etiqueta="Di el vuelto" activo={!l.sinVuelto} onPress={() => cambiar(i, { sinVuelto: false })} />
+                      <BotonCorto etiqueta="No di vuelto" activo={!!l.sinVuelto} onPress={() => cambiar(i, { sinVuelto: true })} />
+                    </View>
+                    {l.sinVuelto ? <Notice tone="info">{`Los ${formatImporte(vuelto)} de más quedan en su cuenta corriente.`}</Notice> : null}
+                  </>
                 ) : null}
               </>
             ) : null}
@@ -162,7 +169,7 @@ function BotonQuitar({ etiqueta, onPress }: { etiqueta: string; onPress: () => v
   )
 }
 
-/** "Te dio" / "Justo": dos botones de 48 px, uno elegido (el vuelto es solo una cuenta en pantalla). */
+/** Pares de botones de 48 px, uno elegido: "Te dio" / "Justo" y "Di el vuelto" / "No di vuelto". */
 function BotonCorto({ etiqueta, activo, onPress }: { etiqueta: string; activo: boolean; onPress: () => void }) {
   const c = useColors()
   return (

@@ -1,6 +1,6 @@
 import { formatImporte } from '@/core/ui/fw/formatImporte'
 import { leerNumero } from '@/core/utils/numero'
-import { armarLinea, type LineaCobroForm } from './entrega'
+import { armarLinea, montoDeLinea, type LineaCobroForm } from './entrega'
 
 /**
  * Los pasos de la entrega del chofer (lienzo de entrega, láminas chofer-03 a chofer-05): devolución,
@@ -51,7 +51,7 @@ const centavos = (n: number) => Math.round(n * 100)
 /** Suma de las líneas con monto válido. */
 export function totalRepartido(lineas: LineaCobroForm[]): number {
   return lineas.reduce((t, l) => {
-    const m = leerNumero(l.monto)
+    const m = montoDeLinea(l)
     return m != null && m > 0 ? t + m : t
   }, 0)
 }

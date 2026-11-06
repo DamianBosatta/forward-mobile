@@ -21,6 +21,16 @@ export interface LineaCobroForm {
   cheque: ChequeForm
   /** Efectivo: lo que dio el cliente, solo para calcular el vuelto en pantalla; nunca viaja. */
   recibido?: string
+  /** Efectivo: "No di vuelto". Lo que sobra de lo recibido viaja como parte del cobro y el servidor lo lleva a la cuenta del cliente. */
+  sinVuelto?: boolean
+}
+
+/** Lo que de verdad viaja en la línea: el monto, o todo lo recibido si el chofer no dio el vuelto. */
+export function montoDeLinea(l: LineaCobroForm): number | null {
+  const monto = leerNumero(l.monto)
+  if (monto == null || !l.sinVuelto || l.medio?.tipo !== 'Efectivo') return monto
+  const recibido = leerNumero(l.recibido ?? '')
+  return recibido != null && recibido > monto ? recibido : monto
 }
 
 /** Solo observaciones del chofer y, si devuelve, el motivo de la devolución (TODO API: sin campo propio, viaja acá). */
@@ -74,7 +84,7 @@ type RenglonDevuelto = components['schemas']['NotaCreditoItemInput']
 
 export function armarLinea(l: LineaCobroForm, n: number): { linea: LineaCobro } | { error: string } {
   if (!l.medio) return { error: `Elegí el medio del cobro ${n}.` }
-  const monto = leerNumero(l.monto)
+  const monto = montoDeLinea(l)
   if (monto == null || monto <= 0) return { error: `El monto del cobro ${n} tiene que ser mayor a cero.` }
   const base = { medioPagoId: l.medio.id, monto, fotoUrl: l.fotoUrl ?? undefined }
   if (l.medio.tipo === 'Transferencia' && !l.fotoUrl) return { error: `Falta la foto del comprobante de la transferencia (cobro ${n}).` }
