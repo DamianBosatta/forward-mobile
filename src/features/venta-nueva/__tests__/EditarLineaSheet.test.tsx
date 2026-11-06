@@ -1,8 +1,7 @@
 import React from 'react'
-import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
+import { render, renderHook, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { StatusBar } from 'expo-status-bar'
-import { useThemeStore } from '@/libs/theme'
+import { useColors, useThemeStore } from '@/libs/theme'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { pctFromPrecio, precioFromPct } from '@/features/ventas/lib/descuentos'
 import { EditarLineaSheet } from '../components/EditarLineaSheet'
@@ -381,18 +380,23 @@ describe('EditarLineaSheet: la cabecera respeta la barra de estado', () => {
   })
 })
 
-describe.each([['light', 'dark'], ['dark', 'light']] as const)('EditarLineaSheet: íconos de la barra de estado en el teléfono, tema %s', (modo, iconos) => {
+describe.each(['light', 'dark'] as const)('EditarLineaSheet: franja bajo la barra de estado, tema %s', (modo) => {
   afterEach(() => useThemeStore.setState({ mode: 'system' }))
-  it(`usa íconos ${iconos} para leerse sobre la cabecera`, () => {
+  const plano = (st: unknown) => Object.assign({}, ...[st].flat(Infinity).filter(Boolean)) as { height?: number; backgroundColor?: string }
+
+  it('en el teléfono mide el inset superior y lleva el color topBar', () => {
     useThemeStore.setState({ mode: modo })
     mockAncho = 390
+    mockTop = 32
     abrir()
-    expect(screen.UNSAFE_getByType(StatusBar).props.style).toBe(iconos)
+    const st = plano(screen.getByTestId('franja-barra-estado').props.style)
+    expect(st.height).toBe(32)
+    expect(st.backgroundColor).toBe(renderHook(() => useColors()).result.current.topBar)
   })
 })
 
-it('en tablet la hoja es un panel lateral y no toca la barra de estado', () => {
+it('en tablet no hay franja: el panel es lateral', () => {
   mockAncho = 800
   abrir()
-  expect(screen.UNSAFE_queryByType(StatusBar)).toBeNull()
+  expect(screen.queryByTestId('franja-barra-estado')).toBeNull()
 })

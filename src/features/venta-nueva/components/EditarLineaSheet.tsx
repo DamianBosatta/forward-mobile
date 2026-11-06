@@ -2,8 +2,7 @@ import React, { useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { Trash2 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { StatusBar } from 'expo-status-bar'
-import { radii, space, typeScale, importe, useColors, useIsDark } from '@/libs/theme'
+import { radii, space, typeScale, importe, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Button, Field, Notice, StatusChip, formatImporte } from '@/core/ui/fw'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -61,7 +60,6 @@ function ConStockDeFragancia(props: EditarLineaSheetProps & { linea: LineaCarrit
 
 function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad, descuentoGeneral = 0 }: EditarLineaSheetProps & { linea: LineaCarrito; maxCantidad: number }) {
   const c = useColors()
-  const oscuro = useIsDark()
   const { isTablet } = useResponsive()
   const insets = useSafeAreaInsets()
   const user = useAuthStore((s) => s.user)
@@ -110,12 +108,13 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
 
   return (
     <Modal visible transparent={isTablet} animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      {/* Teléfono: la cabecera es clara en el tema claro, así que los íconos van oscuros (la raíz los pone siempre claros). */}
-      {!isTablet ? <StatusBar style={oscuro ? 'light' : 'dark'} /> : null}
       <View style={{ flex: 1, flexDirection: 'row', backgroundColor: isTablet ? c.veil : c.bg }}>
         {isTablet && <Pressable accessibilityRole="button" accessibilityLabel="Cerrar" onPress={onClose} style={{ flex: 1 }} />}
         <View testID="editar-linea" accessibilityLabel="Editar línea" style={{ flex: isTablet ? undefined : 1, width: isTablet ? 440 : undefined, backgroundColor: c.bg }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], padding: space[4], paddingTop: space[4] + insets.top, backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.border }}>
+          {/* Teléfono: la raíz deja los íconos de la barra de estado en claro, así que esa franja va del color de las barras
+              del resto de la app (topBar, oscuro en los dos temas) y no sobre la cabecera blanca. */}
+          {!isTablet ? <View testID="franja-barra-estado" style={{ height: insets.top, backgroundColor: c.topBar }} /> : null}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], padding: space[4], paddingTop: space[4] + (isTablet ? insets.top : 0), backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.border }}>
             <View style={{ flex: 1 }}>
               <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{p.codigoPropio ?? ''}</Text>
               <Text style={texto()}>{p.nombre}</Text>
