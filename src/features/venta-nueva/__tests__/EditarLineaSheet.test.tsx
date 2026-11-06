@@ -8,6 +8,11 @@ import { leerNumero } from '../lib/linea'
 import type { LineaCarrito } from '../lib/carrito'
 import { cajaDe6, producto } from '../__testing__/producto'
 
+let mockTop = 0
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: mockTop, bottom: 0, left: 0, right: 0 }),
+  SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
 const mockGet = jest.fn()
 const mockPost = jest.fn()
 jest.mock('@/core/api/client', () => ({
@@ -38,6 +43,7 @@ const escribir = async (campo: string, texto: string) => {
 const valor = (campo: string) => leerNumero(screen.getByLabelText(campo).props.value)
 
 beforeEach(() => {
+  mockTop = 0
   conUsuario(10)
   mockGet.mockReset().mockResolvedValue(undefined)
   mockPost.mockReset().mockResolvedValue(undefined)
@@ -351,4 +357,18 @@ describe('EditarLineaSheet: Se vende por (ventas-nueva-2-productos--linea)', () 
     expect(screen.getByLabelText('Unidades: 24')).toBeTruthy()
   })
 })
+})
+
+describe('EditarLineaSheet: la cabecera respeta la barra de estado', () => {
+  it.each([0, 24, 48])('con inset superior %i el código queda debajo', (top) => {
+    mockTop = top
+    abrir()
+    let nodo = screen.getByText('PRO11923').parent
+    let paddingTop: number | undefined
+    while (nodo && paddingTop === undefined) {
+      paddingTop = (Object.assign({}, ...[nodo.props.style].flat(Infinity).filter(Boolean)) as { paddingTop?: number }).paddingTop
+      nodo = nodo.parent
+    }
+    expect(paddingTop).toBe(16 + top)
+  })
 })

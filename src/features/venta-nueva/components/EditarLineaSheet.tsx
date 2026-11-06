@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { Trash2 } from 'lucide-react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { radii, space, typeScale, importe, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Button, Field, Notice, StatusChip, formatImporte } from '@/core/ui/fw'
@@ -60,6 +61,7 @@ function ConStockDeFragancia(props: EditarLineaSheetProps & { linea: LineaCarrit
 function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad, descuentoGeneral = 0 }: EditarLineaSheetProps & { linea: LineaCarrito; maxCantidad: number }) {
   const c = useColors()
   const { isTablet } = useResponsive()
+  const insets = useSafeAreaInsets()
   const user = useAuthStore((s) => s.user)
   const p = linea.producto
   const base = precioServidor(p)
@@ -109,7 +111,7 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
       <View style={{ flex: 1, flexDirection: 'row', backgroundColor: isTablet ? c.veil : c.bg }}>
         {isTablet && <Pressable accessibilityRole="button" accessibilityLabel="Cerrar" onPress={onClose} style={{ flex: 1 }} />}
         <View testID="editar-linea" accessibilityLabel="Editar línea" style={{ flex: isTablet ? undefined : 1, width: isTablet ? 440 : undefined, backgroundColor: c.bg }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], padding: space[4], backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.border }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], padding: space[4], paddingTop: space[4] + insets.top, backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.border }}>
             <View style={{ flex: 1 }}>
               <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{p.codigoPropio ?? ''}</Text>
               <Text style={texto()}>{p.nombre}</Text>
@@ -215,7 +217,7 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
               </View>
             )}
           </ScrollView>
-          <View style={{ padding: space[4], borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
+          <View style={{ padding: space[4], paddingBottom: space[4] + insets.bottom, borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
             <Button label="Confirmar" disabled={invalido} onPress={() => onConfirm({ ...linea, cantidad, descuentoPct: pct })} />
           </View>
         </View>
