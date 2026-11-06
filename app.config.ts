@@ -34,6 +34,8 @@ const config: ExpoConfig = {
     package: 'com.forward.erp',
     // Audit tranche 1, S3: no Android backup of the app data (MMKV, AsyncStorage) to Google or adb.
     allowBackup: false,
+    // Android 13+: sin este permiso la notificación del servicio de ubicación del viaje queda oculta.
+    permissions: ['android.permission.POST_NOTIFICATIONS'],
   },
   plugins: [
     'expo-router',
@@ -56,6 +58,11 @@ const config: ExpoConfig = {
       {
         locationAlwaysAndWhenInUsePermission:
           'Forward ERP necesita tu ubicación para registrar las entregas.',
+        locationWhenInUsePermission:
+          'Forward ERP usa tu ubicación para registrar las entregas y, mientras dura el viaje, para que la oficina vea por dónde va el camión.',
+        // GPS del viaje: servicio con notificación. No hace falta ACCESS_BACKGROUND_LOCATION.
+        isAndroidForegroundServiceEnabled: true,
+        isIosBackgroundLocationEnabled: true,
       },
     ],
     [

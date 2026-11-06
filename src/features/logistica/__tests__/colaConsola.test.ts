@@ -61,11 +61,18 @@ describe('envío de la cola de la consola', () => {
     const alEnviar = jest.fn()
     expect(await enviarPendientesConsola(USUARIO, { alEnviar })).toBe('completa')
     expect(mockPost.mock.calls).toEqual([
-      ['/api/v1/Logistica/hojas-ruta/h1/paradas/p1/entregar', { claveIdempotencia: 'k-1', nombreReceptor: 'Marta' }],
-      ['/api/v1/Logistica/hojas-ruta/h1/reportar-parada', { entregado: false, motivoRechazo: 'Cerrado', hojaDeRutaId: 'h1', paradaId: 'p2' }],
+      ['/api/v1/Logistica/hojas-ruta/h1/paradas/p1/entregar', { claveIdempotencia: 'k-1', nombreReceptor: 'Marta', resueltaEn: new Date(1000).toISOString() }],
+      ['/api/v1/Logistica/hojas-ruta/h1/reportar-parada', { entregado: false, motivoRechazo: 'Cerrado', hojaDeRutaId: 'h1', paradaId: 'p2', resueltaEn: new Date(2000).toISOString() }],
     ])
     expect(leerCola(USUARIO)).toEqual([])
     expect(alEnviar).toHaveBeenCalledWith('h1')
+  })
+
+  it('S6: una acción guardada con una hora imposible se manda sin resueltaEn en vez de romper', async () => {
+    encolarAccion(USUARIO, entrega(), 8.64e15 + 1)
+    mockPost.mockResolvedValue({})
+    expect(await enviarPendientesConsola(USUARIO)).toBe('completa')
+    expect(mockPost.mock.calls[0][1]).toEqual({ claveIdempotencia: 'k-1', nombreReceptor: 'Marta' })
   })
 
   it('sin cola devuelve vacia y no llama a nadie', async () => {

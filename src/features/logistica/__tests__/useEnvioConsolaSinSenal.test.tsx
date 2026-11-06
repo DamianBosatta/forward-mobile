@@ -66,7 +66,7 @@ describe('useEnvioConsolaSinSenal', () => {
     await conexion(true)
     await drenar()
     expect(post.mock.calls.filter(([u]) => u === entregar)).toHaveLength(1)
-    expect(post).toHaveBeenCalledWith(entregar, { claveIdempotencia: 'mobile-k1' })
+    expect(post).toHaveBeenCalledWith(entregar, { claveIdempotencia: 'mobile-k1', resueltaEn: expect.stringContaining('T') })
     expect(leerCola('u1')).toEqual([])
   })
 
