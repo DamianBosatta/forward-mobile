@@ -8,7 +8,8 @@ import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { producto } from '../__testing__/producto'
 import { aAutoguardado } from '../lib/payload'
 import { repartirFragancias } from '../lib/fragancias'
-import { reemplazar } from '../lib/carrito'
+import { precioServidor, reemplazar } from '../lib/carrito'
+import { formatImporte } from '@/core/ui/fw'
 
 const mockDims = jest.fn()
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => mockDims() }))
@@ -62,8 +63,8 @@ describe('elegir fragancias (PR 2.4)', () => {
     ])
     conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
-    await waitFor(() => expect(within(screen.getByTestId('fragancia-pv2')).getByText('Sin stock')).toBeTruthy())
-    expect(within(screen.getByTestId('fragancia-pv1')).getByText('Hay stock')).toBeTruthy()
+    await waitFor(() => expect(within(screen.getByTestId('fragancia-pv2')).getByText(/Sin stock/)).toBeTruthy())
+    expect(within(screen.getByTestId('fragancia-pv1')).getByText(/Hay stock/)).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith(`/api/v1/Productos/pf/variantes?depositoId=${DEPOSITO_CENTRAL_ID}`)
   })
 
@@ -88,7 +89,7 @@ describe('elegir fragancias (PR 2.4)', () => {
     // Sin ver cantidades el stock es "hay / no hay": la fragancia sin stock (pv2) es la que no alcanza.
     conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
-    await waitFor(() => expect(within(screen.getByTestId('fragancia-pv2')).getByText('Sin stock')).toBeTruthy())
+    await waitFor(() => expect(within(screen.getByTestId('fragancia-pv2')).getByText(/Sin stock/)).toBeTruthy())
     const [campo, fila] = ver ? ['Lavanda', 'fragancia-pv1'] : ['Coco Vainilla', 'fragancia-pv2']
     await userEvent.type(screen.getByLabelText(campo), ver ? '12' : '6')
     expect(within(screen.getByTestId(fila)).getByText(texto)).toBeTruthy()
@@ -102,7 +103,7 @@ describe('elegir fragancias (PR 2.4)', () => {
     conStock(true)
     conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
-    await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText('Stock: 8')).toBeTruthy())
+    await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText(/Stock: 8/)).toBeTruthy())
     const campo = screen.getByLabelText('Lavanda')
     await userEvent.type(campo, '12')
     await userEvent.clear(campo)
@@ -116,7 +117,7 @@ describe('elegir fragancias (PR 2.4)', () => {
     conStock(true)
     conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
-    await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText('Stock: 8')).toBeTruthy())
+    await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText(/Stock: 8/)).toBeTruthy())
     await userEvent.type(screen.getByLabelText('Lavanda'), '13')
     expect(screen.getByText('Se vende de a 6')).toBeTruthy()
     expect(screen.queryByText(/Solo hay/)).toBeNull()
@@ -126,7 +127,7 @@ describe('elegir fragancias (PR 2.4)', () => {
     conStock(true)
     conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} llevo={new Map([['pv1', 12], ['pv2', 6]])} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
-    await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText('Stock: 8')).toBeTruthy())
+    await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText(/Stock: 8/)).toBeTruthy())
     await userEvent.press(screen.getByRole('button', { name: 'Como la última vez' }))
     expect(screen.getByLabelText('Lavanda').props.value).toBe('6')
     expect(screen.getByRole('button', { name: 'Agregar a la venta' })).toBeEnabled()
@@ -257,5 +258,68 @@ describe('S8 y S9: cantidad tipeada en cada fragancia', () => {
     expect(screen.getByLabelText('Coco Vainilla').props.value).toBe('36')
     await agregar()
     expect(cantidades()).toEqual([['pv1', 24], ['pv2', 36]])
+  })
+})
+
+describe('S8: fila compacta aprobada de fragancia', () => {
+  const abrir = async () => {
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
+  }
+  const aplanar = (st: unknown) => Object.assign({}, ...[st].flat(Infinity).filter(Boolean)) as Record<string, number>
+  const filaTextos = (id: string) => within(screen.getByTestId(`fragancia-${id}`)).queryAllByText(/./).map((n) => String(n.props.children))
+
+  it('regla 1: el precio va una vez en el encabezado y en la fila solo si difiere', async () => {
+    const padreOriginal = mockProductos[1]
+    const padreA1000 = { ...padre, precioVenta: 1000 }
+    mockProductos[1] = padreA1000
+    mockProductos.push(producto({ id: 'pv3', nombre: 'Saphirus Aerosol - Rosa', productoPadreId: 'pf', ventaMinimaUnidades: 1, fraccionMinimaVenta: 'Unidad', precioVenta: 1500 }))
+    try {
+      await abrir()
+      const precioPadre = formatImporte(precioServidor(padreA1000))
+      expect(screen.getByText(`${precioPadre} c/u · 3 fragancias`)).toBeTruthy()
+      expect(filaTextos('pv1').join(' ')).not.toContain('$')
+      expect(filaTextos('pv3').join(' ')).toContain(formatImporte(1500))
+    } finally { mockProductos.pop(); mockProductos[1] = padreOriginal }
+  })
+
+  it('regla 2: nombre y campo en la primera línea; abajo "Stock: N · de a M" y el error, sin chip alto', async () => {
+    await abrir()
+    const textos = filaTextos('pv1')
+    expect(textos[0]).toBe('Saphirus Aerosol - Lavanda'.replace('Saphirus Aerosol - ', ''))
+    expect(textos[1]).toMatch(/de a 6/)
+    const st = aplanar(screen.getByLabelText('Lavanda').props.style)
+    expect(st.width).toBeGreaterThanOrEqual(88)
+    expect(st.width).toBeLessThanOrEqual(100)
+    expect(st.height).toBeGreaterThanOrEqual(44)
+    await userEvent.type(screen.getByLabelText('Lavanda'), '25')
+    expect(within(screen.getByTestId('fragancia-pv1')).getByText('Se vende de a 6')).toBeTruthy()
+  })
+
+  it('regla 3: sin cantidad el campo está vacío (no dice 0) y cuenta como 0', async () => {
+    await abrir()
+    const campo = screen.getByLabelText('Lavanda')
+    expect(campo.props.value).toBe('')
+    expect(campo.props.placeholder).toBeUndefined()
+    expect(screen.getByText('0 unidades')).toBeTruthy()
+  })
+
+  it('regla 5: teclado numérico, "siguiente" pasa a la fragancia que sigue y la última cierra', async () => {
+    await abrir()
+    expect(screen.getByLabelText('Lavanda').props.keyboardType).toBe('number-pad')
+    expect(screen.getByLabelText('Lavanda').props.returnKeyType).toBe('next')
+    expect(screen.getByLabelText('Coco Vainilla').props.returnKeyType).toBe('done')
+    expect(screen.getByLabelText('Lavanda').props.submitBehavior).toBe('submit')
+    expect(screen.getByLabelText('Coco Vainilla').props.submitBehavior).toBe('blurAndSubmit')
+  })
+
+  it('regla 6: unidades, total y botón siguen, con el descuento en una fila compacta', async () => {
+    await abrir()
+    const st = aplanar(screen.getByLabelText('Descuento (%)').props.style)
+    expect(st.width).toBeLessThanOrEqual(100)
+    await userEvent.type(screen.getByLabelText('Lavanda'), '12')
+    expect(screen.getByText('12 unidades')).toBeTruthy()
+    expect(screen.getByTestId('fragancias-subtotal')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Agregar a la venta' })).toBeTruthy()
   })
 })
