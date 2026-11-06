@@ -260,8 +260,9 @@ describe('Cantidad y oferta: avisar sin mostrar cantidad', () => {
     mockPost.mockResolvedValue([{ productoId: 'p1', disponible: false }])
     abrir(producto({ id: 'p1', disponible: 0, puedeVenderse: true }))
     escribir('Cantidad', '50')
+    // La cantidad tipeada se consulta con retardo: primero espera el pedido con el valor final.
+    await waitFor(() => expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Stocks/disponibilidad', expect.objectContaining({ items: [{ productoId: 'p1', cantidad: 50 }] })))
     expect(await screen.findByText(AVISO)).toBeTruthy()
-    expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Stocks/disponibilidad', expect.objectContaining({ items: [{ productoId: 'p1', cantidad: 50 }] }))
     expect(screen.queryByText(/Quedan|Disponible|Te quedan/)).toBeNull()
   })
 

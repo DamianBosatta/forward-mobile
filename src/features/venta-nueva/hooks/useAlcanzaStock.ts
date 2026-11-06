@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { fetchDisponibilidad, type DisponibilidadPedido } from '@/libs/api-client/stock'
@@ -7,6 +8,8 @@ import { fetchDisponibilidad, type DisponibilidadPedido } from '@/libs/api-clien
 /** Productos cuya cantidad pedida NO alcanza según el servidor (un sí/no por producto: nunca viene la cantidad). */
 export const productosQueNoAlcanzan = (respuesta: unknown): Set<string> =>
   new Set(Array.isArray(respuesta) ? respuesta.filter((d) => d && d.disponible === false).map((d) => String(d.productoId)) : [])
+
+const RETARDO_MS = 350
 
 /** Cantidades válidas y ordenadas: la misma clave de caché para el mismo pedido. */
 const pedidoDe = (items: DisponibilidadPedido[]) =>
@@ -19,14 +22,23 @@ const pedidoDe = (items: DisponibilidadPedido[]) =>
  */
 export function useAlcanzaStock(items: DisponibilidadPedido[], activo = true) {
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
-  const pedido = pedidoDe(items)
+  const actual = pedidoDe(items)
+  // Se consulta el valor que dejó de cambiar: tipear rápido manda un solo pedido. La clave lleva el pedido, así que una
+  // respuesta lenta de un valor anterior cae en su propia clave y nunca pisa la del valor vigente.
+  const pedido = useDebouncedValue(actual, RETARDO_MS)
   const habilitado = activo && !verCantidades && pedido.length > 0
   const q = useQuery({
     queryKey: ['venta-nueva', 'alcanza-stock', DEPOSITO_CENTRAL_ID, pedido],
     queryFn: () => fetchDisponibilidad(DEPOSITO_CENTRAL_ID, pedido),
     enabled: habilitado,
   })
-  return { noAlcanzan: habilitado ? productosQueNoAlcanzan(q.data) : new Set<string>(), revisando: habilitado && q.isPending, fallo: habilitado && q.isError }
+  // Mientras el valor tipeado espera su turno, la respuesta que hay es de otro valor: sigue "revisando".
+  const esperando = JSON.stringify(actual) !== JSON.stringify(pedido)
+  return {
+    noAlcanzan: habilitado ? productosQueNoAlcanzan(q.data) : new Set<string>(),
+    revisando: activo && !verCantidades && actual.length > 0 && (esperando || q.isPending),
+    fallo: habilitado && q.isError,
+  }
 }
 
 /** Pregunta al servidor, en el momento, qué productos de `items` no alcanzan. Falla en silencio (devuelve vacío). */
