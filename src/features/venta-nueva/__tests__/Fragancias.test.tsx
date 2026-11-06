@@ -323,3 +323,37 @@ describe('S8: fila compacta aprobada de fragancia', () => {
     expect(screen.getByRole('button', { name: 'Agregar a la venta' })).toBeTruthy()
   })
 })
+
+describe('S8 regla 4: buscador de fragancias', () => {
+  const extra = (n: number) => Array.from({ length: n }, (_, i) =>
+    producto({ id: `px${i}`, nombre: `Saphirus Aerosol - ${i === 0 ? 'Maracuyá' : `Aroma ${i}`}`, productoPadreId: 'pf', ventaMinimaUnidades: 1, fraccionMinimaVenta: 'Unidad', precioVenta: 1000 }))
+  const abrir = async (n: number) => {
+    const agregadas = extra(n)
+    mockProductos.push(...agregadas)
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
+    return () => mockProductos.splice(mockProductos.length - agregadas.length, agregadas.length)
+  }
+
+  it('con 7 fragancias no hay buscador', async () => {
+    const limpiar = await abrir(5)
+    try {
+      expect(screen.queryByLabelText('Buscar fragancia')).toBeNull()
+    } finally { limpiar() }
+  })
+
+  it('desde 8 filtra sin tildes ni mayúsculas y conserva lo tipeado en las ocultas', async () => {
+    const limpiar8 = await abrir(6)
+    try {
+      expect(screen.getByLabelText('Buscar fragancia')).toBeTruthy()
+      await userEvent.type(screen.getByLabelText('Lavanda'), '12')
+      await userEvent.type(screen.getByLabelText('Buscar fragancia'), 'MARACUYA')
+      expect(screen.getByLabelText('Maracuyá')).toBeTruthy()
+      expect(screen.queryByLabelText('Lavanda')).toBeNull()
+      expect(screen.getByText('12 unidades')).toBeTruthy()
+      expect(screen.getByLabelText('Maracuyá').props.returnKeyType).toBe('done')
+      await userEvent.clear(screen.getByLabelText('Buscar fragancia'))
+      expect(screen.getByLabelText('Lavanda').props.value).toBe('12')
+    } finally { limpiar8() }
+  })
+})

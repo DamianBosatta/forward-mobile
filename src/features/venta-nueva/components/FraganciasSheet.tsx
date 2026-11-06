@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native'
 import { importe, maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
-import { BottomSheet, Button, Notice, formatImporte } from '@/core/ui/fw'
+import { BottomSheet, Button, Field, Notice, formatImporte } from '@/core/ui/fw'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useVariantesProducto } from '@/libs/api-client/productos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -12,6 +12,8 @@ import { multiploDe, precioServidor, subtotalLinea } from '../lib/carrito'
 import { descuentoDeFragancias, errorDeCantidadFragancia, nombreFragancia, stockDeFragancia } from '../lib/fragancias'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
 import { limitarDigitos } from '../lib/teclado'
+import { normalizarBusqueda } from '@/core/utils/texto'
+import { RENGLONES_PARA_BUSCAR } from '@/features/logistica/consola/DevolucionEnEntrega'
 
 interface Props {
   /** Línea padre a repartir; null = cerrada. */
@@ -57,6 +59,13 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
   const scrollRef = useRef<ScrollView>(null)
   const campos = useRef<Record<string, TextInput | null>>({})
   const filas = useRef<Record<string, number>>({})
+  // Desde 8 fragancias se busca por nombre, sin tildes ni mayúsculas (mismo umbral que la consola del chofer).
+  // Lo tipeado en las filas ocultas se conserva en `textos`, así que sigue sumando a las unidades y al total.
+  const [busqueda, setBusqueda] = useState('')
+  const conBuscador = variantes.length >= RENGLONES_PARA_BUSCAR
+  const nombreDe = (v: (typeof variantes)[number]) => servidor.data?.find((x) => x.id === v.id)?.fraganciaNombre ?? nombreFragancia(v, padre?.nombre)
+  const buscado = normalizarBusqueda(busqueda.trim())
+  const visibles = conBuscador && buscado ? variantes.filter((v) => normalizarBusqueda(nombreDe(v)).includes(buscado)) : variantes
   const total = Object.values(cantidades).reduce((a, n) => a + n, 0)
   const escribir = (id: string, texto: string) => setTextos((s) => ({ ...s, [id]: limitarDigitos(texto.replace(/\D/g, '')) }))
   // "Como la última vez": lo que llevó de cada fragancia, acotado al stock (en múltiplos) al llenar los campos: el
@@ -90,8 +99,10 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
       {!isLoading && variantes.length === 0 ? (
         <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Esta línea no tiene fragancias a la venta.</Text>
       ) : null}
+      {conBuscador ? <Field label="Buscar fragancia" value={busqueda} onChangeText={setBusqueda} autoCorrect={false} /> : null}
+      {conBuscador && buscado && visibles.length === 0 ? <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Ninguna fragancia coincide con la búsqueda.</Text> : null}
       <ScrollView ref={scrollRef} style={{ maxHeight: 420 }} keyboardShouldPersistTaps="handled">
-        {variantes.map((v, i) => {
+        {visibles.map((v, i) => {
           const delServidor = servidor.data?.find((s) => s.id === v.id)
           const disponible = stockDeFragancia(v, delServidor, verCantidades)
           const nombre = delServidor?.fraganciaNombre ?? nombreFragancia(v, padre?.nombre)
@@ -101,7 +112,7 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
           // El precio va una sola vez en el encabezado; en la fila, solo si esta fragancia cuesta distinto.
           const distinto = !padre || precioServidor(v) !== precioServidor(padre)
           const detalle = [stock, m > 1 ? `de a ${m}` : null, distinto ? formatImporte(precioServidor(v)) : null].filter(Boolean).join(' · ')
-          const ultima = i === variantes.length - 1
+          const ultima = i === visibles.length - 1
           return (
             <View key={v.id} testID={`fragancia-${v.id}`} onLayout={(e) => { filas.current[v.id] = e.nativeEvent.layout.y }}
               style={{ gap: space[1], paddingVertical: space[2], borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth, borderTopColor: c.border }}>
@@ -110,7 +121,7 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
                 <CampoCantidad nombre={nombre} value={textos[v.id] ?? ''} onChangeText={(t) => escribir(v.id, t)} error={error}
                   inputRef={(r) => { campos.current[v.id] = r }}
                   returnKeyType={ultima ? 'done' : 'next'}
-                  onSubmitEditing={() => { if (!ultima) campos.current[variantes[i + 1].id]?.focus() }}
+                  onSubmitEditing={() => { if (!ultima) campos.current[visibles[i + 1].id]?.focus() }}
                   onFocus={() => scrollRef.current?.scrollTo({ y: Math.max(0, (filas.current[v.id] ?? 0) - space[2]), animated: true })} />
               </View>
               <Text style={{ ...typeScale.secundario, ...importe, color: disponible <= 0 ? c.chip.anulado.text : c.textSecondary }}>{detalle}</Text>
