@@ -7,3 +7,6 @@ export function sinAcentos(texto: string): string {
 export function normalizarBusqueda(texto: string): string {
   return sinAcentos(texto).toLowerCase()
 }
+
+/** Desde esta cantidad de renglones una lista ofrece buscar por nombre (consola del chofer y fragancias). */
+export const RENGLONES_PARA_BUSCAR = 8

@@ -12,8 +12,7 @@ import { multiploDe, precioServidor, subtotalLinea } from '../lib/carrito'
 import { descuentoDeFragancias, errorDeCantidadFragancia, nombreFragancia, stockDeFragancia } from '../lib/fragancias'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
 import { limitarDigitos } from '../lib/teclado'
-import { normalizarBusqueda } from '@/core/utils/texto'
-import { RENGLONES_PARA_BUSCAR } from '@/features/logistica/consola/DevolucionEnEntrega'
+import { RENGLONES_PARA_BUSCAR, normalizarBusqueda } from '@/core/utils/texto'
 
 interface Props {
   /** Línea padre a repartir; null = cerrada. */
