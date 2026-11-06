@@ -11,10 +11,11 @@ const CAP = { module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }
 let qc: QueryClient
 let catalogoServidor: ReturnType<typeof producto>[]
 // El servidor: el catálogo se pide con la queryFn del propio hook (un `setQueryDefaults` taparía una consulta sin queryFn).
+const mockPost = jest.fn()
 const mockQueryFn = jest.fn(async () => ({ items: catalogoServidor, hasNextPage: false }))
 jest.mock('@/core/api/client', () => ({
   ...jest.requireActual('@/core/api/client'),
-  api: { get: (...a: unknown[]) => mockQueryFn(...(a as [])), put: jest.fn(), post: jest.fn() },
+  api: { get: (...a: unknown[]) => mockQueryFn(...(a as [])), put: jest.fn(), post: (...a: unknown[]) => mockPost(...a) },
 }))
 const cliente = { direccion: 'Tarantino 1898', nombreFantasia: 'Autoservicio Abel' }
 
@@ -227,5 +228,24 @@ describe('RevisarVenta (S5, S6, S7)', () => {
   it('sin motivos de autorización no hay aviso', () => {
     revisar()
     expect(screen.queryByText('Esta venta necesita autorización')).toBeNull()
+  })
+})
+
+describe('RevisarVenta: sin la capacidad de ver cantidades', () => {
+  beforeEach(() => { mockPost.mockReset() })
+
+  it('si el servidor dice que no alcanza, no se contradice: avisa que va a pedir autorización y no dice "Stock confirmado"', async () => {
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [] } as never })
+    mockPost.mockResolvedValue([{ productoId: 'p1', disponible: false }, { productoId: 'p2', disponible: true }])
+    revisar()
+    expect(await screen.findByText('No alcanza el stock, va a pedir autorización')).toBeTruthy()
+    await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(1))
+    expect(screen.queryByText(/Sin stock ahora/)).toBeNull()
+  })
+
+  it('con la capacidad no consulta la disponibilidad: el texto de hoy', async () => {
+    revisar()
+    await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(2))
+    expect(mockPost).not.toHaveBeenCalled()
   })
 })

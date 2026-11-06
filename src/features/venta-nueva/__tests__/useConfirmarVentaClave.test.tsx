@@ -25,13 +25,15 @@ const hook = () => renderHook(() => useConfirmarVenta({
   cabecera: { metodoEntrega: 1 as never, fecha: '2026-10-30', flete: 0, observaciones: '' },
   borrador: borrador as never, alGuardar: jest.fn(),
 }), { wrapper })
-const claveDe = (n: number) => (mockPost.mock.calls[n][1] as { claveIdempotencia: string }).claveIdempotencia
+// Sin la capacidad también se pregunta `/Stocks/disponibilidad`: acá solo cuentan los altas.
+const altas = () => mockPost.mock.calls.filter((c) => c[0] === '/api/v1/Ventas')
+const claveDe = (n: number) => (altas()[n][1] as { claveIdempotencia: string }).claveIdempotencia
 
 beforeEach(() => {
   jest.clearAllMocks()
   qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [] } as never })
-  mockPost.mockResolvedValue({ ventaId: 'v1', message: 'ok', estado: 1 })
+  mockPost.mockImplementation(async (url: string) => (url === '/api/v1/Stocks/disponibilidad' ? [] : { ventaId: 'v1', message: 'ok', estado: 1 }))
 })
 
 describe('useConfirmarVenta: clave de idempotencia por borrador', () => {
@@ -39,16 +41,16 @@ describe('useConfirmarVenta: clave de idempotencia por borrador', () => {
     const { result } = hook()
     await act(async () => { await result.current.confirmar() })
     await act(async () => { await result.current.confirmar() })
-    expect(mockPost).toHaveBeenCalledTimes(2)
+    expect(altas()).toHaveLength(2)
     expect(claveDe(1)).not.toBe(claveDe(0))
   })
 
   it('reintentar el mismo borrador que no se confirmó reusa la misma clave', async () => {
-    mockPost.mockRejectedValueOnce(new ApiError(400, 'Dato inválido'))
+    mockPost.mockImplementationOnce(async () => []).mockRejectedValueOnce(new ApiError(400, 'Dato inválido'))
     const { result } = hook()
     await act(async () => { await result.current.confirmar() })
     await act(async () => { await result.current.confirmar() })
-    expect(mockPost).toHaveBeenCalledTimes(2)
+    expect(altas()).toHaveLength(2)
     expect(claveDe(1)).toBe(claveDe(0))
   })
 })

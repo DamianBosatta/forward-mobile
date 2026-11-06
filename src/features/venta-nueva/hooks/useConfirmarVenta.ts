@@ -20,6 +20,7 @@ import { esEstadoVenta } from '@/core/constants/estados'
 import type { LineaCarrito } from '../lib/carrito'
 import { conStockFresco } from '../lib/avisoStockVivo'
 import { faltaStock } from '../lib/avisos'
+import { consultarQueNoAlcanza } from './useAlcanzaStock'
 import { CLAVE_CATALOGO } from './useCatalogoVenta'
 import type { useBorradorVenta } from './useBorradorVenta'
 
@@ -91,11 +92,17 @@ export function useConfirmarVenta(d: Datos) {
   // Al editar, el stock del catálogo no cuenta lo que esta venta ya reservó: el motivo lo pide el servidor si hace falta.
   // Se decide al confirmar, con el catálogo que haya en ese momento (la revisión lo acaba de volver a pedir). Quien
   // no ve cantidades recibe `disponible = 0`: para él decide `puedeVenderse`.
-  const sinStock = () => {
+  const sinStock = async () => {
     if (d.edicion || !d.esPedido) return false
     const cache = qc.getQueryData<{ items: CatalogoStockItem[] } | CatalogoStockItem[]>(CLAVE_CATALOGO)
     const catalogo = Array.isArray(cache) ? cache : cache?.items ?? []
-    return conStockFresco(d.lineas, catalogo).some((l) => faltaStock(l, verCantidades))
+    const frescas = conStockFresco(d.lineas, catalogo)
+    if (frescas.some((l) => faltaStock(l, verCantidades))) return true
+    if (verCantidades) return false
+    // Sin cantidades el cliente no puede comparar: se le pregunta al servidor (sí/no por producto) y se pide el motivo
+    // como parte del flujo, en vez de esperar el 400 al enviar.
+    const noAlcanzan = await consultarQueNoAlcanza(frescas.map((l) => ({ productoId: l.productoId, cantidad: l.cantidad })))
+    return noAlcanzan.size > 0
   }
 
   async function enviar(motivo?: string) {
@@ -179,16 +186,21 @@ export function useConfirmarVenta(d: Datos) {
 
   async function confirmar(motivo?: string) {
     if (enVuelo.current) return
-    if (!motivo && sinStock()) return setPedirMotivo(true)
     enVuelo.current = true
     setEnviando(true)
     setError(null)
     try {
+      if (!motivo && await sinStock()) {
+        setPedirMotivo(true)
+        return
+      }
       await enviar(motivo)
       setPedirMotivo(false)
     } catch (e) {
-      if (d.esPedido && pideMotivo(e) && !motivo) setPedirMotivo(true)
-      setError(mensajeDelServidor(e, 'No se pudo guardar la venta.'))
+      const faltaMotivo = d.esPedido && pideMotivo(e) && !motivo
+      if (faltaMotivo) setPedirMotivo(true)
+      // Quien no ve cantidades no tiene por qué leer el texto técnico del 400: el motivo se pide y listo.
+      if (!(faltaMotivo && !verCantidades)) setError(mensajeDelServidor(e, 'No se pudo guardar la venta.'))
     } finally {
       enVuelo.current = false
       setEnviando(false)

@@ -6,6 +6,7 @@ import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { direccionDeEntrega, nombreDelCliente, type ClienteNombrable } from '@/features/clientes/lib/cliente'
+import { useAlcanzaStock } from '../hooks/useAlcanzaStock'
 import { useRevalidarStockVenta } from '../hooks/useRevalidarStockVenta'
 import { precioServidor, subtotalLinea, unidadesPorBultoDe, type LineaCarrito } from '../lib/carrito'
 import { disponibleParaLinea, faltaStock, totalesEstimados, type YaReservadas } from '../lib/avisos'
@@ -64,6 +65,9 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
   const c = useColors()
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
   const { lineas, cambios, confirmado, sinConexion, revalidando, revalidar } = useRevalidarStockVenta()
+  // Sin cantidades: el servidor dice, por producto, si lo pedido alcanza (sí/no, nunca el número). Al editar no se
+  // consulta: el `disponible` ya descuenta lo que esta venta reservó y daría un falso "no alcanza".
+  const alcanza = useAlcanzaStock(lineas.map((l) => ({ productoId: l.productoId, cantidad: l.cantidad })), !yaReservadas)
   const [confirmando, setConfirmando] = useState(false)
   // El estado no alcanza como guardia: dos toques antes del re-render leen el mismo `confirmando`.
   const enCurso = useRef(false)
@@ -97,6 +101,8 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
       return { alerta: true, texto: verCantidades ? `Quedan ${mostrarNumero(Math.max(disponibleParaLinea(l, yaReservadas), 0))}, pediste ${mostrarNumero(l.cantidad)}: tocá para ajustar` : 'Sin stock ahora: tocá para ajustar' }
     }
     if (cambio) return { alerta: false, texto: verCantidades ? `Stock actualizado: quedan ${mostrarNumero(disponibleParaLinea(l, yaReservadas))}` : 'Hay stock ahora' }
+    if (alcanza.noAlcanzan.has(l.productoId)) return { alerta: true, texto: 'No alcanza el stock, va a pedir autorización' }
+    if (alcanza.revisando) return { alerta: false, texto: 'Revisando el stock…' }
     return { alerta: false, texto: 'Stock confirmado ahora' }
   }
 

@@ -10,6 +10,7 @@ import { hasCapability } from '@/features/auth/lib/capabilities'
 import { calcularSubtotalConDescuento, canViewCost, pctFromPrecio, precioFromPct } from '@/features/ventas/lib/descuentos'
 import { calcularRentabilidadVenta } from '@/features/ventas/lib/rentabilidad-venta'
 import { multiploDe, precioServidor, type LineaCarrito } from '../lib/carrito'
+import { useAlcanzaStock } from '../hooks/useAlcanzaStock'
 import { disponibleParaLinea, faltaStock } from '../lib/avisos'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoPiso, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
 import { MAX_DIGITOS, TOPE_CANTIDAD, errorDeCantidad, limitarDigitos } from '../lib/teclado'
@@ -84,6 +85,9 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
   const disponible = disponibleParaLinea(lineaTipeada, yaReservadas)
   const restan = disponible - unidades
   const deMas = faltaStock(lineaTipeada, verStock, yaReservadas)
+  // Sin cantidades: el servidor dice si lo tipeado alcanza (sí/no). Al editar no: el `disponible` ya descuenta lo reservado.
+  const { noAlcanzan } = useAlcanzaStock([{ productoId: p.id, cantidad: errorCantidad === null ? unidades : 0 }], !yaReservada)
+  const noAlcanza = !deMas && noAlcanzan.has(p.id)
   const margen = verCosto
     ? calcularRentabilidadVenta({ detalles: [{ precioUnitario: precioFinal, precioCostoSnapshot: p.precioCompraBase, cantidad: unidades }], subtotalBruto: precioFinal * unidades, montoDescuento: 0 })
     : null
@@ -157,6 +161,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
             )}
           </View>
           {deMas ? <Notice tone="advertencia">Pediste más de lo disponible: la venta va a autorización</Notice> : null}
+          {noAlcanza ? <Notice tone="advertencia">No alcanza el stock, va a pedir autorización</Notice> : null}
 
           <View style={{ gap: space[2] }}>
             <Text style={secundario}>Cantidad</Text>
