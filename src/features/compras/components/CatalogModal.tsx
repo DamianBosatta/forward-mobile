@@ -2,7 +2,7 @@ import React from 'react'
 import { ActivityIndicator, FlatList, Modal, Text, TextInput, View } from 'react-native'
 import { Package } from 'lucide-react-native'
 import { Image as ExpoImage } from 'expo-image'
-import { Button, Field, TopBar } from '@/core/ui/fw'
+import { Button, Field, PieFijo, TopBar } from '@/core/ui/fw'
 import { Redondo } from '@/features/venta-nueva/components/ProductoCatalogoCard'
 import { getFullImageUrl } from '@/libs/api-client'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
@@ -100,9 +100,9 @@ export function CatalogModal({ visible, onClose, productSearch, setProductSearch
             )}
           />
         )}
-        <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+        <PieFijo conInsetInferior>
           <Button label="Listo" onPress={onClose} />
-        </View>
+        </PieFijo>
       </View>
     </Modal>
   )

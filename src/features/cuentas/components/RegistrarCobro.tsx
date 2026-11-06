@@ -3,7 +3,7 @@ import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { mostrarNumero } from '@/core/utils/numero'
-import { Button, Field, FormContainer, Notice, Progress, TopBar, TotalsRow, formatImporte, formatPorcentaje } from '@/core/ui/fw'
+import { Button, Field, FormContainer, Notice, PieFijo, Progress, TopBar, TotalsRow, formatImporte, formatPorcentaje } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
@@ -290,15 +290,15 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false, medioInici
   )
 
   const pie = (
-    <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+    <PieFijo>
       <Button label={total > 0 ? `Registrar cobro de ${formatImporte(total)}` : 'Registrar cobro'} loading={registrar.isPending} disabled={registrar.isPending || sinCajaUtil || subiendo} onPress={enviar} />
-    </View>
+    </PieFijo>
   )
 
   return (
     <View style={{ flex: 1 }}>
       {conBarra ? <TopBar lineasMultiples title="Cobrar" subtitle={estado.data ? `${direccionDeEntrega(cliente)} · Saldo ${formatImporte(estado.data.saldoActual)}` : direccionDeEntrega(cliente)} leading={{ kind: 'atras', onPress: onVolver }} /> : null}
-      <ScrollView contentContainerStyle={{ padding: space[4] }}>
+      <ScrollView contentContainerStyle={{ padding: space[4] }} keyboardShouldPersistTaps="handled">
         <FormContainer style={{ gap: space[4] }}>
           {encabezado}
           {isTabletLandscape ? (

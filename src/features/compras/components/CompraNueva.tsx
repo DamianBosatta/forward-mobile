@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Trash2 } from 'lucide-react-native'
-import { Button, Field, Notice, PasosNumerados, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { Button, Field, Notice, PasosNumerados, PieFijo, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useDepositos, useInfiniteProductos } from '@/libs/api-client'
 import { leerNumero, mostrarNumero } from '@/core/utils/numero'
@@ -239,7 +239,7 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
         actions={b.compraId && !edicion ? [{ icon: Trash2, accessibilityLabel: 'Descartar la compra', onPress: descartar }] : []}
       />
       {edicion ? null : <PasosNumerados nombres={PASOS_COMPRA} paso={paso} />}
-      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3] }}>
+      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3] }} keyboardShouldPersistTaps="handled">
         {b.estado === 'conflicto' ? (
           <View style={{ gap: space[2] }}>
             <Notice tone="peligro" title="Alguien más cambió esta compra.">{edicion && b.error ? `${b.error}
@@ -255,7 +255,7 @@ Recargala para ver la versión actual antes de seguir.` : 'Recargala para ver la
         {paso === 2 ? lineas : revisar}
       </ScrollView>
       {paso === 2 ? (
-        <View style={{ gap: space[2], padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+        <PieFijo>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[3] }}>
             <Text style={[typeScale.secundario, { color: c.textSecondary, flexShrink: 1 }]}>{resumenProductos}</Text>
             <View style={{ alignItems: 'flex-end' }}>
@@ -265,11 +265,11 @@ Recargala para ver la versión actual antes de seguir.` : 'Recargala para ver la
           </View>
           <Button label="Ver compra" variant={edicion ? 'secundario' : 'primario'} disabled={b.lineas.length === 0} onPress={() => setPaso(3)} />
           {edicion ? botonGuardarCambios : null}
-        </View>
+        </PieFijo>
       ) : edicion ? (
-        <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>{botonGuardarCambios}</View>
+        <PieFijo>{botonGuardarCambios}</PieFijo>
       ) : (
-        <View style={{ gap: space[2], padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+        <PieFijo>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Total</Text>
             <Text accessibilityLabel={faltanCostos > 0 ? 'Total sin calcular' : undefined} style={[typeScale.titulo, cifras, { color: c.text }]}>{faltanCostos > 0 ? '—' : formatImporte(total)}</Text>
@@ -282,7 +282,7 @@ Recargala para ver la versión actual antes de seguir.` : 'Recargala para ver la
           ) : null}
           <Button label="Guardar nota de pedido" variant="secundario" disabled={bloqueado}
             onPress={() => { void terminar(b.guardarNota, 'No se guardó la nota de pedido') }} />
-        </View>
+        </PieFijo>
       )}
       <ConfirmarYRecibirSheet visible={recibir !== null} onClose={() => setRecibir(null)} pideFactura={b.proveedor.pideFactura}
         ocupado={ocupado} fecha={fechaFactura} onFecha={setFechaFactura} error={recibir?.error ?? null} onConfirmar={(f) => { void confirmarYRecibir(f) }} />

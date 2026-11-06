@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-nativ
 import { Trash2 } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Button, Field, Notice, Segmented, formatImporte } from '@/core/ui/fw'
+import { Button, Field, Notice, PieFijo, Segmented, formatImporte } from '@/core/ui/fw'
 import { useProducto } from '@/libs/api-client/productos'
 import { leerNumero, mostrarNumero, numeroCompleto } from '@/core/utils/numero'
 import { cambioDeCosto, opcionesDeCompra, type LineaCompra, type UnidadCompra } from '../lib/lineaCompra'
@@ -67,7 +67,7 @@ function Contenido({ linea, onClose, onConfirm, onQuitar }: Props & { linea: Lin
               <Trash2 size={22} color={c.text} />
             </Pressable>
           </View>
-          <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }}>
+          <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }} keyboardShouldPersistTaps="handled">
             {opciones.length > 1 ? (
               <View style={{ gap: space[1] }}>
                 <Text style={{ ...typeScale.secundario, color: c.text }}>Se compra por</Text>
@@ -98,10 +98,10 @@ function Contenido({ linea, onClose, onConfirm, onQuitar }: Props & { linea: Lin
               </Notice>
             ) : null}
           </ScrollView>
-          <View style={{ padding: space[4], borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
+          <PieFijo conInsetInferior>
             <Button label="Confirmar" disabled={cantidadInvalida || costoInvalido}
               onPress={() => onConfirm({ ...linea, unidad, cantidad: cantidad!, unidadesPorUnidad: porUnidad, costoUnitario: costo })} />
-          </View>
+          </PieFijo>
         </View>
       </View>
     </Modal>

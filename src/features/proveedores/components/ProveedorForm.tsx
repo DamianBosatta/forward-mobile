@@ -1,5 +1,5 @@
 import React from 'react'
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native'
+import { ActivityIndicator, ScrollView, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { space, useColors } from '@/libs/theme'
 import { Button, FormContainer, Notice, TopBar } from '@/core/ui/fw'
@@ -33,8 +33,8 @@ export function ProveedorForm({ id }: { id?: string }) {
       ) : cargando ? (
         <ActivityIndicator color={c.brandInk} style={{ marginTop: space[8] }} />
       ) : (
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <ScrollView contentContainerStyle={{ paddingVertical: space[4] }}>
+        <View style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={{ paddingVertical: space[4] }} keyboardShouldPersistTaps="handled">
             <FormContainer style={{ paddingHorizontal: space[4], gap: space[4] }}>
               {hayBloqueo ? <Notice tone="info">{AVISO_CAMPOS_SENSIBLES_PROVEEDOR}</Notice> : null}
               <CampoDeSocio label="Razón social" value={datos.razonSocial} onChangeText={v => cambiar('razonSocial', v)} bloqueado={bloqueo.razonSocial} placeholder="Como figura en ARCA" />
@@ -64,7 +64,7 @@ export function ProveedorForm({ id }: { id?: string }) {
               <Button label={editando ? 'Guardar cambios' : 'Guardar proveedor'} onPress={guardar} loading={guardando} />
             </FormContainer>
           </PieDeFormulario>
-        </KeyboardAvoidingView>
+        </View>
       )}
     </View>
   )

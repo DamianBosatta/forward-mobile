@@ -9,7 +9,7 @@ import { useResponsive } from '../libs/useResponsive'
 import { Button, Notice, Segmented, type SegmentedOption } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import { useAuth } from '@/features/auth/hooks/useAuth'
-import { useTecladoVisible } from '@/features/auth/hooks/useTecladoVisible'
+import { useTecladoVisible } from '@/core/utils/useTecladoVisible'
 import {
   authenticateWithBiometrics,
   getBiometricChoice,

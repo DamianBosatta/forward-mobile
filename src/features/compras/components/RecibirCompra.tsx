@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { ScrollView, Text, TextInput, View } from 'react-native'
 import { Check } from 'lucide-react-native'
-import { Button, Field, Notice, TopBar, formatImporte } from '@/core/ui/fw'
+import { Button, Field, Notice, PieFijo, TopBar, formatImporte } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { useRecibirCompra } from '@/libs/api-client/compras'
@@ -167,10 +167,10 @@ export function RecibirCompra({ compra, onVolver, onHecho, onConflicto }: Props)
         )}
         {error ? <Notice tone="peligro">{error}</Notice> : null}
       </ScrollView>
-      <View style={{ gap: space[2], padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+      <PieFijo>
         <Text style={[secundario, { textAlign: 'center' }]}>{textoSuma(unidades)}</Text>
         <Button label="Confirmar recepción" loading={recibir.isPending} disabled={!!problema || plan.problema !== null} onPress={() => { void confirmar() }} />
-      </View>
+      </PieFijo>
     </View>
   )
 }
