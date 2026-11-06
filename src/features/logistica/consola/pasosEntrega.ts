@@ -79,10 +79,26 @@ export function comparacionDeCobro(c: ContextoCobro): { total: number; resto: nu
   return { total, resto, avisaSobra: resto < 0, avisaFalta: resto > 0 && !c.hayDevolucion }
 }
 
-/** "Sobran $ X" para mostrar en rojo; no impide continuar. Lo que falta no es un error: queda en la cuenta (`faltaACuenta`). */
+/** Lo que suman las líneas "No di vuelto" por encima del monto cargado (el vuelto que el chofer no dio). */
+function sobranteDeVuelto(lineas: LineaCobroForm[]): number {
+  return lineas.reduce((t, l) => {
+    const monto = leerNumero(l.monto)
+    const enviado = montoDeLinea(l)
+    return monto != null && monto > 0 && enviado != null && enviado > monto ? t + centavos(enviado) - centavos(monto) : t
+  }, 0) / 100
+}
+
+/**
+ * "Sobran $ X" para mostrar en rojo; no impide continuar. Lo lleva el chofer a la cuenta del cliente si eligió
+ * "No di vuelto": si todo lo que sobra es ese vuelto, no hay aviso, porque `CobroEnEntrega` ya dice "Los $ X de más
+ * quedan en su cuenta corriente" y no se repite. Si sobra más que el vuelto, se avisa el total.
+ * Lo que falta no es un error: queda en la cuenta (`faltaACuenta`).
+ */
 export function avisoDeCobro(c: ContextoCobro): string | null {
   const cmp = comparacionDeCobro(c)
-  return cmp?.avisaSobra ? `Sobran ${formatImporte(-cmp.resto)}` : null
+  if (!cmp?.avisaSobra) return null
+  if (centavos(-cmp.resto) === centavos(sobranteDeVuelto(c.lineas))) return null
+  return `Sobran ${formatImporte(-cmp.resto)}`
 }
 
 /** Lo que falta cobrar y queda como deuda en la cuenta corriente (chofer-04--mixto); `null` si no falta o no se compara. */
