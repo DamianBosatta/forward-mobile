@@ -1,6 +1,8 @@
 import React from 'react'
 import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { StatusBar } from 'expo-status-bar'
+import { useThemeStore } from '@/libs/theme'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { pctFromPrecio, precioFromPct } from '@/features/ventas/lib/descuentos'
 import { EditarLineaSheet } from '../components/EditarLineaSheet'
@@ -9,6 +11,11 @@ import type { LineaCarrito } from '../lib/carrito'
 import { cajaDe6, producto } from '../__testing__/producto'
 
 let mockTop = 0
+let mockAncho: number | null = null
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => {
+  const real = jest.requireActual('react-native/Libraries/Utilities/useWindowDimensions').default
+  return { __esModule: true, default: () => (mockAncho ? { width: mockAncho, height: 800, scale: 2, fontScale: 1 } : real()) }
+})
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: mockTop, bottom: 0, left: 0, right: 0 }),
   SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
@@ -44,6 +51,7 @@ const valor = (campo: string) => leerNumero(screen.getByLabelText(campo).props.v
 
 beforeEach(() => {
   mockTop = 0
+  mockAncho = null
   conUsuario(10)
   mockGet.mockReset().mockResolvedValue(undefined)
   mockPost.mockReset().mockResolvedValue(undefined)
@@ -371,4 +379,20 @@ describe('EditarLineaSheet: la cabecera respeta la barra de estado', () => {
     }
     expect(paddingTop).toBe(16 + top)
   })
+})
+
+describe.each([['light', 'dark'], ['dark', 'light']] as const)('EditarLineaSheet: íconos de la barra de estado en el teléfono, tema %s', (modo, iconos) => {
+  afterEach(() => useThemeStore.setState({ mode: 'system' }))
+  it(`usa íconos ${iconos} para leerse sobre la cabecera`, () => {
+    useThemeStore.setState({ mode: modo })
+    mockAncho = 390
+    abrir()
+    expect(screen.UNSAFE_getByType(StatusBar).props.style).toBe(iconos)
+  })
+})
+
+it('en tablet la hoja es un panel lateral y no toca la barra de estado', () => {
+  mockAncho = 800
+  abrir()
+  expect(screen.UNSAFE_queryByType(StatusBar)).toBeNull()
 })
