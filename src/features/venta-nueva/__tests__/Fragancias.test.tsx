@@ -75,39 +75,73 @@ describe('elegir fragancias (PR 2.4)', () => {
     expect(repartirFragancias(lineas, 'pf', [lavanda, coco], { pv1: 0, pv2: 6 }, 0).map((l) => l.productoId)).toEqual(['pv2', 'p1'])
   })
 
-  it('no deja pedir más que el stock disponible de cada fragancia (como la web)', async () => {
-    useAuthStore.setState({ user: { roles: ['Vendedor'], permissions: [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }] } as never })
+  const conStock = (verCantidades: boolean) => {
+    useAuthStore.setState({ user: { roles: ['Vendedor'], permissions: verCantidades ? [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }] : [] } as never })
     mockGet.mockResolvedValue([
       { id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, stockDisponible: 8, activo: true },
       { id: 'pv2', fraganciaNombre: 'Coco Vainilla', puedeVenderse: false, stockDisponible: 0, activo: true },
     ])
+  }
+
+  it.each([[true, 'Solo hay 8'], [false, 'No hay tanto stock']])('más que el stock (ve cantidades: %s) avisa "%s", no deja confirmar y no baja lo escrito', async (ver, texto) => {
+    conStock(ver)
+    // Sin ver cantidades el stock es "hay / no hay": la fragancia sin stock (pv2) es la que no alcanza.
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
+    await waitFor(() => expect(within(screen.getByTestId('fragancia-pv2')).getByText('Sin stock')).toBeTruthy())
+    const [campo, fila] = ver ? ['Lavanda', 'fragancia-pv1'] : ['Coco Vainilla', 'fragancia-pv2']
+    await userEvent.type(screen.getByLabelText(campo), ver ? '12' : '6')
+    expect(within(screen.getByTestId(fila)).getByText(texto)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Agregar a la venta' })).toBeDisabled()
+    await userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
+    expect(useCarritoVenta.getState().lineas).toEqual([])
+    expect(screen.getByLabelText(campo).props.value).toBe(ver ? '12' : '6')
+  })
+
+  it('corregir al stock quita el aviso y agrega exactamente lo escrito', async () => {
+    conStock(true)
     conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
     await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText('Stock: 8')).toBeTruthy())
-    expect(within(screen.getByTestId('fragancia-pv2')).getByText('Sin stock')).toBeTruthy()
-    await userEvent.type(screen.getByLabelText('Lavanda'), '12')
-    await userEvent.type(screen.getByLabelText('Coco Vainilla'), '6')
-    // Hoy: se deja tipear de más y al confirmar se acota al stock en múltiplos; no se avisa.
-    expect(screen.getByLabelText('Lavanda').props.value).toBe('12')
+    const campo = screen.getByLabelText('Lavanda')
+    await userEvent.type(campo, '12')
+    await userEvent.clear(campo)
+    await userEvent.type(campo, '6')
+    expect(screen.queryByText(/Solo hay/)).toBeNull()
     await userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
     expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad])).toEqual([['pv1', 6]])
   })
 
-  it('al confirmar vuelve a acotar lo que traía el carrito al stock disponible, en cajas enteras', async () => {
-    useAuthStore.setState({ user: { roles: ['Vendedor'], permissions: [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }] } as never })
-    useCarritoVenta.setState({ lineas: [
-      { productoId: 'pv1', producto: lavanda, cantidad: 12, descuentoPct: 0 },
-      { productoId: 'pv2', producto: coco, cantidad: 6, descuentoPct: 0 },
-    ] })
-    mockGet.mockResolvedValue([
-      { id: 'pv1', fraganciaNombre: 'Lavanda', puedeVenderse: true, stockDisponible: 8, activo: true },
-      { id: 'pv2', fraganciaNombre: 'Coco Vainilla', puedeVenderse: false, stockDisponible: 0, activo: true },
-    ])
+  it('si el múltiplo y el stock fallan a la vez, gana "Se vende de a"', async () => {
+    conStock(true)
     conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
     await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
     await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText('Stock: 8')).toBeTruthy())
+    await userEvent.type(screen.getByLabelText('Lavanda'), '13')
+    expect(screen.getByText('Se vende de a 6')).toBeTruthy()
+    expect(screen.queryByText(/Solo hay/)).toBeNull()
+  })
+
+  it('"Como la última vez" acota al stock al llenar los campos y se ve antes de confirmar', async () => {
+    conStock(true)
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} llevo={new Map([['pv1', 12], ['pv2', 6]])} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
+    await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText('Stock: 8')).toBeTruthy())
+    await userEvent.press(screen.getByRole('button', { name: 'Como la última vez' }))
+    expect(screen.getByLabelText('Lavanda').props.value).toBe('6')
+    expect(screen.getByRole('button', { name: 'Agregar a la venta' })).toBeEnabled()
     await userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
     expect(useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad])).toEqual([['pv1', 6]])
+  })
+
+  it('lo que traía el carrito y ya no hay en stock se avisa, no se baja solo', async () => {
+    conStock(true)
+    useCarritoVenta.setState({ lineas: [{ productoId: 'pv1', producto: lavanda, cantidad: 12, descuentoPct: 0 }] })
+    conQuery(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={jest.fn()} />)
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir fragancias' }))
+    await waitFor(() => expect(within(screen.getByTestId('fragancia-pv1')).getByText('Solo hay 8')).toBeTruthy())
+    expect(screen.getByRole('button', { name: 'Agregar a la venta' })).toBeDisabled()
+    expect(screen.getByLabelText('Lavanda').props.value).toBe('12')
   })
 
   it('el descuento es uno solo para toda la línea de fragancias', async () => {

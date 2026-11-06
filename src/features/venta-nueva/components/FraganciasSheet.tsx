@@ -46,27 +46,32 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
   const [textos, setTextos] = useState<Record<string, string>>(() =>
     Object.fromEntries(lineas.filter((l) => l.producto.productoPadreId === padreId).map((l) => [l.productoId, mostrarNumero(l.cantidad)])))
   const cantidades = useMemo(() => Object.fromEntries(Object.entries(textos).map(([id, t]) => [id, t === '' ? 0 : Number(t)])) as Record<string, number>, [textos])
-  // S9: si el producto se vende de a m, una cantidad que no es múltiplo avisa y no deja confirmar.
-  const errorDeMultiplo = (v: (typeof variantes)[number]) => {
+  const disponibleDe = (v: (typeof variantes)[number]) => stockDeFragancia(v, servidor.data?.find((s) => s.id === v.id), verCantidades)
+  // S9: el multiplo gana; si no, lo que supera el stock avisa. Nunca se baja lo que escribio el vendedor: se avisa y no deja confirmar.
+  const errorDeCantidad = (v: (typeof variantes)[number]) => {
     const m = multiploDe(v)
-    return m > 1 && (cantidades[v.id] ?? 0) % m !== 0 ? `Se vende de a ${m}` : undefined
+    const n = cantidades[v.id] ?? 0
+    if (m > 1 && n % m !== 0) return `Se vende de a ${m}`
+    const disponible = disponibleDe(v)
+    if (n > disponible) return verCantidades ? `Solo hay ${disponible}` : 'No hay tanto stock'
+    return undefined
   }
-  const hayErrorDeMultiplo = variantes.some((v) => errorDeMultiplo(v) !== undefined)
+  const hayErrorDeCantidad = variantes.some((v) => errorDeCantidad(v) !== undefined)
   const [pctTexto, setPctTexto] = useState(() => mostrarNumero(descuentoDeFragancias(lineas, padreId)))
   const pctLeido = leerNumero(pctTexto)
   const pctInvalido = pctLeido === null || pctLeido < 0 || pctLeido > 100
   const tope = avisoTope(pctInvalido ? 0 : pctLeido, user?.maxDescuentoPorcentaje ?? 0, hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO'))
   const total = Object.values(cantidades).reduce((a, n) => a + n, 0)
-  // Al confirmar se vuelve a acotar cada cantidad al stock disponible, en múltiplos de la venta mínima (como la web).
-  // Una cantidad que no es múltiplo nunca llega acá: el botón está bloqueado (S9).
-  const aDisponible = () => Object.fromEntries(variantes.map((v) => {
-    const disponible = stockDeFragancia(v, servidor.data?.find((s) => s.id === v.id), verCantidades)
-    const m = multiploDe(v)
-    return [v.id, Math.min(cantidades[v.id] ?? 0, Math.floor(disponible / m) * m)]
-  }))
   const escribir = (id: string, texto: string) => setTextos((s) => ({ ...s, [id]: limitarDigitos(texto.replace(/\D/g, '')) }))
-  // "Como la última vez": las cantidades que llevó de cada fragancia; al agregar se acotan al stock como todo lo demás.
-  const delUltimo = Object.fromEntries(variantes.flatMap((v) => (llevo?.get(v.id) ? [[v.id, llevo.get(v.id)!]] : [])))
+  // "Como la última vez": lo que llevó de cada fragancia, acotado al stock (en múltiplos) al llenar los campos: el
+  // vendedor ve el valor acotado en el campo antes de confirmar, no cambia al confirmar.
+  const delUltimo = Object.fromEntries(variantes.flatMap((v) => {
+    const llevado = llevo?.get(v.id)
+    if (!llevado) return []
+    const m = multiploDe(v)
+    const n = Math.min(llevado, Math.floor(disponibleDe(v) / m) * m)
+    return n > 0 ? [[v.id, n]] : []
+  }))
   const hayUltimo = Object.keys(delUltimo).length > 0
   const subtotal = variantes.reduce((a, v) => a + subtotalLinea({ productoId: v.id, producto: v, cantidad: cantidades[v.id] ?? 0, descuentoPct: pctInvalido ? 0 : pctLeido }), 0)
 
@@ -105,7 +110,7 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
                 <StatusChip estado={hay ? 'entregado' : 'anulado'} label={!hay ? 'Sin stock' : verCantidades ? `Stock: ${disponible}` : 'Hay stock'} />
               </View>
               <Field label={nombre} keyboardType="number-pad" alignRight selectTextOnFocus placeholder="0"
-                value={textos[v.id] ?? ''} onChangeText={(t) => escribir(v.id, t)} error={errorDeMultiplo(v)} />
+                value={textos[v.id] ?? ''} onChangeText={(t) => escribir(v.id, t)} error={errorDeCantidad(v)} />
             </View>
           )
         })}
@@ -123,8 +128,8 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
       </View>
       <Button
         label={total > 0 ? 'Agregar a la venta' : 'Listo'}
-        disabled={variantes.length === 0 || pctInvalido || hayErrorDeMultiplo}
-        onPress={() => { repartirFragancias(padreId, variantes, aDisponible(), pctLeido ?? 0); onClose() }}
+        disabled={variantes.length === 0 || pctInvalido || hayErrorDeCantidad}
+        onPress={() => { repartirFragancias(padreId, variantes, Object.fromEntries(variantes.map((v) => [v.id, cantidades[v.id] ?? 0])), pctLeido ?? 0); onClose() }}
       />
     </BottomSheet>
   )
