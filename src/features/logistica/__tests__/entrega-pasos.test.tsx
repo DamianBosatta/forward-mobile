@@ -247,6 +247,31 @@ describe('E3 Cobro mixto', () => {
     expect(llamadasA(ENTREGAR)[0][1]).toEqual({ claveIdempotencia: expect.stringMatching(/\S{8,}/), ...esperado.entrega })
   })
 
+  it('"No di vuelto": si todo lo que sobra es el vuelto, no hay "Sobran" y el aviso de la cuenta sale una sola vez', async () => {
+    pintar(hoja(P1_CONTADO))
+    await abrir()
+    await hastaElCobro()
+    await cargarEfectivo('1000')
+    await userEvent.press(screen.getByLabelText('Te dio'))
+    await userEvent.type(screen.getByLabelText('Te dio (cobro 1)'), '1200')
+    expect(screen.queryByText(/^Sobran/)).toBeNull()
+    await userEvent.press(screen.getByLabelText('No di vuelto'))
+    expect(screen.queryByText(/^Sobran/)).toBeNull()
+    expect(screen.getAllByText('Los $ 200,00 de más quedan en su cuenta corriente.')).toHaveLength(1)
+    expect(deshabilitado(continuar())).toBe(false)
+  })
+
+  it('"No di vuelto" con más sobrante que el vuelto (1500 de 1000, te dio 1700): sigue avisando Sobran por el total', async () => {
+    pintar(hoja(P1_CONTADO))
+    await abrir()
+    await hastaElCobro()
+    await cargarEfectivo('1500')
+    await userEvent.press(screen.getByLabelText('Te dio'))
+    await userEvent.type(screen.getByLabelText('Te dio (cobro 1)'), '1700')
+    await userEvent.press(screen.getByLabelText('No di vuelto'))
+    expect(screen.getByText('Sobran $ 700,00')).toBeTruthy()
+  })
+
   it('cobrar de más (1500 de 1000, al pedido actual): avisa Sobran, deja continuar y el cuerpo es el de armarEntrega', async () => {
     pintar(hoja(P1_CONTADO))
     await abrir()

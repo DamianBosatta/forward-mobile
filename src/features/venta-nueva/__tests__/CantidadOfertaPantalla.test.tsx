@@ -1,11 +1,18 @@
 import React from 'react'
-import { fireEvent, render, screen, userEvent } from '@testing-library/react-native'
+import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { CantidadOfertaPantalla } from '../components/CantidadOfertaPantalla'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { cajaDe6, producto } from '../__testing__/producto'
 import type { CatalogoStockItem } from '@/libs/api-client'
 import type { LineaCarrito } from '../lib/carrito'
+
+const mockPost = jest.fn()
+jest.mock('@/core/api/client', () => ({
+  ...jest.requireActual('@/core/api/client'),
+  api: { get: jest.fn(), put: jest.fn(), post: (...a: unknown[]) => mockPost(...a) },
+}))
 
 const VER_STOCK = { module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }
 const VER_COSTOS = { module: 'CAP_VER_COSTOS', canRead: true }
@@ -17,7 +24,8 @@ const bulto10 = (over: Partial<CatalogoStockItem> = {}) => producto({ marca: 'Ma
 function abrir(p: CatalogoStockItem = bulto10(), extra: { linea?: LineaCarrito; enVivo?: boolean; yaReservada?: number } = {}) {
   const onListo = jest.fn()
   const onClose = jest.fn()
-  render(<CantidadOfertaPantalla visible producto={p} linea={extra.linea} enVivo={extra.enVivo} yaReservada={extra.yaReservada} onClose={onClose} onListo={onListo} />)
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(<QueryClientProvider client={qc}><CantidadOfertaPantalla visible producto={p} linea={extra.linea} enVivo={extra.enVivo} yaReservada={extra.yaReservada} onClose={onClose} onListo={onListo} /></QueryClientProvider>)
   return { onListo, onClose }
 }
 const escribir = (campo: string, texto: string) => fireEvent.changeText(screen.getByLabelText(campo), texto)
@@ -240,5 +248,36 @@ describe('Cantidad y oferta: costo solo con CAP_VER_COSTOS', () => {
     conUsuario(15, [VER_STOCK, VER_COSTOS])
     abrir(bulto10({ precioCompraBase: 1410 }))
     expect(screen.getByTestId('oferta-costos')).toHaveTextContent(/\$ 1\.410,00/)
+  })
+})
+
+describe('Cantidad y oferta: avisar sin mostrar cantidad', () => {
+  const AVISO = 'No alcanza el stock, va a pedir autorización'
+  beforeEach(() => { mockPost.mockReset() })
+
+  it('sin la capacidad, si el servidor dice que no alcanza avisa sin ninguna cantidad', async () => {
+    conUsuario(15, [])
+    mockPost.mockResolvedValue([{ productoId: 'p1', disponible: false }])
+    abrir(producto({ id: 'p1', disponible: 0, puedeVenderse: true }))
+    escribir('Cantidad', '50')
+    // La cantidad tipeada se consulta con retardo: primero espera el pedido con el valor final.
+    await waitFor(() => expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Stocks/disponibilidad', expect.objectContaining({ items: [{ productoId: 'p1', cantidad: 50 }] })))
+    expect(await screen.findByText(AVISO)).toBeTruthy()
+    expect(screen.queryByText(/Quedan|Disponible|Te quedan/)).toBeNull()
+  })
+
+  it('sin la capacidad, si alcanza no avisa', async () => {
+    conUsuario(15, [])
+    mockPost.mockResolvedValue([{ productoId: 'p1', disponible: true }])
+    abrir(producto({ id: 'p1', disponible: 0, puedeVenderse: true }))
+    escribir('Cantidad', '2')
+    await waitFor(() => expect(mockPost).toHaveBeenCalled())
+    expect(screen.queryByText(AVISO)).toBeNull()
+  })
+
+  it('con la capacidad no consulta al servidor y sigue mostrando sus números', () => {
+    abrir(bulto10({ disponible: 5 }))
+    expect(mockPost).not.toHaveBeenCalled()
+    expect(screen.getByText('Disponible')).toBeTruthy()
   })
 })

@@ -79,4 +79,27 @@ describe('useConfirmarVenta: falta stock (S6, S7)', () => {
     expect(result.current.pedirMotivo).toBe(true)
     expect(mockPost).not.toHaveBeenCalled()
   })
+
+  it('quien no ve cantidades y el servidor dice que no alcanza: pide el motivo antes de mandar, sin error técnico', async () => {
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [] } as never })
+    mockPost.mockImplementation(async (url: string) => (url === '/api/v1/Stocks/disponibilidad' ? [{ productoId: 'p1', disponible: false }] : { ventaId: 'v1', message: 'ok', estado: 1 }))
+    const { result } = hook([linea({ disponible: 0, puedeVenderse: true }, 50)])
+    await act(async () => { await result.current.confirmar() })
+    expect(result.current.pedirMotivo).toBe(true)
+    expect(result.current.error).toBeNull()
+    expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas', expect.anything())
+  })
+
+  it('si igual el servidor responde que falta el motivo, se pide el motivo y no se muestra el error técnico', async () => {
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [] } as never })
+    const { ApiError } = jest.requireActual('@/core/api/client')
+    mockPost.mockImplementation(async (url: string) => {
+      if (url === '/api/v1/Stocks/disponibilidad') return [{ productoId: 'p1', disponible: true }]
+      throw new ApiError(400, 'Stock insuficiente', undefined, 'VentaFaltaStockSinJustificacion')
+    })
+    const { result } = hook([linea({ disponible: 0, puedeVenderse: true }, 50)])
+    await act(async () => { await result.current.confirmar() })
+    expect(result.current.pedirMotivo).toBe(true)
+    expect(result.current.error).toBeNull()
+  })
 })

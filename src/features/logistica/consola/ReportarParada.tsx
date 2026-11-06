@@ -11,7 +11,7 @@ import { leerNumero } from '@/core/utils/numero'
 import { diaArgentina } from '@/core/utils/fecha'
 import { DETALLE_MOTIVO_NO_ENTREGA, MOTIVOS_NO_ENTREGA } from './hojaDeRuta'
 import { etiquetaNota, importeParada } from './cobroParada'
-import { armarEntrega, razonPendiente, type EntregaArmada, type FormEntrega } from './entrega'
+import { armarEntrega, montoDeLinea, razonPendiente, type EntregaArmada, type FormEntrega } from './entrega'
 import { razonCobro, razonDevolucionPaso, razonConfirmar, avisoDeCobro, comparacionDeCobro, faltaACuenta, posicionDePaso, totalRepartido, type ContextoCobro, type Paso } from './pasosEntrega'
 import { FotoEntrega } from './FotoEntrega'
 import { CobroEnEntrega } from './CobroEnEntrega'
@@ -258,7 +258,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
                   devueltos: (renglones.data ?? [])
                     .map((r) => ({ nombre: r.productoNombre ?? 'Producto', cantidad: leerNumero(form.devolucion[r.ventaDetalleId ?? ''] ?? '') ?? 0 }))
                     .filter((x) => x.cantidad > 0),
-                  cobros: lineas.map((l) => ({ medio: l.medio?.nombre ?? '', monto: leerNumero(l.monto) ?? 0, conFoto: !!l.fotoUrl })),
+                  cobros: lineas.map((l) => ({ medio: l.medio?.nombre ?? '', monto: montoDeLinea(l) ?? 0, conFoto: !!l.fotoUrl })),
                   firmada: !!form.firmaUrl,
                 }}
               />

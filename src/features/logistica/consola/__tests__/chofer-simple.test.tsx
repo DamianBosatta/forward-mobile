@@ -415,3 +415,76 @@ describe('S19 pantallas nuevas', () => {
     await waitFor(() => expect(screen.queryByText('Listo, avisamos a Ventas')).toBeNull())
   })
 })
+
+describe.each(['light', 'dark'] as const)('No di vuelto (%s)', (tema) => {
+  beforeEach(() => conTema(tema))
+  const conVuelto = async (monto = '600', dio = '1000') => {
+    pintar(hoja(P1_CONTADO))
+    await abrir()
+    await hastaElCobro()
+    await sumarPago('Efectivo', monto)
+    await userEvent.press(screen.getByLabelText('Te dio'))
+    await userEvent.type(screen.getByLabelText('Te dio (cobro 1)'), dio)
+  }
+  const confirmar = async () => {
+    await aConfirmar()
+    await confirmarEntrega()
+    await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
+  }
+  const AVISO = /de más quedan en su cuenta corriente/
+
+  it('con vuelto por dar muestra "Su vuelto" y la opción, sin avisar nada de la cuenta', async () => {
+    await conVuelto()
+    expect(screen.getByText('Su vuelto $ 400,00')).toBeTruthy()
+    expect(screen.getByLabelText('No di vuelto')).toBeTruthy()
+    expect(screen.getByLabelText('Di el vuelto').props.accessibilityState.selected).toBe(true)
+    expect(screen.queryByText(AVISO)).toBeNull()
+  })
+  it('"No di vuelto" manda lo recibido, lo dice en pantalla y el resumen muestra ese monto', async () => {
+    await conVuelto()
+    await userEvent.press(screen.getByLabelText('No di vuelto'))
+    expect(screen.getByText('Su vuelto $ 400,00')).toBeTruthy()
+    expect(screen.getByText('Los $ 400,00 de más quedan en su cuenta corriente.')).toBeTruthy()
+    await aConfirmar()
+    await userEvent.press(confirmarBtn())
+    expect(await screen.findByText(/cobrado \$ 1\.000,00/)).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Revisar'))
+    await confirmarEntrega()
+    await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
+    expect(cuerpoEntrega().cobro).toEqual({ imputacion: 'PedidoActual', lineas: [{ medioPagoId: 'm-ef', monto: 1000 }] })
+    expect(JSON.stringify(cuerpoEntrega())).not.toMatch(/recibido|vuelto/i)
+  })
+  it('"Di el vuelto" deshace la elección: viaja solo el monto y desaparece el aviso', async () => {
+    await conVuelto()
+    await userEvent.press(screen.getByLabelText('No di vuelto'))
+    await userEvent.press(screen.getByLabelText('Di el vuelto'))
+    expect(screen.queryByText(AVISO)).toBeNull()
+    await confirmar()
+    expect(cuerpoEntrega().cobro).toEqual({ imputacion: 'PedidoActual', lineas: [{ medioPagoId: 'm-ef', monto: 600 }] })
+  })
+  it('sin elegir nada viaja solo el monto, como siempre', async () => {
+    await conVuelto()
+    await confirmar()
+    expect(cuerpoEntrega().cobro).toEqual({ imputacion: 'PedidoActual', lineas: [{ medioPagoId: 'm-ef', monto: 600 }] })
+  })
+  it('si lo recibido deja de superar el monto la elección no suma nada', async () => {
+    await conVuelto()
+    await userEvent.press(screen.getByLabelText('No di vuelto'))
+    await userEvent.clear(screen.getByLabelText('Te dio (cobro 1)'))
+    await userEvent.type(screen.getByLabelText('Te dio (cobro 1)'), '600')
+    expect(screen.queryByLabelText('No di vuelto')).toBeNull()
+    await confirmar()
+    expect(cuerpoEntrega().cobro).toEqual({ imputacion: 'PedidoActual', lineas: [{ medioPagoId: 'm-ef', monto: 600 }] })
+  })
+  it('sin vuelto (justo) o en otro medio no hay opción', async () => {
+    await conVuelto('600', '600')
+    expect(screen.queryByLabelText('No di vuelto')).toBeNull()
+    await userEvent.press(screen.getByLabelText('Justo'))
+    expect(screen.queryByLabelText('No di vuelto')).toBeNull()
+    await userEvent.press(screen.getByLabelText('Quitar cobro 1'))
+    await userEvent.press(screen.getByLabelText('Transferencia'))
+    await userEvent.type(screen.getByLabelText('Monto del cobro 1'), '600')
+    expect(screen.queryByLabelText('No di vuelto')).toBeNull()
+    expect(screen.queryByLabelText('Te dio')).toBeNull()
+  })
+})

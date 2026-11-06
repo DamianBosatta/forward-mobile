@@ -55,7 +55,7 @@ describe('una sola definición de bulto (bulto 12, venta mínima 6)', () => {
 
   it('oferta: el encabezado dice el mismo bulto que la pastilla', () => {
     useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [] } as never })
-    render(<CantidadOfertaPantalla visible producto={bulto12()} onClose={noop} />)
+    render(<QueryClientProvider client={new QueryClient()}><CantidadOfertaPantalla visible producto={bulto12()} onClose={noop} /></QueryClientProvider>)
     expect(screen.getByText(/^Bulto x 12 u · lista/)).toBeTruthy()
   })
 })
