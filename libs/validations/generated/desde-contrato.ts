@@ -10,15 +10,14 @@ import { z } from 'zod'
 function interior(esquema: z.ZodTypeAny): z.ZodTypeAny {
   let actual = esquema
   while (actual instanceof z.ZodOptional || actual instanceof z.ZodNullable) {
-    actual = actual.unwrap()
+    actual = actual.unwrap() as z.ZodTypeAny
   }
   return actual
 }
 
 function conMensaje<T extends z.ZodTypeAny>(esquema: T, mensaje?: string): T {
   if (!mensaje) return esquema
-  const def = { ...esquema._def, errorMap: () => ({ message: mensaje }) }
-  return new (esquema.constructor as new (def: unknown) => T)(def)
+  return esquema.clone({ ...esquema._zod.def, error: () => mensaje }) as T
 }
 
 type Forma = z.ZodRawShape
@@ -28,7 +27,7 @@ export function numeroDelContrato<T extends Forma>(
   campo: keyof T & string,
   mensaje?: string,
 ): z.ZodNumber {
-  const esquema = interior(objeto.shape[campo])
+  const esquema = interior(objeto.shape[campo] as unknown as z.ZodTypeAny)
   if (!(esquema instanceof z.ZodNumber))
     throw new Error(`El campo ${campo} del contrato no es un número`)
   return conMensaje(esquema, mensaje)
@@ -39,7 +38,7 @@ export function textoDelContrato<T extends Forma>(
   campo: keyof T & string,
   mensaje?: string,
 ): z.ZodString {
-  const esquema = interior(objeto.shape[campo])
+  const esquema = interior(objeto.shape[campo] as unknown as z.ZodTypeAny)
   if (!(esquema instanceof z.ZodString))
     throw new Error(`El campo ${campo} del contrato no es un texto`)
   return conMensaje(esquema, mensaje)

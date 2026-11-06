@@ -1,3 +1,4 @@
+import '@/libs/validations/mensajes-zod3'
 import { CreateVentaCommandSchema } from '@/libs/validations/generated/generated/esquemas'
 import { PorcentajeComisionCedidoSchema } from '@/libs/validations/generated/reglas'
 import { METODO_ENTREGA, type MetodoEntregaValue } from '@/features/ventas/lib/venta-form-retiro'

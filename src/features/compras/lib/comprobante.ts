@@ -3,6 +3,7 @@ import { leerNumero, numeroCompleto } from '@/core/utils/numero'
 import { ddmmaaaa } from '@/core/utils/fecha'
 import { fechaIso } from './fecha'
 import { cuitEsValido } from '@/libs/reglas'
+import '@/libs/validations/mensajes-zod3'
 import { ComprobanteCompraInputConReglasSchema } from '@/libs/validations/generated/reglas'
 
 export type ComprobanteCompraInput = components['schemas']['ComprobanteCompraInput']

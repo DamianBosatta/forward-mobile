@@ -6,6 +6,7 @@ const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const { hashDe, VALIDACIONES } = require('./reglas-hash');
+const { adaptar } = require('./zod4-validaciones');
 const { fuente, destino, copiados: COPIADOS, cuitReexport: CUIT_REEXPORT } = VALIDACIONES;
 
 const repo = process.env.FORWARD_SYSTEM_REPO || path.join('..', 'fs-combo');
@@ -22,7 +23,7 @@ function git(args) {
 
 if (ref.startsWith('origin/')) git(['fetch', '-q', 'origin', ref.slice('origin/'.length)]);
 const sha = git(['rev-parse', '--short', ref]).trim();
-const contenidos = new Map(COPIADOS.map((rel) => [rel, git(['show', `${ref}:${fuente}/${rel}`])]));
+const contenidos = new Map(COPIADOS.map((rel) => [rel, adaptar(rel, git(['show', `${ref}:${fuente}/${rel}`]))]));
 contenidos.set('cuit.ts', CUIT_REEXPORT);
 
 fs.rmSync(destino, { recursive: true, force: true });
