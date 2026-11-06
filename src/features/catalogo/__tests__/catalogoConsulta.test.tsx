@@ -15,7 +15,7 @@ let mockAncho = 390
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: mockAncho }) }))
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), useRouter: () => ({ push: mockPush }) }))
-jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() }, useFocusEffect: jest.fn() }))
+jest.mock('expo-router/react-navigation', () => ({ DrawerActions: { openDrawer: jest.fn() }, useFocusEffect: jest.fn() }))
 jest.mock('@/core/api/client', () => ({
   API_URL: 'http://api.test',
   api: { get: jest.fn(), post: jest.fn() },

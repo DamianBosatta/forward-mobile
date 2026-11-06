@@ -11,16 +11,10 @@ const config: ExpoConfig = {
   icon: './assets/icon.png',
   scheme: 'forward',
   userInterfaceStyle: 'automatic',
-  newArchEnabled: true,
   // OTA updates (EAS Update). A native change means a new build before any update: see docs/RELEASE.md.
   runtimeVersion: { policy: 'fingerprint' },
   updates: {
     url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
-  },
-  splash: {
-    image: './assets/splash.png',
-    resizeMode: 'contain',
-    backgroundColor: '#0A0D14',
   },
   ios: {
     supportsTablet: true,
@@ -40,6 +34,14 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-secure-store',
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/splash.png',
+        resizeMode: 'contain',
+        backgroundColor: '#0A0D14',
+      },
+    ],
     [
       'expo-notifications',
       {

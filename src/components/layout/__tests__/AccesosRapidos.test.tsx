@@ -15,7 +15,7 @@ const mockDims = jest.fn()
 
 jest.mock('expo-secure-store', () => ({ setItemAsync: jest.fn(), getItemAsync: jest.fn() }))
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
-jest.mock('@react-navigation/native', () => ({
+jest.mock('expo-router/react-navigation', () => ({
   useNavigation: () => ({ dispatch: mockDispatch }),
   DrawerActions: { openDrawer: () => ({ type: 'OPEN_DRAWER' }) },
 }))

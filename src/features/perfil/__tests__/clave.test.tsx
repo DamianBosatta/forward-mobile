@@ -12,7 +12,7 @@ const mockPost = jest.fn()
 jest.mock('@/core/api/client', () => ({ API_URL: 'http://api.test', api: { post: (u: string, b: unknown) => mockPost(u, b), get: jest.fn() } }))
 const mockBack = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), back: mockBack }) }))
-jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), DrawerActions: { openDrawer: jest.fn() } }))
+jest.mock('expo-router/react-navigation', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), DrawerActions: { openDrawer: jest.fn() } }))
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390, isTablet: false, isTabletLandscape: false, isLarge: false }) }))
 
 function pintar() {

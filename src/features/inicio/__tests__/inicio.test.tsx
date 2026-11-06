@@ -26,7 +26,7 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
   useNavigation: () => ({ dispatch: jest.fn() }),
 }))
-jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
+jest.mock('expo-router/react-navigation', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
 
 const mockAncho = jest.fn(() => 390)
 jest.mock('@/libs/useResponsive', () => ({

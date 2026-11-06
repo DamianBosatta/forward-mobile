@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { AppState, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
-import { DrawerActions } from '@react-navigation/native'
+import { DrawerActions } from "expo-router/react-navigation"
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Search } from 'lucide-react-native'
 import { FONT, space, typeScale, useColors } from '@/libs/theme'

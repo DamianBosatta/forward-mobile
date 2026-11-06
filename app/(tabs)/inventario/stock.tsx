@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { View } from 'react-native'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
-import { DrawerActions } from '@react-navigation/native'
+import { DrawerActions } from "expo-router/react-navigation"
 import { useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { TopBar } from '@/core/ui/fw'

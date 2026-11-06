@@ -1,6 +1,6 @@
 import React from 'react'
 import { View, Text, Pressable, ScrollView } from 'react-native'
-import { DrawerContentComponentProps, useDrawerStatus } from '@react-navigation/drawer'
+import { DrawerContentComponentProps, useDrawerStatus } from 'expo-router/drawer'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { radii, space, typeScale, useColors } from '@/libs/theme'

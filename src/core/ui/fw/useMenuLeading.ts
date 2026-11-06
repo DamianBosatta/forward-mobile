@@ -1,4 +1,4 @@
-import { DrawerActions, useNavigation } from '@react-navigation/native'
+import { DrawerActions, useNavigation } from "expo-router/react-navigation"
 import { useResponsive } from '@/libs/useResponsive'
 
 /**

@@ -16,7 +16,7 @@ jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({}),
   useNavigation: () => ({ dispatch: jest.fn() }),
 }))
-jest.mock('@react-navigation/native', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
+jest.mock('expo-router/react-navigation', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
 jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
 jest.mock('@/core/api/client', () => ({ api: { get: jest.fn() }, API_URL: '' }))
 jest.mock('@/libs/useResponsive', () => ({

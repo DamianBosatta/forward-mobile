@@ -108,7 +108,7 @@ export const PremiumButton = ({
           colors={v.bg as any}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[StyleSheet.absoluteFillObject, { borderRadius: 16 }]}
+          style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}
         />
         
         <View style={styles.content}>

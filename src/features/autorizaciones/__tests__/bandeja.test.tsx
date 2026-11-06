@@ -12,7 +12,7 @@ jest.mock('@/core/api/client', () => ({
 }))
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
-jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), DrawerActions: { openDrawer: jest.fn() } }))
+jest.mock('expo-router/react-navigation', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), DrawerActions: { openDrawer: jest.fn() } }))
 const mockAncho = jest.fn(() => 390)
 jest.mock('@/libs/useResponsive', () => ({
   useResponsive: () => ({ width: mockAncho(), isTablet: mockAncho() >= 600, isTabletLandscape: mockAncho() >= 900, isLarge: mockAncho() >= 600 }),

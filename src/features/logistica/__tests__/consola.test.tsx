@@ -20,7 +20,7 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ replace: mockReplace, push: jest.fn() }),
   useLocalSearchParams: () => ({}),
 }))
-jest.mock('@react-navigation/native', () => ({
+jest.mock('expo-router/react-navigation', () => ({
   useNavigation: () => ({ dispatch: jest.fn() }),
   DrawerActions: { openDrawer: jest.fn() },
   useFocusEffect: (cb: () => void) => { require('react').useEffect(cb, []) },

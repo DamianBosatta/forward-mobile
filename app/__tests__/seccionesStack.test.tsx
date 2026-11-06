@@ -6,7 +6,7 @@ import fs from 'fs'
 import path from 'path'
 import React from 'react'
 import { Text } from 'react-native'
-import { DrawerActions } from '@react-navigation/native'
+import { DrawerActions } from "expo-router/react-navigation"
 import { useNavigation, useRouter } from 'expo-router'
 import { act, renderRouter, screen } from 'expo-router/testing-library'
 
@@ -15,7 +15,7 @@ jest.mock('react-native-safe-area-context', () => require('react-native-safe-are
 // The real drawer content reads the status the same way (useDrawerStatus).
 jest.mock('@/src/components/layout/CustomDrawerContent', () => {
   const { Text } = require('react-native')
-  const { useDrawerStatus } = require('@react-navigation/drawer')
+  const { useDrawerStatus } = require('expo-router/drawer')
   return () => <Text>{`cajon:${useDrawerStatus()}`}</Text>
 })
 jest.mock('@/libs/useResponsive', () => ({

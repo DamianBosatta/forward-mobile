@@ -90,7 +90,7 @@ describe('BentoGrid container — wrap/gap/direction untouched', () => {
         <BentoItem><View /></BentoItem>
       </BentoGrid>,
     )
-    const containerStyle = toJSON()!.props.style as Record<string, unknown>[]
+    const containerStyle = (toJSON() as unknown as { props: { style: Record<string, unknown>[] } }).props.style
     const flat = Array.isArray(containerStyle) ? Object.assign({}, ...containerStyle) : containerStyle
     expect(flat.flexDirection).toBe('row')
     expect(flat.flexWrap).toBe('wrap')

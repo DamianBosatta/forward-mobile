@@ -17,7 +17,7 @@ jest.mock('@/libs/useResponsive', () => ({
   useResponsive: () => ({ width: 390, isTablet: false, isTabletLandscape: false }),
 }))
 let mockAlEnfocar: (() => void) | undefined
-jest.mock('@react-navigation/native', () => ({
+jest.mock('expo-router/react-navigation', () => ({
   useNavigation: () => ({ dispatch: jest.fn() }),
   DrawerActions: { openDrawer: jest.fn() },
   useFocusEffect: (cb: () => void) => {

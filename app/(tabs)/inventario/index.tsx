@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { ActivityIndicator, FlatList, Modal, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
-import { DrawerActions, useFocusEffect } from '@react-navigation/native'
+import { DrawerActions, useFocusEffect } from "expo-router/react-navigation"
 import { useMutation } from '@tanstack/react-query'
 import { LayoutGrid, List, ScanBarcode } from 'lucide-react-native'
 import { FONT, space, typeScale, useColors } from '@/libs/theme'

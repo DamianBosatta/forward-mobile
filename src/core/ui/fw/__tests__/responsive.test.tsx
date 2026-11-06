@@ -14,7 +14,7 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
 }))
 
 const mockDispatch = jest.fn()
-jest.mock('@react-navigation/native', () => ({
+jest.mock('expo-router/react-navigation', () => ({
   useNavigation: () => ({ dispatch: mockDispatch }),
   DrawerActions: { openDrawer: () => ({ type: 'OPEN_DRAWER' }) },
 }))

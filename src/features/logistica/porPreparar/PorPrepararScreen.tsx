@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useIsFocused } from '@react-navigation/native'
+import { useIsFocused } from "expo-router/react-navigation"
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { Filter } from 'lucide-react-native'
 import { FONT, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'

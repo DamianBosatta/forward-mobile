@@ -8,6 +8,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
+        "EXPO_PUBLIC_USE_RN_FETCH": "1",
         "EXPO_PUBLIC_API_URL": "https://api.forward-gestion.com.ar",
         "EXPO_PUBLIC_SIGNALR_URL": "https://api.forward-gestion.com.ar/hubs/erp",
         "EXPO_PUBLIC_SENTRY_DSN": "https://70ed2852baf17572fcf86542da83741c@o4511485650468864.ingest.us.sentry.io/4511485997481984",
@@ -22,6 +23,7 @@
         "buildType": "apk"
       },
       "env": {
+        "EXPO_PUBLIC_USE_RN_FETCH": "1",
         "EXPO_PUBLIC_API_URL": "https://api.forward-gestion.com.ar",
         "EXPO_PUBLIC_SIGNALR_URL": "https://api.forward-gestion.com.ar/hubs/erp",
         "EXPO_PUBLIC_SENTRY_DSN": "https://70ed2852baf17572fcf86542da83741c@o4511485650468864.ingest.us.sentry.io/4511485997481984",
@@ -36,6 +38,7 @@
         "buildType": "apk"
       },
       "env": {
+        "EXPO_PUBLIC_USE_RN_FETCH": "1",
         "EXPO_PUBLIC_API_URL": "https://api.forward-gestion.com.ar",
         "EXPO_PUBLIC_SIGNALR_URL": "https://api.forward-gestion.com.ar/hubs/erp",
         "EXPO_PUBLIC_SENTRY_DSN": "https://70ed2852baf17572fcf86542da83741c@o4511485650468864.ingest.us.sentry.io/4511485997481984",
