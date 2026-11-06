@@ -9,7 +9,7 @@ import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useCatalogoVenta } from '../hooks/useCatalogoVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { leyendaMultiplo, multiploDe, precioServidor, subtotalLinea } from '../lib/carrito'
-import { descuentoDeFragancias, nombreFragancia, stockDeFragancia } from '../lib/fragancias'
+import { descuentoDeFragancias, errorDeCantidadFragancia, nombreFragancia, stockDeFragancia } from '../lib/fragancias'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
 import { limitarDigitos } from '../lib/teclado'
 
@@ -47,15 +47,8 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
     Object.fromEntries(lineas.filter((l) => l.producto.productoPadreId === padreId).map((l) => [l.productoId, mostrarNumero(l.cantidad)])))
   const cantidades = useMemo(() => Object.fromEntries(Object.entries(textos).map(([id, t]) => [id, t === '' ? 0 : Number(t)])) as Record<string, number>, [textos])
   const disponibleDe = (v: (typeof variantes)[number]) => stockDeFragancia(v, servidor.data?.find((s) => s.id === v.id), verCantidades)
-  // S9: el multiplo gana; si no, lo que supera el stock avisa. Nunca se baja lo que escribio el vendedor: se avisa y no deja confirmar.
-  const errorDeCantidad = (v: (typeof variantes)[number]) => {
-    const m = multiploDe(v)
-    const n = cantidades[v.id] ?? 0
-    if (m > 1 && n % m !== 0) return `Se vende de a ${m}`
-    const disponible = disponibleDe(v)
-    if (n > disponible) return verCantidades ? `Solo hay ${disponible}` : 'No hay tanto stock'
-    return undefined
-  }
+  // S9: la regla vive en errorDeCantidadFragancia; nunca se baja lo que escribio el vendedor.
+  const errorDeCantidad = (v: (typeof variantes)[number]) => errorDeCantidadFragancia(cantidades[v.id] ?? 0, multiploDe(v), disponibleDe(v), verCantidades)
   const hayErrorDeCantidad = variantes.some((v) => errorDeCantidad(v) !== undefined)
   const [pctTexto, setPctTexto] = useState(() => mostrarNumero(descuentoDeFragancias(lineas, padreId)))
   const pctLeido = leerNumero(pctTexto)

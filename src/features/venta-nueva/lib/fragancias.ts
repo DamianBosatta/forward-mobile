@@ -53,6 +53,16 @@ export function stockDeFragancia(
   return Math.max(0, Math.floor(delServidor ? (delServidor.stockDisponible ?? 0) : variante.disponible))
 }
 
+/**
+ * Por qué una cantidad tipeada de una fragancia no se puede confirmar (S9). El múltiplo gana; después,
+ * lo que supera el stock. Nunca se baja el valor del vendedor: se avisa y no se deja confirmar.
+ */
+export function errorDeCantidadFragancia(cantidad: number, multiplo: number, disponible: number, verCantidades: boolean): string | undefined {
+  if (multiplo > 1 && cantidad % multiplo !== 0) return `Se vende de a ${multiplo}`
+  if (cantidad > disponible) return verCantidades ? `Solo hay ${disponible}` : 'No hay tanto stock'
+  return undefined
+}
+
 /** El descuento de la línea de fragancias: es uno solo para todas sus variantes (como en la web). */
 export const descuentoDeFragancias = (lineas: LineaCarrito[], padreId: string) =>
   lineas.find((l) => l.producto.productoPadreId === padreId)?.descuentoPct ?? 0

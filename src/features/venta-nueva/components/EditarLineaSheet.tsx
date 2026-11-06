@@ -13,8 +13,9 @@ import { useVariantesProducto } from '@/libs/api-client/productos'
 import { useVistaPreviaLinea } from '@/libs/api-client/ventas'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { multiploDe, precioServidor, type LineaCarrito } from '../lib/carrito'
-import { stockDeFragancia } from '../lib/fragancias'
+import { errorDeCantidadFragancia, stockDeFragancia } from '../lib/fragancias'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoPiso, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
+import { limitarDigitos } from '../lib/teclado'
 import { convertirModo, modoDeCantidad, presentacionDe, unidadesDe, type ModoCantidad } from '../lib/presentacion'
 import { Redondo } from './ProductoCatalogoCard'
 import { SeVendePor } from './SeVendePor'
@@ -62,7 +63,11 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
   const user = useAuthStore((s) => s.user)
   const p = linea.producto
   const base = precioServidor(p)
-  const [cantidad, setCantidad] = useState(linea.cantidad)
+  const esFragancia = !!p.productoPadreId
+  const [cantidadNum, setCantidad] = useState(linea.cantidad)
+  // Fragancia: la cantidad se tipea (vacío = 0) y nunca se baja sola; el resto va con − y +.
+  const [cantidadTexto, setCantidadTexto] = useState(mostrarNumero(linea.cantidad))
+  const cantidad = esFragancia ? (cantidadTexto === '' ? 0 : Number(cantidadTexto)) : cantidadNum
   const [pctTexto, setPctTexto] = useState(mostrarNumero(linea.descuentoPct))
   const [precioTexto, setPrecioTexto] = useState(mostrarNumero(precioFromPct(base, linea.descuentoPct)))
 
@@ -75,7 +80,11 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
   const precioLeido = leerNumero(precioTexto)
   const pctInvalido = pctLeido === null || pctLeido < 0 || pctLeido > 100
   const precioInvalido = precioLeido === null || precioLeido < 0 || precioLeido > base
-  const invalido = pctInvalido || precioInvalido
+  const verStock = hasCapability(user?.permissions, 'CAP_VER_CANTIDADES_STOCK')
+  const errorCantidad = esFragancia ? errorDeCantidadFragancia(cantidad, m, maxCantidad, verStock) : undefined
+  // Una fragancia en 0 o vacía no confirma: quitar la línea es el tacho, como siempre.
+  const cantidadInvalida = errorCantidad !== undefined || (esFragancia && cantidad <= 0)
+  const invalido = pctInvalido || precioInvalido || cantidadInvalida
   const pct = pctLeido !== null && !pctInvalido ? pctLeido : 0
   const precioFinal = precioFromPct(base, pct)
   const tope = avisoTope(pct, user?.maxDescuentoPorcentaje ?? 0, hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO'))
@@ -87,7 +96,6 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
   const piso = servidor ? (servidor.veredicto.toLowerCase() as 'rojo' | 'amarillo' | 'verde') : avisoPiso(p, base, pct)
   const minimo = servidor?.precioMinimoRentable ?? p.precioMinimoRentable
   const verCosto = canViewCost(user?.permissions)
-  const verStock = hasCapability(user?.permissions, 'CAP_VER_CANTIDADES_STOCK')
   const margen = calcularRentabilidadVenta({
     detalles: [{ precioUnitario: precioFinal, precioCostoSnapshot: p.precioCompraBase, cantidad }],
     subtotalBruto: precioFinal * cantidad,
@@ -114,20 +122,25 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
             </Pressable>
           </View>
           <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }}>
-            {pr.modos.length > 1 ? (
+            {!esFragancia && pr.modos.length > 1 ? (
               <View style={{ gap: space[2] }}>
                 <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Se vende por</Text>
                 <SeVendePor presentacion={pr} modo={modo} onCambiar={(mo) => { setModo(mo); setCantidad((n) => convertirModo(pr, mo, n)) }} />
               </View>
             ) : null}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text style={texto()}>Unidades</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-                <Redondo c={c} label="−" a11y="Restar" onPress={() => setCantidad((n) => (n - paso >= m ? n - paso : n))} />
-                <Text accessibilityLabel={`Unidades: ${cantidad}`} style={texto({ ...importe, minWidth: 48, textAlign: 'center' })}>{cantidad}</Text>
-                <Redondo c={c} label="+" a11y="Sumar" disabled={cantidad + paso > maxCantidad} onPress={() => setCantidad((n) => n + paso)} />
+            {esFragancia ? (
+              <Field label="Unidades" keyboardType="number-pad" alignRight selectTextOnFocus placeholder="0"
+                value={cantidadTexto} onChangeText={(t) => setCantidadTexto(limitarDigitos(t.replace(/\D/g, '')))} error={errorCantidad} />
+            ) : (
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={texto()}>Unidades</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+                  <Redondo c={c} label="−" a11y="Restar" onPress={() => setCantidad((n) => (n - paso >= m ? n - paso : n))} />
+                  <Text accessibilityLabel={`Unidades: ${cantidad}`} style={texto({ ...importe, minWidth: 48, textAlign: 'center' })}>{cantidad}</Text>
+                  <Redondo c={c} label="+" a11y="Sumar" disabled={cantidad + paso > maxCantidad} onPress={() => setCantidad((n) => n + paso)} />
+                </View>
               </View>
-            </View>
+            )}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: c.border, paddingBottom: space[3] }}>
               <Text style={texto()}>Precio de lista</Text>
               <View style={{ alignItems: 'flex-end' }}>
