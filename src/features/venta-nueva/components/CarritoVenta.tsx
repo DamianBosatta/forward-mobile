@@ -2,7 +2,7 @@ import React from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { ShoppingCart } from 'lucide-react-native'
 import { space, typeScale, importe, useColors } from '@/libs/theme'
-import { Button, formatImporte } from '@/core/ui/fw'
+import { Button, PieFijo, formatImporte } from '@/core/ui/fw'
 import { precioServidor, resumenCarrito, subtotalLinea, totalEstimado, type LineaCarrito } from '../lib/carrito'
 
 interface CarritoProps {
@@ -19,7 +19,7 @@ export function CarritoFlotante({ lineas, onVerVenta }: CarritoProps) {
   const vacio = lineas.length === 0
   const total = formatImporte(totalEstimado(lineas))
   return (
-    <View testID="carrito-barra" style={{ paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[3], gap: space[2], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+    <PieFijo testID="carrito-barra" relleno={space[3]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3] }}>
         <View style={{ flex: 1 }}>
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{resumenCarrito(lineas)}</Text>
@@ -29,7 +29,7 @@ export function CarritoFlotante({ lineas, onVerVenta }: CarritoProps) {
       </View>
       {/* La lámina la dibuja siempre: sin productos queda en 0 y "Ver venta" no responde. */}
       <Button icon={ShoppingCart} label="Ver venta" accessibilityLabel={`Ver venta: ${lineas.length} ítems, ${ROTULO.toLowerCase()} ${total}`} disabled={vacio} onPress={onVerVenta} />
-    </View>
+    </PieFijo>
   )
 }
 

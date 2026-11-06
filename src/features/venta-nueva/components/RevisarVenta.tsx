@@ -1,7 +1,7 @@
 import React, { useRef, useState, type ReactNode } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { Button, Notice, PieFijo, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -191,7 +191,7 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
           <Text style={secundario}>Los totales son estimados: el total final lo calcula el sistema al guardar.</Text>
         </View>
       </ScrollView>
-      <View style={{ padding: space[4], gap: space[2], borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.bg }}>
+      <PieFijo fondo="bg">
         {error ? <Notice tone="peligro">{error}</Notice> : null}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <Text style={secundario}>Total estimado</Text>
@@ -199,7 +199,7 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
         </View>
         <Button label={etiquetaConfirmar} onPress={() => { void confirmar() }} loading={enviando || confirmando} disabled={enviando || confirmando || deshabilitado || lineas.length === 0} />
         {motivoDeshabilitado ? <MotivoDeshabilitado>{motivoDeshabilitado}</MotivoDeshabilitado> : null}
-      </View>
+      </PieFijo>
     </View>
   )
 }

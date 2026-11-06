@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Image, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { Package, Trash2 } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, StatusChip, TopBar, formatImporte } from '@/core/ui/fw'
+import { Button, Notice, PieFijo, StatusChip, TopBar, formatImporte } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import type { CatalogoStockItem } from '@/libs/api-client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -247,13 +247,13 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
           ) : null}
         </ScrollView>
 
-        <View style={{ padding: space[4], gap: space[2], borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
+        <PieFijo>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <Text style={secundario}>{`${unidades} × ${formatImporte(precioFinal)}`}</Text>
             <Text testID="oferta-subtotal" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(calcularSubtotalConDescuento(base, unidades, pct))}</Text>
           </View>
           <Button label="Listo, seguir cargando" disabled={deshabilitado} onPress={listo} />
-        </View>
+        </PieFijo>
       </View>
     </Modal>
   )
