@@ -1,5 +1,6 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ScrollView } from 'react-native'
 import { act, render, screen, userEvent, within } from '@testing-library/react-native'
 import { CalendarioScreen } from '../CalendarioScreen'
 import { rangoCorto, semanaDe, tituloSemana } from '../semana'
@@ -213,5 +214,50 @@ describe('Calendario', () => {
     act(() => { mockAlEnfocar?.() })
     expect(await screen.findByText('12/10 al 18/10')).toBeTruthy()
     expect(screen.getByText('Martes 13 · hoy')).toBeTruthy()
+  })
+  describe('hoja del evento: acciones fijas abajo', () => {
+    const DETALLE = {
+      id: 'o', tipo: 'Manual', subtipo: null, titulo: 'Rendir la caja de la semana', descripcion: null, fechaInicio: '2026-10-09',
+      recurrencia: null, montoEstimado: null, socioComercialId: null, avisarDiasAntes: 1, visibilidad: 'Personal',
+      ocurrencias: [{ fecha: '2026-10-09', estado: 'Pagado' }],
+    }
+    const abrirEvento = async () => {
+      mockGet.mockImplementation((url: string) =>
+        Promise.resolve(url.startsWith('/api/v1/Calendario/eventos/') ? DETALLE : EVENTOS))
+      pintar()
+      await userEvent.press(await screen.findByLabelText('Rendir la caja de la semana, Pendiente'))
+      await screen.findByLabelText('Guardar cambios')
+    }
+    // La pantalla tiene su propio scroll: el de la hoja es el último (el Modal se monta después).
+    const enElScroll = () => within(screen.UNSAFE_getAllByType(ScrollView).at(-1)!)
+
+    it('Guardar y Borrar quedan fuera del scroll; el título y los campos, dentro', async () => {
+      await abrirEvento()
+      const scroll = enElScroll()
+      expect(scroll.queryByLabelText('Guardar cambios')).toBeNull()
+      expect(scroll.queryByLabelText('Borrar evento')).toBeNull()
+      expect(scroll.getByText('Rendir la caja de la semana')).toBeTruthy()
+      expect(scroll.getByLabelText('Título')).toBeTruthy()
+    })
+
+    it('la confirmación de borrar y su aviso quedan fuera del scroll', async () => {
+      await abrirEvento()
+      await userEvent.press(screen.getByLabelText('Borrar evento'))
+      const scroll = enElScroll()
+      expect(screen.getByLabelText('Sí, borrar')).toBeTruthy()
+      expect(scroll.queryByLabelText('Sí, borrar')).toBeNull()
+      expect(scroll.queryByLabelText('No borrar')).toBeNull()
+      expect(scroll.queryByText('Se borra el evento y todas sus fechas. No se puede deshacer.')).toBeNull()
+    })
+
+    it('la confirmación de mover el día queda fuera del scroll', async () => {
+      await abrirEvento()
+      await userEvent.press(screen.getByLabelText('Día siguiente'))
+      await userEvent.press(screen.getByLabelText('Guardar cambios'))
+      const scroll = enElScroll()
+      expect(screen.getByLabelText('Sí, guardar')).toBeTruthy()
+      expect(scroll.queryByLabelText('Sí, guardar')).toBeNull()
+      expect(scroll.queryByLabelText('No guardar')).toBeNull()
+    })
   })
 })
