@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Image, Pressable, Text, View } from 'react-native'
 import { Package } from 'lucide-react-native'
 import { radii, space, typeScale, importe, useColors, type ForwardColors } from '@/libs/theme'
-import { formatImporte } from '@/core/ui/fw'
+import { Button, formatImporte } from '@/core/ui/fw'
 import type { CatalogoStockItem } from '@/libs/api-client'
 import { cantidadEnPresentacion, multiploDe, precioServidor, stockDeTarjeta, subtotalLinea, unidadesPorBultoDe, vendePorBulto, type LineaCarrito } from '../lib/carrito'
 import { mostrarNumero } from '../lib/linea'
@@ -98,8 +98,9 @@ export function ProductoCatalogoCard({
           </View>
         ) : null}
         {pistas.map((t) => <Text key={t} style={{ ...typeScale.secundario, color: c.textSecondary }}>{t}</Text>)}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2], marginTop: space[1] }}>
-          <View>
+        <View style={{ gap: space[2], marginTop: space[1] }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
             {porBulto ? (
               <>
                 <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{`${formatImporte(unitario)} por unidad`}</Text>
@@ -109,20 +110,22 @@ export function ProductoCatalogoCard({
               <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(unitario)}</Text>
             )}
           </View>
-          {p.esPadreDeVariantes ? (
-            <Accion c={c} label="Elegir fragancias" onPress={onElegirFragancias} />
-          ) : cantidad > 0 ? (
+          {p.esPadreDeVariantes ? null : cantidad > 0 ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Editar ${p.nombre}`}
               onPress={abrir}
-              style={{ minHeight: 44, paddingHorizontal: space[4], borderRadius: radii.campo, backgroundColor: c.brandSoft, borderWidth: 1, borderColor: c.brand, justifyContent: 'center' }}
+              style={{ flexShrink: 0, minHeight: 44, paddingHorizontal: space[4], borderRadius: radii.campo, backgroundColor: c.brandSoft, borderWidth: 1, borderColor: c.brand, justifyContent: 'center' }}
             >
               <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{`${cantidadEnPresentacion(p, cantidad)} ✎`}</Text>
             </Pressable>
           ) : (
             <Accion c={c} label={stock.nivel === 'sin' ? 'Sin stock' : 'Agregar'} a11y={`Añadir ${p.nombre}`} onPress={abrir} />
           )}
+        </View>
+        {p.esPadreDeVariantes ? (
+          <Button testID={`elegir-fragancias-${p.id}`} label="Elegir fragancias" onPress={() => onElegirFragancias?.()} />
+        ) : null}
         </View>
       </View>
     </View>
@@ -144,7 +147,7 @@ function Accion({ c, label, a11y, onPress }: { c: ForwardColors; label: string; 
       accessibilityRole="button"
       accessibilityLabel={a11y ?? label}
       onPress={onPress}
-      style={{ minHeight: 44, paddingHorizontal: space[4], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, justifyContent: 'center' }}
+      style={{ flexShrink: 0, minHeight: 44, paddingHorizontal: space[4], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, justifyContent: 'center' }}
     >
       <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{label}</Text>
     </Pressable>
