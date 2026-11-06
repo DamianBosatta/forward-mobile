@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, BackHandler, Pressable, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Plus, Trash2 } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
@@ -55,24 +55,30 @@ interface Props {
   clienteId?: string
   /** La venta quedó grabada (o en la cola sin señal): la ruta descarta esta pantalla y abre una limpia para la siguiente. */
   alTerminar?: () => void
+  /** La pantalla está a la vista (el menú lateral la deja montada): solo entonces el atrás de Android retrocede un paso. */
+  activa?: boolean
 }
 
-/** Las dos vistas de la venta: el catálogo (donde se arma) y la revisión (líneas, cabecera, total y confirmar). */
-type VistaVenta = 'catalogo' | 'revision'
+/**
+ * Las vistas de la venta tras elegir el cliente: el catálogo (paso 2, donde se arma), el carrito (paso 3: solo las
+ * líneas y el descuento general) y la entrega y facturación (paso 4: operación, fecha, factura, flete, total y confirmar).
+ */
+type VistaVenta = 'catalogo' | 'carrito' | 'entrega'
 
 /**
- * Venta nueva: primero el cliente (elegirlo crea el borrador en el servidor y desde ahí se autoguarda), después el
- * catálogo, que es la vista principal; "Ver venta" lleva a revisar (líneas y cabecera), "Seguir" abre Confirmar y
- * de ahí a la pantalla de venta guardada. Una venta que se abre (retomar, editar, duplicar) arranca en la revisión.
+ * Venta nueva en cuatro pasos: Cliente (elegirlo crea el borrador en el servidor y desde ahí se autoguarda), Productos
+ * (el catálogo, donde se arma), Carrito ("Ver venta": las líneas) y Entrega ("Continuar": cabecera, factura, total y
+ * confirmar, que lleva a la pantalla de venta guardada). El paso no se guarda en el borrador: una venta que se abre
+ * (retomar, editar, duplicar) arranca en el carrito, como antes arrancaba en la revisión.
  */
-export function VentaNuevaPantalla({ abrir, clienteId, alTerminar }: Props = {}) {
+export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true }: Props = {}) {
   const c = useColors()
   const router = useRouter()
   // `cliente`: el de la venta, desde que se elige (o se abre una venta); sin cliente no hay catálogo.
   const [cliente, setCliente] = useState<ClienteElegido | null>(null)
   const [tipo, setTipo] = useState<TipoDocumento>('Pedido')
-  // Una venta nueva se arma en el catálogo; las que se abren arrancan en la revisión.
-  const [vista, setVista] = useState<VistaVenta>(abrir ? 'revision' : 'catalogo')
+  // Una venta nueva se arma en el catálogo; las que se abren arrancan en el carrito.
+  const [vista, setVista] = useState<VistaVenta>(abrir ? 'carrito' : 'catalogo')
   const { lineas: lineasCarrito, vaciar, reemplazar, quitar } = useCarritoVenta()
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
   // Las líneas guardan la fila del catálogo de cuando se cargaron: lo que se ve y se confirma lleva el stock vivo.
@@ -122,6 +128,20 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar }: Props = {})
   const ofertaVivo = oferta ? catalogoVenta.find((p) => p.id === oferta.id) ?? oferta : null
   const llevo = useLoQueLlevo(cliente?.id)
   const volver = { kind: 'atras' as const, onPress: () => router.back() }
+  // Sin productos no hay entrega: el paso 4 no se muestra aunque la vista lo pida (se vació el carrito).
+  const vistaActual: VistaVenta = vista === 'entrega' && lineas.length === 0 ? 'carrito' : vista
+  // El atrás de Android va un paso atrás, igual que la flecha de la barra; donde la flecha sale de la venta (el
+  // cliente, el catálogo de una venta nueva, el carrito de una abierta) no se intercepta y sale como siempre.
+  useEffect(() => {
+    if (!activa || !cliente) return
+    const oyente = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (vistaActual === 'entrega') { setVista('carrito'); return true }
+      if (vistaActual === 'carrito' && !abrir) { setVista('catalogo'); return true }
+      if (vistaActual === 'catalogo' && abrir) { setVista('carrito'); return true }
+      return false
+    })
+    return () => oyente.remove()
+  }, [activa, cliente, vistaActual, abrir])
 
   // Elegir el cliente arranca la venta: crea el borrador del tipo elegido y abre el catálogo.
   const [arrancarDelUltimo, setArrancarDelUltimo] = useState(false)
@@ -234,8 +254,8 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar }: Props = {})
   }
   const rotulo = nombre ? `${direccionDeEntrega(cliente)} · ${nombre}` : direccionDeEntrega(cliente)
   const superaTope = superaElTope(lineas, descuentoValido, tope, exento)
-  // En una venta nueva la flecha de la revisión vuelve al catálogo; en las que se abren, sale de la pantalla.
-  const volverDeRevision = abrir ? volver : { kind: 'atras' as const, onPress: () => setVista('catalogo') }
+  // En una venta nueva la flecha del carrito vuelve al catálogo; en las que se abren, sale de la pantalla.
+  const volverDelCarrito = abrir ? volver : { kind: 'atras' as const, onPress: () => setVista('catalogo') }
 
   // El estado del autoguardado se ve en las dos vistas: un guardado rechazado o un borrador que no nació no pasan en silencio.
   const avisoDelBorrador = aviso ? (
@@ -245,29 +265,36 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar }: Props = {})
     </View>
   ) : null
 
-  // Revisión de toda venta (nueva, retomada, duplicada o editada; lámina Carrito): las líneas con el stock vuelto a chequear; lo que no es una línea
-  // (entrega, descuento general, avisos, comisión) se ajusta desde `ajustes`: la entrega (fecha, logística,
-  // flete, nota y cesión) va en línea, Con factura en su interruptor. "Confirmar venta" manda la venta (sin segunda hoja); la hoja del motivo
-  // sale solo si falta stock, y el botón queda apagado con las mismas guardas de siempre.
+  // Carrito y entrega de toda venta (nueva, retomada, duplicada o editada; lámina Carrito): las líneas con el stock vuelto a chequear;
+  // lo que no es una línea se ajusta desde `ajustes`: en el carrito (paso 3) el descuento general y los avisos de las líneas; en la
+  // entrega (paso 4) la entrega (fecha, logística, flete, nota y cesión), Con factura en su interruptor y la comisión.
+  // "Confirmar venta" manda la venta (sin segunda hoja); la hoja del motivo sale solo si falta stock, y el botón
+  // queda apagado con las mismas guardas de siempre.
   const presupuestoSobreTope = tipo === 'Presupuesto' && superaTope
   const filaAjuste = (rotuloFila: string, valor: string | null, onPress: () => void) => (
-    <Pressable accessibilityRole="button" accessibilityLabel={rotuloFila} onPress={onPress}
+    <Pressable accessibilityRole="button" accessibilityLabel={rotuloFila} onPress={onPress} android_ripple={{ color: c.border }}
       style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], paddingHorizontal: space[3], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
       <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{rotuloFila}</Text>
       {valor ? <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.brandInk }}>{valor}</Text> : null}
     </Pressable>
   )
-  const ajustesRevision = (
+  const avisosRechazo = avisos.rechazos.map((r) => <Notice key={r} tone="peligro">{r}</Notice>)
+  const ajustesCarrito = (
     <View style={{ gap: space[2] }}>
-      <Pressable accessibilityRole="button" onPress={() => setVista('catalogo')}
+      <Pressable accessibilityRole="button" onPress={() => setVista('catalogo')} android_ripple={{ color: c.border }}
         style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, borderStyle: 'dashed' }}>
         <Plus size={20} color={c.brandInk} />
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Agregar productos</Text>
       </Pressable>
       {Object.entries(stockVivo.avisos).map(([id, texto]) => <Notice key={id} tone="advertencia" testID={`aviso-stock-${id}`}>{texto}</Notice>)}
-      {avisos.rechazos.map((r) => <Notice key={r} tone="peligro">{r}</Notice>)}
+      {avisosRechazo}
       {b.retenido && b.borrador ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`El borrador guarda los descuentos hasta tu tope (${mostrarNumero(tope)} %); el resto se guarda al confirmar el pedido.`}</Text> : null}
       {filaAjuste('Descuento a toda la venta', `${mostrarNumero(descuentoValido)} %`, () => setDescGeneral(true))}
+    </View>
+  )
+  const ajustesEntrega = (
+    <View style={{ gap: space[2] }}>
+      {avisosRechazo}
       <CabeceraVenta clienteId={cliente.id} cab={cab} />
       <ConFactura conFactura={cab.cabecera.conFactura} onChange={cab.setConFactura} lineas={lineas} />
       {comision !== null ? (
@@ -277,18 +304,23 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar }: Props = {})
       ) : null}
     </View>
   )
-  const vistaRevision = (
+  const enEntrega = vistaActual === 'entrega'
+  const tituloDeLaVenta = edicion ? `Editar ${tipo.toLowerCase()} ${edicion.codigo}` : enEntrega ? 'Entrega y facturación' : 'Carrito'
+  const vistaCarritoOEntrega = (
     <>
       <TopBar
-        title={edicion ? `Editar ${tipo.toLowerCase()} ${edicion.codigo}` : tipo === 'Pedido' ? 'Revisar venta' : 'Revisar presupuesto'}
+        title={tituloDeLaVenta}
         subtitle={rotulo}
-        leading={volverDeRevision}
+        leading={enEntrega ? { kind: 'atras', onPress: () => setVista('carrito') } : volverDelCarrito}
         syncLabel={b.etiqueta}
         actions={b.borrador ? [{ icon: Trash2, accessibilityLabel: 'Descartar borrador', onPress: descartar }] : []}
       />
-      <PasosVenta paso={3} />
+      <PasosVenta paso={enEntrega ? 4 : 3} />
       {avisoDelBorrador}
       <RevisarVenta
+        paso={enEntrega ? 'entrega' : 'carrito'}
+        onContinuar={() => setVista('entrega')}
+        onVolverAlCarrito={() => setVista('carrito')}
         autorizacion={avisos.porAutorizar}
         onEditarProductos={() => setVista('catalogo')}
         cliente={cliente}
@@ -301,7 +333,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar }: Props = {})
         motivoDeshabilitado={presupuestoSobreTope ? MOTIVO_PRESUPUESTO_SOBRE_TOPE : undefined}
         onEditarLinea={editarLinea}
         onElegirFragancias={setFragancias}
-        ajustes={ajustesRevision}
+        ajustes={enEntrega ? ajustesEntrega : ajustesCarrito}
         sinEncabezado={!edicion}
         yaReservadas={yaReservadas}
         etiquetaConfirmar={edicion ? 'Guardar cambios' : undefined}
@@ -310,25 +342,25 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar }: Props = {})
   )
 
   // Vista de catálogo: donde se arma la venta de una venta nueva. Con la flecha se sale de la venta.
-  // "Ver venta" (la barra del carrito) lleva a la revisión.
+  // "Ver venta" (la barra del carrito) lleva al carrito.
   const vistaCatalogo = (
     <>
       <TopBar
         title={direccionDeEntrega(cliente)}
         subtitle={[nombre, tipo === 'Presupuesto' ? 'Presupuesto' : null].filter(Boolean).join(' · ') || undefined}
-        leading={abrir ? { kind: 'atras', onPress: () => setVista('revision') } : volver}
+        leading={abrir ? { kind: 'atras', onPress: () => setVista('carrito') } : volver}
         syncLabel={b.etiqueta}
       />
       <PasosVenta paso={2} />
       <CreditoDeudaVenta clienteId={cliente.id} tipo={tipo} />
       {avisoDelBorrador}
-      <CatalogoVenta onVerVenta={() => setVista('revision')} llevo={llevo} filtroInicialDelUltimo={arrancarDelUltimo} enVivo={stockVivo.enVivo} onAbrirOferta={setOferta} />
+      <CatalogoVenta onVerVenta={() => setVista('carrito')} llevo={llevo} filtroInicialDelUltimo={arrancarDelUltimo} enVivo={stockVivo.enVivo} onAbrirOferta={setOferta} />
     </>
   )
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      {vista === 'catalogo' ? vistaCatalogo : vistaRevision}
+      {vistaActual === 'catalogo' ? vistaCatalogo : vistaCarritoOEntrega}
       <DescuentoGeneralSheet
         visible={descGeneral}
         valor={descuentoValido}

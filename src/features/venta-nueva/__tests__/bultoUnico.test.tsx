@@ -47,7 +47,7 @@ describe('una sola definición de bulto (bulto 12, venta mínima 6)', () => {
     useCarritoVenta.setState({ lineas: [{ productoId: p.id, producto: p, cantidad: 12, descuentoPct: 0 }] })
     render(
       <QueryClientProvider client={qc}>
-        <RevisarVenta cliente={null} descuentoGeneral={0} enviando={false} error={null} onConfirmar={noop} onEditarLinea={noop} />
+        <RevisarVenta paso="carrito" cliente={null} descuentoGeneral={0} enviando={false} error={null} onConfirmar={noop} onEditarLinea={noop} />
       </QueryClientProvider>,
     )
     expect(screen.getByText('1 bulto × 12 = 12 u')).toBeTruthy()

@@ -44,7 +44,7 @@ export function NuevaVentaInicio({ cargandoCliente, tipo, onTipo, onElegir, onNu
   }
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar title="Nueva venta" textoDerecha="Paso 1 de 3" leading={{ kind: 'atras', onPress: onVolver }} />
+      <TopBar title="Nueva venta" leading={{ kind: 'atras', onPress: onVolver }} />
       <PasosVenta paso={1} />
       <View style={{ paddingHorizontal: space[4], paddingTop: space[3], gap: space[2] }}>
         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Elegí el cliente para ver sus precios y el stock.</Text>

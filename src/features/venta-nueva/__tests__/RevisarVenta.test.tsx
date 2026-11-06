@@ -27,7 +27,7 @@ function revisar(props: Partial<React.ComponentProps<typeof RevisarVenta>> = {})
   const alConfirmar = jest.fn()
   render(
     <QueryClientProvider client={qc}>
-      <RevisarVenta cliente={cliente} descuentoGeneral={0} enviando={false} error={null} onConfirmar={alConfirmar} onEditarLinea={alEditar} {...props} />
+      <RevisarVenta paso="carrito" cliente={cliente} descuentoGeneral={0} enviando={false} error={null} onConfirmar={alConfirmar} onEditarLinea={alEditar} {...props} />
     </QueryClientProvider>,
   )
   return { alEditar, alConfirmar }
@@ -59,7 +59,7 @@ describe('RevisarVenta (S5, S6, S7)', () => {
     expect(screen.getByText('2 u × $ 1.000,00')).toBeTruthy()
     expect(screen.getByText('−10 %')).toBeTruthy()
     // 2 × 1.000 + 4 × 400 con 10 % = 2.000 + 1.440
-    expect(screen.getByTestId('revisar-total')).toHaveTextContent('$ 3.440,00')
+    expect(screen.getByTestId('carrito-paso-total')).toHaveTextContent('$ 3.440,00')
     expect(screen.getByText('Subtotal de lista')).toBeTruthy()
     await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(2))
   })
@@ -103,7 +103,7 @@ describe('RevisarVenta (S5, S6, S7)', () => {
   })
 
   it('el botón puede llevar otra etiqueta (editar: "Guardar cambios")', () => {
-    revisar({ etiquetaConfirmar: 'Guardar cambios' })
+    revisar({ paso: 'entrega', etiquetaConfirmar: 'Guardar cambios' })
     expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Confirmar venta' })).toBeNull()
   })
@@ -129,8 +129,8 @@ describe('RevisarVenta (S5, S6, S7)', () => {
 
   it('Confirmar venta revalida el stock y recién después confirma; con faltante no se bloquea', async () => {
     catalogoServidor = [rollo(), esponja({ disponible: 3 })]
-    const { alConfirmar } = revisar()
-    await screen.findByText('Quedan 3, pediste 4: tocá para ajustar')
+    const { alConfirmar } = revisar({ paso: 'entrega' })
+    await waitFor(() => expect(mockQueryFn).toHaveBeenCalledTimes(1))
     expect(mockQueryFn).toHaveBeenCalledTimes(1)
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(alConfirmar).toHaveBeenCalledTimes(1))
@@ -138,15 +138,14 @@ describe('RevisarVenta (S5, S6, S7)', () => {
   })
 
   it('muestra el error del servidor y deshabilita el botón mientras envía', () => {
-    revisar({ error: 'No se pudo guardar la venta.', enviando: true })
+    revisar({ paso: 'entrega', error: 'No se pudo guardar la venta.', enviando: true })
     expect(screen.getByText('No se pudo guardar la venta.')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeDisabled()
   })
 
   it('sin conexión no marca "Stock confirmado ahora" y confirmar sigue de inmediato (cola sin señal)', async () => {
     onlineManager.setOnline(false)
-    const { alConfirmar } = revisar()
-    expect(await screen.findAllByText('Sin conexión: el stock se revisa al enviar')).toHaveLength(2)
+    const { alConfirmar } = revisar({ paso: 'entrega' })
     expect(screen.queryByText('Stock confirmado ahora')).toBeNull()
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(alConfirmar).toHaveBeenCalledTimes(1))
@@ -154,8 +153,8 @@ describe('RevisarVenta (S5, S6, S7)', () => {
   })
 
   it('mientras revalida al confirmar, el botón queda deshabilitado y no se confirma dos veces', async () => {
-    const { alConfirmar } = revisar()
-    await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(2))
+    const { alConfirmar } = revisar({ paso: 'entrega' })
+    await waitFor(() => expect(mockQueryFn).toHaveBeenCalledTimes(1))
     let soltar: () => void = () => {}
     mockQueryFn.mockImplementationOnce(() => new Promise((res) => { soltar = () => res({ items: catalogoServidor, hasNextPage: false }) }))
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
@@ -165,8 +164,8 @@ describe('RevisarVenta (S5, S6, S7)', () => {
     await waitFor(() => expect(alConfirmar).toHaveBeenCalledTimes(1))
   })
   it('dos toques seguidos en Confirmar venta (antes de re-renderizar) confirman una sola vez', async () => {
-    const { alConfirmar } = revisar()
-    await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(2))
+    const { alConfirmar } = revisar({ paso: 'entrega' })
+    await waitFor(() => expect(mockQueryFn).toHaveBeenCalledTimes(1))
     const boton = screen.getByRole('button', { name: 'Confirmar venta' })
     // Dos toques en el mismo cuadro: el segundo llega antes de que el botón se apague.
     await act(async () => { fireEvent.press(boton); fireEvent.press(boton) })
@@ -176,8 +175,8 @@ describe('RevisarVenta (S5, S6, S7)', () => {
   })
 
   it('si el envío falla, se puede volver a confirmar', async () => {
-    const { alConfirmar } = revisar()
-    await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(2))
+    const { alConfirmar } = revisar({ paso: 'entrega' })
+    await waitFor(() => expect(mockQueryFn).toHaveBeenCalledTimes(1))
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(alConfirmar).toHaveBeenCalledTimes(1))
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
@@ -216,13 +215,18 @@ describe('RevisarVenta (S5, S6, S7)', () => {
   it('abre con el aviso de autorización arriba, la sección Productos con Editar y los descuentos de línea', async () => {
     const alEditarProductos = jest.fn()
     revisar({ autorizacion: ['un descuento supera tu tope', 'el cliente tiene deuda de más de 30 días'], onEditarProductos: alEditarProductos })
-    expect(screen.getByText('Esta venta necesita autorización')).toBeTruthy()
-    expect(screen.getByText(/Un descuento supera tu tope\./)).toBeTruthy()
-    expect(screen.getByText(/Podés confirmarla igual: queda en Por autorizar\./)).toBeTruthy()
+    expect(screen.queryByText('Esta venta necesita autorización')).toBeNull() // el aviso va en la entrega (paso 4)
     expect(screen.getByText('Productos')).toBeTruthy()
     expect(screen.getByText('Descuentos de línea')).toBeTruthy()
     await userEvent.press(screen.getByRole('button', { name: 'Editar productos' }))
     expect(alEditarProductos).toHaveBeenCalledTimes(1)
+  })
+
+  it('el aviso de autorización va en la entrega (paso 4), con sus motivos', () => {
+    revisar({ paso: 'entrega', autorizacion: ['un descuento supera tu tope', 'el cliente tiene deuda de más de 30 días'] })
+    expect(screen.getByText('Esta venta necesita autorización')).toBeTruthy()
+    expect(screen.getByText(/Un descuento supera tu tope\./)).toBeTruthy()
+    expect(screen.getByText(/Podés confirmarla igual: queda en Por autorizar\./)).toBeTruthy()
   })
 
   it('sin motivos de autorización no hay aviso', () => {
@@ -245,7 +249,7 @@ describe('RevisarVenta: sin la capacidad de ver cantidades', () => {
 
   it('con la capacidad no consulta la disponibilidad: el texto de hoy', async () => {
     revisar()
-    await waitFor(() => expect(screen.getAllByText('Stock confirmado ahora')).toHaveLength(2))
+    await waitFor(() => expect(mockQueryFn).toHaveBeenCalledTimes(1))
     expect(mockPost).not.toHaveBeenCalled()
   })
 })

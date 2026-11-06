@@ -39,6 +39,7 @@ const abrir = (a: AbrirVenta) => render(
 )
 async function editarYAbrirConfirmar() {
   abrir({ modo: 'editar', ventaId: 'v9' })
+  await userEvent.press(await screen.findByRole('button', { name: 'Continuar' }))
   await screen.findByRole('button', { name: 'Guardar cambios' })
 }
 
@@ -103,6 +104,7 @@ describe('T4d Con factura al editar', () => {
   it('duplicar no copia el tilde de la venta: nace con el default', async () => {
     ventaServidor = { venta: cabecera({ conFactura: true }), detalles, bultos: [] }
     abrir({ modo: 'duplicar', ventaId: 'v9' })
+    await userEvent.press(await screen.findByRole('button', { name: 'Continuar' }))
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith(URL_DEFECTO))
     await waitFor(() => expect(screen.getByRole('switch', { name: 'Con factura' })).not.toBeChecked())
   })

@@ -10,6 +10,8 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ setParams: (...a: unknown[]) => mockSetParams(...a) }),
 }))
 
+jest.mock('@react-navigation/native', () => ({ useIsFocused: () => true }))
+
 // La pantalla real es enorme: acá importa cuándo la ruta la descarta y abre una limpia.
 let mockInstancias = 0
 let mockTerminar: (() => void) | undefined
