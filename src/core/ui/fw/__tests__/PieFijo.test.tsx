@@ -73,18 +73,34 @@ describe.each(TEMAS)('PieFijo (%s)', (tema) => {
     expect(estilo(screen.getByTestId('pie-contenido')).paddingBottom).toBe(16 + 34)
   })
 
+  const parchearMedicion = () => {
+    const proto = View.prototype as unknown as { measure?: unknown; measureInWindow?: unknown }
+    const original = { measure: proto.measure, measureInWindow: proto.measureInWindow }
+    // `measure` da la posición en pantalla (pageY); `measureInWindow` en Android resta la barra de estado fuera de un Modal translúcido.
+    const medir = jest.fn((cb: (x: number, y: number, w: number, h: number, px: number, py: number) => void) => cb(0, 0, 1000, 100, 0, 2900))
+    const enVentana = jest.fn((cb: (x: number, y: number, w: number, h: number) => void) => cb(0, 2900 - 144, 1000, 100))
+    proto.measure = medir
+    proto.measureInWindow = enVentana
+    afterEachRestaurar = () => { proto.measure = original.measure; proto.measureInWindow = original.measureInWindow }
+    return medir
+  }
+
   it('abierto y sin achicarse la ventana: sube el pie lo que tapa el teclado; si la ventana ya se achicó, no suma', () => {
-    const proto = View.prototype as unknown as { measureInWindow?: unknown }
-    const original = proto.measureInWindow
-    const medir = jest.fn((cb: (x: number, y: number, w: number, h: number) => void) => cb(0, 2900, 1000, 100))
-    proto.measureInWindow = medir
-    afterEachRestaurar = () => { proto.measureInWindow = original }
+    const medir = parchearMedicion()
     const o = montar({ conInsetInferior: true })
     abrir(o, 2200)
     expect(estilo(screen.getByTestId('pie-contenido')).paddingBottom).toBe(16 + 800)
-    medir.mockImplementation((cb) => cb(0, 2000, 1000, 100))
+    medir.mockImplementation((cb) => cb(0, 0, 1000, 100, 0, 2000))
     fireEvent(screen.getByTestId('pie'), 'layout', { nativeEvent: { layout: { x: 0, y: 2000, width: 1000, height: 100 } } })
     expect(estilo(screen.getByTestId('pie-contenido')).paddingBottom).toBe(16)
+  })
+
+  it('mide en coordenadas de pantalla (como screenY del teclado), no las de la ventana sin barra de estado', () => {
+    parchearMedicion()
+    const o = montar()
+    abrir(o, 2200)
+    // pie en pantalla hasta 3000 (pageY 2900 + 100), teclado en 2200: tapa 800; con measureInWindow daría 656.
+    expect(estilo(screen.getByTestId('pie-contenido')).paddingBottom).toBe(16 + 800)
   })
 
   it('usa tokens del tema: fondo y borde superior', () => {

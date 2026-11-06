@@ -15,8 +15,10 @@ export function useEspacioTeclado() {
 
   const medir = useCallback(() => {
     if (!teclado.visible) { setEspacio(0); return }
-    ref.current?.measureInWindow((_x, y, _w, h) => {
-      setEspacio(espacioBajoTeclado({ tecladoAbierto: true, tecladoArriba: teclado.arriba, pieAbajo: y + h }))
+    // `measure` (pageY) y no `measureInWindow`: en Android éste resta la barra de estado fuera de un Modal
+    // translúcido y queda en otro sistema de coordenadas que `screenY` del teclado (medido: 144 px de error).
+    ref.current?.measure((_x, _y, _w, h, _pageX, pageY) => {
+      setEspacio(espacioBajoTeclado({ tecladoAbierto: true, tecladoArriba: teclado.arriba, pieAbajo: pageY + h }))
     })
   }, [teclado.visible, teclado.arriba])
 
