@@ -4,7 +4,7 @@ import { Trash2 } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { radii, space, typeScale, importe, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Button, Field, Notice, StatusChip, formatImporte } from '@/core/ui/fw'
+import { Button, Field, Notice, PieFijo, StatusChip, formatImporte } from '@/core/ui/fw'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { calcularSubtotalConDescuento, canViewCost, pctFromPrecio, precioFromPct } from '@/features/ventas/lib/descuentos'
@@ -220,9 +220,9 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
               </View>
             )}
           </ScrollView>
-          <View style={{ padding: space[4], paddingBottom: space[4] + insets.bottom, borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
+          <PieFijo conInsetInferior>
             <Button label="Confirmar" disabled={invalido} onPress={() => onConfirm({ ...linea, cantidad, descuentoPct: pct })} />
-          </View>
+          </PieFijo>
         </View>
       </View>
     </Modal>

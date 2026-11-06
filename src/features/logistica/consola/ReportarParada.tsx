@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Modal, ScrollView, Text, View, useWindowDimensions } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { space, typeScale, useColors } from '@/libs/theme'
-import { BottomSheet, Button, Field, Notice, OptionCard, TopBar, formatImporte } from '@/core/ui/fw'
+import { BottomSheet, Button, Field, Notice, OptionCard, PieFijo, TopBar, formatImporte } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import type { ParadaDto } from '@/libs/api-client/types'
@@ -55,7 +54,6 @@ const TITULO_PASO: Record<Paso, string> = { devolucion: 'Devoluciones', cobro: '
  */
 export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, exigeFotoRemito, resultadoInicial = 'entregado', onCerrar, onConfirmar }: Props) {
   const c = useColors()
-  const { bottom } = useSafeAreaInsets()
   // Tablet: los pasos van en una columna centrada, no se estiran a todo el ancho.
   const { width } = useWindowDimensions()
   const columna = width >= 768 ? { maxWidth: 640, width: '100%' as const, alignSelf: 'center' as const } : null
@@ -270,7 +268,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
           {error && ultimo ? <Notice tone="peligro">{error}</Notice> : null}
         </ScrollView>
         {eligiendo || enviada ? null : (
-          <View style={{ backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border, padding: space[4], paddingBottom: space[4] + bottom, gap: space[2] }}>
+          <PieFijo conInsetInferior>
             <View style={{ gap: space[2], ...columna }}>
               {razon ? <MotivoDeshabilitado>{razon}</MotivoDeshabilitado> : null}
               <Button
@@ -281,7 +279,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
                 onPress={!ultimo ? seguir : entregado ? () => setConfirmando(true) : confirmar}
               />
             </View>
-          </View>
+          </PieFijo>
         )}
       </View>
       <BottomSheet visible={confirmando} onClose={() => setConfirmando(false)} accessibilityLabel="Confirmar la entrega">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Crosshair, Lock } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
@@ -80,8 +80,8 @@ export function ClienteForm({ id }: { id?: string }) {
       ) : cargando ? (
         <ActivityIndicator color={c.brandInk} style={{ marginTop: space[8] }} />
       ) : (
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <ScrollView contentContainerStyle={{ paddingVertical: space[4] }}>
+        <View style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={{ paddingVertical: space[4] }} keyboardShouldPersistTaps="handled">
             <FormContainer style={{ paddingHorizontal: space[4], gap: space[4] }}>
               {hayBloqueo ? <Notice tone="info">{AVISO_CAMPOS_SENSIBLES}</Notice> : null}
               <Grupo titulo="Entrega">
@@ -178,7 +178,7 @@ export function ClienteForm({ id }: { id?: string }) {
               )}
             </FormContainer>
           </PieDeFormulario>
-        </KeyboardAvoidingView>
+        </View>
       )}
     </View>
   )

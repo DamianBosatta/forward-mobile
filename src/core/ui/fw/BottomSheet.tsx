@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { radii, shadowMd, space, useColors, useIsDark } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
+import { useEspacioTeclado } from './useEspacioTeclado'
 
 interface BottomSheetProps {
   visible: boolean
@@ -23,6 +24,8 @@ export function BottomSheet({ visible, onClose, accessibilityLabel, children }: 
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const { isLarge } = useResponsive()
   const { bottom } = useSafeAreaInsets()
+  // Con el teclado abierto la hoja sube lo que el teclado tapa (contenido y pie quedan a la vista) y pierde la barra del sistema.
+  const { ref, onLayout, tecladoAbierto, espacio } = useEspacioTeclado()
 
   const panel = isLarge
     ? { width: '100%' as const, maxWidth: 600, borderRadius: radii.hoja, padding: space[6], ...sombra }
@@ -33,12 +36,12 @@ export function BottomSheet({ visible, onClose, accessibilityLabel, children }: 
         borderBottomRightRadius: 0,
         paddingTop: space[2],
         paddingHorizontal: space[4],
-        paddingBottom: space[6] + bottom,
+        paddingBottom: space[6] + (tecladoAbierto ? 0 : bottom),
       }
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <View style={[styles.fill, isLarge ? styles.centro : styles.abajo, isLarge && { padding: space[6] }]}>
+      <View ref={ref} onLayout={onLayout} style={[styles.fill, isLarge ? styles.centro : styles.abajo, isLarge && { padding: space[6] }, { paddingBottom: (isLarge ? space[6] : 0) + espacio }]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Cerrar"

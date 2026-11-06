@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
 import { Lock } from 'lucide-react-native'
-import { Button, Field, FormContainer, Notice, PasosNumerados, formatImporte } from '@/core/ui/fw'
+import { Button, Field, FormContainer, Notice, PasosNumerados, PieFijo, formatImporte } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useSocio, useSocios } from '@/libs/api-client/socios'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -65,6 +65,7 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
         keyExtractor={(p) => p.id}
         extraData={[elegido, condicion, franja]}
         contentContainerStyle={{ padding: space[4], gap: space[2] }}
+        keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
           <FormContainer style={{ gap: space[3], paddingBottom: space[2] }}>
             <Field label="Proveedor" placeholder="Nombre, CUIT o código" value={busqueda} onChangeText={setBusqueda} autoCorrect={false} />
@@ -117,9 +118,9 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
           </FormContainer>
         ) : null}
       />
-      <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+      <PieFijo>
         <Button label="Continuar a productos" disabled={!elegido} onPress={() => { if (elegido) onElegir(elegido) }} />
-      </View>
+      </PieFijo>
     </View>
   )
 }

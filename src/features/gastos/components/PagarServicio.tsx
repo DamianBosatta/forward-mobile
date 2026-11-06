@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, ScrollView, View } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { space, useColors } from '@/libs/theme'
 import { MOTIVO_SIN_PERMISO_DE_SERVICIO, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
-import { Button, Field, FormContainer, Notice } from '@/core/ui/fw'
+import { Button, Field, FormContainer, Notice, PieFijo } from '@/core/ui/fw'
 import { useToast } from '@/core/ui/Toast'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -25,7 +24,6 @@ const VACIO: FormServicio = { monto: '', tipoGastoId: null, descripcion: '', med
  */
 export function PagarServicio({ onListo }: { onListo: () => void }) {
   const c = useColors()
-  const insets = useSafeAreaInsets()
   const toast = useToast()
   const { canRead } = usePermissions()
   const puede = usePuedePagarServicio()
@@ -93,10 +91,10 @@ export function PagarServicio({ onListo }: { onListo: () => void }) {
           {registrar.error ? <Notice tone="peligro">{mensajeDelServidor(registrar.error, 'No se pudo registrar el pago.')}</Notice> : null}
         </FormContainer>
       </ScrollView>
-      <View style={{ padding: space[4], paddingBottom: space[4] + insets.bottom, gap: space[2], borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
+      <PieFijo conInsetInferior>
         <Button label="Registrar pago" loading={registrar.isPending} disabled={registrar.isPending || subiendo || !puede} onPress={enviar} />
         {!puede ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_SERVICIO}</MotivoDeshabilitado> : null}
-      </View>
+      </PieFijo>
     </View>
   )
 }

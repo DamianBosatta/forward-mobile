@@ -1,11 +1,10 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { ArrowDown } from 'lucide-react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
-import { Button, Field, FormContainer, Notice, formatImporte } from '@/core/ui/fw'
+import { Button, Field, FormContainer, Notice, PieFijo, formatImporte } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
@@ -41,7 +40,6 @@ export function observacionesConOperacion(operacion: string, nota: string): stri
  */
 export function Transferencia({ onListo }: { onListo: () => void }) {
   const c = useColors()
-  const insets = useSafeAreaInsets()
   const tipos = useTiposMovimientoInterno()
   const { canRead, canDo } = usePermissions()
   // Como la web: sin MOD_PAGOS:Create el botón no desaparece, se deshabilita y dice por qué.
@@ -101,7 +99,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
   const nombreOrigen = propias.find(k => k.id === origen)?.nombre
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ padding: space[4] }}>
+      <ScrollView contentContainerStyle={{ padding: space[4] }} keyboardShouldPersistTaps="handled">
         <FormContainer style={{ gap: space[4] }}>
           {tipos.isLoading || cuentas.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
           {tipos.error ? <Notice tone="peligro">{mensajeDelServidor(tipos.error, 'No se pudieron cargar los tipos.')}</Notice> : null}
@@ -152,10 +150,10 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
         </FormContainer>
       </ScrollView>
       {/* Acción primaria fija abajo (lámina: bottombar). */}
-      <View style={{ padding: space[4], paddingBottom: space[4] + insets.bottom, gap: space[2], borderTopWidth: 1, borderTopColor: c.border, backgroundColor: c.surface }}>
+      <PieFijo conInsetInferior>
         <Button label="Registrar movimiento" loading={registrar.isPending} disabled={registrar.isPending || !puedeRegistrar} onPress={enviar} />
         {!puedeRegistrar ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}</MotivoDeshabilitado> : null}
-      </View>
+      </PieFijo>
     </View>
   )
 }

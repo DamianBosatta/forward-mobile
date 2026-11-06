@@ -1,13 +1,7 @@
 import React from 'react'
-import { View } from 'react-native'
-import { space, useColors } from '@/libs/theme'
+import { PieFijo } from '@/core/ui/fw'
 
-/** Pie fijo de los formularios de socios (láminas Nuevo y Editar): el botón de guardar siempre a mano. */
+/** Pie fijo de los formularios de socios (láminas Nuevo y Editar): el botón de guardar siempre a mano, sobre el teclado. */
 export function PieDeFormulario({ children }: { children: React.ReactNode }) {
-  const c = useColors()
-  return (
-    <View style={{ padding: space[4], gap: space[2], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
-      {children}
-    </View>
-  )
+  return <PieFijo>{children}</PieFijo>
 }
