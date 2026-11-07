@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useTeclado } from '@/core/utils/useTecladoVisible'
 import { BottomSheet, Button, Field, Notice, StatusChip } from '@/core/ui/fw'
+import { BottomSheet, Button, Field, Notice, OptionCard, StatusChip } from '@/core/ui/fw'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   calendarioKeys, useBorrarEvento, useEditarEvento, useEventoCalendario, useMarcarPagado,
@@ -14,7 +15,8 @@ import { chipDe, esHoraValida, esRecordatorio, textoSemanal, TIPO } from './pres
 import { moverDia, nombreLargo } from './semana'
 import { SelectorDia } from './SelectorDia'
 import { usePuedeCobrar } from '@/features/cuentas/lib/permiso'
-import { cobroAbierto, depositoDe, esTareaAsignada, type EventoConTarea } from './tarea'
+import { cobroAbierto, depositoDe, ESTADOS_DE_TAREA, esTareaAsignada, type EstadoTarea, type EventoConTarea } from './tarea'
+import { useCambiarEstadoTarea } from './api'
 
 /** Límites del servidor (EventoCalendario.MaxTitulo / MaxDescripcion). */
 const MAX_TITULO = 150
@@ -130,7 +132,11 @@ function Cuerpo({ cabecera, children, pie }: { cabecera: React.ReactNode; childr
 function DetalleTarea({ evento, onCerrar, onCobrar }: Pick<Props, 'evento' | 'onCerrar' | 'onCobrar'>) {
   const c = useColors()
   const puedeCobrar = usePuedeCobrar()
-  const quiereCobrar = cobroAbierto(evento) && puedeCobrar && !!onCobrar
+  const cambiar = useCambiarEstadoTarea()
+  // El estado que se ve es el último confirmado por el servidor: la hoja guarda el evento con el que se abrió.
+  const [estado, setEstado] = useState<EstadoTarea | null | undefined>(evento.estadoTarea)
+  const [errorEstado, setErrorEstado] = useState<string | null>(null)
+  const quiereCobrar = cobroAbierto({ ...evento, estadoTarea: estado }) && puedeCobrar && !!onCobrar
   const detalle = useEventoCalendario(quiereCobrar ? evento.origenId : null)
   const socioId = detalle.data?.socioComercialId ?? null
   const linea = { ...typeScale.secundario, color: c.textSecondary }
@@ -142,6 +148,26 @@ function DetalleTarea({ evento, onCerrar, onCobrar }: Pick<Props, 'evento' | 'on
       {asignados ? <Text style={linea}>{`Asignada a ${asignados}`}</Text> : null}
       {evento.descripcion ? <Text style={linea}>{evento.descripcion}</Text> : null}
       <Text style={linea}>La ven quienes la tienen asignada y Administración.</Text>
+      <View accessibilityLabel="Estado de la tarea" style={{ gap: space[2] }}>
+        {ESTADOS_DE_TAREA.map((e) => (
+          <OptionCard
+            key={e.valor}
+            label={e.texto}
+            minHeight={56}
+            selected={e.valor === (estado ?? 'Pendiente')}
+            disabled={cambiar.isPending}
+            onPress={() => {
+              if (e.valor === (estado ?? 'Pendiente')) return
+              setErrorEstado(null)
+              cambiar.mutate({ id: evento.origenId, estado: e.valor }, {
+                onSuccess: () => setEstado(e.valor),
+                onError: (err) => setErrorEstado(mensajeDelServidor(err, 'No se pudo cambiar el estado de la tarea.')),
+              })
+            }}
+          />
+        ))}
+      </View>
+      {errorEstado ? <Notice tone="peligro">{errorEstado}</Notice> : null}
       {quiereCobrar ? (
         <Button
           label="Cobrar"

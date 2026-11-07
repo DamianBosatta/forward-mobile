@@ -34,3 +34,11 @@ export const TIPO_TAREA: Record<TipoTarea, string> = {
   EntregaPendiente: 'Entrega pendiente',
   CobroPendiente: 'Cobro pendiente',
 }
+
+/** Los estados que ofrece la web, en su orden y con su texto. */
+export const ESTADOS_DE_TAREA: { valor: EstadoTarea; texto: string }[] = [
+  { valor: 'Pendiente', texto: 'Pendiente' },
+  { valor: 'EnCurso', texto: 'En curso' },
+  { valor: 'Hecha', texto: 'Hecha' },
+  { valor: 'Cancelada', texto: 'Cancelada' },
+]
