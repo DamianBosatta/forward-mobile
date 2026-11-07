@@ -186,6 +186,18 @@ describe('Stock por depósito, sin CAP_VER_CANTIDADES_STOCK', () => {
     const url = llamadasGet().find((u) => u.startsWith('/api/v1/Productos/catalogo-stock?'))!
     expect(new URLSearchParams(url.split('?')[1]).has('depositoId')).toBe(false)
   })
+
+  it('la lista de stock no trae variantes hijas ni hermanas que no coinciden con la búsqueda', async () => {
+    conUsuario([{ module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true }], 'dep-norte')
+    renderPantalla()
+    await abrirStock()
+
+    expect(await screen.findByText(PRODUCTO.nombre)).toBeTruthy()
+    const url = llamadasGet().find((u) => u.startsWith('/api/v1/Productos/catalogo-stock?'))!
+    const params = new URLSearchParams(url.split('?')[1])
+    expect(params.get('sinVariantes')).toBe('true')
+    expect(params.get('familiasCompletas')).toBe('false')
+  })
 })
 
 describe('Pantalla Stock separada del catálogo', () => {
