@@ -5,6 +5,7 @@ import { Trash2 } from 'lucide-react-native'
 import { Button, Field, Notice, PasosNumerados, PieFijo, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useDepositos, useInfiniteProductos } from '@/libs/api-client'
+import { usePuedeElegirDeposito } from '@/features/venta-nueva/hooks/useDepositoDeVenta'
 import { leerNumero, mostrarNumero } from '@/core/utils/numero'
 import { mensajeDelServidor } from '../lib/mensaje-error'
 import { sinCosto, subtotalDe, textoDeLinea, totalCompra, unidadesDe, type LineaCompra } from '../lib/lineaCompra'
@@ -67,6 +68,7 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
   // Lo comprable: comunes y fragancias (variantes), sin la línea, que el servidor no deja comprar.
   const productos = useInfiniteProductos({ pageSize: 30, search: enviada, soloComprables: true })
   const { data: depositos } = useDepositos()
+  const puedeElegirDeposito = usePuedeElegirDeposito()
 
   const volver = () => {
     if (!(edicion && b.hayCambios)) return router.back()
@@ -200,18 +202,23 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
         <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text }]}>Recepción</Text>
         {/* El plazo de pago es del proveedor: acá va de solo lectura. */}
         {b.proveedor.condicion ? <Text style={[typeScale.secundario, { color: c.text }]}>{`Plazo de pago: ${b.proveedor.condicion}`}</Text> : null}
-        <View accessibilityRole="radiogroup" accessibilityLabel="Depósito" style={{ gap: space[2] }}>
-          <Text style={[typeScale.secundario, { color: c.text }]}>Depósito</Text>
-          {(depositos ?? []).map((d) => {
-            const sel = d.id === b.depositoId
-            return (
-              <Pressable key={d.id ?? d.nombre} accessibilityRole="radio" accessibilityState={{ selected: sel, checked: sel }} onPress={() => { if (d.id) b.setDepositoId(d.id) }}
-                style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.campo, borderWidth: 1, borderColor: sel ? c.brand : c.border, backgroundColor: sel ? c.brandSoft : c.surface }}>
-                <Text style={[typeScale.cuerpo, { color: sel ? c.brandInk : c.text }]}>{d.nombre}</Text>
-              </Pressable>
-            )
-          })}
-        </View>
+        {puedeElegirDeposito ? (
+          <View accessibilityRole="radiogroup" accessibilityLabel="Depósito" style={{ gap: space[2] }}>
+            <Text style={[typeScale.secundario, { color: c.text }]}>Depósito</Text>
+            {(depositos ?? []).map((d) => {
+              const sel = d.id === b.depositoId
+              return (
+                <Pressable key={d.id ?? d.nombre} accessibilityRole="radio" accessibilityState={{ selected: sel, checked: sel }} onPress={() => { if (d.id) b.setDepositoId(d.id) }}
+                  style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.campo, borderWidth: 1, borderColor: sel ? c.brand : c.border, backgroundColor: sel ? c.brandSoft : c.surface }}>
+                  <Text style={[typeScale.cuerpo, { color: sel ? c.brandInk : c.text }]}>{d.nombre}</Text>
+                </Pressable>
+              )
+            })}
+          </View>
+        ) : (
+          // Sin CAP_VER_TODOS_LOS_DEPOSITOS la compra entra siempre en el depósito del usuario (o el que ya tenía): se muestra, no se elige.
+          <Text style={[typeScale.secundario, { color: c.text }]}>{`Depósito: ${(depositos ?? []).find((d) => d.id === b.depositoId)?.nombre ?? 'el tuyo'}`}</Text>
+        )}
         <Field label="Gastos operativos ($)" keyboardType="decimal-pad" alignRight value={gastosTexto}
           error={gastosLeidos === null ? 'Escribí un importe válido, por ejemplo 1.500,50.' : undefined}
           onChangeText={(t) => { setGastosTexto(t); const n = t.trim() === '' ? 0 : leerNumero(t); if (n !== null) b.setGastos(n) }} />

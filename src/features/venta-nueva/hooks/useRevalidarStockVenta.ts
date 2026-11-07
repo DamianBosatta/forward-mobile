@@ -5,7 +5,8 @@ import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { conStockFresco, stockCambiado, type CambioDeStock } from '../lib/avisoStockVivo'
 import { useCarritoVenta } from './useCarritoVenta'
-import { CLAVE_CATALOGO, catalogoCompletoQuery } from './useCatalogoVenta'
+import { catalogoCompletoQuery, claveCatalogo } from './useCatalogoVenta'
+import { useDepositoAjenoDeVenta } from './useDepositoDeVenta'
 
 type Cache = { items: CatalogoStockItem[] } | CatalogoStockItem[]
 const SIN_CATALOGO: CatalogoStockItem[] = []
@@ -30,7 +31,8 @@ export function useRevalidarStockVenta() {
   const [sinConexion, setSinConexion] = useState(false)
   // Observa la caché del catálogo: `staleTime` infinito para no pedirlo por su cuenta (lo hace `revalidar`). Tiene que
   // estar activo: `refetchQueries` se salta las consultas cuyos observadores están todos desactivados.
-  const { data } = useQuery<Cache, Error, CatalogoStockItem[]>({ ...catalogoCompletoQuery, staleTime: Infinity, select: itemsDe })
+  const ajeno = useDepositoAjenoDeVenta()
+  const { data } = useQuery<Cache, Error, CatalogoStockItem[]>({ ...catalogoCompletoQuery(ajeno), staleTime: Infinity, select: itemsDe })
   const catalogo = data ?? SIN_CATALOGO
 
   const cambios = useMemo(() => stockCambiado(lineasCarrito, catalogo, verCantidades), [lineasCarrito, catalogo, verCantidades])
@@ -42,21 +44,22 @@ export function useRevalidarStockVenta() {
 
   const revalidar = useCallback(async (): Promise<CambioDeStock[]> => {
     setRevalidando(true)
+    const clave = claveCatalogo(ajeno)
     try {
-      await qc.refetchQueries({ queryKey: CLAVE_CATALOGO })
+      await qc.refetchQueries({ queryKey: clave, exact: true })
       // `refetchQueries` no tira: si falló, el estado de la consulta queda en error y la caché con lo anterior.
       // Sin conexión tampoco espera: el pedido queda en pausa (`fetchStatus: 'paused'`) y `status` sigue en 'success'
       // por lo que había en caché; eso no es haber llegado al servidor.
-      const estado = qc.getQueryState(CLAVE_CATALOGO)
+      const estado = qc.getQueryState(clave)
       const enPausa = estado?.fetchStatus === 'paused'
       setSinConexion(enPausa)
       setConfirmado(!enPausa && estado?.status === 'success')
       const { lineasCarrito: ls, verCantidades: ver } = ultimas.current
-      return stockCambiado(ls, itemsDe(qc.getQueryData<Cache>(CLAVE_CATALOGO)), ver)
+      return stockCambiado(ls, itemsDe(qc.getQueryData<Cache>(clave)), ver)
     } finally {
       setRevalidando(false)
     }
-  }, [qc])
+  }, [qc, ajeno])
 
   useEffect(() => { void revalidar() }, [revalidar])
 

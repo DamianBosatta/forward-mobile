@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '@/core/api/client'
 import { esError } from '@/core/api/errores'
-import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { ventasKeys } from '@/libs/api-client/ventas'
 import { inicioKeys } from '@/core/query/queryClient'
 import type { CatalogoStockItem } from '@/libs/api-client'
@@ -21,7 +20,8 @@ import type { LineaCarrito } from '../lib/carrito'
 import { conStockFresco } from '../lib/avisoStockVivo'
 import { faltaStock } from '../lib/avisos'
 import { consultarQueNoAlcanza } from './useAlcanzaStock'
-import { CLAVE_CATALOGO } from './useCatalogoVenta'
+import { claveCatalogo } from './useCatalogoVenta'
+import { useDepositoAjenoDeVenta, useDepositoDeVenta } from './useDepositoDeVenta'
 import type { useBorradorVenta } from './useBorradorVenta'
 
 interface Datos {
@@ -82,6 +82,8 @@ export function useConfirmarVenta(d: Datos) {
   // La clave es del borrador: se reusa en cada reintento de lo mismo y se renueva al terminar la venta (grabada o en la cola).
   const claveRef = useRef(nuevaClaveIdempotencia())
   // Cuerpos (sin la clave) de los intentos de alta que quedaron sin respuesta: alguno pudo grabarse.
+  const depositoId = useDepositoDeVenta()
+  const ajeno = useDepositoAjenoDeVenta()
   const sinRespuesta = useRef(new Set<string>())
   const [enviando, setEnviando] = useState(false)
   // El estado no alcanza como guardia: dos toques antes del re-render leen el mismo `enviando`.
@@ -94,14 +96,14 @@ export function useConfirmarVenta(d: Datos) {
   // no ve cantidades recibe `disponible = 0`: para él decide `puedeVenderse`.
   const sinStock = async () => {
     if (d.edicion || !d.esPedido) return false
-    const cache = qc.getQueryData<{ items: CatalogoStockItem[] } | CatalogoStockItem[]>(CLAVE_CATALOGO)
+    const cache = qc.getQueryData<{ items: CatalogoStockItem[] } | CatalogoStockItem[]>(claveCatalogo(ajeno))
     const catalogo = Array.isArray(cache) ? cache : cache?.items ?? []
     const frescas = conStockFresco(d.lineas, catalogo)
     if (frescas.some((l) => faltaStock(l, verCantidades))) return true
     if (verCantidades) return false
     // Sin cantidades el cliente no puede comparar: se le pregunta al servidor (sí/no por producto) y se pide el motivo
     // como parte del flujo, en vez de esperar el 400 al enviar.
-    const noAlcanzan = await consultarQueNoAlcanza(frescas.map((l) => ({ productoId: l.productoId, cantidad: l.cantidad })))
+    const noAlcanzan = await consultarQueNoAlcanza(depositoId, frescas.map((l) => ({ productoId: l.productoId, cantidad: l.cantidad })))
     return noAlcanzan.size > 0
   }
 
@@ -124,7 +126,7 @@ export function useConfirmarVenta(d: Datos) {
       r = await api.post<VentaActionResponseDto>(`/api/v1/Ventas/${b.borrador.id}/guardar-presupuesto`, { ventaId: b.borrador.id, version: await b.flush() })
     } else {
       const cuerpo = (claveIdempotencia: string) => aAlta(d.lineas, d.descuentoGeneral, d.cabecera, {
-        clienteId: d.clienteId, depositoId: DEPOSITO_CENTRAL_ID, esPedido: d.esPedido, claveIdempotencia,
+        clienteId: d.clienteId, depositoId, esPedido: d.esPedido, claveIdempotencia,
         motivoVentaSinStock: motivo, porcentajeComisionCedido: d.porcentajeCedido,
       })
       const invalido = errorDeAltaVenta(cuerpo(clave))

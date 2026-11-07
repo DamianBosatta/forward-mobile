@@ -9,7 +9,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { calcularSubtotalConDescuento, canViewCost, pctFromPrecio, precioFromPct } from '@/features/ventas/lib/descuentos'
 import { calcularRentabilidadVenta } from '@/features/ventas/lib/rentabilidad-venta'
-import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { useDepositoDeVenta } from '../hooks/useDepositoDeVenta'
 import { useVariantesProducto } from '@/libs/api-client/productos'
 import { useVistaPreviaLinea } from '@/libs/api-client/ventas'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
@@ -53,7 +53,8 @@ export function EditarLineaSheet(props: EditarLineaSheetProps) {
 function ConStockDeFragancia(props: EditarLineaSheetProps & { linea: LineaCarrito }) {
   const user = useAuthStore((s) => s.user)
   const p = props.linea.producto
-  const servidor = useVariantesProducto(p.productoPadreId ?? '', true, DEPOSITO_CENTRAL_ID)
+  const depositoId = useDepositoDeVenta()
+  const servidor = useVariantesProducto(p.productoPadreId ?? '', true, depositoId)
   const maxCantidad = stockDeFragancia(p, servidor.data?.find((s) => s.id === p.id), hasCapability(user?.permissions, 'CAP_VER_CANTIDADES_STOCK'))
   return <EditarLineaContenido {...props} maxCantidad={maxCantidad} />
 }

@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type ScrollViewInstance, type TextInputInstance, type TextInputProps } from 'react-native'
 import { importe, maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, formatImporte } from '@/core/ui/fw'
-import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { useDepositoDeVenta } from '../hooks/useDepositoDeVenta'
 import { useVariantesProducto } from '@/libs/api-client/productos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
@@ -40,7 +40,8 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
   const { lineas, repartirFragancias } = useCarritoVenta()
   const user = useAuthStore((s) => s.user)
   const verCantidades = hasCapability(user?.permissions, 'CAP_VER_CANTIDADES_STOCK')
-  const servidor = useVariantesProducto(padreId, true, DEPOSITO_CENTRAL_ID)
+  const depositoId = useDepositoDeVenta()
+  const servidor = useVariantesProducto(padreId, true, depositoId)
   const padre = productos.find((p) => p.id === padreId)
   const variantes = useMemo(() => productos.filter((p) => p.productoPadreId === padreId), [productos, padreId])
   // Lo que el vendedor tipea en cada fragancia (vacío = 0). La cantidad sale de acá; nunca se baja sola.

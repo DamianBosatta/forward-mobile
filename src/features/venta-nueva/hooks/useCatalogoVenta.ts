@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { normalizarBusqueda } from '@/core/utils/texto'
+import { useDepositoAjenoDeVenta } from './useDepositoDeVenta'
 import { api, productosKeys, type CatalogoStockItem, type PagedResult } from '@/libs/api-client'
 
 export const DEBOUNCE_BUSQUEDA_MS = 300
@@ -27,16 +28,25 @@ export const CLAVE_CATALOGO = [...productosKeys.all, 'catalogoVenta', 'completo'
  * La clave y la `queryFn` del catálogo completo, juntas: todo observador de la clave las usa (un observador sin
  * `queryFn` pisa la del primero y el refetch falla con «No queryFn was passed»).
  */
-export const catalogoCompletoQuery = { queryKey: CLAVE_CATALOGO, queryFn: () => fetchCatalogoCompleto() }
+export const catalogoCompletoQuery = (depositoId?: string) => ({
+  queryKey: claveCatalogo(depositoId),
+  queryFn: () => fetchCatalogoCompleto(depositoId),
+  // El de otro depósito dura la venta y no se guarda en el teléfono: el propio es el que sirve sin señal.
+  ...(depositoId ? { meta: { persist: false } } : {}),
+})
+
+/** La clave del catálogo de un depósito ajeno (cuelga de `CLAVE_CATALOGO`: invalidar el prefijo alcanza a ambos). */
+export const claveCatalogo = (depositoId?: string) => (depositoId ? [...CLAVE_CATALOGO, depositoId] : CLAVE_CATALOGO)
 
 /**
  * Catálogo completo de venta: páginas de 1000 hasta que no haya más.
  * TODO: unificar con `fetchCatalogoStockCompleto` (libs/api-client/productos.ts, PR #28) cuando se mergee.
  */
-export async function fetchCatalogoCompleto(): Promise<Catalogo> {
+export async function fetchCatalogoCompleto(depositoId?: string): Promise<Catalogo> {
   const items: CatalogoStockItem[] = []
   for (let pagina = 1; pagina <= MAX_PAGES; pagina++) {
     const params = new URLSearchParams({ PageNumber: String(pagina), PageSize: String(PAGE_SIZE) })
+    if (depositoId) params.set('depositoId', depositoId)
     const res = await api.get<PagedResult<CatalogoStockItem>>(`/api/v1/Productos/catalogo-stock?${params}`)
     items.push(...(res?.items ?? []))
     if (!res?.hasNextPage) return { items, truncado: false }
@@ -44,8 +54,9 @@ export async function fetchCatalogoCompleto(): Promise<Catalogo> {
   return { items, truncado: true }
 }
 
-function fetchBusqueda(termino: string) {
+function fetchBusqueda(termino: string, depositoId?: string) {
   const params = new URLSearchParams({ SearchTerm: termino, PageSize: String(PAGE_SIZE) })
+  if (depositoId) params.set('depositoId', depositoId)
   return api.get<PagedResult<CatalogoStockItem>>(`/api/v1/Productos/catalogo-stock?${params}`)
 }
 
@@ -62,17 +73,18 @@ function fetchBusqueda(termino: string) {
  */
 export function useCatalogoVenta(busqueda: string) {
   const termino = useDebouncedValue(busqueda.trim(), DEBOUNCE_BUSQUEDA_MS)
+  const ajeno = useDepositoAjenoDeVenta()
 
   const query = useQuery<Catalogo | CatalogoStockItem[], Error, Catalogo>({
-    ...catalogoCompletoQuery,
+    ...catalogoCompletoQuery(ajeno),
     select: aCatalogo,
     staleTime: 60_000,
   })
   const completo = query.data && !query.data.truncado ? query.data.items : undefined
   const alServidor = !completo && termino.length >= 2
   const servidor = useQuery({
-    queryKey: [...productosKeys.all, 'catalogoVenta', 'busqueda', termino],
-    queryFn: () => fetchBusqueda(termino),
+    queryKey: [...productosKeys.all, 'catalogoVenta', 'busqueda', termino, ...(ajeno ? [ajeno] : [])],
+    queryFn: () => fetchBusqueda(termino, ajeno),
     enabled: alServidor,
     placeholderData: alServidor ? keepPreviousData : undefined,
     staleTime: 60_000,

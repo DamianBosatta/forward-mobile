@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { useDepositoDeVenta } from './useDepositoDeVenta'
 import { useQueryClient } from '@tanstack/react-query'
 import { api } from '@/core/api/client'
 import type { VentaDetalleDto } from '@/libs/api-client/types'
@@ -27,6 +27,7 @@ export function useBorradorVenta(valores: AutoguardadoVenta, topePedido = 0) {
   const valoresDelFallo = useRef<string | null>(null)
   const preguntando = useRef(false)
   const [errorAlCrear, setErrorAlCrear] = useState<string | null>(null)
+  const depositoId = useDepositoDeVenta()
   const iniciar = useIniciarBorradorVenta()
   const descartarMut = useDescartarBorradorVenta()
   const qc = useQueryClient()
@@ -66,7 +67,7 @@ export function useBorradorVenta(valores: AutoguardadoVenta, topePedido = 0) {
   const crear = async (clienteId: string, tipoOperacion: 'Pedido' | 'Presupuesto') => {
     setErrorAlCrear(null)
     try {
-      const r = await iniciar.mutateAsync({ clienteId, depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion })
+      const r = await iniciar.mutateAsync({ clienteId, depositoId, tipoOperacion })
       // El POST no devuelve el tipo: un Presupuesto no lo necesita, y para un Pedido se pregunta si el servidor lo guardó.
       const guardaTipo = tipoOperacion === 'Pedido' ? await servidorGuardaElTipo(r.ventaId) : false
       // Lo que se cargó mientras el POST estaba en vuelo no está en el servidor: el autoguardado lo manda.

@@ -19,6 +19,8 @@ export interface VentaCargada {
   cabecera: { metodoEntrega: MetodoEntregaValue; fecha: string | null; flete: number; observaciones: string; conFactura: boolean }
   version: number
   tipo: 'Pedido' | 'Presupuesto'
+  /** El depósito con el que se guardó la venta: sigue siendo el suyo al retomarla, editarla o duplicarla. */
+  depositoId?: string
   /** A00001 (o el comienzo del id si no tiene número). */
   codigo: string
 }
@@ -71,5 +73,6 @@ export function ventaCargada(venta: VentaDetalleDto, socio: SocioDetailDto, cata
     version: venta.venta.version,
     tipo: tipoDeVenta(venta.venta),
     codigo: codigoDeVenta(venta.venta),
+    depositoId: venta.venta.depositoId,
   }
 }

@@ -9,6 +9,7 @@ import type { TipoDocumento } from '@/features/clientes/components/SeleccionarCl
 import type { ClienteElegido } from '@/features/clientes/lib/recientes'
 import { ElegirClienteVenta } from './ElegirClienteVenta'
 import { PasosVenta } from './PasosVenta'
+import { SelectorDepositoVenta } from './SelectorDepositoVenta'
 
 interface Props {
   /** La ficha del cliente que vino por `?clienteId=` todavía se está trayendo. */
@@ -49,6 +50,7 @@ export function NuevaVentaInicio({ cargandoCliente, tipo, onTipo, onElegir, onNu
       <View style={{ paddingHorizontal: space[4], paddingTop: space[3], gap: space[2] }}>
         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Elegí el cliente para ver sus precios y el stock.</Text>
         <Segmented options={TIPOS} value={tipo} onChange={onTipo} accessibilityLabel="Tipo de venta" />
+        <SelectorDepositoVenta />
       </View>
       <ElegirClienteVenta onElegir={setElegido} onNuevoCliente={onNuevoCliente} seleccionadoId={elegido?.id} ultimoPedido={ultimo ? { fecha: ultimo.fecha, total: ultimo.totalAmount } : null} />
       <PieFijo>
