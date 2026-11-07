@@ -763,6 +763,150 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Cajas/pendientes/{movimientoId}/enviar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    movimientoId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TrasladoEfectivoDtoResponse"];
+                        "application/json": components["schemas"]["TrasladoEfectivoDtoResponse"];
+                        "text/json": components["schemas"]["TrasladoEfectivoDtoResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Cajas/pendientes/{movimientoId}/recibir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    movimientoId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TrasladoEfectivoDtoResponse"];
+                        "application/json": components["schemas"]["TrasladoEfectivoDtoResponse"];
+                        "text/json": components["schemas"]["TrasladoEfectivoDtoResponse"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Cajas/cerradas": {
         parameters: {
             query?: never;
@@ -14452,6 +14596,7 @@ export interface paths {
             parameters: {
                 query?: {
                     depositoId?: string;
+                    paraEditar?: boolean;
                 };
                 header?: never;
                 path: {
@@ -15315,6 +15460,185 @@ export interface paths {
                     "application/json": components["schemas"]["CompletarPendienteRendicionRequest"];
                     "text/json": components["schemas"]["CompletarPendienteRendicionRequest"];
                     "application/*+json": components["schemas"]["CompletarPendienteRendicionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RendicionChoferDtoResponse"];
+                        "application/json": components["schemas"]["RendicionChoferDtoResponse"];
+                        "text/json": components["schemas"]["RendicionChoferDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rendiciones/{id}/rechazar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RechazarRendicionChoferRequest"];
+                    "text/json": components["schemas"]["RechazarRendicionChoferRequest"];
+                    "application/*+json": components["schemas"]["RechazarRendicionChoferRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RendicionChoferDtoResponse"];
+                        "application/json": components["schemas"]["RendicionChoferDtoResponse"];
+                        "text/json": components["schemas"]["RendicionChoferDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rendiciones/{id}/pendientes/{lineaId}/baja": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    lineaId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DarDeBajaPendienteRendicionRequest"];
+                    "text/json": components["schemas"]["DarDeBajaPendienteRendicionRequest"];
+                    "application/*+json": components["schemas"]["DarDeBajaPendienteRendicionRequest"];
                 };
             };
             responses: {
@@ -20729,6 +21053,19 @@ export interface components {
             /** Format: int32 */
             remaining?: number;
         };
+        BajaRendicionDto: {
+            /** Format: uuid */
+            lineaId?: string;
+            /** Format: uuid */
+            pagoId?: string;
+            tipo?: components["schemas"]["TipoLineaRendicion"];
+            /** Format: double */
+            monto?: number;
+            motivo?: string | null;
+            usuario?: string | null;
+            /** Format: date-time */
+            fecha?: string;
+        };
         BilleteContado: {
             /** Format: double */
             denominacion?: number;
@@ -22368,6 +22705,9 @@ export interface components {
             esCuentaCajaEfectivo: boolean;
             esCuentaCarteraCheques: boolean;
         };
+        DarDeBajaPendienteRendicionRequest: {
+            motivo?: string | null;
+        };
         DashboardSummaryDto: {
             /** Format: double */
             salesToday?: number | null;
@@ -22426,6 +22766,11 @@ export interface components {
             /** Format: uuid */
             id: string;
             nombre: string;
+        };
+        DepositoDestinoEfectivoDto: {
+            /** Format: uuid */
+            depositoId?: string;
+            deposito?: string | null;
         };
         DepositoResponse: {
             /** Format: uuid */
@@ -22973,7 +23318,7 @@ export interface components {
         /** @enum {string} */
         EstadoRemito: "Emitido" | "Entregado" | "NoEntregado" | "Anulado";
         /** @enum {string} */
-        EstadoRendicionChofer: "Borrador" | "EnAprobacion" | "Aprobada" | "ConPendientes";
+        EstadoRendicionChofer: "Borrador" | "EnAprobacion" | "Aprobada" | "ConPendientes" | "Rechazada";
         /** @enum {string} */
         EstadoRendicionDelViaje: "SinRendir" | "EnAprobacion" | "ConPendientes" | "Aprobada";
         /** @enum {string} */
@@ -22984,6 +23329,8 @@ export interface components {
         EstadoTarea: "Pendiente" | "EnCurso" | "Hecha" | "Cancelada";
         /** @enum {string} */
         EstadoTransferenciaStock: "Borrador" | "Despachada" | "Recibida" | "Cancelada";
+        /** @enum {string} */
+        EstadoTrasladoEfectivo: "PorEnviar" | "EnViaje" | "Recibido";
         /** @enum {string} */
         EstadoVenta: "Pendiente" | "Confirmada" | "EnPreparacion" | "Empacada" | "EnRuta" | "Entregada" | "NoEntregada" | "Anulada" | "PendienteAutorizacion" | "Vencido" | "RechazadaAutorizacion";
         /** @enum {string} */
@@ -23025,6 +23372,7 @@ export interface components {
             ventaCodigo?: string | null;
             /** Format: uuid */
             pedidoGeneradoId?: string | null;
+            puedeGenerarPedido?: boolean;
             pedidoGeneradoCodigo?: string | null;
             recurrencia?: components["schemas"]["RecurrenciaDto"];
             /** Format: double */
@@ -24053,6 +24401,14 @@ export interface components {
         MovimientoCajaPendienteDto: {
             esDeOtroDeposito?: boolean;
             depositoNombre?: string | null;
+            estadoTraslado?: components["schemas"]["EstadoTrasladoEfectivo"];
+            /** Format: uuid */
+            depositoEntregaId?: string | null;
+            depositoEntregaNombre?: string | null;
+            /** Format: date-time */
+            trasladoEnviadoEn?: string | null;
+            /** Format: date-time */
+            trasladoRecibidoEn?: string | null;
             socioDireccion?: string | null;
             socioNombre?: string | null;
             comprobanteProveedor?: string | null;
@@ -24204,6 +24560,11 @@ export interface components {
             referenciaId?: string | null;
             productoNombre?: string | null;
             depositoNombre?: string | null;
+            /** Format: uuid */
+            transferenciaId?: string | null;
+            /** Format: uuid */
+            otroDepositoId?: string | null;
+            otroDepositoNombre?: string | null;
         };
         MovimientoStockDtoPaginatedResponse: {
             /** Format: int32 */
@@ -25290,6 +25651,15 @@ export interface components {
             pedidoId?: string;
             motivo?: string | null;
         };
+        RechazarRendicionChoferRequest: {
+            motivo?: string | null;
+        };
+        RechazoRendicionDto: {
+            usuario?: string | null;
+            /** Format: date-time */
+            fecha?: string;
+            motivo?: string | null;
+        };
         RecibirCompraCommand: {
             /** Format: uuid */
             compraId?: string;
@@ -25743,6 +26113,11 @@ export interface components {
             conteoEfectivo?: components["schemas"]["BilleteContado"][] | null;
             /** Format: double */
             otrosEfectivo?: number | null;
+            /** Format: uuid */
+            usuarioRechazoId?: string | null;
+            /** Format: date-time */
+            fechaRechazo?: string | null;
+            motivoRechazo?: string | null;
         };
         RendicionChoferDtoResponse: {
             /** Format: int32 */
@@ -25757,6 +26132,7 @@ export interface components {
         RendicionDelViajeDto: {
             datos?: components["schemas"]["RendicionChoferDto"];
             lineas?: components["schemas"]["LineaRendicionDto"][] | null;
+            bajas?: components["schemas"]["BajaRendicionDto"][] | null;
         };
         RendicionViajeListadoDto: {
             /** Format: uuid */
@@ -25784,6 +26160,8 @@ export interface components {
             firmado?: number;
             /** Format: int32 */
             devolucionesPendientes?: number;
+            /** Format: double */
+            diferenciaEfectivo?: number | null;
         };
         RendicionViajeListadoDtoListResponse: {
             /** Format: int32 */
@@ -25979,6 +26357,9 @@ export interface components {
             totales?: components["schemas"]["TotalesResumenRendicionDto"];
             rendicion?: components["schemas"]["RendicionDelViajeDto"];
             anteriorAlCorte?: boolean;
+            deposito?: string | null;
+            depositosDestinoEfectivo?: components["schemas"]["DepositoDestinoEfectivoDto"][] | null;
+            ultimoRechazo?: components["schemas"]["RechazoRendicionDto"];
         };
         ResumenRendicionViajeDtoResponse: {
             /** Format: int32 */
@@ -26500,7 +26881,7 @@ export interface components {
             /** Format: double */
             cantidadFiscal: number;
             /** Format: double */
-            stockRealTotal: number;
+            stockRealTotal?: number | null;
             fiscalSuperaReal: boolean;
             fiscalNegativo: boolean;
             puedeVenderse: boolean;
@@ -26963,6 +27344,29 @@ export interface components {
             usuarioId?: string | null;
             usuarioNombre?: string | null;
             motivo?: string | null;
+        };
+        TrasladoEfectivoDto: {
+            /** Format: uuid */
+            movimientoId?: string;
+            estadoTraslado?: components["schemas"]["EstadoTrasladoEfectivo"];
+            /** Format: date-time */
+            enviadoEn?: string | null;
+            /** Format: uuid */
+            enviadoPorUsuarioId?: string | null;
+            /** Format: date-time */
+            recibidoEn?: string | null;
+            /** Format: uuid */
+            recibidoPorUsuarioId?: string | null;
+        };
+        TrasladoEfectivoDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["TrasladoEfectivoDto"];
+            codigo?: string | null;
         };
         TributoComprobanteDto: {
             tipo: components["schemas"]["TipoTributoRecibido"];
