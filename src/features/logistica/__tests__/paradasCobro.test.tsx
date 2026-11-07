@@ -215,7 +215,7 @@ describe.each(TEMAS)('paradas de solo cobro en la consola del chofer (%s)', (tem
     await userEvent.press(screen.getByText('Estaba cerrado'))
     await userEvent.press(screen.getByRole('button', { name: 'Cerrar sin cobrar' }))
     expect(await screen.findByText('Parada cerrada sin cobrar.')).toBeTruthy()
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/paradas-cobro/pc1/no-cobrada', { motivo: 3 })
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/paradas-cobro/pc1/no-cobrada', { motivo: 'EstabaCerrado' })
     expect(leerCola(USUARIO)).toEqual([])
   })
 
@@ -229,7 +229,7 @@ describe.each(TEMAS)('paradas de solo cobro en la consola del chofer (%s)', (tem
     expect(await screen.findByText('Parada guardada sin cobrar.')).toBeTruthy()
     expect(mockPost).not.toHaveBeenCalled()
     expect(leerCola(USUARIO)).toEqual([
-      expect.objectContaining({ tipo: 'noCobroParada', clave: 'no-cobrada:pc1', paradaId: 'pc1', cuerpo: { motivo: 2 } }),
+      expect.objectContaining({ tipo: 'noCobroParada', clave: 'no-cobrada:pc1', paradaId: 'pc1', cuerpo: { motivo: 'NoPago' } }),
     ])
   })
 

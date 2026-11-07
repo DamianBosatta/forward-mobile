@@ -132,13 +132,13 @@ function DetalleTarea({ evento, cabecera, onCerrar, onCobrar }: Pick<Props, 'eve
   const puedeCobrar = usePuedeCobrar()
   const cambiar = useCambiarEstadoTarea()
   // El estado que se ve es el último confirmado por el servidor: la hoja guarda el evento con el que se abrió.
-  const [estado, setEstado] = useState<EstadoTarea | null | undefined>(evento.estadoTarea)
+  const [estado, setEstado] = useState<EstadoTarea | undefined>(evento.estadoTarea)
   const [errorEstado, setErrorEstado] = useState<string | null>(null)
   const quiereCobrar = cobroAbierto({ ...evento, estadoTarea: estado }) && puedeCobrar && !!onCobrar
   const detalle = useEventoCalendario(quiereCobrar ? evento.origenId : null)
   const socioId = detalle.data?.socioComercialId ?? null
   const linea = { ...typeScale.secundario, color: c.textSecondary }
-  const asignados = (evento.asignados ?? []).map((a) => a.nombre).join(', ')
+  const asignados = (evento.asignados ?? []).flatMap((a) => (a.nombre ? [a.nombre] : [])).join(', ')
   return (
     <Cuerpo
       cabecera={cabecera}

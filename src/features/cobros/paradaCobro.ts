@@ -1,42 +1,20 @@
-/**
- * Parada de solo cobro de la hoja de ruta (S9/S10). El cliente generado todavía no trae `paradasCobro`: se tipa a mano
- * solo lo que la consola consume del contrato (rama backend `feat/calendario-parada-cobro`). Cuando se regenere el
- * cliente, estos tipos se reemplazan por los de `components['schemas']`.
- */
+/** Parada de solo cobro de la hoja de ruta (S9/S10): los tipos salen del contrato. */
 import type { components } from '@/libs/api-client/generated/schema'
 
-/** 1 Pendiente, 2 Cobrada, 3 NoCobrada. */
-export type EstadoParadaCobro = 1 | 2 | 3
-export const PARADA_COBRO_PENDIENTE: EstadoParadaCobro = 1
-export const PARADA_COBRO_COBRADA: EstadoParadaCobro = 2
-export const PARADA_COBRO_NO_COBRADA: EstadoParadaCobro = 3
+/** Las respuestas traen el estado como número: 1 Pendiente, 2 Cobrada, 3 NoCobrada. */
+export const PARADA_COBRO_PENDIENTE = 1
+export const PARADA_COBRO_COBRADA = 2
+export const PARADA_COBRO_NO_COBRADA = 3
 
-/** Por qué no se cobró: Ya pagó = 1, No pagó = 2, Estaba cerrado = 3. */
-export type MotivoNoCobro = 1 | 2 | 3
-export const MOTIVOS_NO_COBRO: ReadonlyArray<{ valor: MotivoNoCobro; texto: string }> = [
-  { valor: 1, texto: 'Ya pagó' },
-  { valor: 2, texto: 'No pagó' },
-  { valor: 3, texto: 'Estaba cerrado' },
+/** Por qué no se cobró. El comando lo recibe como texto; la respuesta lo devuelve como número (`numero`). */
+export type MotivoNoCobro = components['schemas']['MotivoNoCobro']
+export const MOTIVOS_NO_COBRO: ReadonlyArray<{ valor: MotivoNoCobro; numero: number; texto: string }> = [
+  { valor: 'YaPago', numero: 1, texto: 'Ya pagó' },
+  { valor: 'NoPago', numero: 2, texto: 'No pagó' },
+  { valor: 'EstabaCerrado', numero: 3, texto: 'Estaba cerrado' },
 ]
 
-export interface ParadaCobro {
-  id: string
-  clienteId: string
-  clienteNombre: string
-  direccion?: string | null
-  telefono?: string | null
-  latitud?: number | null
-  longitud?: number | null
-  orden: number
-  estado: EstadoParadaCobro
-  montoAcordado?: number | null
-  deudaCliente: number
-  motivoNoCobro?: MotivoNoCobro | null
-  motivoNoCobroTexto?: string | null
-  pagoId?: string | null
-  montoCobrado?: number | null
-  eventoCalendarioId?: string | null
-}
+export type ParadaCobro = components['schemas']['ParadaCobroDto']
 
 /** Una línea de cobro: la misma `LineaCobroEntregaInput` de la entrega (el contrato las comparte). */
 export type LineaCobroParada = components['schemas']['LineaCobroEntregaInput']
@@ -47,16 +25,9 @@ export interface CuerpoCobroParada {
   lineas: LineaCobroParada[]
 }
 
-/** `POST …/paradas-cobro/{paradaCobroId}/no-cobrada`. */
+/** `POST …/paradas-cobro/{paradaCobroId}/no-cobrada` (sin la hora: la agrega el envío). */
 export interface CuerpoNoCobroParada {
   motivo: MotivoNoCobro
-}
-
-export interface RespuestaCobroParada {
-  paradaCobroId: string
-  pagoId: string
-  montoCobrado: number
-  repetida: boolean
 }
 
 /**

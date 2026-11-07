@@ -1,23 +1,14 @@
 import type { EventoCalendario, EventoDetalle } from '@/libs/api-client/calendario'
+import type { components } from '@/libs/api-client/generated/schema'
 
-/**
- * Lo que el contrato del calendario agrega por tarea (S8) y el cliente generado todavía no trae: se tipa a mano solo lo que
- * mobile consume. Todo es opcional: un servidor viejo, o un evento que no es tarea, no lo manda.
- */
-export type TipoTarea = 'General' | 'EntregaPendiente' | 'CobroPendiente'
-export type EstadoTarea = 'Pendiente' | 'EnCurso' | 'Hecha' | 'Cancelada'
+export type TipoTarea = components['schemas']['TipoTarea']
+export type EstadoTarea = components['schemas']['EstadoTarea']
 
-export interface CamposTarea {
-  depositoId?: string | null
-  depositoNombre?: string | null
-  tipoTarea?: TipoTarea | null
-  estadoTarea?: EstadoTarea | null
-  asignados?: { id: string; nombre: string }[] | null
-  socioNombre?: string | null
-}
+/** Campos de tarea del contrato. Un evento que no es tarea no los manda, y un servidor viejo tampoco. */
+export type CamposTarea = Pick<EventoCalendario, 'depositoNombre' | 'tipoTarea' | 'estadoTarea' | 'asignados'>
 
-export type EventoConTarea = EventoCalendario & CamposTarea
-export type DetalleConTarea = EventoDetalle & CamposTarea
+export type EventoConTarea = EventoCalendario
+export type DetalleConTarea = EventoDetalle
 
 /** Una tarea asignada a alguien (de entrega o de cobro, o general con responsables): se ve, no se edita desde mobile. */
 export const esTareaAsignada = (e: CamposTarea) =>

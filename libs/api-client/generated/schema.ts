@@ -817,6 +817,8 @@ export interface paths {
                     Desde?: string;
                     Hasta?: string;
                     Tipos?: components["schemas"]["TipoEventoCalendario"][];
+                    DepositoId?: string;
+                    SinDeposito?: boolean;
                 };
                 header?: never;
                 path?: never;
@@ -1101,6 +1103,184 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Calendario/eventos/{id}/estado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CambiarEstadoTareaCommand"];
+                    "text/json": components["schemas"]["CambiarEstadoTareaCommand"];
+                    "application/*+json": components["schemas"]["CambiarEstadoTareaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Calendario/eventos/{id}/pedido": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["GenerarPedidoDeTareaCommand"];
+                    "text/json": components["schemas"]["GenerarPedidoDeTareaCommand"];
+                    "application/*+json": components["schemas"]["GenerarPedidoDeTareaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VentaActionResponseDto"];
+                        "application/json": components["schemas"]["VentaActionResponseDto"];
+                        "text/json": components["schemas"]["VentaActionResponseDto"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -6972,7 +7152,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AutorizarDevolucionRequest"];
+                    "text/json": components["schemas"]["AutorizarDevolucionRequest"];
+                    "application/*+json": components["schemas"]["AutorizarDevolucionRequest"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -10420,6 +10606,233 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/hojas-ruta/{id}/cobros-pendientes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CobroPendienteDtoListResponse"];
+                        "application/json": components["schemas"]["CobroPendienteDtoListResponse"];
+                        "text/json": components["schemas"]["CobroPendienteDtoListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/hojas-ruta/{id}/paradas-cobro": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SumarParadaCobroCommand"];
+                    "text/json": components["schemas"]["SumarParadaCobroCommand"];
+                    "application/*+json": components["schemas"]["SumarParadaCobroCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/hojas-ruta/{id}/paradas-cobro/{paradaCobroId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    paradaCobroId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/hojas-ruta/{id}/paradas-cobro/{paradaCobroId}/cobrar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    paradaCobroId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CobrarParadaCobroCommand"];
+                    "text/json": components["schemas"]["CobrarParadaCobroCommand"];
+                    "application/*+json": components["schemas"]["CobrarParadaCobroCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CobroParadaResultadoDtoResponse"];
+                        "application/json": components["schemas"]["CobroParadaResultadoDtoResponse"];
+                        "text/json": components["schemas"]["CobroParadaResultadoDtoResponse"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CobroParadaResultadoDtoResponse"];
+                        "application/json": components["schemas"]["CobroParadaResultadoDtoResponse"];
+                        "text/json": components["schemas"]["CobroParadaResultadoDtoResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/hojas-ruta/{id}/paradas-cobro/{paradaCobroId}/no-cobrada": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    paradaCobroId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ReportarNoCobroCommand"];
+                    "text/json": components["schemas"]["ReportarNoCobroCommand"];
+                    "application/*+json": components["schemas"]["ReportarNoCobroCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -20185,6 +20598,11 @@ export interface components {
             /** Format: double */
             pendientesMontoAmount: number;
         };
+        AsignadoEventoDto: {
+            /** Format: uuid */
+            id: string;
+            nombre?: string | null;
+        };
         AsignarComprobantePagoCommand: {
             /** Format: uuid */
             pagoId?: string;
@@ -20262,6 +20680,9 @@ export interface components {
             motivo?: string | null;
             /** Format: int32 */
             version?: number | null;
+        };
+        AutorizarDevolucionRequest: {
+            roturas?: components["schemas"]["RoturaDevolucionInput"][] | null;
         };
         AutorizarVentaCommand: {
             /** Format: uuid */
@@ -20458,6 +20879,9 @@ export interface components {
             /** Format: uuid */
             id?: string;
             habilitada?: boolean;
+        };
+        CambiarEstadoTareaCommand: {
+            estado: components["schemas"]["EstadoTarea"];
         };
         CambiarEstadoVarianteRequest: {
             activo?: boolean;
@@ -20919,6 +21343,12 @@ export interface components {
             data?: components["schemas"]["ClienteRecienteDto"][] | null;
             codigo?: string | null;
         };
+        CobrarParadaCobroCommand: {
+            claveIdempotencia?: string | null;
+            lineas?: components["schemas"]["LineaCobroEntregaInput"][] | null;
+            /** Format: date-time */
+            resueltaEn?: string | null;
+        };
         CobroEnEntregaInput: {
             imputacion?: components["schemas"]["ImputacionCobroChofer"];
             lineas?: components["schemas"]["LineaCobroEntregaInput"][] | null;
@@ -20939,6 +21369,47 @@ export interface components {
             lineas?: components["schemas"]["LineaCobroParadaDto"][] | null;
             cheques?: components["schemas"]["ChequeCobroParadaDto"][] | null;
         };
+        CobroParadaResultadoDto: {
+            /** Format: uuid */
+            paradaCobroId?: string;
+            /** Format: uuid */
+            pagoId?: string;
+            /** Format: double */
+            montoCobrado?: number;
+            repetida?: boolean;
+        };
+        CobroParadaResultadoDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["CobroParadaResultadoDto"];
+            codigo?: string | null;
+        };
+        CobroPendienteDto: {
+            /** Format: uuid */
+            eventoCalendarioId: string;
+            /** Format: uuid */
+            clienteId: string;
+            clienteNombre: string;
+            direccion?: string | null;
+            /** Format: date */
+            fecha: string;
+            /** Format: double */
+            montoAcordado?: number | null;
+        };
+        CobroPendienteDtoListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["CobroPendienteDto"][] | null;
+            codigo?: string | null;
+        };
         CobrosPendientesDto: {
             /** Format: double */
             total: number;
@@ -20950,6 +21421,9 @@ export interface components {
             /** Format: uuid */
             vendedorId?: string;
             vendedorNombre?: string | null;
+            /** Format: uuid */
+            depositoId?: string | null;
+            depositoNombre?: string | null;
             /** Format: double */
             devengado?: number;
             /** Format: double */
@@ -21530,6 +22004,10 @@ export interface components {
             /** Format: int32 */
             avisarDiasAntes: number;
             hora?: string | null;
+            /** Format: uuid */
+            depositoId?: string | null;
+            tipoTarea?: components["schemas"]["TipoTarea"];
+            asignadosIds?: string[] | null;
             visibilidad: components["schemas"]["VisibilidadEvento"];
             /** Format: uuid */
             ventaId?: string | null;
@@ -22119,6 +22597,8 @@ export interface components {
         };
         DevolucionPendienteItemDto: {
             /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
             productoId?: string;
             productoNombre?: string | null;
             /** Format: double */
@@ -22264,6 +22744,10 @@ export interface components {
             /** Format: int32 */
             avisarDiasAntes: number;
             hora?: string | null;
+            /** Format: uuid */
+            depositoId?: string | null;
+            tipoTarea?: components["schemas"]["TipoTarea"];
+            asignadosIds?: string[] | null;
         };
         EditarVentaDepositoCommand: {
             /** Format: uuid */
@@ -22497,6 +22981,8 @@ export interface components {
         /** @enum {string} */
         EstadoStock: "SinStock" | "EnAlerta" | "ConStock";
         /** @enum {string} */
+        EstadoTarea: "Pendiente" | "EnCurso" | "Hecha" | "Cancelada";
+        /** @enum {string} */
         EstadoTransferenciaStock: "Borrador" | "Despachada" | "Recibida" | "Cancelada";
         /** @enum {string} */
         EstadoVenta: "Pendiente" | "Confirmada" | "EnPreparacion" | "Empacada" | "EnRuta" | "Entregada" | "NoEntregada" | "Anulada" | "PendienteAutorizacion" | "Vencido" | "RechazadaAutorizacion";
@@ -22537,6 +23023,9 @@ export interface components {
             /** Format: uuid */
             ventaId?: string | null;
             ventaCodigo?: string | null;
+            /** Format: uuid */
+            pedidoGeneradoId?: string | null;
+            pedidoGeneradoCodigo?: string | null;
             recurrencia?: components["schemas"]["RecurrenciaDto"];
             /** Format: double */
             montoEstimado?: number | null;
@@ -22546,6 +23035,17 @@ export interface components {
             avisarDiasAntes: number;
             visibilidad: components["schemas"]["VisibilidadEvento"];
             ocurrencias: components["schemas"]["OcurrenciaEventoDto"][];
+            /** Format: uuid */
+            depositoId?: string | null;
+            depositoNombre?: string | null;
+            tipoTarea?: components["schemas"]["TipoTarea"];
+            estadoTarea?: components["schemas"]["EstadoTarea"];
+            asignados?: components["schemas"]["AsignadoEventoDto"][] | null;
+            socioNombre?: string | null;
+            creadoPorNombre?: string | null;
+            /** Format: date-time */
+            fechaCreacion?: string;
+            historial?: components["schemas"]["HistorialEventoDto"][] | null;
         };
         EventoCalendarioDto: {
             clave: string;
@@ -22570,6 +23070,13 @@ export interface components {
             avisarDiasAntes?: number | null;
             /** Format: uuid */
             propietarioId?: string | null;
+            /** Format: uuid */
+            depositoId?: string | null;
+            depositoNombre?: string | null;
+            tipoTarea?: components["schemas"]["TipoTarea"];
+            estadoTarea?: components["schemas"]["EstadoTarea"];
+            asignados?: components["schemas"]["AsignadoEventoDto"][] | null;
+            socioNombre?: string | null;
         };
         ExigirFotoRemitoAlEntregarDto: {
             exigirFotoRemitoAlEntregar: boolean;
@@ -22964,6 +23471,15 @@ export interface components {
             /** Format: double */
             montoTotalFiltrado?: number;
         };
+        GenerarPedidoDeTareaCommand: {
+            items: components["schemas"]["CreateVentaCommandItemDto"][];
+            /** Format: uuid */
+            depositoId?: string | null;
+            conFactura?: boolean | null;
+            /** Format: date-time */
+            fechaEntrega?: string | null;
+            observaciones?: string | null;
+        };
         GenerarVariantesProductoCommand: {
             /** Format: uuid */
             productoPadreId?: string;
@@ -23042,6 +23558,11 @@ export interface components {
             data?: string;
             codigo?: string | null;
         };
+        HistorialEventoDto: {
+            /** Format: date-time */
+            cuando: string;
+            que: string;
+        };
         HojaRutaDetalleDto: {
             /** Format: uuid */
             id: string;
@@ -23058,6 +23579,7 @@ export interface components {
             /** Format: double */
             distanciaTotalMetros: number;
             rutaCalculada: boolean;
+            paradasCobro: components["schemas"]["ParadaCobroDto"][];
             detalles: components["schemas"]["ParadaDto"][];
             /** Format: double */
             totalMontoCobrar?: number | null;
@@ -23497,6 +24019,8 @@ export interface components {
         /** @enum {string} */
         MotivoMovimientoCaja: "RetiroDelDueno" | "GastoChico" | "CambioVuelto" | "Aporte" | "Otro";
         /** @enum {string} */
+        MotivoNoCobro: "YaPago" | "NoPago" | "EstabaCerrado";
+        /** @enum {string} */
         MotivoRiesgo: "SinCompras" | "Caida";
         MovimientoCajaDto: {
             /** Format: uuid */
@@ -23769,6 +24293,7 @@ export interface components {
             /** Format: int32 */
             cantidadItems?: number;
             tieneComprobanteFiscal?: boolean;
+            llevaComprobanteFiscal?: boolean;
             creadoPorNombre?: string | null;
         };
         NotaCreditoListDtoIEnumerableResponse: {
@@ -23965,6 +24490,36 @@ export interface components {
             codigo?: string | null;
             tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
             repetida?: boolean;
+        };
+        ParadaCobroDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            clienteId: string;
+            clienteNombre: string;
+            direccion?: string | null;
+            telefono?: string | null;
+            /** Format: double */
+            latitud?: number | null;
+            /** Format: double */
+            longitud?: number | null;
+            /** Format: int32 */
+            orden: number;
+            /** Format: int32 */
+            estado: number;
+            /** Format: double */
+            montoAcordado?: number | null;
+            /** Format: double */
+            deudaCliente: number;
+            /** Format: int32 */
+            motivoNoCobro?: number | null;
+            motivoNoCobroTexto?: string | null;
+            /** Format: uuid */
+            pagoId?: string | null;
+            /** Format: double */
+            montoCobrado?: number | null;
+            /** Format: uuid */
+            eventoCalendarioId?: string | null;
         };
         ParadaDeViajeDto: {
             /** Format: int32 */
@@ -25281,6 +25836,11 @@ export interface components {
             data?: components["schemas"]["RenglonDevolvibleDto"][] | null;
             codigo?: string | null;
         };
+        ReportarNoCobroCommand: {
+            motivo?: components["schemas"]["MotivoNoCobro"];
+            /** Format: date-time */
+            resueltaEn?: string | null;
+        };
         ReportarResultadoParadaCommand: {
             /** Format: uuid */
             hojaDeRutaId?: string;
@@ -25510,6 +26070,12 @@ export interface components {
             pagoId?: string;
             motivo?: string | null;
             confirmaRecuperoFisico?: boolean;
+        };
+        RoturaDevolucionInput: {
+            /** Format: uuid */
+            notaCreditoItemId?: string;
+            /** Format: double */
+            cantidad?: number;
         };
         SaldoRestanteCuentaDto: {
             /** Format: uuid */
@@ -26010,6 +26576,12 @@ export interface components {
             /** Format: double */
             confianza?: number;
         };
+        SumarParadaCobroCommand: {
+            /** Format: uuid */
+            clienteId?: string | null;
+            /** Format: uuid */
+            eventoCalendarioId?: string | null;
+        };
         TalonarioRemitoDto: {
             /** Format: uuid */
             id: string;
@@ -26194,7 +26766,7 @@ export interface components {
         /** @enum {string} */
         TipoMovimientoPeriodoFiscal: "Cierre" | "Reapertura";
         /** @enum {string} */
-        TipoMovimientoStock: "Compra" | "Venta" | "Transferencia" | "Ajuste" | "Reserva" | "LiberacionReserva" | "ReversionVenta";
+        TipoMovimientoStock: "Compra" | "Venta" | "Transferencia" | "Ajuste" | "Reserva" | "LiberacionReserva" | "ReversionVenta" | "Rotura";
         /** @enum {string} */
         TipoMovimientoStockFiscal: "CompraFacturada" | "AnulacionCompra" | "DevolucionProveedor" | "VentaFacturada" | "AnulacionFactura" | "NotaCredito" | "NotaDebito" | "AjusteManual" | "AnulacionDevolucionProveedor" | "AnulacionNotaCredito";
         /** @enum {string} */
@@ -26207,6 +26779,8 @@ export interface components {
         TipoRemito: "Venta" | "Traslado";
         /** @enum {string} */
         TipoSocioComercial: "Cliente" | "Proveedor";
+        /** @enum {string} */
+        TipoTarea: "General" | "EntregaPendiente" | "CobroPendiente";
         /** @enum {string} */
         TipoTributoRecibido: "PercepcionIva" | "PercepcionIibb" | "PercepcionNacional" | "PercepcionMunicipal" | "ImpuestoInterno" | "Otro";
         ToggleProductoStatusCommand: {
@@ -26728,6 +27302,8 @@ export interface components {
             /** Format: double */
             porcentajeComision?: number;
             comisionActiva?: boolean;
+            /** Format: uuid */
+            depositoId?: string | null;
         };
         UserAuditLogDto: {
             /** Format: uuid */

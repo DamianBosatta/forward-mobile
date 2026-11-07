@@ -29,8 +29,8 @@ interface Props {
   puedeReportar: boolean
 }
 
-const motivoTexto = (m: MotivoNoCobro | null | undefined, texto?: string | null) =>
-  texto ?? MOTIVOS_NO_COBRO.find((x) => x.valor === m)?.texto ?? ''
+const motivoTexto = (m: number | null | undefined, texto?: string | null) =>
+  texto ?? MOTIVOS_NO_COBRO.find((x) => x.numero === m)?.texto ?? ''
 
 /**
  * Paradas de solo cobro del itinerario (S9, S10), después de las entregas y con su propio aspecto: ícono de billetes y
@@ -105,7 +105,7 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
     if (ocupada.current) return
     ocupada.current = true
     setError(null)
-    const texto = motivoTexto(motivo)
+    const texto = MOTIVOS_NO_COBRO.find((x) => x.valor === motivo)?.texto ?? ''
     const guardar = () => {
       // El servidor no pide clave para esto (mismo motivo = 200): una sola acción por parada.
       encolarAccion(usuarioId, {

@@ -22,7 +22,7 @@ const cobro = (o: Partial<DatosAccion> = {}): DatosAccion => ({
 } as DatosAccion)
 const noCobro = (o: Partial<DatosAccion> = {}): DatosAccion => ({
   tipo: 'noCobroParada', clave: 'no-cobrada:pc2', hojaDeRutaId: 'h1', paradaId: 'pc2', clienteNombre: 'Kiosco Los Pibes',
-  cuerpo: { motivo: 2 }, ...o,
+  cuerpo: { motivo: 'NoPago' }, ...o,
 } as DatosAccion)
 const entrega = (): DatosAccion => ({
   tipo: 'entrega', clave: 'k-e', hojaDeRutaId: 'h1', paradaId: 'p1', clienteNombre: 'Marta',
@@ -56,7 +56,7 @@ describe('cobro de una parada de solo cobro sin señal', () => {
     expect(leerCola(USUARIO)).toEqual([a])
     await enviarPendientesConsola(USUARIO)
     expect(mockPost).toHaveBeenCalledWith(`${HOJA}/paradas-cobro/pc2/no-cobrada`, {
-      motivo: 2, resueltaEn: new Date(1_700_000_000_000).toISOString(),
+      motivo: 'NoPago', resueltaEn: new Date(1_700_000_000_000).toISOString(),
     })
     expect(leerCola(USUARIO)).toEqual([])
   })
