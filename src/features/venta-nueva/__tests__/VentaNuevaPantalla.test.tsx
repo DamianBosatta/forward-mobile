@@ -236,8 +236,8 @@ describe('pestaña Líneas', () => {
     // El id del POST es el que se busca en /mios (si no coincidiera, el servidor nuevo pasaría por viejo).
     expect(await mockPost.mock.results[0].value).toMatchObject({ ventaId: 'b1' })
     conLineas(12.82)
-    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
-    expect(mockPut.mock.calls.at(-1)[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 12.82 }])
+    // El primer autoguardado es el de la fecha propuesta, con el borrador aún vacío: se espera el que trae las líneas.
+    await waitFor(() => expect(mockPut.mock.calls.at(-1)?.[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 12.82 }]), ESPERA)
     expect(screen.queryByText(/el resto se guarda al confirmar el pedido/)).toBeNull()
   })
 
@@ -252,8 +252,7 @@ describe('pestaña Líneas', () => {
     preparar()
     await elegirCliente()
     conLineas(12.82)
-    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
-    expect(mockPut.mock.calls.at(-1)[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 10 }])
+    await waitFor(() => expect(mockPut.mock.calls.at(-1)?.[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 10 }]), ESPERA)
   })
 
   it('si el GET de /mios falla una vez, se reintenta una vez en el siguiente cambio y deja de recortar', async () => {
@@ -274,8 +273,7 @@ describe('pestaña Líneas', () => {
   it('pedido sobre el tope: el borrador (Presupuesto en el servidor) guarda hasta el tope y el descuento elegido viaja al confirmar', async () => {
     await elegirCliente()
     conLineas(12.82)
-    await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
-    expect(mockPut.mock.calls.at(-1)[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 10 }])
+    await waitFor(() => expect(mockPut.mock.calls.at(-1)?.[1].items).toEqual([{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 10 }]), ESPERA)
     expect(await screen.findByText(/el resto se guarda al confirmar el pedido/)).toBeTruthy()
     await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
     await confirmarVenta()
