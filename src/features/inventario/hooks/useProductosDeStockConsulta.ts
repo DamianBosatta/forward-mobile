@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
-import { useInfiniteProductos } from '@/libs/api-client/productos'
+import { useInfiniteCatalogoStock } from '@/libs/api-client/productos'
 import { useDisponibilidadPorLotes } from '@/libs/api-client/stock'
 import { useDepositoDeConsulta } from '@/features/catalogo/hooks/useDepositoDeConsulta'
 
@@ -8,7 +8,7 @@ const DEBOUNCE_BUSQUEDA_MS = 300
 const TAMANO_PAGINA = 20
 
 /**
- * Lista de la vista Stock sin cantidades (MOD_STOCK): busca por código o nombre EN EL SERVIDOR (GET /Productos, paginado),
+ * Lista de la vista Stock sin cantidades (MOD_STOCK): busca por código o nombre EN EL SERVIDOR (GET /Productos/catalogo-stock, paginado y recortado al depósito del usuario),
  * con el término esperado ~300 ms. Mientras llega la búsqueda nueva se ven los resultados
  * anteriores. El chip de stock sale de POST /Stocks/disponibilidad (un booleano por producto,
  * descontando lo reservado, en el depósito del usuario o el Central): las líneas no tienen stock propio, así que no llevan chip.
@@ -16,14 +16,9 @@ const TAMANO_PAGINA = 20
 export function useProductosDeStockConsulta() {
   const depositoId = useDepositoDeConsulta()
   const [busqueda, setBusqueda] = useState('')
-  const [soloConOferta, setSoloConOferta] = useState(false)
-  const [categoriaId, setCategoriaId] = useState<string | undefined>(undefined)
   const termino = useDebouncedValue(busqueda.trim(), DEBOUNCE_BUSQUEDA_MS)
 
-  const query = useInfiniteProductos(
-    { search: termino || undefined, pageSize: TAMANO_PAGINA, soloActivos: true, conOferta: soloConOferta || undefined, categoriaId },
-    { mantenerAnterior: true },
-  )
+  const query = useInfiniteCatalogoStock({ search: termino || undefined, pageSize: TAMANO_PAGINA }, { mantenerAnterior: true })
 
   const productos = useMemo(() => query.data?.pages.flatMap((p) => p?.items ?? []) ?? [], [query.data])
   const totalCount = query.data?.pages[0]?.totalCount
@@ -48,10 +43,6 @@ export function useProductosDeStockConsulta() {
   return {
     busqueda,
     setBusqueda,
-    soloConOferta,
-    setSoloConOferta,
-    categoriaId,
-    setCategoriaId,
     productos,
     totalCount,
     disponible,

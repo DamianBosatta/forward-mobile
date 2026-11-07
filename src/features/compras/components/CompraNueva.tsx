@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router'
 import { Trash2 } from 'lucide-react-native'
 import { Button, Field, Notice, PasosNumerados, PieFijo, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
-import { useDepositos, useInfiniteProductos } from '@/libs/api-client'
+import { useDepositos, useInfiniteCatalogoStock } from '@/libs/api-client'
 import { usePuedeElegirDeposito } from '@/features/venta-nueva/hooks/useDepositoDeVenta'
 import { leerNumero, mostrarNumero } from '@/core/utils/numero'
 import { mensajeDelServidor } from '../lib/mensaje-error'
@@ -65,8 +65,9 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
     return () => clearTimeout(t)
   }, [busqueda])
   useEffect(() => { setGastosTexto(b.gastos ? mostrarNumero(b.gastos) : '') }, [b.compraId, b.cargando]) // eslint-disable-line react-hooks/exhaustive-deps
-  // Lo comprable: comunes y fragancias (variantes), sin la línea, que el servidor no deja comprar.
-  const productos = useInfiniteProductos({ pageSize: 30, search: enviada, soloComprables: true })
+  // Lo comprable: comunes y fragancias (variantes), sin la línea, que el servidor no deja comprar. Del catálogo por
+  // depósito: `GET /Productos` no filtra por depósito y a un usuario limitado le mostraría productos ajenos.
+  const productos = useInfiniteCatalogoStock({ pageSize: 30, search: enviada, soloComprables: true })
   const { data: depositos } = useDepositos()
   const puedeElegirDeposito = usePuedeElegirDeposito()
 
