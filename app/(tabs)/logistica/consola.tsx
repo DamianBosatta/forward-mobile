@@ -21,6 +21,7 @@ import { RouteSelector } from '@/features/logistica/components/RouteSelector'
 import { PedidoDetalleModal } from '@/features/logistica/components/PedidoDetalleModal'
 import { HojaDeRutaVista } from '@/features/logistica/consola/HojaDeRutaVista'
 import { paradasCobroDe } from '@/features/cobros/paradaCobro'
+import { avisoDeFinalizar, paradasCobroSinResolver } from '@/features/logistica/consola/avisoFinalizar'
 import { ReportarParada, type Resultado, type ReporteParada } from '@/features/logistica/consola/ReportarParada'
 import { LlegueParada } from '@/features/logistica/consola/LlegueParada'
 import { EntregaLista } from '@/features/logistica/consola/EntregaLista'
@@ -420,6 +421,8 @@ export default function ConsolaChoferScreen() {
 
   const motivoSinMandar = `Falta mandar ${sinMandar} ${sinMandar === 1 ? 'acción' : 'acciones'}: esperá la señal para finalizar.`
   const paradasCobro = paradasCobroDe(viaje)
+  // Se puede finalizar con cobros sin resolver (el servidor lo permite): se avisa cuántos y que vuelven a pendientes.
+  const avisoCobros = avisoDeFinalizar(paradasCobroSinResolver(paradasCobro))
   // Una parada de solo cobro pendiente no frena el finalizar (contrato S9): solo cuentan las entregas.
   const todasReportadas = (resumen.total > 0 || (paradasCobro?.length ?? 0) > 0) && resumen.hechas === resumen.total
   const pie = soloLectura ? null : programada ? (
@@ -520,7 +523,8 @@ export default function ConsolaChoferScreen() {
         <BottomSheet visible={finalizando} onClose={() => setFinalizando(false)} accessibilityLabel="Finalizar viaje">
           <Text style={{ ...typeScale.seccion, color: c.text }}>¿Finalizar el viaje?</Text>
           <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Todas las paradas están reportadas. El viaje queda cerrado.</Text>
-          <Button label="Finalizar viaje" loading={finalizar.isPending} onPress={() => accionViaje('finalizar')} />
+          {avisoCobros ? <Notice tone="advertencia" title={avisoCobros.titulo}>{avisoCobros.detalle}</Notice> : null}
+          <Button label={avisoCobros ? 'Finalizar igual' : 'Finalizar viaje'} loading={finalizar.isPending} onPress={() => accionViaje('finalizar')} />
           <Button label="Cancelar" variant="secundario" onPress={() => setFinalizando(false)} />
         </BottomSheet>
         <PermisoGps visible={gps.preguntar} onAceptar={gps.aceptar} onRechazar={gps.rechazar} />
