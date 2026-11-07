@@ -5,7 +5,12 @@ import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import type { PagedResult, StockItem } from '@/libs/api-client/types'
 import type { components } from '@/libs/api-client/generated/schema'
 import { useDepositoDeConsulta } from '@/features/catalogo/hooks/useDepositoDeConsulta'
+import { hasCapability } from '@/features/auth/lib/capabilities'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import type { FiltroEstadoStock } from '../lib/stock-presentacion'
+
+/** "Todos" los depósitos: no se manda `DepositoId` y el servidor responde con los que el usuario puede ver. */
+export const TODOS_LOS_DEPOSITOS = 'todos'
 
 export type StockResumen = components['schemas']['StockResumenResponse']
 
@@ -15,7 +20,7 @@ const TAMANO_PAGINA = 20
 /** Filtros que comparten el listado y el resumen de GET /Stocks (el servidor cuenta con los mismos). */
 function filtros(depositoId: string, termino: string, estado: FiltroEstadoStock) {
   const p = new URLSearchParams()
-  p.set('DepositoId', depositoId)
+  if (depositoId !== TODOS_LOS_DEPOSITOS) p.set('DepositoId', depositoId)
   p.set('Activo', 'true')
   if (termino) p.set('SearchTerm', termino)
   if (estado !== 'todos') p.append('EstadoStock', estado)
@@ -26,13 +31,17 @@ function filtros(depositoId: string, termino: string, estado: FiltroEstadoStock)
  * Stock por depósito, solo consulta (lámina ModStock). Solo se pide con `conCantidades`
  * (CAP_VER_CANTIDADES_STOCK): sin la capacidad el servidor no las manda y la pantalla no las pide.
  * El depósito arranca en el de consulta del usuario (el suyo o el Central) y se cambia entre los que el servidor
- * lista en el resumen. Los totales (artículos, en alerta, sin stock) los cuenta el servidor; no se suman acá.
+ * lista en el resumen. Con CAP_VER_TODOS_LOS_DEPOSITOS arranca en "Todos"; con CAP_VER_STOCK_OTROS_DEPOSITOS (gerente
+ * de depósito) arranca en el suyo y también puede ver "Todos". Sin ninguna, no hay selector: ve el suyo. Mobile solo mira. Los totales (artículos, en alerta, sin stock) los cuenta el servidor; no se suman acá.
  */
 export function useStockPorDeposito({ conCantidades, busqueda }: { conCantidades: boolean; busqueda: string }) {
   const depositoDelUsuario = useDepositoDeConsulta()
   const [elegido, setDeposito] = useState<string | null>(null)
   const [estado, setEstado] = useState<FiltroEstadoStock>('todos')
-  const depositoId = elegido ?? depositoDelUsuario
+  const permisos = useAuthStore((s) => s.user?.permissions)
+  const veTodosLosDepositos = hasCapability(permisos, 'CAP_VER_TODOS_LOS_DEPOSITOS')
+  const puedeVerTodos = veTodosLosDepositos || hasCapability(permisos, 'CAP_VER_STOCK_OTROS_DEPOSITOS')
+  const depositoId = elegido ?? (veTodosLosDepositos ? TODOS_LOS_DEPOSITOS : depositoDelUsuario)
   const termino = useDebouncedValue(busqueda.trim(), DEBOUNCE_BUSQUEDA_MS)
 
   const resumen = useQuery({
@@ -62,6 +71,7 @@ export function useStockPorDeposito({ conCantidades, busqueda }: { conCantidades
 
   return {
     depositoId,
+    puedeVerTodos,
     setDeposito,
     depositos: resumen.data?.depositos ?? [],
     totales: resumen.data?.totales,

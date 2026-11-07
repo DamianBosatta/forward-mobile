@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { useDepositoDeVenta } from './useDepositoDeVenta'
 import { fetchDisponibilidad, type DisponibilidadPedido } from '@/libs/api-client/stock'
 
 /** Productos cuya cantidad pedida NO alcanza según el servidor (un sí/no por producto: nunca viene la cantidad). */
@@ -22,14 +22,15 @@ const pedidoDe = (items: DisponibilidadPedido[]) =>
  */
 export function useAlcanzaStock(items: DisponibilidadPedido[], activo = true) {
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
+  const depositoId = useDepositoDeVenta()
   const actual = pedidoDe(items)
   // Se consulta el valor que dejó de cambiar: tipear rápido manda un solo pedido. La clave lleva el pedido, así que una
   // respuesta lenta de un valor anterior cae en su propia clave y nunca pisa la del valor vigente.
   const pedido = useDebouncedValue(actual, RETARDO_MS)
   const habilitado = activo && !verCantidades && pedido.length > 0
   const q = useQuery({
-    queryKey: ['venta-nueva', 'alcanza-stock', DEPOSITO_CENTRAL_ID, pedido],
-    queryFn: () => fetchDisponibilidad(DEPOSITO_CENTRAL_ID, pedido),
+    queryKey: ['venta-nueva', 'alcanza-stock', depositoId, pedido],
+    queryFn: () => fetchDisponibilidad(depositoId, pedido),
     enabled: habilitado,
   })
   // Mientras el valor tipeado espera su turno, la respuesta que hay es de otro valor: sigue "revisando".
@@ -42,11 +43,11 @@ export function useAlcanzaStock(items: DisponibilidadPedido[], activo = true) {
 }
 
 /** Pregunta al servidor, en el momento, qué productos de `items` no alcanzan. Falla en silencio (devuelve vacío). */
-export async function consultarQueNoAlcanza(items: DisponibilidadPedido[]): Promise<Set<string>> {
+export async function consultarQueNoAlcanza(depositoId: string, items: DisponibilidadPedido[]): Promise<Set<string>> {
   const pedido = pedidoDe(items)
   if (!pedido.length) return new Set()
   try {
-    return productosQueNoAlcanzan(await fetchDisponibilidad(DEPOSITO_CENTRAL_ID, pedido))
+    return productosQueNoAlcanzan(await fetchDisponibilidad(depositoId, pedido))
   } catch {
     return new Set()
   }

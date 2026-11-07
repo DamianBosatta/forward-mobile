@@ -19,7 +19,7 @@ import { useComisionEstimada } from '../hooks/useComisionEstimada'
 import { aAlta, aAutoguardado } from '../lib/payload'
 import { useVistaPreviaVenta } from '@/libs/api-client/ventas'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
-import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { useDepositoDeVenta, useDepositoElegidoStore } from '../hooks/useDepositoDeVenta'
 import { avisosVenta, superaElTope, type YaReservadas } from '../lib/avisos'
 import { mostrarNumero } from '../lib/linea'
 import type { LineaCarrito } from '../lib/carrito'
@@ -85,6 +85,10 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   const { productos: catalogoVenta } = useCatalogoVenta('')
   const lineas = useMemo(() => conStockFresco(lineasCarrito, catalogoVenta), [lineasCarrito, catalogoVenta])
   const user = useAuthStore((s) => s.user)
+  const depositoId = useDepositoDeVenta()
+  const elegirDeposito = useDepositoElegidoStore((s) => s.elegir)
+  // Cada venta arranca (y termina) en el depósito del usuario; una venta que se abre toma el suyo, más abajo.
+  useEffect(() => { elegirDeposito(null); return () => elegirDeposito(null) }, [elegirDeposito])
   // El descuento general siempre es un número válido (0 a 100): se cambia en la hoja "Descuento a toda la venta".
   const [descuentoValido, setDescuentoValido] = useState(0)
   const [descGeneral, setDescGeneral] = useState(false)
@@ -111,7 +115,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   })
   const cuerpoVistaPrevia = useDebouncedValue(cliente && tipo === 'Pedido' && !edicion && lineas.length > 0
     ? aAlta(lineas, descuentoValido, cab.cabecera, {
-      clienteId: cliente.id, depositoId: DEPOSITO_CENTRAL_ID, esPedido: true, claveIdempotencia: '',
+      clienteId: cliente.id, depositoId, esPedido: true, claveIdempotencia: '',
       motivoVentaSinStock: 'Vista previa', porcentajeComisionCedido: cab.porcentajeCedido,
     })
     : null)
@@ -174,6 +178,8 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
     if (!abrirEf || !d || abierta) return
     setAbierta(true)
     setCliente(d.cliente)
+    // Retomar, editar y duplicar siguen en el depósito de la venta: stock, disponibilidad y confirmación no discrepan.
+    if (d.depositoId) elegirDeposito(d.depositoId)
     if (abrirEf.modo === 'retomar') {
       aplicar(d)
       setTipo(abrirEf.tipo)

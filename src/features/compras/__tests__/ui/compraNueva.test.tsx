@@ -3,6 +3,7 @@ import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CompraNueva } from '../../components/CompraNueva'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { tomarAviso } from '../../lib/confirmar-y-recibir'
 
 const mockGet = jest.fn()
@@ -338,5 +339,38 @@ describe('proveedor preseleccionado (desde la ficha del proveedor)', () => {
     pantalla({ proveedorId: 'p2' })
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/v1/socios-comerciales/p2'), ESPERA)
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Compras/borradores', expect.anything())
+  })
+})
+
+describe('depósito de la compra según permiso (S18)', () => {
+  const conCaps = (caps: string[]) =>
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: caps.map((module) => ({ module, canRead: true })) } as never })
+  const dosDepositos = () => {
+    const prev = mockGet.getMockImplementation()!
+    mockGet.mockImplementation((url: string) => (url === '/api/v1/Depositos'
+      ? Promise.resolve([{ id: DEPOSITO_CENTRAL_ID, nombre: 'Depósito Central', activo: true }, { id: 'dep-norte', nombre: 'Depósito Norte', activo: true }])
+      : prev(url)))
+  }
+
+  it('sin CAP_VER_TODOS_LOS_DEPOSITOS el depósito se muestra y no se elige', async () => {
+    conCaps([])
+    dosDepositos()
+    pantalla({ proveedorId: 'p1' })
+    await screen.findByRole('button', { name: '+ Agregar productos' }, ESPERA)
+    await agregarBalde('1')
+    await userEvent.press(await screen.findByRole('button', { name: 'Ver compra' }))
+    expect(await screen.findByText(/^Depósito: /, {}, ESPERA)).toBeTruthy()
+    expect(screen.queryByLabelText('Depósito')).toBeNull()
+  })
+
+  it('con CAP_VER_TODOS_LOS_DEPOSITOS se elige entre los depósitos', async () => {
+    conCaps(['CAP_VER_TODOS_LOS_DEPOSITOS'])
+    dosDepositos()
+    pantalla({ proveedorId: 'p1' })
+    await screen.findByRole('button', { name: '+ Agregar productos' }, ESPERA)
+    await agregarBalde('1')
+    await userEvent.press(await screen.findByRole('button', { name: 'Ver compra' }))
+    expect(await screen.findByLabelText('Depósito', {}, ESPERA)).toBeTruthy()
+    expect(screen.getByRole('radio', { name: 'Depósito Norte' })).toBeTruthy()
   })
 })

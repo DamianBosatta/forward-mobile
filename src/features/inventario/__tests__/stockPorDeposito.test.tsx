@@ -185,3 +185,36 @@ describe('Pantalla Stock separada del catálogo', () => {
     expect((await screen.findByLabelText('Buscar por código o nombre')).props.value).toBe('SAP-AER-250')
   })
 })
+
+describe('Stock: "Todos" los depósitos solo con permiso (S18)', () => {
+  const TODOS = { module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true }
+  const OTROS = { module: 'CAP_VER_STOCK_OTROS_DEPOSITOS', canRead: true }
+  const pedidoDeStock = () => llamadasGet().filter((u) => u.startsWith('/api/v1/Stocks?')).pop() ?? ''
+
+  it('sin ninguna de las dos capacidades no aparece "Todos" y se pide el depósito del usuario', async () => {
+    conUsuario(CON_CANTIDADES, 'dep-1')
+    renderPantalla()
+    await abrirStock()
+    await waitFor(() => expect(pedidoDeStock()).toContain('DepositoId=dep-1'))
+    expect(screen.queryByRole('button', { name: 'Todos los depósitos' })).toBeNull()
+  })
+
+  it('con CAP_VER_TODOS_LOS_DEPOSITOS abre en "Todos": no manda DepositoId y muestra el depósito de cada renglón', async () => {
+    conUsuario([...CON_CANTIDADES, TODOS], 'dep-1')
+    renderPantalla()
+    await abrirStock()
+    await screen.findByText('Make Lavajean')
+    expect(screen.getByRole('button', { name: 'Todos los depósitos', selected: true })).toBeTruthy()
+    expect(pedidoDeStock()).not.toContain('DepositoId=')
+    expect(screen.getAllByText(/Central/).length).toBeGreaterThan(0)
+  })
+
+  it('con CAP_VER_STOCK_OTROS_DEPOSITOS abre en el propio y puede pasar a "Todos"', async () => {
+    conUsuario([...CON_CANTIDADES, OTROS], NORTE_ID)
+    renderPantalla()
+    await abrirStock()
+    await waitFor(() => expect(pedidoDeStock()).toContain(`DepositoId=${NORTE_ID}`))
+    await userEvent.press(await screen.findByRole('button', { name: 'Todos los depósitos' }))
+    await waitFor(() => expect(pedidoDeStock()).not.toContain('DepositoId='))
+  })
+})

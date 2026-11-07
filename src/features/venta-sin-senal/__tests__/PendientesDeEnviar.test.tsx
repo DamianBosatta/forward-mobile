@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import type { AltaVenta } from '@/features/venta-nueva/lib/payload'
 import { producto } from '@/features/venta-nueva/__testing__/producto'
 
@@ -34,7 +35,7 @@ import { cambiarEstado, encolarVenta } from '../lib/cola'
 import { PendientesDeEnviar } from '../components/PendientesDeEnviar'
 
 const alta: AltaVenta = {
-  clienteId: 'c1', depositoId: 'd1', tipoOperacion: 2, metodoEntrega: 1, entregaInmediata: false,
+  clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 2, metodoEntrega: 1, entregaInmediata: false,
   descuentoGeneral: 0, items: [{ productoId: 'p1', cantidad: 6, descuentoPorcentaje: 0 }], claveIdempotencia: 'mobile-p1',
 }
 const montar = () => render(<QueryClientProvider client={new QueryClient()}><PendientesDeEnviar /></QueryClientProvider>)

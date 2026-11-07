@@ -2,7 +2,9 @@ import React from 'react'
 import { act, renderHook, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
 import { api } from '@/libs/api-client'
-import { DEBOUNCE_BUSQUEDA_MS, useCatalogoVenta } from '../hooks/useCatalogoVenta'
+import { CLAVE_CATALOGO, DEBOUNCE_BUSQUEDA_MS, useCatalogoVenta } from '../hooks/useCatalogoVenta'
+import { useAuthStore } from '@/features/auth/store/auth.store'
+import { useDepositoElegidoStore } from '../hooks/useDepositoDeVenta'
 import { producto } from '../__testing__/producto'
 
 jest.mock('@/libs/api-client', () => ({ api: { get: jest.fn() }, productosKeys: { all: ['productos'] } }))
@@ -173,5 +175,25 @@ describe('useCatalogoVenta', () => {
     await act(async () => segunda.resolver(pagina(familia)))
     await waitFor(() => expect(ids()).toEqual(['pf', 'pv1', 'pv2']))
     expect(result.current.isLoading).toBe(false)
+  })
+})
+
+describe('useCatalogoVenta: depósito de la venta (S18)', () => {
+  afterEach(() => useDepositoElegidoStore.setState({ elegido: null }))
+
+  it('del depósito propio pide la misma URL de siempre, sin depositoId', async () => {
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], depositoId: 'dep-propio', permissions: [] } as never })
+    const { result } = renderHook(() => useCatalogoVenta(''), { wrapper })
+    await waitFor(() => expect(result.current.productos).toHaveLength(3))
+    expect(get.mock.calls.every(([u]) => !u.includes('depositoId'))).toBe(true)
+  })
+
+  it('de otro depósito pide ese depósito y no mezcla su caché con la del propio', async () => {
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], depositoId: 'dep-propio', permissions: [] } as never })
+    useDepositoElegidoStore.setState({ elegido: 'dep-otro' })
+    const { result } = renderHook(() => useCatalogoVenta(''), { wrapper })
+    await waitFor(() => expect(result.current.productos).toHaveLength(3))
+    expect(get.mock.calls.every(([u]) => u.includes('depositoId=dep-otro'))).toBe(true)
+    expect(qc.getQueryCache().getAll().map((q) => q.queryKey)).toContainEqual([...CLAVE_CATALOGO, 'dep-otro'])
   })
 })
