@@ -47,7 +47,7 @@ function servidor(url: string) {
   if (url.startsWith('/api/v1/Stocks?')) {
     return Promise.resolve({ items: [FILA_MAKE, FILA_TOALLA], page: 1, pageSize: 20, totalCount: 2, totalPages: 1, hasNextPage: false })
   }
-  if (url.startsWith('/api/v1/Productos?')) {
+  if (url.startsWith('/api/v1/Productos/catalogo-stock?')) {
     return Promise.resolve({ items: [PRODUCTO], page: 1, pageSize: 20, totalCount: 1, totalPages: 1, hasNextPage: false })
   }
   return Promise.reject(new Error(`sin respuesta para ${url}`))
@@ -166,6 +166,25 @@ describe('Stock por depósito, sin CAP_VER_CANTIDADES_STOCK', () => {
     expect(llamadasGet().some((u) => u.startsWith('/api/v1/Stocks'))).toBe(false)
     expect(screen.queryByText('Reservado')).toBeNull()
     expect(screen.queryByText('Artículos')).toBeNull()
+  })
+
+  it('la lista sale del catálogo por depósito, no de GET /Productos (que no filtra por depósito)', async () => {
+    renderPantalla()
+    await abrirStock()
+
+    expect(await screen.findByText(PRODUCTO.nombre)).toBeTruthy()
+    expect(llamadasGet().some((u) => u.startsWith('/api/v1/Productos/catalogo-stock?'))).toBe(true)
+    expect(llamadasGet().some((u) => u.startsWith('/api/v1/Productos?'))).toBe(false)
+  })
+
+  it('quien ve todos los depósitos no manda depósito: el servidor le devuelve su lista de siempre', async () => {
+    conUsuario([{ module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true }], 'dep-norte')
+    renderPantalla()
+    await abrirStock()
+
+    expect(await screen.findByText(PRODUCTO.nombre)).toBeTruthy()
+    const url = llamadasGet().find((u) => u.startsWith('/api/v1/Productos/catalogo-stock?'))!
+    expect(new URLSearchParams(url.split('?')[1]).has('depositoId')).toBe(false)
   })
 })
 
