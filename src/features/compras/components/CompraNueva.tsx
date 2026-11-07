@@ -67,7 +67,7 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
   useEffect(() => { setGastosTexto(b.gastos ? mostrarNumero(b.gastos) : '') }, [b.compraId, b.cargando]) // eslint-disable-line react-hooks/exhaustive-deps
   // Lo comprable: comunes y fragancias (variantes), sin la línea, que el servidor no deja comprar. Del catálogo por
   // depósito: `GET /Productos` no filtra por depósito y a un usuario limitado le mostraría productos ajenos.
-  const productos = useInfiniteCatalogoStock({ pageSize: 30, search: enviada, soloComprables: true })
+  const productos = useInfiniteCatalogoStock({ pageSize: 30, search: enviada, soloComprables: true, familiasCompletas: false })
   const { data: depositos } = useDepositos()
   const puedeElegirDeposito = usePuedeElegirDeposito()
 

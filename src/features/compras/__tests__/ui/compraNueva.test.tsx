@@ -209,6 +209,9 @@ describe('pantalla de compra nueva', () => {
       const urls = mockGet.mock.calls.map(([u]) => String(u)).filter((u) => u.startsWith('/api/v1/Productos/catalogo-stock?'))
       expect(urls.length).toBeGreaterThan(0)
       expect(urls.every((u) => new URLSearchParams(u.split('?')[1]).get('soloComprables') === 'true')).toBe(true)
+      // Buscar una variante no trae a sus hermanas (`/Productos` no lo hacía) y las variantes siguen comprables.
+      expect(urls.every((u) => new URLSearchParams(u.split('?')[1]).get('familiasCompletas') === 'false')).toBe(true)
+      expect(urls.every((u) => !new URLSearchParams(u.split('?')[1]).has('sinVariantes'))).toBe(true)
     })
   })
 

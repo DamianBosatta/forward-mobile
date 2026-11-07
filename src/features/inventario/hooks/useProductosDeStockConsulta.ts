@@ -18,7 +18,7 @@ export function useProductosDeStockConsulta() {
   const [busqueda, setBusqueda] = useState('')
   const termino = useDebouncedValue(busqueda.trim(), DEBOUNCE_BUSQUEDA_MS)
 
-  const query = useInfiniteCatalogoStock({ search: termino || undefined, pageSize: TAMANO_PAGINA }, { mantenerAnterior: true })
+  const query = useInfiniteCatalogoStock({ search: termino || undefined, pageSize: TAMANO_PAGINA, sinVariantes: true, familiasCompletas: false }, { mantenerAnterior: true })
 
   const productos = useMemo(() => query.data?.pages.flatMap((p) => p?.items ?? []) ?? [], [query.data])
   const totalCount = query.data?.pages[0]?.totalCount
