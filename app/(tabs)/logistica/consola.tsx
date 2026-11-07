@@ -20,6 +20,7 @@ import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { RouteSelector } from '@/features/logistica/components/RouteSelector'
 import { PedidoDetalleModal } from '@/features/logistica/components/PedidoDetalleModal'
 import { HojaDeRutaVista } from '@/features/logistica/consola/HojaDeRutaVista'
+import { paradasCobroDe } from '@/features/cobros/paradaCobro'
 import { ReportarParada, type Resultado, type ReporteParada } from '@/features/logistica/consola/ReportarParada'
 import { LlegueParada } from '@/features/logistica/consola/LlegueParada'
 import { EntregaLista } from '@/features/logistica/consola/EntregaLista'
@@ -418,7 +419,9 @@ export default function ConsolaChoferScreen() {
   )
 
   const motivoSinMandar = `Falta mandar ${sinMandar} ${sinMandar === 1 ? 'acción' : 'acciones'}: esperá la señal para finalizar.`
-  const todasReportadas = resumen.total > 0 && resumen.hechas === resumen.total
+  const paradasCobro = paradasCobroDe(viaje)
+  // Una parada de solo cobro pendiente no frena el finalizar (contrato S9): solo cuentan las entregas.
+  const todasReportadas = (resumen.total > 0 || (paradasCobro?.length ?? 0) > 0) && resumen.hechas === resumen.total
   const pie = soloLectura ? null : programada ? (
     <Button size="xl" label="Iniciar recorrido" loading={iniciar.isPending} onPress={() => accionViaje('iniciar')} />
   ) : finalizada || cancelada ? (
@@ -446,6 +449,8 @@ export default function ConsolaChoferScreen() {
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Viaje de hoy" subtitle={subtitulo || undefined} leading={leading} actions={acciones} />
         <HojaDeRutaVista
+          hojaDeRutaId={viaje.id}
+          paradasCobro={paradasCobro}
           resumen={resumen}
           soloLectura={soloLectura}
           puedeReportar={esEstadoHojaRuta(viaje.estado, 'EnCurso')}
