@@ -3,6 +3,7 @@
  * solo lo que la consola consume del contrato (rama backend `feat/calendario-parada-cobro`). Cuando se regenere el
  * cliente, estos tipos se reemplazan por los de `components['schemas']`.
  */
+import type { components } from '@/libs/api-client/generated/schema'
 
 /** 1 Pendiente, 2 Cobrada, 3 NoCobrada. */
 export type EstadoParadaCobro = 1 | 2 | 3
@@ -37,13 +38,8 @@ export interface ParadaCobro {
   eventoCalendarioId?: string | null
 }
 
-/** Una línea de cobro: la misma forma que `LineaCobroEntregaInput` de la entrega. */
-export interface LineaCobroParada {
-  medioPagoId: string
-  monto: number
-  fotoUrl?: string
-  cheques?: unknown[]
-}
+/** Una línea de cobro: la misma `LineaCobroEntregaInput` de la entrega (el contrato las comparte). */
+export type LineaCobroParada = components['schemas']['LineaCobroEntregaInput']
 
 /** `POST hojas-ruta/{id}/paradas-cobro/{paradaCobroId}/cobrar` (sin la hora: la agrega el envío). */
 export interface CuerpoCobroParada {

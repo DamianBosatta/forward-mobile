@@ -7,7 +7,10 @@ import { Button, Notice, StatusChip, formatImporte } from '@/core/ui/fw'
 import { EstadoParada, type ParadaDto } from '@/libs/api-client/types'
 import type { ParadaNumerada, ResumenRuta } from './hojaDeRuta'
 import { chipCobro, etiquetaNota, importeParada, leyendaSinCobro } from './cobroParada'
+import type { ParadaCobro } from '@/features/cobros/paradaCobro'
+import { PARADA_COBRO_PENDIENTE } from '@/features/cobros/paradaCobro'
 import { ParadaGrande } from './ParadaGrande'
+import { ParadasCobro } from './ParadasCobro'
 import { piezasDeParada, textoPiezas } from './piezasParada'
 
 interface Props {
@@ -30,10 +33,14 @@ interface Props {
   avisos?: React.ReactNode
   /** Acción del viaje en la barra fija (Iniciar recorrido, Finalizar, Cambiar de ruta). */
   pie?: React.ReactNode
+  /** Hoja de la que salen las paradas de solo cobro (S9). */
+  hojaDeRutaId?: string
+  /** Paradas de solo cobro de la hoja. Una hoja vieja no las trae: sin ellas la vista queda como siempre. */
+  paradasCobro?: ParadaCobro[]
 }
 
 /** Láminas chofer-01-viaje: próxima parada grande, las que siguen compactas y las hechas; barra fija con Ir y ¡Llegué!. */
-export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue, onComoLlegar, onLlamar, puedeLlamar, onVerPedido, onNota, notaCargando, cabecera, avisos, pie }: Props) {
+export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue, onComoLlegar, onLlamar, puedeLlamar, onVerPedido, onNota, notaCargando, cabecera, avisos, pie, hojaDeRutaId, paradasCobro }: Props) {
   const c = useColors()
   const { bottom } = useSafeAreaInsets()
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
@@ -44,6 +51,7 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue,
   const tituloSeccion = { ...typeScale.seccion, color: c.text }
   const tarjeta = { backgroundColor: c.surface, borderRadius: radii.tarjeta, ...sombra }
   const puedeLlegar = !!proxima && !soloLectura && puedeReportar
+  const cobrosPendientes = (paradasCobro ?? []).filter((p) => p.estado === PARADA_COBRO_PENDIENTE).length
 
   return (
     <View style={{ flex: 1 }}>
@@ -62,8 +70,13 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue,
             onNota={() => onNota(proxima.parada)}
           />
         ) : resumen.total > 0 ? (
-          <Notice tone="exito" title="Ruta completa.">Todas las paradas están reportadas.</Notice>
-        ) : (
+          cobrosPendientes > 0 ? (
+            // Una parada de solo cobro pendiente no frena el finalizar: se puede cobrar ahora o cerrar el viaje igual.
+            <Notice tone="info" title="Entregas completas.">{`Te quedan ${cobrosPendientes} ${cobrosPendientes === 1 ? 'parada' : 'paradas'} de solo cobro.`}</Notice>
+          ) : (
+            <Notice tone="exito" title="Ruta completa.">Todas las paradas están reportadas.</Notice>
+          )
+        ) : (paradasCobro?.length ?? 0) > 0 ? null : (
           <Notice tone="info">Esta hoja de ruta no tiene paradas.</Notice>
         )}
 
@@ -76,6 +89,10 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue,
               ))}
             </View>
           </>
+        ) : null}
+
+        {hojaDeRutaId && paradasCobro && paradasCobro.length > 0 ? (
+          <ParadasCobro hojaDeRutaId={hojaDeRutaId} paradas={paradasCobro} paradasDeEntrega={resumen.total} puedeReportar={!soloLectura && puedeReportar} />
         ) : null}
 
         {reportadas.length > 0 ? (
