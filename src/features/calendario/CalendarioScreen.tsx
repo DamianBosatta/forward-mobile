@@ -22,6 +22,8 @@ import { FilaDeDias, textoEventos } from './FilaDeDias'
 interface Props {
   precarga?: Precarga | null
   onAbrirVenta?: (ventaId: string) => void
+  /** Abre el flujo de cobro del cliente de una tarea de cobro. Sin él, la hoja no ofrece cobrar. */
+  onCobrar?: (socioId: string) => void
   /** Abre la hoja de "Nuevo evento" al entrar (desde la bandeja de avisos). */
   nuevo?: boolean
   /** Avisos sin leer, para el selector "Calendario | Avisos (n)" del teléfono. */
@@ -30,7 +32,7 @@ interface Props {
   onIrAAvisos?: () => void
 }
 
-export function CalendarioScreen({ precarga, onAbrirVenta, nuevo, avisosSinLeer, onIrAAvisos }: Props) {
+export function CalendarioScreen({ precarga, onAbrirVenta, onCobrar, nuevo, avisosSinLeer, onIrAAvisos }: Props) {
   const { isTablet, isTabletLandscape } = useResponsive()
   const c = useColors()
   const insets = useSafeAreaInsets()
@@ -159,6 +161,7 @@ export function CalendarioScreen({ precarga, onAbrirVenta, nuevo, avisosSinLeer,
           onCerrar={() => setAbierto(null)}
           onMovido={(fecha) => { setAbierto(null); irADia(fecha) }}
           onAbrirVenta={onAbrirVenta}
+          onCobrar={onCobrar}
         />
       ) : null}
     </View>

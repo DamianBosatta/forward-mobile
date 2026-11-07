@@ -18,6 +18,7 @@ export default function CalendarioRoute() {
       onIrAAvisos={() => router.push('/avisos' as never)}
       precarga={precarga}
       onAbrirVenta={(id) => router.push({ pathname: '/(tabs)/ventas/[id]', params: { id } })}
+      onCobrar={(socioId) => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId } })}
     />
   )
 }

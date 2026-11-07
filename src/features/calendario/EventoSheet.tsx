@@ -13,6 +13,8 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { chipDe, esHoraValida, esRecordatorio, textoSemanal, TIPO } from './presentacion'
 import { moverDia, nombreLargo } from './semana'
 import { SelectorDia } from './SelectorDia'
+import { usePuedeCobrar } from '@/features/cuentas/lib/permiso'
+import { cobroAbierto, depositoDe, esTareaAsignada, type EventoConTarea } from './tarea'
 
 /** Límites del servidor (EventoCalendario.MaxTitulo / MaxDescripcion). */
 const MAX_TITULO = 150
@@ -21,12 +23,14 @@ const MAX_DESCRIPCION = 500
 const ALTO_MINIMO = 128
 
 interface Props {
-  evento: EventoCalendario
+  evento: EventoConTarea
   onCerrar: () => void
   /** Se guardó un evento que no se repite: el calendario pasa a su día (puede haber cambiado). */
   onMovido: (fecha: string) => void
   /** Abre la venta desde la que se agendó el evento. Sin él, el vínculo solo se nombra. */
   onAbrirVenta?: (ventaId: string) => void
+  /** Abre el cobro del cliente de una tarea de cobro (flujo de cobranza de siempre). */
+  onCobrar?: (socioId: string) => void
 }
 
 /** La ocurrencia se identifica por su fecha ORIGINAL (la de la clave): no cambia al reprogramarla. */
@@ -37,7 +41,7 @@ const fechaOriginalDe = (e: EventoCalendario) => /:(\d{4}-\d{2}-\d{2})$/.exec(e.
  * editan, se borran y se marcan: el DTO no dice si es editable, y el servidor ya filtró que solo
  * lleguen los que el usuario puede ver (y, por eso, tocar). Cheques y compras son automáticos.
  */
-export function EventoSheet({ evento, onCerrar, onMovido, onAbrirVenta }: Props) {
+export function EventoSheet({ evento, onCerrar, onMovido, onAbrirVenta, onCobrar }: Props) {
   const c = useColors()
   const chip = chipDe(evento)
   const original = fechaOriginalDe(evento)
@@ -71,7 +75,11 @@ export function EventoSheet({ evento, onCerrar, onMovido, onAbrirVenta }: Props)
   )
   return (
     <BottomSheet visible onClose={onCerrar} accessibilityLabel={evento.titulo}>
-      {evento.origen === 'Manual' ? (
+      {esTareaAsignada(evento) ? (
+        <Cuerpo cabecera={cabecera}>
+          <DetalleTarea evento={evento} onCerrar={onCerrar} onCobrar={onCobrar} />
+        </Cuerpo>
+      ) : evento.origen === 'Manual' ? (
         <Edicion evento={evento} cabecera={cabecera} onCerrar={onCerrar} onMovido={onMovido} />
       ) : (
         <Cuerpo cabecera={cabecera}>
@@ -110,6 +118,37 @@ function Cuerpo({ cabecera, children, pie }: { cabecera: React.ReactNode; childr
         >
           {pie}
         </View>
+      ) : null}
+    </>
+  )
+}
+
+/**
+ * Tarea asignada (S8): solo se lee. Editar o borrar exige ser quien la creó o tener CAP_ASIGNAR_TAREAS, y eso se hace en la
+ * web. "Cobrar" abre el flujo de cobranza de siempre (MOD_PAGOS); la tarea no mueve plata ni se marca hecha sola.
+ */
+function DetalleTarea({ evento, onCerrar, onCobrar }: Pick<Props, 'evento' | 'onCerrar' | 'onCobrar'>) {
+  const c = useColors()
+  const puedeCobrar = usePuedeCobrar()
+  const quiereCobrar = cobroAbierto(evento) && puedeCobrar && !!onCobrar
+  const detalle = useEventoCalendario(quiereCobrar ? evento.origenId : null)
+  const socioId = detalle.data?.socioComercialId ?? null
+  const linea = { ...typeScale.secundario, color: c.textSecondary }
+  const asignados = (evento.asignados ?? []).map((a) => a.nombre).join(', ')
+  return (
+    <>
+      {evento.socioNombre ? <Text style={linea}>{`Cliente: ${evento.socioNombre}`}</Text> : null}
+      <Text style={linea}>{`Depósito: ${depositoDe(evento)}`}</Text>
+      {asignados ? <Text style={linea}>{`Asignada a ${asignados}`}</Text> : null}
+      {evento.descripcion ? <Text style={linea}>{evento.descripcion}</Text> : null}
+      <Text style={linea}>La ven quienes la tienen asignada y Administración.</Text>
+      {quiereCobrar ? (
+        <Button
+          label="Cobrar"
+          disabled={!socioId}
+          loading={detalle.isPending}
+          onPress={() => { onCerrar(); onCobrar!(socioId!) }}
+        />
       ) : null}
     </>
   )
