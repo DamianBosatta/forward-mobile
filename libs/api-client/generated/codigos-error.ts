@@ -224,6 +224,7 @@ export const CATALOGO_DE_ERRORES = {
   StockInsuficienteAnularCompra: { status: 409, mensaje: "No hay stock suficiente para anular la recepción." },
   StockInsuficienteDevolucionProveedor: { status: 409, mensaje: "No hay stock suficiente para devolver al proveedor." },
   StockInsuficienteTransferencia: { status: 409, mensaje: "No hay stock disponible suficiente en el depósito de origen." },
+  StockMinimoSinFilaEnElDeposito: { status: 400, mensaje: "Este producto no tiene stock cargado en tu depósito, así que no se le puede poner un mínimo y no se guardó ningún cambio. Dejá el stock mínimo en 0 para guardar lo demás." },
   StockNivelDeAlertaNegativo: { status: 400, mensaje: "El nivel de alerta no puede ser negativo." },
   StockReservaInsuficiente: { status: 409, mensaje: "No hay suficiente reserva para liberar." },
   StockSinRegistro: { status: 409, mensaje: "No hay registro de stock del producto en el depósito." },
