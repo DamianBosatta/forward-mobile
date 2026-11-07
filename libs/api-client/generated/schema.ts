@@ -14596,6 +14596,7 @@ export interface paths {
             parameters: {
                 query?: {
                     depositoId?: string;
+                    paraEditar?: boolean;
                 };
                 header?: never;
                 path: {
@@ -24559,6 +24560,11 @@ export interface components {
             referenciaId?: string | null;
             productoNombre?: string | null;
             depositoNombre?: string | null;
+            /** Format: uuid */
+            transferenciaId?: string | null;
+            /** Format: uuid */
+            otroDepositoId?: string | null;
+            otroDepositoNombre?: string | null;
         };
         MovimientoStockDtoPaginatedResponse: {
             /** Format: int32 */
@@ -26875,7 +26881,7 @@ export interface components {
             /** Format: double */
             cantidadFiscal: number;
             /** Format: double */
-            stockRealTotal: number;
+            stockRealTotal?: number | null;
             fiscalSuperaReal: boolean;
             fiscalNegativo: boolean;
             puedeVenderse: boolean;
