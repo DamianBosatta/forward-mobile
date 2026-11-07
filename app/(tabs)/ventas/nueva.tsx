@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { useIsFocused } from '@react-navigation/native'
+import { useIsFocused } from "expo-router/react-navigation"
 import { VentaNuevaPantalla, type AbrirVenta } from '@/features/venta-nueva/components/VentaNuevaPantalla'
 
 type Params = { borrador?: string; tipo?: string; editar?: string; duplicar?: string; clienteId?: string }

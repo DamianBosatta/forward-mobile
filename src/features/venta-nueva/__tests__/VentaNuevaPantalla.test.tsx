@@ -27,7 +27,7 @@ const mockBack = jest.fn()
 const mockReplace = jest.fn()
 let mockTipo = 'Pedido'
 let mockParams: Record<string, string> = {}
-jest.mock('@react-navigation/native', () => ({ useIsFocused: () => true }))
+jest.mock('expo-router/react-navigation', () => ({ useIsFocused: () => true }))
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn(), back: mockBack, replace: mockReplace }),
   useLocalSearchParams: () => mockParams,
