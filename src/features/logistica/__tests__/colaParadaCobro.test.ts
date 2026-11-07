@@ -77,7 +77,7 @@ describe('cobro de una parada de solo cobro sin señal', () => {
     expect(leerCola(USUARIO)).toHaveLength(1)
   })
 
-  it.each(['ParadaYaReportada', 'ClaveConOtroCuerpo', 'ParadaCobroSinViajeEnCurso'])(
+  it.each(['ParadaYaReportada', 'ClaveIdempotenciaConOtroCuerpo', 'Duplicado', 'ParadaCobroSinViajeEnCurso'])(
     'un 409 %s NO da el cobro por enviado: queda para revisar con el mensaje y la ronda sigue',
     async (codigo) => {
       mockPost.mockRejectedValueOnce(rechazo(409, 'La parada ya fue reportada.', codigo)).mockResolvedValue({})

@@ -244,6 +244,19 @@ describe.each(TEMAS)('paradas de solo cobro en la consola del chofer (%s)', (tem
     expect(leerCola(USUARIO)).toEqual([])
   })
 
+  it.each(['ClaveIdempotenciaConOtroCuerpo', 'Duplicado'])('un 409 %s no reusa la clave: el reintento manda una nueva', async (codigo) => {
+    mockPost.mockRejectedValueOnce(rechazo(409, 'Clave usada.', codigo)).mockResolvedValue({})
+    pintar([cobro()])
+    await userEvent.press(screen.getByLabelText('Cobrar en Av. Rivadavia 4500'))
+    await userEvent.press(await screen.findByText('Efectivo'))
+    await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
+    expect(await screen.findByText('Clave usada.')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
+    expect(await screen.findByText('Cobro registrado.')).toBeTruthy()
+    const [primera, segunda] = mockPost.mock.calls.map(([, cuerpo]) => (cuerpo as { claveIdempotencia: string }).claveIdempotencia)
+    expect(segunda).not.toBe(primera)
+  })
+
   it('en tablet la pantalla de la parada queda en una columna', async () => {
     mockAncho = 1024
     pintar([cobro()])

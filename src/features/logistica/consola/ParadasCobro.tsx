@@ -91,8 +91,10 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
       if (esFallaDeRed(e)) { guardar(); return }
       const codigo = (e as { codigo?: string } | null)?.codigo
       // La clave ya quedó con otro cuerpo: el servidor guarda que una parada se resuelve una sola vez, así que una clave nueva es segura.
-      if (codigo === 'ClaveConOtroCuerpo') claves.current.delete(parada.id)
-      if (codigo === 'ParadaYaReportada') void qc.invalidateQueries({ queryKey: logisticaKeys.hojaRuta(hojaDeRutaId) })
+      // `Duplicado`: la misma clave corrió a la par en otra parada. Tampoco se reusa.
+      if (codigo === 'ClaveIdempotenciaConOtroCuerpo' || codigo === 'Duplicado') claves.current.delete(parada.id)
+      // El estado de la parada (y de la tarea) lo decide el servidor: se vuelve a leer, no se supone.
+      if (codigo === 'ParadaYaReportada' || codigo === 'Duplicado') void qc.invalidateQueries({ queryKey: logisticaKeys.hojaRuta(hojaDeRutaId) })
       setError(mensajeDelServidor(e, 'No se pudo registrar el cobro.'))
     } finally {
       ocupada.current = false
