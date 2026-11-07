@@ -16,7 +16,7 @@ let mockRoles: string[] = []
 let mockPermisos: { module: string; canRead: boolean }[] = []
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
-jest.mock('@react-navigation/drawer', () => ({ useDrawerStatus: () => 'closed' }))
+jest.mock('expo-router/drawer', () => ({ useDrawerStatus: () => 'closed' }))
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }))

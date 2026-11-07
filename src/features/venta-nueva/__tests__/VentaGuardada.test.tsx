@@ -238,7 +238,7 @@ describe('V8 listo (CalleListo / TabCalleListo)', () => {
 
   it('"Mandar por WhatsApp" abre el chat del cliente con el pedido; sin teléfono no se ofrece', async () => {
     mockVenta = { ...mockVenta, venta: cabecera({ estado: 2 }) }
-    const abrirUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+    const abrirUrl = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
     mockGet.mockImplementation((url: string) =>
       Promise.resolve(url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? { ...socio, telefono: '11 5555-0000' } : undefined))
     pantalla()

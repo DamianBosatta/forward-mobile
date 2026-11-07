@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View, type TextInputInstance } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
 import { useQueryClient } from '@tanstack/react-query'
@@ -52,7 +52,7 @@ export default function LoginScreen() {
   const [ofrecerHuella, setOfrecerHuella] = useState(false)
   const [currentUrl, setCurrentUrl] = useState(API_URL)
   const [foco, setFoco] = useState<'usuario' | 'contrasena' | null>(null)
-  const contrasenaRef = useRef<TextInput>(null)
+  const contrasenaRef = useRef<TextInputInstance>(null)
   // Alcanzabilidad desconocida no apaga el ingreso: solo "sin red" afirmado.
   const sinConexion = !useNetworkStatus({ desconocidoCuentaComoSinRed: false }).isConnected
 

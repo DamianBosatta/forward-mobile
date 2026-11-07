@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { useLocalSearchParams } from 'expo-router'
-import { useFocusEffect } from '@react-navigation/native'
+import { useFocusEffect } from "expo-router/react-navigation"
 import { ClienteForm } from '@/features/clientes/components/ClienteForm'
 
 /** Alta y edición de cliente. Se rearma en cada visita: el menú lateral deja la pantalla montada. */

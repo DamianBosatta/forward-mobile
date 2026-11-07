@@ -159,6 +159,17 @@ describe('servidor sin el endpoint o con falla: queda lo del teléfono', () => {
     expect(leerRecientes('u1').map(x => x.id)).toEqual(['l2', 'l1'])
   })
 
+  it('sin Clientes:Read no pide los recientes (daría 403) y quedan los del teléfono', async () => {
+    conPermisos([{ module: 'MOD_VENTAS', canRead: true }])
+    locales()
+    servidor(() => Promise.resolve([delServidor('s1', 'Brandsen 3314')]))
+    renderConQuery(hoja())
+
+    expect(await screen.findByText('Calle Vieja 1')).toBeTruthy()
+    expect(get).not.toHaveBeenCalledWith(RECIENTES_URL, expect.anything())
+    expect(screen.queryByText('Brandsen 3314')).toBeNull()
+  })
+
   it('sin recientes en ningún lado no hay sección', async () => {
     servidor(conStatus(404))
     renderConQuery(hoja())

@@ -21,10 +21,12 @@ const reportesKeys = {
  */
 export type PeriodoResumen = { anio: number; mes: number } | { semana: string }
 
-export function useResumenVendedor(periodo: PeriodoResumen, vendedorId: string | null) {
+/** `habilitado`: el endpoint pide Ventas:Read; sin ese permiso no se llama (el servidor daría 403). */
+export function useResumenVendedor(periodo: PeriodoResumen, vendedorId: string | null, habilitado = true) {
   const filtro = 'semana' in periodo ? `semana=${periodo.semana}` : `anio=${periodo.anio}&mes=${periodo.mes}`
   return useQuery({
     queryKey: reportesKeys.resumenVendedor(periodo, vendedorId),
+    enabled: habilitado,
     queryFn: () => api.get<ResumenVendedor>(
       `/api/v1/Reportes/mobile/resumen-vendedor?${filtro}${vendedorId ? `&vendedorId=${vendedorId}` : ''}`,
     ),

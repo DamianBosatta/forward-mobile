@@ -9,7 +9,7 @@ import {
   View
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { MotiView } from 'moti'
+import { MotiView, type MotiTransitionProp } from 'moti'
 import { useColors, tokens } from '@/libs/theme'
 import { safeHaptics } from '@/core/utils/haptics'
 
@@ -92,7 +92,7 @@ export const PremiumButton = ({
         scale: disabled ? 0.98 : 1,
         opacity: disabled ? 0.6 : 1
       }}
-      transition={{ type: 'spring', damping: 15 }}
+      transition={{ type: 'spring', damping: 15 } as MotiTransitionProp}
       style={[{ width: '100%' }, style]}
     >
       <TouchableOpacity
@@ -108,7 +108,7 @@ export const PremiumButton = ({
           colors={v.bg as any}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[StyleSheet.absoluteFillObject, { borderRadius: 16 }]}
+          style={[StyleSheet.absoluteFill, { borderRadius: 16 }]}
         />
         
         <View style={styles.content}>

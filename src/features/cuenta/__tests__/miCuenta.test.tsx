@@ -52,7 +52,7 @@ jest.mock('@/features/auth/utils/biometrics', () => ({
   setBiometricLoginEnabled: (v: boolean, u: string) => mockSetHuella(v, u),
   forgetBiometricLogin: async () => {},
 }))
-jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), DrawerActions: { openDrawer: jest.fn() } }))
+jest.mock('expo-router/react-navigation', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), DrawerActions: { openDrawer: jest.fn() } }))
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390, isTablet: false, isTabletLandscape: false, isLarge: false }) }))
 jest.mock('@/core/utils/haptics', () => ({ safeHaptics: { impact: jest.fn(), notification: jest.fn() } }))
 jest.mock('@/core/ui', () => {

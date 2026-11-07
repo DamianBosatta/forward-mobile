@@ -120,7 +120,7 @@ describe('Mandar recibo', () => {
   }
 
   it('abre el menú de compartir con el total, los medios y la aclaración de que no es fiscal', async () => {
-    const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' })
+    const share = jest.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction', activityType: undefined })
     await userEvent.press(await cobroHecho())
 
     expect(share).toHaveBeenCalledTimes(1)

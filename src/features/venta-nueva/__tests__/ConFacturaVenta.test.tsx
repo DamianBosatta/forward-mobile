@@ -55,6 +55,8 @@ async function abrirConfirmar() {
   await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
   await userEvent.press(screen.getByRole('button', { name: 'Ver venta' }))
   useCarritoVenta.setState({ lineas: [{ productoId: pala.id, producto: pala, cantidad: 12, descuentoPct: 0 }] })
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled())
+  await userEvent.press(screen.getByRole('button', { name: 'Continuar' }))
   await waitFor(() => expect(mockGet).toHaveBeenCalledWith(URL_DEFECTO))
   await screen.findByRole('switch', { name: 'Con factura' })
 }

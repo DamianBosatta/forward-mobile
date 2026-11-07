@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useIsFocused } from "expo-router/react-navigation"
 import { VentaNuevaPantalla, type AbrirVenta } from '@/features/venta-nueva/components/VentaNuevaPantalla'
 
 type Params = { borrador?: string; tipo?: string; editar?: string; duplicar?: string; clienteId?: string }
@@ -24,10 +25,12 @@ export default function NuevaVentaRoute() {
   const params = useLocalSearchParams<Params>()
   const router = useRouter()
   const [vez, setVez] = useState(0)
+  // El atrás de Android solo retrocede un paso de la venta mientras esta pantalla es la que se ve (vive en el drawer).
+  const activa = useIsFocused()
   const alTerminar = () => {
     setVez((v) => v + 1)
     router.setParams({ borrador: undefined, tipo: undefined, editar: undefined, duplicar: undefined, clienteId: undefined })
   }
   const clave = `${vez}:${params.borrador ?? ''}:${params.editar ?? ''}:${params.duplicar ?? ''}:${params.clienteId ?? ''}`
-  return <VentaNuevaPantalla key={clave} abrir={abrirDesdeParams(params)} clienteId={params.clienteId} alTerminar={alTerminar} />
+  return <VentaNuevaPantalla key={clave} abrir={abrirDesdeParams(params)} clienteId={params.clienteId} alTerminar={alTerminar} activa={activa} />
 }

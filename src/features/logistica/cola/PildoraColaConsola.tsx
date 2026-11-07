@@ -16,6 +16,8 @@ const accionesTexto = (n: number) => `${n} ${n === 1 ? 'acción' : 'acciones'}`
 /** Qué hizo el chofer, en sus palabras: "Entrega y cobro", "Entrega, cobro y devolución", "No pude entregar". */
 export function queEs(a: AccionEnCola): string {
   if (a.tipo === 'noEntrega') return 'No pude entregar'
+  if (a.tipo === 'cobroParada') return 'Cobro'
+  if (a.tipo === 'noCobroParada') return 'No cobré'
   const partes = ['entrega', ...(a.cobrado > 0 ? ['cobro'] : []), ...(a.conDevolucion ? ['devolución'] : [])]
   const texto = partes.length === 1 ? partes[0] : `${partes.slice(0, -1).join(', ')} y ${partes[partes.length - 1]}`
   return texto.charAt(0).toUpperCase() + texto.slice(1)
@@ -77,7 +79,7 @@ export function ColaConsola({ acciones }: Props) {
                 <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{horaDe(a.encoladaEn)}</Text>
               </View>
               <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>
-                {a.tipo === 'entrega' && a.cobrado > 0 ? `${a.clienteNombre} · cobrado ${formatImporte(a.cobrado)}` : a.clienteNombre}
+                {(a.tipo === 'entrega' || a.tipo === 'cobroParada') && a.cobrado > 0 ? `${a.clienteNombre} · cobrado ${formatImporte(a.cobrado)}` : a.clienteNombre}
               </Text>
               {a.estado.tipo === 'revisar' ? (
                 <Text style={{ ...typeScale.secundario, color: c.chip.anulado.text }}>{`Para revisar: ${a.estado.mensaje}`}</Text>

@@ -6,6 +6,7 @@ import { BottomSheet, FormContainer, Notice, TopBar, TotalsRow, formatImporte, u
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { useResponsive } from '@/libs/useResponsive'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useResumenVendedor, type ResumenVendedor } from '@/libs/api-client/reportes'
 import { useVendedores } from '@/libs/api-client/ventas'
 import { useAhoraArgentina } from '@/core/utils/useAhoraArgentina'
@@ -34,9 +35,12 @@ export function ReportesScreen() {
   const mes = periodo === 'actual' ? actual : anterior
   const [vendedor, setVendedor] = useState<Vendedor | null>(null)
   const [eligiendo, setEligiendo] = useState(false)
+  // El resumen pide Ventas:Read: sin él no se llama al servidor (daría 403) y se dice que falta el permiso.
+  const puedeVerResumen = useAuthStore((s) => s.canDo('MOD_VENTAS', 'read'))
   const q = useResumenVendedor(
     periodo === 'semana' ? { semana: diaDeLaSemana(ahora) } : { anio: mes.anio, mes: mes.mes },
     vendedor?.id ?? null,
+    puedeVerResumen,
   )
   const puedeElegir = q.data?.puedeElegirVendedor === true
   const vendedores = useVendedores(puedeElegir && eligiendo)
@@ -71,7 +75,9 @@ export function ReportesScreen() {
               <ChevronDown size={20} color={c.textSecondary} />
             </Pressable>
           ) : null}
-          {q.isLoading ? (
+          {!puedeVerResumen ? (
+            <EstadoDePantalla tipo="sinPermiso" titulo="No tenés permiso para ver los reportes" />
+          ) : q.isLoading ? (
             <ActivityIndicator color={c.brand} accessibilityLabel="Cargando los reportes" />
           ) : q.isError && esFallaDeRed(q.error) ? (
             q.data ? (

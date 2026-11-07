@@ -87,7 +87,8 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
   const [aviso, setAviso] = useState<string | null>(null)
   // Ids que el servidor negó o dio de baja al elegirlos: no vuelven a salir de la lista del servidor.
   const [noDisponibles, setNoDisponibles] = useState<string[]>([])
-  const delServidor = useClientesRecientes(visible)
+  const puedeVerClientes = useAuthStore(s => s.canDo('MOD_CLIENTES', 'read'))
+  const delServidor = useClientesRecientes(visible && puedeVerClientes)
   useEffect(() => {
     if (!visible) return
     setGuardados(leerRecientes(usuarioId))
@@ -171,7 +172,7 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
         }
         renderItem={({ item }) => <Fila cliente={item} vencida={item.tieneDeudaVencida === true} onPress={() => elegir(item)} />}
         ListEmptyComponent={
-          isLoading ? <ActivityIndicator color={c.brandInk} /> : error ? null : (
+          isLoading ? <ActivityIndicator color={c.brandInk} /> : error ? undefined : (
             <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
               {buscando ? 'Ningún cliente coincide con la búsqueda.' : 'Todavía no hay clientes en tu cartera.'}
             </Text>

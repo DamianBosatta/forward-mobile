@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
-import { DrawerActions } from '@react-navigation/native'
+import { DrawerActions } from "expo-router/react-navigation"
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Fab, Notice, TopBar } from '@/core/ui/fw'
@@ -69,14 +69,14 @@ export default function ProveedoresScreen() {
         contentContainerStyle={{ paddingBottom: 88 }}
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.brandInk} />}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch() }} tintColor={c.brandInk} />}
         ListEmptyComponent={
           isLoading ? (
             <ActivityIndicator color={c.brandInk} style={{ marginTop: space[8] }} />
           ) : error ? (
             sinRed ? (
               <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los proveedores" accion={{ label: 'Reintentar', onPress: () => void refetch() }} />
-            ) : null
+            ) : undefined
           ) : (
             <EstadoDePantalla
               tipo="vacio"

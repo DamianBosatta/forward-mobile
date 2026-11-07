@@ -13,7 +13,7 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: jest.fn(), back: jest.fn(), replace: jest.fn() }),
   useLocalSearchParams: () => ({ id: mockId }),
 }))
-jest.mock('@react-navigation/native', () => ({
+jest.mock('expo-router/react-navigation', () => ({
   useFocusEffect: (cb: () => void) => require('react').useEffect(cb, []),
 }))
 jest.mock('@/core/api/client', () => ({ api: { get: jest.fn(), post: jest.fn(), put: jest.fn() }, API_URL: '' }))
@@ -123,7 +123,7 @@ describe('solicitud de cambio desde la ficha', () => {
     })
   }
   beforeEach(() => {
-    jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+    jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
     servidorFicha(detalle())
   })
 

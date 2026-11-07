@@ -53,7 +53,9 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
   const [guardados, setGuardados] = useState(() => leerRecientes(usuarioId))
   const [aviso, setAviso] = useState<string | null>(null)
   const [noDisponibles, setNoDisponibles] = useState<string[]>([])
-  const delServidor = useClientesRecientes(true)
+  // clientes-recientes pide Clientes:Read: sin él no se llama (daría 403) y quedan los recientes del teléfono.
+  const puedeVerClientes = useAuthStore((s) => s.canDo('MOD_CLIENTES', 'read'))
+  const delServidor = useClientesRecientes(puedeVerClientes)
   useEffect(() => { setGuardados(leerRecientes(usuarioId)) }, [usuarioId])
   const recientes = buscando ? [] : fusionarRecientes(delServidor.data, guardados, noDisponibles)
 
@@ -175,7 +177,7 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
           )
         }}
         ListEmptyComponent={
-          isLoading ? <ActivityIndicator color={c.brandInk} /> : error ? null : (
+          isLoading ? <ActivityIndicator color={c.brandInk} /> : error ? undefined : (
             <Text style={{ ...typeScale.secundario, color: c.textSecondary, paddingHorizontal: space[4] }}>
               {buscando ? 'Ningún cliente coincide con la búsqueda.' : 'Todavía no hay clientes en tu cartera.'}
             </Text>

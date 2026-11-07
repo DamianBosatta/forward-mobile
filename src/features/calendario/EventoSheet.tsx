@@ -3,7 +3,7 @@ import { ActivityIndicator, ScrollView, Text, View, useWindowDimensions } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useTeclado } from '@/core/utils/useTecladoVisible'
-import { BottomSheet, Button, Field, Notice, StatusChip } from '@/core/ui/fw'
+import { BottomSheet, Button, Field, Notice, OptionCard, StatusChip } from '@/core/ui/fw'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   calendarioKeys, useBorrarEvento, useEditarEvento, useEventoCalendario, useMarcarPagado,
@@ -13,6 +13,9 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { chipDe, esHoraValida, esRecordatorio, textoSemanal, TIPO } from './presentacion'
 import { moverDia, nombreLargo } from './semana'
 import { SelectorDia } from './SelectorDia'
+import { usePuedeCobrar } from '@/features/cuentas/lib/permiso'
+import { cobroAbierto, depositoDe, ESTADOS_DE_TAREA, esTareaAsignada, type EstadoTarea, type EventoConTarea } from './tarea'
+import { useCambiarEstadoTarea } from './api'
 
 /** Límites del servidor (EventoCalendario.MaxTitulo / MaxDescripcion). */
 const MAX_TITULO = 150
@@ -21,12 +24,14 @@ const MAX_DESCRIPCION = 500
 const ALTO_MINIMO = 128
 
 interface Props {
-  evento: EventoCalendario
+  evento: EventoConTarea
   onCerrar: () => void
   /** Se guardó un evento que no se repite: el calendario pasa a su día (puede haber cambiado). */
   onMovido: (fecha: string) => void
   /** Abre la venta desde la que se agendó el evento. Sin él, el vínculo solo se nombra. */
   onAbrirVenta?: (ventaId: string) => void
+  /** Abre el cobro del cliente de una tarea de cobro (flujo de cobranza de siempre). */
+  onCobrar?: (socioId: string) => void
 }
 
 /** La ocurrencia se identifica por su fecha ORIGINAL (la de la clave): no cambia al reprogramarla. */
@@ -37,7 +42,7 @@ const fechaOriginalDe = (e: EventoCalendario) => /:(\d{4}-\d{2}-\d{2})$/.exec(e.
  * editan, se borran y se marcan: el DTO no dice si es editable, y el servidor ya filtró que solo
  * lleguen los que el usuario puede ver (y, por eso, tocar). Cheques y compras son automáticos.
  */
-export function EventoSheet({ evento, onCerrar, onMovido, onAbrirVenta }: Props) {
+export function EventoSheet({ evento, onCerrar, onMovido, onAbrirVenta, onCobrar }: Props) {
   const c = useColors()
   const chip = chipDe(evento)
   const original = fechaOriginalDe(evento)
@@ -71,7 +76,9 @@ export function EventoSheet({ evento, onCerrar, onMovido, onAbrirVenta }: Props)
   )
   return (
     <BottomSheet visible onClose={onCerrar} accessibilityLabel={evento.titulo}>
-      {evento.origen === 'Manual' ? (
+      {esTareaAsignada(evento) ? (
+        <DetalleTarea evento={evento} cabecera={cabecera} onCerrar={onCerrar} onCobrar={onCobrar} />
+      ) : evento.origen === 'Manual' ? (
         <Edicion evento={evento} cabecera={cabecera} onCerrar={onCerrar} onMovido={onMovido} />
       ) : (
         <Cuerpo cabecera={cabecera}>
@@ -82,6 +89,7 @@ export function EventoSheet({ evento, onCerrar, onMovido, onAbrirVenta }: Props)
   )
 }
 
+/**
 /**
  * Cuerpo de la hoja: lo que se lee y se completa hace scroll; `pie` (avisos y botones) queda fijo abajo,
  * siempre a la vista. El scroll se encoge con el teclado abierto: la hoja sube sobre el teclado y su
@@ -112,6 +120,63 @@ function Cuerpo({ cabecera, children, pie }: { cabecera: React.ReactNode; childr
         </View>
       ) : null}
     </>
+  )
+}
+
+/**
+ * Tarea asignada (S8): solo se lee. Editar o borrar exige ser quien la creó o tener CAP_ASIGNAR_TAREAS, y eso se hace en la
+ * web. "Cobrar" abre el flujo de cobranza de siempre (MOD_PAGOS); la tarea no mueve plata ni se marca hecha sola.
+ */
+function DetalleTarea({ evento, cabecera, onCerrar, onCobrar }: Pick<Props, 'evento' | 'onCerrar' | 'onCobrar'> & { cabecera: React.ReactNode }) {
+  const c = useColors()
+  const puedeCobrar = usePuedeCobrar()
+  const cambiar = useCambiarEstadoTarea()
+  // El estado que se ve es el último confirmado por el servidor: la hoja guarda el evento con el que se abrió.
+  const [estado, setEstado] = useState<EstadoTarea | undefined>(evento.estadoTarea)
+  const [errorEstado, setErrorEstado] = useState<string | null>(null)
+  const quiereCobrar = cobroAbierto({ ...evento, estadoTarea: estado }) && puedeCobrar && !!onCobrar
+  const detalle = useEventoCalendario(quiereCobrar ? evento.origenId : null)
+  const socioId = detalle.data?.socioComercialId ?? null
+  const linea = { ...typeScale.secundario, color: c.textSecondary }
+  const asignados = (evento.asignados ?? []).flatMap((a) => (a.nombre ? [a.nombre] : [])).join(', ')
+  return (
+    <Cuerpo
+      cabecera={cabecera}
+      pie={quiereCobrar ? (
+        <Button
+          label="Cobrar"
+          disabled={!socioId}
+          loading={detalle.isPending}
+          onPress={() => { onCerrar(); onCobrar!(socioId!) }}
+        />
+      ) : undefined}
+    >
+      {evento.socioNombre ? <Text style={linea}>{`Cliente: ${evento.socioNombre}`}</Text> : null}
+      <Text style={linea}>{`Depósito: ${depositoDe(evento)}`}</Text>
+      {asignados ? <Text style={linea}>{`Asignada a ${asignados}`}</Text> : null}
+      {evento.descripcion ? <Text style={linea}>{evento.descripcion}</Text> : null}
+      <Text style={linea}>La ven quienes la tienen asignada y Administración.</Text>
+      <View accessibilityLabel="Estado de la tarea" style={{ gap: space[2] }}>
+        {ESTADOS_DE_TAREA.map((e) => (
+          <OptionCard
+            key={e.valor}
+            label={e.texto}
+            minHeight={56}
+            selected={e.valor === (estado ?? 'Pendiente')}
+            disabled={cambiar.isPending}
+            onPress={() => {
+              if (e.valor === (estado ?? 'Pendiente')) return
+              setErrorEstado(null)
+              cambiar.mutate({ id: evento.origenId, estado: e.valor }, {
+                onSuccess: () => setEstado(e.valor),
+                onError: (err) => setErrorEstado(mensajeDelServidor(err, 'No se pudo cambiar el estado de la tarea.')),
+              })
+            }}
+          />
+        ))}
+      </View>
+      {errorEstado ? <Notice tone="peligro">{errorEstado}</Notice> : null}
+    </Cuerpo>
   )
 }
 

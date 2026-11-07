@@ -155,7 +155,7 @@ describe('R1 · detalle del pedido (ResVentaDetalle, TV7)', () => {
   })
 
   it('PDF comparte el de la venta; WhatsApp abre el chat con el texto de la web', async () => {
-    const abrir = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+    const abrir = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: 'PDF' }))
     await waitFor(() => expect(mockShare).toHaveBeenCalled())
@@ -276,7 +276,7 @@ describe('R3 · rechazado (ResRechazada, TV8)', () => {
   })
 
   it('¿Qué hacés ahora?: cobrar lo vencido, armar uno nuevo igual y llamar al cliente', async () => {
-    const abrir = jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+    const abrir = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: /Cobrar lo vencido/ }))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: 'c7' } })

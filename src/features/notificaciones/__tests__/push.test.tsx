@@ -34,7 +34,7 @@ const mockConstants = {
 jest.mock('expo-constants', () => ({
   __esModule: true,
   // Getter: el factory corre al importar push.ts, antes de que mockConstants exista.
-  get default() { return mockConstants },
+  get default() { return mockConstants ?? {} },
   ExecutionEnvironment: { Bare: 'bare', Standalone: 'standalone', StoreClient: 'storeClient' },
 }))
 

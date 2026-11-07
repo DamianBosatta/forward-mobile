@@ -1,5 +1,6 @@
 import React, { useRef, useState, type ReactNode } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
+import { ArrowLeft, ChevronRight } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, PieFijo, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
@@ -13,6 +14,12 @@ import { disponibleParaLinea, faltaStock, totalesEstimados, type YaReservadas } 
 import { mostrarNumero } from '../lib/linea'
 
 interface Props {
+  /** Qué paso de la venta dibuja: 'carrito' (paso 3: las líneas y "Continuar") o 'entrega' (paso 4: total y confirmar). */
+  paso: 'carrito' | 'entrega'
+  /** Paso 3: "Continuar" lleva a la entrega y facturación (apagado sin productos). */
+  onContinuar?: () => void
+  /** Paso 4: vuelve al carrito, por ejemplo a corregir lo que el confirmar rechazó. */
+  onVolverAlCarrito?: () => void
   cliente: ClienteNombrable | null
   descuentoGeneral: number
   flete?: number
@@ -57,11 +64,12 @@ function detalleDe(l: LineaCarrito): string {
 }
 
 /**
- * Revisar y confirmar (lámina Carrito, S5/S6/S7): las líneas con el stock vuelto a chequear al abrir y otra vez al
- * tocar "Confirmar venta" (que manda la venta: no hay segunda confirmación); lo que cambió desde que se cargó queda marcado y el banner lo cuenta. Si falta stock
- * no se bloquea: el flujo de confirmar pide el motivo y la venta va a autorización.
+ * Pasos 3 y 4 de la venta (lámina Carrito, S5/S6/S7). Paso 3, 'carrito': solo las líneas con el stock vuelto a chequear al abrir,
+ * lo que cambió desde que se cargó marcado (el banner lo cuenta), el descuento general y "Continuar". Paso 4, 'entrega': la entrega y la
+ * factura (`ajustes`), el aviso de autorización, el total y "Confirmar venta", que vuelve a chequear el stock y manda la venta
+ * (no hay segunda confirmación). Si falta stock no se bloquea: el flujo de confirmar pide el motivo y la venta va a autorización.
  */
-export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, deshabilitado = false, motivoDeshabilitado, onEditarLinea, onElegirFragancias, ajustes, autorizacion = [], onEditarProductos, yaReservadas, sinEncabezado = false, etiquetaConfirmar = 'Confirmar venta' }: Props) {
+export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, deshabilitado = false, motivoDeshabilitado, onEditarLinea, onElegirFragancias, ajustes, autorizacion = [], onEditarProductos, yaReservadas, sinEncabezado = false, etiquetaConfirmar = 'Confirmar venta' }: Props) {
   const c = useColors()
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
   const { lineas, cambios, confirmado, sinConexion, revalidando, revalidar } = useRevalidarStockVenta()
@@ -74,6 +82,8 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
   const t = totalesEstimados(lineas, descuentoGeneral, flete)
   const lista = lineas.reduce((a, l) => a + l.producto.precioVenta * l.cantidad, 0)
   const ofertas = lista - t.subtotal
+  // Los productos con sus descuentos, sin el flete: lo que cierra el carrito antes de la entrega.
+  const productos = totalesEstimados(lineas, descuentoGeneral).total
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
 
   const confirmar = async () => {
@@ -109,8 +119,8 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3] }}>
-        {sinEncabezado ? null : <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>Revisar venta</Text>}
-        {cliente && !sinEncabezado ? (
+        {sinEncabezado || paso !== 'carrito' ? null : <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>Revisar venta</Text>}
+        {cliente && !sinEncabezado && paso === 'carrito' ? (
           <View style={{ gap: 2 }}>
             <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
             {nombreDelCliente(cliente) ? <Text style={secundario}>{nombreDelCliente(cliente)}</Text> : null}
@@ -121,11 +131,20 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
             {`El stock cambió mientras cargabas: revisá ${cambios.length} ${cambios.length === 1 ? 'producto' : 'productos'}.`}
           </Notice>
         ) : null}
-        {autorizacion.length > 0 ? (
+        {paso === 'entrega' && onVolverAlCarrito && !error ? (
+          <Pressable accessibilityRole="button" accessibilityLabel="Volver al carrito" onPress={onVolverAlCarrito} android_ripple={{ color: c.border }}
+            style={{ minHeight: 44, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+            <ArrowLeft size={16} color={c.textSecondary} />
+            <Text style={{ ...typeScale.cuerpoDestacado, color: c.textSecondary }}>Volver al carrito</Text>
+          </Pressable>
+        ) : null}
+        {paso === 'carrito' && error ? <Notice tone="peligro" testID="carrito-error">{error}</Notice> : null}
+        {paso === 'entrega' && autorizacion.length > 0 ? (
           <Notice tone="advertencia" title="Esta venta necesita autorización" testID="revisar-autorizacion">
             {`${autorizacion.map((m) => `• ${m.charAt(0).toUpperCase()}${m.slice(1)}.`).join('\n')}\nPodés confirmarla igual: queda en Por autorizar.`}
           </Notice>
         ) : null}
+        {paso === 'carrito' ? (
         <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, paddingHorizontal: space[3], paddingBottom: space[1] }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Productos</Text>
@@ -182,12 +201,21 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
           )
         })}
         </View>
+        ) : null}
         {ajustes}
         <View style={{ gap: space[2], paddingTop: space[2] }}>
-          <TotalsRow label="Subtotal de lista" importe={lista} />
-          {ofertas > 0 ? <TotalsRow label="Descuentos de línea" importe={-ofertas} /> : null}
-          {t.descuento > 0 ? <TotalsRow label="Descuento general" importe={-t.descuento} /> : null}
-          {flete > 0 ? <TotalsRow label="Flete (logística propia)" importe={flete} /> : null}
+          {paso === 'carrito' ? (
+            <>
+              <TotalsRow label="Subtotal de lista" importe={lista} />
+              {ofertas > 0 ? <TotalsRow label="Descuentos de línea" importe={-ofertas} /> : null}
+              {t.descuento > 0 ? <TotalsRow label="Descuento general" importe={-t.descuento} /> : null}
+            </>
+          ) : (
+            <>
+              <TotalsRow label="Total de productos" importe={productos} />
+              {flete > 0 ? <TotalsRow label="Flete (logística propia)" importe={flete} /> : null}
+            </>
+          )}
           {entrega ? (
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
               <Text style={secundario}>Entrega</Text>
@@ -197,15 +225,31 @@ export function RevisarVenta({ cliente, descuentoGeneral, flete = 0, entrega, en
           <Text style={secundario}>Los totales son estimados: el total final lo calcula el sistema al guardar.</Text>
         </View>
       </ScrollView>
-      <PieFijo fondo="bg">
-        {error ? <Notice tone="peligro">{error}</Notice> : null}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <Text style={secundario}>Total estimado</Text>
-          <Text testID="revisar-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(t.total)}</Text>
-        </View>
-        <Button label={etiquetaConfirmar} onPress={() => { void confirmar() }} loading={enviando || confirmando} disabled={enviando || confirmando || deshabilitado || lineas.length === 0} />
-        {motivoDeshabilitado ? <MotivoDeshabilitado>{motivoDeshabilitado}</MotivoDeshabilitado> : null}
-      </PieFijo>
+      {paso === 'carrito' ? (
+        <PieFijo fondo="bg">
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <Text style={secundario}>Total de productos</Text>
+            <Text testID="carrito-paso-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(productos)}</Text>
+          </View>
+          <Button label="Continuar" iconoFinal={ChevronRight} onPress={() => onContinuar?.()} disabled={lineas.length === 0} />
+          {lineas.length === 0 ? <MotivoDeshabilitado>Agregá al menos un producto para seguir.</MotivoDeshabilitado> : null}
+        </PieFijo>
+      ) : (
+        <PieFijo fondo="bg">
+          {error ? (
+            <>
+              <Notice tone="peligro">{error}</Notice>
+              {onVolverAlCarrito ? <Button label="Volver al carrito" variant="secundario" onPress={onVolverAlCarrito} /> : null}
+            </>
+          ) : null}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <Text style={secundario}>Total estimado</Text>
+            <Text testID="revisar-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(t.total)}</Text>
+          </View>
+          <Button label={etiquetaConfirmar} onPress={() => { void confirmar() }} loading={enviando || confirmando} disabled={enviando || confirmando || deshabilitado || lineas.length === 0} />
+          {motivoDeshabilitado ? <MotivoDeshabilitado>{motivoDeshabilitado}</MotivoDeshabilitado> : null}
+        </PieFijo>
+      )}
     </View>
   )
 }

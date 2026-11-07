@@ -6,6 +6,7 @@ const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const { listar, hashDe, VALIDACIONES } = require('./reglas-hash');
+const { adaptar } = require('./zod4-validaciones');
 const { fuente, destino, copiados: COPIADOS, cuitReexport: CUIT_REEXPORT } = VALIDACIONES;
 
 const repo = process.env.FORWARD_SYSTEM_REPO || path.join('..', 'fs-combo');
@@ -45,7 +46,7 @@ if (!existe) {
       console.error(`git show ${ref}:${fuente}/${rel} falló en ${repo}:\n${r.stderr}`);
       process.exit(2);
     }
-    remotos.set(rel, r.stdout);
+    remotos.set(rel, adaptar(rel, r.stdout));
   }
   remotos.set('cuit.ts', CUIT_REEXPORT);
   const remoto = hashDe([...remotos.keys()], (rel) => remotos.get(rel));

@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { ActivityIndicator, FlatList, Modal, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
-import { DrawerActions, useFocusEffect } from '@react-navigation/native'
+import { DrawerActions, useFocusEffect } from "expo-router/react-navigation"
 import { useMutation } from '@tanstack/react-query'
 import { LayoutGrid, List, ScanBarcode } from 'lucide-react-native'
 import { FONT, space, typeScale, useColors } from '@/libs/theme'
@@ -106,7 +106,7 @@ function CatalogoConsulta() {
         </View>
       ) : (
         <FlatList
-          ListHeaderComponent={catSinRed ? <Notice tone="advertencia">{textoSinConexion(cat.dataUpdatedAt)}</Notice> : null}
+          ListHeaderComponent={catSinRed ? <Notice tone="advertencia">{textoSinConexion(cat.dataUpdatedAt)}</Notice> : undefined}
           key={`columnas-${columnas}`}
           data={productos}
           numColumns={columnas}
@@ -116,7 +116,7 @@ function CatalogoConsulta() {
           onEndReached={cat.cargarMas}
           onEndReachedThreshold={0.5}
           ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan con la búsqueda." />}
-          ListFooterComponent={cat.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : null}
+          ListFooterComponent={cat.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : undefined}
           renderItem={({ item }) => (
             <ProductoCard
               producto={item}

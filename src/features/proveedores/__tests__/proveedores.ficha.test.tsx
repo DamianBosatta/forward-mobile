@@ -30,7 +30,7 @@ const PERMISOS = [{ module: 'MOD_PROVEEDORES', canRead: true, canUpdate: true },
 
 beforeEach(() => {
   jest.clearAllMocks()
-  jest.spyOn(Linking, 'openURL').mockResolvedValue(true)
+  jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
   conPermisos(PERMISOS)
   servidor(detalle())
 })

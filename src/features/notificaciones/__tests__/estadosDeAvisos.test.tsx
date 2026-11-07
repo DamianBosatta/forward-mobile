@@ -11,7 +11,7 @@ const mockGet = jest.fn()
 jest.mock('@/core/api/client', () => ({ api: { get: (url: string) => mockGet(url), post: jest.fn() } }))
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390, isTablet: false, isTabletLandscape: false }) }))
-jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), DrawerActions: { openDrawer: jest.fn() } }))
+jest.mock('expo-router/react-navigation', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), DrawerActions: { openDrawer: jest.fn() } }))
 
 const SIN_RED = () => new TypeError('Network request failed')
 const AVISO = {

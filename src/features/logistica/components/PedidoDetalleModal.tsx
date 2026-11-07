@@ -31,7 +31,7 @@ export const PedidoDetalleModal = ({ ventaId, clienteNombre, isVisible, onClose 
         <Animated.View
           entering={FadeIn}
           exiting={FadeOut}
-          style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)' }}
+          style={{ ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.6)' }}
         >
           <TouchableOpacity style={{ flex: 1 }} onPress={onClose} />
         </Animated.View>

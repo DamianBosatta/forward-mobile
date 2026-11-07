@@ -10,7 +10,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react'
 import { View, Text, StyleSheet } from 'react-native'
-import { MotiView, AnimatePresence } from 'moti'
+import { MotiView, AnimatePresence, type MotiTransitionProp } from 'moti'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { CheckCircle2, AlertCircle, Info } from 'lucide-react-native'
 import { useColors, type ForwardColors } from '@/libs/theme'
@@ -86,7 +86,7 @@ function ToastHost({ toast }: { toast: ToastEntry | null }) {
             from={{ translateY: -32, opacity: 0 }}
             animate={{ translateY: 0, opacity: 1 }}
             exit={{ translateY: -32, opacity: 0 }}
-            transition={{ type: 'timing', duration: 250 }}
+            transition={{ type: 'timing', duration: 250 } as MotiTransitionProp}
             style={[
               styles.card,
               {

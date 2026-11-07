@@ -8,7 +8,7 @@ import { useVentas } from '@/libs/api-client'
 import type { Venta, PagedResult } from '@/libs/api-client/types'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BlurView } from 'expo-blur'
-import { MotiView } from 'moti'
+import { MotiView, type MotiTransitionProp } from 'moti'
 
 export function TopHeaderActions() {
   const { user, canDo } = useAuthStore()
@@ -87,7 +87,7 @@ export function TopHeaderActions() {
         <MotiView 
           from={{ opacity: 0, scale: 0.95, translateY: -10 }} 
           animate={{ opacity: 1, scale: 1, translateY: 0 }}
-          transition={{ type: 'timing', duration: 250 }}
+          transition={{ type: 'timing', duration: 250 } as MotiTransitionProp}
           style={{
             position: 'absolute',
             top: insets.top + (Platform.OS === 'ios' ? 60 : 70),

@@ -64,7 +64,7 @@ export const MONEDAS_PERMITIDAS = ['ARS', 'USD'] as const
 
 /** caja/abrir-moneda-ars-usd y caja/cerrar-moneda-ars-usd: ARS o USD, en mayúsculas. */
 export const MonedaPermitidaSchema = z.enum(MONEDAS_PERMITIDAS, {
-  errorMap: () => ({ message: 'La moneda tiene que ser ARS o USD.' }),
+  message: 'La moneda tiene que ser ARS o USD.',
 })
 
 /** compra/detalle-moneda-ars: la compra se carga en pesos (A-515). */
@@ -117,7 +117,7 @@ export const CreateProductoConReglasSchema = CreateProductoCommandSchema
 
 /** compra/detalle-cantidad-entera-por-bulto, compra/detalle-costo-positivo y compra/detalle-moneda-ars */
 export const CompraDetalleConReglasSchema = CompraDetalleDtoSchema.superRefine((v, ctx) => {
-  const agregar = (campo: string, resultado: z.SafeParseReturnType<unknown, unknown>) => {
+  const agregar = (campo: string, resultado: z.ZodSafeParseResult<unknown>) => {
     if (!resultado.success) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

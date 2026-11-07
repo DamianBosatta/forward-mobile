@@ -12,7 +12,7 @@ jest.mock('@/core/api/client', () => ({
 }))
 let mockEnfocada = true
 let mockAlEnfocar: (() => void) | undefined
-jest.mock('@react-navigation/native', () => ({
+jest.mock('expo-router/react-navigation', () => ({
   useNavigation: () => ({ dispatch: jest.fn() }),
   DrawerActions: { openDrawer: jest.fn() },
   useIsFocused: () => mockEnfocada,

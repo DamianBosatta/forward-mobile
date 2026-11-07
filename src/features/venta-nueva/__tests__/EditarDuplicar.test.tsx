@@ -58,6 +58,11 @@ beforeEach(() => {
   })
 })
 
+async function aEntrega() {
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled())
+  await userEvent.press(screen.getByRole('button', { name: 'Continuar' }))
+}
+
 describe('editar y duplicar (PR 2.9b)', () => {
   it('Editar solo en Pendiente o Confirmada y con permiso; Duplicar con permiso de crear', async () => {
     const r = conQuery(<AccionesVenta venta={venta as never} rotulo="Tarantino 1898" />)
@@ -76,6 +81,7 @@ describe('editar y duplicar (PR 2.9b)', () => {
     await aplicarDescuentoGeneral(5)
     await new Promise((r) => setTimeout(r, 1200))
     expect(mockPut).not.toHaveBeenCalled()
+    await aEntrega()
     await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1))
     expect(mockPut.mock.calls[0][0]).toBe('/api/v1/Ventas/v9')
@@ -101,6 +107,7 @@ describe('editar y duplicar (PR 2.9b)', () => {
       return Promise.resolve(undefined)
     })
     abrir({ modo: 'editar', ventaId: 'v9' }, qc)
+    await aEntrega()
     await userEvent.press(await screen.findByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1))
     expect(mockPut.mock.calls[0][1]).toMatchObject({ version: 7, items: [{ productoId: 'p1', cantidad: 20, descuentoPorcentaje: 0 }] })
@@ -120,6 +127,7 @@ describe('editar y duplicar (PR 2.9b)', () => {
   it('si otro la cambió (409), se ve el mensaje del servidor y no sale de la pantalla', async () => {
     mockPut.mockRejectedValue(new ApiError(409, 'Error de concurrencia: la venta fue modificada.'))
     abrir({ modo: 'editar', ventaId: 'v9' })
+    await aEntrega()
     await userEvent.press(await screen.findByRole('button', { name: 'Guardar cambios' }))
     expect(await screen.findByText('Error de concurrencia: la venta fue modificada.')).toBeTruthy()
     expect(mockReplace).not.toHaveBeenCalled()
@@ -134,6 +142,7 @@ describe('editar y duplicar (PR 2.9b)', () => {
       return Promise.resolve(undefined)
     })
     abrir({ modo: 'editar', ventaId: 'v9' })
+    await aEntrega()
     expect(await screen.findByText('Sin fecha: elegí el día de entrega.')).toBeTruthy()
     const dias = screen.getAllByRole('radio', { name: /^(dom|lun|mar|mié|jue|vie|sáb) \d+/ })
     expect(dias.length).toBeGreaterThan(0)
@@ -155,17 +164,17 @@ describe('editar y duplicar (PR 2.9b)', () => {
     })
     abrir({ modo: 'duplicar', ventaId: 'v9' })
     expect(await screen.findByText('No se pudo traer el catálogo con los precios y el stock de hoy.')).toBeTruthy()
-    expect(screen.queryByText('Revisar venta')).toBeNull()
+    expect(screen.queryByText('Paso 3 de 4')).toBeNull()
     expect(mockPost).not.toHaveBeenCalled()
     catalogoFalla = false
     await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
-    expect(await screen.findByText('Revisar venta')).toBeTruthy()
+    expect(await screen.findByText('Paso 3 de 4')).toBeTruthy()
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c7', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
   })
 
   it('duplicar crea un borrador nuevo para el mismo cliente y le autoguarda las líneas, sin copiar la fecha', async () => {
     abrir({ modo: 'duplicar', ventaId: 'v9' })
-    expect(await screen.findByText('Revisar venta')).toBeTruthy()
+    expect(await screen.findByText('Paso 3 de 4')).toBeTruthy()
     expect(screen.getByText('Tarantino 1898 · Autoservicio Abel')).toBeTruthy()
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c7', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
@@ -180,7 +189,9 @@ describe('editar, retomar y duplicar usan la revisión nueva (S9)', () => {
 
   it('editar abre "Revisar venta", sin la revisión vieja (Seguir, pestañas), y el botón dice Guardar cambios', async () => {
     abrir({ modo: 'editar', ventaId: 'v9' })
-    expect(await screen.findByText('Revisar venta')).toBeTruthy()
+    expect(await screen.findByText('Paso 3 de 4')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Guardar cambios' })).toBeNull() // se guarda desde la entrega (paso 4)
+    await aEntrega()
     expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Seguir' })).toBeNull()
     expect(screen.queryByRole('tab', { name: 'Cabecera' })).toBeNull()
@@ -213,7 +224,7 @@ describe('editar, retomar y duplicar usan la revisión nueva (S9)', () => {
       return Promise.resolve(undefined)
     })
     abrir({ modo: 'editar', ventaId: 'v9' })
-    await screen.findByText('Revisar venta')
+    await screen.findByText('Paso 3 de 4')
     await userEvent.press(await screen.findByRole('button', { name: /Pala/ }))
     await userEvent.press(await screen.findByRole('button', { name: 'Uno más' }))
     expect(await screen.findByText('Pediste más de lo disponible: la venta va a autorización')).toBeTruthy()
@@ -223,8 +234,9 @@ describe('editar, retomar y duplicar usan la revisión nueva (S9)', () => {
     mockPost.mockImplementation((url: string) => Promise.resolve(
       url === '/api/v1/Ventas/borradores' ? { ventaId: 'b1', version: 1, message: '' } : { ventaId: 'v10', version: 1, message: 'Venta creada.', estado: 1 }))
     abrir({ modo: 'duplicar', ventaId: 'v9' })
-    expect(await screen.findByText('Revisar venta')).toBeTruthy()
+    expect(await screen.findByText('Paso 3 de 4')).toBeTruthy()
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
+    await aEntrega()
     await userEvent.press(await screen.findByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas', expect.objectContaining({ clienteId: 'c7', items: [expect.objectContaining({ productoId: 'p1', cantidad: 12 })] })))
     expect(mockPut.mock.calls.every(([u]: [string]) => u !== '/api/v1/Ventas/v9')).toBe(true)

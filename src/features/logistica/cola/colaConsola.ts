@@ -1,5 +1,6 @@
 import { storage } from '@/core/utils/storage'
 import type { CuerpoEntregaParada } from '@/libs/api-client/logistica'
+import type { CuerpoCobroParada, CuerpoNoCobroParada } from '@/features/cobros/paradaCobro'
 
 /**
  * Consola del chofer sin señal (lámina chofer-01-viaje--sin-senal): lo que el chofer reporta sin conexión
@@ -30,6 +31,10 @@ export type DatosAccion =
   /** `cobrado` y `conDevolucion` solo sirven para decirlo en la lista ("entrega, cobro, devolución"). */
   | (Comun & { tipo: 'entrega'; cuerpo: CuerpoEntregaParada; cobrado: number; conDevolucion: boolean })
   | (Comun & { tipo: 'noEntrega'; cuerpo: CuerpoNoEntrega })
+  /** Parada de solo cobro: `paradaId` es la `paradaCobroId`, `clave` la `claveIdempotencia` del cobro. `cobrado` solo sirve para la lista. */
+  | (Comun & { tipo: 'cobroParada'; cuerpo: CuerpoCobroParada; cobrado: number })
+  /** "No cobré": el servidor no pide clave (mismo motivo = 200), la cola usa `no-cobrada:{paradaCobroId}` para no duplicarla. */
+  | (Comun & { tipo: 'noCobroParada'; cuerpo: CuerpoNoCobroParada })
 
 export type EstadoAccion =
   | { tipo: 'esperando'; intentos: number }
@@ -47,7 +52,7 @@ const esObjeto = (v: unknown): v is Record<string, unknown> => typeof v === 'obj
 const esAccion = (v: unknown): v is AccionEnCola =>
   esObjeto(v) && typeof v.clave === 'string' && !!v.clave && typeof v.encoladaEn === 'number'
   && typeof v.hojaDeRutaId === 'string' && typeof v.paradaId === 'string'
-  && (v.tipo === 'entrega' || v.tipo === 'noEntrega') && esObjeto(v.cuerpo)
+  && (v.tipo === 'entrega' || v.tipo === 'noEntrega' || v.tipo === 'cobroParada' || v.tipo === 'noCobroParada') && esObjeto(v.cuerpo)
   && esObjeto(v.estado) && (v.estado.tipo === 'revisar' || (v.estado.tipo === 'esperando' && typeof v.estado.intentos === 'number'))
 
 /** El texto guardado tal cual (para `useSyncExternalStore`: cambia solo si cambió la cola). */

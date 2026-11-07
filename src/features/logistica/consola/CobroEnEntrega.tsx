@@ -25,10 +25,14 @@ interface Props {
   /** Lo que el cliente ya debía antes de este pedido: una línea roja que solo informa (S18). */
   deudaAnterior?: number | null
   /** "Firma" elegida: lo que no se paga queda como deuda y se saca la foto de la firma (S13). */
-  firma: boolean
-  firmaUrl: string | null
-  onFirma: (firma: boolean) => void
-  onFirmaUrl: (url: string) => void
+  firma?: boolean
+  firmaUrl?: string | null
+  onFirma?: (firma: boolean) => void
+  onFirmaUrl?: (url: string) => void
+  /** Parada de solo cobro: no hay mercadería ni firma, así que la opción "Firma" no se ofrece. */
+  sinFirma?: boolean
+  /** La pantalla que lo aloja ya tiene su título: no repite "Cobro" encima de "¿Cómo paga?". */
+  sinTitulo?: boolean
 }
 
 /** Lo que se dice de cada forma de pago, en una línea (chofer-04). */
@@ -39,7 +43,8 @@ const DETALLE_MEDIO: Partial<Record<string, string>> = { Transferencia: 'Bancari
  * Cheque (del servidor) y Firma (queda como deuda, con foto). Pagos ya cargados con su X de 44 px y "Sumar
  * otro pago". El servidor imputa y valida.
  */
-export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubiendo, hoy, aCobrar, faltaACuenta, aviso, deudaAnterior, firma, firmaUrl, onFirma, onFirmaUrl }: Props) {
+export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubiendo, hoy, aCobrar, faltaACuenta, aviso, deudaAnterior, firma: firmaElegida = false, firmaUrl = null, onFirma = () => undefined, onFirmaUrl = () => undefined, sinFirma = false, sinTitulo = false }: Props) {
+  const firma = firmaElegida && !sinFirma
   const c = useColors()
   const [agregando, setAgregando] = useState(false)
   const cambiar = (i: number, cambio: Partial<LineaCobroForm>) => onLineas(lineas.map((l, j) => (j === i ? { ...l, ...cambio } : l)))
@@ -58,7 +63,7 @@ export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubien
 
   return (
     <View accessibilityLabel="Cobro" style={{ gap: space[3] }}>
-      <EncabezadoCobro aCobrar={aCobrar} />
+      {sinTitulo && aCobrar == null ? null : <EncabezadoCobro aCobrar={aCobrar} sinTitulo={sinTitulo} />}
       {deudaAnterior != null && deudaAnterior > 0 ? (
         <View accessibilityLabel="Deuda anterior">
           <Text style={{ ...typeScale.cuerpoDestacado, color: c.danger }}>{`Deuda anterior ${formatImporte(deudaAnterior)}`}</Text>
@@ -144,7 +149,7 @@ export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubien
           {mediosDelChofer(medios).map((m) => (
             <OptionCard key={m.id} label={nombreDelMedio(m)} detail={DETALLE_MEDIO[m.tipo]} onPress={() => agregar(m)} />
           ))}
-          {firma ? null : <OptionCard icon={PenLine} label="Firma" detail="Queda como deuda, con foto de la firma" onPress={elegirFirma} />}
+          {firma || sinFirma ? null : <OptionCard icon={PenLine} label="Firma" detail="Queda como deuda, con foto de la firma" onPress={elegirFirma} />}
           {hayPagos ? <Button label="No sumo otro" variant="secundario" onPress={() => setAgregando(false)} /> : null}
         </View>
       ) : (
@@ -186,11 +191,11 @@ function BotonCorto({ etiqueta, activo, onPress }: { etiqueta: string; activo: b
   )
 }
 
-function EncabezadoCobro({ aCobrar }: { aCobrar?: number | null }) {
+function EncabezadoCobro({ aCobrar, sinTitulo }: { aCobrar?: number | null; sinTitulo: boolean }) {
   const c = useColors()
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-      <Text style={{ ...typeScale.seccion, color: c.text }}>Cobro</Text>
+      {sinTitulo ? <View /> : <Text style={{ ...typeScale.seccion, color: c.text }}>Cobro</Text>}
       {aCobrar != null ? (
         <Text accessibilityLabel="A cobrar hoy" style={{ ...typeScale.secundario, color: c.textSecondary }}>
           {'A cobrar hoy '}
