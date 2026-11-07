@@ -41,9 +41,13 @@ function resueltaEnDe(a: AccionEnCola): { resueltaEn?: string } {
 
 function mandar(a: AccionEnCola): Promise<unknown> {
   const resuelta = resueltaEnDe(a)
-  return a.tipo === 'entrega'
-    ? api.post(`${URL_HOJA(a.hojaDeRutaId)}/paradas/${a.paradaId}/entregar`, { ...a.cuerpo, ...resuelta })
-    : api.post(`${URL_HOJA(a.hojaDeRutaId)}/reportar-parada`, { hojaDeRutaId: a.hojaDeRutaId, paradaId: a.paradaId, ...a.cuerpo, ...resuelta })
+  const hoja = URL_HOJA(a.hojaDeRutaId)
+  switch (a.tipo) {
+    case 'entrega': return api.post(`${hoja}/paradas/${a.paradaId}/entregar`, { ...a.cuerpo, ...resuelta })
+    case 'cobroParada': return api.post(`${hoja}/paradas-cobro/${a.paradaId}/cobrar`, { ...a.cuerpo, ...resuelta })
+    case 'noCobroParada': return api.post(`${hoja}/paradas-cobro/${a.paradaId}/no-cobrada`, { ...a.cuerpo, ...resuelta })
+    default: return api.post(`${hoja}/reportar-parada`, { hojaDeRutaId: a.hojaDeRutaId, paradaId: a.paradaId, ...a.cuerpo, ...resuelta })
+  }
 }
 
 let enCurso: Promise<ResultadoRonda> | null = null
@@ -74,7 +78,9 @@ async function ronda(usuarioId: string, deps: Dependencias): Promise<ResultadoRo
       }
       // Ya estaba registrada (un intento anterior llegó, quizás sin que se viera la respuesta): cuenta como enviada.
       // Un aviso con clave que el servidor ya tiene con otro cuerpo no es "enviado": se muestra para revisar.
-      const otroCuerpo = a.tipo === 'noEntrega' && (e as { codigo?: string }).codigo === 'ClaveIdempotenciaConOtroCuerpo'
+      // Una parada de solo cobro nunca se da por enviada por un 409: el cobro no se pierde, queda para revisar.
+      const esDeCobro = a.tipo === 'cobroParada' || a.tipo === 'noCobroParada'
+      const otroCuerpo = esDeCobro || a.tipo === 'noEntrega' && (e as { codigo?: string }).codigo === 'ClaveIdempotenciaConOtroCuerpo'
       if (!otroCuerpo && clasificarFalloEntrega(e).tipo === 'yaRegistrada') {
         quitarDeCola(usuarioId, a.clave)
         deps.alEnviar?.(a.hojaDeRutaId)

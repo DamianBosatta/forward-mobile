@@ -1,4 +1,5 @@
 import { EstadoParada, type ParadaDto } from '@/libs/api-client/types'
+import { PARADA_COBRO_COBRADA, PARADA_COBRO_NO_COBRADA, PARADA_COBRO_PENDIENTE, type ParadaCobro } from '@/features/cobros/paradaCobro'
 import type { AccionEnCola } from './colaConsola'
 
 /**
@@ -7,11 +8,22 @@ import type { AccionEnCola } from './colaConsola'
  * Lo ya reportado en el servidor manda; las acciones para revisar (el servidor las rechazó) no se dan por hechas.
  */
 export function conAccionesEnCola<T extends ParadaDto>(detalles: T[], acciones: AccionEnCola[]): T[] {
-  const esperando = new Map(acciones.filter((a) => a.estado.tipo === 'esperando').map((a) => [a.paradaId, a]))
+  const esperando = new Map(acciones.filter((a) => a.estado.tipo === 'esperando' && (a.tipo === 'entrega' || a.tipo === 'noEntrega')).map((a) => [a.paradaId, a]))
   if (esperando.size === 0) return detalles
   return detalles.map((p) => {
     const a = esperando.get(p.id)
     if (!a || p.estado === EstadoParada.Entregado || p.estado === EstadoParada.NoEntregado) return p
     return { ...p, estado: a.tipo === 'entrega' ? EstadoParada.Entregado : EstadoParada.NoEntregado }
+  })
+}
+
+/** Lo mismo para las paradas de solo cobro: cobrada o cerrada sin cobrar sin señal ya cuenta como hecha. */
+export function conAccionesCobroEnCola(paradas: ParadaCobro[], acciones: AccionEnCola[]): ParadaCobro[] {
+  const esperando = new Map(acciones.filter((a) => a.estado.tipo === 'esperando' && (a.tipo === 'cobroParada' || a.tipo === 'noCobroParada')).map((a) => [a.paradaId, a]))
+  if (esperando.size === 0) return paradas
+  return paradas.map((p) => {
+    const a = esperando.get(p.id)
+    if (!a || p.estado !== PARADA_COBRO_PENDIENTE) return p
+    return { ...p, estado: a.tipo === 'cobroParada' ? PARADA_COBRO_COBRADA : PARADA_COBRO_NO_COBRADA }
   })
 }
