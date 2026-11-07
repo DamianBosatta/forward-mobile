@@ -3,7 +3,6 @@ import { ActivityIndicator, ScrollView, Text, View, useWindowDimensions } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useTeclado } from '@/core/utils/useTecladoVisible'
-import { BottomSheet, Button, Field, Notice, StatusChip } from '@/core/ui/fw'
 import { BottomSheet, Button, Field, Notice, OptionCard, StatusChip } from '@/core/ui/fw'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -78,9 +77,7 @@ export function EventoSheet({ evento, onCerrar, onMovido, onAbrirVenta, onCobrar
   return (
     <BottomSheet visible onClose={onCerrar} accessibilityLabel={evento.titulo}>
       {esTareaAsignada(evento) ? (
-        <Cuerpo cabecera={cabecera}>
-          <DetalleTarea evento={evento} onCerrar={onCerrar} onCobrar={onCobrar} />
-        </Cuerpo>
+        <DetalleTarea evento={evento} cabecera={cabecera} onCerrar={onCerrar} onCobrar={onCobrar} />
       ) : evento.origen === 'Manual' ? (
         <Edicion evento={evento} cabecera={cabecera} onCerrar={onCerrar} onMovido={onMovido} />
       ) : (
@@ -92,6 +89,7 @@ export function EventoSheet({ evento, onCerrar, onMovido, onAbrirVenta, onCobrar
   )
 }
 
+/**
 /**
  * Cuerpo de la hoja: lo que se lee y se completa hace scroll; `pie` (avisos y botones) queda fijo abajo,
  * siempre a la vista. El scroll se encoge con el teclado abierto: la hoja sube sobre el teclado y su
@@ -129,7 +127,7 @@ function Cuerpo({ cabecera, children, pie }: { cabecera: React.ReactNode; childr
  * Tarea asignada (S8): solo se lee. Editar o borrar exige ser quien la creó o tener CAP_ASIGNAR_TAREAS, y eso se hace en la
  * web. "Cobrar" abre el flujo de cobranza de siempre (MOD_PAGOS); la tarea no mueve plata ni se marca hecha sola.
  */
-function DetalleTarea({ evento, onCerrar, onCobrar }: Pick<Props, 'evento' | 'onCerrar' | 'onCobrar'>) {
+function DetalleTarea({ evento, cabecera, onCerrar, onCobrar }: Pick<Props, 'evento' | 'onCerrar' | 'onCobrar'> & { cabecera: React.ReactNode }) {
   const c = useColors()
   const puedeCobrar = usePuedeCobrar()
   const cambiar = useCambiarEstadoTarea()
@@ -142,7 +140,17 @@ function DetalleTarea({ evento, onCerrar, onCobrar }: Pick<Props, 'evento' | 'on
   const linea = { ...typeScale.secundario, color: c.textSecondary }
   const asignados = (evento.asignados ?? []).map((a) => a.nombre).join(', ')
   return (
-    <>
+    <Cuerpo
+      cabecera={cabecera}
+      pie={quiereCobrar ? (
+        <Button
+          label="Cobrar"
+          disabled={!socioId}
+          loading={detalle.isPending}
+          onPress={() => { onCerrar(); onCobrar!(socioId!) }}
+        />
+      ) : undefined}
+    >
       {evento.socioNombre ? <Text style={linea}>{`Cliente: ${evento.socioNombre}`}</Text> : null}
       <Text style={linea}>{`Depósito: ${depositoDe(evento)}`}</Text>
       {asignados ? <Text style={linea}>{`Asignada a ${asignados}`}</Text> : null}
@@ -168,15 +176,7 @@ function DetalleTarea({ evento, onCerrar, onCobrar }: Pick<Props, 'evento' | 'on
         ))}
       </View>
       {errorEstado ? <Notice tone="peligro">{errorEstado}</Notice> : null}
-      {quiereCobrar ? (
-        <Button
-          label="Cobrar"
-          disabled={!socioId}
-          loading={detalle.isPending}
-          onPress={() => { onCerrar(); onCobrar!(socioId!) }}
-        />
-      ) : null}
-    </>
+    </Cuerpo>
   )
 }
 
