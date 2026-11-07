@@ -395,6 +395,22 @@ describe('pestaña Cabecera', () => {
     await aEntrega()
   }
 
+  it('la barra de la entrega deja el título entero en hasta 2 líneas junto al estado de guardado y al descarte', async () => {
+    await enCabecera()
+    expect(screen.getByRole('header', { name: 'Entrega y facturación' }).props.numberOfLines).toBe(2)
+    expect(screen.getByText('Guardado')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Descartar borrador' })).toBeTruthy()
+  })
+
+  it('la tarjeta Cliente muestra la dirección, el nombre aparte y la condición de pago con su rótulo', async () => {
+    mockGet.mockImplementation((url: string) => Promise.resolve(url.includes('socios-comerciales') ? { condicionPago: null } : calendario(url)))
+    await enCabecera()
+    expect(screen.getByText('Tarantino 1898')).toBeTruthy()
+    expect(screen.getByText('Autoservicio Abel')).toBeTruthy()
+    expect(screen.getByText('Condición de pago')).toBeTruthy()
+    expect(await screen.findByText('Contado')).toBeTruthy()
+  })
+
   it('retiro: sin fecha ni flete en el autoguardado y sin tira de días', async () => {
     await enCabecera()
     await userEvent.press(screen.getByRole('radio', { name: 'Retiro en el local' }))

@@ -178,8 +178,11 @@ function FilaCobro({ parada, numero, ultima, puedeCobrar, onCobrar }: { parada: 
         {parada.estado === PARADA_COBRO_PENDIENTE ? <StatusChip estado="pendiente" label="Solo cobro" /> : null}
       </View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-        {parada.estado === PARADA_COBRO_COBRADA && parada.montoCobrado != null ? (
-          <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{`Cobrado ${formatImporte(parada.montoCobrado)}`}</Text>
+        {parada.estado === PARADA_COBRO_COBRADA ? (
+          // Sin permiso para ver importes el monto llega null: se lee como cobrada, sin importe ni deuda.
+          parada.montoCobrado != null
+            ? <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{`Cobrado ${formatImporte(parada.montoCobrado)}`}</Text>
+            : <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Cobrado</Text>
         ) : parada.estado === PARADA_COBRO_NO_COBRADA ? (
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{motivoTexto(parada.motivoNoCobro, parada.motivoNoCobroTexto)}</Text>
         ) : (

@@ -113,6 +113,14 @@ describe.each(TEMAS)('paradas de solo cobro en la consola del chofer (%s)', (tem
     expect(screen.queryByLabelText(/^Cobrar en/)).toBeNull()
   })
 
+  it('una cobrada vista sin permiso para importes (monto null) se lee como cobrada, sin importe ni deuda', () => {
+    pintar([cobro({ estado: 2, montoCobrado: null, deudaCliente: 0 })])
+    expect(screen.getByText('Cobrada')).toBeTruthy()
+    expect(screen.getByText('Cobrado')).toBeTruthy()
+    expect(screen.queryByText(/Debe/)).toBeNull()
+    expect(screen.queryByText(/Acordado/)).toBeNull()
+  })
+
   it('con las entregas hechas y un cobro pendiente la ruta no está "completa" y el finalizar sigue a la vista', () => {
     pintar([cobro()], { entregas: [entrega({ id: 'p1', estado: 2 })] })
     expect(screen.getByText('Entregas completas.')).toBeTruthy()
@@ -130,7 +138,11 @@ describe.each(TEMAS)('paradas de solo cobro en la consola del chofer (%s)', (tem
     await userEvent.press(screen.getByLabelText('Cobrar en Av. Rivadavia 4500'))
     expect(await screen.findByText('Parada 2 de 2 · Solo cobro')).toBeTruthy()
     expect(screen.getByText('No llevás mercadería.')).toBeTruthy()
-    expect(screen.getByRole('header', { name: 'Registrar cobro' })).toBeTruthy()
+    // Un solo título del cobro: "¿Cómo paga?". "Registrar cobro" queda solo como el botón del pie.
+    expect(screen.queryByRole('header', { name: 'Registrar cobro' })).toBeNull()
+    expect(screen.queryByText('Cobro')).toBeNull()
+    expect(screen.getByRole('header', { name: '¿Cómo paga?' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Registrar cobro' })).toBeTruthy()
     expect(screen.getByText('Si no pudiste cobrar')).toBeTruthy()
     await userEvent.press(await screen.findByText('Efectivo'))
     expect(screen.getByLabelText('Monto del cobro 1').props.value).toBe('85000')

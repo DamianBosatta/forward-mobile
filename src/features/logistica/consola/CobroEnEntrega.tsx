@@ -31,6 +31,8 @@ interface Props {
   onFirmaUrl?: (url: string) => void
   /** Parada de solo cobro: no hay mercadería ni firma, así que la opción "Firma" no se ofrece. */
   sinFirma?: boolean
+  /** La pantalla que lo aloja ya tiene su título: no repite "Cobro" encima de "¿Cómo paga?". */
+  sinTitulo?: boolean
 }
 
 /** Lo que se dice de cada forma de pago, en una línea (chofer-04). */
@@ -41,7 +43,7 @@ const DETALLE_MEDIO: Partial<Record<string, string>> = { Transferencia: 'Bancari
  * Cheque (del servidor) y Firma (queda como deuda, con foto). Pagos ya cargados con su X de 44 px y "Sumar
  * otro pago". El servidor imputa y valida.
  */
-export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubiendo, hoy, aCobrar, faltaACuenta, aviso, deudaAnterior, firma: firmaElegida = false, firmaUrl = null, onFirma = () => undefined, onFirmaUrl = () => undefined, sinFirma = false }: Props) {
+export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubiendo, hoy, aCobrar, faltaACuenta, aviso, deudaAnterior, firma: firmaElegida = false, firmaUrl = null, onFirma = () => undefined, onFirmaUrl = () => undefined, sinFirma = false, sinTitulo = false }: Props) {
   const firma = firmaElegida && !sinFirma
   const c = useColors()
   const [agregando, setAgregando] = useState(false)
@@ -61,7 +63,7 @@ export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubien
 
   return (
     <View accessibilityLabel="Cobro" style={{ gap: space[3] }}>
-      <EncabezadoCobro aCobrar={aCobrar} />
+      {sinTitulo && aCobrar == null ? null : <EncabezadoCobro aCobrar={aCobrar} sinTitulo={sinTitulo} />}
       {deudaAnterior != null && deudaAnterior > 0 ? (
         <View accessibilityLabel="Deuda anterior">
           <Text style={{ ...typeScale.cuerpoDestacado, color: c.danger }}>{`Deuda anterior ${formatImporte(deudaAnterior)}`}</Text>
@@ -189,11 +191,11 @@ function BotonCorto({ etiqueta, activo, onPress }: { etiqueta: string; activo: b
   )
 }
 
-function EncabezadoCobro({ aCobrar }: { aCobrar?: number | null }) {
+function EncabezadoCobro({ aCobrar, sinTitulo }: { aCobrar?: number | null; sinTitulo: boolean }) {
   const c = useColors()
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-      <Text style={{ ...typeScale.seccion, color: c.text }}>Cobro</Text>
+      {sinTitulo ? <View /> : <Text style={{ ...typeScale.seccion, color: c.text }}>Cobro</Text>}
       {aCobrar != null ? (
         <Text accessibilityLabel="A cobrar hoy" style={{ ...typeScale.secundario, color: c.textSecondary }}>
           {'A cobrar hoy '}

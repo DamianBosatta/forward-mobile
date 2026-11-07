@@ -111,9 +111,9 @@ export function ParadaCobroPantalla({ parada, numero, total, enviando, error, re
               <Text style={{ ...typeScale.cuerpoDestacado, ...importe }}>{formatImporte(parada.deudaCliente)}</Text>
             </Text>
           </View>
-          <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Registrar cobro</Text>
           <CobroEnEntrega
             sinFirma
+            sinTitulo
             medios={medios.data}
             mediosError={medios.isError}
             lineas={lineas}

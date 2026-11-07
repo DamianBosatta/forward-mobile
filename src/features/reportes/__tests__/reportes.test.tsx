@@ -2,6 +2,7 @@ import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RefreshControl } from 'react-native'
 import { act, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { ReportesScreen } from '../ReportesScreen'
 import { mesDe, moverMes, tituloMes } from '../mes'
 
@@ -46,7 +47,10 @@ function pintar() {
 const urls = () => mockGet.mock.calls.map(([u]) => String(u))
 const resumenUrls = () => urls().filter((u) => u.includes('resumen-vendedor'))
 
+const conPermiso = (permissions: unknown[]) => useAuthStore.setState({ user: { id: 'u1', roles: [], permissions } } as never)
+
 beforeEach(() => {
+  conPermiso([{ module: 'MOD_VENTAS', canRead: true }])
   jest.clearAllMocks()
   // 31 de octubre, 22:30 en Argentina: en UTC ya es 1 de noviembre.
   jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-11-01T01:30:00Z'))
@@ -193,5 +197,13 @@ describe('Reportes', () => {
     pintar()
 
     expect(await screen.findByText('Ningún cliente de la cartera debe.')).toBeTruthy()
+  })
+
+  it('sin Ventas:Read no pide el resumen (daría 403) y dice que falta el permiso', async () => {
+    conPermiso([{ module: 'MOD_VIAJES', canRead: true }])
+    pintar()
+
+    expect(await screen.findByText('No tenés permiso para ver los reportes')).toBeTruthy()
+    expect(urls().filter((u) => u.includes('resumen-vendedor'))).toEqual([])
   })
 })

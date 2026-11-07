@@ -3,7 +3,7 @@ import { Text, View } from 'react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Field, Notice, Segmented, type SegmentedOption } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
-import { textoCondicionPago } from '@/features/clientes/lib/cliente'
+import { direccionDeEntrega, nombreDelCliente, textoCondicionPago, type ClienteNombrable } from '@/features/clientes/lib/cliente'
 import { Fila, textoDisponible } from '@/features/clientes/components/CreditoDelCliente'
 import { METODO_ENTREGA, type MetodoEntregaValue } from '@/features/ventas/lib/venta-form-retiro'
 import type { CabeceraVentaEstado } from '../hooks/useCabeceraVenta'
@@ -15,12 +15,12 @@ const ENTREGAS: SegmentedOption<'1' | '2' | '3'>[] = [
   { value: '2', label: 'Retiro en el local' },
 ]
 
-interface Props { clienteId: string; cab: CabeceraVentaEstado }
+interface Props { cliente: ClienteNombrable & { id: string }; cab: CabeceraVentaEstado }
 
 /** Entrega de la revisión (mockup ventas-nueva-3-revisar), en línea: cliente, fecha, logística, flete, observaciones y cesión de comisión. */
-export function CabeceraVenta({ clienteId, cab }: Props) {
+export function CabeceraVenta({ cliente, cab }: Props) {
   const c = useColors()
-  const socio = useSocio(clienteId)
+  const socio = useSocio(cliente.id)
   const { metodoEntrega, fecha } = cab.cabecera
   // Crédito disponible (ficha del cliente, forward-system #882): solo si el servidor lo manda (null sin tope)
   // y deja ver importes (`puedeVerSaldo`; si no, llega redactado en 0). Cargando o con error, no se muestra
@@ -32,8 +32,12 @@ export function CabeceraVenta({ clienteId, cab }: Props) {
     <View style={{ gap: space[4] }}>
       <View style={{ gap: space[1], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
         {titulo('Cliente')}
+        {/* El cliente se muestra por su dirección de entrega y el nombre va en una línea aparte. */}
+        <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
+        {nombreDelCliente(cliente) ? <Text style={secundario}>{nombreDelCliente(cliente)}</Text> : null}
         {/* Solo lectura: la condición de pago se cambia con permiso de autorizar ventas, no acá. */}
-        <Text style={secundario}>{socio.data ? textoCondicionPago(socio.data.condicionPago) : 'Condición de pago…'}</Text>
+        <Text style={secundario}>Condición de pago</Text>
+        <Text style={{ ...typeScale.cuerpo, color: c.text }}>{socio.data ? textoCondicionPago(socio.data.condicionPago) : 'Cargando…'}</Text>
         {disponible !== null ? <Fila etiqueta="Crédito disponible" valor={textoDisponible(disponible)} alerta={disponible < 0} /> : null}
       </View>
       <View style={{ gap: space[4], padding: space[3], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>

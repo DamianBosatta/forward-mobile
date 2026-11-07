@@ -5,6 +5,7 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, screen, userEvent } from '@testing-library/react-native'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { ReportesScreen } from '../ReportesScreen'
 
 const mockGet = jest.fn()
@@ -30,6 +31,7 @@ function pintar() {
 }
 
 beforeEach(() => {
+  useAuthStore.setState({ user: { id: 'u1', roles: [], permissions: [{ module: 'MOD_VENTAS', canRead: true }] } } as never)
   jest.clearAllMocks()
   mockGet.mockResolvedValue(RESUMEN)
 })

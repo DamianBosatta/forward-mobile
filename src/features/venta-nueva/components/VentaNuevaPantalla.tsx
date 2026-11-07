@@ -295,7 +295,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   const ajustesEntrega = (
     <View style={{ gap: space[2] }}>
       {avisosRechazo}
-      <CabeceraVenta clienteId={cliente.id} cab={cab} />
+      <CabeceraVenta cliente={cliente} cab={cab} />
       <ConFactura conFactura={cab.cabecera.conFactura} onChange={cab.setConFactura} lineas={lineas} />
       {comision !== null ? (
         <Text style={{ ...typeScale.secundario, alignSelf: 'flex-start', paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.brandSoft, color: c.brandInk }}>
@@ -309,6 +309,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   const vistaCarritoOEntrega = (
     <>
       <TopBar
+        lineasMultiples
         title={tituloDeLaVenta}
         subtitle={rotulo}
         leading={enEntrega ? { kind: 'atras', onPress: () => setVista('carrito') } : volverDelCarrito}
@@ -346,6 +347,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   const vistaCatalogo = (
     <>
       <TopBar
+        lineasMultiples
         title={direccionDeEntrega(cliente)}
         subtitle={[nombre, tipo === 'Presupuesto' ? 'Presupuesto' : null].filter(Boolean).join(' · ') || undefined}
         leading={abrir ? { kind: 'atras', onPress: () => setVista('carrito') } : volver}

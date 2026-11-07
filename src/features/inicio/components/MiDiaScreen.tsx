@@ -36,9 +36,11 @@ export function MiDiaScreen() {
   const ahora = useAhoraArgentina()
   const hoy = partesArgentina(ahora)
   const mes = mesDe(ahora)
-  const resumen = useResumenVendedor({ anio: mes.anio, mes: mes.mes }, null)
   const pendientes = usePendientesInicio()
-  const recientesServidor = useClientesRecientes(true)
+  // Cada endpoint pide su permiso (Ventas:Read el resumen, Clientes:Read los recientes): sin él no se llama (403).
+  const { canDo } = usePermissions()
+  const resumen = useResumenVendedor({ anio: mes.anio, mes: mes.mes }, null, canDo('MOD_VENTAS', 'read'))
+  const recientesServidor = useClientesRecientes(canDo('MOD_CLIENTES', 'read'))
   const recientes = useMemo(
     () => fusionarRecientes(recientesServidor.data, leerRecientes(user?.id)),
     // `ahora` cambia al volver a enfocar la pantalla: vuelve a leer los del teléfono.
@@ -49,7 +51,6 @@ export function MiDiaScreen() {
   // Un reciente abre la venta con ese cliente; sin permiso para vender, su ficha.
   const venderA = useVenderA()
   // "Nueva venta" pide lo mismo que el "+" de la barra: poder crear ventas (decisión del dueño 22-10).
-  const { canDo } = usePermissions()
   const puedeVender = canDo('MOD_VENTAS', 'create')
   const nombre = user?.nombre || user?.username || ''
 
