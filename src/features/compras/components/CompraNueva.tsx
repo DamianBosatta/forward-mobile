@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Trash2 } from 'lucide-react-native'
@@ -188,7 +189,7 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
         </View>
         {b.lineas.map((l, i) => (
           <View key={l.productoId} accessible style={{ paddingHorizontal: space[4], paddingVertical: space[3], gap: space[1], borderTopWidth: i ? 1 : 0, borderTopColor: c.border }}>
-            <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{l.nombre}</Text>
+            <ProductoIdentidad nombre={l.nombre} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
               <View style={{ flexShrink: 1 }}>
                 <Text style={[typeScale.secundario, { color: c.text }]}>{textoDeLinea(l)}</Text>

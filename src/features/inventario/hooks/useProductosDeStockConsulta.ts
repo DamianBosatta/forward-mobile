@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { useInfiniteCatalogoStock } from '@/libs/api-client/productos'
 import { useDisponibilidadPorLotes } from '@/libs/api-client/stock'
@@ -15,7 +16,7 @@ const TAMANO_PAGINA = 20
  */
 export function useProductosDeStockConsulta() {
   const depositoId = useDepositoDeConsulta()
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda] = useFiltroPersistente('stock.productos.busqueda', '')
   const termino = useDebouncedValue(busqueda.trim(), DEBOUNCE_BUSQUEDA_MS)
 
   const query = useInfiniteCatalogoStock({ search: termino || undefined, pageSize: TAMANO_PAGINA, sinVariantes: true, familiasCompletas: false }, { mantenerAnterior: true })

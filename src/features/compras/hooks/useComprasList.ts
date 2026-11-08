@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { useBorradoresCompraMios, useComprasResumen, useInfiniteCompras } from '@/libs/api-client/compras'
 import { itemsCargados, totalDelServidor, textoContador } from '@/features/listas/lib/contador'
 import { fechaDesdePeriodo, type PeriodoVentas } from '@/features/ventas/hooks/useVentasListaNueva'
@@ -29,12 +30,12 @@ const importeEn = (moneda: string, total: number) =>
  * `estadoDeRuta` (una fila de Inicio): Pendientes con uno solo de sus dos estados.
  */
 export function useComprasList(estadoDeRuta: EstadoCompraRuta | null = null) {
-  const [pestana, setPestana] = useState<PestanaCompras>('pendientes')
+  const [pestana, setPestana] = useFiltroPersistente<PestanaCompras>('compras.pestana', 'pendientes')
   /** Dentro de Pendientes, uno solo de sus estados; null = los dos. */
-  const [soloEstado, setSoloEstado] = useState<EstadoCompraRuta | null>(estadoDeRuta)
+  const [soloEstado, setSoloEstado] = useFiltroPersistente<EstadoCompraRuta | null>('compras.soloEstado', estadoDeRuta)
   // Lo pendiente no vence por antigüedad: por defecto se ve todo.
-  const [periodo, setPeriodo] = useState<PeriodoCompras>('todo')
-  const [busqueda, setBusqueda] = useState('')
+  const [periodo, setPeriodo] = useFiltroPersistente<PeriodoCompras>('compras.periodo', 'todo')
+  const [busqueda, setBusqueda] = useFiltroPersistente('compras.busqueda', '')
   const [busquedaEnviada, setBusquedaEnviada] = useState('')
 
   // Sin espera, cada tecla cambiaba las keys de la lista y del resumen.

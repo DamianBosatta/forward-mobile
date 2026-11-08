@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { diaArgentina } from '@/core/utils/fecha'
 import { useBorradoresVentaMios, useInfiniteVentas, useVentasResumen } from '@/libs/api-client/ventas'
 import { itemsCargados, totalDelServidor } from '@/features/listas/lib/contador'
@@ -30,11 +31,11 @@ export function fechaDesdePeriodo(periodo: PeriodoVentas, hoy: Date = new Date()
  * y pone el importe del filtro ("· $ X").
  */
 export function useVentasListaNueva(filtroDeRuta: FiltroVentasRuta | null = null) {
-  const [pestana, setPestana] = useState<PestanaVentas>(filtroDeRuta?.tipo ?? 'pedidos')
-  const [estado, setEstado] = useState<FiltroEstado>(filtroDeRuta?.estado ?? 'todos')
+  const [pestana, setPestana] = useFiltroPersistente<PestanaVentas>('ventas.pestana', filtroDeRuta?.tipo ?? 'pedidos')
+  const [estado, setEstado] = useFiltroPersistente<FiltroEstado>('ventas.estado', filtroDeRuta?.estado ?? 'todos')
   // Desde Inicio, todo el período: Inicio cuenta sin fecha.
-  const [periodo, setPeriodo] = useState<PeriodoVentas>(filtroDeRuta ? 'todo' : '30d')
-  const [busqueda, setBusqueda] = useState('')
+  const [periodo, setPeriodo] = useFiltroPersistente<PeriodoVentas>('ventas.periodo', filtroDeRuta ? 'todo' : '30d')
+  const [busqueda, setBusqueda] = useFiltroPersistente('ventas.busqueda', '')
   const [busquedaEnviada, setBusquedaEnviada] = useState('')
   useAlLlegarFiltro(filtroDeRuta, (f) => {
     setPestana(f.tipo)

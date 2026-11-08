@@ -1,4 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react'
+import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { ActivityIndicator, FlatList, Modal, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions, useFocusEffect } from "expo-router/react-navigation"
@@ -43,7 +44,7 @@ function CatalogoConsulta() {
   const cat = useCatalogoConsulta()
   // Sin señal: con lo guardado se sigue mostrando la lista y un aviso; sin nada, el estado "sin conexión" (R16).
   const catSinRed = cat.isError && esFallaDeRed(cat.error)
-  const [soloConStock, setSoloConStock] = useState(false)
+  const [soloConStock, setSoloConStock] = useFiltroPersistente('catalogo.soloConStock', false)
   const productos = filtrarPorStock(cat.productos, cat.disponible, soloConStock)
   const columnas = grilla ? 2 : 1
   const [escaneando, setEscaneando] = useState(false)

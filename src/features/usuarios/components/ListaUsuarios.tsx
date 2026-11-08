@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React from 'react'
+import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { FlatList, Text, TextInput, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Search } from 'lucide-react-native'
@@ -32,7 +33,7 @@ function Contenido() {
   const c = useColors()
   const router = useRouter()
   const yo = useAuthStore((s) => s.user?.id)
-  const [texto, setTexto] = useState('')
+  const [texto, setTexto] = useFiltroPersistente('usuarios.busqueda', '')
   const busqueda = useDebouncedValue(texto.trim(), 350)
   const q = useUsuarios({ pageNumber: 1, pageSize: POR_PAGINA, searchTerm: busqueda || undefined })
   const filas = q.data?.items ?? []

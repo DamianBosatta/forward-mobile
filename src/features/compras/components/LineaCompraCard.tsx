@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { Pressable, Text, TextInput, View } from 'react-native'
 import { Notice, Segmented, Field, formatImporte } from '@/core/ui/fw'
 import { Redondo } from '@/features/venta-nueva/components/ProductoCatalogoCard'
@@ -71,7 +72,7 @@ function Contenido({ linea, onCambiar, onEditar }: Props) {
       <Pressable accessibilityRole="button" accessibilityLabel={`Editar ${linea.nombre}`} onPress={() => onEditar(actual)}
         style={{ minHeight: 44, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space[2] }}>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{linea.nombre}</Text>
+          <ProductoIdentidad nombre={linea.nombre} codigo={ficha?.codigoPropio} />
           <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{cantidadInvalida ? '—' : textoDeEmpaque(actual)}</Text>
         </View>
         <Text style={[typeScale.cuerpoDestacado, importe, { color: falta ? c.danger : c.text }]}>{falta ? 'Sin costo' : formatImporte(subtotalDe(actual))}</Text>

@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React from 'react'
+import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { View } from 'react-native'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
 import { DrawerActions } from "expo-router/react-navigation"
@@ -18,7 +19,7 @@ export default function StockScreen() {
   const c = useColors()
   const { width } = useResponsive()
   const { busqueda: inicial } = useLocalSearchParams<{ busqueda?: string }>()
-  const [busqueda, setBusqueda] = useState(typeof inicial === 'string' ? inicial : '')
+  const [busqueda, setBusqueda] = useFiltroPersistente('stock.busqueda', typeof inicial === 'string' ? inicial : '')
 
   return (
     <RequirePermission module="MOD_STOCK" action="read" mode="screen">

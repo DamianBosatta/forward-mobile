@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { Image, Pressable, Text, View } from 'react-native'
 import { Package } from 'lucide-react-native'
 import { radii, space, typeScale, importe, useColors, type ForwardColors } from '@/libs/theme'
@@ -66,8 +67,7 @@ export function ProductoCatalogoCard({
         )}
       </View>
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
-        {p.marca ? <Text style={{ ...typeScale.etiqueta, color: c.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8 }}>{p.marca}</Text> : null}
-        <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{p.nombre}</Text>
+        <ProductoIdentidad nombre={p.nombre} marca={p.marca} codigo={p.codigoPropio} lineasNombre={3} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], flexWrap: 'wrap' }}>
           <Chip c={c} texto={rotuloPresentacion(presentacionDe(p))} />
           {p.precioConOferta != null ? <Chip c={c} texto="Oferta" tono="oferta" /> : null}

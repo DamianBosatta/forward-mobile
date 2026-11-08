@@ -94,7 +94,9 @@ describe('Stock por depósito, con CAP_VER_CANTIDADES_STOCK', () => {
     await abrirStock()
 
     expect(await screen.findByText('Make Lavajean')).toBeTruthy()
-    expect(screen.getByText('PRO06787 · Mín. 24')).toBeTruthy()
+    // S2: el código va como insignia junto al nombre; el mínimo, en su renglón.
+    expect(screen.getByText('PRO06787')).toBeTruthy()
+    expect(screen.getByText('Mín. 24')).toBeTruthy()
     expect(screen.getByText('Reservado 6 · Por ingresar 48')).toBeTruthy()
     expect(screen.getByLabelText('Disponible 8')).toBeTruthy()
     expect(within(screen.getByLabelText('Make Lavajean, PRO06787')).getByText('En alerta')).toBeTruthy()

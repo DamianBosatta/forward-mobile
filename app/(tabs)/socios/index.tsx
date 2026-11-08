@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { ActivityIndicator, RefreshControl, SectionList, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -34,9 +35,9 @@ function ClientesScreen() {
   const navigation = useNavigation()
   const { width } = useResponsive()
   const { canCreate } = usePermissions()
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda] = useFiltroPersistente('socios.busqueda', '')
   const [abierto, setAbierto] = useState<string | null>(null)
-  const [filtros, setFiltros] = useState<FiltrosDeCartera>(SIN_FILTROS)
+  const [filtros, setFiltros] = useFiltroPersistente<FiltrosDeCartera>('socios.filtros', SIN_FILTROS)
   const { clientes, totalCount, saldoTotal, isLoading, isRefetching, error, dataUpdatedAt, refetch, cargarMas } = useCartera(busqueda, filtros, { ordenarPor: 'Direccion' })
   const secciones = useMemo(() => seccionesPorLetra(clientes), [clientes])
   const sinRed = esFallaDeRed(error)

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { Trash2 } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
@@ -57,8 +58,7 @@ function Contenido({ linea, onClose, onConfirm, onQuitar }: Props & { linea: Lin
         <View accessibilityLabel="Línea de compra" style={{ flex: isTablet ? undefined : 1, width: isTablet ? 440 : undefined, backgroundColor: c.bg }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], padding: space[4], backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.border }}>
             <View style={{ flex: 1 }}>
-              {ficha?.codigoPropio ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{ficha.codigoPropio}</Text> : null}
-              <Text style={texto()}>{linea.nombre}</Text>
+              <ProductoIdentidad nombre={linea.nombre} codigo={ficha?.codigoPropio} estiloNombre={texto()} />
               <Text style={{ ...typeScale.titulo, ...importe, color: c.text }}>
                 {`Subtotal ${formatImporte(unidades !== null && !costoInvalido ? unidades * costo! : null)}`}
               </Text>

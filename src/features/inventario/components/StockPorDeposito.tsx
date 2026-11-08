@@ -1,4 +1,5 @@
 import React from 'react'
+import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { ActivityIndicator, FlatList, ScrollView, Text, View } from 'react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, StatusChip } from '@/core/ui/fw'
@@ -34,7 +35,7 @@ function Kpi({ label, valor }: { label: string; valor: number | null | undefined
 function FilaTelefono({ f, conDeposito }: { f: StockItem; conDeposito: boolean }) {
   const c = useColors()
   const chip = chipDeFilaStock(f)
-  const sub = [conDeposito ? f.deposito : null, f.codigoPropio, textoMinimo(f.stockMinimo)].filter(Boolean).join(' · ')
+  const sub = [conDeposito ? f.deposito : null, textoMinimo(f.stockMinimo)].filter(Boolean).join(' · ')
   const extra = textoReservadas(f.cantidadReservada, f.cantidadVirtual)
   return (
     <View
@@ -42,8 +43,8 @@ function FilaTelefono({ f, conDeposito }: { f: StockItem; conDeposito: boolean }
       style={{ flexDirection: 'row', gap: space[3], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface }}
     >
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
-        <Text numberOfLines={2} style={[typeScale.cuerpoDestacado, { color: c.text }]}>{f.producto}</Text>
-        <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary }]}>{sub}</Text>
+        <ProductoIdentidad nombre={f.producto} marca={f.marca} codigo={f.codigoPropio} />
+        {sub ? <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary }]}>{sub}</Text> : null}
         <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{extra}</Text>
       </View>
       <View style={{ alignItems: 'flex-end', gap: space[1] }}>
@@ -78,8 +79,8 @@ function FilaTablet({ f, conDeposito }: { f: StockItem; conDeposito: boolean }) 
     >
       <View style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
         <View style={{ flexShrink: 1 }}>
-          <Text numberOfLines={1} style={[typeScale.cuerpoDestacado, { color: c.text }]}>{f.producto}</Text>
-          <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary }]}>{conDeposito && f.deposito ? `${f.deposito} · ${f.codigoPropio}` : f.codigoPropio}</Text>
+          <ProductoIdentidad nombre={f.producto} marca={f.marca} codigo={f.codigoPropio} lineasNombre={1} />
+          {conDeposito && f.deposito ? <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary }]}>{f.deposito}</Text> : null}
         </View>
         {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
       </View>
@@ -138,8 +139,7 @@ function StockSinCantidades({ busqueda }: { busqueda: string }) {
             style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface }}
           >
             <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
-              <Text numberOfLines={2} style={[typeScale.cuerpoDestacado, { color: c.text }]}>{item.nombre}</Text>
-              <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary }]}>{item.codigoPropio}</Text>
+              <ProductoIdentidad nombre={item.nombre} marca={item.marca} codigo={item.codigoPropio} />
             </View>
             {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
           </View>
