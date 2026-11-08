@@ -20981,6 +20981,8 @@ export interface components {
             /** Format: uuid */
             productoId: string;
             productoNombre: string;
+            marca?: string | null;
+            codigoPropio?: string | null;
             /** Format: double */
             cantidad: number;
             /** Format: double */
@@ -21843,6 +21845,8 @@ export interface components {
             /** Format: uuid */
             productoId: string;
             nombreProducto: string;
+            marca?: string | null;
+            codigoPropio?: string | null;
             /** Format: double */
             cantidad: number;
             /** Format: double */
@@ -21993,6 +21997,8 @@ export interface components {
             /** Format: uuid */
             productoId: string;
             productoNombre: string;
+            marca?: string | null;
+            codigoPropio?: string | null;
             /** Format: double */
             cantidad: number;
             unidadCompra: components["schemas"]["UnidadCompra"];
@@ -22946,6 +22952,8 @@ export interface components {
             /** Format: uuid */
             productoId?: string;
             productoNombre?: string | null;
+            marca?: string | null;
+            codigoPropio?: string | null;
             /** Format: double */
             cantidad?: number;
             /** Format: double */
@@ -22976,6 +22984,8 @@ export interface components {
             /** Format: uuid */
             productoId: string;
             nombreProducto: string;
+            marca?: string | null;
+            codigoPropio?: string | null;
             /** Format: double */
             cantidad: number;
             /** Format: double */
@@ -24194,6 +24204,7 @@ export interface components {
             /** Format: double */
             cantidadDisponible: number;
             marca?: string | null;
+            codigoPropio?: string | null;
         };
         LineaParadaDtoListResponse: {
             /** Format: int32 */
@@ -25118,6 +25129,7 @@ export interface components {
             /** Format: uuid */
             productoId: string;
             producto: string;
+            marca?: string | null;
             codigoPropio: string;
             /** Format: double */
             cantidad: number;
@@ -25390,6 +25402,7 @@ export interface components {
             activo: boolean;
             imageUrl?: string | null;
             codigoPropio: string;
+            marca?: string | null;
             /** Format: uuid */
             categoriaId?: string | null;
             codigoBarra?: string | null;
@@ -26028,6 +26041,8 @@ export interface components {
             /** Format: uuid */
             productoId: string;
             descripcion: string;
+            marca?: string | null;
+            codigoPropio?: string | null;
             /** Format: double */
             cantidad: number;
             presentacion?: string | null;
@@ -26195,6 +26210,8 @@ export interface components {
             /** Format: uuid */
             productoId?: string;
             productoNombre?: string | null;
+            marca?: string | null;
+            codigoPropio?: string | null;
             /** Format: double */
             cantidadVendida?: number;
             /** Format: double */
@@ -27275,6 +27292,7 @@ export interface components {
             /** Format: uuid */
             productoId: string;
             productoNombre: string;
+            marca?: string | null;
             codigoPropio?: string | null;
             /** Format: double */
             cantidad: number;
@@ -27936,6 +27954,8 @@ export interface components {
             /** Format: uuid */
             productoId: string;
             productoNombre: string;
+            marca?: string | null;
+            codigoPropio?: string | null;
             /** Format: uuid */
             productoPadreId?: string | null;
             productoPadreNombre?: string | null;
@@ -28284,6 +28304,8 @@ export interface components {
             /** Format: uuid */
             productoId: string;
             productoNombre: string;
+            marca?: string | null;
+            codigoPropio?: string | null;
             /** Format: double */
             cantidad: number;
             /** Format: double */

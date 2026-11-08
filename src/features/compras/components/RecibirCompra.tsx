@@ -123,7 +123,7 @@ export function RecibirCompra({ compra, onVolver, onHecho, onConflicto }: Props)
           <Check size={16} color={c.onAction} strokeWidth={3} />
         </View>
         <View style={{ flex: 1 }}>
-          <ProductoIdentidad nombre={d.nombreProducto} />
+          <ProductoIdentidad nombre={d.nombreProducto} marca={d.marca} codigo={d.codigoPropio} />
           <Text style={secundario}>{`Pedidas ${mostrarNumero(d.cantidad)}${empaque ? ` · ${empaque}` : ''}`}</Text>
         </View>
         {llego(d, 96)}

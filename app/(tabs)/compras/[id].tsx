@@ -228,7 +228,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
           </Text>
           {compra.detalles.map((d, i) => (
             <View key={d.id} accessible style={{ paddingHorizontal: space[4], paddingVertical: space[3], gap: space[1], borderTopWidth: i ? 1 : 0, borderTopColor: c.border }}>
-              <ProductoIdentidad nombre={d.nombreProducto} />
+              <ProductoIdentidad nombre={d.nombreProducto} marca={d.marca} codigo={d.codigoPropio} />
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
                 <View style={{ flexShrink: 1 }}>
                   <Text style={[typeScale.secundario, { color: c.text }]}>{textoDeLinea(lineaDesdeDetalle(d))}</Text>

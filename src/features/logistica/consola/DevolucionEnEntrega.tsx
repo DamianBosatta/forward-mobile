@@ -77,7 +77,7 @@ export function DevolucionEnEntrega({ renglones, cargando, conError, valores, on
         return (
           <View key={id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 2, borderColor: c.border }}>
             <View style={{ flex: 1 }}>
-              <ProductoIdentidad nombre={nombre} marca={r.marca} />
+              <ProductoIdentidad nombre={nombre} marca={r.marca} codigo={r.codigoPropio} />
               <Text style={{ ...typeScale.secundario, ...importe, color: c.textSecondary }}>{`Pidió ${r.cantidadVendida ?? r.cantidadDisponible} · hasta ${r.cantidadDisponible}`}</Text>
             </View>
             <Stepper nombre={nombre} max={r.cantidadDisponible ?? 0} value={cantidadDe(id)} onChange={(n) => onCambio(id, n > 0 ? String(n) : '')} />

@@ -31,7 +31,7 @@ export function LineasDeLaVenta({ detalles }: { detalles: VentaDetalleDto['detal
             style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2], padding: space[3], borderTopWidth: i ? 1 : 0, borderTopColor: c.border }}
           >
             <View style={{ flex: 1, gap: 2 }}>
-              <ProductoIdentidad nombre={padre ?? items[0]!.productoNombre} />
+              <ProductoIdentidad nombre={padre ?? items[0]!.productoNombre} marca={items[0]!.marca} codigo={padre ? null : items[0]!.codigoPropio} />
               <Text style={{ ...sec, ...importe }}>{desc ? `${partes} · −${mostrarNumero(desc)} %` : partes}</Text>
             </View>
             <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(items.reduce((a, d) => a + d.subtotal, 0))}</Text>

@@ -77,7 +77,7 @@ export function PedidoPorPrepararDetalle({ pedido }: { pedido: VentaPreparacion 
                 borderBottomWidth: i === lineas.length - 1 ? 0 : 1, borderBottomColor: c.border,
               }}
             >
-              <View style={{ flex: 1 }}><ProductoIdentidad nombre={l.productoNombre} estiloNombre={typeScale.cuerpo} /></View>
+              <View style={{ flex: 1 }}><ProductoIdentidad nombre={l.productoNombre} marca={l.marca} codigo={l.codigoPropio} estiloNombre={typeScale.cuerpo} /></View>
               <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{textoCantidad(l.cantidad, l.empaque)}</Text>
             </View>
           ))}

@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query'
 import type { Persister } from '@tanstack/react-query-persist-client'
+import { olvidarFiltros } from '@/core/hooks/useFiltroPersistente'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { useAuthStore } from '../store/auth.store'
 import { useOfertaDeHuella } from '../store/ofertaDeHuella.store'
@@ -11,7 +12,7 @@ import { forgetBiometricLogin } from '../utils/biometrics'
  *   deletes the fingerprint credential and its decision ("Se borra al cerrar sesión" is the person's own action).
  * - forced: the server rejects the refresh (`onUnauthorized`), or a path only drops the tokens. It keeps the
  *   fingerprint credential and decision, so the person re-enters with "Entrar con huella".
- * Both empty the tokens, the react-query cache (memory and disk), the active trip and any unanswered fingerprint
+ * Both empty the tokens, the react-query cache (memory and disk), the active trip, the saved list filters (a new person does not inherit them) and any unanswered fingerprint
  * offer. A different person logging in afterwards is handled at login (`getBiometricChoiceFor`).
  *
  * What is NOT cleared on purpose: the per-user offline queues (`features/venta-sin-senal/lib/cola.ts`,
@@ -48,6 +49,7 @@ async function borrarDatosDeLaSesion({ forzado }: OpcionesDeCierre): Promise<voi
   }
   useLogisticaStore.getState().reset()
   await useLogisticaStore.persist.clearStorage()
+  olvidarFiltros()
   useOfertaDeHuella.getState().descartar()
   if (!forzado) await forgetBiometricLogin()
 }
