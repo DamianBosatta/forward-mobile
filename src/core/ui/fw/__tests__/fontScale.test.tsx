@@ -72,7 +72,7 @@ describe.each(TEMAS)('tope de escala de fuente en controles de alto fijo (%s)', 
 
   it('Stepper caps its quantity', () => {
     render(<Stepper nombre="Aceite" value={3} max={5} onChange={jest.fn()} />)
-    expect(screen.getByText('3').props.maxFontSizeMultiplier).toBe(TOPE)
+    expect(screen.getByLabelText('Cantidad de Aceite: 3').props.maxFontSizeMultiplier).toBe(TOPE)
   })
 
   it('DocumentCard caps the avatar initials', () => {

@@ -60,13 +60,18 @@ describe('Button size', () => {
     expect(screen.queryByLabelText('Escanear etiqueta')).toBeNull()
   })
 
-  it('"Llamar a la empresa" aparece solo con teléfono y llama', async () => {
+  it('"Llamar cliente" llama al teléfono de la parada y sin teléfono queda apagado con su motivo', async () => {
     const onLlamar = jest.fn()
-    const { unmount } = render(<LlegueParada parada={parada} telefonoEmpresa="011 4555-1234" onLlamarEmpresa={onLlamar} onVolver={jest.fn()} onEntregueTodo={jest.fn()} onNoPudeEntregar={jest.fn()} />)
-    await userEvent.press(screen.getByLabelText('Llamar a la empresa'))
+    const { unmount } = render(<LlegueParada parada={{ ...parada, telefono: '011 4555-1234' } as ParadaDto} onLlamarCliente={onLlamar} onVolver={jest.fn()} onEntregueTodo={jest.fn()} onNoPudeEntregar={jest.fn()} />)
+    await userEvent.press(screen.getByLabelText('Llamar cliente'))
     expect(onLlamar).toHaveBeenCalledTimes(1)
-    unmount()
-    render(<LlegueParada parada={parada} telefonoEmpresa={null} onLlamarEmpresa={onLlamar} onVolver={jest.fn()} onEntregueTodo={jest.fn()} onNoPudeEntregar={jest.fn()} />)
     expect(screen.queryByLabelText('Llamar a la empresa')).toBeNull()
+    unmount()
+    onLlamar.mockClear()
+    render(<LlegueParada parada={{ ...parada, telefono: '' } as ParadaDto} onLlamarCliente={onLlamar} onVolver={jest.fn()} onEntregueTodo={jest.fn()} onNoPudeEntregar={jest.fn()} />)
+    expect(screen.getByLabelText('Llamar cliente').props.accessibilityState.disabled).toBe(true)
+    expect(screen.getByText('Este cliente no tiene teléfono cargado.')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Llamar cliente'))
+    expect(onLlamar).not.toHaveBeenCalled()
   })
 })

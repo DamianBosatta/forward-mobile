@@ -5,7 +5,7 @@ import { useAuthStore } from '@/libs/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { conTema } from '@/core/ui/fw/__testing__/tema'
 import { reiniciarCamara, sacarFoto } from '@/features/logistica/__testing__/camara'
-import { confirmarEntrega } from '@/features/logistica/__testing__/confirmar'
+import { confirmarEntrega, fotoDelRemito, noSumarOtroCobro } from '@/features/logistica/__testing__/confirmar'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
 import { armarEntrega } from '../consola/entrega'
 
@@ -78,15 +78,20 @@ const confirmarBtn = () => screen.getByLabelText('Confirmar entrega')
 async function hastaElCobro() {
   await userEvent.press(screen.getByLabelText('No'))
 }
-/** Del cobro al paso Confirmar, con quién recibió escrito. */
-async function aConfirmar(receptor = 'Abel') {
+/**
+ * Del cobro al paso Confirmar, con quién recibió escrito. Con cobro cargado (o firma) pregunta "¿Sumar otro cobro?" y se
+ * dice que No; sin cobro el remito firmado con su foto es obligatorio (dueño 08-11) y se saca, salvo `sinFoto`.
+ */
+async function aConfirmar(receptor = 'Abel', { cobro = false, sinFoto = false } = {}) {
   await userEvent.press(continuar())
+  if (cobro) await noSumarOtroCobro()
+  else if (!sinFoto) await fotoDelRemito()
   if (receptor) await userEvent.type(screen.getByLabelText('Quién recibió'), receptor)
 }
 /** Hasta Confirmar, sin devolución y sin cobro. */
-async function hastaElResumen(receptor = 'Abel') {
+async function hastaElResumen(receptor = 'Abel', opciones: { cobro?: boolean; sinFoto?: boolean } = {}) {
   await hastaElCobro()
-  await aConfirmar(receptor)
+  await aConfirmar(receptor, opciones)
 }
 /** "Sí, devuelve algo" y 2 unidades de aceite. */
 async function devolverDos() {
@@ -183,7 +188,7 @@ describe('Paso Confirmar: quién recibió y foto del remito', () => {
   it('con la foto del remito exigida no confirma sin ella; al sacarla confirma', async () => {
     pintar(hoja(P1, true))
     await abrir()
-    await hastaElResumen()
+    await hastaElResumen('Abel', { sinFoto: true })
     expect(deshabilitado(confirmarBtn())).toBe(true)
     expect(screen.getByText('Falta la foto del remito')).toBeTruthy()
     await sacarFoto('Sacar foto del remito firmado')
@@ -191,17 +196,42 @@ describe('Paso Confirmar: quién recibió y foto del remito', () => {
     expect(deshabilitado(confirmarBtn())).toBe(false)
   })
 
-  it('sin la exigencia, la foto del remito es opcional y se puede confirmar sin ella', async () => {
+  it('sin cobro de dinero la foto del remito es obligatoria aunque la hoja no la exija', async () => {
     pintar(hoja(P1, false))
     await abrir()
-    await hastaElResumen()
+    await hastaElResumen('Abel', { sinFoto: true })
+    expect(deshabilitado(confirmarBtn())).toBe(true)
+    expect(screen.getByText('Falta la foto del remito')).toBeTruthy()
+    await sacarFoto('Sacar foto del remito firmado')
+    await screen.findByText('Foto del remito firmado cargada')
     expect(deshabilitado(confirmarBtn())).toBe(false)
+  })
+
+  it('con un cobro cargado y sin la exigencia, la foto del remito es opcional', async () => {
+    pintar(hoja(P1_CONTADO, false))
+    await abrir()
+    await hastaElCobro()
+    await sumarPago('Efectivo', '1000')
+    await aConfirmar('Abel', { cobro: true })
+    expect(deshabilitado(confirmarBtn())).toBe(false)
+  })
+
+  it('una firma sola (queda como deuda) no cuenta como cobro: el remito sigue obligatorio', async () => {
+    pintar(hoja(P1_CONTADO, false))
+    await abrir()
+    await hastaElCobro()
+    await userEvent.press(screen.getByLabelText('Firma'))
+    await sacarFoto('Sacar foto de la firma del cliente')
+    await screen.findByText('Foto de la firma del cliente cargada')
+    await aConfirmar('Abel', { cobro: true })
+    expect(deshabilitado(confirmarBtn())).toBe(true)
+    expect(screen.getByText('Falta la foto del remito')).toBeTruthy()
   })
 
   it('la foto se saca con la cámara, sin galería, y lo dice', async () => {
     pintar(hoja(P1, true))
     await abrir()
-    await hastaElResumen('')
+    await hastaElResumen('', { sinFoto: true })
     expect(screen.getByText(/Sin galería: la foto se saca ahora, para que no se pueda usar una vieja/)).toBeTruthy()
   })
 })
@@ -235,7 +265,7 @@ describe('E3 Cobro mixto', () => {
     await abrir()
     await hastaElCobro()
     await cargarEfectivo('600')
-    await aConfirmar()
+    await aConfirmar('Abel', { cobro: true })
     await confirmarEntrega()
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
     const esperado = armarEntrega(
@@ -279,7 +309,7 @@ describe('E3 Cobro mixto', () => {
     await cargarEfectivo('1500')
     expect(screen.getByText('Sobran $ 500,00')).toBeTruthy()
     expect(deshabilitado(continuar())).toBe(false)
-    await aConfirmar()
+    await aConfirmar('Abel', { cobro: true })
     await confirmarEntrega()
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
     const esperado = armarEntrega(
@@ -296,7 +326,7 @@ describe('E3 Cobro mixto', () => {
     await abrir()
     await hastaElCobro()
     await cargarEfectivo('600')
-    await aConfirmar()
+    await aConfirmar('Abel', { cobro: true })
     expect(deshabilitado(confirmarBtn())).toBe(true)
     expect(screen.getByText('Falta la foto del remito')).toBeTruthy()
     expect(llamadasA(ENTREGAR)).toHaveLength(0)
@@ -334,6 +364,54 @@ describe('E3 Cobro mixto', () => {
   })
 })
 
+describe('7.1 ¿Sumar otro cobro?', () => {
+  it('tras cargar un cobro pregunta; "Sí" vuelve a elegir cómo paga y suma otro cobro; "No" sigue a Confirmar', async () => {
+    pintar(hoja(P1_CONTADO))
+    await abrir()
+    await hastaElCobro()
+    await sumarPago('Efectivo', '400')
+    await userEvent.press(continuar())
+    expect(await screen.findByText('¿Sumar otro cobro?')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Sí'))
+    expect(await screen.findByText('Sumar otro pago')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Transferencia'))
+    await userEvent.type(screen.getByLabelText('Monto del cobro 2'), '600')
+    await sacarFoto('Sacar foto del comprobante del cobro 2')
+    await screen.findByText('Foto del comprobante del cobro 2 cargada')
+    await userEvent.press(continuar())
+    expect(await screen.findByText('¿Sumar otro cobro?')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('No'))
+    expect(screen.getByText(/Paso 4 de 4 · Confirmar/)).toBeTruthy()
+    await confirmarEntrega()
+    await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
+    expect(llamadasA(ENTREGAR)[0][1].cobro.lineas).toEqual([
+      { medioPagoId: 'm-ef', monto: 400 },
+      expect.objectContaining({ medioPagoId: 'm-tr', monto: 600 }),
+    ])
+  })
+
+  it('sin ningún cobro no pregunta: del cobro se sigue directo (y el remito pasa a ser obligatorio)', async () => {
+    pintar(hoja(P1_CONTADO))
+    await abrir()
+    await hastaElCobro()
+    await userEvent.press(continuar())
+    expect(screen.queryByText('¿Sumar otro cobro?')).toBeNull()
+    expect(screen.getByText(/Paso 4 de 4 · Confirmar/)).toBeTruthy()
+  })
+
+  it('Volver desde la pregunta la descarta y deja el cobro cargado', async () => {
+    pintar(hoja(P1_CONTADO))
+    await abrir()
+    await hastaElCobro()
+    await sumarPago('Efectivo', '400')
+    await userEvent.press(continuar())
+    await screen.findByText('¿Sumar otro cobro?')
+    await userEvent.press(screen.getByLabelText('Volver'))
+    expect(screen.queryByText('¿Sumar otro cobro?')).toBeNull()
+    expect(screen.getByLabelText('Monto del cobro 1').props.value).toBe('400')
+  })
+})
+
 describe('Volver conserva lo cargado', () => {
   it('de confirmar a cobro a devoluciones, nada se pierde', async () => {
     pintar(hoja(P1_CONTADO))
@@ -342,7 +420,7 @@ describe('Volver conserva lo cargado', () => {
     await userEvent.press(continuar())
     await seguirAlCobro()
     await sumarPago('Efectivo', '800')
-    await aConfirmar()
+    await aConfirmar('Abel', { cobro: true })
 
     await userEvent.press(screen.getByLabelText('Volver'))
     expect(screen.getByLabelText('Monto del cobro 1').props.value).toBe('800')
@@ -386,7 +464,7 @@ describe('E6 Confirmar entrega', () => {
     await userEvent.press(continuar())
     await seguirAlCobro()
     await sumarPago('Efectivo', '800')
-    await aConfirmar('Graciela Ruiz')
+    await aConfirmar('Graciela Ruiz', { cobro: true })
     const r = screen.getByLabelText('Resumen de la entrega')
     expect(within(r).getByText('Graciela Ruiz')).toBeTruthy()
     expect(within(r).getByText('Por autorizar en depósito')).toBeTruthy()
@@ -409,7 +487,7 @@ describe('E6 Confirmar entrega', () => {
     await userEvent.press(screen.getByLabelText('Firma'))
     await sacarFoto('Sacar foto de la firma del cliente')
     await screen.findByText('Foto de la firma del cliente cargada')
-    await aConfirmar()
+    await aConfirmar('Abel', { cobro: true })
     await confirmarEntrega()
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
 
@@ -430,7 +508,7 @@ describe('E6 Confirmar entrega', () => {
   })
 
   it('un doble toque en confirmar manda una sola entrega', async () => {
-    mockPost.mockReturnValue(new Promise(() => {}))
+    mockPost.mockImplementation(async (url: string) => (url === '/api/v1/Media/upload-entrega' ? { url: 'https://r2.test/entregas/up-x.jpg' } : new Promise(() => {})))
     pintar(hoja(P1))
     await abrir()
     await hastaElResumen()

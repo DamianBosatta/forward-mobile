@@ -5,7 +5,7 @@ import { useAuthStore } from '@/libs/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { conTema } from '@/core/ui/fw/__testing__/tema'
 import { reiniciarCamara, sacarFoto } from '@/features/logistica/__testing__/camara'
-import { confirmarEntrega } from '@/features/logistica/__testing__/confirmar'
+import { REMITO_URL, conSubidaDeFotos, confirmarEntrega, fotoDelRemito, noSumarOtroCobro } from '@/features/logistica/__testing__/confirmar'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
 
 /**
@@ -82,9 +82,15 @@ async function abrirEntrega(devuelve = false) {
   if (!devuelve) await userEvent.press(screen.getByLabelText('No'))
 }
 const continuar = () => userEvent.press(screen.getByLabelText('Continuar'))
-/** Sin cobro: del cobro al paso Confirmar (quién recibió escrito), donde está "Confirmar entrega". */
-async function alResumen(receptor = 'Abel') {
+/**
+ * Del cobro al paso Confirmar (quién recibió escrito), donde está "Confirmar entrega". Sin cobro de dinero el remito
+ * firmado con su foto es obligatorio (dueño 08-11): la helper lo saca, salvo `sinFoto`. Con cobro, "¿Sumar otro cobro?" → No.
+ */
+async function alResumen(receptor = 'Abel', { conCobro = false, sinFoto = false } = {}) {
+  if (!conCobro && !sinFoto) conSubidaDeFotos(mockPost)
   await continuar()
+  if (conCobro) await noSumarOtroCobro()
+  else if (!sinFoto) await fotoDelRemito()
   await userEvent.type(screen.getByLabelText('Quién recibió'), receptor)
 }
 /** La pantalla "Entrega lista" aparece al registrar la entrega; "Siguiente entrega" la cierra. */
@@ -107,9 +113,9 @@ describe('Consola del chofer: entrega con la operación única', () => {
     await abrirEntrega()
     await alResumen()
     await confirmarEntrega()
-    const [[url, cuerpo]] = mockPost.mock.calls
+    const [[url, cuerpo]] = llamadasA(ENTREGAR)
     expect(url).toBe(ENTREGAR)
-    expect(cuerpo).toEqual({ claveIdempotencia: expect.stringMatching(/\S{8,}/), nombreReceptor: 'Abel' })
+    expect(cuerpo).toEqual({ claveIdempotencia: expect.stringMatching(/\S{8,}/), nombreReceptor: 'Abel', evidenciaUrl: REMITO_URL })
     await cerrarListo()
     expect(await screen.findByText('1 de 2 entregadas')).toBeTruthy()
     expect(llamadasA('/api/v1/Logistica/hojas-ruta/h1/reportar-parada')).toHaveLength(0)
@@ -135,7 +141,7 @@ describe('Consola del chofer: entrega con la operación única', () => {
     })
     pintar({ ...HOJA, exigeFotoRemitoAlEntregar: true })
     await abrirEntrega()
-    await alResumen()
+    await alResumen('Abel', { sinFoto: true })
     // El paso Confirmar no deja confirmar sin la foto exigida.
     expect(screen.getByLabelText('Confirmar entrega').props.accessibilityState.disabled).toBe(true)
     expect(llamadasA(ENTREGAR)).toHaveLength(0)
@@ -184,7 +190,7 @@ describe('Consola del chofer: entrega con la operación única', () => {
     await userEvent.press(screen.getByLabelText('Firma'))
     await sacarFoto('Sacar foto de la firma del cliente')
     await screen.findByText('Foto de la firma del cliente cargada')
-    await alResumen()
+    await alResumen('Abel', { conCobro: true })
     await confirmarEntrega()
 
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
@@ -201,10 +207,10 @@ describe('Consola del chofer: entrega con la operación única', () => {
   })
 
   it('si la respuesta no llega, el reintento repite la misma clave y el mismo cuerpo', async () => {
-    mockPost.mockRejectedValueOnce(new Error('Network request failed'))
     pintar()
     await abrirEntrega()
     await alResumen()
+    mockPost.mockRejectedValueOnce(new Error('Network request failed'))
     await confirmarEntrega()
     expect(await screen.findByText('Network request failed')).toBeTruthy()
     mockPost.mockImplementation(async () => { entregada(); return { paradaId: 'p1', repetida: true } })
@@ -230,10 +236,10 @@ describe('Consola del chofer: entrega con la operación única', () => {
   })
 
   it('si la clave ya se usó en otra parada, la cambia: el próximo intento va con otra clave', async () => {
-    mockPost.mockRejectedValueOnce(Object.assign(new Error('Esta clave de idempotencia ya se usó en otra entrega.'), { status: 409, codigo: 'ClaveIdempotenciaConOtroCuerpo', errors: [] }))
     pintar()
     await abrirEntrega()
     await alResumen()
+    mockPost.mockRejectedValueOnce(Object.assign(new Error('Esta clave de idempotencia ya se usó en otra entrega.'), { status: 409, codigo: 'ClaveIdempotenciaConOtroCuerpo', errors: [] }))
     await confirmarEntrega()
     expect(await screen.findByText(/ya se usó en otra entrega/)).toBeTruthy()
     mockPost.mockResolvedValue({ paradaId: 'p1' })

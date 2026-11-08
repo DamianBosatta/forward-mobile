@@ -33,6 +33,8 @@ interface Props {
   sinFirma?: boolean
   /** La pantalla que lo aloja ya tiene su título: no repite "Cobro" encima de "¿Cómo paga?". */
   sinTitulo?: boolean
+  /** Entra directo a elegir el medio del próximo pago ("¿Sumar otro cobro? Sí"). */
+  elegirAlEntrar?: boolean
 }
 
 /** Lo que se dice de cada forma de pago, en una línea (chofer-04). */
@@ -43,10 +45,10 @@ const DETALLE_MEDIO: Partial<Record<string, string>> = { Transferencia: 'Bancari
  * Cheque (del servidor) y Firma (queda como deuda, con foto). Pagos ya cargados con su X de 44 px y "Sumar
  * otro pago". El servidor imputa y valida.
  */
-export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubiendo, hoy, aCobrar, faltaACuenta, aviso, deudaAnterior, firma: firmaElegida = false, firmaUrl = null, onFirma = () => undefined, onFirmaUrl = () => undefined, sinFirma = false, sinTitulo = false }: Props) {
+export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubiendo, hoy, aCobrar, faltaACuenta, aviso, deudaAnterior, firma: firmaElegida = false, firmaUrl = null, onFirma = () => undefined, onFirmaUrl = () => undefined, sinFirma = false, sinTitulo = false, elegirAlEntrar = false }: Props) {
   const firma = firmaElegida && !sinFirma
   const c = useColors()
-  const [agregando, setAgregando] = useState(false)
+  const [agregando, setAgregando] = useState(elegirAlEntrar)
   const cambiar = (i: number, cambio: Partial<LineaCobroForm>) => onLineas(lineas.map((l, j) => (j === i ? { ...l, ...cambio } : l)))
   const cambiarCheque = (i: number, campo: keyof ChequeForm) => (v: string) =>
     cambiar(i, { cheque: { ...lineas[i].cheque, [campo]: v } })
