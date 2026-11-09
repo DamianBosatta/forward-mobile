@@ -12,6 +12,7 @@ module.exports = {
   setupFiles: ['react-native-gesture-handler/jestSetup.js'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
+    '^@forward/reglas$': '<rootDir>/libs/reglas',
     '^@/core/(.*)$': '<rootDir>/src/core/$1',
     '^@/features/(.*)$': '<rootDir>/src/features/$1',
     '^@/libs/(.*)$': '<rootDir>/libs/$1',
