@@ -1551,6 +1551,7 @@ export interface paths {
                     OrdenarPor?: components["schemas"]["CatalogoOrdenarPor"];
                     Desc?: boolean;
                     NovedadesDesde?: string;
+                    ListaPrecioId?: string;
                     PageNumber?: number;
                     PageSize?: number;
                 };
@@ -1592,6 +1593,7 @@ export interface paths {
             parameters: {
                 query?: {
                     depositoId?: string;
+                    listaPrecioId?: string;
                 };
                 header?: never;
                 path: {
@@ -5060,6 +5062,70 @@ export interface paths {
                         "text/plain": components["schemas"]["EtiquetaPiezaDto"];
                         "application/json": components["schemas"]["EtiquetaPiezaDto"];
                         "text/json": components["schemas"]["EtiquetaPiezaDto"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Configuracion/parametros-itinerario": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ParametrosItinerarioDto"];
+                        "application/json": components["schemas"]["ParametrosItinerarioDto"];
+                        "text/json": components["schemas"]["ParametrosItinerarioDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateParametrosItinerarioCommand"];
+                    "text/json": components["schemas"]["UpdateParametrosItinerarioCommand"];
+                    "application/*+json": components["schemas"]["UpdateParametrosItinerarioCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ParametrosItinerarioDto"];
+                        "application/json": components["schemas"]["ParametrosItinerarioDto"];
+                        "text/json": components["schemas"]["ParametrosItinerarioDto"];
                     };
                 };
             };
@@ -10145,6 +10211,138 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/listas-precios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ListaPrecioDtoIReadOnlyListResponse"];
+                        "application/json": components["schemas"]["ListaPrecioDtoIReadOnlyListResponse"];
+                        "text/json": components["schemas"]["ListaPrecioDtoIReadOnlyListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CrearListaPrecioCommand"];
+                    "text/json": components["schemas"]["CrearListaPrecioCommand"];
+                    "application/*+json": components["schemas"]["CrearListaPrecioCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/listas-precios/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ListaPrecioDtoResponse"];
+                        "application/json": components["schemas"]["ListaPrecioDtoResponse"];
+                        "text/json": components["schemas"]["ListaPrecioDtoResponse"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ActualizarListaPrecioCommand"];
+                    "text/json": components["schemas"]["ActualizarListaPrecioCommand"];
+                    "application/*+json": components["schemas"]["ActualizarListaPrecioCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Logistica/ventas-empacadas": {
         parameters: {
             query?: never;
@@ -11055,6 +11253,45 @@ export interface paths {
                         "text/plain": components["schemas"]["GuidResponse"];
                         "application/json": components["schemas"]["GuidResponse"];
                         "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/hojas-ruta/{id}/planificar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PlanViajeDtoResponse"];
+                        "application/json": components["schemas"]["PlanViajeDtoResponse"];
+                        "text/json": components["schemas"]["PlanViajeDtoResponse"];
                     };
                 };
             };
@@ -14214,6 +14451,7 @@ export interface paths {
             parameters: {
                 query?: {
                     DepositoId?: string;
+                    ListaPrecioId?: string;
                     PageNumber?: number;
                     PageSize?: number;
                     SearchTerm?: string;
@@ -14227,6 +14465,7 @@ export interface paths {
                     BajoMinimo?: boolean;
                     ConVentasDesdeUltimaCompra?: boolean;
                     CompradoAlProveedorId?: string;
+                    CostoDelProveedorId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -14573,6 +14812,120 @@ export interface paths {
                         "text/plain": string;
                         "application/json": string;
                         "text/json": string;
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Productos/{id}/proveedores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProductoProveedorDtoListResponse"];
+                        "application/json": components["schemas"]["ProductoProveedorDtoListResponse"];
+                        "text/json": components["schemas"]["ProductoProveedorDtoListResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AgregarProveedorAProductoCommand"];
+                    "text/json": components["schemas"]["AgregarProveedorAProductoCommand"];
+                    "application/*+json": components["schemas"]["AgregarProveedorAProductoCommand"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Productos/{id}/proveedores/{socioId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    socioId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ActualizarProveedorDeProductoCommand"];
+                    "text/json": components["schemas"]["ActualizarProveedorDeProductoCommand"];
+                    "application/*+json": components["schemas"]["ActualizarProveedorDeProductoCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
                     };
                 };
             };
@@ -17511,6 +17864,7 @@ export interface paths {
                 query?: {
                     OrdenarPor?: components["schemas"]["StockOrdenarPor"];
                     Desc?: boolean;
+                    ListaPrecioId?: string;
                     PageNumber?: number;
                     PageSize?: number;
                     DepositoId?: string;
@@ -20805,6 +21159,12 @@ export interface components {
             certificadoRuta?: string | null;
             habilitada?: boolean;
         };
+        ActualizarListaPrecioCommand: {
+            nombre?: string | null;
+            /** Format: double */
+            markupPorcentaje?: number;
+            activa?: boolean;
+        };
         ActualizarMisPreferenciasCommand: {
             temaPreferido?: string | null;
             foto?: string | null;
@@ -20824,6 +21184,11 @@ export interface components {
         ActualizarPreferenciasNotificacionCommand: {
             preferencias?: components["schemas"]["PreferenciaToastDto"][] | null;
         };
+        ActualizarProveedorDeProductoCommand: {
+            codigoProveedor?: string | null;
+            esHabitual?: boolean;
+            activo?: boolean;
+        };
         AdjustStockCommand: {
             /** Format: uuid */
             productoId?: string;
@@ -20839,6 +21204,12 @@ export interface components {
         AgregarParadaRequest: {
             /** Format: uuid */
             ventaId?: string;
+        };
+        AgregarProveedorAProductoCommand: {
+            /** Format: uuid */
+            socioId?: string;
+            codigoProveedor?: string | null;
+            esHabitual?: boolean;
         };
         /** @enum {string} */
         AgrupacionComisionPorLinea: "Producto" | "Categoria" | "Vendedor";
@@ -21440,6 +21811,9 @@ export interface components {
             precioAnterior?: number | null;
             /** Format: double */
             variacionPorcentaje?: number | null;
+            /** Format: uuid */
+            listaPrecioId?: string | null;
+            listaPrecioNombre?: string | null;
         };
         CatalogoComercialItemDtoPaginatedResponse: {
             /** Format: int32 */
@@ -21476,8 +21850,15 @@ export interface components {
             precioVenta: number;
             /** Format: double */
             precioConOferta?: number | null;
+            /** Format: uuid */
+            listaPrecioId?: string | null;
+            listaPrecioNombre?: string | null;
             /** Format: double */
             precioCompraBase?: number | null;
+            /** Format: double */
+            ultimoCostoProveedor?: number | null;
+            /** Format: double */
+            costoSugerido?: number | null;
             /** Format: double */
             deposito: number;
             /** Format: double */
@@ -22535,6 +22916,11 @@ export interface components {
             /** Format: uuid */
             depositoId?: string | null;
         };
+        CrearListaPrecioCommand: {
+            nombre?: string | null;
+            /** Format: double */
+            markupPorcentaje?: number;
+        };
         CrearNotaCreditoDescuentoCommand: {
             /** Format: uuid */
             facturaId?: string;
@@ -22663,6 +23049,8 @@ export interface components {
             latitude?: number | null;
             /** Format: double */
             longitude?: number | null;
+            /** Format: uuid */
+            listaPrecioId?: string | null;
         };
         CreateFraganciaCommand: {
             nombre?: string | null;
@@ -22949,6 +23337,9 @@ export interface components {
             latitude?: number | null;
             /** Format: double */
             longitude?: number | null;
+            /** Format: uuid */
+            listaPrecioId?: string | null;
+            listaPrecioNombre?: string | null;
         };
         DescuentosDto: {
             periodo?: components["schemas"]["PeriodoDto"];
@@ -23061,6 +23452,7 @@ export interface components {
         DevolucionDelViajeDto: {
             /** Format: uuid */
             notaCreditoId?: string;
+            numeroInterno: string;
             /** Format: uuid */
             paradaId?: string;
             /** Format: uuid */
@@ -23079,6 +23471,7 @@ export interface components {
         DevolucionPendienteDto: {
             /** Format: uuid */
             id?: string;
+            numeroInterno: string;
             /** Format: uuid */
             ventaId?: string;
             codigoVenta?: string | null;
@@ -23821,6 +24214,9 @@ export interface components {
             precioVenta: number;
             /** Format: double */
             precioConOferta?: number | null;
+            /** Format: uuid */
+            listaPrecioId?: string | null;
+            listaPrecioNombre?: string | null;
             /** Format: int32 */
             ventaMinimaUnidades: number;
             /** Format: int32 */
@@ -24097,6 +24493,8 @@ export interface components {
             fechaSalida: string;
             /** Format: double */
             distanciaTotalMetros: number;
+            /** Format: int32 */
+            duracionTotalSegundos?: number | null;
             rutaCalculada: boolean;
             paradasCobro: components["schemas"]["ParadaCobroDto"][];
             detalles: components["schemas"]["ParadaDto"][];
@@ -24415,6 +24813,34 @@ export interface components {
             /** Format: double */
             porcentajeCrecimiento: number;
             mensajeCrecimiento: string;
+        };
+        ListaPrecioDto: {
+            /** Format: uuid */
+            id: string;
+            nombre: string;
+            /** Format: double */
+            markupPorcentaje: number;
+            activa: boolean;
+        };
+        ListaPrecioDtoIReadOnlyListResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ListaPrecioDto"][] | null;
+            codigo?: string | null;
+        };
+        ListaPrecioDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ListaPrecioDto"];
+            codigo?: string | null;
         };
         ListaSurtidoPdfRequest: {
             ventaIds?: string[] | null;
@@ -24833,6 +25259,7 @@ export interface components {
         NotaCreditoListDto: {
             /** Format: uuid */
             id?: string;
+            numeroInterno: string;
             /** Format: uuid */
             ventaId?: string;
             /** Format: uuid */
@@ -25072,6 +25499,14 @@ export interface components {
             /** Format: int32 */
             motivoNoCobro?: number | null;
             motivoNoCobroTexto?: string | null;
+            /** Format: date-time */
+            llegadaEstimadaEn?: string | null;
+            /** Format: int32 */
+            duracionTramoSegundos?: number | null;
+            ventanaDesde?: string | null;
+            ventanaHasta?: string | null;
+            /** Format: int32 */
+            advertenciaVentana: number;
             /** Format: uuid */
             pagoId?: string | null;
             /** Format: double */
@@ -25158,6 +25593,14 @@ export interface components {
             nombreContacto?: string | null;
             /** Format: double */
             deudaAnterior?: number | null;
+            /** Format: date-time */
+            llegadaEstimadaEn?: string | null;
+            /** Format: int32 */
+            duracionTramoSegundos?: number | null;
+            ventanaDesde?: string | null;
+            ventanaHasta?: string | null;
+            /** Format: int32 */
+            advertenciaVentana: number;
         };
         ParadaRendicionDto: {
             /** Format: uuid */
@@ -25194,6 +25637,15 @@ export interface components {
             latitud?: number;
             /** Format: double */
             longitud?: number;
+        };
+        ParametrosItinerarioDto: {
+            /** Format: int32 */
+            minutosServicioPorParada?: number;
+            horaSalidaPorDefecto?: string | null;
+            /** Format: double */
+            multiplicadorTrafico?: number;
+            /** Format: int32 */
+            velocidadPromedioKmH?: number;
         };
         PedidoCaeArcaDto: {
             /** Format: uuid */
@@ -25378,6 +25830,45 @@ export interface components {
         };
         /** @enum {string} */
         PisoVerdict: "Rojo" | "Amarillo" | "Verde";
+        PlanDeParadaDto: {
+            /** Format: int32 */
+            tipo: number;
+            /** Format: uuid */
+            ventaId?: string | null;
+            /** Format: uuid */
+            paradaCobroId?: string | null;
+            /** Format: int32 */
+            orden: number;
+            /** Format: date-time */
+            llegadaEstimadaEn?: string | null;
+            /** Format: int32 */
+            duracionTramoSegundos?: number | null;
+            ventanaDesde?: string | null;
+            ventanaHasta?: string | null;
+            /** Format: int32 */
+            advertenciaVentana: number;
+        };
+        PlanViajeDto: {
+            /** Format: uuid */
+            hojaDeRutaId: string;
+            /** Format: date-time */
+            salidaEn: string;
+            /** Format: double */
+            distanciaTotalMetros: number;
+            /** Format: int32 */
+            duracionTotalSegundos?: number | null;
+            paradas: components["schemas"]["PlanDeParadaDto"][];
+        };
+        PlanViajeDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["PlanViajeDto"];
+            codigo?: string | null;
+        };
         /** @enum {string} */
         PoliticaDuplicados: "Omitir" | "Actualizar" | "CrearIgual";
         PosicionDto: {
@@ -25533,6 +26024,9 @@ export interface components {
             precioVenta: number;
             /** Format: double */
             precioConOferta?: number | null;
+            /** Format: uuid */
+            listaPrecioId?: string | null;
+            listaPrecioNombre?: string | null;
             /** Format: double */
             precioCompraBase?: number | null;
             /** Format: double */
@@ -25641,10 +26135,23 @@ export interface components {
         };
         ProductoProveedorDto: {
             /** Format: uuid */
+            id: string;
+            /** Format: uuid */
             productoId: string;
             nombre: string;
             codigoPropio?: string | null;
+            /** Format: uuid */
+            socioId: string;
+            socioNombre: string;
             codigoProveedor?: string | null;
+            /** Format: double */
+            ultimoCosto?: number | null;
+            /** Format: date-time */
+            fechaUltimoCosto?: string | null;
+            /** Format: uuid */
+            ultimaCompraId?: string | null;
+            esHabitual: boolean;
+            activo: boolean;
         };
         ProductoProveedorDtoListResponse: {
             /** Format: int32 */
@@ -26367,6 +26874,14 @@ export interface components {
             devolucionesPendientes?: number;
             /** Format: double */
             diferenciaEfectivo?: number | null;
+            /** Format: double */
+            debia?: number;
+            /** Format: double */
+            cobrado?: number;
+            /** Format: double */
+            pendiente?: number;
+            /** Format: double */
+            cobradoDeMas?: number;
         };
         RendicionViajeListadoDtoListResponse: {
             /** Format: int32 */
@@ -27085,6 +27600,9 @@ export interface components {
             categoria?: string | null;
             /** Format: double */
             precioConOferta?: number | null;
+            /** Format: uuid */
+            listaPrecioId?: string | null;
+            listaPrecioNombre?: string | null;
             /** Format: double */
             cantidadFiscal: number;
             /** Format: double */
@@ -27430,6 +27948,8 @@ export interface components {
             cobrado?: number;
             /** Format: double */
             pendiente?: number;
+            /** Format: double */
+            cobradoDeMas?: number;
         };
         TransferenciaRendidaInput: {
             /** Format: uuid */
@@ -27673,7 +28193,7 @@ export interface components {
             codigo?: string | null;
         };
         /** @enum {string} */
-        UnidadCompra: "Unidad" | "Bulto" | "BultoMadre";
+        UnidadCompra: "Unidad" | "Bulto" | "BultoMadre" | "Pack";
         UpdateCategoriaCommand: {
             /** Format: uuid */
             id?: string;
@@ -27730,6 +28250,8 @@ export interface components {
             latitude?: number | null;
             /** Format: double */
             longitude?: number | null;
+            /** Format: uuid */
+            listaPrecioId?: string | null;
         };
         UpdateDiasEntregaCommand: {
             lunes?: boolean;
@@ -27788,6 +28310,15 @@ export interface components {
             ventanaPricingMeses?: number;
             /** Format: double */
             umbralDesvioRatioPct?: number;
+        };
+        UpdateParametrosItinerarioCommand: {
+            /** Format: int32 */
+            minutosServicioPorParada?: number;
+            horaSalidaPorDefecto?: string | null;
+            /** Format: double */
+            multiplicadorTrafico?: number;
+            /** Format: int32 */
+            velocidadPromedioKmH?: number;
         };
         UpdatePermissionRequest: {
             module?: string | null;
@@ -27946,6 +28477,8 @@ export interface components {
             comisionActiva?: boolean;
             /** Format: uuid */
             depositoId?: string | null;
+            /** Format: uuid */
+            listaPrecioId?: string | null;
         };
         UserAuditLogDto: {
             /** Format: uuid */
@@ -28337,6 +28870,9 @@ export interface components {
             clienteTelefono?: string | null;
             clienteEmail?: string | null;
             depositoNombre?: string | null;
+            /** Format: uuid */
+            listaPrecioId?: string | null;
+            listaPrecioNombre?: string | null;
             vendedorNombre?: string | null;
             creadoPor?: string | null;
             /** Format: date-time */
@@ -28566,6 +29102,8 @@ export interface components {
             descuentoPorcentaje?: number;
             /** Format: double */
             descuentoGeneral?: number;
+            /** Format: uuid */
+            depositoId?: string | null;
         };
         VistaPreviaPrecioDto: {
             /** Format: double */

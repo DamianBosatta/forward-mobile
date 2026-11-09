@@ -47,6 +47,24 @@ describe('línea de compra', () => {
     expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ unidad: 'Bulto', cantidad: 4, unidadesPorUnidad: 12, costoUnitario: 1000 }))
   })
 
+  it('por pack: la cantidad va en packs, el servidor recibe Pack y el bulto madre no vuelve a multiplicar por el pack', async () => {
+    const onConfirm = abrir({ precioCompraBase: 1000, ventaMinimaUnidades: 8, bultoContenido: 288, bultoMadreContenido: 10 }, { ...LINEA, cantidad: 2 })
+    await userEvent.press(await screen.findByRole('radio', { name: 'Pack × 8' }))
+    expect(screen.getByText('= 16 unidades')).toBeTruthy()
+    expect(screen.getByRole('radio', { name: 'Bulto × 288' })).toBeTruthy()
+    expect(screen.getByRole('radio', { name: 'Bulto madre × 2880' })).toBeTruthy()
+    expect(screen.getByText('Pack x8 · Bulto 36 packs · 288 u. · B. madre 10 bultos · 2.880 u.')).toBeTruthy()
+    await userEvent.type(costo(), '1000')
+    await userEvent.press(confirmar())
+    expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ unidad: 'Pack', cantidad: 2, unidadesPorUnidad: 8, costoUnitario: 1000 }))
+  })
+
+  it('sin pack en el producto no se ofrece Pack', async () => {
+    abrir({ precioCompraBase: 1000, ventaMinimaUnidades: 1 })
+    await screen.findByRole('radio', { name: 'Bulto × 12' })
+    expect(screen.queryByRole('radio', { name: /^Pack/ })).toBeNull()
+  })
+
   it('no se compra una fracción de bulto', async () => {
     abrir({ precioCompraBase: 1000 })
     await userEvent.press(await screen.findByRole('radio', { name: 'Bulto × 12' }))

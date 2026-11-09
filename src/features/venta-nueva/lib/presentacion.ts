@@ -1,9 +1,9 @@
 import type { CatalogoStockItem } from '@/libs/api-client'
+import { unidadesPorPack } from '@/core/utils/empaque'
 
 /** Unidades por venta del producto: la cantidad va de a este múltiplo (6 → 6, 12, 18…). */
 export function multiploDe(producto: Pick<CatalogoStockItem, 'ventaMinimaUnidades'>): number {
-  const m = producto.ventaMinimaUnidades
-  return m && m > 1 ? m : 1
+  return unidadesPorPack(producto.ventaMinimaUnidades) ?? 1
 }
 
 /**

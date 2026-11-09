@@ -89,7 +89,7 @@ function Contenido({ linea, onCambiar, onEditar }: Props) {
           <Redondo c={c} label="+" a11y={`Sumar un ${nombreDeEmpaque(unidad).toLowerCase()} de ${linea.nombre}`} onPress={() => sumar(1)} />
         </View>
       </View>
-      {cantidadInvalida ? <Notice tone="peligro">{unidad === 'Unidad' ? 'La cantidad tiene que ser mayor a 0.' : 'Se compran bultos enteros: escribí un número sin decimales.'}</Notice> : null}
+      {cantidadInvalida ? <Notice tone="peligro">{unidad === 'Unidad' ? 'La cantidad tiene que ser mayor a 0.' : `Se compran ${unidad === 'Pack' ? 'packs' : 'bultos'} enteros: escribí un número sin decimales.`}</Notice> : null}
       <Field label="Costo por unidad ($)" labelSuffix={falta ? 'obligatorio' : undefined} invalid={falta} placeholder={falta ? 'Falta el costo' : undefined}
         keyboardType="decimal-pad" alignRight value={costoTexto} onChangeText={cambiarCosto}
         error={costoInvalido ? 'Escribí un costo mayor a 0, por ejemplo 1.150,50.' : undefined}

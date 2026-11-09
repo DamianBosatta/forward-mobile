@@ -1,8 +1,8 @@
 import type { CompraDetalle } from '@/libs/api-client'
 import { mostrarNumero } from '@/core/utils/numero'
+import { nivelesDeEmpaque, type EmpaqueProducto, type UnidadCompra } from '@/core/utils/empaque'
 
-/** UnidadCompra del servidor: en qué nivel de empaque viene la cantidad. */
-export type UnidadCompra = 'Unidad' | 'Bulto' | 'BultoMadre'
+export type { UnidadCompra }
 
 /**
  * Línea de una compra en el teléfono. La cantidad va en la unidad elegida; el costo es SIEMPRE
@@ -37,6 +37,7 @@ export function subtotalDe(l: LineaCompra): number | null {
 /** Nombre de cada empaque, en singular y plural (la compra sí habla de bultos: es la unidad de compra). */
 const EMPAQUE: Record<UnidadCompra, { singular: string; plural: string }> = {
   Unidad: { singular: 'Unidad', plural: 'Unidades' },
+  Pack: { singular: 'Pack', plural: 'Packs' },
   Bulto: { singular: 'Bulto', plural: 'Bultos' },
   BultoMadre: { singular: 'Bulto madre', plural: 'Bultos madre' },
 }
@@ -105,17 +106,9 @@ export function cambioDeCosto(costo: number | null, ultimo: number | null | unde
   return { pct, fuerte: Math.abs(pct) > UMBRAL_CAMBIO_COSTO }
 }
 
-/**
- * Empaques en los que se puede comprar el producto, con las unidades de cada uno (misma regla que
- * EmpaqueProducto del servidor). `bultoMadreContenido` cuenta BULTOS, no unidades: un bulto madre de
- * 4 bultos de 12 son 48 unidades.
- */
-export function unidadesDisponibles(ficha: { bultoContenido?: number | null; bultoMadreContenido?: number | null } | undefined) {
-  const porBulto = ficha?.bultoContenido && ficha.bultoContenido > 0 ? ficha.bultoContenido : 1
-  const opciones: { unidad: UnidadCompra; unidades: number }[] = [{ unidad: 'Unidad', unidades: 1 }]
-  if (porBulto > 1) opciones.push({ unidad: 'Bulto', unidades: porBulto })
-  if (ficha?.bultoMadreContenido && ficha.bultoMadreContenido > 0) opciones.push({ unidad: 'BultoMadre', unidades: porBulto * ficha.bultoMadreContenido })
-  return opciones
+/** Empaques en los que se puede comprar el producto: la regla única vive en `core/utils/empaque`. */
+export function unidadesDisponibles(ficha: EmpaqueProducto | undefined) {
+  return nivelesDeEmpaque(ficha)
 }
 
 /** "Costo +4,5 % sobre la última compra ($ 710,00)." El importe del último costo llega ya formateado. */
