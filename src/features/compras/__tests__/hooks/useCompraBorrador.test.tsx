@@ -56,6 +56,25 @@ describe('useCompraBorrador', () => {
     expect(mockPost).not.toHaveBeenCalled()
   })
 
+  it('una línea nueva abre en Bulto si el producto lo ofrece, si no en Unidad; en Unidad la cantidad va de a pack', async () => {
+    const { result } = usar()
+    await act(() => result.current.elegirProveedor('p1'))
+    const CAJA = { id: 'pr2', nombre: 'Caja', ventaMinimaUnidades: 8, bultoContenido: 288 }
+    const SUELTO = { id: 'pr3', nombre: 'Suelto', ventaMinimaUnidades: 8, bultoContenido: 12 }
+    act(() => result.current.setCantidadProducto(CAJA, 1))
+    act(() => result.current.setCantidadProducto(SUELTO, 1))
+    expect(result.current.lineas.find((l) => l.productoId === 'pr2')).toMatchObject({ unidad: 'Bulto', unidadesPorUnidad: 288, cantidad: 1 })
+    expect(result.current.lineas.find((l) => l.productoId === 'pr3')).toMatchObject({ unidad: 'Unidad', cantidad: 8 })
+    act(() => result.current.setCantidadProducto(SUELTO, 9))
+    expect(result.current.lineas.find((l) => l.productoId === 'pr3')?.cantidad).toBe(16)
+    act(() => result.current.setCantidadProducto(SUELTO, 15))
+    expect(result.current.lineas.find((l) => l.productoId === 'pr3')?.cantidad).toBe(8)
+    act(() => result.current.setCantidadProducto(SUELTO, 7))
+    expect(result.current.lineas.some((l) => l.productoId === 'pr3')).toBe(false)
+    act(() => result.current.setCantidadProducto(BALDE, 3))
+    expect(result.current.lineas.find((l) => l.productoId === 'pr1')).toMatchObject({ unidad: 'Unidad', cantidad: 3 })
+  })
+
   it('crea el borrador en el depósito por defecto, precarga el último costo y encadena la versión de cada PUT', async () => {
     const { result } = usar()
     await act(() => result.current.elegirProveedor('p1'))

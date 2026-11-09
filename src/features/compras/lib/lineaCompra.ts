@@ -1,6 +1,6 @@
 import type { CompraDetalle } from '@/libs/api-client'
 import { mostrarNumero } from '@/core/utils/numero'
-import { nivelesDeEmpaque, pasoDeUnidad, type EmpaqueProducto, type UnidadCompra } from '@/core/utils/empaque'
+import { nivelesDeEmpaque, nivelInicial, pasoDeUnidad, type EmpaqueProducto, type UnidadCompra } from '@/core/utils/empaque'
 
 export type { UnidadCompra }
 
@@ -116,6 +116,20 @@ export function unidadesDisponibles(ficha: EmpaqueProducto | undefined) {
 /** Cuánto suma el "+" y de a cuánto va la cantidad: el pack en Unidad (igual que venta), 1 en bultos. */
 export function pasoDeCantidad(unidad: UnidadCompra, ficha: EmpaqueProducto | undefined): number {
   return unidad === 'Unidad' ? pasoDeUnidad(ficha) : 1
+}
+
+/** Lleva una cantidad al paso de su nivel: hacia arriba (mínimo un paso) o hacia abajo (0 si no llega a un paso). */
+export function ajustarAlPaso(unidad: UnidadCompra, cantidad: number, ficha: EmpaqueProducto | undefined, hacia: 'arriba' | 'abajo' = 'arriba'): number {
+  const paso = pasoDeCantidad(unidad, ficha)
+  if (paso <= 1) return cantidad
+  return hacia === 'arriba' ? Math.max(paso, Math.ceil(cantidad / paso) * paso) : Math.floor(cantidad / paso) * paso
+}
+
+/** Línea nueva de un producto recién agregado: abre en `nivelInicial` (Bulto si hay) con la cantidad ajustada a su paso. */
+export function lineaNueva(prod: { id: string; nombre: string } & EmpaqueProducto, cantidad: number): LineaCompra {
+  const unidad = nivelInicial(prod)
+  const unidadesPorUnidad = nivelesDeEmpaque(prod).find((n) => n.unidad === unidad)?.unidades ?? 1
+  return { productoId: prod.id, nombre: prod.nombre, cantidad: ajustarAlPaso(unidad, cantidad, prod), unidad, unidadesPorUnidad, costoUnitario: null }
 }
 
 /** Cantidad válida: mayor a 0, entera en bultos y en Unidad múltiplo del pack. */
