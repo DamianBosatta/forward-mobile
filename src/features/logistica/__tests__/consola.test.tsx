@@ -7,7 +7,10 @@ import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { themeColors } from '@/libs/theme'
 import { conTema, estilo } from '@/core/ui/fw/__testing__/tema'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
-import { confirmarEntrega } from '@/features/logistica/__testing__/confirmar'
+import { REMITO_URL, conSubidaDeFotos, confirmarEntrega, fotoDelRemito } from '@/features/logistica/__testing__/confirmar'
+import { reiniciarCamara } from '@/features/logistica/__testing__/camara'
+
+jest.mock('expo-camera', () => require('@/features/logistica/__testing__/camara').expoCameraSimulada)
 
 const mockGet = jest.fn()
 const mockPost = jest.fn()
@@ -46,10 +49,12 @@ const HOJA = {
 let hojaServidor: unknown = HOJA
 let listaServidor: (url: string) => unknown = () => [{ id: 'h1' }]
 
-/** La entrega va en pasos: sin devolución y sin cobro, hasta el paso Confirmar con quién recibió escrito. */
+/** La entrega va en pasos: sin devolución y sin cobro (con la foto del remito, que entonces es obligatoria), hasta el paso Confirmar con quién recibió escrito. */
 async function alResumen(receptor = 'Carlos') {
+  conSubidaDeFotos(mockPost)
   await userEvent.press(screen.getByLabelText('No'))
   await userEvent.press(screen.getByLabelText('Continuar'))
+  await fotoDelRemito()
   if (receptor) await userEvent.type(screen.getByLabelText('Quién recibió'), receptor)
 }
 
@@ -70,6 +75,7 @@ function pintar(hoja: unknown = HOJA, choferId = 'u1', permissions: unknown[] = 
 beforeEach(() => {
   jest.clearAllMocks()
   useLogisticaStore.setState({ activeTrip: null })
+  reiniciarCamara()
   listaServidor = () => [{ id: 'h1' }]
   conTema('light')
 })
@@ -115,6 +121,7 @@ describe('Consola del chofer: hoja de ruta', () => {
     await confirmarEntrega()
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/paradas/p4/entregar', {
       claveIdempotencia: expect.any(String),
+      evidenciaUrl: REMITO_URL,
     })
     expect(await screen.findByLabelText('Entrega lista')).toBeTruthy()
     await userEvent.press(screen.getByLabelText('Siguiente entrega'))
@@ -259,7 +266,7 @@ describe('Consola del chofer: hoja de ruta', () => {
   })
 
   it('un doble toque rápido en confirmar manda un solo reporte', async () => {
-    mockPost.mockReturnValue(new Promise(() => {}))
+    mockPost.mockImplementation(() => new Promise(() => {}))
     pintar()
     await userEvent.press(await screen.findByLabelText('¡Llegué!'))
     await userEvent.press(await screen.findByLabelText('Entregué todo'))
@@ -271,7 +278,7 @@ describe('Consola del chofer: hoja de ruta', () => {
       fireEvent.press(confirmar)
     })
     await act(async () => {})
-    expect(mockPost).toHaveBeenCalledTimes(1)
+    expect(mockPost.mock.calls.filter(([u]) => String(u).endsWith('/entregar'))).toHaveLength(1)
   })
 
   it('en oscuro la tarjeta de la próxima parada usa la marca del tema oscuro', async () => {

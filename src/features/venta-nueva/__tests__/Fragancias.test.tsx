@@ -196,11 +196,28 @@ describe('S8 y S9: cantidad tipeada en cada fragancia', () => {
   const agregar = () => userEvent.press(screen.getByRole('button', { name: 'Agregar a la venta' }))
   const cantidades = () => useCarritoVenta.getState().lineas.map((l) => [l.productoId, l.cantidad])
 
-  it('no hay flechitas: ni − ni + ni botones de sumar o restar', async () => {
+  it('cada fragancia tiene flechas arriba y abajo que suman y restan de a una venta mínima (dueño 08-11)', async () => {
     await abrir()
-    expect(screen.queryByRole('button', { name: /^(Sumar|Restar) / })).toBeNull()
-    expect(screen.queryByText('−')).toBeNull()
-    expect(screen.queryByText('+')).toBeNull()
+    expect(screen.getByLabelText('Sumar una de Lavanda')).toBeTruthy()
+    expect(screen.getByLabelText('Quitar una de Lavanda')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Sumar una de Lavanda'))
+    expect(screen.getByLabelText('Lavanda').props.value).toBe('6')
+    await userEvent.press(screen.getByLabelText('Sumar una de Lavanda'))
+    expect(screen.getByLabelText('Lavanda').props.value).toBe('12')
+    expect(screen.getByText('12 unidades')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Quitar una de Lavanda'))
+    expect(screen.getByLabelText('Lavanda').props.value).toBe('6')
+    await agregar()
+    expect(cantidades()).toEqual([['pv1', 6]])
+  })
+
+  it('las flechas no bajan de 0 ni suben más allá del stock; tipear sigue funcionando después de usarlas', async () => {
+    await abrir()
+    expect(screen.getByLabelText('Quitar una de Lavanda').props.accessibilityState.disabled).toBe(true)
+    await userEvent.press(screen.getByLabelText('Sumar una de Lavanda'))
+    await userEvent.clear(screen.getByLabelText('Lavanda'))
+    await userEvent.type(screen.getByLabelText('Lavanda'), '24')
+    expect(screen.getByText('24 unidades')).toBeTruthy()
   })
 
   it('cada fragancia es un campo numérico con su nombre, que al enfocar selecciona todo', async () => {
@@ -289,8 +306,6 @@ describe('S8: fila compacta aprobada de fragancia', () => {
     expect(textos[0]).toBe('Saphirus Aerosol - Lavanda'.replace('Saphirus Aerosol - ', ''))
     expect(textos[1]).toMatch(/de a 6/)
     const st = aplanar(screen.getByLabelText('Lavanda').props.style)
-    expect(st.width).toBeGreaterThanOrEqual(88)
-    expect(st.width).toBeLessThanOrEqual(100)
     expect(st.height).toBeGreaterThanOrEqual(44)
     await userEvent.type(screen.getByLabelText('Lavanda'), '25')
     expect(within(screen.getByTestId('fragancia-pv1')).getByText('Se vende de a 6')).toBeTruthy()

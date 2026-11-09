@@ -47,7 +47,7 @@ function servidor(url: string) {
   if (url.startsWith('/api/v1/Stocks?')) {
     return Promise.resolve({ items: [FILA_MAKE, FILA_TOALLA], page: 1, pageSize: 20, totalCount: 2, totalPages: 1, hasNextPage: false })
   }
-  if (url.startsWith('/api/v1/Productos?')) {
+  if (url.startsWith('/api/v1/Productos/catalogo-stock?')) {
     return Promise.resolve({ items: [PRODUCTO], page: 1, pageSize: 20, totalCount: 1, totalPages: 1, hasNextPage: false })
   }
   return Promise.reject(new Error(`sin respuesta para ${url}`))
@@ -94,7 +94,9 @@ describe('Stock por depósito, con CAP_VER_CANTIDADES_STOCK', () => {
     await abrirStock()
 
     expect(await screen.findByText('Make Lavajean')).toBeTruthy()
-    expect(screen.getByText('PRO06787 · Mín. 24')).toBeTruthy()
+    // S2: el código va como insignia junto al nombre; el mínimo, en su renglón.
+    expect(screen.getByText('PRO06787')).toBeTruthy()
+    expect(screen.getByText('Mín. 24')).toBeTruthy()
     expect(screen.getByText('Reservado 6 · Por ingresar 48')).toBeTruthy()
     expect(screen.getByLabelText('Disponible 8')).toBeTruthy()
     expect(within(screen.getByLabelText('Make Lavajean, PRO06787')).getByText('En alerta')).toBeTruthy()
@@ -167,6 +169,37 @@ describe('Stock por depósito, sin CAP_VER_CANTIDADES_STOCK', () => {
     expect(screen.queryByText('Reservado')).toBeNull()
     expect(screen.queryByText('Artículos')).toBeNull()
   })
+
+  it('la lista sale del catálogo por depósito, no de GET /Productos (que no filtra por depósito)', async () => {
+    renderPantalla()
+    await abrirStock()
+
+    expect(await screen.findByText(PRODUCTO.nombre)).toBeTruthy()
+    expect(llamadasGet().some((u) => u.startsWith('/api/v1/Productos/catalogo-stock?'))).toBe(true)
+    expect(llamadasGet().some((u) => u.startsWith('/api/v1/Productos?'))).toBe(false)
+  })
+
+  it('quien ve todos los depósitos no manda depósito: el servidor le devuelve su lista de siempre', async () => {
+    conUsuario([{ module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true }], 'dep-norte')
+    renderPantalla()
+    await abrirStock()
+
+    expect(await screen.findByText(PRODUCTO.nombre)).toBeTruthy()
+    const url = llamadasGet().find((u) => u.startsWith('/api/v1/Productos/catalogo-stock?'))!
+    expect(new URLSearchParams(url.split('?')[1]).has('depositoId')).toBe(false)
+  })
+
+  it('la lista de stock no trae variantes hijas ni hermanas que no coinciden con la búsqueda', async () => {
+    conUsuario([{ module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true }], 'dep-norte')
+    renderPantalla()
+    await abrirStock()
+
+    expect(await screen.findByText(PRODUCTO.nombre)).toBeTruthy()
+    const url = llamadasGet().find((u) => u.startsWith('/api/v1/Productos/catalogo-stock?'))!
+    const params = new URLSearchParams(url.split('?')[1])
+    expect(params.get('sinVariantes')).toBe('true')
+    expect(params.get('familiasCompletas')).toBe('false')
+  })
 })
 
 describe('Pantalla Stock separada del catálogo', () => {
@@ -183,5 +216,38 @@ describe('Pantalla Stock separada del catálogo', () => {
     mockParams = { busqueda: 'SAP-AER-250' }
     renderPantalla()
     expect((await screen.findByLabelText('Buscar por código o nombre')).props.value).toBe('SAP-AER-250')
+  })
+})
+
+describe('Stock: "Todos" los depósitos solo con permiso (S18)', () => {
+  const TODOS = { module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true }
+  const OTROS = { module: 'CAP_VER_STOCK_OTROS_DEPOSITOS', canRead: true }
+  const pedidoDeStock = () => llamadasGet().filter((u) => u.startsWith('/api/v1/Stocks?')).pop() ?? ''
+
+  it('sin ninguna de las dos capacidades no aparece "Todos" y se pide el depósito del usuario', async () => {
+    conUsuario(CON_CANTIDADES, 'dep-1')
+    renderPantalla()
+    await abrirStock()
+    await waitFor(() => expect(pedidoDeStock()).toContain('DepositoId=dep-1'))
+    expect(screen.queryByRole('button', { name: 'Todos los depósitos' })).toBeNull()
+  })
+
+  it('con CAP_VER_TODOS_LOS_DEPOSITOS abre en "Todos": no manda DepositoId y muestra el depósito de cada renglón', async () => {
+    conUsuario([...CON_CANTIDADES, TODOS], 'dep-1')
+    renderPantalla()
+    await abrirStock()
+    await screen.findByText('Make Lavajean')
+    expect(screen.getByRole('button', { name: 'Todos los depósitos', selected: true })).toBeTruthy()
+    expect(pedidoDeStock()).not.toContain('DepositoId=')
+    expect(screen.getAllByText(/Central/).length).toBeGreaterThan(0)
+  })
+
+  it('con CAP_VER_STOCK_OTROS_DEPOSITOS abre en el propio y puede pasar a "Todos"', async () => {
+    conUsuario([...CON_CANTIDADES, OTROS], NORTE_ID)
+    renderPantalla()
+    await abrirStock()
+    await waitFor(() => expect(pedidoDeStock()).toContain(`DepositoId=${NORTE_ID}`))
+    await userEvent.press(await screen.findByRole('button', { name: 'Todos los depósitos' }))
+    await waitFor(() => expect(pedidoDeStock()).not.toContain('DepositoId='))
   })
 })

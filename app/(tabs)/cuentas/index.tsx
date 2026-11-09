@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftRight } from 'lucide-react-native'
@@ -40,12 +41,12 @@ function CuentasCorrientesScreen() {
   // Tesorería > "Cargar un cheque" llega con `cobrar=cheque`: elegir el cliente abre su cobro con el medio Cheque.
   const { cobrar } = useLocalSearchParams<{ cobrar?: string }>()
   const cargandoCheque = cobrar === 'cheque'
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda] = useFiltroPersistente('cuentas.busqueda', '')
   const [abierto, setAbierto] = useState<string | null>(null)
   // TM9: en tablet horizontal el cobro se abre en el mismo panel, sin salir de la lista.
   const [cobrando, setCobrando] = useState(false)
-  const [soloVencidas, setSoloVencidas] = useState(false)
-  const [lado, setLado] = useState<LadoDeCuentas>('medeben')
+  const [soloVencidas, setSoloVencidas] = useFiltroPersistente('cuentas.soloVencidas', false)
+  const [lado, setLado] = useFiltroPersistente<LadoDeCuentas>('cuentas.lado', 'medeben')
   const { canRead } = usePermissions()
   const puedeVerDeudas = canRead('MOD_PAGOS')
   const resumenDeudas = useDeudasResumen(puedeVerDeudas)

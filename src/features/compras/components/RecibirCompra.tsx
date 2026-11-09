@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { ScrollView, Text, TextInput, View } from 'react-native'
 import { Check } from 'lucide-react-native'
 import { Button, Field, Notice, PieFijo, TopBar, formatImporte } from '@/core/ui/fw'
@@ -122,7 +123,7 @@ export function RecibirCompra({ compra, onVolver, onHecho, onConflicto }: Props)
           <Check size={16} color={c.onAction} strokeWidth={3} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{d.nombreProducto}</Text>
+          <ProductoIdentidad nombre={d.nombreProducto} marca={d.marca} codigo={d.codigoPropio} />
           <Text style={secundario}>{`Pedidas ${mostrarNumero(d.cantidad)}${empaque ? ` · ${empaque}` : ''}`}</Text>
         </View>
         {llego(d, 96)}

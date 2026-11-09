@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Button, Field, Notice, PieFijo, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, formatPorcentaje } from '@/core/ui/fw'
@@ -161,7 +162,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
             <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Debajo del mínimo</Text>
             {debajoDelMinimo.map((it) => (
               <View key={it.detalleId} accessible style={{ gap: space[1], paddingTop: space[2], borderTopWidth: 1, borderTopColor: c.border }}>
-                <Text style={[typeScale.secundario, { color: c.text }]}>{it.productoNombre}</Text>
+                <ProductoIdentidad nombre={it.productoNombre} marca={it.marca} codigo={it.codigoPropio} estiloNombre={typeScale.secundario} />
                 <Text style={secundario}>{`Precio ${formatImporte(it.precioEfectivo)} · Mínimo ${formatImporte(it.precioMinimoRentable)}`}</Text>
                 <Text style={secundario}>
                   {veCostos ? `Aporte ${formatImporte(it.aporteOverhead)} · Sacrificio ${formatImporte(it.sacrificio)}` : `Sacrificio ${formatImporte(it.sacrificio)}`}
@@ -177,7 +178,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
           {(q.data?.detalles ?? []).map((d) => (
             <View key={d.id} style={{ gap: space[1], paddingVertical: space[1] }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-                <Text style={[typeScale.secundario, { color: c.text, flex: 1 }]}>{d.productoNombre}</Text>
+                <View style={{ flex: 1 }}><ProductoIdentidad nombre={d.productoNombre} marca={d.marca} codigo={d.codigoPropio} estiloNombre={typeScale.secundario} /></View>
                 <Text style={[typeScale.secundario, cifras, { color: c.text }]}>{formatImporte(totales?.subtotalDeLinea[d.id] ?? d.subtotal)}</Text>
               </View>
               <Text style={secundario}>

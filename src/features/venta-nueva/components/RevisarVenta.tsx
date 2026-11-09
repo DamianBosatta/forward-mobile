@@ -1,4 +1,5 @@
 import React, { useRef, useState, type ReactNode } from 'react'
+import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ArrowLeft, ChevronRight } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
@@ -173,9 +174,10 @@ export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, de
                 onPress={() => onEditarLinea(l)}
                 style={{ gap: space[1] }}
               >
-                {l.producto.marca ? <Text style={secundario}>{l.producto.marca}</Text> : null}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-                  <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }}>{l.producto.nombre}</Text>
+                  <View style={{ flex: 1 }}>
+                    <ProductoIdentidad nombre={l.producto.nombre} marca={l.producto.marca} codigo={l.producto.codigoPropio} lineasNombre={3} />
+                  </View>
                   <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(subtotalLinea(l))}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>

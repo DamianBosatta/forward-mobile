@@ -16,21 +16,21 @@ interface Props {
   /** "Entregué todo": sigue al reporte de la entrega (quién recibió, remito, devolución, cobro). */
   onEntregueTodo: () => void
   onNoPudeEntregar: () => void
-  /** Teléfono de la empresa (`HojaRutaDetalleDto.telefonoEmpresa`); sin número válido no se ofrece llamar. */
-  telefonoEmpresa?: string | null
-  onLlamarEmpresa?: () => void
+  /** "Llamar cliente": marca `parada.telefono`; sin número válido el botón queda apagado y dice por qué. */
+  onLlamarCliente?: () => void
 }
 
 /**
  * Lámina chofer-02-llegue: qué se entrega acá. La lista de piezas es una ayuda visual: tildarlas o no
  * no cambia lo que se manda (el primario "Entregué todo" no pregunta por piezas sin tildar).
  */
-export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntregar, telefonoEmpresa, onLlamarEmpresa }: Props) {
+export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntregar, onLlamarCliente }: Props) {
   const c = useColors()
   const { bottom } = useSafeAreaInsets()
   const { width } = useWindowDimensions()
   const columna = width >= 768 ? { maxWidth: 640, width: '100%' as const, alignSelf: 'center' as const } : null
   const piezas = piezasDeParada(parada)
+  const puedeLlamar = urlLlamar(parada.telefono) !== null
   const [marcadas, setMarcadas] = useState<ReadonlySet<number>>(new Set())
   const [escaneando, setEscaneando] = useState(false)
 
@@ -94,8 +94,11 @@ export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntrega
           <View style={{ gap: space[3], ...columna }}>
             <Button size="xl" icon={Check} label="Entregué todo" onPress={entregueTodo} />
             <Button size="xl" variant="secundario" label="No pude entregar" onPress={onNoPudeEntregar} />
-            {onLlamarEmpresa && urlLlamar(telefonoEmpresa) ? (
-              <Button size="xl" variant="secundario" icon={Phone} label="Llamar a la empresa" onPress={onLlamarEmpresa} />
+            {onLlamarCliente ? (
+              <>
+                <Button size="xl" variant="secundario" icon={Phone} label="Llamar cliente" disabled={!puedeLlamar} onPress={onLlamarCliente} />
+                {puedeLlamar ? null : <Text style={{ ...typeScale.secundario, color: c.textSecondary, textAlign: 'center' }}>Este cliente no tiene teléfono cargado.</Text>}
+              </>
             ) : null}
           </View>
         </View>

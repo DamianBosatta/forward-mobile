@@ -29,6 +29,7 @@ export const mov = (id: string, fecha: string, extra: Partial<MovimientoCuentaDt
   debe: 0,
   haber: 0,
   saldoHistorico: 0,
+  itemsDevueltos: [],
   ...extra,
 })
 
@@ -52,6 +53,7 @@ export const movSocio = (id: string, fecha: string, extra: Partial<MovimientoSoc
   haber: 0,
   saldoHistorico: 0,
   imputadoA: [],
+  itemsDevueltos: [],
   ...extra,
 })
 

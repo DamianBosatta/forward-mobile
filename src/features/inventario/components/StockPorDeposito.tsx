@@ -1,4 +1,5 @@
 import React from 'react'
+import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { ActivityIndicator, FlatList, ScrollView, Text, View } from 'react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, StatusChip } from '@/core/ui/fw'
@@ -11,7 +12,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useProductosDeStockConsulta } from '../hooks/useProductosDeStockConsulta'
 import { chipDeStock } from '@/features/catalogo/lib/presentacion'
-import { useStockPorDeposito } from '../hooks/useStockPorDeposito'
+import { TODOS_LOS_DEPOSITOS, useStockPorDeposito } from '../hooks/useStockPorDeposito'
 import { chipDeFilaStock, textoMinimo, textoReservadas, type FiltroEstadoStock } from '../lib/stock-presentacion'
 
 const ESTADOS: { valor: FiltroEstadoStock; label: string }[] = [
@@ -31,10 +32,10 @@ function Kpi({ label, valor }: { label: string; valor: number | null | undefined
 }
 
 /** Renglón del teléfono: nombre, código y mínimo, disponible grande y reservadas / por ingresar. */
-function FilaTelefono({ f }: { f: StockItem }) {
+function FilaTelefono({ f, conDeposito }: { f: StockItem; conDeposito: boolean }) {
   const c = useColors()
   const chip = chipDeFilaStock(f)
-  const sub = [f.codigoPropio, textoMinimo(f.stockMinimo)].filter(Boolean).join(' · ')
+  const sub = [conDeposito ? f.deposito : null, textoMinimo(f.stockMinimo)].filter(Boolean).join(' · ')
   const extra = textoReservadas(f.cantidadReservada, f.cantidadVirtual)
   return (
     <View
@@ -42,8 +43,8 @@ function FilaTelefono({ f }: { f: StockItem }) {
       style={{ flexDirection: 'row', gap: space[3], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface }}
     >
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
-        <Text numberOfLines={2} style={[typeScale.cuerpoDestacado, { color: c.text }]}>{f.producto}</Text>
-        <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary }]}>{sub}</Text>
+        <ProductoIdentidad nombre={f.producto} marca={f.marca} codigo={f.codigoPropio} />
+        {sub ? <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary }]}>{sub}</Text> : null}
         <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{extra}</Text>
       </View>
       <View style={{ alignItems: 'flex-end', gap: space[1] }}>
@@ -68,7 +69,7 @@ function CeldaNumero({ children, fuerte }: { children: string; fuerte?: boolean 
 }
 
 /** Renglón de la tablet (lámina TabStock): Producto · Disponible · Reservado · Por ingresar · Mínimo. */
-function FilaTablet({ f }: { f: StockItem }) {
+function FilaTablet({ f, conDeposito }: { f: StockItem; conDeposito: boolean }) {
   const c = useColors()
   const chip = chipDeFilaStock(f)
   return (
@@ -78,8 +79,8 @@ function FilaTablet({ f }: { f: StockItem }) {
     >
       <View style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
         <View style={{ flexShrink: 1 }}>
-          <Text numberOfLines={1} style={[typeScale.cuerpoDestacado, { color: c.text }]}>{f.producto}</Text>
-          <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary }]}>{f.codigoPropio}</Text>
+          <ProductoIdentidad nombre={f.producto} marca={f.marca} codigo={f.codigoPropio} lineasNombre={1} />
+          {conDeposito && f.deposito ? <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary }]}>{f.deposito}</Text> : null}
         </View>
         {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
       </View>
@@ -138,8 +139,7 @@ function StockSinCantidades({ busqueda }: { busqueda: string }) {
             style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface }}
           >
             <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
-              <Text numberOfLines={2} style={[typeScale.cuerpoDestacado, { color: c.text }]}>{item.nombre}</Text>
-              <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary }]}>{item.codigoPropio}</Text>
+              <ProductoIdentidad nombre={item.nombre} marca={item.marca} codigo={item.codigoPropio} />
             </View>
             {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
           </View>
@@ -153,10 +153,13 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
   const c = useColors()
   const s = useStockPorDeposito({ conCantidades: true, busqueda })
   const sinRed = s.isError && esFallaDeRed(s.error)
+  // En "Todos" hay una fila por producto y depósito: cada una dice de cuál es.
+  const conDeposito = s.depositoId === TODOS_LOS_DEPOSITOS
   return (
     <View style={{ flex: 1 }}>
-      {s.depositos.length > 1 ? (
+      {s.depositos.length > 1 || (s.puedeVerTodos && s.depositos.length > 0) ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }} style={{ flexGrow: 0 }}>
+          {s.puedeVerTodos ? <FiltroChip label="Todos los depósitos" activo={s.depositoId === TODOS_LOS_DEPOSITOS} onPress={() => s.setDeposito(TODOS_LOS_DEPOSITOS)} /> : null}
           {s.depositos.map((d) => (
             <FiltroChip key={d.id} label={d.nombre} activo={d.id === s.depositoId} onPress={() => s.setDeposito(d.id)} />
           ))}
@@ -195,7 +198,7 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
           }
           ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan." />}
           ListFooterComponent={s.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : undefined}
-          renderItem={({ item }) => (tablet ? <FilaTablet f={item} /> : <FilaTelefono f={item} />)}
+          renderItem={({ item }) => (tablet ? <FilaTablet f={item} conDeposito={conDeposito} /> : <FilaTelefono f={item} conDeposito={conDeposito} />)}
         />
       )}
     </View>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Button, Notice, StatusChip, TopBar, TotalsRow, TwoPane, formatImporte, useMenuLeading } from '@/core/ui/fw'
@@ -50,7 +51,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
   // La web solo deja decidir con la capacidad Y modificar Ventas (VentaGestionDetail.tsx:146-149).
   const puedeDecidir = useAuthStore((s) => s.hasCapability('CAP_AUTORIZAR_VENTA') && s.canDo('MOD_VENTAS', 'update'))
   const q = usePendientesAutorizacion(puede)
-  const [filtro, setFiltro] = useState<ClaveMotivo | 'todas'>('todas')
+  const [filtro, setFiltro] = useFiltroPersistente<ClaveMotivo | 'todas'>('autorizaciones.filtro', 'todas')
   const [elegida, setElegida] = useState<string | null>(null)
   const [decidiendo, setDecidiendo] = useState<{ venta: VentaPendienteAutorizacion; decision: Decision } | null>(null)
 

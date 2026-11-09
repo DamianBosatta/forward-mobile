@@ -82,6 +82,41 @@ export function useCatalogoStock(depositoId?: string) {
   })
 }
 
+export interface CatalogoStockParams {
+  search?: string
+  pageSize?: number
+  soloComprables?: boolean
+  /** Sin variantes hijas (el servidor las incluye por defecto): lo que `GET /Productos` listaba. */
+  sinVariantes?: boolean
+  /** `false`: una búsqueda no trae a las hermanas que no coinciden (el servidor lo toma como `true` por defecto). */
+  familiasCompletas?: boolean
+}
+
+/**
+ * Lista paginada del catálogo por depósito (`catalogo-stock`), para pickers con scroll infinito. A diferencia de
+ * `GET /Productos` (ABM, sin filtro de depósito), el servidor la recorta al depósito del usuario salvo
+ * `CAP_VER_TODOS_LOS_DEPOSITOS`: nunca se manda `depositoId`.
+ */
+export function useInfiniteCatalogoStock(params: CatalogoStockParams = {}, { mantenerAnterior = false } = {}) {
+  return useInfiniteQuery({
+    placeholderData: mantenerAnterior ? keepPreviousData : undefined,
+    queryKey: [...productosKeys.all, 'catalogoStockInfinito', params],
+    queryFn: ({ pageParam = 1 }) => {
+      const searchParams = new URLSearchParams()
+      searchParams.set('pageNumber', String(pageParam))
+      searchParams.set('pageSize', String(params.pageSize ?? 20))
+      if (params.search) searchParams.set('searchTerm', params.search)
+      if (params.soloComprables) searchParams.set('soloComprables', 'true')
+      if (params.sinVariantes) searchParams.set('sinVariantes', 'true')
+      if (params.familiasCompletas !== undefined) searchParams.set('familiasCompletas', String(params.familiasCompletas))
+      return api.get<CatalogoStockPage>(`/api/v1/Productos/catalogo-stock?${searchParams}`)
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => (lastPage?.hasNextPage ? (lastPage.page ?? 1) + 1 : undefined),
+    staleTime: 60_000,
+  })
+}
+
 export function useProductos(params: ProductoParams = {}) {
   const searchParams = new URLSearchParams()
   if (params.pageNumber) searchParams.set('pageNumber', String(params.pageNumber))

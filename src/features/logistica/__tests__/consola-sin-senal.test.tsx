@@ -5,7 +5,7 @@ import { useAuthStore } from '@/libs/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { conTema } from '@/core/ui/fw/__testing__/tema'
 import { reiniciarCamara } from '@/features/logistica/__testing__/camara'
-import { confirmarEntrega } from '@/features/logistica/__testing__/confirmar'
+import { confirmarEntrega, noSumarOtroCobro } from '@/features/logistica/__testing__/confirmar'
 import { leerCola, quitarDeCola } from '../cola'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
 
@@ -79,8 +79,13 @@ async function abrirEntrega(devuelve = false) {
 }
 const continuar = () => userEvent.press(screen.getByLabelText('Continuar'))
 /** Sin cobro: del cobro al paso Confirmar (quién recibió escrito), donde está "Confirmar entrega". */
-async function alResumen(receptor = 'Abel') {
+async function alResumen(receptor = 'Abel', cortarSenal = true) {
+  // Un cobro en efectivo: sin cobro de dinero haría falta la foto del remito, que se sube en el acto y necesita señal.
+  await userEvent.press(screen.getByLabelText('Efectivo'))
+  await userEvent.type(screen.getByLabelText('Monto del cobro 1'), '1000')
+  if (cortarSenal) act(() => onlineManager.setOnline(false))
   await continuar()
+  await noSumarOtroCobro()
   await userEvent.type(screen.getByLabelText('Quién recibió'), receptor)
 }
 async function cerrarListo() {
@@ -107,7 +112,7 @@ describe('Consola del chofer sin señal', () => {
   })
 
   it('una entrega sin señal no llama al servidor: queda guardada con su clave y su cuerpo, y lo dice', async () => {
-    await pintar()
+    await pintar(HOJA, false)
     await abrirEntrega()
     await alResumen()
     await confirmarEntrega()
@@ -123,7 +128,7 @@ describe('Consola del chofer sin señal', () => {
   })
 
   it('al volver al viaje la parada ya está hecha, el progreso avanza y la píldora cuenta la acción con "Ver"', async () => {
-    await pintar()
+    await pintar(HOJA, false)
     await abrirEntrega()
     await alResumen()
     await confirmarEntrega()
@@ -132,8 +137,8 @@ describe('Consola del chofer sin señal', () => {
     expect(screen.getByLabelText('1 acción esperando señal')).toBeTruthy()
     await userEvent.press(screen.getByLabelText('Ver las acciones esperando señal'))
     const hoja = await screen.findByLabelText('Acciones esperando señal')
-    expect(within(hoja).getByText('Entrega')).toBeTruthy()
-    expect(within(hoja).getByText('Abel')).toBeTruthy()
+    expect(within(hoja).getByText('Entrega y cobro')).toBeTruthy()
+    expect(within(hoja).getByText('Abel · cobrado $ 1.000,00')).toBeTruthy()
   })
 
   it('la lista dice qué se hizo: entrega, cobro y devolución, con lo cobrado', async () => {
@@ -148,6 +153,7 @@ describe('Consola del chofer sin señal', () => {
     act(() => onlineManager.setOnline(false))
     await userEvent.type(screen.getByLabelText('Monto del cobro 1'), '500')
     await continuar()
+    await noSumarOtroCobro()
     await userEvent.type(screen.getByLabelText('Quién recibió'), 'Abel')
     await confirmarEntrega()
     await cerrarListo()
@@ -177,7 +183,7 @@ describe('Consola del chofer sin señal', () => {
     mockPost.mockResolvedValue({ paradaId: 'p1', repetida: false })
     await pintar(HOJA, false)
     await abrirEntrega()
-    await alResumen()
+    await alResumen('Abel', false)
     await confirmarEntrega()
     await cerrarListo()
     expect(llamadasA(ENTREGAR)).toHaveLength(1)
@@ -189,7 +195,7 @@ describe('Consola del chofer sin señal', () => {
     mockPost.mockRejectedValueOnce(new TypeError('Network request failed'))
     await pintar(HOJA, false)
     await abrirEntrega()
-    await alResumen()
+    await alResumen('Abel', false)
     await confirmarEntrega()
     await screen.findByLabelText('Entrega lista')
     expect(leerCola('u1')).toHaveLength(1)
@@ -197,7 +203,7 @@ describe('Consola del chofer sin señal', () => {
   })
 
   it('no se puede finalizar el viaje mientras queden acciones sin mandar', async () => {
-    await pintar({ ...HOJA, detalles: [HOJA.detalles[0]] })
+    await pintar({ ...HOJA, detalles: [HOJA.detalles[0]] }, false)
     await abrirEntrega()
     await alResumen()
     await confirmarEntrega()

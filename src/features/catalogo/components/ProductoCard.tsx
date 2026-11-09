@@ -2,7 +2,7 @@ import React from 'react'
 import { Image, Pressable, Text, View } from 'react-native'
 import { Package } from 'lucide-react-native'
 import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
-import { StatusChip, formatImporte } from '@/core/ui/fw'
+import { ProductoIdentidad, StatusChip, formatImporte } from '@/core/ui/fw'
 import { getFullImageUrl } from '@/libs/api-client/media'
 import { chipDeTarjeta, detalleDeTarjeta, textoVariacion, type ProductoDeTarjeta } from '../lib/presentacion'
 
@@ -70,14 +70,9 @@ export function ProductoCard({ producto, disponible, grilla, seleccionado, onPre
       </View>
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
-          <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary, flexShrink: 1 }]}>
-            {producto.codigoPropio}
-          </Text>
+          <ProductoIdentidad nombre={producto.nombre} marca={producto.marca} codigo={producto.codigoPropio} />
           {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
         </View>
-        <Text numberOfLines={2} style={[typeScale.cuerpoDestacado, { color: c.text }]}>
-          {producto.nombre}
-        </Text>
         {detalle ? <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{detalle}</Text> : null}
         {/* wrap + marginLeft auto: en la grilla el importe baja de renglón y queda a la derecha. */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: space[2] }}>

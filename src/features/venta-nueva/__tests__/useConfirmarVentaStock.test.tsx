@@ -2,7 +2,6 @@ import React from 'react'
 import { act, renderHook } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { CLAVE_CATALOGO } from '../hooks/useCatalogoVenta'
 import { useConfirmarVenta } from '../hooks/useConfirmarVenta'
 import { producto } from '../__testing__/producto'
 import type { LineaCarrito } from '../lib/carrito'
@@ -36,70 +35,28 @@ beforeEach(() => {
   mockPost.mockResolvedValue({ ventaId: 'v1', message: 'ok', estado: 1 })
 })
 
-describe('useConfirmarVenta: falta stock (S6, S7)', () => {
-  it('quien no ve cantidades y puedeVenderse true: confirma sin pedir motivo aunque disponible llegue en 0', async () => {
-    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [] } as never })
-    const { result } = hook([linea({ disponible: 0, puedeVenderse: true })])
+describe('useConfirmarVenta: falta stock (el servidor lo deja por autorizar, sin motivo obligatorio)', () => {
+  it.each([
+    ['quien no ve cantidades y el producto no puede venderse', [], { disponible: 0, puedeVenderse: false }],
+    ['quien ve cantidades y pide más que el disponible', [CAP], { disponible: 3, puedeVenderse: true }],
+  ])('%s: manda el pedido directo, sin motivo y sin consultar disponibilidad', async (_t, permissions, over) => {
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions } as never })
+    const { result } = hook([linea(over)])
     await act(async () => { await result.current.confirmar() })
-    expect(result.current.pedirMotivo).toBe(false)
+    expect(mockPost).toHaveBeenCalledTimes(1)
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas', expect.not.objectContaining({ motivoVentaSinStock: expect.anything() }))
-  })
-
-  it('quien no ve cantidades y puedeVenderse false: pide el motivo antes de mandar', async () => {
-    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [] } as never })
-    const { result } = hook([linea({ disponible: 0, puedeVenderse: false })])
-    await act(async () => { await result.current.confirmar() })
-    expect(result.current.pedirMotivo).toBe(true)
-    expect(mockPost).not.toHaveBeenCalled()
-  })
-
-  it('quien ve cantidades compara contra disponible: pide motivo aunque puedeVenderse diga true', async () => {
-    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [CAP] } as never })
-    const { result } = hook([linea({ disponible: 3, puedeVenderse: true })])
-    await act(async () => { await result.current.confirmar() })
-    expect(result.current.pedirMotivo).toBe(true)
-    expect(mockPost).not.toHaveBeenCalled()
-  })
-
-  it('con el motivo la venta sin stock se manda (va a autorización): no se bloquea', async () => {
-    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [CAP] } as never })
-    const { result } = hook([linea({ disponible: 3 })])
-    await act(async () => { await result.current.confirmar() })
-    await act(async () => { await result.current.confirmar('Repone el lunes') })
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas', expect.objectContaining({ motivoVentaSinStock: 'Repone el lunes' }))
+    expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Stocks/disponibilidad', expect.anything())
+    expect(result.current.error).toBeNull()
     expect(mockReplace).toHaveBeenCalled()
   })
 
-  it('decide con el stock del catálogo al momento de confirmar, no con el de cuando se renderizó', async () => {
+  it('el mostrador sin stock sigue rechazado: se ve el mensaje del servidor y no se navega', async () => {
     useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [CAP] } as never })
-    const { result } = hook([linea({ disponible: 9 })])
-    // Después de revalidar, el catálogo dice que quedan 3 de los 5 pedidos.
-    qc.setQueryData(CLAVE_CATALOGO, { items: [producto({ id: 'p1', disponible: 3 })], truncado: false })
-    await act(async () => { await result.current.confirmar() })
-    expect(result.current.pedirMotivo).toBe(true)
-    expect(mockPost).not.toHaveBeenCalled()
-  })
-
-  it('quien no ve cantidades y el servidor dice que no alcanza: pide el motivo antes de mandar, sin error técnico', async () => {
-    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [] } as never })
-    mockPost.mockImplementation(async (url: string) => (url === '/api/v1/Stocks/disponibilidad' ? [{ productoId: 'p1', disponible: false }] : { ventaId: 'v1', message: 'ok', estado: 1 }))
-    const { result } = hook([linea({ disponible: 0, puedeVenderse: true }, 50)])
-    await act(async () => { await result.current.confirmar() })
-    expect(result.current.pedirMotivo).toBe(true)
-    expect(result.current.error).toBeNull()
-    expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas', expect.anything())
-  })
-
-  it('si igual el servidor responde que falta el motivo, se pide el motivo y no se muestra el error técnico', async () => {
-    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [] } as never })
     const { ApiError } = jest.requireActual('@/core/api/client')
-    mockPost.mockImplementation(async (url: string) => {
-      if (url === '/api/v1/Stocks/disponibilidad') return [{ productoId: 'p1', disponible: true }]
-      throw new ApiError(400, 'Stock insuficiente', undefined, 'VentaFaltaStockSinJustificacion')
-    })
-    const { result } = hook([linea({ disponible: 0, puedeVenderse: true }, 50)])
+    mockPost.mockRejectedValue(new ApiError(400, 'El retiro en local no tiene stock suficiente.', undefined, 'VentaMostradorSinStock'))
+    const { result } = hook([linea({ disponible: 3 })])
     await act(async () => { await result.current.confirmar() })
-    expect(result.current.pedirMotivo).toBe(true)
-    expect(result.current.error).toBeNull()
+    expect(result.current.error).toContain('El retiro en local no tiene stock suficiente.')
+    expect(mockReplace).not.toHaveBeenCalled()
   })
 })

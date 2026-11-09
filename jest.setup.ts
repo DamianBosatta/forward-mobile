@@ -67,3 +67,8 @@ jest.mock('react-native-mmkv', () => {
   }
 })
 
+
+// Los filtros de las listas viven en memoria toda la sesión (useFiltroPersistente): cada test arranca limpio.
+beforeEach(() => {
+  require('@/core/hooks/useFiltroPersistente').olvidarFiltros()
+})

@@ -23,6 +23,7 @@ import { persistQueryClientSubscribe } from '@tanstack/react-query-persist-clien
 import { api, configureApiClient } from '@/core/api/client'
 import { crearQueryClient, opcionesDePersistencia } from '@/core/query/queryClient'
 import { mmkvPersister } from '@/core/query/persistConfig'
+import { useFiltrosStore } from '@/core/hooks/useFiltroPersistente'
 import { storage } from '@/core/utils/storage'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { useAuthStore } from '../store/auth.store'
@@ -53,6 +54,7 @@ async function conSesion() {
   mockSecure.set(CREDENCIAL_HUELLA, JSON.stringify({ username: 'chofer', password: 'secreta' }))
   mockSecure.set(DECISION_HUELLA, 'true')
   useOfertaDeHuella.getState().ofrecer({ username: 'chofer', password: 'secreta' })
+  useFiltrosStore.getState().poner('socios.lista', { busqueda: 'pepe' })
   expect((await mmkvPersister.restoreClient())?.clientState.queries).toHaveLength(1)
   expect(await AsyncStorage.getItem('forward-logistica-store')).toContain('Almacén Don Pepe')
   return { qc, soltar: () => { dejarDeGuardar(); desconectar() } }
@@ -72,6 +74,8 @@ async function sinNadaDeLaSesion(qc: ReturnType<typeof crearQueryClient>, huella
   expect(await mmkvPersister.restoreClient()).toBeUndefined()
   expect(useLogisticaStore.getState().activeTrip).toBeNull()
   expect(await AsyncStorage.getItem('forward-logistica-store')).toBeNull()
+  // The saved list filters of the previous person are not inherited by the next one.
+  expect(useFiltrosStore.getState().valores).toEqual({})
   // An unanswered offer holds a password in memory: it goes in both kinds.
   expect(useOfertaDeHuella.getState().pendiente).toBeNull()
   const conservada = huella === 'conservada'

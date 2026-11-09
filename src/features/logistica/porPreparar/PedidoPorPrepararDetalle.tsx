@@ -1,4 +1,5 @@
 import React from 'react'
+import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, StatusChip, chipForEstado } from '@/core/ui/fw'
@@ -76,7 +77,7 @@ export function PedidoPorPrepararDetalle({ pedido }: { pedido: VentaPreparacion 
                 borderBottomWidth: i === lineas.length - 1 ? 0 : 1, borderBottomColor: c.border,
               }}
             >
-              <Text style={{ ...typeScale.cuerpo, color: c.text, flex: 1 }}>{l.productoNombre}</Text>
+              <View style={{ flex: 1 }}><ProductoIdentidad nombre={l.productoNombre} marca={l.marca} codigo={l.codigoPropio} estiloNombre={typeScale.cuerpo} /></View>
               <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{textoCantidad(l.cantidad, l.empaque)}</Text>
             </View>
           ))}

@@ -1,4 +1,5 @@
 import React from 'react'
+import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { formatImporte } from '@/core/ui/fw'
@@ -30,7 +31,7 @@ export function LineasDeLaVenta({ detalles }: { detalles: VentaDetalleDto['detal
             style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2], padding: space[3], borderTopWidth: i ? 1 : 0, borderTopColor: c.border }}
           >
             <View style={{ flex: 1, gap: 2 }}>
-              <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{padre ?? items[0]!.productoNombre}</Text>
+              <ProductoIdentidad nombre={padre ?? items[0]!.productoNombre} marca={items[0]!.marca} codigo={padre ? null : items[0]!.codigoPropio} />
               <Text style={{ ...sec, ...importe }}>{desc ? `${partes} · −${mostrarNumero(desc)} %` : partes}</Text>
             </View>
             <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(items.reduce((a, d) => a + d.subtotal, 0))}</Text>

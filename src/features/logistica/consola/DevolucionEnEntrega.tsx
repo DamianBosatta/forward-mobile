@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { CircleCheck, PackageCheck, PackageX } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
@@ -76,7 +77,7 @@ export function DevolucionEnEntrega({ renglones, cargando, conError, valores, on
         return (
           <View key={id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 2, borderColor: c.border }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{nombre}</Text>
+              <ProductoIdentidad nombre={nombre} marca={r.marca} codigo={r.codigoPropio} />
               <Text style={{ ...typeScale.secundario, ...importe, color: c.textSecondary }}>{`Pidió ${r.cantidadVendida ?? r.cantidadDisponible} · hasta ${r.cantidadDisponible}`}</Text>
             </View>
             <Stepper nombre={nombre} max={r.cantidadDisponible ?? 0} value={cantidadDe(id)} onChange={(n) => onCambio(id, n > 0 ? String(n) : '')} />

@@ -475,8 +475,7 @@ export default function ConsolaChoferScreen() {
           <LlegueParada
             key={llegue.parada.id}
             parada={llegue.parada}
-            telefonoEmpresa={viaje.telefonoEmpresa}
-            onLlamarEmpresa={() => abrir(urlLlamar(viaje.telefonoEmpresa))}
+            onLlamarCliente={() => abrir(urlLlamar(llegue.parada.telefono))}
             onVolver={() => setLlegue(null)}
             onEntregueTodo={() => {
               setReportando({ ...llegue, resultado: 'entregado' })

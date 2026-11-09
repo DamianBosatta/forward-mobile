@@ -3,6 +3,7 @@ import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CompraNueva } from '../../components/CompraNueva'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { tomarAviso } from '../../lib/confirmar-y-recibir'
 
 const mockGet = jest.fn()
@@ -53,7 +54,7 @@ beforeEach(() => {
   mockGet.mockImplementation((url: string) => {
     if (url.startsWith('/api/v1/socios-comerciales?')) return Promise.resolve({ items: [COMPLETO, INCOMPLETO], totalCount: 2 })
     if (url.startsWith('/api/v1/socios-comerciales/')) return Promise.resolve(socio(url.split('/').pop()!))
-    if (url.startsWith('/api/v1/Productos?')) return Promise.resolve({ items: [{ id: 'pr1', nombre: 'Balde Nuvia 10L' }], page: 1, totalCount: 1, hasNextPage: false })
+    if (url.startsWith('/api/v1/Productos/catalogo-stock?')) return Promise.resolve({ items: [{ id: 'pr1', nombre: 'Balde Nuvia 10L' }], page: 1, totalCount: 1, hasNextPage: false })
     if (url === '/api/v1/Productos/pr1') return Promise.resolve({ id: 'pr1', precioCompraBase: 1020 })
     if (url === '/api/v1/Depositos') return Promise.resolve([{ id: DEPOSITO_CENTRAL_ID, nombre: 'Depósito Central' }])
     if (url === '/api/v1/Compras/b9') {
@@ -205,10 +206,53 @@ describe('pantalla de compra nueva', () => {
     await screen.findByText('Insumos del Sur SA · 30 días')
     await userEvent.press(screen.getByRole('button', { name: '+ Agregar productos' }))
     await waitFor(() => {
-      const urls = mockGet.mock.calls.map(([u]) => String(u)).filter((u) => u.startsWith('/api/v1/Productos?'))
+      const urls = mockGet.mock.calls.map(([u]) => String(u)).filter((u) => u.startsWith('/api/v1/Productos/catalogo-stock?'))
       expect(urls.length).toBeGreaterThan(0)
       expect(urls.every((u) => new URLSearchParams(u.split('?')[1]).get('soloComprables') === 'true')).toBe(true)
+      // Buscar una variante no trae a sus hermanas (`/Productos` no lo hacía) y las variantes siguen comprables.
+      expect(urls.every((u) => new URLSearchParams(u.split('?')[1]).get('familiasCompletas') === 'false')).toBe(true)
+      expect(urls.every((u) => !new URLSearchParams(u.split('?')[1]).has('sinVariantes'))).toBe(true)
     })
+  })
+
+  it('el selector de productos sale del catálogo por depósito: un usuario de otro depósito no ve lo que ese depósito no maneja', async () => {
+    pantalla()
+    await userEvent.press(await screen.findByRole('button', { name: 'Insumos del Sur SA' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Continuar a productos' }))
+    await screen.findByText('Insumos del Sur SA · 30 días')
+    await userEvent.press(screen.getByRole('button', { name: '+ Agregar productos' }))
+    await screen.findByRole('button', { name: 'Añadir Balde Nuvia 10L' })
+    // `GET /Productos` no filtra por depósito: ahí aparecería un producto solo del Central con stock disponible.
+    expect(mockGet.mock.calls.map(([u]) => String(u)).some((u) => u.startsWith('/api/v1/Productos?'))).toBe(false)
+  })
+
+  it('quien ve todos los depósitos conserva su lista: sin depósito en el pedido y con todo lo que devuelve el servidor', async () => {
+    useAuthStore.setState({ user: { id: 'u1', username: 'u', roles: ['Admin'] as never, depositoId: DEPOSITO_CENTRAL_ID, permissions: [{ module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true }] as never } })
+    mockGet.mockImplementation(((impl) => (url: string) => url.startsWith('/api/v1/Productos/catalogo-stock?')
+      ? Promise.resolve({ items: [{ id: 'pr1', nombre: 'Balde Nuvia 10L' }, { id: 'pr2', nombre: 'Solo Norte 5L' }], page: 1, totalCount: 2, hasNextPage: false })
+      : impl(url))(mockGet.getMockImplementation()!))
+    pantalla()
+    await userEvent.press(await screen.findByRole('button', { name: 'Insumos del Sur SA' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Continuar a productos' }))
+    await screen.findByText('Insumos del Sur SA · 30 días')
+    await userEvent.press(screen.getByRole('button', { name: '+ Agregar productos' }))
+    await screen.findByRole('button', { name: 'Añadir Solo Norte 5L' })
+    expect(screen.getByRole('button', { name: 'Añadir Balde Nuvia 10L' })).toBeTruthy()
+    const urls = mockGet.mock.calls.map(([u]) => String(u)).filter((u) => u.startsWith('/api/v1/Productos/catalogo-stock?'))
+    expect(urls.every((u) => !new URLSearchParams(u.split('?')[1]).has('depositoId'))).toBe(true)
+  })
+
+  it('el resumen del paso 3 muestra marca y código de cada producto', async () => {
+    mockGet.mockImplementation(((orig) => (url: string) => (url === '/api/v1/Productos/pr1' ? Promise.resolve({ id: 'pr1', precioCompraBase: 1020, marca: 'Nuvia', codigoPropio: 'BAL-10' }) : orig(url)))(mockGet.getMockImplementation()!))
+    pantalla()
+    await userEvent.press(await screen.findByRole('button', { name: 'Insumos del Sur SA' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Continuar a productos' }))
+    await screen.findByText('Insumos del Sur SA · 30 días')
+    await agregarBalde('3')
+    await userEvent.press(screen.getByRole('button', { name: 'Listo' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Ver compra' }))
+    expect(await screen.findByText('Nuvia')).toBeTruthy()
+    expect(screen.getByText('BAL-10')).toBeTruthy()
   })
 
   it('confirmar guarda lo pendiente y después confirma; abre la compra', async () => {
@@ -338,5 +382,38 @@ describe('proveedor preseleccionado (desde la ficha del proveedor)', () => {
     pantalla({ proveedorId: 'p2' })
     await waitFor(() => expect(mockGet).toHaveBeenCalledWith('/api/v1/socios-comerciales/p2'), ESPERA)
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Compras/borradores', expect.anything())
+  })
+})
+
+describe('depósito de la compra según permiso (S18)', () => {
+  const conCaps = (caps: string[]) =>
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: caps.map((module) => ({ module, canRead: true })) } as never })
+  const dosDepositos = () => {
+    const prev = mockGet.getMockImplementation()!
+    mockGet.mockImplementation((url: string) => (url === '/api/v1/Depositos'
+      ? Promise.resolve([{ id: DEPOSITO_CENTRAL_ID, nombre: 'Depósito Central', activo: true }, { id: 'dep-norte', nombre: 'Depósito Norte', activo: true }])
+      : prev(url)))
+  }
+
+  it('sin CAP_VER_TODOS_LOS_DEPOSITOS el depósito se muestra y no se elige', async () => {
+    conCaps([])
+    dosDepositos()
+    pantalla({ proveedorId: 'p1' })
+    await screen.findByRole('button', { name: '+ Agregar productos' }, ESPERA)
+    await agregarBalde('1')
+    await userEvent.press(await screen.findByRole('button', { name: 'Ver compra' }))
+    expect(await screen.findByText(/^Depósito: /, {}, ESPERA)).toBeTruthy()
+    expect(screen.queryByLabelText('Depósito')).toBeNull()
+  })
+
+  it('con CAP_VER_TODOS_LOS_DEPOSITOS se elige entre los depósitos', async () => {
+    conCaps(['CAP_VER_TODOS_LOS_DEPOSITOS'])
+    dosDepositos()
+    pantalla({ proveedorId: 'p1' })
+    await screen.findByRole('button', { name: '+ Agregar productos' }, ESPERA)
+    await agregarBalde('1')
+    await userEvent.press(await screen.findByRole('button', { name: 'Ver compra' }))
+    expect(await screen.findByLabelText('Depósito', {}, ESPERA)).toBeTruthy()
+    expect(screen.getByRole('radio', { name: 'Depósito Norte' })).toBeTruthy()
   })
 })

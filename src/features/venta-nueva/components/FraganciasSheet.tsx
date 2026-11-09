@@ -1,8 +1,8 @@
 import React, { useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type ScrollViewInstance, type TextInputInstance, type TextInputProps } from 'react-native'
 import { importe, maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
-import { BottomSheet, Button, Field, Notice, formatImporte } from '@/core/ui/fw'
-import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { BottomSheet, Button, Field, Notice, Stepper, formatImporte } from '@/core/ui/fw'
+import { useDepositoDeVenta } from '../hooks/useDepositoDeVenta'
 import { useVariantesProducto } from '@/libs/api-client/productos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
@@ -40,7 +40,8 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
   const { lineas, repartirFragancias } = useCarritoVenta()
   const user = useAuthStore((s) => s.user)
   const verCantidades = hasCapability(user?.permissions, 'CAP_VER_CANTIDADES_STOCK')
-  const servidor = useVariantesProducto(padreId, true, DEPOSITO_CENTRAL_ID)
+  const depositoId = useDepositoDeVenta()
+  const servidor = useVariantesProducto(padreId, true, depositoId)
   const padre = productos.find((p) => p.id === padreId)
   const variantes = useMemo(() => productos.filter((p) => p.productoPadreId === padreId), [productos, padreId])
   // Lo que el vendedor tipea en cada fragancia (vacío = 0). La cantidad sale de acá; nunca se baja sola.
@@ -66,7 +67,7 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
   const buscado = normalizarBusqueda(busqueda.trim())
   const visibles = conBuscador && buscado ? variantes.filter((v) => normalizarBusqueda(nombreDe(v)).includes(buscado)) : variantes
   const total = Object.values(cantidades).reduce((a, n) => a + n, 0)
-  const escribir = (id: string, texto: string) => setTextos((s) => ({ ...s, [id]: limitarDigitos(texto.replace(/\D/g, '')) }))
+  const escribir = (id: string, texto: string) => setTextos((s) => ({ ...s, [id]: limitarDigitos(texto.replace(/\D/g, '').replace(/^0+/, '')) }))
   // "Como la última vez": lo que llevó de cada fragancia, acotado al stock (en múltiplos) al llenar los campos: el
   // vendedor ve el valor acotado en el campo antes de confirmar, no cambia al confirmar.
   const delUltimo = Object.fromEntries(variantes.flatMap((v) => {
@@ -117,7 +118,8 @@ function Contenido({ padreId, onClose, llevo }: { padreId: string; onClose: () =
               style={{ gap: space[1], paddingVertical: space[2], borderTopWidth: i === 0 ? 0 : StyleSheet.hairlineWidth, borderTopColor: c.border }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
                 <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }}>{nombre}</Text>
-                <CampoCantidad nombre={nombre} value={textos[v.id] ?? ''} onChangeText={(t) => escribir(v.id, t)} error={error}
+                <Stepper nombre={nombre} etiquetaCampo={nombre} value={cantidades[v.id] ?? 0} max={disponible} paso={m} acotar={false} compacto vacioEnCero error={error}
+                  onChange={(n) => escribir(v.id, String(n))}
                   inputRef={(r) => { campos.current[v.id] = r }}
                   returnKeyType={ultima ? 'done' : 'next'}
                   onSubmitEditing={() => { if (!ultima) campos.current[visibles[i + 1].id]?.focus() }}

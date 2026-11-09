@@ -1,4 +1,5 @@
 import React from 'react'
+import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { ScrollView, Text, View } from 'react-native'
 import { ShoppingCart } from 'lucide-react-native'
 import { space, typeScale, importe, useColors } from '@/libs/theme'
@@ -44,7 +45,7 @@ export function CarritoPanel({ lineas, onVerVenta }: CarritoProps) {
         {lineas.map((l) => (
           <View key={l.productoId} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{l.producto.nombre}</Text>
+              <ProductoIdentidad nombre={l.producto.nombre} marca={l.producto.marca} codigo={l.producto.codigoPropio} />
               <Text style={{ ...typeScale.secundario, ...importe, color: c.textSecondary }}>
                 {`${l.cantidad} × ${formatImporte(precioServidor(l.producto))}`}
               </Text>

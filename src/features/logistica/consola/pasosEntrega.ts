@@ -27,9 +27,9 @@ export function razonDevolucionPaso(hayDevolucion: boolean | null, valores: Reco
 }
 
 /** Quién recibió es opcional (S15, dueño 05-11): solo frenan la foto del remito exigida y una foto subiendo. */
-export function razonConfirmar(ctx: { exigeFotoRemito: boolean; remitoUrl: string | null; subiendo: boolean }): string | null {
+export function razonConfirmar(ctx: { exigeFotoRemito: boolean; remitoUrl: string | null; subiendo: boolean; sinCobro?: boolean }): string | null {
   if (ctx.subiendo) return 'Subiendo la foto: esperá un momento'
-  if (ctx.exigeFotoRemito && !ctx.remitoUrl) return 'Falta la foto del remito'
+  if ((ctx.exigeFotoRemito || ctx.sinCobro) && !ctx.remitoUrl) return 'Falta la foto del remito'
   return null
 }
 
@@ -47,6 +47,14 @@ export function razonDevolucion(valores: Record<string, string>, disponibles: Re
 }
 
 const centavos = (n: number) => Math.round(n * 100)
+
+/**
+ * Sin cobro de dinero (07-11, dueño 08-11): no se cargó ninguna línea con monto. La firma como deuda no es un cobro,
+ * así que con solo firma también hace falta la foto del remito firmado para cerrar la entrega.
+ */
+export function sinCobroDeDinero(lineas: LineaCobroForm[]): boolean {
+  return totalRepartido(lineas) <= 0
+}
 
 /** Suma de las líneas con monto válido. */
 export function totalRepartido(lineas: LineaCobroForm[]): number {

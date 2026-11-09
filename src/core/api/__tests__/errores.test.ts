@@ -6,7 +6,7 @@ jest.mock('@/core/query/persistConfig', () => ({ mmkvPersister: { removeClient: 
 // ProblemDetails del sobre único de error (C-007, api-contract «Sobre único de error»).
 const PROBLEMA = {
   type: 'about:blank', title: 'Falta stock', status: 400, detail: 'Hay líneas sin stock: pedí una justificación.',
-  instance: '/api/v1/Ventas', codigo: 'VentaFaltaStockSinJustificacion', traceId: 't1',
+  instance: '/api/v1/Ventas', codigo: 'VentaMostradorSinStock', traceId: 't1',
   message: 'Hay líneas sin stock: pedí una justificación.',
   errors: { motivoSinStock: ['La justificación es obligatoria.'], general: ['Revisá el pedido.'] },
 }
@@ -17,7 +17,7 @@ describe('leerError: único lector de cuerpos de error', () => {
     expect(e).toBeInstanceOf(ApiError)
     expect(e).toMatchObject({
       status: 400,
-      codigo: 'VentaFaltaStockSinJustificacion',
+      codigo: 'VentaMostradorSinStock',
       message: 'Hay líneas sin stock: pedí una justificación.',
       errors: ['La justificación es obligatoria.', 'Revisá el pedido.'],
     })
@@ -42,9 +42,9 @@ describe('leerError: único lector de cuerpos de error', () => {
 describe('esError: decide por código, no por texto', () => {
   it('true solo para un ApiError con ese código', () => {
     const e = leerError(PROBLEMA, 400)
-    expect(esError(e, 'VentaFaltaStockSinJustificacion')).toBe(true)
+    expect(esError(e, 'VentaMostradorSinStock')).toBe(true)
     expect(esError(e, 'Duplicado')).toBe(false)
-    expect(esError(new Error('Hay líneas sin stock'), 'VentaFaltaStockSinJustificacion')).toBe(false)
+    expect(esError(new Error('Hay líneas sin stock'), 'VentaMostradorSinStock')).toBe(false)
     expect(esError(null, 'Duplicado')).toBe(false)
   })
 })

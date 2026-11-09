@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Modal, ScrollView, Text, View, useWindowDimensions } from 'react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
+import { Check, Plus } from 'lucide-react-native'
 import { BottomSheet, Button, Field, Notice, OptionCard, PieFijo, TopBar, formatImporte } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
@@ -12,7 +13,7 @@ import { diaArgentina } from '@/core/utils/fecha'
 import { DETALLE_MOTIVO_NO_ENTREGA, MOTIVOS_NO_ENTREGA } from './hojaDeRuta'
 import { etiquetaNota, importeParada } from './cobroParada'
 import { armarEntrega, montoDeLinea, razonPendiente, type EntregaArmada, type FormEntrega } from './entrega'
-import { razonCobro, razonDevolucionPaso, razonConfirmar, avisoDeCobro, comparacionDeCobro, faltaACuenta, posicionDePaso, totalRepartido, type ContextoCobro, type Paso } from './pasosEntrega'
+import { razonCobro, razonDevolucionPaso, razonConfirmar, avisoDeCobro, comparacionDeCobro, faltaACuenta, posicionDePaso, sinCobroDeDinero, totalRepartido, type ContextoCobro, type Paso } from './pasosEntrega'
 import { FotoEntrega } from './FotoEntrega'
 import { CobroEnEntrega } from './CobroEnEntrega'
 import { DevolucionEnEntrega, DevolucionEnviada, EleccionDevolucion } from './DevolucionEnEntrega'
@@ -71,6 +72,10 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
   /** Lámina ChoferNoEntrega (C5): foto del lugar, opcional, ya subida. */
   const [lugarUrl, setLugarUrl] = useState<string | null>(null)
   const [subiendo, setSubiendo] = useState(0)
+  /** "¿Sumar otro cobro?": la pregunta que sigue a "Continuar" en el cobro cuando ya se cargó algo. */
+  const [preguntandoOtro, setPreguntandoOtro] = useState(false)
+  /** Vino de "Sí": la pantalla de cobro abre directo en la elección del medio. */
+  const [sumandoOtro, setSumandoOtro] = useState(false)
   const [errorForm, setErrorForm] = useState<string | null>(null)
   const entregado = resultado === 'entregado'
   const medios = useMediosCobroChofer(entregado)
@@ -84,6 +89,9 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
   // Con "No, todo bien" las cantidades que se hayan cargado antes no viajan (pero se conservan por si vuelve).
   // La firma solo viaja si eligió "Firma" (y la foto es obligatoria: `razonCobro` no deja seguir sin ella).
   const lineas = f.lineas
+  // Sin dinero cobrado (la firma como deuda no cuenta) el remito firmado con su foto es obligatorio para cerrar.
+  const sinCobro = sinCobroDeDinero(lineas)
+  const remitoObligatorio = exigeFotoRemito || sinCobro
   const form: FormEntrega = { ...f, lineas, devolucion: hayDevolucion ? f.devolucion : {}, firmaUrl: firmar ? f.firmaUrl : null }
 
   const eligiendo = entregado && paso === 'devolucion' && hayDevolucion !== true
@@ -97,13 +105,14 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
   if (!entregado) razon = razonPendiente({ entregado: false, motivo, subiendo: subiendo > 0 })
   else if (paso === 'devolucion') razon = razonDevolucionPaso(hayDevolucion, f.devolucion, disponibles)
   else if (paso === 'cobro') razon = razonCobro(ctxCobro)
-  else razon = razonConfirmar({ exigeFotoRemito, remitoUrl: f.remitoUrl, subiendo: subiendo > 0 })
+  else razon = razonConfirmar({ exigeFotoRemito, sinCobro, remitoUrl: f.remitoUrl, subiendo: subiendo > 0 })
   const listo = razon === null
   const ultimo = !entregado || paso === 'confirmar'
 
   const atras = () => {
     if (!entregado) return onCerrar()
     if (paso === 'confirmar') return setPaso('cobro')
+    if (paso === 'cobro' && preguntandoOtro) return setPreguntandoOtro(false)
     if (paso === 'cobro') {
       setDevEnviada(false)
       // Con "Sí, devuelve" se vuelve a los productos; con "No, todo bien", a la pregunta.
@@ -119,12 +128,20 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
     setErrorForm(null)
     // Marcó una devolución: se le dice que quedó enviada y de ahí sigue con el cobro.
     if (paso === 'devolucion') return setDevEnviada(true)
+    // Ya cargó un cobro (o la firma): se pregunta si suma otro antes de pasar a cerrar.
+    if (paso === 'cobro' && (lineas.length > 0 || firmar)) return setPreguntandoOtro(true)
     setPaso('confirmar')
   }
   const elegirDevolucion = (hay: boolean) => {
     setHayDevolucion(hay)
     if (!hay) setPaso('cobro')
     setDevEnviada(false)
+  }
+
+  const sumarOtro = (si: boolean) => {
+    setPreguntandoOtro(false)
+    setSumandoOtro(si)
+    if (!si) setPaso('confirmar')
   }
 
   const confirmar = () => {
@@ -135,7 +152,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
       onConfirmar({ entregado: false, motivoRechazo: motivo ?? undefined, observaciones: (motivo === 'Otro' ? f.observaciones.trim() : '') || undefined, evidenciaUrl: lugarUrl ?? undefined })
       return
     }
-    const r = armarEntrega(form, { exigeFotoRemito, disponibles })
+    const r = armarEntrega(form, { exigeFotoRemito: remitoObligatorio, disponibles })
     if ('error' in r) {
       setConfirmando(false)
       setErrorForm(r.error)
@@ -166,7 +183,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
             : `Parada ${numero} · ${parada.direccion} · ${parada.clienteNombre}`}
           leading={{ kind: 'atras', onPress: atras }}
         />
-        {entregado && paso === 'cobro' && aCobrarHoy != null ? (
+        {entregado && paso === 'cobro' && !preguntandoOtro && aCobrarHoy != null ? (
           <View style={columna ?? undefined}>
             <ContadorCobro cobrado={cobrado} falta={Math.max(0, Math.round((aCobrarHoy - cobrado) * 100) / 100)} />
           </View>
@@ -208,9 +225,17 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
               onMotivo={(m) => cambiar({ motivoDevolucion: m })}
             />
           ) : null}
-          {entregado && paso === 'cobro' ? (
+          {entregado && paso === 'cobro' && preguntandoOtro ? (
+            <View accessibilityLabel="¿Sumar otro cobro?" style={{ gap: space[3] }}>
+              <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>¿Sumar otro cobro?</Text>
+              <OptionCard minHeight={132} icon={Plus} label="Sí" detail="Cargá otro pago" onPress={() => sumarOtro(true)} />
+              <OptionCard minHeight={132} icon={Check} label="No" detail="Seguí a cerrar la entrega" onPress={() => sumarOtro(false)} />
+            </View>
+          ) : null}
+          {entregado && paso === 'cobro' && !preguntandoOtro ? (
             <>
               <CobroEnEntrega
+                elegirAlEntrar={sumandoOtro}
                 medios={medios.data}
                 mediosError={medios.isError}
                 lineas={f.lineas}
@@ -241,11 +266,11 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
               <FotoEntrega
                 que="del remito firmado"
                 titulo="Foto del remito"
-                obligatoria={exigeFotoRemito}
+                obligatoria={remitoObligatorio}
                 guia="Encuadrá el remito entero, con la firma y la aclaración a la vista"
                 referencia={etiquetaNota(parada) ? `Remito ${etiquetaNota(parada)}` : undefined}
                 lugar={parada.direccion}
-                ayuda={exigeFotoRemito ? 'Sin la foto del remito firmado no se confirma la entrega.' : undefined}
+                ayuda={remitoObligatorio ? (exigeFotoRemito ? 'Sin la foto del remito firmado no se confirma la entrega.' : 'No cargaste ningún cobro: firmá el remito y sacale una foto para cerrar la entrega.') : undefined}
                 url={f.remitoUrl}
                 onUrl={(url) => cambiar({ remitoUrl: url })}
                 onSubiendo={alSubir}
@@ -267,7 +292,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
           {errorForm ? <Notice tone="peligro">{errorForm}</Notice> : null}
           {error && ultimo ? <Notice tone="peligro">{error}</Notice> : null}
         </ScrollView>
-        {eligiendo || enviada ? null : (
+        {eligiendo || enviada || preguntandoOtro ? null : (
           <PieFijo conInsetInferior>
             <View style={{ gap: space[2], ...columna }}>
               {razon ? <MotivoDeshabilitado>{razon}</MotivoDeshabilitado> : null}

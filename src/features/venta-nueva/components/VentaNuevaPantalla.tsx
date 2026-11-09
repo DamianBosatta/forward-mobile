@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, BackHandler, Pressable, Text, View } from 're
 import { useRouter } from 'expo-router'
 import { Plus, Trash2 } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { BottomSheet, Button, Field, Notice, TopBar, formatImporte } from '@/core/ui/fw'
+import { Button, Notice, TopBar, formatImporte } from '@/core/ui/fw'
 import type { CatalogoStockItem } from '@/libs/api-client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
@@ -19,7 +19,7 @@ import { useComisionEstimada } from '../hooks/useComisionEstimada'
 import { aAlta, aAutoguardado } from '../lib/payload'
 import { useVistaPreviaVenta } from '@/libs/api-client/ventas'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
-import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { useDepositoDeVenta, useDepositoElegidoStore } from '../hooks/useDepositoDeVenta'
 import { avisosVenta, superaElTope, type YaReservadas } from '../lib/avisos'
 import { mostrarNumero } from '../lib/linea'
 import type { LineaCarrito } from '../lib/carrito'
@@ -85,6 +85,10 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   const { productos: catalogoVenta } = useCatalogoVenta('')
   const lineas = useMemo(() => conStockFresco(lineasCarrito, catalogoVenta), [lineasCarrito, catalogoVenta])
   const user = useAuthStore((s) => s.user)
+  const depositoId = useDepositoDeVenta()
+  const elegirDeposito = useDepositoElegidoStore((s) => s.elegir)
+  // Cada venta arranca (y termina) en el depósito del usuario; una venta que se abre toma el suyo, más abajo.
+  useEffect(() => { elegirDeposito(null); return () => elegirDeposito(null) }, [elegirDeposito])
   // El descuento general siempre es un número válido (0 a 100): se cambia en la hoja "Descuento a toda la venta".
   const [descuentoValido, setDescuentoValido] = useState(0)
   const [descGeneral, setDescGeneral] = useState(false)
@@ -100,7 +104,6 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   // del borrador, éste (Presupuesto allá) guarda hasta el tope y lo demás va al confirmar (ver useBorradorVenta).
   const b = useBorradorVenta(paraGuardar, tipo === 'Pedido' ? tope : 0)
   const comision = useComisionEstimada(lineas, descuentoValido, cab.cabecera.flete, cab.porcentajeCedido)
-  const [motivo, setMotivo] = useState('')
   const [edicion, setEdicion] = useState<{ ventaId: string; version: number; codigo: string } | null>(null)
   // Editar: lo que la venta ya tenía por producto. El servidor ya lo descontó del `disponible`; sin esto la revisión avisa de más.
   const [yaReservadas, setYaReservadas] = useState<YaReservadas | undefined>(undefined)
@@ -111,7 +114,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   })
   const cuerpoVistaPrevia = useDebouncedValue(cliente && tipo === 'Pedido' && !edicion && lineas.length > 0
     ? aAlta(lineas, descuentoValido, cab.cabecera, {
-      clienteId: cliente.id, depositoId: DEPOSITO_CENTRAL_ID, esPedido: true, claveIdempotencia: '',
+      clienteId: cliente.id, depositoId, esPedido: true, claveIdempotencia: '',
       motivoVentaSinStock: 'Vista previa', porcentajeComisionCedido: cab.porcentajeCedido,
     })
     : null)
@@ -174,6 +177,8 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
     if (!abrirEf || !d || abierta) return
     setAbierta(true)
     setCliente(d.cliente)
+    // Retomar, editar y duplicar siguen en el depósito de la venta: stock, disponibilidad y confirmación no discrepan.
+    if (d.depositoId) elegirDeposito(d.depositoId)
     if (abrirEf.modo === 'retomar') {
       aplicar(d)
       setTipo(abrirEf.tipo)
@@ -268,7 +273,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   // Carrito y entrega de toda venta (nueva, retomada, duplicada o editada; lámina Carrito): las líneas con el stock vuelto a chequear;
   // lo que no es una línea se ajusta desde `ajustes`: en el carrito (paso 3) el descuento general y los avisos de las líneas; en la
   // entrega (paso 4) la entrega (fecha, logística, flete, nota y cesión), Con factura en su interruptor y la comisión.
-  // "Confirmar venta" manda la venta (sin segunda hoja); la hoja del motivo sale solo si falta stock, y el botón
+  // "Confirmar venta" manda la venta (sin segunda hoja); sin stock el servidor lo deja por autorizar, y el botón
   // queda apagado con las mismas guardas de siempre.
   const presupuestoSobreTope = tipo === 'Presupuesto' && superaTope
   const filaAjuste = (rotuloFila: string, valor: string | null, onPress: () => void) => (
@@ -371,14 +376,6 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
         onClose={() => setDescGeneral(false)}
         onAplicar={(pct) => { setDescuentoValido(pct); setDescGeneral(false) }}
       />
-      <BottomSheet visible={conf.pedirMotivo} onClose={conf.cerrarMotivo} accessibilityLabel="Motivo sin stock">
-        <View style={{ gap: space[3] }}>
-          <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>Falta stock</Text>
-          <Text style={{ ...typeScale.cuerpo, color: c.text }}>Para guardar el pedido sin stock, contá por qué. Va a quedar por autorizar.</Text>
-          <Field label="Motivo" value={motivo} onChangeText={setMotivo} placeholder="Ej.: el cliente espera la reposición del lunes." multiline />
-          <Button label="Confirmar con este motivo" disabled={!motivo.trim() || conf.enviando} loading={conf.enviando} onPress={() => void conf.confirmar(motivo)} />
-        </View>
-      </BottomSheet>
       {ofertaVivo ? (
         <CantidadOfertaPantalla visible producto={ofertaVivo} linea={lineas.find((l) => l.productoId === ofertaVivo.id) ?? null}
           enVivo={stockVivo.enVivo} yaReservada={yaReservadas?.[ofertaVivo.id]} onClose={() => setOferta(null)} onListo={() => setOferta(null)} />

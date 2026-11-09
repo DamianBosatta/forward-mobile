@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from "expo-router/react-navigation"
@@ -25,7 +26,7 @@ export default function ProveedoresScreen() {
   const navigation = useNavigation()
   const { width } = useResponsive()
   const { canCreate } = usePermissions()
-  const [busqueda, setBusqueda] = useState('')
+  const [busqueda, setBusqueda] = useFiltroPersistente('proveedores.busqueda', '')
   const [abierto, setAbierto] = useState<string | null>(null)
   const { proveedores, totalCount, isLoading, isRefetching, error, dataUpdatedAt, refetch, cargarMas } = useProveedores(busqueda)
   const sinRed = esFallaDeRed(error)

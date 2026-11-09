@@ -32,7 +32,7 @@ let catalogo: () => Promise<unknown>
 function servidor(url: string) {
   if (url.startsWith('/api/v1/Stocks/resumen')) return Promise.resolve(RESUMEN)
   if (url.startsWith('/api/v1/Stocks?')) return stocks()
-  if (url.startsWith('/api/v1/Productos?')) return productos()
+  if (url.startsWith('/api/v1/Productos/catalogo-stock?')) return productos()
   if (url.startsWith('/api/v1/catalogo?')) return catalogo()
   return Promise.reject(new Error(`sin respuesta para ${url}`))
 }

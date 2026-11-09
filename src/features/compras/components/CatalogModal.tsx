@@ -1,4 +1,5 @@
 import React from 'react'
+import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { ActivityIndicator, FlatList, Modal, Text, TextInput, View } from 'react-native'
 import { Package } from 'lucide-react-native'
 import { Image as ExpoImage } from 'expo-image'
@@ -11,6 +12,7 @@ interface ProductoElegible {
   id: string
   nombre: string
   codigoPropio?: string | null
+  marca?: string | null
   imageUrl?: string | null
 }
 
@@ -32,8 +34,7 @@ function FilaProducto({ item, cantidad, onCambiar }: { item: ProductoElegible; c
         {imgUrl ? <ExpoImage source={imgUrl} style={{ width: 56, height: 56 }} contentFit="cover" /> : <Package size={28} color={c.textSecondary} />}
       </View>
       <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-        {!!item.codigoPropio && <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{item.codigoPropio}</Text>}
-        <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }} numberOfLines={2}>{item.nombre}</Text>
+        <ProductoIdentidad nombre={item.nombre} marca={item.marca} codigo={item.codigoPropio} />
       </View>
       {enCompra ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
@@ -83,7 +84,7 @@ export function CatalogModal({ visible, onClose, productSearch, setProductSearch
       <View accessibilityLabel="Agregar productos" style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Agregar productos" leading={{ kind: 'atras', onPress: onClose }} />
         <View style={{ padding: space[4] }}>
-          <Field label="Buscar producto" placeholder="Nombre o código" value={productSearch} onChangeText={setProductSearch} autoFocus autoCorrect={false} />
+          <Field label="Buscar producto" placeholder="Nombre, marca o código" value={productSearch} onChangeText={setProductSearch} autoFocus autoCorrect={false} />
         </View>
         {loadingProds ? <ActivityIndicator style={{ marginTop: space[10] }} color={c.brand} /> : (
           <FlatList

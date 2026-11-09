@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { useInfiniteCatalogo, type CatalogoComercialItem } from '@/libs/api-client/catalogo'
 import { DIAS_DE_NOVEDADES, novedadesDesde, type ProductoDeTarjeta } from '../lib/presentacion'
@@ -31,9 +32,9 @@ export function aTarjeta(item: CatalogoComercialItem): ProductoDeTarjeta {
  * Pide las novedades de los últimos 30 días: el color de cada tarjeta (nuevo, precio nuevo, sin stock) viene del servidor.
  */
 export function useCatalogoConsulta() {
-  const [busqueda, setBusqueda] = useState('')
-  const [soloConOferta, setSoloConOferta] = useState(false)
-  const [categoriaId, setCategoriaId] = useState<string | undefined>(undefined)
+  const [busqueda, setBusqueda] = useFiltroPersistente('catalogo.busqueda', '')
+  const [soloConOferta, setSoloConOferta] = useFiltroPersistente('catalogo.soloConOferta', false)
+  const [categoriaId, setCategoriaId] = useFiltroPersistente<string | undefined>('catalogo.categoriaId', undefined)
   const termino = useDebouncedValue(busqueda.trim(), DEBOUNCE_BUSQUEDA_MS)
   // Fijo al montar: si cambiara en cada render, la clave de la consulta también.
   const [desde] = useState(() => novedadesDesde(DIAS_DE_NOVEDADES))

@@ -1,14 +1,12 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { gestorStock, type CambioProducto, type GestorStock, type MensajeStock } from '@/core/realtime/stockEnVivo'
 import { useStockEnVivo } from '@/core/realtime/useStockEnVivo'
 import { stockKeys } from '@/libs/api-client'
 import type { LineaCarrito } from '../lib/carrito'
 import { aplicarCambiosAlCatalogo, avisoDeStock } from '../lib/avisoStockVivo'
-import { CLAVE_CATALOGO } from './useCatalogoVenta'
-
-const DEPOSITOS = [DEPOSITO_CENTRAL_ID]
+import { CLAVE_CATALOGO, claveCatalogo } from './useCatalogoVenta'
+import { useDepositoAjenoDeVenta, useDepositoDeVenta } from './useDepositoDeVenta'
 
 /**
  * Stock en vivo de la venta nueva (F4, S1/S2): mantiene fresco el catálogo que muestra la venta y avisa,
@@ -16,6 +14,9 @@ const DEPOSITOS = [DEPOSITO_CENTRAL_ID]
  */
 export function useStockVivoVenta(lineas: LineaCarrito[], gestor: GestorStock = gestorStock) {
   const qc = useQueryClient()
+  const depositoId = useDepositoDeVenta()
+  const ajeno = useDepositoAjenoDeVenta()
+  const depositos = useMemo(() => [depositoId], [depositoId])
   // Lo último que llegó de cada producto.
   const [cambios, setCambios] = useState<Record<string, CambioProducto>>({})
 
@@ -29,14 +30,14 @@ export function useStockVivoVenta(lineas: LineaCarrito[], gestor: GestorStock = 
   const alCambio = useCallback((m: MensajeStock) => {
     setCambios((previos) => ({ ...previos, ...Object.fromEntries(m.productos.map((p) => [p.productoId, p])) }))
     if (m.productos.every((p) => p.disponible !== undefined)) {
-      qc.setQueryData(CLAVE_CATALOGO, (d: Parameters<typeof aplicarCambiosAlCatalogo>[0] | undefined) => (d ? aplicarCambiosAlCatalogo(d, m.productos) : d))
+      qc.setQueryData(claveCatalogo(ajeno), (d: Parameters<typeof aplicarCambiosAlCatalogo>[0] | undefined) => (d ? aplicarCambiosAlCatalogo(d, m.productos) : d))
     } else {
       // Sin números no hay qué poner en la fila: se vuelve a pedir.
       void qc.invalidateQueries({ queryKey: CLAVE_CATALOGO })
     }
-  }, [qc])
+  }, [qc, ajeno])
 
-  const { enVivo } = useStockEnVivo({ depositoIds: DEPOSITOS, alRefrescar, alCambio, gestor })
+  const { enVivo } = useStockEnVivo({ depositoIds: depositos, alRefrescar, alCambio, gestor })
 
   const avisos = useMemo(() => {
     const r: Record<string, string> = {}

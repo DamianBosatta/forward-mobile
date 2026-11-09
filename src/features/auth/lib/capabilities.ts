@@ -25,6 +25,8 @@ export type AppCapability =
   | 'CAP_APROBAR_CAMBIOS_SOCIO'
   | 'CAP_ARMAR_VIAJES'
   | 'CAP_VER_TESORERIA'
+  | 'CAP_VER_TODOS_LOS_DEPOSITOS'
+  | 'CAP_VER_STOCK_OTROS_DEPOSITOS'
 
 /** ¿`permissions` incluye la capacidad? */
 export function hasCapability(
