@@ -700,27 +700,28 @@ describe('confirmar', () => {
     expect(mockReplace).not.toHaveBeenCalled()
   })
 
-  it('sin stock pide el motivo antes de mandar y lo manda en el alta', async () => {
-    // Quien ve cantidades compara contra `disponible`; quien no, decide `puedeVenderse` (L6).
+  it('pedido sin stock: se manda directo, sin pedir motivo, y se avisa que quedó por autorizar por falta de stock', async () => {
     useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [{ module: 'CAP_VER_CANTIDADES_STOCK', canRead: true }], maxDescuentoPorcentaje: 10 } as never })
+    altaConResultado({ estado: 9, motivoPendienteAutorizacion: 1 })
     await armar(120)
     await confirmar()
-    expect(screen.getByText('Falta stock')).toBeTruthy()
-    expect(altas()).toHaveLength(0)
-    await userEvent.type(screen.getByLabelText('Motivo'), 'Repone el lunes')
-    await userEvent.press(screen.getByRole('button', { name: 'Confirmar con este motivo' }))
     await waitFor(() => expect(altas()).toHaveLength(1))
-    expect(altas()[0][1]).toMatchObject({ motivoVentaSinStock: 'Repone el lunes' })
+    expect(screen.queryByText('Falta stock')).toBeNull()
+    expect(screen.queryByLabelText('Motivo')).toBeNull()
+    expect(altas()[0][1]).not.toHaveProperty('motivoVentaSinStock')
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9',
+      'Quedó por autorizar porque falta stock. Te avisamos cuando lo resuelvan.')))
   })
 
-  it('si el servidor pide justificación por stock (código VentaFaltaStockSinJustificacion), se ve su motivo y se abre el pedido de motivo', async () => {
+  it('mostrador sin stock: el servidor lo rechaza (VentaMostradorSinStock) y se ve su mensaje', async () => {
     mockPost.mockImplementation((u: string) => u === '/api/v1/Ventas'
-      ? Promise.reject(new ApiError(400, 'Stock insuficiente para los siguientes productos en el depósito seleccionado: Pala. Debe proporcionar una justificación.', undefined, 'VentaFaltaStockSinJustificacion'))
+      ? Promise.reject(new ApiError(400, 'El retiro en local no tiene stock suficiente.', undefined, 'VentaMostradorSinStock'))
       : Promise.resolve({ ventaId: 'b1', version: 7, message: '' }))
     await armar()
     await confirmar()
-    expect(await screen.findByText(/Debe proporcionar una justificación/)).toBeTruthy()
-    expect(screen.getByLabelText('Motivo')).toBeTruthy()
+    expect(await screen.findByText(/El retiro en local no tiene stock suficiente/)).toBeTruthy()
+    expect(screen.queryByLabelText('Motivo')).toBeNull()
+    expect(mockReplace).not.toHaveBeenCalled()
   })
 
   it('un rechazo cuyo texto menciona la justificación pero trae otro código no abre el pedido de motivo', async () => {

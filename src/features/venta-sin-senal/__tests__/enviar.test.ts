@@ -172,10 +172,10 @@ describe('enviar las ventas guardadas en el teléfono (V9, D4)', () => {
   })
 
   it('error de la venta (400 con código): queda para revisar con el mensaje del servidor y no se reintenta sola', async () => {
-    servidor({ alta: tira(new ApiError(400, 'Falta justificar la venta sin stock.', [], 'VentaFaltaStockSinJustificacion')) })
+    servidor({ alta: tira(new ApiError(400, 'El retiro en local no tiene stock suficiente.', [], 'VentaMostradorSinStock')) })
     encolar()
     await expect(enviarPendientes('u1')).resolves.toBe('completa')
-    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'revisar', mensaje: 'Falta justificar la venta sin stock.' })
+    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'revisar', mensaje: 'El retiro en local no tiene stock suficiente.' })
     await enviarPendientes('u1')
     expect(llamadas('/api/v1/Ventas')).toHaveLength(1)
   })

@@ -6,10 +6,8 @@ import { api, ApiError } from '@/core/api/client'
 import { esError } from '@/core/api/errores'
 import { ventasKeys } from '@/libs/api-client/ventas'
 import { inicioKeys } from '@/core/query/queryClient'
-import type { CatalogoStockItem } from '@/libs/api-client'
 import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { hasCapability } from '@/features/auth/lib/capabilities'
 import type { ClienteNombrable } from '@/features/clientes/lib/cliente'
 import { encolarSiFaltaSenal, loQueVio } from '@/features/venta-sin-senal'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -17,11 +15,7 @@ import { aAlta, aAutoguardado, errorDeAltaVenta, nuevaClaveIdempotencia, type Ca
 import { motivosAutorizacion } from '../lib/motivosAutorizacion'
 import { esEstadoVenta } from '@/core/constants/estados'
 import type { LineaCarrito } from '../lib/carrito'
-import { conStockFresco } from '../lib/avisoStockVivo'
-import { faltaStock } from '../lib/avisos'
-import { consultarQueNoAlcanza } from './useAlcanzaStock'
-import { claveCatalogo } from './useCatalogoVenta'
-import { useDepositoAjenoDeVenta, useDepositoDeVenta } from './useDepositoDeVenta'
+import { useDepositoDeVenta } from './useDepositoDeVenta'
 import type { useBorradorVenta } from './useBorradorVenta'
 
 interface Datos {
@@ -39,8 +33,6 @@ interface Datos {
   edicion?: { ventaId: string; version: number } | null
 }
 
-/** El servidor pide justificación cuando un Pedido no tiene stock (CreateVentaCommandHandler). */
-const pideMotivo = (e: unknown) => esError(e, 'VentaFaltaStockSinJustificacion')
 /** El servidor devolvió la venta que ya existía con esa clave (CreateVentaCommandHandler, operación repetida). */
 const yaExistia = (r: VentaActionResponseDto) => /ya hab[ií]a sido creada/i.test(r.message ?? '')
 /**
@@ -83,31 +75,12 @@ export function useConfirmarVenta(d: Datos) {
   const claveRef = useRef(nuevaClaveIdempotencia())
   // Cuerpos (sin la clave) de los intentos de alta que quedaron sin respuesta: alguno pudo grabarse.
   const depositoId = useDepositoDeVenta()
-  const ajeno = useDepositoAjenoDeVenta()
   const sinRespuesta = useRef(new Set<string>())
   const [enviando, setEnviando] = useState(false)
   // El estado no alcanza como guardia: dos toques antes del re-render leen el mismo `enviando`.
   const enVuelo = useRef(false)
   const [error, setError] = useState<string | null>(null)
-  const [pedirMotivo, setPedirMotivo] = useState(false)
-  const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
-  // Al editar, el stock del catálogo no cuenta lo que esta venta ya reservó: el motivo lo pide el servidor si hace falta.
-  // Se decide al confirmar, con el catálogo que haya en ese momento (la revisión lo acaba de volver a pedir). Quien
-  // no ve cantidades recibe `disponible = 0`: para él decide `puedeVenderse`.
-  const sinStock = async () => {
-    if (d.edicion || !d.esPedido) return false
-    const cache = qc.getQueryData<{ items: CatalogoStockItem[] } | CatalogoStockItem[]>(claveCatalogo(ajeno))
-    const catalogo = Array.isArray(cache) ? cache : cache?.items ?? []
-    const frescas = conStockFresco(d.lineas, catalogo)
-    if (frescas.some((l) => faltaStock(l, verCantidades))) return true
-    if (verCantidades) return false
-    // Sin cantidades el cliente no puede comparar: se le pregunta al servidor (sí/no por producto) y se pide el motivo
-    // como parte del flujo, en vez de esperar el 400 al enviar.
-    const noAlcanzan = await consultarQueNoAlcanza(depositoId, frescas.map((l) => ({ productoId: l.productoId, cantidad: l.cantidad })))
-    return noAlcanzan.size > 0
-  }
-
-  async function enviar(motivo?: string) {
+  async function enviar() {
     const { borrador: b } = d
     const clave = claveRef.current
     const renovarClave = () => { claveRef.current = nuevaClaveIdempotencia(); sinRespuesta.current.clear() }
@@ -117,7 +90,6 @@ export function useConfirmarVenta(d: Datos) {
       // Igual que la web (buildUpdateVentaPayload): la cesión viaja solo si se cambió; ausente = no tocar.
       r = await api.put<VentaActionResponseDto>(`/api/v1/Ventas/${d.edicion.ventaId}`, {
         ...aAutoguardado(d.lineas, d.descuentoGeneral, d.cabecera), id: d.edicion.ventaId, version: d.edicion.version,
-        ...(motivo?.trim() ? { motivoVentaSinStock: motivo.trim() } : {}),
         ...(d.esPedido && d.porcentajeCedido ? { porcentajeComisionCedido: d.porcentajeCedido } : {}),
         // buildUpdateVentaPayload de la web: el tilde viaja si ya tiene valor; ausente = no tocar.
         ...(d.cabecera.conFactura !== undefined ? { conFactura: d.cabecera.conFactura } : {}),
@@ -127,7 +99,7 @@ export function useConfirmarVenta(d: Datos) {
     } else {
       const cuerpo = (claveIdempotencia: string) => aAlta(d.lineas, d.descuentoGeneral, d.cabecera, {
         clienteId: d.clienteId, depositoId, esPedido: d.esPedido, claveIdempotencia,
-        motivoVentaSinStock: motivo, porcentajeComisionCedido: d.porcentajeCedido,
+        porcentajeComisionCedido: d.porcentajeCedido,
       })
       const invalido = errorDeAltaVenta(cuerpo(clave))
       if (invalido) throw new Error(invalido)
@@ -186,28 +158,20 @@ export function useConfirmarVenta(d: Datos) {
     router.replace({ pathname: '/(tabs)/ventas/guardada', params: { id: r.ventaId, mensaje } } as never)
   }
 
-  async function confirmar(motivo?: string) {
+  async function confirmar() {
     if (enVuelo.current) return
     enVuelo.current = true
     setEnviando(true)
     setError(null)
     try {
-      if (!motivo && await sinStock()) {
-        setPedirMotivo(true)
-        return
-      }
-      await enviar(motivo)
-      setPedirMotivo(false)
+      await enviar()
     } catch (e) {
-      const faltaMotivo = d.esPedido && pideMotivo(e) && !motivo
-      if (faltaMotivo) setPedirMotivo(true)
-      // Quien no ve cantidades no tiene por qué leer el texto técnico del 400: el motivo se pide y listo.
-      if (!(faltaMotivo && !verCantidades)) setError(mensajeDelServidor(e, 'No se pudo guardar la venta.'))
+      setError(mensajeDelServidor(e, 'No se pudo guardar la venta.'))
     } finally {
       enVuelo.current = false
       setEnviando(false)
     }
   }
 
-  return { confirmar, enviando, error, pedirMotivo, cerrarMotivo: () => setPedirMotivo(false) }
+  return { confirmar, enviando, error }
 }
