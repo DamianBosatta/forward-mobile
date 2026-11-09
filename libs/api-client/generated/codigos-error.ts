@@ -47,6 +47,7 @@ export const CATALOGO_DE_ERRORES = {
   ClaveIdempotenciaConOtroCuerpo: { status: 409, mensaje: "La clave de idempotencia ya se usó con otros datos." },
   ClaveIdempotenciaDePagoAnulado: { status: 409, mensaje: "El cobro de esa clave de idempotencia ya se anuló." },
   CobroDeClienteSoloPorPagos: { status: 400, mensaje: "Los cobros a clientes se registran en Pagos: Tesorería no imputa a las ventas ni baja la deuda." },
+  CompraCantidadNoMultiploDelPack: { status: 400, mensaje: "La cantidad comprada tiene que ser múltiplo del pack del producto." },
   CompraGastosOperativosNegativos: { status: 400, mensaje: "Los gastos operativos no pueden ser negativos." },
   CompraRecepcionCantidadFueraDeRango: { status: 400, mensaje: "Lo que llegó de cada línea tiene que ser 0 o más y no puede superar lo pedido." },
   CompraRecepcionLineaAjena: { status: 400, mensaje: "Una de las líneas recibidas no es de esta compra." },

@@ -14,6 +14,8 @@ interface ProductoElegible {
   codigoPropio?: string | null
   marca?: string | null
   imageUrl?: string | null
+  ventaMinimaUnidades?: number | null
+  bultoContenido?: number | null
 }
 
 /** Fila del selector (lámina CompraLinea): foto, código, nombre y "+ Añadir" o −/cantidad/+; la cantidad se puede tipear. */

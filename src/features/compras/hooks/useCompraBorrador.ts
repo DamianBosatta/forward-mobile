@@ -7,7 +7,8 @@ import type { CompraDto, ProductoDetailDto, SocioDetailDto } from '@/libs/api-cl
 import { useDepositoDeConsulta } from '@/features/catalogo/hooks/useDepositoDeConsulta'
 import { mensajeDelServidor } from '../lib/mensaje-error'
 import { confirmarYRecibir } from '../lib/confirmar-y-recibir'
-import { detallesParaServidor, lineaDesdeDetalle, type LineaCompra } from '../lib/lineaCompra'
+import type { EmpaqueProducto } from '@/core/utils/empaque'
+import { ajustarAlPaso, detallesParaServidor, lineaDesdeDetalle, lineaNueva, type LineaCompra } from '../lib/lineaCompra'
 import { esEstadoCompra } from '@/core/constants/estados'
 
 export interface ProveedorCompra {
@@ -247,13 +248,17 @@ export function useCompraBorrador(borradorInicial?: string, opciones: { edicion?
   }, [])
 
   /** Desde el catálogo: cantidad en unidades; 0 quita la línea. */
-  const setCantidadProducto = useCallback((prod: { id: string; nombre: string }, cantidad: number) => {
+  const setCantidadProducto = useCallback((prod: { id: string; nombre: string } & EmpaqueProducto, cantidad: number) => {
     const existe = lineas.some((l) => l.productoId === prod.id)
     if (cantidad > 0 && !existe) void precargarCosto(prod.id)
     setLineas((prev) => {
       if (cantidad <= 0) return prev.filter((l) => l.productoId !== prod.id)
-      if (prev.some((l) => l.productoId === prod.id)) return prev.map((l) => (l.productoId === prod.id ? { ...l, cantidad } : l))
-      return [...prev, { productoId: prod.id, nombre: prod.nombre, cantidad, unidad: 'Unidad', unidadesPorUnidad: 1, costoUnitario: null }]
+      if (prev.some((l) => l.productoId === prod.id)) {
+        // Subiendo, al paso de arriba; bajando, al de abajo (si no, el "−" no saldría de 8 a 0): nunca una cantidad que no sea múltiplo.
+        const ajustada = (l: LineaCompra) => ajustarAlPaso(l.unidad, cantidad, prod, cantidad < l.cantidad ? 'abajo' : 'arriba')
+        return prev.map((l) => (l.productoId === prod.id ? { ...l, cantidad: ajustada(l) } : l)).filter((l) => l.cantidad > 0)
+      }
+      return [...prev, lineaNueva(prod, cantidad)]
     })
   }, [lineas, precargarCosto])
 

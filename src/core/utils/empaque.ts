@@ -23,18 +23,43 @@ export function unidadesPorPack(ventaMinimaUnidades: number | null | undefined):
 }
 
 /**
- * Niveles en que se compra el producto, de menor a mayor, con las unidades de cada uno. Pack solo
- * si el pack trae más de una unidad; Bulto solo si trae más de una; Bulto madre si está cargado y
- * se cuenta en UNIDADES (bulto × bultos por madre): el pack no los vuelve a multiplicar.
+ * Cuántas unidades suma un paso de Unidad: el pack (6 → 6, 12, 18…), 1 si el producto no tiene pack.
+ * Venta y compra miden igual: nunca unidades sueltas de un producto con pack.
+ */
+export function pasoDeUnidad(ficha: EmpaqueProducto | null | undefined): number {
+  return unidadesPorPack(ficha?.ventaMinimaUnidades) ?? 1
+}
+
+/** Un nivel de más de una unidad solo se ofrece si son unidades en múltiplo del pack (sin pack, siempre). */
+export function esMultiploDelPack(unidades: number, paso: number): boolean {
+  return paso <= 1 || unidades % paso === 0
+}
+
+/**
+ * LA regla de niveles de venta y compra, de menor a mayor, con las unidades de cada uno. No hay nivel
+ * Pack: el pack es el paso de Unidad. Bulto solo si trae más de una unidad y es múltiplo del pack;
+ * Bulto madre si está cargado, se cuenta en UNIDADES (bulto × bultos por madre) y es múltiplo del pack.
  */
 export function nivelesDeEmpaque(ficha: EmpaqueProducto | null | undefined): { unidad: UnidadCompra; unidades: number }[] {
   const niveles: { unidad: UnidadCompra; unidades: number }[] = [{ unidad: 'Unidad', unidades: 1 }]
-  const pack = unidadesPorPack(ficha?.ventaMinimaUnidades)
-  if (pack != null) niveles.push({ unidad: 'Pack', unidades: pack })
+  const paso = pasoDeUnidad(ficha)
   const porBulto = ficha?.bultoContenido && ficha.bultoContenido > 0 ? ficha.bultoContenido : 1
-  if (porBulto > 1) niveles.push({ unidad: 'Bulto', unidades: porBulto })
-  if (ficha?.bultoMadreContenido && ficha.bultoMadreContenido > 0) niveles.push({ unidad: 'BultoMadre', unidades: porBulto * ficha.bultoMadreContenido })
+  if (porBulto > 1 && esMultiploDelPack(porBulto, paso)) niveles.push({ unidad: 'Bulto', unidades: porBulto })
+  if (ficha?.bultoMadreContenido && ficha.bultoMadreContenido > 0 && esMultiploDelPack(porBulto * ficha.bultoMadreContenido, paso)) {
+    niveles.push({ unidad: 'BultoMadre', unidades: porBulto * ficha.bultoMadreContenido })
+  }
   return niveles
+}
+
+/** Nivel con el que se abre: Bulto si el producto lo ofrece, si no Unidad (como la oferta de venta). */
+export function nivelInicial(ficha: EmpaqueProducto | null | undefined): UnidadCompra {
+  return nivelesDeEmpaque(ficha).some((n) => n.unidad === 'Bulto') ? 'Bulto' : 'Unidad'
+}
+
+/** Una cantidad en unidades, en el mayor nivel cuyo factor la divide (un borrador viejo en Pack se relee así). */
+export function nivelDeUnidades(ficha: EmpaqueProducto | null | undefined, unidades: number): { unidad: UnidadCompra; cantidad: number; unidades: number } {
+  const nivel = [...nivelesDeEmpaque(ficha)].reverse().find((n) => unidades > 0 && unidades % n.unidades === 0) ?? { unidad: 'Unidad' as const, unidades: 1 }
+  return { unidad: nivel.unidad, cantidad: unidades / nivel.unidades, unidades: nivel.unidades }
 }
 
 /**
@@ -45,7 +70,7 @@ export function presentacionEmpaque(ficha: EmpaqueProducto | null | undefined): 
   const niveles = nivelesDeEmpaque(ficha)
   const unidadesDe = (u: UnidadCompra) => niveles.find((n) => n.unidad === u)?.unidades ?? null
   const miles = (n: number) => new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(n)
-  const pack = unidadesDe('Pack')
+  const pack = unidadesPorPack(ficha?.ventaMinimaUnidades)
   const bulto = unidadesDe('Bulto')
   const madre = unidadesDe('BultoMadre')
   const partes: string[] = []

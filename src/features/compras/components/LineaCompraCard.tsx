@@ -7,7 +7,7 @@ import { useProducto } from '@/libs/api-client/productos'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { leerNumero, mostrarNumero, numeroCompleto } from '@/core/utils/numero'
 import {
-  cambioDeCosto, nombreDeEmpaque, opcionesDeCompra, sinCosto, subtotalDe, textoDeEmpaque, textoDeCambioDeCosto,
+  cambioDeCosto, cantidadValida, nombreDeEmpaque, pasoDeCantidad, opcionesDeCompra, sinCosto, subtotalDe, textoDeEmpaque, textoDeCambioDeCosto,
   type LineaCompra, type UnidadCompra,
 } from '../lib/lineaCompra'
 
@@ -38,8 +38,8 @@ function Contenido({ linea, onCambiar, onEditar }: Props) {
   const opciones = opcionesDeCompra(ficha, linea)
   const porUnidadDe = (u: UnidadCompra) => (u === linea.unidad && !ficha ? linea.unidadesPorUnidad : opciones.find((o) => o.unidad === u)?.unidades ?? 1)
   const cantidad = leerNumero(cantidadTexto)
-  // En bulto y bulto madre la cantidad es entera: el servidor no compra una fracción de bulto.
-  const cantidadInvalida = cantidad === null || cantidad <= 0 || (unidad !== 'Unidad' && !Number.isInteger(cantidad))
+  // Bulto y bulto madre van enteros y Unidad de a pack, igual que venta.
+  const cantidadInvalida = !cantidadValida(unidad, cantidad, ficha)
   const costo = costoTexto.trim() === '' ? null : leerNumero(costoTexto)
   const costoInvalido = costoTexto.trim() !== '' && (costo === null || costo <= 0)
   const ultimo = ficha?.precioCompraBase ?? null
@@ -47,7 +47,7 @@ function Contenido({ linea, onCambiar, onEditar }: Props) {
 
   const aplicar = (u: UnidadCompra, cantTexto: string, cosTexto: string) => {
     const cant = leerNumero(cantTexto)
-    if (cant === null || cant <= 0 || (u !== 'Unidad' && !Number.isInteger(cant))) return
+    if (cant === null || !cantidadValida(u, cant, ficha)) return
     const cos = cosTexto.trim() === '' ? null : leerNumero(cosTexto)
     onCambiar({ ...linea, unidad: u, cantidad: cant, unidadesPorUnidad: porUnidadDe(u), costoUnitario: cos !== null && cos > 0 ? cos : null })
   }
@@ -60,7 +60,10 @@ function Contenido({ linea, onCambiar, onEditar }: Props) {
     setCantidadTexto(t)
     aplicar(u, t, costoTexto)
   }
-  const sumar = (d: number) => cambiarCantidad(mostrarNumero(Math.max(1, Math.floor((cantidad ?? 0) + d))))
+  const sumar = (d: number) => {
+    const paso = pasoDeCantidad(unidad, ficha)
+    cambiarCantidad(mostrarNumero(Math.max(paso, Math.floor((cantidad ?? 0) / paso) * paso + d * paso)))
+  }
 
   const actual: LineaCompra = { ...linea, unidad, cantidad: cantidadInvalida ? linea.cantidad : cantidad!, unidadesPorUnidad: porUnidadDe(unidad), costoUnitario: costoInvalido ? null : costo }
   const falta = sinCosto(actual)
@@ -89,7 +92,7 @@ function Contenido({ linea, onCambiar, onEditar }: Props) {
           <Redondo c={c} label="+" a11y={`Sumar un ${nombreDeEmpaque(unidad).toLowerCase()} de ${linea.nombre}`} onPress={() => sumar(1)} />
         </View>
       </View>
-      {cantidadInvalida ? <Notice tone="peligro">{unidad === 'Unidad' ? 'La cantidad tiene que ser mayor a 0.' : `Se compran ${unidad === 'Pack' ? 'packs' : 'bultos'} enteros: escribí un número sin decimales.`}</Notice> : null}
+      {cantidadInvalida ? <Notice tone="peligro">{cantidad === null || cantidad <= 0 ? 'La cantidad tiene que ser mayor a 0.' : unidad === 'Unidad' ? `Este producto se compra de a ${mostrarNumero(pasoDeCantidad(unidad, ficha))} unidades.` : 'Se compran bultos enteros: escribí un número sin decimales.'}</Notice> : null}
       <Field label="Costo por unidad ($)" labelSuffix={falta ? 'obligatorio' : undefined} invalid={falta} placeholder={falta ? 'Falta el costo' : undefined}
         keyboardType="decimal-pad" alignRight value={costoTexto} onChangeText={cambiarCosto}
         error={costoInvalido ? 'Escribí un costo mayor a 0, por ejemplo 1.150,50.' : undefined}
