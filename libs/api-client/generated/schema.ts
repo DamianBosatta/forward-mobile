@@ -3161,6 +3161,7 @@ export interface paths {
                     FechaDesde?: string;
                     FechaHasta?: string;
                     SearchTerm?: string;
+                    Producto?: string;
                     Moneda?: string;
                     MontoMin?: number;
                     MontoMax?: number;
@@ -4192,6 +4193,7 @@ export interface paths {
                     FechaDesde?: string;
                     FechaHasta?: string;
                     SearchTerm?: string;
+                    Producto?: string;
                     Moneda?: string;
                     MontoMin?: number;
                     MontoMax?: number;
@@ -4243,6 +4245,7 @@ export interface paths {
                     FechaDesde?: string;
                     FechaHasta?: string;
                     SearchTerm?: string;
+                    Producto?: string;
                     Estados?: components["schemas"]["EstadoCompra"][];
                 };
                 header?: never;
@@ -10794,6 +10797,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Logistica/cobros-pendientes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    diaSalida?: string;
+                    depositoId?: string;
+                    hojaDeRutaId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CobrosDelDiaDtoResponse"];
+                        "application/json": components["schemas"]["CobrosDelDiaDtoResponse"];
+                        "text/json": components["schemas"]["CobrosDelDiaDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Logistica/hojas-ruta/{id}/paradas-cobro": {
         parameters: {
             query?: never;
@@ -12464,6 +12508,45 @@ export interface paths {
         trace?: never;
     };
     "/api/v1/Logistica/hojas-ruta/{id}/manifiesto-pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Logistica/hojas-ruta/{id}/manifiesto-nc-pdf": {
         parameters: {
             query?: never;
             header?: never;
@@ -17088,6 +17171,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/socios-comerciales/ubicacion-desde-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UbicacionDesdeLinkQuery"];
+                    "text/json": components["schemas"]["UbicacionDesdeLinkQuery"];
+                    "application/*+json": components["schemas"]["UbicacionDesdeLinkQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UbicacionDesdeLinkDtoResponse"];
+                        "application/json": components["schemas"]["UbicacionDesdeLinkDtoResponse"];
+                        "text/json": components["schemas"]["UbicacionDesdeLinkDtoResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/socios-comerciales/{id}/toggle-status": {
         parameters: {
             query?: never;
@@ -20705,6 +20831,8 @@ export interface components {
             depositoId?: string;
             /** Format: double */
             cantidad?: number;
+            /** Format: double */
+            cantidadNueva?: number | null;
             tipoMovimiento?: components["schemas"]["TipoMovimientoStock"];
             observacion?: string | null;
         };
@@ -21688,6 +21816,20 @@ export interface components {
             /** Format: date-time */
             resueltaEn?: string | null;
         };
+        CobroDelDiaDto: {
+            /** Format: uuid */
+            eventoCalendarioId: string;
+            /** Format: uuid */
+            clienteId: string;
+            clienteNombre: string;
+            direccion?: string | null;
+            /** Format: date */
+            fecha: string;
+            /** Format: double */
+            montoAcordado?: number | null;
+            motivo?: components["schemas"]["MotivoCobroNoEntra"];
+            motivoTexto?: string | null;
+        };
         CobroEnEntregaInput: {
             imputacion?: components["schemas"]["ImputacionCobroChofer"];
             lineas?: components["schemas"]["LineaCobroEntregaInput"][] | null;
@@ -21747,6 +21889,21 @@ export interface components {
             traceId?: string | null;
             errors?: string[] | null;
             data?: components["schemas"]["CobroPendienteDto"][] | null;
+            codigo?: string | null;
+        };
+        CobrosDelDiaDto: {
+            items: components["schemas"]["CobroDelDiaDto"][];
+            /** Format: int32 */
+            noVisibles: number;
+        };
+        CobrosDelDiaDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["CobrosDelDiaDto"];
             codigo?: string | null;
         };
         CobrosPendientesDto: {
@@ -22567,6 +22724,10 @@ export interface components {
             email?: string | null;
             telefono?: string | null;
             direccion?: string | null;
+            /** Format: double */
+            latitud?: number | null;
+            /** Format: double */
+            longitud?: number | null;
             nombreFantasia?: string | null;
             nombreContacto?: string | null;
             localidad?: string | null;
@@ -24374,6 +24535,8 @@ export interface components {
             porcentajeComisionConfigurado?: number | null;
         };
         /** @enum {string} */
+        MotivoCobroNoEntra: "OtroDeposito" | "FechaPosterior" | "EnOtraParada" | "ClienteYaEnElViaje";
+        /** @enum {string} */
         MotivoCot: "Importe" | "Peso" | "UmbralPropio";
         /** @enum {string} */
         MotivoMovimientoCaja: "RetiroDelDueno" | "GastoChico" | "CambioVuelto" | "Aporte" | "Otro";
@@ -24465,6 +24628,10 @@ export interface components {
             pagoActivo?: boolean | null;
             mediosPago?: components["schemas"]["MedioPagoLineaDto"][] | null;
             detalle?: string | null;
+            comprobante?: string | null;
+            /** Format: uuid */
+            ventaOrigenId?: string | null;
+            itemsDevueltos: components["schemas"]["NotaCreditoItemDto"][];
         };
         MovimientoCuentaDtoPaginatedResponse: {
             /** Format: int32 */
@@ -24532,6 +24699,9 @@ export interface components {
             cuenta: components["schemas"]["TipoCuentaSocio"];
             referencia: string;
             comprobante?: string | null;
+            /** Format: uuid */
+            ventaOrigenId?: string | null;
+            itemsDevueltos: components["schemas"]["NotaCreditoItemDto"][];
             /** Format: double */
             debe: number;
             /** Format: double */
@@ -24576,6 +24746,10 @@ export interface components {
             /** Format: uuid */
             otroDepositoId?: string | null;
             otroDepositoNombre?: string | null;
+            /** Format: double */
+            stockAnterior?: number | null;
+            /** Format: double */
+            stockNuevo?: number | null;
         };
         MovimientoStockDtoPaginatedResponse: {
             /** Format: int32 */
@@ -24639,6 +24813,17 @@ export interface components {
             data?: components["schemas"]["MovimientoStockFiscalDtoPaginatedResponse"];
             codigo?: string | null;
         };
+        NotaCreditoItemDto: {
+            /** Format: uuid */
+            productoId?: string;
+            productoNombre?: string | null;
+            marca?: string | null;
+            codigo?: string | null;
+            /** Format: double */
+            cantidad?: number;
+            /** Format: double */
+            monto?: number;
+        };
         NotaCreditoItemInput: {
             /** Format: uuid */
             ventaDetalleId?: string;
@@ -24664,6 +24849,7 @@ export interface components {
             motivoRechazo?: string | null;
             /** Format: int32 */
             cantidadItems?: number;
+            items?: components["schemas"]["NotaCreditoItemDto"][] | null;
             tieneComprobanteFiscal?: boolean;
             llevaComprobanteFiscal?: boolean;
             creadoPorNombre?: string | null;
@@ -24995,6 +25181,10 @@ export interface components {
             /** Format: uuid */
             notaCreditoId?: string | null;
             cobros?: components["schemas"]["CobroParadaDto"][] | null;
+            /** Format: double */
+            totalVenta?: number;
+            /** Format: double */
+            debia?: number;
         };
         ParadaRequest: {
             /** Format: uuid */
@@ -27234,6 +27424,12 @@ export interface components {
             firmado?: number;
             /** Format: double */
             deudaAnterior?: number;
+            /** Format: double */
+            debia?: number;
+            /** Format: double */
+            cobrado?: number;
+            /** Format: double */
+            pendiente?: number;
         };
         TransferenciaRendidaInput: {
             /** Format: uuid */
@@ -27403,6 +27599,26 @@ export interface components {
             latitud: number;
             /** Format: double */
             longitud: number;
+        };
+        UbicacionDesdeLinkDto: {
+            /** Format: double */
+            latitud?: number;
+            /** Format: double */
+            longitud?: number;
+            direccionSugerida?: string | null;
+        };
+        UbicacionDesdeLinkDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["UbicacionDesdeLinkDto"];
+            codigo?: string | null;
+        };
+        UbicacionDesdeLinkQuery: {
+            texto?: string | null;
         };
         UltimaCompraProductoDto: {
             /** Format: date */
@@ -27628,6 +27844,10 @@ export interface components {
             email?: string | null;
             telefono?: string | null;
             direccion?: string | null;
+            /** Format: double */
+            latitud?: number | null;
+            /** Format: double */
+            longitud?: number | null;
             nombreFantasia?: string | null;
             nombreContacto?: string | null;
             localidad?: string | null;
@@ -28115,6 +28335,7 @@ export interface components {
             observaciones?: string | null;
             clienteNombre?: string | null;
             clienteTelefono?: string | null;
+            clienteEmail?: string | null;
             depositoNombre?: string | null;
             vendedorNombre?: string | null;
             creadoPor?: string | null;
