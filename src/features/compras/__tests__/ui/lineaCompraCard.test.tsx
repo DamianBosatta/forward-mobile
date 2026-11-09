@@ -65,6 +65,12 @@ describe('tarjeta de producto de la compra', () => {
     expect(screen.getByText('Se compran bultos enteros: escribí un número sin decimales.')).toBeTruthy()
   })
 
+  it('muestra la marca y el código propio del producto junto al nombre', async () => {
+    dibujar(LINEA, { marca: 'Ayudín', codigoPropio: 'LAV-001' })
+    expect(await screen.findByText('Ayudín')).toBeTruthy()
+    expect(screen.getByText('LAV-001')).toBeTruthy()
+  })
+
   it('tocar el nombre abre la hoja de la línea', async () => {
     const { onEditar } = dibujar()
     await userEvent.press(screen.getByRole('button', { name: 'Editar Lavandina Ayudín 1 L' }))

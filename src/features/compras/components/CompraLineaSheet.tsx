@@ -58,7 +58,7 @@ function Contenido({ linea, onClose, onConfirm, onQuitar }: Props & { linea: Lin
         <View accessibilityLabel="Línea de compra" style={{ flex: isTablet ? undefined : 1, width: isTablet ? 440 : undefined, backgroundColor: c.bg }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], padding: space[4], backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.border }}>
             <View style={{ flex: 1 }}>
-              <ProductoIdentidad nombre={linea.nombre} codigo={ficha?.codigoPropio} estiloNombre={texto()} />
+              <ProductoIdentidad nombre={linea.nombre} marca={ficha?.marca} codigo={ficha?.codigoPropio} estiloNombre={texto()} />
               <Text style={{ ...typeScale.titulo, ...importe, color: c.text }}>
                 {`Subtotal ${formatImporte(unidades !== null && !costoInvalido ? unidades * costo! : null)}`}
               </Text>

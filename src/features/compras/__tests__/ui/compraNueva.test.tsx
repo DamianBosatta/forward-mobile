@@ -242,6 +242,19 @@ describe('pantalla de compra nueva', () => {
     expect(urls.every((u) => !new URLSearchParams(u.split('?')[1]).has('depositoId'))).toBe(true)
   })
 
+  it('el resumen del paso 3 muestra marca y código de cada producto', async () => {
+    mockGet.mockImplementation(((orig) => (url: string) => (url === '/api/v1/Productos/pr1' ? Promise.resolve({ id: 'pr1', precioCompraBase: 1020, marca: 'Nuvia', codigoPropio: 'BAL-10' }) : orig(url)))(mockGet.getMockImplementation()!))
+    pantalla()
+    await userEvent.press(await screen.findByRole('button', { name: 'Insumos del Sur SA' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Continuar a productos' }))
+    await screen.findByText('Insumos del Sur SA · 30 días')
+    await agregarBalde('3')
+    await userEvent.press(screen.getByRole('button', { name: 'Listo' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Ver compra' }))
+    expect(await screen.findByText('Nuvia')).toBeTruthy()
+    expect(screen.getByText('BAL-10')).toBeTruthy()
+  })
+
   it('confirmar guarda lo pendiente y después confirma; abre la compra', async () => {
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: 'Insumos del Sur SA' }))

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
+import { useProducto } from '@/libs/api-client/productos'
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Trash2 } from 'lucide-react-native'
@@ -36,6 +37,12 @@ interface Props {
  * Compra nueva con el formato nuevo (láminas Compra y TabCompra), como borrador con autoguardado.
  * Con `editarId` edita una compra ya guardada con el mismo formulario, sin autoguardado.
  */
+/** Marca y código del producto de la línea: salen de la ficha (misma consulta cacheada que usa la tarjeta del paso 2). */
+function IdentidadDeLinea({ productoId, nombre }: { productoId: string; nombre: string }) {
+  const { data: ficha } = useProducto(productoId)
+  return <ProductoIdentidad nombre={nombre} marca={ficha?.marca} codigo={ficha?.codigoPropio} />
+}
+
 export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
   const c = useColors()
   const router = useRouter()
@@ -189,7 +196,7 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
         </View>
         {b.lineas.map((l, i) => (
           <View key={l.productoId} accessible style={{ paddingHorizontal: space[4], paddingVertical: space[3], gap: space[1], borderTopWidth: i ? 1 : 0, borderTopColor: c.border }}>
-            <ProductoIdentidad nombre={l.nombre} />
+            <IdentidadDeLinea productoId={l.productoId} nombre={l.nombre} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
               <View style={{ flexShrink: 1 }}>
                 <Text style={[typeScale.secundario, { color: c.text }]}>{textoDeLinea(l)}</Text>

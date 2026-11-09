@@ -72,7 +72,7 @@ function Contenido({ linea, onCambiar, onEditar }: Props) {
       <Pressable accessibilityRole="button" accessibilityLabel={`Editar ${linea.nombre}`} onPress={() => onEditar(actual)}
         style={{ minHeight: 44, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space[2] }}>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <ProductoIdentidad nombre={linea.nombre} codigo={ficha?.codigoPropio} />
+          <ProductoIdentidad nombre={linea.nombre} marca={ficha?.marca} codigo={ficha?.codigoPropio} />
           <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{cantidadInvalida ? '—' : textoDeEmpaque(actual)}</Text>
         </View>
         <Text style={[typeScale.cuerpoDestacado, importe, { color: falta ? c.danger : c.text }]}>{falta ? 'Sin costo' : formatImporte(subtotalDe(actual))}</Text>
