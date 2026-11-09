@@ -7,9 +7,10 @@ import { useResponsive } from '@/libs/useResponsive'
 import { Button, Field, Notice, PieFijo, Segmented, formatImporte } from '@/core/ui/fw'
 import { useProducto } from '@/libs/api-client/productos'
 import { leerNumero, mostrarNumero, numeroCompleto } from '@/core/utils/numero'
+import { presentacionEmpaque } from '@/core/utils/empaque'
 import { cambioDeCosto, opcionesDeCompra, type LineaCompra, type UnidadCompra } from '../lib/lineaCompra'
 
-const NOMBRE: Record<UnidadCompra, [string, string]> = { Unidad: ['Unidad', 'Unidades'], Bulto: ['Bulto', 'Bultos'], BultoMadre: ['Bulto madre', 'Bultos madre'] }
+const NOMBRE: Record<UnidadCompra, [string, string]> = { Unidad: ['Unidad', 'Unidades'], Pack: ['Pack', 'Packs'], Bulto: ['Bulto', 'Bultos'], BultoMadre: ['Bulto madre', 'Bultos madre'] }
 
 interface Props {
   /** Línea a editar; null = cerrado. */
@@ -39,6 +40,7 @@ function Contenido({ linea, onClose, onConfirm, onQuitar }: Props & { linea: Lin
   const [costoTexto, setCostoTexto] = useState(linea.costoUnitario === null ? '' : numeroCompleto(linea.costoUnitario))
 
   const opciones = opcionesDeCompra(ficha, linea)
+  const empaque = presentacionEmpaque(ficha)
   const porUnidad = unidad === linea.unidad && !ficha ? linea.unidadesPorUnidad : opciones.find((o) => o.unidad === unidad)!.unidades
   const cantidad = leerNumero(cantidadTexto)
   // En bulto y bulto madre la cantidad es entera: el servidor no compra una fracción de bulto.
@@ -73,6 +75,7 @@ function Contenido({ linea, onClose, onConfirm, onQuitar }: Props & { linea: Lin
                 <Text style={{ ...typeScale.secundario, color: c.text }}>Se compra por</Text>
                 <Segmented accessibilityLabel="Unidad de compra" value={unidad} onChange={setUnidad}
                   options={opciones.map((o) => ({ value: o.unidad, label: o.unidad === 'Unidad' ? 'Unidad' : `${NOMBRE[o.unidad][0]} × ${o.unidades}` }))} />
+                {empaque.length > 0 ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{empaque.join(' · ')}</Text> : null}
               </View>
             ) : null}
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] }}>
@@ -87,7 +90,7 @@ function Contenido({ linea, onClose, onConfirm, onQuitar }: Props & { linea: Lin
                 <Redondo label="+" a11y="Sumar" onPress={() => sumar(1)} />
               </View>
             </View>
-            {cantidadInvalida ? <Notice tone="peligro">{unidad === 'Unidad' ? 'La cantidad tiene que ser mayor a 0.' : 'Se compran bultos enteros: escribí un número sin decimales.'}</Notice> : null}
+            {cantidadInvalida ? <Notice tone="peligro">{unidad === 'Unidad' ? 'La cantidad tiene que ser mayor a 0.' : `Se compran ${unidad === 'Pack' ? 'packs' : 'bultos'} enteros: escribí un número sin decimales.`}</Notice> : null}
             <Field label="Costo por unidad ($)" keyboardType="decimal-pad" alignRight value={costoTexto} onChangeText={setCostoTexto}
               error={costoTexto.trim() !== '' && costoInvalido ? 'Escribí un costo mayor a 0, por ejemplo 1.150,50.' : undefined}
               help={`${ultimo ? `Último costo: ${formatImporte(ultimo)}. ` : ''}El costo es siempre por unidad, aunque compres por bulto.`} />

@@ -11,6 +11,7 @@ import type { ParadaCobro } from '@/features/cobros/paradaCobro'
 import { PARADA_COBRO_PENDIENTE } from '@/features/cobros/paradaCobro'
 import { ParadaGrande } from './ParadaGrande'
 import { ParadasCobro } from './ParadasCobro'
+import { PlanParada } from './PlanParada'
 import { piezasDeParada, textoPiezas } from './piezasParada'
 
 interface Props {
@@ -172,6 +173,7 @@ function Fila({ n, ultima, onPress }: { n: ParadaNumerada; ultima: boolean; onPr
           <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(importeParada(parada).valor)}</Text>
         )}
       </View>
+      {pendiente ? <PlanParada parada={parada} /> : null}
     </Pressable>
   )
 }

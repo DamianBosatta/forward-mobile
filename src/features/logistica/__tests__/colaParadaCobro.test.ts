@@ -111,7 +111,7 @@ describe('cobro de una parada de solo cobro sin señal', () => {
 })
 
 describe('paradas de cobro con lo que espera en la cola', () => {
-  const parada = (o: Partial<ParadaCobro>): ParadaCobro => ({ id: 'pc1', clienteId: 'c1', clienteNombre: 'Don Pepe', orden: 1, estado: 1, deudaCliente: 1, ...o })
+  const parada = (o: Partial<ParadaCobro>): ParadaCobro => ({ id: 'pc1', clienteId: 'c1', clienteNombre: 'Don Pepe', orden: 1, estado: 1, deudaCliente: 1, advertenciaVentana: 0, ...o })
 
   it('lo cobrado o cerrado sin señal ya cuenta como hecho; lo que el servidor ya resolvió manda; lo que hay que revisar no', () => {
     const lista = [parada({ id: 'pc1' }), parada({ id: 'pc2' }), parada({ id: 'pc3', estado: 3 }), parada({ id: 'pc4' })]

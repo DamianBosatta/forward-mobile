@@ -34,7 +34,7 @@ const entrega = (o: Record<string, unknown>) => ({
 })
 const cobro = (o: Partial<ParadaCobro> = {}): ParadaCobro => ({
   id: 'pc1', clienteId: 'c1', clienteNombre: 'Almacén Don Pepe', direccion: 'Av. Rivadavia 4500', orden: 1, estado: 1,
-  montoAcordado: 85000, deudaCliente: 120000, ...o,
+  montoAcordado: 85000, deudaCliente: 120000, advertenciaVentana: 0, ...o,
 })
 const rechazo = (status: number, mensaje: string, codigo?: string) => new ApiError(status, mensaje, [], codigo as never)
 

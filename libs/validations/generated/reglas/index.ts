@@ -5,13 +5,18 @@
  * La fuente de cada regla es un fixture de `Forward-Api/contrato/reglas/*.json`; el test de
  * paridad (`paridad.test.ts`) mantiene web y backend dando el mismo veredicto.
  */
+import {
+  MONEDAS_PERMITIDAS,
+  cuitEsValido,
+  esCantidadEnteraSiEsBulto,
+  tieneComoMuchoDosDecimales,
+} from '@forward/reglas'
 import { z } from 'zod'
 
-import { cuitEsValido } from '../cuit'
 import {
   AbrirCajaCommandSchema,
   AutorizarVentaCommandSchema,
-  CerrarCajaCommandSchema,
+  ArquearCajaQuerySchema,
   CompraDetalleDtoSchema,
   ComprobanteCompraInputSchema,
   CreateProductoCommandSchema,
@@ -20,7 +25,8 @@ import {
   RegistrarPagoCommandSchema,
 } from '../generated/esquemas'
 
-const tieneComoMuchoDosDecimales = (n: number) => Math.abs(n * 100 - Math.round(n * 100)) < 1e-9
+// Las reglas puras (CUIT, escala de dinero, monedas, bulto) viven en @forward/reglas (C-022).
+export { MONEDAS_PERMITIDAS, esCantidadEnteraSiEsBulto }
 
 /** autorizar-venta/razon-no-blanca y autorizar-venta/descuento-adicional-dos-decimales */
 export const AutorizarVentaConReglasSchema = AutorizarVentaCommandSchema.superRefine((v, ctx) => {
@@ -49,18 +55,11 @@ export const AutorizarVentaConReglasSchema = AutorizarVentaCommandSchema.superRe
   }
 })
 
-/** compra/detalle-cantidad-entera-por-bulto: en bulto o bulto madre no se compra una fracción. */
-export const esCantidadEnteraSiEsBulto = (unidadCompra: unknown, cantidad: number) =>
-  !(unidadCompra === 'Bulto' || unidadCompra === 'BultoMadre') || Number.isInteger(cantidad)
-
 /** compra/detalle-cantidad-entera-por-bulto: la cantidad confirmada es mayor a 0. */
 export const CantidadDeCompraSchema = z.number().gt(0, 'La cantidad debe ser mayor a 0')
 
 /** compra/detalle-costo-positivo: el contrato publica min 0 (el borrador admite 0); el alta pide mayor a 0. */
 export const CostoUnitarioDeCompraSchema = z.number().gt(0, 'El costo unitario debe ser mayor a 0')
-
-/** Monedas que opera el sistema: la misma lista que `Domain/Common/Monedas.cs` (decisión del dueño L43). */
-export const MONEDAS_PERMITIDAS = ['ARS', 'USD'] as const
 
 /** caja/abrir-moneda-ars-usd y caja/cerrar-moneda-ars-usd: ARS o USD, en mayúsculas. */
 export const MonedaPermitidaSchema = z.enum(MONEDAS_PERMITIDAS, {
@@ -102,7 +101,7 @@ export const AbrirCajaConReglasSchema = AbrirCajaCommandSchema.superRefine((v, c
 })
 
 /** caja/cerrar-moneda-ars-usd */
-export const CerrarCajaConReglasSchema = CerrarCajaCommandSchema.superRefine((v, ctx) => {
+export const CerrarCajaConReglasSchema = ArquearCajaQuerySchema.superRefine((v, ctx) => {
   exigirMoneda(v.moneda, ctx)
   escalaDe('saldoFinalDeclarado', v.saldoFinalDeclarado, ctx, 'El saldo final')
 })

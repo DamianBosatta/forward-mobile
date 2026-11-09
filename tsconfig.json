@@ -8,6 +8,7 @@
     "jsxImportSource": "nativewind",
     "baseUrl": ".",
     "paths": {
+      "@forward/reglas": ["libs/reglas"],
       "@/*": ["./*"],
       "@/libs/*": ["libs/*"],
       "@/components/*": ["components/*"],
