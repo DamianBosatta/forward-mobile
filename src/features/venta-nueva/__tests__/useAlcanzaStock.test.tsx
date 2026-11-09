@@ -2,7 +2,7 @@ import React from 'react'
 import { act, renderHook } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { consultarQueNoAlcanza, useAlcanzaStock } from '../hooks/useAlcanzaStock'
+import { useAlcanzaStock } from '../hooks/useAlcanzaStock'
 import { useDepositoElegidoStore } from '../hooks/useDepositoDeVenta'
 
 const mockPost = jest.fn()
@@ -89,13 +89,6 @@ describe('useAlcanzaStock: depósito de la venta (S18)', () => {
     mockPost.mockResolvedValue([{ productoId: 'p1', disponible: true }])
     renderHook(() => useAlcanzaStock(pedir(5)), { wrapper })
     await avanzar(500)
-    expect(mockPost.mock.calls[0][1]).toMatchObject({ depositoId: 'dep-otro' })
-  })
-
-  it('consultarQueNoAlcanza usa el depósito que se le pasa', async () => {
-    mockPost.mockResolvedValue([{ productoId: 'p1', disponible: false }])
-    const r = await consultarQueNoAlcanza('dep-otro', pedir(5))
-    expect([...r]).toEqual(['p1'])
     expect(mockPost.mock.calls[0][1]).toMatchObject({ depositoId: 'dep-otro' })
   })
 })

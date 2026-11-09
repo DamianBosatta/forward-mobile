@@ -41,14 +41,3 @@ export function useAlcanzaStock(items: DisponibilidadPedido[], activo = true) {
     fallo: habilitado && q.isError,
   }
 }
-
-/** Pregunta al servidor, en el momento, qué productos de `items` no alcanzan. Falla en silencio (devuelve vacío). */
-export async function consultarQueNoAlcanza(depositoId: string, items: DisponibilidadPedido[]): Promise<Set<string>> {
-  const pedido = pedidoDe(items)
-  if (!pedido.length) return new Set()
-  try {
-    return productosQueNoAlcanzan(await fetchDisponibilidad(depositoId, pedido))
-  } catch {
-    return new Set()
-  }
-}
