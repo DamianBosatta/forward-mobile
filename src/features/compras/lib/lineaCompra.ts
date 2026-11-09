@@ -1,6 +1,6 @@
 import type { CompraDetalle } from '@/libs/api-client'
 import { mostrarNumero } from '@/core/utils/numero'
-import { nivelesDeEmpaque, type EmpaqueProducto, type UnidadCompra } from '@/core/utils/empaque'
+import { nivelesDeEmpaque, pasoDeUnidad, type EmpaqueProducto, type UnidadCompra } from '@/core/utils/empaque'
 
 export type { UnidadCompra }
 
@@ -81,13 +81,15 @@ export function detallesParaServidor(lineas: LineaCompra[]) {
 
 /** Línea del teléfono a partir del detalle que devuelve GET /Compras/{id}. */
 export function lineaDesdeDetalle(d: CompraDetalle): LineaCompra {
-  const ingresada = d.cantidadIngresada > 0 ? d.cantidadIngresada : d.cantidad
+  // Un borrador viejo en Pack se relee en unidades: ya no hay nivel Pack, y las unidades son múltiplo del pack.
+  const esPack = d.unidadCompra === 'Pack'
+  const ingresada = esPack ? d.cantidad : d.cantidadIngresada > 0 ? d.cantidadIngresada : d.cantidad
   return {
     productoId: d.productoId,
     nombre: d.nombreProducto,
     cantidad: ingresada,
-    unidad: d.unidadCompra,
-    unidadesPorUnidad: ingresada > 0 ? d.cantidad / ingresada : 1,
+    unidad: esPack ? 'Unidad' : d.unidadCompra,
+    unidadesPorUnidad: esPack ? 1 : ingresada > 0 ? d.cantidad / ingresada : 1,
     costoUnitario: d.costoUnitarioBaseAmount > 0 ? d.costoUnitarioBaseAmount : null,
     monedaCosto: d.moneda ?? undefined,
   }
@@ -109,6 +111,18 @@ export function cambioDeCosto(costo: number | null, ultimo: number | null | unde
 /** Empaques en los que se puede comprar el producto: la regla única vive en `core/utils/empaque`. */
 export function unidadesDisponibles(ficha: EmpaqueProducto | undefined) {
   return nivelesDeEmpaque(ficha)
+}
+
+/** Cuánto suma el "+" y de a cuánto va la cantidad: el pack en Unidad (igual que venta), 1 en bultos. */
+export function pasoDeCantidad(unidad: UnidadCompra, ficha: EmpaqueProducto | undefined): number {
+  return unidad === 'Unidad' ? pasoDeUnidad(ficha) : 1
+}
+
+/** Cantidad válida: mayor a 0, entera en bultos y en Unidad múltiplo del pack. */
+export function cantidadValida(unidad: UnidadCompra, cantidad: number | null, ficha: EmpaqueProducto | undefined): boolean {
+  if (cantidad === null || cantidad <= 0) return false
+  const paso = pasoDeCantidad(unidad, ficha)
+  return unidad === 'Unidad' && paso === 1 ? true : Number.isInteger(cantidad) && cantidad % paso === 0
 }
 
 /** "Costo +4,5 % sobre la última compra ($ 710,00)." El importe del último costo llega ya formateado. */

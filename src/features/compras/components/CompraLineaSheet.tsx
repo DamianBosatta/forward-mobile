@@ -8,7 +8,7 @@ import { Button, Field, Notice, PieFijo, Segmented, formatImporte } from '@/core
 import { useProducto } from '@/libs/api-client/productos'
 import { leerNumero, mostrarNumero, numeroCompleto } from '@/core/utils/numero'
 import { presentacionEmpaque } from '@/core/utils/empaque'
-import { cambioDeCosto, opcionesDeCompra, type LineaCompra, type UnidadCompra } from '../lib/lineaCompra'
+import { cambioDeCosto, cantidadValida, opcionesDeCompra, pasoDeCantidad, type LineaCompra, type UnidadCompra } from '../lib/lineaCompra'
 
 const NOMBRE: Record<UnidadCompra, [string, string]> = { Unidad: ['Unidad', 'Unidades'], Pack: ['Pack', 'Packs'], Bulto: ['Bulto', 'Bultos'], BultoMadre: ['Bulto madre', 'Bultos madre'] }
 
@@ -43,15 +43,16 @@ function Contenido({ linea, onClose, onConfirm, onQuitar }: Props & { linea: Lin
   const empaque = presentacionEmpaque(ficha)
   const porUnidad = unidad === linea.unidad && !ficha ? linea.unidadesPorUnidad : opciones.find((o) => o.unidad === unidad)!.unidades
   const cantidad = leerNumero(cantidadTexto)
-  // En bulto y bulto madre la cantidad es entera: el servidor no compra una fracción de bulto.
-  const cantidadInvalida = cantidad === null || cantidad <= 0 || (unidad !== 'Unidad' && !Number.isInteger(cantidad))
+  const paso = pasoDeCantidad(unidad, ficha)
+  // Bulto y bulto madre van enteros y Unidad de a pack, igual que venta.
+  const cantidadInvalida = !cantidadValida(unidad, cantidad, ficha)
   const costo = costoTexto.trim() === '' ? null : leerNumero(costoTexto)
   const costoInvalido = costo === null || costo <= 0
   const ultimo = ficha?.precioCompraBase ?? null
   const cambio = cambioDeCosto(costo, ultimo)
   const unidades = cantidadInvalida ? null : cantidad! * porUnidad
   const texto = (extra = {}) => ({ ...typeScale.cuerpoDestacado, color: c.text, ...extra })
-  const sumar = (d: number) => setCantidadTexto(mostrarNumero(Math.max(1, Math.floor((cantidad ?? 0) + d))))
+  const sumar = (d: number) => setCantidadTexto(mostrarNumero(Math.max(paso, Math.floor((cantidad ?? 0) / paso) * paso + d * paso)))
 
   return (
     <Modal visible transparent={isTablet} animationType="fade" onRequestClose={onClose}>
@@ -90,7 +91,7 @@ function Contenido({ linea, onClose, onConfirm, onQuitar }: Props & { linea: Lin
                 <Redondo label="+" a11y="Sumar" onPress={() => sumar(1)} />
               </View>
             </View>
-            {cantidadInvalida ? <Notice tone="peligro">{unidad === 'Unidad' ? 'La cantidad tiene que ser mayor a 0.' : `Se compran ${unidad === 'Pack' ? 'packs' : 'bultos'} enteros: escribí un número sin decimales.`}</Notice> : null}
+            {cantidadInvalida ? <Notice tone="peligro">{cantidad === null || cantidad <= 0 ? 'La cantidad tiene que ser mayor a 0.' : unidad === 'Unidad' ? `Este producto se compra de a ${mostrarNumero(paso)} unidades: ${mostrarNumero(paso)}, ${mostrarNumero(paso * 2)}, ${mostrarNumero(paso * 3)}…` : 'Se compran bultos enteros: escribí un número sin decimales.'}</Notice> : null}
             <Field label="Costo por unidad ($)" keyboardType="decimal-pad" alignRight value={costoTexto} onChangeText={setCostoTexto}
               error={costoTexto.trim() !== '' && costoInvalido ? 'Escribí un costo mayor a 0, por ejemplo 1.150,50.' : undefined}
               help={`${ultimo ? `Último costo: ${formatImporte(ultimo)}. ` : ''}El costo es siempre por unidad, aunque compres por bulto.`} />

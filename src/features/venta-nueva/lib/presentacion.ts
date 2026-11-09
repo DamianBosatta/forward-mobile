@@ -1,5 +1,5 @@
 import type { CatalogoStockItem } from '@/libs/api-client'
-import { unidadesPorPack } from '@/core/utils/empaque'
+import { esMultiploDelPack, unidadesPorPack } from '@/core/utils/empaque'
 
 /** Unidades por venta del producto: la cantidad va de a este múltiplo (6 → 6, 12, 18…). */
 export function multiploDe(producto: Pick<CatalogoStockItem, 'ventaMinimaUnidades'>): number {
@@ -30,7 +30,7 @@ export function presentacionDe(p: Pick<CatalogoStockItem, 'ventaMinimaUnidades' 
   }
   const bulto = p.bultoContenido > 1 ? p.bultoContenido : 1
   // Un bulto que no es múltiplo de la venta mínima no se podría pedir cerrado: se ofrece solo por unidad.
-  const hayBulto = bulto > 1 && bulto % minimo === 0
+  const hayBulto = bulto > 1 && esMultiploDelPack(bulto, minimo)
   return { modos: hayBulto ? ['bultos', 'unidades'] : ['unidades'], unidadesPorBulto: bulto, soloBultos: false, paso: { bultos: 1, unidades: minimo } }
 }
 

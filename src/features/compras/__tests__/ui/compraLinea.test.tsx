@@ -47,16 +47,25 @@ describe('línea de compra', () => {
     expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ unidad: 'Bulto', cantidad: 4, unidadesPorUnidad: 12, costoUnitario: 1000 }))
   })
 
-  it('por pack: la cantidad va en packs, el servidor recibe Pack y el bulto madre no vuelve a multiplicar por el pack', async () => {
-    const onConfirm = abrir({ precioCompraBase: 1000, ventaMinimaUnidades: 8, bultoContenido: 288, bultoMadreContenido: 10 }, { ...LINEA, cantidad: 2 })
-    await userEvent.press(await screen.findByRole('radio', { name: 'Pack × 8' }))
-    expect(screen.getByText('= 16 unidades')).toBeTruthy()
-    expect(screen.getByRole('radio', { name: 'Bulto × 288' })).toBeTruthy()
+  it('con pack no hay nivel Pack: Unidad va de a 8, Bulto y Bulto madre solo si son múltiplo, y abre en Bulto', async () => {
+    const onConfirm = abrir({ precioCompraBase: 1000, ventaMinimaUnidades: 8, bultoContenido: 288, bultoMadreContenido: 10 }, { ...LINEA, cantidad: 16 })
+    expect(await screen.findByRole('radio', { name: 'Bulto × 288' })).toBeTruthy()
+    expect(screen.queryByRole('radio', { name: /^Pack/ })).toBeNull()
     expect(screen.getByRole('radio', { name: 'Bulto madre × 2880' })).toBeTruthy()
     expect(screen.getByText('Pack x8 · Bulto 36 packs · 288 u. · B. madre 10 bultos · 2.880 u.')).toBeTruthy()
+    await userEvent.press(screen.getByRole('radio', { name: 'Unidad' }))
     await userEvent.type(costo(), '1000')
     await userEvent.press(confirmar())
-    expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ unidad: 'Pack', cantidad: 2, unidadesPorUnidad: 8, costoUnitario: 1000 }))
+    expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ unidad: 'Unidad', cantidad: 16, unidadesPorUnidad: 1, costoUnitario: 1000 }))
+  })
+
+  it('con pack de 8, 12 unidades sueltas no se pueden confirmar y el "+" suma de a 8', async () => {
+    const onConfirm = abrir({ precioCompraBase: 1000, ventaMinimaUnidades: 8, bultoContenido: 12 }, { ...LINEA, cantidad: 12 })
+    await userEvent.press(await screen.findByRole('button', { name: 'Confirmar' }))
+    expect(onConfirm).not.toHaveBeenCalled()
+    expect(screen.getByText(/de a 8/)).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Sumar' }))
+    expect(screen.getByLabelText('Unidades').props.value).toBe('16')
   })
 
   it('sin pack en el producto no se ofrece Pack', async () => {
