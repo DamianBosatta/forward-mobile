@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
-import { ActivityIndicator, RefreshControl, SectionList, Text, View } from 'react-native'
+import { RefreshControl, SectionList, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { DrawerActions } from "expo-router/react-navigation"
-import { importe, space, typeScale, useColors } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Fab, Notice, TopBar, formatImporte } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
@@ -17,6 +17,7 @@ import { FiltrosCartera, SIN_FILTROS, type FiltrosDeCartera } from '@/features/c
 import { textoCantidad } from '@/features/clientes/lib/cliente'
 import { seccionesPorLetra } from '@/features/clientes/lib/secciones'
 import { FichaCliente } from '@/features/clientes/components/FichaCliente'
+import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
@@ -24,8 +25,6 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 const ANCHO_DOS_PANELES = 900
 /** Alto del `Fab` (src/core/ui/fw/Fab.tsx): la lista deja ese lugar libre abajo. */
 const ALTO_FAB = 56
-
-const textoDestacado = { ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600' as const }
 
 /** Clientes (láminas Clientes y TabClientes): la cartera del vendedor, por dirección de entrega. */
 function ClientesScreen() {
@@ -62,15 +61,16 @@ function ClientesScreen() {
         </View>
       ) : null}
       {totalCount !== undefined ? (
-        <View testID="pie-clientes" style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: space[3], paddingHorizontal: space[4], paddingBottom: space[2] }}>
+        // Resumen en una tarjeta con la cifra mediana (propuesta, frame 1).
+        <View testID="pie-clientes" style={{ marginHorizontal: space[4], marginBottom: space[2], paddingVertical: space[3], paddingHorizontal: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space[3] }}>
           <Text accessibilityLiveRegion="polite" style={{ ...typeScale.secundario, color: c.textSecondary, flexShrink: 1 }}>
             {textoCantidad(clientes.length, totalCount)}
           </Text>
           {saldoTotal !== undefined ? (
-            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-              {'Saldo total '}
-              <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(saldoTotal)}</Text>
-            </Text>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Saldo total</Text>
+              <Text numberOfLines={1} adjustsFontSizeToFit style={[typeScale.titulo, importe, { fontSize: 24, lineHeight: 32, fontWeight: '700', color: c.text }]}>{formatImporte(saldoTotal)}</Text>
+            </View>
           ) : null}
         </View>
       ) : null}
@@ -80,20 +80,30 @@ function ClientesScreen() {
         stickySectionHeadersEnabled
         contentContainerStyle={{ paddingBottom: ALTO_FAB + space[6] + insets.bottom + space[4] }}
         renderSectionHeader={({ section }) => (
-          <View testID={`encabezado-letra-${section.title}`} accessibilityRole="header" style={{ paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[1], backgroundColor: c.bg }}>
-            <Text style={{ ...textoDestacado, color: c.textSecondary }}>{section.title}</Text>
+          <View testID={`encabezado-letra-${section.title}`} accessibilityRole="header" style={{ paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[2], backgroundColor: c.bg }}>
+            <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{section.title}</Text>
           </View>
         )}
-        renderItem={({ item }) => (
-          <ClienteCard cliente={item} seleccionado={dosPaneles && item.id === abierto} onPress={() => abrir(item.id)} />
+        renderItem={({ item, index, section }) => (
+          // Las filas de cada letra van en una tarjeta, como la lista de "Elegir cliente" de la venta (frame 1).
+          <ClienteCard
+            variante="cartera"
+            primera={index === 0}
+            ultima={index === section.data.length - 1}
+            cliente={item}
+            seleccionado={dosPaneles && item.id === abierto}
+            onPress={() => abrir(item.id)}
+          />
         )}
-        
+
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch() }} tintColor={c.brandInk} />}
         ListEmptyComponent={
           isLoading ? (
-            <ActivityIndicator color={c.brandInk} style={{ marginTop: space[8] }} />
+            <View style={{ paddingHorizontal: space[4] }}>
+              <Esqueletos bloques={FILAS_CARGANDO} />
+            </View>
           ) : error ? (
             sinRed ? (
               <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los clientes" accion={{ label: 'Reintentar', onPress: () => void refetch() }} />
@@ -125,7 +135,7 @@ function ClientesScreen() {
         subtitle="Mi cartera"
         leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
       />
-      <BuscadorCartera sobre="pantalla" valor={busqueda} onCambio={setBusqueda} />
+      <BuscadorCartera sobre="pantalla" grande valor={busqueda} onCambio={setBusqueda} />
       <FiltrosCartera sobre="pantalla" valor={filtros} onCambio={setFiltros} totalCartera={filtrando || busqueda.trim() ? undefined : totalCount} />
 
       {dosPaneles ? (
