@@ -93,6 +93,11 @@ describe('Buscar', () => {
     expect(mockGet).not.toHaveBeenCalled()
   })
 
+  it('el lector de pantalla anuncia "Buscar" como encabezado aunque el campo ocupe el lugar del título', () => {
+    pintar()
+    expect(screen.getByRole('header', { name: 'Buscar' })).toBeTruthy()
+  })
+
   it('el campo va dentro de la barra superior, en la fila del botón de volver (propuesta de Cuenta, frame 14)', () => {
     pintar()
     const campo = screen.getByLabelText('Buscar')

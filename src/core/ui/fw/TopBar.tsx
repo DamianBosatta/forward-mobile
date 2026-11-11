@@ -82,7 +82,11 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
         ) : null}
         {logo ? <View style={{ paddingLeft: leading ? 0 : space[3] }}><LogoForward alto={26} /></View> : null}
         {campo ? (
-          <View style={{ flex: 1, minWidth: 0, paddingLeft: leading ? 0 : space[3], paddingRight: space[3] }}>{campo}</View>
+          <View style={{ flex: 1, minWidth: 0, paddingLeft: leading ? 0 : space[3], paddingRight: space[3] }}>
+            {/* El campo ocupa el lugar del título: el título queda como encabezado solo para el lector de pantalla. */}
+            <Text accessibilityRole="header" numberOfLines={1} style={{ position: 'absolute', width: 1, height: 1, opacity: 0 }}>{title}</Text>
+            {campo}
+          </View>
         ) : (
           <View style={{ flex: 1, minWidth: 0, paddingLeft: leading || logo ? 0 : space[3] }}>
             <Text accessibilityRole="header" numberOfLines={maxLineas} maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.titulo, color: colors.onTopBarStrong }}>

@@ -64,7 +64,13 @@ describe('TopBar: campo en la barra (propuesta de Cuenta, Buscar)', () => {
     let fila: any = campo
     while (fila && estilo(fila).flexDirection !== 'row') fila = fila.parent
     expect(contiene(fila, volver)).toBe(true)
-    expect(screen.queryByText('Buscar')).toBeNull()
+    // El título no se ve: queda solo como encabezado para el lector de pantalla.
+    expect(estilo(screen.getByText('Buscar')).opacity).toBe(0)
+  })
+
+  it('con campo, el título sigue siendo el encabezado de la pantalla para el lector de pantalla', () => {
+    render(conMargenes(<TopBar title="Buscar" leading={{ kind: 'atras', onPress: jest.fn() }} campo={<TextInput accessibilityLabel="Texto a buscar" />} />))
+    expect(screen.getByRole('header', { name: 'Buscar' })).toBeTruthy()
   })
 })
 

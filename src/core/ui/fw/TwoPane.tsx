@@ -2,6 +2,7 @@ import React from 'react'
 import { View } from 'react-native'
 import { useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
+import { AvisoSinConexionContext } from './TopBar'
 
 /** Ancho de la lista en tablet horizontal (lámina TabVentas). */
 export const TWO_PANE_LIST_WIDTH = 420
@@ -19,6 +20,9 @@ interface TwoPaneProps {
  * lista a la izquierda y el detalle a la derecha, sin salir de la lista. En
  * teléfono y tablet vertical se ve uno solo: el detalle si hay uno elegido; si
  * no, la lista.
+ *
+ * El detalle va debajo de la barra de la pantalla, que ya muestra el aviso sin conexión: la barra
+ * propia del detalle no lo repite.
  */
 export function TwoPane({ list, detail, emptyDetail = null }: TwoPaneProps) {
   const colors = useColors()
@@ -28,7 +32,7 @@ export function TwoPane({ list, detail, emptyDetail = null }: TwoPaneProps) {
   if (!isTabletLandscape) {
     return (
       <View testID={hayDetalle ? 'two-pane-detail' : 'two-pane-list'} style={{ flex: 1 }}>
-        {hayDetalle ? detail : list}
+        {hayDetalle ? <SinAvisoPropio>{detail}</SinAvisoPropio> : list}
       </View>
     )
   }
@@ -42,8 +46,12 @@ export function TwoPane({ list, detail, emptyDetail = null }: TwoPaneProps) {
         {list}
       </View>
       <View testID="two-pane-detail" style={{ flex: 1, minWidth: 0 }}>
-        {hayDetalle ? detail : emptyDetail}
+        {hayDetalle ? <SinAvisoPropio>{detail}</SinAvisoPropio> : emptyDetail}
       </View>
     </View>
   )
+}
+
+function SinAvisoPropio({ children }: { children: React.ReactNode }) {
+  return <AvisoSinConexionContext.Provider value={false}>{children}</AvisoSinConexionContext.Provider>
 }
