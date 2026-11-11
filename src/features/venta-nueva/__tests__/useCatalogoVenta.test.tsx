@@ -6,6 +6,7 @@ import { CLAVE_CATALOGO, DEBOUNCE_BUSQUEDA_MS, useCatalogoVenta } from '../hooks
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useDepositoElegidoStore } from '../hooks/useDepositoDeVenta'
 import { producto } from '../__testing__/producto'
+import { SIN_DEPOSITO_DE_SESION } from '@/core/api/depositoSesion'
 
 jest.mock('@/libs/api-client', () => ({ api: { get: jest.fn() }, productosKeys: { all: ['productos'] } }))
 const get = api.get as jest.Mock
@@ -112,7 +113,7 @@ describe('useCatalogoVenta', () => {
     const { ids, buscar, result } = await montar()
     await buscar('lavanda')
     await waitFor(() => expect(result.current.isLoading).toBe(false))
-    expect(get).toHaveBeenCalledWith('/api/v1/Productos/catalogo-stock?SearchTerm=lavanda&PageSize=1000')
+    expect(get).toHaveBeenCalledWith('/api/v1/Productos/catalogo-stock?SearchTerm=lavanda&PageSize=1000', SIN_DEPOSITO_DE_SESION)
     expect(ids()).toEqual(['pf', 'pv1', 'pv2'])
   })
 
@@ -123,7 +124,7 @@ describe('useCatalogoVenta', () => {
     expect(pidioBusqueda()).toBe(false)
     expect(ids()).toEqual([])
     await buscar('la')
-    expect(get).toHaveBeenCalledWith('/api/v1/Productos/catalogo-stock?SearchTerm=la&PageSize=1000')
+    expect(get).toHaveBeenCalledWith('/api/v1/Productos/catalogo-stock?SearchTerm=la&PageSize=1000', SIN_DEPOSITO_DE_SESION)
   })
 
   it('con el catálogo guardado por una versión anterior (un arreglo) y sin red, busca igual', async () => {

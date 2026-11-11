@@ -22,7 +22,13 @@ export function useValorDiferido<T>(valor: T, ms = ESPERA_BUSQUEDA_MS): T {
  * a sus clientes y a los "de la casa": mobile no filtra nada por su cuenta. Los filtros de localidad
  * y deuda vencida también los aplica el servidor, antes de paginar.
  */
-export function useCartera(busqueda: string, filtros?: FiltrosDeCartera, orden?: Pick<SociosParams, 'ordenarPor' | 'desc'>) {
+export function useCartera(
+  busqueda: string,
+  filtros?: FiltrosDeCartera,
+  orden?: Pick<SociosParams, 'ordenarPor' | 'desc'>,
+  /** La venta nueva busca sin el depósito de la sesión, como la web; las demás pantallas lo mandan (default). */
+  { sinDepositoDeSesion = false }: { sinDepositoDeSesion?: boolean } = {},
+) {
   const texto = useValorDiferido(busqueda.trim())
   const query = useInfiniteSocios({
     tipo: 1,
@@ -34,6 +40,7 @@ export function useCartera(busqueda: string, filtros?: FiltrosDeCartera, orden?:
     ...(filtros?.conDeudaVencida ? { conDeudaVencida: true } : {}),
     ...(orden?.ordenarPor ? { ordenarPor: orden.ordenarPor } : {}),
     ...(orden?.desc ? { desc: true } : {}),
+    ...(sinDepositoDeSesion ? { sinDepositoDeSesion: true } : {}),
   })
   const pages = query.data?.pages
 

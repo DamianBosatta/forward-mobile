@@ -6,6 +6,7 @@ import { CLAVE_CATALOGO } from '../hooks/useCatalogoVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { useRevalidarStockVenta } from '../hooks/useRevalidarStockVenta'
 import { producto } from '../__testing__/producto'
+import { SIN_DEPOSITO_DE_SESION } from '@/core/api/depositoSesion'
 
 const mockGet = jest.fn()
 jest.mock('@/core/api/client', () => ({
@@ -27,6 +28,6 @@ describe('useRevalidarStockVenta: observa el catálogo con su propia queryFn', (
     const { result } = renderHook(() => useRevalidarStockVenta(), { wrapper })
     await waitFor(() => expect(result.current.confirmado).toBe(true))
     expect(qc.getQueryState(CLAVE_CATALOGO)?.error).toBeNull()
-    expect(mockGet).toHaveBeenCalledWith(expect.stringContaining('/api/v1/Productos/catalogo-stock'))
+    expect(mockGet).toHaveBeenCalledWith(expect.stringContaining('/api/v1/Productos/catalogo-stock'), SIN_DEPOSITO_DE_SESION)
   })
 })
