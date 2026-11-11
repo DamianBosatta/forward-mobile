@@ -61,7 +61,7 @@ describe.each(TEMAS)('Estado de una tarea desde el teléfono (%s)', (tema) => {
     })
     afterEach(() => jest.restoreAllMocks())
 
-    const abrir = async () => { pintar(); await userEvent.press(await screen.findByLabelText('Cobrar a Don Pepe, Pendiente')) }
+    const abrir = async () => { pintar(); await userEvent.press(await screen.findByLabelText('Cobrar a Don Pepe, En curso')) }
 
     it('ofrece los cuatro estados de la web, con el actual marcado', async () => {
       await abrir()

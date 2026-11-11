@@ -2,6 +2,7 @@ import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { CalendarioScreen } from '../CalendarioScreen'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { calendarioKeys } from '@/libs/api-client/calendario'
 
 const mockGet = jest.fn()
@@ -52,6 +53,8 @@ function pintar(antes?: (qc: QueryClient) => void) {
 
 beforeEach(() => {
   jest.clearAllMocks()
+  // Los cheques se ofrecen a la gestión (CAP_VER_TESORERIA), como en la web.
+  useAuthStore.setState({ user: { id: 'u1', username: 'g', roles: ['Empleado'], permissions: [{ module: 'CAP_VER_TESORERIA', canRead: true }] } as never })
   // Viernes 9 de octubre, mediodía en Argentina.
   jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-09T15:00:00Z'))
   eventos = [CAJA, CHEQUE]
@@ -85,8 +88,9 @@ describe('Detalle de un evento del calendario', () => {
       tipo: 'Manual', subtipo: 'Caja', titulo: 'Rendir la caja chica', descripcion: null, fechaInicio: '2026-10-10',
       recurrencia: undefined, montoEstimado: 500, socioComercialId: '33333333-3333-3333-3333-333333333333', avisarDiasAntes: 3,
     })
-    // Se cierra y queda a la vista el día nuevo del evento.
-    expect(await screen.findByText('Sábado 10')).toBeTruthy()
+    // Se cierra y queda a la vista la semana del día nuevo del evento.
+    await waitFor(() => expect(screen.queryByLabelText('Guardar cambios')).toBeNull())
+    expect(screen.getByText('5 oct – 11 oct')).toBeTruthy()
   })
 
   it('borrar pide confirmación dentro de la hoja; recién al confirmar manda el DELETE', async () => {
@@ -105,8 +109,7 @@ describe('Detalle de un evento del calendario', () => {
     eventos = [LUZ]
     detalle = { ...DETALLE, tipo: 'ServicioRecurrente', fechaInicio: '2026-09-09', recurrencia: { frecuencia: 'Mensual', intervalo: 1 } }
     pintar()
-    await userEvent.press(await screen.findByLabelText('jue 8, 1 evento'))
-    await userEvent.press(screen.getByLabelText('Pagar la luz, Vencido'))
+    await userEvent.press(await screen.findByLabelText('Pagar la luz, Vencido'))
     expect(await screen.findByText('Se repite: cambiar el primer día mueve toda la serie.')).toBeTruthy()
     expect(screen.getByText('Reprogramado: el original era el viernes 9 de octubre.')).toBeTruthy()
     // Es financiero: se paga (un recordatorio, en cambio, se marca hecho).
@@ -115,10 +118,10 @@ describe('Detalle de un evento del calendario', () => {
     expect(mockPost).toHaveBeenCalledWith(`/api/v1/Calendario/eventos/${ID}/ocurrencias/2026-10-09`, { estado: 'Pagado' })
   })
 
-  it('un recordatorio hecho (Pagado, no financiero) dice "Hecho" y se desmarca con DELETE de la marca', async () => {
+  it('un recordatorio hecho (Pagado, no financiero) se lee "Pagado" como la web y se desmarca con DELETE de la marca', async () => {
     eventos = [{ ...CAJA, estado: 'Pagado' }]
     detalle = { ...DETALLE, ocurrencias: [{ fecha: '2026-10-09', estado: 'Pagado' }] }
-    await abrir('Rendir la caja, Hecho')
+    await abrir('Rendir la caja, Pagado')
     expect(await screen.findByLabelText('Desmarcar hecho')).toBeTruthy()
     expect(screen.queryByLabelText('Marcar hecho')).toBeNull()
     expect(screen.queryByLabelText('Desmarcar pagado')).toBeNull()
@@ -196,7 +199,7 @@ describe('Detalle de un evento del calendario', () => {
   it('mover el día de un evento con marcas pide confirmación: las marcas que quedan fuera se pierden', async () => {
     eventos = [{ ...CAJA, estado: 'Pagado' }]
     detalle = { ...DETALLE, ocurrencias: [{ fecha: '2026-10-09', estado: 'Pagado' }] }
-    await abrir('Rendir la caja, Hecho')
+    await abrir('Rendir la caja, Pagado')
     await userEvent.press(await screen.findByLabelText('Día siguiente'))
     await userEvent.press(screen.getByLabelText('Guardar cambios'))
     expect(screen.getByText('Se pierde su marca (pagada u omitida).')).toBeTruthy()
@@ -216,8 +219,7 @@ describe('Detalle de un evento del calendario', () => {
     detalle = { ...DETALLE, tipo: 'ServicioRecurrente', fechaInicio: '2026-09-09', recurrencia: { frecuencia: 'Mensual', intervalo: 1 },
       ocurrencias: [{ fecha: '2026-09-09', estado: 'Pagado' }, { fecha: '2026-10-09', estado: 'Omitido', fechaReprogramada: '2026-10-08' }] }
     pintar()
-    await userEvent.press(await screen.findByLabelText('jue 8, 1 evento'))
-    await userEvent.press(screen.getByLabelText('Pagar la luz, Vencido'))
+    await userEvent.press(await screen.findByLabelText('Pagar la luz, Vencido'))
     await userEvent.press(await screen.findByLabelText('Día siguiente'))
     await userEvent.press(screen.getByLabelText('Guardar cambios'))
     expect(screen.getByText('Tiene 2 marcas (pagadas u omitidas). Al cambiar el primer día se pierden las que ya no caigan en la serie.')).toBeTruthy()
