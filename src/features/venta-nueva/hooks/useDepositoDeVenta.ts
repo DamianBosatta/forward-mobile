@@ -37,3 +37,13 @@ export function useDepositoAjenoDeVenta(): string | undefined {
   const deVenta = useDepositoDeVenta()
   return deVenta === propio ? undefined : deVenta
 }
+
+/**
+ * ¿El catálogo de la venta se guarda en el teléfono para vender sin señal tras reiniciar la app (S3)? Sí el del depósito
+ * propio (como siempre) y el del depósito de la sesión; no el de un depósito elegido para una sola venta: dura la venta.
+ */
+export function useCatalogoDeVentaSeGuarda(): boolean {
+  const deSesion = useDepositoDeConsulta()
+  const deVenta = useDepositoDeVenta()
+  return useDepositoAjenoDeVenta() === undefined || deVenta === deSesion
+}

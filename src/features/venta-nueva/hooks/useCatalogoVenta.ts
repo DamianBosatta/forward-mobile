@@ -1,8 +1,10 @@
-import { useMemo } from 'react'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo } from 'react'
+import { keepPreviousData, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { coincidePalabras } from '@/core/utils/texto'
-import { useDepositoAjenoDeVenta } from './useDepositoDeVenta'
+import { useDepositoDeConsulta } from '@/features/catalogo/hooks/useDepositoDeConsulta'
+import { useDepositoPropio } from '@/features/deposito-sesion/hooks/useDepositoDeSesion'
+import { useCatalogoDeVentaSeGuarda, useDepositoAjenoDeVenta } from './useDepositoDeVenta'
 import { api, productosKeys, type CatalogoStockItem, type PagedResult } from '@/libs/api-client'
 import { SIN_DEPOSITO_DE_SESION } from '@/core/api/depositoSesion'
 
@@ -29,15 +31,38 @@ export const CLAVE_CATALOGO = [...productosKeys.all, 'catalogoVenta', 'completo'
  * La clave y la `queryFn` del catálogo completo, juntas: todo observador de la clave las usa (un observador sin
  * `queryFn` pisa la del primero y el refetch falla con «No queryFn was passed»).
  */
-export const catalogoCompletoQuery = (depositoId?: string) => ({
+export const catalogoCompletoQuery = (depositoId?: string, persistir = !depositoId) => ({
   queryKey: claveCatalogo(depositoId),
   queryFn: () => fetchCatalogoCompleto(depositoId),
-  // El de otro depósito dura la venta y no se guarda en el teléfono: el propio es el que sirve sin señal.
-  ...(depositoId ? { meta: { persist: false } } : {}),
+  // Se guardan en el teléfono el propio y el del depósito de la sesión (S3): son los que sirven sin señal. El de un
+  // depósito elegido para una sola venta dura la venta.
+  ...(persistir ? {} : { meta: { persist: false } }),
 })
 
 /** La clave del catálogo de un depósito ajeno (cuelga de `CLAVE_CATALOGO`: invalidar el prefijo alcanza a ambos). */
 export const claveCatalogo = (depositoId?: string) => (depositoId ? [...CLAVE_CATALOGO, depositoId] : CLAVE_CATALOGO)
+
+/**
+ * El catálogo completo que usa la venta ahora: el del depósito de la venta, guardado en el teléfono si es el propio o
+ * el de la sesión. Todo observador del catálogo lo arma con esto: si dos observadores de la misma clave discreparan en
+ * `meta`, el último pisaría al otro.
+ */
+export function useCatalogoCompletoDeVenta() {
+  return catalogoCompletoQuery(useDepositoAjenoDeVenta(), useCatalogoDeVentaSeGuarda())
+}
+
+/**
+ * Deja en el teléfono un solo catálogo de depósito ajeno: el del depósito de la sesión (`depositoDeSesion`, `undefined`
+ * si la sesión está en el propio). Los de depósitos de sesión anteriores se descartan si nadie los mira (el del propio,
+ * con la clave sin depósito, no se toca), para que cambiar de depósito de la sesión no vaya llenando MMKV con catálogos
+ * completos. Se conserva el de la sesión aunque la venta en curso use otro (p. ej. el propio, elegido o retomado).
+ */
+function descartarCatalogosDeOtrosDepositos(qc: QueryClient, depositoDeSesion: string | undefined) {
+  qc.removeQueries({
+    queryKey: CLAVE_CATALOGO,
+    predicate: (q) => q.queryKey.length > CLAVE_CATALOGO.length && q.queryKey[CLAVE_CATALOGO.length] !== depositoDeSesion && q.getObserversCount() === 0,
+  })
+}
 
 /**
  * Catálogo completo de venta: páginas de 1000 hasta que no haya más.
@@ -76,13 +101,22 @@ function fetchBusqueda(termino: string, depositoId?: string) {
  */
 export function useCatalogoVenta(busqueda: string) {
   const termino = useDebouncedValue(busqueda.trim(), DEBOUNCE_BUSQUEDA_MS)
+  const qc = useQueryClient()
   const ajeno = useDepositoAjenoDeVenta()
+  const catalogo = useCatalogoCompletoDeVenta()
+  const seGuarda = useCatalogoDeVentaSeGuarda()
+  const propio = useDepositoPropio()
+  const deSesion = useDepositoDeConsulta()
+  const ajenoDeSesion = deSesion === propio ? undefined : deSesion
 
   const query = useQuery<Catalogo | CatalogoStockItem[], Error, Catalogo>({
-    ...catalogoCompletoQuery(ajeno),
+    ...catalogo,
     select: aCatalogo,
     staleTime: 60_000,
   })
+  useEffect(() => {
+    if (seGuarda) descartarCatalogosDeOtrosDepositos(qc, ajenoDeSesion)
+  }, [qc, ajenoDeSesion, seGuarda])
   const completo = query.data && !query.data.truncado ? query.data.items : undefined
   const alServidor = !completo && termino.length >= 2
   const servidor = useQuery({
