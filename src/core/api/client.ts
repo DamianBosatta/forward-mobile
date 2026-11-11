@@ -307,10 +307,6 @@ async function fetchWithAuth<T>(
   if (token) {
     headers.set('Authorization', `Bearer ${token}`)
   }
-  // El depósito de la sesión viaja en TODOS los pedidos (depositoSesion.ts, como la web); el servidor decide a quién
-  // le achica los listados. Un encabezado manual (SIN_DEPOSITO_DE_SESION) lo pisa abajo.
-  ponerEncabezadoDepositoDeSesion(headers)
-
   // Merge manual headers (vienen del segundo argumento de api.get/post/etc)
   if (options.headers) {
     const manualHeaders = new Headers(options.headers)
@@ -320,6 +316,9 @@ async function fetchWithAuth<T>(
       headers.set(key, value)
     })
   }
+  // El depósito de la sesión viaja en TODOS los pedidos (depositoSesion.ts, como la web); el servidor decide a quién
+  // le achica los listados. Va después de los manuales: SIN_DEPOSITO_DE_SESION lo deja vacío.
+  ponerEncabezadoDepositoDeSesion(headers)
 
   const url = `${API_URL}${endpoint}`;
   logger.info(`API Request: ${options.method || 'GET'} ${endpoint}`)

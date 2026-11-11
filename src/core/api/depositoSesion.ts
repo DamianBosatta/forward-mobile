@@ -93,9 +93,18 @@ function depositoParaEnviar(): string | null {
   return eleccion && usuarioActual !== null && eleccion.usuarioId === usuarioActual ? eleccion.depositoId : null
 }
 
-/** Agrega el encabezado a un pedido saliente cuando hay un depósito elegido. */
+/**
+ * Deja el encabezado de un pedido saliente, ya con los encabezados manuales puestos: el depósito elegido si lo hay.
+ * Un pedido con SIN_DEPOSITO_DE_SESION lo manda vacío solo cuando habría un depósito que pisar; si no hay ninguno
+ * ("Todos", sin elección, sin la capacidad, sin sesión) no viaja nada, como antes: para el servidor es lo mismo
+ * (vacío = sin depósito de sesión) y quien no ve todos los depósitos hace exactamente los pedidos de siempre.
+ */
 export function ponerEncabezadoDepositoDeSesion(headers: Headers) {
   const deposito = depositoParaEnviar()
+  if (headers.get(ENCABEZADO_DEPOSITO_SESION) === '') {
+    if (!deposito) headers.delete(ENCABEZADO_DEPOSITO_SESION)
+    return
+  }
   if (deposito) headers.set(ENCABEZADO_DEPOSITO_SESION, deposito)
 }
 
