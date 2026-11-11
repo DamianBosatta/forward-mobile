@@ -8,6 +8,7 @@ import { formatImporte } from '@/core/ui/fw'
 import { storage } from '@/core/utils/storage'
 import { leerCola } from '@/features/venta-sin-senal'
 import { VentaNuevaPantalla } from '../components/VentaNuevaPantalla'
+import { elegirDepositoDeSesion, limpiarDepositoDeSesion } from '@/features/deposito-sesion'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { producto } from '../__testing__/producto'
 import { avisosVenta } from '../lib/avisos'
@@ -1133,5 +1134,30 @@ describe('integración del flujo: cliente → productos → oferta → confirmar
   it('el primer paso muestra la barra con Cliente marcado', () => {
     pantalla()
     expect(screen.getByLabelText('Paso 1 de 4: Cliente')).toHaveProp('accessibilityState', { selected: true })
+  })
+})
+
+describe('venta nueva: el depósito de la sesión queda fijo al abrir (S8, G1)', () => {
+  const SALTA = '11111111-1111-4111-8111-111111111111'
+  const NORTE = '22222222-2222-4222-8222-222222222222'
+  const SUR = '33333333-3333-4333-8333-333333333333'
+  beforeEach(() => {
+    useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], depositoId: SALTA, permissions: [{ module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true }], maxDescuentoPorcentaje: 10 } as never })
+    elegirDepositoDeSesion('u', NORTE)
+  })
+  afterEach(() => { limpiarDepositoDeSesion(); useAuthStore.setState({ user: null }) })
+
+  it('abierta en A, cambiar la sesión a B no mueve la venta: borrador, stock y confirmación siguen en A', async () => {
+    await elegirCliente()
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: NORTE, tipoOperacion: 'Pedido' })
+    act(() => elegirDepositoDeSesion('u', SUR))
+    await anadir()
+    await userEvent.press(screen.getByRole('button', { name: 'Ver venta' }))
+    const catalogo = () => mockGet.mock.calls.map(([u]) => String(u)).filter((u) => u.includes('catalogo-stock'))
+    expect(catalogo().some((u) => u.includes(`depositoId=${SUR}`))).toBe(false)
+    expect(catalogo().at(-1)).toContain(`depositoId=${NORTE}`)
+    await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
+    await confirmarVenta()
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas', expect.objectContaining({ depositoId: NORTE })))
   })
 })

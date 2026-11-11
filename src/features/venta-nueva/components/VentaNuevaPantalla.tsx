@@ -20,6 +20,7 @@ import { aAlta, aAutoguardado } from '../lib/payload'
 import { useVistaPreviaVenta } from '@/libs/api-client/ventas'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { useDepositoDeVenta, useDepositoElegidoStore } from '../hooks/useDepositoDeVenta'
+import { useDepositoDeConsulta } from '@/features/catalogo/hooks/useDepositoDeConsulta'
 import { avisosVenta, superaElTope, type YaReservadas } from '../lib/avisos'
 import { mostrarNumero } from '../lib/linea'
 import type { LineaCarrito } from '../lib/carrito'
@@ -87,8 +88,12 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   const user = useAuthStore((s) => s.user)
   const depositoId = useDepositoDeVenta()
   const elegirDeposito = useDepositoElegidoStore((s) => s.elegir)
-  // Cada venta arranca (y termina) en el depósito del usuario; una venta que se abre toma el suyo, más abajo.
-  useEffect(() => { elegirDeposito(null); return () => elegirDeposito(null) }, [elegirDeposito])
+  // Cada venta nueva arranca en el depósito de la sesión que había al abrir la pantalla y queda fija en él: cambiar
+  // la sesión en Inicio con la venta abierta no la mueve (S8). Al cerrar se suelta. Una venta que se abre toma el
+  // suyo, más abajo.
+  const depositoDeSesion = useDepositoDeConsulta()
+  const depositoAlAbrir = useRef(depositoDeSesion)
+  useEffect(() => { elegirDeposito(depositoAlAbrir.current); return () => elegirDeposito(null) }, [elegirDeposito])
   // El descuento general siempre es un número válido (0 a 100): se cambia en la hoja "Descuento a toda la venta".
   const [descuentoValido, setDescuentoValido] = useState(0)
   const [descGeneral, setDescGeneral] = useState(false)
