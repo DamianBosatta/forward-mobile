@@ -538,7 +538,8 @@ describe('como el carrito de la venta (propuesta "Clientes como venta", frames 1
     renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
 
     const pie = await screen.findByTestId('pie-cuenta', {}, ESPERA)
-    expect(within(pie).getByText('Saldo')).toBeTruthy()
+    // The footer shows up with the client; its balance arrives later with /estado-cuenta.
+    expect(await within(pie).findByText('Saldo', {}, ESPERA)).toBeTruthy()
     expect(within(pie).getByText($(186420))).toBeTruthy()
     expect(within(pie).getByRole('button', { name: 'Cobrar' })).toBeTruthy()
   })
