@@ -166,13 +166,16 @@ describe('detalle de compra', () => {
     it('al recibir se puede cargar el comprobante: va en el mismo POST, con el CUIT del proveedor precargado', async () => {
       conSocio({ estado: 'Confirmado' })
       await userEvent.press(await screen.findByRole('button', { name: 'Recibir mercadería' }))
-      await userEvent.press(screen.getByRole('button', { name: 'Cargar el comprobante del proveedor' }))
+      // La tarjeta "Factura del proveedor" abre la pantalla del comprobante (foto y datos).
+      await userEvent.press(screen.getByRole('button', { name: 'Cargar los datos de la factura' }))
       await waitFor(() => expect(screen.getByLabelText('CUIT del proveedor').props.value).toBe('30-71234567-1'))
       await userEvent.press(screen.getByRole('radio', { name: 'B' }))
       fireEvent.changeText(screen.getByLabelText('Punto de venta'), '3')
       fireEvent.changeText(screen.getByLabelText('Número'), '1234')
       fireEvent.changeText(screen.getByLabelText('Fecha del comprobante'), '08/10/2026')
       fireEvent.changeText(screen.getByLabelText('Total'), '55.200')
+      await userEvent.press(screen.getByRole('button', { name: 'Guardar comprobante' }))
+      expect(await screen.findByText('Factura B 00003-00001234')).toBeTruthy()
       await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
       expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', {
         compraId: 'aaaa1111-0000', fechaFacturaProveedor: null,
@@ -183,11 +186,11 @@ describe('detalle de compra', () => {
       })
     })
 
-    it('con el comprobante a medio cargar no se recibe: dice qué falta', async () => {
+    it('con el comprobante a medio cargar no se guarda: dice qué falta y no se recibe nada', async () => {
       conSocio({ estado: 'Confirmado' })
       await userEvent.press(await screen.findByRole('button', { name: 'Recibir mercadería' }))
-      await userEvent.press(screen.getByRole('button', { name: 'Cargar el comprobante del proveedor' }))
-      await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
+      await userEvent.press(screen.getByRole('button', { name: 'Cargar los datos de la factura' }))
+      await userEvent.press(screen.getByRole('button', { name: 'Guardar comprobante' }))
       expect(await screen.findByText('Falta el punto de venta.')).toBeTruthy()
       expect(mockPost).not.toHaveBeenCalled()
     })

@@ -16,7 +16,7 @@ import { sinCosto, totalCompra, unidadesDe, type LineaCompra } from '../lib/line
 import { dejarAviso, type Aviso } from '../lib/confirmar-y-recibir'
 import { fechaIso, franjaTexto } from '../lib/fecha'
 import { calcularVencimiento } from '../lib/recepcion'
-import { formNuevo, resumenComprobante } from '../lib/comprobante'
+import { formNuevo } from '../lib/comprobante'
 import { useCompraBorrador, type EstadoGuardado } from '../hooks/useCompraBorrador'
 import { ElegirProveedor } from './ElegirProveedor'
 import { PasosCompra } from './PasosCompra'
@@ -24,7 +24,7 @@ import { CatalogoCompra } from './CatalogoCompra'
 import { CantidadCostoPantalla } from './CantidadCostoPantalla'
 import { CarritoCompra } from './CarritoCompra'
 import { RecepcionCompra } from './RecepcionCompra'
-import { ComprobanteProveedorPantalla, type ComprobanteCargado } from './ComprobanteProveedorPantalla'
+import { ComprobanteProveedorPantalla, resumenDeCargado, type ComprobanteCargado } from './ComprobanteProveedorPantalla'
 import type { ProductoComprable } from './ProductoCompraCard'
 
 const SYNC: Record<EstadoGuardado, string | undefined> = {
@@ -279,7 +279,7 @@ Recargala para ver la versión actual antes de seguir.` : 'Recargala para ver la
           puedeRecibir={puedeRecibir} recibirAhora={recibirAhora} onRecibirAhora={(v) => { setRecibirAhora(v); if (v) setFechaFactura((f) => f || hoyTexto()) }}
           pideFactura={pideFactura} fecha={fechaFactura} onFecha={setFechaFactura} fechaValida={!!fechaLeida}
           vencimiento={vencimiento ? `Vence el ${ddmmaaaa(vencimiento)}` : null}
-          comprobante={comprobante ? resumenComprobante({ tipo: comprobante.form.base?.tipo ?? 'Factura', letra: comprobante.form.letra, puntoVenta: Number(comprobante.form.puntoVenta), numero: Number(comprobante.form.numero) }) : null}
+          comprobante={comprobante ? resumenDeCargado(comprobante) : null}
           onComprobante={() => setComprobanteAbierto(true)}
           faltanCostos={faltanCostos} onVolverAlCarrito={() => setPaso(3)} error={errorPaso4}
           subtotal={subtotal} gastos={b.gastos} total={total} ocupado={ocupado}

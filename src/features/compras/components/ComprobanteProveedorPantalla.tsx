@@ -1,11 +1,11 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Modal, ScrollView, Text, View } from 'react-native'
 import { Camera } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, PieFijo, TopBar } from '@/core/ui/fw'
 import { FotoDelCobro } from '@/features/cuentas/components/FotoDelCobro'
 import { subirComprobanteCobro } from '@/features/cuentas/api/fotos'
-import { armarComprobante, type ComprobanteCompraInput, type FormComprobante } from '../lib/comprobante'
+import { armarComprobante, resumenComprobante, type ComprobanteCompraInput, type FormComprobante } from '../lib/comprobante'
 import { ComprobanteCampos } from './ComprobanteCampos'
 
 export interface ComprobanteCargado {
@@ -13,6 +13,10 @@ export interface ComprobanteCargado {
   comprobante: ComprobanteCompraInput
   fotoUrl: string | null
 }
+
+/** "Factura A 00004-00012345" del comprobante recién cargado (aún sin guardar en el servidor). */
+export const resumenDeCargado = ({ comprobante: c }: ComprobanteCargado) =>
+  resumenComprobante({ tipo: c.tipo ?? 'Factura', letra: c.letra ?? 'A', puntoVenta: c.puntoVenta ?? 0, numero: c.numero ?? 0 })
 
 interface Props {
   visible: boolean
@@ -43,6 +47,10 @@ function Contenido({ form: inicial, fotoUrl: fotoInicial, onVolver, onGuardar, g
   const [fotoUrl, setFotoUrl] = useState(fotoInicial)
   const [subiendo, setSubiendo] = useState(false)
   const [falta, setFalta] = useState<string | null>(null)
+  // El CUIT del proveedor puede llegar después de abrir la pantalla: se precarga cuando está.
+  useEffect(() => {
+    if (inicial.cuit) setForm((f) => (f.cuit ? f : { ...f, cuit: inicial.cuit }))
+  }, [inicial.cuit])
   const guardar = () => {
     const armado = armarComprobante(form)
     if ('error' in armado) return void setFalta(armado.error)
