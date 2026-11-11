@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { act } from '@testing-library/react-native';
-import { render, fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import LoginScreen from '../../../../../app/login';
 import { useAuth } from '../../hooks/useAuth';
@@ -21,7 +21,7 @@ const renderLogin = () => {
   );
 };
 
-// El ingreso usa la marca del diseño (flecha sobre el círculo verde): si renderiza el logo viejo, falla.
+// El ingreso usa la marca FWD real (la de la web): si renderiza el logo viejo, falla.
 jest.mock('@/core/ui/ForwardLogo', () => ({ ForwardLogo: () => { throw new Error('ForwardLogo viejo'); } }));
 
 const mockReplace = jest.fn();
@@ -82,12 +82,33 @@ beforeEach(() => {
 });
 
 describe('Ingreso', () => {
-  it('muestra el encabezado del diseño (marca con flecha, "Forward" y la frase) y no el logo viejo', () => {
+  it('muestra el encabezado del diseño (logo FWD real, "Forward" y la frase) y no el logo viejo', () => {
     auth();
     renderLogin();
     expect(screen.getByRole('header', { name: 'Forward' })).toBeTruthy();
     expect(screen.getByText('Entrá con el mismo usuario de la web.')).toBeTruthy();
-    expect(screen.getByTestId('login-marca', { includeHiddenElements: true })).toBeTruthy();
+    const marca = screen.getByTestId('login-marca', { includeHiddenElements: true });
+    // El logo de la web (icon.svg), no el cuadrado con la flecha.
+    expect(within(marca).getByTestId('logo-fwd', { includeHiddenElements: true })).toBeTruthy();
+  });
+
+  it('el logo FWD se ve también en tablet', () => {
+    auth();
+    mockResponsive = { isTablet: true };
+    renderLogin();
+    const marca = screen.getByTestId('login-marca', { includeHiddenElements: true });
+    expect(within(marca).getByTestId('logo-fwd', { includeHiddenElements: true })).toBeTruthy();
+  });
+
+  it('el campo con foco se marca en verde claro', () => {
+    auth();
+    renderLogin();
+    fireEvent(usuario(), 'focus');
+    const { themeColors } = jest.requireActual('@/libs/theme');
+    let n = usuario().parent as any;
+    while (n && !(n.props.style && [].concat(n.props.style).flat().some((x: any) => x && x.borderWidth))) n = n.parent;
+    const estilo = [].concat(n.props.style).flat().find((x: any) => x && x.borderWidth) as any;
+    expect(estilo).toMatchObject({ borderWidth: 2, borderColor: themeColors.dark.brand });
   });
 
   it('pide usuario o email y contraseña, y dice a quién pedir la contraseña olvidada', () => {
