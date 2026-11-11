@@ -113,7 +113,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
       <RecibirCompra
         compra={compra}
         onVolver={() => setRecibiendoMercaderia(false)}
-        onHecho={(faltante) => { setRecibiendoMercaderia(false); setAviso(faltante ? avisoCompraFaltante(faltante) : null); queryClient.invalidateQueries({ queryKey: inicioKeys.all }) }}
+        onHecho={(f) => { setRecibiendoMercaderia(false); setAviso(f.compraFaltanteNumero ? avisoCompraFaltante(f.compraFaltanteNumero) : null); queryClient.invalidateQueries({ queryKey: inicioKeys.all }) }}
         onConflicto={() => { void q.refetch() }}
       />
     )

@@ -5,7 +5,7 @@ import { Check } from 'lucide-react-native'
 import { Button, Field, Notice, PieFijo, TopBar, formatImporte } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { useRecibirCompra } from '@/libs/api-client/compras'
+import { useRecibirCompra, type CompraFaltante } from '@/libs/api-client/compras'
 import { useSocio } from '@/libs/api-client/socios'
 import type { CompraDto } from '@/libs/api-client'
 import { diaArgentina, hoyTexto } from '@/core/utils/fecha'
@@ -25,7 +25,7 @@ interface Props {
   compra: CompraDto
   onVolver: () => void
   /** La recepción quedó hecha en el servidor. */
-  onHecho: (compraFaltanteNumero?: number | null) => void
+  onHecho: (faltante: CompraFaltante) => void
   /** El servidor dio 409: la compra cambió; quien la muestra la recarga. */
   onConflicto?: () => void
 }
@@ -83,7 +83,7 @@ export function RecibirCompra({ compra, onVolver, onHecho, onConflicto }: Props)
         comprobante: armado && 'comprobante' in armado ? armado.comprobante : undefined,
         lineas: plan.problema === null ? plan.lineas : null,
       })
-      onHecho(r.compraFaltanteNumero)
+      onHecho(r)
     } catch (e) {
       setError(`No se recibió la compra: ${mensajeDelServidor(e)}`)
       if ((e as { status?: number })?.status === 409) onConflicto?.()
