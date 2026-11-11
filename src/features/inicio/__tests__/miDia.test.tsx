@@ -92,23 +92,84 @@ describe('MiDiaScreen', () => {
     expect(url).toContain('anio=2026&mes=10')
   })
 
-  it('el encabezado es oscuro y trae el saludo y las tres cifras (CalleMiDia)', async () => {
+  it('los tres números del mes van en una tarjeta debajo del hero, con el importe a la derecha', async () => {
     pintar()
     const cifras = await screen.findByTestId('mi-dia-cifras')
-    const encabezado = screen.getByTestId('mi-dia-encabezado')
-    expect(encabezado).toHaveStyle({ backgroundColor: '#0E1514' })
-    expect(within(encabezado).getByText('Hola, Emanuel')).toBeTruthy()
-    expect(within(encabezado).getByTestId('mi-dia-cifras')).toBe(cifras)
-    expect(within(cifras).getByText(ars('171.000,00'))).toBeTruthy()
+    expect(screen.getByRole('header', { name: 'Tus números de octubre' })).toBeTruthy()
+    expect(within(cifras).getByLabelText(`Vendido en octubre: ${ars('3.420.000,00')}`)).toBeTruthy()
+    expect(within(cifras).getByLabelText(`Tu comisión: ${ars('171.000,00')}`)).toBeTruthy()
+    expect(within(cifras).getByLabelText(`Por cobrar: ${ars('640.300,00')}`)).toBeTruthy()
+    expect(within(screen.getByTestId('mi-dia-hero')).queryByText(ars('171.000,00'))).toBeNull()
   })
 
-  it('"Vender de nuevo" son círculos de 60 con las iniciales y la dirección debajo', async () => {
-    guardarReciente('u1', { id: 'c1', direccion: 'Tarantino 1898' })
+  it('el hero suma los pendientes de "Para resolver hoy" y nombra los de alerta, con "Nueva venta" adentro', async () => {
+    responder({ vendedor: { ...RESUMEN_VENDEDOR, pedidosRechazados: 1, presupuestosPorVencer: 4 } })
     pintar()
-    const circulo = await screen.findByTestId('reciente-circulo-c1')
-    expect(circulo).toHaveStyle({ width: 60, height: 60, borderRadius: 9999 })
-    expect(within(circulo).getByText('T1')).toBeTruthy()
-    expect(within(screen.getByTestId('reciente-c1')).getByText('Tarantino 1898')).toBeTruthy()
+    // 3 presupuestos + 2 propios esperando autorización + 1 rechazado + 4 por vencer.
+    const hero = await screen.findByTestId('mi-dia-hero')
+    expect(await within(hero).findByText('10 pendientes')).toBeTruthy()
+    expect(within(hero).getByText('1 pedido rechazado · 4 presupuestos por vencer')).toBeTruthy()
+    expect(within(hero).getByRole('button', { name: 'Nueva venta' })).toBeTruthy()
+    expect(screen.getByRole('header', { name: 'Para resolver hoy' })).toBeTruthy()
+  })
+
+  it('con la bandeja de autorizaciones el hero la nombra como alerta', async () => {
+    responder({ inicio: { ...RESUMEN_INICIO, ventas: { ...RESUMEN_INICIO.ventas, presupuestosPendientes: pend(1) }, autorizacionesPendientes: pend(4) } })
+    pintar()
+    const hero = await screen.findByTestId('mi-dia-hero')
+    expect(await within(hero).findByText('5 pendientes')).toBeTruthy()
+    expect(within(hero).getByText('4 pedidos por autorizar')).toBeTruthy()
+    expect(screen.getByLabelText('4 pedidos por autorizar. Bandeja de autorizaciones')).toBeTruthy()
+  })
+
+  it('un solo pendiente va en singular', async () => {
+    responder({ inicio: { ...RESUMEN_INICIO, ventas: { presupuestosPendientes: pend(1), pedidosConfirmados: pend(0), porAutorizar: pend(0) } } })
+    pintar()
+    expect(await within(await screen.findByTestId('mi-dia-hero')).findByText('1 pendiente')).toBeTruthy()
+  })
+
+  it('mientras cargan los números muestra bloques con la forma del hero, no la ruedita ni "Cargando…"', async () => {
+    mockGet.mockImplementation((url: string) => (url.includes('resumen-vendedor') ? new Promise(() => {}) : Promise.resolve(RESUMEN_INICIO)))
+    pintar()
+    expect(await screen.findByTestId('hero-cargando')).toBeTruthy()
+    expect(screen.queryByText('Cargando…')).toBeNull()
+    expect(screen.queryByLabelText('Cargando tus números')).toBeNull()
+  })
+
+  it('si los pendientes fallan, lo dice en su sección con "Reintentar" y el hero muestra "—", nunca un 0', async () => {
+    mockGet.mockImplementation((url: string) =>
+      url.includes('Inicio/resumen') ? Promise.reject(new ApiError(500, 'boom')) : Promise.resolve(RESUMEN_VENDEDOR))
+    pintar()
+    expect(await screen.findByText('No se pudieron cargar los pendientes')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Reintentar pendientes' })).toBeTruthy()
+    expect(within(screen.getByTestId('mi-dia-hero')).getByText('—')).toBeTruthy()
+    expect(screen.queryByText(/^0 pendientes/)).toBeNull()
+    expect(screen.queryByText('Todo al día.')).toBeNull()
+  })
+
+  it('sin permiso de leer Ventas no dibuja lo que no puede ver: sin hero, números ni pendientes, solo "Vender de nuevo"', async () => {
+    useAuthStore.setState({
+      user: { id: 'u1', username: 'emanuel', nombre: 'Emanuel', apellido: 'P', roles: [], permissions: [] },
+    } as never)
+    pintar()
+    expect(await screen.findByRole('header', { name: 'Vender de nuevo' })).toBeTruthy()
+    expect(screen.getByText('Todavía no vendiste a ningún cliente desde acá.')).toBeTruthy()
+    expect(screen.queryByTestId('mi-dia-hero')).toBeNull()
+    expect(screen.queryByTestId('hero-cargando')).toBeNull()
+    expect(screen.queryByText(/Tus números/)).toBeNull()
+    expect(screen.queryByText('Para resolver hoy')).toBeNull()
+    expect(screen.queryByText(/No se pudieron cargar/)).toBeNull()
+    expect(screen.queryByText('Cargando…')).toBeNull()
+    expect(mockGet.mock.calls.some(([u]) => String(u).includes('resumen-vendedor'))).toBe(false)
+  })
+
+  it('"Vender de nuevo" son filas de una tarjeta: iniciales, la dirección de título y el nombre abajo', async () => {
+    guardarReciente('u1', { id: 'c1', direccion: 'Tarantino 1898', nombreFantasia: 'Kiosco Uno' })
+    pintar()
+    const fila = await screen.findByTestId('reciente-c1')
+    expect(within(fila).getByText('T1')).toBeTruthy()
+    expect(within(fila).getByText('Tarantino 1898')).toBeTruthy()
+    expect(within(fila).getByText('Kiosco Uno')).toBeTruthy()
   })
 
   it('"Para resolver hoy" sale de /Inicio/resumen y abre cada lista', async () => {
@@ -145,13 +206,15 @@ describe('MiDiaScreen', () => {
     expect(screen.queryByText(/NaN/)).toBeNull()
   })
 
-  it('con todo en 0 y sin pendientes de Inicio sigue "Todo al día."', async () => {
+  it('con todo en 0 y sin pendientes de Inicio el hero dice "Todo al día." y "Para resolver hoy" no se dibuja', async () => {
     responder({
       inicio: { ventas: { presupuestosPendientes: pend(0), pedidosConfirmados: pend(0), porAutorizar: pend(0) }, compras: null, autorizacionesPendientes: null },
       vendedor: { ...RESUMEN_VENDEDOR, pedidosRechazados: 0, presupuestosPorVencer: 0 },
     })
     pintar()
-    expect(await screen.findByText('Todo al día.')).toBeTruthy()
+    const hero = await screen.findByTestId('mi-dia-hero')
+    expect(await within(hero).findByText('Todo al día.')).toBeTruthy()
+    expect(screen.queryByText('Para resolver hoy')).toBeNull()
   })
 
   it('si el resumen del vendedor falla, lo dice y no inventa cifras', async () => {
@@ -199,7 +262,8 @@ describe('MiDiaScreen', () => {
   it('"Nueva venta" abre la venta nueva', async () => {
     pintar()
     const user = userEvent.setup()
-    await user.press(screen.getByLabelText('Nueva venta'))
+    // Va adentro del hero, que aparece con los números.
+    await user.press(await screen.findByLabelText('Nueva venta'))
     expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas/nueva')
   })
 
