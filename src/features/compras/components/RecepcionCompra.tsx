@@ -9,6 +9,42 @@ import { textoFaltaCosto } from './CarritoCompra'
 /** Lo que dice el interruptor: es la consecuencia de confirmar y recibir en un solo paso. */
 export const RECIBIR_AHORA = 'Confirma la compra e ingresa el stock real en un solo paso, y genera la deuda con el proveedor.'
 
+/**
+ * Depósito de la compra: con CAP_VER_TODOS_LOS_DEPOSITOS y más de uno, se elige (filas con radio, como la venta); si no,
+ * se muestra "Depósito: X". Lo usan el paso 4 y el carrito de la edición (que no tiene paso 4).
+ */
+export function DepositoCompra({ depositos, depositoId, onDeposito, puedeElegir }: {
+  depositos: { id: string; nombre: string }[]; depositoId: string; onDeposito: (id: string) => void; puedeElegir: boolean
+}) {
+  const c = useColors()
+  if (!(puedeElegir && depositos.length > 1)) {
+    const nombre = depositos.find((d) => d.id === depositoId)?.nombre ?? 'el tuyo'
+    return (
+      <View style={{ padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
+        <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{`Depósito: ${nombre}`}</Text>
+      </View>
+    )
+  }
+  return (
+    <View style={{ gap: space[2] }}>
+      <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Depósito</Text>
+      <View accessibilityRole="radiogroup" accessibilityLabel="Depósito" style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, overflow: 'hidden' }}>
+        {depositos.map((d, i) => {
+          const sel = d.id === depositoId
+          return (
+            <Pressable key={d.id} accessibilityRole="radio" accessibilityLabel={d.nombre} accessibilityState={{ checked: sel, selected: sel }} onPress={() => onDeposito(d.id)}
+              android_ripple={{ color: c.surface2 }}
+              style={{ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], borderTopWidth: i ? 1 : 0, borderTopColor: c.border, backgroundColor: sel ? c.brandSoft : c.surface }}>
+              <MarcaRadio elegido={sel} />
+              <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{d.nombre}</Text>
+            </Pressable>
+          )
+        })}
+      </View>
+    </View>
+  )
+}
+
 interface Props {
   proveedor: { nombre: string; cuit?: string | null; condicion: string | null; franja: string | null }
   depositos: { id: string; nombre: string }[]
@@ -65,7 +101,6 @@ export function RecepcionCompra(p: Props) {
       <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>{label}</Text>
     </Pressable>
   )
-  const deposito = p.depositos.find((d) => d.id === p.depositoId)
 
   return (
     <>
@@ -87,26 +122,7 @@ export function RecepcionCompra(p: Props) {
           {fila('Plazo de pago', p.proveedor.condicion)}
           {fila('Franja horaria', p.proveedor.franja)}
         </View>
-        {p.puedeElegirDeposito && p.depositos.length > 1 ? (
-          <>
-            <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Depósito</Text>
-            <View accessibilityRole="radiogroup" accessibilityLabel="Depósito" style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, overflow: 'hidden' }}>
-              {p.depositos.map((d, i) => {
-                const sel = d.id === p.depositoId
-                return (
-                  <Pressable key={d.id} accessibilityRole="radio" accessibilityLabel={d.nombre} accessibilityState={{ checked: sel, selected: sel }} onPress={() => p.onDeposito(d.id)}
-                    android_ripple={{ color: c.surface2 }}
-                    style={{ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], borderTopWidth: i ? 1 : 0, borderTopColor: c.border, backgroundColor: sel ? c.brandSoft : c.surface }}>
-                    <MarcaRadio elegido={sel} />
-                    <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{d.nombre}</Text>
-                  </Pressable>
-                )
-              })}
-            </View>
-          </>
-        ) : (
-          <View style={tarjeta}><Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{`Depósito: ${deposito?.nombre ?? 'el tuyo'}`}</Text></View>
-        )}
+        <DepositoCompra depositos={p.depositos} depositoId={p.depositoId} onDeposito={p.onDeposito} puedeElegir={p.puedeElegirDeposito} />
         {p.puedeRecibir ? (
           <FilaInterruptor titulo="Recibir ahora" apoyo={RECIBIR_AHORA} prendido={p.recibirAhora} onChange={() => p.onRecibirAhora(!p.recibirAhora)} conDivisor />
         ) : null}

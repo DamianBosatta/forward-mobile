@@ -23,7 +23,7 @@ import { PasosCompra } from './PasosCompra'
 import { CatalogoCompra } from './CatalogoCompra'
 import { CantidadCostoPantalla } from './CantidadCostoPantalla'
 import { CarritoCompra } from './CarritoCompra'
-import { RecepcionCompra } from './RecepcionCompra'
+import { DepositoCompra, RecepcionCompra } from './RecepcionCompra'
 import { ComprobanteProveedorPantalla, resumenDeCargado, type ComprobanteCargado } from './ComprobanteProveedorPantalla'
 import type { ProductoComprable } from './ProductoCompraCard'
 
@@ -131,10 +131,15 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
     if (!comprobante) return aviso
     try {
       await guardarComprobante.mutateAsync({ id, comprobante: comprobante.comprobante })
-      if (comprobante.fotoUrl) await asignarFoto.mutateAsync({ id, fotoUrl: comprobante.fotoUrl })
-      return aviso
     } catch (e) {
       return { ...aviso, tono: 'advertencia', texto: `${aviso.texto} No se guardó el comprobante: ${mensajeDelServidor(e)} Cargalo desde acá.` }
+    }
+    if (!comprobante.fotoUrl) return aviso
+    try {
+      await asignarFoto.mutateAsync({ id, fotoUrl: comprobante.fotoUrl })
+      return aviso
+    } catch (e) {
+      return { ...aviso, tono: 'advertencia', texto: `${aviso.texto} El comprobante quedó guardado, pero no la foto de la factura: ${mensajeDelServidor(e)} Cargala desde la compra.` }
     }
   }
   const terminar = async (accion: () => Promise<void>, titulo: string) => {
@@ -216,9 +221,7 @@ Recargala para ver la versión actual antes de seguir.` : 'Recargala para ver la
 
   // Edición: el depósito se cambia en el carrito, porque no hay paso 4.
   const depositoEnEdicion = edicion ? (
-    <View style={{ gap: space[2], padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
-      <Text style={{ ...typeScale.secundario, color: c.text }}>{`Depósito: ${depositos.find((d) => d.id === b.depositoId)?.nombre ?? 'el tuyo'}`}</Text>
-    </View>
+    <DepositoCompra depositos={depositos} depositoId={b.depositoId} onDeposito={b.setDepositoId} puedeElegir={puedeElegirDeposito} />
   ) : null
 
   let cuerpo: React.ReactNode

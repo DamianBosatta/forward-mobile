@@ -14,6 +14,7 @@ import { ddmmaaaa } from '@/core/utils/fecha'
 import { fechaIso } from '../lib/fecha'
 import { mensajeDelServidor } from '../lib/mensaje-error'
 import { numeroDeCompra } from '../lib/numero'
+import { avisoCompraFaltante, type Aviso } from '../lib/confirmar-y-recibir'
 import {
   CONSECUENCIA, MENSAJE_LLEGADA, MENSAJE_RECEPCION, calcularVencimiento, llegadasIniciales, mensajeProblemaFecha, planDeRecepcion,
   problemaFechaFactura, problemaLlegada, textoFaltante, textoSuma, type Llegadas,
@@ -21,11 +22,18 @@ import {
 import { formDesdeComprobante, formNuevo } from '../lib/comprobante'
 import { ComprobanteProveedorPantalla, resumenDeCargado, type ComprobanteCargado } from './ComprobanteProveedorPantalla'
 
+/** El aviso al terminar de recibir: lo que faltó pasó a otra compra y, si falló, que la foto no se guardó. */
+export function avisoDeRecepcion(f: CompraFaltante, fotoNoGuardada?: string): Aviso | null {
+  const faltante = f.compraFaltanteNumero ? avisoCompraFaltante(f.compraFaltanteNumero) : null
+  if (!fotoNoGuardada) return faltante
+  return { clave: faltante?.clave ?? 'recibida', tono: 'advertencia', texto: [faltante?.texto, fotoNoGuardada].filter(Boolean).join(' ') }
+}
+
 interface Props {
   compra: CompraDto
   onVolver: () => void
   /** La recepción quedó hecha en el servidor. */
-  onHecho: (faltante: CompraFaltante) => void
+  onHecho: (faltante: CompraFaltante, fotoNoGuardada?: string) => void
   /** El servidor dio 409: la compra cambió; quien la muestra la recarga. */
   onConflicto?: () => void
 }
@@ -83,9 +91,13 @@ export function RecibirCompra({ compra, onVolver, onHecho, onConflicto }: Props)
       if ((e as { status?: number })?.status === 409) onConflicto?.()
       return
     }
-    // La recepción ya está hecha: si la foto no se adjunta, se avisa y se puede volver a cargar desde la compra.
+    // La recepción ya está hecha: si la foto no se adjunta, se avisa y se vuelve a cargar desde el detalle.
     if (comprobante?.fotoUrl) {
-      try { await asignarFoto.mutateAsync({ id: compra.id, fotoUrl: comprobante.fotoUrl }) } catch { /* la foto se vuelve a cargar desde el detalle */ }
+      try {
+        await asignarFoto.mutateAsync({ id: compra.id, fotoUrl: comprobante.fotoUrl })
+      } catch (e) {
+        return onHecho(r, `La compra quedó recibida, pero no se guardó la foto de la factura: ${mensajeDelServidor(e)} Cargala desde el detalle de la compra.`)
+      }
     }
     onHecho(r)
   }

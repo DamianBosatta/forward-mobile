@@ -17,7 +17,7 @@ import { mostrarNumero } from '@/core/utils/numero'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { ddmmaaaa } from '@/core/utils/fecha'
 import { fechaIso, franjaTexto } from '@/features/compras/lib/fecha'
-import { avisoCompraFaltante, confirmarYRecibir, tomarAviso, type Aviso } from '@/features/compras/lib/confirmar-y-recibir'
+import { confirmarYRecibir, tomarAviso, type Aviso } from '@/features/compras/lib/confirmar-y-recibir'
 import { ConfirmarYRecibirSheet } from '@/features/compras/components/ConfirmarYRecibirSheet'
 import { ComprobanteCampos } from '@/features/compras/components/ComprobanteCampos'
 import { armarComprobante, formDesdeComprobante, formNuevo, resumenComprobante, seCorrigeEnLaWeb, type ComprobanteCompraInput, type FormComprobante } from '@/features/compras/lib/comprobante'
@@ -27,7 +27,7 @@ import { numeroDeCompra } from '@/features/compras/lib/numero'
 import { esEstadoCompra } from '@/core/constants/estados'
 import { FotoDelCobro } from '@/features/cuentas/components/FotoDelCobro'
 import { subirComprobanteCobro } from '@/features/cuentas/api/fotos'
-import { RecibirCompra } from '@/features/compras/components/RecibirCompra'
+import { RecibirCompra, avisoDeRecepcion } from '@/features/compras/components/RecibirCompra'
 import { CONSECUENCIA, accionesDeDetalle, pasosDeCompra } from '@/features/compras/lib/recepcion'
 
 /** Ruta `compras/[id]`: el id viene de la URL. */
@@ -113,7 +113,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
       <RecibirCompra
         compra={compra}
         onVolver={() => setRecibiendoMercaderia(false)}
-        onHecho={(f) => { setRecibiendoMercaderia(false); setAviso(f.compraFaltanteNumero ? avisoCompraFaltante(f.compraFaltanteNumero) : null); queryClient.invalidateQueries({ queryKey: inicioKeys.all }) }}
+        onHecho={(f, foto) => { setRecibiendoMercaderia(false); setAviso(avisoDeRecepcion(f, foto)); queryClient.invalidateQueries({ queryKey: inicioKeys.all }) }}
         onConflicto={() => { void q.refetch() }}
       />
     )

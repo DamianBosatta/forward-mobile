@@ -71,10 +71,11 @@ export function CompraGuardadaPantalla({ id, aviso }: Props) {
       <RecibirCompra
         compra={compra}
         onVolver={() => setRecibiendo(false)}
-        onHecho={(f) => {
+        onHecho={(f, foto) => {
           setRecibiendo(false)
           setFaltante(f.compraFaltanteNumero ? f : null)
           setAvisoVigente(null)
+          setError(foto ?? null)
           queryClient.invalidateQueries({ queryKey: inicioKeys.all })
         }}
         onConflicto={() => { void q.refetch() }}
