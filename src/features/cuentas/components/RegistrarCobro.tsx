@@ -7,12 +7,12 @@ import { Button, Field, FormContainer, Notice, PieFijo, Progress, TopBar, Totals
 import { useSocio } from '@/libs/api-client/socios'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
-import { diaArgentina } from '@/core/utils/fecha'
 import { useEstadoCuentaSocio } from '../api/queries'
-import { claveDeOtroSocio, useCajasAbiertas, useMediosDeCobro, useRegistrarCobro, type CobroRegistrado } from '../api/cobros'
-import { armarCobro, entraACaja, mostrarFecha, type FormCobro } from '../lib/cobro'
+import { useMediosDeCobro } from '../api/cobros'
+import type { FormCobro } from '../lib/cobro'
+import { formCobroVacio as formVacio } from '../lib/lineasCobro'
+import { useEnvioDelCobro } from '../hooks/useEnvioDelCobro'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
-import { nuevaClaveIdempotencia } from '@/features/venta-nueva/lib/payload'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { subirFotoCheque } from '../api/fotos'
 import { CobroListo } from './CobroListo'
@@ -26,22 +26,6 @@ import { condicionesDelMedio } from '../lib/condicionesMedio'
 export const AVISO_IMPUTACION =
   'Imputación automática: el servidor lo aplica a la deuda más vieja y te dice en qué cuenta (TST o Normal) quedó.'
 
-const hoy = () => mostrarFecha(diaArgentina(Date.now()))
-const formVacio = (): FormCobro => ({
-  monto: '',
-  medioPagoId: null,
-  esCheque: false,
-  requiereCaja: false,
-  depositoId: null,
-  referencia: '',
-  cheque: { numero: '', banco: '', titular: '', emision: hoy(), pago: hoy() },
-  cuentaPropiaId: null,
-  comprobanteUrl: null,
-  chequeFotoUrl: null,
-  imputaciones: null,
-  otrosMedios: [],
-})
-
 const IMPUTACION = [{ id: 'automatica', label: 'Automática' }, { id: 'manual', label: 'Elegir comprobantes' }]
 
 /**
@@ -54,19 +38,9 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false, medioInici
   const socio = useSocio(socioId)
   const estado = useEstadoCuentaSocio(socioId, !!socio.data?.puedeVerCuentaCorriente)
   const medios = useMediosDeCobro()
-  const registrar = useRegistrarCobro()
   const [f, setF] = useState<FormCobro>(formVacio)
-  // Una clave por cobro, la misma en cada reintento (tocar de nuevo tras un corte no lo carga dos veces);
-  // «Registrar otro cobro» arranca otra. Un cobro duplicado es peor que perder una edición: se edite lo que se
-  // edite del formulario (monto, medio, cheque, referencia) la clave NO cambia, y si el cobro anterior sí se había
-  // grabado el servidor lo dice con un 409 y lo nuevo no se guarda. Solo se cambia si el servidor dice que la
-  // clave era de otro socio.
-  const [clave, setClave] = useState(nuevaClaveIdempotencia)
-  // Con el cobro combinado, cualquiera de las líneas puede ser efectivo.
-  const conCaja = entraACaja(f)
-  const cajas = useCajasAbiertas(conCaja)
-  const [aviso, setAviso] = useState<string | null>(null)
-  const [cobro, setCobro] = useState<CobroRegistrado | null>(null)
+  // La clave de idempotencia, las cajas y el POST: los mismos que el cobro en pasos (ver useEnvioDelCobro).
+  const { registrar, cajas, conCaja, sinCajas, sinCajaUtil, aviso, cobro, enviar: enviarCobro, reiniciar } = useEnvioDelCobro(socioId, f)
   const [subiendo, setSubiendo] = useState(false)
   // Objetivo del cobro: solo una guía visual de cuánto falta; no entra al payload (ni a la clave de idempotencia).
   const [objetivo, setObjetivo] = useState<'vencido' | 'saldo' | null>(null)
@@ -109,31 +83,12 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false, medioInici
         })}
         imputacionManual={!!f.imputaciones}
         onVolver={onVolver}
-        onOtro={() => { setCobro(null); setF(formVacio()); setClave(nuevaClaveIdempotencia()); registrar.reset() }}
+        onOtro={() => { reiniciar(); setF(formVacio()) }}
       />
     )
   }
 
-  // Con caja: sin lista cargada, con error (aunque haya datos viejos) o sin ninguna abierta, no se cobra.
-  const sinCajas = conCaja && !!cajas.data && !cajas.error && cajas.data.length === 0
-  const sinCajaUtil = conCaja && (!cajas.data || !!cajas.error || cajas.data.length === 0)
-
-  const enviar = () => {
-    if (registrar.isPending || subiendo) return
-    // Con caja, sin las cajas abiertas no se sabe en cuál entra el efectivo: no se manda incompleto.
-    if (sinCajaUtil) return
-    // Con una sola caja abierta se manda esa; con varias, la elige quien cobra.
-    const abiertas = cajas.data ?? []
-    const depositoId = f.depositoId ?? (abiertas.length === 1 ? abiertas[0].depositoId : null)
-    if (conCaja && abiertas.length > 1 && !depositoId) return setAviso('Elegí en qué caja entra el efectivo.')
-    const r = armarCobro(socioId, { ...f, depositoId }, clave)
-    if ('error' in r) return setAviso(r.error)
-    setAviso(null)
-    registrar.mutate(r.payload, {
-      onSuccess: setCobro,
-      onError: e => { if (claveDeOtroSocio(e)) setClave(nuevaClaveIdempotencia()) },
-    })
-  }
+  const enviar = () => enviarCobro(subiendo)
 
   const deudaVencida = estado.data?.deudaVencida ?? 0
 
