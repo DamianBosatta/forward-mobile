@@ -11,6 +11,7 @@ import {
   Lock,
   Navigation,
   PackageCheck,
+  PackageOpen,
   ShieldCheck,
   ShoppingBag,
   Tag,
@@ -117,6 +118,8 @@ export const MENU: MenuGroup[] = [
       // Solo ver (D6): pendientes y no entregados. GET /Logistica/ventas-para-preparacion pide MOD_VIAJES:Read y recorta por depósito
       // (AlcanceDelDespacho); la web abre el tablero de picking con el mismo módulo (REGLAS_DE_RUTA).
       { id: 'por-preparar', label: 'Pedidos de logística', icon: PackageCheck, href: '/(tabs)/logistica/pedidos', routeName: 'logistica/pedidos', appModule: 'MOD_VIAJES' },
+      // Preparación de pedidos (S15): el tablero de picking de la web, solo ver. Mismo módulo que la web y que "Pedidos de logística".
+      { id: 'preparacion', label: 'Preparación de pedidos', icon: PackageOpen, href: '/(tabs)/logistica/picking', routeName: 'logistica/picking', appModule: 'MOD_VIAJES' },
       { id: 'consola', label: 'Consola del chofer', icon: Navigation, href: '/(tabs)/logistica/consola', routeName: 'logistica/consola', appModule: 'MOD_VIAJES' },
     ],
   },

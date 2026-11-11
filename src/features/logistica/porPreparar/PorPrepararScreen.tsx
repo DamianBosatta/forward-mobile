@@ -31,7 +31,7 @@ const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno
  * Datos de una entrega fallida tal como los devuelve el servidor: el motivo y el chofer salen de la
  * parada en la hoja de ruta del pedido; las observaciones, de la venta.
  */
-function DatosDeEntregaFallida({ pedido }: { pedido: VentaPreparacion }) {
+export function DatosDeEntregaFallida({ pedido }: { pedido: VentaPreparacion }) {
   const c = useColors()
   const hoja = useHojaRuta(pedido.hojaRutaId ?? '')
   const venta = useVenta(pedido.id)
