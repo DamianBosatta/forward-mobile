@@ -93,7 +93,9 @@ function CobroDelCliente({ socioId, medioInicial, paso, onPaso, onVolver, onSali
   // Objetivo del cobro: solo una guía visual de cuánto falta; no entra al payload (ni a la clave de idempotencia).
   const [objetivo, setObjetivo] = useState<Objetivo | null>(null)
   // "Medio y monto" abierto: la línea que se edita (null = una nueva) y su borrador.
-  const [editor, setEditor] = useState<{ indice: number | null; borrador: BorradorMedio } | null>(null)
+  // `vez` distingue cada apertura: lo que llega tarde (una foto que termina de subir) no reabre uno cerrado.
+  const [editor, setEditor] = useState<{ indice: number | null; borrador: BorradorMedio; vez: number } | null>(null)
+  const aperturas = useRef(0)
   const [subiendo, setSubiendo] = useState(false)
   const medioInicialAplicado = useRef(false)
   const { registrar, cajas, sinCajaUtil, aviso, cobro, enviar, reiniciar } = useEnvioDelCobro(socioId, f, !!editor?.borrador.requiereCaja)
@@ -153,10 +155,11 @@ function CobroDelCliente({ socioId, medioInicial, paso, onPaso, onVolver, onSali
         b = { ...b, medioPagoId: cheque.id!, esCheque: true, requiereCaja: !!cheque.requiereCaja }
       }
     }
-    setEditor({ indice, borrador: b })
+    aperturas.current += 1
+    setEditor({ indice, borrador: b, vez: aperturas.current })
   }
   if (editor) {
-    const { indice, borrador } = editor
+    const { indice, borrador, vez } = editor
     const conCajas = borrador.requiereCaja
     const motivoCaja = !conCajas ? null
       : cajas.isLoading || cajas.error || !cajas.data || abiertas.length === 0 ? 'Sin una caja abierta no se cobra en efectivo.'
@@ -168,7 +171,7 @@ function CobroDelCliente({ socioId, medioInicial, paso, onPaso, onVolver, onSali
         cargandoMedios={medios.isLoading}
         errorMedios={medios.error}
         borrador={borrador}
-        onCambio={b => setEditor({ indice, borrador: b })}
+        onCambio={b => setEditor(e => (e?.vez === vez ? { ...e, borrador: b } : e))}
         primera={esPrimeraLinea(f, indice)}
         cajas={cajas}
         depositoId={f.depositoId}
