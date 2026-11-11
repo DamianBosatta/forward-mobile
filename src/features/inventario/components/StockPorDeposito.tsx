@@ -1,111 +1,54 @@
 import React from 'react'
-import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
-import { ActivityIndicator, FlatList, ScrollView, Text, View } from 'react-native'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { ActivityIndicator, FlatList, ScrollView, View } from 'react-native'
+import { radii, space, useColors } from '@/libs/theme'
 import { Notice, StatusChip } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
-import { mostrarNumero } from '@/core/utils/numero'
 import type { StockItem } from '@/libs/api-client/types'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
-import { useProductosDeStockConsulta } from '../hooks/useProductosDeStockConsulta'
 import { chipDeStock } from '@/features/catalogo/lib/presentacion'
+import { useProductosDeStockConsulta } from '../hooks/useProductosDeStockConsulta'
 import { TODOS_LOS_DEPOSITOS, useStockPorDeposito } from '../hooks/useStockPorDeposito'
-import { chipDeFilaStock, textoMinimo, textoReservadas, type FiltroEstadoStock } from '../lib/stock-presentacion'
+import { textoVacio } from '../lib/stock-presentacion'
+import { CabeceraDeTabla, FilaDeLista, FilaDeTabla, TarjetaDeLinea, TarjetaDeProducto, TarjetaSinCantidades } from './TarjetaDeStock'
+import { FraganciasDeLinea } from './FraganciasDeLinea'
+import { BotonFiltros, HojaDeFiltros, SelectorDeVista } from './FiltrosDeStock'
+import { TotalesDeStock, type VistaDeStock } from './TotalesDeStock'
+import { DetalleDeStock } from './DetalleDeStock'
 
-const ESTADOS: { valor: FiltroEstadoStock; label: string }[] = [
-  { valor: 'todos', label: 'Todos' },
-  { valor: 'EnAlerta', label: 'En alerta' },
-  { valor: 'SinStock', label: 'Sin stock' },
-]
+/** Un renglón de la grilla: N tarjetas, o el panel de fragancias de una línea desplegada a todo el ancho. */
+type Bloque<T> = { tipo: 'fila'; key: string; items: T[] } | { tipo: 'fragancias'; key: string; linea: T }
 
-function Kpi({ label, valor }: { label: string; valor: number | null | undefined }) {
-  const c = useColors()
-  return (
-    <View style={{ flex: 1, backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[3], gap: space[1] }}>
-      <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{label}</Text>
-      <Text style={[typeScale.titulo, { color: c.text }]}>{valor == null ? '-' : valor}</Text>
-    </View>
-  )
+/** Arma los renglones de la grilla; debajo del renglón de cada línea desplegada va su panel (web LineaAromaCards). */
+function enBloques<T extends { id: string }>(items: T[], columnas: number, desplegada: (i: T) => boolean = () => false): Bloque<T>[] {
+  const bloques: Bloque<T>[] = []
+  for (let i = 0; i < items.length; i += columnas) {
+    const fila = items.slice(i, i + columnas)
+    bloques.push({ tipo: 'fila', key: `fila-${fila[0].id}`, items: fila })
+    for (const l of fila.filter(desplegada)) bloques.push({ tipo: 'fragancias', key: `fragancias-${l.id}`, linea: l })
+  }
+  return bloques
 }
 
-/** Renglón del teléfono: nombre, código y mínimo, disponible grande y reservadas / por ingresar. */
-function FilaTelefono({ f, conDeposito }: { f: StockItem; conDeposito: boolean }) {
-  const c = useColors()
-  const chip = chipDeFilaStock(f)
-  const sub = [conDeposito ? f.deposito : null, textoMinimo(f.stockMinimo)].filter(Boolean).join(' · ')
-  const extra = textoReservadas(f.cantidadReservada, f.cantidadVirtual)
-  return (
-    <View
-      accessibilityLabel={`${f.producto}, ${f.codigoPropio}`}
-      style={{ flexDirection: 'row', gap: space[3], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface }}
-    >
-      <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
-        <ProductoIdentidad nombre={f.producto} marca={f.marca} codigo={f.codigoPropio} />
-        {sub ? <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary }]}>{sub}</Text> : null}
-        <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{extra}</Text>
-      </View>
-      <View style={{ alignItems: 'flex-end', gap: space[1] }}>
-        <Text accessibilityLabel={`Disponible ${mostrarNumero(f.cantidadDisponible)}`} style={[typeScale.titulo, { color: c.text }]}>
-          {mostrarNumero(f.cantidadDisponible)}
-        </Text>
-        {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
-      </View>
-    </View>
-  )
-}
+/** Lugar vacío que completa el último renglón para que las tarjetas no se estiren. */
+const Hueco = () => <View style={{ flex: 1 }} />
 
-const COLUMNAS = ['Disponible', 'Reservado', 'Por ingresar', 'Mínimo'] as const
-
-function CeldaNumero({ children, fuerte }: { children: string; fuerte?: boolean }) {
+/** Cargando (web InventarioGrid): esqueletos de tarjeta. */
+function Esqueletos({ columnas }: { columnas: number }) {
   const c = useColors()
   return (
-    <Text style={[fuerte ? typeScale.cuerpoDestacado : typeScale.cuerpo, { width: 92, textAlign: 'right', color: c.text }]}>
-      {children}
-    </Text>
-  )
-}
-
-/** Renglón de la tablet (lámina TabStock): Producto · Disponible · Reservado · Por ingresar · Mínimo. */
-function FilaTablet({ f, conDeposito }: { f: StockItem; conDeposito: boolean }) {
-  const c = useColors()
-  const chip = chipDeFilaStock(f)
-  return (
-    <View
-      accessibilityLabel={`${f.producto}, ${f.codigoPropio}`}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: 56, paddingHorizontal: space[3], backgroundColor: c.surface, borderRadius: radii.campo }}
-    >
-      <View style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-        <View style={{ flexShrink: 1 }}>
-          <ProductoIdentidad nombre={f.producto} marca={f.marca} codigo={f.codigoPropio} lineasNombre={1} />
-          {conDeposito && f.deposito ? <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary }]}>{f.deposito}</Text> : null}
-        </View>
-        {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
-      </View>
-      <CeldaNumero fuerte>{mostrarNumero(f.cantidadDisponible)}</CeldaNumero>
-      <CeldaNumero>{mostrarNumero(f.cantidadReservada)}</CeldaNumero>
-      <CeldaNumero>{mostrarNumero(f.cantidadVirtual)}</CeldaNumero>
-      <CeldaNumero>{mostrarNumero(f.stockMinimo)}</CeldaNumero>
-    </View>
-  )
-}
-
-function CabeceraTablet() {
-  const c = useColors()
-  return (
-    <View style={{ flexDirection: 'row', gap: space[2], paddingHorizontal: space[3], paddingBottom: space[1] }}>
-      <Text style={[typeScale.secundario, { flex: 1, color: c.textSecondary }]}>Producto</Text>
-      {COLUMNAS.map((label) => (
-        <Text key={label} style={[typeScale.secundario, { width: 92, textAlign: 'right', color: c.textSecondary }]}>{label}</Text>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2], padding: space[4] }}>
+      {Array.from({ length: 4 }).map((_, i) => (
+        <View key={i} testID="esqueleto-tarjeta" style={{ width: `${Math.floor(100 / columnas) - 3}%`, height: 200, borderRadius: radii.tarjeta, backgroundColor: c.surface2 }} />
       ))}
     </View>
   )
 }
 
-/** Sin CAP_VER_CANTIDADES_STOCK: el mismo catálogo, solo con "Hay stock / Sin stock" que decide el servidor. */
-function StockSinCantidades({ busqueda }: { busqueda: string }) {
+/** Sin CAP_VER_CANTIDADES_STOCK (lámina 7): el catálogo de hoy, en tarjetas con solo "Hay stock / Sin stock" del servidor. */
+function StockSinCantidades({ busqueda, columnas }: { busqueda: string; columnas: number }) {
   const c = useColors()
   const cat = useProductosDeStockConsulta()
   const { setBusqueda } = cat
@@ -119,8 +62,8 @@ function StockSinCantidades({ busqueda }: { busqueda: string }) {
   if (cat.isError && !sinRed) return <View style={{ padding: space[4] }}><Notice tone="peligro">No se pudo cargar el stock. Revisá la conexión y volvé a intentar.</Notice></View>
   return (
     <FlatList
-      data={cat.productos}
-      keyExtractor={(p) => p.id}
+      data={enBloques(cat.productos, columnas)}
+      keyExtractor={(b) => b.key}
       onEndReached={cat.cargarMas}
       onEndReachedThreshold={0.5}
       contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] }}
@@ -131,30 +74,66 @@ function StockSinCantidades({ busqueda }: { busqueda: string }) {
         </View>
       }
       ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan con la búsqueda." />}
-      renderItem={({ item }) => {
-        const chip = chipDeStock(cat.disponible.get(item.id))
-        return (
-          <View
-            accessibilityLabel={`${item.nombre}, ${item.codigoPropio}`}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface }}
-          >
-            <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
-              <ProductoIdentidad nombre={item.nombre} marca={item.marca} codigo={item.codigoPropio} />
-            </View>
-            {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
+      renderItem={({ item: b }) =>
+        b.tipo === 'fila' ? (
+          <View style={{ flexDirection: 'row', gap: space[2] }}>
+            {b.items.map((p) => {
+              const chip = chipDeStock(cat.disponible.get(p.id))
+              return (
+                <TarjetaSinCantidades
+                  key={p.id}
+                  nombre={p.nombre}
+                  marca={p.marca}
+                  codigo={p.codigoPropio ?? ''}
+                  imageUrl={p.imageUrl}
+                  chip={chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
+                />
+              )
+            })}
+            {Array.from({ length: columnas - b.items.length }).map((_, i) => <Hueco key={i} />)}
           </View>
-        )
-      }}
+        ) : null
+      }
     />
   )
 }
 
 function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: boolean }) {
   const c = useColors()
+  const veCostos = hasCapability(useAuthStore((st) => st.user?.permissions), 'CAP_VER_COSTOS')
   const s = useStockPorDeposito({ conCantidades: true, busqueda })
+  const [vista, setVista] = React.useState<VistaDeStock>('tarjetas')
+  const [hojaFiltros, setHojaFiltros] = React.useState(false)
+  const [detalle, setDetalle] = React.useState<StockItem | null>(null)
+  const [desplegadas, setDesplegadas] = React.useState<ReadonlySet<string>>(new Set())
+  const alternar = (id: string) =>
+    setDesplegadas((prev) => {
+      const sig = new Set(prev)
+      if (sig.has(id)) sig.delete(id)
+      else sig.add(id)
+      return sig
+    })
+
   const sinRed = s.isError && esFallaDeRed(s.error)
   // En "Todos" hay una fila por producto y depósito: cada una dice de cuál es.
   const conDeposito = s.depositoId === TODOS_LOS_DEPOSITOS
+  const lista = vista === 'lista'
+  const columnas = lista ? 1 : tablet ? 4 : 2
+  const bloques = enBloques(s.filas, columnas, (f) => f.esPadreDeVariantes && desplegadas.has(f.id))
+
+  const pieza = (f: StockItem) => {
+    const linea = f.esPadreDeVariantes ? { abierta: desplegadas.has(f.id), onAlternar: () => alternar(f.id) } : undefined
+    if (lista) {
+      const Fila = tablet ? FilaDeTabla : FilaDeLista
+      return <Fila item={f} onPress={setDetalle} conDeposito={conDeposito} linea={linea} />
+    }
+    return linea ? (
+      <TarjetaDeLinea item={f} onPress={setDetalle} abierta={linea.abierta} onAlternar={linea.onAlternar} />
+    ) : (
+      <TarjetaDeProducto item={f} onPress={setDetalle} />
+    )
+  }
+
   return (
     <View style={{ flex: 1 }}>
       {s.depositos.length > 1 || (s.puedeVerTodos && s.depositos.length > 0) ? (
@@ -165,18 +144,13 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
           ))}
         </ScrollView>
       ) : null}
-      <View style={{ flexDirection: 'row', gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }}>
-        <Kpi label="Artículos" valor={s.totales?.articulos} />
-        <Kpi label="En alerta" valor={s.totales?.enAlerta} />
-        <Kpi label="Sin stock" valor={s.totales?.sinStock} />
-      </View>
-      <View style={{ flexDirection: 'row', gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }}>
-        {ESTADOS.map((e) => (
-          <FiltroChip key={e.valor} label={e.label} activo={s.estado === e.valor} onPress={() => s.setEstado(e.valor)} />
-        ))}
+      <TotalesDeStock resumen={s.resumen} conError={s.resumenConError} vista={vista} valorCosto={veCostos ? { depositoId: s.depositoId } : null} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }}>
+        <BotonFiltros filtros={s.filtros} onPress={() => setHojaFiltros(true)} />
+        <SelectorDeVista vista={vista} onCambiar={setVista} />
       </View>
       {s.isLoading ? (
-        <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
+        <Esqueletos columnas={columnas} />
       ) : s.isError && !(sinRed && s.filas.length > 0) ? (
         sinRed ? (
           <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar el stock" accion={{ label: 'Reintentar', onPress: () => void s.refetch() }} />
@@ -185,31 +159,43 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
         )
       ) : (
         <FlatList
-          data={s.filas}
-          keyExtractor={(f) => f.id}
+          data={bloques}
+          keyExtractor={(b) => b.key}
           onEndReached={s.cargarMas}
           onEndReachedThreshold={0.5}
           contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] }}
           ListHeaderComponent={
             <>
               {sinRed ? <Notice tone="advertencia">{textoSinConexion(s.dataUpdatedAt || undefined)}</Notice> : null}
-              {tablet ? <CabeceraTablet /> : null}
+              {lista && tablet ? <CabeceraDeTabla /> : null}
             </>
           }
-          ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan." />}
+          ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo={textoVacio(s.filtros, busqueda)} />}
           ListFooterComponent={s.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : undefined}
-          renderItem={({ item }) => (tablet ? <FilaTablet f={item} conDeposito={conDeposito} /> : <FilaTelefono f={item} conDeposito={conDeposito} />)}
+          renderItem={({ item: b }) =>
+            b.tipo === 'fragancias' ? (
+              <FraganciasDeLinea linea={b.linea} onAbrirDetalle={setDetalle} />
+            ) : (
+              <View style={{ flexDirection: 'row', gap: space[2] }}>
+                {b.items.map((f) => <View key={f.id} style={{ flex: 1, minWidth: 0 }}>{pieza(f)}</View>)}
+                {Array.from({ length: columnas - b.items.length }).map((_, i) => <Hueco key={i} />)}
+              </View>
+            )
+          }
         />
       )}
+      <HojaDeFiltros visible={hojaFiltros} onCerrar={() => setHojaFiltros(false)} resumen={s.resumen} filtros={s.filtros} onCambiar={s.setFiltros} />
+      <DetalleDeStock item={detalle} onCerrar={() => setDetalle(null)} veCostos={veCostos} />
     </View>
   )
 }
 
 /**
- * Stock por depósito, solo ver (láminas ModStock y TabStock). Con CAP_VER_CANTIDADES_STOCK muestra cantidades;
- * sin ella, solo "Hay stock / Sin stock". La capacidad decide acá, no el rol (X3).
+ * Stock, solo ver (S16): la estructura de "Inventario & Stock" de la web. Con CAP_VER_CANTIDADES_STOCK, Tarjetas (de
+ * entrada) o Lista, totales, filtros, líneas con sus fragancias, detalle y movimientos; sin ella, solo "Hay stock /
+ * Sin stock". Ninguna acción cambia datos. La capacidad decide acá, no el rol (X3).
  */
 export function StockPorDeposito({ busqueda, tablet }: { busqueda: string; tablet: boolean }) {
   const veCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
-  return veCantidades ? <StockConCantidades busqueda={busqueda} tablet={tablet} /> : <StockSinCantidades busqueda={busqueda} />
+  return veCantidades ? <StockConCantidades busqueda={busqueda} tablet={tablet} /> : <StockSinCantidades busqueda={busqueda} columnas={tablet ? 4 : 2} />
 }

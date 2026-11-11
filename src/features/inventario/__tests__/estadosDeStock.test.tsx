@@ -101,11 +101,11 @@ describe('Catálogo', () => {
 })
 
 describe('Stock con cantidades', () => {
-  it('sin renglones: estado "vacío" con la frase de siempre', async () => {
+  it('sin renglones: estado "vacío" con la frase de la web (S16)', async () => {
     stocks = () => Promise.resolve(pagina([]))
     pintar()
     await abrirStock()
-    expect(await screen.findByRole('header', { name: 'No hay productos que coincidan.' })).toBeTruthy()
+    expect(await screen.findByRole('header', { name: 'No hay artículos que coincidan con los filtros.' })).toBeTruthy()
   })
 
   it('sin conexión y sin nada guardado: estado "sin conexión" con Reintentar, que vuelve a pedir', async () => {

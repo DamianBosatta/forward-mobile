@@ -9,8 +9,8 @@ describe('chipDeFilaStock', () => {
     expect(chipDeFilaStock({ cantidadDisponible: 8, enAlerta: true })).toEqual({ estado: 'porAutorizar', label: 'En alerta' })
   })
 
-  it('con stock de sobra dice "Hay stock"', () => {
-    expect(chipDeFilaStock({ cantidadDisponible: 50, enAlerta: false })).toEqual({ estado: 'entregado', label: 'Hay stock' })
+  it('con stock de sobra dice "Con stock" (etiqueta de la web)', () => {
+    expect(chipDeFilaStock({ cantidadDisponible: 50, enAlerta: false })).toEqual({ estado: 'entregado', label: 'Con stock' })
   })
 })
 
@@ -20,8 +20,8 @@ describe('textos del renglón', () => {
     expect(textoMinimo(0)).toBeNull()
   })
 
-  it('reservadas y por ingresar van siempre, con 0 incluido (lámina Stock)', () => {
-    expect(textoReservadas(6, 48)).toBe('Reservado 6 · Por ingresar 48')
-    expect(textoReservadas(0, 0)).toBe('Reservado 0 · Por ingresar 0')
+  it('reservado y por entrar van siempre, con 0 incluido; la web nunca dice "Virtual" ni "Por ingresar"', () => {
+    expect(textoReservadas(6, 48)).toBe('Reservado 6 · Por entrar 48')
+    expect(textoReservadas(0, 0)).toBe('Reservado 0 · Por entrar 0')
   })
 })

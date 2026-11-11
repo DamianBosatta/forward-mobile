@@ -89,19 +89,21 @@ beforeEach(() => {
 describe('Stock por depósito, con CAP_VER_CANTIDADES_STOCK', () => {
   beforeEach(() => conUsuario(CON_CANTIDADES))
 
-  it('muestra disponible, mínimo, reservadas y por ingresar de cada renglón, y los totales que cuenta el servidor', async () => {
+  it('en la Lista muestra disponible, stock real, mínimo, reservado y por entrar de cada renglón, y los totales que cuenta el servidor', async () => {
     renderPantalla()
     await abrirStock()
 
     expect(await screen.findByText('Make Lavajean')).toBeTruthy()
+    // S16: abre en Tarjetas; los renglones con todas las cantidades son de la Lista.
+    await userEvent.press(screen.getByRole('radio', { name: 'Lista' }))
     // S2: el código va como insignia junto al nombre; el mínimo, en su renglón.
     expect(screen.getByText('PRO06787')).toBeTruthy()
-    expect(screen.getByText('Mín. 24')).toBeTruthy()
-    expect(screen.getByText('Reservado 6 · Por ingresar 48')).toBeTruthy()
+    expect(screen.getByText('Stock real 14 · Mín. 24')).toBeTruthy()
+    expect(screen.getByText('Reservado 6 · Por entrar 48')).toBeTruthy()
     expect(screen.getByLabelText('Disponible 8')).toBeTruthy()
     expect(within(screen.getByLabelText('Make Lavajean, PRO06787')).getByText('En alerta')).toBeTruthy()
-    // Sin disponible: "Sin stock", y reservado / por ingresar en 0.
-    expect(screen.getByText('Reservado 0 · Por ingresar 0')).toBeTruthy()
+    // Sin disponible: "Sin stock", y reservado / por entrar en 0.
+    expect(screen.getByText('Reservado 0 · Por entrar 0')).toBeTruthy()
     await waitFor(() => expect(screen.getByText('1703')).toBeTruthy())
     expect(screen.getByText('112')).toBeTruthy()
     expect(screen.getByText('34')).toBeTruthy()
@@ -129,10 +131,12 @@ describe('Stock por depósito, con CAP_VER_CANTIDADES_STOCK', () => {
     expect(screen.getByRole('button', { name: 'Norte', selected: true })).toBeTruthy()
   })
 
-  it('"En alerta" pide solo los renglones en alerta', async () => {
+  it('"En alerta" (en la hoja Filtros) pide solo los renglones en alerta', async () => {
     renderPantalla()
     await abrirStock()
-    await userEvent.press(await screen.findByRole('button', { name: 'En alerta' }))
+    await waitFor(() => expect(screen.getByText('1703')).toBeTruthy())
+    await userEvent.press(screen.getByRole('button', { name: 'Filtros' }))
+    await userEvent.press(screen.getByRole('checkbox', { name: /^En alerta/ }))
 
     await waitFor(() => expect(llamadasGet().some((u) => u.startsWith('/api/v1/Stocks?') && u.includes('EstadoStock=EnAlerta'))).toBe(true))
   })
@@ -145,13 +149,14 @@ describe('Stock por depósito, con CAP_VER_CANTIDADES_STOCK', () => {
     expect(api.post).not.toHaveBeenCalledWith(expect.stringContaining('/Stocks/adjust'), expect.anything())
   })
 
-  it('en tablet (600 px o más) se ve como tabla con Disponible, Reservado, Por ingresar y Mínimo', async () => {
+  it('en tablet (600 px o más) la Lista se ve como tabla con Disponible, Stock real, Reservado, Por entrar y Mínimo', async () => {
     mockAncho = 700
     renderPantalla()
     await abrirStock()
 
     await screen.findByText('Make Lavajean')
-    for (const columna of ['Producto', 'Disponible', 'Reservado', 'Por ingresar', 'Mínimo']) {
+    await userEvent.press(screen.getByRole('radio', { name: 'Lista' }))
+    for (const columna of ['Producto', 'Disponible', 'Stock real', 'Reservado', 'Por entrar', 'Mínimo']) {
       expect(screen.getByText(columna)).toBeTruthy()
     }
   })
