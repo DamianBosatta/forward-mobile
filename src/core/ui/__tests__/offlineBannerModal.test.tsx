@@ -40,7 +40,8 @@ describe('Aviso sin conexión y modales de pantalla completa', () => {
   it.each(['/inventario', '/compras/nueva'])('sin señal en %s el modal conserva el margen del sistema (su barra no queda bajo la hora)', (ruta) => {
     mockRuta = ruta
     render(<Arbol />)
-    expect(screen.getByTestId('aviso-sin-conexion')).toBeTruthy()
+    // Cada barra (la de la pantalla y la del modal, que la tapa) pinta el aviso debajo de ella.
+    expect(screen.getAllByTestId('aviso-sin-conexion')).toHaveLength(2)
     expect(margenSuperior('Ficha de producto')).toBe(30)
     expect(margenSuperior('Inventario')).toBe(30)
   })

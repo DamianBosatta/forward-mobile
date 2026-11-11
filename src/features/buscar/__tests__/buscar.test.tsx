@@ -93,6 +93,18 @@ describe('Buscar', () => {
     expect(mockGet).not.toHaveBeenCalled()
   })
 
+  it('el campo va dentro de la barra superior, en la fila del botón de volver (propuesta de Cuenta, frame 14)', () => {
+    pintar()
+    const campo = screen.getByLabelText('Buscar')
+    // El ancestro más cercano del campo que también tiene el botón de volver es la fila de 64 de la barra.
+    let fila: any = campo.parent
+    while (fila && !within(fila).queryByRole('button', { name: 'Volver' })) fila = fila.parent
+    expect(StyleSheet.flatten(fila.props.style).height).toBe(64)
+    let barra: any = fila
+    while (barra && StyleSheet.flatten(barra.props.style ?? {}).backgroundColor !== themeColors.light.topBar) barra = barra.parent
+    expect(barra).toBeTruthy()
+  })
+
   it('con permisos de todo muestra clientes, ventas y cuenta corriente, y cada fila abre su pantalla', async () => {
     pintar()
     await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')

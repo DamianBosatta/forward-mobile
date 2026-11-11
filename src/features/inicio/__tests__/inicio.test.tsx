@@ -139,6 +139,16 @@ describe('Inicio: ola B (ventas del día y deuda vencida)', () => {
   })
 })
 
+describe('Inicio: barra con el logo FWD (propuesta de Inicio)', () => {
+  it('la barra de Inicio muestra la marca FWD', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []), dashboard: { salesToday: null } })
+    pintar()
+    expect(await screen.findByLabelText('Ventas del día: —')).toBeTruthy()
+    expect(screen.getByTestId('logo-fwd', { includeHiddenElements: true })).toBeTruthy()
+  })
+})
+
 describe('Inicio: me deben y debo salen de /deudas/resumen (MOD_PAGOS:Read)', () => {
   const DEUDAS = { clientesConDeuda: 7, totalDeudaClientes: 48920300, proveedoresConDeuda: 2, totalDeudaProveedores: 21150000 }
 

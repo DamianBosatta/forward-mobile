@@ -39,23 +39,27 @@ export function BuscarScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar title="Buscar" leading={{ kind: 'atras', onPress: () => router.back() }} />
-      <View style={{ backgroundColor: c.topBar, paddingHorizontal: space[4], paddingVertical: space[3] }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: space[12], borderRadius: radii.campo, backgroundColor: c.surface, paddingHorizontal: space[3] }}>
-          <Search size={20} color={c.textSecondary} />
-          <TextInput
-            accessibilityLabel="Buscar"
-            placeholder="Cliente, pedido o cuenta"
-            placeholderTextColor={c.textSecondary}
-            value={texto}
-            onChangeText={setTexto}
-            autoFocus
-            autoCorrect={false}
-            returnKeyType="search"
-            style={{ ...typeScale.cuerpo, flex: 1, color: c.text, paddingVertical: 0 }}
-          />
-        </View>
-      </View>
+      {/* Propuesta de Cuenta, frame 14: el campo va dentro de la barra, en lugar del título. */}
+      <TopBar
+        title="Buscar"
+        leading={{ kind: 'atras', onPress: () => router.back() }}
+        campo={
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: space[12], borderRadius: radii.campo, backgroundColor: c.onTopBar + '1A', paddingHorizontal: space[3] }}>
+            <Search size={20} color={c.onTopBar} />
+            <TextInput
+              accessibilityLabel="Buscar"
+              placeholder="Cliente, pedido o cuenta"
+              placeholderTextColor={c.onTopBar}
+              value={texto}
+              onChangeText={setTexto}
+              autoFocus
+              autoCorrect={false}
+              returnKeyType="search"
+              style={{ ...typeScale.cuerpo, flex: 1, color: c.onTopBarStrong, paddingVertical: 0 }}
+            />
+          </View>
+        }
+      />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: space[4], gap: space[4], paddingBottom: space[12] }}>
         {!hayAlguna ? (
           <Notice tone="peligro">Tu usuario no tiene acceso a ningún módulo para buscar.</Notice>

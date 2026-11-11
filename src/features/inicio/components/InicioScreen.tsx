@@ -108,6 +108,7 @@ export function InicioScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
+        logo
         title={`Hola, ${nombre.split(' ')[0] || ''}`.trim()}
         subtitle={`${DIAS[hoy.diaSemana]} ${hoy.dia} de ${MESES[hoy.mes]}`}
         leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}

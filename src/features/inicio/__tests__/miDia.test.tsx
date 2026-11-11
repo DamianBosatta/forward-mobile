@@ -92,6 +92,12 @@ describe('MiDiaScreen', () => {
     expect(url).toContain('anio=2026&mes=10')
   })
 
+  it('la barra de Mi día muestra la marca FWD (propuesta de Inicio, frame Mi día)', async () => {
+    pintar()
+    expect(await screen.findByText(ars('3.420.000,00'))).toBeTruthy()
+    expect(screen.getByTestId('logo-fwd', { includeHiddenElements: true })).toBeTruthy()
+  })
+
   it('los tres números del mes van en una tarjeta debajo del hero, con el importe a la derecha', async () => {
     pintar()
     const cifras = await screen.findByTestId('mi-dia-cifras')
