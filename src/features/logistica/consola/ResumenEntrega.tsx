@@ -8,7 +8,6 @@ export interface DatosResumen {
   conFotoRemito: boolean
   devueltos: { nombre: string; cantidad: number }[]
   cobros: { medio: string; monto: number; conFoto: boolean }[]
-  firmada: boolean
 }
 
 function Fila({ izq, der, fuerte }: { izq: string; der?: string; fuerte?: boolean }) {
@@ -47,7 +46,7 @@ export function ResumenEntrega({ d }: { d: DatosResumen }) {
       ) : null}
       <View style={bloque}>
         <Text style={{ ...typeScale.seccion, color: c.text }}>Cobro</Text>
-        {d.cobros.length === 0 && !d.firmada ? <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Sin cobro.</Text> : null}
+        {d.cobros.length === 0 ? <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Sin cobro.</Text> : null}
         {d.cobros.map((x, i) => (
           <Fila key={i} izq={x.medio} der={formatImporte(x.monto)} />
         ))}
@@ -57,7 +56,6 @@ export function ResumenEntrega({ d }: { d: DatosResumen }) {
             Lo cobrado queda a tu nombre hasta que lo rindas en el depósito.
           </Text>
         ) : null}
-        {d.firmada ? <Fila izq="Firma del cliente" der="Foto lista" /> : null}
       </View>
     </View>
   )

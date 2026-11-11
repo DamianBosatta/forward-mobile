@@ -4,6 +4,7 @@ import { render, screen, userEvent, waitFor, within, act, fireEvent } from '@tes
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { conTema } from '@/core/ui/fw/__testing__/tema'
+import { themeColors } from '@/libs/theme'
 import { reiniciarCamara, sacarFoto } from '@/features/logistica/__testing__/camara'
 import { confirmarEntrega, fotoDelRemito, noSumarOtroCobro } from '@/features/logistica/__testing__/confirmar'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
@@ -11,7 +12,8 @@ import { armarEntrega } from '../consola/entrega'
 
 /**
  * Bloque 12, T12c: la entrega del chofer en los pasos del lienzo (E1 reportar, E2 devolución,
- * E3/E4 cobro y firma, E5 foto, E6 confirmar). Misma operación única `entregar` que antes.
+ * E3/E4 cobro, E5 firma (foto del remito), E6 cerrar entrega). Misma operación única `entregar` que antes.
+ * S8 (maqueta cobro-chofer): "No paga" en lugar de "Firma", la cuenta del cliente arriba, un solo monto y "Firmar".
  */
 
 const mockGet = jest.fn()
@@ -38,6 +40,7 @@ const parada = (o: { id: string } & Record<string, unknown>) => ({
 })
 const P1 = parada({ id: 'p1', ventaId: 'v1', orden: 1, direccion: 'Tarantino 1898', clienteNombre: 'Abel' })
 const P1_CONTADO = { ...P1, tipoCobro: 'Contado', montoCobrar: 1000 }
+const P1_CON_DEUDA = { ...P1_CONTADO, deudaAnterior: 500 }
 const hoja = (p1: Record<string, unknown>, exigeFoto = false) => ({
   id: 'h1', choferId: 'u1', choferNombre: 'Carlos', vehiculoId: 'x', vehiculoPatente: 'AB 123 CD',
   estado: 2, fechaSalida: '2026-10-07T11:00:00Z', rutaCalculada: true, distanciaTotalMetros: 0, exigeFotoRemitoAlEntregar: exigeFoto,
@@ -73,7 +76,11 @@ const abrir = async () => {
   await userEvent.press(await screen.findByLabelText('Entregué todo'))
 }
 const continuar = () => screen.getByLabelText('Continuar')
-const confirmarBtn = () => screen.getByLabelText('Confirmar entrega')
+const confirmarBtn = () => screen.getByLabelText('Cerrar entrega')
+const fotoDelRemitoFirmado = async () => {
+  await sacarFoto('Firmar')
+  await screen.findByText('Remito firmado')
+}
 /** Entregado, "No, todo bien": cae directo en el cobro. */
 async function hastaElCobro() {
   await userEvent.press(screen.getByLabelText('No'))
@@ -147,7 +154,7 @@ describe('Paso 2: devoluciones', () => {
     await hastaElCobro()
     expect(screen.getByText(/Paso 3 de 4 · Cobro/)).toBeTruthy()
     await aConfirmar()
-    expect(screen.getByText(/Paso 4 de 4 · Confirmar/)).toBeTruthy()
+    expect(screen.getByText(/Paso 4 de 4 · Cerrar entrega/)).toBeTruthy()
   })
 
   it('"Sí, devuelve algo" muestra los productos y pide al menos una unidad', async () => {
@@ -191,8 +198,7 @@ describe('Paso Confirmar: quién recibió y foto del remito', () => {
     await hastaElResumen('Abel', { sinFoto: true })
     expect(deshabilitado(confirmarBtn())).toBe(true)
     expect(screen.getByText('Falta la foto del remito')).toBeTruthy()
-    await sacarFoto('Sacar foto del remito firmado')
-    await screen.findByText('Foto del remito firmado cargada')
+    await fotoDelRemitoFirmado()
     expect(deshabilitado(confirmarBtn())).toBe(false)
   })
 
@@ -202,48 +208,76 @@ describe('Paso Confirmar: quién recibió y foto del remito', () => {
     await hastaElResumen('Abel', { sinFoto: true })
     expect(deshabilitado(confirmarBtn())).toBe(true)
     expect(screen.getByText('Falta la foto del remito')).toBeTruthy()
-    await sacarFoto('Sacar foto del remito firmado')
-    await screen.findByText('Foto del remito firmado cargada')
+    await fotoDelRemitoFirmado()
     expect(deshabilitado(confirmarBtn())).toBe(false)
   })
 
-  it('con un cobro cargado y sin la exigencia, la foto del remito es opcional', async () => {
+  it('S8: si pagó, "Firmar" es opcional y en verde: se cierra la entrega sin la foto', async () => {
     pintar(hoja(P1_CONTADO, false))
     await abrir()
     await hastaElCobro()
     await sumarPago('Efectivo', '1000')
     await aConfirmar('Abel', { cobro: true })
+    expect(screen.getByLabelText('Firmar')).toBeTruthy()
+    expect(screen.getByText('Opcional · foto del remito firmado')).toBeTruthy()
+    expect(screen.queryByText('Sin la foto del remito firmado no se cierra la entrega.')).toBeNull()
     expect(deshabilitado(confirmarBtn())).toBe(false)
+    await confirmarEntrega()
+    await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
+    expect(llamadasA(ENTREGAR)[0][1].evidenciaUrl).toBeUndefined()
+    expect(llamadasA(ENTREGAR)[0][1].cobro.lineas).toEqual([{ medioPagoId: 'm-ef', monto: 1000 }])
   })
 
-  it('una firma sola (queda como deuda) no cuenta como cobro: el remito sigue obligatorio', async () => {
-    pintar(hoja(P1_CONTADO, false))
+  it('S8: "No paga" pasa al paso 4, "Cerrar entrega" queda apagado hasta la foto de "Firmar" y la entrega sale sin cobro', async () => {
+    pintar(hoja(P1_CON_DEUDA, false))
     await abrir()
     await hastaElCobro()
-    await userEvent.press(screen.getByLabelText('Firma'))
-    await sacarFoto('Sacar foto de la firma del cliente')
-    await screen.findByText('Foto de la firma del cliente cargada')
-    await aConfirmar('Abel', { cobro: true })
+    await userEvent.press(screen.getByLabelText('No paga'))
+    expect(screen.getByText(/Paso 4 de 4 · Cerrar entrega/)).toBeTruthy()
+    expect(screen.queryByText('¿Sumar otro cobro?')).toBeNull()
+    expect(within(screen.getByLabelText('No pagó')).getByText('$ 1.500,00 a su CC')).toBeTruthy()
+    expect(screen.getByLabelText('Firmar')).toBeTruthy()
+    expect(screen.getByText('Abre la cámara: foto del remito firmado')).toBeTruthy()
+    expect(screen.getByText('Sin la foto del remito firmado no se cierra la entrega.')).toBeTruthy()
     expect(deshabilitado(confirmarBtn())).toBe(true)
     expect(screen.getByText('Falta la foto del remito')).toBeTruthy()
+    await fotoDelRemitoFirmado()
+    expect(deshabilitado(confirmarBtn())).toBe(false)
+    // "Quién recibió" y "Observaciones" siguen debajo de Firmar.
+    await userEvent.type(screen.getByLabelText('Quién recibió'), 'Abel')
+    expect(screen.getByLabelText('Observaciones')).toBeTruthy()
+    await confirmarEntrega()
+    await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
+    const cuerpo = llamadasA(ENTREGAR)[0][1]
+    expect(cuerpo).toMatchObject({ nombreReceptor: 'Abel', evidenciaUrl: 'https://r2.test/entregas/up-1.jpg' })
+    expect(cuerpo.cobro).toBeUndefined()
+    expect(cuerpo.firma).toBeUndefined()
   })
 
-  it('la foto se saca con la cámara, sin galería, y lo dice', async () => {
+  it('"Firmar" abre la cámara de la app directo, con el encuadre del remito; la foto se puede volver a sacar', async () => {
     pintar(hoja(P1, true))
     await abrir()
     await hastaElResumen('', { sinFoto: true })
-    expect(screen.getByText(/Sin galería: la foto se saca ahora, para que no se pueda usar una vieja/)).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Firmar'))
+    const camara = within(await screen.findByLabelText('Cámara'))
+    expect(camara.getByText('Foto del remito')).toBeTruthy()
+    expect(camara.getByText('Encuadrá el remito entero, con la firma y la aclaración a la vista')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Sacar la foto'))
+    await screen.findByText('Remito firmado')
+    await sacarFoto('Volver a sacar la foto del remito firmado')
+    await waitFor(() => expect(llamadasA('/api/v1/Media/upload-entrega')).toHaveLength(2))
+    expect(screen.getByText('Remito firmado')).toBeTruthy()
   })
 })
 
 describe('E3 Cobro mixto', () => {
   const cargarEfectivo = (monto: string, n = 1) => sumarPago('Efectivo', monto, n)
 
-  it('lo cobrado que no suma "A cobrar hoy" avisa (queda en la cuenta / Sobran) y deja continuar', async () => {
+  it('lo cobrado que no suma la factura avisa (queda en la cuenta / Sobran) y deja continuar', async () => {
     pintar(hoja(P1_CONTADO))
     await abrir()
     await hastaElCobro()
-    expect(within(screen.getByLabelText('A cobrar hoy')).getByText('$ 1.000,00')).toBeTruthy()
+    expect(within(screen.getByLabelText('Factura')).getByText('$ 1.000,00')).toBeTruthy()
     await cargarEfectivo('600')
     expect(deshabilitado(continuar())).toBe(false)
     expect(screen.getByText('Los $ 400,00 que faltan quedan en su cuenta corriente.')).toBeTruthy()
@@ -269,7 +303,7 @@ describe('E3 Cobro mixto', () => {
     await confirmarEntrega()
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
     const esperado = armarEntrega(
-      { receptor: 'Abel', observaciones: '', remitoUrl: null, devolucion: {}, firmaUrl: null,
+      { receptor: 'Abel', observaciones: '', remitoUrl: null, devolucion: {},
         lineas: [{ medio: MEDIOS[0] as never, monto: '600', fotoUrl: null, cheque: CHEQUE_VACIO }] },
       { exigeFotoRemito: false, disponibles: { d1: 6 } },
     )
@@ -277,29 +311,16 @@ describe('E3 Cobro mixto', () => {
     expect(llamadasA(ENTREGAR)[0][1]).toEqual({ claveIdempotencia: expect.stringMatching(/\S{8,}/), ...esperado.entrega })
   })
 
-  it('"No di vuelto": si todo lo que sobra es el vuelto, no hay "Sobran" y el aviso de la cuenta sale una sola vez', async () => {
+  it('S8: el efectivo lleva un solo campo "Monto": sin "Te dio", "Justo" ni vuelto', async () => {
     pintar(hoja(P1_CONTADO))
     await abrir()
     await hastaElCobro()
     await cargarEfectivo('1000')
-    await userEvent.press(screen.getByLabelText('Te dio'))
-    await userEvent.type(screen.getByLabelText('Te dio (cobro 1)'), '1200')
-    expect(screen.queryByText(/^Sobran/)).toBeNull()
-    await userEvent.press(screen.getByLabelText('No di vuelto'))
-    expect(screen.queryByText(/^Sobran/)).toBeNull()
-    expect(screen.getAllByText('Los $ 200,00 de más quedan en su cuenta corriente.')).toHaveLength(1)
-    expect(deshabilitado(continuar())).toBe(false)
-  })
-
-  it('"No di vuelto" con más sobrante que el vuelto (1500 de 1000, te dio 1700): sigue avisando Sobran por el total', async () => {
-    pintar(hoja(P1_CONTADO))
-    await abrir()
-    await hastaElCobro()
-    await cargarEfectivo('1500')
-    await userEvent.press(screen.getByLabelText('Te dio'))
-    await userEvent.type(screen.getByLabelText('Te dio (cobro 1)'), '1700')
-    await userEvent.press(screen.getByLabelText('No di vuelto'))
-    expect(screen.getByText('Sobran $ 700,00')).toBeTruthy()
+    const cobro = screen.getByLabelText('Cobro 1')
+    expect(within(cobro).getByLabelText('Monto del cobro 1')).toBeTruthy()
+    for (const quitado of ['Te dio', 'Justo', 'Di el vuelto', 'No di vuelto']) expect(screen.queryByLabelText(quitado)).toBeNull()
+    expect(screen.queryByText(/vuelto/i)).toBeNull()
+    expect(screen.queryByLabelText('Te dio (cobro 1)')).toBeNull()
   })
 
   it('cobrar de más (1500 de 1000, al pedido actual): avisa Sobran, deja continuar y el cuerpo es el de armarEntrega', async () => {
@@ -313,7 +334,7 @@ describe('E3 Cobro mixto', () => {
     await confirmarEntrega()
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
     const esperado = armarEntrega(
-      { receptor: 'Abel', observaciones: '', remitoUrl: null, devolucion: {}, firmaUrl: null,
+      { receptor: 'Abel', observaciones: '', remitoUrl: null, devolucion: {},
         lineas: [{ medio: MEDIOS[0] as never, monto: '1500', fotoUrl: null, cheque: CHEQUE_VACIO }] },
       { exigeFotoRemito: false, disponibles: { d1: 6 } },
     )
@@ -332,16 +353,60 @@ describe('E3 Cobro mixto', () => {
     expect(llamadasA(ENTREGAR)).toHaveLength(0)
   })
 
-  it('S13: Firma sin su foto frena el cobro; con la foto sigue', async () => {
+  it('S8: "¿Cómo paga?" ofrece Efectivo, Transferencia y "No paga" (en rojo, todo a su cuenta); "Firma" ya no está', async () => {
     pintar(hoja(P1_CONTADO))
     await abrir()
     await hastaElCobro()
-    await userEvent.press(screen.getByLabelText('Firma'))
-    expect(deshabilitado(continuar())).toBe(true)
-    expect(screen.getByText('Falta la foto de la firma')).toBeTruthy()
-    await sacarFoto('Sacar foto de la firma del cliente')
-    await screen.findByText('Foto de la firma del cliente cargada')
-    expect(deshabilitado(continuar())).toBe(false)
+    const opciones = screen.getByLabelText('¿Cómo paga?')
+    expect(within(opciones).getByLabelText('Efectivo')).toBeTruthy()
+    expect(within(opciones).getByLabelText('Transferencia')).toBeTruthy()
+    expect(within(opciones).getByText('Todo queda en su cuenta corriente')).toBeTruthy()
+    expect(within(opciones).getByText('No paga')).toHaveStyle({ color: themeColors.light.danger })
+    expect(screen.queryByLabelText('Firma')).toBeNull()
+    expect(screen.queryByText('Firma')).toBeNull()
+  })
+
+  it('S8: con un pago cargado, "Sumar otro pago" ya no ofrece "No paga"', async () => {
+    pintar(hoja(P1_CONTADO))
+    await abrir()
+    await hastaElCobro()
+    await sumarPago('Efectivo', '400')
+    await userEvent.press(screen.getByLabelText('Sumar otro pago'))
+    expect(within(screen.getByLabelText('Sumar otro pago')).getByLabelText('Efectivo')).toBeTruthy()
+    expect(screen.queryByLabelText('No paga')).toBeNull()
+  })
+
+  it('S8: arriba de las opciones, la cuenta del cliente: deuda anterior en rojo, la factura y el total, una sola vez', async () => {
+    pintar(hoja(P1_CON_DEUDA))
+    await abrir()
+    await hastaElCobro()
+    const cuenta = screen.getByLabelText('Cuenta del cliente')
+    expect(within(cuenta).getByText('Deuda anterior (CC)')).toBeTruthy()
+    expect(within(within(cuenta).getByLabelText('Deuda anterior')).getByText('$ 500,00')).toHaveStyle({ color: themeColors.light.danger })
+    expect(within(cuenta).getByText('Factura')).toBeTruthy()
+    expect(within(within(cuenta).getByLabelText('Factura')).getByText('$ 1.000,00')).toBeTruthy()
+    expect(within(within(cuenta).getByLabelText('Total')).getByText('$ 1.500,00')).toBeTruthy()
+    // Reemplaza a la línea "Deuda anterior $ X" y a "A cobrar hoy": los importes no se repiten.
+    expect(screen.queryByText(/^Deuda anterior \$/)).toBeNull()
+    expect(screen.queryByLabelText('A cobrar hoy')).toBeNull()
+    expect(screen.getAllByText('$ 500,00')).toHaveLength(1)
+  })
+
+  it('S8: sin deuda anterior la cuenta muestra solo la factura, sin un total repetido', async () => {
+    pintar(hoja(P1_CONTADO))
+    await abrir()
+    await hastaElCobro()
+    const cuenta = screen.getByLabelText('Cuenta del cliente')
+    expect(within(cuenta).getByLabelText('Factura')).toBeTruthy()
+    expect(within(cuenta).queryByLabelText('Deuda anterior')).toBeNull()
+    expect(within(cuenta).queryByLabelText('Total')).toBeNull()
+  })
+
+  it('S8: sin importe a cobrar ni deuda no hay cuenta del cliente', async () => {
+    pintar(hoja(P1))
+    await abrir()
+    await hastaElCobro()
+    expect(screen.queryByLabelText('Cuenta del cliente')).toBeNull()
   })
 
   it('la transferencia no sigue sin la foto del comprobante', async () => {
@@ -381,7 +446,7 @@ describe('7.1 ¿Sumar otro cobro?', () => {
     await userEvent.press(continuar())
     expect(await screen.findByText('¿Sumar otro cobro?')).toBeTruthy()
     await userEvent.press(screen.getByLabelText('No'))
-    expect(screen.getByText(/Paso 4 de 4 · Confirmar/)).toBeTruthy()
+    expect(screen.getByText(/Paso 4 de 4 · Cerrar entrega/)).toBeTruthy()
     await confirmarEntrega()
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
     expect(llamadasA(ENTREGAR)[0][1].cobro.lineas).toEqual([
@@ -396,7 +461,7 @@ describe('7.1 ¿Sumar otro cobro?', () => {
     await hastaElCobro()
     await userEvent.press(continuar())
     expect(screen.queryByText('¿Sumar otro cobro?')).toBeNull()
-    expect(screen.getByText(/Paso 4 de 4 · Confirmar/)).toBeTruthy()
+    expect(screen.getByText(/Paso 4 de 4 · Cerrar entrega/)).toBeTruthy()
   })
 
   it('Volver desde la pregunta la descarta y deja el cobro cargado', async () => {
@@ -483,19 +548,15 @@ describe('E6 Confirmar entrega', () => {
     await sumarPago('Transferencia', '100', 2)
     await sacarFoto('Sacar foto del comprobante del cobro 2')
     await screen.findByText('Foto del comprobante del cobro 2 cargada')
-    await userEvent.press(screen.getByLabelText('Sumar otro pago'))
-    await userEvent.press(screen.getByLabelText('Firma'))
-    await sacarFoto('Sacar foto de la firma del cliente')
-    await screen.findByText('Foto de la firma del cliente cargada')
     await aConfirmar('Abel', { cobro: true })
+    await fotoDelRemitoFirmado()
     await confirmarEntrega()
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
 
     const cheque = { numero: '', banco: '', titular: '', emision: '', pago: '' }
     const esperado = armarEntrega(
       {
-        receptor: 'Abel', observaciones: '', remitoUrl: null, devolucion: { d1: '2' },
-        firmaUrl: 'https://r2.test/entregas/up-2.jpg',
+        receptor: 'Abel', observaciones: '', remitoUrl: 'https://r2.test/entregas/up-2.jpg', devolucion: { d1: '2' },
         lineas: [
           { medio: MEDIOS[0] as never, monto: '700', fotoUrl: null, cheque },
           { medio: MEDIOS[1] as never, monto: '100', fotoUrl: 'https://r2.test/entregas/up-1.jpg', cheque },
@@ -513,7 +574,7 @@ describe('E6 Confirmar entrega', () => {
     await abrir()
     await hastaElResumen()
     await userEvent.press(confirmarBtn())
-    const confirmar = await screen.findByLabelText('Sí, confirmar')
+    const confirmar = await screen.findByLabelText('Sí, cerrar')
     act(() => {
       fireEvent.press(confirmar)
       fireEvent.press(confirmar)

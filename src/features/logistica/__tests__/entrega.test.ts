@@ -2,7 +2,7 @@ import { armarEntrega, formatDistancia, mediosDelChofer, razonPendiente, type Fo
 
 const CHEQUE = { id: 'm-ch', nombre: 'Cheque', tipo: 'Cheque' }
 const base: FormEntrega = {
-  receptor: 'Abel', observaciones: '', remitoUrl: null, lineas: [], firmaUrl: null, devolucion: {},
+  receptor: 'Abel', observaciones: '', remitoUrl: null, lineas: [], devolucion: {},
 }
 const ctx = { exigeFotoRemito: false, disponibles: { d1: 3 } }
 const lineaCheque = (cheque: Partial<LineaCobroForm['cheque']>): LineaCobroForm => ({
