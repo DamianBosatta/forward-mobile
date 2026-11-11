@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { ChevronDown, Landmark } from 'lucide-react-native'
+import { Landmark } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { formatImporte } from '@/core/ui/fw'
 import type { CuentaCorrienteResumenDto } from '@/libs/api-client/types'
+import { MarcaRadio } from '@/features/venta-nueva/components/MarcaRadio'
 
 /** Lo que el selector necesita de una cuenta: el saldo es opcional (la lista liviana no lo trae). */
 type CuentaElegible = Pick<CuentaCorrienteResumenDto, 'id' | 'nombre'> & { saldoActual?: number | null }
@@ -19,7 +20,10 @@ interface Props {
   plano?: boolean
 }
 
-/** Lista de cuentas propias para elegir una, con el saldo que informa el servidor cuando lo manda (lámina Transferencia). */
+/**
+ * Lista de cuentas propias para elegir una, con el saldo que informa el servidor cuando lo manda (lámina Transferencia).
+ * Cada cuenta es una fila con radio (propuesta "Finanzas como venta", frames 10 y 14): la elegida lleva borde y marca, no solo color.
+ */
 export function ElegirCuenta({ titulo, cuentas, valor, onCambio, extra, plano = false }: Props) {
   const c = useColors()
   // Elegida la cuenta, la tarjeta se pliega a una sola fila (lámina Transferencia); "Cambiar" vuelve a abrir la lista.
@@ -46,7 +50,7 @@ export function ElegirCuenta({ titulo, cuentas, valor, onCambio, extra, plano = 
             <Text style={[typeScale.cuerpoDestacado, { color: c.text }]} numberOfLines={1}>{elegida.label}</Text>
             {elegida.saldo ? <Text style={[typeScale.secundario, importe, { color: c.textSecondary }]}>{`Saldo ${elegida.saldo}`}</Text> : null}
           </View>
-          <ChevronDown size={20} color={c.textSecondary} />
+          <Text style={[typeScale.secundario, { fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: c.brandInk }]}>Cambiar</Text>
         </Pressable>
       </View>
     )
@@ -75,7 +79,10 @@ export function ElegirCuenta({ titulo, cuentas, valor, onCambio, extra, plano = 
               borderColor: elegida ? c.brand : plano ? 'transparent' : c.border,
             }}
           >
-            <Text style={{ ...typeScale.cuerpo, flex: 1, color: c.text }}>{o.label}</Text>
+            <View testID={elegida ? 'marca-radio-elegida' : 'marca-radio'}>
+              <MarcaRadio elegido={elegida} />
+            </View>
+            <Text style={{ ...(elegida ? typeScale.cuerpoDestacado : typeScale.cuerpo), flex: 1, color: c.text }}>{o.label}</Text>
             {o.saldo ? <Text style={[typeScale.secundario, importe, { color: c.textSecondary }]}>{o.saldo}</Text> : null}
           </Pressable>
         )

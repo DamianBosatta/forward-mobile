@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
-import { ArrowDown } from 'lucide-react-native'
+import { ScrollView, Text, View } from 'react-native'
+import { ArrowDown, Check } from 'lucide-react-native'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
@@ -12,6 +12,8 @@ import { useCuentasPropias, type CuentaParaCobrar } from '@/features/cuentas/api
 import { useRegistrarMovimientoInterno, useSaldoRestante, useTiposMovimientoInterno, type SaldoRestante } from '../api/movimientosInternos'
 import { ElegirChip } from '@/features/cuentas/components/ElegirChip'
 import { ElegirCuenta } from './ElegirCuenta'
+import { MontoGrande } from './MontoGrande'
+import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 
 /** Valor de "Hacia" cuando la plata sale del sistema (un retiro): el servidor no recibe destino. */
 export const SIN_DESTINO = 'sin-destino'
@@ -58,14 +60,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
   const montoConsultado = useDebouncedValue(leerNumero(monto), ESPERA_SALDO_MS)
   const restante = useSaldoRestante(origen, montoConsultado, canRead('MOD_CC'))
 
-  if (hecho) {
-    return (
-      <View style={{ padding: space[4], gap: space[4] }}>
-        <Notice tone="exito" title="Movimiento registrado">Los saldos de las cuentas ya están actualizados.</Notice>
-        <Button label="Volver" onPress={onListo} />
-      </View>
-    )
-  }
+  if (hecho) return <MovimientoRegistrado onVolver={onListo} />
 
   const enviar = () => {
     if (registrar.isPending) return
@@ -97,29 +92,37 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
   // (useCuentasPropias ya las saca).
   const propias: CuentaParaCobrar[] = cuentas.data ?? []
   const nombreOrigen = propias.find(k => k.id === origen)?.nombre
+  const tarjeta = { borderRadius: radii.tarjeta, backgroundColor: c.surface }
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ padding: space[4] }} keyboardShouldPersistTaps="handled">
+        {/* Propuesta "Finanzas como venta", frames 10 a 12: monto grande y tarjetas sin borde, como Entrega y facturación de la venta. */}
         <FormContainer style={{ gap: space[4] }}>
-          {tipos.isLoading || cuentas.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
+          {tipos.isLoading || cuentas.isLoading ? <Esqueletos bloques={[{ alto: 76 }]} /> : null}
           {tipos.error ? <Notice tone="peligro">{mensajeDelServidor(tipos.error, 'No se pudieron cargar los tipos.')}</Notice> : null}
           {cuentas.error ? <Notice tone="peligro">{mensajeDelServidor(cuentas.error, 'No se pudieron cargar las cuentas.')}</Notice> : null}
 
-          <Field label="Monto" value={monto} onChangeText={setMonto} keyboardType="decimal-pad" alignRight prefijo="$" />
+          {/* Lo que queda en la cuenta de origen (lo calcula el servidor) va justo debajo del monto (frame 11). */}
+          <View testID="bloque-monto" style={{ gap: space[2] }}>
+            <MontoGrande value={monto} onChangeText={setMonto} />
+            {restante.data && nombreOrigen && restante.data.monto === leerNumero(monto) ? <SaldoQueQueda saldo={restante.data} cuenta={nombreOrigen} /> : null}
+          </View>
 
-          <ElegirChip
-            titulo="Tipo"
-            opciones={(tipos.data ?? []).filter(t => t.activo && t.id).map(t => ({ id: t.id!, label: t.nombre ?? '' }))}
-            valor={tipoId}
-            onCambio={setTipoId}
-            conTilde
-          />
+          <View testID="tarjeta-tipo" style={{ ...tarjeta, padding: space[4] }}>
+            <ElegirChip
+              titulo="Tipo"
+              tituloVisible
+              opciones={(tipos.data ?? []).filter(t => t.activo && t.id).map(t => ({ id: t.id!, label: t.nombre ?? '' }))}
+              valor={tipoId}
+              onCambio={setTipoId}
+              conTilde
+            />
+          </View>
 
-          {/* "Desde → Hacia" como una sola tarjeta conectada. TODO: el selector de cuenta pasa a BottomSheet y la flecha
-              intercambia las cuentas; hoy las listas van en línea porque los tests y el lector de pantalla las usan así. */}
-          <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, overflow: 'hidden' }}>
+          {/* "Desde → Hacia" en una tarjeta conectada; elegida, "Desde" se pliega a una fila con "Cambiar" (frame 11). */}
+          <View testID="tarjeta-cuentas" style={{ ...tarjeta, overflow: 'hidden' }}>
             <ElegirCuenta plano titulo="Desde" cuentas={propias} valor={origen} onCambio={id => { setOrigen(id); if (id === destino) setDestino(null) }} />
-            <View style={{ height: 1, backgroundColor: c.border, justifyContent: 'center', alignItems: 'flex-end', paddingRight: space[6] }}>
+            <View style={{ height: 1, backgroundColor: c.surface2, justifyContent: 'center', alignItems: 'flex-end', paddingRight: space[6] }}>
               <View
                 importantForAccessibility="no-hide-descendants"
                 accessibilityElementsHidden
@@ -136,23 +139,55 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
               onCambio={setDestino}
               extra={{ valor: SIN_DESTINO, label: 'Ninguna: la plata sale (retiro)' }}
             />
+            {destino === SIN_DESTINO ? (
+              <View style={{ paddingHorizontal: space[2], paddingBottom: space[3] }}>
+                <Field label="Quién se la lleva" value={retira} onChangeText={setRetira} />
+              </View>
+            ) : null}
           </View>
-          {destino === SIN_DESTINO ? <Field label="Quién se la lleva" value={retira} onChangeText={setRetira} /> : null}
 
-          {restante.data && nombreOrigen && restante.data.monto === leerNumero(monto) ? <SaldoQueQueda saldo={restante.data} cuenta={nombreOrigen} /> : null}
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{AVISO_SOLO_CUENTAS_PROPIAS}</Text>
-          <Field label="N.º de operación (opcional)" value={operacion} onChangeText={setOperacion} />
-          <Field label="Observaciones (opcional)" value={observaciones} onChangeText={setObservaciones} />
-
-          {aviso ? <Notice tone="advertencia">{aviso}</Notice> : null}
-          {registrar.error ? <Notice tone="peligro">{mensajeDelServidor(registrar.error, 'No se pudo registrar el movimiento.')}</Notice> : null}
+          <View style={{ ...tarjeta, padding: space[4], gap: space[3] }}>
+            <Field label="N.º de operación (opcional)" value={operacion} onChangeText={setOperacion} />
+            <Field label="Observaciones (opcional)" value={observaciones} onChangeText={setObservaciones} />
+          </View>
           <Notice tone="info">{AVISO_COBRO_DE_CLIENTE}</Notice>
         </FormContainer>
       </ScrollView>
-      {/* Acción primaria fija abajo (lámina: bottombar). */}
+      {/* Acción primaria fija abajo; el aviso de qué falta y el error quedan arriba, a la vista del botón (frame 12). */}
       <PieFijo conInsetInferior>
+        {aviso || registrar.error ? (
+          <View testID="pie-avisos" style={{ gap: space[2] }}>
+            {aviso ? <Notice tone="advertencia">{aviso}</Notice> : null}
+            {registrar.error ? <Notice tone="peligro">{mensajeDelServidor(registrar.error, 'No se pudo registrar el movimiento.')}</Notice> : null}
+          </View>
+        ) : null}
         <Button label="Registrar movimiento" loading={registrar.isPending} disabled={registrar.isPending || !puedeRegistrar} onPress={enviar} />
         {!puedeRegistrar ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}</MotivoDeshabilitado> : null}
+      </PieFijo>
+    </View>
+  )
+}
+
+/** Movimiento registrado (frame 13, como "Venta guardada"): ícono grande, título y explicación; "Volver" en el pie. */
+function MovimientoRegistrado({ onVolver }: { onVolver: () => void }) {
+  const c = useColors()
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={{ padding: space[4], paddingTop: space[12], alignItems: 'center', gap: space[3] }}>
+        <View
+          testID="listo-icono"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={{ width: 96, height: 96, borderRadius: radii.pastilla, alignItems: 'center', justifyContent: 'center', backgroundColor: c.chip.entregado.bg }}
+        >
+          <Check size={40} color={c.chip.entregado.text} strokeWidth={2.5} />
+        </View>
+        <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text, textAlign: 'center' }}>Movimiento registrado</Text>
+        <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>Los saldos de las cuentas ya están actualizados.</Text>
+      </ScrollView>
+      <PieFijo conInsetInferior>
+        <Button label="Volver" onPress={onVolver} />
       </PieFijo>
     </View>
   )
