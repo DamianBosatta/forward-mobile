@@ -49,11 +49,11 @@ describe('V2 ¿A quién le vendés?', () => {
   it('la búsqueda y los filtros los hace el servidor: se los pasan a la cartera tal cual', async () => {
     abrir()
     await userEvent.type(screen.getByLabelText('Buscar cliente'), 'jara')
-    expect(mockCartera).toHaveBeenLastCalledWith('jara', { conDeudaVencida: false })
+    expect(mockCartera).toHaveBeenLastCalledWith('jara', { conDeudaVencida: false }, undefined, { sinDepositoDeSesion: true })
     await userEvent.press(screen.getByRole('button', { name: 'Con deuda vencida' }))
-    expect(mockCartera).toHaveBeenLastCalledWith('jara', { conDeudaVencida: true })
+    expect(mockCartera).toHaveBeenLastCalledWith('jara', { conDeudaVencida: true }, undefined, { sinDepositoDeSesion: true })
     await userEvent.press(screen.getByRole('button', { name: 'La Plata' }))
-    expect(mockCartera).toHaveBeenLastCalledWith('jara', { conDeudaVencida: true, localidad: 'La Plata' })
+    expect(mockCartera).toHaveBeenLastCalledWith('jara', { conDeudaVencida: true, localidad: 'La Plata' }, undefined, { sinDepositoDeSesion: true })
   })
 
   it('un reciente se confirma con el servidor y se elige con el dato fresco', async () => {
