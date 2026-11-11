@@ -10,10 +10,10 @@ import { RequirePermission } from '@/core/ui'
 import { BusquedaBajoBarra } from '@/features/inventario/components/BusquedaBajoBarra'
 import { StockPorDeposito } from '@/features/inventario/components/StockPorDeposito'
 
-/** Desde acá el stock se ve como tabla (lámina TabStock). */
+/** Desde acá las Tarjetas van de a cuatro y la Lista se ve como tabla. */
 const ANCHO_TABLET = 600
 
-/** Stock por depósito, solo consulta (láminas ModStock y TabStock). Se abre buscando `?busqueda=` si viene de la ficha. */
+/** Stock, solo ver, con la estructura de "Inventario & Stock" de la web (S16). Se abre buscando `?busqueda=` si viene de la ficha. */
 export default function StockScreen() {
   const navigation = useNavigation()
   const c = useColors()
