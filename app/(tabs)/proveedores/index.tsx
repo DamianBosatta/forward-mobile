@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
-import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native'
+import { FlatList, RefreshControl, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from "expo-router/react-navigation"
-import { space, typeScale, useColors } from '@/libs/theme'
+import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Fab, Notice, TopBar } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
@@ -15,6 +15,7 @@ import { useProveedores } from '@/features/proveedores/hooks/useProveedores'
 import { textoCantidadProveedores } from '@/features/proveedores/lib/proveedor'
 import { ProveedorCard } from '@/features/proveedores/components/ProveedorCard'
 import { FichaProveedor } from '@/features/proveedores/components/FichaProveedor'
+import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 
 /** Desde este ancho la lista y la ficha van lado a lado (plan §8). */
 const ANCHO_DOS_PANELES = 900
@@ -50,7 +51,8 @@ export default function ProveedoresScreen() {
         </View>
       ) : null}
       {totalCount !== undefined ? (
-        <View style={{ paddingHorizontal: space[4], paddingBottom: space[2] }}>
+        // Resumen en una tarjeta, como el de la lista de Clientes (propuesta, frame 1).
+        <View testID="pie-proveedores" style={{ marginHorizontal: space[4], marginBottom: space[2], paddingVertical: space[3], paddingHorizontal: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
           <Text accessibilityLiveRegion="polite" style={{ ...typeScale.secundario, color: c.textSecondary }}>
             {textoCantidadProveedores(proveedores.length, totalCount)}
           </Text>
@@ -59,8 +61,11 @@ export default function ProveedoresScreen() {
       <FlatList
         data={proveedores}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
+          // Las filas van en una tarjeta, como las de cada letra en la lista de Clientes (frame 1).
           <ProveedorCard
+            primera={index === 0}
+            ultima={index === proveedores.length - 1}
             proveedor={item}
             seleccionado={dosPaneles && item.id === abierto}
             onPress={() => abrir(item.id)}
@@ -73,7 +78,9 @@ export default function ProveedoresScreen() {
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch() }} tintColor={c.brandInk} />}
         ListEmptyComponent={
           isLoading ? (
-            <ActivityIndicator color={c.brandInk} style={{ marginTop: space[8] }} />
+            <View style={{ paddingHorizontal: space[4] }}>
+              <Esqueletos bloques={FILAS_CARGANDO} />
+            </View>
           ) : error ? (
             sinRed ? (
               <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los proveedores" accion={{ label: 'Reintentar', onPress: () => void refetch() }} />
@@ -99,7 +106,7 @@ export default function ProveedoresScreen() {
         subtitle="A quién le compramos"
         leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
       />
-      <BuscadorCartera sobre="pantalla" valor={busqueda} onCambio={setBusqueda} etiqueta="Buscar proveedor" placeholder="Nombre o CUIT" />
+      <BuscadorCartera sobre="pantalla" grande valor={busqueda} onCambio={setBusqueda} etiqueta="Buscar proveedor" placeholder="Nombre o CUIT" />
 
       {dosPaneles ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>

@@ -122,7 +122,8 @@ describe('edición', () => {
   it('carga los datos y devuelve lo que la pantalla no edita (franja de entrega, dirección, contacto, email)', async () => {
     renderConQuery(<ProveedorFormScreen />)
 
-    await waitFor(() => expect(screen.getByLabelText('Razón social').props.value).toBe('Insumos del Sur SA'))
+    // Sin rol de administrador la razón social es una fila bloqueada: el dato cargado se lee de ahí.
+    expect(await screen.findByLabelText('Razón social: Insumos del Sur SA')).toBeTruthy()
     expect(screen.getByLabelText('Días').props.value).toBe('30')
     fireEvent.changeText(screen.getByLabelText('Teléfono'), '1199990000')
     await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
@@ -141,8 +142,11 @@ describe('edición', () => {
     renderConQuery(<ProveedorFormScreen />)
 
     await waitFor(() => expect(screen.getByLabelText('Teléfono').props.value).toBe('1145550000'))
-    expect(editable('Razón social')).toBe(false)
-    expect(editable('CUIT')).toBe(false)
+    // Ya no son campos atenuados: son filas bloqueadas con candado, sin caja para tipear.
+    expect(screen.queryByLabelText('Razón social')).toBeNull()
+    expect(screen.queryByLabelText('CUIT')).toBeNull()
+    expect(screen.getByLabelText('Razón social: Insumos del Sur SA')).toBeTruthy()
+    expect(screen.getByLabelText(`CUIT: ${CUIT_OK}`)).toBeTruthy()
     expect(editable('Teléfono')).toBe(true)
     expect(screen.getByText('La razón social y el CUIT los cambia un administrador: pedilo con «Pedir cambio» en la ficha del proveedor.')).toBeTruthy()
   })

@@ -18,6 +18,8 @@ interface HeroSaldoProps {
   disponible: number | null
   /** Lo que lee el lector de pantalla del saldo ("Saldo $ X" en la ficha, "Saldo: $ X" en la cuenta). */
   accessibilityLabel: string
+  /** Texto arriba de la cifra. Por defecto "Saldo"; la ficha de proveedor dice "Le debemos", "A favor" o "Al día". */
+  etiqueta?: string
 }
 
 /**
@@ -25,7 +27,7 @@ interface HeroSaldoProps {
  * lo vencido con la deuda más vieja y la barra del crédito usado. Mobile no calcula vencimientos ni topes:
  * muestra lo que manda el servidor; la barra solo reparte el tope entre usado y disponible.
  */
-export function HeroSaldo({ saldo, vencido, diasDeudaMasVieja, tope, disponible, accessibilityLabel }: HeroSaldoProps) {
+export function HeroSaldo({ saldo, vencido, diasDeudaMasVieja, tope, disponible, accessibilityLabel, etiqueta = 'Saldo' }: HeroSaldoProps) {
   const c = useColors()
   const pasado = disponible !== null && disponible < 0
   const usado = tope !== null && disponible !== null ? Math.min(tope, Math.max(0, tope - disponible)) : 0
@@ -37,7 +39,7 @@ export function HeroSaldo({ saldo, vencido, diasDeudaMasVieja, tope, disponible,
       style={{ backgroundColor: c.topBar, borderWidth: 1, borderColor: c.topBarBorder, borderRadius: radii.hoja, padding: space[4], gap: 10 }}
     >
       <View accessible accessibilityLabel={accessibilityLabel}>
-        <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>Saldo</Text>
+        <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>{etiqueta}</Text>
         <Text
           numberOfLines={1}
           adjustsFontSizeToFit

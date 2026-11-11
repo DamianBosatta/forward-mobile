@@ -45,14 +45,30 @@ export function Accion({ icono: Icono, label, onPress, sinBorde = false }: { ico
   )
 }
 
-export function Seccion({ titulo, children }: { titulo?: string; children: React.ReactNode }) {
+/**
+ * Tarjeta sin borde de la ficha o del formulario, con el título adentro si lo hay.
+ * `sinRelleno`: sin margen interno, para filas que llegan al borde (compras recientes). `holgada`: separación de 16
+ * entre campos, como los grupos del formulario de cliente. Por defecto, la tarjeta de siempre.
+ */
+export function Seccion({ titulo, children, testID, sinRelleno = false, holgada = false }: {
+  titulo?: string; children: React.ReactNode; testID?: string; sinRelleno?: boolean; holgada?: boolean
+}) {
   const c = useColors()
   return (
-    <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[3] }}>
-      {titulo ? <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>{titulo}</Text> : null}
+    <View
+      testID={testID}
+      style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, ...(sinRelleno ? { overflow: 'hidden' } : { padding: space[4], gap: holgada ? space[4] : space[3] }) }}
+    >
+      {titulo ? <TituloDeSeccion>{titulo}</TituloDeSeccion> : null}
       {children}
     </View>
   )
+}
+
+/** Título de un bloque de la ficha (fuera o dentro de su tarjeta). */
+export function TituloDeSeccion({ children }: { children: string }) {
+  const c = useColors()
+  return <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>{children}</Text>
 }
 
 /** Cifra del resumen de la ficha (saldo, vencido, crédito libre...), como las dice el servidor. */
