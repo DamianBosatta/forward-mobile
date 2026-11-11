@@ -93,7 +93,7 @@ describe('Consola del chofer: GPS del viaje (S5)', () => {
       accuracy: 3,
       foregroundService: expect.objectContaining({ notificationTitle: 'Forward está registrando el viaje' }),
     }))
-    expect(await screen.findByLabelText('Finalizar viaje')).toBeTruthy()
+    expect(await screen.findByLabelText('Cerrar viaje')).toBeTruthy()
     expect(screen.queryByLabelText('Activar ubicación')).toBeNull()
   })
 
@@ -103,7 +103,7 @@ describe('Consola del chofer: GPS del viaje (S5)', () => {
     pintar()
     await userEvent.press(await screen.findByLabelText('Iniciar recorrido'))
     expect(await screen.findByText('Viaje sin ubicación.')).toBeTruthy()
-    expect(await screen.findByLabelText('Finalizar viaje')).toBeTruthy()
+    expect(await screen.findByLabelText('Cerrar viaje')).toBeTruthy()
     expect(loc.startLocationUpdatesAsync).not.toHaveBeenCalled()
     expect(loc.requestForegroundPermissionsAsync).not.toHaveBeenCalled()
   })
@@ -153,7 +153,7 @@ describe('Consola del chofer: GPS del viaje (S5)', () => {
     pintar()
     await userEvent.press(await screen.findByLabelText('Iniciar recorrido'))
     expect(await screen.findByText('Viaje sin ubicación.')).toBeTruthy()
-    expect(await screen.findByLabelText('Finalizar viaje')).toBeTruthy()
+    expect(await screen.findByLabelText('Cerrar viaje')).toBeTruthy()
   })
 
   it('abrir un viaje ya en curso retoma el registro (reinicio del teléfono o volver a entrar)', async () => {
@@ -175,8 +175,8 @@ describe('Consola del chofer: GPS del viaje (S5)', () => {
     mockPost.mockResolvedValue(true)
     pintar({ ...HOJA, estado: EN_CURSO })
     await waitFor(() => expect(loc.startLocationUpdatesAsync).toHaveBeenCalledTimes(1))
-    await userEvent.press(await screen.findByLabelText('Finalizar viaje'))
-    const botones = await screen.findAllByLabelText('Finalizar viaje')
+    await userEvent.press(await screen.findByLabelText('Cerrar viaje'))
+    const botones = await screen.findAllByLabelText('Cerrar viaje')
     await userEvent.press(botones[botones.length - 1])
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/finalizar', undefined))
     await waitFor(() => expect(loc.stopLocationUpdatesAsync).toHaveBeenCalledTimes(1))
@@ -188,8 +188,8 @@ describe('Consola del chofer: GPS del viaje (S5)', () => {
     mockPost.mockRejectedValue(Object.assign(new Error('Faltan paradas.'), { errors: [] }))
     pintar({ ...HOJA, estado: EN_CURSO })
     await waitFor(() => expect(loc.startLocationUpdatesAsync).toHaveBeenCalledTimes(1))
-    await userEvent.press(await screen.findByLabelText('Finalizar viaje'))
-    const botones = await screen.findAllByLabelText('Finalizar viaje')
+    await userEvent.press(await screen.findByLabelText('Cerrar viaje'))
+    const botones = await screen.findAllByLabelText('Cerrar viaje')
     await userEvent.press(botones[botones.length - 1])
     expect(await screen.findByText('Faltan paradas.')).toBeTruthy()
     expect(loc.stopLocationUpdatesAsync).not.toHaveBeenCalled()

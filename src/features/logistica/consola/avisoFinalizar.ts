@@ -11,6 +11,6 @@ export const paradasCobroSinResolver = (paradas: ParadaCobro[] | undefined): num
 export function avisoDeFinalizar(sinResolver: number): { titulo: string; detalle: string } | null {
   if (sinResolver <= 0) return null
   return sinResolver === 1
-    ? { titulo: 'Queda 1 parada de cobro sin resolver.', detalle: 'Si finalizás igual, esa tarea vuelve a quedar pendiente.' }
-    : { titulo: `Quedan ${sinResolver} paradas de cobro sin resolver.`, detalle: 'Si finalizás igual, esas tareas vuelven a quedar pendientes.' }
+    ? { titulo: 'Queda 1 parada de cobro sin resolver.', detalle: 'Si cerrás el viaje igual, esa tarea vuelve a quedar pendiente.' }
+    : { titulo: `Quedan ${sinResolver} paradas de cobro sin resolver.`, detalle: 'Si cerrás el viaje igual, esas tareas vuelven a quedar pendientes.' }
 }

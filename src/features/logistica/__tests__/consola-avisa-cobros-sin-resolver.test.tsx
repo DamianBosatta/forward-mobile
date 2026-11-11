@@ -59,25 +59,25 @@ describe.each(['light', 'dark'] as const)('Finalizar el viaje con cobros sin res
 
   it('avisa cuántas paradas de cobro quedan sin resolver, deja finalizar igual y dice que vuelven a pendientes', async () => {
     pintar(hoja([cobro('a', 1), cobro('b', 1), cobro('c', 2)]))
-    fireEvent.press(await screen.findByLabelText('Finalizar viaje'))
+    fireEvent.press(await screen.findByLabelText('Cerrar viaje'))
     expect(await screen.findByText('Quedan 2 paradas de cobro sin resolver.')).toBeTruthy()
     expect(screen.getByText(/vuelven a quedar pendientes/)).toBeTruthy()
-    expect(screen.getByLabelText('Finalizar igual')).toBeTruthy()
+    expect(screen.getByLabelText('Cerrar igual')).toBeTruthy()
     expect(screen.getByLabelText('Cancelar')).toBeTruthy()
   })
 
   it('con una sola parada pendiente lo dice en singular', async () => {
     pintar(hoja([cobro('a', 1)]))
-    fireEvent.press(await screen.findByLabelText('Finalizar viaje'))
+    fireEvent.press(await screen.findByLabelText('Cerrar viaje'))
     expect(await screen.findByText('Queda 1 parada de cobro sin resolver.')).toBeTruthy()
     expect(screen.getByText(/vuelve a quedar pendiente/)).toBeTruthy()
   })
 
   it('sin paradas de cobro sin resolver no avisa: el cierre sigue como antes', async () => {
     pintar(hoja([cobro('a', 2), cobro('b', 3)]))
-    fireEvent.press(await screen.findByLabelText('Finalizar viaje'))
-    expect(await screen.findByText('¿Finalizar el viaje?')).toBeTruthy()
+    fireEvent.press(await screen.findByLabelText('Cerrar viaje'))
+    expect(await screen.findByText('¿Cerrar el viaje?')).toBeTruthy()
     expect(screen.queryByText(/sin resolver/)).toBeNull()
-    expect(screen.queryByLabelText('Finalizar igual')).toBeNull()
+    expect(screen.queryByLabelText('Cerrar igual')).toBeNull()
   })
 })
