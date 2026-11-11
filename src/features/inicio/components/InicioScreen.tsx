@@ -4,13 +4,13 @@ import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from "expo-router/react-navigation"
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Search } from 'lucide-react-native'
-import { FONT, space, typeScale, useColors } from '@/libs/theme'
+import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { puedeVerVentas } from '@/src/components/layout/menuModules'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client/types'
-import { DocumentCard, TopBar, chipForEstado } from '@/core/ui/fw'
+import { StatusChip, TopBar, chipForEstado, formatImporte } from '@/core/ui/fw'
 import { diaArgentina, msHastaProximaMedianocheArgentina, partesArgentina } from '@/core/utils/fecha'
 import { useHojasDeRuta } from '@/libs/api-client/logistica'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
@@ -18,12 +18,13 @@ import { useCifrasGenerales, useDashboardResumen } from '../api/queries'
 import { PulsoDelNegocio } from './PulsoDelNegocio'
 import { AtajosDeInicio } from './AtajosDeInicio'
 import { ParaResolver, type FilaParaResolver } from './ParaResolver'
+import { BloqueCargando, ErrorConReintentar, ListaEnTarjeta, SeccionDeInicio, TarjetaDeTexto } from './PiezasDeInicio'
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 const dos = (n: number) => String(n).padStart(2, '0')
 
-/** Inicio (láminas Main y TabInicio): el pulso del negocio, los pendientes en "Para resolver" y lo de hoy. */
+/** Inicio de gestión (propuesta de Inicio, frames 6 a 9): el pulso del negocio, los pendientes en "Para resolver" y lo de hoy. */
 export function InicioScreen() {
   const c = useColors()
   const router = useRouter()
@@ -80,23 +81,28 @@ export function InicioScreen() {
   const nombre = [user?.nombre, user?.apellido].filter(Boolean).join(' ') || user?.username || ''
 
   const porAutorizar = pendientes.ventas?.porAutorizar
+  type Nombre = [string, string]
+  // Textos de la galería v2 (frame 7): la cantidad va en el título y el punto de color reemplaza a la pastilla.
   const paraResolver: FilaParaResolver[] = [
     ...(porAutorizar
-      ? [{
-          titulo: porAutorizar.propias ? 'Esperando autorización' : 'Por autorizar',
-          detalle: porAutorizar.propias ? 'Tus ventas esperando el OK' : 'Ventas esperando tu OK',
-          cantidad: porAutorizar.cantidad,
-          tono: 'porAutorizar' as const,
-          onPress: porAutorizar.propias ? ir('/(tabs)/ventas?tipo=pedidos&estado=PendienteAutorizacion') : aAutorizaciones,
-        }]
+      ? [porAutorizar.propias
+          ? { nombre: ['pedido esperando autorización', 'pedidos esperando autorización'] as Nombre, detalle: 'Tus ventas esperando el OK', cantidad: porAutorizar.cantidad, punto: 'atencion' as const, onPress: ir('/(tabs)/ventas?tipo=pedidos&estado=PendienteAutorizacion') }
+          : { nombre: ['pedido por autorizar', 'pedidos por autorizar'] as Nombre, detalle: 'Bandeja de autorizaciones', cantidad: porAutorizar.cantidad, punto: 'atencion' as const, onPress: aAutorizaciones }]
       : []),
     ...(canDo('MOD_STOCK', 'read')
-      ? [{ titulo: 'Alertas de stock', detalle: 'Productos bajo el mínimo', cantidad: alertasStock, tono: 'anulado' as const, onPress: ir('/(tabs)/inventario/stock') }]
+      ? [{ nombre: ['producto bajo el mínimo', 'productos bajo el mínimo'] as Nombre, detalle: 'Alertas de stock', cantidad: alertasStock, punto: 'peligro' as const, onPress: ir('/(tabs)/inventario/stock') }]
       : []),
     ...(pendientes.compras
-      ? [{ titulo: 'Por recibir', detalle: 'Compras confirmadas', cantidad: pendientes.compras.porRecibir.cantidad, tono: 'enCurso' as const, onPress: ir('/(tabs)/compras?estado=Confirmado') }]
+      ? [{ nombre: ['compra por recibir', 'compras por recibir'] as Nombre, detalle: 'Confirmadas, sin recepción', cantidad: pendientes.compras.porRecibir.cantidad, punto: 'info' as const, onPress: ir('/(tabs)/compras?estado=Confirmado') }]
       : []),
   ]
+
+  const atajos = (
+    <AtajosDeInicio
+      puede={{ vender: canDo('MOD_VENTAS', 'create'), cobrar: canDo('MOD_CC', 'read'), catalogo: canDo('MOD_CATALOGO', 'read'), stock: canDo('MOD_STOCK', 'read') }}
+      onIr={(ruta) => router.push(ruta as never)}
+    />
+  )
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -121,73 +127,49 @@ export function InicioScreen() {
             debo={cifras.debo}
             deudaVencida={cifras.deudaVencida}
             onRutas={canDo('MOD_VIAJES', 'read') ? () => router.push('/(tabs)/logistica/hojas' as never) : undefined}
-          />
-        ) : null}
-        <AtajosDeInicio
-          puede={{ vender: canDo('MOD_VENTAS', 'create'), cobrar: canDo('MOD_CC', 'read'), catalogo: canDo('MOD_CATALOGO', 'read'), stock: canDo('MOD_STOCK', 'read') }}
-          onIr={(ruta) => router.push(ruta as never)}
-        />
+          >
+            {atajos}
+          </PulsoDelNegocio>
+        ) : (
+          // Sin leer Ventas no hay hero (igual que hoy): solo los atajos que su permiso deja.
+          <View style={{ paddingHorizontal: space[4] }}>{atajos}</View>
+        )}
 
         <ParaResolver filas={paraResolver} />
 
         {pendientes.error ? (
-          <View style={{ paddingHorizontal: space[4], gap: space[2], alignItems: 'flex-start' }}>
-            <Text style={[typeScale.secundario, { color: c.textSecondary }]}>No se pudieron cargar los pendientes</Text>
-            {pendientes.error.motivo ? (
-              <Text style={[typeScale.secundario, { color: c.text }]}>{pendientes.error.motivo}</Text>
-            ) : null}
-            <Pressable
-              accessibilityRole="button"
+          <View style={{ paddingHorizontal: space[4] }}>
+            <ErrorConReintentar
+              texto="No se pudieron cargar los pendientes"
+              detalle={pendientes.error.motivo}
               accessibilityLabel="Reintentar pendientes"
-              onPress={() => pendientes.refetch()}
-              style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}
-            >
-              <Text style={[typeScale.secundario, { color: c.brandInk, fontFamily: FONT.semibold, fontWeight: '600' }]}>Reintentar</Text>
-            </Pressable>
+              onReintentar={() => pendientes.refetch()}
+            />
           </View>
         ) : null}
 
         {canDo('MOD_VENTAS', 'read') && (
-          <View style={{ paddingHorizontal: space[4], gap: space[3] }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>Reciente · Hoy</Text>
-              {/* Mismo criterio que la pantalla de Ventas: el chofer lee ventas pero ahí lo bloquean. */}
-              {puedeVerVentas(canDo) ? (
-                <Pressable
-                  accessibilityRole="link"
-                  onPress={aVentas}
-                  style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}
-                >
-                  <Text style={[typeScale.secundario, { color: c.brandInk, fontFamily: FONT.semibold, fontWeight: '600' }]}>Ver todo</Text>
-                </Pressable>
-              ) : null}
-            </View>
-            {recientes.isError && !recientes.data ? (
-              <View style={{ gap: space[2], alignItems: 'flex-start' }}>
-                <Text style={[typeScale.secundario, { color: c.textSecondary }]}>No se pudieron cargar las ventas de hoy</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => recientes.refetch()}
-                  style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}
-                >
-                  <Text style={[typeScale.secundario, { color: c.brandInk, fontFamily: FONT.semibold, fontWeight: '600' }]}>Reintentar</Text>
-                </Pressable>
-              </View>
-            ) : ventasHoy.length === 0 ? (
-              <Text style={[typeScale.secundario, { color: c.textSecondary }]}>
-                {recientes.isLoading ? 'Cargando…' : 'Todavía no hay ventas hoy.'}
-              </Text>
-            ) : (
-              <View testID="inicio-recientes" style={{ flexDirection: 'row', gap: space[3] }}>
-                {columnas.map((col, i) => (
-                  <View key={i} style={{ flex: 1, gap: space[3] }}>
-                    {col.map((v) => (
-                      <TarjetaVenta key={v.id} venta={v} onPress={() => router.push(`/(tabs)/ventas/${v.id}`)} />
-                    ))}
-                  </View>
-                ))}
-              </View>
-            )}
+          <View style={{ paddingHorizontal: space[4] }}>
+            {/* "Ver todo": mismo criterio que la pantalla de Ventas; el chofer lee ventas pero ahí lo bloquean. */}
+            <SeccionDeInicio titulo="Reciente · Hoy" enlace={puedeVerVentas(canDo) ? { label: 'Ver todo', onPress: aVentas } : null}>
+              {recientes.isError && !recientes.data ? (
+                <ErrorConReintentar texto="No se pudieron cargar las ventas de hoy" accessibilityLabel="Reintentar" onReintentar={() => recientes.refetch()} />
+              ) : ventasHoy.length === 0 ? (
+                recientes.isLoading ? <BloqueCargando accessibilityLabel="Cargando las ventas de hoy" /> : <TarjetaDeTexto texto="Todavía no hay ventas hoy." />
+              ) : (
+                <View testID="inicio-recientes" style={{ flexDirection: 'row', gap: space[3], alignItems: 'flex-start' }}>
+                  {columnas.map((col, i) => (
+                    <View key={i} style={{ flex: 1 }}>
+                      <ListaEnTarjeta>
+                        {col.map((v) => (
+                          <FilaDeVenta key={v.id} venta={v} onPress={() => router.push(`/(tabs)/ventas/${v.id}`)} />
+                        ))}
+                      </ListaEnTarjeta>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </SeccionDeInicio>
           </View>
         )}
       </ScrollView>
@@ -195,20 +177,33 @@ export function InicioScreen() {
   )
 }
 
-/** Venta → DocumentCard: la dirección es el título y el nombre va en su propia línea. */
-function TarjetaVenta({ venta: v, onPress }: { venta: Venta; onPress: () => void }) {
+/** Una venta de hoy como fila de una tarjeta (frame 7): dirección de título, nombre, número y hora; importe y chip a la derecha. */
+function FilaDeVenta({ venta: v, onPress }: { venta: Venta; onPress: () => void }) {
+  const c = useColors()
   const f = partesArgentina(new Date(v.fecha).getTime())
   const tipo = v.tipoOperacion === 1 ? 'Presupuesto' : 'Pedido'
+  const numeroYHora = `${[tipo, v.codigoPedido].filter(Boolean).join(' ')} · ${dos(f.hora)}:${dos(f.minuto)}`
+  const direccion = v.direccionCliente || v.displayNameCliente
+  const nombre = v.direccionCliente ? v.displayNameCliente : null
+  const monto = formatImporte(v.totalAmount)
+  const chip = chipForEstado('venta', v.estado)
   return (
-    <DocumentCard
-      numero={[tipo, v.codigoPedido].filter(Boolean).join(' ')}
-      vendedor={v.vendedorNombre}
-      direccion={v.direccionCliente || v.displayNameCliente}
-      nombre={v.direccionCliente ? v.displayNameCliente : null}
-      hora={`${dos(f.hora)}:${dos(f.minuto)}`}
-      importe={v.totalAmount}
-      chip={chipForEstado('venta', v.estado)}
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={[numeroYHora, direccion, nombre, monto, chip?.label].filter(Boolean).join(', ')}
       onPress={onPress}
-    />
+      android_ripple={{ color: c.surface2 }}
+      style={{ minHeight: 64, flexDirection: 'row', alignItems: 'flex-start', gap: space[3], paddingVertical: space[3], paddingHorizontal: space[4] }}
+    >
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={[typeScale.cuerpoDestacado, { color: c.text }]} numberOfLines={2}>{direccion}</Text>
+        {nombre ? <Text style={[typeScale.secundario, { color: c.textSecondary }]} numberOfLines={1}>{nombre}</Text> : null}
+        <Text style={[typeScale.secundario, { color: c.textSecondary }]} numberOfLines={1}>{numeroYHora}</Text>
+      </View>
+      <View style={{ alignItems: 'flex-end', gap: space[1] }}>
+        <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]} numberOfLines={1}>{monto}</Text>
+        {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
+      </View>
+    </Pressable>
   )
 }
