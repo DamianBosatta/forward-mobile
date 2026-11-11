@@ -1,19 +1,21 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
+import { Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Crosshair, Lock } from 'lucide-react-native'
-import { space, typeScale, useColors } from '@/libs/theme'
+import { Crosshair } from 'lucide-react-native'
+import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { cuitDigitosFaltantes, cuitEsValido } from '@/libs/reglas'
 import { Button, FormContainer, Notice, TopBar } from '@/core/ui/fw'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { CampoDeSocio } from '@/features/socios/components/CampoDeSocio'
-import { CasillaDeSocio } from '@/features/socios/components/CasillaDeSocio'
+import { InterruptorDeSocio } from '@/features/socios/components/InterruptorDeSocio'
+import { FilaBloqueada } from '@/features/socios/components/FilaBloqueada'
 import { OpcionesRadio } from '@/features/socios/components/OpcionesRadio'
 import { PieDeFormulario } from '@/features/socios/components/PieDeFormulario'
 import { sensiblesBloqueados } from '@/features/socios/lib/camposSensibles'
 import { useClienteForm } from '../hooks/useClienteForm'
 import { ERROR_UBICACION, direccionDeMiUbicacion } from '../lib/ubicacion'
 import { AVISO_CONDICION_PAGO } from './FichaCliente'
+import { Esqueletos, FORMULARIO_CARGANDO } from './Esqueletos'
 import { CONDICIONES_IVA, TIPOS_PAGO, textoCondicionPago } from '../lib/cliente'
 
 
@@ -26,11 +28,11 @@ export const avisoCuitIncompleto = (faltan: number) => `El CUIT tiene 11 dígito
 export const AVISO_ALTA = 'Queda en tu cartera. El tope de crédito y la condición de pago los define gestión.'
 export const AVISO_EDICION = 'Solo podés editar clientes de tu cartera. El crédito y la condición de pago los cambia quien autoriza ventas. No se dan de baja desde la app.'
 
-/** Encabezado de un grupo de campos (Entrega, Datos fiscales, Contacto, Cómo paga). */
+/** Un grupo de campos (Entrega, Datos fiscales, Contacto, Cómo paga) en una tarjeta sin borde (propuesta, frames 15-17). */
 function Grupo({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   const c = useColors()
   return (
-    <View style={{ gap: space[4] }}>
+    <View testID={`grupo-${titulo}`} style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[4] }}>
       <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>{titulo}</Text>
       {children}
     </View>
@@ -78,17 +80,28 @@ export function ClienteForm({ id }: { id?: string }) {
           <Button label="Reintentar" onPress={reintentar} />
         </FormContainer>
       ) : cargando ? (
-        <ActivityIndicator color={c.brandInk} style={{ marginTop: space[8] }} />
+        // Mientras carga no se muestra el formulario: esqueletos con la forma de las tarjetas (frame 20).
+        <FormContainer style={{ padding: space[4] }}>
+          <Esqueletos bloques={FORMULARIO_CARGANDO} />
+        </FormContainer>
       ) : (
         <View style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={{ paddingVertical: space[4] }} keyboardShouldPersistTaps="handled">
             <FormContainer style={{ paddingHorizontal: space[4], gap: space[4] }}>
-              {hayBloqueo ? <Notice tone="info">{AVISO_CAMPOS_SENSIBLES}</Notice> : null}
+              {hayBloqueo ? (
+                // Lo que este usuario no cambia: filas bloqueadas en una tarjeta propia con el aviso (frame 19).
+                <View testID="campos-bloqueados" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[3] }}>
+                  <Notice tone="info">{AVISO_CAMPOS_SENSIBLES}</Notice>
+                  {bloqueo.direccion ? <FilaBloqueada etiqueta="Dirección de entrega" valor={datos.direccion.trim() || '—'} /> : null}
+                  {bloqueo.cuit ? <FilaBloqueada etiqueta="CUIT" valor={datos.cuit.trim() || '—'} /> : null}
+                  {bloqueo.razonSocial ? <FilaBloqueada etiqueta="Razón social" valor={datos.razonSocial.trim() || '—'} /> : null}
+                </View>
+              ) : null}
               <Grupo titulo="Entrega">
-                <View>
-                  <CampoDeSocio label="Dirección de entrega" value={datos.direccion} onChangeText={v => cambiar('direccion', v)} bloqueado={bloqueo.direccion} help="Es como lo van a encontrar los vendedores y el chofer." />
-                  {!bloqueo.direccion ? (
-                    // La mira va dentro del campo (lámina clientes-nuevo): a la altura de la caja, sin la etiqueta.
+                {!bloqueo.direccion ? (
+                  <View>
+                    <CampoDeSocio label="Dirección de entrega" value={datos.direccion} onChangeText={v => cambiar('direccion', v)} help="Es como lo van a encontrar los vendedores y el chofer." />
+                    {/* La mira va dentro del campo (lámina clientes-nuevo): a la altura de la caja, sin la etiqueta. */}
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel="Usar mi ubicación"
@@ -98,22 +111,22 @@ export function ClienteForm({ id }: { id?: string }) {
                     >
                       <Crosshair size={22} color={c.textSecondary} />
                     </Pressable>
-                  ) : null}
-                </View>
+                  </View>
+                ) : null}
                 {errorUbicacion ? <Notice tone="advertencia">{ERROR_UBICACION}</Notice> : null}
                 <CampoDeSocio label="Nombre del local" value={datos.nombreFantasia} onChangeText={v => cambiar('nombreFantasia', v)} />
               </Grupo>
 
               <Grupo titulo="Datos fiscales">
                 {!editando ? (
-                  <CasillaDeSocio label="Alta provisoria" ayuda={AYUDA_PROVISORIA} valor={datos.altaProvisoria} onChange={v => cambiar('altaProvisoria', v)} />
+                  <InterruptorDeSocio label="Alta provisoria" ayuda={AYUDA_PROVISORIA} valor={datos.altaProvisoria} onChange={v => cambiar('altaProvisoria', v)} />
                 ) : null}
+                {!bloqueo.cuit ? (
                 <View style={{ gap: space[1] }}>
                   <CampoDeSocio
                     label="CUIT"
                     value={datos.cuit}
                     onChangeText={v => cambiar('cuit', v)}
-                    bloqueado={bloqueo.cuit}
                     keyboardType="number-pad"
                     placeholder="20-12345678-9"
                     error={cuitInvalido ? ERROR_CUIT : undefined}
@@ -121,13 +134,17 @@ export function ClienteForm({ id }: { id?: string }) {
                   {cuitFaltan > 0 ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{avisoCuitIncompleto(cuitFaltan)}</Text> : null}
                   {cuitInvalido ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{AYUDA_CUIT_VACIO}</Text> : null}
                 </View>
+                ) : null}
                 <OpcionesRadio
+                  enTarjeta
                   titulo="Condición frente al IVA"
                   opciones={CONDICIONES_IVA.map(v => ({ value: v, label: v }))}
                   valor={datos.condicionIva}
                   onChange={v => cambiar('condicionIva', v)}
                 />
-                <CampoDeSocio label="Razón social" value={datos.razonSocial} onChangeText={v => cambiar('razonSocial', v)} bloqueado={bloqueo.razonSocial} placeholder="Como figura en ARCA" />
+                {!bloqueo.razonSocial ? (
+                  <CampoDeSocio label="Razón social" value={datos.razonSocial} onChangeText={v => cambiar('razonSocial', v)} placeholder="Como figura en ARCA" />
+                ) : null}
               </Grupo>
 
               <Grupo titulo="Contacto">
@@ -139,7 +156,7 @@ export function ClienteForm({ id }: { id?: string }) {
               <Grupo titulo="Cómo paga">
                 {puedeCambiarPago ? (
                   <>
-                    <OpcionesRadio titulo="Condición de pago" opciones={TIPOS_PAGO} valor={datos.tipoPago} onChange={v => cambiar('tipoPago', v)} />
+                    <OpcionesRadio enTarjeta titulo="Condición de pago" opciones={TIPOS_PAGO} valor={datos.tipoPago} onChange={v => cambiar('tipoPago', v)} />
                     {datos.tipoPago !== 'Contado' ? (
                       <CampoDeSocio
                         label={datos.tipoPago === 'DiaFijoDelMes' ? 'Día del mes' : 'Días'}
@@ -151,14 +168,11 @@ export function ClienteForm({ id }: { id?: string }) {
                     <CampoDeSocio label="Tope de crédito" value={datos.tope} onChangeText={v => cambiar('tope', v)} keyboardType="decimal-pad" help="En pesos. Vacío: sin tope." />
                   </>
                 ) : (
-                  <View accessible accessibilityLabel={`Condición de pago: ${textoCondicionPago({ tipo: datos.tipoPago })}. ${AVISO_CONDICION_PAGO}`} style={{ gap: space[1] }}>
-                    <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Condición de pago</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-                      <Lock size={16} color={c.textSecondary} />
-                      <Text style={{ ...typeScale.cuerpo, color: c.text }}>{textoCondicionPago({ tipo: datos.tipoPago, dias: Number(datos.plazo) || null, diaDelMes: Number(datos.plazo) || null })}</Text>
-                    </View>
-                    <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{AVISO_CONDICION_PAGO}</Text>
-                  </View>
+                  <FilaBloqueada
+                    etiqueta="Condición de pago"
+                    valor={textoCondicionPago({ tipo: datos.tipoPago, dias: Number(datos.plazo) || null, diaDelMes: Number(datos.plazo) || null })}
+                    razon={AVISO_CONDICION_PAGO}
+                  />
                 )}
               </Grupo>
 
