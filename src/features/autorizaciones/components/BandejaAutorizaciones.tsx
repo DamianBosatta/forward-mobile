@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
-import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from 'react-native'
+import { FlatList, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Button, Notice, StatusChip, TopBar, TotalsRow, TwoPane, formatImporte, useMenuLeading } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
@@ -13,6 +13,10 @@ import { esFallaDeRed } from '@/core/api/errores'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { filtrosConConteo, motivosDe, pideRazon, tieneMotivo, type ClaveMotivo } from '../lib/motivos'
 import { DecisionSheet, type Decision } from './DecisionSheet'
+import { ChipDeFiltro } from './ChipDeFiltro'
+import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
+import { HeroSaldo } from '@/features/clientes/components/SaldoDelCliente'
+import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 
 /** Total de la bandeja: solo si todas las ventas son de la misma moneda; si no, no hay una cifra honesta. */
 export function totalDeBandeja(lista: VentaPendienteAutorizacion[]): number | null {
@@ -21,6 +25,24 @@ export function totalDeBandeja(lista: VentaPendienteAutorizacion[]): number | nu
   if (lista.some((v) => v.totalCurrency !== moneda)) return null
   return lista.reduce((s, v) => s + v.totalAmount, 0)
 }
+
+/**
+ * Hero "Por autorizar" (propuesta "Finanzas como venta", frame 16): la cifra es el total solo si todas son de la
+ * misma moneda; si no, la cantidad. Debajo, la cantidad y la más antigua: todo sale de la misma bandeja.
+ */
+export function heroDeBandeja(lista: VentaPendienteAutorizacion[]): { cifra: string; meta: string } | null {
+  if (lista.length === 0) return null
+  const total = totalDeBandeja(lista)
+  const masAntigua = lista.reduce((a, v) => (new Date(v.fechaPendiente).getTime() < new Date(a.fechaPendiente).getTime() ? v : a))
+  const ventas = lista.length === 1 ? 'venta' : 'ventas'
+  const antigua = `la más antigua, ${formatRelativeTime(masAntigua.fechaPendiente)}`
+  return total !== null
+    ? { cifra: formatImporte(total), meta: `${lista.length} ${ventas} · ${antigua}` }
+    : { cifra: String(lista.length), meta: `${ventas} · ${antigua}` }
+}
+
+/** Esqueletos de la bandeja cargando (frame 18): el hero y una tarjeta. */
+const BANDEJA_CARGANDO = [{ alto: 116, radio: 24, testID: 'esqueleto-hero' }, { alto: 180, testID: 'esqueleto-tarjeta' }]
 
 /**
  * Dirección como título y el nombre (fantasía · razón social, sin repetir) aparte, como la lámina.
@@ -41,7 +63,7 @@ interface Props {
   rutaDetalle: (id: string) => string
 }
 
-/** Bandeja de autorizaciones (láminas Autorizaciones y TabAutorizaciones). */
+/** Bandeja de autorizaciones (láminas Autorizaciones y TabAutorizaciones; propuesta "Finanzas como venta", frames 16 a 18). */
 export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
   const c = useColors()
   const router = useRouter()
@@ -60,7 +82,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
   const lista = q.data ?? []
   const sinRed = q.isError && esFallaDeRed(q.error)
   const visibles = lista.filter((v) => tieneMotivo(v.motivoPendienteAutorizacion, filtro))
-  const total = totalDeBandeja(visibles)
+  const hero = heroDeBandeja(visibles)
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
 
   const abrir = (id: string) => {
@@ -70,32 +92,36 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
   }
 
   const encabezado = (
-    <View style={{ gap: space[3], paddingBottom: space[2] }}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" accessibilityLabel="Motivo" contentContainerStyle={{ gap: space[2] }}>
-        {filtrosConConteo(lista).map((f) => {
-          const sel = f.clave === filtro
-          return (
-            <Pressable
-              key={f.clave}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: sel }}
-              accessibilityLabel={`${f.label}: ${f.cantidad}`}
-              onPress={() => setFiltro(f.clave)}
-              style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: sel ? c.brand : c.border, backgroundColor: sel ? c.brandSoft : c.surface }}
-            >
-              <Text style={[typeScale.secundario, { color: sel ? c.brandInk : c.text }]}>{`${f.label} ${f.cantidad}`}</Text>
-            </Pressable>
-          )
-        })}
-      </ScrollView>
-      {visibles.length > 0 ? (
-        <Text accessibilityRole="summary" style={[typeScale.secundario, { color: c.text }]}>
-          {`${visibles.length} POR AUTORIZAR${total !== null ? ` · ${formatImporte(total)}` : ''}`}
-        </Text>
+    <View style={{ gap: space[3], paddingBottom: space[3] }}>
+      {hero ? (
+        <HeroSaldo
+          titulo="Por autorizar"
+          saldo={0}
+          cifra={hero.cifra}
+          meta={hero.meta}
+          vencido={null}
+          tope={null}
+          disponible={null}
+          accessibilityLabel={`Por autorizar: ${hero.cifra}, ${hero.meta}`}
+        />
       ) : null}
+      {puedeDecidir ? null : (
+        <MotivoDeshabilitado testID="motivo-sin-decidir">Para decidir necesitás el permiso de modificar ventas.</MotivoDeshabilitado>
+      )}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" accessibilityLabel="Motivo" contentContainerStyle={{ gap: space[2] }}>
+        {filtrosConConteo(lista).map((f) => (
+          <ChipDeFiltro
+            key={f.clave}
+            rol="radio"
+            label={`${f.label} · ${f.cantidad}`}
+            accessibilityLabel={`${f.label}: ${f.cantidad}`}
+            activo={f.clave === filtro}
+            onPress={() => setFiltro(f.clave)}
+          />
+        ))}
+      </ScrollView>
       {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
       {sinRed && lista.length > 0 ? <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice> : null}
-      {puedeDecidir ? null : <Text style={secundario}>Para decidir necesitás el permiso de modificar ventas.</Text>}
     </View>
   )
 
@@ -145,7 +171,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
       refreshing={q.isRefetching}
       onRefresh={() => { setAviso(null); void q.refetch() }}
       ListEmptyComponent={
-        q.isLoading ? <ActivityIndicator color={c.brand} />
+        q.isLoading ? <Esqueletos bloques={BANDEJA_CARGANDO} />
           : q.isError && sinRed && lista.length === 0 ? <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar las autorizaciones" accion={{ label: 'Reintentar', onPress: () => void q.refetch() }} />
           : q.isError && !sinRed ? <Notice tone="peligro">{mensajeDelServidor(q.error, 'No se pudo cargar la bandeja. Deslizá hacia abajo para reintentar.')}</Notice>
           : <EstadoDePantalla tipo="vacio" titulo="No hay ventas por autorizar." />
