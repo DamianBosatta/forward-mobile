@@ -323,6 +323,17 @@ describe('useCompraBorrador', () => {
       expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/borradores', { proveedorId: 'p1', depositoId: NORTE })
     })
 
+    it('una compra nueva sin borrador sigue al depósito de la sesión; al crearse el borrador queda fija', async () => {
+      const SUR = '33333333-3333-4333-8333-333333333333'
+      const { result } = usar()
+      act(() => elegirDepositoDeSesion('u', SUR))
+      expect(result.current.depositoId).toBe(SUR)
+      await act(() => result.current.elegirProveedor('p1'))
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/borradores', { proveedorId: 'p1', depositoId: SUR })
+      act(() => elegirDepositoDeSesion('u', NORTE))
+      expect(result.current.depositoId).toBe(SUR)
+    })
+
     it('una compra retomada sigue en su depósito guardado, no en el de la sesión', async () => {
       const { result } = usar('b9')
       await waitFor(() => expect(result.current.cargando).toBe(false))

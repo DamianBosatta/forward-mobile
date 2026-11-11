@@ -54,7 +54,10 @@ export function useCompraBorrador(borradorInicial?: string, opciones: { edicion?
   const [compraId, setCompraId] = useState<string | null>(borradorInicial ?? null)
   const [proveedor, setProveedor] = useState<ProveedorCompra | null>(null)
   const [faltantes, setFaltantes] = useState<{ nombre: string; lista: string[] } | null>(null)
-  const [depositoId, setDepositoId] = useState(depositoPorDefecto)
+  // Una compra nueva sin borrador sigue al depósito de la sesión (la pantalla puede quedar montada mientras se cambia
+  // en Inicio); se fija al crear el borrador o al traer una guardada (`hidratar`), y al elegirlo a mano.
+  const [depositoFijo, setDepositoId] = useState<string | null>(null)
+  const depositoId = depositoFijo ?? depositoPorDefecto
   const [lineas, setLineas] = useState<LineaCompra[]>([])
   const [gastos, setGastos] = useState(0)
   const [descuentoPorcentaje, setDescuento] = useState(0)
@@ -224,6 +227,8 @@ export function useCompraBorrador(borradorInicial?: string, opciones: { edicion?
         return
       }
       const b = await borradorCompraApi.iniciar(id, depositoId)
+      // Con borrador, la compra queda en el depósito con el que nació.
+      setDepositoId(depositoId)
       version.current = b.version
       guardado.current = null
       setProveedor(r.proveedor)

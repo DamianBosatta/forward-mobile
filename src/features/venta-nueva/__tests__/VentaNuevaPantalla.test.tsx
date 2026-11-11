@@ -1160,4 +1160,12 @@ describe('venta nueva: el depósito de la sesión queda fijo al abrir (S8, G1)',
     await confirmarVenta()
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas', expect.objectContaining({ depositoId: NORTE })))
   })
+
+  it('montada vacía (queda abierta en el cajón), la sesión cambia antes de elegir cliente: la venta arranca en el nuevo', async () => {
+    pantalla()
+    act(() => elegirDepositoDeSesion('u', SUR))
+    await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
+    await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: SUR, tipoOperacion: 'Pedido' })
+  })
 })
