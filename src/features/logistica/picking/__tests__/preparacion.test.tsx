@@ -4,6 +4,9 @@ import { render, screen, userEvent, within } from '@testing-library/react-native
 import { useAuthStore } from '@/libs/store/auth.store'
 import { themeColors, useThemeStore } from '@/libs/theme'
 import { PreparacionScreen } from '../PreparacionScreen'
+import { elegirDepositoDeSesion, limpiarDepositoDeSesion } from '@/features/deposito-sesion'
+
+const SESION = '55555555-5555-4555-8555-555555555555'
 
 const mockGet = jest.fn()
 const mockEscritura = jest.fn()
@@ -54,7 +57,7 @@ function servidor() {
   mockGet.mockImplementation((url: string) =>
     url.includes('preparacion/conteos') ? Promise.resolve(CONTEOS)
       : url.includes('ventas-para-preparacion') ? Promise.resolve(pedidos)
-      : url.endsWith('/api/v1/Depositos') ? Promise.resolve([{ id: 'd1', nombre: 'Depósito Central' }, { id: 'd2', nombre: 'Zona Norte' }])
+      : url.endsWith('/api/v1/Depositos') ? Promise.resolve([{ id: 'd1', nombre: 'Depósito Central' }, { id: 'd2', nombre: 'Zona Norte' }, { id: SESION, nombre: 'Zona Sur' }])
       : url.endsWith('/Ventas/vendedores') ? Promise.resolve([{ id: 'u1', nombre: 'Emanuel Parraquini' }, { id: 'u2', nombre: 'Lucía Ferreyra' }])
       : url.endsWith('/Logistica/hojas-ruta/h9') ? Promise.resolve({ id: 'h9', choferNombre: 'Chofer Uno', detalles: [{ ventaId: 'v6', motivoRechazo: 'Local cerrado' }] })
       : url.endsWith('/Ventas/v6') ? Promise.resolve({ venta: { id: 'v6', observaciones: 'Tocar timbre del costado.' }, detalles: [], bultos: [] })
@@ -77,6 +80,7 @@ const ultimaLista = () => pedidosPedidos().at(-1)!
 
 beforeEach(() => {
   jest.clearAllMocks()
+  limpiarDepositoDeSesion()
   pedidos = PEDIDOS
   mockAncho.mockReturnValue(390)
   jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-10T01:30:00Z'))
@@ -216,8 +220,25 @@ describe.each(['light', 'dark'] as const)('Preparación de pedidos (%s)', (esque
     expect(pedidosPedidos().every((u) => !u.includes('DepositoId'))).toBe(true)
   })
 
-  it('quien ve todos los depósitos ve "Todos los depósitos", sin candado', async () => {
+  it('quien ve todos los depósitos arranca en el depósito de la sesión: sin elección, el suyo, y viaja como DepositoId (S8)', async () => {
     permisos({ module: 'MOD_VIAJES', canRead: true }, { module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true })
+    pintar()
+    expect(await screen.findByRole('button', { name: 'Depósito: Depósito Central' })).toBeTruthy()
+    expect(ultimaLista()).toContain('DepositoId=d1')
+  })
+
+  it('con un depósito de la sesión elegido en Inicio, el tablero lo mira', async () => {
+    permisos({ module: 'MOD_VIAJES', canRead: true }, { module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true })
+    elegirDepositoDeSesion('u9', SESION)
+    pintar()
+    expect(await screen.findByRole('button', { name: 'Depósito: Zona Sur' })).toBeTruthy()
+    expect(ultimaLista()).toContain(`DepositoId=${SESION}`)
+    expect(urls().filter((u) => u.includes('preparacion/conteos')).at(-1)).toContain(`DepositoId=${SESION}`)
+  })
+
+  it('con "Todos" en la sesión ve "Todos los depósitos", sin candado', async () => {
+    permisos({ module: 'MOD_VIAJES', canRead: true }, { module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true })
+    elegirDepositoDeSesion('u9', null)
     pintar()
     expect(await screen.findByText('Todos los depósitos')).toBeTruthy()
     expect(screen.queryByText('asignado a tu usuario')).toBeNull()

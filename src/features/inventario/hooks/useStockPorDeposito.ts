@@ -4,7 +4,7 @@ import { api } from '@/core/api/client'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import type { PagedResult, StockItem } from '@/libs/api-client/types'
 import type { components } from '@/libs/api-client/generated/schema'
-import { useDepositoDeConsulta } from '@/features/catalogo/hooks/useDepositoDeConsulta'
+import { useDepositoSesionEfectivo } from '@/features/deposito-sesion/hooks/useDepositoDeSesion'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { SIN_FILTROS, type FiltrosDeStock } from '../lib/stock-presentacion'
@@ -37,19 +37,21 @@ function filtrosDeConsulta(depositoId: string, termino: string, f: FiltrosDeStoc
 /**
  * Stock por depósito, solo consulta (S16, estructura de "Inventario & Stock" de la web). Solo se pide con
  * `conCantidades` (CAP_VER_CANTIDADES_STOCK): sin la capacidad el servidor no las manda y la pantalla no las pide.
- * El depósito arranca en el de consulta del usuario (el suyo o el Central) y se cambia entre los que el servidor
- * lista en el resumen. Con CAP_VER_TODOS_LOS_DEPOSITOS arranca en "Todos"; con CAP_VER_STOCK_OTROS_DEPOSITOS (gerente
+ * El depósito arranca en el de la sesión (el suyo o el Central) y se cambia entre los que el servidor lista en el
+ * resumen. Con CAP_VER_TODOS_LOS_DEPOSITOS arranca en el elegido en Inicio (sin elección, el suyo; "Todos" si eligió
+ * "Todos", como la web); con CAP_VER_STOCK_OTROS_DEPOSITOS (gerente
  * de depósito) arranca en el suyo y también puede ver "Todos". Sin ninguna, no hay selector: ve el suyo. Mobile solo
  * mira. Los totales y los conteos de los filtros los cuenta el servidor (GET /Stocks/resumen); no se suman acá.
  */
 export function useStockPorDeposito({ conCantidades, busqueda }: { conCantidades: boolean; busqueda: string }) {
-  const depositoDelUsuario = useDepositoDeConsulta()
+  // El de la sesión (S8): quien ve todos lo elige en Inicio ("Todos" incluido); el resto, el propio o el Central.
+  const depositoDeSesion = useDepositoSesionEfectivo()
   const [elegido, setDeposito] = useState<string | null>(null)
   const [filtros, setFiltros] = useState<FiltrosDeStock>(SIN_FILTROS)
   const permisos = useAuthStore((s) => s.user?.permissions)
   const veTodosLosDepositos = hasCapability(permisos, 'CAP_VER_TODOS_LOS_DEPOSITOS')
   const puedeVerTodos = veTodosLosDepositos || hasCapability(permisos, 'CAP_VER_STOCK_OTROS_DEPOSITOS')
-  const depositoId = elegido ?? (veTodosLosDepositos ? TODOS_LOS_DEPOSITOS : depositoDelUsuario)
+  const depositoId = elegido ?? depositoDeSesion ?? TODOS_LOS_DEPOSITOS
   const termino = useDebouncedValue(busqueda.trim(), DEBOUNCE_BUSQUEDA_MS)
   const consulta = filtrosDeConsulta(depositoId, termino, filtros).toString()
 

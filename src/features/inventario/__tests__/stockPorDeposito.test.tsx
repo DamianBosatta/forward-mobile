@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import StockScreen from '../../../../app/(tabs)/inventario/stock'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import { elegirDepositoDeSesion, limpiarDepositoDeSesion } from '@/features/deposito-sesion'
 
 // Vista Stock (láminas ModStock y TabStock): solo ver. Pantalla real con react-query real; solo el transporte HTTP es falso.
 
@@ -20,6 +21,7 @@ jest.mock('@/core/api/client', () => ({
 const { api } = jest.requireMock('@/core/api/client') as { api: { get: jest.Mock; post: jest.Mock } }
 
 const NORTE_ID = 'dep-norte'
+const SESION_ID = '44444444-4444-4444-8444-444444444444'
 
 const FILA_MAKE = {
   id: 's1', productoId: 'p-make', producto: 'Make Lavajean', codigoPropio: 'PRO06787', depositoId: DEPOSITO_CENTRAL_ID, deposito: 'Central',
@@ -237,8 +239,26 @@ describe('Stock: "Todos" los depósitos solo con permiso (S18)', () => {
     expect(screen.queryByRole('button', { name: 'Todos los depósitos' })).toBeNull()
   })
 
-  it('con CAP_VER_TODOS_LOS_DEPOSITOS abre en "Todos": no manda DepositoId y muestra el depósito de cada renglón', async () => {
+  afterEach(() => limpiarDepositoDeSesion())
+
+  it('con CAP_VER_TODOS_LOS_DEPOSITOS y sin elección abre en el depósito propio (el de la sesión, S8)', async () => {
     conUsuario([...CON_CANTIDADES, TODOS], 'dep-1')
+    renderPantalla()
+    await abrirStock()
+    await waitFor(() => expect(pedidoDeStock()).toContain('DepositoId=dep-1'))
+  })
+
+  it('con el depósito de la sesión elegido en Inicio, Stock abre en ese depósito', async () => {
+    conUsuario([...CON_CANTIDADES, TODOS], 'dep-1')
+    elegirDepositoDeSesion('u1', SESION_ID)
+    renderPantalla()
+    await abrirStock()
+    await waitFor(() => expect(pedidoDeStock()).toContain(`DepositoId=${SESION_ID}`))
+  })
+
+  it('con "Todos" elegido en la sesión abre en "Todos": no manda DepositoId y muestra el depósito de cada renglón', async () => {
+    conUsuario([...CON_CANTIDADES, TODOS], 'dep-1')
+    elegirDepositoDeSesion('u1', null)
     renderPantalla()
     await abrirStock()
     await screen.findByText('Make Lavajean')
