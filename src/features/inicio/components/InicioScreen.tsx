@@ -13,6 +13,7 @@ import type { Venta } from '@/libs/api-client/types'
 import { StatusChip, TopBar, chipForEstado, formatImporte } from '@/core/ui/fw'
 import { diaArgentina, msHastaProximaMedianocheArgentina, partesArgentina } from '@/core/utils/fecha'
 import { useHojasDeRuta } from '@/libs/api-client/logistica'
+import { DepositoSesion } from '@/features/deposito-sesion'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
 import { useCifrasGenerales, useDashboardResumen } from '../api/queries'
 import { PulsoDelNegocio } from './PulsoDelNegocio'
@@ -117,6 +118,8 @@ export function InicioScreen() {
         contentContainerStyle={{ paddingTop: space[4], gap: space[4], paddingBottom: (tablet ? insets.bottom : 0) + space[4] }}
         refreshControl={<RefreshControl refreshing={refrescando} onRefresh={refrescar} tintColor={c.brand} />}
       >
+        {/* Depósito de la sesión (S8): solo con CAP_VER_TODOS_LOS_DEPOSITOS; sin ella no ocupa lugar. */}
+        <DepositoSesion style={{ paddingHorizontal: space[4] }} />
         {canDo('MOD_VENTAS', 'read') ? (
           <PulsoDelNegocio
             ventasDelDia={cifras.ventasDelDia}
