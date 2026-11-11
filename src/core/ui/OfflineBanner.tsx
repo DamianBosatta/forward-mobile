@@ -1,6 +1,8 @@
+import React, { useContext } from 'react'
 import { View } from 'react-native'
 import { usePathname } from 'expo-router'
-import { space } from '@/libs/theme'
+import { SafeAreaInsetsContext, type EdgeInsets } from 'react-native-safe-area-context'
+import { space, useColors } from '@/libs/theme'
 import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
 import { Notice } from './fw'
 
@@ -14,18 +16,32 @@ export function ocultaAvisoGlobalSinConexion(pathname: string | null | undefined
   return !!pathname && RUTAS_CON_AVISO_PROPIO.some((r) => pathname === r || pathname.startsWith(`${r}/`))
 }
 
+const SIN_MARGENES: EdgeInsets = { top: 0, bottom: 0, left: 0, right: 0 }
+
 /**
- * Aviso global sin conexión. Va en el flujo, debajo de las pantallas (no flotando encima del encabezado),
- * y solo donde la pantalla es de lectura.
+ * Aviso global sin conexión, arriba de todo (propuesta de Inicio, frame 10): se ve sin bajar y no lo
+ * tapa la barra de abajo. Va en el flujo, no flotando, y solo donde la pantalla es de lectura.
+ *
+ * Envuelve a las pantallas: con el aviso a la vista, él ocupa el margen superior del sistema y las
+ * pantallas reciben ese margen en 0, así su barra superior queda pegada debajo del aviso. El árbol es
+ * siempre el mismo (con o sin aviso) para que perder la señal no vuelva a montar la navegación.
  */
-export function OfflineBanner() {
+export function OfflineBanner({ children }: { children?: React.ReactNode }) {
   const { isConnected } = useNetworkStatus()
   const pathname = usePathname()
-  if (isConnected || ocultaAvisoGlobalSinConexion(pathname)) return null
+  const c = useColors()
+  const insets = useContext(SafeAreaInsetsContext) ?? SIN_MARGENES
+  const visible = !isConnected && !ocultaAvisoGlobalSinConexion(pathname)
 
   return (
-    <View testID="aviso-sin-conexion" style={{ paddingHorizontal: space[3], paddingVertical: space[2] }}>
-      <Notice tone="advertencia">Sin conexión - Modo lectura (Cache)</Notice>
+    <View style={{ flex: 1 }}>
+      {visible ? (
+        // Sobre el fondo de la barra superior: el aviso queda dentro del encabezado oscuro, arriba del título.
+        <View testID="aviso-sin-conexion" style={{ paddingTop: insets.top + space[2], paddingHorizontal: space[4], paddingBottom: space[2], backgroundColor: c.topBar }}>
+          <Notice tone="advertencia">Sin conexión - Modo lectura (Cache)</Notice>
+        </View>
+      ) : null}
+      <SafeAreaInsetsContext.Provider value={visible ? { ...insets, top: 0 } : insets}>{children}</SafeAreaInsetsContext.Provider>
     </View>
   )
 }
