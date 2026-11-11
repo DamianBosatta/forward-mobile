@@ -68,7 +68,7 @@ describe('hero de saldo (frames 5 y 11)', () => {
     const hero = await screen.findByTestId('hero-saldo')
     expect(within(hero).queryByText('Cuenta TST')).toBeNull()
     expect(screen.getByLabelText('Cuenta TST: $ 0,00')).toBeTruthy()
-    expect(screen.getByLabelText('Normal (con factura): $ 186.420,00')).toBeTruthy()
+    expect(screen.getByLabelText('Cuenta Normal (con factura): $ 186.420,00')).toBeTruthy()
   })
 })
 

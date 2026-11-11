@@ -508,3 +508,45 @@ describe('Filtro por período de los movimientos', () => {
     expect(urls()).toContain('/api/v1/cuentas-corrientes/cTst/movimientos?pageNumber=1&pageSize=20&fechaDesde=2026-10-01&fechaHasta=2026-10-30')
   })
 })
+
+describe('como el carrito de la venta (propuesta "Clientes como venta", frames 13 y 14)', () => {
+  const movimientos = () => paginaDeMovimientosSocio([
+    movSocio('n1', '2026-10-02T12:00:00Z', { cuenta: 'Normal', referencia: 'Entrega de Venta', comprobante: 'A00409', debe: 84400, saldoHistorico: 216420, vencimiento: '2026-11-01' }),
+  ])
+
+  it('el saldo va en el hero oscuro y TST y Normal en dos tarjetas', async () => {
+    renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+
+    const hero = await screen.findByTestId('hero-saldo', {}, ESPERA)
+    expect(within(hero).getByLabelText(`Saldo: ${$(186420)}`)).toBeTruthy()
+    expect(within(hero).queryByText('Cuenta TST')).toBeNull()
+    expect(screen.getByLabelText(`Cuenta TST: ${$(132020)}`)).toBeTruthy()
+  })
+
+  it('cada movimiento es una línea de una tarjeta: fecha en pastilla y el detalle en una sola línea', async () => {
+    servidor({ socioMovs: movimientos })
+    renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+
+    const venta = await screen.findByLabelText(/Entrega de Venta/, {}, ESPERA)
+    expect(within(screen.getByTestId('lista-movimientos')).getByLabelText(/Entrega de Venta/)).toBeTruthy()
+    expect(within(venta).getByTestId('fecha-movimiento')).toBeTruthy()
+    expect(within(venta).getByText('Cuenta Normal · Vence 1 nov')).toBeTruthy()
+  })
+
+  it('el pie copia el del carrito: el saldo a la izquierda y "Cobrar" como botón principal', async () => {
+    conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true, canCreate: true }])
+    renderConQuery(<CuentaCorrienteCliente socioId="c1" />)
+
+    const pie = await screen.findByTestId('pie-cuenta', {}, ESPERA)
+    expect(within(pie).getByText('Saldo')).toBeTruthy()
+    expect(within(pie).getByText($(186420))).toBeTruthy()
+    expect(within(pie).getByRole('button', { name: 'Cobrar' })).toBeTruthy()
+  })
+
+  it('mientras carga el cliente se ven esqueletos, no la ruedita', async () => {
+    get.mockImplementation(() => new Promise(() => {}))
+    renderConQuery(<CuentaCorrienteCliente socioId="c1" conBarra />)
+
+    expect((await screen.findAllByTestId('esqueleto-fila', {}, ESPERA)).length).toBeGreaterThan(0)
+  })
+})

@@ -85,10 +85,10 @@ export function HeroSaldo({ saldo, vencido, diasDeudaMasVieja, tope, disponible,
 /** TST y Normal en dos tarjetas sin borde (frames 5 y 13), con la etiqueta que lee el lector de pantalla. */
 export function SaldosPorCuenta({ tst, normal }: { tst: number; normal: number }) {
   const c = useColors()
-  const tarjeta = (etiqueta: string, valor: number) => (
+  const tarjeta = (etiqueta: string, valor: number, paraElLector = etiqueta) => (
     <View
       accessible
-      accessibilityLabel={`${etiqueta}: ${formatImporte(valor)}`}
+      accessibilityLabel={`${paraElLector}: ${formatImporte(valor)}`}
       style={{ flex: 1, minWidth: 0, backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[3], gap: 2 }}
     >
       <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{etiqueta}</Text>
@@ -98,7 +98,7 @@ export function SaldosPorCuenta({ tst, normal }: { tst: number; normal: number }
   return (
     <View style={{ flexDirection: 'row', gap: space[2] }}>
       {tarjeta('Cuenta TST', tst)}
-      {tarjeta('Normal (con factura)', normal)}
+      {tarjeta('Normal (con factura)', normal, 'Cuenta Normal (con factura)')}
     </View>
   )
 }
