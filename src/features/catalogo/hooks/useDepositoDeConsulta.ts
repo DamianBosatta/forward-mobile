@@ -1,7 +1,10 @@
-import { useAuthStore } from '@/features/auth/store/auth.store'
-import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { useDepositoParaRegistrar } from '@/features/deposito-sesion/hooks/useDepositoDeSesion'
 
-/** Depósito de la disponibilidad: el del usuario si el perfil lo trae; si no, el Central (BACKLOG-9B.md). */
+/**
+ * Depósito de la disponibilidad y de lo que se registra (venta, compra, ficha, stock en vivo): el depósito de la
+ * sesión (S8). Quien ve todos los depósitos lo elige en Inicio ("Todos" consulta en el Central); el resto, siempre el
+ * suyo; sin depósito en el perfil, el Central (BACKLOG-9B.md).
+ */
 export function useDepositoDeConsulta(): string {
-  return useAuthStore((s) => s.user?.depositoId) ?? DEPOSITO_CENTRAL_ID
+  return useDepositoParaRegistrar()
 }

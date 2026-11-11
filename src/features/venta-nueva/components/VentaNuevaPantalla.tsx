@@ -87,7 +87,9 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   const user = useAuthStore((s) => s.user)
   const depositoId = useDepositoDeVenta()
   const elegirDeposito = useDepositoElegidoStore((s) => s.elegir)
-  // Cada venta arranca (y termina) en el depósito del usuario; una venta que se abre toma el suyo, más abajo.
+  // Una venta nueva vacía (sin cliente ni borrador) sigue al depósito de la sesión: la pantalla puede quedar montada en
+  // el cajón mientras se cambia en Inicio. Se fija al crear el borrador (`empezar`). Al abrir y al cerrar se suelta;
+  // una venta que se abre toma el suyo, más abajo.
   useEffect(() => { elegirDeposito(null); return () => elegirDeposito(null) }, [elegirDeposito])
   // El descuento general siempre es un número válido (0 a 100): se cambia en la hoja "Descuento a toda la venta".
   const [descuentoValido, setDescuentoValido] = useState(0)
@@ -152,6 +154,9 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
     setArrancarDelUltimo(!!opciones?.delUltimo)
     setCliente(elegido)
     setVista('catalogo')
+    // Desde acá la venta tiene borrador: queda en el depósito con el que nace (el de la sesión, si no eligió otro), y
+    // cambiar la sesión en Inicio ya no la mueve (S8; la web lo fija igual al tener identidad, venta-form.tsx).
+    if (useDepositoElegidoStore.getState().elegido === null) elegirDeposito(depositoId)
     void b.crear(elegido.id, tipo)
   }
   useEffect(() => {

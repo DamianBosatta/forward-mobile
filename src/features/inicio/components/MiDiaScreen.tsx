@@ -15,6 +15,7 @@ import { direccionDeEntrega, inicialesDeDireccion, nombreDelCliente } from '@/fe
 import { fusionarRecientes, leerRecientes } from '@/features/clientes/lib/recientes'
 import { useVenderA } from '@/features/venta-nueva/hooks/useVenderA'
 import { usePermissions } from '@/core/auth/RequirePermission'
+import { DepositoSesion } from '@/features/deposito-sesion'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
 import { useResumenInicio } from '../api/queries'
 import {
@@ -199,6 +200,8 @@ export function MiDiaScreen() {
         contentContainerStyle={{ padding: space[4], gap: space[5], paddingBottom: space[12] }}
         refreshControl={<RefreshControl refreshing={refrescando} onRefresh={refrescar} tintColor={c.brand} />}
       >
+        {/* Depósito de la sesión (S8): solo con CAP_VER_TODOS_LOS_DEPOSITOS; sin ella no ocupa lugar. */}
+        <DepositoSesion />
         {isTablet ? (
           <View style={{ flexDirection: 'row', gap: space[6], alignItems: 'flex-start' }}>
             <View style={{ flex: 1, gap: space[5] }}>{hero}{nuevaVentaSuelta}{numeros}</View>

@@ -1,6 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Alert } from 'react-native'
 import { api } from './client'
+import { SIN_DEPOSITO_DE_SESION } from '@/core/api/depositoSesion'
 import type { PagedResult, SocioComercial, SocioDetailDto, CreateSocioRequest, UpdateSocioRequest, ClienteLightDto } from './types'
 export type { ClienteLightDto }
 import { cuentasKeys } from './cuentas-corrientes'
@@ -20,6 +21,11 @@ export interface SociosParams {
   desc?:       boolean
   pageNumber?: number
   pageSize?:   number
+  /**
+   * Sin el depósito de la sesión (X-Deposito-Sesion vacío): el servidor aplica solo el alcance del usuario. Lo usa la
+   * venta nueva, como la web (venta-form.tsx); va en la clave de caché, así no se mezcla con las listas normales.
+   */
+  sinDepositoDeSesion?: boolean
 }
 
 export const sociosKeys = {
@@ -29,7 +35,8 @@ export const sociosKeys = {
   list: (params: SociosParams) => [...sociosKeys.lists(), params] as const,
   infinite: (params: SociosParams) => [...sociosKeys.all, 'infinite', params] as const,
   detail: (id: string) => [...sociosKeys.all, 'detail', id] as const,
-  recientes: () => [...sociosKeys.all, 'recientes'] as const,
+  recientes: (sinDepositoDeSesion = false) =>
+    (sinDepositoDeSesion ? [...sociosKeys.all, 'recientes', 'sinDepositoDeSesion'] : [...sociosKeys.all, 'recientes']) as readonly string[],
   localidades: () => [...sociosKeys.all, 'localidades'] as const,
 }
 
@@ -81,17 +88,21 @@ export const LIMITE_RECIENTES = 5
  * Los últimos clientes activos que el usuario usó en sus ventas y borradores, del más reciente al más
  * viejo. El 404 de un servidor que todavía no tiene el endpoint es esperado: no se registra como error.
  */
-export const fetchClientesRecientes = (limite: number = LIMITE_RECIENTES) =>
-  api.get<ClienteReciente[]>(`/api/v1/socios-comerciales/clientes-recientes?limite=${limite}`, { estadosEsperados: [404] })
+export const fetchClientesRecientes = (limite: number = LIMITE_RECIENTES, { sinDepositoDeSesion = false } = {}) =>
+  api.get<ClienteReciente[]>(`/api/v1/socios-comerciales/clientes-recientes?limite=${limite}`, {
+    estadosEsperados: [404],
+    ...(sinDepositoDeSesion ? SIN_DEPOSITO_DE_SESION : {}),
+  })
 
 /**
  * Recientes del servidor para el selector de cliente. Sin reintentos: si falla (404 de un servidor
  * viejo, sin red, 403), `data` queda sin definir y el selector sigue con los recientes del teléfono.
  */
-export function useClientesRecientes(habilitado: boolean) {
+export function useClientesRecientes(habilitado: boolean, { sinDepositoDeSesion = false }: { sinDepositoDeSesion?: boolean } = {}) {
   return useQuery({
-    queryKey: sociosKeys.recientes(),
-    queryFn: () => fetchClientesRecientes(),
+    // La venta nueva los pide sin el depósito de la sesión (como la web), con su propia clave.
+    queryKey: sociosKeys.recientes(sinDepositoDeSesion),
+    queryFn: () => fetchClientesRecientes(LIMITE_RECIENTES, { sinDepositoDeSesion }),
     enabled: habilitado,
     retry: false,
     staleTime: 30_000,
@@ -137,7 +148,10 @@ export function useInfiniteSocios(params: SociosParams = {}) {
       if (params.desc) sp.append('Desc', 'true')
 
       // `saldoTotal` (PR #882): la suma de todo el filtro, solo en la página 1; null si no se puede dar.
-      return api.get<PagedResult<SocioComercial> & { saldoTotal?: number | null }>(`/api/v1/socios-comerciales?${sp}`)
+      const url = `/api/v1/socios-comerciales?${sp}`
+      return params.sinDepositoDeSesion
+        ? api.get<PagedResult<SocioComercial> & { saldoTotal?: number | null }>(url, SIN_DEPOSITO_DE_SESION)
+        : api.get<PagedResult<SocioComercial> & { saldoTotal?: number | null }>(url)
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {

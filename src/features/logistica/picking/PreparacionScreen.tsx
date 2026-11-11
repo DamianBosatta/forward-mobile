@@ -13,6 +13,7 @@ import { useDepositos } from '@/libs/api-client/depositos'
 import { useVendedores } from '@/libs/api-client/ventas'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
+import { useDepositoSesionEfectivo } from '@/features/deposito-sesion/hooks/useDepositoDeSesion'
 import { diaArgentina } from '@/core/utils/fecha'
 import { useAhoraArgentina } from '@/core/utils/useAhoraArgentina'
 import { PedidoPorPrepararDetalle } from '@/features/logistica/porPreparar/PedidoPorPrepararDetalle'
@@ -71,8 +72,11 @@ function Tablero() {
   const veTodos = hasCapability(permisos, 'CAP_VER_TODOS_LOS_DEPOSITOS')
   const depositos = useDepositos()
   const nombrePropio = depositos.data?.find((d) => d.id === depositoPropio)?.nombre ?? undefined
-  // Quien ve todos elige acá cuál mirar (null = todos); solo ese depósito viaja como DepositoId.
-  const [depositoElegido, setDepositoElegido] = useState<string | null>(null)
+  // Quien ve todos arranca en el depósito de la sesión (S8, como la web: el de Inicio; null = todos) y acá puede
+  // mirar otro sin cambiar la sesión. Solo ese depósito viaja como DepositoId.
+  const depositoDeSesion = useDepositoSesionEfectivo()
+  const [elegidoEnTablero, setDepositoElegido] = useState<string | null | undefined>(undefined)
+  const depositoElegido = elegidoEnTablero === undefined ? depositoDeSesion : elegidoEnTablero
   const [eligiendoDeposito, setEligiendoDeposito] = useState(false)
   const depositoParaServidor = veTodos ? (depositoElegido ?? undefined) : undefined
   const nombreElegido = depositoElegido ? depositos.data?.find((d) => d.id === depositoElegido)?.nombre ?? undefined : undefined

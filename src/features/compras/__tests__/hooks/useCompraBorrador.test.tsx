@@ -3,6 +3,8 @@ import { act, renderHook, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useCompraBorrador } from '../../hooks/useCompraBorrador'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { useAuthStore } from '@/features/auth/store/auth.store'
+import { elegirDepositoDeSesion, limpiarDepositoDeSesion } from '@/features/deposito-sesion'
 
 const mockGet = jest.fn()
 const mockPost = jest.fn()
@@ -302,6 +304,40 @@ describe('useCompraBorrador', () => {
       await act(() => result.current.guardarCambios().catch(() => {}))
       expect(result.current.estado).toBe('conflicto')
       expect(result.current.error).toMatch(/Error de concurrencia/)
+    })
+  })
+
+  describe('depósito de la sesión (S8)', () => {
+    const SALTA = '11111111-1111-4111-8111-111111111111'
+    const NORTE = '22222222-2222-4222-8222-222222222222'
+    beforeEach(() => {
+      useAuthStore.setState({ user: { id: 'u', roles: [], depositoId: SALTA, permissions: [{ module: 'CAP_VER_TODOS_LOS_DEPOSITOS', canRead: true }] } as never })
+      elegirDepositoDeSesion('u', NORTE)
+    })
+    afterEach(() => { limpiarDepositoDeSesion(); useAuthStore.setState({ user: null }) })
+
+    it('una compra nueva crea el borrador en el depósito de la sesión', async () => {
+      const { result } = usar()
+      expect(result.current.depositoId).toBe(NORTE)
+      await act(() => result.current.elegirProveedor('p1'))
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/borradores', { proveedorId: 'p1', depositoId: NORTE })
+    })
+
+    it('una compra nueva sin borrador sigue al depósito de la sesión; al crearse el borrador queda fija', async () => {
+      const SUR = '33333333-3333-4333-8333-333333333333'
+      const { result } = usar()
+      act(() => elegirDepositoDeSesion('u', SUR))
+      expect(result.current.depositoId).toBe(SUR)
+      await act(() => result.current.elegirProveedor('p1'))
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/borradores', { proveedorId: 'p1', depositoId: SUR })
+      act(() => elegirDepositoDeSesion('u', NORTE))
+      expect(result.current.depositoId).toBe(SUR)
+    })
+
+    it('una compra retomada sigue en su depósito guardado, no en el de la sesión', async () => {
+      const { result } = usar('b9')
+      await waitFor(() => expect(result.current.cargando).toBe(false))
+      expect(result.current.depositoId).toBe('d2')
     })
   })
 })

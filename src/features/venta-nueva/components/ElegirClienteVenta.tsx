@@ -47,7 +47,8 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
   const usuarioId = useAuthStore((s) => s.user?.id)
   const [busqueda, setBusqueda] = useState('')
   const [filtros, setFiltros] = useState<FiltrosDeCartera>(SIN_FILTROS)
-  const { clientes, isLoading, error, cargarMas, totalCount } = useCartera(busqueda, filtros)
+  // La venta nueva busca sin el depósito de la sesión, como la web (venta-form.tsx): toda la cartera que el usuario ve.
+  const { clientes, isLoading, error, cargarMas, totalCount } = useCartera(busqueda, filtros, undefined, { sinDepositoDeSesion: true })
   const buscando = busqueda.trim().length > 0
   const qc = useQueryClient()
   const [guardados, setGuardados] = useState(() => leerRecientes(usuarioId))
@@ -55,7 +56,7 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
   const [noDisponibles, setNoDisponibles] = useState<string[]>([])
   // clientes-recientes pide Clientes:Read: sin él no se llama (daría 403) y quedan los recientes del teléfono.
   const puedeVerClientes = useAuthStore((s) => s.canDo('MOD_CLIENTES', 'read'))
-  const delServidor = useClientesRecientes(puedeVerClientes)
+  const delServidor = useClientesRecientes(puedeVerClientes, { sinDepositoDeSesion: true })
   useEffect(() => { setGuardados(leerRecientes(usuarioId)) }, [usuarioId])
   const recientes = buscando ? [] : fusionarRecientes(delServidor.data, guardados, noDisponibles)
 

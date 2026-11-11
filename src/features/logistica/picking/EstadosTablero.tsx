@@ -1,72 +1,12 @@
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
-import { Building2, ChevronDown, Inbox, Lock, Shield } from 'lucide-react-native'
+import { Text, View } from 'react-native'
+import { Inbox, Shield } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { BottomSheet, Button, Notice } from '@/core/ui/fw'
-import { FiltroChip } from '@/core/ui/fw/FiltroChip'
+import { Button, Notice } from '@/core/ui/fw'
 import { Skeleton } from '@/core/ui/Skeleton'
 
-/**
- * Depósito arriba del tablero (DepositoDelTablero de la web). Quien no ve todos los depósitos ve el suyo, fijo, con
- * el aviso de que se lo asignaron. Quien los ve todos lo puede cambiar (`onElegir`): solo cambia lo que se mira.
- */
-export function DepositoDelTablero({ nombre, asignado, onElegir }: { nombre: string; asignado: boolean; onElegir?: () => void }) {
-  const c = useColors()
-  const contenido = (
-    <>
-      <Building2 size={18} color={c.textSecondary} />
-      <View style={{ flex: 1 }}>
-        <Text style={{ ...typeScale.secundario, color: c.text }}>{nombre}</Text>
-        {asignado ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
-            <Lock size={12} color={c.textSecondary} />
-            <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>asignado a tu usuario</Text>
-          </View>
-        ) : null}
-      </View>
-      {onElegir ? <ChevronDown size={18} color={c.textSecondary} /> : null}
-    </>
-  )
-  const estilo = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space[2], minHeight: 44, paddingHorizontal: space[3], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, backgroundColor: onElegir ? c.surface : c.surface2 }
-  if (onElegir) {
-    return (
-      <Pressable onPress={onElegir} android_ripple={{ color: c.surface2 }} accessibilityRole="button" accessibilityLabel={`Depósito: ${nombre}`} accessibilityHint="Elegí qué depósito mirar" style={estilo}>
-        {contenido}
-      </Pressable>
-    )
-  }
-  return (
-    <View accessible accessibilityLabel={`Depósito: ${nombre}${asignado ? ', asignado a tu usuario' : ''}`} style={estilo}>
-      {contenido}
-    </View>
-  )
-}
-
-/** Hoja para elegir el depósito que se mira (solo con CAP_VER_TODOS_LOS_DEPOSITOS). `null` = todos. */
-export function ElegirDepositoSheet({ visible, depositos, elegido, cargando, error, onElegir, onClose }: {
-  visible: boolean
-  depositos: { id: string; nombre: string }[]
-  elegido: string | null
-  cargando: boolean
-  error: boolean
-  onElegir: (id: string | null) => void
-  onClose: () => void
-}) {
-  const c = useColors()
-  return (
-    <BottomSheet visible={visible} onClose={onClose} accessibilityLabel="Elegir depósito">
-      <View testID="hoja-depositos" style={{ gap: space[3] }}>
-        <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Depósito</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
-          <FiltroChip label="Todos los depósitos" activo={elegido === null} onPress={() => onElegir(null)} />
-          {depositos.map((d) => <FiltroChip key={d.id} label={d.nombre} activo={elegido === d.id} onPress={() => onElegir(d.id)} />)}
-        </View>
-        {cargando ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Cargando…</Text> : null}
-        {error ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>No se pudo cargar la lista de depósitos.</Text> : null}
-      </View>
-    </BottomSheet>
-  )
-}
+// El depósito de arriba y su hoja viven en deposito-sesion: Inicio (depósito de la sesión) usa los mismos.
+export { DepositoDelTablero, ElegirDepositoSheet } from '@/features/deposito-sesion/components/ElegirDeposito'
 
 /** Cargando con la forma del tablero (TableroEsqueleto): pestañas y tarjetas grises, para que nada salte al llegar. */
 export function TableroEsqueleto() {

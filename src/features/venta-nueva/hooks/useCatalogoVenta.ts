@@ -4,6 +4,7 @@ import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { coincidePalabras } from '@/core/utils/texto'
 import { useDepositoAjenoDeVenta } from './useDepositoDeVenta'
 import { api, productosKeys, type CatalogoStockItem, type PagedResult } from '@/libs/api-client'
+import { SIN_DEPOSITO_DE_SESION } from '@/core/api/depositoSesion'
 
 export const DEBOUNCE_BUSQUEDA_MS = 300
 // El servidor valida PageSize entre 1 y 1000.
@@ -47,7 +48,9 @@ export async function fetchCatalogoCompleto(depositoId?: string): Promise<Catalo
   for (let pagina = 1; pagina <= MAX_PAGES; pagina++) {
     const params = new URLSearchParams({ PageNumber: String(pagina), PageSize: String(PAGE_SIZE) })
     if (depositoId) params.set('depositoId', depositoId)
-    const res = await api.get<PagedResult<CatalogoStockItem>>(`/api/v1/Productos/catalogo-stock?${params}`)
+    // Sin el depósito de la sesión, como la web (venta-form.tsx, GrillaLineasVenta.tsx): el depósito de la venta va en
+    // `depositoId`. La clave no cambia: este catálogo es solo de la venta y nunca se pidió con otro encabezado.
+    const res = await api.get<PagedResult<CatalogoStockItem>>(`/api/v1/Productos/catalogo-stock?${params}`, SIN_DEPOSITO_DE_SESION)
     items.push(...(res?.items ?? []))
     if (!res?.hasNextPage) return { items, truncado: false }
   }
@@ -57,7 +60,7 @@ export async function fetchCatalogoCompleto(depositoId?: string): Promise<Catalo
 function fetchBusqueda(termino: string, depositoId?: string) {
   const params = new URLSearchParams({ SearchTerm: termino, PageSize: String(PAGE_SIZE) })
   if (depositoId) params.set('depositoId', depositoId)
-  return api.get<PagedResult<CatalogoStockItem>>(`/api/v1/Productos/catalogo-stock?${params}`)
+  return api.get<PagedResult<CatalogoStockItem>>(`/api/v1/Productos/catalogo-stock?${params}`, SIN_DEPOSITO_DE_SESION)
 }
 
 /**

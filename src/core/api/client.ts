@@ -3,6 +3,7 @@ import { logger } from '@/src/core/utils/logger'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { mmkvPersister } from '@/core/query/persistConfig'
 import { CATALOGO_DE_ERRORES, type CodigoError } from '@/libs/api-client/generated/codigos-error'
+import { ponerEncabezadoDepositoDeSesion } from './depositoSesion'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // API Client Base
@@ -306,7 +307,6 @@ async function fetchWithAuth<T>(
   if (token) {
     headers.set('Authorization', `Bearer ${token}`)
   }
-
   // Merge manual headers (vienen del segundo argumento de api.get/post/etc)
   if (options.headers) {
     const manualHeaders = new Headers(options.headers)
@@ -316,6 +316,9 @@ async function fetchWithAuth<T>(
       headers.set(key, value)
     })
   }
+  // El depósito de la sesión viaja en TODOS los pedidos (depositoSesion.ts, como la web); el servidor decide a quién
+  // le achica los listados. Va después de los manuales: SIN_DEPOSITO_DE_SESION lo deja vacío.
+  ponerEncabezadoDepositoDeSesion(headers)
 
   const url = `${API_URL}${endpoint}`;
   logger.info(`API Request: ${options.method || 'GET'} ${endpoint}`)
