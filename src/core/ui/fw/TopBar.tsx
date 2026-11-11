@@ -1,10 +1,18 @@
-import React from 'react'
+import React, { createContext, useContext } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ArrowLeft, Menu, type LucideIcon } from 'lucide-react-native'
 import { maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
+import { LogoForward } from '@/features/auth/components/LogoForward'
+import { Notice } from './Notice'
 
 const TOCABLE = 44
+
+/**
+ * Si la barra muestra el aviso global sin conexión. Lo decide OfflineBanner (app/_layout) una sola vez
+ * para toda la app: sin señal y fuera de las pantallas con aviso propio. Fuera de él, nunca.
+ */
+export const AvisoSinConexionContext = createContext(false)
 
 export interface TopBarAction {
   icon: LucideIcon
@@ -35,16 +43,24 @@ interface TopBarProps {
   tabs?: TopBarTab[]
   /** El título y el subtítulo pueden ocupar hasta 2 líneas (p. ej. una dirección larga). Por defecto, 1. */
   lineasMultiples?: boolean
+  /** Marca FWD entre el botón de la izquierda y el título (propuesta de Inicio). */
+  logo?: boolean
+  /** Contenido de la fila en lugar del título (p. ej. el campo de Buscar, propuesta de Cuenta). */
+  campo?: React.ReactNode
 }
 
-/** Barra superior de la lámina F4: alto 64, título 20/600, botones de 44 y pestañas de 48. */
-export function TopBar({ title, subtitle, leading, actions = [], syncLabel, textoDerecha, tabs, lineasMultiples = false }: TopBarProps) {
+/**
+ * Barra superior de la lámina F4: alto 64, título 20/600, botones de 44 y pestañas de 48. Sin señal,
+ * el aviso global va debajo de la barra (propuesta de Inicio, frame 10), sobre el fondo de la pantalla.
+ */
+export function TopBar({ title, subtitle, leading, actions = [], syncLabel, textoDerecha, tabs, lineasMultiples = false, logo = false, campo }: TopBarProps) {
   const colors = useColors()
+  const avisoSinConexion = useContext(AvisoSinConexionContext)
   const insets = useSafeAreaInsets()
   const Lead = leading?.kind === 'atras' ? ArrowLeft : Menu
   const maxLineas = lineasMultiples ? 2 : 1
 
-  return (
+  const barra = (
     <View
       style={{
         backgroundColor: colors.topBar,
@@ -64,16 +80,25 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
             <Lead size={24} color={colors.onTopBarStrong} strokeWidth={2} />
           </Pressable>
         ) : null}
-        <View style={{ flex: 1, minWidth: 0, paddingLeft: leading ? 0 : space[3] }}>
-          <Text accessibilityRole="header" numberOfLines={maxLineas} maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.titulo, color: colors.onTopBarStrong }}>
-            {title}
-          </Text>
-          {subtitle ? (
-            <Text numberOfLines={maxLineas} style={{ ...typeScale.secundario, color: colors.onTopBar }}>
-              {subtitle}
+        {logo ? <View style={{ paddingLeft: leading ? 0 : space[3] }}><LogoForward alto={26} /></View> : null}
+        {campo ? (
+          <View style={{ flex: 1, minWidth: 0, paddingLeft: leading ? 0 : space[3], paddingRight: space[3] }}>
+            {/* El campo ocupa el lugar del título: el título queda como encabezado solo para el lector de pantalla. */}
+            <Text accessibilityRole="header" numberOfLines={1} style={{ position: 'absolute', width: 1, height: 1, opacity: 0 }}>{title}</Text>
+            {campo}
+          </View>
+        ) : (
+          <View style={{ flex: 1, minWidth: 0, paddingLeft: leading || logo ? 0 : space[3] }}>
+            <Text accessibilityRole="header" numberOfLines={maxLineas} maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.titulo, color: colors.onTopBarStrong }}>
+              {title}
             </Text>
-          ) : null}
-        </View>
+            {subtitle ? (
+              <Text numberOfLines={maxLineas} style={{ ...typeScale.secundario, color: colors.onTopBar }}>
+                {subtitle}
+              </Text>
+            ) : null}
+          </View>
+        )}
         {textoDerecha ? (
           <Text numberOfLines={1} style={{ ...typeScale.secundario, color: colors.onTopBar, paddingRight: space[3] }}>
             {textoDerecha}
@@ -140,5 +165,16 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
         </View>
       ) : null}
     </View>
+  )
+
+  if (!avisoSinConexion) return barra
+  return (
+    <>
+      {barra}
+      {/* Debajo de la barra, sobre el fondo: el margen del sistema ya lo puso la barra. */}
+      <View testID="aviso-sin-conexion" style={{ paddingTop: space[2], paddingHorizontal: space[4], backgroundColor: colors.bg }}>
+        <Notice tone="advertencia">Sin conexión - Modo lectura (Cache)</Notice>
+      </View>
+    </>
   )
 }

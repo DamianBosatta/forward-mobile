@@ -190,6 +190,7 @@ export function MiDiaScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
+        logo
         title={`Hola, ${nombre}`.trim()}
         subtitle={fecha}
         leading={menu}

@@ -105,7 +105,7 @@ function RootLayoutNav() {
       <PushDeAvisos />
       <EnvioVentasSinSenal />
       <EnvioConsolaSinSenal />
-      {/* Sin señal, el aviso va arriba de todas las pantallas (propuesta de Inicio, frame 10). */}
+      {/* Sin señal, cada barra superior pinta el aviso debajo de ella (propuesta de Inicio, frame 10). */}
       <OfflineBanner>
         <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.bg } }}>
           <Stack.Screen name="login" options={{ gestureEnabled: false }} />
