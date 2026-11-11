@@ -4,9 +4,10 @@ import { useRouter } from 'expo-router'
 import { ArrowLeftRight, Landmark, Zap } from 'lucide-react-native'
 import { usePuedePagarServicio } from '@/features/gastos/lib/permiso'
 import { radii, space, useColors } from '@/libs/theme'
-import { FilaDeAccion, FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
+import { FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
 import { usePuedeCobrar, usePuedeTransferir } from '@/features/cuentas/lib/permiso'
-import { MOTIVO_SIN_PERMISO_DE_SERVICIO, MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
+import { MOTIVO_SIN_PERMISO_DE_SERVICIO, MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA } from '@/core/ui/fw/MotivoDeshabilitado'
+import { FilaDeTesoreria } from '@/features/tesoreria/components/FilaDeTesoreria'
 
 /** Aviso de la lámina tesoreria-inicio: el cobro de un cliente no se carga desde Tesorería. */
 const AVISO_COBROS_DE_CLIENTES = 'Los cobros de clientes se cargan desde la ficha del cliente, con "Cobrar".'
@@ -30,38 +31,34 @@ export default function TesoreriaScreen() {
   // Misma regla que el botón "Cobrar" de la cuenta del cliente (CuentaCorrienteCliente): sin ella no se ofrece.
   const cargarCheque = usePuedeCobrar()
 
+  const separador = <View style={{ height: 1, backgroundColor: c.surface2, marginLeft: space[4] }} />
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Tesorería" leading={menu} />
       <ScrollView contentContainerStyle={{ padding: space[4] }}>
         <FormContainer style={{ gap: space[3] }}>
-          {/* Lámina tesoreria-inicio: una sola tarjeta con las acciones separadas por una línea. */}
-          <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, overflow: 'hidden' }}>
-            {/* Como la web (L13): sin permiso la fila se ve deshabilitada con el motivo, no se oculta. */}
-            <FilaDeAccion
-              agrupada
+          {/* Propuesta "Finanzas como venta", frames 8 y 9: una tarjeta sin borde con las acciones separadas por una línea. */}
+          <View testID="tarjeta-tesoreria" style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>
+            {/* Como la web (L13): sin permiso la fila no se oculta; lleva candado y el motivo adentro. */}
+            <FilaDeTesoreria
               icon={ArrowLeftRight}
               title="Transferencia entre cuentas"
               subtitle="Mové plata entre tus cuentas"
-              disabled={!transferir}
+              motivo={transferir ? undefined : MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}
               onPress={() => router.push('/(tabs)/tesoreria/transferencia')}
             />
-            {!transferir ? <View style={{ paddingHorizontal: space[4], paddingBottom: space[3] }}><MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}</MotivoDeshabilitado></View> : null}
-            <View style={{ height: 1, backgroundColor: c.border }} />
-            <FilaDeAccion
-              agrupada
+            {separador}
+            <FilaDeTesoreria
               icon={Zap}
               title="Pagar un servicio"
               subtitle="Luz, gas, alquiler, flete y otros gastos"
-              disabled={!pagarServicio}
+              motivo={pagarServicio ? undefined : MOTIVO_SIN_PERMISO_DE_SERVICIO}
               onPress={() => router.push('/(tabs)/tesoreria/pagar-servicio')}
             />
-            {!pagarServicio ? <View style={{ paddingHorizontal: space[4], paddingBottom: space[3] }}><MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_SERVICIO}</MotivoDeshabilitado></View> : null}
             {cargarCheque ? (
               <>
-                <View style={{ height: 1, backgroundColor: c.border }} />
-                <FilaDeAccion
-                  agrupada
+                {separador}
+                <FilaDeTesoreria
                   icon={Landmark}
                   title="Cargar un cheque"
                   subtitle={AYUDA_CHEQUE_COMO_COBRO}
