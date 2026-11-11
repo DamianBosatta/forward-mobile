@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '@/core/api/client'
 import { sociosKeys } from '@/libs/api-client/socios'
+import { depositosKeys } from '@/libs/api-client/depositos'
+import { useCajaActiva } from '@/libs/api-client/finanzas'
+import { useDepositoParaRegistrar } from '@/features/deposito-sesion/hooks/useDepositoDeSesion'
 import type {
   CuentaCorrienteResumenDto, GetMovimientosCuentaDto, ImputacionMovimientoDto, MovimientoSocioDtoPaginatedResponse, SocioDetailDto, TipoCuentaSocio,
 } from '@/libs/api-client/types'
@@ -19,16 +22,23 @@ export function useMediosDeCobro() {
   })
 }
 
-export type CajaAbierta = components['schemas']['CajaAbiertaEstadoDto']
-
-/** Depósitos con la caja abierta, sin montos (`GET /Cajas/abiertas/estado`, pide MOD_PAGOS:Read). */
-export function useCajasAbiertas(enabled: boolean) {
-  return useQuery({
-    queryKey: ['cajas', 'abiertas-estado'],
-    enabled,
-    queryFn: () => api.get<CajaAbierta[]>('/api/v1/Cajas/abiertas/estado'),
-  })
+/**
+ * La caja donde entra el efectivo del cobro: la del depósito de la sesión (`useDepositoParaRegistrar`: el elegido en
+ * Inicio; con "Todos", el Central; sin permiso de ver todos, el propio), como `useCajaActivaDeTrabajo` de la web. No
+ * se elige entre las cajas abiertas: se cambia el depósito de la sesión. `data` es `null` si ese depósito no tiene la
+ * caja abierta. `nombre`: el de la caja abierta o, si no hay, el del depósito si la lista ya está en caché.
+ */
+export function useCajaDelCobro(enabled: boolean) {
+  const depositoId = useDepositoParaRegistrar()
+  const caja = useCajaActiva(depositoId, { enabled })
+  const qc = useQueryClient()
+  const nombre = caja.data?.abierta && caja.data.depositoNombre
+    ? caja.data.depositoNombre
+    : qc.getQueryData<{ id?: string; nombre?: string | null }[]>(depositosKeys.lists())?.find(d => d.id === depositoId)?.nombre ?? null
+  return { depositoId, nombre, caja }
 }
+
+export type CajaDelCobro = ReturnType<typeof useCajaDelCobro>
 
 /**
  * Una cuenta propia como opción del selector, sin saldo (`CuentaPropiaOpcionDto`). `saldoActual` solo

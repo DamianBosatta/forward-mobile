@@ -9,7 +9,8 @@ import { api, ApiError } from '@/core/api/client'
 import { formatImporte } from '@/core/ui/fw'
 import { MOTIVO_SIN_PERMISO_DE_COBRO } from '@/core/ui/fw/MotivoDeshabilitado'
 import { clienteDeLista, conPermisos, pagina, renderConQuery } from '@/features/clientes/__testing__/ayuda'
-import { estadoDeCuenta, fichaConCuentas, mov, paginaDeMovimientos } from '../__testing__/servidor'
+import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { cajaActivaDe, estadoDeCuenta, fichaConCuentas, mov, paginaDeMovimientos } from '../__testing__/servidor'
 
 let mockParams: Record<string, string | undefined> = {}
 const mockBack = jest.fn()
@@ -32,7 +33,6 @@ const MEDIOS = [
   { id: 'm-tr', nombre: 'Transferencia', requiereCaja: false, esCheque: false, activo: true },
   { id: 'm-ch', nombre: 'Cheque', requiereCaja: false, esCheque: true, activo: true },
 ]
-const UNA_CAJA = [{ depositoId: 'dep-central', depositoNombre: 'Caja Central' }]
 const $ = (n: number) => formatImporte(n)
 const registrado = (sobre: object = {}) => ({ data: 'p1', sobre: { statusCode: 200, succeeded: true, data: 'p1', tipoCuenta: 'Tst', ...sobre } })
 
@@ -42,7 +42,7 @@ beforeEach(() => {
   conPermisos([{ module: 'MOD_PAGOS', canRead: true, canCreate: true }])
   get.mockImplementation(async (url: string) => {
     if (url === '/api/v1/gastos/medios-pago') return MEDIOS
-    if (url === '/api/v1/Cajas/abiertas/estado') return UNA_CAJA
+    if (url.startsWith('/api/v1/Cajas/activa')) return cajaActivaDe(url, 'Caja Central')
     if (url.endsWith('/estado-cuenta')) return estadoDeCuenta({ deudaVencida: 50000, tieneDeudaVencida: true })
     if (url.includes('/movimientos')) return paginaDeMovimientos([mov('m1', '2026-10-11T14:00:00Z', { haber: 50000, pagoId: 'p1' })])
     if (url.startsWith('/api/v1/socios-comerciales?')) return { ...pagina([clienteDeLista()], 1), saldoTotal: 186420 }
@@ -128,7 +128,7 @@ describe('pasos del cobro', () => {
     expect(post.mock.calls[0][1]).toEqual({
       socioComercialId: 'c1',
       referencia: 'Op 77',
-      depositoId: 'dep-central',
+      depositoId: DEPOSITO_CENTRAL_ID,
       claveIdempotencia: expect.stringMatching(/^mobile-/),
       lineas: [{ medioPagoId: 'm-ef', monto: 30000 }, { medioPagoId: 'm-tr', monto: 20000 }],
     })

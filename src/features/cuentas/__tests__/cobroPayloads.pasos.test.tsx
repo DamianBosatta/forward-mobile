@@ -8,7 +8,7 @@ import { IMPUTADO_DE_MAS } from '../lib/cobro'
 import { formatImporte } from '@/core/ui/fw/formatImporte'
 import { conPermisos, renderConQuery } from '@/features/clientes/__testing__/ayuda'
 import {
-  DOS_CAJAS, ESCENARIOS, ESPERA, claves, deOtroSocio, ok, otroCuerpo, post, servidor, sinClave, sinRed, subir, urlDeFoto, type Escenario,
+  ESCENARIOS, ESPERA, claves, deOtroSocio, ok, otroCuerpo, post, servidor, sinClave, sinRed, subir, urlDeFoto, type Escenario,
 } from '../__testing__/escenariosCobro'
 
 let mockParams: Record<string, string | undefined> = {}
@@ -50,7 +50,6 @@ async function llenar(e: Pick<Escenario, 'lineas' | 'imputar' | 'referencia'>) {
     await presionar(i === 0 ? 'Agregar un medio' : 'Agregar otro medio')
     await userEvent.press(await screen.findByRole('radio', { name: l.medio }, ESPERA))
     fireEvent.changeText(screen.getByLabelText('Monto'), l.monto)
-    if (l.caja) await userEvent.press(await screen.findByRole('radio', { name: l.caja }, ESPERA))
     if (l.cuenta) await userEvent.press(await screen.findByRole('radio', { name: l.cuenta }, ESPERA))
     if (l.cheque) {
       fireEvent.changeText(screen.getByLabelText('N.º de cheque'), l.cheque.numero)
@@ -81,7 +80,6 @@ async function abrirMedio(medio: string, monto: string) {
 
 describe('cuerpos del cobro en pasos (los mismos que el formulario de siempre)', () => {
   it.each(ESCENARIOS.map(e => [e.nombre, e] as const))('%s', async (_nombre, e) => {
-    servidor(e.cajas)
     renderConQuery(<CobroRoute />)
     await llenar(e)
     await registrar()
@@ -176,20 +174,11 @@ describe('idempotencia del cobro en pasos', () => {
 })
 
 describe('reglas del cobro en pasos', () => {
-  it('con dos cajas y ninguna elegida no se agrega el efectivo', async () => {
-    servidor(DOS_CAJAS)
+  it('sin la caja del depósito de la sesión abierta no se agrega el efectivo', async () => {
+    servidor('sin caja')
     renderConQuery(<CobroRoute />)
     await abrirMedio('Efectivo', '1.000')
-    expect(await screen.findByText('Elegí en qué caja entra el efectivo.', {}, ESPERA)).toBeTruthy()
-    expect(apagado('Agregar este medio')).toBe(true)
-    expect(post).not.toHaveBeenCalled()
-  })
-
-  it('sin ninguna caja abierta no se agrega el efectivo', async () => {
-    servidor([])
-    renderConQuery(<CobroRoute />)
-    await abrirMedio('Efectivo', '1.000')
-    expect(await screen.findByText(/No hay ninguna caja abierta/, {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByText(/No hay una caja abierta en este depósito/, {}, ESPERA)).toBeTruthy()
     expect(apagado('Agregar este medio')).toBe(true)
   })
 

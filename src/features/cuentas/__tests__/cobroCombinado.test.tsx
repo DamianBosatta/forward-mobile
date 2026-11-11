@@ -5,7 +5,8 @@ import { RegistrarCobro } from '../components/RegistrarCobro'
 import { CHEQUE_SOLO_EN_UN_MEDIO, LINEA_INCOMPLETA } from '../lib/cobro'
 import { api } from '@/core/api/client'
 import { conPermisos, renderConQuery } from '@/features/clientes/__testing__/ayuda'
-import { estadoDeCuenta, fichaConCuentas, mov, paginaDeMovimientos } from '../__testing__/servidor'
+import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { cajaActivaDe, estadoDeCuenta, fichaConCuentas, mov, paginaDeMovimientos } from '../__testing__/servidor'
 
 jest.mock('@/core/api/client', () => ({
   ...jest.requireActual('@/core/api/client'),
@@ -28,7 +29,7 @@ beforeEach(() => {
   conPermisos([{ module: 'MOD_PAGOS', canRead: true, canCreate: true }])
   get.mockImplementation(async (url: string) => {
     if (url === '/api/v1/gastos/medios-pago') return MEDIOS
-    if (url === '/api/v1/Cajas/abiertas/estado') return [{ depositoId: 'dep-central', depositoNombre: 'Depósito Central' }]
+    if (url.startsWith('/api/v1/Cajas/activa')) return cajaActivaDe(url)
     if (url.endsWith('/estado-cuenta')) return estadoDeCuenta()
     if (url.includes('/movimientos')) return paginaDeMovimientos([mov('m1', '2026-10-11T14:00:00Z', { haber: 84300, pagoId: 'p1' })])
     return fichaConCuentas()
@@ -66,7 +67,7 @@ it('cobro combinado: manda una línea por medio en el mismo cobro, con el total 
   expect(cuerpo).toEqual({
     socioComercialId: 'c1',
     // Una de las líneas es efectivo: el servidor necesita saber en qué caja entra.
-    depositoId: 'dep-central',
+    depositoId: DEPOSITO_CENTRAL_ID,
     claveIdempotencia: expect.stringMatching(/^mobile-/),
     lineas: [{ medioPagoId: 'm-ef', monto: 50000 }, { medioPagoId: 'm-tr', monto: 34300 }],
   })
@@ -80,7 +81,7 @@ it('cobro combinado: el efectivo en la segunda línea también manda la caja', a
   await registrar()
 
   expect(post.mock.calls[0][1]).toMatchObject({
-    depositoId: 'dep-central',
+    depositoId: DEPOSITO_CENTRAL_ID,
     lineas: [{ medioPagoId: 'm-tr', monto: 34300 }, { medioPagoId: 'm-ef', monto: 50000 }],
   })
 })

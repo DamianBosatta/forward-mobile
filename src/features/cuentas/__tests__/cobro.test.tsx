@@ -5,7 +5,8 @@ import { COBRO_CON_LO_DE_ANTES, COBRO_YA_ESTABA, SIN_CUENTA_CONFIRMADA } from '.
 import { leerFecha } from '../lib/cobro'
 import { api, ApiError } from '@/core/api/client'
 import { conPermisos, renderConQuery } from '@/features/clientes/__testing__/ayuda'
-import { estadoDeCuenta, fichaConCuentas, mov, paginaDeMovimientos } from '../__testing__/servidor'
+import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
+import { cajaActivaDe, estadoDeCuenta, fichaConCuentas, mov, paginaDeMovimientos } from '../__testing__/servidor'
 
 jest.mock('@/core/api/client', () => ({
   ...jest.requireActual('@/core/api/client'),
@@ -23,16 +24,14 @@ const MEDIOS = [
   { id: 'm-ch', nombre: 'Cheque', requiereCaja: false, esCheque: true, activo: true },
 ]
 
-const UNA_CAJA = [{ depositoId: 'dep-central', depositoNombre: 'Depósito Central' }]
-
 /** Respuesta del alta del cobro: el id en `data` y lo que el sobre traiga al lado (`tipoCuenta` desde forward-system #868). */
 const registrado = (sobre: object = {}) => ({ data: 'p1', sobre: { statusCode: 200, succeeded: true, data: 'p1', ...sobre } })
 
 /** `pagoEn`: la cuenta (`cTst` o `cNor`) cuyos movimientos traen el pago `p1`; con `null`, ninguna. */
-function servidor({ pagoEn = 'cNor' as 'cTst' | 'cNor' | null, cajas = UNA_CAJA } = {}) {
+function servidor({ pagoEn = 'cNor' as 'cTst' | 'cNor' | null, conCaja = true } = {}) {
   get.mockImplementation(async (url: string) => {
     if (url === '/api/v1/gastos/medios-pago') return MEDIOS
-    if (url === '/api/v1/Cajas/abiertas/estado') return cajas
+    if (url.startsWith('/api/v1/Cajas/activa')) return conCaja ? cajaActivaDe(url) : undefined
     if (url.endsWith('/estado-cuenta')) return estadoDeCuenta()
     if (url.includes('/movimientos')) {
       const conElPago = !!pagoEn && url.startsWith(`/api/v1/cuentas-corrientes/${pagoEn}/movimientos`)
@@ -378,28 +377,14 @@ it('lee fechas dd/mm/aaaa y rechaza las que no existen', () => {
   expect(leerFecha('2026-10-07')).toBeNull()
 })
 
-it('un cobro en efectivo manda el depósito de la única caja abierta', async () => {
+it('un cobro en efectivo manda el depósito de la sesión, cuya caja está abierta', async () => {
   renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
   await cargarMontoYMedio('5.000', 'Efectivo')
   await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
 
   expect(post.mock.calls[0][1]).toEqual({
-    socioComercialId: 'c1', depositoId: 'dep-central', claveIdempotencia: expect.stringMatching(/^mobile-/), lineas: [{ medioPagoId: 'm-ef', monto: 5000 }],
+    socioComercialId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, claveIdempotencia: expect.stringMatching(/^mobile-/), lineas: [{ medioPagoId: 'm-ef', monto: 5000 }],
   })
-})
-
-it('con dos cajas abiertas obliga a elegir la caja y manda esa', async () => {
-  servidor({ cajas: [...UNA_CAJA, { depositoId: 'dep-sur', depositoNombre: 'Depósito Sur' }] })
-  renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
-  await cargarMontoYMedio('5.000', 'Efectivo')
-  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
-  expect(screen.getByText('Elegí en qué caja entra el efectivo.')).toBeTruthy()
-  expect(post).not.toHaveBeenCalled()
-
-  await userEvent.press(await screen.findByRole('radio', { name: 'Depósito Sur' }, ESPERA))
-  await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
-
-  expect(post.mock.calls[0][1].depositoId).toBe('dep-sur')
 })
 
 it('un medio que no va a caja no manda depósito', async () => {
@@ -410,10 +395,10 @@ it('un medio que no va a caja no manda depósito', async () => {
   expect(post.mock.calls[0][1]).not.toHaveProperty('depositoId')
 })
 
-it('con efectivo, no se puede registrar mientras cargan las cajas abiertas: no sale un cobro sin caja', async () => {
+it('con efectivo, no se puede registrar mientras carga la caja: no sale un cobro sin caja', async () => {
   let cargar: (v: unknown) => void = () => {}
   get.mockImplementation(async (url: string) => {
-    if (url === '/api/v1/Cajas/abiertas/estado') return new Promise(r => { cargar = r })
+    if (url.startsWith('/api/v1/Cajas/activa')) return new Promise(r => { cargar = r })
     if (url === '/api/v1/gastos/medios-pago') return MEDIOS
     if (url.endsWith('/estado-cuenta')) return estadoDeCuenta()
     return fichaConCuentas()
@@ -424,18 +409,18 @@ it('con efectivo, no se puede registrar mientras cargan las cajas abiertas: no s
   await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
   expect(post).not.toHaveBeenCalled()
 
-  cargar(UNA_CAJA)
+  cargar(cajaActivaDe(''))
   await waitFor(() => expect(screen.getByRole('button', { name: /^Registrar cobro de/ }).props.accessibilityState?.disabled).toBeFalsy(), ESPERA)
   await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
-  expect(post.mock.calls[0][1].depositoId).toBe('dep-central')
+  expect(post.mock.calls[0][1].depositoId).toBe(DEPOSITO_CENTRAL_ID)
 })
 
 it('si falla la carga de cajas, lo dice con Reintentar y no manda el cobro; al reintentar, cobra con su caja', async () => {
   let falla = true
   get.mockImplementation(async (url: string) => {
-    if (url === '/api/v1/Cajas/abiertas/estado') {
+    if (url.startsWith('/api/v1/Cajas/activa')) {
       if (falla) throw new Error('No se pudo leer las cajas.')
-      return UNA_CAJA
+      return cajaActivaDe(url)
     }
     if (url === '/api/v1/gastos/medios-pago') return MEDIOS
     if (url.endsWith('/estado-cuenta')) return estadoDeCuenta()
@@ -452,15 +437,15 @@ it('si falla la carga de cajas, lo dice con Reintentar y no manda el cobro; al r
   await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
   await waitFor(() => expect(screen.queryByText('No se pudo leer las cajas.') === null).toBe(true), ESPERA)
   await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
-  expect(post.mock.calls[0][1].depositoId).toBe('dep-central')
+  expect(post.mock.calls[0][1].depositoId).toBe(DEPOSITO_CENTRAL_ID)
 })
 
-it('con efectivo y ninguna caja abierta, avisa y no manda el cobro', async () => {
-  servidor({ cajas: [] })
+it('con efectivo y sin la caja del depósito de la sesión abierta, avisa y no manda el cobro', async () => {
+  servidor({ conCaja: false })
   renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
   await cargarMontoYMedio('100', 'Efectivo')
 
-  expect(await screen.findByText('No hay ninguna caja abierta. Abrí una caja para registrar cobros en efectivo.', {}, ESPERA)).toBeTruthy()
+  expect(await screen.findByText('No hay una caja abierta en este depósito. Abrí una caja para registrar cobros en efectivo.', {}, ESPERA)).toBeTruthy()
   await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
   expect(post).not.toHaveBeenCalled()
 })

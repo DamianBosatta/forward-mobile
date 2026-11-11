@@ -98,7 +98,7 @@ function CobroDelCliente({ socioId, medioInicial, paso, onPaso, onVolver, onSali
   const aperturas = useRef(0)
   const [subiendo, setSubiendo] = useState(false)
   const medioInicialAplicado = useRef(false)
-  const { registrar, cajas, sinCajaUtil, aviso, cobro, enviar, reiniciar } = useEnvioDelCobro(socioId, f, !!editor?.borrador.requiereCaja)
+  const { registrar, cajaDelCobro, sinCajaUtil, aviso, cobro, enviar, reiniciar } = useEnvioDelCobro(socioId, f, !!editor?.borrador.requiereCaja)
   const { hasCapability, canDo } = usePermissions()
   // POST Media/upload-cheque: quien cobra (MOD_PAGOS:Create) o quien gestiona cheques (MediaController).
   const subeFotoCheque = canDo('MOD_PAGOS', 'create') || hasCapability('CAP_GESTIONAR_CHEQUES')
@@ -122,8 +122,8 @@ function CobroDelCliente({ socioId, medioInicial, paso, onPaso, onVolver, onSali
   const meta = objetivo === 'vencido' ? deudaVencida : objetivo === 'saldo' ? saldoActual : 0
   const falta = Math.max(meta - total, 0)
   const ocupado = registrar.isPending || subiendo
-  const abiertas = cajas.data ?? []
-  const nombreCaja = (id: string | null) => abiertas.find(k => k.depositoId === (id ?? (abiertas.length === 1 ? abiertas[0].depositoId : null)))?.depositoNombre ?? null
+  // El efectivo entra a la caja del depósito de la sesión (como la web): su nombre va en el detalle de la línea.
+  const nombreCaja = cajaDelCobro.nombre
 
   if (cobro) {
     return (
@@ -162,8 +162,7 @@ function CobroDelCliente({ socioId, medioInicial, paso, onPaso, onVolver, onSali
     const { indice, borrador, vez } = editor
     const conCajas = borrador.requiereCaja
     const motivoCaja = !conCajas ? null
-      : cajas.isLoading || cajas.error || !cajas.data || abiertas.length === 0 ? 'Sin una caja abierta no se cobra en efectivo.'
-        : abiertas.length > 1 && !f.depositoId ? 'Elegí en qué caja entra el efectivo.' : null
+      : !cajaDelCobro.caja.isSuccess || cajaDelCobro.caja.error || !cajaDelCobro.caja.data?.abierta ? 'Sin una caja abierta no se cobra en efectivo.' : null
     const motivo = errorDelBorrador(f, indice, borrador) ?? motivoCaja ?? (subiendo ? 'Esperá a que termine de subir la foto.' : null)
     return (
       <MedioYMonto
@@ -173,9 +172,7 @@ function CobroDelCliente({ socioId, medioInicial, paso, onPaso, onVolver, onSali
         borrador={borrador}
         onCambio={b => setEditor(e => (e?.vez === vez ? { ...e, borrador: b } : e))}
         primera={esPrimeraLinea(f, indice)}
-        cajas={cajas}
-        depositoId={f.depositoId}
-        onCaja={id => setF(p => ({ ...p, depositoId: id }))}
+        caja={cajaDelCobro}
         subeFotoCheque={subeFotoCheque}
         onSubiendo={setSubiendo}
         motivo={motivo}
@@ -270,7 +267,7 @@ function CobroDelCliente({ socioId, medioInicial, paso, onPaso, onVolver, onSali
         {lineas.map(l => {
           const nombre = nombreMedio(l.medioPagoId)
           const monto = leerNumero(l.monto) ?? 0
-          const detalle = l.requiereCaja ? nombreCaja(f.depositoId)
+          const detalle = l.requiereCaja ? nombreCaja
             : l.indice === 0 && f.esCheque ? [f.cheque.numero && `N.º ${f.cheque.numero}`, f.cheque.banco].filter(Boolean).join(' · ')
               : l.indice === 0 && f.comprobanteUrl ? 'Foto del comprobante cargada' : null
           return (
@@ -339,7 +336,7 @@ function CobroDelCliente({ socioId, medioInicial, paso, onPaso, onVolver, onSali
           </View>
           {lineas.map(l => (
             <React.Fragment key={l.indice}>
-              {montoAccesible([nombreMedio(l.medioPagoId), l.requiereCaja ? nombreCaja(f.depositoId) : null].filter(Boolean).join(' · '), leerNumero(l.monto) ?? 0)}
+              {montoAccesible([nombreMedio(l.medioPagoId), l.requiereCaja ? nombreCaja : null].filter(Boolean).join(' · '), leerNumero(l.monto) ?? 0)}
             </React.Fragment>
           ))}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[3] }}>

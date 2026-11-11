@@ -5,16 +5,15 @@ import { space, typeScale, useColors } from '@/libs/theme'
 import { Button, Field, FormContainer, Notice, PieFijo, TopBar, formatImporte, formatPorcentaje } from '@/core/ui/fw'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
-import type { CajaAbierta, MedioDePago } from '../api/cobros'
+import type { CajaDelCobro, MedioDePago } from '../api/cobros'
 import { subirFotoCheque } from '../api/fotos'
 import type { FormCobro } from '../lib/cobro'
 import { condicionesDelMedio } from '../lib/condicionesMedio'
 import type { BorradorMedio } from '../lib/lineasCobro'
+import { CajaDelCobroInline } from './CajaDelCobroInline'
 import { DestinoDelCobro } from './DestinoDelCobro'
 import { ElegirChip } from './ElegirChip'
 import { FotoDelCobro } from './FotoDelCobro'
-
-export const SIN_CAJA_ABIERTA = 'No hay ninguna caja abierta. Abrí una caja para registrar cobros en efectivo.'
 
 interface Props {
   medios: MedioDePago[]
@@ -24,9 +23,8 @@ interface Props {
   onCambio: (b: BorradorMedio) => void
   /** La primera línea del cobro: la única con cuenta donde entró, foto del comprobante y datos del cheque. */
   primera: boolean
-  cajas: { data?: CajaAbierta[]; error: unknown; isLoading: boolean; refetch: () => unknown }
-  depositoId: string | null
-  onCaja: (depositoId: string) => void
+  /** La caja del depósito de la sesión, donde entra el efectivo (no se elige acá). */
+  caja: CajaDelCobro
   subeFotoCheque: boolean
   onSubiendo: (subiendo: boolean) => void
   /** Por qué todavía no se puede agregar; `null` si se puede. */
@@ -40,8 +38,8 @@ interface Props {
 
 /**
  * "Medio y monto" (maqueta "Cobros como venta", frames 7 a 9; el lugar de "Cantidad y oferta" en la venta): un
- * medio con su monto y lo que ese medio pide. Efectivo: la caja donde entra. Transferencia o depósito: la cuenta
- * donde entró y la foto del comprobante. Cheque: sus datos y su foto. Comisión, neto y acreditación son solo
+ * medio con su monto y lo que ese medio pide. Efectivo: la caja del depósito de la sesión, donde entra (no se elige).
+ * Transferencia o depósito: la cuenta donde entró y la foto del comprobante. Cheque: sus datos y su foto. Comisión, neto y acreditación son solo
  * informativos. Los mismos componentes y textos que el formulario de siempre.
  */
 export function MedioYMonto(p: Props) {
@@ -54,7 +52,6 @@ export function MedioYMonto(p: Props) {
     const m = p.medios.find(x => x.id === id)
     onCambio({ ...b, medioPagoId: id, cuentaPropiaId: null, esCheque: !!m?.esCheque, requiereCaja: !!m?.requiereCaja })
   }
-  const abiertas = p.cajas.data ?? []
 
   return (
     <View style={{ flex: 1 }}>
@@ -81,17 +78,7 @@ export function MedioYMonto(p: Props) {
             </Text>
           ) : null}
 
-          {b.requiereCaja && abiertas.length > 1 ? (
-            <ElegirChip titulo="Caja" tituloVisible opciones={abiertas.map(k => ({ id: k.depositoId, label: k.depositoNombre ?? 'Caja' }))} valor={p.depositoId} onCambio={p.onCaja} />
-          ) : null}
-          {b.requiereCaja && p.cajas.error ? (
-            <>
-              <Notice tone="peligro">{mensajeDelServidor(p.cajas.error, 'No se pudieron cargar las cajas abiertas.')}</Notice>
-              <Button label="Reintentar" variant="secundario" onPress={() => { void p.cajas.refetch() }} />
-            </>
-          ) : null}
-          {b.requiereCaja && p.cajas.data && !p.cajas.error && abiertas.length === 0 ? <Notice tone="advertencia">{SIN_CAJA_ABIERTA}</Notice> : null}
-          {b.requiereCaja && p.cajas.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
+          {b.requiereCaja ? <CajaDelCobroInline caja={p.caja} /> : null}
 
           {p.primera && b.esCheque ? (
             <>
