@@ -64,6 +64,8 @@ export interface VentasPreparacionParams {
   metodoEntrega?: number
   ticketId?: string
   vendedorId?: string
+  /** Solo quien ve todos los depósitos lo manda; sin él el servidor recorta al depósito del usuario. */
+  depositoId?: string
 }
 
 /** Query string (PascalCase) compartido por la lista y los conteos del tablero: mismos filtros. */
@@ -74,6 +76,7 @@ function preparacionSearchParams(params?: VentasPreparacionParams) {
   if (params?.metodoEntrega != null) searchParams.set('MetodoEntrega', String(params.metodoEntrega))
   if (params?.ticketId) searchParams.set('TicketId', params.ticketId)
   if (params?.vendedorId) searchParams.set('VendedorId', params.vendedorId)
+  if (params?.depositoId) searchParams.set('DepositoId', params.depositoId)
   return searchParams
 }
 

@@ -19,7 +19,7 @@ import { PedidoPorPrepararDetalle } from '@/features/logistica/porPreparar/Pedid
 import { ATAJOS_ENTREGA, COLUMNAS, atajoDeRango, conteosDeColumnas, rangoDeAtajo, repartirEnColumnas, type ColumnaId, type VentaTablero } from './tablero'
 import { ColumnaTablero } from './ColumnaTablero'
 import { PestanasEstado } from './PestanasEstado'
-import { DepositoDelTablero, ErrorTablero, SinAccesoPreparacion, TableroEsqueleto, TableroVacio } from './EstadosTablero'
+import { DepositoDelTablero, ElegirDepositoSheet, ErrorTablero, SinAccesoPreparacion, TableroEsqueleto, TableroVacio } from './EstadosTablero'
 import { FiltrosTableroSheet, filtrosDeApertura, type FiltrosTablero } from './FiltrosTablero'
 
 const AVISO = 'Desde el teléfono solo se ven. Preparar, empacar y reprogramar se hace en la web.'
@@ -71,7 +71,13 @@ function Tablero() {
   const veTodos = hasCapability(permisos, 'CAP_VER_TODOS_LOS_DEPOSITOS')
   const depositos = useDepositos()
   const nombrePropio = depositos.data?.find((d) => d.id === depositoPropio)?.nombre ?? undefined
-  const nombreDeposito = veTodos ? 'Todos los depósitos' : (nombrePropio ?? 'Tu depósito')
+  // Quien ve todos elige acá cuál mirar (null = todos); solo ese depósito viaja como DepositoId.
+  const [depositoElegido, setDepositoElegido] = useState<string | null>(null)
+  const [eligiendoDeposito, setEligiendoDeposito] = useState(false)
+  const depositoParaServidor = veTodos ? (depositoElegido ?? undefined) : undefined
+  const nombreElegido = depositoElegido ? depositos.data?.find((d) => d.id === depositoElegido)?.nombre ?? undefined : undefined
+  const nombreDeposito = veTodos ? (depositoElegido ? (nombreElegido ?? 'Depósito elegido') : 'Todos los depósitos') : (nombrePropio ?? 'Tu depósito')
+  const nombreParaTextos = veTodos ? nombreElegido : nombrePropio
 
   // La lista de vendedores pide Ventas:Read; sin ese permiso no se ofrece filtrar por vendedor.
   const veVendedores = useAuthStore((s) => s.canDo('MOD_VENTAS', 'read'))
@@ -84,6 +90,7 @@ function Tablero() {
     fechaHasta: filtros.rango.hasta || undefined,
     metodoEntrega: filtros.metodo ?? undefined,
     vendedorId: filtros.vendedor?.id,
+    depositoId: depositoParaServidor,
   }
   const q = useVentasParaPreparacion(params, { activa, mantenerAlFiltrar: true })
   const conteosQ = useConteosPreparacion(params, { activa })
@@ -107,7 +114,7 @@ function Tablero() {
 
   const cabeza = (
     <View style={{ gap: space[3] }}>
-      <DepositoDelTablero nombre={nombreDeposito} asignado={!veTodos} />
+      <DepositoDelTablero nombre={nombreDeposito} asignado={!veTodos} onElegir={veTodos ? () => setEligiendoDeposito(true) : undefined} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ gap: space[2], alignItems: 'center' }}>
           {ATAJOS_ENTREGA.map(({ id, label }) => (
@@ -141,7 +148,7 @@ function Tablero() {
   } else if (sinPedidos) {
     cuerpo = (
       <TableroVacio
-        nombreDeposito={veTodos ? undefined : nombrePropio}
+        nombreDeposito={nombreParaTextos}
         onVerTodo={atajo === 'todo' ? undefined : () => setFiltros({ ...filtros, exacto: false, rango: rangoDeAtajo('todo', hoy) })}
         onLimpiarFiltros={deApertura ? undefined : limpiar}
       />
@@ -185,9 +192,20 @@ function Tablero() {
         onCambio={setFiltros}
         onLimpiar={limpiar}
         vendedores={veVendedores ? { lista: vendedores.data ?? [], cargando: vendedores.isLoading, error: vendedores.isError } : null}
-        nombreDeposito={veTodos ? undefined : nombrePropio}
+        nombreDeposito={nombreParaTextos}
         onClose={() => setFiltrando(false)}
       />
+      {veTodos ? (
+        <ElegirDepositoSheet
+          visible={eligiendoDeposito}
+          depositos={(depositos.data ?? []).flatMap((d) => (d.id ? [{ id: d.id, nombre: d.nombre ?? 'Sin nombre' }] : []))}
+          elegido={depositoElegido}
+          cargando={depositos.isLoading}
+          error={depositos.isError}
+          onElegir={(id) => { setDepositoElegido(id); setEligiendoDeposito(false) }}
+          onClose={() => setEligiendoDeposito(false)}
+        />
+      ) : null}
     </Marco>
   )
 }

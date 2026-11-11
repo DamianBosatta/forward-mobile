@@ -1,22 +1,19 @@
 import React from 'react'
-import { Text, View } from 'react-native'
-import { Building2, Inbox, Lock, Shield } from 'lucide-react-native'
+import { Pressable, Text, View } from 'react-native'
+import { Building2, ChevronDown, Inbox, Lock, Shield } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice } from '@/core/ui/fw'
+import { BottomSheet, Button, Notice } from '@/core/ui/fw'
+import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { Skeleton } from '@/core/ui/Skeleton'
 
 /**
- * Depósito arriba del tablero, solo como contexto (DepositoDelTablero de la web): no se elige acá. Quien no ve todos
- * los depósitos ve el suyo con el aviso de que se lo asignaron.
+ * Depósito arriba del tablero (DepositoDelTablero de la web). Quien no ve todos los depósitos ve el suyo, fijo, con
+ * el aviso de que se lo asignaron. Quien los ve todos lo puede cambiar (`onElegir`): solo cambia lo que se mira.
  */
-export function DepositoDelTablero({ nombre, asignado }: { nombre: string; asignado: boolean }) {
+export function DepositoDelTablero({ nombre, asignado, onElegir }: { nombre: string; asignado: boolean; onElegir?: () => void }) {
   const c = useColors()
-  return (
-    <View
-      accessible
-      accessibilityLabel={`Depósito: ${nombre}${asignado ? ', asignado a tu usuario' : ''}`}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: 44, paddingHorizontal: space[3], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface2 }}
-    >
+  const contenido = (
+    <>
       <Building2 size={18} color={c.textSecondary} />
       <View style={{ flex: 1 }}>
         <Text style={{ ...typeScale.secundario, color: c.text }}>{nombre}</Text>
@@ -27,7 +24,47 @@ export function DepositoDelTablero({ nombre, asignado }: { nombre: string; asign
           </View>
         ) : null}
       </View>
+      {onElegir ? <ChevronDown size={18} color={c.textSecondary} /> : null}
+    </>
+  )
+  const estilo = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space[2], minHeight: 44, paddingHorizontal: space[3], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, backgroundColor: onElegir ? c.surface : c.surface2 }
+  if (onElegir) {
+    return (
+      <Pressable onPress={onElegir} android_ripple={{ color: c.surface2 }} accessibilityRole="button" accessibilityLabel={`Depósito: ${nombre}`} accessibilityHint="Elegí qué depósito mirar" style={estilo}>
+        {contenido}
+      </Pressable>
+    )
+  }
+  return (
+    <View accessible accessibilityLabel={`Depósito: ${nombre}${asignado ? ', asignado a tu usuario' : ''}`} style={estilo}>
+      {contenido}
     </View>
+  )
+}
+
+/** Hoja para elegir el depósito que se mira (solo con CAP_VER_TODOS_LOS_DEPOSITOS). `null` = todos. */
+export function ElegirDepositoSheet({ visible, depositos, elegido, cargando, error, onElegir, onClose }: {
+  visible: boolean
+  depositos: { id: string; nombre: string }[]
+  elegido: string | null
+  cargando: boolean
+  error: boolean
+  onElegir: (id: string | null) => void
+  onClose: () => void
+}) {
+  const c = useColors()
+  return (
+    <BottomSheet visible={visible} onClose={onClose} accessibilityLabel="Elegir depósito">
+      <View testID="hoja-depositos" style={{ gap: space[3] }}>
+        <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Depósito</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+          <FiltroChip label="Todos los depósitos" activo={elegido === null} onPress={() => onElegir(null)} />
+          {depositos.map((d) => <FiltroChip key={d.id} label={d.nombre} activo={elegido === d.id} onPress={() => onElegir(d.id)} />)}
+        </View>
+        {cargando ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Cargando…</Text> : null}
+        {error ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>No se pudo cargar la lista de depósitos.</Text> : null}
+      </View>
+    </BottomSheet>
   )
 }
 

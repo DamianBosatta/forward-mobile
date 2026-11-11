@@ -42,7 +42,7 @@ const PEDIDOS = [
   pedido({ id: 'v3', codigoPedido: 'A00430', direccion: 'Gaona 1200', clienteNombre: 'Almacén Rita', estado: 3, itemsCount: 5, unidadesCount: 36, ultimoCambioPor: 'Operario Uno', ultimoCambioEn: '2026-10-09T13:42:00Z' }),
   pedido({ id: 'v4', codigoPedido: 'A00431', direccion: 'Corrientes 900', clienteNombre: 'Kiosco Leo', estado: 4, piezasCount: 3, hojaRutaId: 'h1', hojaRutaCodigo: 'HR-0042' }),
   pedido({ id: 'v5', codigoPedido: 'A00432', direccion: 'Rivadavia 50', clienteNombre: 'Super Ana', estado: 4, piezasCount: 2, metodoEntrega: 3, metodoEntregaNombre: 'Expreso' }),
-  pedido({ id: 'v6', codigoPedido: 'A00399', direccion: 'Tarantino 1898', clienteNombre: 'Abel', estado: 7, fechaEntrega: '2026-10-07T13:00:00Z' }),
+  pedido({ id: 'v6', codigoPedido: 'A00399', direccion: 'Tarantino 1898', clienteNombre: 'Abel', estado: 7, fechaEntrega: '2026-10-07T13:00:00Z', hojaRutaId: 'h9' }),
 ]
 const CONTEOS = { columnas: [
   { clave: 'Confirmada', cantidad: 12 }, { clave: 'EnPreparacion', cantidad: 5 },
@@ -56,6 +56,8 @@ function servidor() {
       : url.includes('ventas-para-preparacion') ? Promise.resolve(pedidos)
       : url.endsWith('/api/v1/Depositos') ? Promise.resolve([{ id: 'd1', nombre: 'Depósito Central' }, { id: 'd2', nombre: 'Zona Norte' }])
       : url.endsWith('/Ventas/vendedores') ? Promise.resolve([{ id: 'u1', nombre: 'Emanuel Parraquini' }, { id: 'u2', nombre: 'Lucía Ferreyra' }])
+      : url.endsWith('/Logistica/hojas-ruta/h9') ? Promise.resolve({ id: 'h9', choferNombre: 'Chofer Uno', detalles: [{ ventaId: 'v6', motivoRechazo: 'Local cerrado' }] })
+      : url.endsWith('/Ventas/v6') ? Promise.resolve({ venta: { id: 'v6', observaciones: 'Tocar timbre del costado.' }, detalles: [], bultos: [] })
       : url.endsWith('/Ventas/v1') ? Promise.resolve({ venta: { id: 'v1' }, detalles: [{ id: 'd1', productoNombre: 'Lavandina Ayudín Clásica 2 L', cantidad: 60 }], bultos: [] })
       : Promise.reject(new Error(`sin respuesta: ${url}`)),
   )
@@ -148,6 +150,10 @@ describe.each(['light', 'dark'] as const)('Preparación de pedidos (%s)', (esque
     expect(within(fallida).getByText('Entrega fallida mié 7/10')).toBeTruthy()
     // La fecha ya es la fallida: no se marca atrasado.
     expect(within(fallida).queryByText('Atrasado')).toBeNull()
+    // Lo que ya muestra "No entregados" de mobile: motivo y chofer de la hoja, observaciones de la venta.
+    expect(await within(fallida).findByText('Motivo: Local cerrado')).toBeTruthy()
+    expect(within(fallida).getByText('Observaciones: Tocar timbre del costado.')).toBeTruthy()
+    expect(within(fallida).getByText('Chofer Uno (chofer)')).toBeTruthy()
   })
 
   it('solo para ver: sin casillas ni botones que cambien datos, y nunca escribe en el servidor', async () => {
@@ -215,6 +221,17 @@ describe.each(['light', 'dark'] as const)('Preparación de pedidos (%s)', (esque
     pintar()
     expect(await screen.findByText('Todos los depósitos')).toBeTruthy()
     expect(screen.queryByText('asignado a tu usuario')).toBeNull()
+    expect(pedidosPedidos().every((u) => !u.includes('DepositoId'))).toBe(true)
+    // Elige un depósito: la lista y los conteos lo piden con DepositoId.
+    await userEvent.press(screen.getByRole('button', { name: 'Depósito: Todos los depósitos' }))
+    await userEvent.press(await within(screen.getByTestId('hoja-depositos')).findByRole('button', { name: 'Zona Norte' }))
+    expect(ultimaLista()).toContain('DepositoId=d2')
+    expect(urls().filter((u) => u.includes('preparacion/conteos')).at(-1)).toContain('DepositoId=d2')
+    expect(screen.getByText('Zona Norte')).toBeTruthy()
+    // Volver a todos saca el parámetro.
+    await userEvent.press(screen.getByRole('button', { name: 'Depósito: Zona Norte' }))
+    await userEvent.press(within(screen.getByTestId('hoja-depositos')).getByRole('button', { name: 'Todos los depósitos' }))
+    expect(screen.getByRole('button', { name: 'Depósito: Todos los depósitos' })).toBeTruthy()
   })
 
   it('cargando, error con Reintentar, sin pedidos con Ver todo y Limpiar filtros, y columna vacía', async () => {

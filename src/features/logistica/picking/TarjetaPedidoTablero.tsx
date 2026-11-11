@@ -47,7 +47,7 @@ function Dato({ icono: Icono, children }: { icono: LucideIcon; children: React.R
  * En hoja, método) arriba, la dirección en negrita y el cliente debajo, y un renglón con ícono por dato. Tocarla
  * abre el detalle del pedido.
  */
-export function TarjetaPedidoTablero({ venta, hoy, opciones = {}, onAbrir }: { venta: VentaTablero; hoy: string; opciones?: OpcionesTarjeta; onAbrir: () => void }) {
+export function TarjetaPedidoTablero({ venta, hoy, opciones = {}, onAbrir, children }: { venta: VentaTablero; hoy: string; opciones?: OpcionesTarjeta; onAbrir: () => void; children?: React.ReactNode }) {
   const c = useColors()
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const { etiquetaFecha = 'Entrega', marcarAtraso = true, mostrarItems, mostrarHoja, mostrarPiezas, mostrarUltimoCambio } = opciones
@@ -84,6 +84,8 @@ export function TarjetaPedidoTablero({ venta, hoy, opciones = {}, onAbrir }: { v
         {mostrarItems ? <Dato icono={Package}>{`${venta.itemsCount} ítems · ${venta.unidadesCount ?? 0} unidades`}</Dato> : null}
         {ultimoCambio ? <Dato icono={History}>{ultimoCambio}</Dato> : null}
       </View>
+      {/* Lo que cada columna suma abajo (No entregado: motivo, observaciones y chofer). */}
+      {children}
       {mostrarPiezas ? (
         <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{`${venta.piezasCount} ${venta.piezasCount === 1 ? 'pieza' : 'piezas'}`}</Text>
       ) : null}

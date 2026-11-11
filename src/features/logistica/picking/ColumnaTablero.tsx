@@ -3,6 +3,7 @@ import { Text, View } from 'react-native'
 import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { COLUMNAS, subtotalDeColumna, type ColumnaId, type VentaTablero } from './tablero'
 import { TarjetaPedidoTablero, type OpcionesTarjeta } from './TarjetaPedidoTablero'
+import { DatosDeEntregaFallida } from '@/features/logistica/porPreparar/PorPrepararScreen'
 
 const semibold = { fontFamily: FONT.semibold, fontWeight: '600' as const }
 
@@ -56,7 +57,11 @@ export function ColumnaTablero({ id, items, hoy, onAbrir }: { id: ColumnaId; ite
           <Text style={{ ...typeScale.secundario, color: c.textSecondary, textAlign: 'center' }}>{col.vacia}</Text>
         </View>
       ) : (
-        items.map((v) => <TarjetaPedidoTablero key={v.id} venta={v} hoy={hoy} opciones={OPCIONES[id]} onAbrir={() => onAbrir(v)} />)
+        items.map((v) => (
+          <TarjetaPedidoTablero key={v.id} venta={v} hoy={hoy} opciones={OPCIONES[id]} onAbrir={() => onAbrir(v)}>
+            {id === 'noEntregado' ? <DatosDeEntregaFallida pedido={v} /> : null}
+          </TarjetaPedidoTablero>
+        ))
       )}
     </View>
   )
