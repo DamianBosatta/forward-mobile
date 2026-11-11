@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Text, View } from 'react-native'
 import { BottomSheet, Button, Field, Notice } from '@/core/ui/fw'
-import { space, typeScale, useColors } from '@/libs/theme'
+import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { VentaCambioError, esConflictoDeVenta, useAutorizarVenta, useRechazarAutorizacion } from '@/libs/api-client/ventas'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { leerDescuentoAdicional } from '../lib/descuentoAdicional'
@@ -88,7 +88,8 @@ export function DecisionSheet({ decision, ventaId, cliente, version, fechaPendie
           : 'La venta queda confirmada y reserva el stock.'}
       </Text>
       {!esRechazo && cambios.length > 0 ? (
-        <View accessible accessibilityLabel="Cambios en el pedido" style={{ gap: space[1] }}>
+        // Frame 21: los cambios del pedido en una tarjeta gris.
+        <View accessible accessibilityLabel="Cambios en el pedido" style={{ gap: space[1], padding: space[3], borderRadius: radii.campo, backgroundColor: c.surface2 }}>
           <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Cambios en el pedido</Text>
           {cambios.map((x) => (
             <Text key={x.id} style={[typeScale.secundario, { color: c.text }]}>

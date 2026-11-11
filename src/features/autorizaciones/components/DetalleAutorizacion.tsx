@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
+import { CircleAlert } from 'lucide-react-native'
 import { useRouter } from 'expo-router'
 import { Button, Field, Notice, PieFijo, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, formatPorcentaje } from '@/core/ui/fw'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
@@ -14,6 +15,7 @@ import { estimarTotales, leerAjustes } from '../lib/ajustes'
 import { ClienteParaAutorizar } from './ClienteParaAutorizar'
 import { clienteDeBandeja } from './BandejaAutorizaciones'
 import { DecisionSheet, type Decision } from './DecisionSheet'
+import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 
 /** El servidor manda el estado como número o como nombre según el endpoint. */
 const POR_AUTORIZAR = ['9', 'PendienteAutorizacion']
@@ -77,7 +79,12 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         {barra}
         <View style={{ padding: space[4] }}>
-          {q.isError ? <Notice tone="peligro">{mensajeDelServidor(q.error, 'No se pudo cargar la venta.')}</Notice> : <ActivityIndicator color={c.brand} />}
+          {q.isError ? (
+            <Notice tone="peligro">{mensajeDelServidor(q.error, 'No se pudo cargar la venta.')}</Notice>
+          ) : (
+            // Frame 23: esqueletos con la forma de las tarjetas en lugar de la ruedita.
+            <Esqueletos bloques={[{ alto: 140, testID: 'esqueleto-tarjeta' }, { alto: 76 }]} />
+          )}
         </View>
       </View>
     )
@@ -99,10 +106,11 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], paddingBottom: space[12] }} keyboardShouldPersistTaps="handled">
         <View style={tarjeta}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-            <Text style={[typeScale.cuerpoDestacado, { color: c.text, flex: 1 }]}>{cliente.titulo}</Text>
+            <Text style={[typeScale.seccion, { color: c.text, flex: 1 }]}>{cliente.titulo}</Text>
             {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
           </View>
           <Text style={secundario}>{lineaDeApoyo}</Text>
+          <View style={{ height: 1, backgroundColor: c.surface2 }} />
           <TotalsRow label={rotuloTotal} importe={totalMostrado} destacado />
         </View>
 
@@ -111,10 +119,17 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
           <Notice tone="info">Esta venta ya no espera autorización.</Notice>
         ) : (
           <>
-            <View style={tarjeta}>
-              <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Por qué espera</Text>
-              {motivos.map((m) => <Text key={m.clave} style={[typeScale.secundario, { color: c.text }]}>{`• ${m.texto}`}</Text>)}
-              {venta.motivoVentaSinStock ? <Text style={secundario}>{`Motivo del vendedor: «${venta.motivoVentaSinStock}»`}</Text> : null}
+            {/* Frame 19: "Por qué espera" como aviso ámbar con sus viñetas (los colores del aviso de advertencia). */}
+            <View
+              testID="por-que-espera"
+              style={{ flexDirection: 'row', gap: space[2], padding: space[3], borderRadius: radii.campo, backgroundColor: c.chip.porAutorizar.bg }}
+            >
+              <CircleAlert size={20} color={c.chip.porAutorizar.text} strokeWidth={2} />
+              <View style={{ flex: 1, gap: space[1] }}>
+                <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text }]}>Por qué espera</Text>
+                {motivos.map((m) => <Text key={m.clave} style={[typeScale.secundario, { color: c.text }]}>{`• ${m.texto}`}</Text>)}
+                {venta.motivoVentaSinStock ? <Text style={[typeScale.secundario, { color: c.text }]}>{`Motivo del vendedor: «${venta.motivoVentaSinStock}»`}</Text> : null}
+              </View>
             </View>
             {puedeDecidir ? null : (
               <Notice tone="info">
@@ -127,17 +142,13 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
         )}
 
         {/* Debajo de los botones: si la ficha llega tarde, no los corre de lugar. */}
-        <ClienteParaAutorizar socio={socio.isError ? null : socio.data} />
-        {veCuenta && venta.clienteId ? (
-          <Pressable
-            accessibilityRole="link"
-            accessibilityLabel="Ver cuenta corriente del cliente"
-            onPress={() => router.push({ pathname: '/(tabs)/cuentas/[id]', params: { id: venta.clienteId! } })}
-            style={{ minHeight: 44, justifyContent: 'center' }}
-          >
-            <Text style={[typeScale.cuerpoDestacado, { color: c.brandInk }]}>Ver cuenta corriente del cliente</Text>
-          </Pressable>
-        ) : null}
+        <ClienteParaAutorizar
+          socio={socio.isError ? null : socio.data}
+          enlace={veCuenta && venta.clienteId ? {
+            label: 'Ver cuenta corriente del cliente',
+            onPress: () => router.push({ pathname: '/(tabs)/cuentas/[id]', params: { id: venta.clienteId! } }),
+          } : undefined}
+        />
 
         {veCostos ? (
           <View style={tarjeta} testID="bloque-costos">
@@ -163,7 +174,8 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
             {debajoDelMinimo.map((it) => (
               <View key={it.detalleId} accessible style={{ gap: space[1], paddingTop: space[2], borderTopWidth: 1, borderTopColor: c.border }}>
                 <ProductoIdentidad nombre={it.productoNombre} marca={it.marca} codigo={it.codigoPropio} estiloNombre={typeScale.secundario} />
-                <Text style={secundario}>{`Precio ${formatImporte(it.precioEfectivo)} · Mínimo ${formatImporte(it.precioMinimoRentable)}`}</Text>
+                {/* Frame 20: el precio y el mínimo en rojo. */}
+                <Text style={[typeScale.secundario, cifras, { color: c.chip.anulado.text }]}>{`Precio ${formatImporte(it.precioEfectivo)} · Mínimo ${formatImporte(it.precioMinimoRentable)}`}</Text>
                 <Text style={secundario}>
                   {veCostos ? `Aporte ${formatImporte(it.aporteOverhead)} · Sacrificio ${formatImporte(it.sacrificio)}` : `Sacrificio ${formatImporte(it.sacrificio)}`}
                 </Text>
@@ -173,13 +185,14 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
           </View>
         ) : null}
 
-        <View style={tarjeta}>
-          <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{`Líneas (${q.data?.detalles.length ?? 0})`}</Text>
-          {(q.data?.detalles ?? []).map((d) => (
-            <View key={d.id} style={{ gap: space[1], paddingVertical: space[1] }}>
+        {/* Frame 20: las líneas como filas de una tarjeta con el subtotal a la derecha; los totales, en otra. */}
+        <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text, marginBottom: -space[2] }]}>{`Líneas (${q.data?.detalles.length ?? 0})`}</Text>
+        <View testID="tarjeta-lineas" style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>
+          {(q.data?.detalles ?? []).map((d, i) => (
+            <View key={d.id} style={{ gap: space[1], paddingVertical: space[3], paddingHorizontal: space[4], borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.surface2 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
                 <View style={{ flex: 1 }}><ProductoIdentidad nombre={d.productoNombre} marca={d.marca} codigo={d.codigoPropio} estiloNombre={typeScale.secundario} /></View>
-                <Text style={[typeScale.secundario, cifras, { color: c.text }]}>{formatImporte(totales?.subtotalDeLinea[d.id] ?? d.subtotal)}</Text>
+                <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(totales?.subtotalDeLinea[d.id] ?? d.subtotal)}</Text>
               </View>
               <Text style={secundario}>
                 {`${d.cantidad} × ${formatImporte(d.precioUnitario)}${d.porcentajeDescuentoItem > 0 ? ` · Desc. ${formatPorcentaje(d.porcentajeDescuentoItem)}` : ''}`}
@@ -199,6 +212,8 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
               ) : null}
             </View>
           ))}
+        </View>
+        <View testID="tarjeta-totales" style={tarjeta}>
           <TotalsRow label="Subtotal" importe={totales?.subtotalBruto ?? venta.subtotalBrutoAmount} />
           {(totales?.montoDescuento ?? venta.montoDescuentoAmount) > 0 ? <TotalsRow label="Descuento general" importe={-(totales?.montoDescuento ?? venta.montoDescuentoAmount)} /> : null}
           <TotalsRow label="Flete" importe={venta.cargoFleteAmount} />

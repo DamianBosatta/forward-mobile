@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, ScrollView, View } from 'react-native'
-import { space, useColors } from '@/libs/theme'
+import { ScrollView, View } from 'react-native'
+import { radii, space, useColors } from '@/libs/theme'
 import { MOTIVO_SIN_PERMISO_DE_SERVICIO, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { Button, Field, FormContainer, Notice, PieFijo } from '@/core/ui/fw'
 import { useToast } from '@/core/ui/Toast'
@@ -11,6 +11,8 @@ import { subirComprobanteCobro } from '@/features/cuentas/api/fotos'
 import { ElegirChip } from '@/features/cuentas/components/ElegirChip'
 import { FotoDelCobro } from '@/features/cuentas/components/FotoDelCobro'
 import { ElegirCuenta } from '@/features/tesoreria/components/ElegirCuenta'
+import { MontoGrande } from '@/features/tesoreria/components/MontoGrande'
+import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { useRegistrarGasto, useTiposGasto } from '../api/gastos'
 import { usePuedePagarServicio } from '../lib/permiso'
 import { cuerpoDelGasto, validarServicio, type FormServicio } from '../lib/servicio'
@@ -53,45 +55,57 @@ export function PagarServicio({ onListo }: { onListo: () => void }) {
     })
   }
 
+  const tarjeta = { borderRadius: radii.tarjeta, backgroundColor: c.surface, padding: space[4], gap: space[3] }
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ padding: space[4] }} keyboardShouldPersistTaps="handled">
+        {/* Propuesta "Finanzas como venta", frames 14 y 15: monto grande y tres tarjetas sin borde. */}
         <FormContainer style={{ gap: space[4] }}>
-          {tipos.isLoading || medios.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
+          {tipos.isLoading || medios.isLoading ? <Esqueletos bloques={[{ alto: 76 }]} /> : null}
           {tipos.error ? <Notice tone="peligro">{mensajeDelServidor(tipos.error, 'No se pudieron cargar los conceptos.')}</Notice> : null}
           {medios.error ? <Notice tone="peligro">{mensajeDelServidor(medios.error, 'No se pudieron cargar los medios de pago.')}</Notice> : null}
 
-          <Field label="Monto" value={f.monto} onChangeText={monto => setF(p => ({ ...p, monto }))} keyboardType="decimal-pad" alignRight prefijo="$" />
-          <ElegirChip
-            titulo="Concepto"
-            tituloVisible
-            conTilde
-            opciones={conceptos.map(t => ({ id: t.id!, label: t.nombre ?? '' }))}
-            valor={f.tipoGastoId}
-            onCambio={tipoGastoId => setF(p => ({ ...p, tipoGastoId }))}
-          />
-          <Field label="Descripción (opcional)" value={f.descripcion} onChangeText={descripcion => setF(p => ({ ...p, descripcion }))} maxLength={200} />
-          <ElegirChip
-            titulo="Medio de pago"
-            tituloVisible
-            conTilde
-            opciones={mediosDePago.map(m => ({ id: m.id!, label: m.nombre ?? '' }))}
-            valor={f.medioPagoId}
-            onCambio={id => setF(p => ({ ...p, medioPagoId: id, cuentaOrigenId: null }))}
-          />
-          {f.medioPagoId ? (
-            <>
-              {cuentas.error ? <Notice tone="peligro">{mensajeDelServidor(cuentas.error, 'No se pudieron cargar las cuentas.')}</Notice> : null}
-              <ElegirCuenta titulo="Cuenta de origen" cuentas={cuentas.data ?? []} valor={f.cuentaOrigenId} onCambio={cuentaOrigenId => setF(p => ({ ...p, cuentaOrigenId }))} />
-            </>
-          ) : null}
-          <FotoDelCobro que="del comprobante" url={f.comprobanteUrl} subir={subirComprobanteCobro} onUrl={comprobanteUrl => setF(p => ({ ...p, comprobanteUrl }))} onSubiendo={setSubiendo} />
-
-          {aviso ? <Notice tone="advertencia">{aviso}</Notice> : null}
-          {registrar.error ? <Notice tone="peligro">{mensajeDelServidor(registrar.error, 'No se pudo registrar el pago.')}</Notice> : null}
+          <MontoGrande value={f.monto} onChangeText={monto => setF(p => ({ ...p, monto }))} />
+          <View testID="tarjeta-concepto" style={tarjeta}>
+            <ElegirChip
+              titulo="Concepto"
+              tituloVisible
+              conTilde
+              opciones={conceptos.map(t => ({ id: t.id!, label: t.nombre ?? '' }))}
+              valor={f.tipoGastoId}
+              onCambio={tipoGastoId => setF(p => ({ ...p, tipoGastoId }))}
+            />
+            <Field label="Descripción (opcional)" value={f.descripcion} onChangeText={descripcion => setF(p => ({ ...p, descripcion }))} maxLength={200} />
+          </View>
+          <View testID="tarjeta-medio" style={tarjeta}>
+            <ElegirChip
+              titulo="Medio de pago"
+              tituloVisible
+              conTilde
+              opciones={mediosDePago.map(m => ({ id: m.id!, label: m.nombre ?? '' }))}
+              valor={f.medioPagoId}
+              onCambio={id => setF(p => ({ ...p, medioPagoId: id, cuentaOrigenId: null }))}
+            />
+            {f.medioPagoId ? (
+              <>
+                {cuentas.error ? <Notice tone="peligro">{mensajeDelServidor(cuentas.error, 'No se pudieron cargar las cuentas.')}</Notice> : null}
+                <ElegirCuenta titulo="Cuenta de origen" cuentas={cuentas.data ?? []} valor={f.cuentaOrigenId} onCambio={cuentaOrigenId => setF(p => ({ ...p, cuentaOrigenId }))} />
+              </>
+            ) : null}
+          </View>
+          <View testID="tarjeta-comprobante" style={tarjeta}>
+            <FotoDelCobro que="del comprobante" url={f.comprobanteUrl} subir={subirComprobanteCobro} onUrl={comprobanteUrl => setF(p => ({ ...p, comprobanteUrl }))} onSubiendo={setSubiendo} />
+          </View>
         </FormContainer>
       </ScrollView>
+      {/* El aviso de qué falta y el error al guardar quedan arriba del pie, a la vista del botón (frame 15). */}
       <PieFijo conInsetInferior>
+        {aviso || registrar.error ? (
+          <View testID="pie-avisos" style={{ gap: space[2] }}>
+            {aviso ? <Notice tone="advertencia">{aviso}</Notice> : null}
+            {registrar.error ? <Notice tone="peligro">{mensajeDelServidor(registrar.error, 'No se pudo registrar el pago.')}</Notice> : null}
+          </View>
+        ) : null}
         <Button label="Registrar pago" loading={registrar.isPending} disabled={registrar.isPending || subiendo || !puede} onPress={enviar} />
         {!puede ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_SERVICIO}</MotivoDeshabilitado> : null}
       </PieFijo>

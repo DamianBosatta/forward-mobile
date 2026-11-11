@@ -79,18 +79,19 @@ describe('Autorizaciones: la bandeja', () => {
     expect(screen.getByLabelText('Todas: 2')).toBeTruthy()
     expect(screen.getByLabelText('Crédito: 1')).toBeTruthy()
     expect(screen.queryByLabelText(/Sin stock/)).toBeNull()
-    expect(screen.getByText('2 POR AUTORIZAR · $ 1.500,50')).toBeTruthy()
+    // Propuesta "Finanzas como venta", frame 16: el resumen pasó a hero con la cifra grande.
+    expect(screen.getByLabelText(/^Por autorizar: \$ 1\.500,50, 2 ventas · /)).toBeTruthy()
 
     await userEvent.press(screen.getByLabelText('Margen: 1'))
     expect(screen.queryByText('Dirección a - Cliente a')).toBeNull()
-    expect(screen.getByText('1 POR AUTORIZAR · $ 500,00')).toBeTruthy()
+    expect(screen.getByLabelText(/^Por autorizar: \$ 500,00, 1 venta · /)).toBeTruthy()
   })
 
   it('con monedas distintas no suma un total', async () => {
     conCapacidades('CAP_AUTORIZAR_VENTA')
     bandeja([venta('a', 4, 100), venta('b', 4, 100, { totalCurrency: 'USD' })])
     pintar()
-    expect(await screen.findByText('2 POR AUTORIZAR')).toBeTruthy()
+    expect(await screen.findByLabelText(/^Por autorizar: 2, ventas · /)).toBeTruthy()
   })
 
   it('sin CAP_AUTORIZAR_VENTA no pide la bandeja y lo explica', async () => {

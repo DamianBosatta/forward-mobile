@@ -20,6 +20,12 @@ interface HeroSaldoProps {
   accessibilityLabel: string
   /** Texto arriba de la cifra. Por defecto "Saldo"; la ficha de proveedor dice "Le debemos", "A favor" o "Al día". */
   etiqueta?: string
+  /** Rótulo sobre la cifra (Finanzas: "Te deben", "Debés", "Por autorizar"). Si viene, manda sobre `etiqueta`. */
+  titulo?: string
+  /** Línea debajo de la cifra ("7 clientes con deuda"); la lee el lector junto con la cifra. */
+  meta?: string
+  /** La cifra ya escrita, cuando no es un importe (la cantidad de ventas por autorizar). */
+  cifra?: string
 }
 
 /**
@@ -27,7 +33,8 @@ interface HeroSaldoProps {
  * lo vencido con la deuda más vieja y la barra del crédito usado. Mobile no calcula vencimientos ni topes:
  * muestra lo que manda el servidor; la barra solo reparte el tope entre usado y disponible.
  */
-export function HeroSaldo({ saldo, vencido, diasDeudaMasVieja, tope, disponible, accessibilityLabel, etiqueta = 'Saldo' }: HeroSaldoProps) {
+export function HeroSaldo({ saldo, vencido, diasDeudaMasVieja, tope, disponible, accessibilityLabel, etiqueta, titulo, meta, cifra }: HeroSaldoProps) {
+  const rotulo = titulo ?? etiqueta ?? 'Saldo'
   const c = useColors()
   const pasado = disponible !== null && disponible < 0
   const usado = tope !== null && disponible !== null ? Math.min(tope, Math.max(0, tope - disponible)) : 0
@@ -39,14 +46,15 @@ export function HeroSaldo({ saldo, vencido, diasDeudaMasVieja, tope, disponible,
       style={{ backgroundColor: c.topBar, borderWidth: 1, borderColor: c.topBarBorder, borderRadius: radii.hoja, padding: space[4], gap: 10 }}
     >
       <View accessible accessibilityLabel={accessibilityLabel}>
-        <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>{etiqueta}</Text>
+        <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>{rotulo}</Text>
         <Text
           numberOfLines={1}
           adjustsFontSizeToFit
           style={[typeScale.titulo, importe, { fontSize: 32, lineHeight: 40, fontWeight: '700', color: c.onTopBarStrong }]}
         >
-          {formatImporte(saldo)}
+          {cifra ?? formatImporte(saldo)}
         </Text>
+        {meta ? <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>{meta}</Text> : null}
       </View>
       {vencido !== null && vencido > 0 ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] }}>
