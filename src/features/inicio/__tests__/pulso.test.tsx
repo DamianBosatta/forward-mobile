@@ -55,7 +55,7 @@ describe('Inicio general: accesos rápidos', () => {
   })
 })
 
-describe('Inicio general: la tarjeta de ventas del día en cada tema', () => {
+describe('Inicio general: el hero de ventas del día en cada tema', () => {
   const { StyleSheet } = require('react-native')
   const { useThemeStore, themeColors } = require('@/libs/theme')
   afterEach(() => useThemeStore.setState({ mode: 'system' }))
@@ -64,19 +64,13 @@ describe('Inicio general: la tarjeta de ventas del día en cada tema', () => {
   const pintar = () =>
     render(<PulsoDelNegocio ventasDelDia={100} cantidadVentas={2} pedidosPendientes={0} rutasActivas={0} meDeben={null} debo={null} />)
 
-  it('en oscuro usa la superficie con borde, no el fondo de la página', () => {
-    useThemeStore.setState({ mode: 'dark' })
-    pintar()
-    expect(estiloHero().backgroundColor).toBe(themeColors.dark.surface)
-    expect(estiloHero().borderColor).toBe(themeColors.dark.border)
-    expect(estiloHero().backgroundColor).not.toBe(themeColors.dark.bg)
-  })
-
-  it('en claro es una tarjeta blanca con borde, como la lámina', () => {
-    useThemeStore.setState({ mode: 'light' })
-    pintar()
-    expect(estiloHero().backgroundColor).toBe(themeColors.light.surface)
-    expect(estiloHero().borderColor).toBe(themeColors.light.border)
+  it('"Ventas del día" va en el hero oscuro, igual en los dos temas (galería v2)', () => {
+    for (const mode of ['dark', 'light']) {
+      useThemeStore.setState({ mode })
+      const r = pintar()
+      expect(estiloHero().backgroundColor).toBe(themeColors.dark.brandSoft)
+      r.unmount()
+    }
   })
 
   it('"Rutas activas" abre la lista de hojas de ruta; sin destino no es un botón', async () => {
@@ -88,5 +82,41 @@ describe('Inicio general: la tarjeta de ventas del día en cada tema', () => {
     expect(onRutas).toHaveBeenCalledTimes(1)
     rerender(<PulsoDelNegocio ventasDelDia={0} cantidadVentas={0} pedidosPendientes={0} rutasActivas={3} meDeben={0} debo={0} />)
     expect(screen.queryByRole('button', { name: 'Rutas activas: 3' })).toBeNull()
+  })
+})
+
+describe('Inicio general: propuesta (frames 6 a 9)', () => {
+  const { StyleSheet } = require('react-native')
+  const { themeColors, useThemeStore } = require('@/libs/theme')
+  afterEach(() => useThemeStore.setState({ mode: 'system' }))
+
+  it('los atajos van sin borde y "Nueva venta" en color de acción', () => {
+    useThemeStore.setState({ mode: 'light' })
+    render(<AtajosDeInicio puede={{ vender: true, cobrar: true, catalogo: true, stock: true }} onIr={jest.fn()} />)
+    const estilo = (n: string) => StyleSheet.flatten(screen.getByRole('button', { name: n }).props.style)
+    expect(estilo('Nueva venta').backgroundColor).toBe(themeColors.light.action)
+    expect(estilo('Cobrar').borderWidth ?? 0).toBe(0)
+    expect(estilo('Nueva venta').borderWidth ?? 0).toBe(0)
+  })
+
+  it('lo que va entre el hero y los mosaicos (los atajos) se dibuja ahí', () => {
+    render(
+      <PulsoDelNegocio ventasDelDia={1} cantidadVentas={1} pedidosPendientes={1} rutasActivas={1} meDeben={1} debo={1}>
+        <AtajosDeInicio puede={{ vender: true, cobrar: false, catalogo: false, stock: false }} onIr={jest.fn()} />
+      </PulsoDelNegocio>,
+    )
+    expect(screen.getByRole('button', { name: 'Nueva venta' })).toBeTruthy()
+  })
+
+  it('sin dato, "—" en el hero, en los mosaicos y en la lista; nunca 0', () => {
+    render(<PulsoDelNegocio ventasDelDia={null} cantidadVentas={null} pedidosPendientes={null} rutasActivas={null} meDeben={null} debo={null} />)
+    expect(screen.getAllByText('—')).toHaveLength(5)
+    expect(screen.queryByText(/ventas$/)).toBeNull()
+    expect(screen.queryByText('0')).toBeNull()
+  })
+
+  it('"Vencido" lleva un punto rojo y solo aparece si el servidor lo manda', () => {
+    render(<PulsoDelNegocio ventasDelDia={1} cantidadVentas={1} pedidosPendientes={1} rutasActivas={1} meDeben={1} debo={1} deudaVencida={486300} />)
+    expect(screen.getByTestId('vencido-punto')).toBeTruthy()
   })
 })

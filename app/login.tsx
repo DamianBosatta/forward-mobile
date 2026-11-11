@@ -3,12 +3,13 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput,
 import { useRouter } from 'expo-router'
 import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
 import { useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, Eye, EyeOff, Fingerprint } from 'lucide-react-native'
-import { useColors, space, typeScale } from '../libs/theme'
+import { Eye, EyeOff, Fingerprint } from 'lucide-react-native'
+import { themeColors, useColors, space, typeScale } from '../libs/theme'
 import { useResponsive } from '../libs/useResponsive'
 import { Button, Notice, Segmented, type SegmentedOption } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { LogoForward } from '@/features/auth/components/LogoForward'
 import { useTecladoVisible } from '@/core/utils/useTecladoVisible'
 import {
   authenticateWithBiometrics,
@@ -26,6 +27,8 @@ const INTENTOS_ANTES_DEL_BLOQUEO = 5
 
 /** Campos sobre el fondo oscuro del ingreso (lienzo M1 y TM13): siempre oscuro, con o sin tema claro. */
 const CAMPO = { fondo: '#18211F', borde: '#33403D' } as const
+/** Foco del campo: el verde claro de la marca (galería v2, login), el mismo en los dos temas porque el ingreso es siempre oscuro. */
+const FOCO = themeColors.dark.brand
 
 const ENTORNOS: SegmentedOption<string>[] = [
   { value: ENV_PROD, label: 'Producción' },
@@ -128,7 +131,7 @@ export default function LoginScreen() {
     height: isTablet ? 56 : 52,
     borderRadius: 12,
     borderWidth: enfocado || conError ? 2 : 1,
-    borderColor: conError ? c.chip.anulado.text : enfocado ? c.action : CAMPO.borde,
+    borderColor: conError ? c.chip.anulado.text : enfocado ? FOCO : CAMPO.borde,
     backgroundColor: CAMPO.fondo,
     paddingHorizontal: space[4],
     flexDirection: 'row' as const,
@@ -251,9 +254,10 @@ export default function LoginScreen() {
     </View>
   )
 
-  const logo = (tam: number) => (
-    <View testID="login-marca" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: tam, height: tam, borderRadius: tam * 0.28, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
-      <ArrowRight size={tam * 0.53} strokeWidth={2.4} color={c.onAction} />
+  // El logo FWD real (el de la web); el nombre "Forward" va al lado en texto, así que el logo es decorativo.
+  const logo = (alto: number) => (
+    <View testID="login-marca" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ alignSelf: 'flex-start' }}>
+      <LogoForward alto={alto} />
     </View>
   )
 

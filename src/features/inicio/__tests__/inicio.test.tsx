@@ -226,10 +226,10 @@ describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
     pintar()
 
     // Con la capacidad, "Por autorizar" es la bandeja de todos, no las propias.
-    expect(await screen.findByLabelText('Para resolver, Por autorizar: 2')).toBeTruthy()
-    expect(screen.getAllByLabelText(/Por autorizar/)).toHaveLength(1)
-    expect(screen.getByLabelText('Para resolver, Por recibir: 3')).toBeTruthy()
-    expect(screen.getAllByLabelText(/Por recibir/)).toHaveLength(1)
+    expect(await screen.findByLabelText('2 pedidos por autorizar. Bandeja de autorizaciones')).toBeTruthy()
+    expect(screen.getAllByLabelText(/por autorizar/)).toHaveLength(1)
+    expect(screen.getByLabelText('3 compras por recibir. Confirmadas, sin recepción')).toBeTruthy()
+    expect(screen.getAllByLabelText(/por recibir/)).toHaveLength(1)
     expect(screen.queryByTestId('inicio-pendientes')).toBeNull()
     expect(screen.queryByLabelText('Ventas pendientes')).toBeNull()
     expect(screen.queryByLabelText('Compras pendientes')).toBeNull()
@@ -242,8 +242,8 @@ describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
     servidor({ resumen: { ventas: null, compras: RESUMEN.compras, autorizacionesPendientes: null }, hoy: pagina(0, []) })
     pintar()
 
-    expect(await screen.findByLabelText('Para resolver, Por recibir: 0')).toBeTruthy()
-    expect(screen.queryByLabelText(/Por autorizar/)).toBeNull()
+    expect(await screen.findByLabelText('0 compras por recibir. Confirmadas, sin recepción')).toBeTruthy()
+    expect(screen.queryByLabelText(/por autorizar/)).toBeNull()
   })
 
   it('vendedor sin CAP_AUTORIZAR_VENTA: ve las suyas como "Esperando autorización" y la fila lleva a Ventas filtrada por ese estado', async () => {
@@ -251,10 +251,10 @@ describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
     servidor({ resumen: { ventas: RESUMEN.ventas, compras: null, autorizacionesPendientes: null }, hoy: pagina(0, []) })
     pintar()
 
-    const fila = await screen.findByLabelText('Para resolver, Esperando autorización: 1')
-    expect(screen.getAllByLabelText(/Esperando autorización/)).toHaveLength(1)
-    expect(screen.queryByLabelText(/Por autorizar/)).toBeNull()
-    expect(screen.queryByLabelText(/Por recibir/)).toBeNull()
+    const fila = await screen.findByLabelText('1 pedido esperando autorización. Tus ventas esperando el OK')
+    expect(screen.getAllByLabelText(/esperando autorización/)).toHaveLength(1)
+    expect(screen.queryByLabelText(/por autorizar/)).toBeNull()
+    expect(screen.queryByLabelText(/por recibir/)).toBeNull()
     await userEvent.setup().press(fila)
     expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas?tipo=pedidos&estado=PendienteAutorizacion')
   })
@@ -266,7 +266,7 @@ describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
 
     expect(await screen.findByText(/El usuario está desactivado\./, {}, { timeout: 500 })).toBeTruthy()
     expect(pedidosDelResumen()).toBe(1)
-    expect(screen.queryByLabelText(/Para resolver, /)).toBeNull()
+    expect(screen.queryByTestId('para-resolver')).toBeNull()
     expect(mockGet.mock.calls.some(([u]) => /tipoOperacion|Compras\/resumen|pendientes-autorizacion/.test(String(u)))).toBe(false)
   })
 
@@ -276,11 +276,11 @@ describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
     pintar()
 
     expect(await screen.findByText('No se pudieron cargar los pendientes', {}, { timeout: 3000 })).toBeTruthy()
-    expect(screen.queryByLabelText(/Para resolver, /)).toBeNull()
+    expect(screen.queryByTestId('para-resolver')).toBeNull()
 
     servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
     await userEvent.setup().press(screen.getByRole('button', { name: 'Reintentar pendientes' }))
-    expect(await screen.findByLabelText('Para resolver, Por recibir: 0')).toBeTruthy()
+    expect(await screen.findByLabelText('0 compras por recibir. Confirmadas, sin recepción')).toBeTruthy()
     expect(screen.queryByText('No se pudieron cargar los pendientes')).toBeNull()
   })
 
@@ -294,7 +294,7 @@ describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
     pintar(qc)
 
     await screen.findByText('Todavía no hay ventas hoy.')
-    expect(screen.queryByLabelText(/Para resolver, /)).toBeNull()
+    expect(screen.queryByTestId('para-resolver')).toBeNull()
   })
 })
 
@@ -303,8 +303,8 @@ describe('Inicio: cualquier mutación vuelve a pedir el resumen', () => {
   const POR_AUTORIZAR_4 = { ...RESUMEN, autorizacionesPendientes: pendiente(4, importe(400000)) }
   const casos = [
     // Crear una compra solo invalida la lista de compras, no comprasKeys.all.
-    ['crear una compra', useCreateCompra, { proveedorId: 'p1', depositoId: 'd1', detalles: [] }, RECIBIR_5, 'Para resolver, Por recibir: 5'],
-    ['anular una venta', useAnularVenta, { id: 'v1', version: 1, motivoAnulacion: 'Error de carga' }, POR_AUTORIZAR_4, 'Para resolver, Por autorizar: 4'],
+    ['crear una compra', useCreateCompra, { proveedorId: 'p1', depositoId: 'd1', detalles: [] }, RECIBIR_5, '5 compras por recibir. Confirmadas, sin recepción'],
+    ['anular una venta', useAnularVenta, { id: 'v1', version: 1, motivoAnulacion: 'Error de carga' }, POR_AUTORIZAR_4, '4 pedidos por autorizar. Bandeja de autorizaciones'],
   ] as const
 
   it.each(casos)('%s con Inicio en pantalla', async (_, usar, variables, despues, fila) => {
@@ -313,7 +313,7 @@ describe('Inicio: cualquier mutación vuelve a pedir el resumen', () => {
     const qc = crearQueryClient({ retry: false })
     const mutar = mutacion(qc, usar, variables)
     pintar(qc)
-    await screen.findByLabelText('Para resolver, Por recibir: 0')
+    await screen.findByLabelText('0 compras por recibir. Confirmadas, sin recepción')
 
     servidor({ resumen: despues, hoy: pagina(0, []) })
     await mutar()
@@ -327,12 +327,12 @@ describe('Inicio: cualquier mutación vuelve a pedir el resumen', () => {
     const qc = crearQueryClient({ retry: false })
     const autorizar = mutacion(qc, useAutorizarVenta, { id: 'v1', version: 1 })
     pintar(qc)
-    await screen.findByLabelText('Para resolver, Por autorizar: 2')
+    await screen.findByLabelText('2 pedidos por autorizar. Bandeja de autorizaciones')
 
     servidor({ resumen: { ...RESUMEN, autorizacionesPendientes: pendiente(1, importe(150000)) }, hoy: pagina(0, []) })
     mockEscribir.mockRejectedValueOnce(new ApiError(409, 'La venta fue modificada por otro usuario.'))
     await autorizar()
-    expect(await screen.findByLabelText('Para resolver, Por autorizar: 1')).toBeTruthy()
+    expect(await screen.findByLabelText('1 pedido por autorizar. Bandeja de autorizaciones')).toBeTruthy()
   })
 
   it.each(casos)('%s con Inicio fuera de pantalla: al volver lo pide de nuevo', async (_, usar, variables, despues, fila) => {
@@ -341,7 +341,7 @@ describe('Inicio: cualquier mutación vuelve a pedir el resumen', () => {
     const qc = crearQueryClient({ retry: false })
     const mutar = mutacion(qc, usar, variables)
     const { desmontar } = pintar(qc)
-    await screen.findByLabelText('Para resolver, Por recibir: 0')
+    await screen.findByLabelText('0 compras por recibir. Confirmadas, sin recepción')
     desmontar()
 
     servidor({ resumen: despues, hoy: pagina(0, []) })
@@ -364,10 +364,10 @@ describe('Inicio: servidor sin /Inicio/resumen (404), las cuatro llamadas de ant
     })
     pintar()
 
-    expect(await screen.findByLabelText('Para resolver, Por autorizar: 2')).toBeTruthy()
-    expect(await screen.findByLabelText('Para resolver, Por recibir: 2')).toBeTruthy()
-    expect(screen.getAllByLabelText(/Por autorizar/)).toHaveLength(1)
-    expect(screen.getAllByLabelText(/Por recibir/)).toHaveLength(1)
+    expect(await screen.findByLabelText('2 pedidos por autorizar. Bandeja de autorizaciones')).toBeTruthy()
+    expect(await screen.findByLabelText('2 compras por recibir. Confirmadas, sin recepción')).toBeTruthy()
+    expect(screen.getAllByLabelText(/por autorizar/)).toHaveLength(1)
+    expect(screen.getAllByLabelText(/por recibir/)).toHaveLength(1)
     // Primero se pidió el resumen; con el 404 vino lo de antes, sin importes.
     expect(screen.queryByText(/\$/)).toBeNull()
     const urls = mockGet.mock.calls.map(([u]) => u as string)
@@ -385,7 +385,7 @@ describe('Inicio: servidor sin /Inicio/resumen (404), las cuatro llamadas de ant
     pintar()
 
     await screen.findByText('Todavía no hay ventas hoy.')
-    expect(screen.queryByLabelText(/Por recibir/)).toBeNull()
+    expect(screen.queryByLabelText(/por recibir/)).toBeNull()
     expect(screen.queryByTestId('para-resolver')).toBeNull()
   })
 
@@ -395,10 +395,10 @@ describe('Inicio: servidor sin /Inicio/resumen (404), las cuatro llamadas de ant
     pintar()
 
     await screen.findByText('Todavía no hay ventas hoy.')
-    expect(screen.queryByLabelText(/Por autorizar/)).toBeNull()
+    expect(screen.queryByLabelText(/por autorizar/)).toBeNull()
     expect(mockGet.mock.calls.some(([u]) => String(u).includes('pendientes-autorizacion'))).toBe(false)
     // Sin MOD_COMPRAS tampoco hay "Por recibir".
-    expect(screen.queryByLabelText(/Por recibir/)).toBeNull()
+    expect(screen.queryByLabelText(/por recibir/)).toBeNull()
   })
 
   it('cada fila lleva a su lista ya filtrada por lo que cuenta', async () => {
@@ -407,10 +407,10 @@ describe('Inicio: servidor sin /Inicio/resumen (404), las cuatro llamadas de ant
     pintar()
     const user = userEvent.setup()
 
-    await user.press(await screen.findByLabelText('Para resolver, Por recibir: 1'))
+    await user.press(await screen.findByLabelText('1 compra por recibir. Confirmadas, sin recepción'))
     expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/compras?estado=Confirmado')
     // Con la capacidad, la fila es la bandeja: va a Autorizaciones.
-    await user.press(await screen.findByLabelText('Para resolver, Por autorizar: 1'))
+    await user.press(await screen.findByLabelText('1 pedido por autorizar. Bandeja de autorizaciones'))
     expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/autorizaciones')
   })
 })
@@ -421,10 +421,23 @@ describe('Inicio: Reciente · Hoy', () => {
     servidor({ resumen: RESUMEN, hoy: pagina(1, [VENTA_HOY]) })
     pintar()
 
-    const tarjeta = await screen.findByLabelText(/^Pedido A00418 · Emanuel Parraquini/)
+    const tarjeta = await screen.findByLabelText(/^Pedido A00418 · 10:03/)
     expect(within(tarjeta).getByText('Juan B. Justo 6376')).toBeTruthy()
     expect(within(tarjeta).getByText('Carlos')).toBeTruthy()
     expect(within(tarjeta).queryByText(/Juan B\. Justo 6376.*Carlos/)).toBeNull()
+  })
+
+  it('cada venta es una fila de una tarjeta: dirección, nombre, número y hora; importe y chip a la derecha', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(1, [VENTA_HOY]) })
+    pintar()
+    const fila = await screen.findByLabelText(/^Pedido A00418 · 10:03/)
+    expect(within(fila).getByText('Pedido A00418 · 10:03')).toBeTruthy()
+    expect(within(fila).getByText(ars('214.560,00'))).toBeTruthy()
+    expect(within(fila).getByText('Confirmado')).toBeTruthy()
+    expect(within(screen.getByTestId('inicio-recientes')).getAllByLabelText(/^Pedido A00418/)).toHaveLength(1)
+    await userEvent.setup().press(fila)
+    expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas/v1')
   })
 
   it('si la consulta de hoy falla muestra un error con "Reintentar", no un día vacío', async () => {
@@ -492,7 +505,8 @@ describe('Inicio: Reciente · Hoy', () => {
     servidor({ resumen: RESUMEN, hoy: pagina(1, [VENTA_HOY]) }) // 13:03Z
     pintar()
     const tarjeta = await screen.findByLabelText(/^Pedido A00418/)
-    expect(within(tarjeta).getByText('10:03')).toBeTruthy()
+    // La hora va con el número, como en la propuesta (frame 7).
+    expect(within(tarjeta).getByText('Pedido A00418 · 10:03')).toBeTruthy()
   })
 })
 
@@ -502,10 +516,10 @@ describe('Inicio: tablet', () => {
     servidor({ presupuestos: pagina(1), pedidos: pagina(1), compras: { notasPedido: 1, confirmadas: 1 }, hoy: pagina(0, []) })
     mockAncho.mockReturnValue(900)
     pintar()
-    await screen.findByLabelText('Para resolver, Por recibir: 1')
+    await screen.findByLabelText('1 compra por recibir. Confirmadas, sin recepción')
 
     expect(screen.queryByTestId('inicio-pendientes')).toBeNull()
-    expect(screen.getAllByLabelText(/Por recibir/)).toHaveLength(1)
+    expect(screen.getAllByLabelText(/por recibir/)).toHaveLength(1)
   })
 })
 
@@ -528,12 +542,12 @@ describe('Inicio: encabezado y "Para resolver" (lámina inicio-general)', () => 
     const user = userEvent.setup()
     expect(await screen.findByText('Para resolver')).toBeTruthy()
     const lista = screen.getByTestId('para-resolver')
-    expect(within(lista).getByLabelText('Para resolver, Por autorizar: 2')).toBeTruthy()
-    expect(within(await within(lista).findByLabelText('Para resolver, Alertas de stock: 18')).getByText('18')).toBeTruthy()
-    expect(within(lista).getByLabelText('Para resolver, Por recibir: 3')).toBeTruthy()
-    await user.press(within(lista).getByLabelText('Para resolver, Alertas de stock: 18'))
+    expect(within(lista).getByLabelText('2 pedidos por autorizar. Bandeja de autorizaciones')).toBeTruthy()
+    expect(within(await within(lista).findByLabelText('18 productos bajo el mínimo. Alertas de stock')).getByText('18 productos bajo el mínimo')).toBeTruthy()
+    expect(within(lista).getByLabelText('3 compras por recibir. Confirmadas, sin recepción')).toBeTruthy()
+    await user.press(within(lista).getByLabelText('18 productos bajo el mínimo. Alertas de stock'))
     expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/inventario/stock')
-    await user.press(within(lista).getByLabelText('Para resolver, Por autorizar: 2'))
+    await user.press(within(lista).getByLabelText('2 pedidos por autorizar. Bandeja de autorizaciones'))
     expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/autorizaciones')
   })
 
@@ -542,8 +556,8 @@ describe('Inicio: encabezado y "Para resolver" (lámina inicio-general)', () => 
     servidor({ resumen: { ...RESUMEN, compras: null, autorizacionesPendientes: null }, hoy: pagina(0, []), dashboard: { salesToday: 1, lowStockAlerts: 18 } })
     pintar()
     await screen.findByText('Hola, Emanuel')
-    expect(screen.queryByLabelText(/Para resolver, Alertas de stock/)).toBeNull()
-    expect(screen.queryByLabelText(/Para resolver, Por recibir/)).toBeNull()
+    expect(screen.queryByLabelText(/Alertas de stock/)).toBeNull()
+    expect(screen.queryByLabelText(/por recibir/)).toBeNull()
   })
 
   it('"Nueva venta" es el botón relleno de color de marca', async () => {
@@ -555,5 +569,20 @@ describe('Inicio: encabezado y "Para resolver" (lámina inicio-general)', () => 
     pintar()
     const b = await screen.findByRole('button', { name: 'Nueva venta' })
     expect(flat(b).backgroundColor).toBe(themeColors.light.action)
+  })
+
+  it('"Para resolver" usa los textos de la galería v2: la cantidad en el título y un punto de color', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'MOD_STOCK', 'CAP_AUTORIZAR_VENTA')
+    servidor({ resumen: { ...RESUMEN, autorizacionesPendientes: pendiente(1), compras: { ...RESUMEN.compras, porRecibir: pendiente(2) } }, hoy: pagina(0, []), dashboard: { salesToday: 1, lowStockAlerts: 4 } })
+    pintar()
+    const lista = await screen.findByTestId('para-resolver')
+    expect(within(lista).getByText('1 pedido por autorizar')).toBeTruthy()
+    expect(within(lista).getByText('Bandeja de autorizaciones')).toBeTruthy()
+    expect(await within(lista).findByText('4 productos bajo el mínimo')).toBeTruthy()
+    expect(within(lista).getByText('Alertas de stock')).toBeTruthy()
+    expect(within(lista).getByText('2 compras por recibir')).toBeTruthy()
+    expect(within(lista).getByText('Confirmadas, sin recepción')).toBeTruthy()
+    // Sin pastilla con el número suelto: el número va en el título.
+    expect(within(lista).queryByText('4')).toBeNull()
   })
 })

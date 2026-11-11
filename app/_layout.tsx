@@ -105,11 +105,13 @@ function RootLayoutNav() {
       <PushDeAvisos />
       <EnvioVentasSinSenal />
       <EnvioConsolaSinSenal />
-      <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.bg } }}>
-        <Stack.Screen name="login" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
-      </Stack>
-      <OfflineBanner />
+      {/* Sin señal, el aviso va arriba de todas las pantallas (propuesta de Inicio, frame 10). */}
+      <OfflineBanner>
+        <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.bg } }}>
+          <Stack.Screen name="login" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
+        </Stack>
+      </OfflineBanner>
       <OfertaDeHuella />
     </View>
   )

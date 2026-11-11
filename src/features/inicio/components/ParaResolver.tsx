@@ -1,57 +1,38 @@
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
-import { ChevronRight } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import type { ChipEstado } from '@/libs/theme'
+import { View } from 'react-native'
+import { space } from '@/libs/theme'
+import { FilaDeInicio, ListaEnTarjeta, SeccionDeInicio, type TonoPunto } from './PiezasDeInicio'
 
 export interface FilaParaResolver {
-  titulo: string
+  /** Lo que se cuenta, en singular y en plural: "pedido por autorizar" / "pedidos por autorizar". */
+  nombre: [uno: string, varios: string]
   detalle: string
   /** `null` = sin dato: la fila no se muestra (nunca un 0 inventado). */
   cantidad: number | null
-  /** Color de la pastilla, de los chips de estado del tema. */
-  tono: ChipEstado
+  /** Punto de color en lugar de la pastilla (atención, peligro, en curso). */
+  punto: TonoPunto
   onPress: () => void
 }
 
-/** "Para resolver" (lámina inicio-general): una fila por pendiente con su cantidad en pastilla y un chevron. */
+/** "Para resolver" con los textos de la galería v2 (propuesta, frame 7): la cantidad en el título, un punto de color y la flecha. */
 export function ParaResolver({ filas }: { filas: FilaParaResolver[] }) {
-  const c = useColors()
-  const visibles = filas.filter((f) => f.cantidad != null)
+  const visibles = filas.filter((f): f is FilaParaResolver & { cantidad: number } => f.cantidad != null)
   if (visibles.length === 0) return null
   return (
-    <View style={{ paddingHorizontal: space[4], gap: space[3] }}>
-      <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>Para resolver</Text>
-      <View testID="para-resolver" style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, overflow: 'hidden' }}>
-        {visibles.map((f, i) => (
-          <Pressable
-            key={f.titulo}
-            accessibilityRole="button"
-            accessibilityLabel={`Para resolver, ${f.titulo}: ${f.cantidad}`}
-            onPress={f.onPress}
-            android_ripple={{ color: c.surface2 }}
-            style={{
-              minHeight: 64,
-              paddingHorizontal: space[4],
-              paddingVertical: space[3],
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: space[3],
-              borderTopWidth: i > 0 ? 1 : 0,
-              borderTopColor: c.border,
-            }}
-          >
-            <View style={{ minWidth: 44, height: 44, paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.chip[f.tono].bg, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={[typeScale.cuerpoDestacado, importe, { color: c.chip[f.tono].text }]}>{f.cantidad}</Text>
-            </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <Text style={[typeScale.cuerpoDestacado, { color: c.text }]} numberOfLines={1}>{f.titulo}</Text>
-              <Text style={[typeScale.secundario, { color: c.textSecondary }]} numberOfLines={1}>{f.detalle}</Text>
-            </View>
-            <ChevronRight size={20} color={c.textSecondary} strokeWidth={2} />
-          </Pressable>
-        ))}
-      </View>
+    <View style={{ paddingHorizontal: space[4] }}>
+      <SeccionDeInicio titulo="Para resolver">
+        <ListaEnTarjeta testID="para-resolver">
+          {visibles.map((f) => (
+            <FilaDeInicio
+              key={f.nombre[1]}
+              titulo={`${f.cantidad} ${f.cantidad === 1 ? f.nombre[0] : f.nombre[1]}`}
+              apoyo={f.detalle}
+              punto={f.punto}
+              onPress={f.onPress}
+            />
+          ))}
+        </ListaEnTarjeta>
+      </SeccionDeInicio>
     </View>
   )
 }
