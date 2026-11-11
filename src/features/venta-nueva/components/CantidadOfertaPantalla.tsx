@@ -14,7 +14,7 @@ import { useAlcanzaStock } from '../hooks/useAlcanzaStock'
 import { disponibleParaLinea, faltaStock } from '../lib/avisos'
 import { MENSAJE_TOPE_SIN_CONFIGURAR, avisoPiso, avisoTope, leerNumero, mostrarNumero } from '../lib/linea'
 import { MAX_DIGITOS, TOPE_CANTIDAD, errorDeCantidad, limitarDigitos } from '../lib/teclado'
-import { chipsDeDescuento, presentacionDe, rotuloPresentacion, unidadesDe, valorEn, convertirModo, modoDeCantidad, type ModoCantidad } from '../lib/presentacion'
+import { chipsDeDescuento, presentacionDe, rotuloPresentacion, unidadesDe, valorEn, convertirModo, modoInicialDeVenta, type ModoCantidad } from '../lib/presentacion'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 
 interface Props {
@@ -61,7 +61,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
   const verCosto = canViewCost(user?.permissions)
 
   const unidadesIniciales = linea?.cantidad ?? minimo
-  const modoInicial: ModoCantidad = modoDeCantidad(pr, unidadesIniciales)
+  const modoInicial: ModoCantidad = modoInicialDeVenta(pr, linea?.cantidad)
   const [modo, setModo] = useState<ModoCantidad>(modoInicial)
   const [texto, setTexto] = useState(String(valorEn(pr, modoInicial, unidadesIniciales)))
   const [pctTexto, setPctTexto] = useState(mostrarNumero(linea?.descuentoPct ?? 0))

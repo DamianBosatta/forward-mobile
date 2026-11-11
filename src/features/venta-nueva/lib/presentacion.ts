@@ -70,6 +70,15 @@ export function modoDeCantidad(pr: Presentacion, unidades: number): ModoCantidad
   return pr.modos.includes('bultos') && unidades % pr.unidadesPorBulto === 0 ? 'bultos' : 'unidades'
 }
 
+/** Nivel con el que abre la venta de un producto nuevo: Unidades, y Bultos solo si es lo único que se ofrece. */
+export const NIVEL_INICIAL_VENTA: ModoCantidad = 'unidades'
+
+/** Modo con el que abre "Cantidad y oferta": una línea que ya estaba conserva su nivel; una nueva abre en `NIVEL_INICIAL_VENTA`. */
+export function modoInicialDeVenta(pr: Presentacion, unidadesDeLinea?: number | null): ModoCantidad {
+  if (unidadesDeLinea != null) return modoDeCantidad(pr, unidadesDeLinea)
+  return pr.modos.includes(NIVEL_INICIAL_VENTA) ? NIVEL_INICIAL_VENTA : pr.modos[0]
+}
+
 /** Lo ingresado en un modo, en unidades (Bultos × N). */
 export function unidadesDe(pr: Presentacion, modo: ModoCantidad, valor: number): number {
   return modo === 'bultos' ? valor * pr.unidadesPorBulto : valor
