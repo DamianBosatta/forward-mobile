@@ -6,7 +6,7 @@
  */
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Switch } from 'react-native'
+import { StyleSheet, Switch } from 'react-native'
 import { render, screen, userEvent, within } from '@testing-library/react-native'
 import { PreferenciasAvisos } from '../PreferenciasAvisos'
 
@@ -90,5 +90,30 @@ describe('Preferencias de avisos', () => {
     await screen.findByLabelText('Venta autorizada')
     await userEvent.press(screen.getByLabelText('Volver'))
     expect(mockBack).toHaveBeenCalled()
+  })
+})
+
+describe('Preferencias como venta (propuesta Cuenta, frames 12 y 13)', () => {
+  it('cada grupo va en una tarjeta sin borde', async () => {
+    pintar()
+    await screen.findByLabelText('Venta autorizada')
+    for (const g of ['Ventas', 'Cobros y pagos', 'Calendario']) expect(StyleSheet.flatten(screen.getByTestId(`grupo-${g}`).props.style).borderWidth ?? 0).toBe(0)
+  })
+
+  it('un crítico muestra el candado, su texto y el interruptor atenuado', async () => {
+    pintar()
+    const caja = await screen.findByLabelText('Caja sin cerrar')
+    expect(within(caja).getByTestId('candado-critico')).toBeTruthy()
+    expect(within(caja).getByText('Crítico: no se puede silenciar')).toBeTruthy()
+    expect(StyleSheet.flatten(within(caja).getByTestId('interruptor-atenuado').props.style).opacity).toBe(0.5)
+    const venta = screen.getByLabelText('Venta autorizada')
+    expect(within(venta).queryByTestId('candado-critico')).toBeNull()
+  })
+
+  it('mientras carga muestra un esqueleto con la forma de los grupos', async () => {
+    mockGet.mockReturnValue(new Promise(() => {}))
+    pintar()
+    expect(await screen.findByLabelText('Cargando')).toBeTruthy()
+    expect(screen.getByTestId('esqueleto-grupo')).toBeTruthy()
   })
 })
