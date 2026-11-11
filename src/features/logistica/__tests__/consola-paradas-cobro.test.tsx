@@ -63,25 +63,25 @@ describe('Consola del chofer: paradas de solo cobro (S9)', () => {
     pintar(hoja({ paradasCobro: [COBRO] }))
     expect(await screen.findByText('Solo cobro (1)')).toBeTruthy()
     expect(screen.getByLabelText('Cobrar en Av. Rivadavia 4500')).toBeTruthy()
-    expect(await screen.findByLabelText('Finalizar viaje')).toBeTruthy()
+    expect(await screen.findByLabelText('Cerrar viaje')).toBeTruthy()
   })
 
   it('con una entrega todavía sin reportar no se puede finalizar, aunque haya paradas de cobro', async () => {
     pintar(hoja({ detalles: [{ ...ENTREGA, estado: 1 }], paradasCobro: [COBRO] }))
     expect(await screen.findByText('Solo cobro (1)')).toBeTruthy()
-    expect(screen.queryByLabelText('Finalizar viaje')).toBeNull()
+    expect(screen.queryByLabelText('Cerrar viaje')).toBeNull()
   })
 
   it('sigue valiendo: una hoja vieja sin paradasCobro y sin entregas no muestra la sección ni se puede finalizar', async () => {
     pintar(hoja({}))
     expect(await screen.findByText('Viaje de hoy')).toBeTruthy()
     expect(screen.queryByText(/Solo cobro/)).toBeNull()
-    expect(screen.queryByLabelText('Finalizar viaje')).toBeNull()
+    expect(screen.queryByLabelText('Cerrar viaje')).toBeNull()
   })
 
   it('sigue valiendo: una hoja vieja con todas las entregas hechas se finaliza', async () => {
     pintar(hoja({ detalles: [{ ...ENTREGA, estado: 2 }] }))
-    expect(await screen.findByLabelText('Finalizar viaje')).toBeTruthy()
+    expect(await screen.findByLabelText('Cerrar viaje')).toBeTruthy()
     expect(screen.queryByText(/Solo cobro/)).toBeNull()
   })
 })

@@ -127,7 +127,7 @@ describe('Consola del chofer: entrega con la operación única', () => {
     await userEvent.press(await screen.findByLabelText('Entregué todo'))
     await userEvent.press(screen.getByLabelText('No'))
     await alResumen('   ')
-    expect(screen.getByLabelText('Confirmar entrega').props.accessibilityState.disabled).toBeFalsy()
+    expect(screen.getByLabelText('Cerrar entrega').props.accessibilityState.disabled).toBeFalsy()
     await confirmarEntrega()
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
     expect(llamadasA(ENTREGAR)[0][1].nombreReceptor).toBeUndefined()
@@ -143,19 +143,20 @@ describe('Consola del chofer: entrega con la operación única', () => {
     await abrirEntrega()
     await alResumen('Abel', { sinFoto: true })
     // El paso Confirmar no deja confirmar sin la foto exigida.
-    expect(screen.getByLabelText('Confirmar entrega').props.accessibilityState.disabled).toBe(true)
+    expect(screen.getByLabelText('Cerrar entrega').props.accessibilityState.disabled).toBe(true)
     expect(llamadasA(ENTREGAR)).toHaveLength(0)
-    // Lámina ChoferEntrega: el pie dice qué falta y la sección marca la foto como obligatoria.
+    // El pie dice qué falta y "Firmar" avisa que sin la foto del remito firmado no se cierra (S8).
     expect(screen.getByText('Falta la foto del remito')).toBeTruthy()
-    expect(within(screen.getByLabelText('Foto del remito')).getByText('Obligatoria')).toBeTruthy()
+    expect(screen.getByText('Abre la cámara: foto del remito firmado')).toBeTruthy()
+    expect(screen.getByText('Sin la foto del remito firmado no se cierra la entrega.')).toBeTruthy()
 
-    await sacarFoto('Sacar foto del remito firmado')
-    expect(await screen.findByText('Foto del remito firmado cargada')).toBeTruthy()
-    // Lámina ChoferListo: miniatura, hora de la foto y sección en Lista.
-    expect(screen.getByLabelText('Miniatura de la foto del remito firmado')).toBeTruthy()
-    expect(screen.getByText(/Sacada a las \d{2}:\d{2} · se adjunta a la venta/)).toBeTruthy()
-    expect(within(screen.getByLabelText('Foto del remito')).getByText('Lista')).toBeTruthy()
+    await sacarFoto('Firmar')
+    expect(await screen.findByText('Remito firmado')).toBeTruthy()
+    // Con la foto: miniatura y la fila verde que se toca para volver a sacarla.
+    expect(screen.getByLabelText('Miniatura del remito firmado')).toBeTruthy()
+    expect(screen.getByLabelText('Volver a sacar la foto del remito firmado')).toBeTruthy()
     expect(screen.queryByText('Falta la foto del remito')).toBeNull()
+    expect(screen.queryByText('Sin la foto del remito firmado no se cierra la entrega.')).toBeNull()
     const [[, form]] = llamadasA('/api/v1/Media/upload-entrega')
     expect(form).toBeInstanceOf(FormData)
 
@@ -164,7 +165,7 @@ describe('Consola del chofer: entrega con la operación única', () => {
     expect(llamadasA(ENTREGAR)[0][1]).toMatchObject({ nombreReceptor: 'Abel', evidenciaUrl: 'https://r2.test/entregas/remito.jpg' })
   })
 
-  it('cobro mixto: efectivo y transferencia con la foto del comprobante, al pedido de hoy, con firma', async () => {
+  it('cobro mixto: efectivo y transferencia con la foto del comprobante, al pedido de hoy, con la firma opcional del remito', async () => {
     let foto = 0
     mockPost.mockImplementation(async (url: string) => {
       if (url === '/api/v1/Media/upload-entrega') return { url: `https://r2.test/entregas/${++foto}.jpg` }
@@ -186,11 +187,11 @@ describe('Consola del chofer: entrega con la operación única', () => {
 
     await sacarFoto('Sacar foto del comprobante del cobro 2')
     await screen.findByText('Foto del comprobante del cobro 2 cargada')
-    await userEvent.press(screen.getByLabelText('Sumar otro pago'))
-    await userEvent.press(screen.getByLabelText('Firma'))
-    await sacarFoto('Sacar foto de la firma del cliente')
-    await screen.findByText('Foto de la firma del cliente cargada')
     await alResumen('Abel', { conCobro: true })
+    // Pagó: "Firmar" es opcional, pero si la saca viaja como la foto del remito (evidencia).
+    expect(screen.getByText('Opcional · foto del remito firmado')).toBeTruthy()
+    await sacarFoto('Firmar')
+    await screen.findByText('Remito firmado')
     await confirmarEntrega()
 
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
@@ -202,8 +203,9 @@ describe('Consola del chofer: entrega con la operación única', () => {
           { medioPagoId: 'm-tr', monto: 400.5, fotoUrl: 'https://r2.test/entregas/1.jpg' },
         ],
       },
-      firma: { fotoUrl: 'https://r2.test/entregas/2.jpg' },
+      evidenciaUrl: 'https://r2.test/entregas/2.jpg',
     })
+    expect(llamadasA(ENTREGAR)[0][1].firma).toBeUndefined()
   })
 
   it('si la respuesta no llega, el reintento repite la misma clave y el mismo cuerpo', async () => {
@@ -231,7 +233,7 @@ describe('Consola del chofer: entrega con la operación única', () => {
     await alResumen()
     await confirmarEntrega()
     expect(await screen.findByText('Esta entrega ya se había registrado antes con otros datos.')).toBeTruthy()
-    expect(screen.queryByLabelText('Confirmar entrega')).toBeNull()
+    expect(screen.queryByLabelText('Cerrar entrega')).toBeNull()
     expect(await screen.findByText('1 de 2 entregadas')).toBeTruthy()
   })
 

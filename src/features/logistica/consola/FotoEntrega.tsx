@@ -34,13 +34,14 @@ const hhmm = (ms: number) => {
   return `${String(p.hora).padStart(2, '0')}:${String(p.minuto).padStart(2, '0')}`
 }
 
-/** Foto con la cámara propia de la app (lámina ChoferCamara), subida en el acto a `upload-entrega`: el reintento de la entrega reusa la misma URL. */
-export function FotoEntrega({ que, url, onUrl, onSubiendo, ayuda, guia, titulo, obligatoria, referencia, lugar }: Props) {
-  const c = useColors()
+/**
+ * La cámara propia y la subida en el acto a `upload-entrega`, compartidas por `FotoEntrega` y `FirmarRemito`: el
+ * reintento de la entrega reusa la misma URL.
+ */
+export function useFotoEntrega(onUrl: (url: string) => void, onSubiendo: (subiendo: boolean) => void) {
   const [subiendo, setSubiendo] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sacadaA, setSacadaA] = useState<number | null>(null)
-
   const [camara, setCamara] = useState(false)
 
   const sacar = () => {
@@ -62,6 +63,14 @@ export function FotoEntrega({ que, url, onUrl, onSubiendo, ayuda, guia, titulo, 
       onSubiendo(false)
     }
   }
+
+  return { subiendo, error, sacadaA, camara, sacar, subir, cerrarCamara: () => setCamara(false) }
+}
+
+/** Foto con la cámara propia de la app (lámina ChoferCamara), subida en el acto a `upload-entrega`: el reintento de la entrega reusa la misma URL. */
+export function FotoEntrega({ que, url, onUrl, onSubiendo, ayuda, guia, titulo, obligatoria, referencia, lugar }: Props) {
+  const c = useColors()
+  const { subiendo, error, sacadaA, camara, sacar, subir, cerrarCamara } = useFotoEntrega(onUrl, onSubiendo)
 
   const estado = url ? 'Lista' : obligatoria ? 'Obligatoria' : 'Opcional'
   return (
@@ -104,7 +113,7 @@ export function FotoEntrega({ que, url, onUrl, onSubiendo, ayuda, guia, titulo, 
         titulo={titulo ?? `Foto ${que}`}
         subtitulo={[referencia, lugar].filter(Boolean).join(' · ') || undefined}
         guia={guia}
-        onCerrar={() => setCamara(false)}
+        onCerrar={cerrarCamara}
         onFoto={(uri) => void subir(uri)}
       />
     </View>

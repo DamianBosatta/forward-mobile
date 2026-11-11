@@ -19,18 +19,14 @@ export interface LineaCobroForm {
   monto: string
   fotoUrl: string | null
   cheque: ChequeForm
-  /** Efectivo: lo que dio el cliente, solo para calcular el vuelto en pantalla; nunca viaja. */
-  recibido?: string
-  /** Efectivo: "No di vuelto". Lo que sobra de lo recibido viaja como parte del cobro y el servidor lo lleva a la cuenta del cliente. */
-  sinVuelto?: boolean
 }
 
-/** Lo que de verdad viaja en la línea: el monto, o todo lo recibido si el chofer no dio el vuelto. */
+/**
+ * Lo que viaja en la línea: el monto que cargó el chofer, sin "Te dio" ni vuelto (S8). Si en efectivo cobra de más,
+ * viaja todo y el servidor lo deja a favor en la cuenta del cliente.
+ */
 export function montoDeLinea(l: LineaCobroForm): number | null {
-  const monto = leerNumero(l.monto)
-  if (monto == null || !l.sinVuelto || l.medio?.tipo !== 'Efectivo') return monto
-  const recibido = leerNumero(l.recibido ?? '')
-  return recibido != null && recibido > monto ? recibido : monto
+  return leerNumero(l.monto)
 }
 
 /** Solo observaciones del chofer y, si devuelve, el motivo de la devolución (TODO API: sin campo propio, viaja acá). */
@@ -38,7 +34,7 @@ export function observacionesDeEntrega(observaciones: string, motivoDevolucion?:
   return [motivoDevolucion ? `Devolución: ${motivoDevolucion}` : null, observaciones.trim()].filter(Boolean).join(' · ') || undefined
 }
 
-/** Lo que el chofer puede elegir para cobrar (S13). La firma no es un medio del servidor: va aparte (`firmaUrl`). */
+/** Lo que el chofer puede elegir para cobrar (S13). "No paga" no es un medio: no lleva líneas (S8). */
 const TIPOS_DEL_CHOFER = ['Efectivo', 'Transferencia', 'Cheque'] as const
 
 /**
@@ -68,8 +64,6 @@ export interface FormEntrega {
   /** Foto del remito firmado, ya subida. */
   remitoUrl: string | null
   lineas: LineaCobroForm[]
-  /** Foto de la firma del cliente por lo que no paga, ya subida. */
-  firmaUrl: string | null
   /** Cantidad devuelta por renglón (`ventaDetalleId` → texto del campo). */
   devolucion: Record<string, string>
   /** Solo viaja si hay devolución (observaciones, TODO API). */
@@ -108,7 +102,7 @@ export function armarEntrega(
   ctx: { exigeFotoRemito: boolean; disponibles: Record<string, number> },
 ): { entrega: EntregaArmada } | { error: string } {
   const receptor = f.receptor.trim()
-  if (ctx.exigeFotoRemito && !f.remitoUrl) return { error: 'Falta la foto del remito firmado: sin ella no se confirma la entrega.' }
+  if (ctx.exigeFotoRemito && !f.remitoUrl) return { error: 'Falta la foto del remito firmado: sin ella no se cierra la entrega.' }
 
   const lineas: LineaCobro[] = []
   for (const [i, l] of f.lineas.entries()) {
@@ -133,7 +127,6 @@ export function armarEntrega(
       evidenciaUrl: f.remitoUrl ?? undefined,
       observaciones: observacionesDeEntrega(f.observaciones, items.length > 0 ? f.motivoDevolucion : null),
       cobro: lineas.length > 0 ? { imputacion: 'PedidoActual', lineas } : undefined,
-      firma: f.firmaUrl ? { fotoUrl: f.firmaUrl } : undefined,
       devolucion: items.length > 0 ? { items } : undefined,
     },
   }

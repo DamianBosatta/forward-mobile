@@ -373,7 +373,7 @@ export default function ConsolaChoferScreen() {
       // Un 409 puede ser que la oficina la canceló o la cambió: se vuelve a pedir lo que dice el servidor.
       remota.refetch()
       qc.invalidateQueries({ queryKey: logisticaKeys.hojasRuta() })
-      setAviso(mensajeDelServidor(e, accion === 'iniciar' ? 'No se pudo iniciar el recorrido.' : 'No se pudo finalizar el viaje.'))
+      setAviso(mensajeDelServidor(e, accion === 'iniciar' ? 'No se pudo iniciar el recorrido.' : 'No se pudo cerrar el viaje.'))
     }
   }
 
@@ -419,7 +419,7 @@ export default function ConsolaChoferScreen() {
     </View>
   )
 
-  const motivoSinMandar = `Falta mandar ${sinMandar} ${sinMandar === 1 ? 'acción' : 'acciones'}: esperá la señal para finalizar.`
+  const motivoSinMandar = `Falta mandar ${sinMandar} ${sinMandar === 1 ? 'acción' : 'acciones'}: esperá la señal para cerrar el viaje.`
   const paradasCobro = paradasCobroDe(viaje)
   // Se puede finalizar con cobros sin resolver (el servidor lo permite): se avisa cuántos y que vuelven a pendientes.
   const avisoCobros = avisoDeFinalizar(paradasCobroSinResolver(paradasCobro))
@@ -439,11 +439,11 @@ export default function ConsolaChoferScreen() {
   ) : esEstadoHojaRuta(viaje.estado, 'EnCurso') && todasReportadas ? (
     sinMandar > 0 ? (
       <View style={{ gap: space[2] }}>
-        <Button size="xl" label="Finalizar viaje" disabled onPress={() => undefined} />
+        <Button size="xl" label="Cerrar viaje" disabled onPress={() => undefined} />
         <MotivoDeshabilitado>{motivoSinMandar}</MotivoDeshabilitado>
       </View>
     ) : (
-      <Button size="xl" label="Finalizar viaje" onPress={() => setFinalizando(true)} />
+      <Button size="xl" label="Cerrar viaje" onPress={() => setFinalizando(true)} />
     )
   ) : null
 
@@ -519,11 +519,11 @@ export default function ConsolaChoferScreen() {
           />
         ) : null}
         {avisado ? <AvisadoVentas guardado={avisado.guardado} onVolver={() => setAvisado(null)} /> : null}
-        <BottomSheet visible={finalizando} onClose={() => setFinalizando(false)} accessibilityLabel="Finalizar viaje">
-          <Text style={{ ...typeScale.seccion, color: c.text }}>¿Finalizar el viaje?</Text>
+        <BottomSheet visible={finalizando} onClose={() => setFinalizando(false)} accessibilityLabel="Cerrar viaje">
+          <Text style={{ ...typeScale.seccion, color: c.text }}>¿Cerrar el viaje?</Text>
           <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Todas las paradas están reportadas. El viaje queda cerrado.</Text>
           {avisoCobros ? <Notice tone="advertencia" title={avisoCobros.titulo}>{avisoCobros.detalle}</Notice> : null}
-          <Button label={avisoCobros ? 'Finalizar igual' : 'Finalizar viaje'} loading={finalizar.isPending} onPress={() => accionViaje('finalizar')} />
+          <Button label={avisoCobros ? 'Cerrar igual' : 'Cerrar viaje'} loading={finalizar.isPending} onPress={() => accionViaje('finalizar')} />
           <Button label="Cancelar" variant="secundario" onPress={() => setFinalizando(false)} />
         </BottomSheet>
         <PermisoGps visible={gps.preguntar} onAceptar={gps.aceptar} onRechazar={gps.rechazar} />

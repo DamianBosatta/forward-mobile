@@ -4,8 +4,8 @@ import { armarLinea, montoDeLinea, type LineaCobroForm } from './entrega'
 
 /**
  * Los pasos de la entrega del chofer (lienzo de entrega, láminas chofer-03 a chofer-05): devolución,
- * cobro y confirmar. "Llegué" es el paso 1 y vive afuera. La foto del remito, el receptor y la firma se
- * piden al confirmar. Cada regla de "Continuar" vive acá y devuelve el motivo por el que está apagado;
+ * cobro y cerrar la entrega. "Llegué" es el paso 1 y vive afuera. La firma (foto del remito firmado) y el
+ * receptor se piden al cerrar (S8). Cada regla de "Continuar" vive acá y devuelve el motivo por el que está apagado;
  * `armarEntrega` sigue siendo quien arma el cuerpo, con las mismas validaciones de siempre.
  */
 export type Paso = 'devolucion' | 'cobro' | 'confirmar'
@@ -49,8 +49,8 @@ export function razonDevolucion(valores: Record<string, string>, disponibles: Re
 const centavos = (n: number) => Math.round(n * 100)
 
 /**
- * Sin cobro de dinero (07-11, dueño 08-11): no se cargó ninguna línea con monto. La firma como deuda no es un cobro,
- * así que con solo firma también hace falta la foto del remito firmado para cerrar la entrega.
+ * Sin cobro de dinero (07-11, dueño 08-11): no se cargó ninguna línea con monto ("No paga", S8). Entonces la foto
+ * del remito firmado es obligatoria para cerrar la entrega.
  */
 export function sinCobroDeDinero(lineas: LineaCobroForm[]): boolean {
   return totalRepartido(lineas) <= 0
@@ -70,9 +70,6 @@ export interface ContextoCobro {
   aCobrar: number | null
   hayDevolucion: boolean
   subiendo: boolean
-  /** "Firma" elegida como forma de pago: lo que no se paga queda como deuda y va la foto de la firma. */
-  firma?: boolean
-  firmaUrl?: string | null
 }
 
 /**
@@ -87,26 +84,13 @@ export function comparacionDeCobro(c: ContextoCobro): { total: number; resto: nu
   return { total, resto, avisaSobra: resto < 0, avisaFalta: resto > 0 && !c.hayDevolucion }
 }
 
-/** Lo que suman las líneas "No di vuelto" por encima del monto cargado (el vuelto que el chofer no dio). */
-function sobranteDeVuelto(lineas: LineaCobroForm[]): number {
-  return lineas.reduce((t, l) => {
-    const monto = leerNumero(l.monto)
-    const enviado = montoDeLinea(l)
-    return monto != null && monto > 0 && enviado != null && enviado > monto ? t + centavos(enviado) - centavos(monto) : t
-  }, 0) / 100
-}
-
 /**
- * "Sobran $ X" para mostrar en rojo; no impide continuar. Lo lleva el chofer a la cuenta del cliente si eligió
- * "No di vuelto": si todo lo que sobra es ese vuelto, no hay aviso, porque `CobroEnEntrega` ya dice "Los $ X de más
- * quedan en su cuenta corriente" y no se repite. Si sobra más que el vuelto, se avisa el total.
- * Lo que falta no es un error: queda en la cuenta (`faltaACuenta`).
+ * "Sobran $ X" para mostrar en rojo; no impide continuar. Sin vuelto (S8), lo que sobra viaja con el cobro y el
+ * servidor lo deja a favor en la cuenta del cliente. Lo que falta no es un error: queda en la cuenta (`faltaACuenta`).
  */
 export function avisoDeCobro(c: ContextoCobro): string | null {
   const cmp = comparacionDeCobro(c)
-  if (!cmp?.avisaSobra) return null
-  if (centavos(-cmp.resto) === centavos(sobranteDeVuelto(c.lineas))) return null
-  return `Sobran ${formatImporte(-cmp.resto)}`
+  return cmp?.avisaSobra ? `Sobran ${formatImporte(-cmp.resto)}` : null
 }
 
 /** Lo que falta cobrar y queda como deuda en la cuenta corriente (chofer-04--mixto); `null` si no falta o no se compara. */
@@ -121,6 +105,5 @@ export function razonCobro(c: ContextoCobro): string | null {
     const r = armarLinea(l, i + 1)
     if ('error' in r) return r.error
   }
-  if (c.firma && !c.firmaUrl) return 'Falta la foto de la firma'
   return null
 }

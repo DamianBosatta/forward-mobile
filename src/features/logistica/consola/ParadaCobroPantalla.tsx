@@ -35,7 +35,7 @@ const comoCampo = (n: number) => String(n).replace('.', ',')
 
 /**
  * Pantalla de una parada de solo cobro (S9, S10): la dirección arriba y el cliente debajo, el aviso de que no se lleva
- * mercadería, el cobro con las mismas líneas de la entrega (sin firma) y, aparte, "No cobré" con su motivo obligatorio.
+ * mercadería, el cobro con las mismas líneas de la entrega (sin "No paga") y, aparte, "No cobré" con su motivo obligatorio.
  * Monta una vez por parada: el estado arranca limpio. El envío (con o sin señal) lo resuelve quien la abre.
  */
 export function ParadaCobroPantalla({ parada, numero, total, enviando, error, resultado, onCerrar, onCobrar, onNoCobre }: Props) {
@@ -112,8 +112,6 @@ export function ParadaCobroPantalla({ parada, numero, total, enviando, error, re
             </Text>
           </View>
           <CobroEnEntrega
-            sinFirma
-            sinTitulo
             medios={medios.data}
             mediosError={medios.isError}
             lineas={lineas}

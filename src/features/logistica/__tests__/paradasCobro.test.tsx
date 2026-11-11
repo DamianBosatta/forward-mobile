@@ -146,8 +146,9 @@ describe.each(TEMAS)('paradas de solo cobro en la consola del chofer (%s)', (tem
     expect(screen.getByText('Si no pudiste cobrar')).toBeTruthy()
     await userEvent.press(await screen.findByText('Efectivo'))
     expect(screen.getByLabelText('Monto del cobro 1').props.value).toBe('85000')
-    // Sin firma: es solo cobro, no hay mercadería.
+    // Ni firma ni "No paga": es solo cobro, sin mercadería, y tiene su propio "No cobré".
     expect(screen.queryByText('Firma')).toBeNull()
+    expect(screen.queryByLabelText('No paga')).toBeNull()
   })
 
   it('"Registrar cobro" sin medio queda apagado con su razón', async () => {

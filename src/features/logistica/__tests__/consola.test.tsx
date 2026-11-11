@@ -117,7 +117,7 @@ describe('Consola del chofer: hoja de ruta', () => {
     await userEvent.press(await screen.findByLabelText('Entregué todo'))
     // Pasos de la entrega: sin quién recibió igual se confirma; recién el último paso confirma.
     await alResumen('')
-    expect(screen.getByLabelText('Confirmar entrega').props.accessibilityState.disabled).toBeFalsy()
+    expect(screen.getByLabelText('Cerrar entrega').props.accessibilityState.disabled).toBeFalsy()
     await confirmarEntrega()
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/paradas/p4/entregar', {
       claveIdempotencia: expect.any(String),
@@ -126,7 +126,7 @@ describe('Consola del chofer: hoja de ruta', () => {
     expect(await screen.findByLabelText('Entrega lista')).toBeTruthy()
     await userEvent.press(screen.getByLabelText('Siguiente entrega'))
     expect(await screen.findByText('2 de 4 entregadas')).toBeTruthy()
-    expect(screen.queryByLabelText('Confirmar entrega')).toBeNull()
+    expect(screen.queryByLabelText('Cerrar entrega')).toBeNull()
   })
 
   it('no se pudo entregar: pide el motivo y lo manda como motivoRechazo', async () => {
@@ -150,7 +150,7 @@ describe('Consola del chofer: hoja de ruta', () => {
     await alResumen()
     await confirmarEntrega()
     expect(await screen.findByText('La venta ya no está en ruta.')).toBeTruthy()
-    expect(screen.getByLabelText('Confirmar entrega')).toBeTruthy()
+    expect(screen.getByLabelText('Cerrar entrega')).toBeTruthy()
     expect(screen.getByText('1 de 4 entregadas')).toBeTruthy()
   })
 
@@ -271,8 +271,8 @@ describe('Consola del chofer: hoja de ruta', () => {
     await userEvent.press(await screen.findByLabelText('¡Llegué!'))
     await userEvent.press(await screen.findByLabelText('Entregué todo'))
     await alResumen()
-    await userEvent.press(screen.getByLabelText('Confirmar entrega'))
-    const confirmar = await screen.findByLabelText('Sí, confirmar')
+    await userEvent.press(screen.getByLabelText('Cerrar entrega'))
+    const confirmar = await screen.findByLabelText('Sí, cerrar')
     act(() => {
       fireEvent.press(confirmar)
       fireEvent.press(confirmar)
@@ -397,5 +397,21 @@ describe('Consola del chofer: qué cobrar (fila 70)', () => {
     const proxima = await screen.findByLabelText('Próxima parada')
     expect(within(proxima).getByText('Total del pedido')).toBeTruthy()
     expect(screen.queryByText(/A cobrar hoy/)).toBeNull()
+  })
+})
+
+describe('S7 Cerrar viaje', () => {
+  const TERMINADA = { ...HOJA, detalles: HOJA.detalles.map((d) => ({ ...d, estado: 2 })) }
+
+  it('con todas las paradas reportadas, "Cerrar viaje" pide confirmar, cierra la hoja y lleva al chofer al menú principal', async () => {
+    mockPost.mockResolvedValue(true)
+    pintar(TERMINADA)
+    await userEvent.press(await screen.findByLabelText('Cerrar viaje'))
+    expect(await screen.findByText('¿Cerrar el viaje?')).toBeTruthy()
+    expect(screen.queryByLabelText('Finalizar viaje')).toBeNull()
+    const botones = screen.getAllByLabelText('Cerrar viaje')
+    await userEvent.press(botones[botones.length - 1])
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/finalizar', undefined))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(tabs)'))
   })
 })
