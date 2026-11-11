@@ -12,6 +12,7 @@ import { PARADA_COBRO_PENDIENTE } from '@/features/cobros/paradaCobro'
 import { ParadaGrande } from './ParadaGrande'
 import { ParadasCobro } from './ParadasCobro'
 import { PlanParada } from './PlanParada'
+import { HorarioDelDia } from './HorarioDelDia'
 import { piezasDeParada, textoPiezas } from './piezasParada'
 
 interface Props {
@@ -174,6 +175,7 @@ function Fila({ n, ultima, onPress }: { n: ParadaNumerada; ultima: boolean; onPr
         )}
       </View>
       {pendiente ? <PlanParada parada={parada} /> : null}
+      {pendiente ? <HorarioDelDia horario={parada.horarioDelDia} /> : null}
     </Pressable>
   )
 }
