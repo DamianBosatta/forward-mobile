@@ -1,11 +1,10 @@
 import React, { useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
-import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native'
+import { FlatList, RefreshControl, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftRight } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { Button, Notice, Segmented, TopBar, TwoPane, useMenuLeading } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
@@ -21,6 +20,8 @@ import { RegistrarCobro } from '@/features/cuentas/components/RegistrarCobro'
 import { DeudasAProveedores } from '@/features/cuentas/components/DeudasAProveedores'
 import { useDeudasResumen } from '@/features/cuentas/api/queries'
 import { ResumenDeCuentas } from '@/features/cuentas/components/ResumenDeCuentas'
+import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
+import { ChipDeFiltro } from '@/features/autorizaciones/components/ChipDeFiltro'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
@@ -29,15 +30,18 @@ type LadoDeCuentas = 'medeben' | 'debo'
 /** Sin MOD_PAGOS:Read el servidor no deja ver las deudas con proveedores (`GET /deudas/proveedores`). */
 export const AVISO_DEBO_SIN_PERMISO = 'Tu usuario no puede ver lo que se les debe a los proveedores.'
 
+/** Desde este ancho "Transferir" lleva el texto junto al ícono (propuesta "Finanzas como venta", frame 1, como v2). */
+const ANCHO_TRANSFERIR_CON_TEXTO = 600
+
 /**
- * Cuentas (láminas cuentas-lista CuentaCorriente y TabCuentaCorriente): la cartera por dirección de
- * entrega; tocar un cliente abre su cuenta (en tablet horizontal, en el panel de la derecha).
+ * Cuentas (láminas cuentas-lista CuentaCorriente y TabCuentaCorriente; propuesta "Finanzas como venta", frames 1 a 7):
+ * la cartera por dirección de entrega; tocar un cliente abre su cuenta (en tablet horizontal, en el panel de la derecha).
  */
 function CuentasCorrientesScreen() {
   const c = useColors()
   const router = useRouter()
   const menu = useMenuLeading()
-  const { isTabletLandscape } = useResponsive()
+  const { isTabletLandscape, width } = useResponsive()
   // Tesorería > "Cargar un cheque" llega con `cobrar=cheque`: elegir el cliente abre su cobro con el medio Cheque.
   const { cobrar } = useLocalSearchParams<{ cobrar?: string }>()
   const cargandoCheque = cobrar === 'cheque'
@@ -86,15 +90,28 @@ function CuentasCorrientesScreen() {
       <FlatList
         data={clientes}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <ClienteCard chevron conAntiguedad cliente={item} seleccionado={isTabletLandscape && item.id === abierto} onPress={() => abrir(item.id)} />
+        renderItem={({ item, index }) => (
+          // Las filas van en una tarjeta, con la fila aprobada de Clientes (frame 1).
+          <ClienteCard
+            variante="cartera"
+            primera={index === 0}
+            ultima={index === clientes.length - 1}
+            chevron
+            conAntiguedad
+            cliente={item}
+            seleccionado={isTabletLandscape && item.id === abierto}
+            onPress={() => abrir(item.id)}
+          />
         )}
+        contentContainerStyle={{ paddingTop: space[3], paddingBottom: space[6] }}
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch() }} tintColor={c.brandInk} />}
         ListEmptyComponent={
           isLoading ? (
-            <ActivityIndicator color={c.brandInk} style={{ marginTop: space[8] }} />
+            <View style={{ paddingHorizontal: space[4] }}>
+              <Esqueletos bloques={FILAS_CARGANDO} />
+            </View>
           ) : error ? (
             sinRed ? (
               <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los clientes" accion={{ label: 'Reintentar', onPress: () => void refetch() }} />
@@ -115,7 +132,7 @@ function CuentasCorrientesScreen() {
       <TopBar
         title="Cuentas"
         leading={menu}
-        actions={[{ icon: ArrowLeftRight, accessibilityLabel: 'Transferir', label: 'Transferir', disabled: !puedeTransferir, onPress: () => router.push('/(tabs)/tesoreria/transferencia') }]}
+        actions={[{ icon: ArrowLeftRight, accessibilityLabel: 'Transferir', label: width >= ANCHO_TRANSFERIR_CON_TEXTO ? 'Transferir' : undefined, disabled: !puedeTransferir, onPress: () => router.push('/(tabs)/tesoreria/transferencia') }]}
       />
       {!puedeTransferir ? (
         <View style={{ paddingHorizontal: space[4], paddingTop: space[2] }}>
@@ -148,10 +165,10 @@ function CuentasCorrientesScreen() {
         )
       ) : (
         <>
-          <ResumenDeCuentas saldoTotal={saldoTotal} clientesConDeuda={resumenDeudas.data?.clientesConDeuda} />
-          <BuscadorCartera sobre="pantalla" valor={busqueda} onCambio={setBusqueda} />
+          <ResumenDeCuentas saldoTotal={saldoTotal} clientesConDeuda={resumenDeudas.data?.clientesConDeuda} cargando={isLoading} />
+          <BuscadorCartera sobre="pantalla" grande valor={busqueda} onCambio={setBusqueda} />
           <View style={{ flexDirection: 'row', paddingHorizontal: space[4], paddingBottom: space[1] }}>
-            <FiltroChip label="Con deuda vencida" activo={soloVencidas} onPress={() => setSoloVencidas(v => !v)} />
+            <ChipDeFiltro label="Con deuda vencida" activo={soloVencidas} onPress={() => setSoloVencidas(v => !v)} />
           </View>
       <TwoPane
         list={lista}

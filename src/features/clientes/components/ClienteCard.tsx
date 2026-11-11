@@ -1,6 +1,6 @@
 import React from 'react'
 import { Linking, Pressable, Text, View } from 'react-native'
-import { Lock, Phone } from 'lucide-react-native'
+import { ChevronRight, Lock, Phone } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { FilaDeSocio, StatusChip, formatImporte } from '@/core/ui/fw'
 import type { SocioListDto } from '@/libs/api-client/types'
@@ -14,7 +14,7 @@ interface ClienteCardProps {
   onPress: () => void
   /** En tablet, el cliente abierto en el panel de la derecha. */
   seleccionado?: boolean
-  /** Flecha al final de la fila (lista de cuentas). Por defecto, sin flecha. */
+  /** Flecha al final de la fila (lista de cuentas; también con `variante="cartera"`). Por defecto, sin flecha. */
   chevron?: boolean
   /** Chip con la antigüedad de la deuda más vieja (lista "Me deben" de Cuentas). Por defecto, sin chip. */
   conAntiguedad?: boolean
@@ -131,6 +131,11 @@ export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = 
           >
             <Phone size={20} color={c.brandInk} />
           </Pressable>
+        ) : null}
+        {chevron ? (
+          <View testID="fila-chevron" style={{ alignSelf: 'center' }}>
+            <ChevronRight size={20} color={c.textSecondary} />
+          </View>
         ) : null}
       </Pressable>
     )
