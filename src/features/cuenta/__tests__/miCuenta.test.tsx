@@ -7,8 +7,10 @@ import fs from 'fs'
 import path from 'path'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Alert } from 'react-native'
-import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { fireEvent, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
+import { themeColors } from '@/libs/theme'
 import PerfilScreen from '../../../../app/(tabs)/perfil'
 
 const mockPost = jest.fn()
@@ -246,7 +248,7 @@ describe('Mi cuenta', () => {
     mockPost.mockRejectedValueOnce(new Error('sin señal'))
     pintar()
     await userEvent.press(screen.getByRole('button', { name: 'Cerrar sesión' }))
-    await userEvent.press(screen.getByLabelText('Confirmar: Cerrar sesión'))
+    await userEvent.press(screen.getByTestId('confirmar-cerrar-sesion'))
 
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Sessions/logout', {})
@@ -259,7 +261,7 @@ describe('Mi cuenta', () => {
     mockPost.mockRejectedValueOnce(new Error('sin señal'))
     pintar()
     await userEvent.press(screen.getByRole('button', { name: 'Cerrar sesión' }))
-    await userEvent.press(screen.getByLabelText('Confirmar: Cerrar sesión'))
+    await userEvent.press(screen.getByTestId('confirmar-cerrar-sesion'))
 
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
     expect(alerta).toHaveBeenCalledWith(expect.any(String), expect.stringContaining('no se pudo cerrar en los demás dispositivos'))
@@ -271,7 +273,7 @@ describe('Mi cuenta', () => {
     mockPost.mockResolvedValueOnce(true)
     pintar()
     await userEvent.press(screen.getByRole('button', { name: 'Cerrar sesión' }))
-    await userEvent.press(screen.getByLabelText('Confirmar: Cerrar sesión'))
+    await userEvent.press(screen.getByTestId('confirmar-cerrar-sesion'))
 
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
     expect(alerta).not.toHaveBeenCalled()
@@ -281,7 +283,7 @@ describe('Mi cuenta', () => {
     usuario()
     pintar()
     await userEvent.press(screen.getByRole('button', { name: 'Cerrar sesión' }))
-    await userEvent.press(screen.getByLabelText('Confirmar: Cerrar sesión'))
+    await userEvent.press(screen.getByTestId('confirmar-cerrar-sesion'))
 
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
     expect(mockBajaPush).toHaveBeenCalledTimes(1)
@@ -352,5 +354,55 @@ describe('Mi cuenta', () => {
     await userEvent.press(screen.getByLabelText('Confirmar: Cambiar y salir'))
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
     alerta.mockRestore()
+  })
+})
+
+describe('Mi cuenta como venta (propuesta Cuenta, frames 1 a 3)', () => {
+  const estilo = (testID: string) => StyleSheet.flatten(screen.getByTestId(testID).props.style)
+
+  it('la identidad va en una tarjeta sin borde con las iniciales en grande, no en la franja oscura', () => {
+    usuario()
+    pintar()
+    const tarjeta = screen.getByTestId('tarjeta-identidad')
+    expect(within(tarjeta).getByText('EP')).toBeTruthy()
+    expect(within(tarjeta).getByText('Emanuel Parraquini')).toBeTruthy()
+    expect(within(tarjeta).getByText('Vendedor · eparraquini')).toBeTruthy()
+    expect(within(tarjeta).getByText('ep@forward.com.ar')).toBeTruthy()
+    expect(estilo('tarjeta-identidad').backgroundColor).toBe(themeColors.light.surface)
+    expect(estilo('tarjeta-identidad').borderWidth ?? 0).toBe(0)
+    expect(StyleSheet.flatten(screen.getByTestId('iniciales-identidad').props.style)).toEqual(expect.objectContaining({ width: 56, height: 56 }))
+  })
+
+  it('las tarjetas de ajustes no llevan borde', () => {
+    usuario({ permissions: [{ module: 'MOD_USUARIOS', canRead: true }] })
+    pintar()
+    for (const t of ['tarjeta-seguridad', 'tarjeta-telefono', 'tarjeta-equipo']) expect(estilo(t).borderWidth ?? 0).toBe(0)
+  })
+
+  it('la huella dice "Prendida" o "Apagada" en su fila', async () => {
+    mockHuella.prendida = false
+    usuario()
+    pintar()
+    const fila = await screen.findByRole('switch', { name: 'Entrar con huella' })
+    expect(await within(fila).findByText('Apagada')).toBeTruthy()
+  })
+
+  it('sin permiso de leer usuarios no hay encabezado "Equipo"', () => {
+    usuario({ permissions: [{ module: 'MOD_VENTAS', canRead: true }] })
+    pintar()
+    expect(screen.queryByRole('header', { name: 'Equipo' })).toBeNull()
+    expect(screen.queryByTestId('tarjeta-equipo')).toBeNull()
+  })
+
+  it('"Cerrar sesión" pide confirmar en una hoja desde abajo con el texto de siempre; Cancelar no sale', async () => {
+    usuario()
+    pintar()
+    await userEvent.press(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    expect(screen.getByTestId('hoja-manija')).toBeTruthy()
+    expect(screen.getByText('Se cierra aquí y en los demás dispositivos; en la web puede seguir abierta unos minutos.')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Cancelar' }))
+    expect(screen.queryByTestId('hoja-manija')).toBeNull()
+    expect(mockPost).not.toHaveBeenCalled()
+    expect(mockReplace).not.toHaveBeenCalled()
   })
 })

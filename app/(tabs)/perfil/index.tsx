@@ -5,7 +5,7 @@ import { Bell, Fingerprint, Lock, LogOut } from 'lucide-react-native'
 import { useAuthStore } from '../../../libs/store/auth.store'
 import { useThemeStore, useColors, radii, space, typeScale, type ThemeMode } from '../../../libs/theme'
 import { ConfirmModal } from '@/core/ui'
-import { Button, FilaDeAjuste, FilaInterruptor, Notice, Segmented, TopBar, useMenuLeading, type SegmentedOption } from '@/core/ui/fw'
+import { BottomSheet, Button, FilaDeAjuste, FilaInterruptor, Notice, Segmented, TopBar, useMenuLeading, type SegmentedOption } from '@/core/ui/fw'
 import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
 import { FilaDeUsuarios } from '@/features/perfil/components/FilaDeUsuarios'
 import { lineasDeIdentidad } from '@/features/perfil/lib/identidad'
@@ -56,7 +56,8 @@ export default function PerfilScreen() {
   const iniciales = `${user?.nombre?.[0] ?? ''}${user?.apellido?.[0] ?? ''}`.toUpperCase() || '·'
   const { rol: quien, email } = lineasDeIdentidad(user)
   const [version] = useState(() => lineasDeVersion(leerDatosDeVersion()))
-  const tarjeta = { borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }
+  // Tarjetas por tono, sin borde (propuesta Cuenta, frame 1).
+  const tarjeta = { borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' as const }
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
   const titulo = (t: string) => <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>{t}</Text>
 
@@ -100,22 +101,21 @@ export default function PerfilScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Mi cuenta" leading={leading} />
-      <View style={{ backgroundColor: c.topBar, paddingHorizontal: space[4], paddingBottom: space[5] }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] + 2, width: '100%', maxWidth: 640, alignSelf: 'center' }}>
-          <View style={{ width: 60, height: 60, borderRadius: radii.pastilla, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
+      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], paddingBottom: space[12], width: '100%', maxWidth: 640, alignSelf: 'center' }}>
+        {/* Propuesta Cuenta, frame 1: la identidad sale de la franja oscura a una tarjeta sin borde con las iniciales en grande. */}
+        <View testID="tarjeta-identidad" style={[tarjeta, { flexDirection: 'row', alignItems: 'center', gap: space[4], padding: space[4] }]}>
+          <View testID="iniciales-identidad" style={{ width: 56, height: 56, borderRadius: radii.pastilla, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
             <Text style={[typeScale.titulo, { fontWeight: '700', color: c.onAction }]}>{iniciales}</Text>
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={{ fontSize: 19, lineHeight: 26, fontWeight: '700', color: c.onTopBarStrong }}>{nombre}</Text>
-            {quien ? <Text style={[typeScale.secundario, { color: c.onTopBar }]}>{quien}</Text> : null}
-            {email ? <Text style={[typeScale.secundario, { color: c.onTopBar }]}>{email}</Text> : null}
+            <Text style={[typeScale.titulo, { fontWeight: '700', color: c.text }]}>{nombre}</Text>
+            {quien ? <Text style={secundario}>{quien}</Text> : null}
+            {email ? <Text style={secundario}>{email}</Text> : null}
           </View>
         </View>
-      </View>
 
-      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], paddingBottom: space[12], width: '100%', maxWidth: 640, alignSelf: 'center' }}>
         {seccion('Seguridad')}
-        <View style={tarjeta}>
+        <View testID="tarjeta-seguridad" style={tarjeta}>
           {huella?.disponible ? (
             <FilaInterruptor icono={Fingerprint} titulo="Entrar con huella" apoyo={huella.prendida ? 'Prendida' : 'Apagada'} prendido={huella.prendida} onChange={() => { void cambiarHuella() }} conDivisor />
           ) : null}
@@ -124,7 +124,7 @@ export default function PerfilScreen() {
         {avisoHuella ? <Notice tone="info">{avisoHuella}</Notice> : null}
 
         {seccion('En este teléfono')}
-        <View style={tarjeta}>
+        <View testID="tarjeta-telefono" style={tarjeta}>
           <FilaDeAjuste icono={Bell} titulo="Avisos en el teléfono" apoyo="Cuáles saltan apenas llegan" onPress={() => router.push('/avisos/preferencias')} conDivisor />
           <View style={{ padding: space[4], paddingTop: space[3], gap: space[2] }}>
             <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Tema</Text>
@@ -135,7 +135,7 @@ export default function PerfilScreen() {
         {canDo('MOD_USUARIOS', 'read') ? (
           <>
             {seccion('Equipo')}
-            <View style={tarjeta}>
+            <View testID="tarjeta-equipo" style={tarjeta}>
               <FilaDeUsuarios onPress={() => router.push('/perfil/usuarios')} />
             </View>
           </>
@@ -161,16 +161,13 @@ export default function PerfilScreen() {
         ) : null}
       </ScrollView>
 
-      <ConfirmModal
-        visible={confirmarSalida}
-        title="Cerrar sesión"
-        message="Se cierra aquí y en los demás dispositivos; en la web puede seguir abierta unos minutos."
-        variant="danger"
-        confirmLabel="Cerrar sesión"
-        cancelLabel="Cancelar"
-        onConfirm={() => { setConfirmarSalida(false); void salir() }}
-        onCancel={() => setConfirmarSalida(false)}
-      />
+      {/* Propuesta Cuenta, frame 3: la confirmación pasa a hoja desde abajo, con el mismo texto. */}
+      <BottomSheet visible={confirmarSalida} onClose={() => setConfirmarSalida(false)} accessibilityLabel="Cerrar sesión">
+        <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>Cerrar sesión</Text>
+        <Text style={[typeScale.cuerpo, { color: c.text }]}>Se cierra aquí y en los demás dispositivos; en la web puede seguir abierta unos minutos.</Text>
+        <Button testID="confirmar-cerrar-sesion" label="Cerrar sesión" variant="peligro" icon={LogOut} onPress={() => { setConfirmarSalida(false); void salir() }} />
+        <Button label="Cancelar" variant="secundario" onPress={() => setConfirmarSalida(false)} />
+      </BottomSheet>
       <ConfirmModal
         visible={entornoPendiente !== null}
         title="Cambiar de servidor"

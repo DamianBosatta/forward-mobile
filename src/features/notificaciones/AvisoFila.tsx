@@ -12,10 +12,15 @@ interface AvisoFilaProps {
   destino: DestinoAviso
   cuando: string
   onPress: () => void
+  /**
+   * 'fila' (por defecto): con borde (panel del calendario). 'tarjeta': tarjeta sin borde de la bandeja
+   * (propuesta Cuenta, frame 8); sin leer en verde claro, leído en blanco.
+   */
+  variante?: 'fila' | 'tarjeta'
 }
 
 /** Una fila de la bandeja (lámina M17): etiquetas "Sin leer" y "Crítico" en texto, tipo y hora, título, mensaje y adónde lleva (o que es de la web). */
-export function AvisoFila({ aviso, destino, cuando, onPress }: AvisoFilaProps) {
+export function AvisoFila({ aviso, destino, cuando, onPress, variante = 'fila' }: AvisoFilaProps) {
   const c = useColors()
   const tipo = avisoDeTipo(aviso.tipo)
   const Icono = tipo?.Icono ?? Bell
@@ -32,8 +37,7 @@ export function AvisoFila({ aviso, destino, cuando, onPress }: AvisoFilaProps) {
         padding: space[4],
         minHeight: 48,
         borderRadius: radii.tarjeta,
-        borderWidth: 1,
-        borderColor: aviso.leida ? c.border : c.brand,
+        ...(variante === 'tarjeta' ? null : { borderWidth: 1, borderColor: aviso.leida ? c.border : c.brand }),
         backgroundColor: aviso.leida ? c.surface : c.brandSoft,
         overflow: 'hidden',
       }}
@@ -58,7 +62,7 @@ export function AvisoFila({ aviso, destino, cuando, onPress }: AvisoFilaProps) {
         <Text style={{ ...(aviso.leida ? typeScale.cuerpo : typeScale.cuerpoDestacado), color: c.text }}>{aviso.titulo}</Text>
         <Text style={{ ...typeScale.secundario, color: c.text }}>{aviso.mensaje}</Text>
         {destino.tipo === 'ruta' ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1], minHeight: variante === 'tarjeta' ? space[8] : undefined }}>
             <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>{destino.etiqueta}</Text>
             <ChevronRight size={18} color={c.brandInk} />
           </View>

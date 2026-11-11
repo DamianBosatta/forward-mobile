@@ -1,9 +1,11 @@
 import React from 'react'
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { ScrollView, Switch, Text, View } from 'react-native'
+import { Lock } from 'lucide-react-native'
 import { useRouter } from 'expo-router'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { FilaInterruptor, FormContainer, Notice, TopBar } from '@/core/ui/fw'
 import { useActualizarPreferenciasAvisos, usePreferenciasAvisos, type PreferenciaAviso } from '@/libs/api-client/notificaciones'
+import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { GRUPOS_DE_AVISOS, avisoDeTipo, grupoDeTipo } from './avisos'
 
 const mensajeDe = (e: unknown, porDefecto: string) => (e instanceof Error && e.message ? e.message : porDefecto)
@@ -27,13 +29,14 @@ export function PreferenciasAvisos() {
   const fila = (p: PreferenciaAviso, ultima: boolean) => {
     const etiqueta = avisoDeTipo(p.tipo)?.etiqueta ?? p.tipo
     const valor = !p.silenciable || prendido(p)
+    // Crítico (lo marca el servidor): candado, su texto y el interruptor atenuado (propuesta Cuenta, frame 12).
+    if (!p.silenciable) return <FilaCritica key={p.tipo} titulo={etiqueta} conDivisor={!ultima} />
     return (
       <FilaInterruptor
         key={p.tipo}
         titulo={etiqueta}
-        apoyo={p.silenciable ? (valor ? 'Salta apenas llega' : 'Solo en la bandeja') : 'Crítico: no se puede silenciar'}
+        apoyo={valor ? 'Salta apenas llega' : 'Solo en la bandeja'}
         prendido={valor}
-        disabled={!p.silenciable}
         onChange={() => guardar.mutate([{ tipo: p.tipo, toast: !valor }])}
         conDivisor={!ultima}
       />
@@ -55,14 +58,14 @@ export function PreferenciasAvisos() {
           </Text>
           {guardar.isError ? <Notice tone="peligro">{mensajeDe(guardar.error, 'No se pudo guardar la preferencia.')}</Notice> : null}
           {q.isLoading ? (
-            <ActivityIndicator color={c.brand} accessibilityLabel="Cargando las preferencias" />
+            <Esqueletos bloques={[{ alto: 150, testID: 'esqueleto-grupo' }]} />
           ) : q.isError ? (
             <Notice tone="peligro">{mensajeDe(q.error, 'No se pudieron cargar las preferencias.')}</Notice>
           ) : (
             temas.map(({ tema, filas }) => (
               <View key={tema} style={{ gap: space[2] }}>
                 <Text accessibilityRole="header" style={{ ...typeScale.etiqueta, color: c.textSecondary, paddingHorizontal: space[2], textTransform: 'uppercase' }}>{tema}</Text>
-                <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, overflow: 'hidden' }}>
+                <View testID={`grupo-${tema}`} style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, overflow: 'hidden' }}>
                   {filas.map((p, i) => fila(p, i === filas.length - 1))}
                 </View>
               </View>
@@ -70,6 +73,37 @@ export function PreferenciasAvisos() {
           )}
         </FormContainer>
       </ScrollView>
+    </View>
+  )
+}
+
+/**
+ * Fila de un aviso crítico: siempre prendido y no se puede tocar. Mismo rótulo y estado accesible que la fila de
+ * interruptor deshabilitada; suma el candado junto al texto y atenúa el interruptor para explicar por qué no se mueve.
+ */
+function FilaCritica({ titulo, conDivisor }: { titulo: string; conDivisor: boolean }) {
+  const c = useColors()
+  return (
+    <View
+      accessible
+      accessibilityRole="switch"
+      accessibilityLabel={titulo}
+      accessibilityState={{ checked: true, disabled: true }}
+      style={[
+        { minHeight: 64, paddingHorizontal: space[4], paddingVertical: space[2], flexDirection: 'row', alignItems: 'center', gap: space[3] },
+        conDivisor ? { borderBottomWidth: 1, borderBottomColor: c.border } : null,
+      ]}
+    >
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{titulo}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
+          <View testID="candado-critico"><Lock size={14} color={c.textSecondary} /></View>
+          <Text style={[typeScale.secundario, { color: c.textSecondary, flexShrink: 1 }]}>Crítico: no se puede silenciar</Text>
+        </View>
+      </View>
+      <View testID="interruptor-atenuado" pointerEvents="none" style={{ opacity: 0.5 }}>
+        <Switch value disabled trackColor={{ false: c.border, true: c.action }} thumbColor={c.onAction} />
+      </View>
     </View>
   )
 }

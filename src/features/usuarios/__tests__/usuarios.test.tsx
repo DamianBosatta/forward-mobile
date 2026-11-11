@@ -4,7 +4,8 @@
  */
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
 import UsuariosRoute from '../../../../app/(tabs)/perfil/usuarios'
 
@@ -87,5 +88,32 @@ describe('Usuarios (solo consulta)', () => {
     mockGet.mockRejectedValue(new TypeError('Network request failed'))
     pintar()
     expect(await screen.findByRole('button', { name: 'Reintentar' })).toBeTruthy()
+  })
+})
+
+describe('Usuarios como clientes (propuesta Cuenta, frames 6 y 7)', () => {
+  it('las filas con iniciales van en una tarjeta sin borde', async () => {
+    conLectura()
+    pintar()
+    const tarjeta = await screen.findByTestId('tarjeta-usuarios')
+    expect(within(tarjeta).getByText('MB')).toBeTruthy()
+    expect(within(tarjeta).getByText('Marcelo Bianchi')).toBeTruthy()
+    expect(StyleSheet.flatten(tarjeta.props.style).borderWidth ?? 0).toBe(0)
+  })
+
+  it('el buscador es el grande de la lista de clientes', async () => {
+    conLectura()
+    pintar()
+    await screen.findByText('Marcelo Bianchi')
+    expect(StyleSheet.flatten(screen.getByTestId('buscador-cartera').props.style).height).toBe(52)
+    expect(screen.getByLabelText('Buscar por nombre o puesto')).toBeTruthy()
+  })
+
+  it('mientras carga muestra esqueletos de fila', async () => {
+    conLectura()
+    mockGet.mockReturnValue(new Promise(() => {}))
+    pintar()
+    expect(await screen.findByLabelText('Cargando')).toBeTruthy()
+    expect(screen.getAllByTestId('esqueleto-fila').length).toBeGreaterThan(0)
   })
 })

@@ -1,18 +1,21 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native'
+import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { CheckCheck, Settings } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { Button, FormContainer, Notice, Segmented, TopBar, useMenuLeading } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
-import { CalendarioAvisosTabs } from '@/core/ui/fw/CalendarioAvisosTabs'
+import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { useBandejaAvisos } from '@/libs/api-client/notificaciones'
 import { AvisoFila } from './AvisoFila'
+import { VistaCalendarioAvisos } from './VistaCalendarioAvisos'
 import { conEncabezadosDeDia, destinoDelAviso, horaDelAviso } from './bandeja'
 import { useAbrirAviso } from './useAbrirAviso'
 
 type Filtro = 'todos' | 'sinLeer'
+/** Dos tarjetas de aviso mientras carga (propuesta Cuenta, frame 10). */
+const AVISOS_CARGANDO = [{ alto: 110 }, { alto: 110 }]
 const mensajeDe = (e: unknown, porDefecto: string) => (e instanceof Error && e.message ? e.message : porDefecto)
 
 /** Bandeja de avisos: lo que el servidor manda al usuario, más nuevo primero, de a páginas. */
@@ -32,7 +35,7 @@ export function BandejaAvisos() {
   const verAvisos = !q.isError || (sinRed && avisos.length > 0)
 
   const vacio = q.isLoading ? (
-    <ActivityIndicator color={c.brand} accessibilityLabel="Cargando los avisos" />
+    <Esqueletos bloques={AVISOS_CARGANDO} />
   ) : q.isError && sinRed ? (
     <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los avisos" accion={{ label: 'Reintentar', onPress: () => void q.refetch() }} />
   ) : q.isError ? (
@@ -55,7 +58,6 @@ export function BandejaAvisos() {
           { icon: Settings, accessibilityLabel: 'Preferencias de avisos', onPress: () => router.push('/avisos/preferencias' as never) },
         ]}
       />
-      <CalendarioAvisosTabs actual="avisos" sinLeer={noLeidas} onElegir={() => router.push('/calendario' as never)} />
       <FlatList
         data={verAvisos ? filas : []}
         keyExtractor={(f) => f.clave}
@@ -63,7 +65,9 @@ export function BandejaAvisos() {
         refreshControl={<RefreshControl refreshing={q.isRefetching && !q.isFetchingNextPage} onRefresh={() => void q.refetch()} />}
         ListHeaderComponent={
           <View style={{ gap: space[3] }}>
-            <FormContainer>
+            <FormContainer style={{ gap: space[3] }}>
+              {/* Propuesta Cuenta, frame 8: "Calendario | Avisos N" baja al cuerpo, arriba del filtro. */}
+              <VistaCalendarioAvisos sinLeer={noLeidas} onCalendario={() => router.push('/calendario' as never)} />
               <Segmented<Filtro>
                 accessibilityLabel="Filtrar avisos"
                 value={soloNoLeidas ? 'sinLeer' : 'todos'}
@@ -84,7 +88,7 @@ export function BandejaAvisos() {
             {item.tipo === 'dia' ? (
               <Text accessibilityRole="header" style={{ ...typeScale.etiqueta, color: c.textSecondary, marginTop: space[2] }}>{item.titulo}</Text>
             ) : (
-              <AvisoFila aviso={item.aviso} destino={destinoDelAviso(item.aviso.accion)} cuando={horaDelAviso(item.aviso.fechaCreacion)} onPress={() => abrir(item.aviso)} />
+              <AvisoFila variante="tarjeta" aviso={item.aviso} destino={destinoDelAviso(item.aviso.accion)} cuando={horaDelAviso(item.aviso.fechaCreacion)} onPress={() => abrir(item.aviso)} />
             )}
           </FormContainer>
         )}
@@ -96,8 +100,16 @@ export function BandejaAvisos() {
               </FormContainer>
             ) : null}
             {/* Los avisos salen de los eventos del calendario: no hay "crear aviso". */}
-            <FormContainer style={{ marginTop: space[4] }}>
-              <Button label="Nuevo evento" variant="secundario" onPress={() => router.push('/calendario?nuevo=1' as never)} />
+            <FormContainer style={{ marginTop: space[2] }}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Nuevo evento"
+                onPress={() => router.push('/calendario?nuevo=1' as never)}
+                android_ripple={{ color: c.surface2 }}
+                style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk, textAlign: 'center' }}>Nuevo evento</Text>
+              </Pressable>
             </FormContainer>
           </>
         }

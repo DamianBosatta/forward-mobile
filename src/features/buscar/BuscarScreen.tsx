@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Search } from 'lucide-react-native'
-import { radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Button, Notice, StatusChip, TopBar, chipForEstado, formatImporte, iniciales } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -10,6 +10,7 @@ import { useInfiniteVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client'
 import type { SocioListDto } from '@/libs/api-client/types'
 import { useCartera, useValorDiferido } from '@/features/clientes/hooks/useCartera'
+import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { parseDateSafe } from '@/core/utils/fecha'
@@ -59,7 +60,13 @@ export function BuscarScreen() {
         {!hayAlguna ? (
           <Notice tone="peligro">Tu usuario no tiene acceso a ningún módulo para buscar.</Notice>
         ) : !buscando ? (
-          <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Escribí al menos ${MINIMO_BUSQUEDA} letras para buscar.`}</Text>
+          // Propuesta Cuenta, frame 14: la lupa en círculo con el mismo pedido de letras.
+          <View testID="buscar-antes" style={{ alignItems: 'center', gap: space[3], paddingTop: space[12], paddingHorizontal: space[4] }}>
+            <View style={{ width: 96, height: 96, borderRadius: radii.pastilla, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center' }}>
+              <Search size={40} color={c.textSecondary} />
+            </View>
+            <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>{`Escribí al menos ${MINIMO_BUSQUEDA} letras para buscar.`}</Text>
+          </View>
         ) : (
           <View testID="buscar-resultados" style={{ flexDirection: isTablet ? 'row' : 'column', alignItems: isTablet ? 'flex-start' : 'stretch', gap: space[4] }}>
             {visibles.clientes ? <SeccionClientes termino={termino} columna={isTablet} /> : null}
@@ -75,12 +82,14 @@ export function BuscarScreen() {
   )
 }
 
-function Seccion({ titulo, cantidad, testID, columna, estado, children }: {
+function Seccion({ titulo, cantidad, testID, columna, estado, pie, children }: {
   titulo: string
   cantidad?: number
   testID: string
   columna: boolean
   estado: Estado
+  /** Texto bajo la tarjeta (p. ej. "Se muestran 5 de N ventas…"). */
+  pie?: React.ReactNode
   children?: React.ReactNode
 }) {
   const c = useColors()
@@ -89,47 +98,64 @@ function Seccion({ titulo, cantidad, testID, columna, estado, children }: {
       <Text accessibilityRole="header" style={{ ...typeScale.etiqueta, color: c.textSecondary }}>
         {cantidad !== undefined ? `${titulo.toUpperCase()} · ${cantidad}` : titulo.toUpperCase()}
       </Text>
-      {estado === 'cargando' ? <ActivityIndicator color={c.brand} accessibilityLabel={`Buscando en ${titulo}`} /> : null}
+      {estado === 'cargando' ? <Esqueletos bloques={[{ alto: 64 }]} /> : null}
       {estado === 'error' ? <Notice tone="peligro">{`No se pudo buscar en ${titulo.toLowerCase()}.`}</Notice> : null}
       {estado === 'vacio' ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Sin resultados.</Text> : null}
-      {estado === 'ok' ? children : null}
+      {estado === 'ok' ? (
+        // Propuesta Cuenta, frames 15 y 16: las filas de la sección en una tarjeta sin borde, como "Elegir cliente" de la venta.
+        <View testID="tarjeta-seccion" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, overflow: 'hidden' }}>
+          {React.Children.toArray(children).map((fila, i) => (
+            <View key={React.isValidElement(fila) && fila.key !== null ? fila.key : i} style={i > 0 ? { borderTopWidth: 1, borderTopColor: c.surface2 } : null}>{fila}</View>
+          ))}
+        </View>
+      ) : null}
+      {estado === 'ok' ? pie : null}
     </View>
   )
 }
 
-function Fila({ etiqueta, avatar, titulo, detalle, derecha, chip, onPress }: {
+function Fila({ etiqueta, avatar, titulo, detalle, detalleEnRojo = false, derecha, chip, vender, testID, onPress }: {
   etiqueta: string
   avatar?: string
   titulo: string
   detalle?: string | null
+  /** El detalle es una deuda vencida: va en rojo y con su texto. */
+  detalleEnRojo?: boolean
   derecha?: string
   chip?: React.ComponentProps<typeof StatusChip> | null
+  /** "Vender" dentro de la fila, a la derecha (solo con permiso de crear ventas). */
+  vender?: { label: string; onPress: () => void }
+  testID?: string
   onPress: () => void
 }) {
   const c = useColors()
-  const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={etiqueta}
-      onPress={onPress}
-      android_ripple={{ color: c.surface2 }}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 44, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, ...sombra }}
-    >
-      {avatar ? (
-        <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ width: 40, height: 40, borderRadius: radii.pastilla, backgroundColor: c.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ ...typeScale.secundario, color: c.brandInk }}>{avatar}</Text>
+    <View testID={testID} style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], paddingRight: vender ? space[2] : 0 }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={etiqueta}
+        onPress={onPress}
+        android_ripple={{ color: c.surface2 }}
+        style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 64, paddingVertical: space[3], paddingLeft: space[4], paddingRight: vender ? space[1] : space[4] }}
+      >
+        {avatar ? (
+          <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ width: 44, height: 44, borderRadius: radii.pastilla, backgroundColor: c.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>{avatar}</Text>
+          </View>
+        ) : null}
+        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+          <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{titulo}</Text>
+          {detalle ? <Text numberOfLines={1} style={{ ...typeScale.secundario, color: detalleEnRojo ? c.chip.anulado.text : c.textSecondary }}>{detalle}</Text> : null}
         </View>
-      ) : null}
-      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-        <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{titulo}</Text>
-        {detalle ? <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.textSecondary }}>{detalle}</Text> : null}
-      </View>
-      <View style={{ alignItems: 'flex-end', gap: space[1] }}>
-        {derecha ? <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{derecha}</Text> : null}
-        {chip ? <StatusChip {...chip} /> : null}
-      </View>
-    </Pressable>
+        {derecha || chip ? (
+          <View style={{ alignItems: 'flex-end', gap: space[1] }}>
+            {derecha ? <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{derecha}</Text> : null}
+            {chip ? <StatusChip {...chip} /> : null}
+          </View>
+        ) : null}
+      </Pressable>
+      {vender ? <Button label="Vender" accessibilityLabel={vender.label} onPress={vender.onPress} /> : null}
+    </View>
   )
 }
 
@@ -157,23 +183,19 @@ function SeccionClientes({ termino, columna }: { termino: string; columna: boole
       {lista.map((cl) => {
         const direccion = direccionDeEntrega(cl)
         const nombre = nombreDelCliente(cl)
-        const fila = (
+        // Lienzo ResBuscar y propuesta Cuenta, frame 15: "Vender" dentro de la fila (solo con la venta nueva y permiso para crear ventas).
+        return (
           <Fila
             key={cl.id}
+            testID={`fila-cliente-${cl.id}`}
             etiqueta={[direccion, nombre].filter(Boolean).join(', ')}
             avatar={iniciales(direccion)}
             titulo={direccion}
             detalle={nombre}
+            vender={venderA ? { label: `Vender a ${direccion}`, onPress: () => router.push(venderA(cl.id) as never) } : undefined}
             onPress={() => router.push({ pathname: '/(tabs)/socios/[id]', params: { id: cl.id } })}
           />
         )
-        // Lienzo ResBuscar: la fila lleva su botón "Vender" (solo con la venta nueva y permiso para crear ventas).
-        return venderA ? (
-          <View key={cl.id} style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-            <View style={{ flex: 1, minWidth: 0 }}>{fila}</View>
-            <Button label="Vender" accessibilityLabel={`Vender a ${direccion}`} onPress={() => router.push(venderA(cl.id) as never)} />
-          </View>
-        ) : fila
       })}
     </Seccion>
   )
@@ -195,6 +217,7 @@ function SeccionCuentas({ termino, columna }: { termino: string; columna: boolea
             etiqueta={`Cuenta de ${direccion}, saldo ${saldo}${cl.tieneDeudaVencida ? ', deuda vencida' : ''}`}
             titulo={direccion}
             detalle={cl.tieneDeudaVencida ? `Vencido ${formatImporte(cl.deudaVencidaAmount)}` : nombreDelCliente(cl)}
+            detalleEnRojo={cl.tieneDeudaVencida === true}
             derecha={saldo}
             onPress={() => router.push({ pathname: '/(tabs)/cuentas/[id]', params: { id: cl.id } })}
           />
@@ -218,30 +241,36 @@ function SeccionVentas({ termino, columna }: { termino: string; columna: boolean
   const ventas: Venta[] = (q.data?.pages[0]?.items ?? []).slice(0, MAX_POR_SECCION)
   const total = q.data?.pages[0]?.totalCount
   return (
-    <Seccion titulo="Ventas" testID="buscar-ventas" columna={columna} cantidad={espera ? undefined : total} estado={estadoDe(espera, q.error, ventas.length)}>
+    <Seccion
+      titulo="Ventas"
+      testID="buscar-ventas"
+      columna={columna}
+      cantidad={espera ? undefined : total}
+      estado={estadoDe(espera, q.error, ventas.length)}
+      pie={total !== undefined && total > ventas.length ? (
+        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
+          {`Se muestran ${ventas.length} de ${total} ventas. Afiná la búsqueda para ver el resto.`}
+        </Text>
+      ) : null}
+    >
       {ventas.map((v) => {
         const direccion = v.direccionCliente?.trim() || v.nombreFantasiaCliente?.trim() || v.razonSocialCliente
         const tipo = v.tipoOperacion === 1 ? 'Presupuesto' : 'Pedido'
         const numero = v.codigoPedido ?? v.id.slice(0, 8).toUpperCase()
-        const importe = formatImporte(v.totalAmount)
+        const monto = formatImporte(v.totalAmount)
         const chip = chipForEstado('venta', v.estado)
         return (
           <Fila
             key={v.id}
-            etiqueta={[`${tipo} ${numero}`, direccion, fechaCorta(v.fecha), importe, chip?.label].filter(Boolean).join(', ')}
+            etiqueta={[`${tipo} ${numero}`, direccion, fechaCorta(v.fecha), monto, chip?.label].filter(Boolean).join(', ')}
             titulo={`${tipo} ${numero}`}
             detalle={`${direccion} · ${fechaCorta(v.fecha)}`}
-            derecha={importe}
+            derecha={monto}
             chip={chip}
             onPress={() => router.push(`/(tabs)/ventas/${v.id}` as never)}
           />
         )
       })}
-      {total !== undefined && total > ventas.length ? (
-        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-          {`Se muestran ${ventas.length} de ${total} ventas. Afiná la búsqueda para ver el resto.`}
-        </Text>
-      ) : null}
     </Seccion>
   )
 }

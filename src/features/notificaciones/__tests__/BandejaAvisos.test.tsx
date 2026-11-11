@@ -6,6 +6,8 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
+import { themeColors } from '@/libs/theme'
 import { BandejaAvisos } from '../BandejaAvisos'
 
 const mockGet = jest.fn()
@@ -150,5 +152,59 @@ describe('Bandeja de avisos', () => {
     expect(mockPush).toHaveBeenCalledWith('/calendario?nuevo=1')
     await userEvent.press(screen.getByLabelText('Calendario'))
     expect(mockPush).toHaveBeenCalledWith('/calendario')
+  })
+})
+
+describe('Avisos como venta (propuesta Cuenta, frames 8 a 11)', () => {
+  const estilo = (el: { props: { style?: unknown } }) => StyleSheet.flatten(el.props.style as never) as Record<string, unknown>
+
+  it('"Calendario | Avisos N" es un segmentado dentro del cuerpo, arriba de "Todos / Sin leer · N"', async () => {
+    pintar()
+    await screen.findByText('Venta A00421 autorizada')
+    const vista = screen.getByTestId('vista-calendario-avisos')
+    expect(estilo(vista).backgroundColor).toBe(themeColors.light.surface2)
+    const avisos = within(vista).getByRole('tab', { name: 'Avisos (2)' })
+    expect(avisos.props.accessibilityState.selected).toBe(true)
+    expect(within(vista).getByRole('tab', { name: 'Calendario' }).props.accessibilityState.selected).toBe(false)
+    // En el orden del árbol: primero la vista y después el filtro, los dos en el cuerpo.
+    const orden = screen.UNSAFE_root
+      .findAll((n) => typeof n.type === 'string' && (n.props.testID === 'vista-calendario-avisos' || n.props.accessibilityLabel === 'Filtrar avisos'))
+      .map((n) => n.props.testID ?? n.props.accessibilityLabel)
+    expect([...new Set(orden)]).toEqual(['vista-calendario-avisos', 'Filtrar avisos'])
+    // Ya no hay solapas pegadas a la barra superior.
+    expect(screen.queryAllByRole('tab').every((t) => within(vista).queryByLabelText(t.props.accessibilityLabel) !== null)).toBe(true)
+  })
+
+  it('cada aviso va en tarjeta sin borde: sin leer en verde claro con su etiqueta, leído en blanco', async () => {
+    pintar()
+    const sinLeer = await screen.findByLabelText('Venta A00421 autorizada, sin leer')
+    expect(estilo(sinLeer)).toEqual(expect.objectContaining({ backgroundColor: themeColors.light.brandSoft }))
+    expect(estilo(sinLeer).borderWidth ?? 0).toBe(0)
+    expect(within(sinLeer).getByText('Sin leer')).toBeTruthy()
+    const leido = screen.getByLabelText('Tu semana')
+    expect(estilo(leido)).toEqual(expect.objectContaining({ backgroundColor: themeColors.light.surface }))
+    expect(estilo(leido).borderWidth ?? 0).toBe(0)
+  })
+
+  it('"Crítico" va en rojo con su texto', async () => {
+    mockGet.mockResolvedValue({ items: [aviso({ id: 'c1', tipo: 'PagoProveedorVencido', severidad: 'Critica', leida: true, titulo: 'Norte venció', mensaje: 'Sin pagar.' })], noLeidas: 0, hayMas: false })
+    pintar()
+    const fila = await screen.findByLabelText('Norte venció')
+    expect(within(fila).getByLabelText('Estado: Crítico')).toBeTruthy()
+  })
+
+  it('mientras carga muestra esqueletos con la forma de las tarjetas', async () => {
+    mockGet.mockReturnValue(new Promise(() => {}))
+    pintar()
+    expect(await screen.findByLabelText('Cargando')).toBeTruthy()
+    expect(screen.getAllByTestId('esqueleto-fila')).toHaveLength(2)
+  })
+
+  it('"Nuevo evento" es un enlace, no un botón con borde', async () => {
+    pintar()
+    await screen.findByText('Venta A00421 autorizada')
+    const enlace = screen.getByRole('button', { name: 'Nuevo evento' })
+    expect(estilo(within(enlace).getByText('Nuevo evento')).color).toBe(themeColors.light.brandInk)
+    expect(estilo(enlace).borderWidth ?? 0).toBe(0)
   })
 })

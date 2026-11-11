@@ -4,7 +4,8 @@
  */
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, userEvent } from '@testing-library/react-native'
+import { render, screen, userEvent, within } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
 import ClaveRoute from '../../../../app/(tabs)/perfil/clave'
 
@@ -98,5 +99,35 @@ describe('Reglas de la contraseña nueva en vivo (S6)', () => {
     await userEvent.type(screen.getByLabelText('Contraseña nueva'), 'Larga#2026')
     await userEvent.type(screen.getByLabelText('Repetir la contraseña nueva'), 'Larga#2026')
     expect(botonCambiar().props.accessibilityState.disabled).toBe(false)
+  })
+})
+
+describe('Cambiar contraseña como venta (propuesta Cuenta, frames 4 y 5)', () => {
+  it('los tres campos van en una tarjeta sin borde y las reglas en otra', () => {
+    pintar()
+    const campos = screen.getByTestId('tarjeta-campos')
+    for (const l of ['Contraseña actual', 'Contraseña nueva', 'Repetir la contraseña nueva']) expect(within(campos).getByLabelText(l)).toBeTruthy()
+    const reglas = screen.getByTestId('tarjeta-reglas')
+    expect(within(reglas).getAllByText(/· falta$/)).toHaveLength(5)
+    for (const t of ['tarjeta-campos', 'tarjeta-reglas']) expect(StyleSheet.flatten(screen.getByTestId(t).props.style).borderWidth ?? 0).toBe(0)
+  })
+
+  it('el botón va en el pie fijo, con la explicación de cuándo se habilita', async () => {
+    pintar()
+    const pie = screen.getByTestId('pie-clave')
+    expect(within(pie).getByRole('button', { name: 'Cambiar contraseña' }).props.accessibilityState.disabled).toBe(true)
+    expect(within(pie).getByText('Se habilita cuando todo está completo y las dos nuevas coinciden.')).toBeTruthy()
+    await completar('Vieja#2025', 'Nueva#20260', 'Nueva#20260')
+    expect(within(pie).getByRole('button', { name: 'Cambiar contraseña' }).props.accessibilityState.disabled).toBe(false)
+    expect(within(pie).queryByText('Se habilita cuando todo está completo y las dos nuevas coinciden.')).toBeNull()
+  })
+
+  it('el aviso de listo queda arriba de las tarjetas, a la vista', async () => {
+    pintar()
+    await completar('Vieja#2025', 'Nueva#20260', 'Nueva#20260')
+    await userEvent.press(botonCambiar())
+    await screen.findByText(/la contraseña nueva ya vale/)
+    const plano = JSON.stringify(screen.toJSON())
+    expect(plano.indexOf('la contraseña nueva ya vale')).toBeLessThan(plano.indexOf('tarjeta-campos'))
   })
 })

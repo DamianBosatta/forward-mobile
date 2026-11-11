@@ -1,6 +1,8 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, userEvent, within } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
+import { themeColors } from '@/libs/theme'
 import { BuscarScreen } from '../BuscarScreen'
 import { clientesConCuenta, seccionesVisibles } from '../lib/secciones'
 
@@ -183,5 +185,57 @@ describe('Buscar', () => {
     pintar()
     await userEvent.press(screen.getByLabelText('Volver'))
     expect(mockBack).toHaveBeenCalled()
+  })
+})
+
+describe('Buscar como venta (propuesta Cuenta, frames 14 a 17)', () => {
+  const estilo = (el: { props: { style?: unknown } }) => (StyleSheet.flatten(el.props.style as never) ?? {}) as Record<string, unknown>
+
+  it('antes de escribir: la lupa en círculo con el pedido de 2 letras y la línea de permisos', () => {
+    pintar()
+    const antes = screen.getByTestId('buscar-antes')
+    expect(within(antes).getByText('Escribí al menos 2 letras para buscar.')).toBeTruthy()
+    expect(screen.getByText('La búsqueda solo muestra lo que tu usuario puede ver.')).toBeTruthy()
+  })
+
+  it('las filas de cada sección van dentro de una tarjeta sin borde, sin sombra por fila', async () => {
+    pintar()
+    await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')
+    const clientes = await screen.findByTestId('buscar-clientes')
+    await within(clientes).findByText('CLIENTES · 1')
+    const tarjeta = within(clientes).getByTestId('tarjeta-seccion')
+    expect(estilo(tarjeta)).toEqual(expect.objectContaining({ backgroundColor: themeColors.light.surface }))
+    expect(estilo(tarjeta).borderWidth ?? 0).toBe(0)
+    const fila = within(tarjeta).getByRole('button', { name: 'Tarantino 1898, Autoservicio Abel' })
+    expect(estilo(fila).elevation).toBeUndefined()
+    expect(estilo(fila).shadowOpacity).toBeUndefined()
+  })
+
+  it('"Vender" (con permiso de crear ventas) va dentro de la fila del cliente', async () => {
+    mockPermisos = ['MOD_CLIENTES', 'MOD_VENTAS', 'MOD_VENTAS:create']
+    pintar()
+    await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')
+    const fila = await screen.findByTestId('fila-cliente-c1')
+    expect(within(fila).getByRole('button', { name: 'Vender a Tarantino 1898' })).toBeTruthy()
+    expect(within(fila).getByRole('button', { name: 'Tarantino 1898, Autoservicio Abel' })).toBeTruthy()
+  })
+
+  it('importes tabulares y el vencido en rojo con su texto', async () => {
+    pintar()
+    await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')
+    const ventas = await screen.findByTestId('buscar-ventas')
+    const importe = await within(ventas).findByText('$ 88.738,89')
+    expect(estilo(importe).fontVariant).toEqual(['tabular-nums'])
+    const cuentas = screen.getByTestId('buscar-cuentas')
+    expect(estilo(within(cuentas).getByText('$ 214.560,00')).fontVariant).toEqual(['tabular-nums'])
+    expect(estilo(within(cuentas).getByText('Vencido $ 84.300,00')).color).toBe(themeColors.light.chip.anulado.text)
+  })
+
+  it('mientras busca, un esqueleto de fila por sección', async () => {
+    mockGet.mockReturnValue(new Promise(() => {}))
+    pintar()
+    await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')
+    const ventas = await screen.findByTestId('buscar-ventas')
+    expect(within(ventas).getByTestId('esqueleto-fila')).toBeTruthy()
   })
 })
