@@ -100,12 +100,14 @@ it('con solo MOD_CLIENTES:update no hay Editar ni Pedir cambio', async () => {
 
   await screen.findByRole('header', { name: 'Insumos del Sur SA' })
   expect(screen.queryByRole('button', { name: 'Editar' })).toBeNull()
+  await userEvent.press(screen.getByRole('radio', { name: 'Datos' }))
   expect(screen.queryByRole('button', { name: 'Pedir cambio' })).toBeNull()
 })
 
-it('quien edita sin ser administrador puede Pedir cambio', async () => {
+it('quien edita sin ser administrador puede Pedir cambio (en la solapa Datos)', async () => {
   renderConQuery(<FichaProveedor id="p1" />)
-  expect(await screen.findByRole('button', { name: 'Pedir cambio' })).toBeTruthy()
+  await userEvent.press(await screen.findByRole('radio', { name: 'Datos' }))
+  expect(screen.getByRole('button', { name: 'Pedir cambio' })).toBeTruthy()
 })
 
 it('un administrador edita directo y no ve Pedir cambio', async () => {
@@ -113,6 +115,7 @@ it('un administrador edita directo y no ve Pedir cambio', async () => {
   renderConQuery(<FichaProveedor id="p1" />)
 
   await screen.findByRole('button', { name: 'Editar' })
+  await userEvent.press(screen.getByRole('radio', { name: 'Datos' }))
   expect(screen.queryByRole('button', { name: 'Pedir cambio' })).toBeNull()
 })
 
@@ -152,7 +155,8 @@ describe('ficha en teléfono con barra (proveedores-ficha)', () => {
     conPermisos([...PERMISOS, { module: 'MOD_COMPRAS', canRead: true, canCreate: true }])
     renderConQuery(<FichaProveedor id="p1" conBarra />)
 
-    expect(await screen.findByText('Condiciones de compra')).toBeTruthy()
+    await userEvent.press(await screen.findByRole('radio', { name: 'Condiciones' }))
+    expect(screen.getByText('Condiciones de compra')).toBeTruthy()
     expect(screen.getByText('30 días de factura')).toBeTruthy()
     expect(screen.getByText('A confirmar')).toBeTruthy()
     await userEvent.press(screen.getByRole('button', { name: 'Nueva compra' }))
