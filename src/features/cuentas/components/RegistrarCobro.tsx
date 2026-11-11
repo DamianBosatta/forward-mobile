@@ -15,6 +15,7 @@ import { useEnvioDelCobro } from '../hooks/useEnvioDelCobro'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { subirFotoCheque } from '../api/fotos'
+import { CajaDelCobroInline } from './CajaDelCobroInline'
 import { CobroListo } from './CobroListo'
 import { DestinoDelCobro } from './DestinoDelCobro'
 import { ElegirChip } from './ElegirChip'
@@ -39,8 +40,8 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false, medioInici
   const estado = useEstadoCuentaSocio(socioId, !!socio.data?.puedeVerCuentaCorriente)
   const medios = useMediosDeCobro()
   const [f, setF] = useState<FormCobro>(formVacio)
-  // La clave de idempotencia, las cajas y el POST: los mismos que el cobro en pasos (ver useEnvioDelCobro).
-  const { registrar, cajas, conCaja, sinCajas, sinCajaUtil, aviso, cobro, enviar: enviarCobro, reiniciar } = useEnvioDelCobro(socioId, f)
+  // La clave de idempotencia, la caja del depósito de la sesión y el POST: los mismos que el cobro en pasos (ver useEnvioDelCobro).
+  const { registrar, cajaDelCobro, conCaja, sinCajaUtil, aviso, cobro, enviar: enviarCobro, reiniciar } = useEnvioDelCobro(socioId, f)
   const [subiendo, setSubiendo] = useState(false)
   // Objetivo del cobro: solo una guía visual de cuánto falta; no entra al payload (ni a la clave de idempotencia).
   const [objetivo, setObjetivo] = useState<'vencido' | 'saldo' | null>(null)
@@ -169,22 +170,7 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false, medioInici
           valor={f.medioPagoId}
           onCambio={id => setF(p => ({ ...p, medioPagoId: id, cuentaPropiaId: null, esCheque: !!medios.data?.find(m => m.id === id)?.esCheque, requiereCaja: !!medios.data?.find(m => m.id === id)?.requiereCaja }))}
         />
-        {conCaja && (cajas.data?.length ?? 0) > 1 ? (
-          <ElegirChip
-            titulo="Caja"
-            opciones={(cajas.data ?? []).map(k => ({ id: k.depositoId, label: k.depositoNombre ?? 'Caja' }))}
-            valor={f.depositoId}
-            onCambio={id => setF(p => ({ ...p, depositoId: id }))}
-          />
-        ) : null}
-        {conCaja && cajas.error ? (
-          <>
-            <Notice tone="peligro">{mensajeDelServidor(cajas.error, 'No se pudieron cargar las cajas abiertas.')}</Notice>
-            <Button label="Reintentar" variant="secundario" onPress={() => { void cajas.refetch() }} />
-          </>
-        ) : null}
-        {sinCajas ? <Notice tone="advertencia">No hay ninguna caja abierta. Abrí una caja para registrar cobros en efectivo.</Notice> : null}
-        {conCaja && cajas.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
+        {conCaja ? <CajaDelCobroInline caja={cajaDelCobro} /> : null}
         {medios.error ? <Notice tone="peligro">{mensajeDelServidor(medios.error, 'No se pudieron cargar los medios de pago.')}</Notice> : null}
         {condiciones ? (
           <View

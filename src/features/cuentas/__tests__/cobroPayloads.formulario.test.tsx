@@ -6,7 +6,7 @@ import { RegistrarCobro } from '../components/RegistrarCobro'
 import { COBRO_CON_LO_DE_ANTES, COBRO_YA_ESTABA } from '../components/CobroListo'
 import { conPermisos, renderConQuery } from '@/features/clientes/__testing__/ayuda'
 import {
-  DOS_CAJAS, ESCENARIOS, ESPERA, claves, deOtroSocio, ok, otroCuerpo, post, servidor, sinClave, sinRed, subir, urlDeFoto, type Escenario,
+  ESCENARIOS, ESPERA, claves, deOtroSocio, ok, otroCuerpo, post, servidor, sinClave, sinRed, subir, urlDeFoto, type Escenario,
 } from '../__testing__/escenariosCobro'
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), back: jest.fn(), replace: jest.fn() }), useLocalSearchParams: () => ({}) }))
@@ -39,7 +39,6 @@ async function llenar(e: Pick<Escenario, 'lineas' | 'imputar' | 'referencia'>) {
       fireEvent.changeText(await screen.findByLabelText(`Monto del medio ${i + 1}`), l.monto)
       await userEvent.press(screen.getAllByRole('radio', { name: l.medio })[i])
     }
-    if (l.caja) await userEvent.press(await screen.findByRole('radio', { name: l.caja }, ESPERA))
     if (l.cuenta) await userEvent.press(await screen.findByRole('radio', { name: l.cuenta }, ESPERA))
     if (l.cheque) {
       fireEvent.changeText(screen.getByLabelText('N.º de cheque'), l.cheque.numero)
@@ -66,7 +65,6 @@ const montar = () => renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.
 
 describe('cuerpos del formulario de siempre', () => {
   it.each(ESCENARIOS.map(e => [e.nombre, e] as const))('%s', async (_nombre, e) => {
-    servidor(e.cajas)
     montar()
     await llenar(e)
     await registrar()
@@ -129,12 +127,12 @@ describe('idempotencia del formulario de siempre', () => {
     expect(k[1]).not.toBe(k[0])
   })
 
-  it('con dos cajas y ninguna elegida no manda y pide la caja', async () => {
-    servidor(DOS_CAJAS)
+  it('sin la caja del depósito de la sesión abierta no manda el efectivo y lo avisa', async () => {
+    servidor('sin caja')
     montar()
     await llenar({ lineas: [{ medio: 'Efectivo', monto: '1.000' }] })
     await registrar()
-    expect(await screen.findByText('Elegí en qué caja entra el efectivo.', {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByText(/No hay una caja abierta en este depósito/, {}, ESPERA)).toBeTruthy()
     expect(post).not.toHaveBeenCalled()
   })
 })

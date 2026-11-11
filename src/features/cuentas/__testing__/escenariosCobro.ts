@@ -5,10 +5,11 @@
  * Quien lo use mockea `@/core/api/client` (api.get, api.post, api.postConSobre).
  */
 import { ApiError, api } from '@/core/api/client'
+import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { formatImporte } from '@/core/ui/fw/formatImporte'
 import { diaArgentina } from '@/core/utils/fecha'
 import { clienteDeLista, pagina } from '@/features/clientes/__testing__/ayuda'
-import { estadoDeCuenta, fichaConCuentas, mov, paginaDeMovimientos } from './servidor'
+import { cajaActivaDe, estadoDeCuenta, fichaConCuentas, mov, paginaDeMovimientos } from './servidor'
 
 export const get = api.get as jest.Mock
 export const subir = api.post as jest.Mock
@@ -27,13 +28,11 @@ export const PENDIENTES = [
   { documentoId: 'v-409', codigoPedido: 'A00409', fecha: '2026-10-01T12:00:00Z', total: 50000, saldoPendiente: 50000, tipoCuenta: 'Tst', tipo: 'Venta' },
   { documentoId: 'v-410', codigoPedido: 'A00410', fecha: '2026-10-05T12:00:00Z', total: 40000, saldoPendiente: 30000, tipoCuenta: 'Tst', tipo: 'Venta' },
 ]
-export const UNA_CAJA = [{ depositoId: 'dep-a', depositoNombre: 'Caja A' }]
-export const DOS_CAJAS = [{ depositoId: 'dep-a', depositoNombre: 'Caja A' }, { depositoId: 'dep-b', depositoNombre: 'Caja B' }]
-
-export function servidor(cajas: unknown = UNA_CAJA) {
+/** `caja`: la del depósito de la sesión abierta (por defecto), sin caja abierta (204: `undefined`) o un error. */
+export function servidor(caja: 'abierta' | 'sin caja' | Error = 'abierta') {
   get.mockImplementation(async (url: string) => {
     if (url === '/api/v1/gastos/medios-pago') return MEDIOS
-    if (url === '/api/v1/Cajas/abiertas/estado') { if (cajas instanceof Error) throw cajas; return cajas }
+    if (url.startsWith('/api/v1/Cajas/activa')) { if (caja instanceof Error) throw caja; return caja === 'abierta' ? cajaActivaDe(url) : undefined }
     if (url === '/api/v1/cuentas-corrientes/propias/para-cobrar') return PARA_COBRAR
     if (url.startsWith('/api/v1/deudas/socios/c1/pendientes')) return PENDIENTES
     if (url.startsWith('/api/v1/socios-comerciales?')) return { ...pagina([clienteDeLista()], 1), saldoTotal: 186420 }
@@ -50,23 +49,17 @@ export const sinRed = () => new ApiError(0, 'Sin conexión')
 /** La foto subida: `POST /Media/upload-…` devuelve su URL. */
 export const urlDeFoto = (url: string) => ({ url: `https://r2.forward/${url.split('/').pop()}/foto.jpg` })
 
-export type Linea = { medio: string; monto: string; caja?: string; cuenta?: string; foto?: boolean; cheque?: { numero: string; banco: string; titular: string } }
-export type Escenario = { nombre: string; cajas?: unknown; lineas: Linea[]; imputar?: [string, string | null][]; referencia?: string; esperado: Record<string, unknown> }
+export type Linea = { medio: string; monto: string; cuenta?: string; foto?: boolean; cheque?: { numero: string; banco: string; titular: string } }
+export type Escenario = { nombre: string; lineas: Linea[]; imputar?: [string, string | null][]; referencia?: string; esperado: Record<string, unknown> }
 
 /** Las fechas del cheque arrancan en el día argentino de hoy. */
 const HOY_ISO = diaArgentina(Date.now())
 
 export const ESCENARIOS: Escenario[] = [
   {
-    nombre: 'efectivo con una caja abierta',
+    nombre: 'efectivo con la caja del depósito de la sesión abierta',
     lineas: [{ medio: 'Efectivo', monto: '30.000' }],
-    esperado: { socioComercialId: 'c1', depositoId: 'dep-a', lineas: [{ medioPagoId: 'm-ef', monto: 30000 }] },
-  },
-  {
-    nombre: 'efectivo con dos cajas, elegida la B',
-    cajas: DOS_CAJAS,
-    lineas: [{ medio: 'Efectivo', monto: '30.000', caja: 'Caja B' }],
-    esperado: { socioComercialId: 'c1', depositoId: 'dep-b', lineas: [{ medioPagoId: 'm-ef', monto: 30000 }] },
+    esperado: { socioComercialId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, lineas: [{ medioPagoId: 'm-ef', monto: 30000 }] },
   },
   {
     nombre: 'transferencia con cuenta, foto y referencia',
@@ -102,15 +95,14 @@ export const ESCENARIOS: Escenario[] = [
   {
     nombre: 'combinado: efectivo y transferencia',
     lineas: [{ medio: 'Efectivo', monto: '30.000' }, { medio: 'Transferencia', monto: '20.000' }],
-    esperado: { socioComercialId: 'c1', depositoId: 'dep-a', lineas: [{ medioPagoId: 'm-ef', monto: 30000 }, { medioPagoId: 'm-tr', monto: 20000 }] },
+    esperado: { socioComercialId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, lineas: [{ medioPagoId: 'm-ef', monto: 30000 }, { medioPagoId: 'm-tr', monto: 20000 }] },
   },
   {
-    nombre: 'combinado: transferencia con cuenta y efectivo con dos cajas',
-    cajas: DOS_CAJAS,
-    lineas: [{ medio: 'Transferencia', monto: '10.000', cuenta: 'Galicia' }, { medio: 'Efectivo', monto: '5.000', caja: 'Caja A' }],
+    nombre: 'combinado: transferencia con cuenta y efectivo',
+    lineas: [{ medio: 'Transferencia', monto: '10.000', cuenta: 'Galicia' }, { medio: 'Efectivo', monto: '5.000' }],
     esperado: {
       socioComercialId: 'c1',
-      depositoId: 'dep-a',
+      depositoId: DEPOSITO_CENTRAL_ID,
       lineas: [{ medioPagoId: 'm-tr', monto: 10000, cuentaPropiaId: 'cp-galicia' }, { medioPagoId: 'm-ef', monto: 5000 }],
     },
   },

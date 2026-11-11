@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { nuevaClaveIdempotencia } from '@/features/venta-nueva/lib/payload'
-import { claveDeOtroSocio, useCajasAbiertas, useRegistrarCobro, type CobroRegistrado } from '../api/cobros'
+import { claveDeOtroSocio, useCajaDelCobro, useRegistrarCobro, type CobroRegistrado } from '../api/cobros'
 import { armarCobro, entraACaja, type FormCobro } from '../lib/cobro'
 
 /**
  * El envío de un cobro, compartido por el formulario de siempre (`RegistrarCobro`) y el cobro en pasos
- * (`CobroEnPasos`): la clave de idempotencia, las cajas abiertas y el POST.
+ * (`CobroEnPasos`): la clave de idempotencia, la caja del depósito de la sesión y el POST.
  *
  * Una clave por cobro, la misma en cada reintento (tocar de nuevo tras un corte no lo carga dos veces);
  * «Registrar otro cobro» (`reiniciar`) arranca otra. Un cobro duplicado es peor que perder una edición: se edite
@@ -13,30 +13,30 @@ import { armarCobro, entraACaja, type FormCobro } from '../lib/cobro'
  * se había grabado el servidor lo dice con un 409 y lo nuevo no se guarda. Solo se cambia si el servidor dice que
  * la clave era de otro socio.
  *
- * `pedirCajas`: pide las cajas abiertas aunque ninguna línea del formulario entre a caja todavía (el medio que
- * se está cargando sí entra).
+ * El efectivo entra a la caja del depósito de la sesión, como en la web (`useCajaDelCobro`): no se elige caja. Sin
+ * esa caja abierta, sin saber todavía si lo está o con un error al pedirla, no se cobra en efectivo (la web tampoco).
+ *
+ * `pedirCajas`: pide la caja aunque ninguna línea del formulario entre a caja todavía (el medio que se está
+ * cargando sí entra).
  */
 export function useEnvioDelCobro(socioId: string, f: FormCobro, pedirCajas = false) {
   const registrar = useRegistrarCobro()
   const [clave, setClave] = useState(nuevaClaveIdempotencia)
   // Con el cobro combinado, cualquiera de las líneas puede ser efectivo.
   const conCaja = entraACaja(f)
-  const cajas = useCajasAbiertas(conCaja || pedirCajas)
+  const cajaDelCobro = useCajaDelCobro(conCaja || pedirCajas)
+  const { caja } = cajaDelCobro
   const [aviso, setAviso] = useState<string | null>(null)
   const [cobro, setCobro] = useState<CobroRegistrado | null>(null)
 
-  // Con caja: sin lista cargada, con error (aunque haya datos viejos) o sin ninguna abierta, no se cobra.
-  const sinCajas = conCaja && !!cajas.data && !cajas.error && cajas.data.length === 0
-  const sinCajaUtil = conCaja && (!cajas.data || !!cajas.error || cajas.data.length === 0)
+  // Con caja: sin respuesta todavía, con error (aunque haya datos viejos) o sin la caja abierta, no se cobra.
+  const sinCajaUtil = conCaja && (!caja.isSuccess || !!caja.error || !caja.data?.abierta)
 
   const enviar = (subiendo: boolean) => {
     if (registrar.isPending || subiendo) return
-    // Con caja, sin las cajas abiertas no se sabe en cuál entra el efectivo: no se manda incompleto.
+    // Con caja, sin la caja del depósito de la sesión abierta no se manda (como la web).
     if (sinCajaUtil) return
-    // Con una sola caja abierta se manda esa; con varias, la elige quien cobra.
-    const abiertas = cajas.data ?? []
-    const depositoId = f.depositoId ?? (abiertas.length === 1 ? abiertas[0].depositoId : null)
-    if (conCaja && abiertas.length > 1 && !depositoId) return setAviso('Elegí en qué caja entra el efectivo.')
+    const depositoId = conCaja ? cajaDelCobro.depositoId : null
     const r = armarCobro(socioId, { ...f, depositoId }, clave)
     if ('error' in r) return setAviso(r.error)
     setAviso(null)
@@ -54,5 +54,5 @@ export function useEnvioDelCobro(socioId: string, f: FormCobro, pedirCajas = fal
     registrar.reset()
   }
 
-  return { registrar, cajas, conCaja, sinCajas, sinCajaUtil, aviso, setAviso, cobro, enviar, reiniciar }
+  return { registrar, cajaDelCobro, conCaja, sinCajaUtil, aviso, setAviso, cobro, enviar, reiniciar }
 }

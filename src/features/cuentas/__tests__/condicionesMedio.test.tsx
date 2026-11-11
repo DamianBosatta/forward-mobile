@@ -38,7 +38,7 @@ describe('RegistrarCobro: condiciones del medio (solo informativo)', () => {
     conPermisos([{ module: 'MOD_PAGOS', canRead: true, canCreate: true }])
     get.mockImplementation(async (url: string) => {
       if (url === '/api/v1/gastos/medios-pago') return MEDIOS
-      if (url === '/api/v1/Cajas/abiertas/estado') return []
+      if (url.startsWith('/api/v1/Cajas/activa')) return undefined
       if (url.endsWith('/estado-cuenta')) return estadoDeCuenta()
       return fichaConCuentas()
     })

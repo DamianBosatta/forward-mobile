@@ -1,4 +1,5 @@
 import type { MovimientoCuentaDto, MovimientoSocioDto, MovimientoSocioDtoPaginatedResponse } from '@/libs/api-client/types'
+import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { clienteDeLista, pagina } from '@/features/clientes/__testing__/ayuda'
 
 /** Ficha del cliente como la manda el servidor: cuenta TST `cTst`, cuenta Normal `cNor`. */
@@ -69,3 +70,9 @@ export const paginaDeMovimientosSocio = (items: MovimientoSocioDto[], page = 1, 
 
 /** El 404 de un servidor que todavía no tiene el endpoint (mismo `status` que el ApiError del cliente). */
 export const noEncontrado = () => Object.assign(new Error('El recurso solicitado no existe.'), { status: 404 })
+
+/** `GET /Cajas/activa?depositoId=`: la caja abierta del depósito pedido (el de la sesión; en los tests, el Central). */
+export const cajaActivaDe = (url: string, depositoNombre = 'Depósito Central') => {
+  const depositoId = new URLSearchParams(url.split('?')[1] ?? '').get('depositoId') ?? DEPOSITO_CENTRAL_ID
+  return { id: `caja-${depositoId}`, fecha: '2026-11-11T09:00:00Z', saldoInicialAmount: 0, abierta: true, depositoId, depositoNombre }
+}
