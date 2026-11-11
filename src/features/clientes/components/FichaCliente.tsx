@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native'
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { AlertCircle, FilePen, HandCoins, Lock, MapPin, MessageCircle, Pencil, Phone, ShoppingCart } from 'lucide-react-native'
+import { ChevronRight, FilePen, HandCoins, MapPin, MessageCircle, Pencil, Phone, ShoppingCart } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, Progress, Segmented, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
+import { Button, Notice, Segmented, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { useSocio } from '@/libs/api-client/socios'
 import { useVentas } from '@/libs/api-client/ventas'
@@ -14,9 +14,12 @@ import { usePuedeCobrar } from '@/features/cuentas/lib/permiso'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { puedePedirCambio } from '@/features/socios/lib/camposSensibles'
 import { formatToLocalTime } from '@/core/utils/fecha'
-import { CreditoDelCliente } from './CreditoDelCliente'
-import { SolicitudCambio } from './SolicitudCambio'
-import { Accion, Dato, Seccion } from '@/features/socios/components/PiezasDeFicha'
+import { AVISO_DEUDA_VENCIDA, CreditoDelCliente } from './CreditoDelCliente'
+import { SolicitudCambioSheet } from './SolicitudCambio'
+import { HeroSaldo, SaldosPorCuenta } from './SaldoDelCliente'
+import { Esqueletos, FICHA_CARGANDO, FILAS_CARGANDO } from './Esqueletos'
+import { Accion, Dato } from '@/features/socios/components/PiezasDeFicha'
+import { FilaBloqueada } from '@/features/socios/components/FilaBloqueada'
 import { useVenderA } from '@/features/venta-nueva/hooks/useVenderA'
 import { urlLlamar, urlWhatsApp } from '../lib/contacto'
 import { direccionDeEntrega, nombreDelCliente, textoCondicionPago } from '../lib/cliente'
@@ -30,8 +33,24 @@ type Solapa = 'compras' | 'cuenta' | 'datos'
  * acciones, resumen de la cuenta y tres solapas (Compras, Cuenta, Datos). Lo que la web decidió se respeta:
  * cuenta solo si el servidor la deja ver, Editar si el servidor dice que es de tu cartera, dirección,
  * razón social y CUIT solo por administrador (los demás piden el cambio).
+ * Visual de la propuesta "Clientes como venta" (frames 5 a 12): hero de saldo, tarjetas sin borde y el pie de la venta.
  */
 export const MOTIVO_SIN_COBRO = 'No tenés permiso para cobrar'
+
+/** Tarjeta sin borde de la ficha (v2). */
+function Tarjeta({ children, testID, sinRelleno = false }: { children: React.ReactNode; testID?: string; sinRelleno?: boolean }) {
+  const c = useColors()
+  return (
+    <View testID={testID} style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, overflow: 'hidden', ...(sinRelleno ? {} : { padding: space[4], gap: space[3] }) }}>
+      {children}
+    </View>
+  )
+}
+
+function Titulo({ children }: { children: string }) {
+  const c = useColors()
+  return <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>{children}</Text>
+}
 
 /**
  * `conBarra`: en teléfono la ficha pone su propia barra superior (dirección y nombre en el título, lápiz de
@@ -57,7 +76,9 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
     return (
       <View style={{ flex: 1 }}>
         {barraSimple}
-        <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
+        <View style={{ padding: space[4] }}>
+          <Esqueletos bloques={FICHA_CARGANDO} />
+        </View>
       </View>
     )
   }
@@ -93,6 +114,7 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
     ...(verCuenta ? [{ value: 'cuenta' as const, label: 'Cuenta' }] : []),
     { value: 'datos' as const, label: 'Datos' },
   ]
+  const vencidaConImporte = estado?.tieneDeudaVencida === true && typeof estado.deudaVencida === 'number'
 
   return (
     <View style={{ flex: 1 }}>
@@ -114,140 +136,121 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
         ) : null}
 
         <View style={{ flexDirection: 'row', gap: space[2] }}>
-          {telefono ? <Accion icono={Phone} label="Llamar" onPress={() => Linking.openURL(urlLlamar(telefono))} /> : null}
-          {whatsapp ? <Accion icono={MessageCircle} label="WhatsApp" onPress={() => Linking.openURL(whatsapp)} /> : null}
+          {telefono ? <Accion sinBorde icono={Phone} label="Llamar" onPress={() => Linking.openURL(urlLlamar(telefono))} /> : null}
+          {whatsapp ? <Accion sinBorde icono={MessageCircle} label="WhatsApp" onPress={() => Linking.openURL(whatsapp)} /> : null}
           {cliente.direccion?.trim() ? (
             <Accion
+              sinBorde
               icono={MapPin}
               label="Cómo llegar"
               onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cliente.direccion)}`)}
             />
           ) : null}
           {!conBarra && puedeEditar ? (
-            <Accion icono={Pencil} label="Editar" onPress={() => router.push({ pathname: '/(tabs)/socios/nuevo', params: { id } })} />
+            <Accion sinBorde icono={Pencil} label="Editar" onPress={() => router.push({ pathname: '/(tabs)/socios/nuevo', params: { id } })} />
           ) : null}
         </View>
 
-        {pidiendoCambio ? <SolicitudCambio cliente={cliente} onCerrar={() => setPidiendoCambio(false)} /> : null}
-
         {estado ? (
-          <View accessible accessibilityLabel={`Saldo ${formatImporte(estado.saldoActual)}`} style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, padding: space[4], gap: space[3] }}>
-            <View style={{ gap: space[1] }}>
-              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Saldo</Text>
-              <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(estado.saldoActual)}</Text>
-            </View>
-            {vencido !== null && vencido > 0 ? (
-              <View style={{ gap: space[1] }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space[1], backgroundColor: c.chip.anulado.bg, borderRadius: radii.pastilla, paddingVertical: space[1], paddingHorizontal: 10 }}>
-                  <AlertCircle size={14} color={c.chip.anulado.text} />
-                  <Text style={[typeScale.etiqueta, { color: c.chip.anulado.text }]}>{`Vencido ${formatImporte(vencido)}`}</Text>
-                </View>
-                {/* Días hábiles de la deuda más vieja (SocioDetailDto): null sin deuda o sin permiso de saldo. */}
-                {cliente.diasDeudaMasVieja ? (
-                  <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-                    {`Deuda más vieja: ${cliente.diasDeudaMasVieja} ${cliente.diasDeudaMasVieja === 1 ? 'día' : 'días'}`}
-                  </Text>
-                ) : null}
-              </View>
-            ) : null}
-            <View style={{ flexDirection: 'row', gap: space[4] }}>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Cuenta TST</Text>
-                <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(estado.saldoTst)}</Text>
-              </View>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Normal (con factura)</Text>
-                <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(estado.saldoNormal)}</Text>
-              </View>
-            </View>
-            {disponible !== null ? (
-              <View style={{ gap: space[2] }}>
-                {tope !== null ? <Progress value={Math.min(tope, Math.max(0, tope - disponible))} max={tope} accessibilityLabel="Crédito usado" /> : null}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <Text style={{ ...typeScale.cuerpo, color: disponible < 0 ? c.chip.anulado.text : c.text }}>{disponible < 0 ? 'Pasado del tope' : 'Crédito libre'}</Text>
-                  <Text style={[typeScale.cuerpoDestacado, importe, { color: disponible < 0 ? c.chip.anulado.text : c.text }]}>{formatImporte(Math.abs(disponible))}</Text>
-                </View>
-              </View>
-            ) : null}
-          </View>
+          <>
+            <HeroSaldo
+              saldo={estado.saldoActual}
+              vencido={vencido}
+              diasDeudaMasVieja={cliente.diasDeudaMasVieja}
+              tope={tope}
+              disponible={disponible}
+              accessibilityLabel={`Saldo ${formatImporte(estado.saldoActual)}`}
+            />
+            <SaldosPorCuenta tst={estado.saldoTst} normal={estado.saldoNormal} />
+          </>
         ) : null}
 
         <Segmented options={solapas} value={solapa} onChange={setSolapa} accessibilityLabel="Secciones de la ficha" />
 
         {solapa === 'compras' ? (
-          <Seccion titulo="Últimas ventas">
-            {ventas.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
+          <View style={{ gap: space[3] }}>
+            <Titulo>Últimas ventas</Titulo>
+            {ventas.isLoading ? <Esqueletos bloques={FILAS_CARGANDO} /> : null}
             {ventas.error ? <Notice tone="peligro">{mensajeDelServidor(ventas.error, 'No se pudieron cargar las ventas.')}</Notice> : null}
             {!ventas.isLoading && !ventas.error && ultimas.length === 0 ? (
-              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Todavía no tiene ventas.</Text>
+              <Tarjeta>
+                <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Todavía no tiene ventas.</Text>
+              </Tarjeta>
             ) : null}
-            {ultimas.map(v => {
-              const chip = chipForEstado('venta', v.estado)
-              const tipo = v.tipoOperacion === 1 ? 'Presupuesto' : 'Pedido'
-              return (
-                <Pressable
-                  key={v.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${v.codigoPedido ?? 'Venta'}, ${tipo}, ${formatImporte(v.totalAmount)}`}
-                  onPress={() => router.push({ pathname: '/(tabs)/ventas/[id]', params: { id: v.id } })}
-                  style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: space[3] }}
-                >
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{v.codigoPedido ?? '—'}</Text>
-                    <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`${formatToLocalTime(v.fecha, 'EEE d/M')} · ${tipo}`}</Text>
-                  </View>
-                  <View style={{ alignItems: 'flex-end', gap: space[1] }}>
-                    <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(v.totalAmount)}</Text>
-                    {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
-                  </View>
-                </Pressable>
-              )
-            })}
-          </Seccion>
+            {ultimas.length > 0 ? (
+              <Tarjeta testID="lista-ultimas-ventas" sinRelleno>
+                {ultimas.map((v, i) => {
+                  const chip = chipForEstado('venta', v.estado)
+                  const tipo = v.tipoOperacion === 1 ? 'Presupuesto' : 'Pedido'
+                  return (
+                    <Pressable
+                      key={v.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${v.codigoPedido ?? 'Venta'}, ${tipo}, ${formatImporte(v.totalAmount)}`}
+                      onPress={() => router.push({ pathname: '/(tabs)/ventas/[id]', params: { id: v.id } })}
+                      android_ripple={{ color: c.surface2 }}
+                      style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3], paddingLeft: space[4], paddingRight: space[3], borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.surface2 }}
+                    >
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{v.codigoPedido ?? '—'}</Text>
+                        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`${formatToLocalTime(v.fecha, 'EEE d/M')} · ${tipo}`}</Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end', gap: space[1] }}>
+                        <Text style={[typeScale.titulo, importe, { fontWeight: '700', color: c.text }]}>{formatImporte(v.totalAmount)}</Text>
+                        {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
+                      </View>
+                      <ChevronRight testID="venta-chevron" size={20} color={c.textSecondary} />
+                    </Pressable>
+                  )
+                })}
+              </Tarjeta>
+            ) : null}
+          </View>
         ) : null}
 
         {solapa === 'cuenta' && verCuenta ? (
-          <Seccion titulo="Cuenta corriente">
-            {cuenta.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
+          <View style={{ gap: space[3] }}>
+            <Titulo>Cuenta corriente</Titulo>
+            {cuenta.isLoading ? <Esqueletos bloques={FILAS_CARGANDO} /> : null}
             {cuenta.error ? <Notice tone="peligro">{mensajeDelServidor(cuenta.error, 'No se pudo cargar la cuenta.')}</Notice> : null}
             {estado ? (
               <>
-                <TotalsRow label="Saldo" importe={estado.saldoActual} destacado />
-                {estado.saldoAFavor > 0 ? <TotalsRow label="A favor" importe={estado.saldoAFavor} /> : null}
-                {cliente.topeCredito != null ? <TotalsRow label="Tope de crédito" importe={cliente.topeCredito} /> : null}
-                <CreditoDelCliente estado={estado} />
+                {/* Totales como los del carrito (frame 6): renglones chicos y el saldo como renglón final destacado. */}
+                <Tarjeta testID="totales-cuenta">
+                  {cliente.topeCredito != null ? <TotalsRow label="Tope de crédito" importe={cliente.topeCredito} /> : null}
+                  <CreditoDelCliente estado={estado} sinAviso />
+                  {estado.saldoAFavor > 0 ? <TotalsRow label="A favor" importe={estado.saldoAFavor} /> : null}
+                  <TotalsRow label="Saldo" importe={estado.saldoActual} destacado />
+                </Tarjeta>
+                {vencidaConImporte ? <Notice tone="advertencia">{AVISO_DEUDA_VENCIDA}</Notice> : null}
               </>
             ) : null}
-          </Seccion>
+          </View>
         ) : null}
 
         {solapa === 'datos' ? (
-          <Seccion>
-            <Dato etiqueta="Dirección de entrega" valor={cliente.direccion} />
-            <Dato etiqueta="Localidad" valor={cliente.localidad} />
-            <Dato etiqueta="Contacto" valor={cliente.nombreContacto} />
-            <Dato etiqueta="Teléfono" valor={cliente.telefono} />
-            <Dato etiqueta="Razón social" valor={cliente.razonSocial} />
-            <Dato etiqueta="CUIT" valor={cliente.cuit} />
-            <Dato etiqueta="Condición frente al IVA" valor={cliente.condicionIva} />
-            <Dato etiqueta="Email" valor={cliente.email} />
+          <Tarjeta>
+            <Dato etiquetaChica etiqueta="Dirección de entrega" valor={cliente.direccion} />
+            <Dato etiquetaChica etiqueta="Localidad" valor={cliente.localidad} />
+            <Dato etiquetaChica etiqueta="Contacto" valor={cliente.nombreContacto} />
+            <Dato etiquetaChica etiqueta="Teléfono" valor={cliente.telefono} />
+            <Dato etiquetaChica etiqueta="Razón social" valor={cliente.razonSocial} />
+            <Dato etiquetaChica etiqueta="CUIT" valor={cliente.cuit} />
+            <Dato etiquetaChica etiqueta="Condición frente al IVA" valor={cliente.condicionIva} />
+            <Dato etiquetaChica etiqueta="Email" valor={cliente.email} />
             {/* Solo con el servidor nuevo (forward-system #896): uno anterior no manda el nombre y no se muestra nada. */}
-            <Dato etiqueta="Vendedor" valor={cliente.vendedorResponsableNombre} />
+            <Dato etiquetaChica etiqueta="Vendedor" valor={cliente.vendedorResponsableNombre} />
             {/* La dirección, la razón social y el CUIT solo los cambia un administrador (regla de la web); el resto los pide. */}
             {puedePedirCambio(esAdmin, puedeEditar) ? (
               <Button label="Pedir cambio" variant="secundario" icon={FilePen} onPress={() => setPidiendoCambio(true)} />
             ) : null}
-            <View style={{ gap: space[1] }}>
-              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Condición de pago</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-                {!puedeAutorizar ? <Lock size={16} color={c.textSecondary} /> : null}
-                <Text style={{ ...typeScale.cuerpo, color: c.text }}>{textoCondicionPago(cliente.condicionPago)}</Text>
-              </View>
-              {!puedeAutorizar ? (
-                <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{AVISO_CONDICION_PAGO}</Text>
-              ) : null}
-            </View>
-          </Seccion>
+            <View style={{ borderTopWidth: 1, borderTopColor: c.border }} />
+            {puedeAutorizar ? (
+              <Dato etiquetaChica etiqueta="Condición de pago" valor={textoCondicionPago(cliente.condicionPago)} />
+            ) : (
+              <FilaBloqueada etiqueta="Condición de pago" valor={textoCondicionPago(cliente.condicionPago)} razon={AVISO_CONDICION_PAGO} />
+            )}
+          </Tarjeta>
         ) : null}
       </ScrollView>
 
@@ -268,6 +271,8 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
           {verCuenta && !puedeCobrar ? <MotivoDeshabilitado>{MOTIVO_SIN_COBRO}</MotivoDeshabilitado> : null}
         </View>
       ) : null}
+
+      <SolicitudCambioSheet visible={pidiendoCambio} cliente={cliente} onCerrar={() => setPidiendoCambio(false)} />
     </View>
   )
 }

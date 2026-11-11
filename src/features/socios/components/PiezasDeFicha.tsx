@@ -4,18 +4,20 @@ import type { LucideIcon } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 
 /** Piezas de la ficha de un socio (clientes y proveedores): dato, acción, sección y cifra. */
-export function Dato({ etiqueta, valor }: { etiqueta: string; valor?: string | null }) {
+export function Dato({ etiqueta, valor, etiquetaChica = false }: { etiqueta: string; valor?: string | null; etiquetaChica?: boolean }) {
   const c = useColors()
   if (!valor?.trim()) return null
   return (
-    <View style={{ gap: space[1] }}>
-      <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{etiqueta}</Text>
+    <View style={{ gap: etiquetaChica ? 2 : space[1] }}>
+      {/* `etiquetaChica`: etiqueta 12/600 arriba del valor, como las filas de solo lectura de la venta (ficha de cliente). */}
+      <Text style={{ ...(etiquetaChica ? typeScale.etiqueta : typeScale.secundario), color: c.textSecondary }}>{etiqueta}</Text>
       <Text style={{ ...typeScale.cuerpo, color: c.text }}>{valor}</Text>
     </View>
   )
 }
 
-export function Accion({ icono: Icono, label, onPress }: { icono: LucideIcon; label: string; onPress: () => void }) {
+/** `sinBorde`: la acción sin contorno (ficha de cliente, propuesta "Clientes como venta"). */
+export function Accion({ icono: Icono, label, onPress, sinBorde = false }: { icono: LucideIcon; label: string; onPress: () => void; sinBorde?: boolean }) {
   const c = useColors()
   return (
     <Pressable
@@ -29,7 +31,7 @@ export function Accion({ icono: Icono, label, onPress }: { icono: LucideIcon; la
         minHeight: 64,
         borderRadius: radii.campo,
         backgroundColor: c.surface,
-        borderWidth: 1,
+        borderWidth: sinBorde ? 0 : 1,
         borderColor: c.border,
         alignItems: 'center',
         justifyContent: 'center',
