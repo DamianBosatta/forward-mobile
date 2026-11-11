@@ -22,9 +22,10 @@ const SIN_MARGENES: EdgeInsets = { top: 0, bottom: 0, left: 0, right: 0 }
  * Aviso global sin conexión, arriba de todo (propuesta de Inicio, frame 10): se ve sin bajar y no lo
  * tapa la barra de abajo. Va en el flujo, no flotando, y solo donde la pantalla es de lectura.
  *
- * Envuelve a las pantallas: con el aviso a la vista, él ocupa el margen superior del sistema y las
- * pantallas reciben ese margen en 0, así su barra superior queda pegada debajo del aviso. El árbol es
- * siempre el mismo (con o sin aviso) para que perder la señal no vuelva a montar la navegación.
+ * Envuelve a las pantallas y las corre hacia abajo; no cambia el margen del sistema que leen: los
+ * modales de pantalla completa (otra ventana, encima del aviso) lo necesitan entero para que su barra
+ * no quede bajo la hora. El árbol es siempre el mismo (con o sin aviso) para que perder la señal no
+ * vuelva a montar la navegación.
  */
 export function OfflineBanner({ children }: { children?: React.ReactNode }) {
   const { isConnected } = useNetworkStatus()
@@ -41,7 +42,7 @@ export function OfflineBanner({ children }: { children?: React.ReactNode }) {
           <Notice tone="advertencia">Sin conexión - Modo lectura (Cache)</Notice>
         </View>
       ) : null}
-      <SafeAreaInsetsContext.Provider value={visible ? { ...insets, top: 0 } : insets}>{children}</SafeAreaInsetsContext.Provider>
+      {children}
     </View>
   )
 }

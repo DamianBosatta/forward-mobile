@@ -65,14 +65,14 @@ describe('OfflineBanner arriba de la pantalla (propuesta de Inicio, frame 10)', 
     )
   beforeEach(() => { montajes = 0; mockConectado = false; mockRuta = '/inventario/stock' })
 
-  it('sin señal va arriba, antes de la pantalla y con el margen del sistema; la pantalla ya no lo suma', () => {
+  it('sin señal va arriba, antes de la pantalla y con el margen del sistema; la pantalla conserva el suyo (los modales lo necesitan)', () => {
     pintar()
     const aviso = screen.getByTestId('aviso-sin-conexion')
     const pantalla = screen.getByTestId('pantalla')
     const orden = screen.toJSON() as unknown as { children: { props: { testID?: string } }[] }
     expect(orden.children[0].props.testID).toBe('aviso-sin-conexion')
     expect(StyleSheet.flatten(aviso.props.style).paddingTop).toBeGreaterThanOrEqual(INSETS.top)
-    expect(pantalla.props.children).toBe('arriba 0')
+    expect(pantalla.props.children).toBe('arriba 30')
   })
 
   it('en la consola del chofer y en la venta nueva sigue oculto y la pantalla conserva su margen', () => {
