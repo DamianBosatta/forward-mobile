@@ -95,7 +95,8 @@ describe.each(TEMAS)('Tareas de cobro en el calendario (%s)', (tema) => {
     it('una tarea de cobro ya hecha no ofrece cobrar', async () => {
       eventos = [{ ...COBRO, estadoTarea: 'Hecha' }]
       pintar()
-      await userEvent.press(await screen.findByLabelText('Cobrar a Don Pepe, Pendiente'))
+      // La tarea muestra su propio estado, como la web (resumen-evento.ts).
+      await userEvent.press(await screen.findByLabelText('Cobrar a Don Pepe, Hecha'))
       expect(await screen.findByText('Asignada a Vendedor Uno')).toBeTruthy()
       expect(screen.queryByLabelText('Cobrar')).toBeNull()
     })

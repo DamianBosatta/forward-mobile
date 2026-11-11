@@ -3,14 +3,16 @@ import { ActivityIndicator, ScrollView, Text, View, useWindowDimensions } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useTeclado } from '@/core/utils/useTecladoVisible'
-import { BottomSheet, Button, Field, Notice, OptionCard, StatusChip } from '@/core/ui/fw'
+import { BottomSheet, Button, Field, Notice, OptionCard } from '@/core/ui/fw'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   calendarioKeys, useBorrarEvento, useEditarEvento, useEventoCalendario, useMarcarPagado,
   type EventoCalendario, type EventoDetalle,
 } from '@/libs/api-client/calendario'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { chipDe, esHoraValida, esRecordatorio, textoSemanal, TIPO } from './presentacion'
+import { esHoraValida, esRecordatorio, textoSemanal, TIPO } from './presentacion'
+import { resumenDeEvento } from './resumen'
+import { PuntoDeEstado } from './PuntoDeEstado'
 import { moverDia, nombreLargo } from './semana'
 import { SelectorDia } from './SelectorDia'
 import { usePuedeCobrar } from '@/features/cuentas/lib/permiso'
@@ -44,13 +46,13 @@ const fechaOriginalDe = (e: EventoCalendario) => /:(\d{4}-\d{2}-\d{2})$/.exec(e.
  */
 export function EventoSheet({ evento, onCerrar, onMovido, onAbrirVenta, onCobrar }: Props) {
   const c = useColors()
-  const chip = chipDe(evento)
+  const resumen = resumenDeEvento(evento)
   const original = fechaOriginalDe(evento)
   const cabecera = (
     <>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
         <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text, flex: 1 }}>{evento.titulo}</Text>
-        {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
+        <PuntoDeEstado tono={resumen.tono} texto={resumen.estado} />
       </View>
       <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
         {[nombreLargo(moverDia(evento.fecha, 0)), evento.hora, TIPO[evento.tipo] ?? evento.tipo].filter(Boolean).join(' · ')}

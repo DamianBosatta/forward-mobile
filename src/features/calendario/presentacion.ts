@@ -1,13 +1,45 @@
-import type { ChipEstado } from '@/libs/theme'
 import type { EventoCalendario } from '@/libs/api-client/calendario'
 
-/** Cómo se nombra y se pinta cada estado y cada tipo de evento. */
-export const CHIP: Record<EventoCalendario['estado'], { estado: ChipEstado; label: string }> = {
-  Pendiente: { estado: 'pendiente', label: 'Pendiente' },
-  Pagado: { estado: 'entregado', label: 'Pagado' },
-  Vencido: { estado: 'porAutorizar', label: 'Vencido' },
-  Cancelado: { estado: 'anulado', label: 'Cancelado' },
+type TipoEvento = EventoCalendario['tipo']
+type EstadoEvento = EventoCalendario['estado']
+
+/** El color de un punto de estado: un token de `useColors()` (la web: `bg-info`, `bg-danger`…). */
+export type TonoDePunto = 'info' | 'danger' | 'success' | 'warning' | 'textSecondary'
+
+/**
+ * Cómo se nombra y se pinta cada estado de un evento, igual que la web (`ESTILO_ESTADO` de
+ * forward-frontend/apps/web/src/features/calendario/core/domain/presentacion.ts): un evento cancelado se lee "Omitido".
+ */
+export const ESTILO_ESTADO: Record<EstadoEvento, { etiqueta: string; tono: TonoDePunto }> = {
+  Pendiente: { etiqueta: 'Pendiente', tono: 'info' },
+  Vencido: { etiqueta: 'Vencido', tono: 'danger' },
+  Pagado: { etiqueta: 'Pagado', tono: 'success' },
+  Cancelado: { etiqueta: 'Omitido', tono: 'textSecondary' },
 }
+
+/** El orden de la leyenda de estados. */
+export const ESTADOS_DEL_CALENDARIO: EstadoEvento[] = ['Pendiente', 'Vencido', 'Pagado', 'Cancelado']
+
+/** El nombre de cada tipo en los filtros (en plural, como la web: `ETIQUETA_TIPO`). */
+export const ETIQUETA_TIPO: Record<TipoEvento, string> = {
+  VencimientoCompra: 'Compras',
+  ChequeEmitido: 'Cheques emitidos',
+  ChequeRecibido: 'Cheques recibidos',
+  ServicioRecurrente: 'Servicios',
+  ObligacionPeriodica: 'Obligaciones',
+  Manual: 'Eventos',
+}
+
+/** Orden en que se ofrecen los filtros (la web, `TIPOS_DEL_CALENDARIO`). */
+export const TIPOS_DEL_CALENDARIO: TipoEvento[] = ['ChequeRecibido', 'ChequeEmitido', 'VencimientoCompra', 'ServicioRecurrente', 'ObligacionPeriodica', 'Manual']
+
+/**
+ * Qué filtros se ofrecen, como la web (`tiposOfrecidos`): la gestión (CAP_VER_TESORERIA) ve cheques, compras y
+ * servicios de la empresa; el resto solo sus eventos personales, así que se le ofrecen los tres tipos que se cargan a
+ * mano. El filtrado real lo hace el servidor; esto es solo la oferta.
+ */
+export const tiposOfrecidos = (esGestion: boolean): TipoEvento[] =>
+  esGestion ? TIPOS_DEL_CALENDARIO : TIPOS_MANUALES.map((t) => t.value)
 
 /**
  * Un recordatorio (`tipo` Manual) se marca "hecho", como en la lámina TabCalendario; un servicio,
@@ -15,11 +47,6 @@ export const CHIP: Record<EventoCalendario['estado'], { estado: ChipEstado; labe
  * eso dice si es de Administración, no si es un pago.
  */
 export const esRecordatorio = (e: Pick<EventoCalendario, 'tipo'>) => e.tipo === 'Manual'
-
-export function chipDe(e: Pick<EventoCalendario, 'estado' | 'tipo'>) {
-  const chip = CHIP[e.estado]
-  return chip && e.estado === 'Pagado' && esRecordatorio(e) ? { ...chip, label: 'Hecho' } : chip
-}
 
 export const TIPO: Record<EventoCalendario['tipo'], string> = {
   VencimientoCompra: 'Vencimiento de compra',

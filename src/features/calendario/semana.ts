@@ -86,8 +86,37 @@ export function mesDe(ms: number, meses = 0): MesGrilla {
   }
 }
 
-/** "26/10 al 01/11": el rango de la semana en la barra superior (lámina M16). */
-export function rangoCorto(dias: DiaSemana[]): string {
-  const [a, b] = [dias[0], dias[dias.length - 1]]
-  return `${dos(a.numero)}/${dos(a.mes + 1)} al ${dos(b.numero)}/${dos(b.mes + 1)}`
+
+const MES_CORTO = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sept', 'oct', 'nov', 'dic']
+const mediodia = (fecha: string) => Date.parse(`${fecha}T15:00:00Z`)
+
+/** Un día YYYY-MM-DD corrido `dias` días (aritmética de calendario argentino). */
+export const sumarDias = (fecha: string, dias: number) => moverDia(fecha, dias).fecha
+
+/** Los 7 días (lunes a domingo) de la semana de un día YYYY-MM-DD. */
+export const semanaDelDia = (fecha: string) => semanaDe(mediodia(fecha))
+
+/** La grilla del mes de un día YYYY-MM-DD. */
+export const mesDelDia = (fecha: string) => mesDe(mediodia(fecha))
+
+/** "Miércoles, 11 de noviembre": el título de la vista Día y de cada día de la lista (la web, `etiquetaDeDia`). */
+export function tituloDia(fecha: string): string {
+  const d = moverDia(fecha, 0)
+  return `${d.largo}, ${d.numero} de ${MESES[d.mes]}`
 }
+
+/** "9 nov – 15 nov": el título de la vista Semana (la web, `etiquetaDeSemana`). */
+export function tituloSemanaCorta(dias: DiaSemana[]): string {
+  const [a, b] = [dias[0], dias[dias.length - 1]]
+  return `${a.numero} ${MES_CORTO[a.mes]} – ${b.numero} ${MES_CORTO[b.mes]}`
+}
+
+/** "Noviembre de 2026": el título de la vista Mes (la web, `etiquetaDeMes`). */
+export function tituloMes(fecha: string): string {
+  const [anio, mes] = fecha.split('-').map(Number)
+  const nombre = MESES[mes - 1]
+  return `${nombre[0].toUpperCase()}${nombre.slice(1)} de ${anio}`
+}
+
+/** "Mié 11": la cabecera de un día en la semana (la web, `etiquetaDeColumna`). */
+export const cabeceraDeDia = (d: DiaSemana) => `${d.corto[0].toUpperCase()}${d.corto.slice(1)} ${d.numero}`

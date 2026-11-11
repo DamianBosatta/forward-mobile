@@ -2,6 +2,7 @@ import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, userEvent, within } from '@testing-library/react-native'
 import { CalendarioScreen } from '../CalendarioScreen'
+import { storage } from '@/core/utils/storage'
 
 let mockHorizontal = true
 jest.mock('@/libs/useResponsive', () => ({
@@ -24,6 +25,7 @@ const AVISOS = { items: [{ id: 'n1', tipo: 'VentaAutorizada', severidad: 'Info',
 
 beforeEach(() => {
   jest.clearAllMocks()
+  storage.clearAll()
   mockHorizontal = true
   jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-22T15:00:00Z'))
   mockGet.mockImplementation((url: string) =>
@@ -36,15 +38,13 @@ afterEach(() => jest.restoreAllMocks())
 const pintar = () => render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><CalendarioScreen /></QueryClientProvider>)
 
 describe('Calendario y avisos en tablet (TM10)', () => {
-  it('muestra el mes entero (octubre 2026 arranca un jueves) y pide el rango de la grilla', async () => {
+  it('muestra lo mismo que el teléfono: abre en la semana de hoy, como la web', async () => {
     pintar()
     expect(await screen.findByText('Reunión de vendedores')).toBeTruthy()
-    expect(screen.getByText('Octubre 2026')).toBeTruthy()
-    expect(mockGet.mock.calls.map(([u]) => String(u))).toContain('/api/v1/Calendario?Desde=2026-09-28&Hasta=2026-11-01')
-    expect(screen.getByLabelText('jue 22, 1 evento, hoy').props.accessibilityState.checked).toBe(true)
-    expect(screen.getByText('Jueves 22 · hoy')).toBeTruthy()
-    await userEvent.press(screen.getByLabelText('lun 5, 1 evento'))
-    expect(screen.getByLabelText('Llamar a Sofía, Pendiente')).toBeTruthy()
+    expect(screen.getByText('19 oct – 25 oct')).toBeTruthy()
+    expect(screen.getByRole('radio', { name: 'Semana' }).props.accessibilityState.checked).toBe(true)
+    expect(mockGet.mock.calls.map(([u]) => String(u))).toContain('/api/v1/Calendario?Desde=2026-10-19&Hasta=2026-10-25')
+    expect(screen.getByLabelText('Reunión de vendedores, Pendiente')).toBeTruthy()
   })
 
   it('en horizontal los avisos van al lado, con "Marcar leídos"; en vertical no', async () => {
@@ -60,8 +60,10 @@ describe('Calendario y avisos en tablet (TM10)', () => {
     pintar()
     await screen.findByText('Reunión de vendedores')
     expect(screen.queryByTestId('panel-avisos')).toBeNull()
-    await userEvent.press(screen.getByLabelText('Mes siguiente'))
-    expect(await screen.findByText('Noviembre 2026')).toBeTruthy()
+    await userEvent.press(screen.getByRole('radio', { name: 'Mes' }))
+    expect(await screen.findByText('Octubre de 2026')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Siguiente'))
+    expect(await screen.findByText('Noviembre de 2026')).toBeTruthy()
     expect(mockGet.mock.calls.map(([u]) => String(u))).toContain('/api/v1/Calendario?Desde=2026-10-26&Hasta=2026-12-06')
   })
 
