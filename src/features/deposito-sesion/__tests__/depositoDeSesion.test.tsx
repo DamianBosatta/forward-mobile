@@ -105,7 +105,9 @@ describe('la elección se guarda en el teléfono', () => {
     const { result } = renderHook(() => useDepositoDeConsulta())
     expect(result.current).toBe(PROPIO)
     pintar()
-    expect(mockDisco.size).toBe(0)
+    // La de u1 se borra y u2 arranca en su propio depósito (como la web).
+    expect(depositoDeSesionDe('u1')).toBeUndefined()
+    expect(depositoDeSesionDe('u2')).toBe(PROPIO)
   })
 })
 

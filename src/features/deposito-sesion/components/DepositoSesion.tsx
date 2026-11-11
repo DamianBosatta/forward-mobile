@@ -4,6 +4,7 @@ import { useDepositos } from '@/libs/api-client/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import {
   depositoDeSesionDe,
+  depositoPropioODefecto,
   descartarSiEsDeOtro,
   elegirDepositoDeSesion,
   limpiarDepositoDeSesion,
@@ -28,6 +29,12 @@ export function DepositoSesion({ style }: { style?: StyleProp<ViewStyle> } = {})
 
   // Otro usuario en el mismo teléfono no hereda la elección del anterior.
   useEffect(() => { descartarSiEsDeOtro(usuarioId) }, [usuarioId])
+  // Primera vez de este usuario: arranca en su depósito (o el Central), no en "Todos", y queda guardado para que
+  // viaje en el encabezado X-Deposito-Sesion (como la web).
+  const propioId = useAuthStore((s) => s.user?.depositoId)
+  useEffect(() => {
+    if (puedeElegir && usuarioId && depositoDeSesionDe(usuarioId) === undefined) elegirDepositoDeSesion(usuarioId, depositoPropioODefecto(propioId))
+  }, [puedeElegir, usuarioId, propioId])
   useEffect(() => {
     if (!puedeElegir && guardado !== undefined) limpiarDepositoDeSesion()
   }, [puedeElegir, guardado])
