@@ -100,6 +100,19 @@ describe('S3: el catálogo de la venta sin señal es el del depósito de la sesi
     expect(guardadas()).toContain(clave(CLAVE_CATALOGO))
     expect(qc.getQueryData(claveCatalogo(NORTE))).toBeUndefined()
   })
+
+  it('elegir el depósito propio para una venta (o retomar una que lo trae) no descarta el catálogo de la sesión', async () => {
+    elegirDepositoDeSesion('u', NORTE)
+    const r = await montarCatalogo()
+    expect(guardadas()).toContain(clave(claveCatalogo(NORTE)))
+
+    act(() => useDepositoElegidoStore.setState({ elegido: PROPIO }))
+    await waitFor(() => expect(qc.getQueryData(CLAVE_CATALOGO)).toBeDefined())
+    expect(r.result.current.cargado).toBe(true)
+    expect(qc.getQueryData(claveCatalogo(NORTE))).toBeDefined()
+    expect(guardadas()).toContain(clave(claveCatalogo(NORTE)))
+    expect(guardadas()).toContain(clave(CLAVE_CATALOGO))
+  })
 })
 
 describe('S3: "Precios y stock de las HH:MM" es la hora del catálogo del depósito en uso', () => {
