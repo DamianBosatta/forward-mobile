@@ -10,6 +10,7 @@ export function BuscadorCartera({
   etiqueta = 'Buscar cliente',
   placeholder = 'Buscar dirección, nombre o CUIT',
   sobre = 'barra',
+  grande = false,
 }: {
   valor: string
   onCambio: (texto: string) => void
@@ -17,16 +18,19 @@ export function BuscadorCartera({
   placeholder?: string
   /** 'barra' (por defecto): pegado a la barra superior; 'pantalla': sobre el fondo, con borde (lámina clientes-lista). */
   sobre?: 'barra' | 'pantalla'
+  /** El buscador grande de "Elegir cliente" de la venta (52 de alto; lista de Clientes). */
+  grande?: boolean
 }) {
   const c = useColors()
   return (
     <View style={sobre === 'barra' ? { backgroundColor: c.topBar, paddingHorizontal: space[4], paddingBottom: space[3] } : { paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[2] }}>
       <View
+        testID="buscador-cartera"
         style={{
           flexDirection: 'row',
           alignItems: 'center',
           gap: space[2],
-          height: space[12],
+          height: grande ? 52 : space[12],
           borderRadius: radii.campo,
           backgroundColor: sobre === 'barra' ? c.surface : c.surface2,
           borderWidth: sobre === 'barra' ? 0 : 1,

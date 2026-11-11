@@ -221,9 +221,13 @@ describe('D7: dirección, razón social y CUIT solo los cambia un administrador 
     renderConQuery(<ClienteFormScreen />)
 
     await waitFor(() => expect(screen.getByLabelText('Nombre del local').props.value).toBe('Kiosco Chela'))
-    expect(editable('Dirección de entrega')).toBe(false)
-    expect(editable('CUIT')).toBe(false)
-    expect(editable('Razón social')).toBe(false)
+    // Propuesta "Clientes como venta" (frame 19): ya no son campos atenuados sino filas bloqueadas, sin caja para tipear.
+    expect(screen.queryByLabelText('Dirección de entrega')).toBeNull()
+    expect(screen.queryByLabelText('CUIT')).toBeNull()
+    expect(screen.queryByLabelText('Razón social')).toBeNull()
+    expect(screen.getByLabelText('Dirección de entrega: Av. del Valle 89')).toBeTruthy()
+    expect(screen.getByLabelText('CUIT: 27-24389156-3')).toBeTruthy()
+    expect(screen.getByLabelText('Razón social: Graciela Ruiz')).toBeTruthy()
     expect(editable('Nombre del local')).toBe(true)
     expect(editable('Teléfono')).toBe(true)
     expect(screen.getByText(AVISO)).toBeTruthy()

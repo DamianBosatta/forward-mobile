@@ -41,11 +41,12 @@ beforeEach(() => {
 })
 
 describe('alta provisoria', () => {
-  it('marcada, el alta va como provisoria (el servidor perdona el CUIT y los datos que falten)', async () => {
+  // Propuesta "Clientes como venta" (frame 15): la casilla pasó a interruptor, como "Con factura" de la venta.
+  it('prendida, el alta va como provisoria (el servidor perdona el CUIT y los datos que falten)', async () => {
     conPermisos(SIN_CAP)
     renderConQuery(<ClienteFormScreen />)
     fireEvent.changeText(screen.getByLabelText('Dirección de entrega'), 'Av. del Valle 89')
-    await userEvent.press(screen.getByRole('checkbox', { name: 'Alta provisoria' }))
+    await userEvent.press(screen.getByRole('switch', { name: 'Alta provisoria' }))
     await userEvent.press(screen.getByRole('button', { name: 'Guardar' }))
 
     await waitFor(() => expect(post).toHaveBeenCalled())
@@ -69,7 +70,7 @@ describe('alta provisoria', () => {
     renderConQuery(<ClienteFormScreen />)
 
     await waitFor(() => expect(screen.getByLabelText('Nombre del local').props.value).toBe('Kiosco Chela'))
-    expect(screen.queryByRole('checkbox', { name: 'Alta provisoria' })).toBeNull()
+    expect(screen.queryByRole('switch', { name: 'Alta provisoria' })).toBeNull()
   })
 })
 

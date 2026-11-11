@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native'
+import { ScrollView, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native'
 import { useRouter } from 'expo-router'
+import { HandCoins } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { Button, Notice, Segmented, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
@@ -11,7 +12,9 @@ import { usePuedeCobrar } from '../lib/permiso'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { formatToLocalTime } from '@/core/utils/fecha'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
-import { CreditoDelCliente } from '@/features/clientes/components/CreditoDelCliente'
+import { AVISO_DEUDA_VENCIDA, CreditoDelCliente } from '@/features/clientes/components/CreditoDelCliente'
+import { HeroSaldo, SaldosPorCuenta } from '@/features/clientes/components/SaldoDelCliente'
+import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { useEstadoCuentaSocio } from '../api/queries'
 import { useMovimientosDeCliente } from '../hooks/useMovimientosDeCliente'
 import { PERIODOS_DE_CUENTA, rangoDelPeriodo, type PeriodoDeCuenta } from '../lib/periodo'
@@ -39,7 +42,26 @@ function Tarjeta({ titulo, children }: { titulo?: string; children: React.ReactN
   )
 }
 
-function Movimiento({ m, tabla }: { m: MovimientoConCuenta; tabla?: boolean }) {
+/** Los datos de un movimiento en una sola línea ("Cuenta TST · Efectivo · Imputado a A00401"), cada parte con su texto. */
+function LineaDeDetalle({ partes }: { partes: string[] }) {
+  const c = useColors()
+  return (
+    <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
+      {partes.map((p, i) => (
+        <React.Fragment key={i}>
+          {i > 0 ? ' · ' : null}
+          <Text>{p}</Text>
+        </React.Fragment>
+      ))}
+    </Text>
+  )
+}
+
+/**
+ * Un movimiento como una línea del carrito de la venta (propuesta "Clientes como venta", frame 13): la fecha en
+ * pastilla, el detalle en una línea, el importe y el saldo a la derecha (lo cobrado en verde con "−").
+ */
+function Movimiento({ m, tabla, ultimo }: { m: MovimientoConCuenta; tabla?: boolean; ultimo?: boolean }) {
   const c = useColors()
   const fecha = formatToLocalTime(m.fecha, 'EEE d MMM')
   const esDebe = m.debe > 0
@@ -49,23 +71,27 @@ function Movimiento({ m, tabla }: { m: MovimientoConCuenta; tabla?: boolean }) {
   const descripcion = descripcionDe(m)
   const vence = textoVencimiento(m.vencimiento)
   const imputado = textoImputacion(m.imputadoA)
+  const partes = [NOMBRE_CUENTA[m.cuenta], detalle, tabla ? null : vence, imputado].filter((p): p is string => Boolean(p))
   return (
     <View
       accessible
       accessibilityLabel={[fecha, NOMBRE_CUENTA[m.cuenta], descripcion, detalle, vence, imputado, monto, saldo].filter(Boolean).join(', ')}
-      style={{ flexDirection: 'row', gap: space[3], paddingVertical: space[3], paddingHorizontal: space[4], backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.border }}
+      style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[3], paddingVertical: space[3], paddingHorizontal: space[4], backgroundColor: c.surface, borderBottomWidth: ultimo ? 0 : 1, borderBottomColor: c.surface2 }}
     >
-      {/* Teléfono: día/mes a la izquierda. Tablet (TabCuentas): tabla Fecha / Movimiento / Vence / Importe. */}
-      <Text style={{ ...typeScale.secundario, color: c.textSecondary, width: tabla ? 96 : 44 }}>{tabla ? fecha : formatToLocalTime(m.fecha, 'dd/MM')}</Text>
-      <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
+      {/* Teléfono: día/mes en pastilla. Tablet (TabCuentas): tabla Fecha / Movimiento / Vence / Importe. */}
+      {tabla ? (
+        <Text style={{ ...typeScale.secundario, color: c.textSecondary, width: 96 }}>{fecha}</Text>
+      ) : (
+        <View testID="fecha-movimiento" style={{ backgroundColor: c.surface2, borderRadius: radii.campo, paddingVertical: 2, paddingHorizontal: space[2] }}>
+          <Text style={[typeScale.etiqueta, importe, { color: c.text }]}>{formatToLocalTime(m.fecha, 'dd/MM')}</Text>
+        </View>
+      )}
+      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{descripcion}</Text>
-        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{NOMBRE_CUENTA[m.cuenta]}</Text>
-        {detalle ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{detalle}</Text> : null}
-        {tabla ? null : vence ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{vence}</Text> : null}
-        {imputado ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{imputado}</Text> : null}
+        <LineaDeDetalle partes={partes} />
       </View>
       {tabla ? <Text style={{ ...typeScale.secundario, color: c.textSecondary, width: 120 }}>{vence ?? '—'}</Text> : null}
-      <View style={{ alignItems: 'flex-end', gap: space[1] }}>
+      <View style={{ alignItems: 'flex-end', gap: 2 }}>
         {/* El signo va siempre con el color: lo cobrado en verde, lo que se debe en el color base. */}
         <Text style={[typeScale.cuerpoDestacado, importe, { color: esDebe ? c.text : c.chip.entregado.text }]}>{monto}</Text>
         <Text style={[typeScale.secundario, importe, { color: c.textSecondary }]}>{saldo}</Text>
@@ -106,7 +132,9 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
     return (
       <View style={{ flex: 1 }}>
         {barraSimple}
-        <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
+        <View style={{ padding: space[4] }}>
+          <Esqueletos bloques={FILAS_CARGANDO} />
+        </View>
       </View>
     )
   }
@@ -123,6 +151,8 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
   const cliente = socio.data
   const nombre = nombreDelCliente(cliente)
   const e = estado.data
+  // Misma condición que `CreditoDelCliente`: lo vencido solo se dice si el servidor lo informa con importe.
+  const vencida = e?.tieneDeudaVencida === true && typeof e.deudaVencida === 'number'
 
   // La pantalla de cobro pide los medios y las cajas abiertas: MOD_PAGOS:Read además de Create. Como en la web, el
   // botón no desaparece: sin permiso se ve deshabilitado y dice por qué.
@@ -130,6 +160,7 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
     <View style={{ gap: space[2] }}>
       <Button
         label="Cobrar"
+        icon={HandCoins}
         disabled={!puedeCobrar}
         onPress={() => (onRegistrarCobro ? onRegistrarCobro() : router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId } }))}
       />
@@ -152,31 +183,32 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
       {!verCuenta ? <Notice tone="info">No tenés acceso a la cuenta corriente de este cliente.</Notice> : null}
 
       {verCuenta ? (
-        <Tarjeta>
-          {estado.isLoading ? <ActivityIndicator color={c.brandInk} /> : null}
+        <>
+          {estado.isLoading ? <Esqueletos bloques={[{ alto: 180, radio: radii.hoja, testID: 'esqueleto-hero' }]} /> : null}
           {estado.error ? <Notice tone="peligro">{mensajeDelServidor(estado.error, 'No se pudo cargar la cuenta.')}</Notice> : null}
           {e ? (
             <>
-              <View accessible accessibilityLabel={`Saldo: ${formatImporte(e.saldoActual)}`} style={{ gap: space[1] }}>
-                <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Saldo</Text>
-                <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(e.saldoActual)}</Text>
-              </View>
-              <View style={{ flexDirection: 'row', gap: space[4] }}>
-                <View accessible accessibilityLabel={`Cuenta TST: ${formatImporte(e.saldoTst)}`} style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>TST</Text>
-                  <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(e.saldoTst)}</Text>
-                </View>
-                <View accessible accessibilityLabel={`Cuenta Normal (con factura): ${formatImporte(e.saldoNormal)}`} style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Normal (con factura)</Text>
-                  <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(e.saldoNormal)}</Text>
-                </View>
-              </View>
-              {e.saldoAFavor > 0 ? <TotalsRow label="A favor" importe={e.saldoAFavor} /> : null}
-              {cliente.topeCredito != null ? <TotalsRow label="Tope de crédito" importe={cliente.topeCredito} /> : null}
-              <CreditoDelCliente estado={e} />
+              <HeroSaldo
+                saldo={e.saldoActual}
+                vencido={vencida ? e.deudaVencida : null}
+                diasDeudaMasVieja={cliente.diasDeudaMasVieja}
+                tope={cliente.topeCredito != null && cliente.topeCredito > 0 ? cliente.topeCredito : null}
+                disponible={typeof e.creditoDisponible === 'number' ? e.creditoDisponible : null}
+                accessibilityLabel={`Saldo: ${formatImporte(e.saldoActual)}`}
+              />
+              <SaldosPorCuenta tst={e.saldoTst} normal={e.saldoNormal} />
+              {/* El resto como los totales del carrito (frame 13). */}
+              {cliente.topeCredito != null || e.saldoAFavor > 0 || vencida || typeof e.creditoDisponible === 'number' ? (
+                <Tarjeta>
+                  {cliente.topeCredito != null ? <TotalsRow label="Tope de crédito" importe={cliente.topeCredito} /> : null}
+                  <CreditoDelCliente estado={e} sinAviso />
+                  {e.saldoAFavor > 0 ? <TotalsRow label="A favor" importe={e.saldoAFavor} /> : null}
+                </Tarjeta>
+              ) : null}
+              {vencida ? <Notice tone="advertencia">{AVISO_DEUDA_VENCIDA}</Notice> : null}
             </>
           ) : null}
-        </Tarjeta>
+        </>
       ) : null}
 
       {verCuenta ? <Notice tone="info">{AVISO_CADA_COBRO}</Notice> : null}
@@ -191,12 +223,20 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
             ))}
           </View>
           {/* TODO API: "Saldo al 01/10" inicial y PDF del estado. */}
-          {movs.cargando ? <ActivityIndicator color={c.brandInk} /> : null}
+          {movs.cargando ? <Esqueletos bloques={FILAS_CARGANDO} /> : null}
           {movs.error ? <Notice tone="peligro">{mensajeDelServidor(movs.error, 'No se pudieron cargar los movimientos.')}</Notice> : null}
           {!movs.cargando && !movs.error && movs.movimientos.length === 0 ? (
-            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{periodo ? 'No hay movimientos en este período.' : 'No hay movimientos en esta cuenta.'}</Text>
+            <Tarjeta>
+              <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{periodo ? 'No hay movimientos en este período.' : 'No hay movimientos en esta cuenta.'}</Text>
+            </Tarjeta>
           ) : null}
-          {movs.movimientos.map(m => <Movimiento key={`${m.cuenta}-${m.id}`} m={m} tabla={isTabletLandscape} />)}
+          {movs.movimientos.length > 0 ? (
+            <View testID="lista-movimientos" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, overflow: 'hidden' }}>
+              {movs.movimientos.map((m, i) => (
+                <Movimiento key={`${m.cuenta}-${m.id}`} m={m} tabla={isTabletLandscape} ultimo={i === movs.movimientos.length - 1} />
+              ))}
+            </View>
+          ) : null}
           {movs.errorPaginaSiguiente ? (
             <>
               <Notice tone="peligro">{mensajeDelServidor(movs.errorPaginaSiguiente, 'No se pudieron cargar los movimientos anteriores.')}</Notice>
@@ -209,7 +249,16 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
       ) : null}
     </ScrollView>
     {verCuenta && !isTabletLandscape ? (
-      <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>{registrarCobro}</View>
+      // Pie del carrito (frame 13): el saldo a la izquierda y "Cobrar" como botón principal.
+      <View testID="pie-cuenta" style={{ padding: space[4], gap: space[2], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+        {e ? (
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
+            <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Saldo</Text>
+            <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(e.saldoActual)}</Text>
+          </View>
+        ) : null}
+        {registrarCobro}
+      </View>
     ) : null}
     </View>
   )

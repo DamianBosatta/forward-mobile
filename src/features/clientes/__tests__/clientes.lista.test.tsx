@@ -137,7 +137,9 @@ describe('deuda vencida y saldo de la cartera (servidor con PR #882)', () => {
     renderConQuery(<ClientesScreen />)
 
     expect(await screen.findByText('1 de 142 clientes')).toBeTruthy()
-    expect(await screen.findByText(/Saldo total \$ 4\.812\.330/)).toBeTruthy()
+    const resumen = screen.getByTestId('pie-clientes')
+    expect(within(resumen).getByText('Saldo total')).toBeTruthy()
+    expect(within(resumen).getByText(/\$ 4\.812\.330/)).toBeTruthy()
   })
 
   it('el saldo total llega solo en la página 1: al cargar más se mantiene', async () => {
@@ -147,12 +149,12 @@ describe('deuda vencida y saldo de la cartera (servidor con PR #882)', () => {
         : { ...pagina([clienteDeLista()], 142), hasNextPage: true, saldoTotal: 4812330 },
     )
     renderConQuery(<ClientesScreen />)
-    await screen.findByText(/Saldo total \$ 4\.812\.330/)
+    await screen.findByText(/\$ 4\.812\.330/)
 
     fireEvent(screen.UNSAFE_getByType(SectionList), 'onEndReached')
 
     expect(await screen.findByText('2 de 142 clientes')).toBeTruthy()
-    expect(screen.getByText(/Saldo total \$ 4\.812\.330/)).toBeTruthy()
+    expect(within(screen.getByTestId('pie-clientes')).getByText(/\$ 4\.812\.330/)).toBeTruthy()
   })
 
   it('si el servidor no da el saldo total (null) o es un servidor anterior, queda "N de M" y sin chips', async () => {
@@ -262,13 +264,15 @@ describe('lámina Clientes (bloque 12, T7)', () => {
 })
 
 describe('lista de clientes como el diseño (D6c)', () => {
-  it('la fila es plana: sin borde redondeado ni sombra, con una línea abajo', async () => {
+  // Propuesta "Clientes como venta" (frame 1): las filas de cada letra van en una tarjeta sin borde ni sombra.
+  it('la fila va en la tarjeta de su letra, sin borde ni sombra', async () => {
     renderConQuery(<ClientesScreen />)
 
     const fila = await screen.findByRole('button', { name: /Av\. del Valle 89/ })
     const estilo = StyleSheet.flatten(fila.props.style)
-    expect(estilo.borderBottomWidth).toBe(1)
-    expect(estilo.borderRadius).toBeUndefined()
+    expect(estilo.borderTopLeftRadius).toBe(16)
+    expect(estilo.borderBottomLeftRadius).toBe(16)
+    expect(estilo.borderWidth).toBeUndefined()
     expect(estilo.shadowOpacity).toBeUndefined()
     expect(estilo.elevation).toBeUndefined()
   })
