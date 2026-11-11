@@ -6,6 +6,7 @@ import { StatusChip, formatImporte } from '@/core/ui/fw'
 import type { ParadaDto } from '@/libs/api-client/types'
 import { chipCobro, etiquetaNota, importeParada } from './cobroParada'
 import { piezasDeParada } from './piezasParada'
+import { HorarioDelDia } from './HorarioDelDia'
 
 interface Props {
   parada: ParadaDto
@@ -47,6 +48,7 @@ export function ParadaGrande({ parada, numero, total, puedeLlamar, notaCargando,
           <MapPin size={24} color={c.text} />
           <Text style={{ ...typeScale.cuerpo, fontSize: 21, lineHeight: 28, color: c.text, flex: 1 }}>{parada.direccion}</Text>
         </View>
+        <HorarioDelDia horario={parada.horarioDelDia} />
         {nota ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Remito ${nota}`}</Text> : null}
       </View>
       <View style={{ flexDirection: 'row', gap: space[3] }}>

@@ -281,3 +281,28 @@ describe('Cantidad y oferta: avisar sin mostrar cantidad', () => {
     expect(screen.getByText('Disponible')).toBeTruthy()
   })
 })
+
+describe('Cantidad y oferta: nivel con el que abre', () => {
+  // Bulto = venta mínima = 10: el mínimo es un bulto cerrado, que antes hacía abrir en Bultos.
+  const bultoCerrado = () => bulto10({ ventaMinimaUnidades: 10 })
+  const seleccionado = (nombre: string) => screen.getByRole('button', { name: nombre }).props.accessibilityState?.selected
+
+  it('un producto nuevo abre en Unidades aunque tenga bulto', () => {
+    abrir(bultoCerrado())
+    expect(seleccionado('Unidades')).toBe(true)
+    expect(seleccionado('Bultos')).toBe(false)
+  })
+
+  it('una línea que ya estaba en bultos conserva Bultos al editarla', () => {
+    const p = bultoCerrado()
+    abrir(p, { linea: { productoId: p.id, producto: p, cantidad: 20, descuentoPct: 0 } })
+    expect(seleccionado('Bultos')).toBe(true)
+    expect(seleccionado('Unidades')).toBe(false)
+  })
+
+  it('un producto que solo se vende por caja abre en Bultos (no hay Unidades)', () => {
+    abrir(cajaDe6({ disponible: 100 }))
+    expect(screen.queryByRole('button', { name: 'Unidades' })).toBeNull()
+    expect(screen.getByText('6 unidades en total')).toBeTruthy()
+  })
+})
