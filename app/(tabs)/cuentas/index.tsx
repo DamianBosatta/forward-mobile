@@ -157,7 +157,7 @@ function CuentasCorrientesScreen() {
       </View>
       {lado === 'debo' ? (
         puedeVerDeudas ? (
-          <DeudasAProveedores />
+          <DeudasAProveedores onPagar={socioId => router.push({ pathname: '/(tabs)/tesoreria/pagos/pagar', params: { socioId } })} />
         ) : (
           <View style={{ padding: space[4] }}>
             <Notice tone="info">{AVISO_DEBO_SIN_PERMISO}</Notice>

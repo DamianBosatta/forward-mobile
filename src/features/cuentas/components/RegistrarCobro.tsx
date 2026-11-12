@@ -24,8 +24,9 @@ import { FotoDelCobro } from './FotoDelCobro'
 import { OtrosMediosDelCobro } from './OtrosMediosDelCobro'
 import { condicionesDelMedio } from '../lib/condicionesMedio'
 
-export const AVISO_IMPUTACION =
-  'Imputación automática: el servidor lo aplica a la deuda más vieja y te dice en qué cuenta (TST o Normal) quedó.'
+import { AVISO_IMPUTACION } from '../lib/contraparte'
+
+export { AVISO_IMPUTACION }
 
 const IMPUTACION = [{ id: 'automatica', label: 'Automática' }, { id: 'manual', label: 'Elegir comprobantes' }]
 
