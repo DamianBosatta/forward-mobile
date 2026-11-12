@@ -69,7 +69,7 @@ export function ReportesScreen() {
               accessibilityLabel={`Vendedor: ${vendedor?.nombre ?? 'Todos'}`}
               accessibilityHint="Elegí de qué vendedor ver los reportes"
               onPress={() => setEligiendo(true)}
-              style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}
+              style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], borderRadius: radii.campo, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface }}
             >
               <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Vendedor</Text>
               <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }} numberOfLines={1}>{vendedor?.nombre ?? 'Todos'}</Text>

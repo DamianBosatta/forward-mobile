@@ -283,7 +283,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   const presupuestoSobreTope = tipo === 'Presupuesto' && superaTope
   const filaAjuste = (rotuloFila: string, valor: string | null, onPress: () => void) => (
     <Pressable accessibilityRole="button" accessibilityLabel={rotuloFila} onPress={onPress} android_ripple={{ color: c.border }}
-      style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], paddingHorizontal: space[3], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
+      style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], paddingHorizontal: space[3], borderRadius: radii.campo, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface }}>
       <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{rotuloFila}</Text>
       {valor ? <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.brandInk }}>{valor}</Text> : null}
     </Pressable>
@@ -292,7 +292,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   const ajustesCarrito = (
     <View style={{ gap: space[2] }}>
       <Pressable accessibilityRole="button" onPress={() => setVista('catalogo')} android_ripple={{ color: c.border }}
-        style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, borderStyle: 'dashed' }}>
+        style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], borderRadius: radii.campo, borderWidth: 1, borderColor: c.borderStrong, borderStyle: 'dashed' }}>
         <Plus size={20} color={c.brandInk} />
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Agregar productos</Text>
       </Pressable>

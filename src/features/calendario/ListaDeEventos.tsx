@@ -44,7 +44,7 @@ export function ListaDeEventos({ dias, hoy, porDia, onAbrir, etiqueta }: Props) 
                 accessibilityLabel={`${e.titulo}, ${r.estado}`}
                 accessibilityHint="Abre el detalle del evento"
                 android_ripple={{ color: c.surface2 }}
-                style={{ minHeight: 44, flexDirection: 'row', alignItems: 'flex-start', gap: space[3], padding: space[3], backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: radii.campo, overflow: 'hidden' }}
+                style={{ minHeight: 44, flexDirection: 'row', alignItems: 'flex-start', gap: space[3], padding: space[3], backgroundColor: c.surface, borderWidth: 1, borderColor: c.borderStrong, borderRadius: radii.campo, overflow: 'hidden' }}
               >
                 <Text style={{ ...typeScale.secundario, ...importe, color: c.textSecondary, width: 44 }}>{horaDeEvento(e)}</Text>
                 <View style={{ flex: 1, minWidth: 0, gap: 2 }}>

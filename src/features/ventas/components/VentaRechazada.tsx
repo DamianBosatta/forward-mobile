@@ -31,7 +31,7 @@ function Accion({ titulo, detalle, onPress }: { titulo: string; detalle: string;
       accessibilityRole="button"
       accessibilityLabel={titulo}
       onPress={onPress}
-      style={{ minHeight: 56, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: 2 }}
+      style={{ minHeight: 56, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.borderStrong, gap: 2 }}
     >
       <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{titulo}</Text>
       <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{detalle}</Text>

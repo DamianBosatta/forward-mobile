@@ -23,7 +23,7 @@ export function TarjetaDeEvento({ evento: e, onPress }: { evento: EventoCalendar
       accessibilityLabel={`${e.titulo}, ${r.estado}`}
       accessibilityHint="Abre el detalle del evento"
       android_ripple={{ color: c.surface2 }}
-      style={{ minHeight: 44, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: radii.campo, paddingVertical: space[2] + 2, paddingHorizontal: space[3], gap: space[1], overflow: 'hidden' }}
+      style={{ minHeight: 44, backgroundColor: c.surface, borderWidth: 1, borderColor: c.borderStrong, borderRadius: radii.campo, paddingVertical: space[2] + 2, paddingHorizontal: space[3], gap: space[1], overflow: 'hidden' }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] + 2 }}>
         <Icono size={16} color={c.textSecondary} />

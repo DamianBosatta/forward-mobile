@@ -40,7 +40,7 @@ function Contenido({ valor, lineas, flete, onClose, onAplicar }: Props) {
   const aviso = avisoTope(pct, tope, exento)
   const chip = (activo: boolean) => ({
     minHeight: 44, paddingHorizontal: space[4], borderRadius: radii.pastilla, justifyContent: 'center' as const,
-    backgroundColor: activo ? c.action : c.surface, borderWidth: activo ? 0 : 1, borderColor: c.border,
+    backgroundColor: activo ? c.action : c.surface, borderWidth: activo ? 0 : 1, borderColor: c.borderStrong,
   })
 
   return (

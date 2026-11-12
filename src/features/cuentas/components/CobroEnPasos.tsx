@@ -339,7 +339,7 @@ function CobroDelCliente({ socioId, medioInicial, contraparte, paso, onPaso, onV
             accessibilityLabel={lineas.length ? 'Agregar otro medio' : 'Agregar un medio'}
             onPress={() => abrirMedio(null)}
             android_ripple={{ color: c.border }}
-            style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], borderRadius: radii.tarjeta, borderWidth: 1, borderStyle: 'dashed', borderColor: c.border }}
+            style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], borderRadius: radii.tarjeta, borderWidth: 1, borderStyle: 'dashed', borderColor: c.borderStrong }}
           >
             <Plus size={20} color={c.brandInk} />
             <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>{lineas.length ? 'Agregar otro medio' : 'Agregar un medio'}</Text>

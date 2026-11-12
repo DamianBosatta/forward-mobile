@@ -126,7 +126,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
               <View
                 importantForAccessibility="no-hide-descendants"
                 accessibilityElementsHidden
-                style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}
+                style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface, borderWidth: 1, borderColor: c.borderStrong }}
               >
                 <ArrowDown size={16} color={c.textSecondary} strokeWidth={2} />
               </View>

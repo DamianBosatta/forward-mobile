@@ -42,7 +42,7 @@ export function ControlesCalendario(p: Props) {
         {flecha(ChevronLeft, 'Anterior', -1)}
         <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={{ ...typeScale.seccion, color: c.text, flex: 1, textAlign: 'center' }}>{p.titulo}</Text>
         {flecha(ChevronRight, 'Siguiente', 1)}
-        <Pressable onPress={p.onHoy} accessibilityRole="button" accessibilityLabel="Hoy" android_ripple={{ color: c.surface2 }} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
+        <Pressable onPress={p.onHoy} accessibilityRole="button" accessibilityLabel="Hoy" android_ripple={{ color: c.surface2 }} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface }}>
           <Text style={{ ...typeScale.secundario, color: c.text }}>Hoy</Text>
         </Pressable>
       </View>

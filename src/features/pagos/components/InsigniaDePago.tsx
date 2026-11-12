@@ -6,7 +6,7 @@ import { radii, space, typeScale, useColors } from '@/libs/theme'
 export function InsigniaDePago({ texto }: { texto: string }) {
   const c = useColors()
   return (
-    <View style={{ alignSelf: 'flex-start', borderWidth: 1, borderColor: c.border, borderRadius: radii.pastilla, paddingHorizontal: space[2], paddingVertical: 2 }}>
+    <View style={{ alignSelf: 'flex-start', borderWidth: 1, borderColor: c.borderStrong, borderRadius: radii.pastilla, paddingHorizontal: space[2], paddingVertical: 2 }}>
       <Text style={{ ...typeScale.etiqueta, fontWeight: '600', color: c.textSecondary }}>{texto}</Text>
     </View>
   )

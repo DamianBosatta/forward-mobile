@@ -95,7 +95,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
   const destacado = { ...typeScale.cuerpoDestacado, color: c.text }
   const tarjeta = { padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }
-  const campo = { minHeight: 48, borderRadius: radii.campo, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.border, paddingHorizontal: space[3], color: c.text, ...typeScale.cuerpoDestacado, ...importe }
+  const campo = { minHeight: 48, borderRadius: radii.campo, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.borderStrong, paddingHorizontal: space[3], color: c.text, ...typeScale.cuerpoDestacado, ...importe }
 
   const poner = (nuevoPct: number) => {
     setPctTexto(mostrarNumero(nuevoPct))
@@ -128,7 +128,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
 
         <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }} keyboardShouldPersistTaps="handled">
           <View style={{ flexDirection: 'row', gap: space[3], alignItems: 'center' }}>
-            <View style={{ width: 84, height: 84, borderRadius: radii.tarjeta, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <View style={{ width: 84, height: 84, borderRadius: radii.tarjeta, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.borderStrong, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               {p.imageUrl ? <Image source={{ uri: p.imageUrl }} style={{ width: 84, height: 84 }} accessibilityIgnoresInvertColors /> : <Package size={28} color={c.textSecondary} />}
             </View>
             <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
@@ -178,7 +178,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
               ) : (
                 <Text style={destacado}>{ROTULO_MODO[pr.modos[0]]}</Text>
               )}
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 48, borderRadius: radii.campo, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.border }}>
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 48, borderRadius: radii.campo, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.borderStrong }}>
                 <Pressable accessibilityRole="button" accessibilityLabel="Uno menos" onPress={() => mover(-1)} style={{ width: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ ...typeScale.titulo, color: c.text }}>−</Text>
                 </Pressable>
@@ -203,7 +203,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
                 const activo = !pctInvalido && pct === o
                 return (
                   <Pressable key={o} accessibilityRole="button" accessibilityLabel={`${o} %`} accessibilityState={{ selected: activo }} onPress={() => poner(o)}
-                    style={{ flex: 1, minHeight: 44, borderRadius: radii.campo, alignItems: 'center', justifyContent: 'center', backgroundColor: activo ? c.action : c.surface2, borderWidth: activo ? 0 : 1, borderColor: c.border }}>
+                    style={{ flex: 1, minHeight: 44, borderRadius: radii.campo, alignItems: 'center', justifyContent: 'center', backgroundColor: activo ? c.action : c.surface2, borderWidth: activo ? 0 : 1, borderColor: c.borderStrong }}>
                     <Text style={{ ...typeScale.cuerpoDestacado, color: activo ? c.onAction : c.text }}>{`${o} %`}</Text>
                   </Pressable>
                 )

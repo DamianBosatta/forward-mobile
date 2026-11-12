@@ -98,7 +98,7 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <FiltrosCartera valor={filtros} onCambio={setFiltros} totalCartera={totalCount} sobre="pantalla" />
       <View style={{ padding: space[4], gap: space[3] }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: 52, borderRadius: radii.campo, backgroundColor: c.surface2, paddingHorizontal: space[3], borderWidth: 1, borderColor: c.border }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: 52, borderRadius: radii.campo, backgroundColor: c.surface2, paddingHorizontal: space[3], borderWidth: 1, borderColor: c.borderStrong }}>
           <Search size={20} color={c.textSecondary} />
           <TextInput
             accessibilityLabel="Buscar cliente"

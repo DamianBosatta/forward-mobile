@@ -110,7 +110,7 @@ function FilaDeDeuda({ deuda, primera, ultima, onPagar }: { deuda: DeudaProveedo
           accessibilityLabel={`Pagar a ${deuda.razonSocial}`}
           onPress={onPagar}
           android_ripple={{ color: c.border }}
-          style={{ alignSelf: 'flex-start', minHeight: 44, minWidth: 88, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.border }}
+          style={{ alignSelf: 'flex-start', minHeight: 44, minWidth: 88, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.borderStrong }}
         >
           <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Pagar</Text>
         </Pressable>
