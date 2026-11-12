@@ -70,6 +70,8 @@ export function ConfirmModal({
       transparent
       animationType="fade"
       onRequestClose={onCancel}
+      statusBarTranslucent
+      navigationBarTranslucent
     >
       <View
         style={{

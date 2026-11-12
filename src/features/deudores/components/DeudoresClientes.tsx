@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { FlatList, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { FileText } from 'lucide-react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
-import { BottomSheet, Button, FilaDeSocio, Notice, formatImporte } from '@/core/ui/fw'
+import { BottomSheet, Button, FilaDeSocio, Notice, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -29,6 +29,7 @@ type Vendedor = { id: string; nombre: string }
  * export, lleva "Estado de cuenta" en PDF o Excel para compartir. Pedirla solo con MOD_PAGOS:Read.
  */
 export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => void }) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const { canRead } = usePermissions()
   const veVendedores = canRead('MOD_VENTAS')
@@ -83,7 +84,7 @@ export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => vo
             onEstadoDeCuenta={puedeExportar && item.puedeVerCuentaCorriente ? () => setArchivoDe({ id: item.socioId, razonSocial: item.razonSocial }) : undefined}
           />
         )}
-        contentContainerStyle={{ paddingTop: space[3], paddingBottom: space[6] }}
+        contentContainerStyle={{ paddingTop: space[3], paddingBottom: space[6] + insetInferior }}
         onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) void q.fetchNextPage() }}
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => { void q.refetch() }} tintColor={c.brandInk} />}

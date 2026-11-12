@@ -1,6 +1,7 @@
 import React from 'react'
-import { View, Text, Modal, TouchableOpacity, ScrollView, Platform, StyleSheet, ActivityIndicator } from 'react-native'
-import { useColors, typeScale } from '@/libs/theme'
+import { View, Text, Modal, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator } from 'react-native'
+import { space, useColors, typeScale } from '@/libs/theme'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X, Package, PackageCheck, AlertCircle } from 'lucide-react-native'
 import Animated, { FadeIn, FadeOut, SlideInDown } from 'react-native-reanimated'
 import { useVenta } from '@/libs/api-client'
@@ -19,6 +20,7 @@ interface PedidoDetalleModalProps {
  */
 export const PedidoDetalleModal = ({ ventaId, clienteNombre, isVisible, onClose }: PedidoDetalleModalProps) => {
   const colors = useColors()
+  const insets = useSafeAreaInsets()
   const { data, isLoading, isError } = useVenta(ventaId ?? '')
 
   const items = data?.detalles ?? []
@@ -27,7 +29,7 @@ export const PedidoDetalleModal = ({ ventaId, clienteNombre, isVisible, onClose 
   const total = data?.venta?.totalAmount
 
   return (
-    <Modal visible={isVisible} transparent animationType="none" onRequestClose={onClose}>
+    <Modal visible={isVisible} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
       <View style={{ flex: 1, justifyContent: 'flex-end' }}>
         <Animated.View
           entering={FadeIn}
@@ -44,7 +46,7 @@ export const PedidoDetalleModal = ({ ventaId, clienteNombre, isVisible, onClose 
             borderTopLeftRadius: 32,
             borderTopRightRadius: 32,
             padding: 24,
-            paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+            paddingBottom: space[6] + insets.bottom,
             maxHeight: '85%'
           }}
         >

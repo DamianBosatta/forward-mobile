@@ -74,7 +74,7 @@ export function EscanerCodigo({ visible, onClose, onLeido }: EscanerCodigoProps)
   }
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Escanear código" leading={{ kind: 'atras', onPress: onClose }} />
         {contenido}

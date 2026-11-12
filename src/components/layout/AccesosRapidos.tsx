@@ -6,7 +6,7 @@ import { useResponsive } from '@/libs/useResponsive'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { safeHaptics } from '@/core/utils/haptics'
 import { veEntradaDeVentas } from './menuModules'
-import { BottomBar, type BottomBarItem } from '@/core/ui/fw'
+import { BottomBar, SobreBarraInferiorProvider, type BottomBarItem } from '@/core/ui/fw'
 
 type Activa = 'inicio' | 'ventas' | 'compras' | 'clientes' | 'cobros'
 
@@ -40,7 +40,7 @@ export function ConAccesosRapidos({ activa, children }: { activa: Activa; childr
   const { isTablet } = useResponsive()
   return (
     <View style={{ flex: 1 }}>
-      <View style={{ flex: 1 }}>{children}</View>
+      <View style={{ flex: 1 }}>{isTablet ? children : <SobreBarraInferiorProvider>{children}</SobreBarraInferiorProvider>}</View>
       {isTablet ? null : <AccesosRapidos activa={activa} />}
     </View>
   )

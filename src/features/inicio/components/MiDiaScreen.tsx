@@ -7,7 +7,7 @@ import { useResponsive } from '@/libs/useResponsive'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useResumenVendedor } from '@/libs/api-client/reportes'
 import { useClientesRecientes } from '@/libs/api-client/socios'
-import { Button, TopBar, formatImporte, useMenuLeading } from '@/core/ui/fw'
+import { Button, TopBar, formatImporte, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { nombreMes, mesDe } from '@/src/features/reportes/mes'
 import { useAhoraArgentina } from '@/core/utils/useAhoraArgentina'
 import { partesArgentina } from '@/core/utils/fecha'
@@ -52,6 +52,7 @@ interface Pendiente {
  * /Inicio/resumen para "Para resolver hoy". El hero suma esas mismas filas: no es un dato nuevo.
  */
 export function MiDiaScreen() {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const menu = useMenuLeading()
@@ -198,7 +199,7 @@ export function MiDiaScreen() {
       />
       <ScrollView
         testID="mi-dia-scroll"
-        contentContainerStyle={{ padding: space[4], gap: space[5], paddingBottom: space[12] }}
+        contentContainerStyle={{ padding: space[4], gap: space[5], paddingBottom: space[12] + insetInferior }}
         refreshControl={<RefreshControl refreshing={refrescando} onRefresh={refrescar} tintColor={c.brand} />}
       >
         {/* Depósito de la sesión (S8): solo con CAP_VER_TODOS_LOS_DEPOSITOS; sin ella no ocupa lugar. */}

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { FlatList, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Button, Notice, StatusChip, TopBar, TotalsRow, TwoPane, formatImporte, useMenuLeading } from '@/core/ui/fw'
+import { Button, Notice, StatusChip, TopBar, TotalsRow, TwoPane, formatImporte, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { usePendientesAutorizacion, type VentaPendienteAutorizacion } from '@/libs/api-client/ventas'
@@ -65,6 +65,7 @@ interface Props {
 
 /** Bandeja de autorizaciones (láminas Autorizaciones y TabAutorizaciones; propuesta "Finanzas como venta", frames 16 a 18). */
 export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const leading = useMenuLeading()
@@ -166,7 +167,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
       data={visibles}
       keyExtractor={(v) => v.id}
       ListHeaderComponent={encabezado}
-      contentContainerStyle={{ padding: space[4], paddingBottom: space[12] }}
+      contentContainerStyle={{ padding: space[4], paddingBottom: space[12] + insetInferior }}
       renderItem={({ item }) => tarjeta(item)}
       refreshing={q.isRefetching}
       onRefresh={() => { setAviso(null); void q.refetch() }}

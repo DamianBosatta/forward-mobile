@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, ScrollView, Share, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, FormContainer, Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { Button, FormContainer, Notice, TotalsRow, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import type { SocioDetailDto } from '@/libs/api-client/types'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { useEstadoCuentaSocio } from '../api/queries'
@@ -30,6 +30,7 @@ interface Props {
 
 /** Cobro registrado (lámina CobroListo): en qué cuenta quedó según el servidor y el saldo nuevo. */
 export function CobroListo({ cliente, cobro, monto, medio, lineas, imputacionManual, onVolver, onOtro }: Props) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   // Un cobro anulado ya no está en ninguna cuenta: no se busca dónde quedó.
   const { cuenta, buscando } = useCuentaDelPago(cobro.anulado ? { ...cobro, pagoId: null } : cobro, cliente)
@@ -55,7 +56,7 @@ export function CobroListo({ cliente, cobro, monto, medio, lineas, imputacionMan
   }
 
   return (
-    <ScrollView contentContainerStyle={{ padding: space[4] }}>
+    <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior }}>
       <FormContainer style={{ gap: space[4] }}>
         <Notice tone={cobro.anulado ? 'advertencia' : 'exito'} title={cobro.anulado ? 'Cobro anulado' : cobro.conLoDeAntes ? 'Cobro ya registrado' : 'Cobro registrado'}>{`${direccionDeEntrega(cliente)} · ${nombreDelCliente(cliente)}`}</Notice>
         {cobro.yaEstaba ? <Notice tone="info">{COBRO_YA_ESTABA}</Notice> : null}

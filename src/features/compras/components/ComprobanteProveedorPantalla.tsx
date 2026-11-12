@@ -60,7 +60,7 @@ function Contenido({ form: inicial, fotoUrl: fotoInicial, onVolver, onGuardar, g
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
 
   return (
-    <Modal visible animationType="slide" onRequestClose={() => { if (!guardando) onVolver() }}>
+    <Modal visible animationType="slide" onRequestClose={() => { if (!guardando) onVolver() }} statusBarTranslucent navigationBarTranslucent>
       <View accessibilityLabel="Comprobante del proveedor" style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Comprobante del proveedor" leading={{ kind: 'atras', onPress: () => { if (!guardando) onVolver() } }} />
         <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3] }} keyboardShouldPersistTaps="handled">
@@ -77,7 +77,7 @@ function Contenido({ form: inicial, fotoUrl: fotoInicial, onVolver, onGuardar, g
           {falta ? <Notice tone="peligro">{falta}</Notice> : null}
           {error ? <Notice tone="peligro">{error}</Notice> : null}
         </ScrollView>
-        <PieFijo conInsetInferior>
+        <PieFijo>
           <Button label="Guardar comprobante" loading={guardando} disabled={subiendo || guardando} onPress={guardar} />
         </PieFijo>
       </View>

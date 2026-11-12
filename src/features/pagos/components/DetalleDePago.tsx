@@ -1,7 +1,7 @@
 import React from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, FormContainer, Notice, TopBar, formatImporte } from '@/core/ui/fw'
+import { Button, FormContainer, Notice, TopBar, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { formatToLocalTime } from '@/core/utils/fecha'
@@ -15,6 +15,7 @@ import { InsigniaDePago } from './InsigniaDePago'
  * imputó y con qué movimientos se concilió. Solo lectura: anular y el comprobante quedan en la web.
  */
 export function DetalleDePago({ id, onVolver }: { id: string; onVolver: () => void }) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const puedeVer = usePuedeVerPagos()
   const q = usePago(id, puedeVer)
@@ -48,7 +49,7 @@ export function DetalleDePago({ id, onVolver }: { id: string; onVolver: () => vo
     )
   } else {
     cuerpo = (
-      <ScrollView contentContainerStyle={{ padding: space[4] }}>
+      <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior }}>
         <FormContainer style={{ gap: space[4] }}>
           <View style={tarjeta}>
             <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>{p.razonSocialSocio?.trim() || '—'}</Text>

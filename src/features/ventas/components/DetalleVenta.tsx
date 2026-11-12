@@ -3,7 +3,7 @@ import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'r
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, pesoRegular } from '@/core/ui/fw'
+import { Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, pesoRegular, useInsetInferior } from '@/core/ui/fw'
 import { api } from '@/core/api/client'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { esEstadoVenta } from '@/core/constants/estados'
@@ -56,6 +56,7 @@ function LineaDeTiempo({ pasos }: { pasos: NonNullable<ReturnType<typeof pasosDe
  * TabVentasRechazada, sin salir de la lista). Qué se puede hacer sale de `accionesDeVenta` (reglas de la web).
  */
 export function DetalleVenta({ id, onVolver }: Props) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const { canDo } = usePermissions()
@@ -111,7 +112,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title={`${tipoDeVenta(h)} ${codigoDeVenta(h)}`} subtitle={nombre ? `${direccion} · ${nombre}` : direccion} leading={volver} />
       {pasos ? <LineaDeTiempo pasos={pasos} /> : null}
-      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }}>
+      <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[4] }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
           <Text style={sec}>{[fecha ? `${tituloDelDia(fecha)} ${horaDe(h.fecha)}` : null, h.vendedorNombre].filter(Boolean).join(' · ')}</Text>
           {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}

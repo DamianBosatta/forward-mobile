@@ -222,7 +222,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
       </ScrollView>
       {/* Barra fija como la lámina: decidir siempre a mano, con el margen en amarillo pide motivo. */}
       {porAutorizar && puedeDecidir ? (
-        <PieFijo conInsetInferior>
+        <PieFijo>
           <View style={{ flexDirection: 'row', gap: space[3] }}>
           <View style={{ flex: 1 }}><Button label="Rechazar" variant="secundario" onPress={() => abrirDecision('rechazar')} /></View>
           <View style={{ flex: 1.4 }}><Button label={pideRazon(venta.motivoPendienteAutorizacion) ? 'Revisar y autorizar' : 'Autorizar'} onPress={() => abrirDecision('autorizar')} /></View>

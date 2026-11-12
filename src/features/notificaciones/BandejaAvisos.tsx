@@ -3,7 +3,7 @@ import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { CheckCheck, Settings } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
-import { Button, FormContainer, Notice, Segmented, TopBar, useMenuLeading } from '@/core/ui/fw'
+import { Button, FormContainer, Notice, Segmented, TopBar, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
@@ -20,6 +20,7 @@ const mensajeDe = (e: unknown, porDefecto: string) => (e instanceof Error && e.m
 
 /** Bandeja de avisos: lo que el servidor manda al usuario, más nuevo primero, de a páginas. */
 export function BandejaAvisos() {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const menu = useMenuLeading()
@@ -61,7 +62,7 @@ export function BandejaAvisos() {
       <FlatList
         data={verAvisos ? filas : []}
         keyExtractor={(f) => f.clave}
-        contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] }}
+        contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] + insetInferior }}
         refreshControl={<RefreshControl refreshing={q.isRefetching && !q.isFetchingNextPage} onRefresh={() => void q.refetch()} />}
         ListHeaderComponent={
           <View style={{ gap: space[3] }}>

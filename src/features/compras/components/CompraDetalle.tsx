@@ -9,7 +9,7 @@ import { hasCapability } from '@/features/auth/lib/capabilities'
 import type { CompraDto } from '@/libs/api-client'
 import { useSocio } from '@/libs/api-client/socios'
 import { usePermissions } from '@/core/auth/RequirePermission'
-import { BottomSheet, Button, Field, Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
+import { BottomSheet, Button, Field, Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { PasosDeEstado } from '@/core/ui/fw/PasosDeEstado'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { diaArgentina, hoyTexto } from '@/core/utils/fecha'
@@ -51,6 +51,7 @@ type Hoja = 'cancelar' | 'anularRecepcion' | 'confirmarYRecibir' | 'comprobante'
  * Embebible en el panel derecho de la lista en tablet horizontal (`onVolver` cierra el panel).
  */
 export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: string; onVolver?: () => void; aviso?: Aviso }) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const { canDo } = usePermissions()
@@ -193,7 +194,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
         leading={{ kind: 'atras', onPress: volver }}
       />
       {pasos ? <PasosDeEstado pasos={pasos} accessibilityLabel="Estado de la compra" /> : null}
-      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] * 2 }}>
+      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] * 2 + insetInferior }}>
         <View style={{ gap: space[1], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
             <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text, flexShrink: 1 }]}>{compra.razonSocialProveedor}</Text>

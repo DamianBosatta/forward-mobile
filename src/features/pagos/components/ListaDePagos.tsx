@@ -3,7 +3,7 @@ import { FlatList, RefreshControl, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Plus } from 'lucide-react-native'
 import { space, useColors } from '@/libs/theme'
-import { Button, Field, Notice, Segmented, TopBar } from '@/core/ui/fw'
+import { Button, Field, Notice, Segmented, TopBar, useInsetInferior } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
@@ -24,6 +24,7 @@ import { FilaDePago } from './FilaDePago'
  * Anular y el comprobante quedan en la web.
  */
 export function ListaDePagos({ onVolver }: { onVolver: () => void }) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const puedeVer = usePuedeVerPagos()
@@ -91,7 +92,7 @@ export function ListaDePagos({ onVolver }: { onVolver: () => void }) {
             onPress={() => router.push({ pathname: '/(tabs)/tesoreria/pagos/[id]', params: { id: item.id } })}
           />
         )}
-        contentContainerStyle={{ paddingTop: space[3], paddingBottom: space[6] }}
+        contentContainerStyle={{ paddingTop: space[3], paddingBottom: space[6] + insetInferior }}
         onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) void q.fetchNextPage() }}
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => { void q.refetch() }} tintColor={c.brandInk} />}

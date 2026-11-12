@@ -3,8 +3,7 @@ import { ActivityIndicator, FlatList, Pressable, ScrollView, SectionList, Text, 
 import { useRouter } from 'expo-router'
 import {
   Button, DocumentCard, Fab, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, useMenuLeading,
-  type SegmentedOption,
-} from '@/core/ui/fw'
+  type SegmentedOption, useInsetInferior } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
@@ -50,6 +49,7 @@ interface Props {
 
 /** Lista de compras con el formato nuevo (láminas Compras y TabCompras). */
 export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const leading = useMenuLeading()
@@ -134,7 +134,7 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
       sections={agruparPorDia(l.compras, (x) => x.fecha)}
       keyExtractor={(x) => x.id}
       ListHeaderComponent={filtros}
-      contentContainerStyle={{ padding: space[4], paddingBottom: space[12] * 2 }}
+      contentContainerStyle={{ padding: space[4], paddingBottom: space[12] * 2 + insetInferior }}
       renderSectionHeader={({ section }) => (
         <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.textSecondary, backgroundColor: c.bg, paddingVertical: space[2] }]}>{section.titulo}</Text>
       )}
@@ -172,7 +172,7 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
     <FlatList<BorradorCompra>
       data={l.borradores}
       keyExtractor={(b) => b.id}
-      contentContainerStyle={{ padding: space[4], gap: space[3] }}
+      contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[3] }}
       ListHeaderComponent={<Notice tone="info">Los borradores se guardan solos mientras cargás una compra. Tocá uno para seguirlo.</Notice>}
       renderItem={({ item: b }) => {
         const pie = `${b.cantidadLineas} ${b.cantidadLineas === 1 ? 'línea' : 'líneas'} · Guardado ${tituloDelDia(new Date(b.fechaModificacion)).toLowerCase()} ${horaDe(b.fechaModificacion)}`

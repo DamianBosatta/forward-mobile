@@ -1,7 +1,7 @@
 import React from 'react'
 import { Alert, FlatList, Pressable, Text, View } from 'react-native'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice } from '@/core/ui/fw'
+import { Button, Notice, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
 import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { useDescartarBorradorVenta, type BorradorVenta } from '@/libs/api-client/ventas'
@@ -31,6 +31,7 @@ interface Props {
 
 /** Borradores (lámina ResBorradores): las ventas que se empezaron y no se terminaron; seguir o descartar. */
 export function ListaBorradores({ borradores, cargando, error, sinConexion = false, onReintentar, onSeguir }: Props) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const descartar = useDescartarBorradorVenta()
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
@@ -44,7 +45,7 @@ export function ListaBorradores({ borradores, cargando, error, sinConexion = fal
     <FlatList<BorradorVenta>
       data={borradores}
       keyExtractor={(b) => b.id}
-      contentContainerStyle={{ padding: space[4], gap: space[3] }}
+      contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[3] }}
       ListHeaderComponent={<Notice tone="info">Los borradores se guardan solos y se descartan a las 48 h sin cambios. Tocá uno para seguirlo.</Notice>}
       renderItem={({ item: b }) => {
         const { titulo, subtitulo, total } = identidadDeBorrador(b)

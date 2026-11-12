@@ -1,7 +1,7 @@
 import React from 'react'
 import { ActivityIndicator, FlatList, Modal, Text, View } from 'react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { StatusChip, TopBar } from '@/core/ui/fw'
+import { StatusChip, TopBar, useInsetInferior } from '@/core/ui/fw'
 import { formatToLocalTime } from '@/core/utils/fecha'
 import type { MovimientoStockHistorialDto } from '@/libs/api-client/types'
 import { useMovimientosDeStock } from '../hooks/useConsultasDeStock'
@@ -37,11 +37,12 @@ interface Props {
  */
 export function MovimientosDeStock({ visible, onCerrar, productoId, producto }: Props) {
   const c = useColors()
+  const insetInferior = useInsetInferior()
   const q = useMovimientosDeStock(productoId, visible)
   const movimientos = q.data?.pages.flatMap((p) => p?.items ?? []) ?? []
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onCerrar}>
+    <Modal visible={visible} animationType="slide" onRequestClose={onCerrar} statusBarTranslucent navigationBarTranslucent>
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Movimientos" subtitle={producto} leading={{ kind: 'atras', onPress: onCerrar }} />
         {q.isLoading ? (
@@ -59,7 +60,7 @@ export function MovimientosDeStock({ visible, onCerrar, productoId, producto }: 
               if (q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage()
             }}
             onEndReachedThreshold={0.5}
-            contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] }}
+            contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] + insetInferior }}
             ListEmptyComponent={<Text style={[typeScale.cuerpo, { color: c.textSecondary, textAlign: 'center', padding: space[4] }]}>No hay movimientos registrados para este producto.</Text>}
             ListFooterComponent={q.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : undefined}
           />

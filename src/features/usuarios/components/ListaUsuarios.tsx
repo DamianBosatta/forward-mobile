@@ -2,7 +2,7 @@ import React from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { FlatList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Notice, StatusChip, TopBar } from '@/core/ui/fw'
+import { Notice, StatusChip, TopBar, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
 import { RequirePermission } from '@/core/auth/RequirePermission'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
@@ -31,6 +31,7 @@ export function ListaUsuarios() {
 }
 
 function Contenido() {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const yo = useAuthStore((s) => s.user?.id)
@@ -60,7 +61,7 @@ function Contenido() {
         data={[0]}
         keyExtractor={() => 'usuarios'}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingVertical: space[4], gap: space[4], paddingBottom: space[12], width: '100%', maxWidth: 640, alignSelf: 'center' }}
+        contentContainerStyle={{ paddingVertical: space[4], gap: space[4], paddingBottom: space[12] + insetInferior, width: '100%', maxWidth: 640, alignSelf: 'center' }}
         renderItem={() => (
           <View style={{ gap: space[4] }}>
             <View style={{ paddingHorizontal: space[4] }}>

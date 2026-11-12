@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router'
 import { Search } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Button, Notice, StatusChip, TopBar, chipForEstado, formatImporte, iniciales } from '@/core/ui/fw'
+import { Button, Notice, StatusChip, TopBar, chipForEstado, formatImporte, iniciales, useInsetInferior } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useInfiniteVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client'
@@ -27,6 +27,7 @@ type Estado = 'cargando' | 'error' | 'vacio' | 'ok'
  * leer ese módulo. En tablet las secciones van en columnas.
  */
 export function BuscarScreen() {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const { isTablet } = useResponsive()
@@ -60,7 +61,7 @@ export function BuscarScreen() {
           </View>
         }
       />
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: space[4], gap: space[4], paddingBottom: space[12] }}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: space[4], gap: space[4], paddingBottom: space[12] + insetInferior }}>
         {!hayAlguna ? (
           <Notice tone="peligro">Tu usuario no tiene acceso a ningún módulo para buscar.</Notice>
         ) : !buscando ? (

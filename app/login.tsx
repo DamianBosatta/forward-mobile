@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View, type TextInputInstance } from 'react-native'
 import { useRouter } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
 import { useQueryClient } from '@tanstack/react-query'
 import { Eye, EyeOff, Fingerprint } from 'lucide-react-native'
@@ -45,6 +46,9 @@ export default function LoginScreen() {
   const c = useColors()
   const { isTablet } = useResponsive()
   const teclado = useTecladoVisible()
+  const insets = useSafeAreaInsets()
+  // Con el teclado abierto la barra del sistema queda tapada: no se suma.
+  const insetInferior = teclado ? 0 : insets.bottom
   const queryClient = useQueryClient()
   const { login, isLoading, error, isLocked, failedAttempts } = useAuth()
 
@@ -263,8 +267,8 @@ export default function LoginScreen() {
 
   if (isTablet) {
     return (
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, flexDirection: 'row', backgroundColor: c.topBar }}>
-        <View style={{ flex: 1, padding: 64, justifyContent: 'space-between', backgroundColor: CAMPO.fondo }}>
+      <KeyboardAvoidingView testID="login-raiz" behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, flexDirection: 'row', backgroundColor: c.topBar }}>
+        <View style={{ flex: 1, padding: 64, paddingTop: 64 + insets.top, paddingBottom: 64 + insetInferior, justifyContent: 'space-between', backgroundColor: CAMPO.fondo }}>
           {logo(72)}
           <View style={{ gap: space[3] }}>
             <Text accessibilityRole="header" style={{ fontSize: 48, lineHeight: 56, fontWeight: '700', color: c.onTopBarStrong }}>Forward</Text>
@@ -274,7 +278,7 @@ export default function LoginScreen() {
           </View>
           <Text style={[typeScale.secundario, { color: c.onTopBar }]}>Forward Distribuidora</Text>
         </View>
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingVertical: 64, paddingHorizontal: 80 }} keyboardShouldPersistTaps="handled">
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingTop: 64 + insets.top, paddingBottom: 64 + insetInferior, paddingHorizontal: 80 }} keyboardShouldPersistTaps="handled">
           {formulario}
         </ScrollView>
       </KeyboardAvoidingView>
@@ -282,9 +286,9 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: c.topBar }}>
+    <KeyboardAvoidingView testID="login-raiz" behavior="padding" style={{ flex: 1, backgroundColor: c.topBar }}>
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: space[6], paddingBottom: space[8], width: '100%', maxWidth: 480, alignSelf: 'center' }}
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: space[6], paddingTop: insets.top, paddingBottom: space[8] + insetInferior, width: '100%', maxWidth: 480, alignSelf: 'center' }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

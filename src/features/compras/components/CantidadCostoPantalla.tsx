@@ -68,7 +68,7 @@ function Contenido({ linea, onClose, onListo, onQuitar }: Props & { linea: Linea
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
 
   return (
-    <Modal visible animationType="slide" onRequestClose={onClose}>
+    <Modal visible animationType="slide" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
       <View accessibilityLabel="Cantidad y costo" style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Cantidad y costo" leading={{ kind: 'atras', onPress: onClose }}
           actions={[{ icon: Trash2, accessibilityLabel: 'Quitar la línea', onPress: () => onQuitar(linea.productoId) }]} />
@@ -114,7 +114,7 @@ function Contenido({ linea, onClose, onListo, onQuitar }: Props & { linea: Linea
             ) : null}
           </View>
         </ScrollView>
-        <PieFijo conInsetInferior>
+        <PieFijo>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[3] }}>
             <Text style={{ ...secundario, ...importe }}>{subtotal !== null ? `${mostrarNumero(cantidad!)} × ${formatImporte(porUnidad * costo!)}` : 'Subtotal'}</Text>
             <Text style={{ ...typeScale.titulo, ...importe, color: c.text }}>{subtotal !== null ? formatImporte(subtotal) : costo === null ? 'Sin costo' : '$ —'}</Text>

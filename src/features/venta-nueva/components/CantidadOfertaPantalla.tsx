@@ -118,7 +118,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
   }
 
   return (
-    <Modal visible animationType="slide" onRequestClose={onClose}>
+    <Modal visible animationType="slide" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
       <View testID="cantidad-oferta" accessibilityLabel="Cantidad y oferta" style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar
           title="Cantidad y oferta"

@@ -99,7 +99,7 @@ export function PagarServicio({ onListo }: { onListo: () => void }) {
         </FormContainer>
       </ScrollView>
       {/* El aviso de qué falta y el error al guardar quedan arriba del pie, a la vista del botón (frame 15). */}
-      <PieFijo conInsetInferior>
+      <PieFijo>
         {aviso || registrar.error ? (
           <View testID="pie-avisos" style={{ gap: space[2] }}>
             {aviso ? <Notice tone="advertencia">{aviso}</Notice> : null}

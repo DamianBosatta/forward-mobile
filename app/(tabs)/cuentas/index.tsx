@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftRight } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Button, Notice, Segmented, TopBar, TwoPane, useMenuLeading } from '@/core/ui/fw'
+import { Button, Notice, Segmented, TopBar, TwoPane, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
@@ -39,6 +39,7 @@ const ANCHO_TRANSFERIR_CON_TEXTO = 600
  * la cartera por dirección de entrega; tocar un cliente abre su cuenta (en tablet horizontal, en el panel de la derecha).
  */
 function CuentasCorrientesScreen() {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const menu = useMenuLeading()
@@ -106,7 +107,7 @@ function CuentasCorrientesScreen() {
             onPress={() => abrir(item.id)}
           />
         )}
-        contentContainerStyle={{ paddingTop: space[3], paddingBottom: space[6] }}
+        contentContainerStyle={{ paddingTop: space[3], paddingBottom: space[6] + insetInferior }}
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch() }} tintColor={c.brandInk} />}
