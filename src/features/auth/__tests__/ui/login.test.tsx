@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import LoginScreen from '../../../../../app/login';
 import { useAuth } from '../../hooks/useAuth';
 import { useOfertaDeHuella } from '../../store/ofertaDeHuella.store';
+import { themeColors, useThemeStore } from '@/libs/theme';
 
 // LoginScreen uses useQueryClient() (to clear cache on API env switch), so it
 // must render inside a QueryClientProvider.
@@ -79,17 +80,29 @@ beforeEach(() => {
   mockResponsive = { isTablet: false };
   mockAuthenticate.mockResolvedValue(null);
   (globalThis as { __DEV__?: boolean }).__DEV__ = true;
+  useThemeStore.setState({ mode: 'light' });
 });
 
+const estiloCon = (el: { parent: any }, clave: string) => {
+  let n = el.parent;
+  while (n && !(n.props.style && [].concat(n.props.style).flat().some((x: any) => x && x[clave] !== undefined))) n = n.parent;
+  return [].concat(n.props.style).flat().find((x: any) => x && x[clave] !== undefined) as any;
+};
+const plano = (style: unknown) => Object.assign({}, ...[style].flat(Infinity as 1).filter(Boolean));
+
 describe('Ingreso', () => {
-  it('muestra el encabezado del diseño (logo FWD real, "Forward" y la frase) y no el logo viejo', () => {
+  it('muestra la marca (logo FWD real al lado de "Forward"), el título y la frase de la variante A', () => {
     auth();
     renderLogin();
-    expect(screen.getByRole('header', { name: 'Forward' })).toBeTruthy();
-    expect(screen.getByText('Entrá con el mismo usuario de la web.')).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Ingresá a tu cuenta' })).toBeTruthy();
+    expect(screen.getByText('Usá el mismo usuario y contraseña de la web.')).toBeTruthy();
+    // El nombre va una sola vez, al lado del logo; no hay un "Forward" gigante repetido como título.
+    expect(screen.getAllByText('Forward')).toHaveLength(1);
+    expect(screen.queryByRole('header', { name: 'Forward' })).toBeNull();
     const marca = screen.getByTestId('login-marca', { includeHiddenElements: true });
     // El logo de la web (icon.svg), no el cuadrado con la flecha.
     expect(within(marca).getByTestId('logo-fwd', { includeHiddenElements: true })).toBeTruthy();
+    expect(within(marca).getByTestId('logo-fwd', { includeHiddenElements: true }).props.height).toBe(56);
   });
 
   it('el logo FWD se ve también en tablet', () => {
@@ -100,15 +113,59 @@ describe('Ingreso', () => {
     expect(within(marca).getByTestId('logo-fwd', { includeHiddenElements: true })).toBeTruthy();
   });
 
-  it('el campo con foco se marca en verde claro', () => {
+  describe.each(['light', 'dark'] as const)('tema %s', (modo) => {
+    const c = themeColors[modo];
+    beforeEach(() => useThemeStore.setState({ mode: modo }));
+
+    it('sigue el tema: fondo, campos y borde de control salen de libs/theme', () => {
+      auth();
+      renderLogin();
+      expect(estiloCon(usuario(), 'borderWidth')).toMatchObject({ borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface });
+      expect(plano(screen.getByText('Usuario o email').props.style).color).toBe(c.text);
+    });
+
+    it('el campo con foco lleva borde de 2 pt en el color de marca del tema', () => {
+      auth();
+      renderLogin();
+      fireEvent(usuario(), 'focus');
+      expect(estiloCon(usuario(), 'borderWidth')).toMatchObject({ borderWidth: 2, borderColor: c.brandInk });
+    });
+
+    it('con error del servidor marca los dos campos en el color de peligro del tema', () => {
+      auth({ error: 'Usuario o contraseña incorrectos' });
+      renderLogin();
+      expect(estiloCon(usuario(), 'borderWidth')).toMatchObject({ borderWidth: 2, borderColor: c.chip.anulado.text });
+      expect(estiloCon(contrasena(), 'borderWidth')).toMatchObject({ borderWidth: 2, borderColor: c.chip.anulado.text });
+    });
+
+    it('la huella es un botón de contorno con borderStrong', async () => {
+      auth();
+      mockBio.available = true;
+      mockBio.saved = true;
+      mockBio.choice = 'enabled';
+      renderLogin();
+      const huella = await screen.findByRole('button', { name: 'Entrar con huella' });
+      expect(plano(huella.props.style)).toMatchObject({ borderWidth: 1, borderColor: c.borderStrong });
+    });
+  });
+
+  it('el botón Ingresar queda en el pie fijo sobre el teclado y la huella debajo, en el mismo pie', async () => {
     auth();
+    mockBio.available = true;
+    mockBio.saved = true;
+    mockBio.choice = 'enabled';
     renderLogin();
-    fireEvent(usuario(), 'focus');
-    const { themeColors } = jest.requireActual('@/libs/theme');
-    let n = usuario().parent as any;
-    while (n && !(n.props.style && [].concat(n.props.style).flat().some((x: any) => x && x.borderWidth))) n = n.parent;
-    const estilo = [].concat(n.props.style).flat().find((x: any) => x && x.borderWidth) as any;
-    expect(estilo).toMatchObject({ borderWidth: 2, borderColor: themeColors.dark.brand });
+    const huella = await screen.findByRole('button', { name: 'Entrar con huella' });
+    const pie = screen.getByTestId('login-pie');
+    expect(within(pie).getByRole('button', { name: 'Ingresar' })).toBeTruthy();
+    expect(within(pie).getByRole('button', { name: 'Entrar con huella' })).toBe(huella);
+  });
+
+  it('cargando: el botón muestra el giro y los campos se atenúan', () => {
+    auth({ isLoading: true });
+    renderLogin();
+    expect(ingresar().props.accessibilityState).toMatchObject({ busy: true });
+    expect(estiloCon(usuario(), 'borderWidth').opacity).toBeLessThan(1);
   });
 
   it('pide usuario o email y contraseña, y dice a quién pedir la contraseña olvidada', () => {
@@ -195,6 +252,17 @@ describe('Ingreso', () => {
     renderLogin();
     expect(await screen.findByText('Usuario o contraseña incorrectos.')).toBeTruthy();
     expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it('un solo aviso de error trae el texto del servidor y los intentos que quedan', () => {
+    auth({ error: 'Usuario o contraseña incorrectos.', failedAttempts: 2 });
+    renderLogin();
+    const avisos = screen.getAllByTestId('login-aviso-error');
+    expect(avisos).toHaveLength(1);
+    expect(within(avisos[0]).getByText(/Usuario o contraseña incorrectos\./)).toBeTruthy();
+    expect(within(avisos[0]).getByText(/Te quedan 3 intentos antes del bloqueo\./)).toBeTruthy();
+    // Nada de una segunda línea de intentos suelta fuera del aviso.
+    expect(screen.getAllByText(/Te quedan 3 intentos/)).toHaveLength(1);
   });
 
   it('avisa los intentos que quedan y bloquea el botón cuando se agotan', () => {
@@ -298,16 +366,12 @@ describe('Ingreso', () => {
     act(() => mockRed({ isConnected: true, isInternetReachable: null }));
     expect(screen.queryByText(/Sin conexión/)).toBeNull();
   });
+});
 
-  it('con error del servidor marca los dos campos en rojo', () => {
-    auth({ error: 'Usuario o contraseña incorrectos' });
-    renderLogin();
-    const borde = (el: { parent: any }) => {
-      let n = el.parent;
-      while (n && !(n.props.style && [].concat(n.props.style).flat().some((x: any) => x && x.borderWidth))) n = n.parent;
-      return [].concat(n.props.style).flat().find((x: any) => x && x.borderWidth);
-    };
-    expect(borde(usuario())).toMatchObject({ borderWidth: 2, borderColor: '#A90F0F' });
-    expect(borde(contrasena())).toMatchObject({ borderWidth: 2, borderColor: '#A90F0F' });
+describe('Ingreso: tokens', () => {
+  it('app/login.tsx no trae colores hex sueltos: todo sale de libs/theme', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fuente = (require('fs') as typeof import('fs')).readFileSync(require.resolve('../../../../../app/login.tsx'), 'utf8');
+    expect(fuente.match(/#[0-9a-fA-F]{6}/g)).toBeNull();
   });
 });
