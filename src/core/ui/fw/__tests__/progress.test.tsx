@@ -41,14 +41,14 @@ describe.each(['light', 'dark'] as const)('tema %s', (modo) => {
   const c = themeColors[modo]
   beforeEach(() => useThemeStore.setState({ mode: modo }))
 
-  it('sobre superficie: pista border y relleno brand', () => {
+  it('sobre superficie: pista borderStrong y relleno brand', () => {
     render(<Progress value={1} max={2} accessibilityLabel="Entregas hechas" />)
-    expect(flat(barra().props.style).backgroundColor).toBe(c.border)
+    expect(flat(barra().props.style).backgroundColor).toBe(c.borderStrong)
     expect(flat((barra().children[0] as unknown as { props: { style: unknown } }).props.style).backgroundColor).toBe(c.brand)
   })
 
   it('sobre la barra superior: la pista de la consola del chofer', () => {
     render(<Progress value={1} max={2} accessibilityLabel="Entregas hechas" sobreBarra />)
-    expect(flat(barra().props.style).backgroundColor).toBe(modo === 'dark' ? c.border : c.textSecondary)
+    expect(flat(barra().props.style).backgroundColor).toBe(modo === 'dark' ? c.borderStrong : c.textSecondary)
   })
 })

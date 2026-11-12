@@ -102,7 +102,7 @@ function FilaCritica({ titulo, conDivisor }: { titulo: string; conDivisor: boole
         </View>
       </View>
       <View testID="interruptor-atenuado" pointerEvents="none" style={{ opacity: 0.5 }}>
-        <Switch value disabled trackColor={{ false: c.border, true: c.action }} thumbColor={c.onAction} />
+        <Switch value disabled trackColor={{ false: c.borderStrong, true: c.action }} thumbColor={c.onAction} />
       </View>
     </View>
   )

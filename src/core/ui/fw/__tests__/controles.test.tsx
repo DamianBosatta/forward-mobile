@@ -69,11 +69,12 @@ describe('Field', () => {
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
-  it.each(TEMAS)('tema %s: relleno superficie-2 y texto del tema', (tema) => {
+  it.each(TEMAS)('tema %s: relleno superficie, contorno borderStrong y texto del tema', (tema) => {
     conTema(tema)
     render(<Field label="Observaciones" value="Entregar antes de las 12" />)
     const s = estilo(screen.getByLabelText('Observaciones'))
-    expect(s.backgroundColor).toBe(themeColors[tema].surface2)
+    expect(s.backgroundColor).toBe(themeColors[tema].surface)
+    expect(s.borderColor).toBe(themeColors[tema].borderStrong)
     expect(s.color).toBe(themeColors[tema].text)
     expect(s.height).toBe(48)
   })
