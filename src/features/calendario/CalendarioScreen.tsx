@@ -1,10 +1,11 @@
 import React, { useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, ScrollView, Text, View, type ScrollViewInstance } from 'react-native'
+import { ScrollView, Text, View, type ScrollViewInstance } from 'react-native'
 import { Plus } from 'lucide-react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { Button, FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
-import { textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { esFallaDeRed } from '@/core/api/errores'
 import { CalendarioAvisosTabs } from '@/core/ui/fw/CalendarioAvisosTabs'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -120,15 +121,16 @@ export function CalendarioScreen({ precarga, onAbrirVenta, onCobrar, nuevo, avis
   }
 
   const sinRed = q.isError && esFallaDeRed(q.error)
+  const reintentar = { label: 'Reintentar', onPress: () => void q.refetch() }
   const contenido = q.isLoading ? (
-    <View style={{ gap: space[2], alignItems: 'flex-start' }}>
-      <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Cargando el calendario…</Text>
-      <ActivityIndicator color={c.brand} />
-    </View>
+    // Bloques quietos con la forma de la semana (un día por fila), como las listas de Cuentas y Pagos.
+    <Esqueletos bloques={[{ alto: 76 }, { alto: 76 }, { alto: 76 }]} />
+  ) : sinRed && !q.data ? (
+    <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar el calendario" accion={reintentar} />
   ) : q.isError && !(sinRed && q.data) ? (
     <View style={{ gap: space[3] }}>
       <Notice tone="peligro">No se pudo cargar el calendario.</Notice>
-      <Button label="Reintentar" variant="secundario" onPress={() => void q.refetch()} />
+      <Button label={reintentar.label} variant="secundario" onPress={reintentar.onPress} />
     </View>
   ) : vista === 'semana' ? (
     <View onLayout={(e) => { yDeLaVista.current = e.nativeEvent.layout.y }}>
