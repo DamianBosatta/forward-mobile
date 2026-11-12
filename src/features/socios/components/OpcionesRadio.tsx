@@ -1,6 +1,6 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { MarcaRadio } from '@/features/venta-nueva/components/MarcaRadio'
 
 /**
@@ -12,11 +12,12 @@ export function OpcionesRadio<T extends string>({ titulo, opciones, valor, onCha
   titulo: string; opciones: { value: T; label: string }[]; valor: T; onChange: (v: T) => void; enTarjeta?: boolean
 }) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={titulo} style={{ gap: space[1] }}>
       <Text style={{ ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: c.text }}>{titulo}</Text>
       {enTarjeta ? (
-        <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, overflow: 'hidden' }}>
+        <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface, overflow: 'hidden' }}>
           {opciones.map((op, i) => {
             const elegido = op.value === valor
             return (

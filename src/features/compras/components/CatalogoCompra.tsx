@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Field, FormContainer, Notice, StatusChip, useInsetInferior } from '@/core/ui/fw'
 import { useInfiniteCatalogoStock } from '@/libs/api-client'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -34,6 +34,7 @@ interface Props {
 export function CatalogoCompra({ proveedor, lineas, onAgregar, onCambiar, onQuitar, onAbrir }: Props) {
   const insetInferior = useInsetInferior()
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const [busqueda, setBusqueda] = useState('')
   const [enviada, setEnviada] = useState('')
   const [filtro, setFiltro] = useState<Filtro>('todos')
@@ -54,7 +55,7 @@ export function CatalogoCompra({ proveedor, lineas, onAgregar, onCambiar, onQuit
   const textoUltima = ultimas.isLoading ? 'Cargando…' : ultimas.isError ? 'No se pudo cargar' : ultima ? numeroDeCompra(ultima) : 'Sin compras'
 
   const condicion = (k: string, v: string) => (
-    <View accessible accessibilityLabel={`${k}: ${v}`} style={{ flex: 1, gap: 2, padding: space[3], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
+    <View accessible accessibilityLabel={`${k}: ${v}`} style={{ flex: 1, gap: 2, padding: space[3], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }}>
       <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{k}</Text>
       <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{v}</Text>
     </View>

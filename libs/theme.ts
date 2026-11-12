@@ -283,7 +283,7 @@ export const space = {
   12: 48,
 } as const
 
-/** --shadow-md de la web, la única sombra. Claro: 0 4px 6px -1px / 0,1. Oscuro: 0 4px 8px -1px / 0,5. */
+/** --shadow-md de la web: la sombra de lo que flota (hojas, FAB, tarjetas de acción). Claro: 0 4px 6px -1px / 0,1. Oscuro: 0 4px 8px -1px / 0,5. */
 export const shadowMd = {
   light: {
     shadowColor: '#000000',
@@ -298,6 +298,24 @@ export const shadowMd = {
     shadowOpacity: 0.5,
     shadowRadius: 4,
     elevation: 4,
+  },
+} as const
+
+/** Sombra suave de las tarjetas de contenido (S2): separa la tarjeta blanca del fondo `bg` sin competir con `shadowMd`. */
+export const shadowSm = {
+  light: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  dark: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.4,
+    shadowRadius: 2,
+    elevation: 1,
   },
 } as const
 
@@ -423,5 +441,11 @@ export function useIsDark(): boolean {
   }
 
   return mode === 'dark'
+}
+
+
+/** `shadowSm` del esquema activo, para `...sombra` en las tarjetas de contenido. */
+export function useSombraTarjeta() {
+  return shadowSm[useIsDark() ? 'dark' : 'light']
 }
 

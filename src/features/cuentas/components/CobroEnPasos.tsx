@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { ChevronRight, Plus, X } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { mostrarNumero } from '@/core/utils/numero'
 import { Button, Field, FormContainer, Notice, PieFijo, TopBar, formatImporte } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -99,6 +99,7 @@ interface PropsDelCliente {
 
 function CobroDelCliente({ socioId, medioInicial, contraparte, paso, onPaso, onVolver, onSalir }: PropsDelCliente) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const t = textosDe(contraparte)
   const aProveedor = contraparte === 'proveedor'
   const socio = useSocio(socioId)
@@ -226,7 +227,7 @@ function CobroDelCliente({ socioId, medioInicial, contraparte, paso, onPaso, onV
   }
 
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
-  const tarjeta = { gap: space[2], backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, padding: space[4] }
+  const tarjeta = { gap: space[2], backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, padding: space[4] }
   const montoAccesible = (label: string, n: number, destacado = false) => (
     <View accessible accessibilityLabel={`${label}: ${formatImporte(n)}`} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[3] }}>
       <Text style={destacado ? { ...typeScale.cuerpoDestacado, color: c.text } : secundario}>{label}</Text>

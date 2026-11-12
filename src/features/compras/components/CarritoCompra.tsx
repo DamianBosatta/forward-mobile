@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Plus } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Field, Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { useProducto } from '@/libs/api-client/productos'
@@ -40,9 +40,10 @@ interface Props {
  */
 export function CarritoCompra({ lineas, onEditarProductos, onAbrirLinea, gastosTexto, onGastos, gastosInvalidos, subtotal, gastos, extra }: Props) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const faltan = lineas.filter(sinCosto).length
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
-  const tarjeta = { padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }
+  const tarjeta = { padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }
 
   return (
     <View style={{ gap: space[3] }}>

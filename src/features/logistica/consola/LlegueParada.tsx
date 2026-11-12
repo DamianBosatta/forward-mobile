@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Check, Phone, ScanLine } from 'lucide-react-native'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, MarcaDeCasilla, TopBar } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import type { ParadaDto } from '@/libs/api-client/types'
@@ -26,6 +26,7 @@ interface Props {
  */
 export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntregar, onLlamarCliente }: Props) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const { bottom } = useSafeAreaInsets()
   const { width } = useWindowDimensions()
   const columna = width >= 768 ? { maxWidth: 640, width: '100%' as const, alignSelf: 'center' as const } : null
@@ -55,7 +56,7 @@ export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntrega
             {piezas.total > 0 ? `Tenés ${textoPiezas(piezas.total)} para entregar acá` : 'Entregá el pedido acá'}
           </Text>
           {piezas.total > 0 ? (
-            <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border }}>
+            <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra }}>
               {Array.from({ length: piezas.total }, (_, i) => (
                 <PiezaFila
                   key={i}

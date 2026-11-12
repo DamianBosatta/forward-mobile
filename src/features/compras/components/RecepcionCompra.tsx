@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ArrowLeft } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, Field, FilaInterruptor, Notice, PieFijo, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { MarcaRadio } from '@/features/venta-nueva/components/MarcaRadio'
 import { textoFaltaCosto } from './CarritoCompra'
@@ -17,10 +17,11 @@ export function DepositoCompra({ depositos, depositoId, onDeposito, puedeElegir 
   depositos: { id: string; nombre: string }[]; depositoId: string; onDeposito: (id: string) => void; puedeElegir: boolean
 }) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   if (!(puedeElegir && depositos.length > 1)) {
     const nombre = depositos.find((d) => d.id === depositoId)?.nombre ?? 'el tuyo'
     return (
-      <View style={{ padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
+      <View style={{ padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }}>
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{`Depósito: ${nombre}`}</Text>
       </View>
     )
@@ -28,7 +29,7 @@ export function DepositoCompra({ depositos, depositoId, onDeposito, puedeElegir 
   return (
     <View style={{ gap: space[2] }}>
       <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Depósito</Text>
-      <View accessibilityRole="radiogroup" accessibilityLabel="Depósito" style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, overflow: 'hidden' }}>
+      <View accessibilityRole="radiogroup" accessibilityLabel="Depósito" style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface, overflow: 'hidden' }}>
         {depositos.map((d, i) => {
           const sel = d.id === depositoId
           return (
@@ -85,8 +86,9 @@ interface Props {
  */
 export function RecepcionCompra(p: Props) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
-  const tarjeta = { gap: space[2], padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }
+  const tarjeta = { gap: space[2], padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }
   const bloqueado = p.ocupado || p.faltanCostos > 0
   const recibir = p.puedeRecibir && p.recibirAhora
   const fila = (k: string, v: string | null) => (v ? (

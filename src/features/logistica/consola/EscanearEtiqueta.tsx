@@ -3,7 +3,7 @@ import { Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { CircleCheck, X, Zap, ZapOff } from 'lucide-react-native'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, Notice } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import { leerEtiqueta, tituloPieza } from './piezasParada'
@@ -26,6 +26,7 @@ const DEBOUNCE_MS = 1500
  */
 export function EscanearEtiqueta({ visible, etiquetas, marcadas, onLeida, onCerrar }: Props) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const { top, bottom } = useSafeAreaInsets()
   const [permiso, pedirPermiso] = useCameraPermissions()
   const [flash, setFlash] = useState(false)
@@ -90,7 +91,7 @@ export function EscanearEtiqueta({ visible, etiquetas, marcadas, onLeida, onCerr
         </View>
         <View style={{ padding: space[4], gap: space[3], flex: 1 }}>
           {mensaje ? <Notice tone={mensaje.tono}>{mensaje.texto}</Notice> : <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Apuntá a la etiqueta de la pieza.</Text>}
-          <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border }}>
+          <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra }}>
             {etiquetas.map((e, i) => {
               const hecha = marcadas.has(i)
               return (

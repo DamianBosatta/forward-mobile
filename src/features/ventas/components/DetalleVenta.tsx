@@ -2,7 +2,7 @@ import React from 'react'
 import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, pesoRegular, useInsetInferior } from '@/core/ui/fw'
 import { api } from '@/core/api/client'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -58,6 +58,7 @@ function LineaDeTiempo({ pasos }: { pasos: NonNullable<ReturnType<typeof pasosDe
 export function DetalleVenta({ id, onVolver }: Props) {
   const insetInferior = useInsetInferior()
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const router = useRouter()
   const { canDo } = usePermissions()
   const userId = useAuthStore((s) => s.user?.id)
@@ -102,7 +103,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
   const cobrar = () => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: h.clienteId } } as never)
   const fecha = h.fecha ? new Date(h.fecha) : null
   const dato = (k: string, v: string) => (
-    <View style={{ flex: 1, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: space[1] }}>
+    <View style={{ flex: 1, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, ...sombra, gap: space[1] }}>
       <Text style={sec}>{k}</Text>
       <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{v}</Text>
     </View>
@@ -149,7 +150,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
             {cobro ? (
               <View style={{ gap: space[2] }}>
                 <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Cobro</Text>
-                <View style={{ gap: space[1], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}>
+                <View style={{ gap: space[1], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, ...sombra }}>
                   {cobro.filas.map((f) => <TotalsRow key={f.clave} label={f.texto} importe={f.monto} />)}
                   {cobro.saldo !== null ? <TotalsRow label="Saldo" importe={cobro.saldo} destacado /> : null}
                 </View>

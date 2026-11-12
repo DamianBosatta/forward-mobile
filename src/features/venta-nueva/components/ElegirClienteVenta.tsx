@@ -3,7 +3,7 @@ import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View } from 'r
 import { Plus, Search } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import { fetchSocio, sociosKeys, useClientesRecientes } from '@/libs/api-client/socios'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Notice, StatusChip, formatImporte } from '@/core/ui/fw'
 import { partesArgentina, parseDateSafe } from '@/core/utils/fecha'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -44,6 +44,7 @@ function textoUltimoPedido(u: { fecha: string; total: number }): string {
  */
 export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, ultimoPedido }: Props) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const usuarioId = useAuthStore((s) => s.user?.id)
   const [busqueda, setBusqueda] = useState('')
   const [filtros, setFiltros] = useState<FiltrosDeCartera>(SIN_FILTROS)
@@ -125,7 +126,7 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
             {recientes.length > 0 ? (
               <>
                 {titulo('Recientes')}
-                <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, overflow: 'hidden' }}>
+                <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface, overflow: 'hidden' }}>
                   {recientes.map((r, i) => {
                     const direccion = direccionDeEntrega(r)
                     const nombre = nombreDelCliente(r)

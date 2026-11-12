@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Image, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { Package, Trash2 } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, Notice, PieFijo, StatusChip, TopBar, formatImporte } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import type { CatalogoStockItem } from '@/libs/api-client'
@@ -49,6 +49,7 @@ export function CantidadOfertaPantalla(props: Props) {
 
 function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }: Props) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const user = useAuthStore((s) => s.user)
   const reemplazar = useCarritoVenta((s) => s.reemplazar)
   const quitar = useCarritoVenta((s) => s.quitar)
@@ -94,7 +95,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
 
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
   const destacado = { ...typeScale.cuerpoDestacado, color: c.text }
-  const tarjeta = { padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }
+  const tarjeta = { padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, ...sombra }
   const campo = { minHeight: 48, borderRadius: radii.campo, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.borderStrong, paddingHorizontal: space[3], color: c.text, ...typeScale.cuerpoDestacado, ...importe }
 
   const poner = (nuevoPct: number) => {
@@ -167,7 +168,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
             <Text style={secundario}>Cantidad</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
               {pr.modos.length > 1 ? (
-                <View accessibilityRole="radiogroup" accessibilityLabel="Presentación" style={{ flexDirection: 'row', padding: 3, borderRadius: radii.tarjeta, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.border }}>
+                <View accessibilityRole="radiogroup" accessibilityLabel="Presentación" style={{ flexDirection: 'row', padding: 3, borderRadius: radii.tarjeta, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.border, ...sombra }}>
                   {pr.modos.map((m) => (
                     <Pressable key={m} accessibilityRole="button" accessibilityLabel={ROTULO_MODO[m]} accessibilityState={{ selected: modo === m }} onPress={() => cambiarModo(m)}
                       style={{ minHeight: 40, paddingHorizontal: space[3], borderRadius: radii.campo, justifyContent: 'center', backgroundColor: modo === m ? c.action : 'transparent' }}>

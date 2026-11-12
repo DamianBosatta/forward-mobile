@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, FlatList, Text, View } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, Notice, PieFijo, TotalsRow } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { MOTIVO_SIN_PERMISO_DE_COBRO, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
@@ -26,6 +26,7 @@ interface Props {
 /** Saldo por cuenta del cliente elegido, en solo lectura (el lugar de "Último pedido" y del crédito en la venta). */
 function SaldoDelCliente({ socioId }: { socioId: string }) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const socio = useSocio(socioId)
   const verCuenta = !!socio.data?.puedeVerCuentaCorriente
   const estado = useEstadoCuentaSocio(socioId, verCuenta)
@@ -35,7 +36,7 @@ function SaldoDelCliente({ socioId }: { socioId: string }) {
   if (!estado.data) return <Notice tone="peligro">{mensajeDelServidor(estado.error, 'No se pudo cargar la cuenta.')}</Notice>
   const tope = socio.data.topeCredito
   return (
-    <View style={{ gap: space[2], backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, padding: space[4] }}>
+    <View style={{ gap: space[2], backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, padding: space[4] }}>
       <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Saldo</Text>
       <TotalsRow label="Saldo del cliente" importe={estado.data.saldoActual} destacado />
       <TotalsRow label="TST" importe={estado.data.saldoTst} />

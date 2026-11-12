@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native'
 import { ChevronRight, Package } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, Notice, StatusChip, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { useFichaCatalogo } from '@/libs/api-client/catalogo'
 import { getFullImageUrl } from '@/libs/api-client/media'
@@ -53,6 +53,7 @@ export function FichaProducto({
 }) {
   const insetInferior = useInsetInferior()
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const [errorFoto, setErrorFoto] = useState<string | null>(null)
 
   // The chip answers for one unit, same as the card. The server also tells whether the minimum sale (a box) fits.
@@ -100,7 +101,7 @@ export function FichaProducto({
       </View>
 
       {/* Lámina catalogo-ficha: el precio y "Cómo se vende" van juntos en una sola tarjeta. */}
-      <View testID="ficha-precio-tarjeta" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, padding: space[4], gap: space[3] }}>
+      <View testID="ficha-precio-tarjeta" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, padding: space[4], gap: space[3] }}>
         <View style={{ gap: space[1] }}>
           <Fila label="Precio de lista por unidad" valor={formatImporte(p.precioVenta)} fuerte />
           {variacion ? (

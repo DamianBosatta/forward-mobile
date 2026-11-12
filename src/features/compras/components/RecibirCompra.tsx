@@ -3,7 +3,7 @@ import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { ScrollView, Text, TextInput, View } from 'react-native'
 
 import { Button, Field, MarcaDeCasilla, Notice, PieFijo, TopBar, formatImporte } from '@/core/ui/fw'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { useAsignarFotoFacturaCompra, useRecibirCompra, type CompraFaltante } from '@/libs/api-client/compras'
 import { useSocio } from '@/libs/api-client/socios'
@@ -55,6 +55,7 @@ const empaqueTexto = (d: Detalle) => {
  */
 export function RecibirCompra({ compra, onVolver, onHecho, onConflicto }: Props) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const { isTablet } = useResponsive()
   const recibir = useRecibirCompra()
   const asignarFoto = useAsignarFotoFacturaCompra()
@@ -148,7 +149,7 @@ export function RecibirCompra({ compra, onVolver, onHecho, onConflicto }: Props)
     )
   }
 
-  const tarjeta = { gap: space[2], padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }
+  const tarjeta = { gap: space[2], padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>

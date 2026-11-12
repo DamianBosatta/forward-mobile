@@ -3,7 +3,7 @@ import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'r
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Check } from 'lucide-react-native'
-import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { FONT, importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, Notice, StatusChip, TopBar, chipForEstado, formatImporte } from '@/core/ui/fw'
 import { usePuedeCobrar } from '@/features/cuentas/lib/permiso'
 import { urlWhatsApp } from '@/features/clientes/lib/contacto'
@@ -27,6 +27,7 @@ interface Props {
  */
 export function VentaGuardadaPantalla({ id, mensaje }: Props) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const insets = useSafeAreaInsets()
   const router = useRouter()
   const puedeCobrarPagos = usePuedeCobrar()
@@ -79,7 +80,7 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
     <View testID="venta-guardada" style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Venta guardada" />
       <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: insets.bottom + space[6], gap: space[4] }}>
-        <View testID="venta-guardada-resumen" style={{ padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: space[2] }}>
+        <View testID="venta-guardada-resumen" style={{ padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, ...sombra, gap: space[2] }}>
           <View style={{ alignItems: 'center', gap: space[1], paddingBottom: space[2] }}>
             <View testID="venta-guardada-marca" style={{ width: 56, height: 56, borderRadius: radii.pastilla, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
               <Check size={30} color={c.onAction} strokeWidth={2.5} />

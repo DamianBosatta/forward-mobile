@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Modal, ScrollView, Text, TextInput, View } from 'react-native'
 import { Package, Trash2 } from 'lucide-react-native'
 import { Image as ExpoImage } from 'expo-image'
-import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { FONT, importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, Field, Notice, PieFijo, Segmented, TopBar, formatImporte } from '@/core/ui/fw'
 import { Redondo } from '@/features/venta-nueva/components/ProductoCatalogoCard'
 import { getFullImageUrl } from '@/libs/api-client'
@@ -38,6 +38,7 @@ export function CantidadCostoPantalla(props: Props) {
 
 function Contenido({ linea, onClose, onListo, onQuitar }: Props & { linea: LineaCompra }) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const { data: ficha } = useProducto(linea.productoId)
   const [unidad, setUnidad] = useState(linea.unidad)
   const [cantidadTexto, setCantidadTexto] = useState(numeroCompleto(linea.cantidad))
@@ -100,7 +101,7 @@ function Contenido({ linea, onClose, onListo, onQuitar }: Props & { linea: Linea
           {errorCantidad ? <Text style={{ ...typeScale.secundario, color: c.chip.anulado.text, textAlign: 'center' }}>{errorCantidad}</Text>
             : unidad !== 'Unidad' && unidades !== null ? <Text style={{ ...secundario, textAlign: 'center' }}>{`= ${mostrarNumero(unidades)} unidades`}</Text> : null}
 
-          <View style={{ gap: space[3], padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
+          <View style={{ gap: space[3], padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }}>
             <Text style={{ ...typeScale.seccion, color: c.text }}>Costo</Text>
             <Field label="Costo por unidad ($)" keyboardType="decimal-pad" alignRight value={costoTexto} onChangeText={setCostoTexto}
               placeholder="Falta el costo" invalid={costo === null}
