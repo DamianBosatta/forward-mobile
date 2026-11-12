@@ -1,17 +1,20 @@
 import React from 'react'
 import { Pressable, Text, View, type TextStyle } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
-import { FONT, importe, radii, space, themeColors, typeScale, useColors } from '@/libs/theme'
+import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice } from '@/core/ui/fw'
 
 /**
  * Piezas de Inicio con el modelo de la venta y de la galería v2 (propuesta de Inicio, frames 1 a 9):
- * el hero oscuro, las listas como filas de una tarjeta, los títulos de sección, los avisos con
+ * el hero, las listas como filas de una tarjeta, los títulos de sección, los avisos con
  * "Reintentar" y los bloques de carga. Presentacionales: reciben todo por props.
  */
 
-/** El hero es oscuro en los dos temas (galería v2): fondo marca-suave oscura, texto y apoyo de la barra. */
-const HERO = { fondo: themeColors.dark.brandSoft, texto: themeColors.dark.onTopBarStrong, apoyo: themeColors.dark.onTopBar, carga: themeColors.dark.surface2 }
+/** Colores del hero con los del tema: fondo marca-suave, cifra en el texto, apoyo en el secundario (en oscuro, los de la galería v2). */
+function useColoresHero() {
+  const c = useColors()
+  return { fondo: c.brandSoft, texto: c.text, apoyo: c.textSecondary, carga: c.surface2 }
+}
 /** La cifra grande del hero (galería v2: 32/40, 700). Es la única medida fuera de la escala de texto. */
 const CIFRA_HERO: TextStyle = { fontFamily: FONT.semibold, fontSize: 32, lineHeight: 40, fontWeight: '700', ...importe }
 const semibold = { fontFamily: FONT.semibold, fontWeight: '600' as const }
@@ -25,12 +28,13 @@ export function HeroDeInicio({ etiqueta, cifra, meta, accessibilityLabel, childr
   children?: React.ReactNode
   testID?: string
 }) {
+  const hero = useColoresHero()
   return (
-    <View testID={testID} style={{ backgroundColor: HERO.fondo, borderRadius: radii.hoja, padding: space[4], gap: space[2] }}>
+    <View testID={testID} style={{ backgroundColor: hero.fondo, borderRadius: radii.hoja, padding: space[4], gap: space[2] }}>
       <View accessible accessibilityLabel={accessibilityLabel ?? [`${etiqueta}: ${cifra}`, meta].filter(Boolean).join(', ')} style={{ gap: space[1] }}>
-        <Text style={[typeScale.secundario, { color: HERO.apoyo }]}>{etiqueta}</Text>
-        <Text style={[CIFRA_HERO, { color: HERO.texto }]} numberOfLines={1} adjustsFontSizeToFit>{cifra}</Text>
-        {meta ? <Text style={[typeScale.secundario, { color: HERO.apoyo }]}>{meta}</Text> : null}
+        <Text style={[typeScale.secundario, { color: hero.apoyo }]}>{etiqueta}</Text>
+        <Text style={[CIFRA_HERO, { color: hero.texto }]} numberOfLines={1} adjustsFontSizeToFit>{cifra}</Text>
+        {meta ? <Text style={[typeScale.secundario, { color: hero.apoyo }]}>{meta}</Text> : null}
       </View>
       {children ? <View style={{ marginTop: space[1] }}>{children}</View> : null}
     </View>
@@ -39,15 +43,16 @@ export function HeroDeInicio({ etiqueta, cifra, meta, accessibilityLabel, childr
 
 /** Hero mientras carga: bloques con su forma en lugar de la ruedita (frame 3). */
 export function HeroCargando({ accessibilityLabel }: { accessibilityLabel: string }) {
+  const hero = useColoresHero()
   return (
     <View
       testID="hero-cargando"
       accessible
       accessibilityLabel={accessibilityLabel}
-      style={{ backgroundColor: HERO.fondo, borderRadius: radii.hoja, padding: space[4], gap: space[3] }}
+      style={{ backgroundColor: hero.fondo, borderRadius: radii.hoja, padding: space[4], gap: space[3] }}
     >
-      <View style={{ height: space[4], width: '40%', borderRadius: radii.campo, backgroundColor: HERO.carga }} />
-      <View style={{ height: space[8], width: '70%', borderRadius: radii.campo, backgroundColor: HERO.carga }} />
+      <View style={{ height: space[4], width: '40%', borderRadius: radii.campo, backgroundColor: hero.carga }} />
+      <View style={{ height: space[8], width: '70%', borderRadius: radii.campo, backgroundColor: hero.carga }} />
     </View>
   )
 }
