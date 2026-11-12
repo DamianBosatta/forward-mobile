@@ -156,7 +156,15 @@ function CatalogoConsulta() {
         <FiltroChip label="Con stock" activo={soloConStock} onPress={() => setSoloConStock((v) => !v)} />
         <FiltroChip label="Con oferta" activo={cat.soloConOferta} onPress={() => cat.setSoloConOferta((v) => !v)} />
         <SelectorLineaFamilia categoriaId={cat.categoriaId} onChange={cat.setCategoriaId} />
-        <BotonCatalogoPdf busqueda={cat.busqueda} soloConStock={soloConStock} conOferta={cat.soloConOferta} categoriaId={cat.categoriaId} />
+        <BotonCatalogoPdf
+          busqueda={cat.busqueda}
+          soloConStock={soloConStock}
+          conOferta={cat.soloConOferta}
+          categoriaId={cat.categoriaId}
+          totalCount={cat.totalCount}
+          puedeElegirLista={cat.puedeElegirLista}
+          listaFija={cat.listaFija}
+        />
       </View>
       {avisoEscaneo ? (
         <View style={{ padding: space[4], paddingBottom: 0 }}>

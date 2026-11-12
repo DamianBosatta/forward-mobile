@@ -280,28 +280,50 @@ export function useToggleProductoStatus() {
   })
 }
 
-/** Tarjeta (foto grande, para mostrar) o Lista (compacto, para precios). El servidor usa Lista si no viene. */
-export type FormatoCatalogoPdf = components['schemas']['FormatoCatalogoPdf']
+/**
+ * Lista (compacto, con escala de descuentos; el default del servidor), Tarjeta (foto grande y precio) o Informativo
+ * (las tarjetas sin ningún precio, con todos los productos activos). El schema generado todavía no trae Informativo
+ * (Forward-Api GetCatalogoPdfQuery.cs lo agregó el 2026-11-11): se suma acá hasta regenerarlo.
+ */
+export type FormatoCatalogoPdf = components['schemas']['FormatoCatalogoPdf'] | 'Informativo'
 
 export interface CatalogoPdfFiltros {
   search?: string
   soloDisponibles?: boolean
   conOferta?: boolean
   categoriaId?: string
+  /** Lista de precios pedida. El servidor solo la usa para quien puede elegir lista y no tiene una propia. */
+  listaPrecioId?: string
   formato?: FormatoCatalogoPdf
   /** YYYY-MM-DD (día argentino): el PDF marca nuevo, precio nuevo y sin stock desde ese día. */
   novedadesDesde?: string
+  /** Escalas de descuento a imprimir (5, 10, 15, 20). Omitido: el servidor imprime 5, 10 y 15. Solo Lista. */
+  descuentos?: readonly number[]
+  /** Solo el precio de lista, sin columnas de descuento. Gana sobre `descuentos`. */
+  sinDescuentos?: boolean
 }
 
-/** URL del PDF del catálogo con los mismos filtros que la pantalla (GET /catalogo/pdf, MOD_CATALOGO). */
-export function getCatalogoPdfUrl({ search, soloDisponibles, conOferta, categoriaId, formato, novedadesDesde }: CatalogoPdfFiltros): string {
+/**
+ * URL del PDF del catálogo (GET /catalogo/pdf, MOD_CATALOGO), con los mismos parámetros que manda la web
+ * (`useCatalogoPdf` de @forward/api-client). El Informativo imprime todos los productos activos sin precios:
+ * manda solo el formato, como la web (`pedidoDelPdf`).
+ */
+export function getCatalogoPdfUrl(filtros: CatalogoPdfFiltros): string {
+  const { search, soloDisponibles, conOferta, categoriaId, listaPrecioId, formato, novedadesDesde, descuentos, sinDescuentos } = filtros
   const params = new URLSearchParams()
-  if (search?.trim()) params.set('SearchTerm', search.trim())
-  if (soloDisponibles) params.set('SoloDisponibles', 'true')
-  if (conOferta) params.set('ConOferta', 'true')
-  if (categoriaId) params.set('CategoriaId', categoriaId)
-  if (formato) params.set('Formato', formato)
-  if (novedadesDesde) params.set('NovedadesDesde', novedadesDesde)
+  if (formato === 'Informativo') {
+    params.set('Formato', formato)
+  } else {
+    if (search?.trim()) params.set('SearchTerm', search.trim())
+    if (soloDisponibles) params.set('SoloDisponibles', 'true')
+    if (conOferta) params.set('ConOferta', 'true')
+    if (categoriaId) params.set('CategoriaId', categoriaId)
+    if (listaPrecioId) params.set('ListaPrecioId', listaPrecioId)
+    if (formato) params.set('Formato', formato)
+    if (novedadesDesde) params.set('NovedadesDesde', novedadesDesde)
+    for (const d of descuentos ?? []) params.append('Descuentos', String(d))
+    if (sinDescuentos) params.set('SinDescuentos', 'true')
+  }
   const query = params.toString()
   return `${API_URL}/api/v1/catalogo/pdf${query ? `?${query}` : ''}`
 }
