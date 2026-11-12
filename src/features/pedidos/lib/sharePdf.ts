@@ -1,7 +1,7 @@
 /**
  * sharePdf.ts
  *
- * Authenticated PDF download → OS share sheet helper.
+ * Authenticated PDF (or .xlsx) download → OS share sheet helper.
  * Design D1: fetch authed PDF URL → write to FileSystem.cacheDirectory
  * → open via Sharing.shareAsync. Never throws across the UI boundary;
  * always returns a typed SharePdfResult.
@@ -33,6 +33,14 @@ export function getSharing(): SharingModule | null {
   return sharingModuleCache
 }
 
+/** Mime type and iOS UTI of the shared file, from its extension: PDF (default) or Excel (.xlsx). */
+function tipoDeArchivo(fileName: string): { mimeType: string; UTI: string } {
+  if (fileName.toLowerCase().endsWith('.xlsx')) {
+    return { mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', UTI: 'org.openxmlformats.spreadsheetml.sheet' }
+  }
+  return { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' }
+}
+
 export type SharePdfResult =
   | { ok: true }
   | { ok: false; reason: 'auth' | 'network' | 'unavailable' | 'unknown'; message: string; status?: number }
@@ -50,10 +58,11 @@ export interface SharePdfOptions {
 }
 
 /**
- * Downloads a PDF from an authenticated API endpoint and opens the OS share sheet.
+ * Downloads a file (PDF, or Excel when `fileName` ends in .xlsx) from an authenticated API endpoint and opens the
+ * OS share sheet.
  *
  * @param url      - Authenticated API URL (e.g. from getEtiquetasUrl / getNotaEntregaUrl)
- * @param fileName - Output file name (e.g. 'etiquetas-abc12345.pdf')
+ * @param fileName - Output file name (e.g. 'etiquetas-abc12345.pdf'); its extension sets the shared mime type
  * @param options  - Optional fetch options. Defaults to GET with no body (backward-compatible).
  * @returns SharePdfResult — never throws
  */
@@ -152,10 +161,7 @@ export async function sharePdf(url: string, fileName: string, options?: SharePdf
 
   // 5. Open the OS share sheet
   try {
-    await Sharing.shareAsync(uri, {
-      mimeType: 'application/pdf',
-      UTI: 'com.adobe.pdf',
-    })
+    await Sharing.shareAsync(uri, tipoDeArchivo(fileName))
   } catch {
     return {
       ok: false,

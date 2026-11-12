@@ -154,4 +154,20 @@ describe('sharePdf — success path', () => {
       expect.objectContaining({ mimeType: 'application/pdf' }),
     )
   })
+
+  it('shares an .xlsx file with the spreadsheet mime type and UTI', async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse())
+    const result = await sharePdf('https://api.example.com/export', 'estado-cuenta.xlsx')
+    expect(result).toEqual({ ok: true })
+    expect(mockShareAsync).toHaveBeenCalledWith('file:///cache/estado-cuenta.xlsx', {
+      mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      UTI: 'org.openxmlformats.spreadsheetml.sheet',
+    })
+  })
+
+  it('keeps the PDF mime type and UTI for .pdf files', async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse())
+    await sharePdf('https://api.example.com/pdf', 'test.pdf')
+    expect(mockShareAsync).toHaveBeenCalledWith('file:///cache/test.pdf', { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' })
+  })
 })

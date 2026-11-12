@@ -7120,6 +7120,9 @@ export interface paths {
                 query?: {
                     PageNumber?: number;
                     PageSize?: number;
+                    /** Format: uuid */
+                    VendedorId?: string;
+                    SearchTerm?: string;
                 };
                 header?: never;
                 path?: never;
@@ -23954,6 +23957,9 @@ export interface components {
             puedeVerCuentaCorriente: boolean;
             /** Format: int32 */
             diasDeudaMasVieja?: number | null;
+            /** Format: uuid */
+            vendedorId?: string | null;
+            vendedorNombre?: string | null;
         };
         DeudaSocioDtoPaginatedResponse: {
             /** Format: int32 */

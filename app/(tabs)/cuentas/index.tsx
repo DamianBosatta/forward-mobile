@@ -22,10 +22,11 @@ import { useDeudasResumen } from '@/features/cuentas/api/queries'
 import { ResumenDeCuentas } from '@/features/cuentas/components/ResumenDeCuentas'
 import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { ChipDeFiltro } from '@/features/autorizaciones/components/ChipDeFiltro'
+import { DeudoresClientes } from '@/features/deudores/components/DeudoresClientes'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
-type LadoDeCuentas = 'medeben' | 'debo'
+type LadoDeCuentas = 'medeben' | 'deudores' | 'debo'
 
 /** Sin MOD_PAGOS:Read el servidor no deja ver las deudas con proveedores (`GET /deudas/proveedores`). */
 export const AVISO_DEBO_SIN_PERMISO = 'Tu usuario no puede ver lo que se les debe a los proveedores.'
@@ -50,9 +51,11 @@ function CuentasCorrientesScreen() {
   // TM9: en tablet horizontal el cobro se abre en el mismo panel, sin salir de la lista.
   const [cobrando, setCobrando] = useState(false)
   const [soloVencidas, setSoloVencidas] = useFiltroPersistente('cuentas.soloVencidas', false)
-  const [lado, setLado] = useFiltroPersistente<LadoDeCuentas>('cuentas.lado', 'medeben')
+  const [ladoElegido, setLado] = useFiltroPersistente<LadoDeCuentas>('cuentas.lado', 'medeben')
   const { canRead } = usePermissions()
+  // MOD_PAGOS:Read abre las deudas (GET /deudas/*): sin él, Deudores no se ofrece y Debo explica por qué.
   const puedeVerDeudas = canRead('MOD_PAGOS')
+  const lado: LadoDeCuentas = ladoElegido === 'deudores' && !puedeVerDeudas ? 'medeben' : ladoElegido
   const resumenDeudas = useDeudasResumen(puedeVerDeudas)
   const puedeTransferir = usePuedeTransferir()
   const { clientes, totalCount, saldoTotal, isLoading, isRefetching, error, dataUpdatedAt, refetch, cargarMas } = useCartera(
@@ -148,6 +151,7 @@ function CuentasCorrientesScreen() {
         <Segmented
           options={[
             { value: 'medeben', label: totalCount !== undefined ? `Me deben · ${totalCount}` : 'Me deben' },
+            ...(puedeVerDeudas ? [{ value: 'deudores' as const, label: 'Deudores' }] : []),
             { value: 'debo', label: 'Debo' },
           ]}
           value={lado}
@@ -155,7 +159,9 @@ function CuentasCorrientesScreen() {
           accessibilityLabel="Lado de las cuentas"
         />
       </View>
-      {lado === 'debo' ? (
+      {lado === 'deudores' ? (
+        <DeudoresClientes onAbrir={id => router.push({ pathname: '/(tabs)/cuentas/[id]', params: { id } })} />
+      ) : lado === 'debo' ? (
         puedeVerDeudas ? (
           <DeudasAProveedores onPagar={socioId => router.push({ pathname: '/(tabs)/tesoreria/pagos/pagar', params: { socioId } })} />
         ) : (
