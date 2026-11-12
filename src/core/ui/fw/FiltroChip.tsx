@@ -20,7 +20,7 @@ export function FiltroChip({ label, activo, onPress, oscuro = false }: FiltroChi
       accessibilityLabel={label}
       accessibilityState={{ selected: activo }}
       style={{
-        minHeight: 36,
+        minHeight: 44,
         justifyContent: 'center',
         paddingHorizontal: space[3],
         borderRadius: radii.pastilla,
