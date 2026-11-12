@@ -150,10 +150,10 @@ describe('pago a un proveedor', () => {
     mockParams = {}
     renderConQuery(<PagarRoute />)
     expect(await screen.findByText('Pago a proveedor', {}, ESPERA)).toBeTruthy()
-    const continuar = screen.getByRole('button', { name: 'Continuar a qué se paga' })
+    const continuar = screen.getByRole('button', { name: 'Continuar a qué pagás' })
     expect(continuar.props.accessibilityState?.disabled).toBe(true)
     await presionar(/^Molinos SA/)
-    await presionar('Continuar a qué se paga')
+    await presionar('Continuar a qué pagás')
     expect(await screen.findByLabelText('Paso 2 de 4: Qué pagás', {}, ESPERA)).toBeTruthy()
     expect(get.mock.calls.map(([u]) => String(u)).some(u => u.startsWith('/api/v1/socios-comerciales?') && u.includes('tipo=2'))).toBe(true)
   })
