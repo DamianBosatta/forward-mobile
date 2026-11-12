@@ -61,3 +61,19 @@ export function useFichaCatalogo(productoId: string, depositoId: string) {
     staleTime: 60_000,
   })
 }
+
+/** Una lista de precios (GET /api/v1/listas-precios: Productos o Ventas, lectura). */
+export type ListaPrecio = components['schemas']['ListaPrecioDto']
+
+/**
+ * Las listas de precios, activas primero, para elegir con cuál sale el catálogo en PDF. Solo se pide para quien puede
+ * elegir lista (`enabled`): a un vendedor con lista propia el servidor le aplica siempre la suya.
+ */
+export function useListasPrecio(enabled: boolean) {
+  return useQuery({
+    queryKey: [...catalogoKeys.all, 'listas-precios'] as const,
+    queryFn: () => api.get<ListaPrecio[]>('/api/v1/listas-precios'),
+    enabled,
+    staleTime: 10 * 60_000,
+  })
+}

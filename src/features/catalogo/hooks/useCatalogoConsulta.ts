@@ -3,6 +3,7 @@ import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { useInfiniteCatalogo, type CatalogoComercialItem } from '@/libs/api-client/catalogo'
 import { DIAS_DE_NOVEDADES, novedadesDesde, type ProductoDeTarjeta } from '../lib/presentacion'
+import { listaDeLosPrecios, puedeElegirLista } from '../lib/listaDePrecios'
 
 const DEBOUNCE_BUSQUEDA_MS = 300
 const TAMANO_PAGINA = 20
@@ -48,6 +49,8 @@ export function useCatalogoConsulta() {
   const productos = useMemo(() => items.map(aTarjeta), [items])
   const disponible = useMemo(() => new Map(items.map((i) => [i.productoId, i.disponible] as const)), [items])
   const totalCount = query.data?.pages[0]?.totalCount
+  // Para el PDF: si se puede elegir la lista de precios o cuál se aplica (la regla de la web, sobre los ítems).
+  const lista = useMemo(() => ({ puedeElegir: puedeElegirLista(items), fija: listaDeLosPrecios(items) }), [items])
 
   return {
     busqueda,
@@ -59,6 +62,10 @@ export function useCatalogoConsulta() {
     productos,
     totalCount,
     disponible,
+    /** Si quien mira puede elegir la lista de precios del PDF. */
+    puedeElegirLista: lista.puedeElegir,
+    /** La lista con la que salen los precios para quien no elige; `null` = precio base. */
+    listaFija: lista.fija,
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,
