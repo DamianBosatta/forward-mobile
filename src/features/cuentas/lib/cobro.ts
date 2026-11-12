@@ -97,7 +97,7 @@ export interface CobroPayload {
 
 export const SIN_COMPROBANTES = 'Elegí al menos un comprobante o volvé a la imputación automática.'
 export const MONTO_IMPUTADO_INVALIDO = 'Revisá el monto a imputar de cada comprobante.'
-export const IMPUTADO_DE_MAS = 'Lo imputado no puede superar el monto del cobro.'
+export const IMPUTADO_DE_MAS = 'Lo imputado no puede superar el monto.'
 /** Mismos textos que la web (`validar-registro-pago.ts`, validarLineasMultilinea). */
 export const LINEA_INCOMPLETA = 'Hay líneas incompletas: completá el medio y el monto, o quitalas.'
 export const CHEQUE_SOLO_EN_UN_MEDIO = 'El cheque se carga en un cobro de un solo medio: sacá esa línea o usá el cobro simple.'
@@ -152,7 +152,7 @@ export function armarCobro(
   contraparte: Contraparte = 'cliente',
 ): { payload: CobroPayload } | { error: string } {
   const monto = leerNumero(f.monto)
-  if (monto === null || monto <= 0) return { error: 'Ingresá el monto del cobro.' }
+  if (monto === null || monto <= 0) return { error: 'Ingresá el monto.' }
   if (!f.medioPagoId) return { error: 'Elegí el medio de pago.' }
   const otros = armarOtrosMedios(f)
   if ('error' in otros) return otros
