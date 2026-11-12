@@ -89,7 +89,7 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
   const lista = (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <View testID="catalogo-encabezado" style={{ paddingHorizontal: space[3], paddingTop: space[3], paddingBottom: space[2], gap: space[3], backgroundColor: c.bg }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: 52, borderRadius: radii.campo, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.border, paddingLeft: space[3] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: 52, borderRadius: radii.campo, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.borderStrong, paddingLeft: space[3] }}>
           <Search size={20} color={c.textSecondary} />
           <TextInput
             value={busqueda}

@@ -22,7 +22,7 @@ interface FieldProps extends Omit<TextInputProps, 'style' | 'placeholderTextColo
 
 const etiqueta = { ...typeScale.secundario, ...pesoSemibold }
 
-/** Campo de la lámina F4: etiqueta 14/600, alto 48, relleno superficie-2, foco con la marca y error en rojo. */
+/** Campo de la lámina F4: etiqueta 14/600, alto 48, relleno superficie, contorno fuerte (3:1), foco con la marca y error en rojo. */
 export function Field({ label, help, error, alignRight, verOcultar, labelSuffix, invalid, prefijo, secureTextEntry, onFocus, onBlur, ...input }: FieldProps) {
   const colors = useColors()
   const [foco, setFoco] = useState(false)
@@ -58,8 +58,8 @@ export function Field({ label, help, error, alignRight, verOcultar, labelSuffix,
           height: space[12],
           borderRadius: radii.campo,
           borderWidth: conMarca ? 2 : 1,
-          borderColor: error || invalid ? colorError : foco ? colors.brand : colors.border,
-          backgroundColor: conMarca ? colors.surface : colors.surface2,
+          borderColor: error || invalid ? colorError : foco ? colors.brand : colors.borderStrong,
+          backgroundColor: colors.surface,
           paddingHorizontal: space[3] - (conMarca ? 1 : 0),
           paddingLeft: prefijo ? space[8] : space[3] - (conMarca ? 1 : 0),
           paddingRight: ojo ? space[12] : space[3] - (conMarca ? 1 : 0),

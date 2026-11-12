@@ -147,7 +147,7 @@ function Accion({ c, label, a11y, onPress }: { c: ForwardColors; label: string; 
       accessibilityRole="button"
       accessibilityLabel={a11y ?? label}
       onPress={onPress}
-      style={{ flexShrink: 0, minHeight: 44, paddingHorizontal: space[4], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, justifyContent: 'center' }}
+      style={{ flexShrink: 0, minHeight: 44, paddingHorizontal: space[4], borderRadius: radii.campo, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface, justifyContent: 'center' }}
     >
       <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{label}</Text>
     </Pressable>
@@ -162,7 +162,7 @@ export function Redondo({ c, label, a11y, onPress, disabled = false }: { c: Forw
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={{ width: 44, height: 44, borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}
+      style={{ width: 44, height: 44, borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}
     >
       <Text style={{ ...typeScale.titulo, color: disabled ? c.textSecondary : c.text }}>{label}</Text>
     </Pressable>

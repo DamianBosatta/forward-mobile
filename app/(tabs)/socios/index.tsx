@@ -2,11 +2,10 @@ import React, { useMemo, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { RefreshControl, SectionList, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { DrawerActions } from "expo-router/react-navigation"
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Fab, Notice, TopBar, formatImporte } from '@/core/ui/fw'
+import { Fab, Notice, TopBar, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -29,7 +28,7 @@ const ALTO_FAB = 56
 /** Clientes (láminas Clientes y TabClientes): la cartera del vendedor, por dirección de entrega. */
 function ClientesScreen() {
   const c = useColors()
-  const insets = useSafeAreaInsets()
+  const insetInferior = useInsetInferior()
   const router = useRouter()
   const navigation = useNavigation()
   const { width } = useResponsive()
@@ -78,7 +77,7 @@ function ClientesScreen() {
         sections={secciones}
         keyExtractor={item => item.id}
         stickySectionHeadersEnabled
-        contentContainerStyle={{ paddingBottom: ALTO_FAB + space[6] + insets.bottom + space[4] }}
+        contentContainerStyle={{ paddingBottom: ALTO_FAB + space[6] + insetInferior + space[4] }}
         renderSectionHeader={({ section }) => (
           <View testID={`encabezado-letra-${section.title}`} accessibilityRole="header" style={{ paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[2], backgroundColor: c.bg }}>
             <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{section.title}</Text>

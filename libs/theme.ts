@@ -14,7 +14,7 @@ import { logger } from '@/core/utils/logger'
 //   surface, cardBg     → superficie
 //   surface2, inputBg   → superficie-2
 //   surface3            → superficie-2 (legado: no hay superficie-3)
-//   border, borderStrong→ borde (legado: hay un solo gris de borde)
+//   border              → borde de separadores; borderStrong → contorno de controles (3:1)
 //   text                → texto
 //   textMuted, textSecondary, textDisabled → texto-secundario (legado: el
 //                         deshabilitado no se marca bajando el contraste)
@@ -93,6 +93,7 @@ function conLegados(t: {
   surface: string
   surface2: string
   border: string
+  borderStrong: string
   text: string
   textSecondary: string
   brandInk: string
@@ -107,7 +108,7 @@ function conLegados(t: {
     surface2: t.surface2,
     surface3: t.surface2,
     border: t.border,
-    borderStrong: t.border,
+    borderStrong: t.borderStrong,
     text: t.text,
     textMuted: t.textSecondary,
     textSecondary: t.textSecondary,
@@ -118,7 +119,7 @@ function conLegados(t: {
     secondary: ESTADOS_WEB.info,
     ...ESTADOS_WEB,
     glassBg: t.glassBg,
-    glassBorder: t.border,
+    glassBorder: t.borderStrong,
     inputBg: t.surface2,
     cardBg: t.surface,
   }
@@ -146,10 +147,11 @@ const LIGHT_COLORS: ForwardColors = {
     anulado: { bg: '#FDE8E8', text: '#A90F0F' },
   },
   ...conLegados({
-    bg: '#FAFAFA',
+    bg: '#F2F4F3',
     surface: '#FFFFFF',
     surface2: '#F0F0F0',
-    border: '#E0E0E0',
+    border: '#D3DBD9',
+    borderStrong: '#7A8A87',
     text: '#141F1D',
     textSecondary: '#556D68',
     brandInk: '#0A7662',
@@ -185,6 +187,7 @@ const DARK_COLORS: ForwardColors = {
     surface: '#0E1514',
     surface2: '#151E1C',
     border: '#273432',
+    borderStrong: '#5E7370',
     text: '#EDF2F1',
     textSecondary: '#9DAFAB',
     brandInk: '#00E6BB',
@@ -280,7 +283,7 @@ export const space = {
   12: 48,
 } as const
 
-/** --shadow-md de la web, la única sombra. Claro: 0 4px 6px -1px / 0,1. Oscuro: 0 4px 8px -1px / 0,5. */
+/** --shadow-md de la web: la sombra de lo que flota (hojas, FAB, tarjetas de acción). Claro: 0 4px 6px -1px / 0,1. Oscuro: 0 4px 8px -1px / 0,5. */
 export const shadowMd = {
   light: {
     shadowColor: '#000000',
@@ -295,6 +298,24 @@ export const shadowMd = {
     shadowOpacity: 0.5,
     shadowRadius: 4,
     elevation: 4,
+  },
+} as const
+
+/** Sombra suave de las tarjetas de contenido (S2): separa la tarjeta blanca del fondo `bg` sin competir con `shadowMd`. */
+export const shadowSm = {
+  light: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  dark: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.4,
+    shadowRadius: 2,
+    elevation: 1,
   },
 } as const
 
@@ -420,5 +441,11 @@ export function useIsDark(): boolean {
   }
 
   return mode === 'dark'
+}
+
+
+/** `shadowSm` del esquema activo, para `...sombra` en las tarjetas de contenido. */
+export function useSombraTarjeta() {
+  return shadowSm[useIsDark() ? 'dark' : 'light']
 }
 

@@ -40,7 +40,7 @@ export function BottomSheet({ visible, onClose, accessibilityLabel, children }: 
       }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
       <View ref={ref} onLayout={onLayout} style={[styles.fill, isLarge ? styles.centro : styles.abajo, isLarge && { padding: space[6] }, { paddingBottom: (isLarge ? space[6] : 0) + espacio }]}>
         <Pressable
           accessibilityRole="button"

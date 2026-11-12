@@ -1,16 +1,16 @@
 import React from 'react'
 import { View, type StyleProp, type ViewStyle } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { space, useColors } from '@/libs/theme'
 import { paddingInferiorDelPie } from './espacioTeclado'
+import { useInsetInferior } from './insetInferior'
 import { useEspacioTeclado } from './useEspacioTeclado'
 
 interface PieFijoProps {
   children: React.ReactNode
   /** Fondo del pie: `surface` (por defecto) o `bg` cuando la pantalla es de fondo base. */
   fondo?: 'surface' | 'bg'
-  /** Suma la barra del sistema abajo mientras el teclado está cerrado. Usalo en Modal y hojas que llegan al borde. */
-  conInsetInferior?: boolean
+  /** Solo si el pie queda sobre otra barra que ya cubre la barra del sistema. Por defecto el pie suma la barra del sistema (sola mientras el teclado está cerrado; dentro de ConAccesosRapidos no se suma). */
+  sinInsetInferior?: boolean
   gap?: number
   /** Relleno de arriba y de abajo (el horizontal es siempre space[4]). Por defecto space[4]. */
   relleno?: number
@@ -23,9 +23,9 @@ interface PieFijoProps {
  * (y sin la barra del sistema debajo). Todo formulario con un campo de texto usa este pie.
  * Va como último hijo de una columna que llega al borde inferior (pantalla o Modal).
  */
-export function PieFijo({ children, fondo = 'surface', conInsetInferior = false, gap = space[2], relleno = space[4], style, testID }: PieFijoProps) {
+export function PieFijo({ children, fondo = 'surface', sinInsetInferior = false, gap = space[2], relleno = space[4], style, testID }: PieFijoProps) {
   const c = useColors()
-  const { bottom } = useSafeAreaInsets()
+  const bottom = useInsetInferior()
   const { ref, onLayout, tecladoAbierto, espacio } = useEspacioTeclado()
   return (
     <View
@@ -40,7 +40,7 @@ export function PieFijo({ children, fondo = 'surface', conInsetInferior = false,
           paddingHorizontal: space[4],
           paddingTop: relleno,
           gap,
-          paddingBottom: paddingInferiorDelPie({ base: relleno, inset: bottom, usaInset: conInsetInferior, tecladoAbierto, espacio }),
+          paddingBottom: paddingInferiorDelPie({ base: relleno, inset: bottom, usaInset: !sinInsetInferior, tecladoAbierto, espacio }),
         }}
       >
         {children}

@@ -3,7 +3,7 @@ import { Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { ChevronRight, FilePen, HandCoins, MapPin, MessageCircle, Pencil, Phone, ShoppingCart } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, Segmented, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
+import { Button, Notice, Segmented, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { useSocio } from '@/libs/api-client/socios'
 import { useVentas } from '@/libs/api-client/ventas'
@@ -57,6 +57,7 @@ function Titulo({ children }: { children: string }) {
  * editar); en el panel de la tablet la barra es la de la lista.
  */
 export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: boolean }) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const { canUpdate } = usePermissions()
@@ -127,7 +128,7 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
           actions={puedeEditar ? [{ icon: Pencil, accessibilityLabel: 'Editar', onPress: () => router.push({ pathname: '/(tabs)/socios/nuevo', params: { id } }) }] : []}
         />
       ) : null}
-      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }}>
+      <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[4] }}>
         {!conBarra ? (
           <View style={{ gap: space[1] }}>
             <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccion}</Text>

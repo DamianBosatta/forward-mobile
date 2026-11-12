@@ -5,7 +5,7 @@ import { Bell, Fingerprint, Lock, LogOut } from 'lucide-react-native'
 import { useAuthStore } from '../../../libs/store/auth.store'
 import { useThemeStore, useColors, radii, space, typeScale, type ThemeMode } from '../../../libs/theme'
 import { ConfirmModal } from '@/core/ui'
-import { BottomSheet, Button, FilaDeAjuste, FilaInterruptor, Notice, Segmented, TopBar, useMenuLeading, type SegmentedOption } from '@/core/ui/fw'
+import { BottomSheet, Button, FilaDeAjuste, FilaInterruptor, Notice, Segmented, TopBar, useMenuLeading, type SegmentedOption, useInsetInferior } from '@/core/ui/fw'
 import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
 import { FilaDeUsuarios } from '@/features/perfil/components/FilaDeUsuarios'
 import { lineasDeIdentidad } from '@/features/perfil/lib/identidad'
@@ -32,6 +32,7 @@ const AVISO_HUELLA_PRENDIDA = 'La próxima vez que entres con tu contraseña que
  * selector de servidor, solo en la build de desarrollo.
  */
 export default function PerfilScreen() {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const leading = useMenuLeading()
@@ -101,7 +102,7 @@ export default function PerfilScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Mi cuenta" leading={leading} />
-      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], paddingBottom: space[12], width: '100%', maxWidth: 640, alignSelf: 'center' }}>
+      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], paddingBottom: space[12] + insetInferior, width: '100%', maxWidth: 640, alignSelf: 'center' }}>
         {/* Propuesta Cuenta, frame 1: la identidad sale de la franja oscura a una tarjeta sin borde con las iniciales en grande. */}
         <View testID="tarjeta-identidad" style={[tarjeta, { flexDirection: 'row', alignItems: 'center', gap: space[4], padding: space[4] }]}>
           <View testID="iniciales-identidad" style={{ width: 56, height: 56, borderRadius: radii.pastilla, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>

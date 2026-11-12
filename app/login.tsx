@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View, type TextInputInstance } from 'react-native'
 import { useRouter } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
 import { useQueryClient } from '@tanstack/react-query'
 import { Eye, EyeOff, Fingerprint } from 'lucide-react-native'
-import { themeColors, useColors, space, typeScale } from '../libs/theme'
+import { useColors, space, typeScale } from '../libs/theme'
 import { useResponsive } from '../libs/useResponsive'
-import { Button, Notice, Segmented, type SegmentedOption } from '@/core/ui/fw'
+import { Button, Notice, PieFijo, Segmented, type SegmentedOption } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { LogoForward } from '@/features/auth/components/LogoForward'
@@ -25,18 +26,14 @@ import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
 /** El mismo tope que aplica `useAuth` antes de bloquear el ingreso. */
 const INTENTOS_ANTES_DEL_BLOQUEO = 5
 
-/** Campos sobre el fondo oscuro del ingreso (lienzo M1 y TM13): siempre oscuro, con o sin tema claro. */
-const CAMPO = { fondo: '#18211F', borde: '#33403D' } as const
-/** Foco del campo: el verde claro de la marca (galería v2, login), el mismo en los dos temas porque el ingreso es siempre oscuro. */
-const FOCO = themeColors.dark.brand
-
 const ENTORNOS: SegmentedOption<string>[] = [
   { value: ENV_PROD, label: 'Producción' },
   { value: ENV_LOCAL, label: 'Local' },
 ]
 
 /**
- * Ingreso (bloque 12, T2: lienzo M1 y TM13; reglas mobile §15): usuario y contraseña o huella.
+ * Ingreso (variante A de la maqueta del login; reglas mobile §15): usuario y contraseña o huella.
+ * Sigue el tema del sistema; en teléfono el botón queda fijo sobre el teclado (`PieFijo`).
  * Las builds que van a los teléfonos entran siempre a producción; el selector de servidor queda
  * solo en la build de desarrollo.
  */
@@ -45,6 +42,9 @@ export default function LoginScreen() {
   const c = useColors()
   const { isTablet } = useResponsive()
   const teclado = useTecladoVisible()
+  const insets = useSafeAreaInsets()
+  // Con el teclado abierto la barra del sistema queda tapada: no se suma.
+  const insetInferior = teclado ? 0 : insets.bottom
   const queryClient = useQueryClient()
   const { login, isLoading, error, isLocked, failedAttempts } = useAuth()
 
@@ -124,25 +124,64 @@ export default function LoginScreen() {
   }
 
   const quedan = INTENTOS_ANTES_DEL_BLOQUEO - failedAttempts
-  const etiqueta = [typeScale.secundario, { fontWeight: '600' as const, color: c.onTopBar }]
+  const lineaIntentos =
+    !isLocked && failedAttempts > 0 && quedan > 0 ? `Te quedan ${quedan} ${quedan === 1 ? 'intento' : 'intentos'} antes del bloqueo.` : null
+  const etiqueta = [typeScale.secundario, { fontWeight: '600' as const, color: c.text }]
   // Los dos campos se marcan en error: el servidor no distingue cuál falló.
   const conError = !!error && !faltanDatos
   const campo = (enfocado: boolean) => ({
     height: isTablet ? 56 : 52,
     borderRadius: 12,
     borderWidth: enfocado || conError ? 2 : 1,
-    borderColor: conError ? c.chip.anulado.text : enfocado ? FOCO : CAMPO.borde,
-    backgroundColor: CAMPO.fondo,
-    paddingHorizontal: space[4],
+    borderColor: conError ? c.chip.anulado.text : enfocado ? c.brandInk : c.borderStrong,
+    backgroundColor: c.surface,
+    paddingHorizontal: space[4] - (enfocado || conError ? 1 : 0),
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
+    opacity: isLoading ? 0.55 : 1,
   })
-  const textoCampo = { flex: 1, minWidth: 0, ...typeScale.cuerpo, color: c.onTopBarStrong, paddingVertical: 0 }
+  const textoCampo = { flex: 1, minWidth: 0, ...typeScale.cuerpo, color: c.text, paddingVertical: 0 }
+
+  const botones = (
+    <>
+      <Button
+        label={isLocked ? 'Acceso bloqueado' : 'Ingresar'}
+        onPress={() => { void ingresar() }}
+        loading={isLoading}
+        disabled={isLocked || sinConexion}
+      />
+      {ofrecerHuella ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Entrar con huella"
+          disabled={sinConexion || isLoading}
+          accessibilityState={{ disabled: sinConexion || isLoading }}
+          onPress={() => { void entrarConHuella() }}
+          android_ripple={{ color: c.borderStrong }}
+          style={{
+            height: 52,
+            opacity: sinConexion ? 0.4 : isLoading ? 0.55 : 1,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: c.borderStrong,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: space[2] + 2,
+            overflow: 'hidden',
+          }}
+        >
+          <Fingerprint size={22} color={c.text} />
+          <Text maxFontSizeMultiplier={1.3} style={[typeScale.cuerpoDestacado, { color: c.text }]}>Entrar con huella</Text>
+        </Pressable>
+      ) : null}
+    </>
+  )
 
   const formulario = (
     <View style={{ gap: space[3] + 2 }}>
       {isTablet ? (
-        <Text accessibilityRole="header" style={{ fontSize: 28, lineHeight: 36, fontWeight: '700', color: c.onTopBarStrong, marginBottom: space[2] }}>
+        <Text accessibilityRole="header" style={{ fontSize: 28, lineHeight: 36, fontWeight: '700', color: c.text, marginBottom: space[2] }}>
           Ingresá
         </Text>
       ) : null}
@@ -190,9 +229,10 @@ export default function LoginScreen() {
             accessibilityRole="button"
             accessibilityLabel={verContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             onPress={() => setVerContrasena((v) => !v)}
+            android_ripple={{ color: c.border, borderless: true }}
             style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
           >
-            {verContrasena ? <EyeOff size={22} color={c.onTopBar} /> : <Eye size={22} color={c.onTopBar} />}
+            {verContrasena ? <EyeOff size={22} color={c.textSecondary} /> : <Eye size={22} color={c.textSecondary} />}
           </Pressable>
         </View>
       </View>
@@ -200,11 +240,11 @@ export default function LoginScreen() {
       {/* PROPUESTA de la lámina: sin red el ingreso y la huella quedan apagados (ambos necesitan al servidor). */}
       {sinConexion ? <Notice tone="advertencia">Sin conexión. Conectate a internet para ingresar; se reintenta solo.</Notice> : null}
       {faltanDatos ? <Notice tone="advertencia">Completá tu usuario y tu contraseña.</Notice> : null}
-      {error && !faltanDatos ? <Notice tone="peligro">{error}</Notice> : null}
-      {!isLocked && failedAttempts > 0 && quedan > 0 ? (
-        <Text style={[typeScale.secundario, { color: c.onTopBar }]}>
-          {`Te quedan ${quedan} ${quedan === 1 ? 'intento' : 'intentos'} antes del bloqueo.`}
-        </Text>
+      {/* Un solo aviso: el texto del servidor y, adentro, los intentos que quedan. */}
+      {error && !faltanDatos ? (
+        <Notice tone="peligro" testID="login-aviso-error" title={lineaIntentos ? error : undefined}>{lineaIntentos ?? error}</Notice>
+      ) : lineaIntentos && !faltanDatos ? (
+        <Notice tone="advertencia" testID="login-aviso-error">{lineaIntentos}</Notice>
       ) : null}
 
       {__DEV__ ? (
@@ -214,41 +254,10 @@ export default function LoginScreen() {
         </View>
       ) : null}
 
-      <View style={{ marginTop: space[2], gap: space[3] }}>
-        <Button
-          label={isLocked ? 'Acceso bloqueado' : 'Ingresar'}
-          onPress={() => { void ingresar() }}
-          loading={isLoading}
-          disabled={isLocked || sinConexion}
-        />
-        {ofrecerHuella ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Entrar con huella"
-            disabled={sinConexion}
-            accessibilityState={{ disabled: sinConexion }}
-            onPress={() => { void entrarConHuella() }}
-            android_ripple={{ color: CAMPO.borde }}
-            style={{
-              height: 52,
-              opacity: sinConexion ? 0.4 : 1,
-              borderRadius: 14,
-              borderWidth: 1,
-              borderColor: CAMPO.borde,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: space[2] + 2,
-              overflow: 'hidden',
-            }}
-          >
-            <Fingerprint size={22} color={c.onTopBarStrong} />
-            <Text style={[typeScale.cuerpoDestacado, { color: c.onTopBarStrong }]}>Entrar con huella</Text>
-          </Pressable>
-        ) : null}
-      </View>
+      {/* En tablet los botones van en el formulario; en teléfono quedan en el pie fijo sobre el teclado. */}
+      {isTablet ? <View style={{ marginTop: space[2], gap: space[3] }}>{botones}</View> : null}
 
-      <Text style={[typeScale.secundario, { color: c.onTopBar, textAlign: 'center', marginTop: space[3] }]}>
+      <Text style={[typeScale.secundario, { color: c.textSecondary, textAlign: 'center', marginTop: space[3] }]}>
         ¿Olvidaste la contraseña? Pedila a tu administrador.
       </Text>
     </View>
@@ -263,8 +272,8 @@ export default function LoginScreen() {
 
   if (isTablet) {
     return (
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, flexDirection: 'row', backgroundColor: c.topBar }}>
-        <View style={{ flex: 1, padding: 64, justifyContent: 'space-between', backgroundColor: CAMPO.fondo }}>
+      <KeyboardAvoidingView testID="login-raiz" behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, flexDirection: 'row', backgroundColor: c.bg }}>
+        <View style={{ flex: 1, padding: 64, paddingTop: 64 + insets.top, paddingBottom: 64 + insetInferior, justifyContent: 'space-between', backgroundColor: c.topBar }}>
           {logo(72)}
           <View style={{ gap: space[3] }}>
             <Text accessibilityRole="header" style={{ fontSize: 48, lineHeight: 56, fontWeight: '700', color: c.onTopBarStrong }}>Forward</Text>
@@ -274,7 +283,7 @@ export default function LoginScreen() {
           </View>
           <Text style={[typeScale.secundario, { color: c.onTopBar }]}>Forward Distribuidora</Text>
         </View>
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingVertical: 64, paddingHorizontal: 80 }} keyboardShouldPersistTaps="handled">
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingTop: 64 + insets.top, paddingBottom: 64 + insetInferior, paddingHorizontal: 80 }} keyboardShouldPersistTaps="handled">
           {formulario}
         </ScrollView>
       </KeyboardAvoidingView>
@@ -282,19 +291,28 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: c.topBar }}>
+    <View testID="login-raiz" style={{ flex: 1, backgroundColor: c.bg }}>
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: space[6], paddingBottom: space[8], width: '100%', maxWidth: 480, alignSelf: 'center' }}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: space[6], paddingTop: insets.top + (teclado ? space[4] : space[8]), paddingBottom: space[6], width: '100%', maxWidth: 480, alignSelf: 'center', gap: space[6] }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ flex: 1, justifyContent: 'center', gap: space[3], paddingVertical: teclado ? space[4] : space[8] }}>
-          {logo(teclado ? 40 : 64)}
-          <Text accessibilityRole="header" style={{ marginTop: space[3], fontSize: 32, lineHeight: 40, fontWeight: '700', color: c.onTopBarStrong }}>Forward</Text>
-          {teclado ? null : <Text style={[typeScale.cuerpo, { color: c.onTopBar }]}>Entrá con el mismo usuario de la web.</Text>}
+        <View style={{ gap: space[2] }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
+            {logo(teclado ? 40 : 56)}
+            <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.titulo, color: c.text }}>Forward</Text>
+          </View>
+          {teclado ? null : (
+            <View style={{ gap: space[1], marginTop: space[4] }}>
+              <Text accessibilityRole="header" maxFontSizeMultiplier={1.3} style={[typeScale.titulo, { color: c.text }]}>Ingresá a tu cuenta</Text>
+              <Text style={[typeScale.cuerpo, { color: c.textSecondary }]}>Usá el mismo usuario y contraseña de la web.</Text>
+            </View>
+          )}
         </View>
         {formulario}
       </ScrollView>
-    </KeyboardAvoidingView>
+      <PieFijo fondo="bg" testID="login-pie">{botones}</PieFijo>
+    </View>
   )
 }

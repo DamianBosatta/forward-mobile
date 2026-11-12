@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router'
 import { FileText, HandCoins } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
-import { Button, Notice, Segmented, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { Button, Notice, Segmented, TopBar, TotalsRow, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { MOTIVO_SIN_PERMISO_DE_COBRO, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { useResponsive } from '@/libs/useResponsive'
 import { useSocio } from '@/libs/api-client/socios'
@@ -109,6 +109,7 @@ function Movimiento({ m, tabla, ultimo }: { m: MovimientoConCuenta; tabla?: bool
  * el cobro se abre en el panel y no en otra pantalla.
  */
 export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = false }: { socioId: string; onRegistrarCobro?: () => void; conBarra?: boolean }) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const puedeCobrar = usePuedeCobrar()
@@ -175,7 +176,7 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
   return (
     <View style={{ flex: 1 }}>
     {conBarra ? <TopBar lineasMultiples title={direccionDeEntrega(cliente)} subtitle={nombre ? `Cuenta corriente · ${nombre}` : 'Cuenta corriente'} leading={{ kind: 'atras', onPress: () => router.back() }} /> : null}
-    <ScrollView testID="cuenta-corriente-scroll" onScroll={alDesplazar} scrollEventThrottle={200} contentContainerStyle={{ padding: space[4], gap: space[4] }}>
+    <ScrollView testID="cuenta-corriente-scroll" onScroll={alDesplazar} scrollEventThrottle={200} contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[4] }}>
       {!conBarra ? (
         <View style={{ gap: space[1] }}>
           <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccionDeEntrega(cliente)}</Text>

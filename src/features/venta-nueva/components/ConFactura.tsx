@@ -57,7 +57,7 @@ export function ConFactura({ conFactura, onChange, lineas }: { conFactura: boole
         {conFactura !== undefined ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`La deuda va a la cuenta ${cuentaDeLaVenta(conFactura)} del cliente.`}</Text> : null}
       </View>
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none">
-        <Switch value={valor} disabled={conFactura === undefined} trackColor={{ false: c.border, true: c.action }} />
+        <Switch value={valor} disabled={conFactura === undefined} trackColor={{ false: c.borderStrong, true: c.action }} />
       </View>
     </Pressable>
     {faltantes.length > 0 ? (

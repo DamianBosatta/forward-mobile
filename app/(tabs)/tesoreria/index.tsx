@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router'
 import { ArrowLeftRight, HandCoins, Landmark, Zap } from 'lucide-react-native'
 import { usePuedePagarServicio } from '@/features/gastos/lib/permiso'
 import { radii, space, useColors } from '@/libs/theme'
-import { FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
+import { FormContainer, Notice, TopBar, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { usePuedeCobrar, usePuedeTransferir } from '@/features/cuentas/lib/permiso'
 import { MOTIVO_SIN_PERMISO_DE_SERVICIO, MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA } from '@/core/ui/fw/MotivoDeshabilitado'
 import { FilaDeTesoreria } from '@/features/tesoreria/components/FilaDeTesoreria'
@@ -23,6 +23,7 @@ const AYUDA_CHEQUE_COMO_COBRO = 'El cheque se carga como cobro de un cliente.'
  * `POST /cheques`): lleva al cobro de un cliente con el medio Cheque (regla A-1114: el cheque va en un cobro de un solo medio).
  */
 export default function TesoreriaScreen() {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const menu = useMenuLeading()
@@ -38,7 +39,7 @@ export default function TesoreriaScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Tesorería" leading={menu} />
-      <ScrollView contentContainerStyle={{ padding: space[4] }}>
+      <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior }}>
         <FormContainer style={{ gap: space[3] }}>
           {/* Propuesta "Finanzas como venta", frames 8 y 9: una tarjeta sin borde con las acciones separadas por una línea. */}
           <View testID="tarjeta-tesoreria" style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>

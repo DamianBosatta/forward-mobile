@@ -1,24 +1,12 @@
 import type { CuerpoEntregaParada, MedioCobroChofer } from '@/libs/api-client/logistica'
 import type { components } from '@/libs/api-client/generated/schema'
 import { leerNumero } from '@/core/utils/numero'
-import { leerFecha } from '@/features/cuentas/lib/cobro'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-
-export interface ChequeForm {
-  numero: string
-  banco: string
-  titular: string
-  /** dd/mm/aaaa */
-  emision: string
-  /** dd/mm/aaaa */
-  pago: string
-}
 
 export interface LineaCobroForm {
   medio: MedioCobroChofer | null
   monto: string
   fotoUrl: string | null
-  cheque: ChequeForm
 }
 
 /**
@@ -82,15 +70,9 @@ export function armarLinea(l: LineaCobroForm, n: number): { linea: LineaCobro } 
   if (monto == null || monto <= 0) return { error: `El monto del cobro ${n} tiene que ser mayor a cero.` }
   const base = { medioPagoId: l.medio.id, monto, fotoUrl: l.fotoUrl ?? undefined }
   if (l.medio.tipo === 'Transferencia' && !l.fotoUrl) return { error: `Falta la foto del comprobante de la transferencia (cobro ${n}).` }
-  if (l.medio.tipo !== 'Cheque') return { linea: base }
-  const { numero, banco, titular } = l.cheque
-  if (!numero.trim() || !banco.trim() || !titular.trim()) return { error: `Completá número, banco y titular del cheque (cobro ${n}).` }
-  const fechaEmision = leerFecha(l.cheque.emision)
-  const fechaPago = leerFecha(l.cheque.pago)
-  if (!fechaEmision || !fechaPago) return { error: `Las fechas del cheque van como dd/mm/aaaa (cobro ${n}).` }
-  // Un cheque por línea: su monto es el de la línea (el servidor exige que cuadren).
-  const cheque = { numero: numero.trim(), banco: banco.trim(), titular: titular.trim(), fechaEmision, fechaPago, monto, imagenUrl: l.fotoUrl ?? undefined }
-  return { linea: { ...base, cheques: [cheque] } }
+  // El cheque lo carga la oficina en la rendición: el chofer solo avisa con monto y foto (sin el arreglo `cheques`).
+  if (l.medio.tipo === 'Cheque' && !l.fotoUrl) return { error: `Falta la foto del cheque (cobro ${n}).` }
+  return { linea: base }
 }
 
 /**

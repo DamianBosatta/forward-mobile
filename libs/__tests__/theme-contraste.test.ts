@@ -70,6 +70,27 @@ describe.each(['light', 'dark'] as const)('tema %s: contraste de texto', (tema) 
   })
 })
 
+// WCAG 1.4.11: el contorno de un control (campo, casilla, switch apagado) se distingue con 3:1.
+describe.each(['light', 'dark'] as const)('tema %s: bordes de controles', (tema) => {
+  const colores = themeColors[tema]
+
+  it.each([
+    ['surface', colores.surface],
+    ['bg', colores.bg],
+  ])('borderStrong sobre %s pasa 3:1', (_nombre, fondo) => {
+    expect(contraste(colores.borderStrong, fondo)).toBeGreaterThanOrEqual(3)
+  })
+
+  it('borderStrong es propio y más fuerte que border (separadores)', () => {
+    expect(colores.borderStrong).not.toBe(colores.border)
+    expect(contraste(colores.borderStrong, colores.surface)).toBeGreaterThan(contraste(colores.border, colores.surface))
+  })
+
+  it('glassBorder usa borderStrong', () => {
+    expect(colores.glassBorder).toBe(colores.borderStrong)
+  })
+})
+
 describe('fórmula de contraste', () => {
   it('reproduce los valores conocidos (negro/blanco 21:1, marca sobre blanco < 4,5)', () => {
     expect(contraste('#000000', '#FFFFFF')).toBeCloseTo(21, 5)

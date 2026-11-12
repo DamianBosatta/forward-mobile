@@ -119,7 +119,7 @@ it('si el servidor rechaza, se ve su mensaje con el detalle', async () => {
   expect(mockReplace).not.toHaveBeenCalled()
 })
 
-it('al editar, carga los datos y devuelve el horario que no se edita acá', async () => {
+it('al editar, carga los datos y devuelve el horario cargado como franjas por día', async () => {
   conPermisos(SIN_CAP)
   mockId = 'c1'
   const horario = [{ dia: 1, desde: '08:00', hasta: '12:00', esValida: true }]
@@ -131,7 +131,7 @@ it('al editar, carga los datos y devuelve el horario que no se edita acá', asyn
 
   await waitFor(() => expect(put).toHaveBeenCalled())
   expect(put.mock.calls[0][0]).toBe('/api/v1/socios-comerciales/c1')
-  expect(put.mock.calls[0][1]).toMatchObject({ id: 'c1', nombreContacto: 'Chela', horario })
+  expect(put.mock.calls[0][1]).toMatchObject({ id: 'c1', nombreContacto: 'Chela', horario: [{ dia: 1, desde: '08:00', hasta: '12:00' }] })
 })
 
 describe('edición: el detalle manda', () => {
@@ -186,7 +186,7 @@ describe('edición: el detalle manda', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
 
     await waitFor(() => expect(put).toHaveBeenCalled())
-    expect(put.mock.calls[0][1].horario).toEqual(nuevo)
+    expect(put.mock.calls[0][1].horario).toEqual([{ dia: 2, desde: '09:00', hasta: '13:00' }])
   })
 
   it('con detalle en caché y el refetch fallido, muestra el error con Reintentar y no deja guardar el viejo', async () => {

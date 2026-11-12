@@ -108,7 +108,7 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
   const texto = (extra = {}) => ({ ...typeScale.cuerpoDestacado, color: c.text, ...extra })
 
   return (
-    <Modal visible transparent={isTablet} animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible transparent={isTablet} animationType="fade" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
       <View style={{ flex: 1, flexDirection: 'row', backgroundColor: isTablet ? c.veil : c.bg }}>
         {isTablet && <Pressable accessibilityRole="button" accessibilityLabel="Cerrar" onPress={onClose} style={{ flex: 1 }} />}
         <View testID="editar-linea" accessibilityLabel="Editar línea" style={{ flex: isTablet ? undefined : 1, width: isTablet ? 440 : undefined, backgroundColor: c.bg }}>
@@ -221,7 +221,7 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
               </View>
             )}
           </ScrollView>
-          <PieFijo conInsetInferior>
+          <PieFijo>
             <Button label="Confirmar" disabled={invalido} onPress={() => onConfirm({ ...linea, cantidad, descuentoPct: pct })} />
           </PieFijo>
         </View>

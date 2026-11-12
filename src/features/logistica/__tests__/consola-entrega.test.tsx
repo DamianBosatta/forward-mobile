@@ -176,7 +176,8 @@ describe('Consola del chofer: entrega con la operación única', () => {
     await abrirEntrega()
     await userEvent.press(screen.getByLabelText('Efectivo'))
     await userEvent.type(screen.getByLabelText('Monto del cobro 1'), '600')
-    await userEvent.press(screen.getByLabelText('Sumar otro pago'))
+    await continuar()
+    await userEvent.press(await screen.findByLabelText('Sí'))
     await userEvent.press(screen.getByLabelText('Transferencia'))
     await userEvent.type(screen.getByLabelText('Monto del cobro 2'), '400,50')
 
@@ -185,8 +186,8 @@ describe('Consola del chofer: entrega con la operación única', () => {
     expect(await screen.findByText(/Falta la foto del comprobante de la transferencia \(cobro 2\)/)).toBeTruthy()
     expect(llamadasA(ENTREGAR)).toHaveLength(0)
 
-    await sacarFoto('Sacar foto del comprobante del cobro 2')
-    await screen.findByText('Foto del comprobante del cobro 2 cargada')
+    await sacarFoto('Sacar foto del comprobante')
+    await screen.findByText('Foto del comprobante cargada')
     await alResumen('Abel', { conCobro: true })
     // Pagó: "Firmar" es opcional, pero si la saca viaja como la foto del remito (evidencia).
     expect(screen.getByText('Opcional · foto del remito firmado')).toBeTruthy()

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { ChevronDown } from 'lucide-react-native'
 import { FONT, importe as cifras, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
-import { BottomSheet, FormContainer, Notice, TopBar, TotalsRow, formatImporte, useMenuLeading } from '@/core/ui/fw'
+import { BottomSheet, FormContainer, Notice, TopBar, TotalsRow, formatImporte, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { useResponsive } from '@/libs/useResponsive'
@@ -25,6 +25,7 @@ const porcentaje = (n: number) => `${String(Math.round(n * 10) / 10).replace('.'
  * por vendedor.
  */
 export function ReportesScreen() {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const { isTablet } = useResponsive()
   const menu = useMenuLeading()
@@ -60,7 +61,7 @@ export function ReportesScreen() {
       />
       <ScrollView
         refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => { void q.refetch() }} tintColor={c.brand} />}
-        contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] }}>
+        contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] + insetInferior }}>
         <FormContainer style={{ gap: space[3], ...(isTablet ? { maxWidth: 960 } : null) }}>
           {puedeElegir ? (
             <Pressable
@@ -68,7 +69,7 @@ export function ReportesScreen() {
               accessibilityLabel={`Vendedor: ${vendedor?.nombre ?? 'Todos'}`}
               accessibilityHint="Elegí de qué vendedor ver los reportes"
               onPress={() => setEligiendo(true)}
-              style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}
+              style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], borderRadius: radii.campo, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface }}
             >
               <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Vendedor</Text>
               <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }} numberOfLines={1}>{vendedor?.nombre ?? 'Todos'}</Text>

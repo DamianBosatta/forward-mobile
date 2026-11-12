@@ -1,8 +1,8 @@
 import React from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
-import { Check } from 'lucide-react-native'
+
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Field, Notice, formatImporte } from '@/core/ui/fw'
+import { Field, MarcaDeCasilla, Notice, formatImporte } from '@/core/ui/fw'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { mostrarNumero } from '@/core/utils/numero'
 import { formatToLocalTime } from '@/core/utils/fecha'
@@ -51,11 +51,11 @@ export function ElegirComprobantes({ socioId, valor, onCambio, sinPendientes = '
               onPress={() => alternar(d)}
               style={{
                 minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[3],
-                borderRadius: radii.campo, borderWidth: elegido ? 2 : 1, borderColor: elegido ? c.brand : c.border,
+                borderRadius: radii.campo, borderWidth: elegido ? 2 : 1, borderColor: elegido ? c.brand : c.borderStrong,
                 backgroundColor: elegido ? c.brandSoft : c.surface,
               }}
             >
-              <View style={{ width: 20, alignItems: 'center' }}>{elegido ? <Check size={18} color={c.brandInk} /> : null}</View>
+              <MarcaDeCasilla marcada={elegido} />
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{nombre}</Text>
                 <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`${formatToLocalTime(d.fecha, 'd MMM')} · ${NOMBRE_CUENTA[d.tipoCuenta]}`}</Text>

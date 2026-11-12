@@ -22,7 +22,7 @@ export function InterruptorDeSocio({ label, ayuda, valor, onChange }: { label: s
         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{ayuda}</Text>
       </View>
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none">
-        <Switch value={valor} trackColor={{ false: c.border, true: c.action }} thumbColor={valor ? c.onAction : c.textSecondary} />
+        <Switch value={valor} trackColor={{ false: c.borderStrong, true: c.action }} thumbColor={valor ? c.onAction : c.textSecondary} />
       </View>
     </Pressable>
   )

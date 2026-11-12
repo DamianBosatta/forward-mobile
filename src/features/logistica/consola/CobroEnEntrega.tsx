@@ -5,7 +5,7 @@ import { importe, maxFontScale, radii, space, typeScale, useColors } from '@/lib
 import { Button, formatImporte, Field, Notice, OptionCard } from '@/core/ui/fw'
 import type { MedioCobroChofer } from '@/libs/api-client/logistica'
 import { FotoEntrega } from './FotoEntrega'
-import { mediosDelChofer, nombreDelMedio, type ChequeForm, type LineaCobroForm } from './entrega'
+import { mediosDelChofer, nombreDelMedio, type LineaCobroForm } from './entrega'
 
 interface Props {
   medios: MedioCobroChofer[] | undefined
@@ -13,8 +13,6 @@ interface Props {
   lineas: LineaCobroForm[]
   onLineas: (lineas: LineaCobroForm[]) => void
   onSubiendo: (subiendo: boolean) => void
-  /** dd/mm/aaaa de hoy, para precargar las fechas del cheque. */
-  hoy: string
   /** Lámina ChoferEntrega: lo que hay que cobrar en la parada (lo decide el servidor): el importe de la factura. */
   aCobrar?: number | null
   /** "Factura A00012": el número de la nota de pedido, si el servidor lo manda. Sin él dice solo "Factura". */
@@ -35,24 +33,22 @@ interface Props {
 }
 
 /** Lo que se dice de cada forma de pago, en una línea (chofer-04). */
-const DETALLE_MEDIO: Partial<Record<string, string>> = { Transferencia: 'Bancaria o billetera · Foto del comprobante', Cheque: 'Foto y datos' }
+const DETALLE_MEDIO: Partial<Record<string, string>> = { Transferencia: 'Bancaria o billetera · Foto del comprobante', Cheque: 'Monto y foto del cheque' }
 
 const redondear = (n: number) => Math.round(n * 100) / 100
 
 /**
  * Lámina chofer-04 con la maqueta cobro-chofer (S8): arriba la cuenta del cliente (deuda anterior, factura y total) y
  * cómo paga: Efectivo, Transferencia y Cheque (del servidor) y "No paga" (todo a su cuenta corriente). Cada pago
- * lleva un solo monto, sin "Te dio" ni vuelto. Pagos ya cargados con su X de 44 px y "Sumar otro pago". El servidor
+ * lleva un solo monto, sin "Te dio" ni vuelto. Pagos ya cargados con su X de 44 px; sumar otro lo pregunta "¿Sumar otro cobro?" al continuar. El servidor
  * imputa y valida.
  */
-export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubiendo, hoy, aCobrar, codigoFactura, faltaACuenta, aviso, deudaAnterior, onNoPaga, elegirAlEntrar = false }: Props) {
+export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubiendo, aCobrar, codigoFactura, faltaACuenta, aviso, deudaAnterior, onNoPaga, elegirAlEntrar = false }: Props) {
   const c = useColors()
   const [agregando, setAgregando] = useState(elegirAlEntrar)
   const cambiar = (i: number, cambio: Partial<LineaCobroForm>) => onLineas(lineas.map((l, j) => (j === i ? { ...l, ...cambio } : l)))
-  const cambiarCheque = (i: number, campo: keyof ChequeForm) => (v: string) =>
-    cambiar(i, { cheque: { ...lineas[i].cheque, [campo]: v } })
   const agregar = (medio: MedioCobroChofer) => {
-    onLineas([...lineas, { medio, monto: '', fotoUrl: null, cheque: { numero: '', banco: '', titular: '', emision: hoy, pago: hoy } }])
+    onLineas([...lineas, { medio, monto: '', fotoUrl: null }])
     setAgregando(false)
   }
   const hayPagos = lineas.length > 0
@@ -75,18 +71,11 @@ export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubien
               <BotonQuitar etiqueta={`Quitar cobro ${n}`} onPress={() => onLineas(lineas.filter((_, j) => j !== i))} />
             </View>
             <Field label={`Monto del cobro ${n}`} value={l.monto} onChangeText={(v) => cambiar(i, { monto: v })} keyboardType="decimal-pad" alignRight />
-            {l.medio?.tipo === 'Cheque' ? (
-              <>
-                <Field label={`N.º de cheque (cobro ${n})`} value={l.cheque.numero} onChangeText={cambiarCheque(i, 'numero')} />
-                <Field label={`Banco (cobro ${n})`} value={l.cheque.banco} onChangeText={cambiarCheque(i, 'banco')} />
-                <Field label={`Titular (cobro ${n})`} value={l.cheque.titular} onChangeText={cambiarCheque(i, 'titular')} />
-                <Field label={`Fecha de emisión (cobro ${n})`} value={l.cheque.emision} onChangeText={cambiarCheque(i, 'emision')} help="dd/mm/aaaa" />
-                <Field label={`Fecha de pago (cobro ${n})`} value={l.cheque.pago} onChangeText={cambiarCheque(i, 'pago')} help="dd/mm/aaaa" />
-              </>
-            ) : null}
             {l.medio && l.medio.tipo !== 'Efectivo' ? (
               <FotoEntrega
-                que={`${l.medio.tipo === 'Cheque' ? 'del cheque' : 'del comprobante'} del cobro ${n}`}
+                que={l.medio.tipo === 'Cheque' ? 'del cheque' : 'del comprobante'}
+                destacada
+                obligatoria
                 ayuda={l.medio.tipo === 'Transferencia' ? 'La transferencia necesita la captura del comprobante.' : undefined}
                 url={l.fotoUrl}
                 onUrl={(url) => cambiar(i, { fotoUrl: url })}
@@ -107,9 +96,7 @@ export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubien
           {onNoPaga && !hayPagos ? <OpcionNoPaga onPress={onNoPaga} /> : null}
           {hayPagos ? <Button label="No sumo otro" variant="secundario" onPress={() => setAgregando(false)} /> : null}
         </View>
-      ) : (
-        <Button label="Sumar otro pago" variant="secundario" onPress={() => setAgregando(true)} />
-      )}
+      ) : null}
     </View>
   )
 }

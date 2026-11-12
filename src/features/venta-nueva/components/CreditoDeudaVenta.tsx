@@ -1,6 +1,6 @@
 import React from 'react'
 import { Text, View } from 'react-native'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Notice, formatImporte } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
 import type { TipoDocumento } from '@/features/clientes/components/SeleccionarClienteSheet'
@@ -17,13 +17,14 @@ interface Props {
  */
 export function CreditoDeudaVenta({ clienteId, tipo }: Props) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const s = useSocio(clienteId).data
   // Crédito y deuda: solo si el servidor los manda y deja ver importes (`puedeVerSaldo`); si no, no se muestran.
   const disponible = s?.puedeVerSaldo === true && typeof s.creditoDisponible === 'number' ? s.creditoDisponible : null
   const vencida = s?.tieneDeudaVencida === true
   const montoVencido = vencida && typeof s?.deudaVencidaAmount === 'number' ? s.deudaVencidaAmount : null
   const deuda = vencida ? (montoVencido !== null ? formatImporte(montoVencido) : 'Sí') : 'Ninguna'
-  const tarjeta = { flex: 1, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }
+  const tarjeta = { flex: 1, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, ...sombra }
   if (disponible === null && s?.tieneDeudaVencida === undefined) return null
   return (
     <View style={{ paddingHorizontal: space[4], paddingTop: space[3], gap: space[2] }}>

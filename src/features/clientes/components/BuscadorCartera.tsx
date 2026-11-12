@@ -34,7 +34,7 @@ export function BuscadorCartera({
           borderRadius: radii.campo,
           backgroundColor: sobre === 'barra' ? c.surface : c.surface2,
           borderWidth: sobre === 'barra' ? 0 : 1,
-          borderColor: c.border,
+          borderColor: c.borderStrong,
           paddingHorizontal: space[3],
         }}
       >

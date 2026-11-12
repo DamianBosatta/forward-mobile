@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native'
 import { ChevronRight, Package } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, StatusChip, formatImporte } from '@/core/ui/fw'
+import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
+import { Button, Notice, StatusChip, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { useFichaCatalogo } from '@/libs/api-client/catalogo'
 import { getFullImageUrl } from '@/libs/api-client/media'
 import { useDepositoDeConsulta } from '../hooks/useDepositoDeConsulta'
@@ -51,7 +51,9 @@ export function FichaProducto({
   /** La marca de novedad y el precio anterior vienen de la tarjeta del listado: la ficha del producto no los trae. */
   novedad?: Pick<ProductoDeTarjeta, 'novedad' | 'precioAnterior' | 'variacionPorcentaje'>
 }) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const [errorFoto, setErrorFoto] = useState<string | null>(null)
 
   // The chip answers for one unit, same as the card. The server also tells whether the minimum sale (a box) fits.
@@ -70,7 +72,7 @@ export function FichaProducto({
   const encabezado = [p.codigoPropio, p.marca, p.categoriaPathCompleto].filter(Boolean).join(' · ')
 
   return (
-    <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }}>
+    <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[4] }}>
       <View style={{ height: 200, borderRadius: radii.tarjeta, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         {foto ? (
           <Image source={{ uri: foto }} style={{ width: '100%', height: '100%' }} resizeMode="contain" accessibilityLabel={`Foto de ${p.nombre}`} />
@@ -99,7 +101,7 @@ export function FichaProducto({
       </View>
 
       {/* Lámina catalogo-ficha: el precio y "Cómo se vende" van juntos en una sola tarjeta. */}
-      <View testID="ficha-precio-tarjeta" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, padding: space[4], gap: space[3] }}>
+      <View testID="ficha-precio-tarjeta" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, padding: space[4], gap: space[3] }}>
         <View style={{ gap: space[1] }}>
           <Fila label="Precio de lista por unidad" valor={formatImporte(p.precioVenta)} fuerte />
           {variacion ? (

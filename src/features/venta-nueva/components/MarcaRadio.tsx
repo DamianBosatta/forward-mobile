@@ -8,7 +8,7 @@ export function MarcaRadio({ elegido }: { elegido: boolean }) {
   const c = useColors()
   return (
     <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
-      style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: elegido ? 0 : 2, borderColor: c.border, backgroundColor: elegido ? c.action : 'transparent' }}>
+      style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: elegido ? 0 : 2, borderColor: c.borderStrong, backgroundColor: elegido ? c.action : 'transparent' }}>
       {elegido ? <Check size={14} color={c.onAction} strokeWidth={3} /> : null}
     </View>
   )

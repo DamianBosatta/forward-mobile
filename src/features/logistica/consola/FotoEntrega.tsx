@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Image, Text, View } from 'react-native'
+import { Camera } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice } from '@/core/ui/fw'
 import { uploadFotoEntrega } from '@/libs/api-client/media'
@@ -24,6 +25,8 @@ interface Props {
   referencia?: string
   /** Lámina ChoferCamara: dónde (la dirección de la parada), en el subtítulo de la cámara. */
   lugar?: string
+  /** Botón de sacar la foto llamativo (primario) mientras falta: transferencia y cheque del chofer. */
+  destacada?: boolean
 }
 
 /** Lámina Camara (E5): solo la cámara del teléfono, nunca la galería. */
@@ -68,7 +71,7 @@ export function useFotoEntrega(onUrl: (url: string) => void, onSubiendo: (subien
 }
 
 /** Foto con la cámara propia de la app (lámina ChoferCamara), subida en el acto a `upload-entrega`: el reintento de la entrega reusa la misma URL. */
-export function FotoEntrega({ que, url, onUrl, onSubiendo, ayuda, guia, titulo, obligatoria, referencia, lugar }: Props) {
+export function FotoEntrega({ que, url, onUrl, onSubiendo, ayuda, guia, titulo, obligatoria, referencia, lugar, destacada }: Props) {
   const c = useColors()
   const { subiendo, error, sacadaA, camara, sacar, subir, cerrarCamara } = useFotoEntrega(onUrl, onSubiendo)
 
@@ -103,7 +106,9 @@ export function FotoEntrega({ que, url, onUrl, onSubiendo, ayuda, guia, titulo, 
       ) : null}
       <Button
         label={url ? `Volver a sacar la foto ${que}` : `Sacar foto ${que}`}
-        variant="secundario"
+        variant={destacada && !url ? 'primario' : 'secundario'}
+        size={destacada && !url ? 'xl' : 'md'}
+        icon={destacada && !url ? Camera : undefined}
         loading={subiendo}
         onPress={sacar}
       />

@@ -2,7 +2,7 @@ import React from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Check } from 'lucide-react-native'
-import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { FONT, importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, Notice, StatusChip, TopBar, formatImporte } from '@/core/ui/fw'
 import type { CobroRegistrado } from '../api/cobros'
 import type { LineaDeRecibo } from '../lib/cobro'
@@ -27,6 +27,7 @@ interface Props {
  */
 export function PagoRegistradoPantalla({ proveedor, pago, lineas, total, onVolver, onOtro }: Props) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const insets = useSafeAreaInsets()
   const titulo = pago.anulado ? 'Pago anulado' : pago.conLoDeAntes ? 'Pago ya registrado' : 'Pago registrado'
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
@@ -36,7 +37,7 @@ export function PagoRegistradoPantalla({ proveedor, pago, lineas, total, onVolve
     <View style={{ flex: 1 }}>
       <TopBar title="Pago registrado" />
       <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: insets.bottom + space[6], gap: space[4] }}>
-        <View style={{ padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: space[2] }}>
+        <View style={{ padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, ...sombra, gap: space[2] }}>
           <View style={{ alignItems: 'center', gap: space[1], paddingBottom: space[2] }}>
             <View style={{ width: 56, height: 56, borderRadius: radii.pastilla, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
               <Check size={30} color={c.onAction} strokeWidth={2.5} />

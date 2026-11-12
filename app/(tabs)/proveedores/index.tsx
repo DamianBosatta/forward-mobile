@@ -5,7 +5,7 @@ import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from "expo-router/react-navigation"
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Fab, Notice, TopBar } from '@/core/ui/fw'
+import { Fab, Notice, TopBar, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -22,6 +22,7 @@ const ANCHO_DOS_PANELES = 900
 
 /** Proveedores (láminas Proveedores y Tablet · Proveedores): lista buscable y ficha; alta y edición con los permisos de la web. */
 export default function ProveedoresScreen() {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const navigation = useNavigation()
@@ -72,7 +73,7 @@ export default function ProveedoresScreen() {
             onNuevaCompra={canCreate('MOD_COMPRAS') ? () => router.push('/(tabs)/compras/nueva' as never) : undefined}
           />
         )}
-        contentContainerStyle={{ paddingBottom: 88 }}
+        contentContainerStyle={{ paddingBottom: 88 + insetInferior }}
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch() }} tintColor={c.brandInk} />}

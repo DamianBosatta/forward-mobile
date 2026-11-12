@@ -47,7 +47,7 @@ function pintar(paradasCobro: ParadaCobro[] | undefined, extra: { entregas?: unk
         resumen={resumenRuta(detalles)}
         soloLectura={false}
         puedeReportar={extra.puedeReportar ?? true}
-        onLlegue={jest.fn()} onComoLlegar={jest.fn()} onLlamar={jest.fn()} puedeLlamar={() => false} onVerPedido={jest.fn()} onNota={jest.fn()}
+        onLlegue={jest.fn()} onComoLlegar={jest.fn()} onLlamar={jest.fn()} puedeLlamar={() => false} onNota={jest.fn()}
         notaCargando={false}
         hojaDeRutaId="h1"
         paradasCobro={paradasCobro}

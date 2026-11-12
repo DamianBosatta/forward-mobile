@@ -1,5 +1,5 @@
 import React from 'react'
-import { Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native'
+import { ScrollView, Text, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Check, Navigation } from 'lucide-react-native'
 import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
@@ -25,7 +25,6 @@ interface Props {
   onComoLlegar: (p: ParadaDto) => void
   onLlamar: (p: ParadaDto) => void
   puedeLlamar: (p: ParadaDto) => boolean
-  onVerPedido: (p: ParadaDto) => void
   /** Comparte el PDF de la nota de entrega de la parada. */
   onNota: (p: ParadaDto) => void
   notaCargando: boolean
@@ -42,7 +41,7 @@ interface Props {
 }
 
 /** Láminas chofer-01-viaje: próxima parada grande, las que siguen compactas y las hechas; barra fija con Ir y ¡Llegué!. */
-export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue, onComoLlegar, onLlamar, puedeLlamar, onVerPedido, onNota, notaCargando, cabecera, avisos, pie, hojaDeRutaId, paradasCobro }: Props) {
+export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue, onComoLlegar, onLlamar, puedeLlamar, onNota, notaCargando, cabecera, avisos, pie, hojaDeRutaId, paradasCobro }: Props) {
   const c = useColors()
   const { bottom } = useSafeAreaInsets()
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
@@ -68,7 +67,6 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue,
             puedeLlamar={puedeLlamar(proxima.parada)}
             notaCargando={notaCargando}
             onLlamar={() => onLlamar(proxima.parada)}
-            onVerPedido={() => onVerPedido(proxima.parada)}
             onNota={() => onNota(proxima.parada)}
           />
         ) : resumen.total > 0 ? (
@@ -87,7 +85,7 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue,
             <Text accessibilityRole="header" style={tituloSeccion}>{`Después (${despues.length})`}</Text>
             <View style={tarjeta}>
               {despues.map((n, i) => (
-                <Fila key={n.parada.id} n={n} ultima={i === despues.length - 1} onPress={onVerPedido} />
+                <Fila key={n.parada.id} n={n} ultima={i === despues.length - 1} />
               ))}
             </View>
           </>
@@ -102,7 +100,7 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue,
             <Text accessibilityRole="header" style={tituloSeccion}>{`Hechas (${reportadas.length})`}</Text>
             <View style={tarjeta}>
               {reportadas.map((n, i) => (
-                <Fila key={n.parada.id} n={n} ultima={i === reportadas.length - 1} onPress={onVerPedido} />
+                <Fila key={n.parada.id} n={n} ultima={i === reportadas.length - 1} />
               ))}
             </View>
           </>
@@ -131,16 +129,14 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue,
   )
 }
 
-function Fila({ n, ultima, onPress }: { n: ParadaNumerada; ultima: boolean; onPress: (p: ParadaDto) => void }) {
+function Fila({ n, ultima }: { n: ParadaNumerada; ultima: boolean }) {
   const c = useColors()
   const { parada, numero } = n
   const pendiente = parada.estado === EstadoParada.Pendiente
   return (
-    <Pressable
-      onPress={() => onPress(parada)}
-      accessibilityRole="button"
+    <View
+      accessible
       accessibilityLabel={`Parada ${numero}: ${parada.direccion}`}
-      accessibilityHint="Abre el pedido"
       style={{
         minHeight: 64,
         paddingVertical: space[3],
@@ -176,7 +172,7 @@ function Fila({ n, ultima, onPress }: { n: ParadaNumerada; ultima: boolean; onPr
       </View>
       {pendiente ? <PlanParada parada={parada} /> : null}
       {pendiente ? <HorarioDelDia horario={parada.horarioDelDia} /> : null}
-    </Pressable>
+    </View>
   )
 }
 

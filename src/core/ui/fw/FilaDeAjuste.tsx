@@ -68,7 +68,7 @@ export function FilaInterruptor({
         <Switch
           value={prendido}
           disabled={disabled}
-          trackColor={{ false: c.border, true: c.action }}
+          trackColor={{ false: c.borderStrong, true: c.action }}
           thumbColor={prendido ? c.onAction : c.textSecondary}
         />
       </View>

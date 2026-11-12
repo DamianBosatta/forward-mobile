@@ -1,8 +1,8 @@
 import React from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { Check, LayoutGrid, List, SlidersHorizontal } from 'lucide-react-native'
+import { LayoutGrid, List, SlidersHorizontal } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { BottomSheet, Button } from '@/core/ui/fw'
+import { BottomSheet, Button, Casilla } from '@/core/ui/fw'
 import { mostrarNumero } from '@/core/utils/numero'
 import type { StockResumen } from '../hooks/useStockPorDeposito'
 import {
@@ -89,34 +89,16 @@ interface Opcion {
 }
 
 /** Opción con casilla: el nombre accesible lleva el conteo separado por coma ("Sin stock, 34"), no pegado al nombre. */
-function Casilla({ label, cantidad, marcada, onPress }: { label: string; cantidad?: number; marcada: boolean; onPress: () => void }) {
+function OpcionConConteo({ label, cantidad, marcada, onPress }: { label: string; cantidad?: number; marcada: boolean; onPress: () => void }) {
   const c = useColors()
   return (
-    <Pressable
-      accessibilityRole="checkbox"
+    <Casilla
+      label={label}
       accessibilityLabel={cantidad != null ? `${label}, ${mostrarNumero(cantidad)}` : label}
-      accessibilityState={{ checked: marcada }}
+      marcada={marcada}
       onPress={onPress}
-      android_ripple={{ color: c.border }}
-      style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: space[3] }}
-    >
-      <View
-        style={{
-          width: 24,
-          height: 24,
-          borderRadius: radii.campo / 2,
-          borderWidth: 2,
-          borderColor: marcada ? c.brand : c.border,
-          backgroundColor: marcada ? c.brand : 'transparent',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {marcada ? <Check size={14} color={c.onAction} strokeWidth={3} /> : null}
-      </View>
-      <Text numberOfLines={1} style={[typeScale.cuerpo, { flex: 1, color: c.text }]}>{label}</Text>
-      {cantidad != null ? <Text style={[typeScale.secundario, importe, { color: c.textSecondary }]}>{mostrarNumero(cantidad)}</Text> : null}
-    </Pressable>
+      detalle={cantidad != null ? <Text style={[typeScale.secundario, importe, { color: c.textSecondary }]}>{mostrarNumero(cantidad)}</Text> : null}
+    />
   )
 }
 
@@ -129,7 +111,7 @@ function Grupo({ titulo, opciones, elegidos, onAlternar }: { titulo: string; opc
     <View style={{ gap: space[1] }}>
       <Text style={[typeScale.etiqueta, { color: c.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>{titulo}</Text>
       {visibles.map((o) => (
-        <Casilla key={o.valor} label={o.label} cantidad={o.cantidad} marcada={elegidos.includes(o.valor)} onPress={() => onAlternar(o.valor)} />
+        <OpcionConConteo key={o.valor} label={o.label} cantidad={o.cantidad} marcada={elegidos.includes(o.valor)} onPress={() => onAlternar(o.valor)} />
       ))}
       {opciones.length > LIMITE_VISIBLE ? (
         <Pressable accessibilityRole="button" onPress={() => setTodas((v) => !v)} style={{ minHeight: 44, justifyContent: 'center' }}>
@@ -210,8 +192,8 @@ export function HojaDeFiltros({ visible, onCerrar, resumen, filtros, onCambiar }
         <Grupo titulo="Línea" opciones={lineas} elegidos={filtros.linea ? [filtros.linea.id] : []} onAlternar={alternarLinea} />
         <Grupo titulo="Marca" opciones={marcas} elegidos={filtros.marca ? [filtros.marca.clave] : []} onAlternar={alternarMarca} />
         <View style={{ borderTopWidth: 1, borderTopColor: c.border, paddingTop: space[2] }}>
-          <Casilla label="Solo sin peso" cantidad={resumen?.totales.sinPeso} marcada={filtros.sinPeso} onPress={() => onCambiar({ ...filtros, sinPeso: !filtros.sinPeso })} />
-          <Casilla label="Solo ocultos" marcada={filtros.soloOcultos} onPress={() => onCambiar({ ...filtros, soloOcultos: !filtros.soloOcultos })} />
+          <OpcionConConteo label="Solo sin peso" cantidad={resumen?.totales.sinPeso} marcada={filtros.sinPeso} onPress={() => onCambiar({ ...filtros, sinPeso: !filtros.sinPeso })} />
+          <OpcionConConteo label="Solo ocultos" marcada={filtros.soloOcultos} onPress={() => onCambiar({ ...filtros, soloOcultos: !filtros.soloOcultos })} />
         </View>
       </ScrollView>
       <Button label={articulos == null ? 'Ver artículos' : `Ver ${mostrarNumero(articulos)} artículos`} onPress={onCerrar} />

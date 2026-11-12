@@ -16,7 +16,7 @@ export function Progress({ value, max, accessibilityLabel, sobreBarra = false }:
   const c = useColors()
   const oscuro = useIsDark()
   const proporcion = max > 0 ? Math.min(1, Math.max(0, value / max)) : 0
-  const pista = sobreBarra && !oscuro ? c.textSecondary : c.border
+  const pista = sobreBarra && !oscuro ? c.textSecondary : c.borderStrong
   return (
     <View
       accessibilityRole="progressbar"

@@ -107,13 +107,17 @@ async function devolverDos() {
   await userEvent.press(screen.getByLabelText('Sumar una de Aceite 900 ml'))
 }
 const seguirAlCobro = async () => userEvent.press(await screen.findByLabelText('Seguir con el cobro'))
+/** "Continuar" → "¿Sumar otro cobro?" → Sí: la única vía para sumar otro pago (no hay botón dentro del cobro). */
+async function sumarOtroCobro() {
+  await userEvent.press(continuar())
+  await userEvent.press(await screen.findByLabelText('Sí'))
+}
 /** Un pago: la primera vez se elige el medio directo; las siguientes, con "Sumar otro pago". */
 async function sumarPago(medio: string, monto: string, n = 1) {
-  if (n > 1) await userEvent.press(screen.getByLabelText('Sumar otro pago'))
+  if (n > 1) await sumarOtroCobro()
   await userEvent.press(screen.getByLabelText(medio))
   await userEvent.type(screen.getByLabelText(`Monto del cobro ${n}`), monto)
 }
-const CHEQUE_VACIO = { numero: '', banco: '', titular: '', emision: '', pago: '' }
 const deshabilitado =(el: { props: { accessibilityState?: { disabled?: boolean } } }) => el.props.accessibilityState?.disabled === true
 
 beforeEach(() => {
@@ -304,7 +308,7 @@ describe('E3 Cobro mixto', () => {
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
     const esperado = armarEntrega(
       { receptor: 'Abel', observaciones: '', remitoUrl: null, devolucion: {},
-        lineas: [{ medio: MEDIOS[0] as never, monto: '600', fotoUrl: null, cheque: CHEQUE_VACIO }] },
+        lineas: [{ medio: MEDIOS[0] as never, monto: '600', fotoUrl: null }] },
       { exigeFotoRemito: false, disponibles: { d1: 6 } },
     )
     if (!('entrega' in esperado)) throw new Error(esperado.error)
@@ -335,7 +339,7 @@ describe('E3 Cobro mixto', () => {
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
     const esperado = armarEntrega(
       { receptor: 'Abel', observaciones: '', remitoUrl: null, devolucion: {},
-        lineas: [{ medio: MEDIOS[0] as never, monto: '1500', fotoUrl: null, cheque: CHEQUE_VACIO }] },
+        lineas: [{ medio: MEDIOS[0] as never, monto: '1500', fotoUrl: null }] },
       { exigeFotoRemito: false, disponibles: { d1: 6 } },
     )
     if (!('entrega' in esperado)) throw new Error(esperado.error)
@@ -371,7 +375,7 @@ describe('E3 Cobro mixto', () => {
     await abrir()
     await hastaElCobro()
     await sumarPago('Efectivo', '400')
-    await userEvent.press(screen.getByLabelText('Sumar otro pago'))
+    await sumarOtroCobro()
     expect(within(screen.getByLabelText('Sumar otro pago')).getByLabelText('Efectivo')).toBeTruthy()
     expect(screen.queryByLabelText('No paga')).toBeNull()
   })
@@ -434,8 +438,8 @@ describe('E3 Cobro mixto', () => {
     await sumarPago('Transferencia', '1000')
     expect(deshabilitado(continuar())).toBe(true)
     expect(screen.getByText('Falta la foto del comprobante de la transferencia (cobro 1).')).toBeTruthy()
-    await sacarFoto('Sacar foto del comprobante del cobro 1')
-    await screen.findByText('Foto del comprobante del cobro 1 cargada')
+    await sacarFoto('Sacar foto del comprobante')
+    await screen.findByText('Foto del comprobante cargada')
     expect(deshabilitado(continuar())).toBe(false)
   })
 
@@ -459,8 +463,8 @@ describe('7.1 ¿Sumar otro cobro?', () => {
     expect(await screen.findByText('Sumar otro pago')).toBeTruthy()
     await userEvent.press(screen.getByLabelText('Transferencia'))
     await userEvent.type(screen.getByLabelText('Monto del cobro 2'), '600')
-    await sacarFoto('Sacar foto del comprobante del cobro 2')
-    await screen.findByText('Foto del comprobante del cobro 2 cargada')
+    await sacarFoto('Sacar foto del comprobante')
+    await screen.findByText('Foto del comprobante cargada')
     await userEvent.press(continuar())
     expect(await screen.findByText('¿Sumar otro cobro?')).toBeTruthy()
     await userEvent.press(screen.getByLabelText('No'))
@@ -564,20 +568,19 @@ describe('E6 Confirmar entrega', () => {
     await seguirAlCobro()
     await sumarPago('Efectivo', '700')
     await sumarPago('Transferencia', '100', 2)
-    await sacarFoto('Sacar foto del comprobante del cobro 2')
-    await screen.findByText('Foto del comprobante del cobro 2 cargada')
+    await sacarFoto('Sacar foto del comprobante')
+    await screen.findByText('Foto del comprobante cargada')
     await aConfirmar('Abel', { cobro: true })
     await fotoDelRemitoFirmado()
     await confirmarEntrega()
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
 
-    const cheque = { numero: '', banco: '', titular: '', emision: '', pago: '' }
     const esperado = armarEntrega(
       {
         receptor: 'Abel', observaciones: '', remitoUrl: 'https://r2.test/entregas/up-2.jpg', devolucion: { d1: '2' },
         lineas: [
-          { medio: MEDIOS[0] as never, monto: '700', fotoUrl: null, cheque },
-          { medio: MEDIOS[1] as never, monto: '100', fotoUrl: 'https://r2.test/entregas/up-1.jpg', cheque },
+          { medio: MEDIOS[0] as never, monto: '700', fotoUrl: null },
+          { medio: MEDIOS[1] as never, monto: '100', fotoUrl: 'https://r2.test/entregas/up-1.jpg' },
         ],
       },
       { exigeFotoRemito: false, disponibles: { d1: 6 } },

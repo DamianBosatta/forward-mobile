@@ -101,13 +101,17 @@ async function devolverDos() {
   await userEvent.press(await screen.findByLabelText('Sumar una de Aceite 900 ml'))
   await userEvent.press(screen.getByLabelText('Sumar una de Aceite 900 ml'))
 }
+/** "Continuar" → "¿Sumar otro cobro?" → Sí: la única vía para sumar otro pago (no hay botón dentro del cobro). */
+async function sumarOtroCobro() {
+  await userEvent.press(continuar())
+  await userEvent.press(await screen.findByLabelText('Sí'))
+}
 /** Un pago: la primera vez se elige el medio directo; las siguientes, con "Sumar otro pago". */
 async function sumarPago(medio: string, monto: string, n = 1) {
-  if (n > 1) await userEvent.press(screen.getByLabelText('Sumar otro pago'))
+  if (n > 1) await sumarOtroCobro()
   await userEvent.press(screen.getByLabelText(medio))
   await userEvent.type(screen.getByLabelText(`Monto del cobro ${n}`), monto)
 }
-const CHEQUE_VACIO = { numero: '', banco: '', titular: '', emision: '', pago: '' }
 const deshabilitado =(el: { props: { accessibilityState?: { disabled?: boolean } } }) => el.props.accessibilityState?.disabled === true
 
 beforeEach(() => {
@@ -185,7 +189,7 @@ describe('S13 formas de pago', () => {
     await abrir()
     await hastaElCobro()
     await sumarPago('Efectivo', '400')
-    await userEvent.press(screen.getByLabelText('Sumar otro pago'))
+    await sumarOtroCobro()
     expect(screen.getAllByRole('radio').map((r) => r.props.accessibilityLabel)).toEqual(MEDIOS_DEL_CHOFER)
   })
   it('No paga no manda cobro ni firma: la foto del remito firmado viaja como evidencia', async () => {
@@ -248,7 +252,7 @@ describe('S13b un solo Transferencia aunque el servidor mande dos', () => {
     await abrir()
     await hastaElCobro()
     await sumarPago('Efectivo', '400')
-    await userEvent.press(screen.getByLabelText('Sumar otro pago'))
+    await sumarOtroCobro()
     expect(titulos()).toEqual(MEDIOS_DEL_CHOFER)
   })
   it('el pago viaja con el id de Transferencia bancaria, la tarjeta dice Transferencia y pide la foto', async () => {
@@ -261,7 +265,7 @@ describe('S13b un solo Transferencia aunque el servidor mande dos', () => {
     expect(within(screen.getByLabelText('Medio del cobro 1')).getByText('Transferencia')).toBeTruthy()
     expect(deshabilitado(continuar())).toBe(true)
     expect(screen.getByText('Falta la foto del comprobante de la transferencia (cobro 1).')).toBeTruthy()
-    await sacarFoto('Sacar foto del comprobante del cobro 1')
+    await sacarFoto('Sacar foto del comprobante')
     await aConfirmar('Abel', { cobro: true })
     await confirmarEntrega()
     await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))

@@ -34,7 +34,7 @@ export function DepositoDelTablero({ nombre, asignado, onElegir, etiqueta, testI
       {onElegir ? <ChevronDown size={18} color={c.textSecondary} /> : null}
     </>
   )
-  const estilo = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space[2], minHeight: 44, paddingHorizontal: space[3], paddingVertical: etiqueta ? space[2] : 0, borderRadius: radii.campo, borderWidth: 1, borderColor: c.border, backgroundColor: onElegir ? c.surface : c.surface2 }
+  const estilo = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space[2], minHeight: 44, paddingHorizontal: space[3], paddingVertical: etiqueta ? space[2] : 0, borderRadius: radii.campo, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: onElegir ? c.surface : c.surface2 }
   if (onElegir) {
     return (
       <Pressable testID={testID} onPress={onElegir} android_ripple={{ color: c.surface2 }} accessibilityRole="button" accessibilityLabel={`Depósito: ${nombre}`} accessibilityHint="Elegí qué depósito mirar" style={estilo}>

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { Check } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, Notice, StatusChip, TopBar, chipForEstado, formatImporte, pesoSemibold } from '@/core/ui/fw'
 import { useAsignarFotoFacturaCompra, useCompra, useConfirmarCompra, useGuardarComprobanteCompra, type CompraFaltante } from '@/libs/api-client/compras'
 import { useSocio } from '@/libs/api-client/socios'
@@ -34,6 +34,7 @@ interface Props {
  */
 export function CompraGuardadaPantalla({ id, aviso }: Props) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const insets = useSafeAreaInsets()
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -138,7 +139,7 @@ export function CompraGuardadaPantalla({ id, aviso }: Props) {
     <View testID="compra-guardada" style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Compra guardada" />
       <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: insets.bottom + space[6], gap: space[4] }}>
-        <View style={{ padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, gap: space[2] }}>
+        <View style={{ padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, ...sombra, gap: space[2] }}>
           <View style={{ alignItems: 'center', gap: space[1], paddingBottom: space[2] }}>
             <View style={{ width: 56, height: 56, borderRadius: radii.pastilla, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
               <Check size={30} color={c.onAction} strokeWidth={2.5} />

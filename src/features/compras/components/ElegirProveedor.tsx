@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
 import { Lock } from 'lucide-react-native'
 import { Button, Field, FormContainer, Notice, PieFijo, formatImporte } from '@/core/ui/fw'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { useSocio, useSocios } from '@/libs/api-client/socios'
 import { useInfiniteCompras } from '@/libs/api-client/compras'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -52,6 +52,7 @@ function recientesDe(compras: readonly { id: string; numero?: number | null; pro
  */
 export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const [busqueda, setBusqueda] = useState('')
   const [enviada, setEnviada] = useState('')
   const [elegido, setElegido] = useState<string | null>(null)
@@ -103,7 +104,7 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
     )
   }
   const tarjeta = (filas: React.ReactNode) => (
-    <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, overflow: 'hidden' }}>{filas}</View>
+    <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface, overflow: 'hidden' }}>{filas}</View>
   )
   const dato = (k: string, v: string | null) => (
     <View accessible accessibilityLabel={`${k}: ${v ?? '—'}`} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[3], paddingVertical: space[1] }}>
@@ -161,7 +162,7 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
               <Notice tone="advertencia" title={`A ${ficha.data?.razonSocial ?? 'este proveedor'} le falta ${faltaElegido.join(' y ')}.`}>Completalo en la web para poder comprarle.</Notice>
             ) : (
               // TODO API: las condiciones editables no existen en el servidor; las condiciones van de solo lectura.
-              <View style={{ gap: space[1], padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
+              <View style={{ gap: space[1], padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }}>
                 <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>Condiciones del proveedor</Text>
                 {dato('Plazo de pago', condicion)}
                 {dato('Franja horaria', franja)}

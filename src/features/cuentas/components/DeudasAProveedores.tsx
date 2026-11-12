@@ -1,7 +1,7 @@
 import React from 'react'
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Notice, formatImporte } from '@/core/ui/fw'
+import { Notice, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { HeroSaldo } from '@/features/clientes/components/SaldoDelCliente'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
@@ -22,6 +22,7 @@ const DEBO_CARGANDO = [{ alto: 96, radio: radii.hoja, testID: 'esqueleto-hero' }
  * fila lleva "Pagar", que abre el pago a ese proveedor (`onPagar`). Pedirla solo con MOD_PAGOS:Read.
  */
 export function DeudasAProveedores({ onPagar }: { onPagar?: (socioId: string) => void }) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const q = useDeudasProveedores(true)
   const pagar = usePuedeCobrar() ? onPagar : undefined
@@ -51,7 +52,7 @@ export function DeudasAProveedores({ onPagar }: { onPagar?: (socioId: string) =>
         renderItem={({ item, index }) => (
           <FilaDeDeuda deuda={item} primera={index === 0} ultima={index === filas.length - 1} onPagar={pagar ? () => pagar(item.socioId) : undefined} />
         )}
-        contentContainerStyle={{ paddingTop: space[3], paddingBottom: space[6] }}
+        contentContainerStyle={{ paddingTop: space[3], paddingBottom: space[6] + insetInferior }}
         onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) void q.fetchNextPage() }}
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => { void q.refetch() }} tintColor={c.brandInk} />}
@@ -109,7 +110,7 @@ function FilaDeDeuda({ deuda, primera, ultima, onPagar }: { deuda: DeudaProveedo
           accessibilityLabel={`Pagar a ${deuda.razonSocial}`}
           onPress={onPagar}
           android_ripple={{ color: c.border }}
-          style={{ alignSelf: 'flex-start', minHeight: 44, minWidth: 88, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.border }}
+          style={{ alignSelf: 'flex-start', minHeight: 44, minWidth: 88, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.borderStrong }}
         >
           <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Pagar</Text>
         </Pressable>

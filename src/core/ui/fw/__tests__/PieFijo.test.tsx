@@ -2,6 +2,7 @@ import React from 'react'
 import { Keyboard, Text, View } from 'react-native'
 import { act, fireEvent, render, screen } from '@testing-library/react-native'
 import { PieFijo } from '../PieFijo'
+import { SobreBarraInferiorProvider } from '../insetInferior'
 import { espacioBajoTeclado, paddingInferiorDelPie } from '../espacioTeclado'
 import { TEMAS, conTema, estilo } from '../__testing__/tema'
 
@@ -59,14 +60,25 @@ describe.each(TEMAS)('PieFijo (%s)', (tema) => {
   const cerrar = (o: Record<string, (e: unknown) => void>) =>
     act(() => { (o.keyboardDidHide ?? o.keyboardWillHide)({}) })
 
-  it('cerrado: el contenido se ve y con conInsetInferior suma la barra del sistema', () => {
-    montar({ conInsetInferior: true })
+  it('cerrado: por defecto suma la barra del sistema', () => {
+    montar()
     expect(screen.getByText('Confirmar')).toBeTruthy()
     expect(estilo(screen.getByTestId('pie-contenido')).paddingBottom).toBe(16 + 34)
   })
 
+  it('sinInsetInferior: queda solo con su relleno', () => {
+    montar({ sinInsetInferior: true })
+    expect(estilo(screen.getByTestId('pie-contenido')).paddingBottom).toBe(16)
+  })
+
+  it('dentro de ConAccesosRapidos (BottomBar debajo) no suma la barra del sistema dos veces', () => {
+    jest.spyOn(Keyboard, 'addListener').mockImplementation((() => ({ remove: () => {} })) as never)
+    render(<SobreBarraInferiorProvider><PieFijo testID="pie"><Text>Confirmar</Text></PieFijo></SobreBarraInferiorProvider>)
+    expect(estilo(screen.getByTestId('pie-contenido')).paddingBottom).toBe(16)
+  })
+
   it('abierto: saca el inset y deja el pie sobre el teclado', () => {
-    const o = montar({ conInsetInferior: true })
+    const o = montar()
     abrir(o, 2000)
     expect(estilo(screen.getByTestId('pie-contenido')).paddingBottom).toBe(16)
     cerrar(o)
@@ -87,7 +99,7 @@ describe.each(TEMAS)('PieFijo (%s)', (tema) => {
 
   it('abierto y sin achicarse la ventana: sube el pie lo que tapa el teclado; si la ventana ya se achicó, no suma', () => {
     const medir = parchearMedicion()
-    const o = montar({ conInsetInferior: true })
+    const o = montar()
     abrir(o, 2200)
     expect(estilo(screen.getByTestId('pie-contenido')).paddingBottom).toBe(16 + 800)
     medir.mockImplementation((cb) => cb(0, 0, 1000, 100, 0, 2000))

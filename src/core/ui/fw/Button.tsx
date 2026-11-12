@@ -24,10 +24,10 @@ interface ButtonProps {
 }
 
 function paleta(c: ForwardColors, variant: ButtonVariant, inactivo: boolean, xl: boolean) {
-  if (inactivo) return { fondo: c.surface2, texto: c.textSecondary, borde: c.surface2 }
+  if (inactivo) return { fondo: c.surface2, texto: c.textSecondary, borde: c.borderStrong }
   if (variant === 'peligro') return { fondo: c.dangerStrong, texto: c.onDangerStrong, borde: c.dangerStrong }
   if (variant === 'peligroContorno') return { fondo: c.surface, texto: c.chip.anulado.text, borde: c.chip.anulado.text }
-  if (variant === 'secundario') return { fondo: c.surface, texto: c.text, borde: xl ? c.textSecondary : c.border }
+  if (variant === 'secundario') return { fondo: c.surface, texto: c.text, borde: xl ? c.textSecondary : c.borderStrong }
   return { fondo: c.action, texto: c.onAction, borde: c.action }
 }
 
@@ -71,6 +71,7 @@ export function Button({
         borderRadius: xl ? radii.tarjeta : radii.campo,
         borderWidth: xl ? 2 : 1,
         borderColor: p.borde,
+        borderStyle: disabled ? 'dashed' : 'solid',
         backgroundColor: p.fondo,
         alignItems: 'center',
         justifyContent: 'center',

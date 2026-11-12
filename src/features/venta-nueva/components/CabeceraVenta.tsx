@@ -1,6 +1,6 @@
 import React from 'react'
 import { Text, View } from 'react-native'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, Field, Notice, Segmented, type SegmentedOption } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
 import { direccionDeEntrega, nombreDelCliente, textoCondicionPago, type ClienteNombrable } from '@/features/clientes/lib/cliente'
@@ -20,6 +20,7 @@ interface Props { cliente: ClienteNombrable & { id: string }; cab: CabeceraVenta
 /** Entrega de la revisión (mockup ventas-nueva-3-revisar), en línea: cliente, fecha, logística, flete, observaciones y cesión de comisión. */
 export function CabeceraVenta({ cliente, cab }: Props) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const socio = useSocio(cliente.id)
   const { metodoEntrega, fecha } = cab.cabecera
   // Crédito disponible (ficha del cliente, forward-system #882): solo si el servidor lo manda (null sin tope)
@@ -40,7 +41,7 @@ export function CabeceraVenta({ cliente, cab }: Props) {
         <Text style={{ ...typeScale.cuerpo, color: c.text }}>{socio.data ? textoCondicionPago(socio.data.condicionPago) : 'Cargando…'}</Text>
         {disponible !== null ? <Fila etiqueta="Crédito disponible" valor={textoDisponible(disponible)} alerta={disponible < 0} /> : null}
       </View>
-      <View style={{ gap: space[4], padding: space[3], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
+      <View style={{ gap: space[4], padding: space[3], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }}>
       {titulo('Entrega')}
       {metodoEntrega !== METODO_ENTREGA.RetiroEnLocal ? (
         <View style={{ gap: space[2] }}>

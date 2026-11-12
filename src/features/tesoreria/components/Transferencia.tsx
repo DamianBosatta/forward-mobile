@@ -4,7 +4,7 @@ import { ArrowDown, Check } from 'lucide-react-native'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
-import { Button, Field, FormContainer, Notice, PieFijo, formatImporte } from '@/core/ui/fw'
+import { Button, Field, FormContainer, Notice, PieFijo, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
@@ -126,7 +126,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
               <View
                 importantForAccessibility="no-hide-descendants"
                 accessibilityElementsHidden
-                style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface, borderWidth: 1, borderColor: c.border }}
+                style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface, borderWidth: 1, borderColor: c.borderStrong }}
               >
                 <ArrowDown size={16} color={c.textSecondary} strokeWidth={2} />
               </View>
@@ -155,7 +155,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
         </FormContainer>
       </ScrollView>
       {/* Acción primaria fija abajo; el aviso de qué falta y el error quedan arriba, a la vista del botón (frame 12). */}
-      <PieFijo conInsetInferior>
+      <PieFijo>
         {aviso || registrar.error ? (
           <View testID="pie-avisos" style={{ gap: space[2] }}>
             {aviso ? <Notice tone="advertencia">{aviso}</Notice> : null}
@@ -171,10 +171,11 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
 
 /** Movimiento registrado (frame 13, como "Venta guardada"): ícono grande, título y explicación; "Volver" en el pie. */
 function MovimientoRegistrado({ onVolver }: { onVolver: () => void }) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ padding: space[4], paddingTop: space[12], alignItems: 'center', gap: space[3] }}>
+      <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior, paddingTop: space[12], alignItems: 'center', gap: space[3] }}>
         <View
           testID="listo-icono"
           accessibilityElementsHidden
@@ -186,7 +187,7 @@ function MovimientoRegistrado({ onVolver }: { onVolver: () => void }) {
         <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text, textAlign: 'center' }}>Movimiento registrado</Text>
         <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>Los saldos de las cuentas ya están actualizados.</Text>
       </ScrollView>
-      <PieFijo conInsetInferior>
+      <PieFijo>
         <Button label="Volver" onPress={onVolver} />
       </PieFijo>
     </View>

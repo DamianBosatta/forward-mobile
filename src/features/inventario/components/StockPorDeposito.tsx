@@ -1,7 +1,7 @@
 import React from 'react'
 import { ActivityIndicator, FlatList, ScrollView, View } from 'react-native'
 import { radii, space, useColors } from '@/libs/theme'
-import { Notice, StatusChip } from '@/core/ui/fw'
+import { Notice, StatusChip, useInsetInferior } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
@@ -49,6 +49,7 @@ function Esqueletos({ columnas }: { columnas: number }) {
 
 /** Sin CAP_VER_CANTIDADES_STOCK (lámina 7): el catálogo de hoy, en tarjetas con solo "Hay stock / Sin stock" del servidor. */
 function StockSinCantidades({ busqueda, columnas }: { busqueda: string; columnas: number }) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const cat = useProductosDeStockConsulta()
   const { setBusqueda } = cat
@@ -66,7 +67,7 @@ function StockSinCantidades({ busqueda, columnas }: { busqueda: string; columnas
       keyExtractor={(b) => b.key}
       onEndReached={cat.cargarMas}
       onEndReachedThreshold={0.5}
-      contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] }}
+      contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] + insetInferior }}
       ListHeaderComponent={
         <View style={{ gap: space[2] }}>
           {sinRed ? <Notice tone="advertencia">{textoSinConexion(cat.dataUpdatedAt)}</Notice> : null}
@@ -99,6 +100,7 @@ function StockSinCantidades({ busqueda, columnas }: { busqueda: string; columnas
 }
 
 function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: boolean }) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const veCostos = hasCapability(useAuthStore((st) => st.user?.permissions), 'CAP_VER_COSTOS')
   const s = useStockPorDeposito({ conCantidades: true, busqueda })
@@ -137,7 +139,7 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
   return (
     <View style={{ flex: 1 }}>
       {s.depositos.length > 1 || (s.puedeVerTodos && s.depositos.length > 0) ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }} style={{ flexGrow: 0 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }} style={{ flexGrow: 0, flexShrink: 0 }}>
           {s.puedeVerTodos ? <FiltroChip label="Todos los depósitos" activo={s.depositoId === TODOS_LOS_DEPOSITOS} onPress={() => s.setDeposito(TODOS_LOS_DEPOSITOS)} /> : null}
           {s.depositos.map((d) => (
             <FiltroChip key={d.id} label={d.nombre} activo={d.id === s.depositoId} onPress={() => s.setDeposito(d.id)} />
@@ -163,7 +165,7 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
           keyExtractor={(b) => b.key}
           onEndReached={s.cargarMas}
           onEndReachedThreshold={0.5}
-          contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] }}
+          contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] + insetInferior }}
           ListHeaderComponent={
             <>
               {sinRed ? <Notice tone="advertencia">{textoSinConexion(s.dataUpdatedAt || undefined)}</Notice> : null}

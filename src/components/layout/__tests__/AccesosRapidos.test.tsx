@@ -7,6 +7,7 @@ import React from 'react'
 import { Text } from 'react-native'
 import { render, screen, userEvent } from '@testing-library/react-native'
 import { ConAccesosRapidos } from '../AccesosRapidos'
+import { PieFijo } from '@/core/ui/fw'
 
 const mockPush = jest.fn()
 const mockDispatch = jest.fn()
@@ -20,7 +21,7 @@ jest.mock('expo-router/react-navigation', () => ({
   DrawerActions: { openDrawer: () => ({ type: 'OPEN_DRAWER' }) },
 }))
 jest.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  useSafeAreaInsets: () => ({ top: 0, bottom: 34, left: 0, right: 0 }),
 }))
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   __esModule: true,
@@ -41,6 +42,27 @@ const pantalla = (activa: 'inicio' | 'ventas' | 'compras' = 'inicio') =>
   )
 
 const nombresDeLaBarra = () => screen.getAllByRole('button').map((b) => b.props.accessibilityLabel)
+
+describe('ConAccesosRapidos y la barra del sistema', () => {
+  const conPie = () =>
+    render(
+      <ConAccesosRapidos activa="inicio">
+        <PieFijo testID="pie"><Text>Guardar</Text></PieFijo>
+      </ConAccesosRapidos>,
+    )
+  it('en teléfono la barra inferior absorbe el inset: el pie de adentro no lo suma otra vez', () => {
+    conAncho(390)
+    conPermisos(...VENDEDOR)
+    conPie()
+    expect(screen.getByTestId('pie-contenido').props.style.paddingBottom).toBe(16)
+  })
+  it('en tablet no hay barra: el pie suma el inset', () => {
+    conAncho(1194)
+    conPermisos(...VENDEDOR)
+    conPie()
+    expect(screen.getByTestId('pie-contenido').props.style.paddingBottom).toBe(16 + 34)
+  })
+})
 
 describe('ConAccesosRapidos', () => {
   beforeEach(() => {

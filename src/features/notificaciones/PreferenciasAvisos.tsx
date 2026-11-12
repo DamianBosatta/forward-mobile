@@ -3,7 +3,7 @@ import { ScrollView, Switch, Text, View } from 'react-native'
 import { Lock } from 'lucide-react-native'
 import { useRouter } from 'expo-router'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { FilaInterruptor, FormContainer, Notice, TopBar } from '@/core/ui/fw'
+import { FilaInterruptor, FormContainer, Notice, TopBar, useInsetInferior } from '@/core/ui/fw'
 import { useActualizarPreferenciasAvisos, usePreferenciasAvisos, type PreferenciaAviso } from '@/libs/api-client/notificaciones'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { GRUPOS_DE_AVISOS, avisoDeTipo, grupoDeTipo } from './avisos'
@@ -15,6 +15,7 @@ const mensajeDe = (e: unknown, porDefecto: string) => (e instanceof Error && e.m
  * tiene push todavía (BACKLOG-9B), así que acá solo se edita.
  */
 export function PreferenciasAvisos() {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const q = usePreferenciasAvisos()
@@ -51,7 +52,7 @@ export function PreferenciasAvisos() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Preferencias de avisos" leading={{ kind: 'atras', onPress: () => router.back() }} />
-      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] }}>
+      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] + insetInferior }}>
         <FormContainer style={{ gap: space[3] }}>
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
             Todos los avisos quedan en la bandeja. Elegí cuáles saltan apenas llegan en la web; en el teléfono se ven en la bandeja y en el número del menú.
@@ -102,7 +103,7 @@ function FilaCritica({ titulo, conDivisor }: { titulo: string; conDivisor: boole
         </View>
       </View>
       <View testID="interruptor-atenuado" pointerEvents="none" style={{ opacity: 0.5 }}>
-        <Switch value disabled trackColor={{ false: c.border, true: c.action }} thumbColor={c.onAction} />
+        <Switch value disabled trackColor={{ false: c.borderStrong, true: c.action }} thumbColor={c.onAction} />
       </View>
     </View>
   )

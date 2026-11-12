@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { FlatList, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Button, Notice, StatusChip, TopBar, TotalsRow, TwoPane, formatImporte, useMenuLeading } from '@/core/ui/fw'
+import { Button, FiltroChip, Notice, StatusChip, TopBar, TotalsRow, TwoPane, formatImporte, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { usePendientesAutorizacion, type VentaPendienteAutorizacion } from '@/libs/api-client/ventas'
@@ -13,7 +13,6 @@ import { esFallaDeRed } from '@/core/api/errores'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { filtrosConConteo, motivosDe, pideRazon, tieneMotivo, type ClaveMotivo } from '../lib/motivos'
 import { DecisionSheet, type Decision } from './DecisionSheet'
-import { ChipDeFiltro } from './ChipDeFiltro'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { HeroSaldo } from '@/features/clientes/components/SaldoDelCliente'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
@@ -65,6 +64,7 @@ interface Props {
 
 /** Bandeja de autorizaciones (láminas Autorizaciones y TabAutorizaciones; propuesta "Finanzas como venta", frames 16 a 18). */
 export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const leading = useMenuLeading()
@@ -110,7 +110,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
       )}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" accessibilityLabel="Motivo" contentContainerStyle={{ gap: space[2] }}>
         {filtrosConConteo(lista).map((f) => (
-          <ChipDeFiltro
+          <FiltroChip
             key={f.clave}
             rol="radio"
             label={`${f.label} · ${f.cantidad}`}
@@ -166,7 +166,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
       data={visibles}
       keyExtractor={(v) => v.id}
       ListHeaderComponent={encabezado}
-      contentContainerStyle={{ padding: space[4], paddingBottom: space[12] }}
+      contentContainerStyle={{ padding: space[4], paddingBottom: space[12] + insetInferior }}
       renderItem={({ item }) => tarjeta(item)}
       refreshing={q.isRefetching}
       onRefresh={() => { setAviso(null); void q.refetch() }}

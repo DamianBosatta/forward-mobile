@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { ScrollView, Text, TextInput, View } from 'react-native'
-import { Check } from 'lucide-react-native'
-import { Button, Field, Notice, PieFijo, TopBar, formatImporte } from '@/core/ui/fw'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+
+import { Button, Field, MarcaDeCasilla, Notice, PieFijo, TopBar, formatImporte } from '@/core/ui/fw'
+import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { useAsignarFotoFacturaCompra, useRecibirCompra, type CompraFaltante } from '@/libs/api-client/compras'
 import { useSocio } from '@/libs/api-client/socios'
@@ -55,6 +55,7 @@ const empaqueTexto = (d: Detalle) => {
  */
 export function RecibirCompra({ compra, onVolver, onHecho, onConflicto }: Props) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   const { isTablet } = useResponsive()
   const recibir = useRecibirCompra()
   const asignarFoto = useAsignarFotoFacturaCompra()
@@ -137,10 +138,7 @@ export function RecibirCompra({ compra, onVolver, onHecho, onConflicto }: Props)
     // Como la marca de la venta: tildada si llegó algo; vacía si no, y en rojo si falta corregirla.
     return (
       <View key={d.id} accessible style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[3], paddingVertical: space[3], borderTopWidth: 1, borderTopColor: c.border }}>
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
-          style={{ width: 24, height: 24, marginTop: space[1], borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: llegoAlgo ? 0 : 2, borderColor: falla ? c.danger : c.border, backgroundColor: llegoAlgo ? c.action : 'transparent' }}>
-          {llegoAlgo ? <Check size={14} color={c.onAction} strokeWidth={3} /> : null}
-        </View>
+        <View style={{ marginTop: space[1] }}><MarcaDeCasilla marcada={llegoAlgo} error={!!falla} /></View>
         <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
           <ProductoIdentidad nombre={d.nombreProducto} marca={d.marca} codigo={d.codigoPropio} />
           <Text style={secundario}>{`Pedidas ${mostrarNumero(d.cantidad)}${empaque ? ` · ${empaque}` : ''}`}</Text>
@@ -151,7 +149,7 @@ export function RecibirCompra({ compra, onVolver, onHecho, onConflicto }: Props)
     )
   }
 
-  const tarjeta = { gap: space[2], padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }
+  const tarjeta = { gap: space[2], padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>

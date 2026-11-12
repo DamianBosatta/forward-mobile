@@ -127,7 +127,7 @@ export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = 
             accessibilityLabel="Llamar"
             accessibilityHint={direccion}
             onPress={llamar}
-            style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}
           >
             <Phone size={20} color={c.brandInk} />
           </Pressable>

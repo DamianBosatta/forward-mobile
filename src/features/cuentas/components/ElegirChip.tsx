@@ -1,7 +1,7 @@
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
-import { Check } from 'lucide-react-native'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { Text, View } from 'react-native'
+import { space, typeScale, useColors } from '@/libs/theme'
+import { FiltroChip } from '@/core/ui/fw'
 
 interface Props {
   titulo: string
@@ -19,31 +19,9 @@ export function ElegirChip({ titulo, opciones, valor, onCambio, tituloVisible = 
   const c = useColors()
   const chips = (
     <View accessibilityRole="radiogroup" accessibilityLabel={titulo} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
-      {opciones.map(o => {
-        const elegido = o.id === valor
-        return (
-          <Pressable
-            key={o.id}
-            accessibilityRole="radio"
-            accessibilityLabel={o.label}
-            accessibilityState={{ checked: elegido, selected: elegido }}
-            onPress={() => onCambio(o.id)}
-            style={{
-              minHeight: 44,
-              justifyContent: 'center',
-              ...(conTilde ? { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space[2] } : {}),
-              paddingHorizontal: space[4],
-              borderRadius: radii.pastilla,
-              backgroundColor: elegido ? c.brandSoft : c.surface2,
-              borderWidth: elegido ? 2 : 0,
-              borderColor: c.brand,
-            }}
-          >
-            {conTilde && elegido ? <View testID="chip-tilde"><Check size={18} color={c.brandInk} strokeWidth={2.5} /></View> : null}
-            <Text style={{ ...typeScale.secundario, color: elegido ? c.brandInk : c.text }}>{o.label}</Text>
-          </Pressable>
-        )
-      })}
+      {opciones.map(o => (
+        <FiltroChip key={o.id} rol="radio" label={o.label} activo={o.id === valor} conTilde={conTilde} onPress={() => onCambio(o.id)} />
+      ))}
     </View>
   )
   if (!tituloVisible) return chips

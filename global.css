@@ -6,12 +6,12 @@
    los valores salen de libs/theme.ts (themeColors). */
 @layer base {
   :root {
-    --color-bg: #fafafa;
+    --color-bg: #f2f4f3;
     --color-surface: #ffffff;
     --color-surface-2: #f0f0f0;
     --color-surface-3: #f0f0f0; /* legado: no hay superficie-3 */
-    --color-border: #e0e0e0;
-    --color-border-strong: #e0e0e0; /* legado: un solo gris de borde */
+    --color-border: #d3dbd9;
+    --color-border-strong: #7a8a87;
     --color-text: #141f1d;
     --color-text-muted: #556d68;
     --color-text-disabled: #556d68; /* legado: mismo contraste que el secundario */
@@ -31,7 +31,7 @@
     --color-surface-2: #151e1c;
     --color-surface-3: #151e1c;
     --color-border: #273432;
-    --color-border-strong: #273432;
+    --color-border-strong: #5e7370;
     --color-text: #edf2f1;
     --color-text-muted: #9dafab;
     --color-text-disabled: #9dafab;

@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { AppState, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from "expo-router/react-navigation"
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Search } from 'lucide-react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
@@ -10,7 +9,7 @@ import { puedeVerVentas } from '@/src/components/layout/menuModules'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client/types'
-import { StatusChip, TopBar, chipForEstado, formatImporte } from '@/core/ui/fw'
+import { StatusChip, TopBar, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { diaArgentina, msHastaProximaMedianocheArgentina, partesArgentina } from '@/core/utils/fecha'
 import { useHojasDeRuta } from '@/libs/api-client/logistica'
 import { DepositoSesion } from '@/features/deposito-sesion'
@@ -30,7 +29,7 @@ export function InicioScreen() {
   const c = useColors()
   const router = useRouter()
   const navigation = useNavigation()
-  const insets = useSafeAreaInsets()
+  const insetInferior = useInsetInferior()
   const { width } = useResponsive()
   const tablet = width >= 600
   const { user, canDo } = useAuthStore()
@@ -116,7 +115,7 @@ export function InicioScreen() {
       />
       <ScrollView
         testID="inicio-scroll"
-        contentContainerStyle={{ paddingTop: space[4], gap: space[4], paddingBottom: (tablet ? insets.bottom : 0) + space[4] }}
+        contentContainerStyle={{ paddingTop: space[4], gap: space[4], paddingBottom: insetInferior + space[4] }}
         refreshControl={<RefreshControl refreshing={refrescando} onRefresh={refrescar} tintColor={c.brand} />}
       >
         {/* Depósito de la sesión (S8): solo con CAP_VER_TODOS_LOS_DEPOSITOS; sin ella no ocupa lugar. */}

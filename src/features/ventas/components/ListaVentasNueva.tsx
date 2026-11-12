@@ -4,8 +4,7 @@ import { useRouter } from 'expo-router'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import {
   Button, DocumentCard, Field, Notice, Segmented, StatusChip, TopBar, TwoPane, chipForEstado, useMenuLeading,
-  type SegmentedOption,
-} from '@/core/ui/fw'
+  type SegmentedOption, useInsetInferior } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
@@ -75,6 +74,7 @@ interface Props {
 
 /** Lista de ventas con el formato nuevo (láminas Ventas y TabVentas). Detrás del switch de la venta nueva. */
 export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
+  const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
   const leading = useMenuLeading()
@@ -172,7 +172,7 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
       sections={agruparPorDia(l.ventas, (v) => v.fecha)}
       keyExtractor={(v) => v.id}
       ListHeaderComponent={filtros}
-      contentContainerStyle={{ padding: space[4], paddingBottom: space[12] * 2 }}
+      contentContainerStyle={{ padding: space[4], paddingBottom: space[12] * 2 + insetInferior }}
       renderSectionHeader={({ section }) => (
         <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text, backgroundColor: c.bg, paddingVertical: space[2] }]}>{section.titulo}</Text>
       )}

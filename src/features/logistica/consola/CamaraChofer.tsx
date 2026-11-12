@@ -102,7 +102,7 @@ export function CamaraChofer({ visible, titulo, subtitulo, guia, onCerrar, onFot
   }
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onCerrar}>
+    <Modal visible={visible} animationType="slide" statusBarTranslucent navigationBarTranslucent onRequestClose={onCerrar}>
       <View accessibilityLabel="Cámara" style={{ flex: 1, backgroundColor: c.topBar, paddingTop: top, paddingBottom: bottom }}>
         <View style={{ height: 64, flexDirection: 'row', alignItems: 'center', gap: space[1], paddingHorizontal: space[1] }}>
           <Pressable accessibilityRole="button" accessibilityLabel="Cancelar la foto" onPress={onCerrar} style={estilos.boton}>

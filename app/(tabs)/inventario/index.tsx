@@ -7,7 +7,7 @@ import { useMutation } from '@tanstack/react-query'
 import { LayoutGrid, List, ScanBarcode } from 'lucide-react-native'
 import { FONT, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Notice, TopBar } from '@/core/ui/fw'
+import { Notice, TopBar, useInsetInferior } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed, TEXTO_SIN_CONEXION } from '@/core/api/errores'
@@ -33,6 +33,7 @@ function falloDelEscaneo(error: Error, codigo?: string): string {
 
 /** Catálogo, solo consulta (láminas CatalogoConsulta, FichaProducto y TabCatalogoConsulta). */
 function CatalogoConsulta() {
+  const insetInferior = useInsetInferior()
   const navigation = useNavigation()
   const router = useRouter()
   const c = useColors()
@@ -113,7 +114,7 @@ function CatalogoConsulta() {
           numColumns={columnas}
           keyExtractor={(p) => p.id}
           columnWrapperStyle={columnas > 1 ? { gap: space[3] } : undefined}
-          contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] }}
+          contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] + insetInferior }}
           onEndReached={cat.cargarMas}
           onEndReachedThreshold={0.5}
           ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan con la búsqueda." />}
@@ -203,6 +204,8 @@ function CatalogoConsulta() {
         visible={!dosPaneles && seleccion !== null}
         animationType="slide"
         onRequestClose={() => setSeleccion(null)}
+        statusBarTranslucent
+        navigationBarTranslucent
       >
         <View style={{ flex: 1, backgroundColor: c.bg }}>
           <TopBar title="Ficha de producto" leading={{ kind: 'atras', onPress: () => setSeleccion(null) }} />

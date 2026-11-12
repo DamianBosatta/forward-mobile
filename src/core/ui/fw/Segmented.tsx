@@ -1,5 +1,6 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
+import { Check } from 'lucide-react-native'
 import { radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 
 export interface SegmentedOption<T extends string> {
@@ -29,6 +30,8 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
         padding: space[1],
         backgroundColor: colors.surface2,
         borderRadius: radii.campo,
+        borderWidth: 1,
+        borderColor: colors.borderStrong,
       }}
     >
       {options.map((op) => {
@@ -44,16 +47,21 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
             accessibilityState={{ selected: elegido, checked: elegido }}
             style={{
               flexGrow: 1,
+              flexDirection: 'row',
+              gap: space[1],
               flexShrink: 0,
               minHeight: 44,
               borderRadius: radii.campo,
               alignItems: 'center',
               justifyContent: 'center',
               paddingHorizontal: space[1],
+              borderWidth: elegido ? 2 : 0,
+              borderColor: colors.brand,
               backgroundColor: elegido ? colors.surface : 'transparent',
               ...(elegido ? sombra : null),
             }}
           >
+            {elegido ? <Check size={16} color={colors.brandInk} strokeWidth={2.5} /> : null}
             <Text
               numberOfLines={1}
               style={{

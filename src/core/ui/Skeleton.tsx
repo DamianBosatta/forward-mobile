@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { View, StyleSheet, ViewStyle, Animated } from 'react-native'
-import { useIsDark } from '@/libs/theme'
+import { useColors } from '@/libs/theme'
 
 interface SkeletonProps {
   width?: number | string
@@ -13,7 +13,7 @@ interface SkeletonProps {
  * Componente Skeleton con animación de "shimmer" (pulso)
  */
 export const Skeleton = ({ width, height, borderRadius = 8, style }: SkeletonProps) => {
-  const isDark = useIsDark()
+  const c = useColors()
   const opacity = new Animated.Value(0.3)
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export const Skeleton = ({ width, height, borderRadius = 8, style }: SkeletonPro
           width: width as any,
           height: height as any,
           borderRadius,
-          backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+          backgroundColor: c.borderStrong,
           opacity,
         },
         style,

@@ -85,7 +85,7 @@ export function ProveedorCard({ proveedor, onPress, seleccionado = false, onNuev
           accessibilityLabel="Nueva compra"
           accessibilityHint={proveedor.razonSocial}
           onPress={onNuevaCompra}
-          style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}
+          style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}
         >
           <ShoppingCart size={20} color={c.brandInk} />
         </Pressable>

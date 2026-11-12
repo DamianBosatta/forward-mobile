@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { ChevronRight, type LucideIcon } from 'lucide-react-native'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 
 interface Props {
   title: string
@@ -21,6 +21,7 @@ interface Props {
  */
 export function FilaDeAccion({ title, subtitle, icon: Icono, disabled = false, agrupada = false, onPress }: Props) {
   const c = useColors()
+  const sombra = useSombraTarjeta()
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
@@ -34,7 +35,7 @@ export function FilaDeAccion({ title, subtitle, icon: Icono, disabled = false, a
         alignItems: 'center',
         gap: space[3],
         paddingHorizontal: space[4],
-        ...(agrupada ? {} : { borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }),
+        ...(agrupada ? {} : { borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }),
         opacity: disabled ? 0.55 : 1,
       }}
     >

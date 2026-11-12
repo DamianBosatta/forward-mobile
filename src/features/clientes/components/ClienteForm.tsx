@@ -15,6 +15,7 @@ import { sensiblesBloqueados } from '@/features/socios/lib/camposSensibles'
 import { useClienteForm } from '../hooks/useClienteForm'
 import { ERROR_UBICACION, direccionDeMiUbicacion } from '../lib/ubicacion'
 import { AVISO_CONDICION_PAGO } from './FichaCliente'
+import { HorarioEntregaEditor } from './HorarioEntregaEditor'
 import { Esqueletos, FORMULARIO_CARGANDO } from './Esqueletos'
 import { CONDICIONES_IVA, TIPOS_PAGO, textoCondicionPago } from '../lib/cliente'
 
@@ -48,7 +49,7 @@ export function ClienteForm({ id }: { id?: string }) {
     destino === 'vender'
       ? router.replace({ pathname: '/(tabs)/ventas/nueva', params: { clienteId: nuevoId } })
       : router.replace({ pathname: '/(tabs)/socios/[id]', params: { id: nuevoId } })
-  const { datos, cambiar, guardar, error, editando, puedeCambiarPago, cargando, guardando, errorDeCarga, reintentar, guardado } = useClienteForm(id, alGuardar)
+  const { datos, cambiar, guardar, error, intentoGuardar, editando, puedeCambiarPago, cargando, guardando, errorDeCarga, reintentar, guardado } = useClienteForm(id, alGuardar)
   // Misma regla que la web: dirección, razón social y CUIT los edita directo solo un administrador.
   const esAdmin = useAuthStore(s => s.isAdmin())
   const bloqueo = sensiblesBloqueados(esAdmin, editando, guardado)
@@ -115,6 +116,10 @@ export function ClienteForm({ id }: { id?: string }) {
                 ) : null}
                 {errorUbicacion ? <Notice tone="advertencia">{ERROR_UBICACION}</Notice> : null}
                 <CampoDeSocio label="Nombre del local" value={datos.nombreFantasia} onChangeText={v => cambiar('nombreFantasia', v)} />
+              </Grupo>
+
+              <Grupo titulo="Horario de entrega">
+                <HorarioEntregaEditor filas={datos.horario} onChange={v => cambiar('horario', v)} mostrarErrores={intentoGuardar} />
               </Grupo>
 
               <Grupo titulo="Datos fiscales">
