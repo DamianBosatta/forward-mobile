@@ -98,7 +98,7 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
               accessibilityRole="radio"
               accessibilityLabel={t.label}
               accessibilityState={{ checked: activo }}
-              style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: space[3], borderRadius: radii.campo, borderWidth: activo ? 2 : 1, borderColor: activo ? c.brand : c.border, backgroundColor: activo ? c.brandSoft : c.surface }}
+              style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: space[3], borderRadius: radii.campo, borderWidth: activo ? 2 : 1, borderColor: activo ? c.brand : c.borderStrong, backgroundColor: activo ? c.brandSoft : c.surface }}
             >
               <Text style={{ ...typeScale.cuerpoDestacado, color: activo ? c.brandInk : c.text }}>{t.label}</Text>
             </Pressable>

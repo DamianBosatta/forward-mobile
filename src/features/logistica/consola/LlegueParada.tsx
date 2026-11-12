@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'r
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Check, Phone, ScanLine } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, TopBar } from '@/core/ui/fw'
+import { Button, MarcaDeCasilla, TopBar } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import type { ParadaDto } from '@/libs/api-client/types'
 import { EscanearEtiqueta } from './EscanearEtiqueta'
@@ -118,20 +118,7 @@ function PiezaFila({ titulo, marcada, ultima, onPress }: { titulo: string; marca
       accessibilityState={{ checked: marcada }}
       style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], borderBottomWidth: ultima ? 0 : 1, borderBottomColor: c.border }}
     >
-      <View
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: radii.campo,
-          borderWidth: 3,
-          borderColor: marcada ? c.action : c.textSecondary,
-          backgroundColor: marcada ? c.action : c.surface,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {marcada ? <Check size={22} color={c.onAction} strokeWidth={3} /> : null}
-      </View>
+      <MarcaDeCasilla marcada={marcada} tamano={36} />
       <Text style={{ ...typeScale.seccion, color: c.text, flex: 1 }}>{titulo}</Text>
     </Pressable>
   )

@@ -1,5 +1,6 @@
 import React from 'react'
-import { Pressable, Text } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
+import { Check } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 
 interface FiltroChipProps {
@@ -21,14 +22,18 @@ export function FiltroChip({ label, activo, onPress, oscuro = false }: FiltroChi
       accessibilityState={{ selected: activo }}
       style={{
         minHeight: 44,
+        flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: space[3],
+        gap: space[1],
+        paddingHorizontal: space[3] - (activo && !oscuro ? 1 : 0),
         borderRadius: radii.pastilla,
-        borderWidth: 1,
-        borderColor: oscuro ? (activo ? c.action : c.topBarBorder) : activo ? c.brand : c.border,
+        borderWidth: activo && !oscuro ? 2 : 1,
+        borderColor: oscuro ? (activo ? c.action : c.topBarBorder) : activo ? c.brand : c.borderStrong,
         backgroundColor: oscuro ? (activo ? c.action : 'transparent') : activo ? c.brandSoft : c.surface,
       }}
     >
+      {activo && !oscuro ? <View testID="chip-tilde"><Check size={16} color={c.brandInk} strokeWidth={2.5} /></View> : null}
       <Text style={[typeScale.secundario, { color: oscuro ? (activo ? c.onAction : c.onTopBarStrong) : activo ? c.brandInk : c.text }]}>{label}</Text>
     </Pressable>
   )
