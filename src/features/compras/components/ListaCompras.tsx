@@ -2,10 +2,13 @@ import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, ScrollView, SectionList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import {
-  DocumentCard, Fab, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, useMenuLeading,
+  Button, DocumentCard, Fab, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, useMenuLeading,
   type SegmentedOption,
 } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
+import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { esFallaDeRed } from '@/core/api/errores'
+import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -65,6 +68,11 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
   }
 
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
+  const sinRed = esFallaDeRed(q.error)
+  const reintentar = { label: 'Reintentar', onPress: () => { void l.refrescar() } }
+  const bq = l.borradoresQuery
+  const borradoresSinRed = esFallaDeRed(bq.error)
+  const reintentarBorradores = { label: 'Reintentar', onPress: () => { void bq.refetch() } }
 
   const filtros = (
     <View style={{ gap: space[3], paddingBottom: space[2] }}>
@@ -102,6 +110,17 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
       {l.contador ? <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{l.contador}</Text> : null}
       {l.resumenTexto ? <Text style={secundario}>{l.resumenTexto}</Text> : null}
       {l.compradoTexto ? <Text style={secundario}>{l.compradoTexto}</Text> : null}
+      {/* Con compras a la vista el error va arriba de ellas; sin red y sin nada que mostrar, la pantalla entera (abajo). */}
+      {q.isError && !(sinRed && l.compras.length === 0) ? (
+        <View style={{ gap: space[2] }}>
+          {sinRed ? (
+            <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice>
+          ) : (
+            <Notice tone="peligro">No se pudieron cargar las compras.</Notice>
+          )}
+          <Button label={reintentar.label} variant="secundario" onPress={reintentar.onPress} />
+        </View>
+      ) : null}
     </View>
   )
 
@@ -135,9 +154,9 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
       refreshing={q.isRefetching}
       onRefresh={() => { void l.refrescar() }}
       ListEmptyComponent={
-        q.isLoading ? <ActivityIndicator color={c.brand} />
-          : q.isError ? <Notice tone="peligro">No se pudieron cargar las compras. Deslizá hacia abajo para reintentar.</Notice>
-          : <Text style={secundario}>No hay compras con estos filtros.</Text>
+        q.isLoading ? <Esqueletos bloques={FILAS_CARGANDO} />
+          : q.isError ? (sinRed ? <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar las compras" accion={reintentar} /> : undefined)
+          : <EstadoDePantalla tipo="vacio" titulo="No hay compras con estos filtros." />
       }
       ListFooterComponent={q.isFetchingNextPage ? <ActivityIndicator color={c.brand} /> : undefined}
     />
@@ -165,9 +184,18 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
         )
       }}
       ListEmptyComponent={
-        l.borradoresQuery.isLoading ? <ActivityIndicator color={c.brand} />
-          : l.borradoresQuery.isError ? <Notice tone="peligro">No se pudieron cargar los borradores.</Notice>
-          : <Text style={secundario}>No tenés borradores.</Text>
+        bq.isLoading ? <Esqueletos bloques={FILAS_CARGANDO} />
+          : bq.isError ? (
+            borradoresSinRed ? (
+              <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los borradores" accion={reintentarBorradores} />
+            ) : (
+              <View style={{ gap: space[2] }}>
+                <Notice tone="peligro">No se pudieron cargar los borradores.</Notice>
+                <Button label={reintentarBorradores.label} variant="secundario" onPress={reintentarBorradores.onPress} />
+              </View>
+            )
+          )
+          : <EstadoDePantalla tipo="vacio" titulo="No tenés borradores." />
       }
     />
   )
