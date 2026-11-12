@@ -40,9 +40,14 @@ const config: ExpoConfig = {
     [
       'expo-splash-screen',
       {
-        image: './assets/splash.png',
+        // Logo recortado al borde y con fondo transparente: el plugin lo mete en un cuadrado de imageWidth dp, así que un PNG con
+        // aire alrededor se ve chico. Fondo = bg oscuro de libs/theme.ts (DARK_COLORS.bg); sin variante clara porque las letras son blancas.
+        image: './assets/splash-logo.png',
         resizeMode: 'contain',
-        backgroundColor: '#0A0D14',
+        backgroundColor: '#080D0C',
+        // Android 12+ enmascara con un círculo de 192 dp sobre un lienzo de 288: 144 dp de ancho deja el logo entero adentro.
+        android: { imageWidth: 144 },
+        ios: { imageWidth: 220 },
       },
     ],
     [
