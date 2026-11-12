@@ -1,5 +1,6 @@
 import React from 'react'
-import { fireEvent, screen, userEvent, waitFor, within } from '@testing-library/react-native'
+import { cleanup, fireEvent, screen, userEvent, waitFor, within } from '@testing-library/react-native'
+import { onlineManager } from '@tanstack/react-query'
 import { FlatList } from 'react-native'
 import TesoreriaScreen from '../../../../app/(tabs)/tesoreria/index'
 import PagosScreen from '../../../../app/(tabs)/tesoreria/pagos/index'
@@ -163,6 +164,21 @@ describe('Lista de pagos', () => {
     renderConQuery(<PagosScreen />)
     expect(await screen.findByText('El servidor no respondió.', {}, ESPERA)).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeTruthy()
+  })
+
+  it('sin red y sin nada guardado (la consulta queda en pausa, sin error) muestra sin conexión con Reintentar, no el vacío', async () => {
+    onlineManager.setOnline(false)
+    try {
+      renderConQuery(<PagosScreen />)
+      expect(await screen.findByRole('header', { name: 'No pudimos cargar los pagos' }, ESPERA)).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Reintentar' })).toBeTruthy()
+      expect(screen.queryByText('No hay pagos a proveedores.')).toBeNull()
+      expect(urls()).toHaveLength(0)
+    } finally {
+      // Volver a estar en línea despierta la consulta en pausa: primero se desmonta la pantalla.
+      cleanup()
+      onlineManager.setOnline(true)
+    }
   })
 
   it('"Pagar a proveedor" va con MOD_PAGOS crear y leer, y abre el pago sin proveedor elegido', async () => {

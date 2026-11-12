@@ -51,7 +51,8 @@ const CLIENTE: TextosDelFlujo = {
 
 const PROVEEDOR: TextosDelFlujo = {
   titulo: 'Pago a proveedor',
-  pasos: ['Proveedor', 'Qué se paga', 'Medios', 'Confirmar'],
+  // Cortos como los del cobro: la barra de pasos no parte renglón y tiene que entrar en 360 de ancho.
+  pasos: ['Proveedor', 'Qué pagás', 'Medios', 'Confirmar'],
   continuarAlPaso2: 'Continuar a qué se paga',
   verbo: 'Pagás',
   saldo: 'Le debés',

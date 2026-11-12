@@ -65,9 +65,9 @@ async function cargarMedio(medio: string, monto: string) {
 }
 
 describe('pago a un proveedor', () => {
-  it('con el proveedor elegido arranca en "Qué se paga", con lo que se le debe y la imputación del pago', async () => {
+  it('con el proveedor elegido arranca en "Qué pagás", con lo que se le debe y la imputación del pago', async () => {
     renderConQuery(<PagarRoute />)
-    expect(await screen.findByLabelText('Paso 2 de 4: Qué se paga', {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByLabelText('Paso 2 de 4: Qué pagás', {}, ESPERA)).toBeTruthy()
     expect(screen.getByLabelText('Paso 1 de 4: Proveedor')).toBeTruthy()
     expect(await screen.findByLabelText(`Le debés: ${$(80000)}`, {}, ESPERA)).toBeTruthy()
     expect(screen.getByText(AVISO_IMPUTACION_PAGO)).toBeTruthy()
@@ -146,7 +146,7 @@ describe('pago a un proveedor', () => {
     expect(linea.chequesRecibidos).toBeUndefined()
   })
 
-  it('sin proveedor elegido, el paso 1 lista los proveedores y elegir uno lleva a "Qué se paga"', async () => {
+  it('sin proveedor elegido, el paso 1 lista los proveedores y elegir uno lleva a "Qué pagás"', async () => {
     mockParams = {}
     renderConQuery(<PagarRoute />)
     expect(await screen.findByText('Pago a proveedor', {}, ESPERA)).toBeTruthy()
@@ -154,7 +154,7 @@ describe('pago a un proveedor', () => {
     expect(continuar.props.accessibilityState?.disabled).toBe(true)
     await presionar(/^Molinos SA/)
     await presionar('Continuar a qué se paga')
-    expect(await screen.findByLabelText('Paso 2 de 4: Qué se paga', {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByLabelText('Paso 2 de 4: Qué pagás', {}, ESPERA)).toBeTruthy()
     expect(get.mock.calls.map(([u]) => String(u)).some(u => u.startsWith('/api/v1/socios-comerciales?') && u.includes('tipo=2'))).toBe(true)
   })
 })

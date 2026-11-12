@@ -15,6 +15,7 @@ import { PERIODOS_DE_CUENTA, rangoDelPeriodo, type PeriodoDeCuenta } from '@/fea
 import { usePagos } from '../api/pagos'
 import { FILTROS_DE_PAGOS, textoSinPagos, type FiltroDePagos } from '../lib/pago'
 import { usePuedeVerPagos } from '../lib/permiso'
+import { useSinConexionSinDatos } from '../lib/sinConexion'
 import { FilaDePago } from './FilaDePago'
 
 /**
@@ -35,6 +36,9 @@ export function ListaDePagos({ onVolver }: { onVolver: () => void }) {
   const q = usePagos(filtro, texto, rango, puedeVer)
   const filas = useMemo(() => (q.data?.pages ?? []).flatMap(p => p?.items ?? []), [q.data])
   const sinRed = esFallaDeRed(q.error)
+  // Sin red y sin nada guardado la consulta queda en pausa (sin error): también es "sin conexión".
+  const enPausa = useSinConexionSinDatos(q)
+  const sinConexion = (!!q.error && sinRed) || enPausa
   const reintentar = { label: 'Reintentar', onPress: () => void q.refetch() }
 
   const encabezado = (
@@ -96,9 +100,9 @@ export function ListaDePagos({ onVolver }: { onVolver: () => void }) {
             <View style={{ paddingHorizontal: space[4] }}>
               <Esqueletos bloques={FILAS_CARGANDO} />
             </View>
-          ) : q.error ? (
-            sinRed ? <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los pagos" accion={reintentar} /> : undefined
-          ) : (
+          ) : sinConexion ? (
+            <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los pagos" accion={reintentar} />
+          ) : q.error ? undefined : (
             <EstadoDePantalla tipo="vacio" titulo={textoSinPagos(filtro, !!texto || !!periodo)} />
           )
         }
