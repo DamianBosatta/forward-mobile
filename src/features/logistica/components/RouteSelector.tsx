@@ -3,8 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
 import { MotiView } from 'moti'
 import { ChevronRight, MapPin, Truck } from 'lucide-react-native'
-import { GlassCard } from '@/core/ui'
-import { useColors, BRAND } from '@/libs/theme'
+import { useColors, BRAND, radii } from '@/libs/theme'
 import type { HojaRutaListItemDto } from '@/libs/api-client/types'
 import type { EstadoHojaRutaNombre } from '@/core/constants/estados'
 import { resolverEstadoHojaRuta } from '@/libs/reglas/estados'
@@ -83,7 +82,7 @@ export function RouteSelector({ routes, onSelect }: RouteSelectorProps) {
                 activeOpacity={0.8}
                 onPress={() => onSelect(item.id)}
               >
-                <GlassCard style={{ padding: 20 }}>
+                <View style={{ padding: 20, borderRadius: radii.tarjeta, backgroundColor: colors.surface }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -115,7 +114,7 @@ export function RouteSelector({ routes, onSelect }: RouteSelectorProps) {
                       <ChevronRight size={20} color={colors.textMuted} />
                     </View>
                   </View>
-                </GlassCard>
+                </View>
               </TouchableOpacity>
             </MotiView>
           )

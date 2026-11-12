@@ -2,9 +2,8 @@ import React from 'react'
 import { View, Text, StyleSheet, ScrollView, Platform, BackHandler, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
-import { maxFontScale, useColors, useIsDark } from '@/libs/theme'
+import { maxFontScale, useColors } from '@/libs/theme'
 import { ForwardLogo } from './ForwardLogo'
-import { GlassCard } from './GlassCard'
 import { AlertOctagon, RefreshCcw, Home, LogOut, ChevronLeft } from 'lucide-react-native'
 import { safeHaptics } from '@/core/utils/haptics'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -23,7 +22,6 @@ export function GlobalErrorBoundary({ error, retry }: GlobalErrorBoundaryProps) 
   }, [error]);
 
   const colors = useColors()
-  const isDark = useIsDark()
   const router = useRouter()
 
   const handleRetry = () => {
@@ -69,7 +67,7 @@ export function GlobalErrorBoundary({ error, retry }: GlobalErrorBoundaryProps) 
               La aplicación ha detectado un error crítico. Podés intentar reanudar el módulo o volver al panel principal.
             </Text>
 
-            <View style={[styles.errorBox, { backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)' }]}>
+            <View style={[styles.errorBox, { backgroundColor: colors.surface2, borderColor: colors.border }]}>
               <ScrollView style={{ maxHeight: 100 }} showsVerticalScrollIndicator={false}>
                 <Text style={[styles.errorTitle, { color: colors.danger }]}>{error.name}</Text>
                 <Text style={[styles.errorMessage, { color: colors.text }]}>{error.message}</Text>
@@ -128,7 +126,7 @@ const styles = StyleSheet.create({
   iconContainer: { width: 90, height: 90, borderRadius: 45, alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
   title: { fontSize: 26, fontWeight: '900', marginBottom: 12, letterSpacing: -0.5 },
   subtitle: { fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 32, fontWeight: '600' },
-  errorBox: { width: '100%', padding: 16, borderRadius: 16, marginBottom: 32, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  errorBox: { width: '100%', padding: 16, borderRadius: 16, marginBottom: 32, borderWidth: 1 },
   errorTitle: { fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
   errorMessage: { fontSize: 12, fontWeight: '700', lineHeight: 18 },
   actions: { width: '100%', gap: 12 },
