@@ -39,8 +39,10 @@ describe.each(TEMAS)('Ingreso: bordes del sistema (%s)', (tema) => {
   it('teléfono: deja lugar arriba (barra de estado) y abajo (barra de navegación)', () => {
     mockResponsive = { isTablet: false }
     const s = montar()
-    expect(s.paddingTop).toBe(30)
-    expect(s.paddingBottom).toBe(32 + 20)
+    expect(s.paddingTop).toBe(30 + 32)
+    // Abajo, la barra de navegación la absorbe el pie fijo (PieFijo suma el inset con el teclado cerrado).
+    const contenido = screen.getByTestId('login-pie-contenido', { includeHiddenElements: true })
+    expect(contenido.props.style.paddingBottom).toBe(16 + 20)
   })
 
   it('tablet: el formulario también respeta ambos bordes', () => {

@@ -312,7 +312,7 @@ export default function LoginScreen() {
         </View>
         {formulario}
       </ScrollView>
-      <PieFijo fondo="bg" conInsetInferior testID="login-pie">{botones}</PieFijo>
+      <PieFijo fondo="bg" testID="login-pie">{botones}</PieFijo>
     </View>
   )
 }
