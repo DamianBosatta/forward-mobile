@@ -3,6 +3,7 @@ import { useCreateSocio, useSocio, useUpdateSocio } from '@/libs/api-client/soci
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { leerNumero, mostrarNumero } from '@/core/utils/numero'
+import { agruparFranjas, expandirFilas, horaValida, validarFilas, type FilaHorario } from '@/core/utils/horario'
 import { condicionPagoParaEnviar, type TipoCondicionPago } from '../lib/cliente'
 
 export interface DatosCliente {
@@ -21,13 +22,16 @@ export interface DatosCliente {
   tope: string
   /** Solo en el alta: el cliente nace provisorio y se completan los datos después. */
   altaProvisoria: boolean
+  /** Horario de entrega en filas (días + desde/hasta); al guardar se abre en una franja por día. */
+  horario: FilaHorario[]
 }
 
 const VACIO: DatosCliente = {
   direccion: '', nombreFantasia: '', nombreContacto: '', telefono: '', razonSocial: '', cuit: '',
-  condicionIva: 'Responsable Inscripto', email: '', tipoPago: 'Contado', plazo: '', tope: '', altaProvisoria: false,
+  condicionIva: 'Responsable Inscripto', email: '', tipoPago: 'Contado', plazo: '', tope: '', altaProvisoria: false, horario: [],
 }
 
+export const HORARIO_INVALIDO = 'Revisá el horario de entrega: hay filas con errores.'
 export const TOPE_INVALIDO = 'Revisá el tope de crédito: va en pesos, sin signo.'
 
 /**
@@ -55,6 +59,7 @@ export function useClienteForm(id: string | undefined, alGuardar: (id: string, d
   const actualizar = useUpdateSocio()
   const [datos, setDatos] = useState<DatosCliente>(VACIO)
   const [error, setError] = useState<string | null>(null)
+  const [intentoGuardar, setIntentoGuardar] = useState(false)
 
   // Se llena UNA vez por cliente, con el detalle traído al abrir (si el refetch falló, el caché viejo no vale): un refetch posterior no pisa lo tipeado.
   const llenadoDe = useRef<string | null>(null)
@@ -77,6 +82,7 @@ export function useClienteForm(id: string | undefined, alGuardar: (id: string, d
       plazo: String((cp?.tipo === 'DiaFijoDelMes' ? cp.diaDelMes : cp?.dias) ?? ''),
       tope: actual.topeCredito != null ? mostrarNumero(actual.topeCredito) : '',
       altaProvisoria: false,
+      horario: agruparFranjas(actual.horario),
     })
     setCargado(true)
   }, [editando, actual, isFetchedAfterMount, isSuccess, id])
@@ -88,9 +94,12 @@ export function useClienteForm(id: string | undefined, alGuardar: (id: string, d
   const guardar = async (destino: DestinoAlGuardar = 'ficha') => {
     if (editando && !cargado) return
     setError(null)
+    setIntentoGuardar(true)
+    if (validarFilas(datos.horario).some(e => e)) return setError(HORARIO_INVALIDO)
     // El tope lo fija solo quien autoriza ventas (el servidor lo exige): sin la capacidad no se manda.
     const tope = puedeCambiarPago ? cambioDeTope(datos.tope, actual?.topeCredito) : {}
     if ('error' in tope) return setError(tope.error)
+    const franjas = expandirFilas(datos.horario.map(f => ({ ...f, desde: horaValida(f.desde)!, hasta: horaValida(f.hasta)! })))
     const comun = {
       direccion: datos.direccion.trim(),
       nombreFantasia: datos.nombreFantasia.trim(),
@@ -105,11 +114,12 @@ export function useClienteForm(id: string | undefined, alGuardar: (id: string, d
     }
     try {
       if (editando && id) {
-        // El horario no se edita acá, pero el servidor lo pisa con lo que llegue: se devuelve el actual.
-        await actualizar.mutateAsync({ ...comun, id, horario: actual?.horario })
+        // El servidor pisa el horario con lo que llegue: sin filas se devuelve el actual si ya estaba vacío, y [] si se quitaron todas.
+        const horario = franjas.length > 0 || (actual?.horario?.length ?? 0) > 0 ? franjas : actual?.horario
+        await actualizar.mutateAsync({ ...comun, id, horario })
         alGuardar(id, destino)
       } else {
-        alGuardar(await crear.mutateAsync({ ...comun, tipoRaw: 0, altaProvisoria: datos.altaProvisoria, saldoInicial: 0 }), destino)
+        alGuardar(await crear.mutateAsync({ ...comun, ...(franjas.length > 0 ? { horario: franjas } : {}), tipoRaw: 0, altaProvisoria: datos.altaProvisoria, saldoInicial: 0 }), destino)
       }
     } catch (e) {
       setError(mensajeDelServidor(e, 'No se pudo guardar el cliente.'))
@@ -117,7 +127,7 @@ export function useClienteForm(id: string | undefined, alGuardar: (id: string, d
   }
 
   return {
-    datos, cambiar, guardar, error, editando, puedeCambiarPago,
+    datos, cambiar, guardar, error, intentoGuardar, editando, puedeCambiarPago,
     cargando: editando && !cargado && !errorDeCarga,
     /** Al editar, el detalle no cargó: no se muestra el formulario (guardaría en blanco). */
     errorDeCarga: editando && !cargado && errorDeCarga ? mensajeDelServidor(errorDeCarga, 'No se pudo cargar el cliente.') : null,
