@@ -8,6 +8,7 @@ import {
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
+import { useSinConexionSinDatos } from '@/features/ventas/lib/sinConexion'
 import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
@@ -71,7 +72,11 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
   const sinRed = esFallaDeRed(q.error)
   const reintentar = { label: 'Reintentar', onPress: () => { void l.refrescar() } }
   const bq = l.borradoresQuery
-  const borradoresSinRed = esFallaDeRed(bq.error)
+  // Sin red y sin nada guardado la consulta queda en pausa (sin error): también es "sin conexión".
+  const comprasEnPausa = useSinConexionSinDatos(q)
+  const borradoresEnPausa = useSinConexionSinDatos(bq)
+  const comprasSinConexion = (q.isError && sinRed) || comprasEnPausa
+  const borradoresSinRed = (bq.isError && esFallaDeRed(bq.error)) || borradoresEnPausa
   const reintentarBorradores = { label: 'Reintentar', onPress: () => { void bq.refetch() } }
 
   const filtros = (
@@ -155,7 +160,8 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
       onRefresh={() => { void l.refrescar() }}
       ListEmptyComponent={
         q.isLoading ? <Esqueletos bloques={FILAS_CARGANDO} />
-          : q.isError ? (sinRed ? <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar las compras" accion={reintentar} /> : undefined)
+          : comprasSinConexion ? <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar las compras" accion={reintentar} />
+          : q.isError ? undefined
           : <EstadoDePantalla tipo="vacio" titulo="No hay compras con estos filtros." />
       }
       ListFooterComponent={q.isFetchingNextPage ? <ActivityIndicator color={c.brand} /> : undefined}
@@ -185,15 +191,13 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
       }}
       ListEmptyComponent={
         bq.isLoading ? <Esqueletos bloques={FILAS_CARGANDO} />
-          : bq.isError ? (
-            borradoresSinRed ? (
-              <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los borradores" accion={reintentarBorradores} />
-            ) : (
-              <View style={{ gap: space[2] }}>
-                <Notice tone="peligro">No se pudieron cargar los borradores.</Notice>
-                <Button label={reintentarBorradores.label} variant="secundario" onPress={reintentarBorradores.onPress} />
-              </View>
-            )
+          : borradoresSinRed ? (
+            <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los borradores" accion={reintentarBorradores} />
+          ) : bq.isError ? (
+            <View style={{ gap: space[2] }}>
+              <Notice tone="peligro">No se pudieron cargar los borradores.</Notice>
+              <Button label={reintentarBorradores.label} variant="secundario" onPress={reintentarBorradores.onPress} />
+            </View>
           )
           : <EstadoDePantalla tipo="vacio" titulo="No tenés borradores." />
       }

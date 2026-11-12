@@ -17,6 +17,7 @@ import type { BorradorVenta } from '@/libs/api-client/ventas'
 import type { FiltroVentasRuta } from '@/features/listas/lib/filtroDeRuta'
 import { agruparPorDia, entregaDe, horaDe } from '../lib/agruparPorDia'
 import { identidadDeBorrador } from '../lib/borradorCliente'
+import { useSinConexionSinDatos } from '../lib/sinConexion'
 import { ListaBorradores } from './ListaBorradores'
 import { Fab } from '@/core/ui/fw/Fab'
 import { motivosDe } from '@/features/autorizaciones/lib/motivos'
@@ -109,6 +110,11 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
   const sinRed = esFallaDeRed(q.error)
   const reintentar = { label: 'Reintentar', onPress: () => { void l.refrescar() } }
   const bq = l.borradoresQuery
+  // Sin red y sin nada guardado la consulta queda en pausa (sin error): también es "sin conexión".
+  const ventasEnPausa = useSinConexionSinDatos(q)
+  const borradoresEnPausa = useSinConexionSinDatos(bq)
+  const ventasSinConexion = (q.isError && sinRed) || ventasEnPausa
+  const borradoresSinConexion = (bq.isError && esFallaDeRed(bq.error)) || borradoresEnPausa
 
   const contadorPorAutorizar = l.estado === 'todos' && l.totales && l.totales.porAutorizar > 0 ? l.totales.porAutorizar : null
   const filtros = (
@@ -190,7 +196,8 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
       onRefresh={() => { void l.refrescar() }}
       ListEmptyComponent={
         q.isLoading ? <Esqueletos bloques={FILAS_CARGANDO} />
-          : q.isError ? (sinRed ? <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar las ventas" accion={reintentar} /> : undefined)
+          : ventasSinConexion ? <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar las ventas" accion={reintentar} />
+          : q.isError ? undefined
           : <EstadoDePantalla tipo="vacio" titulo="No hay ventas con estos filtros." />
       }
       ListFooterComponent={q.isFetchingNextPage ? <ActivityIndicator color={c.brand} /> : undefined}
@@ -202,7 +209,7 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
       borradores={l.borradores}
       cargando={bq.isLoading}
       error={bq.isError}
-      sinConexion={esFallaDeRed(bq.error)}
+      sinConexion={borradoresSinConexion}
       onReintentar={() => { void bq.refetch() }}
       onSeguir={retomar}
     />

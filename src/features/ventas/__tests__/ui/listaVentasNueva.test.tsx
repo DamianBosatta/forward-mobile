@@ -1,7 +1,7 @@
 import React from 'react'
 import { Alert, Text } from 'react-native'
-import { act, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act, cleanup, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
+import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { subDays } from 'date-fns'
 import { diaArgentina } from '@/core/utils/fecha'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -403,6 +403,29 @@ describe('lista de ventas nueva: estados de pantalla', () => {
     const antes = llamadasALaLista()
     await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
     await waitFor(() => expect(llamadasALaLista()).toBeGreaterThan(antes))
+  })
+
+  describe('sin red y sin nada guardado (la consulta queda en pausa, sin error)', () => {
+    beforeEach(() => { onlineManager.setOnline(false) })
+    // Volver a estar en línea despierta las consultas en pausa: primero se desmonta la pantalla.
+    afterEach(() => { cleanup(); onlineManager.setOnline(true) })
+
+    it('ventas: muestra la pantalla de sin conexión con Reintentar, no el vacío', async () => {
+      conLista(() => Promise.resolve(pagina([], 0)))
+      pantalla()
+      expect(await screen.findByRole('header', { name: 'No pudimos cargar las ventas' })).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Reintentar' })).toBeTruthy()
+      expect(screen.queryByRole('header', { name: 'No hay ventas con estos filtros.' })).toBeNull()
+      expect(llamadasALaLista()).toBe(0)
+    })
+
+    it('borradores: muestra la pantalla de sin conexión, no el vacío', async () => {
+      conLista(() => Promise.resolve(pagina([], 0)))
+      pantalla()
+      await userEvent.press(screen.getByRole('radio', { name: 'Borradores' }))
+      expect(await screen.findByRole('header', { name: 'No pudimos cargar los borradores' })).toBeTruthy()
+      expect(screen.queryByRole('header', { name: 'No tenés borradores.' })).toBeNull()
+    })
   })
 
   it('Borradores: esqueletos mientras carga', async () => {

@@ -1,6 +1,6 @@
 import React from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
+import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
+import { cleanup, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { CalendarioScreen } from '../CalendarioScreen'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { storage } from '@/core/utils/storage'
@@ -273,6 +273,19 @@ describe.each(TEMAS)('Calendario como la web (%s)', (tema) => {
     const antes = llamadasAlCalendario()
     await userEvent.press(screen.getByLabelText('Reintentar'))
     await waitFor(() => expect(llamadasAlCalendario()).toBeGreaterThan(antes))
+  })
+
+  it('sin red la consulta queda en pausa (sin error): sin nada guardado muestra sin conexión, no el vacío', async () => {
+    onlineManager.setOnline(false)
+    try {
+      pintar()
+      expect(await screen.findByRole('header', { name: 'No pudimos cargar el calendario' })).toBeTruthy()
+      expect(screen.getByLabelText('Reintentar')).toBeTruthy()
+      expect(llamadasAlCalendario()).toBe(0)
+    } finally {
+      cleanup()
+      onlineManager.setOnline(true)
+    }
   })
 
   it('sin red y sin nada guardado muestra la pantalla de sin conexión; Reintentar vuelve a pedir', async () => {

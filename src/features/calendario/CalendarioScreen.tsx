@@ -7,6 +7,7 @@ import { Button, FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { esFallaDeRed } from '@/core/api/errores'
+import { useSinConexionSinDatos } from '@/features/ventas/lib/sinConexion'
 import { CalendarioAvisosTabs } from '@/core/ui/fw/CalendarioAvisosTabs'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useResponsive } from '@/libs/useResponsive'
@@ -121,11 +122,13 @@ export function CalendarioScreen({ precarga, onAbrirVenta, onCobrar, nuevo, avis
   }
 
   const sinRed = q.isError && esFallaDeRed(q.error)
+  // Sin red y sin nada guardado la consulta queda en pausa (sin error): también es "sin conexión".
+  const sinConexionSinDatos = useSinConexionSinDatos(q)
   const reintentar = { label: 'Reintentar', onPress: () => void q.refetch() }
   const contenido = q.isLoading ? (
     // Bloques quietos con la forma de la semana (un día por fila), como las listas de Cuentas y Pagos.
     <Esqueletos bloques={[{ alto: 76 }, { alto: 76 }, { alto: 76 }]} />
-  ) : sinRed && !q.data ? (
+  ) : (sinRed || sinConexionSinDatos) && !q.data ? (
     <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar el calendario" accion={reintentar} />
   ) : q.isError && !(sinRed && q.data) ? (
     <View style={{ gap: space[3] }}>

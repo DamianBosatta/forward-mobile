@@ -71,15 +71,13 @@ export function ListaBorradores({ borradores, cargando, error, sinConexion = fal
       }}
       ListEmptyComponent={
         cargando ? <Esqueletos bloques={FILAS_CARGANDO} />
-          : error ? (
-            sinConexion ? (
-              <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los borradores" accion={onReintentar ? { label: 'Reintentar', onPress: onReintentar } : undefined} />
-            ) : (
-              <View style={{ gap: space[2] }}>
-                <Notice tone="peligro">No se pudieron cargar los borradores.</Notice>
-                {onReintentar ? <Button label="Reintentar" variant="secundario" onPress={onReintentar} /> : null}
-              </View>
-            )
+          : sinConexion ? (
+            <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los borradores" accion={onReintentar ? { label: 'Reintentar', onPress: onReintentar } : undefined} />
+          ) : error ? (
+            <View style={{ gap: space[2] }}>
+              <Notice tone="peligro">No se pudieron cargar los borradores.</Notice>
+              {onReintentar ? <Button label="Reintentar" variant="secundario" onPress={onReintentar} /> : null}
+            </View>
           )
           : <EstadoDePantalla tipo="vacio" titulo="No tenés borradores." />
       }
