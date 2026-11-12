@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { ScrollView, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native'
 import { useRouter } from 'expo-router'
-import { HandCoins } from 'lucide-react-native'
+import { FileText, HandCoins } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { Button, Notice, Segmented, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
@@ -16,6 +16,8 @@ import { AVISO_DEUDA_VENCIDA, CreditoDelCliente } from '@/features/clientes/comp
 import { HeroSaldo, SaldosPorCuenta } from '@/features/clientes/components/SaldoDelCliente'
 import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { useEstadoCuentaSocio } from '../api/queries'
+import { HojaEstadoDeCuenta } from '@/features/deudores/components/HojaEstadoDeCuenta'
+import { usePuedeExportarEstadoDeCuenta } from '@/features/deudores/lib/permiso'
 import { useMovimientosDeCliente } from '../hooks/useMovimientosDeCliente'
 import { PERIODOS_DE_CUENTA, rangoDelPeriodo, type PeriodoDeCuenta } from '../lib/periodo'
 import { NOMBRE_CUENTA, descripcionDe, textoImputacion, textoVencimiento, type FiltroCuenta, type MovimientoConCuenta } from '../lib/movimientos'
@@ -110,6 +112,8 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
   const c = useColors()
   const router = useRouter()
   const puedeCobrar = usePuedeCobrar()
+  const puedeExportar = usePuedeExportarEstadoDeCuenta()
+  const [compartiendo, setCompartiendo] = useState(false)
   const { isTabletLandscape } = useResponsive()
   const [filtro, setFiltro] = useState<FiltroCuenta>('ambas')
   // Período elegido (null = todo el historial). El rango se fija al elegirlo: no se mueve con el reloj mientras se mira.
@@ -216,13 +220,15 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
       {verCuenta ? (
         <View style={{ gap: space[3] }}>
           <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Movimientos</Text>
+          {/* S2: el estado de cuenta en PDF o Excel para mandárselo al cliente (MOD_CC o MOD_CLIENTES, como el export). */}
+          {puedeExportar ? <Button label="Estado de cuenta" icon={FileText} variant="secundario" onPress={() => setCompartiendo(true)} /> : null}
           <Segmented options={FILTROS} value={filtro} onChange={setFiltro} accessibilityLabel="Cuenta" />
           <View accessibilityRole="radiogroup" accessibilityLabel="Período" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
             {PERIODOS_DE_CUENTA.map(p => (
               <FiltroChip key={p.valor} label={p.label} activo={periodo === p.valor} onPress={() => setPeriodo(periodo === p.valor ? null : p.valor)} />
             ))}
           </View>
-          {/* TODO API: "Saldo al 01/10" inicial y PDF del estado. */}
+          {/* TODO API: "Saldo al 01/10" inicial. */}
           {movs.cargando ? <Esqueletos bloques={FILAS_CARGANDO} /> : null}
           {movs.error ? <Notice tone="peligro">{mensajeDelServidor(movs.error, 'No se pudieron cargar los movimientos.')}</Notice> : null}
           {!movs.cargando && !movs.error && movs.movimientos.length === 0 ? (
@@ -259,6 +265,9 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
         ) : null}
         {registrarCobro}
       </View>
+    ) : null}
+    {verCuenta && puedeExportar ? (
+      <HojaEstadoDeCuenta socio={compartiendo ? { id: socioId, razonSocial: cliente.razonSocial } : null} onClose={() => setCompartiendo(false)} />
     ) : null}
     </View>
   )
