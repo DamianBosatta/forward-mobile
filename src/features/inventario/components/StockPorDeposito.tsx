@@ -139,7 +139,7 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
   return (
     <View style={{ flex: 1 }}>
       {s.depositos.length > 1 || (s.puedeVerTodos && s.depositos.length > 0) ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }} style={{ flexGrow: 0 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }} style={{ flexGrow: 0, flexShrink: 0 }}>
           {s.puedeVerTodos ? <FiltroChip label="Todos los depósitos" activo={s.depositoId === TODOS_LOS_DEPOSITOS} onPress={() => s.setDeposito(TODOS_LOS_DEPOSITOS)} /> : null}
           {s.depositos.map((d) => (
             <FiltroChip key={d.id} label={d.nombre} activo={d.id === s.depositoId} onPress={() => s.setDeposito(d.id)} />
