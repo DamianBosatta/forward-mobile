@@ -19,7 +19,7 @@ export function AvisadoVentas({ guardado, onVolver }: { guardado: boolean; onVol
     safeHaptics.notification('success')
   }, [])
   return (
-    <Modal visible animationType="fade" onRequestClose={onVolver}>
+    <Modal visible animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={onVolver}>
       <View accessibilityLabel="Avisamos a Ventas" style={{ flex: 1, backgroundColor: c.bg }}>
         <View style={{ flex: 1, padding: space[4], gap: space[3], justifyContent: 'center', alignItems: 'center', ...columna }}>
           <CircleCheck size={56} color={c.brandInk} strokeWidth={2.5} />

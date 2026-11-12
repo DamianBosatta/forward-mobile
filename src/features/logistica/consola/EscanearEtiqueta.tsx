@@ -55,7 +55,7 @@ export function EscanearEtiqueta({ visible, etiquetas, marcadas, onLeida, onCerr
 
   const sinPermiso = !permiso?.granted
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onCerrar}>
+    <Modal visible={visible} animationType="slide" statusBarTranslucent navigationBarTranslucent onRequestClose={onCerrar}>
       <View accessibilityLabel="Escanear etiqueta" style={{ flex: 1, backgroundColor: c.bg, paddingTop: top }}>
         <View style={{ height: 290, backgroundColor: c.topBar }}>
           {!sinPermiso ? (

@@ -1,15 +1,9 @@
-import { armarEntrega, formatDistancia, mediosDelChofer, razonPendiente, type FormEntrega, type LineaCobroForm } from '../consola/entrega'
+import { armarEntrega, formatDistancia, mediosDelChofer, razonPendiente, type FormEntrega } from '../consola/entrega'
 
-const CHEQUE = { id: 'm-ch', nombre: 'Cheque', tipo: 'Cheque' }
 const base: FormEntrega = {
   receptor: 'Abel', observaciones: '', remitoUrl: null, lineas: [], devolucion: {},
 }
 const ctx = { exigeFotoRemito: false, disponibles: { d1: 3 } }
-const lineaCheque = (cheque: Partial<LineaCobroForm['cheque']>): LineaCobroForm => ({
-  medio: CHEQUE, monto: '1.500', fotoUrl: null,
-  cheque: { numero: '123', banco: 'Nación', titular: 'Abel SA', emision: '10/10/2026', pago: '30/10/2026', ...cheque },
-})
-
 describe('armarEntrega', () => {
   it('S15: quién recibió es opcional: sin nombre la entrega sale igual y no manda nombreReceptor', () => {
     const r = armarEntrega({ ...base, receptor: '  ' }, ctx)
@@ -21,7 +15,7 @@ describe('armarEntrega', () => {
   })
 
   it('S17: el cobro siempre va con la imputación por defecto (el pedido de hoy)', () => {
-    const r = armarEntrega({ ...base, lineas: [{ medio: { id: 'm-ef', nombre: 'Efectivo', tipo: 'Efectivo' }, monto: '500', fotoUrl: null, cheque: { numero: '', banco: '', titular: '', emision: '', pago: '' } }] }, ctx)
+    const r = armarEntrega({ ...base, lineas: [{ medio: { id: 'm-ef', nombre: 'Efectivo', tipo: 'Efectivo' }, monto: '500', fotoUrl: null }] }, ctx)
     expect(r).toMatchObject({ entrega: { cobro: { imputacion: 'PedidoActual', lineas: [{ medioPagoId: 'm-ef', monto: 500 }] } } })
   })
 
@@ -33,26 +27,6 @@ describe('armarEntrega', () => {
   it('S14: lo que no se cobra no lleva motivo en las observaciones: solo lo que escribió el chofer y la devolución', () => {
     const r = armarEntrega({ ...base, observaciones: ' dejó en portería ' }, ctx)
     expect(r).toMatchObject({ entrega: { observaciones: 'dejó en portería' } })
-  })
-
-  it('un cheque viaja con sus datos y el monto de la línea, con las fechas como las lee el servidor', () => {
-    const r = armarEntrega({ ...base, lineas: [lineaCheque({})] }, ctx)
-    expect(r).toEqual({
-      entrega: expect.objectContaining({
-        cobro: {
-          imputacion: 'PedidoActual',
-          lineas: [{
-            medioPagoId: 'm-ch', monto: 1500,
-            cheques: [{ numero: '123', banco: 'Nación', titular: 'Abel SA', fechaEmision: '2026-10-10', fechaPago: '2026-10-30', monto: 1500 }],
-          }],
-        },
-      }),
-    })
-  })
-
-  it('un cheque sin titular o con la fecha mal escrita no sale', () => {
-    expect(armarEntrega({ ...base, lineas: [lineaCheque({ titular: '' })] }, ctx)).toEqual({ error: 'Completá número, banco y titular del cheque (cobro 1).' })
-    expect(armarEntrega({ ...base, lineas: [lineaCheque({ pago: '31/02/2026' })] }, ctx)).toEqual({ error: 'Las fechas del cheque van como dd/mm/aaaa (cobro 1).' })
   })
 
   it('no devuelve más de lo que el servidor dice que se puede; vacío o cero no es devolución', () => {

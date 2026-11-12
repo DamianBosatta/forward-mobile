@@ -47,7 +47,7 @@ export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntrega
   }
 
   return (
-    <Modal visible animationType="slide" onRequestClose={onVolver}>
+    <Modal visible animationType="slide" statusBarTranslucent navigationBarTranslucent onRequestClose={onVolver}>
       <View accessibilityLabel="Llegué" style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title={parada.clienteNombre} subtitle={parada.direccion} leading={{ kind: 'atras', onPress: onVolver }} />
         <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], ...columna }}>

@@ -15,7 +15,6 @@ interface Props {
   puedeLlamar: boolean
   notaCargando: boolean
   onLlamar: () => void
-  onVerPedido: () => void
   onNota: () => void
 }
 
@@ -24,7 +23,7 @@ interface Props {
  * monto) con borde de 3 px. El resto de las acciones del pedido quedan como atajos de 44 px; las
  * principales (Ir, ¡Llegué!) viven en la barra fija de abajo.
  */
-export function ParadaGrande({ parada, numero, total, puedeLlamar, notaCargando, onLlamar, onVerPedido, onNota }: Props) {
+export function ParadaGrande({ parada, numero, total, puedeLlamar, notaCargando, onLlamar, onNota }: Props) {
   const c = useColors()
   const cobro = importeParada(parada)
   const chip = chipCobro(parada)
@@ -57,7 +56,6 @@ export function ParadaGrande({ parada, numero, total, puedeLlamar, notaCargando,
       </View>
       <View style={{ flexDirection: 'row', gap: space[2] }}>
         <Atajo label="Llamar" disabled={!puedeLlamar} onPress={onLlamar} />
-        <Atajo label="Ver pedido" onPress={onVerPedido} />
         <Atajo label="Nota de entrega" busy={notaCargando} onPress={onNota} />
       </View>
     </View>

@@ -36,7 +36,7 @@ export function EntregaLista({ parada, cobrado, piezas, hechas, total, siguiente
     safeHaptics.notification('success')
   }, [])
   return (
-    <Modal visible animationType="fade" onRequestClose={siguiente ? onSiguiente : onTermine}>
+    <Modal visible animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={siguiente ? onSiguiente : onTermine}>
       <View accessibilityLabel="Entrega lista" style={{ flex: 1, backgroundColor: c.bg }}>
         <View style={{ flex: 1, padding: space[4], gap: space[4], justifyContent: 'center', ...columna }}>
           <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[5], gap: space[2], alignItems: 'center' }}>

@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen, userEvent, within } from '@testing-library/react-native'
 import { CobroEnEntrega } from '../CobroEnEntrega'
 
-const props = { medios: [], mediosError: false, lineas: [], onLineas: jest.fn(), onSubiendo: jest.fn(), hoy: '07/11/2026' }
+const props = { medios: [], mediosError: false, lineas: [], onLineas: jest.fn(), onSubiendo: jest.fn() }
 
 describe('CobroEnEntrega: encabezado y cuenta del cliente (S8)', () => {
   it('no repite "Cobro" ni "A cobrar hoy": el título es "¿Cómo paga?"', () => {

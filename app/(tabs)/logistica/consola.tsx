@@ -18,7 +18,6 @@ import { useAuthStore } from '@/libs/store'
 import { esChofer } from '@/src/components/layout/menuModules'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { RouteSelector } from '@/features/logistica/components/RouteSelector'
-import { PedidoDetalleModal } from '@/features/logistica/components/PedidoDetalleModal'
 import { HojaDeRutaVista } from '@/features/logistica/consola/HojaDeRutaVista'
 import { paradasCobroDe } from '@/features/cobros/paradaCobro'
 import { avisoDeFinalizar, paradasCobroSinResolver } from '@/features/logistica/consola/avisoFinalizar'
@@ -80,7 +79,6 @@ export default function ConsolaChoferScreen() {
   /** Lámina chofer-06: la entrega que acaba de quedar registrada. */
   const [lista, setLista] = useState<{ parada: ParadaDto; cobrado: number; piezas: number; guardada: boolean } | null>(null)
   const [errorReporte, setErrorReporte] = useState<string | null>(null)
-  const [pedido, setPedido] = useState<ParadaDto | null>(null)
   const [finalizando, setFinalizando] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
   /** chofer-07-estados, "Guardado sin señal": lo último que se reportó quedó en el teléfono. */
@@ -466,7 +464,6 @@ export default function ConsolaChoferScreen() {
           onComoLlegar={(p) => abrir(urlComoLlegar(p.direccion))}
           onLlamar={(p) => abrir(urlLlamar(p.telefono))}
           puedeLlamar={(p) => urlLlamar(p.telefono) !== null}
-          onVerPedido={setPedido}
           onNota={compartirNota}
           notaCargando={notaCargando}
           pie={pie}
@@ -527,12 +524,6 @@ export default function ConsolaChoferScreen() {
           <Button label="Cancelar" variant="secundario" onPress={() => setFinalizando(false)} />
         </BottomSheet>
         <PermisoGps visible={gps.preguntar} onAceptar={gps.aceptar} onRechazar={gps.rechazar} />
-        <PedidoDetalleModal
-          ventaId={pedido?.ventaId ?? null}
-          clienteNombre={pedido?.clienteNombre}
-          isVisible={!!pedido}
-          onClose={() => setPedido(null)}
-        />
       </View>
     </RequirePermission>
   )

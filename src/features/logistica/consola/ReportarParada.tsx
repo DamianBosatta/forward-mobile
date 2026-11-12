@@ -7,9 +7,7 @@ import { safeHaptics } from '@/core/utils/haptics'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import type { ParadaDto } from '@/libs/api-client/types'
 import { useLineasParada, useMediosCobroChofer } from '@/libs/api-client/logistica'
-import { mostrarFecha } from '@/features/cuentas/lib/cobro'
 import { leerNumero } from '@/core/utils/numero'
-import { diaArgentina } from '@/core/utils/fecha'
 import { DETALLE_MOTIVO_NO_ENTREGA, MOTIVOS_NO_ENTREGA } from './hojaDeRuta'
 import { etiquetaNota, importeParada } from './cobroParada'
 import { armarEntrega, montoDeLinea, razonPendiente, type EntregaArmada, type FormEntrega } from './entrega'
@@ -175,7 +173,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
   const resumenDeConfirmacion = partes ? ` ${partes.charAt(0).toUpperCase()}${partes.slice(1)}.` : ''
 
   return (
-    <Modal visible animationType="slide" onRequestClose={atras}>
+    <Modal visible animationType="slide" statusBarTranslucent navigationBarTranslucent onRequestClose={atras}>
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar
           title={entregado ? parada.clienteNombre : 'No pude entregar'}
@@ -244,7 +242,6 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
                 onSubiendo={alSubir}
                 aCobrar={aCobrarHoy}
                 codigoFactura={parada.codigoPedido}
-                hoy={mostrarFecha(diaArgentina(Date.now()))}
                 faltaACuenta={faltaACuenta(ctxCobro)}
                 aviso={avisoDeCobro(ctxCobro)}
                 deudaAnterior={parada.deudaAnterior}
@@ -294,7 +291,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
           {error && ultimo ? <Notice tone="peligro">{error}</Notice> : null}
         </ScrollView>
         {eligiendo || enviada || preguntandoOtro ? null : (
-          <PieFijo conInsetInferior>
+          <PieFijo>
             <View style={{ gap: space[2], ...columna }}>
               {razon ? <MotivoDeshabilitado>{razon}</MotivoDeshabilitado> : null}
               <Button

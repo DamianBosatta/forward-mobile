@@ -5,8 +5,6 @@ import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, OptionCard, PieFijo, TopBar, formatImporte } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { useMediosCobroChofer } from '@/libs/api-client/logistica'
-import { mostrarFecha } from '@/features/cuentas/lib/cobro'
-import { diaArgentina } from '@/core/utils/fecha'
 import { MOTIVOS_NO_COBRO, type MotivoNoCobro, type ParadaCobro } from '@/features/cobros/paradaCobro'
 import { CobroEnEntrega } from './CobroEnEntrega'
 import { armarLinea, type LineaCobroForm } from './entrega'
@@ -61,7 +59,7 @@ export function ParadaCobroPantalla({ parada, numero, total, enviando, error, re
 
   if (resultado) {
     return (
-      <Modal visible animationType="slide" onRequestClose={onCerrar}>
+      <Modal visible animationType="slide" statusBarTranslucent navigationBarTranslucent onRequestClose={onCerrar}>
         <View style={{ flex: 1, backgroundColor: c.bg }}>
           <TopBar title={parada.direccion ?? parada.clienteNombre} subtitle={`Parada ${numero} de ${total} · Solo cobro`} leading={{ kind: 'atras', onPress: onCerrar }} />
           <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], ...columna }}>
@@ -79,7 +77,7 @@ export function ParadaCobroPantalla({ parada, numero, total, enviando, error, re
               </Notice>
             )}
           </ScrollView>
-          <PieFijo conInsetInferior>
+          <PieFijo>
             <View style={columna ?? undefined}>
               <Button size="xl" icon={Check} label="Volver a la ruta" onPress={onCerrar} />
             </View>
@@ -90,7 +88,7 @@ export function ParadaCobroPantalla({ parada, numero, total, enviando, error, re
   }
 
   return (
-    <Modal visible animationType="slide" onRequestClose={onCerrar}>
+    <Modal visible animationType="slide" statusBarTranslucent navigationBarTranslucent onRequestClose={onCerrar}>
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title={parada.direccion ?? parada.clienteNombre} subtitle={`Parada ${numero} de ${total} · Solo cobro`} leading={{ kind: 'atras', onPress: onCerrar }} />
         <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], ...columna }} keyboardShouldPersistTaps="handled">
@@ -117,7 +115,6 @@ export function ParadaCobroPantalla({ parada, numero, total, enviando, error, re
             lineas={lineas}
             onLineas={cambiarLineas}
             onSubiendo={alSubir}
-            hoy={mostrarFecha(diaArgentina(Date.now()))}
           />
           <View accessibilityLabel="Si no pudiste cobrar" style={{ gap: space[3] }}>
             <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Si no pudiste cobrar</Text>
@@ -137,7 +134,7 @@ export function ParadaCobroPantalla({ parada, numero, total, enviando, error, re
           </View>
           {error ? <Notice tone="peligro">{error}</Notice> : null}
         </ScrollView>
-        <PieFijo conInsetInferior>
+        <PieFijo>
           <View style={{ gap: space[2], ...columna }}>
             {razon ? <MotivoDeshabilitado>{razon}</MotivoDeshabilitado> : null}
             <Button

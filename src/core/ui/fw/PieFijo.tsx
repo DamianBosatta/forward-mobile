@@ -11,8 +11,6 @@ interface PieFijoProps {
   fondo?: 'surface' | 'bg'
   /** Solo si el pie queda sobre otra barra que ya cubre la barra del sistema. Por defecto el pie suma la barra del sistema (sola mientras el teclado está cerrado; dentro de ConAccesosRapidos no se suma). */
   sinInsetInferior?: boolean
-  /** @deprecated Es el comportamiento por defecto; se ignora. */
-  conInsetInferior?: boolean
   gap?: number
   /** Relleno de arriba y de abajo (el horizontal es siempre space[4]). Por defecto space[4]. */
   relleno?: number
