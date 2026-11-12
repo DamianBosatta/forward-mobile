@@ -2,9 +2,8 @@ import React, { useState } from 'react'
 import { Text, View } from 'react-native'
 import { Share2 } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
-import { BottomSheet, Button, Notice, Segmented, pesoSemibold } from '@/core/ui/fw'
+import { BottomSheet, Button, FiltroChip, Notice, Segmented, pesoSemibold } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
-import { ChipDeFiltro } from '@/features/autorizaciones/components/ChipDeFiltro'
 import { useEnLinea } from '@/features/ventas/lib/sinConexion'
 import { sharePdf } from '@/features/pedidos/lib/sharePdf'
 import { diaArgentina } from '@/core/utils/fecha'
@@ -84,9 +83,9 @@ export function HojaEstadoDeCuenta({ socio, onClose }: Props) {
       <View style={{ gap: space[2] }}>
         <Text style={titulo}>Período</Text>
         <View accessibilityRole="radiogroup" accessibilityLabel="Período" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
-          <ChipDeFiltro rol="radio" label="Todo" activo={periodo === null} onPress={() => setPeriodo(null)} />
+          <FiltroChip rol="radio" label="Todo" activo={periodo === null} onPress={() => setPeriodo(null)} />
           {PERIODOS_DE_CUENTA.map(p => (
-            <ChipDeFiltro key={p.valor} rol="radio" label={p.label} activo={periodo === p.valor} onPress={() => setPeriodo(p.valor)} />
+            <FiltroChip key={p.valor} rol="radio" label={p.label} activo={periodo === p.valor} onPress={() => setPeriodo(p.valor)} />
           ))}
         </View>
       </View>

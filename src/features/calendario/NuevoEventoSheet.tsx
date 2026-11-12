@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
+import { Check } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, Segmented, pesoSemibold } from '@/core/ui/fw'
 import { useCrearEvento } from '@/libs/api-client/calendario'
@@ -98,8 +99,10 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
               accessibilityRole="radio"
               accessibilityLabel={t.label}
               accessibilityState={{ checked: activo }}
-              style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: space[3], borderRadius: radii.campo, borderWidth: activo ? 2 : 1, borderColor: activo ? c.brand : c.borderStrong, backgroundColor: activo ? c.brandSoft : c.surface }}
+              android_ripple={{ color: c.surface2 }}
+              style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[3], borderRadius: radii.campo, borderWidth: activo ? 2 : 1, borderColor: activo ? c.brand : c.borderStrong, backgroundColor: activo ? c.brandSoft : c.surface }}
             >
+              {activo ? <Check size={18} color={c.brandInk} strokeWidth={2.5} /> : null}
               <Text style={{ ...typeScale.cuerpoDestacado, color: activo ? c.brandInk : c.text }}>{t.label}</Text>
             </Pressable>
           )
@@ -139,6 +142,7 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
                   accessibilityLabel={d.largo}
                   accessibilityState={{ checked: activo }}
                   onPress={() => alternarDia(d.valor)}
+                  android_ripple={{ color: c.surface2 }}
                   style={{
                     flex: 1,
                     minHeight: 44,
@@ -146,10 +150,13 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
                     justifyContent: 'center',
                     borderRadius: radii.campo,
                     borderWidth: activo ? 2 : 1,
-                    borderColor: activo ? c.brand : c.border,
+                    borderColor: activo ? c.brand : c.borderStrong,
                     backgroundColor: activo ? c.brandSoft : c.surface,
+                    flexDirection: 'row',
+                    gap: 2,
                   }}
                 >
+                  {activo ? <Check size={14} color={c.brandInk} strokeWidth={2.5} /> : null}
                   <Text style={{ ...typeScale.cuerpoDestacado, color: activo ? c.brandInk : c.text }}>{d.corto}</Text>
                 </Pressable>
               )

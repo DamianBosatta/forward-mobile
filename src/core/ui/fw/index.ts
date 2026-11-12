@@ -2,6 +2,7 @@
 export { Button, type ButtonVariant, type ButtonSize } from './Button'
 export { Field } from './Field'
 export { Segmented, type SegmentedOption } from './Segmented'
+export { FiltroChip } from './FiltroChip'
 export { Notice, type NoticeTone } from './Notice'
 export { TopBar, type TopBarAction, type TopBarTab } from './TopBar'
 export { BottomBar, type BottomBarItem } from './BottomBar'

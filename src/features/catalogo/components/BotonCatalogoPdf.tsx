@@ -1,9 +1,9 @@
 import React, { useState, useSyncExternalStore } from 'react'
 import { onlineManager } from '@tanstack/react-query'
-import { Pressable, Text, View } from 'react-native'
-import { Check, Lock } from 'lucide-react-native'
-import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
-import { BottomSheet, Button, Notice, Segmented } from '@/core/ui/fw'
+import { Text, View } from 'react-native'
+import { Lock } from 'lucide-react-native'
+import { FONT, space, typeScale, useColors } from '@/libs/theme'
+import { BottomSheet, Button, FiltroChip, Notice, Segmented } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { RequirePermission } from '@/core/ui'
 import { getCatalogoPdfUrl, type FormatoCatalogoPdf } from '@/libs/api-client/productos'
@@ -144,13 +144,13 @@ function ExportarCatalogoPdf({ busqueda, soloConStock, conOferta, categoriaId, t
               {puedeElegirLista ? (
                 <>
                   <View accessibilityLabel="Lista de precios" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
-                    <ChipDeOpcion rol="radio" label="Sin lista (precio base)" elegido={listaPrecioId === ''} onPress={() => setListaPrecioId('')} />
+                    <FiltroChip rol="radio" label="Sin lista (precio base)" activo={listaPrecioId === ''} onPress={() => setListaPrecioId('')} />
                     {visibles.map((l) => (
-                      <ChipDeOpcion
+                      <FiltroChip
                         key={l.id}
                         rol="radio"
                         label={l.activa ? l.nombre : `${l.nombre} (desactivada)`}
-                        elegido={listaPrecioId === l.id}
+                        activo={listaPrecioId === l.id}
                         onPress={() => setListaPrecioId(l.id)}
                       />
                     ))}
@@ -182,7 +182,7 @@ function ExportarCatalogoPdf({ busqueda, soloConStock, conOferta, categoriaId, t
                 <>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
                     {DESCUENTOS_DISPONIBLES.map((d) => (
-                      <ChipDeOpcion key={d} rol="checkbox" label={`−${d} %`} elegido={descuentos.includes(d)} onPress={() => alternarDescuento(d)} />
+                      <FiltroChip key={d} rol="checkbox" label={`−${d} %`} activo={descuentos.includes(d)} onPress={() => alternarDescuento(d)} />
                     ))}
                   </View>
                   <Text style={ayuda}>
@@ -203,37 +203,5 @@ function ExportarCatalogoPdf({ busqueda, soloConStock, conOferta, categoriaId, t
         {motivo ? <MotivoDeshabilitado>{motivo}</MotivoDeshabilitado> : null}
       </BottomSheet>
     </>
-  )
-}
-
-/**
- * Opción en pastilla de la hoja (una lista de precios, un descuento): 44 pt de alto, la elegida con tilde además del
- * color. `FiltroChip` mide 36 y es un filtro de pantalla, no una opción de un formulario.
- */
-function ChipDeOpcion({ label, elegido, rol, onPress }: { label: string; elegido: boolean; rol: 'radio' | 'checkbox'; onPress: () => void }) {
-  const c = useColors()
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole={rol}
-      accessibilityLabel={label}
-      accessibilityState={{ checked: elegido }}
-      android_ripple={{ color: c.brandSoft }}
-      style={{
-        minHeight: 44,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: space[1],
-        paddingHorizontal: space[3],
-        borderRadius: radii.pastilla,
-        borderWidth: 1,
-        borderColor: elegido ? c.brand : c.border,
-        backgroundColor: elegido ? c.brandSoft : c.surface,
-        overflow: 'hidden',
-      }}
-    >
-      {elegido ? <Check size={16} color={c.brandInk} /> : null}
-      <Text style={[typeScale.secundario, { color: elegido ? c.brandInk : c.text }]}>{label}</Text>
-    </Pressable>
   )
 }

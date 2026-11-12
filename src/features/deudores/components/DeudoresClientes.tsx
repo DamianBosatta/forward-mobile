@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { FlatList, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { FileText } from 'lucide-react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
-import { BottomSheet, Button, FilaDeSocio, Notice, formatImporte, useInsetInferior } from '@/core/ui/fw'
+import { BottomSheet, Button, FilaDeSocio, FiltroChip, Notice, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -12,7 +12,6 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { useValorDiferido } from '@/features/clientes/hooks/useCartera'
-import { ChipDeFiltro } from '@/features/autorizaciones/components/ChipDeFiltro'
 import { ChipAntiguedadDeuda } from '@/features/cuentas/components/ChipAntiguedadDeuda'
 import { chipAntiguedadDeuda } from '@/features/cuentas/lib/antiguedadDeuda'
 import { useSinConexionSinDatos } from '@/features/ventas/lib/sinConexion'
@@ -55,7 +54,7 @@ export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => vo
       <BuscadorCartera sobre="pantalla" grande etiqueta="Buscar deudor" placeholder="Buscar razón social, fantasía o CUIT" valor={busqueda} onCambio={setBusqueda} />
       {veVendedores ? (
         <View style={{ flexDirection: 'row', paddingHorizontal: space[4], paddingBottom: space[1] }}>
-          <ChipDeFiltro label={`Vendedor: ${vendedor?.nombre ?? 'Todos'}`} activo={!!vendedor} onPress={() => setEligiendoVendedor(true)} />
+          <FiltroChip label={`Vendedor: ${vendedor?.nombre ?? 'Todos'}`} activo={!!vendedor} onPress={() => setEligiendoVendedor(true)} />
         </View>
       ) : null}
       {total !== undefined && cantidad !== undefined ? (
@@ -159,9 +158,9 @@ function ElegirVendedor({ visible, vendedores, cargando, error, elegido, onElegi
       <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>Vendedor</Text>
       <ScrollView style={{ maxHeight: 420 }}>
         <View accessibilityRole="radiogroup" accessibilityLabel="Vendedor" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
-          <ChipDeFiltro rol="radio" label="Todos" activo={elegido === null} onPress={() => onElegir(null)} />
+          <FiltroChip rol="radio" label="Todos" activo={elegido === null} onPress={() => onElegir(null)} />
           {vendedores.map(v => (
-            <ChipDeFiltro key={v.id} rol="radio" label={v.nombre} activo={elegido?.id === v.id} onPress={() => onElegir(v)} />
+            <FiltroChip key={v.id} rol="radio" label={v.nombre} activo={elegido?.id === v.id} onPress={() => onElegir(v)} />
           ))}
         </View>
       </ScrollView>

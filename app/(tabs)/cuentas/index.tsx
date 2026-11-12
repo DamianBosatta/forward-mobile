@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftRight } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Button, Notice, Segmented, TopBar, TwoPane, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
+import { Button, FiltroChip, Notice, Segmented, TopBar, TwoPane, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
@@ -21,7 +21,6 @@ import { DeudasAProveedores } from '@/features/cuentas/components/DeudasAProveed
 import { useDeudasResumen } from '@/features/cuentas/api/queries'
 import { ResumenDeCuentas } from '@/features/cuentas/components/ResumenDeCuentas'
 import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
-import { ChipDeFiltro } from '@/features/autorizaciones/components/ChipDeFiltro'
 import { DeudoresClientes } from '@/features/deudores/components/DeudoresClientes'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -175,7 +174,7 @@ function CuentasCorrientesScreen() {
           <ResumenDeCuentas saldoTotal={saldoTotal} clientesConDeuda={resumenDeudas.data?.clientesConDeuda} cargando={isLoading} />
           <BuscadorCartera sobre="pantalla" grande valor={busqueda} onCambio={setBusqueda} />
           <View style={{ flexDirection: 'row', paddingHorizontal: space[4], paddingBottom: space[1] }}>
-            <ChipDeFiltro label="Con deuda vencida" activo={soloVencidas} onPress={() => setSoloVencidas(v => !v)} />
+            <FiltroChip label="Con deuda vencida" activo={soloVencidas} onPress={() => setSoloVencidas(v => !v)} />
           </View>
       <TwoPane
         list={lista}

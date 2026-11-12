@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { FlatList, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Button, Notice, StatusChip, TopBar, TotalsRow, TwoPane, formatImporte, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
+import { Button, FiltroChip, Notice, StatusChip, TopBar, TotalsRow, TwoPane, formatImporte, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { usePendientesAutorizacion, type VentaPendienteAutorizacion } from '@/libs/api-client/ventas'
@@ -13,7 +13,6 @@ import { esFallaDeRed } from '@/core/api/errores'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { filtrosConConteo, motivosDe, pideRazon, tieneMotivo, type ClaveMotivo } from '../lib/motivos'
 import { DecisionSheet, type Decision } from './DecisionSheet'
-import { ChipDeFiltro } from './ChipDeFiltro'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { HeroSaldo } from '@/features/clientes/components/SaldoDelCliente'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
@@ -111,7 +110,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
       )}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" accessibilityLabel="Motivo" contentContainerStyle={{ gap: space[2] }}>
         {filtrosConConteo(lista).map((f) => (
-          <ChipDeFiltro
+          <FiltroChip
             key={f.clave}
             rol="radio"
             label={`${f.label} · ${f.cantidad}`}
