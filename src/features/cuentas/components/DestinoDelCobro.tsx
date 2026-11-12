@@ -14,13 +14,15 @@ interface Props {
   onCuenta: (id: string) => void
   onComprobante: (url: string) => void
   onSubiendo: (subiendo: boolean) => void
+  /** En un pago a un proveedor la cuenta es de donde sale la plata. */
+  tituloCuenta?: string
 }
 
 /**
  * Transferencia o depósito: en qué cuenta propia entró y la foto del comprobante. Las cuentas las lista quien
  * puede cobrar (MOD_PAGOS:Create, sin saldos); si la lista falla, no se elige y el servidor usa la cuenta del medio.
  */
-export function DestinoDelCobro({ medio, cuentaPropiaId, comprobanteUrl, onCuenta, onComprobante, onSubiendo }: Props) {
+export function DestinoDelCobro({ medio, cuentaPropiaId, comprobanteUrl, onCuenta, onComprobante, onSubiendo, tituloCuenta = 'Cuenta donde entró' }: Props) {
   const c = useColors()
   const { canRead, canDo } = usePermissions()
   const cuentas = useCuentasPropias(canDo('MOD_PAGOS', 'create'), canRead('MOD_CC'))
@@ -29,11 +31,11 @@ export function DestinoDelCobro({ medio, cuentaPropiaId, comprobanteUrl, onCuent
   return (
     <>
       {opciones.length > 0 ? (
-        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Cuenta donde entró</Text>
+        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{tituloCuenta}</Text>
       ) : null}
       {opciones.length > 0 ? (
         // Sin elegir, se marca la cuenta del medio, que es la que usa el servidor si no se manda ninguna.
-        <ElegirChip titulo="Cuenta donde entró" opciones={opciones} valor={cuentaPropiaId ?? medio.cuentaPropiaDefaultId ?? null} onCambio={onCuenta} />
+        <ElegirChip titulo={tituloCuenta} opciones={opciones} valor={cuentaPropiaId ?? medio.cuentaPropiaDefaultId ?? null} onCambio={onCuenta} />
       ) : null}
       <FotoDelCobro que="del comprobante" url={comprobanteUrl} subir={subirComprobanteCobro} onUrl={onComprobante} onSubiendo={onSubiendo} />
     </>

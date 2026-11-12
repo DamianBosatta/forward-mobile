@@ -1,13 +1,14 @@
 import React from 'react'
 import { ScrollView, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { ArrowLeftRight, Landmark, Zap } from 'lucide-react-native'
+import { ArrowLeftRight, HandCoins, Landmark, Zap } from 'lucide-react-native'
 import { usePuedePagarServicio } from '@/features/gastos/lib/permiso'
 import { radii, space, useColors } from '@/libs/theme'
 import { FormContainer, Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
 import { usePuedeCobrar, usePuedeTransferir } from '@/features/cuentas/lib/permiso'
 import { MOTIVO_SIN_PERMISO_DE_SERVICIO, MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA } from '@/core/ui/fw/MotivoDeshabilitado'
 import { FilaDeTesoreria } from '@/features/tesoreria/components/FilaDeTesoreria'
+import { usePuedeVerPagos } from '@/features/pagos/lib/permiso'
 
 /** Aviso de la lámina tesoreria-inicio: el cobro de un cliente no se carga desde Tesorería. */
 const AVISO_COBROS_DE_CLIENTES = 'Los cobros de clientes se cargan desde la ficha del cliente, con "Cobrar".'
@@ -30,6 +31,8 @@ export default function TesoreriaScreen() {
   const pagarServicio = usePuedePagarServicio()
   // Misma regla que el botón "Cobrar" de la cuenta del cliente (CuentaCorrienteCliente): sin ella no se ofrece.
   const cargarCheque = usePuedeCobrar()
+  // Como la ruta /finanzas/pagos de la web (MOD_PAGOS:Read + CAP_VER_TESORERIA): sin ella no se ofrece.
+  const verPagos = usePuedeVerPagos()
 
   const separador = <View style={{ height: 1, backgroundColor: c.surface2, marginLeft: space[4] }} />
   return (
@@ -55,6 +58,17 @@ export default function TesoreriaScreen() {
               motivo={pagarServicio ? undefined : MOTIVO_SIN_PERMISO_DE_SERVICIO}
               onPress={() => router.push('/(tabs)/tesoreria/pagar-servicio')}
             />
+            {verPagos ? (
+              <>
+                {separador}
+                <FilaDeTesoreria
+                  icon={HandCoins}
+                  title="Pagos"
+                  subtitle="Pagos a proveedores y cobros de clientes"
+                  onPress={() => router.push('/(tabs)/tesoreria/pagos')}
+                />
+              </>
+            ) : null}
             {cargarCheque ? (
               <>
                 {separador}

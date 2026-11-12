@@ -8,13 +8,16 @@ export const PASOS_COBRO = ['Cliente', 'Qué se cobra', 'Medios', 'Confirmar'] a
 
 export type PasoCobro = 1 | 2 | 3 | 4
 
-/** Barra de pasos del cobro (maqueta "Cobros como venta"): la misma forma que la de la venta nueva, con "Paso N de 4" arriba. */
-export function PasosCobro({ paso }: { paso: PasoCobro }) {
+/**
+ * Barra de pasos del cobro (maqueta "Cobros como venta"): la misma forma que la de la venta nueva, con "Paso N de 4" arriba.
+ * `nombres`: los del pago a un proveedor (Proveedor, Qué se paga…); sin ellos, los del cobro.
+ */
+export function PasosCobro({ paso, nombres = PASOS_COBRO }: { paso: PasoCobro; nombres?: readonly string[] }) {
   const c = useColors()
   return (
     <View style={{ backgroundColor: c.topBar }}>
-      <Text style={{ ...typeScale.secundario, color: c.onTopBar, paddingHorizontal: space[4], paddingTop: space[1] }}>{`Paso ${paso} de ${PASOS_COBRO.length}`}</Text>
-      <PasosNumerados nombres={PASOS_COBRO} paso={paso} />
+      <Text style={{ ...typeScale.secundario, color: c.onTopBar, paddingHorizontal: space[4], paddingTop: space[1] }}>{`Paso ${paso} de ${nombres.length}`}</Text>
+      <PasosNumerados nombres={nombres} paso={paso} />
     </View>
   )
 }

@@ -14,6 +14,8 @@ interface Props {
   /** Id del comprobante → monto tipeado. */
   valor: Record<string, string>
   onCambio: (valor: Record<string, string>) => void
+  /** Sin comprobantes pendientes; por defecto, el texto del cliente. */
+  sinPendientes?: string
 }
 
 /** "A00409", la factura o el número de la venta: como lo muestra el servidor. */
@@ -21,14 +23,14 @@ export const nombreDocumento = (d: DocumentoPendiente) =>
   d.codigoPedido ?? d.numeroFactura ?? (d.numero != null ? `N.º ${d.numero}` : d.tipo)
 
 /** Imputación manual: los comprobantes con saldo del cliente; al elegir uno se propone su saldo pendiente. */
-export function ElegirComprobantes({ socioId, valor, onCambio }: Props) {
+export function ElegirComprobantes({ socioId, valor, onCambio, sinPendientes = 'El cliente no tiene comprobantes pendientes.' }: Props) {
   const c = useColors()
   const pendientes = useDocumentosPendientes(socioId, true)
 
   if (pendientes.isLoading) return <ActivityIndicator color={c.brandInk} />
   if (pendientes.error) return <Notice tone="peligro">{mensajeDelServidor(pendientes.error, 'No se pudieron cargar los comprobantes pendientes.')}</Notice>
   const documentos = pendientes.data ?? []
-  if (documentos.length === 0) return <Notice tone="info">El cliente no tiene comprobantes pendientes.</Notice>
+  if (documentos.length === 0) return <Notice tone="info">{sinPendientes}</Notice>
 
   const alternar = (d: DocumentoPendiente) => {
     const { [d.documentoId]: elegido, ...resto } = valor

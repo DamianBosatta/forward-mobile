@@ -8,6 +8,7 @@ import { leerNumero } from '@/features/venta-nueva/lib/linea'
 import type { CajaDelCobro, MedioDePago } from '../api/cobros'
 import { subirFotoCheque } from '../api/fotos'
 import type { FormCobro } from '../lib/cobro'
+import { textosDe, type Contraparte } from '../lib/contraparte'
 import { condicionesDelMedio } from '../lib/condicionesMedio'
 import type { BorradorMedio } from '../lib/lineasCobro'
 import { CajaDelCobroInline } from './CajaDelCobroInline'
@@ -23,6 +24,8 @@ interface Props {
   onCambio: (b: BorradorMedio) => void
   /** La primera línea del cobro: la única con cuenta donde entró, foto del comprobante y datos del cheque. */
   primera: boolean
+  /** Pago a un proveedor: el cheque es propio y la cuenta, de donde sale. Por defecto, el cobro. */
+  contraparte?: Contraparte
   /** La caja del depósito de la sesión, donde entra el efectivo (no se elige acá). */
   caja: CajaDelCobro
   subeFotoCheque: boolean
@@ -66,7 +69,7 @@ export function MedioYMonto(p: Props) {
           {p.cargandoMedios ? <ActivityIndicator color={c.brandInk} /> : null}
           {p.errorMedios ? <Notice tone="peligro">{mensajeDelServidor(p.errorMedios, 'No se pudieron cargar los medios de pago.')}</Notice> : null}
           <ElegirChip titulo="Medio" tituloVisible opciones={p.medios.filter(m => m.activo && m.id).map(m => ({ id: m.id!, label: m.nombre ?? '' }))} valor={b.medioPagoId} onCambio={elegir} />
-          {b.esCheque ? <Notice tone="info">El cheque se carga en un cobro de un solo medio.</Notice> : null}
+          {b.esCheque ? <Notice tone="info">{textosDe(p.contraparte ?? 'cliente').chequeVaSolo}</Notice> : null}
           <Field label="Monto" value={b.monto} onChangeText={v => onCambio({ ...b, monto: v })} keyboardType="decimal-pad" alignRight />
           {condiciones ? (
             <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
@@ -100,6 +103,7 @@ export function MedioYMonto(p: Props) {
               onCuenta={id => onCambio({ ...b, cuentaPropiaId: id })}
               onComprobante={u => onCambio({ ...b, comprobanteUrl: u })}
               onSubiendo={p.onSubiendo}
+              tituloCuenta={p.contraparte === 'proveedor' ? 'Cuenta de donde sale' : undefined}
             />
           ) : null}
           {!p.primera && medio && !b.requiereCaja ? (
