@@ -1,6 +1,7 @@
 import React from 'react'
 import { Text, View } from 'react-native'
-import { space, useColors } from '@/libs/theme'
+import { space, useColors, typeScale } from '@/libs/theme'
+import { pesoRegular } from './tipografia'
 
 export interface PasoDeEstado { label: string; estado: 'hecho' | 'actual' | 'pendiente' }
 
@@ -20,7 +21,7 @@ export function PasosDeEstado({ pasos, accessibilityLabel }: { pasos: PasoDeEsta
       {pasos.map((p) => (
         <View key={p.label} accessible accessibilityLabel={`${p.label}, ${DESCRIPCION[p.estado]}`} style={{ flex: 1, gap: 6 }}>
           <View style={{ height: 6, borderRadius: 999, backgroundColor: p.estado === 'pendiente' ? c.topBarBorder : c.brand }} />
-          <Text style={{ fontSize: 12, lineHeight: 16, color: p.estado === 'actual' ? c.onTopBarStrong : c.onTopBar, fontWeight: p.estado === 'actual' ? '700' : '400' }}>
+          <Text style={{ ...typeScale.etiqueta, ...(p.estado === 'actual' ? null : pesoRegular), color: p.estado === 'actual' ? c.onTopBarStrong : c.onTopBar }}>
             {p.label}
           </Text>
         </View>

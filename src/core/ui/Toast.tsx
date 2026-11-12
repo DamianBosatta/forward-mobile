@@ -13,7 +13,8 @@ import { View, Text, StyleSheet } from 'react-native'
 import { MotiView, AnimatePresence, type MotiTransitionProp } from 'moti'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { CheckCircle2, AlertCircle, Info } from 'lucide-react-native'
-import { useColors, type ForwardColors } from '@/libs/theme'
+import { useColors, type ForwardColors, typeScale } from '@/libs/theme'
+import { pesoSemibold } from './fw/tipografia'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -165,8 +166,7 @@ const styles = StyleSheet.create({
   },
   message: {
     flex: 1,
-    fontSize: 14,
-    fontFamily: 'Outfit_600SemiBold',
-    lineHeight: 20,
+    ...typeScale.secundario,
+    ...pesoSemibold,
   },
 })

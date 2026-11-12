@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
-import { BottomSheet, Button, Field, Notice, Segmented } from '@/core/ui/fw'
+import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { BottomSheet, Button, Field, Notice, Segmented, pesoSemibold } from '@/core/ui/fw'
 import { useCrearEvento } from '@/libs/api-client/calendario'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { SelectorDia } from './SelectorDia'
@@ -87,7 +87,7 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
             : `Viene de la venta ${precarga.origen}: el título y la descripción ya están cargados.`}
         </Notice>
       ) : null}
-      <Text style={{ ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600', color: c.text }}>Tipo de evento</Text>
+      <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: c.text }}>Tipo de evento</Text>
       <View accessibilityRole="radiogroup" accessibilityLabel="Tipo de evento" style={{ gap: space[2] }}>
         {TIPOS_MANUALES.map((t) => {
           const activo = t.value === tipo
@@ -117,7 +117,7 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
         help="Sin hora, es de todo el día."
         error={horaValida ? undefined : 'Escribí la hora como 09:30.'}
       />
-      <Text style={{ ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600', color: c.text }}>Se repite</Text>
+      <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: c.text }}>Se repite</Text>
       <Segmented<Repite>
         accessibilityLabel="Se repite"
         value={repite}
@@ -158,7 +158,7 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{textoSemanal(diasElegidos)}</Text>
         </>
       ) : null}
-      <Text style={{ ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600', color: c.text }}>Avisarme</Text>
+      <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: c.text }}>Avisarme</Text>
       <Segmented<Aviso>
         accessibilityLabel="Avisarme"
         value={aviso}

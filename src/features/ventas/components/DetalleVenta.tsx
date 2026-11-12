@@ -3,7 +3,7 @@ import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'r
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
+import { Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, pesoRegular } from '@/core/ui/fw'
 import { api } from '@/core/api/client'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { esEstadoVenta } from '@/core/constants/estados'
@@ -44,7 +44,7 @@ function LineaDeTiempo({ pasos }: { pasos: NonNullable<ReturnType<typeof pasosDe
           <View testID={`tramo-${p.etiqueta}`} style={{ height: 6, borderRadius: radii.pastilla, backgroundColor: `${c.onTopBar}40`, overflow: 'hidden' }}>
             <View style={{ height: 6, width: p.avance === 'completo' ? '100%' : p.avance === 'medio' ? '50%' : '0%', backgroundColor: c.brand }} />
           </View>
-          <Text style={{ fontSize: 11, lineHeight: 14, color: p.actual ? c.onTopBarStrong : c.onTopBar, fontWeight: p.actual ? '700' : '400' }}>{p.etiqueta}</Text>
+          <Text style={{ ...typeScale.etiqueta, ...(p.actual ? null : pesoRegular), color: p.actual ? c.onTopBarStrong : c.onTopBar }}>{p.etiqueta}</Text>
         </View>
       ))}
     </View>

@@ -196,7 +196,7 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
                         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`${formatToLocalTime(v.fecha, 'EEE d/M')} · ${tipo}`}</Text>
                       </View>
                       <View style={{ alignItems: 'flex-end', gap: space[1] }}>
-                        <Text style={[typeScale.titulo, importe, { fontWeight: '700', color: c.text }]}>{formatImporte(v.totalAmount)}</Text>
+                        <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(v.totalAmount)}</Text>
                         {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
                       </View>
                       <ChevronRight testID="venta-chevron" size={20} color={c.textSecondary} />

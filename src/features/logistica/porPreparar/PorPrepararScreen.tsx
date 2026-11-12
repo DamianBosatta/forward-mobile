@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useIsFocused } from "expo-router/react-navigation"
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { Filter } from 'lucide-react-native'
-import { FONT, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
-import { Notice, StatusChip, TopBar, TwoPane, chipForEstado, useMenuLeading } from '@/core/ui/fw'
+import { radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
+import { Notice, StatusChip, TopBar, TwoPane, chipForEstado, useMenuLeading, pesoSemibold } from '@/core/ui/fw'
 import { useResponsive } from '@/libs/useResponsive'
 import { useConteosPreparacion, useHojaRuta, useVentasParaPreparacion, type VentaPreparacion } from '@/libs/api-client/logistica'
 import { useVenta } from '@/libs/api-client'
@@ -24,7 +24,6 @@ const esNoEntregada = (v: VentaPreparacion) => esEstadoVenta(v.estado, 'NoEntreg
 const TODAS = 'todas'
 type Pestana = 'pendientes' | 'noEntregados'
 
-const semibold = { fontFamily: FONT.semibold, fontWeight: '600' as const }
 const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`
 
 /**
@@ -42,7 +41,7 @@ export function DatosDeEntregaFallida({ pedido }: { pedido: VentaPreparacion }) 
   if (!motivo && !observaciones && !chofer) return null
   return (
     <View style={{ gap: space[1] }}>
-      {motivo ? <Text style={{ ...typeScale.secundario, ...semibold, color: c.text }}>{`Motivo: ${motivo}`}</Text> : null}
+      {motivo ? <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: c.text }}>{`Motivo: ${motivo}`}</Text> : null}
       {observaciones ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Observaciones: ${observaciones}`}</Text> : null}
       {chofer ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`${chofer} (chofer)`}</Text> : null}
     </View>
@@ -121,11 +120,11 @@ export function PorPrepararScreen() {
         {/* Ya está en una hoja que no salió: el servidor no la deja sumar a otra. */}
         {falla ? <DatosDeEntregaFallida pedido={v} /> : null}
         {v.hojaRutaCodigo ? (
-          <Text style={{ ...typeScale.secundario, ...semibold, color: c.text }}>{`En hoja ${v.hojaRutaCodigo}`}</Text>
+          <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: c.text }}>{`En hoja ${v.hojaRutaCodigo}`}</Text>
         ) : null}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2], marginTop: space[1] }}>
           <Text style={{ ...typeScale.secundario, color: c.text, flex: 1 }}>{v.metodoEntregaNombre}</Text>
-          <Text style={{ ...typeScale.secundario, ...semibold, color: c.text }}>
+          <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: c.text }}>
             {[
               plural(v.itemsCount, 'producto', 'productos'),
               // La suma la da el servidor (9B, prioridad 3); uno anterior no la manda.
@@ -180,7 +179,7 @@ export function PorPrepararScreen() {
         </Text>
       ) : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] }}>
-        <Text accessibilityRole="header" style={{ ...typeScale.secundario, ...semibold, color: c.text, flex: 1 }}>
+        <Text accessibilityRole="header" style={{ ...typeScale.secundario, ...pesoSemibold, color: c.text, flex: 1 }}>
           {enPendientes
             ? `${todas ? 'Todas las fechas' : nombreDelDia(dia)} · ${plural(delDia.length, 'pedido', 'pedidos')} · ${plural(lineas, 'producto', 'productos')}`
             : `${plural(noEntregados.length, 'pedido no entregado', 'pedidos no entregados')}, para reprogramar`}
@@ -198,7 +197,7 @@ export function PorPrepararScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] }}>
           <Text style={{ ...typeScale.secundario, color: c.text, flex: 1 }}>{resumenFiltros}</Text>
           <Pressable accessibilityRole="button" onPress={() => setFiltros(SIN_FILTROS)} style={{ minHeight: 44, justifyContent: 'center' }}>
-            <Text style={{ ...typeScale.secundario, ...semibold, color: c.brandInk }}>Quitar filtros</Text>
+            <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: c.brandInk }}>Quitar filtros</Text>
           </Pressable>
         </View>
       ) : null}

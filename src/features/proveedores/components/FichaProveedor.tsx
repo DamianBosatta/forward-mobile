@@ -159,7 +159,7 @@ export function FichaProveedor({ id, conBarra = false }: { id: string; conBarra?
                         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{formatToLocalTime(k.fecha, 'EEE d MMM')}</Text>
                       </View>
                       <View style={{ alignItems: 'flex-end', gap: space[1] }}>
-                        <Text style={[typeScale.titulo, importe, { fontWeight: '700', color: c.text }]}>{formatImporte(k.totalAmount)}</Text>
+                        <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(k.totalAmount)}</Text>
                         {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
                       </View>
                       <ChevronRight testID="compra-chevron" size={20} color={c.textSecondary} />

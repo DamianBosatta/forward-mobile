@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { Pressable, Text, TextInput, View, type TextInputProps } from 'react-native'
 import { Eye, EyeOff } from 'lucide-react-native'
-import { FONT, maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
+import { maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
+import { pesoSemibold } from './tipografia'
 
 interface FieldProps extends Omit<TextInputProps, 'style' | 'placeholderTextColor'> {
   label: string
@@ -19,7 +20,7 @@ interface FieldProps extends Omit<TextInputProps, 'style' | 'placeholderTextColo
   prefijo?: string
 }
 
-const etiqueta = { ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600' as const }
+const etiqueta = { ...typeScale.secundario, ...pesoSemibold }
 
 /** Campo de la lámina F4: etiqueta 14/600, alto 48, relleno superficie-2, foco con la marca y error en rojo. */
 export function Field({ label, help, error, alignRight, verOcultar, labelSuffix, invalid, prefijo, secureTextEntry, onFocus, onBlur, ...input }: FieldProps) {

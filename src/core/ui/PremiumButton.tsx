@@ -12,6 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { MotiView, type MotiTransitionProp } from 'moti'
 import { useColors, tokens } from '@/libs/theme'
 import { safeHaptics } from '@/core/utils/haptics'
+import { pesoSemibold } from './fw/tipografia'
 
 interface PremiumButtonProps {
   title: string
@@ -147,7 +148,7 @@ const styles = StyleSheet.create({
     zIndex: 1
   },
   text: {
-    fontWeight: '900',
+    ...pesoSemibold,
     letterSpacing: 0.5,
     textTransform: 'uppercase'
   },

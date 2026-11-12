@@ -102,7 +102,7 @@ export function SaldosPorCuenta({ tst, normal }: { tst: number; normal: number }
       style={{ flex: 1, minWidth: 0, backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[3], gap: 2 }}
     >
       <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{etiqueta}</Text>
-      <Text numberOfLines={1} adjustsFontSizeToFit style={[typeScale.titulo, importe, { fontWeight: '700', color: c.text }]}>{formatImporte(valor)}</Text>
+      <Text numberOfLines={1} adjustsFontSizeToFit style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(valor)}</Text>
     </View>
   )
   return (

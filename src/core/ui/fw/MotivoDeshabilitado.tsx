@@ -1,7 +1,7 @@
 import React from 'react'
 import { Text, View } from 'react-native'
 import { Lock } from 'lucide-react-native'
-import { space, useColors } from '@/libs/theme'
+import { space, useColors, typeScale } from '@/libs/theme'
 
 /** Por qué no hay permiso para registrar cobros: el mismo texto de la web (finanzas/_components/cobro-pago-panel.tsx). */
 export const MOTIVO_SIN_PERMISO_DE_COBRO =
@@ -20,7 +20,7 @@ export function MotivoDeshabilitado({ children, testID }: { children: string; te
   return (
     <View testID={testID} accessibilityRole="text" style={{ flexDirection: 'row', gap: space[2] }}>
       <Lock size={16} color={c.textSecondary} style={{ marginTop: 1 }} />
-      <Text style={{ flex: 1, fontSize: 13, lineHeight: 18, color: c.textSecondary }}>{children}</Text>
+      <Text style={{ flex: 1, ...typeScale.secundario, color: c.textSecondary }}>{children}</Text>
     </View>
   )
 }

@@ -29,7 +29,7 @@ export function PasosNumerados({ nombres, paso }: Props) {
             <View accessible accessibilityLabel={`Paso ${n} de ${nombres.length}: ${nombre}`} accessibilityState={{ selected: actual }} style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
               <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: actual || hecho ? c.action : 'transparent', borderWidth: actual || hecho ? 0 : 1, borderColor: c.onTopBar }}>
                 {hecho ? <Check size={14} color={c.onAction} strokeWidth={3} /> : (
-                  <Text style={{ ...typeScale.etiqueta, color: actual ? c.onAction : c.onTopBar, fontWeight: '600' }}>{n}</Text>
+                  <Text style={{ ...typeScale.etiqueta, color: actual ? c.onAction : c.onTopBar }}>{n}</Text>
                 )}
               </View>
               <Text style={{ ...typeScale.etiqueta, color: actual ? c.onTopBarStrong : c.onTopBar, fontWeight: actual ? '600' : '400' }}>{nombre}</Text>

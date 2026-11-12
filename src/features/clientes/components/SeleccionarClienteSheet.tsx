@@ -4,7 +4,7 @@ import { Plus, Search } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import { fetchSocio, sociosKeys, useClientesRecientes } from '@/libs/api-client/socios'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { BottomSheet, Notice, Segmented, StatusChip } from '@/core/ui/fw'
+import { BottomSheet, Notice, Segmented, StatusChip, pesoSemibold } from '@/core/ui/fw'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useCartera } from '../hooks/useCartera'
@@ -64,7 +64,7 @@ function Fila({ cliente, onPress, vencida = false }: { cliente: ClienteElegido; 
 
 function Titulo({ children }: { children: string }) {
   const c = useColors()
-  return <Text accessibilityRole="header" style={{ ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: c.textSecondary }}>{children}</Text>
+  return <Text accessibilityRole="header" style={{ ...typeScale.secundario, ...pesoSemibold, color: c.textSecondary }}>{children}</Text>
 }
 
 /**

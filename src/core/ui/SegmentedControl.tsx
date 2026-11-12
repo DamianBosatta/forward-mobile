@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react'
 import { View, Text, Pressable, Animated, LayoutAnimation, Platform, UIManager, useWindowDimensions } from 'react-native'
 import * as Haptics from 'expo-haptics'
-import { useColors, useIsDark } from '@/libs/theme'
+import { useColors, typeScale } from '@/libs/theme'
 import { BRAND } from '@/libs/theme'
 
 // Habilitar LayoutAnimation en Android
@@ -28,7 +28,6 @@ interface SegmentedControlProps {
  */
 export function SegmentedControl({ options, selectedIndex, value, onChange }: SegmentedControlProps) {
   const colors = useColors()
-  const isDark = useIsDark()
   const { width } = useWindowDimensions()
 
   // Normalizar opciones a objetos {label, value}
@@ -71,7 +70,7 @@ export function SegmentedControl({ options, selectedIndex, value, onChange }: Se
     <View
       style={{
         flexDirection: 'row',
-        backgroundColor: isDark ? '#FFFFFF08' : colors.surface2, 
+        backgroundColor: colors.surface2, 
         borderRadius: 16,
         padding: 4,
         borderWidth: 1,
@@ -122,9 +121,8 @@ export function SegmentedControl({ options, selectedIndex, value, onChange }: Se
           >
             <Text
               style={{
-                fontSize: 13,
-                fontWeight: isActive ? '900' : '600',
-                color: isActive ? colors.primary : (isDark ? '#FFFFFF40' : colors.textMuted),
+                ...typeScale.etiqueta,
+                color: isActive ? colors.primary : colors.textMuted,
                 letterSpacing: 0.5,
                 textTransform: 'uppercase'
               }}

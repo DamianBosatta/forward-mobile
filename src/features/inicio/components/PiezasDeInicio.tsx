@@ -2,7 +2,7 @@ import React from 'react'
 import { Pressable, Text, View, type TextStyle } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Notice } from '@/core/ui/fw'
+import { Notice, pesoSemibold } from '@/core/ui/fw'
 
 /**
  * Piezas de Inicio con el modelo de la venta y de la galería v2 (propuesta de Inicio, frames 1 a 9):
@@ -17,7 +17,6 @@ function useColoresHero() {
 }
 /** La cifra grande del hero (galería v2: 32/40, 700). Es la única medida fuera de la escala de texto. */
 const CIFRA_HERO: TextStyle = { fontFamily: FONT.semibold, fontSize: 32, lineHeight: 40, fontWeight: '700', ...importe }
-const semibold = { fontFamily: FONT.semibold, fontWeight: '600' as const }
 const TOCABLE = { minHeight: 44, minWidth: 44, justifyContent: 'center' as const }
 
 export function HeroDeInicio({ etiqueta, cifra, meta, accessibilityLabel, children, testID }: {
@@ -72,7 +71,7 @@ export function SeccionDeInicio({ titulo, enlace, children }: { titulo: string; 
         <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text, flexShrink: 1 }]}>{titulo}</Text>
         {enlace ? (
           <Pressable accessibilityRole="link" accessibilityLabel={enlace.label} onPress={enlace.onPress} style={TOCABLE}>
-            <Text style={[typeScale.secundario, semibold, { color: c.brandInk }]}>{enlace.label}</Text>
+            <Text style={[typeScale.secundario, pesoSemibold, { color: c.brandInk }]}>{enlace.label}</Text>
           </Pressable>
         ) : null}
       </View>
@@ -150,7 +149,7 @@ export function ErrorConReintentar({ texto, detalle, accessibilityLabel, onReint
       <Notice tone="peligro">{texto}</Notice>
       {detalle ? <Text style={[typeScale.secundario, { color: c.text }]}>{detalle}</Text> : null}
       <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel} onPress={onReintentar} style={[TOCABLE, { alignSelf: 'flex-start' }]}>
-        <Text style={[typeScale.secundario, semibold, { color: c.brandInk }]}>Reintentar</Text>
+        <Text style={[typeScale.secundario, pesoSemibold, { color: c.brandInk }]}>Reintentar</Text>
       </Pressable>
     </View>
   )

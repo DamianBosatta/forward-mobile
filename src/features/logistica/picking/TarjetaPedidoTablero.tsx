@@ -1,10 +1,10 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { CalendarDays, Clock, History, Package, Route, UserRound, type LucideIcon } from 'lucide-react-native'
-import { FONT, importe, radii, shadowMd, space, typeScale, useColors, useIsDark, type ChipEstado } from '@/libs/theme'
+import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark, type ChipEstado } from '@/libs/theme'
 import { diaCorto, estaAtrasado, etiquetaMetodo, textoUltimoCambio, type VentaTablero } from './tablero'
+import { pesoSemibold } from '@/core/ui/fw'
 
-const semibold = { fontFamily: FONT.semibold, fontWeight: '600' as const }
 
 export interface OpcionesTarjeta {
   /** "Entrega" en el flujo normal, "Entrega fallida" en No entregado. */
@@ -66,7 +66,7 @@ export function TarjetaPedidoTablero({ venta, hoy, opciones = {}, onAbrir, child
       style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[3], gap: space[2], ...sombra }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[2] }}>
-        <Text style={{ ...typeScale.secundario, ...semibold, color: c.textSecondary, flex: 1 }} numberOfLines={1}>{codigo}</Text>
+        <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: c.textSecondary, flex: 1 }} numberOfLines={1}>{codigo}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: space[1], flexShrink: 1 }}>
           {atrasado ? <Etiqueta texto="Atrasado" icono={Clock} tono="porAutorizar" /> : null}
           {mostrarHoja && venta.hojaRutaCodigo ? <Etiqueta texto={`En hoja ${venta.hojaRutaCodigo}`} icono={Route} tono="enCurso" /> : null}

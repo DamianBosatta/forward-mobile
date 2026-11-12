@@ -43,7 +43,7 @@ export function EstadoDePantalla({ tipo, titulo, texto, guardadoA, accion }: Est
       <View style={{ width: 96, height: 96, borderRadius: radii.pastilla, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center' }}>
         <Icono size={40} color={c.textSecondary} />
       </View>
-      <Text accessibilityRole="header" style={[typeScale.titulo, { marginTop: space[2], fontWeight: '700', color: c.text, textAlign: 'center' }]}>
+      <Text accessibilityRole="header" style={[typeScale.titulo, { marginTop: space[2], color: c.text, textAlign: 'center' }]}>
         {titulo}
       </Text>
       {cuerpo ? <Text style={[typeScale.cuerpo, { color: c.textSecondary, textAlign: 'center' }]}>{cuerpo}</Text> : null}

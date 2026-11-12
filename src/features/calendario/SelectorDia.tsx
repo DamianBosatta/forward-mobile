@@ -1,8 +1,9 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { ChevronLeft, ChevronRight } from 'lucide-react-native'
-import { FONT, space, typeScale, useColors } from '@/libs/theme'
+import { space, typeScale, useColors } from '@/libs/theme'
 import { moverDia, nombreLargo } from './semana'
+import { pesoSemibold } from '@/core/ui/fw'
 
 /** El día del evento, de a uno con flechas. El servidor guarda el día, no la hora. */
 export function SelectorDia({ fecha, onCambiar, etiqueta = 'Día', nota = 'El calendario guarda el día, no la hora' }: {
@@ -24,7 +25,7 @@ export function SelectorDia({ fecha, onCambiar, etiqueta = 'Día', nota = 'El ca
   )
   return (
     <View style={{ gap: space[1] }}>
-      <Text style={{ ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600', color: c.text }}>{etiqueta}</Text>
+      <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: c.text }}>{etiqueta}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         {flecha(ChevronLeft, 'Día anterior', -1)}
         <View style={{ flex: 1, alignItems: 'center' }}>

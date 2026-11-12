@@ -1,8 +1,8 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { MapPin } from 'lucide-react-native'
-import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { StatusChip, formatImporte } from '@/core/ui/fw'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { StatusChip, formatImporte, pesoSemibold } from '@/core/ui/fw'
 import type { ParadaDto } from '@/libs/api-client/types'
 import { chipCobro, etiquetaNota, importeParada } from './cobroParada'
 import { piezasDeParada } from './piezasParada'
@@ -86,7 +86,7 @@ function Atajo({ label, onPress, disabled, busy }: { label: string; onPress: () 
       accessibilityState={{ disabled: !!inactivo, busy: !!busy }}
       style={{ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[2], borderRadius: radii.campo, borderWidth: 2, borderColor: inactivo ? c.border : c.textSecondary, backgroundColor: c.surface }}
     >
-      <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600', color: inactivo ? c.textSecondary : c.text, textAlign: 'center' }}>{label}</Text>
+      <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.secundario, ...pesoSemibold, color: inactivo ? c.textSecondary : c.text, textAlign: 'center' }}>{label}</Text>
     </Pressable>
   )
 }
