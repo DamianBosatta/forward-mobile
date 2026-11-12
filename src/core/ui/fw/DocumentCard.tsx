@@ -1,9 +1,10 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { FONT, importe as cifras, maxFontScale, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
+import { importe as cifras, maxFontScale, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { StatusChip } from './StatusChip'
 import { formatImporte } from './formatImporte'
 import type { ChipInfo } from './estadoChip'
+import { pesoSemibold } from './tipografia'
 
 interface DocumentCardProps {
   numero: string
@@ -89,7 +90,7 @@ export function DocumentCard(p: DocumentCardProps) {
           justifyContent: 'center',
         }}
       >
-        <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.secundario, { fontFamily: FONT.semibold, fontWeight: '600', color: c.brandInk }]}>
+        <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.secundario, { ...pesoSemibold, color: c.brandInk }]}>
           {iniciales(p.avatar ?? p.vendedor)}
         </Text>
       </View>

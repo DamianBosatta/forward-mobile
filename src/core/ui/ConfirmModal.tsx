@@ -4,7 +4,7 @@ import {
   Dimensions, StyleSheet, ActivityIndicator
 } from 'react-native'
 import { AlertTriangle, CheckCircle2, Info } from 'lucide-react-native'
-import { useColors, useIsDark, BRAND, maxFontScale } from '@/libs/theme'
+import { useColors, useIsDark, maxFontScale, radii, shadowMd, space, typeScale } from '@/libs/theme'
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
@@ -27,19 +27,20 @@ interface ConfirmModalProps {
 
 // ─── config por variante ──────────────────────────────────────────────────────
 
+/** Ícono, acento y botón de confirmar de cada variante, todo con colores del tema. */
 function useVariant(variant: ConfirmVariant, colors: ReturnType<typeof useColors>) {
   switch (variant) {
     case 'success':
-      return { Icon: CheckCircle2, color: BRAND.blue }
+      return { Icon: CheckCircle2, color: colors.success, boton: colors.success, textoBoton: colors.onAction }
     case 'warning':
-      return { Icon: AlertTriangle, color: colors.warning }
+      return { Icon: AlertTriangle, color: colors.warning, boton: colors.warning, textoBoton: colors.onAction }
     case 'info':
-      return { Icon: Info, color: colors.info }
+      return { Icon: Info, color: colors.info, boton: colors.info, textoBoton: colors.onAction }
     case 'primary':
-      return { Icon: Info, color: colors.primary }
+      return { Icon: Info, color: colors.primary, boton: colors.primary, textoBoton: colors.onPrimary }
     case 'danger':
     default:
-      return { Icon: AlertTriangle, color: colors.danger }
+      return { Icon: AlertTriangle, color: colors.danger, boton: colors.dangerStrong, textoBoton: colors.onDangerStrong }
   }
 }
 
@@ -61,7 +62,7 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   const colors = useColors()
   const isDark = useIsDark()
-  const { Icon, color: accentColor } = useVariant(variant, colors)
+  const { Icon, color: accentColor, boton, textoBoton } = useVariant(variant, colors)
 
   return (
     <Modal
@@ -73,26 +74,22 @@ export function ConfirmModal({
       <View
         style={{
           flex: 1,
-          backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.48)',
+          backgroundColor: colors.veil,
           alignItems: 'center',
           justifyContent: 'center',
-          paddingHorizontal: 24,
+          paddingHorizontal: space[6],
         }}
       >
           {/* Card */}
           <View
             style={{
               width: '100%',
-              backgroundColor: isDark ? '#121212' : '#ffffff',
-              borderRadius: 32,
-              padding: 24,
+              backgroundColor: colors.surface,
+              borderRadius: radii.hoja,
+              padding: space[6],
               borderWidth: 1,
-              borderColor: isDark ? '#FFFFFF10' : '#00000005',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 24 },
-              shadowOpacity: 0.5,
-              shadowRadius: 40,
-              elevation: 28,
+              borderColor: colors.border,
+              ...(isDark ? shadowMd.dark : shadowMd.light),
             }}
           >
             {/* Ícono */}
@@ -111,22 +108,20 @@ export function ConfirmModal({
 
             {/* Textos */}
             <Text style={{
-              fontSize: 18, fontWeight: '900',
+              ...typeScale.seccion,
               color: colors.text,
               textAlign: 'center',
-              letterSpacing: -0.5,
-              marginBottom: 8,
+              marginBottom: space[2],
             }}>
               {title}
             </Text>
 
             {message && (
               <Text style={{
-                fontSize: 13, fontWeight: '500',
+                ...typeScale.secundario,
                 color: colors.textMuted,
                 textAlign: 'center',
-                lineHeight: 18,
-                marginBottom: 24,
+                marginBottom: space[6],
               }}>
                 {message}
               </Text>
@@ -149,13 +144,13 @@ export function ConfirmModal({
                     flex: 1,
                     height: 54,
                     borderRadius: 18,
-                    backgroundColor: isDark ? '#FFFFFF08' : '#F1F5F9',
+                    backgroundColor: colors.surface2,
                     alignItems: 'center',
                     justifyContent: 'center',
                     opacity: loading ? 0.5 : 1
                   }}
                 >
-                  <Text style={{ color: colors.textMuted, fontWeight: '900', fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }} maxFontSizeMultiplier={maxFontScale}>
+                  <Text style={{ ...typeScale.etiqueta, color: colors.textMuted, letterSpacing: 0.5, textTransform: 'uppercase' }} maxFontSizeMultiplier={maxFontScale}>
                     {cancelLabel || 'Cancelar'}
                   </Text>
                 </Pressable>
@@ -167,20 +162,15 @@ export function ConfirmModal({
                     flex: 1,
                     height: 54,
                     borderRadius: 18,
-                    backgroundColor: accentColor,
+                    backgroundColor: boton,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    shadowColor: accentColor,
-                    shadowOffset: { width: 0, height: 8 },
-                    shadowOpacity: 0.3,
-                    shadowRadius: 12,
-                    elevation: 6,
                   }}
                 >
                   {loading ? (
-                    <ActivityIndicator color="#FFF" size="small" />
+                    <ActivityIndicator color={textoBoton} size="small" />
                   ) : (
-                    <Text style={{ color: variant === 'success' || variant === 'primary' || variant === 'danger' ? '#fff' : '#000', fontWeight: '900', fontSize: 12, letterSpacing: 0.5, textTransform: 'uppercase' }} maxFontSizeMultiplier={maxFontScale}>
+                    <Text style={{ ...typeScale.etiqueta, color: textoBoton, letterSpacing: 0.5, textTransform: 'uppercase' }} maxFontSizeMultiplier={maxFontScale}>
                       {confirmLabel}
                     </Text>
                   )}

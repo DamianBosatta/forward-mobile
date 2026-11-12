@@ -1,9 +1,9 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { COLUMNAS, type ColumnaId } from './tablero'
+import { pesoSemibold } from '@/core/ui/fw'
 
-const semibold = { fontFamily: FONT.semibold, fontWeight: '600' as const }
 
 /**
  * Pestañas por estado (PestanasEstado de la web, hasta 899 px) en dos filas de dos: cada una con ícono, nombre y
@@ -36,7 +36,7 @@ export function PestanasEstado({ activa, conteos, onCambiar }: { activa: Columna
                 }}
               >
                 <Icono size={20} color={sel ? colores.text : c.textSecondary} />
-                <Text style={{ ...typeScale.secundario, ...semibold, color: c.text, flex: 1 }} numberOfLines={2}>{titulo}</Text>
+                <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: c.text, flex: 1 }} numberOfLines={2}>{titulo}</Text>
                 {n === undefined ? null : (
                   <View style={{ minWidth: 24, height: 24, borderRadius: radii.pastilla, paddingHorizontal: space[1], alignItems: 'center', justifyContent: 'center', backgroundColor: colores.bg }}>
                     <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.etiqueta, ...importe, color: colores.text }}>{n}</Text>

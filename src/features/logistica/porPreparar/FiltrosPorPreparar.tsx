@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { BottomSheet, Button, chipForEstado } from '@/core/ui/fw'
-import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
+import { BottomSheet, Button, chipForEstado, pesoSemibold } from '@/core/ui/fw'
+import { radii, space, typeScale, useColors } from '@/libs/theme'
 
 export interface FiltrosPreparacion {
   /** MetodoEntrega del servidor (va como `MetodoEntrega`). */
@@ -38,7 +38,7 @@ function Grupo<T>({ titulo, opciones, valor, onCambio, nota }: { titulo: string;
   const c = useColors()
   return (
     <View style={{ gap: space[2] }}>
-      <Text style={[typeScale.secundario, { color: c.text, fontFamily: FONT.semibold, fontWeight: '600' }]}>{titulo}</Text>
+      <Text style={[typeScale.secundario, { color: c.text, ...pesoSemibold }]}>{titulo}</Text>
       <View accessibilityRole="radiogroup" accessibilityLabel={titulo} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
         {opciones.map((o) => {
           const sel = o.valor === valor

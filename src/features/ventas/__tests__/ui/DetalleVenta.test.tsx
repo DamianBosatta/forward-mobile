@@ -313,3 +313,18 @@ describe.each(['light', 'dark'])('R5 · motivo de la autorización en el detalle
     expect(screen.queryByText('Motivo de la autorización')).toBeNull()
   })
 })
+
+describe('línea de tiempo con los colores del tema (auditoría de UI, tanda 6)', () => {
+  const { StyleSheet } = jest.requireActual('react-native')
+  const { themeColors, useThemeStore } = jest.requireActual('@/libs/theme')
+  afterEach(() => useThemeStore.setState({ mode: 'system' }))
+
+  it.each(['light', 'dark'] as const)('en %s el riel de cada tramo sale del tema, no de un gris fijo', async (mode) => {
+    useThemeStore.setState({ mode })
+    pantalla()
+    await screen.findByText('Pedido A00419')
+    const riel = StyleSheet.flatten(screen.getByTestId('tramo-Preparando').props.style).backgroundColor
+    expect(riel).toBe(`${themeColors[mode].onTopBar}40`)
+    expect(riel).not.toBe('#33403D')
+  })
+})

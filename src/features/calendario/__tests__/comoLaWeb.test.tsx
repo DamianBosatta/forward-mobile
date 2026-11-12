@@ -1,6 +1,6 @@
 import React from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, userEvent, within } from '@testing-library/react-native'
+import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
+import { cleanup, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { CalendarioScreen } from '../CalendarioScreen'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { storage } from '@/core/utils/storage'
@@ -248,5 +248,53 @@ describe.each(TEMAS)('Calendario como la web (%s)', (tema) => {
     pintar()
     expect(await screen.findByText('No se pudo cargar el calendario.')).toBeTruthy()
     expect(screen.getByLabelText('Reintentar')).toBeTruthy()
+  })
+
+  const llamadasAlCalendario = () => urls().filter((u) => u.startsWith('/api/v1/Calendario?')).length
+
+  it('mientras carga muestra los esqueletos', async () => {
+    mockGet.mockImplementation((url: string) => url.startsWith('/api/v1/Calendario?') ? new Promise(() => {}) : Promise.resolve([]))
+    pintar()
+    expect(await screen.findByLabelText('Cargando')).toBeTruthy()
+    expect(screen.getAllByTestId('esqueleto-fila').length).toBeGreaterThan(0)
+  })
+
+  it('Agenda vacía usa el estado de pantalla con su texto', async () => {
+    eventos = []
+    pintar()
+    await userEvent.press(vista('Agenda'))
+    expect(await screen.findByRole('header', { name: 'No hay eventos con estos filtros.' })).toBeTruthy()
+  })
+
+  it('Reintentar del error vuelve a pedir el calendario', async () => {
+    mockGet.mockImplementation((url: string) => url.startsWith('/api/v1/Calendario?') ? Promise.reject(new Error('500')) : Promise.resolve([]))
+    pintar()
+    await screen.findByText('No se pudo cargar el calendario.')
+    const antes = llamadasAlCalendario()
+    await userEvent.press(screen.getByLabelText('Reintentar'))
+    await waitFor(() => expect(llamadasAlCalendario()).toBeGreaterThan(antes))
+  })
+
+  it('sin red la consulta queda en pausa (sin error): sin nada guardado muestra sin conexión, no el vacío', async () => {
+    onlineManager.setOnline(false)
+    try {
+      pintar()
+      expect(await screen.findByRole('header', { name: 'No pudimos cargar el calendario' })).toBeTruthy()
+      expect(screen.getByLabelText('Reintentar')).toBeTruthy()
+      expect(llamadasAlCalendario()).toBe(0)
+    } finally {
+      cleanup()
+      onlineManager.setOnline(true)
+    }
+  })
+
+  it('sin red y sin nada guardado muestra la pantalla de sin conexión; Reintentar vuelve a pedir', async () => {
+    mockGet.mockImplementation((url: string) => url.startsWith('/api/v1/Calendario?') ? Promise.reject(new TypeError('Network request failed')) : Promise.resolve([]))
+    pintar()
+    expect(await screen.findByRole('header', { name: 'No pudimos cargar el calendario' })).toBeTruthy()
+    expect(screen.getByText('Parece que no hay señal. Probá de nuevo en un rato.')).toBeTruthy()
+    const antes = llamadasAlCalendario()
+    await userEvent.press(screen.getByLabelText('Reintentar'))
+    await waitFor(() => expect(llamadasAlCalendario()).toBeGreaterThan(antes))
   })
 })

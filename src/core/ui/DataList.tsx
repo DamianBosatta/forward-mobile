@@ -9,8 +9,9 @@ import {
   TouchableOpacity
 } from 'react-native'
 import { FlashList, FlashListProps } from '@shopify/flash-list'
-import { useColors } from '@/libs/theme'
+import { useColors, typeScale } from '@/libs/theme'
 import { SearchX, AlertCircle, RefreshCw } from 'lucide-react-native'
+import { pesoSemibold } from './fw/tipografia'
 
 interface DataListProps<T> extends Omit<FlashListProps<T>, 'RefreshControl'> {
   isLoading?: boolean
@@ -166,8 +167,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     marginTop: 16,
-    fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
+    ...typeScale.cuerpoDestacado,
   },
   footer: {
     paddingVertical: 20,
@@ -182,13 +182,11 @@ const styles = StyleSheet.create({
   },
   errorTitle: {
     marginTop: 20,
-    fontSize: 18,
-    fontFamily: 'Inter_700Bold',
+    ...typeScale.seccion,
   },
   errorMessage: {
     marginTop: 8,
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
+    ...typeScale.secundario,
     textAlign: 'center',
   },
   retryButton: {
@@ -202,7 +200,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   retryText: {
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
+    ...typeScale.secundario,
+    ...pesoSemibold,
   },
 })

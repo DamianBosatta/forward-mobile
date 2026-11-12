@@ -1,7 +1,7 @@
 import React from 'react'
 import { Alert, Text } from 'react-native'
-import { act, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act, cleanup, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
+import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { subDays } from 'date-fns'
 import { diaArgentina } from '@/core/utils/fecha'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -361,5 +361,101 @@ describe('lista de ventas nueva: botón "Nueva venta" (S1)', () => {
     pantalla()
     await screen.findByText('Mostrando 2 de 61')
     expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
+  })
+})
+
+describe('lista de ventas nueva: estados de pantalla', () => {
+  const llamadasALaLista = () => mockGet.mock.calls.filter(([u]) => String(u).startsWith('/api/v1/Ventas?')).length
+  /** La lista de ventas contesta `lista`; los borradores y el resumen, `otros`. */
+  function conLista(lista: () => Promise<unknown>, borradores: () => Promise<unknown> = () => Promise.resolve([])) {
+    mockGet.mockImplementation((url: string) => url.startsWith('/api/v1/Ventas?') ? lista()
+      : url.includes('borradores/mios') ? borradores() : Promise.resolve({}))
+  }
+
+  it('mientras carga muestra los esqueletos de las filas', async () => {
+    conLista(() => new Promise(() => {}))
+    pantalla()
+    expect(await screen.findByLabelText('Cargando')).toBeTruthy()
+    expect(screen.getAllByTestId('esqueleto-fila')).toHaveLength(2)
+  })
+
+  it('sin ventas muestra el estado vacío con su texto', async () => {
+    conLista(() => Promise.resolve(pagina([], 0)))
+    pantalla()
+    expect(await screen.findByRole('header', { name: 'No hay ventas con estos filtros.' })).toBeTruthy()
+    expect(screen.queryByLabelText('Cargando')).toBeNull()
+  })
+
+  it('con error del servidor avisa y Reintentar vuelve a pedir la lista', async () => {
+    conLista(() => Promise.reject(new Error('boom')))
+    pantalla()
+    expect(await screen.findByText('No se pudieron cargar las ventas.')).toBeTruthy()
+    const antes = llamadasALaLista()
+    await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
+    await waitFor(() => expect(llamadasALaLista()).toBeGreaterThan(antes))
+  })
+
+  it('sin red y sin ventas muestra la pantalla de sin conexión; Reintentar vuelve a pedir', async () => {
+    conLista(() => Promise.reject(new TypeError('Network request failed')))
+    pantalla()
+    expect(await screen.findByRole('header', { name: 'No pudimos cargar las ventas' })).toBeTruthy()
+    expect(screen.getByText('Parece que no hay señal. Probá de nuevo en un rato.')).toBeTruthy()
+    const antes = llamadasALaLista()
+    await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
+    await waitFor(() => expect(llamadasALaLista()).toBeGreaterThan(antes))
+  })
+
+  describe('sin red y sin nada guardado (la consulta queda en pausa, sin error)', () => {
+    beforeEach(() => { onlineManager.setOnline(false) })
+    // Volver a estar en línea despierta las consultas en pausa: primero se desmonta la pantalla.
+    afterEach(() => { cleanup(); onlineManager.setOnline(true) })
+
+    it('ventas: muestra la pantalla de sin conexión con Reintentar, no el vacío', async () => {
+      conLista(() => Promise.resolve(pagina([], 0)))
+      pantalla()
+      expect(await screen.findByRole('header', { name: 'No pudimos cargar las ventas' })).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Reintentar' })).toBeTruthy()
+      expect(screen.queryByRole('header', { name: 'No hay ventas con estos filtros.' })).toBeNull()
+      expect(llamadasALaLista()).toBe(0)
+    })
+
+    it('borradores: muestra la pantalla de sin conexión, no el vacío', async () => {
+      conLista(() => Promise.resolve(pagina([], 0)))
+      pantalla()
+      await userEvent.press(screen.getByRole('radio', { name: 'Borradores' }))
+      expect(await screen.findByRole('header', { name: 'No pudimos cargar los borradores' })).toBeTruthy()
+      expect(screen.queryByRole('header', { name: 'No tenés borradores.' })).toBeNull()
+    })
+  })
+
+  it('Borradores: esqueletos mientras carga', async () => {
+    conLista(() => Promise.resolve(pagina([], 0)), () => new Promise(() => {}))
+    pantalla()
+    await userEvent.press(screen.getByRole('radio', { name: 'Borradores' }))
+    expect(await screen.findByLabelText('Cargando')).toBeTruthy()
+  })
+
+  it('Borradores: vacío con su texto', async () => {
+    conLista(() => Promise.resolve(pagina([], 0)))
+    pantalla()
+    await userEvent.press(screen.getByRole('radio', { name: 'Borradores' }))
+    expect(await screen.findByRole('header', { name: 'No tenés borradores.' })).toBeTruthy()
+  })
+
+  it('Borradores: con error avisa y Reintentar los vuelve a pedir', async () => {
+    conLista(() => Promise.resolve(pagina([], 0)), () => Promise.reject(new Error('boom')))
+    pantalla()
+    await userEvent.press(screen.getByRole('radio', { name: 'Borradores' }))
+    expect(await screen.findByText('No se pudieron cargar los borradores.')).toBeTruthy()
+    const antes = mockGet.mock.calls.filter(([u]) => String(u).includes('borradores/mios')).length
+    await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
+    await waitFor(() => expect(mockGet.mock.calls.filter(([u]) => String(u).includes('borradores/mios')).length).toBeGreaterThan(antes))
+  })
+
+  it('Borradores: sin red muestra la pantalla de sin conexión', async () => {
+    conLista(() => Promise.resolve(pagina([], 0)), () => Promise.reject(new TypeError('Network request failed')))
+    pantalla()
+    await userEvent.press(screen.getByRole('radio', { name: 'Borradores' }))
+    expect(await screen.findByRole('header', { name: 'No pudimos cargar los borradores' })).toBeTruthy()
   })
 })

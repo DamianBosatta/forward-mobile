@@ -105,10 +105,10 @@ export default function PerfilScreen() {
         {/* Propuesta Cuenta, frame 1: la identidad sale de la franja oscura a una tarjeta sin borde con las iniciales en grande. */}
         <View testID="tarjeta-identidad" style={[tarjeta, { flexDirection: 'row', alignItems: 'center', gap: space[4], padding: space[4] }]}>
           <View testID="iniciales-identidad" style={{ width: 56, height: 56, borderRadius: radii.pastilla, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={[typeScale.titulo, { fontWeight: '700', color: c.onAction }]}>{iniciales}</Text>
+            <Text style={[typeScale.titulo, { color: c.onAction }]}>{iniciales}</Text>
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[typeScale.titulo, { fontWeight: '700', color: c.text }]}>{nombre}</Text>
+            <Text style={[typeScale.titulo, { color: c.text }]}>{nombre}</Text>
             {quien ? <Text style={secundario}>{quien}</Text> : null}
             {email ? <Text style={secundario}>{email}</Text> : null}
           </View>

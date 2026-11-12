@@ -2,6 +2,7 @@ import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { formatImporte } from '@/core/ui/fw'
+import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
 import type { EventoCalendario } from '@/libs/api-client/calendario'
 import { horaDeEvento, resumenDeEvento } from './resumen'
 import { depositoDe } from './tarea'
@@ -23,7 +24,7 @@ export function ListaDeEventos({ dias, hoy, porDia, onAbrir, etiqueta }: Props) 
   const c = useColors()
   const conEventos = dias.filter((d) => (porDia.get(d)?.length ?? 0) > 0)
   if (conEventos.length === 0) {
-    return <Text accessibilityRole="text" style={{ ...typeScale.secundario, color: c.textSecondary }}>No hay eventos con estos filtros.</Text>
+    return <EstadoDePantalla tipo="vacio" titulo="No hay eventos con estos filtros." />
   }
   return (
     <View accessibilityLabel={etiqueta} style={{ gap: space[4] }}>

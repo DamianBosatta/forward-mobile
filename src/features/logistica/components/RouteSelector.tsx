@@ -3,8 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
 import { MotiView } from 'moti'
 import { ChevronRight, MapPin, Truck } from 'lucide-react-native'
-import { GlassCard } from '@/core/ui'
-import { useColors, BRAND } from '@/libs/theme'
+import { useColors, BRAND, radii, typeScale } from '@/libs/theme'
 import type { HojaRutaListItemDto } from '@/libs/api-client/types'
 import type { EstadoHojaRutaNombre } from '@/core/constants/estados'
 import { resolverEstadoHojaRuta } from '@/libs/reglas/estados'
@@ -52,13 +51,13 @@ export function RouteSelector({ routes, onSelect }: RouteSelectorProps) {
         animate={{ opacity: 1, translateY: 0 }}
         style={{ paddingHorizontal: 20, paddingBottom: 12 }}
       >
-        <Text style={{ fontSize: 12, fontWeight: '900', color: colors.primary, letterSpacing: 2 }}>
+        <Text style={{ ...typeScale.etiqueta, color: colors.primary, letterSpacing: 2 }}>
           DRIVER CONSOLE
         </Text>
-        <Text style={{ fontSize: 28, fontWeight: '900', color: colors.text }}>
+        <Text style={{ ...typeScale.titulo, color: colors.text }}>
           Seleccioná tu viaje
         </Text>
-        <Text style={{ fontSize: 14, color: colors.textSecondary, marginTop: 4 }}>
+        <Text style={{ ...typeScale.secundario, color: colors.textSecondary, marginTop: 4 }}>
           Tenés {routes.length} rutas para hoy
         </Text>
       </MotiView>
@@ -83,19 +82,19 @@ export function RouteSelector({ routes, onSelect }: RouteSelectorProps) {
                 activeOpacity={0.8}
                 onPress={() => onSelect(item.id)}
               >
-                <GlassCard style={{ padding: 20 }}>
+                <View style={{ padding: 20, borderRadius: radii.tarjeta, backgroundColor: colors.surface }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                         <Truck size={18} color={color} />
-                        <Text style={{ fontSize: 16, fontWeight: '900', color: colors.text }}>
+                        <Text style={{ ...typeScale.cuerpoDestacado, color: colors.text }}>
                           Viaje #{item.id.substring(0, 8).toUpperCase()}
                         </Text>
                       </View>
 
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <MapPin size={14} color={colors.textSecondary} />
-                        <Text style={{ fontSize: 13, color: colors.textSecondary }}>
+                        <Text style={{ ...typeScale.secundario, color: colors.textSecondary }}>
                           {`${stopCount} ${stopCount === 1 ? 'entrega' : 'entregas'}`}
                         </Text>
                       </View>
@@ -108,14 +107,14 @@ export function RouteSelector({ routes, onSelect }: RouteSelectorProps) {
                         borderRadius: 10,
                         borderWidth: 1, borderColor: color,
                       }}>
-                        <Text style={{ fontSize: 11, fontWeight: '900', color }}>
+                        <Text style={{ ...typeScale.etiqueta, color }}>
                           {estatoLabel(item.estado)}
                         </Text>
                       </View>
                       <ChevronRight size={20} color={colors.textMuted} />
                     </View>
                   </View>
-                </GlassCard>
+                </View>
               </TouchableOpacity>
             </MotiView>
           )

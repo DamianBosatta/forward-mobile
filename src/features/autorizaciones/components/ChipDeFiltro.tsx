@@ -2,6 +2,7 @@ import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Check } from 'lucide-react-native'
 import { maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
+import { pesoSemibold } from '@/core/ui/fw'
 
 interface Props {
   label: string
@@ -43,7 +44,7 @@ export function ChipDeFiltro({ label, activo, onPress, rol = 'button', accessibi
           <Check size={18} color={c.brandInk} strokeWidth={2.5} />
         </View>
       ) : null}
-      <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.secundario, { color: activo ? c.brandInk : c.text }, activo ? { fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600' } : null]}>
+      <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.secundario, { color: activo ? c.brandInk : c.text }, activo ? pesoSemibold : null]}>
         {label}
       </Text>
     </Pressable>

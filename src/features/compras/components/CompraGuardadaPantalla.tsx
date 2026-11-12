@@ -4,8 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { Check } from 'lucide-react-native'
-import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, StatusChip, TopBar, chipForEstado, formatImporte } from '@/core/ui/fw'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { Button, Notice, StatusChip, TopBar, chipForEstado, formatImporte, pesoSemibold } from '@/core/ui/fw'
 import { useAsignarFotoFacturaCompra, useCompra, useConfirmarCompra, useGuardarComprobanteCompra, type CompraFaltante } from '@/libs/api-client/compras'
 import { useSocio } from '@/libs/api-client/socios'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -50,7 +50,6 @@ export function CompraGuardadaPantalla({ id, aviso }: Props) {
   const [error, setError] = useState<string | null>(null)
   const listo = () => router.replace('/(tabs)' as never)
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
-  const negrita = { fontFamily: FONT.semibold, fontWeight: '600' as const }
 
   // Recién guardada: el caché puede traer la versión de antes; se espera la que llega al abrir.
   const compra = q.isFetchedAfterMount && q.isSuccess ? q.data : undefined
@@ -144,14 +143,14 @@ export function CompraGuardadaPantalla({ id, aviso }: Props) {
             <View style={{ width: 56, height: 56, borderRadius: radii.pastilla, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
               <Check size={30} color={c.onAction} strokeWidth={2.5} />
             </View>
-            <Text accessibilityRole="header" style={{ ...typeScale.titulo, ...negrita, color: c.text, textAlign: 'center', marginTop: space[2] }}>{titulo}</Text>
+            <Text accessibilityRole="header" style={{ ...typeScale.titulo, ...pesoSemibold, color: c.text, textAlign: 'center', marginTop: space[2] }}>{titulo}</Text>
             <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, textAlign: 'center' }}>{compra.razonSocialProveedor}</Text>
             {socio.data?.cuit ? <Text style={{ ...secundario, ...importe, textAlign: 'center' }}>{`CUIT ${socio.data.cuit}`}</Text> : null}
             <Text style={{ ...secundario, textAlign: 'center' }}>{resumen}</Text>
           </View>
           {fila('Estado', chip ? <StatusChip estado={chip.estado} label={chip.label} /> : <Text style={{ ...typeScale.cuerpo, color: c.text }}>{estado}</Text>)}
           {fila('Depósito', <Text style={{ ...typeScale.secundario, color: c.text }}>{compra.nombreDeposito}</Text>)}
-          {fila('Total', <Text style={{ ...typeScale.titulo, ...importe, ...negrita, color: c.text }}>{formatImporte(compra.totalAmount)}</Text>, true)}
+          {fila('Total', <Text style={{ ...typeScale.titulo, ...importe, ...pesoSemibold, color: c.text }}>{formatImporte(compra.totalAmount)}</Text>, true)}
         </View>
 
         {error ? <Notice tone="peligro">{error}</Notice> : null}

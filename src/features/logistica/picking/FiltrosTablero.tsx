@@ -1,8 +1,8 @@
 import React from 'react'
 import { ScrollView, Text, View } from 'react-native'
-import { BottomSheet, Button } from '@/core/ui/fw'
+import { BottomSheet, Button, pesoSemibold } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
-import { FONT, space, typeScale, useColors } from '@/libs/theme'
+import { space, typeScale, useColors } from '@/libs/theme'
 import { SelectorDia } from '@/features/calendario/SelectorDia'
 import { ATAJOS_ENTREGA, METODOS, rangoDeAtajo, type AtajoEntrega, type RangoEntrega } from './tablero'
 
@@ -21,7 +21,7 @@ function Grupo({ titulo, children }: { titulo: string; children: React.ReactNode
   const c = useColors()
   return (
     <View style={{ gap: space[2] }}>
-      <Text style={{ ...typeScale.secundario, fontFamily: FONT.semibold, fontWeight: '600', color: c.text }}>{titulo}</Text>
+      <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: c.text }}>{titulo}</Text>
       <View accessibilityLabel={titulo} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>{children}</View>
     </View>
   )

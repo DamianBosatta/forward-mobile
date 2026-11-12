@@ -3,7 +3,7 @@ import { Alert, Linking, Pressable, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { CreditCard, FileText, MessageCircle, type LucideIcon } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, formatImporte } from '@/core/ui/fw'
+import { Button, formatImporte, pesoSemibold } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { getNotaEntregaUrl, getVentaPdfUrl, useAnularVenta, useConvertirPresupuesto } from '@/libs/api-client/ventas'
@@ -96,7 +96,7 @@ function Celda({ icono: Icono, label, onPress, principal, cargando, deshabilitad
       }}
     >
       <Icono size={20} color={principal ? c.onAction : c.text} />
-      <Text style={{ ...typeScale.secundario, fontWeight: '700', color: principal ? c.onAction : c.text }}>{label}</Text>
+      <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: principal ? c.onAction : c.text }}>{label}</Text>
     </Pressable>
   )
 }

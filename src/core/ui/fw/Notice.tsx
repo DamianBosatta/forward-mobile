@@ -1,7 +1,8 @@
 import React from 'react'
 import { Text, View } from 'react-native'
 import { CircleAlert, CircleCheck, CircleX, Info, type LucideIcon } from 'lucide-react-native'
-import { FONT, radii, space, typeScale, useColors, type ChipEstado } from '@/libs/theme'
+import { radii, space, typeScale, useColors, type ChipEstado } from '@/libs/theme'
+import { pesoSemibold } from './tipografia'
 
 export type NoticeTone = 'info' | 'advertencia' | 'peligro' | 'exito'
 
@@ -45,7 +46,7 @@ export function Notice({ tone, title, children, testID }: NoticeProps) {
       <Icono size={20} color={par.text} strokeWidth={2} />
       <Text style={{ ...typeScale.secundario, color: colors.text, flex: 1 }}>
         {title ? (
-          <Text style={{ fontFamily: FONT.semibold, fontWeight: '600' }}>{`${title} `}</Text>
+          <Text style={pesoSemibold}>{`${title} `}</Text>
         ) : null}
         {children}
       </Text>

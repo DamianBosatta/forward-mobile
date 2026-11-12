@@ -9,7 +9,7 @@ import {
   ViewStyle
 } from 'react-native'
 import { MotiView, type MotiTransitionProp } from 'moti'
-import { useColors, tokens, useIsDark } from '@/libs/theme'
+import { useColors, tokens, useIsDark, typeScale } from '@/libs/theme'
 
 interface PremiumInputProps extends TextInputProps {
   label: string
@@ -99,8 +99,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    fontSize: 10,
-    fontWeight: '700',
+    ...typeScale.etiqueta,
     letterSpacing: 2,
     marginBottom: 8,
     marginLeft: 4,

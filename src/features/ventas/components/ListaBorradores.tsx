@@ -1,7 +1,9 @@
 import React from 'react'
-import { ActivityIndicator, Alert, FlatList, Pressable, Text, View } from 'react-native'
+import { Alert, FlatList, Pressable, Text, View } from 'react-native'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice } from '@/core/ui/fw'
+import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
+import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { useDescartarBorradorVenta, type BorradorVenta } from '@/libs/api-client/ventas'
 import { horaDe, tituloDelDia } from '../lib/agruparPorDia'
 import { identidadDeBorrador } from '../lib/borradorCliente'
@@ -19,12 +21,16 @@ interface Props {
   borradores: BorradorVenta[]
   cargando: boolean
   error: boolean
+  /** El error es que el pedido no llegó al servidor. */
+  sinConexion?: boolean
+  /** Volver a pedir los borradores (botón Reintentar del error). */
+  onReintentar?: () => void
   /** Retomar el borrador en la venta nueva (pregunta el tipo si el servidor no lo guardó). */
   onSeguir: (b: BorradorVenta) => void
 }
 
 /** Borradores (lámina ResBorradores): las ventas que se empezaron y no se terminaron; seguir o descartar. */
-export function ListaBorradores({ borradores, cargando, error, onSeguir }: Props) {
+export function ListaBorradores({ borradores, cargando, error, sinConexion = false, onReintentar, onSeguir }: Props) {
   const c = useColors()
   const descartar = useDescartarBorradorVenta()
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
@@ -64,9 +70,16 @@ export function ListaBorradores({ borradores, cargando, error, onSeguir }: Props
         )
       }}
       ListEmptyComponent={
-        cargando ? <ActivityIndicator color={c.brand} />
-          : error ? <Notice tone="peligro">No se pudieron cargar los borradores.</Notice>
-          : <Text style={secundario}>No tenés borradores.</Text>
+        cargando ? <Esqueletos bloques={FILAS_CARGANDO} />
+          : sinConexion ? (
+            <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los borradores" accion={onReintentar ? { label: 'Reintentar', onPress: onReintentar } : undefined} />
+          ) : error ? (
+            <View style={{ gap: space[2] }}>
+              <Notice tone="peligro">No se pudieron cargar los borradores.</Notice>
+              {onReintentar ? <Button label="Reintentar" variant="secundario" onPress={onReintentar} /> : null}
+            </View>
+          )
+          : <EstadoDePantalla tipo="vacio" titulo="No tenés borradores." />
       }
     />
   )

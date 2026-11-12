@@ -52,7 +52,7 @@ export function ColaConsola({ acciones }: Props) {
           }}
         >
           <RefreshCw size={20} color={par.text} strokeWidth={2} />
-          <Text style={{ ...typeScale.seccion, fontSize: 17, color: par.text, flexShrink: 1 }}>{texto}</Text>
+          <Text style={{ ...typeScale.seccion, color: par.text, flexShrink: 1 }}>{texto}</Text>
         </View>
         <Pressable
           accessibilityRole="button"
@@ -61,7 +61,7 @@ export function ColaConsola({ acciones }: Props) {
           onPress={() => setAbierta(true)}
           style={{ minHeight: 48, minWidth: 48, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Text style={{ ...typeScale.seccion, fontSize: 17, color: c.brandInk }}>Ver</Text>
+          <Text style={{ ...typeScale.seccion, color: c.brandInk }}>Ver</Text>
         </Pressable>
       </View>
       <BottomSheet visible={abierta} onClose={() => setAbierta(false)} accessibilityLabel="Acciones esperando señal">

@@ -3,10 +3,13 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, SectionList, Text, Vie
 import { useRouter } from 'expo-router'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import {
-  DocumentCard, Field, Notice, Segmented, StatusChip, TopBar, TwoPane, chipForEstado, useMenuLeading,
+  Button, DocumentCard, Field, Notice, Segmented, StatusChip, TopBar, TwoPane, chipForEstado, useMenuLeading,
   type SegmentedOption,
 } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
+import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { esFallaDeRed } from '@/core/api/errores'
+import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import type { Venta } from '@/libs/api-client'
@@ -14,6 +17,7 @@ import type { BorradorVenta } from '@/libs/api-client/ventas'
 import type { FiltroVentasRuta } from '@/features/listas/lib/filtroDeRuta'
 import { agruparPorDia, entregaDe, horaDe } from '../lib/agruparPorDia'
 import { identidadDeBorrador } from '../lib/borradorCliente'
+import { useSinConexionSinDatos } from '../lib/sinConexion'
 import { ListaBorradores } from './ListaBorradores'
 import { Fab } from '@/core/ui/fw/Fab'
 import { motivosDe } from '@/features/autorizaciones/lib/motivos'
@@ -103,6 +107,14 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
 
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
   const esBorradores = l.pestana === 'borradores'
+  const sinRed = esFallaDeRed(q.error)
+  const reintentar = { label: 'Reintentar', onPress: () => { void l.refrescar() } }
+  const bq = l.borradoresQuery
+  // Sin red y sin nada guardado la consulta queda en pausa (sin error): también es "sin conexión".
+  const ventasEnPausa = useSinConexionSinDatos(q)
+  const borradoresEnPausa = useSinConexionSinDatos(bq)
+  const ventasSinConexion = (q.isError && sinRed) || ventasEnPausa
+  const borradoresSinConexion = (bq.isError && esFallaDeRed(bq.error)) || borradoresEnPausa
 
   const contadorPorAutorizar = l.estado === 'todos' && l.totales && l.totales.porAutorizar > 0 ? l.totales.porAutorizar : null
   const filtros = (
@@ -141,6 +153,17 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
         </View>
       ) : null}
       {l.contador ? <Text style={secundario}>{l.contador}</Text> : null}
+      {/* Con ventas a la vista el error va arriba de ellas; sin red y sin nada que mostrar, la pantalla entera (abajo). */}
+      {q.isError && !(sinRed && l.ventas.length === 0) ? (
+        <View style={{ gap: space[2] }}>
+          {sinRed ? (
+            <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice>
+          ) : (
+            <Notice tone="peligro">No se pudieron cargar las ventas.</Notice>
+          )}
+          <Button label={reintentar.label} variant="secundario" onPress={reintentar.onPress} />
+        </View>
+      ) : null}
     </View>
   )
 
@@ -172,9 +195,10 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
       refreshing={q.isRefetching}
       onRefresh={() => { void l.refrescar() }}
       ListEmptyComponent={
-        q.isLoading ? <ActivityIndicator color={c.brand} />
-          : q.isError ? <Notice tone="peligro">No se pudieron cargar las ventas. Deslizá hacia abajo para reintentar.</Notice>
-          : <Text style={secundario}>No hay ventas con estos filtros.</Text>
+        q.isLoading ? <Esqueletos bloques={FILAS_CARGANDO} />
+          : ventasSinConexion ? <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar las ventas" accion={reintentar} />
+          : q.isError ? undefined
+          : <EstadoDePantalla tipo="vacio" titulo="No hay ventas con estos filtros." />
       }
       ListFooterComponent={q.isFetchingNextPage ? <ActivityIndicator color={c.brand} /> : undefined}
     />
@@ -183,8 +207,10 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
   const listaBorradores = (
     <ListaBorradores
       borradores={l.borradores}
-      cargando={l.borradoresQuery.isLoading}
-      error={l.borradoresQuery.isError}
+      cargando={bq.isLoading}
+      error={bq.isError}
+      sinConexion={borradoresSinConexion}
+      onReintentar={() => { void bq.refetch() }}
       onSeguir={retomar}
     />
   )

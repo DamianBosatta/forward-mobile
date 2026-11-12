@@ -3,7 +3,7 @@ import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'r
 import { useRouter } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte } from '@/core/ui/fw'
+import { Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, pesoRegular } from '@/core/ui/fw'
 import { api } from '@/core/api/client'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { esEstadoVenta } from '@/core/constants/estados'
@@ -34,17 +34,17 @@ interface Props {
   onVolver?: () => void
 }
 
-/** Línea de tiempo del pedido (ResVentaDetalle): cinco tramos; el actual, en blanco y a la mitad si se está preparando. */
+/** Línea de tiempo del pedido (ResVentaDetalle): cinco tramos; el actual, en blanco y a la mitad si se está preparando. El riel es el texto secundario de la barra al 25 % (sigue el tema). */
 function LineaDeTiempo({ pasos }: { pasos: NonNullable<ReturnType<typeof pasosDeLaVenta>> }) {
   const c = useColors()
   return (
     <View accessibilityRole="list" accessibilityLabel="Estado del pedido" style={{ flexDirection: 'row', gap: 4, paddingHorizontal: space[3], paddingBottom: space[4], backgroundColor: c.topBar }}>
       {pasos.map((p) => (
         <View key={p.etiqueta} accessibilityState={{ selected: p.actual }} style={{ flex: 1, gap: 6 }}>
-          <View style={{ height: 6, borderRadius: 999, backgroundColor: '#33403D', overflow: 'hidden' }}>
+          <View testID={`tramo-${p.etiqueta}`} style={{ height: 6, borderRadius: radii.pastilla, backgroundColor: `${c.onTopBar}40`, overflow: 'hidden' }}>
             <View style={{ height: 6, width: p.avance === 'completo' ? '100%' : p.avance === 'medio' ? '50%' : '0%', backgroundColor: c.brand }} />
           </View>
-          <Text style={{ fontSize: 11, lineHeight: 14, color: p.actual ? c.onTopBarStrong : c.onTopBar, fontWeight: p.actual ? '700' : '400' }}>{p.etiqueta}</Text>
+          <Text style={{ ...typeScale.etiqueta, ...(p.actual ? null : pesoRegular), color: p.actual ? c.onTopBarStrong : c.onTopBar }}>{p.etiqueta}</Text>
         </View>
       ))}
     </View>
