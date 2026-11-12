@@ -402,6 +402,24 @@ describe('E3 Cobro mixto', () => {
     expect(within(cuenta).queryByLabelText('Total')).toBeNull()
   })
 
+  it('S8: la factura lleva el número de pedido de la parada', async () => {
+    pintar(hoja({ ...P1_CONTADO, codigoPedido: 'A00012' }))
+    await abrir()
+    await hastaElCobro()
+    const factura = within(screen.getByLabelText('Cuenta del cliente')).getByLabelText('Factura')
+    expect(within(factura).getByText('Factura A00012')).toBeTruthy()
+    expect(within(factura).getByText('$ 1.000,00')).toBeTruthy()
+  })
+
+  it('S8: sin número de pedido la factura dice solo "Factura"', async () => {
+    pintar(hoja({ ...P1_CONTADO, codigoPedido: null }))
+    await abrir()
+    await hastaElCobro()
+    const factura = within(screen.getByLabelText('Cuenta del cliente')).getByLabelText('Factura')
+    expect(within(factura).getByText('Factura')).toBeTruthy()
+    expect(within(factura).queryByText(/^Factura /)).toBeNull()
+  })
+
   it('S8: sin importe a cobrar ni deuda no hay cuenta del cliente', async () => {
     pintar(hoja(P1))
     await abrir()

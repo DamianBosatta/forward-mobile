@@ -26162,6 +26162,7 @@ export interface components {
             montoCobrar?: number | null;
             /** Format: int32 */
             numeroNotaEntrega?: number | null;
+            codigoPedido?: string | null;
             nombreContacto?: string | null;
             /** Format: double */
             deudaAnterior?: number | null;

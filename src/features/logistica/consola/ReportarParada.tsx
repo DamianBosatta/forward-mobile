@@ -243,6 +243,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
                 onLineas={(l) => cambiar({ lineas: l })}
                 onSubiendo={alSubir}
                 aCobrar={aCobrarHoy}
+                codigoFactura={parada.codigoPedido}
                 hoy={mostrarFecha(diaArgentina(Date.now()))}
                 faltaACuenta={faltaACuenta(ctxCobro)}
                 aviso={avisoDeCobro(ctxCobro)}
