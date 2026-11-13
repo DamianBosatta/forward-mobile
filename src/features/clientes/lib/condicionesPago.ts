@@ -4,8 +4,9 @@
  * `condicion-pago-venta.ts` y `validarCondicionesPagoCliente` de `packages/validations`.
  * Las reglas de negocio las resuelve la API; acá solo el invariante de la pantalla (con filas, una
  * y solo una predeterminada) y los rangos que evitan el viaje.
- * Deuda X1: la validación vive en la web (packages/validations) y todavía no la copia sync:reglas.
+ * La validación de filas y los campos obligatorios son los de libs/reglas (sync:reglas, X1): acá solo el adaptador.
  */
+import { validarCondicionesPagoCliente } from '@/libs/reglas/socios'
 import type { components } from '@/libs/api-client/generated/schema'
 import type { TipoCondicionPago } from './cliente'
 
@@ -56,19 +57,16 @@ export function quitarFila(filas: readonly FilaCondicion[], indice: number): Fil
 export const cambiarFila = (filas: readonly FilaCondicion[], indice: number, cambio: Partial<FilaCondicion>): FilaCondicion[] =>
   filas.map((f, i) => (i === indice ? { ...f, ...cambio } : f))
 
-const enteroEnRango = (t: string, min: number, max: number) => /^\d+$/.test(t.trim()) && Number(t) >= min && Number(t) <= max
-
-/** Un error por fila (objeto vacío = bien): tipo elegido, plazo en rango (1-365 / 1-31) y sin repetidas. */
+/**
+ * Un error por fila (objeto vacío = bien): tipo elegido, plazo en rango (1-365 / 1-31) y sin repetidas.
+ * Adaptador sobre la regla compartida: `plazo` es `dias` o `diaDelMes` según el tipo, y el error de
+ * cualquiera de los dos se muestra en `plazo`.
+ */
 export function validarFilas(filas: readonly FilaCondicion[]): ErrorFilaCondicion[] {
-  const vistas = new Set<string>()
-  return filas.map((f) => {
-    if (!f.tipo) return { tipo: 'Elegí la condición de pago' }
-    if (conDias(f.tipo) && !enteroEnRango(f.plazo, 1, 365)) return { plazo: 'Ingresá los días de plazo (entre 1 y 365)' }
-    if (f.tipo === 'DiaFijoDelMes' && !enteroEnRango(f.plazo, 1, 31)) return { plazo: 'Ingresá el día del mes (entre 1 y 31)' }
-    const clave = f.tipo === 'Contado' ? f.tipo : `${f.tipo}|${Number(f.plazo)}`
-    const repetida = vistas.has(clave)
-    vistas.add(clave)
-    return repetida ? { tipo: 'Hay una condición de pago repetida' } : {}
+  const errores = validarCondicionesPagoCliente(filas.map((f) => ({ tipo: f.tipo, dias: f.plazo, diaDelMes: f.plazo })))
+  return errores.map(({ tipo, dias, diaDelMes }) => {
+    const plazo = dias ?? diaDelMes
+    return { ...(tipo ? { tipo } : {}), ...(plazo ? { plazo } : {}) }
   })
 }
 
@@ -157,15 +155,3 @@ export function resolverCondicionPagoVenta(entrada: {
   const vigente = elegida ?? (lista ? condicionPredeterminadaDelCliente(lista) : undefined)
   return { opciones: lista ? opciones : [], vigente, paraEnviar: vigente }
 }
-
-/**
- * Campos que la API exige en un cliente NUEVO no provisorio (B4-P2). Copia de `CAMPOS_OBLIGATORIOS_CLIENTE`
- * de la web (forward-frontend/packages/validations/src/index.ts); deuda X1 hasta que sync:reglas lo copie.
- */
-export const CAMPOS_OBLIGATORIOS_CLIENTE = [
-  ['telefono', 'El teléfono es obligatorio en clientes'],
-  ['direccion', 'La dirección es obligatoria en clientes'],
-  ['nombreFantasia', 'El nombre de fantasía es obligatorio en clientes'],
-  ['nombreContacto', 'El nombre de contacto es obligatorio en clientes'],
-] as const
-export type CampoObligatorioCliente = (typeof CAMPOS_OBLIGATORIOS_CLIENTE)[number][0]

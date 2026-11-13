@@ -1,6 +1,6 @@
 import { cuitEsValido } from '@/libs/reglas'
 import { EmailDeSocioSchema } from '@/libs/validations/generated/reglas'
-import { CAMPOS_OBLIGATORIOS_CLIENTE, type CampoObligatorioCliente } from './condicionesPago'
+import { OBLIGATORIOS_CLIENTE, type CampoObligatorioCliente } from '@/libs/reglas/socios'
 
 export const ERROR_CUIT_REQUERIDO = 'El CUIT es requerido'
 export const ERROR_CUIT_INVALIDO = 'Revisá el CUIT: no es válido.'
@@ -24,7 +24,7 @@ interface Entrada {
 export function validarCliente(d: Entrada, { esAltaNueva, altaProvisoria, cuitEditable }: { esAltaNueva: boolean; altaProvisoria: boolean; cuitEditable: boolean }): ErroresDelCliente {
   const e: ErroresDelCliente = {}
   if (esAltaNueva && !altaProvisoria) {
-    for (const [campo, mensaje] of CAMPOS_OBLIGATORIOS_CLIENTE) if (!d[campo].trim()) e[campo] = mensaje
+    for (const [campo, mensaje] of OBLIGATORIOS_CLIENTE) if (!d[campo].trim()) e[campo] = mensaje
   }
   if (cuitEditable) {
     if (d.cuit.trim()) { if (!cuitEsValido(d.cuit)) e.cuit = ERROR_CUIT_INVALIDO }

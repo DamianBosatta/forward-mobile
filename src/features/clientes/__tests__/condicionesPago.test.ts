@@ -57,6 +57,19 @@ describe('validación de filas (mismos rangos que la web)', () => {
     expect(e[2]!.plazo).toBe('Ingresá el día del mes (entre 1 y 31)')
     expect(e[3]).toEqual({})
   })
+  it('el adaptador deja el error en tipo o plazo, sin las claves de la regla compartida', () => {
+    expect(validarFilas([
+      { tipo: 'DiasDesdeEntrega', plazo: '0', predeterminada: true },
+      { tipo: 'DiaFijoDelMes', plazo: '', predeterminada: false },
+      { tipo: '', plazo: '', predeterminada: false },
+      { tipo: 'Contado', plazo: '', predeterminada: false },
+    ])).toEqual([
+      { plazo: 'Ingresá los días de plazo (entre 1 y 365)' },
+      { plazo: 'Ingresá el día del mes (entre 1 y 31)' },
+      { tipo: 'Elegí la condición de pago' },
+      {},
+    ])
+  })
   it('marca la repetida', () => {
     const e = validarFilas([
       { tipo: 'DiasDesdeEntrega', plazo: '15', predeterminada: true },
