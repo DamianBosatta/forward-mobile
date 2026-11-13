@@ -41,14 +41,22 @@ describe('Inicio se refresca tras las mutaciones', () => {
   const colgada = <T,>(p: Promise<T>) => Promise.race([p, new Promise<'colgada'>((r) => setTimeout(() => r('colgada'), 300))])
 
   it('la mutación no espera a que vuelva el resumen (Inicio siempre está montado)', async () => {
-    const qc = crearQueryClient()
-    // El resumen en pantalla, con un servidor que no contesta.
-    const soltar = new QueryObserver(qc, { queryKey: inicioKeys.resumen(), queryFn: () => new Promise(() => {}) }).subscribe(() => {})
-    qc.setQueryData(inicioKeys.resumen(), { ventas: null, compras: null, autorizacionesPendientes: null })
+    // Reloj controlado (ver el test siguiente): evita que el resumen y la mutación caigan en el mismo milisegundo.
+    let ahora = 1_000_000
+    const reloj = jest.spyOn(Date, 'now').mockImplementation(() => ahora)
+    try {
+      const qc = crearQueryClient()
+      // El resumen en pantalla, con un servidor que no contesta.
+      const soltar = new QueryObserver(qc, { queryKey: inicioKeys.resumen(), queryFn: () => new Promise(() => {}) }).subscribe(() => {})
+      qc.setQueryData(inicioKeys.resumen(), { ventas: null, compras: null, autorizacionesPendientes: null })
+      ahora += 50
 
-    expect(await colgada(new MutationObserver(qc, { mutationFn: async () => 'ok' }).mutate())).toBe('ok')
-    expect(qc.getQueryState(inicioKeys.resumen())?.isInvalidated).toBe(true)
-    soltar()
+      expect(await colgada(new MutationObserver(qc, { mutationFn: async () => 'ok' }).mutate())).toBe('ok')
+      expect(qc.getQueryState(inicioKeys.resumen())?.isInvalidated).toBe(true)
+      soltar()
+    } finally {
+      reloj.mockRestore()
+    }
   })
 
   it('también tras un error (p. ej. un 409: la venta cambió); no con meta.noRefrescaInicio (una búsqueda)', async () => {
