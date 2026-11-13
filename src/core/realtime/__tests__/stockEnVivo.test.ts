@@ -9,7 +9,7 @@ function conexionFalsa() {
     start: jest.fn().mockResolvedValue(undefined),
     stop: jest.fn().mockResolvedValue(undefined),
     invoke: jest.fn().mockResolvedValue(true),
-    on: jest.fn((_e: string, cb: (m: MensajeStock) => void) => { h.cambio = cb }),
+    on: jest.fn((e: string, cb: (m: MensajeStock) => void) => { if (e === 'StockCambio') h.cambio = cb }),
     onreconnecting: jest.fn((cb: () => void) => { h.reconectando = cb }),
     onreconnected: jest.fn((cb: () => void) => { h.reconectada = cb }),
     onclose: jest.fn((cb: () => void) => { h.cerrada = cb }),

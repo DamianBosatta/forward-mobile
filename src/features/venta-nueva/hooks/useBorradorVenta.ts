@@ -8,6 +8,7 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useAutoguardado } from './useAutoguardado'
 import { autoguardadoDesdeVenta } from '../lib/hidratar'
 import { aAutoguardado, hastaElTope, superaElTope, type AutoguardadoVenta } from '../lib/payload'
+import { marcarVieja } from '@/libs/api-client/invalidaciones'
 
 /**
  * Borrador de la venta nueva (mismo flujo que la web): nace en el servidor al elegir el cliente y
@@ -35,7 +36,7 @@ export function useBorradorVenta(valores: AutoguardadoVenta, topePedido = 0) {
     async (v: AutoguardadoVenta, version: number) => {
       const r = await guardarBorradorVenta(borrador!.id, version, { ...v })
       // El detalle en caché ya no es el del servidor: quien reabra el borrador tiene que traer el vigente (sin recargar ahora: nadie lo está mirando).
-      void qc.invalidateQueries({ queryKey: ventasKeys.detail(borrador!.id), refetchType: 'none' })
+      void marcarVieja(qc, ventasKeys.detail(borrador!.id))
       return r.version
     },
     [borrador, qc],

@@ -23,12 +23,18 @@ export function FiltrosCartera({
   onCambio,
   totalCartera,
   sobre = 'barra',
+  deudores,
 }: {
   valor: FiltrosDeCartera
   onCambio: (f: FiltrosDeCartera) => void
   totalCartera?: number
   /** 'barra' (por defecto): sobre el color de la barra superior; 'pantalla': sobre el fondo. */
   sobre?: 'barra' | 'pantalla'
+  /**
+   * La vista "Deudores" (los clientes que deben, de `GET /deudas/clientes`). Sin definir no se ofrece (sin permiso de
+   * deudas). Activa, los demás filtros no aplican y se esconden: queda "Mi cartera" para volver.
+   */
+  deudores?: { activo: boolean; onCambio: (activo: boolean) => void }
 }) {
   const c = useColors()
   const { data } = useLocalidades()
@@ -43,13 +49,20 @@ export function FiltrosCartera({
       contentContainerStyle={{ gap: space[2], paddingHorizontal: space[4], paddingBottom: space[3], paddingTop: sobre === 'barra' ? 0 : space[1] }}
     >
       {/* La lista es siempre la cartera del vendedor: la pastilla dice cuántos son, no filtra. */}
-      {totalCartera !== undefined ? <FiltroChip label={`Mi cartera · ${totalCartera}`} activo onPress={() => onCambio(SIN_FILTROS)} /> : null}
-      <FiltroChip
+      {totalCartera !== undefined || deudores?.activo ? (
+        <FiltroChip
+          label={totalCartera !== undefined ? `Mi cartera · ${totalCartera}` : 'Mi cartera'}
+          activo={!deudores?.activo}
+          onPress={() => { onCambio(SIN_FILTROS); deudores?.onCambio(false) }}
+        />
+      ) : null}
+      {deudores ? <FiltroChip label="Deudores" activo={deudores.activo} onPress={() => deudores.onCambio(!deudores.activo)} /> : null}
+      {deudores?.activo ? null : <FiltroChip
         label="Con deuda vencida"
         activo={valor.conDeudaVencida}
         onPress={() => onCambio({ ...valor, conDeudaVencida: !valor.conDeudaVencida })}
-      />
-      {localidades.map(localidad => (
+      />}
+      {(deudores?.activo ? [] : localidades).map(localidad => (
         <FiltroChip
           key={localidad}
           label={localidad}

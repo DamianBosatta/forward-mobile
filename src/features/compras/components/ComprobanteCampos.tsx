@@ -34,25 +34,41 @@ function Opciones<T extends string>({ etiqueta, opciones, valor, onCambio }: {
  * alícuota). Percepciones, no gravado, exento y varias alícuotas se cargan en la web.
  */
 export function ComprobanteCampos({ form, onCambio }: { form: FormComprobante; onCambio: (f: FormComprobante) => void }) {
+  const c = useColors()
   const set = (cambio: Partial<FormComprobante>) => onCambio({ ...form, ...cambio })
+  const tarjeta = { gap: space[3], padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface } as const
+  const titulo = (t: string) => <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>{t}</Text>
+  // Los campos de una fila se alinean arriba: si uno lleva ayuda o error, el de al lado no se estira.
+  const fila = { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] } as const
   return (
     <View style={{ gap: space[3] }}>
-      <Opciones etiqueta="Letra" opciones={LETRAS.map((l) => ({ value: l, label: l }))} valor={form.letra} onCambio={(letra) => set({ letra })} />
-      <View style={{ flexDirection: 'row', gap: space[2] }}>
-        <View style={{ flex: 1 }}><Field label="Punto de venta" value={form.puntoVenta} onChangeText={(puntoVenta) => set({ puntoVenta })} keyboardType="number-pad" /></View>
-        <View style={{ flex: 2 }}><Field label="Número" value={form.numero} onChangeText={(numero) => set({ numero })} keyboardType="number-pad" /></View>
+      <View style={tarjeta}>
+        {titulo('Comprobante')}
+        <Opciones etiqueta="Letra" opciones={LETRAS.map((l) => ({ value: l, label: l }))} valor={form.letra} onCambio={(letra) => set({ letra })} />
+        <View style={fila}>
+          <View style={{ flex: 1 }}><Field label="Punto de venta" value={form.puntoVenta} onChangeText={(puntoVenta) => set({ puntoVenta })} keyboardType="number-pad" /></View>
+          <View style={{ flex: 2 }}><Field label="Número" value={form.numero} onChangeText={(numero) => set({ numero })} keyboardType="number-pad" /></View>
+        </View>
+        <Field label="Fecha del comprobante" placeholder="dd/mm/aaaa" value={form.fecha} onChangeText={(fecha) => set({ fecha })} keyboardType="numbers-and-punctuation" />
       </View>
-      <Field label="Fecha del comprobante" placeholder="dd/mm/aaaa" value={form.fecha} onChangeText={(fecha) => set({ fecha })} keyboardType="numbers-and-punctuation" />
-      <Field label="CUIT del proveedor" value={form.cuit} onChangeText={(cuit) => set({ cuit })} keyboardType="numbers-and-punctuation" />
-      <Field label="Razón social" value={form.razonSocial} onChangeText={(razonSocial) => set({ razonSocial })} />
-      {form.letra === 'A' ? (
-        <>
-          <Opciones etiqueta="Alícuota de IVA" opciones={ALICUOTAS} valor={form.alicuota} onCambio={(alicuota) => set({ alicuota })} />
-          <Field label="Neto gravado" value={form.neto} onChangeText={(neto) => set({ neto })} keyboardType="decimal-pad" />
-          <Field label="IVA" value={form.iva} onChangeText={(iva) => set({ iva })} keyboardType="decimal-pad" help="Vacío: se calcula del neto." />
-        </>
-      ) : null}
-      <Field label="Total" value={form.total} onChangeText={(total) => set({ total })} keyboardType="decimal-pad" />
+      <View style={tarjeta}>
+        {titulo('Proveedor')}
+        <Field label="CUIT del proveedor" value={form.cuit} onChangeText={(cuit) => set({ cuit })} keyboardType="numbers-and-punctuation" />
+        <Field label="Razón social" value={form.razonSocial} onChangeText={(razonSocial) => set({ razonSocial })} />
+      </View>
+      <View style={tarjeta}>
+        {titulo('Importes')}
+        {form.letra === 'A' ? (
+          <>
+            <Opciones etiqueta="Alícuota de IVA" opciones={ALICUOTAS} valor={form.alicuota} onCambio={(alicuota) => set({ alicuota })} />
+            <View style={fila}>
+              <View style={{ flex: 1 }}><Field label="Neto gravado" value={form.neto} onChangeText={(neto) => set({ neto })} keyboardType="decimal-pad" /></View>
+              <View style={{ flex: 1 }}><Field label="IVA" value={form.iva} onChangeText={(iva) => set({ iva })} keyboardType="decimal-pad" help="Vacío: se calcula del neto." /></View>
+            </View>
+          </>
+        ) : null}
+        <Field label="Total" value={form.total} onChangeText={(total) => set({ total })} keyboardType="decimal-pad" />
+      </View>
     </View>
   )
 }

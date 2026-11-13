@@ -19,6 +19,7 @@ import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@ta
 import { api, API_URL } from './client'
 import type { Vehiculo as VehiculoDto, VentaEmpacada, Chofer, Vehiculo, HojaDeRuta, HojaRutaListItemDto } from './types'
 import type { components } from './generated/schema'
+import { invalidarLogistica, invalidarPorCambioDeHojaDeRuta, invalidarPorCambioDeVenta } from './invalidaciones'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Query Keys
@@ -262,9 +263,7 @@ export function useCrearHojaRuta() {
       depositoId?: string | null
       paradas: { ventaId: string; latitud?: number; longitud?: number; direccionDestino?: string | null }[]
     }) => api.post<string>('/api/v1/Logistica/hojas-ruta', payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: logisticaKeys.all })
-    }
+    onSuccess: () => invalidarPorCambioDeHojaDeRuta(queryClient),
   })
 }
 
@@ -272,9 +271,7 @@ export function useIniciarHojaRuta() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => api.post<string>(`/api/v1/Logistica/hojas-ruta/${id}/iniciar`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: logisticaKeys.all })
-    }
+    onSuccess: () => invalidarPorCambioDeHojaDeRuta(queryClient),
   })
 }
 
@@ -292,9 +289,7 @@ export function useReportarParada() {
       /** Se genera una vez por reporte y se repite en cada reintento (misma clave y cuerpo = el servidor no duplica). */
       claveIdempotencia?: string
     }) => api.post<void>(`/api/v1/Logistica/hojas-ruta/${payload.hojaDeRutaId}/reportar-parada`, payload),
-    onSuccess: (_, { hojaDeRutaId }) => {
-      queryClient.invalidateQueries({ queryKey: logisticaKeys.hojaRuta(hojaDeRutaId) })
-    }
+    onSuccess: (_, { hojaDeRutaId }) => invalidarPorCambioDeHojaDeRuta(queryClient, hojaDeRutaId),
   })
 }
 
@@ -317,9 +312,7 @@ export function useEntregarParada() {
     mutationFn: ({ hojaDeRutaId, paradaId, cuerpo }: { hojaDeRutaId: string; paradaId: string; cuerpo: CuerpoEntregaParada }) =>
       api.post<EntregaParadaResultado>(`/api/v1/Logistica/hojas-ruta/${hojaDeRutaId}/paradas/${paradaId}/entregar`, cuerpo),
     retry: false,
-    onSuccess: (_, { hojaDeRutaId }) => {
-      queryClient.invalidateQueries({ queryKey: logisticaKeys.hojaRuta(hojaDeRutaId) })
-    },
+    onSuccess: (_, { hojaDeRutaId }) => invalidarPorCambioDeHojaDeRuta(queryClient, hojaDeRutaId),
   })
 }
 
@@ -351,9 +344,7 @@ export function useFinalizarHojaRuta() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => api.post<void>(`/api/v1/Logistica/hojas-ruta/${id}/finalizar`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: logisticaKeys.all })
-    }
+    onSuccess: () => invalidarPorCambioDeHojaDeRuta(queryClient),
   })
 }
 
@@ -374,9 +365,7 @@ export function useIniciarPreparacion() {
         '/api/v1/logistica/iniciar-preparacion-masiva',
         { ventaIds },
       ),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: pickingKeys.all })
-    },
+    onSuccess: () => invalidarPorCambioDeVenta(queryClient),
   })
 }
 
@@ -393,9 +382,7 @@ export function usePickingEmpacarVenta() {
   return useMutation({
     mutationFn: ({ ventaId, cantidadBultos, version }: { ventaId: string; cantidadBultos: number; version: number }) =>
       api.post<unknown>(`/api/v1/logistica/${ventaId}/empacar`, { cantidadBultos, version }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: pickingKeys.all })
-    },
+    onSuccess: () => invalidarPorCambioDeVenta(queryClient),
   })
 }
 
@@ -409,9 +396,7 @@ export function useRevertirAPreparacion() {
   return useMutation({
     mutationFn: (ventaId: string) =>
       api.post<boolean>(`/api/v1/logistica/${ventaId}/revertir-preparacion`, {}),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: pickingKeys.all })
-    },
+    onSuccess: () => invalidarPorCambioDeVenta(queryClient),
   })
 }
 
@@ -424,9 +409,7 @@ export function useRevertirAConfirmada() {
   return useMutation({
     mutationFn: (ventaId: string) =>
       api.post<boolean>(`/api/v1/logistica/${ventaId}/revertir-confirmada`, {}),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: pickingKeys.all })
-    },
+    onSuccess: () => invalidarPorCambioDeVenta(queryClient),
   })
 }
 
@@ -443,9 +426,7 @@ export function useCreateVehiculo() {
   return useMutation({
     mutationFn: (payload: VehiculoCrudPayload) =>
       api.post<VehiculoCrudResult>('/api/v1/Logistica/vehiculos', payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: logisticaKeys.vehiculos() })
-    },
+    onSuccess: () => invalidarLogistica(queryClient),
   })
 }
 
@@ -458,9 +439,7 @@ export function useUpdateVehiculo() {
   return useMutation({
     mutationFn: ({ id, ...payload }: VehiculoCrudPayload & { id: string }) =>
       api.put<VehiculoCrudResult>(`/api/v1/Logistica/vehiculos/${id}`, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: logisticaKeys.vehiculos() })
-    },
+    onSuccess: () => invalidarLogistica(queryClient),
   })
 }
 
@@ -473,8 +452,6 @@ export function useDeactivateVehiculo() {
   return useMutation({
     mutationFn: (id: string) =>
       api.delete<void>(`/api/v1/Logistica/vehiculos/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: logisticaKeys.vehiculos() })
-    },
+    onSuccess: () => invalidarLogistica(queryClient),
   })
 }

@@ -7,6 +7,7 @@ import type {
   UserDetailDto,
   ModulePermissionDto,
 } from './types'
+import { invalidarUsuarios } from './invalidaciones'
 
 // Backward-compatible aliases
 type UserListItem = UserListDto
@@ -113,9 +114,7 @@ export function useUpdatePermisos(userId: string) {
   return useMutation({
     mutationFn: (permissions: ModulePermissionDto[]) =>
       api.put<void>(`/api/v1/Users/${userId}/permissions`, permissions),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: adminKeys.user(userId) })
-    },
+    onSuccess: () => invalidarUsuarios(qc, userId),
   })
 }
 
@@ -124,8 +123,6 @@ export function useToggleActivo() {
   return useMutation({
     mutationFn: (userId: string) =>
       api.patch<boolean>(`/api/v1/Users/${userId}/toggle-active`),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: adminKeys.allUsers })
-    },
+    onSuccess: () => invalidarUsuarios(qc),
   })
 }

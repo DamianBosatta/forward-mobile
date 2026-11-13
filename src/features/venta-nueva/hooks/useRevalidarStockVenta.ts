@@ -7,6 +7,7 @@ import { conStockFresco, stockCambiado, type CambioDeStock } from '../lib/avisoS
 import { useCarritoVenta } from './useCarritoVenta'
 import { claveCatalogo, useCatalogoCompletoDeVenta } from './useCatalogoVenta'
 import { useDepositoAjenoDeVenta } from './useDepositoDeVenta'
+import { refrescarExacta } from '@/libs/api-client/invalidaciones'
 
 type Cache = { items: CatalogoStockItem[] } | CatalogoStockItem[]
 const SIN_CATALOGO: CatalogoStockItem[] = []
@@ -46,7 +47,7 @@ export function useRevalidarStockVenta() {
     setRevalidando(true)
     const clave = claveCatalogo(ajeno)
     try {
-      await qc.refetchQueries({ queryKey: clave, exact: true })
+      await refrescarExacta(qc, clave)
       // `refetchQueries` no tira: si falló, el estado de la consulta queda en error y la caché con lo anterior.
       // Sin conexión tampoco espera: el pedido queda en pausa (`fetchStatus: 'paused'`) y `status` sigue en 'success'
       // por lo que había en caché; eso no es haber llegado al servidor.

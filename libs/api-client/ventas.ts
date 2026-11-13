@@ -15,6 +15,7 @@ import type {
   AutorizarVentaCommand,
 } from './types'
 import type { components } from './generated/schema'
+import { invalidarBorradoresDeVenta, invalidarPorCambioDeVenta } from './invalidaciones'
 
 /**
  * `tipoOperacion` llegó con forward-system #883 (enum por nombre); `clienteDireccion` (null si el cliente no
@@ -52,6 +53,11 @@ export type VentasResumen = Omit<components['schemas']['VentasResumenDto'], 'can
 }
 
 // #region Query Keys
+/** Simulaciones de comisión (detalle de venta y venta nueva): dependen de lo cobrado y del precio. */
+export const comisionesKeys = {
+  simulacion: ['comisiones', 'simulacion'] as const,
+}
+
 export const ventasKeys = {
   all: ['ventas'] as const,
   lists: () => [...ventasKeys.all, 'list'] as const,
@@ -289,9 +295,7 @@ export function useCreateVenta() {
   return useMutation({
     mutationFn: (data: CreateVentaRequest) =>
       api.post<Venta>('/api/v1/Ventas', data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ventasKeys.all })
-    },
+    onSuccess: () => invalidarPorCambioDeVenta(queryClient),
   })
 }
 
@@ -329,7 +333,7 @@ export function useDescartarBorradorVenta() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => api.post<boolean>(`/api/v1/Ventas/${id}/descartar-borrador`),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ventasKeys.borradoresMios() }),
+    onSettled: () => invalidarBorradoresDeVenta(queryClient),
   })
 }
 
@@ -339,8 +343,7 @@ export function useEntregarVenta() {
     mutationFn: ({ id, version, usuarioModificadorId }: { id: string; version: number; usuarioModificadorId: string }) =>
       api.put<VentaActionResponseDto>(`/api/v1/Logistica/${id}/entregar`, { version, usuarioModificadorId }),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ventasKeys.detail(id) })
-      queryClient.invalidateQueries({ queryKey: ventasKeys.all })
+      return invalidarPorCambioDeVenta(queryClient)
     },
   })
 }
@@ -351,8 +354,7 @@ export function useConvertirPresupuesto() {
     mutationFn: ({ id, version, usuarioGeneradorId }: { id: string; version: number; usuarioGeneradorId: string }) =>
       api.put<void>(`/api/v1/Ventas/${id}/convertir-a-pedido`, { version, usuarioGeneradorId }),
     onSettled: (_data, _err, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ventasKeys.detail(id) })
-      queryClient.invalidateQueries({ queryKey: ventasKeys.all })
+      return invalidarPorCambioDeVenta(queryClient)
     },
   })
 }
@@ -363,8 +365,7 @@ export function useAnularVenta() {
     mutationFn: ({ id, version, motivoAnulacion }: { id: string; version: number; motivoAnulacion: string }) =>
       api.delete<void>(`/api/v1/Ventas/${id}`, buildAnularVentaPayload(version, motivoAnulacion)),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ventasKeys.detail(id) })
-      queryClient.invalidateQueries({ queryKey: ventasKeys.all })
+      return invalidarPorCambioDeVenta(queryClient)
     },
   })
 }
@@ -409,11 +410,10 @@ export function useAutorizarVenta() {
         buildAutorizarPayload({ ventaId: id, version: version ?? (await versionParaDecidir(id, fechaPendiente)), razon, descuentoAdicionalPorcentaje, ajustes }),
       ),
     onSuccess: (_data, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ventasKeys.detail(id) })
-      queryClient.invalidateQueries({ queryKey: ventasKeys.all })
+      return invalidarPorCambioDeVenta(queryClient)
     },
     // Con la venta cambiada, el detalle y la bandeja en pantalla quedaron viejos: se vuelven a pedir.
-    onError: (e: unknown) => { if (esConflictoDeVenta(e)) queryClient.invalidateQueries({ queryKey: ventasKeys.all }) },
+    onError: (e: unknown) => { if (esConflictoDeVenta(e)) void invalidarPorCambioDeVenta(queryClient) },
   })
 }
 
@@ -428,10 +428,9 @@ export function useRechazarAutorizacion() {
         motivoRechazo: motivo.trim(),
       }),
     onSuccess: (_data, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ventasKeys.detail(id) })
-      queryClient.invalidateQueries({ queryKey: ventasKeys.all })
+      return invalidarPorCambioDeVenta(queryClient)
     },
-    onError: (e: unknown) => { if (esConflictoDeVenta(e)) queryClient.invalidateQueries({ queryKey: ventasKeys.all }) },
+    onError: (e: unknown) => { if (esConflictoDeVenta(e)) void invalidarPorCambioDeVenta(queryClient) },
   })
 }
 
@@ -441,8 +440,7 @@ export function useUpdateVenta() {
     mutationFn: ({ id, version, data }: { id: string; version: number; data: Partial<CreateVentaRequest> }) =>
       api.put<Venta>(`/api/v1/Ventas/${id}`, { ...data, version }),
     onSuccess: (_data, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ventasKeys.detail(id) })
-      queryClient.invalidateQueries({ queryKey: ventasKeys.all })
+      return invalidarPorCambioDeVenta(queryClient)
     },
   })
 }
@@ -453,8 +451,7 @@ export function useEmpacarVenta() {
     mutationFn: ({ id, version, cantidadBultos, usuarioModificadorId }: { id: string; version: number; cantidadBultos: number; usuarioModificadorId: string }) =>
       api.post<EmpacarVentaResponseDto>(`/api/v1/Logistica/${id}/empacar`, { version, cantidadBultos, usuarioModificadorId }),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ventasKeys.detail(id) })
-      queryClient.invalidateQueries({ queryKey: ventasKeys.all })
+      return invalidarPorCambioDeVenta(queryClient)
     },
   })
 }

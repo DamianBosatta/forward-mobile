@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '@/core/api/client'
-import { sociosKeys } from '@/libs/api-client/socios'
 import { depositosKeys } from '@/libs/api-client/depositos'
 import { useCajaActiva } from '@/libs/api-client/finanzas'
 import { useDepositoParaRegistrar } from '@/features/deposito-sesion/hooks/useDepositoDeSesion'
@@ -10,6 +9,7 @@ import type {
 import type { components } from '@/libs/api-client/generated/schema'
 import { cuentasKeys } from './queries'
 import type { CobroPayload } from '../lib/cobro'
+import { invalidarPorMovimientoDeDinero } from '@/libs/api-client/invalidaciones'
 
 export type MedioDePago = components['schemas']['MedioPagoResponse']
 
@@ -158,10 +158,7 @@ export function useRegistrarCobro() {
       }
     },
     retry: false,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: cuentasKeys.all })
-      qc.invalidateQueries({ queryKey: sociosKeys.all })
-    },
+    onSuccess: () => invalidarPorMovimientoDeDinero(qc),
   })
 }
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Modal, ScrollView, Text, View } from 'react-native'
 import { Camera } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, PieFijo, TopBar } from '@/core/ui/fw'
+import { Button, FormContainer, Notice, PieFijo, TopBar } from '@/core/ui/fw'
 import { FotoDelCobro } from '@/features/cuentas/components/FotoDelCobro'
 import { subirComprobanteCobro } from '@/features/cuentas/api/fotos'
 import { armarComprobante, resumenComprobante, type ComprobanteCompraInput, type FormComprobante } from '../lib/comprobante'
@@ -63,7 +63,8 @@ function Contenido({ form: inicial, fotoUrl: fotoInicial, onVolver, onGuardar, g
     <Modal visible animationType="slide" onRequestClose={() => { if (!guardando) onVolver() }} statusBarTranslucent navigationBarTranslucent>
       <View accessibilityLabel="Comprobante del proveedor" style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Comprobante del proveedor" leading={{ kind: 'atras', onPress: () => { if (!guardando) onVolver() } }} />
-        <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3] }} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={{ padding: space[4] }} keyboardShouldPersistTaps="handled">
+          <FormContainer style={{ gap: space[3] }}>
           <Text style={secundario}>Como figura en el papel. Las percepciones y varias alícuotas se cargan en la web.</Text>
           <View style={{ alignItems: 'center', gap: space[2], padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderStyle: 'dashed', borderColor: c.textSecondary, backgroundColor: c.surface }}>
             <Camera size={32} color={c.textSecondary} />
@@ -76,6 +77,7 @@ function Contenido({ form: inicial, fotoUrl: fotoInicial, onVolver, onGuardar, g
           <ComprobanteCampos form={form} onCambio={setForm} />
           {falta ? <Notice tone="peligro">{falta}</Notice> : null}
           {error ? <Notice tone="peligro">{error}</Notice> : null}
+          </FormContainer>
         </ScrollView>
         <PieFijo>
           <Button label="Guardar comprobante" loading={guardando} disabled={subiendo || guardando} onPress={guardar} />

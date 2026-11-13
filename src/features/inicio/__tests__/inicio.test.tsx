@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, renderHook, screen, userEvent, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useAnularVenta, useAutorizarVenta, ventasKeys } from '@/libs/api-client/ventas'
-import { useCreateCompra } from '@/features/compras/api/queries'
+import { useCreateCompra } from '@/libs/api-client/compras'
 import { crearQueryClient } from '@/core/query/queryClient'
 import { InicioScreen } from '../components/InicioScreen'
 
@@ -312,7 +312,6 @@ describe('Inicio: cualquier mutación vuelve a pedir el resumen', () => {
   const RECIBIR_5 = { ...RESUMEN, compras: { ...RESUMEN.compras, porRecibir: pendiente(5) } }
   const POR_AUTORIZAR_4 = { ...RESUMEN, autorizacionesPendientes: pendiente(4, importe(400000)) }
   const casos = [
-    // Crear una compra solo invalida la lista de compras, no comprasKeys.all.
     ['crear una compra', useCreateCompra, { proveedorId: 'p1', depositoId: 'd1', detalles: [] }, RECIBIR_5, '5 compras por recibir. Confirmadas, sin recepción'],
     ['anular una venta', useAnularVenta, { id: 'v1', version: 1, motivoAnulacion: 'Error de carga' }, POR_AUTORIZAR_4, '4 pedidos por autorizar. Bandeja de autorizaciones'],
   ] as const

@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, waitFor } from '@testing-library/react-native'
 import { api } from '@/core/api/client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -35,7 +36,7 @@ it('montado en la app, manda solo lo que quedó en el teléfono del usuario logu
     ? { rechazos: [], total: 600, lineas: [{ productoId: 'p1', precioBase: 100 }] }
     : { ventaId: 'v1', version: 1, message: '', estado: 2 })
   encolarVenta('u1', { alta, cliente: {}, visto: { total: 600, precios: { p1: 100 } } })
-  const { toJSON } = render(<EnvioVentasSinSenal />)
+  const { toJSON } = render(<QueryClientProvider client={new QueryClient()}><EnvioVentasSinSenal /></QueryClientProvider>)
   expect(toJSON()).toBeNull()
   await waitFor(() => expect(leerCola('u1')[0].estado).toMatchObject({ tipo: 'enviada', ventaId: 'v1' }))
 })

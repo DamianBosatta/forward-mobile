@@ -1,7 +1,6 @@
 import React from 'react'
 import { act, fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import ClienteFormScreen from '../../../../app/(tabs)/socios/nuevo'
-import { AVISO_CONDICION_PAGO } from '../components/FichaCliente'
 import { api } from '@/core/api/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { sociosKeys } from '@/libs/api-client/socios'
@@ -29,6 +28,7 @@ async function completarAlta() {
   fireEvent.changeText(screen.getByLabelText('Nombre del local'), 'Kiosco Chela')
   fireEvent.changeText(screen.getByLabelText('Contacto'), 'Chela')
   fireEvent.changeText(screen.getByLabelText('Teléfono'), '1146582291')
+  fireEvent.changeText(screen.getByLabelText('CUIT'), '30-71234567-1')
 }
 
 beforeEach(() => {
@@ -38,23 +38,21 @@ beforeEach(() => {
   put.mockResolvedValue(true)
 })
 
-it('sin la capacidad de autorizar ventas, la condición de pago es de solo lectura y no se manda', async () => {
+it('un alta completa se guarda como siempre y abre la ficha', async () => {
   conPermisos(SIN_CAP)
   renderConQuery(<ClienteFormScreen />)
 
-  expect(screen.getByText(AVISO_CONDICION_PAGO)).toBeTruthy()
-  expect(screen.queryByRole('radio', { name: 'Días desde la entrega' })).toBeNull()
   await completarAlta()
   await userEvent.press(screen.getByRole('button', { name: 'Guardar' }))
 
   await waitFor(() => expect(post).toHaveBeenCalled())
   const body = post.mock.calls[0][1]
   expect(body).toMatchObject({ tipoRaw: 0, direccion: 'Av. del Valle 89', nombreFantasia: 'Kiosco Chela', nombreContacto: 'Chela' })
-  expect(body.condicionPago).toBeUndefined()
+  expect(body.condicionesPagoCliente).toEqual([{ tipo: 'Contado', predeterminada: true }])
   expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(tabs)/socios/[id]', params: { id: 'nuevo-id' } })
 })
 
-it('un CUIT que no cierra se marca en el campo con la ayuda del alta provisoria, pero no frena el guardado', async () => {
+it('un CUIT que no cierra se marca en el campo con la ayuda del alta provisoria y frena el guardado, como en la web', async () => {
   conPermisos(SIN_CAP)
   renderConQuery(<ClienteFormScreen />)
 
@@ -62,9 +60,11 @@ it('un CUIT que no cierra se marca en el campo con la ayuda del alta provisoria,
   expect(screen.getByText('Revisá el CUIT: no es válido.')).toBeTruthy()
   expect(screen.getByText('Si todavía no lo tenés, dejalo vacío y guardalo como alta provisoria.')).toBeTruthy()
 
+  await completarAlta()
+  fireEvent.changeText(screen.getByLabelText('CUIT'), '30-7123456')
   await userEvent.press(screen.getByRole('button', { name: 'Guardar' }))
-  await waitFor(() => expect(post).toHaveBeenCalled())
-  expect(post.mock.calls[0][1].cuit).toBe('30-7123456')
+  expect(await screen.findByText('Revisá los datos marcados en rojo.')).toBeTruthy()
+  expect(post).not.toHaveBeenCalled()
 })
 
 it('un CUIT incompleto dice cuántos dígitos faltan (regla compartida cuitDigitosFaltantes)', () => {
@@ -95,17 +95,17 @@ it('un CUIT válido o vacío no muestra el error', async () => {
   expect(screen.queryByText('Revisá el CUIT: no es válido.')).toBeNull()
 })
 
-it('con la capacidad, la condición de pago se elige y viaja al servidor', async () => {
+it('la condición de pago se elige y viaja al servidor como lista', async () => {
   conPermisos(CON_CAP)
   renderConQuery(<ClienteFormScreen />)
 
   await completarAlta()
-  await userEvent.press(screen.getByRole('radio', { name: 'Días desde la entrega' }))
+  await userEvent.press(screen.getByRole('radio', { name: 'Días desde la entrega, condición 1' }))
   fireEvent.changeText(screen.getByLabelText('Días'), '15')
   await userEvent.press(screen.getByRole('button', { name: 'Guardar' }))
 
   await waitFor(() => expect(post).toHaveBeenCalled())
-  expect(post.mock.calls[0][1].condicionPago).toEqual({ tipo: 'DiasDesdeEntrega', dias: 15 })
+  expect(post.mock.calls[0][1].condicionesPagoCliente).toEqual([{ tipo: 'DiasDesdeEntrega', dias: 15, predeterminada: true }])
 })
 
 it('si el servidor rechaza, se ve su mensaje con el detalle', async () => {
@@ -113,6 +113,7 @@ it('si el servidor rechaza, se ve su mensaje con el detalle', async () => {
   post.mockRejectedValue(Object.assign(new Error('Datos inválidos.'), { errors: ['El teléfono es obligatorio en clientes.'] }))
   renderConQuery(<ClienteFormScreen />)
 
+  await completarAlta()
   await userEvent.press(screen.getByRole('button', { name: 'Guardar' }))
 
   expect(await screen.findByText('Datos inválidos.\nEl teléfono es obligatorio en clientes.')).toBeTruthy()

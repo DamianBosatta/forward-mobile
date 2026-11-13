@@ -1,14 +1,9 @@
 import { MutationCache, QueryClient, type DefaultOptions, type Query } from '@tanstack/react-query'
 import { conectarFocoConAppState } from './focusManager'
+import { inicioKeys } from '@/core/query/inicioKeys'
+import { invalidarInicio } from '@/libs/api-client/invalidaciones'
 
-/**
- * Raíz de las consultas de Inicio: resumen de Ventas y Compras. Cada mutación la invalida al terminar
- * (`crearQueryClient`); lo que cambia datos sin `useMutation` la invalida a mano.
- */
-export const inicioKeys = {
-  all: ['inicio'] as const,
-  resumen: () => [...inicioKeys.all, 'resumen'] as const,
-}
+export { inicioKeys } from './inicioKeys'
 
 /**
  * El QueryClient de la app (app/_layout.tsx). Los tests lo crean con esto para tener la misma
@@ -24,7 +19,13 @@ export function crearQueryClient(consultas: DefaultOptions['queries'] = {}): Que
     // terminar la mutación. Afuera las que no cambian datos (`meta.noRefrescaInicio`, p. ej. el escaneo).
     mutationCache: new MutationCache({
       onSettled: (_data, _error, _variables, _contexto, mutation) => {
-        if (!mutation.meta?.noRefrescaInicio) void queryClient.invalidateQueries({ queryKey: inicioKeys.all })
+        if (mutation.meta?.noRefrescaInicio) return
+        // Si la regla de la propia mutación ya trajo el resumen después de enviarla, no se pide dos veces.
+        const yaRefrescado = queryClient
+          .getQueryCache()
+          .findAll({ queryKey: inicioKeys.all })
+          .some((q) => q.state.dataUpdatedAt >= mutation.state.submittedAt)
+        if (!yaRefrescado) void invalidarInicio(queryClient)
       },
     }),
     defaultOptions: {
@@ -34,12 +35,20 @@ export function crearQueryClient(consultas: DefaultOptions['queries'] = {}): Que
   return queryClient
 }
 
+function esListaInfinita(query: Query): boolean {
+  const data = query.state.data as { pages?: unknown; pageParams?: unknown } | undefined
+  if (data && typeof data === 'object' && Array.isArray(data.pages) && Array.isArray(data.pageParams)) return true
+  return (query.queryKey as unknown[]).includes('infinite')
+}
+
 /** Qué consultas se guardan en el teléfono para abrir sin conexión. */
 export function debePersistir(query: Query): boolean {
   if (query.state.status !== 'success') return false
   // `null` es "no hay dato" (p. ej. el servidor todavía no tiene el endpoint): no vale para después.
   if (query.state.data === null) return false
   if (query.meta && query.meta.persist === false) return false
+  // Las listas infinitas (`{ pages, pageParams }`) crecen sin tope y se vuelven a pedir de la primera página: no se guardan.
+  if (esListaInfinita(query)) return false
   const queryKey = query.queryKey as string[]
   const isHeavy = queryKey.includes('catalogoStock') || queryKey.includes('list')
   return !isHeavy

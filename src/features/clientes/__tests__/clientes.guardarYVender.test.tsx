@@ -34,6 +34,10 @@ describe('alta de cliente según el diseño (ModNuevoCliente)', () => {
   it('"Guardar y vender" crea el cliente con el mismo pedido y abre la venta nueva con ese cliente', async () => {
     renderConQuery(<ClienteFormScreen />)
     fireEvent.changeText(screen.getByLabelText('Dirección de entrega'), 'Av. del Valle 89')
+    fireEvent.changeText(screen.getByLabelText('Nombre del local'), 'Kiosco Chela')
+    fireEvent.changeText(screen.getByLabelText('Contacto'), 'Chela')
+    fireEvent.changeText(screen.getByLabelText('Teléfono'), '1146582291')
+    fireEvent.changeText(screen.getByLabelText('CUIT'), '30-71234567-1')
     await userEvent.press(screen.getByRole('button', { name: 'Guardar y vender' }))
 
     await waitFor(() => expect(post).toHaveBeenCalledTimes(1))
@@ -44,6 +48,10 @@ describe('alta de cliente según el diseño (ModNuevoCliente)', () => {
   it('"Guardar" sigue abriendo la ficha, no la venta', async () => {
     renderConQuery(<ClienteFormScreen />)
     fireEvent.changeText(screen.getByLabelText('Dirección de entrega'), 'Av. del Valle 89')
+    fireEvent.changeText(screen.getByLabelText('Nombre del local'), 'Kiosco Chela')
+    fireEvent.changeText(screen.getByLabelText('Contacto'), 'Chela')
+    fireEvent.changeText(screen.getByLabelText('Teléfono'), '1146582291')
+    fireEvent.changeText(screen.getByLabelText('CUIT'), '30-71234567-1')
     await userEvent.press(screen.getByRole('button', { name: 'Guardar' }))
 
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(tabs)/socios/[id]', params: { id: 'nuevo-id' } }))
@@ -51,7 +59,7 @@ describe('alta de cliente según el diseño (ModNuevoCliente)', () => {
 
   it('muestra el aviso azul con el texto del diseño', () => {
     renderConQuery(<ClienteFormScreen />)
-    expect(AVISO_ALTA).toBe('Queda en tu cartera. El tope de crédito y la condición de pago los define gestión.')
+    expect(AVISO_ALTA).toBe('Queda en tu cartera. El tope de crédito lo define quien autoriza ventas.')
     expect(screen.getByText(AVISO_ALTA)).toBeTruthy()
   })
 

@@ -9,12 +9,14 @@ import { TopBar } from '@/core/ui/fw'
 import { RequirePermission } from '@/core/ui'
 import { BusquedaBajoBarra } from '@/features/inventario/components/BusquedaBajoBarra'
 import { StockPorDeposito } from '@/features/inventario/components/StockPorDeposito'
+import { useRefrescarAlEnfocar } from '@/core/hooks/useRefrescarAlEnfocar'
 
 /** Desde acá las Tarjetas van de a cuatro y la Lista se ve como tabla. */
 const ANCHO_TABLET = 600
 
 /** Stock, solo ver, con la estructura de "Inventario & Stock" de la web (S16). Se abre buscando `?busqueda=` si viene de la ficha. */
 export default function StockScreen() {
+  useRefrescarAlEnfocar()
   const navigation = useNavigation()
   const c = useColors()
   const { width } = useResponsive()

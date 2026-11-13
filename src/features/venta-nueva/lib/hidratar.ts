@@ -1,4 +1,5 @@
 import type { CatalogoStockItem } from '@/libs/api-client'
+import type { CondicionPagoDto } from '@/features/clientes/lib/condicionesPago'
 import type { SocioDetailDto, VentaDetalleDto, VentaDetalleItemDto, VentaHeaderDto } from '@/libs/api-client/types'
 import { METODO_ENTREGA, type MetodoEntregaValue } from '@/features/ventas/lib/venta-form-retiro'
 import { aElegido, type ClienteElegido } from '@/features/clientes/lib/recientes'
@@ -16,7 +17,7 @@ export interface VentaCargada {
   cliente: ClienteElegido
   lineas: LineaCarrito[]
   descuentoGeneral: number
-  cabecera: { metodoEntrega: MetodoEntregaValue; fecha: string | null; flete: number; observaciones: string; conFactura: boolean }
+  cabecera: { metodoEntrega: MetodoEntregaValue; fecha: string | null; flete: number; observaciones: string; conFactura: boolean; condicionPago?: CondicionPagoDto }
   version: number
   tipo: 'Pedido' | 'Presupuesto'
   /** El depósito con el que se guardó la venta: sigue siendo el suyo al retomarla, editarla o duplicarla. */
@@ -57,7 +58,7 @@ export function cabeceraDesdeVenta(h: VentaHeaderDto): VentaCargada['cabecera'] 
   const dia = h.fechaEntrega?.match(/^\d{4}-\d{2}-\d{2}/)?.[0] ?? null
   return { metodoEntrega: metodo, fecha: dia, flete: h.cargoFleteAmount ?? 0, observaciones: h.observaciones ?? '',
     // Como la web (buildEditHydration): una venta sin el dato se toma como sin factura.
-    conFactura: h.conFactura ?? false }
+    conFactura: h.conFactura ?? false, condicionPago: h.condicionPago }
 }
 
 /** Lo que el servidor tiene de la venta, en la misma forma que el snapshot del autoguardado (para compararlos). */

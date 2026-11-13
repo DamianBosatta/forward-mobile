@@ -24,6 +24,7 @@ import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esque
 import { DeudoresClientes } from '@/features/deudores/components/DeudoresClientes'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
+import { useRefrescarAlEnfocar } from '@/core/hooks/useRefrescarAlEnfocar'
 
 type LadoDeCuentas = 'medeben' | 'deudores' | 'debo'
 
@@ -205,6 +206,7 @@ function CuentasCorrientesScreen() {
 }
 
 export default function CuentasCorrientesScreenConBarra() {
+  useRefrescarAlEnfocar()
   return (
     <ConAccesosRapidos activa="cobros">
       <CuentasCorrientesScreen />

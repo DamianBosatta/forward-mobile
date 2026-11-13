@@ -3,10 +3,10 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
 import { safeHaptics } from '@/core/utils/haptics'
-import { logisticaKeys } from '@/libs/api-client/logistica'
 import { esperaDeReintento } from '@/features/venta-sin-senal/hooks/useVentasSinSenal'
 import { parsearCola, suscribirCola, textoDeCola, type AccionEnCola } from './colaConsola'
 import { enviarPendientesConsola } from './enviarConsola'
+import { invalidarPorCambioDeHojaDeRuta } from '@/libs/api-client/invalidaciones'
 
 /** Solo lectura: lo que el chofer logueado dejó en el teléfono (sin enviar nada: eso lo hace `useEnvioConsolaSinSenal`). */
 export function useColaConsola(): { items: AccionEnCola[]; esperando: AccionEnCola[]; paraRevisar: AccionEnCola[] } {
@@ -45,7 +45,7 @@ export function useEnvioConsolaSinSenal() {
     if (reintento.current) clearTimeout(reintento.current)
     reintento.current = null
     const r = await enviarPendientesConsola(usuarioId, {
-      alEnviar: (hojaDeRutaId) => { void qc.invalidateQueries({ queryKey: logisticaKeys.hojaRuta(hojaDeRutaId) }) },
+      alEnviar: (hojaDeRutaId) => { void invalidarPorCambioDeHojaDeRuta(qc, hojaDeRutaId) },
       alFallar: () => safeHaptics.notification('warning'),
     })
     if (usuarioActual.current !== usuarioId) return

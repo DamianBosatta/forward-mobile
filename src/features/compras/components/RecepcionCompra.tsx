@@ -2,7 +2,7 @@ import React from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ArrowLeft } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
-import { Button, Field, FilaInterruptor, Notice, PieFijo, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { Button, Field, FormContainer, FilaInterruptor, Notice, PieFijo, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { MarcaRadio } from '@/features/venta-nueva/components/MarcaRadio'
 import { textoFaltaCosto } from './CarritoCompra'
 
@@ -106,7 +106,8 @@ export function RecepcionCompra(p: Props) {
 
   return (
     <>
-      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3] }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ padding: space[4] }} keyboardShouldPersistTaps="handled">
+        <FormContainer style={{ gap: space[3] }}>
         {enlace('Volver al carrito', p.onVolverAlCarrito)}
         {p.error ? <Notice tone="peligro">{p.error}</Notice> : null}
         {p.faltanCostos > 0 ? (
@@ -137,9 +138,9 @@ export function RecepcionCompra(p: Props) {
                 help={`La condición de pago se cuenta desde la factura.${p.vencimiento ? ` ${p.vencimiento}` : ''}`} />
             ) : null}
             {p.comprobante ? <Text style={{ ...typeScale.secundario, color: c.text }}>{p.comprobante}</Text> : null}
-            <View style={{ flexDirection: 'row', gap: space[2] }}>
-              <View style={{ flex: 1 }}><Button label="Sacar foto" variant="secundario" accessibilityLabel="Sacar foto de la factura" onPress={p.onComprobante} /></View>
-              <View style={{ flex: 1 }}><Button label={p.comprobante ? 'Cambiar datos' : 'Cargar datos'} variant="secundario" accessibilityLabel="Cargar los datos de la factura" onPress={p.onComprobante} /></View>
+            <View style={{ gap: space[2] }}>
+              <Button label="Sacar foto" variant="secundario" accessibilityLabel="Sacar foto de la factura" onPress={p.onComprobante} />
+              <Button label={p.comprobante ? 'Cambiar datos' : 'Cargar datos'} variant="secundario" accessibilityLabel="Cargar los datos de la factura" onPress={p.onComprobante} />
             </View>
             <Text style={secundario}>Opcional. Se puede cargar después desde la compra.</Text>
           </View>
@@ -148,6 +149,7 @@ export function RecepcionCompra(p: Props) {
           <TotalsRow label={p.faltanCostos > 0 ? 'Subtotal (falta un costo)' : 'Subtotal'} importe={p.subtotal} />
           {p.faltanCostos > 0 ? null : <TotalsRow label="Gastos operativos" importe={p.gastos} />}
         </View>
+        </FormContainer>
       </ScrollView>
       <PieFijo>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>

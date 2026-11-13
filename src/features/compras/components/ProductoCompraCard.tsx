@@ -17,6 +17,10 @@ export interface ProductoComprable extends EmpaqueProducto {
   marca?: string | null
   codigoPropio?: string | null
   imageUrl?: string | null
+  /** Stock real actual (catalogo-stock). */
+  stockActual?: number | null
+  /** Unidades vendidas desde la última compra del producto; sin valor si nunca se compró. */
+  vendidoDesdeUltimaCompra?: number | null
 }
 
 interface Props {
@@ -33,6 +37,24 @@ interface Props {
 
 const corto = (o: { unidad: UnidadCompra; unidades: number }) =>
   o.unidad === 'Unidad' ? 'Unid.' : `${o.unidad === 'Bulto' ? 'Bulto' : 'B. madre'} · ${mostrarNumero(o.unidades)}`
+
+/** "Stock actual" y "Vendido desde la última compra", como en la web; sin dato (o sin compra previa) se dice con un guion. */
+export function StockYVentas({ producto: p }: { producto: ProductoComprable }) {
+  const c = useColors()
+  const celda = (k: string, v: number | null | undefined) => (
+    <View accessible accessibilityLabel={`${k}: ${typeof v === 'number' ? mostrarNumero(v) : 'sin dato'}`}
+      style={{ flex: 1, minWidth: 0, gap: 2, paddingVertical: space[2], paddingHorizontal: space[3], borderRadius: radii.campo, backgroundColor: c.surface2 }}>
+      <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{k}</Text>
+      <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{typeof v === 'number' ? mostrarNumero(v) : '—'}</Text>
+    </View>
+  )
+  return (
+    <View testID={`stock-${p.id}`} style={{ flexDirection: 'row', alignItems: 'stretch', gap: space[2] }}>
+      {celda('Stock actual', p.stockActual)}
+      {celda('Vendido desde la última compra', p.vendidoDesdeUltimaCompra)}
+    </View>
+  )
+}
 
 /**
  * Tarjeta del catálogo de la compra (maqueta "Compras como venta", frames 5 y 6; copia la tarjeta del catálogo de la venta):
@@ -90,6 +112,7 @@ export function ProductoCompraCard({ producto: p, linea, onAgregar, onCambiar, o
           ) : null}
         </View>
       </Pressable>
+      <StockYVentas producto={p} />
       {linea ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: space[2] }}>
           <Segmented accessibilityLabel={`Unidad de compra de ${p.nombre}`} value={linea.unidad} onChange={cambiarUnidad}

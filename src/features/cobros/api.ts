@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/core/api/client'
-import { logisticaKeys } from '@/libs/api-client/logistica'
 import type { CuerpoCobroParada, CuerpoNoCobroParada } from './paradaCobro'
+import { invalidarPorCobroDeParada } from '@/libs/api-client/invalidaciones'
 
 const URL_PARADA = (hojaDeRutaId: string, paradaCobroId: string) =>
   `/api/v1/Logistica/hojas-ruta/${hojaDeRutaId}/paradas-cobro/${paradaCobroId}`
@@ -18,7 +18,7 @@ export function useCobrarParadaCobro() {
     mutationFn: ({ hojaDeRutaId, paradaCobroId, cuerpo }: Destino & { cuerpo: CuerpoCobroParada }) =>
       api.post<unknown>(`${URL_PARADA(hojaDeRutaId, paradaCobroId)}/cobrar`, cuerpo),
     retry: false,
-    onSuccess: (_, { hojaDeRutaId }) => { void qc.invalidateQueries({ queryKey: logisticaKeys.hojaRuta(hojaDeRutaId) }) },
+    onSuccess: (_, { hojaDeRutaId }) => invalidarPorCobroDeParada(qc, hojaDeRutaId),
   })
 }
 
@@ -29,6 +29,6 @@ export function useNoCobrarParadaCobro() {
     mutationFn: ({ hojaDeRutaId, paradaCobroId, cuerpo }: Destino & { cuerpo: CuerpoNoCobroParada }) =>
       api.post<unknown>(`${URL_PARADA(hojaDeRutaId, paradaCobroId)}/no-cobrada`, cuerpo),
     retry: false,
-    onSuccess: (_, { hojaDeRutaId }) => { void qc.invalidateQueries({ queryKey: logisticaKeys.hojaRuta(hojaDeRutaId) }) },
+    onSuccess: (_, { hojaDeRutaId }) => invalidarPorCobroDeParada(qc, hojaDeRutaId),
   })
 }

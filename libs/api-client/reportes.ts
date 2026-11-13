@@ -9,7 +9,7 @@ import type { components } from './generated/schema'
  */
 export type ResumenVendedor = components['schemas']['ResumenVendedorDto']
 
-const reportesKeys = {
+export const reportesKeys = {
   all: ['reportes'] as const,
   resumenVendedor: (periodo: PeriodoResumen, vendedorId: string | null) =>
     [...reportesKeys.all, 'resumen-vendedor', periodo, vendedorId] as const,

@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { CalendarDays, Clock, History, Package, Route, UserRound, type LucideIcon } from 'lucide-react-native'
 import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark, type ChipEstado } from '@/libs/theme'
-import { diaCorto, estaAtrasado, etiquetaMetodo, textoUltimoCambio, type VentaTablero } from './tablero'
+import { diaCorto, estaAtrasado, etiquetaMetodo, textoPaso, textoUltimoCambio, type VentaTablero } from './tablero'
 import { pesoSemibold } from '@/core/ui/fw'
 
 
@@ -42,6 +42,34 @@ function Dato({ icono: Icono, children }: { icono: LucideIcon; children: React.R
   )
 }
 
+const PASOS_VISIBLES = 3
+
+/** Pasos del pedido (estado · usuario · fecha y hora), del más viejo al más nuevo; más de 3 se pliegan. */
+function ListaDePasos({ pasos }: { pasos: NonNullable<VentaTablero['pasos']> }) {
+  const c = useColors()
+  const [todos, setTodos] = useState(false)
+  const ordenados = [...pasos].sort((a, b) => Date.parse(a.fecha) - Date.parse(b.fecha))
+  const visibles = todos ? ordenados : ordenados.slice(-PASOS_VISIBLES)
+  return (
+    <View testID="pasos-pedido" style={{ gap: space[1] }}>
+      {visibles.map((p, i) => (
+        <Dato key={`${p.fecha}-${i}`} icono={History}>{textoPaso(p)}</Dato>
+      ))}
+      {ordenados.length > PASOS_VISIBLES ? (
+        <Pressable
+          onPress={() => setTodos((v) => !v)}
+          android_ripple={{ color: c.surface2 }}
+          accessibilityRole="button"
+          accessibilityLabel={todos ? 'Ver menos pasos' : 'Ver todos los pasos'}
+          style={{ minHeight: 44, justifyContent: 'center' }}
+        >
+          <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: c.text }}>{todos ? 'Ver menos' : `Ver todos (${ordenados.length})`}</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  )
+}
+
 /**
  * Tarjeta del tablero, la `TarjetaPedido` de la web sin casilla ni botones (solo ver): código y etiquetas (Atrasado,
  * En hoja, método) arriba, la dirección en negrita y el cliente debajo, y un renglón con ícono por dato. Tocarla
@@ -54,16 +82,19 @@ export function TarjetaPedidoTablero({ venta, hoy, opciones = {}, onAbrir, child
   const codigo = venta.codigoPedido ?? venta.id.slice(0, 8).toUpperCase()
   const atrasado = marcarAtraso && estaAtrasado(venta.fechaEntrega, hoy)
   const dia = venta.fechaEntrega ? diaCorto(venta.fechaEntrega) : null
-  const ultimoCambio = mostrarUltimoCambio ? textoUltimoCambio(venta) : null
+  const pasos = venta.pasos ?? []
+  // Con pasos, el último ya dice quién y cuándo: la línea suelta no se repite.
+  const ultimoCambio = mostrarUltimoCambio && pasos.length === 0 ? textoUltimoCambio(venta) : null
   return (
+    // Los pasos quedan fuera del Pressable: su "Ver todos" es un botón propio, no puede anidarse en otro accesible.
+    <View testID={`tarjeta-${venta.id}`} style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[3], gap: space[2], ...sombra }}>
     <Pressable
-      testID={`tarjeta-${venta.id}`}
       onPress={onAbrir}
       android_ripple={{ color: c.surface2 }}
       accessibilityRole="button"
       accessibilityLabel={`Pedido ${codigo}: ${venta.direccion}`}
       accessibilityHint="Abre el detalle del pedido"
-      style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[3], gap: space[2], ...sombra }}
+      style={{ gap: space[2] }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[2] }}>
         <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: c.textSecondary, flex: 1 }} numberOfLines={1}>{codigo}</Text>
@@ -90,5 +121,7 @@ export function TarjetaPedidoTablero({ venta, hoy, opciones = {}, onAbrir, child
         <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{`${venta.piezasCount} ${venta.piezasCount === 1 ? 'pieza' : 'piezas'}`}</Text>
       ) : null}
     </Pressable>
+      {pasos.length > 0 ? <ListaDePasos pasos={pasos} /> : null}
+    </View>
   )
 }

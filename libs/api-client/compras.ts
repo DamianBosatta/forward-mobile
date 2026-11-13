@@ -3,6 +3,7 @@ import { api } from './client'
 import { buildAnularCompraPayload } from './anular-compra'
 import type { Compra, CompraDtoList, CompraDto, PagedResult, CreateCompraRequest, EstadoCompra } from './types'
 import type { components } from './generated/schema'
+import { invalidarPorCambioDeCompra } from './invalidaciones'
 
 type ComprobanteCompraInput = components['schemas']['ComprobanteCompraInput']
 
@@ -144,9 +145,7 @@ export function useCreateCompra() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateCompraRequest) => api.post<Compra>('/api/v1/Compras', data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: comprasKeys.all })
-    },
+    onSuccess: () => invalidarPorCambioDeCompra(queryClient),
   })
 }
 
@@ -155,10 +154,7 @@ export function useUpdateCompra() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: CreateCompraRequest }) =>
       api.put<Compra>(`/api/v1/Compras/${id}`, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: comprasKeys.all })
-      queryClient.invalidateQueries({ queryKey: comprasKeys.detail(variables.id) })
-    },
+    onSuccess: () => invalidarPorCambioDeCompra(queryClient),
   })
 }
 
@@ -167,9 +163,7 @@ export function useCancelarCompra() {
   return useMutation({
     mutationFn: ({ id, motivo }: { id: string; motivo: string }) =>
       api.delete<void>(`/api/v1/Compras/${id}/anular`, buildAnularCompraPayload(motivo)),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: comprasKeys.all })
-    },
+    onSuccess: () => invalidarPorCambioDeCompra(queryClient),
   })
 }
 
@@ -177,9 +171,7 @@ export function useConfirmarCompra() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => api.post<void>(`/api/v1/Compras/${id}/confirmar`, {}),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: comprasKeys.all })
-    },
+    onSuccess: () => invalidarPorCambioDeCompra(queryClient),
   })
 }
 
@@ -208,9 +200,7 @@ export function useRecibirCompra() {
       })
       return { compraFaltanteId: sobre?.compraFaltanteId ?? null, compraFaltanteNumero: sobre?.compraFaltanteNumero ?? null }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: comprasKeys.all })
-    },
+    onSuccess: () => invalidarPorCambioDeCompra(queryClient),
   })
 }
 
@@ -223,9 +213,7 @@ export function useAsignarFotoFacturaCompra() {
   return useMutation({
     mutationFn: ({ id, fotoUrl }: { id: string; fotoUrl: string | null }) =>
       api.put<string>(`/api/v1/Compras/${id}/foto-factura`, { fotoUrl }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: comprasKeys.all })
-    },
+    onSuccess: () => invalidarPorCambioDeCompra(queryClient),
   })
 }
 
@@ -235,9 +223,7 @@ export function useGuardarComprobanteCompra() {
   return useMutation({
     mutationFn: ({ id, comprobante }: { id: string; comprobante: ComprobanteCompraInput }) =>
       api.put<components['schemas']['ComprobanteRecibidoDto']>(`/api/v1/Compras/${id}/comprobante`, comprobante),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: comprasKeys.all })
-    },
+    onSuccess: () => invalidarPorCambioDeCompra(queryClient),
   })
 }
 
@@ -251,9 +237,7 @@ export function useAnularRecepcionCompra() {
   return useMutation({
     mutationFn: ({ id, motivo, version }: { id: string; motivo: string; version: number }) =>
       api.post<string>(`/api/v1/Compras/${id}/anular-recepcion`, { compraId: id, motivo, version }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: comprasKeys.all })
-    },
+    onSuccess: () => invalidarPorCambioDeCompra(queryClient),
   })
 }
 

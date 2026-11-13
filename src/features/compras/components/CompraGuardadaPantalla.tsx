@@ -9,7 +9,6 @@ import { Button, Notice, StatusChip, TopBar, chipForEstado, formatImporte, pesoS
 import { useAsignarFotoFacturaCompra, useCompra, useConfirmarCompra, useGuardarComprobanteCompra, type CompraFaltante } from '@/libs/api-client/compras'
 import { useSocio } from '@/libs/api-client/socios'
 import { usePermissions } from '@/core/auth/RequirePermission'
-import { inicioKeys } from '@/core/query/queryClient'
 import { esEstadoCompra } from '@/core/constants/estados'
 import { hoyTexto } from '@/core/utils/fecha'
 import { mostrarNumero } from '@/core/utils/numero'
@@ -20,6 +19,7 @@ import { textoSuma, unidadesAIngresar } from '../lib/recepcion'
 import { formDesdeComprobante, formNuevo, seCorrigeEnLaWeb } from '../lib/comprobante'
 import { RecibirCompra } from './RecibirCompra'
 import { ComprobanteProveedorPantalla, type ComprobanteCargado } from './ComprobanteProveedorPantalla'
+import { invalidarInicio } from '@/libs/api-client/invalidaciones'
 
 interface Props {
   id: string
@@ -76,7 +76,7 @@ export function CompraGuardadaPantalla({ id, aviso }: Props) {
           setFaltante(f.compraFaltanteNumero ? f : null)
           setAvisoVigente(null)
           setError(foto ?? null)
-          queryClient.invalidateQueries({ queryKey: inicioKeys.all })
+          void invalidarInicio(queryClient)
         }}
         onConflicto={() => { void q.refetch() }}
       />
@@ -103,7 +103,7 @@ export function CompraGuardadaPantalla({ id, aviso }: Props) {
     setError(null)
     try {
       await confirmar.mutateAsync(compra.id)
-      queryClient.invalidateQueries({ queryKey: inicioKeys.all })
+      void invalidarInicio(queryClient)
     } catch (e) {
       setError(`No se confirmó la compra: ${mensajeDelServidor(e)}`)
     }

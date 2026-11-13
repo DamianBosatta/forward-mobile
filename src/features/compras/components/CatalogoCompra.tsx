@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
 import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
-import { Field, FormContainer, Notice, StatusChip, useInsetInferior } from '@/core/ui/fw'
+import { Field, FormContainer, Notice, StatusChip } from '@/core/ui/fw'
 import { useInfiniteCatalogoStock } from '@/libs/api-client'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
@@ -32,7 +32,6 @@ interface Props {
  * y a un usuario limitado le mostraría productos ajenos. Sin conexión se sigue cargando: el borrador se guarda al volver.
  */
 export function CatalogoCompra({ proveedor, lineas, onAgregar, onCambiar, onQuitar, onAbrir }: Props) {
-  const insetInferior = useInsetInferior()
   const c = useColors()
   const sombra = useSombraTarjeta()
   const [busqueda, setBusqueda] = useState('')
@@ -67,7 +66,7 @@ export function CatalogoCompra({ proveedor, lineas, onAgregar, onCambiar, onQuit
       data={visibles}
       keyExtractor={(p) => p.id}
       extraData={lineas}
-      contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[3] }}
+      contentContainerStyle={{ padding: space[4], paddingBottom: space[4], gap: space[3] }}
       keyboardShouldPersistTaps="handled"
       onEndReached={() => { if (productos.hasNextPage && !productos.isFetchingNextPage) void productos.fetchNextPage() }}
       onEndReachedThreshold={0.5}

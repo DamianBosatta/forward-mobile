@@ -120,8 +120,8 @@ describe('Drawer sections keep their own back stack (A-05)', () => {
     }
     act(() => router.push('/(tabs)/inventario/stock' as never))
     expect(pantalla('inventario/stock')).toBeTruthy()
-    act(() => router.push('/(tabs)/logistica/pedidos' as never))
-    expect(pantalla('logistica/pedidos')).toBeTruthy()
+    act(() => router.push('/(tabs)/logistica/picking' as never))
+    expect(pantalla('logistica/picking')).toBeTruthy()
     act(() => router.push('/(tabs)/logistica/consola' as never))
     expect(pantalla('logistica/consola')).toBeTruthy()
     act(() => router.push('/(tabs)/perfil' as never))

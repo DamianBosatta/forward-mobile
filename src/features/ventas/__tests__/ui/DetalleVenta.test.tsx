@@ -84,6 +84,14 @@ describe('R1 · detalle del pedido (ResVentaDetalle, TV7)', () => {
     expect(screen.getByLabelText(/^Total: /)).toBeTruthy()
   })
 
+  it('muestra la condición de pago elegida en la venta', async () => {
+    venta({ condicionPago: { tipo: 'DiasDesdeEntrega', dias: 15 } })
+    pantalla()
+    await screen.findByText('Pedido A00419')
+    expect(screen.getByText('Condición de pago')).toBeTruthy()
+    expect(screen.getByText('Cuenta corriente, 15 días desde la entrega')).toBeTruthy()
+  })
+
   it('sin cobros no hay tarjeta "Cobro"', async () => {
     pantalla()
     await screen.findByText('Pedido A00419')

@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { ChevronRight, FilePen, HandCoins, MapPin, MessageCircle, Pencil, Phone, ShoppingCart } from 'lucide-react-native'
+import { ChevronRight, FilePen, FileText, HandCoins, MapPin, MessageCircle, Pencil, Phone, ShoppingCart } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, Segmented, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { useSocio } from '@/libs/api-client/socios'
 import { useVentas } from '@/libs/api-client/ventas'
+import { HojaEstadoDeCuenta } from '@/features/deudores/components/HojaEstadoDeCuenta'
+import { usePuedeExportarEstadoDeCuenta } from '@/features/deudores/lib/permiso'
 import { useEstadoCuentaSocio } from '@/features/cuentas/api/queries'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -64,6 +66,8 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
   const puedeCobrarPagos = usePuedeCobrar()
   const venderA = useVenderA()
   const [pidiendoCambio, setPidiendoCambio] = useState(false)
+  const [compartiendo, setCompartiendo] = useState(false)
+  const puedeExportar = usePuedeExportarEstadoDeCuenta()
   const [solapa, setSolapa] = useState<Solapa>('compras')
   const puedeAutorizar = useAuthStore(s => s.hasCapability('CAP_AUTORIZAR_VENTA'))
   const esAdmin = useAuthStore(s => s.isAdmin())
@@ -224,6 +228,7 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
                   <TotalsRow label="Saldo" importe={estado.saldoActual} destacado />
                 </Tarjeta>
                 {vencidaConImporte ? <Notice tone="advertencia">{AVISO_DEUDA_VENCIDA}</Notice> : null}
+                {puedeExportar ? <Button label="Estado de cuenta" icon={FileText} variant="secundario" onPress={() => setCompartiendo(true)} /> : null}
               </>
             ) : null}
           </View>
@@ -273,6 +278,7 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
         </View>
       ) : null}
 
+      <HojaEstadoDeCuenta socio={compartiendo ? { id, razonSocial: cliente.razonSocial } : null} onClose={() => setCompartiendo(false)} />
       <SolicitudCambioSheet visible={pidiendoCambio} cliente={cliente} onCerrar={() => setPidiendoCambio(false)} />
     </View>
   )

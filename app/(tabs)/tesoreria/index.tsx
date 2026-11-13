@@ -9,6 +9,7 @@ import { usePuedeCobrar, usePuedeTransferir } from '@/features/cuentas/lib/permi
 import { MOTIVO_SIN_PERMISO_DE_SERVICIO, MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA } from '@/core/ui/fw/MotivoDeshabilitado'
 import { FilaDeTesoreria } from '@/features/tesoreria/components/FilaDeTesoreria'
 import { usePuedeVerPagos } from '@/features/pagos/lib/permiso'
+import { useRefrescarAlEnfocar } from '@/core/hooks/useRefrescarAlEnfocar'
 
 /** Aviso de la lámina tesoreria-inicio: el cobro de un cliente no se carga desde Tesorería. */
 const AVISO_COBROS_DE_CLIENTES = 'Los cobros de clientes se cargan desde la ficha del cliente, con "Cobrar".'
@@ -23,6 +24,7 @@ const AYUDA_CHEQUE_COMO_COBRO = 'El cheque se carga como cobro de un cliente.'
  * `POST /cheques`): lleva al cobro de un cliente con el medio Cheque (regla A-1114: el cheque va en un cobro de un solo medio).
  */
 export default function TesoreriaScreen() {
+  useRefrescarAlEnfocar()
   const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()

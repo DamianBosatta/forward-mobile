@@ -10,6 +10,8 @@ import { diaArgentina } from '@/core/utils/fecha'
 import type { TipoDocumento } from '@/features/clientes/components/SeleccionarClienteSheet'
 import { fechaEntregaPorDefecto, tiraDeDias } from '../lib/calendario'
 import { leerNumero, mostrarNumero } from '../lib/linea'
+import { useSocio } from '@/libs/api-client/socios'
+import { resolverCondicionPagoVenta, type CondicionPagoDto } from '@/features/clientes/lib/condicionesPago'
 import type { Cabecera } from '../lib/payload'
 import type { VentaCargada } from '../lib/hidratar'
 
@@ -19,7 +21,11 @@ import type { VentaCargada } from '../lib/hidratar'
  * `fechaEntregaPorDefecto`) hasta que el vendedor elija otra. Sin calendario (cargando o con
  * error) no se propone ninguna: no se adivina un día hábil.
  */
-export function useCabeceraVenta(tipo: TipoDocumento, pedirDefectoConFactura = true) {
+export function useCabeceraVenta(tipo: TipoDocumento, pedirDefectoConFactura = true, clienteId?: string) {
+  // Condición de pago (Se elige en cada venta): la del cliente por defecto; al editar, la guardada hasta que se cambie.
+  const socio = useSocio(clienteId ?? '')
+  const [condicionElegida, setCondicionElegida] = useState<CondicionPagoDto | undefined>(undefined)
+  const [condicionGuardada, setCondicionGuardada] = useState<CondicionPagoDto | null>(null)
   const [metodoEntrega, setMetodoEntrega] = useState<MetodoEntregaValue>(METODO_ENTREGA.Logistica)
   const [fechaElegida, setFecha] = useState<string | null>(null)
   // Al editar una venta sin fecha guardada no se propone ninguna: queda vacía hasta que el vendedor elija.
@@ -58,12 +64,14 @@ export function useCabeceraVenta(tipo: TipoDocumento, pedirDefectoConFactura = t
     : cesionLeida === null || cesionLeida < comision / 2 || cesionLeida >= comision
       ? `Podés ceder desde ${mostrarNumero(comision / 2)} % hasta menos de ${mostrarNumero(comision)} %.` : null
 
+  const condicion = resolverCondicionPagoVenta({ lista: socio.data?.condicionesPagoCliente, guardada: condicionGuardada, elegida: condicionElegida })
   const cabecera: Cabecera = {
     metodoEntrega,
     fecha: fechaElegida ?? (proponer ? propuesta : null),
     flete: metodoEntrega === METODO_ENTREGA.Logistica && fleteLeido !== null ? fleteLeido : 0,
     observaciones,
     conFactura,
+    condicionPago: condicion.paraEnviar,
   }
   /** Carga la cabecera de una venta del servidor; sin fecha, `proponerFecha` decide si se propone la del servidor. */
   const hidratar = (h: VentaCargada['cabecera'], proponerFecha = true, conFacturaDeLaVenta = false) => {
@@ -74,9 +82,15 @@ export function useCabeceraVenta(tipo: TipoDocumento, pedirDefectoConFactura = t
     setObservaciones(h.observaciones)
     // Editar y retomar traen el tilde de la venta (web: setConFacturaElegido(hydration.conFactura)); duplicar parte del default.
     if (conFacturaDeLaVenta) setConFactura(h.conFactura)
+    // Editar: la guardada es la base y solo viaja si se cambia. Retomar o duplicar: parte de la que tenía.
+    setCondicionGuardada(conFacturaDeLaVenta ? h.condicionPago ?? null : null)
+    setCondicionElegida(conFacturaDeLaVenta ? undefined : h.condicionPago)
   }
   return {
     cabecera, tira, hidratar, setConFactura,
+    condicion: { opciones: condicion.opciones, vigente: condicion.vigente, elegir: setCondicionElegida, cargando: socio.isLoading,
+      // Pedido y Presupuesto eligen la condición; el Presupuesto la guarda en el autoguardado del borrador.
+      visible: true },
     calendarioError: (dias.isError && dias.data === undefined) || (feriados.isError && feriados.data === undefined),
     reintentarCalendario: () => { if (dias.isError) void dias.refetch(); if (feriados.isError) void feriados.refetch() }, setMetodoEntrega, setFecha, fleteTexto, setFleteTexto, fleteInvalido, observaciones, setObservaciones,
     comision, puedeCeder, cesionTexto, setCesionTexto, cesionError,
