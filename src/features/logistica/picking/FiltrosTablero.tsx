@@ -11,11 +11,13 @@ export interface FiltrosTablero {
   rango: RangoEntrega
   /** El rango exacto (Desde / Hasta) está abierto aunque coincida con un atajo. */
   exacto: boolean
+  /** YYYY-MM-DD elegido en la tira de días; reemplaza al rango. Un atajo o el rango exacto lo limpian. */
+  dia: string | null
   metodo: number | null
   vendedor: { id: string; nombre: string } | null
 }
 
-export const filtrosDeApertura = (hoy: string): FiltrosTablero => ({ rango: rangoDeAtajo('hoy', hoy), exacto: false, metodo: null, vendedor: null })
+export const filtrosDeApertura = (hoy: string): FiltrosTablero => ({ rango: rangoDeAtajo('hoy', hoy), exacto: false, dia: null, metodo: null, vendedor: null })
 
 function Grupo({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   const c = useColors()
@@ -50,7 +52,7 @@ export function FiltrosTableroSheet({ visible, hoy, filtros, atajo, onCambio, on
   // El rango exacto arranca del atajo que se estaba mirando; "Todo" no tiene extremos, así que arranca en hoy.
   const desde = rango.desde || hoy
   const hasta = rango.hasta || desde
-  const exacto = (d: string, h: string) => onCambio({ ...filtros, exacto: true, rango: { desde: d, hasta: h < d ? d : h } })
+  const exacto = (d: string, h: string) => onCambio({ ...filtros, exacto: true, dia: null, rango: { desde: d, hasta: h < d ? d : h } })
   return (
     <BottomSheet visible={visible} onClose={onClose} accessibilityLabel="Filtros del tablero">
       <View testID="hoja-filtros" style={{ gap: space[4] }}>
@@ -58,11 +60,11 @@ export function FiltrosTableroSheet({ visible, hoy, filtros, atajo, onCambio, on
         <ScrollView style={{ maxHeight: 460 }} contentContainerStyle={{ gap: space[4] }}>
           <Grupo titulo="Entrega">
             {ATAJOS_ENTREGA.map(({ id, label }) => (
-              <FiltroChip key={id} label={label} activo={!filtros.exacto && atajo === id} onPress={() => onCambio({ ...filtros, exacto: false, rango: rangoDeAtajo(id, hoy) })} />
+              <FiltroChip key={id} label={label} activo={!filtros.exacto && atajo === id} onPress={() => onCambio({ ...filtros, exacto: false, dia: null, rango: rangoDeAtajo(id, hoy) })} />
             ))}
-            <FiltroChip label="Rango exacto" activo={filtros.exacto || atajo === null} onPress={() => exacto(desde, hasta)} />
+            <FiltroChip label="Rango exacto" activo={filtros.exacto || (atajo === null && filtros.dia === null)} onPress={() => exacto(desde, hasta)} />
           </Grupo>
-          {filtros.exacto || atajo === null ? (
+          {filtros.exacto || (atajo === null && filtros.dia === null) ? (
             <View style={{ gap: space[2] }}>
               <View testID="rango-desde">
                 <SelectorDia fecha={desde} etiqueta="Desde" nota="Primer día de entrega" onCambiar={(d) => exacto(d, hasta)} />

@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useIsFocused } from 'expo-router/react-navigation'
-import { Pressable, ScrollView, View } from 'react-native'
+import { Pressable, ScrollView, Text, View } from 'react-native'
 import { Filter } from 'lucide-react-native'
-import { space, useColors } from '@/libs/theme'
-import { Notice, TopBar, useMenuLeading } from '@/core/ui/fw'
+import { space, typeScale, useColors } from '@/libs/theme'
+import { Notice, TopBar, useMenuLeading, pesoSemibold } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
@@ -14,10 +14,13 @@ import { useVendedores } from '@/libs/api-client/ventas'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useDepositoSesionEfectivo } from '@/features/deposito-sesion/hooks/useDepositoDeSesion'
+import { useDiasEntrega, useFeriados } from '@/libs/api-client/configuracion'
 import { diaArgentina } from '@/core/utils/fecha'
 import { useAhoraArgentina } from '@/core/utils/useAhoraArgentina'
 import { PedidoPorPrepararDetalle } from '@/features/logistica/porPreparar/PedidoPorPrepararDetalle'
-import { ATAJOS_ENTREGA, COLUMNAS, atajoDeRango, conteosDeColumnas, rangoDeAtajo, repartirEnColumnas, type ColumnaId, type VentaTablero } from './tablero'
+import { ATAJOS_ENTREGA, COLUMNAS, atajoDeRango, conteosDeColumnas, rangoDeAtajo, repartirEnColumnas, textoTotalDelDia, totalDelDia, type ColumnaId, type VentaTablero } from './tablero'
+import { nombreDelDia, proximosDiasDeEntrega } from './dias'
+import { TiraDeDias } from './TiraDeDias'
 import { ColumnaTablero } from './ColumnaTablero'
 import { PestanasEstado } from './PestanasEstado'
 import { DepositoDelTablero, ElegirDepositoSheet, ErrorTablero, SinAccesoPreparacion, TableroEsqueleto, TableroVacio } from './EstadosTablero'
@@ -57,10 +60,16 @@ function Marco({ children, leading }: { children: React.ReactNode; leading?: { k
 function Tablero() {
   const c = useColors()
   const { isTabletLandscape } = useResponsive()
-  const hoy = diaArgentina(useAhoraArgentina())
+  const ahora = useAhoraArgentina()
+  const hoy = diaArgentina(ahora)
   const [filtros, setFiltros] = useState<FiltrosTablero>(() => filtrosDeApertura(hoy))
   // Al cambiar el día argentino el tablero vuelve a abrir en el día nuevo.
   useEffect(() => { setFiltros(filtrosDeApertura(hoy)) }, [hoy])
+  // Tira de próximos días de entrega: los habilita el servidor y los feriados se marcan aparte.
+  const diasEntrega = useDiasEntrega().data
+  const dias = useMemo(() => proximosDiasDeEntrega(ahora, diasEntrega), [hoy, diasEntrega]) // eslint-disable-line react-hooks/exhaustive-deps
+  const feriados = useFeriados(dias[0].fecha)
+  const esFeriado = (fecha: string) => !!feriados.data?.some((f) => f.fecha?.slice(0, 10) === fecha)
   const [pestana, setPestana] = useState<ColumnaId>('aPreparar')
   const [pedido, setPedido] = useState<VentaTablero | null>(null)
   const [filtrando, setFiltrando] = useState(false)
@@ -100,8 +109,10 @@ function Tablero() {
   const conteosQ = useConteosPreparacion(params, { activa })
   const conteos = conteosQ.isError ? null : conteosDeColumnas(conteosQ.data)
   const columnas = useMemo(() => repartirEnColumnas((q.data ?? []) as VentaTablero[]), [q.data])
-  const atajo = filtros.exacto ? null : atajoDeRango(filtros.rango, hoy)
-  const deApertura = !filtros.exacto && atajo === 'hoy' && filtros.metodo === null && !filtros.vendedor
+  const atajo = filtros.exacto || filtros.dia ? null : atajoDeRango(filtros.rango, hoy)
+  const deApertura = !filtros.exacto && !filtros.dia && atajo === 'hoy' && filtros.metodo === null && !filtros.vendedor
+  const diaElegido = dias.find((d) => d.fecha === filtros.dia)
+  const etiquetaRango = diaElegido ? nombreDelDia(diaElegido) : atajo === 'todo' ? 'Todas las fechas' : (ATAJOS_ENTREGA.find((a) => a.id === atajo)?.label ?? 'Rango exacto')
   const limpiar = () => setFiltros(filtrosDeApertura(hoy))
 
   if (pedido) {
@@ -118,13 +129,14 @@ function Tablero() {
 
   const cabeza = (
     <View style={{ gap: space[3] }}>
+      <TiraDeDias dias={dias} elegido={filtros.dia} esFeriado={esFeriado} onElegir={(fecha) => setFiltros({ ...filtros, exacto: false, dia: fecha, rango: { desde: fecha, hasta: fecha } })} />
       <DepositoDelTablero nombre={nombreDeposito} asignado={!veTodos} onElegir={veTodos ? () => setEligiendoDeposito(true) : undefined} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ gap: space[2], alignItems: 'center' }}>
           {ATAJOS_ENTREGA.map(({ id, label }) => (
-            <FiltroChip key={id} label={label} activo={atajo === id} onPress={() => setFiltros({ ...filtros, exacto: false, rango: rangoDeAtajo(id, hoy) })} />
+            <FiltroChip key={id} label={label} activo={atajo === id} onPress={() => setFiltros({ ...filtros, exacto: false, dia: null, rango: rangoDeAtajo(id, hoy) })} />
           ))}
-          <FiltroChip label="Rango exacto" activo={atajo === null} onPress={() => { setFiltros({ ...filtros, exacto: true }); setFiltrando(true) }} />
+          <FiltroChip label="Rango exacto" activo={atajo === null && !filtros.dia} onPress={() => { setFiltros({ ...filtros, exacto: true, dia: null }); setFiltrando(true) }} />
         </ScrollView>
         <Pressable
           onPress={() => setFiltrando(true)}
@@ -153,7 +165,7 @@ function Tablero() {
     cuerpo = (
       <TableroVacio
         nombreDeposito={nombreParaTextos}
-        onVerTodo={atajo === 'todo' ? undefined : () => setFiltros({ ...filtros, exacto: false, rango: rangoDeAtajo('todo', hoy) })}
+        onVerTodo={atajo === 'todo' ? undefined : () => setFiltros({ ...filtros, exacto: false, dia: null, rango: rangoDeAtajo('todo', hoy) })}
         onLimpiarFiltros={deApertura ? undefined : limpiar}
       />
     )
@@ -183,6 +195,11 @@ function Tablero() {
         {cabeza}
         {/* Sin señal con datos guardados: se avisa y se sigue mostrando lo último. */}
         {q.isError && hayDatos && sinRed ? <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice> : null}
+        {hayDatos ? (
+          <Text accessibilityRole="header" style={{ ...typeScale.secundario, ...pesoSemibold, color: c.text }}>
+            {textoTotalDelDia(etiquetaRango, totalDelDia(columnas))}
+          </Text>
+        ) : null}
         {cuerpo}
         {hayDatos && !sinPedidos ? (
           <Notice tone="info">{!isTabletLandscape && pestana === 'noEntregado' ? AVISO_NO_ENTREGADO : AVISO}</Notice>

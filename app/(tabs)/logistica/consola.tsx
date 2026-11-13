@@ -61,7 +61,7 @@ export default function ConsolaChoferScreen() {
   // viajes (CAP_ARMAR_VIAJES) también abre una hoja (GET hojas-ruta/{id}).
   const puedeVerViajes = canDo('MOD_VIAJES', 'read') || hasCapability('CAP_ARMAR_VIAJES')
   // El inicio del chofer es esta misma pantalla; el resto vuelve a los pedidos de logística.
-  const volverA = esChofer(canDo) ? '/(tabs)' : '/(tabs)/logistica/pedidos'
+  const volverA = esChofer(canDo) ? '/(tabs)' : '/(tabs)/logistica/picking'
   const { activeTrip, setActiveTrip, clearActiveTrip, updateStopStatus } = useLogisticaStore()
   const [rutaElegida, setRutaElegida] = useState<string | null>(null)
   // La hoja que el chofer acaba de dejar con "Cambiar de ruta": la lista vieja no la vuelve a elegir sola.

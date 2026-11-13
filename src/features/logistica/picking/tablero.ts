@@ -3,14 +3,14 @@ import type { ChipEstado } from '@/libs/theme'
 import type { ConteosPreparacion, VentaPreparacion } from '@/libs/api-client/logistica'
 import type { components } from '@/libs/api-client/generated/schema'
 import { resolverEstadoVenta } from '@/libs/reglas/estados'
-import { diaArgentina, partesArgentina } from '@/core/utils/fecha'
+import { diaArgentina, formatToLocalTime, partesArgentina } from '@/core/utils/fecha'
 import { moverDia } from '@/features/calendario/semana'
 
 /**
  * Lo que trae `ventas-para-preparacion` para una tarjeta del tablero. El tipo de mobile no tiene el último
  * cambio; se suma desde el contrato (X14), sin interfaz escrita a mano.
  */
-export type VentaTablero = VentaPreparacion & Partial<Pick<components['schemas']['VentaPreparacionDto'], 'ultimoCambioPor' | 'ultimoCambioEn'>>
+export type VentaTablero = VentaPreparacion & Partial<Pick<components['schemas']['VentaPreparacionDto'], 'ultimoCambioPor' | 'ultimoCambioEn' | 'pasos'>>
 
 export type ColumnaId = 'aPreparar' | 'enPreparacion' | 'empacados' | 'noEntregado'
 
@@ -49,6 +49,17 @@ export function subtotalDeColumna(id: ColumnaId, items: readonly VentaTablero[])
   if (id === 'noEntregado') return 'Hay que reprogramar'
   if (id === 'empacados') return plural(items.reduce((s, v) => s + v.piezasCount, 0), 'pieza', 'piezas')
   return `${items.reduce((s, v) => s + (v.unidadesCount ?? 0), 0)} unidades`
+}
+
+/** Pedidos y productos del día: las tres columnas de trabajo; los no entregados tienen su columna y no suman. */
+export function totalDelDia(columnas: Columnas): { pedidos: number; productos: number } {
+  const delDia = [...columnas.aPreparar, ...columnas.enPreparacion, ...columnas.empacados]
+  return { pedidos: delDia.length, productos: delDia.reduce((s, v) => s + v.itemsCount, 0) }
+}
+
+/** "Hoy · 2 pedidos · 8 productos": el total de lo que muestra el tablero para el día o rango elegido. */
+export function textoTotalDelDia(etiqueta: string, t: { pedidos: number; productos: number }): string {
+  return `${etiqueta} · ${plural(t.pedidos, 'pedido', 'pedidos')} · ${plural(t.productos, 'producto', 'productos')}`
 }
 
 /**
@@ -92,6 +103,15 @@ export function textoUltimoCambio(v: Pick<VentaTablero, 'ultimoCambioPor' | 'ult
   const cuando = p ? `${dos(p.dia)}/${dos(p.mes + 1)} ${dos(p.hora)}:${dos(p.minuto)}` : null
   const partes = [v.ultimoCambioPor, cuando].filter((x): x is string => !!x)
   return partes.length > 0 ? partes.join(' · ') : null
+}
+
+export type PasoTablero = NonNullable<components['schemas']['VentaPreparacionDto']['pasos']>[number]
+
+/** "Confirmada → En Preparación · Lucía Gómez · 04/11 14:32". Un paso viejo sin origen muestra solo el estado al que llegó. */
+export function textoPaso(p: PasoTablero): string {
+  const etiqueta = (e: number) => resolverEstadoVenta(e)?.info.etiqueta ?? String(e)
+  const estados = p.estadoAnterior == null ? etiqueta(p.estadoNuevo) : `${etiqueta(p.estadoAnterior)} → ${etiqueta(p.estadoNuevo)}`
+  return `${estados} · ${p.usuarioNombre} · ${formatToLocalTime(p.fecha, 'dd/MM HH:mm')}`
 }
 
 /** Método de entrega como la web (MetodoBadge): Logística, Retiro o Expreso. */

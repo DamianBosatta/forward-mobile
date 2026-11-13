@@ -27,6 +27,8 @@ const mockSocioDetail: SocioDetailDto = {
   puedeEditar: true,
   deLaCasa: false,
   depositoIds: [],
+  condicionesPagoCliente: [],
+  puedeEditarCondicionesPago: false,
 }
 
 describe('useSocio', () => {

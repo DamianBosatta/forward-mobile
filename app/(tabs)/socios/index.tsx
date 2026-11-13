@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { RefreshControl, SectionList, Text, View } from 'react-native'
-import { useNavigation, useRouter } from 'expo-router'
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from "expo-router/react-navigation"
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
@@ -15,6 +15,8 @@ import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { FiltrosCartera, SIN_FILTROS, type FiltrosDeCartera } from '@/features/clientes/components/FiltrosCartera'
 import { textoCantidad } from '@/features/clientes/lib/cliente'
 import { seccionesPorLetra } from '@/features/clientes/lib/secciones'
+import { DeudoresClientes } from '@/features/deudores/components/DeudoresClientes'
+import { usePuedeVerDeudores } from '@/features/deudores/lib/permiso'
 import { FichaCliente } from '@/features/clientes/components/FichaCliente'
 import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
@@ -22,6 +24,8 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
 /** Desde este ancho la lista y la ficha van lado a lado (plan §8). */
 const ANCHO_DOS_PANELES = 900
+/** Valor del parametro de ruta `filtro` que abre la pestana Clientes en Deudores (lo usa Inicio). */
+export const FILTRO_DEUDORES = 'deudores'
 /** Alto del `Fab` (src/core/ui/fw/Fab.tsx): la lista deja ese lugar libre abajo. */
 const ALTO_FAB = 56
 
@@ -40,6 +44,15 @@ function ClientesScreen() {
   const secciones = useMemo(() => seccionesPorLetra(clientes), [clientes])
   const sinRed = esFallaDeRed(error)
   const hayDatos = clientes.length > 0
+  // "Deudores": los clientes que deben (`GET /deudas/clientes`, MOD_PAGOS:Read). El servidor acota al vendedor.
+  const puedeVerDeudores = usePuedeVerDeudores()
+  const [soloDeudores, setSoloDeudores] = useFiltroPersistente('socios.soloDeudores', false)
+  // `?filtro=deudores` (p. ej. desde Inicio) abre directo en Deudores; sin el permiso se ignora.
+  const { filtro } = useLocalSearchParams<{ filtro?: string }>()
+  useEffect(() => {
+    if (filtro === FILTRO_DEUDORES && puedeVerDeudores) setSoloDeudores(true)
+  }, [filtro, puedeVerDeudores, setSoloDeudores])
+  const verDeudores = (soloDeudores || (filtro === FILTRO_DEUDORES)) && puedeVerDeudores
   const filtrando = filtros.conDeudaVencida || !!filtros.localidad
   const dosPaneles = width >= ANCHO_DOS_PANELES
 
@@ -48,7 +61,17 @@ function ClientesScreen() {
     else router.push({ pathname: '/(tabs)/socios/[id]', params: { id } })
   }
 
-  const lista = (
+  // Con permiso del export, la cuenta de un deudor lleva "Estado de cuenta" para compartir por WhatsApp.
+  const listaDeudores = (
+    <DeudoresClientes
+      onAbrir={id => {
+        if (dosPaneles) setAbierto(id)
+        else router.push({ pathname: '/(tabs)/cuentas/[id]', params: { id } })
+      }}
+    />
+  )
+
+  const lista = verDeudores ? listaDeudores : (
     <View style={{ flex: 1 }}>
       {error && !(sinRed && !hayDatos) ? (
         <View style={{ padding: space[4] }}>
@@ -134,8 +157,14 @@ function ClientesScreen() {
         subtitle="Mi cartera"
         leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
       />
-      <BuscadorCartera sobre="pantalla" grande valor={busqueda} onCambio={setBusqueda} />
-      <FiltrosCartera sobre="pantalla" valor={filtros} onCambio={setFiltros} totalCartera={filtrando || busqueda.trim() ? undefined : totalCount} />
+      {verDeudores ? null : <BuscadorCartera sobre="pantalla" grande valor={busqueda} onCambio={setBusqueda} />}
+      <FiltrosCartera
+        sobre="pantalla"
+        valor={filtros}
+        onCambio={setFiltros}
+        totalCartera={verDeudores || filtrando || busqueda.trim() ? undefined : totalCount}
+        deudores={puedeVerDeudores ? { activo: verDeudores, onCambio: setSoloDeudores } : undefined}
+      />
 
       {dosPaneles ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>

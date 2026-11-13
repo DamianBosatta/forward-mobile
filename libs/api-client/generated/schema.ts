@@ -1725,6 +1725,9 @@ export interface paths {
                     ConOferta?: boolean;
                     Formato?: components["schemas"]["FormatoCatalogoPdf"];
                     NovedadesDesde?: string;
+                    Descuentos?: number[];
+                    SinDescuentos?: boolean;
+                    ListaPrecioId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -3209,6 +3212,10 @@ export interface paths {
                     Estados?: components["schemas"]["EstadoCompra"][];
                     FechaDesde?: string;
                     FechaHasta?: string;
+                    CreadoPorId?: string;
+                    Numero?: string;
+                    FechaCreacionDesde?: string;
+                    FechaCreacionHasta?: string;
                     SearchTerm?: string;
                     Producto?: string;
                     Moneda?: string;
@@ -4225,6 +4232,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Compras/{id}/recorrido": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CompraRecorridoDtoResponse"];
+                        "application/json": components["schemas"]["CompraRecorridoDtoResponse"];
+                        "text/json": components["schemas"]["CompraRecorridoDtoResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Compras/export": {
         parameters: {
             query?: never;
@@ -4242,6 +4299,10 @@ export interface paths {
                     FechaDesde?: string;
                     FechaHasta?: string;
                     SearchTerm?: string;
+                    CreadoPorId?: string;
+                    Numero?: string;
+                    FechaCreacionDesde?: string;
+                    FechaCreacionHasta?: string;
                     Producto?: string;
                     Moneda?: string;
                     MontoMin?: number;
@@ -4294,6 +4355,10 @@ export interface paths {
                     FechaDesde?: string;
                     FechaHasta?: string;
                     SearchTerm?: string;
+                    CreadoPorId?: string;
+                    Numero?: string;
+                    FechaCreacionDesde?: string;
+                    FechaCreacionHasta?: string;
                     Producto?: string;
                     Estados?: components["schemas"]["EstadoCompra"][];
                 };
@@ -6092,6 +6157,7 @@ export interface paths {
             parameters: {
                 query?: {
                     activo?: boolean;
+                    searchTerm?: string;
                 };
                 header?: never;
                 path?: never;
@@ -6296,6 +6362,7 @@ export interface paths {
             parameters: {
                 query?: {
                     activo?: boolean;
+                    searchTerm?: string;
                 };
                 header?: never;
                 path?: never;
@@ -6335,6 +6402,7 @@ export interface paths {
             parameters: {
                 query?: {
                     activo?: boolean;
+                    searchTerm?: string;
                 };
                 header?: never;
                 path?: never;
@@ -6374,6 +6442,7 @@ export interface paths {
             parameters: {
                 query?: {
                     activo?: boolean;
+                    searchTerm?: string;
                 };
                 header?: never;
                 path?: never;
@@ -6667,6 +6736,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cuentas-corrientes/socios/{socioId}/estado-cuenta/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    SocioComercialId?: string;
+                    Desde?: string;
+                    Hasta?: string;
+                    Formato?: components["schemas"]["FormatoExport"];
+                };
+                header?: never;
+                path: {
+                    socioId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": string;
+                        "application/json": string;
+                        "text/json": string;
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cuentas-corrientes/socios/{socioId}/movimientos": {
         parameters: {
             query?: never;
@@ -6831,6 +6955,107 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content?: never;
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/cuentas-corrientes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CuentaCorrienteDetalleDtoResponse"];
+                        "application/json": components["schemas"]["CuentaCorrienteDetalleDtoResponse"];
+                        "text/json": components["schemas"]["CuentaCorrienteDetalleDtoResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UpdateCuentaCorrienteCommand"];
+                    "text/json": components["schemas"]["UpdateCuentaCorrienteCommand"];
+                    "application/*+json": components["schemas"]["UpdateCuentaCorrienteCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
                 };
             };
         };
@@ -7120,7 +7345,6 @@ export interface paths {
                 query?: {
                     PageNumber?: number;
                     PageSize?: number;
-                    /** Format: uuid */
                     VendedorId?: string;
                     SearchTerm?: string;
                 };
@@ -11350,6 +11574,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/Logistica/hojas-ruta/{id}/orden": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ReordenarRutaRequest"];
+                    "text/json": components["schemas"]["ReordenarRutaRequest"];
+                    "application/*+json": components["schemas"]["ReordenarRutaRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PlanViajeDtoResponse"];
+                        "application/json": components["schemas"]["PlanViajeDtoResponse"];
+                        "text/json": components["schemas"]["PlanViajeDtoResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Logistica/hojas-ruta/{id}/cancelar": {
         parameters: {
             query?: never;
@@ -14607,6 +14876,9 @@ export interface paths {
                     ConOferta?: boolean;
                     Formato?: components["schemas"]["FormatoCatalogoPdf"];
                     NovedadesDesde?: string;
+                    Descuentos?: number[];
+                    SinDescuentos?: boolean;
+                    ListaPrecioId?: string;
                 };
                 header?: never;
                 path?: never;
@@ -20018,6 +20290,8 @@ export interface paths {
                     Estados?: components["schemas"]["EstadoVenta"][];
                     FechaDesde?: string;
                     FechaHasta?: string;
+                    FechaCreacionDesde?: string;
+                    FechaCreacionHasta?: string;
                     TicketId?: string;
                     TipoOperacion?: components["schemas"]["TipoOperacionVenta"];
                     SearchTerm?: string;
@@ -20113,6 +20387,8 @@ export interface paths {
                     Estados?: components["schemas"]["EstadoVenta"][];
                     FechaDesde?: string;
                     FechaHasta?: string;
+                    FechaCreacionDesde?: string;
+                    FechaCreacionHasta?: string;
                     TicketId?: string;
                     TipoOperacion?: components["schemas"]["TipoOperacionVenta"];
                     SearchTerm?: string;
@@ -20163,6 +20439,8 @@ export interface paths {
                 query?: {
                     FechaDesde?: string;
                     FechaHasta?: string;
+                    FechaCreacionDesde?: string;
+                    FechaCreacionHasta?: string;
                     ClienteId?: string;
                     SearchTerm?: string;
                     TicketId?: string;
@@ -21069,6 +21347,56 @@ export interface paths {
                         "text/plain": number;
                         "application/json": number;
                         "text/json": number;
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/Ventas/{id}/recorrido": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VentaRecorridoDtoResponse"];
+                        "application/json": components["schemas"]["VentaRecorridoDtoResponse"];
+                        "text/json": components["schemas"]["VentaRecorridoDtoResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
                     };
                 };
             };
@@ -22209,6 +22537,13 @@ export interface components {
             /** Format: double */
             nuevaCantidad: number;
         };
+        CambioDeTitular: {
+            tipo?: components["schemas"]["TitularCuentaCorriente"];
+            /** Format: uuid */
+            socioComercialId?: string | null;
+            /** Format: uuid */
+            vendedorId?: string | null;
+        };
         CampoPlantillaDto: {
             clave?: string | null;
             etiqueta?: string | null;
@@ -22448,6 +22783,12 @@ export interface components {
             newPassword?: string | null;
             confirmNewPassword?: string | null;
         };
+        ChequeAvisadoInput: {
+            /** Format: uuid */
+            pagoLineaId?: string;
+            recibido?: boolean;
+            cheques?: components["schemas"]["ChequeDetalleItem"][] | null;
+        };
         ChequeCobroParadaDto: {
             /** Format: uuid */
             chequeId?: string;
@@ -22461,6 +22802,11 @@ export interface components {
             fotoUrl?: string | null;
             enManosDelChofer?: boolean;
             fotoRuta?: string | null;
+            /** Format: date */
+            fechaEmision?: string | null;
+            /** Format: uuid */
+            pagoLineaId?: string | null;
+            corregible?: boolean;
         };
         ChequeDetalleItem: {
             numero?: string | null;
@@ -22599,6 +22945,7 @@ export interface components {
             /** Format: uuid */
             chequeId?: string;
             recibido?: boolean;
+            correccion?: components["schemas"]["ChequeDetalleItem"];
         };
         ChoferDeViajeDto: {
             /** Format: uuid */
@@ -22853,6 +23200,7 @@ export interface components {
         CompletarPendienteRendicionRequest: {
             /** Format: uuid */
             cuentaPropiaId?: string | null;
+            cheques?: components["schemas"]["ChequeDetalleItem"][] | null;
         };
         CompraActionResponseDto: {
             /** Format: uuid */
@@ -22934,6 +23282,8 @@ export interface components {
             fechaAnulacion?: string | null;
             usuarioAnulacionNombre?: string | null;
             creadoPor?: string | null;
+            /** Format: date-time */
+            fechaModificacion?: string | null;
             eliminada: boolean;
             motivoEliminacion?: string | null;
             /** Format: date-time */
@@ -22988,6 +23338,19 @@ export interface components {
             creadoPor?: string | null;
             /** Format: date */
             fechaEsperadaRecepcion?: string | null;
+            /** Format: date-time */
+            fechaCreacion?: string;
+            /** Format: uuid */
+            creadoPorId?: string;
+            /** Format: date-time */
+            fechaModificacion?: string | null;
+            /** Format: date-time */
+            fechaRecepcion?: string | null;
+            /** Format: int64 */
+            compraFaltanteNumero?: number | null;
+            facturaProveedor?: string | null;
+            /** Format: double */
+            aPagar?: number | null;
         };
         CompraDtoListPaginatedResponse: {
             /** Format: int32 */
@@ -23000,6 +23363,31 @@ export interface components {
             totalPages?: number;
             readonly hasNextPage?: boolean;
             items?: components["schemas"]["CompraDtoList"][] | null;
+        };
+        CompraRecorridoDto: {
+            /** Format: uuid */
+            compraId: string;
+            /** Format: int64 */
+            numero: number;
+            orden: components["schemas"]["RecorridoOrdenCompraDto"];
+            recepcion?: components["schemas"]["RecorridoRecepcionCompraDto"];
+            facturaProveedor?: components["schemas"]["RecorridoFacturaProveedorDto"];
+            pagos: components["schemas"]["RecorridoPagoCompraDto"][];
+            /** Format: double */
+            total: number;
+            totalCurrency: string;
+            /** Format: double */
+            faltaPagar?: number | null;
+        };
+        CompraRecorridoDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["CompraRecorridoDto"];
+            codigo?: string | null;
         };
         CompraRepetibleDto: {
             /** Format: uuid */
@@ -23240,6 +23628,15 @@ export interface components {
         };
         /** @enum {string} */
         CondicionIvaReceptor: "ResponsableInscripto" | "Exento" | "ConsumidorFinal" | "Monotributo" | "NoCategorizado" | "ProveedorDelExterior" | "ClienteDelExterior" | "IvaLiberado" | "MonotributistaSocial" | "NoAlcanzado" | "MonotributoTrabajadorIndependientePromovido";
+        CondicionPagoClienteDto: {
+            tipo: components["schemas"]["TipoCondicionPago"];
+            /** Format: int32 */
+            dias?: number | null;
+            /** Format: int32 */
+            diaDelMes?: number | null;
+            descripcion?: string | null;
+            predeterminada?: boolean;
+        };
         CondicionPagoDto: {
             tipo: components["schemas"]["TipoCondicionPago"];
             /** Format: int32 */
@@ -23297,6 +23694,8 @@ export interface components {
             /** Format: date */
             fechaFacturaProveedor?: string | null;
             comprobante?: components["schemas"]["ComprobanteCompraInput"];
+            /** Format: double */
+            gastosOperativos?: number | null;
         };
         ConservadoDto: {
             /** Format: uuid */
@@ -23636,6 +24035,7 @@ export interface components {
             horario?: components["schemas"]["FranjaHorariaDto"][] | null;
             condicionPago?: components["schemas"]["CondicionPagoDto"];
             franjaEntrega?: components["schemas"]["FranjaHorariaDto"][] | null;
+            condicionesPagoCliente?: components["schemas"]["CondicionPagoClienteDto"][] | null;
             topeCredito?: components["schemas"]["TopeCreditoDto"];
             altaProvisoria?: boolean;
             /** Format: double */
@@ -23710,6 +24110,7 @@ export interface components {
             /** Format: double */
             porcentajeComisionCedido?: number | null;
             conFactura?: boolean | null;
+            condicionPago?: components["schemas"]["CondicionPagoDto"];
             /** Format: double */
             totalEsperado?: number | null;
         };
@@ -23745,6 +24146,40 @@ export interface components {
             nombre?: string | null;
             activo?: boolean | null;
         };
+        CuentaCorrienteDetalleDto: {
+            /** Format: uuid */
+            id?: string;
+            nombre?: string | null;
+            esPrincipal?: boolean;
+            tipo?: components["schemas"]["TipoCuentaSocio"];
+            activo?: boolean;
+            titular?: components["schemas"]["TitularCuentaCorriente"];
+            /** Format: uuid */
+            socioComercialId?: string | null;
+            razonSocial?: string | null;
+            /** Format: uuid */
+            vendedorId?: string | null;
+            depositoIds?: string[] | null;
+            /** Format: uuid */
+            depositoId?: string | null;
+            depositoNombre?: string | null;
+            esCuentaDeEfectivo?: boolean;
+            /** Format: int32 */
+            movimientosCount?: number;
+            puedeCambiarTitular?: boolean;
+            /** Format: int32 */
+            rowVersion?: number;
+        };
+        CuentaCorrienteDetalleDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["CuentaCorrienteDetalleDto"];
+            codigo?: string | null;
+        };
         CuentaCorrienteResumenDto: {
             /** Format: uuid */
             id: string;
@@ -23757,6 +24192,9 @@ export interface components {
             socioComercialId?: string | null;
             razonSocial?: string | null;
             tipoSocio?: string | null;
+            nombreFantasia?: string | null;
+            direccion?: string | null;
+            cuit?: string | null;
             /** Format: uuid */
             vendedorId?: string | null;
             vendedorNombre?: string | null;
@@ -24034,6 +24472,7 @@ export interface components {
             motivo?: string | null;
             solicitadaPor?: string | null;
             items?: components["schemas"]["DevolucionPendienteItemDto"][] | null;
+            origen: string;
         };
         DevolucionPendienteDtoIEnumerableResponse: {
             /** Format: int32 */
@@ -24892,7 +25331,7 @@ export interface components {
             fotoRuta?: string | null;
         };
         /** @enum {string} */
-        FormatoCatalogoPdf: "Lista" | "Tarjeta";
+        FormatoCatalogoPdf: "Lista" | "Tarjeta" | "Informativo";
         /** @enum {string} */
         FormatoExport: "Excel" | "Pdf";
         FraganciaResponse: {
@@ -25311,6 +25750,7 @@ export interface components {
             cuentaPropiaId?: string | null;
             cuentaPropia?: string | null;
             comprobanteRuta?: string | null;
+            chequeAvisado?: boolean;
         };
         LineaConceptoDto: {
             descripcion?: string | null;
@@ -26228,6 +26668,15 @@ export interface components {
             /** Format: int32 */
             velocidadPromedioKmH?: number;
         };
+        PasoVentaDto: {
+            /** Format: int32 */
+            estadoAnterior?: number | null;
+            /** Format: int32 */
+            estadoNuevo: number;
+            usuarioNombre: string;
+            /** Format: date-time */
+            fecha: string;
+        };
         PedidoCaeArcaDto: {
             /** Format: uuid */
             solicitudId: string;
@@ -26609,6 +27058,8 @@ export interface components {
             listaPrecioId?: string | null;
             listaPrecioNombre?: string | null;
             /** Format: double */
+            precioDeLista?: number | null;
+            /** Format: double */
             precioCompraBase?: number | null;
             /** Format: double */
             markupPorcentaje?: number | null;
@@ -26962,6 +27413,8 @@ export interface components {
             /** Format: date */
             fechaFacturaProveedor?: string | null;
             comprobante?: components["schemas"]["ComprobanteCompraInput"];
+            /** Format: double */
+            gastosOperativos?: number | null;
         };
         RecibirParcialCompraCommand: {
             lineas?: components["schemas"]["LineaRecibida"][] | null;
@@ -26992,6 +27445,88 @@ export interface components {
             mejorDiaAnterior?: components["schemas"]["MejorDiaDto"];
             mejorDiaHistorico?: components["schemas"]["MejorDiaDto"];
             ventaMasGrande?: components["schemas"]["VentaMasGrandeDto"];
+        };
+        RecorridoCobroDto: {
+            /** Format: uuid */
+            pagoId?: string | null;
+            /** Format: date-time */
+            fecha: string;
+            medio: string;
+            /** Format: double */
+            monto: number;
+        };
+        RecorridoEntregaDto: {
+            /** Format: uuid */
+            hojaDeRutaId?: string | null;
+            /** Format: date-time */
+            fecha: string;
+            choferNombre?: string | null;
+            estado: string;
+            /** Format: date-time */
+            resueltaEn?: string | null;
+            conFoto: boolean;
+            conFirma: boolean;
+        };
+        RecorridoFacturaDto: {
+            /** Format: uuid */
+            facturaId: string;
+            codigo?: string | null;
+            /** Format: date */
+            fechaEmision: string;
+            estado: string;
+            /** Format: double */
+            total: number;
+        };
+        RecorridoFacturaProveedorDto: {
+            /** Format: uuid */
+            comprobanteId: string;
+            codigo: string;
+            /** Format: date */
+            fecha: string;
+            /** Format: double */
+            total: number;
+        };
+        RecorridoNotaEntregaDto: {
+            /** Format: int32 */
+            numero: number;
+            /** Format: date-time */
+            fecha?: string | null;
+            depositoNombre?: string | null;
+        };
+        RecorridoOrdenCompraDto: {
+            /** Format: date-time */
+            fechaCreacion: string;
+            creadoPorNombre?: string | null;
+            estado: string;
+        };
+        RecorridoPagoCompraDto: {
+            /** Format: uuid */
+            pagoId?: string | null;
+            /** Format: date-time */
+            fecha: string;
+            medio?: string | null;
+            /** Format: double */
+            monto: number;
+        };
+        RecorridoPedidoDto: {
+            codigo?: string | null;
+            /** Format: date-time */
+            fecha?: string | null;
+        };
+        RecorridoPresupuestoDto: {
+            codigo?: string | null;
+            /** Format: date-time */
+            fechaCreacion: string;
+            vendedorNombre?: string | null;
+        };
+        RecorridoRecepcionCompraDto: {
+            /** Format: date-time */
+            fecha?: string | null;
+            depositoNombre?: string | null;
+            /** Format: uuid */
+            compraFaltanteId?: string | null;
+            /** Format: int64 */
+            compraFaltanteNumero?: number | null;
         };
         RecurrenciaDto: {
             frecuencia: components["schemas"]["FrecuenciaRecurrencia"];
@@ -27488,6 +28023,7 @@ export interface components {
             motivoDiferencia?: string | null;
             transferencias?: components["schemas"]["TransferenciaRendidaInput"][] | null;
             cheques?: components["schemas"]["ChequeRendidoInput"][] | null;
+            chequesAvisados?: components["schemas"]["ChequeAvisadoInput"][] | null;
             observaciones?: string | null;
         };
         RenglonDevolvibleDto: {
@@ -27516,6 +28052,9 @@ export interface components {
             errors?: string[] | null;
             data?: components["schemas"]["RenglonDevolvibleDto"][] | null;
             codigo?: string | null;
+        };
+        ReordenarRutaRequest: {
+            paradaIds?: string[] | null;
         };
         ReportarNoCobroCommand: {
             motivo?: components["schemas"]["MotivoNoCobro"];
@@ -27961,6 +28500,8 @@ export interface components {
             puedeVerSaldo: boolean;
             puedeVerCuentaCorriente: boolean;
             puedeEditar: boolean;
+            condicionesPagoCliente: components["schemas"]["CondicionPagoClienteDto"][];
+            puedeEditarCondicionesPago: boolean;
             deLaCasa: boolean;
             tieneDeudaVencida?: boolean;
             /** Format: double */
@@ -28472,6 +29013,8 @@ export interface components {
         TipoTarea: "General" | "EntregaPendiente" | "CobroPendiente";
         /** @enum {string} */
         TipoTributoRecibido: "PercepcionIva" | "PercepcionIibb" | "PercepcionNacional" | "PercepcionMunicipal" | "ImpuestoInterno" | "Otro";
+        /** @enum {string} */
+        TitularCuentaCorriente: "Cliente" | "Proveedor" | "Vendedor" | "Propia";
         ToggleProductoStatusCommand: {
             /** Format: uuid */
             productoId?: string;
@@ -28816,6 +29359,16 @@ export interface components {
             /** Format: uuid */
             cuentaCarteraChequesId?: string | null;
         };
+        UpdateCuentaCorrienteCommand: {
+            /** Format: int32 */
+            rowVersion?: number;
+            nombre?: string | null;
+            esPrincipal?: boolean | null;
+            depositoIds?: string[] | null;
+            /** Format: uuid */
+            depositoId?: string | null;
+            titular?: components["schemas"]["CambioDeTitular"];
+        };
         UpdateDatosEmpresaCommand: {
             razonSocial?: string | null;
             nombreFantasia?: string | null;
@@ -28974,6 +29527,7 @@ export interface components {
             horario?: components["schemas"]["FranjaHorariaDto"][] | null;
             condicionPago?: components["schemas"]["CondicionPagoDto"];
             franjaEntrega?: components["schemas"]["FranjaHorariaDto"][] | null;
+            condicionesPagoCliente?: components["schemas"]["CondicionPagoClienteDto"][] | null;
             topeCredito?: components["schemas"]["TopeCreditoDto"];
             /**
              * Format: uuid
@@ -29035,6 +29589,7 @@ export interface components {
             /** Format: double */
             porcentajeComisionCedido?: number | null;
             conFactura?: boolean | null;
+            condicionPago?: components["schemas"]["CondicionPagoDto"];
             tipoOperacion?: components["schemas"]["TipoOperacionVenta"];
         };
         UpdateVentaCommandItemDto: {
@@ -29335,6 +29890,9 @@ export interface components {
             /** Format: int64 */
             numeroPedido?: number | null;
             readonly codigoPedido?: string | null;
+            /** Format: int64 */
+            numeroPresupuesto?: number | null;
+            readonly codigoPresupuesto?: string | null;
             /** Format: uuid */
             clienteId: string;
             razonSocialCliente: string;
@@ -29374,6 +29932,21 @@ export interface components {
             montoCobrado?: number | null;
             estadoPago: string;
             valoresEnGestion?: components["schemas"]["ValoresEnGestionCompactoDto"];
+            /** Format: date-time */
+            fechaCreacion?: string;
+            /** Format: int32 */
+            numeroNotaEntrega?: number | null;
+            /** Format: date-time */
+            fechaNotaEntrega?: string | null;
+            /** Format: date-time */
+            fechaSalidaViaje?: string | null;
+            choferNombre?: string | null;
+            estadoEntrega?: string | null;
+            /** Format: date-time */
+            fechaEntregada?: string | null;
+            codigoFactura?: string | null;
+            /** Format: double */
+            saldo?: number | null;
         };
         VentaDtoListPaginatedResponse: {
             /** Format: int32 */
@@ -29434,6 +30007,9 @@ export interface components {
             /** Format: int64 */
             numeroPedido?: number | null;
             readonly codigoPedido?: string | null;
+            /** Format: int64 */
+            numeroPresupuesto?: number | null;
+            readonly codigoPresupuesto?: string | null;
             /** Format: uuid */
             clienteId: string;
             /** Format: uuid */
@@ -29470,6 +30046,7 @@ export interface components {
             metodoEntrega?: number | null;
             metodoEntregaNombre?: string | null;
             conFactura?: boolean;
+            condicionPago: components["schemas"]["CondicionPagoDto"];
             motivoVentaSinStock?: string | null;
             /** Format: date-time */
             fechaEntrega?: string | null;
@@ -29584,6 +30161,7 @@ export interface components {
             ultimoCambioPor?: string | null;
             /** Format: date-time */
             ultimoCambioEn?: string | null;
+            pasos?: components["schemas"]["PasoVentaDto"][] | null;
             /** Format: int32 */
             itemsCount: number;
             /** Format: double */
@@ -29595,6 +30173,31 @@ export interface components {
             /** Format: uuid */
             hojaRutaId?: string | null;
             readonly hojaRutaCodigo?: string | null;
+        };
+        VentaRecorridoDto: {
+            /** Format: uuid */
+            ventaId: string;
+            presupuesto?: components["schemas"]["RecorridoPresupuestoDto"];
+            pedido?: components["schemas"]["RecorridoPedidoDto"];
+            notaEntrega?: components["schemas"]["RecorridoNotaEntregaDto"];
+            entregas: components["schemas"]["RecorridoEntregaDto"][];
+            facturas: components["schemas"]["RecorridoFacturaDto"][];
+            cobros: components["schemas"]["RecorridoCobroDto"][];
+            /** Format: double */
+            total: number;
+            totalCurrency: string;
+            /** Format: double */
+            faltaCobrar?: number | null;
+        };
+        VentaRecorridoDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["VentaRecorridoDto"];
+            codigo?: string | null;
         };
         VentasDelMesDto: {
             /** Format: double */

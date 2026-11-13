@@ -3,7 +3,7 @@ import { Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { COLUMNAS, subtotalDeColumna, type ColumnaId, type VentaTablero } from './tablero'
 import { TarjetaPedidoTablero, type OpcionesTarjeta } from './TarjetaPedidoTablero'
-import { DatosDeEntregaFallida } from '@/features/logistica/porPreparar/PorPrepararScreen'
+import { DatosDeEntregaFallida } from '@/features/logistica/porPreparar/DatosDeEntregaFallida'
 import { pesoSemibold } from '@/core/ui/fw'
 
 
