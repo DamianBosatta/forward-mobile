@@ -27,6 +27,8 @@ export type AppCapability =
   | 'CAP_VER_TESORERIA'
   | 'CAP_VER_TODOS_LOS_DEPOSITOS'
   | 'CAP_VER_STOCK_OTROS_DEPOSITOS'
+  | 'CAP_ADMINISTRAR_CUENTAS_CORRIENTES'
+  | 'CAP_GESTIONAR_CARTERA_CLIENTES'
 
 /** ¿`permissions` incluye la capacidad? */
 export function hasCapability(

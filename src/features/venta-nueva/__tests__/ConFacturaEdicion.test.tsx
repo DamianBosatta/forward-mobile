@@ -110,6 +110,29 @@ describe('T4d Con factura al editar', () => {
   })
 })
 
+// Condición de pago al editar: la guardada en la venta es la base; solo viaja si el vendedor la cambia.
+describe('condición de pago al editar', () => {
+  const abrirConCondicion = async () => {
+    ventaServidor = { venta: cabecera({ conFactura: true, condicionPago: { tipo: 'DiasDesdeEntrega', dias: 15 } }), detalles, bultos: [] }
+    ;(socio as Record<string, unknown>).condicionesPagoCliente = [{ tipo: 'Contado', predeterminada: true }]
+    await editarYAbrirConfirmar()
+    await waitFor(() => expect(screen.getByRole('radio', { name: /15 días desde la entrega/ })).toBeChecked())
+  }
+  it('muestra la de la venta aunque el cliente ya no la tenga y, sin cambios, el PUT no la manda', async () => {
+    await abrirConCondicion()
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1))
+    expect(mockPut.mock.calls[0][1]).not.toHaveProperty('condicionPago')
+  })
+  it('si el vendedor la cambia, el PUT manda la nueva', async () => {
+    await abrirConCondicion()
+    await userEvent.press(screen.getByRole('radio', { name: /^Contado/ }))
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1))
+    expect(mockPut.mock.calls[0][1].condicionPago).toEqual({ tipo: 'Contado' })
+  })
+})
+
 // Igual que la web (ConFacturaField.tsx:33, 51-63): POST /Ventas/stock-fiscal/verificar con los renglones, solo con el tilde
 // puesto; el aviso nunca bloquea (K12).
 describe('T4d aviso de stock fiscal', () => {

@@ -39,3 +39,10 @@ export type {
   EstadoHojaRutaInfo,
 } from './estados'
 export { DIA_ISO, diaAFecha, fechaADia, diaATexto, textoADia } from './fechas'
+export {
+  CAMPOS_OBLIGATORIOS_CLIENTE,
+  OBLIGATORIOS_CLIENTE,
+  validarCondicionesPagoCliente,
+  validarPlazoCondicionPago,
+} from './socios'
+export type { CampoObligatorioCliente, ErrorCondicionPagoCliente } from './socios'

@@ -1,9 +1,10 @@
 import React from 'react'
 import { Text, View } from 'react-native'
 import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
-import { Button, Field, Notice, Segmented, type SegmentedOption } from '@/core/ui/fw'
+import { Button, Field, FiltroChip, Notice, Segmented, type SegmentedOption } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
 import { direccionDeEntrega, nombreDelCliente, textoCondicionPago, type ClienteNombrable } from '@/features/clientes/lib/cliente'
+import { AVISO_NO_COBRAR, claveCondicionPago, mismaCondicionPago } from '@/features/clientes/lib/condicionesPago'
 import { Fila, textoDisponible } from '@/features/clientes/components/CreditoDelCliente'
 import { METODO_ENTREGA, type MetodoEntregaValue } from '@/features/ventas/lib/venta-form-retiro'
 import type { CabeceraVentaEstado } from '../hooks/useCabeceraVenta'
@@ -36,9 +37,27 @@ export function CabeceraVenta({ cliente, cab }: Props) {
         {/* El cliente se muestra por su dirección de entrega y el nombre va en una línea aparte. */}
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{direccionDeEntrega(cliente)}</Text>
         {nombreDelCliente(cliente) ? <Text style={secundario}>{nombreDelCliente(cliente)}</Text> : null}
-        {/* Solo lectura: la condición de pago se cambia con permiso de autorizar ventas, no acá. */}
-        <Text style={secundario}>Condición de pago</Text>
-        <Text style={{ ...typeScale.cuerpo, color: c.text }}>{socio.data ? textoCondicionPago(socio.data.condicionPago) : 'Cargando…'}</Text>
+        {cab.condicion.visible ? (
+          <View style={{ gap: space[2] }}>
+            <Text style={secundario}>Condición de pago</Text>
+            {cab.condicion.vigente === undefined ? (
+              <Text style={{ ...typeScale.cuerpo, color: c.text }}>{cab.condicion.cargando ? 'Cargando…' : 'No se pudo traer la condición del cliente.'}</Text>
+            ) : (
+              <View accessibilityRole="radiogroup" accessibilityLabel="Condición de pago" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+                {cab.condicion.opciones.map((o) => (
+                  <FiltroChip
+                    key={claveCondicionPago(o.condicion)}
+                    rol="radio"
+                    label={textoCondicionPago(o.condicion) + (o.predeterminada ? ' (predeterminada)' : '')}
+                    activo={mismaCondicionPago(o.condicion, cab.condicion.vigente)}
+                    onPress={() => cab.condicion.elegir(o.condicion)}
+                  />
+                ))}
+              </View>
+            )}
+            {cab.condicion.vigente && cab.condicion.vigente.tipo !== 'Contado' ? <Text style={secundario}>{AVISO_NO_COBRAR}</Text> : null}
+          </View>
+        ) : null}
         {disponible !== null ? <Fila etiqueta="Crédito disponible" valor={textoDisponible(disponible)} alerta={disponible < 0} /> : null}
       </View>
       <View style={{ gap: space[4], padding: space[3], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }}>

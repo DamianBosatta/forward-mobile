@@ -187,6 +187,26 @@ export function useUpdateSocio() {
   })
 }
 
+/** PATCH vendedor-responsable: quién atiende al cliente (CAP_GESTIONAR_CARTERA_CLIENTES). */
+export function useAsignarVendedorResponsable() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ socioId, vendedorResponsableId }: { socioId: string; vendedorResponsableId: string }) =>
+      api.patch<boolean>(`/api/v1/socios-comerciales/${socioId}/vendedor-responsable`, { socioId, vendedorResponsableId }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: sociosKeys.all }) },
+  })
+}
+
+/** PUT depositos: los depósitos del cliente, al menos uno (CAP_VER_TODOS_LOS_DEPOSITOS + editar clientes). */
+export function useAsignarDepositosSocio() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ socioId, depositoIds }: { socioId: string; depositoIds: string[] }) =>
+      api.put<boolean>(`/api/v1/socios-comerciales/${socioId}/depositos`, { socioId, depositoIds }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: sociosKeys.all }) },
+  })
+}
+
 export function useToggleSocioStatus() {
   const qc = useQueryClient()
   return useMutation({

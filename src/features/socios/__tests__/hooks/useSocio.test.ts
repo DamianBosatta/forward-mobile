@@ -27,7 +27,7 @@ const mockSocioDetail: SocioDetailDto = {
   puedeEditar: true,
   deLaCasa: false,
   depositoIds: [],
-  condicionesPagoCliente: [],
+  condicionesPagoCliente: [{ tipo: 'Contado', predeterminada: true }],
   puedeEditarCondicionesPago: false,
 }
 
