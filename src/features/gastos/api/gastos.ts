@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/core/api/client'
 import type { components } from '@/libs/api-client/generated/schema'
-import { cuentasKeys } from '@/features/cuentas/api/queries'
-import { tesoreriaKeys } from '@/libs/api-client/tesoreria'
 import type { GastoPayload } from '../lib/servicio'
+import { invalidarPorCambioDeGasto } from '@/libs/api-client/invalidaciones'
 
 export type TipoGasto = components['schemas']['TipoGastoResponse']
 
@@ -25,11 +24,6 @@ export function useRegistrarGasto() {
   return useMutation({
     mutationFn: (payload: GastoPayload) => api.post('/api/v1/gastos', payload),
     retry: false,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: gastosKeys.all })
-      qc.invalidateQueries({ queryKey: cuentasKeys.all })
-      qc.invalidateQueries({ queryKey: tesoreriaKeys.all })
-      qc.invalidateQueries({ queryKey: ['cajas'] })
-    },
+    onSuccess: () => invalidarPorCambioDeGasto(qc),
   })
 }

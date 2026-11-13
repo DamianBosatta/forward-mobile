@@ -1,4 +1,6 @@
-import { act, renderHook, waitFor } from '@testing-library/react-native'
+import React from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act, renderHook as renderHookSinCliente, waitFor } from '@testing-library/react-native'
 import NetInfo from '@react-native-community/netinfo'
 import { api } from '@/core/api/client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -27,6 +29,10 @@ jest.mock('@react-native-community/netinfo', () => ({
 import { encolarVenta, cambiarEstado, leerCola } from '../lib/cola'
 import { useVentasSinSenal, esperaDeReintento } from '../hooks/useVentasSinSenal'
 
+let qc: QueryClient
+const wrapper = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+const renderHook = <T,>(cb: () => T) => renderHookSinCliente(cb, { wrapper })
+
 const post = api.post as jest.Mock
 const get = api.get as jest.Mock
 let seq = 0
@@ -43,6 +49,7 @@ const drenar = () => act(async () => { await new Promise((r) => setImmediate(r))
 const altas = () => post.mock.calls.filter(([u]) => u === '/api/v1/Ventas')
 
 beforeEach(() => {
+  qc = new QueryClient()
   mockDisco.clear()
   mockOyentes.length = 0
   jest.clearAllMocks()
@@ -71,6 +78,21 @@ describe('useVentasSinSenal', () => {
     await waitFor(() => expect(result.current.enviadas).toHaveLength(1))
     expect(altas()).toHaveLength(1)
     expect(result.current.esperando).toHaveLength(0)
+  })
+
+  it('después de enviar refresca por la regla central lo que muestran las ventas y el inicio', async () => {
+    post.mockImplementation(async (url: string) => (url.endsWith('vista-previa') ? vista : { ventaId: 'v1', version: 1, message: '', estado: 2 }))
+    qc.setQueryData(['ventas', 'list'], 1)
+    qc.setQueryData(['inicio', 'resumen'], 1)
+    qc.setQueryData(['otra-cosa'], 1)
+    encolarVenta('u1', { alta: alta(), cliente: {}, visto: { total: 600, precios: { p1: 100 } } })
+    renderHook(() => useVentasSinSenal())
+    await drenar()
+    await waitFor(() => expect(leerCola('u1')[0].estado.tipo).toBe('enviada'))
+    const vieja = (k: unknown[]) => qc.getQueryCache().find({ queryKey: k })!.state.isInvalidated
+    expect(vieja(['ventas', 'list'])).toBe(true)
+    expect(vieja(['inicio', 'resumen'])).toBe(true)
+    expect(vieja(['otra-cosa'])).toBe(false)
   })
 
   it('mientras no hay señal no reintenta; al volver, sí', async () => {

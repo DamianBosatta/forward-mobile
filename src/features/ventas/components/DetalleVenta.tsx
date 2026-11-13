@@ -8,7 +8,7 @@ import { api } from '@/core/api/client'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { esEstadoVenta } from '@/core/constants/estados'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { useVenta, ventasKeys } from '@/libs/api-client/ventas'
+import { comisionesKeys, useVenta, ventasKeys } from '@/libs/api-client/ventas'
 import { useSocio } from '@/libs/api-client/socios'
 import type { components } from '@/libs/api-client/generated/schema'
 import { direccionDeEntrega, nombreDelCliente, textoCondicionPago } from '@/features/clientes/lib/cliente'
@@ -69,7 +69,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
   const propia = !!h && h.vendedorId === userId
   // Sin `monto`: el servidor simula el cobro de lo que falta (saldo pendiente).
   const comision = useQuery({
-    queryKey: ['comisiones', 'simulacion', 'venta', id, h?.totalAmount, pagos.data?.montoPagado],
+    queryKey: [...comisionesKeys.simulacion, 'venta', id, h?.totalAmount, pagos.data?.montoPagado],
     queryFn: () => api.get<Simulacion>(`/api/v1/comisiones/simulacion/ventas/${id}`),
     enabled: propia,
   })

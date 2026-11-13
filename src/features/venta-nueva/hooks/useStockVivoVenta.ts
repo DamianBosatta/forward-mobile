@@ -2,11 +2,11 @@ import { useCallback, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { gestorStock, type CambioProducto, type GestorStock, type MensajeStock } from '@/core/realtime/stockEnVivo'
 import { useStockEnVivo } from '@/core/realtime/useStockEnVivo'
-import { stockKeys } from '@/libs/api-client'
 import type { LineaCarrito } from '../lib/carrito'
 import { aplicarCambiosAlCatalogo, avisoDeStock } from '../lib/avisoStockVivo'
-import { CLAVE_CATALOGO, claveCatalogo } from './useCatalogoVenta'
+import { claveCatalogo } from './useCatalogoVenta'
 import { useDepositoAjenoDeVenta, useDepositoDeVenta } from './useDepositoDeVenta'
+import { invalidarStock } from '@/libs/api-client/invalidaciones'
 
 /**
  * Stock en vivo de la venta nueva (F4, S1/S2): mantiene fresco el catálogo que muestra la venta y avisa,
@@ -23,8 +23,7 @@ export function useStockVivoVenta(lineas: LineaCarrito[], gestor: GestorStock = 
   const alRefrescar = useCallback(() => {
     // Lo que cambió con la conexión cortada no se avisó: se vuelve a pedir y los avisos viejos ya no valen.
     setCambios({})
-    void qc.invalidateQueries({ queryKey: CLAVE_CATALOGO })
-    void qc.invalidateQueries({ queryKey: stockKeys.all })
+    void invalidarStock(qc)
   }, [qc])
 
   const alCambio = useCallback((m: MensajeStock) => {
@@ -33,7 +32,7 @@ export function useStockVivoVenta(lineas: LineaCarrito[], gestor: GestorStock = 
       qc.setQueryData(claveCatalogo(ajeno), (d: Parameters<typeof aplicarCambiosAlCatalogo>[0] | undefined) => (d ? aplicarCambiosAlCatalogo(d, m.productos) : d))
     } else {
       // Sin números no hay qué poner en la fila: se vuelve a pedir.
-      void qc.invalidateQueries({ queryKey: CLAVE_CATALOGO })
+      void invalidarStock(qc)
     }
   }, [qc, ajeno])
 

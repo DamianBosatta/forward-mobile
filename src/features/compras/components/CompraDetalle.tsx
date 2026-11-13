@@ -3,7 +3,7 @@ import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { AccessibilityInfo, ActivityIndicator, Image, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { comprasKeys, useAnularRecepcionCompra, useCompra, useCancelarCompra, useConfirmarCompra, useGuardarComprobanteCompra, useAsignarFotoFacturaCompra } from '@/libs/api-client/compras'
+import { useAnularRecepcionCompra, useCompra, useCancelarCompra, useConfirmarCompra, useGuardarComprobanteCompra, useAsignarFotoFacturaCompra } from '@/libs/api-client/compras'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import type { CompraDto } from '@/libs/api-client'
@@ -21,7 +21,6 @@ import { confirmarYRecibir, type Aviso } from '@/features/compras/lib/confirmar-
 import { ConfirmarYRecibirSheet } from '@/features/compras/components/ConfirmarYRecibirSheet'
 import { ComprobanteCampos } from '@/features/compras/components/ComprobanteCampos'
 import { armarComprobante, formDesdeComprobante, formNuevo, resumenComprobante, seCorrigeEnLaWeb, type ComprobanteCompraInput, type FormComprobante } from '@/features/compras/lib/comprobante'
-import { inicioKeys } from '@/core/query/queryClient'
 import { lineaDesdeDetalle, textoDeLinea } from '@/features/compras/lib/lineaCompra'
 import { numeroDeCompra } from '@/features/compras/lib/numero'
 import { esEstadoCompra } from '@/core/constants/estados'
@@ -29,6 +28,7 @@ import { FotoDelCobro } from '@/features/cuentas/components/FotoDelCobro'
 import { subirComprobanteCobro } from '@/features/cuentas/api/fotos'
 import { RecibirCompra, avisoDeRecepcion } from '@/features/compras/components/RecibirCompra'
 import { CONSECUENCIA, accionesDeDetalle, pasosDeCompra } from '@/features/compras/lib/recepcion'
+import { invalidarInicio, invalidarPorCambioDeCompra } from '@/libs/api-client/invalidaciones'
 
 /** Una fila rótulo / valor de las tarjetas del detalle. */
 function FilaDato({ k, v }: { k: string; v: string }) {
@@ -105,7 +105,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
       <RecibirCompra
         compra={compra}
         onVolver={() => setRecibiendoMercaderia(false)}
-        onHecho={(f, foto) => { setRecibiendoMercaderia(false); setAviso(avisoDeRecepcion(f, foto)); queryClient.invalidateQueries({ queryKey: inicioKeys.all }) }}
+        onHecho={(f, foto) => { setRecibiendoMercaderia(false); setAviso(avisoDeRecepcion(f, foto)); void invalidarInicio(queryClient) }}
         onConflicto={() => { void q.refetch() }}
       />
     )
@@ -170,8 +170,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
       if (r.tipo === 'hecho') {
         cerrarHoja()
         setAviso(r.aviso)
-        queryClient.invalidateQueries({ queryKey: comprasKeys.all })
-        queryClient.invalidateQueries({ queryKey: inicioKeys.all })
+        void invalidarPorCambioDeCompra(queryClient)
         return
       }
       setError(r.mensaje)

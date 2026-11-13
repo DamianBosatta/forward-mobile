@@ -21,6 +21,7 @@ import { FichaCliente } from '@/features/clientes/components/FichaCliente'
 import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
+import { useRefrescarAlEnfocar } from '@/core/hooks/useRefrescarAlEnfocar'
 
 /** Desde este ancho la lista y la ficha van lado a lado (plan §8). */
 const ANCHO_DOS_PANELES = 900
@@ -188,6 +189,7 @@ function ClientesScreen() {
 }
 
 export default function ClientesScreenConBarra() {
+  useRefrescarAlEnfocar()
   return (
     <ConAccesosRapidos activa="clientes">
       <ClientesScreen />

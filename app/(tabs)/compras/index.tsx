@@ -4,9 +4,11 @@ import { RequirePermission } from '@/core/auth/RequirePermission'
 import { ListaCompras } from '@/features/compras/components/ListaCompras'
 import { useEstadoCompraDeRuta } from '@/features/listas/lib/filtroDeRuta'
 import { CompraDetalle } from './[id]'
+import { useRefrescarAlEnfocar } from '@/core/hooks/useRefrescarAlEnfocar'
 
 /** Pantalla principal de Compras (Bloque 9A, PR 3.1): en teléfono lleva la barra de accesos rápidos. */
 export default function ComprasListScreenRoute() {
+  useRefrescarAlEnfocar()
   // Las filas de Inicio llegan con el estado en la ruta (?estado=NotaPedido o Confirmado).
   const estadoDeRuta = useEstadoCompraDeRuta()
   return (

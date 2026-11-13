@@ -10,7 +10,7 @@ import { esFallaDeRed } from '@/core/api/errores'
 import { importe, maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
 import { safeHaptics } from '@/core/utils/haptics'
 import { useEntregarParada, useFinalizarHojaRuta, useHojaRuta, useHojasDeRuta, useIniciarHojaRuta, useReportarParada } from '@/libs/api-client'
-import { getManifiestoUrl, logisticaKeys } from '@/libs/api-client/logistica'
+import { getManifiestoUrl } from '@/libs/api-client/logistica'
 import { getNotaEntregaUrl } from '@/libs/api-client/ventas'
 import { EstadoHojaRuta, type ParadaDto } from '@/libs/api-client/types'
 import { esEstadoHojaRuta } from '@/core/constants/estados'
@@ -40,6 +40,8 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { sharePdf } from '@/features/pedidos/lib/sharePdf'
 import { diaArgentina, parseDateSafe, partesArgentina } from '@/core/utils/fecha'
 import { useAhoraArgentina } from '@/core/utils/useAhoraArgentina'
+import { invalidarLogistica } from '@/libs/api-client/invalidaciones'
+import { useRefrescarAlEnfocar } from '@/core/hooks/useRefrescarAlEnfocar'
 
 const horaDe = (ms: number) => {
   const p = partesArgentina(ms)
@@ -52,6 +54,7 @@ const horaDe = (ms: number) => {
  * "no se pudo entregar" sigue por `reportar-parada`.
  */
 export default function ConsolaChoferScreen() {
+  useRefrescarAlEnfocar()
   const c = useColors()
   const router = useRouter()
   const menu = useMenuLeading()
@@ -370,7 +373,7 @@ export default function ConsolaChoferScreen() {
       setFinalizando(false)
       // Un 409 puede ser que la oficina la canceló o la cambió: se vuelve a pedir lo que dice el servidor.
       remota.refetch()
-      qc.invalidateQueries({ queryKey: logisticaKeys.hojasRuta() })
+      void invalidarLogistica(qc)
       setAviso(mensajeDelServidor(e, accion === 'iniciar' ? 'No se pudo iniciar el recorrido.' : 'No se pudo cerrar el viaje.'))
     }
   }
@@ -431,7 +434,7 @@ export default function ConsolaChoferScreen() {
         setDescartada(viaje.id)
         clearActiveTrip()
         setRutaElegida(null)
-        qc.invalidateQueries({ queryKey: logisticaKeys.hojasRuta() })
+        void invalidarLogistica(qc)
       }} />
     ) : null
   ) : esEstadoHojaRuta(viaje.estado, 'EnCurso') && todasReportadas ? (

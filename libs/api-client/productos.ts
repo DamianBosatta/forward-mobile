@@ -2,6 +2,7 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient, keepPreviousDa
 import { api, API_URL } from './client'
 import type { Producto, ProductoDetailDto, PagedResult, CreateProductoRequest, UpdateProductoRequest } from './types'
 import type { components } from './generated/schema'
+import { invalidarProductosYCatalogo, invalidarStock } from './invalidaciones'
 
 export const productosKeys = {
   all: ['productos'] as const,
@@ -192,7 +193,7 @@ export function useCreateProducto() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateProductoRequest) => api.post<Producto>('/api/v1/Productos', data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: productosKeys.all }),
+    onSuccess: () => invalidarProductosYCatalogo(queryClient),
   })
 }
 
@@ -200,10 +201,7 @@ export function useUpdateProducto() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: UpdateProductoRequest) => api.put<Producto>(`/api/v1/Productos/${data.id}`, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: productosKeys.all })
-      queryClient.invalidateQueries({ queryKey: productosKeys.detail(variables.id) })
-    },
+    onSuccess: () => invalidarProductosYCatalogo(queryClient),
   })
 }
 
@@ -273,10 +271,7 @@ export function useToggleProductoStatus() {
       }
     },
 
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: productosKeys.all })
-      queryClient.invalidateQueries({ queryKey: ['stock'] })
-    },
+    onSettled: () => invalidarStock(queryClient),
   })
 }
 

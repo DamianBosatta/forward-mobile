@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '@/core/api/client'
 import type { components } from '@/libs/api-client/generated/schema'
 import { cuentasKeys } from '@/features/cuentas/api/queries'
-import { tesoreriaKeys } from '@/libs/api-client/tesoreria'
+import { invalidarPorMovimientoInterno } from '@/libs/api-client/invalidaciones'
 
 export type TipoMovimientoInterno = components['schemas']['TipoMovimientoInternoResponse']
 export type MovimientoInternoPayload = components['schemas']['RegistrarMovimientoEntreCuentasCommand']
@@ -22,10 +22,7 @@ export function useRegistrarMovimientoInterno() {
   return useMutation({
     mutationFn: (payload: MovimientoInternoPayload) => api.post<string>('/api/v1/movimientos-internos', payload),
     retry: false,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: cuentasKeys.all })
-      qc.invalidateQueries({ queryKey: tesoreriaKeys.all })
-    },
+    onSuccess: () => invalidarPorMovimientoInterno(qc),
   })
 }
 

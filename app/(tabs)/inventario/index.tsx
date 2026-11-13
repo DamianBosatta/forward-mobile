@@ -22,6 +22,7 @@ import { SelectorLineaFamilia } from '@/features/catalogo/components/SelectorLin
 import { BotonCatalogoPdf } from '@/features/catalogo/components/BotonCatalogoPdf'
 import { DIAS_DE_NOVEDADES, filtrarPorStock } from '@/features/catalogo/lib/presentacion'
 import { BusquedaBajoBarra } from '@/features/inventario/components/BusquedaBajoBarra'
+import { useRefrescarAlEnfocar } from '@/core/hooks/useRefrescarAlEnfocar'
 
 /** Ancho desde el que la grilla y la ficha van lado a lado (plan §8, lámina TabCatalogoConsulta). */
 const ANCHO_DOS_PANELES = 900
@@ -218,6 +219,7 @@ function CatalogoConsulta() {
 
 /** El catálogo se habilita con MOD_CATALOGO (no con Stock). La consulta vive adentro: sin permiso no se pide nada. */
 export default function CatalogoConsultaScreen() {
+  useRefrescarAlEnfocar()
   return (
     <RequirePermission module="MOD_CATALOGO" action="read" mode="screen">
       <CatalogoConsulta />

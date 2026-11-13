@@ -2,10 +2,11 @@ import { useCallback, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { gestorStock, type GestorStock } from '@/core/realtime/stockEnVivo'
 import { useStockEnVivo } from '@/core/realtime/useStockEnVivo'
-import { CLAVE_CATALOGO, useCatalogoVenta } from '@/features/venta-nueva/hooks/useCatalogoVenta'
+import { useCatalogoVenta } from '@/features/venta-nueva/hooks/useCatalogoVenta'
 import { useDepositoDeVenta } from '@/features/venta-nueva/hooks/useDepositoDeVenta'
 import { lineasQueCambiaron, type LineaCambiada } from '../lib/cambiosEnCola'
 import type { VentaEnCola } from '../lib/cola'
+import { invalidarStock } from '@/libs/api-client/invalidaciones'
 
 /**
  * Las líneas de las ventas guardadas en el teléfono que cambiaron de stock (F4, S3). Al (re)conectar vuelve a pedir
@@ -22,7 +23,7 @@ export function useAvisosDeCola(cola: VentaEnCola[], gestor: GestorStock = gesto
     () => [...new Set([depositoDelCatalogo, ...cola.filter((v) => v.estado.tipo === 'esperando').map((v) => v.alta.depositoId).filter((d): d is string => !!d)])],
     [cola, depositoDelCatalogo],
   )
-  const alRefrescar = useCallback(() => { void qc.invalidateQueries({ queryKey: CLAVE_CATALOGO }) }, [qc])
+  const alRefrescar = useCallback(() => { void invalidarStock(qc) }, [qc])
   const { enVivo } = useStockEnVivo({ depositoIds: depositos, alRefrescar, alCambio: alRefrescar, gestor })
   // Sin cantidades (sin la capacidad) el catálogo trae ceros: se compara por `puedeVenderse`.
   const verCantidades = gestor.veCantidades()

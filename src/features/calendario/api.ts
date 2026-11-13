@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/core/api/client'
-import { calendarioKeys } from '@/libs/api-client/calendario'
 import type { EstadoTarea } from './tarea'
+import { invalidarCalendario } from '@/libs/api-client/invalidaciones'
 
 /**
  * Cambia el estado de una tarea (`POST /calendario/eventos/{id}/estado`). Lo usan quien la creó, un asignado o quien tiene
@@ -12,6 +12,6 @@ export function useCambiarEstadoTarea() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, estado }: { id: string; estado: EstadoTarea }) => api.post<string>(`/api/v1/Calendario/eventos/${id}/estado`, { estado }),
-    onSuccess: () => { void qc.invalidateQueries({ queryKey: calendarioKeys.all }) },
+    onSuccess: () => invalidarCalendario(qc),
   })
 }

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { api } from '@/core/api/client'
+import { stockConsultaKeys } from '@/libs/api-client/stock'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import type { PagedResult, StockItem } from '@/libs/api-client/types'
 import type { components } from '@/libs/api-client/generated/schema'
@@ -56,7 +57,7 @@ export function useStockPorDeposito({ conCantidades, busqueda }: { conCantidades
   const consulta = filtrosDeConsulta(depositoId, termino, filtros).toString()
 
   const resumen = useQuery({
-    queryKey: ['stock-consulta', 'resumen', consulta],
+    queryKey: [...stockConsultaKeys.all, 'resumen', consulta],
     queryFn: () => api.get<StockResumen>(`/api/v1/Stocks/resumen?${consulta}`),
     enabled: conCantidades,
     placeholderData: keepPreviousData,
@@ -64,7 +65,7 @@ export function useStockPorDeposito({ conCantidades, busqueda }: { conCantidades
   })
 
   const lista = useInfiniteQuery({
-    queryKey: ['stock-consulta', 'lista', consulta],
+    queryKey: [...stockConsultaKeys.all, 'lista', consulta],
     queryFn: ({ pageParam = 1 }) => {
       const p = new URLSearchParams(consulta)
       p.set('PageNumber', String(pageParam))

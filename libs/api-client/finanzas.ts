@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import type { CajaActivaDto, MovimientoCajaDto, Pago, PagedResult } from './types'
 import type { components } from './generated/schema'
+import { invalidarCaja } from './invalidaciones'
 
 type CerrarCajaResponseDto = components['schemas']['CerrarCajaResponseDto']
 
@@ -11,6 +12,8 @@ export const finanzasKeys = {
   /** La caja abierta de un depósito; sin depósito, la única abierta (como la web: `['caja', 'activa', depositoId]`). */
   cajaActiva: (depositoId?: string) => ['caja', 'activa', depositoId ?? 'unica'] as const,
   cajas: ['cajas'] as const,
+  /** Raíz de todo lo de caja: cajas activas y movimientos de cada caja. */
+  caja: ['caja'] as const,
   movimientosCaja: (cajaId: string) => ['caja', cajaId, 'movimientos'] as const,
 }
 
@@ -49,8 +52,7 @@ export function useAbrirCaja() {
   return useMutation({
     mutationFn: (saldoInicial: number) =>
       api.post<string>('/api/v1/Cajas/abrir', { saldoInicial }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: finanzasKeys.cajasActivas }),
+    onSuccess: () => invalidarCaja(queryClient),
   })
 }
 
@@ -59,8 +61,7 @@ export function useCerrarCaja() {
   return useMutation({
     mutationFn: ({ cajaId, saldoFinalDeclarado }: { cajaId: string; saldoFinalDeclarado: number }) =>
       api.post<CerrarCajaResponseDto>('/api/v1/Cajas/cerrar', { cajaId, saldoFinalDeclarado }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: finanzasKeys.cajasActivas }),
+    onSuccess: () => invalidarCaja(queryClient),
   })
 }
 

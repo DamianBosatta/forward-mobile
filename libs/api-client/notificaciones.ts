@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import type { components } from './generated/schema'
+import { invalidarNotificaciones, invalidarPreferenciasDeAvisos } from './invalidaciones'
 
 /** GET /Notificaciones: el destinatario sale del token; el servidor filtra lo financiero y lo vencido. */
 export type BandejaAvisos = components['schemas']['NotificacionesBandejaDto']
@@ -69,7 +70,7 @@ export function useMarcarAvisosLeidos() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (ids?: string[]) => api.post<number>('/api/v1/Notificaciones/marcar-leidas', ids?.length ? { ids } : {}),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: notificacionesKeys.all }),
+    onSuccess: () => invalidarNotificaciones(qc),
     meta: { noRefrescaInicio: true },
   })
 }
@@ -86,7 +87,7 @@ export function useActualizarPreferenciasAvisos() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (preferencias: PreferenciaToast[]) => api.put<number>('/api/v1/Notificaciones/preferencias', { preferencias }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: notificacionesKeys.preferencias() }),
+    onSuccess: () => invalidarPreferenciasDeAvisos(qc),
     meta: { noRefrescaInicio: true },
   })
 }

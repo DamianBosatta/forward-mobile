@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { api } from '@/libs/api-client/client'
-import { borradorCompraApi, comprasKeys, type GuardarCompraBody } from '@/libs/api-client/compras'
-import { inicioKeys } from '@/core/query/queryClient'
+import { borradorCompraApi, type GuardarCompraBody } from '@/libs/api-client/compras'
 import type { CompraDto, ProductoDetailDto, SocioDetailDto } from '@/libs/api-client/types'
 import { useDepositoDeConsulta } from '@/features/catalogo/hooks/useDepositoDeConsulta'
 import { mensajeDelServidor } from '../lib/mensaje-error'
@@ -10,6 +9,7 @@ import { confirmarYRecibir } from '../lib/confirmar-y-recibir'
 import type { EmpaqueProducto } from '@/core/utils/empaque'
 import { ajustarAlPaso, detallesParaServidor, lineaDesdeDetalle, lineaNueva, type LineaCompra } from '../lib/lineaCompra'
 import { esEstadoCompra } from '@/core/constants/estados'
+import { invalidarBorradoresDeCompra, invalidarPorCambioDeCompra } from '@/libs/api-client/invalidaciones'
 
 export interface ProveedorCompra {
   id: string
@@ -201,8 +201,7 @@ export function useCompraBorrador(borradorInicial?: string, opciones: { edicion?
         }
         throw e
       }
-      queryClient.invalidateQueries({ queryKey: comprasKeys.all })
-      queryClient.invalidateQueries({ queryKey: inicioKeys.all })
+      void invalidarPorCambioDeCompra(queryClient)
     })()
     guardandoCambios.current = p
     const libre = () => { guardandoCambios.current = null }
@@ -234,7 +233,7 @@ export function useCompraBorrador(borradorInicial?: string, opciones: { edicion?
       setProveedor(r.proveedor)
       setCompraId(b.compraId)
       setEstado('guardado')
-      queryClient.invalidateQueries({ queryKey: comprasKeys.borradoresMios() })
+      void invalidarBorradoresDeCompra(queryClient)
     } catch (e) {
       setError(mensajeDelServidor(e, 'No se pudo empezar la compra.'))
     }
@@ -270,9 +269,7 @@ export function useCompraBorrador(borradorInicial?: string, opciones: { edicion?
   const terminar = useCallback(async <T>(accion: (id: string, v: number) => Promise<T>): Promise<T> => {
     const v = await guardarAhora()
     const r = await accion(compraId!, v)
-    queryClient.invalidateQueries({ queryKey: comprasKeys.all })
-    // No es una mutación de react-query: Inicio (que el QueryClient refresca tras cada mutación) se marca a mano.
-    queryClient.invalidateQueries({ queryKey: inicioKeys.all })
+    void invalidarPorCambioDeCompra(queryClient)
     return r
   }, [compraId, guardarAhora, queryClient])
 
@@ -296,7 +293,7 @@ export function useCompraBorrador(borradorInicial?: string, opciones: { edicion?
         descartado.current = false
         throw e
       }
-      queryClient.invalidateQueries({ queryKey: comprasKeys.borradoresMios() })
+      void invalidarBorradoresDeCompra(queryClient)
     },
   }
 }

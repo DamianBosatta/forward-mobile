@@ -9,6 +9,16 @@ jest.mock('@/core/api/client', () => ({ api: { post: () => Promise.resolve(true)
 const consulta = (qc: ReturnType<typeof crearQueryClient>, queryKey: unknown[]) => qc.getQueryCache().find({ queryKey })!
 
 describe('debePersistir: lo que se guarda en el teléfono', () => {
+  it('una lista infinita no se guarda, aunque su clave no diga "list"', () => {
+    const qc = crearQueryClient()
+    qc.setQueryData(['stock-consulta', 'deposito', 'd1'], { pages: [{ items: [1] }], pageParams: [1] })
+    expect(debePersistir(consulta(qc, ['stock-consulta', 'deposito', 'd1']))).toBe(false)
+    qc.setQueryData(['x', 'infinite'], { items: [] })
+    expect(debePersistir(consulta(qc, ['x', 'infinite']))).toBe(false)
+    qc.setQueryData(['inicio', 'resumen'], { ventas: 1 })
+    expect(debePersistir(consulta(qc, ['inicio', 'resumen']))).toBe(true)
+  })
+
   it('una respuesta con datos se guarda; `null` (p. ej. servidor sin el endpoint) no', () => {
     const qc = crearQueryClient()
     qc.setQueryData(['inicio', 'resumen'], { ventas: null, compras: null, autorizacionesPendientes: null })
@@ -42,13 +52,23 @@ describe('Inicio se refresca tras las mutaciones', () => {
   })
 
   it('también tras un error (p. ej. un 409: la venta cambió); no con meta.noRefrescaInicio (una búsqueda)', async () => {
-    const qc = crearQueryClient()
-    qc.setQueryData(inicioKeys.resumen(), { ventas: null, compras: null, autorizacionesPendientes: null })
-    await new MutationObserver(qc, { mutationFn: async () => 'ok', meta: { noRefrescaInicio: true } }).mutate()
-    expect(qc.getQueryState(inicioKeys.resumen())?.isInvalidated).toBe(false)
+    // Reloj controlado: la regla compara `dataUpdatedAt >= submittedAt` (en ms). Con el reloj real, el resumen y la
+    // mutación podían caer en el mismo milisegundo y la mutación contaba como "ya refrescada" (falla intermitente).
+    let ahora = 1_000_000
+    const reloj = jest.spyOn(Date, 'now').mockImplementation(() => ahora)
+    try {
+      const qc = crearQueryClient()
+      qc.setQueryData(inicioKeys.resumen(), { ventas: null, compras: null, autorizacionesPendientes: null })
+      ahora += 50
+      await new MutationObserver(qc, { mutationFn: async () => 'ok', meta: { noRefrescaInicio: true } }).mutate()
+      expect(qc.getQueryState(inicioKeys.resumen())?.isInvalidated).toBe(false)
 
-    await new MutationObserver(qc, { mutationFn: () => Promise.reject(new Error('409')) }).mutate().catch(() => undefined)
-    expect(qc.getQueryState(inicioKeys.resumen())?.isInvalidated).toBe(true)
+      ahora += 50
+      await new MutationObserver(qc, { mutationFn: () => Promise.reject(new Error('409')) }).mutate().catch(() => undefined)
+      expect(qc.getQueryState(inicioKeys.resumen())?.isInvalidated).toBe(true)
+    } finally {
+      reloj.mockRestore()
+    }
   })
 })
 

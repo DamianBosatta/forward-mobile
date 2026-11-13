@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '@/core/api/client'
+import { comisionesKeys } from '@/libs/api-client/ventas'
 import type { components } from '@/libs/api-client/generated/schema'
 import { subtotalLinea, type LineaCarrito } from '../lib/carrito'
 
@@ -26,7 +27,7 @@ export function useComisionEstimada(lineas: LineaCarrito[], descuentoGeneral: nu
     return () => clearTimeout(t)
   }, [pedido])
   const { data } = useQuery({
-    queryKey: ['comisiones', 'simulacion', estable],
+    queryKey: [...comisionesKeys.simulacion, estable],
     queryFn: () => api.post<Simulacion>('/api/v1/comisiones/simulacion', JSON.parse(estable!)),
     enabled: !!estable,
     staleTime: 60_000,

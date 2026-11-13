@@ -36,7 +36,15 @@ export interface OyenteStock {
   alEstado: (enVivo: boolean) => void
 }
 
+/** Avisos de cambios de datos (`[{ tipo, id }]`, lote cada ~300 ms) para refrescar lo que ya está en pantalla. */
+export interface OyenteAvisos {
+  alAvisos: (avisos: unknown) => void
+  /** Se volvió a conectar (reconexión o vuelta de segundo plano): pudo perderse algún aviso. No suena en la primera conexión. */
+  alReconectar: () => void
+}
+
 const EVENTO = 'StockCambio'
+const EVENTO_ENTIDADES = 'EntidadCambio'
 
 function conexionReal(): ConexionStock {
   return new HubConnectionBuilder()
@@ -49,6 +57,9 @@ function conexionReal(): ConexionStock {
 
 export function crearGestorStock(crear: () => ConexionStock = conexionReal) {
   const oyentes = new Map<OyenteStock, string[]>()
+  const oyentesAvisos = new Set<OyenteAvisos>()
+  // Ya hubo una conexión lista: las siguientes son reconexiones y piden refrescar.
+  let yaConecto = false
   let conexion: ConexionStock | null = null
   let conectando = false
   let enVivo = false
@@ -75,14 +86,17 @@ export function crearGestorStock(crear: () => ConexionStock = conexionReal) {
     if (mia !== ronda) return
     poner(true)
     oyentes.forEach((_, o) => o.alConectar())
+    if (yaConecto) oyentesAvisos.forEach((o) => o.alReconectar())
+    yaConecto = true
   }
 
   async function abrir() {
-    if (conexion || conectando || oyentes.size === 0 || AppState.currentState !== 'active') return
+    if (conexion || conectando || (oyentes.size === 0 && oyentesAvisos.size === 0) || AppState.currentState !== 'active') return
     conectando = true
     const mia = ++ronda
     const c = crear()
     c.on(EVENTO, (m: MensajeStock) => { if (mia === ronda) oyentes.forEach((_, o) => o.alCambio(m)) })
+    c.on(EVENTO_ENTIDADES, (avisos: unknown) => { if (mia === ronda) oyentesAvisos.forEach((o) => o.alAvisos(avisos)) })
     c.onreconnecting(() => { if (mia === ronda) { cantidades = false; poner(false) } })
     c.onreconnected(() => { if (mia === ronda) void conectado(c, mia) })
     c.onclose(() => { if (mia === ronda) { conexion = null; poner(false) } })
@@ -114,20 +128,36 @@ export function crearGestorStock(crear: () => ConexionStock = conexionReal) {
     if (e === 'active') void abrir()
     else if (e === 'background') soltar()
   }
+  const escucharAppState = () => { if (!sub) sub = AppState.addEventListener('change', alCambiarAppState) }
+  /** Sin nadie que escuche (stock ni avisos) se suelta la conexión y se olvida que hubo una. */
+  const soltarSiNadie = () => {
+    if (oyentes.size > 0 || oyentesAvisos.size > 0) return
+    sub?.remove()
+    sub = null
+    yaConecto = false
+    soltar()
+  }
 
   return {
     /** Se une a `depositoIds`; abre la conexión si es el primero. Devuelve la baja. */
     suscribir(depositoIds: string[], oyente: OyenteStock): () => void {
       oyentes.set(oyente, depositoIds)
-      if (!sub) sub = AppState.addEventListener('change', alCambiarAppState)
+      escucharAppState()
       if (conexion && enVivo) void unirse(conexion, depositoIds)
       else void abrir()
       return () => {
         oyentes.delete(oyente)
-        if (oyentes.size > 0) return
-        sub?.remove()
-        sub = null
-        soltar()
+        soltarSiNadie()
+      }
+    },
+    /** Escucha los avisos de cambios (`EntidadCambio`) por la misma conexión; la abre si es el primero. Devuelve la baja. */
+    suscribirAvisos(oyente: OyenteAvisos): () => void {
+      oyentesAvisos.add(oyente)
+      escucharAppState()
+      void abrir()
+      return () => {
+        oyentesAvisos.delete(oyente)
+        soltarSiNadie()
       }
     },
     /** Reintenta abrir si no hay conexión (la reconexión automática no cubre una apertura fallida). */

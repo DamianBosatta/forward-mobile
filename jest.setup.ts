@@ -72,3 +72,9 @@ jest.mock('react-native-mmkv', () => {
 beforeEach(() => {
   require('@/core/hooks/useFiltroPersistente').olvidarFiltros()
 })
+
+// useRefrescarAlEnfocar usa useFocusEffect y necesita un navegador: en los tests de pantallas es un no-op.
+// Su propio test usa la implementación real (jest.requireActual).
+jest.mock('@/core/hooks/useRefrescarAlEnfocar', () => ({
+  useRefrescarAlEnfocar: jest.fn(),
+}))

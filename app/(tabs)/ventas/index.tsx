@@ -3,9 +3,11 @@ import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { useFiltroVentasDeRuta } from '@/features/listas/lib/filtroDeRuta'
 import { ListaVentasNueva } from '@/features/ventas/components/ListaVentasNueva'
 import { DetalleVenta } from '@/features/ventas/components/DetalleVenta'
+import { useRefrescarAlEnfocar } from '@/core/hooks/useRefrescarAlEnfocar'
 
 /** Pantalla principal: en teléfono lleva la barra de accesos rápidos (Bloque 9A, PR 0.3). */
 export default function VentasListScreenRoute() {
+  useRefrescarAlEnfocar()
   // Las filas de Inicio llegan con el filtro en la ruta (?tipo=…&estado=…).
   const filtroDeRuta = useFiltroVentasDeRuta()
   return (

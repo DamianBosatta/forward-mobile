@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import type { components } from './generated/schema'
+import { invalidarCalendario } from './invalidaciones'
 
 /** GET /Calendario: el servidor filtra lo que cada uno puede ver (personales; lo de la empresa según el puesto). */
 export type EventoCalendario = components['schemas']['EventoCalendarioDto']
@@ -25,7 +26,7 @@ export function useCrearEvento() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (evento: CrearEvento) => api.post<string>('/api/v1/Calendario/eventos', evento),
-    onSuccess: () => qc.invalidateQueries({ queryKey: calendarioKeys.all }),
+    onSuccess: () => invalidarCalendario(qc),
   })
 }
 
@@ -55,7 +56,7 @@ function useMutacionCalendario<V>(fn: (v: V) => Promise<unknown>, borrado?: (v: 
       const id = borrado?.(v)
       const semanas = { queryKey: calendarioKeys.all, predicate: (q: { queryKey: readonly unknown[] }) => !id || q.queryKey[1] !== 'evento' }
       if (id) qc.setQueriesData<EventoCalendario[]>(semanas, (semana) => semana?.filter((e) => e.origenId !== id))
-      void qc.invalidateQueries(semanas)
+      void invalidarCalendario(qc, !!id)
     },
   })
 }

@@ -3,9 +3,10 @@ import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import * as Notifications from 'expo-notifications'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { notificacionesKeys, useMarcarAvisosLeidos } from '@/libs/api-client/notificaciones'
+import { useMarcarAvisosLeidos } from '@/libs/api-client/notificaciones'
 import { rutaAlTocarAviso } from './bandeja'
 import { bajaDePushAlCerrarSesion, leerDatosPush, registrarPush } from './push'
+import { invalidarNotificaciones } from '@/libs/api-client/invalidaciones'
 
 /** La bandeja: adonde lleva un push sin pantalla propia en mobile (o sin datos del servidor). */
 export const RUTA_BANDEJA = '/avisos'
@@ -39,7 +40,7 @@ export function PushDeAvisos() {
       }),
     })
     const sub = Notifications.addNotificationReceivedListener(() => {
-      void qc.invalidateQueries({ queryKey: notificacionesKeys.all })
+      void invalidarNotificaciones(qc)
     })
     return () => sub.remove()
   }, [qc])

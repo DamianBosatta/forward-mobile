@@ -4,7 +4,7 @@ import { api } from './client'
 import { SIN_DEPOSITO_DE_SESION } from '@/core/api/depositoSesion'
 import type { PagedResult, SocioComercial, SocioDetailDto, CreateSocioRequest, UpdateSocioRequest, ClienteLightDto } from './types'
 export type { ClienteLightDto }
-import { cuentasKeys } from './cuentas-corrientes'
+import { invalidarPorCambioDeSocio } from './invalidaciones'
 
 export interface SociosParams {
   tipo?:       1 | 2        // 1 = Cliente, 2 = Proveedor
@@ -168,10 +168,7 @@ export function useCreateSocio() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateSocioRequest) => api.post<string>('/api/v1/socios-comerciales', data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: sociosKeys.all })
-      qc.invalidateQueries({ queryKey: cuentasKeys.all })
-    },
+    onSuccess: () => invalidarPorCambioDeSocio(qc),
   })
 }
 
@@ -179,11 +176,7 @@ export function useUpdateSocio() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (data: UpdateSocioRequest) => api.put<string>(`/api/v1/socios-comerciales/${data.id}`, data),
-    onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: sociosKeys.all })
-      qc.invalidateQueries({ queryKey: sociosKeys.detail(vars.id) })
-      qc.invalidateQueries({ queryKey: cuentasKeys.all })
-    },
+    onSuccess: () => invalidarPorCambioDeSocio(qc),
   })
 }
 
@@ -212,9 +205,7 @@ export function useToggleSocioStatus() {
   return useMutation({
     mutationFn: ({ id }: { id: string }) =>
       api.patch<boolean>(`/api/v1/socios-comerciales/${id}/toggle-status`, {}),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: sociosKeys.all })
-    },
+    onSuccess: () => invalidarPorCambioDeSocio(qc),
     onError: (err: { status?: number; message?: string }) => {
       console.error('Toggle status error:', err)
       setTimeout(() => {

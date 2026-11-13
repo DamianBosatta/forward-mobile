@@ -4,8 +4,6 @@ import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '@/core/api/client'
 import { esError } from '@/core/api/errores'
-import { ventasKeys } from '@/libs/api-client/ventas'
-import { inicioKeys } from '@/core/query/queryClient'
 import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import type { ClienteNombrable } from '@/features/clientes/lib/cliente'
@@ -17,6 +15,7 @@ import { esEstadoVenta } from '@/core/constants/estados'
 import type { LineaCarrito } from '../lib/carrito'
 import { useDepositoDeVenta } from './useDepositoDeVenta'
 import type { useBorradorVenta } from './useBorradorVenta'
+import { invalidarPorCambioDeVenta } from '@/libs/api-client/invalidaciones'
 
 interface Datos {
   clienteId: string
@@ -149,9 +148,8 @@ export function useConfirmarVenta(d: Datos) {
       }
     }
     if (conLoDeAntes) mensaje = 'El pedido ya se había grabado con lo de antes. Revisalo y editalo si cambiaste algo.'
-    void qc.invalidateQueries({ queryKey: ventasKeys.all })
-    // No es una mutación de react-query: Inicio (que el QueryClient refresca tras cada mutación) se marca a mano.
-    void qc.invalidateQueries({ queryKey: inicioKeys.all })
+    void invalidarPorCambioDeVenta(qc)
+    // No es una mutación de react-query: la regla central también refresca Inicio.
     // La venta ya está guardada: vaciar el carrito no puede disparar un PUT con items=[] al borrador.
     renovarClave()
     b.cerrar()

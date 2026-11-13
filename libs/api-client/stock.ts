@@ -2,6 +2,12 @@ import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/rea
 import { api } from './client'
 import type { StockItem, PagedResult, AjusteStockRequest } from './types'
 import { productosKeys } from './productos'
+import { invalidarStock } from './invalidaciones'
+
+/** Consultas de stock de la pantalla de Inventario (resumen, lista, movimientos, valor, rentabilidad). */
+export const stockConsultaKeys = {
+  all: ['stock-consulta'] as const,
+}
 
 export const stockKeys = {
   all: ['stock'] as const,
@@ -168,10 +174,6 @@ export function useAjustarStock() {
       }
     },
 
-    onSettled: () => {
-      // Invalidar para sincronizar con la verdad del servidor
-      queryClient.invalidateQueries({ queryKey: stockKeys.all })
-      queryClient.invalidateQueries({ queryKey: productosKeys.all })
-    },
+    onSettled: () => invalidarStock(queryClient),
   })
 }
