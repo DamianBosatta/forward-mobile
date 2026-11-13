@@ -11,10 +11,11 @@ import { clienteDeLista, conPermisos, pagina, renderConQuery } from '../__testin
 // pdf por whatsapp".
 
 const mockPush = jest.fn()
+let mockParams: Record<string, string> = {}
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn() }),
   useNavigation: () => ({ dispatch: jest.fn() }),
-  useLocalSearchParams: () => ({}),
+  useLocalSearchParams: () => mockParams,
 }))
 jest.mock('expo-router/react-navigation', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
 jest.mock('@/core/api/client', () => ({ api: { get: jest.fn() }, API_URL: 'http://api.test' }))
@@ -52,6 +53,7 @@ const CON_DEUDAS = [
 
 beforeEach(() => {
   jest.clearAllMocks()
+  mockParams = {}
   mockSharePdf.mockResolvedValue({ ok: true })
   conPermisos(CON_DEUDAS)
   get.mockImplementation(async (url: string) => {
@@ -113,6 +115,25 @@ describe('Clientes: filtro Deudores', () => {
     await screen.findByText('Av. del Valle 89')
 
     expect(screen.queryByRole('button', { name: 'Deudores' })).toBeNull()
+  })
+})
+
+describe('Clientes: abrir directo en Deudores (?filtro=deudores)', () => {
+  it('con el parametro y permiso, abre en la vista de deudores', async () => {
+    mockParams = { filtro: 'deudores' }
+    renderConQuery(<ClientesScreen />)
+
+    expect(await screen.findByText('Graciela Ruiz', undefined, ESPERA)).toBeTruthy()
+    expect(screen.queryByText('Av. del Valle 89')).toBeNull()
+  })
+
+  it('con el parametro pero sin permiso de deudas, lo ignora y muestra la cartera', async () => {
+    mockParams = { filtro: 'deudores' }
+    conPermisos([{ module: 'MOD_CLIENTES', canRead: true, canCreate: true }])
+    renderConQuery(<ClientesScreen />)
+
+    expect(await screen.findByText('Av. del Valle 89')).toBeTruthy()
+    expect(get.mock.calls.some(([u]) => String(u).startsWith('/api/v1/deudas/clientes'))).toBe(false)
   })
 })
 

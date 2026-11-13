@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { RefreshControl, SectionList, Text, View } from 'react-native'
-import { useNavigation, useRouter } from 'expo-router'
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from "expo-router/react-navigation"
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
@@ -24,6 +24,8 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
 /** Desde este ancho la lista y la ficha van lado a lado (plan §8). */
 const ANCHO_DOS_PANELES = 900
+/** Valor del parametro de ruta `filtro` que abre la pestana Clientes en Deudores (lo usa Inicio). */
+export const FILTRO_DEUDORES = 'deudores'
 /** Alto del `Fab` (src/core/ui/fw/Fab.tsx): la lista deja ese lugar libre abajo. */
 const ALTO_FAB = 56
 
@@ -45,7 +47,12 @@ function ClientesScreen() {
   // "Deudores": los clientes que deben (`GET /deudas/clientes`, MOD_PAGOS:Read). El servidor acota al vendedor.
   const puedeVerDeudores = usePuedeVerDeudores()
   const [soloDeudores, setSoloDeudores] = useFiltroPersistente('socios.soloDeudores', false)
-  const verDeudores = soloDeudores && puedeVerDeudores
+  // `?filtro=deudores` (p. ej. desde Inicio) abre directo en Deudores; sin el permiso se ignora.
+  const { filtro } = useLocalSearchParams<{ filtro?: string }>()
+  useEffect(() => {
+    if (filtro === FILTRO_DEUDORES && puedeVerDeudores) setSoloDeudores(true)
+  }, [filtro, puedeVerDeudores, setSoloDeudores])
+  const verDeudores = (soloDeudores || (filtro === FILTRO_DEUDORES)) && puedeVerDeudores
   const filtrando = filtros.conDeudaVencida || !!filtros.localidad
   const dosPaneles = width >= ANCHO_DOS_PANELES
 
