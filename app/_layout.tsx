@@ -3,6 +3,7 @@ import { Stack } from 'expo-router'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { asyncStoragePersister } from '@/core/query/persistConfig'
 import { crearQueryClient, opcionesDePersistencia } from '@/core/query/queryClient'
+import { versionDeCache } from '@/core/query/versionDeCache'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { useAuthGuard } from '../hooks/useAuthGuard'
@@ -28,6 +29,7 @@ import { OfflineBanner } from '@/core/ui/OfflineBanner'
 import '../global.css'
 import { loadSavedApiUrl } from '@/core/api/client'
 import { AvisosAlVolver, PushDeAvisos } from '@/features/notificaciones'
+import { AvisosEnVivo } from '@/core/realtime/AvisosEnVivo'
 import { EnvioVentasSinSenal } from '@/features/venta-sin-senal'
 import { EnvioConsolaSinSenal } from '@/features/logistica/cola'
 
@@ -103,6 +105,7 @@ function RootLayoutNav() {
       <AuthGuardHandler />
       <AvisosAlVolver />
       <PushDeAvisos />
+      <AvisosEnVivo />
       <EnvioVentasSinSenal />
       <EnvioConsolaSinSenal />
       {/* Sin señal, cada barra superior pinta el aviso debajo de ella (propuesta de Inicio, frame 10). */}
@@ -144,6 +147,7 @@ function RootLayout() {
         client={queryClient} 
         persistOptions={{ 
           persister: asyncStoragePersister,
+          buster: versionDeCache(),
           dehydrateOptions: opcionesDePersistencia,
         }}
       >

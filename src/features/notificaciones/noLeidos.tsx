@@ -2,7 +2,8 @@ import { useEffect } from 'react'
 import { AppState } from 'react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { notificacionesKeys, useAvisosNoLeidosQuery } from '@/libs/api-client/notificaciones'
+import { useAvisosNoLeidosQuery } from '@/libs/api-client/notificaciones'
+import { invalidarNotificaciones } from '@/libs/api-client/invalidaciones'
 
 /** Cada cuánto se vuelve a mirar el badge con la app abierta (un push lo refresca al llegar; esto cubre al que no tiene push). */
 export const INTERVALO_BADGE_MS = 60_000
@@ -21,7 +22,7 @@ export function AvisosAlVolver() {
   const qc = useQueryClient()
   useEffect(() => {
     const sub = AppState.addEventListener('change', (estado) => {
-      if (estado === 'active') void qc.invalidateQueries({ queryKey: notificacionesKeys.all })
+      if (estado === 'active') void invalidarNotificaciones(qc)
     })
     return () => sub.remove()
   }, [qc])

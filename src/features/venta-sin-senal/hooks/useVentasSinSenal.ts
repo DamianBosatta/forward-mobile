@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { invalidarPorCambioDeVenta } from '@/libs/api-client/invalidaciones'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
 import { api } from '@/core/api/client'
@@ -28,6 +30,7 @@ export function useColaDelUsuario(): VentaEnCola[] {
  */
 export function useVentasSinSenal() {
   const usuarioId = useAuthStore((s) => s.user?.id)
+  const queryClient = useQueryClient()
   const { isConnected } = useNetworkStatus()
   const items = useColaDelUsuario()
   const grupos = useMemo(() => agrupar(items), [items])
@@ -48,11 +51,13 @@ export function useVentasSinSenal() {
     if (usuarioActual.current !== usuarioId) return
     if (r !== 'sinSenal') {
       fallos.current = 0
+      // Lo que se mandó creó ventas (o borradores) en el servidor: Ventas, Inicio y stock lo muestran ya.
+      if (r !== 'vacia') void invalidarPorCambioDeVenta(queryClient)
       return
     }
     fallos.current += 1
     reintento.current = setTimeout(() => { void enviar() }, esperaDeReintento(fallos.current))
-  }, [usuarioId])
+  }, [usuarioId, queryClient])
 
   useEffect(() => {
     if (usuarioId) limpiarEnviadasViejas(usuarioId)

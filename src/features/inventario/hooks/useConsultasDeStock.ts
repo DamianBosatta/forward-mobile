@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { api } from '@/core/api/client'
+import { stockConsultaKeys } from '@/libs/api-client/stock'
 import type { MovimientoStockHistorialDto, PagedResult } from '@/libs/api-client/types'
 import type { components } from '@/libs/api-client/generated/schema'
 import type { CatalogoStockItem } from '@/libs/api-client/productos'
@@ -20,7 +21,7 @@ export function useValorDelStockACosto(depositoId: string, habilitado: boolean) 
   if (depositoId !== TODOS_LOS_DEPOSITOS) p.set('DepositoId', depositoId)
   const consulta = p.toString()
   return useQuery({
-    queryKey: ['stock-consulta', 'valor-costo', consulta],
+    queryKey: [...stockConsultaKeys.all, 'valor-costo', consulta],
     queryFn: () => api.get<StockValorizado>(`/api/v1/Reportes/stock/valorizado?${consulta}`),
     enabled: habilitado,
     staleTime: 60_000,
@@ -30,7 +31,7 @@ export function useValorDelStockACosto(depositoId: string, habilitado: boolean) 
 /** Movimientos de un producto, de a 20 (web StockMovimientosPanel): GET /Stocks/movimientos. Cerrado no consulta. */
 export function useMovimientosDeStock(productoId: string, habilitado: boolean) {
   return useInfiniteQuery({
-    queryKey: ['stock-consulta', 'movimientos', productoId],
+    queryKey: [...stockConsultaKeys.all, 'movimientos', productoId],
     queryFn: ({ pageParam = 1 }) => {
       const p = new URLSearchParams({ ProductoId: productoId, PageNumber: String(pageParam), PageSize: String(TAMANO_PAGINA_MOVIMIENTOS) })
       return api.get<PagedResult<MovimientoStockHistorialDto>>(`/api/v1/Stocks/movimientos?${p}`)
@@ -49,7 +50,7 @@ export function useMovimientosDeStock(productoId: string, habilitado: boolean) {
  */
 export function useRentabilidadDeProducto(productoId: string, codigo: string, habilitado: boolean) {
   return useQuery({
-    queryKey: ['stock-consulta', 'rentabilidad', productoId],
+    queryKey: [...stockConsultaKeys.all, 'rentabilidad', productoId],
     queryFn: async () => {
       const p = new URLSearchParams({ pageNumber: '1', pageSize: '10', searchTerm: codigo })
       const pagina = await api.get<PagedResult<CatalogoStockItem>>(`/api/v1/Productos/catalogo-stock?${p}`)

@@ -9,6 +9,16 @@ jest.mock('@/core/api/client', () => ({ api: { post: () => Promise.resolve(true)
 const consulta = (qc: ReturnType<typeof crearQueryClient>, queryKey: unknown[]) => qc.getQueryCache().find({ queryKey })!
 
 describe('debePersistir: lo que se guarda en el teléfono', () => {
+  it('una lista infinita no se guarda, aunque su clave no diga "list"', () => {
+    const qc = crearQueryClient()
+    qc.setQueryData(['stock-consulta', 'deposito', 'd1'], { pages: [{ items: [1] }], pageParams: [1] })
+    expect(debePersistir(consulta(qc, ['stock-consulta', 'deposito', 'd1']))).toBe(false)
+    qc.setQueryData(['x', 'infinite'], { items: [] })
+    expect(debePersistir(consulta(qc, ['x', 'infinite']))).toBe(false)
+    qc.setQueryData(['inicio', 'resumen'], { ventas: 1 })
+    expect(debePersistir(consulta(qc, ['inicio', 'resumen']))).toBe(true)
+  })
+
   it('una respuesta con datos se guarda; `null` (p. ej. servidor sin el endpoint) no', () => {
     const qc = crearQueryClient()
     qc.setQueryData(['inicio', 'resumen'], { ventas: null, compras: null, autorizacionesPendientes: null })

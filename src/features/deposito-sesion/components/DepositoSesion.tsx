@@ -13,6 +13,7 @@ import {
 } from '../lib/depositoDeSesion'
 import { useDepositoSesionEfectivo, usePuedeElegirDeposito } from '../hooks/useDepositoDeSesion'
 import { DepositoDelTablero, ElegirDepositoSheet } from './ElegirDeposito'
+import { invalidarTodo } from '@/libs/api-client/invalidaciones'
 
 const NOTA = 'Stock, catálogo, ventas y compras nuevas arrancan en este depósito. Lo que ya está guardado sigue en el suyo.'
 
@@ -31,7 +32,7 @@ export function DepositoSesion({ style }: { style?: StyleProp<ViewStyle> } = {})
 
   // Otro usuario en el mismo teléfono no hereda la elección del anterior; lo pedido con ella se vuelve a pedir.
   useEffect(() => {
-    if (descartarSiEsDeOtro(usuarioId)) void queryClient.invalidateQueries()
+    if (descartarSiEsDeOtro(usuarioId)) void invalidarTodo(queryClient)
   }, [usuarioId, queryClient])
   // Primera vez de este usuario: arranca en su depósito (o el Central), no en "Todos", y queda guardado para que
   // viaje en el encabezado X-Deposito-Sesion (como la web).
@@ -39,7 +40,7 @@ export function DepositoSesion({ style }: { style?: StyleProp<ViewStyle> } = {})
   useEffect(() => {
     if (puedeElegir && usuarioId && depositoDeSesionDe(usuarioId) === undefined) {
       elegirDepositoDeSesion(usuarioId, depositoPropioODefecto(propioId))
-      void queryClient.invalidateQueries()
+      void invalidarTodo(queryClient)
     }
   }, [puedeElegir, usuarioId, propioId, queryClient])
   useEffect(() => {
@@ -61,7 +62,7 @@ function DepositoSesionConPermiso({ usuarioId, style }: { usuarioId: string; sty
   const cambiar = (nuevo: string | null) => {
     if (nuevo === depositoId) return
     elegirDepositoDeSesion(usuarioId, nuevo)
-    void queryClient.invalidateQueries()
+    void invalidarTodo(queryClient)
   }
 
   const depositos = useMemo(
@@ -73,7 +74,7 @@ function DepositoSesionConPermiso({ usuarioId, style }: { usuarioId: string; sty
   useEffect(() => {
     if (isSuccess && depositoId && !depositos.some((d) => d.id === depositoId)) {
       elegirDepositoDeSesion(usuarioId, null)
-      void queryClient.invalidateQueries()
+      void invalidarTodo(queryClient)
     }
   }, [isSuccess, depositoId, depositos, usuarioId, queryClient])
 

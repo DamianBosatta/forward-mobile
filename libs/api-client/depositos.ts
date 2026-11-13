@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import type { Deposito, CreateDepositoRequest, UpdateDepositoRequest, DeactivateDepositoRequest } from './types'
+import { invalidarDepositos, invalidarDepositosYStock } from './invalidaciones'
 
 export const depositosKeys = {
   all: ['depositos'] as const,
@@ -19,7 +20,7 @@ export function useCreateDeposito() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateDepositoRequest) => api.post<string>('/api/v1/Depositos', data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: depositosKeys.all }),
+    onSuccess: () => invalidarDepositos(queryClient),
   })
 }
 
@@ -27,9 +28,7 @@ export function useUpdateDeposito() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: UpdateDepositoRequest) => api.put<string>(`/api/v1/Depositos/${data.id}`, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: depositosKeys.all })
-    },
+    onSuccess: () => invalidarDepositos(queryClient),
   })
 }
 
@@ -40,9 +39,6 @@ export function useDeactivateDeposito() {
       const url = `/api/v1/Depositos/${params.id}${params.targetDepositoId ? `?targetId=${params.targetDepositoId}` : ''}`
       return api.delete<boolean>(url)
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: depositosKeys.all })
-      queryClient.invalidateQueries({ queryKey: ['stock'] })
-    },
+    onSuccess: () => invalidarDepositosYStock(queryClient),
   })
 }

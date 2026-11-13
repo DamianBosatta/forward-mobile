@@ -13,12 +13,13 @@ import {
   MOTIVOS_NO_COBRO, PARADA_COBRO_COBRADA, PARADA_COBRO_NO_COBRADA, PARADA_COBRO_PENDIENTE,
   type MotivoNoCobro, type ParadaCobro,
 } from '@/features/cobros/paradaCobro'
-import { logisticaKeys, useMediosCobroChofer } from '@/libs/api-client/logistica'
+import { useMediosCobroChofer } from '@/libs/api-client/logistica'
 import { encolarAccion } from '../cola/colaConsola'
 import { useColaConsola } from '../cola/useColaConsola'
 import { conAccionesCobroEnCola } from '../cola/conAccionesEnCola'
 import { ParadaCobroPantalla, lineasParaEnviar, type ResultadoParadaCobro } from './ParadaCobroPantalla'
 import { montoDeLinea, type LineaCobroForm } from './entrega'
+import { invalidarPorCambioDeHojaDeRuta } from '@/libs/api-client/invalidaciones'
 
 interface Props {
   hojaDeRutaId: string
@@ -94,7 +95,7 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
       // `Duplicado`: la misma clave corrió a la par en otra parada. Tampoco se reusa.
       if (codigo === 'ClaveIdempotenciaConOtroCuerpo' || codigo === 'Duplicado') claves.current.delete(parada.id)
       // El estado de la parada (y de la tarea) lo decide el servidor: se vuelve a leer, no se supone.
-      if (codigo === 'ParadaYaReportada' || codigo === 'Duplicado') void qc.invalidateQueries({ queryKey: logisticaKeys.hojaRuta(hojaDeRutaId) })
+      if (codigo === 'ParadaYaReportada' || codigo === 'Duplicado') void invalidarPorCambioDeHojaDeRuta(qc, hojaDeRutaId)
       setError(mensajeDelServidor(e, 'No se pudo registrar el cobro.'))
     } finally {
       ocupada.current = false
