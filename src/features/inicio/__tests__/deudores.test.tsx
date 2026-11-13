@@ -87,7 +87,7 @@ describe('DeudoresDeInicio: adónde lleva y con qué permiso', () => {
     conPermisos('MOD_PAGOS:read', 'MOD_CLIENTES:read', 'MOD_CC:read')
     pintar()
     await userEvent.press(await screen.findByRole('button', { name: /Deudores/ }))
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/socios')
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/socios', params: { filtro: 'deudores' } })
   })
 
   it('sin Clientes pero con Cobros, abre las cuentas corrientes', async () => {

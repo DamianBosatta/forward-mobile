@@ -6,11 +6,12 @@ import { TarjetaDeudores } from './TarjetaDeudores'
 
 /**
  * Destino de "Ver deudores": la solapa Clientes (MOD_CLIENTES) o, sin ella, Cobros (MOD_CC).
- * TODO(deudores): cuando la cartera acepte el filtro Deudores por ruta, pasarlo acá; hoy solo existe
- * el filtro persistido "con deuda vencida" dentro de la pantalla, sin parámetro de ruta.
+ * Clientes se abre directo en el filtro Deudores con `?filtro=deudores` (lo lee `app/(tabs)/socios/index.tsx`).
  */
-export function destinoDeDeudores(canDo: ReturnType<typeof usePermissions>['canDo']): string | null {
-  if (canDo('MOD_CLIENTES', 'read')) return '/(tabs)/socios'
+export type DestinoDeDeudores = string | { pathname: string; params: { filtro: string } }
+
+export function destinoDeDeudores(canDo: ReturnType<typeof usePermissions>['canDo']): DestinoDeDeudores | null {
+  if (canDo('MOD_CLIENTES', 'read')) return { pathname: '/(tabs)/socios', params: { filtro: 'deudores' } }
   if (canDo('MOD_CC', 'read')) return '/(tabs)/cuentas'
   return null
 }
