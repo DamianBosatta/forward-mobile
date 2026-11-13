@@ -1,5 +1,5 @@
 import { QueryClient, QueryObserver } from '@tanstack/react-query'
-import { invalidarPorAvisos, invalidarPorEntidad, refrescarVencidas } from '../invalidaciones'
+import { invalidarPorAvisos, invalidarPorCambioDeSocio, invalidarPorEntidad, refrescarVencidas } from '../invalidaciones'
 
 const nuevo = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
 const sembrar = (qc: QueryClient, ...claves: unknown[][]) => claves.forEach((k) => qc.setQueryData(k, { ok: true }))
@@ -73,5 +73,16 @@ describe('refrescarVencidas', () => {
     expect(vencida).toHaveBeenCalledTimes(1)
     expect(fresca).not.toHaveBeenCalled()
     u1(); u2()
+  })
+})
+
+describe('invalidarPorCambioDeSocio', () => {
+  it('guardar condiciones de pago, vendedor o depósitos refresca socios y cuentas, y nada más', async () => {
+    const qc = nuevo()
+    sembrar(qc, ['socios', 'list'], ['cuentas-corrientes', 'list'], ['otra-cosa'])
+    await invalidarPorCambioDeSocio(qc)
+    expect(vieja(qc, ['socios', 'list'])).toBe(true)
+    expect(vieja(qc, ['cuentas-corrientes', 'list'])).toBe(true)
+    expect(vieja(qc, ['otra-cosa'])).toBe(false)
   })
 })

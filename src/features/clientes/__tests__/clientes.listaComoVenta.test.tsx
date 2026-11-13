@@ -10,6 +10,7 @@ const mockPush = jest.fn()
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn() }),
   useNavigation: () => ({ dispatch: jest.fn() }),
+  useLocalSearchParams: () => ({}),
 }))
 jest.mock('expo-router/react-navigation', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
 jest.mock('@/core/api/client', () => ({ api: { get: jest.fn() }, API_URL: '' }))

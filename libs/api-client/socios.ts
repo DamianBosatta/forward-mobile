@@ -186,7 +186,7 @@ export function useAsignarVendedorResponsable() {
   return useMutation({
     mutationFn: ({ socioId, vendedorResponsableId }: { socioId: string; vendedorResponsableId: string }) =>
       api.patch<boolean>(`/api/v1/socios-comerciales/${socioId}/vendedor-responsable`, { socioId, vendedorResponsableId }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: sociosKeys.all }) },
+    onSuccess: () => { invalidarPorCambioDeSocio(qc) },
   })
 }
 
@@ -196,7 +196,7 @@ export function useAsignarDepositosSocio() {
   return useMutation({
     mutationFn: ({ socioId, depositoIds }: { socioId: string; depositoIds: string[] }) =>
       api.put<boolean>(`/api/v1/socios-comerciales/${socioId}/depositos`, { socioId, depositoIds }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: sociosKeys.all }) },
+    onSuccess: () => { invalidarPorCambioDeSocio(qc) },
   })
 }
 
