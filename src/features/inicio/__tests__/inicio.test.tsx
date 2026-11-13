@@ -30,7 +30,7 @@ jest.mock('expo-router/react-navigation', () => ({ DrawerActions: { openDrawer: 
 
 const mockAncho = jest.fn(() => 390)
 jest.mock('@/libs/useResponsive', () => ({
-  useResponsive: () => ({ width: mockAncho(), height: 800, isSmall: false, isMedium: true, isLarge: false, scale: (n: number) => n }),
+  useResponsive: () => ({ width: mockAncho(), height: 800, isTablet: mockAncho() >= 600, isSmall: false, isMedium: true, isLarge: false, scale: (n: number) => n }),
 }))
 
 const VENTA_HOY = {
@@ -128,7 +128,8 @@ describe('Inicio: ola B (ventas del día y deuda vencida)', () => {
     servidor({ resumen: RESUMEN, hoy: pagina(3, []), dashboard: { salesToday: 1284500 }, deudas: { clientesConDeuda: 7, totalDeudaClientes: 100, totalDeudaVencidaClientes: 2500000, proveedoresConDeuda: 0, totalDeudaProveedores: 0 } })
     pintar()
     expect(await screen.findByLabelText(`Ventas del día: ${ars("1.284.500,00")}, 3 ventas`)).toBeTruthy()
-    expect(await screen.findByLabelText(`Vencido (más de 30 días): ${ars('2.500.000,00')}`)).toBeTruthy()
+    expect(await screen.findByText('7 clientes te deben')).toBeTruthy()
+    expect(screen.getByTestId('deudores-vencido').props.children).toContain(ars('2.500.000,00'))
   })
 
   it('si salesToday viene null (sin dato) muestra "—"', async () => {
@@ -569,7 +570,8 @@ describe('Inicio: encabezado y "Para resolver" (lámina inicio-general)', () => 
     expect(screen.queryByLabelText(/por recibir/)).toBeNull()
   })
 
-  it('"Nueva venta" es el botón relleno de color de marca', async () => {
+  it('en tablet no hay barra inferior: "Nueva venta" es un botón relleno en la pantalla; en teléfono va al centro de la barra', async () => {
+    mockAncho.mockReturnValue(1194)
     useAuthStore.setState({
       user: { id: 'u1', username: 'emanuel', nombre: 'Emanuel', roles: [], permissions: [{ module: 'MOD_VENTAS', canRead: true, canCreate: true }] },
     } as never)
@@ -578,6 +580,14 @@ describe('Inicio: encabezado y "Para resolver" (lámina inicio-general)', () => 
     pintar()
     const b = await screen.findByRole('button', { name: 'Nueva venta' })
     expect(flat(b).backgroundColor).toBe(themeColors.light.action)
+  })
+
+  it('en teléfono la pantalla no dibuja "Nueva venta": es del botón central de la barra', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    pintar()
+    await screen.findByText('Hola, Emanuel')
+    expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
   })
 
   it('"Para resolver" usa los textos de la galería v2: la cantidad en el título y un punto de color', async () => {

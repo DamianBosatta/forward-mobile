@@ -191,12 +191,12 @@ describe('lista de compras', () => {
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/compras/nueva?borrador=b1')
   })
 
-  it('en el teléfono tocar una tarjeta abre el detalle y el "+" de la lista es uno solo', async () => {
+  it('en el teléfono tocar una tarjeta abre el detalle, el "+" de "Nueva compra" es uno solo y "Nueva venta" aparece una sola vez, como botón central', async () => {
     pantalla(390)
     await userEvent.press(await screen.findByRole('button', { name: /BBBB2222/ }))
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/compras/bbbb2222-0000-0000-0000-000000000000')
     expect(screen.getAllByLabelText('Nueva compra')).toHaveLength(1)
-    expect(screen.queryByLabelText('Nueva venta')).toBeNull()
+    expect(screen.getAllByLabelText('Nueva venta')).toHaveLength(1)
   })
 
   it('en tablet horizontal el detalle se abre al costado, sin salir de la lista', async () => {

@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { LucideIcon } from 'lucide-react-native'
 import { maxFontScale, space, typeScale, useColors } from '@/libs/theme'
+import { ALTO_BARRA_CON_CENTRO } from './NuevaVentaCentral'
 
 export interface BottomBarItem {
   key: string
@@ -61,7 +62,7 @@ export function BottomBar({ items, activeKey, center }: BottomBarProps) {
     <View
       accessibilityLabel="Acciones rápidas"
       style={{
-        height: 76 + insets.bottom,
+        height: (center ? ALTO_BARRA_CON_CENTRO : 76) + insets.bottom,
         paddingBottom: insets.bottom,
         flexDirection: 'row',
         alignItems: 'center',
@@ -73,7 +74,7 @@ export function BottomBar({ items, activeKey, center }: BottomBarProps) {
       {center ? (
         <>
           {items.slice(0, mitad).map(renderItem)}
-          <View style={{ flex: 1, alignItems: 'center' }}>{center}</View>
+          <View testID="barra-centro" style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>{center}</View>
           {items.slice(mitad).map(renderItem)}
         </>
       ) : (

@@ -1,7 +1,13 @@
 import React from 'react'
+import { Text } from 'react-native'
 import { render, screen, userEvent } from '@testing-library/react-native'
 import { PulsoDelNegocio } from '../components/PulsoDelNegocio'
-import { AtajosDeInicio } from '../components/AtajosDeInicio'
+
+// La tarjeta Deudores tiene su propio test (deudores.test.tsx); acá solo importa dónde se dibuja.
+jest.mock('../components/DeudoresDeInicio', () => {
+  const { Text } = require('react-native')
+  return { DeudoresDeInicio: () => <Text>tarjeta-deudores-mock</Text> }
+})
 
 const NBSP = '\u00a0'
 
@@ -31,27 +37,12 @@ describe('Inicio general: el pulso del negocio (lámina inicio-general)', () => 
   })
 })
 
-describe('Inicio general: deuda vencida de los clientes', () => {
-  it('con el dato muestra la cifra de deuda vencida', () => {
-    render(<PulsoDelNegocio ventasDelDia={null} cantidadVentas={null} pedidosPendientes={0} rutasActivas={0} meDeben={100} debo={null} deudaVencida={2500000} />)
-    expect(screen.getByLabelText(`Vencido (más de 30 días): $${NBSP}2.500.000,00`)).toBeTruthy()
-  })
-
-  it('sin el dato no muestra la cifra', () => {
-    render(<PulsoDelNegocio ventasDelDia={null} cantidadVentas={null} pedidosPendientes={0} rutasActivas={0} meDeben={null} debo={null} />)
+describe('Inicio general: Deudores destaca entre el hero y los mosaicos', () => {
+  it('la tarjeta Deudores se dibuja y el pulso ya no trae atajos ni la cifra de vencido', () => {
+    render(<PulsoDelNegocio ventasDelDia={1} cantidadVentas={1} pedidosPendientes={1} rutasActivas={1} meDeben={1} debo={1} />)
+    expect(screen.getByText('tarjeta-deudores-mock')).toBeTruthy()
     expect(screen.queryByLabelText(/Vencido/)).toBeNull()
-  })
-})
-
-describe('Inicio general: accesos rápidos', () => {
-  it('cada atajo abre su pantalla y solo aparecen los que el usuario puede usar', async () => {
-    const ir = jest.fn()
-    render(<AtajosDeInicio puede={{ vender: true, cobrar: false, catalogo: true, stock: true }} onIr={ir} />)
-    expect(screen.queryByRole('button', { name: 'Cobrar' })).toBeNull()
-    await userEvent.press(screen.getByRole('button', { name: 'Nueva venta' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Catálogo' }))
-    await userEvent.press(screen.getByRole('button', { name: 'Stock' }))
-    expect(ir.mock.calls.map((c) => c[0])).toEqual(['/(tabs)/ventas/nueva', '/(tabs)/inventario', '/(tabs)/inventario/stock'])
+    expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
   })
 })
 
@@ -86,26 +77,13 @@ describe('Inicio general: el hero de ventas del día en cada tema', () => {
 })
 
 describe('Inicio general: propuesta (frames 6 a 9)', () => {
-  const { StyleSheet } = require('react-native')
-  const { themeColors, useThemeStore } = require('@/libs/theme')
-  afterEach(() => useThemeStore.setState({ mode: 'system' }))
-
-  it('los atajos van sin borde y "Nueva venta" en color de acción', () => {
-    useThemeStore.setState({ mode: 'light' })
-    render(<AtajosDeInicio puede={{ vender: true, cobrar: true, catalogo: true, stock: true }} onIr={jest.fn()} />)
-    const estilo = (n: string) => StyleSheet.flatten(screen.getByRole('button', { name: n }).props.style)
-    expect(estilo('Nueva venta').backgroundColor).toBe(themeColors.light.action)
-    expect(estilo('Cobrar').borderWidth ?? 0).toBe(0)
-    expect(estilo('Nueva venta').borderWidth ?? 0).toBe(0)
-  })
-
-  it('lo que va entre el hero y los mosaicos (los atajos) se dibuja ahí', () => {
+  it('lo que va entre el hero y Deudores (en tablet, "Nueva venta") se dibuja ahí', () => {
     render(
       <PulsoDelNegocio ventasDelDia={1} cantidadVentas={1} pedidosPendientes={1} rutasActivas={1} meDeben={1} debo={1}>
-        <AtajosDeInicio puede={{ vender: true, cobrar: false, catalogo: false, stock: false }} onIr={jest.fn()} />
+        <Text>en-el-medio</Text>
       </PulsoDelNegocio>,
     )
-    expect(screen.getByRole('button', { name: 'Nueva venta' })).toBeTruthy()
+    expect(screen.getByText('en-el-medio')).toBeTruthy()
   })
 
   it('sin dato, "—" en el hero, en los mosaicos y en la lista; nunca 0', () => {
@@ -113,10 +91,5 @@ describe('Inicio general: propuesta (frames 6 a 9)', () => {
     expect(screen.getAllByText('—')).toHaveLength(5)
     expect(screen.queryByText(/ventas$/)).toBeNull()
     expect(screen.queryByText('0')).toBeNull()
-  })
-
-  it('"Vencido" lleva un punto rojo y solo aparece si el servidor lo manda', () => {
-    render(<PulsoDelNegocio ventasDelDia={1} cantidadVentas={1} pedidosPendientes={1} rutasActivas={1} meDeben={1} debo={1} deudaVencida={486300} />)
-    expect(screen.getByTestId('vencido-punto')).toBeTruthy()
   })
 })
