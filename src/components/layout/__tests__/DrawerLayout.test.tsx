@@ -6,6 +6,7 @@
 import React from 'react'
 import { render } from '@testing-library/react-native'
 import DrawerLayout from '@/app/(tabs)/_layout'
+import { useAuthStore } from '@/libs/store/auth.store'
 
 const mockDims = jest.fn()
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
@@ -24,9 +25,13 @@ jest.mock('expo-router/drawer', () => {
 })
 jest.mock('@/src/components/layout/CustomDrawerContent', () => () => null)
 
+const conSesion = () => useAuthStore.setState({ isAuthenticated: true, accessToken: 'tok' })
+const sinSesion = () => useAuthStore.setState({ isAuthenticated: false, accessToken: null })
+
 const opcionesConAncho = (width: number) => {
   mockDims.mockReturnValue({ width, height: 800, scale: 2, fontScale: 1 })
   mockDrawer.mockClear()
+  conSesion()
   render(<DrawerLayout />)
   return mockDrawer.mock.calls[0][0].screenOptions
 }
@@ -42,5 +47,24 @@ describe('DrawerLayout — menú lateral por ancho', () => {
     const opciones = opcionesConAncho(ancho)
     expect(opciones.drawerType).toBe('permanent')
     expect(opciones.drawerStyle.width).toBe(240)
+  })
+})
+
+describe('DrawerLayout — sin sesión', () => {
+  beforeEach(() => mockDrawer.mockClear())
+  afterEach(() => conSesion())
+
+  it('sin sesión no monta el cajón: no despacha CLOSE_DRAWER antes de ir al login', () => {
+    mockDims.mockReturnValue({ width: 360, height: 800, scale: 2, fontScale: 1 })
+    sinSesion()
+    render(<DrawerLayout />)
+    expect(mockDrawer).not.toHaveBeenCalled()
+  })
+
+  it('con sesión monta el cajón', () => {
+    mockDims.mockReturnValue({ width: 360, height: 800, scale: 2, fontScale: 1 })
+    conSesion()
+    render(<DrawerLayout />)
+    expect(mockDrawer).toHaveBeenCalled()
   })
 })

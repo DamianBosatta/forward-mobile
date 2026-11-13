@@ -5,6 +5,7 @@
 import React from 'react'
 import { render } from '@testing-library/react-native'
 import DrawerLayout from '@/app/(tabs)/_layout'
+import { useAuthStore } from '@/libs/store/auth.store'
 
 const mockPantallas: string[] = []
 jest.mock('expo-router/drawer', () => {
@@ -16,6 +17,9 @@ jest.mock('expo-router/drawer', () => {
   return { Drawer }
 })
 jest.mock('@/src/components/layout/CustomDrawerContent', () => () => null)
+
+// The Drawer layout only mounts with a session.
+beforeEach(() => useAuthStore.setState({ isAuthenticated: true, accessToken: 'tok' }))
 
 describe('rutas del cajón', () => {
   it('registra la sección de avisos y conserva las secciones y pantallas de antes', () => {
