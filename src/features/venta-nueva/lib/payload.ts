@@ -25,6 +25,7 @@ export interface AutoguardadoVenta {
   fechaEntrega?: string
   cargoFlete?: number
   observaciones?: string
+  condicionPago?: CondicionPagoDto
 }
 
 export const itemsDe = (lineas: LineaCarrito[]): ItemVenta[] =>
@@ -42,6 +43,7 @@ export function aAutoguardado(lineas: LineaCarrito[], descuentoGeneral = 0, cab:
   if (cab.metodoEntrega !== METODO_ENTREGA.RetiroEnLocal && cab.fecha) p.fechaEntrega = cab.fecha
   if (cab.metodoEntrega === METODO_ENTREGA.Logistica) p.cargoFlete = cab.flete
   if (cab.observaciones.trim()) p.observaciones = cab.observaciones.trim()
+  if (cab.condicionPago) p.condicionPago = cab.condicionPago
   return p
 }
 

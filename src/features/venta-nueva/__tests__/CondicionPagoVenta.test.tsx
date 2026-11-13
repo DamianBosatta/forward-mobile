@@ -48,8 +48,9 @@ function pantalla() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   return render(<QueryClientProvider client={qc}><VentaNuevaPantalla /></QueryClientProvider>)
 }
-async function abrirRevision() {
+async function abrirRevision(tipo: 'Pedido' | 'Presupuesto' = 'Pedido') {
   pantalla()
+  if (tipo === 'Presupuesto') await userEvent.press(screen.getByRole('radio', { name: 'Presupuesto' }))
   await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
   await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
   await userEvent.press(screen.getByRole('button', { name: 'Ver venta' }))
@@ -98,6 +99,20 @@ describe.each([['light', 390], ['dark', 390], ['light', 820], ['dark', 820]] as 
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(cuerpoDelAlta()).toBeDefined())
     expect(cuerpoDelAlta().condicionPago).toEqual({ tipo: 'Contado' })
+  })
+
+  it('un Presupuesto nuevo también ofrece la condición, con la predeterminada del cliente', async () => {
+    mockPut.mockResolvedValue({ ventaId: 'b1', version: 8 })
+    await abrirRevision('Presupuesto')
+    await waitFor(() => expect(screen.getByRole('radio', { name: /15 días desde la entrega.*predeterminada/ })).toBeChecked())
+    expect(screen.getByRole('radio', { name: 'Contado' })).toBeTruthy()
+  })
+
+  it('el Presupuesto guarda la condición elegida en el autoguardado del borrador', async () => {
+    mockPut.mockResolvedValue({ ventaId: 'b1', version: 8 })
+    await abrirRevision('Presupuesto')
+    await userEvent.press(screen.getByRole('radio', { name: 'Contado' }))
+    await waitFor(() => expect(mockPut.mock.calls.some((c) => c[1]?.condicionPago?.tipo === 'Contado')).toBe(true), { timeout: 5000 })
   })
 
   it('avisa lo del manifiesto solo cuando no es contado', async () => {

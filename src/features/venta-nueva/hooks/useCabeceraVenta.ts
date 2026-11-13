@@ -89,8 +89,8 @@ export function useCabeceraVenta(tipo: TipoDocumento, pedirDefectoConFactura = t
   return {
     cabecera, tira, hidratar, setConFactura,
     condicion: { opciones: condicion.opciones, vigente: condicion.vigente, elegir: setCondicionElegida, cargando: socio.isLoading,
-      // Un Presupuesto nuevo todavía no tiene condición: se la pone la venta al confirmarse como Pedido.
-      visible: tipo === 'Pedido' || condicionGuardada !== null },
+      // Pedido y Presupuesto eligen la condición; el Presupuesto la guarda en el autoguardado del borrador.
+      visible: true },
     calendarioError: (dias.isError && dias.data === undefined) || (feriados.isError && feriados.data === undefined),
     reintentarCalendario: () => { if (dias.isError) void dias.refetch(); if (feriados.isError) void feriados.refetch() }, setMetodoEntrega, setFecha, fleteTexto, setFleteTexto, fleteInvalido, observaciones, setObservaciones,
     comision, puedeCeder, cesionTexto, setCesionTexto, cesionError,
