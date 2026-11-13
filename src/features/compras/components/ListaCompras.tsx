@@ -16,7 +16,7 @@ import type { CompraDtoList } from '@/libs/api-client'
 import type { BorradorCompra } from '@/libs/api-client/compras'
 import { agruparPorDia, horaDe, tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { useComprasList, type PeriodoCompras, type PestanaCompras } from '../hooks/useComprasList'
-import { llegaTexto } from '../lib/fecha'
+import { fechaHoraTexto, llegaTexto } from '../lib/fecha'
 import type { EstadoCompraRuta } from '@/features/listas/lib/filtroDeRuta'
 import { numeroDeCompra } from '../lib/numero'
 
@@ -147,6 +147,7 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
             direccion={x.razonSocialProveedor}
             nombre={[`${numeroDeCompra(x)} · ${x.creadoPor ?? x.nombreDeposito}`, llegaTexto(x.fechaEsperadaRecepcion)].filter(Boolean).join(' · ')}
             hora={horaDe(x.fecha)}
+            fechaHora={fechaHoraTexto(x.fecha)}
             detalle={productos(x.itemsCount ?? 0)}
             importe={x.totalAmount}
             chip={chipForEstado('compra', x.estado)}

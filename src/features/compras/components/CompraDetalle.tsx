@@ -9,14 +9,14 @@ import { hasCapability } from '@/features/auth/lib/capabilities'
 import type { CompraDto } from '@/libs/api-client'
 import { useSocio } from '@/libs/api-client/socios'
 import { usePermissions } from '@/core/auth/RequirePermission'
-import { BottomSheet, Button, Field, Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
+import { BottomSheet, Button, Field, Notice, PieFijo, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { PasosDeEstado } from '@/core/ui/fw/PasosDeEstado'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { diaArgentina, hoyTexto } from '@/core/utils/fecha'
 import { mostrarNumero } from '@/core/utils/numero'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { ddmmaaaa } from '@/core/utils/fecha'
-import { fechaIso, franjaTexto } from '@/features/compras/lib/fecha'
+import { fechaHoraTexto, franjaTexto } from '@/features/compras/lib/fecha'
 import { confirmarYRecibir, type Aviso } from '@/features/compras/lib/confirmar-y-recibir'
 import { ConfirmarYRecibirSheet } from '@/features/compras/components/ConfirmarYRecibirSheet'
 import { ComprobanteCampos } from '@/features/compras/components/ComprobanteCampos'
@@ -124,6 +124,8 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
   const pasos = pasosDeCompra(estado)
   const franja = franjaTexto(compra.franjaEntregaProveedor)
   const hayBarra = acciones.confirmar || acciones.recibir || acciones.editar || acciones.cancelar
+  // Con pie de acciones, el pie ya suma la barra del sistema; sin él, el último dato la respeta el scroll.
+  const hayPie = hayBarra || acciones.anularRecepcion
 
   // Cada hoja arranca limpia: ni el motivo ni el error de otra quedan a la vista.
   const abrirHoja = (h: Hoja) => { setError(null); setAviso(null); setMotivo(''); if (h === 'anularRecepcion' || h === 'confirmarYRecibir') setVersionVista(compra.version); if (h === 'confirmarYRecibir') setFechaFactura(hoyTexto()); setComprobante(h === 'comprobante' ? formComprobante() : null); setHoja(h) }
@@ -194,7 +196,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
         leading={{ kind: 'atras', onPress: volver }}
       />
       {pasos ? <PasosDeEstado pasos={pasos} accessibilityLabel="Estado de la compra" /> : null}
-      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] * 2 + insetInferior }}>
+      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: hayPie ? space[6] : space[6] + insetInferior }}>
         <View style={{ gap: space[1], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
             <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text, flexShrink: 1 }]}>{compra.razonSocialProveedor}</Text>
@@ -210,6 +212,10 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
         <View style={{ gap: space[1], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
           <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text }]}>Recepción</Text>
           <FilaDato k="Depósito" v={compra.nombreDeposito} />
+          {fechaHoraTexto(compra.fecha) ? <FilaDato k="Pedido" v={fechaHoraTexto(compra.fecha)!} /> : null}
+          {fechaHoraTexto(compra.fechaRecepcion) ? <FilaDato k="Recibida" v={fechaHoraTexto(compra.fechaRecepcion)!} /> : null}
+          {fechaHoraTexto(compra.fechaAnulacion) ? <FilaDato k="Recepción anulada" v={fechaHoraTexto(compra.fechaAnulacion)!} /> : null}
+          {fechaHoraTexto(compra.fechaCancelacion) ? <FilaDato k="Cancelada" v={fechaHoraTexto(compra.fechaCancelacion)!} /> : null}
           {franja ? <FilaDato k="Entrega esperada" v={franja} /> : null}
           {compra.condicionPago?.descripcion ? <FilaDato k="Plazo de pago" v={compra.condicionPago.descripcion} /> : null}
           <FilaDato k="Con factura" v={compra.conFactura ? 'Sí' : 'No'} />
@@ -226,7 +232,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
                   <Text style={[typeScale.secundario, { color: c.text }]}>{textoDeLinea(lineaDesdeDetalle(d))}</Text>
                   <Text style={[typeScale.secundario, cifras, { color: c.textSecondary }]}>{`${formatImporte(d.costoUnitarioBaseAmount)} por unidad`}</Text>
                 </View>
-                <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(d.subtotalAmount)}</Text>
+                <Text numberOfLines={1} style={[typeScale.cuerpoDestacado, cifras, { color: c.text, flexShrink: 0, textAlign: 'right' }]}>{formatImporte(d.subtotalAmount)}</Text>
               </View>
             </View>
           ))}
@@ -275,7 +281,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
         ) : null}
       </ScrollView>
       {hayBarra ? (
-        <View style={{ gap: space[2], padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+        <PieFijo>
           {acciones.recibir ? <Button label="Recibir mercadería" disabled={ocupado} onPress={() => { setError(null); setAviso(null); setRecibiendoMercaderia(true) }} /> : null}
           {acciones.confirmar ? (
             <Button label="Confirmar compra" loading={confirmar.isPending} disabled={ocupado} onPress={() => { void correr(() => confirmar.mutateAsync(compra.id), 'No se confirmó la compra') }} />
@@ -287,11 +293,11 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
               {acciones.cancelar ? <View style={{ flex: 1 }}><Button label="Cancelar compra" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('cancelar')} /></View> : null}
             </View>
           ) : null}
-        </View>
+        </PieFijo>
       ) : acciones.anularRecepcion ? (
-        <View style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+        <PieFijo>
           <Button label="Anular recepción" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('anularRecepcion')} />
-        </View>
+        </PieFijo>
       ) : null}
       <BottomSheet visible={hoja === 'anularRecepcion'} onClose={cerrarHoja} accessibilityLabel="Anular la recepción">
         <Text style={[typeScale.titulo, { color: c.text }]}>Anular la recepción</Text>
