@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Plus, Search } from 'lucide-react-native'
+import { useVentas } from '@/libs/api-client/ventas'
 import { FONT, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { useAuthStore } from '@/libs/store/auth.store'
@@ -10,14 +11,16 @@ import { useClientesRecientes } from '@/libs/api-client/socios'
 import { Button, TopBar, formatImporte, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { nombreMes, mesDe } from '@/src/features/reportes/mes'
 import { useAhoraArgentina } from '@/core/utils/useAhoraArgentina'
-import { partesArgentina } from '@/core/utils/fecha'
+import { diaArgentina, partesArgentina } from '@/core/utils/fecha'
 import { direccionDeEntrega, inicialesDeDireccion, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { fusionarRecientes, leerRecientes } from '@/features/clientes/lib/recientes'
 import { useVenderA } from '@/features/venta-nueva/hooks/useVenderA'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { DepositoSesion } from '@/features/deposito-sesion'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
-import { useResumenInicio } from '../api/queries'
+import { useDashboardResumen, useResumenInicio } from '../api/queries'
+import { DeudoresDeInicio } from './DeudoresDeInicio'
+import { MosaicoDeInicio } from './MosaicoDeInicio'
 import {
   BloqueCargando,
   ErrorConReintentar,
@@ -41,8 +44,6 @@ interface Pendiente {
   titulo: string
   apoyo: string
   punto: TonoPunto
-  /** El hero lo nombra: es algo que el vendedor tiene que resolver ya (rechazos, vencimientos, la bandeja). */
-  alerta: boolean
   onPress?: () => void
 }
 
@@ -89,7 +90,8 @@ export function MiDiaScreen() {
   }, [resumen, pendientes, recientesServidor])
 
   const ir = (ruta: string) => () => router.push(ruta as never)
-  const nuevaVenta = puedeVender ? <Button label="Nueva venta" icon={Plus} onPress={ir('/(tabs)/ventas/nueva')} /> : null
+  // En teléfono "Nueva venta" es el botón central de la barra inferior; en tablet no hay barra y va en el hero.
+  const nuevaVentaEnTablet = isTablet && puedeVender ? <Button label="Nueva venta" icon={Plus} onPress={ir('/(tabs)/ventas/nueva')} /> : null
 
   // ── Para resolver hoy: las filas de siempre, cada una con su punto de color ──
   const filas: Pendiente[] = []
@@ -97,14 +99,14 @@ export function MiDiaScreen() {
   if (v) {
     const p = v.presupuestos.cantidad
     if (p) {
-      filas.push({ clave: 'presupuestos', cantidad: p, titulo: plural(p, 'presupuesto pendiente', 'presupuestos pendientes'), apoyo: 'Pasalos a pedido o reabrilos', punto: 'neutro', alerta: false, onPress: ir('/(tabs)/ventas?tipo=presupuestos&estado=Pendiente') })
+      filas.push({ clave: 'presupuestos', cantidad: p, titulo: plural(p, 'presupuesto pendiente', 'presupuestos pendientes'), apoyo: 'Pasalos a pedido o reabrilos', punto: 'neutro', onPress: ir('/(tabs)/ventas?tipo=presupuestos&estado=Pendiente') })
     }
     const a = v.porAutorizar
     if (a?.cantidad) {
       filas.push(
         a.propias
-          ? { clave: 'autorizar', cantidad: a.cantidad, titulo: plural(a.cantidad, 'pedido esperando autorización', 'pedidos esperando autorización'), apoyo: 'Esperando a gestión', punto: 'atencion', alerta: false, onPress: ir('/(tabs)/ventas?tipo=pedidos&estado=PendienteAutorizacion') }
-          : { clave: 'autorizar', cantidad: a.cantidad, titulo: plural(a.cantidad, 'pedido por autorizar', 'pedidos por autorizar'), apoyo: 'Bandeja de autorizaciones', punto: 'atencion', alerta: true, onPress: ir('/(tabs)/autorizaciones') },
+          ? { clave: 'autorizar', cantidad: a.cantidad, titulo: plural(a.cantidad, 'pedido esperando autorización', 'pedidos esperando autorización'), apoyo: 'Esperando a gestión', punto: 'atencion', onPress: ir('/(tabs)/ventas?tipo=pedidos&estado=PendienteAutorizacion') }
+          : { clave: 'autorizar', cantidad: a.cantidad, titulo: plural(a.cantidad, 'pedido por autorizar', 'pedidos por autorizar'), apoyo: 'Bandeja de autorizaciones', punto: 'atencion', onPress: ir('/(tabs)/autorizaciones') },
       )
     }
   }
@@ -112,23 +114,47 @@ export function MiDiaScreen() {
   const cuenta = (n: unknown) => (typeof n === 'number' && Number.isFinite(n) && n > 0 ? n : 0)
   const rechazados = cuenta(resumen.data?.pedidosRechazados)
   if (rechazados) {
-    filas.push({ clave: 'rechazados', cantidad: rechazados, titulo: plural(rechazados, 'pedido rechazado', 'pedidos rechazados'), apoyo: 'Rechazados por gestión este mes', punto: 'peligro', alerta: true })
+    filas.push({ clave: 'rechazados', cantidad: rechazados, titulo: plural(rechazados, 'pedido rechazado', 'pedidos rechazados'), apoyo: 'Rechazados por gestión este mes', punto: 'peligro' })
   }
   const porVencer = cuenta(resumen.data?.presupuestosPorVencer)
   if (porVencer) {
-    filas.push({ clave: 'por-vencer', cantidad: porVencer, titulo: plural(porVencer, 'presupuesto por vencer', 'presupuestos por vencer'), apoyo: 'Cerralos o reabrilos antes de que venzan', punto: 'atencion', alerta: true })
+    filas.push({ clave: 'por-vencer', cantidad: porVencer, titulo: plural(porVencer, 'presupuesto por vencer', 'presupuestos por vencer'), apoyo: 'Cerralos o reabrilos antes de que venzan', punto: 'atencion' })
   }
 
-  // ── Hero: la suma de esas filas. Sin dato, "—"; "Todo al día." solo si se sabe que no hay nada ──
+  // ── Hero: lo vendido hoy (GET /Dashboard/summary, lo propio) y cuántas ventas fueron ──
+  const dia = diaArgentina(ahora)
+  const ventasHoy = useDashboardResumen(veVentas)
+  const cantidadHoy = useVentas({ pageNumber: 1, pageSize: 1, fechaDesde: dia, fechaHasta: dia }, { enabled: veVentas }).data?.totalCount ?? null
   const pendientesConocidos = !pendientes.error && !!v && v.presupuestos.cantidad != null
-  const total = filas.reduce((s, f) => s + f.cantidad, 0)
-  const todoConocido = pendientesConocidos && !!resumen.data
-  const cifraHero = total > 0 ? plural(total, 'pendiente', 'pendientes') : todoConocido ? 'Todo al día.' : '—'
-  const metaHero = filas.filter((f) => f.alerta).map((f) => f.titulo).join(' · ') || null
-  const hero = !veVentas ? null : resumen.isLoading ? (
+  const hero = !veVentas ? null : ventasHoy.isLoading ? (
     <HeroCargando accessibilityLabel="Cargando tu día" />
+  ) : ventasHoy.isError ? (
+    <ErrorConReintentar texto="No se pudieron cargar las ventas de hoy." accessibilityLabel="Reintentar ventas de hoy" onReintentar={() => ventasHoy.refetch()} />
   ) : (
-    <HeroDeInicio testID="mi-dia-hero" etiqueta="Mi día" cifra={cifraHero} meta={metaHero}>{nuevaVenta}</HeroDeInicio>
+    <HeroDeInicio
+      testID="mi-dia-hero"
+      etiqueta="Ventas de hoy"
+      cifra={formatImporte(ventasHoy.data?.salesToday ?? null)}
+      meta={cantidadHoy == null ? null : plural(cantidadHoy, 'venta', 'ventas')}
+    >
+      {nuevaVentaEnTablet}
+    </HeroDeInicio>
+  )
+  const deudores = (
+    <DeudoresDeInicio
+      respaldo={!veVentas ? undefined : {
+        cargando: resumen.isLoading,
+        error: resumen.isError,
+        datos: resumen.data ? { clientes: resumen.data.cobrosPendientes.clientes, total: resumen.data.cobrosPendientes.total } : null,
+        reintentar: () => resumen.refetch(),
+      }}
+    />
+  )
+  // "Por cobrar" ya es la tarjeta Deudores (mismo total): no se repite como mosaico.
+  const mosaicos = !veVentas ? null : (
+    <View style={{ flexDirection: 'row', gap: space[3] }}>
+      <MosaicoDeInicio etiqueta="Pedidos pendientes" valor={v ? String(v.pedidos.cantidad) : '—'} />
+    </View>
   )
 
   const resolver = !veVentas ? null : pendientes.error ? (
@@ -155,7 +181,6 @@ export function MiDiaScreen() {
       <ListaEnTarjeta testID="mi-dia-cifras">
         <Cifra etiqueta={`Vendido en ${mesNombre}`} importe={resumen.data.ventas.facturado} />
         <Cifra etiqueta="Tu comisión" importe={resumen.data.comisiones.neto} resaltada />
-        <Cifra etiqueta="Por cobrar" importe={resumen.data.cobrosPendientes.total} />
       </ListaEnTarjeta>
     </SeccionDeInicio>
   )
@@ -185,8 +210,8 @@ export function MiDiaScreen() {
     </SeccionDeInicio>
   )
 
-  // Sin leer Ventas no hay hero: "Nueva venta" (si puede crear) queda suelta, con el mismo permiso de siempre.
-  const nuevaVentaSuelta = !veVentas ? nuevaVenta : null
+  // Sin leer Ventas no hay hero: en tablet "Nueva venta" (si puede crear) queda suelta.
+  const nuevaVentaSuelta = !veVentas ? nuevaVentaEnTablet : null
   const fecha = `${DIAS[hoy.diaSemana]} ${hoy.dia} de ${MESES[hoy.mes]}`
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -206,13 +231,15 @@ export function MiDiaScreen() {
         <DepositoSesion />
         {isTablet ? (
           <View style={{ flexDirection: 'row', gap: space[6], alignItems: 'flex-start' }}>
-            <View style={{ flex: 1, gap: space[5] }}>{hero}{nuevaVentaSuelta}{numeros}</View>
+            <View style={{ flex: 1, gap: space[5] }}>{hero}{nuevaVentaSuelta}{deudores}{mosaicos}{numeros}</View>
             <View style={{ flex: 1, gap: space[5] }}>{resolver}{venderDeNuevo}</View>
           </View>
         ) : (
           <>
             {hero}
             {nuevaVentaSuelta}
+            {deudores}
+            {mosaicos}
             {resolver}
             {numeros}
             {venderDeNuevo}

@@ -48,6 +48,8 @@ const RESUMEN_VENDEDOR = {
 function responder(extra: Record<string, unknown> = {}) {
   mockGet.mockImplementation((url: string) => {
     if (url.includes('Inicio/resumen')) return Promise.resolve(extra.inicio ?? RESUMEN_INICIO)
+    if (url.includes('Dashboard/summary')) return Promise.resolve(extra.dashboard ?? { salesToday: 1284500 })
+    if (url.includes('/Ventas?')) return Promise.resolve({ items: [], totalCount: 3, pageNumber: 1, pageSize: 1 })
     if (url.includes('resumen-vendedor')) return extra.vendedor instanceof Error ? Promise.reject(extra.vendedor) : Promise.resolve(extra.vendedor ?? RESUMEN_VENDEDOR)
     return Promise.reject(new ApiError(404, 'no'))
   })
@@ -75,6 +77,11 @@ describe('varianteDeInicio (como la web: CAP_VER_COSTOS decide, no el rol)', () 
   it('el chofer sigue yendo a su consola', () => expect(varianteDeInicio({ esChofer: true, veCostos: true })).toBe('chofer'))
   it('con CAP_VER_COSTOS, el de gestión', () => expect(varianteDeInicio({ esChofer: false, veCostos: true })).toBe('gestion'))
   it('sin CAP_VER_COSTOS, Mi día del vendedor', () => expect(varianteDeInicio({ esChofer: false, veCostos: false })).toBe('vendedor'))
+  it('quien no vende y maneja stock o compras, el de depósito; con CAP_VER_COSTOS gana gestión y el chofer su consola', () => {
+    expect(varianteDeInicio({ esChofer: false, veCostos: false, esDeposito: true })).toBe('deposito')
+    expect(varianteDeInicio({ esChofer: false, veCostos: true, esDeposito: true })).toBe('gestion')
+    expect(varianteDeInicio({ esChofer: true, veCostos: false, esDeposito: true })).toBe('chofer')
+  })
 })
 
 describe('MiDiaScreen', () => {
@@ -86,8 +93,9 @@ describe('MiDiaScreen', () => {
     expect(screen.getByText('Vendido en octubre')).toBeTruthy()
     expect(screen.getByText('Tu comisión')).toBeTruthy()
     expect(screen.getByText(ars('171.000,00'))).toBeTruthy()
-    expect(screen.getByText('Por cobrar')).toBeTruthy()
-    expect(screen.getByText(ars('640.300,00'))).toBeTruthy()
+    // Cobros y clientes: la tarjeta Deudores sale de cobrosPendientes (el vendedor no tiene MOD_PAGOS).
+    expect(await screen.findByText('4 clientes te deben')).toBeTruthy()
+    expect(screen.getByTestId('deudores-monto').props.children).toBe(ars('640.300,00'))
     const url = mockGet.mock.calls.map(([u]) => String(u)).find((u) => u.includes('resumen-vendedor'))!
     expect(url).toContain('anio=2026&mes=10')
   })
@@ -104,34 +112,44 @@ describe('MiDiaScreen', () => {
     expect(screen.getByRole('header', { name: 'Tus números de octubre' })).toBeTruthy()
     expect(within(cifras).getByLabelText(`Vendido en octubre: ${ars('3.420.000,00')}`)).toBeTruthy()
     expect(within(cifras).getByLabelText(`Tu comisión: ${ars('171.000,00')}`)).toBeTruthy()
-    expect(within(cifras).getByLabelText(`Por cobrar: ${ars('640.300,00')}`)).toBeTruthy()
+    expect(within(cifras).queryByLabelText(/Por cobrar/)).toBeNull()
     expect(within(screen.getByTestId('mi-dia-hero')).queryByText(ars('171.000,00'))).toBeNull()
   })
 
-  it('el hero suma los pendientes de "Para resolver hoy" y nombra los de alerta, con "Nueva venta" adentro', async () => {
-    responder({ vendedor: { ...RESUMEN_VENDEDOR, pedidosRechazados: 1, presupuestosPorVencer: 4 } })
+  it('el hero muestra lo vendido hoy y cuántas ventas fueron, sin "Nueva venta" adentro en teléfono', async () => {
     pintar()
-    // 3 presupuestos + 2 propios esperando autorización + 1 rechazado + 4 por vencer.
     const hero = await screen.findByTestId('mi-dia-hero')
-    expect(await within(hero).findByText('10 pendientes')).toBeTruthy()
-    expect(within(hero).getByText('1 pedido rechazado · 4 presupuestos por vencer')).toBeTruthy()
-    expect(within(hero).getByRole('button', { name: 'Nueva venta' })).toBeTruthy()
+    expect(within(hero).getByText('Ventas de hoy')).toBeTruthy()
+    expect(within(hero).getByText(ars('1.284.500,00'))).toBeTruthy()
+    expect(await within(hero).findByText('3 ventas')).toBeTruthy()
+    expect(within(hero).queryByRole('button', { name: 'Nueva venta' })).toBeNull()
     expect(screen.getByRole('header', { name: 'Para resolver hoy' })).toBeTruthy()
   })
 
-  it('con la bandeja de autorizaciones el hero la nombra como alerta', async () => {
-    responder({ inicio: { ...RESUMEN_INICIO, ventas: { ...RESUMEN_INICIO.ventas, presupuestosPendientes: pend(1) }, autorizacionesPendientes: pend(4) } })
+  it('sin dato de ventas de hoy el hero muestra "—", nunca 0', async () => {
+    responder({ dashboard: { salesToday: null } })
     pintar()
     const hero = await screen.findByTestId('mi-dia-hero')
-    expect(await within(hero).findByText('5 pendientes')).toBeTruthy()
-    expect(within(hero).getByText('4 pedidos por autorizar')).toBeTruthy()
-    expect(screen.getByLabelText('4 pedidos por autorizar. Bandeja de autorizaciones')).toBeTruthy()
+    expect(within(hero).getByLabelText('Ventas de hoy: —', { exact: false })).toBeTruthy()
   })
 
-  it('un solo pendiente va en singular', async () => {
-    responder({ inicio: { ...RESUMEN_INICIO, ventas: { presupuestosPendientes: pend(1), pedidosConfirmados: pend(0), porAutorizar: pend(0) } } })
+  it('con la bandeja de autorizaciones la fila la nombra como alerta', async () => {
+    responder({ inicio: { ...RESUMEN_INICIO, ventas: { ...RESUMEN_INICIO.ventas, presupuestosPendientes: pend(1) }, autorizacionesPendientes: pend(4) } })
     pintar()
-    expect(await within(await screen.findByTestId('mi-dia-hero')).findByText('1 pendiente')).toBeTruthy()
+    expect(await screen.findByLabelText('4 pedidos por autorizar. Bandeja de autorizaciones')).toBeTruthy()
+  })
+
+  it('si las ventas de hoy fallan, el hero lo dice con "Reintentar" y no inventa una cifra', async () => {
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes('Dashboard/summary')) return Promise.reject(new ApiError(500, 'boom'))
+      if (url.includes('Inicio/resumen')) return Promise.resolve(RESUMEN_INICIO)
+      if (url.includes('resumen-vendedor')) return Promise.resolve(RESUMEN_VENDEDOR)
+      return Promise.reject(new ApiError(404, 'no'))
+    })
+    pintar()
+    expect(await screen.findByText('No se pudieron cargar las ventas de hoy.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Reintentar ventas de hoy' })).toBeTruthy()
+    expect(screen.queryByTestId('mi-dia-hero')).toBeNull()
   })
 
   it('mientras cargan los números muestra bloques con la forma del hero, no la ruedita ni "Cargando…"', async () => {
@@ -212,14 +230,14 @@ describe('MiDiaScreen', () => {
     expect(screen.queryByText(/NaN/)).toBeNull()
   })
 
-  it('con todo en 0 y sin pendientes de Inicio el hero dice "Todo al día." y "Para resolver hoy" no se dibuja', async () => {
+  it('sin pendientes de Inicio "Para resolver hoy" no se dibuja', async () => {
     responder({
       inicio: { ventas: { presupuestosPendientes: pend(0), pedidosConfirmados: pend(0), porAutorizar: pend(0) }, compras: null, autorizacionesPendientes: null },
       vendedor: { ...RESUMEN_VENDEDOR, pedidosRechazados: 0, presupuestosPorVencer: 0 },
     })
     pintar()
-    const hero = await screen.findByTestId('mi-dia-hero')
-    expect(await within(hero).findByText('Todo al día.')).toBeTruthy()
+    await screen.findByTestId('mi-dia-hero')
+    await screen.findByText(ars('3.420.000,00'))
     expect(screen.queryByText('Para resolver hoy')).toBeNull()
   })
 
@@ -265,15 +283,22 @@ describe('MiDiaScreen', () => {
     })
   })
 
-  it('"Nueva venta" abre la venta nueva', async () => {
+  it('en teléfono "Nueva venta" no está en la pantalla: es el botón central de la barra inferior', async () => {
     pintar()
-    const user = userEvent.setup()
-    // Va adentro del hero, que aparece con los números.
-    await user.press(await screen.findByLabelText('Nueva venta'))
+    await screen.findByTestId('mi-dia-hero')
+    expect(screen.queryByLabelText('Nueva venta')).toBeNull()
+  })
+
+  it('en tablet no hay barra: "Nueva venta" va dentro del hero y abre la venta nueva', async () => {
+    mockAncho.mockReturnValue(900)
+    pintar()
+    const hero = await screen.findByTestId('mi-dia-hero')
+    await userEvent.setup().press(within(hero).getByLabelText('Nueva venta'))
     expect(mockPush).toHaveBeenLastCalledWith('/(tabs)/ventas/nueva')
   })
 
-  it('sin permiso para crear ventas no ofrece "Nueva venta", igual que el "+" de la barra (decisión del dueño 22-10)', async () => {
+  it('sin permiso para crear ventas no ofrece "Nueva venta" ni en tablet (decisión del dueño 22-10)', async () => {
+    mockAncho.mockReturnValue(900)
     useAuthStore.setState({
       user: { id: 'u1', username: 'emanuel', nombre: 'Emanuel', apellido: 'P', roles: [], permissions: [{ module: 'MOD_VENTAS', canRead: true }] },
     } as never)
@@ -293,6 +318,6 @@ describe('MiDiaScreen', () => {
     mockAncho.mockReturnValue(900)
     pintar()
     await waitFor(() => expect(screen.getByText(ars('171.000,00'))).toBeTruthy())
-    expect(screen.getByLabelText('Nueva venta')).toBeTruthy()
+    expect(screen.getByTestId('tarjeta-deudores')).toBeTruthy()
   })
 })

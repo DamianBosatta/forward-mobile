@@ -4,10 +4,10 @@
  * permiso que su entrada del menú lateral.
  */
 import React from 'react'
-import { Text } from 'react-native'
+import { StyleSheet, Text } from 'react-native'
 import { render, screen, userEvent } from '@testing-library/react-native'
 import { ConAccesosRapidos } from '../AccesosRapidos'
-import { PieFijo } from '@/core/ui/fw'
+import { PieFijo, ALTO_BARRA_CON_CENTRO, DIAMETRO_NUEVA_VENTA } from '@/core/ui/fw'
 
 const mockPush = jest.fn()
 const mockDispatch = jest.fn()
@@ -70,13 +70,13 @@ describe('ConAccesosRapidos', () => {
     mockDispatch.mockClear()
   })
 
-  it('en teléfono muestra la barra del diseño: Mi día, Ventas, Clientes y Cobros, en ese orden y nada más', () => {
+  it('en teléfono muestra la barra del diseño: Mi día, Ventas, Nueva venta al centro, Clientes y Cobros, en ese orden y nada más', () => {
     conAncho(390)
     conPermisos(...VENDEDOR)
     pantalla()
 
     expect(screen.getByText('Contenido de la pantalla')).toBeTruthy()
-    expect(nombresDeLaBarra()).toEqual(['Mi día', 'Ventas', 'Clientes', 'Cobros'])
+    expect(nombresDeLaBarra()).toEqual(['Mi día', 'Ventas', 'Nueva venta', 'Clientes', 'Cobros'])
   })
 
   it.each([600, 1194])('con %i px (tablet) no hay barra: el menú está fijo', (ancho) => {
@@ -98,8 +98,9 @@ describe('ConAccesosRapidos', () => {
     await user.press(screen.getByRole('button', { name: 'Clientes' }))
     await user.press(screen.getByRole('button', { name: 'Cobros' }))
     await user.press(screen.getByRole('button', { name: 'Mi día' }))
+    await user.press(screen.getByRole('button', { name: 'Nueva venta' }))
 
-    expect(mockPush.mock.calls.map(([r]) => r)).toEqual(['/(tabs)/ventas', '/(tabs)/socios', '/(tabs)/cuentas', '/(tabs)/'])
+    expect(mockPush.mock.calls.map(([r]) => r)).toEqual(['/(tabs)/ventas', '/(tabs)/socios', '/(tabs)/cuentas', '/(tabs)/', '/(tabs)/ventas/nueva'])
     expect(mockDispatch).not.toHaveBeenCalled()
   })
 
@@ -117,16 +118,46 @@ describe('ConAccesosRapidos', () => {
     conPermisos(...VENDEDOR, 'MOD_COMPRAS:create')
     pantalla('compras')
 
-    expect(nombresDeLaBarra()).toEqual(['Mi día', 'Ventas', 'Clientes', 'Cobros'])
-    for (const b of screen.getAllByRole('button')) expect(b.props.accessibilityState).toMatchObject({ selected: false })
+    expect(nombresDeLaBarra()).toEqual(['Mi día', 'Ventas', 'Nueva venta', 'Clientes', 'Cobros'])
+    for (const b of screen.getAllByRole('button').filter((x) => x.props.accessibilityLabel !== 'Nueva venta')) expect(b.props.accessibilityState).toMatchObject({ selected: false })
   })
 
-  it('un chofer (lee ventas, no las crea) ve solo Mi día', () => {
+  it('un chofer (lee ventas, no las crea) ve Mi ruta y Cobros, sin Nueva venta ni Clientes', () => {
     conAncho(390)
-    conPermisos('MOD_VENTAS:read', 'MOD_VIAJES:read')
+    conPermisos('MOD_VENTAS:read', 'MOD_VIAJES:read', 'MOD_CC:read', 'MOD_CLIENTES:read')
     pantalla()
 
-    expect(nombresDeLaBarra()).toEqual(['Mi día'])
+    expect(nombresDeLaBarra()).toEqual(['Mi ruta', 'Cobros'])
+  })
+
+  it('sin permiso de crear ventas no hay botón central', () => {
+    conAncho(390)
+    conPermisos('MOD_VENTAS:read', 'MOD_CLIENTES:read')
+    pantalla()
+
+    expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
+    expect(screen.queryByTestId('barra-centro')).toBeNull()
+  })
+
+  it('el botón central queda dentro de los límites de la barra (Android no entrega toques afuera)', () => {
+    conAncho(390)
+    conPermisos(...VENDEDOR)
+    pantalla()
+
+    const barra = screen.getByLabelText('Acciones rápidas')
+    const alto = (StyleSheet.flatten(barra.props.style) as { height: number }).height
+    expect(alto).toBe(ALTO_BARRA_CON_CENTRO + 34)
+    expect(DIAMETRO_NUEVA_VENTA + 16).toBeLessThanOrEqual(ALTO_BARRA_CON_CENTRO)
+    expect(screen.getByRole('button', { name: 'Nueva venta' })).toBeTruthy()
+  })
+
+  it('sin botón central la barra conserva su alto de 76', () => {
+    conAncho(390)
+    conPermisos('MOD_CLIENTES:read')
+    pantalla()
+
+    const barra = screen.getByLabelText('Acciones rápidas')
+    expect((StyleSheet.flatten(barra.props.style) as { height: number }).height).toBe(76 + 34)
   })
 
   it('sin permisos queda solo Mi día', () => {
@@ -155,7 +186,7 @@ describe('ConAccesosRapidos', () => {
     conPermisos('MOD_VENTAS:create')
     pantalla()
 
-    expect(nombresDeLaBarra()).toEqual(['Mi día', 'Ventas'])
+    expect(nombresDeLaBarra()).toEqual(['Mi día', 'Nueva venta', 'Ventas'])
   })
 
   it('Clientes pide MOD_CLIENTES y Cobros pide MOD_CC, como el menú lateral', () => {

@@ -2,21 +2,21 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { AppState, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from "expo-router/react-navigation"
-import { Search } from 'lucide-react-native'
+import { Plus, Search } from 'lucide-react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { puedeVerVentas } from '@/src/components/layout/menuModules'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client/types'
-import { StatusChip, TopBar, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
+import { Button, StatusChip, TopBar, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { diaArgentina, msHastaProximaMedianocheArgentina, partesArgentina } from '@/core/utils/fecha'
 import { useHojasDeRuta } from '@/libs/api-client/logistica'
 import { DepositoSesion } from '@/features/deposito-sesion'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
 import { useCifrasGenerales, useDashboardResumen } from '../api/queries'
 import { PulsoDelNegocio } from './PulsoDelNegocio'
-import { AtajosDeInicio } from './AtajosDeInicio'
+import { DeudoresDeInicio } from './DeudoresDeInicio'
 import { ParaResolver, type FilaParaResolver } from './ParaResolver'
 import { BloqueCargando, ErrorConReintentar, ListaEnTarjeta, SeccionDeInicio, TarjetaDeTexto } from './PiezasDeInicio'
 
@@ -30,7 +30,7 @@ export function InicioScreen() {
   const router = useRouter()
   const navigation = useNavigation()
   const insetInferior = useInsetInferior()
-  const { width } = useResponsive()
+  const { width, isTablet } = useResponsive()
   const tablet = width >= 600
   const { user, canDo } = useAuthStore()
   const pendientes = usePendientesInicio()
@@ -97,12 +97,8 @@ export function InicioScreen() {
       : []),
   ]
 
-  const atajos = (
-    <AtajosDeInicio
-      puede={{ vender: canDo('MOD_VENTAS', 'create'), cobrar: canDo('MOD_CC', 'read'), catalogo: canDo('MOD_CATALOGO', 'read'), stock: canDo('MOD_STOCK', 'read') }}
-      onIr={(ruta) => router.push(ruta as never)}
-    />
-  )
+  // En teléfono "Nueva venta" es el botón central de la barra inferior; en tablet no hay barra, así que va acá.
+  const nuevaVentaEnTablet = isTablet && canDo('MOD_VENTAS', 'create') ? <Button label="Nueva venta" icon={Plus} onPress={() => router.push('/(tabs)/ventas/nueva' as never)} /> : null
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -128,14 +124,16 @@ export function InicioScreen() {
             rutasActivas={rutas.data?.length ?? null}
             meDeben={cifras.meDeben}
             debo={cifras.debo}
-            deudaVencida={cifras.deudaVencida}
             onRutas={canDo('MOD_VIAJES', 'read') ? () => router.push('/(tabs)/logistica/hojas' as never) : undefined}
           >
-            {atajos}
+            {nuevaVentaEnTablet}
           </PulsoDelNegocio>
         ) : (
-          // Sin leer Ventas no hay hero (igual que hoy): solo los atajos que su permiso deja.
-          <View style={{ paddingHorizontal: space[4] }}>{atajos}</View>
+          // Sin leer Ventas no hay hero: queda la tarjeta Deudores si puede verla (y "Nueva venta" en tablet).
+          <View style={{ gap: space[4], paddingHorizontal: space[4] }}>
+            {nuevaVentaEnTablet}
+            <DeudoresDeInicio />
+          </View>
         )}
 
         <ParaResolver filas={paraResolver} />

@@ -1,12 +1,12 @@
 import React from 'react'
 import { View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Banknote, FileText, House, User } from 'lucide-react-native'
+import { Banknote, Boxes, FileText, House, Navigation, User } from 'lucide-react-native'
 import { useResponsive } from '@/libs/useResponsive'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { safeHaptics } from '@/core/utils/haptics'
-import { veEntradaDeVentas } from './menuModules'
-import { BottomBar, SobreBarraInferiorProvider, type BottomBarItem } from '@/core/ui/fw'
+import { esChofer, veEntradaDeVentas } from './menuModules'
+import { BottomBar, NuevaVentaCentral, SobreBarraInferiorProvider, type BottomBarItem } from '@/core/ui/fw'
 
 type Activa = 'inicio' | 'ventas' | 'compras' | 'clientes' | 'cobros'
 
@@ -14,7 +14,7 @@ type Activa = 'inicio' | 'ventas' | 'compras' | 'clientes' | 'cobros'
  * Barra inferior de accesos rápidos (lámina CalleMiDia, D2): Mi día, Ventas, Clientes y Cobros.
  * Solo en teléfono: en tablet el menú está fijo. Cada acceso pide lo mismo que su entrada del menú
  * lateral (Ventas: crear ventas, como la web; Clientes: MOD_CLIENTES; Cobros, que abre
- * las cuentas corrientes: MOD_CC). Lo demás (nueva venta, nueva compra, menú) está en cada pantalla.
+ * las cuentas corrientes: MOD_CC). Con permiso de crear ventas, "Nueva venta" va al centro de la barra.
  */
 function AccesosRapidos({ activa }: { activa: Activa }) {
   const router = useRouter()
@@ -25,14 +25,23 @@ function AccesosRapidos({ activa }: { activa: Activa }) {
     router.push(ruta as never)
   }
 
+  // El chofer (D12, maqueta A): "Mi ruta" y "Cobros"; sin ventas ni clientes. El resto: Mi día, Ventas, Clientes y Cobros.
+  const chofer = esChofer(canDo)
+  const puedeVender = veEntradaDeVentas(canDo)
   const items: BottomBarItem[] = [
-    { key: 'inicio', label: 'Mi día', icon: House, onPress: ir('/(tabs)/') },
-    ...(veEntradaDeVentas(canDo) ? [{ key: 'ventas', label: 'Ventas', icon: FileText, onPress: ir('/(tabs)/ventas') }] : []),
-    ...(canDo('MOD_CLIENTES', 'read') ? [{ key: 'clientes', label: 'Clientes', icon: User, onPress: ir('/(tabs)/socios') }] : []),
+    chofer
+      ? { key: 'inicio', label: 'Mi ruta', icon: Navigation, onPress: ir('/(tabs)/') }
+      : { key: 'inicio', label: 'Mi día', icon: House, onPress: ir('/(tabs)/') },
+    ...(puedeVender ? [{ key: 'ventas', label: 'Ventas', icon: FileText, onPress: ir('/(tabs)/ventas') }] : []),
+    ...(!chofer && canDo('MOD_CLIENTES', 'read') ? [{ key: 'clientes', label: 'Clientes', icon: User, onPress: ir('/(tabs)/socios') }] : []),
+    ...(!chofer && !puedeVender && canDo('MOD_STOCK', 'read') ? [{ key: 'stock', label: 'Stock', icon: Boxes, onPress: ir('/(tabs)/inventario/stock') }] : []),
     ...(canDo('MOD_CC', 'read') ? [{ key: 'cobros', label: 'Cobros', icon: Banknote, onPress: ir('/(tabs)/cuentas') }] : []),
   ]
 
-  return <BottomBar items={items} activeKey={activa} />
+  // "Nueva venta" al centro, solo con permiso de crear ventas (el mismo del menú y de la web).
+  const centro = puedeVender ? <NuevaVentaCentral onPress={ir('/(tabs)/ventas/nueva')} /> : undefined
+
+  return <BottomBar items={items} activeKey={activa} center={centro} />
 }
 
 /** Envuelve una pantalla principal (Inicio, Ventas, Clientes, Cobros, Compras) y le suma la barra en teléfono. */

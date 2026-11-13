@@ -78,7 +78,7 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
   const c = useColors()
   const router = useRouter()
   const leading = useMenuLeading()
-  const { isTabletLandscape } = useResponsive()
+  const { isTabletLandscape, isTablet } = useResponsive()
   const { canDo } = usePermissions()
   const [elegida, setElegida] = useState<string | null>(null)
   const l = useVentasListaNueva(filtroDeRuta)
@@ -226,8 +226,9 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
         detail={isTabletLandscape && elegida ? detalle(elegida, () => setElegida(null)) : null}
         emptyDetail={<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: space[6] }}><Text style={secundario}>Elegí una venta para ver el detalle.</Text></View>}
       />
-      {/* La venta nueva sale de este botón, en teléfono y en tablet; pide elegir el cliente primero. */}
-      {canDo('MOD_VENTAS', 'create') ? <Fab accessibilityLabel="Nueva venta" label="Nueva venta" onPress={() => router.push('/(tabs)/ventas/nueva' as never)} /> : null}
+      {/* En teléfono la venta nueva sale del botón central de la barra inferior (NuevaVentaCentral): acá no se repite.
+          En tablet no hay barra inferior, así que el botón sigue acá; pide elegir el cliente primero. */}
+      {isTablet && canDo('MOD_VENTAS', 'create') ? <Fab accessibilityLabel="Nueva venta" label="Nueva venta" onPress={() => router.push('/(tabs)/ventas/nueva' as never)} /> : null}
     </View>
   )
 }

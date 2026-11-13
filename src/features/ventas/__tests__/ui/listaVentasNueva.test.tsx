@@ -343,17 +343,21 @@ describe('lista de ventas nueva: botón "Nueva venta" (S1)', () => {
   const conPermiso = (canCreate: boolean) =>
     useAuthStore.setState({ user: { id: 'u', roles: ['Vendedor'], permissions: [{ module: 'MOD_VENTAS', canRead: true, canCreate }] } as never })
 
-  it('con permiso de crear ventas hay un botón flotante que abre ventas/nueva, en teléfono y en tablet', async () => {
+  it('en teléfono la lista ya no trae el botón flotante: la venta nueva sale del botón central de la barra', async () => {
     conPermiso(true)
-    for (const ancho of [390, 1194]) {
-      mockPush.mockReset()
-      const { unmount } = pantalla(ancho)
-      await screen.findByText('Mostrando 2 de 61')
-      expect(screen.getAllByRole('button', { name: 'Nueva venta' })).toHaveLength(1)
-      await userEvent.press(screen.getByRole('button', { name: 'Nueva venta' }))
-      expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva')
-      unmount()
-    }
+    pantalla(390)
+    await screen.findByText('Mostrando 2 de 61')
+    expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
+  })
+
+  it('en tablet (sin barra inferior) el botón sigue en la lista y abre ventas/nueva', async () => {
+    conPermiso(true)
+    mockPush.mockReset()
+    pantalla(1194)
+    await screen.findByText('Mostrando 2 de 61')
+    expect(screen.getAllByRole('button', { name: 'Nueva venta' })).toHaveLength(1)
+    await userEvent.press(screen.getByRole('button', { name: 'Nueva venta' }))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva')
   })
 
   it('sin permiso de crear ventas no hay botón', async () => {

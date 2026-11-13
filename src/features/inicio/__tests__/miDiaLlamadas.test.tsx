@@ -48,13 +48,15 @@ afterEach(() => jest.restoreAllMocks())
 
 const INICIO = '/api/v1/Inicio/resumen'
 const VENDEDOR = '/api/v1/Reportes/mobile/resumen-vendedor?anio=2026&mes=10'
+const DASHBOARD = '/api/v1/Dashboard/summary'
+const HOY = '/api/v1/Ventas?pageNumber=1&pageSize=1&fechaDesde=2026-10-17&fechaHasta=2026-10-17'
 const RECIENTES = '/api/v1/socios-comerciales/clientes-recientes?limite=5'
 
 /** Mi día con la propuesta pide lo mismo que antes, según los permisos (frame 5: "No cambia qué endpoints se llaman"). */
 describe('Mi día: qué endpoints llama según los permisos', () => {
   it.each([
-    ['Ventas', [{ module: 'MOD_VENTAS', canRead: true, canCreate: true }], [INICIO, VENDEDOR]],
-    ['Ventas, Compras y Clientes', [{ module: 'MOD_VENTAS', canRead: true, canCreate: true }, { module: 'MOD_COMPRAS', canRead: true }, { module: 'MOD_CLIENTES', canRead: true }], [INICIO, VENDEDOR, RECIENTES]],
+    ['Ventas', [{ module: 'MOD_VENTAS', canRead: true, canCreate: true }], [INICIO, VENDEDOR, DASHBOARD, HOY]],
+    ['Ventas, Compras y Clientes', [{ module: 'MOD_VENTAS', canRead: true, canCreate: true }, { module: 'MOD_COMPRAS', canRead: true }, { module: 'MOD_CLIENTES', canRead: true }], [INICIO, VENDEDOR, DASHBOARD, HOY, RECIENTES]],
     ['crear ventas sin leerlas', [{ module: 'MOD_VENTAS', canRead: false, canCreate: true }], []],
     ['sin permisos', [], []],
   ])('%s', async (_nombre, permisos, esperadas) => {
