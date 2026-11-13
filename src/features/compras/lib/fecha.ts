@@ -1,3 +1,13 @@
+import { ddmmaaaa, diaArgentina, parseDateSafe } from '@/core/utils/fecha'
+import { horaDe } from '@/features/ventas/lib/agruparPorDia'
+
+/** Instante del servidor → "dd/mm/aaaa HH:mm" con el día y la hora de Argentina (X9); null sin fecha válida. */
+export function fechaHoraTexto(iso: string | null | undefined): string | null {
+  const f = parseDateSafe(iso)
+  if (!f) return null
+  return `${ddmmaaaa(diaArgentina(f.getTime()))} ${horaDe(iso)}`
+}
+
 /** "dd/mm/aaaa" → "aaaa-mm-dd" (fecha calendario, sin zona); null si no es una fecha válida. */
 export function fechaIso(texto: string): string | null {
   const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(texto.trim())

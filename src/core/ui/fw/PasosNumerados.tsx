@@ -17,24 +17,31 @@ interface Props {
  */
 export function PasosNumerados({ nombres, paso }: Props) {
   const c = useColors()
+  const ultimo = nombres.length - 1
+  // Cada paso ocupa una columna del mismo ancho (punto arriba, nombre abajo): con cuatro pasos entran en 360 de ancho
+  // sin que el último quede cortado. La barra va de un punto al otro, centrada en el punto; la de relleno marca lo hecho.
+  const barra = (lleno: boolean) => (
+    <View style={{ flex: 1, height: 2, borderRadius: 1, backgroundColor: lleno ? c.action : c.onTopBar, opacity: lleno ? 1 : 0.4 }} />
+  )
   return (
-    <View accessibilityRole="list" accessibilityLabel="Pasos" style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], paddingTop: space[1], paddingBottom: space[3], backgroundColor: c.topBar }}>
+    <View accessibilityRole="list" accessibilityLabel="Pasos" style={{ flexDirection: 'row', paddingHorizontal: space[2], paddingTop: space[1], paddingBottom: space[3], backgroundColor: c.topBar }}>
       {nombres.map((nombre, i) => {
         const n = i + 1
         const actual = n === paso
         const hecho = n < paso
         return (
-          <React.Fragment key={nombre}>
-            {i > 0 ? <View style={{ flex: 1, height: 2, borderRadius: 1, backgroundColor: n <= paso ? c.action : c.topBarBorder }} /> : null}
-            <View accessible accessibilityLabel={`Paso ${n} de ${nombres.length}: ${nombre}`} accessibilityState={{ selected: actual }} style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
+          <View key={nombre} accessible accessibilityLabel={`Paso ${n} de ${nombres.length}: ${nombre}`} accessibilityState={{ selected: actual }} style={{ flex: 1, minWidth: 0, alignItems: 'center', gap: space[1] }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch' }}>
+              {i > 0 ? barra(n <= paso) : <View style={{ flex: 1 }} />}
               <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: actual || hecho ? c.action : 'transparent', borderWidth: actual || hecho ? 0 : 1, borderColor: c.onTopBar }}>
                 {hecho ? <Check size={14} color={c.onAction} strokeWidth={3} /> : (
                   <Text style={{ ...typeScale.etiqueta, color: actual ? c.onAction : c.onTopBar }}>{n}</Text>
                 )}
               </View>
-              <Text style={{ ...typeScale.etiqueta, color: actual ? c.onTopBarStrong : c.onTopBar, fontWeight: actual ? '600' : '400' }}>{nombre}</Text>
+              {i < ultimo ? barra(n < paso) : <View style={{ flex: 1 }} />}
             </View>
-          </React.Fragment>
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ ...typeScale.etiqueta, alignSelf: 'stretch', textAlign: 'center', color: actual ? c.onTopBarStrong : c.onTopBar, fontWeight: actual ? '600' : '400' }}>{nombre}</Text>
+          </View>
         )
       })}
     </View>

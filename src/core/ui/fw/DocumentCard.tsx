@@ -26,6 +26,10 @@ interface DocumentCardProps {
    * encabezado si no hay) y el pie con el chip, la hora y el importe.
    */
   plano?: boolean
+  /** Solo `plano`: "Pedido 12/11/2026 10:30". Va en su propia línea, con el día y la hora argentinos. */
+  fechaHora?: string | null
+  /** Solo `plano`: "Último cambio 12/11/2026 15:42". Sin dato (el servidor no lo manda), no se muestra la línea. */
+  ultimoCambio?: string | null
 }
 
 /** Iniciales (dos letras) del vendedor para el avatar. */
@@ -45,21 +49,27 @@ export function DocumentCard(p: DocumentCardProps) {
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
 
   if (p.plano) {
+    const fechas = [p.fechaHora ? `Pedido ${p.fechaHora}` : null, p.ultimoCambio ? `Último cambio ${p.ultimoCambio}` : null].filter(Boolean) as string[]
+    const etiquetaPlana = [p.direccion, p.nombre || encabezado, p.chip?.label, p.detalle || p.hora, ...fechas, total].filter(Boolean).join(', ')
     return (
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={etiqueta}
+        accessibilityLabel={etiquetaPlana}
         onPress={p.onPress}
         android_ripple={{ color: c.surface2 }}
         style={{ minHeight: 44, padding: space[4], gap: space[1], borderRadius: radii.tarjeta, backgroundColor: c.surface, ...sombra }}
       >
-        <Text numberOfLines={1} style={[typeScale.cuerpoDestacado, { color: c.text }]}>{p.direccion}</Text>
-        <Text numberOfLines={1} style={secundario}>{p.nombre || encabezado}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], paddingTop: space[1] }}>
-          {p.chip && <StatusChip estado={p.chip.estado} label={p.chip.label} />}
-          <Text numberOfLines={1} style={[secundario, { flexShrink: 1 }]}>{pie}</Text>
-          <Text style={[typeScale.titulo, cifras, { color: c.textSecondary, flex: 1, textAlign: 'right' }]}>{total}</Text>
+        {/* Título y importe en la misma fila: el importe no se parte ni se corre (cifras tabulares, a la derecha, ancho propio). */}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[3] }}>
+          <Text numberOfLines={2} style={[typeScale.cuerpoDestacado, { color: c.text, flex: 1, minWidth: 0 }]}>{p.direccion}</Text>
+          <Text numberOfLines={1} testID="documento-importe" style={[typeScale.titulo, cifras, { color: c.text, flexShrink: 0, textAlign: 'right' }]}>{total}</Text>
         </View>
+        <Text numberOfLines={2} style={secundario}>{p.nombre || encabezado}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space[2], paddingTop: space[1] }}>
+          {p.chip && <StatusChip estado={p.chip.estado} label={p.chip.label} />}
+          <Text numberOfLines={1} style={[secundario, { flexShrink: 1 }]}>{p.detalle || p.hora}</Text>
+        </View>
+        {fechas.map((f) => <Text key={f} numberOfLines={1} style={[secundario, cifras]}>{f}</Text>)}
       </Pressable>
     )
   }
