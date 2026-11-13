@@ -2,10 +2,15 @@ import { Drawer } from 'expo-router/drawer'
 import { Platform } from 'react-native'
 import CustomDrawerContent from '@/src/components/layout/CustomDrawerContent'
 import { useResponsive } from '@/libs/useResponsive'
+import { useAuthStore } from '@/libs/store/auth.store'
 
 export default function DrawerLayout() {
   // Plan §8: en tablet (≥ 600) el menú queda fijo; en teléfono se abre con el botón.
   const { isTablet } = useResponsive()
+  // Sin sesión el cajón no se monta: la app abre en (tabs) un instante antes de que la guarda mande al login, y el
+  // cajón recién montado despacha CLOSE_DRAWER sin navegador que lo atienda (aviso de LogBox en el login).
+  const haySesion = useAuthStore((s) => s.isAuthenticated && !!s.accessToken)
+  if (!haySesion) return null
 
   return (
     <Drawer

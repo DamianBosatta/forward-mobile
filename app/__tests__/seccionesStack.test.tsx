@@ -9,6 +9,7 @@ import { Text } from 'react-native'
 import { DrawerActions } from "expo-router/react-navigation"
 import { useNavigation, useRouter } from 'expo-router'
 import { act, renderRouter, screen } from 'expo-router/testing-library'
+import { useAuthStore } from '@/libs/store/auth.store'
 
 // The global mock lacks SafeAreaView, which the router's default navigator wrapper needs.
 jest.mock('react-native-safe-area-context', () => require('react-native-safe-area-context/jest/mock').default)
@@ -23,6 +24,9 @@ jest.mock('@/libs/useResponsive', () => ({
 }))
 
 jest.setTimeout(30_000)
+
+// The Drawer layout only mounts with a session.
+beforeEach(() => useAuthStore.setState({ isAuthenticated: true, accessToken: 'tok' }))
 
 const RAIZ = path.join(__dirname, '..', '(tabs)')
 
