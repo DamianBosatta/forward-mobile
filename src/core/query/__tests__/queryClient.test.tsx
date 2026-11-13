@@ -52,13 +52,23 @@ describe('Inicio se refresca tras las mutaciones', () => {
   })
 
   it('también tras un error (p. ej. un 409: la venta cambió); no con meta.noRefrescaInicio (una búsqueda)', async () => {
-    const qc = crearQueryClient()
-    qc.setQueryData(inicioKeys.resumen(), { ventas: null, compras: null, autorizacionesPendientes: null })
-    await new MutationObserver(qc, { mutationFn: async () => 'ok', meta: { noRefrescaInicio: true } }).mutate()
-    expect(qc.getQueryState(inicioKeys.resumen())?.isInvalidated).toBe(false)
+    // Reloj controlado: la regla compara `dataUpdatedAt >= submittedAt` (en ms). Con el reloj real, el resumen y la
+    // mutación podían caer en el mismo milisegundo y la mutación contaba como "ya refrescada" (falla intermitente).
+    let ahora = 1_000_000
+    const reloj = jest.spyOn(Date, 'now').mockImplementation(() => ahora)
+    try {
+      const qc = crearQueryClient()
+      qc.setQueryData(inicioKeys.resumen(), { ventas: null, compras: null, autorizacionesPendientes: null })
+      ahora += 50
+      await new MutationObserver(qc, { mutationFn: async () => 'ok', meta: { noRefrescaInicio: true } }).mutate()
+      expect(qc.getQueryState(inicioKeys.resumen())?.isInvalidated).toBe(false)
 
-    await new MutationObserver(qc, { mutationFn: () => Promise.reject(new Error('409')) }).mutate().catch(() => undefined)
-    expect(qc.getQueryState(inicioKeys.resumen())?.isInvalidated).toBe(true)
+      ahora += 50
+      await new MutationObserver(qc, { mutationFn: () => Promise.reject(new Error('409')) }).mutate().catch(() => undefined)
+      expect(qc.getQueryState(inicioKeys.resumen())?.isInvalidated).toBe(true)
+    } finally {
+      reloj.mockRestore()
+    }
   })
 })
 
