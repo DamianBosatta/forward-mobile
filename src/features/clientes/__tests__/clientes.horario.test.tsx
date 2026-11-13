@@ -35,6 +35,7 @@ async function datosMinimos() {
   fireEvent.changeText(screen.getByLabelText('Nombre del local'), 'Kiosco Chela')
   fireEvent.changeText(screen.getByLabelText('Contacto'), 'Chela')
   fireEvent.changeText(screen.getByLabelText('Teléfono'), '1146582291')
+  fireEvent.changeText(screen.getByLabelText('CUIT'), '30-71234567-1')
 }
 
 describe('editor del horario de entrega', () => {

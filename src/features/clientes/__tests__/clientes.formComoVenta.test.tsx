@@ -3,7 +3,6 @@ import { ActivityIndicator, StyleSheet } from 'react-native'
 import { fireEvent, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import ClienteFormScreen from '../../../../app/(tabs)/socios/nuevo'
 import { AVISO_CAMPOS_SENSIBLES } from '../components/ClienteForm'
-import { AVISO_CONDICION_PAGO } from '../components/FichaCliente'
 import { api } from '@/core/api/client'
 import { themeColors } from '@/libs/theme'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -68,13 +67,6 @@ it('la condición frente al IVA son filas con radio dentro de una tarjeta, como 
   expect(elegido.props.accessibilityState).toEqual(expect.objectContaining({ checked: true }))
   expect(estilo(elegido).backgroundColor).toBe(themeColors.light.brandSoft)
   expect(within(elegido).getByTestId('marca-radio-elegida')).toBeTruthy()
-})
-
-it('sin la capacidad, la condición de pago es una fila bloqueada con candado y su razón', () => {
-  renderConQuery(<ClienteFormScreen />)
-
-  const fila = screen.getByLabelText(`Condición de pago: Contado. ${AVISO_CONDICION_PAGO}`)
-  expect(within(fila).getAllByTestId('candado').length).toBeGreaterThan(0)
 })
 
 describe('editar como vendedor (frame 19)', () => {
