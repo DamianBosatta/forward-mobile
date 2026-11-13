@@ -93,6 +93,8 @@ export function useConfirmarVenta(d: Datos) {
         ...(d.esPedido && d.porcentajeCedido ? { porcentajeComisionCedido: d.porcentajeCedido } : {}),
         // buildUpdateVentaPayload de la web: el tilde viaja si ya tiene valor; ausente = no tocar.
         ...(d.cabecera.conFactura !== undefined ? { conFactura: d.cabecera.conFactura } : {}),
+        // Solo si el vendedor la cambió; ausente = el servidor conserva la que tiene.
+        ...(d.cabecera.condicionPago ? { condicionPago: d.cabecera.condicionPago } : {}),
       })
     } else if (!d.esPedido && b.borrador) {
       r = await api.post<VentaActionResponseDto>(`/api/v1/Ventas/${b.borrador.id}/guardar-presupuesto`, { ventaId: b.borrador.id, version: await b.flush() })

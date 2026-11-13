@@ -2,6 +2,7 @@ import '@/libs/validations/mensajes-zod3'
 import { CreateVentaCommandSchema } from '@/libs/validations/generated/generated/esquemas'
 import { PorcentajeComisionCedidoSchema } from '@/libs/validations/generated/reglas'
 import { METODO_ENTREGA, type MetodoEntregaValue } from '@/features/ventas/lib/venta-form-retiro'
+import type { CondicionPagoDto } from '@/features/clientes/lib/condicionesPago'
 import type { LineaCarrito } from './carrito'
 
 /** Lo que viaja al servidor: producto, cantidad y descuento. El precio lo pone el servidor. */
@@ -12,6 +13,8 @@ export interface Cabecera {
   metodoEntrega: MetodoEntregaValue; fecha: string | null; flete: number; observaciones: string
   /** Tilde "Con factura" (solo el alta lo manda, como la web). Sin valor: todavía no se conoce el default y se omite. */
   conFactura?: boolean
+  /** Condición de pago de la venta. Alta: la elegida (o la predeterminada del cliente). Edición: solo si se cambió. */
+  condicionPago?: CondicionPagoDto
 }
 
 /** Cuerpo del autoguardado (UpdateVentaCommand; el id y la versión los pone la llamada). */
@@ -92,6 +95,7 @@ export function aAlta(lineas: LineaCarrito[], descuentoGeneral: number, cab: Cab
   if (d.esPedido && d.porcentajeComisionCedido) p.porcentajeComisionCedido = d.porcentajeComisionCedido
   // buildVentaPayload de la web: solo si el tilde ya tiene valor; si no, el servidor aplica el default de Configuración.
   if (cab.conFactura !== undefined) p.conFactura = cab.conFactura
+  if (cab.condicionPago) p.condicionPago = cab.condicionPago
   return p
 }
 

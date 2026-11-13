@@ -11,7 +11,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useVenta, ventasKeys } from '@/libs/api-client/ventas'
 import { useSocio } from '@/libs/api-client/socios'
 import type { components } from '@/libs/api-client/generated/schema'
-import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
+import { direccionDeEntrega, nombreDelCliente, textoCondicionPago } from '@/features/clientes/lib/cliente'
 import { urlLlamar } from '@/features/clientes/lib/contacto'
 import { motivosAutorizacion } from '@/features/venta-nueva/lib/motivosAutorizacion'
 import { mostrarNumero } from '@/features/venta-nueva/lib/linea'
@@ -139,6 +139,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
               <View style={{ gap: space[2] }}>
                 <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Entrega y factura</Text>
                 <View style={{ flexDirection: 'row', gap: space[2] }}>{dato('Entrega', entrega ?? 'A coordinar')}{dato('Con factura', h.conFactura ? 'Sí' : 'No')}</View>
+                <View style={{ flexDirection: 'row' }}>{dato('Condición de pago', textoCondicionPago(h.condicionPago))}</View>
               </View>
             )}
             {esEstadoVenta(h.estado, 'PendienteAutorizacion') ? (

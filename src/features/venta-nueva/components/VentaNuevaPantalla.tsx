@@ -98,7 +98,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   const preseleccion = useSocio(abrir ? '' : clienteId ?? '')
   // Una sola vez: si después vuelve a la lista con la flecha, no se la elige de nuevo.
   const preseleccionado = useRef(false)
-  const cab = useCabeceraVenta(tipo, abrir?.modo !== 'editar')
+  const cab = useCabeceraVenta(tipo, abrir?.modo !== 'editar', cliente?.id)
   const tope = user?.maxDescuentoPorcentaje ?? 0
   const exento = hasCapability(user?.permissions, 'CAP_EXENTO_TOPE_DESCUENTO')
   const paraGuardar = aAutoguardado(lineas, descuentoValido, cab.cabecera)

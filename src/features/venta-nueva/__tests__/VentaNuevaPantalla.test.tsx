@@ -402,12 +402,12 @@ describe('pestaña Cabecera', () => {
   })
 
   it('la tarjeta Cliente muestra la dirección, el nombre aparte y la condición de pago con su rótulo', async () => {
-    mockGet.mockImplementation((url: string) => Promise.resolve(url.includes('socios-comerciales') ? { condicionPago: null } : calendario(url)))
+    mockGet.mockImplementation((url: string) => Promise.resolve(url.includes('socios-comerciales') ? { condicionesPagoCliente: [{ tipo: 'Contado', predeterminada: true }] } : calendario(url)))
     await enCabecera()
     expect(screen.getByText('Tarantino 1898')).toBeTruthy()
     expect(screen.getByText('Autoservicio Abel')).toBeTruthy()
     expect(screen.getByText('Condición de pago')).toBeTruthy()
-    expect(await screen.findByText('Contado')).toBeTruthy()
+    expect(await screen.findByRole('radio', { name: /^Contado/ })).toBeChecked()
   })
 
   it('retiro: sin fecha ni flete en el autoguardado y sin tira de días', async () => {
@@ -456,9 +456,9 @@ describe('pestaña Cabecera', () => {
   })
 
   it('flete y observaciones viajan en el autoguardado; el flete suma al total; la condición de pago se ve', async () => {
-    mockGet.mockImplementation((url: string) => Promise.resolve(url.includes('socios-comerciales') ? { condicionPago: { tipo: 'DiasDesdeEntrega', dias: 30 } } : calendario(url)))
+    mockGet.mockImplementation((url: string) => Promise.resolve(url.includes('socios-comerciales') ? { condicionesPagoCliente: [{ tipo: 'DiasDesdeEntrega', dias: 30, predeterminada: true }] } : calendario(url)))
     await enCabecera()
-    expect(await screen.findByText('Cuenta corriente, 30 días desde la entrega')).toBeTruthy()
+    expect(await screen.findByRole('radio', { name: /Cuenta corriente, 30 días desde la entrega/ })).toBeChecked()
     await userEvent.type(screen.getByLabelText('Flete ($)'), '3300')
     await userEvent.type(screen.getByLabelText('Observaciones'), ' Por la puerta de atrás ')
     await waitFor(() => expect(ultimoPut()).toMatchObject({ cargoFlete: 3300, observaciones: 'Por la puerta de atrás' }), ESPERA)
@@ -487,9 +487,9 @@ describe('pestaña Cabecera', () => {
       ['de un servidor anterior (sin el campo)', { puedeVerSaldo: true }],
       ['de un servidor que ni manda puedeVerSaldo', { creditoDisponible: 80000 }],
     ])('no lo muestra si está %s', async (_caso, socio) => {
-      conSocio({ condicionPago: { tipo: 'DiasDesdeEntrega', dias: 30 }, ...socio })
+      conSocio({ condicionesPagoCliente: [{ tipo: 'DiasDesdeEntrega', dias: 30, predeterminada: true }], ...socio })
       await enCabecera()
-      expect(await screen.findByText('Cuenta corriente, 30 días desde la entrega')).toBeTruthy()
+      expect(await screen.findByRole('radio', { name: /30 días desde la entrega/ })).toBeTruthy()
       expect(screen.queryByText('Crédito disponible')).toBeNull()
     })
 
