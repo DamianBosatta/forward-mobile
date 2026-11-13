@@ -23282,6 +23282,8 @@ export interface components {
             fechaAnulacion?: string | null;
             usuarioAnulacionNombre?: string | null;
             creadoPor?: string | null;
+            /** Format: date-time */
+            fechaModificacion?: string | null;
             eliminada: boolean;
             motivoEliminacion?: string | null;
             /** Format: date-time */
@@ -23340,6 +23342,8 @@ export interface components {
             fechaCreacion?: string;
             /** Format: uuid */
             creadoPorId?: string;
+            /** Format: date-time */
+            fechaModificacion?: string | null;
             /** Format: date-time */
             fechaRecepcion?: string | null;
             /** Format: int64 */
@@ -26663,6 +26667,15 @@ export interface components {
             multiplicadorTrafico?: number;
             /** Format: int32 */
             velocidadPromedioKmH?: number;
+        };
+        PasoVentaDto: {
+            /** Format: int32 */
+            estadoAnterior?: number | null;
+            /** Format: int32 */
+            estadoNuevo: number;
+            usuarioNombre: string;
+            /** Format: date-time */
+            fecha: string;
         };
         PedidoCaeArcaDto: {
             /** Format: uuid */
@@ -30148,6 +30161,7 @@ export interface components {
             ultimoCambioPor?: string | null;
             /** Format: date-time */
             ultimoCambioEn?: string | null;
+            pasos?: components["schemas"]["PasoVentaDto"][] | null;
             /** Format: int32 */
             itemsCount: number;
             /** Format: double */
