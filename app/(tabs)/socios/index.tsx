@@ -15,6 +15,8 @@ import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { FiltrosCartera, SIN_FILTROS, type FiltrosDeCartera } from '@/features/clientes/components/FiltrosCartera'
 import { textoCantidad } from '@/features/clientes/lib/cliente'
 import { seccionesPorLetra } from '@/features/clientes/lib/secciones'
+import { DeudoresClientes } from '@/features/deudores/components/DeudoresClientes'
+import { usePuedeVerDeudores } from '@/features/deudores/lib/permiso'
 import { FichaCliente } from '@/features/clientes/components/FichaCliente'
 import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
@@ -40,6 +42,10 @@ function ClientesScreen() {
   const secciones = useMemo(() => seccionesPorLetra(clientes), [clientes])
   const sinRed = esFallaDeRed(error)
   const hayDatos = clientes.length > 0
+  // "Deudores": los clientes que deben (`GET /deudas/clientes`, MOD_PAGOS:Read). El servidor acota al vendedor.
+  const puedeVerDeudores = usePuedeVerDeudores()
+  const [soloDeudores, setSoloDeudores] = useFiltroPersistente('socios.soloDeudores', false)
+  const verDeudores = soloDeudores && puedeVerDeudores
   const filtrando = filtros.conDeudaVencida || !!filtros.localidad
   const dosPaneles = width >= ANCHO_DOS_PANELES
 
@@ -48,7 +54,17 @@ function ClientesScreen() {
     else router.push({ pathname: '/(tabs)/socios/[id]', params: { id } })
   }
 
-  const lista = (
+  // Con permiso del export, la cuenta de un deudor lleva "Estado de cuenta" para compartir por WhatsApp.
+  const listaDeudores = (
+    <DeudoresClientes
+      onAbrir={id => {
+        if (dosPaneles) setAbierto(id)
+        else router.push({ pathname: '/(tabs)/cuentas/[id]', params: { id } })
+      }}
+    />
+  )
+
+  const lista = verDeudores ? listaDeudores : (
     <View style={{ flex: 1 }}>
       {error && !(sinRed && !hayDatos) ? (
         <View style={{ padding: space[4] }}>
@@ -134,8 +150,14 @@ function ClientesScreen() {
         subtitle="Mi cartera"
         leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
       />
-      <BuscadorCartera sobre="pantalla" grande valor={busqueda} onCambio={setBusqueda} />
-      <FiltrosCartera sobre="pantalla" valor={filtros} onCambio={setFiltros} totalCartera={filtrando || busqueda.trim() ? undefined : totalCount} />
+      {verDeudores ? null : <BuscadorCartera sobre="pantalla" grande valor={busqueda} onCambio={setBusqueda} />}
+      <FiltrosCartera
+        sobre="pantalla"
+        valor={filtros}
+        onCambio={setFiltros}
+        totalCartera={verDeudores || filtrando || busqueda.trim() ? undefined : totalCount}
+        deudores={puedeVerDeudores ? { activo: verDeudores, onCambio: setSoloDeudores } : undefined}
+      />
 
       {dosPaneles ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>

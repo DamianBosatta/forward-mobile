@@ -1,5 +1,5 @@
 import React from 'react'
-import { Modal, Pressable, StyleSheet, View } from 'react-native'
+import { Modal, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { radii, shadowMd, space, useColors, useIsDark } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
@@ -23,13 +23,19 @@ export function BottomSheet({ visible, onClose, accessibilityLabel, children }: 
   const c = useColors()
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const { isLarge } = useResponsive()
-  const { bottom } = useSafeAreaInsets()
+  const { top, bottom } = useSafeAreaInsets()
+  const { height } = useWindowDimensions()
   // Con el teclado abierto la hoja sube lo que el teclado tapa (contenido y pie quedan a la vista) y pierde la barra del sistema.
   const { ref, onLayout, tecladoAbierto, espacio } = useEspacioTeclado()
 
+  // La hoja nunca pasa del alto disponible (pantalla menos barra de estado, teclado y un margen): el ScrollView
+  // de adentro se achica y scrollea en vez de meter la hoja bajo la barra de estado en teléfonos bajos.
+  const maxHeight = Math.max(0, height - top - espacio - (isLarge ? space[6] * 2 : space[4]))
+
   const panel = isLarge
-    ? { width: '100%' as const, maxWidth: 600, borderRadius: radii.hoja, padding: space[6], ...sombra }
+    ? { width: '100%' as const, maxWidth: 600, maxHeight, borderRadius: radii.hoja, padding: space[6], ...sombra }
     : {
+        maxHeight,
         borderTopLeftRadius: radii.hoja,
         borderTopRightRadius: radii.hoja,
         borderBottomLeftRadius: 0,

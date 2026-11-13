@@ -51,6 +51,17 @@ export function subtotalDeColumna(id: ColumnaId, items: readonly VentaTablero[])
   return `${items.reduce((s, v) => s + (v.unidadesCount ?? 0), 0)} unidades`
 }
 
+/** Pedidos y productos del día: las tres columnas de trabajo; los no entregados tienen su columna y no suman. */
+export function totalDelDia(columnas: Columnas): { pedidos: number; productos: number } {
+  const delDia = [...columnas.aPreparar, ...columnas.enPreparacion, ...columnas.empacados]
+  return { pedidos: delDia.length, productos: delDia.reduce((s, v) => s + v.itemsCount, 0) }
+}
+
+/** "Hoy · 2 pedidos · 8 productos": el total de lo que muestra el tablero para el día o rango elegido. */
+export function textoTotalDelDia(etiqueta: string, t: { pedidos: number; productos: number }): string {
+  return `${etiqueta} · ${plural(t.pedidos, 'pedido', 'pedidos')} · ${plural(t.productos, 'producto', 'productos')}`
+}
+
 /**
  * Cantidad de cada pestaña: la que cuenta el servidor (`preparacion/conteos`, `clave` = nombre del estado). Sin
  * respuesta devuelve null y la pestaña va sin número, nunca con uno contado en el teléfono (como "Pedidos de logística").

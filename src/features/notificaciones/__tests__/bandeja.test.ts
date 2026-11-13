@@ -23,7 +23,7 @@ const ESPERADO: Record<AccionDestino, string> = {
   Socios: '/socios',
   SolicitudesSocio: 'web',
   Importaciones: 'web',
-  Picking: '/logistica/pedidos',
+  Picking: '/logistica/picking',
   Compra: '/compras/id-1',
   Calendario: '/calendario',
   Inventario: '/inventario',

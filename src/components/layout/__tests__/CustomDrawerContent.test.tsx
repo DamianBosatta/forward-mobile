@@ -72,7 +72,6 @@ const APROBADOS = [
   'Avisos',
   'Reportes',
   'Consola del chofer',
-  'Pedidos de logística',
   'Preparación de pedidos',
   'Mi cuenta y contraseña',
 ]
@@ -109,7 +108,7 @@ describe('CustomDrawerContent — recorte al alcance aprobado', () => {
     expect(titulos).toEqual(SECCIONES)
     const texto = JSON.stringify(screen.toJSON())
     const posicion = (t: string) => texto.indexOf(JSON.stringify(t))
-    const orden = ['Inicio', 'VENDER', 'Ventas', 'Clientes', 'Catálogo', 'Stock', 'COMPRAR', 'Compras', 'Proveedores', 'GESTIÓN', 'Cuentas corrientes', 'Calendario', 'LOGÍSTICA', 'Pedidos de logística', 'Preparación de pedidos', 'Consola del chofer', 'Reportes']
+    const orden = ['Inicio', 'VENDER', 'Ventas', 'Clientes', 'Catálogo', 'Stock', 'COMPRAR', 'Compras', 'Proveedores', 'GESTIÓN', 'Cuentas corrientes', 'Calendario', 'LOGÍSTICA', 'Preparación de pedidos', 'Consola del chofer', 'Reportes']
     const posiciones = orden.map(posicion)
     expect(orden.filter((t, i) => posiciones[i] < 0)).toEqual([])
     expect([...posiciones].sort((a, b) => a - b)).toEqual(posiciones)
@@ -182,7 +181,6 @@ describe('CustomDrawerContent — recorte al alcance aprobado', () => {
     ['ventas', '[id]', 'Ventas'],
     ['inventario', 'stock', 'Stock'],
     ['logistica', 'consola', 'Consola del chofer'],
-    ['logistica', 'pedidos', 'Pedidos de logística'],
     ['logistica', 'picking', 'Preparación de pedidos'],
     ['perfil', 'clave', 'Mi cuenta y contraseña'],
     ['perfil', 'usuarios', 'Mi cuenta y contraseña'],
@@ -267,7 +265,7 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     conPermisos('MOD_VENTAS:read', 'MOD_VIAJES:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Preparación de pedidos', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Preparación de pedidos', 'Mi cuenta y contraseña'])
     expect(screen.queryByText('VENDER')).toBeNull()
   })
 
@@ -334,9 +332,9 @@ describe('CustomDrawerContent — por puesto sembrado (C-004, L-12)', () => {
   const ESPERADO: Record<string, string[]> = {
     Vendedor: ['Inicio', 'Ventas', 'Clientes', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'],
     // Lee viajes y no crea ventas: el menú lo trata como al chofer, más su stock. El Catálogo es otro módulo (MOD_CATALOGO), que el puesto sembrado no trae.
-    Depósito: ['Inicio', 'Stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Preparación de pedidos', 'Mi cuenta y contraseña'],
-    Chofer: ['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Preparación de pedidos', 'Mi cuenta y contraseña'],
-    'Gerente de depósito': ['Inicio', 'Stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Pedidos de logística', 'Preparación de pedidos', 'Mi cuenta y contraseña'],
+    Depósito: ['Inicio', 'Stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Preparación de pedidos', 'Mi cuenta y contraseña'],
+    Chofer: ['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Preparación de pedidos', 'Mi cuenta y contraseña'],
+    'Gerente de depósito': ['Inicio', 'Stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Preparación de pedidos', 'Mi cuenta y contraseña'],
   }
 
   const visibles = () => APROBADOS.filter((n) => screen.queryByText(n) !== null)

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, userEvent, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { themeColors, useThemeStore } from '@/libs/theme'
+import { estilo } from '@/core/ui/fw/__testing__/tema'
 import { PreparacionScreen } from '../PreparacionScreen'
 import { elegirDepositoDeSesion, limpiarDepositoDeSesion } from '@/features/deposito-sesion'
 
@@ -57,6 +58,8 @@ function servidor() {
   mockGet.mockImplementation((url: string) =>
     url.includes('preparacion/conteos') ? Promise.resolve(CONTEOS)
       : url.includes('ventas-para-preparacion') ? Promise.resolve(pedidos)
+      : url.includes('dias-entrega') ? Promise.resolve({ lunes: true, martes: true, miercoles: true, jueves: true, viernes: true })
+      : url.includes('feriados') ? Promise.resolve([{ id: 'f', fecha: '2026-10-12', descripcion: 'Diversidad cultural' }])
       : url.endsWith('/api/v1/Depositos') ? Promise.resolve([{ id: 'd1', nombre: 'Depósito Central' }, { id: 'd2', nombre: 'Zona Norte' }, { id: SESION, nombre: 'Zona Sur' }])
       : url.endsWith('/Ventas/vendedores') ? Promise.resolve([{ id: 'u1', nombre: 'Emanuel Parraquini' }, { id: 'u2', nombre: 'Lucía Ferreyra' }])
       : url.endsWith('/Logistica/hojas-ruta/h9') ? Promise.resolve({ id: 'h9', choferNombre: 'Chofer Uno', detalles: [{ ventaId: 'v6', motivoRechazo: 'Local cerrado' }] })
@@ -187,6 +190,43 @@ describe.each(['light', 'dark'] as const)('Preparación de pedidos (%s)', (esque
     await userEvent.press(screen.getByRole('button', { name: 'Todo' }))
     expect(ultimaLista()).not.toContain('FechaDesde')
     expect(ultimaLista()).not.toContain('FechaHasta')
+  })
+
+  it('la tira de días saltea el fin de semana y tacha el feriado, que no se elige', async () => {
+    pintar()
+    await screen.findByTestId('tarjeta-v1')
+    const feriado = await screen.findByLabelText('lun 12 · Feriado')
+    expect(feriado.props.accessibilityState.disabled).toBe(true)
+    expect(estilo(within(feriado).getByText('12')).textDecorationLine).toBe('line-through')
+    expect(screen.getByText('El lun 12 es feriado: no hay entregas.')).toBeTruthy()
+    expect(screen.queryByLabelText(/^sáb|^dom/)).toBeNull()
+    expect(screen.getByLabelText('vie 9 · Hoy')).toBeTruthy()
+  })
+
+  it('elegir un día pide esa fecha y reemplaza el rango; un atajo lo suelta', async () => {
+    pintar()
+    await screen.findByTestId('tarjeta-v1')
+    await userEvent.press(screen.getByLabelText('mar 13'))
+    expect(ultimaLista()).toContain('FechaDesde=2026-10-13&FechaHasta=2026-10-13')
+    expect(urls().filter((u) => u.includes('preparacion/conteos')).at(-1)).toContain('FechaDesde=2026-10-13')
+    expect(screen.getByLabelText('mar 13').props.accessibilityState.checked).toBe(true)
+    expect(screen.getByRole('button', { name: 'Hoy' }).props.accessibilityState.selected).toBe(false)
+    expect(screen.getByRole('button', { name: 'Rango exacto' }).props.accessibilityState.selected).toBe(false)
+    await userEvent.press(screen.getByRole('button', { name: 'Esta semana' }))
+    expect(ultimaLista()).toContain('FechaDesde=2026-10-09&FechaHasta=2026-10-15')
+    expect(screen.getByLabelText('mar 13').props.accessibilityState.checked).toBe(false)
+    expect(screen.getByRole('button', { name: 'Esta semana' }).props.accessibilityState.selected).toBe(true)
+  })
+
+  it('el total de la cabecera cuenta pedidos y productos del día, sin los no entregados', async () => {
+    pintar()
+    await screen.findByTestId('tarjeta-v1')
+    // v1..v5 de trabajo: 12 + 3 + 5 + 1 + 1 productos; el no entregado (v6) no suma.
+    expect(screen.getByText('Hoy · 5 pedidos · 22 productos')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('mar 13'))
+    expect(await screen.findByText('mar 13 · 5 pedidos · 22 productos')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Todo' }))
+    expect(await screen.findByText('Todas las fechas · 5 pedidos · 22 productos')).toBeTruthy()
   })
 
   it('la hoja de filtros filtra por rango exacto, método y vendedor, y Limpiar vuelve a como abrió', async () => {
