@@ -65,6 +65,6 @@ it('el cuerpo del pago no cambia: descripción recortada, medio y cuenta de orig
 
   await waitFor(() => expect(post).toHaveBeenCalledTimes(1), ESPERA)
   expect(post.mock.calls[0]).toEqual(['/api/v1/gastos', {
-    descripcion: 'Factura de octubre', monto: 48300, tipoGastoId: 'tg-luz', medioPagoId: 'm-tr', cuentaOrigenId: 'gal', comprobanteUrl: null,
+    descripcion: 'Factura de octubre', monto: 48300, tipoGastoId: 'tg-luz', medioPagoId: 'm-tr', cuentaOrigenId: 'gal', comprobanteUrl: null, claveIdempotencia: expect.any(String),
   }])
 })

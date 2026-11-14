@@ -189,7 +189,7 @@ describe('Autorizaciones: la bandeja', () => {
 
     await userEvent.press(screen.getByLabelText('Autorizar la venta de Dirección a - Cliente a'))
     await userEvent.press(hoja('Autorizar venta').getByRole('button', { name: 'Autorizar' }))
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/a/autorizar', { ventaId: 'a', version: 7, razon: null })
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/a/autorizar', { ventaId: 'a', version: 7, razon: null, claveIdempotencia: expect.any(String) })
   })
 
   it('la autorización rápida de la bandeja no edita líneas: el pedido no lleva ajustes', async () => {
@@ -252,7 +252,7 @@ describe('Autorizaciones: la bandeja', () => {
       pintar()
       await userEvent.press(await screen.findByLabelText('Autorizar la venta de Juan B. Justo 6376 - Carlos'))
       await userEvent.press(hoja('Autorizar venta').getByRole('button', { name: 'Autorizar' }))
-      await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/a/autorizar', { ventaId: 'a', version: 41, razon: null }))
+      await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/a/autorizar', { ventaId: 'a', version: 41, razon: null, claveIdempotencia: expect.any(String) }))
 
       await userEvent.press(screen.getByLabelText('Rechazar la venta de Juan B. Justo 6376 - Carlos'))
       await userEvent.type(screen.getByLabelText('Motivo del rechazo · obligatorio'), 'Sin crédito')

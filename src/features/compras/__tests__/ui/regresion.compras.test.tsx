@@ -13,13 +13,23 @@ const mockGet = jest.fn()
 const mockPost = jest.fn()
 const mockPut = jest.fn()
 const mockPostConSobre = jest.fn()
+/** El log guarda el cuerpo sin la clave de idempotencia (es aleatoria); que viaje y sea una por llamada se prueba en idempotencia*.test. */
+const mockSinClave = (b: unknown) => {
+  if (b && typeof b === 'object' && 'claveIdempotencia' in b) {
+    const { claveIdempotencia, ...resto } = b as Record<string, unknown>
+    expect(claveIdempotencia).toEqual(expect.stringMatching(/^mobile-/))
+    return resto
+  }
+  return b
+}
+
 jest.mock('@/core/api/client', () => ({
   api: {
     get: (...a: unknown[]) => mockGet(...a),
-    post: (u: string, b: unknown) => { mockLog.push(['POST', u, b]); return mockPost(u, b) },
-    put: (u: string, b: unknown) => { mockLog.push(['PUT', u, b]); return mockPut(u, b) },
+    post: (u: string, b: unknown) => { mockLog.push(['POST', u, mockSinClave(b)]); return mockPost(u, b) },
+    put: (u: string, b: unknown) => { mockLog.push(['PUT', u, mockSinClave(b)]); return mockPut(u, b) },
     delete: jest.fn(),
-    postConSobre: (u: string, b: unknown) => { mockLog.push(['POSTSOBRE', u, b]); return mockPostConSobre(u, b) },
+    postConSobre: (u: string, b: unknown) => { mockLog.push(['POSTSOBRE', u, mockSinClave(b)]); return mockPostConSobre(u, b) },
   },
   API_URL: 'x',
 }))

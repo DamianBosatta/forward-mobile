@@ -1,5 +1,6 @@
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
+import { conClave, crearIntento } from '@/core/utils/idempotencia'
 import type { StockItem, PagedResult, AjusteStockRequest } from './types'
 import { productosKeys } from './productos'
 import { invalidarStock } from './invalidaciones'
@@ -87,12 +88,15 @@ export function useDisponibilidadPorLotes(depositoId: string, lotes: Disponibili
  * Hook Senior con Updates Optimistas para Ajuste de Stock.
  * Actualiza tanto la lista de stock como la lista de productos (catálogo) localmente.
  */
+/** Una clave por intento: el reintento o el doble toque del mismo ajuste manda la misma (ver `crearIntento`). */
+const intentoAjusteStock = crearIntento()
+
 export function useAjustarStock() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: (data: AjusteStockRequest) =>
-      api.post<boolean>('/api/v1/Stocks/adjust', data),
+      conClave(intentoAjusteStock, data, (cuerpo) => api.post<boolean>('/api/v1/Stocks/adjust', cuerpo)),
 
     onMutate: async (variables) => {
       // Cancelar refetches salientes para no sobrescribir nuestro update optimista

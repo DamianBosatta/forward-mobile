@@ -118,7 +118,7 @@ describe('recibir mercadería (M11)', () => {
   it('confirmar recepción manda lo mismo que antes: solo el id, la fecha de factura y el comprobante', async () => {
     await abrirRecepcion()
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', { compraId: 'aaaa1111-0000', fechaFacturaProveedor: null })
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', { compraId: 'aaaa1111-0000', fechaFacturaProveedor: null, claveIdempotencia: expect.any(String) })
   })
 
   it('con la condición por días desde la factura exige la fecha, y la rechaza fuera del rango de la web', async () => {
@@ -179,7 +179,7 @@ describe('recibir mercadería (M11)', () => {
     expect(screen.getByText('Suma 54 unidades al stock y genera la deuda con el proveedor')).toBeTruthy()
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
     expect(mockPostConSobre).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir-parcial', {
-      fechaFacturaProveedor: null,
+      fechaFacturaProveedor: null, claveIdempotencia: expect.any(String),
       lineas: [
         { detalleId: 'l1', cantidadRecibida: 24 },
         { detalleId: 'l2', cantidadRecibida: 30 },

@@ -7,7 +7,7 @@ import { Button, StatusChip, formatImporte } from '@/core/ui/fw'
 import { esFallaDeRed } from '@/core/api/errores'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { nuevaClaveIdempotencia } from '@/features/venta-nueva/lib/payload'
+import { nuevaClaveIdempotencia } from '@/core/utils/idempotencia'
 import { useCobrarParadaCobro, useNoCobrarParadaCobro } from '@/features/cobros/api'
 import {
   MOTIVOS_NO_COBRO, PARADA_COBRO_COBRADA, PARADA_COBRO_NO_COBRADA, PARADA_COBRO_PENDIENTE,

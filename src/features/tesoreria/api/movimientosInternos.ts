@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '@/core/api/client'
+import { conClave, crearIntento } from '@/core/utils/idempotencia'
 import type { components } from '@/libs/api-client/generated/schema'
 import { cuentasKeys } from '@/features/cuentas/api/queries'
 import { invalidarPorMovimientoInterno } from '@/libs/api-client/invalidaciones'
@@ -17,10 +18,14 @@ export function useTiposMovimientoInterno() {
 }
 
 /** Movimiento entre cuentas propias. Sin reintentos: repetirlo movería la plata dos veces. */
+/** Una clave por intento: el reintento o el doble toque del mismo movimiento manda la misma (ver `crearIntento`). */
+const intentoMovimientoInterno = crearIntento()
+
 export function useRegistrarMovimientoInterno() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (payload: MovimientoInternoPayload) => api.post<string>('/api/v1/movimientos-internos', payload),
+    mutationFn: (payload: MovimientoInternoPayload) =>
+      conClave(intentoMovimientoInterno, payload, (cuerpo) => api.post<string>('/api/v1/movimientos-internos', cuerpo)),
     retry: false,
     onSuccess: () => invalidarPorMovimientoInterno(qc),
   })

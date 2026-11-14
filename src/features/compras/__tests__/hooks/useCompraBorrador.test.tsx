@@ -96,7 +96,7 @@ describe('useCompraBorrador', () => {
     act(() => result.current.setLineas([{ productoId: 'pr1', nombre: 'Balde', cantidad: 3, unidad: 'Unidad', unidadesPorUnidad: 1, costoUnitario: 900 }]))
     await act(() => result.current.confirmar())
     expect(puts().at(-1)?.detalles[0]).toMatchObject({ cantidad: 3, costoUnitario: 900 })
-    expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Compras/c1/confirmar', { compraId: 'c1' })
+    expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Compras/c1/confirmar', { compraId: 'c1', claveIdempotencia: expect.any(String) })
     expect(mockPut.mock.invocationCallOrder.at(-1)!).toBeLessThan(mockPost.mock.invocationCallOrder.at(-1)!)
   })
 

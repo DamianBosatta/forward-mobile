@@ -22,8 +22,8 @@ jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
   default: () => ({ width: mockAncho, height: 800, scale: 2, fontScale: 1 }),
 }))
 let mockClaves = 0
-jest.mock('@/features/venta-nueva/lib/payload', () => ({
-  ...jest.requireActual('@/features/venta-nueva/lib/payload'),
+jest.mock('@/core/utils/idempotencia', () => ({
+  ...jest.requireActual('@/core/utils/idempotencia'),
   nuevaClaveIdempotencia: () => `clave-${++mockClaves}`,
 }))
 

@@ -76,7 +76,7 @@ describe('detalle de compra', () => {
     expect(screen.getByLabelText('Total: $ 55.200,00')).toBeTruthy()
     mockPost.mockRejectedValueOnce(Object.assign(new Error('No se le puede comprar a Insumos del Sur SA'), { status: 400 }))
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar compra' }))
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/confirmar', {})
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/confirmar', { compraId: 'aaaa1111-0000', claveIdempotencia: expect.any(String) })
     expect(await screen.findByText(/No se confirmó la compra: No se le puede comprar/)).toBeTruthy()
   })
 
@@ -101,7 +101,7 @@ describe('detalle de compra', () => {
     await userEvent.clear(fecha)
     await userEvent.type(fecha, hoyTexto())
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', { compraId: 'aaaa1111-0000', fechaFacturaProveedor: diaArgentina(Date.now()) })
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', { compraId: 'aaaa1111-0000', fechaFacturaProveedor: diaArgentina(Date.now()), claveIdempotencia: expect.any(String) })
   })
 
   it('confirmada al contado: recibir no pide fecha de factura', async () => {
@@ -109,7 +109,7 @@ describe('detalle de compra', () => {
     await userEvent.press(await screen.findByRole('button', { name: 'Recibir mercadería' }))
     expect(screen.queryByLabelText('Fecha de la factura')).toBeNull()
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', { compraId: 'aaaa1111-0000', fechaFacturaProveedor: null })
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', { compraId: 'aaaa1111-0000', fechaFacturaProveedor: null, claveIdempotencia: expect.any(String) })
   })
 
   it('cancelar exige un motivo y lo manda al servidor', async () => {
@@ -178,7 +178,7 @@ describe('detalle de compra', () => {
       expect(await screen.findByText('Factura B 00003-00001234')).toBeTruthy()
       await userEvent.press(screen.getByRole('button', { name: 'Confirmar recepción' }))
       expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/recibir', {
-        compraId: 'aaaa1111-0000', fechaFacturaProveedor: null,
+        compraId: 'aaaa1111-0000', fechaFacturaProveedor: null, claveIdempotencia: expect.any(String),
         comprobante: {
           tipo: 'Factura', letra: 'B', puntoVenta: 3, numero: 1234, fecha: '2026-10-08', cuitEmisor: '30712345671',
           razonSocialEmisor: 'Insumos del Sur SA', noGravado: 0, exento: 0, total: 55200, alicuotas: [], tributos: [],
@@ -298,7 +298,7 @@ describe('detalle de compra', () => {
       fireEvent.changeText(screen.getByLabelText('Fecha de la factura'), '05/10/2026')
       mockGet.mockClear()
       await enviar()
-      expect(mockPostConSobre).toHaveBeenCalledWith(URL_CYR, { version: 3, fechaFacturaProveedor: '2026-10-05' })
+      expect(mockPostConSobre).toHaveBeenCalledWith(URL_CYR, { version: 3, fechaFacturaProveedor: '2026-10-05', claveIdempotencia: expect.any(String) })
       expect(await screen.findByText('Compra confirmada. Compra recibida.')).toBeTruthy()
       await waitFor(() => expect(mockGet).toHaveBeenCalled())
       expect(mockPost).not.toHaveBeenCalled()
