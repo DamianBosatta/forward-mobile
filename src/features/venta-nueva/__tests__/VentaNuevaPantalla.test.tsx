@@ -153,7 +153,7 @@ describe('venta nueva: cliente, borrador y autoguardado', () => {
     await anadir()
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1), ESPERA)
     const items = [{ productoId: 'p1', cantidad: 1, descuentoPorcentaje: 0 }]
-    expect(mockPut).toHaveBeenLastCalledWith('/api/v1/Ventas/b1', { id: 'b1', version: 7, descuentoGeneral: 0, metodoEntrega: 1, items, fechaEntrega: expect.any(String), cargoFlete: 0, claveIdempotencia: expect.any(String) })
+    expect(mockPut).toHaveBeenLastCalledWith('/api/v1/Ventas/b1', { id: 'b1', version: 7, descuentoGeneral: 0, metodoEntrega: 1, items, fechaEntrega: expect.any(String), cargoFlete: 0, observaciones: '', claveIdempotencia: expect.any(String) })
     await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
     await anadir()
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(2), ESPERA)

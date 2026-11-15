@@ -1,6 +1,7 @@
 import { aAlta, aAutoguardado, errorDeAltaVenta, type Cabecera } from '../lib/payload'
 import { METODO_ENTREGA } from '@/features/ventas/lib/venta-form-retiro'
 import type { LineaCarrito } from '../lib/carrito'
+import { cabeceraDesdeVenta } from '../lib/hidratar'
 
 const CAB: Cabecera = { metodoEntrega: METODO_ENTREGA.Logistica, fecha: '2026-11-03', flete: 0, observaciones: '' }
 const linea = (parcial: Partial<LineaCarrito> = {}) =>
@@ -60,5 +61,38 @@ describe('aAlta: conFactura', () => {
 
   it('el autoguardado (PUT) nunca lo manda', () => {
     expect(aAutoguardado([linea()], 0, { ...CAB, conFactura: true })).not.toHaveProperty('conFactura')
+  })
+})
+
+// S3 (decisiones 2026-11-15): en la edición, sin `observaciones` el servidor conserva las notas; "" las borra.
+describe('observaciones en el cuerpo de actualización (aAutoguardado)', () => {
+  it('vacías viajan como cadena vacía para poder borrar las notas guardadas', () => {
+    expect(aAutoguardado([linea()], 0, { ...CAB, observaciones: '' }).observaciones).toBe('')
+  })
+
+  it('solo espacios viajan como cadena vacía', () => {
+    expect(aAutoguardado([linea()], 0, { ...CAB, observaciones: '   \n ' }).observaciones).toBe('')
+  })
+
+  it('con texto viajan recortadas', () => {
+    expect(aAutoguardado([linea()], 0, { ...CAB, observaciones: '  Portón negro  ' }).observaciones).toBe('Portón negro')
+  })
+
+  it('la venta hidratada sin notas se compara igual a su base (no dispara un guardado de más)', () => {
+    const h = { metodoEntrega: 1, cargoFleteAmount: 0, observaciones: null } as never
+    const base = aAutoguardado([], 0, cabeceraDesdeVenta(h))
+    expect(aAutoguardado([], 0, cabeceraDesdeVenta(h))).toEqual(base)
+    expect(base.observaciones).toBe('')
+  })
+})
+
+describe('observaciones en el alta (aAlta)', () => {
+  it('vacías o solo espacios se omiten', () => {
+    expect(alta([linea()], 0, { ...CAB, observaciones: '' })).not.toHaveProperty('observaciones')
+    expect(alta([linea()], 0, { ...CAB, observaciones: '  ' })).not.toHaveProperty('observaciones')
+  })
+
+  it('con texto viajan recortadas', () => {
+    expect(alta([linea()], 0, { ...CAB, observaciones: ' Entrar por atrás ' }).observaciones).toBe('Entrar por atrás')
   })
 })

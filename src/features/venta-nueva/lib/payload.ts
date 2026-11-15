@@ -36,13 +36,14 @@ const SIN_CABECERA: Cabecera = { metodoEntrega: METODO_ENTREGA.Logistica, fecha:
 /**
  * Snapshot del autoguardado, con las reglas de la web (buildUpdateVentaPayload): la fecha no va en
  * un retiro; el flete solo en logística propia (incluso 0: limpiarlo tiene que viajar); el retiro
- * deja el flete en 0 del lado del servidor. Las observaciones van si no están vacías.
+ * deja el flete en 0 del lado del servidor. Las observaciones siempre viajan recortadas: sin la clave el
+ * servidor conserva las notas guardadas y "" las borra (asi se puede vaciar una nota); `aAlta` las omite vacias.
  */
 export function aAutoguardado(lineas: LineaCarrito[], descuentoGeneral = 0, cab: Cabecera = SIN_CABECERA): AutoguardadoVenta {
   const p: AutoguardadoVenta = { descuentoGeneral, metodoEntrega: cab.metodoEntrega, items: itemsDe(lineas) }
   if (cab.metodoEntrega !== METODO_ENTREGA.RetiroEnLocal && cab.fecha) p.fechaEntrega = cab.fecha
   if (cab.metodoEntrega === METODO_ENTREGA.Logistica) p.cargoFlete = cab.flete
-  if (cab.observaciones.trim()) p.observaciones = cab.observaciones.trim()
+  p.observaciones = cab.observaciones.trim()
   if (cab.condicionPago) p.condicionPago = cab.condicionPago
   return p
 }
@@ -83,7 +84,7 @@ export interface DatosAlta {
 
 /** Alta (buildVentaPayload de la web): el vendedor sale del token; el flete solo si es > 0; la cesión solo en Pedido. */
 export function aAlta(lineas: LineaCarrito[], descuentoGeneral: number, cab: Cabecera, d: DatosAlta): AltaVenta {
-  const { cargoFlete, ...resto } = aAutoguardado(lineas, descuentoGeneral, cab)
+  const { cargoFlete, observaciones, ...resto } = aAutoguardado(lineas, descuentoGeneral, cab)
   const p: AltaVenta = {
     ...resto,
     clienteId: d.clienteId,
@@ -93,6 +94,8 @@ export function aAlta(lineas: LineaCarrito[], descuentoGeneral: number, cab: Cab
     claveIdempotencia: d.claveIdempotencia,
   }
   if (cargoFlete) p.cargoFlete = cargoFlete
+  // Un alta no tiene notas guardadas que borrar: vacias se omiten.
+  if (observaciones) p.observaciones = observaciones
   if (d.motivoVentaSinStock?.trim()) p.motivoVentaSinStock = d.motivoVentaSinStock.trim()
   if (d.esPedido && d.porcentajeComisionCedido) p.porcentajeComisionCedido = d.porcentajeComisionCedido
   // buildVentaPayload de la web: solo si el tilde ya tiene valor; si no, el servidor aplica el default de Configuración.
