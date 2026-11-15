@@ -87,6 +87,7 @@ describe('pantalla', () => {
 
     await waitFor(() => expect(post).toHaveBeenCalledWith('/api/v1/gastos', {
       descripcion: 'Luz', monto: 1500.5, tipoGastoId: 'tg-luz', medioPagoId: 'm-tr', cuentaOrigenId: 'gal', comprobanteUrl: null,
+      claveIdempotencia: expect.any(String),
     }), ESPERA)
     await waitFor(() => expect(onListo).toHaveBeenCalled(), ESPERA)
     expect(mockShow).toHaveBeenCalledWith('Pago registrado', 'success')

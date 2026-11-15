@@ -21814,6 +21814,7 @@ export interface components {
             principales?: components["schemas"]["FilaAbcDto"][] | null;
         };
         AbrirCajaCommand: {
+            claveIdempotencia?: string | null;
             /**
              * Format: uuid
              * @deprecated
@@ -21939,6 +21940,7 @@ export interface components {
             activo?: boolean;
         };
         AdjustStockCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             productoId?: string;
             /** Format: uuid */
@@ -22261,6 +22263,7 @@ export interface components {
             roturas?: components["schemas"]["RoturaDevolucionInput"][] | null;
         };
         AutorizarVentaCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             ventaId?: string;
             /** Format: int32 */
@@ -22582,6 +22585,7 @@ export interface components {
             notaCredito?: components["schemas"]["ComprobanteCompraInput"];
         };
         CargarPendientesCommand: {
+            claveIdempotencia?: string | null;
             movimientoIds?: string[] | null;
         };
         CarteraChequesResumenDto: {
@@ -23598,6 +23602,7 @@ export interface components {
             montoAplicar?: number;
         };
         ConciliarPagoCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             pagoId?: string;
             aplicaciones?: components["schemas"]["ConciliacionDto"][] | null;
@@ -23665,6 +23670,7 @@ export interface components {
             codigo?: string | null;
         };
         ConfirmarCompraCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             compraId?: string;
             /**
@@ -23689,6 +23695,7 @@ export interface components {
             fotoUrl?: string | null;
         };
         ConfirmarYRecibirCompraCommand: {
+            claveIdempotencia?: string | null;
             /** Format: int32 */
             version?: number | null;
             /** Format: date */
@@ -23733,6 +23740,7 @@ export interface components {
             columnas: components["schemas"]["ConteoColumnaPreparacionDto"][];
         };
         ConvertirPresupuestoCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             ventaId?: string;
             /** Format: int32 */
@@ -23854,6 +23862,7 @@ export interface components {
             nota?: string | null;
         };
         CrearPedidoTransferenciaCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             depositoOrigenId?: string;
             observacion?: string | null;
@@ -23894,6 +23903,7 @@ export interface components {
             imprenta?: components["schemas"]["DatosImprentaRequest"];
         };
         CrearTransferenciaStockCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             depositoOrigenId?: string;
             /** Format: uuid */
@@ -23924,6 +23934,7 @@ export interface components {
             depositoId?: string;
         };
         CreateCompraCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             proveedorId?: string;
             /** Format: uuid */
@@ -24076,6 +24087,7 @@ export interface components {
             capacidadCargaKg?: number;
         };
         CreateVentaBorradorCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             clienteId?: string;
             /** Format: uuid */
@@ -24259,12 +24271,14 @@ export interface components {
             habilitacion?: string | null;
         };
         DepositarChequeCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             chequeId?: string;
             /** Format: uuid */
             cuentaDestinoId?: string;
         };
         DepositarChequesCommand: {
+            claveIdempotencia?: string | null;
             chequeIds?: string[] | null;
             /** Format: uuid */
             cuentaDestinoId?: string;
@@ -24354,6 +24368,7 @@ export interface components {
             observacion?: string | null;
         };
         DespacharTransferenciaStockCommand: {
+            claveIdempotencia?: string | null;
             /** Format: int32 */
             version?: number | null;
         };
@@ -26375,6 +26390,7 @@ export interface components {
         /** @enum {string} */
         OrigenTalonarioRemito: "Autoimpresor" | "Imprenta";
         PagarComisionVendedorCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             vendedorId?: string;
             /** Format: double */
@@ -27381,6 +27397,7 @@ export interface components {
             motivoRechazo?: string | null;
         };
         RechazarChequeCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             chequeId?: string;
             motivo?: string | null;
@@ -27403,6 +27420,7 @@ export interface components {
             motivo?: string | null;
         };
         RecibirCompraCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             compraId?: string;
             /**
@@ -27417,12 +27435,14 @@ export interface components {
             gastosOperativos?: number | null;
         };
         RecibirParcialCompraCommand: {
+            claveIdempotencia?: string | null;
             lineas?: components["schemas"]["LineaRecibida"][] | null;
             /** Format: date */
             fechaFacturaProveedor?: string | null;
             comprobante?: components["schemas"]["ComprobanteCompraInput"];
         };
         RecibirTransferenciaStockCommand: {
+            claveIdempotencia?: string | null;
             /** Format: int32 */
             version?: number | null;
         };
@@ -27564,6 +27584,7 @@ export interface components {
             fechaComprobante?: string;
         };
         RegistrarDevolucionProveedorCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             compraId?: string;
             /** Format: int32 */
@@ -27577,6 +27598,7 @@ export interface components {
             plataforma?: string | null;
         };
         RegistrarGastoCommand: {
+            claveIdempotencia?: string | null;
             descripcion?: string | null;
             /** Format: double */
             monto?: number;
@@ -27602,6 +27624,7 @@ export interface components {
             usuarioId?: string;
         };
         RegistrarMovimientoCajaCommand: {
+            claveIdempotencia?: string | null;
             tipo?: components["schemas"]["TipoMovimientoCaja"];
             /** Format: double */
             monto?: number;
@@ -27611,6 +27634,7 @@ export interface components {
             tipoCuenta?: components["schemas"]["TipoCuentaSocio"];
         };
         RegistrarMovimientoEntreCuentasCommand: {
+            claveIdempotencia?: string | null;
             /** Format: double */
             monto?: number;
             moneda?: string | null;
@@ -27626,6 +27650,7 @@ export interface components {
             retiradoPorNombre?: string | null;
         };
         RegistrarMovimientoManualVendedorCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             cuentaCorrienteId?: string;
             /** Format: double */
@@ -28010,6 +28035,7 @@ export interface components {
             codigo?: string | null;
         };
         RendirCobrosChoferCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             hojaRutaId?: string;
             /** Format: uuid */
@@ -28601,6 +28627,7 @@ export interface components {
             motivo?: string | null;
         };
         SolicitarDevolucionCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             ventaId?: string;
             motivo?: string | null;
@@ -29567,6 +29594,7 @@ export interface components {
             capacidadCargaKg?: number;
         };
         UpdateVentaCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             id?: string;
             /**

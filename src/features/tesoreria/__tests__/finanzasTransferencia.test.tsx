@@ -119,6 +119,6 @@ it('el cuerpo de un retiro no cambia: sin destino, con quién se la lleva y "Op.
 
   expect(post).toHaveBeenCalledTimes(1)
   expect(post.mock.calls[0]).toEqual(['/api/v1/movimientos-internos', {
-    tipoMovimientoInternoId: 't-re', cuentaOrigenId: 'caja', cuentaDestinoId: null, monto: 1500.5, observaciones: 'Op. 77 · Viáticos', retiradoPorNombre: 'Emanuel',
+    tipoMovimientoInternoId: 't-re', cuentaOrigenId: 'caja', cuentaDestinoId: null, monto: 1500.5, observaciones: 'Op. 77 · Viáticos', retiradoPorNombre: 'Emanuel', claveIdempotencia: expect.any(String),
   }])
 })

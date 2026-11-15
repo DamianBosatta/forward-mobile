@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
+import { conClave, crearIntento } from '@/core/utils/idempotencia'
 import type { CajaActivaDto, MovimientoCajaDto, Pago, PagedResult } from './types'
 import type { components } from './generated/schema'
 import { invalidarCaja } from './invalidaciones'
@@ -47,11 +48,14 @@ export function useMovimientosCaja(cajaId: string) {
   })
 }
 
+/** Una clave por intento: el reintento o el doble toque de la misma apertura manda la misma (ver `crearIntento`). */
+const intentoAbrirCaja = crearIntento()
+
 export function useAbrirCaja() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (saldoInicial: number) =>
-      api.post<string>('/api/v1/Cajas/abrir', { saldoInicial }),
+      conClave(intentoAbrirCaja, { saldoInicial }, (cuerpo) => api.post<string>('/api/v1/Cajas/abrir', cuerpo)),
     onSuccess: () => invalidarCaja(queryClient),
   })
 }

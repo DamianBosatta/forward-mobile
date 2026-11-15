@@ -213,7 +213,7 @@ describe('R2 · presupuesto (ResPresupuesto)', () => {
     const alerta = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, botones) => { botones?.find((b) => b.text === 'Pasar a pedido')?.onPress?.() })
     pantalla()
     await userEvent.press(await screen.findByRole('button', { name: 'Pasar a pedido' }))
-    await waitFor(() => expect(mockPut).toHaveBeenCalledWith('/api/v1/Ventas/v9/convertir-a-pedido', { version: 3, usuarioGeneradorId: 'u1' }))
+    await waitFor(() => expect(mockPut).toHaveBeenCalledWith('/api/v1/Ventas/v9/convertir-a-pedido', { ventaId: 'v9', version: 3, usuarioGeneradorId: 'u1', claveIdempotencia: expect.any(String) }))
     alerta.mockRestore()
   })
 

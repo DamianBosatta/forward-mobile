@@ -9,13 +9,17 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import type { ClienteNombrable } from '@/features/clientes/lib/cliente'
 import { encolarSiFaltaSenal, loQueVio } from '@/features/venta-sin-senal'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { aAlta, aAutoguardado, errorDeAltaVenta, nuevaClaveIdempotencia, type Cabecera } from '../lib/payload'
+import { aAlta, aAutoguardado, errorDeAltaVenta, type Cabecera } from '../lib/payload'
+import { conClave, crearIntento, nuevaClaveIdempotencia } from '@/core/utils/idempotencia'
 import { motivosAutorizacion } from '../lib/motivosAutorizacion'
 import { esEstadoVenta } from '@/core/constants/estados'
 import type { LineaCarrito } from '../lib/carrito'
 import { useDepositoDeVenta } from './useDepositoDeVenta'
 import type { useBorradorVenta } from './useBorradorVenta'
 import { invalidarPorCambioDeVenta } from '@/libs/api-client/invalidaciones'
+
+/** Una clave por intento de guardar la edición de una venta: el reintento o el doble toque manda la misma (ver `crearIntento`). */
+const intentoEdicion = crearIntento()
 
 interface Datos {
   clienteId: string
@@ -87,14 +91,15 @@ export function useConfirmarVenta(d: Datos) {
     let conLoDeAntes = false
     if (d.edicion) {
       // Igual que la web (buildUpdateVentaPayload): la cesión viaja solo si se cambió; ausente = no tocar.
-      r = await api.put<VentaActionResponseDto>(`/api/v1/Ventas/${d.edicion.ventaId}`, {
+      const ventaId = d.edicion.ventaId
+      r = await conClave(intentoEdicion, {
         ...aAutoguardado(d.lineas, d.descuentoGeneral, d.cabecera), id: d.edicion.ventaId, version: d.edicion.version,
         ...(d.esPedido && d.porcentajeCedido ? { porcentajeComisionCedido: d.porcentajeCedido } : {}),
         // buildUpdateVentaPayload de la web: el tilde viaja si ya tiene valor; ausente = no tocar.
         ...(d.cabecera.conFactura !== undefined ? { conFactura: d.cabecera.conFactura } : {}),
         // Solo si el vendedor la cambió; ausente = el servidor conserva la que tiene.
         ...(d.cabecera.condicionPago ? { condicionPago: d.cabecera.condicionPago } : {}),
-      })
+      }, (cuerpo) => api.put<VentaActionResponseDto>(`/api/v1/Ventas/${ventaId}`, cuerpo))
     } else if (!d.esPedido && b.borrador) {
       r = await api.post<VentaActionResponseDto>(`/api/v1/Ventas/${b.borrador.id}/guardar-presupuesto`, { ventaId: b.borrador.id, version: await b.flush() })
     } else {

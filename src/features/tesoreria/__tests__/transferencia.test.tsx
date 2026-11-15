@@ -148,7 +148,7 @@ it('registra el movimiento entre dos cuentas propias con el tipo del catálogo',
   await userEvent.press(screen.getByRole('button', { name: 'Registrar movimiento' }))
 
   expect(post).toHaveBeenCalledWith('/api/v1/movimientos-internos', {
-    tipoMovimientoInternoId: 't-tr', cuentaOrigenId: 'caja', cuentaDestinoId: 'gal', monto: 350000, observaciones: null, retiradoPorNombre: null,
+    tipoMovimientoInternoId: 't-tr', cuentaOrigenId: 'caja', cuentaDestinoId: 'gal', monto: 350000, observaciones: null, retiradoPorNombre: null, claveIdempotencia: expect.any(String),
   })
   expect(await screen.findByText('Movimiento registrado')).toBeTruthy()
 })

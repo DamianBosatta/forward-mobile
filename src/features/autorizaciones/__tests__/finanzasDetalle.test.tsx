@@ -125,7 +125,7 @@ it('los cuerpos de autorizar con ajuste y de rechazar no cambian', async () => {
 
   await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1))
   expect(mockPost.mock.calls[0]).toEqual(['/api/v1/Ventas/v1/autorizar', {
-    ventaId: 'v1', version: 42, razon: 'Cliente estratégico', ajustes: [{ ventaDetalleId: 'd1', cantidadNueva: 9 }],
+    ventaId: 'v1', version: 42, razon: 'Cliente estratégico', ajustes: [{ ventaDetalleId: 'd1', cantidadNueva: 9 }], claveIdempotencia: expect.any(String)
   }])
 })
 

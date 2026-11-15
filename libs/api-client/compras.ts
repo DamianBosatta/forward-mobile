@@ -1,5 +1,6 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
+import { conClave, crearIntento } from '@/core/utils/idempotencia'
 import { buildAnularCompraPayload } from './anular-compra'
 import type { Compra, CompraDtoList, CompraDto, PagedResult, CreateCompraRequest, EstadoCompra } from './types'
 import type { components } from './generated/schema'
@@ -139,12 +140,21 @@ export function useCompra(id: string) {
   })
 }
 
-// ── Mutations ────────────────────────────────────────────────────────────────
+/// ── Mutations ────────────────────────────────────────────────────────────────
+
+/** Una clave por intento (ver `crearIntento`): el reintento o el doble toque de la misma operación manda la misma. */
+const intentoCrearCompra = crearIntento()
+const intentoConfirmarCompra = crearIntento()
+const intentoRecibirCompra = crearIntento()
+
+/** Confirma una compra (nota de pedido → confirmada). Una sola copia: el hook y el autoguardado del borrador la usan. */
+export const confirmarCompra = (id: string) =>
+  conClave(intentoConfirmarCompra, { compraId: id }, (cuerpo) => api.post<void>(`/api/v1/Compras/${id}/confirmar`, cuerpo), id)
 
 export function useCreateCompra() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (data: CreateCompraRequest) => api.post<Compra>('/api/v1/Compras', data),
+    mutationFn: (data: CreateCompraRequest) => conClave(intentoCrearCompra, data, (cuerpo) => api.post<Compra>('/api/v1/Compras', cuerpo)),
     onSuccess: () => invalidarPorCambioDeCompra(queryClient),
   })
 }
@@ -170,7 +180,7 @@ export function useCancelarCompra() {
 export function useConfirmarCompra() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.post<void>(`/api/v1/Compras/${id}/confirmar`, {}),
+    mutationFn: confirmarCompra,
     onSuccess: () => invalidarPorCambioDeCompra(queryClient),
   })
 }
@@ -189,15 +199,21 @@ export function useRecibirCompra() {
       lineas?: components['schemas']['LineaRecibida'][] | null
     }): Promise<CompraFaltante> => {
       if (!lineas) {
-        await api.post<void>(`/api/v1/Compras/${id}/recibir`, {
-          compraId: id, fechaFacturaProveedor: fechaFacturaProveedor ?? null, ...(comprobante ? { comprobante } : {}),
-        })
+        await conClave(
+          intentoRecibirCompra,
+          { compraId: id, fechaFacturaProveedor: fechaFacturaProveedor ?? null, ...(comprobante ? { comprobante } : {}) },
+          (cuerpo) => api.post<void>(`/api/v1/Compras/${id}/recibir`, cuerpo),
+          id,
+        )
         return {}
       }
       // El número de la compra nueva viene al lado de `data` (R22b): se lee del sobre.
-      const { sobre } = await api.postConSobre<string, CompraFaltante>(`/api/v1/Compras/${id}/recibir-parcial`, {
-        fechaFacturaProveedor: fechaFacturaProveedor ?? null, ...(comprobante ? { comprobante } : {}), lineas,
-      })
+      const { sobre } = await conClave(
+        intentoRecibirCompra,
+        { fechaFacturaProveedor: fechaFacturaProveedor ?? null, ...(comprobante ? { comprobante } : {}), lineas },
+        (cuerpo) => api.postConSobre<string, CompraFaltante>(`/api/v1/Compras/${id}/recibir-parcial`, cuerpo),
+        id,
+      )
       return { compraFaltanteId: sobre?.compraFaltanteId ?? null, compraFaltanteNumero: sobre?.compraFaltanteNumero ?? null }
     },
     onSuccess: () => invalidarPorCambioDeCompra(queryClient),
@@ -264,6 +280,6 @@ export const borradorCompraApi = {
   guardar: (body: GuardarCompraBody) => api.put<CompraActionResponse>(`/api/v1/Compras/${body.id}`, body),
   guardarNota: (id: string, version: number) =>
     api.post<CompraActionResponse>(`/api/v1/Compras/${id}/guardar-nota-pedido`, { compraId: id, version }),
-  confirmar: (id: string) => api.post<void>(`/api/v1/Compras/${id}/confirmar`, { compraId: id }),
+  confirmar: confirmarCompra,
   descartar: (id: string) => api.post<boolean>(`/api/v1/Compras/${id}/descartar-borrador`, {}),
 }

@@ -140,7 +140,7 @@ describe('venta nueva: stock en vivo (S2)', () => {
 describe('venta nueva: cliente, borrador y autoguardado', () => {
   it('al elegir el cliente crea el borrador para ese cliente, lo nombra por la dirección y le guarda la fecha propuesta', async () => {
     await elegirCliente()
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' })
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido', claveIdempotencia: expect.any(String) })
     expect(screen.getByText('Paso 3 de 4')).toBeTruthy()
     expect(screen.getByText('Tarantino 1898 · Autoservicio Abel')).toBeTruthy()
     // El borrador nace vacío en el servidor: la fecha propuesta viaja en el primer autoguardado.
@@ -153,7 +153,7 @@ describe('venta nueva: cliente, borrador y autoguardado', () => {
     await anadir()
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1), ESPERA)
     const items = [{ productoId: 'p1', cantidad: 1, descuentoPorcentaje: 0 }]
-    expect(mockPut).toHaveBeenLastCalledWith('/api/v1/Ventas/b1', { id: 'b1', version: 7, descuentoGeneral: 0, metodoEntrega: 1, items, fechaEntrega: expect.any(String), cargoFlete: 0 })
+    expect(mockPut).toHaveBeenLastCalledWith('/api/v1/Ventas/b1', { id: 'b1', version: 7, descuentoGeneral: 0, metodoEntrega: 1, items, fechaEntrega: expect.any(String), cargoFlete: 0, claveIdempotencia: expect.any(String) })
     await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
     await anadir()
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(2), ESPERA)
@@ -228,7 +228,7 @@ describe('pestaña Líneas', () => {
   it('el borrador nace con el tipo que se eligió: Presupuesto también viaja', async () => {
     mockTipo = 'Presupuesto'
     await elegirCliente()
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Presupuesto' })
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Presupuesto', claveIdempotencia: expect.any(String) })
   })
 
   it('servidor nuevo: el autoguardado de un pedido manda el descuento sobre el tope sin recortarlo', async () => {
@@ -918,7 +918,7 @@ describe('cliente primero, catálogo después', () => {
     await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
     expect(await screen.findByRole('button', { name: 'Añadir pala' })).toBeTruthy()
     expect(screen.queryByText('¿Cómo arrancás?')).toBeNull()
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido', claveIdempotencia: expect.any(String) }))
     // El cliente se identifica por la dirección; el nombre va en otra línea.
     expect(screen.getByText('Tarantino 1898')).toBeTruthy()
     expect(screen.getByText('Autoservicio Abel')).toBeTruthy()
@@ -930,7 +930,7 @@ describe('cliente primero, catálogo después', () => {
     await userEvent.press(screen.getByRole('radio', { name: 'Presupuesto' }))
     await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
     await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Presupuesto' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Presupuesto', claveIdempotencia: expect.any(String) }))
   })
 
   it('?clienteId= salta la lista: llega directo al catálogo con el borrador de ese cliente', async () => {
@@ -938,7 +938,7 @@ describe('cliente primero, catálogo después', () => {
     pantalla({ clienteId: 'c1' })
     expect(await screen.findByRole('button', { name: 'Añadir pala' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Elegir Tarantino' })).toBeNull()
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido', claveIdempotencia: expect.any(String) }))
   })
 
   it('"Ver venta" lleva a revisar la venta y la flecha vuelve al catálogo', async () => {
@@ -1149,7 +1149,7 @@ describe('venta nueva: el depósito de la sesión queda fijo al abrir (S8, G1)',
 
   it('abierta en A, cambiar la sesión a B no mueve la venta: borrador, stock y confirmación siguen en A', async () => {
     await elegirCliente()
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: NORTE, tipoOperacion: 'Pedido' })
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: NORTE, tipoOperacion: 'Pedido', claveIdempotencia: expect.any(String) })
     act(() => elegirDepositoDeSesion('u', SUR))
     await anadir()
     await userEvent.press(screen.getByRole('button', { name: 'Ver venta' }))
@@ -1166,6 +1166,6 @@ describe('venta nueva: el depósito de la sesión queda fijo al abrir (S8, G1)',
     act(() => elegirDepositoDeSesion('u', SUR))
     await userEvent.press(screen.getByRole('button', { name: 'Elegir Tarantino' }))
     await userEvent.press(screen.getByRole('button', { name: /^Continuar a productos/ }))
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: SUR, tipoOperacion: 'Pedido' })
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c1', depositoId: SUR, tipoOperacion: 'Pedido', claveIdempotencia: expect.any(String) })
   })
 })

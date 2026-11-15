@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { nuevaClaveIdempotencia } from '@/features/venta-nueva/lib/payload'
+import { nuevaClaveIdempotencia } from '@/core/utils/idempotencia'
 import { claveDeOtroSocio, useCajaDelCobro, useRegistrarCobro, type CobroRegistrado } from '../api/cobros'
 import { armarCobro, entraACaja, type FormCobro } from '../lib/cobro'
 import type { Contraparte } from '../lib/contraparte'

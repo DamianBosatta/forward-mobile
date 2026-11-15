@@ -249,12 +249,24 @@ describe('enviar las ventas guardadas en el teléfono (V9, D4)', () => {
       encolar({ observaciones: 'Tocar timbre', fechaEntrega: '2026-10-23' })
       await expect(enviarPendientes('u1')).resolves.toBe('completa')
       expect(llamadas('/api/v1/Ventas')).toHaveLength(0)
-      expect(llamadas('/api/v1/Ventas/borradores')[0][1]).toEqual({ clienteId: 'c1', depositoId: 'd1', tipoOperacion: 'Pedido' })
+      expect(llamadas('/api/v1/Ventas/borradores')[0][1]).toEqual({
+        clienteId: 'c1', depositoId: 'd1', tipoOperacion: 'Pedido', claveIdempotencia: `${leerCola('u1')[0].alta.claveIdempotencia}-borrador`,
+      })
       expect(put).toHaveBeenCalledWith('/api/v1/Ventas/b1', {
         id: 'b1', version: 1, descuentoGeneral: 5, metodoEntrega: 1,
-        items: [{ productoId: 'p1', cantidad: 6, descuentoPorcentaje: 0 }], fechaEntrega: '2026-10-23', observaciones: 'Tocar timbre',
+        items: [{ productoId: 'p1', cantidad: 6, descuentoPorcentaje: 0 }], fechaEntrega: '2026-10-23', observaciones: 'Tocar timbre', claveIdempotencia: expect.stringMatching(/^mobile-/),
       })
       expect(leerCola('u1')[0].estado).toEqual({ tipo: 'enBorradores', ventaId: 'b1', totalServidor: 684 })
+    })
+
+    it('el reintento del alta del borrador (sin respuesta) manda la misma clave', async () => {
+      servidor({ vista: () => vista({ lineas: [linea('p1', 120)], total: 684 }), borrador: () => { throw new Error('Network request failed') } })
+      encolar()
+      await enviarPendientes('u1')
+      await enviarPendientes('u1')
+      const altas = llamadas('/api/v1/Ventas/borradores')
+      expect(altas.length).toBeGreaterThan(1)
+      expect(altas[1][1].claveIdempotencia).toBe(altas[0][1].claveIdempotencia)
     })
 
     it('un presupuesto va a un borrador de presupuesto', async () => {

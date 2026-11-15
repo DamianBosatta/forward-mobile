@@ -203,7 +203,7 @@ describe('Autorizar venta: el detalle', () => {
 
     await userEvent.type(hoja.getByLabelText('Razón para autorizar · obligatoria'), 'Cliente estratégico')
     await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 42, razon: 'Cliente estratégico' })
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 42, razon: 'Cliente estratégico', claveIdempotencia: expect.any(String) })
     expect(mockBack).toHaveBeenCalled()
   })
 
@@ -232,7 +232,7 @@ describe('Autorizar venta: el detalle', () => {
       expect(hoja.getByText('Detergente Magistral: 10 → 9')).toBeTruthy()
       await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
       expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', {
-        ventaId: 'v1', version: 42, razon: null, ajustes: [{ ventaDetalleId: 'd1', cantidadNueva: 9 }],
+        ventaId: 'v1', version: 42, razon: null, ajustes: [{ ventaDetalleId: 'd1', cantidadNueva: 9 }], claveIdempotencia: expect.any(String)
       })
     })
 
@@ -241,7 +241,7 @@ describe('Autorizar venta: el detalle', () => {
       expect(hoja.getByText('Lavandina Ayudín: quitado')).toBeTruthy()
       await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
       expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', {
-        ventaId: 'v1', version: 42, razon: null, ajustes: [{ ventaDetalleId: 'd2', cantidadNueva: 0 }],
+        ventaId: 'v1', version: 42, razon: null, ajustes: [{ ventaDetalleId: 'd2', cantidadNueva: 0 }], claveIdempotencia: expect.any(String)
       })
     })
 
@@ -313,7 +313,7 @@ describe('Autorizar venta: el detalle', () => {
     it('sin tocar las líneas no manda ajustes (igual que hoy)', async () => {
       const hoja = await abrirConCantidades({})
       await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
-      expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 42, razon: null })
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 42, razon: null, claveIdempotencia: expect.any(String) })
     })
 
     it('quitar todas las líneas no deja autorizar y manda a rechazar', async () => {
@@ -364,7 +364,7 @@ describe('Autorizar venta: el detalle', () => {
       expect(hoja.getByText(/No cambia la comisión del vendedor/)).toBeTruthy()
       await userEvent.type(hoja.getByLabelText('Descuento adicional al autorizar (opcional)'), '5,25')
       await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
-      expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 42, razon: null, descuentoAdicionalPorcentaje: 5.25 })
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 42, razon: null, descuentoAdicionalPorcentaje: 5.25, claveIdempotencia: expect.any(String) })
     })
 
     it.each([['12,345', 'hasta 2 decimales'], ['150', 'entre 0 y 100'], ['abc', 'Escribí un número']])(
@@ -392,7 +392,7 @@ describe('Autorizar venta: el detalle', () => {
       const hoja = await abrirHoja()
       await userEvent.type(hoja.getByLabelText('Descuento adicional al autorizar (opcional)'), '0')
       await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
-      expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 42, razon: null })
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 42, razon: null, claveIdempotencia: expect.any(String) })
     })
   })
 
@@ -446,7 +446,7 @@ describe('Autorizar venta: el detalle', () => {
     await userEvent.type(hoja.getByLabelText('Razón para autorizar · obligatoria'), 'ok')
     await waitFor(() => expect(hoja.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBeFalsy())
     await userEvent.press(hoja.getByRole('button', { name: 'Autorizar' }))
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 43, razon: 'ok' })
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 43, razon: 'ok', claveIdempotencia: expect.any(String) })
   })
 
   it('tras un 409 vuelve a pedir la venta y el reintento manda la versión nueva', async () => {
@@ -473,7 +473,7 @@ describe('Autorizar venta: el detalle', () => {
     await userEvent.type(hoja2.getByLabelText('Razón para autorizar · obligatoria'), 'ok')
     await waitFor(() => expect(hoja2.getByRole('button', { name: 'Autorizar' }).props.accessibilityState.disabled).toBeFalsy())
     await userEvent.press(hoja2.getByRole('button', { name: 'Autorizar' }))
-    expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 44, razon: 'ok' })
+    expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Ventas/v1/autorizar', { ventaId: 'v1', version: 44, razon: 'ok', claveIdempotencia: expect.any(String) })
   })
 
   describe('el cliente: condición de pago, saldo y vencido (de la ficha del cliente)', () => {

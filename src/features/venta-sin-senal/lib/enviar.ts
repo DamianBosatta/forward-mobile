@@ -173,8 +173,8 @@ class Envio {
   }
 
   /**
-   * Borrador para revisar (POST /Ventas/borradores, el mismo del autoguardado). Su alta no lleva
-   * clave: si un intento anterior quedó sin respuesta, primero se busca el borrador vacío de este
+   * Borrador para revisar (POST /Ventas/borradores, el mismo del autoguardado). Su alta lleva una
+   * clave por venta encolada (`<clave>-borrador`); además, si un intento anterior quedó sin respuesta, primero se busca el borrador vacío de este
    * cliente que nació desde entonces, para no dejar otro huérfano.
    */
   private async crearBorrador(desde: number, totalServidor: number | null, buscarAntes: boolean) {
@@ -193,6 +193,8 @@ class Envio {
       this.exigirSesion()
       creado = await api.post<VentaActionResponseDto>('/api/v1/Ventas/borradores', {
         clienteId: alta.clienteId, depositoId: alta.depositoId, tipoOperacion: tipo,
+        // Una clave por venta encolada: el reintento del alta del borrador (sin respuesta) la repite y el servidor devuelve el mismo borrador.
+        claveIdempotencia: `${alta.claveIdempotencia}-borrador`,
       })
     }
     this.pasar({ paso: 'borradorCreado', ventaId: creado.ventaId, version: creado.version, totalServidor })

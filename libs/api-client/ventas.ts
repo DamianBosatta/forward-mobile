@@ -1,5 +1,6 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { api, API_URL } from './client'
+import { conClave, crearIntento } from '@/core/utils/idempotencia'
 import { buildAnularVentaPayload } from './anular-venta'
 import { buildAutorizarPayload, type AjusteDeLinea } from './autorizar-venta'
 import type {
@@ -290,6 +291,13 @@ export function useVendedores(enabled: boolean) {
 
 // #region Mutations
 
+/** Una clave por intento (ver `crearIntento`): el reintento o el doble toque de la misma operación manda la misma. */
+const intentoBorradorVenta = crearIntento()
+const intentoGuardarVenta = crearIntento()
+const intentoConvertirPresupuesto = crearIntento()
+const intentoAutorizarVenta = crearIntento()
+const intentoEditarVenta = crearIntento()
+
 export function useCreateVenta() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -305,7 +313,7 @@ export function useCreateVenta() {
  */
 export const useIniciarBorradorVenta = () => useMutation({
   mutationFn: (data: { clienteId: string; depositoId: string; tipoOperacion?: 'Pedido' | 'Presupuesto' }) =>
-    api.post<VentaActionResponseDto>('/api/v1/Ventas/borradores', data),
+    conClave(intentoBorradorVenta, data, (cuerpo) => api.post<VentaActionResponseDto>('/api/v1/Ventas/borradores', cuerpo)),
 })
 
 /**
@@ -326,7 +334,7 @@ export async function servidorGuardaElTipo(borradorId: string): Promise<boolean 
 
 /** Autoguardado del borrador: PUT /Ventas/{id} con la versión vigente; devuelve la nueva. */
 export function guardarBorradorVenta(id: string, version: number, data: Record<string, unknown>) {
-  return api.put<VentaActionResponseDto>(`/api/v1/Ventas/${id}`, { ...data, id, version })
+  return conClave(intentoGuardarVenta, { ...data, id, version }, (cuerpo) => api.put<VentaActionResponseDto>(`/api/v1/Ventas/${id}`, cuerpo))
 }
 
 export function useDescartarBorradorVenta() {
@@ -352,7 +360,8 @@ export function useConvertirPresupuesto() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, version, usuarioGeneradorId }: { id: string; version: number; usuarioGeneradorId: string }) =>
-      api.put<void>(`/api/v1/Ventas/${id}/convertir-a-pedido`, { version, usuarioGeneradorId }),
+      conClave(intentoConvertirPresupuesto, { ventaId: id, version, usuarioGeneradorId }, (cuerpo) =>
+        api.put<void>(`/api/v1/Ventas/${id}/convertir-a-pedido`, cuerpo)),
     onSettled: (_data, _err, { id }) => {
       return invalidarPorCambioDeVenta(queryClient)
     },
@@ -405,9 +414,10 @@ export function useAutorizarVenta() {
     mutationFn: async ({ id, version, razon, fechaPendiente, descuentoAdicionalPorcentaje, ajustes }: {
       id: string; version?: number; razon?: string | null; fechaPendiente?: string; descuentoAdicionalPorcentaje?: number | null; ajustes?: AjusteDeLinea[]
     }) =>
-      api.post<boolean>(
-        `/api/v1/Ventas/${id}/autorizar`,
+      conClave(
+        intentoAutorizarVenta,
         buildAutorizarPayload({ ventaId: id, version: version ?? (await versionParaDecidir(id, fechaPendiente)), razon, descuentoAdicionalPorcentaje, ajustes }),
+        (cuerpo) => api.post<boolean>(`/api/v1/Ventas/${id}/autorizar`, cuerpo),
       ),
     onSuccess: (_data, { id }) => {
       return invalidarPorCambioDeVenta(queryClient)
@@ -438,7 +448,7 @@ export function useUpdateVenta() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, version, data }: { id: string; version: number; data: Partial<CreateVentaRequest> }) =>
-      api.put<Venta>(`/api/v1/Ventas/${id}`, { ...data, version }),
+      conClave(intentoEditarVenta, { ...data, id, version }, (cuerpo) => api.put<Venta>(`/api/v1/Ventas/${id}`, cuerpo)),
     onSuccess: (_data, { id }) => {
       return invalidarPorCambioDeVenta(queryClient)
     },

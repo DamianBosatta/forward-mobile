@@ -89,7 +89,7 @@ describe('editar y duplicar (PR 2.9b)', () => {
       id: 'v9', version: 4, descuentoGeneral: 5, metodoEntrega: 1, fechaEntrega: '2026-01-02', cargoFlete: 0,
       items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 0 }],
       // T4d: como la web, el PUT de la edición manda el tilde de la venta (esta no lo trae: `?? false`); lo demás igual.
-      conFactura: false,
+      conFactura: false, claveIdempotencia: expect.any(String),
     })
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas/borradores', expect.anything())
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas', expect.anything())
@@ -169,14 +169,14 @@ describe('editar y duplicar (PR 2.9b)', () => {
     catalogoFalla = false
     await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
     expect(await screen.findByText('Paso 3 de 4')).toBeTruthy()
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c7', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c7', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido', claveIdempotencia: expect.any(String) }))
   })
 
   it('duplicar crea un borrador nuevo para el mismo cliente y le autoguarda las líneas, sin copiar la fecha', async () => {
     abrir({ modo: 'duplicar', ventaId: 'v9' })
     expect(await screen.findByText('Paso 3 de 4')).toBeTruthy()
     expect(screen.getByText('Tarantino 1898 · Autoservicio Abel')).toBeTruthy()
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c7', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido' }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c7', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido', claveIdempotencia: expect.any(String) }))
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     expect(mockPut.mock.calls[0][0]).toBe('/api/v1/Ventas/b1')
     expect(mockPut.mock.calls[0][1]).toMatchObject({ id: 'b1', version: 1, items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 0 }] })

@@ -118,7 +118,4 @@ export function errorDeAltaVenta(alta: AltaVenta): string | null {
   }
   return null
 }
-
-/** Clave de idempotencia de un alta (A.4 del servidor): única por venta, < 200 caracteres. */
-export const nuevaClaveIdempotencia = () =>
-  `mobile-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`
+

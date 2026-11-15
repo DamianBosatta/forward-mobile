@@ -1,6 +1,10 @@
 import { api } from '@/libs/api-client/client'
+import { conClave, crearIntento } from '@/core/utils/idempotencia'
 import { mensajeDelServidor } from './mensaje-error'
 import { numeroDeCompra } from './numero'
+
+/** Una clave por intento: el reintento (red, doble toque) de la misma confirmación manda la misma clave. */
+const intento = crearIntento()
 
 /** Código del 409 que da el servidor cuando la compra ya estaba recibida (reintento seguro). */
 const CODIGO_YA_RECIBIDA = 'CompraYaRecibida'
@@ -56,10 +60,12 @@ export type Desenlace =
  */
 export async function confirmarYRecibir(id: string, datos: DatosConfirmarYRecibir): Promise<Desenlace> {
   try {
-    const { sobre } = await api.postConSobre<string, { message?: string }>(`/api/v1/Compras/${id}/confirmar-y-recibir`, {
-      version: datos.version ?? null,
-      fechaFacturaProveedor: datos.fechaFacturaProveedor ?? null,
-    })
+    const { sobre } = await conClave(
+      intento,
+      { version: datos.version ?? null, fechaFacturaProveedor: datos.fechaFacturaProveedor ?? null },
+      (cuerpo) => api.postConSobre<string, { message?: string }>(`/api/v1/Compras/${id}/confirmar-y-recibir`, cuerpo),
+      id,
+    )
     return { tipo: 'hecho', aviso: aviso('recibida', sobre?.message) }
   } catch (e) {
     const { status, codigo } = (e ?? {}) as { status?: number; codigo?: string }

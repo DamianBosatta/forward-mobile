@@ -111,7 +111,7 @@ describe('Compra guardada (frames 17 a 20)', () => {
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/compras/c1')
     estado = 'Confirmado'
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar compra' }))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/c1/confirmar', {}), ESPERA)
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/c1/confirmar', { compraId: 'c1', claveIdempotencia: expect.any(String) }), ESPERA)
     expect(await screen.findByText('Compra C-00232 confirmada', {}, ESPERA)).toBeTruthy()
   })
 

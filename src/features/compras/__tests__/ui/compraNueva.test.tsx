@@ -235,7 +235,7 @@ describe('paso 4: recepción', () => {
     await hastaRecepcion()
     expect(await screen.findByText('CUIT 30-12345678-9', {}, ESPERA)).toBeTruthy()
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar compra' }))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/c1/confirmar', { compraId: 'c1' }), ESPERA)
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/c1/confirmar', { compraId: 'c1', claveIdempotencia: expect.any(String) }), ESPERA)
     expect(puts().at(-1)?.detalles[0]).toMatchObject({ cantidad: 1, costoUnitario: 1020 })
     expect(mockReplace).toHaveBeenCalledWith('/(tabs)/compras/guardada?id=c1')
   })
@@ -276,7 +276,7 @@ describe('paso 4: recepción', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar y recibir' }))
     await waitFor(() => expect(mockReplace).toHaveBeenCalled(), ESPERA)
     expect(mockPostConSobre).toHaveBeenCalledTimes(1)
-    expect(mockPostConSobre).toHaveBeenCalledWith(URL_CYR, { version: 10 + mockPut.mock.calls.length, fechaFacturaProveedor: '2026-10-05' })
+    expect(mockPostConSobre).toHaveBeenCalledWith(URL_CYR, { version: 10 + mockPut.mock.calls.length, fechaFacturaProveedor: '2026-10-05', claveIdempotencia: expect.any(String) })
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Compras/c1/confirmar', expect.anything())
     // En la URL solo la clave; el mensaje del servidor queda en memoria.
     expect(mockReplace).toHaveBeenCalledWith('/(tabs)/compras/guardada?id=c1&aviso=recibida')
