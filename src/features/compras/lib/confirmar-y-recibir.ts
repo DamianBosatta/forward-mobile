@@ -2,6 +2,7 @@ import { api } from '@/libs/api-client/client'
 import { conClave, crearIntento } from '@/core/utils/idempotencia'
 import { mensajeDelServidor } from './mensaje-error'
 import { numeroDeCompra } from './numero'
+import { crearBuzonDeAvisos } from '@/core/navigation/buzonDeAvisos'
 
 /** Una clave por intento: el reintento (red, doble toque) de la misma confirmación manda la misma clave. */
 const intento = crearIntento()
@@ -36,15 +37,10 @@ export const avisoCompraFaltante = (numero: number): Aviso => ({
 })
 
 /** Avisos en memoria por compra, para el detalle que se abre después: un enlace con `?aviso=` solo no muestra nada. */
-const pendientes = new Map<string, Aviso>()
-export const dejarAviso = (id: string, a: Aviso) => { pendientes.set(id, a) }
+const buzon = crearBuzonDeAvisos<Aviso>()
+export const dejarAviso = buzon.dejar
 /** Devuelve (y consume) el aviso que se dejó para esta compra, solo si coincide con la clave de la ruta. */
-export function tomarAviso(id: string, clave: string | undefined): Aviso | null {
-  const a = pendientes.get(id)
-  if (!a || a.clave !== clave) return null
-  pendientes.delete(id)
-  return a
-}
+export const tomarAviso = buzon.tomar
 
 /**
  * Cómo terminó el intento: `hecho` va al detalle con el aviso (también cuando no se sabe, para que

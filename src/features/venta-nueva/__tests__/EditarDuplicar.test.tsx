@@ -10,6 +10,24 @@ import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { producto } from '../__testing__/producto'
 import { aplicarDescuentoGeneral } from '../__testing__/descuentoGeneral'
 
+// SEG-11: the message no longer travels in the route; the route carries the key the save left in memory.
+const mockDejados = new Map<string, string>()
+jest.mock('../lib/mensajeDeGuardada', () => {
+  const real = jest.requireActual('../lib/mensajeDeGuardada')
+  return {
+    ...real,
+    dejarMensajeDeVenta: (id: string, texto: string) => {
+      const clave = real.dejarMensajeDeVenta(id, texto)
+      mockDejados.set(clave, texto)
+      return clave
+    },
+  }
+})
+/** Matches the route key whose message in memory is `texto` (no key when there is no message). */
+const avisoCon = (texto: string) =>
+  texto ? { asymmetricMatch: (clave: unknown) => mockDejados.get(clave as string) === texto, toString: () => `aviso(${texto})` } : undefined
+
+
 const mockGet = jest.fn()
 const mockPost = jest.fn()
 const mockPut = jest.fn()
@@ -93,7 +111,7 @@ describe('editar y duplicar (PR 2.9b)', () => {
     })
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas/borradores', expect.anything())
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas', expect.anything())
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(tabs)/ventas/guardada', params: { id: 'v9', mensaje: 'Venta actualizada.' } }))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(tabs)/ventas/guardada', params: { id: 'v9', aviso: avisoCon('Venta actualizada.') } }))
   })
 
   it('editar con un caché viejo de la venta hidrata lo vigente del servidor (líneas y versión), no lo cacheado', async () => {
@@ -240,6 +258,6 @@ describe('editar, retomar y duplicar usan la revisión nueva (S9)', () => {
     await userEvent.press(await screen.findByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas', expect.objectContaining({ clienteId: 'c7', items: [expect.objectContaining({ productoId: 'p1', cantidad: 12 })] })))
     expect(mockPut.mock.calls.every(([u]: [string]) => u !== '/api/v1/Ventas/v9')).toBe(true)
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(tabs)/ventas/guardada', params: { id: 'v10', mensaje: 'Venta creada.' } }))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith({ pathname: '/(tabs)/ventas/guardada', params: { id: 'v10', aviso: avisoCon('Venta creada.') } }))
   })
 })
