@@ -150,7 +150,7 @@ function Accion({ c, label, a11y, onPress }: { c: ForwardColors; label: string; 
       onPress={onPress}
       style={{ flexShrink: 0, minHeight: 44, paddingHorizontal: space[4], borderRadius: radii.campo, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface, justifyContent: 'center' }}
     >
-      <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{label}</Text>
+      <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{label}</Text>
     </Pressable>
   )
 }

@@ -19,6 +19,7 @@ import { ProductoCatalogoCard } from './ProductoCatalogoCard'
 import { CarritoFlotante, CarritoPanel } from './CarritoVenta'
 import { FraganciasSheet } from './FraganciasSheet'
 import { cantidadDeFragancias } from '../lib/fragancias'
+import { columnasDelCatalogo } from '../lib/columnasCatalogo'
 
 interface CatalogoVentaProps {
   onVerVenta: () => void
@@ -64,7 +65,9 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
   const [escaneando, setEscaneando] = useState(escanearAlAbrir)
   const [avisoEscaneo, setAvisoEscaneo] = useState<string | null>(null)
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
-  const columnas = formFactor === 'tabletLandscape' ? 3 : formFactor === 'tabletPortrait' ? 2 : 1
+  // Ancho real de la lista (después del menú fijo y del panel de la venta): de ahí salen las columnas.
+  const [anchoLista, setAnchoLista] = useState<number | null>(null)
+  const columnas = columnasDelCatalogo(formFactor, anchoLista)
   // El pie cuenta lo vendible del catálogo: las variantes no se venden sueltas.
   const totalVendible = useMemo(() => completo.filter((p) => !p.productoPadreId).length, [completo])
   const sinFiltros = !filtros.delUltimo && !filtros.conOferta && !filtros.hayStock
@@ -140,6 +143,7 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
       </View>
       <FlatList
         key={columnas}
+        onLayout={(e) => setAnchoLista(Math.round(e.nativeEvent.layout.width))}
         data={productos}
         numColumns={columnas}
         keyExtractor={(p) => p.id}
