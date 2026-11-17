@@ -6,7 +6,7 @@ import { BottomSheet, Button, Field, Notice, Segmented, pesoSemibold } from '@/c
 import { useCrearEvento } from '@/libs/api-client/calendario'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { SelectorDia } from './SelectorDia'
-import { DIAS_SEMANA, TIPOS_MANUALES, diaDeLaSemana, esHoraValida, textoSemanal, type TipoManual } from './presentacion'
+import { DIAS_SEMANA, MAX_DESCRIPCION, MAX_TITULO, TIPOS_MANUALES, diaDeLaSemana, esHoraValida, textoSemanal, type TipoManual } from './presentacion'
 
 export interface Precarga {
   titulo: string
@@ -26,8 +26,6 @@ interface Props {
 }
 
 /** Límites del servidor (EventoCalendario.MaxTitulo / MaxDescripcion). */
-const MAX_TITULO = 150
-const MAX_DESCRIPCION = 500
 
 type Aviso = '0' | '1' | '3'
 type Repite = 'no' | 'semanal'

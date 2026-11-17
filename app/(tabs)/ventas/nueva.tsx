@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
+import { idDeRuta, opcionDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
 import { useIsFocused } from "expo-router/react-navigation"
 import { VentaNuevaPantalla, type AbrirVenta } from '@/features/venta-nueva/components/VentaNuevaPantalla'
 
 type Params = { borrador?: string; tipo?: string; editar?: string; duplicar?: string; clienteId?: string }
+const PARAMETROS = { borrador: idDeRuta, tipo: opcionDeRuta(['Pedido', 'Presupuesto']), editar: idDeRuta, duplicar: idDeRuta, clienteId: idDeRuta }
 
 /**
  * `?borrador=<id>&tipo=…` retoma un borrador; `?editar=<id>` edita una venta; `?duplicar=<id>` parte de una.
@@ -22,7 +24,7 @@ export function abrirDesdeParams(p: Params): AbrirVenta | undefined {
  * de idempotencia. Al terminar también se vacían los parámetros, para que "Nueva venta" no reabra un duplicado.
  */
 export default function NuevaVentaRoute() {
-  const params = useLocalSearchParams<Params>()
+  const params: Params = useParametrosDeRuta(PARAMETROS)
   const router = useRouter()
   const [vez, setVez] = useState(0)
   // El atrás de Android solo retrocede un paso de la venta mientras esta pantalla es la que se ve (vive en el drawer).

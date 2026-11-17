@@ -18,10 +18,9 @@ import { SelectorDia } from './SelectorDia'
 import { usePuedeCobrar } from '@/features/cuentas/lib/permiso'
 import { cobroAbierto, depositoDe, ESTADOS_DE_TAREA, esTareaAsignada, type EstadoTarea, type EventoConTarea } from './tarea'
 import { useCambiarEstadoTarea } from './api'
+import { MAX_DESCRIPCION, MAX_TITULO } from './presentacion'
 
 /** Límites del servidor (EventoCalendario.MaxTitulo / MaxDescripcion). */
-const MAX_TITULO = 150
-const MAX_DESCRIPCION = 500
 /** Lo mínimo que se deja de scroll aunque el teclado y el pie ocupen casi todo. */
 const ALTO_MINIMO = 128
 

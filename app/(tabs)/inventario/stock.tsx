@@ -1,7 +1,8 @@
 import React from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { View } from 'react-native'
-import { useLocalSearchParams, useNavigation } from 'expo-router'
+import { useNavigation } from 'expo-router'
+import { textoDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
 import { DrawerActions } from "expo-router/react-navigation"
 import { useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
@@ -20,8 +21,8 @@ export default function StockScreen() {
   const navigation = useNavigation()
   const c = useColors()
   const { width } = useResponsive()
-  const { busqueda: inicial } = useLocalSearchParams<{ busqueda?: string }>()
-  const [busqueda, setBusqueda] = useFiltroPersistente('stock.busqueda', typeof inicial === 'string' ? inicial : '')
+  const { busqueda: inicial } = useParametrosDeRuta({ busqueda: textoDeRuta(100) })
+  const [busqueda, setBusqueda] = useFiltroPersistente('stock.busqueda', inicial ?? '')
 
   return (
     <RequirePermission module="MOD_STOCK" action="read" mode="screen">

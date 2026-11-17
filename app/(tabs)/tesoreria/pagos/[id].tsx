@@ -1,6 +1,7 @@
 import React from 'react'
 import { View } from 'react-native'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
+import { idDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
 import { useColors } from '@/libs/theme'
 import { DetalleDePago } from '@/features/pagos/components/DetalleDePago'
 
@@ -8,10 +9,10 @@ import { DetalleDePago } from '@/features/pagos/components/DetalleDePago'
 export default function DetalleDePagoScreen() {
   const c = useColors()
   const router = useRouter()
-  const { id } = useLocalSearchParams<{ id?: string }>()
+  const { id } = useParametrosDeRuta({ id: idDeRuta })
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <DetalleDePago id={id ?? ''} onVolver={() => router.back()} />
+      {id ? <DetalleDePago id={id} onVolver={() => router.back()} /> : null}
     </View>
   )
 }
