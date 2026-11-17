@@ -37,7 +37,7 @@ jobs:
       - run: npm run lint:eslint
       - run: npm run knip
       - name: Audit production dependencies (high and critical)
-        run: npm audit --omit=dev --audit-level=high
+        run: node scripts/audit-ci.mjs
       - run: npm test -- --ci
         env:
           TZ: ${{ matrix.tz }}
