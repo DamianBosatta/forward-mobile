@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { useInfiniteSocios, type SociosParams } from '@/libs/api-client/socios'
 import type { SocioListDto } from '@/libs/api-client/types'
 import type { FiltrosDeCartera } from '../components/FiltrosCartera'
@@ -8,12 +9,7 @@ export const ESPERA_BUSQUEDA_MS = 300
 
 /** Devuelve `valor` recién cuando dejó de cambiar durante `ms`. */
 export function useValorDiferido<T>(valor: T, ms = ESPERA_BUSQUEDA_MS): T {
-  const [diferido, setDiferido] = useState(valor)
-  useEffect(() => {
-    const t = setTimeout(() => setDiferido(valor), ms)
-    return () => clearTimeout(t)
-  }, [valor, ms])
-  return diferido
+  return useDebouncedValue(valor, ms)
 }
 
 /**

@@ -2,7 +2,7 @@ import type { components } from '@/libs/api-client/generated/schema'
 import { leerNumero, numeroCompleto } from '@/core/utils/numero'
 import { ddmmaaaa } from '@/core/utils/fecha'
 import { fechaIso } from './fecha'
-import { cuitEsValido } from '@/libs/reglas'
+import { cuitEsValido, redondear2 } from '@/libs/reglas'
 import '@/libs/validations/mensajes-zod3'
 import { ComprobanteCompraInputConReglasSchema } from '@/libs/validations/generated/reglas'
 
@@ -65,7 +65,6 @@ export function resumenComprobante(c: Pick<ComprobanteRecibido, 'tipo' | 'letra'
 }
 
 const entero = (t: string) => (/^\d+$/.test(t.trim()) ? Number(t.trim()) : null)
-const redondear = (n: number) => Math.round(n * 100) / 100
 
 /**
  * El cuerpo para el servidor, o qué falta. Valida lo que se puede ver en el teléfono; el resto
@@ -89,7 +88,7 @@ export function armarComprobante(f: FormComprobante): { comprobante: Comprobante
     const neto = leerNumero(f.neto)
     if (!neto) return { error: 'En una factura A falta el neto gravado.' }
     const tasa = ALICUOTAS.find((a) => a.value === f.alicuota)?.tasa ?? 0
-    const iva = f.iva.trim() ? leerNumero(f.iva) : redondear(neto * tasa)
+    const iva = f.iva.trim() ? leerNumero(f.iva) : redondear2(neto * tasa)
     if (iva === null) return { error: 'El IVA no es un número.' }
     alicuotas = [{ alicuota: f.alicuota, netoGravado: neto, iva }]
   }

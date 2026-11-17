@@ -6,6 +6,7 @@ import { Button, formatImporte, Field, Notice, OptionCard } from '@/core/ui/fw'
 import type { MedioCobroChofer } from '@/libs/api-client/logistica'
 import { FotoEntrega } from './FotoEntrega'
 import { mediosDelChofer, nombreDelMedio, type LineaCobroForm } from './entrega'
+import { redondear2 } from '@/libs/reglas/dinero'
 
 interface Props {
   medios: MedioCobroChofer[] | undefined
@@ -34,8 +35,6 @@ interface Props {
 
 /** Lo que se dice de cada forma de pago, en una línea (chofer-04). */
 const DETALLE_MEDIO: Partial<Record<string, string>> = { Transferencia: 'Bancaria o billetera · Foto del comprobante', Cheque: 'Monto y foto del cheque' }
-
-const redondear = (n: number) => Math.round(n * 100) / 100
 
 /**
  * Lámina chofer-04 con la maqueta cobro-chofer (S8): arriba la cuenta del cliente (deuda anterior, factura y total) y
@@ -128,7 +127,7 @@ function CuentaDelCliente({ deudaAnterior, factura, codigoFactura }: { deudaAnte
       {deuda != null && factura != null ? (
         <View accessibilityLabel="Total" style={{ ...dato, flexBasis: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', backgroundColor: c.brandSoft, borderColor: c.brandInk }}>
           <Text style={rotulo}>Total</Text>
-          <Text style={{ ...typeScale.seccion, ...importe, color: c.text }}>{formatImporte(redondear(deuda + factura))}</Text>
+          <Text style={{ ...typeScale.seccion, ...importe, color: c.text }}>{formatImporte(redondear2(deuda + factura))}</Text>
         </View>
       ) : null}
     </View>

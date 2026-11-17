@@ -1,3 +1,4 @@
+import { redondear2 } from '@/libs/reglas/dinero'
 /**
  * Forma canónica de un borrador para compararlo con lo que devuelve el servidor: el GET del detalle
  * no garantiza el orden de las líneas y puede normalizar decimales. Los números se redondean a 2
@@ -5,7 +6,7 @@
  * del orden (se ordenan por su propia forma canónica: productoId, cantidad, precio...).
  */
 function canonico(v: unknown): unknown {
-  if (typeof v === 'number') return Math.round(v * 100) / 100
+  if (typeof v === 'number') return redondear2(v)
   if (Array.isArray(v)) return v.map(canonico).sort((a, b) => (JSON.stringify(a) < JSON.stringify(b) ? -1 : JSON.stringify(a) > JSON.stringify(b) ? 1 : 0))
   if (v && typeof v === 'object') {
     const o = v as Record<string, unknown>

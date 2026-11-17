@@ -15,7 +15,7 @@
  * or any other context without side effects.
  */
 
-import { redondear2 } from '@/libs/reglas/dinero'
+import { conDescuento, multiplicarYRedondear, redondear2 } from '@/libs/reglas/dinero'
 
 import type { ModulePermission } from '@/libs/api-client/types'
 import { hasCapability } from '@/features/auth/lib/capabilities'
@@ -48,7 +48,7 @@ export function esPrecioValido(precioFinal: number, precioMinimo: number): boole
  * Calculates a cart line's subtotal applying a per-item percentage discount.
  *
  * Espejo de `VentaDetalle` y de la web (Bloque 13, R15): el unitario se redondea a 2 decimales
- * ANTES del subtotal y el subtotal se redondea medio hacia afuera del cero (`redondear2`).
+ * ANTES del subtotal y el subtotal se redondea medio hacia afuera del cero (`multiplicarYRedondear`, la regla de la web y del servidor).
  *
  * @param precioVenta     - Unit selling price (base, before discount)
  * @param cantidad        - Quantity
@@ -59,11 +59,7 @@ export function calcularSubtotalConDescuento(
   cantidad: number,
   descuentoPct: number,
 ): number {
-  const precioFinal = redondear2(precioVenta * (1 - descuentoPct / 100))
-  // En centavos enteros: 6,67 × 1,5 en binario da 10,004999… y bajaría a 10,00; 667 × 1,5 = 1000,5
-  // es exacto y llega a redondear2 como 10,005.
-  const centavos = Math.round(precioFinal * 100)
-  return redondear2((centavos * cantidad) / 100)
+  return multiplicarYRedondear(conDescuento(precioVenta, descuentoPct), cantidad)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -84,7 +80,7 @@ export function calcularSubtotalConDescuento(
 export function pctFromPrecio(precioVenta: number, precioFinal: number): number {
   if (precioVenta <= 0) return 0
   const raw = (1 - precioFinal / precioVenta) * 100
-  return Math.round(raw * 100) / 100
+  return redondear2(raw)
 }
 
 /**
@@ -99,7 +95,7 @@ export function pctFromPrecio(precioVenta: number, precioFinal: number): number 
  */
 export function precioFromPct(precioVenta: number, pct: number): number {
   const raw = precioVenta * (1 - pct / 100)
-  return Math.round(raw * 100) / 100
+  return redondear2(raw)
 }
 
 /**
@@ -232,7 +228,7 @@ export function computeModalFloor(input: ComputeModalFloorInput): ComputeModalFl
   const effectiveFloor = precioMinimo / generalFactor
 
   return {
-    piso: Math.round(effectiveFloor * 100) / 100,
+    piso: redondear2(effectiveFloor),
     floorUnknown: false,
   }
 }

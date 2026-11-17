@@ -8,6 +8,7 @@ import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import type { ParadaDto } from '@/libs/api-client/types'
 import { useLineasParada, useMediosCobroChofer } from '@/libs/api-client/logistica'
 import { leerNumero } from '@/core/utils/numero'
+import { redondear2 } from '@/libs/reglas/dinero'
 import { DETALLE_MOTIVO_NO_ENTREGA, MOTIVOS_NO_ENTREGA } from './hojaDeRuta'
 import { etiquetaNota, importeParada } from './cobroParada'
 import { armarEntrega, montoDeLinea, razonPendiente, type EntregaArmada, type FormEntrega } from './entrega'
@@ -167,7 +168,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
   const cobrado = totalRepartido(lineas)
   // "No pagó · $ X a su CC" (S8): la deuda anterior más esta factura. Con devolución la cuenta la hace el servidor.
   const deudaAnterior = parada.deudaAnterior != null && parada.deudaAnterior > 0 ? parada.deudaAnterior : 0
-  const aSuCuenta = aCobrarHoy != null && !hayDevolucion ? Math.round((deudaAnterior + aCobrarHoy) * 100) / 100 : null
+  const aSuCuenta = aCobrarHoy != null && !hayDevolucion ? redondear2(deudaAnterior + aCobrarHoy) : null
   // "Recibió Marta · cobrado $ 1.000,00.": solo lo que hay; sin nombre y sin cobro no se agrega nada.
   const partes = [f.receptor.trim() ? `Recibió ${f.receptor.trim()}` : null, cobrado > 0 ? `cobrado ${formatImporte(cobrado)}` : null].filter(Boolean).join(' · ')
   const resumenDeConfirmacion = partes ? ` ${partes.charAt(0).toUpperCase()}${partes.slice(1)}.` : ''
@@ -184,7 +185,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
         />
         {entregado && paso === 'cobro' && !preguntandoOtro && aCobrarHoy != null ? (
           <View style={columna ?? undefined}>
-            <ContadorCobro cobrado={cobrado} falta={Math.max(0, Math.round((aCobrarHoy - cobrado) * 100) / 100)} />
+            <ContadorCobro cobrado={cobrado} falta={Math.max(0, redondear2(aCobrarHoy - cobrado))} />
           </View>
         ) : null}
         <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], ...columna }} keyboardShouldPersistTaps="handled">

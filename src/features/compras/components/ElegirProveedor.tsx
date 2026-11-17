@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
+import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
 import { Lock } from 'lucide-react-native'
 import { Button, Field, FormContainer, Notice, PieFijo, formatImporte } from '@/core/ui/fw'
@@ -54,7 +55,7 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
   const c = useColors()
   const sombra = useSombraTarjeta()
   const [busqueda, setBusqueda] = useState('')
-  const [enviada, setEnviada] = useState('')
+  const enviada = useDebouncedValue(busqueda.trim(), 300)
   const [elegido, setElegido] = useState<string | null>(null)
   const ficha = useSocio(elegido ?? '')
   // "Última compra" y "Recientes" salen de GET /Compras (MOD_COMPRAS:Read): sin el permiso no se piden.
@@ -62,10 +63,6 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
   const ultimas = useComprasDelProveedor(elegido ?? '', puedeVerCompras, 1)
   const ultima = ultimas.data?.items?.[0]
   const delServidor = useInfiniteCompras({ pageSize: COMPRAS_PARA_RECIENTES }, { enabled: puedeVerCompras })
-  useEffect(() => {
-    const t = setTimeout(() => setEnviada(busqueda.trim()), 300)
-    return () => clearTimeout(t)
-  }, [busqueda])
   const buscando = enviada.length >= 2
   const q = useSocios({ tipo: 2, activo: true, pageSize: 50, search: buscando ? enviada : undefined })
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
