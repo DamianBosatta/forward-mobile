@@ -2,7 +2,7 @@ import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Trash2 } from 'lucide-react-native'
 import { maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Field } from '@/core/ui/fw'
+import { Button, Field, enmascararHora } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import {
   ORDEN_DIAS, expandirFilas, letraDelDia, nombreDelDia, textoHorario, validarFilas, horaValida, type FilaHorario,
@@ -74,10 +74,10 @@ export function HorarioEntregaEditor({ filas, onChange, mostrarErrores = true }:
           </View>
           <View style={{ flexDirection: 'row', gap: space[3] }}>
             <View style={{ flex: 1 }}>
-              <Field label="Desde" value={fila.desde} onChangeText={v => cambiarFila(i, { desde: v })} keyboardType="numbers-and-punctuation" placeholder="08:00" invalid={mostrarErrores && !!errores[i]} />
+              <Field label="Desde" value={fila.desde} onChangeText={v => cambiarFila(i, { desde: enmascararHora(v) })} keyboardType="number-pad" placeholder="08:00" invalid={mostrarErrores && !!errores[i]} />
             </View>
             <View style={{ flex: 1 }}>
-              <Field label="Hasta" value={fila.hasta} onChangeText={v => cambiarFila(i, { hasta: v })} keyboardType="numbers-and-punctuation" placeholder="12:00" invalid={mostrarErrores && !!errores[i]} />
+              <Field label="Hasta" value={fila.hasta} onChangeText={v => cambiarFila(i, { hasta: enmascararHora(v) })} keyboardType="number-pad" placeholder="12:00" invalid={mostrarErrores && !!errores[i]} />
             </View>
           </View>
           {mostrarErrores && errores[i] ? <Text accessibilityRole="alert" style={{ ...typeScale.secundario, color: c.chip.anulado.text }}>{errores[i]}</Text> : null}

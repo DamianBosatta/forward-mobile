@@ -2,7 +2,7 @@ import React from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ArrowLeft } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
-import { Button, Field, FormContainer, FilaInterruptor, Notice, PieFijo, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { Button, Field, FormContainer, enmascararFecha, FilaInterruptor, Notice, PieFijo, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { MarcaRadio } from '@/features/venta-nueva/components/MarcaRadio'
 import { textoFaltaCosto } from './CarritoCompra'
 
@@ -133,7 +133,7 @@ export function RecepcionCompra(p: Props) {
           <View style={tarjeta}>
             <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Factura del proveedor</Text>
             {p.pideFactura ? (
-              <Field label="Fecha de la factura" placeholder="dd/mm/aaaa" value={p.fecha} onChangeText={p.onFecha} keyboardType="numbers-and-punctuation"
+              <Field label="Fecha de la factura" placeholder="dd/mm/aaaa" value={p.fecha} onChangeText={(t) => p.onFecha(enmascararFecha(t))} keyboardType="number-pad" maxLength={10}
                 error={p.fechaValida ? undefined : 'Escribí la fecha como dd/mm/aaaa.'}
                 help={`La condición de pago se cuenta desde la factura.${p.vencimiento ? ` ${p.vencimiento}` : ''}`} />
             ) : null}

@@ -20,6 +20,7 @@ export { SobreBarraInferiorProvider, useInsetInferior, usePaddingFinalDePantalla
 export * from './Progress'
 export * from './TwoPane'
 export * from './FormContainer'
+export * from './mascaras'
 export * from './useMenuLeading'
 export { OptionCard } from './OptionCard'
 export { Casilla, MarcaDeCasilla } from './Casilla'

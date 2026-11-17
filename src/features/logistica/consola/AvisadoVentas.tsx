@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react'
-import { Modal, Text, View, useWindowDimensions } from 'react-native'
+import { Modal, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { CircleCheck } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
-import { Button } from '@/core/ui/fw'
+import { Button, useColumnaDeFormulario } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 
 /**
@@ -13,8 +13,7 @@ import { safeHaptics } from '@/core/utils/haptics'
 export function AvisadoVentas({ guardado, onVolver }: { guardado: boolean; onVolver: () => void }) {
   const c = useColors()
   const { bottom } = useSafeAreaInsets()
-  const { width } = useWindowDimensions()
-  const columna = width >= 768 ? { maxWidth: 640, width: '100%' as const, alignSelf: 'center' as const } : null
+  const columna = useColumnaDeFormulario()
   useEffect(() => {
     safeHaptics.notification('success')
   }, [])

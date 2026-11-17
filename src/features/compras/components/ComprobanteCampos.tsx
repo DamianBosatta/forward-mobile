@@ -1,6 +1,6 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { Field } from '@/core/ui/fw'
+import { Field, enmascararFecha } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { ALICUOTAS, type FormComprobante, type Letra } from '../lib/comprobante'
 
@@ -49,11 +49,11 @@ export function ComprobanteCampos({ form, onCambio }: { form: FormComprobante; o
           <View style={{ flex: 1 }}><Field label="Punto de venta" value={form.puntoVenta} onChangeText={(puntoVenta) => set({ puntoVenta })} keyboardType="number-pad" /></View>
           <View style={{ flex: 2 }}><Field label="Número" value={form.numero} onChangeText={(numero) => set({ numero })} keyboardType="number-pad" /></View>
         </View>
-        <Field label="Fecha del comprobante" placeholder="dd/mm/aaaa" value={form.fecha} onChangeText={(fecha) => set({ fecha })} keyboardType="numbers-and-punctuation" />
+        <Field label="Fecha del comprobante" placeholder="dd/mm/aaaa" value={form.fecha} onChangeText={(fecha) => set({ fecha: enmascararFecha(fecha) })} keyboardType="number-pad" maxLength={10} />
       </View>
       <View style={tarjeta}>
         {titulo('Proveedor')}
-        <Field label="CUIT del proveedor" value={form.cuit} onChangeText={(cuit) => set({ cuit })} keyboardType="numbers-and-punctuation" />
+        <Field label="CUIT del proveedor" value={form.cuit} onChangeText={(cuit) => set({ cuit })} keyboardType="number-pad" />
         <Field label="Razón social" value={form.razonSocial} onChangeText={(razonSocial) => set({ razonSocial })} />
       </View>
       <View style={tarjeta}>
