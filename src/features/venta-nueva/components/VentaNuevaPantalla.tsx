@@ -163,7 +163,8 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
     if (!preseleccion.data || preseleccionado.current) return
     preseleccionado.current = true
     empezar(aElegido(preseleccion.data))
-  })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per preselection, guarded by the ref
+  }, [preseleccion.data])
 
   // Cada venta nueva arranca con el carrito vacío.
   useEffect(() => { vaciar() }, [vaciar])
@@ -200,13 +201,15 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
       setADuplicar(d)
       void b.crear(d.cliente.id, d.tipo)
     }
-  })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot per opened sale, guarded by `abierta`
+  }, [abrirEf, cargada.datos, abierta])
   useEffect(() => {
     if (!aDuplicar || (!b.borrador && !b.errorAlCrear)) return
     // La fecha de entrega no se copia: se propone el próximo día hábil.
     aplicar(aDuplicar, { ...aDuplicar.cabecera, fecha: null })
     setADuplicar(null)
-  })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot once the draft exists or failed
+  }, [aDuplicar, b.borrador, b.errorAlCrear])
 
   if (abrirEf && !abierta) {
     const titulo = abrirEf.modo === 'retomar' ? 'Retomar borrador' : abrirEf.modo === 'editar' ? 'Editar venta' : 'Duplicar venta'

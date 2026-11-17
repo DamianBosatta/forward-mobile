@@ -137,7 +137,7 @@ export function ClienteForm({ id }: { id?: string }) {
                     value={datos.cuit}
                     onChangeText={v => cambiar('cuit', v)}
                     keyboardType="number-pad"
-                    placeholder="20-12345678-9"
+                    placeholder="20123456789"
                     error={errorCuit}
                   />
                   {cuitFaltan > 0 ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{avisoCuitIncompleto(cuitFaltan)}</Text> : null}

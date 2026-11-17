@@ -1,3 +1,4 @@
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import React from 'react'
 import { ActivityIndicator, FlatList, Modal, Text, View } from 'react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
@@ -52,7 +53,7 @@ export function MovimientosDeStock({ visible, onCerrar, productoId, producto }: 
             No se pudo cargar el historial. Intentá de nuevo.
           </Text>
         ) : (
-          <FlatList
+          <FlatList {...LISTA_LARGA_PROPS}
             data={movimientos}
             keyExtractor={(m) => m.id}
             renderItem={({ item }) => <Movimiento m={item} />}

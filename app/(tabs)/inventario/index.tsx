@@ -1,3 +1,4 @@
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import React, { useCallback, useRef, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { ActivityIndicator, FlatList, Modal, Text, View } from 'react-native'
@@ -108,7 +109,7 @@ function CatalogoConsulta() {
           <Notice tone="peligro">No se pudo cargar el catálogo. Revisá la conexión y volvé a intentar.</Notice>
         </View>
       ) : (
-        <FlatList
+        <FlatList {...LISTA_LARGA_PROPS}
           ListHeaderComponent={catSinRed ? <Notice tone="advertencia">{textoSinConexion(cat.dataUpdatedAt)}</Notice> : undefined}
           key={`columnas-${columnas}`}
           data={productos}

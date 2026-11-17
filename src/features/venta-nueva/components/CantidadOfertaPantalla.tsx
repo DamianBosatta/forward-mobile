@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Image, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { Image } from 'expo-image'
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { Package, Trash2 } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, Notice, PieFijo, StatusChip, TopBar, formatImporte } from '@/core/ui/fw'
@@ -130,7 +131,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
         <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }} keyboardShouldPersistTaps="handled">
           <View style={{ flexDirection: 'row', gap: space[3], alignItems: 'center' }}>
             <View style={{ width: 84, height: 84, borderRadius: radii.tarjeta, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.borderStrong, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              {p.imageUrl ? <Image source={{ uri: p.imageUrl }} style={{ width: 84, height: 84 }} accessibilityIgnoresInvertColors /> : <Package size={28} color={c.textSecondary} />}
+              {p.imageUrl ? <Image source={{ uri: p.imageUrl }} style={{ width: 84, height: 84 }} cachePolicy="memory-disk" contentFit="cover" accessibilityIgnoresInvertColors /> : <Package size={28} color={c.textSecondary} />}
             </View>
             <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
               <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{[p.marca, p.codigoPropio].filter(Boolean).join(' · ')}</Text>
@@ -171,7 +172,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
                 <View accessibilityRole="radiogroup" accessibilityLabel="Presentación" style={{ flexDirection: 'row', padding: 3, borderRadius: radii.tarjeta, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.border, ...sombra }}>
                   {pr.modos.map((m) => (
                     <Pressable key={m} accessibilityRole="button" accessibilityLabel={ROTULO_MODO[m]} accessibilityState={{ selected: modo === m }} onPress={() => cambiarModo(m)}
-                      style={{ minHeight: 40, paddingHorizontal: space[3], borderRadius: radii.campo, justifyContent: 'center', backgroundColor: modo === m ? c.action : 'transparent' }}>
+                      style={{ minHeight: 44, paddingHorizontal: space[3], borderRadius: radii.campo, justifyContent: 'center', backgroundColor: modo === m ? c.action : 'transparent' }}>
                       <Text style={{ ...typeScale.cuerpoDestacado, color: modo === m ? c.onAction : c.textSecondary }}>{ROTULO_MODO[m]}</Text>
                     </Pressable>
                   ))}

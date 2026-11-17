@@ -69,7 +69,7 @@ export function ProveedorForm({ id }: { id?: string }) {
                   <CampoDeSocio label="Razón social" value={datos.razonSocial} onChangeText={v => cambiar('razonSocial', v)} placeholder="Como figura en ARCA" />
                 ) : null}
                 {!bloqueo.cuit ? (
-                  <CampoDeSocio label="CUIT" value={datos.cuit} onChangeText={v => cambiar('cuit', v)} keyboardType="number-pad" placeholder="30-12345678-9" />
+                  <CampoDeSocio label="CUIT" value={datos.cuit} onChangeText={v => cambiar('cuit', v)} keyboardType="number-pad" placeholder="30123456789" />
                 ) : null}
                 <OpcionesRadio
                   enTarjeta

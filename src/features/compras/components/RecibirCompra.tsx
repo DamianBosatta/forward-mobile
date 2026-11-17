@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { ScrollView, Text, TextInput, View } from 'react-native'
 
-import { Button, Field, MarcaDeCasilla, Notice, PieFijo, TopBar, formatImporte } from '@/core/ui/fw'
+import { Button, Field, enmascararFecha, MarcaDeCasilla, Notice, PieFijo, TopBar, formatImporte } from '@/core/ui/fw'
 import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { useAsignarFotoFacturaCompra, useRecibirCompra, type CompraFaltante } from '@/libs/api-client/compras'
@@ -173,7 +173,7 @@ export function RecibirCompra({ compra, onVolver, onHecho, onConflicto }: Props)
         {plan.problema === 'nada' ? <Notice tone="peligro">{MENSAJE_RECEPCION.nada}</Notice> : null}
         {pideFactura ? (
           <Field
-            label="Fecha de la factura" placeholder="dd/mm/aaaa" value={fechaFactura} onChangeText={setFechaFactura} keyboardType="numbers-and-punctuation"
+            label="Fecha de la factura" placeholder="dd/mm/aaaa" value={fechaFactura} onChangeText={(t) => setFechaFactura(enmascararFecha(t))} keyboardType="number-pad" maxLength={10}
             help="La condición de pago se cuenta desde la factura." error={problema ? mensajeProblemaFecha(problema) : undefined}
           />
         ) : null}

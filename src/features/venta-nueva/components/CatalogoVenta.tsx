@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { ScanBarcode, Search } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
@@ -13,13 +13,13 @@ import { EscanerCodigo } from '@/features/catalogo/components/EscanerCodigo'
 import { useCatalogoVenta } from '../hooks/useCatalogoVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import type { CatalogoStockItem } from '@/libs/api-client'
-import { cantidadEn } from '../lib/carrito'
 import { resolverCodigo } from '../lib/escaneo'
 import { FILTROS_VACIOS, filtrarCatalogo } from '../lib/filtrosCatalogo'
 import { ProductoCatalogoCard } from './ProductoCatalogoCard'
 import { CarritoFlotante, CarritoPanel } from './CarritoVenta'
 import { FraganciasSheet } from './FraganciasSheet'
 import { cantidadDeFragancias } from '../lib/fragancias'
+import { columnasDelCatalogo } from '../lib/columnasCatalogo'
 
 interface CatalogoVentaProps {
   onVerVenta: () => void
@@ -65,11 +65,35 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
   const [escaneando, setEscaneando] = useState(escanearAlAbrir)
   const [avisoEscaneo, setAvisoEscaneo] = useState<string | null>(null)
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
-  const columnas = formFactor === 'tabletLandscape' ? 3 : formFactor === 'tabletPortrait' ? 2 : 1
+  // Ancho real de la lista (después del menú fijo y del panel de la venta): de ahí salen las columnas.
+  const [anchoLista, setAnchoLista] = useState<number | null>(null)
+  const columnas = columnasDelCatalogo(formFactor, anchoLista)
   // El pie cuenta lo vendible del catálogo: las variantes no se venden sueltas.
   const totalVendible = useMemo(() => completo.filter((p) => !p.productoPadreId).length, [completo])
   const sinFiltros = !filtros.delUltimo && !filtros.conOferta && !filtros.hayStock
   const alternar = (k: keyof typeof filtros) => setFiltros((f) => ({ ...f, [k]: !f[k] }))
+
+  // Rows stay stable across +/-: one line map per cart change, and callbacks that read the latest cart through a ref.
+  const lineaPorProducto = useMemo(() => new Map(lineas.map((l) => [l.productoId, l])), [lineas])
+  const lineasRef = useRef(lineas)
+  lineasRef.current = lineas
+  const cambiarCantidad = useCallback((productoId: string, unidades: number) => {
+    const l = lineasRef.current.find((x) => x.productoId === productoId)
+    if (l) reemplazar({ ...l, cantidad: unidades })
+  }, [reemplazar])
+  const renderItem = useCallback(({ item }: { item: CatalogoStockItem }) => (
+    <ProductoCatalogoCard
+      producto={item}
+      linea={lineaPorProducto.get(item.id)}
+      cantidad={item.esPadreDeVariantes ? cantidadDeFragancias(lineas, item.id) : lineaPorProducto.get(item.id)?.cantidad ?? 0}
+      verCantidades={verCantidades}
+      enVivo={enVivo}
+      onAbrirOferta={onAbrirOferta}
+      onCambiarCantidad={cambiarCantidad}
+      llevoAntes={llevo?.get(item.id)}
+      onElegirFragancias={setFragancias}
+    />
+  ), [lineaPorProducto, lineas, verCantidades, enVivo, onAbrirOferta, cambiarCantidad, llevo])
 
   const alLeer = (codigo: string) => {
     setEscaneando(false)
@@ -119,6 +143,7 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
       </View>
       <FlatList
         key={columnas}
+        onLayout={(e) => setAnchoLista(Math.round(e.nativeEvent.layout.width))}
         data={productos}
         numColumns={columnas}
         keyExtractor={(p) => p.id}
@@ -144,22 +169,7 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
             <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>No hay productos que coincidan.</Text>
           )
         }
-        renderItem={({ item }) => (
-          <ProductoCatalogoCard
-            producto={item}
-            linea={lineas.find((l) => l.productoId === item.id)}
-            cantidad={item.esPadreDeVariantes ? cantidadDeFragancias(lineas, item.id) : cantidadEn(lineas, item.id)}
-            verCantidades={verCantidades}
-            enVivo={enVivo}
-            onAbrirOferta={onAbrirOferta}
-            onCambiarCantidad={(unidades) => {
-              const l = lineas.find((x) => x.productoId === item.id)
-              if (l) reemplazar({ ...l, cantidad: unidades })
-            }}
-            llevoAntes={llevo?.get(item.id)}
-            onElegirFragancias={() => setFragancias(item.id)}
-          />
-        )}
+        renderItem={renderItem}
       />
       {!isTabletLandscape && <CarritoFlotante lineas={lineas} onVerVenta={onVerVenta} />}
     </View>

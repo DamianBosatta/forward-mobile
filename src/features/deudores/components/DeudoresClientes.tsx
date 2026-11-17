@@ -1,3 +1,4 @@
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import React, { useMemo, useState } from 'react'
 import { FlatList, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { FileText } from 'lucide-react-native'
@@ -72,7 +73,7 @@ export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => vo
           )}
         </View>
       ) : null}
-      <FlatList
+      <FlatList {...LISTA_LARGA_PROPS}
         testID="lista-deudores"
         data={filas}
         keyExtractor={item => item.socioId}

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { Modal, ScrollView, Text, View, useWindowDimensions } from 'react-native'
+import { Modal, ScrollView, Text, View } from 'react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { Check, Plus } from 'lucide-react-native'
-import { BottomSheet, Button, Field, Notice, OptionCard, PieFijo, TopBar, formatImporte } from '@/core/ui/fw'
+import { BottomSheet, Button, Field, Notice, OptionCard, PieFijo, TopBar, formatImporte, useColumnaDeFormulario } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import type { ParadaDto } from '@/libs/api-client/types'
@@ -56,8 +56,7 @@ const TITULO_PASO: Record<Paso, string> = { devolucion: 'Devoluciones', cobro: '
 export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, exigeFotoRemito, resultadoInicial = 'entregado', onCerrar, onConfirmar }: Props) {
   const c = useColors()
   // Tablet: los pasos van en una columna centrada, no se estiran a todo el ancho.
-  const { width } = useWindowDimensions()
-  const columna = width >= 768 ? { maxWidth: 640, width: '100%' as const, alignSelf: 'center' as const } : null
+  const columna = useColumnaDeFormulario()
   const [resultado] = useState<Resultado>(resultadoInicial)
   const [paso, setPaso] = useState<Paso>('devolucion')
   const [f, setF] = useState<FormEntrega>(formVacio)

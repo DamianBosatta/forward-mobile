@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Check } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { BottomSheet, Button, Field, Notice, Segmented, pesoSemibold } from '@/core/ui/fw'
+import { BottomSheet, Button, Field, Notice, Segmented, enmascararHora, pesoSemibold } from '@/core/ui/fw'
 import { useCrearEvento } from '@/libs/api-client/calendario'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { SelectorDia } from './SelectorDia'
@@ -111,9 +111,9 @@ export function NuevoEventoSheet({ fecha: inicial, precarga, onCerrar, onCreado 
       <Field
         label="Hora (opcional)"
         value={hora}
-        onChangeText={setHora}
+        onChangeText={(t) => setHora(enmascararHora(t))}
         placeholder="09:30"
-        keyboardType="numbers-and-punctuation"
+        keyboardType="number-pad"
         maxLength={5}
         help="Sin hora, es de todo el día."
         error={horaValida ? undefined : 'Escribí la hora como 09:30.'}

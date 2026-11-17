@@ -113,7 +113,7 @@ export function DataList<T>({
         : '') || 'No se pudieron cargar los datos.'
     return (
       <View style={styles.errorContainer}>
-        <AlertCircle size={48} color={colors.danger ?? '#EF4444'} strokeWidth={1.5} />
+        <AlertCircle size={48} color={colors.danger} strokeWidth={1.5} />
         <Text style={[styles.errorTitle, { color: colors.text }]}>Algo salió mal</Text>
         <Text style={[styles.errorMessage, { color: colors.textMuted }]} numberOfLines={3}>
           {message}

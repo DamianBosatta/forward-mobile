@@ -63,8 +63,8 @@ export const PremiumButton = ({
         }
       case 'danger':
         return {
-          bg: ['#ef4444', '#dc2626'],
-          text: '#FFFFFF',
+          bg: [colors.dangerStrong, colors.dangerStrong],
+          text: colors.onDangerStrong,
           border: 'transparent'
         }
       default:

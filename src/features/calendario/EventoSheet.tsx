@@ -3,7 +3,7 @@ import { ActivityIndicator, ScrollView, Text, View, useWindowDimensions } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useTeclado } from '@/core/utils/useTecladoVisible'
-import { BottomSheet, Button, Field, Notice, OptionCard } from '@/core/ui/fw'
+import { BottomSheet, Button, Field, Notice, OptionCard, enmascararHora } from '@/core/ui/fw'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   calendarioKeys, useBorrarEvento, useEditarEvento, useEventoCalendario, useMarcarPagado,
@@ -310,9 +310,9 @@ function Formulario({ d, evento, cabecera, onCerrar, onMovido, onBorrado }: Prop
       <Field
         label="Hora (opcional)"
         value={hora}
-        onChangeText={setHora}
+        onChangeText={(t) => setHora(enmascararHora(t))}
         placeholder="09:30"
-        keyboardType="numbers-and-punctuation"
+        keyboardType="number-pad"
         maxLength={5}
         help="Sin hora, es de todo el día."
         error={horaValida ? undefined : 'Escribí la hora como 09:30.'}

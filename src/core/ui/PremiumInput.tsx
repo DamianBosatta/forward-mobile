@@ -52,8 +52,8 @@ export const PremiumInput = ({
 
       <MotiView
         animate={{
-          borderColor: isFocused ? colors.primary : (variant === 'search' ? 'rgba(255,255,255,0.05)' : colors.glassBorder),
-          backgroundColor: isFocused ? (isDark ? 'rgba(0, 209, 193, 0.05)' : 'rgba(0, 180, 162, 0.05)') : colors.inputBg,
+          borderColor: isFocused ? colors.primary : (colors.glassBorder),
+          backgroundColor: colors.inputBg,
           shadowOpacity: isFocused && isDark ? 0.3 : 0,
           scale: isFocused ? 1.01 : 1,
         }}

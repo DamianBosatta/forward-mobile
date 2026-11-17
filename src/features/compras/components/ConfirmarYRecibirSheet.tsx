@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Text } from 'react-native'
-import { BottomSheet, Button, Field, Notice } from '@/core/ui/fw'
+import { BottomSheet, Button, Field, Notice, enmascararFecha } from '@/core/ui/fw'
 import { typeScale, useColors } from '@/libs/theme'
 import { hoyTexto } from '@/core/utils/fecha'
 import { fechaIso } from '../lib/fecha'
@@ -33,7 +33,7 @@ export function ConfirmarYRecibirSheet({ visible, onClose, pideFactura, ocupado,
         Confirma la compra e ingresa el stock real en un solo paso, y genera la deuda con el proveedor.
       </Text>
       {pideFactura ? (
-        <Field label="Fecha de la factura" placeholder="dd/mm/aaaa" value={fecha} onChangeText={onFecha} keyboardType="numbers-and-punctuation"
+        <Field label="Fecha de la factura" placeholder="dd/mm/aaaa" value={fecha} onChangeText={(t) => onFecha(enmascararFecha(t))} keyboardType="number-pad" maxLength={10}
           help="La condición de pago se cuenta desde la factura." error={leida ? undefined : 'Escribí la fecha como dd/mm/aaaa.'} />
       ) : null}
       {error ? <Notice tone="peligro">{error}</Notice> : null}

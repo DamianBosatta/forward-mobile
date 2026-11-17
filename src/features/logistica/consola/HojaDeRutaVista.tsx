@@ -1,9 +1,9 @@
 import React from 'react'
-import { ScrollView, Text, View, useWindowDimensions } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Check, Navigation } from 'lucide-react-native'
 import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
-import { Button, Notice, StatusChip, formatImporte } from '@/core/ui/fw'
+import { Button, Notice, StatusChip, formatImporte, useColumnaDeFormulario } from '@/core/ui/fw'
 import { EstadoParada, type ParadaDto } from '@/libs/api-client/types'
 import type { ParadaNumerada, ResumenRuta } from './hojaDeRuta'
 import { chipCobro, etiquetaNota, importeParada, leyendaSinCobro } from './cobroParada'
@@ -47,8 +47,7 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue,
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const { proxima, despues, reportadas } = resumen
   // Tablet: la hoja queda en una columna legible, no estirada.
-  const { width } = useWindowDimensions()
-  const columna = width >= 768 ? { maxWidth: 640, width: '100%' as const, alignSelf: 'center' as const } : null
+  const columna = useColumnaDeFormulario()
   const tituloSeccion = { ...typeScale.seccion, color: c.text }
   const tarjeta = { backgroundColor: c.surface, borderRadius: radii.tarjeta, ...sombra }
   const puedeLlegar = !!proxima && !soloLectura && puedeReportar

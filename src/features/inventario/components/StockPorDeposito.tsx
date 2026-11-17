@@ -1,3 +1,4 @@
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import React from 'react'
 import { ActivityIndicator, FlatList, ScrollView, View } from 'react-native'
 import { radii, space, useColors } from '@/libs/theme'
@@ -62,7 +63,7 @@ function StockSinCantidades({ busqueda, columnas }: { busqueda: string; columnas
   }
   if (cat.isError && !sinRed) return <View style={{ padding: space[4] }}><Notice tone="peligro">No se pudo cargar el stock. Revisá la conexión y volvé a intentar.</Notice></View>
   return (
-    <FlatList
+    <FlatList {...LISTA_LARGA_PROPS}
       data={enBloques(cat.productos, columnas)}
       keyExtractor={(b) => b.key}
       onEndReached={cat.cargarMas}
@@ -160,7 +161,7 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
           <View style={{ padding: space[4] }}><Notice tone="peligro">No se pudo cargar el stock. Revisá la conexión y volvé a intentar.</Notice></View>
         )
       ) : (
-        <FlatList
+        <FlatList {...LISTA_LARGA_PROPS}
           data={bloques}
           keyExtractor={(b) => b.key}
           onEndReached={s.cargarMas}

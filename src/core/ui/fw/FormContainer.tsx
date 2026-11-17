@@ -26,3 +26,12 @@ export function FormContainer({ children, style }: FormContainerProps) {
     </View>
   )
 }
+
+/**
+ * Same column as `FormContainer`, as a style for screens that need it on several containers
+ * (ScrollView content, modal bodies). Null on phones. Single breakpoint (X1): `useResponsive().isTablet`.
+ */
+export function useColumnaDeFormulario(): ViewStyle | null {
+  const { isTablet } = useResponsive()
+  return isTablet ? { width: '100%', maxWidth: FORM_MAX_WIDTH, alignSelf: 'center' } : null
+}
