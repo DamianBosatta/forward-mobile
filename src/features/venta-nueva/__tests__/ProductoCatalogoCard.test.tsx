@@ -192,7 +192,7 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
       const texto = screen.getByText('$ 2.496,00')
       expect(texto.props.numberOfLines).toBe(1)
       expect(texto.parent?.parent).toHaveStyle({ flexShrink: 0 })
-      expect(texto.parent?.parent?.parent).toHaveStyle({ flexWrap: 'wrap' })
+      expect(texto.parent?.parent?.parent?.parent).toHaveStyle({ flexWrap: 'wrap' })
     })
 
     it('Agregar y Sin stock siguen con su look liso (sin relleno de acción)', () => {
