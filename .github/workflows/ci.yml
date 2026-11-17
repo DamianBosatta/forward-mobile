@@ -27,22 +27,68 @@ jobs:
       matrix:
         tz: ['UTC', 'America/Argentina/Buenos_Aires', 'Asia/Tokyo']
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
           cache: npm
       - run: npm ci
       - run: npm run lint
+      - run: npm run lint:eslint
+      - run: npm run knip
+      - name: Audit production dependencies (high and critical)
+        run: npm audit --omit=dev --audit-level=high
       - run: npm test -- --ci
         env:
           TZ: ${{ matrix.tz }}
       - if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: junit-${{ strategy.job-index }}
           path: junit.xml
           retention-days: 7
+
+  # Shared-code and contract gate (ARQ-01): libs/reglas, libs/validations/generated and the generated API types
+  # must match forward-system's main. forward-system is private: the job needs the FORWARD_SYSTEM_READ_TOKEN secret
+  # (a read-only token for that repo). Without it only the hash of each copy is verified and a notice says so.
+  # It is not part of the `check` matrix, so the required status check names do not change.
+  contrato:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HAS_SOURCE_TOKEN: ${{ secrets.FORWARD_SYSTEM_READ_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        if: env.HAS_SOURCE_TOKEN == 'true'
+        with:
+          repository: DamianBosatta/forward-system
+          ref: main
+          token: ${{ secrets.FORWARD_SYSTEM_READ_TOKEN }}
+          path: forward-system
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Contract checks against forward-system
+        if: env.HAS_SOURCE_TOKEN == 'true'
+        env:
+          FORWARD_SYSTEM_REPO: forward-system
+          FORWARD_SYSTEM_REF: HEAD
+          CHECK_REGLAS_EXIGIR_FUENTE: '1'
+          CHECK_VALIDACIONES_EXIGIR_FUENTE: '1'
+        run: |
+          npm run check:reglas
+          npm run check:validaciones
+          npm run check:types
+      - name: Contract checks (hash of each copy only)
+        if: env.HAS_SOURCE_TOKEN != 'true'
+        run: |
+          echo "::warning::FORWARD_SYSTEM_READ_TOKEN is not set: the copies were not compared with forward-system (ARQ-01)."
+          npm run check:reglas
+          npm run check:validaciones
 
   # Publishes the JS bundle of every merge to main as an EAS Update on the `production` channel.
   # The fingerprint runtime version keeps it away from builds with different native code (docs/RELEASE.md).
@@ -69,9 +115,9 @@ jobs:
             echo "ready=false" >> "$GITHUB_OUTPUT"
           fi
       - if: steps.token.outputs.ready == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - if: steps.token.outputs.ready == 'true'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
           cache: npm
@@ -92,7 +138,7 @@ jobs:
           '
           test -n "$(grep '^EXPO_PUBLIC_API_URL=' "$GITHUB_ENV")"
       - if: steps.token.outputs.ready == 'true'
-        uses: expo/expo-github-action@v8
+        uses: expo/expo-github-action@c7b66a9c327a43a8fa7c0158e7f30d6040d2481e # v8
         with:
           # Pinned on purpose (last green publish run); bump it deliberately in a PR.
           eas-version: 27.2.0
