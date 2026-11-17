@@ -2,7 +2,7 @@
  * logistica-store-partialize.test.ts
  *
  * TASK-5-D1: Verifies that the Zustand logistica store's `partialize` function
- * serializes `activeTrip` (persisted to AsyncStorage).
+ * serializes `activeTrip` (persisted to the encrypted MMKV store, SEG-10).
  *
  * Uses the store module directly and inspects the partialize output rather than
  * going through AsyncStorage, keeping the test free of native module mocking.
@@ -25,6 +25,18 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   multiRemove: jest.fn(() => Promise.resolve()),
   getAllKeys: jest.fn(() => Promise.resolve([])),
 }))
+
+// The trip lives in the encrypted MMKV store (SEG-10); its native modules are out of reach with react-native mocked.
+jest.mock('@/core/utils/storage', () => {
+  const memoria = new Map<string, string>()
+  return {
+    zustandStorageMudadoDesde: () => ({
+      getItem: (k: string) => memoria.get(k) ?? null,
+      setItem: (k: string, v: string) => { memoria.set(k, v) },
+      removeItem: (k: string) => { memoria.delete(k) },
+    }),
+  }
+})
 
 // Mock react-native core modules used transitively by the store
 jest.mock('react-native', () => ({
