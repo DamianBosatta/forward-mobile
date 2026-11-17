@@ -1,6 +1,7 @@
 import React from 'react'
 import { View } from 'react-native'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
+import { idDeRuta, opcionDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
 import { useColors } from '@/libs/theme'
 import { CobroEnPasos } from '@/features/cuentas/components/CobroEnPasos'
 
@@ -12,11 +13,11 @@ import { CobroEnPasos } from '@/features/cuentas/components/CobroEnPasos'
 export default function RegistrarCobroScreen() {
   const c = useColors()
   const router = useRouter()
-  const { socioId, medio } = useLocalSearchParams<{ socioId?: string; medio?: string }>()
+  const { socioId, medio } = useParametrosDeRuta({ socioId: idDeRuta, medio: opcionDeRuta(['cheque']) })
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <CobroEnPasos socioId={socioId || undefined} medioInicial={medio === 'cheque' ? 'cheque' : undefined} onVolver={() => router.back()} />
+      <CobroEnPasos socioId={socioId || undefined} medioInicial={medio} onVolver={() => router.back()} />
     </View>
   )
 }

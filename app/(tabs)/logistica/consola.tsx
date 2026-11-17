@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { Linking, RefreshControl, ScrollView, Text, View } from 'react-native'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
+import { idDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
 import { onlineManager, useQueryClient } from '@tanstack/react-query'
 import { FileText, Phone, RefreshCw, WifiOff } from 'lucide-react-native'
 import { RequirePermission } from '@/core/ui'
@@ -58,7 +59,7 @@ export default function ConsolaChoferScreen() {
   const c = useColors()
   const router = useRouter()
   const menu = useMenuLeading()
-  const { id } = useLocalSearchParams<{ id?: string }>()
+  const { id } = useParametrosDeRuta({ id: idDeRuta })
   const { user, canDo, hasCapability, isSuperAdmin } = useAuthStore()
   // Sin permiso de viajes no se consulta nada: el servidor respondería 403. La oficina que arma
   // viajes (CAP_ARMAR_VIAJES) también abre una hoja (GET hojas-ruta/{id}).

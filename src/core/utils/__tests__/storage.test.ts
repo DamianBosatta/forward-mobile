@@ -138,3 +138,49 @@ describe('app.config.ts', () => {
     expect(config.android.allowBackup).toBe(false)
   })
 })
+
+/**
+ * SEG-10: a key that used to live in AsyncStorage (plain text) moves to the encrypted store, and no plain copy stays
+ * behind once the encrypted one exists, whatever left it there (an interrupted move or an older build writing it).
+ */
+describe('zustandStorageMudadoDesde', () => {
+  function adaptador(plano: Map<string, string>) {
+    let modulo: typeof import('../storage') | undefined
+    jest.isolateModules(() => { modulo = require('../storage') })
+    const almacenPlano = {
+      getItem: jest.fn(async (k: string) => plano.get(k) ?? null),
+      removeItem: jest.fn(async (k: string) => { plano.delete(k) }),
+    }
+    return { mudado: modulo!.zustandStorageMudadoDesde(almacenPlano), almacenPlano }
+  }
+  const esperarPendientes = () => new Promise((r) => setImmediate(r))
+
+  it('with the encrypted value present, a read returns it and removes the plain copy', async () => {
+    const plano = new Map([['logistica-storage', '{"viaje":"plano"}']])
+    const { mudado } = adaptador(plano)
+    mudado.setItem('logistica-storage', '{"viaje":"cifrado"}')
+
+    expect(await mudado.getItem('logistica-storage')).toBe('{"viaje":"cifrado"}')
+    await esperarPendientes()
+    expect(plano.has('logistica-storage')).toBe(false)
+  })
+
+  it('with only the plain value, a read moves it to the encrypted store and removes the plain copy', async () => {
+    const plano = new Map([['logistica-storage', '{"viaje":"plano"}']])
+    const { mudado } = adaptador(plano)
+
+    expect(await mudado.getItem('logistica-storage')).toBe('{"viaje":"plano"}')
+    expect(plano.has('logistica-storage')).toBe(false)
+    expect(mockArchivo.datos.get('logistica-storage')).toBe('{"viaje":"plano"}')
+  })
+
+  it('if removing the plain copy fails, the read still returns the encrypted value', async () => {
+    const { mudado, almacenPlano } = adaptador(new Map())
+    almacenPlano.removeItem.mockRejectedValueOnce(new Error('AsyncStorage unavailable'))
+    mudado.setItem('logistica-storage', 'cifrado')
+
+    expect(await mudado.getItem('logistica-storage')).toBe('cifrado')
+    await esperarPendientes()
+    expect(almacenPlano.removeItem).toHaveBeenCalledWith('logistica-storage')
+  })
+})

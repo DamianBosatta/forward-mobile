@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { RefreshControl, SectionList, Text, View } from 'react-native'
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
+import { useNavigation, useRouter } from 'expo-router'
+import { opcionDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
 import { DrawerActions } from "expo-router/react-navigation"
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
@@ -49,7 +50,7 @@ function ClientesScreen() {
   const puedeVerDeudores = usePuedeVerDeudores()
   const [soloDeudores, setSoloDeudores] = useFiltroPersistente('socios.soloDeudores', false)
   // `?filtro=deudores` (p. ej. desde Inicio) abre directo en Deudores; sin el permiso se ignora.
-  const { filtro } = useLocalSearchParams<{ filtro?: string }>()
+  const { filtro } = useParametrosDeRuta({ filtro: opcionDeRuta([FILTRO_DEUDORES]) })
   useEffect(() => {
     if (filtro === FILTRO_DEUDORES && puedeVerDeudores) setSoloDeudores(true)
   }, [filtro, puedeVerDeudores, setSoloDeudores])

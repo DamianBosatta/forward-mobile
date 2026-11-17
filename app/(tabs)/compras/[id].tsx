@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useLocalSearchParams } from 'expo-router'
+import { idDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
 import { tomarAviso } from '@/features/compras/lib/confirmar-y-recibir'
 import { CompraDetalle } from '@/features/compras/components/CompraDetalle'
 
@@ -10,7 +10,8 @@ export { CompraDetalle }
 export default function CompraDetailScreen() {
   // `aviso`: clave del resultado de confirmar y recibir desde la compra nueva. El texto se toma de
   // memoria (lo dejó esa pantalla); un enlace con la clave sola no muestra nada.
-  const { id, aviso } = useLocalSearchParams<{ id: string; aviso?: string }>()
+  const { id, aviso } = useParametrosDeRuta({ id: idDeRuta, aviso: idDeRuta })
   const [inicial] = useState(() => (id ? tomarAviso(id, aviso) : null))
-  return <CompraDetalle id={id ?? ''} aviso={inicial ?? undefined} />
+  if (!id) return null
+  return <CompraDetalle id={id} aviso={inicial ?? undefined} />
 }

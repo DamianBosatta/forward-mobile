@@ -17,6 +17,7 @@ import type { LineaCarrito } from '../lib/carrito'
 import { useDepositoDeVenta } from './useDepositoDeVenta'
 import type { useBorradorVenta } from './useBorradorVenta'
 import { invalidarPorCambioDeVenta } from '@/libs/api-client/invalidaciones'
+import { dejarMensajeDeVenta } from '../lib/mensajeDeGuardada'
 
 /** Una clave por intento de guardar la edición de una venta: el reintento o el doble toque manda la misma (ver `crearIntento`). */
 const intentoEdicion = crearIntento()
@@ -160,7 +161,7 @@ export function useConfirmarVenta(d: Datos) {
     b.cerrar()
     d.alGuardar()
     // Lámina Guardada: el resumen, lo que dijo el servidor y las acciones (compartir, convertir, agendar, anular).
-    router.replace({ pathname: '/(tabs)/ventas/guardada', params: { id: r.ventaId, mensaje } } as never)
+    router.replace({ pathname: '/(tabs)/ventas/guardada', params: { id: r.ventaId, aviso: mensaje ? dejarMensajeDeVenta(r.ventaId, mensaje) : undefined } } as never)
   }
 
   async function confirmar() {

@@ -93,3 +93,7 @@ export function textoSemanal(dias: number[]): string {
   const lista = nombres.length === 1 ? nombres[0] : `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`
   return `Se repite todos los ${lista}`
 }
+
+/** Largo máximo del título y la descripción de un evento: el de los formularios y el de un enlace que lo precarga. */
+export const MAX_TITULO = 150
+export const MAX_DESCRIPCION = 500

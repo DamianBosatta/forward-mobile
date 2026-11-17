@@ -7,6 +7,7 @@ import { versionDeCache } from '@/core/query/versionDeCache'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { useAuthGuard } from '../hooks/useAuthGuard'
+import { useGuardDeRuta } from '@/core/auth/useGuardDeRuta'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { conectarCierreDeSesion } from '@/features/auth/lib/cerrarSesion'
 import { hasSavedCredentials } from '@/features/auth/utils/biometrics'
@@ -42,6 +43,8 @@ hasSavedCredentials().catch((err) => logger.warn('Legacy fingerprint credential 
 
 function AuthGuardHandler() {
   useAuthGuard()
+  // ARQ-04: cada pantalla pide lo mismo que su ruta en la web (también si llega por enlace o por push).
+  useGuardDeRuta()
   return null
 }
 

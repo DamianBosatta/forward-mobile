@@ -56,7 +56,8 @@ async function conSesion() {
   useOfertaDeHuella.getState().ofrecer({ username: 'chofer', password: 'secreta' })
   useFiltrosStore.getState().poner('socios.lista', { busqueda: 'pepe' })
   expect((await mmkvPersister.restoreClient())?.clientState.queries).toHaveLength(1)
-  expect(await AsyncStorage.getItem('forward-logistica-store')).toContain('Almacén Don Pepe')
+  // SEG-10: the trip lives in the encrypted store.
+  expect(storage.getString('forward-logistica-store')).toContain('Almacén Don Pepe')
   return { qc, soltar: () => { dejarDeGuardar(); desconectar() } }
 }
 
@@ -73,6 +74,7 @@ async function sinNadaDeLaSesion(qc: ReturnType<typeof crearQueryClient>, huella
   // The disk holds nothing (not an empty client) even if the app dies right away.
   expect(await mmkvPersister.restoreClient()).toBeUndefined()
   expect(useLogisticaStore.getState().activeTrip).toBeNull()
+  expect(storage.getString('forward-logistica-store')).toBeUndefined()
   expect(await AsyncStorage.getItem('forward-logistica-store')).toBeNull()
   // The saved list filters of the previous person are not inherited by the next one.
   expect(useFiltrosStore.getState().valores).toEqual({})
