@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native'
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Check, Phone, ScanLine } from 'lucide-react-native'
 import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
-import { Button, MarcaDeCasilla, TopBar } from '@/core/ui/fw'
+import { Button, MarcaDeCasilla, TopBar, useColumnaDeFormulario } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import type { ParadaDto } from '@/libs/api-client/types'
 import { EscanearEtiqueta } from './EscanearEtiqueta'
@@ -28,8 +28,7 @@ export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntrega
   const c = useColors()
   const sombra = useSombraTarjeta()
   const { bottom } = useSafeAreaInsets()
-  const { width } = useWindowDimensions()
-  const columna = width >= 768 ? { maxWidth: 640, width: '100%' as const, alignSelf: 'center' as const } : null
+  const columna = useColumnaDeFormulario()
   const piezas = piezasDeParada(parada)
   const puedeLlamar = urlLlamar(parada.telefono) !== null
   const [marcadas, setMarcadas] = useState<ReadonlySet<number>>(new Set())

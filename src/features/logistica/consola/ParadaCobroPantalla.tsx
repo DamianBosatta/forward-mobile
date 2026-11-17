@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import { Modal, ScrollView, Text, View, useWindowDimensions } from 'react-native'
+import { Modal, ScrollView, Text, View } from 'react-native'
 import { Check } from 'lucide-react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, OptionCard, PieFijo, TopBar, formatImporte } from '@/core/ui/fw'
+import { Button, Notice, OptionCard, PieFijo, TopBar, formatImporte, useColumnaDeFormulario } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { useMediosCobroChofer } from '@/libs/api-client/logistica'
 import { MOTIVOS_NO_COBRO, type MotivoNoCobro, type ParadaCobro } from '@/features/cobros/paradaCobro'
@@ -38,8 +38,7 @@ const comoCampo = (n: number) => String(n).replace('.', ',')
  */
 export function ParadaCobroPantalla({ parada, numero, total, enviando, error, resultado, onCerrar, onCobrar, onNoCobre }: Props) {
   const c = useColors()
-  const { width } = useWindowDimensions()
-  const columna = width >= 768 ? { maxWidth: 640, width: '100%' as const, alignSelf: 'center' as const } : null
+  const columna = useColumnaDeFormulario()
   const medios = useMediosCobroChofer(true)
   const [lineas, setLineas] = useState<LineaCobroForm[]>([])
   const [subiendo, setSubiendo] = useState(0)

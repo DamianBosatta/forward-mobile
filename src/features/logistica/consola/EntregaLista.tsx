@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react'
-import { Modal, Text, View, useWindowDimensions } from 'react-native'
+import { Modal, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { CircleCheck } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Progress, formatImporte } from '@/core/ui/fw'
+import { Button, Progress, formatImporte, useColumnaDeFormulario } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import type { ParadaDto } from '@/libs/api-client/types'
 import { textoPiezas } from './piezasParada'
@@ -30,8 +30,7 @@ interface Props {
 export function EntregaLista({ parada, cobrado, piezas, hechas, total, siguiente, onSiguiente, onTermine, sinSenal = false }: Props) {
   const c = useColors()
   const { bottom } = useSafeAreaInsets()
-  const { width } = useWindowDimensions()
-  const columna = width >= 768 ? { maxWidth: 640, width: '100%' as const, alignSelf: 'center' as const } : null
+  const columna = useColumnaDeFormulario()
   useEffect(() => {
     safeHaptics.notification('success')
   }, [])
