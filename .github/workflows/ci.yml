@@ -138,7 +138,7 @@ jobs:
           '
           test -n "$(grep '^EXPO_PUBLIC_API_URL=' "$GITHUB_ENV")"
       - if: steps.token.outputs.ready == 'true'
-        uses: expo/expo-github-action@c7b66a9c327a43a8fa7c0158e7f30d6040d2481e # v8
+        uses: expo/expo-github-action@5273c2136bd09c2a341fe3340d3e767ce5a13015 # v9.0.2
         with:
           # Pinned on purpose (last green publish run); bump it deliberately in a PR.
           eas-version: 27.2.0
