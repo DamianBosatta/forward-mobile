@@ -12,6 +12,16 @@ const tarjetaSimple = () =>
   render(<ProductoCatalogoCard producto={producto()} cantidad={0} verCantidades onAbrirOferta={noop} />)
 
 describe('ProductoCatalogoCard (CalleCatalogo)', () => {
+  it('con las mismas props no se vuelve a dibujar (la fila no se reevalúa por el +/− de otra)', () => {
+    const p = producto()
+    const alDibujar = jest.fn()
+    const Espia = ({ children }: { children?: React.ReactNode }) => { alDibujar(); return <>{children}</> }
+    const r = render(<Espia><ProductoCatalogoCard producto={p} cantidad={0} verCantidades onAbrirOferta={noop} /></Espia>)
+    expect(ProductoCatalogoCard).toHaveProperty('$$typeof', Symbol.for('react.memo'))
+    r.rerender(<Espia><ProductoCatalogoCard producto={p} cantidad={0} verCantidades onAbrirOferta={noop} /></Espia>)
+    expect(screen.getAllByTestId('producto-p1')).toHaveLength(1)
+  })
+
   it('lo que ya está en el carrito se marca con el fondo y el borde de la marca; lo que no, queda liso', () => {
     const r = pintar(6)
     expect(screen.getByTestId('producto-p1')).toHaveStyle({ backgroundColor: '#E0F8F3', borderColor: '#00C29E' })
@@ -22,7 +32,7 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
 
   it('con foto la muestra; sin foto deja el ícono de producto', () => {
     const r = pintar(0, { imageUrl: 'https://img.test/a.png' })
-    expect(screen.UNSAFE_getByType(require('react-native').Image).props.source).toEqual({ uri: 'https://img.test/a.png' })
+    expect(screen.UNSAFE_getByType(require('expo-image').Image).props.source).toEqual({ uri: 'https://img.test/a.png' })
     r.unmount()
     pintar(0, { imageUrl: null })
     expect(screen.UNSAFE_queryByType(require('react-native').Image)).toBeNull()
@@ -136,7 +146,7 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
       const onCambiar = conLineaDe(producto(), 3)
       expect(screen.queryByRole('radiogroup', { name: 'Se vende por' })).toBeNull()
       await userEvent.press(screen.getByRole('button', { name: /^Sumar / }))
-      expect(onCambiar).toHaveBeenCalledWith(4)
+      expect(onCambiar).toHaveBeenCalledWith('p1', 4)
     })
 
     it('Pack y Bulto: marca el modo de la línea, "+" suma un pack y cambiar a Bulto redondea al próximo bulto', async () => {
@@ -144,18 +154,18 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
       expect(screen.getByRole('button', { name: 'Pack · 6' })).toHaveAccessibilityState({ selected: true })
       expect(screen.getByRole('button', { name: 'Bulto · 12' })).toHaveAccessibilityState({ selected: false })
       await userEvent.press(screen.getByRole('button', { name: /^Sumar / }))
-      expect(onCambiar).toHaveBeenLastCalledWith(12)
+      expect(onCambiar).toHaveBeenLastCalledWith('pk', 12)
       await userEvent.press(screen.getByRole('button', { name: 'Bulto · 12' }))
-      expect(onCambiar).toHaveBeenLastCalledWith(12)
+      expect(onCambiar).toHaveBeenLastCalledWith('pk', 12)
     })
 
     it('en Bulto el "+" suma 12 unidades y "−" resta un bulto sin bajar del mínimo', async () => {
       const onCambiar = conLineaDe(pack(), 24)
       expect(screen.getByRole('button', { name: 'Bulto · 12' })).toHaveAccessibilityState({ selected: true })
       await userEvent.press(screen.getByRole('button', { name: /^Sumar / }))
-      expect(onCambiar).toHaveBeenLastCalledWith(36)
+      expect(onCambiar).toHaveBeenLastCalledWith('pk', 36)
       await userEvent.press(screen.getByRole('button', { name: /^Restar / }))
-      expect(onCambiar).toHaveBeenLastCalledWith(12)
+      expect(onCambiar).toHaveBeenLastCalledWith('pk', 12)
     })
 
     it('"−" está apagado en el mínimo de venta', () => {

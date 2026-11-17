@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
-import { Image, Pressable, Text, View } from 'react-native'
+import { Image } from 'expo-image'
+import { Pressable, Text, View } from 'react-native'
 import { Package } from 'lucide-react-native'
 import { radii, space, typeScale, importe, useColors, type ForwardColors } from '@/libs/theme'
 import { Button, formatImporte } from '@/core/ui/fw'
@@ -23,9 +24,9 @@ interface ProductoCatalogoCardProps {
   llevoAntes?: number
   /** Hay conexión al stock en vivo: la línea de stock agrega "· ahora". */
   enVivo?: boolean
-  onElegirFragancias?: () => void
+  onElegirFragancias?: (productoId: string) => void
   /** Cambia la cantidad de la línea (en unidades) desde la tarjeta: selector "Se vende por" y "−" / "+". */
-  onCambiarCantidad?: (unidades: number) => void
+  onCambiarCantidad?: (productoId: string, unidades: number) => void
   /** Abre la pantalla de cantidad y oferta: "Agregar" y, si ya está en el carrito, el chip de edición. */
   onAbrirOferta: (producto: CatalogoStockItem) => void
 }
@@ -34,7 +35,7 @@ interface ProductoCatalogoCardProps {
  * Tarjeta del catálogo de venta (propuesta Catálogo): foto, marca, nombre, presentación, oferta, stock en vivo,
  * precio (por bulto y por unidad) y "Agregar" o el chip de edición. Sin stock se puede pedir: queda por autorizar.
  */
-export function ProductoCatalogoCard({
+export const ProductoCatalogoCard = React.memo(function ProductoCatalogoCard({
   producto: p, cantidad, verCantidades, linea, llevoAntes, enVivo, onElegirFragancias, onCambiarCantidad, onAbrirOferta,
 }: ProductoCatalogoCardProps) {
   const c = useColors()
@@ -61,7 +62,7 @@ export function ProductoCatalogoCard({
     >
       <View style={{ width: 76, height: 76, borderRadius: radii.campo, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         {p.imageUrl ? (
-          <Image source={{ uri: p.imageUrl }} style={{ width: 76, height: 76 }} accessibilityIgnoresInvertColors />
+          <Image source={{ uri: p.imageUrl }} style={{ width: 76, height: 76 }} cachePolicy="memory-disk" contentFit="cover" recyclingKey={p.id} accessibilityIgnoresInvertColors />
         ) : (
           <Package size={28} color={c.textSecondary} />
         )}
@@ -87,13 +88,13 @@ export function ProductoCatalogoCard({
         {enCarrito && linea ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], flexWrap: 'wrap' }}>
             <SeVendePor compacto presentacion={pr} modo={modo}
-              onCambiar={(m) => { setModoElegido(m); onCambiarCantidad?.(convertirModo(pr, m, linea.cantidad)) }} />
+              onCambiar={(m) => { setModoElegido(m); onCambiarCantidad?.(p.id, convertirModo(pr, m, linea.cantidad)) }} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-              <Redondo c={c} label="−" a11y={`Restar ${p.nombre}`} disabled={linea.cantidad - paso < multiploDe(p)} onPress={() => onCambiarCantidad?.(linea.cantidad - paso)} />
+              <Redondo c={c} label="−" a11y={`Restar ${p.nombre}`} disabled={linea.cantidad - paso < multiploDe(p)} onPress={() => onCambiarCantidad?.(p.id, linea.cantidad - paso)} />
               <Text accessibilityLabel={`${modo === 'bultos' ? 'Bultos' : 'Unidades'}: ${valorEn(pr, modo, linea.cantidad)}`} style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text, minWidth: 28, textAlign: 'center' }}>
                 {mostrarNumero(valorEn(pr, modo, linea.cantidad))}
               </Text>
-              <Redondo c={c} label="+" a11y={`Sumar ${p.nombre}`} disabled={linea.cantidad + paso > TOPE_CANTIDAD} onPress={() => onCambiarCantidad?.(linea.cantidad + paso)} />
+              <Redondo c={c} label="+" a11y={`Sumar ${p.nombre}`} disabled={linea.cantidad + paso > TOPE_CANTIDAD} onPress={() => onCambiarCantidad?.(p.id, linea.cantidad + paso)} />
             </View>
           </View>
         ) : null}
@@ -124,13 +125,13 @@ export function ProductoCatalogoCard({
           )}
         </View>
         {p.esPadreDeVariantes ? (
-          <Button testID={`elegir-fragancias-${p.id}`} label="Elegir fragancias" onPress={() => onElegirFragancias?.()} />
+          <Button testID={`elegir-fragancias-${p.id}`} label="Elegir fragancias" onPress={() => onElegirFragancias?.(p.id)} />
         ) : null}
         </View>
       </View>
     </View>
   )
-}
+})
 
 function Chip({ c, texto, tono }: { c: ForwardColors; texto: string; tono?: 'oferta' }) {
   const colores = tono === 'oferta' ? c.chip.porAutorizar : { bg: c.surface2, text: c.text }
