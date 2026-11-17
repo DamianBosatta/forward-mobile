@@ -6,7 +6,7 @@
 import React from 'react'
 import { act } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, waitFor } from '@testing-library/react-native'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { ESTADOS_ESPERADOS_PUSH } from '@/libs/api-client/notificaciones'
 import { PushDeAvisos } from '../PushDeAvisos'
@@ -44,12 +44,14 @@ const mockPedirPermiso = jest.fn()
 const mockToken = jest.fn()
 let mockAlTocar: ((r: unknown) => void) | null = null
 const mockUltimaRespuesta = jest.fn()
+const mockCanal = jest.fn(async (..._a: unknown[]) => null)
 jest.mock('expo-notifications', () => ({
   AndroidImportance: { DEFAULT: 3 },
+  AndroidNotificationVisibility: { PRIVATE: 2 },
   getPermissionsAsync: () => mockPermiso(),
   requestPermissionsAsync: () => mockPedirPermiso(),
   getExpoPushTokenAsync: (o: unknown) => mockToken(o),
-  setNotificationChannelAsync: jest.fn(async () => null),
+  setNotificationChannelAsync: (...a: unknown[]) => mockCanal(...a),
   setNotificationHandler: jest.fn(),
   addNotificationReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
   addNotificationResponseReceivedListener: (cb: (r: unknown) => void) => {
@@ -92,12 +94,22 @@ beforeEach(() => {
 })
 
 describe('Registro del celular', () => {
-  it('al iniciar sesión pide el permiso y registra el token con la plataforma', async () => {
-    mockPermiso.mockResolvedValue({ status: 'undetermined' })
+  // SEG-15: el diálogo del sistema no aparece sin contexto; primero una tarjeta dice para qué son los avisos.
+  it('al iniciar sesión sin permiso todavía, primero explica para qué y no pide nada', async () => {
+    mockPermiso.mockResolvedValue({ status: 'undetermined', canAskAgain: true })
     pintar()
-    expect(registros()).toHaveLength(0)
-
     iniciarSesion()
+
+    expect(await screen.findByText('Te avisamos cuando autoricen tus ventas')).toBeTruthy()
+    expect(mockPedirPermiso).not.toHaveBeenCalled()
+    expect(registros()).toHaveLength(0)
+  })
+
+  it('con "Activar avisos" pide el permiso y registra el token con la plataforma', async () => {
+    mockPermiso.mockResolvedValue({ status: 'undetermined', canAskAgain: true })
+    pintar()
+    iniciarSesion()
+    fireEvent.press(await screen.findByText('Activar avisos'))
 
     await waitFor(() => expect(registros()).toHaveLength(1))
     expect(mockPedirPermiso).toHaveBeenCalledTimes(1)
@@ -105,6 +117,28 @@ describe('Registro del celular', () => {
     const [, cuerpo, opciones] = registros()[0]
     expect(cuerpo).toEqual({ token: TOKEN, plataforma: 'ios' })
     expect(opciones).toMatchObject({ estadosEsperados: ESTADOS_ESPERADOS_PUSH })
+  })
+
+  it('con "Ahora no" no pide el permiso ni registra', async () => {
+    mockPermiso.mockResolvedValue({ status: 'undetermined', canAskAgain: true })
+    pintar()
+    iniciarSesion()
+    fireEvent.press(await screen.findByText('Ahora no'))
+
+    await waitFor(() => expect(screen.queryByText('Te avisamos cuando autoricen tus ventas')).toBeNull())
+    expect(mockPedirPermiso).not.toHaveBeenCalled()
+    expect(registros()).toHaveLength(0)
+  })
+
+  it('si el sistema ya no deja preguntar, no muestra la tarjeta ni pide nada', async () => {
+    mockPermiso.mockResolvedValue({ status: 'denied', canAskAgain: false })
+    pintar()
+    iniciarSesion()
+
+    await waitFor(() => expect(mockPermiso).toHaveBeenCalled())
+    expect(screen.queryByText('Te avisamos cuando autoricen tus ventas')).toBeNull()
+    expect(mockPedirPermiso).not.toHaveBeenCalled()
+    expect(registros()).toHaveLength(0)
   })
 
   it('al abrir la app con la sesión ya iniciada también registra', async () => {
@@ -148,6 +182,20 @@ describe('Registro del celular', () => {
 
     expect(ESTADOS_ESPERADOS_PUSH).toEqual(expect.arrayContaining([400, 404, 405]))
     expect(registros()[0][2]).toMatchObject({ estadosEsperados: ESTADOS_ESPERADOS_PUSH })
+  })
+})
+
+describe('Pantalla bloqueada (M9, SEG-07, decisión #25)', () => {
+  it('en Android el canal de avisos no muestra el contenido con el teléfono bloqueado', async () => {
+    const { Platform } = jest.requireActual<typeof import('react-native')>('react-native')
+    const antes = Platform.OS
+    Object.defineProperty(Platform, 'OS', { get: () => 'android', configurable: true })
+    try {
+      await registrarPush()
+    } finally {
+      Object.defineProperty(Platform, 'OS', { get: () => antes, configurable: true })
+    }
+    expect(mockCanal).toHaveBeenCalledWith('default', expect.objectContaining({ lockscreenVisibility: 2 }))
   })
 })
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useLocalSearchParams } from 'expo-router'
+import { idDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
 import { CompraGuardadaPantalla } from '@/features/compras/components/CompraGuardadaPantalla'
 import { tomarAviso } from '@/features/compras/lib/confirmar-y-recibir'
 
@@ -9,7 +9,8 @@ import { tomarAviso } from '@/features/compras/lib/confirmar-y-recibir'
  * clave sola no muestra un éxito que no pasó).
  */
 export default function CompraGuardadaRoute() {
-  const { id, aviso } = useLocalSearchParams<{ id: string; aviso?: string }>()
+  const { id, aviso } = useParametrosDeRuta({ id: idDeRuta, aviso: idDeRuta })
   const [inicial] = useState(() => (id ? tomarAviso(id, aviso) : null))
-  return <CompraGuardadaPantalla id={id ?? ''} aviso={inicial ?? undefined} />
+  if (!id) return null
+  return <CompraGuardadaPantalla id={id} aviso={inicial ?? undefined} />
 }

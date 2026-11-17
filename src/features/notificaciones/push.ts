@@ -33,21 +33,46 @@ export function projectIdDeEas(): string | null {
   return typeof id === 'string' && id ? id : null
 }
 
+/** El projectId de EAS si este celular puede recibir push de este proyecto; `null` en web, Expo Go o sin EAS. */
+function proyectoQueRecibePush(): string | null {
+  if (Platform.OS !== 'android' && Platform.OS !== 'ios') return null
+  // Expo Go no recibe push remotos de este proyecto.
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return null
+  return projectIdDeEas()
+}
+
+/**
+ * Qué pasa con el permiso de avisos, sin mostrar el diálogo del sistema (SEG-15): `concedido` registra sin
+ * preguntar; `preguntable` muestra antes una tarjeta que dice para qué son; `no` (sin push, o el sistema ya no deja
+ * preguntar) no muestra nada. Nunca tira.
+ */
+export type PermisoDePush = 'concedido' | 'preguntable' | 'no'
+export async function permisoDePush(): Promise<PermisoDePush> {
+  if (!proyectoQueRecibePush()) return 'no'
+  try {
+    const { status, canAskAgain } = await Notifications.getPermissionsAsync()
+    if (status === 'granted') return 'concedido'
+    return canAskAgain === false ? 'no' : 'preguntable'
+  } catch {
+    return 'no'
+  }
+}
+
 /**
  * El token de Expo de este celular, o `null` si no puede recibir push. Nunca tira. Con
  * `pedirPermiso: false` no muestra el diálogo (para la baja: si no hay permiso, no hay token).
  */
 export async function tokenDePush({ pedirPermiso }: { pedirPermiso: boolean }): Promise<string | null> {
-  if (Platform.OS !== 'android' && Platform.OS !== 'ios') return null
-  // Expo Go no recibe push remotos de este proyecto.
-  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return null
-  const projectId = projectIdDeEas()
+  const projectId = proyectoQueRecibePush()
   if (!projectId) return null
   try {
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync(CANAL_AVISOS, {
         name: 'Avisos',
         importance: Notifications.AndroidImportance.DEFAULT,
+        // M9, SEG-07 (decisión #25): con el teléfono bloqueado no se ve el contenido del aviso. Android no cambia
+        // la visibilidad de un canal ya creado: rige en las instalaciones nuevas; el texto genérico lo pone el servidor.
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
       })
     }
     let { status } = await Notifications.getPermissionsAsync()

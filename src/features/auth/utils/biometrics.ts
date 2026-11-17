@@ -4,8 +4,9 @@ import * as SecureStore from 'expo-secure-store';
 /**
  * "Entrar con huella" is opt-in (audit tranche 1, S2, owner's decision "Opt-in, con botón"): after the first
  * password login the app asks; only if the person accepts is the credential saved, behind device authentication
- * (`requireAuthentication`). The login screen shows a button and never prompts on its own. A manual logout forgets
- * it; a forced one (session expired) keeps it. The decision and the credential belong to one username.
+ * (`requireAuthentication`). The login screen shows a button and never prompts on its own. Every logout, manual or
+ * forced (session expired), forgets it (M9, SEG-04, owner's decision #23). The decision and the credential belong
+ * to one username.
  */
 const BIOMETRIC_CREDENTIALS_KEY = 'forward_biometric_credentials';
 /** Plain marker (no authentication) so the login screen can show the button without prompting. */
@@ -121,12 +122,12 @@ export async function acceptBiometricLogin(creds: BiometricCredentials): Promise
   return true;
 }
 
-/** "Ahora no": stores no credential and does not ask this person again until a manual logout. */
+/** "Ahora no": stores no credential and does not ask this person again until the next logout. */
 export async function declineBiometricLogin(username: string) {
   await setBiometricLoginEnabled(false, username);
 }
 
-/** Manual logout or another person: deletes the credential and the decision, so the next login is asked again. */
+/** Any logout or another person: deletes the credential and the decision, so the next login is asked again. */
 export async function forgetBiometricLogin() {
   await clearSavedCredentials();
   await SecureStore.deleteItemAsync(BIOMETRIC_ENABLED_KEY);

@@ -15,6 +15,24 @@ import { avisosVenta } from '../lib/avisos'
 import { aplicarDescuentoGeneral } from '../__testing__/descuentoGeneral'
 import { AVISO_DEUDA_VENCIDA } from '@/features/clientes/components/CreditoDelCliente'
 
+// SEG-11: the message no longer travels in the route; the route carries the key the save left in memory.
+const mockDejados = new Map<string, string>()
+jest.mock('../lib/mensajeDeGuardada', () => {
+  const real = jest.requireActual('../lib/mensajeDeGuardada')
+  return {
+    ...real,
+    dejarMensajeDeVenta: (id: string, texto: string) => {
+      const clave = real.dejarMensajeDeVenta(id, texto)
+      mockDejados.set(clave, texto)
+      return clave
+    },
+  }
+})
+/** Matches the route key whose message in memory is `texto` (no key when there is no message). */
+const avisoCon = (texto: string) =>
+  texto ? { asymmetricMatch: (clave: unknown) => mockDejados.get(clave as string) === texto, toString: () => `aviso(${texto})` } : undefined
+
+
 const mockPost = jest.fn()
 const mockGet = jest.fn()
 const mockDims = jest.fn()
@@ -546,7 +564,7 @@ describe('confirmar', () => {
     await aEntrega()
   }
   const confirmar = confirmarVenta
-  const guardada = (id: string, mensaje: string) => ({ pathname: '/(tabs)/ventas/guardada', params: { id, mensaje } })
+  const guardada = (id: string, mensaje: string) => ({ pathname: '/(tabs)/ventas/guardada', params: { id, aviso: avisoCon(mensaje) } })
   // La vista previa de la venta también hace POST: las respuestas de prueba se encolan solo para el
   // alta (`/api/v1/Ventas`), así una vista previa nunca se queda con la respuesta que era del alta.
   const alAlta = (...respuestas: Array<() => Promise<unknown>>) => {

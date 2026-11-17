@@ -1,6 +1,7 @@
 import type { AjusteDeLinea } from '@/libs/api-client/autorizar-venta'
 import { calcularSubtotalConDescuento } from '@/features/ventas/lib/descuentos'
-import { redondear2 } from '@/libs/reglas/dinero'
+import { sumarMontos } from '@/libs/reglas/dinero'
+import { calcularTotalesVenta } from '@/features/ventas/lib/totalVenta'
 
 export interface LineaEditable {
   id: string
@@ -95,18 +96,15 @@ export function estimarTotales(venta: TotalesDeVenta, lineas: LineaEditable[], l
   }
   const nuevas = new Map(lectura.cambios.map((x) => [x.id, x.despues]))
   const subtotalDeLinea: Record<string, number> = {}
-  let subtotalBruto = 0
+  const renglones: number[] = []
   for (const l of lineas) {
     const nueva = nuevas.get(l.id)
-    if (nueva === undefined) { subtotalBruto += l.subtotal ?? 0; continue }
+    if (nueva === undefined) { renglones.push(l.subtotal ?? 0); continue }
     // El unitario del detalle ya es neto (incluye el descuento de la línea, `VentaDetalle.cs:170`): no se descuenta de nuevo.
     subtotalDeLinea[l.id] = calcularSubtotalConDescuento(l.precioUnitario ?? 0, nueva, 0)
-    subtotalBruto += subtotalDeLinea[l.id]
+    renglones.push(subtotalDeLinea[l.id])
   }
-  subtotalBruto = redondear2(subtotalBruto)
-  const descuento = subtotalBruto * ((venta.porcentajeDescuento ?? 0) / 100)
-  return {
-    subtotalDeLinea, subtotalBruto, montoDescuento: redondear2(descuento), flete,
-    total: hayErrores ? null : redondear2(subtotalBruto - descuento + flete), estimado: true,
-  }
+  const subtotalBruto = sumarMontos(renglones)
+  const { montoDescuento, total } = calcularTotalesVenta({ subtotalBruto, descuentoGeneralPct: venta.porcentajeDescuento ?? 0, cargoFlete: flete })
+  return { subtotalDeLinea, subtotalBruto, montoDescuento, flete, total: hayErrores ? null : total, estimado: true }
 }

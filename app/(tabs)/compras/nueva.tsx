@@ -1,5 +1,5 @@
 import React from 'react'
-import { useLocalSearchParams } from 'expo-router'
+import { idDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
 import { CompraNueva } from '@/features/compras/components/CompraNueva'
 
 /**
@@ -9,7 +9,7 @@ import { CompraNueva } from '@/features/compras/components/CompraNueva'
  * proveedor) la compra nueva arranca con ese proveedor ya elegido.
  */
 export default function NuevaCompraRoute() {
-  const { edit, borrador, proveedor } = useLocalSearchParams<{ edit?: string; borrador?: string; proveedor?: string }>()
+  const { edit, borrador, proveedor } = useParametrosDeRuta({ edit: idDeRuta, borrador: idDeRuta, proveedor: idDeRuta })
   if (edit) return <CompraNueva key={`edit-${edit}`} editarId={edit} />
   return <CompraNueva key={borrador ?? proveedor ?? 'nueva'} borradorId={borrador} proveedorId={proveedor} />
 }

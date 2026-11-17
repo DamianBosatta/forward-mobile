@@ -2,12 +2,13 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { immer } from 'zustand/middleware/immer';
+import { zustandStorageMudadoDesde } from '@/core/utils/storage';
 import type { HojaRutaDetalleDto, ParadaDto } from '@/libs/api-client/types';
 import { EstadoHojaRuta, EstadoParada } from '@/libs/api-client/types';
 
 // Local extension of ParadaDto that includes mutable delivery state written
 // by the chofer consola. These fields are not persisted back to the server DTO
-// but are kept in Zustand/AsyncStorage for optimistic UI updates.
+// but are kept in Zustand/encrypted MMKV for optimistic UI updates.
 type ParadaConEstado = ParadaDto & {
   motivoRechazo?: string | null;
   observaciones?: string | null;
@@ -62,7 +63,9 @@ export const useLogisticaStore = create<LogisticaState>()(
     })),
     {
       name: 'forward-logistica-store',
-      storage: createJSONStorage(() => AsyncStorage),
+      // SEG-10: el viaje (paradas, clientes, direcciones) va cifrado; un viaje guardado por un build viejo en
+      // AsyncStorage se muda en la primera lectura.
+      storage: createJSONStorage(() => zustandStorageMudadoDesde(AsyncStorage)),
       partialize: (state) => ({
         activeTrip: state.activeTrip,
       }),

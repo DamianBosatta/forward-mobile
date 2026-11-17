@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
+import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
 import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Field, FormContainer, Notice, StatusChip } from '@/core/ui/fw'
@@ -35,15 +36,11 @@ export function CatalogoCompra({ proveedor, lineas, onAgregar, onCambiar, onQuit
   const c = useColors()
   const sombra = useSombraTarjeta()
   const [busqueda, setBusqueda] = useState('')
-  const [enviada, setEnviada] = useState('')
+  const enviada = useDebouncedValue(busqueda.trim(), 300)
   const [filtro, setFiltro] = useState<Filtro>('todos')
   const { isConnected } = useNetworkStatus({ desconocidoCuentaComoSinRed: false })
   const puedeVerCompras = usePermissions().canDo('MOD_COMPRAS', 'read')
   const ultimas = useComprasDelProveedor(proveedor.id, puedeVerCompras, 1)
-  useEffect(() => {
-    const t = setTimeout(() => setEnviada(busqueda.trim()), 300)
-    return () => clearTimeout(t)
-  }, [busqueda])
   const productos = useInfiniteCatalogoStock({ pageSize: 30, search: enviada, soloComprables: true, familiasCompletas: false })
   const todos = (productos.data?.pages.flatMap((p) => p.items ?? []) ?? []) as ProductoComprable[]
   const total = productos.data?.pages[0]?.totalCount ?? todos.length

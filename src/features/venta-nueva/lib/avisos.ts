@@ -1,4 +1,4 @@
-import { redondear2 } from '@/libs/reglas/dinero'
+import { calcularTotalesVenta } from '@/features/ventas/lib/totalVenta'
 import type { TipoDocumento } from '@/features/clientes/components/SeleccionarClienteSheet'
 import { precioServidor, totalEstimado, type LineaCarrito } from './carrito'
 import { isLineaSinStock } from '@/features/ventas/lib/venta-form-retiro'
@@ -68,7 +68,7 @@ export function avisosVenta(lineas: LineaCarrito[], ctx: ContextoAvisos): { porA
 /** Totales ESTIMADOS (el real lo calcula el servidor al guardar). */
 export function totalesEstimados(lineas: LineaCarrito[], descuentoGeneral: number, flete = 0) {
   const subtotal = totalEstimado(lineas)
-  // Bloque 13 (R15): la cabecera sale de los subtotales redondeados; descuento y total, a 2 decimales.
-  const descuento = redondear2(subtotal * (descuentoGeneral / 100))
-  return { subtotal, descuento, flete, total: redondear2(subtotal - descuento + flete) }
+  // RED-06: el total es el del servidor, con el descuento general SIN redondear (`calcularTotalesVenta`).
+  const { montoDescuento, total } = calcularTotalesVenta({ subtotalBruto: subtotal, descuentoGeneralPct: descuentoGeneral, cargoFlete: flete })
+  return { subtotal, descuento: montoDescuento, flete, total }
 }

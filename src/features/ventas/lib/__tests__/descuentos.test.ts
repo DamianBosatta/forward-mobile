@@ -75,14 +75,14 @@ describe('calcularSubtotalConDescuento', () => {
     expect(calcularSubtotalConDescuento(100, 0, 20)).toBe(0)
   })
 
-  it('fractional discount: computes correctly (no rounding in this function)', () => {
+  it('fractional discount: 33,5 % de 100 es exacto', () => {
     // 100 * (1 - 0.335) * 1 = 66.5
-    expect(calcularSubtotalConDescuento(100, 1, 33.5)).toBeCloseTo(66.5)
+    expect(calcularSubtotalConDescuento(100, 1, 33.5)).toBe(66.5)
   })
 
   it('non-trivial combination: 15% off, qty 4, price 50', () => {
     // 50 * 0.85 = 42.5; 42.5 * 4 = 170
-    expect(calcularSubtotalConDescuento(50, 4, 15)).toBeCloseTo(170)
+    expect(calcularSubtotalConDescuento(50, 4, 15)).toBe(170)
   })
 })
 

@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { FlatList, RefreshControl, Text, View } from 'react-native'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
+import { opcionDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
 import { ArrowLeftRight } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
@@ -45,7 +46,7 @@ function CuentasCorrientesScreen() {
   const menu = useMenuLeading()
   const { isTabletLandscape, width } = useResponsive()
   // Tesorería > "Cargar un cheque" llega con `cobrar=cheque`: elegir el cliente abre su cobro con el medio Cheque.
-  const { cobrar } = useLocalSearchParams<{ cobrar?: string }>()
+  const { cobrar } = useParametrosDeRuta({ cobrar: opcionDeRuta(['cheque']) })
   const cargandoCheque = cobrar === 'cheque'
   const [busqueda, setBusqueda] = useFiltroPersistente('cuentas.busqueda', '')
   const [abierto, setAbierto] = useState<string | null>(null)

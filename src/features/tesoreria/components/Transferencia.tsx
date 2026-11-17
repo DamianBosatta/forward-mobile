@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { ArrowDown, Check } from 'lucide-react-native'
+import { useCambiosSinGuardar } from '@/core/hooks/useCambiosSinGuardar'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
@@ -59,6 +60,9 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
   const [hecho, setHecho] = useState(false)
   const montoConsultado = useDebouncedValue(leerNumero(monto), ESPERA_SALDO_MS)
   const restante = useSaldoRestante(origen, montoConsultado, canRead('MOD_CC'))
+
+  // Con la transferencia a medio cargar, salir avisa; registrada (`hecho`) ya no hay nada que perder.
+  useCambiosSinGuardar({ tipoId, origen, destino, monto, observaciones, operacion, retira }, { activo: !hecho })
 
   if (hecho) return <MovimientoRegistrado onVolver={onListo} />
 

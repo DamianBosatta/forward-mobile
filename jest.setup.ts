@@ -78,3 +78,9 @@ beforeEach(() => {
 jest.mock('@/core/hooks/useRefrescarAlEnfocar', () => ({
   useRefrescarAlEnfocar: jest.fn(),
 }))
+
+// useCambiosSinGuardar usa usePreventRemove y necesita un navegador: en los tests de pantallas no frena nada.
+// Su propio test usa la implementación real (jest.unmock).
+jest.mock('@/core/hooks/useCambiosSinGuardar', () => ({
+  useCambiosSinGuardar: jest.fn(() => ({ hayCambios: false, soltar: jest.fn() })),
+}))

@@ -1,3 +1,4 @@
+import { redondear2 } from '@/libs/reglas/dinero'
 /**
  * Número tal como lo tipea el usuario. es-AR: punto de miles, coma decimal ("2.176,50" → 2176.5,
  * "12,82" → 12.82). Como el teclado decimal de Android a veces solo ofrece ".", un único punto
@@ -19,7 +20,7 @@ export function leerNumero(texto: string): number | null {
 
 /** 12.82 → "12,82" (sin miles: es un campo editable). */
 export function mostrarNumero(n: number): string {
-  return String(Math.round(n * 100) / 100).replace('.', ',')
+  return String(redondear2(n)).replace('.', ',')
 }
 
 /** 12.345 → "12,345": precisión completa, para sembrar un campo sin redondear lo que ya guardó el servidor. */

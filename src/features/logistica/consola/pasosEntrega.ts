@@ -1,5 +1,6 @@
 import { formatImporte } from '@/core/ui/fw/formatImporte'
 import { leerNumero } from '@/core/utils/numero'
+import { redondear2 } from '@/libs/reglas/dinero'
 import { armarLinea, montoDeLinea, type LineaCobroForm } from './entrega'
 
 /**
@@ -46,7 +47,7 @@ export function razonDevolucion(valores: Record<string, string>, disponibles: Re
   return alguno ? null : 'Indicá qué devuelve'
 }
 
-const centavos = (n: number) => Math.round(n * 100)
+const centavos = (n: number) => Math.round(redondear2(n) * 100)
 
 /**
  * Sin cobro de dinero (07-11, dueño 08-11): no se cargó ninguna línea con monto ("No paga", S8). Entonces la foto

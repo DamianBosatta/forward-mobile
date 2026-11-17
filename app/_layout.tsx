@@ -7,10 +7,12 @@ import { versionDeCache } from '@/core/query/versionDeCache'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { StatusBar } from 'expo-status-bar'
 import { useAuthGuard } from '../hooks/useAuthGuard'
+import { useGuardDeRuta } from '@/core/auth/useGuardDeRuta'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { conectarCierreDeSesion } from '@/features/auth/lib/cerrarSesion'
 import { hasSavedCredentials } from '@/features/auth/utils/biometrics'
 import { logger } from '@/core/utils/logger'
+import { protegerCapturaDeLaApp } from '@/core/utils/proteccionDeCaptura'
 import { OfertaDeHuella } from '@/features/auth/components/OfertaDeHuella'
 import { View } from 'react-native'
 import {
@@ -39,9 +41,13 @@ const queryClient = crearQueryClient()
 conectarCierreDeSesion(queryClient, asyncStoragePersister)
 // A fingerprint credential saved by an older build without the marker is deleted on the first start, not only when the login screen shows.
 hasSavedCredentials().catch((err) => logger.warn('Legacy fingerprint credential cleanup failed:', err))
+// M9, SEG-12: no screen of the app can be captured or shows in the app switcher (owner's decision #24).
+protegerCapturaDeLaApp().catch((err) => logger.warn('Screen capture protection failed:', err))
 
 function AuthGuardHandler() {
   useAuthGuard()
+  // ARQ-04: cada pantalla pide lo mismo que su ruta en la web (también si llega por enlace o por push).
+  useGuardDeRuta()
   return null
 }
 
