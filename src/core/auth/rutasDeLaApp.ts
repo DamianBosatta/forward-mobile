@@ -80,7 +80,7 @@ const CORRESPONDENCIAS: readonly Correspondencia[] = [
   { app: /^\/logistica\/(consola|hojas)$/, destino: () => web('/logistica') },
 ]
 
-/** La decisión para una pantalla de la app, o `undefined` si la pantalla no tiene ninguna (el test lo impide). */
+/** La decisión para una pantalla de la app, o `undefined` si no tiene ninguna (el test lo impide; el control la cierra). */
 export function destinoDeRuta(pathname: string, params: Parametros = {}): Destino | undefined {
   for (const c of CORRESPONDENCIAS) {
     const m = pathname.match(c.app)
@@ -89,8 +89,13 @@ export function destinoDeRuta(pathname: string, params: Parametros = {}): Destin
   return undefined
 }
 
-/** ¿Puede abrir esta pantalla de la app? Lo mismo que la web pide para su ruta; sin regla, sí. */
+/**
+ * ¿Puede abrir esta pantalla de la app? Lo mismo que la web pide para su ruta. Una ruta sin decisión no abre (falla
+ * cerrado): lo que abre sin permiso, como el ingreso o Inicio, lo dice su correspondencia `abierta`, así que volver a
+ * Inicio nunca entra en un bucle.
+ */
 export function puedeAbrirPantalla(permisos: Permisos, pathname: string, params: Parametros = {}): boolean {
   const destino = destinoDeRuta(pathname, params)
-  return !destino || 'abierta' in destino || puedeAbrir(permisos, destino.web)
+  if (!destino) return false
+  return 'abierta' in destino || puedeAbrir(permisos, destino.web)
 }

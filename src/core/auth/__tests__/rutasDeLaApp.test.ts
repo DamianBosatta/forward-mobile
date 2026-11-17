@@ -61,6 +61,18 @@ describe('pantallas de la app → rutas de la web (ARQ-04)', () => {
     expect(puedeAbrirPantalla(vendedor, '/ventas/nueva', { editar: 'v9' })).toBe(false)
   })
 
+  it('una pantalla sin decisión no abre: el control falla cerrado y vuelve a Inicio', () => {
+    const todo = filas('MOD_VENTAS:RCUD', 'MOD_COMPRAS:RCUD', 'MOD_VIAJES:RCUD')
+    for (const p of ['/desconocida', '/ventas/v9/otra', '/_sitemap', '/logistica']) {
+      expect(destinoDeRuta(p)).toBeUndefined()
+      expect(puedeAbrirPantalla(todo, p)).toBe(false)
+    }
+  })
+
+  it('el ingreso e Inicio abren siempre: el regreso a Inicio no entra en un bucle', () => {
+    for (const p of ['/', '/login']) expect(puedeAbrirPantalla(filas(), p)).toBe(true)
+  })
+
   it('las pantallas propias de cada uno abren sin permisos', () => {
     for (const p of ['/', '/avisos', '/calendario', '/perfil', '/perfil/clave', '/buscar', '/autorizaciones/a1']) {
       expect(puedeAbrirPantalla(filas(), p)).toBe(true)

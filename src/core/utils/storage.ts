@@ -96,14 +96,20 @@ interface AlmacenPlano {
 
 /**
  * Adaptador de Zustand sobre el almacén cifrado para una clave que antes vivía en `plano` (AsyncStorage, sin cifrar).
- * Lee primero lo cifrado; si no está, lee lo viejo, lo copia al cifrado y recién entonces borra la copia plana. Lo
- * nuevo se escribe solo cifrado y borrar borra en los dos lados (SEG-10).
+ * Lee primero lo cifrado; si no está, lee lo viejo, lo copia al cifrado y recién entonces borra la copia plana. Toda
+ * lectura con lo cifrado presente borra también la copia plana que haya quedado. Lo nuevo se escribe solo cifrado y
+ * borrar borra en los dos lados (SEG-10).
  */
 export function zustandStorageMudadoDesde(plano: AlmacenPlano) {
   return {
     getItem: (name: string): string | null | Promise<string | null> => {
       const cifrado = zustandStorage.getItem(name)
-      if (cifrado !== null) return cifrado
+      if (cifrado !== null) {
+        // Con lo cifrado ya guardado no queda copia plana: la deja una mudanza cortada o un build viejo. Si falla, la
+        // próxima lectura lo reintenta; la lectura no espera a AsyncStorage.
+        plano.removeItem(name).catch(() => undefined)
+        return cifrado
+      }
       return plano.getItem(name).then(async (viejo) => {
         if (viejo === null) return null
         zustandStorage.setItem(name, viejo)
