@@ -30,7 +30,8 @@ export function useAuthGuard() {
           useAuthStore.getState().setTokens(tokens)
         },
         onUnauthorized: () => {
-          // Forced logout: everything goes except the fingerprint, so "Entrar con huella" still works.
+          // Forced logout: clears the same as a manual one, the fingerprint login included (M9, SEG-04); only the
+          // per-user offline queues stay.
           void cerrarSesion({ forzado: true })
         },
       })

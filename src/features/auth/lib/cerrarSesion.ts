@@ -8,12 +8,12 @@ import { forgetBiometricLogin } from '../utils/biometrics'
 
 /**
  * The one logout of the app (audit A-01 + M-02). Every path ends here, in one of two kinds:
- * - manual: "Cerrar sesión" (Mi cuenta and the side menu, through `useCerrarSesion`) and changing server. It also
- *   deletes the fingerprint credential and its decision ("Se borra al cerrar sesión" is the person's own action).
- * - forced: the server rejects the refresh (`onUnauthorized`), or a path only drops the tokens. It keeps the
- *   fingerprint credential and decision, so the person re-enters with "Entrar con huella".
- * Both empty the tokens, the react-query cache (memory and disk), the active trip, the saved list filters (a new person does not inherit them) and any unanswered fingerprint
- * offer. A different person logging in afterwards is handled at login (`getBiometricChoiceFor`).
+ * - manual: "Cerrar sesión" (Mi cuenta and the side menu, through `useCerrarSesion`) and changing server.
+ * - forced: the server rejects the refresh (`onUnauthorized`), or a path only drops the tokens.
+ * Both empty the tokens, the react-query cache (memory and disk), the active trip, the saved list filters (a new
+ * person does not inherit them), any unanswered fingerprint offer, and the fingerprint credential and its decision
+ * (M9, SEG-04, owner's decision #23: on a shared phone the next person must never enter as the previous one with
+ * "Entrar con huella"). A credential left by an older build is still handled at login (`getBiometricChoiceFor`).
  *
  * What is NOT cleared on purpose: the per-user offline queues (`features/venta-sin-senal/lib/cola.ts`,
  * `features/logistica/cola/colaConsola.ts`). They hold sales and deliveries not yet sent; they are keyed by
@@ -21,7 +21,7 @@ import { forgetBiometricLogin } from '../utils/biometrics'
  */
 
 export interface OpcionesDeCierre {
-  /** The session expired or was rejected (not the person's choice): the fingerprint stays. */
+  /** The session expired or was rejected (not the person's choice). Today it clears the same as a manual one. */
   forzado?: boolean
 }
 
@@ -42,7 +42,7 @@ let cerrando = false
  * covers that changing: `MutationCache.clear()` notifies `removed` before emptying. It relies on a persister that
  * writes at once, like MMKV.
  */
-async function borrarDatosDeLaSesion({ forzado }: OpcionesDeCierre): Promise<void> {
+async function borrarDatosDeLaSesion(): Promise<void> {
   if (cacheDeLaApp) {
     cacheDeLaApp.queryClient.clear()
     await cacheDeLaApp.persister.removeClient()
@@ -51,23 +51,23 @@ async function borrarDatosDeLaSesion({ forzado }: OpcionesDeCierre): Promise<voi
   await useLogisticaStore.persist.clearStorage()
   olvidarFiltros()
   useOfertaDeHuella.getState().descartar()
-  if (!forzado) await forgetBiometricLogin()
+  await forgetBiometricLogin()
 }
 
 /**
  * Closes the session on this phone: drops the tokens and empties the react-query cache (memory and disk), the
- * active trip (`forward-logistica-store`); a manual logout also deletes the fingerprint credential and its decision.
+ * active trip (`forward-logistica-store`) and the fingerprint credential and its decision.
  * Callable outside React. Revoking on
  * the server and navigating are the caller's job (`useCerrarSesion`).
  */
-export async function cerrarSesion(opciones: OpcionesDeCierre = {}): Promise<void> {
+export async function cerrarSesion(_opciones: OpcionesDeCierre = {}): Promise<void> {
   cerrando = true
   try {
     useAuthStore.getState().logout()
   } finally {
     cerrando = false
   }
-  await borrarDatosDeLaSesion(opciones)
+  await borrarDatosDeLaSesion()
 }
 
 /**
@@ -79,7 +79,7 @@ export function conectarCierreDeSesion(queryClient: QueryClient, persister: Pick
   cacheDeLaApp = { queryClient, persister }
   const dejarDeEscuchar = useAuthStore.subscribe((estado, antes) => {
     if (cerrando || !antes.isAuthenticated || estado.isAuthenticated) return
-    void borrarDatosDeLaSesion({ forzado: true })
+    void borrarDatosDeLaSesion()
   })
   return () => {
     dejarDeEscuchar()

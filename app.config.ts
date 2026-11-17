@@ -30,6 +30,8 @@ const config: ExpoConfig = {
     allowBackup: false,
     // Android 13+: sin este permiso la notificación del servicio de ubicación del viaje queda oculta.
     permissions: ['android.permission.POST_NOTIFICATIONS'],
+    // M9, SEG-09: no module may add the microphone (expo-image-picker adds RECORD_AUDIO unless it is blocked).
+    blockedPermissions: ['android.permission.RECORD_AUDIO'],
   },
   plugins: [
     'expo-router',
@@ -61,6 +63,9 @@ const config: ExpoConfig = {
       'expo-camera',
       {
         cameraPermission: 'Forward ERP necesita acceso a la cámara para escanear productos.',
+        // M9, SEG-09: the app only scans and takes photos, it never records video; no microphone permission.
+        microphonePermission: false,
+        recordAudioAndroid: false,
       },
     ],
     [

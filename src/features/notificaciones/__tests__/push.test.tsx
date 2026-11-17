@@ -44,12 +44,14 @@ const mockPedirPermiso = jest.fn()
 const mockToken = jest.fn()
 let mockAlTocar: ((r: unknown) => void) | null = null
 const mockUltimaRespuesta = jest.fn()
+const mockCanal = jest.fn(async (..._a: unknown[]) => null)
 jest.mock('expo-notifications', () => ({
   AndroidImportance: { DEFAULT: 3 },
+  AndroidNotificationVisibility: { PRIVATE: 2 },
   getPermissionsAsync: () => mockPermiso(),
   requestPermissionsAsync: () => mockPedirPermiso(),
   getExpoPushTokenAsync: (o: unknown) => mockToken(o),
-  setNotificationChannelAsync: jest.fn(async () => null),
+  setNotificationChannelAsync: (...a: unknown[]) => mockCanal(...a),
   setNotificationHandler: jest.fn(),
   addNotificationReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
   addNotificationResponseReceivedListener: (cb: (r: unknown) => void) => {
@@ -180,6 +182,20 @@ describe('Registro del celular', () => {
 
     expect(ESTADOS_ESPERADOS_PUSH).toEqual(expect.arrayContaining([400, 404, 405]))
     expect(registros()[0][2]).toMatchObject({ estadosEsperados: ESTADOS_ESPERADOS_PUSH })
+  })
+})
+
+describe('Pantalla bloqueada (M9, SEG-07, decisión #25)', () => {
+  it('en Android el canal de avisos no muestra el contenido con el teléfono bloqueado', async () => {
+    const { Platform } = jest.requireActual<typeof import('react-native')>('react-native')
+    const antes = Platform.OS
+    Object.defineProperty(Platform, 'OS', { get: () => 'android', configurable: true })
+    try {
+      await registrarPush()
+    } finally {
+      Object.defineProperty(Platform, 'OS', { get: () => antes, configurable: true })
+    }
+    expect(mockCanal).toHaveBeenCalledWith('default', expect.objectContaining({ lockscreenVisibility: 2 }))
   })
 })
 

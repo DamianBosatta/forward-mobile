@@ -70,6 +70,9 @@ export async function tokenDePush({ pedirPermiso }: { pedirPermiso: boolean }): 
       await Notifications.setNotificationChannelAsync(CANAL_AVISOS, {
         name: 'Avisos',
         importance: Notifications.AndroidImportance.DEFAULT,
+        // M9, SEG-07 (decisión #25): con el teléfono bloqueado no se ve el contenido del aviso. Android no cambia
+        // la visibilidad de un canal ya creado: rige en las instalaciones nuevas; el texto genérico lo pone el servidor.
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
       })
     }
     let { status } = await Notifications.getPermissionsAsync()

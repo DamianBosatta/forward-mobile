@@ -1,7 +1,8 @@
 /**
- * Audit tranche 1, S2 correction: the fingerprint decision and credential belong to one username. After a forced
- * logout the phone keeps them for that person; if someone else logs in with a password, they are deleted and the
- * offer shows for the new person. Never a different person's credential saved silently.
+ * Audit tranche 1, S2 correction: the fingerprint decision and credential belong to one username. Since M9 (SEG-04,
+ * owner's decision #23) a forced logout deletes them too, so the next person never sees "Entrar con huella" for the
+ * previous one. A credential left on the phone by an older build (which kept it on a forced logout) is still
+ * deleted when someone else logs in with a password, and the offer shows for the new person.
  */
 import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native'
@@ -47,10 +48,26 @@ beforeEach(() => {
   })
 })
 
-it('A accepted the fingerprint; after a forced logout B logs in with a password: A\'s credential goes, B is asked', async () => {
+it('A accepted the fingerprint; a forced logout deletes it: no "Entrar con huella", and B is asked', async () => {
   useAuthStore.setState({ isAuthenticated: true, accessToken: 't1', refreshToken: 'r1' })
   await acceptBiometricLogin({ username: 'ana.g', password: 'deAna' })
   await cerrarSesion({ forzado: true })
+  expect(mockSecure.has(CREDENCIAL)).toBe(false)
+  expect(await hasSavedCredentials()).toBe(false)
+
+  render(<QueryClientProvider client={new QueryClient()}><LoginScreen /></QueryClientProvider>)
+  await screen.findByRole('button', { name: 'Ingresar' })
+  expect(screen.queryByRole('button', { name: 'Entrar con huella' })).toBeNull()
+  fireEvent.changeText(screen.getByLabelText('Usuario o email'), 'beto.r')
+  fireEvent.changeText(screen.getByLabelText('Contraseña'), 'deBeto')
+  fireEvent.press(screen.getByRole('button', { name: 'Ingresar' }))
+
+  await waitFor(() => expect(useOfertaDeHuella.getState().pendiente).toEqual({ username: 'beto.r', password: 'deBeto' }))
+  expect(mockSecure.has(CREDENCIAL)).toBe(false)
+})
+
+it('A\'s credential left by an older build (kept on a forced logout): B logs in with a password, it goes, B is asked', async () => {
+  await acceptBiometricLogin({ username: 'ana.g', password: 'deAna' })
   expect(await hasSavedCredentials()).toBe(true)
 
   render(<QueryClientProvider client={new QueryClient()}><LoginScreen /></QueryClientProvider>)
@@ -80,6 +97,7 @@ it('A turned it on in Mi cuenta and logged in; after a forced logout B logs in: 
   expect(useOfertaDeHuella.getState().pendiente).toBeNull()
   deAna.unmount()
   await cerrarSesion({ forzado: true })
+  expect(mockSecure.has(CREDENCIAL)).toBe(false)
 
   await entrarConContrasenia('beto.r', 'deBeto')
   await waitFor(() => expect(useOfertaDeHuella.getState().pendiente).toEqual({ username: 'beto.r', password: 'deBeto' }))
