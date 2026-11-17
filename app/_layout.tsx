@@ -18,7 +18,6 @@ import { View } from 'react-native'
 import {
   useFonts,
   Inter_400Regular,
-  Inter_500Medium,
   Inter_600SemiBold,
   Inter_700Bold,
   Inter_800ExtraBold,
@@ -62,16 +61,14 @@ function RootLayoutNav() {
   }, [])
 
   // Inter sola (plan §7). Los nombres Outfit_* son legados: las pantallas viejas
-  // los referencian, así que se registran apuntando a los archivos de Inter.
+  // los referencian (600/700/800/900 en core/ui), así que se registran apuntando a los
+  // archivos de Inter. Solo se cargan los pesos con uso verificado (REN-06).
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
-    Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
     Inter_800ExtraBold,
     Inter_900Black,
-    Outfit_400Regular: Inter_400Regular,
-    Outfit_500Medium: Inter_500Medium,
     Outfit_600SemiBold: Inter_600SemiBold,
     Outfit_700Bold: Inter_700Bold,
     Outfit_800ExtraBold: Inter_800ExtraBold,

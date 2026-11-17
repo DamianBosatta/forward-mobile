@@ -1,5 +1,6 @@
 import React from 'react'
-import { Image, Pressable, Text, View } from 'react-native'
+import { Image as ExpoImage } from 'expo-image'
+import { Pressable, Text, View } from 'react-native'
 import { Package } from 'lucide-react-native'
 import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { ProductoIdentidad, StatusChip, formatImporte } from '@/core/ui/fw'
@@ -63,7 +64,7 @@ export function ProductoCard({ producto, disponible, grilla, seleccionado, onPre
         }}
       >
         {foto ? (
-          <Image source={{ uri: foto }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+          <ExpoImage source={{ uri: foto }} style={{ width: '100%', height: '100%' }} contentFit="cover" cachePolicy="memory-disk" recyclingKey={foto} />
         ) : (
           <Package size={32} color={c.textSecondary} strokeWidth={1.6} />
         )}

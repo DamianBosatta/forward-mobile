@@ -1,3 +1,4 @@
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import React, { useMemo, useState } from 'react'
 import { FlatList, RefreshControl, View } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -80,7 +81,7 @@ export function ListaDePagos({ onVolver }: { onVolver: () => void }) {
           <Button label="Reintentar" variant="secundario" onPress={reintentar.onPress} />
         </View>
       ) : null}
-      <FlatList
+      <FlatList {...LISTA_LARGA_PROPS}
         data={filas}
         keyExtractor={item => item.id}
         keyboardShouldPersistTaps="handled"

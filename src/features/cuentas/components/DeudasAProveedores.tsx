@@ -1,3 +1,4 @@
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import React from 'react'
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
@@ -46,7 +47,7 @@ export function DeudasAProveedores({ onPagar }: { onPagar?: (socioId: string) =>
           )}
         </View>
       ) : null}
-      <FlatList
+      <FlatList {...LISTA_LARGA_PROPS}
         data={filas}
         keyExtractor={item => item.socioId}
         renderItem={({ item, index }) => (

@@ -1,3 +1,4 @@
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { RefreshControl, SectionList, Text, View } from 'react-native'
@@ -98,7 +99,7 @@ function ClientesScreen() {
           ) : null}
         </View>
       ) : null}
-      <SectionList
+      <SectionList {...LISTA_LARGA_PROPS}
         sections={secciones}
         keyExtractor={item => item.id}
         stickySectionHeadersEnabled
