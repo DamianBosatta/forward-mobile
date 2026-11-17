@@ -24,6 +24,12 @@ export let API_URL = ENV_DEL_BUILD && ENV_DEL_BUILD !== ENV_DEV_RETIRADO ? ENV_D
 
 export async function loadSavedApiUrl(): Promise<string> {
   try {
+    // SEG-05: only a dev build shows the server selector, so only a dev build reads the choice back. A release
+    // installed over a dev client (same package) drops whatever server that client had saved.
+    if (!__DEV__) {
+      await AsyncStorage.removeItem(STORAGE_KEY)
+      return API_URL
+    }
     const saved = await AsyncStorage.getItem(STORAGE_KEY)
     if (saved && saved !== ENV_DEV_RETIRADO) {
       API_URL = saved
