@@ -23,3 +23,10 @@ it('android blocks RECORD_AUDIO, whatever module asks for it', () => {
 it('expo-camera declares no microphone on Android nor iOS', () => {
   expect(opcionesDe('expo-camera')).toMatchObject({ recordAudioAndroid: false, microphonePermission: false })
 })
+
+it('the committed iOS Info.plist declares no microphone (ios/ is versioned, so the plugin does not regenerate it)', () => {
+  const { readFileSync } = jest.requireActual<typeof import('fs')>('fs')
+  const { join } = jest.requireActual<typeof import('path')>('path')
+  const plist = readFileSync(join(__dirname, '../../../../ios/ForwardERP/Info.plist'), 'utf8')
+  expect(plist).not.toContain('NSMicrophoneUsageDescription')
+})
