@@ -11,6 +11,7 @@ import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cl
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
 import { useEstadoCuentaSocio } from '../api/queries'
 import { useDocumentosPendientes, useMediosDeCobro } from '../api/cobros'
+import { useCambiosSinGuardar } from '@/core/hooks/useCambiosSinGuardar'
 import { armarCobro, type FormCobro } from '../lib/cobro'
 import {
   aplicarBorrador, borradorDe, errorDelBorrador, esPrimeraLinea, formCobroVacio, hayCheque, lineasDelCobro, quitarLinea, totalDelCobro,
@@ -117,6 +118,8 @@ function CobroDelCliente({ socioId, medioInicial, contraparte, paso, onPaso, onV
   const [subiendo, setSubiendo] = useState(false)
   const medioInicialAplicado = useRef(false)
   const { registrar, cajaDelCobro, sinCajaUtil, aviso, cobro, enviar, reiniciar } = useEnvioDelCobro(socioId, f, !!editor?.borrador.requiereCaja, contraparte)
+  // Un cobro a medio cargar avisa antes de irse (flecha, atrás de Android o gesto); registrado, ya no hay nada que perder.
+  useCambiosSinGuardar(f, { activo: !cobro })
   const { hasCapability, canDo } = usePermissions()
   // POST Media/upload-cheque: quien cobra (MOD_PAGOS:Create) o quien gestiona cheques (MediaController).
   const subeFotoCheque = canDo('MOD_PAGOS', 'create') || hasCapability('CAP_GESTIONAR_CHEQUES')

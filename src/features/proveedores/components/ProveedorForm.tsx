@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { ScrollView, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { radii, space, useColors } from '@/libs/theme'
@@ -10,6 +10,7 @@ import { PieDeFormulario } from '@/features/socios/components/PieDeFormulario'
 import { Seccion } from '@/features/socios/components/PiezasDeFicha'
 import { Esqueletos, FORMULARIO_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { CONDICIONES_IVA, TIPOS_PAGO } from '@/features/clientes/lib/cliente'
+import { useCambiosSinGuardar } from '@/core/hooks/useCambiosSinGuardar'
 import { useProveedorForm } from '../hooks/useProveedorForm'
 import { AVISO_CAMPOS_SENSIBLES_PROVEEDOR, AVISO_EDICION_PROVEEDOR } from '../lib/proveedor'
 
@@ -26,8 +27,11 @@ function Grupo({ titulo, children }: { titulo: string; children: React.ReactNode
 export function ProveedorForm({ id }: { id?: string }) {
   const c = useColors()
   const router = useRouter()
-  const alGuardar = (nuevoId: string) => router.replace({ pathname: '/(tabs)/proveedores/[id]', params: { id: nuevoId } })
+  const soltarRef = useRef<() => void>(() => undefined)
+  const alGuardar = (nuevoId: string) => { soltarRef.current(); router.replace({ pathname: '/(tabs)/proveedores/[id]', params: { id: nuevoId } }) }
   const { datos, cambiar, guardar, error, editando, bloqueo, cargando, guardando, errorDeCarga, reintentar, guardado } = useProveedorForm(id, alGuardar)
+  const { soltar } = useCambiosSinGuardar(datos, { listo: !cargando })
+  soltarRef.current = soltar
   const hayBloqueo = bloqueo.razonSocial || bloqueo.cuit
 
   return (
