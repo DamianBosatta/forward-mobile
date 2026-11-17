@@ -1,5 +1,6 @@
 import React from 'react'
-import { fireEvent, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
+import { Alert } from 'react-native'
+import { act, fireEvent, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CompraNueva } from '../../components/CompraNueva'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
@@ -27,6 +28,15 @@ jest.mock('@/core/auth/RequirePermission', () => ({ usePermissions: () => ({ can
 
 let mockConectado: boolean | null = true
 jest.mock('@/core/utils/useNetworkStatus', () => ({ useNetworkStatus: () => ({ isConnected: mockConectado }) }))
+
+// El aviso "Salir sin guardar" usa el hook real; solo se reemplaza usePreventRemove (necesita un navegador).
+jest.unmock('@/core/hooks/useCambiosSinGuardar')
+let mockPrevenir = false
+let mockAlBloquear: ((o: { data: { action: unknown }; repeat: () => void }) => void) | null = null
+const mockDesactivar = jest.fn()
+jest.mock('expo-router/react-navigation', () => ({
+  usePreventRemove: (prevenir: boolean, cb: typeof mockAlBloquear) => { mockPrevenir = prevenir; mockAlBloquear = cb; return mockDesactivar },
+}))
 
 const ESPERA = { timeout: 3000 }
 const COMPLETO = { id: 'p1', razonSocial: 'Insumos del Sur SA', requiereCompletar: false }
@@ -429,6 +439,38 @@ describe('editar una compra guardada', () => {
     await waitFor(() => expect(mockBack).toHaveBeenCalled(), ESPERA)
     expect(mockPut).toHaveBeenCalledTimes(1)
     expect(mockPut.mock.calls[0][1]).toMatchObject({ version: 7, descuentoPorcentaje: 10, detalles: [{ unidadCompra: 'Bulto', monedaCosto: 'USD', costoUnitario: 5 }] })
+  })
+
+  it('con cambios sin guardar, salir pregunta "Salir sin guardar" y solo sale si se confirma', async () => {
+    const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined)
+    pantalla({ editarId: 'c7' })
+    await cambiarCosto()
+    await waitFor(() => expect(mockPrevenir).toBe(true))
+    const repeat = jest.fn()
+    mockAlBloquear!({ data: { action: {} }, repeat })
+    expect(alerta).toHaveBeenCalledWith('Salir sin guardar', 'Hay cambios sin guardar. Si salís, se pierden.', expect.any(Array))
+    expect(repeat).not.toHaveBeenCalled()
+    const botones = alerta.mock.calls[0][2]!
+    expect(botones.map((b) => b.text)).toEqual(['Seguir editando', 'Salir'])
+    await act(async () => { botones[1].onPress!() })
+    expect(repeat).toHaveBeenCalledTimes(1)
+    alerta.mockRestore()
+  })
+
+  it('sin cambios, salir no pregunta', async () => {
+    pantalla({ editarId: 'c7' })
+    expect(await screen.findByText('4 bultos × 12 = 48 u', {}, ESPERA)).toBeTruthy()
+    expect(mockPrevenir).toBe(false)
+  })
+
+  it('tras guardar con éxito, salir no pregunta', async () => {
+    pantalla({ editarId: 'c7' })
+    await cambiarCosto()
+    await waitFor(() => expect(mockPrevenir).toBe(true))
+    await userEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(mockBack).toHaveBeenCalled(), ESPERA)
+    expect(mockDesactivar).toHaveBeenCalled()
+    await waitFor(() => expect(mockPrevenir).toBe(false))
   })
 
   it('dos toques seguidos en Guardar cambios mandan un solo PUT', async () => {

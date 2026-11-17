@@ -17,6 +17,7 @@ import { dejarAviso, type Aviso } from '../lib/confirmar-y-recibir'
 import { fechaIso, franjaTexto } from '../lib/fecha'
 import { calcularVencimiento } from '../lib/recepcion'
 import { formNuevo } from '../lib/comprobante'
+import { useCambiosSinGuardar } from '@/core/hooks/useCambiosSinGuardar'
 import { useCompraBorrador, type EstadoGuardado } from '../hooks/useCompraBorrador'
 import { ElegirProveedor } from './ElegirProveedor'
 import { PasosCompra } from './PasosCompra'
@@ -79,13 +80,9 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
   const depositos = (depositosDelServidor ?? []).flatMap((d) => (d.id ? [{ id: d.id, nombre: d.nombre ?? '' }] : []))
   const puedeElegirDeposito = usePuedeElegirDeposito()
 
-  const volver = () => {
-    if (!(edicion && b.hayCambios)) return router.back()
-    Alert.alert('Salir sin guardar', 'Hay cambios sin guardar. Si salís, se pierden.', [
-      { text: 'Seguir editando', style: 'cancel' },
-      { text: 'Salir', style: 'destructive', onPress: () => router.back() },
-    ])
-  }
+  // La flecha, el atrás de Android y el gesto pasan por el mismo aviso (una compra se edita con cambios sin guardar).
+  const { soltar } = useCambiosSinGuardar(edicion && b.hayCambios)
+  const volver = () => router.back()
 
   if (b.cargando) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: 'center' }}><ActivityIndicator color={c.brand} /></View>
   if (edicion && b.noEditable) {
@@ -186,6 +183,7 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
     setOcupado(true)
     try {
       await b.guardarCambios()
+      soltar()
       router.back()
     } catch {
       // El aviso (con el mensaje del servidor y, si hubo conflicto, "Recargar") lo muestra el formulario.
@@ -196,7 +194,7 @@ export function CompraNueva({ borradorId, editarId, proveedorId }: Props) {
   }
   const descartar = () => Alert.alert('Descartar la compra', 'Se borra este borrador. No se puede deshacer.', [
     { text: 'Volver', style: 'cancel' },
-    { text: 'Descartar', style: 'destructive', onPress: () => { b.descartar().then(volver, (e) => Alert.alert('No se descartó', mensajeDelServidor(e))) } },
+    { text: 'Descartar', style: 'destructive', onPress: () => { b.descartar().then(() => { soltar(); volver() }, (e) => Alert.alert('No se descartó', mensajeDelServidor(e))) } },
   ])
 
   const avisoGuardado = b.estado === 'conflicto' ? (

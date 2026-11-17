@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Crosshair } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { cuitDigitosFaltantes, cuitEsValido } from '@/libs/reglas'
 import { Button, FormContainer, Notice, TopBar } from '@/core/ui/fw'
+import { useCambiosSinGuardar } from '@/core/hooks/useCambiosSinGuardar'
 import { CampoDeSocio } from '@/features/socios/components/CampoDeSocio'
 import { InterruptorDeSocio } from '@/features/socios/components/InterruptorDeSocio'
 import { FilaBloqueada } from '@/features/socios/components/FilaBloqueada'
@@ -43,12 +44,17 @@ function Grupo({ titulo, children }: { titulo: string; children: React.ReactNode
 export function ClienteForm({ id }: { id?: string }) {
   const c = useColors()
   const router = useRouter()
+  const soltarRef = useRef<() => void>(() => undefined)
   // "Guardar y vender" sigue de largo a la venta nueva con el cliente recién creado (la pantalla lee `clienteId`).
-  const alGuardar = (nuevoId: string, destino: 'ficha' | 'vender') =>
-    destino === 'vender'
+  const alGuardar = (nuevoId: string, destino: 'ficha' | 'vender') => {
+    soltarRef.current()
+    return destino === 'vender'
       ? router.replace({ pathname: '/(tabs)/ventas/nueva', params: { clienteId: nuevoId } })
       : router.replace({ pathname: '/(tabs)/socios/[id]', params: { id: nuevoId } })
+  }
   const { datos, cambiar, guardar, error, errores, erroresCondiciones, intentoGuardar, editando, puedeCambiarPago, puedeSaldoInicial, puedeEditarCondiciones, bloqueo, cargando, guardando, errorDeCarga, reintentar, guardado } = useClienteForm(id, alGuardar)
+  const { soltar } = useCambiosSinGuardar(datos, { listo: !cargando })
+  soltarRef.current = soltar
   const [buscandoUbicacion, setBuscandoUbicacion] = useState(false)
   const [errorUbicacion, setErrorUbicacion] = useState(false)
   const usarMiUbicacion = async () => {
