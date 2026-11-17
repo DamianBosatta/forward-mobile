@@ -1,8 +1,9 @@
 /**
  * Audit tranche 1, S1 (A-01 + M-02): one `cerrarSesion()` for every logout path. After it, nothing of the
  * previous session stays on the phone: tokens, the react-query cache (memory and disk, mutations included),
- * the active trip of the driver console (`forward-logistica-store`). The fingerprint credential and its decision
- * go only on a manual logout; a forced one (session expired) keeps them so "Entrar con huella" still works.
+ * the active trip of the driver console (`forward-logistica-store`), and the fingerprint credential and its
+ * decision, on a manual logout and on a forced one too (M9, SEG-04, owner's decision #23: a shared phone must not
+ * keep the previous person's "Entrar con huella").
  */
 // The store lives inside the factory: `core/utils/storage.ts` reads SecureStore while the imports load.
 jest.mock('expo-secure-store', () => {
@@ -60,11 +61,8 @@ async function conSesion() {
   return { qc, soltar: () => { dejarDeGuardar(); desconectar() } }
 }
 
-/**
- * Every store of the previous session is empty. The fingerprint credential and its decision go only on a manual
- * logout; a forced one keeps them so the person re-enters with "Entrar con huella".
- */
-async function sinNadaDeLaSesion(qc: ReturnType<typeof crearQueryClient>, huella: 'borrada' | 'conservada') {
+/** Every store of the previous session is empty, the fingerprint credential and its decision included. */
+async function sinNadaDeLaSesion(qc: ReturnType<typeof crearQueryClient>) {
   const auth = useAuthStore.getState()
   expect({ isAuthenticated: auth.isAuthenticated, accessToken: auth.accessToken, refreshToken: auth.refreshToken, user: auth.user })
     .toEqual({ isAuthenticated: false, accessToken: null, refreshToken: null, user: null })
@@ -78,9 +76,8 @@ async function sinNadaDeLaSesion(qc: ReturnType<typeof crearQueryClient>, huella
   expect(useFiltrosStore.getState().valores).toEqual({})
   // An unanswered offer holds a password in memory: it goes in both kinds.
   expect(useOfertaDeHuella.getState().pendiente).toBeNull()
-  const conservada = huella === 'conservada'
-  expect(mockSecure.has(CREDENCIAL_HUELLA)).toBe(conservada)
-  expect(mockSecure.has(DECISION_HUELLA)).toBe(conservada)
+  expect(mockSecure.has(CREDENCIAL_HUELLA)).toBe(false)
+  expect(mockSecure.has(DECISION_HUELLA)).toBe(false)
 }
 
 beforeEach(async () => {
@@ -94,11 +91,11 @@ describe('cerrarSesion(): the next user of the phone sees nothing of the previou
   it('manual logout empties tokens, query cache, active trip, and deletes the fingerprint credential and decision', async () => {
     const { qc, soltar } = await conSesion()
     await cerrarSesion()
-    await sinNadaDeLaSesion(qc, 'borrada')
+    await sinNadaDeLaSesion(qc)
     soltar()
   })
 
-  it('forced logout (refresh rejected with 4xx) empties the rest but keeps the fingerprint credential and decision', async () => {
+  it('forced logout (refresh rejected with 4xx) also empties everything, the fingerprint credential and decision included', async () => {
     const { qc, soltar } = await conSesion()
     configureApiClient({
       getToken: () => useAuthStore.getState().accessToken,
@@ -111,15 +108,15 @@ describe('cerrarSesion(): the next user of the phone sees nothing of the previou
 
     await expect(api.get('/api/v1/Inicio/resumen')).rejects.toMatchObject({ status: 401 })
     await new Promise((r) => setTimeout(r, 0))
-    await sinNadaDeLaSesion(qc, 'conservada')
+    await sinNadaDeLaSesion(qc)
     soltar()
   })
 
-  it('a path that only drops the tokens counts as forced: the rest is emptied, the fingerprint stays', async () => {
+  it('a path that only drops the tokens counts as forced: everything is emptied, the fingerprint included', async () => {
     const { qc, soltar } = await conSesion()
     useAuthStore.getState().logout()
     await new Promise((r) => setTimeout(r, 0))
-    await sinNadaDeLaSesion(qc, 'conservada')
+    await sinNadaDeLaSesion(qc)
     soltar()
   })
 
