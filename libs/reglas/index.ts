@@ -13,7 +13,18 @@ export {
   redondearDosDecimales,
   redondear2,
   formatearMonto,
+  aDecimal,
+  aNumero,
+  sumarDecimales,
+  restarDecimales,
+  multiplicarDecimales,
+  dividirPorCien,
+  redondearDecimal,
+  multiplicarYRedondear,
+  conDescuento,
+  sumarMontos,
 } from './dinero'
+export type { Decimal } from './dinero'
 export { pisoCesionComision } from './comisiones'
 export { MONEDAS_PERMITIDAS } from './monedas'
 export type { MonedaPermitida } from './monedas'

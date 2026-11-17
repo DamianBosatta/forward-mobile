@@ -50,6 +50,29 @@ export const CASOS: Readonly<Record<string, readonly Caso[]>> = {
     { nombre: 'el medio NO va al par (2,525 → 2,53)', entrada: [2.525], esperado: 2.53 },
     { nombre: 'dos decimales quedan igual', entrada: [10.25], esperado: 10.25 },
   ],
+  multiplicarYRedondear: [
+    {
+      nombre: 'el producto exacto 1,005 sube a 1,01 (Math.round daba 1,00)',
+      entrada: [1.5, 0.67],
+      esperado: 1.01,
+    },
+    { nombre: '10,1 × 0,95 = 9,595 sube a 9,60', entrada: [10.1, 0.95], esperado: 9.6 },
+    { nombre: 'el medio se aleja del cero en negativos', entrada: [-1.5, 0.67], esperado: -1.01 },
+    { nombre: 'sin decimales de más queda igual', entrada: [3, 33.33], esperado: 99.99 },
+  ],
+  conDescuento: [
+    { nombre: '0,75 con 30 % da 0,53 (no 0,52)', entrada: [0.75, 30], esperado: 0.53 },
+    { nombre: '10,1 con 5 % da 9,60', entrada: [10.1, 5], esperado: 9.6 },
+    { nombre: '1000 con 10 % da 900', entrada: [1000, 10], esperado: 900 },
+    { nombre: 'sin descuento queda igual', entrada: [1000, 0], esperado: 1000 },
+    { nombre: 'con 100 % da cero', entrada: [1000, 100], esperado: 0 },
+  ],
+  sumarMontos: [
+    { nombre: '0,1 + 0,2 da 0,3 exacto', entrada: [[0.1, 0.2]], esperado: 0.3 },
+    { nombre: '28,8 + 80,8 da 109,6', entrada: [[28.8, 80.8]], esperado: 109.6 },
+    { nombre: 'la lista vacía suma cero', entrada: [[]], esperado: 0 },
+    { nombre: 'un monto no numérico da NaN', entrada: [[1, Number.NaN]], esperado: Number.NaN },
+  ],
   formatearMonto: [
     { nombre: 'punto de miles y coma decimal', entrada: [1234567.891], esperado: '1.234.567,89' },
     { nombre: 'siempre dos decimales', entrada: [10], esperado: '10,00' },
