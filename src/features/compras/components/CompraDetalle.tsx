@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
-import { AccessibilityInfo, ActivityIndicator, Image, ScrollView, Text, View } from 'react-native'
+import { Image as ExpoImage } from 'expo-image'
+import { AccessibilityInfo, ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAnularRecepcionCompra, useCompra, useCancelarCompra, useConfirmarCompra, useGuardarComprobanteCompra, useAsignarFotoFacturaCompra } from '@/libs/api-client/compras'
@@ -263,8 +264,8 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
           <View style={{ gap: space[2], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
             <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Factura del proveedor</Text>
             {compra.fotoFacturaProveedorUrl ? (
-              <Image source={{ uri: compra.fotoFacturaProveedorUrl }} accessibilityLabel="Foto de la factura del proveedor"
-                style={{ width: '100%', height: 220, borderRadius: radii.campo, backgroundColor: c.border }} resizeMode="contain" />
+              <ExpoImage source={{ uri: compra.fotoFacturaProveedorUrl }} cachePolicy="memory-disk" accessibilityLabel="Foto de la factura del proveedor"
+                style={{ width: '100%', height: 220, borderRadius: radii.campo, backgroundColor: c.border }} contentFit="contain" />
             ) : null}
             {puedeCambiarFoto ? (
               <>

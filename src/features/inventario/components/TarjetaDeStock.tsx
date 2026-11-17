@@ -1,5 +1,6 @@
 import React from 'react'
-import { Image, Pressable, Text, View } from 'react-native'
+import { Image as ExpoImage } from 'expo-image'
+import { Pressable, Text, View } from 'react-native'
 import { AlertTriangle, Package } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { StatusChip } from '@/core/ui/fw'
@@ -19,7 +20,7 @@ export function FotoDeProducto({ imageUrl, alto }: { imageUrl?: string | null; a
       importantForAccessibility="no-hide-descendants"
       style={{ height: alto, borderRadius: radii.campo, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
     >
-      {foto ? <Image source={{ uri: foto }} style={{ width: '100%', height: '100%' }} resizeMode="cover" /> : <Package size={28} color={c.textSecondary} strokeWidth={1.6} />}
+      {foto ? <ExpoImage source={{ uri: foto }} style={{ width: '100%', height: '100%' }} contentFit="cover" cachePolicy="memory-disk" recyclingKey={foto} /> : <Package size={28} color={c.textSecondary} strokeWidth={1.6} />}
     </View>
   )
 }

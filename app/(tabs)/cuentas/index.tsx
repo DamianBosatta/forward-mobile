@@ -1,3 +1,4 @@
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import React, { useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { FlatList, RefreshControl, Text, View } from 'react-native'
@@ -92,7 +93,7 @@ function CuentasCorrientesScreen() {
           )}
         </View>
       ) : null}
-      <FlatList
+      <FlatList {...LISTA_LARGA_PROPS}
         data={clientes}
         keyExtractor={item => item.id}
         renderItem={({ item, index }) => (

@@ -1,3 +1,4 @@
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, ScrollView, SectionList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -130,7 +131,7 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
   )
 
   const listaCompras = (
-    <SectionList
+    <SectionList {...LISTA_LARGA_PROPS}
       sections={agruparPorDia(l.compras, (x) => x.fecha)}
       keyExtractor={(x) => x.id}
       ListHeaderComponent={filtros}
@@ -170,7 +171,7 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
   )
 
   const listaBorradores = (
-    <FlatList<BorradorCompra>
+    <FlatList<BorradorCompra> {...LISTA_LARGA_PROPS}
       data={l.borradores}
       keyExtractor={(b) => b.id}
       contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[3] }}

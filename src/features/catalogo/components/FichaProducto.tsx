@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native'
+import { Image as ExpoImage } from 'expo-image'
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { ChevronRight, Package } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, Notice, StatusChip, formatImporte, useInsetInferior } from '@/core/ui/fw'
@@ -75,7 +76,7 @@ export function FichaProducto({
     <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[4] }}>
       <View style={{ height: 200, borderRadius: radii.tarjeta, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         {foto ? (
-          <Image source={{ uri: foto }} style={{ width: '100%', height: '100%' }} resizeMode="contain" accessibilityLabel={`Foto de ${p.nombre}`} />
+          <ExpoImage source={{ uri: foto }} style={{ width: '100%', height: '100%' }} contentFit="contain" cachePolicy="memory-disk" accessibilityLabel={`Foto de ${p.nombre}`} />
         ) : (
           <Package size={56} color={c.textSecondary} strokeWidth={1.4} />
         )}
