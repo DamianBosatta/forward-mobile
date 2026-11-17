@@ -187,10 +187,12 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
       expect(screen.getByTestId('elegir-fragancias-p1')).toBe(boton)
     })
 
-    it('el precio puede achicarse (flex 1, minWidth 0) para que ningún botón se salga de la tarjeta', () => {
+    it('el precio no se achica y la fila envuelve: nunca se parte a mitad de número, la acción baja si no entra', () => {
       tarjetaSimple()
-      const precio = screen.getByText('$ 2.496,00').parent?.parent
-      expect(precio).toHaveStyle({ flex: 1, minWidth: 0 })
+      const texto = screen.getByText('$ 2.496,00')
+      expect(texto.props.numberOfLines).toBe(1)
+      expect(texto.parent?.parent).toHaveStyle({ flexShrink: 0 })
+      expect(texto.parent?.parent?.parent).toHaveStyle({ flexWrap: 'wrap' })
     })
 
     it('Agregar y Sin stock siguen con su look liso (sin relleno de acción)', () => {

@@ -100,15 +100,17 @@ export const ProductoCatalogoCard = React.memo(function ProductoCatalogoCard({
         ) : null}
         {pistas.map((t) => <Text key={t} style={{ ...typeScale.secundario, color: c.textSecondary }}>{t}</Text>)}
         <View style={{ gap: space[2], marginTop: space[1] }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
-          <View style={{ flex: 1, minWidth: 0 }}>
+        {/* Precio y acción en una fila que envuelve: el bloque del precio no se achica (nunca se parte a mitad de número);
+            si no entra junto a la acción, la acción baja a su propia línea. */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', columnGap: space[2], rowGap: space[2] }}>
+          <View style={{ flexGrow: 1, flexShrink: 0 }}>
             {porBulto ? (
               <>
-                <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{`${formatImporte(unitario)} por unidad`}</Text>
-                <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{`${formatImporte(unitario * unidadesPorBultoDe(p))} por bulto`}</Text>
+                <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{`${formatImporte(unitario)} por unidad`}</Text>
+                <Text numberOfLines={1} style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{`${formatImporte(unitario * unidadesPorBultoDe(p))} por bulto`}</Text>
               </>
             ) : (
-              <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(unitario)}</Text>
+              <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(unitario)}</Text>
             )}
           </View>
           {p.esPadreDeVariantes ? null : cantidad > 0 ? (
