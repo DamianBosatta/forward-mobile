@@ -11,6 +11,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { conectarCierreDeSesion } from '@/features/auth/lib/cerrarSesion'
 import { hasSavedCredentials } from '@/features/auth/utils/biometrics'
 import { logger } from '@/core/utils/logger'
+import { protegerCapturaDeLaApp } from '@/core/utils/proteccionDeCaptura'
 import { OfertaDeHuella } from '@/features/auth/components/OfertaDeHuella'
 import { View } from 'react-native'
 import {
@@ -39,6 +40,8 @@ const queryClient = crearQueryClient()
 conectarCierreDeSesion(queryClient, asyncStoragePersister)
 // A fingerprint credential saved by an older build without the marker is deleted on the first start, not only when the login screen shows.
 hasSavedCredentials().catch((err) => logger.warn('Legacy fingerprint credential cleanup failed:', err))
+// M9, SEG-12: no screen of the app can be captured or shows in the app switcher (owner's decision #24).
+protegerCapturaDeLaApp().catch((err) => logger.warn('Screen capture protection failed:', err))
 
 function AuthGuardHandler() {
   useAuthGuard()
