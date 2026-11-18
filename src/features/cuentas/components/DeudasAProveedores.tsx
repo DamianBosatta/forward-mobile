@@ -1,5 +1,5 @@
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
-import React from 'react'
+import React, { memo, useCallback, useMemo } from 'react'
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, formatImporte, useInsetInferior } from '@/core/ui/fw'
@@ -28,7 +28,12 @@ export function DeudasAProveedores({ onPagar }: { onPagar?: (socioId: string) =>
   const c = useColors()
   const q = useDeudasProveedores(true)
   const pagar = usePuedeCobrar() ? onPagar : undefined
-  const filas = (q.data?.pages ?? []).flatMap(p => p?.pagina?.items ?? [])
+  const paginas = q.data?.pages
+  const filas = useMemo(() => (paginas ?? []).flatMap(p => p?.pagina?.items ?? []), [paginas])
+  const ultimoIndice = filas.length - 1
+  const renderDeuda = useCallback(({ item, index }: { item: DeudaProveedor; index: number }) => (
+    <FilaDeDeuda deuda={item} primera={index === 0} ultima={index === ultimoIndice} onPagar={pagar} />
+  ), [ultimoIndice, pagar])
   const total = q.data?.pages?.[0]?.deudaTotal
   const sinRed = esFallaDeRed(q.error)
 
@@ -51,9 +56,7 @@ export function DeudasAProveedores({ onPagar }: { onPagar?: (socioId: string) =>
       <FlatList {...LISTA_LARGA_PROPS}
         data={filas}
         keyExtractor={item => item.socioId}
-        renderItem={({ item, index }) => (
-          <FilaDeDeuda deuda={item} primera={index === 0} ultima={index === filas.length - 1} onPagar={pagar ? () => pagar(item.socioId) : undefined} />
-        )}
+        renderItem={renderDeuda}
         contentContainerStyle={{ paddingTop: space[3], paddingBottom: space[6] + insetInferior }}
         onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) void q.fetchNextPage() }}
         onEndReachedThreshold={0.5}
@@ -78,7 +81,7 @@ export function DeudasAProveedores({ onPagar }: { onPagar?: (socioId: string) =>
  * Un proveedor por fila (frame 6): razón social, chip de antigüedad y el monto a la derecha. Sin flecha (no abre una
  * cuenta); con `onPagar`, un botón "Pagar" de 44 pt debajo, fuera del bloque que se lee de corrido.
  */
-function FilaDeDeuda({ deuda, primera, ultima, onPagar }: { deuda: DeudaProveedor; primera: boolean; ultima: boolean; onPagar?: () => void }) {
+const FilaDeDeuda = memo(function FilaDeDeuda({ deuda, primera, ultima, onPagar }: { deuda: DeudaProveedor; primera: boolean; ultima: boolean; onPagar?: (socioId: string) => void }) {
   const c = useColors()
   const monto = formatImporte(deuda.saldoDeuda, { moneda: deuda.moneda })
   const antiguedad = chipAntiguedadDeuda(deuda.diasDeudaMasVieja)?.texto
@@ -108,7 +111,7 @@ function FilaDeDeuda({ deuda, primera, ultima, onPagar }: { deuda: DeudaProveedo
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Pagar a ${deuda.razonSocial}`}
-          onPress={onPagar}
+          onPress={() => onPagar(deuda.socioId)}
           android_ripple={{ color: c.border }}
           style={{ alignSelf: 'flex-start', minHeight: 44, minWidth: 88, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.borderStrong }}
         >
@@ -117,4 +120,4 @@ function FilaDeDeuda({ deuda, primera, ultima, onPagar }: { deuda: DeudaProveedo
       ) : null}
     </View>
   )
-}
+})

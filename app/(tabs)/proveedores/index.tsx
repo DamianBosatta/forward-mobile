@@ -1,5 +1,5 @@
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
-import React, { useState } from 'react'
+import React, { memo, useCallback, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { FlatList, RefreshControl, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
@@ -21,6 +21,13 @@ import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esque
 /** Desde este ancho la lista y la ficha van lado a lado (plan §8). */
 const ANCHO_DOS_PANELES = 900
 
+type PropsFilaProveedor = Omit<React.ComponentProps<typeof ProveedorCard>, 'onPress'> & { onAbrir: (id: string) => void }
+
+/** Fila memoizada: no se vuelve a pintar mientras el proveedor, su posición y los callbacks no cambien. */
+const FilaProveedor = memo(function FilaProveedor({ onAbrir, ...tarjeta }: PropsFilaProveedor) {
+  return <ProveedorCard {...tarjeta} onPress={() => onAbrir(tarjeta.proveedor.id)} />
+})
+
 /** Proveedores (láminas Proveedores y Tablet · Proveedores): lista buscable y ficha; alta y edición con los permisos de la web. */
 export default function ProveedoresScreen() {
   const insetInferior = useInsetInferior()
@@ -36,10 +43,24 @@ export default function ProveedoresScreen() {
   const hayDatos = proveedores.length > 0
   const dosPaneles = width >= ANCHO_DOS_PANELES
 
-  const abrir = (id: string) => {
+  const abrir = useCallback((id: string) => {
     if (dosPaneles) setAbierto(id)
     else router.push({ pathname: '/(tabs)/proveedores/[id]', params: { id } })
-  }
+  }, [dosPaneles, router])
+  const puedeComprar = canCreate('MOD_COMPRAS')
+  const nuevaCompra = useCallback(() => router.push('/(tabs)/compras/nueva' as never), [router])
+  const ultimoIndice = proveedores.length - 1
+  const renderProveedor = useCallback(({ item, index }: { item: (typeof proveedores)[number]; index: number }) => (
+    // Las filas van en una tarjeta, como las de cada letra en la lista de Clientes (frame 1).
+    <FilaProveedor
+      primera={index === 0}
+      ultima={index === ultimoIndice}
+      proveedor={item}
+      seleccionado={dosPaneles && item.id === abierto}
+      onAbrir={abrir}
+      onNuevaCompra={puedeComprar ? nuevaCompra : undefined}
+    />
+  ), [ultimoIndice, dosPaneles, abierto, abrir, puedeComprar, nuevaCompra])
 
   const lista = (
     <View style={{ flex: 1 }}>
@@ -63,17 +84,7 @@ export default function ProveedoresScreen() {
       <FlatList {...LISTA_LARGA_PROPS}
         data={proveedores}
         keyExtractor={item => item.id}
-        renderItem={({ item, index }) => (
-          // Las filas van en una tarjeta, como las de cada letra en la lista de Clientes (frame 1).
-          <ProveedorCard
-            primera={index === 0}
-            ultima={index === proveedores.length - 1}
-            proveedor={item}
-            seleccionado={dosPaneles && item.id === abierto}
-            onPress={() => abrir(item.id)}
-            onNuevaCompra={canCreate('MOD_COMPRAS') ? () => router.push('/(tabs)/compras/nueva' as never) : undefined}
-          />
-        )}
+        renderItem={renderProveedor}
         contentContainerStyle={{ paddingBottom: 88 + insetInferior }}
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
