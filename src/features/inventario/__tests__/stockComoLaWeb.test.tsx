@@ -306,7 +306,7 @@ describe('Detalle del producto (lámina 5) y movimientos (lámina 6)', () => {
     await abrir()
     await abrirDetalle()
     await userEvent.press(screen.getByRole('button', { name: 'Ver movimientos' }))
-    expect(await screen.findByText('No hay movimientos registrados para este producto.')).toBeTruthy()
+    expect(await screen.findByText('Todavía no hay movimientos de este producto.')).toBeTruthy()
   })
 
   it('movimientos con error', async () => {
@@ -315,7 +315,7 @@ describe('Detalle del producto (lámina 5) y movimientos (lámina 6)', () => {
     await abrir()
     await abrirDetalle()
     await userEvent.press(screen.getByRole('button', { name: 'Ver movimientos' }))
-    expect(await screen.findByText('No se pudo cargar el historial. Intentá de nuevo.')).toBeTruthy()
+    expect(await screen.findByText('No pudimos cargar el historial')).toBeTruthy()
   })
 
   it('tocar una fragancia abre el mismo detalle', async () => {

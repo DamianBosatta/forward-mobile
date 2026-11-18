@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
 import { useQueryClient } from '@tanstack/react-query'
 import { Eye, EyeOff, Fingerprint } from 'lucide-react-native'
-import { useColors, space, typeScale } from '../libs/theme'
+import { FONT, useColors, space, typeScale } from '../libs/theme'
 import { useResponsive } from '../libs/useResponsive'
 import { Button, Notice, PieFijo, Segmented, type SegmentedOption } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
@@ -181,7 +181,7 @@ export default function LoginScreen() {
   const formulario = (
     <View style={{ gap: space[3] + 2 }}>
       {isTablet ? (
-        <Text accessibilityRole="header" style={{ fontSize: 28, lineHeight: 36, fontWeight: '700', color: c.text, marginBottom: space[2] }}>
+        <Text accessibilityRole="header" style={{ ...typeScale.destacado, color: c.text, marginBottom: space[2] }}>
           Ingresá
         </Text>
       ) : null}
@@ -276,8 +276,8 @@ export default function LoginScreen() {
         <View style={{ flex: 1, padding: 64, paddingTop: 64 + insets.top, paddingBottom: 64 + insetInferior, justifyContent: 'space-between', backgroundColor: c.topBar }}>
           {logo(72)}
           <View style={{ gap: space[3] }}>
-            <Text accessibilityRole="header" style={{ fontSize: 48, lineHeight: 56, fontWeight: '700', color: c.onTopBarStrong }}>Forward</Text>
-            <Text style={{ fontSize: 20, lineHeight: 30, color: c.onTopBar, maxWidth: 420 }}>
+            <Text accessibilityRole="header" style={{ ...typeScale.hero, color: c.onTopBarStrong }}>Forward</Text>
+            <Text style={{ ...typeScale.titulo, fontFamily: FONT.regular, fontWeight: '400', lineHeight: 30, color: c.onTopBar, maxWidth: 420 }}>
               Vendé, cobrá y seguí tus pedidos desde la calle, con los mismos datos que la web.
             </Text>
           </View>

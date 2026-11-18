@@ -5,6 +5,7 @@ import { radii, space, useColors } from '@/libs/theme'
 import { Notice, StatusChip, useInsetInferior } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { ErrorDeConsulta } from '@/core/ui/estados'
 import { esFallaDeRed } from '@/core/api/errores'
 import type { StockItem } from '@/libs/api-client/types'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -56,12 +57,11 @@ function StockSinCantidades({ busqueda, columnas }: { busqueda: string; columnas
   const { setBusqueda } = cat
   // La búsqueda de esta vista vive en la pantalla; el hook la espera ~300 ms como en el catálogo.
   React.useEffect(() => { setBusqueda(busqueda) }, [busqueda, setBusqueda])
-  if (cat.isLoading) return <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
+  if (cat.isLoading) return <Esqueletos columnas={columnas} />
   const sinRed = cat.isError && esFallaDeRed(cat.error)
-  if (sinRed && cat.productos.length === 0) {
-    return <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar el stock" accion={{ label: 'Reintentar', onPress: () => { void cat.refetch() } }} />
+  if (cat.isError && !(sinRed && cat.productos.length > 0)) {
+    return <ErrorDeConsulta error={cat.error} titulo="No pudimos cargar el stock" guardadoA={cat.dataUpdatedAt || undefined} onReintentar={() => { void cat.refetch() }} />
   }
-  if (cat.isError && !sinRed) return <View style={{ padding: space[4] }}><Notice tone="peligro">No se pudo cargar el stock. Revisá la conexión y volvé a intentar.</Notice></View>
   return (
     <FlatList {...LISTA_LARGA_PROPS}
       data={enBloques(cat.productos, columnas)}
@@ -155,11 +155,7 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
       {s.isLoading ? (
         <Esqueletos columnas={columnas} />
       ) : s.isError && !(sinRed && s.filas.length > 0) ? (
-        sinRed ? (
-          <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar el stock" accion={{ label: 'Reintentar', onPress: () => void s.refetch() }} />
-        ) : (
-          <View style={{ padding: space[4] }}><Notice tone="peligro">No se pudo cargar el stock. Revisá la conexión y volvé a intentar.</Notice></View>
-        )
+        <ErrorDeConsulta error={s.error} titulo="No pudimos cargar el stock" onReintentar={() => void s.refetch()} />
       ) : (
         <FlatList {...LISTA_LARGA_PROPS}
           data={bloques}

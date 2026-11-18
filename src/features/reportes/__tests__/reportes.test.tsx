@@ -188,7 +188,7 @@ describe('Reportes', () => {
     mockGet.mockRejectedValue(new Error('500'))
     pintar()
 
-    expect(await screen.findByText('No se pudieron cargar los reportes.')).toBeTruthy()
+    expect(await screen.findByRole('header', { name: 'No pudimos cargar los reportes' })).toBeTruthy()
     expect(screen.queryByTestId('reporte-ventas')).toBeNull()
   })
 

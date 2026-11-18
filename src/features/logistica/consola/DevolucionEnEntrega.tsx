@@ -15,7 +15,7 @@ export function EleccionDevolucion({ valor, onElegir }: { valor: boolean | null;
   const c = useColors()
   return (
     <View accessibilityLabel="¿Hay devolución?" style={{ gap: space[3] }}>
-      <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>¿Tiene devoluciones?</Text>
+      <Text accessibilityRole="header" style={{ ...typeScale.tituloGrande, color: c.text }}>¿Tiene devoluciones?</Text>
       <OptionCard minHeight={132} icon={PackageCheck} label="No" selected={valor === false} onPress={() => onElegir(false)} />
       <OptionCard minHeight={132} icon={PackageX} label="Sí" selected={valor === true} onPress={() => onElegir(true)} />
     </View>
@@ -30,7 +30,7 @@ export function DevolucionEnviada({ onSeguir }: { onSeguir: () => void }) {
   return (
     <View accessibilityLabel="Devolución enviada" style={{ gap: space[3], alignItems: 'center', paddingTop: space[6] }}>
       <CircleCheck size={56} color={c.brandInk} strokeWidth={2.5} />
-      <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text, textAlign: 'center' }}>Devolución enviada</Text>
+      <Text accessibilityRole="header" style={{ ...typeScale.tituloGrande, color: c.text, textAlign: 'center' }}>Devolución enviada</Text>
       <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>Depósito la va a autorizar cuando reciba la mercadería. Seguí con el cobro.</Text>
       <View style={{ alignSelf: 'stretch' }}>
         <Button size="xl" label="Seguir con el cobro" onPress={onSeguir} />
@@ -67,7 +67,7 @@ export function DevolucionEnEntrega({ renglones, cargando, conError, valores, on
   const unidades = cargadas.reduce((t, n) => t + n, 0)
   return (
     <View accessibilityLabel="Devolución" style={{ gap: space[4] }}>
-      <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>¿Qué devuelve?</Text>
+      <Text accessibilityRole="header" style={{ ...typeScale.tituloGrande, color: c.text }}>¿Qué devuelve?</Text>
       {cargando ? <ActivityIndicator color={c.brand} accessibilityLabel="Cargando los productos del pedido" /> : null}
       {conError ? <Notice tone="peligro">No se pudieron cargar los productos del pedido.</Notice> : null}
       {conBuscador ? <Field label="Buscar producto o marca" value={busqueda} onChangeText={setBusqueda} autoCorrect={false} /> : null}

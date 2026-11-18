@@ -133,13 +133,14 @@ describe('Stock con cantidades', () => {
     expect(screen.getByText('Make Lavajean')).toBeTruthy()
   })
 
-  it('otro error sin datos sigue siendo el aviso de siempre', async () => {
+  it('otro error sin datos: estado de error con Reintentar, sin hablar de señal', async () => {
     stocks = () => Promise.reject(new Error('boom'))
     pintar()
     await abrirStock()
 
-    expect(await screen.findByText('No se pudo cargar el stock. Revisá la conexión y volvé a intentar.')).toBeTruthy()
-    expect(screen.queryByRole('header', { name: 'No pudimos cargar el stock' })).toBeNull()
+    expect(await screen.findByRole('header', { name: 'No pudimos cargar el stock' })).toBeTruthy()
+    expect(screen.getByText(/Algo salió mal de nuestro lado/)).toBeTruthy()
+    expect(screen.queryByText(/no hay señal/)).toBeNull()
   })
 })
 
