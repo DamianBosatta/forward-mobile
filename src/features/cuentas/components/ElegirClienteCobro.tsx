@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { memo, useCallback, useState } from 'react'
 import { FlatList, Text, View } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { Button, Notice, PieFijo, TotalsRow } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { MOTIVO_SIN_PERMISO_DE_COBRO, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
@@ -54,16 +55,27 @@ function SaldoDelCliente({ socioId }: { socioId: string }) {
  * cartera es la de Cuentas (búsqueda y deuda vencida en el servidor) con la misma fila, el chip de antigüedad de
  * la deuda y el candado de cartera ajena. Sin "Recientes": no hay cobros recientes.
  */
+type ClienteDeCartera = ReturnType<typeof useCartera>['clientes'][number]
+
+/** Fila memoizada de la cartera: solo se repinta si cambia el cliente o si pasa a estar elegido. */
+const FilaCliente = memo(function FilaCliente({ cliente, seleccionado, onElegir }: { cliente: ClienteDeCartera; seleccionado: boolean; onElegir: (id: string) => void }) {
+  return <ClienteCard cliente={cliente} seleccionado={seleccionado} conAntiguedad onPress={() => onElegir(cliente.id)} />
+})
+
 export function ElegirClienteCobro({ seleccionadoId, onElegir, onContinuar, puedeCobrar }: Props) {
   const c = useColors()
   const [busqueda, setBusqueda] = useState('')
   const [soloVencidas, setSoloVencidas] = useState(false)
   const { clientes, isLoading, error, refetch, cargarMas } = useCartera(busqueda, soloVencidas ? { conDeudaVencida: true } : undefined)
   const buscando = busqueda.trim().length > 0
+  const renderCliente = useCallback(
+    ({ item }: { item: (typeof clientes)[number] }) => <FilaCliente cliente={item} seleccionado={item.id === seleccionadoId} onElegir={onElegir} />,
+    [seleccionadoId, onElegir],
+  )
 
   return (
     <View style={{ flex: 1 }}>
-      <FlatList
+      <FlatList {...LISTA_LARGA_PROPS}
         style={{ flex: 1 }}
         data={clientes}
         keyExtractor={item => item.id}
@@ -89,7 +101,7 @@ export function ElegirClienteCobro({ seleccionadoId, onElegir, onContinuar, pued
             </Text>
           </View>
         }
-        renderItem={({ item }) => <ClienteCard cliente={item} seleccionado={item.id === seleccionadoId} conAntiguedad onPress={() => onElegir(item.id)} />}
+        renderItem={renderCliente}
         ListEmptyComponent={
           isLoading ? <View style={{ paddingHorizontal: space[4] }}><Esqueletos bloques={FILAS_CARGANDO} /></View> : error ? <ErrorDeConsulta error={error} titulo="No pudimos cargar la cartera" onReintentar={() => { void refetch() }} /> : (
             <Text style={{ ...typeScale.secundario, color: c.textSecondary, paddingHorizontal: space[4] }}>

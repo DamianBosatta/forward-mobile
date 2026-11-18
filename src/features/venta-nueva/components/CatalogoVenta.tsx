@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { ScanBarcode, Search } from 'lucide-react-native'
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, StatusChip } from '@/core/ui/fw'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'

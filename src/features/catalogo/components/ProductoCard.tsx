@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { memo } from 'react'
 import { Image as ExpoImage } from 'expo-image'
 import { Pressable, Text, View } from 'react-native'
 import { Package } from 'lucide-react-native'
@@ -20,7 +20,7 @@ interface ProductoCardProps {
  * Tarjeta del catálogo de consulta (lámina CatalogoConsulta): foto, código, chip, nombre y precio de lista. El chip lleva
  * el color de la novedad (verde nuevo, ámbar precio nuevo, rojo sin stock) y un precio que cambió muestra la variación.
  */
-export function ProductoCard({ producto, disponible, grilla, seleccionado, onPress }: ProductoCardProps) {
+export const ProductoCard = memo(function ProductoCard({ producto, disponible, grilla, seleccionado, onPress }: ProductoCardProps) {
   const c = useColors()
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const chip = chipDeTarjeta(producto.novedad, disponible)
@@ -93,4 +93,4 @@ export function ProductoCard({ producto, disponible, grilla, seleccionado, onPre
       </View>
     </Pressable>
   )
-}
+})

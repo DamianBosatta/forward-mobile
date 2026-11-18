@@ -1,5 +1,5 @@
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
-import React, { useEffect, useState } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, ScrollView, SectionList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import {
@@ -41,6 +41,45 @@ const ESTADOS_PENDIENTES: { value: EstadoCompraRuta | null; label: string }[] = 
 
 const productos = (n: number) => `${n} ${n === 1 ? 'producto' : 'productos'}`
 
+/** Fila memoizada: no se vuelve a pintar mientras la compra y `onAbrir` no cambien. */
+const FilaCompra = memo(function FilaCompra({ x, onAbrir }: { x: CompraDtoList; onAbrir: (id: string) => void }) {
+  return (
+    <View style={{ marginBottom: space[3] }}>
+      <DocumentCard
+        plano
+        numero={numeroDeCompra(x)}
+        vendedor={x.creadoPor ?? x.nombreDeposito}
+        direccion={x.razonSocialProveedor}
+        nombre={[`${numeroDeCompra(x)} · ${x.creadoPor ?? x.nombreDeposito}`, llegaTexto(x.fechaEsperadaRecepcion)].filter(Boolean).join(' · ')}
+        hora={horaDe(x.fecha)}
+        fechaHora={fechaHoraTexto(x.fecha)}
+        detalle={productos(x.itemsCount ?? 0)}
+        importe={x.totalAmount}
+        chip={chipForEstado('compra', x.estado)}
+        onPress={() => onAbrir(x.id)}
+      />
+    </View>
+  )
+})
+
+/** Fila memoizada de un borrador: no se vuelve a pintar mientras el borrador y `onAbrir` no cambien. */
+const FilaBorrador = memo(function FilaBorrador({ b, onAbrir }: { b: BorradorCompra; onAbrir: (id: string) => void }) {
+  const c = useColors()
+  const pie = `${b.cantidadLineas} ${b.cantidadLineas === 1 ? 'línea' : 'líneas'} · Guardado ${tituloDelDia(new Date(b.fechaModificacion)).toLowerCase()} ${horaDe(b.fechaModificacion)}`
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${b.proveedorNombre}, ${pie}`}
+      onPress={() => onAbrir(b.id)}
+      android_ripple={{ color: c.surface2 }}
+      style={{ minHeight: 44, padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[1], overflow: 'hidden' }}
+    >
+      <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{b.proveedorNombre}</Text>
+      <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{pie}</Text>
+    </Pressable>
+  )
+})
+
 interface Props {
   /** Detalle embebido para el panel derecho en tablet horizontal. */
   detalle: (id: string, cerrar: () => void) => React.ReactNode
@@ -64,10 +103,14 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
     if (elegida && q.data && !q.isFetching && !q.isPlaceholderData && !l.compras.some((x) => x.id === elegida)) setElegida(null)
   }, [elegida, q.data, q.isFetching, q.isPlaceholderData, l.compras])
 
-  const abrir = (id: string) => {
+  const abrir = useCallback((id: string) => {
     if (isTabletLandscape) setElegida(id)
     else router.push(`/(tabs)/compras/${id}` as never)
-  }
+  }, [isTabletLandscape, router])
+  const abrirBorrador = useCallback((id: string) => router.push(`/(tabs)/compras/nueva?borrador=${id}` as never), [router])
+  const secciones = useMemo(() => agruparPorDia(l.compras, (x) => x.fecha), [l.compras])
+  const renderCompra = useCallback(({ item }: { item: CompraDtoList }) => <FilaCompra x={item} onAbrir={abrir} />, [abrir])
+  const renderBorrador = useCallback(({ item }: { item: BorradorCompra }) => <FilaBorrador b={item} onAbrir={abrirBorrador} />, [abrirBorrador])
 
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
   const sinRed = esFallaDeRed(q.error)
@@ -132,30 +175,14 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
 
   const listaCompras = (
     <SectionList {...LISTA_LARGA_PROPS}
-      sections={agruparPorDia(l.compras, (x) => x.fecha)}
+      sections={secciones}
       keyExtractor={(x) => x.id}
       ListHeaderComponent={filtros}
       contentContainerStyle={{ padding: space[4], paddingBottom: space[12] * 2 + insetInferior }}
       renderSectionHeader={({ section }) => (
         <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.textSecondary, backgroundColor: c.bg, paddingVertical: space[2] }]}>{section.titulo}</Text>
       )}
-      renderItem={({ item: x }: { item: CompraDtoList }) => (
-        <View style={{ marginBottom: space[3] }}>
-          <DocumentCard
-            plano
-            numero={numeroDeCompra(x)}
-            vendedor={x.creadoPor ?? x.nombreDeposito}
-            direccion={x.razonSocialProveedor}
-            nombre={[`${numeroDeCompra(x)} · ${x.creadoPor ?? x.nombreDeposito}`, llegaTexto(x.fechaEsperadaRecepcion)].filter(Boolean).join(' · ')}
-            hora={horaDe(x.fecha)}
-            fechaHora={fechaHoraTexto(x.fecha)}
-            detalle={productos(x.itemsCount ?? 0)}
-            importe={x.totalAmount}
-            chip={chipForEstado('compra', x.estado)}
-            onPress={() => abrir(x.id)}
-          />
-        </View>
-      )}
+      renderItem={renderCompra}
       onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) void q.fetchNextPage() }}
       onEndReachedThreshold={0.4}
       refreshing={q.isRefetching}
@@ -176,21 +203,7 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
       keyExtractor={(b) => b.id}
       contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[3] }}
       ListHeaderComponent={<Notice tone="info">Los borradores se guardan solos mientras cargás una compra. Tocá uno para seguirlo.</Notice>}
-      renderItem={({ item: b }) => {
-        const pie = `${b.cantidadLineas} ${b.cantidadLineas === 1 ? 'línea' : 'líneas'} · Guardado ${tituloDelDia(new Date(b.fechaModificacion)).toLowerCase()} ${horaDe(b.fechaModificacion)}`
-        return (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`${b.proveedorNombre}, ${pie}`}
-            onPress={() => router.push(`/(tabs)/compras/nueva?borrador=${b.id}` as never)}
-            android_ripple={{ color: c.surface2 }}
-            style={{ minHeight: 44, padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[1], overflow: 'hidden' }}
-          >
-            <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{b.proveedorNombre}</Text>
-            <Text style={secundario}>{pie}</Text>
-          </Pressable>
-        )
-      }}
+      renderItem={renderBorrador}
       ListEmptyComponent={
         bq.isLoading ? <Esqueletos bloques={FILAS_CARGANDO} />
           : borradoresSinRed ? (

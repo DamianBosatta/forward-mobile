@@ -1,6 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native'
+import type { SocioListDto } from '@/libs/api-client/types'
 import { Plus, Search } from 'lucide-react-native'
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { useQueryClient } from '@tanstack/react-query'
 import { fetchSocio, sociosKeys, useClientesRecientes } from '@/libs/api-client/socios'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
@@ -62,6 +64,11 @@ function Fila({ cliente, onPress, vencida = false }: { cliente: ClienteElegido; 
   )
 }
 
+/** Fila de la cartera memoizada: no se repinta al tipear en el buscador mientras el cliente no cambie. */
+const FilaDeCartera = memo(function FilaDeCartera({ cliente, onElegir }: { cliente: SocioListDto; onElegir: (c: SocioListDto) => void }) {
+  return <Fila cliente={cliente} vencida={cliente.tieneDeudaVencida === true} onPress={() => onElegir(cliente)} />
+})
+
 function Titulo({ children }: { children: string }) {
   const c = useColors()
   return <Text accessibilityRole="header" style={{ ...typeScale.secundario, ...pesoSemibold, color: c.textSecondary }}>{children}</Text>
@@ -101,10 +108,11 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
     ? avisoDeudaVencida(clientes.filter(x => x.tieneDeudaVencida === true).map(direccionDeEntrega))
     : null
 
-  const elegir = (cliente: ClienteElegido) => {
+  const elegir = useCallback((cliente: ClienteElegido) => {
     guardarReciente(usuarioId, cliente)
     onSelect(aElegido(cliente), tipo)
-  }
+  }, [usuarioId, onSelect, tipo])
+  const renderCliente = useCallback(({ item }: { item: SocioListDto }) => <FilaDeCartera cliente={item} onElegir={elegir} />, [elegir])
 
   // Un reciente es una foto vieja: se confirma con el servidor que sigue en la cartera y se usa el dato fresco.
   const verificando = useRef(false)
@@ -152,7 +160,7 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
       </View>
       {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
       {error ? <Notice tone="peligro">{mensajeDelServidor(error, 'No se pudo cargar la cartera.')}</Notice> : null}
-      <FlatList
+      <FlatList {...LISTA_LARGA_PROPS}
         style={{ maxHeight: height * 0.45 }}
         data={clientes}
         keyExtractor={item => item.id}
@@ -170,7 +178,7 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
             <Titulo>{buscando ? 'Resultados' : 'Cartera'}</Titulo>
           </View>
         }
-        renderItem={({ item }) => <Fila cliente={item} vencida={item.tieneDeudaVencida === true} onPress={() => elegir(item)} />}
+        renderItem={renderCliente}
         ListEmptyComponent={
           isLoading ? <ActivityIndicator color={c.brandInk} /> : error ? undefined : (
             <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>

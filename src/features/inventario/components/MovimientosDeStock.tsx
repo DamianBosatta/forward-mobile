@@ -1,5 +1,5 @@
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
-import React from 'react'
+import React, { memo, useCallback, useMemo } from 'react'
 import { ActivityIndicator, FlatList, Modal, Text, View } from 'react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { StatusChip, TopBar, useInsetInferior } from '@/core/ui/fw'
@@ -11,7 +11,8 @@ import type { MovimientoStockHistorialDto } from '@/libs/api-client/types'
 import { useMovimientosDeStock } from '../hooks/useConsultasDeStock'
 import { cantidadConSigno, estadoDeMovimiento } from '../lib/stock-presentacion'
 
-function Movimiento({ m }: { m: MovimientoStockHistorialDto }) {
+/** Fila memoizada: no se vuelve a pintar mientras el movimiento no cambie. */
+const Movimiento = memo(function Movimiento({ m }: { m: MovimientoStockHistorialDto }) {
   const c = useColors()
   const color = m.cantidad > 0 ? c.chip.entregado.text : m.cantidad < 0 ? c.chip.anulado.text : c.text
   return (
@@ -25,7 +26,7 @@ function Movimiento({ m }: { m: MovimientoStockHistorialDto }) {
       <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{m.usuarioNombre}</Text>
     </View>
   )
-}
+})
 
 interface Props {
   visible: boolean
@@ -43,7 +44,9 @@ export function MovimientosDeStock({ visible, onCerrar, productoId, producto }: 
   const c = useColors()
   const insetInferior = useInsetInferior()
   const q = useMovimientosDeStock(productoId, visible)
-  const movimientos = q.data?.pages.flatMap((p) => p?.items ?? []) ?? []
+  const paginas = q.data?.pages
+  const movimientos = useMemo(() => paginas?.flatMap((p) => p?.items ?? []) ?? [], [paginas])
+  const renderMovimiento = useCallback(({ item }: { item: MovimientoStockHistorialDto }) => <Movimiento m={item} />, [])
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onCerrar} statusBarTranslucent navigationBarTranslucent>
@@ -57,7 +60,7 @@ export function MovimientosDeStock({ visible, onCerrar, productoId, producto }: 
           <FlatList {...LISTA_LARGA_PROPS}
             data={movimientos}
             keyExtractor={(m) => m.id}
-            renderItem={({ item }) => <Movimiento m={item} />}
+            renderItem={renderMovimiento}
             onEndReached={() => {
               if (q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage()
             }}

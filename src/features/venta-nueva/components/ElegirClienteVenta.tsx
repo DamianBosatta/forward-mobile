@@ -1,9 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View } from 'react-native'
 import { Plus, Search } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
+import type { SocioListDto } from '@/libs/api-client/types'
 import { fetchSocio, sociosKeys, useClientesRecientes } from '@/libs/api-client/socios'
 import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { Notice, StatusChip, formatImporte } from '@/core/ui/fw'
 import { partesArgentina, parseDateSafe } from '@/core/utils/fecha'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -33,6 +35,33 @@ function textoUltimoPedido(u: { fecha: string; total: number }): string {
   return ['Último pedido', dia].filter(Boolean).join(' ') + ` · ${formatImporte(u.total)}`
 }
 
+type Ultimo = { fecha: string; total: number } | null | undefined
+
+/** Fila memoizada de la cartera: solo la elegida recibe `ultimoPedido`, así elegir otra no repinta las demás. */
+const FilaCliente = memo(function FilaCliente({ item, sel, ultimoPedido, onElegir }: { item: SocioListDto; sel: boolean; ultimoPedido: Ultimo; onElegir: (c: SocioListDto) => void }) {
+  const c = useColors()
+  const direccion = direccionDeEntrega(item)
+  const nombre = nombreDelCliente(item)
+  const vencida = item.tieneDeudaVencida === true
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: sel }}
+      accessibilityLabel={[direccion, nombre, vencida && 'deuda vencida'].filter(Boolean).join(', ')}
+      onPress={() => onElegir(item)}
+      style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3], borderBottomWidth: 1, borderBottomColor: c.border, backgroundColor: sel ? c.brandSoft : 'transparent' }}
+    >
+      <MarcaRadio elegido={sel} />
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{direccion}</Text>
+        {nombre ? <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.textSecondary }}>{nombre}</Text> : null}
+        {sel && ultimoPedido ? <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.brandInk }}>{textoUltimoPedido(ultimoPedido)}</Text> : null}
+      </View>
+      {vencida ? <StatusChip estado="anulado" label="Deuda vencida" /> : null}
+    </Pressable>
+  )
+})
+
 /**
  * V2 "¿A quién le vendés?" (CalleCliente / TabCalleCliente): búsqueda en el servidor sobre la cartera del vendedor,
  * filtros de la cartera (deuda vencida y localidad; los decide el servidor), recientes y alta. Devuelve solo el
@@ -61,10 +90,17 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
   useEffect(() => { setGuardados(leerRecientes(usuarioId)) }, [usuarioId])
   const recientes = buscando ? [] : fusionarRecientes(delServidor.data, guardados, noDisponibles)
 
-  const elegir = (cliente: ClienteElegido) => {
+  const elegir = useCallback((cliente: ClienteElegido) => {
     guardarReciente(usuarioId, cliente)
     onElegir(aElegido(cliente))
-  }
+  }, [usuarioId, onElegir])
+  const renderCliente = useCallback(
+    ({ item }: { item: SocioListDto }) => {
+      const sel = item.id === seleccionadoId
+      return <FilaCliente item={item} sel={sel} ultimoPedido={sel ? ultimoPedido : null} onElegir={elegir} />
+    },
+    [seleccionadoId, ultimoPedido, elegir],
+  )
 
   // Un reciente es una foto vieja: se confirma con el servidor que sigue en la cartera y se usa el dato fresco.
   const verificando = useRef(false)
@@ -114,7 +150,7 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
         {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
         {error ? <Notice tone="peligro">{mensajeDelServidor(error, 'No se pudo cargar la cartera.')}</Notice> : null}
       </View>
-      <FlatList
+      <FlatList {...LISTA_LARGA_PROPS}
         style={{ flex: 1 }}
         data={clientes}
         keyExtractor={(item) => item.id}
@@ -155,29 +191,7 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
             </View>
           </View>
         }
-        renderItem={({ item }) => {
-          const direccion = direccionDeEntrega(item)
-          const nombre = nombreDelCliente(item)
-          const vencida = item.tieneDeudaVencida === true
-          const sel = item.id === seleccionadoId
-          return (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected: sel }}
-              accessibilityLabel={[direccion, nombre, vencida && 'deuda vencida'].filter(Boolean).join(', ')}
-              onPress={() => elegir(item)}
-              style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3], borderBottomWidth: 1, borderBottomColor: c.border, backgroundColor: sel ? c.brandSoft : 'transparent' }}
-            >
-              <MarcaRadio elegido={sel} />
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{direccion}</Text>
-                {nombre ? <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.textSecondary }}>{nombre}</Text> : null}
-                {sel && ultimoPedido ? <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.brandInk }}>{textoUltimoPedido(ultimoPedido)}</Text> : null}
-              </View>
-              {vencida ? <StatusChip estado="anulado" label="Deuda vencida" /> : null}
-            </Pressable>
-          )
-        }}
+        renderItem={renderCliente}
         ListEmptyComponent={
           isLoading ? <ActivityIndicator color={c.brandInk} /> : error ? undefined : (
             <Text style={{ ...typeScale.secundario, color: c.textSecondary, paddingHorizontal: space[4] }}>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { FlatList, Pressable, ScrollView, Text, View } from 'react-native'
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { useRouter } from 'expo-router'
 import { Button, FiltroChip, Notice, StatusChip, TopBar, TotalsRow, TwoPane, formatImporte, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
@@ -162,7 +163,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
   const cuerpo = !puede ? (
     <View style={{ padding: space[4] }}><Notice tone="info">Autorizar ventas necesita el permiso de autorizar ventas. Pedíselo a un administrador.</Notice></View>
   ) : (
-    <FlatList
+    <FlatList {...LISTA_LARGA_PROPS}
       data={visibles}
       keyExtractor={(v) => v.id}
       ListHeaderComponent={encabezado}

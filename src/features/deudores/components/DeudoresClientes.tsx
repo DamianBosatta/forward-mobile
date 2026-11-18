@@ -1,5 +1,5 @@
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
-import React, { useMemo, useState } from 'react'
+import React, { memo, useCallback, useMemo, useState } from 'react'
 import { FlatList, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { FileText } from 'lucide-react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
@@ -50,6 +50,11 @@ export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => vo
   const cantidad = primera?.pagina?.totalCount
   const sinRed = esFallaDeRed(q.error)
   const conFiltro = !!vendedor || !!texto
+  const pedirArchivo = useCallback((d: Deudor) => setArchivoDe({ id: d.socioId, razonSocial: d.razonSocial }), [])
+  const renderDeudor = useCallback(
+    ({ item }: { item: Deudor }) => <FilaDeDeudor deudor={item} conArchivo={puedeExportar} onAbrir={onAbrir} onEstadoDeCuenta={pedirArchivo} />,
+    [puedeExportar, onAbrir, pedirArchivo],
+  )
 
   return (
     <View style={{ flex: 1 }}>
@@ -78,13 +83,7 @@ export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => vo
         testID="lista-deudores"
         data={filas}
         keyExtractor={item => item.socioId}
-        renderItem={({ item }) => (
-          <FilaDeDeudor
-            deudor={item}
-            onAbrir={item.puedeVerCuentaCorriente ? () => onAbrir(item.socioId) : undefined}
-            onEstadoDeCuenta={puedeExportar && item.puedeVerCuentaCorriente ? () => setArchivoDe({ id: item.socioId, razonSocial: item.razonSocial }) : undefined}
-          />
-        )}
+        renderItem={renderDeudor}
         contentContainerStyle={{ paddingTop: space[3], paddingBottom: space[6] + insetInferior }}
         onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) void q.fetchNextPage() }}
         onEndReachedThreshold={0.5}
@@ -123,7 +122,9 @@ export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => vo
 }
 
 /** Un deudor por fila: razón social y monto, vendedor y CUIT, chip de antigüedad; el archivo como acción de 44 pt. */
-function FilaDeDeudor({ deudor, onAbrir, onEstadoDeCuenta }: { deudor: Deudor; onAbrir?: () => void; onEstadoDeCuenta?: () => void }) {
+const FilaDeDeudor = memo(function FilaDeDeudor({ deudor, conArchivo, onAbrir: abrir, onEstadoDeCuenta: pedir }: { deudor: Deudor; conArchivo: boolean; onAbrir: (socioId: string) => void; onEstadoDeCuenta: (d: Deudor) => void }) {
+  const onAbrir = deudor.puedeVerCuentaCorriente ? () => abrir(deudor.socioId) : undefined
+  const onEstadoDeCuenta = conArchivo && deudor.puedeVerCuentaCorriente ? () => pedir(deudor) : undefined
   const c = useColors()
   const monto = formatImporte(deudor.saldoDeuda, { moneda: deudor.moneda })
   const vendedor = deudor.vendedorNombre ?? 'Sin vendedor'
@@ -142,7 +143,7 @@ function FilaDeDeudor({ deudor, onAbrir, onEstadoDeCuenta }: { deudor: Deudor; o
       chevron={!!onAbrir}
     />
   )
-}
+})
 
 interface ElegirVendedorProps {
   visible: boolean

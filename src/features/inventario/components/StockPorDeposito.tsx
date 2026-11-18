@@ -1,5 +1,5 @@
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
-import React from 'react'
+import React, { memo, useCallback, useMemo } from 'react'
 import { ActivityIndicator, FlatList, ScrollView, View } from 'react-native'
 import { radii, space, useColors } from '@/libs/theme'
 import { Notice, StatusChip, useInsetInferior } from '@/core/ui/fw'
@@ -49,6 +49,35 @@ function Esqueletos({ columnas }: { columnas: number }) {
   )
 }
 
+type ProductoSinCantidades = ReturnType<typeof useProductosDeStockConsulta>['productos'][number]
+
+/** Renglón memoizado de la grilla sin cantidades: no se vuelve a pintar mientras su bloque y el stock no cambien. */
+const BloqueSinCantidades = memo(function BloqueSinCantidades({ b, disponible, columnas }: {
+  b: Bloque<ProductoSinCantidades>
+  disponible: ReturnType<typeof useProductosDeStockConsulta>['disponible']
+  columnas: number
+}) {
+  if (b.tipo !== 'fila') return null
+  return (
+    <View style={{ flexDirection: 'row', gap: space[2] }}>
+      {b.items.map((p) => {
+        const chip = chipDeStock(disponible.get(p.id))
+        return (
+          <TarjetaSinCantidades
+            key={p.id}
+            nombre={p.nombre}
+            marca={p.marca}
+            codigo={p.codigoPropio ?? ''}
+            imageUrl={p.imageUrl}
+            chip={chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
+          />
+        )
+      })}
+      {Array.from({ length: columnas - b.items.length }).map((_, i) => <Hueco key={i} />)}
+    </View>
+  )
+})
+
 /** Sin CAP_VER_CANTIDADES_STOCK (lámina 7): el catálogo de hoy, en tarjetas con solo "Hay stock / Sin stock" del servidor. */
 function StockSinCantidades({ busqueda, columnas }: { busqueda: string; columnas: number }) {
   const insetInferior = useInsetInferior()
@@ -57,6 +86,10 @@ function StockSinCantidades({ busqueda, columnas }: { busqueda: string; columnas
   const { setBusqueda } = cat
   // La búsqueda de esta vista vive en la pantalla; el hook la espera ~300 ms como en el catálogo.
   React.useEffect(() => { setBusqueda(busqueda) }, [busqueda, setBusqueda])
+  const bloques = useMemo(() => enBloques(cat.productos, columnas), [cat.productos, columnas])
+  const renderBloque = useCallback(({ item: b }: { item: Bloque<(typeof cat.productos)[number]> }) => (
+    <BloqueSinCantidades b={b} disponible={cat.disponible} columnas={columnas} />
+  ), [cat.disponible, columnas])
   if (cat.isLoading) return <Esqueletos columnas={columnas} />
   const sinRed = cat.isError && esFallaDeRed(cat.error)
   if (cat.isError && !(sinRed && cat.productos.length > 0)) {
@@ -64,7 +97,7 @@ function StockSinCantidades({ busqueda, columnas }: { busqueda: string; columnas
   }
   return (
     <FlatList {...LISTA_LARGA_PROPS}
-      data={enBloques(cat.productos, columnas)}
+      data={bloques}
       keyExtractor={(b) => b.key}
       onEndReached={cat.cargarMas}
       onEndReachedThreshold={0.5}
@@ -76,29 +109,56 @@ function StockSinCantidades({ busqueda, columnas }: { busqueda: string; columnas
         </View>
       }
       ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan con la búsqueda." />}
-      renderItem={({ item: b }) =>
-        b.tipo === 'fila' ? (
-          <View style={{ flexDirection: 'row', gap: space[2] }}>
-            {b.items.map((p) => {
-              const chip = chipDeStock(cat.disponible.get(p.id))
-              return (
-                <TarjetaSinCantidades
-                  key={p.id}
-                  nombre={p.nombre}
-                  marca={p.marca}
-                  codigo={p.codigoPropio ?? ''}
-                  imageUrl={p.imageUrl}
-                  chip={chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
-                />
-              )
-            })}
-            {Array.from({ length: columnas - b.items.length }).map((_, i) => <Hueco key={i} />)}
-          </View>
-        ) : null
-      }
+      renderItem={renderBloque}
     />
   )
 }
+
+/** Una tarjeta, fila o línea del stock con cantidades. */
+function PiezaDeStock({ f, lista, tablet, conDeposito, desplegadas, onAlternar, onDetalle }: {
+  f: StockItem
+  lista: boolean
+  tablet: boolean
+  conDeposito: boolean
+  desplegadas: ReadonlySet<string>
+  onAlternar: (id: string) => void
+  onDetalle: (item: StockItem) => void
+}) {
+  const linea = f.esPadreDeVariantes ? { abierta: desplegadas.has(f.id), onAlternar: () => onAlternar(f.id) } : undefined
+  if (lista) {
+    const Fila = tablet ? FilaDeTabla : FilaDeLista
+    return <Fila item={f} onPress={onDetalle} conDeposito={conDeposito} linea={linea} />
+  }
+  return linea ? (
+    <TarjetaDeLinea item={f} onPress={onDetalle} abierta={linea.abierta} onAlternar={linea.onAlternar} />
+  ) : (
+    <TarjetaDeProducto item={f} onPress={onDetalle} />
+  )
+}
+
+/** Renglón memoizado de la grilla con cantidades: no se vuelve a pintar mientras su bloque y las props no cambien. */
+const BloqueConCantidades = memo(function BloqueConCantidades({ b, lista, tablet, columnas, conDeposito, desplegadas, onAlternar, onDetalle }: {
+  b: Bloque<StockItem>
+  lista: boolean
+  tablet: boolean
+  columnas: number
+  conDeposito: boolean
+  desplegadas: ReadonlySet<string>
+  onAlternar: (id: string) => void
+  onDetalle: (item: StockItem) => void
+}) {
+  if (b.tipo === 'fragancias') return <FraganciasDeLinea linea={b.linea} onAbrirDetalle={onDetalle} />
+  return (
+    <View style={{ flexDirection: 'row', gap: space[2] }}>
+      {b.items.map((f) => (
+        <View key={f.id} style={{ flex: 1, minWidth: 0 }}>
+          <PiezaDeStock f={f} lista={lista} tablet={tablet} conDeposito={conDeposito} desplegadas={desplegadas} onAlternar={onAlternar} onDetalle={onDetalle} />
+        </View>
+      ))}
+      {Array.from({ length: columnas - b.items.length }).map((_, i) => <Hueco key={i} />)}
+    </View>
+  )
+})
 
 function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: boolean }) {
   const insetInferior = useInsetInferior()
@@ -109,33 +169,28 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
   const [hojaFiltros, setHojaFiltros] = React.useState(false)
   const [detalle, setDetalle] = React.useState<StockItem | null>(null)
   const [desplegadas, setDesplegadas] = React.useState<ReadonlySet<string>>(new Set())
-  const alternar = (id: string) =>
+  const alternar = useCallback((id: string) =>
     setDesplegadas((prev) => {
       const sig = new Set(prev)
       if (sig.has(id)) sig.delete(id)
       else sig.add(id)
       return sig
-    })
+    }), [])
 
   const sinRed = s.isError && esFallaDeRed(s.error)
   // En "Todos" hay una fila por producto y depósito: cada una dice de cuál es.
   const conDeposito = s.depositoId === TODOS_LOS_DEPOSITOS
   const lista = vista === 'lista'
   const columnas = lista ? 1 : tablet ? 4 : 2
-  const bloques = enBloques(s.filas, columnas, (f) => f.esPadreDeVariantes && desplegadas.has(f.id))
-
-  const pieza = (f: StockItem) => {
-    const linea = f.esPadreDeVariantes ? { abierta: desplegadas.has(f.id), onAlternar: () => alternar(f.id) } : undefined
-    if (lista) {
-      const Fila = tablet ? FilaDeTabla : FilaDeLista
-      return <Fila item={f} onPress={setDetalle} conDeposito={conDeposito} linea={linea} />
-    }
-    return linea ? (
-      <TarjetaDeLinea item={f} onPress={setDetalle} abierta={linea.abierta} onAlternar={linea.onAlternar} />
-    ) : (
-      <TarjetaDeProducto item={f} onPress={setDetalle} />
-    )
-  }
+  const filas = s.filas
+  const bloques = useMemo(
+    () => enBloques(filas, columnas, (f) => f.esPadreDeVariantes && desplegadas.has(f.id)),
+    [filas, columnas, desplegadas],
+  )
+  const renderBloque = useCallback(({ item: b }: { item: Bloque<StockItem> }) => (
+    <BloqueConCantidades b={b} lista={lista} tablet={tablet} columnas={columnas} conDeposito={conDeposito}
+      desplegadas={desplegadas} onAlternar={alternar} onDetalle={setDetalle} />
+  ), [lista, tablet, columnas, conDeposito, desplegadas, alternar])
 
   return (
     <View style={{ flex: 1 }}>
@@ -171,16 +226,7 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
           }
           ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo={textoVacio(s.filtros, busqueda)} />}
           ListFooterComponent={s.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : undefined}
-          renderItem={({ item: b }) =>
-            b.tipo === 'fragancias' ? (
-              <FraganciasDeLinea linea={b.linea} onAbrirDetalle={setDetalle} />
-            ) : (
-              <View style={{ flexDirection: 'row', gap: space[2] }}>
-                {b.items.map((f) => <View key={f.id} style={{ flex: 1, minWidth: 0 }}>{pieza(f)}</View>)}
-                {Array.from({ length: columnas - b.items.length }).map((_, i) => <Hueco key={i} />)}
-              </View>
-            )
-          }
+          renderItem={renderBloque}
         />
       )}
       <HojaDeFiltros visible={hojaFiltros} onCerrar={() => setHojaFiltros(false)} resumen={s.resumen} filtros={s.filtros} onCambiar={s.setFiltros} />

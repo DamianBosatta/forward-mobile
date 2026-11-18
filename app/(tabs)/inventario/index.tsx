@@ -1,5 +1,5 @@
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
-import React, { useCallback, useRef, useState } from 'react'
+import React, { memo, useCallback, useRef, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { ActivityIndicator, FlatList, Modal, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
@@ -34,6 +34,13 @@ function falloDelEscaneo(error: Error, codigo?: string): string {
 }
 
 /** Catálogo, solo consulta (láminas CatalogoConsulta, FichaProducto y TabCatalogoConsulta). */
+type PropsProducto = Omit<React.ComponentProps<typeof ProductoCard>, 'onPress'> & { onAbrir: (id: string) => void }
+
+/** Fila memoizada: no se vuelve a pintar mientras el producto, su stock y `onAbrir` no cambien. */
+const FilaProducto = memo(function FilaProducto({ onAbrir, ...tarjeta }: PropsProducto) {
+  return <ProductoCard {...tarjeta} onPress={() => onAbrir(tarjeta.producto.id)} />
+})
+
 function CatalogoConsulta() {
   const insetInferior = useInsetInferior()
   const navigation = useNavigation()
@@ -83,6 +90,17 @@ function CatalogoConsulta() {
   // La ficha del producto no trae la marca de novedad: sale de la tarjeta que se tocó.
   const novedadDe = (id: string) => cat.productos.find((p) => p.id === id)
 
+  const abrirProducto = useCallback((id: string) => { cancelarEscaneo(); setSeleccion(id) }, [cancelarEscaneo])
+  const renderProducto = useCallback(({ item }: { item: (typeof productos)[number] }) => (
+    <FilaProducto
+      producto={item}
+      disponible={cat.disponible.get(item.id)}
+      grilla={grilla}
+      seleccionado={dosPaneles && seleccion === item.id}
+      onAbrir={abrirProducto}
+    />
+  ), [cat.disponible, grilla, dosPaneles, seleccion, abrirProducto])
+
   const lista = (
     <View style={{ flex: 1 }}>
       <View
@@ -121,15 +139,7 @@ function CatalogoConsulta() {
           onEndReachedThreshold={0.5}
           ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan con la búsqueda." />}
           ListFooterComponent={cat.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : undefined}
-          renderItem={({ item }) => (
-            <ProductoCard
-              producto={item}
-              disponible={cat.disponible.get(item.id)}
-              grilla={grilla}
-              seleccionado={dosPaneles && seleccion === item.id}
-              onPress={() => { cancelarEscaneo(); setSeleccion(item.id) }}
-            />
-          )}
+          renderItem={renderProducto}
         />
       )}
     </View>

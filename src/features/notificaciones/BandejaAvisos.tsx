@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { memo, useCallback, useState } from 'react'
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { CheckCheck, Settings } from 'lucide-react-native'
@@ -10,13 +10,31 @@ import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { useBandejaAvisos } from '@/libs/api-client/notificaciones'
 import { AvisoFila } from './AvisoFila'
 import { VistaCalendarioAvisos } from './VistaCalendarioAvisos'
-import { conEncabezadosDeDia, destinoDelAviso, horaDelAviso } from './bandeja'
+import { conEncabezadosDeDia, destinoDelAviso, horaDelAviso, type FilaDeBandeja } from './bandeja'
+import type { Aviso } from '@/libs/api-client/notificaciones'
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { useAbrirAviso } from './useAbrirAviso'
 
 type Filtro = 'todos' | 'sinLeer'
 /** Dos tarjetas de aviso mientras carga (propuesta Cuenta, frame 10). */
 const AVISOS_CARGANDO = [{ alto: 110 }, { alto: 110 }]
 const mensajeDe = (e: unknown, porDefecto: string) => (e instanceof Error && e.message ? e.message : porDefecto)
+
+type FilaBandeja = FilaDeBandeja<Aviso>
+
+/** Fila memoizada: encabezado de día o tarjeta de aviso; no se repinta si el aviso no cambió. */
+const FilaDeBandeja = memo(function FilaDeBandeja({ item, onAbrir }: { item: FilaBandeja; onAbrir: ReturnType<typeof useAbrirAviso>['abrir'] }) {
+  const c = useColors()
+  return (
+    <FormContainer>
+      {item.tipo === 'dia' ? (
+        <Text accessibilityRole="header" style={{ ...typeScale.etiqueta, color: c.textSecondary, marginTop: space[2] }}>{item.titulo}</Text>
+      ) : (
+        <AvisoFila variante="tarjeta" aviso={item.aviso} destino={destinoDelAviso(item.aviso.accion)} cuando={horaDelAviso(item.aviso.fechaCreacion)} onPress={() => onAbrir(item.aviso)} />
+      )}
+    </FormContainer>
+  )
+})
 
 /** Bandeja de avisos: lo que el servidor manda al usuario, más nuevo primero, de a páginas. */
 export function BandejaAvisos() {
@@ -34,6 +52,8 @@ export function BandejaAvisos() {
   const sinRed = q.isError && esFallaDeRed(q.error)
   // Sin conexión con avisos ya guardados: se siguen viendo, con un aviso; cualquier otro error los oculta como siempre.
   const verAvisos = !q.isError || (sinRed && avisos.length > 0)
+
+  const renderFila = useCallback(({ item }: { item: FilaBandeja }) => <FilaDeBandeja item={item} onAbrir={abrir} />, [abrir])
 
   const vacio = q.isLoading ? (
     <Esqueletos bloques={AVISOS_CARGANDO} />
@@ -59,7 +79,7 @@ export function BandejaAvisos() {
           { icon: Settings, accessibilityLabel: 'Preferencias de avisos', onPress: () => router.push('/avisos/preferencias' as never) },
         ]}
       />
-      <FlatList
+      <FlatList {...LISTA_LARGA_PROPS}
         data={verAvisos ? filas : []}
         keyExtractor={(f) => f.clave}
         contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] + insetInferior }}
@@ -84,15 +104,7 @@ export function BandejaAvisos() {
           </View>
         }
         ListEmptyComponent={<FormContainer>{vacio}</FormContainer>}
-        renderItem={({ item }) => (
-          <FormContainer>
-            {item.tipo === 'dia' ? (
-              <Text accessibilityRole="header" style={{ ...typeScale.etiqueta, color: c.textSecondary, marginTop: space[2] }}>{item.titulo}</Text>
-            ) : (
-              <AvisoFila variante="tarjeta" aviso={item.aviso} destino={destinoDelAviso(item.aviso.accion)} cuando={horaDelAviso(item.aviso.fechaCreacion)} onPress={() => abrir(item.aviso)} />
-            )}
-          </FormContainer>
-        )}
+        renderItem={renderFila}
         ListFooterComponent={
           <>
             {q.hasNextPage ? (
