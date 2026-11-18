@@ -5,6 +5,7 @@ import { FileText } from 'lucide-react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, FilaDeSocio, FiltroChip, Notice, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { ErrorDeConsulta, esqueletoDeFilas } from '@/core/ui/estados'
 import { esFallaDeRed } from '@/core/api/errores'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useVendedores } from '@/libs/api-client/ventas'
@@ -64,7 +65,7 @@ export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => vo
           <Text style={importe}>{formatImporte(total)}</Text>
         </Text>
       ) : null}
-      {q.error && !(sinRed && filas.length === 0) ? (
+      {q.error && filas.length > 0 ? (
         <View style={{ padding: space[4] }}>
           {sinRed ? (
             <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice>
@@ -95,7 +96,9 @@ export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => vo
             <View style={{ paddingHorizontal: space[4] }}>
               <Esqueletos bloques={FILAS_CARGANDO} />
             </View>
-          ) : q.error ? undefined : (
+          ) : q.error ? (
+            <ErrorDeConsulta error={q.error} titulo="No pudimos cargar los deudores" onReintentar={() => void q.refetch()} />
+          ) : (
             <EstadoDePantalla
               tipo="vacio"
               titulo={conFiltro ? 'No encontramos clientes con saldo pendiente para ese filtro.' : 'No hay clientes con saldo pendiente.'}
@@ -165,7 +168,7 @@ function ElegirVendedor({ visible, vendedores, cargando, error, elegido, onElegi
           ))}
         </View>
       </ScrollView>
-      {cargando ? <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Cargando…</Text> : null}
+      {cargando ? <Esqueletos bloques={esqueletoDeFilas(2, 44)} /> : null}
       {error ? <Notice tone="peligro">No se pudo cargar la lista de vendedores.</Notice> : null}
       <Button label="Listo" variant="secundario" onPress={onClose} />
     </BottomSheet>

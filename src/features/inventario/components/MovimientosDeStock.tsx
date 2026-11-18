@@ -3,6 +3,9 @@ import React from 'react'
 import { ActivityIndicator, FlatList, Modal, Text, View } from 'react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { StatusChip, TopBar, useInsetInferior } from '@/core/ui/fw'
+import { Esqueletos } from '@/features/clientes/components/Esqueletos'
+import { ErrorDeConsulta, esqueletoDeFilas } from '@/core/ui/estados'
+import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
 import { formatToLocalTime } from '@/core/utils/fecha'
 import type { MovimientoStockHistorialDto } from '@/libs/api-client/types'
 import { useMovimientosDeStock } from '../hooks/useConsultasDeStock'
@@ -47,11 +50,9 @@ export function MovimientosDeStock({ visible, onCerrar, productoId, producto }: 
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Movimientos" subtitle={producto} leading={{ kind: 'atras', onPress: onCerrar }} />
         {q.isLoading ? (
-          <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
+          <View style={{ padding: space[4] }}><Esqueletos bloques={esqueletoDeFilas(5, 64)} /></View>
         ) : q.isError ? (
-          <Text accessibilityRole="alert" style={[typeScale.cuerpo, { color: c.chip.anulado.text, padding: space[4], textAlign: 'center' }]}>
-            No se pudo cargar el historial. Intentá de nuevo.
-          </Text>
+          <ErrorDeConsulta error={q.error} titulo="No pudimos cargar el historial" onReintentar={() => { void q.refetch() }} />
         ) : (
           <FlatList {...LISTA_LARGA_PROPS}
             data={movimientos}
@@ -62,7 +63,7 @@ export function MovimientosDeStock({ visible, onCerrar, productoId, producto }: 
             }}
             onEndReachedThreshold={0.5}
             contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] + insetInferior }}
-            ListEmptyComponent={<Text style={[typeScale.cuerpo, { color: c.textSecondary, textAlign: 'center', padding: space[4] }]}>No hay movimientos registrados para este producto.</Text>}
+            ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="Todavía no hay movimientos de este producto." />}
             ListFooterComponent={q.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : undefined}
           />
         )}

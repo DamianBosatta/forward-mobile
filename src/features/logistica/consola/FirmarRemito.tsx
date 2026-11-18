@@ -62,7 +62,7 @@ export function FirmarRemito({ obligatoria, url, onUrl, onSubiendo, referencia, 
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
             {subiendo ? <ActivityIndicator color={verde.bg} /> : <PenLine size={26} color={verde.bg} strokeWidth={2.5} />}
-            <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.seccion, fontSize: 21, lineHeight: 28, color: verde.bg }}>Firmar</Text>
+            <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.consolaTexto, color: verde.bg }}>Firmar</Text>
           </View>
           <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.secundario, color: verde.bg }}>
             {obligatoria ? 'Abre la cámara: foto del remito firmado' : 'Opcional · foto del remito firmado'}

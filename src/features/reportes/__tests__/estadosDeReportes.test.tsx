@@ -60,11 +60,12 @@ describe('Reportes: sin conexión', () => {
     expect(screen.getByTestId('reporte-ventas')).toBeTruthy()
   })
 
-  it('otro error sigue siendo el aviso de siempre', async () => {
+  it('otro error: estado de error con Reintentar, sin hablar de señal', async () => {
     mockGet.mockRejectedValue(new Error('500'))
     pintar()
 
-    expect(await screen.findByText('No se pudieron cargar los reportes.')).toBeTruthy()
-    expect(screen.queryByRole('header', { name: 'No pudimos cargar los reportes' })).toBeNull()
+    expect(await screen.findByRole('header', { name: 'No pudimos cargar los reportes' })).toBeTruthy()
+    expect(screen.getByText(/Algo salió mal de nuestro lado/)).toBeTruthy()
+    expect(screen.queryByText(/no hay señal/)).toBeNull()
   })
 })

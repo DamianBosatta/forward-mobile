@@ -1,5 +1,7 @@
 import React, { useRef, useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
+import { Pressable, ScrollView, Text, View } from 'react-native'
+import { esqueletoDeFilas } from '@/core/ui/estados'
+import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { ChevronRight, Plus, X } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { mostrarNumero } from '@/core/utils/numero'
@@ -124,7 +126,7 @@ function CobroDelCliente({ socioId, medioInicial, contraparte, paso, onPaso, onV
   // POST Media/upload-cheque: quien cobra (MOD_PAGOS:Create) o quien gestiona cheques (MediaController).
   const subeFotoCheque = canDo('MOD_PAGOS', 'create') || hasCapability('CAP_GESTIONAR_CHEQUES')
 
-  if (socio.isLoading) return <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
+  if (socio.isLoading) return <View style={{ padding: space[4] }}><Esqueletos bloques={esqueletoDeFilas(3, 96)} /></View>
   if (!socio.data) {
     return (
       <View style={{ flex: 1 }}>

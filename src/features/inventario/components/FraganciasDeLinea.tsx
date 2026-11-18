@@ -1,9 +1,11 @@
 import React from 'react'
-import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { AlertTriangle } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useVariantesProducto, type VarianteProducto } from '@/libs/api-client/productos'
 import type { StockItem } from '@/libs/api-client/types'
+import { Esqueletos } from '@/features/clientes/components/Esqueletos'
+import { esqueletoDeFilas } from '@/core/ui/estados'
 import { TODOS_LOS_DEPOSITOS } from '../hooks/useStockPorDeposito'
 import { textoStockAroma, varianteComoFila } from '../lib/stock-presentacion'
 
@@ -35,9 +37,8 @@ export function FraganciasDeLinea({ linea, onAbrirDetalle }: Props) {
     <View accessibilityLabel={`Fragancias de ${linea.producto}`} style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>
       <Text style={[typeScale.cuerpoDestacado, { color: c.text, paddingHorizontal: space[3], paddingVertical: space[3] }]}>{linea.producto}</Text>
       {isLoading ? (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], padding: space[3] }}>
-          <ActivityIndicator size="small" color={c.brandInk} />
-          <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Cargando aromas...</Text>
+        <View style={{ padding: space[3] }}>
+          <Esqueletos bloques={esqueletoDeFilas(3, 44)} />
         </View>
       ) : isError ? (
         aviso('No se pudieron cargar los aromas de esta línea.', true)

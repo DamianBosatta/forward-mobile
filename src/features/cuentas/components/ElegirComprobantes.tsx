@@ -1,5 +1,7 @@
 import React from 'react'
-import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
+import { esqueletoDeFilas } from '@/core/ui/estados'
+import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Field, MarcaDeCasilla, Notice, formatImporte } from '@/core/ui/fw'
@@ -27,7 +29,7 @@ export function ElegirComprobantes({ socioId, valor, onCambio, sinPendientes = '
   const c = useColors()
   const pendientes = useDocumentosPendientes(socioId, true)
 
-  if (pendientes.isLoading) return <ActivityIndicator color={c.brandInk} />
+  if (pendientes.isLoading) return <Esqueletos bloques={esqueletoDeFilas(2, 64)} />
   if (pendientes.error) return <Notice tone="peligro">{mensajeDelServidor(pendientes.error, 'No se pudieron cargar los comprobantes pendientes.')}</Notice>
   const documentos = pendientes.data ?? []
   if (documentos.length === 0) return <Notice tone="info">{sinPendientes}</Notice>

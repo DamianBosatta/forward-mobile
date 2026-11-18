@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, FlatList, Text, View } from 'react-native'
+import { FlatList, Text, View } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { Button, Field, Notice, PieFijo } from '@/core/ui/fw'
 import { MOTIVO_SIN_PERMISO_DE_COBRO, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
+import { ErrorDeConsulta, esqueletoDeFilas } from '@/core/ui/estados'
+import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -39,7 +41,7 @@ export function ElegirProveedorPago({ seleccionadoId, onElegir, onContinuar, pue
         ListHeaderComponent={
           <View style={{ gap: space[2], paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[2] }}>
             <Field label="Buscar proveedor" value={busqueda} onChangeText={setBusqueda} placeholder="Nombre o CUIT" returnKeyType="search" />
-            {error ? (
+            {error && proveedores.length > 0 ? (
               <View style={{ gap: space[2] }}>
                 <Notice tone={esFallaDeRed(error) ? 'advertencia' : 'peligro'}>
                   {esFallaDeRed(error) ? textoSinConexion() : mensajeDelServidor(error, 'No se pudieron cargar los proveedores.')}
@@ -53,7 +55,7 @@ export function ElegirProveedorPago({ seleccionadoId, onElegir, onContinuar, pue
           <ProveedorCard proveedor={item} seleccionado={item.id === seleccionadoId} primera={index === 0} ultima={index === proveedores.length - 1} onPress={() => onElegir(item.id)} />
         )}
         ListEmptyComponent={
-          isLoading ? <ActivityIndicator color={c.brandInk} /> : error ? undefined : (
+          isLoading ? <View style={{ paddingHorizontal: space[4] }}><Esqueletos bloques={FILAS_CARGANDO} /></View> : error ? <ErrorDeConsulta error={error} titulo="No pudimos cargar los proveedores" onReintentar={() => { void refetch() }} /> : (
             <Text style={{ ...typeScale.secundario, color: c.textSecondary, paddingHorizontal: space[4] }}>
               {buscando ? 'Ningún proveedor coincide con la búsqueda.' : 'Todavía no hay proveedores.'}
             </Text>
