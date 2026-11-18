@@ -1,14 +1,30 @@
 import { storage } from '@/core/utils/storage'
 import { nuevaClaveIdempotencia } from '@/core/utils/idempotencia'
+import type { DatosAccion } from './colaConsola'
 
 /**
- * Las claves de idempotencia de lo que el chofer reporta en una parada (cobro, entrega, aviso), guardadas en el MMKV
- * cifrado del teléfono y no en memoria (RED-08): si la app se cierra después de un intento sin respuesta, el reintento
- * sale con la misma clave y el servidor no lo graba dos veces. Una lista por usuario, como la cola de la consola.
+ * Idempotency keys of what the driver reports at a stop (cobro, entrega, aviso), stored in the phone's encrypted MMKV
+ * instead of memory (RED-08): if the app closes after an attempt that got no answer, the retry goes out with the same
+ * key and the server does not record it twice. One list per user, like the console queue (kept on logout like it).
  *
- * `uso` dice de qué es la clave: `cobro:<paradaCobroId>`, `entrega:<paradaId>`, `aviso:<paradaId>`.
- * Se borra cuando el servidor confirma (o cuando la clave ya no sirve); lo que nadie borró se olvida a los 7 días.
+ * `uso` says what the key is for: `cobro:<paradaCobroId>`, `entrega:<paradaId>`, `aviso:<paradaId>`.
+ * It is dropped when the server confirms (or the key is spent); anything nobody dropped expires after 7 days.
  */
+
+/** What each stop key is for. One place, so the screens and the queue name the same key. */
+export const usoEntrega = (paradaId: string) => `entrega:${paradaId}`
+export const usoAviso = (paradaId: string) => `aviso:${paradaId}`
+export const usoCobro = (paradaCobroId: string) => `cobro:${paradaCobroId}`
+
+/** The stored key a queued action was sent with; `undefined` for "No cobré", whose key is fixed per stop. */
+export function usoDeAccion(a: Pick<DatosAccion, 'tipo' | 'paradaId'>): string | undefined {
+  switch (a.tipo) {
+    case 'entrega': return usoEntrega(a.paradaId)
+    case 'noEntrega': return usoAviso(a.paradaId)
+    case 'cobroParada': return usoCobro(a.paradaId)
+    default: return undefined
+  }
+}
 
 const VIGENCIA_MS = 7 * 24 * 60 * 60_000
 const claveDeLista = (usuarioId: string) => `consola-claves:${usuarioId}`
@@ -35,7 +51,7 @@ function escribir(usuarioId: string, guardadas: Guardadas): void {
   else storage.set(claveDeLista(usuarioId), JSON.stringify(guardadas))
 }
 
-/** La clave guardada para ese uso, o una nueva que queda guardada antes de devolverla. */
+/** The stored key for that use, or a new one that is stored before it is returned. */
 export function claveDeParada(usuarioId: string, uso: string, ahora = Date.now()): string {
   const guardadas = leer(usuarioId)
   const ya = guardadas[uso]
@@ -46,10 +62,14 @@ export function claveDeParada(usuarioId: string, uso: string, ahora = Date.now()
   return clave
 }
 
-/** El servidor confirmó (o la clave ya no sirve): el próximo reporte de ese uso sale con una clave nueva. */
-export function olvidarClaveDeParada(usuarioId: string, uso: string): void {
+/**
+ * The server confirmed (or the key is spent): the next report for that use goes out with a new key.
+ * With `soloSi`, only that key is forgotten: a newer key stored for the same stop stays.
+ */
+export function olvidarClaveDeParada(usuarioId: string, uso: string, soloSi?: string): void {
   const guardadas = leer(usuarioId)
   if (!(uso in guardadas)) return
+  if (soloSi !== undefined && guardadas[uso].clave !== soloSi) return
   delete guardadas[uso]
   escribir(usuarioId, guardadas)
 }

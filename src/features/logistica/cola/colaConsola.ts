@@ -88,20 +88,20 @@ export function suscribirCola(oyente: () => void): () => void {
   return () => { oyentes.delete(oyente) }
 }
 
-/** Una entrega y su aviso resuelven la misma parada; un cobro y un "No cobré", la misma parada de cobro. */
+/** An entrega and its aviso resolve the same stop; a cobro and a "No cobré" resolve the same collection stop. */
 const familia = (tipo: DatosAccion['tipo']) => (tipo === 'cobroParada' || tipo === 'noCobroParada' ? 'cobro' : 'entrega')
 
 type Parada = Pick<DatosAccion, 'tipo' | 'hojaDeRutaId' | 'paradaId'>
 
-/** Una acción para revisar de esa misma parada (misma hoja, mismo id y misma familia). */
+/** An action left for review for that same stop (same trip, same id and same family). */
 const esRevisarDe = (p: Parada) => (a: AccionEnCola) =>
   a.estado.tipo === 'revisar' && a.hojaDeRutaId === p.hojaDeRutaId && a.paradaId === p.paradaId && familia(a.tipo) === familia(p.tipo)
 
 /**
- * Guarda la acción en el teléfono. La misma clave dos veces queda una sola vez (devuelve la que ya estaba): una que
- * espera no cambia, porque puede estar saliendo. Lo que el chofer vuelve a reportar de una parada que quedó para
- * revisar la reemplaza (RED-09): con la misma clave, vuelve a esperar con el cuerpo y la hora nuevos (el servidor
- * aplica la clave una sola vez); con otra clave (la app se reinició y la perdió), la para revisar se saca.
+ * Stores the action on the phone. The same key twice is kept once (returns the one already there): a waiting action
+ * does not change, because it may be on its way. A new report for a stop left for review replaces it (RED-09): with
+ * the same key it waits again with the new body and time (the server applies a key only once); with another key
+ * (the previous one was spent or expired), the review item is dropped.
  */
 export function encolarAccion(usuarioId: string, d: DatosAccion, ahora = Date.now()): AccionEnCola {
   const lista = leerCola(usuarioId)
@@ -114,8 +114,8 @@ export function encolarAccion(usuarioId: string, d: DatosAccion, ahora = Date.no
 }
 
 /**
- * El servidor ya tiene esa parada resuelta (se reportó con señal, o ya estaba registrada): lo que había quedado para
- * revisar de ella sobra y no tiene que frenar el cierre del viaje. Lo que espera no se toca: puede estar saliendo.
+ * The server already has that stop resolved (reported online, or already recorded): whatever of it was left for review
+ * is stale and must not block closing the trip. Waiting actions are left alone: they may be on their way.
  */
 export function olvidarRevisarDeParada(usuarioId: string, p: Parada): void {
   const lista = leerCola(usuarioId)

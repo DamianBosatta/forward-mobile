@@ -14,7 +14,7 @@ import {
 } from '@/features/cobros/paradaCobro'
 import { useMediosCobroChofer } from '@/libs/api-client/logistica'
 import { encolarAccion, olvidarRevisarDeParada } from '../cola/colaConsola'
-import { claveDeParada, olvidarClaveDeParada } from '../cola/clavesDeParada'
+import { claveDeParada, olvidarClaveDeParada, usoCobro } from '../cola/clavesDeParada'
 import { useColaConsola } from '../cola/useColaConsola'
 import { conAccionesCobroEnCola } from '../cola/conAccionesEnCola'
 import { ParadaCobroPantalla, lineasParaEnviar, type ResultadoParadaCobro } from './ParadaCobroPantalla'
@@ -59,8 +59,7 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
   const total = paradasDeEntrega + lista.length
   const seleccionada = lista.findIndex((p) => p.id === abierta)
 
-  // La clave del cobro queda en el teléfono, no en memoria (RED-08): cerrar la app no la cambia y el reintento no cobra dos veces.
-  const usoCobro = (id: string) => `cobro:${id}`
+  // The cobro key lives on the phone, not in memory (RED-08): closing the app keeps it, so a retry never collects twice.
   const claveDe = (id: string) => claveDeParada(usuarioId, usoCobro(id))
   const olvidarClave = (id: string) => olvidarClaveDeParada(usuarioId, usoCobro(id))
   const cerrar = () => { setAbierta(null); setError(null); setResultado(null) }
@@ -83,11 +82,11 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
       if (!onlineManager.isOnline()) { guardar(); return }
       await cobrar.mutateAsync({ hojaDeRutaId, paradaCobroId: parada.id, cuerpo })
       olvidarClave(parada.id)
-      // El servidor ya la tiene: lo que había quedado para revisar de esta parada sobra y no frena el cierre (RED-01).
+      // The server has it now: whatever of this stop was left for review is stale and must not block closing (RED-01).
       olvidarRevisarDeParada(usuarioId, { tipo: 'cobroParada', hojaDeRutaId, paradaId: parada.id })
       setResultado({ tipo: 'cobro', monto, guardada: false })
     } catch (e) {
-      // Sin respuesta (sin red o tiempo agotado): pudo haberse grabado; queda en la cola con la misma clave.
+      // No answer (no network or timed out): it may have been stored; it is queued with the same key.
       if (esSinRespuesta(e)) { guardar(); return }
       const codigo = (e as { codigo?: string } | null)?.codigo
       // La clave ya quedó con otro cuerpo: el servidor guarda que una parada se resuelve una sola vez, así que una clave nueva es segura.

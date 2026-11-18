@@ -37,9 +37,9 @@ export function esTiempoAgotado(e: unknown): boolean {
 }
 
 /**
- * True si el pedido quedó sin respuesta: no llegó ({@link esFallaDeRed}) o se cortó por plazo ({@link esTiempoAgotado}).
- * En los dos casos el servidor pudo haberlo grabado igual: lo que tiene clave de idempotencia se guarda en el teléfono
- * y se vuelve a mandar con esa misma clave, nunca con una nueva. Una sola regla para las colas sin señal.
+ * True when the request got no answer: it never arrived ({@link esFallaDeRed}) or it hit the time limit
+ * ({@link esTiempoAgotado}). Either way the server may have stored it: anything with an idempotency key is kept on the
+ * phone and resent with that same key, never a new one. One rule for every offline queue.
  */
 export function esSinRespuesta(e: unknown): boolean {
   return esFallaDeRed(e) || esTiempoAgotado(e)

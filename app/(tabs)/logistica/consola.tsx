@@ -26,7 +26,7 @@ import { ReportarParada, type Resultado, type ReporteParada } from '@/features/l
 import { LlegueParada } from '@/features/logistica/consola/LlegueParada'
 import { EntregaLista } from '@/features/logistica/consola/EntregaLista'
 import { AvisadoVentas } from '@/features/logistica/consola/AvisadoVentas'
-import { claveDeParada, ColaConsola, encolarAccion, olvidarClaveDeParada, olvidarRevisarDeParada, useColaConsola, type DatosAccion } from '@/features/logistica/cola'
+import { claveDeParada, ColaConsola, encolarAccion, olvidarClaveDeParada, olvidarRevisarDeParada, usoAviso, usoEntrega, useColaConsola, type DatosAccion } from '@/features/logistica/cola'
 import { conAccionesEnCola } from '@/features/logistica/cola/conAccionesEnCola'
 import { PermisoGps } from '@/features/logistica/gps/PermisoGps'
 import { terminarRegistroGps } from '@/features/logistica/gps/registroGps'
@@ -132,11 +132,9 @@ export default function ConsolaChoferScreen() {
   const usuarioId = user?.id ?? ''
   // Una clave por parada, la misma en cada reintento (también si se cierra y reabre la entrega o la app):
   // si la respuesta se perdió, el servidor contesta lo que ya registró en vez de cargarlo dos veces.
-  // Queda guardada en el teléfono, no en memoria (RED-08).
-  const usoEntrega = (paradaId: string) => `entrega:${paradaId}`
+  // Stored on the phone, not in memory (RED-08), so it also survives an app restart.
   const claveDe = (paradaId: string) => claveDeParada(usuarioId, usoEntrega(paradaId))
   // Aviso "No pude entregar": una clave por intento de reporte, la misma en cada reintento (misma regla que la entrega).
-  const usoAviso = (paradaId: string) => `aviso:${paradaId}`
   const claveAvisoDe = (paradaId: string) => claveDeParada(usuarioId, usoAviso(paradaId))
   // Guarda síncrona: un doble toque llega antes de que `isPending` se vea en pantalla.
   const reportandoYa = useRef(false)
@@ -223,7 +221,7 @@ export default function ConsolaChoferScreen() {
   // Lo reportado sin señal que todavía no salió ya cuenta como hecho, aunque el servidor aún no lo sepa.
   const deEsteViaje = cola.items.filter((a) => a.hojaDeRutaId === viaje.id)
   const esperando = deEsteViaje.filter((a) => a.estado.tipo === 'esperando').length
-  // Lo que quedó para revisar tampoco salió (RED-01): se reintenta o se descarta en la píldora antes de cerrar el viaje.
+  // Actions left for review were not sent either (RED-01): the pill retries or discards them before the trip closes.
   const enRevision = deEsteViaje.length - esperando
   const sinMandar = esperando + enRevision
   const detalles = conAccionesEnCola((viaje.detalles ?? []) as ParadaDto[], deEsteViaje)
@@ -285,7 +283,7 @@ export default function ConsolaChoferScreen() {
         else {
           await entregar.mutateAsync({ hojaDeRutaId: viaje.id, paradaId: parada.id, cuerpo })
           olvidarClaveDeParada(usuarioId, usoEntrega(parada.id))
-          // El servidor ya la tiene: lo que había quedado para revisar de esta parada sobra (RED-01).
+          // The server has it now: whatever of this stop was left for review is stale (RED-01).
           olvidarRevisarDeParada(usuarioId, { tipo: 'entrega', hojaDeRutaId: viaje.id, paradaId: parada.id })
         }
         updateStopStatus(parada.id, { delivered: true, observations: r.entrega.observaciones ?? undefined })
