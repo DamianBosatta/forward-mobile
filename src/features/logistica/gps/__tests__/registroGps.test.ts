@@ -19,6 +19,11 @@ jest.mock('expo-location', () => ({
 }))
 jest.mock('expo-notifications', () => ({ requestPermissionsAsync: jest.fn() }))
 jest.mock('expo-task-manager', () => ({ defineTask: jest.fn() }))
+let mockAlmacenBloqueado = false
+jest.mock('@/core/utils/storage', () => ({
+  ...jest.requireActual('@/core/utils/storage'),
+  estadoDelAlmacen: () => (mockAlmacenBloqueado ? { bloqueado: true, motivo: 'keystore-ilegible' } : { bloqueado: false }),
+}))
 const mockPost = jest.fn()
 jest.mock('@/core/api/client', () => ({
   ...jest.requireActual('@/core/api/client'),
@@ -170,6 +175,22 @@ describe('cuándo se detiene', () => {
     await llega(lectura(1000))
     expect(leerPosiciones(USUARIO)).toEqual([])
     expect(loc.stopLocationUpdatesAsync).toHaveBeenCalledWith(TAREA_GPS)
+  })
+
+  it('SEG-01: con el almacén bloqueado una lectura no frena la tarea del viaje, avisa el motivo y no escribe', async () => {
+    await comenzarRegistroGps(HOJA, USUARIO)
+    const aviso = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    mockAlmacenBloqueado = true
+    try {
+      await llega(lectura(1000))
+    } finally {
+      mockAlmacenBloqueado = false
+    }
+    expect(loc.stopLocationUpdatesAsync).not.toHaveBeenCalled()
+    expect(registrando).toBe(true)
+    expect(aviso).toHaveBeenCalledWith('[WARN]', expect.stringContaining('almacén'), 'keystore-ilegible')
+    aviso.mockRestore()
+    expect(leerPosiciones(USUARIO)).toEqual([])
   })
 
   it('una lectura tardía sin viaje activo no se guarda', async () => {

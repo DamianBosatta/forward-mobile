@@ -32,11 +32,15 @@ export function AlmacenBloqueadoVista({ reintentoFallido, onReintentar }: Almace
 }
 
 /** Reloads the JS bundle so every store reads the real file from the start. */
-function recargarLaApp() {
+function recargarLaApp(alFallar: () => void) {
   try {
     // Optional native module, as in perfil/lib/version.ts: absent in a dev client without expo-updates.
     const Updates = require('expo-updates') as typeof import('expo-updates')
-    Updates.reloadAsync().catch(() => DevSettings.reload())
+    Updates.reloadAsync().catch((e) => {
+      // DevSettings.reload does nothing in a release build: say it did not work instead.
+      logger.error(new Error(`Encrypted storage reload failed: ${e instanceof Error ? e.message : 'unknown'}`))
+      alFallar()
+    })
   } catch {
     DevSettings.reload()
   }
@@ -58,7 +62,7 @@ export function AlmacenBloqueado({ motivo }: { motivo: MotivoDeBloqueo }) {
 
   const reintentar = () => {
     if (sePuedeAbrirElAlmacen()) {
-      recargarLaApp()
+      recargarLaApp(() => setReintentoFallido(true))
       return
     }
     setReintentoFallido(true)

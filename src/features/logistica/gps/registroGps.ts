@@ -2,7 +2,7 @@ import * as Location from 'expo-location'
 import * as Notifications from 'expo-notifications'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { logger } from '@/core/utils/logger'
-import { storage } from '@/core/utils/storage'
+import { estadoDelAlmacen, storage } from '@/core/utils/storage'
 import { encolarPosiciones, type PosicionEnCola } from './colaPosiciones'
 import { enviarPosicionesPendientes, type ResultadoEnvioPosiciones } from './enviarPosiciones'
 
@@ -164,6 +164,12 @@ async function alRecibirLecturas({ data, error }: { data?: { locations?: Locatio
   try {
     if (error) {
       logger.warn('El GPS del viaje informó una falla', error.message)
+      return
+    }
+    const almacen = estadoDelAlmacen()
+    if (almacen.bloqueado) {
+      // SEG-01: el viaje activo no se puede leer (el almacén está en memoria): frenar la tarea nativa la cortaría sin aviso.
+      logger.warn('El GPS del viaje no puede leer el almacén bloqueado; la tarea sigue', almacen.motivo)
       return
     }
     const activo = leerActivo()

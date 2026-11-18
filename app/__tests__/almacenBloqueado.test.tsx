@@ -104,4 +104,15 @@ describe('app start with an unreadable storage key', () => {
     expect(mockSetItem).not.toHaveBeenCalled()
     expect(mockSecure.get('forward_mmkv_key')).toBe(CLAVE_GUARDADA)
   })
+
+  it('Reintentar when the reload rejects says it did not work and reports the reason, never the key', async () => {
+    const { screen, userEvent } = arrancarConElKeystoreRoto()
+    mockGetItem.mockImplementation((k: string) => mockSecure.get(k) ?? null)
+    mockReloadAsync.mockRejectedValueOnce(new Error('reload failed'))
+    await userEvent.press(await screen.findByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByText(/Todavía no se pudo/)).toBeTruthy()
+    expect(mockCaptureException).toHaveBeenCalledTimes(2)
+    expect(String(mockCaptureException.mock.calls[1][0])).toContain('reload failed')
+    expect(JSON.stringify(mockCaptureException.mock.calls)).not.toContain(CLAVE_GUARDADA)
+  })
 })
