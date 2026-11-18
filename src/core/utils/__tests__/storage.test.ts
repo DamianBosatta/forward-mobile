@@ -45,9 +45,11 @@ const mockCreateMMKV = jest.fn((config: { id: string; encryptionKey?: string }) 
     },
   }
 })
+const mockDeleteMMKV = jest.fn((id: string) => mockArchivos.delete(id))
 jest.mock('react-native-mmkv', () => ({
   createMMKV: (c: { id: string; encryptionKey?: string }) => mockCreateMMKV(c),
   existsMMKV: (id: string) => mockArchivos.has(id),
+  deleteMMKV: (id: string) => mockDeleteMMKV(id),
 }))
 
 const ID = 'forward-app-storage'
@@ -97,6 +99,7 @@ const keystoreSano = () => mockGetItem.mockImplementation((k: string) => mockSec
 beforeEach(() => {
   jest.clearAllMocks()
   keystoreSano()
+  mockSetItem.mockImplementation((k: string, v: string) => { mockSecure.set(k, v) })
   mockSecure.clear()
   mockArchivos.clear()
 })
@@ -251,6 +254,110 @@ describe('MMKV encryption key', () => {
   })
 })
 
+/**
+ * "Empezar de nuevo" (owner decision 2026-11-18, recovery screen): once the person confirms, the unreadable file is
+ * replaced by an empty one on a new key. The key is the point of no return, so it is written and read back BEFORE the
+ * file is deleted: a key that cannot be written touches nothing.
+ */
+describe('reiniciarAlmacen', () => {
+  /** A Keystore whose old entry no longer decrypts (screen lock changed): reads throw until a new key is written. */
+  function keystoreInvalidado() {
+    let invalidado = true
+    mockGetItem.mockImplementation((k: string) => {
+      if (invalidado) throw new Error('KeyPermanentlyInvalidatedException')
+      return mockSecure.get(k) ?? null
+    })
+    mockSetItem.mockImplementation((k: string, v: string) => {
+      mockSecure.set(k, v)
+      invalidado = false
+    })
+  }
+
+  it('with a lost key: saves a new key, reads it back, then deletes the file; the next start opens it empty and unblocked', () => {
+    telefonoConClaveYColas()
+    mockSecure.delete(CLAVE)
+    const { modulo } = arrancarLaApp()
+    expect(modulo.estadoDelAlmacen()).toEqual({ bloqueado: true, motivo: 'clave-perdida' })
+
+    expect(modulo.reiniciarAlmacen()).toBe('reiniciado')
+    const nueva = mockSecure.get(CLAVE)!
+    expect(nueva).toMatch(CLAVE_NUEVA)
+    expect(mockSetItem).toHaveBeenCalledTimes(1)
+    expect(mockDeleteMMKV).toHaveBeenCalledWith(ID)
+    expect(mockSetItem.mock.invocationCallOrder[0]).toBeLessThan(mockDeleteMMKV.mock.invocationCallOrder[0])
+    expect(archivo()).toBeUndefined()
+    expect(marcas()?.get('clave-guardada')).toBe('1')
+    // This run keeps the stand-in: the GPS task keeps its early return until the app reloads (332e119).
+    expect(modulo.estadoDelAlmacen()).toEqual({ bloqueado: true, motivo: 'clave-perdida' })
+
+    const recargada = arrancarLaApp()
+    expect(recargada.config).toEqual({ id: ID, encryptionKey: nueva })
+    expect(recargada.modulo.estadoDelAlmacen()).toEqual({ bloqueado: false })
+    expect(recargada.storage.getString('cola-consola-7')).toBeUndefined()
+  })
+
+  it('with an invalidated Keystore (reads throw until a new key is written), the reset works the same way', () => {
+    telefonoConClaveYColas()
+    keystoreInvalidado()
+    const { modulo } = arrancarLaApp()
+    expect(modulo.estadoDelAlmacen()).toEqual({ bloqueado: true, motivo: 'keystore-ilegible' })
+
+    expect(modulo.reiniciarAlmacen()).toBe('reiniciado')
+    expect(mockDeleteMMKV).toHaveBeenCalledWith(ID)
+    const recargada = arrancarLaApp()
+    expect(recargada.config).toEqual({ id: ID, encryptionKey: mockSecure.get(CLAVE) })
+    expect(recargada.modulo.estadoDelAlmacen()).toEqual({ bloqueado: false })
+  })
+
+  it('if the new key cannot be saved, nothing is touched: the old key and the file stay as they were', () => {
+    telefonoConClaveYColas()
+    keystoreRoto()
+    const { modulo } = arrancarLaApp()
+    mockSetItem.mockImplementation(() => { throw new Error('Keystore unavailable') })
+
+    expect(modulo.reiniciarAlmacen()).toBe('sin-guardar')
+    expect(mockDeleteMMKV).not.toHaveBeenCalled()
+    expect(mockDeleteItemAsync).not.toHaveBeenCalled()
+    expect(mockSecure.get(CLAVE)).toBe(CLAVE_GUARDADA)
+    expectArchivoIntacto()
+  })
+
+  it('if the new key is saved but does not read back, the file is not deleted and the result says so', () => {
+    telefonoConClaveYColas()
+    keystoreRoto()
+    const { modulo } = arrancarLaApp()
+
+    expect(modulo.reiniciarAlmacen()).toBe('sin-leer')
+    expect(mockSetItem).toHaveBeenCalledTimes(1)
+    expect(mockDeleteMMKV).not.toHaveBeenCalled()
+    expect(archivo()?.datos.get('cola-consola-7')).toBe('[{"parada":1}]')
+  })
+
+  it('if the saved key reads again, nothing is written or deleted: the reload opens the file with its data', () => {
+    telefonoConClaveYColas()
+    keystoreRoto()
+    const { modulo } = arrancarLaApp()
+    keystoreSano()
+
+    expect(modulo.reiniciarAlmacen()).toBe('se-abre')
+    expect(mockSetItem).not.toHaveBeenCalled()
+    expect(mockDeleteMMKV).not.toHaveBeenCalled()
+    expectArchivoIntacto()
+  })
+
+  it('never touches a file that opened in this run, not even when the Keystore fails afterwards', () => {
+    telefonoConClaveYColas()
+    const { modulo } = arrancarLaApp()
+
+    expect(modulo.reiniciarAlmacen()).toBe('se-abre')
+    keystoreRoto()
+    expect(modulo.reiniciarAlmacen()).toBe('se-abre')
+    expect(mockSetItem).not.toHaveBeenCalled()
+    expect(mockDeleteMMKV).not.toHaveBeenCalled()
+    expectArchivoIntacto()
+  })
+})
+
 describe('app.config.ts', () => {
   it('turns Android backup off, so the data and the key do not leave the phone', () => {
     const config = require('../../../../app.config').default
@@ -317,5 +424,25 @@ describe('zustandStorageMudadoDesde', () => {
     expect(almacenPlano.removeItem).not.toHaveBeenCalled()
     expect(plano.get('logistica-storage')).toBe('{"viaje":"plano"}')
     expectArchivoIntacto()
+  })
+
+  it('after Empezar de nuevo, removing also removes the plain copy, so the reload does not bring back an old trip', async () => {
+    telefonoConClaveYColas()
+    mockSecure.delete(CLAVE)
+    const plano = new Map([['logistica-storage', '{"viaje":"plano"}']])
+    let modulo: typeof import('../storage') | undefined
+    jest.isolateModules(() => { modulo = require('../storage') })
+    const almacenPlano = {
+      getItem: jest.fn(async (k: string) => plano.get(k) ?? null),
+      removeItem: jest.fn(async (k: string) => { plano.delete(k) }),
+    }
+    // The store builds its adapter at import, before the person confirms.
+    const mudado = modulo!.zustandStorageMudadoDesde(almacenPlano)
+    expect(modulo!.reiniciarAlmacen()).toBe('reiniciado')
+
+    // Still blocked in this run: reads do not move the plain copy into the stand-in.
+    expect(await mudado.getItem('logistica-storage')).toBeNull()
+    await mudado.removeItem('logistica-storage')
+    expect(plano.has('logistica-storage')).toBe(false)
   })
 })

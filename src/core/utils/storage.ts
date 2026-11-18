@@ -1,6 +1,6 @@
 import { getRandomBytes } from 'expo-crypto'
 import * as SecureStore from 'expo-secure-store'
-import { createMMKV, existsMMKV, type MMKV } from 'react-native-mmkv'
+import { createMMKV, deleteMMKV, existsMMKV, type MMKV } from 'react-native-mmkv'
 
 /**
  * MMKV instance, encrypted at rest with a per-install key (audit tranche 1, S3).
@@ -16,7 +16,8 @@ import { createMMKV, existsMMKV, type MMKV } from 'react-native-mmkv'
  *
  * SEG-01 (re-audit 3): MMKV discards a file opened with the wrong key, and every offline queue lives in this file.
  * So a Keystore that cannot be read, or that answers "no key" after a key was saved, never opens the file: the app
- * blocks (`estadoDelAlmacen`) and offers Reintentar, which reloads the app once the key reads again.
+ * blocks (`estadoDelAlmacen`) and offers Reintentar, which reloads the app once the key reads again, or Empezar de
+ * nuevo (`reiniciarAlmacen`), which replaces the unreadable file with an empty one once the person confirms it.
  */
 const STORAGE_ID = 'forward-app-storage'
 const STORAGE_KEY_NAME = 'forward_mmkv_key'
@@ -201,6 +202,51 @@ export function sePuedeAbrirElAlmacen(): boolean {
 }
 
 /**
+ * What Empezar de nuevo did:
+ * - `reiniciado`: a new key is saved and reads back, and the old file is deleted. The reload opens an empty file.
+ * - `se-abre`: the saved key reads again, so nothing was written or deleted: the reload opens the file with its data.
+ * - `sin-guardar`: the Keystore did not take a new key. Nothing changed.
+ * - `sin-leer`: the new key was saved but does not read back. The file was not deleted, but the old key is replaced:
+ *   once the Keystore answers again, the next start opens the old file with the new key and MMKV discards it.
+ */
+export type ResultadoDelReinicio = 'reiniciado' | 'se-abre' | 'sin-guardar' | 'sin-leer'
+
+/** True once Empezar de nuevo deleted the file in this run: the plain copies it moved from can go too. */
+let seReinicio = false
+
+/** Reads the key back up to `LECTURAS_DE_LA_CLAVE` times, as a start does. */
+function seLeeLaClave(clave: string): boolean {
+  for (let intento = 0; intento < LECTURAS_DE_LA_CLAVE; intento++) {
+    const lectura = leerClaveGuardada()
+    if (lectura.estado === 'guardada') return lectura.clave === clave
+    if (lectura.estado === 'sin-clave') return false
+  }
+  return false
+}
+
+/**
+ * Empezar de nuevo (owner decision 2026-11-18, recovery screen), only after the person confirms it. The key is the
+ * point of no return, so it is written and read back BEFORE the file is deleted: a Keystore that does not take a key
+ * deletes nothing. The file is deleted without opening it. This run keeps the in-memory stand-in (and the GPS task its
+ * early return): the caller closes the session and reloads the app, which opens the new empty file.
+ */
+export function reiniciarAlmacen(): ResultadoDelReinicio {
+  // Never wipe a file that opened in this run, or one that opens now: the reload recovers it, with all the queues.
+  if (!apertura.estado.bloqueado || planDeApertura().tipo !== 'bloquear') return 'se-abre'
+  const nueva = claveNueva()
+  if (!guardarClave(nueva)) return 'sin-guardar'
+  if (!seLeeLaClave(nueva)) return 'sin-leer'
+  try {
+    deleteMMKV(STORAGE_ID)
+  } catch {
+    // Left on disk: the next start opens it with the new key and MMKV discards what it cannot decrypt.
+  }
+  marcarClaveGuardada()
+  seReinicio = true
+  return 'reiniciado'
+}
+
+/**
  * Adapter for Zustand/React-Query that expects synchronous Storage-like interface
  */
 export const zustandStorage = {
@@ -230,7 +276,9 @@ interface AlmacenPlano {
  */
 export function zustandStorageMudadoDesde(plano: AlmacenPlano) {
   // SEG-01: blocked, the encrypted side is a stand-in in memory. Moving the plain copy into it and removing it would
-  // lose it at the next start, so the plain copy is left alone until the real file opens.
+  // lose it at the next start, so the plain copy is left alone until the real file opens. After Empezar de nuevo the
+  // person chose to start fresh: removing (the logout that follows) removes the plain copy too, so the reload does
+  // not move an old trip into the new file.
   const bloqueado = apertura.estado.bloqueado
   return {
     getItem: (name: string): string | null | Promise<string | null> => {
@@ -252,7 +300,7 @@ export function zustandStorageMudadoDesde(plano: AlmacenPlano) {
     setItem: (name: string, value: string) => zustandStorage.setItem(name, value),
     removeItem: async (name: string) => {
       zustandStorage.removeItem(name)
-      if (!bloqueado) await plano.removeItem(name)
+      if (!bloqueado || seReinicio) await plano.removeItem(name)
     },
   }
 }
