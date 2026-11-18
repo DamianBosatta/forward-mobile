@@ -6,7 +6,7 @@
  *
  * Reconciliation (PR0):
  *   - DELETED stale hooks: useEmpacarMasivo (/empacar-masivo), useEnviarARutaMasivo (/enviar-a-ruta-masivo)
- *   - ADDED: useIniciarPreparacion, useEmpacarVenta, useRevertirAPreparacion, useRevertirAConfirmada
+ *   - MOVED: useEmpacarVenta lives in ventas.ts (the other picking-transition hooks are not defined in mobile)
  *   - FIXED: useCrearHojaRuta now includes depositoId
  *   - FIXED: useVentasParaPreparacion now uses PascalCase query params
  *   - ADDED: VentaPreparacion.metodoEntrega field
