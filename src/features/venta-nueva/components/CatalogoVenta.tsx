@@ -6,7 +6,7 @@ import { CeldaDeGrilla, paddingDeGrilla } from '@/core/ui/listaFlash'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, StatusChip } from '@/core/ui/fw'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
-import { esFallaDeRed, esTiempoAgotado, mensajeDeError } from '@/core/api/errores'
+import { esSinRespuesta, mensajeDeError } from '@/core/api/errores'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { useResponsive } from '@/libs/useResponsive'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -160,7 +160,7 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
             <ActivityIndicator color={c.brand} />
           ) : isError ? (
             // Sin catálogo por un error: no es "sin resultados". Mismo criterio que el catálogo de consulta (inventario).
-            esFallaDeRed(error) || esTiempoAgotado(error) ? (
+            esSinRespuesta(error) ? (
               <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar el catálogo" texto={mensajeDeError(error)} accion={{ label: 'Reintentar', onPress: () => { void reintentar() } }} />
             ) : (
               <View style={{ gap: space[3] }}>

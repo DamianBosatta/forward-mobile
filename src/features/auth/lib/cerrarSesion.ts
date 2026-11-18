@@ -18,8 +18,9 @@ import { forgetBiometricLogin } from '../utils/biometrics'
  * handled at login (`getBiometricChoiceFor`).
  *
  * What is NOT cleared on purpose: the per-user offline queues (`features/venta-sin-senal/lib/cola.ts`,
- * `features/logistica/cola/colaConsola.ts`). They hold sales and deliveries not yet sent; they are keyed by
- * user, so another user of the phone neither sees nor sends them.
+ * `features/logistica/cola/colaConsola.ts`) and the per-user stop idempotency keys (`consola-claves:{usuarioId}`,
+ * `features/logistica/cola/clavesDeParada.ts`). They hold sales and deliveries not yet sent, and the keys those
+ * retries must reuse; they are keyed by user, so another user of the phone neither sees nor sends them.
  */
 
 export interface OpcionesDeCierre {
