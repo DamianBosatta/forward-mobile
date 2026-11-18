@@ -4,6 +4,9 @@
  */
 
 import { sharePdf } from '../sharePdf'
+import { configureApiClient } from '@/core/api/client'
+
+jest.mock('@/core/query/persistConfig', () => ({ mmkvPersister: { removeClient: jest.fn() } }))
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
 
@@ -65,6 +68,12 @@ function makeOkResponse(status = 200) {
 beforeEach(() => {
   jest.clearAllMocks()
   mockAccessToken.value = 'test-jwt-token'
+  configureApiClient({
+    getToken: () => mockAccessToken.value,
+    getRefreshToken: () => null,
+    onTokensRefreshed: jest.fn(),
+    onUnauthorized: jest.fn(),
+  })
   mockIsAvailable.mockResolvedValue(true)
   mockShareAsync.mockResolvedValue(undefined)
 })
@@ -73,14 +82,8 @@ describe('sharePdf — Authorization header', () => {
   it('sends Authorization: Bearer <token> in the fetch request', async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse())
     await sharePdf('https://api.example.com/pdf', 'test.pdf')
-    expect(mockFetch).toHaveBeenCalledWith(
-      'https://api.example.com/pdf',
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: 'Bearer test-jwt-token',
-        }),
-      }),
-    )
+    expect(mockFetch.mock.calls[0][0]).toBe('https://api.example.com/pdf')
+    expect(new Headers(mockFetch.mock.calls[0][1].headers).get('Authorization')).toBe('Bearer test-jwt-token')
   })
 })
 
@@ -169,5 +172,66 @@ describe('sharePdf — success path', () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse())
     await sharePdf('https://api.example.com/pdf', 'test.pdf')
     expect(mockShareAsync).toHaveBeenCalledWith('file:///cache/test.pdf', { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' })
+  })
+})
+
+describe('sharePdf — 401 refresh (M10a)', () => {
+  it('with an expired token refreshes once and retries the download with the new token', async () => {
+    let token = 'vencido'
+    configureApiClient({
+      getToken: () => token,
+      getRefreshToken: () => 'refresh-1',
+      onTokensRefreshed: (t) => { token = t.accessToken },
+      onUnauthorized: jest.fn(),
+    })
+    mockAccessToken.value = 'vencido'
+    mockFetch
+      .mockResolvedValueOnce(makeOkResponse(401))
+      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ access_token: 'nuevo', refresh_token: 'refresh-2' }) })
+      .mockResolvedValueOnce(makeOkResponse())
+
+    const result = await sharePdf('https://api.example.com/pdf', 'test.pdf')
+
+    expect(result).toEqual({ ok: true })
+    expect(mockFetch).toHaveBeenCalledTimes(3)
+    expect(mockFetch.mock.calls[1][0]).toContain('/connect/token')
+    expect(mockFetch.mock.calls[2][0]).toBe('https://api.example.com/pdf')
+    expect(new Headers(mockFetch.mock.calls[2][1].headers).get('Authorization')).toBe('Bearer nuevo')
+    expect(mockShareAsync).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('sharePdf — plazo de la descarga', () => {
+  /** Un fetch que responde a los `ms` y se corta si se aborta la señal (como el de React Native). */
+  const fetchLento = (ms: number) => (_url: string, init: RequestInit = {}) =>
+    new Promise((resolve, reject) => {
+      const t = setTimeout(() => resolve(makeOkResponse()), ms)
+      init.signal?.addEventListener('abort', () => {
+        clearTimeout(t)
+        reject(Object.assign(new Error('Aborted'), { name: 'AbortError' }))
+      })
+    })
+
+  beforeEach(() => jest.useFakeTimers())
+  afterEach(() => jest.useRealTimers())
+
+  it('una descarga de 20 s (más que los 15 s de un request común) llega y se comparte', async () => {
+    mockFetch.mockImplementationOnce(fetchLento(20_000))
+    const enCurso = sharePdf('https://api.example.com/pdf', 'test.pdf')
+    await jest.advanceTimersByTimeAsync(20_000)
+    expect(await enCurso).toEqual(expect.objectContaining({ ok: true }))
+  })
+
+  it('si la descarga pasa de 120 s dice que tardó demasiado, no que no hay conexión', async () => {
+    mockFetch.mockImplementationOnce(fetchLento(500_000))
+    const enCurso = sharePdf('https://api.example.com/pdf', 'test.pdf')
+    await jest.advanceTimersByTimeAsync(120_000)
+    expect(await enCurso).toEqual({ ok: false, reason: 'network', message: 'La descarga tardó demasiado. Probá de nuevo.' })
+  })
+
+  it('sin red sigue diciendo que no se pudo conectar', async () => {
+    mockFetch.mockRejectedValueOnce(new TypeError('Network request failed'))
+    const r = await sharePdf('https://api.example.com/pdf', 'test.pdf')
+    expect(r).toEqual(expect.objectContaining({ ok: false, message: 'No se pudo conectar al servidor. Verificá tu conexión.' }))
   })
 })

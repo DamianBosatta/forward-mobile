@@ -1,7 +1,7 @@
 import React from 'react'
 import { Alert, Linking } from 'react-native'
 import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { formatImporte } from '@/core/ui/fw'
 import { diaArgentina } from '@/core/utils/fecha'
@@ -295,5 +295,22 @@ describe('V8 listo (CalleListo / TabCalleListo)', () => {
     pantalla()
     expect(await screen.findByText('Presupuesto A00419 guardado')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Cobrar ahora' })).toBeNull()
+  })
+})
+
+describe('Agendar sin red', () => {
+  it('falla en el acto con el aviso de falta de red y no deja ninguna mutación en pausa', async () => {
+    try {
+      mockPost.mockRejectedValue(new TypeError('Network request failed'))
+      const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+      pantalla(undefined, qc)
+      await userEvent.press(await screen.findByRole('button', { name: 'Agendar' }))
+      onlineManager.setOnline(false) // la venta ya cargó: se corta la red justo antes de agendar
+      await userEvent.press(screen.getAllByRole('button', { name: 'Agendar' }).at(-1)!)
+      expect(await screen.findByText('Sin conexión. Revisá tu red e intentá de nuevo.')).toBeTruthy()
+      expect(qc.getMutationCache().getAll().filter((m) => m.state.isPaused)).toHaveLength(0)
+    } finally {
+      onlineManager.setOnline(true)
+    }
   })
 })

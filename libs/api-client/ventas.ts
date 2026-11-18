@@ -208,6 +208,37 @@ export function useVenta(id: string, opciones: { fresco?: boolean; activo?: bool
   })
 }
 
+/** Detalle de la venta sin caché de react-query (para leer el estado en el que quedó tras una acción). */
+export const fetchVentaDetalle = (id: string) => api.get<VentaDetalleDto>(`/api/v1/Ventas/${id}`)
+
+/** Pagos de la venta (cobrado y pendiente). */
+export function useVentaPagos(id: string, enabled: boolean) {
+  return useQuery({
+    queryKey: [...ventasKeys.detail(id), 'pagos'],
+    queryFn: () => api.get<components['schemas']['VentaPagosDto']>(`/api/v1/Ventas/${id}/pagos`),
+    enabled,
+  })
+}
+
+/** Comisión simulada de la venta; `claveExtra` son los valores de los que depende (total y cobrado). */
+export function useComisionSimulacionVenta(id: string, enabled: boolean, claveExtra: readonly unknown[]) {
+  return useQuery({
+    queryKey: [...comisionesKeys.simulacion, 'venta', id, ...claveExtra],
+    queryFn: () => api.get<components['schemas']['SimulacionComisionDto']>(`/api/v1/comisiones/simulacion/ventas/${id}`),
+    enabled,
+  })
+}
+
+/** Renglones a los que no les alcanza el stock fiscal (aviso de "Con factura"; nunca bloquea). */
+export function useVerificarStockFiscal(items: { productoId: string; cantidad: number }[], enabled: boolean) {
+  return useQuery({
+    queryKey: [...ventasKeys.all, 'stock-fiscal', items] as const,
+    queryFn: () => api.post<components['schemas']['FaltanteStockFiscalDto'][]>('/api/v1/Ventas/stock-fiscal/verificar', { items }),
+    enabled,
+    staleTime: 15_000,
+  })
+}
+
 /**
  * Authorization preview for a below-floor venta (PR-2e-b).
  * Returns the per-item sacrificio breakdown and totals. Role-gated server-side

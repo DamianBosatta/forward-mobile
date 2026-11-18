@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, type NetworkMode } from '@tanstack/react-query'
 import { api } from './client'
 import { conClave, crearIntento } from '@/core/utils/idempotencia'
 import type { components } from './generated/schema'
@@ -25,10 +25,14 @@ export function useCalendario(desde: string, hasta: string) {
 /** Una clave por intento (ver `crearIntento`): el reintento o el doble toque del mismo evento manda la misma. */
 const intentoCrearEvento = crearIntento()
 
-/** POST /Calendario/eventos: devuelve el id del evento nuevo. */
-export function useCrearEvento() {
+/**
+ * POST /Calendario/eventos: devuelve el id del evento nuevo. `networkMode: 'always'` es para quien tiene que fallar en
+ * el acto sin red (no quedar en pausa hasta que vuelva); sin él, la mutación espera la red como las demás.
+ */
+export function useCrearEvento({ networkMode }: { networkMode?: NetworkMode } = {}) {
   const qc = useQueryClient()
   return useMutation({
+    networkMode,
     mutationFn: (evento: CrearEvento) =>
       conClave(intentoCrearEvento, evento, (cuerpo) => api.post<string>('/api/v1/Calendario/eventos', cuerpo)),
     onSuccess: () => invalidarCalendario(qc),

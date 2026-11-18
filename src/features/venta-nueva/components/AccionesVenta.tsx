@@ -3,10 +3,9 @@ import { Alert, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, Segmented } from '@/core/ui/fw'
-import { api } from '@/core/api/client'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { getNotaEntregaUrl, getVentaPdfUrl, useAnularVenta, useConvertirPresupuesto } from '@/libs/api-client/ventas'
+import { fetchVentaDetalle, getNotaEntregaUrl, getVentaPdfUrl, useAnularVenta, useConvertirPresupuesto } from '@/libs/api-client/ventas'
 import { useCrearEvento } from '@/libs/api-client/calendario'
 import type { VentaDetalleDto } from '@/libs/api-client/types'
 import { sharePdf } from '@/features/pedidos/lib/sharePdf'
@@ -42,7 +41,8 @@ export function AccionesVenta({ venta, rotulo }: Props) {
   const userId = useAuthStore((s) => s.user?.id) ?? ''
   const convertir = useConvertirPresupuesto()
   const anular = useAnularVenta()
-  const crearEvento = useCrearEvento()
+  // Sin red tiene que fallar en el acto con el aviso de falta de red, no quedar en pausa con el botón cargando.
+  const crearEvento = useCrearEvento({ networkMode: 'always' })
   const [pdf, setPdf] = useState(false)
   const [hoja, setHoja] = useState<'anular' | 'agendar' | null>(null)
   const [motivo, setMotivo] = useState('')
@@ -73,7 +73,7 @@ export function AccionesVenta({ venta, rotulo }: Props) {
     {
       text: 'Convertir',
       onPress: () => void convertir.mutateAsync({ id: h.id, version: h.version, usuarioGeneradorId: userId }).then(async () => {
-        const d = await api.get<VentaDetalleDto>(`/api/v1/Ventas/${h.id}`).catch(() => null)
+        const d = await fetchVentaDetalle(h.id).catch(() => null)
         const motivos = motivosAutorizacion(d?.venta.motivoPendienteAutorizacion)
         if (esEstadoVenta(d?.venta.estado, 'PendienteAutorizacion')) {
           Alert.alert('Quedó por autorizar', motivos.length ? `Porque ${motivos.join(', ')}. Te avisamos cuando lo resuelvan.` : 'Te avisamos cuando lo resuelvan.')
