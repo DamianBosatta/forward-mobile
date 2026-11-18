@@ -69,17 +69,20 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
     if (ocupada.current) return
     ocupada.current = true
     setError(null)
-    const cuerpo = { claveIdempotencia: claveDe(parada.id), lineas: lineasParaEnviar(form) }
+    const cuerpoCon = (claveIdempotencia: string) => ({ claveIdempotencia, lineas: lineasParaEnviar(form) })
+    // Set inside the try: reading the key writes to the phone and a failure there must still release `ocupada`.
+    let cuerpo: ReturnType<typeof cuerpoCon> | undefined
     const monto = form.reduce((t, l) => t + (montoDeLinea(l) ?? 0), 0)
-    const guardar = () => {
+    const guardar = (c: ReturnType<typeof cuerpoCon>) => {
       encolarAccion(usuarioId, {
-        tipo: 'cobroParada', clave: cuerpo.claveIdempotencia, hojaDeRutaId, paradaId: parada.id, clienteNombre: parada.clienteNombre, cuerpo, cobrado: monto,
+        tipo: 'cobroParada', clave: c.claveIdempotencia, hojaDeRutaId, paradaId: parada.id, clienteNombre: parada.clienteNombre, cuerpo: c, cobrado: monto,
       })
       setResultado({ tipo: 'cobro', monto, guardada: true })
     }
     try {
+      cuerpo = cuerpoCon(claveDe(parada.id))
       // Sin señal no se llama al servidor: queda en el teléfono con la misma clave y sale sola al volver.
-      if (!onlineManager.isOnline()) { guardar(); return }
+      if (!onlineManager.isOnline()) { guardar(cuerpo); return }
       await cobrar.mutateAsync({ hojaDeRutaId, paradaCobroId: parada.id, cuerpo })
       olvidarClave(parada.id)
       // The server has it now: whatever of this stop was left for review is stale and must not block closing (RED-01).
@@ -87,7 +90,7 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
       setResultado({ tipo: 'cobro', monto, guardada: false })
     } catch (e) {
       // No answer (no network or timed out): it may have been stored; it is queued with the same key.
-      if (esSinRespuesta(e)) { guardar(); return }
+      if (cuerpo && esSinRespuesta(e)) { guardar(cuerpo); return }
       const codigo = (e as { codigo?: string } | null)?.codigo
       // La clave ya quedó con otro cuerpo: el servidor guarda que una parada se resuelve una sola vez, así que una clave nueva es segura.
       // `Duplicado`: la misma clave corrió a la par en otra parada. Tampoco se reusa.

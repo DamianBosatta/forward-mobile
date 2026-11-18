@@ -316,12 +316,13 @@ export default function ConsolaChoferScreen() {
       }
       return
     }
-    const claveAviso = claveAvisoDe(parada.id)
-    const cuerpo = { entregado: false as const, motivoRechazo: r.motivoRechazo, observaciones: r.observaciones, evidenciaUrl: r.evidenciaUrl, claveIdempotencia: claveAviso }
-    const guardarNoEntrega = () => {
+    const cuerpoCon = (claveIdempotencia: string) => ({ entregado: false as const, motivoRechazo: r.motivoRechazo, observaciones: r.observaciones, evidenciaUrl: r.evidenciaUrl, claveIdempotencia })
+    // Set inside the try: reading the key writes to the phone and a failure there must still release `reportandoYa`.
+    let cuerpo: ReturnType<typeof cuerpoCon> | undefined
+    const guardarNoEntrega = (c: ReturnType<typeof cuerpoCon>) => {
       encolarAccion(usuarioId, {
-        clave: claveAviso, hojaDeRutaId: viaje.id, paradaId: parada.id, clienteNombre: parada.clienteNombre,
-        tipo: 'noEntrega', cuerpo,
+        clave: c.claveIdempotencia, hojaDeRutaId: viaje.id, paradaId: parada.id, clienteNombre: parada.clienteNombre,
+        tipo: 'noEntrega', cuerpo: c,
       })
       updateStopStatus(parada.id, { delivered: false, observations: r.observaciones, reason: r.motivoRechazo })
       setGuardado(true)
@@ -329,8 +330,9 @@ export default function ConsolaChoferScreen() {
       setReportando(null)
     }
     try {
+      cuerpo = cuerpoCon(claveAvisoDe(parada.id))
       if (!onlineManager.isOnline()) {
-        guardarNoEntrega()
+        guardarNoEntrega(cuerpo)
         return
       }
       await reportar.mutateAsync({ hojaDeRutaId: viaje.id, paradaId: parada.id, ...cuerpo })
@@ -341,7 +343,7 @@ export default function ConsolaChoferScreen() {
       setAvisado({ guardado: false })
       setReportando(null)
     } catch (e) {
-      if (esSinRespuesta(e)) guardarNoEntrega()
+      if (cuerpo && esSinRespuesta(e)) guardarNoEntrega(cuerpo)
       else {
         // La clave ya quedó con otro cuerpo (o en otra parada): no se reintenta con ella, el error se muestra.
         if ((e as { codigo?: string } | null)?.codigo === 'ClaveIdempotenciaConOtroCuerpo') olvidarClaveDeParada(usuarioId, usoAviso(parada.id))

@@ -6,6 +6,8 @@ import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { conTema } from '@/core/ui/fw/__testing__/tema'
 import { reiniciarCamara, sacarFoto } from '@/features/logistica/__testing__/camara'
 import { REMITO_URL, conSubidaDeFotos, confirmarEntrega, fotoDelRemito, noSumarOtroCobro } from '@/features/logistica/__testing__/confirmar'
+import { storage } from '@/core/utils/storage'
+import { leerCola, quitarDeCola } from '../cola/colaConsola'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
 
 /**
@@ -80,6 +82,17 @@ async function abrirEntrega(devuelve = false) {
   await userEvent.press(await screen.findByLabelText('¡Llegué!'))
   await userEvent.press(await screen.findByLabelText('Entregué todo'))
   if (!devuelve) await userEvent.press(screen.getByLabelText('No'))
+}
+const REPORTAR = '/api/v1/Logistica/hojas-ruta/h1/reportar-parada'
+const vaciarColaYClaves = () => {
+  for (const a of leerCola('u1')) quitarDeCola('u1', a.clave)
+  storage.remove('consola-claves:u1')
+}
+async function avisarNoPudeEntregar() {
+  await userEvent.press(await screen.findByLabelText('¡Llegué!'))
+  await userEvent.press(await screen.findByLabelText('No pude entregar'))
+  await userEvent.press(screen.getByLabelText('Cerrado o sin nadie'))
+  await userEvent.press(screen.getByLabelText('Avisar a Ventas'))
 }
 const continuar = () => userEvent.press(screen.getByLabelText('Continuar'))
 /**
@@ -310,6 +323,29 @@ describe('Consola del chofer: entrega con la operación única', () => {
     await waitFor(() => expect(llamadasA(REPORTAR)).toHaveLength(3))
     expect(llamadasA(REPORTAR)[2][1].claveIdempotencia).not.toBe(llamadas[0][1].claveIdempotencia)
   })
+
+  it('si la clave del aviso no se puede guardar en el teléfono, el botón queda usable para reintentar', async () => {
+    vaciarColaYClaves()
+    mockPost.mockResolvedValue(true)
+    const real = storage.set.bind(storage)
+    let fallo = false
+    // Only the first write of the stop keys fails; the rest of the app (persisted stores) writes normally.
+    const escritura = jest.spyOn(storage, 'set').mockImplementation((k: string, v: string | number | boolean | ArrayBuffer) => {
+      if (k === 'consola-claves:u1' && !fallo) { fallo = true; throw new Error('disco lleno') }
+      return real(k, v)
+    })
+    try {
+      pintar()
+      await avisarNoPudeEntregar()
+      await waitFor(() => expect(fallo).toBe(true))
+      expect(llamadasA(REPORTAR)).toHaveLength(0)
+      await userEvent.press(screen.getByLabelText('Avisar a Ventas'))
+      await waitFor(() => expect(llamadasA(REPORTAR)).toHaveLength(1))
+    } finally {
+      escritura.mockRestore()
+    }
+  })
+
 })
 
 describe('Consola del chofer: hoja editada en la oficina', () => {

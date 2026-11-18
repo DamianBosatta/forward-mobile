@@ -316,6 +316,24 @@ describe.each(TEMAS)('paradas de solo cobro en la consola del chofer (%s)', (tem
     expect(segunda).not.toBe(primera)
   })
 
+  it('si la clave no se puede guardar en el teléfono, el botón de cobrar queda usable para reintentar', async () => {
+    mockPost.mockResolvedValue({})
+    const escritura = jest.spyOn(storage, 'set').mockImplementationOnce(() => { throw new Error('disco lleno') })
+    try {
+      pintar([cobro()])
+      await userEvent.press(screen.getByLabelText('Cobrar en Av. Rivadavia 4500'))
+      await userEvent.press(await screen.findByText('Efectivo'))
+      await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
+      await waitFor(() => expect(escritura).toHaveBeenCalled())
+      expect(mockPost).not.toHaveBeenCalled()
+      await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
+      expect(await screen.findByText('Cobro registrado.')).toBeTruthy()
+      expect(mockPost).toHaveBeenCalledTimes(1)
+    } finally {
+      escritura.mockRestore()
+    }
+  })
+
   it('en tablet la pantalla de la parada queda en una columna', async () => {
     mockAncho = 1024
     pintar([cobro()])
