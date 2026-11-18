@@ -89,7 +89,8 @@ function StockSinCantidades({ busqueda, columnas }: { busqueda: string; columnas
   // La búsqueda de esta vista vive en la pantalla; el hook la espera ~300 ms como en el catálogo.
   React.useEffect(() => { setBusqueda(busqueda) }, [busqueda, setBusqueda])
   const bloques = useMemo(() => enBloques(cat.productos, columnas), [cat.productos, columnas])
-  const renderBloque = useCallback(({ item: b }: { item: Bloque<(typeof cat.productos)[number]> }) => (
+  type ProductoDeStock = (typeof cat.productos)[number]
+  const renderBloque = useCallback(({ item: b }: { item: Bloque<ProductoDeStock> }) => (
     <BloqueSinCantidades b={b} disponible={cat.disponible} columnas={columnas} />
   ), [cat.disponible, columnas])
   if (cat.isLoading) return <Esqueletos columnas={columnas} />

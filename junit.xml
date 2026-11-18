@@ -1,35 +1,135 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="15" failures="0" errors="0" time="11.48">
-  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2026-10-31T02:22:36" time="11.172" tests="15">
-    <testcase classname=" sin la capacidad de autorizar ventas, la condición de pago es de solo lectura y no se manda" name=" sin la capacidad de autorizar ventas, la condición de pago es de solo lectura y no se manda" time="0.904">
+<testsuites name="jest tests" tests="60" failures="0" errors="0" time="18.986">
+  <testsuite name="S4 — Inventory cost-field gating: canViewCost(permissions)" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="1.227" tests="6">
+    <testcase classname="S4 — Inventory cost-field gating: canViewCost(permissions) returns false without CAP_VER_COSTOS — cost field must be hidden" name="S4 — Inventory cost-field gating: canViewCost(permissions) returns false without CAP_VER_COSTOS — cost field must be hidden" time="0.02">
     </testcase>
-    <testcase classname=" un CUIT que no cierra se marca en el campo con la ayuda del alta provisoria, pero no frena el guardado" name=" un CUIT que no cierra se marca en el campo con la ayuda del alta provisoria, pero no frena el guardado" time="0.252">
+    <testcase classname="S4 — Inventory cost-field gating: canViewCost(permissions) returns false for empty permissions — cost field must be hidden" name="S4 — Inventory cost-field gating: canViewCost(permissions) returns false for empty permissions — cost field must be hidden" time="0.001">
     </testcase>
-    <testcase classname=" un CUIT incompleto dice cuántos dígitos faltan (regla compartida cuitDigitosFaltantes)" name=" un CUIT incompleto dice cuántos dígitos faltan (regla compartida cuitDigitosFaltantes)" time="0.082">
+    <testcase classname="S4 — Inventory cost-field gating: canViewCost(permissions) returns false for an unknown capability — cost field must be hidden" name="S4 — Inventory cost-field gating: canViewCost(permissions) returns false for an unknown capability — cost field must be hidden" time="0.001">
     </testcase>
-    <testcase classname=" un CUIT de 11 dígitos que no cierra no dice &quot;faltan&quot;: ya tiene los once" name=" un CUIT de 11 dígitos que no cierra no dice &quot;faltan&quot;: ya tiene los once" time="0.052">
+    <testcase classname="S4 — Inventory cost-field gating: canViewCost(permissions) returns true with CAP_VER_COSTOS — cost field must be visible" name="S4 — Inventory cost-field gating: canViewCost(permissions) returns true with CAP_VER_COSTOS — cost field must be visible" time="0">
     </testcase>
-    <testcase classname=" un CUIT válido o vacío no muestra el error" name=" un CUIT válido o vacío no muestra el error" time="0.072">
+    <testcase classname="S4 — Inventory edit-affordance gate behavioral contract MOD_STOCK:update without CAP_VER_COSTOS → access-denied view" name="S4 — Inventory edit-affordance gate behavioral contract MOD_STOCK:update without CAP_VER_COSTOS → access-denied view" time="0">
     </testcase>
-    <testcase classname=" con la capacidad, la condición de pago se elige y viaja al servidor" name=" con la capacidad, la condición de pago se elige y viaja al servidor" time="0.599">
+    <testcase classname="S4 — Inventory edit-affordance gate behavioral contract CAP_VER_COSTOS → edit form editable with cost field" name="S4 — Inventory edit-affordance gate behavioral contract CAP_VER_COSTOS → edit form editable with cost field" time="0.001">
     </testcase>
-    <testcase classname=" si el servidor rechaza, se ve su mensaje con el detalle" name=" si el servidor rechaza, se ve su mensaje con el detalle" time="0.214">
+  </testsuite>
+  <testsuite name="chipDeFilaStock" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="1.218" tests="5">
+    <testcase classname="chipDeFilaStock sin disponible dice &quot;Sin stock&quot;, aunque el servidor lo marque en alerta" name="chipDeFilaStock sin disponible dice &quot;Sin stock&quot;, aunque el servidor lo marque en alerta" time="0.019">
     </testcase>
-    <testcase classname=" al editar, carga los datos y devuelve el horario que no se edita acá" name=" al editar, carga los datos y devuelve el horario que no se edita acá" time="0.245">
+    <testcase classname="chipDeFilaStock en alerta (lo decide el servidor) dice &quot;En alerta&quot;" name="chipDeFilaStock en alerta (lo decide el servidor) dice &quot;En alerta&quot;" time="0.001">
     </testcase>
-    <testcase classname="edición: el detalle manda si el detalle no carga, muestra el error con Reintentar y no deja guardar en blanco" name="edición: el detalle manda si el detalle no carga, muestra el error con Reintentar y no deja guardar en blanco" time="0.3">
+    <testcase classname="chipDeFilaStock con stock de sobra dice &quot;Con stock&quot; (etiqueta de la web)" name="chipDeFilaStock con stock de sobra dice &quot;Con stock&quot; (etiqueta de la web)" time="0">
     </testcase>
-    <testcase classname="edición: el detalle manda un refetch posterior no pisa lo que el usuario tipeó" name="edición: el detalle manda un refetch posterior no pisa lo que el usuario tipeó" time="0.14">
+    <testcase classname="textos del renglón el mínimo solo se escribe si existe" name="textos del renglón el mínimo solo se escribe si existe" time="0.001">
     </testcase>
-    <testcase classname="edición: el detalle manda al guardar manda el horario recién traído, no el del caché viejo" name="edición: el detalle manda al guardar manda el horario recién traído, no el del caché viejo" time="0.263">
+    <testcase classname="textos del renglón reservado y por entrar van siempre, con 0 incluido; la web nunca dice &quot;Virtual&quot; ni &quot;Por ingresar&quot;" name="textos del renglón reservado y por entrar van siempre, con 0 incluido; la web nunca dice &quot;Virtual&quot; ni &quot;Por ingresar&quot;" time="0.001">
     </testcase>
-    <testcase classname="edición: el detalle manda con detalle en caché y el refetch fallido, muestra el error con Reintentar y no deja guardar el viejo" name="edición: el detalle manda con detalle en caché y el refetch fallido, muestra el error con Reintentar y no deja guardar el viejo" time="0.064">
+  </testsuite>
+  <testsuite name="Stock: el buscador no queda pegado a la barra superior" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="5.344" tests="2">
+    <testcase classname="Stock: el buscador no queda pegado a la barra superior deja aire arriba con el tema dark y conserva el color de la barra" name="Stock: el buscador no queda pegado a la barra superior deja aire arriba con el tema dark y conserva el color de la barra" time="0.157">
     </testcase>
-    <testcase classname="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) un no administrador edita el resto pero no los tres campos sensibles, y se le dice por qué" name="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) un no administrador edita el resto pero no los tres campos sensibles, y se le dice por qué" time="0.068">
+    <testcase classname="Stock: el buscador no queda pegado a la barra superior deja aire arriba con el tema light y conserva el color de la barra" name="Stock: el buscador no queda pegado a la barra superior deja aire arriba con el tema light y conserva el color de la barra" time="0.009">
     </testcase>
-    <testcase classname="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) un administrador edita todo y no ve el aviso" name="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) un administrador edita todo y no ve el aviso" time="0.065">
+  </testsuite>
+  <testsuite name="Catálogo" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="11.113" tests="10">
+    <testcase classname="Catálogo sin productos: estado &quot;vacío&quot; con la frase de siempre" name="Catálogo sin productos: estado &quot;vacío&quot; con la frase de siempre" time="0.337">
     </testcase>
-    <testcase classname="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) en el alta nadie tiene nada bloqueado" name="D7: dirección, razón social y CUIT solo los cambia un administrador (regla de la web) en el alta nadie tiene nada bloqueado" time="0.078">
+    <testcase classname="Catálogo sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar, que vuelve a pedir" name="Catálogo sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar, que vuelve a pedir" time="0.297">
+    </testcase>
+    <testcase classname="Catálogo con lo guardado y sin conexión: la lista sigue y un aviso dice a qué hora se guardó" name="Catálogo con lo guardado y sin conexión: la lista sigue y un aviso dice a qué hora se guardó" time="0.096">
+    </testcase>
+    <testcase classname="Catálogo otro error sin datos sigue siendo el aviso de siempre" name="Catálogo otro error sin datos sigue siendo el aviso de siempre" time="0.087">
+    </testcase>
+    <testcase classname="Stock con cantidades sin renglones: estado &quot;vacío&quot; con la frase de la web (S16)" name="Stock con cantidades sin renglones: estado &quot;vacío&quot; con la frase de la web (S16)" time="0.079">
+    </testcase>
+    <testcase classname="Stock con cantidades sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar, que vuelve a pedir" name="Stock con cantidades sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar, que vuelve a pedir" time="0.279">
+    </testcase>
+    <testcase classname="Stock con cantidades con lo guardado y sin conexión: la lista sigue y un aviso dice a qué hora se guardó" name="Stock con cantidades con lo guardado y sin conexión: la lista sigue y un aviso dice a qué hora se guardó" time="0.143">
+    </testcase>
+    <testcase classname="Stock con cantidades otro error sin datos: estado de error con Reintentar, sin hablar de señal" name="Stock con cantidades otro error sin datos: estado de error con Reintentar, sin hablar de señal" time="0.095">
+    </testcase>
+    <testcase classname="Stock sin cantidades sin productos: estado &quot;vacío&quot; con la frase de siempre" name="Stock sin cantidades sin productos: estado &quot;vacío&quot; con la frase de siempre" time="0.062">
+    </testcase>
+    <testcase classname="Stock sin cantidades sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar" name="Stock sin cantidades sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar" time="0.061">
+    </testcase>
+  </testsuite>
+  <testsuite name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="12.072" tests="17">
+    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK en la Lista muestra disponible, stock real, mínimo, reservado y por entrar de cada renglón, y los totales que cuenta el servidor" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK en la Lista muestra disponible, stock real, mínimo, reservado y por entrar de cada renglón, y los totales que cuenta el servidor" time="0.528">
+    </testcase>
+    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK pide el stock del depósito del usuario y, si no tiene, el Central" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK pide el stock del depósito del usuario y, si no tiene, el Central" time="0.183">
+    </testcase>
+    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK cambiar de depósito pide el stock de ese depósito" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK cambiar de depósito pide el stock de ese depósito" time="0.245">
+    </testcase>
+    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK &quot;En alerta&quot; (en la hoja Filtros) pide solo los renglones en alerta" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK &quot;En alerta&quot; (en la hoja Filtros) pide solo los renglones en alerta" time="0.479">
+    </testcase>
+    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK no ofrece ninguna acción de ajuste: es solo consulta" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK no ofrece ninguna acción de ajuste: es solo consulta" time="0.073">
+    </testcase>
+    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK en tablet (600 px o más) la Lista se ve como tabla con Disponible, Stock real, Reservado, Por entrar y Mínimo" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK en tablet (600 px o más) la Lista se ve como tabla con Disponible, Stock real, Reservado, Por entrar y Mínimo" time="0.248">
+    </testcase>
+    <testcase classname="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK muestra solo &quot;Hay stock / Sin stock&quot; y no pide ni dibuja cantidades" name="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK muestra solo &quot;Hay stock / Sin stock&quot; y no pide ni dibuja cantidades" time="0.065">
+    </testcase>
+    <testcase classname="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK la lista sale del catálogo por depósito, no de GET /Productos (que no filtra por depósito)" name="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK la lista sale del catálogo por depósito, no de GET /Productos (que no filtra por depósito)" time="0.063">
+    </testcase>
+    <testcase classname="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK quien ve todos los depósitos no manda depósito: el servidor le devuelve su lista de siempre" name="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK quien ve todos los depósitos no manda depósito: el servidor le devuelve su lista de siempre" time="0.062">
+    </testcase>
+    <testcase classname="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK la lista de stock no trae variantes hijas ni hermanas que no coinciden con la búsqueda" name="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK la lista de stock no trae variantes hijas ni hermanas que no coinciden con la búsqueda" time="0.064">
+    </testcase>
+    <testcase classname="Pantalla Stock separada del catálogo se abre sin selector Catálogo/Stock y con el título Stock" name="Pantalla Stock separada del catálogo se abre sin selector Catálogo/Stock y con el título Stock" time="0.028">
+    </testcase>
+    <testcase classname="Pantalla Stock separada del catálogo viene de la ficha con ?busqueda=: la pantalla abre buscando ese código" name="Pantalla Stock separada del catálogo viene de la ficha con ?busqueda=: la pantalla abre buscando ese código" time="0.025">
+    </testcase>
+    <testcase classname="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) sin ninguna de las dos capacidades no aparece &quot;Todos&quot; y se pide el depósito del usuario" name="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) sin ninguna de las dos capacidades no aparece &quot;Todos&quot; y se pide el depósito del usuario" time="0.061">
+    </testcase>
+    <testcase classname="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con CAP_VER_TODOS_LOS_DEPOSITOS y sin elección abre en el depósito propio (el de la sesión, S8)" name="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con CAP_VER_TODOS_LOS_DEPOSITOS y sin elección abre en el depósito propio (el de la sesión, S8)" time="0.063">
+    </testcase>
+    <testcase classname="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con el depósito de la sesión elegido en Inicio, Stock abre en ese depósito" name="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con el depósito de la sesión elegido en Inicio, Stock abre en ese depósito" time="0.07">
+    </testcase>
+    <testcase classname="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con &quot;Todos&quot; elegido en la sesión abre en &quot;Todos&quot;: no manda DepositoId y muestra el depósito de cada renglón" name="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con &quot;Todos&quot; elegido en la sesión abre en &quot;Todos&quot;: no manda DepositoId y muestra el depósito de cada renglón" time="0.12">
+    </testcase>
+    <testcase classname="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con CAP_VER_STOCK_OTROS_DEPOSITOS abre en el propio y puede pasar a &quot;Todos&quot;" name="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con CAP_VER_STOCK_OTROS_DEPOSITOS abre en el propio y puede pasar a &quot;Todos&quot;" time="0.274">
+    </testcase>
+  </testsuite>
+  <testsuite name="Tarjetas y Lista (láminas 1 y 4)" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="18.341" tests="20">
+    <testcase classname="Tarjetas y Lista (láminas 1 y 4) abre en Tarjetas: cada tarjeta con el disponible grande y &quot;disponible&quot; o &quot;En alerta&quot;; totales Artículos y En alerta" name="Tarjetas y Lista (láminas 1 y 4) abre en Tarjetas: cada tarjeta con el disponible grande y &quot;disponible&quot; o &quot;En alerta&quot;; totales Artículos y En alerta" time="0.335">
+    </testcase>
+    <testcase classname="Tarjetas y Lista (láminas 1 y 4) Lista: cada renglón con disponible, stock real, mínimo, reservado y por entrar, y los cuatro totales" name="Tarjetas y Lista (láminas 1 y 4) Lista: cada renglón con disponible, stock real, mínimo, reservado y por entrar, y los cuatro totales" time="0.287">
+    </testcase>
+    <testcase classname="Tarjetas y Lista (láminas 1 y 4) &quot;Valor del stock a costo&quot; solo en la Lista y solo con CAP_VER_COSTOS, del depósito elegido" name="Tarjetas y Lista (láminas 1 y 4) &quot;Valor del stock a costo&quot; solo en la Lista y solo con CAP_VER_COSTOS, del depósito elegido" time="0.262">
+    </testcase>
+    <testcase classname="Tarjetas y Lista (láminas 1 y 4) sin CAP_VER_COSTOS no hay valor a costo ni se pide el reporte" name="Tarjetas y Lista (láminas 1 y 4) sin CAP_VER_COSTOS no hay valor a costo ni se pide el reporte" time="0.266">
+    </testcase>
+    <testcase classname="Filtros (lámina 3) la hoja muestra Estado de stock, Línea, Marca, &quot;Solo sin peso&quot; y &quot;Solo ocultos&quot; con lo que cuenta el servidor" name="Filtros (lámina 3) la hoja muestra Estado de stock, Línea, Marca, &quot;Solo sin peso&quot; y &quot;Solo ocultos&quot; con lo que cuenta el servidor" time="0.273">
+    </testcase>
+    <testcase classname="Filtros (lámina 3) cada filtro viaja al listado y al resumen; el botón cuenta los activos y &quot;Limpiar&quot; los saca" name="Filtros (lámina 3) cada filtro viaja al listado y al resumen; el botón cuenta los activos y &quot;Limpiar&quot; los saca" time="2.135">
+    </testcase>
+    <testcase classname="Filtros (lámina 3) Línea y Marca son una sola: tocar la elegida la suelta" name="Filtros (lámina 3) Línea y Marca son una sola: tocar la elegida la suelta" time="0.652">
+    </testcase>
+    <testcase classname="Línea con sus fragancias (lámina 2) &quot;Ver fragancias&quot; pide las variantes del depósito y muestra cada fragancia con su stock" name="Línea con sus fragancias (lámina 2) &quot;Ver fragancias&quot; pide las variantes del depósito y muestra cada fragancia con su stock" time="0.454">
+    </testcase>
+    <testcase classname="Línea con sus fragancias (lámina 2) si fallan o no hay: lo dice con los textos de la web" name="Línea con sus fragancias (lámina 2) si fallan o no hay: lo dice con los textos de la web" time="0.255">
+    </testcase>
+    <testcase classname="Línea con sus fragancias (lámina 2) sin fragancias generadas" name="Línea con sus fragancias (lámina 2) sin fragancias generadas" time="0.293">
+    </testcase>
+    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) muestra Stock Físico, Disponibilidad y Datos fiscales; sin costos, el aviso de gestión; nunca &quot;Editar producto&quot;" name="Detalle del producto (lámina 5) y movimientos (lámina 6) muestra Stock Físico, Disponibilidad y Datos fiscales; sin costos, el aviso de gestión; nunca &quot;Editar producto&quot;" time="0.275">
+    </testcase>
+    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) con CAP_VER_COSTOS suma Rentabilidad: bandas de precio y costo real" name="Detalle del producto (lámina 5) y movimientos (lámina 6) con CAP_VER_COSTOS suma Rentabilidad: bandas de precio y costo real" time="0.299">
+    </testcase>
+    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) &quot;Ver movimientos&quot; lista tipo, fecha, cantidad con signo, observación y quién" name="Detalle del producto (lámina 5) y movimientos (lámina 6) &quot;Ver movimientos&quot; lista tipo, fecha, cantidad con signo, observación y quién" time="0.516">
+    </testcase>
+    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) sin movimientos y con error, los textos de la web" name="Detalle del producto (lámina 5) y movimientos (lámina 6) sin movimientos y con error, los textos de la web" time="0.47">
+    </testcase>
+    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) movimientos con error" name="Detalle del producto (lámina 5) y movimientos (lámina 6) movimientos con error" time="0.478">
+    </testcase>
+    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) tocar una fragancia abre el mismo detalle" name="Detalle del producto (lámina 5) y movimientos (lámina 6) tocar una fragancia abre el mismo detalle" time="0.469">
+    </testcase>
+    <testcase classname="Estados (lámina 8) cargando: esqueletos de tarjeta" name="Estados (lámina 8) cargando: esqueletos de tarjeta" time="0.025">
+    </testcase>
+    <testcase classname="Estados (lámina 8) vacío con solo &quot;En alerta&quot;: el inventario está saludable" name="Estados (lámina 8) vacío con solo &quot;En alerta&quot;: el inventario está saludable" time="0.682">
+    </testcase>
+    <testcase classname="Estados (lámina 8) vacío con otros filtros" name="Estados (lámina 8) vacío con otros filtros" time="0.077">
+    </testcase>
+    <testcase classname="Solo ver: ninguna acción cambia datos ni en Tarjetas, ni en Lista, ni en el detalle hay ajustar, transferir, pedir, editar, duplicar, activar ni seleccionar" name="Solo ver: ninguna acción cambia datos ni en Tarjetas, ni en Lista, ni en el detalle hay ajustar, transferir, pedir, editar, duplicar, activar ni seleccionar" time="0.445">
     </testcase>
   </testsuite>
 </testsuites>
