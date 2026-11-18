@@ -1,6 +1,6 @@
 import { api } from '@/core/api/client'
 import { esFallaDeRed, esTiempoAgotado } from '@/core/api/errores'
-import { TOPE_DE_INTENTOS, avisoDeTope } from '@/core/utils/colasSinSenal'
+import { TOPE_DE_INTENTOS, avisoDeTope, detieneEnElTope } from '@/core/utils/colasSinSenal'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { clasificarFalloEntrega } from '../consola/entrega'
@@ -78,7 +78,7 @@ async function ronda(usuarioId: string, deps: Dependencias): Promise<ResultadoRo
     } catch (e) {
       if (esTransitoria(e)) {
         const intentos = a.estado.tipo === 'esperando' ? a.estado.intentos + 1 : 1
-        if (intentos < TOPE_DE_INTENTOS) {
+        if (intentos < TOPE_DE_INTENTOS || !detieneEnElTope(e)) {
           cambiarEstado(usuarioId, a.clave, { tipo: 'esperando', intentos })
           return 'sinSenal'
         }

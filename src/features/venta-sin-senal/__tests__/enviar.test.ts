@@ -376,7 +376,7 @@ describe('enviar las ventas guardadas en el teléfono (V9, D4)', () => {
 describe('tope de intentos de la venta sin señal (RED-05)', () => {
   it(`al fallo número ${TOPE_DE_INTENTOS} deja de reintentarse sola: queda para revisar con el aviso, conserva su fase y la siguiente sale`, async () => {
     let n = 0
-    servidor({ alta: () => { n++; if (n === 1) throw sinRed(); return alta200('v2') } })
+    servidor({ alta: () => { n++; if (n === 1) throw new ApiError(502, 'Bad gateway'); return alta200('v2') } })
     const trabada = encolar({}, 1_000)
     const siguiente = encolar({}, 2_000)
     cambiarEstado('u1', trabada.clave, { tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: TOPE_DE_INTENTOS - 1 })
@@ -390,6 +390,20 @@ describe('tope de intentos de la venta sin señal (RED-05)', () => {
     post.mockClear()
     await expect(enviarPendientes('u1')).resolves.toBe('vacia')
     expect(post).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['sin red', sinRed()],
+    ['con la sesión vencida (401)', new ApiError(401, 'Sesión expirada')],
+  ])('%s el tope no la detiene: sigue esperando con su fase y sale sola cuando vuelve la señal', async (_caso, fallo) => {
+    let n = 0
+    servidor({ alta: () => { n++; if (n === 1) throw fallo; return alta200('v2') } })
+    const v = encolar({}, 1_000)
+    cambiarEstado('u1', v.clave, { tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: TOPE_DE_INTENTOS - 1 })
+    await expect(enviarPendientes('u1')).resolves.toBe('sinSenal')
+    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: TOPE_DE_INTENTOS })
+    await expect(enviarPendientes('u1')).resolves.toBe('completa')
+    expect(leerCola('u1')[0]).toMatchObject({ clave: v.clave, estado: { tipo: 'enviada', ventaId: 'v2' } })
   })
 
   it('reintentarVenta la vuelve a esperar desde la fase en que quedó, con la misma clave: no repite la vista previa', async () => {

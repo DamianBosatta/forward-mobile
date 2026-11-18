@@ -163,7 +163,7 @@ describe('envío de la cola de la consola', () => {
     encolarAccion(USUARIO, entrega(), 1000)
     encolarAccion(USUARIO, noEntrega(), 2000)
     cambiarEstado(USUARIO, 'k-1', { tipo: 'esperando', intentos: TOPE_DE_INTENTOS - 1 })
-    mockPost.mockRejectedValueOnce(new TypeError('Network request failed')).mockResolvedValueOnce({})
+    mockPost.mockRejectedValueOnce(rechazo(503, 'Servicio no disponible')).mockResolvedValueOnce({})
     const alFallar = jest.fn()
     expect(await enviarPendientesConsola(USUARIO, { alFallar })).toBe('completa')
     expect(mockPost.mock.calls.map(([url]) => url)).toEqual([
@@ -176,6 +176,22 @@ describe('envío de la cola de la consola', () => {
     mockPost.mockClear()
     expect(await enviarPendientesConsola(USUARIO)).toBe('vacia')
     expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['sin red', new TypeError('Network request failed')],
+    ['con la sesión vencida (401)', rechazo(401, 'Sesión expirada')],
+  ])(`RED-05: %s el tope no la detiene: sigue esperando y sale sola cuando vuelve la señal`, async (_caso, fallo) => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'esperando', intentos: TOPE_DE_INTENTOS - 1 })
+    mockPost.mockRejectedValueOnce(fallo)
+    const alFallar = jest.fn()
+    expect(await enviarPendientesConsola(USUARIO, { alFallar })).toBe('sinSenal')
+    expect(leerCola(USUARIO).map((a) => a.estado)).toEqual([{ tipo: 'esperando', intentos: TOPE_DE_INTENTOS }])
+    expect(alFallar).not.toHaveBeenCalled()
+    mockPost.mockResolvedValueOnce({})
+    expect(await enviarPendientesConsola(USUARIO)).toBe('completa')
+    expect(leerCola(USUARIO)).toEqual([])
   })
 
   it('Reintentar vuelve a esperar una acción para revisar, desde cero intentos, y la ronda la manda con la misma clave y el mismo cuerpo', async () => {

@@ -1,6 +1,6 @@
 import { api, ApiError } from '@/core/api/client'
 import { esError, mensajeDeError } from '@/core/api/errores'
-import { TOPE_DE_INTENTOS, avisoDeTope } from '@/core/utils/colasSinSenal'
+import { TOPE_DE_INTENTOS, avisoDeTope, detieneEnElTope } from '@/core/utils/colasSinSenal'
 import { guardarBorradorVenta, type BorradorVenta, type VistaPreviaVenta } from '@/libs/api-client/ventas'
 import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
 import type { components } from '@/libs/api-client/generated/schema'
@@ -116,7 +116,7 @@ class Envio {
         const a = this.actual()
         if (a?.estado.tipo !== 'esperando') return false
         const intentos = a.estado.intentos + 1
-        if (intentos < TOPE_DE_INTENTOS) {
+        if (intentos < TOPE_DE_INTENTOS || !detieneEnElTope(e)) {
           cambiarEstado(this.usuarioId, this.venta.clave, { ...a.estado, intentos })
           return false
         }
