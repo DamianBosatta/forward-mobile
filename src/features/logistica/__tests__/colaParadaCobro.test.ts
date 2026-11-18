@@ -99,7 +99,7 @@ describe('cobro de una parada de solo cobro sin señal', () => {
     encolarAccion(USUARIO, noCobro(), 2000)
     await expect(enviarPendientesConsola(USUARIO)).resolves.toBe('sinSenal')
     expect(mockPost).toHaveBeenCalledTimes(1)
-    expect(leerCola(USUARIO)[0].estado).toEqual({ tipo: 'esperando', intentos: 1 })
+    expect(leerCola(USUARIO)[0].estado).toEqual({ tipo: 'esperando', intentos: 1, fallosDelTope: 1 })
   })
 
   it('sigue valiendo: una entrega con 409 ya registrada se da por enviada', async () => {

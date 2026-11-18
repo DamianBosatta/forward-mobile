@@ -37,7 +37,11 @@ export type DatosAccion =
   | (Comun & { tipo: 'noCobroParada'; cuerpo: CuerpoNoCobroParada })
 
 export type EstadoAccion =
-  | { tipo: 'esperando'; intentos: number }
+  /**
+   * `intentos`: todos los fallos transitorios. `fallosDelTope`: solo los que cuentan para `TOPE_DE_INTENTOS`
+   * (`fallosDelTopeTras`); falta en las colas guardadas por la versión anterior y vale cero.
+   */
+  | { tipo: 'esperando'; intentos: number; fallosDelTope?: number }
   /** El servidor la rechazó: no se reintenta sola; la revisa la oficina o el chofer con este mensaje. */
   | { tipo: 'revisar'; mensaje: string }
 
@@ -97,6 +101,24 @@ export function encolarAccion(usuarioId: string, d: DatosAccion, ahora = Date.no
 /** Cambia el estado de una acción (y lo deja guardado antes de seguir). */
 export function cambiarEstado(usuarioId: string, clave: string, estado: EstadoAccion): void {
   escribir(usuarioId, leerCola(usuarioId).map((a) => (a.clave === clave ? { ...a, estado } : a)))
+}
+
+/**
+ * "Reintentar" de una acción para revisar: vuelve a esperar, desde cero intentos, con la misma clave y el mismo cuerpo
+ * (el servidor la aplica una sola vez). Una que ya espera no cambia.
+ */
+export function reintentarAccion(usuarioId: string, clave: string): void {
+  if (leerCola(usuarioId).some((a) => a.clave === clave && a.estado.tipo === 'revisar')) {
+    cambiarEstado(usuarioId, clave, { tipo: 'esperando', intentos: 0 })
+  }
+}
+
+/**
+ * "Descartar" de una acción para revisar: la saca solo del teléfono. No llama al servidor ni anula nada que ya esté
+ * registrado allá. Una que espera no se descarta: podría estar saliendo en este momento.
+ */
+export function descartarAccion(usuarioId: string, clave: string): void {
+  if (leerCola(usuarioId).some((a) => a.clave === clave && a.estado.tipo === 'revisar')) quitarDeCola(usuarioId, clave)
 }
 
 /** Saca una acción que ya salió (o que el chofer resolvió). */
