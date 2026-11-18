@@ -87,10 +87,8 @@ export function Stepper({ value, max, onChange, nombre, paso = 1, acotar = true,
         onFocus={(e) => { setFoco(true); resto.onFocus?.(e) }}
         onBlur={() => { setFoco(false); setTexto(mostrar(value)) }}
         style={{
-          ...typeScale.titulo,
+          ...typeScale.tituloGrande,
           ...importe,
-          fontSize: 26,
-          lineHeight: 32,
           minWidth: compacto ? 56 : 64,
           height: lado,
           paddingVertical: 0,
