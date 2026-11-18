@@ -122,6 +122,12 @@ describe('a queued report whose key the server already holds with another body (
     ['aviso', 'aviso:p1', (k: string) => ({
       tipo: 'noEntrega', clave: k, hojaDeRutaId: 'h1', paradaId: 'p1', clienteNombre: 'Marta', cuerpo: { entregado: false, claveIdempotencia: k },
     } as unknown as DatosAccion), conOtroCuerpo()],
+    ['aviso (Duplicado)', 'aviso:p1', (k: string) => ({
+      tipo: 'noEntrega', clave: k, hojaDeRutaId: 'h1', paradaId: 'p1', clienteNombre: 'Marta', cuerpo: { entregado: false, claveIdempotencia: k },
+    } as unknown as DatosAccion), rechazo(409, 'Duplicado.', 'Duplicado')],
+    ['entrega (Duplicado)', 'entrega:p1', (k: string) => ({
+      tipo: 'entrega', clave: k, hojaDeRutaId: 'h1', paradaId: 'p1', clienteNombre: 'Marta', cuerpo: { claveIdempotencia: k }, cobrado: 0, conDevolucion: false,
+    } as DatosAccion), rechazo(409, 'Duplicado.', 'Duplicado')],
     ['entrega (key used on another stop)', 'entrega:p1', (k: string) => ({
       tipo: 'entrega', clave: k, hojaDeRutaId: 'h1', paradaId: 'p1', clienteNombre: 'Marta', cuerpo: { claveIdempotencia: k }, cobrado: 0, conDevolucion: false,
     } as DatosAccion), conOtroCuerpo('La clave ya se usó en otra entrega.')],

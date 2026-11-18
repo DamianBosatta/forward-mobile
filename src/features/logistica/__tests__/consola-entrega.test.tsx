@@ -7,7 +7,7 @@ import { conTema } from '@/core/ui/fw/__testing__/tema'
 import { reiniciarCamara, sacarFoto } from '@/features/logistica/__testing__/camara'
 import { REMITO_URL, conSubidaDeFotos, confirmarEntrega, fotoDelRemito, noSumarOtroCobro } from '@/features/logistica/__testing__/confirmar'
 import { storage } from '@/core/utils/storage'
-import { leerCola, quitarDeCola } from '../cola/colaConsola'
+import { cambiarEstado, encolarAccion, leerCola, quitarDeCola } from '../cola/colaConsola'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
 
 /**
@@ -324,6 +324,18 @@ describe('Consola del chofer: entrega con la operación única', () => {
     expect(llamadasA(REPORTAR)[2][1].claveIdempotencia).not.toBe(llamadas[0][1].claveIdempotencia)
   })
 
+  it('si el aviso se corta por plazo, queda en la cola con la misma clave que ya se mandó', async () => {
+    vaciarColaYClaves()
+    mockPost.mockRejectedValueOnce(Object.assign(new Error('Aborted'), { name: 'AbortError' }))
+    pintar()
+    await avisarNoPudeEntregar()
+    await waitFor(() => expect(leerCola('u1')).toHaveLength(1))
+    const [enviado] = llamadasA(REPORTAR)
+    expect(leerCola('u1')[0]).toMatchObject({
+      tipo: 'noEntrega', paradaId: 'p1', clave: enviado[1].claveIdempotencia, cuerpo: { claveIdempotencia: enviado[1].claveIdempotencia },
+    })
+  })
+
   it('si la clave del aviso no se puede guardar en el teléfono, el botón queda usable para reintentar', async () => {
     vaciarColaYClaves()
     mockPost.mockResolvedValue(true)
@@ -346,6 +358,21 @@ describe('Consola del chofer: entrega con la operación única', () => {
     }
   })
 
+  it('si el servidor dice que la entrega ya estaba registrada, lo que había quedado para revisar de esa parada se descarta', async () => {
+    vaciarColaYClaves()
+    encolarAccion('u1', { tipo: 'entrega', clave: 'k-viejo', hojaDeRutaId: 'h1', paradaId: 'p1', clienteNombre: 'Abel', cuerpo: { claveIdempotencia: 'k-viejo' }, cobrado: 0, conDevolucion: false } as never)
+    cambiarEstado('u1', 'k-viejo', { tipo: 'revisar', mensaje: 'El servidor rechazó el reporte.' })
+    mockPost.mockImplementation(async () => {
+      entregada()
+      throw Object.assign(new Error('Esta entrega ya se había registrado antes con otros datos.'), { status: 409, codigo: 'ClaveIdempotenciaConOtroCuerpo', errors: [] })
+    })
+    pintar()
+    await abrirEntrega()
+    await alResumen()
+    await confirmarEntrega()
+    expect(await screen.findByText('1 de 2 entregadas')).toBeTruthy()
+    expect(leerCola('u1')).toEqual([])
+  })
 })
 
 describe('Consola del chofer: hoja editada en la oficina', () => {

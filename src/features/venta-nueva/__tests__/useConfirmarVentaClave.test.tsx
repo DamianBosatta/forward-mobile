@@ -3,6 +3,7 @@ import { act, renderHook } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useConfirmarVenta } from '../hooks/useConfirmarVenta'
+import { leerCola, quitarDeCola } from '@/features/venta-sin-senal/lib/cola'
 import { producto } from '../__testing__/producto'
 
 const mockPost = jest.fn()
@@ -53,6 +54,24 @@ describe('useConfirmarVenta: clave de idempotencia por borrador', () => {
     await act(async () => { await result.current.confirmar() })
     expect(altas()).toHaveLength(2)
     expect(claveDe(1)).toBe(claveDe(0))
+  })
+})
+
+describe('useConfirmarVenta: alta cortada por plazo (RED-07)', () => {
+  beforeEach(() => { for (const v of leerCola('u')) quitarDeCola('u', v.clave) })
+
+  it('a timed-out alta is queued with the same key that was posted, so it cannot become a second sale', async () => {
+    const tiempoAgotado = Object.assign(new Error('Aborted'), { name: 'AbortError' })
+    mockPost.mockImplementation(async (url: string) => {
+      if (url === '/api/v1/Stocks/disponibilidad') return []
+      throw tiempoAgotado
+    })
+    const { result } = hook()
+    await act(async () => { await result.current.confirmar() })
+    expect(altas()).toHaveLength(1)
+    const cola = leerCola('u')
+    expect(cola).toHaveLength(1)
+    expect(cola[0]).toMatchObject({ clave: claveDe(0), alta: { claveIdempotencia: claveDe(0) } })
   })
 })
 

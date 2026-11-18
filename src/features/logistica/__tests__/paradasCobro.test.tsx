@@ -292,6 +292,20 @@ describe.each(TEMAS)('paradas de solo cobro en la consola del chofer (%s)', (tem
     ])
   })
 
+  it('if "No cobré" times out the close is queued like no signal, once per stop', async () => {
+    mockPost.mockRejectedValue(Object.assign(new Error('Aborted'), { name: 'AbortError' }))
+    pintar([cobro()])
+    await userEvent.press(screen.getByLabelText('Cobrar en Av. Rivadavia 4500'))
+    await userEvent.press(await screen.findByText('No cobré'))
+    await userEvent.press(screen.getByText('No pagó'))
+    await userEvent.press(screen.getByRole('button', { name: 'Cerrar sin cobrar' }))
+    expect(await screen.findByText('Parada guardada sin cobrar.')).toBeTruthy()
+    expect(mockPost).toHaveBeenCalledTimes(1)
+    expect(leerCola(USUARIO)).toEqual([
+      expect.objectContaining({ tipo: 'noCobroParada', clave: 'no-cobrada:pc1', paradaId: 'pc1', cuerpo: { motivo: 'NoPago' } }),
+    ])
+  })
+
   it('un 409 de "ya reportada" se muestra tal cual, sin dar la parada por cobrada', async () => {
     mockPost.mockRejectedValue(rechazo(409, 'La parada ya fue reportada.', 'ParadaYaReportada'))
     pintar([cobro()])

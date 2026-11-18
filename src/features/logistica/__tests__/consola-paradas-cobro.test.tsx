@@ -92,6 +92,20 @@ describe('Consola del chofer: paradas de solo cobro (S9)', () => {
     expect(screen.queryByText('¿Cerrar el viaje?')).toBeNull()
   })
 
+  it('with several actions left for review the reason is in plural and still blocks closing', async () => {
+    for (const [clave, paradaId] of [['k-1', 'pc1'], ['k-2', 'pc2']]) {
+      encolarAccion('u1', {
+        tipo: 'cobroParada', clave, hojaDeRutaId: 'h1', paradaId, clienteNombre: 'Don Pepe',
+        cuerpo: { claveIdempotencia: clave, lineas: [] }, cobrado: 1000,
+      })
+      cambiarEstado('u1', clave, { tipo: 'revisar', mensaje: 'El servidor rechazó el cobro.' })
+    }
+    pintar(hoja({ paradasCobro: [COBRO] }))
+    expect(await screen.findByText('2 acciones para revisar: reintentalas o descartalas para cerrar el viaje.')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Cerrar viaje'))
+    expect(screen.queryByText('¿Cerrar el viaje?')).toBeNull()
+  })
+
   it('sigue valiendo: una hoja vieja con todas las entregas hechas se finaliza', async () => {
     pintar(hoja({ detalles: [{ ...ENTREGA, estado: 2 }] }))
     expect(await screen.findByLabelText('Cerrar viaje')).toBeTruthy()
