@@ -1,6 +1,7 @@
 import React from 'react'
 import { View } from 'react-native'
 import { render, screen } from '@testing-library/react-native'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { OfflineBanner } from '@/core/ui/OfflineBanner'
 import { TopBar, TwoPane } from '..'
 
@@ -29,9 +30,11 @@ function Lista() {
 }
 const pintar = () =>
   render(
-    <SafeAreaInsetsContext.Provider value={INSETS}>
-      <OfflineBanner><Lista /></OfflineBanner>
-    </SafeAreaInsetsContext.Provider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <SafeAreaInsetsContext.Provider value={INSETS}>
+        <OfflineBanner><Lista /></OfflineBanner>
+      </SafeAreaInsetsContext.Provider>
+    </QueryClientProvider>,
   )
 
 describe('TwoPane sin señal: un solo aviso', () => {

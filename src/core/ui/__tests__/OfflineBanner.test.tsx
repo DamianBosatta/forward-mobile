@@ -1,6 +1,7 @@
 import React from 'react'
 import { StyleSheet } from 'react-native'
-import { render, screen } from '@testing-library/react-native'
+import { act, render, screen, waitFor } from '@testing-library/react-native'
+import { MutationObserver, QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
 import { OfflineBanner } from '../OfflineBanner'
 import { TopBar } from '../fw'
 
@@ -16,15 +17,18 @@ const INSETS = { top: 30, bottom: 10, left: 0, right: 0 }
 const TEXTO = /Sin conexión - Modo lectura/
 
 /** Igual que app/_layout.tsx: las pantallas (con su TopBar) van dentro de OfflineBanner. */
+let qc = new QueryClient()
 const pintar = (hijo: React.ReactElement = <TopBar title="Stock" />) =>
   render(
-    <SafeAreaInsetsContext.Provider value={INSETS}>
-      <OfflineBanner>{hijo}</OfflineBanner>
-    </SafeAreaInsetsContext.Provider>,
+    <QueryClientProvider client={qc}>
+      <SafeAreaInsetsContext.Provider value={INSETS}>
+        <OfflineBanner>{hijo}</OfflineBanner>
+      </SafeAreaInsetsContext.Provider>
+    </QueryClientProvider>,
   )
 
 describe('OfflineBanner', () => {
-  beforeEach(() => { mockConectado = false; mockRuta = '/' })
+  beforeEach(() => { qc = new QueryClient(); mockConectado = false; mockRuta = '/' })
 
   it('en una pantalla de solo lectura sin señal sigue mostrando el aviso', () => {
     mockRuta = '/inventario/stock'
@@ -71,7 +75,7 @@ describe('OfflineBanner debajo de la barra (propuesta de Inicio, frame 10)', () 
       </>
     )
   }
-  beforeEach(() => { montajes = 0; mockConectado = false; mockRuta = '/inventario/stock' })
+  beforeEach(() => { qc = new QueryClient(); montajes = 0; mockConectado = false; mockRuta = '/inventario/stock' })
 
   it('sin señal nada va arriba de la barra: la barra pone el margen del sistema y el aviso va después; la pantalla conserva su margen (los modales lo necesitan)', () => {
     pintar(<Pantalla />)
@@ -105,11 +109,63 @@ describe('OfflineBanner debajo de la barra (propuesta de Inicio, frame 10)', () 
     const r = pintar(<Pantalla />)
     mockConectado = false
     r.rerender(
-      <SafeAreaInsetsContext.Provider value={INSETS}>
-        <OfflineBanner><Pantalla /></OfflineBanner>
-      </SafeAreaInsetsContext.Provider>,
+      <QueryClientProvider client={qc}>
+        <SafeAreaInsetsContext.Provider value={INSETS}>
+          <OfflineBanner><Pantalla /></OfflineBanner>
+        </SafeAreaInsetsContext.Provider>
+      </QueryClientProvider>,
     )
     expect(screen.getByText(TEXTO)).toBeTruthy()
     expect(montajes).toBe(1)
+  })
+})
+
+describe('OfflineBanner: acciones pausadas sin señal (RED-02)', () => {
+  const TEXTO_ESPERA = /esperan? señal/
+  const pausar = (n: number) => {
+    onlineManager.setOnline(false)
+    for (let i = 0; i < n; i++) void new MutationObserver(qc, { mutationFn: async () => 'ok' }).mutate()
+  }
+  beforeEach(() => { qc = new QueryClient(); mockConectado = false; mockRuta = '/inventario/stock'; onlineManager.setOnline(true) })
+  afterEach(() => { onlineManager.setOnline(true) })
+
+  it('sin acciones en espera no se muestra el aviso', () => {
+    pintar()
+    expect(screen.queryByTestId('aviso-acciones-en-espera')).toBeNull()
+  })
+
+  it('con 3 acciones pausadas dice cuántas esperan señal y que se mandan solas al volver', async () => {
+    pintar()
+    await act(async () => { pausar(3) })
+    expect(await screen.findByText('3 acciones esperan señal. Se envían solas cuando vuelva la conexión.')).toBeTruthy()
+  })
+
+  it('con una sola lo dice en singular', async () => {
+    pintar()
+    await act(async () => { pausar(1) })
+    expect(await screen.findByText('1 acción espera señal. Se envía sola cuando vuelva la conexión.')).toBeTruthy()
+  })
+
+  it('es un aviso accesible: región viva educada', async () => {
+    pintar()
+    await act(async () => { pausar(2) })
+    expect((await screen.findByTestId('aviso-acciones-en-espera')).props.accessibilityLiveRegion).toBe('polite')
+  })
+
+  it('se muestra también donde el aviso de modo lectura se oculta (venta nueva)', async () => {
+    mockRuta = '/ventas/nueva'
+    pintar()
+    await act(async () => { pausar(2) })
+    expect(await screen.findByText(TEXTO_ESPERA)).toBeTruthy()
+    expect(screen.queryByText(TEXTO)).toBeNull()
+  })
+
+  it('desaparece cuando vuelve la señal y se envían', async () => {
+    mockConectado = true
+    pintar()
+    await act(async () => { pausar(2) })
+    expect(await screen.findByText(TEXTO_ESPERA)).toBeTruthy()
+    await act(async () => { onlineManager.setOnline(true); await qc.resumePausedMutations() })
+    await waitFor(() => expect(screen.queryByText(TEXTO_ESPERA)).toBeNull())
   })
 })

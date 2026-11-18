@@ -1,8 +1,9 @@
 import React from 'react'
 import { View } from 'react-native'
 import { usePathname } from 'expo-router'
+import { useMutationState } from '@tanstack/react-query'
 import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
-import { AvisoSinConexionContext } from './fw/TopBar'
+import { AccionesEnEsperaContext, AvisoSinConexionContext } from './fw/TopBar'
 
 /**
  * Pantallas que trabajan sin señal (encolan y mandan solo al volver) y muestran su propio aviso:
@@ -27,10 +28,14 @@ export function OfflineBanner({ children }: { children?: React.ReactNode }) {
   const { isConnected } = useNetworkStatus()
   const pathname = usePathname()
   const visible = !isConnected && !ocultaAvisoGlobalSinConexion(pathname)
+  // RED-02: acciones de react-query pausadas por falta de señal; se avisa en toda pantalla, no solo en las de lectura.
+  const enEspera = useMutationState({ filters: { status: 'pending' }, select: (m) => m.state.isPaused }).filter(Boolean).length
 
   return (
     <AvisoSinConexionContext.Provider value={visible}>
-      <View style={{ flex: 1 }}>{children}</View>
+      <AccionesEnEsperaContext.Provider value={enEspera}>
+        <View style={{ flex: 1 }}>{children}</View>
+      </AccionesEnEsperaContext.Provider>
     </AvisoSinConexionContext.Provider>
   )
 }
