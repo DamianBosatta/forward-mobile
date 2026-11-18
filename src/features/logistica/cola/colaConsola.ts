@@ -37,7 +37,11 @@ export type DatosAccion =
   | (Comun & { tipo: 'noCobroParada'; cuerpo: CuerpoNoCobroParada })
 
 export type EstadoAccion =
-  | { tipo: 'esperando'; intentos: number }
+  /**
+   * `intentos`: todos los fallos transitorios. `fallosDelTope`: solo los que cuentan para `TOPE_DE_INTENTOS`
+   * (`fallosDelTopeTras`); falta en las colas guardadas por la versión anterior y vale cero.
+   */
+  | { tipo: 'esperando'; intentos: number; fallosDelTope?: number }
   /** El servidor la rechazó: no se reintenta sola; la revisa la oficina o el chofer con este mensaje. */
   | { tipo: 'revisar'; mensaje: string }
 

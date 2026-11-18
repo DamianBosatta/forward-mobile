@@ -88,11 +88,11 @@ describe('envío de la cola de la consola', () => {
     expect(await enviarPendientesConsola(USUARIO)).toBe('sinSenal')
     expect(mockPost).toHaveBeenCalledTimes(1)
     const [a, b] = leerCola(USUARIO)
-    expect(a.estado).toEqual({ tipo: 'esperando', intentos: 1 })
+    expect(a.estado).toEqual({ tipo: 'esperando', intentos: 1, fallosDelTope: 0 })
     expect(b.estado).toEqual({ tipo: 'esperando', intentos: 0 })
     mockPost.mockRejectedValueOnce(rechazo(503, 'caído'))
     expect(await enviarPendientesConsola(USUARIO)).toBe('sinSenal')
-    expect(leerCola(USUARIO)[0].estado).toEqual({ tipo: 'esperando', intentos: 2 })
+    expect(leerCola(USUARIO)[0].estado).toEqual({ tipo: 'esperando', intentos: 2, fallosDelTope: 1 })
   })
 
   it('el reintento repite la misma clave y el mismo cuerpo', async () => {
@@ -156,13 +156,13 @@ describe('envío de la cola de la consola', () => {
     mockPost.mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'))
     expect(await enviarPendientesConsola(USUARIO)).toBe('sinSenal')
     expect(mockPost).toHaveBeenCalledTimes(1)
-    expect(leerCola(USUARIO).map((a) => a.estado)).toEqual([{ tipo: 'esperando', intentos: 1 }, { tipo: 'esperando', intentos: 0 }])
+    expect(leerCola(USUARIO).map((a) => a.estado)).toEqual([{ tipo: 'esperando', intentos: 1, fallosDelTope: 1 }, { tipo: 'esperando', intentos: 0 }])
   })
 
   it(`RED-05: al fallo número ${TOPE_DE_INTENTOS} deja de reintentarse sola, queda para revisar con el aviso y la ronda sigue con la próxima`, async () => {
     encolarAccion(USUARIO, entrega(), 1000)
     encolarAccion(USUARIO, noEntrega(), 2000)
-    cambiarEstado(USUARIO, 'k-1', { tipo: 'esperando', intentos: TOPE_DE_INTENTOS - 1 })
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'esperando', intentos: TOPE_DE_INTENTOS - 1, fallosDelTope: TOPE_DE_INTENTOS - 1 })
     mockPost.mockRejectedValueOnce(rechazo(503, 'Servicio no disponible')).mockResolvedValueOnce({})
     const alFallar = jest.fn()
     expect(await enviarPendientesConsola(USUARIO, { alFallar })).toBe('completa')
@@ -183,11 +183,11 @@ describe('envío de la cola de la consola', () => {
     ['con la sesión vencida (401)', rechazo(401, 'Sesión expirada')],
   ])(`RED-05: %s el tope no la detiene: sigue esperando y sale sola cuando vuelve la señal`, async (_caso, fallo) => {
     encolarAccion(USUARIO, entrega(), 1000)
-    cambiarEstado(USUARIO, 'k-1', { tipo: 'esperando', intentos: TOPE_DE_INTENTOS - 1 })
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'esperando', intentos: TOPE_DE_INTENTOS - 1, fallosDelTope: TOPE_DE_INTENTOS - 1 })
     mockPost.mockRejectedValueOnce(fallo)
     const alFallar = jest.fn()
     expect(await enviarPendientesConsola(USUARIO, { alFallar })).toBe('sinSenal')
-    expect(leerCola(USUARIO).map((a) => a.estado)).toEqual([{ tipo: 'esperando', intentos: TOPE_DE_INTENTOS }])
+    expect(leerCola(USUARIO).map((a) => a.estado)).toEqual([{ tipo: 'esperando', intentos: TOPE_DE_INTENTOS, fallosDelTope: TOPE_DE_INTENTOS - 1 }])
     expect(alFallar).not.toHaveBeenCalled()
     mockPost.mockResolvedValueOnce({})
     expect(await enviarPendientesConsola(USUARIO)).toBe('completa')
@@ -235,5 +235,50 @@ describe('envío de la cola de la consola', () => {
     expect(await enviarPendientesConsola(USUARIO, { sesion: () => 'otro' })).toBe('sinSenal')
     expect(mockPost).not.toHaveBeenCalled()
     expect(leerCola(USUARIO)[0].estado).toEqual({ tipo: 'esperando', intentos: 0 })
+  })
+})
+
+describe('tope de la consola: solo cuentan los fallos que llegaron al servidor o se colgaron (RED-05)', () => {
+  const ENTREGAR = '/api/v1/Logistica/hojas-ruta/h1/paradas/p1/entregar'
+
+  it.each([
+    ['un 503', rechazo(503, 'Servicio no disponible')],
+    ['un tiempo agotado (AbortError)', new DOMException('Aborted', 'AbortError')],
+  ])(`${TOPE_DE_INTENTOS - 1} rondas sin red y después %s no la detienen: sigue esperando y sale en la próxima ronda`, async (_caso, fallo) => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    const alFallar = jest.fn()
+    for (let i = 0; i < TOPE_DE_INTENTOS - 1; i++) {
+      mockPost.mockRejectedValueOnce(new TypeError('Network request failed'))
+      expect(await enviarPendientesConsola(USUARIO, { alFallar })).toBe('sinSenal')
+    }
+    mockPost.mockRejectedValueOnce(fallo)
+    expect(await enviarPendientesConsola(USUARIO, { alFallar })).toBe('sinSenal')
+    expect(leerCola(USUARIO).map((a) => a.estado)).toEqual([{ tipo: 'esperando', intentos: TOPE_DE_INTENTOS, fallosDelTope: 1 }])
+    expect(alFallar).not.toHaveBeenCalled()
+    mockPost.mockResolvedValueOnce({})
+    expect(await enviarPendientesConsola(USUARIO)).toBe('completa')
+    expect(leerCola(USUARIO)).toEqual([])
+  })
+
+  it('una cola guardada por la versión anterior (muchos intentos, sin la cuenta del tope) no se detiene en su primer 5xx', async () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'esperando', intentos: 50 })
+    mockPost.mockRejectedValueOnce(rechazo(503, 'Servicio no disponible'))
+    expect(await enviarPendientesConsola(USUARIO)).toBe('sinSenal')
+    expect(leerCola(USUARIO).map((a) => a.estado)).toEqual([{ tipo: 'esperando', intentos: 51, fallosDelTope: 1 }])
+  })
+
+  it('Reintentar una acción que la ronda en curso ya detuvo por el tope la vuelve a mandar en esa ronda, una vez y con la misma clave', async () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    encolarAccion(USUARIO, noEntrega(), 2000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'esperando', intentos: TOPE_DE_INTENTOS - 1, fallosDelTope: TOPE_DE_INTENTOS - 1 })
+    mockPost
+      .mockRejectedValueOnce(rechazo(503, 'Servicio no disponible'))
+      .mockImplementationOnce(async () => { reintentarAccion(USUARIO, 'k-1'); return {} })
+      .mockResolvedValue({})
+    expect(await enviarPendientesConsola(USUARIO)).toBe('completa')
+    expect(mockPost.mock.calls.map(([url]) => url)).toEqual([ENTREGAR, '/api/v1/Logistica/hojas-ruta/h1/reportar-parada', ENTREGAR])
+    expect(mockPost.mock.calls[2]).toEqual(mockPost.mock.calls[0])
+    expect(leerCola(USUARIO)).toEqual([])
   })
 })

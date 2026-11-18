@@ -1,6 +1,6 @@
 import { api, ApiError } from '@/core/api/client'
 import { esError, mensajeDeError } from '@/core/api/errores'
-import { TOPE_DE_INTENTOS, avisoDeTope, detieneEnElTope } from '@/core/utils/colasSinSenal'
+import { TOPE_DE_INTENTOS, avisoDeTope, fallosDelTopeTras } from '@/core/utils/colasSinSenal'
 import { guardarBorradorVenta, type BorradorVenta, type VistaPreviaVenta } from '@/libs/api-client/ventas'
 import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
 import type { components } from '@/libs/api-client/generated/schema'
@@ -96,8 +96,10 @@ class Envio {
   /** Guarda el paso ANTES de la llamada que lo sigue: si la app muere en el medio, se retoma de acá. */
   private pasar(fase: FaseEnvio) {
     const a = this.actual()
-    const intentos = a?.estado.tipo === 'esperando' ? a.estado.intentos : 0
-    cambiarEstado(this.usuarioId, this.venta.clave, { tipo: 'esperando', fase, intentos })
+    const previo = a?.estado.tipo === 'esperando' ? a.estado : undefined
+    cambiarEstado(this.usuarioId, this.venta.clave, {
+      tipo: 'esperando', fase, intentos: previo?.intentos ?? 0, fallosDelTope: previo?.fallosDelTope,
+    })
   }
 
   /** true: quedó resuelta (enviada, en Borradores o para revisar); false: se cortó y sigue esperando. */
@@ -116,8 +118,9 @@ class Envio {
         const a = this.actual()
         if (a?.estado.tipo !== 'esperando') return false
         const intentos = a.estado.intentos + 1
-        if (intentos < TOPE_DE_INTENTOS || !detieneEnElTope(e)) {
-          cambiarEstado(this.usuarioId, this.venta.clave, { ...a.estado, intentos })
+        const fallosDelTope = fallosDelTopeTras(a.estado.fallosDelTope, e)
+        if (fallosDelTope < TOPE_DE_INTENTOS) {
+          cambiarEstado(this.usuarioId, this.venta.clave, { ...a.estado, intentos, fallosDelTope })
           return false
         }
         // Tope: deja de reintentarse sola para no trabar a las de atrás. Guarda la fase: pudo haberse grabado, y
@@ -226,16 +229,22 @@ class Envio {
   }
 }
 
+/** El estado guardado de una venta, para comparar (`null`: ya no está en la cola). */
+const estadoGuardado = (usuarioId: string, clave: string) =>
+  JSON.stringify(leerCola(usuarioId).find((v) => v.clave === clave)?.estado ?? null)
+
 async function ronda(usuarioId: string): Promise<ResultadoRonda> {
-  const vistas = new Set<string>()
-  // Se relee la cola en cada vuelta: lo que se encola durante la ronda también sale, en orden.
+  // Cómo dejó la ronda cada venta que ya resolvió: no se vuelve a mandar salvo que su estado cambie después
+  // (`reintentarVenta` durante la ronda la vuelve a esperar y sale en esta misma ronda).
+  const resueltas = new Map<string, string>()
+  // Se relee la cola en cada vuelta: lo que se encola (o se retoma) durante la ronda también sale, en orden.
   for (;;) {
-    const sig = leerCola(usuarioId).find((v) => v.estado.tipo === 'esperando' && !vistas.has(v.clave))
-    if (!sig || sig.estado.tipo !== 'esperando') return vistas.size ? 'completa' : 'vacia'
+    const sig = leerCola(usuarioId).find((v) => v.estado.tipo === 'esperando' && resueltas.get(v.clave) !== JSON.stringify(v.estado))
+    if (!sig || sig.estado.tipo !== 'esperando') return resueltas.size ? 'completa' : 'vacia'
     if (!enSesion(usuarioId)) return 'sinSenal'
-    vistas.add(sig.clave)
     // Sin señal se corta acá: las de atrás esperan su turno, para no adelantarse a la que no salió.
     if (!(await new Envio(usuarioId, sig).ejecutar(sig.estado.fase))) return 'sinSenal'
+    resueltas.set(sig.clave, estadoGuardado(usuarioId, sig.clave))
   }
 }
 

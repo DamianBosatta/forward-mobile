@@ -94,7 +94,7 @@ describe('enviar las ventas guardadas en el teléfono (V9, D4)', () => {
     servidor({ alta: () => { n++; if (n === 1) throw new DOMException('Aborted', 'AbortError'); return alta200('v1', { message: 'La venta ya había sido creada con esta clave de idempotencia (operación repetida).' }) } })
     const v = encolar()
     await expect(enviarPendientes('u1')).resolves.toBe('sinSenal')
-    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: 1 })
+    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: 1, fallosDelTope: 1 })
     expect(llamadas('/api/v1/Ventas')[0][1].claveIdempotencia).toBe(v.clave)
     post.mockClear()
 
@@ -129,7 +129,7 @@ describe('enviar las ventas guardadas en el teléfono (V9, D4)', () => {
     await expect(enviarPendientes('u1')).resolves.toBe('sinSenal')
     servidor({ alta: tira(new ApiError(401, 'Sesión expirada')) })
     await expect(enviarPendientes('u1')).resolves.toBe('sinSenal')
-    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: 2 })
+    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: 2, fallosDelTope: 1 })
   })
 
   it('dos avisos de conexión a la vez no mandan la venta dos veces', async () => {
@@ -200,7 +200,7 @@ describe('enviar las ventas guardadas en el teléfono (V9, D4)', () => {
     servidor({ vista: tira(sinRed()) })
     encolar()
     await expect(enviarPendientes('u1')).resolves.toBe('sinSenal')
-    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'esperando', fase: { paso: 'nueva' }, intentos: 1 })
+    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'esperando', fase: { paso: 'nueva' }, intentos: 1, fallosDelTope: 0 })
   })
 
   describe('T5b: total esperado (POST /Ventas, 409 TotalCambiado)', () => {
@@ -379,7 +379,7 @@ describe('tope de intentos de la venta sin señal (RED-05)', () => {
     servidor({ alta: () => { n++; if (n === 1) throw new ApiError(502, 'Bad gateway'); return alta200('v2') } })
     const trabada = encolar({}, 1_000)
     const siguiente = encolar({}, 2_000)
-    cambiarEstado('u1', trabada.clave, { tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: TOPE_DE_INTENTOS - 1 })
+    cambiarEstado('u1', trabada.clave, { tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: TOPE_DE_INTENTOS - 1, fallosDelTope: TOPE_DE_INTENTOS - 1 })
     await expect(enviarPendientes('u1')).resolves.toBe('completa')
     const [a, b] = leerCola('u1')
     expect(a).toMatchObject({
@@ -399,11 +399,47 @@ describe('tope de intentos de la venta sin señal (RED-05)', () => {
     let n = 0
     servidor({ alta: () => { n++; if (n === 1) throw fallo; return alta200('v2') } })
     const v = encolar({}, 1_000)
-    cambiarEstado('u1', v.clave, { tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: TOPE_DE_INTENTOS - 1 })
+    cambiarEstado('u1', v.clave, { tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: TOPE_DE_INTENTOS - 1, fallosDelTope: TOPE_DE_INTENTOS - 1 })
     await expect(enviarPendientes('u1')).resolves.toBe('sinSenal')
-    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: TOPE_DE_INTENTOS })
+    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: TOPE_DE_INTENTOS, fallosDelTope: TOPE_DE_INTENTOS - 1 })
     await expect(enviarPendientes('u1')).resolves.toBe('completa')
     expect(leerCola('u1')[0]).toMatchObject({ clave: v.clave, estado: { tipo: 'enviada', ventaId: 'v2' } })
+  })
+
+  it.each([
+    ['un 503', new ApiError(503, 'Servicio no disponible')],
+    ['un tiempo agotado (AbortError)', new DOMException('Aborted', 'AbortError')],
+  ])(`${TOPE_DE_INTENTOS - 1} rondas sin red y después %s no la detienen: sigue esperando y sale en la próxima ronda`, async (_caso, fallo) => {
+    let n = 0
+    servidor({ vista: () => { n++; if (n < TOPE_DE_INTENTOS) throw sinRed(); if (n === TOPE_DE_INTENTOS) throw fallo; return vista() } })
+    encolar()
+    for (let i = 0; i < TOPE_DE_INTENTOS; i++) await expect(enviarPendientes('u1')).resolves.toBe('sinSenal')
+    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'esperando', fase: { paso: 'nueva' }, intentos: TOPE_DE_INTENTOS, fallosDelTope: 1 })
+    await expect(enviarPendientes('u1')).resolves.toBe('completa')
+    expect(leerCola('u1')[0].estado).toMatchObject({ tipo: 'enviada', ventaId: 'v1' })
+  })
+
+  it('una cola guardada por la versión anterior (muchos intentos, sin la cuenta del tope) no se detiene en su primer 5xx', async () => {
+    servidor({ alta: tira(new ApiError(502, 'Bad gateway')) })
+    const v = encolar()
+    cambiarEstado('u1', v.clave, { tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: 50 })
+    await expect(enviarPendientes('u1')).resolves.toBe('sinSenal')
+    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: 51, fallosDelTope: 1 })
+  })
+
+  it('reintentarVenta de una venta que la ronda en curso ya detuvo por el tope la manda en esa misma ronda, una vez y con la misma clave', async () => {
+    let altas = 0
+    const trabada = encolar({}, 1_000)
+    const siguiente = encolar({}, 2_000)
+    servidor({
+      vista: () => { reintentarVenta('u1', trabada.clave); return vista() },
+      alta: (cuerpo) => { altas++; if (altas === 1) throw new ApiError(502, 'Bad gateway'); return alta200(cuerpo.claveIdempotencia === trabada.clave ? 'v1' : 'v2') },
+    })
+    cambiarEstado('u1', trabada.clave, { tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: TOPE_DE_INTENTOS - 1, fallosDelTope: TOPE_DE_INTENTOS - 1 })
+    await expect(enviarPendientes('u1')).resolves.toBe('completa')
+    expect(llamadas('/api/v1/Ventas').map(([, c]) => c.claveIdempotencia)).toEqual([trabada.clave, siguiente.clave, trabada.clave])
+    expect(llamadas('/api/v1/Ventas')[2]).toEqual(llamadas('/api/v1/Ventas')[0])
+    expect(leerCola('u1').map((v) => [v.clave, v.estado.tipo])).toEqual([[trabada.clave, 'enviada'], [siguiente.clave, 'enviada']])
   })
 
   it('reintentarVenta la vuelve a esperar desde la fase en que quedó, con la misma clave: no repite la vista previa', async () => {

@@ -32,7 +32,11 @@ export type FaseEnvio =
   | { paso: 'borradorCreado'; ventaId: string; version: number; totalServidor: number | null }
 
 export type EstadoEnCola =
-  | { tipo: 'esperando'; fase: FaseEnvio; intentos: number }
+  /**
+   * `intentos`: todos los fallos transitorios. `fallosDelTope`: solo los que cuentan para `TOPE_DE_INTENTOS`
+   * (`fallosDelTopeTras`); falta en las colas guardadas por la versión anterior y vale cero.
+   */
+  | { tipo: 'esperando'; fase: FaseEnvio; intentos: number; fallosDelTope?: number }
   | { tipo: 'enviada'; ventaId: string; codigo: string | null; estado: EstadoVentaNombre | null }
   /** El precio cambió al enviarse: quedó como borrador para revisarla (no se confirmó). */
   | { tipo: 'enBorradores'; ventaId: string; totalServidor: number | null }

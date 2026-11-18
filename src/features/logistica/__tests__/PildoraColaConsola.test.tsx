@@ -58,6 +58,15 @@ describe('acciones para revisar en la cola de la consola', () => {
     expect(within(hoja).getByRole('button', { name: 'Reintentar entrega y cobro de Almacén Don Pepe' })).toBeTruthy()
   })
 
+  it('el texto de la lista dice que hay acciones para revisar; sin ninguna, que se mandan solas', async () => {
+    const hoja = await abrirLista()
+    expect(within(hoja).getByText(
+      'Las que esperan señal se mandan solas, en este orden, cuando vuelva la conexión. 1 acción para revisar: tocá Reintentar o Descartar.',
+    )).toBeTruthy()
+    await userEvent.press(within(hoja).getByRole('button', { name: 'Reintentar entrega y cobro de Almacén Don Pepe' }))
+    expect(within(hoja).getByText('Se mandan solas, en este orden, cuando vuelva la conexión.')).toBeTruthy()
+  })
+
   it('Reintentar la vuelve a la cola esperando señal, con la misma clave y el mismo cuerpo, y desaparecen sus botones', async () => {
     const hoja = await abrirLista()
     await userEvent.press(within(hoja).getByRole('button', { name: 'Reintentar entrega y cobro de Almacén Don Pepe' }))

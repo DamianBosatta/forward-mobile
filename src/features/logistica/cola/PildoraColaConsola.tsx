@@ -41,6 +41,11 @@ export function ColaConsola({ acciones }: Props) {
   const aRevisar = acciones.length - esperando
   const texto = esperando > 0 ? `${accionesTexto(esperando)} esperando señal` : `${accionesTexto(aRevisar)} para revisar`
   const par = c.chip[esperando > 0 ? 'porAutorizar' : 'anulado']
+  const ayuda = aRevisar === 0
+    ? 'Se mandan solas, en este orden, cuando vuelva la conexión.'
+    : esperando === 0
+      ? `${accionesTexto(aRevisar)} para revisar: no se mandan solas. Tocá Reintentar o Descartar en cada una.`
+      : `Las que esperan señal se mandan solas, en este orden, cuando vuelva la conexión. ${accionesTexto(aRevisar)} para revisar: tocá Reintentar o Descartar.`
   return (
     <>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3] }}>
@@ -68,7 +73,7 @@ export function ColaConsola({ acciones }: Props) {
       </View>
       <BottomSheet visible={abierta} onClose={() => setAbierta(false)} accessibilityLabel="Acciones esperando señal">
         <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Esperando señal</Text>
-        <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>Se mandan solas, en este orden, cuando vuelva la conexión.</Text>
+        <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>{ayuda}</Text>
         <View style={{ gap: space[2], marginTop: space[3] }}>
           {acciones.map((a) => <FilaAccion key={a.clave} a={a} usuarioId={usuarioId} />)}
         </View>
