@@ -4,7 +4,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as SplashScreen from 'expo-splash-screen'
 import { space, useColors } from '@/libs/theme'
 import { logger } from '@/core/utils/logger'
-import { reiniciarAlmacen, sePuedeAbrirElAlmacen, type MotivoDeBloqueo } from '@/core/utils/storage'
+import {
+  quedoUnReinicioAMedias,
+  reiniciarAlmacen,
+  sePuedeAbrirElAlmacen,
+  type MotivoDeBloqueo,
+  type ResultadoDelReinicio,
+} from '@/core/utils/storage'
 import { cerrarSesion } from '@/features/auth/lib/cerrarSesion'
 import { ConfirmModal } from './ConfirmModal'
 import { Button } from './fw/Button'
@@ -27,7 +33,8 @@ const AVISO: Record<AvisoDeRecuperacion, string> = {
   'reintento-fallido': 'Todavía no se pudo. Esperá unos segundos y tocá Reintentar; si sigue igual, reiniciá el teléfono.',
   'sin-guardar':
     'No se pudo empezar de nuevo: el teléfono no dejó guardar una clave nueva. No se borró nada. Reiniciá el teléfono y probá otra vez.',
-  'sin-leer': 'No se pudo terminar: el teléfono no deja leer la clave nueva. Reiniciá el teléfono y tocá Reintentar.',
+  'sin-leer':
+    'No se pudo terminar: el teléfono no deja leer la clave nueva. Lo que estaba guardado en el teléfono ya no se puede recuperar. Reiniciá el teléfono y tocá Reintentar para terminar.',
 }
 
 interface AlmacenBloqueadoVistaProps {
@@ -64,8 +71,9 @@ export function AlmacenBloqueadoVista({
           // Same column on phone and tablet: a readable width, centered.
           <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center', gap: space[3], paddingHorizontal: space[6] }}>
             {aviso ? <Notice tone="advertencia">{AVISO[aviso]}</Notice> : null}
-            <Button label="Empezar de nuevo" onPress={onEmpezarDeNuevo} disabled={procesando} />
-            <Button label="Reintentar" variant="secundario" onPress={onReintentar} disabled={procesando} />
+            {/* Reintentar first: it never deletes anything, and an unreadable Keystore can be transient. */}
+            <Button label="Reintentar" onPress={onReintentar} disabled={procesando} />
+            <Button label="Empezar de nuevo" variant="peligroContorno" onPress={onEmpezarDeNuevo} disabled={procesando} />
           </View>
         )}
       </ScrollView>
@@ -121,11 +129,17 @@ export function AlmacenBloqueado({ motivo }: { motivo: MotivoDeBloqueo }) {
   }, [motivo])
 
   const reintentar = () => {
-    if (sePuedeAbrirElAlmacen()) {
-      recargarLaApp(() => setAviso('reintento-fallido'))
+    // After `sin-leer` the old key is gone: Reintentar finishes the reset, never reloads into the old data.
+    const aMedias = quedoUnReinicioAMedias()
+    if (!sePuedeAbrirElAlmacen()) {
+      setAviso(aMedias ? 'sin-leer' : 'reintento-fallido')
       return
     }
-    setAviso('reintento-fallido')
+    if (aMedias) {
+      void empezarDeNuevo()
+      return
+    }
+    recargarLaApp(() => setAviso('reintento-fallido'))
   }
 
   const terminar = (siguiente: () => void) => {
@@ -139,7 +153,15 @@ export function AlmacenBloqueado({ motivo }: { motivo: MotivoDeBloqueo }) {
     if (enCurso.current) return
     enCurso.current = true
     setProcesando(true)
-    const resultado = reiniciarAlmacen()
+    let resultado: ResultadoDelReinicio
+    try {
+      resultado = reiniciarAlmacen()
+    } catch (e) {
+      // Unexpected: the reset threw before deleting anything. The buttons come back and the notice says so.
+      logger.error(new Error(`Storage reset failed: ${e instanceof Error ? e.message : 'unknown'}`))
+      terminar(() => setAviso(quedoUnReinicioAMedias() ? 'sin-leer' : 'sin-guardar'))
+      return
+    }
     if (resultado === 'sin-guardar' || resultado === 'sin-leer') {
       terminar(() => setAviso(resultado))
       return
@@ -153,7 +175,7 @@ export function AlmacenBloqueado({ motivo }: { motivo: MotivoDeBloqueo }) {
         logger.error(new Error(`Logout after storage reset failed: ${e instanceof Error ? e.message : 'unknown'}`))
       }
     }
-    // `se-abre`: the key reads again, so the reload recovers everything instead of wiping it.
+    // `se-abre`: the key reads again and no key was written, so the reload recovers everything instead of wiping it.
     recargarLaApp(() =>
       terminar(() => (resultado === 'reiniciado' ? setYaReiniciado(true) : setAviso('reintento-fallido'))),
     )

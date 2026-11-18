@@ -100,6 +100,7 @@ beforeEach(() => {
   jest.clearAllMocks()
   keystoreSano()
   mockSetItem.mockImplementation((k: string, v: string) => { mockSecure.set(k, v) })
+  mockRandomBytes.mockReset().mockImplementation((n: number) => Uint8Array.from({ length: n }, (_, i) => (i * 37 + 11) % 256))
   mockSecure.clear()
   mockArchivos.clear()
 })
@@ -343,6 +344,53 @@ describe('reiniciarAlmacen', () => {
     expect(mockSetItem).not.toHaveBeenCalled()
     expect(mockDeleteMMKV).not.toHaveBeenCalled()
     expectArchivoIntacto()
+  })
+
+  it('if no random key can be made, nothing is written or deleted and the result says the key was not saved', () => {
+    telefonoConClaveYColas()
+    keystoreRoto()
+    const { modulo } = arrancarLaApp()
+    mockRandomBytes.mockImplementationOnce(() => { throw new Error('no entropy') })
+
+    expect(modulo.reiniciarAlmacen()).toBe('sin-guardar')
+    expect(mockSetItem).not.toHaveBeenCalled()
+    expect(mockDeleteMMKV).not.toHaveBeenCalled()
+    expectArchivoIntacto()
+  })
+
+  it('after sin-leer the old key is gone: once the new key reads, the next call finishes the reset instead of se-abre', async () => {
+    telefonoConClaveYColas()
+    keystoreRoto()
+    const plano = new Map([['logistica-storage', '{"viaje":"plano"}']])
+    const { modulo } = arrancarLaApp()
+    const mudado = modulo.zustandStorageMudadoDesde({
+      getItem: jest.fn(async (k: string) => plano.get(k) ?? null),
+      removeItem: jest.fn(async (k: string) => { plano.delete(k) }),
+    })
+    expect(modulo.reiniciarAlmacen()).toBe('sin-leer')
+    const nueva = mockSecure.get(CLAVE)
+    keystoreSano()
+
+    expect(modulo.sePuedeAbrirElAlmacen()).toBe(true)
+    expect(modulo.reiniciarAlmacen()).toBe('reiniciado')
+    // No second key: the one already saved reads back.
+    expect(mockSetItem).toHaveBeenCalledTimes(1)
+    expect(mockSecure.get(CLAVE)).toBe(nueva)
+    expect(mockDeleteMMKV).toHaveBeenCalledWith(ID)
+    // The logout that follows removes the plain logistica copy too, so the reload does not bring back an old trip.
+    await mudado.removeItem('logistica-storage')
+    expect(plano.has('logistica-storage')).toBe(false)
+  })
+
+  it('after sin-leer, a key that again cannot be saved still reports sin-leer: the old key is already gone', () => {
+    telefonoConClaveYColas()
+    keystoreRoto()
+    const { modulo } = arrancarLaApp()
+    expect(modulo.reiniciarAlmacen()).toBe('sin-leer')
+    mockSetItem.mockImplementation(() => { throw new Error('Keystore unavailable') })
+
+    expect(modulo.reiniciarAlmacen()).toBe('sin-leer')
+    expect(mockDeleteMMKV).not.toHaveBeenCalled()
   })
 
   it('never touches a file that opened in this run, not even when the Keystore fails afterwards', () => {

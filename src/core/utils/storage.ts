@@ -204,15 +204,27 @@ export function sePuedeAbrirElAlmacen(): boolean {
 /**
  * What Empezar de nuevo did:
  * - `reiniciado`: a new key is saved and reads back, and the old file is deleted. The reload opens an empty file.
- * - `se-abre`: the saved key reads again, so nothing was written or deleted: the reload opens the file with its data.
- * - `sin-guardar`: the Keystore did not take a new key. Nothing changed.
- * - `sin-leer`: the new key was saved but does not read back. The file was not deleted, but the old key is replaced:
- *   once the Keystore answers again, the next start opens the old file with the new key and MMKV discards it.
+ * - `se-abre`: no key was written in this run and the saved key reads again (or the file already opened): nothing was
+ *   written or deleted, and the reload opens the file with its data.
+ * - `sin-guardar`: no new key could be made or saved. Nothing changed.
+ * - `sin-leer`: a new key was saved but does not read back. The file was not deleted, but the old key is gone, so the
+ *   old data can no longer be read. Once the new key reads, the next call (or Reintentar) finishes the reset as
+ *   `reiniciado`; a start that comes first opens the file with the new key and MMKV discards what it cannot decrypt.
  */
 export type ResultadoDelReinicio = 'reiniciado' | 'se-abre' | 'sin-guardar' | 'sin-leer'
 
 /** True once Empezar de nuevo deleted the file in this run: the plain copies it moved from can go too. */
 let seReinicio = false
+/** True once Empezar de nuevo overwrote the old key in this run: from then on the old data is lost. */
+let seCambioLaClave = false
+
+/**
+ * A reset left half done (`sin-leer`): the old key is gone but the file was not deleted yet. Reintentar must finish
+ * the reset instead of reloading into the old file and its plain copies.
+ */
+export function quedoUnReinicioAMedias(): boolean {
+  return seCambioLaClave && !seReinicio
+}
 
 /** Reads the key back up to `LECTURAS_DE_LA_CLAVE` times, as a start does. */
 function seLeeLaClave(clave: string): boolean {
@@ -231,11 +243,27 @@ function seLeeLaClave(clave: string): boolean {
  * early return): the caller closes the session and reloads the app, which opens the new empty file.
  */
 export function reiniciarAlmacen(): ResultadoDelReinicio {
-  // Never wipe a file that opened in this run, or one that opens now: the reload recovers it, with all the queues.
-  if (!apertura.estado.bloqueado || planDeApertura().tipo !== 'bloquear') return 'se-abre'
-  const nueva = claveNueva()
-  if (!guardarClave(nueva)) return 'sin-guardar'
+  // Never wipe a file that opened in this run.
+  if (!apertura.estado.bloqueado) return 'se-abre'
+  if (planDeApertura().tipo !== 'bloquear') {
+    // The key reads: the reload recovers the file with all the queues, unless this flow already overwrote the old
+    // key. Then the file is lost anyway, so the reset is finished and its plain copies go with it.
+    return seCambioLaClave ? terminarElReinicio() : 'se-abre'
+  }
+  let nueva: string
+  try {
+    nueva = claveNueva()
+  } catch {
+    return seCambioLaClave ? 'sin-leer' : 'sin-guardar'
+  }
+  if (!guardarClave(nueva)) return seCambioLaClave ? 'sin-leer' : 'sin-guardar'
+  seCambioLaClave = true
   if (!seLeeLaClave(nueva)) return 'sin-leer'
+  return terminarElReinicio()
+}
+
+/** The new key is saved and reads back: delete the old file without opening it. */
+function terminarElReinicio(): ResultadoDelReinicio {
   try {
     deleteMMKV(STORAGE_ID)
   } catch {

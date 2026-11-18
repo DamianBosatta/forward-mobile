@@ -55,6 +55,13 @@ jest.mock('@sentry/react-native', () => ({
   captureException: (e: unknown) => mockCaptureException(e),
   captureMessage: jest.fn(),
 }))
+const mockRandomBytes = jest.fn((n: number) =>
+  (jest.requireActual('expo-crypto') as typeof import('expo-crypto')).getRandomBytes(n),
+)
+jest.mock('expo-crypto', () => ({
+  ...jest.requireActual('expo-crypto'),
+  getRandomBytes: (n: number) => mockRandomBytes(n),
+}))
 jest.mock('expo-local-authentication', () => ({}))
 jest.mock('../../global.css', () => ({}))
 
@@ -65,7 +72,7 @@ const TITULO = 'No pudimos abrir lo guardado en el teléfono'
 const CONFIRMACION = '¿Empezar de nuevo?'
 
 /** A fresh app start: React, the testing library and the layout come from one new module registry. */
-function arrancarConElKeystoreRoto(tema: 'light' | 'dark' = 'light'): Pick<typeof RNTL, 'screen' | 'userEvent'> {
+function arrancarConElKeystoreRoto(tema: 'light' | 'dark' = 'light'): typeof RNTL {
   mockGetItem.mockImplementation(() => { throw new Error('Keystore unavailable') })
   jest.resetModules()
   const React = require('react') as typeof import('react')
@@ -124,8 +131,15 @@ describe.each(['light', 'dark'] as const)('recovery screen (%s)', (tema) => {
     expect(screen.getByText(/bloqueo de pantalla/)).toBeTruthy()
     // The number of pending operations cannot be read without the key: the generic loss message.
     expect(screen.getByText(/todavía no se envió al servidor se pierde/)).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Empezar de nuevo' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeTruthy()
+    // Reintentar is the primary action (non-destructive, and an unreadable Keystore can be transient); Empezar de
+    // nuevo comes second, outlined as destructive.
+    const botones = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel)
+    expect(botones.indexOf('Reintentar')).toBeLessThan(botones.indexOf('Empezar de nuevo'))
+    const c = themeColors[tema]
+    expect(StyleSheet.flatten(screen.getByRole('button', { name: 'Reintentar' }).props.style).backgroundColor).toBe(c.action)
+    const empezar = StyleSheet.flatten(screen.getByRole('button', { name: 'Empezar de nuevo' }).props.style)
+    expect(empezar.backgroundColor).toBe(c.surface)
+    expect(empezar.borderColor).toBe(c.chip.anulado.text)
   })
 })
 
@@ -222,9 +236,67 @@ describe('Empezar de nuevo', () => {
     await empezarDeNuevoYConfirmar(rntl)
 
     expect(await rntl.screen.findByText(/no deja leer la clave nueva/)).toBeTruthy()
+    // The old key is already overwritten: the notice says plainly that the old data cannot come back.
+    expect(rntl.screen.getByText(/ya no se puede recuperar/)).toBeTruthy()
     expect(mockDeleteMMKV).not.toHaveBeenCalled()
     expect(cerroLaSesion()).toBe(false)
     expect(mockReloadAsync).not.toHaveBeenCalled()
+  })
+
+  it('after sin-leer, Reintentar while the key still does not read keeps the same notice and touches nothing more', async () => {
+    const rntl = arrancarConElKeystoreRoto()
+    await empezarDeNuevoYConfirmar(rntl)
+    await rntl.screen.findByText(/no deja leer la clave nueva/)
+    await rntl.userEvent.press(rntl.screen.getByRole('button', { name: 'Reintentar' }))
+
+    expect(rntl.screen.getByText(/ya no se puede recuperar/)).toBeTruthy()
+    expect(mockSetItem).toHaveBeenCalledTimes(1)
+    expect(mockDeleteMMKV).not.toHaveBeenCalled()
+    expect(mockReloadAsync).not.toHaveBeenCalled()
+  })
+
+  it('after sin-leer, Reintentar once the new key reads finishes the reset: deletes the file, logs out and reloads', async () => {
+    const rntl = arrancarConElKeystoreRoto()
+    await empezarDeNuevoYConfirmar(rntl)
+    await rntl.screen.findByText(/no deja leer la clave nueva/)
+    mockGetItem.mockImplementation((k: string) => mockSecure.get(k) ?? null)
+    await rntl.userEvent.press(rntl.screen.getByRole('button', { name: 'Reintentar' }))
+
+    expect(mockSetItem).toHaveBeenCalledTimes(1)
+    expect(mockDeleteMMKV).toHaveBeenCalledWith('forward-app-storage')
+    expect(cerroLaSesion()).toBe(true)
+    expect(mockReloadAsync).toHaveBeenCalledTimes(1)
+  })
+
+  it('confirmed, when no random key can be made: wipes nothing, says so and both buttons work again', async () => {
+    const rntl = arrancarConElKeystoreRoto()
+    await rntl.screen.findByRole('header', { name: TITULO })
+    mockRandomBytes.mockImplementationOnce(() => { throw new Error('no entropy') })
+    await empezarDeNuevoYConfirmar(rntl)
+
+    expect(await rntl.screen.findByText(/No se borró nada/)).toBeTruthy()
+    expect(seTocoAlgo()).toBe(false)
+    expect(mockReloadAsync).not.toHaveBeenCalled()
+    expect(rntl.screen.queryByText(CONFIRMACION)).toBeNull()
+    for (const name of ['Reintentar', 'Empezar de nuevo']) {
+      expect(rntl.screen.getByRole('button', { name }).props.accessibilityState?.disabled).toBe(false)
+    }
+  })
+
+  it('a double tap on Borrar y empezar writes one key, deletes the file once and reloads once', async () => {
+    const { screen, userEvent, fireEvent, act } = arrancarConElKeystoreRoto()
+    keystoreQueAceptaUnaClaveNueva()
+    await userEvent.press(await screen.findByRole('button', { name: 'Empezar de nuevo' }))
+    const borrar = screen.getByRole('button', { name: 'Borrar y empezar' })
+    // Both taps land before the screen re-renders with the button disabled: only the in-flight guard stops the second.
+    await act(async () => {
+      fireEvent.press(borrar)
+      fireEvent.press(borrar)
+    })
+
+    expect(mockSetItem).toHaveBeenCalledTimes(1)
+    expect(mockDeleteMMKV).toHaveBeenCalledTimes(1)
+    expect(mockReloadAsync).toHaveBeenCalledTimes(1)
   })
 
   it('confirmed, when the saved key reads again: wipes nothing, does not log out and reloads with the data', async () => {
