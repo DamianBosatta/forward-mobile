@@ -2,10 +2,9 @@ import React from 'react'
 import { ActivityIndicator, Text } from 'react-native'
 import { typeScale, useColors } from '@/libs/theme'
 import { Button, Notice } from '@/core/ui/fw'
+import { AvisoSoloWeb } from '@/core/ui/AvisoSoloWeb'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import type { CajaDelCobro } from '../api/cobros'
-
-export const SIN_CAJA_ABIERTA = 'No hay una caja abierta en este depósito. Abrí una caja para registrar cobros en efectivo.'
 
 /**
  * Dónde entra el efectivo, como `DepositoTrabajoInline` de la web: el depósito de la sesión como texto, sin selector
@@ -28,7 +27,7 @@ export function CajaDelCobroInline({ caja: { nombre, caja } }: { caja: CajaDelCo
       <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
         Se registra en <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{nombre ?? 'tu depósito'}</Text>
       </Text>
-      {caja.data?.abierta ? null : <Notice tone="advertencia">{SIN_CAJA_ABIERTA}</Notice>}
+      {caja.data?.abierta ? null : <AvisoSoloWeb accion="abrirCaja" />}
     </>
   )
 }

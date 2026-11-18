@@ -178,7 +178,7 @@ describe('reglas del cobro en pasos', () => {
     servidor('sin caja')
     renderConQuery(<CobroRoute />)
     await abrirMedio('Efectivo', '1.000')
-    expect(await screen.findByText(/No hay una caja abierta en este depósito/, {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByText(/La caja se abre desde la web\./, {}, ESPERA)).toBeTruthy()
     expect(apagado('Agregar este medio')).toBe(true)
   })
 
