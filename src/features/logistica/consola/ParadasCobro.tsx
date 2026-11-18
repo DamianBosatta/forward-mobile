@@ -4,10 +4,9 @@ import { onlineManager, useQueryClient } from '@tanstack/react-query'
 import { HandCoins } from 'lucide-react-native'
 import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { Button, StatusChip, formatImporte } from '@/core/ui/fw'
-import { esFallaDeRed } from '@/core/api/errores'
+import { esSinRespuesta } from '@/core/api/errores'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { nuevaClaveIdempotencia } from '@/core/utils/idempotencia'
 import { useCobrarParadaCobro, useNoCobrarParadaCobro } from '@/features/cobros/api'
 import {
   MOTIVOS_NO_COBRO, PARADA_COBRO_COBRADA, PARADA_COBRO_NO_COBRADA, PARADA_COBRO_PENDIENTE,
@@ -15,6 +14,7 @@ import {
 } from '@/features/cobros/paradaCobro'
 import { useMediosCobroChofer } from '@/libs/api-client/logistica'
 import { encolarAccion, olvidarRevisarDeParada } from '../cola/colaConsola'
+import { claveDeParada, olvidarClaveDeParada } from '../cola/clavesDeParada'
 import { useColaConsola } from '../cola/useColaConsola'
 import { conAccionesCobroEnCola } from '../cola/conAccionesEnCola'
 import { ParadaCobroPantalla, lineasParaEnviar, type ResultadoParadaCobro } from './ParadaCobroPantalla'
@@ -48,7 +48,6 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
   const noCobrar = useNoCobrarParadaCobro()
   // Los medios se piden apenas se ve la sección: así un cobro sin señal los encuentra ya guardados.
   useMediosCobroChofer(puedeReportar && paradas.length > 0)
-  const claves = useRef(new Map<string, string>())
   const ocupada = useRef(false)
   const [abierta, setAbierta] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -60,13 +59,10 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
   const total = paradasDeEntrega + lista.length
   const seleccionada = lista.findIndex((p) => p.id === abierta)
 
-  const claveDe = (id: string) => {
-    const guardada = claves.current.get(id)
-    if (guardada) return guardada
-    const nueva = nuevaClaveIdempotencia()
-    claves.current.set(id, nueva)
-    return nueva
-  }
+  // La clave del cobro queda en el teléfono, no en memoria (RED-08): cerrar la app no la cambia y el reintento no cobra dos veces.
+  const usoCobro = (id: string) => `cobro:${id}`
+  const claveDe = (id: string) => claveDeParada(usuarioId, usoCobro(id))
+  const olvidarClave = (id: string) => olvidarClaveDeParada(usuarioId, usoCobro(id))
   const cerrar = () => { setAbierta(null); setError(null); setResultado(null) }
   const abrir = (id: string) => { setError(null); setResultado(null); setAbierta(id) }
 
@@ -86,16 +82,17 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
       // Sin señal no se llama al servidor: queda en el teléfono con la misma clave y sale sola al volver.
       if (!onlineManager.isOnline()) { guardar(); return }
       await cobrar.mutateAsync({ hojaDeRutaId, paradaCobroId: parada.id, cuerpo })
-      claves.current.delete(parada.id)
+      olvidarClave(parada.id)
       // El servidor ya la tiene: lo que había quedado para revisar de esta parada sobra y no frena el cierre (RED-01).
       olvidarRevisarDeParada(usuarioId, { tipo: 'cobroParada', hojaDeRutaId, paradaId: parada.id })
       setResultado({ tipo: 'cobro', monto, guardada: false })
     } catch (e) {
-      if (esFallaDeRed(e)) { guardar(); return }
+      // Sin respuesta (sin red o tiempo agotado): pudo haberse grabado; queda en la cola con la misma clave.
+      if (esSinRespuesta(e)) { guardar(); return }
       const codigo = (e as { codigo?: string } | null)?.codigo
       // La clave ya quedó con otro cuerpo: el servidor guarda que una parada se resuelve una sola vez, así que una clave nueva es segura.
       // `Duplicado`: la misma clave corrió a la par en otra parada. Tampoco se reusa.
-      if (codigo === 'ClaveIdempotenciaConOtroCuerpo' || codigo === 'Duplicado') claves.current.delete(parada.id)
+      if (codigo === 'ClaveIdempotenciaConOtroCuerpo' || codigo === 'Duplicado') olvidarClave(parada.id)
       // El estado de la parada (y de la tarea) lo decide el servidor: se vuelve a leer, no se supone.
       if (codigo === 'ParadaYaReportada' || codigo === 'Duplicado') void invalidarPorCambioDeHojaDeRuta(qc, hojaDeRutaId)
       setError(mensajeDelServidor(e, 'No se pudo registrar el cobro.'))
@@ -122,7 +119,7 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
       olvidarRevisarDeParada(usuarioId, { tipo: 'noCobroParada', hojaDeRutaId, paradaId: parada.id })
       setResultado({ tipo: 'noCobrada', motivo: texto, guardada: false })
     } catch (e) {
-      if (esFallaDeRed(e)) { guardar(); return }
+      if (esSinRespuesta(e)) { guardar(); return }
       setError(mensajeDelServidor(e, 'No se pudo cerrar la parada.'))
     } finally {
       ocupada.current = false

@@ -7,6 +7,7 @@ import { conTema, TEMAS } from '@/core/ui/fw/__testing__/tema'
 import type { ParadaCobro } from '@/features/cobros/paradaCobro'
 import { encolarAccion, leerCola, quitarDeCola } from '../cola'
 import { cambiarEstado } from '../cola/colaConsola'
+import { storage } from '@/core/utils/storage'
 import { HojaDeRutaVista } from '../consola/HojaDeRutaVista'
 import { resumenRuta } from '../consola/hojaDeRuta'
 
@@ -66,6 +67,7 @@ beforeEach(() => {
   mockPost.mockReset()
   mockGet.mockImplementation((url: string) => (url.endsWith('/medios-cobro') ? Promise.resolve(MEDIOS) : Promise.reject(new Error(`sin respuesta: ${url}`))))
   for (const a of leerCola(USUARIO)) quitarDeCola(USUARIO, a.clave)
+  storage.remove(`consola-claves:${USUARIO}`)
   act(() => onlineManager.setOnline(true))
 })
 
@@ -196,6 +198,34 @@ describe.each(TEMAS)('paradas de solo cobro en la consola del chofer (%s)', (tem
     await userEvent.press(await screen.findByText('Efectivo'))
     await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
     expect(await screen.findByText('El monto no coincide.')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
+    expect(await screen.findByText('Cobro registrado.')).toBeTruthy()
+    expect(mockPost.mock.calls.map((c) => (c[1] as { claveIdempotencia: string }).claveIdempotencia)).toEqual(['clave-1', 'clave-1'])
+  })
+
+  it('RED-08: a collection that times out is queued with the same key, without an error, and the stop counts as collected', async () => {
+    mockPost.mockRejectedValueOnce(Object.assign(new Error('Aborted'), { name: 'AbortError' }))
+    pintar([cobro()])
+    await userEvent.press(screen.getByLabelText('Cobrar en Av. Rivadavia 4500'))
+    await userEvent.press(await screen.findByText('Efectivo'))
+    await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
+    expect(await screen.findByText('Cobro guardado.')).toBeTruthy()
+    expect(leerCola(USUARIO)).toEqual([
+      expect.objectContaining({ tipo: 'cobroParada', clave: 'clave-1', cuerpo: expect.objectContaining({ claveIdempotencia: 'clave-1' }) }),
+    ])
+  })
+
+  it('RED-08: the collection key survives closing the app: after a rejection, the reopened console sends the SAME key', async () => {
+    mockPost.mockRejectedValueOnce(rechazo(503, 'Servicio no disponible')).mockResolvedValue({ paradaCobroId: 'pc1', pagoId: 'pg1', montoCobrado: 85000, repetida: false })
+    const primera = pintar([cobro()])
+    await userEvent.press(screen.getByLabelText('Cobrar en Av. Rivadavia 4500'))
+    await userEvent.press(await screen.findByText('Efectivo'))
+    await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
+    expect(await screen.findByText('Servicio no disponible')).toBeTruthy()
+    primera.unmount()
+    pintar([cobro()])
+    await userEvent.press(screen.getByLabelText('Cobrar en Av. Rivadavia 4500'))
+    await userEvent.press(await screen.findByText('Efectivo'))
     await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
     expect(await screen.findByText('Cobro registrado.')).toBeTruthy()
     expect(mockPost.mock.calls.map((c) => (c[1] as { claveIdempotencia: string }).claveIdempotencia)).toEqual(['clave-1', 'clave-1'])

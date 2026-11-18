@@ -8,6 +8,7 @@ import { reiniciarCamara } from '@/features/logistica/__testing__/camara'
 import { confirmarEntrega, noSumarOtroCobro } from '@/features/logistica/__testing__/confirmar'
 import { encolarAccion, leerCola, quitarDeCola } from '../cola'
 import { cambiarEstado } from '../cola/colaConsola'
+import { storage } from '@/core/utils/storage'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
 
 /**
@@ -100,6 +101,8 @@ beforeEach(() => {
   conTema('light')
   reiniciarCamara()
   for (const a of leerCola('u1')) quitarDeCola('u1', a.clave)
+  // Stop keys live on the phone now (RED-08): each test starts without the previous one's keys.
+  storage.remove('consola-claves:u1')
 })
 afterEach(() => {
   act(() => onlineManager.setOnline(true))
@@ -201,6 +204,18 @@ describe('Consola del chofer sin señal', () => {
     await screen.findByLabelText('Entrega lista')
     expect(leerCola('u1')).toHaveLength(1)
     expect(screen.getByText('Entrega guardada en el teléfono. Se manda sola cuando haya señal.')).toBeTruthy()
+  })
+
+  it('RED-08: a delivery that times out is queued with the same stop key, as if there were no signal', async () => {
+    mockPost.mockRejectedValueOnce(Object.assign(new Error('Aborted'), { name: 'AbortError' }))
+    await pintar(HOJA, false)
+    await abrirEntrega()
+    await alResumen('Abel', false)
+    await confirmarEntrega()
+    await screen.findByLabelText('Entrega lista')
+    const cola = leerCola('u1')
+    expect(cola).toHaveLength(1)
+    expect(cola[0].clave).toBe((llamadasA(ENTREGAR)[0][1] as { claveIdempotencia: string }).claveIdempotencia)
   })
 
   it('no se puede finalizar el viaje mientras queden acciones sin mandar', async () => {
