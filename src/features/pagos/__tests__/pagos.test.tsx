@@ -229,6 +229,9 @@ describe('Detalle de un pago', () => {
     expect(screen.getByLabelText(`C-00031: ${$(25000)}`)).toBeTruthy()
     expect(screen.getByLabelText(`Extracto 4411: ${$(25000)}`)).toBeTruthy()
     expect(screen.queryByText('ANULADO')).toBeNull()
+    // Anular y el comprobante son de la web: el detalle lo dice y no ofrece la acción.
+    expect(screen.getByText(/Anular el pago y bajar el comprobante se hace desde la web\./)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /anular/i })).toBeNull()
   })
 
   it('un pago anulado lo dice', async () => {

@@ -2,6 +2,7 @@ import React from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, FormContainer, Notice, TopBar, formatImporte, useInsetInferior } from '@/core/ui/fw'
+import { AvisoSoloWeb } from '@/core/ui/AvisoSoloWeb'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { formatToLocalTime } from '@/core/utils/fecha'
@@ -76,6 +77,7 @@ export function DetalleDePago({ id, onVolver }: { id: string; onVolver: () => vo
               {p.conciliaciones.map(k => monto(k.referenciaMovimiento, k.montoAplicadoAmount, k.montoAplicadoMoneda))}
             </View>
           ) : null}
+          <AvisoSoloWeb accion="anularPago" />
         </FormContainer>
       </ScrollView>
     )
