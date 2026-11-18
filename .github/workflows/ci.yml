@@ -93,7 +93,7 @@ jobs:
   # Publishes the JS bundle of every merge to main as an EAS Update on the `production` channel.
   # The fingerprint runtime version keeps it away from builds with different native code (docs/RELEASE.md).
   publish-update:
-    needs: check
+    needs: [check, contrato]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20

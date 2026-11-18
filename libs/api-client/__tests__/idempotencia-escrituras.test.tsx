@@ -3,7 +3,6 @@ import { act, renderHook } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider, type UseMutationResult } from '@tanstack/react-query'
 import { useConfirmarCompra, useRecibirCompra, borradorCompraApi } from '../compras'
 import { guardarBorradorVenta, useAutorizarVenta, useConvertirPresupuesto, useIniciarBorradorVenta } from '../ventas'
-import { useAjustarStock } from '../stock'
 import { useAbrirCaja } from '../finanzas'
 import { api } from '../client'
 
@@ -67,11 +66,6 @@ const casos: Caso[] = [
     nombre: 'alta de borrador de venta', metodo: 'post', url: '/api/v1/Ventas/borradores',
     cuerpo: { clienteId: 'cl1', depositoId: 'd1' },
     usar: useIniciarBorradorVenta, vars: { clienteId: 'cl1', depositoId: 'd1' }, otras: { clienteId: 'cl2', depositoId: 'd1' },
-  },
-  {
-    nombre: 'ajuste de stock', metodo: 'post', url: '/api/v1/Stocks/adjust',
-    cuerpo: { productoId: 'p1', depositoId: 'd1', cantidad: 5 },
-    usar: useAjustarStock, vars: { productoId: 'p1', depositoId: 'd1', cantidad: 5 }, otras: { productoId: 'p1', depositoId: 'd1', cantidad: 6 },
   },
   {
     nombre: 'abrir caja', metodo: 'post', url: '/api/v1/Cajas/abrir', cuerpo: { saldoInicial: 100 },

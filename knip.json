@@ -21,7 +21,6 @@
     "@react-native-community/datetimepicker",
     "@tanstack/query-async-storage-persister",
     "expo-asset",
-    "expo-blur",
     "expo-font",
     "expo-system-ui",
     "openapi-typescript",

@@ -4,6 +4,7 @@ import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { Check, Plus } from 'lucide-react-native'
 import { BottomSheet, Button, Field, Notice, OptionCard, PieFijo, TopBar, formatImporte, useColumnaDeFormulario } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
+import { useCambiosSinGuardar } from '@/core/hooks/useCambiosSinGuardar'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import type { ParadaDto } from '@/libs/api-client/types'
 import { useLineasParada, useMediosCobroChofer } from '@/libs/api-client/logistica'
@@ -74,6 +75,8 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
   /** Vino de "Sí": la pantalla de cobro abre directo en la elección del medio. */
   const [sumandoOtro, setSumandoOtro] = useState(false)
   const [errorForm, setErrorForm] = useState<string | null>(null)
+  // Con lo cargado a medio cerrar, salir avisa; mientras se envía la entrega ya no hay nada que perder.
+  useCambiosSinGuardar({ f, hayDevolucion, motivo, lugarUrl }, { activo: !enviando })
   const entregado = resultado === 'entregado'
   const medios = useMediosCobroChofer(entregado)
   // Quien ve la hoja ve las líneas de sus paradas: el chofer con solo viajes también devuelve.

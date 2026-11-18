@@ -152,10 +152,6 @@ export {
   useLineasParada,
   // Picking board (Batch 1)
   useVentasParaPreparacion,
-  useIniciarPreparacion,
-  usePickingEmpacarVenta,
-  useRevertirAPreparacion,
-  useRevertirAConfirmada,
   // Vehiculos CRUD
   useCreateVehiculo,
   useUpdateVehiculo,

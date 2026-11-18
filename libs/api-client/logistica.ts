@@ -352,67 +352,6 @@ export function useFinalizarHojaRuta() {
 // Mutations — Picking Board (Batch 1 endpoints)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Advances selected ventas from Confirmada(2) to EnPreparacion(3).
- * Handles N=1 and N>1. Non-Confirmada ventas are skipped and reported in result.
- * Invalidates the picking board on success.
- */
-export function useIniciarPreparacion() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (ventaIds: string[]) =>
-      api.post<IniciarPreparacionMasivaResult>(
-        '/api/v1/logistica/iniciar-preparacion-masiva',
-        { ventaIds },
-      ),
-    onSuccess: () => invalidarPorCambioDeVenta(queryClient),
-  })
-}
-
-/**
- * Empaca a venta (EnPreparacion → Empacada) — picking board variant.
- * Requires cantidadBultos ≥ 1. Sends the version token for optimistic concurrency.
- * Invalidates the picking board on success.
- *
- * NOTE: Named usePickingEmpacarVenta to avoid collision with the ventas-module
- * useEmpacarVenta (which has a different signature including usuarioModificadorId).
- */
-export function usePickingEmpacarVenta() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ ventaId, cantidadBultos, version }: { ventaId: string; cantidadBultos: number; version: number }) =>
-      api.post<unknown>(`/api/v1/logistica/${ventaId}/empacar`, { cantidadBultos, version }),
-    onSuccess: () => invalidarPorCambioDeVenta(queryClient),
-  })
-}
-
-/**
- * Reverts a packed venta (Empacada) back to EnPreparacion.
- * DESTRUCTIVE: previously created bultos/etiquetas are removed in the backend.
- * Invalidates the picking board on success.
- */
-export function useRevertirAPreparacion() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (ventaId: string) =>
-      api.post<boolean>(`/api/v1/logistica/${ventaId}/revertir-preparacion`, {}),
-    onSuccess: () => invalidarPorCambioDeVenta(queryClient),
-  })
-}
-
-/**
- * Reverts a venta in EnPreparacion back to Confirmada.
- * Invalidates the picking board on success.
- */
-export function useRevertirAConfirmada() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (ventaId: string) =>
-      api.post<boolean>(`/api/v1/logistica/${ventaId}/revertir-confirmada`, {}),
-    onSuccess: () => invalidarPorCambioDeVenta(queryClient),
-  })
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Mutations — Vehiculos CRUD
 // ─────────────────────────────────────────────────────────────────────────────
