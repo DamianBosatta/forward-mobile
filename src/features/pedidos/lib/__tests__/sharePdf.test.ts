@@ -200,3 +200,38 @@ describe('sharePdf — 401 refresh (M10a)', () => {
     expect(mockShareAsync).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('sharePdf — plazo de la descarga', () => {
+  /** Un fetch que responde a los `ms` y se corta si se aborta la señal (como el de React Native). */
+  const fetchLento = (ms: number) => (_url: string, init: RequestInit = {}) =>
+    new Promise((resolve, reject) => {
+      const t = setTimeout(() => resolve(makeOkResponse()), ms)
+      init.signal?.addEventListener('abort', () => {
+        clearTimeout(t)
+        reject(Object.assign(new Error('Aborted'), { name: 'AbortError' }))
+      })
+    })
+
+  beforeEach(() => jest.useFakeTimers())
+  afterEach(() => jest.useRealTimers())
+
+  it('una descarga de 20 s (más que los 15 s de un request común) llega y se comparte', async () => {
+    mockFetch.mockImplementationOnce(fetchLento(20_000))
+    const enCurso = sharePdf('https://api.example.com/pdf', 'test.pdf')
+    await jest.advanceTimersByTimeAsync(20_000)
+    expect(await enCurso).toEqual(expect.objectContaining({ ok: true }))
+  })
+
+  it('si la descarga pasa de 120 s dice que tardó demasiado, no que no hay conexión', async () => {
+    mockFetch.mockImplementationOnce(fetchLento(500_000))
+    const enCurso = sharePdf('https://api.example.com/pdf', 'test.pdf')
+    await jest.advanceTimersByTimeAsync(120_000)
+    expect(await enCurso).toEqual({ ok: false, reason: 'network', message: 'La descarga tardó demasiado. Probá de nuevo.' })
+  })
+
+  it('sin red sigue diciendo que no se pudo conectar', async () => {
+    mockFetch.mockRejectedValueOnce(new TypeError('Network request failed'))
+    const r = await sharePdf('https://api.example.com/pdf', 'test.pdf')
+    expect(r).toEqual(expect.objectContaining({ ok: false, message: 'No se pudo conectar al servidor. Verificá tu conexión.' }))
+  })
+})

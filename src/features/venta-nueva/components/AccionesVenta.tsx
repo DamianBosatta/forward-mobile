@@ -41,7 +41,8 @@ export function AccionesVenta({ venta, rotulo }: Props) {
   const userId = useAuthStore((s) => s.user?.id) ?? ''
   const convertir = useConvertirPresupuesto()
   const anular = useAnularVenta()
-  const crearEvento = useCrearEvento()
+  // Sin red tiene que fallar en el acto con el aviso de falta de red, no quedar en pausa con el botón cargando.
+  const crearEvento = useCrearEvento({ networkMode: 'always' })
   const [pdf, setPdf] = useState(false)
   const [hoja, setHoja] = useState<'anular' | 'agendar' | null>(null)
   const [motivo, setMotivo] = useState('')

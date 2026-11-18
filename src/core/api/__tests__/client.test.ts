@@ -134,3 +134,24 @@ describe('estados esperados: no se registran como error', () => {
     expect(mockLogError).toHaveBeenCalledTimes(2)
   })
 })
+
+describe('plazo por request', () => {
+  /** Un fetch que responde a los `ms` y se corta si se aborta la señal. */
+  const fetchLento = (ms: number) => (_url: string, init: RequestInit = {}) =>
+    new Promise((resolve, reject) => {
+      const t = setTimeout(() => resolve({ ok: true, status: 200, json: () => Promise.resolve({ succeeded: true, data: 'x' }) }), ms)
+      init.signal?.addEventListener('abort', () => {
+        clearTimeout(t)
+        reject(Object.assign(new Error('Aborted'), { name: 'AbortError' }))
+      })
+    })
+  beforeEach(() => jest.useFakeTimers())
+  afterEach(() => jest.useRealTimers())
+
+  it('un request JSON (api) se corta a los 15 s', async () => {
+    mockFetch.mockImplementationOnce(fetchLento(60_000))
+    const enCurso = fallo(api.get('/api/v1/Lento'))
+    await jest.advanceTimersByTimeAsync(15_000)
+    expect(await enCurso).toMatchObject({ name: 'AbortError' })
+  })
+})

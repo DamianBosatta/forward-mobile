@@ -65,6 +65,9 @@ export async function setApiUrl(url: string): Promise<void> {
 /** Timeout por request (15s) — previene hang attacks y conexiones zombies */
 const REQUEST_TIMEOUT_MS = 15_000
 
+/** Plazo de una descarga de archivo (PDF / Excel): en React Native el fetch responde recién con el cuerpo entero, así que el plazo cubre la descarga. Igual que la web (`TIEMPO_LIMITE_ARCHIVOS_MS`). */
+export const DESCARGA_TIMEOUT_MS = 120_000
+
 class ApiError extends Error {
   constructor(
     public status: number,
@@ -186,9 +189,9 @@ async function attemptRefresh(): Promise<boolean> {
 // ── Fetch con timeout ────────────────────────────────────────────────────────
 
 /** The one fetch with timeout: every request of the app (login and permissions included) goes through it. */
-export function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
+export function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = REQUEST_TIMEOUT_MS): Promise<Response> {
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
   return fetch(url, { ...options, signal: controller.signal })
     .finally(() => clearTimeout(timeoutId))
@@ -302,25 +305,25 @@ export interface OpcionesGet extends RequestInit {
  * The one place that sends an authenticated request and, on a 401, renews the token once (mutex shared with every
  * caller) and retries with it. If the renewal fails it throws ApiError(401). Returns the final response, ok or not.
  */
-async function enviarConRenovacion(url: string, options: RequestInit, headers: Headers): Promise<Response> {
-  const response = await fetchWithTimeout(url, { ...options, headers })
+async function enviarConRenovacion(url: string, options: RequestInit, headers: Headers, timeoutMs?: number): Promise<Response> {
+  const response = await fetchWithTimeout(url, { ...options, headers }, timeoutMs)
   if (response.status !== 401) return response
   const refreshed = await attemptRefresh()
   if (!refreshed) throw new ApiError(401, 'Sesión expirada')
   // Reintentar con el nuevo token
   headers.set('Authorization', `Bearer ${_getToken()}`)
-  return fetchWithTimeout(url, { ...options, headers })
+  return fetchWithTimeout(url, { ...options, headers }, timeoutMs)
 }
 
 /**
- * Authenticated download of an absolute URL (PDF / Excel for the share sheet): same Bearer token, 401 renewal and
- * timeout as `api`, but returns the raw Response (the caller reads the blob and maps the status).
+ * Authenticated download of an absolute URL (PDF / Excel for the share sheet): same Bearer token and 401 renewal as `api`
+ * (timeout: {@link DESCARGA_TIMEOUT_MS}, not 15 s), but returns the raw Response (the caller reads the blob and maps the status).
  */
 export async function descargarConAuth(url: string, options: RequestInit = {}): Promise<Response> {
   const headers = new Headers(options.headers)
   const token = _getToken()
   if (token) headers.set('Authorization', `Bearer ${token}`)
-  return enviarConRenovacion(url, options, headers)
+  return enviarConRenovacion(url, options, headers, DESCARGA_TIMEOUT_MS)
 }
 
 async function fetchWithAuth<T>(
