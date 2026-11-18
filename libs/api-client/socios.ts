@@ -5,6 +5,7 @@ import { SIN_DEPOSITO_DE_SESION } from '@/core/api/depositoSesion'
 import type { PagedResult, SocioComercial, SocioDetailDto, CreateSocioRequest, UpdateSocioRequest, ClienteLightDto } from './types'
 export type { ClienteLightDto }
 import { invalidarPorCambioDeSocio } from './invalidaciones'
+import type { components } from './generated/schema'
 
 export interface SociosParams {
   tipo?:       1 | 2        // 1 = Cliente, 2 = Proveedor
@@ -228,5 +229,12 @@ export function useSocio(id: string, opciones: { fresco?: boolean } = {}) {
     enabled: !!id,
     staleTime: opciones.fresco ? 0 : 5 * 60_000,
     refetchOnMount: opciones.fresco ? 'always' : true,
+  })
+}
+
+/** Pedido de cambio de razón social, CUIT o dirección: lo decide un administrador. */
+export function useSolicitarCambioSocio(socioId: string) {
+  return useMutation({
+    mutationFn: (s: components['schemas']['SolicitarCambioSocioCommand']) => api.post<string>(`/api/v1/socios-comerciales/${socioId}/solicitudes-cambio`, s),
   })
 }

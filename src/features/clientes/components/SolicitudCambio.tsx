@@ -1,10 +1,9 @@
 import React, { useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
-import { useMutation } from '@tanstack/react-query'
 import { Check } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice } from '@/core/ui/fw'
-import { api } from '@/core/api/client'
+import { useSolicitarCambioSocio } from '@/libs/api-client/socios'
 import type { SocioDetailDto } from '@/libs/api-client/types'
 import type { components } from '@/libs/api-client/generated/schema'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -28,9 +27,7 @@ export function armarSolicitud(actual: Sensibles, propuesto: { razonSocial: stri
 function useSolicitud(cliente: Sensibles) {
   const [propuesto, setPropuesto] = useState({ razonSocial: cliente.razonSocial ?? '', cuit: cliente.cuit ?? '', direccion: cliente.direccion ?? '' })
   const [motivo, setMotivo] = useState('')
-  const enviar = useMutation({
-    mutationFn: (s: Solicitud) => api.post<string>(`/api/v1/socios-comerciales/${cliente.id}/solicitudes-cambio`, s),
-  })
+  const enviar = useSolicitarCambioSocio(cliente.id)
   const campo = (k: keyof typeof propuesto) => (v: string) => setPropuesto(p => ({ ...p, [k]: v }))
   const formulario = (
     <>
