@@ -1,5 +1,6 @@
 import React, { memo, useCallback, useState } from 'react'
-import { FlatList, Text, View } from 'react-native'
+import { FlashList } from '@shopify/flash-list'
+import { Text, View } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { Button, Field, Notice, PieFijo } from '@/core/ui/fw'
@@ -10,7 +11,6 @@ import { textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useProveedores } from '@/features/proveedores/hooks/useProveedores'
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { ProveedorCard } from '@/features/proveedores/components/ProveedorCard'
 
 interface Props {
@@ -46,7 +46,7 @@ export function ElegirProveedorPago({ seleccionadoId, onElegir, onContinuar, pue
 
   return (
     <View style={{ flex: 1 }}>
-      <FlatList {...LISTA_LARGA_PROPS}
+      <FlashList
         style={{ flex: 1 }}
         data={proveedores}
         keyExtractor={item => item.id}

@@ -1,11 +1,11 @@
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View } from 'react-native'
+import { FlashList } from '@shopify/flash-list'
+import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native'
 import { Plus, Search } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import type { SocioListDto } from '@/libs/api-client/types'
 import { fetchSocio, sociosKeys, useClientesRecientes } from '@/libs/api-client/socios'
 import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { Notice, StatusChip, formatImporte } from '@/core/ui/fw'
 import { partesArgentina, parseDateSafe } from '@/core/utils/fecha'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -150,7 +150,7 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
         {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
         {error ? <Notice tone="peligro">{mensajeDelServidor(error, 'No se pudo cargar la cartera.')}</Notice> : null}
       </View>
-      <FlatList {...LISTA_LARGA_PROPS}
+      <FlashList
         style={{ flex: 1 }}
         data={clientes}
         keyExtractor={(item) => item.id}

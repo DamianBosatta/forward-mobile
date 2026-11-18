@@ -1,6 +1,6 @@
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import React, { memo, useCallback, useMemo, useState } from 'react'
-import { FlatList, RefreshControl, ScrollView, Text, View } from 'react-native'
+import { FlashList } from '@shopify/flash-list'
+import { RefreshControl, ScrollView, Text, View } from 'react-native'
 import { FileText } from 'lucide-react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, FilaDeSocio, FiltroChip, Notice, formatImporte, useInsetInferior } from '@/core/ui/fw'
@@ -79,7 +79,7 @@ export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => vo
           )}
         </View>
       ) : null}
-      <FlatList {...LISTA_LARGA_PROPS}
+      <FlashList
         testID="lista-deudores"
         data={filas}
         keyExtractor={item => item.socioId}

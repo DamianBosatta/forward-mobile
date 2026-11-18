@@ -3,6 +3,7 @@ import { join, sep } from 'path'
 
 /**
  * Contrato de las listas largas (S9 / REN-02): toda FlatList o SectionList lleva `LISTA_LARGA_PROPS`.
+ * Las listas pesadas de una columna usan FlashList (listasFlashContrato) y no llevan estas props.
  * Las dos excepciones no son listas largas: son un solo bloque envuelto en una FlatList para que scrollee.
  */
 const RAIZ = join(__dirname, '..', '..', '..', '..')
@@ -21,7 +22,7 @@ describe('listas largas', () => {
   const conLista = todos.filter((p) => /<(FlatList|SectionList)\b/.test(readFileSync(p, 'utf8')))
 
   it('encuentra las listas del proyecto', () => {
-    expect(conLista.length).toBeGreaterThan(10)
+    expect(conLista.length).toBeGreaterThan(5)
   })
 
   it.each(

@@ -1,7 +1,7 @@
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import React, { useCallback, useState } from 'react'
+import { FlashList } from '@shopify/flash-list'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
-import { FlatList, RefreshControl, Text, View } from 'react-native'
+import { RefreshControl, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { opcionDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
 import { ArrowLeftRight } from 'lucide-react-native'
@@ -107,7 +107,7 @@ function CuentasCorrientesScreen() {
           )}
         </View>
       ) : null}
-      <FlatList {...LISTA_LARGA_PROPS}
+      <FlashList
         data={clientes}
         keyExtractor={item => item.id}
         renderItem={renderCliente}

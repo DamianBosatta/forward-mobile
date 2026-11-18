@@ -1,6 +1,7 @@
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
+import { FlashList } from '@shopify/flash-list'
+import { separadorDeFilas } from '@/core/ui/listaFlash'
 import React, { memo, useCallback, useMemo } from 'react'
-import { ActivityIndicator, FlatList, ScrollView, View } from 'react-native'
+import { ActivityIndicator, ScrollView, View } from 'react-native'
 import { radii, space, useColors } from '@/libs/theme'
 import { Notice, StatusChip, useInsetInferior } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
@@ -35,6 +36,7 @@ function enBloques<T extends { id: string }>(items: T[], columnas: number, despl
 }
 
 /** Lugar vacío que completa el último renglón para que las tarjetas no se estiren. */
+const SEPARADOR = separadorDeFilas(space[2])
 const Hueco = () => <View style={{ flex: 1 }} />
 
 /** Cargando (web InventarioGrid): esqueletos de tarjeta. */
@@ -96,14 +98,15 @@ function StockSinCantidades({ busqueda, columnas }: { busqueda: string; columnas
     return <ErrorDeConsulta error={cat.error} titulo="No pudimos cargar el stock" guardadoA={cat.dataUpdatedAt || undefined} onReintentar={() => { void cat.refetch() }} />
   }
   return (
-    <FlatList {...LISTA_LARGA_PROPS}
+    <FlashList
       data={bloques}
       keyExtractor={(b) => b.key}
       onEndReached={cat.cargarMas}
       onEndReachedThreshold={0.5}
-      contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] + insetInferior }}
+      contentContainerStyle={{ padding: space[4], paddingBottom: space[12] + insetInferior }}
+      ItemSeparatorComponent={SEPARADOR}
       ListHeaderComponent={
-        <View style={{ gap: space[2] }}>
+        <View style={{ gap: space[2], paddingBottom: space[2] }}>
           {sinRed ? <Notice tone="advertencia">{textoSinConexion(cat.dataUpdatedAt)}</Notice> : null}
           <Notice tone="info">Tu perfil no ve cantidades: se muestra solo si hay o no hay stock.</Notice>
         </View>
@@ -212,20 +215,23 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
       ) : s.isError && !(sinRed && s.filas.length > 0) ? (
         <ErrorDeConsulta error={s.error} titulo="No pudimos cargar el stock" onReintentar={() => void s.refetch()} />
       ) : (
-        <FlatList {...LISTA_LARGA_PROPS}
+        <FlashList
           data={bloques}
           keyExtractor={(b) => b.key}
           onEndReached={s.cargarMas}
           onEndReachedThreshold={0.5}
-          contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] + insetInferior }}
+          contentContainerStyle={{ padding: space[4], paddingBottom: space[12] + insetInferior }}
+          ItemSeparatorComponent={SEPARADOR}
           ListHeaderComponent={
-            <>
-              {sinRed ? <Notice tone="advertencia">{textoSinConexion(s.dataUpdatedAt || undefined)}</Notice> : null}
-              {lista && tablet ? <CabeceraDeTabla /> : null}
-            </>
+            sinRed || (lista && tablet) ? (
+              <View style={{ gap: space[2], paddingBottom: space[2] }}>
+                {sinRed ? <Notice tone="advertencia">{textoSinConexion(s.dataUpdatedAt || undefined)}</Notice> : null}
+                {lista && tablet ? <CabeceraDeTabla /> : null}
+              </View>
+            ) : undefined
           }
           ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo={textoVacio(s.filtros, busqueda)} />}
-          ListFooterComponent={s.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : undefined}
+          ListFooterComponent={s.isFetchingNextPage ? <View style={{ paddingTop: space[2] }}><ActivityIndicator color={c.brandInk} /></View> : undefined}
           renderItem={renderBloque}
         />
       )}

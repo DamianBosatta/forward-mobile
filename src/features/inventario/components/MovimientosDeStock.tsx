@@ -1,6 +1,7 @@
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
+import { FlashList } from '@shopify/flash-list'
+import { separadorDeFilas } from '@/core/ui/listaFlash'
 import React, { memo, useCallback, useMemo } from 'react'
-import { ActivityIndicator, FlatList, Modal, Text, View } from 'react-native'
+import { ActivityIndicator, Modal, Text, View } from 'react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { StatusChip, TopBar, useInsetInferior } from '@/core/ui/fw'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
@@ -40,6 +41,8 @@ interface Props {
  * observación y quién. Usa el endpoint de la web (GET /Stocks/movimientos), de a 20. Cerrado no consulta. Sin el
  * enlace al historial completo de la web.
  */
+const SEPARADOR = separadorDeFilas(space[2])
+
 export function MovimientosDeStock({ visible, onCerrar, productoId, producto }: Props) {
   const c = useColors()
   const insetInferior = useInsetInferior()
@@ -57,7 +60,7 @@ export function MovimientosDeStock({ visible, onCerrar, productoId, producto }: 
         ) : q.isError ? (
           <ErrorDeConsulta error={q.error} titulo="No pudimos cargar el historial" onReintentar={() => { void q.refetch() }} />
         ) : (
-          <FlatList {...LISTA_LARGA_PROPS}
+          <FlashList
             data={movimientos}
             keyExtractor={(m) => m.id}
             renderItem={renderMovimiento}
@@ -65,9 +68,10 @@ export function MovimientosDeStock({ visible, onCerrar, productoId, producto }: 
               if (q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage()
             }}
             onEndReachedThreshold={0.5}
-            contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] + insetInferior }}
+            contentContainerStyle={{ padding: space[4], paddingBottom: space[12] + insetInferior }}
+            ItemSeparatorComponent={SEPARADOR}
             ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="Todavía no hay movimientos de este producto." />}
-            ListFooterComponent={q.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : undefined}
+            ListFooterComponent={q.isFetchingNextPage ? <View style={{ paddingTop: space[2] }}><ActivityIndicator color={c.brandInk} /></View> : undefined}
           />
         )}
       </View>
