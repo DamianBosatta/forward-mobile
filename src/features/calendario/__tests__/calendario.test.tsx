@@ -98,7 +98,7 @@ describe('Calendario', () => {
     await userEvent.press(screen.getByLabelText('3 días antes'))
     await userEvent.press(screen.getByLabelText('Guardar evento'))
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Calendario/eventos', {
-      tipo: 'Manual', titulo: 'Pasar a cobrar', descripcion: null, fechaInicio: '2026-10-10', avisarDiasAntes: 3, visibilidad: 'Personal',
+      tipo: 'Manual', titulo: 'Pasar a cobrar', descripcion: null, fechaInicio: '2026-10-10', avisarDiasAntes: 3, visibilidad: 'Personal', claveIdempotencia: expect.stringMatching(/^mobile-/),
     })
     await waitFor(() => expect(screen.queryByLabelText('Guardar evento')).toBeNull())
   })

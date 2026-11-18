@@ -1,7 +1,9 @@
 import React from 'react'
 import { act, renderHook } from '@testing-library/react-native'
-import { QueryClient, QueryClientProvider, type UseMutationResult } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, useMutation, type UseMutationResult } from '@tanstack/react-query'
 import { useConfirmarCompra, useRecibirCompra, borradorCompraApi } from '../compras'
+import { useCreateSocio } from '../socios'
+import { useCrearEvento } from '../calendario'
 import { guardarBorradorVenta, useAutorizarVenta, useConvertirPresupuesto, useIniciarBorradorVenta } from '../ventas'
 import { useAbrirCaja } from '../finanzas'
 import { api } from '../client'
@@ -37,6 +39,13 @@ interface Caso {
 
 const LINEA = { compraDetalleId: 'd1', cantidadRecibida: 2 }
 
+/** `borradorCompraApi.iniciar` es una llamada suelta (la usa `useCompraBorrador`): se la envuelve en una mutación para correr los mismos casos. */
+const useIniciarBorradorCompra = () =>
+  useMutation({ mutationFn: (v: { proveedorId: string; depositoId: string }) => borradorCompraApi.iniciar(v.proveedorId, v.depositoId) })
+
+const SOCIO = { razonSocial: 'Almacén Don José', cuit: '20123456786', tipoRaw: 1, direccion: 'Mitre 123' }
+const EVENTO = { tipo: 'Tarea', titulo: 'Visita', fechaInicio: '2026-11-20', avisarDiasAntes: 0, visibilidad: 'Personal' }
+
 const casos: Caso[] = [
   {
     nombre: 'confirmar compra', metodo: 'post', url: '/api/v1/Compras/c1/confirmar', cuerpo: { compraId: 'c1' },
@@ -71,6 +80,19 @@ const casos: Caso[] = [
     nombre: 'abrir caja', metodo: 'post', url: '/api/v1/Cajas/abrir', cuerpo: { saldoInicial: 100 },
     usar: useAbrirCaja, vars: 100, otras: 200,
   },
+  {
+    nombre: 'alta de borrador de compra', metodo: 'post', url: '/api/v1/Compras/borradores',
+    cuerpo: { proveedorId: 'pr1', depositoId: 'd1' },
+    usar: useIniciarBorradorCompra, vars: { proveedorId: 'pr1', depositoId: 'd1' }, otras: { proveedorId: 'pr2', depositoId: 'd1' },
+  },
+  {
+    nombre: 'alta de socio comercial', metodo: 'post', url: '/api/v1/socios-comerciales', cuerpo: SOCIO,
+    usar: useCreateSocio, vars: SOCIO, otras: { ...SOCIO, razonSocial: 'Almacén Don José SRL' },
+  },
+  {
+    nombre: 'alta de evento del calendario', metodo: 'post', url: '/api/v1/Calendario/eventos', cuerpo: EVENTO,
+    usar: useCrearEvento, vars: EVENTO, otras: { ...EVENTO, titulo: 'Visita al cliente' },
+  },
 ]
 
 const llamadas = (c: Caso) => mock[c.metodo].mock.calls.filter((l) => l[0] === c.url)
@@ -93,12 +115,15 @@ describe.each(casos)('$nombre: una clave por intento', (c) => {
     await act(async () => { await result.current.mutateAsync(c.vars as never).catch(() => undefined) })
     await act(async () => { await result.current.mutateAsync(c.vars as never) })
     expect(llamadas(c)).toHaveLength(2)
+    // Sin clave, `undefined` sería igual a `undefined`: primero se exige que la clave viaje.
+    expect(claveDe(c, 0)).toMatch(/^mobile-/)
     expect(claveDe(c, 1)).toBe(claveDe(c, 0))
   })
 
   it('un doble toque con la primera todavía en vuelo manda la misma clave', async () => {
     const { result } = hook()
     await act(async () => { await Promise.all([result.current.mutateAsync(c.vars as never), result.current.mutateAsync(c.vars as never)]) })
+    expect(claveDe(c, 0)).toMatch(/^mobile-/)
     expect(claveDe(c, 1)).toBe(claveDe(c, 0))
   })
 

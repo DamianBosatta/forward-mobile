@@ -163,7 +163,7 @@ describe('venta guardada (PR 2.9)', () => {
     await waitFor(() => expect(mockPost).toHaveBeenCalled())
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Calendario/eventos', {
       tipo: 'Manual', titulo: 'Pedido A00419 · Tarantino 1898 · Autoservicio Abel', fechaInicio: diaArgentina(Date.now() + 86_400_000),
-      socioComercialId: 'c7', avisarDiasAntes: 0, visibilidad: 'Personal',
+      socioComercialId: 'c7', avisarDiasAntes: 0, visibilidad: 'Personal', claveIdempotencia: expect.stringMatching(/^mobile-/),
     })
     expect(Alert.alert).toHaveBeenCalledWith('Agendado', 'Quedó en tu calendario.')
   })
