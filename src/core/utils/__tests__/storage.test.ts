@@ -302,4 +302,20 @@ describe('zustandStorageMudadoDesde', () => {
     await esperarPendientes()
     expect(almacenPlano.removeItem).toHaveBeenCalledWith('logistica-storage')
   })
+
+  it('while the encrypted file is blocked, the plain copy is neither read into the stand-in nor removed (SEG-01)', async () => {
+    telefonoConClaveYColas()
+    keystoreRoto()
+    const plano = new Map([['logistica-storage', '{"viaje":"plano"}']])
+    const { mudado, almacenPlano } = adaptador(plano)
+
+    expect(await mudado.getItem('logistica-storage')).toBeNull()
+    mudado.setItem('logistica-storage', '{"viaje":"nuevo"}')
+    await mudado.removeItem('logistica-storage')
+    await esperarPendientes()
+
+    expect(almacenPlano.removeItem).not.toHaveBeenCalled()
+    expect(plano.get('logistica-storage')).toBe('{"viaje":"plano"}')
+    expectArchivoIntacto()
+  })
 })

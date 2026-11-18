@@ -150,7 +150,7 @@ function migrarDesdeLaClaveVieja(): Almacen {
     try {
       void SecureStore.deleteItemAsync(STORAGE_KEY_NAME).catch(() => {})
     } catch {
-      // Left saved: the next start opens with it and the old data does not decrypt (fail-closed, as an unreadable Keystore).
+      // Left saved: the next start opens with it and the old data does not decrypt.
     }
   }
   return almacen
@@ -229,8 +229,12 @@ interface AlmacenPlano {
  * borrar borra en los dos lados (SEG-10).
  */
 export function zustandStorageMudadoDesde(plano: AlmacenPlano) {
+  // SEG-01: blocked, the encrypted side is a stand-in in memory. Moving the plain copy into it and removing it would
+  // lose it at the next start, so the plain copy is left alone until the real file opens.
+  const bloqueado = apertura.estado.bloqueado
   return {
     getItem: (name: string): string | null | Promise<string | null> => {
+      if (bloqueado) return null
       const cifrado = zustandStorage.getItem(name)
       if (cifrado !== null) {
         // Con lo cifrado ya guardado no queda copia plana: la deja una mudanza cortada o un build viejo. Si falla, la
@@ -248,7 +252,7 @@ export function zustandStorageMudadoDesde(plano: AlmacenPlano) {
     setItem: (name: string, value: string) => zustandStorage.setItem(name, value),
     removeItem: async (name: string) => {
       zustandStorage.removeItem(name)
-      await plano.removeItem(name)
+      if (!bloqueado) await plano.removeItem(name)
     },
   }
 }
