@@ -27,6 +27,8 @@ import { colorScheme } from 'nativewind'
 import { useColors, useIsDark, useThemeStore } from '@/libs/theme'
 import * as SplashScreen from 'expo-splash-screen'
 import { OfflineBanner } from '@/core/ui/OfflineBanner'
+import { AlmacenBloqueado } from '@/core/ui/AlmacenBloqueado'
+import { estadoDelAlmacen } from '@/core/utils/storage'
 import '../global.css'
 import { loadSavedApiUrl } from '@/core/api/client'
 import { AvisosAlVolver, PushDeAvisos } from '@/features/notificaciones'
@@ -144,6 +146,17 @@ Sentry.init({
 })
 
 function RootLayout() {
+  const almacen = estadoDelAlmacen()
+  if (almacen.bloqueado) {
+    // SEG-01: without the encrypted storage nothing of the app runs, so no queue is sent or overwritten.
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <AlmacenBloqueado motivo={almacen.motivo} />
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    )
+  }
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <PersistQueryClientProvider 
