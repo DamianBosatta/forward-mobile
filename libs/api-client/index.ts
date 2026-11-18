@@ -4,6 +4,7 @@
 
 // Client base
 export { api, configureApiClient, ApiError, API_URL, ENV_PROD, ENV_LOCAL, loadSavedApiUrl, setApiUrl } from './client'
+export { obtenerVersionMinima } from './appMovil'
 
 // Types / DTOs
 export type {
