@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { ChevronDown } from 'lucide-react-native'
 import { FONT, importe as cifras, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { BottomSheet, FormContainer, Notice, TopBar, TotalsRow, formatImporte, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { ErrorDeConsulta, esqueletoDeFilas } from '@/core/ui/estados'
+import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { esFallaDeRed } from '@/core/api/errores'
 import { useResponsive } from '@/libs/useResponsive'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -16,6 +18,8 @@ import { diaDeLaSemana, tituloSemana } from './semana'
 type Vendedor = { id: string; nombre: string }
 
 const semibold = { fontFamily: FONT.semibold, fontWeight: '600' as const }
+/** Lo que ocupa el lugar del reporte mientras carga: la franja de lo vendido y las dos cifras de apoyo. */
+const ESQUELETO_REPORTE = [{ alto: 148 }, { alto: 100 }, { alto: 100 }]
 const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`
 const porcentaje = (n: number) => `${String(Math.round(n * 10) / 10).replace('.', ',')} %`
 
@@ -79,18 +83,14 @@ export function ReportesScreen() {
           {!puedeVerResumen ? (
             <EstadoDePantalla tipo="sinPermiso" titulo="No tenés permiso para ver los reportes" />
           ) : q.isLoading ? (
-            <ActivityIndicator color={c.brand} accessibilityLabel="Cargando los reportes" />
-          ) : q.isError && esFallaDeRed(q.error) ? (
-            q.data ? (
-              <>
-                <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice>
-                <Secciones r={q.data} />
-              </>
-            ) : (
-              <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los reportes" accion={{ label: 'Reintentar', onPress: () => void q.refetch() }} />
-            )
+            <Esqueletos bloques={ESQUELETO_REPORTE} />
+          ) : q.isError && esFallaDeRed(q.error) && q.data ? (
+            <>
+              <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice>
+              <Secciones r={q.data} />
+            </>
           ) : q.isError || !q.data ? (
-            <Notice tone="peligro">No se pudieron cargar los reportes.</Notice>
+            <ErrorDeConsulta error={q.error ?? new Error('Sin datos')} titulo="No pudimos cargar los reportes" onReintentar={() => void q.refetch()} />
           ) : (
             <Secciones r={q.data} />
           )}
@@ -116,7 +116,7 @@ export function ReportesScreen() {
               </Pressable>
             )
           })}
-          {vendedores.isLoading ? <ActivityIndicator color={c.brand} accessibilityLabel="Cargando vendedores" /> : null}
+          {vendedores.isLoading ? <Esqueletos bloques={esqueletoDeFilas(3, 48)} /> : null}
           {vendedores.isError ? <Notice tone="peligro">No se pudo cargar la lista de vendedores.</Notice> : null}
         </View>
       </BottomSheet>

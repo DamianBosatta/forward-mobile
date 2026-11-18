@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import { esqueletoDeFilas } from '@/core/ui/estados'
+import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { mostrarNumero } from '@/core/utils/numero'
@@ -61,7 +63,7 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false, medioInici
   }, [medioInicial, medios.data])
   const cheque = (campo: keyof FormCobro['cheque']) => (v: string) => setF(p => ({ ...p, cheque: { ...p.cheque, [campo]: v } }))
 
-  if (socio.isLoading) return <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
+  if (socio.isLoading) return <View style={{ padding: space[4] }}><Esqueletos bloques={esqueletoDeFilas(3, 96)} /></View>
   if (!socio.data) return <Notice tone="peligro">{mensajeDelServidor(socio.error, 'No se pudo abrir el cliente.')}</Notice>
   const cliente = socio.data
   const medio = medios.data?.find(m => m.id === f.medioPagoId)

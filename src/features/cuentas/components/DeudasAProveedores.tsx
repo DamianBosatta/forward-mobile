@@ -6,6 +6,7 @@ import { Notice, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { HeroSaldo } from '@/features/clientes/components/SaldoDelCliente'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { ErrorDeConsulta } from '@/core/ui/estados'
 import { esFallaDeRed } from '@/core/api/errores'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useDeudasProveedores, type DeudaProveedor } from '../api/queries'
@@ -38,7 +39,7 @@ export function DeudasAProveedores({ onPagar }: { onPagar?: (socioId: string) =>
           <HeroSaldo titulo="Debés" saldo={total} vencido={null} tope={null} disponible={null} accessibilityLabel={`Debés: ${formatImporte(total)}`} />
         </View>
       ) : null}
-      {q.error && !(sinRed && filas.length === 0) ? (
+      {q.error && filas.length > 0 ? (
         <View style={{ padding: space[4] }}>
           {sinRed ? (
             <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice>
@@ -63,9 +64,7 @@ export function DeudasAProveedores({ onPagar }: { onPagar?: (socioId: string) =>
               <Esqueletos bloques={DEBO_CARGANDO} />
             </View>
           ) : q.error ? (
-            sinRed ? (
-              <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar las deudas" accion={{ label: 'Reintentar', onPress: () => void q.refetch() }} />
-            ) : undefined
+            <ErrorDeConsulta error={q.error} titulo="No pudimos cargar las deudas" texto={mensajeDelServidor(q.error, 'No se pudieron cargar las deudas con proveedores.')} onReintentar={() => void q.refetch()} />
           ) : (
             <EstadoDePantalla tipo="vacio" titulo="No le debés a ningún proveedor." />
           )
