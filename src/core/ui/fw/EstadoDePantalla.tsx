@@ -1,11 +1,11 @@
 import React from 'react'
 import { Text, View } from 'react-native'
-import { Inbox, Lock, WifiOff, type LucideIcon } from 'lucide-react-native'
+import { Inbox, Lock, TriangleAlert, WifiOff, type LucideIcon } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { partesArgentina } from '@/core/utils/fecha'
 import { Button } from './Button'
 
-export type TipoEstadoDePantalla = 'vacio' | 'sinConexion' | 'sinPermiso'
+export type TipoEstadoDePantalla = 'vacio' | 'sinConexion' | 'sinPermiso' | 'error'
 
 interface EstadoDePantallaProps {
   tipo: TipoEstadoDePantalla
@@ -17,7 +17,7 @@ interface EstadoDePantallaProps {
   accion?: { label: string; onPress: () => void }
 }
 
-const ICONO: Record<TipoEstadoDePantalla, LucideIcon> = { vacio: Inbox, sinConexion: WifiOff, sinPermiso: Lock }
+const ICONO: Record<TipoEstadoDePantalla, LucideIcon> = { vacio: Inbox, sinConexion: WifiOff, sinPermiso: Lock, error: TriangleAlert }
 
 /** La frase de "sin conexión" (lienzo R16): sirve a la pantalla entera y a un aviso sobre lo ya guardado. Sin hora no se inventa. */
 export function textoSinConexion(guardadoA?: number): string {
@@ -30,10 +30,11 @@ export function textoSinConexion(guardadoA?: number): string {
 function textoDeSiempre(tipo: TipoEstadoDePantalla, guardadoA?: number): string | null {
   if (tipo === 'sinPermiso') return 'Si lo necesitás, pedíselo a quien administra los usuarios en la web.'
   if (tipo === 'sinConexion') return textoSinConexion(guardadoA)
+  if (tipo === 'error') return 'Algo salió mal de nuestro lado. Probá de nuevo en un rato.'
   return null
 }
 
-/** Lista vacía, sin conexión con el servidor o sin permiso (lienzo R16): el mismo dibujo en toda la app. */
+/** Lista vacía, sin conexión con el servidor, falla del servidor o sin permiso (lienzo R16): el mismo dibujo en toda la app. */
 export function EstadoDePantalla({ tipo, titulo, texto, guardadoA, accion }: EstadoDePantallaProps) {
   const c = useColors()
   const Icono = ICONO[tipo]
