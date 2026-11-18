@@ -90,6 +90,7 @@ it('el alta manda el mismo cuerpo de hoy, campo por campo', async () => {
     franjaEntrega: undefined,
     tipoRaw: 1,
     saldoInicial: 0,
+    claveIdempotencia: expect.stringMatching(/^mobile-/),
   })
 })
 
