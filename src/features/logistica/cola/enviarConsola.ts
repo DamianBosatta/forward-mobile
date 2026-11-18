@@ -1,5 +1,6 @@
 import { api } from '@/core/api/client'
-import { esFallaDeRed } from '@/core/api/errores'
+import { esFallaDeRed, esTiempoAgotado } from '@/core/api/errores'
+import { TOPE_DE_INTENTOS, avisoDeTope } from '@/core/utils/colasSinSenal'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { clasificarFalloEntrega } from '../consola/entrega'
@@ -24,7 +25,7 @@ const URL_HOJA = (hojaDeRutaId: string) => `/api/v1/Logistica/hojas-ruta/${hojaD
  * la sesión venció (401: sale cuando vuelva a entrar) o demasiados pedidos (429). La acción sigue esperando.
  */
 function esTransitoria(e: unknown): boolean {
-  if (esFallaDeRed(e)) return true
+  if (esFallaDeRed(e) || esTiempoAgotado(e)) return true
   const status = (e as { status?: unknown } | null)?.status
   if (typeof status !== 'number') return false
   return status === 401 || status === 408 || status === 429 || status >= 500
@@ -54,7 +55,8 @@ let enCurso: Promise<ResultadoRonda> | null = null
 
 /**
  * Manda lo que espera, en orden de llegada (FIFO), una por vez. Si se corta la señal deja el resto como estaba.
- * Un rechazo del servidor no se reintenta: la acción queda "para revisar" y la ronda sigue con la próxima.
+ * Un rechazo del servidor no se reintenta: la acción queda "para revisar" y la ronda sigue con la próxima. Lo mismo
+ * pasa al fallo de red número `TOPE_DE_INTENTOS` de una misma acción: deja de trabar a las de atrás.
  * Dos rondas a la vez comparten el mismo envío: una acción nunca sale dos veces en paralelo.
  */
 export function enviarPendientesConsola(usuarioId: string, deps: Dependencias = {}): Promise<ResultadoRonda> {
@@ -64,17 +66,28 @@ export function enviarPendientesConsola(usuarioId: string, deps: Dependencias = 
 
 async function ronda(usuarioId: string, deps: Dependencias): Promise<ResultadoRonda> {
   const sesion = deps.sesion ?? (() => useAuthStore.getState().user?.id)
-  const esperando = leerCola(usuarioId).filter((a) => a.estado.tipo === 'esperando')
-  if (esperando.length === 0) return 'vacia'
-  for (const a of esperando) {
+  const vistas = new Set<string>()
+  // Se relee la cola en cada vuelta: lo que se encola (o se reintenta) durante la ronda también sale, en orden.
+  for (;;) {
+    const a = leerCola(usuarioId).find((x) => x.estado.tipo === 'esperando' && !vistas.has(x.clave))
+    if (!a) return vistas.size ? 'completa' : 'vacia'
     if (sesion() !== usuarioId) return 'sinSenal'
+    vistas.add(a.clave)
     try {
       await mandar(a)
     } catch (e) {
       if (esTransitoria(e)) {
         const intentos = a.estado.tipo === 'esperando' ? a.estado.intentos + 1 : 1
-        cambiarEstado(usuarioId, a.clave, { tipo: 'esperando', intentos })
-        return 'sinSenal'
+        if (intentos < TOPE_DE_INTENTOS) {
+          cambiarEstado(usuarioId, a.clave, { tipo: 'esperando', intentos })
+          return 'sinSenal'
+        }
+        // Tope: deja de reintentarse sola para no trabar la cola; el chofer la reintenta o la descarta.
+        cambiarEstado(usuarioId, a.clave, {
+          tipo: 'revisar', mensaje: avisoDeTope('Tocá Reintentar para mandarla de nuevo o Descartar para sacarla del teléfono.'),
+        })
+        deps.alFallar?.(a)
+        continue
       }
       // Ya estaba registrada (un intento anterior llegó, quizás sin que se viera la respuesta): cuenta como enviada.
       // Un aviso con clave que el servidor ya tiene con otro cuerpo no es "enviado": se muestra para revisar.
@@ -93,5 +106,4 @@ async function ronda(usuarioId: string, deps: Dependencias): Promise<ResultadoRo
     quitarDeCola(usuarioId, a.clave)
     deps.alEnviar?.(a.hojaDeRutaId)
   }
-  return 'completa'
 }

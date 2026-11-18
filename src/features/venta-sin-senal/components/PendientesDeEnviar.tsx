@@ -9,7 +9,7 @@ import { agrupar, useColaDelUsuario } from '../hooks/useVentasSinSenal'
 import { useHoraDelCatalogo } from '../hooks/useHoraDelCatalogo'
 import { useAvisosDeCola } from '../hooks/useAvisosDeCola'
 import { textoDeLineaCambiada } from '../lib/cambiosEnCola'
-import type { VentaEnCola } from '../lib/cola'
+import { detenidaPorTope, reintentarVenta, type VentaEnCola } from '../lib/cola'
 import { enviarPendientes } from '../lib/enviar'
 import { VentasSinSenalLista } from './VentasSinSenalLista'
 
@@ -20,6 +20,12 @@ import { VentasSinSenalLista } from './VentasSinSenalLista'
 export function PendientesDeEnviar() {
   const items = useColaDelUsuario()
   return items.length === 0 ? null : <Bloque items={items} />
+}
+
+/** Retoma las detenidas por el tope de intentos (desde su fase, con su clave) y manda todo lo que espera. */
+function enviarAhora(usuarioId: string, items: VentaEnCola[]) {
+  items.filter(detenidaPorTope).forEach((v) => reintentarVenta(usuarioId, v.clave))
+  void enviarPendientes(usuarioId)
 }
 
 function Bloque({ items }: { items: VentaEnCola[] }) {
@@ -43,7 +49,7 @@ function Bloque({ items }: { items: VentaEnCola[] }) {
       {cambiadas.map((l) => <Notice key={`${l.clave}:${l.productoId}`} tone="advertencia" title="Cambió el stock:">{textoDeLineaCambiada(l)}</Notice>)}
       <VentasSinSenalLista items={items} sinSenal={sinSenal} horaCatalogo={horaCatalogo} onAbrir={abrir} />
       {porEnviar > 0 && usuarioId ? (
-        <Button variant="secundario" label={sinSenal ? 'Enviar ahora (sin señal)' : 'Enviar ahora'} disabled={sinSenal} onPress={() => { void enviarPendientes(usuarioId) }} />
+        <Button variant="secundario" label={sinSenal ? 'Enviar ahora (sin señal)' : 'Enviar ahora'} disabled={sinSenal} onPress={() => enviarAhora(usuarioId, items)} />
       ) : null}
     </View>
   )

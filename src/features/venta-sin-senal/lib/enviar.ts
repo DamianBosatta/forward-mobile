@@ -1,5 +1,6 @@
 import { api, ApiError } from '@/core/api/client'
 import { esError, mensajeDeError } from '@/core/api/errores'
+import { TOPE_DE_INTENTOS, avisoDeTope } from '@/core/utils/colasSinSenal'
 import { guardarBorradorVenta, type BorradorVenta, type VistaPreviaVenta } from '@/libs/api-client/ventas'
 import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
 import type { components } from '@/libs/api-client/generated/schema'
@@ -113,10 +114,18 @@ class Envio {
       if (e instanceof SesionCambiada) return false
       if (esTransitoria(e)) {
         const a = this.actual()
-        if (a?.estado.tipo === 'esperando') {
-          cambiarEstado(this.usuarioId, this.venta.clave, { ...a.estado, intentos: a.estado.intentos + 1 })
+        if (a?.estado.tipo !== 'esperando') return false
+        const intentos = a.estado.intentos + 1
+        if (intentos < TOPE_DE_INTENTOS) {
+          cambiarEstado(this.usuarioId, this.venta.clave, { ...a.estado, intentos })
+          return false
         }
-        return false
+        // Tope: deja de reintentarse sola para no trabar a las de atrás. Guarda la fase: pudo haberse grabado, y
+        // "Enviar ahora" la retoma desde ahí con la misma clave (`reintentarVenta`).
+        cambiarEstado(this.usuarioId, this.venta.clave, {
+          tipo: 'revisar', mensaje: avisoDeTope('Tocá «Enviar ahora» para probar de nuevo.'), fase: a.estado.fase,
+        })
+        return true
       }
       // Error de la venta (validación o negocio: lo dicen el status y el código): no se reintenta sola.
       cambiarEstado(this.usuarioId, this.venta.clave, { tipo: 'revisar', mensaje: mensajeDeError(e, POR_DEFECTO) })

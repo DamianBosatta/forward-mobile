@@ -99,6 +99,24 @@ export function cambiarEstado(usuarioId: string, clave: string, estado: EstadoAc
   escribir(usuarioId, leerCola(usuarioId).map((a) => (a.clave === clave ? { ...a, estado } : a)))
 }
 
+/**
+ * "Reintentar" de una acción para revisar: vuelve a esperar, desde cero intentos, con la misma clave y el mismo cuerpo
+ * (el servidor la aplica una sola vez). Una que ya espera no cambia.
+ */
+export function reintentarAccion(usuarioId: string, clave: string): void {
+  if (leerCola(usuarioId).some((a) => a.clave === clave && a.estado.tipo === 'revisar')) {
+    cambiarEstado(usuarioId, clave, { tipo: 'esperando', intentos: 0 })
+  }
+}
+
+/**
+ * "Descartar" de una acción para revisar: la saca solo del teléfono. No llama al servidor ni anula nada que ya esté
+ * registrado allá. Una que espera no se descarta: podría estar saliendo en este momento.
+ */
+export function descartarAccion(usuarioId: string, clave: string): void {
+  if (leerCola(usuarioId).some((a) => a.clave === clave && a.estado.tipo === 'revisar')) quitarDeCola(usuarioId, clave)
+}
+
 /** Saca una acción que ya salió (o que el chofer resolvió). */
 export function quitarDeCola(usuarioId: string, clave: string): void {
   const lista = leerCola(usuarioId)

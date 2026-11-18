@@ -1,8 +1,9 @@
 import { ApiError } from '@/core/api/client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import {
-  encolarAccion, leerCola, quitarDeCola, suscribirCola, textoDeCola, type DatosAccion,
+  cambiarEstado, descartarAccion, encolarAccion, leerCola, quitarDeCola, reintentarAccion, suscribirCola, textoDeCola, type DatosAccion,
 } from '../cola/colaConsola'
+import { TOPE_DE_INTENTOS, avisoDeTope } from '@/core/utils/colasSinSenal'
 import { enviarPendientesConsola } from '../cola/enviarConsola'
 
 const mockPost = jest.fn()
@@ -146,6 +147,70 @@ describe('envío de la cola de la consola', () => {
     // Las que esperan revisión no se vuelven a mandar solas.
     mockPost.mockClear()
     expect(await enviarPendientesConsola(USUARIO)).toBe('vacia')
+    expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  it('RED-01: un tiempo agotado (AbortError) no la manda a revisar: sigue esperando, cuenta el intento y corta la ronda', async () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    encolarAccion(USUARIO, noEntrega(), 2000)
+    mockPost.mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'))
+    expect(await enviarPendientesConsola(USUARIO)).toBe('sinSenal')
+    expect(mockPost).toHaveBeenCalledTimes(1)
+    expect(leerCola(USUARIO).map((a) => a.estado)).toEqual([{ tipo: 'esperando', intentos: 1 }, { tipo: 'esperando', intentos: 0 }])
+  })
+
+  it(`RED-05: al fallo número ${TOPE_DE_INTENTOS} deja de reintentarse sola, queda para revisar con el aviso y la ronda sigue con la próxima`, async () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    encolarAccion(USUARIO, noEntrega(), 2000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'esperando', intentos: TOPE_DE_INTENTOS - 1 })
+    mockPost.mockRejectedValueOnce(new TypeError('Network request failed')).mockResolvedValueOnce({})
+    const alFallar = jest.fn()
+    expect(await enviarPendientesConsola(USUARIO, { alFallar })).toBe('completa')
+    expect(mockPost.mock.calls.map(([url]) => url)).toEqual([
+      '/api/v1/Logistica/hojas-ruta/h1/paradas/p1/entregar', '/api/v1/Logistica/hojas-ruta/h1/reportar-parada',
+    ])
+    expect(leerCola(USUARIO)).toEqual([expect.objectContaining({
+      clave: 'k-1', estado: { tipo: 'revisar', mensaje: avisoDeTope('Tocá Reintentar para mandarla de nuevo o Descartar para sacarla del teléfono.') },
+    })])
+    expect(alFallar).toHaveBeenCalledWith(expect.objectContaining({ clave: 'k-1' }))
+    mockPost.mockClear()
+    expect(await enviarPendientesConsola(USUARIO)).toBe('vacia')
+    expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  it('Reintentar vuelve a esperar una acción para revisar, desde cero intentos, y la ronda la manda con la misma clave y el mismo cuerpo', async () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    mockPost.mockRejectedValueOnce(rechazo(400, 'Falta quién recibió.'))
+    await enviarPendientesConsola(USUARIO)
+    const primera = mockPost.mock.calls[0]
+    reintentarAccion(USUARIO, 'k-1')
+    expect(leerCola(USUARIO)[0].estado).toEqual({ tipo: 'esperando', intentos: 0 })
+    mockPost.mockResolvedValueOnce({})
+    expect(await enviarPendientesConsola(USUARIO)).toBe('completa')
+    expect(mockPost.mock.calls[1]).toEqual(primera)
+    expect(leerCola(USUARIO)).toEqual([])
+  })
+
+  it('una acción que vuelve a esperar mientras corre una ronda sale en esa misma ronda', async () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    encolarAccion(USUARIO, noEntrega(), 2000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'revisar', mensaje: 'x' })
+    mockPost.mockImplementation(async (url: string) => {
+      if (url.endsWith('/reportar-parada')) reintentarAccion(USUARIO, 'k-1')
+      return {}
+    })
+    expect(await enviarPendientesConsola(USUARIO)).toBe('completa')
+    expect(mockPost).toHaveBeenCalledTimes(2)
+    expect(leerCola(USUARIO)).toEqual([])
+  })
+
+  it('Descartar saca del teléfono solo una acción para revisar y no llama al servidor; una que espera no se descarta', () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    encolarAccion(USUARIO, noEntrega(), 2000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'revisar', mensaje: 'x' })
+    descartarAccion(USUARIO, 'k-1')
+    descartarAccion(USUARIO, 'k-2')
+    expect(leerCola(USUARIO).map((a) => a.clave)).toEqual(['k-2'])
     expect(mockPost).not.toHaveBeenCalled()
   })
 

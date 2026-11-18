@@ -16,7 +16,8 @@ jest.mock('@/core/api/client', () => ({
   API_URL: '',
 }))
 
-import { encolarVenta, leerCola, cambiarEstado } from '../lib/cola'
+import { encolarVenta, leerCola, cambiarEstado, reintentarVenta } from '../lib/cola'
+import { TOPE_DE_INTENTOS, avisoDeTope } from '@/core/utils/colasSinSenal'
 import { enviarPendientes } from '../lib/enviar'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 
@@ -369,5 +370,44 @@ describe('enviar las ventas guardadas en el teléfono (V9, D4)', () => {
     cambiarEstado('u1', c.clave, { tipo: 'enviada', ventaId: 'v1', codigo: null, estado: null })
     await expect(enviarPendientes('u1')).resolves.toBe('vacia')
     expect(post).not.toHaveBeenCalled()
+  })
+})
+
+describe('tope de intentos de la venta sin señal (RED-05)', () => {
+  it(`al fallo número ${TOPE_DE_INTENTOS} deja de reintentarse sola: queda para revisar con el aviso, conserva su fase y la siguiente sale`, async () => {
+    let n = 0
+    servidor({ alta: () => { n++; if (n === 1) throw sinRed(); return alta200('v2') } })
+    const trabada = encolar({}, 1_000)
+    const siguiente = encolar({}, 2_000)
+    cambiarEstado('u1', trabada.clave, { tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: TOPE_DE_INTENTOS - 1 })
+    await expect(enviarPendientes('u1')).resolves.toBe('completa')
+    const [a, b] = leerCola('u1')
+    expect(a).toMatchObject({
+      clave: trabada.clave,
+      estado: { tipo: 'revisar', mensaje: avisoDeTope('Tocá «Enviar ahora» para probar de nuevo.'), fase: { paso: 'altaEnviada' } },
+    })
+    expect(b).toMatchObject({ clave: siguiente.clave, estado: { tipo: 'enviada', ventaId: 'v2' } })
+    post.mockClear()
+    await expect(enviarPendientes('u1')).resolves.toBe('vacia')
+    expect(post).not.toHaveBeenCalled()
+  })
+
+  it('reintentarVenta la vuelve a esperar desde la fase en que quedó, con la misma clave: no repite la vista previa', async () => {
+    servidor()
+    const v = encolar()
+    cambiarEstado('u1', v.clave, { tipo: 'revisar', mensaje: 'x', fase: { paso: 'altaEnviada' } })
+    reintentarVenta('u1', v.clave)
+    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'esperando', fase: { paso: 'altaEnviada' }, intentos: 0 })
+    await enviarPendientes('u1')
+    expect(llamadas('/api/v1/Ventas/vista-previa')).toHaveLength(0)
+    expect(llamadas('/api/v1/Ventas')[0][1].claveIdempotencia).toBe(v.clave)
+    expect(leerCola('u1')[0].estado).toMatchObject({ tipo: 'enviada', ventaId: 'v1' })
+  })
+
+  it('reintentarVenta no toca una venta que el servidor rechazó (para revisar sin fase)', () => {
+    const v = encolar()
+    cambiarEstado('u1', v.clave, { tipo: 'revisar', mensaje: 'Sin stock' })
+    reintentarVenta('u1', v.clave)
+    expect(leerCola('u1')[0].estado).toEqual({ tipo: 'revisar', mensaje: 'Sin stock' })
   })
 })

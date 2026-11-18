@@ -36,8 +36,12 @@ export type EstadoEnCola =
   | { tipo: 'enviada'; ventaId: string; codigo: string | null; estado: EstadoVentaNombre | null }
   /** El precio cambió al enviarse: quedó como borrador para revisarla (no se confirmó). */
   | { tipo: 'enBorradores'; ventaId: string; totalServidor: number | null }
-  /** El servidor la rechazó: no se reintenta sola; el vendedor la revisa con este mensaje. */
-  | { tipo: 'revisar'; mensaje: string }
+  /**
+   * El servidor la rechazó, o se detuvo por el tope de intentos (`TOPE_DE_INTENTOS`): no se reintenta sola; el vendedor
+   * la revisa con este mensaje. `fase`: solo la detenida por el tope, el paso donde quedó (pudo haberse grabado), para
+   * retomarla desde ahí con la misma clave (`reintentarVenta`).
+   */
+  | { tipo: 'revisar'; mensaje: string; fase?: FaseEnvio }
 
 /** Lo que el vendedor vio al vender: el total y el precio de cada producto (el del servidor, de la hora del catálogo). */
 export interface LoQueVio {
@@ -182,6 +186,20 @@ export function encolarVenta(usuarioId: string, d: DatosParaEncolar, ahora = Dat
 /** Cambia el estado de una venta (y lo deja guardado antes de seguir). */
 export function cambiarEstado(usuarioId: string, clave: string, estado: EstadoEnCola): void {
   escribir(usuarioId, leerCola(usuarioId).map((v) => (v.clave === clave ? { ...v, estado } : v)))
+}
+
+/** La venta se detuvo por el tope de intentos (no la rechazó el servidor) y se puede retomar. */
+export const detenidaPorTope = (v: VentaEnCola): boolean =>
+  v.estado.tipo === 'revisar' && esObjeto(v.estado.fase) && PASOS.has(v.estado.fase.paso as string)
+
+/**
+ * Retoma una venta detenida por el tope: vuelve a esperar desde el paso donde quedó, con la misma clave y desde cero
+ * intentos. Una que rechazó el servidor (sin fase) no cambia: reintentarla daría el mismo rechazo.
+ */
+export function reintentarVenta(usuarioId: string, clave: string): void {
+  const v = leerCola(usuarioId).find((x) => x.clave === clave)
+  if (!v || !detenidaPorTope(v) || v.estado.tipo !== 'revisar' || !v.estado.fase) return
+  cambiarEstado(usuarioId, clave, { tipo: 'esperando', fase: v.estado.fase, intentos: 0 })
 }
 
 /** Saca una venta que el vendedor ya revisó (para revisar o en Borradores). Las que esperan no se sacan acá. */
