@@ -126,7 +126,8 @@ describe('formulario de siempre: la caja del depósito de la sesión', () => {
     renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
     await cargarMontoYMedio('5.000', 'Efectivo')
 
-    expect(await screen.findByText('No hay una caja abierta en este depósito. Abrí una caja para registrar cobros en efectivo.', {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByText(/La caja se abre desde la web\./, {}, ESPERA)).toBeTruthy()
+    expect(screen.queryByText(/Abrí una caja/)).toBeNull()
     expect(apagado(/^Registrar cobro de/)).toBe(true)
     await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
     expect(post).not.toHaveBeenCalled()
@@ -178,7 +179,8 @@ describe('cobro en pasos: la caja del depósito de la sesión', () => {
     renderConQuery(<CobroRoute />)
     await abrirEfectivo()
 
-    expect(await screen.findByText('No hay una caja abierta en este depósito. Abrí una caja para registrar cobros en efectivo.', {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByText(/La caja se abre desde la web\./, {}, ESPERA)).toBeTruthy()
+    expect(screen.queryByText(/Abrí una caja/)).toBeNull()
     expect(apagado('Agregar este medio')).toBe(true)
   })
 })
