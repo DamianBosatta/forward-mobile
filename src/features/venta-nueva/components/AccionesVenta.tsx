@@ -3,10 +3,10 @@ import { Alert, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, Field, Notice, Segmented } from '@/core/ui/fw'
-import { api } from '@/core/api/client'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { getNotaEntregaUrl, getVentaPdfUrl, useAnularVenta, useConvertirPresupuesto } from '@/libs/api-client/ventas'
+import { fetchVentaDetalle, getNotaEntregaUrl, getVentaPdfUrl, useAnularVenta, useConvertirPresupuesto } from '@/libs/api-client/ventas'
+import { useCrearEvento } from '@/libs/api-client/calendario'
 import type { VentaDetalleDto } from '@/libs/api-client/types'
 import { sharePdf } from '@/features/pedidos/lib/sharePdf'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -41,12 +41,13 @@ export function AccionesVenta({ venta, rotulo }: Props) {
   const userId = useAuthStore((s) => s.user?.id) ?? ''
   const convertir = useConvertirPresupuesto()
   const anular = useAnularVenta()
+  // Sin red tiene que fallar en el acto con el aviso de falta de red, no quedar en pausa con el botón cargando.
+  const crearEvento = useCrearEvento({ networkMode: 'always' })
   const [pdf, setPdf] = useState(false)
   const [hoja, setHoja] = useState<'anular' | 'agendar' | null>(null)
   const [motivo, setMotivo] = useState('')
   const [titulo, setTitulo] = useState('')
   const [cuando, setCuando] = useState<Cuando>('1')
-  const [agendando, setAgendando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const esPresupuestoPendiente = h.tipoOperacion === 1 && esEstadoVenta(h.estado, 'Pendiente')
   const puedeConvertir = esPresupuestoPendiente && canDo('MOD_VENTAS', 'update')
@@ -72,7 +73,7 @@ export function AccionesVenta({ venta, rotulo }: Props) {
     {
       text: 'Convertir',
       onPress: () => void convertir.mutateAsync({ id: h.id, version: h.version, usuarioGeneradorId: userId }).then(async () => {
-        const d = await api.get<VentaDetalleDto>(`/api/v1/Ventas/${h.id}`).catch(() => null)
+        const d = await fetchVentaDetalle(h.id).catch(() => null)
         const motivos = motivosAutorizacion(d?.venta.motivoPendienteAutorizacion)
         if (esEstadoVenta(d?.venta.estado, 'PendienteAutorizacion')) {
           Alert.alert('Quedó por autorizar', motivos.length ? `Porque ${motivos.join(', ')}. Te avisamos cuando lo resuelvan.` : 'Te avisamos cuando lo resuelvan.')
@@ -94,9 +95,8 @@ export function AccionesVenta({ venta, rotulo }: Props) {
 
   const agendar = async () => {
     setError(null)
-    setAgendando(true)
     try {
-      await api.post('/api/v1/Calendario/eventos', {
+      await crearEvento.mutateAsync({
         tipo: 'Manual', titulo: titulo.trim(), fechaInicio: diaArgentina(Date.now() + Number(cuando) * DIA_MS),
         socioComercialId: h.clienteId, avisarDiasAntes: 0, visibilidad: 'Personal',
       })
@@ -104,8 +104,6 @@ export function AccionesVenta({ venta, rotulo }: Props) {
       Alert.alert('Agendado', 'Quedó en tu calendario.')
     } catch (e) {
       setError(mensajeDelServidor(e, 'No se pudo agendar.'))
-    } finally {
-      setAgendando(false)
     }
   }
 
@@ -139,7 +137,7 @@ export function AccionesVenta({ venta, rotulo }: Props) {
         <Field label="Recordatorio" value={titulo} onChangeText={setTitulo} />
         <Segmented accessibilityLabel="Cuándo" options={[...CUANDO]} value={cuando} onChange={setCuando} />
         {error ? <Notice tone="peligro">{error}</Notice> : null}
-        <Button label="Agendar" disabled={!titulo.trim()} loading={agendando} onPress={() => void agendar()} />
+        <Button label="Agendar" disabled={!titulo.trim()} loading={crearEvento.isPending} onPress={() => void agendar()} />
       </BottomSheet>
     </View>
   )

@@ -249,6 +249,15 @@ export const typeScale = {
   cuerpoDestacado: texto(16, 600, 24), // nombres e importes de fila
   secundario: texto(14, 400, 20),
   etiqueta: texto(12, 600, 16), // solo chips y barra inferior
+  // Cifras y títulos grandes (hero de reportes, consola del chofer, login): antes eran fontSize sueltos.
+  seccionGrande: texto(19, 600, 26), // botones xl y opciones grandes
+  consolaTexto: texto(21, 600, 28), // acciones y direcciones de la consola
+  tituloGrande: texto(24, 600, 32), // título de hoja o paso
+  destacado: texto(28, 600, 36), // importe grande
+  consolaCifra: texto(30, 600, 36), // cifra de la parada
+  cifraGrande: texto(32, 600, 40), // cifra del hero de inicio y saldo del cliente
+  cifra: texto(36, 600, 44), // cifra hero (reportes)
+  hero: texto(48, 600, 56), // marca en el login ancho
 } as const
 
 /**

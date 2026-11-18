@@ -36,7 +36,7 @@ export function OfertaDeHuella() {
       visible={conSesion && pendiente !== null}
       variant="primary"
       title="¿Querés entrar con huella la próxima vez?"
-      message="Guardamos tu usuario y tu contraseña en este teléfono, protegidos con tu huella o el bloqueo del teléfono. Se borran cuando cerrás sesión desde la app."
+      message="Guardamos tu usuario y tu contraseña en este teléfono, protegidos con tu huella o el bloqueo del teléfono. Se borran si la sesión se vence o te la cierran."
       confirmLabel="Sí, usar huella"
       cancelLabel="Ahora no"
       loading={guardando}

@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { memo, useCallback, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { ChevronRight } from 'lucide-react-native'
 import { radii, space, typeScale, useColors, type ChipEstado } from '@/libs/theme'
 import { StatusChip, TopBar, useMenuLeading } from '@/core/ui/fw'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { useHojasDeRuta } from '@/libs/api-client/logistica'
 import type { HojaRutaListItemDto } from '@/libs/api-client/types'
@@ -48,6 +49,23 @@ function Fila({ hoja, ultima, onPress }: { hoja: HojaRutaListItemDto; ultima: bo
 }
 
 /** Hojas de ruta de toda la empresa (MOD_VIAJES:Read). Por defecto las En curso, lo que cuenta "Rutas activas" de Inicio. */
+/** Fila memoizada con el borde de la tarjeta agrupada (primera/última). */
+const FilaDeHoja = memo(function FilaDeHoja({ hoja, primera, ultima, onAbrir }: { hoja: HojaRutaListItemDto; primera: boolean; ultima: boolean; onAbrir: (id: string) => void }) {
+  const c = useColors()
+  return (
+    <View
+      style={{
+        backgroundColor: c.surface, borderColor: c.border, overflow: 'hidden',
+        borderLeftWidth: 1, borderRightWidth: 1, borderTopWidth: primera ? 1 : 0, borderBottomWidth: ultima ? 1 : 0,
+        borderTopLeftRadius: primera ? radii.tarjeta : 0, borderTopRightRadius: primera ? radii.tarjeta : 0,
+        borderBottomLeftRadius: ultima ? radii.tarjeta : 0, borderBottomRightRadius: ultima ? radii.tarjeta : 0,
+      }}
+    >
+      <Fila hoja={hoja} ultima={ultima} onPress={() => onAbrir(hoja.id)} />
+    </View>
+  )
+})
+
 export function HojasDeRutaScreen() {
   const c = useColors()
   const router = useRouter()
@@ -56,6 +74,12 @@ export function HojasDeRutaScreen() {
   const filtro = FILTROS.find((f) => f.clave === clave) ?? FILTROS[0]
   const q = useHojasDeRuta({ estado: filtro.estado })
   const hojas = q.data ?? []
+  const abrirHoja = useCallback((id: string) => router.push({ pathname: '/(tabs)/logistica/consola', params: { id } } as never), [router])
+  const total = hojas.length
+  const renderHoja = useCallback(
+    ({ item, index }: { item: HojaRutaListItemDto; index: number }) => <FilaDeHoja hoja={item} primera={index === 0} ultima={index === total - 1} onAbrir={abrirHoja} />,
+    [total, abrirHoja],
+  )
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -70,27 +94,12 @@ export function HojasDeRutaScreen() {
       ) : hojas.length === 0 ? (
         <EstadoDePantalla tipo="vacio" titulo={filtro.vacio} />
       ) : (
-        <FlatList
+        <FlatList {...LISTA_LARGA_PROPS}
           data={hojas}
           keyExtractor={(h) => h.id}
           refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={() => { void q.refetch() }} />}
           contentContainerStyle={{ padding: space[4] }}
-          renderItem={({ item, index }) => {
-            const primera = index === 0
-            const ultima = index === hojas.length - 1
-            return (
-              <View
-                style={{
-                  backgroundColor: c.surface, borderColor: c.border, overflow: 'hidden',
-                  borderLeftWidth: 1, borderRightWidth: 1, borderTopWidth: primera ? 1 : 0, borderBottomWidth: ultima ? 1 : 0,
-                  borderTopLeftRadius: primera ? radii.tarjeta : 0, borderTopRightRadius: primera ? radii.tarjeta : 0,
-                  borderBottomLeftRadius: ultima ? radii.tarjeta : 0, borderBottomRightRadius: ultima ? radii.tarjeta : 0,
-                }}
-              >
-                <Fila hoja={item} ultima={ultima} onPress={() => router.push({ pathname: '/(tabs)/logistica/consola', params: { id: item.id } } as never)} />
-              </View>
-            )
-          }}
+          renderItem={renderHoja}
         />
       )}
     </View>

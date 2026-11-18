@@ -212,7 +212,7 @@ export default function ConsolaChoferScreen() {
             <View style={{ width: 96, height: 96, borderRadius: radii.pastilla, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center' }}>
               {conError || !enLinea ? <WifiOff size={40} color={c.textSecondary} /> : <Phone size={40} color={c.textSecondary} />}
             </View>
-            <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text, textAlign: 'center' }}>
+            <Text accessibilityRole="header" style={{ ...typeScale.tituloGrande, color: c.text, textAlign: 'center' }}>
               {conError ? 'No pudimos traer tu viaje' : 'Hoy no tenés viaje'}
             </Text>
             <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>
@@ -392,7 +392,7 @@ export default function ConsolaChoferScreen() {
       {viaje.totalMontoCobrar != null ? (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
           <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>A cobrar hoy</Text>
-          <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.titulo, ...importe, fontSize: 28, lineHeight: 34, color: c.text }}>{formatImporte(viaje.totalMontoCobrar)}</Text>
+          <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.destacado, ...importe, color: c.text }}>{formatImporte(viaje.totalMontoCobrar)}</Text>
         </View>
       ) : null}
       <ColaConsola acciones={deEsteViaje} />

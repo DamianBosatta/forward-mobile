@@ -81,7 +81,7 @@ export function Button({
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
         {loading && <ActivityIndicator size="small" color={p.texto} />}
         {Icono ? <Icono size={xl ? 26 : 20} color={p.texto} strokeWidth={2.5} /> : null}
-        <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.cuerpoDestacado, ...(xl ? { fontSize: 19, lineHeight: 26 } : null), color: p.texto }}>{label}</Text>
+        <Text maxFontSizeMultiplier={maxFontScale} style={{ ...(xl ? typeScale.seccionGrande : typeScale.cuerpoDestacado), color: p.texto }}>{label}</Text>
         {IconoFinal ? <IconoFinal testID="icono-final" size={xl ? 26 : 20} color={p.texto} strokeWidth={2.5} /> : null}
       </View>
     </Pressable>

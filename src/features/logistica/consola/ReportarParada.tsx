@@ -4,6 +4,7 @@ import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { Check, Plus } from 'lucide-react-native'
 import { BottomSheet, Button, Field, Notice, OptionCard, PieFijo, TopBar, formatImporte, useColumnaDeFormulario } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
+import { useCambiosSinGuardar } from '@/core/hooks/useCambiosSinGuardar'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import type { ParadaDto } from '@/libs/api-client/types'
 import { useLineasParada, useMediosCobroChofer } from '@/libs/api-client/logistica'
@@ -74,6 +75,8 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
   /** Vino de "Sí": la pantalla de cobro abre directo en la elección del medio. */
   const [sumandoOtro, setSumandoOtro] = useState(false)
   const [errorForm, setErrorForm] = useState<string | null>(null)
+  // Con lo cargado a medio cerrar, salir avisa; mientras se envía la entrega ya no hay nada que perder.
+  useCambiosSinGuardar({ f, hayDevolucion, motivo, lugarUrl }, { activo: !enviando })
   const entregado = resultado === 'entregado'
   const medios = useMediosCobroChofer(entregado)
   // Quien ve la hoja ve las líneas de sus paradas: el chofer con solo viajes también devuelve.
@@ -191,7 +194,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
           {!entregado ? (
             <>
               <View accessibilityLabel="Motivo" style={{ gap: space[3] }}>
-                <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>¿Por qué no pudiste entregar?</Text>
+                <Text accessibilityRole="header" style={{ ...typeScale.tituloGrande, color: c.text }}>¿Por qué no pudiste entregar?</Text>
                 {MOTIVOS_NO_ENTREGA.map((m) => (
                   <OptionCard key={m} label={m} detail={DETALLE_MOTIVO_NO_ENTREGA[m]} selected={motivo === m} onPress={() => setMotivo(m)} />
                 ))}
@@ -226,7 +229,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
           ) : null}
           {entregado && paso === 'cobro' && preguntandoOtro ? (
             <View accessibilityLabel="¿Sumar otro cobro?" style={{ gap: space[3] }}>
-              <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>¿Sumar otro cobro?</Text>
+              <Text accessibilityRole="header" style={{ ...typeScale.tituloGrande, color: c.text }}>¿Sumar otro cobro?</Text>
               <OptionCard minHeight={132} icon={Plus} label="Sí" detail="Cargá otro pago" onPress={() => sumarOtro(true)} />
               <OptionCard minHeight={132} icon={Check} label="No" detail="Seguí a cerrar la entrega" onPress={() => sumarOtro(false)} />
             </View>

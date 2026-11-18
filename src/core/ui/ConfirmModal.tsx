@@ -142,6 +142,9 @@ export function ConfirmModal({
                 <Pressable
                   onPress={onCancel}
                   disabled={loading}
+                  accessibilityRole="button"
+                  accessibilityLabel={cancelLabel || 'Cancelar'}
+                  accessibilityState={{ disabled: loading }}
                   style={{
                     flex: 1,
                     height: 54,
@@ -160,6 +163,9 @@ export function ConfirmModal({
                 <Pressable
                   onPress={onConfirm}
                   disabled={loading}
+                  accessibilityRole="button"
+                  accessibilityLabel={confirmLabel}
+                  accessibilityState={{ disabled: loading, busy: loading }}
                   style={{
                     flex: 1,
                     height: 54,

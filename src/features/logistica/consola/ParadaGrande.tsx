@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { MapPin } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { StatusChip, formatImporte, pesoSemibold } from '@/core/ui/fw'
 import type { ParadaDto } from '@/libs/api-client/types'
 import { chipCobro, etiquetaNota, importeParada } from './cobroParada'
@@ -39,13 +39,13 @@ export function ParadaGrande({ parada, numero, total, puedeLlamar, notaCargando,
         {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
       </View>
       <View style={{ gap: space[1] }}>
-        <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.titulo, fontSize: 30, lineHeight: 36, color: c.text }}>
+        <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.consolaCifra, color: c.text }}>
           {parada.clienteNombre}
         </Text>
         {/* El cliente se identifica por la dirección: es el punto de entrega. */}
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[2] }}>
           <MapPin size={24} color={c.text} />
-          <Text style={{ ...typeScale.cuerpo, fontSize: 21, lineHeight: 28, color: c.text, flex: 1 }}>{parada.direccion}</Text>
+          <Text style={{ ...typeScale.consolaTexto, fontFamily: FONT.regular, fontWeight: '400', color: c.text, flex: 1 }}>{parada.direccion}</Text>
         </View>
         <HorarioDelDia horario={parada.horarioDelDia} />
         {nota ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Remito ${nota}`}</Text> : null}
@@ -67,7 +67,7 @@ function Dato({ rotulo, valor, crece }: { rotulo: string; valor: string; crece?:
   return (
     <View style={{ flex: crece ? 1 : undefined, backgroundColor: c.surface2, borderRadius: radii.campo, padding: space[3] }}>
       <Text style={{ ...typeScale.etiqueta, color: c.textSecondary, textTransform: 'uppercase' }}>{rotulo}</Text>
-      <Text maxFontSizeMultiplier={1.3} numberOfLines={1} adjustsFontSizeToFit style={{ ...typeScale.titulo, ...importe, fontSize: 30, lineHeight: 36, color: c.text }}>{valor}</Text>
+      <Text maxFontSizeMultiplier={1.3} numberOfLines={1} adjustsFontSizeToFit style={{ ...typeScale.consolaCifra, ...importe, color: c.text }}>{valor}</Text>
     </View>
   )
 }

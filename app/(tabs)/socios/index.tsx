@@ -1,5 +1,5 @@
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { RefreshControl, SectionList, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
@@ -12,7 +12,7 @@ import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantall
 import { esFallaDeRed } from '@/core/api/errores'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useCartera } from '@/features/clientes/hooks/useCartera'
-import { ClienteCard } from '@/features/clientes/components/ClienteCard'
+import { FilaCliente } from '@/features/clientes/components/FilaCliente'
 import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { FiltrosCartera, SIN_FILTROS, type FiltrosDeCartera } from '@/features/clientes/components/FiltrosCartera'
 import { textoCantidad } from '@/features/clientes/lib/cliente'
@@ -59,10 +59,21 @@ function ClientesScreen() {
   const filtrando = filtros.conDeudaVencida || !!filtros.localidad
   const dosPaneles = width >= ANCHO_DOS_PANELES
 
-  const abrir = (id: string) => {
+  const abrir = useCallback((id: string) => {
     if (dosPaneles) setAbierto(id)
     else router.push({ pathname: '/(tabs)/socios/[id]', params: { id } })
-  }
+  }, [dosPaneles, router])
+  const renderCliente = useCallback(({ item, index, section }: { item: (typeof clientes)[number]; index: number; section: { data: readonly unknown[] } }) => (
+    // Las filas de cada letra van en una tarjeta, como la lista de "Elegir cliente" de la venta (frame 1).
+    <FilaCliente
+      variante="cartera"
+      primera={index === 0}
+      ultima={index === section.data.length - 1}
+      cliente={item}
+      seleccionado={dosPaneles && item.id === abierto}
+      onAbrir={abrir}
+    />
+  ), [dosPaneles, abierto, abrir])
 
   // Con permiso del export, la cuenta de un deudor lleva "Estado de cuenta" para compartir por WhatsApp.
   const listaDeudores = (
@@ -94,7 +105,7 @@ function ClientesScreen() {
           {saldoTotal !== undefined ? (
             <View style={{ alignItems: 'flex-end' }}>
               <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Saldo total</Text>
-              <Text numberOfLines={1} adjustsFontSizeToFit style={[typeScale.titulo, importe, { fontSize: 24, lineHeight: 32, fontWeight: '700', color: c.text }]}>{formatImporte(saldoTotal)}</Text>
+              <Text numberOfLines={1} adjustsFontSizeToFit style={[typeScale.tituloGrande, importe, { color: c.text }]}>{formatImporte(saldoTotal)}</Text>
             </View>
           ) : null}
         </View>
@@ -109,17 +120,7 @@ function ClientesScreen() {
             <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{section.title}</Text>
           </View>
         )}
-        renderItem={({ item, index, section }) => (
-          // Las filas de cada letra van en una tarjeta, como la lista de "Elegir cliente" de la venta (frame 1).
-          <ClienteCard
-            variante="cartera"
-            primera={index === 0}
-            ultima={index === section.data.length - 1}
-            cliente={item}
-            seleccionado={dosPaneles && item.id === abierto}
-            onPress={() => abrir(item.id)}
-          />
-        )}
+        renderItem={renderCliente}
 
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}

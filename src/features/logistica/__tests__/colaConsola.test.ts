@@ -1,8 +1,9 @@
 import { ApiError } from '@/core/api/client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import {
-  encolarAccion, leerCola, quitarDeCola, suscribirCola, textoDeCola, type DatosAccion,
+  cambiarEstado, descartarAccion, encolarAccion, leerCola, quitarDeCola, reintentarAccion, suscribirCola, textoDeCola, type DatosAccion,
 } from '../cola/colaConsola'
+import { TOPE_DE_INTENTOS, avisoDeTope } from '@/core/utils/colasSinSenal'
 import { enviarPendientesConsola } from '../cola/enviarConsola'
 
 const mockPost = jest.fn()
@@ -87,11 +88,11 @@ describe('envío de la cola de la consola', () => {
     expect(await enviarPendientesConsola(USUARIO)).toBe('sinSenal')
     expect(mockPost).toHaveBeenCalledTimes(1)
     const [a, b] = leerCola(USUARIO)
-    expect(a.estado).toEqual({ tipo: 'esperando', intentos: 1 })
+    expect(a.estado).toEqual({ tipo: 'esperando', intentos: 1, fallosDelTope: 0 })
     expect(b.estado).toEqual({ tipo: 'esperando', intentos: 0 })
     mockPost.mockRejectedValueOnce(rechazo(503, 'caído'))
     expect(await enviarPendientesConsola(USUARIO)).toBe('sinSenal')
-    expect(leerCola(USUARIO)[0].estado).toEqual({ tipo: 'esperando', intentos: 2 })
+    expect(leerCola(USUARIO)[0].estado).toEqual({ tipo: 'esperando', intentos: 2, fallosDelTope: 1 })
   })
 
   it('el reintento repite la misma clave y el mismo cuerpo', async () => {
@@ -149,10 +150,179 @@ describe('envío de la cola de la consola', () => {
     expect(mockPost).not.toHaveBeenCalled()
   })
 
+  it('RED-01: un tiempo agotado (AbortError) no la manda a revisar: sigue esperando, cuenta el intento y corta la ronda', async () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    encolarAccion(USUARIO, noEntrega(), 2000)
+    mockPost.mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'))
+    expect(await enviarPendientesConsola(USUARIO)).toBe('sinSenal')
+    expect(mockPost).toHaveBeenCalledTimes(1)
+    expect(leerCola(USUARIO).map((a) => a.estado)).toEqual([{ tipo: 'esperando', intentos: 1, fallosDelTope: 1 }, { tipo: 'esperando', intentos: 0 }])
+  })
+
+  it(`RED-05: al fallo número ${TOPE_DE_INTENTOS} deja de reintentarse sola, queda para revisar con el aviso y la ronda sigue con la próxima`, async () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    encolarAccion(USUARIO, noEntrega(), 2000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'esperando', intentos: TOPE_DE_INTENTOS - 1, fallosDelTope: TOPE_DE_INTENTOS - 1 })
+    mockPost.mockRejectedValueOnce(rechazo(503, 'Servicio no disponible')).mockResolvedValueOnce({})
+    const alFallar = jest.fn()
+    expect(await enviarPendientesConsola(USUARIO, { alFallar })).toBe('completa')
+    expect(mockPost.mock.calls.map(([url]) => url)).toEqual([
+      '/api/v1/Logistica/hojas-ruta/h1/paradas/p1/entregar', '/api/v1/Logistica/hojas-ruta/h1/reportar-parada',
+    ])
+    expect(leerCola(USUARIO)).toEqual([expect.objectContaining({
+      clave: 'k-1', estado: { tipo: 'revisar', mensaje: avisoDeTope('Tocá Reintentar para mandarla de nuevo o Descartar para sacarla del teléfono.') },
+    })])
+    expect(alFallar).toHaveBeenCalledWith(expect.objectContaining({ clave: 'k-1' }))
+    mockPost.mockClear()
+    expect(await enviarPendientesConsola(USUARIO)).toBe('vacia')
+    expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['sin red', new TypeError('Network request failed')],
+    ['con la sesión vencida (401)', rechazo(401, 'Sesión expirada')],
+  ])(`RED-05: %s el tope no la detiene: sigue esperando y sale sola cuando vuelve la señal`, async (_caso, fallo) => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'esperando', intentos: TOPE_DE_INTENTOS - 1, fallosDelTope: TOPE_DE_INTENTOS - 1 })
+    mockPost.mockRejectedValueOnce(fallo)
+    const alFallar = jest.fn()
+    expect(await enviarPendientesConsola(USUARIO, { alFallar })).toBe('sinSenal')
+    expect(leerCola(USUARIO).map((a) => a.estado)).toEqual([{ tipo: 'esperando', intentos: TOPE_DE_INTENTOS, fallosDelTope: TOPE_DE_INTENTOS - 1 }])
+    expect(alFallar).not.toHaveBeenCalled()
+    mockPost.mockResolvedValueOnce({})
+    expect(await enviarPendientesConsola(USUARIO)).toBe('completa')
+    expect(leerCola(USUARIO)).toEqual([])
+  })
+
+  it('Reintentar vuelve a esperar una acción para revisar, desde cero intentos, y la ronda la manda con la misma clave y el mismo cuerpo', async () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    mockPost.mockRejectedValueOnce(rechazo(400, 'Falta quién recibió.'))
+    await enviarPendientesConsola(USUARIO)
+    const primera = mockPost.mock.calls[0]
+    reintentarAccion(USUARIO, 'k-1')
+    expect(leerCola(USUARIO)[0].estado).toEqual({ tipo: 'esperando', intentos: 0 })
+    mockPost.mockResolvedValueOnce({})
+    expect(await enviarPendientesConsola(USUARIO)).toBe('completa')
+    expect(mockPost.mock.calls[1]).toEqual(primera)
+    expect(leerCola(USUARIO)).toEqual([])
+  })
+
+  it('una acción que vuelve a esperar mientras corre una ronda sale en esa misma ronda', async () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    encolarAccion(USUARIO, noEntrega(), 2000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'revisar', mensaje: 'x' })
+    mockPost.mockImplementation(async (url: string) => {
+      if (url.endsWith('/reportar-parada')) reintentarAccion(USUARIO, 'k-1')
+      return {}
+    })
+    expect(await enviarPendientesConsola(USUARIO)).toBe('completa')
+    expect(mockPost).toHaveBeenCalledTimes(2)
+    expect(leerCola(USUARIO)).toEqual([])
+  })
+
+  it('Descartar saca del teléfono solo una acción para revisar y no llama al servidor; una que espera no se descarta', () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    encolarAccion(USUARIO, noEntrega(), 2000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'revisar', mensaje: 'x' })
+    descartarAccion(USUARIO, 'k-1')
+    descartarAccion(USUARIO, 'k-2')
+    expect(leerCola(USUARIO).map((a) => a.clave)).toEqual(['k-2'])
+    expect(mockPost).not.toHaveBeenCalled()
+  })
+
   it('no manda nada si entró otro usuario en el teléfono', async () => {
     encolarAccion(USUARIO, entrega())
     expect(await enviarPendientesConsola(USUARIO, { sesion: () => 'otro' })).toBe('sinSenal')
     expect(mockPost).not.toHaveBeenCalled()
     expect(leerCola(USUARIO)[0].estado).toEqual({ tipo: 'esperando', intentos: 0 })
+  })
+})
+
+describe('tope de la consola: solo cuentan los fallos que llegaron al servidor o se colgaron (RED-05)', () => {
+  const ENTREGAR = '/api/v1/Logistica/hojas-ruta/h1/paradas/p1/entregar'
+
+  it.each([
+    ['un 503', rechazo(503, 'Servicio no disponible')],
+    ['un tiempo agotado (AbortError)', new DOMException('Aborted', 'AbortError')],
+  ])(`${TOPE_DE_INTENTOS - 1} rondas sin red y después %s no la detienen: sigue esperando y sale en la próxima ronda`, async (_caso, fallo) => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    const alFallar = jest.fn()
+    for (let i = 0; i < TOPE_DE_INTENTOS - 1; i++) {
+      mockPost.mockRejectedValueOnce(new TypeError('Network request failed'))
+      expect(await enviarPendientesConsola(USUARIO, { alFallar })).toBe('sinSenal')
+    }
+    mockPost.mockRejectedValueOnce(fallo)
+    expect(await enviarPendientesConsola(USUARIO, { alFallar })).toBe('sinSenal')
+    expect(leerCola(USUARIO).map((a) => a.estado)).toEqual([{ tipo: 'esperando', intentos: TOPE_DE_INTENTOS, fallosDelTope: 1 }])
+    expect(alFallar).not.toHaveBeenCalled()
+    mockPost.mockResolvedValueOnce({})
+    expect(await enviarPendientesConsola(USUARIO)).toBe('completa')
+    expect(leerCola(USUARIO)).toEqual([])
+  })
+
+  it('una cola guardada por la versión anterior (muchos intentos, sin la cuenta del tope) no se detiene en su primer 5xx', async () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'esperando', intentos: 50 })
+    mockPost.mockRejectedValueOnce(rechazo(503, 'Servicio no disponible'))
+    expect(await enviarPendientesConsola(USUARIO)).toBe('sinSenal')
+    expect(leerCola(USUARIO).map((a) => a.estado)).toEqual([{ tipo: 'esperando', intentos: 51, fallosDelTope: 1 }])
+  })
+
+  it('Reintentar una acción que la ronda en curso ya detuvo por el tope la vuelve a mandar en esa ronda, una vez y con la misma clave', async () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    encolarAccion(USUARIO, noEntrega(), 2000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'esperando', intentos: TOPE_DE_INTENTOS - 1, fallosDelTope: TOPE_DE_INTENTOS - 1 })
+    mockPost
+      .mockRejectedValueOnce(rechazo(503, 'Servicio no disponible'))
+      .mockImplementationOnce(async () => { reintentarAccion(USUARIO, 'k-1'); return {} })
+      .mockResolvedValue({})
+    expect(await enviarPendientesConsola(USUARIO)).toBe('completa')
+    expect(mockPost.mock.calls.map(([url]) => url)).toEqual([ENTREGAR, '/api/v1/Logistica/hojas-ruta/h1/reportar-parada', ENTREGAR])
+    expect(mockPost.mock.calls[2]).toEqual(mockPost.mock.calls[0])
+    expect(leerCola(USUARIO)).toEqual([])
+  })
+})
+
+describe('tiempo agotado en la consola: es un corte, no un rechazo (RED-01)', () => {
+  const plazoVencido = () => new DOMException('Aborted', 'AbortError')
+  // Las paradas de cobro, armadas sobre la misma hoja que la entrega.
+  const deCobro = (o: Partial<DatosAccion>) => entrega(o)
+
+  it.each<[string, DatosAccion, string]>([
+    ['la entrega', entrega(), '/api/v1/Logistica/hojas-ruta/h1/paradas/p1/entregar'],
+    ['el aviso "No pude entregar"', noEntrega({ cuerpo: { entregado: false, motivoRechazo: 'Cerrado', claveIdempotencia: 'k-2' } } as never), '/api/v1/Logistica/hojas-ruta/h1/reportar-parada'],
+    ['el cobro de una parada de cobro', deCobro({
+      tipo: 'cobroParada', clave: 'k-cobro', paradaId: 'pc1', cuerpo: { claveIdempotencia: 'k-cobro', lineas: [{ medioPagoId: 'm1', monto: 85000 }] }, cobrado: 85000,
+    } as never), '/api/v1/Logistica/hojas-ruta/h1/paradas-cobro/pc1/cobrar'],
+    ['el "No cobré"', deCobro({ tipo: 'noCobroParada', clave: 'no-cobrada:pc2', paradaId: 'pc2', cuerpo: { motivo: 'NoPago' } } as never),
+      '/api/v1/Logistica/hojas-ruta/h1/paradas-cobro/pc2/no-cobrada'],
+  ])('%s: sigue esperando, la ronda da sinSenal, no va a revisar y la próxima ronda la repite con la misma clave y el mismo cuerpo', async (_caso, accion, url) => {
+    encolarAccion(USUARIO, accion, 1000)
+    const alFallar = jest.fn()
+    mockPost.mockRejectedValueOnce(plazoVencido())
+    expect(await enviarPendientesConsola(USUARIO, { alFallar })).toBe('sinSenal')
+    expect(leerCola(USUARIO).map((a) => a.estado)).toEqual([{ tipo: 'esperando', intentos: 1, fallosDelTope: 1 }])
+    expect(alFallar).not.toHaveBeenCalled()
+
+    mockPost.mockResolvedValueOnce({})
+    expect(await enviarPendientesConsola(USUARIO, { alFallar })).toBe('completa')
+    expect(mockPost).toHaveBeenCalledTimes(2)
+    expect(mockPost.mock.calls[0][0]).toBe(url)
+    expect(mockPost.mock.calls[1]).toEqual(mockPost.mock.calls[0])
+    expect(leerCola(USUARIO)).toEqual([])
+    expect(alFallar).not.toHaveBeenCalled()
+  })
+
+  it(`un tiempo agotado cuenta para el tope: el fallo número ${TOPE_DE_INTENTOS} por plazo la deja para revisar con el aviso y la ronda sigue`, async () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    encolarAccion(USUARIO, noEntrega(), 2000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'esperando', intentos: TOPE_DE_INTENTOS - 1, fallosDelTope: TOPE_DE_INTENTOS - 1 })
+    mockPost.mockRejectedValueOnce(plazoVencido()).mockResolvedValueOnce({})
+    const alFallar = jest.fn()
+    expect(await enviarPendientesConsola(USUARIO, { alFallar })).toBe('completa')
+    expect(leerCola(USUARIO)).toEqual([expect.objectContaining({
+      clave: 'k-1', estado: { tipo: 'revisar', mensaje: avisoDeTope('Tocá Reintentar para mandarla de nuevo o Descartar para sacarla del teléfono.') },
+    })])
+    expect(alFallar).toHaveBeenCalledWith(expect.objectContaining({ clave: 'k-1' }))
   })
 })

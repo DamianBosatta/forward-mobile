@@ -24,7 +24,9 @@ jest.mock('@react-native-community/netinfo', () => ({
   addEventListener: jest.fn((o: Oyente) => { mockOyentes.push(o); return () => undefined }),
 }))
 
-import { encolarAccion, leerCola } from '../cola/colaConsola'
+import { ApiError } from '@/core/api/client'
+import { TOPE_DE_INTENTOS } from '@/core/utils/colasSinSenal'
+import { cambiarEstado, encolarAccion, leerCola, reintentarAccion } from '../cola/colaConsola'
 import { useEnvioConsolaSinSenal } from '../cola'
 
 /**
@@ -76,6 +78,37 @@ describe('useEnvioConsolaSinSenal', () => {
     renderHook(() => useEnvioConsolaSinSenal(), { wrapper: envoltura })
     await conexion(true)
     await drenar()
-    expect(leerCola('u1')).toEqual([expect.objectContaining({ clave: 'mobile-k1', estado: { tipo: 'esperando', intentos: 1 } })])
+    expect(leerCola('u1')).toEqual([expect.objectContaining({ clave: 'mobile-k1', estado: { tipo: 'esperando', intentos: 1, fallosDelTope: 0 } })])
+  })
+
+  it('Reintentar mientras la ronda manda otra acción: la detenida por el tope sale de nuevo, una vez y con la misma clave, sin esperar a que cambie la señal', async () => {
+    jest.useFakeTimers({ doNotFake: ['setImmediate', 'nextTick'] })
+    try {
+      const enc = (clave: string, paradaId: string, t: number) => encolarAccion('u1', {
+        clave, hojaDeRutaId: 'h1', paradaId, clienteNombre: 'X', tipo: 'entrega', cuerpo: { claveIdempotencia: clave } as never, cobrado: 0, conDevolucion: false,
+      }, t)
+      enc('a', 'p1', 1000)
+      enc('b', 'p2', 2000)
+      cambiarEstado('u1', 'a', { tipo: 'esperando', intentos: TOPE_DE_INTENTOS - 1, fallosDelTope: TOPE_DE_INTENTOS - 1 })
+      let soltar: (v: unknown) => void = () => undefined
+      post.mockRejectedValueOnce(new ApiError(503, 'Servicio no disponible', []))
+        .mockImplementationOnce(() => new Promise((r) => { soltar = r }))
+        .mockResolvedValue({})
+      renderHook(() => useEnvioConsolaSinSenal(), { wrapper: envoltura })
+      await conexion(true)
+      await drenar()
+      expect(leerCola('u1').map((x) => [x.clave, x.estado.tipo])).toEqual([['a', 'revisar'], ['b', 'esperando']])
+      act(() => { reintentarAccion('u1', 'a') })
+      await act(async () => { soltar({}) })
+      await drenar()
+      await act(async () => { jest.advanceTimersByTime(60 * 60_000) })
+      await drenar()
+      const urls = post.mock.calls.map(([u]) => u)
+      expect(urls).toEqual([entregar, '/api/v1/Logistica/hojas-ruta/h1/paradas/p2/entregar', entregar])
+      expect(post.mock.calls[2]).toEqual(post.mock.calls[0])
+      expect(leerCola('u1')).toEqual([])
+    } finally {
+      jest.useRealTimers()
+    }
   })
 })

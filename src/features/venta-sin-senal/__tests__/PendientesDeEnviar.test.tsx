@@ -31,7 +31,8 @@ jest.mock('@/core/realtime/stockEnVivo', () => ({
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 
-import { cambiarEstado, encolarVenta } from '../lib/cola'
+import { cambiarEstado, encolarVenta, leerCola } from '../lib/cola'
+import { avisoDeTope } from '@/core/utils/colasSinSenal'
 import { PendientesDeEnviar } from '../components/PendientesDeEnviar'
 
 const alta: AltaVenta = {
@@ -53,6 +54,17 @@ it('con ventas del usuario muestra el bloque "Pendientes de enviar" con la venta
   montar()
   expect(screen.getByText('Pendientes de enviar (1)')).toBeTruthy()
   expect(screen.getByText('En cola')).toBeTruthy()
+})
+
+it('RED-05: una venta detenida por el tope muestra el aviso y «Enviar ahora» la vuelve a la cola desde su fase, con la misma clave', async () => {
+  const v = encolarVenta('u1', { alta, cliente: { razonSocial: 'Almacén Luis' } as never, visto: { total: 600, precios: { p1: 100 } } })
+  const aviso = avisoDeTope('Tocá «Enviar ahora» para probar de nuevo.')
+  cambiarEstado('u1', v.clave, { tipo: 'revisar', mensaje: aviso, fase: { paso: 'altaEnviada' } })
+  montar()
+  expect(screen.getByText(aviso)).toBeTruthy()
+  fireEvent.press(screen.getByText('Enviar ahora'))
+  await waitFor(() => expect(leerCola('u1')[0].estado).toMatchObject({ tipo: 'esperando', fase: { paso: 'altaEnviada' } }))
+  expect(leerCola('u1')[0].alta.claveIdempotencia).toBe('mobile-p1')
 })
 
 it('no muestra las ventas de otro usuario', () => {

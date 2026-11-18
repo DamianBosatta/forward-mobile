@@ -1,10 +1,11 @@
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
-import React, { useMemo, useState } from 'react'
-import { FlatList, RefreshControl, ScrollView, Text, View } from 'react-native'
+import React, { memo, useCallback, useMemo, useState } from 'react'
+import { FlashList } from '@shopify/flash-list'
+import { RefreshControl, ScrollView, Text, View } from 'react-native'
 import { FileText } from 'lucide-react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, Button, FilaDeSocio, FiltroChip, Notice, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { ErrorDeConsulta, esqueletoDeFilas } from '@/core/ui/estados'
 import { esFallaDeRed } from '@/core/api/errores'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useVendedores } from '@/libs/api-client/ventas'
@@ -49,6 +50,11 @@ export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => vo
   const cantidad = primera?.pagina?.totalCount
   const sinRed = esFallaDeRed(q.error)
   const conFiltro = !!vendedor || !!texto
+  const pedirArchivo = useCallback((d: Deudor) => setArchivoDe({ id: d.socioId, razonSocial: d.razonSocial }), [])
+  const renderDeudor = useCallback(
+    ({ item }: { item: Deudor }) => <FilaDeDeudor deudor={item} conArchivo={puedeExportar} onAbrir={onAbrir} onEstadoDeCuenta={pedirArchivo} />,
+    [puedeExportar, onAbrir, pedirArchivo],
+  )
 
   return (
     <View style={{ flex: 1 }}>
@@ -64,7 +70,7 @@ export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => vo
           <Text style={importe}>{formatImporte(total)}</Text>
         </Text>
       ) : null}
-      {q.error && !(sinRed && filas.length === 0) ? (
+      {q.error && filas.length > 0 ? (
         <View style={{ padding: space[4] }}>
           {sinRed ? (
             <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice>
@@ -73,17 +79,11 @@ export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => vo
           )}
         </View>
       ) : null}
-      <FlatList {...LISTA_LARGA_PROPS}
+      <FlashList
         testID="lista-deudores"
         data={filas}
         keyExtractor={item => item.socioId}
-        renderItem={({ item }) => (
-          <FilaDeDeudor
-            deudor={item}
-            onAbrir={item.puedeVerCuentaCorriente ? () => onAbrir(item.socioId) : undefined}
-            onEstadoDeCuenta={puedeExportar && item.puedeVerCuentaCorriente ? () => setArchivoDe({ id: item.socioId, razonSocial: item.razonSocial }) : undefined}
-          />
-        )}
+        renderItem={renderDeudor}
         contentContainerStyle={{ paddingTop: space[3], paddingBottom: space[6] + insetInferior }}
         onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) void q.fetchNextPage() }}
         onEndReachedThreshold={0.5}
@@ -95,7 +95,9 @@ export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => vo
             <View style={{ paddingHorizontal: space[4] }}>
               <Esqueletos bloques={FILAS_CARGANDO} />
             </View>
-          ) : q.error ? undefined : (
+          ) : q.error ? (
+            <ErrorDeConsulta error={q.error} titulo="No pudimos cargar los deudores" onReintentar={() => void q.refetch()} />
+          ) : (
             <EstadoDePantalla
               tipo="vacio"
               titulo={conFiltro ? 'No encontramos clientes con saldo pendiente para ese filtro.' : 'No hay clientes con saldo pendiente.'}
@@ -120,7 +122,9 @@ export function DeudoresClientes({ onAbrir }: { onAbrir: (socioId: string) => vo
 }
 
 /** Un deudor por fila: razón social y monto, vendedor y CUIT, chip de antigüedad; el archivo como acción de 44 pt. */
-function FilaDeDeudor({ deudor, onAbrir, onEstadoDeCuenta }: { deudor: Deudor; onAbrir?: () => void; onEstadoDeCuenta?: () => void }) {
+const FilaDeDeudor = memo(function FilaDeDeudor({ deudor, conArchivo, onAbrir: abrir, onEstadoDeCuenta: pedir }: { deudor: Deudor; conArchivo: boolean; onAbrir: (socioId: string) => void; onEstadoDeCuenta: (d: Deudor) => void }) {
+  const onAbrir = deudor.puedeVerCuentaCorriente ? () => abrir(deudor.socioId) : undefined
+  const onEstadoDeCuenta = conArchivo && deudor.puedeVerCuentaCorriente ? () => pedir(deudor) : undefined
   const c = useColors()
   const monto = formatImporte(deudor.saldoDeuda, { moneda: deudor.moneda })
   const vendedor = deudor.vendedorNombre ?? 'Sin vendedor'
@@ -139,7 +143,7 @@ function FilaDeDeudor({ deudor, onAbrir, onEstadoDeCuenta }: { deudor: Deudor; o
       chevron={!!onAbrir}
     />
   )
-}
+})
 
 interface ElegirVendedorProps {
   visible: boolean
@@ -165,7 +169,7 @@ function ElegirVendedor({ visible, vendedores, cargando, error, elegido, onElegi
           ))}
         </View>
       </ScrollView>
-      {cargando ? <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Cargando…</Text> : null}
+      {cargando ? <Esqueletos bloques={esqueletoDeFilas(2, 44)} /> : null}
       {error ? <Notice tone="peligro">No se pudo cargar la lista de vendedores.</Notice> : null}
       <Button label="Listo" variant="secundario" onPress={onClose} />
     </BottomSheet>

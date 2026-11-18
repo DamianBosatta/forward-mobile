@@ -1,11 +1,12 @@
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
-import React from 'react'
-import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native'
+import React, { memo, useCallback, useMemo } from 'react'
+import { FlashList } from '@shopify/flash-list'
+import { Pressable, RefreshControl, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { HeroSaldo } from '@/features/clientes/components/SaldoDelCliente'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { ErrorDeConsulta } from '@/core/ui/estados'
 import { esFallaDeRed } from '@/core/api/errores'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useDeudasProveedores, type DeudaProveedor } from '../api/queries'
@@ -27,7 +28,12 @@ export function DeudasAProveedores({ onPagar }: { onPagar?: (socioId: string) =>
   const c = useColors()
   const q = useDeudasProveedores(true)
   const pagar = usePuedeCobrar() ? onPagar : undefined
-  const filas = (q.data?.pages ?? []).flatMap(p => p?.pagina?.items ?? [])
+  const paginas = q.data?.pages
+  const filas = useMemo(() => (paginas ?? []).flatMap(p => p?.pagina?.items ?? []), [paginas])
+  const ultimoIndice = filas.length - 1
+  const renderDeuda = useCallback(({ item, index }: { item: DeudaProveedor; index: number }) => (
+    <FilaDeDeuda deuda={item} primera={index === 0} ultima={index === ultimoIndice} onPagar={pagar} />
+  ), [ultimoIndice, pagar])
   const total = q.data?.pages?.[0]?.deudaTotal
   const sinRed = esFallaDeRed(q.error)
 
@@ -38,7 +44,7 @@ export function DeudasAProveedores({ onPagar }: { onPagar?: (socioId: string) =>
           <HeroSaldo titulo="Debés" saldo={total} vencido={null} tope={null} disponible={null} accessibilityLabel={`Debés: ${formatImporte(total)}`} />
         </View>
       ) : null}
-      {q.error && !(sinRed && filas.length === 0) ? (
+      {q.error && filas.length > 0 ? (
         <View style={{ padding: space[4] }}>
           {sinRed ? (
             <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice>
@@ -47,12 +53,10 @@ export function DeudasAProveedores({ onPagar }: { onPagar?: (socioId: string) =>
           )}
         </View>
       ) : null}
-      <FlatList {...LISTA_LARGA_PROPS}
+      <FlashList
         data={filas}
         keyExtractor={item => item.socioId}
-        renderItem={({ item, index }) => (
-          <FilaDeDeuda deuda={item} primera={index === 0} ultima={index === filas.length - 1} onPagar={pagar ? () => pagar(item.socioId) : undefined} />
-        )}
+        renderItem={renderDeuda}
         contentContainerStyle={{ paddingTop: space[3], paddingBottom: space[6] + insetInferior }}
         onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) void q.fetchNextPage() }}
         onEndReachedThreshold={0.5}
@@ -63,9 +67,7 @@ export function DeudasAProveedores({ onPagar }: { onPagar?: (socioId: string) =>
               <Esqueletos bloques={DEBO_CARGANDO} />
             </View>
           ) : q.error ? (
-            sinRed ? (
-              <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar las deudas" accion={{ label: 'Reintentar', onPress: () => void q.refetch() }} />
-            ) : undefined
+            <ErrorDeConsulta error={q.error} titulo="No pudimos cargar las deudas" texto={mensajeDelServidor(q.error, 'No se pudieron cargar las deudas con proveedores.')} onReintentar={() => void q.refetch()} />
           ) : (
             <EstadoDePantalla tipo="vacio" titulo="No le debés a ningún proveedor." />
           )
@@ -79,7 +81,7 @@ export function DeudasAProveedores({ onPagar }: { onPagar?: (socioId: string) =>
  * Un proveedor por fila (frame 6): razón social, chip de antigüedad y el monto a la derecha. Sin flecha (no abre una
  * cuenta); con `onPagar`, un botón "Pagar" de 44 pt debajo, fuera del bloque que se lee de corrido.
  */
-function FilaDeDeuda({ deuda, primera, ultima, onPagar }: { deuda: DeudaProveedor; primera: boolean; ultima: boolean; onPagar?: () => void }) {
+const FilaDeDeuda = memo(function FilaDeDeuda({ deuda, primera, ultima, onPagar }: { deuda: DeudaProveedor; primera: boolean; ultima: boolean; onPagar?: (socioId: string) => void }) {
   const c = useColors()
   const monto = formatImporte(deuda.saldoDeuda, { moneda: deuda.moneda })
   const antiguedad = chipAntiguedadDeuda(deuda.diasDeudaMasVieja)?.texto
@@ -109,7 +111,7 @@ function FilaDeDeuda({ deuda, primera, ultima, onPagar }: { deuda: DeudaProveedo
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Pagar a ${deuda.razonSocial}`}
-          onPress={onPagar}
+          onPress={() => onPagar(deuda.socioId)}
           android_ripple={{ color: c.border }}
           style={{ alignSelf: 'flex-start', minHeight: 44, minWidth: 88, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.borderStrong }}
         >
@@ -118,4 +120,4 @@ function FilaDeDeuda({ deuda, primera, ultima, onPagar }: { deuda: DeudaProveedo
       ) : null}
     </View>
   )
-}
+})

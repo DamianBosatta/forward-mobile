@@ -1,9 +1,6 @@
-import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueries } from '@tanstack/react-query'
 import { api } from './client'
-import { conClave, crearIntento } from '@/core/utils/idempotencia'
-import type { StockItem, PagedResult, AjusteStockRequest } from './types'
-import { productosKeys } from './productos'
-import { invalidarStock } from './invalidaciones'
+import type { StockItem, PagedResult } from './types'
 
 /** Consultas de stock de la pantalla de Inventario (resumen, lista, movimientos, valor, rentabilidad). */
 export const stockConsultaKeys = {
@@ -81,103 +78,5 @@ export function useDisponibilidadPorLotes(depositoId: string, lotes: Disponibili
       enabled: items.length > 0,
       staleTime: 60_000,
     })),
-  })
-}
-
-/**
- * Hook Senior con Updates Optimistas para Ajuste de Stock.
- * Actualiza tanto la lista de stock como la lista de productos (catálogo) localmente.
- */
-/** Una clave por intento: el reintento o el doble toque del mismo ajuste manda la misma (ver `crearIntento`). */
-const intentoAjusteStock = crearIntento()
-
-export function useAjustarStock() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (data: AjusteStockRequest) =>
-      conClave(intentoAjusteStock, data, (cuerpo) => api.post<boolean>('/api/v1/Stocks/adjust', cuerpo)),
-
-    onMutate: async (variables) => {
-      // Cancelar refetches salientes para no sobrescribir nuestro update optimista
-      await queryClient.cancelQueries({ queryKey: productosKeys.all })
-      await queryClient.cancelQueries({ queryKey: stockKeys.all })
-
-      // Snapshot del estado previo
-      const prevProductos = queryClient.getQueryData(productosKeys.all)
-
-      // Update optimista en las queries infinitas de productos
-      queryClient.setQueriesData({ queryKey: productosKeys.all }, (old: any) => {
-        if (!old) return old
-
-        if (old.pages) {
-          return {
-            ...old,
-            pages: old.pages.map((page: any) => ({
-              ...page,
-              data: {
-                ...page.data,
-                content: page.data?.content?.map((p: any) => {
-                  if (p.id === variables.productoId) {
-                    return { ...p, stockTotal: (p.stockTotal || 0) + variables.cantidad }
-                  }
-                  return p
-                }),
-                items: page.data?.items?.map((p: any) => {
-                  if (p.id === variables.productoId) {
-                    return { ...p, stockTotal: (p.stockTotal || 0) + variables.cantidad }
-                  }
-                  return p
-                })
-              },
-              // Fallback para estructuras aplanadas
-              content: page.content?.map((p: any) => {
-                if (p.id === variables.productoId) {
-                  return { ...p, stockTotal: (p.stockTotal || 0) + variables.cantidad }
-                }
-                return p
-              }),
-              items: page.items?.map((p: any) => {
-                if (p.id === variables.productoId) {
-                  return { ...p, stockTotal: (p.stockTotal || 0) + variables.cantidad }
-                }
-                return p
-              })
-            }))
-          }
-        }
-
-        if (old.data?.items) {
-           return {
-             ...old,
-             data: {
-               ...old.data,
-               items: old.data.items.map((p: any) => p.id === variables.productoId ? { ...p, stockTotal: (p.stockTotal || 0) + variables.cantidad } : p)
-             }
-           }
-        }
-
-        if (Array.isArray(old)) {
-           return old.map((p: any) => p.id === variables.productoId ? { ...p, stockTotal: (p.stockTotal || 0) + variables.cantidad } : p)
-        }
-
-        if (old.id === variables.productoId) {
-           return { ...old, stockTotal: (old.stockTotal || 0) + variables.cantidad }
-        }
-
-        return old
-      })
-
-      return { prevProductos }
-    },
-
-    onError: (err, variables, context) => {
-      // Rollback al estado anterior si falla
-      if (context?.prevProductos) {
-        queryClient.setQueryData(productosKeys.all, context.prevProductos)
-      }
-    },
-
-    onSettled: () => invalidarStock(queryClient),
   })
 }

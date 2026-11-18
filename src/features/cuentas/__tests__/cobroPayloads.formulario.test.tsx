@@ -132,7 +132,7 @@ describe('idempotencia del formulario de siempre', () => {
     montar()
     await llenar({ lineas: [{ medio: 'Efectivo', monto: '1.000' }] })
     await registrar()
-    expect(await screen.findByText(/No hay una caja abierta en este depósito/, {}, ESPERA)).toBeTruthy()
+    expect(await screen.findByText(/La caja se abre desde la web\./, {}, ESPERA)).toBeTruthy()
     expect(post).not.toHaveBeenCalled()
   })
 })

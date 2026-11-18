@@ -13,6 +13,8 @@ const TOCABLE = 44
  * para toda la app: sin señal y fuera de las pantallas con aviso propio. Fuera de él, nunca.
  */
 export const AvisoSinConexionContext = createContext(false)
+/** Cuántas acciones pausadas por falta de señal esperan para enviarse (RED-02). Lo decide OfflineBanner. */
+export const AccionesEnEsperaContext = createContext(0)
 
 export interface TopBarAction {
   icon: LucideIcon
@@ -56,6 +58,7 @@ interface TopBarProps {
 export function TopBar({ title, subtitle, leading, actions = [], syncLabel, textoDerecha, tabs, lineasMultiples = false, logo = false, campo }: TopBarProps) {
   const colors = useColors()
   const avisoSinConexion = useContext(AvisoSinConexionContext)
+  const accionesEnEspera = useContext(AccionesEnEsperaContext)
   const insets = useSafeAreaInsets()
   const Lead = leading?.kind === 'atras' ? ArrowLeft : Menu
   const maxLineas = lineasMultiples ? 2 : 1
@@ -167,14 +170,24 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
     </View>
   )
 
-  if (!avisoSinConexion) return barra
+  if (!avisoSinConexion && accionesEnEspera === 0) return barra
   return (
     <>
       {barra}
       {/* Debajo de la barra, sobre el fondo: el margen del sistema ya lo puso la barra. */}
-      <View testID="aviso-sin-conexion" style={{ paddingTop: space[2], paddingHorizontal: space[4], backgroundColor: colors.bg }}>
-        <Notice tone="advertencia">Sin conexión - Modo lectura (Cache)</Notice>
+      <View testID="aviso-sin-conexion" style={{ paddingTop: space[2], paddingHorizontal: space[4], backgroundColor: colors.bg, gap: space[2] }}>
+        {avisoSinConexion ? <Notice tone="advertencia">Sin conexión - Modo lectura (Cache)</Notice> : null}
+        {accionesEnEspera > 0 ? (
+          <Notice tone="info" testID="aviso-acciones-en-espera">{textoAccionesEnEspera(accionesEnEspera)}</Notice>
+        ) : null}
       </View>
     </>
   )
+}
+
+/** Frase del aviso de acciones pausadas sin señal: cuántas son y que se mandan solas al volver. */
+export function textoAccionesEnEspera(n: number): string {
+  return n === 1
+    ? '1 acción espera señal. Se envía sola cuando vuelva la conexión.'
+    : `${n} acciones esperan señal. Se envían solas cuando vuelva la conexión.`
 }

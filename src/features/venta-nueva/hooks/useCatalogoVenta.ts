@@ -21,7 +21,7 @@ interface Catalogo {
 }
 
 // Antes se persistía como arreglo con la misma clave: se acepta, para tener catálogo sin red tras
-// actualizar. `useToggleProductoStatus` y `useAjustarStock` (reescriben cachés) no se usan en mobile.
+// actualizar. `useToggleProductoStatus` (reescribe cachés) no se usa en mobile.
 const aCatalogo = (d: Catalogo | CatalogoStockItem[]): Catalogo => (Array.isArray(d) ? { items: d, truncado: false } : d)
 
 /** La clave del catálogo completo de la venta: la usa también el stock en vivo para refrescarlo. */

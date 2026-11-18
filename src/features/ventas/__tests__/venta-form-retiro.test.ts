@@ -9,7 +9,7 @@
  *
  * NOTE ON COMPONENT TESTS:
  *   nueva.tsx is a 2000-line RN screen that depends on:
- *   - expo-router (navigation), @tanstack/react-query, expo-blur, expo-image,
+ *   - expo-router (navigation), @tanstack/react-query, expo-image,
  *     zustand stores, and numerous native modules not shimmable in jest-expo.
  *   Rendering it in jest causes import resolution failures for native bridged
  *   modules (DateTimePicker, etc.). This is an established limitation in

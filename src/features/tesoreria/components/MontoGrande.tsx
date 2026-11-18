@@ -2,9 +2,6 @@ import React, { useState } from 'react'
 import { Text, TextInput, View } from 'react-native'
 import { importe, maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
 
-/** Cifra del monto grande (v2): fuera de la escala de 6 pasos a propósito, como la cifra de los heroes. */
-const CIFRA = { fontSize: 28, lineHeight: 36 } as const
-
 interface Props {
   value: string
   onChangeText: (texto: string) => void
@@ -37,7 +34,7 @@ export function MontoGrande({ value, onChangeText, label = 'Monto' }: Props) {
           backgroundColor: c.surface,
         }}
       >
-        <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.titulo, CIFRA, { color: c.textSecondary }]}>$</Text>
+        <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.destacado, { color: c.textSecondary }]}>$</Text>
         <TextInput
           accessibilityLabel={label}
           maxFontSizeMultiplier={maxFontScale}
@@ -48,7 +45,7 @@ export function MontoGrande({ value, onChangeText, label = 'Monto' }: Props) {
           keyboardType="decimal-pad"
           placeholder="0,00"
           placeholderTextColor={c.textSecondary}
-          style={[typeScale.titulo, CIFRA, importe, { flex: 1, color: c.text, textAlign: 'right', paddingVertical: 0 }]}
+          style={[typeScale.destacado, importe, { flex: 1, color: c.text, textAlign: 'right', paddingVertical: 0 }]}
         />
       </View>
     </View>

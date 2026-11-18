@@ -1,8 +1,6 @@
 import React, { useMemo } from 'react'
 import { Pressable, Switch, Text, View } from 'react-native'
-import { useQuery } from '@tanstack/react-query'
-import { api } from '@/core/api/client'
-import { ventasKeys } from '@/libs/api-client/ventas'
+import { useVerificarStockFiscal } from '@/libs/api-client/ventas'
 import type { components } from '@/libs/api-client/generated/schema'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { Notice } from '@/core/ui/fw'
@@ -35,12 +33,7 @@ export function ConFactura({ conFactura, onChange, lineas }: { conFactura: boole
   const c = useColors()
   const valor = conFactura ?? false
   const items = useMemo(() => itemsParaVerificar(lineas), [lineas])
-  const verificacion = useQuery({
-    queryKey: [...ventasKeys.all, 'stock-fiscal', items] as const,
-    queryFn: () => api.post<FaltanteStockFiscal[]>('/api/v1/Ventas/stock-fiscal/verificar', { items }),
-    enabled: conFactura === true && items.length > 0,
-    staleTime: 15_000,
-  })
+  const verificacion = useVerificarStockFiscal(items, conFactura === true && items.length > 0)
   const faltantes = conFactura === true && Array.isArray(verificacion.data) ? verificacion.data : []
   return (
     <View style={{ gap: space[2] }}>

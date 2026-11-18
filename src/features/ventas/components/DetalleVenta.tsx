@@ -1,14 +1,12 @@
 import React from 'react'
 import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { useQuery } from '@tanstack/react-query'
 import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, pesoRegular, useInsetInferior } from '@/core/ui/fw'
-import { api } from '@/core/api/client'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { esEstadoVenta } from '@/core/constants/estados'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { comisionesKeys, useVenta, ventasKeys } from '@/libs/api-client/ventas'
+import { useComisionSimulacionVenta, useVenta, useVentaPagos } from '@/libs/api-client/ventas'
 import { useSocio } from '@/libs/api-client/socios'
 import type { components } from '@/libs/api-client/generated/schema'
 import { direccionDeEntrega, nombreDelCliente, textoCondicionPago } from '@/features/clientes/lib/cliente'
@@ -65,14 +63,10 @@ export function DetalleVenta({ id, onVolver }: Props) {
   const q = useVenta(id)
   const h = q.data?.venta
   const socio = useSocio(h?.clienteId ?? '')
-  const pagos = useQuery({ queryKey: [...ventasKeys.detail(id), 'pagos'], queryFn: () => api.get<Pagos>(`/api/v1/Ventas/${id}/pagos`), enabled: !!h })
+  const pagos = useVentaPagos(id, !!h)
   const propia = !!h && h.vendedorId === userId
   // Sin `monto`: el servidor simula el cobro de lo que falta (saldo pendiente).
-  const comision = useQuery({
-    queryKey: [...comisionesKeys.simulacion, 'venta', id, h?.totalAmount, pagos.data?.montoPagado],
-    queryFn: () => api.get<Simulacion>(`/api/v1/comisiones/simulacion/ventas/${id}`),
-    enabled: propia,
-  })
+  const comision = useComisionSimulacionVenta(id, propia, [h?.totalAmount, pagos.data?.montoPagado])
   const volver = { kind: 'atras' as const, onPress: onVolver ?? (() => router.back()) }
   const sec = { ...typeScale.secundario, color: c.textSecondary }
 

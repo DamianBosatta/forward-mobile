@@ -1,6 +1,8 @@
-import React, { useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
-import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
+import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import { FlashList } from '@shopify/flash-list'
+import { separadorDeFilas } from '@/core/ui/listaFlash'
 import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Field, FormContainer, Notice, StatusChip } from '@/core/ui/fw'
 import { useInfiniteCatalogoStock } from '@/libs/api-client'
@@ -32,6 +34,8 @@ interface Props {
  * depósito (comunes y fragancias, sin la línea, que el servidor no deja comprar): `GET /Productos` no filtra por depósito
  * y a un usuario limitado le mostraría productos ajenos. Sin conexión se sigue cargando: el borrador se guarda al volver.
  */
+const SEPARADOR = separadorDeFilas(space[3])
+
 export function CatalogoCompra({ proveedor, lineas, onAgregar, onCambiar, onQuitar, onAbrir }: Props) {
   const c = useColors()
   const sombra = useSombraTarjeta()
@@ -44,7 +48,7 @@ export function CatalogoCompra({ proveedor, lineas, onAgregar, onCambiar, onQuit
   const productos = useInfiniteCatalogoStock({ pageSize: 30, search: enviada, soloComprables: true, familiasCompletas: false })
   const todos = (productos.data?.pages.flatMap((p) => p.items ?? []) ?? []) as ProductoComprable[]
   const total = productos.data?.pages[0]?.totalCount ?? todos.length
-  const porId = new Map(lineas.map((l) => [l.productoId, l]))
+  const porId = useMemo(() => new Map(lineas.map((l) => [l.productoId, l])), [lineas])
   const visibles = filtro === 'sinCosto' ? todos.filter((p) => { const l = porId.get(p.id); return !!l && sinCosto(l) }) : todos
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
   const ultima = ultimas.data?.items?.[0]
@@ -57,18 +61,25 @@ export function CatalogoCompra({ proveedor, lineas, onAgregar, onCambiar, onQuit
     </View>
   )
 
+  const renderProducto = useCallback(({ item }: { item: ProductoComprable }) => (
+    <FormContainer>
+      <ProductoCompraCard producto={item} linea={porId.get(item.id)} onAgregar={onAgregar} onCambiar={onCambiar} onQuitar={onQuitar} onAbrir={onAbrir} />
+    </FormContainer>
+  ), [porId, onAgregar, onCambiar, onQuitar, onAbrir])
+
   return (
-    <FlatList
+    <FlashList
       style={{ flex: 1 }}
       data={visibles}
       keyExtractor={(p) => p.id}
       extraData={lineas}
-      contentContainerStyle={{ padding: space[4], paddingBottom: space[4], gap: space[3] }}
+      contentContainerStyle={{ padding: space[4] }}
+      ItemSeparatorComponent={SEPARADOR}
       keyboardShouldPersistTaps="handled"
       onEndReached={() => { if (productos.hasNextPage && !productos.isFetchingNextPage) void productos.fetchNextPage() }}
       onEndReachedThreshold={0.5}
       ListHeaderComponent={
-        <FormContainer style={{ gap: space[3] }}>
+        <FormContainer style={{ gap: space[3], paddingBottom: space[3] }}>
           <View style={{ flexDirection: 'row', gap: space[3] }}>
             {condicion('Plazo de pago', proveedor.condicion ?? '—')}
             {puedeVerCompras ? condicion('Última compra', textoUltima) : null}
@@ -89,19 +100,15 @@ export function CatalogoCompra({ proveedor, lineas, onAgregar, onCambiar, onQuit
           {isConnected === false ? <View style={{ flexDirection: 'row' }}><StatusChip estado="pendiente" label="Sin conexión" /></View> : null}
         </FormContainer>
       }
-      renderItem={({ item }) => (
-        <FormContainer>
-          <ProductoCompraCard producto={item} linea={porId.get(item.id)} onAgregar={onAgregar} onCambiar={onCambiar} onQuitar={onQuitar} onAbrir={onAbrir} />
-        </FormContainer>
-      )}
+      renderItem={renderProducto}
       ListEmptyComponent={
         productos.isLoading ? <ActivityIndicator color={c.brand} />
           : productos.isError ? <Notice tone="peligro">No se pudieron cargar los productos.</Notice>
           : <Text style={{ ...secundario, textAlign: 'center' }}>{filtro === 'sinCosto' ? 'No hay productos sin costo cargado.' : 'No hay productos con esa búsqueda.'}</Text>
       }
       ListFooterComponent={
-        productos.isFetchingNextPage ? <ActivityIndicator color={c.brand} />
-          : visibles.length > 0 && filtro === 'todos' ? <Text style={{ ...secundario, textAlign: 'center' }}>{`Mostrando ${visibles.length} de ${total}`}</Text>
+        productos.isFetchingNextPage ? <View style={{ paddingTop: space[3] }}><ActivityIndicator color={c.brand} /></View>
+          : visibles.length > 0 && filtro === 'todos' ? <Text style={{ ...secundario, textAlign: 'center', paddingTop: space[3] }}>{`Mostrando ${visibles.length} de ${total}`}</Text>
           : undefined
       }
     />

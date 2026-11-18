@@ -1,6 +1,7 @@
 import React from 'react'
 import { Modal, StyleSheet, View } from 'react-native'
 import { render, screen } from '@testing-library/react-native'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { OfflineBanner } from '@/core/ui/OfflineBanner'
 import { TopBar } from '@/core/ui/fw'
 
@@ -14,8 +15,10 @@ const { SafeAreaInsetsContext } = jest.requireActual('react-native-safe-area-con
 const INSETS = { top: 30, bottom: 10, left: 0, right: 0 }
 
 /** Same placement as app/_layout.tsx: the Stack (screens, with their RN <Modal>s) is the child of OfflineBanner. */
+const cliente = new QueryClient()
 function Arbol() {
   return (
+    <QueryClientProvider client={cliente}>
     <SafeAreaInsetsContext.Provider value={INSETS}>
       <View style={{ flex: 1 }}>
         <OfflineBanner>
@@ -26,6 +29,7 @@ function Arbol() {
         </OfflineBanner>
       </View>
     </SafeAreaInsetsContext.Provider>
+    </QueryClientProvider>
   )
 }
 const margenSuperior = (titulo: string) => {

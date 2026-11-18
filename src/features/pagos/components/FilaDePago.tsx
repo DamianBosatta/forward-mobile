@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { memo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { ArrowDownLeft, ArrowRight, ArrowUpRight, ChevronRight } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
@@ -12,14 +12,14 @@ interface Props {
   pago: RenglonDePago
   primera: boolean
   ultima: boolean
-  onPress: () => void
+  onAbrir: (id: string) => void
 }
 
 /**
  * Un pago o cobro de la lista (web `pagos-client.tsx`): fecha, flecha de entrada o salida con su nombre, la entidad,
  * quién lo registró, el monto y los avisos ANULADO y "Sin movimiento de caja".
  */
-export function FilaDePago({ pago: p, primera, ultima, onPress }: Props) {
+export const FilaDePago = memo(function FilaDePago({ pago: p, primera, ultima, onAbrir }: Props) {
   const c = useColors()
   const sentido = sentidoDelPago(p)
   const Flecha = sentido === 'neutro' ? ArrowRight : sentido === 'entra' ? ArrowDownLeft : ArrowUpRight
@@ -32,7 +32,7 @@ export function FilaDePago({ pago: p, primera, ultima, onPress }: Props) {
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={[NOMBRE_DEL_SENTIDO[sentido], entidad, monto, p.tipoNombre, fecha, p.estaAnulado && 'anulado'].filter(Boolean).join(', ')}
-      onPress={onPress}
+      onPress={() => onAbrir(p.id)}
       android_ripple={{ color: c.surface2 }}
       style={{
         minHeight: 64,
@@ -67,4 +67,4 @@ export function FilaDePago({ pago: p, primera, ultima, onPress }: Props) {
       <ChevronRight size={20} color={c.textSecondary} />
     </Pressable>
   )
-}
+})

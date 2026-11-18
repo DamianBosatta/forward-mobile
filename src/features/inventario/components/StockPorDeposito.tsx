@@ -1,10 +1,12 @@
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
-import React from 'react'
-import { ActivityIndicator, FlatList, ScrollView, View } from 'react-native'
+import { FlashList } from '@shopify/flash-list'
+import { separadorDeFilas } from '@/core/ui/listaFlash'
+import React, { memo, useCallback, useMemo } from 'react'
+import { ActivityIndicator, ScrollView, View } from 'react-native'
 import { radii, space, useColors } from '@/libs/theme'
 import { Notice, StatusChip, useInsetInferior } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { ErrorDeConsulta } from '@/core/ui/estados'
 import { esFallaDeRed } from '@/core/api/errores'
 import type { StockItem } from '@/libs/api-client/types'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -34,6 +36,7 @@ function enBloques<T extends { id: string }>(items: T[], columnas: number, despl
 }
 
 /** Lugar vacío que completa el último renglón para que las tarjetas no se estiren. */
+const SEPARADOR = separadorDeFilas(space[2])
 const Hueco = () => <View style={{ flex: 1 }} />
 
 /** Cargando (web InventarioGrid): esqueletos de tarjeta. */
@@ -48,6 +51,35 @@ function Esqueletos({ columnas }: { columnas: number }) {
   )
 }
 
+type ProductoSinCantidades = ReturnType<typeof useProductosDeStockConsulta>['productos'][number]
+
+/** Renglón memoizado de la grilla sin cantidades: no se vuelve a pintar mientras su bloque y el stock no cambien. */
+const BloqueSinCantidades = memo(function BloqueSinCantidades({ b, disponible, columnas }: {
+  b: Bloque<ProductoSinCantidades>
+  disponible: ReturnType<typeof useProductosDeStockConsulta>['disponible']
+  columnas: number
+}) {
+  if (b.tipo !== 'fila') return null
+  return (
+    <View style={{ flexDirection: 'row', gap: space[2] }}>
+      {b.items.map((p) => {
+        const chip = chipDeStock(disponible.get(p.id))
+        return (
+          <TarjetaSinCantidades
+            key={p.id}
+            nombre={p.nombre}
+            marca={p.marca}
+            codigo={p.codigoPropio ?? ''}
+            imageUrl={p.imageUrl}
+            chip={chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
+          />
+        )
+      })}
+      {Array.from({ length: columnas - b.items.length }).map((_, i) => <Hueco key={i} />)}
+    </View>
+  )
+})
+
 /** Sin CAP_VER_CANTIDADES_STOCK (lámina 7): el catálogo de hoy, en tarjetas con solo "Hay stock / Sin stock" del servidor. */
 function StockSinCantidades({ busqueda, columnas }: { busqueda: string; columnas: number }) {
   const insetInferior = useInsetInferior()
@@ -56,49 +88,81 @@ function StockSinCantidades({ busqueda, columnas }: { busqueda: string; columnas
   const { setBusqueda } = cat
   // La búsqueda de esta vista vive en la pantalla; el hook la espera ~300 ms como en el catálogo.
   React.useEffect(() => { setBusqueda(busqueda) }, [busqueda, setBusqueda])
-  if (cat.isLoading) return <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
+  const bloques = useMemo(() => enBloques(cat.productos, columnas), [cat.productos, columnas])
+  type ProductoDeStock = (typeof cat.productos)[number]
+  const renderBloque = useCallback(({ item: b }: { item: Bloque<ProductoDeStock> }) => (
+    <BloqueSinCantidades b={b} disponible={cat.disponible} columnas={columnas} />
+  ), [cat.disponible, columnas])
+  if (cat.isLoading) return <Esqueletos columnas={columnas} />
   const sinRed = cat.isError && esFallaDeRed(cat.error)
-  if (sinRed && cat.productos.length === 0) {
-    return <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar el stock" accion={{ label: 'Reintentar', onPress: () => { void cat.refetch() } }} />
+  if (cat.isError && !(sinRed && cat.productos.length > 0)) {
+    return <ErrorDeConsulta error={cat.error} titulo="No pudimos cargar el stock" guardadoA={cat.dataUpdatedAt || undefined} onReintentar={() => { void cat.refetch() }} />
   }
-  if (cat.isError && !sinRed) return <View style={{ padding: space[4] }}><Notice tone="peligro">No se pudo cargar el stock. Revisá la conexión y volvé a intentar.</Notice></View>
   return (
-    <FlatList {...LISTA_LARGA_PROPS}
-      data={enBloques(cat.productos, columnas)}
+    <FlashList
+      data={bloques}
       keyExtractor={(b) => b.key}
       onEndReached={cat.cargarMas}
       onEndReachedThreshold={0.5}
-      contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] + insetInferior }}
+      contentContainerStyle={{ padding: space[4], paddingBottom: space[12] + insetInferior }}
+      ItemSeparatorComponent={SEPARADOR}
       ListHeaderComponent={
-        <View style={{ gap: space[2] }}>
+        <View style={{ gap: space[2], paddingBottom: space[2] }}>
           {sinRed ? <Notice tone="advertencia">{textoSinConexion(cat.dataUpdatedAt)}</Notice> : null}
           <Notice tone="info">Tu perfil no ve cantidades: se muestra solo si hay o no hay stock.</Notice>
         </View>
       }
       ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan con la búsqueda." />}
-      renderItem={({ item: b }) =>
-        b.tipo === 'fila' ? (
-          <View style={{ flexDirection: 'row', gap: space[2] }}>
-            {b.items.map((p) => {
-              const chip = chipDeStock(cat.disponible.get(p.id))
-              return (
-                <TarjetaSinCantidades
-                  key={p.id}
-                  nombre={p.nombre}
-                  marca={p.marca}
-                  codigo={p.codigoPropio ?? ''}
-                  imageUrl={p.imageUrl}
-                  chip={chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
-                />
-              )
-            })}
-            {Array.from({ length: columnas - b.items.length }).map((_, i) => <Hueco key={i} />)}
-          </View>
-        ) : null
-      }
+      renderItem={renderBloque}
     />
   )
 }
+
+/** Una tarjeta, fila o línea del stock con cantidades. */
+function PiezaDeStock({ f, lista, tablet, conDeposito, desplegadas, onAlternar, onDetalle }: {
+  f: StockItem
+  lista: boolean
+  tablet: boolean
+  conDeposito: boolean
+  desplegadas: ReadonlySet<string>
+  onAlternar: (id: string) => void
+  onDetalle: (item: StockItem) => void
+}) {
+  const linea = f.esPadreDeVariantes ? { abierta: desplegadas.has(f.id), onAlternar: () => onAlternar(f.id) } : undefined
+  if (lista) {
+    const Fila = tablet ? FilaDeTabla : FilaDeLista
+    return <Fila item={f} onPress={onDetalle} conDeposito={conDeposito} linea={linea} />
+  }
+  return linea ? (
+    <TarjetaDeLinea item={f} onPress={onDetalle} abierta={linea.abierta} onAlternar={linea.onAlternar} />
+  ) : (
+    <TarjetaDeProducto item={f} onPress={onDetalle} />
+  )
+}
+
+/** Renglón memoizado de la grilla con cantidades: no se vuelve a pintar mientras su bloque y las props no cambien. */
+const BloqueConCantidades = memo(function BloqueConCantidades({ b, lista, tablet, columnas, conDeposito, desplegadas, onAlternar, onDetalle }: {
+  b: Bloque<StockItem>
+  lista: boolean
+  tablet: boolean
+  columnas: number
+  conDeposito: boolean
+  desplegadas: ReadonlySet<string>
+  onAlternar: (id: string) => void
+  onDetalle: (item: StockItem) => void
+}) {
+  if (b.tipo === 'fragancias') return <FraganciasDeLinea linea={b.linea} onAbrirDetalle={onDetalle} />
+  return (
+    <View style={{ flexDirection: 'row', gap: space[2] }}>
+      {b.items.map((f) => (
+        <View key={f.id} style={{ flex: 1, minWidth: 0 }}>
+          <PiezaDeStock f={f} lista={lista} tablet={tablet} conDeposito={conDeposito} desplegadas={desplegadas} onAlternar={onAlternar} onDetalle={onDetalle} />
+        </View>
+      ))}
+      {Array.from({ length: columnas - b.items.length }).map((_, i) => <Hueco key={i} />)}
+    </View>
+  )
+})
 
 function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: boolean }) {
   const insetInferior = useInsetInferior()
@@ -109,33 +173,28 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
   const [hojaFiltros, setHojaFiltros] = React.useState(false)
   const [detalle, setDetalle] = React.useState<StockItem | null>(null)
   const [desplegadas, setDesplegadas] = React.useState<ReadonlySet<string>>(new Set())
-  const alternar = (id: string) =>
+  const alternar = useCallback((id: string) =>
     setDesplegadas((prev) => {
       const sig = new Set(prev)
       if (sig.has(id)) sig.delete(id)
       else sig.add(id)
       return sig
-    })
+    }), [])
 
   const sinRed = s.isError && esFallaDeRed(s.error)
   // En "Todos" hay una fila por producto y depósito: cada una dice de cuál es.
   const conDeposito = s.depositoId === TODOS_LOS_DEPOSITOS
   const lista = vista === 'lista'
   const columnas = lista ? 1 : tablet ? 4 : 2
-  const bloques = enBloques(s.filas, columnas, (f) => f.esPadreDeVariantes && desplegadas.has(f.id))
-
-  const pieza = (f: StockItem) => {
-    const linea = f.esPadreDeVariantes ? { abierta: desplegadas.has(f.id), onAlternar: () => alternar(f.id) } : undefined
-    if (lista) {
-      const Fila = tablet ? FilaDeTabla : FilaDeLista
-      return <Fila item={f} onPress={setDetalle} conDeposito={conDeposito} linea={linea} />
-    }
-    return linea ? (
-      <TarjetaDeLinea item={f} onPress={setDetalle} abierta={linea.abierta} onAlternar={linea.onAlternar} />
-    ) : (
-      <TarjetaDeProducto item={f} onPress={setDetalle} />
-    )
-  }
+  const filas = s.filas
+  const bloques = useMemo(
+    () => enBloques(filas, columnas, (f) => f.esPadreDeVariantes && desplegadas.has(f.id)),
+    [filas, columnas, desplegadas],
+  )
+  const renderBloque = useCallback(({ item: b }: { item: Bloque<StockItem> }) => (
+    <BloqueConCantidades b={b} lista={lista} tablet={tablet} columnas={columnas} conDeposito={conDeposito}
+      desplegadas={desplegadas} onAlternar={alternar} onDetalle={setDetalle} />
+  ), [lista, tablet, columnas, conDeposito, desplegadas, alternar])
 
   return (
     <View style={{ flex: 1 }}>
@@ -155,36 +214,26 @@ function StockConCantidades({ busqueda, tablet }: { busqueda: string; tablet: bo
       {s.isLoading ? (
         <Esqueletos columnas={columnas} />
       ) : s.isError && !(sinRed && s.filas.length > 0) ? (
-        sinRed ? (
-          <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar el stock" accion={{ label: 'Reintentar', onPress: () => void s.refetch() }} />
-        ) : (
-          <View style={{ padding: space[4] }}><Notice tone="peligro">No se pudo cargar el stock. Revisá la conexión y volvé a intentar.</Notice></View>
-        )
+        <ErrorDeConsulta error={s.error} titulo="No pudimos cargar el stock" onReintentar={() => void s.refetch()} />
       ) : (
-        <FlatList {...LISTA_LARGA_PROPS}
+        <FlashList
           data={bloques}
           keyExtractor={(b) => b.key}
           onEndReached={s.cargarMas}
           onEndReachedThreshold={0.5}
-          contentContainerStyle={{ padding: space[4], gap: space[2], paddingBottom: space[12] + insetInferior }}
+          contentContainerStyle={{ padding: space[4], paddingBottom: space[12] + insetInferior }}
+          ItemSeparatorComponent={SEPARADOR}
           ListHeaderComponent={
-            <>
-              {sinRed ? <Notice tone="advertencia">{textoSinConexion(s.dataUpdatedAt || undefined)}</Notice> : null}
-              {lista && tablet ? <CabeceraDeTabla /> : null}
-            </>
+            sinRed || (lista && tablet) ? (
+              <View style={{ gap: space[2], paddingBottom: space[2] }}>
+                {sinRed ? <Notice tone="advertencia">{textoSinConexion(s.dataUpdatedAt || undefined)}</Notice> : null}
+                {lista && tablet ? <CabeceraDeTabla /> : null}
+              </View>
+            ) : undefined
           }
           ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo={textoVacio(s.filtros, busqueda)} />}
-          ListFooterComponent={s.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : undefined}
-          renderItem={({ item: b }) =>
-            b.tipo === 'fragancias' ? (
-              <FraganciasDeLinea linea={b.linea} onAbrirDetalle={setDetalle} />
-            ) : (
-              <View style={{ flexDirection: 'row', gap: space[2] }}>
-                {b.items.map((f) => <View key={f.id} style={{ flex: 1, minWidth: 0 }}>{pieza(f)}</View>)}
-                {Array.from({ length: columnas - b.items.length }).map((_, i) => <Hueco key={i} />)}
-              </View>
-            )
-          }
+          ListFooterComponent={s.isFetchingNextPage ? <View style={{ paddingTop: space[2] }}><ActivityIndicator color={c.brandInk} /></View> : undefined}
+          renderItem={renderBloque}
         />
       )}
       <HojaDeFiltros visible={hojaFiltros} onCerrar={() => setHojaFiltros(false)} resumen={s.resumen} filtros={s.filtros} onCambiar={s.setFiltros} />

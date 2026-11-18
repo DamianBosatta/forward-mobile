@@ -1,7 +1,7 @@
 import React from 'react'
 import { cleanup, fireEvent, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { onlineManager } from '@tanstack/react-query'
-import { FlatList } from 'react-native'
+import { FlashList } from '@shopify/flash-list'
 import TesoreriaScreen from '../../../../app/(tabs)/tesoreria/index'
 import PagosScreen from '../../../../app/(tabs)/tesoreria/pagos/index'
 import DetalleDePagoScreen from '../../../../app/(tabs)/tesoreria/pagos/[id]'
@@ -105,7 +105,7 @@ describe('Lista de pagos', () => {
     renderConQuery(<PagosScreen />)
     await screen.findByText('Molinos SA', {}, ESPERA)
 
-    fireEvent(screen.UNSAFE_getByType(FlatList), 'onEndReached')
+    fireEvent(screen.UNSAFE_getByType(FlashList), 'onEndReached')
 
     expect(await screen.findByText('Lácteos SRL', {}, ESPERA)).toBeTruthy()
     expect(urls()).toContain('/api/v1/Tesoreria?fuente=pago&categoria=proveedor&pageNumber=2&pageSize=20')
@@ -229,6 +229,9 @@ describe('Detalle de un pago', () => {
     expect(screen.getByLabelText(`C-00031: ${$(25000)}`)).toBeTruthy()
     expect(screen.getByLabelText(`Extracto 4411: ${$(25000)}`)).toBeTruthy()
     expect(screen.queryByText('ANULADO')).toBeNull()
+    // Anular y el comprobante son de la web: el detalle lo dice y no ofrece la acción.
+    expect(screen.getByText(/Anular el pago y bajar el comprobante se hace desde la web\./)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /anular/i })).toBeNull()
   })
 
   it('un pago anulado lo dice', async () => {

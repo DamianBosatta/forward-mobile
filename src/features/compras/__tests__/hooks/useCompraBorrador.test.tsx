@@ -80,7 +80,7 @@ describe('useCompraBorrador', () => {
   it('crea el borrador en el depósito por defecto, precarga el último costo y encadena la versión de cada PUT', async () => {
     const { result } = usar()
     await act(() => result.current.elegirProveedor('p1'))
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/borradores', { proveedorId: 'p1', depositoId: DEPOSITO_CENTRAL_ID })
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/borradores', { proveedorId: 'p1', depositoId: DEPOSITO_CENTRAL_ID, claveIdempotencia: expect.stringMatching(/^mobile-/) })
     expect(result.current.proveedor).toEqual({ id: 'p1', nombre: 'Insumos del Sur SA', condicion: '30 días', pideFactura: false })
 
     act(() => result.current.setCantidadProducto(BALDE, 2))
@@ -320,7 +320,7 @@ describe('useCompraBorrador', () => {
       const { result } = usar()
       expect(result.current.depositoId).toBe(NORTE)
       await act(() => result.current.elegirProveedor('p1'))
-      expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/borradores', { proveedorId: 'p1', depositoId: NORTE })
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/borradores', { proveedorId: 'p1', depositoId: NORTE, claveIdempotencia: expect.stringMatching(/^mobile-/) })
     })
 
     it('una compra nueva sin borrador sigue al depósito de la sesión; al crearse el borrador queda fija', async () => {
@@ -329,7 +329,7 @@ describe('useCompraBorrador', () => {
       act(() => elegirDepositoDeSesion('u', SUR))
       expect(result.current.depositoId).toBe(SUR)
       await act(() => result.current.elegirProveedor('p1'))
-      expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/borradores', { proveedorId: 'p1', depositoId: SUR })
+      expect(mockPost).toHaveBeenCalledWith('/api/v1/Compras/borradores', { proveedorId: 'p1', depositoId: SUR, claveIdempotencia: expect.stringMatching(/^mobile-/) })
       act(() => elegirDepositoDeSesion('u', NORTE))
       expect(result.current.depositoId).toBe(SUR)
     })

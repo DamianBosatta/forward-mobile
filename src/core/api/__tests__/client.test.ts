@@ -66,6 +66,37 @@ describe('ApiError: código y datos del sobre', () => {
   })
 })
 
+describe('renovación del token con varios 401 a la vez (COD-02)', () => {
+  it('tres pedidos que reciben 401 a la vez piden un solo refresh y cada uno se reintenta una vez con el token nuevo', async () => {
+    let token = 'viejo'
+    const onUnauthorized = jest.fn()
+    configureApiClient({
+      getToken: () => token, getRefreshToken: () => 'r1',
+      onTokensRefreshed: (t) => { token = t.accessToken }, onUnauthorized,
+    })
+    const visto: Record<string, string[]> = {}
+    mockFetch.mockImplementation(async (url: string, init: RequestInit = {}) => {
+      const auth = new Headers(init.headers).get('Authorization') ?? ''
+      if (url.endsWith('/connect/token')) {
+        await Promise.resolve()
+        return { ok: true, status: 200, json: () => Promise.resolve({ access_token: 'nuevo', refresh_token: 'r2' }) }
+      }
+      ;(visto[url] ??= []).push(auth)
+      const ok = auth === 'Bearer nuevo'
+      return { ok, status: ok ? 200 : 401, json: () => Promise.resolve(ok ? { succeeded: true, data: url.replace(/^https?:\/\/[^/]+/, '') } : {}) }
+    })
+
+    const r = await Promise.all([api.get('/api/v1/A'), api.get('/api/v1/B'), api.get('/api/v1/C')])
+
+    expect(r).toEqual(['/api/v1/A', '/api/v1/B', '/api/v1/C'])
+    const refrescos = mockFetch.mock.calls.filter(([u]) => String(u).endsWith('/connect/token'))
+    expect(refrescos).toHaveLength(1)
+    for (const url of Object.keys(visto)) expect(visto[url]).toEqual(['Bearer viejo', 'Bearer nuevo'])
+    expect(Object.keys(visto)).toHaveLength(3)
+    expect(onUnauthorized).not.toHaveBeenCalled()
+  })
+})
+
 // Sobre de éxito con un campo al lado de `data` (forward-system #868: el cobro informa su cuenta).
 const SOBRE_COBRO = { statusCode: 200, succeeded: true, message: 'Pago registrado', errors: null, data: 'p1', tipoCuenta: 'Tst' }
 
@@ -132,5 +163,26 @@ describe('estados esperados: no se registran como error', () => {
     responder(500, {})
     await fallo(api.get('/api/v1/Inicio/resumen', { estadosEsperados: [404] }))
     expect(mockLogError).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('plazo por request', () => {
+  /** Un fetch que responde a los `ms` y se corta si se aborta la señal. */
+  const fetchLento = (ms: number) => (_url: string, init: RequestInit = {}) =>
+    new Promise((resolve, reject) => {
+      const t = setTimeout(() => resolve({ ok: true, status: 200, json: () => Promise.resolve({ succeeded: true, data: 'x' }) }), ms)
+      init.signal?.addEventListener('abort', () => {
+        clearTimeout(t)
+        reject(Object.assign(new Error('Aborted'), { name: 'AbortError' }))
+      })
+    })
+  beforeEach(() => jest.useFakeTimers())
+  afterEach(() => jest.useRealTimers())
+
+  it('un request JSON (api) se corta a los 15 s', async () => {
+    mockFetch.mockImplementationOnce(fetchLento(60_000))
+    const enCurso = fallo(api.get('/api/v1/Lento'))
+    await jest.advanceTimersByTimeAsync(15_000)
+    expect(await enCurso).toMatchObject({ name: 'AbortError' })
   })
 })

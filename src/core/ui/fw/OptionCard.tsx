@@ -45,7 +45,7 @@ export function OptionCard({ label, detail, icon: Icono, selected = false, minHe
     >
       {Icono ? <Icono size={minHeight > 100 ? 40 : 28} color={selected ? c.brandInk : c.text} strokeWidth={2.5} /> : null}
       <View style={{ flex: 1 }}>
-        <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.seccion, fontSize: 19, lineHeight: 26, color: selected ? c.brandInk : c.text }}>{label}</Text>
+        <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.seccionGrande, color: selected ? c.brandInk : c.text }}>{label}</Text>
         {detail ? <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.secundario, color: c.textSecondary }}>{detail}</Text> : null}
       </View>
       {selected ? <Check size={28} color={c.brandInk} strokeWidth={3} /> : null}

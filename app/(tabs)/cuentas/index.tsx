@@ -1,7 +1,7 @@
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
+import { FlashList } from '@shopify/flash-list'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
-import { FlatList, RefreshControl, Text, View } from 'react-native'
+import { RefreshControl, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { opcionDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
 import { ArrowLeftRight } from 'lucide-react-native'
@@ -13,7 +13,7 @@ import { esFallaDeRed } from '@/core/api/errores'
 import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useCartera } from '@/features/clientes/hooks/useCartera'
-import { ClienteCard } from '@/features/clientes/components/ClienteCard'
+import { FilaCliente } from '@/features/clientes/components/FilaCliente'
 import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { textoMostrando } from '@/features/clientes/lib/cliente'
 import { CuentaCorrienteCliente } from '@/features/cuentas/components/CuentaCorrienteCliente'
@@ -22,7 +22,7 @@ import { RegistrarCobro } from '@/features/cuentas/components/RegistrarCobro'
 import { DeudasAProveedores } from '@/features/cuentas/components/DeudasAProveedores'
 import { useDeudasResumen } from '@/features/cuentas/api/queries'
 import { ResumenDeCuentas } from '@/features/cuentas/components/ResumenDeCuentas'
-import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
+import { Esqueletos, FILAS_CARGANDO, ErrorDeConsulta } from '@/core/ui/estados'
 import { DeudoresClientes } from '@/features/deudores/components/DeudoresClientes'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -68,11 +68,25 @@ function CuentasCorrientesScreen() {
   const sinRed = esFallaDeRed(error)
   const hayDatos = clientes.length > 0
 
-  const abrir = (id: string) => {
+  const abrir = useCallback((id: string) => {
     if (isTabletLandscape) { setAbierto(id); setCobrando(cargandoCheque) }
     else if (cargandoCheque) router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: id, medio: 'cheque' } })
     else router.push({ pathname: '/(tabs)/cuentas/[id]', params: { id } })
-  }
+  }, [isTabletLandscape, cargandoCheque, router])
+  const ultimoIndice = clientes.length - 1
+  const renderCliente = useCallback(({ item, index }: { item: (typeof clientes)[number]; index: number }) => (
+    // Las filas van en una tarjeta, con la fila aprobada de Clientes (frame 1).
+    <FilaCliente
+      variante="cartera"
+      primera={index === 0}
+      ultima={index === ultimoIndice}
+      chevron
+      conAntiguedad
+      cliente={item}
+      seleccionado={isTabletLandscape && item.id === abierto}
+      onAbrir={abrir}
+    />
+  ), [ultimoIndice, isTabletLandscape, abierto, abrir])
 
   const lista = (
     <View style={{ flex: 1 }}>
@@ -84,7 +98,7 @@ function CuentasCorrientesScreen() {
           {textoMostrando(clientes.length, totalCount, saldoTotal)}
         </Text>
       ) : null}
-      {error && !(sinRed && !hayDatos) ? (
+      {error && hayDatos ? (
         <View style={{ padding: space[4] }}>
           {sinRed ? (
             <Notice tone="advertencia">{textoSinConexion(dataUpdatedAt || undefined)}</Notice>
@@ -93,22 +107,10 @@ function CuentasCorrientesScreen() {
           )}
         </View>
       ) : null}
-      <FlatList {...LISTA_LARGA_PROPS}
+      <FlashList
         data={clientes}
         keyExtractor={item => item.id}
-        renderItem={({ item, index }) => (
-          // Las filas van en una tarjeta, con la fila aprobada de Clientes (frame 1).
-          <ClienteCard
-            variante="cartera"
-            primera={index === 0}
-            ultima={index === clientes.length - 1}
-            chevron
-            conAntiguedad
-            cliente={item}
-            seleccionado={isTabletLandscape && item.id === abierto}
-            onPress={() => abrir(item.id)}
-          />
-        )}
+        renderItem={renderCliente}
         contentContainerStyle={{ paddingTop: space[3], paddingBottom: space[6] + insetInferior }}
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
@@ -119,9 +121,7 @@ function CuentasCorrientesScreen() {
               <Esqueletos bloques={FILAS_CARGANDO} />
             </View>
           ) : error ? (
-            sinRed ? (
-              <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los clientes" accion={{ label: 'Reintentar', onPress: () => void refetch() }} />
-            ) : undefined
+            <ErrorDeConsulta error={error} titulo="No pudimos cargar los clientes" texto={mensajeDelServidor(error, 'No se pudo cargar la cartera.')} onReintentar={() => void refetch()} />
           ) : (
             <EstadoDePantalla
               tipo="vacio"

@@ -2,7 +2,7 @@ import React from 'react'
 import { View } from 'react-native'
 import { useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { AvisoSinConexionContext } from './TopBar'
+import { AccionesEnEsperaContext, AvisoSinConexionContext } from './TopBar'
 
 /** Ancho de la lista en tablet horizontal (lámina TabVentas). */
 export const TWO_PANE_LIST_WIDTH = 420
@@ -53,5 +53,9 @@ export function TwoPane({ list, detail, emptyDetail = null }: TwoPaneProps) {
 }
 
 function SinAvisoPropio({ children }: { children: React.ReactNode }) {
-  return <AvisoSinConexionContext.Provider value={false}>{children}</AvisoSinConexionContext.Provider>
+  return (
+    <AvisoSinConexionContext.Provider value={false}>
+      <AccionesEnEsperaContext.Provider value={0}>{children}</AccionesEnEsperaContext.Provider>
+    </AvisoSinConexionContext.Provider>
+  )
 }

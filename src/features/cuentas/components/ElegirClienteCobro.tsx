@@ -1,10 +1,13 @@
-import React, { useState } from 'react'
-import { ActivityIndicator, FlatList, Text, View } from 'react-native'
+import React, { memo, useCallback, useState } from 'react'
+import { FlashList } from '@shopify/flash-list'
+import { Text, View } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, Notice, PieFijo, TotalsRow } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { MOTIVO_SIN_PERMISO_DE_COBRO, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
+import { ErrorDeConsulta, esqueletoDeFilas } from '@/core/ui/estados'
+import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { useSocio } from '@/libs/api-client/socios'
@@ -30,7 +33,7 @@ function SaldoDelCliente({ socioId }: { socioId: string }) {
   const socio = useSocio(socioId)
   const verCuenta = !!socio.data?.puedeVerCuentaCorriente
   const estado = useEstadoCuentaSocio(socioId, verCuenta)
-  if (socio.isLoading || (verCuenta && estado.isLoading)) return <ActivityIndicator color={c.brandInk} />
+  if (socio.isLoading || (verCuenta && estado.isLoading)) return <Esqueletos bloques={[{ alto: 120 }]} />
   if (!socio.data) return <Notice tone="peligro">{mensajeDelServidor(socio.error, 'No se pudo abrir el cliente.')}</Notice>
   if (!verCuenta) return <Notice tone="peligro">{SIN_ACCESO_A_LA_CUENTA}</Notice>
   if (!estado.data) return <Notice tone="peligro">{mensajeDelServidor(estado.error, 'No se pudo cargar la cuenta.')}</Notice>
@@ -52,16 +55,27 @@ function SaldoDelCliente({ socioId }: { socioId: string }) {
  * cartera es la de Cuentas (búsqueda y deuda vencida en el servidor) con la misma fila, el chip de antigüedad de
  * la deuda y el candado de cartera ajena. Sin "Recientes": no hay cobros recientes.
  */
+type ClienteDeCartera = ReturnType<typeof useCartera>['clientes'][number]
+
+/** Fila memoizada de la cartera: solo se repinta si cambia el cliente o si pasa a estar elegido. */
+const FilaCliente = memo(function FilaCliente({ cliente, seleccionado, onElegir }: { cliente: ClienteDeCartera; seleccionado: boolean; onElegir: (id: string) => void }) {
+  return <ClienteCard cliente={cliente} seleccionado={seleccionado} conAntiguedad onPress={() => onElegir(cliente.id)} />
+})
+
 export function ElegirClienteCobro({ seleccionadoId, onElegir, onContinuar, puedeCobrar }: Props) {
   const c = useColors()
   const [busqueda, setBusqueda] = useState('')
   const [soloVencidas, setSoloVencidas] = useState(false)
   const { clientes, isLoading, error, refetch, cargarMas } = useCartera(busqueda, soloVencidas ? { conDeudaVencida: true } : undefined)
   const buscando = busqueda.trim().length > 0
+  const renderCliente = useCallback(
+    ({ item }: { item: (typeof clientes)[number] }) => <FilaCliente cliente={item} seleccionado={item.id === seleccionadoId} onElegir={onElegir} />,
+    [seleccionadoId, onElegir],
+  )
 
   return (
     <View style={{ flex: 1 }}>
-      <FlatList
+      <FlashList
         style={{ flex: 1 }}
         data={clientes}
         keyExtractor={item => item.id}
@@ -74,7 +88,7 @@ export function ElegirClienteCobro({ seleccionadoId, onElegir, onContinuar, pued
             <View style={{ flexDirection: 'row', paddingHorizontal: space[4] }}>
               <FiltroChip label="Con deuda vencida" activo={soloVencidas} onPress={() => setSoloVencidas(v => !v)} />
             </View>
-            {error ? (
+            {error && clientes.length > 0 ? (
               <View style={{ gap: space[2], paddingHorizontal: space[4] }}>
                 <Notice tone={esFallaDeRed(error) ? 'advertencia' : 'peligro'}>
                   {esFallaDeRed(error) ? textoSinConexion() : mensajeDelServidor(error, 'No se pudo cargar la cartera.')}
@@ -87,9 +101,9 @@ export function ElegirClienteCobro({ seleccionadoId, onElegir, onContinuar, pued
             </Text>
           </View>
         }
-        renderItem={({ item }) => <ClienteCard cliente={item} seleccionado={item.id === seleccionadoId} conAntiguedad onPress={() => onElegir(item.id)} />}
+        renderItem={renderCliente}
         ListEmptyComponent={
-          isLoading ? <ActivityIndicator color={c.brandInk} /> : error ? undefined : (
+          isLoading ? <View style={{ paddingHorizontal: space[4] }}><Esqueletos bloques={FILAS_CARGANDO} /></View> : error ? <ErrorDeConsulta error={error} titulo="No pudimos cargar la cartera" onReintentar={() => { void refetch() }} /> : (
             <Text style={{ ...typeScale.secundario, color: c.textSecondary, paddingHorizontal: space[4] }}>
               {buscando ? 'Ningún cliente coincide con la búsqueda.' : 'Todavía no hay clientes en tu cartera.'}
             </Text>

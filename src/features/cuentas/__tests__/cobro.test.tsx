@@ -445,7 +445,8 @@ it('con efectivo y sin la caja del depósito de la sesión abierta, avisa y no m
   renderConQuery(<RegistrarCobro socioId="c1" onVolver={jest.fn()} />)
   await cargarMontoYMedio('100', 'Efectivo')
 
-  expect(await screen.findByText('No hay una caja abierta en este depósito. Abrí una caja para registrar cobros en efectivo.', {}, ESPERA)).toBeTruthy()
+  expect(await screen.findByText(/La caja se abre desde la web\./, {}, ESPERA)).toBeTruthy()
+  expect(screen.queryByText(/Abrí una caja/)).toBeNull()
   await userEvent.press(screen.getByRole('button', { name: /^Registrar cobro de/ }))
   expect(post).not.toHaveBeenCalled()
 })

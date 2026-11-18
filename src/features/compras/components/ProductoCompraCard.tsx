@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { memo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Package } from 'lucide-react-native'
 import { Image as ExpoImage } from 'expo-image'
@@ -61,7 +61,7 @@ export function StockYVentas({ producto: p }: { producto: ProductoComprable }) {
  * foto, marca y código, cómo viene el producto y, si ya está en la compra, cuánto se pide, a qué costo por unidad (o
  * "Falta el costo") y el nivel con −/+. El costo se carga en "Cantidad y costo": tocar la tarjeta la abre.
  */
-export function ProductoCompraCard({ producto: p, linea, onAgregar, onCambiar, onQuitar, onAbrir }: Props) {
+export const ProductoCompraCard = memo(function ProductoCompraCard({ producto: p, linea, onAgregar, onCambiar, onQuitar, onAbrir }: Props) {
   const c = useColors()
   const img = getFullImageUrl(p.imageUrl ?? undefined)
   const empaque = presentacionEmpaque(p)
@@ -128,4 +128,4 @@ export function ProductoCompraCard({ producto: p, linea, onAgregar, onCambiar, o
       )}
     </View>
   )
-}
+})

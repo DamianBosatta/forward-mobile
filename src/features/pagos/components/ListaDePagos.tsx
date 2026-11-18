@@ -1,6 +1,6 @@
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
-import React, { useMemo, useState } from 'react'
-import { FlatList, RefreshControl, View } from 'react-native'
+import React, { useCallback, useMemo, useState } from 'react'
+import { FlashList } from '@shopify/flash-list'
+import { RefreshControl, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Plus } from 'lucide-react-native'
 import { space, useColors } from '@/libs/theme'
@@ -42,6 +42,11 @@ export function ListaDePagos({ onVolver }: { onVolver: () => void }) {
   const enPausa = useSinConexionSinDatos(q)
   const sinConexion = (!!q.error && sinRed) || enPausa
   const reintentar = { label: 'Reintentar', onPress: () => void q.refetch() }
+  const abrirPago = useCallback((id: string) => router.push({ pathname: '/(tabs)/tesoreria/pagos/[id]', params: { id } }), [router])
+  const ultimoIndice = filas.length - 1
+  const renderPago = useCallback(({ item, index }: { item: (typeof filas)[number]; index: number }) => (
+    <FilaDePago pago={item} primera={index === 0} ultima={index === ultimoIndice} onAbrir={abrirPago} />
+  ), [ultimoIndice, abrirPago])
 
   const encabezado = (
     <TopBar
@@ -81,18 +86,11 @@ export function ListaDePagos({ onVolver }: { onVolver: () => void }) {
           <Button label="Reintentar" variant="secundario" onPress={reintentar.onPress} />
         </View>
       ) : null}
-      <FlatList {...LISTA_LARGA_PROPS}
+      <FlashList
         data={filas}
         keyExtractor={item => item.id}
         keyboardShouldPersistTaps="handled"
-        renderItem={({ item, index }) => (
-          <FilaDePago
-            pago={item}
-            primera={index === 0}
-            ultima={index === filas.length - 1}
-            onPress={() => router.push({ pathname: '/(tabs)/tesoreria/pagos/[id]', params: { id: item.id } })}
-          />
-        )}
+        renderItem={renderPago}
         contentContainerStyle={{ paddingTop: space[3], paddingBottom: space[6] + insetInferior }}
         onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) void q.fetchNextPage() }}
         onEndReachedThreshold={0.5}

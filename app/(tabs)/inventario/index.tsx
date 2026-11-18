@@ -1,7 +1,8 @@
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
-import React, { useCallback, useRef, useState } from 'react'
+import { FlashList } from '@shopify/flash-list'
+import { CeldaDeGrilla, paddingDeGrilla } from '@/core/ui/listaFlash'
+import React, { memo, useCallback, useRef, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
-import { ActivityIndicator, FlatList, Modal, Text, View } from 'react-native'
+import { ActivityIndicator, Modal, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions, useFocusEffect } from "expo-router/react-navigation"
 import { useMutation } from '@tanstack/react-query'
@@ -34,6 +35,13 @@ function falloDelEscaneo(error: Error, codigo?: string): string {
 }
 
 /** Catálogo, solo consulta (láminas CatalogoConsulta, FichaProducto y TabCatalogoConsulta). */
+type PropsProducto = Omit<React.ComponentProps<typeof ProductoCard>, 'onPress'> & { onAbrir: (id: string) => void }
+
+/** Fila memoizada: no se vuelve a pintar mientras el producto, su stock y `onAbrir` no cambien. */
+const FilaProducto = memo(function FilaProducto({ onAbrir, ...tarjeta }: PropsProducto) {
+  return <ProductoCard {...tarjeta} onPress={() => onAbrir(tarjeta.producto.id)} />
+})
+
 function CatalogoConsulta() {
   const insetInferior = useInsetInferior()
   const navigation = useNavigation()
@@ -83,6 +91,19 @@ function CatalogoConsulta() {
   // La ficha del producto no trae la marca de novedad: sale de la tarjeta que se tocó.
   const novedadDe = (id: string) => cat.productos.find((p) => p.id === id)
 
+  const abrirProducto = useCallback((id: string) => { cancelarEscaneo(); setSeleccion(id) }, [cancelarEscaneo])
+  const renderProducto = useCallback(({ item }: { item: (typeof productos)[number] }) => (
+    <CeldaDeGrilla columnas={columnas} espacio={space[3]}>
+      <FilaProducto
+        producto={item}
+        disponible={cat.disponible.get(item.id)}
+        grilla={grilla}
+        seleccionado={dosPaneles && seleccion === item.id}
+        onAbrir={abrirProducto}
+      />
+    </CeldaDeGrilla>
+  ), [columnas, cat.disponible, grilla, dosPaneles, seleccion, abrirProducto])
+
   const lista = (
     <View style={{ flex: 1 }}>
       <View
@@ -109,27 +130,18 @@ function CatalogoConsulta() {
           <Notice tone="peligro">No se pudo cargar el catálogo. Revisá la conexión y volvé a intentar.</Notice>
         </View>
       ) : (
-        <FlatList {...LISTA_LARGA_PROPS}
-          ListHeaderComponent={catSinRed ? <Notice tone="advertencia">{textoSinConexion(cat.dataUpdatedAt)}</Notice> : undefined}
+        <FlashList
+          ListHeaderComponent={catSinRed ? <View style={{ paddingBottom: space[3] }}><Notice tone="advertencia">{textoSinConexion(cat.dataUpdatedAt)}</Notice></View> : undefined}
           key={`columnas-${columnas}`}
           data={productos}
           numColumns={columnas}
           keyExtractor={(p) => p.id}
-          columnWrapperStyle={columnas > 1 ? { gap: space[3] } : undefined}
-          contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] + insetInferior }}
+          contentContainerStyle={{ paddingTop: space[4], paddingHorizontal: paddingDeGrilla(space[4], columnas, space[3]), paddingBottom: space[12] + insetInferior }}
           onEndReached={cat.cargarMas}
           onEndReachedThreshold={0.5}
           ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan con la búsqueda." />}
           ListFooterComponent={cat.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : undefined}
-          renderItem={({ item }) => (
-            <ProductoCard
-              producto={item}
-              disponible={cat.disponible.get(item.id)}
-              grilla={grilla}
-              seleccionado={dosPaneles && seleccion === item.id}
-              onPress={() => { cancelarEscaneo(); setSeleccion(item.id) }}
-            />
-          )}
+          renderItem={renderProducto}
         />
       )}
     </View>

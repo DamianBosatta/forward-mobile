@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { ScanBarcode, Search } from 'lucide-react-native'
+import { FlashList } from '@shopify/flash-list'
+import { CeldaDeGrilla, paddingDeGrilla } from '@/core/ui/listaFlash'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, StatusChip } from '@/core/ui/fw'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
@@ -82,6 +84,7 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
     if (l) reemplazar({ ...l, cantidad: unidades })
   }, [reemplazar])
   const renderItem = useCallback(({ item }: { item: CatalogoStockItem }) => (
+    <CeldaDeGrilla columnas={columnas} espacio={space[3]}>
     <ProductoCatalogoCard
       producto={item}
       linea={lineaPorProducto.get(item.id)}
@@ -93,7 +96,8 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
       llevoAntes={llevo?.get(item.id)}
       onElegirFragancias={setFragancias}
     />
-  ), [lineaPorProducto, lineas, verCantidades, enVivo, onAbrirOferta, cambiarCantidad, llevo])
+    </CeldaDeGrilla>
+  ), [columnas, lineaPorProducto, lineas, verCantidades, enVivo, onAbrirOferta, cambiarCantidad, llevo])
 
   const alLeer = (codigo: string) => {
     setEscaneando(false)
@@ -141,14 +145,13 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
         )}
         {avisoEscaneo ? <Notice tone="advertencia">{avisoEscaneo}</Notice> : null}
       </View>
-      <FlatList
+      <FlashList
         key={columnas}
         onLayout={(e) => setAnchoLista(Math.round(e.nativeEvent.layout.width))}
         data={productos}
         numColumns={columnas}
         keyExtractor={(p) => p.id}
-        columnWrapperStyle={columnas > 1 ? { gap: space[3] } : undefined}
-        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: space[4], gap: space[3] }}
+        contentContainerStyle={{ paddingHorizontal: paddingDeGrilla(space[4], columnas, space[3]), paddingBottom: space[4] }}
         ListFooterComponent={
           <Text style={{ ...typeScale.secundario, color: c.textSecondary, textAlign: 'center' }}>{`Mostrando ${productos.length} de ${Math.max(totalVendible, productos.length)}`}</Text>
         }
