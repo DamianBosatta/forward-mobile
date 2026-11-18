@@ -51,7 +51,7 @@ export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntrega
       <View accessibilityLabel="Llegué" style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title={parada.clienteNombre} subtitle={parada.direccion} leading={{ kind: 'atras', onPress: onVolver }} />
         <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], ...columna }}>
-          <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>
+          <Text accessibilityRole="header" style={{ ...typeScale.tituloGrande, color: c.text }}>
             {piezas.total > 0 ? `Tenés ${textoPiezas(piezas.total)} para entregar acá` : 'Entregá el pedido acá'}
           </Text>
           {piezas.total > 0 ? (

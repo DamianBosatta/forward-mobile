@@ -22,7 +22,7 @@ import { RegistrarCobro } from '@/features/cuentas/components/RegistrarCobro'
 import { DeudasAProveedores } from '@/features/cuentas/components/DeudasAProveedores'
 import { useDeudasResumen } from '@/features/cuentas/api/queries'
 import { ResumenDeCuentas } from '@/features/cuentas/components/ResumenDeCuentas'
-import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
+import { Esqueletos, FILAS_CARGANDO, ErrorDeConsulta } from '@/core/ui/estados'
 import { DeudoresClientes } from '@/features/deudores/components/DeudoresClientes'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -84,7 +84,7 @@ function CuentasCorrientesScreen() {
           {textoMostrando(clientes.length, totalCount, saldoTotal)}
         </Text>
       ) : null}
-      {error && !(sinRed && !hayDatos) ? (
+      {error && hayDatos ? (
         <View style={{ padding: space[4] }}>
           {sinRed ? (
             <Notice tone="advertencia">{textoSinConexion(dataUpdatedAt || undefined)}</Notice>
@@ -119,9 +119,7 @@ function CuentasCorrientesScreen() {
               <Esqueletos bloques={FILAS_CARGANDO} />
             </View>
           ) : error ? (
-            sinRed ? (
-              <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los clientes" accion={{ label: 'Reintentar', onPress: () => void refetch() }} />
-            ) : undefined
+            <ErrorDeConsulta error={error} titulo="No pudimos cargar los clientes" texto={mensajeDelServidor(error, 'No se pudo cargar la cartera.')} onReintentar={() => void refetch()} />
           ) : (
             <EstadoDePantalla
               tipo="vacio"

@@ -18,7 +18,7 @@ export function ContadorCobro({ cobrado, falta }: Props) {
   const dato = (rotulo: string, valor: number, color: string) => (
     <View style={{ flex: 1 }}>
       <Text style={{ ...typeScale.etiqueta, color: c.textSecondary, textTransform: 'uppercase' }}>{rotulo}</Text>
-      <Text maxFontSizeMultiplier={1.3} numberOfLines={1} adjustsFontSizeToFit style={{ ...typeScale.titulo, ...importe, fontSize: 26, lineHeight: 32, color }}>
+      <Text maxFontSizeMultiplier={1.3} numberOfLines={1} adjustsFontSizeToFit style={{ ...typeScale.destacado, ...importe, color }}>
         {formatImporte(valor)}
       </Text>
     </View>

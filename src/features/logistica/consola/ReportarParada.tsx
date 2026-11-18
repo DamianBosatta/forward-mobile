@@ -191,7 +191,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
           {!entregado ? (
             <>
               <View accessibilityLabel="Motivo" style={{ gap: space[3] }}>
-                <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>¿Por qué no pudiste entregar?</Text>
+                <Text accessibilityRole="header" style={{ ...typeScale.tituloGrande, color: c.text }}>¿Por qué no pudiste entregar?</Text>
                 {MOTIVOS_NO_ENTREGA.map((m) => (
                   <OptionCard key={m} label={m} detail={DETALLE_MOTIVO_NO_ENTREGA[m]} selected={motivo === m} onPress={() => setMotivo(m)} />
                 ))}
@@ -226,7 +226,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
           ) : null}
           {entregado && paso === 'cobro' && preguntandoOtro ? (
             <View accessibilityLabel="¿Sumar otro cobro?" style={{ gap: space[3] }}>
-              <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>¿Sumar otro cobro?</Text>
+              <Text accessibilityRole="header" style={{ ...typeScale.tituloGrande, color: c.text }}>¿Sumar otro cobro?</Text>
               <OptionCard minHeight={132} icon={Plus} label="Sí" detail="Cargá otro pago" onPress={() => sumarOtro(true)} />
               <OptionCard minHeight={132} icon={Check} label="No" detail="Seguí a cerrar la entrega" onPress={() => sumarOtro(false)} />
             </View>

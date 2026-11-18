@@ -2,7 +2,7 @@ import React, { type ReactNode } from 'react'
 import { View } from 'react-native'
 import { esFallaDeRed } from '@/core/api/errores'
 import { space } from '@/libs/theme'
-import { Esqueletos } from '@/features/clientes/components/Esqueletos'
+import { Esqueletos } from './Esqueletos'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
 
 type Bloques = React.ComponentProps<typeof Esqueletos>['bloques']

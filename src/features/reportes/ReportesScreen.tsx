@@ -167,7 +167,7 @@ function FranjaVendido({ r }: { r: ResumenVendedor }) {
       style={{ backgroundColor: c.topBar, borderRadius: radii.tarjeta, padding: space[5], gap: space[1] }}
     >
       <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>Vendido</Text>
-      <Text style={{ fontSize: 36, lineHeight: 44, ...semibold, color: c.onTopBarStrong, ...cifras }} adjustsFontSizeToFit numberOfLines={1}>{monto}</Text>
+      <Text style={{ ...typeScale.cifra, color: c.onTopBarStrong, ...cifras }} adjustsFontSizeToFit numberOfLines={1}>{monto}</Text>
       <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>
         {`${plural(ventas.operaciones, 'venta', 'ventas')} · Ticket promedio ${formatImporte(ventas.ticketPromedio)}`}
       </Text>

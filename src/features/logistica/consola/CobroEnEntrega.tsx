@@ -88,7 +88,7 @@ export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubien
       {faltaACuenta ? <Notice tone="info">{`Los ${formatImporte(faltaACuenta)} que faltan quedan en su cuenta corriente.`}</Notice> : null}
       {elegirMedio ? (
         <View accessibilityLabel={hayPagos ? 'Sumar otro pago' : '¿Cómo paga?'} style={{ gap: space[2] }}>
-          <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontSize: 24, lineHeight: 32, color: c.text }}>{hayPagos ? 'Sumar otro pago' : '¿Cómo paga?'}</Text>
+          <Text accessibilityRole="header" style={{ ...typeScale.tituloGrande, color: c.text }}>{hayPagos ? 'Sumar otro pago' : '¿Cómo paga?'}</Text>
           {mediosDelChofer(medios).map((m) => (
             <OptionCard key={m.id} label={nombreDelMedio(m)} detail={DETALLE_MEDIO[m.tipo]} onPress={() => agregar(m)} />
           ))}
@@ -146,7 +146,7 @@ function OpcionNoPaga({ onPress }: { onPress: () => void }) {
       android_ripple={{ color: c.border }}
       style={{ minHeight: 76, justifyContent: 'center', paddingHorizontal: space[4], paddingVertical: space[3], borderRadius: radii.tarjeta, borderWidth: 2, borderColor: c.danger, backgroundColor: c.surface }}
     >
-      <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.seccion, fontSize: 19, lineHeight: 26, color: c.danger }}>No paga</Text>
+      <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.seccionGrande, color: c.danger }}>No paga</Text>
       <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.secundario, color: c.textSecondary }}>Todo queda en su cuenta corriente</Text>
     </Pressable>
   )
