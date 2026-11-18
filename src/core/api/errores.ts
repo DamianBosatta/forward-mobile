@@ -37,6 +37,15 @@ export function esTiempoAgotado(e: unknown): boolean {
 }
 
 /**
+ * True si el pedido quedó sin respuesta: no llegó ({@link esFallaDeRed}) o se cortó por plazo ({@link esTiempoAgotado}).
+ * En los dos casos el servidor pudo haberlo grabado igual: lo que tiene clave de idempotencia se guarda en el teléfono
+ * y se vuelve a mandar con esa misma clave, nunca con una nueva. Una sola regla para las colas sin señal.
+ */
+export function esSinRespuesta(e: unknown): boolean {
+  return esFallaDeRed(e) || esTiempoAgotado(e)
+}
+
+/**
  * True si `e` es un {@link ApiError} con ese código del catálogo de errores. Es como una pantalla
  * decide qué hacer: por código, nunca leyendo el texto del mensaje.
  */

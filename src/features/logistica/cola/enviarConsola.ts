@@ -1,5 +1,5 @@
 import { api } from '@/core/api/client'
-import { esFallaDeRed, esTiempoAgotado } from '@/core/api/errores'
+import { esSinRespuesta } from '@/core/api/errores'
 import { TOPE_DE_INTENTOS, avisoDeTope, fallosDelTopeTras } from '@/core/utils/colasSinSenal'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -25,7 +25,7 @@ const URL_HOJA = (hojaDeRutaId: string) => `/api/v1/Logistica/hojas-ruta/${hojaD
  * la sesión venció (401: sale cuando vuelva a entrar) o demasiados pedidos (429). La acción sigue esperando.
  */
 function esTransitoria(e: unknown): boolean {
-  if (esFallaDeRed(e) || esTiempoAgotado(e)) return true
+  if (esSinRespuesta(e)) return true
   const status = (e as { status?: unknown } | null)?.status
   if (typeof status !== 'number') return false
   return status === 401 || status === 408 || status === 429 || status >= 500
