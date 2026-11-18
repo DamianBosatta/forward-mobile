@@ -29,7 +29,6 @@ jest.mock('@/core/ui', () => {
 })
 jest.mock('@/core/ui/PremiumInput', () => ({ PremiumInput: () => null }))
 jest.mock('moti', () => ({ MotiView: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
-jest.mock('expo-blur', () => ({ BlurView: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
 let mockAncho = 390
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => ({ width: mockAncho, height: 800, scale: 2, fontScale: 1 }) }))
 jest.mock('../../../../app/(tabs)/compras/[id]', () => {

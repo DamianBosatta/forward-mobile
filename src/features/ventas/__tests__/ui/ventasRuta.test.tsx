@@ -19,7 +19,6 @@ jest.mock('@/core/ui', () => {
 jest.mock('@/core/ui/DataList', () => ({ DataList: ({ ListHeaderComponent }: { ListHeaderComponent: React.ReactNode }) => <>{ListHeaderComponent}</> }))
 jest.mock('@/core/ui/PremiumInput', () => ({ PremiumInput: () => null }))
 jest.mock('moti', () => ({ MotiView: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
-jest.mock('expo-blur', () => ({ BlurView: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
 jest.mock('@/features/ventas/components/ListaVentasNueva', () => {
   const { Text } = require('react-native')
   return { ListaVentasNueva: () => <Text>lista nueva</Text> }
