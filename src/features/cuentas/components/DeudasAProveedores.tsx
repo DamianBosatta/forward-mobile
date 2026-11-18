@@ -1,6 +1,6 @@
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import React, { memo, useCallback, useMemo } from 'react'
-import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native'
+import { FlashList } from '@shopify/flash-list'
+import { Pressable, RefreshControl, Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { HeroSaldo } from '@/features/clientes/components/SaldoDelCliente'
@@ -53,7 +53,7 @@ export function DeudasAProveedores({ onPagar }: { onPagar?: (socioId: string) =>
           )}
         </View>
       ) : null}
-      <FlatList {...LISTA_LARGA_PROPS}
+      <FlashList
         data={filas}
         keyExtractor={item => item.socioId}
         renderItem={renderDeuda}

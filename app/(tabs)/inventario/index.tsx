@@ -1,7 +1,8 @@
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
+import { FlashList } from '@shopify/flash-list'
+import { CeldaDeGrilla, paddingDeGrilla } from '@/core/ui/listaFlash'
 import React, { memo, useCallback, useRef, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
-import { ActivityIndicator, FlatList, Modal, Text, View } from 'react-native'
+import { ActivityIndicator, Modal, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions, useFocusEffect } from "expo-router/react-navigation"
 import { useMutation } from '@tanstack/react-query'
@@ -92,14 +93,16 @@ function CatalogoConsulta() {
 
   const abrirProducto = useCallback((id: string) => { cancelarEscaneo(); setSeleccion(id) }, [cancelarEscaneo])
   const renderProducto = useCallback(({ item }: { item: (typeof productos)[number] }) => (
-    <FilaProducto
-      producto={item}
-      disponible={cat.disponible.get(item.id)}
-      grilla={grilla}
-      seleccionado={dosPaneles && seleccion === item.id}
-      onAbrir={abrirProducto}
-    />
-  ), [cat.disponible, grilla, dosPaneles, seleccion, abrirProducto])
+    <CeldaDeGrilla columnas={columnas} espacio={space[3]}>
+      <FilaProducto
+        producto={item}
+        disponible={cat.disponible.get(item.id)}
+        grilla={grilla}
+        seleccionado={dosPaneles && seleccion === item.id}
+        onAbrir={abrirProducto}
+      />
+    </CeldaDeGrilla>
+  ), [columnas, cat.disponible, grilla, dosPaneles, seleccion, abrirProducto])
 
   const lista = (
     <View style={{ flex: 1 }}>
@@ -127,14 +130,13 @@ function CatalogoConsulta() {
           <Notice tone="peligro">No se pudo cargar el catálogo. Revisá la conexión y volvé a intentar.</Notice>
         </View>
       ) : (
-        <FlatList {...LISTA_LARGA_PROPS}
-          ListHeaderComponent={catSinRed ? <Notice tone="advertencia">{textoSinConexion(cat.dataUpdatedAt)}</Notice> : undefined}
+        <FlashList
+          ListHeaderComponent={catSinRed ? <View style={{ paddingBottom: space[3] }}><Notice tone="advertencia">{textoSinConexion(cat.dataUpdatedAt)}</Notice></View> : undefined}
           key={`columnas-${columnas}`}
           data={productos}
           numColumns={columnas}
           keyExtractor={(p) => p.id}
-          columnWrapperStyle={columnas > 1 ? { gap: space[3] } : undefined}
-          contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] + insetInferior }}
+          contentContainerStyle={{ paddingTop: space[4], paddingHorizontal: paddingDeGrilla(space[4], columnas, space[3]), paddingBottom: space[12] + insetInferior }}
           onEndReached={cat.cargarMas}
           onEndReachedThreshold={0.5}
           ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan con la búsqueda." />}

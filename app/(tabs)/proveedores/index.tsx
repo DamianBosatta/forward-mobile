@@ -1,7 +1,7 @@
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import React, { memo, useCallback, useState } from 'react'
+import { FlashList } from '@shopify/flash-list'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
-import { FlatList, RefreshControl, Text, View } from 'react-native'
+import { RefreshControl, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from "expo-router/react-navigation"
 import { radii, space, typeScale, useColors } from '@/libs/theme'
@@ -81,7 +81,7 @@ export default function ProveedoresScreen() {
           </Text>
         </View>
       ) : null}
-      <FlatList {...LISTA_LARGA_PROPS}
+      <FlashList
         data={proveedores}
         keyExtractor={item => item.id}
         renderItem={renderProveedor}

@@ -1,8 +1,8 @@
 import React, { memo, useCallback, useState } from 'react'
-import { FlatList, Text, View } from 'react-native'
+import { FlashList } from '@shopify/flash-list'
+import { Text, View } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
-import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { Button, Notice, PieFijo, TotalsRow } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { MOTIVO_SIN_PERMISO_DE_COBRO, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
@@ -75,7 +75,7 @@ export function ElegirClienteCobro({ seleccionadoId, onElegir, onContinuar, pued
 
   return (
     <View style={{ flex: 1 }}>
-      <FlatList {...LISTA_LARGA_PROPS}
+      <FlashList
         style={{ flex: 1 }}
         data={clientes}
         keyExtractor={item => item.id}
