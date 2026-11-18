@@ -51,7 +51,7 @@ export function TarjetaDeudores({ estado, datos, onPress, onReintentar }: Props)
           <Text style={[typeScale.secundario, { color: c.textSecondary }]} numberOfLines={2}>{cuantos}</Text>
         </View>
       </View>
-      <Text testID="deudores-monto" style={[typeScale.titulo, importe, { color: c.text, fontSize: 28, lineHeight: 36 }]} numberOfLines={1} adjustsFontSizeToFit>{monto}</Text>
+      <Text testID="deudores-monto" style={[typeScale.destacado, importe, { color: c.text }]} numberOfLines={1} adjustsFontSizeToFit>{monto}</Text>
       {vencido ? <Text testID="deudores-vencido" style={[typeScale.secundario, { color: c.textSecondary }]}>{vencido}</Text> : null}
       {onPress ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44 }}>

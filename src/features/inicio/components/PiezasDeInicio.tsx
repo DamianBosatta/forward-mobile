@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, Text, View, type TextStyle } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
-import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, pesoSemibold } from '@/core/ui/fw'
 
 /**
@@ -15,8 +15,8 @@ function useColoresHero() {
   const c = useColors()
   return { fondo: c.brandSoft, texto: c.text, apoyo: c.textSecondary, carga: c.surface2 }
 }
-/** La cifra grande del hero (galería v2: 32/40, 700). Es la única medida fuera de la escala de texto. */
-const CIFRA_HERO: TextStyle = { fontFamily: FONT.semibold, fontSize: 32, lineHeight: 40, fontWeight: '700', ...importe }
+/** La cifra grande del hero (token cifraGrande, 32/40). */
+const CIFRA_HERO: TextStyle = { ...typeScale.cifraGrande, ...importe }
 const TOCABLE = { minHeight: 44, minWidth: 44, justifyContent: 'center' as const }
 
 export function HeroDeInicio({ etiqueta, cifra, meta, accessibilityLabel, children, testID }: {

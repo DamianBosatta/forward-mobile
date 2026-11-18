@@ -94,7 +94,7 @@ function ClientesScreen() {
           {saldoTotal !== undefined ? (
             <View style={{ alignItems: 'flex-end' }}>
               <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Saldo total</Text>
-              <Text numberOfLines={1} adjustsFontSizeToFit style={[typeScale.titulo, importe, { fontSize: 24, lineHeight: 32, fontWeight: '700', color: c.text }]}>{formatImporte(saldoTotal)}</Text>
+              <Text numberOfLines={1} adjustsFontSizeToFit style={[typeScale.tituloGrande, importe, { color: c.text }]}>{formatImporte(saldoTotal)}</Text>
             </View>
           ) : null}
         </View>

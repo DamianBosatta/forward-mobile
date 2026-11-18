@@ -255,6 +255,7 @@ export const typeScale = {
   tituloGrande: texto(24, 600, 32), // título de hoja o paso
   destacado: texto(28, 600, 36), // importe grande
   consolaCifra: texto(30, 600, 36), // cifra de la parada
+  cifraGrande: texto(32, 600, 40), // cifra del hero de inicio y saldo del cliente
   cifra: texto(36, 600, 44), // cifra hero (reportes)
   hero: texto(48, 600, 56), // marca en el login ancho
 } as const

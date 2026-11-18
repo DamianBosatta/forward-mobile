@@ -50,7 +50,7 @@ export function HeroSaldo({ saldo, vencido, diasDeudaMasVieja, tope, disponible,
         <Text
           numberOfLines={1}
           adjustsFontSizeToFit
-          style={[typeScale.titulo, importe, { fontSize: 32, lineHeight: 40, fontWeight: '700', color: c.onTopBarStrong }]}
+          style={[typeScale.cifraGrande, importe, { color: c.onTopBarStrong }]}
         >
           {cifra ?? formatImporte(saldo)}
         </Text>
