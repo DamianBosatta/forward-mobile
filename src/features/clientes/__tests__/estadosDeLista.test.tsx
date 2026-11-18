@@ -47,7 +47,7 @@ describe.each([
   { nombre: 'Clientes', Pantalla: ClientesScreen, buscador: 'Buscar cliente', vacio: 'Todavía no hay clientes en tu cartera.', sinBusqueda: 'Ningún cliente coincide con la búsqueda.', falla: 'No pudimos cargar los clientes', fila: 'Av. del Valle 89' },
   { nombre: 'Proveedores', Pantalla: ProveedoresScreen, buscador: 'Buscar proveedor', vacio: 'Todavía no hay proveedores cargados.', sinBusqueda: 'Ningún proveedor coincide con la búsqueda.', falla: 'No pudimos cargar los proveedores', fila: 'Insumos del Sur SA', item: { razonSocial: 'Insumos del Sur SA', direccion: '' } },
   { nombre: 'Cuentas corrientes', Pantalla: CuentasScreen, buscador: 'Buscar cliente', vacio: 'Todavía no hay clientes en tu cartera.', sinBusqueda: 'Ningún cliente coincide con la búsqueda.', falla: 'No pudimos cargar los clientes', fila: 'Av. del Valle 89' },
-])('$nombre', ({ Pantalla, buscador, vacio, sinBusqueda, falla, fila, item }) => {
+])('$nombre', ({ nombre, Pantalla, buscador, vacio, sinBusqueda, falla, fila, item }) => {
   it('lista vacía sin búsqueda: estado "vacío" con la frase de siempre', async () => {
     pintar(<Pantalla />)
 
@@ -95,6 +95,7 @@ describe.each([
     pintar(<Pantalla />)
 
     expect(await screen.findByText('No tenés permisos para esta acción.')).toBeTruthy()
-    expect(screen.queryByRole('header', { name: falla })).toBeNull()
+    if (nombre === 'Cuentas corrientes') expect(screen.getByRole('button', { name: 'Reintentar' })).toBeTruthy()
+    else expect(screen.queryByRole('header', { name: falla })).toBeNull()
   })
 })
