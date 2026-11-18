@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { ScanBarcode, Search } from 'lucide-react-native'
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, StatusChip } from '@/core/ui/fw'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
@@ -141,7 +142,7 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
         )}
         {avisoEscaneo ? <Notice tone="advertencia">{avisoEscaneo}</Notice> : null}
       </View>
-      <FlatList
+      <FlatList {...LISTA_LARGA_PROPS}
         key={columnas}
         onLayout={(e) => setAnchoLista(Math.round(e.nativeEvent.layout.width))}
         data={productos}

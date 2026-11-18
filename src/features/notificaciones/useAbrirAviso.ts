@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { useRouter } from 'expo-router'
 import { useMarcarAvisosLeidos, type Aviso } from '@/libs/api-client/notificaciones'
 import { rutaAlTocarAviso } from './bandeja'
@@ -6,10 +7,11 @@ import { rutaAlTocarAviso } from './bandeja'
 export function useAbrirAviso() {
   const router = useRouter()
   const marcar = useMarcarAvisosLeidos()
-  const abrir = (aviso: Pick<Aviso, 'id' | 'leida' | 'accion'>) => {
-    if (!aviso.leida) marcar.mutate([aviso.id])
+  const { mutate } = marcar
+  const abrir = useCallback((aviso: Pick<Aviso, 'id' | 'leida' | 'accion'>) => {
+    if (!aviso.leida) mutate([aviso.id])
     const ruta = rutaAlTocarAviso(aviso.accion)
     if (ruta) router.push(ruta as never)
-  }
+  }, [mutate, router])
   return { abrir, marcar }
 }

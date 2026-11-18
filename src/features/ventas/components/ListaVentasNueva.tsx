@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, Alert, Pressable, ScrollView, SectionList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -6,6 +6,7 @@ import {
   Button, DocumentCard, Field, Notice, Segmented, StatusChip, TopBar, TwoPane, chipForEstado, useMenuLeading,
   type SegmentedOption, useInsetInferior } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
+import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
@@ -72,6 +73,24 @@ interface Props {
   filtroDeRuta?: FiltroVentasRuta | null
 }
 
+/** Fila memoizada: no se vuelve a pintar mientras la venta y `onAbrir` no cambien. */
+const FilaVenta = memo(function FilaVenta({ v, onAbrir }: { v: Venta; onAbrir: (id: string) => void }) {
+  return (
+    <View style={{ marginBottom: space[3] }}>
+      <DocumentCard
+        numero={v.codigoPedido ?? v.id.slice(0, 8).toUpperCase()}
+        vendedor={v.vendedorNombre}
+        {...clienteDe(v)}
+        hora={horaDe(v.fecha)}
+        detalle={detalleDe(v)}
+        importe={v.totalAmount}
+        chip={chipForEstado('venta', v.estado)}
+        onPress={() => onAbrir(v.id)}
+      />
+    </View>
+  )
+})
+
 /** Lista de ventas con el formato nuevo (láminas Ventas y TabVentas). Detrás del switch de la venta nueva. */
 export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
   const insetInferior = useInsetInferior()
@@ -88,10 +107,12 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
     if (elegida && q.data && !q.isFetching && !l.ventas.some((v) => v.id === elegida)) setElegida(null)
   }, [elegida, q.data, q.isFetching, l.ventas])
 
-  const abrir = (id: string) => {
+  const abrir = useCallback((id: string) => {
     if (isTabletLandscape) setElegida(id)
     else router.push(`/(tabs)/ventas/${id}` as never)
-  }
+  }, [isTabletLandscape, router])
+  const secciones = useMemo(() => agruparPorDia(l.ventas, (v) => v.fecha), [l.ventas])
+  const renderVenta = useCallback(({ item }: { item: Venta }) => <FilaVenta v={item} onAbrir={abrir} />, [abrir])
 
   // Desde forward-system #883 el borrador guarda si se armaba un pedido o un presupuesto y se retoma
   // como tal. Un servidor anterior no lo manda (todo borrador es presupuesto ahí): se pregunta.
@@ -168,28 +189,15 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
   )
 
   const listaVentas = (
-    <SectionList
-      sections={agruparPorDia(l.ventas, (v) => v.fecha)}
+    <SectionList {...LISTA_LARGA_PROPS}
+      sections={secciones}
       keyExtractor={(v) => v.id}
       ListHeaderComponent={filtros}
       contentContainerStyle={{ padding: space[4], paddingBottom: space[12] * 2 + insetInferior }}
       renderSectionHeader={({ section }) => (
         <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text, backgroundColor: c.bg, paddingVertical: space[2] }]}>{section.titulo}</Text>
       )}
-      renderItem={({ item: v }) => (
-        <View style={{ marginBottom: space[3] }}>
-          <DocumentCard
-            numero={v.codigoPedido ?? v.id.slice(0, 8).toUpperCase()}
-            vendedor={v.vendedorNombre}
-            {...clienteDe(v)}
-            hora={horaDe(v.fecha)}
-            detalle={detalleDe(v)}
-            importe={v.totalAmount}
-            chip={chipForEstado('venta', v.estado)}
-            onPress={() => abrir(v.id)}
-          />
-        </View>
-      )}
+      renderItem={renderVenta}
       onEndReached={() => { if (q.hasNextPage && !q.isFetchingNextPage) void q.fetchNextPage() }}
       onEndReachedThreshold={0.4}
       refreshing={q.isRefetching}
