@@ -298,6 +298,31 @@ export interface OpcionesGet extends RequestInit {
   estadosEsperados?: number[]
 }
 
+/**
+ * The one place that sends an authenticated request and, on a 401, renews the token once (mutex shared with every
+ * caller) and retries with it. If the renewal fails it throws ApiError(401). Returns the final response, ok or not.
+ */
+async function enviarConRenovacion(url: string, options: RequestInit, headers: Headers): Promise<Response> {
+  const response = await fetchWithTimeout(url, { ...options, headers })
+  if (response.status !== 401) return response
+  const refreshed = await attemptRefresh()
+  if (!refreshed) throw new ApiError(401, 'Sesión expirada')
+  // Reintentar con el nuevo token
+  headers.set('Authorization', `Bearer ${_getToken()}`)
+  return fetchWithTimeout(url, { ...options, headers })
+}
+
+/**
+ * Authenticated download of an absolute URL (PDF / Excel for the share sheet): same Bearer token, 401 renewal and
+ * timeout as `api`, but returns the raw Response (the caller reads the blob and maps the status).
+ */
+export async function descargarConAuth(url: string, options: RequestInit = {}): Promise<Response> {
+  const headers = new Headers(options.headers)
+  const token = _getToken()
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+  return enviarConRenovacion(url, options, headers)
+}
+
 async function fetchWithAuth<T>(
   endpoint: string,
   { estadosEsperados, ...options }: OpcionesGet = {},
@@ -329,29 +354,7 @@ async function fetchWithAuth<T>(
   const url = `${API_URL}${endpoint}`;
   logger.info(`API Request: ${options.method || 'GET'} ${endpoint}`)
 
-  const response = await fetchWithTimeout(url, { ...options, headers })
-
-  // Silent refresh on 401
-  if (response.status === 401) {
-    const refreshed = await attemptRefresh()
-    if (refreshed) {
-      // Reintentar con el nuevo token
-      const newToken = _getToken()
-      headers.set('Authorization', `Bearer ${newToken}`)
-      const retryResponse = await fetchWithTimeout(url, { ...options, headers })
-
-      if (!retryResponse.ok) {
-        const errorData = await retryResponse.json().catch(() => ({}))
-        throw leerError(errorData, retryResponse.status)
-      }
-
-      if (retryResponse.status === 204) return undefined as T
-      const retryJson = await retryResponse.json()
-      return leer(retryJson, retryResponse.status)
-    } else {
-      throw new ApiError(401, 'Sesión expirada')
-    }
-  }
+  const response = await enviarConRenovacion(url, options, headers)
 
     if (!response.ok) {
       let errorData: unknown = null

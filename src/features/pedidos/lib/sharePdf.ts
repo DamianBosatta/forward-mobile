@@ -12,6 +12,7 @@
 // the /legacy sub-path. The root export exposes only the new File/Directory API.
 import * as FileSystem from 'expo-file-system/legacy'
 import { useAuthStore } from '@/libs/store/auth.store'
+import { ApiError, descargarConAuth } from '@/core/api/client'
 
 // expo-sharing pulls in the ExpoSharing NATIVE module the moment it is evaluated. If the
 // installed dev/runtime build was compiled before expo-sharing was added to the project, a
@@ -85,7 +86,7 @@ export async function sharePdf(url: string, fileName: string, options?: SharePdf
     }
   }
 
-  // 2. Read auth token from store (same source the api client uses)
+  // 2. No session at all: do not even try the download
   const token = useAuthStore.getState().accessToken
   if (!token) {
     return {
@@ -95,21 +96,23 @@ export async function sharePdf(url: string, fileName: string, options?: SharePdf
     }
   }
 
-  // 3. Fetch the PDF with the Bearer token
+  // 3. Download the file
   const method = options?.method ?? 'GET'
+  // Same client path as `api`: Bearer token, 15 s timeout and the one 401 renewal + retry (src/core/api).
   const fetchInit: RequestInit = {
     method,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}),
-    },
+    headers: method === 'POST' ? { 'Content-Type': 'application/json' } : {},
     ...(method === 'POST' && options?.body ? { body: JSON.stringify(options.body) } : {}),
   }
 
   let response: Response
   try {
-    response = await fetch(url, fetchInit)
-  } catch {
+    response = await descargarConAuth(url, fetchInit)
+  } catch (e) {
+    // Renewal failed: the session is over (ApiError 401), not a connectivity problem.
+    if (e instanceof ApiError && e.status === 401) {
+      return { ok: false, reason: 'auth', message: 'Sesión expirada. Por favor, volvé a iniciar sesión.' }
+    }
     return {
       ok: false,
       reason: 'network',

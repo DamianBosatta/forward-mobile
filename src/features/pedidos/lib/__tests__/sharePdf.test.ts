@@ -4,6 +4,9 @@
  */
 
 import { sharePdf } from '../sharePdf'
+import { configureApiClient } from '@/core/api/client'
+
+jest.mock('@/core/query/persistConfig', () => ({ mmkvPersister: { removeClient: jest.fn() } }))
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
 
@@ -65,6 +68,12 @@ function makeOkResponse(status = 200) {
 beforeEach(() => {
   jest.clearAllMocks()
   mockAccessToken.value = 'test-jwt-token'
+  configureApiClient({
+    getToken: () => mockAccessToken.value,
+    getRefreshToken: () => null,
+    onTokensRefreshed: jest.fn(),
+    onUnauthorized: jest.fn(),
+  })
   mockIsAvailable.mockResolvedValue(true)
   mockShareAsync.mockResolvedValue(undefined)
 })
@@ -73,14 +82,8 @@ describe('sharePdf — Authorization header', () => {
   it('sends Authorization: Bearer <token> in the fetch request', async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse())
     await sharePdf('https://api.example.com/pdf', 'test.pdf')
-    expect(mockFetch).toHaveBeenCalledWith(
-      'https://api.example.com/pdf',
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: 'Bearer test-jwt-token',
-        }),
-      }),
-    )
+    expect(mockFetch.mock.calls[0][0]).toBe('https://api.example.com/pdf')
+    expect(new Headers(mockFetch.mock.calls[0][1].headers).get('Authorization')).toBe('Bearer test-jwt-token')
   })
 })
 
@@ -169,5 +172,31 @@ describe('sharePdf — success path', () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse())
     await sharePdf('https://api.example.com/pdf', 'test.pdf')
     expect(mockShareAsync).toHaveBeenCalledWith('file:///cache/test.pdf', { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' })
+  })
+})
+
+describe('sharePdf — 401 refresh (M10a)', () => {
+  it('with an expired token refreshes once and retries the download with the new token', async () => {
+    let token = 'vencido'
+    configureApiClient({
+      getToken: () => token,
+      getRefreshToken: () => 'refresh-1',
+      onTokensRefreshed: (t) => { token = t.accessToken },
+      onUnauthorized: jest.fn(),
+    })
+    mockAccessToken.value = 'vencido'
+    mockFetch
+      .mockResolvedValueOnce(makeOkResponse(401))
+      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ access_token: 'nuevo', refresh_token: 'refresh-2' }) })
+      .mockResolvedValueOnce(makeOkResponse())
+
+    const result = await sharePdf('https://api.example.com/pdf', 'test.pdf')
+
+    expect(result).toEqual({ ok: true })
+    expect(mockFetch).toHaveBeenCalledTimes(3)
+    expect(mockFetch.mock.calls[1][0]).toContain('/connect/token')
+    expect(mockFetch.mock.calls[2][0]).toBe('https://api.example.com/pdf')
+    expect(new Headers(mockFetch.mock.calls[2][1].headers).get('Authorization')).toBe('Bearer nuevo')
+    expect(mockShareAsync).toHaveBeenCalledTimes(1)
   })
 })
