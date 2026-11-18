@@ -88,14 +88,39 @@ export function suscribirCola(oyente: () => void): () => void {
   return () => { oyentes.delete(oyente) }
 }
 
-/** Guarda la acción en el teléfono. La misma clave dos veces queda una sola vez (devuelve la que ya estaba). */
+/** Una entrega y su aviso resuelven la misma parada; un cobro y un "No cobré", la misma parada de cobro. */
+const familia = (tipo: DatosAccion['tipo']) => (tipo === 'cobroParada' || tipo === 'noCobroParada' ? 'cobro' : 'entrega')
+
+type Parada = Pick<DatosAccion, 'tipo' | 'hojaDeRutaId' | 'paradaId'>
+
+/** Una acción para revisar de esa misma parada (misma hoja, mismo id y misma familia). */
+const esRevisarDe = (p: Parada) => (a: AccionEnCola) =>
+  a.estado.tipo === 'revisar' && a.hojaDeRutaId === p.hojaDeRutaId && a.paradaId === p.paradaId && familia(a.tipo) === familia(p.tipo)
+
+/**
+ * Guarda la acción en el teléfono. La misma clave dos veces queda una sola vez (devuelve la que ya estaba): una que
+ * espera no cambia, porque puede estar saliendo. Lo que el chofer vuelve a reportar de una parada que quedó para
+ * revisar la reemplaza (RED-09): con la misma clave, vuelve a esperar con el cuerpo y la hora nuevos (el servidor
+ * aplica la clave una sola vez); con otra clave (la app se reinició y la perdió), la para revisar se saca.
+ */
 export function encolarAccion(usuarioId: string, d: DatosAccion, ahora = Date.now()): AccionEnCola {
   const lista = leerCola(usuarioId)
   const ya = lista.find((a) => a.clave === d.clave)
-  if (ya) return ya
+  if (ya && ya.estado.tipo !== 'revisar') return ya
   const accion: AccionEnCola = { ...d, encoladaEn: ahora, estado: { tipo: 'esperando', intentos: 0 } }
-  escribir(usuarioId, [...lista, accion])
+  const reemplazada = esRevisarDe(d)
+  escribir(usuarioId, [...lista.filter((a) => a.clave !== d.clave && !reemplazada(a)), accion])
   return accion
+}
+
+/**
+ * El servidor ya tiene esa parada resuelta (se reportó con señal, o ya estaba registrada): lo que había quedado para
+ * revisar de ella sobra y no tiene que frenar el cierre del viaje. Lo que espera no se toca: puede estar saliendo.
+ */
+export function olvidarRevisarDeParada(usuarioId: string, p: Parada): void {
+  const lista = leerCola(usuarioId)
+  const quedan = lista.filter((a) => !esRevisarDe(p)(a))
+  if (quedan.length !== lista.length) escribir(usuarioId, quedan)
 }
 
 /** Cambia el estado de una acción (y lo deja guardado antes de seguir). */
