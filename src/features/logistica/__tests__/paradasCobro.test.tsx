@@ -5,7 +5,8 @@ import { ApiError } from '@/core/api/client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { conTema, TEMAS } from '@/core/ui/fw/__testing__/tema'
 import type { ParadaCobro } from '@/features/cobros/paradaCobro'
-import { leerCola, quitarDeCola } from '../cola'
+import { encolarAccion, leerCola, quitarDeCola } from '../cola'
+import { cambiarEstado } from '../cola/colaConsola'
 import { HojaDeRutaVista } from '../consola/HojaDeRutaVista'
 import { resumenRuta } from '../consola/hojaDeRuta'
 
@@ -170,6 +171,21 @@ describe.each(TEMAS)('paradas de solo cobro en la consola del chofer (%s)', (tem
     expect(mockPost).toHaveBeenCalledWith('/api/v1/Logistica/hojas-ruta/h1/paradas-cobro/pc1/cobrar', {
       claveIdempotencia: 'clave-1', lineas: [{ medioPagoId: 'm-ef', monto: 85000 }],
     })
+    expect(leerCola(USUARIO)).toEqual([])
+  })
+
+  it('RED-01: a collection left for review (old key) is dropped once the same stop is collected online', async () => {
+    encolarAccion(USUARIO, {
+      tipo: 'cobroParada', clave: 'k-viejo', hojaDeRutaId: 'h1', paradaId: 'pc1', clienteNombre: 'Don Pepe',
+      cuerpo: { claveIdempotencia: 'k-viejo', lineas: [] }, cobrado: 85000,
+    })
+    cambiarEstado(USUARIO, 'k-viejo', { tipo: 'revisar', mensaje: 'La conexión tardó demasiado.' })
+    mockPost.mockResolvedValue({ paradaCobroId: 'pc1', pagoId: 'pg1', montoCobrado: 85000, repetida: false })
+    pintar([cobro()])
+    await userEvent.press(screen.getByLabelText('Cobrar en Av. Rivadavia 4500'))
+    await userEvent.press(await screen.findByText('Efectivo'))
+    await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
+    expect(await screen.findByText('Cobro registrado.')).toBeTruthy()
     expect(leerCola(USUARIO)).toEqual([])
   })
 

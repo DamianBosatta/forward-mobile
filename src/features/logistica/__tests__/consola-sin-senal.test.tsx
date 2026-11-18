@@ -1,12 +1,13 @@
 import React from 'react'
 import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, render, screen, userEvent, within } from '@testing-library/react-native'
+import { act, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { conTema } from '@/core/ui/fw/__testing__/tema'
 import { reiniciarCamara } from '@/features/logistica/__testing__/camara'
 import { confirmarEntrega, noSumarOtroCobro } from '@/features/logistica/__testing__/confirmar'
-import { leerCola, quitarDeCola } from '../cola'
+import { encolarAccion, leerCola, quitarDeCola } from '../cola'
+import { cambiarEstado } from '../cola/colaConsola'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
 
 /**
@@ -211,5 +212,23 @@ describe('Consola del chofer sin señal', () => {
     await userEvent.press(screen.getByLabelText('Terminé el viaje'))
     expect(screen.queryByText('¿Cerrar el viaje?')).toBeNull()
     expect(screen.getByText('Falta mandar 1 acción: esperá la señal para cerrar el viaje.')).toBeTruthy()
+  })
+
+  it.each([
+    ['the server takes it', () => mockPost.mockResolvedValue({ paradaId: 'p1', repetida: false })],
+    ['the server already had it', () => mockPost.mockRejectedValue(Object.assign(new Error('La parada ya fue reportada.'), { status: 409, errors: [] }))],
+  ])('RED-01: re-reporting a stop online drops what was left for review for it (%s), so it no longer blocks closing', async (_caso, responder) => {
+    encolarAccion('u1', {
+      tipo: 'entrega', clave: 'k-viejo', hojaDeRutaId: 'h1', paradaId: 'p1', clienteNombre: 'Abel',
+      cuerpo: { claveIdempotencia: 'k-viejo' }, cobrado: 1000, conDevolucion: false,
+    })
+    cambiarEstado('u1', 'k-viejo', { tipo: 'revisar', mensaje: 'La conexión tardó demasiado.' })
+    responder()
+    await pintar(HOJA, false)
+    await abrirEntrega()
+    await alResumen('Abel', false)
+    await confirmarEntrega()
+    await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
+    await waitFor(() => expect(leerCola('u1')).toEqual([]))
   })
 })

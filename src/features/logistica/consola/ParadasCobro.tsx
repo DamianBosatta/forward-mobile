@@ -14,7 +14,7 @@ import {
   type MotivoNoCobro, type ParadaCobro,
 } from '@/features/cobros/paradaCobro'
 import { useMediosCobroChofer } from '@/libs/api-client/logistica'
-import { encolarAccion } from '../cola/colaConsola'
+import { encolarAccion, olvidarRevisarDeParada } from '../cola/colaConsola'
 import { useColaConsola } from '../cola/useColaConsola'
 import { conAccionesCobroEnCola } from '../cola/conAccionesEnCola'
 import { ParadaCobroPantalla, lineasParaEnviar, type ResultadoParadaCobro } from './ParadaCobroPantalla'
@@ -87,6 +87,8 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
       if (!onlineManager.isOnline()) { guardar(); return }
       await cobrar.mutateAsync({ hojaDeRutaId, paradaCobroId: parada.id, cuerpo })
       claves.current.delete(parada.id)
+      // El servidor ya la tiene: lo que había quedado para revisar de esta parada sobra y no frena el cierre (RED-01).
+      olvidarRevisarDeParada(usuarioId, { tipo: 'cobroParada', hojaDeRutaId, paradaId: parada.id })
       setResultado({ tipo: 'cobro', monto, guardada: false })
     } catch (e) {
       if (esFallaDeRed(e)) { guardar(); return }
@@ -117,6 +119,7 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
     try {
       if (!onlineManager.isOnline()) { guardar(); return }
       await noCobrar.mutateAsync({ hojaDeRutaId, paradaCobroId: parada.id, cuerpo: { motivo } })
+      olvidarRevisarDeParada(usuarioId, { tipo: 'noCobroParada', hojaDeRutaId, paradaId: parada.id })
       setResultado({ tipo: 'noCobrada', motivo: texto, guardada: false })
     } catch (e) {
       if (esFallaDeRed(e)) { guardar(); return }

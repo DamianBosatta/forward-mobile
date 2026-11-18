@@ -26,7 +26,7 @@ import { ReportarParada, type Resultado, type ReporteParada } from '@/features/l
 import { LlegueParada } from '@/features/logistica/consola/LlegueParada'
 import { EntregaLista } from '@/features/logistica/consola/EntregaLista'
 import { AvisadoVentas } from '@/features/logistica/consola/AvisadoVentas'
-import { ColaConsola, encolarAccion, useColaConsola, type DatosAccion } from '@/features/logistica/cola'
+import { ColaConsola, encolarAccion, olvidarRevisarDeParada, useColaConsola, type DatosAccion } from '@/features/logistica/cola'
 import { conAccionesEnCola } from '@/features/logistica/cola/conAccionesEnCola'
 import { PermisoGps } from '@/features/logistica/gps/PermisoGps'
 import { terminarRegistroGps } from '@/features/logistica/gps/registroGps'
@@ -232,7 +232,10 @@ export default function ConsolaChoferScreen() {
 
   // Lo reportado sin señal que todavía no salió ya cuenta como hecho, aunque el servidor aún no lo sepa.
   const deEsteViaje = cola.items.filter((a) => a.hojaDeRutaId === viaje.id)
-  const sinMandar = deEsteViaje.filter((a) => a.estado.tipo === 'esperando').length
+  const esperando = deEsteViaje.filter((a) => a.estado.tipo === 'esperando').length
+  // Lo que quedó para revisar tampoco salió (RED-01): se reintenta o se descarta en la píldora antes de cerrar el viaje.
+  const enRevision = deEsteViaje.length - esperando
+  const sinMandar = esperando + enRevision
   const detalles = conAccionesEnCola((viaje.detalles ?? []) as ParadaDto[], deEsteViaje)
   const resumen = resumenRuta(detalles)
   const finalizada = esEstadoHojaRuta(viaje.estado, 'Finalizada')
@@ -290,7 +293,11 @@ export default function ConsolaChoferScreen() {
         // Sin señal no se llama al servidor: queda en el teléfono con la misma clave y sale sola al volver.
         const guardada = !onlineManager.isOnline()
         if (guardada) guardarEntrega(parada, cuerpo, cobrado)
-        else await entregar.mutateAsync({ hojaDeRutaId: viaje.id, paradaId: parada.id, cuerpo })
+        else {
+          await entregar.mutateAsync({ hojaDeRutaId: viaje.id, paradaId: parada.id, cuerpo })
+          // El servidor ya la tiene: lo que había quedado para revisar de esta parada sobra (RED-01).
+          olvidarRevisarDeParada(usuarioId, { tipo: 'entrega', hojaDeRutaId: viaje.id, paradaId: parada.id })
+        }
         updateStopStatus(parada.id, { delivered: true, observations: r.entrega.observaciones ?? undefined })
         setLista({ parada, cobrado, piezas, guardada })
         setReportando(null)
@@ -309,6 +316,7 @@ export default function ConsolaChoferScreen() {
         if (fallo.tipo === 'claveUsada') claves.current.set(parada.id, nuevaClaveIdempotencia())
         if (fallo.tipo === 'yaRegistrada') {
           // Un intento anterior ya la registró (quizás con otros datos): manda lo que guardó el servidor.
+          olvidarRevisarDeParada(usuarioId, { tipo: 'entrega', hojaDeRutaId: viaje.id, paradaId: parada.id })
           setReportando(null)
           setAviso(fallo.mensaje)
           remota.refetch()
@@ -339,6 +347,7 @@ export default function ConsolaChoferScreen() {
       }
       await reportar.mutateAsync({ hojaDeRutaId: viaje.id, paradaId: parada.id, ...cuerpo })
       clavesAviso.current.delete(parada.id)
+      olvidarRevisarDeParada(usuarioId, { tipo: 'noEntrega', hojaDeRutaId: viaje.id, paradaId: parada.id })
       updateStopStatus(parada.id, { delivered: false, observations: r.observaciones, reason: r.motivoRechazo })
       setGuardado(false)
       setAvisado({ guardado: false })
@@ -408,7 +417,7 @@ export default function ConsolaChoferScreen() {
       {!enLinea ? (
         <Notice tone="advertencia" title="Sin señal.">Seguí trabajando: se manda solo cuando vuelva.</Notice>
       ) : null}
-      {guardado && sinMandar > 0 ? <Notice tone="info" title="Guardado sin señal.">Se manda cuando haya señal.</Notice> : null}
+      {guardado && esperando > 0 ? <Notice tone="info" title="Guardado sin señal.">Se manda cuando haya señal.</Notice> : null}
       {soloLectura ? <Notice tone="info">Esta hoja de ruta es de otro chofer: solo podés verla.</Notice> : null}
       {finalizada ? <Notice tone="exito" title="Viaje finalizado.">Quedó cerrado en el sistema.</Notice> : null}
       {cancelada ? <Notice tone="info" title="Hoja cancelada.">La oficina canceló esta hoja de ruta antes de salir.</Notice> : null}
@@ -421,7 +430,11 @@ export default function ConsolaChoferScreen() {
     </View>
   )
 
-  const motivoSinMandar = `Falta mandar ${sinMandar} ${sinMandar === 1 ? 'acción' : 'acciones'}: esperá la señal para cerrar el viaje.`
+  const motivoSinMandar = [
+    esperando > 0 ? `Falta mandar ${esperando} ${esperando === 1 ? 'acción' : 'acciones'}: esperá la señal para cerrar el viaje.` : '',
+    enRevision === 1 ? '1 acción para revisar: reintentala o descartala para cerrar el viaje.' : '',
+    enRevision > 1 ? `${enRevision} acciones para revisar: reintentalas o descartalas para cerrar el viaje.` : '',
+  ].filter(Boolean).join(' ')
   const paradasCobro = paradasCobroDe(viaje)
   // Se puede finalizar con cobros sin resolver (el servidor lo permite): se avisa cuántos y que vuelven a pendientes.
   const avisoCobros = avisoDeFinalizar(paradasCobroSinResolver(paradasCobro))
