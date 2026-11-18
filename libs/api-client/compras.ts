@@ -146,6 +146,7 @@ export function useCompra(id: string) {
 const intentoCrearCompra = crearIntento()
 const intentoConfirmarCompra = crearIntento()
 const intentoRecibirCompra = crearIntento()
+const intentoIniciarBorradorCompra = crearIntento()
 
 /** Confirma una compra (nota de pedido → confirmada). Una sola copia: el hook y el autoguardado del borrador la usan. */
 export const confirmarCompra = (id: string) =>
@@ -276,7 +277,7 @@ export interface GuardarCompraBody {
 /** Llamadas sueltas del borrador: el autoguardado las encadena con la versión de cada respuesta. */
 export const borradorCompraApi = {
   iniciar: (proveedorId: string, depositoId: string) =>
-    api.post<CompraActionResponse>('/api/v1/Compras/borradores', { proveedorId, depositoId }),
+    conClave(intentoIniciarBorradorCompra, { proveedorId, depositoId }, (cuerpo) => api.post<CompraActionResponse>('/api/v1/Compras/borradores', cuerpo)),
   guardar: (body: GuardarCompraBody) => api.put<CompraActionResponse>(`/api/v1/Compras/${body.id}`, body),
   guardarNota: (id: string, version: number) =>
     api.post<CompraActionResponse>(`/api/v1/Compras/${id}/guardar-nota-pedido`, { compraId: id, version }),

@@ -2,6 +2,7 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tansta
 import { Alert } from 'react-native'
 import { api } from './client'
 import { SIN_DEPOSITO_DE_SESION } from '@/core/api/depositoSesion'
+import { conClave, crearIntento } from '@/core/utils/idempotencia'
 import type { PagedResult, SocioComercial, SocioDetailDto, CreateSocioRequest, UpdateSocioRequest, ClienteLightDto } from './types'
 export type { ClienteLightDto }
 import { invalidarPorCambioDeSocio } from './invalidaciones'
@@ -164,10 +165,14 @@ export function useInfiniteSocios(params: SociosParams = {}) {
   })
 }
 
+/** Una clave por intento (ver `crearIntento`): el reintento o el doble toque del mismo alta manda la misma. */
+const intentoCrearSocio = crearIntento()
+
 export function useCreateSocio() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: CreateSocioRequest) => api.post<string>('/api/v1/socios-comerciales', data),
+    mutationFn: (data: CreateSocioRequest) =>
+      conClave(intentoCrearSocio, data, (cuerpo) => api.post<string>('/api/v1/socios-comerciales', cuerpo)),
     onSuccess: () => invalidarPorCambioDeSocio(qc),
   })
 }
