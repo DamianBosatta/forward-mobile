@@ -1,6 +1,7 @@
 import React from 'react'
 import { StyleSheet, TextInput, View } from 'react-native'
 import { render, screen } from '@testing-library/react-native'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Search } from 'lucide-react-native'
 import { space, themeColors } from '@/libs/theme'
 import { OfflineBanner } from '@/core/ui/OfflineBanner'
@@ -77,9 +78,11 @@ describe('TopBar: campo en la barra (propuesta de Cuenta, Buscar)', () => {
 describe('TopBar: aviso sin conexión debajo de la barra (propuesta de Inicio, frame 10)', () => {
   const pintar = (barra: React.ReactElement) =>
     render(
-      <SafeAreaInsetsContext.Provider value={INSETS}>
-        <OfflineBanner>{barra}</OfflineBanner>
-      </SafeAreaInsetsContext.Provider>,
+      <QueryClientProvider client={new QueryClient()}>
+        <SafeAreaInsetsContext.Provider value={INSETS}>
+          <OfflineBanner>{barra}</OfflineBanner>
+        </SafeAreaInsetsContext.Provider>
+      </QueryClientProvider>,
     )
 
   it('sin señal el aviso va debajo de la barra, fuera del bloque oscuro, y no vuelve a sumar el margen del sistema', () => {
