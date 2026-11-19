@@ -159,15 +159,13 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
           <EstadoDeConsulta
             cargando={isLoading}
             error={isError ? (error ?? true) : undefined}
-            vacio
+            vacio={productos.length === 0}
             esqueleto={esqueletoDeFilas(3)}
             tituloError="No pudimos cargar el catálogo"
             textoError={isError ? mensajeDeError(error, 'No se pudo cargar el catálogo. Revisá la conexión y volvé a intentar.') : undefined}
             tituloVacio="No hay productos que coincidan."
             onReintentar={() => { void reintentar() }}
-          >
-            {null}
-          </EstadoDeConsulta>
+          />
         }
         renderItem={renderItem}
       />
