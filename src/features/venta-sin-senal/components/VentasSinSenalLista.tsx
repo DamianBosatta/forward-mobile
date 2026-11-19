@@ -2,7 +2,7 @@ import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Clock } from 'lucide-react-native'
 import { FONT, importe as cifras, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
-import { Notice, StatusChip, chipForEstado, formatImporte, type ChipInfo } from '@/core/ui/fw'
+import { Button, Notice, StatusChip, chipForEstado, formatImporte, type ChipInfo } from '@/core/ui/fw'
 import { direccionDeEntrega, inicialesDeDireccion, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { horaDe } from '@/features/ventas/lib/agruparPorDia'
 import { agrupar } from '../hooks/useVentasSinSenal'
@@ -16,6 +16,8 @@ interface Props {
   horaCatalogo: string | null
   /** Tocar una venta: abrir la enviada o el borrador, o revisar la rechazada. Sin esto las filas no se tocan. */
   onAbrir?: (v: VentaEnCola) => void
+  /** "Descartar" en las ventas para revisar (RED-R3-01): quien lo recibe pide la confirmación y las saca de la cola. Sin esto no hay botón. */
+  onDescartar?: (v: VentaEnCola) => void
 }
 
 const EN_EL_TELEFONO: ChipInfo = { estado: 'pendiente', label: 'En cola' }
@@ -49,7 +51,7 @@ function detalleDe(v: VentaEnCola): string | null {
 }
 
 /** V9 "Mis ventas de hoy": lo que espera en el teléfono, lo que hay que revisar y lo enviado. */
-export function VentasSinSenalLista({ items, sinSenal, horaCatalogo, onAbrir }: Props) {
+export function VentasSinSenalLista({ items, sinSenal, horaCatalogo, onAbrir, onDescartar }: Props) {
   const c = useColors()
   const { esperando, paraRevisar, enviadas } = agrupar(items)
   const titulo = [typeScale.secundario, { fontFamily: FONT.semibold, fontWeight: '600' as const, color: c.textSecondary }]
@@ -75,7 +77,16 @@ export function VentasSinSenalLista({ items, sinSenal, horaCatalogo, onAbrir }: 
       {paraRevisar.length > 0 && (
         <>
           <Text accessibilityRole="header" style={titulo}>{`Para revisar · ${paraRevisar.length}`}</Text>
-          {paraRevisar.map((v) => <Tarjeta key={v.clave}><Fila v={v} onAbrir={onAbrir} /></Tarjeta>)}
+          {paraRevisar.map((v) => (
+            <Tarjeta key={v.clave}>
+              <Fila v={v} onAbrir={onAbrir} />
+              {onDescartar ? (
+                <View style={{ paddingHorizontal: space[4], paddingBottom: space[3] }}>
+                  <Button variant="secundario" label="Descartar" accessibilityLabel={`Descartar la venta de ${direccionDeEntrega(v.cliente)}`} onPress={() => onDescartar(v)} />
+                </View>
+              ) : null}
+            </Tarjeta>
+          ))}
         </>
       )}
 
