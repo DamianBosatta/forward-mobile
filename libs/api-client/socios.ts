@@ -18,6 +18,8 @@ export interface SociosParams {
   localidad?:  string
   /** Solo los clientes con deuda vencida, entre los que el usuario puede ver el saldo. */
   conDeudaVencida?: boolean
+  /** Solo los clientes con saldo deudor ("Me deben"); con `activo` coincide con `clientesConDeuda` de /deudas/resumen. */
+  conDeuda?: boolean
   /** Orden de la lista (default del servidor: `RazonSocial`); `Direccion` deja los sin dirección al final. */
   ordenarPor?: 'RazonSocial' | 'Direccion'
   desc?:       boolean
@@ -130,6 +132,7 @@ export function useInfiniteSocios(params: SociosParams = {}) {
       if (params.agenda) sp.append('agenda', 'true')
       if (params.localidad) sp.append('localidad', params.localidad)
       if (params.conDeudaVencida) sp.append('conDeudaVencida', 'true')
+      if (params.conDeuda) sp.append('conDeuda', 'true')
       if (params.ordenarPor) sp.append('OrdenarPor', params.ordenarPor)
       if (params.desc) sp.append('Desc', 'true')
 

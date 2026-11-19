@@ -9,6 +9,8 @@ export interface FiltrosDeCartera {
   localidad?: string
   /** Solo los clientes con deuda vencida. */
   conDeudaVencida: boolean
+  /** Solo los clientes con saldo deudor (pestaña "Me deben" de Cuentas). */
+  conDeuda?: boolean
 }
 
 export const SIN_FILTROS: FiltrosDeCartera = { conDeudaVencida: false }

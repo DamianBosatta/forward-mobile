@@ -34,6 +34,7 @@ export function useCartera(
     pageSize: 20,
     ...(filtros?.localidad ? { localidad: filtros.localidad } : {}),
     ...(filtros?.conDeudaVencida ? { conDeudaVencida: true } : {}),
+    ...(filtros?.conDeuda ? { conDeuda: true } : {}),
     ...(orden?.ordenarPor ? { ordenarPor: orden.ordenarPor } : {}),
     ...(orden?.desc ? { desc: true } : {}),
     ...(sinDepositoDeSesion ? { sinDepositoDeSesion: true } : {}),

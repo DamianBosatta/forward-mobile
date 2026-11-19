@@ -97,6 +97,36 @@ describe('R10 Cuentas corrientes: resumen y transferencia', () => {
 
     await waitFor(() => expect(get.mock.calls.some(([u]) => String(u).includes('conDeudaVencida=true'))).toBe(true), ESPERA)
   })
+
+  it('"Me deben" pide al servidor solo los clientes activos con deuda', async () => {
+    renderConQuery(<CuentasCorrientesScreen />)
+    await screen.findByText('Mostrando 1 de 142', {}, ESPERA)
+
+    const pedidos = get.mock.calls.map(([u]) => String(u)).filter(u => u.startsWith('/api/v1/socios-comerciales?'))
+    expect(pedidos.length).toBeGreaterThan(0)
+    for (const u of pedidos) {
+      expect(u).toContain('conDeuda=true')
+      expect(u).toContain('activo=true')
+    }
+    expect(screen.getByText('Me deben · 142')).toBeTruthy()
+  })
+
+  it('"Me deben" sin deudores dice que nadie te debe', async () => {
+    get.mockImplementation(async (url: string) => (url.startsWith('/api/v1/socios-comerciales?') ? pagina([], 0) : fichaConCuentas()))
+    renderConQuery(<CuentasCorrientesScreen />)
+
+    expect(await screen.findByText('Ningún cliente te debe.', {}, ESPERA)).toBeTruthy()
+  })
+
+  it('al cargar un cheque la lista ofrece toda la cartera, con o sin deuda', async () => {
+    mockParams.mockReturnValue({ cobrar: 'cheque' })
+    renderConQuery(<CuentasCorrientesScreen />)
+    await screen.findByText('Mostrando 1 de 142', {}, ESPERA)
+
+    const pedidos = get.mock.calls.map(([u]) => String(u)).filter(u => u.startsWith('/api/v1/socios-comerciales?'))
+    expect(pedidos.length).toBeGreaterThan(0)
+    expect(pedidos.some(u => u.includes('conDeuda=true'))).toBe(false)
+  })
 })
 
 describe('TM9 cobro en el panel (tablet)', () => {

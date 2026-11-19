@@ -61,9 +61,11 @@ function CuentasCorrientesScreen() {
   const lado: LadoDeCuentas = ladoElegido === 'deudores' && !puedeVerDeudas ? 'medeben' : ladoElegido
   const resumenDeudas = useDeudasResumen(puedeVerDeudas)
   const puedeTransferir = usePuedeTransferir()
+  // "Me deben" lista solo los clientes activos con deuda (el servidor filtra antes de paginar). Al cargar un
+  // cheque se elige de toda la cartera: un cliente sin deuda también puede dejar un cheque a cuenta.
   const { clientes, totalCount, saldoTotal, isLoading, isRefetching, error, dataUpdatedAt, refetch, cargarMas } = useCartera(
     busqueda,
-    soloVencidas ? { conDeudaVencida: true } : undefined,
+    { conDeudaVencida: soloVencidas, conDeuda: !cargandoCheque },
   )
   const sinRed = esFallaDeRed(error)
   const hayDatos = clientes.length > 0
@@ -124,7 +126,11 @@ function CuentasCorrientesScreen() {
             textoError={mensajeDelServidor(error, 'No se pudo cargar la cartera.')}
             onReintentar={() => void refetch()}
             vacio
-            tituloVacio={busqueda.trim() ? 'Ningún cliente coincide con la búsqueda.' : 'Todavía no hay clientes en tu cartera.'}
+            tituloVacio={
+              busqueda.trim()
+                ? 'Ningún cliente coincide con la búsqueda.'
+                : cargandoCheque ? 'Todavía no hay clientes en tu cartera.' : 'Ningún cliente te debe.'
+            }
           />
         }
       />
