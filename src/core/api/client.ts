@@ -97,6 +97,15 @@ let _onUnauthorized: (() => void) | null = null
 /** El token de acceso vigente (el mismo que usan las requests): lo lee el hub de stock en cada (re)conexión. */
 export const tokenActual = (): string | null => _getToken()
 
+// Quienes quieren enterarse de un refresh exitoso (el hub de stock reabre su conexión con el token nuevo).
+const _alRenovarToken = new Set<() => void>()
+
+/** Avisa después de cada refresh exitoso del token. Devuelve la baja. */
+export function alRenovarToken(oyente: () => void): () => void {
+  _alRenovarToken.add(oyente)
+  return () => { _alRenovarToken.delete(oyente) }
+}
+
 // Mutex para prevenir refresh concurrentes
 let _isRefreshing = false
 let _refreshPromise: Promise<boolean> | null = null
@@ -171,6 +180,9 @@ async function attemptRefresh(): Promise<boolean> {
       _onTokensRefreshed?.({
         accessToken: data.access_token,
         refreshToken: data.refresh_token ?? refreshToken,
+      })
+      _alRenovarToken.forEach((oyente) => {
+        try { oyente() } catch (e) { logger.warn('Oyente de token renovado falló', e) }
       })
       return true
     } catch (err) {
