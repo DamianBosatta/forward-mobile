@@ -60,15 +60,6 @@ export function useAbrirCaja() {
   })
 }
 
-export function useCerrarCaja() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ cajaId, saldoFinalDeclarado }: { cajaId: string; saldoFinalDeclarado: number }) =>
-      api.post<CerrarCajaResponseDto>('/api/v1/Cajas/cerrar', { cajaId, saldoFinalDeclarado }),
-    onSuccess: () => invalidarCaja(queryClient),
-  })
-}
-
 
 // ── Pagos & Cuentas Corrientes ──────────────────────────────────────────────
 

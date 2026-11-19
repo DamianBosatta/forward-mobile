@@ -97,13 +97,9 @@ export {
   useCajaActiva,
   useMovimientosCaja,
   useAbrirCaja,
-  useCerrarCaja,
   usePagos,
 } from './finanzas'
 
-// Realtime
-export { realtimeClient } from './realtime'
-export type { RealtimeEvent } from './realtime'
 
 // Stock
 export * from './stock'

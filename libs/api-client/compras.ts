@@ -160,15 +160,6 @@ export function useCreateCompra() {
   })
 }
 
-export function useUpdateCompra() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: CreateCompraRequest }) =>
-      api.put<Compra>(`/api/v1/Compras/${id}`, data),
-    onSuccess: () => invalidarPorCambioDeCompra(queryClient),
-  })
-}
-
 export function useCancelarCompra() {
   const queryClient = useQueryClient()
   return useMutation({

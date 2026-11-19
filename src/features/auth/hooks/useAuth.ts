@@ -2,7 +2,6 @@ import { useState, useRef, useCallback } from 'react';
 import { useAuthStore, parsePermissionsFromArray } from '../store/auth.store';
 import { configureApiClient, fetchWithTimeout, API_URL } from '@/core/api/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { realtimeClient } from '@/libs/api-client/realtime';
 import { cerrarSesion } from '../lib/cerrarSesion';
 import { esTiempoAgotado } from '@/core/api/errores';
 
@@ -190,7 +189,6 @@ export function useAuth() {
 
   const logout = useCallback(async () => {
     await cerrarSesion();
-    realtimeClient.disconnect().catch(() => {});
   }, []);
 
   return {

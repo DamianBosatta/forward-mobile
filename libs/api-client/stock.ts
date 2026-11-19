@@ -22,22 +22,6 @@ export interface StockParams {
   search?: string
 }
 
-export function useStock(params: StockParams = {}, { enabled = true } = {}) {
-  const searchParams = new URLSearchParams()
-  if (params.pageNumber) searchParams.set('pageNumber', String(params.pageNumber))
-  if (params.pageSize) searchParams.set('pageSize', String(params.pageSize))
-  if (params.depositoId) searchParams.set('depositoId', params.depositoId)
-  if (params.productoId) searchParams.set('productoId', params.productoId)
-  if (params.activo !== undefined && params.activo !== null) searchParams.set('activo', String(params.activo))
-  if (params.search) searchParams.set('searchTerm', params.search)
-
-  return useQuery({
-    queryKey: stockKeys.list(params),
-    queryFn: () => api.get<PagedResult<StockItem>>(`/api/v1/Stocks?${searchParams}`),
-    enabled,
-  })
-}
-
 export interface DisponibilidadItem {
   productoId: string
   disponible: boolean
@@ -55,19 +39,6 @@ export function fetchDisponibilidad(depositoId: string, items: DisponibilidadPed
 
 const disponibilidadKey = (depositoId: string, items: DisponibilidadPedido[]) =>
   [...stockKeys.all, 'disponibilidad', depositoId, items] as const
-
-/**
- * ¿Se puede vender la cantidad pedida de cada producto en el depósito? El servidor descuenta lo
- * reservado y responde un booleano por producto, nunca la cantidad (PR 3.1).
- */
-export function useDisponibilidad(depositoId: string, items: DisponibilidadPedido[]) {
-  return useQuery({
-    queryKey: disponibilidadKey(depositoId, items),
-    queryFn: () => fetchDisponibilidad(depositoId, items),
-    enabled: items.length > 0,
-    staleTime: 60_000,
-  })
-}
 
 /** Igual, pero una consulta por lote (una página del listado): al cargar otra solo se pide la nueva. */
 export function useDisponibilidadPorLotes(depositoId: string, lotes: DisponibilidadPedido[][]) {
