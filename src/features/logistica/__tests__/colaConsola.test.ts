@@ -1,7 +1,7 @@
 import { ApiError } from '@/core/api/client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import {
-  cambiarEstado, descartarAccion, encolarAccion, leerCola, quitarDeCola, reintentarAccion, suscribirCola, textoDeCola, type DatosAccion,
+  cambiarEstado, descartarAccion, encolarAccion, leerCola, olvidarRevisarDeParada, quitarDeCola, reintentarAccion, suscribirCola, textoDeCola, type DatosAccion,
 } from '../cola/colaConsola'
 import { TOPE_DE_INTENTOS, avisoDeTope } from '@/core/utils/colasSinSenal'
 import { enviarPendientesConsola } from '../cola/enviarConsola'
@@ -51,6 +51,75 @@ describe('cola de la consola sin señal', () => {
 
   it('ignora entradas guardadas ilegibles en vez de romper', () => {
     expect(leerCola(undefined)).toEqual([])
+  })
+})
+
+describe('reportar de nuevo una acción para revisar (RED-09)', () => {
+  it('the same key left for review goes back to waiting with the new body, the same key and the time of the new report', async () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'revisar', mensaje: 'El servidor rechazó la entrega.' })
+    const nueva = entrega({ cuerpo: { claveIdempotencia: 'k-1', nombreReceptor: 'Rosa' } } as Partial<DatosAccion>)
+
+    const a = encolarAccion(USUARIO, nueva, 5000)
+
+    expect(leerCola(USUARIO)).toEqual([a])
+    expect(a).toMatchObject({ clave: 'k-1', encoladaEn: 5000, estado: { tipo: 'esperando', intentos: 0 }, cuerpo: { nombreReceptor: 'Rosa' } })
+    // The round sends what the driver reported last, never the old body, with the same idempotency key.
+    mockPost.mockResolvedValue({})
+    await enviarPendientesConsola(USUARIO)
+    expect(mockPost).toHaveBeenCalledTimes(1)
+    expect(mockPost.mock.calls[0][1]).toMatchObject({ claveIdempotencia: 'k-1', nombreReceptor: 'Rosa' })
+    expect(leerCola(USUARIO)).toEqual([])
+  })
+
+  it('a "No cobré" left for review is re-armed with the new reason (its key is fixed per stop)', () => {
+    const noCobro = (motivo: 'YaPago' | 'NoPago'): DatosAccion => ({
+      tipo: 'noCobroParada', clave: 'no-cobrada:pc1', hojaDeRutaId: 'h1', paradaId: 'pc1', clienteNombre: 'Don Pepe', cuerpo: { motivo },
+    } as DatosAccion)
+    encolarAccion(USUARIO, noCobro('YaPago'))
+    cambiarEstado(USUARIO, 'no-cobrada:pc1', { tipo: 'revisar', mensaje: 'x' })
+    encolarAccion(USUARIO, noCobro('NoPago'))
+    expect(leerCola(USUARIO)).toEqual([expect.objectContaining({ cuerpo: { motivo: 'NoPago' }, estado: { tipo: 'esperando', intentos: 0 } })])
+  })
+
+  it('still holds: an action already waiting keeps its body (it may be on its way)', () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    encolarAccion(USUARIO, entrega({ cuerpo: { claveIdempotencia: 'k-1', nombreReceptor: 'Rosa' } } as Partial<DatosAccion>), 2000)
+    expect(leerCola(USUARIO)).toEqual([expect.objectContaining({ cuerpo: { claveIdempotencia: 'k-1', nombreReceptor: 'Marta' } })])
+  })
+
+  it('a new report of the same stop with another key replaces the one left for review; waiting ones and other stops stay', () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'revisar', mensaje: 'La conexión tardó demasiado.' })
+    encolarAccion(USUARIO, noEntrega(), 1500)
+    encolarAccion(USUARIO, noEntrega({ clave: 'k-3', paradaId: 'p3' } as Partial<DatosAccion>), 1600)
+    cambiarEstado(USUARIO, 'k-3', { tipo: 'revisar', mensaje: 'x' })
+
+    // The app restarted and the key of stop p1 was lost: the driver reports "No pude entregar" with a new key.
+    encolarAccion(USUARIO, noEntrega({ clave: 'k-9', paradaId: 'p1' } as Partial<DatosAccion>), 2000)
+
+    expect(leerCola(USUARIO).map((a) => [a.clave, a.estado.tipo])).toEqual([['k-2', 'esperando'], ['k-3', 'revisar'], ['k-9', 'esperando']])
+  })
+
+  it('a collection stop and a delivery stop never replace each other, even with the same id', () => {
+    encolarAccion(USUARIO, entrega({ paradaId: 'x1' } as Partial<DatosAccion>), 1000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'revisar', mensaje: 'x' })
+    encolarAccion(USUARIO, { tipo: 'noCobroParada', clave: 'no-cobrada:x1', hojaDeRutaId: 'h1', paradaId: 'x1', clienteNombre: 'Don Pepe', cuerpo: { motivo: 'NoPago' } }, 2000)
+    expect(leerCola(USUARIO).map((a) => a.clave)).toEqual(['k-1', 'no-cobrada:x1'])
+  })
+
+  it('olvidarRevisarDeParada drops what was left for review of a stop the server already has, never what is waiting', () => {
+    encolarAccion(USUARIO, entrega(), 1000)
+    cambiarEstado(USUARIO, 'k-1', { tipo: 'revisar', mensaje: 'x' })
+    encolarAccion(USUARIO, noEntrega({ clave: 'k-5', paradaId: 'p1', hojaDeRutaId: 'h2' } as Partial<DatosAccion>), 1500)
+    cambiarEstado(USUARIO, 'k-5', { tipo: 'revisar', mensaje: 'x' })
+    encolarAccion(USUARIO, noEntrega(), 2000)
+
+    olvidarRevisarDeParada(USUARIO, { tipo: 'entrega', hojaDeRutaId: 'h1', paradaId: 'p1' })
+    olvidarRevisarDeParada(USUARIO, { tipo: 'noEntrega', hojaDeRutaId: 'h1', paradaId: 'p2' })
+
+    // p1 of h1 is gone; p1 of another trip stays; p2 is waiting, so it stays.
+    expect(leerCola(USUARIO).map((a) => a.clave)).toEqual(['k-5', 'k-2'])
   })
 })
 

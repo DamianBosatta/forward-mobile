@@ -1,10 +1,11 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react-native'
+import { render, screen, userEvent } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { conTema } from '@/core/ui/fw/__testing__/tema'
 import { storage } from '@/core/utils/storage'
+import { cambiarEstado, encolarAccion } from '../cola/colaConsola'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
 
 const mockGet = jest.fn()
@@ -77,6 +78,32 @@ describe('Consola del chofer: paradas de solo cobro (S9)', () => {
     expect(await screen.findByText('Viaje de hoy')).toBeTruthy()
     expect(screen.queryByText(/Solo cobro/)).toBeNull()
     expect(screen.queryByLabelText('Cerrar viaje')).toBeNull()
+  })
+
+  it('RED-01: a stop collection left for review blocks closing the trip until it is retried or discarded', async () => {
+    encolarAccion('u1', {
+      tipo: 'cobroParada', clave: 'k-cobro', hojaDeRutaId: 'h1', paradaId: 'pc1', clienteNombre: 'Don Pepe',
+      cuerpo: { claveIdempotencia: 'k-cobro', lineas: [] }, cobrado: 85000,
+    })
+    cambiarEstado('u1', 'k-cobro', { tipo: 'revisar', mensaje: 'El servidor rechazó el cobro.' })
+    pintar(hoja({ paradasCobro: [COBRO] }))
+    expect(await screen.findByText('1 acción para revisar: reintentala o descartala para cerrar el viaje.')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Cerrar viaje'))
+    expect(screen.queryByText('¿Cerrar el viaje?')).toBeNull()
+  })
+
+  it('with several actions left for review the reason is in plural and still blocks closing', async () => {
+    for (const [clave, paradaId] of [['k-1', 'pc1'], ['k-2', 'pc2']]) {
+      encolarAccion('u1', {
+        tipo: 'cobroParada', clave, hojaDeRutaId: 'h1', paradaId, clienteNombre: 'Don Pepe',
+        cuerpo: { claveIdempotencia: clave, lineas: [] }, cobrado: 1000,
+      })
+      cambiarEstado('u1', clave, { tipo: 'revisar', mensaje: 'El servidor rechazó el cobro.' })
+    }
+    pintar(hoja({ paradasCobro: [COBRO] }))
+    expect(await screen.findByText('2 acciones para revisar: reintentalas o descartalas para cerrar el viaje.')).toBeTruthy()
+    await userEvent.press(screen.getByLabelText('Cerrar viaje'))
+    expect(screen.queryByText('¿Cerrar el viaje?')).toBeNull()
   })
 
   it('sigue valiendo: una hoja vieja con todas las entregas hechas se finaliza', async () => {

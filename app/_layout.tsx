@@ -28,6 +28,7 @@ import { useColors, useIsDark, useThemeStore } from '@/libs/theme'
 import * as SplashScreen from 'expo-splash-screen'
 import { OfflineBanner } from '@/core/ui/OfflineBanner'
 import { AlmacenBloqueado } from '@/core/ui/AlmacenBloqueado'
+import { GuardiaDeVersion } from '@/features/version/GuardiaDeVersion'
 import { estadoDelAlmacen } from '@/core/utils/storage'
 import '../global.css'
 import { loadSavedApiUrl } from '@/core/api/client'
@@ -170,7 +171,9 @@ function RootLayout() {
         <SafeAreaProvider>
           <ToastProvider>
             <BottomSheetModalProvider>
-              <RootLayoutNav />
+              <GuardiaDeVersion>
+                <RootLayoutNav />
+              </GuardiaDeVersion>
             </BottomSheetModalProvider>
           </ToastProvider>
         </SafeAreaProvider>

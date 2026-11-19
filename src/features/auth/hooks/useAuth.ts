@@ -4,6 +4,7 @@ import { configureApiClient, fetchWithTimeout, API_URL } from '@/core/api/client
 import { useQueryClient } from '@tanstack/react-query';
 import { realtimeClient } from '@/libs/api-client/realtime';
 import { cerrarSesion } from '../lib/cerrarSesion';
+import { esTiempoAgotado } from '@/core/api/errores';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Login Rate Limiting — Previene ataques de fuerza bruta desde el cliente
@@ -180,7 +181,7 @@ export function useAuth() {
       return true;
     } catch (err: any) {
       setIsLoading(false);
-      setError(err?.name === 'AbortError'
+      setError(esTiempoAgotado(err)
         ? 'El servidor tardó demasiado en responder. Intentá de nuevo.'
         : err?.message ?? 'No se pudo conectar al servidor.');
       return false;

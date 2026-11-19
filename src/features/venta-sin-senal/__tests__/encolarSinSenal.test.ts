@@ -41,6 +41,20 @@ describe('vender sin señal desde la venta (T5b)', () => {
     expect(leerCola('u1')).toHaveLength(1)
   })
 
+  it('RED-07: a timed-out alta (AbortError) is queued like no signal, with the same key, resuming at the alta', () => {
+    const tiempoAgotado = Object.assign(new Error('Aborted'), { name: 'AbortError' })
+    expect(encolarSiFaltaSenal('u1', tiempoAgotado, datos())).not.toBeNull()
+    // Confirmar again after a second timeout keeps one queued sale.
+    encolarSiFaltaSenal('u1', tiempoAgotado, datos())
+    expect(leerCola('u1')).toHaveLength(1)
+    expect(leerCola('u1')[0]).toMatchObject({
+      clave: 'mobile-abc',
+      alta: { claveIdempotencia: 'mobile-abc', totalEsperado: 570 },
+      // The POST may have been stored: it resumes at the alta with the same key, never as a new sale.
+      estado: { tipo: 'esperando', fase: { paso: 'altaEnviada' } },
+    })
+  })
+
   it('un error del servidor (no de la conexión) no se encola: lo ve el vendedor en la venta', () => {
     expect(encolarSiFaltaSenal('u1', new ApiError(400, 'Cliente inválido'), datos())).toBeNull()
     expect(encolarSiFaltaSenal('u1', new ApiError(500, 'boom'), datos())).toBeNull()

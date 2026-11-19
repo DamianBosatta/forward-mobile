@@ -1,12 +1,14 @@
 import React from 'react'
 import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, render, screen, userEvent, within } from '@testing-library/react-native'
+import { act, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/libs/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { conTema } from '@/core/ui/fw/__testing__/tema'
 import { reiniciarCamara } from '@/features/logistica/__testing__/camara'
 import { confirmarEntrega, noSumarOtroCobro } from '@/features/logistica/__testing__/confirmar'
-import { leerCola, quitarDeCola } from '../cola'
+import { encolarAccion, leerCola, quitarDeCola } from '../cola'
+import { cambiarEstado } from '../cola/colaConsola'
+import { storage } from '@/core/utils/storage'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
 
 /**
@@ -99,6 +101,8 @@ beforeEach(() => {
   conTema('light')
   reiniciarCamara()
   for (const a of leerCola('u1')) quitarDeCola('u1', a.clave)
+  // Stop keys live on the phone now (RED-08): each test starts without the previous one's keys.
+  storage.remove('consola-claves:u1')
 })
 afterEach(() => {
   act(() => onlineManager.setOnline(true))
@@ -202,6 +206,18 @@ describe('Consola del chofer sin señal', () => {
     expect(screen.getByText('Entrega guardada en el teléfono. Se manda sola cuando haya señal.')).toBeTruthy()
   })
 
+  it('RED-08: a delivery that times out is queued with the same stop key, as if there were no signal', async () => {
+    mockPost.mockRejectedValueOnce(Object.assign(new Error('Aborted'), { name: 'AbortError' }))
+    await pintar(HOJA, false)
+    await abrirEntrega()
+    await alResumen('Abel', false)
+    await confirmarEntrega()
+    await screen.findByLabelText('Entrega lista')
+    const cola = leerCola('u1')
+    expect(cola).toHaveLength(1)
+    expect(cola[0].clave).toBe((llamadasA(ENTREGAR)[0][1] as { claveIdempotencia: string }).claveIdempotencia)
+  })
+
   it('no se puede finalizar el viaje mientras queden acciones sin mandar', async () => {
     await pintar({ ...HOJA, detalles: [HOJA.detalles[0]] }, false)
     await abrirEntrega()
@@ -211,5 +227,23 @@ describe('Consola del chofer sin señal', () => {
     await userEvent.press(screen.getByLabelText('Terminé el viaje'))
     expect(screen.queryByText('¿Cerrar el viaje?')).toBeNull()
     expect(screen.getByText('Falta mandar 1 acción: esperá la señal para cerrar el viaje.')).toBeTruthy()
+  })
+
+  it.each([
+    ['the server takes it', () => mockPost.mockResolvedValue({ paradaId: 'p1', repetida: false })],
+    ['the server already had it', () => mockPost.mockRejectedValue(Object.assign(new Error('La parada ya fue reportada.'), { status: 409, errors: [] }))],
+  ])('RED-01: re-reporting a stop online drops what was left for review for it (%s), so it no longer blocks closing', async (_caso, responder) => {
+    encolarAccion('u1', {
+      tipo: 'entrega', clave: 'k-viejo', hojaDeRutaId: 'h1', paradaId: 'p1', clienteNombre: 'Abel',
+      cuerpo: { claveIdempotencia: 'k-viejo' }, cobrado: 1000, conDevolucion: false,
+    })
+    cambiarEstado('u1', 'k-viejo', { tipo: 'revisar', mensaje: 'La conexión tardó demasiado.' })
+    responder()
+    await pintar(HOJA, false)
+    await abrirEntrega()
+    await alResumen('Abel', false)
+    await confirmarEntrega()
+    await waitFor(() => expect(llamadasA(ENTREGAR)).toHaveLength(1))
+    await waitFor(() => expect(leerCola('u1')).toEqual([]))
   })
 })

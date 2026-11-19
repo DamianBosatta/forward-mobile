@@ -5,6 +5,8 @@ import {
   encolarAccion, leerCola, quitarDeCola, type DatosAccion,
 } from '../cola/colaConsola'
 import { enviarPendientesConsola } from '../cola/enviarConsola'
+import { claveDeParada } from '../cola/clavesDeParada'
+import { storage } from '@/core/utils/storage'
 import { conAccionesCobroEnCola } from '../cola/conAccionesEnCola'
 import { queEs } from '../cola/PildoraColaConsola'
 
@@ -34,6 +36,7 @@ beforeEach(() => {
   useAuthStore.setState({ user: { id: USUARIO } } as never)
   mockPost.mockReset()
   for (const a of leerCola(USUARIO)) quitarDeCola(USUARIO, a.clave)
+  storage.remove(`consola-claves:${USUARIO}`)
 })
 
 describe('cobro de una parada de solo cobro sin señal', () => {
@@ -107,6 +110,50 @@ describe('cobro de una parada de solo cobro sin señal', () => {
     encolarAccion(USUARIO, entrega(), 1000)
     await enviarPendientesConsola(USUARIO)
     expect(leerCola(USUARIO)).toEqual([])
+  })
+})
+
+describe('a queued report whose key the server already holds with another body (RED-08)', () => {
+  const conOtroCuerpo = (mensaje = 'La clave ya se usó con otro cuerpo.') => rechazo(409, mensaje, 'ClaveIdempotenciaConOtroCuerpo')
+
+  it.each([
+    ['cobro', 'cobro:pc1', (k: string) => cobro({ clave: k, cuerpo: { claveIdempotencia: k, lineas: [] } } as never), conOtroCuerpo()],
+    ['cobro (Duplicado)', 'cobro:pc1', (k: string) => cobro({ clave: k, cuerpo: { claveIdempotencia: k, lineas: [] } } as never), rechazo(409, 'Duplicado.', 'Duplicado')],
+    ['aviso', 'aviso:p1', (k: string) => ({
+      tipo: 'noEntrega', clave: k, hojaDeRutaId: 'h1', paradaId: 'p1', clienteNombre: 'Marta', cuerpo: { entregado: false, claveIdempotencia: k },
+    } as unknown as DatosAccion), conOtroCuerpo()],
+    ['aviso (Duplicado)', 'aviso:p1', (k: string) => ({
+      tipo: 'noEntrega', clave: k, hojaDeRutaId: 'h1', paradaId: 'p1', clienteNombre: 'Marta', cuerpo: { entregado: false, claveIdempotencia: k },
+    } as unknown as DatosAccion), rechazo(409, 'Duplicado.', 'Duplicado')],
+    ['entrega (Duplicado)', 'entrega:p1', (k: string) => ({
+      tipo: 'entrega', clave: k, hojaDeRutaId: 'h1', paradaId: 'p1', clienteNombre: 'Marta', cuerpo: { claveIdempotencia: k }, cobrado: 0, conDevolucion: false,
+    } as DatosAccion), rechazo(409, 'Duplicado.', 'Duplicado')],
+    ['entrega (key used on another stop)', 'entrega:p1', (k: string) => ({
+      tipo: 'entrega', clave: k, hojaDeRutaId: 'h1', paradaId: 'p1', clienteNombre: 'Marta', cuerpo: { claveIdempotencia: k }, cobrado: 0, conDevolucion: false,
+    } as DatosAccion), conOtroCuerpo('La clave ya se usó en otra entrega.')],
+  ])('%s: goes to review and the next report of that stop gets a new key, so it cannot loop', async (_, uso, accion, error) => {
+    const k = claveDeParada(USUARIO, uso)
+    mockPost.mockRejectedValue(error)
+    encolarAccion(USUARIO, accion(k), 1000)
+    await enviarPendientesConsola(USUARIO)
+    expect(leerCola(USUARIO)[0].estado.tipo).toBe('revisar')
+    expect(claveDeParada(USUARIO, uso)).not.toBe(k)
+  })
+
+  it('a newer key for the same stop is kept: only the key that was rejected is forgotten', async () => {
+    const nueva = claveDeParada(USUARIO, 'cobro:pc1')
+    mockPost.mockRejectedValue(conOtroCuerpo())
+    encolarAccion(USUARIO, cobro(), 1000)
+    await enviarPendientesConsola(USUARIO)
+    expect(claveDeParada(USUARIO, 'cobro:pc1')).toBe(nueva)
+  })
+
+  it('a stored key is kept when the queue only lost the signal', async () => {
+    const k = claveDeParada(USUARIO, 'cobro:pc1')
+    mockPost.mockRejectedValue(new TypeError('Network request failed'))
+    encolarAccion(USUARIO, cobro({ clave: k, cuerpo: { claveIdempotencia: k, lineas: [] } } as never), 1000)
+    await enviarPendientesConsola(USUARIO)
+    expect(claveDeParada(USUARIO, 'cobro:pc1')).toBe(k)
   })
 })
 

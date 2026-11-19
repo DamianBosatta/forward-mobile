@@ -1,10 +1,11 @@
 import { api } from '@/core/api/client'
-import { esFallaDeRed, esTiempoAgotado } from '@/core/api/errores'
+import { esSinRespuesta } from '@/core/api/errores'
 import { TOPE_DE_INTENTOS, avisoDeTope, fallosDelTopeTras } from '@/core/utils/colasSinSenal'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { clasificarFalloEntrega } from '../consola/entrega'
 import { cambiarEstado, leerCola, quitarDeCola, type AccionEnCola } from './colaConsola'
+import { olvidarClaveDeParada, usoDeAccion } from './clavesDeParada'
 
 /** `vacia`: no había nada que mandar; `completa`: se resolvió todo lo que esperaba; `sinSenal`: se cortó y se reintenta después. */
 export type ResultadoRonda = 'vacia' | 'completa' | 'sinSenal'
@@ -25,7 +26,7 @@ const URL_HOJA = (hojaDeRutaId: string) => `/api/v1/Logistica/hojas-ruta/${hojaD
  * la sesión venció (401: sale cuando vuelva a entrar) o demasiados pedidos (429). La acción sigue esperando.
  */
 function esTransitoria(e: unknown): boolean {
-  if (esFallaDeRed(e) || esTiempoAgotado(e)) return true
+  if (esSinRespuesta(e)) return true
   const status = (e as { status?: unknown } | null)?.status
   if (typeof status !== 'number') return false
   return status === 401 || status === 408 || status === 429 || status >= 500
@@ -113,6 +114,12 @@ async function despachar(usuarioId: string, deps: Dependencias, a: AccionEnCola)
       deps.alEnviar?.(a.hojaDeRutaId)
       return true
     }
+    // The key is spent (held with another body, or used on another stop): the stop's next report gets a new one,
+    // otherwise re-reporting offline would resend the same key and land here again (RED-08). Safe: the server
+    // resolves a stop only once, so a new key cannot record it twice.
+    const codigo = (e as { codigo?: string } | null)?.codigo
+    const uso = usoDeAccion(a)
+    if (uso && (codigo === 'ClaveIdempotenciaConOtroCuerpo' || codigo === 'Duplicado')) olvidarClaveDeParada(usuarioId, uso, a.clave)
     cambiarEstado(usuarioId, a.clave, { tipo: 'revisar', mensaje: mensajeDelServidor(e, 'El servidor rechazó el reporte.') })
     deps.alFallar?.(a)
     return true

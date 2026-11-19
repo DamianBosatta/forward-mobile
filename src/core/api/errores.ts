@@ -37,6 +37,15 @@ export function esTiempoAgotado(e: unknown): boolean {
 }
 
 /**
+ * True when the request got no answer: it never arrived ({@link esFallaDeRed}) or it hit the time limit
+ * ({@link esTiempoAgotado}). Either way the server may have stored it: anything with an idempotency key is kept on the
+ * phone and resent with that same key, never a new one. One rule for every offline queue.
+ */
+export function esSinRespuesta(e: unknown): boolean {
+  return esFallaDeRed(e) || esTiempoAgotado(e)
+}
+
+/**
  * True si `e` es un {@link ApiError} con ese código del catálogo de errores. Es como una pantalla
  * decide qué hacer: por código, nunca leyendo el texto del mensaje.
  */

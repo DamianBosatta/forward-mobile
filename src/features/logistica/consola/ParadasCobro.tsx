@@ -4,17 +4,17 @@ import { onlineManager, useQueryClient } from '@tanstack/react-query'
 import { HandCoins } from 'lucide-react-native'
 import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { Button, StatusChip, formatImporte } from '@/core/ui/fw'
-import { esFallaDeRed } from '@/core/api/errores'
+import { esSinRespuesta } from '@/core/api/errores'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
-import { nuevaClaveIdempotencia } from '@/core/utils/idempotencia'
 import { useCobrarParadaCobro, useNoCobrarParadaCobro } from '@/features/cobros/api'
 import {
   MOTIVOS_NO_COBRO, PARADA_COBRO_COBRADA, PARADA_COBRO_NO_COBRADA, PARADA_COBRO_PENDIENTE,
   type MotivoNoCobro, type ParadaCobro,
 } from '@/features/cobros/paradaCobro'
 import { useMediosCobroChofer } from '@/libs/api-client/logistica'
-import { encolarAccion } from '../cola/colaConsola'
+import { encolarAccion, olvidarRevisarDeParada } from '../cola/colaConsola'
+import { claveDeParada, olvidarClaveDeParada, usoCobro } from '../cola/clavesDeParada'
 import { useColaConsola } from '../cola/useColaConsola'
 import { conAccionesCobroEnCola } from '../cola/conAccionesEnCola'
 import { ParadaCobroPantalla, lineasParaEnviar, type ResultadoParadaCobro } from './ParadaCobroPantalla'
@@ -48,7 +48,6 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
   const noCobrar = useNoCobrarParadaCobro()
   // Los medios se piden apenas se ve la sección: así un cobro sin señal los encuentra ya guardados.
   useMediosCobroChofer(puedeReportar && paradas.length > 0)
-  const claves = useRef(new Map<string, string>())
   const ocupada = useRef(false)
   const [abierta, setAbierta] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -60,13 +59,9 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
   const total = paradasDeEntrega + lista.length
   const seleccionada = lista.findIndex((p) => p.id === abierta)
 
-  const claveDe = (id: string) => {
-    const guardada = claves.current.get(id)
-    if (guardada) return guardada
-    const nueva = nuevaClaveIdempotencia()
-    claves.current.set(id, nueva)
-    return nueva
-  }
+  // The cobro key lives on the phone, not in memory (RED-08): closing the app keeps it, so a retry never collects twice.
+  const claveDe = (id: string) => claveDeParada(usuarioId, usoCobro(id))
+  const olvidarClave = (id: string) => olvidarClaveDeParada(usuarioId, usoCobro(id))
   const cerrar = () => { setAbierta(null); setError(null); setResultado(null) }
   const abrir = (id: string) => { setError(null); setResultado(null); setAbierta(id) }
 
@@ -74,26 +69,32 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
     if (ocupada.current) return
     ocupada.current = true
     setError(null)
-    const cuerpo = { claveIdempotencia: claveDe(parada.id), lineas: lineasParaEnviar(form) }
+    const cuerpoCon = (claveIdempotencia: string) => ({ claveIdempotencia, lineas: lineasParaEnviar(form) })
+    // Set inside the try: reading the key writes to the phone and a failure there must still release `ocupada`.
+    let cuerpo: ReturnType<typeof cuerpoCon> | undefined
     const monto = form.reduce((t, l) => t + (montoDeLinea(l) ?? 0), 0)
-    const guardar = () => {
+    const guardar = (c: ReturnType<typeof cuerpoCon>) => {
       encolarAccion(usuarioId, {
-        tipo: 'cobroParada', clave: cuerpo.claveIdempotencia, hojaDeRutaId, paradaId: parada.id, clienteNombre: parada.clienteNombre, cuerpo, cobrado: monto,
+        tipo: 'cobroParada', clave: c.claveIdempotencia, hojaDeRutaId, paradaId: parada.id, clienteNombre: parada.clienteNombre, cuerpo: c, cobrado: monto,
       })
       setResultado({ tipo: 'cobro', monto, guardada: true })
     }
     try {
+      cuerpo = cuerpoCon(claveDe(parada.id))
       // Sin señal no se llama al servidor: queda en el teléfono con la misma clave y sale sola al volver.
-      if (!onlineManager.isOnline()) { guardar(); return }
+      if (!onlineManager.isOnline()) { guardar(cuerpo); return }
       await cobrar.mutateAsync({ hojaDeRutaId, paradaCobroId: parada.id, cuerpo })
-      claves.current.delete(parada.id)
+      olvidarClave(parada.id)
+      // The server has it now: whatever of this stop was left for review is stale and must not block closing (RED-01).
+      olvidarRevisarDeParada(usuarioId, { tipo: 'cobroParada', hojaDeRutaId, paradaId: parada.id })
       setResultado({ tipo: 'cobro', monto, guardada: false })
     } catch (e) {
-      if (esFallaDeRed(e)) { guardar(); return }
+      // No answer (no network or timed out): it may have been stored; it is queued with the same key.
+      if (cuerpo && esSinRespuesta(e)) { guardar(cuerpo); return }
       const codigo = (e as { codigo?: string } | null)?.codigo
       // La clave ya quedó con otro cuerpo: el servidor guarda que una parada se resuelve una sola vez, así que una clave nueva es segura.
       // `Duplicado`: la misma clave corrió a la par en otra parada. Tampoco se reusa.
-      if (codigo === 'ClaveIdempotenciaConOtroCuerpo' || codigo === 'Duplicado') claves.current.delete(parada.id)
+      if (codigo === 'ClaveIdempotenciaConOtroCuerpo' || codigo === 'Duplicado') olvidarClave(parada.id)
       // El estado de la parada (y de la tarea) lo decide el servidor: se vuelve a leer, no se supone.
       if (codigo === 'ParadaYaReportada' || codigo === 'Duplicado') void invalidarPorCambioDeHojaDeRuta(qc, hojaDeRutaId)
       setError(mensajeDelServidor(e, 'No se pudo registrar el cobro.'))
@@ -117,9 +118,10 @@ export function ParadasCobro({ hojaDeRutaId, paradas, paradasDeEntrega, puedeRep
     try {
       if (!onlineManager.isOnline()) { guardar(); return }
       await noCobrar.mutateAsync({ hojaDeRutaId, paradaCobroId: parada.id, cuerpo: { motivo } })
+      olvidarRevisarDeParada(usuarioId, { tipo: 'noCobroParada', hojaDeRutaId, paradaId: parada.id })
       setResultado({ tipo: 'noCobrada', motivo: texto, guardada: false })
     } catch (e) {
-      if (esFallaDeRed(e)) { guardar(); return }
+      if (esSinRespuesta(e)) { guardar(); return }
       setError(mensajeDelServidor(e, 'No se pudo cerrar la parada.'))
     } finally {
       ocupada.current = false

@@ -5,7 +5,9 @@ import { ApiError } from '@/core/api/client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { conTema, TEMAS } from '@/core/ui/fw/__testing__/tema'
 import type { ParadaCobro } from '@/features/cobros/paradaCobro'
-import { leerCola, quitarDeCola } from '../cola'
+import { encolarAccion, leerCola, quitarDeCola } from '../cola'
+import { cambiarEstado } from '../cola/colaConsola'
+import { storage } from '@/core/utils/storage'
 import { HojaDeRutaVista } from '../consola/HojaDeRutaVista'
 import { resumenRuta } from '../consola/hojaDeRuta'
 
@@ -65,6 +67,7 @@ beforeEach(() => {
   mockPost.mockReset()
   mockGet.mockImplementation((url: string) => (url.endsWith('/medios-cobro') ? Promise.resolve(MEDIOS) : Promise.reject(new Error(`sin respuesta: ${url}`))))
   for (const a of leerCola(USUARIO)) quitarDeCola(USUARIO, a.clave)
+  storage.remove(`consola-claves:${USUARIO}`)
   act(() => onlineManager.setOnline(true))
 })
 
@@ -173,6 +176,21 @@ describe.each(TEMAS)('paradas de solo cobro en la consola del chofer (%s)', (tem
     expect(leerCola(USUARIO)).toEqual([])
   })
 
+  it('RED-01: a collection left for review (old key) is dropped once the same stop is collected online', async () => {
+    encolarAccion(USUARIO, {
+      tipo: 'cobroParada', clave: 'k-viejo', hojaDeRutaId: 'h1', paradaId: 'pc1', clienteNombre: 'Don Pepe',
+      cuerpo: { claveIdempotencia: 'k-viejo', lineas: [] }, cobrado: 85000,
+    })
+    cambiarEstado(USUARIO, 'k-viejo', { tipo: 'revisar', mensaje: 'La conexión tardó demasiado.' })
+    mockPost.mockResolvedValue({ paradaCobroId: 'pc1', pagoId: 'pg1', montoCobrado: 85000, repetida: false })
+    pintar([cobro()])
+    await userEvent.press(screen.getByLabelText('Cobrar en Av. Rivadavia 4500'))
+    await userEvent.press(await screen.findByText('Efectivo'))
+    await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
+    expect(await screen.findByText('Cobro registrado.')).toBeTruthy()
+    expect(leerCola(USUARIO)).toEqual([])
+  })
+
   it('un rechazo del servidor se muestra y el reintento manda la MISMA clave', async () => {
     mockPost.mockRejectedValueOnce(rechazo(400, 'El monto no coincide.')).mockResolvedValue({ paradaCobroId: 'pc1', pagoId: 'pg1', montoCobrado: 85000, repetida: false })
     pintar([cobro()])
@@ -180,6 +198,34 @@ describe.each(TEMAS)('paradas de solo cobro en la consola del chofer (%s)', (tem
     await userEvent.press(await screen.findByText('Efectivo'))
     await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
     expect(await screen.findByText('El monto no coincide.')).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
+    expect(await screen.findByText('Cobro registrado.')).toBeTruthy()
+    expect(mockPost.mock.calls.map((c) => (c[1] as { claveIdempotencia: string }).claveIdempotencia)).toEqual(['clave-1', 'clave-1'])
+  })
+
+  it('RED-08: a collection that times out is queued with the same key, without an error, and the stop counts as collected', async () => {
+    mockPost.mockRejectedValueOnce(Object.assign(new Error('Aborted'), { name: 'AbortError' }))
+    pintar([cobro()])
+    await userEvent.press(screen.getByLabelText('Cobrar en Av. Rivadavia 4500'))
+    await userEvent.press(await screen.findByText('Efectivo'))
+    await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
+    expect(await screen.findByText('Cobro guardado.')).toBeTruthy()
+    expect(leerCola(USUARIO)).toEqual([
+      expect.objectContaining({ tipo: 'cobroParada', clave: 'clave-1', cuerpo: expect.objectContaining({ claveIdempotencia: 'clave-1' }) }),
+    ])
+  })
+
+  it('RED-08: the collection key survives closing the app: after a rejection, the reopened console sends the SAME key', async () => {
+    mockPost.mockRejectedValueOnce(rechazo(503, 'Servicio no disponible')).mockResolvedValue({ paradaCobroId: 'pc1', pagoId: 'pg1', montoCobrado: 85000, repetida: false })
+    const primera = pintar([cobro()])
+    await userEvent.press(screen.getByLabelText('Cobrar en Av. Rivadavia 4500'))
+    await userEvent.press(await screen.findByText('Efectivo'))
+    await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
+    expect(await screen.findByText('Servicio no disponible')).toBeTruthy()
+    primera.unmount()
+    pintar([cobro()])
+    await userEvent.press(screen.getByLabelText('Cobrar en Av. Rivadavia 4500'))
+    await userEvent.press(await screen.findByText('Efectivo'))
     await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
     expect(await screen.findByText('Cobro registrado.')).toBeTruthy()
     expect(mockPost.mock.calls.map((c) => (c[1] as { claveIdempotencia: string }).claveIdempotencia)).toEqual(['clave-1', 'clave-1'])
@@ -246,6 +292,20 @@ describe.each(TEMAS)('paradas de solo cobro en la consola del chofer (%s)', (tem
     ])
   })
 
+  it('if "No cobré" times out the close is queued like no signal, once per stop', async () => {
+    mockPost.mockRejectedValue(Object.assign(new Error('Aborted'), { name: 'AbortError' }))
+    pintar([cobro()])
+    await userEvent.press(screen.getByLabelText('Cobrar en Av. Rivadavia 4500'))
+    await userEvent.press(await screen.findByText('No cobré'))
+    await userEvent.press(screen.getByText('No pagó'))
+    await userEvent.press(screen.getByRole('button', { name: 'Cerrar sin cobrar' }))
+    expect(await screen.findByText('Parada guardada sin cobrar.')).toBeTruthy()
+    expect(mockPost).toHaveBeenCalledTimes(1)
+    expect(leerCola(USUARIO)).toEqual([
+      expect.objectContaining({ tipo: 'noCobroParada', clave: 'no-cobrada:pc1', paradaId: 'pc1', cuerpo: { motivo: 'NoPago' } }),
+    ])
+  })
+
   it('un 409 de "ya reportada" se muestra tal cual, sin dar la parada por cobrada', async () => {
     mockPost.mockRejectedValue(rechazo(409, 'La parada ya fue reportada.', 'ParadaYaReportada'))
     pintar([cobro()])
@@ -268,6 +328,24 @@ describe.each(TEMAS)('paradas de solo cobro en la consola del chofer (%s)', (tem
     expect(await screen.findByText('Cobro registrado.')).toBeTruthy()
     const [primera, segunda] = mockPost.mock.calls.map(([, cuerpo]) => (cuerpo as { claveIdempotencia: string }).claveIdempotencia)
     expect(segunda).not.toBe(primera)
+  })
+
+  it('si la clave no se puede guardar en el teléfono, el botón de cobrar queda usable para reintentar', async () => {
+    mockPost.mockResolvedValue({})
+    const escritura = jest.spyOn(storage, 'set').mockImplementationOnce(() => { throw new Error('disco lleno') })
+    try {
+      pintar([cobro()])
+      await userEvent.press(screen.getByLabelText('Cobrar en Av. Rivadavia 4500'))
+      await userEvent.press(await screen.findByText('Efectivo'))
+      await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
+      await waitFor(() => expect(escritura).toHaveBeenCalled())
+      expect(mockPost).not.toHaveBeenCalled()
+      await userEvent.press(screen.getByRole('button', { name: 'Registrar cobro' }))
+      expect(await screen.findByText('Cobro registrado.')).toBeTruthy()
+      expect(mockPost).toHaveBeenCalledTimes(1)
+    } finally {
+      escritura.mockRestore()
+    }
   })
 
   it('en tablet la pantalla de la parada queda en una columna', async () => {

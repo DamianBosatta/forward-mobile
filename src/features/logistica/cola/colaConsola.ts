@@ -88,14 +88,39 @@ export function suscribirCola(oyente: () => void): () => void {
   return () => { oyentes.delete(oyente) }
 }
 
-/** Guarda la acción en el teléfono. La misma clave dos veces queda una sola vez (devuelve la que ya estaba). */
+/** An entrega and its aviso resolve the same stop; a cobro and a "No cobré" resolve the same collection stop. */
+const familia = (tipo: DatosAccion['tipo']) => (tipo === 'cobroParada' || tipo === 'noCobroParada' ? 'cobro' : 'entrega')
+
+type Parada = Pick<DatosAccion, 'tipo' | 'hojaDeRutaId' | 'paradaId'>
+
+/** An action left for review for that same stop (same trip, same id and same family). */
+const esRevisarDe = (p: Parada) => (a: AccionEnCola) =>
+  a.estado.tipo === 'revisar' && a.hojaDeRutaId === p.hojaDeRutaId && a.paradaId === p.paradaId && familia(a.tipo) === familia(p.tipo)
+
+/**
+ * Stores the action on the phone. The same key twice is kept once (returns the one already there): a waiting action
+ * does not change, because it may be on its way. A new report for a stop left for review replaces it (RED-09): with
+ * the same key it waits again with the new body and time (the server applies a key only once); with another key
+ * (the previous one was spent or expired), the review item is dropped.
+ */
 export function encolarAccion(usuarioId: string, d: DatosAccion, ahora = Date.now()): AccionEnCola {
   const lista = leerCola(usuarioId)
   const ya = lista.find((a) => a.clave === d.clave)
-  if (ya) return ya
+  if (ya && ya.estado.tipo !== 'revisar') return ya
   const accion: AccionEnCola = { ...d, encoladaEn: ahora, estado: { tipo: 'esperando', intentos: 0 } }
-  escribir(usuarioId, [...lista, accion])
+  const reemplazada = esRevisarDe(d)
+  escribir(usuarioId, [...lista.filter((a) => a.clave !== d.clave && !reemplazada(a)), accion])
   return accion
+}
+
+/**
+ * The server already has that stop resolved (reported online, or already recorded): whatever of it was left for review
+ * is stale and must not block closing the trip. Waiting actions are left alone: they may be on their way.
+ */
+export function olvidarRevisarDeParada(usuarioId: string, p: Parada): void {
+  const lista = leerCola(usuarioId)
+  const quedan = lista.filter((a) => !esRevisarDe(p)(a))
+  if (quedan.length !== lista.length) escribir(usuarioId, quedan)
 }
 
 /** Cambia el estado de una acción (y lo deja guardado antes de seguir). */

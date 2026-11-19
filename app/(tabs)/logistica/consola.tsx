@@ -7,7 +7,7 @@ import { FileText, Phone, RefreshCw, WifiOff } from 'lucide-react-native'
 import { RequirePermission } from '@/core/ui'
 import { BottomSheet, Button, Notice, Progress, formatImporte, TopBar, useMenuLeading, type TopBarAction } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
-import { esFallaDeRed } from '@/core/api/errores'
+import { esSinRespuesta } from '@/core/api/errores'
 import { importe, maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
 import { safeHaptics } from '@/core/utils/haptics'
 import { useEntregarParada, useFinalizarHojaRuta, useHojaRuta, useHojasDeRuta, useIniciarHojaRuta, useReportarParada } from '@/libs/api-client'
@@ -26,7 +26,7 @@ import { ReportarParada, type Resultado, type ReporteParada } from '@/features/l
 import { LlegueParada } from '@/features/logistica/consola/LlegueParada'
 import { EntregaLista } from '@/features/logistica/consola/EntregaLista'
 import { AvisadoVentas } from '@/features/logistica/consola/AvisadoVentas'
-import { ColaConsola, encolarAccion, useColaConsola, type DatosAccion } from '@/features/logistica/cola'
+import { claveDeParada, ColaConsola, encolarAccion, olvidarClaveDeParada, olvidarRevisarDeParada, usoAviso, usoEntrega, useColaConsola, type DatosAccion } from '@/features/logistica/cola'
 import { conAccionesEnCola } from '@/features/logistica/cola/conAccionesEnCola'
 import { PermisoGps } from '@/features/logistica/gps/PermisoGps'
 import { terminarRegistroGps } from '@/features/logistica/gps/registroGps'
@@ -129,25 +129,13 @@ export default function ConsolaChoferScreen() {
   const cola = useColaConsola()
   const reportar = useReportarParada()
   const entregar = useEntregarParada()
-  // Una clave por parada, la misma en cada reintento (también si se cierra y reabre la entrega):
+  const usuarioId = user?.id ?? ''
+  // Una clave por parada, la misma en cada reintento (también si se cierra y reabre la entrega o la app):
   // si la respuesta se perdió, el servidor contesta lo que ya registró en vez de cargarlo dos veces.
-  const claves = useRef(new Map<string, string>())
-  const claveDe = (paradaId: string) => {
-    const guardada = claves.current.get(paradaId)
-    if (guardada) return guardada
-    const nueva = nuevaClaveIdempotencia()
-    claves.current.set(paradaId, nueva)
-    return nueva
-  }
+  // Stored on the phone, not in memory (RED-08), so it also survives an app restart.
+  const claveDe = (paradaId: string) => claveDeParada(usuarioId, usoEntrega(paradaId))
   // Aviso "No pude entregar": una clave por intento de reporte, la misma en cada reintento (misma regla que la entrega).
-  const clavesAviso = useRef(new Map<string, string>())
-  const claveAvisoDe = (paradaId: string) => {
-    const guardada = clavesAviso.current.get(paradaId)
-    if (guardada) return guardada
-    const nueva = nuevaClaveIdempotencia()
-    clavesAviso.current.set(paradaId, nueva)
-    return nueva
-  }
+  const claveAvisoDe = (paradaId: string) => claveDeParada(usuarioId, usoAviso(paradaId))
   // Guarda síncrona: un doble toque llega antes de que `isPending` se vea en pantalla.
   const reportandoYa = useRef(false)
   const iniciar = useIniciarHojaRuta()
@@ -232,7 +220,10 @@ export default function ConsolaChoferScreen() {
 
   // Lo reportado sin señal que todavía no salió ya cuenta como hecho, aunque el servidor aún no lo sepa.
   const deEsteViaje = cola.items.filter((a) => a.hojaDeRutaId === viaje.id)
-  const sinMandar = deEsteViaje.filter((a) => a.estado.tipo === 'esperando').length
+  const esperando = deEsteViaje.filter((a) => a.estado.tipo === 'esperando').length
+  // Actions left for review were not sent either (RED-01): the pill retries or discards them before the trip closes.
+  const enRevision = deEsteViaje.length - esperando
+  const sinMandar = esperando + enRevision
   const detalles = conAccionesEnCola((viaje.detalles ?? []) as ParadaDto[], deEsteViaje)
   const resumen = resumenRuta(detalles)
   const finalizada = esEstadoHojaRuta(viaje.estado, 'Finalizada')
@@ -270,7 +261,6 @@ export default function ConsolaChoferScreen() {
     Linking.openURL(url).catch(() => setAviso('No se pudo abrir esa aplicación en el teléfono.'))
   }
 
-  const usuarioId = user?.id ?? ''
   const guardarEntrega = (parada: ParadaDto, cuerpo: CuerpoEntregaParada, cobrado: number) =>
     encolarAccion(usuarioId, {
       clave: cuerpo.claveIdempotencia ?? nuevaClaveIdempotencia(), hojaDeRutaId: viaje.id, paradaId: parada.id, clienteNombre: parada.clienteNombre,
@@ -290,13 +280,18 @@ export default function ConsolaChoferScreen() {
         // Sin señal no se llama al servidor: queda en el teléfono con la misma clave y sale sola al volver.
         const guardada = !onlineManager.isOnline()
         if (guardada) guardarEntrega(parada, cuerpo, cobrado)
-        else await entregar.mutateAsync({ hojaDeRutaId: viaje.id, paradaId: parada.id, cuerpo })
+        else {
+          await entregar.mutateAsync({ hojaDeRutaId: viaje.id, paradaId: parada.id, cuerpo })
+          olvidarClaveDeParada(usuarioId, usoEntrega(parada.id))
+          // The server has it now: whatever of this stop was left for review is stale (RED-01).
+          olvidarRevisarDeParada(usuarioId, { tipo: 'entrega', hojaDeRutaId: viaje.id, paradaId: parada.id })
+        }
         updateStopStatus(parada.id, { delivered: true, observations: r.entrega.observaciones ?? undefined })
         setLista({ parada, cobrado, piezas, guardada })
         setReportando(null)
       } catch (e) {
-        if (esFallaDeRed(e)) {
-          // El pedido no llegó aunque el teléfono creyera tener señal: igual que sin señal; la misma clave evita duplicar.
+        if (esSinRespuesta(e)) {
+          // Sin respuesta (no llegó, o se cortó por plazo y pudo grabarse): igual que sin señal; la misma clave evita duplicar.
           const cobrado = (r.entrega.cobro?.lineas ?? []).reduce((t, l) => t + (l.monto ?? 0), 0)
           guardarEntrega(parada, { ...r.entrega, claveIdempotencia: claveDe(parada.id) }, cobrado)
           updateStopStatus(parada.id, { delivered: true, observations: r.entrega.observaciones ?? undefined })
@@ -306,9 +301,10 @@ export default function ConsolaChoferScreen() {
           return
         }
         const fallo = clasificarFalloEntrega(e)
-        if (fallo.tipo === 'claveUsada') claves.current.set(parada.id, nuevaClaveIdempotencia())
+        if (fallo.tipo === 'claveUsada') olvidarClaveDeParada(usuarioId, usoEntrega(parada.id))
         if (fallo.tipo === 'yaRegistrada') {
           // Un intento anterior ya la registró (quizás con otros datos): manda lo que guardó el servidor.
+          olvidarRevisarDeParada(usuarioId, { tipo: 'entrega', hojaDeRutaId: viaje.id, paradaId: parada.id })
           setReportando(null)
           setAviso(fallo.mensaje)
           remota.refetch()
@@ -320,12 +316,13 @@ export default function ConsolaChoferScreen() {
       }
       return
     }
-    const claveAviso = claveAvisoDe(parada.id)
-    const cuerpo = { entregado: false as const, motivoRechazo: r.motivoRechazo, observaciones: r.observaciones, evidenciaUrl: r.evidenciaUrl, claveIdempotencia: claveAviso }
-    const guardarNoEntrega = () => {
+    const cuerpoCon = (claveIdempotencia: string) => ({ entregado: false as const, motivoRechazo: r.motivoRechazo, observaciones: r.observaciones, evidenciaUrl: r.evidenciaUrl, claveIdempotencia })
+    // Set inside the try: reading the key writes to the phone and a failure there must still release `reportandoYa`.
+    let cuerpo: ReturnType<typeof cuerpoCon> | undefined
+    const guardarNoEntrega = (c: ReturnType<typeof cuerpoCon>) => {
       encolarAccion(usuarioId, {
-        clave: claveAviso, hojaDeRutaId: viaje.id, paradaId: parada.id, clienteNombre: parada.clienteNombre,
-        tipo: 'noEntrega', cuerpo,
+        clave: c.claveIdempotencia, hojaDeRutaId: viaje.id, paradaId: parada.id, clienteNombre: parada.clienteNombre,
+        tipo: 'noEntrega', cuerpo: c,
       })
       updateStopStatus(parada.id, { delivered: false, observations: r.observaciones, reason: r.motivoRechazo })
       setGuardado(true)
@@ -333,21 +330,23 @@ export default function ConsolaChoferScreen() {
       setReportando(null)
     }
     try {
+      cuerpo = cuerpoCon(claveAvisoDe(parada.id))
       if (!onlineManager.isOnline()) {
-        guardarNoEntrega()
+        guardarNoEntrega(cuerpo)
         return
       }
       await reportar.mutateAsync({ hojaDeRutaId: viaje.id, paradaId: parada.id, ...cuerpo })
-      clavesAviso.current.delete(parada.id)
+      olvidarClaveDeParada(usuarioId, usoAviso(parada.id))
+      olvidarRevisarDeParada(usuarioId, { tipo: 'noEntrega', hojaDeRutaId: viaje.id, paradaId: parada.id })
       updateStopStatus(parada.id, { delivered: false, observations: r.observaciones, reason: r.motivoRechazo })
       setGuardado(false)
       setAvisado({ guardado: false })
       setReportando(null)
     } catch (e) {
-      if (esFallaDeRed(e)) guardarNoEntrega()
+      if (cuerpo && esSinRespuesta(e)) guardarNoEntrega(cuerpo)
       else {
         // La clave ya quedó con otro cuerpo (o en otra parada): no se reintenta con ella, el error se muestra.
-        if ((e as { codigo?: string } | null)?.codigo === 'ClaveIdempotenciaConOtroCuerpo') clavesAviso.current.delete(parada.id)
+        if ((e as { codigo?: string } | null)?.codigo === 'ClaveIdempotenciaConOtroCuerpo') olvidarClaveDeParada(usuarioId, usoAviso(parada.id))
         setErrorReporte(mensajeDelServidor(e, 'No se pudo reportar la parada.'))
       }
     } finally {
@@ -408,7 +407,7 @@ export default function ConsolaChoferScreen() {
       {!enLinea ? (
         <Notice tone="advertencia" title="Sin señal.">Seguí trabajando: se manda solo cuando vuelva.</Notice>
       ) : null}
-      {guardado && sinMandar > 0 ? <Notice tone="info" title="Guardado sin señal.">Se manda cuando haya señal.</Notice> : null}
+      {guardado && esperando > 0 ? <Notice tone="info" title="Guardado sin señal.">Se manda cuando haya señal.</Notice> : null}
       {soloLectura ? <Notice tone="info">Esta hoja de ruta es de otro chofer: solo podés verla.</Notice> : null}
       {finalizada ? <Notice tone="exito" title="Viaje finalizado.">Quedó cerrado en el sistema.</Notice> : null}
       {cancelada ? <Notice tone="info" title="Hoja cancelada.">La oficina canceló esta hoja de ruta antes de salir.</Notice> : null}
@@ -421,7 +420,11 @@ export default function ConsolaChoferScreen() {
     </View>
   )
 
-  const motivoSinMandar = `Falta mandar ${sinMandar} ${sinMandar === 1 ? 'acción' : 'acciones'}: esperá la señal para cerrar el viaje.`
+  const motivoSinMandar = [
+    esperando > 0 ? `Falta mandar ${esperando} ${esperando === 1 ? 'acción' : 'acciones'}: esperá la señal para cerrar el viaje.` : '',
+    enRevision === 1 ? '1 acción para revisar: reintentala o descartala para cerrar el viaje.' : '',
+    enRevision > 1 ? `${enRevision} acciones para revisar: reintentalas o descartalas para cerrar el viaje.` : '',
+  ].filter(Boolean).join(' ')
   const paradasCobro = paradasCobroDe(viaje)
   // Se puede finalizar con cobros sin resolver (el servidor lo permite): se avisa cuántos y que vuelven a pendientes.
   const avisoCobros = avisoDeFinalizar(paradasCobroSinResolver(paradasCobro))
