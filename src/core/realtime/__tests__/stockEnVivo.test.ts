@@ -160,3 +160,58 @@ describe('gestor de stock en vivo', () => {
     expect(c.start).not.toHaveBeenCalled()
   })
 })
+
+describe('stock en vivo: token renovado (RED-R4-01)', () => {
+  /** Un cliente de mentira de renovaciones: `renovar()` es lo que dispara el refresh exitoso del cliente HTTP. */
+  function renovaciones() {
+    const oyentes = new Set<() => void>()
+    return {
+      alRenovar: (o: () => void) => { oyentes.add(o); return () => { oyentes.delete(o) } },
+      renovar: () => oyentes.forEach((o) => o()),
+      cuantos: () => oyentes.size,
+    }
+  }
+
+  it('una apertura fallida (401 con token vencido) se reintenta una vez al renovarse el token', async () => {
+    const { c } = conexionFalsa()
+    c.start.mockRejectedValueOnce(new Error('401'))
+    const r = renovaciones()
+    const g = crearGestorStock(() => c, r.alRenovar)
+    const o = oyente()
+    g.suscribir(['d1'], o)
+    await flush()
+    expect(c.start).toHaveBeenCalledTimes(1)
+    expect(g.enVivo()).toBe(false)
+    r.renovar()
+    await flush()
+    expect(c.start).toHaveBeenCalledTimes(2)
+    expect(g.enVivo()).toBe(true)
+    expect(o.alConectar).toHaveBeenCalledTimes(1)
+  })
+
+  it('con la conexión ya abierta, renovar el token no reabre nada (sin tormenta de reintentos)', async () => {
+    const { c } = conexionFalsa()
+    const r = renovaciones()
+    const g = crearGestorStock(() => c, r.alRenovar)
+    g.suscribir(['d1'], oyente())
+    await flush()
+    r.renovar()
+    r.renovar()
+    await flush()
+    expect(c.start).toHaveBeenCalledTimes(1)
+  })
+
+  it('tras el logout (nadie escucha) un refresh no reabre el hub y se suelta el oyente', async () => {
+    const { c } = conexionFalsa()
+    c.start.mockRejectedValueOnce(new Error('401'))
+    const r = renovaciones()
+    const g = crearGestorStock(() => c, r.alRenovar)
+    const baja = g.suscribir(['d1'], oyente())
+    await flush()
+    baja()
+    expect(r.cuantos()).toBe(0)
+    r.renovar()
+    await flush()
+    expect(c.start).toHaveBeenCalledTimes(1)
+  })
+})

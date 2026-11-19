@@ -1,3 +1,4 @@
+import { Alert } from 'react-native'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -126,5 +127,43 @@ describe('al reconectar: líneas de la cola que cambiaron (S3)', () => {
     catalogo(1)
     conectar()
     expect(await screen.findByText(/Quedan 1 de Producto X \(la venta guardada lleva 6\)/)).toBeTruthy()
+  })
+})
+
+describe('RED-R3-01: descartar una venta rechazada por el servidor', () => {
+  const rechazada = () => {
+    const v = encolarVenta('u1', { alta, cliente: { razonSocial: 'Almacén Luis' } as never, visto: { total: 600, precios: { p1: 100 } } })
+    cambiarEstado('u1', v.clave, { tipo: 'revisar', mensaje: 'El servidor la rechazó.' })
+    return v
+  }
+
+  it('«Descartar» pide confirmación y, al confirmar, saca la venta solo del teléfono', () => {
+    const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined)
+    rechazada()
+    montar()
+    fireEvent.press(screen.getByText('Descartar'))
+    expect(alerta).toHaveBeenCalledTimes(1)
+    expect(leerCola('u1')).toHaveLength(1) // todavía no: falta confirmar
+    const botones = alerta.mock.calls[0][2] as { text: string; onPress?: () => void }[]
+    act(() => botones.find((b) => b.text === 'Descartar')!.onPress!())
+    expect(leerCola('u1')).toHaveLength(0)
+    alerta.mockRestore()
+  })
+
+  it('Cancelar en la confirmación deja la venta en la cola', () => {
+    const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined)
+    rechazada()
+    montar()
+    fireEvent.press(screen.getByText('Descartar'))
+    const botones = alerta.mock.calls[0][2] as { text: string; onPress?: () => void }[]
+    botones.find((b) => b.text === 'Cancelar')!.onPress?.()
+    expect(leerCola('u1')).toHaveLength(1)
+    alerta.mockRestore()
+  })
+
+  it('una venta que solo espera señal no tiene «Descartar»', () => {
+    encolarVenta('u1', { alta, cliente: { razonSocial: 'Almacén Luis' } as never, visto: { total: 600, precios: { p1: 100 } } })
+    montar()
+    expect(screen.queryByText('Descartar')).toBeNull()
   })
 })

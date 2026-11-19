@@ -102,6 +102,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/AppMovil/version-minima": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VersionMinimaDtoResponse"];
+                        "application/json": components["schemas"]["VersionMinimaDtoResponse"];
+                        "text/json": components["schemas"]["VersionMinimaDtoResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/Audit/permisos": {
         parameters: {
             query?: never;
@@ -828,7 +865,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EnviarTrasladoEfectivoCommand"];
+                    "text/json": components["schemas"]["EnviarTrasladoEfectivoCommand"];
+                    "application/*+json": components["schemas"]["EnviarTrasladoEfectivoCommand"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -900,7 +943,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RecibirTrasladoEfectivoCommand"];
+                    "text/json": components["schemas"]["RecibirTrasladoEfectivoCommand"];
+                    "application/*+json": components["schemas"]["RecibirTrasladoEfectivoCommand"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -2101,7 +2150,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AcreditarChequeCommand"];
+                    "text/json": components["schemas"]["AcreditarChequeCommand"];
+                    "application/*+json": components["schemas"]["AcreditarChequeCommand"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -8910,7 +8965,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EmitirFacturaArcaCommand"];
+                    "text/json": components["schemas"]["EmitirFacturaArcaCommand"];
+                    "application/*+json": components["schemas"]["EmitirFacturaArcaCommand"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -8921,6 +8982,17 @@ export interface paths {
                         "text/plain": components["schemas"]["EmisionArcaDtoResponse"];
                         "application/json": components["schemas"]["EmisionArcaDtoResponse"];
                         "text/json": components["schemas"]["EmisionArcaDtoResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
                     };
                 };
                 /** @description Not Found */
@@ -13729,7 +13801,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EmitirComprobanteFiscalNotaCreditoCommand"];
+                    "text/json": components["schemas"]["EmitirComprobanteFiscalNotaCreditoCommand"];
+                    "application/*+json": components["schemas"]["EmitirComprobanteFiscalNotaCreditoCommand"];
+                };
+            };
             responses: {
                 /** @description Created */
                 201: {
@@ -14625,7 +14703,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AutorizarPedidoTransferenciaCommand"];
+                    "text/json": components["schemas"]["AutorizarPedidoTransferenciaCommand"];
+                    "application/*+json": components["schemas"]["AutorizarPedidoTransferenciaCommand"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -14709,7 +14793,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CancelarPedidoTransferenciaCommand"];
+                    "text/json": components["schemas"]["CancelarPedidoTransferenciaCommand"];
+                    "application/*+json": components["schemas"]["CancelarPedidoTransferenciaCommand"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -16006,6 +16096,17 @@ export interface paths {
                         "text/json": components["schemas"]["RemitoDtoResponse"];
                     };
                 };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
                 /** @description Not Found */
                 404: {
                     headers: {
@@ -16176,7 +16277,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AprobarRendicionChoferRequest"];
+                    "text/json": components["schemas"]["AprobarRendicionChoferRequest"];
+                    "application/*+json": components["schemas"]["AprobarRendicionChoferRequest"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -17489,7 +17596,13 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CerrarSesionRequest"];
+                    "text/json": components["schemas"]["CerrarSesionRequest"];
+                    "application/*+json": components["schemas"]["CerrarSesionRequest"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -21889,7 +22002,13 @@ export interface components {
             /** Format: double */
             montoNetoTotal?: number;
         };
+        AcreditarChequeCommand: {
+            claveIdempotencia?: string | null;
+            /** Format: uuid */
+            chequeId?: string;
+        };
         AcreditarTarjetaCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             acreditacionTarjetaId?: string;
             /** Format: uuid */
@@ -21967,6 +22086,7 @@ export interface components {
         /** @enum {string} */
         AgrupacionReporte: "Dia" | "Semana" | "Mes" | "Anio";
         AjustarStockFiscalCommand: {
+            claveIdempotencia?: string | null;
             /** Format: double */
             cantidad?: number;
             motivo?: string | null;
@@ -22066,11 +22186,13 @@ export interface components {
             motivo?: string | null;
         };
         AnularMovimientoInternoCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             movimientoInternoId?: string;
             motivo?: string | null;
         };
         AnularPagoCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             pagoId?: string;
             /**
@@ -22093,6 +22215,7 @@ export interface components {
             motivo?: string | null;
         };
         AnularTransaccionCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             transaccionId?: string;
             motivo?: string | null;
@@ -22121,6 +22244,9 @@ export interface components {
             markupPorcentaje?: number | null;
             /** Format: double */
             aumentoCostoPorcentaje?: number | null;
+        };
+        AprobarRendicionChoferRequest: {
+            claveIdempotencia?: string | null;
         };
         ArcaEstadoDto: {
             ambiente: string;
@@ -22180,6 +22306,7 @@ export interface components {
             nombre?: string | null;
         };
         AsignarComprobantePagoCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             pagoId?: string;
             comprobanteUrl?: string | null;
@@ -22261,6 +22388,12 @@ export interface components {
         };
         AutorizarDevolucionRequest: {
             roturas?: components["schemas"]["RoturaDevolucionInput"][] | null;
+            claveIdempotencia?: string | null;
+        };
+        AutorizarPedidoTransferenciaCommand: {
+            claveIdempotencia?: string | null;
+            /** Format: uuid */
+            pedidoId?: string;
         };
         AutorizarVentaCommand: {
             claveIdempotencia?: string | null;
@@ -22553,6 +22686,7 @@ export interface components {
             obligatorio?: boolean;
         };
         CancelCompraCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             compraId?: string;
             motivoAnulacion?: string | null;
@@ -22562,7 +22696,13 @@ export interface components {
             id?: string;
             motivo?: string | null;
         };
+        CancelarPedidoTransferenciaCommand: {
+            claveIdempotencia?: string | null;
+            /** Format: uuid */
+            pedidoId?: string;
+        };
         CancelarTransferenciaStockCommand: {
+            claveIdempotencia?: string | null;
             /** Format: int32 */
             version?: number | null;
             motivo?: string | null;
@@ -22576,6 +22716,7 @@ export interface components {
             version?: number | null;
         };
         CargarNotaCreditoDevolucionCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             compraId?: string;
             /** Format: uuid */
@@ -22750,6 +22891,7 @@ export interface components {
             operaciones?: number;
         };
         CerrarCajaConArqueoRequest: {
+            claveIdempotencia?: string | null;
             /** Format: double */
             saldoFinalDeclarado?: number;
             moneda?: string | null;
@@ -22774,6 +22916,9 @@ export interface components {
             /** Format: uuid */
             movimientoCuentaId?: string | null;
             advertenciaAsiento?: string | null;
+        };
+        CerrarSesionRequest: {
+            refreshToken?: string | null;
         };
         CerrarVigenciaReglaComisionCommand: {
             /** Format: uuid */
@@ -23205,6 +23350,7 @@ export interface components {
             /** Format: uuid */
             cuentaPropiaId?: string | null;
             cheques?: components["schemas"]["ChequeDetalleItem"][] | null;
+            claveIdempotencia?: string | null;
         };
         CompraActionResponseDto: {
             /** Format: uuid */
@@ -23753,6 +23899,7 @@ export interface components {
             usuarioGeneradorId?: string;
         };
         CorregirCesionComisionCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             ventaId?: string;
             /** Format: int32 */
@@ -23810,6 +23957,7 @@ export interface components {
             depositoId?: string | null;
             tipoTarea?: components["schemas"]["TipoTarea"];
             asignadosIds?: string[] | null;
+            claveIdempotencia?: string | null;
             visibilidad: components["schemas"]["VisibilidadEvento"];
             /** Format: uuid */
             ventaId?: string | null;
@@ -23928,6 +24076,7 @@ export interface components {
             codigo?: string | null;
         };
         CreateCompraBorradorCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             proveedorId?: string;
             /** Format: uuid */
@@ -23959,6 +24108,7 @@ export interface components {
             titular?: string | null;
         };
         CreateCuentaCorrienteCommand: {
+            claveIdempotencia?: string | null;
             nombre?: string | null;
             /** Format: uuid */
             socioComercialId?: string | null;
@@ -24026,6 +24176,7 @@ export interface components {
             esCargaMasiva?: boolean;
         };
         CreateSocioCommand: {
+            claveIdempotencia?: string | null;
             razonSocial?: string | null;
             cuit?: string | null;
             /** Format: int32 */
@@ -24226,6 +24377,7 @@ export interface components {
         };
         DarDeBajaPendienteRendicionRequest: {
             motivo?: string | null;
+            claveIdempotencia?: string | null;
         };
         DashboardSummaryDto: {
             /** Format: double */
@@ -24724,7 +24876,16 @@ export interface components {
             data?: components["schemas"]["EmisionArcaDto"];
             codigo?: string | null;
         };
+        EmitirComprobanteFiscalNotaCreditoCommand: {
+            claveIdempotencia?: string | null;
+            /** Format: uuid */
+            notaCreditoId?: string;
+        };
+        EmitirFacturaArcaCommand: {
+            claveIdempotencia?: string | null;
+        };
         EmitirNotaCreditoCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             ventaId?: string;
             destino?: components["schemas"]["DestinoNotaCredito"];
@@ -24814,6 +24975,11 @@ export interface components {
              * @deprecated
              */
             usuarioModificadorId?: string;
+        };
+        EnviarTrasladoEfectivoCommand: {
+            /** Format: uuid */
+            movimientoId?: string;
+            claveIdempotencia?: string | null;
         };
         /** @enum {string} */
         EscalonComision: "Articulo" | "PadreDeVariantes" | "Subcategoria" | "Categoria" | "Familia" | "Linea" | "DefaultVendedor";
@@ -25201,6 +25367,7 @@ export interface components {
             codigo?: string | null;
         };
         FacturarAPedidoCommand: {
+            claveIdempotencia?: string | null;
             confirmarFueraDeTermino?: boolean;
             motivo?: string | null;
         };
@@ -27390,6 +27557,7 @@ export interface components {
             codigo?: string | null;
         };
         RechazarAutorizacionVentaCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             ventaId?: string;
             /** Format: int32 */
@@ -27404,14 +27572,17 @@ export interface components {
         };
         RechazarDevolucionRequest: {
             motivo?: string | null;
+            claveIdempotencia?: string | null;
         };
         RechazarPedidoTransferenciaCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             pedidoId?: string;
             motivo?: string | null;
         };
         RechazarRendicionChoferRequest: {
             motivo?: string | null;
+            claveIdempotencia?: string | null;
         };
         RechazoRendicionDto: {
             usuario?: string | null;
@@ -27445,6 +27616,11 @@ export interface components {
             claveIdempotencia?: string | null;
             /** Format: int32 */
             version?: number | null;
+        };
+        RecibirTrasladoEfectivoCommand: {
+            /** Format: uuid */
+            movimientoId?: string;
+            claveIdempotencia?: string | null;
         };
         ReconciliacionArcaDto: {
             pedidos: components["schemas"]["PedidoCaeArcaDto"][];
@@ -27904,6 +28080,7 @@ export interface components {
             ventaId?: string | null;
             /** Format: uuid */
             hojaDeRutaId?: string | null;
+            domicilioEntrega?: string | null;
             creadoPorNombre?: string | null;
         };
         RemitoResumenDtoPaginatedResponse: {
@@ -28102,6 +28279,7 @@ export interface components {
             resueltaEn?: string | null;
         };
         ReprogramarEntregaCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             ventaId?: string;
             /** Format: date-time */
@@ -28110,6 +28288,7 @@ export interface components {
         /** @enum {string} */
         ResolucionSolicitudArca: "Vincular" | "Ajeno";
         ResolverNotaCreditoCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             notaCreditoId?: string;
             aprobar?: boolean;
@@ -28315,6 +28494,7 @@ export interface components {
             detalle?: components["schemas"]["ConservadoDto"][] | null;
         };
         RevertirEndosoEntregaChequesCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             pagoId?: string;
             motivo?: string | null;
@@ -30255,6 +30435,19 @@ export interface components {
         };
         VerificarStockFiscalVentaQuery: {
             items?: components["schemas"]["ItemStockFiscalDto"][] | null;
+        };
+        VersionMinimaDto: {
+            versionMinima?: string | null;
+        };
+        VersionMinimaDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["VersionMinimaDto"];
+            codigo?: string | null;
         };
         ViajeResumenDto: {
             /** Format: uuid */

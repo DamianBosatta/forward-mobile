@@ -218,6 +218,7 @@ export const CATALOGO_DE_ERRORES = {
   RendicionViajeAnteriorAlCorte: { status: 409, mensaje: "El viaje llegó antes de que empezara la rendición: no se rinde por acá." },
   RendicionViajeYaRendido: { status: 409, mensaje: "El viaje ya tiene una rendición." },
   RolNoRegistrado: { status: 400, mensaje: "El rol no está registrado en el sistema." },
+  SesionesSinCerrar: { status: 500, mensaje: "El cambio se guardó, pero no se pudieron cerrar las sesiones abiertas del usuario. No repitas la operación: avisá a Sistemas." },
   SinPermiso: { status: 403, mensaje: "No tenés permisos para acceder a este recurso." },
   SocioCondicionPagoRepetida: { status: 400, mensaje: "Hay una condición de pago repetida." },
   SocioCondicionesPagoPredeterminadaUnica: { status: 400, mensaje: "Elegí una sola condición de pago predeterminada." },

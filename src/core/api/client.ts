@@ -97,6 +97,15 @@ let _onUnauthorized: (() => void) | null = null
 /** El token de acceso vigente (el mismo que usan las requests): lo lee el hub de stock en cada (re)conexión. */
 export const tokenActual = (): string | null => _getToken()
 
+// Quienes quieren enterarse de un refresh exitoso (el hub de stock reabre su conexión con el token nuevo).
+const _alRenovarToken = new Set<() => void>()
+
+/** Avisa después de cada refresh exitoso del token. Devuelve la baja. */
+export function alRenovarToken(oyente: () => void): () => void {
+  _alRenovarToken.add(oyente)
+  return () => { _alRenovarToken.delete(oyente) }
+}
+
 // Mutex para prevenir refresh concurrentes
 let _isRefreshing = false
 let _refreshPromise: Promise<boolean> | null = null
@@ -172,6 +181,9 @@ async function attemptRefresh(): Promise<boolean> {
         accessToken: data.access_token,
         refreshToken: data.refresh_token ?? refreshToken,
       })
+      _alRenovarToken.forEach((oyente) => {
+        try { oyente() } catch (e) { logger.warn('Oyente de token renovado falló', e) }
+      })
       return true
     } catch (err) {
       // Error de red/timeout → transitorio. NO desloguear; se reintenta luego.
@@ -193,8 +205,20 @@ export function fetchWithTimeout(url: string, options: RequestInit = {}, timeout
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
+  // The caller's signal (a screen leaving) must still cancel the request: it is chained to ours by hand because
+  // `AbortSignal.any` is not available in every Hermes version the app runs on.
+  const delLlamador = options.signal
+  const cancelar = () => controller.abort()
+  if (delLlamador) {
+    if (delLlamador.aborted) controller.abort()
+    else delLlamador.addEventListener('abort', cancelar)
+  }
+
   return fetch(url, { ...options, signal: controller.signal })
-    .finally(() => clearTimeout(timeoutId))
+    .finally(() => {
+      clearTimeout(timeoutId)
+      delLlamador?.removeEventListener('abort', cancelar)
+    })
 }
 
 // ── Sanitización de errores ──────────────────────────────────────────────────

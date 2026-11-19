@@ -148,3 +148,39 @@ jobs:
         env:
           MSG: ${{ github.event.head_commit.message }}
         run: eas update --channel production --environment production --message "$MSG" --non-interactive
+      # OPS-R4-01: a fingerprint runtime with no installed build receives the update on no phone and the job stays green.
+      # Compares the runtime of the update just published with the one of the latest finished production Android build.
+      # Warning only: never fails the job. Prints runtime versions and a verdict, nothing else from the CLI output.
+      - name: Check that a production build has this runtime
+        if: steps.token.outputs.ready == 'true'
+        continue-on-error: true
+        run: |
+          eas update:list --all --platform android --limit 1 --json --non-interactive > "$RUNNER_TEMP/update.json" 2> /dev/null || true
+          eas build:list --platform android --build-profile production --status finished --limit 1 --json --non-interactive > "$RUNNER_TEMP/build.json" 2> /dev/null || true
+          node -e '
+            const fs = require("fs")
+            // Takes the first runtime version found: `runtimeVersion` as text, or `runtime.version` (the two shapes of the eas-cli JSON).
+            const find = (v) => {
+              if (!v || typeof v !== "object") return null
+              if (typeof v.runtimeVersion === "string") return v.runtimeVersion
+              if (v.runtime && typeof v.runtime.version === "string") return v.runtime.version
+              for (const k of Object.keys(v)) { const r = find(v[k]); if (r) return r }
+              return null
+            }
+            const read = (f) => { try { return find(JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + "/" + f, "utf8"))) } catch { return null } }
+            const update = read("update.json")
+            const build = read("build.json")
+            const summary = process.env.GITHUB_STEP_SUMMARY
+            let msg
+            if (!update || !build) {
+              msg = "Could not read the runtime version of the update (" + (update ?? "unknown") + ") or of the latest production Android build (" + (build ?? "unknown") + "): check expo.dev by hand (docs/RELEASE.md)."
+            } else if (update !== build) {
+              msg = "The update runtime " + update + " differs from the runtime " + build + " of the latest finished production Android build: no installed phone receives this update. A new APK is needed (docs/RELEASE.md)."
+            } else {
+              console.log("Update runtime " + update + " matches the latest production Android build.")
+              if (summary) fs.appendFileSync(summary, "Update runtime " + update + " matches the latest production Android build.\n")
+              process.exit(0)
+            }
+            console.log("::warning::" + msg)
+            if (summary) fs.appendFileSync(summary, "**Warning:** " + msg + "\n")
+          '

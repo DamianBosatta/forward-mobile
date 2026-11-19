@@ -1,6 +1,6 @@
 import { AppState } from 'react-native'
 import { HttpTransportType, HubConnectionBuilder, LogLevel, type HubConnection } from '@microsoft/signalr'
-import { API_URL, tokenActual } from '@/core/api/client'
+import { API_URL, alRenovarToken, tokenActual } from '@/core/api/client'
 import { logger } from '@/core/utils/logger'
 
 /**
@@ -55,7 +55,11 @@ function conexionReal(): ConexionStock {
     .build()
 }
 
-export function crearGestorStock(crear: () => ConexionStock = conexionReal) {
+export function crearGestorStock(
+  crear: () => ConexionStock = conexionReal,
+  /** Cómo enterarse de un token renovado (el de la app escucha al cliente HTTP). */
+  alRenovar: (oyente: () => void) => () => void = alRenovarToken,
+) {
   const oyentes = new Map<OyenteStock, string[]>()
   const oyentesAvisos = new Set<OyenteAvisos>()
   // Ya hubo una conexión lista: las siguientes son reconexiones y piden refrescar.
@@ -124,16 +128,24 @@ export function crearGestorStock(crear: () => ConexionStock = conexionReal) {
   }
 
   let sub: { remove: () => void } | null = null
+  // Una apertura fallida por 401 (token vencido al abrir la app) no la cubre la reconexión automática:
+  // al renovarse el token se reintenta una vez. `abrir` no hace nada si ya hay conexión o una apertura en curso.
+  let bajaRenovacion: (() => void) | null = null
   const alCambiarAppState = (e: string) => {
     if (e === 'active') void abrir()
     else if (e === 'background') soltar()
   }
-  const escucharAppState = () => { if (!sub) sub = AppState.addEventListener('change', alCambiarAppState) }
+  const escucharAppState = () => {
+    if (!sub) sub = AppState.addEventListener('change', alCambiarAppState)
+    if (!bajaRenovacion) bajaRenovacion = alRenovar(() => { void abrir() })
+  }
   /** Sin nadie que escuche (stock ni avisos) se suelta la conexión y se olvida que hubo una. */
   const soltarSiNadie = () => {
     if (oyentes.size > 0 || oyentesAvisos.size > 0) return
     sub?.remove()
     sub = null
+    bajaRenovacion?.()
+    bajaRenovacion = null
     yaConecto = false
     soltar()
   }

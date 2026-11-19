@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { View, Text, TouchableOpacity } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
 import { MotiView } from 'moti'
@@ -44,6 +44,59 @@ export function estadoColor(estado: number | undefined, primary: string): string
 export function RouteSelector({ routes, onSelect }: RouteSelectorProps) {
   const colors = useColors()
 
+  const renderItem = useCallback(({ item, index }: { item: HojaRutaListItemDto; index: number }) => {
+      const stopCount = item.cantidadParadas
+      const color = estadoColor(item.estado, colors.primary)
+
+      return (
+        <MotiView
+          from={{ opacity: 0, translateX: -20 }}
+          animate={{ opacity: 1, translateX: 0 }}
+          transition={{ delay: index * 80 }}
+          style={{ marginBottom: 12 }}
+        >
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => onSelect(item.id)}
+          >
+            <View style={{ padding: 20, borderRadius: radii.tarjeta, backgroundColor: colors.surface }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <Truck size={18} color={color} />
+                    <Text style={{ ...typeScale.cuerpoDestacado, color: colors.text }}>
+                      Viaje #{item.id.substring(0, 8).toUpperCase()}
+                    </Text>
+                  </View>
+
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <MapPin size={14} color={colors.textSecondary} />
+                    <Text style={{ ...typeScale.secundario, color: colors.textSecondary }}>
+                      {`${stopCount} ${stopCount === 1 ? 'entrega' : 'entregas'}`}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View style={{
+                    backgroundColor: color + '20',
+                    paddingHorizontal: 10, paddingVertical: 6,
+                    borderRadius: 10,
+                    borderWidth: 1, borderColor: color,
+                  }}>
+                    <Text style={{ ...typeScale.etiqueta, color }}>
+                      {estatoLabel(item.estado)}
+                    </Text>
+                  </View>
+                  <ChevronRight size={20} color={colors.textMuted} />
+                </View>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </MotiView>
+      )
+  }, [colors, onSelect])
+
   return (
     <View style={{ flex: 1 }}>
       <MotiView
@@ -67,58 +120,7 @@ export function RouteSelector({ routes, onSelect }: RouteSelectorProps) {
         keyExtractor={(item: HojaRutaListItemDto) => item.id}
         estimatedItemSize={100}
         contentContainerStyle={{ padding: 16 }}
-        renderItem={({ item, index }: { item: HojaRutaListItemDto; index: number }) => {
-          const stopCount = item.cantidadParadas
-          const color = estadoColor(item.estado, colors.primary)
-
-          return (
-            <MotiView
-              from={{ opacity: 0, translateX: -20 }}
-              animate={{ opacity: 1, translateX: 0 }}
-              transition={{ delay: index * 80 }}
-              style={{ marginBottom: 12 }}
-            >
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => onSelect(item.id)}
-              >
-                <View style={{ padding: 20, borderRadius: radii.tarjeta, backgroundColor: colors.surface }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        <Truck size={18} color={color} />
-                        <Text style={{ ...typeScale.cuerpoDestacado, color: colors.text }}>
-                          Viaje #{item.id.substring(0, 8).toUpperCase()}
-                        </Text>
-                      </View>
-
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <MapPin size={14} color={colors.textSecondary} />
-                        <Text style={{ ...typeScale.secundario, color: colors.textSecondary }}>
-                          {`${stopCount} ${stopCount === 1 ? 'entrega' : 'entregas'}`}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                      <View style={{
-                        backgroundColor: color + '20',
-                        paddingHorizontal: 10, paddingVertical: 6,
-                        borderRadius: 10,
-                        borderWidth: 1, borderColor: color,
-                      }}>
-                        <Text style={{ ...typeScale.etiqueta, color }}>
-                          {estatoLabel(item.estado)}
-                        </Text>
-                      </View>
-                      <ChevronRight size={20} color={colors.textMuted} />
-                    </View>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            </MotiView>
-          )
-        }}
+        renderItem={renderItem}
       />
     </View>
   )

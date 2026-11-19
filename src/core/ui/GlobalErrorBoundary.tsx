@@ -18,7 +18,8 @@ export interface GlobalErrorBoundaryProps {
 export function GlobalErrorBoundary({ error, retry }: GlobalErrorBoundaryProps) {
   // Capture the error in the local log file immediately
   React.useEffect(() => {
-    logger.error('CRITICAL_CRASH:', error.name, error.message, error.stack);
+    // The real Error: the logger sends it to Sentry as an exception (grouped by type and stack), not as loose text.
+    logger.error('CRITICAL_CRASH:', error);
   }, [error]);
 
   const colors = useColors()
@@ -70,7 +71,7 @@ export function GlobalErrorBoundary({ error, retry }: GlobalErrorBoundaryProps) 
             <View style={[styles.errorBox, { backgroundColor: colors.surface2, borderColor: colors.border }]}>
               <ScrollView style={{ maxHeight: 100 }} showsVerticalScrollIndicator={false}>
                 <Text style={[styles.errorTitle, { color: colors.danger }]}>{error.name}</Text>
-                <Text style={[styles.errorMessage, { color: colors.text }]}>{error.message}</Text>
+                <Text style={[styles.errorMessage, { color: colors.text }]}>El detalle quedó registrado para el equipo.</Text>
               </ScrollView>
             </View>
 
