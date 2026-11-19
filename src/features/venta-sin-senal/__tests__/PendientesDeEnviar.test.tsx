@@ -32,6 +32,7 @@ jest.mock('@/core/realtime/stockEnVivo', () => ({
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 
+import NetInfo from '@react-native-community/netinfo'
 import { cambiarEstado, encolarVenta, leerCola } from '../lib/cola'
 import { avisoDeTope } from '@/core/utils/colasSinSenal'
 import { PendientesDeEnviar } from '../components/PendientesDeEnviar'
@@ -127,6 +128,26 @@ describe('al reconectar: líneas de la cola que cambiaron (S3)', () => {
     catalogo(1)
     conectar()
     expect(await screen.findByText(/Quedan 1 de Producto X \(la venta guardada lleva 6\)/)).toBeTruthy()
+  })
+})
+
+describe('RED-03: alcanzabilidad desconocida no es sin señal', () => {
+  const avisar = (estado: { isConnected: boolean | null; isInternetReachable: boolean | null }) =>
+    (NetInfo.addEventListener as jest.Mock).mockImplementationOnce((cb: (e: unknown) => void) => { cb(estado); return () => undefined })
+
+  it('con la conexión sin confirmar (isInternetReachable null) no muestra el aviso ni deshabilita «Enviar ahora»', () => {
+    avisar({ isConnected: true, isInternetReachable: null })
+    encolarVenta('u1', { alta, cliente: { razonSocial: 'Almacén Luis' } as never, visto: { total: 600, precios: { p1: 100 } } })
+    montar()
+    expect(screen.queryByText(/^Sin señal/)).toBeNull()
+    expect(screen.getByText('Enviar ahora')).toBeTruthy()
+  })
+
+  it('con la red caída afirmada sí muestra el aviso', () => {
+    avisar({ isConnected: false, isInternetReachable: false })
+    encolarVenta('u1', { alta, cliente: { razonSocial: 'Almacén Luis' } as never, visto: { total: 600, precios: { p1: 100 } } })
+    montar()
+    expect(screen.getByText(/^Sin señal/)).toBeTruthy()
   })
 })
 

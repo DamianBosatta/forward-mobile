@@ -31,7 +31,7 @@ export function useColaDelUsuario(): VentaEnCola[] {
 export function useVentasSinSenal() {
   const usuarioId = useAuthStore((s) => s.user?.id)
   const queryClient = useQueryClient()
-  const { isConnected } = useNetworkStatus()
+  const { isConnected } = useNetworkStatus({ desconocidoCuentaComoSinRed: false })
   const items = useColaDelUsuario()
   const grupos = useMemo(() => agrupar(items), [items])
 

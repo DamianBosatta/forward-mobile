@@ -29,7 +29,7 @@ export function useColaConsola(): { items: AccionEnCola[]; esperando: AccionEnCo
 export function useEnvioConsolaSinSenal() {
   const usuarioId = useAuthStore((s) => s.user?.id)
   const qc = useQueryClient()
-  const { isConnected } = useNetworkStatus()
+  const { isConnected } = useNetworkStatus({ desconocidoCuentaComoSinRed: false })
   const { esperando } = useColaConsola()
 
   const conSenal = useRef(isConnected)
