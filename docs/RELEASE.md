@@ -108,6 +108,50 @@ Dos caminos, según la documentación de Expo (https://docs.expo.dev/eas-update/
 - Volver a publicar la actualización anterior: buscar su grupo en expo.dev → proyecto → Updates (o con `eas update:list --branch production`) y correr `eas update:republish --group <id-anterior>`.
 - Usar el asistente `eas update:rollback`, que permite volver a una actualización anterior o al bundle que vino dentro del build.
 
+### Firma de las actualizaciones (preparada, sin activar)
+
+La firma de punta a punta hace que la app solo aplique actualizaciones firmadas con la clave privada de Forward: ni la CDN ni Expo pueden meter un bundle propio. Documentación: https://docs.expo.dev/eas-update/code-signing/
+
+**Requisito previo:** Expo solo ofrece la firma en los planes pagos Production o Enterprise (https://expo.dev/pricing). Con el plan gratis no se puede activar.
+
+**Estado (2026-11-19):** el par de claves y el certificado ya están generados, fuera del repositorio:
+
+- `C:/dev/secretos/forward-mobile-ota-firma/keys/private-key.pem`: clave privada. Solo la puede leer el usuario de Windows del dueño. Nunca se commitea ni se pega en un chat.
+- `C:/dev/secretos/forward-mobile-ota-firma/keys/public-key.pem`: clave pública (no es secreta).
+- `C:/dev/secretos/forward-mobile-ota-firma/certs/certificate.pem`: certificado autofirmado, válido por 10 años (`Forward ERP`). Este sí va al repositorio cuando se active.
+
+Guardar una copia de la carpeta `keys` en un gestor de contraseñas: si se pierde la clave privada, no se pueden publicar más actualizaciones para los APK que tengan el certificado, y hay que sacar un APK nuevo.
+
+**Pasos para activarla, junto con el próximo APK:**
+
+1. Pasar al plan Production de Expo.
+2. Cargar la clave privada como secreto del repositorio. El dueño lo hace desde su terminal; el contenido no se muestra:
+
+   ```
+   gh secret set EXPO_CODE_SIGNING_KEY --repo DamianBosatta/forward-mobile < C:/dev/secretos/forward-mobile-ota-firma/keys/private-key.pem
+   ```
+
+3. En una rama nueva, copiar el certificado a `certs/certificate.pem` y sumar a `updates` en `app.config.ts`:
+
+   ```ts
+   codeSigningCertificate: './certs/certificate.pem',
+   codeSigningMetadata: { keyid: 'main', alg: 'rsa-v1_5-sha256' },
+   ```
+
+4. En el job `publish-update` de `.github/workflows/ci.yml`, escribir la clave en un archivo temporal antes de publicar y pasarla a `eas update`:
+
+   ```
+   printf '%s
+' "$EXPO_CODE_SIGNING_KEY" > "$RUNNER_TEMP/ota-key.pem"
+   eas update ... --private-key-path "$RUNNER_TEMP/ota-key.pem"
+   ```
+
+   con `EXPO_CODE_SIGNING_KEY: ${{ secrets.EXPO_CODE_SIGNING_KEY }}` en el `env` de ese paso.
+5. Mergear y sacar un APK nuevo (ver "Build del APK"). El certificado cambia el `fingerprint`, así que el APK nuevo es un runtime nuevo: los APK viejos siguen recibiendo solo las actualizaciones de su runtime, sin firma.
+6. Probar en un teléfono con el APK nuevo que una actualización firmada se aplica. Una publicada sin firma, o con otra clave, la app la rechaza.
+
+Para rotar la clave o quitar la firma, seguir las secciones "Key rotation" y "Removing code signing" de la documentación. En los dos casos hace falta un APK nuevo.
+
 ## Build del APK
 
 Los APK los construye EAS Build, no la máquina de nadie. Los dos perfiles (`preview` y `production` en `eas.json`) producen un APK instalable (`android.buildType: "apk"`). EAS instala las dependencias desde el lockfile con `npm ci`, así que el build sale de lo que está commiteado.
