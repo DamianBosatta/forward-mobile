@@ -54,6 +54,7 @@ jest.mock('@sentry/react-native', () => ({
   wrap: (c: unknown) => c,
   captureException: (e: unknown) => mockCaptureException(e),
   captureMessage: jest.fn(),
+  setUser: jest.fn(),
 }))
 const mockRandomBytes = jest.fn((n: number) =>
   (jest.requireActual('expo-crypto') as typeof import('expo-crypto')).getRandomBytes(n),
