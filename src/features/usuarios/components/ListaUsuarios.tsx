@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { FlatList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
@@ -54,6 +54,16 @@ function Contenido() {
       </View>
     )
 
+  const renderItem = useCallback(() => (
+    <View style={{ gap: space[4] }}>
+      <View style={{ paddingHorizontal: space[4] }}>
+        <Notice tone="info">Solo consulta. Altas, bajas y permisos se manejan desde la web.</Notice>
+      </View>
+      <BuscadorCartera valor={texto} onCambio={setTexto} etiqueta="Buscar por nombre o puesto" placeholder="Buscar por nombre o puesto" sobre="pantalla" grande />
+      {cuerpo}
+    </View>
+  ), [texto, setTexto, cuerpo])
+
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Usuarios" subtitle={subtitulo} leading={{ kind: 'atras', onPress: () => router.back() }} />
@@ -62,15 +72,7 @@ function Contenido() {
         keyExtractor={() => 'usuarios'}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingVertical: space[4], gap: space[4], paddingBottom: space[12] + insetInferior, width: '100%', maxWidth: 640, alignSelf: 'center' }}
-        renderItem={() => (
-          <View style={{ gap: space[4] }}>
-            <View style={{ paddingHorizontal: space[4] }}>
-              <Notice tone="info">Solo consulta. Altas, bajas y permisos se manejan desde la web.</Notice>
-            </View>
-            <BuscadorCartera valor={texto} onCambio={setTexto} etiqueta="Buscar por nombre o puesto" placeholder="Buscar por nombre o puesto" sobre="pantalla" grande />
-            {cuerpo}
-          </View>
-        )}
+        renderItem={renderItem}
       />
     </View>
   )

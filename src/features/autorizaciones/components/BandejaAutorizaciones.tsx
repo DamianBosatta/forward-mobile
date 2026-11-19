@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { FlatList, Pressable, ScrollView, Text, View } from 'react-native'
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
@@ -84,13 +84,13 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
   const sinRed = q.isError && esFallaDeRed(q.error)
   const visibles = lista.filter((v) => tieneMotivo(v.motivoPendienteAutorizacion, filtro))
   const hero = heroDeBandeja(visibles)
-  const secundario = [typeScale.secundario, { color: c.textSecondary }]
+  const secundario = useMemo(() => [typeScale.secundario, { color: c.textSecondary }], [c.textSecondary])
 
-  const abrir = (id: string) => {
+  const abrir = useCallback((id: string) => {
     setAviso(null)
     if (isTabletLandscape) setElegida(id)
     else router.push(rutaDetalle(id) as never)
-  }
+  }, [isTabletLandscape, router, rutaDetalle])
 
   const encabezado = (
     <View style={{ gap: space[3], paddingBottom: space[3] }}>
@@ -126,7 +126,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
     </View>
   )
 
-  const tarjeta = (v: VentaPendienteAutorizacion) => {
+  const tarjeta = useCallback((v: VentaPendienteAutorizacion) => {
     const conRazon = pideRazon(v.motivoPendienteAutorizacion)
     const cliente = clienteDeBandeja(v)
     return (
@@ -158,7 +158,9 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
         ) : null}
       </View>
     )
-  }
+  }, [c, secundario, abrir, puedeDecidir])
+
+  const renderItem = useCallback(({ item }: { item: VentaPendienteAutorizacion }) => tarjeta(item), [tarjeta])
 
   const cuerpo = !puede ? (
     <View style={{ padding: space[4] }}><Notice tone="info">Autorizar ventas necesita el permiso de autorizar ventas. Pedíselo a un administrador.</Notice></View>
@@ -168,7 +170,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
       keyExtractor={(v) => v.id}
       ListHeaderComponent={encabezado}
       contentContainerStyle={{ padding: space[4], paddingBottom: space[12] + insetInferior }}
-      renderItem={({ item }) => tarjeta(item)}
+      renderItem={renderItem}
       refreshing={q.isRefetching}
       onRefresh={() => { setAviso(null); void q.refetch() }}
       ListEmptyComponent={

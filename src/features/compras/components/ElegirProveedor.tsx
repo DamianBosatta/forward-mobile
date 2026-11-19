@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
 import { Lock } from 'lucide-react-native'
@@ -65,7 +65,7 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
   const delServidor = useInfiniteCompras({ pageSize: COMPRAS_PARA_RECIENTES }, { enabled: puedeVerCompras })
   const buscando = enviada.length >= 2
   const q = useSocios({ tipo: 2, activo: true, pageSize: 50, search: buscando ? enviada : undefined })
-  const secundario = [typeScale.secundario, { color: c.textSecondary }]
+  const secundario = useMemo(() => [typeScale.secundario, { color: c.textSecondary }], [c.textSecondary])
 
   const recientes = buscando || !puedeVerCompras ? [] : recientesDe(delServidor.data?.pages[0]?.items ?? [])
   const lista: FilaProveedor[] = (q.data?.items ?? []).map((p) => ({ id: p.id, nombre: p.razonSocial, cuit: p.cuit, falta: !!p.requiereCompletar }))
@@ -78,7 +78,7 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
     : 'Sin compras'
   const conNumero = ultima && typeof ultima.numero === 'number' && ultima.numero > 0 ? `${numeroDeCompra(ultima)} · ${textoUltima}` : textoUltima
 
-  const fila = (p: FilaProveedor, i: number) => {
+  const fila = useCallback((p: FilaProveedor, i: number) => {
     const sel = p.id === elegido
     return (
       <Pressable
@@ -99,10 +99,11 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
         </View>
       </Pressable>
     )
-  }
-  const tarjeta = (filas: React.ReactNode) => (
+  }, [c, elegido, secundario])
+  const tarjeta = useCallback((filas: React.ReactNode) => (
     <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface, overflow: 'hidden' }}>{filas}</View>
-  )
+  ), [c, sombra])
+  const renderItem = useCallback(({ item }: { item: FilaProveedor[] }) => <FormContainer>{tarjeta(item.map(fila))}</FormContainer>, [tarjeta, fila])
   const dato = (k: string, v: string | null) => (
     <View accessible accessibilityLabel={`${k}: ${v ?? '—'}`} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[3], paddingVertical: space[1] }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
@@ -140,7 +141,7 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
             {lista.length > 0 ? <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>{buscando ? 'Resultados' : 'Proveedores'}</Text> : null}
           </FormContainer>
         }
-        renderItem={({ item }) => <FormContainer>{tarjeta(item.map(fila))}</FormContainer>}
+        renderItem={renderItem}
         ListEmptyComponent={
           <FormContainer style={{ gap: space[2] }}>
             {q.isLoading ? <ActivityIndicator color={c.brand} />
