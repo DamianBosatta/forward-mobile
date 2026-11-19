@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { ScanBarcode, Search } from 'lucide-react-native'
 import { FlashList } from '@shopify/flash-list'
 import { CeldaDeGrilla, paddingDeGrilla } from '@/core/ui/listaFlash'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, StatusChip } from '@/core/ui/fw'
-import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
-import { esSinRespuesta, mensajeDeError } from '@/core/api/errores'
+import { Notice, StatusChip } from '@/core/ui/fw'
+import { EstadoDeConsulta, esqueletoDeFilas } from '@/core/ui/estados'
+import { mensajeDeError } from '@/core/api/errores'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { useResponsive } from '@/libs/useResponsive'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -156,21 +156,18 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
           <Text style={{ ...typeScale.secundario, color: c.textSecondary, textAlign: 'center' }}>{`Mostrando ${productos.length} de ${Math.max(totalVendible, productos.length)}`}</Text>
         }
         ListEmptyComponent={
-          isLoading ? (
-            <ActivityIndicator color={c.brand} />
-          ) : isError ? (
-            // Sin catálogo por un error: no es "sin resultados". Mismo criterio que el catálogo de consulta (inventario).
-            esSinRespuesta(error) ? (
-              <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar el catálogo" texto={mensajeDeError(error)} accion={{ label: 'Reintentar', onPress: () => { void reintentar() } }} />
-            ) : (
-              <View style={{ gap: space[3] }}>
-                <Notice tone="peligro">{mensajeDeError(error, 'No se pudo cargar el catálogo. Revisá la conexión y volvé a intentar.')}</Notice>
-                <Button label="Reintentar" variant="secundario" onPress={() => { void reintentar() }} />
-              </View>
-            )
-          ) : (
-            <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>No hay productos que coincidan.</Text>
-          )
+          <EstadoDeConsulta
+            cargando={isLoading}
+            error={isError ? (error ?? true) : undefined}
+            vacio
+            esqueleto={esqueletoDeFilas(3)}
+            tituloError="No pudimos cargar el catálogo"
+            textoError={isError ? mensajeDeError(error, 'No se pudo cargar el catálogo. Revisá la conexión y volvé a intentar.') : undefined}
+            tituloVacio="No hay productos que coincidan."
+            onReintentar={() => { void reintentar() }}
+          >
+            {null}
+          </EstadoDeConsulta>
         }
         renderItem={renderItem}
       />

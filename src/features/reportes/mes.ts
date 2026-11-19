@@ -19,8 +19,6 @@ export function moverMes({ anio, mes }: Mes, delta: number): Mes {
   return { anio: Math.floor(indice / 12), mes: (indice % 12) + 1 }
 }
 
-export const mismoMes = (a: Mes, b: Mes) => a.anio === b.anio && a.mes === b.mes
-
 export const tituloMes = ({ anio, mes }: Mes) => `${NOMBRES[mes - 1]} ${anio}`
 
 export const nombreMes = ({ mes }: Mes) => NOMBRES[mes - 1]!

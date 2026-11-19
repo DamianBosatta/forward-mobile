@@ -13,10 +13,6 @@ export function nombreFragancia(variante: Pick<CatalogoStockItem, 'nombre'>, pad
   return prefijo && variante.nombre.startsWith(prefijo) ? variante.nombre.slice(prefijo.length) : variante.nombre
 }
 
-export type GrupoLineas =
-  | { tipo: 'producto'; linea: LineaCarrito }
-  | { tipo: 'fragancias'; padreId: string; lineas: LineaCarrito[] }
-
 export type GrupoPorPadre<T> = { tipo: 'producto'; item: T } | { tipo: 'fragancias'; padreId: string; items: T[] }
 
 /** Agrupa las variantes de una misma línea padre, en el orden en que aparece la primera. */
@@ -29,11 +25,6 @@ export function agruparPorPadre<T>(items: T[], padreDe: (item: T) => string | nu
     else grupos.push(padreId ? { tipo: 'fragancias', padreId, items: [item] } : { tipo: 'producto', item })
   }
   return grupos
-}
-
-export function agruparLineas(lineas: LineaCarrito[]): GrupoLineas[] {
-  return agruparPorPadre(lineas, (l) => l.producto.productoPadreId).map((g) =>
-    g.tipo === 'producto' ? { tipo: 'producto', linea: g.item } : { tipo: 'fragancias', padreId: g.padreId, lineas: g.items })
 }
 
 export const cantidadDeFragancias = (lineas: LineaCarrito[], padreId: string) =>
