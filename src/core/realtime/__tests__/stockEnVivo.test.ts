@@ -215,3 +215,64 @@ describe('stock en vivo: token renovado (RED-R4-01)', () => {
     expect(c.start).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('reintento de la apertura por red o 5xx (RED-R4-01 residual)', () => {
+  beforeEach(() => { jest.useFakeTimers() })
+  afterEach(() => { jest.useRealTimers() })
+
+  it('reintenta con espera creciente mientras haya quien escuche, y deja de hacerlo al conectar', async () => {
+    const { c } = conexionFalsa()
+    c.start.mockRejectedValueOnce(new Error('Network')).mockRejectedValueOnce(new Error('503'))
+    const g = crearGestorStock(() => c, () => () => undefined)
+    const o = oyente()
+    g.suscribir(['d1'], o)
+    await jest.advanceTimersByTimeAsync(0)
+    expect(c.start).toHaveBeenCalledTimes(1)
+    await jest.advanceTimersByTimeAsync(1_999)
+    expect(c.start).toHaveBeenCalledTimes(1)
+    await jest.advanceTimersByTimeAsync(1) // 2 s
+    expect(c.start).toHaveBeenCalledTimes(2)
+    await jest.advanceTimersByTimeAsync(3_999)
+    expect(c.start).toHaveBeenCalledTimes(2)
+    await jest.advanceTimersByTimeAsync(1) // 4 s después
+    expect(c.start).toHaveBeenCalledTimes(3)
+    expect(g.enVivo()).toBe(true)
+    expect(o.alConectar).toHaveBeenCalledTimes(1)
+    await jest.advanceTimersByTimeAsync(120_000)
+    expect(c.start).toHaveBeenCalledTimes(3)
+  })
+
+  it('la espera tiene tope', async () => {
+    const { c } = conexionFalsa()
+    c.start.mockRejectedValue(new Error('Network'))
+    const g = crearGestorStock(() => c, () => () => undefined)
+    g.suscribir(['d1'], oyente())
+    await jest.advanceTimersByTimeAsync(10 * 60_000)
+    const antes = c.start.mock.calls.length
+    await jest.advanceTimersByTimeAsync(60_000)
+    expect(c.start.mock.calls.length - antes).toBe(1)
+  })
+
+  it('cuando nadie escucha deja de reintentar', async () => {
+    const { c } = conexionFalsa()
+    c.start.mockRejectedValue(new Error('Network'))
+    const g = crearGestorStock(() => c, () => () => undefined)
+    const baja = g.suscribir(['d1'], oyente())
+    await jest.advanceTimersByTimeAsync(0)
+    expect(c.start).toHaveBeenCalledTimes(1)
+    baja()
+    await jest.advanceTimersByTimeAsync(10 * 60_000)
+    expect(c.start).toHaveBeenCalledTimes(1)
+  })
+
+  it('en segundo plano no reintenta', async () => {
+    const { c } = conexionFalsa()
+    c.start.mockRejectedValue(new Error('Network'))
+    const g = crearGestorStock(() => c, () => () => undefined)
+    g.suscribir(['d1'], oyente())
+    await jest.advanceTimersByTimeAsync(0)
+    cambioDeEstado('background')
+    await jest.advanceTimersByTimeAsync(10 * 60_000)
+    expect(c.start).toHaveBeenCalledTimes(1)
+  })
+})

@@ -1,4 +1,4 @@
-import { obtenerVersionMinima } from '@/libs/api-client/appMovil'
+import { obtenerVersionMinima } from './appMovil'
 import { logger } from '@/core/utils/logger'
 import { estaDesactualizada } from './semver'
 

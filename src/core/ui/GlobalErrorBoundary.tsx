@@ -70,7 +70,6 @@ export function GlobalErrorBoundary({ error, retry }: GlobalErrorBoundaryProps) 
 
             <View style={[styles.errorBox, { backgroundColor: colors.surface2, borderColor: colors.border }]}>
               <ScrollView style={{ maxHeight: 100 }} showsVerticalScrollIndicator={false}>
-                <Text style={[styles.errorTitle, { color: colors.danger }]}>{error.name}</Text>
                 <Text style={[styles.errorMessage, { color: colors.text }]}>El detalle quedó registrado para el equipo.</Text>
               </ScrollView>
             </View>
@@ -128,7 +127,6 @@ const styles = StyleSheet.create({
   title: { ...typeScale.titulo, marginBottom: 12, letterSpacing: -0.5 },
   subtitle: { ...typeScale.secundario, textAlign: 'center', marginBottom: 32 },
   errorBox: { width: '100%', padding: 16, borderRadius: 16, marginBottom: 32, borderWidth: 1 },
-  errorTitle: { ...typeScale.etiqueta, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
   errorMessage: { ...typeScale.secundario },
   actions: { width: '100%', gap: 12 },
   primaryBtn: { height: 56, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },

@@ -38,16 +38,6 @@ export function useCajaActiva(depositoId?: string, { enabled = true }: { enabled
   })
 }
 
-export function useMovimientosCaja(cajaId: string) {
-  return useQuery({
-    queryKey: finanzasKeys.movimientosCaja(cajaId),
-    queryFn: () => api.get<MovimientoCajaDto[]>(`/api/v1/Cajas/${cajaId}/movimientos`),
-    enabled: !!cajaId,
-    staleTime: 30_000,
-    refetchInterval: 30_000,
-  })
-}
-
 /** Una clave por intento: el reintento o el doble toque de la misma apertura manda la misma (ver `crearIntento`). */
 const intentoAbrirCaja = crearIntento()
 
@@ -60,27 +50,5 @@ export function useAbrirCaja() {
   })
 }
 
-export function useCerrarCaja() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ cajaId, saldoFinalDeclarado }: { cajaId: string; saldoFinalDeclarado: number }) =>
-      api.post<CerrarCajaResponseDto>('/api/v1/Cajas/cerrar', { cajaId, saldoFinalDeclarado }),
-    onSuccess: () => invalidarCaja(queryClient),
-  })
-}
-
 
 // ── Pagos & Cuentas Corrientes ──────────────────────────────────────────────
-
-export function usePagos(params: { pageNumber?: number; pageSize?: number; socioId?: string } = {}) {
-  const searchParams = new URLSearchParams()
-  if (params.pageNumber) searchParams.set('page', String(params.pageNumber))
-  if (params.pageSize) searchParams.set('pageSize', String(params.pageSize))
-
-  return useQuery({
-    queryKey: ['pagos', params.pageNumber, params.pageSize, params.socioId],
-    queryFn: () =>
-      api.get<PagedResult<Pago>>(`/api/v1/Pagos/socio/${params.socioId}?${searchParams}`),
-    enabled: !!params.socioId
-  })
-}

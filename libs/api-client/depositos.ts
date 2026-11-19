@@ -16,29 +16,3 @@ export function useDepositos() {
   })
 }
 
-export function useCreateDeposito() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (data: CreateDepositoRequest) => api.post<string>('/api/v1/Depositos', data),
-    onSuccess: () => invalidarDepositos(queryClient),
-  })
-}
-
-export function useUpdateDeposito() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (data: UpdateDepositoRequest) => api.put<string>(`/api/v1/Depositos/${data.id}`, data),
-    onSuccess: () => invalidarDepositos(queryClient),
-  })
-}
-
-export function useDeactivateDeposito() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (params: DeactivateDepositoRequest) => {
-      const url = `/api/v1/Depositos/${params.id}${params.targetDepositoId ? `?targetId=${params.targetDepositoId}` : ''}`
-      return api.delete<boolean>(url)
-    },
-    onSuccess: () => invalidarDepositosYStock(queryClient),
-  })
-}

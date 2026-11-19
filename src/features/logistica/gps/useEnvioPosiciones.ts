@@ -14,7 +14,7 @@ const ESPERA_MINIMA_MS = 60_000
  */
 export function useEnvioPosiciones() {
   const usuarioId = useAuthStore((s) => s.user?.id)
-  const { isConnected } = useNetworkStatus()
+  const { isConnected } = useNetworkStatus({ desconocidoCuentaComoSinRed: false })
   const texto = useSyncExternalStore(suscribirPosiciones, () => textoDePosiciones(usuarioId))
   const hayPendientes = useMemo(() => !!texto && texto !== '[]', [texto])
 

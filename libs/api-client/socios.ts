@@ -56,18 +56,6 @@ export function useLocalidades() {
   })
 }
 
-export function useClientes() {
-  return useSocios({ tipo: 1, activo: true, pageSize: 200 })
-}
-
-export function useClientesActivos() {
-  return useQuery({
-    queryKey: [...sociosKeys.clientes(), 'activos'],
-    queryFn: () => api.get<ClienteLightDto[]>('/api/v1/socios-comerciales/clientes-activos'),
-    staleTime: 5 * 60_000,
-  })
-}
-
 /**
  * Un cliente de "recientes" tal como lo manda `GET /socios-comerciales/clientes-recientes`
  * (forward-system #915). Tipado a mano: el schema generado todavía no lo trae.
@@ -109,10 +97,6 @@ export function useClientesRecientes(habilitado: boolean, { sinDepositoDeSesion 
     retry: false,
     staleTime: 30_000,
   })
-}
-
-export function useProveedores() {
-  return useSocios({ tipo: 2, activo: true, pageSize: 200 })
 }
 
 export function useSocios(params: SociosParams = {}) {
@@ -203,24 +187,6 @@ export function useAsignarDepositosSocio() {
     mutationFn: ({ socioId, depositoIds }: { socioId: string; depositoIds: string[] }) =>
       api.put<boolean>(`/api/v1/socios-comerciales/${socioId}/depositos`, { socioId, depositoIds }),
     onSuccess: () => { invalidarPorCambioDeSocio(qc) },
-  })
-}
-
-export function useToggleSocioStatus() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id }: { id: string }) =>
-      api.patch<boolean>(`/api/v1/socios-comerciales/${id}/toggle-status`, {}),
-    onSuccess: () => invalidarPorCambioDeSocio(qc),
-    onError: (err: { status?: number; message?: string }) => {
-      console.error('Toggle status error:', err)
-      setTimeout(() => {
-        Alert.alert(
-          'Error al Modificar',
-          `No se pudo cambiar el estado de este socio.\n\nStatus: ${err?.status}\nError: ${err?.message || 'Revisá tu conexión a internet o los permisos.'}`
-        )
-      }, 400)
-    }
   })
 }
 

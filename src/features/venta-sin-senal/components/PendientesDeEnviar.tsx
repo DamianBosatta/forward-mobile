@@ -43,7 +43,7 @@ function confirmarDescarte(usuarioId: string, v: VentaEnCola) {
 function Bloque({ items }: { items: VentaEnCola[] }) {
   const c = useColors()
   const router = useRouter()
-  const { isConnected } = useNetworkStatus()
+  const { isConnected } = useNetworkStatus({ desconocidoCuentaComoSinRed: false })
   const horaCatalogo = useHoraDelCatalogo()
   const cambiadas = useAvisosDeCola(items)
   const usuarioId = useAuthStore((st) => st.user?.id)

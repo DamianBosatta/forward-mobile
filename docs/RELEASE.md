@@ -57,7 +57,7 @@ Motivo: el 2026-11-02 el dev client instalado en el emulador se cerró al abrir 
 
 `app.config.ts` define `runtimeVersion: { policy: 'fingerprint' }`. La versión de runtime es una huella calculada sobre la parte nativa del proyecto (dependencias nativas, plugins y configuración nativa). Cada build lleva su huella y solo recibe actualizaciones publicadas con la misma huella. Si un cambio toca algo nativo, la huella cambia y la actualización queda para los builds nuevos: los teléfonos con el build viejo la ignoran en lugar de romperse. Por eso un cambio nativo sin build nuevo no rompe a nadie, pero tampoco le llega a nadie hasta que se instala el build nuevo.
 
-Para que no pase en silencio, el job `publish-update` del CI compara, después de publicar, la versión de runtime de la actualización con la del último build `production` de Android terminado. Si difieren, escribe un `::warning::` y una línea en el resumen del job: "hace falta un APK nuevo". No falla el job (la actualización queda publicada para cuando se instale el build nuevo). Un cambio de dependencia nativa (agregar, sacar o subir un paquete con código nativo) siempre exige un APK nuevo; mientras no se reparta, el aviso sigue apareciendo en cada merge.
+Para que no pase en silencio, el job `publish-update` del CI compara, después de publicar, la versión de runtime de la última actualización de la rama `production` (no de otras ramas) con la del último build `production` de Android terminado. Si difieren, escribe un `::warning::` y una línea en el resumen del job: "hace falta un APK nuevo". No falla el job (la actualización queda publicada para cuando se instale el build nuevo). Un cambio de dependencia nativa (agregar, sacar o subir un paquete con código nativo) siempre exige un APK nuevo; mientras no se reparta, el aviso sigue apareciendo en cada merge.
 
 ### Canales
 
@@ -199,6 +199,15 @@ La app tiene dos números:
 - **Build** (`versionCode` de Android): lo pone EAS. `eas.json` usa `cli.appVersionSource: "remote"` y `autoIncrement: true` en los perfiles `preview` y `production`, así que cada build suma uno al número guardado en EAS. No se edita a mano ni vive en el repositorio.
 
 Cambiar la versión en `app.config.ts` cambia la huella de runtime: los builds anteriores dejan de recibir las actualizaciones que se publiquen después, y hace falta un build nuevo.
+
+### Versión mínima: bloquear versiones viejas (OPS-03)
+
+La app pregunta al servidor, antes del login y al volver a primer plano, cuál es la versión mínima que soporta (`GET` anónimo de `AppMovil`, `data.versionMinima`). Si la instalada es menor, muestra la pantalla "Actualización requerida" y no deja pasar.
+
+- **Dónde se fija**: en el servidor, sección `AppMovil`, clave `VersionMinima` (en el contenedor, la variable de entorno `AppMovil__VersionMinima`). Debe ser versión semántica estricta (`1.4.0`, sin ceros a la izquierda). **Está vacía por defecto en producción: sin bloqueo.** Un valor inválido el servidor lo trata como vacío.
+- **Contra qué compara**: la `version` de `app.config.ts` (la que se ve en "Mi cuenta"), no el build ni la huella de runtime. Mientras `version` siga en `1.0.0` no hay forma de distinguir un APK de otro, así que subir la mínima por encima de `1.0.0` bloquea a todos. Antes de usar el bloqueo hay que subir `version` en un release (ver "Versión") y repartir ese APK.
+- **Cuándo usarlo**: solo cuando el servidor deja de soportar una versión (un contrato que cambió sin compatibilidad hacia atrás). Una actualización OTA corrige el JavaScript pero no el APK: si el cambio exige un APK nuevo (huella distinta), publicar el APK, esperar a que se reparta y recién después subir la mínima.
+- **Falla abierta**: sin respuesta (sin red, 404 de un servidor viejo, plazo de 4 s vencido, valor inválido) la app sigue. El chofer sin señal nunca queda bloqueado por esto.
 
 ### Dónde verlas en la app
 

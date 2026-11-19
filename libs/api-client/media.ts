@@ -18,29 +18,6 @@ export function getFullImageUrl(path?: string | null): string | null {
   return `${cleanBase}${cleanPath}`
 }
 
-export async function uploadProductImage(uri: string): Promise<string> {
-  // En un entorno de React Native / Expo, usamos FormData
-  const formData = new FormData()
-  
-  // Obtenemos el nombre del archivo de la URI
-  const filename = uri.split('/').pop() ?? 'image.jpg'
-  
-  // Inferir el tipo
-  const match = /\.(\w+)$/.exec(filename)
-  const type = match ? `image/${match[1]}` : `image/jpeg`
-
-  // @ts-ignore - FormData en React Native acepta objetos {uri, name, type}
-  formData.append('file', { uri, name: filename, type })
-
-  const response = await api.post<UploadResult>('/api/v1/Media/upload-product', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  })
-
-  return response.url
-}
-
 /**
  * Sube una foto de la entrega (remito firmado, comprobante, firma) a la carpeta de entregas
  * (`POST /Media/upload-entrega`, MOD_VIAJES:Update, hasta 2 MB). Devuelve la URL que va en el cuerpo

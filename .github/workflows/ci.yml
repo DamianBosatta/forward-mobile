@@ -149,22 +149,24 @@ jobs:
           MSG: ${{ github.event.head_commit.message }}
         run: eas update --channel production --environment production --message "$MSG" --non-interactive
       # OPS-R4-01: a fingerprint runtime with no installed build receives the update on no phone and the job stays green.
-      # Compares the runtime of the update just published with the one of the latest finished production Android build.
+      # Compares the runtime of the latest update of the production branch (the one just published) with the one of the latest finished production Android build.
       # Warning only: never fails the job. Prints runtime versions and a verdict, nothing else from the CLI output.
       - name: Check that a production build has this runtime
         if: steps.token.outputs.ready == 'true'
         continue-on-error: true
         run: |
-          eas update:list --all --platform android --limit 1 --json --non-interactive > "$RUNNER_TEMP/update.json" 2> /dev/null || true
+          eas update:list --branch production --platform android --limit 1 --json --non-interactive > "$RUNNER_TEMP/update.json" 2> /dev/null || true
           eas build:list --platform android --build-profile production --status finished --limit 1 --json --non-interactive > "$RUNNER_TEMP/build.json" 2> /dev/null || true
           node -e '
             const fs = require("fs")
-            // Takes the first runtime version found: `runtimeVersion` as text, or `runtime.version` (the two shapes of the eas-cli JSON).
+            // The runtime lives on the update group of the production branch: `currentPage[0].runtimeVersion` (OPS-R4B-01).
+            // Build list items carry it as `runtime.version`. Any other shape reads as unknown and warns instead of guessing.
+            const first = (v) => (Array.isArray(v) ? v[0] : v && Array.isArray(v.currentPage) ? v.currentPage[0] : Array.isArray(v && v.builds) ? v.builds[0] : v)
             const find = (v) => {
-              if (!v || typeof v !== "object") return null
-              if (typeof v.runtimeVersion === "string") return v.runtimeVersion
-              if (v.runtime && typeof v.runtime.version === "string") return v.runtime.version
-              for (const k of Object.keys(v)) { const r = find(v[k]); if (r) return r }
+              const item = first(v)
+              if (!item || typeof item !== "object") return null
+              if (typeof item.runtimeVersion === "string") return item.runtimeVersion
+              if (item.runtime && typeof item.runtime.version === "string") return item.runtime.version
               return null
             }
             const read = (f) => { try { return find(JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + "/" + f, "utf8"))) } catch { return null } }
