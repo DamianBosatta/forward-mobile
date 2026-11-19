@@ -1,4 +1,5 @@
 import { type ExpoConfig } from 'expo/config'
+import { version as APP_VERSION } from './package.json'
 
 /** EAS project id: used by `extra.eas` and by the EAS Update URL (single source). */
 const EAS_PROJECT_ID = '058596a1-a678-4d5a-917e-79f3a93abc67'
@@ -6,7 +7,8 @@ const EAS_PROJECT_ID = '058596a1-a678-4d5a-917e-79f3a93abc67'
 const config: ExpoConfig = {
   name: 'Forward ERP',
   slug: 'forward-erp',
-  version: '1.0.0',
+  // OPS-03/OPS-07: package.json is the single source of the app version (semver). The minimum-version check compares against it.
+  version: APP_VERSION,
   orientation: 'default',
   icon: './assets/icon.png',
   scheme: 'forward',
