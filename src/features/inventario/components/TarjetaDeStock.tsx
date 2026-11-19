@@ -37,13 +37,17 @@ interface TarjetaProps {
  */
 export function TarjetaDeProducto({ item, onPress }: TarjetaProps) {
   const c = useColors()
-  const alerta = item.enAlerta === true
+  // One rule for card, row and totals: chipDeFilaStock ("Sin stock" wins over "En alerta" at 0 available).
+  const chip = chipDeFilaStock({ cantidadDisponible: item.cantidadDisponible ?? 0, enAlerta: item.enAlerta === true })
+  const alerta = chip?.estado === 'porAutorizar'
+  const sinStock = chip?.estado === 'anulado'
   const disponible = mostrarNumero(item.cantidadDisponible ?? 0)
   const ambar = c.chip.porAutorizar.text
+  const rojo = c.chip.anulado.text
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${item.producto}, disponible: ${disponible}${alerta ? ', en alerta de stock' : ''}`}
+      accessibilityLabel={`${item.producto}, disponible: ${disponible}${alerta ? ', en alerta de stock' : sinStock ? ', sin stock' : ''}`}
       onPress={() => onPress(item)}
       android_ripple={{ color: c.border }}
       style={{
@@ -66,6 +70,8 @@ export function TarjetaDeProducto({ item, onPress }: TarjetaProps) {
             <AlertTriangle size={14} color={ambar} />
             <Text style={[typeScale.etiqueta, { color: ambar }]}>En alerta</Text>
           </View>
+        ) : sinStock ? (
+          <Text style={[typeScale.etiqueta, { color: rojo }]}>Sin stock</Text>
         ) : (
           <Text style={[typeScale.secundario, { color: c.textSecondary }]}>disponible</Text>
         )}
