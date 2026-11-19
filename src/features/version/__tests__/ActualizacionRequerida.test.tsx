@@ -24,6 +24,22 @@ describe.each(['light', 'dark'] as const)('ActualizacionRequerida, tema %s', (mo
     expect(screen.getByText(/1\.4\.0/)).toBeTruthy()
   })
 
+  it('la columna tiene ancho máximo, para que en tablet horizontal el texto no sea una sola línea', () => {
+    render(
+      <SafeAreaProvider initialMetrics={{ ...metrics, frame: { x: 0, y: 0, width: 2560, height: 1600 } }}>
+        <ActualizacionRequerida instalada="1.0.0" minima="1.4.0" onReintentar={jest.fn()} />
+      </SafeAreaProvider>,
+    )
+    const anchos: unknown[] = []
+    let nodo = screen.getByText('Hay que actualizar la app').parent
+    while (nodo) {
+      const estilo = [nodo.props.style].flat(Infinity) as Array<Record<string, unknown> | undefined>
+      for (const e of estilo) if (e && e.maxWidth !== undefined) anchos.push(e.maxWidth)
+      nodo = nodo.parent
+    }
+    expect(anchos).toContain(560)
+  })
+
   it('Volver a comprobar llama a onReintentar', () => {
     const onReintentar = jest.fn()
     render(

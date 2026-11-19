@@ -23,12 +23,15 @@ export function ActualizacionRequerida({ instalada, minima, onReintentar }: Prop
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top, paddingBottom: insets.bottom + space[6] }}>
         {/* The version pair goes inside the centered column, right under the explanation: as a separate
             sibling it was pushed to the bottom edge by EstadoDePantalla's flex: 1. */}
-        <EstadoDePantalla
-          tipo="error"
-          titulo="Hay que actualizar la app"
-          texto={`${TEXTO}\n\nTu versión: ${instalada} · Mínima: ${minima}`}
-          accion={{ label: 'Volver a comprobar', onPress: onReintentar }}
-        />
+        {/* Readable column on tablets: without a cap the explanation became one ~1600 px line in landscape. */}
+        <View style={{ flex: 1, width: '100%', maxWidth: 560, alignSelf: 'center' }}>
+          <EstadoDePantalla
+            tipo="error"
+            titulo="Hay que actualizar la app"
+            texto={`${TEXTO}\n\nTu versión: ${instalada} · Mínima: ${minima}`}
+            accion={{ label: 'Volver a comprobar', onPress: onReintentar }}
+          />
+        </View>
       </ScrollView>
     </View>
   )
