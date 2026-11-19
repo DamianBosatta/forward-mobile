@@ -28,4 +28,10 @@ describe('GlobalErrorBoundary (OPS-02)', () => {
     expect(screen.queryByText(/SELECT/)).toBeNull()
     expect(screen.getByText('Algo salió mal')).toBeTruthy()
   })
+
+  it('OPS-R4B-02: tampoco muestra el nombre de la clase del error, solo el texto fijo', () => {
+    render(<GlobalErrorBoundary error={new TypeError('x')} retry={jest.fn()} />)
+    expect(screen.queryByText('TypeError')).toBeNull()
+    expect(screen.getByText('El detalle quedó registrado para el equipo.')).toBeTruthy()
+  })
 })
