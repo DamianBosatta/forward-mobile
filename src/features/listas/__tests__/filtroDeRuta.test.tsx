@@ -25,9 +25,8 @@ jest.mock('@/core/auth/RequirePermission', () => ({
 jest.mock('@/core/ui', () => {
   const { View } = require('react-native')
   const Pasa = ({ children }: { children?: React.ReactNode }) => <View>{children}</View>
-  return { ForwardLogo: Pasa, TopHeaderActions: Pasa, RequirePermission: Pasa, GlassCard: Pasa, AuroraGlow: Pasa, SegmentedControl: Pasa }
+  return { ForwardLogo: Pasa, TopHeaderActions: Pasa, RequirePermission: Pasa, GlassCard: Pasa }
 })
-jest.mock('@/core/ui/PremiumInput', () => ({ PremiumInput: () => null }))
 jest.mock('moti', () => ({ MotiView: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
 let mockAncho = 390
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => ({ width: mockAncho, height: 800, scale: 2, fontScale: 1 }) }))

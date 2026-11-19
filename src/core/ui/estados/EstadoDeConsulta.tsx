@@ -46,7 +46,8 @@ interface Props {
   /** Cuándo guardó el teléfono lo que había (ms); solo para el texto de "sin conexión". */
   guardadoA?: number
   onReintentar?: () => void
-  children: ReactNode
+  /** Lo que se muestra con datos. Sin hijos (por ejemplo dentro de un `ListEmptyComponent`), con datos no pinta nada. */
+  children?: ReactNode
 }
 
 /**

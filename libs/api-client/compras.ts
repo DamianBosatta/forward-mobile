@@ -67,14 +67,6 @@ function mismoRango(a: unknown, b: ComprasListParams) {
 
 // ── Queries ──────────────────────────────────────────────────────────────────
 
-export function useCompras(params: { pageNumber?: number; pageSize?: number } = {}) {
-  const { pageNumber = 1, pageSize = 20 } = params
-  return useQuery({
-    queryKey: comprasKeys.list(params),
-    queryFn: () => api.get<PagedResult<CompraDtoList>>(`/api/v1/Compras?pageNumber=${pageNumber}&pageSize=${pageSize}`),
-  })
-}
-
 /**
  * Hook para scroll infinito en lista de compras
  */
@@ -156,15 +148,6 @@ export function useCreateCompra() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateCompraRequest) => conClave(intentoCrearCompra, data, (cuerpo) => api.post<Compra>('/api/v1/Compras', cuerpo)),
-    onSuccess: () => invalidarPorCambioDeCompra(queryClient),
-  })
-}
-
-export function useUpdateCompra() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: CreateCompraRequest }) =>
-      api.put<Compra>(`/api/v1/Compras/${id}`, data),
     onSuccess: () => invalidarPorCambioDeCompra(queryClient),
   })
 }

@@ -144,39 +144,9 @@ export function getManifiestoUrl(id: string): string {
 /** GET /api/v1/logistica/etiquetas-masivas-pdf?ventaIds=a,b,c */
 // NOTE: getEtiquetasUrl (single venta) is exported from ventas.ts — same URL, no need to duplicate.
 
-export function getEtiquetasMasivasUrl(ventaIds: string[]): string {
-  return `${API_URL}/api/v1/Logistica/etiquetas-masivas-pdf?ventaIds=${ventaIds.join(',')}`
-}
-
-/** POST /api/v1/logistica/lista-surtido-pdf (body { ventaIds }) — used with sharePdf POST extension */
-export function getSurtidoPdfUrl(): string {
-  return `${API_URL}/api/v1/logistica/lista-surtido-pdf`
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Queries
 // ─────────────────────────────────────────────────────────────────────────────
-
-export function useVentasEmpacadas() {
-  return useQuery({
-    queryKey: logisticaKeys.ventasEmpacadas(),
-    queryFn: () => api.get<VentaEmpacada[]>('/api/v1/Logistica/ventas-empacadas')
-  })
-}
-
-export function useChoferes() {
-  return useQuery({
-    queryKey: logisticaKeys.choferes(),
-    queryFn: () => api.get<Chofer[]>('/api/v1/Logistica/choferes')
-  })
-}
-
-export function useVehiculos() {
-  return useQuery({
-    queryKey: logisticaKeys.vehiculos(),
-    queryFn: () => api.get<Vehiculo[]>('/api/v1/Logistica/vehiculos')
-  })
-}
 
 // GET /api/v1/Logistica/hojas-ruta returns the LIST shape (HojaRutaListItemDto with
 // cantidadParadas, no detalles) — NOT the detail shape. Typed accordingly so consumers
@@ -251,21 +221,6 @@ export function useConteosPreparacion(params?: VentasPreparacionParams, opciones
 // ─────────────────────────────────────────────────────────────────────────────
 // Mutations — Hoja de Ruta lifecycle
 // ─────────────────────────────────────────────────────────────────────────────
-
-export function useCrearHojaRuta() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (payload: {
-      choferId: string
-      vehiculoId: string
-      fechaSalida: string
-      usuarioGeneradorId: string
-      depositoId?: string | null
-      paradas: { ventaId: string; latitud?: number; longitud?: number; direccionDestino?: string | null }[]
-    }) => api.post<string>('/api/v1/Logistica/hojas-ruta', payload),
-    onSuccess: () => invalidarPorCambioDeHojaDeRuta(queryClient),
-  })
-}
 
 export function useIniciarHojaRuta() {
   const queryClient = useQueryClient()
@@ -355,42 +310,3 @@ export function useFinalizarHojaRuta() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Mutations — Vehiculos CRUD
 // ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Creates a new vehicle. Management-only.
- * Invalidates the vehiculos list on success.
- */
-export function useCreateVehiculo() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (payload: VehiculoCrudPayload) =>
-      api.post<VehiculoCrudResult>('/api/v1/Logistica/vehiculos', payload),
-    onSuccess: () => invalidarLogistica(queryClient),
-  })
-}
-
-/**
- * Updates an existing vehicle. Management-only.
- * Invalidates the vehiculos list on success.
- */
-export function useUpdateVehiculo() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, ...payload }: VehiculoCrudPayload & { id: string }) =>
-      api.put<VehiculoCrudResult>(`/api/v1/Logistica/vehiculos/${id}`, payload),
-    onSuccess: () => invalidarLogistica(queryClient),
-  })
-}
-
-/**
- * Deactivates (soft-deletes) a vehicle. Management-only.
- * Invalidates the vehiculos list on success.
- */
-export function useDeactivateVehiculo() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) =>
-      api.delete<void>(`/api/v1/Logistica/vehiculos/${id}`),
-    onSuccess: () => invalidarLogistica(queryClient),
-  })
-}

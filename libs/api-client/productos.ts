@@ -75,14 +75,6 @@ export async function buscarPorCodigoBarra(codigo: string, signal?: AbortSignal)
   return null
 }
 
-export function useCatalogoStock(depositoId?: string) {
-  return useQuery({
-    queryKey: [...productosKeys.all, 'catalogoStock', depositoId],
-    queryFn: () => fetchCatalogoStockCompleto(depositoId),
-    staleTime: 60_000,
-  })
-}
-
 export interface CatalogoStockParams {
   search?: string
   pageSize?: number
@@ -118,53 +110,6 @@ export function useInfiniteCatalogoStock(params: CatalogoStockParams = {}, { man
   })
 }
 
-export function useProductos(params: ProductoParams = {}) {
-  const searchParams = new URLSearchParams()
-  if (params.pageNumber) searchParams.set('pageNumber', String(params.pageNumber))
-  if (params.pageSize) searchParams.set('pageSize', String(params.pageSize))
-  if (params.search) searchParams.set('searchTerm', params.search)
-  if (params.soloActivos !== undefined) searchParams.set('soloActivos', String(params.soloActivos))
-  if (params.soloComprables) searchParams.set('soloComprables', 'true')
-
-  return useQuery({
-    queryKey: productosKeys.list(params),
-    queryFn: () => api.get<PagedResult<Producto>>(`/api/v1/Productos?${searchParams}`),
-    staleTime: 5 * 60_000,
-  })
-}
-
-/**
- * Hook para scroll infinito en lista de productos.
- * `mantenerAnterior`: mientras llega la búsqueda nueva se siguen viendo los resultados de la
- * anterior (para listas cuya única clave cambiante es el término de búsqueda).
- */
-export function useInfiniteProductos(params: ProductoParams = {}, { mantenerAnterior = false } = {}) {
-  return useInfiniteQuery({
-    placeholderData: mantenerAnterior ? keepPreviousData : undefined,
-    queryKey: productosKeys.infinite(params),
-    queryFn: ({ pageParam = 1 }) => {
-      const searchParams = new URLSearchParams()
-      searchParams.set('pageNumber', String(pageParam))
-      searchParams.set('pageSize', String(params.pageSize ?? 20))
-      if (params.search) searchParams.set('searchTerm', params.search)
-      if (params.soloActivos !== undefined) searchParams.set('soloActivos', String(params.soloActivos))
-      if (params.soloComprables) searchParams.set('soloComprables', 'true')
-      if (params.categoriaId) searchParams.set('categoriaId', params.categoriaId)
-      if (params.conOferta) searchParams.set('conOferta', 'true')
-
-      return api.get<PagedResult<Producto>>(`/api/v1/Productos?${searchParams}`)
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
-      if (lastPage.hasNextPage) {
-        return lastPage.page + 1
-      }
-      return undefined
-    },
-    staleTime: 5 * 60_000,
-  })
-}
-
 export function useProducto(id: string) {
   return useQuery({
     queryKey: productosKeys.detail(id),
@@ -189,22 +134,6 @@ export function useVariantesProducto(id: string, enabled = true, depositoId?: st
   })
 }
 
-export function useCreateProducto() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (data: CreateProductoRequest) => api.post<Producto>('/api/v1/Productos', data),
-    onSuccess: () => invalidarProductosYCatalogo(queryClient),
-  })
-}
-
-export function useUpdateProducto() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (data: UpdateProductoRequest) => api.put<Producto>(`/api/v1/Productos/${data.id}`, data),
-    onSuccess: () => invalidarProductosYCatalogo(queryClient),
-  })
-}
-
 /** Forma mínima de un producto dentro de cualquier caché de productos. */
 interface ProductoEnCache {
   id?: string
@@ -221,59 +150,6 @@ type CacheProductos =
       items?: ProductoEnCache[]
       pages?: { data?: { items?: ProductoEnCache[] }; items?: ProductoEnCache[] }[]
     }
-
-/**
- * Update Optimista para Toggle Status de Producto
- */
-export function useToggleProductoStatus() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, activo }: { id: string; activo: boolean }) => 
-      api.put<boolean>(`/api/v1/Productos/${id}/toggle-status`, { activo }),
-
-    onMutate: async (variables) => {
-      await queryClient.cancelQueries({ queryKey: productosKeys.all })
-      const previousData = queryClient.getQueryData(productosKeys.all)
-
-      const aplicar = (p: ProductoEnCache) =>
-        p.id === variables.id ? { ...p, activo: variables.activo } : p
-
-      queryClient.setQueriesData<CacheProductos>({ queryKey: productosKeys.all }, (old) => {
-        if (!old) return old
-        if (Array.isArray(old)) return old.map(aplicar)
-
-        if (old.pages) {
-          return {
-            ...old,
-            pages: old.pages.map((page) => ({
-              ...page,
-              data: { ...page.data, items: page.data?.items?.map(aplicar) },
-              items: page.items?.map(aplicar),
-            })),
-          }
-        }
-
-        if (old.data?.items) {
-          return { ...old, data: { ...old.data, items: old.data.items.map(aplicar) } }
-        }
-
-        if (old.id === variables.id) return { ...old, activo: variables.activo }
-
-        return old
-      })
-
-      return { previousData }
-    },
-
-    onError: (err, variables, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(productosKeys.all, context.previousData)
-      }
-    },
-
-    onSettled: () => invalidarStock(queryClient),
-  })
-}
 
 /**
  * Lista (compacto, con escala de descuentos; el default del servidor), Tarjeta (foto grande y precio) o Informativo

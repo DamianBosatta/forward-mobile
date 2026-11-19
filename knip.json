@@ -5,17 +5,21 @@
     "**/__tests__/**/*.{ts,tsx}",
     "**/*.{test,spec}.{ts,tsx}"
   ],
-  "project": ["app/**/*.{ts,tsx}", "src/**/*.{ts,tsx}", "libs/**/*.{ts,tsx}"],
+  "project": [
+    "app/**/*.{ts,tsx}",
+    "src/**/*.{ts,tsx}",
+    "libs/**/*.{ts,tsx}"
+  ],
+  "ignoreExportsUsedInFile": true,
   "rules": {
-    "exports": "off",
+    "exports": "error",
     "types": "off",
     "enumMembers": "off",
     "duplicates": "off"
   },
   "ignore": [
     "libs/validations/generated/**",
-    "src/features/logistica/components/PedidoDetalleModal.tsx",
-    "src/features/socios/api/queries.ts"
+    "src/features/logistica/components/PedidoDetalleModal.tsx"
   ],
   "ignoreDependencies": [
     "@react-native-community/datetimepicker",
@@ -25,5 +29,10 @@
     "expo-system-ui",
     "openapi-typescript",
     "ts-jest"
-  ]
+  ],
+  "ignoreIssues": {
+    "src/features/logistica/__testing__/camara.tsx": [
+      "exports"
+    ]
+  }
 }

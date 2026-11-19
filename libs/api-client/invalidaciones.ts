@@ -182,11 +182,6 @@ export function invalidarBorradoresDeVenta(queryClient: Qc): Promise<void> {
   return refrescar(queryClient, ventasKeys.borradoresMios())
 }
 
-/** El tablero de preparación (picking). */
-export function invalidarPreparacion(queryClient: Qc): Promise<void> {
-  return refrescar(queryClient, pickingKeys.all)
-}
-
 /**
  * Una hoja de ruta cambió (armar, iniciar, reportar parada, entregar, cancelar). Con `hojaId` se
  * refrescan esa hoja y el listado; sin él, toda la logística. En los dos casos también ventas,

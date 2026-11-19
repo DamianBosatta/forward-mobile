@@ -84,17 +84,6 @@ export function useEstadoCuentaSocio(socioId: string, enabled = true) {
   })
 }
 
-export function useCuentasPropias(activo: boolean = true) {
-  return useQuery({
-    queryKey: cuentasKeys.propias(activo),
-    queryFn: async () => {
-      const res = await api.get<CuentaCorrienteResumenDto[]>(`/api/v1/cuentas-corrientes/propias?activo=${activo}`)
-      return res
-    },
-    staleTime: 30_000,
-  })
-}
-
 /** Movimientos de una cuenta, del más nuevo al más viejo, de a 20 (el servidor pagina y ordena). */
 export function useCuentaMovimientos(cuentaId: string | null | undefined, enabled = true, rango?: RangoDeDias) {
   return useInfiniteQuery({
