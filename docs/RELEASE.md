@@ -200,6 +200,15 @@ La app tiene dos números:
 
 Cambiar la versión en `app.config.ts` cambia la huella de runtime: los builds anteriores dejan de recibir las actualizaciones que se publiquen después, y hace falta un build nuevo.
 
+### Versión mínima: bloquear versiones viejas (OPS-03)
+
+La app pregunta al servidor, antes del login y al volver a primer plano, cuál es la versión mínima que soporta (`GET` anónimo de `AppMovil`, `data.versionMinima`). Si la instalada es menor, muestra la pantalla "Actualización requerida" y no deja pasar.
+
+- **Dónde se fija**: en el servidor, sección `AppMovil`, clave `VersionMinima` (en el contenedor, la variable de entorno `AppMovil__VersionMinima`). Debe ser versión semántica estricta (`1.4.0`, sin ceros a la izquierda). **Está vacía por defecto en producción: sin bloqueo.** Un valor inválido el servidor lo trata como vacío.
+- **Contra qué compara**: la `version` de `app.config.ts` (la que se ve en "Mi cuenta"), no el build ni la huella de runtime. Mientras `version` siga en `1.0.0` no hay forma de distinguir un APK de otro, así que subir la mínima por encima de `1.0.0` bloquea a todos. Antes de usar el bloqueo hay que subir `version` en un release (ver "Versión") y repartir ese APK.
+- **Cuándo usarlo**: solo cuando el servidor deja de soportar una versión (un contrato que cambió sin compatibilidad hacia atrás). Una actualización OTA corrige el JavaScript pero no el APK: si el cambio exige un APK nuevo (huella distinta), publicar el APK, esperar a que se reparta y recién después subir la mínima.
+- **Falla abierta**: sin respuesta (sin red, 404 de un servidor viejo, plazo de 4 s vencido, valor inválido) la app sigue. El chofer sin señal nunca queda bloqueado por esto.
+
 ### Dónde verlas en la app
 
 Al pie de "Mi cuenta":
