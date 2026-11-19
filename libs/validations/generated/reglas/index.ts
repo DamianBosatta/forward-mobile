@@ -63,7 +63,7 @@ export const CostoUnitarioDeCompraSchema = z.number().gt(0, 'El costo unitario d
 
 /** caja/abrir-moneda-ars-usd y caja/cerrar-moneda-ars-usd: ARS o USD, en mayúsculas. */
 export const MonedaPermitidaSchema = z.enum(MONEDAS_PERMITIDAS, {
-  message: 'La moneda tiene que ser ARS o USD.',
+  error: () => 'La moneda tiene que ser ARS o USD.',
 })
 
 /** compra/detalle-moneda-ars: la compra se carga en pesos (A-515). */

@@ -17,10 +17,10 @@ function interior(esquema: z.ZodTypeAny): z.ZodTypeAny {
 
 function conMensaje<T extends z.ZodTypeAny>(esquema: T, mensaje?: string): T {
   if (!mensaje) return esquema
-  return esquema.clone({ ...esquema._zod.def, error: () => mensaje }) as T
+  return esquema.clone({ ...esquema.def, error: () => mensaje }) as T
 }
 
-type Forma = z.ZodRawShape
+type Forma = Record<string, z.ZodType>
 
 export function numeroDelContrato<T extends Forma>(
   objeto: z.ZodObject<T>,
