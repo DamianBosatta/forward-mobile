@@ -3,16 +3,7 @@
  *
  * Authoritative contract = web packages/api-client/src/picking.ts + logistica.ts
  * (verified against LogisticaController.cs).
- *
- * Reconciliation (PR0):
- *   - DELETED stale hooks: useEmpacarMasivo (/empacar-masivo), useEnviarARutaMasivo (/enviar-a-ruta-masivo)
- *   - MOVED: useEmpacarVenta lives in ventas.ts (the other picking-transition hooks are not defined in mobile)
- *   - FIXED: useCrearHojaRuta now includes depositoId
- *   - FIXED: useVentasParaPreparacion now uses PascalCase query params
- *   - ADDED: VentaPreparacion.metodoEntrega field
- *   - ADDED: useCreateVehiculo, useUpdateVehiculo, useDeactivateVehiculo
- *   - ADDED: pickingKeys query-key namespace
- *   - ADDED: URL builders getManifiestoUrl, getEtiquetasUrl, getSurtidoPdfUrl
+ * Only hooks used by the app live here; unused ones were removed (history in git).
  */
 
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
@@ -140,9 +131,6 @@ export interface VehiculoCrudResult extends VehiculoDto {
 export function getManifiestoUrl(id: string): string {
   return `${API_URL}/api/v1/Logistica/hojas-ruta/${id}/manifiesto-pdf`
 }
-
-/** GET /api/v1/logistica/etiquetas-masivas-pdf?ventaIds=a,b,c */
-// NOTE: getEtiquetasUrl (single venta) is exported from ventas.ts — same URL, no need to duplicate.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Queries

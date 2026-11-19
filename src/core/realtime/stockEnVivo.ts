@@ -73,7 +73,8 @@ export function crearGestorStock(
   let cantidades = false
   // Cada apertura/cierre invalida las rondas anteriores que siguen en vuelo.
   let ronda = 0
-  // Apertura fallida por red o 5xx: reintento con espera creciente mientras haya quien escuche (el 401 lo cubre la renovación del token).
+  // Apertura fallida (cualquier error, incluido 401/403): reintento con espera creciente mientras haya quien escuche.
+  // Tras un 401 además reabre la renovación del token (alRenovarToken).
   let intentos = 0
   let temporizador: ReturnType<typeof setTimeout> | null = null
   const cancelarReintento = () => {

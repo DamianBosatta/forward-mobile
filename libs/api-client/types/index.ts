@@ -424,7 +424,7 @@ export type CajaActivaDto = components['schemas']['CajaActivaDto']
  */
 export type MovimientoCajaDto = components['schemas']['MovimientoCajaDto']
 
-// Backward-compatible interface kept for caja.store.ts and legacy consumers.
+// Backward-compatible interface kept for legacy consumers.
 // New code should use CajaActivaDto from the generated schema.
 export interface Caja {
   id: string
