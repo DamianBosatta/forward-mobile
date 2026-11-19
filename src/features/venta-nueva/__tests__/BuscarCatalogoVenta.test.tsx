@@ -58,11 +58,12 @@ async function abrirCatalogo() {
 
 // El bug (A-18): un error al cargar el catálogo se veía como "No hay productos que coincidan".
 describe('catálogo de venta: estados de la lista', () => {
-  it('sin red muestra el error traducido y "Reintentar", nunca el texto de sin resultados; Reintentar vuelve a pedir', async () => {
+  it('sin red muestra el estado de sin conexión y "Reintentar", nunca el texto de sin resultados; Reintentar vuelve a pedir', async () => {
     mockGet.mockReset().mockRejectedValue(new TypeError('Network request failed'))
     await abrirCatalogo()
 
-    expect(await screen.findByText('Sin conexión. Revisá tu red e intentá de nuevo.')).toBeTruthy()
+    expect(await screen.findByText('No pudimos cargar el catálogo')).toBeTruthy()
+    expect(screen.getByText('Parece que no hay señal. Probá de nuevo en un rato.')).toBeTruthy()
     expect(screen.queryByText('No hay productos que coincidan.')).toBeNull()
 
     mockGet.mockReset().mockResolvedValue(pagina([pala]))
@@ -70,7 +71,7 @@ describe('catálogo de venta: estados de la lista', () => {
     await act(async () => {})
     expect(mockGet).toHaveBeenCalled()
     expect(await screen.findByTestId('producto-p1')).toBeTruthy()
-    expect(screen.queryByText('Sin conexión. Revisá tu red e intentá de nuevo.')).toBeNull()
+    expect(screen.queryByText('No pudimos cargar el catálogo')).toBeNull()
   })
 
   it('un error del servidor también se ve como error con "Reintentar", no como sin resultados', async () => {

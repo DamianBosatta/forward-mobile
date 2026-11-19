@@ -39,6 +39,8 @@ interface Props {
   /** Qué ocupa el lugar mientras carga. Sin dato, tres filas. */
   esqueleto?: Bloques
   tituloError: string
+  /** Reemplaza el texto de "error" (por ejemplo el mensaje del servidor); "sin conexión" conserva el suyo. */
+  textoError?: string
   tituloVacio: string
   textoVacio?: string
   /** Cuándo guardó el teléfono lo que había (ms); solo para el texto de "sin conexión". */
@@ -51,7 +53,7 @@ interface Props {
  * Los cuatro estados de una consulta con el mismo dibujo en toda la app: esqueleto, sin conexión, error
  * y vacío; con datos muestra `children`. Presentacional: la pantalla le pasa lo que ya tiene (X1/X4).
  */
-export function EstadoDeConsulta({ cargando, error, vacio, esqueleto, tituloError, tituloVacio, textoVacio, guardadoA, onReintentar, children }: Props) {
+export function EstadoDeConsulta({ cargando, error, vacio, esqueleto, tituloError, textoError, tituloVacio, textoVacio, guardadoA, onReintentar, children }: Props) {
   if (cargando) {
     return (
       <View style={{ padding: space[4] }}>
@@ -59,7 +61,7 @@ export function EstadoDeConsulta({ cargando, error, vacio, esqueleto, tituloErro
       </View>
     )
   }
-  if (error) return <ErrorDeConsulta error={error} titulo={tituloError} guardadoA={guardadoA} onReintentar={onReintentar} />
+  if (error) return <ErrorDeConsulta error={error} titulo={tituloError} texto={textoError} guardadoA={guardadoA} onReintentar={onReintentar} />
   if (vacio) return <EstadoDePantalla tipo="vacio" titulo={tituloVacio} texto={textoVacio} />
   return <>{children}</>
 }
