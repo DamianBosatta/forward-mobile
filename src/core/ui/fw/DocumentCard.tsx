@@ -1,3 +1,4 @@
+import { iniciales } from '@/core/utils/texto'
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { importe as cifras, maxFontScale, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
@@ -32,11 +33,8 @@ interface DocumentCardProps {
   ultimoCambio?: string | null
 }
 
-/** Iniciales (dos letras) del vendedor para el avatar. */
-export function iniciales(nombre: string): string {
-  const partes = nombre.trim().split(/\s+/).filter(Boolean)
-  return partes.slice(0, 2).map((p) => p[0]!.toUpperCase()).join('')
-}
+/** Iniciales (dos letras) para el avatar: la misma regla que las del cliente (`core/utils/texto`). */
+export { iniciales }
 
 /** Tarjeta de documento de la lámina F4 (lista de ventas y compras). En compras el título es el proveedor. */
 export function DocumentCard(p: DocumentCardProps) {
