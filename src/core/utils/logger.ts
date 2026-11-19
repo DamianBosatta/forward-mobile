@@ -16,7 +16,7 @@ const isDev = () => __DEV__
 
 const QUERY_STRING = /\?\S*/g
 
-const withoutQueryString = (text: string): string => text.replace(QUERY_STRING, '?<redacted>')
+export const withoutQueryString = (text: string): string => text.replace(QUERY_STRING, '?<redacted>')
 
 const API_ERROR_4XX = /API Error \[4\d\d\]/
 

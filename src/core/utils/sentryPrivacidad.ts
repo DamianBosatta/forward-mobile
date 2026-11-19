@@ -1,13 +1,11 @@
 import * as Sentry from '@sentry/react-native'
 import type { Breadcrumb, ErrorEvent } from '@sentry/react-native'
+import { withoutQueryString as sinQuery } from './logger'
 
 /**
  * Sentry privacy rules (SEG-06, OPS-05): breadcrumbs and events never carry a query string (search terms typed by
  * the user), and the only user data attached is the opaque user id (no name, email or username).
  */
-
-const QUERY_STRING = /\?\S*/g
-const sinQuery = (texto: string): string => texto.replace(QUERY_STRING, '?<redacted>')
 
 const LIMPIAR_EN_MIGAS = ['url', 'from', 'to'] as const
 
