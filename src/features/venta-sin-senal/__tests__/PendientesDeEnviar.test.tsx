@@ -161,6 +161,14 @@ describe('RED-R3-01: descartar una venta rechazada por el servidor', () => {
     alerta.mockRestore()
   })
 
+  it('RED-R4B-01: una venta en Borradores (ya existe en el servidor) no tiene «Descartar»', () => {
+    const v = encolarVenta('u1', { alta, cliente: { razonSocial: 'Almacén Luis' } as never, visto: { total: 600, precios: { p1: 100 } } })
+    cambiarEstado('u1', v.clave, { tipo: 'enBorradores', ventaId: 'v7', totalServidor: 700 } as never)
+    montar()
+    expect(screen.getByText('En Borradores')).toBeTruthy()
+    expect(screen.queryByText('Descartar')).toBeNull()
+  })
+
   it('una venta que solo espera señal no tiene «Descartar»', () => {
     encolarVenta('u1', { alta, cliente: { razonSocial: 'Almacén Luis' } as never, visto: { total: 600, precios: { p1: 100 } } })
     montar()

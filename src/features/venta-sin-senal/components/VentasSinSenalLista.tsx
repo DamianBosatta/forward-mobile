@@ -16,7 +16,7 @@ interface Props {
   horaCatalogo: string | null
   /** Tocar una venta: abrir la enviada o el borrador, o revisar la rechazada. Sin esto las filas no se tocan. */
   onAbrir?: (v: VentaEnCola) => void
-  /** "Descartar" en las ventas para revisar (RED-R3-01): quien lo recibe pide la confirmación y las saca de la cola. Sin esto no hay botón. */
+  /** "Descartar" en las ventas rechazadas (`revisar`, RED-R3-01); las de Borradores ya existen en el servidor y no lo llevan (RED-R4B-01): quien lo recibe pide la confirmación y las saca de la cola. Sin esto no hay botón. */
   onDescartar?: (v: VentaEnCola) => void
 }
 
@@ -80,7 +80,7 @@ export function VentasSinSenalLista({ items, sinSenal, horaCatalogo, onAbrir, on
           {paraRevisar.map((v) => (
             <Tarjeta key={v.clave}>
               <Fila v={v} onAbrir={onAbrir} />
-              {onDescartar ? (
+              {onDescartar && v.estado.tipo === 'revisar' ? (
                 <View style={{ paddingHorizontal: space[4], paddingBottom: space[3] }}>
                   <Button variant="secundario" label="Descartar" accessibilityLabel={`Descartar la venta de ${direccionDeEntrega(v.cliente)}`} onPress={() => onDescartar(v)} />
                 </View>
