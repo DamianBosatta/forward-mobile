@@ -45,6 +45,8 @@ export interface OyenteAvisos {
 
 const EVENTO = 'StockCambio'
 const EVENTO_ENTIDADES = 'EntidadCambio'
+const ESPERA_INICIAL_MS = 2_000
+const ESPERA_MAXIMA_MS = 60_000
 
 function conexionReal(): ConexionStock {
   return new HubConnectionBuilder()
@@ -71,6 +73,19 @@ export function crearGestorStock(
   let cantidades = false
   // Cada apertura/cierre invalida las rondas anteriores que siguen en vuelo.
   let ronda = 0
+  // Apertura fallida por red o 5xx: reintento con espera creciente mientras haya quien escuche (el 401 lo cubre la renovación del token).
+  let intentos = 0
+  let temporizador: ReturnType<typeof setTimeout> | null = null
+  const cancelarReintento = () => {
+    if (temporizador) clearTimeout(temporizador)
+    temporizador = null
+  }
+  const reintentarLuego = () => {
+    if (temporizador || (oyentes.size === 0 && oyentesAvisos.size === 0)) return
+    const espera = Math.min(ESPERA_MAXIMA_MS, ESPERA_INICIAL_MS * 2 ** intentos)
+    intentos++
+    temporizador = setTimeout(() => { temporizador = null; void abrir() }, espera)
+  }
 
   const depositos = () => [...new Set([...oyentes.values()].flat())]
   const poner = (valor: boolean) => {
@@ -96,6 +111,7 @@ export function crearGestorStock(
 
   async function abrir() {
     if (conexion || conectando || (oyentes.size === 0 && oyentesAvisos.size === 0) || AppState.currentState !== 'active') return
+    cancelarReintento()
     conectando = true
     const mia = ++ronda
     const c = crear()
@@ -108,16 +124,19 @@ export function crearGestorStock(
       await c.start()
       if (mia !== ronda) { void c.stop(); return }
       conexion = c
+      intentos = 0
       await conectado(c, mia)
     } catch (e) {
       logger.warn('No se pudo abrir el stock en vivo', e)
-      if (mia === ronda) poner(false)
+      if (mia === ronda) { poner(false); reintentarLuego() }
     } finally {
       conectando = false
     }
   }
 
   function soltar() {
+    cancelarReintento()
+    intentos = 0
     ronda++
     const c = conexion
     conexion = null
