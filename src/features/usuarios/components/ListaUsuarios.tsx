@@ -38,31 +38,33 @@ function Contenido() {
   const [texto, setTexto] = useFiltroPersistente('usuarios.busqueda', '')
   const busqueda = useDebouncedValue(texto.trim(), 350)
   const q = useUsuarios({ pageNumber: 1, pageSize: POR_PAGINA, searchTerm: busqueda || undefined })
-  const filas = q.data?.items ?? []
   const total = q.data?.totalCount
   const subtitulo = total === undefined ? undefined : `${total} ${total === 1 ? 'usuario' : 'usuarios'}`
 
-  const cuerpo = q.isLoading ? <View style={{ paddingHorizontal: space[4] }}><Esqueletos bloques={FILAS_CARGANDO} /></View>
-    : q.isError && filas.length === 0 ? (
-      <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los usuarios" accion={{ label: 'Reintentar', onPress: () => void q.refetch() }} />
-    )
-    : filas.length === 0 ? <EstadoDePantalla tipo="vacio" titulo={busqueda ? 'No hay usuarios con esa búsqueda.' : 'No hay usuarios.'} />
-    : (
-      // Propuesta Cuenta, frame 6: filas con iniciales dentro de una tarjeta sin borde, como la lista de Clientes.
-      <View testID="tarjeta-usuarios" style={{ marginHorizontal: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>
-        {filas.map((u, i) => <FilaUsuario key={u.id ?? i} u={u} esYo={!!yo && u.id === yo} conDivisor={i > 0} />)}
-      </View>
-    )
+  const renderItem = useCallback(() => {
+    const filas = q.data?.items ?? []
+    const cuerpo = q.isLoading ? <View style={{ paddingHorizontal: space[4] }}><Esqueletos bloques={FILAS_CARGANDO} /></View>
+      : q.isError && filas.length === 0 ? (
+        <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los usuarios" accion={{ label: 'Reintentar', onPress: () => void q.refetch() }} />
+      )
+      : filas.length === 0 ? <EstadoDePantalla tipo="vacio" titulo={busqueda ? 'No hay usuarios con esa búsqueda.' : 'No hay usuarios.'} />
+      : (
+        // Propuesta Cuenta, frame 6: filas con iniciales dentro de una tarjeta sin borde, como la lista de Clientes.
+        <View testID="tarjeta-usuarios" style={{ marginHorizontal: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>
+          {filas.map((u, i) => <FilaUsuario key={u.id ?? i} u={u} esYo={!!yo && u.id === yo} conDivisor={i > 0} />)}
+        </View>
+      )
 
-  const renderItem = useCallback(() => (
-    <View style={{ gap: space[4] }}>
-      <View style={{ paddingHorizontal: space[4] }}>
-        <Notice tone="info">Solo consulta. Altas, bajas y permisos se manejan desde la web.</Notice>
+    return (
+      <View style={{ gap: space[4] }}>
+        <View style={{ paddingHorizontal: space[4] }}>
+          <Notice tone="info">Solo consulta. Altas, bajas y permisos se manejan desde la web.</Notice>
+        </View>
+        <BuscadorCartera valor={texto} onCambio={setTexto} etiqueta="Buscar por nombre o puesto" placeholder="Buscar por nombre o puesto" sobre="pantalla" grande />
+        {cuerpo}
       </View>
-      <BuscadorCartera valor={texto} onCambio={setTexto} etiqueta="Buscar por nombre o puesto" placeholder="Buscar por nombre o puesto" sobre="pantalla" grande />
-      {cuerpo}
-    </View>
-  ), [texto, setTexto, cuerpo])
+    )
+  }, [texto, setTexto, q, busqueda, c, yo])
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
