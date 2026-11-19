@@ -6,8 +6,9 @@
     "**/*.{test,spec}.{ts,tsx}"
   ],
   "project": ["app/**/*.{ts,tsx}", "src/**/*.{ts,tsx}", "libs/**/*.{ts,tsx}"],
+  "ignoreExportsUsedInFile": true,
   "rules": {
-    "exports": "off",
+    "exports": "error",
     "types": "off",
     "enumMembers": "off",
     "duplicates": "off"
@@ -15,7 +16,6 @@
   "ignore": [
     "libs/validations/generated/**",
     "src/features/logistica/components/PedidoDetalleModal.tsx",
-    "src/features/socios/api/queries.ts"
   ],
   "ignoreDependencies": [
     "@react-native-community/datetimepicker",

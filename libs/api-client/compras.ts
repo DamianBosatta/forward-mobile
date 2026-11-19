@@ -67,14 +67,6 @@ function mismoRango(a: unknown, b: ComprasListParams) {
 
 // ── Queries ──────────────────────────────────────────────────────────────────
 
-export function useCompras(params: { pageNumber?: number; pageSize?: number } = {}) {
-  const { pageNumber = 1, pageSize = 20 } = params
-  return useQuery({
-    queryKey: comprasKeys.list(params),
-    queryFn: () => api.get<PagedResult<CompraDtoList>>(`/api/v1/Compras?pageNumber=${pageNumber}&pageSize=${pageSize}`),
-  })
-}
-
 /**
  * Hook para scroll infinito en lista de compras
  */

@@ -329,15 +329,6 @@ const intentoConvertirPresupuesto = crearIntento()
 const intentoAutorizarVenta = crearIntento()
 const intentoEditarVenta = crearIntento()
 
-export function useCreateVenta() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (data: CreateVentaRequest) =>
-      api.post<Venta>('/api/v1/Ventas', data),
-    onSuccess: () => invalidarPorCambioDeVenta(queryClient),
-  })
-}
-
 /**
  * Borrador con autoguardado (el de la web): sin líneas; el vendedor sale del token. `tipoOperacion`
  * (forward-system #883) dice qué se arma: un servidor viejo lo ignora y el borrador nace Presupuesto.
@@ -373,17 +364,6 @@ export function useDescartarBorradorVenta() {
   return useMutation({
     mutationFn: (id: string) => api.post<boolean>(`/api/v1/Ventas/${id}/descartar-borrador`),
     onSettled: () => invalidarBorradoresDeVenta(queryClient),
-  })
-}
-
-export function useEntregarVenta() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, version, usuarioModificadorId }: { id: string; version: number; usuarioModificadorId: string }) =>
-      api.put<VentaActionResponseDto>(`/api/v1/Logistica/${id}/entregar`, { version, usuarioModificadorId }),
-    onSuccess: (_, { id }) => {
-      return invalidarPorCambioDeVenta(queryClient)
-    },
   })
 }
 
@@ -475,28 +455,6 @@ export function useRechazarAutorizacion() {
   })
 }
 
-export function useUpdateVenta() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, version, data }: { id: string; version: number; data: Partial<CreateVentaRequest> }) =>
-      conClave(intentoEditarVenta, { ...data, id, version }, (cuerpo) => api.put<Venta>(`/api/v1/Ventas/${id}`, cuerpo)),
-    onSuccess: (_data, { id }) => {
-      return invalidarPorCambioDeVenta(queryClient)
-    },
-  })
-}
-
-export function useEmpacarVenta() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, version, cantidadBultos, usuarioModificadorId }: { id: string; version: number; cantidadBultos: number; usuarioModificadorId: string }) =>
-      api.post<EmpacarVentaResponseDto>(`/api/v1/Logistica/${id}/empacar`, { version, cantidadBultos, usuarioModificadorId }),
-    onSuccess: (_, { id }) => {
-      return invalidarPorCambioDeVenta(queryClient)
-    },
-  })
-}
-
 /**
  * PDF comercial de la venta para el cliente (`GET /Ventas/{id}/pdf`): PRESUPUESTO o PEDIDO, sin
  * costos. No es la Nota de Entrega, que es el documento logístico.
@@ -509,7 +467,4 @@ export function getNotaEntregaUrl(id: string) {
   return `${API_URL}/api/v1/Logistica/${id}/nota-entrega-pdf`
 }
 
-export function getEtiquetasUrl(id: string) {
-  return `${API_URL}/api/v1/Logistica/${id}/etiquetas-pdf`
-}
 // #endregion

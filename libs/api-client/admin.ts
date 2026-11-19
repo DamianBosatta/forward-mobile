@@ -68,11 +68,3 @@ export function useUsuarios(params: GetUsuariosParams = {}) {
     queryFn:  () => api.get<PagedResult<UserListDto>>(`/api/v1/Users?${q}`),
   })
 }
-
-export function useUsuario(id: string) {
-  return useQuery({
-    queryKey: adminKeys.user(id),
-    queryFn:  () => api.get<UserDetailDto>(`/api/v1/Users/${id}`),
-    enabled:  !!id,
-  })
-}

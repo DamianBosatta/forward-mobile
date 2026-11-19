@@ -43,29 +43,6 @@ export interface UseConfiguracionSistemaOptions {
   enabled?: boolean
 }
 
-/**
- * Returns the global minimum profit margin from the backend.
- * Endpoint: GET /api/v1/Configuracion/margen-minimo
- *
- * Used by the venta form and the per-item discount modal for client-side
- * profitability floor validation. Fetched once on mount (staleTime: 5 min)
- * to avoid per-keystroke DB calls.
- *
- * Pass `{ enabled: false }` for non-cost roles to prevent a 403 error after
- * the endpoint was role-gated in S3a.
- */
-export function useConfiguracionSistema(options: UseConfiguracionSistemaOptions = {}) {
-  const { enabled = true } = options
-  return useQuery({
-    queryKey: configuracionKeys.margenMinimo(),
-    queryFn: () => api.get<MargenMinimoResponse>('/api/v1/Configuracion/margen-minimo'),
-    staleTime: 5 * 60_000,
-    // Retry once on failure — this is a cheap cached read from the backend
-    retry: 1,
-    enabled,
-  })
-}
-
 type Schemas = import('./generated/schema').components['schemas']
 
 /** Días de la semana con entregas (Configuración); cualquier usuario autenticado lo puede leer. */

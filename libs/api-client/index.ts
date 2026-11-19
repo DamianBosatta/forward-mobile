@@ -73,20 +73,15 @@ export {
   useVentas,
   useVenta,
   useAutorizacionPreview,
-  useCreateVenta,
-  useEntregarVenta,
   useConvertirPresupuesto,
   useAnularVenta,
-  useUpdateVenta,
   useAutorizarVenta,
-  useEmpacarVenta,
   getNotaEntregaUrl,
   getVentaPdfUrl,
-  getEtiquetasUrl
 } from './ventas'
 
 // Productos hooks
-export { productosKeys, useProductos, useInfiniteProductos, useInfiniteCatalogoStock, useCatalogoStock, useProducto, useVariantesProducto, useCreateProducto, useUpdateProducto, useToggleProductoStatus, getCatalogoPdfUrl } from './productos'
+export { productosKeys, useInfiniteCatalogoStock, useProducto, useVariantesProducto, getCatalogoPdfUrl } from './productos'
 export { catalogoKeys, useInfiniteCatalogo } from './catalogo'
 export type { CatalogoComercialItem, CatalogoParams } from './catalogo'
 export type { CatalogoPdfFiltros, CatalogoStockItem, AlmacenStockItem, VarianteProducto } from './productos'
@@ -95,9 +90,7 @@ export type { CatalogoPdfFiltros, CatalogoStockItem, AlmacenStockItem, VarianteP
 export {
   finanzasKeys,
   useCajaActiva,
-  useMovimientosCaja,
   useAbrirCaja,
-  usePagos,
 } from './finanzas'
 
 
@@ -116,7 +109,6 @@ export type { CreateCompraRequest } from './types'
 
 // Socios Comerciales (Clientes / Proveedores)
 export * from './socios'
-export { useProveedores, useClientesActivos } from './socios'
 
 // Administración (Usuarios y Auditoría)
 export * from './admin'
@@ -128,19 +120,15 @@ export * from './cuentas-corrientes'
 export * from './tesoreria'
 
 // Configuración del sistema
-export { useConfiguracionSistema, configuracionKeys } from './configuracion'
+export { configuracionKeys } from './configuracion'
 export type { MargenMinimoResponse } from './configuracion'
 
 // Logística hooks
 export {
   logisticaKeys,
   pickingKeys,
-  useVentasEmpacadas,
-  useChoferes,
-  useVehiculos,
   useHojasDeRuta,
   useHojaRuta,
-  useCrearHojaRuta,
   useIniciarHojaRuta,
   useFinalizarHojaRuta,
   useReportarParada,
@@ -150,13 +138,8 @@ export {
   // Picking board (Batch 1)
   useVentasParaPreparacion,
   // Vehiculos CRUD
-  useCreateVehiculo,
-  useUpdateVehiculo,
-  useDeactivateVehiculo,
   // URL builders (consumed by sharePdf)
   getManifiestoUrl,
-  getEtiquetasMasivasUrl,
-  getSurtidoPdfUrl,
 } from './logistica'
 
 export type {
