@@ -54,6 +54,14 @@ describe.each([
     expect(await screen.findByRole('header', { name: vacio })).toBeTruthy()
   })
 
+  it('mientras carga: esqueleto de EstadoDeConsulta, sin el vacío', async () => {
+    get.mockImplementation(() => new Promise(() => {}))
+    pintar(<Pantalla />)
+
+    expect((await screen.findAllByRole('progressbar', { name: 'Cargando' })).length).toBeGreaterThan(0)
+    expect(screen.queryByRole('header', { name: vacio })).toBeNull()
+  })
+
   it('vacía por la búsqueda: la frase de la búsqueda, sin acción', async () => {
     pintar(<Pantalla />)
     await screen.findByRole('header', { name: vacio })

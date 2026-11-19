@@ -8,7 +8,7 @@ import { ArrowLeftRight } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Button, FiltroChip, Notice, Segmented, TopBar, TwoPane, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
-import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -22,7 +22,7 @@ import { RegistrarCobro } from '@/features/cuentas/components/RegistrarCobro'
 import { DeudasAProveedores } from '@/features/cuentas/components/DeudasAProveedores'
 import { useDeudasResumen } from '@/features/cuentas/api/queries'
 import { ResumenDeCuentas } from '@/features/cuentas/components/ResumenDeCuentas'
-import { Esqueletos, FILAS_CARGANDO, ErrorDeConsulta } from '@/core/ui/estados'
+import { EstadoDeConsulta, FILAS_CARGANDO } from '@/core/ui/estados'
 import { DeudoresClientes } from '@/features/deudores/components/DeudoresClientes'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -116,18 +116,16 @@ function CuentasCorrientesScreen() {
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch() }} tintColor={c.brandInk} />}
         ListEmptyComponent={
-          isLoading ? (
-            <View style={{ paddingHorizontal: space[4] }}>
-              <Esqueletos bloques={FILAS_CARGANDO} />
-            </View>
-          ) : error ? (
-            <ErrorDeConsulta error={error} titulo="No pudimos cargar los clientes" texto={mensajeDelServidor(error, 'No se pudo cargar la cartera.')} onReintentar={() => void refetch()} />
-          ) : (
-            <EstadoDePantalla
-              tipo="vacio"
-              titulo={busqueda.trim() ? 'Ningún cliente coincide con la búsqueda.' : 'Todavía no hay clientes en tu cartera.'}
-            />
-          )
+          <EstadoDeConsulta
+            cargando={isLoading}
+            esqueleto={FILAS_CARGANDO}
+            error={error}
+            tituloError="No pudimos cargar los clientes"
+            textoError={mensajeDelServidor(error, 'No se pudo cargar la cartera.')}
+            onReintentar={() => void refetch()}
+            vacio
+            tituloVacio={busqueda.trim() ? 'Ningún cliente coincide con la búsqueda.' : 'Todavía no hay clientes en tu cartera.'}
+          />
         }
       />
     </View>

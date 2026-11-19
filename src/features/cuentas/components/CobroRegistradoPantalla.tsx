@@ -61,7 +61,7 @@ export function CobroRegistradoPantalla({ cliente, cobro, monto, medio, lineas, 
   }
 
   const fila = (k: string, v: React.ReactNode, ultima = false) => (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[3], minHeight: 40, borderBottomWidth: ultima ? 0 : 1, borderBottomColor: c.border }}>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[3], minHeight: space[12], borderBottomWidth: ultima ? 0 : 1, borderBottomColor: c.border }}>
       <Text style={secundario}>{k}</Text>
       {v}
     </View>

@@ -11,7 +11,8 @@ import { FONT, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Notice, TopBar, useInsetInferior } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
-import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { EstadoDeConsulta } from '@/core/ui/estados'
 import { esFallaDeRed, TEXTO_SIN_CONEXION } from '@/core/api/errores'
 import { RequirePermission } from '@/core/ui'
 import { ApiError } from '@/core/api/client'
@@ -121,15 +122,15 @@ function CatalogoConsulta() {
         </Text>
         <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{`Novedades: ${DIAS_DE_NOVEDADES} días`}</Text>
       </View>
-      {cat.isLoading ? (
-        <ActivityIndicator style={{ marginTop: space[8] }} color={c.brandInk} />
-      ) : catSinRed && cat.productos.length === 0 ? (
-        <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar el catálogo" accion={{ label: 'Reintentar', onPress: () => { void cat.refetch() } }} />
-      ) : cat.isError && !catSinRed ? (
-        <View style={{ padding: space[4] }}>
-          <Notice tone="peligro">No se pudo cargar el catálogo. Revisá la conexión y volvé a intentar.</Notice>
-        </View>
-      ) : (
+      {/* Sin red: con lo guardado sigue la lista y un aviso; sin nada, la pantalla entera. Otro error: la pantalla entera. */}
+      <EstadoDeConsulta
+        cargando={cat.isLoading}
+        error={cat.isError && (!catSinRed || cat.productos.length === 0) ? cat.error : undefined}
+        tituloError="No pudimos cargar el catálogo"
+        textoError="No se pudo cargar el catálogo. Revisá la conexión y volvé a intentar."
+        tituloVacio="No hay productos que coincidan con la búsqueda."
+        onReintentar={() => { void cat.refetch() }}
+      >
         <FlashList
           ListHeaderComponent={catSinRed ? <View style={{ paddingBottom: space[3] }}><Notice tone="advertencia">{textoSinConexion(cat.dataUpdatedAt)}</Notice></View> : undefined}
           key={`columnas-${columnas}`}
@@ -139,11 +140,11 @@ function CatalogoConsulta() {
           contentContainerStyle={{ paddingTop: space[4], paddingHorizontal: paddingDeGrilla(space[4], columnas, space[3]), paddingBottom: space[12] + insetInferior }}
           onEndReached={cat.cargarMas}
           onEndReachedThreshold={0.5}
-          ListEmptyComponent={<EstadoDePantalla tipo="vacio" titulo="No hay productos que coincidan con la búsqueda." />}
+          ListEmptyComponent={<EstadoDeConsulta cargando={false} vacio tituloError="No pudimos cargar el catálogo" tituloVacio="No hay productos que coincidan con la búsqueda." />}
           ListFooterComponent={cat.isFetchingNextPage ? <ActivityIndicator color={c.brandInk} /> : undefined}
           renderItem={renderProducto}
         />
-      )}
+      </EstadoDeConsulta>
     </View>
   )
 

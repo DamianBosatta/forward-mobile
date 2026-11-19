@@ -45,7 +45,7 @@ export function PagoRegistradoPantalla({ proveedor, pago, lineas, total, onVolve
             <Text accessibilityRole="header" style={{ ...typeScale.titulo, fontFamily: FONT.semibold, fontWeight: '600', color: c.text, textAlign: 'center', marginTop: space[2] }}>{titulo}</Text>
             <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, textAlign: 'center' }}>{proveedor}</Text>
           </View>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[3], minHeight: 40 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[3], minHeight: space[12] }}>
             <Text style={secundario}>Estado</Text>
             {pago.anulado ? <StatusChip estado="anulado" label="Anulado" /> : <StatusChip estado="entregado" label="Registrado" />}
           </View>

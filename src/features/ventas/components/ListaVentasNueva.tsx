@@ -7,9 +7,9 @@ import {
   type SegmentedOption, useInsetInferior } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
-import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { EstadoDeConsulta, FILAS_CARGANDO } from '@/core/ui/estados'
 import { esFallaDeRed } from '@/core/api/errores'
-import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import type { Venta } from '@/libs/api-client'
@@ -203,10 +203,17 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
       refreshing={q.isRefetching}
       onRefresh={() => { void l.refrescar() }}
       ListEmptyComponent={
-        q.isLoading ? <Esqueletos bloques={FILAS_CARGANDO} />
-          : ventasSinConexion ? <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar las ventas" accion={reintentar} />
-          : q.isError ? undefined
-          : <EstadoDePantalla tipo="vacio" titulo="No hay ventas con estos filtros." />
+        // Con error del servidor el aviso va arriba (filtros); sin red y sin ventas, la pantalla entera.
+        <EstadoDeConsulta
+          cargando={q.isLoading}
+          esqueleto={FILAS_CARGANDO}
+          sinConexion={ventasSinConexion}
+          error={ventasSinConexion ? q.error : undefined}
+          tituloError="No pudimos cargar las ventas"
+          onReintentar={reintentar.onPress}
+          vacio={!q.isError}
+          tituloVacio="No hay ventas con estos filtros."
+        />
       }
       ListFooterComponent={q.isFetchingNextPage ? <ActivityIndicator color={c.brand} /> : undefined}
     />

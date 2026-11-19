@@ -21,12 +21,14 @@ interface ErrorProps {
   onReintentar?: () => void
   /** Reemplaza el texto de "error" (por ejemplo el mensaje del servidor); "sin conexión" conserva el suyo. */
   texto?: string
+  /** Fuerza "sin conexión" aunque no haya error (la consulta quedó en pausa por falta de red). */
+  sinConexion?: boolean
 }
 
 /** Falla de una consulta: "sin conexión" si el pedido no llegó, "error" si llegó y falló; en ambos, Reintentar. */
-export function ErrorDeConsulta({ error, titulo, guardadoA, onReintentar, texto }: ErrorProps) {
+export function ErrorDeConsulta({ error, titulo, guardadoA, onReintentar, texto, sinConexion }: ErrorProps) {
   const accion = onReintentar ? { label: 'Reintentar', onPress: onReintentar } : undefined
-  const sinRed = esFallaDeRed(error)
+  const sinRed = sinConexion || esFallaDeRed(error)
   return <EstadoDePantalla tipo={sinRed ? 'sinConexion' : 'error'} titulo={titulo} texto={sinRed ? undefined : texto} guardadoA={guardadoA} accion={accion} />
 }
 
@@ -34,6 +36,8 @@ interface Props {
   cargando: boolean
   /** Lo que devolvió la consulta al fallar (`query.error`). Sin valor, no hubo falla. */
   error?: unknown
+  /** Fuerza "sin conexión" aunque no haya error (la consulta quedó en pausa por falta de red y sin nada guardado). */
+  sinConexion?: boolean
   /** La consulta terminó sin nada que mostrar. */
   vacio?: boolean
   /** Qué ocupa el lugar mientras carga. Sin dato, tres filas. */
@@ -54,7 +58,7 @@ interface Props {
  * Los cuatro estados de una consulta con el mismo dibujo en toda la app: esqueleto, sin conexión, error
  * y vacío; con datos muestra `children`. Presentacional: la pantalla le pasa lo que ya tiene (X1/X4).
  */
-export function EstadoDeConsulta({ cargando, error, vacio, esqueleto, tituloError, textoError, tituloVacio, textoVacio, guardadoA, onReintentar, children }: Props) {
+export function EstadoDeConsulta({ cargando, error, sinConexion, vacio, esqueleto, tituloError, textoError, tituloVacio, textoVacio, guardadoA, onReintentar, children }: Props) {
   if (cargando) {
     return (
       <View style={{ padding: space[4] }}>
@@ -62,7 +66,7 @@ export function EstadoDeConsulta({ cargando, error, vacio, esqueleto, tituloErro
       </View>
     )
   }
-  if (error) return <ErrorDeConsulta error={error} titulo={tituloError} texto={textoError} guardadoA={guardadoA} onReintentar={onReintentar} />
+  if (error || sinConexion) return <ErrorDeConsulta error={error} sinConexion={sinConexion} titulo={tituloError} texto={textoError} guardadoA={guardadoA} onReintentar={onReintentar} />
   if (vacio) return <EstadoDePantalla tipo="vacio" titulo={tituloVacio} texto={textoVacio} />
   return <>{children}</>
 }

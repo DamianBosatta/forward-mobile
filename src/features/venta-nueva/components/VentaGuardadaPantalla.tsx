@@ -70,7 +70,7 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
   const direccion = socio.data ? direccionDeEntrega(socio.data) : (h.clienteNombre ?? '')
   const nombre = socio.data ? nombreDelCliente(socio.data) : ''
   const fila = (k: string, v: React.ReactNode, ultima = false) => (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 40, borderBottomWidth: ultima ? 0 : 1, borderBottomColor: c.border }}>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: space[12], borderBottomWidth: ultima ? 0 : 1, borderBottomColor: c.border }}>
       <Text style={secundario}>{k}</Text>
       {v}
     </View>
