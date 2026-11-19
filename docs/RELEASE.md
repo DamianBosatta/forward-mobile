@@ -57,6 +57,8 @@ Motivo: el 2026-11-02 el dev client instalado en el emulador se cerró al abrir 
 
 `app.config.ts` define `runtimeVersion: { policy: 'fingerprint' }`. La versión de runtime es una huella calculada sobre la parte nativa del proyecto (dependencias nativas, plugins y configuración nativa). Cada build lleva su huella y solo recibe actualizaciones publicadas con la misma huella. Si un cambio toca algo nativo, la huella cambia y la actualización queda para los builds nuevos: los teléfonos con el build viejo la ignoran en lugar de romperse. Por eso un cambio nativo sin build nuevo no rompe a nadie, pero tampoco le llega a nadie hasta que se instala el build nuevo.
 
+Para que no pase en silencio, el job `publish-update` del CI compara, después de publicar, la versión de runtime de la actualización con la del último build `production` de Android terminado. Si difieren, escribe un `::warning::` y una línea en el resumen del job: "hace falta un APK nuevo". No falla el job (la actualización queda publicada para cuando se instale el build nuevo). Un cambio de dependencia nativa (agregar, sacar o subir un paquete con código nativo) siempre exige un APK nuevo; mientras no se reparta, el aviso sigue apareciendo en cada merge.
+
 ### Canales
 
 | Canal | Builds que lo escuchan | API |
