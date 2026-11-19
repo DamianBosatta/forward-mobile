@@ -32,7 +32,6 @@ import { MedioYMonto } from './MedioYMonto'
 import { PasosCobro, type PasoCobro } from './PasosCobro'
 
 export const SIN_MEDIOS = 'Agregá al menos un medio.'
-export const CHEQUE_VA_SOLO = textosDe('cliente').chequeVaSolo
 
 const IMPUTACION = [{ id: 'automatica', label: 'Automática' }, { id: 'manual', label: 'Elegir comprobantes' }]
 type Objetivo = 'vencido' | 'saldo'

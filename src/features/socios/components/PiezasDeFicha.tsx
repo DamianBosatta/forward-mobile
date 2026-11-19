@@ -70,25 +70,3 @@ export function TituloDeSeccion({ children }: { children: string }) {
   const c = useColors()
   return <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>{children}</Text>
 }
-
-/** Cifra del resumen de la ficha (saldo, vencido, crédito libre...), como las dice el servidor. */
-export function Cifra({ etiqueta, valor, alerta = false }: { etiqueta: string; valor: string; alerta?: boolean }) {
-  const c = useColors()
-  return (
-    <View
-      style={{
-        flex: 1,
-        minWidth: 0,
-        paddingVertical: space[2],
-        paddingHorizontal: space[3],
-        borderRadius: radii.tarjeta,
-        backgroundColor: alerta ? c.chip.anulado.bg : c.surface,
-        borderWidth: alerta ? 0 : 1,
-        borderColor: c.border,
-      }}
-    >
-      <Text style={{ ...typeScale.secundario, color: alerta ? c.chip.anulado.text : c.textSecondary }}>{etiqueta}</Text>
-      <Text numberOfLines={1} style={[typeScale.cuerpoDestacado, importe, { color: alerta ? c.chip.anulado.text : c.text }]}>{valor}</Text>
-    </View>
-  )
-}

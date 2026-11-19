@@ -42,33 +42,6 @@ function useSolicitud(cliente: Sensibles) {
   return { enviada: enviar.isSuccess, formulario }
 }
 
-/**
- * Pedir el cambio de la dirección, la razón social o el CUIT (`POST /socios-comerciales/{id}/solicitudes-cambio`):
- * un no administrador no los cambia directo. Qué se puede pedir y si falta el motivo lo dice el servidor.
- * Tarjeta dentro de la ficha (proveedores); la ficha de cliente usa `SolicitudCambioSheet`.
- */
-export function SolicitudCambio({ cliente, onCerrar }: { cliente: Sensibles; onCerrar: () => void }) {
-  const c = useColors()
-  const { enviada, formulario } = useSolicitud(cliente)
-
-  return (
-    <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[3] }}>
-      <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>{TITULO_SOLICITUD}</Text>
-      {enviada ? (
-        <>
-          <Notice tone="exito">{SOLICITUD_ENVIADA}</Notice>
-          <Button label="Listo" variant="secundario" onPress={onCerrar} />
-        </>
-      ) : (
-        <>
-          {formulario}
-          <Button label="Cancelar" variant="secundario" onPress={onCerrar} />
-        </>
-      )}
-    </View>
-  )
-}
-
 function ContenidoDeLaHoja({ cliente, onCerrar }: { cliente: Sensibles; onCerrar: () => void }) {
   const c = useColors()
   const { enviada, formulario } = useSolicitud(cliente)
