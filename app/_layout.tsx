@@ -20,8 +20,6 @@ import {
   useFonts,
   Inter_400Regular,
   Inter_600SemiBold,
-  Inter_700Bold,
-  Inter_800ExtraBold,
   Inter_900Black,
 } from '@expo-google-fonts/inter'
 import { colorScheme } from 'nativewind'
@@ -64,18 +62,13 @@ function RootLayoutNav() {
     useThemeStore.getState().hydrate()
   }, [])
 
-  // Inter sola (plan §7). Los nombres Outfit_* son legados: las pantallas viejas
-  // los referencian (600/700/800/900 en core/ui), así que se registran apuntando a los
-  // archivos de Inter. Solo se cargan los pesos con uso verificado (REN-06).
+  // Inter sola (plan §7). Outfit_900Black es legado: ForwardLogo lo referencia, así que se
+  // registra apuntando al archivo de Inter 900. Solo se cargan los pesos con uso verificado
+  // (400 y 600 vía FONT en libs/theme.ts, 900 por ForwardLogo): REN-06.
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_600SemiBold,
-    Inter_700Bold,
-    Inter_800ExtraBold,
     Inter_900Black,
-    Outfit_600SemiBold: Inter_600SemiBold,
-    Outfit_700Bold: Inter_700Bold,
-    Outfit_800ExtraBold: Inter_800ExtraBold,
     Outfit_900Black: Inter_900Black,
   })
   const colors = useColors()
