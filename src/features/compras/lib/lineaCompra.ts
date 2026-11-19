@@ -53,12 +53,6 @@ export function textoDeLinea(l: Pick<LineaCompra, 'cantidad' | 'unidad' | 'unida
   return `${mostrarNumero(l.cantidad)} ${EMPAQUE[l.unidad].plural.toLowerCase()} × ${mostrarNumero(l.unidadesPorUnidad)} = ${unidades} u`
 }
 
-/** "Bulto ×12 = 240 u" (paso Productos); "240 u" si va por unidad. */
-export function textoDeEmpaque(l: Pick<LineaCompra, 'cantidad' | 'unidad' | 'unidadesPorUnidad'>): string {
-  const unidades = `${mostrarNumero(l.cantidad * l.unidadesPorUnidad)} u`
-  return l.unidad === 'Unidad' ? unidades : `${EMPAQUE[l.unidad].singular} ×${mostrarNumero(l.unidadesPorUnidad)} = ${unidades}`
-}
-
 /** Total con la misma cuenta que el servidor (TotalesCompra): bruto con descuento más gastos. */
 export function totalCompra(lineas: LineaCompra[], descuentoPorcentaje: number, gastos: number): number {
   const bruto = lineas.reduce((acc, l) => acc + (subtotalDe(l) ?? 0), 0)
