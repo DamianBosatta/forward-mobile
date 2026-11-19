@@ -30,6 +30,9 @@ export function crearQueryClient(consultas: DefaultOptions['queries'] = {}): Que
     }),
     defaultOptions: {
       queries: { staleTime: 30_000, gcTime: 24 * 60 * 60_000, retry: 1, ...consultas },
+      // RED-02: una sola política para todas las mutaciones: sin red quedan en pausa y salen al volver.
+      // Los que necesitan fallar en el acto lo piden por mutación (`networkMode: 'always'`).
+      mutations: { networkMode: 'online' },
     },
   })
   return queryClient
