@@ -1,7 +1,7 @@
 import React from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { space, typeScale, useColors } from '@/libs/theme'
+import { space, useColors } from '@/libs/theme'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
 
 const TEXTO =
@@ -21,18 +21,14 @@ export function ActualizacionRequerida({ instalada, minima, onReintentar }: Prop
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       {/* Scrolls: a large system font must not push the button off the screen. */}
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top, paddingBottom: insets.bottom + space[6] }}>
+        {/* The version pair goes inside the centered column, right under the explanation: as a separate
+            sibling it was pushed to the bottom edge by EstadoDePantalla's flex: 1. */}
         <EstadoDePantalla
           tipo="error"
           titulo="Hay que actualizar la app"
-          texto={TEXTO}
+          texto={`${TEXTO}\n\nTu versión: ${instalada} · Mínima: ${minima}`}
           accion={{ label: 'Volver a comprobar', onPress: onReintentar }}
         />
-        {/* Same readable centered column on phone and tablet. */}
-        <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center', paddingHorizontal: space[6] }}>
-          <Text style={[typeScale.cuerpo, { color: c.textSecondary, textAlign: 'center' }]}>
-            {`Tu versión: ${instalada} · Mínima: ${minima}`}
-          </Text>
-        </View>
       </ScrollView>
     </View>
   )
