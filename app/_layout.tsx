@@ -12,6 +12,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { conectarCierreDeSesion } from '@/features/auth/lib/cerrarSesion'
 import { hasSavedCredentials } from '@/features/auth/utils/biometrics'
 import { logger } from '@/core/utils/logger'
+import { limpiarEvento, limpiarMigaDePan, vincularUsuarioASentry } from '@/core/utils/sentryPrivacidad'
 import { protegerCapturaDeLaApp } from '@/core/utils/proteccionDeCaptura'
 import { OfertaDeHuella } from '@/features/auth/components/OfertaDeHuella'
 import { View } from 'react-native'
@@ -144,7 +145,12 @@ Sentry.init({
   // Performance tracing: sample 10% of transactions to get perf data without
   // overwhelming the Sentry quota. Defaults to 0 (no perf) when omitted.
   tracesSampleRate: 0.1,
+  // SEG-06: no query string (search terms) in breadcrumbs or events.
+  beforeBreadcrumb: limpiarMigaDePan,
+  beforeSend: limpiarEvento,
 })
+// OPS-05: only the opaque user id is attached to events; logout clears it.
+vincularUsuarioASentry(useAuthStore)
 
 function RootLayout() {
   const almacen = estadoDelAlmacen()
