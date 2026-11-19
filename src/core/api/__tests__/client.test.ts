@@ -185,4 +185,34 @@ describe('plazo por request', () => {
     await jest.advanceTimersByTimeAsync(15_000)
     expect(await enCurso).toMatchObject({ name: 'AbortError' })
   })
+
+  it('la señal del llamador también corta el request (RED-04): no la pisa el plazo propio', async () => {
+    mockFetch.mockImplementationOnce(fetchLento(60_000))
+    const pantalla = new AbortController()
+    const enCurso = fallo(api.get('/api/v1/Lento', { signal: pantalla.signal }))
+    await jest.advanceTimersByTimeAsync(1_000)
+    pantalla.abort()
+    await jest.advanceTimersByTimeAsync(0)
+    expect(await enCurso).toMatchObject({ name: 'AbortError' })
+  })
+
+  it('con la señal del llamador puesta y sin abortarla, el plazo propio sigue cortando a los 15 s', async () => {
+    mockFetch.mockImplementationOnce(fetchLento(60_000))
+    const pantalla = new AbortController()
+    const enCurso = fallo(api.get('/api/v1/Lento', { signal: pantalla.signal }))
+    await jest.advanceTimersByTimeAsync(15_000)
+    expect(await enCurso).toMatchObject({ name: 'AbortError' })
+    expect(pantalla.signal.aborted).toBe(false)
+  })
+
+  it('una señal ya abortada corta el request sin esperar el plazo', async () => {
+    // Like the real fetch: a signal that is already aborted rejects at once.
+    mockFetch.mockImplementationOnce((_u: string, init: RequestInit = {}) =>
+      init.signal?.aborted ? Promise.reject(Object.assign(new Error('Aborted'), { name: 'AbortError' })) : fetchLento(60_000)(_u, init))
+    const pantalla = new AbortController()
+    pantalla.abort()
+    const enCurso = fallo(api.get('/api/v1/Lento', { signal: pantalla.signal }))
+    await jest.advanceTimersByTimeAsync(0)
+    expect(await enCurso).toMatchObject({ name: 'AbortError' })
+  })
 })

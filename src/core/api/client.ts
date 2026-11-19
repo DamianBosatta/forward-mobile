@@ -205,8 +205,20 @@ export function fetchWithTimeout(url: string, options: RequestInit = {}, timeout
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
+  // The caller's signal (a screen leaving) must still cancel the request: it is chained to ours by hand because
+  // `AbortSignal.any` is not available in every Hermes version the app runs on.
+  const delLlamador = options.signal
+  const cancelar = () => controller.abort()
+  if (delLlamador) {
+    if (delLlamador.aborted) controller.abort()
+    else delLlamador.addEventListener('abort', cancelar)
+  }
+
   return fetch(url, { ...options, signal: controller.signal })
-    .finally(() => clearTimeout(timeoutId))
+    .finally(() => {
+      clearTimeout(timeoutId)
+      delLlamador?.removeEventListener('abort', cancelar)
+    })
 }
 
 // ── Sanitización de errores ──────────────────────────────────────────────────
