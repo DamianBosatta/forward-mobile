@@ -111,6 +111,10 @@ function ClientesScreen() {
         </View>
       ) : null}
       <SectionList {...LISTA_LARGA_PROPS}
+        // Sticky headers: with no sections (loading) React Native lets the Android content view clip and turns
+        // clipping off once the cartera arrives; that toggle loses detached children and the next Fabric insert
+        // crashes the app (Sentry FORWARD-MOBILE-Z). This list never clips.
+        removeClippedSubviews={false}
         sections={secciones}
         keyExtractor={item => item.id}
         stickySectionHeadersEnabled

@@ -34,4 +34,23 @@ describe('listas largas', () => {
     const conProps = (fuente.match(/<(FlatList|SectionList)(<[^>]+>)?\s*\{\.\.\.LISTA_LARGA_PROPS\}/g) ?? []).length
     expect(conProps).toBe(abiertas)
   })
+
+  // Sentry FORWARD-MOBILE-Z: on Android, React Native lets a list with sticky headers clip while it has no
+  // header and turns clipping off once one appears; that toggle crashes the Fabric mount. Every sticky list
+  // turns clipping off for good, overriding the `removeClippedSubviews: true` of LISTA_LARGA_PROPS.
+  const encabezadoFijo = /\b(stickySectionHeadersEnabled|stickyHeaderIndices)\b/g
+  const conEncabezadoFijo = todos.filter((p) => (readFileSync(p, 'utf8').match(encabezadoFijo) ?? []).length > 0)
+
+  it('encuentra las listas con encabezados fijos', () => {
+    expect(conEncabezadoFijo.length).toBeGreaterThan(0)
+  })
+
+  it.each(
+    conEncabezadoFijo.map((p) => [p.slice(RAIZ.length + 1).split(sep).join('/'), p]),
+  )('%s no recorta vistas en sus listas con encabezados fijos', (_nombre, p) => {
+    const fuente = readFileSync(p, 'utf8')
+    const fijas = (fuente.match(encabezadoFijo) ?? []).length
+    const sinRecorte = (fuente.match(/removeClippedSubviews=\{false\}/g) ?? []).length
+    expect(sinRecorte).toBeGreaterThanOrEqual(fijas)
+  })
 })
