@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAuthStore, parsePermissionsFromArray } from '../store/auth.store';
 import { configureApiClient, fetchWithTimeout, API_URL } from '@/core/api/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -22,6 +22,12 @@ export function useAuth() {
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState<number | null>(null);
   const lastAttemptRef = useRef<number>(0);
+  // The lockout timer is cleared on unmount and before a new one is set, so no callback runs after teardown.
+  const lockoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (lockoutTimerRef.current) clearTimeout(lockoutTimerRef.current);
+    lockoutTimerRef.current = null;
+  }, []);
 
   const queryClient = useQueryClient();
 
@@ -122,7 +128,9 @@ export function useAuth() {
 
         if (newAttempts >= MAX_ATTEMPTS) {
           setLockedUntil(Date.now() + LOCKOUT_DURATION_MS);
-          setTimeout(() => {
+          if (lockoutTimerRef.current) clearTimeout(lockoutTimerRef.current);
+          lockoutTimerRef.current = setTimeout(() => {
+            lockoutTimerRef.current = null;
             setLockedUntil(null);
             setFailedAttempts(0);
           }, LOCKOUT_DURATION_MS);
