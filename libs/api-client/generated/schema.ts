@@ -19323,7 +19323,80 @@ export interface paths {
                 };
             };
         };
-        put?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EditarTransferenciaStockCommand"];
+                    "text/json": components["schemas"]["EditarTransferenciaStockCommand"];
+                    "application/*+json": components["schemas"]["EditarTransferenciaStockCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
         post?: never;
         delete?: never;
         options?: never;
@@ -19678,6 +19751,95 @@ export interface paths {
                         "text/plain": components["schemas"]["GuidResponse"];
                         "application/json": components["schemas"]["GuidResponse"];
                         "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/transferencias/{id}/correcciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["CorregirTransferenciaStockCommand"];
+                    "text/json": components["schemas"]["CorregirTransferenciaStockCommand"];
+                    "application/*+json": components["schemas"]["CorregirTransferenciaStockCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["GuidResponse"];
+                        "application/json": components["schemas"]["GuidResponse"];
+                        "text/json": components["schemas"]["GuidResponse"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Forbidden */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
                     };
                 };
                 /** @description Not Found */
@@ -22751,6 +22913,12 @@ export interface components {
             version?: number | null;
             motivo?: string | null;
         };
+        CantidadRealTrasladadaInput: {
+            /** Format: uuid */
+            productoId?: string;
+            /** Format: double */
+            cantidadReal?: number;
+        };
         CargarCodigoCotRequest: {
             codigo?: string | null;
         };
@@ -23951,6 +24119,13 @@ export interface components {
             /** Format: double */
             nuevoPorcentaje?: number | null;
         };
+        CorregirTransferenciaStockCommand: {
+            claveIdempotencia?: string | null;
+            /** Format: int32 */
+            version?: number | null;
+            motivo?: string | null;
+            items?: components["schemas"]["CantidadRealTrasladadaInput"][] | null;
+        };
         CotDto: {
             estado: components["schemas"]["EstadoCot"];
             frenaLaSalida: boolean;
@@ -24852,6 +25027,17 @@ export interface components {
             depositoId?: string | null;
             tipoTarea?: components["schemas"]["TipoTarea"];
             asignadosIds?: string[] | null;
+        };
+        EditarTransferenciaStockCommand: {
+            claveIdempotencia?: string | null;
+            /** Format: int32 */
+            version?: number | null;
+            /** Format: uuid */
+            depositoOrigenId?: string;
+            /** Format: uuid */
+            depositoDestinoId?: string;
+            observacion?: string | null;
+            items?: components["schemas"]["LineaTransferenciaInput"][] | null;
         };
         EditarVentaDepositoCommand: {
             /** Format: uuid */
@@ -29379,6 +29565,17 @@ export interface components {
             /** Format: uuid */
             cuentaPropiaId?: string | null;
         };
+        TransferenciaStockCorreccionDto: {
+            /** Format: date-time */
+            fecha: string;
+            usuarioNombre?: string | null;
+            /** Format: uuid */
+            productoId: string;
+            productoNombre: string;
+            /** Format: double */
+            diferencia: number;
+            motivo?: string | null;
+        };
         TransferenciaStockDto: {
             /** Format: uuid */
             id: string;
@@ -29416,6 +29613,7 @@ export interface components {
             cot?: components["schemas"]["CotDto"];
             /** Format: double */
             valorTotal?: number | null;
+            correcciones: components["schemas"]["TransferenciaStockCorreccionDto"][];
         };
         TransferenciaStockDtoResponse: {
             /** Format: int32 */

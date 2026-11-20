@@ -523,6 +523,18 @@ export const CorregirCesionComisionCommandSchema = z.object({
   version: z.number().int().optional(),
 })
 
+export const CantidadRealTrasladadaInputSchema = z.object({
+  cantidadReal: z.number().optional(),
+  productoId: z.string().optional(),
+})
+
+export const CorregirTransferenciaStockCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
+  items: z.array(CantidadRealTrasladadaInputSchema).min(1).nullable().optional(),
+  motivo: z.string().min(1).max(280).nullable().optional(),
+  version: z.number().int().nullable().optional(),
+})
+
 export const FrecuenciaRecurrenciaSchema = z.enum([
   'Mensual',
   'Anual',
@@ -968,6 +980,15 @@ export const EditarEventoCommandSchema = z.object({
   tipo: TipoEventoCalendarioSchema.optional(),
   tipoTarea: TipoTareaSchema.optional(),
   titulo: z.string().min(1).max(150).optional(),
+})
+
+export const EditarTransferenciaStockCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
+  depositoDestinoId: z.string().optional(),
+  depositoOrigenId: z.string().optional(),
+  items: z.array(LineaTransferenciaInputSchema).min(1).nullable().optional(),
+  observacion: z.string().max(280).nullable().optional(),
+  version: z.number().int().nullable().optional(),
 })
 
 export const CambioCantidadDtoSchema = z.object({
