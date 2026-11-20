@@ -4,9 +4,9 @@ import * as SecureStore from 'expo-secure-store';
 /**
  * "Entrar con huella" is opt-in (audit tranche 1, S2, owner's decision "Opt-in, con botón"): after the first
  * password login the app asks; only if the person accepts is the credential saved, behind device authentication
- * (`requireAuthentication`). The login screen shows a button and never prompts on its own. Every logout, manual or
- * forced (session expired), forgets it (M9, SEG-04, owner's decision #23). The decision and the credential belong
- * to one username.
+ * (`requireAuthentication`). The login screen shows a button and never prompts on its own. A manual logout keeps the
+ * credential and the decision (next login offers the button again); only a forced logout (session expired, server
+ * rejected the refresh) forgets them (SEG-04, `cerrarSesion`). The decision and the credential belong to one username.
  */
 const BIOMETRIC_CREDENTIALS_KEY = 'forward_biometric_credentials';
 /** Plain marker (no authentication) so the login screen can show the button without prompting. */
