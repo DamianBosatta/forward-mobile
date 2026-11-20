@@ -24,7 +24,6 @@ export default tseslint.config(
     files: [
       'hooks/useAuthGuard.ts',
       'src/components/layout/CustomDrawerContent.tsx',
-      'src/core/ui/SegmentedControl.tsx',
       'src/core/ui/Skeleton.tsx',
       'src/features/venta-nueva/components/VentaNuevaPantalla.tsx',
       'src/features/venta-nueva/hooks/useAutoguardado.ts',
