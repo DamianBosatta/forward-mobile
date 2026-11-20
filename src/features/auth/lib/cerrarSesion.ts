@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import type { Persister } from '@tanstack/react-query-persist-client'
 import { olvidarFiltros } from '@/core/hooks/useFiltroPersistente'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
+import { useHojaRutaGuardada } from '@/features/logistica/store/hojaRutaGuardada.store'
 import { useAuthStore } from '../store/auth.store'
 import { useOfertaDeHuella } from '../store/ofertaDeHuella.store'
 import { forgetBiometricLogin } from '../utils/biometrics'
@@ -52,6 +53,7 @@ async function borrarDatosDeLaSesion({ forzado }: OpcionesDeCierre): Promise<voi
   }
   useLogisticaStore.getState().reset()
   await useLogisticaStore.persist.clearStorage()
+  await useHojaRutaGuardada.persist.clearStorage()
   olvidarFiltros()
   useOfertaDeHuella.getState().descartar()
   if (forzado) await forgetBiometricLogin()

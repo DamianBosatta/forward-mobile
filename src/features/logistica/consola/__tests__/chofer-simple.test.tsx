@@ -116,7 +116,7 @@ const deshabilitado =(el: { props: { accessibilityState?: { disabled?: boolean }
 
 beforeEach(() => {
   jest.clearAllMocks()
-  useLogisticaStore.setState({ activeTrip: null })
+  useLogisticaStore.getState().reset()
   conTema('light')
   reiniciarCamara()
   MEDIOS = MEDIOS_BASE

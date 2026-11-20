@@ -97,7 +97,7 @@ async function cerrarListo() {
 
 beforeEach(() => {
   jest.clearAllMocks()
-  useLogisticaStore.setState({ activeTrip: null })
+  useLogisticaStore.getState().reset()
   conTema('light')
   reiniciarCamara()
   for (const a of leerCola('u1')) quitarDeCola('u1', a.clave)

@@ -18,6 +18,7 @@ import { esEstadoHojaRuta } from '@/core/constants/estados'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { esChofer } from '@/src/components/layout/menuModules'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
+import { useHojaRutaGuardada } from '@/features/logistica/store/hojaRutaGuardada.store'
 import { RouteSelector } from '@/features/logistica/components/RouteSelector'
 import { HojaDeRutaVista } from '@/features/logistica/consola/HojaDeRutaVista'
 import { paradasCobroDe } from '@/features/cobros/paradaCobro'
@@ -66,7 +67,9 @@ export default function ConsolaChoferScreen() {
   const puedeVerViajes = canDo('MOD_VIAJES', 'read') || hasCapability('CAP_ARMAR_VIAJES')
   // El inicio del chofer es esta misma pantalla; el resto vuelve a los pedidos de logística.
   const volverA = esChofer(canDo) ? '/(tabs)' : '/(tabs)/logistica/picking'
-  const { activeTrip, setActiveTrip, clearActiveTrip, updateStopStatus } = useLogisticaStore()
+  const { activeTripId, setActiveTripId, clearActiveTrip } = useLogisticaStore()
+  // The open trip kept on the phone (its own persistence): it serves offline after any restart or OTA.
+  const { hoja: activeTrip, guardar: guardarHoja, updateStopStatus } = useHojaRutaGuardada()
   const [rutaElegida, setRutaElegida] = useState<string | null>(null)
   // La hoja que el chofer acaba de dejar con "Cambiar de ruta": la lista vieja no la vuelve a elegir sola.
   const [descartada, setDescartada] = useState<string | null>(null)
@@ -93,15 +96,15 @@ export default function ConsolaChoferScreen() {
 
   // Sin id de navegación, un viaje cerrado que quedó guardado no secuestra la consola.
   useEffect(() => {
-    const guardado = useLogisticaStore.getState().activeTrip
+    const guardado = useHojaRutaGuardada.getState().hoja
     const cerrado = esEstadoHojaRuta(guardado?.estado, 'Finalizada', 'Cancelada')
     if (!id && cerrado) clearActiveTrip()
   }, [id, clearActiveTrip])
 
-  const objetivo = id || activeTrip?.id || rutaElegida || ''
+  const objetivo = id || activeTripId || rutaElegida || ''
   // El servidor devuelve todo el historial del chofer: se piden solo las de hoy (día argentino) y sin las canceladas.
   const hoy = diaArgentina(useAhoraArgentina())
-  const buscar = puedeVerViajes && !id && !activeTrip?.id && !!user?.id
+  const buscar = puedeVerViajes && !id && !activeTripId && !!user?.id
   const rutas = useHojasDeRuta({ choferId: user?.id, fecha: hoy }, { enabled: buscar })
   // Un viaje en curso que salió otro día (pasada la medianoche, sin cerrar) sigue siendo del chofer: se pide aparte, sin fecha.
   const enCurso = useHojasDeRuta({ choferId: user?.id, estado: EstadoHojaRuta.EnCurso }, { enabled: buscar })
@@ -114,17 +117,19 @@ export default function ConsolaChoferScreen() {
     })
   }, [rutas.data, enCurso.data])
   useEffect(() => {
-    if (id || activeTrip?.id) return
+    if (id || activeTripId) return
     // Un viaje en curso manda: hay que cerrarlo antes de arrancar otro.
     const abiertas = rutasDeHoy.filter((r) => esEstadoHojaRuta(r.estado, 'EnCurso'))
     const unica = abiertas.length === 1 ? abiertas[0] : rutasDeHoy.length === 1 ? rutasDeHoy[0] : null
     if (unica && unica.id !== descartada) setRutaElegida(unica.id ?? null)
-  }, [rutasDeHoy, id, activeTrip?.id, descartada])
+  }, [rutasDeHoy, id, activeTripId, descartada])
 
   const remota = useHojaRuta(puedeVerViajes ? objetivo : '')
   useEffect(() => {
-    if (remota.data) setActiveTrip(remota.data)
-  }, [remota.data, setActiveTrip])
+    if (!remota.data) return
+    guardarHoja(remota.data)
+    setActiveTripId(remota.data.id ?? null)
+  }, [remota.data, guardarHoja, setActiveTripId])
 
   const cola = useColaConsola()
   const reportar = useReportarParada()
@@ -169,7 +174,7 @@ export default function ConsolaChoferScreen() {
     )
   }
 
-  if (!id && !activeTrip?.id && !rutaElegida && rutasDeHoy.length > 1) {
+  if (!id && !activeTripId && !rutaElegida && rutasDeHoy.length > 1) {
     return (
       <RequirePermission module="MOD_VIAJES" action="read" mode="screen">
         <View style={{ flex: 1, backgroundColor: c.bg }}>

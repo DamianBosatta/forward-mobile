@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
+import { useHojaRutaGuardada } from '@/features/logistica/store/hojaRutaGuardada.store'
 import { themeColors } from '@/libs/theme'
 import { conTema, estilo } from '@/core/ui/fw/__testing__/tema'
 import ConsolaChoferScreen from '../../../../app/(tabs)/logistica/consola'
@@ -74,7 +75,7 @@ function pintar(hoja: unknown = HOJA, choferId = 'u1', permissions: unknown[] = 
 
 beforeEach(() => {
   jest.clearAllMocks()
-  useLogisticaStore.setState({ activeTrip: null })
+  useLogisticaStore.getState().reset()
   reiniciarCamara()
   listaServidor = () => [{ id: 'h1' }]
   conTema('light')
@@ -159,7 +160,7 @@ describe('Consola del chofer: hoja de ruta', () => {
     expect(await screen.findByLabelText('Iniciar recorrido')).toBeTruthy()
     expect(screen.queryByLabelText('¡Llegué!')).toBeNull()
     screen.unmount()
-    useLogisticaStore.setState({ activeTrip: null })
+    useLogisticaStore.getState().reset()
     pintar(HOJA, 'otro')
     expect(await screen.findByText(/es de otro chofer/)).toBeTruthy()
     expect(screen.queryByLabelText('¡Llegué!')).toBeNull()
@@ -167,7 +168,8 @@ describe('Consola del chofer: hoja de ruta', () => {
 
   it('si la oficina cancela la hoja que el chofer tenía abierta, lo dice y no ofrece reportar ni iniciar', async () => {
     // El chofer la tenía guardada sin salir; desde #860 la oficina puede cancelarla mientras está Programada.
-    useLogisticaStore.setState({ activeTrip: { ...HOJA, estado: 1 } as never })
+    useHojaRutaGuardada.getState().guardar({ ...HOJA, estado: 1 } as never)
+    useLogisticaStore.getState().setActiveTripId('h1')
     pintar({ ...HOJA, estado: 4 })
     expect(await screen.findByText(/cancelada/i)).toBeTruthy()
     expect(screen.queryByLabelText('¡Llegué!')).toBeNull()
