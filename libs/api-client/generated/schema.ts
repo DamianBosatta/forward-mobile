@@ -23713,6 +23713,7 @@ export interface components {
             facturaProveedor?: string | null;
             /** Format: double */
             aPagar?: number | null;
+            estadoPago?: string | null;
         };
         CompraDtoListPaginatedResponse: {
             /** Format: int32 */
