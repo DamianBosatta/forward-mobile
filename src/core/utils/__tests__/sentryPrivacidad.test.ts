@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/react-native'
-import { limpiarEvento, limpiarMigaDePan, vincularUsuarioASentry } from '../sentryPrivacidad'
+import { limpiarEvento, limpiarMigaDePan, limpiarTransaccion, vincularUsuarioASentry } from '../sentryPrivacidad'
 
 jest.mock('@sentry/react-native', () => ({ setUser: jest.fn() }))
 
@@ -30,6 +30,24 @@ describe('limpiarEvento (SEG-06)', () => {
     expect(e.request).toEqual({ url: 'https://api/x?<redacted>' })
     expect(e.exception?.values?.[0].value).toBe('fallo en /Clientes?<redacted>')
     expect(e.breadcrumbs?.[0].data?.url).toBe('/a?<redacted>')
+  })
+})
+
+describe('limpiarTransaccion (MS-R5-01)', () => {
+  it('saca la query de la URL de cada span, de su descripción y de la transacción', () => {
+    const t = limpiarTransaccion({
+      type: 'transaction',
+      transaction: 'GET /Productos?searchTerm=abc',
+      spans: [{
+        description: 'GET https://api/x/Productos?searchTerm=abc',
+        data: { url: 'https://api/x/Productos?searchTerm=abc', 'http.url': 'https://api/x/Productos?searchTerm=abc', 'http.query': '?searchTerm=abc', 'http.method': 'GET' },
+      }],
+    } as never)
+    expect(t.transaction).toBe('GET /Productos?<redacted>')
+    const span = t.spans![0]!
+    expect(span.description).toBe('GET https://api/x/Productos?<redacted>')
+    expect(span.data).toEqual({ url: 'https://api/x/Productos?<redacted>', 'http.url': 'https://api/x/Productos?<redacted>', 'http.method': 'GET' })
+    expect(JSON.stringify(t)).not.toContain('searchTerm=abc')
   })
 })
 
