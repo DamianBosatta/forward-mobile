@@ -46,12 +46,20 @@ beforeEach(() => {
 describe.each([
   { nombre: 'Clientes', Pantalla: ClientesScreen, buscador: 'Buscar cliente', vacio: 'Todavía no hay clientes en tu cartera.', sinBusqueda: 'Ningún cliente coincide con la búsqueda.', falla: 'No pudimos cargar los clientes', fila: 'Av. del Valle 89' },
   { nombre: 'Proveedores', Pantalla: ProveedoresScreen, buscador: 'Buscar proveedor', vacio: 'Todavía no hay proveedores cargados.', sinBusqueda: 'Ningún proveedor coincide con la búsqueda.', falla: 'No pudimos cargar los proveedores', fila: 'Insumos del Sur SA', item: { razonSocial: 'Insumos del Sur SA', direccion: '' } },
-  { nombre: 'Cuentas corrientes', Pantalla: CuentasScreen, buscador: 'Buscar cliente', vacio: 'Todavía no hay clientes en tu cartera.', sinBusqueda: 'Ningún cliente coincide con la búsqueda.', falla: 'No pudimos cargar los clientes', fila: 'Av. del Valle 89' },
+  { nombre: 'Cuentas corrientes', Pantalla: CuentasScreen, buscador: 'Buscar cliente', vacio: 'Ningún cliente te debe.', sinBusqueda: 'Ningún cliente coincide con la búsqueda.', falla: 'No pudimos cargar los clientes', fila: 'Av. del Valle 89' },
 ])('$nombre', ({ nombre, Pantalla, buscador, vacio, sinBusqueda, falla, fila, item }) => {
   it('lista vacía sin búsqueda: estado "vacío" con la frase de siempre', async () => {
     pintar(<Pantalla />)
 
     expect(await screen.findByRole('header', { name: vacio })).toBeTruthy()
+  })
+
+  it('mientras carga: esqueleto de EstadoDeConsulta, sin el vacío', async () => {
+    get.mockImplementation(() => new Promise(() => {}))
+    pintar(<Pantalla />)
+
+    expect((await screen.findAllByRole('progressbar', { name: 'Cargando' })).length).toBeGreaterThan(0)
+    expect(screen.queryByRole('header', { name: vacio })).toBeNull()
   })
 
   it('vacía por la búsqueda: la frase de la búsqueda, sin acción', async () => {

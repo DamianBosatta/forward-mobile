@@ -98,6 +98,21 @@ describe('Catálogo', () => {
     pintar(CatalogoScreen)
     expect(await screen.findByText('No se pudo cargar el catálogo. Revisá la conexión y volvé a intentar.')).toBeTruthy()
   })
+
+  it('mientras carga: esqueleto de EstadoDeConsulta', async () => {
+    catalogo = () => new Promise(() => {})
+    pintar(CatalogoScreen)
+    expect(await screen.findByRole('progressbar', { name: 'Cargando' })).toBeTruthy()
+  })
+
+  it('otro error sin datos: Reintentar vuelve a pedir el catálogo', async () => {
+    catalogo = () => Promise.reject(new Error('boom'))
+    pintar(CatalogoScreen)
+    await screen.findByRole('header', { name: 'No pudimos cargar el catálogo' })
+    catalogo = () => Promise.resolve(pagina([fichaDeCatalogo(PRODUCTO)]))
+    await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByText('Make Lavajean')).toBeTruthy()
+  })
 })
 
 describe('Stock con cantidades', () => {

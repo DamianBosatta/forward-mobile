@@ -102,4 +102,17 @@ describe('mutaciones en el teléfono', () => {
     expect(qc.getMutationCache().getAll().filter((m) => m.state.isPaused)).toHaveLength(2)
     expect(dehydrate(qc, opcionesDePersistencia).mutations).toHaveLength(0)
   })
+
+  it('RED-02: todas las mutaciones comparten networkMode "online": sin red quedan en pausa y salen cuando vuelve', async () => {
+    const qc = crearQueryClient()
+    expect(qc.getDefaultOptions().mutations?.networkMode).toBe('online')
+    const fn = jest.fn(async () => 'ok')
+    onlineManager.setOnline(false)
+    void new MutationObserver(qc, { mutationFn: fn }).mutate()
+    await act(async () => {})
+    expect(fn).not.toHaveBeenCalled()
+    expect(qc.getMutationCache().getAll().filter((m) => m.state.isPaused)).toHaveLength(1)
+    await act(async () => { onlineManager.setOnline(true); await qc.resumePausedMutations() })
+    expect(fn).toHaveBeenCalledTimes(1)
+  })
 })

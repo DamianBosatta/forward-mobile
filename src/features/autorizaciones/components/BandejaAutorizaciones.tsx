@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
-import { FlatList, Pressable, ScrollView, Text, View } from 'react-native'
+import { FlatList, Pressable, ScrollView, Text, View, type StyleProp, type TextStyle } from 'react-native'
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { useRouter } from 'expo-router'
 import { Button, FiltroChip, Notice, StatusChip, TopBar, TotalsRow, TwoPane, formatImporte, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
@@ -62,6 +62,50 @@ interface Props {
   /** Ruta del detalle en teléfono. */
   rutaDetalle: (id: string) => string
 }
+
+interface TarjetaProps {
+  v: VentaPendienteAutorizacion
+  c: ReturnType<typeof useColors>
+  secundario: StyleProp<TextStyle>
+  abrir: (id: string) => void
+  puedeDecidir: boolean
+  onDecidir: (v: VentaPendienteAutorizacion, decision: Decision) => void
+}
+
+/** Tarjeta de una venta por autorizar. Memoizada: la lista no la vuelve a pintar si no cambió su venta. */
+const TarjetaAutorizacion = React.memo(function TarjetaAutorizacion({ v, c, secundario, abrir, puedeDecidir, onDecidir }: TarjetaProps) {
+  const conRazon = pideRazon(v.motivoPendienteAutorizacion)
+  const cliente = clienteDeBandeja(v)
+    return (
+      <View style={{ marginBottom: space[3], padding: space[4], gap: space[2], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Ver la venta de ${v.clienteDisplayName}`} onPress={() => abrir(v.id)} style={{ gap: space[1], minHeight: 44 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
+            <Text numberOfLines={1} style={[secundario, { flexShrink: 1 }]}>{v.codigoPedido ? `${v.codigoPedido} · ${v.vendedorNombre}` : v.vendedorNombre}</Text>
+            <Text style={secundario}>{formatRelativeTime(v.fechaPendiente)}</Text>
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
+            <Text numberOfLines={2} style={[typeScale.cuerpoDestacado, { color: c.text, flex: 1 }]}>{cliente.titulo}</Text>
+          </View>
+          {cliente.nombre ? <Text numberOfLines={1} style={[typeScale.secundario, { color: c.text }]}>{cliente.nombre}</Text> : null}
+          {/* Pastillas cortas con texto (la lámina); la frase de cada motivo está en el detalle. */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+            {motivosDe(v.motivoPendienteAutorizacion).map((m) => <StatusChip key={m.clave} estado="porAutorizar" label={m.filtro} />)}
+          </View>
+          <TotalsRow label="Total" importe={v.totalAmount} />
+        </Pressable>
+        {puedeDecidir ? (
+        <View style={{ flexDirection: 'row', gap: space[3] }}>
+          <View style={{ flex: 1 }}><Button label="Rechazar" variant="secundario" accessibilityLabel={`Rechazar la venta de ${v.clienteDisplayName}`} onPress={() => { onDecidir(v, 'rechazar') }} /></View>
+          <View style={{ flex: 1 }}>
+            {conRazon
+              ? <Button label="Revisar" accessibilityLabel={`Revisar la venta de ${v.clienteDisplayName}`} onPress={() => abrir(v.id)} />
+              : <Button label="Autorizar" accessibilityLabel={`Autorizar la venta de ${v.clienteDisplayName}`} onPress={() => { onDecidir(v, 'autorizar') }} />}
+          </View>
+        </View>
+        ) : null}
+      </View>
+    )
+})
 
 /** Bandeja de autorizaciones (láminas Autorizaciones y TabAutorizaciones; propuesta "Finanzas como venta", frames 16 a 18). */
 export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
@@ -126,41 +170,15 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
     </View>
   )
 
-  const tarjeta = useCallback((v: VentaPendienteAutorizacion) => {
-    const conRazon = pideRazon(v.motivoPendienteAutorizacion)
-    const cliente = clienteDeBandeja(v)
-    return (
-      <View style={{ marginBottom: space[3], padding: space[4], gap: space[2], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
-        <Pressable accessibilityRole="button" accessibilityLabel={`Ver la venta de ${v.clienteDisplayName}`} onPress={() => abrir(v.id)} style={{ gap: space[1], minHeight: 44 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
-            <Text numberOfLines={1} style={[secundario, { flexShrink: 1 }]}>{v.codigoPedido ? `${v.codigoPedido} · ${v.vendedorNombre}` : v.vendedorNombre}</Text>
-            <Text style={secundario}>{formatRelativeTime(v.fechaPendiente)}</Text>
-          </View>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
-            <Text numberOfLines={2} style={[typeScale.cuerpoDestacado, { color: c.text, flex: 1 }]}>{cliente.titulo}</Text>
-          </View>
-          {cliente.nombre ? <Text numberOfLines={1} style={[typeScale.secundario, { color: c.text }]}>{cliente.nombre}</Text> : null}
-          {/* Pastillas cortas con texto (la lámina); la frase de cada motivo está en el detalle. */}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
-            {motivosDe(v.motivoPendienteAutorizacion).map((m) => <StatusChip key={m.clave} estado="porAutorizar" label={m.filtro} />)}
-          </View>
-          <TotalsRow label="Total" importe={v.totalAmount} />
-        </Pressable>
-        {puedeDecidir ? (
-        <View style={{ flexDirection: 'row', gap: space[3] }}>
-          <View style={{ flex: 1 }}><Button label="Rechazar" variant="secundario" accessibilityLabel={`Rechazar la venta de ${v.clienteDisplayName}`} onPress={() => { setAviso(null); setDecidiendo({ venta: v, decision: 'rechazar' }) }} /></View>
-          <View style={{ flex: 1 }}>
-            {conRazon
-              ? <Button label="Revisar" accessibilityLabel={`Revisar la venta de ${v.clienteDisplayName}`} onPress={() => abrir(v.id)} />
-              : <Button label="Autorizar" accessibilityLabel={`Autorizar la venta de ${v.clienteDisplayName}`} onPress={() => { setAviso(null); setDecidiendo({ venta: v, decision: 'autorizar' }) }} />}
-          </View>
-        </View>
-        ) : null}
-      </View>
-    )
-  }, [c, secundario, abrir, puedeDecidir])
+  const onDecidir = useCallback((venta: VentaPendienteAutorizacion, decision: Decision) => {
+    setAviso(null)
+    setDecidiendo({ venta, decision })
+  }, [])
 
-  const renderItem = useCallback(({ item }: { item: VentaPendienteAutorizacion }) => tarjeta(item), [tarjeta])
+  const renderItem = useCallback(({ item }: { item: VentaPendienteAutorizacion }) => (
+    <TarjetaAutorizacion v={item} c={c} secundario={secundario} abrir={abrir} puedeDecidir={puedeDecidir} onDecidir={onDecidir} />
+  ), [c, secundario, abrir, puedeDecidir, onDecidir])
+
 
   const cuerpo = !puede ? (
     <View style={{ padding: space[4] }}><Notice tone="info">Autorizar ventas necesita el permiso de autorizar ventas. Pedíselo a un administrador.</Notice></View>

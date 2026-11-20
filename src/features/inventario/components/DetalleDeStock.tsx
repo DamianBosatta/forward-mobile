@@ -23,7 +23,7 @@ function Dato({ label, valor, ultimo }: { label: string; valor: string; ultimo?:
     <View
       accessible
       accessibilityLabel={`${label}: ${valor}`}
-      style={{ minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3], borderBottomWidth: ultimo ? 0 : 1, borderBottomColor: c.border }}
+      style={{ minHeight: space[12], flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3], borderBottomWidth: ultimo ? 0 : 1, borderBottomColor: c.border }}
     >
       <Text style={[typeScale.secundario, { color: c.textSecondary, flexShrink: 1 }]}>{label}</Text>
       <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{valor}</Text>

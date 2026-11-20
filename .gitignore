@@ -18,3 +18,5 @@ android.bak/
 # Reportes de tests y basura local
 junit.xml
 tsc_errors.txt
+
+/ios/

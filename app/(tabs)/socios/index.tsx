@@ -8,7 +8,7 @@ import { DrawerActions } from "expo-router/react-navigation"
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Fab, Notice, TopBar, formatImporte, useInsetInferior } from '@/core/ui/fw'
-import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useCartera } from '@/features/clientes/hooks/useCartera'
@@ -20,7 +20,7 @@ import { seccionesPorLetra } from '@/features/clientes/lib/secciones'
 import { DeudoresClientes } from '@/features/deudores/components/DeudoresClientes'
 import { usePuedeVerDeudores } from '@/features/deudores/lib/permiso'
 import { FichaCliente } from '@/features/clientes/components/FichaCliente'
-import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
+import { EstadoDeConsulta, FILAS_CARGANDO } from '@/core/ui/estados'
 import { ConAccesosRapidos } from '@/src/components/layout/AccesosRapidos'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useRefrescarAlEnfocar } from '@/core/hooks/useRefrescarAlEnfocar'
@@ -126,26 +126,22 @@ function ClientesScreen() {
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch() }} tintColor={c.brandInk} />}
         ListEmptyComponent={
-          isLoading ? (
-            <View style={{ paddingHorizontal: space[4] }}>
-              <Esqueletos bloques={FILAS_CARGANDO} />
-            </View>
-          ) : error ? (
-            sinRed ? (
-              <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los clientes" accion={{ label: 'Reintentar', onPress: () => void refetch() }} />
-            ) : undefined
-          ) : (
-            <EstadoDePantalla
-              tipo="vacio"
-              titulo={
-                busqueda.trim()
-                  ? 'Ningún cliente coincide con la búsqueda.'
-                  : filtrando
-                    ? 'Ningún cliente coincide con los filtros.'
-                    : 'Todavía no hay clientes en tu cartera.'
-              }
-            />
-          )
+          // Con error del servidor la lista queda sin nada y el aviso va arriba; sin red, la pantalla entera.
+          <EstadoDeConsulta
+            cargando={isLoading}
+            esqueleto={FILAS_CARGANDO}
+            error={error && sinRed ? error : undefined}
+            tituloError="No pudimos cargar los clientes"
+            onReintentar={() => void refetch()}
+            vacio={!error}
+            tituloVacio={
+              busqueda.trim()
+                ? 'Ningún cliente coincide con la búsqueda.'
+                : filtrando
+                  ? 'Ningún cliente coincide con los filtros.'
+                  : 'Todavía no hay clientes en tu cartera.'
+            }
+          />
         }
       />
       {canCreate('MOD_CLIENTES') ? (

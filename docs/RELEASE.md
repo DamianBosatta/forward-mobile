@@ -66,7 +66,7 @@ Para que no pase en silencio, el job `publish-update` del CI compara, después d
 | `preview` | perfil `preview` de `eas.json` | producción |
 | `production` | perfil `production` de `eas.json` | producción |
 
-Los dos canales apuntan a la API de producción (no hay entorno de staging). El perfil `development` no tiene canal.
+Los dos canales apuntan a la API de producción (no hay entorno de staging). El perfil `development` no tiene canal. El perfil `development` apunta a la API local (`http://10.0.2.2:5000`, OPS-09): nunca a producción.
 
 ### Publicación automática en cada merge a `main`
 
@@ -195,7 +195,7 @@ Se borraron `docker_build.sh` (corría `npm install --legacy-peer-deps`, `expo p
 
 La app tiene dos números:
 
-- **Versión** (`version` en `app.config.ts`, hoy `1.0.0`): la que ve la gente. Se sube a mano en cada release, en un commit propio, antes del build: `1.0.1` para correcciones, `1.1.0` para funciones nuevas.
+- **Versión** (campo `version` de `package.json`, hoy `1.0.0`): la que ve la gente. `app.config.ts` la lee de ahí, así que hay un solo lugar donde cambiarla (OPS-07). Esquema: versión semántica estricta, sin ceros a la izquierda. Se sube en cada release, en un commit propio, antes del build: `npm version 1.0.1 --no-git-tag-version` (cambia `package.json` y `package-lock.json`). `1.0.1` para correcciones, `1.1.0` para funciones nuevas.
 - **Build** (`versionCode` de Android): lo pone EAS. `eas.json` usa `cli.appVersionSource: "remote"` y `autoIncrement: true` en los perfiles `preview` y `production`, así que cada build suma uno al número guardado en EAS. No se edita a mano ni vive en el repositorio.
 
 Cambiar la versión en `app.config.ts` cambia la huella de runtime: los builds anteriores dejan de recibir las actualizaciones que se publiquen después, y hace falta un build nuevo.
@@ -205,7 +205,9 @@ Cambiar la versión en `app.config.ts` cambia la huella de runtime: los builds a
 La app pregunta al servidor, antes del login y al volver a primer plano, cuál es la versión mínima que soporta (`GET` anónimo de `AppMovil`, `data.versionMinima`). Si la instalada es menor, muestra la pantalla "Actualización requerida" y no deja pasar.
 
 - **Dónde se fija**: en el servidor, sección `AppMovil`, clave `VersionMinima` (en el contenedor, la variable de entorno `AppMovil__VersionMinima`). Debe ser versión semántica estricta (`1.4.0`, sin ceros a la izquierda). **Está vacía por defecto en producción: sin bloqueo.** Un valor inválido el servidor lo trata como vacío.
-- **Contra qué compara**: la `version` de `app.config.ts` (la que se ve en "Mi cuenta"), no el build ni la huella de runtime. Mientras `version` siga en `1.0.0` no hay forma de distinguir un APK de otro, así que subir la mínima por encima de `1.0.0` bloquea a todos. Antes de usar el bloqueo hay que subir `version` en un release (ver "Versión") y repartir ese APK.
+- **Contra qué compara**: la `version` de la app, o sea la de `package.json` (la que se ve en "Mi cuenta"), no el build ni la huella de runtime. Mientras `version` siga en `1.0.0` no hay forma de distinguir un APK de otro, así que subir la mínima por encima de `1.0.0` bloquea a todos. Antes de usar el bloqueo hay que subir `version` en un release (ver "Versión") y repartir ese APK.
+
+  Pasos para activar el bloqueo: (1) subir `version` en `package.json` y construir el APK nuevo (ver "Versión"); (2) repartirlo y esperar a que los teléfonos lo instalen; (3) recién entonces el dueño define `AppMovil__VersionMinima` en el servidor con esa versión (por ejemplo `1.1.0`) y reinicia el contenedor. Para levantar el bloqueo, vaciar la variable. Este repositorio nunca fija ese valor.
 - **Cuándo usarlo**: solo cuando el servidor deja de soportar una versión (un contrato que cambió sin compatibilidad hacia atrás). Una actualización OTA corrige el JavaScript pero no el APK: si el cambio exige un APK nuevo (huella distinta), publicar el APK, esperar a que se reparta y recién después subir la mínima.
 - **Falla abierta**: sin respuesta (sin red, 404 de un servidor viejo, plazo de 4 s vencido, valor inválido) la app sigue. El chofer sin señal nunca queda bloqueado por esto.
 

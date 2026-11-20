@@ -25,11 +25,8 @@ export function nombreDelCliente(c: ClienteNombrable): string {
   return [contacto, local].filter((p, i, todos) => p && todos.indexOf(p) === i).join(' · ')
 }
 
-/** Dos letras para el avatar, de la dirección: "Av. del Valle 89" → "AV", "Brandsen 3314" → "B3". */
-export function inicialesDeDireccion(direccion: string): string {
-  const palabras = direccion.split(/\s+/).filter(Boolean)
-  return palabras.slice(0, 2).map(p => p[0]).join('').toUpperCase()
-}
+/** Dos letras para el avatar, de la dirección (una sola regla: `iniciales` de core/utils/texto). */
+export { iniciales as inicialesDeDireccion } from '@/core/utils/texto'
 
 export type TipoCondicionPago = 'Contado' | 'DiasDesdeEntrega' | 'DiasDesdeFactura' | 'DiaFijoDelMes'
 export const CONDICIONES_IVA = ['Responsable Inscripto', 'Monotributista', 'Exento', 'Consumidor Final']

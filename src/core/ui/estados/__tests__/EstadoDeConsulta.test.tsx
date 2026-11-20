@@ -32,6 +32,14 @@ describe.each(['light', 'dark'] as const)('EstadoDeConsulta (%s)', (modo) => {
     expect(reintentar).toHaveBeenCalledTimes(1)
   })
 
+  it('sinConexion sin error (consulta en pausa): "sin conexión" con Reintentar', async () => {
+    const reintentar = jest.fn()
+    render(<EstadoDeConsulta {...base} cargando={false} sinConexion onReintentar={reintentar}>{datos}</EstadoDeConsulta>)
+    expect(screen.getByText(/no hay señal/)).toBeTruthy()
+    await userEvent.press(screen.getByRole('button', { name: 'Reintentar' }))
+    expect(reintentar).toHaveBeenCalledTimes(1)
+  })
+
   it('otro error: estado "error" con Reintentar, sin hablar de señal', async () => {
     const reintentar = jest.fn()
     render(<EstadoDeConsulta {...base} cargando={false} error={new Error('boom')} onReintentar={reintentar}>{datos}</EstadoDeConsulta>)

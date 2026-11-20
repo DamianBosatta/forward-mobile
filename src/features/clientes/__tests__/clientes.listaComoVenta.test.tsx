@@ -31,7 +31,7 @@ it('cada fila lleva las iniciales de la dirección en lugar del radio de la vent
   renderConQuery(<ClientesScreen />)
 
   const fila = await screen.findByRole('button', { name: /Av\. del Valle 89/ })
-  expect(within(fila).getByText('AD')).toBeTruthy()
+  expect(within(fila).getByText('DV')).toBeTruthy()
 })
 
 it('las filas de cada letra van dentro de una tarjeta', async () => {
@@ -95,6 +95,6 @@ it('mientras carga se ven esqueletos de fila, no la ruedita', async () => {
 it('sin variante, ClienteCard sigue siendo la fila plana de siempre (lista "Me deben" y cobros)', () => {
   renderConQuery(<ClienteCard cliente={clienteDeLista()} onPress={jest.fn()} />)
 
-  expect(screen.queryByText('AD')).toBeNull()
+  expect(screen.queryByText('DV')).toBeNull()
   expect(estilo(screen.getByRole('button', { name: /Av\. del Valle 89/ })).borderRadius).toBeUndefined()
 })

@@ -65,7 +65,7 @@ describe('Me deben (frames 1 y 2)', () => {
     renderConQuery(<CuentasCorrientesScreen />)
 
     const fila = await screen.findByRole('button', { name: /^Av\. del Valle 89, Chela · Kiosco Chela/ }, ESPERA)
-    expect(within(fila).getByText('AD')).toBeTruthy()
+    expect(within(fila).getByText('DV')).toBeTruthy()
     expect(within(fila).getByText($(186420))).toBeTruthy()
     expect(within(fila).getByTestId('fila-chevron')).toBeTruthy()
   })
