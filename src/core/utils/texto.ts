@@ -23,15 +23,15 @@ export function coincidePalabras(campos: ReadonlyArray<string | null | undefined
   return palabras.every((p) => normalizados.some((c) => c.includes(p)))
 }
 
-const PREFIJOS_DE_CALLE = /^(calle|av\.?|avenida|pasaje|pje\.?|ruta|bv\.?|boulevard|diagonal)$/i
+const PREFIJOS_DE_CALLE = /^(calle|av\.?|avda\.?|avenida|pasaje|pje\.?|psje\.?|ruta|rta\.?|bv\.?|bvd\.?|boulevard|bulevar|diagonal|diag\.?|camino|cno\.?)$/i
 
 /**
  * Dos letras para un avatar, de una dirección o un nombre: "Brandsen 3314" → "B3", "Juan Pérez" → "JP".
- * Salta el prefijo de calle (Calle, Av., Avenida, Pasaje, Pje., Ruta, Bv., Boulevard, Diagonal): "Calle 1 234" → "12".
+ * Salta el prefijo de calle (Calle, Av., Avenida, Pasaje, Avda., Pje., Ruta, Bv., Boulevard, Diagonal, Diag., Camino): "Calle 1 234" → "12".
  * Es la única regla de iniciales de la app (X1).
  */
 export function iniciales(texto: string): string {
   const palabras = texto.split(/\s+/).filter(Boolean)
-  const sinPrefijo = palabras.length > 1 && PREFIJOS_DE_CALLE.test(palabras[0]!) ? palabras.slice(1) : palabras
+  const sinPrefijo = palabras.length > 1 && PREFIJOS_DE_CALLE.test(sinAcentos(palabras[0]!)) ? palabras.slice(1) : palabras
   return sinPrefijo.slice(0, 2).map((p) => p[0]!).join('').toUpperCase()
 }

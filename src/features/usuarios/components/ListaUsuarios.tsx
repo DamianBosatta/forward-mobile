@@ -12,6 +12,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { iniciales } from '@/core/utils/texto'
 
 const POR_PAGINA = 50
 
@@ -84,7 +85,7 @@ function Contenido() {
 function FilaUsuario({ u, esYo, conDivisor }: { u: UserListDto; esYo: boolean; conDivisor: boolean }) {
   const c = useColors()
   const nombre = nombreDe(u)
-  const iniciales = `${u.nombre?.[0] ?? nombre[0] ?? ''}${u.apellido?.[0] ?? ''}`.toUpperCase()
+  const letras = iniciales([u.nombre, u.apellido].filter(Boolean).join(' ') || nombre)
   const activo = u.estaActivo !== false
   return (
     <View
@@ -94,7 +95,7 @@ function FilaUsuario({ u, esYo, conDivisor }: { u: UserListDto; esYo: boolean; c
       ]}
     >
       <View style={{ width: 44, height: 44, borderRadius: radii.pastilla, backgroundColor: c.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={[typeScale.cuerpoDestacado, { color: c.brandInk }]}>{iniciales}</Text>
+        <Text style={[typeScale.cuerpoDestacado, { color: c.brandInk }]}>{letras}</Text>
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text numberOfLines={1} style={[typeScale.cuerpoDestacado, { color: c.text }]}>{esYo ? `${nombre} · vos` : nombre}</Text>

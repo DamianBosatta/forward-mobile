@@ -8,8 +8,14 @@ describe('iniciales (avatar)', () => {
     expect(iniciales('Calle 1 234')).toBe('12')
   })
 
-  it.each(['Calle', 'Av.', 'Av', 'AVENIDA', 'Pasaje', 'Pje.', 'pje', 'Ruta', 'Bv.', 'Boulevard', 'Diagonal'])('salta el prefijo %s', (prefijo) => {
+  it.each(['Calle', 'Av.', 'Av', 'AVENIDA', 'Pasaje', 'Pje.', 'pje', 'Ruta', 'Bv.', 'Boulevard', 'Diagonal', 'Avda.', 'Diag.', 'Camino', 'Bulevar', 'Psje.'])('salta el prefijo %s', (prefijo) => {
     expect(iniciales(`${prefijo} del Valle 89`)).toBe('DV')
+  })
+
+  it('toma la calle y el número', () => {
+    expect(iniciales('Av. Mitre 742')).toBe('M7')
+    expect(iniciales('Pasaje Los Andes 12')).toBe('LA')
+    expect(iniciales('Calle 1 nº 234')).not.toMatch(/^C/)
   })
 
   it('sin prefijo conserva las iniciales de siempre', () => {
