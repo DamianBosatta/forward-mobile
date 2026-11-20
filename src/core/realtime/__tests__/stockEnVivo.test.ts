@@ -242,6 +242,29 @@ describe('reintento de la apertura por red o 5xx (RED-R4-01 residual)', () => {
     expect(c.start).toHaveBeenCalledTimes(3)
   })
 
+  it('un 401 se reintenta, un 403 (sin permiso del hub) no y queda sin conexión (MR-R5-01)', async () => {
+    const error = (statusCode: number) => Object.assign(new Error(`Status code '${statusCode}'`), { statusCode })
+    const uno = conexionFalsa()
+    uno.c.start.mockRejectedValueOnce(error(401))
+    const g1 = crearGestorStock(() => uno.c, () => () => undefined)
+    g1.suscribir(['d1'], oyente())
+    await jest.advanceTimersByTimeAsync(2_000)
+    expect(uno.c.start).toHaveBeenCalledTimes(2)
+    expect(g1.enVivo()).toBe(true)
+
+    const dos = conexionFalsa()
+    dos.c.start.mockRejectedValue(error(403))
+    const g2 = crearGestorStock(() => dos.c, () => () => undefined)
+    const o = oyente()
+    g2.suscribir(['d1'], o)
+    await jest.advanceTimersByTimeAsync(10 * 60_000)
+    expect(dos.c.start).toHaveBeenCalledTimes(1)
+    expect(g2.enVivo()).toBe(false)
+    g2.reintentar()
+    await jest.advanceTimersByTimeAsync(0)
+    expect(dos.c.start).toHaveBeenCalledTimes(2)
+  })
+
   it('la espera tiene tope', async () => {
     const { c } = conexionFalsa()
     c.start.mockRejectedValue(new Error('Network'))
