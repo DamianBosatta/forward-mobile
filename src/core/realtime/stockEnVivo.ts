@@ -48,6 +48,12 @@ const EVENTO_ENTIDADES = 'EntidadCambio'
 const ESPERA_INICIAL_MS = 2_000
 const ESPERA_MAXIMA_MS = 60_000
 
+/** Un 4xx que no se arregla esperando (403 sin permiso del hub, 404...): 401 (se renueva el token), 408 y 429 sí se reintentan. */
+function esRechazoPermanente(e: unknown): boolean {
+  const codigo = (e as { statusCode?: unknown } | null)?.statusCode
+  return typeof codigo === 'number' && codigo >= 400 && codigo < 500 && ![401, 408, 429].includes(codigo)
+}
+
 function conexionReal(): ConexionStock {
   return new HubConnectionBuilder()
     // El token viaja en `accessTokenFactory` (query string solo en este hub), no en cookies.
@@ -73,8 +79,8 @@ export function crearGestorStock(
   let cantidades = false
   // Cada apertura/cierre invalida las rondas anteriores que siguen en vuelo.
   let ronda = 0
-  // Apertura fallida (cualquier error, incluido 401/403): reintento con espera creciente mientras haya quien escuche.
-  // Tras un 401 además reabre la renovación del token (alRenovarToken).
+  // Apertura fallida por red, 5xx o 401: reintento con espera creciente mientras haya quien escuche (un 4xx permanente, como un
+  // 403, no reintenta). Tras un 401 además reabre la renovación del token (alRenovarToken).
   let intentos = 0
   let temporizador: ReturnType<typeof setTimeout> | null = null
   const cancelarReintento = () => {
@@ -129,7 +135,7 @@ export function crearGestorStock(
       await conectado(c, mia)
     } catch (e) {
       logger.warn('No se pudo abrir el stock en vivo', e)
-      if (mia === ronda) { poner(false); reintentarLuego() }
+      if (mia === ronda) { poner(false); if (!esRechazoPermanente(e)) reintentarLuego() }
     } finally {
       conectando = false
     }

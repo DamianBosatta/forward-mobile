@@ -198,7 +198,7 @@ La app tiene dos números:
 - **Versión** (campo `version` de `package.json`, hoy `1.0.0`): la que ve la gente. `app.config.ts` la lee de ahí, así que hay un solo lugar donde cambiarla (OPS-07). Esquema: versión semántica estricta, sin ceros a la izquierda. Se sube en cada release, en un commit propio, antes del build: `npm version 1.0.1 --no-git-tag-version` (cambia `package.json` y `package-lock.json`). `1.0.1` para correcciones, `1.1.0` para funciones nuevas.
 - **Build** (`versionCode` de Android): lo pone EAS. `eas.json` usa `cli.appVersionSource: "remote"` y `autoIncrement: true` en los perfiles `preview` y `production`, así que cada build suma uno al número guardado en EAS. No se edita a mano ni vive en el repositorio.
 
-Cambiar la versión en `app.config.ts` cambia la huella de runtime: los builds anteriores dejan de recibir las actualizaciones que se publiquen después, y hace falta un build nuevo.
+La versión se cambia solo en `package.json` (`app.config.ts` la lee de ahí). No hay una medición de si subirla cambia la huella de runtime; antes de un release, correr `npx expo-updates fingerprint:generate` antes y después del cambio de versión para saberlo.
 
 ### Versión mínima: bloquear versiones viejas (OPS-03)
 

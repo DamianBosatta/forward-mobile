@@ -115,7 +115,7 @@ export function invalidarDepositosYStock(queryClient: Qc): Promise<void> {
 // ── Cuentas, caja y tesorería ────────────────────────────────────────────────
 
 /** Cuentas corrientes, sus deudas y los socios (saldo y deuda de cada uno). */
-export function invalidarCuentasYDeudas(queryClient: Qc): Promise<void> {
+function invalidarCuentasYDeudas(queryClient: Qc): Promise<void> {
   return refrescar(queryClient, cuentasKeys.all, sociosKeys.all)
 }
 
@@ -125,7 +125,7 @@ export function invalidarCaja(queryClient: Qc): Promise<void> {
 }
 
 /** Tesorería y la lista de pagos y cobros (sale de la misma fuente). */
-export function invalidarTesoreria(queryClient: Qc): Promise<void> {
+function invalidarTesoreria(queryClient: Qc): Promise<void> {
   return refrescar(queryClient, tesoreriaKeys.all, pagosKeys.all)
 }
 

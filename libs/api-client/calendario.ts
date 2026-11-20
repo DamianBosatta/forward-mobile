@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type NetworkMode } from '@tanstack/react-query'
-import { api } from './client'
+import { api } from '@/core/api/client'
 import { conClave, crearIntento } from '@/core/utils/idempotencia'
 import type { components } from './generated/schema'
 import { invalidarCalendario } from './invalidaciones'

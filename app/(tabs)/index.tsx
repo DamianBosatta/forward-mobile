@@ -1,4 +1,4 @@
-import { useAuthStore } from '../../libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import ConsolaChoferScreen from './logistica/consola'
 import { InicioScreen } from '@/features/inicio/components/InicioScreen'
 import { InicioDeposito } from '@/features/inicio/components/InicioDeposito'

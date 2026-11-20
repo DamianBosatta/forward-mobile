@@ -14,7 +14,7 @@ jest.mock('@tanstack/react-query', () => ({
 jest.mock('@/core/ui', () => ({ ForwardLogo: () => null, ConfirmModal: () => null }))
 jest.mock('@/core/utils/haptics', () => ({ safeHaptics: { impact: jest.fn(), notification: jest.fn() } }))
 jest.mock('@/libs/api-client', () => ({ API_URL: 'x', setApiUrl: jest.fn(), ENV_PROD: 'p', ENV_DEV: 'd', ENV_LOCAL: 'l' }))
-jest.mock('../../../../libs/store/auth.store', () => ({
+jest.mock('@/features/auth/store/auth.store', () => ({
   useAuthStore: () => ({
     user: { nombre: 'Super', apellido: 'Admin', username: 'superadmin@forward.com', email: 'superadmin@forward.com', roles: ['AdministradorSistemas'] },
     logout: jest.fn(),

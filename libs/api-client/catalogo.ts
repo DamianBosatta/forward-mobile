@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery, keepPreviousData } from '@tanstack/react-query'
-import { api } from './client'
+import { api } from '@/core/api/client'
 import type { components } from './generated/schema'
 
 /** Ficha del catálogo comercial (GET /api/v1/catalogo, MOD_CATALOGO): una por producto suelto y una por línea. */

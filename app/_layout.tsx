@@ -12,7 +12,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { conectarCierreDeSesion } from '@/features/auth/lib/cerrarSesion'
 import { hasSavedCredentials } from '@/features/auth/utils/biometrics'
 import { logger } from '@/core/utils/logger'
-import { limpiarEvento, limpiarMigaDePan, vincularUsuarioASentry } from '@/core/utils/sentryPrivacidad'
+import { limpiarEvento, limpiarMigaDePan, limpiarTransaccion, vincularUsuarioASentry } from '@/core/utils/sentryPrivacidad'
 import { protegerCapturaDeLaApp } from '@/core/utils/proteccionDeCaptura'
 import { OfertaDeHuella } from '@/features/auth/components/OfertaDeHuella'
 import { View } from 'react-native'
@@ -141,6 +141,8 @@ Sentry.init({
   // SEG-06: no query string (search terms) in breadcrumbs or events.
   beforeBreadcrumb: limpiarMigaDePan,
   beforeSend: limpiarEvento,
+  // beforeSend does not run on transactions: their spans carry the request URL (search text included).
+  beforeSendTransaction: limpiarTransaccion,
 })
 // OPS-05: only the opaque user id is attached to events; logout clears it.
 vincularUsuarioASentry(useAuthStore)

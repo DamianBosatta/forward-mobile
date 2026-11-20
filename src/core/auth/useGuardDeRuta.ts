@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useGlobalSearchParams, usePathname, useRouter } from 'expo-router'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { permisosDesde } from '@/features/auth/lib/permisos'
 import { puedeAbrirPantalla } from './rutasDeLaApp'
 

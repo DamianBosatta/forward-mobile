@@ -2,9 +2,9 @@ import React from 'react'
 import { act, renderHook } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
 import { useCrearEvento } from '../calendario'
-import { api } from '../client'
+import { api } from '@/core/api/client'
 
-jest.mock('../client', () => ({ api: { get: jest.fn(), post: jest.fn() }, API_URL: 'x' }))
+jest.mock('@/core/api/client', () => ({ api: { get: jest.fn(), post: jest.fn() }, API_URL: 'x' }))
 
 const mockPost = api.post as jest.Mock
 const evento = { tipo: 'Manual', titulo: 't', fechaInicio: '2026-11-20', socioComercialId: 's', avisarDiasAntes: 0, visibilidad: 'Personal' } as const

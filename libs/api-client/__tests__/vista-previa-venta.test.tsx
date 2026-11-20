@@ -2,9 +2,9 @@ import React from 'react'
 import { renderHook, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useVistaPreviaVenta } from '../ventas'
-import { api } from '../client'
+import { api } from '@/core/api/client'
 
-jest.mock('../client', () => ({ api: { post: jest.fn() }, API_URL: 'x' }))
+jest.mock('@/core/api/client', () => ({ api: { post: jest.fn() }, API_URL: 'x' }))
 
 const post = api.post as jest.Mock
 

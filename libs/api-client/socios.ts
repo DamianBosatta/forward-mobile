@@ -1,6 +1,6 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Alert } from 'react-native'
-import { api } from './client'
+import { api } from '@/core/api/client'
 import { SIN_DEPOSITO_DE_SESION } from '@/core/api/depositoSesion'
 import { conClave, crearIntento } from '@/core/utils/idempotencia'
 import type { PagedResult, SocioComercial, SocioDetailDto, CreateSocioRequest, UpdateSocioRequest, ClienteLightDto } from './types'
@@ -74,13 +74,13 @@ export interface ClienteReciente {
 }
 
 /** Máximo de recientes que se le piden al servidor (el servidor acepta de 1 a 10). */
-export const LIMITE_RECIENTES = 5
+const LIMITE_RECIENTES = 5
 
 /**
  * Los últimos clientes activos que el usuario usó en sus ventas y borradores, del más reciente al más
  * viejo. El 404 de un servidor que todavía no tiene el endpoint es esperado: no se registra como error.
  */
-export const fetchClientesRecientes = (limite: number = LIMITE_RECIENTES, { sinDepositoDeSesion = false } = {}) =>
+const fetchClientesRecientes = (limite: number = LIMITE_RECIENTES, { sinDepositoDeSesion = false } = {}) =>
   api.get<ClienteReciente[]>(`/api/v1/socios-comerciales/clientes-recientes?limite=${limite}`, {
     estadosEsperados: [404],
     ...(sinDepositoDeSesion ? SIN_DEPOSITO_DE_SESION : {}),

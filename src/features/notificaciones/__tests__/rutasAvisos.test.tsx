@@ -5,7 +5,7 @@
 import React from 'react'
 import { render } from '@testing-library/react-native'
 import DrawerLayout from '@/app/(tabs)/_layout'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 
 const mockPantallas: string[] = []
 jest.mock('expo-router/drawer', () => {

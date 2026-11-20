@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useRouter, useSegments, useRootNavigationState } from 'expo-router'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { configureApiClient } from '@/core/api/client'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import { cerrarSesion } from '@/features/auth/lib/cerrarSesion'

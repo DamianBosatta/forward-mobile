@@ -1,7 +1,7 @@
 import { buscarPorCodigoBarra, fetchCatalogoStockCompleto } from '../productos'
-import { api } from '../client'
+import { api } from '@/core/api/client'
 
-jest.mock('../client', () => ({ api: { get: jest.fn() } }))
+jest.mock('@/core/api/client', () => ({ api: { get: jest.fn() } }))
 
 const get = api.get as jest.Mock
 const item = (id: string) => ({ id, nombre: id })

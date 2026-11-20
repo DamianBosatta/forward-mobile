@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/react-native'
-import type { Breadcrumb, ErrorEvent } from '@sentry/react-native'
+import type { Breadcrumb, ErrorEvent, TransactionEvent } from '@sentry/react-native'
 import { withoutQueryString as sinQuery } from './logger'
 
 /**
@@ -34,6 +34,39 @@ export function limpiarEvento(evento: ErrorEvent): ErrorEvent {
       ...salida.exception,
       values: salida.exception.values.map((v) => (typeof v.value === 'string' ? { ...v, value: sinQuery(v.value) } : v)),
     }
+  }
+  if (salida.breadcrumbs) salida.breadcrumbs = salida.breadcrumbs.map(limpiarMigaDePan)
+  return salida
+}
+
+const LIMPIAR_EN_SPANS = ['url', 'http.url', 'http.query'] as const
+
+type Datos = Record<string, unknown> | undefined
+
+const limpiarDatos = (datos: Datos): Datos => {
+  if (!datos) return datos
+  const salida = { ...datos }
+  for (const clave of LIMPIAR_EN_SPANS) if (typeof salida[clave] === 'string') salida[clave] = sinQuery(salida[clave] as string)
+  // http.query is the raw query string itself (no "?"): drop it instead of redacting.
+  if ('http.query' in salida) delete salida['http.query']
+  return salida
+}
+
+/**
+ * `Sentry.init({ beforeSendTransaction })`: `beforeSend` does not run on performance transactions, whose spans carry the
+ * request URL (with the search text) in `description` and `data`. Same query-string rule as events.
+ */
+export function limpiarTransaccion(transaccion: TransactionEvent): TransactionEvent {
+  const salida: TransactionEvent = { ...transaccion }
+  if (typeof salida.transaction === 'string') salida.transaction = sinQuery(salida.transaction)
+  if (salida.request) salida.request = limpiarEvento({ request: salida.request } as ErrorEvent).request
+  if (salida.contexts?.trace?.data) salida.contexts = { ...salida.contexts, trace: { ...salida.contexts.trace, data: limpiarDatos(salida.contexts.trace.data) as never } }
+  if (salida.spans) {
+    salida.spans = salida.spans.map((span) => ({
+      ...span,
+      ...(typeof span.description === 'string' ? { description: sinQuery(span.description) } : {}),
+      ...(span.data ? { data: limpiarDatos(span.data) as never } : {}),
+    }))
   }
   if (salida.breadcrumbs) salida.breadcrumbs = salida.breadcrumbs.map(limpiarMigaDePan)
   return salida

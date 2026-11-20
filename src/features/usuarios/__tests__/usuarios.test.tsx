@@ -6,7 +6,7 @@ import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { StyleSheet } from 'react-native'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import UsuariosRoute from '../../../../app/(tabs)/perfil/usuarios'
 
 const mockGet = jest.fn()

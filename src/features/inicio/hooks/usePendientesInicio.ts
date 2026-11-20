@@ -1,5 +1,5 @@
-import { useAuthStore } from '@/libs/store/auth.store'
-import { ApiError } from '@/libs/api-client/client'
+import { useAuthStore } from '@/features/auth/store/auth.store'
+import { ApiError } from '@/core/api/client'
 import { usePendientesAutorizacion, useVentas } from '@/libs/api-client/ventas'
 import { useComprasResumenInicio, useResumenInicio, type ImporteInicio } from '../api/queries'
 

@@ -2,9 +2,10 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Alert, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Bell, Fingerprint, Lock, LogOut } from 'lucide-react-native'
-import { useAuthStore } from '../../../libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useThemeStore, useColors, radii, space, typeScale, type ThemeMode } from '../../../libs/theme'
 import { ConfirmModal } from '@/core/ui'
+import { iniciales } from '@/core/utils/texto'
 import { BottomSheet, Button, FilaDeAjuste, FilaInterruptor, Notice, Segmented, TopBar, useMenuLeading, type SegmentedOption, useInsetInferior } from '@/core/ui/fw'
 import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
 import { FilaDeUsuarios } from '@/features/perfil/components/FilaDeUsuarios'
@@ -54,7 +55,7 @@ export default function PerfilScreen() {
   }, [])
 
   const nombre = [user?.nombre, user?.apellido].filter(Boolean).join(' ') || user?.username || 'Usuario'
-  const iniciales = `${user?.nombre?.[0] ?? ''}${user?.apellido?.[0] ?? ''}`.toUpperCase() || '·'
+  const letras = iniciales([user?.nombre, user?.apellido].filter(Boolean).join(' ')) || '·'
   const { rol: quien, email } = lineasDeIdentidad(user)
   const [version] = useState(() => lineasDeVersion(leerDatosDeVersion()))
   // Tarjetas por tono, sin borde (propuesta Cuenta, frame 1).
@@ -106,7 +107,7 @@ export default function PerfilScreen() {
         {/* Propuesta Cuenta, frame 1: la identidad sale de la franja oscura a una tarjeta sin borde con las iniciales en grande. */}
         <View testID="tarjeta-identidad" style={[tarjeta, { flexDirection: 'row', alignItems: 'center', gap: space[4], padding: space[4] }]}>
           <View testID="iniciales-identidad" style={{ width: 56, height: 56, borderRadius: radii.pastilla, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={[typeScale.titulo, { color: c.onAction }]}>{iniciales}</Text>
+            <Text style={[typeScale.titulo, { color: c.onAction }]}>{letras}</Text>
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[typeScale.titulo, { color: c.text }]}>{nombre}</Text>

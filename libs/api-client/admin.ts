@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from './client'
+import { api } from '@/core/api/client'
 import type { components } from './generated/schema'
 import type {
   PagedResult,

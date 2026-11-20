@@ -1,5 +1,5 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
-import { api, API_URL } from './client'
+import { api, API_URL } from '@/core/api/client'
 import type { Producto, ProductoDetailDto, PagedResult, CreateProductoRequest, UpdateProductoRequest } from './types'
 import type { components } from './generated/schema'
 import { invalidarProductosYCatalogo, invalidarStock } from './invalidaciones'

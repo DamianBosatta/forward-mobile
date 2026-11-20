@@ -11,7 +11,7 @@
 // (cacheDirectory, writeAsStringAsync, deleteAsync, EncodingType) live under
 // the /legacy sub-path. The root export exposes only the new File/Directory API.
 import * as FileSystem from 'expo-file-system/legacy'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { ApiError, descargarConAuth } from '@/core/api/client'
 import { esTiempoAgotado } from '@/core/api/errores'
 

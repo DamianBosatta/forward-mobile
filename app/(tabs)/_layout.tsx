@@ -2,7 +2,7 @@ import { Drawer } from 'expo-router/drawer'
 import { Platform } from 'react-native'
 import CustomDrawerContent from '@/src/components/layout/CustomDrawerContent'
 import { useResponsive } from '@/libs/useResponsive'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 
 export default function DrawerLayout() {
   // Plan §8: en tablet (≥ 600) el menú queda fijo; en teléfono se abre con el botón.

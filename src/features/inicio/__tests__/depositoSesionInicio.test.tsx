@@ -1,7 +1,7 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, userEvent, within } from '@testing-library/react-native'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useThemeStore } from '@/libs/theme'
 import { limpiarDepositoDeSesion } from '@/features/deposito-sesion'
 import { InicioScreen } from '../components/InicioScreen'

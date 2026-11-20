@@ -1,5 +1,5 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from './client'
+import { api } from '@/core/api/client'
 import { conClave, crearIntento } from '@/core/utils/idempotencia'
 import { buildAnularCompraPayload } from './anular-compra'
 import type { Compra, CompraDtoList, CompraDto, PagedResult, CreateCompraRequest, EstadoCompra } from './types'
@@ -141,7 +141,7 @@ const intentoRecibirCompra = crearIntento()
 const intentoIniciarBorradorCompra = crearIntento()
 
 /** Confirma una compra (nota de pedido → confirmada). Una sola copia: el hook y el autoguardado del borrador la usan. */
-export const confirmarCompra = (id: string) =>
+const confirmarCompra = (id: string) =>
   conClave(intentoConfirmarCompra, { compraId: id }, (cuerpo) => api.post<void>(`/api/v1/Compras/${id}/confirmar`, cuerpo), id)
 
 export function useCreateCompra() {

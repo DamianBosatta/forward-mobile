@@ -6,9 +6,9 @@ import { useCreateSocio } from '../socios'
 import { useCrearEvento } from '../calendario'
 import { guardarBorradorVenta, useAutorizarVenta, useConvertirPresupuesto, useIniciarBorradorVenta } from '../ventas'
 import { useAbrirCaja } from '../finanzas'
-import { api } from '../client'
+import { api } from '@/core/api/client'
 
-jest.mock('../client', () => ({
+jest.mock('@/core/api/client', () => ({
   api: { get: jest.fn(), post: jest.fn(), put: jest.fn(), postConSobre: jest.fn() },
   API_URL: 'x',
 }))

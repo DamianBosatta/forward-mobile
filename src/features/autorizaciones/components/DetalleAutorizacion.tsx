@@ -7,7 +7,7 @@ import { Button, Field, Notice, PieFijo, StatusChip, TopBar, TotalsRow, chipForE
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useAutorizacionPreview, usePendientesAutorizacion, useVenta } from '@/libs/api-client/ventas'
 import { useSocio } from '@/libs/api-client/socios'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { formatRelativeTime } from '@/core/utils/fecha'
 import { pideRazon, textosDeMotivos } from '../lib/motivos'

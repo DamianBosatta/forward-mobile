@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { api } from '@/libs/api-client/client'
+import { api } from '@/core/api/client'
 import { borradorCompraApi, type GuardarCompraBody } from '@/libs/api-client/compras'
 import type { CompraDto, ProductoDetailDto, SocioDetailDto } from '@/libs/api-client/types'
 import { useDepositoDeConsulta } from '@/features/catalogo/hooks/useDepositoDeConsulta'

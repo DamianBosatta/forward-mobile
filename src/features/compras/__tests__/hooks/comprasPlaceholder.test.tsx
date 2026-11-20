@@ -2,9 +2,9 @@ import React from 'react'
 import { renderHook, waitFor, act } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useInfiniteCompras, useComprasResumen, type ComprasFiltroParams, type ComprasListParams } from '@/libs/api-client/compras'
-import { api } from '@/libs/api-client/client'
+import { api } from '@/core/api/client'
 
-jest.mock('@/libs/api-client/client', () => ({
+jest.mock('@/core/api/client', () => ({
   api: { get: jest.fn() },
 }))
 

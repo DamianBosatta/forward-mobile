@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { api, ApiError } from '@/libs/api-client/client'
+import { api, ApiError } from '@/core/api/client'
 import { comprasKeys } from '@/libs/api-client/compras'
 import { inicioKeys } from '@/core/query/queryClient'
 import { useDeudasResumen } from '@/features/cuentas/api/queries'
