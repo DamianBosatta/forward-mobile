@@ -77,7 +77,7 @@ async function hastaElCobro() {
 
 beforeEach(() => {
   jest.clearAllMocks()
-  useLogisticaStore.setState({ activeTrip: null })
+  useLogisticaStore.getState().reset()
   conTema('light')
   reiniciarCamara()
   let subidas = 0

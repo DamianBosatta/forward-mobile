@@ -55,7 +55,7 @@ function pintar(h: unknown) {
 beforeEach(() => {
   jest.clearAllMocks()
   storage.clearAll()
-  useLogisticaStore.setState({ activeTrip: null })
+  useLogisticaStore.getState().reset()
   conTema('light')
 })
 

@@ -2,7 +2,7 @@
  * logistica-store-partialize.test.ts
  *
  * TASK-5-D1: Verifies that the Zustand logistica store's `partialize` function
- * serializes `activeTrip` (persisted to the encrypted MMKV store, SEG-10).
+ * pins what each store persists: the id in the logistica store, the trip in its own store (S4).
  *
  * Uses the store module directly and inspects the partialize output rather than
  * going through AsyncStorage, keeping the test free of native module mocking.
@@ -29,12 +29,14 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 // The trip lives in the encrypted MMKV store (SEG-10); its native modules are out of reach with react-native mocked.
 jest.mock('@/core/utils/storage', () => {
   const memoria = new Map<string, string>()
+  const almacen = {
+    getItem: (k: string) => memoria.get(k) ?? null,
+    setItem: (k: string, v: string) => { memoria.set(k, v) },
+    removeItem: (k: string) => { memoria.delete(k) },
+  }
   return {
-    zustandStorageMudadoDesde: () => ({
-      getItem: (k: string) => memoria.get(k) ?? null,
-      setItem: (k: string, v: string) => { memoria.set(k, v) },
-      removeItem: (k: string) => { memoria.delete(k) },
-    }),
+    zustandStorage: almacen,
+    zustandStorageMudadoDesde: () => almacen,
   }
 })
 
@@ -44,6 +46,7 @@ jest.mock('react-native', () => ({
 }))
 
 import { useLogisticaStore } from '../store/logistica.store'
+import { useHojaRutaGuardada } from '../store/hojaRutaGuardada.store'
 
 const MOCK_ACTIVE_TRIP = {
   id: 'hoja-001',
@@ -60,51 +63,32 @@ const MOCK_ACTIVE_TRIP = {
   ],
 } as any
 
-describe('logistica store — partialize contract', () => {
+describe('logistica stores — what each one persists (S4)', () => {
   beforeEach(() => {
-    // Reset to a known baseline between tests
-    useLogisticaStore.setState({
-      activeTrip: null,
-    } as any)
+    useLogisticaStore.getState().reset()
   })
 
-  describe('activeTrip is included in persisted state', () => {
-    it('serializes activeTrip when set', () => {
-      useLogisticaStore.getState().setActiveTrip(MOCK_ACTIVE_TRIP)
+  it('the logistica store keeps only the id of the open trip', () => {
+    useLogisticaStore.getState().setActiveTripId('hoja-001')
+    const raw = useLogisticaStore.persist.getOptions().storage?.getItem('forward-logistica-store') as { state: object }
+    expect(Object.keys(raw?.state ?? {})).toEqual(['activeTripId'])
+  })
 
-      const state = useLogisticaStore.getState()
-      // The partialize function is the one registered in the persist config.
-      // Reconstruct what it does: include only activeTrip.
-      const persisted = { activeTrip: state.activeTrip }
+  it('the trip with its stops is saved by the dedicated store, with stop-level delivery state', () => {
+    useHojaRutaGuardada.getState().guardar(MOCK_ACTIVE_TRIP)
+    useHojaRutaGuardada.getState().updateStopStatus('parada-001', { delivered: true, observations: 'Entregado sin novedades' })
 
-      expect(persisted.activeTrip).not.toBeNull()
-      expect(persisted.activeTrip?.id).toBe('hoja-001')
-      expect(persisted.activeTrip?.estado).toBe(2)
-    })
+    const stop = useHojaRutaGuardada.getState().hoja?.detalles?.[0]
+    expect(stop?.estado).toBe(2) // EstadoParada.Entregado
+    expect(stop?.observaciones).toBe('Entregado sin novedades')
+  })
 
-    it('serializes activeTrip as null when cleared', () => {
-      useLogisticaStore.getState().setActiveTrip(MOCK_ACTIVE_TRIP)
-      useLogisticaStore.getState().clearActiveTrip()
+  it('clearing the active trip clears the id and the saved trip', () => {
+    useHojaRutaGuardada.getState().guardar(MOCK_ACTIVE_TRIP)
+    useLogisticaStore.getState().setActiveTripId('hoja-001')
+    useLogisticaStore.getState().clearActiveTrip()
 
-      const state = useLogisticaStore.getState()
-      const persisted = { activeTrip: state.activeTrip }
-
-      expect(persisted.activeTrip).toBeNull()
-    })
-
-    it('preserves stop-level delivery state in activeTrip', () => {
-      useLogisticaStore.getState().setActiveTrip(MOCK_ACTIVE_TRIP)
-      useLogisticaStore.getState().updateStopStatus('parada-001', {
-        delivered: true,
-        observations: 'Entregado sin novedades',
-      })
-
-      const state = useLogisticaStore.getState()
-      const persisted = { activeTrip: state.activeTrip }
-
-      const stop = persisted.activeTrip?.detalles?.[0]
-      expect(stop?.estado).toBe(2) // EstadoParada.Entregado
-      expect(stop?.observaciones).toBe('Entregado sin novedades')
-    })
+    expect(useLogisticaStore.getState().activeTripId).toBeNull()
+    expect(useHojaRutaGuardada.getState().hoja).toBeNull()
   })
 })

@@ -9,12 +9,14 @@ const VIAJE = { id: 'hoja-7', detalles: [{ id: 'p1', clienteNombre: 'Almacén Do
 function cargar() {
   let mod: {
     store: typeof import('../store/logistica.store').useLogisticaStore
+    guardada: typeof import('../store/hojaRutaGuardada.store').useHojaRutaGuardada
     mmkv: typeof import('@/core/utils/storage').zustandStorage
     plano: typeof import('@react-native-async-storage/async-storage').default
   } | undefined
   jest.isolateModules(() => {
     mod = {
       store: require('../store/logistica.store').useLogisticaStore,
+      guardada: require('../store/hojaRutaGuardada.store').useHojaRutaGuardada,
       mmkv: require('@/core/utils/storage').zustandStorage,
       // Same registry as the store, so this is the AsyncStorage the store reads.
       plano: require('@react-native-async-storage/async-storage'),
@@ -30,18 +32,21 @@ describe('active trip storage (SEG-10)', () => {
 
     await store.persist.rehydrate()
 
-    expect(store.getState().activeTrip?.id).toBe('hoja-7')
-    expect(mmkv.getItem(CLAVE)).toContain('Almacén Don Pepe')
+    expect(store.getState().activeTripId).toBe('hoja-7')
+    // The trip itself moved to the dedicated persistence, encrypted too.
+    expect(mmkv.getItem('forward-hoja-ruta-guardada')).toContain('Almacén Don Pepe')
+    expect(mmkv.getItem(CLAVE)).not.toContain('Almacén Don Pepe')
     expect(await plano.getItem(CLAVE)).toBeNull()
   })
 
   it('a new trip is written to the encrypted store, never to AsyncStorage', async () => {
-    const { store, mmkv, plano } = cargar()
+    const { store, guardada, mmkv, plano } = cargar()
     await store.persist.rehydrate()
 
-    store.getState().setActiveTrip(VIAJE as never)
+    guardada.getState().guardar(VIAJE as never)
 
-    expect(mmkv.getItem(CLAVE)).toContain('Almacén Don Pepe')
+    expect(mmkv.getItem('forward-hoja-ruta-guardada')).toContain('Almacén Don Pepe')
+    expect(await plano.getItem('forward-hoja-ruta-guardada')).toBeNull()
     expect(await plano.getItem(CLAVE)).toBeNull()
   })
 

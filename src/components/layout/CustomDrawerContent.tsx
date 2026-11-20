@@ -1,4 +1,5 @@
 import React from 'react'
+import { iniciales } from '@/core/utils/texto'
 import { View, Text, Pressable, ScrollView } from 'react-native'
 import { DrawerContentComponentProps, useDrawerStatus } from 'expo-router/drawer'
 import { useRouter } from 'expo-router'
@@ -29,8 +30,8 @@ function rutaActualDelCajon(state: DrawerContentComponentProps['state']): string
   return state.routeNames[state.index]
 }
 
-const iniciales = (nombre?: string, apellido?: string) =>
-  `${nombre?.[0] ?? ''}${apellido?.[0] ?? ''}`.toUpperCase() || '·'
+const inicialesDeUsuario = (nombre?: string, apellido?: string) =>
+  iniciales([nombre, apellido].filter(Boolean).join(' ')) || '·'
 
 /**
  * Menú lateral (Bloque 9A, PR 0.3; D2). En teléfono es la lámina Menu: panel claro
@@ -124,7 +125,7 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
             justifyContent: 'center',
           }}
         >
-          <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>{iniciales(user?.nombre, user?.apellido)}</Text>
+          <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>{inicialesDeUsuario(user?.nombre, user?.apellido)}</Text>
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.onTopBarStrong }}>

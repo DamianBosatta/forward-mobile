@@ -72,7 +72,7 @@ const iniciarResponde = () => mockPost.mockImplementation(async (url: string) =>
 beforeEach(() => {
   jest.clearAllMocks()
   storage.clearAll()
-  useLogisticaStore.setState({ activeTrip: null })
+  useLogisticaStore.getState().reset()
   loc.hasStartedLocationUpdatesAsync.mockResolvedValue(false)
   // Como el módulo real: una vez arrancada, la tarea figura arrancada.
   loc.startLocationUpdatesAsync.mockImplementation(async () => { loc.hasStartedLocationUpdatesAsync.mockResolvedValue(true) })

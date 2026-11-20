@@ -27,6 +27,7 @@ import { mmkvPersister } from '@/core/query/persistConfig'
 import { useFiltrosStore } from '@/core/hooks/useFiltroPersistente'
 import { storage } from '@/core/utils/storage'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
+import { useHojaRutaGuardada } from '@/features/logistica/store/hojaRutaGuardada.store'
 import { useAuthStore } from '../store/auth.store'
 import { useOfertaDeHuella } from '../store/ofertaDeHuella.store'
 import { cerrarSesion, conectarCierreDeSesion } from '../lib/cerrarSesion'
@@ -51,14 +52,15 @@ async function conSesion() {
   useAuthStore.setState({ isAuthenticated: true, accessToken: 't1', refreshToken: 'r1' })
   qc.setQueryData(['inicio', 'resumen'], { ventas: null, compras: null, autorizacionesPendientes: { cantidad: 2, importes: [] } })
   qc.getMutationCache().build(qc, { mutationKey: ['cobro'] })
-  useLogisticaStore.getState().setActiveTrip(VIAJE as never)
+  useHojaRutaGuardada.getState().guardar(VIAJE as never)
+  useLogisticaStore.getState().setActiveTripId((VIAJE as { id: string }).id)
   mockSecure.set(CREDENCIAL_HUELLA, JSON.stringify({ username: 'chofer', password: 'secreta' }))
   mockSecure.set(DECISION_HUELLA, 'true')
   useOfertaDeHuella.getState().ofrecer({ username: 'chofer', password: 'secreta' })
   useFiltrosStore.getState().poner('socios.lista', { busqueda: 'pepe' })
   expect((await mmkvPersister.restoreClient())?.clientState.queries).toHaveLength(1)
   // SEG-10: the trip lives in the encrypted store.
-  expect(storage.getString('forward-logistica-store')).toContain('Almacén Don Pepe')
+  expect(storage.getString('forward-hoja-ruta-guardada')).toContain('Almacén Don Pepe')
   return { qc, soltar: () => { dejarDeGuardar(); desconectar() } }
 }
 
@@ -71,7 +73,9 @@ async function sinNadaDeLaSesion(qc: ReturnType<typeof crearQueryClient>, huella
   expect(qc.getMutationCache().getAll()).toHaveLength(0)
   // The disk holds nothing (not an empty client) even if the app dies right away.
   expect(await mmkvPersister.restoreClient()).toBeUndefined()
-  expect(useLogisticaStore.getState().activeTrip).toBeNull()
+  expect(useLogisticaStore.getState().activeTripId).toBeNull()
+  expect(useHojaRutaGuardada.getState().hoja).toBeNull()
+  expect(storage.getString('forward-hoja-ruta-guardada')).toBeUndefined()
   expect(storage.getString('forward-logistica-store')).toBeUndefined()
   expect(await AsyncStorage.getItem('forward-logistica-store')).toBeNull()
   // The saved list filters of the previous person are not inherited by the next one.
@@ -128,7 +132,7 @@ describe('cerrarSesion(): the next user of the phone sees nothing of the previou
     useAuthStore.setState({ isAuthenticated: true, accessToken: 't2' })
     expect(qc.getQueryData(['inicio', 'resumen'])).toBeTruthy()
     expect(await mmkvPersister.restoreClient()).toBeTruthy()
-    expect(useLogisticaStore.getState().activeTrip).not.toBeNull()
+    expect(useHojaRutaGuardada.getState().hoja).not.toBeNull()
     expect(mockSecure.has(CREDENCIAL_HUELLA)).toBe(true)
     soltar()
   })

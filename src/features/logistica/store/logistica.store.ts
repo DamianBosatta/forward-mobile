@@ -3,29 +3,19 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { immer } from 'zustand/middleware/immer';
 import { zustandStorageMudadoDesde } from '@/core/utils/storage';
-import type { HojaRutaDetalleDto, ParadaDto } from '@/libs/api-client/types';
-import { EstadoHojaRuta, EstadoParada } from '@/libs/api-client/types';
 
-// Local extension of ParadaDto that includes mutable delivery state written
-// by the chofer consola. These fields are not persisted back to the server DTO
-// but are kept in Zustand/encrypted MMKV for optimistic UI updates.
-type ParadaConEstado = ParadaDto & {
-  motivoRechazo?: string | null;
-  observaciones?: string | null;
-};
+import { useHojaRutaGuardada, type ActiveHojaRuta } from './hojaRutaGuardada.store';
 
-// ActiveTrip uses ParadaConEstado[] for detalles (adds local delivery state fields).
-type ActiveHojaRuta = Omit<HojaRutaDetalleDto, 'detalles'> & {
-  detalles?: ParadaConEstado[] | null;
-};
-
+/**
+ * Client-only pointer of the driver console: which trip is open. The trip itself (stops, clients, addresses) is in
+ * `useHojaRutaGuardada`, its own persistence (ARQ-05, S4).
+ */
 interface LogisticaState {
-  // Viaje activo (Consola del Chofer)
-  activeTrip: ActiveHojaRuta | null;
+  activeTripId: string | null;
 
-  setActiveTrip: (trip: ActiveHojaRuta | null) => void;
+  setActiveTripId: (id: string | null) => void;
+  /** The trip ended or was left: forgets the id and the saved copy. */
   clearActiveTrip: () => void;
-  updateStopStatus: (paradaId: string, payload: { delivered: boolean; observations?: string; reason?: string }) => void;
 
   reset: () => void;
 }
@@ -33,41 +23,38 @@ interface LogisticaState {
 export const useLogisticaStore = create<LogisticaState>()(
   persist(
     immer((set) => ({
-      activeTrip: null,
+      activeTripId: null,
 
-      // Actions Viaje
-      setActiveTrip: (trip) => set((state) => {
-        state.activeTrip = trip;
-      }),
-      
-      clearActiveTrip: () => set((state) => {
-        state.activeTrip = null;
+      setActiveTripId: (id) => set((state) => {
+        state.activeTripId = id;
       }),
 
-      updateStopStatus: (paradaId, payload) => set((state) => {
-        if (!state.activeTrip?.detalles) return;
-        const index = state.activeTrip.detalles.findIndex(d => d.id === paradaId);
-        if (index !== -1) {
-          state.activeTrip.detalles[index].estado = payload.delivered ? EstadoParada.Entregado : EstadoParada.NoEntregado;
-          state.activeTrip.detalles[index].motivoRechazo = payload.reason ?? '';
-          if (payload.observations !== undefined) {
-            state.activeTrip.detalles[index].observaciones = payload.observations;
-          }
-        }
-      }),
+      clearActiveTrip: () => {
+        useHojaRutaGuardada.getState().borrar();
+        set((state) => { state.activeTripId = null; });
+      },
 
-      reset: () =>
-        set((state) => {
-          state.activeTrip = null;
-        }),
+      reset: () => {
+        useHojaRutaGuardada.getState().borrar();
+        set((state) => { state.activeTripId = null; });
+      },
     })),
     {
       name: 'forward-logistica-store',
+      version: 1,
+      // v0 persisted the whole trip (`activeTrip`). Only its id stays here; the copy seeds the dedicated persistence,
+      // so a driver mid-trip who gets this update keeps the trip offline.
+      migrate: (persisted) => {
+        const viejo = persisted as { activeTrip?: ActiveHojaRuta | null } | null;
+        const viaje = viejo?.activeTrip ?? null;
+        if (viaje) useHojaRutaGuardada.getState().guardar(viaje);
+        return { activeTripId: viaje?.id ?? null };
+      },
       // SEG-10: el viaje (paradas, clientes, direcciones) va cifrado; un viaje guardado por un build viejo en
       // AsyncStorage se muda en la primera lectura.
       storage: createJSONStorage(() => zustandStorageMudadoDesde(AsyncStorage)),
       partialize: (state) => ({
-        activeTrip: state.activeTrip,
+        activeTripId: state.activeTripId,
       }),
     }
   )

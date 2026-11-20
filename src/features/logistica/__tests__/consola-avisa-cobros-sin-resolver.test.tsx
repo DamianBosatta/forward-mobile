@@ -51,7 +51,7 @@ function pintar(h: unknown) {
 beforeEach(() => {
   jest.clearAllMocks()
   storage.clearAll()
-  useLogisticaStore.setState({ activeTrip: null })
+  useLogisticaStore.getState().reset()
 })
 
 describe.each(['light', 'dark'] as const)('Finalizar el viaje con cobros sin resolver (S26, %s)', (tema) => {
