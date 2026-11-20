@@ -1,6 +1,6 @@
 import { getCatalogoPdfUrl } from '../productos'
 
-jest.mock('../client', () => ({ API_URL: 'http://api.test', api: { get: jest.fn() } }))
+jest.mock('@/core/api/client', () => ({ API_URL: 'http://api.test', api: { get: jest.fn() } }))
 
 describe('getCatalogoPdfUrl', () => {
   it('manda los mismos filtros que la pantalla y nada de más', () => {

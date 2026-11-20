@@ -1,4 +1,4 @@
-import { API_URL, fetchWithTimeout } from '@/libs/api-client/client'
+import { API_URL, fetchWithTimeout } from '@/core/api/client'
 import type { components } from '@/libs/api-client/generated/schema'
 
 /** The response of the endpoint: generated from openapi.json (X14), not written by hand. */

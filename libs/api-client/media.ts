@@ -1,4 +1,4 @@
-import { api, API_URL } from './client'
+import { api, API_URL } from '@/core/api/client'
 
 export interface UploadResult {
   url: string

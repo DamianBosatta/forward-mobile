@@ -37,7 +37,7 @@ jest.mock('@/core/auth/RequirePermission', () => ({
 jest.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: () => ({ refreshPermissions: jest.fn(), logout: jest.fn() }),
 }))
-jest.mock('@/libs/store/auth.store', () => ({
+jest.mock('@/features/auth/store/auth.store', () => ({
   useAuthStore: () => ({ isAuthenticated: true, user: { nombre: 'Emanuel', apellido: 'Parraquini', roles: mockRoles, permissions: mockPermisos } }),
 }))
 

@@ -1,7 +1,7 @@
 import React from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, userEvent } from '@testing-library/react-native'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { crearQueryClient } from '@/core/query/queryClient'
 import { TEMAS, conTema } from '@/core/ui/fw/__testing__/tema'
 import { TarjetaDeudores } from '../components/TarjetaDeudores'

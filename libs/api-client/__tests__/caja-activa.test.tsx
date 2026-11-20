@@ -2,9 +2,9 @@ import React from 'react'
 import { renderHook, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { finanzasKeys, useCajaActiva } from '../finanzas'
-import { api } from '../client'
+import { api } from '@/core/api/client'
 
-jest.mock('../client', () => ({ api: { get: jest.fn() }, API_URL: 'x' }))
+jest.mock('@/core/api/client', () => ({ api: { get: jest.fn() }, API_URL: 'x' }))
 
 const get = api.get as jest.Mock
 let qc: QueryClient

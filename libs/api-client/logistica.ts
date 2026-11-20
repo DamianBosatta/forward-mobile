@@ -7,7 +7,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query'
-import { api, API_URL } from './client'
+import { api, API_URL } from '@/core/api/client'
 import type { Vehiculo as VehiculoDto, VentaEmpacada, Chofer, Vehiculo, HojaDeRuta, HojaRutaListItemDto } from './types'
 import type { components } from './generated/schema'
 import { invalidarLogistica, invalidarPorCambioDeHojaDeRuta, invalidarPorCambioDeVenta } from './invalidaciones'

@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react-native'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import InicioRoute from '../../../../app/(tabs)/index'
 
 jest.mock('../../../../app/(tabs)/logistica/consola', () => ({ __esModule: true, default: () => require('react').createElement(require('react-native').Text, null, 'RUTA_DEL_DIA') }))

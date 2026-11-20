@@ -1,4 +1,4 @@
-import { api } from '@/libs/api-client/client'
+import { api } from '@/core/api/client'
 import { conClave, crearIntento } from '@/core/utils/idempotencia'
 import { mensajeDelServidor } from './mensaje-error'
 import { numeroDeCompra } from './numero'

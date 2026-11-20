@@ -3,7 +3,7 @@ import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Alert } from 'react-native'
 import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import PerfilScreen from '../../../../app/(tabs)/perfil'
 
 const mockPost = jest.fn()

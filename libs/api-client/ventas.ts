@@ -1,5 +1,5 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query'
-import { api, API_URL } from './client'
+import { api, API_URL } from '@/core/api/client'
 import { conClave, crearIntento } from '@/core/utils/idempotencia'
 import { buildAnularVentaPayload } from './anular-venta'
 import { buildAutorizarPayload, type AjusteDeLinea } from './autorizar-venta'

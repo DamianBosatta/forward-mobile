@@ -1,7 +1,7 @@
 /** ARQ-04: un enlace (`forward://compras`) a una pantalla sin permiso vuelve a Inicio, como el middleware de la web. */
 import { renderHook } from '@testing-library/react-native'
 import { act } from 'react'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useGuardDeRuta } from '../useGuardDeRuta'
 
 const mockReplace = jest.fn()

@@ -12,7 +12,7 @@ jest.mock('@/core/query/persistConfig', () => ({ mmkvPersister: { removeClient: 
 
 // Mock auth store — default: token present
 const mockAccessToken: { value: string | null } = { value: 'test-jwt-token' }
-jest.mock('@/libs/store/auth.store', () => ({
+jest.mock('@/features/auth/store/auth.store', () => ({
   useAuthStore: {
     getState: () => ({ accessToken: mockAccessToken.value }),
   },

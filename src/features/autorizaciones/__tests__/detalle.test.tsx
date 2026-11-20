@@ -1,7 +1,7 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { AVISO_DEUDA_VENCIDA } from '@/features/clientes/components/CreditoDelCliente'
 import { DetalleAutorizacion } from '../components/DetalleAutorizacion'
 

@@ -1,7 +1,7 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, userEvent, waitFor, within, act, fireEvent } from '@testing-library/react-native'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { conTema } from '@/core/ui/fw/__testing__/tema'
 import { reiniciarCamara, sacarFoto } from '@/features/logistica/__testing__/camara'

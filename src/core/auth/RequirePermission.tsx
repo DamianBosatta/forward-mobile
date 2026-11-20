@@ -1,7 +1,7 @@
 import React from 'react'
 import { View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useColors } from '@/libs/theme'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
 import type { AppModule } from '@/libs/api-client/types'

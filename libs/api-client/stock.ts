@@ -1,5 +1,5 @@
 import { useQuery, useQueries } from '@tanstack/react-query'
-import { api } from './client'
+import { api } from '@/core/api/client'
 import type { StockItem, PagedResult } from './types'
 
 /** Consultas de stock de la pantalla de Inventario (resumen, lista, movimientos, valor, rentabilidad). */

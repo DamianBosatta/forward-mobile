@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from './client'
+import { api } from '@/core/api/client'
 import type { Deposito, CreateDepositoRequest, UpdateDepositoRequest, DeactivateDepositoRequest } from './types'
 import { invalidarDepositos, invalidarDepositosYStock } from './invalidaciones'
 

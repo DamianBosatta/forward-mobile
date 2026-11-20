@@ -3,7 +3,7 @@ import { View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { TopBar } from '@/core/ui/fw'
 import { useColors } from '@/libs/theme'
-import { useAuthStore } from '@/libs/store/auth.store'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { CambiarContrasena } from '@/features/cuenta/components/CambiarContrasena'
 
 /** Pantalla propia de "Cambiar contraseña" (lámina perfil--clave): barra con vuelta y el formulario de siempre, con su pie fijo. */

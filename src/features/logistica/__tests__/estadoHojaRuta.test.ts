@@ -6,7 +6,7 @@ jest.mock('@/libs/theme', () => ({
 }))
 jest.mock('expo-router', () => ({ useRouter: jest.fn(), useNavigation: jest.fn(), useFocusEffect: jest.fn() }))
 jest.mock('@/libs/api-client/logistica', () => ({}))
-jest.mock('@/libs/store/auth.store', () => ({ useAuthStore: jest.fn() }))
+jest.mock('@/features/auth/store/auth.store', () => ({ useAuthStore: jest.fn() }))
 jest.mock('@/core/ui', () => ({}))
 jest.mock('moti', () => ({ MotiView: 'MotiView' }))
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({}) }))

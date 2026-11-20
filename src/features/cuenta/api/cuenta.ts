@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { api } from '@/libs/api-client/client'
+import { api } from '@/core/api/client'
 
 export interface CambioContrasena {
   /** El servidor exige que sea el correo del token (si no, 403). */
