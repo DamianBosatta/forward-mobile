@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from './client'
+import { api } from '@/core/api/client'
 import type { components } from './generated/schema'
 import { invalidarNotificaciones, invalidarPreferenciasDeAvisos } from './invalidaciones'
 
@@ -10,7 +10,7 @@ export type PreferenciaAviso = components['schemas']['PreferenciaNotificacionDto
 export type PreferenciaToast = components['schemas']['PreferenciaToastDto']
 
 /** Página de la bandeja (el servidor acota a 1..100). */
-export const AVISOS_POR_PAGINA = 30
+const AVISOS_POR_PAGINA = 30
 
 /** Keyset del servidor: avisos anteriores al último de la página previa (fecha + id para desempatar). */
 export interface CursorAvisos {
@@ -25,7 +25,7 @@ export const notificacionesKeys = {
   preferencias: () => [...notificacionesKeys.all, 'preferencias'] as const,
 }
 
-export function urlBandeja(soloNoLeidas: boolean, limite: number, cursor?: CursorAvisos): string {
+function urlBandeja(soloNoLeidas: boolean, limite: number, cursor?: CursorAvisos): string {
   const p = new URLSearchParams({ SoloNoLeidas: String(soloNoLeidas), Limite: String(limite) })
   if (cursor) {
     p.set('AntesDe', cursor.antesDe)
@@ -35,7 +35,7 @@ export function urlBandeja(soloNoLeidas: boolean, limite: number, cursor?: Curso
 }
 
 /** El cursor de la página que sigue, o `undefined` si el servidor dice que no hay más. */
-export function cursorSiguiente(pagina: BandejaAvisos): CursorAvisos | undefined {
+function cursorSiguiente(pagina: BandejaAvisos): CursorAvisos | undefined {
   const ultimo = pagina.items[pagina.items.length - 1]
   if (!pagina.hayMas || !ultimo) return undefined
   return { antesDe: ultimo.fechaCreacion, antesDeId: ultimo.id }

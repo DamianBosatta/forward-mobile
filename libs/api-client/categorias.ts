@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { api } from './client'
+import { api } from '@/core/api/client'
 import type { components } from './generated/schema'
 
 /** Categoría del árbol del catálogo: `nivel` 1 = Línea, 2 = Familia (más abajo, Categoría y Subcategoría). */
 export type CategoriaItem = components['schemas']['CategoriaResponse']
 
-export const categoriasKeys = {
+const categoriasKeys = {
   all: ['categorias'] as const,
 }
 
