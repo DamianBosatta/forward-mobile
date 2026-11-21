@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Plus } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Field, Notice, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { useProducto } from '@/libs/api-client/productos'
@@ -40,10 +40,9 @@ interface Props {
  */
 export function CarritoCompra({ lineas, onEditarProductos, onAbrirLinea, gastosTexto, onGastos, gastosInvalidos, subtotal, gastos, extra }: Props) {
   const c = useColors()
-  const sombra = useSombraTarjeta()
   const faltan = lineas.filter(sinCosto).length
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
-  const tarjeta = { padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }
+  const tarjeta = { padding: space[4], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }
 
   return (
     <View style={{ gap: space[3] }}>
@@ -61,7 +60,7 @@ export function CarritoCompra({ lineas, onEditarProductos, onAbrirLinea, gastosT
           return (
             <Pressable key={l.productoId} accessibilityRole="button" accessibilityLabel={`Cantidad y costo de ${l.nombre}`} onPress={() => onAbrirLinea(l)}
               android_ripple={{ color: c.surface2 }}
-              style={{ gap: space[1], paddingVertical: space[3], borderTopWidth: 1, borderTopColor: c.border, borderBottomWidth: i === lineas.length - 1 ? 0 : 0 }}>
+              style={{ gap: space[1], paddingVertical: space[3], borderTopWidth: i ? 1 : 0, borderTopColor: c.border }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: space[2] }}>
                 <View style={{ flex: 1, minWidth: 0 }}><IdentidadDeLinea productoId={l.productoId} nombre={l.nombre} /></View>
                 <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{falta ? '—' : formatImporte(subtotalDe(l))}</Text>
@@ -70,7 +69,7 @@ export function CarritoCompra({ lineas, onEditarProductos, onAbrirLinea, gastosT
               {falta ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2] }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
-                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: c.danger }} />
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: c.dangerFill }} />
                     <Text style={{ ...typeScale.secundario, color: c.chip.anulado.text }}>Falta el costo</Text>
                   </View>
                   <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Cargar el costo</Text>
@@ -82,7 +81,7 @@ export function CarritoCompra({ lineas, onEditarProductos, onAbrirLinea, gastosT
       </View>
       <Pressable accessibilityRole="button" accessibilityLabel="Agregar productos" onPress={onEditarProductos}
         android_ripple={{ color: c.surface2 }}
-        style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], borderRadius: radii.campo, borderWidth: 1, borderStyle: 'dashed', borderColor: c.textSecondary }}>
+        style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], borderRadius: radii.pastilla, borderWidth: 1, borderStyle: 'dashed', borderColor: c.textSecondary }}>
         <Plus size={20} color={c.text} />
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Agregar productos</Text>
       </Pressable>
