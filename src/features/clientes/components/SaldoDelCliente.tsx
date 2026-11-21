@@ -74,7 +74,7 @@ export function HeroSaldo({ saldo, vencido, diasDeudaMasVieja, tope, disponible,
           <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: c.ink, opacity: 0.2 }} />
           <View
             testID="hero-credito-relleno"
-            style={{ height: space[2], width: `${tope > 0 ? (usado / tope) * 100 : 0}%`, backgroundColor: c.ink }}
+            style={{ height: space[2], width: `${tope > 0 ? (usado / tope) * 100 : 0}%`, backgroundColor: enAviso ? c.dangerFill : c.ink }}
           />
         </View>
       ) : null}

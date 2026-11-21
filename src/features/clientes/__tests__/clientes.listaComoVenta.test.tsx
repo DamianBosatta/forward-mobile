@@ -34,16 +34,15 @@ it('cada fila lleva las iniciales de la dirección en lugar del radio de la vent
   expect(within(fila).getByText('DV')).toBeTruthy()
 })
 
-it('las filas de cada letra van dentro de una tarjeta', async () => {
+it('cada fila es una tarjeta propia de radio 22', async () => {
   get.mockResolvedValue(pagina([clienteDeLista({ id: 'a', direccion: 'Av. del Valle 89' }), clienteDeLista({ id: 'b', direccion: 'Alsina 20' })], 2))
   renderConQuery(<ClientesScreen />)
 
   // El orden lo da el servidor (OrdenarPor=Direccion): la lista no reordena.
   const primera = await screen.findByRole('button', { name: /^Av\. del Valle 89/ })
   const ultima = screen.getByRole('button', { name: /^Alsina 20/ })
-  expect(estilo(primera)).toMatchObject({ marginHorizontal: 16, borderTopLeftRadius: 16, borderTopRightRadius: 16 })
-  expect(estilo(primera).borderBottomLeftRadius ?? 0).toBe(0)
-  expect(estilo(ultima)).toMatchObject({ borderBottomLeftRadius: 16, borderBottomRightRadius: 16, borderBottomWidth: 0 })
+  expect(estilo(primera)).toMatchObject({ marginHorizontal: 16, borderRadius: 22, marginBottom: 8 })
+  expect(estilo(ultima)).toMatchObject({ borderRadius: 22, marginBottom: 0 })
 })
 
 it('cartera de otro vendedor: el candado dice "Saldo reservado" con texto, no solo para el lector de pantalla', async () => {
@@ -56,12 +55,12 @@ it('cartera de otro vendedor: el candado dice "Saldo reservado" con texto, no so
   expect(within(fila).getByText('Vendedor: Lucía R.')).toBeTruthy()
 })
 
-it('Llamar es un botón redondo de 44 con borde, que marca sin abrir la ficha', async () => {
+it('Llamar es un botón redondo de 44 sin borde, que marca sin abrir la ficha', async () => {
   renderConQuery(<ClientesScreen />)
 
   await screen.findByText('Av. del Valle 89')
   const llamar = screen.getByLabelText('Llamar')
-  expect(estilo(llamar)).toMatchObject({ width: 44, height: 44, borderRadius: 22, borderWidth: 1 })
+  expect(estilo(llamar)).toMatchObject({ width: 44, height: 44, borderRadius: 22 })
   await userEvent.press(llamar)
   expect(Linking.openURL).toHaveBeenCalledWith('tel:1146582291')
   expect(mockPush).not.toHaveBeenCalled()
