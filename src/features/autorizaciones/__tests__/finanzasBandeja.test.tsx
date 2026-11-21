@@ -107,13 +107,13 @@ it('cargando: esqueletos con la forma del hero y de una tarjeta (frame 18)', asy
 it('"Rechazar" de la tarjeta no es rojo: el único botón rojo es el de la hoja de rechazo', async () => {
   pintar([venta('a', 4, 100)])
   const enTarjeta = await screen.findByRole('button', { name: 'Rechazar la venta de Dirección a - Cliente a' })
-  expect(StyleSheet.flatten(enTarjeta.props.style).backgroundColor).not.toBe(themeColors.light.dangerStrong)
+  expect(StyleSheet.flatten(enTarjeta.props.style).backgroundColor).not.toBe(themeColors.light.dangerFill)
 
   await userEvent.press(enTarjeta)
   await userEvent.type(screen.getByLabelText('Motivo del rechazo · obligatorio'), 'Sin margen')
 
   const enHoja = within(screen.getByLabelText('Rechazar venta')).getByRole('button', { name: 'Rechazar' })
-  expect(StyleSheet.flatten(enHoja.props.style).backgroundColor).toBe(themeColors.light.dangerStrong)
+  expect(StyleSheet.flatten(enHoja.props.style).backgroundColor).toBe(themeColors.light.dangerFill)
 })
 
 it('el cuerpo de rechazar no cambia: id, versión y motivo recortado', async () => {

@@ -9,8 +9,12 @@ import { PressableFx } from './PressableFx'
  * destructivo que no compite con nada (cerrar sesión); el sólido queda para confirmar.
  */
 export type ButtonVariant = 'primario' | 'secundario' | 'peligro' | 'peligroContorno' | 'listo'
-/** `xl` es la escala de la consola del chofer: 72 de alto y texto 19 (se lee al sol, con una mano). */
-export type ButtonSize = 'md' | 'xl'
+/**
+ * `md` 48 (el alto de siempre, filas y diálogos), `lg` 64 (el botón principal de ancho completo del pie, spec FWD §4)
+ * y `xl` 72 con texto 19 (la consola del chofer: se lee al sol, con una mano).
+ */
+export type ButtonSize = 'md' | 'lg' | 'xl'
+const ALTO: Record<ButtonSize, number> = { md: 48, lg: 64, xl: 72 }
 
 interface ButtonProps {
   label: string
@@ -37,7 +41,7 @@ function paleta(c: ForwardColors, variant: ButtonVariant, inactivo: boolean) {
   return { fondo: c.primaryBg, texto: c.primaryFg, borde: null, ondas: c.primaryFg }
 }
 
-/** Botón FWD: píldora de 64 de alto (72 en `xl`), texto 800. Presionado: escala 0.95 (PressableFx). */
+/** Botón FWD: píldora de 48 de alto (`lg` 64, `xl` 72), texto 800. Presionado: escala 0.95 (PressableFx). */
 export function Button({
   label,
   onPress,
@@ -72,7 +76,7 @@ export function Button({
       // fondo ni alto. El toque se marca con el ripple nativo.
       android_ripple={inactivo ? undefined : { color: p.ondas }}
       style={{
-        height: xl ? 72 : 64,
+        height: ALTO[size],
         paddingHorizontal: space[6],
         borderRadius: radii.pastilla,
         ...(p.borde ? { borderWidth: 2, borderColor: p.borde } : null),

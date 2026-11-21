@@ -37,7 +37,7 @@ describe.each(TEMAS)('tope de escala de fuente en controles de alto fijo (%s)', 
         <Button label="Entregar" size="xl" onPress={jest.fn()} />
       </>,
     )
-    expect(estilo(screen.getByRole('button', { name: 'Confirmar' })).height).toBe(64)
+    expect(estilo(screen.getByRole('button', { name: 'Confirmar' })).height).toBe(48)
     expect(estilo(screen.getByRole('button', { name: 'Entregar' })).height).toBe(72)
   })
 

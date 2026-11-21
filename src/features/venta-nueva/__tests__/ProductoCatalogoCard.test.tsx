@@ -1,6 +1,7 @@
 import React from 'react'
 import { render, screen, userEvent } from '@testing-library/react-native'
 import { formatImporte } from '@/core/ui/fw'
+import { themeColors } from '@/libs/theme'
 import { ProductoCatalogoCard } from '../components/ProductoCatalogoCard'
 import { cajaDe6, producto } from '../__testing__/producto'
 
@@ -24,7 +25,7 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
 
   it('lo que ya está en el carrito se marca con el fondo y el borde de la marca; lo que no, queda liso', () => {
     const r = pintar(6)
-    expect(screen.getByTestId('producto-p1')).toHaveStyle({ backgroundColor: '#E0F8F3', borderColor: '#00C29E' })
+    expect(screen.getByTestId('producto-p1')).toHaveStyle({ backgroundColor: themeColors.light.brandSoft, borderColor: themeColors.light.brand })
     r.unmount()
     pintar(0)
     expect(screen.getByTestId('producto-p1')).toHaveStyle({ backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' })
@@ -182,7 +183,7 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
     it('va en su propia fila, a todo el ancho, con el relleno de acción y alto de 48', () => {
       padre()
       const boton = screen.getByRole('button', { name: 'Elegir fragancias' })
-      expect(boton).toHaveStyle({ backgroundColor: '#2BD4BD', height: 48 })
+      expect(boton).toHaveStyle({ backgroundColor: themeColors.light.primaryBg, height: 48 })
       // La fila del precio ya no comparte renglón con el botón: el contenedor del botón es columna (estira).
       expect(screen.getByTestId('elegir-fragancias-p1')).toBe(boton)
     })
@@ -197,7 +198,7 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
 
     it('Agregar y Sin stock siguen con su look liso (sin relleno de acción)', () => {
       tarjetaSimple()
-      expect(screen.getByRole('button', { name: /Añadir/ })).not.toHaveStyle({ backgroundColor: '#2BD4BD' })
+      expect(screen.getByRole('button', { name: /Añadir/ })).not.toHaveStyle({ backgroundColor: themeColors.light.primaryBg })
     })
   })
 })

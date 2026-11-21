@@ -40,7 +40,9 @@ describe.each(['light', 'dark'] as const)('pantalla Llegué (%s)', (tema) => {
     await userEvent.press(screen.getByLabelText('No pude entregar'))
     expect(onNo).toHaveBeenCalledTimes(1)
     expect(estilo(screen.getByLabelText('Entregué todo')).height).toBe(72)
-    expect(estilo(screen.getByLabelText('No pude entregar')).borderColor).toBe(themeColors[tema].textSecondary)
+    // Spec FWD §5 (`.btn.ghost`): secundario es píldora `surface` sin borde; el texto va en `text`.
+    expect(estilo(screen.getByLabelText('No pude entregar'))).toMatchObject({ height: 72, backgroundColor: themeColors[tema].surface })
+    expect(estilo(screen.getByLabelText('No pude entregar')).borderColor).toBeUndefined()
   })
 })
 

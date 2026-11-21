@@ -8,7 +8,7 @@ import { PressableFx } from './PressableFx'
 /** Diámetro del botón central: spec FWD (`.tcenter .cb`, 84). */
 export const DIAMETRO_NUEVA_VENTA = 84
 /** Alto de la barra inferior cuando lleva el botón central: botón + aire, todo dentro de sus límites (Android no entrega toques fuera del padre). */
-export const ALTO_BARRA_CON_CENTRO = 96
+export const ALTO_BARRA_CON_CENTRO = 100
 
 /** Token `halo` de la spec §6: anillo que crece de 0.9 a 1.5 y se apaga, 1.8 s, infinito. */
 export const HALO = { desde: 0.9, hasta: 1.5, opacidadInicial: 0.45, duracion: 1800 } as const
