@@ -287,7 +287,7 @@ export default function LoginScreen() {
       >
         <View style={{ gap: space[2] }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
-            {logo(teclado ? 40 : 72)}
+            {logo(teclado ? 40 : 56)}
             <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.tituloPantalla, color: c.text }}>Forward</Text>
           </View>
           {teclado ? null : (
