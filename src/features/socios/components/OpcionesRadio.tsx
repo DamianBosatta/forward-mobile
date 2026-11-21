@@ -1,21 +1,42 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { MarcaRadio } from '@/features/venta-nueva/components/MarcaRadio'
+import { MarcaRadio } from '@/core/ui/fw/MarcaRadio'
 
 /**
  * Grupo de opciones excluyentes (una por renglón, 48 de alto): condición de IVA, condición de pago.
  * `enTarjeta`: las filas con radio y check dentro de una tarjeta, como el paso Cliente de la venta
- * (formulario de cliente, propuesta "Clientes como venta"). Sin él, los renglones con borde de siempre (proveedores).
+ * (formulario de cliente, propuesta "Clientes como venta"). `enPastilla`: opciones como filas en pastilla (mockups proveedores-nuevo*):
+ * 56 de alto, `surfaceAlt`, la elegida en teal con texto `ink` y la marca invertida. Sin ninguno, los renglones de siempre (proveedores).
  */
-export function OpcionesRadio<T extends string>({ titulo, opciones, valor, onChange, enTarjeta = false }: {
-  titulo: string; opciones: { value: T; label: string }[]; valor: T; onChange: (v: T) => void; enTarjeta?: boolean
+export function OpcionesRadio<T extends string>({ titulo, opciones, valor, onChange, enTarjeta = false, enPastilla = false }: {
+  titulo: string; opciones: { value: T; label: string }[]; valor: T; onChange: (v: T) => void; enTarjeta?: boolean; enPastilla?: boolean
 }) {
   const c = useColors()
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={titulo} style={{ gap: space[1] }}>
       <Text style={{ ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: c.text }}>{titulo}</Text>
-      {enTarjeta ? (
+      {enPastilla ? (
+        <View style={{ gap: space[2] }}>
+          {opciones.map(op => {
+            const elegido = op.value === valor
+            return (
+              <Pressable
+                key={op.value}
+                accessibilityRole="radio"
+                accessibilityLabel={op.label}
+                accessibilityState={{ checked: elegido, selected: elegido }}
+                onPress={() => onChange(op.value)}
+                android_ripple={{ color: c.ink }}
+                style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], borderRadius: radii.fila, backgroundColor: elegido ? c.teal : c.surfaceAlt }}
+              >
+                <MarcaRadio elegido={elegido} sobreTeal={elegido} />
+                <Text style={{ ...typeScale.cuerpoDestacado, color: elegido ? c.ink : c.text, flex: 1 }}>{op.label}</Text>
+              </Pressable>
+            )
+          })}
+        </View>
+      ) : enTarjeta ? (
         <View style={{ borderRadius: radii.fila, backgroundColor: c.bg, overflow: 'hidden' }}>
           {opciones.map(op => {
             const elegido = op.value === valor
