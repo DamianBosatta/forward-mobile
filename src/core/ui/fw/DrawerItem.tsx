@@ -13,7 +13,7 @@ export interface DrawerItemProps {
   activa?: boolean
   /** Texto chico a la derecha (p. ej. "Solo ver"). */
   hint?: string
-  /** Fila desplegada de un grupo: va sobre `surface` e ícono de 20. */
+  /** Fila desplegada de un grupo: va sobre `surface` (en el panel oscuro, transparente) e ícono de 20. */
   hija?: boolean
   /** Menú fijo de tablet: panel oscuro, la activa en color de acción y sin ícono. */
   oscuro?: boolean
@@ -31,7 +31,7 @@ export function DrawerItem({ label, icon: Icono, onPress, activa = false, hint, 
   const c = useColors()
   const color = activa ? (oscuro ? c.onAction : c.ink) : oscuro ? c.onPanelOscuroStrong : c.text
   const aux = activa ? color : oscuro ? c.onPanelOscuro : c.textMuted
-  const fondoFila = activa ? (oscuro ? c.action : c.lime) : (fondo ?? (hija ? c.surface : 'transparent'))
+  const fondoFila = activa ? (oscuro ? c.action : c.lime) : (fondo ?? (hija && !oscuro ? c.surface : 'transparent'))
   return (
     <PressableFx
       accessibilityRole="button"
