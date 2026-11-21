@@ -112,6 +112,16 @@ describe('Calendario', () => {
     expect(irAAvisos).toHaveBeenCalledTimes(1)
   })
 
+  it('en teléfono, el selector va dentro del cuerpo, arriba de los controles, y no hay solapas en la barra', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={qc}><CalendarioScreen avisosSinLeer={2} onIrAAvisos={() => {}} /></QueryClientProvider>)
+    await screen.findByText('Rendir la caja de la semana')
+    const selector = screen.getByTestId('vista-calendario-avisos')
+    expect(within(screen.getByTestId('calendario')).getByTestId('vista-calendario-avisos')).toBe(selector)
+    expect(within(selector).getByRole('tab', { name: 'Calendario' }).props.accessibilityState.selected).toBe(true)
+    expect(screen.queryAllByTestId('vista-calendario-avisos')).toHaveLength(1)
+  })
+
   it('ofrece los tres tipos de la web a cualquier usuario y guarda el elegido', async () => {
     mockPost.mockResolvedValue('nuevo-id')
     pintar()

@@ -9,7 +9,7 @@ import { esFallaDeRed } from '@/core/api/errores'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { useBandejaAvisos } from '@/libs/api-client/notificaciones'
 import { AvisoFila } from './AvisoFila'
-import { VistaCalendarioAvisos } from './VistaCalendarioAvisos'
+import { CalendarioAvisosTabs } from '@/core/ui/fw/CalendarioAvisosTabs'
 import { conEncabezadosDeDia, destinoDelAviso, horaDelAviso, type FilaDeBandeja } from './bandeja'
 import type { Aviso } from '@/libs/api-client/notificaciones'
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
@@ -88,7 +88,7 @@ export function BandejaAvisos() {
           <View style={{ gap: space[3] }}>
             <FormContainer style={{ gap: space[3] }}>
               {/* Propuesta Cuenta, frame 8: "Calendario | Avisos N" baja al cuerpo, arriba del filtro. */}
-              <VistaCalendarioAvisos sinLeer={noLeidas} onCalendario={() => router.push('/calendario' as never)} />
+              <CalendarioAvisosTabs actual="avisos" sinLeer={noLeidas} onElegir={() => router.push('/calendario' as never)} />
               <Segmented<Filtro>
                 accessibilityLabel="Filtrar avisos"
                 value={soloNoLeidas ? 'sinLeer' : 'todos'}
