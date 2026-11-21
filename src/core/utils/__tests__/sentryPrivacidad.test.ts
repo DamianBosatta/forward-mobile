@@ -51,6 +51,25 @@ describe('limpiarTransaccion (MS-R5-01)', () => {
   })
 })
 
+describe('limpiarTransaccion: every URL attribute the SDK writes (MS-R6-01)', () => {
+  const URL_CON_QUERY = 'https://api/x/Productos?searchTerm=abc'
+  it('drops the query from url, http.url and url.full and removes http.query and http.fragment', () => {
+    const t = limpiarTransaccion({
+      type: 'transaction',
+      spans: [{
+        data: { url: URL_CON_QUERY, 'http.url': URL_CON_QUERY, 'url.full': URL_CON_QUERY, 'http.query': '?searchTerm=abc', 'http.fragment': '#frag?searchTerm=abc', 'http.method': 'GET' },
+      }],
+    } as never)
+    expect(t.spans![0]!.data).toEqual({
+      url: 'https://api/x/Productos?<redacted>',
+      'http.url': 'https://api/x/Productos?<redacted>',
+      'url.full': 'https://api/x/Productos?<redacted>',
+      'http.method': 'GET',
+    })
+    expect(JSON.stringify(t)).not.toContain('searchTerm=abc')
+  })
+})
+
 describe('vincularUsuarioASentry (OPS-05)', () => {
   const tienda = (inicial: { id: string } | null) => {
     let estado: { user: { id: string; nombre?: string } | null } = { user: inicial }

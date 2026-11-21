@@ -141,6 +141,16 @@ describe('CatalogoVenta (agregar productos)', () => {
     expect(screen.getByTestId('carrito-total')).toHaveTextContent('$ 900,00')
   })
 
+  it('al girar el equipo cambian las columnas sin perder los productos (la lista no se remonta por columnas)', () => {
+    conAncho(600)
+    const { rerender } = render(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={abrirYAgregar} />)
+    expect(screen.getByTestId('producto-p1')).toBeTruthy()
+    conAncho(1194)
+    rerender(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={abrirYAgregar} />)
+    expect(screen.getByTestId('producto-p1')).toBeTruthy()
+    expect(screen.getByTestId('carrito-panel')).toBeTruthy()
+  })
+
   it('tablet horizontal: el carrito queda fijo a la derecha', () => {
     conAncho(1194)
     render(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={abrirYAgregar} />)

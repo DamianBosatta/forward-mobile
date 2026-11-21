@@ -146,7 +146,6 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
         {avisoEscaneo ? <Notice tone="advertencia">{avisoEscaneo}</Notice> : null}
       </View>
       <FlashList
-        key={columnas}
         onLayout={(e) => setAnchoLista(Math.round(e.nativeEvent.layout.width))}
         data={productos}
         numColumns={columnas}

@@ -28,8 +28,8 @@ describe('calcularRentabilidadVenta', () => {
       montoDescuento: 0,
     })
     expect(result).not.toBeNull()
-    expect(result!.margenNeto).toBeCloseTo(400, 5)
-    expect(result!.margenPct).toBeCloseTo(40, 2)
+    expect(result!.margenNeto).toBe(400)
+    expect(result!.margenPct).toBe(40)
   })
 
   // S4-corrected case 2: general discount 20%, no flete
@@ -42,8 +42,8 @@ describe('calcularRentabilidadVenta', () => {
       montoDescuento: 200,
     })
     expect(result).not.toBeNull()
-    expect(result!.margenNeto).toBeCloseTo(200, 5)
-    expect(result!.margenPct).toBeCloseTo(25, 2)
+    expect(result!.margenNeto).toBe(200)
+    expect(result!.margenPct).toBe(25)
   })
 
   // S4-corrected case 3: no discount, flete 200 (flete excluded — not passed in)
@@ -55,8 +55,8 @@ describe('calcularRentabilidadVenta', () => {
       montoDescuento: 0,
     })
     expect(result).not.toBeNull()
-    expect(result!.margenNeto).toBeCloseTo(400, 5)
-    expect(result!.margenPct).toBeCloseTo(40, 2)
+    expect(result!.margenNeto).toBe(400)
+    expect(result!.margenPct).toBe(40)
   })
 
   // S4-corrected case 4: general 20% + flete 200 (flete excluded)
@@ -68,8 +68,8 @@ describe('calcularRentabilidadVenta', () => {
       montoDescuento: 200,
     })
     expect(result).not.toBeNull()
-    expect(result!.margenNeto).toBeCloseTo(200, 5)
-    expect(result!.margenPct).toBeCloseTo(25, 2)
+    expect(result!.margenNeto).toBe(200)
+    expect(result!.margenPct).toBe(25)
   })
 
   // S4-corrected case 5a: empty detalles → null
@@ -130,8 +130,8 @@ describe('calcularRentabilidadVenta', () => {
       montoDescuento: 0,
     })
     expect(result).not.toBeNull()
-    expect(result!.margenNeto).toBeCloseTo(90, 5)
-    expect(result!.margenPct).toBeCloseTo(36, 2)
+    expect(result!.margenNeto).toBe(90)
+    expect(result!.margenPct).toBe(36)
   })
 })
 

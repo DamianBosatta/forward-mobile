@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, BackHandler, Pressable, Text, View } from 'react-native'
+import { Alert, BackHandler, Pressable, Text, View } from 'react-native'
+import { EstadoDeConsulta } from '@/core/ui/estados/EstadoDeConsulta'
 import { useRouter } from 'expo-router'
 import { Plus, Trash2 } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
@@ -222,7 +223,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
               <Notice tone="peligro">{cargada.error}</Notice>
               <Button label="Reintentar" variant="secundario" onPress={cargada.reintentar} />
             </View>
-          ) : <ActivityIndicator color={c.brand} />}
+          ) : <EstadoDeConsulta cargando tituloError="No pudimos cargar la venta" tituloVacio="" />}
         </View>
       </View>
     )

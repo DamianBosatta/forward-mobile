@@ -116,3 +116,9 @@ describe('mutaciones en el teléfono', () => {
     expect(fn).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('REQ-01: default staleTime', () => {
+  it('lists refetch after 10 s by default, not 30 s', () => {
+    expect(crearQueryClient().getDefaultOptions().queries?.staleTime).toBe(10_000)
+  })
+})
