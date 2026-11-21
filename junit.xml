@@ -1,135 +1,705 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="60" failures="0" errors="0" time="18.986">
-  <testsuite name="S4 — Inventory cost-field gating: canViewCost(permissions)" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="1.227" tests="6">
-    <testcase classname="S4 — Inventory cost-field gating: canViewCost(permissions) returns false without CAP_VER_COSTOS — cost field must be hidden" name="S4 — Inventory cost-field gating: canViewCost(permissions) returns false without CAP_VER_COSTOS — cost field must be hidden" time="0.02">
+<testsuites name="jest tests" tests="324" failures="0" errors="0" time="166.672">
+  <testsuite name="Me deben (frames 1 y 2)" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:30:21" time="123.334" tests="8">
+    <testcase classname="Me deben (frames 1 y 2) &quot;Te deben&quot; es un hero con la cifra grande y &quot;N clientes con deuda&quot; debajo" name="Me deben (frames 1 y 2) &quot;Te deben&quot; es un hero con la cifra grande y &quot;N clientes con deuda&quot; debajo" time="1.115">
     </testcase>
-    <testcase classname="S4 — Inventory cost-field gating: canViewCost(permissions) returns false for empty permissions — cost field must be hidden" name="S4 — Inventory cost-field gating: canViewCost(permissions) returns false for empty permissions — cost field must be hidden" time="0.001">
+    <testcase classname="Me deben (frames 1 y 2) cada fila lleva las iniciales de la dirección, el saldo y la flecha porque abre la cuenta" name="Me deben (frames 1 y 2) cada fila lleva las iniciales de la dirección, el saldo y la flecha porque abre la cuenta" time="0.21">
     </testcase>
-    <testcase classname="S4 — Inventory cost-field gating: canViewCost(permissions) returns false for an unknown capability — cost field must be hidden" name="S4 — Inventory cost-field gating: canViewCost(permissions) returns false for an unknown capability — cost field must be hidden" time="0.001">
+    <testcase classname="Me deben (frames 1 y 2) cartera ajena: el candado del saldo lleva el texto &quot;Saldo reservado&quot; y la pastilla de otro vendedor" name="Me deben (frames 1 y 2) cartera ajena: el candado del saldo lleva el texto &quot;Saldo reservado&quot; y la pastilla de otro vendedor" time="0.185">
     </testcase>
-    <testcase classname="S4 — Inventory cost-field gating: canViewCost(permissions) returns true with CAP_VER_COSTOS — cost field must be visible" name="S4 — Inventory cost-field gating: canViewCost(permissions) returns true with CAP_VER_COSTOS — cost field must be visible" time="0">
+    <testcase classname="Me deben (frames 1 y 2) &quot;Transferir&quot; es solo ícono en el teléfono y lleva el texto desde 600 px" name="Me deben (frames 1 y 2) &quot;Transferir&quot; es solo ícono en el teléfono y lleva el texto desde 600 px" time="0.346">
     </testcase>
-    <testcase classname="S4 — Inventory edit-affordance gate behavioral contract MOD_STOCK:update without CAP_VER_COSTOS → access-denied view" name="S4 — Inventory edit-affordance gate behavioral contract MOD_STOCK:update without CAP_VER_COSTOS → access-denied view" time="0">
+    <testcase classname="Me deben (frames 1 y 2) el chip &quot;Con deuda vencida&quot; mide 44 y lleva tilde cuando está activo" name="Me deben (frames 1 y 2) el chip &quot;Con deuda vencida&quot; mide 44 y lleva tilde cuando está activo" time="0.344">
     </testcase>
-    <testcase classname="S4 — Inventory edit-affordance gate behavioral contract CAP_VER_COSTOS → edit form editable with cost field" name="S4 — Inventory edit-affordance gate behavioral contract CAP_VER_COSTOS → edit form editable with cost field" time="0.001">
+    <testcase classname="Me deben (frames 1 y 2) cargando: esqueletos con la forma del hero y de las filas en lugar de la ruedita" name="Me deben (frames 1 y 2) cargando: esqueletos con la forma del hero y de las filas en lugar de la ruedita" time="0.086">
     </testcase>
-  </testsuite>
-  <testsuite name="chipDeFilaStock" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="1.218" tests="5">
-    <testcase classname="chipDeFilaStock sin disponible dice &quot;Sin stock&quot;, aunque el servidor lo marque en alerta" name="chipDeFilaStock sin disponible dice &quot;Sin stock&quot;, aunque el servidor lo marque en alerta" time="0.019">
+    <testcase classname="Debo (frames 6 y 7) &quot;Debés&quot; es un hero con la cifra grande y cada proveedor va en una fila sin flecha (solo lectura)" name="Debo (frames 6 y 7) &quot;Debés&quot; es un hero con la cifra grande y cada proveedor va en una fila sin flecha (solo lectura)" time="0.307">
     </testcase>
-    <testcase classname="chipDeFilaStock en alerta (lo decide el servidor) dice &quot;En alerta&quot;" name="chipDeFilaStock en alerta (lo decide el servidor) dice &quot;En alerta&quot;" time="0.001">
-    </testcase>
-    <testcase classname="chipDeFilaStock con stock de sobra dice &quot;Con stock&quot; (etiqueta de la web)" name="chipDeFilaStock con stock de sobra dice &quot;Con stock&quot; (etiqueta de la web)" time="0">
-    </testcase>
-    <testcase classname="textos del renglón el mínimo solo se escribe si existe" name="textos del renglón el mínimo solo se escribe si existe" time="0.001">
-    </testcase>
-    <testcase classname="textos del renglón reservado y por entrar van siempre, con 0 incluido; la web nunca dice &quot;Virtual&quot; ni &quot;Por ingresar&quot;" name="textos del renglón reservado y por entrar van siempre, con 0 incluido; la web nunca dice &quot;Virtual&quot; ni &quot;Por ingresar&quot;" time="0.001">
+    <testcase classname="Debo (frames 6 y 7) cargando: esqueleto del hero y de una fila" name="Debo (frames 6 y 7) cargando: esqueleto del hero y de una fila" time="0.346">
     </testcase>
   </testsuite>
-  <testsuite name="Stock: el buscador no queda pegado a la barra superior" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="5.344" tests="2">
-    <testcase classname="Stock: el buscador no queda pegado a la barra superior deja aire arriba con el tema dark y conserva el color de la barra" name="Stock: el buscador no queda pegado a la barra superior deja aire arriba con el tema dark y conserva el color de la barra" time="0.157">
+  <testsuite name="formulario de siempre: la caja del depósito de la sesión" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:30:21" time="126.512" tests="7">
+    <testcase classname="formulario de siempre: la caja del depósito de la sesión el efectivo entra a la caja del depósito elegido en Inicio, que se muestra como texto y sin chips de caja" name="formulario de siempre: la caja del depósito de la sesión el efectivo entra a la caja del depósito elegido en Inicio, que se muestra como texto y sin chips de caja" time="0.915">
     </testcase>
-    <testcase classname="Stock: el buscador no queda pegado a la barra superior deja aire arriba con el tema light y conserva el color de la barra" name="Stock: el buscador no queda pegado a la barra superior deja aire arriba con el tema light y conserva el color de la barra" time="0.009">
+    <testcase classname="formulario de siempre: la caja del depósito de la sesión con &quot;Todos&quot; elegido, el efectivo entra a la caja del Central" name="formulario de siempre: la caja del depósito de la sesión con &quot;Todos&quot; elegido, el efectivo entra a la caja del Central" time="0.527">
     </testcase>
-  </testsuite>
-  <testsuite name="Catálogo" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="11.113" tests="10">
-    <testcase classname="Catálogo sin productos: estado &quot;vacío&quot; con la frase de siempre" name="Catálogo sin productos: estado &quot;vacío&quot; con la frase de siempre" time="0.337">
+    <testcase classname="formulario de siempre: la caja del depósito de la sesión sin permiso de ver todos los depósitos, el efectivo entra a la caja del propio aunque haya una elección guardada" name="formulario de siempre: la caja del depósito de la sesión sin permiso de ver todos los depósitos, el efectivo entra a la caja del propio aunque haya una elección guardada" time="0.559">
     </testcase>
-    <testcase classname="Catálogo sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar, que vuelve a pedir" name="Catálogo sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar, que vuelve a pedir" time="0.297">
+    <testcase classname="formulario de siempre: la caja del depósito de la sesión sin caja abierta en el depósito de la sesión avisa y no deja cobrar en efectivo, aunque otro depósito tenga la suya abierta" name="formulario de siempre: la caja del depósito de la sesión sin caja abierta en el depósito de la sesión avisa y no deja cobrar en efectivo, aunque otro depósito tenga la suya abierta" time="0.279">
     </testcase>
-    <testcase classname="Catálogo con lo guardado y sin conexión: la lista sigue y un aviso dice a qué hora se guardó" name="Catálogo con lo guardado y sin conexión: la lista sigue y un aviso dice a qué hora se guardó" time="0.096">
+    <testcase classname="formulario de siempre: la caja del depósito de la sesión una transferencia no pide la caja ni manda depósito" name="formulario de siempre: la caja del depósito de la sesión una transferencia no pide la caja ni manda depósito" time="0.415">
     </testcase>
-    <testcase classname="Catálogo otro error sin datos sigue siendo el aviso de siempre" name="Catálogo otro error sin datos sigue siendo el aviso de siempre" time="0.087">
+    <testcase classname="cobro en pasos: la caja del depósito de la sesión &quot;Medio y monto&quot; muestra la caja del depósito de la sesión como texto y el cobro la manda" name="cobro en pasos: la caja del depósito de la sesión &quot;Medio y monto&quot; muestra la caja del depósito de la sesión como texto y el cobro la manda" time="1.186">
     </testcase>
-    <testcase classname="Stock con cantidades sin renglones: estado &quot;vacío&quot; con la frase de la web (S16)" name="Stock con cantidades sin renglones: estado &quot;vacío&quot; con la frase de la web (S16)" time="0.079">
-    </testcase>
-    <testcase classname="Stock con cantidades sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar, que vuelve a pedir" name="Stock con cantidades sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar, que vuelve a pedir" time="0.279">
-    </testcase>
-    <testcase classname="Stock con cantidades con lo guardado y sin conexión: la lista sigue y un aviso dice a qué hora se guardó" name="Stock con cantidades con lo guardado y sin conexión: la lista sigue y un aviso dice a qué hora se guardó" time="0.143">
-    </testcase>
-    <testcase classname="Stock con cantidades otro error sin datos: estado de error con Reintentar, sin hablar de señal" name="Stock con cantidades otro error sin datos: estado de error con Reintentar, sin hablar de señal" time="0.095">
-    </testcase>
-    <testcase classname="Stock sin cantidades sin productos: estado &quot;vacío&quot; con la frase de siempre" name="Stock sin cantidades sin productos: estado &quot;vacío&quot; con la frase de siempre" time="0.062">
-    </testcase>
-    <testcase classname="Stock sin cantidades sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar" name="Stock sin cantidades sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar" time="0.061">
+    <testcase classname="cobro en pasos: la caja del depósito de la sesión sin caja abierta en el depósito de la sesión no se agrega el efectivo" name="cobro en pasos: la caja del depósito de la sesión sin caja abierta en el depósito de la sesión no se agrega el efectivo" time="0.762">
     </testcase>
   </testsuite>
-  <testsuite name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="12.072" tests="17">
-    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK en la Lista muestra disponible, stock real, mínimo, reservado y por entrar de cada renglón, y los totales que cuenta el servidor" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK en la Lista muestra disponible, stock real, mínimo, reservado y por entrar de cada renglón, y los totales que cuenta el servidor" time="0.528">
+  <testsuite name="Autorizaciones: estados de la bandeja" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:30:21" time="127.177" tests="4">
+    <testcase classname="Autorizaciones: estados de la bandeja sin ventas por autorizar: estado &quot;vacío&quot; con la frase de siempre" name="Autorizaciones: estados de la bandeja sin ventas por autorizar: estado &quot;vacío&quot; con la frase de siempre" time="1.248">
     </testcase>
-    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK pide el stock del depósito del usuario y, si no tiene, el Central" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK pide el stock del depósito del usuario y, si no tiene, el Central" time="0.183">
+    <testcase classname="Autorizaciones: estados de la bandeja sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar, que vuelve a pedir" name="Autorizaciones: estados de la bandeja sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar, que vuelve a pedir" time="0.282">
     </testcase>
-    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK cambiar de depósito pide el stock de ese depósito" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK cambiar de depósito pide el stock de ese depósito" time="0.245">
+    <testcase classname="Autorizaciones: estados de la bandeja con lo guardado y sin conexión: la bandeja sigue y un aviso dice a qué hora se guardó" name="Autorizaciones: estados de la bandeja con lo guardado y sin conexión: la bandeja sigue y un aviso dice a qué hora se guardó" time="0.121">
     </testcase>
-    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK &quot;En alerta&quot; (en la hoja Filtros) pide solo los renglones en alerta" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK &quot;En alerta&quot; (en la hoja Filtros) pide solo los renglones en alerta" time="0.479">
-    </testcase>
-    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK no ofrece ninguna acción de ajuste: es solo consulta" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK no ofrece ninguna acción de ajuste: es solo consulta" time="0.073">
-    </testcase>
-    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK en tablet (600 px o más) la Lista se ve como tabla con Disponible, Stock real, Reservado, Por entrar y Mínimo" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK en tablet (600 px o más) la Lista se ve como tabla con Disponible, Stock real, Reservado, Por entrar y Mínimo" time="0.248">
-    </testcase>
-    <testcase classname="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK muestra solo &quot;Hay stock / Sin stock&quot; y no pide ni dibuja cantidades" name="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK muestra solo &quot;Hay stock / Sin stock&quot; y no pide ni dibuja cantidades" time="0.065">
-    </testcase>
-    <testcase classname="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK la lista sale del catálogo por depósito, no de GET /Productos (que no filtra por depósito)" name="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK la lista sale del catálogo por depósito, no de GET /Productos (que no filtra por depósito)" time="0.063">
-    </testcase>
-    <testcase classname="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK quien ve todos los depósitos no manda depósito: el servidor le devuelve su lista de siempre" name="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK quien ve todos los depósitos no manda depósito: el servidor le devuelve su lista de siempre" time="0.062">
-    </testcase>
-    <testcase classname="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK la lista de stock no trae variantes hijas ni hermanas que no coinciden con la búsqueda" name="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK la lista de stock no trae variantes hijas ni hermanas que no coinciden con la búsqueda" time="0.064">
-    </testcase>
-    <testcase classname="Pantalla Stock separada del catálogo se abre sin selector Catálogo/Stock y con el título Stock" name="Pantalla Stock separada del catálogo se abre sin selector Catálogo/Stock y con el título Stock" time="0.028">
-    </testcase>
-    <testcase classname="Pantalla Stock separada del catálogo viene de la ficha con ?busqueda=: la pantalla abre buscando ese código" name="Pantalla Stock separada del catálogo viene de la ficha con ?busqueda=: la pantalla abre buscando ese código" time="0.025">
-    </testcase>
-    <testcase classname="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) sin ninguna de las dos capacidades no aparece &quot;Todos&quot; y se pide el depósito del usuario" name="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) sin ninguna de las dos capacidades no aparece &quot;Todos&quot; y se pide el depósito del usuario" time="0.061">
-    </testcase>
-    <testcase classname="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con CAP_VER_TODOS_LOS_DEPOSITOS y sin elección abre en el depósito propio (el de la sesión, S8)" name="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con CAP_VER_TODOS_LOS_DEPOSITOS y sin elección abre en el depósito propio (el de la sesión, S8)" time="0.063">
-    </testcase>
-    <testcase classname="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con el depósito de la sesión elegido en Inicio, Stock abre en ese depósito" name="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con el depósito de la sesión elegido en Inicio, Stock abre en ese depósito" time="0.07">
-    </testcase>
-    <testcase classname="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con &quot;Todos&quot; elegido en la sesión abre en &quot;Todos&quot;: no manda DepositoId y muestra el depósito de cada renglón" name="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con &quot;Todos&quot; elegido en la sesión abre en &quot;Todos&quot;: no manda DepositoId y muestra el depósito de cada renglón" time="0.12">
-    </testcase>
-    <testcase classname="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con CAP_VER_STOCK_OTROS_DEPOSITOS abre en el propio y puede pasar a &quot;Todos&quot;" name="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con CAP_VER_STOCK_OTROS_DEPOSITOS abre en el propio y puede pasar a &quot;Todos&quot;" time="0.274">
+    <testcase classname="Autorizaciones: estados de la bandeja otro error sin datos sigue siendo el aviso con el mensaje del servidor" name="Autorizaciones: estados de la bandeja otro error sin datos sigue siendo el aviso con el mensaje del servidor" time="0.085">
     </testcase>
   </testsuite>
-  <testsuite name="Tarjetas y Lista (láminas 1 y 4)" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="18.341" tests="20">
-    <testcase classname="Tarjetas y Lista (láminas 1 y 4) abre en Tarjetas: cada tarjeta con el disponible grande y &quot;disponible&quot; o &quot;En alerta&quot;; totales Artículos y En alerta" name="Tarjetas y Lista (láminas 1 y 4) abre en Tarjetas: cada tarjeta con el disponible grande y &quot;disponible&quot; o &quot;En alerta&quot;; totales Artículos y En alerta" time="0.335">
+  <testsuite name="useSocio" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:32:28" time="1.15" tests="4">
+    <testcase classname="useSocio returns SocioDetailDto with all required fields" name="useSocio returns SocioDetailDto with all required fields" time="0.051">
     </testcase>
-    <testcase classname="Tarjetas y Lista (láminas 1 y 4) Lista: cada renglón con disponible, stock real, mínimo, reservado y por entrar, y los cuatro totales" name="Tarjetas y Lista (láminas 1 y 4) Lista: cada renglón con disponible, stock real, mínimo, reservado y por entrar, y los cuatro totales" time="0.287">
+    <testcase classname="useSocio returns condicionIva, email, telefono and direccion fields" name="useSocio returns condicionIva, email, telefono and direccion fields" time="0.003">
     </testcase>
-    <testcase classname="Tarjetas y Lista (láminas 1 y 4) &quot;Valor del stock a costo&quot; solo en la Lista y solo con CAP_VER_COSTOS, del depósito elegido" name="Tarjetas y Lista (láminas 1 y 4) &quot;Valor del stock a costo&quot; solo en la Lista y solo con CAP_VER_COSTOS, del depósito elegido" time="0.262">
+    <testcase classname="useSocio returns saldo and account fields" name="useSocio returns saldo and account fields" time="0.003">
     </testcase>
-    <testcase classname="Tarjetas y Lista (láminas 1 y 4) sin CAP_VER_COSTOS no hay valor a costo ni se pide el reporte" name="Tarjetas y Lista (láminas 1 y 4) sin CAP_VER_COSTOS no hay valor a costo ni se pide el reporte" time="0.266">
+    <testcase classname="useSocio is disabled when id is empty" name="useSocio is disabled when id is empty" time="0.003">
     </testcase>
-    <testcase classname="Filtros (lámina 3) la hoja muestra Estado de stock, Línea, Marca, &quot;Solo sin peso&quot; y &quot;Solo ocultos&quot; con lo que cuenta el servidor" name="Filtros (lámina 3) la hoja muestra Estado de stock, Línea, Marca, &quot;Solo sin peso&quot; y &quot;Solo ocultos&quot; con lo que cuenta el servidor" time="0.273">
+  </testsuite>
+  <testsuite name="hero &quot;Por autorizar&quot; (frame 16)" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:30:21" time="128.525" tests="8">
+    <testcase classname="hero &quot;Por autorizar&quot; (frame 16) con todas de la misma moneda la cifra es el total; debajo, la cantidad y la más antigua" name="hero &quot;Por autorizar&quot; (frame 16) con todas de la misma moneda la cifra es el total; debajo, la cantidad y la más antigua" time="1.075">
     </testcase>
-    <testcase classname="Filtros (lámina 3) cada filtro viaja al listado y al resumen; el botón cuenta los activos y &quot;Limpiar&quot; los saca" name="Filtros (lámina 3) cada filtro viaja al listado y al resumen; el botón cuenta los activos y &quot;Limpiar&quot; los saca" time="2.135">
+    <testcase classname="hero &quot;Por autorizar&quot; (frame 16) con monedas distintas la cifra es la cantidad" name="hero &quot;Por autorizar&quot; (frame 16) con monedas distintas la cifra es la cantidad" time="0.107">
     </testcase>
-    <testcase classname="Filtros (lámina 3) Línea y Marca son una sola: tocar la elegida la suelta" name="Filtros (lámina 3) Línea y Marca son una sola: tocar la elegida la suelta" time="0.652">
+    <testcase classname="hero &quot;Por autorizar&quot; (frame 16) el hero sigue al filtro elegido" name="hero &quot;Por autorizar&quot; (frame 16) el hero sigue al filtro elegido" time="0.331">
     </testcase>
-    <testcase classname="Línea con sus fragancias (lámina 2) &quot;Ver fragancias&quot; pide las variantes del depósito y muestra cada fragancia con su stock" name="Línea con sus fragancias (lámina 2) &quot;Ver fragancias&quot; pide las variantes del depósito y muestra cada fragancia con su stock" time="0.454">
+    <testcase classname=" filtros de 44 px con tilde en el elegido y &quot;·&quot; antes de la cantidad (frame 16)" name=" filtros de 44 px con tilde en el elegido y &quot;·&quot; antes de la cantidad (frame 16)" time="0.09">
     </testcase>
-    <testcase classname="Línea con sus fragancias (lámina 2) si fallan o no hay: lo dice con los textos de la web" name="Línea con sus fragancias (lámina 2) si fallan o no hay: lo dice con los textos de la web" time="0.255">
+    <testcase classname=" sin modificar Ventas: la línea con candado arriba de los filtros y tarjetas sin botones (frame 17)" name=" sin modificar Ventas: la línea con candado arriba de los filtros y tarjetas sin botones (frame 17)" time="0.053">
     </testcase>
-    <testcase classname="Línea con sus fragancias (lámina 2) sin fragancias generadas" name="Línea con sus fragancias (lámina 2) sin fragancias generadas" time="0.293">
+    <testcase classname=" cargando: esqueletos con la forma del hero y de una tarjeta (frame 18)" name=" cargando: esqueletos con la forma del hero y de una tarjeta (frame 18)" time="0.025">
     </testcase>
-    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) muestra Stock Físico, Disponibilidad y Datos fiscales; sin costos, el aviso de gestión; nunca &quot;Editar producto&quot;" name="Detalle del producto (lámina 5) y movimientos (lámina 6) muestra Stock Físico, Disponibilidad y Datos fiscales; sin costos, el aviso de gestión; nunca &quot;Editar producto&quot;" time="0.275">
+    <testcase classname=" &quot;Rechazar&quot; de la tarjeta no es rojo: el único botón rojo es el de la hoja de rechazo" name=" &quot;Rechazar&quot; de la tarjeta no es rojo: el único botón rojo es el de la hoja de rechazo" time="0.522">
     </testcase>
-    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) con CAP_VER_COSTOS suma Rentabilidad: bandas de precio y costo real" name="Detalle del producto (lámina 5) y movimientos (lámina 6) con CAP_VER_COSTOS suma Rentabilidad: bandas de precio y costo real" time="0.299">
+    <testcase classname=" el cuerpo de rechazar no cambia: id, versión y motivo recortado" name=" el cuerpo de rechazar no cambia: id, versión y motivo recortado" time="0.87">
     </testcase>
-    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) &quot;Ver movimientos&quot; lista tipo, fecha, cantidad con signo, observación y quién" name="Detalle del producto (lámina 5) y movimientos (lámina 6) &quot;Ver movimientos&quot; lista tipo, fecha, cantidad con signo, observación y quién" time="0.516">
+  </testsuite>
+  <testsuite name="textosDeMotivos" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:32:29" time="1.012" tests="6">
+    <testcase classname="textosDeMotivos con detalle del servidor, una frase por ítem y en su orden (un motivo puede repetirse por línea)" name="textosDeMotivos con detalle del servidor, una frase por ítem y en su orden (un motivo puede repetirse por línea)" time="0.025">
     </testcase>
-    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) sin movimientos y con error, los textos de la web" name="Detalle del producto (lámina 5) y movimientos (lámina 6) sin movimientos y con error, los textos de la web" time="0.47">
+    <testcase classname="textosDeMotivos sin detalle (undefined) usa las frases de las banderas" name="textosDeMotivos sin detalle (undefined) usa las frases de las banderas" time="0.002">
     </testcase>
-    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) movimientos con error" name="Detalle del producto (lámina 5) y movimientos (lámina 6) movimientos con error" time="0.478">
+    <testcase classname="textosDeMotivos sin detalle (null) usa las frases de las banderas" name="textosDeMotivos sin detalle (null) usa las frases de las banderas" time="0.001">
     </testcase>
-    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) tocar una fragancia abre el mismo detalle" name="Detalle del producto (lámina 5) y movimientos (lámina 6) tocar una fragancia abre el mismo detalle" time="0.469">
+    <testcase classname="textosDeMotivos sin detalle ([]) usa las frases de las banderas" name="textosDeMotivos sin detalle ([]) usa las frases de las banderas" time="0.001">
     </testcase>
-    <testcase classname="Estados (lámina 8) cargando: esqueletos de tarjeta" name="Estados (lámina 8) cargando: esqueletos de tarjeta" time="0.025">
+    <testcase classname="textosDeMotivos un ítem sin texto no se muestra; si no queda ninguno, vuelve a las banderas" name="textosDeMotivos un ítem sin texto no se muestra; si no queda ninguno, vuelve a las banderas" time="0.001">
     </testcase>
-    <testcase classname="Estados (lámina 8) vacío con solo &quot;En alerta&quot;: el inventario está saludable" name="Estados (lámina 8) vacío con solo &quot;En alerta&quot;: el inventario está saludable" time="0.682">
+    <testcase classname="textosDeMotivos sin banderas ni detalle no hay frases" name="textosDeMotivos sin banderas ni detalle no hay frases" time="0.001">
     </testcase>
-    <testcase classname="Estados (lámina 8) vacío con otros filtros" name="Estados (lámina 8) vacío con otros filtros" time="0.077">
+  </testsuite>
+  <testsuite name="sensiblesBloqueados (misma regla que la web)" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:32:30" time="1.222" tests="7">
+    <testcase classname="sensiblesBloqueados (misma regla que la web) un administrador edita todo" name="sensiblesBloqueados (misma regla que la web) un administrador edita todo" time="0.009">
     </testcase>
-    <testcase classname="Solo ver: ninguna acción cambia datos ni en Tarjetas, ni en Lista, ni en el detalle hay ajustar, transferir, pedir, editar, duplicar, activar ni seleccionar" name="Solo ver: ninguna acción cambia datos ni en Tarjetas, ni en Lista, ni en el detalle hay ajustar, transferir, pedir, editar, duplicar, activar ni seleccionar" time="0.445">
+    <testcase classname="sensiblesBloqueados (misma regla que la web) un no administrador en edición ve bloqueados razón social, CUIT y dirección" name="sensiblesBloqueados (misma regla que la web) un no administrador en edición ve bloqueados razón social, CUIT y dirección" time="0.015">
+    </testcase>
+    <testcase classname="sensiblesBloqueados (misma regla que la web) en el alta no se bloquea nada" name="sensiblesBloqueados (misma regla que la web) en el alta no se bloquea nada" time="0.002">
+    </testcase>
+    <testcase classname="sensiblesBloqueados (misma regla que la web) completar un hueco no requiere trámite: CUIT o dirección vacíos quedan editables" name="sensiblesBloqueados (misma regla que la web) completar un hueco no requiere trámite: CUIT o dirección vacíos quedan editables" time="0.006">
+    </testcase>
+    <testcase classname="puedePedirCambio esAdmin=false puedeEditar=true → true" name="puedePedirCambio esAdmin=false puedeEditar=true → true" time="0.002">
+    </testcase>
+    <testcase classname="puedePedirCambio esAdmin=true puedeEditar=true → false" name="puedePedirCambio esAdmin=true puedeEditar=true → false" time="0.001">
+    </testcase>
+    <testcase classname="puedePedirCambio esAdmin=false puedeEditar=false → false" name="puedePedirCambio esAdmin=false puedeEditar=false → false" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:30:21" time="130.458" tests="9">
+    <testcase classname=" &quot;Por qué espera&quot; es un aviso ámbar con sus viñetas (frame 19)" name=" &quot;Por qué espera&quot; es un aviso ámbar con sus viñetas (frame 19)" time="0.995">
+    </testcase>
+    <testcase classname=" el enlace a la cuenta corriente es una fila con flecha dentro de la tarjeta del cliente (frame 19)" name=" el enlace a la cuenta corriente es una fila con flecha dentro de la tarjeta del cliente (frame 19)" time="0.139">
+    </testcase>
+    <testcase classname=" &quot;Debajo del mínimo&quot;: el precio y el mínimo van en rojo (frame 20)" name=" &quot;Debajo del mínimo&quot;: el precio y el mínimo van en rojo (frame 20)" time="0.093">
+    </testcase>
+    <testcase classname=" las líneas son filas de una tarjeta y los totales van en otra (frame 20)" name=" las líneas son filas de una tarjeta y los totales van en otra (frame 20)" time="0.086">
+    </testcase>
+    <testcase classname=" hoja Autorizar: los cambios del pedido van en una tarjeta gris (frame 21)" name=" hoja Autorizar: los cambios del pedido van en una tarjeta gris (frame 21)" time="0.404">
+    </testcase>
+    <testcase classname=" hoja Rechazar: &quot;Rechazar&quot; es el único botón rojo; el del pie del detalle no (frame 22)" name=" hoja Rechazar: &quot;Rechazar&quot; es el único botón rojo; el del pie del detalle no (frame 22)" time="0.786">
+    </testcase>
+    <testcase classname=" cargando: esqueletos con la forma de las tarjetas en lugar de la ruedita (frame 23)" name=" cargando: esqueletos con la forma de las tarjetas en lugar de la ruedita (frame 23)" time="0.046">
+    </testcase>
+    <testcase classname=" los cuerpos de autorizar con ajuste y de rechazar no cambian" name=" los cuerpos de autorizar con ajuste y de rechazar no cambian" time="1.375">
+    </testcase>
+    <testcase classname=" el cuerpo de rechazar no cambia" name=" el cuerpo de rechazar no cambia" time="0.897">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:32:28" time="3.918" tests="6">
+    <testcase classname=" une las dos cuentas del más nuevo al más viejo y marca la cuenta de cada movimiento" name=" une las dos cuentas del más nuevo al más viejo y marca la cuenta de cada movimiento" time="0.005">
+    </testcase>
+    <testcase classname=" no muestra nada más viejo que lo último cargado de una cuenta que todavía tiene páginas" name=" no muestra nada más viejo que lo último cargado de una cuenta que todavía tiene páginas" time="0.002">
+    </testcase>
+    <testcase classname="texto de vencimiento e imputación el vencimiento es el día del servidor, sin correrse por el huso" name="texto de vencimiento e imputación el vencimiento es el día del servidor, sin correrse por el huso" time="0.003">
+    </testcase>
+    <testcase classname="texto de vencimiento e imputación sin vencimiento (o con uno ilegible) no hay texto" name="texto de vencimiento e imputación sin vencimiento (o con uno ilegible) no hay texto" time="0.001">
+    </testcase>
+    <testcase classname="texto de vencimiento e imputación lista los comprobantes a los que se imputó y resume desde el cuarto" name="texto de vencimiento e imputación lista los comprobantes a los que se imputó y resume desde el cuarto" time="0.001">
+    </testcase>
+    <testcase classname="texto de vencimiento e imputación el concepto suma el comprobante salvo que ya lo diga" name="texto de vencimiento e imputación el concepto suma el comprobante salvo que ya lo diga" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="chipAntiguedadDeuda" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:32:32" time="0.744" tests="3">
+    <testcase classname="chipAntiguedadDeuda más de 30 días: vencida, en peligro" name="chipAntiguedadDeuda más de 30 días: vencida, en peligro" time="0.009">
+    </testcase>
+    <testcase classname="chipAntiguedadDeuda hasta 30 días: deuda, en aviso; 1 en singular" name="chipAntiguedadDeuda hasta 30 días: deuda, en aviso; 1 en singular" time="0.001">
+    </testcase>
+    <testcase classname="chipAntiguedadDeuda 0, null o sin dato: sin chip" name="chipAntiguedadDeuda 0, null o sin dato: sin chip" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:30:21" time="131.453" tests="22">
+    <testcase classname=" lista la cartera por dirección y en el teléfono tocar un cliente abre su cuenta" name=" lista la cartera por dirección y en el teléfono tocar un cliente abre su cuenta" time="1.268">
+    </testcase>
+    <testcase classname=" en tablet horizontal la cuenta se abre al costado, sin salir de la lista" name=" en tablet horizontal la cuenta se abre al costado, sin salir de la lista" time="4.434">
+    </testcase>
+    <testcase classname="R10 Cuentas corrientes: resumen y transferencia Te deben muestra el saldo total que da el servidor" name="R10 Cuentas corrientes: resumen y transferencia Te deben muestra el saldo total que da el servidor" time="0.173">
+    </testcase>
+    <testcase classname="R10 Cuentas corrientes: resumen y transferencia sin saldo total no hay resumen: no se suma en el teléfono" name="R10 Cuentas corrientes: resumen y transferencia sin saldo total no hay resumen: no se suma en el teléfono" time="0.13">
+    </testcase>
+    <testcase classname="R10 Cuentas corrientes: resumen y transferencia Transferencia, con MOD_PAGOS crear y leer, abre el movimiento entre cuentas propias" name="R10 Cuentas corrientes: resumen y transferencia Transferencia, con MOD_PAGOS crear y leer, abre el movimiento entre cuentas propias" time="0.294">
+    </testcase>
+    <testcase classname="R10 Cuentas corrientes: resumen y transferencia Transferencia sin permiso se ve deshabilitada, con el motivo, y no navega" name="R10 Cuentas corrientes: resumen y transferencia Transferencia sin permiso se ve deshabilitada, con el motivo, y no navega" time="0.114">
+    </testcase>
+    <testcase classname="R10 Cuentas corrientes: resumen y transferencia el filtro &quot;Con deuda vencida&quot; lo aplica el servidor" name="R10 Cuentas corrientes: resumen y transferencia el filtro &quot;Con deuda vencida&quot; lo aplica el servidor" time="0.366">
+    </testcase>
+    <testcase classname="R10 Cuentas corrientes: resumen y transferencia &quot;Me deben&quot; pide al servidor solo los clientes activos con deuda" name="R10 Cuentas corrientes: resumen y transferencia &quot;Me deben&quot; pide al servidor solo los clientes activos con deuda" time="0.153">
+    </testcase>
+    <testcase classname="R10 Cuentas corrientes: resumen y transferencia &quot;Me deben&quot; sin deudores dice que nadie te debe" name="R10 Cuentas corrientes: resumen y transferencia &quot;Me deben&quot; sin deudores dice que nadie te debe" time="0.128">
+    </testcase>
+    <testcase classname="R10 Cuentas corrientes: resumen y transferencia al cargar un cheque la lista ofrece toda la cartera, con o sin deuda" name="R10 Cuentas corrientes: resumen y transferencia al cargar un cheque la lista ofrece toda la cartera, con o sin deuda" time="0.121">
+    </testcase>
+    <testcase classname="TM9 cobro en el panel (tablet) Registrar cobro abre el cobro al costado, sin salir de la lista, y Cancelar vuelve a la cuenta" name="TM9 cobro en el panel (tablet) Registrar cobro abre el cobro al costado, sin salir de la lista, y Cancelar vuelve a la cuenta" time="1.077">
+    </testcase>
+    <testcase classname=" en el teléfono la barra de abajo sigue a la vista en Cobros (lámina CalleMiDia)" name=" en el teléfono la barra de abajo sigue a la vista en Cobros (lámina CalleMiDia)" time="0.143">
+    </testcase>
+    <testcase classname="Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read) con MOD_PAGOS:Read el lado &quot;Debo&quot; lista las deudas con proveedores y el total del servidor" name="Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read) con MOD_PAGOS:Read el lado &quot;Debo&quot; lista las deudas con proveedores y el total del servidor" time="0.398">
+    </testcase>
+    <testcase classname="Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read) cada proveedor dice la antigüedad de su deuda más vieja: vencida (&gt;30) o deuda de N días; sin dato, sin chip" name="Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read) cada proveedor dice la antigüedad de su deuda más vieja: vencida (&gt;30) o deuda de N días; sin dato, sin chip" time="0.356">
+    </testcase>
+    <testcase classname="Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read) sin proveedores con deuda dice que no se le debe a nadie" name="Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read) sin proveedores con deuda dice que no se le debe a nadie" time="0.316">
+    </testcase>
+    <testcase classname="Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read) si el servidor falla muestra el error, no una lista vacía" name="Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read) si el servidor falla muestra el error, no una lista vacía" time="0.294">
+    </testcase>
+    <testcase classname="Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read) sin MOD_PAGOS:Read avisa y no pide las deudas" name="Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read) sin MOD_PAGOS:Read avisa y no pide las deudas" time="0.3">
+    </testcase>
+    <testcase classname="Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read) Te deben suma la cantidad de clientes con deuda del resumen" name="Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read) Te deben suma la cantidad de clientes con deuda del resumen" time="0.107">
+    </testcase>
+    <testcase classname="Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read) sin MOD_PAGOS:Read Te deben no muestra clientes con deuda" name="Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read) sin MOD_PAGOS:Read Te deben no muestra clientes con deuda" time="0.108">
+    </testcase>
+    <testcase classname=" llegando desde Tesorería con &quot;Cargar un cheque&quot;, tocar un cliente abre su cobro con el cheque como medio" name=" llegando desde Tesorería con &quot;Cargar un cheque&quot;, tocar un cliente abre su cobro con el cheque como medio" time="0.294">
+    </testcase>
+    <testcase classname="Me deben: antigüedad de la deuda más vieja un cliente con deuda de 49 días muestra &quot;Vencida · 49 días&quot; y la dice en la etiqueta de la fila" name="Me deben: antigüedad de la deuda más vieja un cliente con deuda de 49 días muestra &quot;Vencida · 49 días&quot; y la dice en la etiqueta de la fila" time="0.126">
+    </testcase>
+    <testcase classname="Me deben: antigüedad de la deuda más vieja un cliente sin días de deuda (null) no muestra chip" name="Me deben: antigüedad de la deuda más vieja un cliente sin días de deuda (null) no muestra chip" time="0.113">
+    </testcase>
+  </testsuite>
+  <testsuite name="rangoDelPeriodo (día de negocio argentino)" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:32:31" time="2.109" tests="6">
+    <testcase classname="rangoDelPeriodo (día de negocio argentino) mes actual: del 1 a hoy" name="rangoDelPeriodo (día de negocio argentino) mes actual: del 1 a hoy" time="0.009">
+    </testcase>
+    <testcase classname="rangoDelPeriodo (día de negocio argentino) mes anterior: del 1 al último día" name="rangoDelPeriodo (día de negocio argentino) mes anterior: del 1 al último día" time="0.001">
+    </testcase>
+    <testcase classname="rangoDelPeriodo (día de negocio argentino) mes anterior en enero cruza el año" name="rangoDelPeriodo (día de negocio argentino) mes anterior en enero cruza el año" time="0.001">
+    </testcase>
+    <testcase classname="rangoDelPeriodo (día de negocio argentino) mes anterior de marzo respeta febrero" name="rangoDelPeriodo (día de negocio argentino) mes anterior de marzo respeta febrero" time="0.001">
+    </testcase>
+    <testcase classname="rangoDelPeriodo (día de negocio argentino) últimos 90 días: hoy y los 89 anteriores" name="rangoDelPeriodo (día de negocio argentino) últimos 90 días: hoy y los 89 anteriores" time="0.001">
+    </testcase>
+    <testcase classname="rangoDelPeriodo (día de negocio argentino) a las 01:00 UTC todavía es el día anterior en Argentina" name="rangoDelPeriodo (día de negocio argentino) a las 01:00 UTC todavía es el día anterior en Argentina" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="cuerpos del formulario de siempre" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:30:21" time="132.337" tests="12">
+    <testcase classname="cuerpos del formulario de siempre efectivo con la caja del depósito de la sesión abierta" name="cuerpos del formulario de siempre efectivo con la caja del depósito de la sesión abierta" time="2.14">
+    </testcase>
+    <testcase classname="cuerpos del formulario de siempre transferencia con cuenta, foto y referencia" name="cuerpos del formulario de siempre transferencia con cuenta, foto y referencia" time="1.128">
+    </testcase>
+    <testcase classname="cuerpos del formulario de siempre transferencia sin cuenta elegida, con centavos" name="cuerpos del formulario de siempre transferencia sin cuenta elegida, con centavos" time="0.502">
+    </testcase>
+    <testcase classname="cuerpos del formulario de siempre cheque con sus datos y su foto" name="cuerpos del formulario de siempre cheque con sus datos y su foto" time="0.692">
+    </testcase>
+    <testcase classname="cuerpos del formulario de siempre combinado: efectivo y transferencia" name="cuerpos del formulario de siempre combinado: efectivo y transferencia" time="0.977">
+    </testcase>
+    <testcase classname="cuerpos del formulario de siempre combinado: transferencia con cuenta y efectivo" name="cuerpos del formulario de siempre combinado: transferencia con cuenta y efectivo" time="1.41">
+    </testcase>
+    <testcase classname="cuerpos del formulario de siempre imputación manual a dos comprobantes" name="cuerpos del formulario de siempre imputación manual a dos comprobantes" time="1.288">
+    </testcase>
+    <testcase classname="idempotencia del formulario de siempre la misma clave al reintentar y tras editar; otra tras &quot;Registrar otro cobro&quot;" name="idempotencia del formulario de siempre la misma clave al reintentar y tras editar; otra tras &quot;Registrar otro cobro&quot;" time="1.738">
+    </testcase>
+    <testcase classname="idempotencia del formulario de siempre un 200 repetido avisa que el cobro ya estaba registrado" name="idempotencia del formulario de siempre un 200 repetido avisa que el cobro ya estaba registrado" time="0.574">
+    </testcase>
+    <testcase classname="idempotencia del formulario de siempre un 409 con otro cuerpo avisa que quedó con los datos de antes" name="idempotencia del formulario de siempre un 409 con otro cuerpo avisa que quedó con los datos de antes" time="0.578">
+    </testcase>
+    <testcase classname="idempotencia del formulario de siempre un 409 de otro cliente muestra el error y el siguiente intento usa otra clave" name="idempotencia del formulario de siempre un 409 de otro cliente muestra el error y el siguiente intento usa otra clave" time="0.802">
+    </testcase>
+    <testcase classname="idempotencia del formulario de siempre sin la caja del depósito de la sesión abierta no manda el efectivo y lo avisa" name="idempotencia del formulario de siempre sin la caja del depósito de la sesión abierta no manda el efectivo y lo avisa" time="0.374">
+    </testcase>
+  </testsuite>
+  <testsuite name="descuento adicional al autorizar: formato y rango" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:32:33" time="0.902" tests="16">
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;&quot; vale null, sin error" name="descuento adicional al autorizar: formato y rango &quot;&quot; vale null, sin error" time="0.007">
+    </testcase>
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;   &quot; vale null, sin error" name="descuento adicional al autorizar: formato y rango &quot;   &quot; vale null, sin error" time="0.001">
+    </testcase>
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;0&quot; vale null, sin error" name="descuento adicional al autorizar: formato y rango &quot;0&quot; vale null, sin error" time="0.001">
+    </testcase>
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;0,00&quot; vale null, sin error" name="descuento adicional al autorizar: formato y rango &quot;0,00&quot; vale null, sin error" time="0.001">
+    </testcase>
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;100&quot; vale 100, sin error" name="descuento adicional al autorizar: formato y rango &quot;100&quot; vale 100, sin error" time="0">
+    </testcase>
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;100,00&quot; vale 100, sin error" name="descuento adicional al autorizar: formato y rango &quot;100,00&quot; vale 100, sin error" time="0.001">
+    </testcase>
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;5.&quot; vale 5, sin error" name="descuento adicional al autorizar: formato y rango &quot;5.&quot; vale 5, sin error" time="0">
+    </testcase>
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;,5&quot; vale 0.5, sin error" name="descuento adicional al autorizar: formato y rango &quot;,5&quot; vale 0.5, sin error" time="0.001">
+    </testcase>
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;.5&quot; vale 0.5, sin error" name="descuento adicional al autorizar: formato y rango &quot;.5&quot; vale 0.5, sin error" time="0">
+    </testcase>
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;2,25&quot; vale 2.25, sin error" name="descuento adicional al autorizar: formato y rango &quot;2,25&quot; vale 2.25, sin error" time="0.001">
+    </testcase>
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;100,01&quot; no vale: entre 0 y 100" name="descuento adicional al autorizar: formato y rango &quot;100,01&quot; no vale: entre 0 y 100" time="0.001">
+    </testcase>
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;1,234&quot; no vale: hasta 2 decimales" name="descuento adicional al autorizar: formato y rango &quot;1,234&quot; no vale: hasta 2 decimales" time="0.001">
+    </testcase>
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;,&quot; no vale: Escribí un número" name="descuento adicional al autorizar: formato y rango &quot;,&quot; no vale: Escribí un número" time="0.001">
+    </testcase>
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;.&quot; no vale: Escribí un número" name="descuento adicional al autorizar: formato y rango &quot;.&quot; no vale: Escribí un número" time="0.001">
+    </testcase>
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;-5&quot; no vale: Escribí un número" name="descuento adicional al autorizar: formato y rango &quot;-5&quot; no vale: Escribí un número" time="0">
+    </testcase>
+    <testcase classname="descuento adicional al autorizar: formato y rango &quot;5,5,5&quot; no vale: Escribí un número" name="descuento adicional al autorizar: formato y rango &quot;5,5,5&quot; no vale: Escribí un número" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="Autorizaciones: la bandeja" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:30:21" time="132.694" tests="17">
+    <testcase classname="Autorizaciones: la bandeja muestra cada venta con todos sus motivos, los filtros con su cantidad y el total de la lista" name="Autorizaciones: la bandeja muestra cada venta con todos sus motivos, los filtros con su cantidad y el total de la lista" time="1.295">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja con monedas distintas no suma un total" name="Autorizaciones: la bandeja con monedas distintas no suma un total" time="0.091">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja sin CAP_AUTORIZAR_VENTA no pide la bandeja y lo explica" name="Autorizaciones: la bandeja sin CAP_AUTORIZAR_VENTA no pide la bandeja y lo explica" time="0.022">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja si el servidor rechaza, muestra su mensaje" name="Autorizaciones: la bandeja si el servidor rechaza, muestra su mensaje" time="0.085">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja rechazar pide el motivo y lo manda con la versión vigente de la venta" name="Autorizaciones: la bandeja rechazar pide el motivo y lo manda con la versión vigente de la venta" time="0.791">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja con la capacidad pero Ventas solo en lectura ve la bandeja y puede abrir la venta, sin Autorizar ni Rechazar" name="Autorizaciones: la bandeja con la capacidad pero Ventas solo en lectura ve la bandeja y puede abrir la venta, sin Autorizar ni Rechazar" time="0.095">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja si la venta cambió desde que se cargó la lista, no decide y lo avisa" name="Autorizaciones: la bandeja si la venta cambió desde que se cargó la lista, no decide y lo avisa" time="0.524">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja si la venta cambió, vuelve a pedir la bandeja, cierra la hoja y avisa (no queda la tarjeta vieja fallando)" name="Autorizaciones: la bandeja si la venta cambió, vuelve a pedir la bandeja, cierra la hoja y avisa (no queda la tarjeta vieja fallando)" time="0.49">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja un 409 real del servidor cierra la hoja y avisa; el aviso se va al abrir otra venta" name="Autorizaciones: la bandeja un 409 real del servidor cierra la hoja y avisa; el aviso se va al abrir otra venta" time="0.673">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja autorizar sin razón la manda en null; con margen en amarillo la tarjeta lleva a revisar" name="Autorizaciones: la bandeja autorizar sin razón la manda en null; con margen en amarillo la tarjeta lleva a revisar" time="0.683">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja la autorización rápida de la bandeja no edita líneas: el pedido no lleva ajustes" name="Autorizaciones: la bandeja la autorización rápida de la bandeja no edita líneas: el pedido no lleva ajustes" time="0.479">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja en teléfono, tocar la tarjeta abre el detalle" name="Autorizaciones: la bandeja en teléfono, tocar la tarjeta abre el detalle" time="0.254">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja en tablet horizontal el detalle se abre al lado, sin salir de la lista" name="Autorizaciones: la bandeja en tablet horizontal el detalle se abre al lado, sin salir de la lista" time="0.26">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja con el servidor de forward-system #884 (número, cliente por partes y versión) la tarjeta lleva el número con el vendedor, la dirección como título y el nombre aparte" name="Autorizaciones: la bandeja con el servidor de forward-system #884 (número, cliente por partes y versión) la tarjeta lleva el número con el vendedor, la dirección como título y el nombre aparte" time="0.078">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja con el servidor de forward-system #884 (número, cliente por partes y versión) sin dirección el título es el nombre; fantasía igual a la razón social no se repite" name="Autorizaciones: la bandeja con el servidor de forward-system #884 (número, cliente por partes y versión) sin dirección el título es el nombre; fantasía igual a la razón social no se repite" time="0.081">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja con el servidor de forward-system #884 (número, cliente por partes y versión) autorizar y rechazar usan la versión de la bandeja, sin pedir el detalle" name="Autorizaciones: la bandeja con el servidor de forward-system #884 (número, cliente por partes y versión) autorizar y rechazar usan la versión de la bandeja, sin pedir el detalle" time="1.191">
+    </testcase>
+    <testcase classname="Autorizaciones: la bandeja con el servidor de forward-system #884 (número, cliente por partes y versión) con un servidor anterior la tarjeta queda como antes: vendedor solo y el nombre compuesto" name="Autorizaciones: la bandeja con el servidor de forward-system #884 (número, cliente por partes y versión) con un servidor anterior la tarjeta queda como antes: vendedor solo y el nombre compuesto" time="0.077">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:30:21" time="135.106" tests="38">
+    <testcase classname=" muestra el saldo con el desglose TST / Normal que da el servidor" name=" muestra el saldo con el desglose TST / Normal que da el servidor" time="3.439">
+    </testcase>
+    <testcase classname=" los movimientos de las dos cuentas van juntos y cada uno dice en qué cuenta está" name=" los movimientos de las dos cuentas van juntos y cada uno dice en qué cuenta está" time="0.194">
+    </testcase>
+    <testcase classname=" con el filtro TST solo quedan los movimientos de esa cuenta" name=" con el filtro TST solo quedan los movimientos de esa cuenta" time="0.381">
+    </testcase>
+    <testcase classname=" Ver movimientos anteriores pide la página siguiente al servidor" name=" Ver movimientos anteriores pide la página siguiente al servidor" time="0.356">
+    </testcase>
+    <testcase classname=" si el servidor no deja ver la cuenta, no se pide ni el estado ni los movimientos" name=" si el servidor no deja ver la cuenta, no se pide ni el estado ni los movimientos" time="0.059">
+    </testcase>
+    <testcase classname=" si el servidor rechaza los movimientos, se ve su mensaje" name=" si el servidor rechaza los movimientos, se ve su mensaje" time="0.14">
+    </testcase>
+    <testcase classname=" Registrar cobro con permiso para crear pagos abre el cobro de este cliente; sin él se ve deshabilitado con el motivo (como la web)" name=" Registrar cobro con permiso para crear pagos abre el cobro de este cliente; sin él se ve deshabilitado con el motivo (como la web)" time="0.492">
+    </testcase>
+    <testcase classname=" Registrar cobro queda deshabilitado, con el motivo, sin MOD_PAGOS:Read o sin MOD_PAGOS:Create: la pantalla de cobro pide medios y cajas" name=" Registrar cobro queda deshabilitado, con el motivo, sin MOD_PAGOS:Read o sin MOD_PAGOS:Create: la pantalla de cobro pide medios y cajas" time="0.336">
+    </testcase>
+    <testcase classname=" con permiso de cobro no se muestra ningún motivo" name=" con permiso de cobro no se muestra ningún motivo" time="0.155">
+    </testcase>
+    <testcase classname="vencido y disponible (servidor con PR #882) lo vencido en las dos cuentas se ve con el importe de cada una, y el disponible" name="vencido y disponible (servidor con PR #882) lo vencido en las dos cuentas se ve con el importe de cada una, y el disponible" time="0.21">
+    </testcase>
+    <testcase classname="vencido y disponible (servidor con PR #882) con un servidor anterior, la cuenta se ve como antes: sin vencido ni disponible" name="vencido y disponible (servidor con PR #882) con un servidor anterior, la cuenta se ve como antes: sin vencido ni disponible" time="0.145">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) pide los movimientos por el socio, una sola vez, y no los pide cuenta por cuenta" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) pide los movimientos por el socio, una sola vez, y no los pide cuenta por cuenta" time="0.126">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) cada movimiento muestra la fecha, la cuenta, el concepto con su comprobante y el importe" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) cada movimiento muestra la fecha, la cuenta, el concepto con su comprobante y el importe" time="0.128">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) una deuda impaga dice cuándo vence y un cobro dice a qué se imputó" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) una deuda impaga dice cuándo vence y un cobro dice a qué se imputó" time="0.13">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) con más de tres comprobantes, resume los que faltan" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) con más de tres comprobantes, resume los que faltan" time="0.12">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) lo que no vence ni se imputó no muestra esas líneas" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) lo que no vence ni se imputó no muestra esas líneas" time="0.158">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) al llegar cerca del final de la lista pide la página siguiente, una sola vez" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) al llegar cerca del final de la lista pide la página siguiente, una sola vez" time="0.221">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) en la última página, desplazarse no pide nada más" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) en la última página, desplazarse no pide nada más" time="0.141">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) Ver movimientos anteriores sigue pidiendo la página siguiente" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) Ver movimientos anteriores sigue pidiendo la página siguiente" time="0.341">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) el filtro de cuenta se lo pide al servidor, que pagina solo esa cuenta" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) el filtro de cuenta se lo pide al servidor, que pagina solo esa cuenta" time="0.35">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) si la primera página falla con un 500, la pantalla cae al camino de antes y no vuelve a probar el endpoint nuevo" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) si la primera página falla con un 500, la pantalla cae al camino de antes y no vuelve a probar el endpoint nuevo" time="0.561">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) si la primera página falla por la red, la pantalla cae al camino de antes" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) si la primera página falla por la red, la pantalla cae al camino de antes" time="0.14">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) un 403 del endpoint nuevo también cae al camino de antes, que muestra el motivo si lo rechaza igual" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) un 403 del endpoint nuevo también cae al camino de antes, que muestra el motivo si lo rechaza igual" time="0.137">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) cuando falla la página siguiente se conserva la lista, se ofrece Reintentar y el desplazamiento no insiste" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) cuando falla la página siguiente se conserva la lista, se ofrece Reintentar y el desplazamiento no insiste" time="0.173">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) cuando falla la página siguiente Reintentar vuelve a pedir la página y, si anda, la suma" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) cuando falla la página siguiente Reintentar vuelve a pedir la página y, si anda, la suma" time="0.391">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) un movimiento repetido por el corrimiento del offset aparece una sola vez" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) un movimiento repetido por el corrimiento del offset aparece una sola vez" time="0.342">
+    </testcase>
+    <testcase classname="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) si el servidor no deja ver la cuenta, no se pide el endpoint nuevo" name="movimientos de las dos cuentas en un solo endpoint (servidor con PR #905) si el servidor no deja ver la cuenta, no se pide el endpoint nuevo" time="0.071">
+    </testcase>
+    <testcase classname="servidor anterior, sin el endpoint de movimientos del socio (404) la pantalla queda como antes: las dos cuentas por separado, sin vencimiento ni imputación" name="servidor anterior, sin el endpoint de movimientos del socio (404) la pantalla queda como antes: las dos cuentas por separado, sin vencimiento ni imputación" time="0.155">
+    </testcase>
+    <testcase classname="servidor anterior, sin el endpoint de movimientos del socio (404) el 404 se espera: se pide como esperado y una sola vez, aunque se cambie de cuenta" name="servidor anterior, sin el endpoint de movimientos del socio (404) el 404 se espera: se pide como esperado y una sola vez, aunque se cambie de cuenta" time="0.551">
+    </testcase>
+    <testcase classname="servidor anterior, sin el endpoint de movimientos del socio (404) una respuesta que no es una página tampoco rompe la pantalla: se usa el camino de antes" name="servidor anterior, sin el endpoint de movimientos del socio (404) una respuesta que no es una página tampoco rompe la pantalla: se usa el camino de antes" time="0.154">
+    </testcase>
+    <testcase classname="Filtro por período de los movimientos sin elegir período no manda fechas" name="Filtro por período de los movimientos sin elegir período no manda fechas" time="0.146">
+    </testcase>
+    <testcase classname="Filtro por período de los movimientos &quot;Mes anterior&quot; manda desde/hasta del mes pasado al endpoint del socio" name="Filtro por período de los movimientos &quot;Mes anterior&quot; manda desde/hasta del mes pasado al endpoint del socio" time="0.316">
+    </testcase>
+    <testcase classname="Filtro por período de los movimientos &quot;Últimos 90 días&quot; manda el rango y tocarlo de nuevo vuelve a todo el historial" name="Filtro por período de los movimientos &quot;Últimos 90 días&quot; manda el rango y tocarlo de nuevo vuelve a todo el historial" time="0.573">
+    </testcase>
+    <testcase classname="Filtro por período de los movimientos con un servidor sin el endpoint nuevo, las cuentas se piden con fechaDesde/fechaHasta" name="Filtro por período de los movimientos con un servidor sin el endpoint nuevo, las cuentas se piden con fechaDesde/fechaHasta" time="0.357">
+    </testcase>
+    <testcase classname="como el carrito de la venta (propuesta &quot;Clientes como venta&quot;, frames 13 y 14) el saldo va en el hero oscuro y TST y Normal en dos tarjetas" name="como el carrito de la venta (propuesta &quot;Clientes como venta&quot;, frames 13 y 14) el saldo va en el hero oscuro y TST y Normal en dos tarjetas" time="0.093">
+    </testcase>
+    <testcase classname="como el carrito de la venta (propuesta &quot;Clientes como venta&quot;, frames 13 y 14) cada movimiento es una línea de una tarjeta: fecha en pastilla y el detalle en una sola línea" name="como el carrito de la venta (propuesta &quot;Clientes como venta&quot;, frames 13 y 14) cada movimiento es una línea de una tarjeta: fecha en pastilla y el detalle en una sola línea" time="0.127">
+    </testcase>
+    <testcase classname="como el carrito de la venta (propuesta &quot;Clientes como venta&quot;, frames 13 y 14) el pie copia el del carrito: el saldo a la izquierda y &quot;Cobrar&quot; como botón principal" name="como el carrito de la venta (propuesta &quot;Clientes como venta&quot;, frames 13 y 14) el pie copia el del carrito: el saldo a la izquierda y &quot;Cobrar&quot; como botón principal" time="0.095">
+    </testcase>
+    <testcase classname="como el carrito de la venta (propuesta &quot;Clientes como venta&quot;, frames 13 y 14) mientras carga el cliente se ven esqueletos, no la ruedita" name="como el carrito de la venta (propuesta &quot;Clientes como venta&quot;, frames 13 y 14) mientras carga el cliente se ven esqueletos, no la ruedita" time="0.006">
+    </testcase>
+  </testsuite>
+  <testsuite name="pasos del pago a proveedor" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:32:33" time="3.831" tests="2">
+    <testcase classname="pasos del pago a proveedor los nombres no son más largos que los del cobro, que entran en 360 de ancho" name="pasos del pago a proveedor los nombres no son más largos que los del cobro, que entran en 360 de ancho" time="0.004">
+    </testcase>
+    <testcase classname="pasos del pago a proveedor el cobro sigue con sus nombres" name="pasos del pago a proveedor el cobro sigue con sus nombres" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="pasos del cobro" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:30:21" time="137.049" tests="11">
+    <testcase classname="pasos del cobro con el cliente ya elegido salta el paso 1 y arranca en &quot;Qué se cobra&quot;" name="pasos del cobro con el cliente ya elegido salta el paso 1 y arranca en &quot;Qué se cobra&quot;" time="0.319">
+    </testcase>
+    <testcase classname="pasos del cobro sin cliente arranca en el paso 1: elegir el cliente lleva a &quot;Qué se cobra&quot;" name="pasos del cobro sin cliente arranca en el paso 1: elegir el cliente lleva a &quot;Qué se cobra&quot;" time="0.941">
+    </testcase>
+    <testcase classname="pasos del cobro sin permiso de cobrar, el paso 1 no deja seguir y dice por qué" name="pasos del cobro sin permiso de cobrar, el paso 1 no deja seguir y dice por qué" time="0.404">
+    </testcase>
+    <testcase classname="pasos del cobro cobro completo: objetivo, un medio, Cobrás / Cubierto / Falta y &quot;Registrar cobro de $X&quot;" name="pasos del cobro cobro completo: objetivo, un medio, Cobrás / Cubierto / Falta y &quot;Registrar cobro de $X&quot;" time="3.511">
+    </testcase>
+    <testcase classname="pasos del cobro quitar un medio lo saca de la lista y del total" name="pasos del cobro quitar un medio lo saca de la lista y del total" time="1.737">
+    </testcase>
+    <testcase classname="pasos del cobro el cheque va solo: con un cheque en la lista no se puede agregar otro medio" name="pasos del cobro el cheque va solo: con un cheque en la lista no se puede agregar otro medio" time="1.473">
+    </testcase>
+    <testcase classname="pasos del cobro un cheque como segundo medio no deja confirmar: el aviso dice que el cheque va solo" name="pasos del cobro un cheque como segundo medio no deja confirmar: el aviso dice que el cheque va solo" time="1.487">
+    </testcase>
+    <testcase classname="pasos del cobro &quot;Cobro registrado&quot;: un reintento que ya estaba lo avisa" name="pasos del cobro &quot;Cobro registrado&quot;: un reintento que ya estaba lo avisa" time="1.384">
+    </testcase>
+    <testcase classname="pasos del cobro &quot;Cobro ya registrado&quot;: tras un corte, la misma clave y el 409 dice que lo nuevo no se guardó" name="pasos del cobro &quot;Cobro ya registrado&quot;: tras un corte, la misma clave y el 409 dice que lo nuevo no se guardó" time="1.552">
+    </testcase>
+    <testcase classname="pasos del cobro &quot;Registrar otro cobro&quot; vuelve a &quot;Qué se cobra&quot; con otra clave" name="pasos del cobro &quot;Registrar otro cobro&quot; vuelve a &quot;Qué se cobra&quot; con otra clave" time="2.499">
+    </testcase>
+    <testcase classname=" embebido (tablet, sin barra): RegistrarCobro sigue siendo el formulario de una sola pantalla" name=" embebido (tablet, sin barra): RegistrarCobro sigue siendo el formulario de una sola pantalla" time="0.062">
+    </testcase>
+  </testsuite>
+  <testsuite name="ElegirChip visual (opt-in)" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:32:32" time="6.612" tests="2">
+    <testcase classname="ElegirChip visual (opt-in) por defecto no muestra título visible ni tilde" name="ElegirChip visual (opt-in) por defecto no muestra título visible ni tilde" time="0.021">
+    </testcase>
+    <testcase classname="ElegirChip visual (opt-in) con conTilde marca solo la opción elegida y con tituloVisible escribe el título" name="ElegirChip visual (opt-in) con conTilde marca solo la opción elegida y con tituloVisible escribe el título" time="0.012">
+    </testcase>
+  </testsuite>
+  <testsuite name="Autorizar venta: el detalle" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:30:21" time="142.425" tests="50">
+    <testcase classname="Autorizar venta: el detalle la tarjeta de arriba lleva la dirección como título y &quot;cliente · vendedor · hace N&quot; (lámina AutorizarVenta)" name="Autorizar venta: el detalle la tarjeta de arriba lleva la dirección como título y &quot;cliente · vendedor · hace N&quot; (lámina AutorizarVenta)" time="0.792">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle sin la fila de la bandeja, el título es el nombre del cliente y no se inventa la dirección" name="Autorizar venta: el detalle sin la fila de la bandeja, el título es el nombre del cliente y no se inventa la dirección" time="0.154">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle muestra todos los motivos y el del vendedor, las líneas y los totales" name="Autorizar venta: el detalle muestra todos los motivos y el del vendedor, las líneas y los totales" time="0.108">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle detalle de cada motivo (forward-system #907) con un servidor nuevo muestra el texto de cada motivo, con sus montos y productos" name="Autorizar venta: el detalle detalle de cada motivo (forward-system #907) con un servidor nuevo muestra el texto de cada motivo, con sus montos y productos" time="0.077">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle detalle de cada motivo (forward-system #907) con un servidor anterior (sin detalleMotivos) se queda con las frases de las banderas" name="Autorizar venta: el detalle detalle de cada motivo (forward-system #907) con un servidor anterior (sin detalleMotivos) se queda con las frases de las banderas" time="0.125">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle detalle de cada motivo (forward-system #907) con detalleMotivos en null o vacío (quien no puede autorizar) también usa las banderas" name="Autorizar venta: el detalle detalle de cada motivo (forward-system #907) con detalleMotivos en null o vacío (quien no puede autorizar) también usa las banderas" time="0.133">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle detalle de cada motivo (forward-system #907) el motivo del vendedor por falta de stock sigue debajo, y la razón obligatoria sigue saliendo de las banderas" name="Autorizar venta: el detalle detalle de cada motivo (forward-system #907) el motivo del vendedor por falta de stock sigue debajo, y la razón obligatoria sigue saliendo de las banderas" time="0.291">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle sin CAP_VER_COSTOS quien autoriza ve precio, mínimo y sacrificio de la línea, pero ningún costo (forward-system #951)" name="Autorizar venta: el detalle sin CAP_VER_COSTOS quien autoriza ve precio, mínimo y sacrificio de la línea, pero ningún costo (forward-system #951)" time="0.137">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle sin CAP_AUTORIZAR_VENTA no pide la vista previa aunque tenga Reportes y costos (el servidor daría 403)" name="Autorizar venta: el detalle sin CAP_AUTORIZAR_VENTA no pide la vista previa aunque tenga Reportes y costos (el servidor daría 403)" time="0.061">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle con CAP_VER_COSTOS, lo que el servidor manda en null se ve &quot;—&quot;, nunca &quot;$ 0&quot;" name="Autorizar venta: el detalle con CAP_VER_COSTOS, lo que el servidor manda en null se ve &quot;—&quot;, nunca &quot;$ 0&quot;" time="0.143">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle con CAP_VER_COSTOS muestra el costo de la venta y el margen y el piso de cada línea del servidor (cierre del bloque 9)" name="Autorizar venta: el detalle con CAP_VER_COSTOS muestra el costo de la venta y el margen y el piso de cada línea del servidor (cierre del bloque 9)" time="0.111">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle sin CAP_VER_COSTOS no dibuja margen ni piso de la línea aunque lleguen" name="Autorizar venta: el detalle sin CAP_VER_COSTOS no dibuja margen ni piso de la línea aunque lleguen" time="0.136">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle con CAP_AUTORIZAR_VENTA y costos pero sin Reportes también pide la vista previa" name="Autorizar venta: el detalle con CAP_AUTORIZAR_VENTA y costos pero sin Reportes también pide la vista previa" time="0.079">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle con margen en amarillo autorizar exige la razón y la manda con la versión del detalle" name="Autorizar venta: el detalle con margen en amarillo autorizar exige la razón y la manda con la versión del detalle" time="0.856">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) bajar una cantidad manda el ajuste y muestra &quot;10 → 9&quot; antes de confirmar" name="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) bajar una cantidad manda el ajuste y muestra &quot;10 → 9&quot; antes de confirmar" time="0.749">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) quitar una línea (cantidad 0) manda cantidadNueva 0 y muestra &quot;quitado&quot;" name="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) quitar una línea (cantidad 0) manda cantidadNueva 0 y muestra &quot;quitado&quot;" time="0.675">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) el total en pantalla mientras se edita sin editar muestra el total del servidor" name="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) el total en pantalla mientras se edita sin editar muestra el total del servidor" time="0.111">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) el total en pantalla mientras se edita bajar 10 → 9 recalcula subtotal de la línea, subtotal, descuento y total, y lo rotula estimado" name="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) el total en pantalla mientras se edita bajar 10 → 9 recalcula subtotal de la línea, subtotal, descuento y total, y lo rotula estimado" time="0.271">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) el total en pantalla mientras se edita quitar una línea (0) la descuenta del total" name="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) el total en pantalla mientras se edita quitar una línea (0) la descuenta del total" time="0.209">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) el total en pantalla mientras se edita con descuento por línea el unitario del servidor ya es neto: subtotal = neto × cantidad, sin descontar dos veces" name="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) el total en pantalla mientras se edita con descuento por línea el unitario del servidor ya es neto: subtotal = neto × cantidad, sin descontar dos veces" time="0.234">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) el total en pantalla mientras se edita con una cantidad inválida no muestra un total que parezca definitivo" name="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) el total en pantalla mientras se edita con una cantidad inválida no muestra un total que parezca definitivo" time="0.348">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) sin tocar las líneas no manda ajustes (igual que hoy)" name="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) sin tocar las líneas no manda ajustes (igual que hoy)" time="0.484">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) quitar todas las líneas no deja autorizar y manda a rechazar" name="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) quitar todas las líneas no deja autorizar y manda a rechazar" time="0.56">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) una cantidad que no baja no deja autorizar y lo dice en la línea" name="Autorizar venta: el detalle editar las líneas al autorizar (solo bajar o quitar) una cantidad que no baja no deja autorizar y lo dice en la línea" time="0.481">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle tras rechazar no vuelve a pedir la vista previa de esa venta (el servidor daría 400 y se vería el error)" name="Autorizar venta: el detalle tras rechazar no vuelve a pedir la vista previa de esa venta (el servidor daría 400 y se vería el error)" time="0.885">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle descuento adicional al autorizar (opcional) se manda en el pedido de autorizar, con coma o punto decimal" name="Autorizar venta: el detalle descuento adicional al autorizar (opcional) se manda en el pedido de autorizar, con coma o punto decimal" time="0.53">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle descuento adicional al autorizar (opcional) &quot;12,345&quot; no se manda: avisa (hasta 2 decimales) y no deja autorizar" name="Autorizar venta: el detalle descuento adicional al autorizar (opcional) &quot;12,345&quot; no se manda: avisa (hasta 2 decimales) y no deja autorizar" time="0.421">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle descuento adicional al autorizar (opcional) &quot;150&quot; no se manda: avisa (entre 0 y 100) y no deja autorizar" name="Autorizar venta: el detalle descuento adicional al autorizar (opcional) &quot;150&quot; no se manda: avisa (entre 0 y 100) y no deja autorizar" time="0.354">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle descuento adicional al autorizar (opcional) &quot;abc&quot; no se manda: avisa (Escribí un número) y no deja autorizar" name="Autorizar venta: el detalle descuento adicional al autorizar (opcional) &quot;abc&quot; no se manda: avisa (Escribí un número) y no deja autorizar" time="0.373">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle descuento adicional al autorizar (opcional) con descuento, la razón avisa que el piso la puede volver obligatoria" name="Autorizar venta: el detalle descuento adicional al autorizar (opcional) con descuento, la razón avisa que el piso la puede volver obligatoria" time="0.297">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle descuento adicional al autorizar (opcional) vacío o en 0 no se manda el campo (sin descuento adicional)" name="Autorizar venta: el detalle descuento adicional al autorizar (opcional) vacío o en 0 no se manda el campo (sin descuento adicional)" time="0.465">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle si la venta ya no espera autorización, no ofrece decidir" name="Autorizar venta: el detalle si la venta ya no espera autorización, no ofrece decidir" time="0.062">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle sin CAP_AUTORIZAR_VENTA (entrando por un enlace) el detalle es de solo lectura" name="Autorizar venta: el detalle sin CAP_AUTORIZAR_VENTA (entrando por un enlace) el detalle es de solo lectura" time="0.062">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle con CAP_AUTORIZAR_VENTA pero Ventas solo en lectura no decide (igual que la web: capacidad + modificar Ventas)" name="Autorizar venta: el detalle con CAP_AUTORIZAR_VENTA pero Ventas solo en lectura no decide (igual que la web: capacidad + modificar Ventas)" time="0.064">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle &quot;Ver cuenta corriente del cliente&quot; lleva a la cuenta del cliente, solo con Cuentas corrientes" name="Autorizar venta: el detalle &quot;Ver cuenta corriente del cliente&quot; lleva a la cuenta del cliente, solo con Cuentas corrientes" time="0.229">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle sin Cuentas corrientes no ofrece el enlace a la cuenta" name="Autorizar venta: el detalle sin Cuentas corrientes no ofrece el enlace a la cuenta" time="0.063">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle al abrir la decisión vuelve a pedir la venta y manda la versión nueva, no la cacheada" name="Autorizar venta: el detalle al abrir la decisión vuelve a pedir la venta y manda la versión nueva, no la cacheada" time="0.483">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle tras un 409 vuelve a pedir la venta y el reintento manda la versión nueva" name="Autorizar venta: el detalle tras un 409 vuelve a pedir la venta y el reintento manda la versión nueva" time="0.901">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) muestra condición de pago, saldo, vencido y disponible del servidor, sin el aviso de pedidos nuevos" name="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) muestra condición de pago, saldo, vencido y disponible del servidor, sin el aviso de pedidos nuevos" time="0.062">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) sin deuda vencida y con tope, muestra el disponible y no inventa un vencido" name="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) sin deuda vencida y con tope, muestra el disponible y no inventa un vencido" time="0.062">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) si el servidor redacta los importes (puedeVerSaldo false) solo queda la condición de pago, nunca &quot;$ 0&quot;" name="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) si el servidor redacta los importes (puedeVerSaldo false) solo queda la condición de pago, nunca &quot;$ 0&quot;" time="0.062">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) con un servidor anterior (sin vencido ni disponible) muestra lo que hay y no falla" name="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) con un servidor anterior (sin vencido ni disponible) muestra lo que hay y no falla" time="0.063">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) sin tope (disponible null) ni condición cargada: no hay Disponible y la condición es Contado" name="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) sin tope (disponible null) ni condición cargada: no hay Disponible y la condición es Contado" time="0.063">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) si el servidor ni manda puedeVerSaldo (muy anterior), no muestra importes que podrían estar redactados" name="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) si el servidor ni manda puedeVerSaldo (muy anterior), no muestra importes que podrían estar redactados" time="0.061">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) si la ficha da 403 no muestra nada y el resto del detalle y los botones siguen" name="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) si la ficha da 403 no muestra nada y el resto del detalle y los botones siguen" time="0.068">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) si la ficha da 404 no muestra nada y el resto del detalle y los botones siguen" name="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) si la ficha da 404 no muestra nada y el resto del detalle y los botones siguen" time="0.062">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) mientras la ficha carga no hay bloque y los botones se pueden usar; al llegar aparece sin tocarlos" name="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) mientras la ficha carga no hay bloque y los botones se pueden usar; al llegar aparece sin tocarlos" time="0.296">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) sin Clientes:Read no pide la ficha (el servidor daría 403) y el detalle queda igual" name="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) sin Clientes:Read no pide la ficha (el servidor daría 403) y el detalle queda igual" time="0.075">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) si la venta no trae clienteId no pide ninguna ficha" name="Autorizar venta: el detalle el cliente: condición de pago, saldo y vencido (de la ficha del cliente) si la venta no trae clienteId no pide ninguna ficha" time="0.114">
+    </testcase>
+    <testcase classname="Autorizar venta: el detalle tras un 409, si la venta ya no espera autorización, no quedan los botones de decidir" name="Autorizar venta: el detalle tras un 409, si la venta ya no espera autorización, no quedan los botones de decidir" time="0.597">
+    </testcase>
+  </testsuite>
+  <testsuite name="condicionesDelMedio" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:32:25" time="20.898" tests="4">
+    <testcase classname="condicionesDelMedio calcula comisión y neto sobre el monto y trae los días de acreditación" name="condicionesDelMedio calcula comisión y neto sobre el monto y trae los días de acreditación" time="0.005">
+    </testcase>
+    <testcase classname="condicionesDelMedio sin monto no calcula; sin comisión ni demora devuelve null" name="condicionesDelMedio sin monto no calcula; sin comisión ni demora devuelve null" time="0.003">
+    </testcase>
+    <testcase classname="RegistrarCobro: condiciones del medio (solo informativo) con un medio que cobra comisión muestra comisión, neto y acreditación" name="RegistrarCobro: condiciones del medio (solo informativo) con un medio que cobra comisión muestra comisión, neto y acreditación" time="0.34">
+    </testcase>
+    <testcase classname="RegistrarCobro: condiciones del medio (solo informativo) con un medio sin comisión ni demora no muestra nada" name="RegistrarCobro: condiciones del medio (solo informativo) con un medio sin comisión ni demora no muestra nada" time="0.286">
+    </testcase>
+  </testsuite>
+  <testsuite name="usePuedeTransferir" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:32:30" time="20.044" tests="4">
+    <testcase classname="usePuedeTransferir es true con MOD_PAGOS crear y leer y MOD_CC leer" name="usePuedeTransferir es true con MOD_PAGOS crear y leer y MOD_CC leer" time="0.009">
+    </testcase>
+    <testcase classname="usePuedeTransferir es false sin MOD_CC leer" name="usePuedeTransferir es false sin MOD_CC leer" time="0.003">
+    </testcase>
+    <testcase classname="usePuedeTransferir es false sin MOD_PAGOS crear" name="usePuedeTransferir es false sin MOD_PAGOS crear" time="0.002">
+    </testcase>
+    <testcase classname="usePuedeTransferir es false sin MOD_PAGOS leer" name="usePuedeTransferir es false sin MOD_PAGOS leer" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="usePuedeCobrar" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:32:33" time="17.273" tests="3">
+    <testcase classname="usePuedeCobrar es true con MOD_PAGOS crear y leer" name="usePuedeCobrar es true con MOD_PAGOS crear y leer" time="0.012">
+    </testcase>
+    <testcase classname="usePuedeCobrar es false con MOD_PAGOS solo de lectura" name="usePuedeCobrar es false con MOD_PAGOS solo de lectura" time="0.003">
+    </testcase>
+    <testcase classname="usePuedeCobrar es false sin permisos" name="usePuedeCobrar es false sin permisos" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="cuerpos del cobro en pasos (los mismos que el formulario de siempre)" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:30:21" time="150.461" tests="17">
+    <testcase classname="cuerpos del cobro en pasos (los mismos que el formulario de siempre) efectivo con la caja del depósito de la sesión abierta" name="cuerpos del cobro en pasos (los mismos que el formulario de siempre) efectivo con la caja del depósito de la sesión abierta" time="1.682">
+    </testcase>
+    <testcase classname="cuerpos del cobro en pasos (los mismos que el formulario de siempre) transferencia con cuenta, foto y referencia" name="cuerpos del cobro en pasos (los mismos que el formulario de siempre) transferencia con cuenta, foto y referencia" time="1.571">
+    </testcase>
+    <testcase classname="cuerpos del cobro en pasos (los mismos que el formulario de siempre) transferencia sin cuenta elegida, con centavos" name="cuerpos del cobro en pasos (los mismos que el formulario de siempre) transferencia sin cuenta elegida, con centavos" time="1.406">
+    </testcase>
+    <testcase classname="cuerpos del cobro en pasos (los mismos que el formulario de siempre) cheque con sus datos y su foto" name="cuerpos del cobro en pasos (los mismos que el formulario de siempre) cheque con sus datos y su foto" time="1.646">
+    </testcase>
+    <testcase classname="cuerpos del cobro en pasos (los mismos que el formulario de siempre) combinado: efectivo y transferencia" name="cuerpos del cobro en pasos (los mismos que el formulario de siempre) combinado: efectivo y transferencia" time="1.905">
+    </testcase>
+    <testcase classname="cuerpos del cobro en pasos (los mismos que el formulario de siempre) combinado: transferencia con cuenta y efectivo" name="cuerpos del cobro en pasos (los mismos que el formulario de siempre) combinado: transferencia con cuenta y efectivo" time="2.128">
+    </testcase>
+    <testcase classname="cuerpos del cobro en pasos (los mismos que el formulario de siempre) imputación manual a dos comprobantes" name="cuerpos del cobro en pasos (los mismos que el formulario de siempre) imputación manual a dos comprobantes" time="2.028">
+    </testcase>
+    <testcase classname="idempotencia del cobro en pasos la misma clave al reintentar y tras editar un medio; otra tras &quot;Registrar otro cobro&quot;" name="idempotencia del cobro en pasos la misma clave al reintentar y tras editar un medio; otra tras &quot;Registrar otro cobro&quot;" time="3.669">
+    </testcase>
+    <testcase classname="idempotencia del cobro en pasos un 200 repetido avisa que el cobro ya estaba registrado" name="idempotencia del cobro en pasos un 200 repetido avisa que el cobro ya estaba registrado" time="1.095">
+    </testcase>
+    <testcase classname="idempotencia del cobro en pasos un 409 con otro cuerpo avisa que quedó con los datos de antes" name="idempotencia del cobro en pasos un 409 con otro cuerpo avisa que quedó con los datos de antes" time="1.121">
+    </testcase>
+    <testcase classname="idempotencia del cobro en pasos un 409 de otro cliente muestra el error y el siguiente intento usa otra clave" name="idempotencia del cobro en pasos un 409 de otro cliente muestra el error y el siguiente intento usa otra clave" time="1.329">
+    </testcase>
+    <testcase classname="idempotencia del cobro en pasos sin cliente: volver al paso 1 tras un corte y elegir el mismo cliente arranca otro cobro, con otra clave" name="idempotencia del cobro en pasos sin cliente: volver al paso 1 tras un corte y elegir el mismo cliente arranca otro cobro, con otra clave" time="4.275">
+    </testcase>
+    <testcase classname="reglas del cobro en pasos sin la caja del depósito de la sesión abierta no se agrega el efectivo" name="reglas del cobro en pasos sin la caja del depósito de la sesión abierta no se agrega el efectivo" time="0.704">
+    </testcase>
+    <testcase classname="reglas del cobro en pasos con un cheque como segundo medio no se puede confirmar" name="reglas del cobro en pasos con un cheque como segundo medio no se puede confirmar" time="1.395">
+    </testcase>
+    <testcase classname="reglas del cobro en pasos lo imputado no puede superar el cobro: no se puede confirmar" name="reglas del cobro en pasos lo imputado no puede superar el cobro: no se puede confirmar" time="1.278">
+    </testcase>
+    <testcase classname="reglas del cobro en pasos volver de &quot;Medio y monto&quot; mientras sube la foto: al terminar no se vuelve a abrir" name="reglas del cobro en pasos volver de &quot;Medio y monto&quot; mientras sube la foto: al terminar no se vuelve a abrir" time="1.114">
+    </testcase>
+    <testcase classname="entradas Tesorería con medio=cheque: salta el paso 1 y el primer medio abre con Cheque elegido" name="entradas Tesorería con medio=cheque: salta el paso 1 y el primer medio abre con Cheque elegido" time="0.438">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:30:22" time="150.328" tests="7">
+    <testcase classname=" cobro combinado: manda una línea por medio en el mismo cobro, con el total de las dos" name=" cobro combinado: manda una línea por medio en el mismo cobro, con el total de las dos" time="1.107">
+    </testcase>
+    <testcase classname=" cobro combinado: el efectivo en la segunda línea también manda la caja" name=" cobro combinado: el efectivo en la segunda línea también manda la caja" time="0.937">
+    </testcase>
+    <testcase classname=" cobro combinado: el cheque no se combina (el servidor lo rechaza), se avisa y no se manda" name=" cobro combinado: el cheque no se combina (el servidor lo rechaza), se avisa y no se manda" time="0.882">
+    </testcase>
+    <testcase classname=" cobro combinado: una línea sin medio o sin monto no se manda; quitarla vuelve al cobro de un medio" name=" cobro combinado: una línea sin medio o sin monto no se manda; quitarla vuelve al cobro de un medio" time="1.143">
+    </testcase>
+    <testcase classname="Mandar recibo abre el menú de compartir con el total, los medios y la aclaración de que no es fiscal" name="Mandar recibo abre el menú de compartir con el total, los medios y la aclaración de que no es fiscal" time="1.199">
+    </testcase>
+    <testcase classname="Mandar recibo si compartir falla no se rompe: muestra un aviso en la pantalla" name="Mandar recibo si compartir falla no se rompe: muestra un aviso en la pantalla" time="1.037">
+    </testcase>
+    <testcase classname=" con el cheque como medio inicial, abre el cobro con el medio Cheque elegido y su hoja lista" name=" con el cheque como medio inicial, abre el cobro con el medio Cheque elegido y su hoja lista" time="0.089">
+    </testcase>
+  </testsuite>
+  <testsuite name="cuenta donde entró" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:30:21" time="152.996" tests="13">
+    <testcase classname="cuenta donde entró quien cobra (MOD_PAGOS:Create, sin MOD_CC:Read) elige la cuenta propia de la lista liviana y la manda en la línea" name="cuenta donde entró quien cobra (MOD_PAGOS:Create, sin MOD_CC:Read) elige la cuenta propia de la lista liviana y la manda en la línea" time="1.387">
+    </testcase>
+    <testcase classname="cuenta donde entró con un servidor anterior (404) y MOD_CC:Read usa la lista de cuentas propias de siempre" name="cuenta donde entró con un servidor anterior (404) y MOD_CC:Read usa la lista de cuentas propias de siempre" time="0.719">
+    </testcase>
+    <testcase classname="cuenta donde entró con un servidor anterior y sin MOD_CC:Read no hay lista ni cuenta: el servidor usa la del medio, como antes" name="cuenta donde entró con un servidor anterior y sin MOD_CC:Read no hay lista ni cuenta: el servidor usa la del medio, como antes" time="0.479">
+    </testcase>
+    <testcase classname="cuenta donde entró si la lista de cuentas falla, no se elige y el cobro sale igual" name="cuenta donde entró si la lista de cuentas falla, no se elige y el cobro sale igual" time="0.471">
+    </testcase>
+    <testcase classname="fotos la foto del comprobante se sube a upload-comprobante y su URL va en el cobro" name="fotos la foto del comprobante se sube a upload-comprobante y su URL va en el cobro" time="0.719">
+    </testcase>
+    <testcase classname="fotos gestión sube la foto del cheque a upload-cheque y va en el cheque recibido" name="fotos gestión sube la foto del cheque a upload-cheque y va en el cheque recibido" time="0.828">
+    </testcase>
+    <testcase classname="fotos quien cobra (MOD_PAGOS:Create), aunque no sea gestión, sube la foto del cheque a upload-cheque" name="fotos quien cobra (MOD_PAGOS:Create), aunque no sea gestión, sube la foto del cheque a upload-cheque" time="0.528">
+    </testcase>
+    <testcase classname="imputación por defecto es automática: no pide los pendientes ni manda imputaciones" name="imputación por defecto es automática: no pide los pendientes ni manda imputaciones" time="0.473">
+    </testcase>
+    <testcase classname="imputación manual: se eligen los comprobantes y cada uno va con su monto" name="imputación manual: se eligen los comprobantes y cada uno va con su monto" time="1.067">
+    </testcase>
+    <testcase classname="imputación manual: lo imputado no puede superar el monto del cobro" name="imputación manual: lo imputado no puede superar el monto del cobro" time="0.813">
+    </testcase>
+    <testcase classname="imputación el cobro registrado dice a qué comprobantes se imputó, según los movimientos del servidor" name="imputación el cobro registrado dice a qué comprobantes se imputó, según los movimientos del servidor" time="0.458">
+    </testcase>
+    <testcase classname="imputación con el servidor nuevo, &quot;imputado a&quot; sale de las imputaciones de GET /Pagos/{id}, sin cruzar movimientos" name="imputación con el servidor nuevo, &quot;imputado a&quot; sale de las imputaciones de GET /Pagos/{id}, sin cruzar movimientos" time="0.47">
+    </testcase>
+    <testcase classname="imputación el 403 de GET /Pagos/{id} (quien cobra sin MOD_PAGOS:Read) es esperado: no se registra como error y cae a los movimientos" name="imputación el 403 de GET /Pagos/{id} (quien cobra sin MOD_PAGOS:Read) es esperado: no se registra como error y cae a los movimientos" time="0.44">
+    </testcase>
+  </testsuite>
+  <testsuite name="undefined" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:30:21" time="164.557" tests="38">
+    <testcase classname=" manda un cobro de una línea sin elegir la cuenta ni imputar: eso lo decide el servidor" name=" manda un cobro de una línea sin elegir la cuenta ni imputar: eso lo decide el servidor" time="0.625">
+    </testcase>
+    <testcase classname="idempotencia del cobro (forward-system: claveIdempotencia) manda una clave de idempotencia válida para el servidor (menos de 200 caracteres)" name="idempotencia del cobro (forward-system: claveIdempotencia) manda una clave de idempotencia válida para el servidor (menos de 200 caracteres)" time="0.49">
+    </testcase>
+    <testcase classname="idempotencia del cobro (forward-system: claveIdempotencia) un reintento tras un corte reusa la misma clave: el servidor no carga el cobro dos veces" name="idempotencia del cobro (forward-system: claveIdempotencia) un reintento tras un corte reusa la misma clave: el servidor no carga el cobro dos veces" time="0.686">
+    </testcase>
+    <testcase classname="idempotencia del cobro (forward-system: claveIdempotencia) un reintento tras un rechazo del servidor también reusa la clave (no se grabó nada con ella)" name="idempotencia del cobro (forward-system: claveIdempotencia) un reintento tras un rechazo del servidor también reusa la clave (no se grabó nada con ella)" time="0.679">
+    </testcase>
+    <testcase classname="idempotencia del cobro (forward-system: claveIdempotencia) un cobro nuevo usa una clave nueva" name="idempotencia del cobro (forward-system: claveIdempotencia) un cobro nuevo usa una clave nueva" time="1.04">
+    </testcase>
+    <testcase classname="idempotencia del cobro (forward-system: claveIdempotencia) un reintento idéntico que el servidor ya tenía (200 «operación repetida») se muestra como registrado y avisa que no se cargó de nuevo" name="idempotencia del cobro (forward-system: claveIdempotencia) un reintento idéntico que el servidor ya tenía (200 «operación repetida») se muestra como registrado y avisa que no se cargó de nuevo" time="0.49">
+    </testcase>
+    <testcase classname="idempotencia del cobro (forward-system: claveIdempotencia) servidor anterior: ignora la clave y contesta como siempre, sin avisos de reintento" name="idempotencia del cobro (forward-system: claveIdempotencia) servidor anterior: ignora la clave y contesta como siempre, sin avisos de reintento" time="0.469">
+    </testcase>
+    <testcase classname="idempotencia del cobro (forward-system: claveIdempotencia) 409 ClaveIdempotenciaConOtroCuerpo: si tras un corte se cambió el cobro, lleva al que quedó grabado con el aviso y no muestra el monto nuevo" name="idempotencia del cobro (forward-system: claveIdempotencia) 409 ClaveIdempotenciaConOtroCuerpo: si tras un corte se cambió el cobro, lleva al que quedó grabado con el aviso y no muestra el monto nuevo" time="0.747">
+    </testcase>
+    <testcase classname="idempotencia del cobro (forward-system: claveIdempotencia) tras un corte, si se edita el monto la clave es la misma y el 409 dice que lo nuevo NO se guardó" name="idempotencia del cobro (forward-system: claveIdempotencia) tras un corte, si se edita el monto la clave es la misma y el 409 dice que lo nuevo NO se guardó" time="0.682">
+    </testcase>
+    <testcase classname="idempotencia del cobro (forward-system: claveIdempotencia) tras un corte, si se edita la referencia la clave es la misma y el 409 dice que lo nuevo NO se guardó" name="idempotencia del cobro (forward-system: claveIdempotencia) tras un corte, si se edita la referencia la clave es la misma y el 409 dice que lo nuevo NO se guardó" time="0.695">
+    </testcase>
+    <testcase classname="idempotencia del cobro (forward-system: claveIdempotencia) tras un corte, si se edita el medio de pago la clave es la misma y el 409 dice que lo nuevo NO se guardó" name="idempotencia del cobro (forward-system: claveIdempotencia) tras un corte, si se edita el medio de pago la clave es la misma y el 409 dice que lo nuevo NO se guardó" time="0.823">
+    </testcase>
+    <testcase classname="idempotencia del cobro (forward-system: claveIdempotencia) tras un corte, si se edita un dato del cheque la clave es la misma y el 409 dice que lo nuevo NO se guardó" name="idempotencia del cobro (forward-system: claveIdempotencia) tras un corte, si se edita un dato del cheque la clave es la misma y el 409 dice que lo nuevo NO se guardó" time="0.78">
+    </testcase>
+    <testcase classname="idempotencia del cobro (forward-system: claveIdempotencia) 409 con la clave de otro socio: muestra el motivo del servidor, no da nada por registrado y la próxima vez usa otra clave" name="idempotencia del cobro (forward-system: claveIdempotencia) 409 con la clave de otro socio: muestra el motivo del servidor, no da nada por registrado y la próxima vez usa otra clave" time="0.655">
+    </testcase>
+    <testcase classname="idempotencia del cobro (forward-system: claveIdempotencia) 409 con el cobro anulado: lo dice con el mensaje del servidor, sin &quot;registrado&quot; ni cuenta, y «Registrar otro cobro» usa otra clave" name="idempotencia del cobro (forward-system: claveIdempotencia) 409 con el cobro anulado: lo dice con el mensaje del servidor, sin &quot;registrado&quot; ni cuenta, y «Registrar otro cobro» usa otra clave" time="0.987">
+    </testcase>
+    <testcase classname="idempotencia del cobro (forward-system: claveIdempotencia) un 409 sin el código de la clave (p. ej. conflicto de concurrencia) es un error común: no se da el cobro por registrado" name="idempotencia del cobro (forward-system: claveIdempotencia) un 409 sin el código de la clave (p. ej. conflicto de concurrencia) es un error común: no se da el cobro por registrado" time="0.428">
+    </testcase>
+    <testcase classname=" servidor nuevo: dice la cuenta que trae la respuesta del cobro, sin buscarla en los movimientos" name=" servidor nuevo: dice la cuenta que trae la respuesta del cobro, sin buscarla en los movimientos" time="0.427">
+    </testcase>
+    <testcase classname=" servidor viejo: sin tipoCuenta en la respuesta: busca el pago en los movimientos y dice la cuenta donde está" name=" servidor viejo: sin tipoCuenta en la respuesta: busca el pago en los movimientos y dice la cuenta donde está" time="0.467">
+    </testcase>
+    <testcase classname=" un tipoCuenta que mobile no conoce: busca el pago en los movimientos y dice la cuenta donde está" name=" un tipoCuenta que mobile no conoce: busca el pago en los movimientos y dice la cuenta donde está" time="0.488">
+    </testcase>
+    <testcase classname=" un 2xx sin id del pago: el cobro se da por registrado, sin cuenta confirmada y sin buscar en los movimientos" name=" un 2xx sin id del pago: el cobro se da por registrado, sin cuenta confirmada y sin buscar en los movimientos" time="0.453">
+    </testcase>
+    <testcase classname=" servidor viejo: si el pago no aparece en ninguna cuenta, no inventa una: lo dice" name=" servidor viejo: si el pago no aparece en ninguna cuenta, no inventa una: lo dice" time="0.425">
+    </testcase>
+    <testcase classname=" con cheque pide sus datos y los manda como cheque recibido, con las fechas del día argentino" name=" con cheque pide sus datos y los manda como cheque recibido, con las fechas del día argentino" time="0.747">
+    </testcase>
+    <testcase classname=" si el servidor rechaza, se ve su motivo y el cobro no se da por hecho" name=" si el servidor rechaza, se ve su motivo y el cobro no se da por hecho" time="0.427">
+    </testcase>
+    <testcase classname=" mientras se registra, un segundo toque no manda otro cobro" name=" mientras se registra, un segundo toque no manda otro cobro" time="0.465">
+    </testcase>
+    <testcase classname=" lee fechas dd/mm/aaaa y rechaza las que no existen" name=" lee fechas dd/mm/aaaa y rechaza las que no existen" time="0">
+    </testcase>
+    <testcase classname=" un cobro en efectivo manda el depósito de la sesión, cuya caja está abierta" name=" un cobro en efectivo manda el depósito de la sesión, cuya caja está abierta" time="0.436">
+    </testcase>
+    <testcase classname=" un medio que no va a caja no manda depósito" name=" un medio que no va a caja no manda depósito" time="0.443">
+    </testcase>
+    <testcase classname=" con efectivo, no se puede registrar mientras carga la caja: no sale un cobro sin caja" name=" con efectivo, no se puede registrar mientras carga la caja: no sale un cobro sin caja" time="0.565">
+    </testcase>
+    <testcase classname=" si falla la carga de cajas, lo dice con Reintentar y no manda el cobro; al reintentar, cobra con su caja" name=" si falla la carga de cajas, lo dice con Reintentar y no manda el cobro; al reintentar, cobra con su caja" time="0.794">
+    </testcase>
+    <testcase classname=" con efectivo y sin la caja del depósito de la sesión abierta, avisa y no manda el cobro" name=" con efectivo y sin la caja del depósito de la sesión abierta, avisa y no manda el cobro" time="0.359">
+    </testcase>
+    <testcase classname="R11 cobro: resumen &quot;Cobrás&quot; y &quot;Todo lo vencido&quot; (solo pantalla: el cobro se manda igual) Cobrás muestra lo que se tipea en el monto" name="R11 cobro: resumen &quot;Cobrás&quot; y &quot;Todo lo vencido&quot; (solo pantalla: el cobro se manda igual) Cobrás muestra lo que se tipea en el monto" time="0.1">
+    </testcase>
+    <testcase classname="R11 cobro: resumen &quot;Cobrás&quot; y &quot;Todo lo vencido&quot; (solo pantalla: el cobro se manda igual) Todo lo vencido carga la deuda vencida en el monto y el cobro se manda con ese monto, sin campos nuevos" name="R11 cobro: resumen &quot;Cobrás&quot; y &quot;Todo lo vencido&quot; (solo pantalla: el cobro se manda igual) Todo lo vencido carga la deuda vencida en el monto y el cobro se manda con ese monto, sin campos nuevos" time="0.719">
+    </testcase>
+    <testcase classname="R11 cobro: resumen &quot;Cobrás&quot; y &quot;Todo lo vencido&quot; (solo pantalla: el cobro se manda igual) con un objetivo elegido la tira muestra cuánto falta y el cobro se manda igual" name="R11 cobro: resumen &quot;Cobrás&quot; y &quot;Todo lo vencido&quot; (solo pantalla: el cobro se manda igual) con un objetivo elegido la tira muestra cuánto falta y el cobro se manda igual" time="0.305">
+    </testcase>
+    <testcase classname="R11 cobro: resumen &quot;Cobrás&quot; y &quot;Todo lo vencido&quot; (solo pantalla: el cobro se manda igual) mientras se manda el cobro, &quot;Todo lo vencido&quot; no cambia el monto que se está registrando" name="R11 cobro: resumen &quot;Cobrás&quot; y &quot;Todo lo vencido&quot; (solo pantalla: el cobro se manda igual) mientras se manda el cobro, &quot;Todo lo vencido&quot; no cambia el monto que se está registrando" time="0.532">
+    </testcase>
+    <testcase classname="R11 cobro: resumen &quot;Cobrás&quot; y &quot;Todo lo vencido&quot; (solo pantalla: el cobro se manda igual) sin deuda vencida no hay &quot;Todo lo vencido&quot;" name="R11 cobro: resumen &quot;Cobrás&quot; y &quot;Todo lo vencido&quot; (solo pantalla: el cobro se manda igual) sin deuda vencida no hay &quot;Todo lo vencido&quot;" time="0.153">
+    </testcase>
+    <testcase classname="R11 cobro: resumen &quot;Cobrás&quot; y &quot;Todo lo vencido&quot; (solo pantalla: el cobro se manda igual) la tira muestra la deuda vencida desde el principio, sin elegir un objetivo" name="R11 cobro: resumen &quot;Cobrás&quot; y &quot;Todo lo vencido&quot; (solo pantalla: el cobro se manda igual) la tira muestra la deuda vencida desde el principio, sin elegir un objetivo" time="0.104">
+    </testcase>
+    <testcase classname="R11 cobro: resumen &quot;Cobrás&quot; y &quot;Todo lo vencido&quot; (solo pantalla: el cobro se manda igual) &quot;Otro monto&quot; suelta el objetivo y deja el monto como estaba; el cobro se manda igual" name="R11 cobro: resumen &quot;Cobrás&quot; y &quot;Todo lo vencido&quot; (solo pantalla: el cobro se manda igual) &quot;Otro monto&quot; suelta el objetivo y deja el monto como estaba; el cobro se manda igual" time="1.02">
+    </testcase>
+    <testcase classname="el saldo del cliente no se repite con barra, el saldo va en el subtítulo de la barra y no hay una fila &quot;Saldo del cliente&quot; en el cuerpo" name="el saldo del cliente no se repite con barra, el saldo va en el subtítulo de la barra y no hay una fila &quot;Saldo del cliente&quot; en el cuerpo" time="0.166">
+    </testcase>
+    <testcase classname="el saldo del cliente no se repite sin barra, el saldo sigue en una fila del cuerpo" name="el saldo del cliente no se repite sin barra, el saldo sigue en una fila del cuerpo" time="0.15">
     </testcase>
   </testsuite>
 </testsuites>

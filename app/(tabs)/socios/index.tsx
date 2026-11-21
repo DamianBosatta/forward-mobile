@@ -98,14 +98,14 @@ function ClientesScreen() {
       ) : null}
       {totalCount !== undefined ? (
         // Resumen en una tarjeta con la cifra mediana (propuesta, frame 1).
-        <View testID="pie-clientes" style={{ marginHorizontal: space[4], marginBottom: space[2], paddingVertical: space[3], paddingHorizontal: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space[3] }}>
+        <View testID="pie-clientes" style={{ marginHorizontal: space[4], marginBottom: space[2], paddingVertical: space[4], paddingHorizontal: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space[3] }}>
           <Text accessibilityLiveRegion="polite" style={{ ...typeScale.secundario, color: c.textSecondary, flexShrink: 1 }}>
             {textoCantidad(clientes.length, totalCount)}
           </Text>
           {saldoTotal !== undefined ? (
             <View style={{ alignItems: 'flex-end' }}>
               <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Saldo total</Text>
-              <Text numberOfLines={1} adjustsFontSizeToFit style={[typeScale.tituloGrande, importe, { color: c.text }]}>{formatImporte(saldoTotal)}</Text>
+              <Text numberOfLines={1} adjustsFontSizeToFit style={[typeScale.tituloGrande, importe, { color: c.accentText }]}>{formatImporte(saldoTotal)}</Text>
             </View>
           ) : null}
         </View>

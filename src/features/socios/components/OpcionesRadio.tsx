@@ -1,6 +1,6 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
+import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { MarcaRadio } from '@/features/venta-nueva/components/MarcaRadio'
 
 /**
@@ -12,13 +12,12 @@ export function OpcionesRadio<T extends string>({ titulo, opciones, valor, onCha
   titulo: string; opciones: { value: T; label: string }[]; valor: T; onChange: (v: T) => void; enTarjeta?: boolean
 }) {
   const c = useColors()
-  const sombra = useSombraTarjeta()
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={titulo} style={{ gap: space[1] }}>
       <Text style={{ ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: c.text }}>{titulo}</Text>
       {enTarjeta ? (
-        <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface, overflow: 'hidden' }}>
-          {opciones.map((op, i) => {
+        <View style={{ borderRadius: radii.fila, backgroundColor: c.bg, overflow: 'hidden' }}>
+          {opciones.map(op => {
             const elegido = op.value === valor
             return (
               <Pressable
@@ -30,7 +29,7 @@ export function OpcionesRadio<T extends string>({ titulo, opciones, valor, onCha
                 android_ripple={{ color: c.surface2 }}
                 style={{
                   minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[2], paddingHorizontal: space[3],
-                  borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.border, backgroundColor: elegido ? c.brandSoft : c.surface,
+                  backgroundColor: 'transparent',
                 }}
               >
                 <View testID={elegido ? 'marca-radio-elegida' : undefined}>
@@ -52,9 +51,8 @@ export function OpcionesRadio<T extends string>({ titulo, opciones, valor, onCha
               accessibilityState={{ checked: elegido, selected: elegido }}
               onPress={() => onChange(op.value)}
               style={{
-                minHeight: 48, justifyContent: 'center', paddingHorizontal: space[3], borderRadius: radii.campo,
-                borderWidth: elegido ? 2 : 1, borderColor: elegido ? c.brand : c.border,
-                backgroundColor: elegido ? c.brandSoft : c.surface,
+                minHeight: 48, justifyContent: 'center', paddingHorizontal: space[3], borderRadius: radii.fila,
+                backgroundColor: elegido ? c.surfaceAlt : c.surface,
               }}
             >
               <Text style={{ ...(elegido ? typeScale.cuerpoDestacado : typeScale.cuerpo), color: c.text }}>{op.label}</Text>

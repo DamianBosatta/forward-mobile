@@ -89,7 +89,7 @@ export function DecisionSheet({ decision, ventaId, cliente, version, fechaPendie
       </Text>
       {!esRechazo && cambios.length > 0 ? (
         // Frame 21: los cambios del pedido en una tarjeta gris.
-        <View accessible accessibilityLabel="Cambios en el pedido" style={{ gap: space[1], padding: space[3], borderRadius: radii.campo, backgroundColor: c.surface2 }}>
+        <View accessible accessibilityLabel="Cambios en el pedido" style={{ gap: space[1], padding: space[3], borderRadius: radii.fila, backgroundColor: c.surface2 }}>
           <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Cambios en el pedido</Text>
           {cambios.map((x) => (
             <Text key={x.id} style={[typeScale.secundario, { color: c.text }]}>
