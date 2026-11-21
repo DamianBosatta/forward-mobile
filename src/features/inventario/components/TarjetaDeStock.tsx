@@ -153,7 +153,7 @@ export function FilaDeLista({ item, onPress, conDeposito, linea }: FilaListaProp
           <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{textoStockReal(item.cantidadActual, item.stockMinimo)}</Text>
           <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{textoReservadas(item.cantidadReservada, item.cantidadVirtual)}</Text>
         </View>
-        <View accessible accessibilityLabel={`Disponible ${mostrarNumero(item.cantidadDisponible)}${chip ? `, ${chip.label}` : ''}`} style={{ justifyContent: 'center' }}>
+        <View accessible accessibilityLabel={`Disponible ${mostrarNumero(item.cantidadDisponible)}`} style={{ justifyContent: 'center' }}>
           <BloqueDisponible cantidad={mostrarNumero(item.cantidadDisponible)} estado={chip?.estado === 'porAutorizar' || chip?.estado === 'anulado' ? chip.estado : 'entregado'} />
         </View>
       </Pressable>

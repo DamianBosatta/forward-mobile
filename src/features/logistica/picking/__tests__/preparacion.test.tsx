@@ -107,8 +107,8 @@ describe.each(['light', 'dark'] as const)('Preparación de pedidos (%s)', (esque
     for (const f of filas) expect(within(f).getAllByRole('tab')).toHaveLength(2)
     const activa = screen.getByRole('tab', { name: 'A preparar: 12 pedidos' })
     expect(activa.props.accessibilityState).toMatchObject({ selected: true })
-    // La elegida toma el color de su columna (ámbar, como "por autorizar").
-    expect(flat(activa.props.style).borderColor).toBe(c.chip.porAutorizar.text)
+    // La elegida va rellena con el color de acción (spec FWD: sin bordes).
+    expect(flat(activa.props.style).backgroundColor).toBe(c.primaryBg)
   })
 
   it('cada columna lleva su subtotal y su cantidad: unidades, piezas o "Hay que reprogramar"', async () => {
