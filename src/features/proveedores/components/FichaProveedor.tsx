@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { ChevronRight, FilePen, MapPin, MessageCircle, Pencil, Phone, Plus } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, Segmented, StatusChip, TopBar, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { useSocio } from '@/libs/api-client/socios'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -11,6 +11,7 @@ import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { puedePedirCambio } from '@/features/socios/lib/camposSensibles'
 import { Accion, Dato, Seccion, TituloDeSeccion } from '@/features/socios/components/PiezasDeFicha'
 import { SolicitudCambioSheet } from '@/features/clientes/components/SolicitudCambio'
+import { HeroSaldo } from '@/features/clientes/components/SaldoDelCliente'
 import { Esqueletos, FICHA_CARGANDO, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { urlLlamar, urlWhatsApp } from '@/features/clientes/lib/contacto'
 import { formatToLocalTime } from '@/core/utils/fecha'
@@ -119,10 +120,14 @@ export function FichaProveedor({ id, conBarra = false }: { id: string; conBarra?
 
         {saldo ? (
           // TODO API: "N facturas sin pagar · la más vieja vence dd/mm" (hoy el servidor no manda la factura más vieja).
-          <View testID="hero-saldo" accessible accessibilityLabel={`${saldo.etiqueta} ${formatImporte(saldo.monto)}`} style={{ padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.lime }}>
-            <Text style={{ ...typeScale.secundario, color: c.ink }}>{saldo.etiqueta}</Text>
-            <Text numberOfLines={1} adjustsFontSizeToFit style={[typeScale.numeroProtagonista, importe, { color: c.ink }]}>{formatImporte(saldo.monto)}</Text>
-          </View>
+          <HeroSaldo
+            saldo={saldo.monto}
+            vencido={null}
+            tope={null}
+            disponible={null}
+            etiqueta={saldo.etiqueta}
+            accessibilityLabel={`${saldo.etiqueta} ${formatImporte(saldo.monto)}`}
+          />
         ) : null}
 
         <Segmented options={SOLAPAS} value={solapa} onChange={setSolapa} accessibilityLabel="Secciones de la ficha" />

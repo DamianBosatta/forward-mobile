@@ -15,9 +15,6 @@ interface ProveedorCardProps {
   seleccionado?: boolean
   /** Si viene, la fila ofrece "Nueva compra" (el padre decide con el permiso de MOD_COMPRAS). */
   onNuevaCompra?: () => void
-  /** Legacy grouping flags kept so existing callers compile; rows are loose now and ignore them. */
-  primera?: boolean
-  ultima?: boolean
 }
 
 /**
