@@ -20772,6 +20772,7 @@ export interface paths {
                     MontoMax?: number;
                     Moneda?: string;
                     EstadoPago?: components["schemas"]["EstadoPagoVenta"];
+                    IncluirSerieDiaria?: boolean;
                 };
                 header?: never;
                 path?: never;
@@ -22409,6 +22410,7 @@ export interface components {
             motivoAnulacion?: string | null;
         };
         AnularRecepcionCompraCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             compraId?: string;
             motivo?: string | null;
@@ -24195,6 +24197,7 @@ export interface components {
             descripcion?: string | null;
         };
         CrearHojaRutaCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             choferId?: string;
             /** Format: uuid */
@@ -24452,6 +24455,7 @@ export interface components {
             canDelete?: boolean;
         };
         CreateVehiculoCommand: {
+            claveIdempotencia?: string | null;
             patente?: string | null;
             modelo?: string | null;
             /** Format: double */
@@ -30708,6 +30712,12 @@ export interface components {
             /** Format: double */
             margenBrutoPorcentaje?: number | null;
         };
+        VentasResumenDiaDto: {
+            /** Format: date */
+            dia: string;
+            /** Format: double */
+            total: number;
+        };
         VentasResumenDto: {
             /** Format: double */
             totalVendido?: number;
@@ -30721,6 +30731,9 @@ export interface components {
             entregadas?: number;
             /** Format: int32 */
             cantidad: number;
+            /** Format: int32 */
+            clientesDistintos?: number;
+            serieDiariaArs?: components["schemas"]["VentasResumenDiaDto"][] | null;
         };
         VerificarStockFiscalVentaQuery: {
             items?: components["schemas"]["ItemStockFiscalDto"][] | null;
