@@ -2,8 +2,7 @@ import React from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ArrowLeft, Check } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Field, FormContainer, enmascararFecha, FilaInterruptor, Notice, PieFijo, TotalsRow, formatImporte } from '@/core/ui/fw'
-import { MarcaRadio } from '@/features/venta-nueva/components/MarcaRadio'
+import { Button, Field, FormContainer, enmascararFecha, FilaInterruptor, MarcaRadio, Notice, PieFijo, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { textoFaltaCosto } from './CarritoCompra'
 
 /** Lo que dice el interruptor: es la consecuencia de confirmar y recibir en un solo paso. */
@@ -35,11 +34,7 @@ export function DepositoCompra({ depositos, depositoId, onDeposito, puedeElegir 
             <Pressable key={d.id} accessibilityRole="radio" accessibilityLabel={d.nombre} accessibilityState={{ checked: sel, selected: sel }} onPress={() => onDeposito(d.id)}
               android_ripple={{ color: c.surface2 }}
               style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], borderRadius: radii.fila, backgroundColor: sel ? c.teal : c.surface }}>
-              {sel ? (
-                <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: c.ink }}>
-                  <Check size={14} color={c.lime} strokeWidth={3} />
-                </View>
-              ) : <MarcaRadio elegido={false} />}
+              <MarcaRadio elegido={sel} sobreTeal={sel} />
               <Text style={{ ...typeScale.cuerpoDestacado, color: sel ? c.ink : c.text }}>{d.nombre}</Text>
             </Pressable>
           )

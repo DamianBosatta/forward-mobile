@@ -3,8 +3,6 @@ import { View } from 'react-native'
 import { radii, useColors, useIsDark } from '@/libs/theme'
 
 const ALTO = 12
-/** `ink` (#201E1E) al 20 %: la pista de la spec, igual en claro y oscuro (la barra va sobre lime o teal). */
-const PISTA = 'rgba(32, 30, 30, 0.2)'
 
 interface ProgressProps {
   value: number
@@ -22,7 +20,7 @@ export function Progress({ value, max, accessibilityLabel, sobreBarra = false, s
   const c = useColors()
   const oscuro = useIsDark()
   const proporcion = max > 0 ? Math.min(1, Math.max(0, value / max)) : 0
-  const pista = sobreColor ? PISTA : sobreBarra && !oscuro ? c.textSecondary : sobreBarra ? c.borderStrong : c.surfaceAlt
+  const pista = sobreColor ? c.veilInk20 : sobreBarra && !oscuro ? c.textSecondary : sobreBarra ? c.borderStrong : c.surfaceAlt
   const relleno = sobreColor ? c.ink : sobreBarra ? c.brand : c.accentText
   return (
     <View

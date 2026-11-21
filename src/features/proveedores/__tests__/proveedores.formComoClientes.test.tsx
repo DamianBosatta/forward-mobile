@@ -4,7 +4,7 @@ import { fireEvent, screen, userEvent, waitFor, within } from '@testing-library/
 import ProveedorFormScreen from '../../../../app/(tabs)/proveedores/nuevo'
 import { AVISO_CAMPOS_SENSIBLES_PROVEEDOR } from '../lib/proveedor'
 import { api } from '@/core/api/client'
-import { themeColors } from '@/libs/theme'
+import { radii, themeColors } from '@/libs/theme';
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { clienteDeLista, conPermisos, renderConQuery } from '../../clientes/__testing__/ayuda'
 
@@ -45,7 +45,7 @@ it('cada grupo va en una tarjeta sin borde con su título', () => {
 
   for (const grupo of ['Datos fiscales', 'Contacto', 'Condiciones de compra']) {
     const tarjeta = screen.getByTestId(`grupo-${grupo}`)
-    expect(estilo(tarjeta)).toMatchObject({ backgroundColor: themeColors.light.surface, borderRadius: 16 })
+    expect(estilo(tarjeta)).toMatchObject({ backgroundColor: themeColors.light.surface, borderRadius: radii.tarjetaGrande })
     expect(estilo(tarjeta).borderWidth ?? 0).toBe(0)
     expect(within(tarjeta).getByRole('header', { name: grupo })).toBeTruthy()
   }
@@ -58,7 +58,8 @@ it('la condición frente al IVA y la de pago son filas con radio dentro de una t
     const radios = screen.getByLabelText(grupo)
     await userEvent.press(within(radios).getByRole('radio', { name: opcion }))
     const elegido = within(radios).getByRole('radio', { name: opcion })
-    expect(estilo(elegido).backgroundColor).toBe(themeColors.light.brandSoft)
+    // Receta FWD: la fila elegida no lleva tinte propio; la marca teal con tilde dice cuál es (el color nunca va solo).
+    expect(estilo(elegido).backgroundColor).toBe('transparent')
     expect(within(elegido).getByTestId('marca-radio-elegida')).toBeTruthy()
   }
 })

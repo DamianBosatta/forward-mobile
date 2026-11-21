@@ -2,7 +2,7 @@ import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Bell, ChevronRight, Monitor } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { StatusChip } from '@/core/ui/fw'
+import { IconoEnCuadro, StatusChip } from '@/core/ui/fw'
 import type { Aviso } from '@/libs/api-client/notificaciones'
 import { avisoDeTipo } from './avisos'
 import type { DestinoAviso } from './bandeja'
@@ -42,9 +42,7 @@ export function AvisoFila({ aviso, destino, cuando, onPress, variante = 'fila' }
         overflow: 'hidden',
       }}
     >
-      <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: variante === 'tarjeta' ? c.surfaceAlt : c.surface, alignItems: 'center', justifyContent: 'center' }}>
-        <Icono size={24} color={variante === 'tarjeta' ? c.text : critico ? c.danger : c.brandInk} strokeWidth={2} />
-      </View>
+      <IconoEnCuadro icono={Icono} fondo={variante === 'tarjeta' ? c.surfaceAlt : c.surface} color={variante === 'tarjeta' ? c.text : critico ? c.danger : c.brandInk} />
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
         {!aviso.leida || critico ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space[2] }}>

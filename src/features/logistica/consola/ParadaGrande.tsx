@@ -66,13 +66,10 @@ export function ParadaGrande({ parada, numero, total, puedeLlamar, notaCargando,
   )
 }
 
-/** Ink al 12 % sobre la tarjeta lime (receta `.dato` de la lámina); el mismo velo que la pista de `Progress`. */
-const VELO_SOBRE_LIME = 'rgba(32, 30, 30, 0.12)'
-
 function Dato({ rotulo, valor, crece }: { rotulo: string; valor: string; crece?: boolean }) {
   const c = useColors()
   return (
-    <View style={{ flex: crece ? 1 : undefined, backgroundColor: VELO_SOBRE_LIME, borderRadius: radii.cantidad, paddingVertical: space[3], paddingHorizontal: space[4] }}>
+    <View style={{ flex: crece ? 1 : undefined, backgroundColor: c.veilInk12, borderRadius: radii.cantidad, paddingVertical: space[3], paddingHorizontal: space[4] }}>
       <Text style={{ ...typeScale.etiqueta, color: c.ink, opacity: 0.78, textTransform: 'uppercase' }}>{rotulo}</Text>
       <Text maxFontSizeMultiplier={1.3} numberOfLines={1} adjustsFontSizeToFit style={{ ...typeScale.consolaCifra, ...importe, color: c.ink }}>{valor}</Text>
     </View>
@@ -90,7 +87,7 @@ function Atajo({ label, onPress, disabled, busy }: { label: string; onPress: () 
       accessibilityLabel={label}
       accessibilityState={{ disabled: !!inactivo, busy: !!busy }}
       android_ripple={{ color: c.ink }}
-      style={{ flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: VELO_SOBRE_LIME, opacity: inactivo ? 0.5 : 1 }}
+      style={{ flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.veilInk12, opacity: inactivo ? 0.5 : 1 }}
     >
       <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.cuerpoDestacado, color: c.ink, textAlign: 'center' }}>{label}</Text>
     </PressableFx>

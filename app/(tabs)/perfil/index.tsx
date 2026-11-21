@@ -1,11 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native'
+import { Alert, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Bell, Fingerprint, Lock, LogOut } from 'lucide-react-native'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { useThemeStore, useColors, maxFontScale, radii, space, typeScale, type ThemeMode } from '../../../libs/theme'
+import { useThemeStore, useColors, radii, space, typeScale, type ThemeMode } from '../../../libs/theme'
 import { ConfirmModal } from '@/core/ui'
-import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { iniciales } from '@/core/utils/texto'
 import { BottomSheet, Button, FilaDeAjuste, FilaInterruptor, Notice, Segmented, TopBar, useMenuLeading, type SegmentedOption, useInsetInferior } from '@/core/ui/fw'
 import { API_URL, setApiUrl, ENV_PROD, ENV_LOCAL } from '@/libs/api-client'
@@ -161,21 +160,7 @@ export default function PerfilScreen() {
 
         <View style={{ gap: space[2] }}>
           {/* Decisión del dueño (L12): "Cerrar sesión" en texto normal; el aviso de peligro lo da el contorno. */}
-          <PressableFx
-            accessibilityRole="button"
-            accessibilityLabel="Cerrar sesión"
-            accessibilityState={{ disabled: saliendo, busy: saliendo }}
-            disabled={saliendo}
-            onPress={() => setConfirmarSalida(true)}
-            android_ripple={{ color: c.surfaceAlt }}
-            style={{ height: 64, borderRadius: radii.pastilla, borderWidth: 2, borderColor: c.dangerFill, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-              {saliendo ? <ActivityIndicator size="small" color={c.text} /> : null}
-              <LogOut size={20} color={c.text} strokeWidth={2.5} />
-              <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.cuerpoDestacado, { color: c.text }]}>Cerrar sesión</Text>
-            </View>
-          </PressableFx>
+          <Button label="Cerrar sesión" variant="peligroContornoNeutro" size="lg" icon={LogOut} loading={saliendo} onPress={() => setConfirmarSalida(true)} />
           <Text style={secundario}>Cierra tu sesión aquí y en los demás dispositivos; en la web puede seguir abierta unos minutos. Para volver a entrar vas a necesitar tu usuario y tu contraseña.</Text>
         </View>
 
