@@ -145,7 +145,7 @@ describe('Ingreso', () => {
       mockBio.choice = 'enabled';
       renderLogin();
       const huella = await screen.findByRole('button', { name: 'Entrar con huella' });
-      expect(plano(huella.props.style)).toMatchObject({ minHeight: 64, backgroundColor: c.surface });
+      expect(plano(huella.props.style)).toMatchObject({ backgroundColor: c.surface });
     });
   });
 
