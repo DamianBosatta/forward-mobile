@@ -4,24 +4,27 @@ import { useColorScheme } from 'react-native'
 import type { TextStyle } from 'react-native'
 import { logger } from '@/core/utils/logger'
 
-// ── Tokens del Bloque 9 (plan §7 y §10) ────────────────────────────────────
+// ── Tokens FWD (restyle, spec docs/mobile/restyle-fwd/00-spec.md §2-4) ────
 // Los dos temas usan los MISMOS nombres: la pantalla se programa una vez y el
-// tema cambia los valores. Fuente: tokens.css de la web (claro y bloque .dark)
-// más los tokens nuevos que existen porque el valor de la web no llega a 4,5:1.
+// tema cambia los valores. Los hex son los aprobados por el dueño (2026-11-20/21).
 //
-// Claves legadas (las consumen las pantallas viejas) → token aprobado:
-//   bg, background      → fondo
-//   surface, cardBg     → superficie
-//   surface2, inputBg   → superficie-2
-//   surface3            → superficie-2 (legado: no hay superficie-3)
-//   border              → borde de separadores; borderStrong → contorno de controles (3:1)
-//   text                → texto
-//   textMuted, textSecondary, textDisabled → texto-secundario (legado: el
-//                         deshabilitado no se marca bajando el contraste)
-//   primary             → marca-tinta (es texto y fondo de botones viejos)
-//   primaryHover        → marca-tinta presionada (legado)
-//   secondary, info     → información (web --color-info; solo íconos)
-//   success/warning/danger → estados de la web: SOLO íconos y puntos, nunca texto
+// Claves legadas (las consumen ~230 archivos) → token FWD. Una clave que se usa como TEXTO
+// nunca apunta a un relleno (lime y rojo no se leen sobre blanco):
+//   bg, background      → bg
+//   surface, cardBg     → surface
+//   surface2, surface3, inputBg → surfaceAlt
+//   border              → line (separadores); borderStrong → contorno de controles (3:1)
+//   text                → text
+//   textMuted, textSecondary, textDisabled → textMuted (el deshabilitado no baja el contraste)
+//   brand               → acento de contorno/indicador/tinte (accentText: 3:1 sobre surface y bg)
+//   brandInk            → accentText (texto de acento: petróleo en claro, lime en oscuro)
+//   brandSoft           → selección (tinte petróleo claro / surfaceAlt oscuro)
+//   action, primary     → primaryBg (relleno de botón principal); onAction, onPrimary → primaryFg
+//   primaryHover        → primaryBg presionado
+//   danger              → rojo LEGIBLE como texto (claro #C52020, oscuro #FF6B5E); el relleno de la
+//                         spec es dangerFill (#FF6B5E) con texto onState
+//   warning             → #FFB020 (relleno de estado; solo íconos, puntos y rellenos con texto ink)
+//   success, info, secondary → como hoy (S5)
 //   glassBg, glassBorder→ superficie translúcida / borde (legado)
 
 export type ThemeMode = 'dark' | 'light' | 'system'
@@ -40,19 +43,33 @@ export interface ChipColors {
 }
 
 export interface ForwardColors {
+  // ── Marca FWD (spec 00-spec.md §2): iguales en claro y oscuro ──
+  lime: string // protagonista: tarjeta principal, bloques de cantidad. Texto encima: siempre `ink`
+  teal: string // avance y "hecho". Nunca color de texto sobre fondo claro: para eso `accentText`
+  ink: string // texto sobre lime, teal y estados
+  // ── Por tema (spec §2) ──
+  surfaceAlt: string
+  accentText: string // texto de acento: petróleo en claro, lime en oscuro
+  primaryBg: string // botón principal
+  primaryFg: string
+  fabBg: string // "Nueva venta": lime en claro, teal en oscuro
+  onFab: string
+  /** Relleno de estado de la spec (solo estados, texto `onState`, siempre con el estado escrito). */
+  dangerFill: string
+  onState: string
   // ── Tokens aprobados ──
-  brand: string // marca: acentos (pestaña activa, foco). Nunca texto sobre claro
-  brandInk: string // marca-tinta: enlaces y texto teal
-  brandSoft: string // marca-suave: selección
-  action: string // botón primario y flotante
+  brand: string // acentos (pestaña activa, foco, borde de selección): legible como contorno 3:1
+  brandInk: string // enlaces y texto de acento (= accentText)
+  brandSoft: string // selección
+  action: string // botón primario y flotante legado (= primaryBg)
   onAction: string
   dangerStrong: string // botón de peligro
   onDangerStrong: string
   topBar: string // barra superior
   onTopBar: string // texto secundario en la barra
-  onTopBarStrong: string // título e íconos de la barra (lámina F4)
+  onTopBarStrong: string // título e íconos de la barra
   topBarBorder: string
-  veil: string // velo de la hoja inferior. DECISIÓN PENDIENTE DEL DUEÑO: el plan §7.2 solo dice texto-secundario
+  veil: string // velo de la hoja inferior
   chip: Record<ChipEstado, ChipColors>
   // ── Claves legadas (ver mapeo arriba) ──
   bg: string
@@ -72,7 +89,7 @@ export interface ForwardColors {
   secondary: string
   success: string
   warning: string
-  danger: string
+  danger: string // legible como texto (hay pantallas que lo usan así); el relleno de la spec es `dangerFill`
   info: string
   glassBg: string
   glassBorder: string
@@ -80,120 +97,139 @@ export interface ForwardColors {
   cardBg: string
 }
 
-// Estados de la web: iguales en los dos temas, solo para íconos y puntos.
-const ESTADOS_WEB = {
+// Marca y estados: iguales en los dos temas. `success` e `info` siguen como hoy (S5: el teal de marca no marca estados).
+const MARCA = { lime: '#E0EB3C', teal: '#00AB96', ink: '#201E1E' } as const
+const ESTADOS = {
   success: '#21C45D',
-  warning: '#FFA200',
-  danger: '#EF4343',
+  warning: '#FFB020', // spec: solo estados, texto ink
+  dangerFill: '#FF6B5E',
+  onState: '#201E1E',
   info: '#0DA2E7',
 } as const
 
 function conLegados(t: {
   bg: string
   surface: string
-  surface2: string
+  surfaceAlt: string
   border: string
   borderStrong: string
   text: string
   textSecondary: string
-  brandInk: string
-  brandInkPressed: string
-  onPrimary: string
+  accentText: string
+  primaryBg: string
+  primaryFg: string
+  primaryPressed: string
+  fabBg: string
+  danger: string
   glassBg: string
 }) {
   return {
+    ...MARCA,
+    ...ESTADOS,
+    surfaceAlt: t.surfaceAlt,
+    accentText: t.accentText,
+    primaryBg: t.primaryBg,
+    primaryFg: t.primaryFg,
+    fabBg: t.fabBg,
+    onFab: MARCA.ink,
     bg: t.bg,
     background: t.bg,
     surface: t.surface,
-    surface2: t.surface2,
-    surface3: t.surface2,
+    surface2: t.surfaceAlt,
+    surface3: t.surfaceAlt,
     border: t.border,
     borderStrong: t.borderStrong,
     text: t.text,
     textMuted: t.textSecondary,
     textSecondary: t.textSecondary,
     textDisabled: t.textSecondary,
-    primary: t.brandInk,
-    onPrimary: t.onPrimary,
-    primaryHover: t.brandInkPressed,
-    secondary: ESTADOS_WEB.info,
-    ...ESTADOS_WEB,
+    primary: t.primaryBg,
+    onPrimary: t.primaryFg,
+    primaryHover: t.primaryPressed,
+    secondary: ESTADOS.info,
+    danger: t.danger,
     glassBg: t.glassBg,
     glassBorder: t.borderStrong,
-    inputBg: t.surface2,
+    inputBg: t.surfaceAlt,
     cardBg: t.surface,
   }
 }
 
 const LIGHT_COLORS: ForwardColors = {
-  brand: '#00C29E',
-  brandInk: '#0A7662',
-  brandSoft: '#E0F8F3',
-  action: '#2BD4BD',
-  onAction: '#080D0C',
+  brand: '#00796A',
+  brandInk: '#00796A',
+  brandSoft: '#EAF4F1',
+  action: '#00796A',
+  onAction: '#FFFFFF',
   dangerStrong: '#C52020',
   onDangerStrong: '#FFFFFF',
-  topBar: '#0E1514',
-  onTopBar: '#9DAFAB',
-  onTopBarStrong: '#FFFFFF',
-  topBarBorder: '#0E1514',
-  veil: 'rgba(85, 109, 104, 0.85)', // texto-secundario #556D68 al 85 %
+  topBar: '#201E1E',
+  onTopBar: '#B5B2B3',
+  onTopBarStrong: '#F5F5F1',
+  topBarBorder: '#201E1E',
+  veil: 'rgba(90, 87, 87, 0.85)', // textMuted #5A5757 al 85 %
   chip: {
-    confirmado: { bg: '#E0F8F3', text: '#0A7662' },
-    pendiente: { bg: '#F0F0F0', text: '#556D68' },
-    porAutorizar: { bg: '#FFF4E0', text: '#92610C' },
+    confirmado: { bg: '#EAF4F1', text: '#00796A' },
+    pendiente: { bg: '#E2E3DE', text: '#5A5757' },
+    porAutorizar: { bg: '#FFF1D6', text: '#8A5A00' },
     enCurso: { bg: '#E2F4FC', text: '#0D6E9C' },
     entregado: { bg: '#E4F8EC', text: '#157A3A' },
-    anulado: { bg: '#FDE8E8', text: '#A90F0F' },
+    anulado: { bg: '#FFE6E3', text: '#B3261E' },
   },
   ...conLegados({
-    bg: '#F2F4F3',
+    bg: '#F1F2EE',
     surface: '#FFFFFF',
-    surface2: '#F0F0F0',
-    border: '#D3DBD9',
-    borderStrong: '#7A8A87',
-    text: '#141F1D',
-    textSecondary: '#556D68',
-    brandInk: '#0A7662',
-    brandInkPressed: '#075A4B',
-    onPrimary: '#FFFFFF',
+    surfaceAlt: '#E2E3DE',
+    border: '#E2E3DE',
+    borderStrong: '#7A7778',
+    text: '#201E1E',
+    textSecondary: '#5A5757',
+    accentText: '#00796A',
+    primaryBg: '#00796A',
+    primaryFg: '#FFFFFF',
+    primaryPressed: '#005A4F',
+    fabBg: '#E0EB3C',
+    danger: '#C52020',
     glassBg: 'rgba(255, 255, 255, 0.85)',
   }),
 }
 
 const DARK_COLORS: ForwardColors = {
-  brand: '#00E6BB',
-  brandInk: '#00E6BB',
-  brandSoft: '#0B3B32',
-  action: '#2BD4BD',
-  onAction: '#080D0C',
+  brand: '#E0EB3C',
+  brandInk: '#E0EB3C',
+  brandSoft: '#3A3637',
+  action: '#E0EB3C',
+  onAction: '#201E1E',
   dangerStrong: '#C52020',
   onDangerStrong: '#FFFFFF',
-  topBar: '#080D0C',
-  onTopBar: '#9DAFAB',
-  onTopBarStrong: '#EDF2F1',
-  topBarBorder: '#273432',
-  veil: 'rgba(8, 13, 12, 0.80)', // fondo oscuro #080D0C al 80 %
+  topBar: '#141213',
+  onTopBar: '#B5B2B3',
+  onTopBarStrong: '#F5F5F1',
+  topBarBorder: '#454142',
+  veil: 'rgba(20, 18, 19, 0.80)', // fondo oscuro #141213 al 80 %
   chip: {
-    confirmado: { bg: '#0B3B32', text: '#00E6BB' },
-    pendiente: { bg: '#151E1C', text: '#9DAFAB' },
-    porAutorizar: { bg: '#392E10', text: '#FFAB1A' },
+    confirmado: { bg: '#3A3637', text: '#E0EB3C' },
+    pendiente: { bg: '#3A3637', text: '#B5B2B3' },
+    porAutorizar: { bg: '#4A3A12', text: '#FFB020' },
     enCurso: { bg: '#0E2E3A', text: '#26B2F3' },
     entregado: { bg: '#113421', text: '#3BDE77' },
-    anulado: { bg: '#361D1C', text: '#F15F5F' },
+    anulado: { bg: '#4A2320', text: '#FF8478' },
   },
   ...conLegados({
-    bg: '#080D0C',
-    surface: '#0E1514',
-    surface2: '#151E1C',
-    border: '#273432',
-    borderStrong: '#5E7370',
-    text: '#EDF2F1',
-    textSecondary: '#9DAFAB',
-    brandInk: '#00E6BB',
-    brandInkPressed: '#1AFFD5',
-    onPrimary: '#080D0C',
-    glassBg: 'rgba(14, 21, 20, 0.85)',
+    bg: '#141213',
+    surface: '#2A2728',
+    surfaceAlt: '#3A3637',
+    border: '#454142',
+    borderStrong: '#8C8889',
+    text: '#F5F5F1',
+    textSecondary: '#B5B2B3',
+    accentText: '#E0EB3C',
+    primaryBg: '#E0EB3C',
+    primaryFg: '#201E1E',
+    primaryPressed: '#CAD535',
+    fabBg: '#00AB96',
+    danger: '#FF6B5E',
+    glassBg: 'rgba(42, 39, 40, 0.85)',
   }),
 }
 
@@ -210,7 +246,7 @@ export const BRAND = {
   blueDark: '#2563EB',
   lime:     '#A3E635',
   limeDark: '#84cc16',
-  fontSans: 'Inter_400Regular', // Inter sola (plan §7)
+  fontSans: 'Manrope_600SemiBold', // Manrope 600/700/800 (spec §3)
   violet:   '#8b5cf6',
   orange:   '#f97316',
   green:    '#10b981',
@@ -219,11 +255,13 @@ export const BRAND = {
 } as const
 
 // ── Fuente ─────────────────────────────────────────────────────────────────
-// Inter es la única familia. Con fuentes propias, Android no elige el peso por
-// fontWeight: el peso va en el nombre de la familia.
+// Manrope 600/700/800 (spec §3). Con fuentes propias, Android no elige el peso por
+// fontWeight: el peso va en el nombre de la familia. No hay peso 400: `regular` es el 600.
 export const FONT = {
-  regular: 'Inter_400Regular',
-  semibold: 'Inter_600SemiBold',
+  regular: 'Manrope_600SemiBold',
+  semibold: 'Manrope_600SemiBold',
+  bold: 'Manrope_700Bold',
+  extrabold: 'Manrope_800ExtraBold',
 } as const
 
 // ── Escala tipográfica (plan §7.3) ─────────────────────────────────────────
@@ -233,31 +271,45 @@ export interface TextToken {
   fontSize: number
   fontWeight: TextStyle['fontWeight']
   lineHeight: number
+  letterSpacing?: number
 }
 
-const texto = (fontSize: number, peso: 400 | 600, lineHeight: number): TextToken => ({
-  fontFamily: peso === 600 ? FONT.semibold : FONT.regular,
+type Peso = 600 | 700 | 800
+
+const FAMILIA_POR_PESO: Record<Peso, string> = { 600: FONT.semibold, 700: FONT.bold, 800: FONT.extrabold }
+
+/** `tracking` en em (spec §3: -0.03em en títulos y números protagonistas). */
+const texto = (fontSize: number, peso: Peso, lineHeight: number, tracking = 0): TextToken => ({
+  fontFamily: FAMILIA_POR_PESO[peso],
   fontSize,
-  fontWeight: peso === 600 ? '600' : '400',
+  fontWeight: String(peso) as TextStyle['fontWeight'],
   lineHeight,
+  ...(tracking ? { letterSpacing: Math.round(fontSize * tracking * 100) / 100 } : null),
 })
 
 export const typeScale = {
-  titulo: texto(20, 600, 28), // título de pantalla y totales
-  seccion: texto(18, 600, 24),
-  cuerpo: texto(16, 400, 24),
-  cuerpoDestacado: texto(16, 600, 24), // nombres e importes de fila
-  secundario: texto(14, 400, 20),
-  etiqueta: texto(12, 600, 16), // solo chips y barra inferior
-  // Cifras y títulos grandes (hero de reportes, consola del chofer, login): antes eran fontSize sueltos.
-  seccionGrande: texto(19, 600, 26), // botones xl y opciones grandes
-  consolaTexto: texto(21, 600, 28), // acciones y direcciones de la consola
-  tituloGrande: texto(24, 600, 32), // título de hoja o paso
-  destacado: texto(28, 600, 36), // importe grande
-  consolaCifra: texto(30, 600, 36), // cifra de la parada
-  cifraGrande: texto(32, 600, 40), // cifra del hero de inicio y saldo del cliente
-  cifra: texto(36, 600, 44), // cifra hero (reportes)
-  hero: texto(48, 600, 56), // marca en el login ancho
+  // Roles de la spec §3.
+  tituloPantalla: texto(31, 800, 34, -0.03),
+  numeroProtagonista: texto(39, 800, 42, -0.03), // con `importe` (cifras tabulares)
+  tituloTarjeta: texto(26, 800, 30, -0.02),
+  textoFila: texto(16, 800, 22),
+  etiquetaChip: texto(12, 800, 16),
+  // Escala existente: mismos nombres y tamaños, pesos Manrope (spec §3: 600 secundario, 800 títulos y filas).
+  titulo: texto(20, 600, 28), // título de pantalla y totales. Sigue en 600: src/core/ui/fw/__tests__/componentes.test.tsx (fuera de U0a) lo fija; pasar a 800 es de U0b
+  seccion: texto(18, 800, 24),
+  cuerpo: texto(16, 600, 24),
+  cuerpoDestacado: texto(16, 800, 24), // nombres e importes de fila
+  secundario: texto(14, 600, 20),
+  etiqueta: texto(12, 800, 16), // solo chips y barra inferior
+  // Cifras y títulos grandes (hero de reportes, consola del chofer, login).
+  seccionGrande: texto(19, 800, 26), // botones xl y opciones grandes
+  consolaTexto: texto(21, 800, 28), // acciones y direcciones de la consola
+  tituloGrande: texto(24, 800, 32), // título de hoja o paso
+  destacado: texto(28, 800, 36), // importe grande
+  consolaCifra: texto(30, 800, 36), // cifra de la parada
+  cifraGrande: texto(32, 800, 40), // cifra del hero de inicio y saldo del cliente
+  cifra: texto(36, 800, 44), // cifra hero (reportes)
+  hero: texto(48, 800, 56), // marca en el login ancho
 } as const
 
 /**
@@ -273,10 +325,15 @@ export const importe: TextStyle = { fontVariant: ['tabular-nums'] }
 // ── Radios, espaciado y sombra (plan §7.1) ─────────────────────────────────
 
 export const radii = {
-  campo: 10, // campos y botones (--radius-md)
-  tarjeta: 16, // (--radius-lg)
-  hoja: 24, // (--radius-xl)
-  pastilla: 9999, // chips (--radius-full)
+  campo: 10, // campos y botones legados (--radius-md)
+  tarjeta: 16, // legado (--radius-lg); en la spec equivale al bloque de cantidad
+  hoja: 24, // legado (--radius-xl); la fila de la spec es 22-24
+  pastilla: 9999, // chips y botones (spec: píldora)
+  // Spec FWD §4
+  tarjetaGrande: 30,
+  tile: 28,
+  fila: 22,
+  cantidad: 16,
 } as const
 
 /** Base 4, como --space-1 … --space-12 de la web. */
