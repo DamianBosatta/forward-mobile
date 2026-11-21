@@ -2,14 +2,12 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
 import { Lock } from 'lucide-react-native'
-import { Button, Field, FormContainer, Notice, PieFijo, formatImporte } from '@/core/ui/fw'
+import { Button, Field, FormContainer, MarcaRadio, Notice, PieFijo, formatImporte } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useSocio, useSocios } from '@/libs/api-client/socios'
 import { useInfiniteCompras } from '@/libs/api-client/compras'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useComprasDelProveedor } from '@/features/proveedores/hooks/useProveedores'
-import { Check } from 'lucide-react-native'
-import { MarcaRadio } from '@/features/venta-nueva/components/MarcaRadio'
 import { formatToLocalDate } from '@/core/utils/fecha'
 import { franjaTexto } from '../lib/fecha'
 import { numeroDeCompra } from '../lib/numero'
@@ -90,11 +88,7 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
         android_ripple={{ color: c.surface2 }}
         style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3], borderRadius: radii.fila, backgroundColor: sel ? c.teal : c.surface }}
       >
-        {sel ? (
-          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: c.ink }}>
-            <Check size={14} color={c.lime} strokeWidth={3} />
-          </View>
-        ) : <MarcaRadio elegido={false} />}
+        <MarcaRadio elegido={sel} sobreTeal={sel} />
         <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
           <Text style={[typeScale.cuerpoDestacado, { color: sel ? c.ink : c.text }]}>{p.nombre}</Text>
           {p.cuit ? <Text style={[typeScale.secundario, { color: sel ? c.ink : c.textSecondary }]}>{`CUIT ${p.cuit}`}</Text> : null}
@@ -103,7 +97,7 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
         </View>
       </Pressable>
     )
-  }, [c, elegido, secundario])
+  }, [c, elegido])
   const tarjeta = useCallback((filas: React.ReactNode) => (
     <View style={{ gap: space[2] }}>{filas}</View>
   ), [])

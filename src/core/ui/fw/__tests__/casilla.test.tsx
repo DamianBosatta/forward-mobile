@@ -18,11 +18,11 @@ describe.each(['light', 'dark'] as const)('Casilla, tema %s', (modo) => {
     expect(StyleSheet.flatten(nodo.props.style).minHeight).toBeGreaterThanOrEqual(44)
   })
 
-  it('sin tildar: borde de 2 px borderStrong; tildada: relleno brandInk', () => {
+  it('sin tildar: borde de 2 px borderStrong; tildada: relleno teal con tilde ink', () => {
     const { rerender } = render(<Casilla label="x" marcada={false} onPress={jest.fn()} />)
     expect(StyleSheet.flatten(caja().props.style)).toMatchObject({ borderWidth: 2, borderColor: c.borderStrong })
     rerender(<Casilla label="x" marcada onPress={jest.fn()} />)
-    expect(StyleSheet.flatten(caja().props.style)).toMatchObject({ backgroundColor: c.brandInk })
+    expect(StyleSheet.flatten(caja().props.style)).toMatchObject({ backgroundColor: c.teal })
     expect(screen.getByRole('checkbox').props.accessibilityState).toEqual({ checked: true })
   })
 

@@ -3,7 +3,7 @@ import { Modal, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Check, ChevronRight, Phone, ScanLine } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, TopBar, useColumnaDeFormulario } from '@/core/ui/fw'
+import { Button, MarcaDeCasilla, TopBar, useColumnaDeFormulario } from '@/core/ui/fw'
 import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { safeHaptics } from '@/core/utils/haptics'
 import type { ParadaDto } from '@/libs/api-client/types'
@@ -127,23 +127,7 @@ function PiezaFila({ titulo, marcada, onPress }: { titulo: string; marcada: bool
       android_ripple={{ color: c.surfaceAlt }}
       style={{ minHeight: 68, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], borderRadius: radii.fila, backgroundColor: marcada ? c.teal : c.surface }}
     >
-      <View
-        testID="casilla-caja"
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 12,
-          borderWidth: 3,
-          borderColor: marcada ? c.ink : c.textSecondary,
-          backgroundColor: marcada ? c.ink : 'transparent',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {marcada ? <Check size={22} color={c.lime} strokeWidth={3} /> : null}
-      </View>
+      <MarcaDeCasilla marcada={marcada} tamano={36} sobreTeal={marcada} />
       <Text style={{ ...typeScale.seccion, color: marcada ? c.ink : c.text, flex: 1 }}>{titulo}</Text>
     </PressableFx>
   )
