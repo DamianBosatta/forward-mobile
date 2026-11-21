@@ -1,4 +1,5 @@
 import React from 'react'
+import { esRetiroEnLocal, etiquetaMetodo } from '@/core/utils/metodoEntrega'
 import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { PressableFx } from '@/core/ui/fw/PressableFx'
@@ -92,7 +93,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
   const motivos = motivosAutorizacion(h.motivoPendienteAutorizacion)
   const sim = comision.data
   const cobro = esPresupuesto ? null : cobroDeLaVenta(pagos.data)
-  const entrega = h.metodoEntregaNombre === 'RetiroEnLocal' ? 'Retiro en el local' : diaDeEntregaCorto(h.fechaEntrega)
+  const entrega = esRetiroEnLocal(null, h.metodoEntregaNombre) ? etiquetaMetodo(null, h.metodoEntregaNombre, { larga: true }) : diaDeEntregaCorto(h.fechaEntrega)
   const telefono = cliente?.telefono ?? h.clienteTelefono ?? null
   const cobrar = () => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: h.clienteId } } as never)
   const fecha = h.fecha ? new Date(h.fecha) : null

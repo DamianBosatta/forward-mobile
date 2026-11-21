@@ -114,11 +114,6 @@ export function textoPaso(p: PasoTablero): string {
   return `${estados} · ${p.usuarioNombre} · ${formatToLocalTime(p.fecha, 'dd/MM HH:mm')}`
 }
 
-/** Método de entrega como la web (MetodoBadge): Logística, Retiro o Expreso. */
-export function etiquetaMetodo(metodo: number, nombre: string): string {
-  return metodo === 1 ? 'Logística' : metodo === 2 ? 'Retiro' : metodo === 3 ? 'Expreso' : nombre
-}
-
 /** Los atajos de entrega de la web (rango-entrega.ts). `''` = sin límite: no viaja. */
 export type AtajoEntrega = 'hoy' | 'manana' | 'semana' | 'todo'
 export interface RangoEntrega { desde: string; hasta: string }
