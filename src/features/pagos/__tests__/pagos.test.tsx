@@ -138,14 +138,16 @@ describe('Lista de pagos', () => {
     const sale = await screen.findByLabelText(/^Sale, Molinos SA, /, {}, ESPERA)
     expect(sale.props.accessibilityLabel).toContain(`Molinos SA, ${$(25000)}, Pago a proveedor`)
     expect(within(sale).getByText('Registró Ana Gómez')).toBeTruthy()
-    expect(within(sale).getByText($(25000))).toBeTruthy()
+    expect(within(sale).getByText(`−${$(25000)}`)).toBeTruthy()
     expect(within(sale).queryByText('ANULADO')).toBeNull()
 
     const entra = screen.getByLabelText(/^Entra, Kiosco Chela/)
     expect(within(entra).getByText('ANULADO')).toBeTruthy()
+    expect(within(entra).getByText(`+${$(12000)}`)).toBeTruthy()
 
     const neutro = screen.getByLabelText(/^Sin movimiento de caja, Flete Sur/)
     expect(within(neutro).getByText('Sin movimiento de caja')).toBeTruthy()
+    expect(within(neutro).getByText($(5000))).toBeTruthy()
   })
 
   it('tocar un renglón abre su detalle', async () => {

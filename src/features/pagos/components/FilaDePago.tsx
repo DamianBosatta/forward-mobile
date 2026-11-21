@@ -25,6 +25,8 @@ export const FilaDePago = memo(function FilaDePago({ pago: p, onAbrir }: Props) 
   // S5 (excepción aprobada): la flecha de Tesorería conserva verde/rojo; el sentido además va escrito en la etiqueta.
   const colorFlecha = sentido === 'neutro' ? c.text : sentido === 'entra' ? c.success : c.dangerFill
   const monto = formatImporte(p.monto, { moneda: p.moneda })
+  // S5: el sentido también va escrito junto al monto (+ entra, − sale); sin movimiento de caja no lleva signo.
+  const signo = sentido === 'entra' ? '+' : sentido === 'sale' ? '−' : ''
   const entidad = p.socioRazonSocial?.trim() || '—'
   const fecha = formatToLocalTime(p.fecha)
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
@@ -54,7 +56,7 @@ export const FilaDePago = memo(function FilaDePago({ pago: p, onAbrir }: Props) 
       </View>
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
         <Text numberOfLines={2} style={{ ...typeScale.textoFila, color: c.text }}>{entidad}</Text>
-        <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{monto}</Text>
+        <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{`${signo}${monto}`}</Text>
         <Text style={secundario}>{`${p.tipoNombre} · ${fecha}`}</Text>
         {p.creadoPorNombre ? <Text style={secundario}>{`Registró ${p.creadoPorNombre}`}</Text> : null}
         {p.estaAnulado || p.sinMovimientoDeCaja ? (
