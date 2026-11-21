@@ -42,22 +42,22 @@ export function ElegirCuenta({ titulo, cuentas, valor, onCambio, extra, plano = 
           onPress={() => setAbierta(true)}
           style={{ minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[3], paddingVertical: space[2] }}
         >
-          <View style={{ width: 40, height: 40, borderRadius: radii.campo, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface2 }}>
-            <Landmark size={20} color={c.textSecondary} />
+          <View style={{ width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface2 }}>
+            <Landmark size={24} color={c.text} />
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{titulo}</Text>
             <Text style={[typeScale.cuerpoDestacado, { color: c.text }]} numberOfLines={1}>{elegida.label}</Text>
             {elegida.saldo ? <Text style={[typeScale.secundario, importe, { color: c.textSecondary }]}>{`Saldo ${elegida.saldo}`}</Text> : null}
           </View>
-          <Text style={[typeScale.secundario, { fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: c.brandInk }]}>Cambiar</Text>
+          <Text style={[typeScale.secundario, { fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '800', color: c.brandInk }]}>Cambiar</Text>
         </Pressable>
       </View>
     )
   }
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={titulo} style={{ gap: space[1], padding: plano ? space[2] : 0 }}>
-      <Text style={{ ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: c.text }}>{titulo}</Text>
+      <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{titulo}</Text>
       {opciones.map(o => {
         const elegida = o.id === valor
         return (
@@ -68,15 +68,13 @@ export function ElegirCuenta({ titulo, cuentas, valor, onCambio, extra, plano = 
             accessibilityState={{ checked: elegida, selected: elegida }}
             onPress={() => { setAbierta(false); onCambio(o.id) }}
             style={{
-              minHeight: 48,
+              minHeight: 56,
               flexDirection: 'row',
               alignItems: 'center',
               gap: space[3],
               paddingHorizontal: space[3],
-              borderRadius: radii.campo,
-              backgroundColor: elegida ? c.brandSoft : plano ? 'transparent' : c.surface,
-              borderWidth: elegida ? 2 : 1,
-              borderColor: elegida ? c.brand : plano ? 'transparent' : c.border,
+              borderRadius: radii.fila,
+              backgroundColor: elegida ? c.brandSoft : plano ? 'transparent' : c.surface2,
             }}
           >
             <View testID={elegida ? 'marca-radio-elegida' : 'marca-radio'}>

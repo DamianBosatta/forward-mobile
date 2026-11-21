@@ -43,10 +43,9 @@ export function ListaDePagos({ onVolver }: { onVolver: () => void }) {
   const sinConexion = (!!q.error && sinRed) || enPausa
   const reintentar = { label: 'Reintentar', onPress: () => void q.refetch() }
   const abrirPago = useCallback((id: string) => router.push({ pathname: '/(tabs)/tesoreria/pagos/[id]', params: { id } }), [router])
-  const ultimoIndice = filas.length - 1
-  const renderPago = useCallback(({ item, index }: { item: (typeof filas)[number]; index: number }) => (
-    <FilaDePago pago={item} primera={index === 0} ultima={index === ultimoIndice} onAbrir={abrirPago} />
-  ), [ultimoIndice, abrirPago])
+  const renderPago = useCallback(({ item }: { item: (typeof filas)[number] }) => (
+    <FilaDePago pago={item} onAbrir={abrirPago} />
+  ), [abrirPago])
 
   const encabezado = (
     <TopBar

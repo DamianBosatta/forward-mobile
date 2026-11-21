@@ -10,31 +10,31 @@ interface Props {
 }
 
 /**
- * Monto como cifra grande con "$" (propuesta "Finanzas como venta", frames 10, 11, 14 y 15; v2): un campo de 64 px
- * con borde de marca cuando tiene valor o foco. Mismo texto libre que el campo de siempre: lo lee `leerNumero`.
+ * Monto como bloque grande (FWD, `.amount`): tarjeta de radio 30 sobre `surface`, rótulo arriba y la cifra
+ * protagonista con "$". El foco lo marca un contorno de 2 pt en `text`, no solo el color. Mismo texto libre que
+ * el campo de siempre: lo lee `leerNumero`.
  */
 export function MontoGrande({ value, onChangeText, label = 'Monto' }: Props) {
   const c = useColors()
   const [foco, setFoco] = useState(false)
-  const marcado = foco || value.trim().length > 0
   return (
-    <View style={{ gap: space[1] }}>
-      <Text style={{ ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: c.text }}>{label}</Text>
-      <View
-        testID="monto-grande"
-        style={{
-          height: 64,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: space[2],
-          paddingHorizontal: space[4],
-          borderRadius: radii.campo,
-          borderWidth: 2,
-          borderColor: marcado ? c.brand : c.border,
-          backgroundColor: c.surface,
-        }}
-      >
-        <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.destacado, { color: c.textSecondary }]}>$</Text>
+    <View
+      testID="monto-grande"
+      style={{
+        minHeight: 96,
+        paddingHorizontal: space[5],
+        paddingTop: space[4],
+        paddingBottom: space[5],
+        gap: space[2],
+        borderRadius: radii.tarjetaGrande,
+        borderWidth: 2,
+        borderColor: foco ? c.text : 'transparent',
+        backgroundColor: c.surface,
+      }}
+    >
+      <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{label}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+        <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.numeroProtagonista, { color: c.textMuted }]}>$</Text>
         <TextInput
           accessibilityLabel={label}
           maxFontSizeMultiplier={maxFontScale}
@@ -44,8 +44,8 @@ export function MontoGrande({ value, onChangeText, label = 'Monto' }: Props) {
           onBlur={() => setFoco(false)}
           keyboardType="decimal-pad"
           placeholder="0,00"
-          placeholderTextColor={c.textSecondary}
-          style={[typeScale.destacado, importe, { flex: 1, color: c.text, textAlign: 'right', paddingVertical: 0 }]}
+          placeholderTextColor={c.textMuted}
+          style={[typeScale.numeroProtagonista, importe, { flex: 1, color: c.text, textAlign: 'right', paddingVertical: 0 }]}
         />
       </View>
     </View>
