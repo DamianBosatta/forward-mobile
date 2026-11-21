@@ -3,7 +3,7 @@ import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ArrowLeft, ChevronRight } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, Notice, PieFijo, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { Button, Entrada, Notice, PieFijo, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -163,8 +163,8 @@ export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, de
           const { texto, alerta } = estadoDeStock(l, cambio)
           const color = alerta ? c.chip.porAutorizar.text : c.chip.entregado.text
           return (
+            <Entrada key={l.productoId} tipo="fila" indice={i}>
             <View
-              key={l.productoId}
               testID={cambio ? `linea-cambio-${l.productoId}` : undefined}
               style={{ paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radii.campo, gap: space[1], borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.border, ...(cambio ? { borderWidth: 2, borderColor: c.chip.porAutorizar.text } : null) }}
             >
@@ -200,12 +200,13 @@ export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, de
                 </Pressable>
               ) : null}
             </View>
+            </Entrada>
           )
         })}
         </View>
         ) : null}
         {ajustes}
-        <View style={{ gap: space[2], paddingTop: space[2] }}>
+        <Entrada tipo="tarjeta" style={{ gap: space[2], paddingTop: space[2] }}>
           {paso === 'carrito' ? (
             <>
               <TotalsRow label="Subtotal de lista" importe={lista} />
@@ -225,7 +226,7 @@ export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, de
             </View>
           ) : null}
           <Text style={secundario}>Los totales son estimados: el total final lo calcula el sistema al guardar.</Text>
-        </View>
+        </Entrada>
       </ScrollView>
       {paso === 'carrito' ? (
         <PieFijo fondo="bg">
