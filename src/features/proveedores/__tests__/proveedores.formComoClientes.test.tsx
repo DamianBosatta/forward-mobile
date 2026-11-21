@@ -60,6 +60,7 @@ it('la condición frente al IVA y la de pago son filas en pastilla con radio', a
     const elegido = within(radios).getByRole('radio', { name: opcion })
     // Receta FWD (proveedores-nuevo): la fila elegida va en teal con texto ink; el estado también va en el rol (no solo color).
     expect(estilo(elegido)).toMatchObject({ backgroundColor: themeColors.light.teal, minHeight: 56, borderRadius: radii.fila })
+    expect(within(elegido).getByTestId('marca-radio-elegida')).toBeTruthy()
     expect(elegido.props.accessibilityState).toMatchObject({ checked: true })
     const otra = within(radios).getAllByRole('radio').find(r => r !== elegido)!
     expect(estilo(otra).backgroundColor).toBe(themeColors.light.surfaceAlt)

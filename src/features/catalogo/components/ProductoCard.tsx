@@ -2,7 +2,7 @@ import React, { memo } from 'react'
 import { Image as ExpoImage } from 'expo-image'
 import { Pressable, Text, View } from 'react-native'
 import { Package } from 'lucide-react-native'
-import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { ProductoIdentidad, StatusChip, formatImporte } from '@/core/ui/fw'
 import { getFullImageUrl } from '@/libs/api-client/media'
 import { chipDeTarjeta, detalleDeTarjeta, textoVariacion, type ProductoDeTarjeta } from '../lib/presentacion'
@@ -22,14 +22,13 @@ interface ProductoCardProps {
  */
 export const ProductoCard = memo(function ProductoCard({ producto, disponible, grilla, seleccionado, onPress }: ProductoCardProps) {
   const c = useColors()
-  const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const chip = chipDeTarjeta(producto.novedad, disponible)
   const variacion = textoVariacion(producto.variacionPorcentaje)
   const sinStock = producto.novedad === 'SinStock'
   const conNovedad = !!producto.novedad && producto.novedad !== 'Ninguna'
   const detalle = detalleDeTarjeta(producto)
   const foto = getFullImageUrl(producto.imageUrl)
-  const ladoFoto = grilla ? undefined : 72
+  const ladoFoto = grilla ? undefined : 84
 
   return (
     <Pressable
@@ -45,19 +44,17 @@ export const ProductoCard = memo(function ProductoCard({ producto, disponible, g
         flexDirection: grilla ? 'column' : 'row',
         gap: space[3],
         padding: space[3],
-        borderRadius: radii.tarjeta,
+        borderRadius: radii.tile,
+        // Sin borde ni sombra (receta FWD): la elegida se distingue por el fondo y por accessibilityState.selected.
         backgroundColor: seleccionado ? c.brandSoft : c.surface,
-        borderWidth: 2,
-        borderColor: seleccionado ? c.brand : c.surface,
-        ...sombra,
       }}
     >
       <View
         style={{
           width: ladoFoto,
-          height: grilla ? 120 : 72,
-          borderRadius: radii.campo,
-          backgroundColor: c.surface2,
+          height: grilla ? 120 : 84,
+          borderRadius: radii.fila,
+          backgroundColor: c.surfaceAlt,
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
@@ -78,7 +75,7 @@ export const ProductoCard = memo(function ProductoCard({ producto, disponible, g
         {/* wrap + marginLeft auto: en la grilla el importe baja de renglón y queda a la derecha. */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: space[2] }}>
           <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Precio de lista</Text>
-          <Text style={[typeScale.cuerpoDestacado, importe, { marginLeft: 'auto', color: sinStock ? c.textSecondary : c.text }]}>{formatImporte(producto.precioVenta)}</Text>
+          <Text style={[typeScale.seccion, importe, { marginLeft: 'auto', color: sinStock ? c.textSecondary : c.text }]}>{formatImporte(producto.precioVenta)}</Text>
         </View>
         {variacion ? (
           <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'baseline', gap: space[2] }}>
