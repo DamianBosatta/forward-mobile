@@ -7,6 +7,7 @@ import { useVenta } from '@/libs/api-client'
 import type { VentaPreparacion } from '@/libs/api-client/logistica'
 import type { VentaDetalleItemDto } from '@/libs/api-client/types'
 import { tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
+import { etiquetaMetodo } from '../picking/tablero'
 import { parseDateSafe } from '@/core/utils/fecha'
 
 type Empaque = NonNullable<VentaDetalleItemDto['empaque']>
@@ -59,7 +60,7 @@ export function PedidoPorPrepararDetalle({ pedido }: { pedido: VentaPreparacion 
       </View>
       <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[2] }}>
         {dato('Entrega', entrega ? tituloDelDia(entrega) : 'Sin fecha')}
-        {dato('Cómo', pedido.metodoEntregaNombre)}
+        {dato('Cómo', etiquetaMetodo(pedido.metodoEntrega, pedido.metodoEntregaNombre))}
         {dato('Lugar', pedido.direccion)}
       </View>
       <Text style={{ ...typeScale.seccion, color: c.text }}>{`Productos (${pedido.itemsCount})`}</Text>
