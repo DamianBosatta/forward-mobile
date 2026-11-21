@@ -102,7 +102,7 @@ describe('Ingreso', () => {
     const marca = screen.getByTestId('login-marca', { includeHiddenElements: true });
     // El logo de la web (icon.svg), no el cuadrado con la flecha.
     expect(within(marca).getByTestId('logo-fwd', { includeHiddenElements: true })).toBeTruthy();
-    expect(within(marca).getByTestId('logo-fwd', { includeHiddenElements: true }).props.height).toBe(56);
+    expect(within(marca).getByTestId('logo-fwd', { includeHiddenElements: true }).props.height).toBe(72);
   });
 
   it('el logo FWD se ve también en tablet', () => {
@@ -120,32 +120,32 @@ describe('Ingreso', () => {
     it('sigue el tema: fondo, campos y borde de control salen de libs/theme', () => {
       auth();
       renderLogin();
-      expect(estiloCon(usuario(), 'borderWidth')).toMatchObject({ borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface });
+      expect(estiloCon(usuario(), 'borderWidth')).toMatchObject({ borderWidth: 2, borderColor: 'transparent', backgroundColor: c.surface });
       expect(plano(screen.getByText('Usuario o email').props.style).color).toBe(c.text);
     });
 
-    it('el campo con foco lleva borde de 2 pt en el color de marca del tema', () => {
+    it('el campo con foco lleva borde de 2 pt en el color de texto del tema', () => {
       auth();
       renderLogin();
       fireEvent(usuario(), 'focus');
-      expect(estiloCon(usuario(), 'borderWidth')).toMatchObject({ borderWidth: 2, borderColor: c.brandInk });
+      expect(estiloCon(usuario(), 'borderWidth')).toMatchObject({ borderWidth: 2, borderColor: c.text });
     });
 
     it('con error del servidor marca los dos campos en el color de peligro del tema', () => {
       auth({ error: 'Usuario o contraseña incorrectos' });
       renderLogin();
-      expect(estiloCon(usuario(), 'borderWidth')).toMatchObject({ borderWidth: 2, borderColor: c.chip.anulado.text });
-      expect(estiloCon(contrasena(), 'borderWidth')).toMatchObject({ borderWidth: 2, borderColor: c.chip.anulado.text });
+      expect(estiloCon(usuario(), 'borderWidth')).toMatchObject({ borderWidth: 2, borderColor: c.dangerFill });
+      expect(estiloCon(contrasena(), 'borderWidth')).toMatchObject({ borderWidth: 2, borderColor: c.dangerFill });
     });
 
-    it('la huella es un botón de contorno con borderStrong', async () => {
+    it('la huella es un botón secundario de 64, sin contorno', async () => {
       auth();
       mockBio.available = true;
       mockBio.saved = true;
       mockBio.choice = 'enabled';
       renderLogin();
       const huella = await screen.findByRole('button', { name: 'Entrar con huella' });
-      expect(plano(huella.props.style)).toMatchObject({ borderWidth: 1, borderColor: c.borderStrong });
+      expect(plano(huella.props.style)).toMatchObject({ minHeight: 64, backgroundColor: c.surface });
     });
   });
 

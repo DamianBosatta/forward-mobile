@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
 import { useQueryClient } from '@tanstack/react-query'
 import { Eye, EyeOff, Fingerprint } from 'lucide-react-native'
-import { FONT, useColors, space, typeScale } from '../libs/theme'
+import { FONT, radii, useColors, space, typeScale } from '../libs/theme'
 import { useResponsive } from '../libs/useResponsive'
 import { Button, Notice, PieFijo, Segmented, type SegmentedOption } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
@@ -126,16 +126,17 @@ export default function LoginScreen() {
   const quedan = INTENTOS_ANTES_DEL_BLOQUEO - failedAttempts
   const lineaIntentos =
     !isLocked && failedAttempts > 0 && quedan > 0 ? `Te quedan ${quedan} ${quedan === 1 ? 'intento' : 'intentos'} antes del bloqueo.` : null
-  const etiqueta = [typeScale.secundario, { fontWeight: '600' as const, color: c.text }]
+  const etiqueta = [typeScale.secundario, { fontFamily: FONT.extrabold, fontWeight: '800' as const, color: c.text }]
   // Los dos campos se marcan en error: el servidor no distingue cuál falló.
   const conError = !!error && !faltanDatos
   const campo = (enfocado: boolean) => ({
-    height: isTablet ? 56 : 52,
-    borderRadius: 12,
-    borderWidth: enfocado || conError ? 2 : 1,
-    borderColor: conError ? c.chip.anulado.text : enfocado ? c.brandInk : c.borderStrong,
+    // Campo píldora (receta `.input`): 56 de alto, sin borde en reposo; el foco lo marca con el texto y el error con danger.
+    height: 56,
+    borderRadius: radii.pastilla,
+    borderWidth: 2,
+    borderColor: conError ? c.dangerFill : enfocado ? c.text : 'transparent',
     backgroundColor: c.surface,
-    paddingHorizontal: space[4] - (enfocado || conError ? 1 : 0),
+    paddingHorizontal: space[5] - 2,
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     opacity: isLoading ? 0.55 : 1,
@@ -145,35 +146,21 @@ export default function LoginScreen() {
   const botones = (
     <>
       <Button
+        size="lg"
         label={isLocked ? 'Acceso bloqueado' : 'Ingresar'}
         onPress={() => { void ingresar() }}
         loading={isLoading}
         disabled={isLocked || sinConexion}
       />
       {ofrecerHuella ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Entrar con huella"
+        <Button
+          size="lg"
+          variant="secundario"
+          icon={Fingerprint}
+          label="Entrar con huella"
           disabled={sinConexion || isLoading}
-          accessibilityState={{ disabled: sinConexion || isLoading }}
           onPress={() => { void entrarConHuella() }}
-          android_ripple={{ color: c.borderStrong }}
-          style={{
-            height: 52,
-            opacity: sinConexion ? 0.4 : isLoading ? 0.55 : 1,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: c.borderStrong,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: space[2] + 2,
-            overflow: 'hidden',
-          }}
-        >
-          <Fingerprint size={22} color={c.text} />
-          <Text maxFontSizeMultiplier={1.3} style={[typeScale.cuerpoDestacado, { color: c.text }]}>Entrar con huella</Text>
-        </Pressable>
+        />
       ) : null}
     </>
   )
@@ -181,7 +168,7 @@ export default function LoginScreen() {
   const formulario = (
     <View style={{ gap: space[3] + 2 }}>
       {isTablet ? (
-        <Text accessibilityRole="header" style={{ ...typeScale.destacado, color: c.text, marginBottom: space[2] }}>
+        <Text accessibilityRole="header" style={{ ...typeScale.tituloPantalla, color: c.text, marginBottom: space[2] }}>
           Ingresá
         </Text>
       ) : null}
@@ -230,7 +217,7 @@ export default function LoginScreen() {
             accessibilityLabel={verContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             onPress={() => setVerContrasena((v) => !v)}
             android_ripple={{ color: c.border, borderless: true }}
-            style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 44, height: 44, borderRadius: radii.pastilla, alignItems: 'center', justifyContent: 'center' }}
           >
             {verContrasena ? <EyeOff size={22} color={c.textSecondary} /> : <Eye size={22} color={c.textSecondary} />}
           </Pressable>
@@ -300,12 +287,12 @@ export default function LoginScreen() {
       >
         <View style={{ gap: space[2] }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
-            {logo(teclado ? 40 : 56)}
-            <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.titulo, color: c.text }}>Forward</Text>
+            {logo(teclado ? 40 : 72)}
+            <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.tituloPantalla, color: c.text }}>Forward</Text>
           </View>
           {teclado ? null : (
             <View style={{ gap: space[1], marginTop: space[4] }}>
-              <Text accessibilityRole="header" maxFontSizeMultiplier={1.3} style={[typeScale.titulo, { color: c.text }]}>Ingresá a tu cuenta</Text>
+              <Text accessibilityRole="header" maxFontSizeMultiplier={1.3} style={[typeScale.tituloPantalla, { color: c.text }]}>Ingresá a tu cuenta</Text>
               <Text style={[typeScale.cuerpo, { color: c.textSecondary }]}>Usá el mismo usuario y contraseña de la web.</Text>
             </View>
           )}

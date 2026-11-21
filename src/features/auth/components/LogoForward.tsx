@@ -1,29 +1,26 @@
 import React from 'react'
-import Svg, { G, Path, Text as SvgText } from 'react-native-svg'
-import { FONT } from '@/libs/theme'
+import Svg, { ClipPath, Defs, Polygon, Rect } from 'react-native-svg'
+import { themeColors } from '@/libs/theme'
 
 /**
- * Marca FWD, la misma de la web (forward-frontend/apps/web/public/icon.svg), con el viewBox recortado
- * como en la galería v2 (`0 31 281 219`). Los colores son los del logo, no del tema: es una imagen de
- * marca y se ve igual en claro y en oscuro. Decorativa: quien la usa pone el nombre en texto al lado.
+ * Marca FWD (receta de `.logo` del restyle): cuadrado lima redondeado, franja diagonal ink y cuña teal en la
+ * esquina. Es una imagen de marca: los tres colores son los de la marca (iguales en claro y oscuro). Dibujada en
+ * una grilla de 72 para que escale a cualquier tamaño. Decorativa: quien la usa pone el nombre en texto al lado.
  */
-const ANCHO = 281
-const ALTO = 219
-const LIMA = '#98d14d'
-const FLECHA = '#00c19e'
-const LETRAS = '#00a385'
+const MARCA = themeColors.light
+const GRILLA = 72
 
 export function LogoForward({ alto }: { alto: number }) {
-  const ancho = Math.round((alto * ANCHO) / ALTO)
   return (
-    <Svg testID="logo-fwd" width={ancho} height={alto} viewBox={`0 31 ${ANCHO} ${ALTO}`} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <G transform="translate(0,31.5)">
-        <Path d="M280.5 0.5L280.5 217.5L0.5 217.5L280.5 0.5Z" fill={LIMA} fillOpacity={0.85} />
-        <Path d="M20 160C80 150 160 145 270 155L200 120M270 155L200 190" stroke={FLECHA} strokeWidth={12} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        <SvgText x="10" y="100" fontFamily={FONT.semibold} fontWeight="800" fontSize="110" letterSpacing={-6} fill={LETRAS}>
-          FWD
-        </SvgText>
-      </G>
+    <Svg testID="logo-fwd" width={alto} height={alto} viewBox={`0 0 ${GRILLA} ${GRILLA}`} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Defs>
+        <ClipPath id="logo-fwd-recorte">
+          <Rect x={0} y={0} width={GRILLA} height={GRILLA} rx={24} ry={24} />
+        </ClipPath>
+      </Defs>
+      <Rect x={0} y={0} width={GRILLA} height={GRILLA} rx={24} ry={24} fill={MARCA.lime} />
+      <Rect x={28} y={-16} width={16} height={112} fill={MARCA.ink} transform="rotate(28 36 40)" clipPath="url(#logo-fwd-recorte)" />
+      <Polygon points="72,38 72,72 38,72" fill={MARCA.teal} clipPath="url(#logo-fwd-recorte)" />
     </Svg>
   )
 }
