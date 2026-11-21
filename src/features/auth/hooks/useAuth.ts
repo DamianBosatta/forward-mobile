@@ -4,6 +4,7 @@ import { configureApiClient, fetchWithTimeout, API_URL } from '@/core/api/client
 import { useQueryClient } from '@tanstack/react-query';
 import { cerrarSesion } from '../lib/cerrarSesion';
 import { esTiempoAgotado } from '@/core/api/errores';
+import { logger } from '@/core/utils/logger';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Login Rate Limiting — Previene ataques de fuerza bruta desde el cliente
@@ -79,7 +80,7 @@ export function useAuth() {
       }
       return false;
     } catch (err) {
-      console.error("[useAuth] Failed to refresh permissions:", err);
+      logger.error("[useAuth] Failed to refresh permissions:", err);
       return false;
     }
   }, [setUser]);
@@ -186,11 +187,11 @@ export function useAuth() {
 
       setIsLoading(false);
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsLoading(false);
       setError(esTiempoAgotado(err)
         ? 'El servidor tardó demasiado en responder. Intentá de nuevo.'
-        : err?.message ?? 'No se pudo conectar al servidor.');
+        : (err as { message?: string } | null)?.message ?? 'No se pudo conectar al servidor.');
       return false;
     }
   }, [failedAttempts, isLocked, lockRemainingMs, setTokens, refreshPermissions, queryClient]);

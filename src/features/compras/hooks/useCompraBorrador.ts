@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { api } from '@/core/api/client'
+import { logger } from '@/core/utils/logger'
 import { borradorCompraApi, type GuardarCompraBody } from '@/libs/api-client/compras'
 import type { CompraDto, ProductoDetailDto, SocioDetailDto } from '@/libs/api-client/types'
 import { useDepositoDeConsulta } from '@/features/catalogo/hooks/useDepositoDeConsulta'
@@ -169,7 +170,7 @@ export function useCompraBorrador(borradorInicial?: string, opciones: { edicion?
       if (k === guardado.current || k === fallido.current || descartado.current || enConflicto.current) return undefined
       return borradorCompraApi.guardar({ ...c, version: version.current }).then(
         (r) => { version.current = r.version },
-        (e) => { console.warn('No se pudo guardar el borrador al salir', e) },
+        (e) => { logger.warn('No se pudo guardar el borrador al salir', e) },
       )
     }).finally(() => { if (salidasPendientes.get(c.id) === salida) salidasPendientes.delete(c.id) })
     salidasPendientes.set(c.id, salida)

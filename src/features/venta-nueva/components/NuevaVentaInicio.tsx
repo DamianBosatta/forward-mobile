@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { ActivityIndicator, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
+import { EstadoDeConsulta } from '@/core/ui/estados/EstadoDeConsulta'
 import { Button, PieFijo, Segmented, TopBar } from '@/core/ui/fw'
 import { useUltimoPedido } from '../hooks/useUltimoPedido'
 import { direccionDeEntrega } from '@/features/clientes/lib/cliente'
@@ -39,7 +40,7 @@ export function NuevaVentaInicio({ cargandoCliente, tipo, onTipo, onElegir, onNu
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Nueva venta" leading={{ kind: 'atras', onPress: onVolver }} />
-        <ActivityIndicator color={c.brand} style={{ margin: space[4] }} />
+        <EstadoDeConsulta cargando tituloError="No pudimos cargar el cliente" tituloVacio="" />
       </View>
     )
   }

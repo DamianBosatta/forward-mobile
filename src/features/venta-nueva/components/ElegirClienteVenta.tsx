@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { FlashList } from '@shopify/flash-list'
-import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native'
+import { Pressable, Text, TextInput, View } from 'react-native'
+import { EstadoDeConsulta } from '@/core/ui/estados/EstadoDeConsulta'
 import { Plus, Search } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import type { SocioListDto } from '@/libs/api-client/types'
@@ -193,7 +194,7 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
         }
         renderItem={renderCliente}
         ListEmptyComponent={
-          isLoading ? <ActivityIndicator color={c.brandInk} /> : error ? undefined : (
+          isLoading ? <EstadoDeConsulta cargando tituloError="No pudimos cargar los clientes" tituloVacio="" /> : error ? undefined : (
             <Text style={{ ...typeScale.secundario, color: c.textSecondary, paddingHorizontal: space[4] }}>
               {buscando ? 'Ningún cliente coincide con la búsqueda.' : 'Todavía no hay clientes en tu cartera.'}
             </Text>

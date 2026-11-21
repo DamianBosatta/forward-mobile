@@ -1,6 +1,6 @@
 import type { CuerpoEntregaParada, MedioCobroChofer } from '@/libs/api-client/logistica'
 import type { components } from '@/libs/api-client/generated/schema'
-import { leerNumero } from '@/core/utils/numero'
+import { formatearNumero, leerNumero } from '@/core/utils/numero'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 
 export interface LineaCobroForm {
@@ -137,7 +137,7 @@ export function clasificarFalloEntrega(e: unknown): FalloEntrega {
 /** Kilómetros del recorrido como los dice el servidor: "850 m", "12,3 km". */
 export function formatDistancia(metros: number): string {
   if (metros < 1000) return `${Math.round(metros)} m`
-  return `${(metros / 1000).toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`
+  return `${formatearNumero(metros / 1000, { minimo: 1, maximo: 1 })} km`
 }
 
 /**
