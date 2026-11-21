@@ -38,11 +38,11 @@ beforeEach(() => {
 })
 
 describe('hero de saldo (frame 5)', () => {
-  it('lo que se le debe va en la tarjeta oscura de la ficha del cliente, con su etiqueta', async () => {
+  it('lo que se le debe va en la tarjeta lime de la ficha del proveedor, con su etiqueta', async () => {
     renderConQuery(<FichaProveedor id="p1" />)
 
     const hero = await screen.findByTestId('hero-saldo')
-    expect(estilo(hero).backgroundColor).toBe(themeColors.light.panelOscuro)
+    expect(estilo(hero).backgroundColor).toBe(themeColors.light.lime)
     expect(within(hero).getByLabelText('Le debemos $ 710.430,00')).toBeTruthy()
     expect(within(hero).getByText('Le debemos')).toBeTruthy()
     expect(within(hero).queryByText('Saldo')).toBeNull()

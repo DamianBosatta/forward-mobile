@@ -28,7 +28,7 @@ const VISTAS = [
 export function SelectorDeVista({ vista, onCambiar }: { vista: VistaDeStock; onCambiar: (v: VistaDeStock) => void }) {
   const c = useColors()
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel="Cambiar vista de stock" style={{ flexDirection: 'row', gap: space[1], padding: space[1], borderRadius: radii.campo, backgroundColor: c.surface2 }}>
+    <View accessibilityRole="radiogroup" accessibilityLabel="Cambiar vista de stock" style={{ flexDirection: 'row', gap: space[1], padding: space[1], borderRadius: radii.pastilla, backgroundColor: c.surfaceAlt }}>
       {VISTAS.map(({ valor, label, Icono }) => {
         const elegido = vista === valor
         return (
@@ -41,9 +41,9 @@ export function SelectorDeVista({ vista, onCambiar }: { vista: VistaDeStock; onC
               if (!elegido) onCambiar(valor)
             }}
             android_ripple={{ color: c.border }}
-            style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radii.campo, backgroundColor: elegido ? c.surface : 'transparent' }}
+            style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radii.pastilla, backgroundColor: elegido ? c.primaryBg : 'transparent' }}
           >
-            <Icono size={20} color={elegido ? c.text : c.textSecondary} />
+            <Icono size={20} color={elegido ? c.primaryFg : c.textSecondary} />
           </Pressable>
         )
       })}
@@ -70,13 +70,11 @@ export function BotonFiltros({ filtros, onPress }: { filtros: FiltrosDeStock; on
         gap: space[2],
         paddingHorizontal: space[4],
         borderRadius: radii.pastilla,
-        borderWidth: 1,
-        borderColor: activo ? c.brand : c.border,
-        backgroundColor: activo ? c.brandSoft : c.surface,
+        backgroundColor: activo ? c.primaryBg : c.surface,
       }}
     >
-      <SlidersHorizontal size={18} color={activo ? c.brandInk : c.text} />
-      <Text style={[typeScale.cuerpoDestacado, { color: activo ? c.brandInk : c.text }]}>{label}</Text>
+      <SlidersHorizontal size={18} color={activo ? c.primaryFg : c.text} />
+      <Text style={[typeScale.cuerpoDestacado, { color: activo ? c.primaryFg : c.text }]}>{label}</Text>
     </Pressable>
   )
 }

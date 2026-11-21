@@ -20,7 +20,7 @@ export function DepositoDelTablero({ nombre, asignado, onElegir, etiqueta, testI
   const c = useColors()
   const contenido = (
     <>
-      <Building2 size={18} color={c.textSecondary} />
+      <Building2 size={22} color={c.textSecondary} />
       <View style={{ flex: 1 }}>
         {etiqueta ? <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{etiqueta}</Text> : null}
         <Text style={{ ...(etiqueta ? typeScale.cuerpoDestacado : typeScale.secundario), color: c.text }} numberOfLines={1}>{nombre}</Text>
@@ -31,10 +31,10 @@ export function DepositoDelTablero({ nombre, asignado, onElegir, etiqueta, testI
           </View>
         ) : null}
       </View>
-      {onElegir ? <ChevronDown size={18} color={c.textSecondary} /> : null}
+      {onElegir ? <ChevronDown size={20} color={c.textSecondary} /> : null}
     </>
   )
-  const estilo = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space[2], minHeight: 44, paddingHorizontal: space[3], paddingVertical: etiqueta ? space[2] : 0, borderRadius: radii.campo, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: onElegir ? c.surface : c.surface2 }
+  const estilo = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space[3], minHeight: 56, paddingHorizontal: space[4], paddingVertical: etiqueta ? space[2] : 0, borderRadius: radii.fila, backgroundColor: onElegir ? c.surface : c.surface2 }
   if (onElegir) {
     return (
       <Pressable testID={testID} onPress={onElegir} android_ripple={{ color: c.surface2 }} accessibilityRole="button" accessibilityLabel={`Depósito: ${nombre}`} accessibilityHint="Elegí qué depósito mirar" style={estilo}>

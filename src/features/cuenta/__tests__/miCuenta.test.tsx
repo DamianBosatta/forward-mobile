@@ -360,7 +360,7 @@ describe('Mi cuenta', () => {
 describe('Mi cuenta como venta (propuesta Cuenta, frames 1 a 3)', () => {
   const estilo = (testID: string) => StyleSheet.flatten(screen.getByTestId(testID).props.style)
 
-  it('la identidad va en una tarjeta sin borde con las iniciales en grande, no en la franja oscura', () => {
+  it('la identidad va en la tarjeta lime sin borde con las iniciales en grande, no en la franja oscura', () => {
     usuario()
     pintar()
     const tarjeta = screen.getByTestId('tarjeta-identidad')
@@ -368,9 +368,9 @@ describe('Mi cuenta como venta (propuesta Cuenta, frames 1 a 3)', () => {
     expect(within(tarjeta).getByText('Emanuel Parraquini')).toBeTruthy()
     expect(within(tarjeta).getByText('Vendedor · eparraquini')).toBeTruthy()
     expect(within(tarjeta).getByText('ep@forward.com.ar')).toBeTruthy()
-    expect(estilo('tarjeta-identidad').backgroundColor).toBe(themeColors.light.surface)
+    expect(estilo('tarjeta-identidad').backgroundColor).toBe(themeColors.light.lime)
     expect(estilo('tarjeta-identidad').borderWidth ?? 0).toBe(0)
-    expect(StyleSheet.flatten(screen.getByTestId('iniciales-identidad').props.style)).toEqual(expect.objectContaining({ width: 56, height: 56 }))
+    expect(StyleSheet.flatten(screen.getByTestId('iniciales-identidad').props.style)).toEqual(expect.objectContaining({ width: 64, height: 64 }))
   })
 
   it('las tarjetas de ajustes no llevan borde', () => {

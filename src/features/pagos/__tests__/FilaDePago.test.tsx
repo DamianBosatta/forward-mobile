@@ -28,13 +28,13 @@ describe.each(['light', 'dark'] as const)('FilaDePago, flechas de Tesorería (%s
   afterAll(() => useThemeStore.setState({ mode: 'system' }))
 
   it('la salida de dinero usa dangerFill (S5) y el texto "Sale" lo dice por escrito', () => {
-    render(<FilaDePago pago={pago(-1)} primera ultima onAbrir={jest.fn()} />)
+    render(<FilaDePago pago={pago(-1)} onAbrir={jest.fn()} />)
     expect(screen.UNSAFE_getByType(ArrowUpRight).props.color).toBe(c.dangerFill)
     expect(screen.getByRole('button').props.accessibilityLabel).toContain('Sale')
   })
 
   it('la entrada de dinero usa success', () => {
-    render(<FilaDePago pago={pago(1)} primera ultima onAbrir={jest.fn()} />)
+    render(<FilaDePago pago={pago(1)} onAbrir={jest.fn()} />)
     expect(screen.UNSAFE_getByType(ArrowDownLeft).props.color).toBe(c.success)
   })
 })

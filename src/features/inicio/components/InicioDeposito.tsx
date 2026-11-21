@@ -6,6 +6,7 @@ import { space, useColors } from '@/libs/theme'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { TopBar, useInsetInferior, useMenuLeading } from '@/core/ui/fw'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
+import { useAccionAvisos } from '@/core/navigation/useAccionAvisos'
 import { useAhoraArgentina } from '@/core/utils/useAhoraArgentina'
 import { partesArgentina } from '@/core/utils/fecha'
 import { DepositoSesion } from '@/features/deposito-sesion'
@@ -25,6 +26,7 @@ const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno
 export function InicioDeposito() {
   const c = useColors()
   const router = useRouter()
+  const accionAvisos = useAccionAvisos()
   const menu = useMenuLeading()
   const insetInferior = useInsetInferior()
   const { user, canDo } = useAuthStore()
@@ -99,7 +101,7 @@ export function InicioDeposito() {
         title={`Hola, ${nombre}`.trim()}
         subtitle={`${DIAS[hoy.diaSemana]} ${hoy.dia} de ${MESES[hoy.mes]}`}
         leading={menu}
-        actions={[{ icon: Search, accessibilityLabel: 'Buscar', onPress: () => router.push('/buscar') }]}
+        actions={[{ icon: Search, accessibilityLabel: 'Buscar', onPress: () => router.push('/buscar') }, accionAvisos]}
       />
       <ScrollView
         testID="deposito-scroll"

@@ -33,7 +33,7 @@ export const AVISO_EDICION = 'Solo podés editar clientes de tu cartera. El tope
 function Grupo({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   const c = useColors()
   return (
-    <View testID={`grupo-${titulo}`} style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[4] }}>
+    <View testID={`grupo-${titulo}`} style={{ backgroundColor: c.surface, borderRadius: radii.tarjetaGrande, padding: space[5], gap: space[4] }}>
       <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>{titulo}</Text>
       {children}
     </View>
@@ -94,7 +94,7 @@ export function ClienteForm({ id }: { id?: string }) {
             <FormContainer style={{ paddingHorizontal: space[4], gap: space[4] }}>
               {hayBloqueo ? (
                 // Lo que este usuario no cambia: filas bloqueadas en una tarjeta propia con el aviso (frame 19).
-                <View testID="campos-bloqueados" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[3] }}>
+                <View testID="campos-bloqueados" style={{ backgroundColor: c.surface, borderRadius: radii.tarjetaGrande, padding: space[5], gap: space[3] }}>
                   <Notice tone="info">{AVISO_CAMPOS_SENSIBLES}</Notice>
                   {bloqueo.direccion ? <FilaBloqueada etiqueta="Dirección de entrega" valor={datos.direccion.trim() || '—'} /> : null}
                   {bloqueo.cuit ? <FilaBloqueada etiqueta="CUIT" valor={datos.cuit.trim() || '—'} /> : null}

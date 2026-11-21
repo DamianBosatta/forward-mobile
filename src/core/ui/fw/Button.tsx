@@ -6,9 +6,10 @@ import { PressableFx } from './PressableFx'
 
 /**
  * `listo`: la acción que cierra un trabajo terminado (teal con texto ink, spec FWD §5). `peligroContorno`:
- * destructivo que no compite con nada (cerrar sesión); el sólido queda para confirmar.
+ * destructivo que no compite con nada, con el texto en rojo; el sólido queda para confirmar. `peligroContornoNeutro`: el mismo contorno
+ * de peligro pero con el texto normal (decisión del dueño: "Cerrar sesión" en texto normal).
  */
-export type ButtonVariant = 'primario' | 'secundario' | 'peligro' | 'peligroContorno' | 'listo'
+export type ButtonVariant = 'primario' | 'secundario' | 'peligro' | 'peligroContorno' | 'peligroContornoNeutro' | 'listo'
 /**
  * `md` 48 (el alto de siempre, filas y diálogos), `lg` 64 (el botón principal de ancho completo del pie, spec FWD §4)
  * y `xl` 72 con texto 19 (la consola del chofer: se lee al sol, con una mano).
@@ -36,6 +37,7 @@ function paleta(c: ForwardColors, variant: ButtonVariant, inactivo: boolean) {
   if (inactivo) return { fondo: c.surfaceAlt, texto: c.textMuted, borde: null, ondas: c.border }
   if (variant === 'peligro') return { fondo: c.dangerFill, texto: c.onState, borde: null, ondas: c.ink }
   if (variant === 'peligroContorno') return { fondo: c.surface, texto: c.chip.anulado.text, borde: c.chip.anulado.text, ondas: c.border }
+  if (variant === 'peligroContornoNeutro') return { fondo: 'transparent', texto: c.text, borde: c.dangerFill, ondas: c.surfaceAlt }
   if (variant === 'secundario') return { fondo: c.surface, texto: c.text, borde: null, ondas: c.surfaceAlt }
   if (variant === 'listo') return { fondo: c.teal, texto: c.ink, borde: null, ondas: c.ink }
   return { fondo: c.primaryBg, texto: c.primaryFg, borde: null, ondas: c.primaryFg }

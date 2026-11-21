@@ -17,6 +17,7 @@ import { fusionarRecientes, leerRecientes } from '@/features/clientes/lib/recien
 import { useVenderA } from '@/features/venta-nueva/hooks/useVenderA'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { DepositoSesion } from '@/features/deposito-sesion'
+import { useAccionAvisos } from '@/core/navigation/useAccionAvisos'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
 import { useDashboardResumen, useResumenInicio } from '../api/queries'
 import { DeudoresDeInicio } from './DeudoresDeInicio'
@@ -56,6 +57,7 @@ export function MiDiaScreen() {
   const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
+  const accionAvisos = useAccionAvisos()
   const menu = useMenuLeading()
   const { isTablet } = useResponsive()
   const user = useAuthStore((s) => s.user)
@@ -220,7 +222,7 @@ export function MiDiaScreen() {
         title={`Hola, ${nombre}`.trim()}
         subtitle={fecha}
         leading={menu}
-        actions={[{ icon: Search, accessibilityLabel: 'Buscar', onPress: () => router.push('/buscar') }]}
+        actions={[{ icon: Search, accessibilityLabel: 'Buscar', onPress: () => router.push('/buscar') }, accionAvisos]}
       />
       <ScrollView
         testID="mi-dia-scroll"

@@ -1,5 +1,4 @@
 import {
-  Bell,
   BookOpen,
   Boxes,
   Building2,
@@ -14,6 +13,7 @@ import {
   ShieldCheck,
   ShoppingBag,
   Tag,
+  Truck,
   Wallet,
   type LucideIcon,
 } from 'lucide-react-native'
@@ -38,6 +38,8 @@ export interface MenuItem {
   capacidad?: AppCapability
   /** Condición propia que se suma a las anteriores (p. ej. varios módulos o un corte por perfil). */
   visibleSi?: (canDo: Acceso['canDo']) => boolean
+  /** Entradas que se despliegan en el lugar (Logística). La fila solo agrupa: no navega y desaparece sin hijos visibles. */
+  hijos?: MenuItem[]
 }
 
 export interface MenuGroup {
@@ -72,7 +74,7 @@ export function puedeVerVentas(canDo: CanDo): boolean {
 
 /**
  * Módulos del alcance, en las secciones de la lámina ModMenu: Inicio suelto, VENDER, COMPRAR,
- * GESTIÓN, LOGÍSTICA y Reportes suelto al final. Quién ve cada entrada no cambia: lo deciden
+ * GESTIÓN, Logística (fila que despliega) y Reportes suelto al final. Quién ve cada entrada no cambia: lo deciden
  * `appModule`, `capacidad` y `visibleSi`, no la sección.
  */
 export const MENU: MenuGroup[] = [
@@ -104,25 +106,27 @@ export const MENU: MenuGroup[] = [
       { id: 'cuentas', label: 'Cuentas corrientes', icon: Landmark, href: '/(tabs)/cuentas', routeName: 'cuentas/index', appModule: 'MOD_CC' },
       // Transferencias entre cuentas propias; los cobros se registran desde la cuenta corriente del cliente.
       // Los cheques se operan en la web (bloque 12, D10).
-      { id: 'movimientos', label: 'Transferencias', icon: Wallet, href: '/(tabs)/tesoreria', routeName: 'tesoreria/index', appModule: 'MOD_PAGOS' },
+      { id: 'tesoreria', label: 'Tesorería', icon: Wallet, href: '/(tabs)/tesoreria', routeName: 'tesoreria/index', appModule: 'MOD_PAGOS' },
       // El calendario no es un módulo en el servidor: cada uno ve el suyo (CalendarioController).
       { id: 'calendario', label: 'Calendario', icon: CalendarDays, href: '/(tabs)/calendario', routeName: 'calendario/index' },
-      // Cada uno ve sus avisos (el destinatario sale del token); el número de no leídas va al lado.
-      { id: 'avisos', label: 'Avisos', icon: Bell, href: '/(tabs)/avisos', routeName: 'avisos/index' },
     ],
   },
   {
-    title: 'LOGÍSTICA',
+    // Una sola fila "Logística" (sin título de sección) que despliega Picking y la Consola del chofer (L4).
     items: [
-      // Solo ver (D6): pendientes y no entregados. GET /Logistica/ventas-para-preparacion pide MOD_VIAJES:Read y recorta por depósito
-      // (AlcanceDelDespacho); la web abre el tablero de picking con el mismo módulo (REGLAS_DE_RUTA).
-      // Preparación de pedidos (S15): el tablero de picking de la web, solo ver. Mismo módulo que la web y que "Pedidos de logística".
-      { id: 'preparacion', label: 'Preparación de pedidos', icon: PackageOpen, href: '/(tabs)/logistica/picking', routeName: 'logistica/picking', appModule: 'MOD_VIAJES' },
-      { id: 'consola', label: 'Consola del chofer', icon: Navigation, href: '/(tabs)/logistica/consola', routeName: 'logistica/consola', appModule: 'MOD_VIAJES' },
-    ],
-  },
-  {
-    items: [
+      {
+        id: 'logistica',
+        label: 'Logística',
+        icon: Truck,
+        href: '/(tabs)/logistica/picking',
+        routeName: 'logistica',
+        hijos: [
+          // Solo ver (D6): GET /Logistica/ventas-para-preparacion pide MOD_VIAJES:Read y recorta por depósito (AlcanceDelDespacho);
+          // la web abre el tablero de picking con el mismo módulo (REGLAS_DE_RUTA). Es la ex "Preparación de pedidos" (S15).
+          { id: 'picking', label: 'Picking', icon: PackageOpen, href: '/(tabs)/logistica/picking', routeName: 'logistica/picking', appModule: 'MOD_VIAJES' },
+          { id: 'consola', label: 'Consola del chofer', icon: Navigation, href: '/(tabs)/logistica/consola', routeName: 'logistica/consola', appModule: 'MOD_VIAJES' },
+        ],
+      },
       // El servidor pide Ventas:Read y acota el alcance (el vendedor ve lo suyo); el chofer lee ventas pero no vende.
       { id: 'reportes', label: 'Reportes', icon: ChartColumn, href: '/(tabs)/reportes', routeName: 'reportes/index', visibleSi: (canDo) => canDo('MOD_VENTAS', 'read') && puedeVerVentas(canDo) },
     ],
@@ -139,12 +143,13 @@ interface Acceso {
 
 /** Deja solo lo que el usuario puede usar; un grupo sin ítems visibles desaparece con su título. */
 export function menuVisible(menu: MenuGroup[], { canDo, tieneCapacidad }: Acceso): MenuGroup[] {
-  const puede = (it: MenuItem) =>
+  const puede = (it: MenuItem): boolean =>
+    (!it.hijos || it.hijos.some(puede)) &&
     (!it.capacidad || tieneCapacidad(it.capacidad)) &&
     (!it.appModule || canDo(it.appModule, it.appAction ?? 'read')) &&
     (!it.visibleSi || it.visibleSi(canDo))
   return menu
-    .map((g) => ({ ...g, items: g.items.filter(puede) }))
+    .map((g) => ({ ...g, items: g.items.filter(puede).map((it) => (it.hijos ? { ...it, hijos: it.hijos.filter(puede) } : it)) }))
     .filter((g) => g.items.length > 0)
 }
 
@@ -153,6 +158,6 @@ export function esRutaActiva(item: MenuItem, rutaActual: string | undefined): bo
   if (!rutaActual) return false
   if (rutaActual === item.routeName) return true
   // Una pantalla hermana con entrada propia (Stock dentro de inventario/) no resalta a la de índice.
-  if (MENU.some((g) => g.items.some((i) => i.routeName === rutaActual))) return false
+  if (MENU.some((g) => g.items.some((i) => i.routeName === rutaActual || i.hijos?.some((h) => h.routeName === rutaActual)))) return false
   return item.routeName.endsWith('/index') && rutaActual.startsWith(item.routeName.slice(0, -'index'.length))
 }

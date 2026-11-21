@@ -26,16 +26,16 @@ export function VistaSemanal({ dias, hoy, porDia, onAbrir, entregas, onHoyMedido
         const delDia = porDia.get(d.fecha) ?? []
         const marca = entregas?.(d.fecha)
         const esHoy = d.fecha === hoy
-        const tinta = esHoy ? c.onAction : c.text
+        const tinta = esHoy ? c.ink : c.text
         return (
           <View
             key={d.fecha}
             testID={`dia-${d.fecha}`}
             accessibilityLabel={tituloDia(d.fecha)}
             onLayout={esHoy && onHoyMedido ? (ev) => onHoyMedido(ev.nativeEvent.layout.y) : undefined}
-            style={{ backgroundColor: c.surface2, borderRadius: radii.campo, padding: space[2], gap: space[2], opacity: marca?.sinEntregas ? 0.8 : 1 }}
+            style={{ backgroundColor: c.surfaceAlt, borderRadius: radii.tile, padding: space[3], gap: space[2], opacity: marca?.sinEntregas ? 0.8 : 1 }}
           >
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', paddingVertical: space[1] + 2, paddingHorizontal: space[2], borderRadius: radii.campo - 2, backgroundColor: esHoy ? c.action : 'transparent' }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', paddingVertical: space[1] + 2, paddingHorizontal: space[2], borderRadius: radii.fila, backgroundColor: esHoy ? c.lime : 'transparent' }}>
               <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: tinta }}>{cabeceraDeDia(d)}</Text>
               {esHoy ? <Text style={{ ...typeScale.etiqueta, color: tinta }}>Hoy</Text> : null}
               {marca?.feriado || marca?.sinEntregas ? (

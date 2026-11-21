@@ -57,7 +57,7 @@ export function ProveedorForm({ id }: { id?: string }) {
             <FormContainer style={{ paddingHorizontal: space[4], gap: space[4] }}>
               {hayBloqueo ? (
                 // Lo que este usuario no cambia: filas bloqueadas en una tarjeta propia con el aviso (frame 19).
-                <View testID="campos-bloqueados" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[3] }}>
+                <View testID="campos-bloqueados" style={{ backgroundColor: c.surface, borderRadius: radii.tarjetaGrande, padding: space[5], gap: space[3] }}>
                   <Notice tone="info">{AVISO_CAMPOS_SENSIBLES_PROVEEDOR}</Notice>
                   {bloqueo.razonSocial ? <FilaBloqueada etiqueta="Razón social" valor={datos.razonSocial.trim() || '—'} /> : null}
                   {bloqueo.cuit ? <FilaBloqueada etiqueta="CUIT" valor={datos.cuit.trim() || '—'} /> : null}
@@ -72,7 +72,7 @@ export function ProveedorForm({ id }: { id?: string }) {
                   <CampoDeSocio label="CUIT" value={datos.cuit} onChangeText={v => cambiar('cuit', v)} keyboardType="number-pad" placeholder="30123456789" />
                 ) : null}
                 <OpcionesRadio
-                  enTarjeta
+                  enPastilla
                   titulo="Condición frente al IVA"
                   opciones={CONDICIONES_IVA.map(v => ({ value: v, label: v }))}
                   valor={datos.condicionIva}
@@ -85,7 +85,7 @@ export function ProveedorForm({ id }: { id?: string }) {
               </Grupo>
 
               <Grupo titulo="Condiciones de compra">
-                <OpcionesRadio enTarjeta titulo="Condición de pago (obligatoria para comprarle)" opciones={TIPOS_PAGO} valor={datos.tipoPago} onChange={v => cambiar('tipoPago', v)} />
+                <OpcionesRadio enPastilla titulo="Condición de pago (obligatoria para comprarle)" opciones={TIPOS_PAGO} valor={datos.tipoPago} onChange={v => cambiar('tipoPago', v)} />
                 {datos.tipoPago !== 'Contado' ? (
                   <CampoDeSocio
                     label={datos.tipoPago === 'DiaFijoDelMes' ? 'Día del mes' : 'Días'}

@@ -11,6 +11,8 @@ export interface ProductoIdentidadProps {
   lineasNombre?: number
   /** Estilo del nombre; por defecto el de nombres de fila (`cuerpoDestacado`). */
   estiloNombre?: TextStyle
+  /** Dentro de una tarjeta teal (producto en la compra): todo el texto en `ink` y la insignia sobre un velo `ink`. */
+  sobreTeal?: boolean
 }
 
 /**
@@ -18,27 +20,27 @@ export interface ProductoIdentidadProps {
  * insignia al lado del nombre. Sin marca no hay renglón de marca; sin código no hay insignia. Es la única
  * convención de la app: no se arma a mano en cada pantalla (web: `ProductoIdentidad` de `@forward/ui`).
  */
-export function ProductoIdentidad({ nombre, marca, codigo, lineasNombre = 2, estiloNombre }: ProductoIdentidadProps) {
+export function ProductoIdentidad({ nombre, marca, codigo, lineasNombre = 2, estiloNombre, sobreTeal = false }: ProductoIdentidadProps) {
   const c = useColors()
   const marcaLimpia = marca?.trim()
   const codigoLimpio = codigo?.trim()
   return (
     <View style={{ flexShrink: 1, minWidth: 0, gap: space[1] }}>
       {marcaLimpia ? (
-        <Text numberOfLines={1} style={[typeScale.etiqueta, { color: c.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
+        <Text numberOfLines={1} style={[typeScale.etiqueta, { color: sobreTeal ? c.ink : c.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8 }]}>
           {marcaLimpia}
         </Text>
       ) : null}
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', flexWrap: 'wrap', columnGap: space[2], rowGap: space[1] }}>
-        <Text numberOfLines={lineasNombre} style={[typeScale.cuerpoDestacado, { color: c.text, flexShrink: 1 }, estiloNombre]}>
+        <Text numberOfLines={lineasNombre} style={[typeScale.cuerpoDestacado, { color: sobreTeal ? c.ink : c.text, flexShrink: 1 }, estiloNombre]}>
           {nombre}
         </Text>
         {codigoLimpio ? (
           <View
             accessibilityLabel={`Código ${codigoLimpio}`}
-            style={{ backgroundColor: c.surface2, borderRadius: radii.pastilla, paddingHorizontal: space[2], paddingVertical: 2, alignSelf: 'flex-start' }}
+            style={{ backgroundColor: sobreTeal ? c.veilInk12 : c.surface2, borderRadius: radii.pastilla, paddingHorizontal: space[2], paddingVertical: 2, alignSelf: 'flex-start' }}
           >
-            <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.etiqueta, { color: c.textSecondary }]}>
+            <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.etiqueta, { color: sobreTeal ? c.ink : c.textSecondary }]}>
               {codigoLimpio}
             </Text>
           </View>

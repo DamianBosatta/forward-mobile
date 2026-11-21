@@ -59,7 +59,9 @@ export default function PerfilScreen() {
   const { rol: quien, email } = lineasDeIdentidad(user)
   const [version] = useState(() => lineasDeVersion(leerDatosDeVersion()))
   // Tarjetas por tono, sin borde (propuesta Cuenta, frame 1).
-  const tarjeta = { borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' as const }
+  const tarjeta = { borderRadius: radii.tarjetaGrande, backgroundColor: c.surface, overflow: 'hidden' as const }
+  // FWD lote 6: cada fila es su propia píldora `surface`, sin divisores.
+  const pastilla = { borderRadius: radii.fila, backgroundColor: c.surface, overflow: 'hidden' as const }
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
   const titulo = (t: string) => <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>{t}</Text>
 
@@ -105,30 +107,36 @@ export default function PerfilScreen() {
       <TopBar title="Mi cuenta" leading={leading} />
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4], paddingBottom: space[12] + insetInferior, width: '100%', maxWidth: 640, alignSelf: 'center' }}>
         {/* Propuesta Cuenta, frame 1: la identidad sale de la franja oscura a una tarjeta sin borde con las iniciales en grande. */}
-        <View testID="tarjeta-identidad" style={[tarjeta, { flexDirection: 'row', alignItems: 'center', gap: space[4], padding: space[4] }]}>
-          <View testID="iniciales-identidad" style={{ width: 56, height: 56, borderRadius: radii.pastilla, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={[typeScale.titulo, { color: c.onAction }]}>{letras}</Text>
+        <View testID="tarjeta-identidad" style={[tarjeta, { backgroundColor: c.lime, flexDirection: 'row', alignItems: 'center', gap: space[4], padding: space[5] }]}>
+          <View testID="iniciales-identidad" style={{ width: 64, height: 64, borderRadius: radii.pastilla, backgroundColor: c.ink, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={[typeScale.titulo, { color: c.lime }]}>{letras}</Text>
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={[typeScale.titulo, { color: c.text }]}>{nombre}</Text>
-            {quien ? <Text style={secundario}>{quien}</Text> : null}
-            {email ? <Text style={secundario}>{email}</Text> : null}
+            <Text style={[typeScale.titulo, { color: c.ink }]}>{nombre}</Text>
+            {quien ? <Text style={[typeScale.secundario, { color: c.ink }]}>{quien}</Text> : null}
+            {email ? <Text style={[typeScale.secundario, { color: c.ink }]}>{email}</Text> : null}
           </View>
         </View>
 
         {seccion('Seguridad')}
-        <View testID="tarjeta-seguridad" style={tarjeta}>
+        <View testID="tarjeta-seguridad" style={{ gap: space[2] }}>
           {huella?.disponible ? (
-            <FilaInterruptor icono={Fingerprint} titulo="Entrar con huella" apoyo={huella.prendida ? 'Prendida' : 'Apagada'} prendido={huella.prendida} onChange={() => { void cambiarHuella() }} conDivisor />
+            <View style={pastilla}>
+              <FilaInterruptor icono={Fingerprint} titulo="Entrar con huella" apoyo={huella.prendida ? 'Prendida' : 'Apagada'} prendido={huella.prendida} onChange={() => { void cambiarHuella() }} />
+            </View>
           ) : null}
-          <FilaDeAjuste icono={Lock} titulo="Cambiar contraseña" apoyo="Pide la actual y una nueva" onPress={() => router.push('/perfil/clave')} />
+          <View style={pastilla}>
+            <FilaDeAjuste icono={Lock} titulo="Cambiar contraseña" apoyo="Pide la actual y una nueva" onPress={() => router.push('/perfil/clave')} />
+          </View>
         </View>
         {avisoHuella ? <Notice tone="info">{avisoHuella}</Notice> : null}
 
         {seccion('En este teléfono')}
-        <View testID="tarjeta-telefono" style={tarjeta}>
-          <FilaDeAjuste icono={Bell} titulo="Avisos en el teléfono" apoyo="Cuáles saltan apenas llegan" onPress={() => router.push('/avisos/preferencias')} conDivisor />
-          <View style={{ padding: space[4], paddingTop: space[3], gap: space[2] }}>
+        <View testID="tarjeta-telefono" style={{ gap: space[2] }}>
+          <View style={pastilla}>
+            <FilaDeAjuste icono={Bell} titulo="Avisos en el teléfono" apoyo="Cuáles saltan apenas llegan" onPress={() => router.push('/avisos/preferencias')} />
+          </View>
+          <View style={[pastilla, { padding: space[4], paddingTop: space[3], gap: space[2] }]}>
             <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Tema</Text>
             <Segmented accessibilityLabel="Tema" options={THEME_OPTIONS} value={mode} onChange={setMode} />
           </View>
@@ -137,7 +145,7 @@ export default function PerfilScreen() {
         {canDo('MOD_USUARIOS', 'read') ? (
           <>
             {seccion('Equipo')}
-            <View testID="tarjeta-equipo" style={tarjeta}>
+            <View testID="tarjeta-equipo" style={pastilla}>
               <FilaDeUsuarios onPress={() => router.push('/perfil/usuarios')} />
             </View>
           </>
@@ -151,7 +159,8 @@ export default function PerfilScreen() {
         </View>
 
         <View style={{ gap: space[2] }}>
-          <Button label="Cerrar sesión" variant="peligroContorno" icon={LogOut} loading={saliendo} onPress={() => setConfirmarSalida(true)} />
+          {/* Decisión del dueño (L12): "Cerrar sesión" en texto normal; el aviso de peligro lo da el contorno. */}
+          <Button label="Cerrar sesión" variant="peligroContornoNeutro" size="lg" icon={LogOut} loading={saliendo} onPress={() => setConfirmarSalida(true)} />
           <Text style={secundario}>Cierra tu sesión aquí y en los demás dispositivos; en la web puede seguir abierta unos minutos. Para volver a entrar vas a necesitar tu usuario y tu contraseña.</Text>
         </View>
 
@@ -167,8 +176,8 @@ export default function PerfilScreen() {
       <BottomSheet visible={confirmarSalida} onClose={() => setConfirmarSalida(false)} accessibilityLabel="Cerrar sesión">
         <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text }]}>Cerrar sesión</Text>
         <Text style={[typeScale.cuerpo, { color: c.text }]}>Se cierra aquí y en los demás dispositivos; en la web puede seguir abierta unos minutos.</Text>
-        <Button testID="confirmar-cerrar-sesion" label="Cerrar sesión" variant="peligro" icon={LogOut} onPress={() => { setConfirmarSalida(false); void salir() }} />
-        <Button label="Cancelar" variant="secundario" onPress={() => setConfirmarSalida(false)} />
+        <Button testID="confirmar-cerrar-sesion" size="lg" label="Cerrar sesión" variant="peligro" icon={LogOut} onPress={() => { setConfirmarSalida(false); void salir() }} />
+        <Button label="Cancelar" variant="secundario" size="lg" onPress={() => setConfirmarSalida(false)} />
       </BottomSheet>
       <ConfirmModal
         visible={entornoPendiente !== null}

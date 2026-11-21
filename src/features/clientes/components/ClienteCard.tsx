@@ -23,7 +23,7 @@ interface ClienteCardProps {
    * "Elegir cliente" de la venta (iniciales, saldo en el renglón de los chips, Llamar redondo; propuesta frames 1 y 2).
    */
   variante?: 'fila' | 'cartera'
-  /** Con `variante="cartera"`: dónde cae la fila en la tarjeta de su letra (redondea esa punta). */
+  /** Con `variante="cartera"`: la fila es una tarjeta propia (radio 22); `primera` ya no cambia el aspecto. */
   primera?: boolean
   ultima?: boolean
 }
@@ -38,7 +38,7 @@ export const SALDO_RESERVADO = 'Saldo reservado'
  * este usuario puede verlo; sin permiso hay un candado y el tag de cartera ajena. La deuda vencida, solo si el
  * servidor la informa (la redacta igual que el saldo).
  */
-export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = false, conAntiguedad = false, variante = 'fila', primera = false, ultima = false }: ClienteCardProps) {
+export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = false, conAntiguedad = false, variante = 'fila', primera: _primera = false, ultima = false }: ClienteCardProps) {
   const c = useColors()
   const direccion = direccionDeEntrega(cliente)
   const nombre = nombreDelCliente(cliente)
@@ -95,15 +95,13 @@ export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = 
           gap: space[3],
           minHeight: 64,
           marginHorizontal: space[4],
+          marginBottom: ultima ? 0 : space[2],
           paddingVertical: space[3],
           paddingLeft: space[4],
           paddingRight: space[2],
           overflow: 'hidden',
           backgroundColor: seleccionado ? c.brandSoft : c.surface,
-          borderBottomWidth: ultima ? 0 : 1,
-          borderBottomColor: c.surface2,
-          ...(primera ? { borderTopLeftRadius: radii.tarjeta, borderTopRightRadius: radii.tarjeta } : null),
-          ...(ultima ? { borderBottomLeftRadius: radii.tarjeta, borderBottomRightRadius: radii.tarjeta } : null),
+          borderRadius: radii.fila,
         }}
       >
         <View
@@ -127,7 +125,7 @@ export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = 
             accessibilityLabel="Llamar"
             accessibilityHint={direccion}
             onPress={llamar}
-            style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center' }}
           >
             <Phone size={20} color={c.brandInk} />
           </Pressable>

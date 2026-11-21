@@ -4,7 +4,7 @@ import { fireEvent, screen, userEvent, waitFor, within } from '@testing-library/
 import ProveedorFormScreen from '../../../../app/(tabs)/proveedores/nuevo'
 import { AVISO_CAMPOS_SENSIBLES_PROVEEDOR } from '../lib/proveedor'
 import { api } from '@/core/api/client'
-import { themeColors } from '@/libs/theme'
+import { radii, themeColors } from '@/libs/theme';
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { clienteDeLista, conPermisos, renderConQuery } from '../../clientes/__testing__/ayuda'
 
@@ -45,21 +45,25 @@ it('cada grupo va en una tarjeta sin borde con su título', () => {
 
   for (const grupo of ['Datos fiscales', 'Contacto', 'Condiciones de compra']) {
     const tarjeta = screen.getByTestId(`grupo-${grupo}`)
-    expect(estilo(tarjeta)).toMatchObject({ backgroundColor: themeColors.light.surface, borderRadius: 16 })
+    expect(estilo(tarjeta)).toMatchObject({ backgroundColor: themeColors.light.surface, borderRadius: radii.tarjetaGrande })
     expect(estilo(tarjeta).borderWidth ?? 0).toBe(0)
     expect(within(tarjeta).getByRole('header', { name: grupo })).toBeTruthy()
   }
 })
 
-it('la condición frente al IVA y la de pago son filas con radio dentro de una tarjeta', async () => {
+it('la condición frente al IVA y la de pago son filas en pastilla con radio', async () => {
   renderConQuery(<ProveedorFormScreen />)
 
   for (const [grupo, opcion] of [['Condición frente al IVA', 'Monotributista'], ['Condición de pago (obligatoria para comprarle)', 'Día fijo del mes']]) {
     const radios = screen.getByLabelText(grupo)
     await userEvent.press(within(radios).getByRole('radio', { name: opcion }))
     const elegido = within(radios).getByRole('radio', { name: opcion })
-    expect(estilo(elegido).backgroundColor).toBe(themeColors.light.brandSoft)
+    // Receta FWD (proveedores-nuevo): la fila elegida va en teal con texto ink; el estado también va en el rol (no solo color).
+    expect(estilo(elegido)).toMatchObject({ backgroundColor: themeColors.light.teal, minHeight: 56, borderRadius: radii.fila })
     expect(within(elegido).getByTestId('marca-radio-elegida')).toBeTruthy()
+    expect(elegido.props.accessibilityState).toMatchObject({ checked: true })
+    const otra = within(radios).getAllByRole('radio').find(r => r !== elegido)!
+    expect(estilo(otra).backgroundColor).toBe(themeColors.light.surfaceAlt)
   }
 })
 

@@ -49,18 +49,15 @@ export default function ProveedoresScreen() {
   }, [dosPaneles, router])
   const puedeComprar = canCreate('MOD_COMPRAS')
   const nuevaCompra = useCallback(() => router.push('/(tabs)/compras/nueva' as never), [router])
-  const ultimoIndice = proveedores.length - 1
-  const renderProveedor = useCallback(({ item, index }: { item: (typeof proveedores)[number]; index: number }) => (
-    // Las filas van en una tarjeta, como las de cada letra en la lista de Clientes (frame 1).
+  const renderProveedor = useCallback(({ item }: { item: (typeof proveedores)[number] }) => (
+    // Filas sueltas (receta FWD).
     <FilaProveedor
-      primera={index === 0}
-      ultima={index === ultimoIndice}
       proveedor={item}
       seleccionado={dosPaneles && item.id === abierto}
       onAbrir={abrir}
       onNuevaCompra={puedeComprar ? nuevaCompra : undefined}
     />
-  ), [ultimoIndice, dosPaneles, abierto, abrir, puedeComprar, nuevaCompra])
+  ), [dosPaneles, abierto, abrir, puedeComprar, nuevaCompra])
 
   const lista = (
     <View style={{ flex: 1 }}>

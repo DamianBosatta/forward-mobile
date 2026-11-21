@@ -26,7 +26,7 @@ export function ResumenDeCuentas({ saldoTotal, clientesConDeuda, cargando = fals
   if (saldoTotal === undefined) {
     return cargando ? (
       <View style={{ marginHorizontal: space[4], marginTop: space[3] }}>
-        <Esqueletos bloques={[{ alto: ALTO_HERO, radio: radii.hoja, testID: 'esqueleto-hero' }]} />
+        <Esqueletos bloques={[{ alto: ALTO_HERO, radio: radii.tarjetaGrande, testID: 'esqueleto-hero' }]} />
       </View>
     ) : null
   }

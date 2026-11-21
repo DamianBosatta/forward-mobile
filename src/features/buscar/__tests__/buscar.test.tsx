@@ -215,14 +215,15 @@ describe('Buscar como venta (propuesta Cuenta, frames 14 a 17)', () => {
     expect(screen.getByText('La búsqueda solo muestra lo que tu usuario puede ver.')).toBeTruthy()
   })
 
-  it('las filas de cada sección van dentro de una tarjeta sin borde, sin sombra por fila', async () => {
+  it('cada resultado es una fila suelta de 22 de radio, sin borde ni sombra', async () => {
     pintar()
     await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')
     const clientes = await screen.findByTestId('buscar-clientes')
     await within(clientes).findByText('CLIENTES · 1')
     const tarjeta = within(clientes).getByTestId('tarjeta-seccion')
-    expect(estilo(tarjeta)).toEqual(expect.objectContaining({ backgroundColor: themeColors.light.surface }))
-    expect(estilo(tarjeta).borderWidth ?? 0).toBe(0)
+    const suelta = tarjeta.children[0] as never
+    expect(estilo(suelta)).toEqual(expect.objectContaining({ backgroundColor: themeColors.light.surface, borderRadius: 22 }))
+    expect(estilo(suelta).borderWidth ?? 0).toBe(0)
     const fila = within(tarjeta).getByRole('button', { name: 'Tarantino 1898, Autoservicio Abel' })
     expect(estilo(fila).elevation).toBeUndefined()
     expect(estilo(fila).shadowOpacity).toBeUndefined()
@@ -245,7 +246,7 @@ describe('Buscar como venta (propuesta Cuenta, frames 14 a 17)', () => {
     expect(estilo(importe).fontVariant).toEqual(['tabular-nums'])
     const cuentas = screen.getByTestId('buscar-cuentas')
     expect(estilo(within(cuentas).getByText('$ 214.560,00')).fontVariant).toEqual(['tabular-nums'])
-    expect(estilo(within(cuentas).getByText('Vencido $ 84.300,00')).color).toBe(themeColors.light.chip.anulado.text)
+    expect(estilo(within(cuentas).getByText('Vencido $ 84.300,00'))).toEqual(expect.objectContaining({ color: themeColors.light.text, fontWeight: '800' }))
   })
 
   it('mientras busca, un esqueleto de fila por sección', async () => {

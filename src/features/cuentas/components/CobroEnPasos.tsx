@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 import { esqueletoDeFilas } from '@/core/ui/estados'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { ChevronRight, Plus, X } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { mostrarNumero } from '@/core/utils/numero'
 import { Button, Field, FormContainer, Notice, PieFijo, TopBar, formatImporte } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -101,7 +101,6 @@ interface PropsDelCliente {
 
 function CobroDelCliente({ socioId, medioInicial, contraparte, paso, onPaso, onVolver, onSalir }: PropsDelCliente) {
   const c = useColors()
-  const sombra = useSombraTarjeta()
   const t = textosDe(contraparte)
   const aProveedor = contraparte === 'proveedor'
   const socio = useSocio(socioId)
@@ -231,11 +230,11 @@ function CobroDelCliente({ socioId, medioInicial, contraparte, paso, onPaso, onV
   }
 
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
-  const tarjeta = { gap: space[2], backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, padding: space[4] }
-  const montoAccesible = (label: string, n: number, destacado = false) => (
+  const tarjeta = { gap: space[2], backgroundColor: c.surface, borderRadius: radii.tarjetaGrande, padding: space[5] }
+  const montoAccesible = (label: string, n: number, destacado = false, tinta?: string) => (
     <View accessible accessibilityLabel={`${label}: ${formatImporte(n)}`} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[3] }}>
-      <Text style={destacado ? { ...typeScale.cuerpoDestacado, color: c.text } : secundario}>{label}</Text>
-      <Text style={[destacado ? typeScale.cuerpoDestacado : typeScale.cuerpo, importe, { color: c.text }]}>{formatImporte(n)}</Text>
+      <Text style={destacado ? { ...typeScale.cuerpoDestacado, color: tinta ?? c.text } : { ...secundario, color: tinta ?? secundario.color }}>{label}</Text>
+      <Text style={[destacado ? typeScale.cuerpoDestacado : typeScale.cuerpo, importe, { color: tinta ?? c.text }]}>{formatImporte(n)}</Text>
     </View>
   )
   const pie = (arriba: string, abajo: string, importeDelPie: number, boton: React.ReactNode, aclaracion?: React.ReactNode) => (
@@ -267,28 +266,32 @@ function CobroDelCliente({ socioId, medioInicial, contraparte, paso, onPaso, onV
     cuerpo = (
       <>
         {estado.data ? (
-          <View style={tarjeta}>
-            {montoAccesible('Vencido', deudaVencida, true)}
-            {montoAccesible(t.saldo, saldoActual)}
+          <View style={{ ...tarjeta, backgroundColor: c.lime }}>
+            {montoAccesible('Vencido', deudaVencida, true, c.ink)}
+            {montoAccesible(t.saldo, saldoActual, false, c.ink)}
           </View>
         ) : null}
-        {aProveedor && pendientes.data ? <View style={tarjeta}>{montoAccesible(t.saldo, saldoActual, true)}</View> : null}
+        {aProveedor && pendientes.data ? <View style={{ ...tarjeta, backgroundColor: c.lime }}>{montoAccesible(t.saldo, saldoActual, true, c.ink)}</View> : null}
         {opcionesObjetivo.length > 0 ? (
-          <ElegirChip
-            titulo={t.verbo}
-            tituloVisible
-            opciones={[...opcionesObjetivo, { id: 'otro', label: 'Otro monto' }]}
-            valor={objetivo ?? 'otro'}
-            onCambio={id => fijarObjetivo(id === 'otro' ? null : (id as Objetivo))}
-          />
+          <View style={tarjeta}>
+            <ElegirChip
+              titulo={t.verbo}
+              tituloVisible
+              opciones={[...opcionesObjetivo, { id: 'otro', label: 'Otro monto' }]}
+              valor={objetivo ?? 'otro'}
+              onCambio={id => fijarObjetivo(id === 'otro' ? null : (id as Objetivo))}
+            />
+          </View>
         ) : null}
-        <ElegirChip
-          titulo="Se aplica a"
-          tituloVisible
-          opciones={IMPUTACION}
-          valor={f.imputaciones ? 'manual' : 'automatica'}
-          onCambio={id => setF(p => ({ ...p, imputaciones: id === 'manual' ? (p.imputaciones ?? {}) : null }))}
-        />
+        <View style={tarjeta}>
+          <ElegirChip
+            titulo="Se aplica a"
+            tituloVisible
+            opciones={IMPUTACION}
+            valor={f.imputaciones ? 'manual' : 'automatica'}
+            onCambio={id => setF(p => ({ ...p, imputaciones: id === 'manual' ? (p.imputaciones ?? {}) : null }))}
+          />
+        </View>
         {f.imputaciones ? (
           <ElegirComprobantes socioId={socioId} valor={f.imputaciones} onCambio={v => setF(p => ({ ...p, imputaciones: v }))} sinPendientes={t.sinComprobantes} />
         ) : (
@@ -311,7 +314,7 @@ function CobroDelCliente({ socioId, medioInicial, contraparte, paso, onPaso, onV
             : l.indice === 0 && f.esCheque ? [f.cheque.numero && `N.º ${f.cheque.numero}`, f.cheque.banco].filter(Boolean).join(' · ')
               : l.indice === 0 && f.comprobanteUrl ? 'Foto del comprobante cargada' : null
           return (
-            <View key={l.indice} style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], borderRadius: radii.tarjeta, borderWidth: 2, borderColor: c.brand, backgroundColor: c.surface }}>
+            <View key={l.indice} style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], borderRadius: radii.fila, backgroundColor: c.surface }}>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`Editar ${nombre}, ${formatImporte(monto)}`}
@@ -344,7 +347,7 @@ function CobroDelCliente({ socioId, medioInicial, contraparte, paso, onPaso, onV
             accessibilityLabel={lineas.length ? 'Agregar otro medio' : 'Agregar un medio'}
             onPress={() => abrirMedio(null)}
             android_ripple={{ color: c.border }}
-            style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], borderRadius: radii.tarjeta, borderWidth: 1, borderStyle: 'dashed', borderColor: c.borderStrong }}
+            style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], borderRadius: radii.fila, backgroundColor: c.surface }}
           >
             <Plus size={20} color={c.brandInk} />
             <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>{lineas.length ? 'Agregar otro medio' : 'Agregar un medio'}</Text>

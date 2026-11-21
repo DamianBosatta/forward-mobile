@@ -1,7 +1,7 @@
 import React from 'react'
 import { Image as ExpoImage } from 'expo-image'
 import { Pressable, Text, View } from 'react-native'
-import { AlertTriangle, Package } from 'lucide-react-native'
+import { Package } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { StatusChip } from '@/core/ui/fw'
 import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
@@ -18,9 +18,25 @@ export function FotoDeProducto({ imageUrl, alto }: { imageUrl?: string | null; a
     <View
       accessible={false}
       importantForAccessibility="no-hide-descendants"
-      style={{ height: alto, borderRadius: radii.campo, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
+      style={{ height: alto, borderRadius: radii.cantidad, backgroundColor: c.surfaceAlt, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
     >
       {foto ? <ExpoImage source={{ uri: foto }} style={{ width: '100%', height: '100%' }} contentFit="cover" cachePolicy="memory-disk" recyclingKey={foto} /> : <Package size={28} color={c.textSecondary} strokeWidth={1.6} />}
+    </View>
+  )
+}
+
+/**
+ * Bloque "disponible" (spec FWD §5, bloque de cantidad): lima con stock, warning "En alerta", danger "Sin stock".
+ * Texto siempre `ink` y el estado siempre escrito.
+ */
+export function BloqueDisponible({ cantidad, estado }: { cantidad: string; estado: 'entregado' | 'porAutorizar' | 'anulado' | null }) {
+  const c = useColors()
+  const fondo = estado === 'porAutorizar' ? c.warning : estado === 'anulado' ? c.dangerFill : c.lime
+  const palabra = estado === 'porAutorizar' ? 'En alerta' : estado === 'anulado' ? 'Sin stock' : 'disponible'
+  return (
+    <View accessible={false} style={{ minWidth: 76, minHeight: 56, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radii.cantidad, backgroundColor: fondo }}>
+      <Text style={[typeScale.seccionGrande, importe, { color: c.ink }]}>{cantidad}</Text>
+      <Text maxFontSizeMultiplier={1.3} style={[typeScale.etiquetaChip, { color: c.ink }]}>{palabra}</Text>
     </View>
   )
 }
@@ -42,39 +58,18 @@ export function TarjetaDeProducto({ item, onPress }: TarjetaProps) {
   const alerta = chip?.estado === 'porAutorizar'
   const sinStock = chip?.estado === 'anulado'
   const disponible = mostrarNumero(item.cantidadDisponible ?? 0)
-  const ambar = c.chip.porAutorizar.text
-  const rojo = c.chip.anulado.text
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${item.producto}, disponible: ${disponible}${alerta ? ', en alerta de stock' : sinStock ? ', sin stock' : ''}`}
       onPress={() => onPress(item)}
-      android_ripple={{ color: c.border }}
-      style={{
-        flex: 1,
-        minWidth: 0,
-        gap: space[2],
-        padding: space[3],
-        borderRadius: radii.tarjeta,
-        backgroundColor: c.surface,
-        borderWidth: alerta ? 2 : 0,
-        borderColor: alerta ? c.chip.porAutorizar.bg : 'transparent',
-      }}
+      android_ripple={{ color: c.surfaceAlt }}
+      style={{ flex: 1, minWidth: 0, gap: space[2], padding: space[4], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}
     >
       <FotoDeProducto imageUrl={item.imageUrl} alto={72} />
       <ProductoIdentidad nombre={item.producto} marca={item.marca} codigo={item.codigoPropio} />
-      <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: space[1] }}>
-        <Text style={[typeScale.titulo, importe, { color: alerta ? ambar : c.text }]}>{disponible}</Text>
-        {alerta ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
-            <AlertTriangle size={14} color={ambar} />
-            <Text style={[typeScale.etiqueta, { color: ambar }]}>En alerta</Text>
-          </View>
-        ) : sinStock ? (
-          <Text style={[typeScale.etiqueta, { color: rojo }]}>Sin stock</Text>
-        ) : (
-          <Text style={[typeScale.secundario, { color: c.textSecondary }]}>disponible</Text>
-        )}
+      <View style={{ alignSelf: 'flex-start' }}>
+        <BloqueDisponible cantidad={disponible} estado={chip?.estado === 'porAutorizar' || chip?.estado === 'anulado' ? chip.estado : 'entregado'} />
       </View>
     </Pressable>
   )
@@ -93,12 +88,12 @@ export function TarjetaDeLinea({ item, onPress, abierta, onAlternar }: TarjetaLi
   const c = useColors()
   const disponible = mostrarNumero(item.cantidadDisponible ?? 0)
   return (
-    <View style={{ flex: 1, minWidth: 0, borderRadius: radii.tarjeta, backgroundColor: c.surface, padding: space[3], gap: space[2] }}>
+    <View style={{ flex: 1, minWidth: 0, borderRadius: radii.tarjetaGrande, backgroundColor: c.surface, padding: space[3], gap: space[2] }}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${item.producto}, total en stock: ${disponible}`}
         onPress={() => onPress(item)}
-        android_ripple={{ color: c.border }}
+        android_ripple={{ color: c.surfaceAlt }}
         style={{ gap: space[2] }}
       >
         <FotoDeProducto imageUrl={item.imageUrl} alto={72} />
@@ -123,7 +118,7 @@ export function BotonFragancias({ abierta, onPress }: { abierta: boolean; onPres
       accessibilityLabel={label}
       accessibilityState={{ expanded: abierta }}
       onPress={onPress}
-      android_ripple={{ color: c.border }}
+      android_ripple={{ color: c.surfaceAlt }}
       style={{ minHeight: 44, justifyContent: 'center' }}
     >
       <Text style={[typeScale.cuerpoDestacado, { color: c.brandInk }]}>{label}</Text>
@@ -143,14 +138,13 @@ interface FilaListaProps extends TarjetaProps {
 export function FilaDeLista({ item, onPress, conDeposito, linea }: FilaListaProps) {
   const c = useColors()
   const chip = chipDeFilaStock(item)
-  const color = item.cantidadDisponible > 0 && item.enAlerta ? c.chip.porAutorizar.text : c.text
   return (
-    <View style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, padding: space[3], gap: space[1] }}>
+    <View style={{ borderRadius: radii.tarjetaGrande, backgroundColor: c.surface, padding: space[3], gap: space[1] }}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${item.producto}, ${item.codigoPropio}`}
         onPress={() => onPress(item)}
-        android_ripple={{ color: c.border }}
+        android_ripple={{ color: c.surfaceAlt }}
         style={{ flexDirection: 'row', gap: space[3] }}
       >
         <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
@@ -159,11 +153,8 @@ export function FilaDeLista({ item, onPress, conDeposito, linea }: FilaListaProp
           <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{textoStockReal(item.cantidadActual, item.stockMinimo)}</Text>
           <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{textoReservadas(item.cantidadReservada, item.cantidadVirtual)}</Text>
         </View>
-        <View style={{ alignItems: 'flex-end', gap: space[1] }}>
-          <Text accessibilityLabel={`Disponible ${mostrarNumero(item.cantidadDisponible)}`} style={[typeScale.titulo, importe, { color }]}>
-            {mostrarNumero(item.cantidadDisponible)}
-          </Text>
-          {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
+        <View accessible accessibilityLabel={`Disponible ${mostrarNumero(item.cantidadDisponible)}`} style={{ justifyContent: 'center' }}>
+          <BloqueDisponible cantidad={mostrarNumero(item.cantidadDisponible)} estado={chip?.estado === 'porAutorizar' || chip?.estado === 'anulado' ? chip.estado : 'entregado'} />
         </View>
       </Pressable>
       {linea ? <BotonFragancias abierta={linea.abierta} onPress={linea.onAlternar} /> : null}
@@ -188,7 +179,7 @@ export function FilaDeTabla({ item, onPress, conDeposito, linea }: FilaListaProp
         accessibilityRole="button"
         accessibilityLabel={`${item.producto}, ${item.codigoPropio}`}
         onPress={() => onPress(item)}
-        android_ripple={{ color: c.border }}
+        android_ripple={{ color: c.surfaceAlt }}
         style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: 56 }}
       >
         <View style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
@@ -225,7 +216,7 @@ export function CabeceraDeTabla() {
 export function TarjetaSinCantidades({ nombre, marca, codigo, imageUrl, chip }: { nombre: string; marca?: string | null; codigo: string; imageUrl?: string | null; chip: React.ReactNode }) {
   const c = useColors()
   return (
-    <View accessibilityLabel={`${nombre}, ${codigo}`} style={{ flex: 1, minWidth: 0, gap: space[2], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+    <View accessibilityLabel={`${nombre}, ${codigo}`} style={{ flex: 1, minWidth: 0, gap: space[2], padding: space[3], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}>
       <FotoDeProducto imageUrl={imageUrl} alto={72} />
       <ProductoIdentidad nombre={nombre} marca={marca} codigo={codigo} />
       {chip}

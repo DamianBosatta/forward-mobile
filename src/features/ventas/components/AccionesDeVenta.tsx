@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Alert, Linking, Pressable, Text, View } from 'react-native'
+import { Alert, Linking, Text, View } from 'react-native'
+import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { useRouter } from 'expo-router'
 import { CreditCard, FileText, MessageCircle, type LucideIcon } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
@@ -85,19 +86,20 @@ export function AccionesDeVenta({ venta, acciones, onAnulada }: Props) {
 function Celda({ icono: Icono, label, onPress, principal, cargando, deshabilitado }: { icono: LucideIcon; label: string; onPress: () => void; principal?: boolean; cargando?: boolean; deshabilitado?: boolean }) {
   const c = useColors()
   return (
-    <Pressable
+    <PressableFx
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ busy: !!cargando, disabled: !!deshabilitado }}
       onPress={cargando || deshabilitado ? undefined : onPress}
+      android_ripple={{ color: c.surfaceAlt }}
       style={{
-        flex: 1, height: 56, borderRadius: radii.campo + 2, alignItems: 'center', justifyContent: 'center', gap: 2,
-        borderWidth: 1, borderColor: principal ? c.action : c.border, backgroundColor: principal ? c.action : c.surface, opacity: deshabilitado ? 0.5 : 1,
+        flex: principal ? 2 : 1, height: 64, borderRadius: radii.pastilla, alignItems: 'center', justifyContent: 'center', gap: 2,
+        backgroundColor: principal ? c.primaryBg : c.surface, opacity: deshabilitado ? 0.5 : 1,
       }}
     >
-      <Icono size={20} color={principal ? c.onAction : c.text} />
-      <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: principal ? c.onAction : c.text }}>{label}</Text>
-    </Pressable>
+      <Icono size={20} color={principal ? c.primaryFg : c.text} />
+      <Text style={{ ...typeScale.secundario, ...pesoSemibold, color: principal ? c.primaryFg : c.text }}>{label}</Text>
+    </PressableFx>
   )
 }
 
@@ -127,7 +129,7 @@ export function BarraDeLaVenta({ venta, acciones, conSaldo, onCobrar }: BarraPro
   }
 
   return (
-    <View style={{ flexDirection: 'row', gap: space[2], padding: space[3], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+    <View style={{ flexDirection: 'row', gap: space[2], padding: space[3], backgroundColor: c.bg }}>
       <Celda icono={MessageCircle} label="WhatsApp" deshabilitado={!url} onPress={() => url && void Linking.openURL(url)} />
       <Celda icono={FileText} label="PDF" cargando={pdf} onPress={() => void compartir()} />
       {acciones.cobrar && conSaldo ? <Celda icono={CreditCard} label="Cobrar" principal onPress={onCobrar} /> : null}

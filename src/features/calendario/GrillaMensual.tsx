@@ -27,10 +27,10 @@ interface Props {
 export function GrillaMensual({ mes, hoy, porDia, onElegirDia, entregas }: Props) {
   const c = useColors()
   return (
-    <View accessibilityLabel="Calendario mensual" style={{ borderWidth: 1, borderColor: c.border, borderRadius: radii.campo, overflow: 'hidden', backgroundColor: c.border, gap: 1 }}>
+    <View accessibilityLabel="Calendario mensual" style={{ borderRadius: radii.tarjetaGrande, overflow: 'hidden', backgroundColor: c.bg, gap: 1 }}>
       <View style={{ flexDirection: 'row', gap: 1 }}>
         {ENCABEZADO.map((n) => (
-          <Text key={n} style={{ flex: 1, textAlign: 'center', ...typeScale.etiqueta, color: c.textSecondary, backgroundColor: c.surface2, paddingVertical: space[1] + 2 }}>{n}</Text>
+          <Text key={n} style={{ flex: 1, textAlign: 'center', ...typeScale.etiqueta, color: c.textSecondary, backgroundColor: c.surfaceAlt, paddingVertical: space[1] + 2 }}>{n}</Text>
         ))}
       </View>
       {mes.semanas.map((semana) => (
@@ -46,11 +46,11 @@ export function GrillaMensual({ mes, hoy, porDia, onElegirDia, entregas }: Props
                 onPress={() => onElegirDia(d.fecha)}
                 accessibilityRole="button"
                 accessibilityLabel={`Ver la semana del ${tituloDia(d.fecha).toLowerCase()}, ${textoEventos(delDia.length)}${marca?.feriado ? `, ${marca.feriado}` : ''}`}
-                android_ripple={{ color: c.surface2 }}
-                style={{ flex: 1, minWidth: 0, minHeight: 64, padding: 3, gap: 3, backgroundColor: marca?.sinEntregas ? c.surface2 : c.surface, opacity: d.delMes ? 1 : 0.5 }}
+                android_ripple={{ color: c.surfaceAlt }}
+                style={{ flex: 1, minWidth: 0, minHeight: 64, padding: 3, gap: 3, backgroundColor: marca?.sinEntregas ? c.surfaceAlt : c.surface, opacity: d.delMes ? 1 : 0.5 }}
               >
-                <View style={{ width: 24, height: 24, borderRadius: radii.pastilla, alignItems: 'center', justifyContent: 'center', backgroundColor: esHoy ? c.action : 'transparent' }}>
-                  <Text style={{ ...typeScale.etiqueta, color: esHoy ? c.onAction : c.text }}>{d.numero}</Text>
+                <View style={{ width: 24, height: 24, borderRadius: radii.pastilla, alignItems: 'center', justifyContent: 'center', backgroundColor: esHoy ? c.lime : 'transparent' }}>
+                  <Text style={{ ...typeScale.etiqueta, color: esHoy ? c.ink : c.text }}>{d.numero}</Text>
                 </View>
                 {marca?.feriado ? <Text numberOfLines={1} style={{ ...typeScale.etiqueta, color: c.textSecondary }}>Feriado</Text> : null}
                 {delDia.slice(0, MAX_POR_CELDA).map((e) => (

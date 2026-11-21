@@ -14,11 +14,18 @@ interface SegmentedProps<T extends string> {
   value: T
   onChange: (value: T) => void
   accessibilityLabel: string
+  /** `sobreTeal`: dentro de una tarjeta teal (producto en la compra): píldora `ink` y el elegido en lima con texto `ink`. */
+  tono?: 'normal' | 'sobreTeal'
 }
 
-/** Selector segmentado FWD: píldora `surfaceAlt` sin borde ni sombra; el elegido pasa a botón principal con tilde. */
-export function Segmented<T extends string>({ options, value, onChange, accessibilityLabel }: SegmentedProps<T>) {
+/** Selector segmentado FWD: píldora `surfaceAlt` sin borde ni sombra; el elegido pasa a botón principal con tilde. Variante `sobreTeal`: píldora `ink` con el elegido en lima. */
+export function Segmented<T extends string>({ options, value, onChange, accessibilityLabel, tono = 'normal' }: SegmentedProps<T>) {
   const colors = useColors()
+  const sobreTeal = tono === 'sobreTeal'
+  const fondo = sobreTeal ? colors.ink : colors.surfaceAlt
+  const fondoElegido = sobreTeal ? colors.lime : colors.primaryBg
+  const textoElegido = sobreTeal ? colors.ink : colors.primaryFg
+  const textoComun = sobreTeal ? colors.onPanelOscuro : colors.textMuted
 
   return (
     <View
@@ -28,7 +35,7 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
         flexDirection: 'row',
         gap: space[1],
         padding: space[1],
-        backgroundColor: colors.surfaceAlt,
+        backgroundColor: fondo,
         borderRadius: radii.pastilla,
       }}
     >
@@ -53,15 +60,15 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
               alignItems: 'center',
               justifyContent: 'center',
               paddingHorizontal: space[1],
-              backgroundColor: elegido ? colors.primaryBg : 'transparent',
+              backgroundColor: elegido ? fondoElegido : 'transparent',
             }}
           >
-            {elegido ? <Check size={16} color={colors.primaryFg} strokeWidth={2.5} /> : null}
+            {elegido ? <Check size={16} color={textoElegido} strokeWidth={2.5} /> : null}
             <Text
               numberOfLines={1}
               style={{
                 ...(elegido ? typeScale.cuerpoDestacado : typeScale.cuerpo),
-                color: elegido ? colors.primaryFg : colors.textMuted,
+                color: elegido ? textoElegido : textoComun,
               }}
             >
               {op.label}

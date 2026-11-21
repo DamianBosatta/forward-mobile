@@ -121,11 +121,11 @@ export function FichaProveedor({ id, conBarra = false }: { id: string; conBarra?
         {saldo ? (
           // TODO API: "N facturas sin pagar · la más vieja vence dd/mm" (hoy el servidor no manda la factura más vieja).
           <HeroSaldo
-            etiqueta={saldo.etiqueta}
             saldo={saldo.monto}
             vencido={null}
             tope={null}
             disponible={null}
+            etiqueta={saldo.etiqueta}
             accessibilityLabel={`${saldo.etiqueta} ${formatImporte(saldo.monto)}`}
           />
         ) : null}
@@ -208,7 +208,7 @@ export function FichaProveedor({ id, conBarra = false }: { id: string; conBarra?
 
       {alComprar ? (
         // Pie fijo como el de la ficha del cliente, también en el panel de la tablet.
-        <View testID="pie-ficha-proveedor" style={{ padding: space[4], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+        <View testID="pie-ficha-proveedor" style={{ padding: space[4], backgroundColor: c.bg }}>
           <Button label="Nueva compra" icon={Plus} onPress={alComprar} />
         </View>
       ) : null}

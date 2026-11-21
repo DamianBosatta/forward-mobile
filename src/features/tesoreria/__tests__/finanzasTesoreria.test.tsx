@@ -15,7 +15,7 @@ const ESPERA = { timeout: 5000 }
 jest.setTimeout(15_000)
 
 describe('Tesorería con permisos (frame 8)', () => {
-  it('las acciones van en una tarjeta sin borde, en filas de 64 px con su ícono en un cuadrado y la flecha', async () => {
+  it('las acciones van en una tarjeta sin borde, en filas de 76 px con su ícono en un cuadrado y la flecha', async () => {
     conPermisos([{ module: 'MOD_PAGOS', canRead: true, canCreate: true }, { module: 'MOD_CC', canRead: true }, { module: 'CAP_VER_TESORERIA', canRead: true }])
     renderConQuery(<TesoreriaScreen />)
 
@@ -23,7 +23,7 @@ describe('Tesorería con permisos (frame 8)', () => {
     expect(StyleSheet.flatten(tarjeta.props.style).borderWidth ?? 0).toBe(0)
     for (const nombre of ['Transferencia entre cuentas', 'Pagar un servicio', 'Cargar un cheque']) {
       const fila = within(tarjeta).getByRole('button', { name: nombre })
-      expect(StyleSheet.flatten(fila.props.style).minHeight).toBe(64)
+      expect(StyleSheet.flatten(fila.props.style).minHeight).toBe(76)
       expect(within(fila).getByTestId('fila-icono')).toBeTruthy()
       expect(within(fila).getByTestId('fila-chevron')).toBeTruthy()
       expect(within(fila).queryByTestId('fila-candado')).toBeNull()

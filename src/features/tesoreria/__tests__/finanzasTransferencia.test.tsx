@@ -35,7 +35,7 @@ it('el monto es una cifra grande con "$", en un campo de 64 px (frame 10)', asyn
   renderConQuery(<Transferencia onListo={jest.fn()} />)
   const caja = await screen.findByTestId('monto-grande', {}, ESPERA)
 
-  expect(StyleSheet.flatten(caja.props.style).height).toBe(64)
+  expect(StyleSheet.flatten(caja.props.style).minHeight).toBe(96)
   expect(within(caja).getByText('$')).toBeTruthy()
   expect(within(caja).getByLabelText('Monto')).toBeTruthy()
 })

@@ -30,7 +30,7 @@ export function OtrosMediosDelCobro({ medios, valor, onCambio, disabled }: Props
       {valor.map((o, i) => {
         const n = i + 2
         return (
-          <View key={i} style={{ gap: space[2], paddingTop: space[3], borderTopWidth: 1, borderTopColor: c.border }}>
+          <View key={i} style={{ gap: space[2], paddingTop: space[3] }}>
             <ElegirChip
               titulo={`Medio ${n}`}
               opciones={opciones}

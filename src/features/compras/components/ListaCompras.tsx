@@ -72,7 +72,7 @@ const FilaBorrador = memo(function FilaBorrador({ b, onAbrir }: { b: BorradorCom
       accessibilityLabel={`${b.proveedorNombre}, ${pie}`}
       onPress={() => onAbrir(b.id)}
       android_ripple={{ color: c.surface2 }}
-      style={{ minHeight: 44, padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, gap: space[1], overflow: 'hidden' }}
+      style={{ minHeight: 44, padding: space[5], borderRadius: radii.fila, backgroundColor: c.surface, gap: space[1], overflow: 'hidden' }}
     >
       <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{b.proveedorNombre}</Text>
       <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{pie}</Text>
@@ -134,26 +134,18 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
           {ESTADOS_PENDIENTES.map((e) => {
             const sel = e.value === l.soloEstado
             return (
-              <Pressable
-                key={e.label}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: sel }}
-                onPress={() => l.setSoloEstado(e.value)}
-                style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: sel ? c.brand : c.border, backgroundColor: sel ? c.brandSoft : c.surface }}
-              >
-                <Text style={[typeScale.secundario, { color: sel ? c.brandInk : c.text }]}>{e.label}</Text>
-              </Pressable>
+              <FiltroChip key={e.label} rol="radio" label={e.label} activo={sel} onPress={() => l.setSoloEstado(e.value)} />
             )
           })}
         </ScrollView>
       ) : null}
       {l.tarjeta ? (
-        <View testID="totales-lista" style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space[3], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+        <View testID="totales-lista" style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space[3], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.lime }}>
           <View style={{ flexShrink: 1 }}>
-            <Text style={secundario}>{l.tarjeta.rotulo}</Text>
-            <Text style={[typeScale.titulo, cifras, { color: c.text }]}>{l.tarjeta.importe}</Text>
+            <Text style={[typeScale.secundario, { color: c.ink }]}>{l.tarjeta.rotulo}</Text>
+            <Text style={[typeScale.numeroProtagonista, cifras, { color: c.ink }]}>{l.tarjeta.importe}</Text>
           </View>
-          <Text style={[typeScale.etiqueta, { color: c.textSecondary, paddingHorizontal: space[2], paddingVertical: space[1], borderRadius: radii.pastilla, backgroundColor: c.surface2 }]}>{l.tarjeta.cuenta}</Text>
+          <Text style={[typeScale.etiqueta, { color: c.text, paddingHorizontal: space[3], paddingVertical: space[1], borderRadius: radii.pastilla, backgroundColor: c.surfaceAlt }]}>{l.tarjeta.cuenta}</Text>
         </View>
       ) : null}
       {l.contador ? <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{l.contador}</Text> : null}

@@ -50,9 +50,9 @@ function Contenido() {
       )
       : filas.length === 0 ? <EstadoDePantalla tipo="vacio" titulo={busqueda ? 'No hay usuarios con esa búsqueda.' : 'No hay usuarios.'} />
       : (
-        // Propuesta Cuenta, frame 6: filas con iniciales dentro de una tarjeta sin borde, como la lista de Clientes.
-        <View testID="tarjeta-usuarios" style={{ marginHorizontal: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>
-          {filas.map((u, i) => <FilaUsuario key={u.id ?? i} u={u} esYo={!!yo && u.id === yo} conDivisor={i > 0} />)}
+        // FWD lote 6: cada usuario es su propia píldora `surface`, sin borde ni divisor.
+        <View testID="tarjeta-usuarios" style={{ marginHorizontal: space[4], gap: space[2] }}>
+          {filas.map((u, i) => <FilaUsuario key={u.id ?? i} u={u} esYo={!!yo && u.id === yo} />)}
         </View>
       )
 
@@ -65,7 +65,7 @@ function Contenido() {
         {cuerpo}
       </View>
     )
-  }, [texto, setTexto, q, busqueda, c, yo])
+  }, [texto, setTexto, q, busqueda, yo])
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -82,20 +82,17 @@ function Contenido() {
 }
 
 /** Fila de solo lectura: iniciales, nombre (· vos), puesto y estado. No se toca. */
-function FilaUsuario({ u, esYo, conDivisor }: { u: UserListDto; esYo: boolean; conDivisor: boolean }) {
+function FilaUsuario({ u, esYo }: { u: UserListDto; esYo: boolean }) {
   const c = useColors()
   const nombre = nombreDe(u)
   const letras = iniciales([u.nombre, u.apellido].filter(Boolean).join(' ') || nombre)
   const activo = u.estaActivo !== false
   return (
     <View
-      style={[
-        { minHeight: 64, paddingHorizontal: space[4], paddingVertical: space[3], flexDirection: 'row', alignItems: 'center', gap: space[3] },
-        conDivisor && { borderTopWidth: 1, borderTopColor: c.surface2 },
-      ]}
+      style={{ minHeight: 76, paddingHorizontal: space[3], paddingVertical: space[3], flexDirection: 'row', alignItems: 'center', gap: space[3], borderRadius: radii.fila, backgroundColor: c.surface }}
     >
-      <View style={{ width: 44, height: 44, borderRadius: radii.pastilla, backgroundColor: c.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={[typeScale.cuerpoDestacado, { color: c.brandInk }]}>{letras}</Text>
+      <View style={{ width: 44, height: 44, borderRadius: radii.pastilla, backgroundColor: c.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{letras}</Text>
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text numberOfLines={1} style={[typeScale.cuerpoDestacado, { color: c.text }]}>{esYo ? `${nombre} · vos` : nombre}</Text>

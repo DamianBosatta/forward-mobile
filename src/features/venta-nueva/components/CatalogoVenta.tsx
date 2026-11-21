@@ -117,7 +117,7 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
   const lista = (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <View testID="catalogo-encabezado" style={{ paddingHorizontal: space[3], paddingTop: space[3], paddingBottom: space[2], gap: space[3], backgroundColor: c.bg }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: 52, borderRadius: radii.campo, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.borderStrong, paddingLeft: space[3] }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: 56, borderRadius: radii.fila, backgroundColor: c.surface, paddingLeft: space[4] }}>
           <Search size={20} color={c.textSecondary} />
           <TextInput
             value={busqueda}
@@ -128,7 +128,7 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
             autoCorrect={false}
             style={{ ...typeScale.cuerpo, flex: 1, color: c.text, paddingVertical: 0 }}
           />
-          <Pressable accessibilityRole="button" accessibilityLabel="Escanear código de barras" onPress={() => setEscaneando(true)} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Escanear código de barras" onPress={() => setEscaneando(true)} android_ripple={{ color: c.surfaceAlt }} style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
             <ScanBarcode size={22} color={c.text} />
           </Pressable>
         </View>

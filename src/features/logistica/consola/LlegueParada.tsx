@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
+import { Modal, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Check, Phone, ScanLine } from 'lucide-react-native'
-import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
+import { Check, ChevronRight, Phone, ScanLine } from 'lucide-react-native'
+import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, MarcaDeCasilla, TopBar, useColumnaDeFormulario } from '@/core/ui/fw'
+import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { safeHaptics } from '@/core/utils/haptics'
 import type { ParadaDto } from '@/libs/api-client/types'
 import { EscanearEtiqueta } from './EscanearEtiqueta'
@@ -26,7 +27,6 @@ interface Props {
  */
 export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntregar, onLlamarCliente }: Props) {
   const c = useColors()
-  const sombra = useSombraTarjeta()
   const { bottom } = useSafeAreaInsets()
   const columna = useColumnaDeFormulario()
   const piezas = piezasDeParada(parada)
@@ -55,13 +55,12 @@ export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntrega
             {piezas.total > 0 ? `Tenés ${textoPiezas(piezas.total)} para entregar acá` : 'Entregá el pedido acá'}
           </Text>
           {piezas.total > 0 ? (
-            <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra }}>
+            <View style={{ gap: space[2] }}>
               {Array.from({ length: piezas.total }, (_, i) => (
                 <PiezaFila
                   key={i}
                   titulo={tituloPieza(i, piezas.total, piezas.etiquetas?.[i] ?? (piezas.numeros[i] != null ? `Bulto ${piezas.numeros[i]}` : null))}
                   marcada={marcadas.has(i)}
-                  ultima={i === piezas.total - 1}
                   onPress={() => alternar(i)}
                 />
               ))}
@@ -70,36 +69,42 @@ export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntrega
           {/* Sin etiquetas del servidor (TODO API) no se ofrece escanear. */}
           {piezas.etiquetas ? (
             <>
-              <Pressable
+              <PressableFx
                 accessibilityRole="button"
                 accessibilityLabel="Escanear etiqueta"
                 accessibilityHint="Tilda la pieza sola. Es opcional."
                 onPress={() => setEscaneando(true)}
-                style={{ minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radii.tarjeta, borderWidth: 2, borderColor: c.textSecondary, backgroundColor: c.surface }}
+                android_ripple={{ color: c.surfaceAlt }}
+                style={{ minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3], paddingHorizontal: space[4], borderRadius: radii.fila, backgroundColor: c.surface }}
               >
-                <View style={{ width: 48, height: 48, borderRadius: radii.campo, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center' }}>
-                  <ScanLine size={26} color={c.brandInk} />
+                <View style={{ width: 44, height: 44, borderRadius: radii.pastilla, backgroundColor: c.lime, alignItems: 'center', justifyContent: 'center' }}>
+                  <ScanLine size={24} color={c.ink} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ ...typeScale.seccion, color: c.text }}>Escanear etiqueta</Text>
                   <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Tilda la pieza sola. Es opcional.</Text>
                 </View>
-              </Pressable>
+                <ChevronRight size={22} color={c.text} />
+              </PressableFx>
               <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>{`${marcadas.size} de ${piezas.total} marcadas`}</Text>
               <EscanearEtiqueta visible={escaneando} etiquetas={piezas.etiquetas} marcadas={marcadas} onLeida={marcar} onCerrar={() => setEscaneando(false)} />
             </>
           ) : null}
         </ScrollView>
-        <View style={{ backgroundColor: c.bg, borderTopWidth: 1, borderTopColor: c.border, padding: space[4], paddingBottom: space[4] + bottom }}>
+        <View style={{ backgroundColor: c.bg, padding: space[4], paddingBottom: space[4] + bottom }}>
           <View style={{ gap: space[3], ...columna }}>
-            <Button size="xl" icon={Check} label="Entregué todo" onPress={entregueTodo} />
-            <Button size="xl" variant="secundario" label="No pude entregar" onPress={onNoPudeEntregar} />
-            {onLlamarCliente ? (
-              <>
-                <Button size="xl" variant="secundario" icon={Phone} label="Llamar cliente" disabled={!puedeLlamar} onPress={onLlamarCliente} />
-                {puedeLlamar ? null : <Text style={{ ...typeScale.secundario, color: c.textSecondary, textAlign: 'center' }}>Este cliente no tiene teléfono cargado.</Text>}
-              </>
-            ) : null}
+            <Button size="xl" variant="listo" icon={Check} label="Entregué todo" onPress={entregueTodo} />
+            <View style={{ flexDirection: 'row', gap: space[3] }}>
+              <View style={{ flex: 1 }}>
+                <Button size="lg" variant="secundario" label="No pude entregar" onPress={onNoPudeEntregar} />
+              </View>
+              {onLlamarCliente ? (
+                <View style={{ flex: 1 }}>
+                  <Button size="lg" variant="secundario" icon={Phone} label="Llamar cliente" disabled={!puedeLlamar} onPress={onLlamarCliente} />
+                </View>
+              ) : null}
+            </View>
+            {onLlamarCliente && !puedeLlamar ? <Text style={{ ...typeScale.secundario, color: c.textSecondary, textAlign: 'center' }}>Este cliente no tiene teléfono cargado.</Text> : null}
           </View>
         </View>
       </View>
@@ -107,19 +112,23 @@ export function LlegueParada({ parada, onVolver, onEntregueTodo, onNoPudeEntrega
   )
 }
 
-/** Una pieza con casilla de 36 px y borde de 3 px (se lee al sol); tildada = relleno + tilde, nunca solo color. */
-function PiezaFila({ titulo, marcada, ultima, onPress }: { titulo: string; marcada: boolean; ultima: boolean; onPress: () => void }) {
+/**
+ * Una pieza con casilla de 36 px (se lee al sol). Tildada: tarjeta teal con casilla ink y tilde lime;
+ * sin tildar: tarjeta superficie con casilla de borde 3. Nunca solo color: el tilde marca el estado.
+ */
+function PiezaFila({ titulo, marcada, onPress }: { titulo: string; marcada: boolean; onPress: () => void }) {
   const c = useColors()
   return (
-    <Pressable
+    <PressableFx
       onPress={onPress}
       accessibilityRole="checkbox"
       accessibilityLabel={titulo}
       accessibilityState={{ checked: marcada }}
-      style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], borderBottomWidth: ultima ? 0 : 1, borderBottomColor: c.border }}
+      android_ripple={{ color: c.surfaceAlt }}
+      style={{ minHeight: 68, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], borderRadius: radii.fila, backgroundColor: marcada ? c.teal : c.surface }}
     >
-      <MarcaDeCasilla marcada={marcada} tamano={36} />
-      <Text style={{ ...typeScale.seccion, color: c.text, flex: 1 }}>{titulo}</Text>
-    </Pressable>
+      <MarcaDeCasilla marcada={marcada} tamano={36} sobreTeal={marcada} />
+      <Text style={{ ...typeScale.seccion, color: marcada ? c.ink : c.text, flex: 1 }}>{titulo}</Text>
+    </PressableFx>
   )
 }

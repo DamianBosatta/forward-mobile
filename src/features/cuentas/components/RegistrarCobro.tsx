@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { esqueletoDeFilas } from '@/core/ui/estados'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
-import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { mostrarNumero } from '@/core/utils/numero'
 import { Button, Field, FormContainer, Notice, PieFijo, Progress, TopBar, TotalsRow, formatImporte, formatPorcentaje } from '@/core/ui/fw'
@@ -38,7 +38,6 @@ const IMPUTACION = [{ id: 'automatica', label: 'Automática' }, { id: 'manual', 
  */
 export function RegistrarCobro({ socioId, onVolver, conBarra = false, medioInicial }: { socioId: string; onVolver: () => void; conBarra?: boolean; medioInicial?: 'cheque' }) {
   const c = useColors()
-  const sombra = useSombraTarjeta()
   const { isTabletLandscape } = useResponsive()
   const socio = useSocio(socioId)
   const estado = useEstadoCuentaSocio(socioId, !!socio.data?.puedeVerCuentaCorriente)
@@ -119,7 +118,7 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false, medioInici
         </View>
       ) : null}
       {estado.data && !conBarra ? <TotalsRow label="Saldo del cliente" importe={estado.data.saldoActual} /> : null}
-      <View style={{ gap: space[3], backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, padding: space[4] }}>
+      <View style={{ gap: space[3], backgroundColor: c.surface, borderRadius: radii.tarjetaGrande, padding: space[4] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3] }}>
           <View accessible accessibilityLabel={`Cobrás: ${formatImporte(total)}`}>
             <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Cobrás</Text>

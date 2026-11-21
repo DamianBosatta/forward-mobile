@@ -3,7 +3,7 @@ import { ScrollView, Switch, Text, View } from 'react-native'
 import { Lock } from 'lucide-react-native'
 import { useRouter } from 'expo-router'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { FilaInterruptor, FormContainer, Notice, TopBar, useInsetInferior } from '@/core/ui/fw'
+import { FilaInterruptor, FormContainer, IconoEnCuadro, Notice, TopBar, useInsetInferior } from '@/core/ui/fw'
 import { useActualizarPreferenciasAvisos, usePreferenciasAvisos, type PreferenciaAviso } from '@/libs/api-client/notificaciones'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { GRUPOS_DE_AVISOS, avisoDeTipo, grupoDeTipo } from './avisos'
@@ -27,20 +27,22 @@ export function PreferenciasAvisos() {
     return pendiente?.toast ?? p.toast
   }
 
-  const fila = (p: PreferenciaAviso, ultima: boolean) => {
+  // FWD lote 6: cada fila es su propia píldora `surface`, sin divisores.
+  const pastilla = { backgroundColor: c.surface, borderRadius: radii.fila, overflow: 'hidden' as const }
+  const fila = (p: PreferenciaAviso) => {
     const etiqueta = avisoDeTipo(p.tipo)?.etiqueta ?? p.tipo
     const valor = !p.silenciable || prendido(p)
     // Crítico (lo marca el servidor): candado, su texto y el interruptor atenuado (propuesta Cuenta, frame 12).
-    if (!p.silenciable) return <FilaCritica key={p.tipo} titulo={etiqueta} conDivisor={!ultima} />
+    if (!p.silenciable) return <FilaCritica key={p.tipo} titulo={etiqueta} />
     return (
-      <FilaInterruptor
-        key={p.tipo}
-        titulo={etiqueta}
-        apoyo={valor ? 'Salta apenas llega' : 'Solo en la bandeja'}
-        prendido={valor}
-        onChange={() => guardar.mutate([{ tipo: p.tipo, toast: !valor }])}
-        conDivisor={!ultima}
-      />
+      <View key={p.tipo} style={pastilla}>
+        <FilaInterruptor
+          titulo={etiqueta}
+          apoyo={valor ? 'Salta apenas llega' : 'Solo en la bandeja'}
+          prendido={valor}
+          onChange={() => guardar.mutate([{ tipo: p.tipo, toast: !valor }])}
+        />
+      </View>
     )
   }
 
@@ -66,8 +68,8 @@ export function PreferenciasAvisos() {
             temas.map(({ tema, filas }) => (
               <View key={tema} style={{ gap: space[2] }}>
                 <Text accessibilityRole="header" style={{ ...typeScale.etiqueta, color: c.textSecondary, paddingHorizontal: space[2], textTransform: 'uppercase' }}>{tema}</Text>
-                <View testID={`grupo-${tema}`} style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, overflow: 'hidden' }}>
-                  {filas.map((p, i) => fila(p, i === filas.length - 1))}
+                <View testID={`grupo-${tema}`} style={{ gap: space[2] }}>
+                  {filas.map((p) => fila(p))}
                 </View>
               </View>
             ))
@@ -82,7 +84,7 @@ export function PreferenciasAvisos() {
  * Fila de un aviso crítico: siempre prendido y no se puede tocar. Mismo rótulo y estado accesible que la fila de
  * interruptor deshabilitada; suma el candado junto al texto y atenúa el interruptor para explicar por qué no se mueve.
  */
-function FilaCritica({ titulo, conDivisor }: { titulo: string; conDivisor: boolean }) {
+function FilaCritica({ titulo }: { titulo: string }) {
   const c = useColors()
   return (
     <View
@@ -90,17 +92,12 @@ function FilaCritica({ titulo, conDivisor }: { titulo: string; conDivisor: boole
       accessibilityRole="switch"
       accessibilityLabel={titulo}
       accessibilityState={{ checked: true, disabled: true }}
-      style={[
-        { minHeight: 64, paddingHorizontal: space[4], paddingVertical: space[2], flexDirection: 'row', alignItems: 'center', gap: space[3] },
-        conDivisor ? { borderBottomWidth: 1, borderBottomColor: c.border } : null,
-      ]}
+      style={{ minHeight: 76, paddingHorizontal: space[3], paddingVertical: space[2], flexDirection: 'row', alignItems: 'center', gap: space[3], backgroundColor: c.surface, borderRadius: radii.fila }}
     >
+      <IconoEnCuadro testID="candado-critico" icono={Lock} />
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{titulo}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
-          <View testID="candado-critico"><Lock size={14} color={c.textSecondary} /></View>
-          <Text style={[typeScale.secundario, { color: c.textSecondary, flexShrink: 1 }]}>Crítico: no se puede silenciar</Text>
-        </View>
+        <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Crítico: no se puede silenciar</Text>
       </View>
       <View testID="interruptor-atenuado" pointerEvents="none" style={{ opacity: 0.5 }}>
         <Switch value disabled trackColor={{ false: c.borderStrong, true: c.action }} thumbColor={c.onAction} />

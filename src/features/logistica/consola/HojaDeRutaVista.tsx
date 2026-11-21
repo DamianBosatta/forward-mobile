@@ -2,7 +2,7 @@ import React from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Check, Navigation } from 'lucide-react-native'
-import { importe, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, StatusChip, formatImporte, useColumnaDeFormulario } from '@/core/ui/fw'
 import { EstadoParada, type ParadaDto } from '@/libs/api-client/types'
 import type { ParadaNumerada, ResumenRuta } from './hojaDeRuta'
@@ -44,12 +44,12 @@ interface Props {
 export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue, onComoLlegar, onLlamar, puedeLlamar, onNota, notaCargando, cabecera, avisos, pie, hojaDeRutaId, paradasCobro }: Props) {
   const c = useColors()
   const { bottom } = useSafeAreaInsets()
-  const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const { proxima, despues, reportadas } = resumen
   // Tablet: la hoja queda en una columna legible, no estirada.
   const columna = useColumnaDeFormulario()
-  const tituloSeccion = { ...typeScale.seccion, color: c.text }
-  const tarjeta = { backgroundColor: c.surface, borderRadius: radii.tarjeta, ...sombra }
+  const tituloSeccion = { ...typeScale.titulo, color: c.text }
+  // Cada parada es su propia tarjeta (radio fila, sin sombra ni borde), separadas por 8.
+  const lista = { gap: space[2] }
   const puedeLlegar = !!proxima && !soloLectura && puedeReportar
   const cobrosPendientes = (paradasCobro ?? []).filter((p) => p.estado === PARADA_COBRO_PENDIENTE).length
 
@@ -82,9 +82,9 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue,
         {despues.length > 0 ? (
           <>
             <Text accessibilityRole="header" style={tituloSeccion}>{`Después (${despues.length})`}</Text>
-            <View style={tarjeta}>
-              {despues.map((n, i) => (
-                <Fila key={n.parada.id} n={n} ultima={i === despues.length - 1} />
+            <View style={lista}>
+              {despues.map((n) => (
+                <Fila key={n.parada.id} n={n} />
               ))}
             </View>
           </>
@@ -97,16 +97,16 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue,
         {reportadas.length > 0 ? (
           <>
             <Text accessibilityRole="header" style={tituloSeccion}>{`Hechas (${reportadas.length})`}</Text>
-            <View style={tarjeta}>
-              {reportadas.map((n, i) => (
-                <Fila key={n.parada.id} n={n} ultima={i === reportadas.length - 1} />
+            <View style={lista}>
+              {reportadas.map((n) => (
+                <Fila key={n.parada.id} n={n} />
               ))}
             </View>
           </>
         ) : null}
       </ScrollView>
       {proxima || pie ? (
-        <View style={{ backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border, padding: space[4], paddingBottom: space[4] + bottom }}>
+        <View style={{ backgroundColor: c.bg, padding: space[4], paddingBottom: space[4] + bottom }}>
           <View style={{ gap: space[3], ...columna }}>
             {proxima ? (
               <View style={{ flexDirection: 'row', gap: space[3] }}>
@@ -115,7 +115,7 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue,
                 </View>
                 {puedeLlegar ? (
                   <View style={{ flex: 1 }}>
-                    <Button size="xl" icon={Check} label="¡Llegué!" onPress={() => onLlegue(proxima.parada)} />
+                    <Button size="xl" variant="listo" icon={Check} label="¡Llegué!" onPress={() => onLlegue(proxima.parada)} />
                   </View>
                 ) : null}
               </View>
@@ -128,7 +128,7 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue,
   )
 }
 
-function Fila({ n, ultima }: { n: ParadaNumerada; ultima: boolean }) {
+function Fila({ n }: { n: ParadaNumerada }) {
   const c = useColors()
   const { parada, numero } = n
   const pendiente = parada.estado === EstadoParada.Pendiente
@@ -139,10 +139,10 @@ function Fila({ n, ultima }: { n: ParadaNumerada; ultima: boolean }) {
       style={{
         minHeight: 64,
         paddingVertical: space[3],
-        paddingHorizontal: space[4],
+        paddingHorizontal: space[5],
         gap: space[1],
-        borderBottomWidth: ultima ? 0 : 1,
-        borderBottomColor: c.border,
+        backgroundColor: c.surface,
+        borderRadius: radii.fila,
       }}
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>

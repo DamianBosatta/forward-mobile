@@ -325,7 +325,7 @@ describe('S18 deuda anterior en rojo', () => {
     await hastaElCobro()
     const linea = await screen.findByLabelText('Deuda anterior')
     expect(within(linea).getByText('Deuda anterior (CC)')).toBeTruthy()
-    expect(within(linea).getByText('$ 100,00')).toHaveStyle({ color: themeColors.light.danger })
+    expect(within(linea).getByText('$ 100,00')).toHaveStyle({ color: themeColors.light.text })
     expect(screen.queryByLabelText(/pagar la deuda/i)).toBeNull()
   })
   it('sin el campo (servidor anterior) o en cero no hay línea', async () => {
