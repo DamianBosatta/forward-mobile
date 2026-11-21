@@ -171,6 +171,7 @@ export const AnularPagoCommandSchema = z.object({
 })
 
 export const AnularRecepcionCompraCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   compraId: z.string().optional(),
   motivo: z.string().min(1).max(280).nullable().optional(),
   version: z.number().int().nullable().optional(),
@@ -610,6 +611,7 @@ export const ParadaRequestSchema = z.object({
 
 export const CrearHojaRutaCommandSchema = z.object({
   choferId: z.string().optional(),
+  claveIdempotencia: z.string().nullable().optional(),
   depositoId: z.string().nullable().optional(),
   fechaSalida: z.string().optional(),
   paradas: z.array(ParadaRequestSchema).min(1).nullable().optional(),
@@ -892,6 +894,7 @@ export const CreateUserCommandSchema = z.object({
 
 export const CreateVehiculoCommandSchema = z.object({
   capacidadCargaKg: z.number().gt(0).optional(),
+  claveIdempotencia: z.string().nullable().optional(),
   modelo: z.string().min(1).max(100).nullable().optional(),
   patente: z.string().min(1).max(20).nullable().optional(),
 })
