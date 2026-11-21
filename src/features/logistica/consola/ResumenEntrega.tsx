@@ -24,7 +24,7 @@ function Fila({ izq, der, fuerte }: { izq: string; der?: string; fuerte?: boolea
 export function ResumenEntrega({ d }: { d: DatosResumen }) {
   const c = useColors()
   const total = d.cobros.reduce((t, x) => t + x.monto, 0)
-  const bloque = { backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[2] }
+  const bloque = { backgroundColor: c.surface, borderRadius: radii.tarjetaGrande, padding: space[5], gap: space[2] }
   return (
     <View accessibilityLabel="Resumen de la entrega" style={{ gap: space[4] }}>
       <View style={bloque}>

@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { X } from 'lucide-react-native'
 import { importe, maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, formatImporte, Field, Notice, OptionCard } from '@/core/ui/fw'
+import { PressableFx } from '@/core/ui/fw/PressableFx'
 import type { MedioCobroChofer } from '@/libs/api-client/logistica'
 import { FotoEntrega } from './FotoEntrega'
 import { mediosDelChofer, nombreDelMedio, type LineaCobroForm } from './entrega'
@@ -61,7 +62,7 @@ export function CobroEnEntrega({ medios, mediosError, lineas, onLineas, onSubien
       {lineas.map((l, i) => {
         const n = i + 1
         return (
-          <View key={i} accessibilityLabel={`Cobro ${n}`} style={{ gap: space[2], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 2, borderColor: c.border }}>
+          <View key={i} accessibilityLabel={`Cobro ${n}`} style={{ gap: space[2], padding: space[4], borderRadius: radii.fila, backgroundColor: c.surface }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
               <View accessibilityLabel={`Medio del cobro ${n}`} style={{ flex: 1 }}>
                 <Text style={{ ...typeScale.seccion, color: c.text }}>{l.medio ? nombreDelMedio(l.medio) : 'Sin medio'}</Text>
@@ -108,24 +109,24 @@ function CuentaDelCliente({ deudaAnterior, factura, codigoFactura }: { deudaAnte
   const c = useColors()
   const deuda = deudaAnterior != null && deudaAnterior > 0 ? deudaAnterior : null
   if (deuda == null && factura == null) return null
-  const dato = { flexGrow: 1, flexBasis: 128, borderRadius: radii.campo, paddingHorizontal: space[3], paddingVertical: space[2], backgroundColor: c.surface, borderWidth: 2, borderColor: c.border }
-  const rotulo = { ...typeScale.secundario, color: c.textSecondary }
+  const dato = { flexGrow: 1, flexBasis: 128, borderRadius: radii.fila, paddingHorizontal: space[4], paddingVertical: space[3], backgroundColor: c.surface }
+  const rotulo = { ...typeScale.etiqueta, color: c.textSecondary, textTransform: 'uppercase' as const }
   return (
     <View accessibilityLabel="Cuenta del cliente" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
       {deuda != null ? (
-        <View accessibilityLabel="Deuda anterior" style={{ ...dato, borderColor: c.danger }}>
+        <View accessibilityLabel="Deuda anterior" style={dato}>
           <Text style={rotulo}>Deuda anterior (CC)</Text>
-          <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.danger }}>{formatImporte(deuda)}</Text>
+          <Text style={{ ...typeScale.seccion, ...importe, color: c.text }}>{formatImporte(deuda)}</Text>
         </View>
       ) : null}
       {factura != null ? (
         <View accessibilityLabel="Factura" style={dato}>
           <Text style={rotulo}>{codigoFactura ? `Factura ${codigoFactura}` : 'Factura'}</Text>
-          <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text }}>{formatImporte(factura)}</Text>
+          <Text style={{ ...typeScale.seccion, ...importe, color: c.text }}>{formatImporte(factura)}</Text>
         </View>
       ) : null}
       {deuda != null && factura != null ? (
-        <View accessibilityLabel="Total" style={{ ...dato, flexBasis: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', backgroundColor: c.brandSoft, borderColor: c.brandInk }}>
+        <View accessibilityLabel="Total" style={{ ...dato, flexBasis: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', backgroundColor: c.surfaceAlt }}>
           <Text style={rotulo}>Total</Text>
           <Text style={{ ...typeScale.seccion, ...importe, color: c.text }}>{formatImporte(redondear2(deuda + factura))}</Text>
         </View>
@@ -134,35 +135,35 @@ function CuentaDelCliente({ deudaAnterior, factura, codigoFactura }: { deudaAnte
   )
 }
 
-/** "No paga": el mismo tamaño que las otras opciones, en rojo (borde y nombre) porque todo queda como deuda. */
+/** "No paga": el mismo tamaño que las otras opciones, con relleno de peligro y texto ink porque todo queda como deuda. */
 function OpcionNoPaga({ onPress }: { onPress: () => void }) {
   const c = useColors()
   return (
-    <Pressable
+    <PressableFx
       onPress={onPress}
       accessibilityRole="radio"
       accessibilityLabel="No paga"
       accessibilityState={{ checked: false }}
-      android_ripple={{ color: c.border }}
-      style={{ minHeight: 76, justifyContent: 'center', paddingHorizontal: space[4], paddingVertical: space[3], borderRadius: radii.tarjeta, borderWidth: 2, borderColor: c.danger, backgroundColor: c.surface }}
+      android_ripple={{ color: c.ink }}
+      style={{ minHeight: 76, justifyContent: 'center', paddingHorizontal: space[5], paddingVertical: space[3], borderRadius: radii.fila, backgroundColor: c.dangerFill }}
     >
-      <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.seccionGrande, color: c.danger }}>No paga</Text>
-      <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.secundario, color: c.textSecondary }}>Todo queda en su cuenta corriente</Text>
-    </Pressable>
+      <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.seccionGrande, color: c.onState }}>No paga</Text>
+      <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.secundario, color: c.onState }}>Todo queda en su cuenta corriente</Text>
+    </PressableFx>
   )
 }
 
 function BotonQuitar({ etiqueta, onPress }: { etiqueta: string; onPress: () => void }) {
   const c = useColors()
   return (
-    <Pressable
+    <PressableFx
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={etiqueta}
       android_ripple={{ color: c.border }}
-      style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radii.campo, borderWidth: 2, borderColor: c.textSecondary }}
+      style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radii.pastilla, backgroundColor: c.surfaceAlt }}
     >
       <X size={22} color={c.text} strokeWidth={3} />
-    </Pressable>
+    </PressableFx>
   )
 }

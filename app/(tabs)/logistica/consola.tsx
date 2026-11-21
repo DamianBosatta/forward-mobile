@@ -165,9 +165,9 @@ export default function ConsolaChoferScreen() {
       <View accessibilityLabel="Cargando la hoja de ruta" accessibilityLiveRegion="polite" style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Viaje de hoy" leading={menu} />
         <View style={{ padding: space[4], gap: space[3] }}>
-          <View style={{ height: 24, width: '60%', borderRadius: radii.campo, backgroundColor: c.surface2 }} />
-          <View style={{ height: 12, borderRadius: radii.pastilla, backgroundColor: c.surface2 }} />
-          <View style={{ height: 220, borderRadius: radii.tarjeta, backgroundColor: c.surface2 }} />
+          <View style={{ height: 24, width: '60%', borderRadius: radii.pastilla, backgroundColor: c.surface }} />
+          <View style={{ height: 12, borderRadius: radii.pastilla, backgroundColor: c.surface }} />
+          <View style={{ height: 220, borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }} />
           <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>Buscando tu viaje…</Text>
         </View>
       </View>
@@ -202,7 +202,7 @@ export default function ConsolaChoferScreen() {
           refreshControl={<RefreshControl refreshing={rutas.isRefetching || enCurso.isRefetching} onRefresh={revisar} />}
         >
           <View accessibilityRole={conError ? 'alert' : undefined} style={{ alignItems: 'center', gap: space[3] }}>
-            <View style={{ width: 96, height: 96, borderRadius: radii.pastilla, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 96, height: 96, borderRadius: radii.pastilla, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
               {conError || !enLinea ? <WifiOff size={40} color={c.textSecondary} /> : <Phone size={40} color={c.textSecondary} />}
             </View>
             <Text accessibilityRole="header" style={{ ...typeScale.tituloGrande, color: c.text, textAlign: 'center' }}>
