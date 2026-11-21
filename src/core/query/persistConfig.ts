@@ -1,3 +1,4 @@
+import type { PersistedClient } from '@tanstack/react-query-persist-client'
 import { storage } from '../utils/storage'
 
 /**
@@ -5,7 +6,7 @@ import { storage } from '../utils/storage'
  * Uses synchronous storage to prevent UI flickers and improve performance.
  */
 export const mmkvPersister = {
-  persistClient: async (client: any) => {
+  persistClient: async (client: PersistedClient) => {
     storage.set('REACT_QUERY_OFFLINE_CACHE', JSON.stringify(client))
   },
   restoreClient: async () => {

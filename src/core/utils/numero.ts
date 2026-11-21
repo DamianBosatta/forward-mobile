@@ -27,3 +27,11 @@ export function mostrarNumero(n: number): string {
 export function numeroCompleto(n: number): string {
   return String(n).replace('.', ',')
 }
+
+/**
+ * Número para mostrar en es-AR: punto de miles, coma decimal ("2.880", "12,3"). Es el único formateador de
+ * números de la app que no son plata (la plata va por `formatearMonto`). Por defecto, hasta 2 decimales.
+ */
+export function formatearNumero(n: number, { minimo = 0, maximo = 2 }: { minimo?: number; maximo?: number } = {}): string {
+  return new Intl.NumberFormat('es-AR', { minimumFractionDigits: minimo, maximumFractionDigits: maximo }).format(n)
+}

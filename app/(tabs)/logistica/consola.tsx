@@ -69,7 +69,9 @@ export default function ConsolaChoferScreen() {
   const volverA = esChofer(canDo) ? '/(tabs)' : '/(tabs)/logistica/picking'
   const { activeTripId, setActiveTripId, clearActiveTrip } = useLogisticaStore()
   // The open trip kept on the phone (its own persistence): it serves offline after any restart or OTA.
-  const { hoja: activeTrip, guardar: guardarHoja, updateStopStatus } = useHojaRutaGuardada()
+  const activeTrip = useHojaRutaGuardada((s) => s.hoja)
+  const guardarHoja = useHojaRutaGuardada((s) => s.guardar)
+  const updateStopStatus = useHojaRutaGuardada((s) => s.updateStopStatus)
   const [rutaElegida, setRutaElegida] = useState<string | null>(null)
   // La hoja que el chofer acaba de dejar con "Cambiar de ruta": la lista vieja no la vuelve a elegir sola.
   const [descartada, setDescartada] = useState<string | null>(null)

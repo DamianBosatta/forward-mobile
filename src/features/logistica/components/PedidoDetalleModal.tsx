@@ -6,6 +6,7 @@ import { X, Package, PackageCheck, AlertCircle } from 'lucide-react-native'
 import Animated, { FadeIn, FadeOut, SlideInDown } from 'react-native-reanimated'
 import { useVenta } from '@/libs/api-client'
 import { pesoSemibold } from '@/core/ui/fw'
+import { formatearNumero } from '@/core/utils/numero'
 
 interface PedidoDetalleModalProps {
   ventaId: string | null
@@ -102,7 +103,7 @@ export const PedidoDetalleModal = ({ ventaId, clienteNombre, isVisible, onClose 
                 </View>
                 {total != null && (
                   <Text style={{ ...typeScale.cuerpoDestacado, color: colors.text }}>
-                    $ {Math.round(total).toLocaleString('es-AR')}
+                    $ {formatearNumero(Math.round(total), { maximo: 0 })}
                   </Text>
                 )}
               </View>

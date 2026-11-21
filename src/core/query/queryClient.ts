@@ -6,6 +6,12 @@ import { invalidarInicio } from '@/libs/api-client/invalidaciones'
 export { inicioKeys } from './inicioKeys'
 
 /**
+ * REQ-01: how long a list stays fresh by default. Short, because the lists show money and stock that other devices change;
+ * what is slow-moving sets its own longer `staleTime` in its query (catalog, categories, depositos).
+ */
+export const STALE_TIME_DEFAULT = 10_000
+
+/**
  * El QueryClient de la app (app/_layout.tsx). Los tests lo crean con esto para tener la misma
  * configuración; `consultas` pisa los valores por defecto de las consultas (p. ej. `retry: false`).
  */
@@ -29,7 +35,7 @@ export function crearQueryClient(consultas: DefaultOptions['queries'] = {}): Que
       },
     }),
     defaultOptions: {
-      queries: { staleTime: 30_000, gcTime: 24 * 60 * 60_000, retry: 1, ...consultas },
+      queries: { staleTime: STALE_TIME_DEFAULT, gcTime: 24 * 60 * 60_000, retry: 1, ...consultas },
       // RED-02: una sola política para todas las mutaciones: sin red quedan en pausa y salen al volver.
       // Los que necesitan fallar en el acto lo piden por mutación (`networkMode: 'always'`).
       mutations: { networkMode: 'online' },
