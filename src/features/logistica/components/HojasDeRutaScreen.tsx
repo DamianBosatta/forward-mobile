@@ -2,8 +2,10 @@ import React, { memo, useCallback, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { ChevronRight } from 'lucide-react-native'
-import { radii, space, typeScale, useColors, type ChipEstado } from '@/libs/theme'
+import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated'
+import { importe, maxFontScale, radii, space, typeScale, useColors, type ChipEstado } from '@/libs/theme'
 import { StatusChip, TopBar, useMenuLeading } from '@/core/ui/fw'
+import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
@@ -24,48 +26,58 @@ const CHIP_DE_TONO: Record<string, ChipEstado> = { pendiente: 'pendiente', enrut
 const codigoDe = (id: string) => `Hoja #${id.substring(0, 8).toUpperCase()}`
 const entregas = (n: number) => `${n} ${n === 1 ? 'entrega' : 'entregas'}`
 
-function Fila({ hoja, ultima, onPress }: { hoja: HojaRutaListItemDto; ultima: boolean; onPress: () => void }) {
+/** Bloque de cantidad de la fila (receta .qty del FWD): lime con texto ink; en una hoja hecha, tinta con texto lime. */
+function BloqueEntregas({ cantidad, hecha }: { cantidad: number; hecha: boolean }) {
   const c = useColors()
-  const estado = resolverEstadoHojaRuta(hoja.estado)
+  const texto = hecha ? c.lime : c.ink
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${codigoDe(hoja.id)}, ${hoja.choferNombre}, ${hoja.vehiculoPatente}, ${entregas(hoja.cantidadParadas)}`}
-      onPress={onPress}
-      style={{ minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3], borderBottomWidth: ultima ? 0 : 1, borderBottomColor: c.border }}
-    >
-      <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
-        <Text style={[typeScale.secundario, { color: c.textSecondary }]} numberOfLines={1}>{codigoDe(hoja.id)}</Text>
-        <Text style={[typeScale.cuerpoDestacado, { color: c.text }]} numberOfLines={1}>{hoja.choferNombre}</Text>
-        <Text style={[typeScale.secundario, { color: c.textSecondary }]} numberOfLines={1}>{hoja.vehiculoPatente}</Text>
-      </View>
-      <View style={{ alignItems: 'flex-end', gap: space[1] }}>
-        {estado ? <StatusChip estado={CHIP_DE_TONO[estado.info.tono] ?? 'pendiente'} label={estado.nombre === 'EnCurso' ? 'En curso' : estado.info.etiqueta} /> : null}
-        <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{entregas(hoja.cantidadParadas)}</Text>
-      </View>
-      <ChevronRight size={20} color={c.textSecondary} />
-    </Pressable>
+    <View accessible={false} testID="bloque-entregas" style={{ minWidth: 60, height: 60, paddingHorizontal: space[2], borderRadius: radii.cantidad, backgroundColor: hecha ? c.ink : c.lime, alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+      <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.titulo, importe, { color: texto }]}>{cantidad}</Text>
+      <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.etiquetaChip, { color: texto }]}>{cantidad === 1 ? 'entrega' : 'entregas'}</Text>
+    </View>
   )
 }
 
-/** Hojas de ruta de toda la empresa (MOD_VIAJES:Read). Por defecto las En curso, lo que cuenta "Rutas activas" de Inicio. */
-/** Fila memoizada con el borde de la tarjeta agrupada (primera/última). */
-const FilaDeHoja = memo(function FilaDeHoja({ hoja, primera, ultima, onAbrir }: { hoja: HojaRutaListItemDto; primera: boolean; ultima: boolean; onAbrir: (id: string) => void }) {
+/** Fila con su propia tarjeta (radii.fila, sin bordes); la hoja Finalizada usa la receta "hecho": teal con texto ink. */
+const FilaDeHoja = memo(function FilaDeHoja({ hoja, indice, onAbrir }: { hoja: HojaRutaListItemDto; indice: number; onAbrir: (id: string) => void }) {
   const c = useColors()
+  const reducido = useReducedMotion()
+  const estado = resolverEstadoHojaRuta(hoja.estado)
+  const hecha = estado?.info.tono === 'entregada'
+  const etiqueta = estado ? (estado.nombre === 'EnCurso' ? 'En curso' : estado.info.etiqueta) : null
+  const apagado = hecha ? c.ink : c.textSecondary
   return (
-    <View
-      style={{
-        backgroundColor: c.surface, borderColor: c.border, overflow: 'hidden',
-        borderLeftWidth: 1, borderRightWidth: 1, borderTopWidth: primera ? 1 : 0, borderBottomWidth: ultima ? 1 : 0,
-        borderTopLeftRadius: primera ? radii.tarjeta : 0, borderTopRightRadius: primera ? radii.tarjeta : 0,
-        borderBottomLeftRadius: ultima ? radii.tarjeta : 0, borderBottomRightRadius: ultima ? radii.tarjeta : 0,
-      }}
-    >
-      <Fila hoja={hoja} ultima={ultima} onPress={() => onAbrir(hoja.id)} />
-    </View>
+    <Animated.View entering={reducido ? undefined : FadeInDown.duration(450).delay(Math.min(indice, 8) * 60)} style={{ marginBottom: space[2] }}>
+      <PressableFx
+        accessibilityRole="button"
+        accessibilityLabel={`${codigoDe(hoja.id)}, ${hoja.choferNombre}, ${hoja.vehiculoPatente}, ${entregas(hoja.cantidadParadas)}`}
+        onPress={() => onAbrir(hoja.id)}
+        android_ripple={{ color: c.surfaceAlt }}
+        style={{ minHeight: 84, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3], paddingLeft: space[3], paddingRight: space[4], overflow: 'hidden', borderRadius: radii.fila, backgroundColor: hecha ? c.teal : c.surface }}
+      >
+        <BloqueEntregas cantidad={hoja.cantidadParadas} hecha={hecha} />
+        <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
+          <Text style={[typeScale.secundario, { color: apagado }]} numberOfLines={1}>{codigoDe(hoja.id)}</Text>
+          <Text style={[typeScale.cuerpoDestacado, { color: hecha ? c.ink : c.text }]} numberOfLines={1}>{hoja.choferNombre}</Text>
+          <Text style={[typeScale.secundario, { color: apagado }]} numberOfLines={1}>{hoja.vehiculoPatente}</Text>
+        </View>
+        {estado && etiqueta ? (
+          hecha ? (
+            // Sobre teal, el chip "entregado" (teal) no se vería: va en tinta con texto lime, escrito igual.
+            <View accessible accessibilityLabel={`Estado: ${etiqueta}`} style={{ minHeight: 28, justifyContent: 'center', paddingHorizontal: space[3], borderRadius: radii.pastilla, backgroundColor: c.ink }}>
+              <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.etiquetaChip, { color: c.lime }]}>{etiqueta}</Text>
+            </View>
+          ) : (
+            <StatusChip estado={CHIP_DE_TONO[estado.info.tono] ?? 'pendiente'} label={etiqueta} />
+          )
+        ) : null}
+        <ChevronRight size={20} color={apagado} />
+      </PressableFx>
+    </Animated.View>
   )
 })
 
+/** Hojas de ruta de toda la empresa (MOD_VIAJES:Read). Por defecto las En curso, lo que cuenta "Rutas activas" de Inicio. */
 export function HojasDeRutaScreen() {
   const c = useColors()
   const router = useRouter()
@@ -75,10 +87,9 @@ export function HojasDeRutaScreen() {
   const q = useHojasDeRuta({ estado: filtro.estado })
   const hojas = q.data ?? []
   const abrirHoja = useCallback((id: string) => router.push({ pathname: '/(tabs)/logistica/consola', params: { id } } as never), [router])
-  const total = hojas.length
   const renderHoja = useCallback(
-    ({ item, index }: { item: HojaRutaListItemDto; index: number }) => <FilaDeHoja hoja={item} primera={index === 0} ultima={index === total - 1} onAbrir={abrirHoja} />,
-    [total, abrirHoja],
+    ({ item, index }: { item: HojaRutaListItemDto; index: number }) => <FilaDeHoja hoja={item} indice={index} onAbrir={abrirHoja} />,
+    [abrirHoja],
   )
 
   return (
