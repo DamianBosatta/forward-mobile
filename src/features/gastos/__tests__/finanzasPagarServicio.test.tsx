@@ -31,7 +31,7 @@ beforeEach(() => {
 it('monto grande y tres tarjetas: concepto y descripción; medio y cuenta con radio; comprobante (frame 14)', async () => {
   renderConQuery(<PagarServicio onListo={jest.fn()} />)
 
-  expect(StyleSheet.flatten((await screen.findByTestId('monto-grande', {}, ESPERA)).props.style).height).toBe(64)
+  expect(StyleSheet.flatten((await screen.findByTestId('monto-grande', {}, ESPERA)).props.style).minHeight).toBe(96)
   const concepto = screen.getByTestId('tarjeta-concepto')
   expect(await within(concepto).findByRole('radio', { name: 'Luz' }, ESPERA)).toBeTruthy()
   expect(within(concepto).getByLabelText('Descripción (opcional)')).toBeTruthy()

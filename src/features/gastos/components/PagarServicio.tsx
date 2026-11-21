@@ -55,7 +55,7 @@ export function PagarServicio({ onListo }: { onListo: () => void }) {
     })
   }
 
-  const tarjeta = { borderRadius: radii.tarjeta, backgroundColor: c.surface, padding: space[4], gap: space[3] }
+  const tarjeta = { borderRadius: radii.tarjetaGrande, backgroundColor: c.surface, padding: space[5], gap: space[3] }
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ padding: space[4] }} keyboardShouldPersistTaps="handled">

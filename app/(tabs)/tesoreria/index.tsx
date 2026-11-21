@@ -3,7 +3,7 @@ import { ScrollView, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { ArrowLeftRight, HandCoins, Landmark, Zap } from 'lucide-react-native'
 import { usePuedePagarServicio } from '@/features/gastos/lib/permiso'
-import { radii, space, useColors } from '@/libs/theme'
+import { space, useColors } from '@/libs/theme'
 import { FormContainer, Notice, TopBar, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { usePuedeCobrar, usePuedeTransferir } from '@/features/cuentas/lib/permiso'
 import { MOTIVO_SIN_PERMISO_DE_SERVICIO, MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA } from '@/core/ui/fw/MotivoDeshabilitado'
@@ -37,14 +37,13 @@ export default function TesoreriaScreen() {
   // Como la ruta /finanzas/pagos de la web (MOD_PAGOS:Read + CAP_VER_TESORERIA): sin ella no se ofrece.
   const verPagos = usePuedeVerPagos()
 
-  const separador = <View style={{ height: 1, backgroundColor: c.surface2, marginLeft: space[4] }} />
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Tesorería" leading={menu} />
       <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior }}>
         <FormContainer style={{ gap: space[3] }}>
-          {/* Propuesta "Finanzas como venta", frames 8 y 9: una tarjeta sin borde con las acciones separadas por una línea. */}
-          <View testID="tarjeta-tesoreria" style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>
+          {/* FWD (lote 6): las acciones son píldoras separadas, sin línea ni borde. */}
+          <View testID="tarjeta-tesoreria" style={{ gap: space[2] }}>
             {/* Como la web (L13): sin permiso la fila no se oculta; lleva candado y el motivo adentro. */}
             <FilaDeTesoreria
               icon={ArrowLeftRight}
@@ -53,7 +52,6 @@ export default function TesoreriaScreen() {
               motivo={transferir ? undefined : MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}
               onPress={() => router.push('/(tabs)/tesoreria/transferencia')}
             />
-            {separador}
             <FilaDeTesoreria
               icon={Zap}
               title="Pagar un servicio"
@@ -62,26 +60,20 @@ export default function TesoreriaScreen() {
               onPress={() => router.push('/(tabs)/tesoreria/pagar-servicio')}
             />
             {verPagos ? (
-              <>
-                {separador}
-                <FilaDeTesoreria
-                  icon={HandCoins}
-                  title="Pagos"
-                  subtitle="Pagos a proveedores y cobros de clientes"
-                  onPress={() => router.push('/(tabs)/tesoreria/pagos')}
-                />
-              </>
+              <FilaDeTesoreria
+                icon={HandCoins}
+                title="Pagos"
+                subtitle="Pagos a proveedores y cobros de clientes"
+                onPress={() => router.push('/(tabs)/tesoreria/pagos')}
+              />
             ) : null}
             {cargarCheque ? (
-              <>
-                {separador}
-                <FilaDeTesoreria
-                  icon={Landmark}
-                  title="Cargar un cheque"
-                  subtitle={AYUDA_CHEQUE_COMO_COBRO}
-                  onPress={() => router.push({ pathname: '/(tabs)/cuentas', params: { cobrar: 'cheque' } })}
-                />
-              </>
+              <FilaDeTesoreria
+                icon={Landmark}
+                title="Cargar un cheque"
+                subtitle={AYUDA_CHEQUE_COMO_COBRO}
+                onPress={() => router.push({ pathname: '/(tabs)/cuentas', params: { cobrar: 'cheque' } })}
+              />
             ) : null}
           </View>
           <Notice tone="info">{AVISO_COBROS_DE_CLIENTES}</Notice>
