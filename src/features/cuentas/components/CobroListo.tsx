@@ -62,7 +62,7 @@ export function CobroListo({ cliente, cobro, monto, medio, lineas, imputacionMan
         {cobro.yaEstaba ? <Notice tone="info">{COBRO_YA_ESTABA}</Notice> : null}
         {cobro.conLoDeAntes ? <Notice tone="advertencia">{COBRO_CON_LO_DE_ANTES}</Notice> : null}
         {cobro.anulado ? <Notice tone="advertencia">{cobro.aviso ?? "Este cobro se registró con esta clave y después se anuló."}</Notice> : null}
-        {cobro.anulado ? null : <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[2] }}>
+        {cobro.anulado ? null : <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjetaGrande, padding: space[4], gap: space[2] }}>
           {/* El monto y el medio del formulario no son los del cobro que quedó grabado con lo de antes. */}
           {cobro.conLoDeAntes ? null : <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(monto)}</Text>}
           {medio && !cobro.conLoDeAntes ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{medio}</Text> : null}
@@ -84,7 +84,7 @@ export function CobroListo({ cliente, cobro, monto, medio, lineas, imputacionMan
         </View>}
 
         {estado.data ? (
-          <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[2] }}>
+          <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjetaGrande, padding: space[4], gap: space[2] }}>
             <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Saldo nuevo</Text>
             <TotalsRow label="Cuenta TST" importe={estado.data.saldoTst} />
             <TotalsRow label="Cuenta Normal" importe={estado.data.saldoNormal} />

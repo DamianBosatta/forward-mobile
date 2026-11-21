@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
-import { FlatList, Pressable, ScrollView, Text, View, type StyleProp, type TextStyle } from 'react-native'
+import { FlatList, Pressable, Text, View, type StyleProp, type TextStyle } from 'react-native'
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { useRouter } from 'expo-router'
 import { Button, FiltroChip, Notice, StatusChip, TopBar, TotalsRow, TwoPane, formatImporte, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
@@ -77,7 +77,7 @@ const TarjetaAutorizacion = React.memo(function TarjetaAutorizacion({ v, c, secu
   const conRazon = pideRazon(v.motivoPendienteAutorizacion)
   const cliente = clienteDeBandeja(v)
     return (
-      <View style={{ marginBottom: space[3], padding: space[4], gap: space[2], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+      <View style={{ marginBottom: space[3], padding: space[5], gap: space[2], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}>
         <Pressable accessibilityRole="button" accessibilityLabel={`Ver la venta de ${v.clienteDisplayName}`} onPress={() => abrir(v.id)} style={{ gap: space[1], minHeight: 44 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
             <Text numberOfLines={1} style={[secundario, { flexShrink: 1 }]}>{v.codigoPedido ? `${v.codigoPedido} · ${v.vendedorNombre}` : v.vendedorNombre}</Text>
@@ -153,7 +153,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
       {puedeDecidir ? null : (
         <MotivoDeshabilitado testID="motivo-sin-decidir">Para decidir necesitás el permiso de modificar ventas.</MotivoDeshabilitado>
       )}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" accessibilityLabel="Motivo" contentContainerStyle={{ gap: space[2] }}>
+      <View accessibilityRole="radiogroup" accessibilityLabel="Motivo" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
         {filtrosConConteo(lista).map((f) => (
           <FiltroChip
             key={f.clave}
@@ -164,7 +164,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
             onPress={() => setFiltro(f.clave)}
           />
         ))}
-      </ScrollView>
+      </View>
       {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
       {sinRed && lista.length > 0 ? <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice> : null}
     </View>

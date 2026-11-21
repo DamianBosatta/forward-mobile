@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { ActivityIndicator, ScrollView, Share, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Check } from 'lucide-react-native'
-import { FONT, importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
+import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, StatusChip, TopBar, TotalsRow, formatImporte } from '@/core/ui/fw'
 import type { SocioDetailDto } from '@/libs/api-client/types'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
@@ -32,7 +32,6 @@ interface Props {
  */
 export function CobroRegistradoPantalla({ cliente, cobro, monto, medio, lineas, imputacionManual, onVolver, onOtro }: Props) {
   const c = useColors()
-  const sombra = useSombraTarjeta()
   const insets = useSafeAreaInsets()
   // Un cobro anulado ya no está en ninguna cuenta: no se busca dónde quedó.
   const { cuenta, buscando } = useCuentaDelPago(cobro.anulado ? { ...cobro, pagoId: null } : cobro, cliente)
@@ -61,7 +60,7 @@ export function CobroRegistradoPantalla({ cliente, cobro, monto, medio, lineas, 
   }
 
   const fila = (k: string, v: React.ReactNode, ultima = false) => (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[3], minHeight: space[12], borderBottomWidth: ultima ? 0 : 1, borderBottomColor: c.border }}>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[3], minHeight: space[12] }}>
       <Text style={secundario}>{k}</Text>
       {v}
     </View>
@@ -74,7 +73,7 @@ export function CobroRegistradoPantalla({ cliente, cobro, monto, medio, lineas, 
       {/* La barra dice siempre "Cobro registrado" (maqueta, frames 14 a 16); la tarjeta dice cómo quedó. */}
       <TopBar title="Cobro registrado" />
       <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: insets.bottom + space[6], gap: space[4] }}>
-        <View style={{ padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, ...sombra, gap: space[2] }}>
+        <View style={{ padding: space[4], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface, gap: space[2] }}>
           <View style={{ alignItems: 'center', gap: space[1], paddingBottom: space[2] }}>
             <View style={{ width: 56, height: 56, borderRadius: radii.pastilla, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
               <Check size={30} color={c.onAction} strokeWidth={2.5} />
@@ -100,7 +99,7 @@ export function CobroRegistradoPantalla({ cliente, cobro, monto, medio, lineas, 
         {!cobro.anulado && !buscando && !cuenta ? <Notice tone="advertencia">{SIN_CUENTA_CONFIRMADA}</Notice> : null}
 
         {estado.data ? (
-          <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, padding: space[4], gap: space[2] }}>
+          <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjetaGrande, padding: space[4], gap: space[2] }}>
             <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Saldo nuevo</Text>
             <TotalsRow label="Cuenta TST" importe={estado.data.saldoTst} />
             <TotalsRow label="Cuenta Normal" importe={estado.data.saldoNormal} />

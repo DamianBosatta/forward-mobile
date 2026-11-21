@@ -27,7 +27,7 @@ function DiaChip({ dia, activo, onPress }: { dia: number; activo: boolean; onPre
       android_ripple={{ color: c.surface2 }}
       style={{
         width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radii.pastilla,
-        borderWidth: activo ? 2 : 1, borderColor: activo ? c.brand : c.borderStrong, backgroundColor: activo ? c.brandSoft : c.surface,
+        backgroundColor: activo ? c.brandSoft : c.surface2,
       }}
     >
       <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.secundario, color: activo ? c.brandInk : c.text }}>{letraDelDia(dia)}</Text>

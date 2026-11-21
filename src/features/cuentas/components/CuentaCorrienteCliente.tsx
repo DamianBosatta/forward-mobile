@@ -37,7 +37,7 @@ const FILTROS = [
 function Tarjeta({ titulo, children }: { titulo?: string; children: React.ReactNode }) {
   const c = useColors()
   return (
-    <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[3] }}>
+    <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjetaGrande, padding: space[5], gap: space[3] }}>
       {titulo ? <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>{titulo}</Text> : null}
       {children}
     </View>
@@ -61,9 +61,9 @@ function LineaDeDetalle({ partes }: { partes: string[] }) {
 
 /**
  * Un movimiento como una línea del carrito de la venta (propuesta "Clientes como venta", frame 13): la fecha en
- * pastilla, el detalle en una línea, el importe y el saldo a la derecha (lo cobrado en verde con "−").
+ * pastilla, el detalle en una línea, el importe y el saldo a la derecha (lo cobrado en accentText con "−").
  */
-function Movimiento({ m, tabla, ultimo }: { m: MovimientoConCuenta; tabla?: boolean; ultimo?: boolean }) {
+function Movimiento({ m, tabla }: { m: MovimientoConCuenta; tabla?: boolean }) {
   const c = useColors()
   const fecha = formatToLocalTime(m.fecha, 'EEE d MMM')
   const esDebe = m.debe > 0
@@ -78,13 +78,13 @@ function Movimiento({ m, tabla, ultimo }: { m: MovimientoConCuenta; tabla?: bool
     <View
       accessible
       accessibilityLabel={[fecha, NOMBRE_CUENTA[m.cuenta], descripcion, detalle, vence, imputado, monto, saldo].filter(Boolean).join(', ')}
-      style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[3], paddingVertical: space[3], paddingHorizontal: space[4], backgroundColor: c.surface, borderBottomWidth: ultimo ? 0 : 1, borderBottomColor: c.surface2 }}
+      style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[3], paddingVertical: space[3], paddingHorizontal: space[4], backgroundColor: c.surface, borderRadius: radii.fila }}
     >
       {/* Teléfono: día/mes en pastilla. Tablet (TabCuentas): tabla Fecha / Movimiento / Vence / Importe. */}
       {tabla ? (
         <Text style={{ ...typeScale.secundario, color: c.textSecondary, width: 96 }}>{fecha}</Text>
       ) : (
-        <View testID="fecha-movimiento" style={{ backgroundColor: c.surface2, borderRadius: radii.campo, paddingVertical: 2, paddingHorizontal: space[2] }}>
+        <View testID="fecha-movimiento" style={{ backgroundColor: c.surface2, borderRadius: radii.pastilla, paddingVertical: 2, paddingHorizontal: space[2] }}>
           <Text style={[typeScale.etiqueta, importe, { color: c.text }]}>{formatToLocalTime(m.fecha, 'dd/MM')}</Text>
         </View>
       )}
@@ -94,8 +94,8 @@ function Movimiento({ m, tabla, ultimo }: { m: MovimientoConCuenta; tabla?: bool
       </View>
       {tabla ? <Text style={{ ...typeScale.secundario, color: c.textSecondary, width: 120 }}>{vence ?? '—'}</Text> : null}
       <View style={{ alignItems: 'flex-end', gap: 2 }}>
-        {/* El signo va siempre con el color: lo cobrado en verde, lo que se debe en el color base. */}
-        <Text style={[typeScale.cuerpoDestacado, importe, { color: esDebe ? c.text : c.chip.entregado.text }]}>{monto}</Text>
+        {/* El signo va siempre con el color: lo cobrado en accentText, lo que se debe en el color base. */}
+        <Text style={[typeScale.cuerpoDestacado, importe, { color: esDebe ? c.text : c.accentText }]}>{monto}</Text>
         <Text style={[typeScale.secundario, importe, { color: c.textSecondary }]}>{saldo}</Text>
       </View>
     </View>
@@ -238,9 +238,9 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
             </Tarjeta>
           ) : null}
           {movs.movimientos.length > 0 ? (
-            <View testID="lista-movimientos" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, overflow: 'hidden' }}>
-              {movs.movimientos.map((m, i) => (
-                <Movimiento key={`${m.cuenta}-${m.id}`} m={m} tabla={isTabletLandscape} ultimo={i === movs.movimientos.length - 1} />
+            <View testID="lista-movimientos" style={{ gap: space[2] }}>
+              {movs.movimientos.map(m => (
+                <Movimiento key={`${m.cuenta}-${m.id}`} m={m} tabla={isTabletLandscape} />
               ))}
             </View>
           ) : null}
@@ -257,7 +257,7 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
     </ScrollView>
     {verCuenta && !isTabletLandscape ? (
       // Pie del carrito (frame 13): el saldo a la izquierda y "Cobrar" como botón principal.
-      <View testID="pie-cuenta" style={{ padding: space[4], gap: space[2], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+      <View testID="pie-cuenta" style={{ padding: space[4], gap: space[2], backgroundColor: c.bg }}>
         {e ? (
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
             <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Saldo</Text>

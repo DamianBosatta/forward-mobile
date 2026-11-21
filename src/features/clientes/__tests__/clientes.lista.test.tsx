@@ -266,13 +266,12 @@ describe('lámina Clientes (bloque 12, T7)', () => {
 
 describe('lista de clientes como el diseño (D6c)', () => {
   // Propuesta "Clientes como venta" (frame 1): las filas de cada letra van en una tarjeta sin borde ni sombra.
-  it('la fila va en la tarjeta de su letra, sin borde ni sombra', async () => {
+  it('la fila es una tarjeta propia, sin borde ni sombra', async () => {
     renderConQuery(<ClientesScreen />)
 
     const fila = await screen.findByRole('button', { name: /Av\. del Valle 89/ })
     const estilo = StyleSheet.flatten(fila.props.style)
-    expect(estilo.borderTopLeftRadius).toBe(16)
-    expect(estilo.borderBottomLeftRadius).toBe(16)
+    expect(estilo.borderRadius).toBe(22)
     expect(estilo.borderWidth).toBeUndefined()
     expect(estilo.shadowOpacity).toBeUndefined()
     expect(estilo.elevation).toBeUndefined()

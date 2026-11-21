@@ -17,7 +17,7 @@ export function Dato({ etiqueta, valor, etiquetaChica = false }: { etiqueta: str
 }
 
 /** `sinBorde`: la acción sin contorno (ficha de cliente, propuesta "Clientes como venta"). */
-export function Accion({ icono: Icono, label, onPress, sinBorde = false }: { icono: LucideIcon; label: string; onPress: () => void; sinBorde?: boolean }) {
+export function Accion({ icono: Icono, label, onPress }: { icono: LucideIcon; label: string; onPress: () => void; sinBorde?: boolean }) {
   const c = useColors()
   return (
     <Pressable
@@ -29,10 +29,8 @@ export function Accion({ icono: Icono, label, onPress, sinBorde = false }: { ico
         flex: 1,
         minWidth: 72,
         minHeight: 64,
-        borderRadius: radii.campo,
+        borderRadius: radii.fila,
         backgroundColor: c.surface,
-        borderWidth: sinBorde ? 0 : 1,
-        borderColor: c.border,
         alignItems: 'center',
         justifyContent: 'center',
         gap: space[1],
@@ -57,7 +55,7 @@ export function Seccion({ titulo, children, testID, sinRelleno = false, holgada 
   return (
     <View
       testID={testID}
-      style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, ...(sinRelleno ? { overflow: 'hidden' } : { padding: space[4], gap: holgada ? space[4] : space[3] }) }}
+      style={{ backgroundColor: c.surface, borderRadius: radii.tarjetaGrande, ...(sinRelleno ? { overflow: 'hidden' } : { padding: space[5], gap: holgada ? space[4] : space[3] }) }}
     >
       {titulo ? <TituloDeSeccion>{titulo}</TituloDeSeccion> : null}
       {children}
