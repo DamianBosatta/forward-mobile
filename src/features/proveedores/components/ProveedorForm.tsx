@@ -57,7 +57,7 @@ export function ProveedorForm({ id }: { id?: string }) {
             <FormContainer style={{ paddingHorizontal: space[4], gap: space[4] }}>
               {hayBloqueo ? (
                 // Lo que este usuario no cambia: filas bloqueadas en una tarjeta propia con el aviso (frame 19).
-                <View testID="campos-bloqueados" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[3] }}>
+                <View testID="campos-bloqueados" style={{ backgroundColor: c.surface, borderRadius: radii.tarjetaGrande, padding: space[5], gap: space[3] }}>
                   <Notice tone="info">{AVISO_CAMPOS_SENSIBLES_PROVEEDOR}</Notice>
                   {bloqueo.razonSocial ? <FilaBloqueada etiqueta="Razón social" valor={datos.razonSocial.trim() || '—'} /> : null}
                   {bloqueo.cuit ? <FilaBloqueada etiqueta="CUIT" valor={datos.cuit.trim() || '—'} /> : null}
