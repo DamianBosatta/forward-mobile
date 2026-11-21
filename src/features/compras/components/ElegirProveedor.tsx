@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
+import { formatearCuit } from '@/libs/reglas/cuit'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
 import { Lock } from 'lucide-react-native'
@@ -93,7 +94,7 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
         <MarcaRadio elegido={sel} />
         <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
           <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{p.nombre}</Text>
-          {p.cuit ? <Text style={secundario}>{`CUIT ${p.cuit}`}</Text> : null}
+          {p.cuit ? <Text style={secundario}>{`CUIT ${formatearCuit(p.cuit)}`}</Text> : null}
           {p.falta ? <Text style={[typeScale.secundario, { color: c.chip.porAutorizar.text }]}>Faltan datos de compra: se completan en la web</Text> : null}
           {p.ultima ? <Text style={[typeScale.secundario, { color: c.brandInk }]}>{p.ultima}</Text> : null}
         </View>

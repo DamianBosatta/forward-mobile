@@ -13,3 +13,11 @@ describe('RouteSelector: cantidad de entregas por viaje', () => {
     expect(screen.queryByText(/parada/i)).toBeNull()
   })
 })
+
+describe('RouteSelector: entrada animada', () => {
+  it('con muchos viajes los muestra todos (el retraso de entrada tiene tope)', () => {
+    const rutas = Array.from({ length: 12 }, (_, i) => ruta(`id${String(i).padStart(6, '0')}-x`, i + 1))
+    render(<RouteSelector routes={rutas} onSelect={jest.fn()} />)
+    expect(screen.getByText('1 entrega')).toBeTruthy()
+  })
+})

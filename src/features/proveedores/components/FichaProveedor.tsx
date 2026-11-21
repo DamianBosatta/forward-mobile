@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { formatearCuit } from '@/libs/reglas/cuit'
 import { Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { ChevronRight, FilePen, MapPin, MessageCircle, Pencil, Phone, Plus } from 'lucide-react-native'
@@ -75,7 +76,7 @@ export function FichaProveedor({ id, conBarra = false }: { id: string; conBarra?
   const condicion = condicionBreve(proveedor.condicionPago)
   const faltan = proveedor.condicionesDeCompraFaltantes?.length > 0 || !condicion
   const saldo = proveedor.puedeVerSaldo && canRead('MOD_CC') ? saldoDelProveedor(proveedor.saldoAmount) : null
-  const cuit = proveedor.cuit?.trim() ? `CUIT ${proveedor.cuit.trim()}` : null
+  const cuit = proveedor.cuit?.trim() ? `CUIT ${formatearCuit(proveedor.cuit.trim())}` : null
   const subtitulo = [cuit, condicion ? `paga a ${condicion}` : null].filter(Boolean).join(' · ')
   const ultimas = compras.data?.items ?? []
   const horarios = horariosDeEntrega(proveedor)
@@ -190,7 +191,7 @@ export function FichaProveedor({ id, conBarra = false }: { id: string; conBarra?
         {solapa === 'datos' ? (
           <Seccion>
             <Dato etiquetaChica etiqueta="Razón social" valor={proveedor.razonSocial} />
-            <Dato etiquetaChica etiqueta="CUIT" valor={proveedor.cuit} />
+            <Dato etiquetaChica etiqueta="CUIT" valor={formatearCuit(proveedor.cuit)} />
             <Dato etiquetaChica etiqueta="Condición frente al IVA" valor={proveedor.condicionIva} />
             <Dato etiquetaChica etiqueta="Condición de pago" valor={condicion ? `Paga a ${condicion}` : null} />
             <Dato etiquetaChica etiqueta="Teléfono" valor={proveedor.telefono} />

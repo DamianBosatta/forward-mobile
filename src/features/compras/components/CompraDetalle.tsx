@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { formatearCuit } from '@/libs/reglas/cuit'
 import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { Image as ExpoImage } from 'expo-image'
 import { AccessibilityInfo, ActivityIndicator, ScrollView, Text, View } from 'react-native'
@@ -202,7 +203,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
             <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text, flexShrink: 1 }]}>{compra.razonSocialProveedor}</Text>
             {(() => { const chip = chipForEstado('compra', compra.estado); return chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null })()}
           </View>
-          {socio.data?.cuit ? <Text style={[secundario, cifras]}>{`CUIT ${socio.data.cuit}`}</Text> : null}
+          {socio.data?.cuit ? <Text style={[secundario, cifras]}>{`CUIT ${formatearCuit(socio.data.cuit)}`}</Text> : null}
         </View>
         {aviso ? <Notice tone={aviso.tono}>{aviso.texto}</Notice> : null}
         {esEstadoCompra(estado, 'Confirmado') && !compra.eliminada ? <Notice tone="info">Ya cuenta como stock por ingresar. Cuando llegue, marcala recibida.</Notice> : null}

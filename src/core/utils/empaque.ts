@@ -1,4 +1,4 @@
-import { mostrarNumero } from './numero'
+import { formatearNumero, mostrarNumero } from './numero'
 
 /** UnidadCompra del servidor: en qué nivel de empaque viene la cantidad (3 = Pack). */
 export type UnidadCompra = 'Unidad' | 'Pack' | 'Bulto' | 'BultoMadre'
@@ -69,7 +69,7 @@ export function nivelDeUnidades(ficha: EmpaqueProducto | null | undefined, unida
 export function presentacionEmpaque(ficha: EmpaqueProducto | null | undefined): string[] {
   const niveles = nivelesDeEmpaque(ficha)
   const unidadesDe = (u: UnidadCompra) => niveles.find((n) => n.unidad === u)?.unidades ?? null
-  const miles = (n: number) => new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(n)
+  const miles = (n: number) => formatearNumero(n)
   const pack = unidadesPorPack(ficha?.ventaMinimaUnidades)
   const bulto = unidadesDe('Bulto')
   const madre = unidadesDe('BultoMadre')

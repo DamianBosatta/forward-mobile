@@ -3,6 +3,7 @@ import { Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { ChevronRight, FilePen, FileText, HandCoins, MapPin, MessageCircle, Pencil, Phone, ShoppingCart } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { formatearCuit } from '@/libs/reglas/cuit'
 import { Button, Notice, Segmented, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { useSocio } from '@/libs/api-client/socios'
@@ -241,7 +242,7 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
             <Dato etiquetaChica etiqueta="Contacto" valor={cliente.nombreContacto} />
             <Dato etiquetaChica etiqueta="Teléfono" valor={cliente.telefono} />
             <Dato etiquetaChica etiqueta="Razón social" valor={cliente.razonSocial} />
-            <Dato etiquetaChica etiqueta="CUIT" valor={cliente.cuit} />
+            <Dato etiquetaChica etiqueta="CUIT" valor={formatearCuit(cliente.cuit)} />
             <Dato etiquetaChica etiqueta="Condición frente al IVA" valor={cliente.condicionIva} />
             <Dato etiquetaChica etiqueta="Email" valor={cliente.email} />
             {/* Solo con el servidor nuevo (forward-system #896): uno anterior no manda el nombre y no se muestra nada. */}

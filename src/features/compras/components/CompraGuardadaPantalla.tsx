@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { formatearCuit } from '@/libs/reglas/cuit'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -146,7 +147,7 @@ export function CompraGuardadaPantalla({ id, aviso }: Props) {
             </View>
             <Text accessibilityRole="header" style={{ ...typeScale.titulo, ...pesoSemibold, color: c.text, textAlign: 'center', marginTop: space[2] }}>{titulo}</Text>
             <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, textAlign: 'center' }}>{compra.razonSocialProveedor}</Text>
-            {socio.data?.cuit ? <Text style={{ ...secundario, ...importe, textAlign: 'center' }}>{`CUIT ${socio.data.cuit}`}</Text> : null}
+            {socio.data?.cuit ? <Text style={{ ...secundario, ...importe, textAlign: 'center' }}>{`CUIT ${formatearCuit(socio.data.cuit)}`}</Text> : null}
             <Text style={{ ...secundario, textAlign: 'center' }}>{resumen}</Text>
           </View>
           {fila('Estado', chip ? <StatusChip estado={chip.estado} label={chip.label} /> : <Text style={{ ...typeScale.cuerpo, color: c.text }}>{estado}</Text>)}

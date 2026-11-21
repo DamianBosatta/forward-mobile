@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
 import { MotiView } from 'moti'
 import { ChevronRight, MapPin, Truck } from 'lucide-react-native'
-import { useColors, BRAND, radii, typeScale } from '@/libs/theme'
+import { useReducedMotion } from 'react-native-reanimated'
+import { useColors, BRAND, radii, space, typeScale } from '@/libs/theme'
 import type { HojaRutaListItemDto } from '@/libs/api-client/types'
 import type { EstadoHojaRutaNombre } from '@/core/constants/estados'
 import { resolverEstadoHojaRuta } from '@/libs/reglas/estados'
@@ -41,15 +42,16 @@ type Colores = ReturnType<typeof useColors>
 
 /** Fila de un viaje. Memoizada: la lista no la repinta si no cambió su viaje, el color o el callback. */
 const FilaRuta = React.memo(function FilaRuta({ item, index, colors, onSelect }: { item: HojaRutaListItemDto; index: number; colors: Colores; onSelect: (id: string) => void }) {
+  const reducir = useReducedMotion()
   const stopCount = item.cantidadParadas
   const color = estadoColor(item.estado, colors.primary)
 
   return (
     <MotiView
-      from={{ opacity: 0, translateX: -20 }}
+      from={{ opacity: 0, translateX: reducir ? 0 : -space[5] }}
       animate={{ opacity: 1, translateX: 0 }}
-      transition={{ delay: index * 80 }}
-      style={{ marginBottom: 12 }}
+      transition={{ delay: reducir ? 0 : Math.min(index, 5) * 80 }}
+      style={{ marginBottom: space[3] }}
     >
       <TouchableOpacity
         activeOpacity={0.8}
