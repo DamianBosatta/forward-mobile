@@ -1,6 +1,7 @@
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { nombreDelDia, type DiaEntrega } from './dias'
 
 interface Props {
@@ -26,23 +27,22 @@ export function TiraDeDias({ dias, elegido, esFeriado, onElegir }: Props) {
           const feriado = esFeriado(d.fecha)
           const activo = d.fecha === elegido
           return (
-            <Pressable
+            <PressableFx
               key={d.fecha}
               disabled={feriado}
               onPress={() => onElegir(d.fecha)}
-              android_ripple={{ color: c.surface2 }}
+              android_ripple={{ color: c.surfaceAlt }}
               accessibilityRole="radio"
               accessibilityLabel={`${d.semana} ${d.numero}${d.esHoy ? ' · Hoy' : ''}${feriado ? ' · Feriado' : ''}`}
               accessibilityState={{ checked: activo, disabled: feriado }}
               style={{
-                flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center', borderRadius: radii.campo,
-                borderWidth: activo ? 2 : 1, borderColor: activo ? c.brand : c.border,
-                backgroundColor: activo ? c.brandSoft : feriado ? c.surface2 : c.surface,
+                flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center', borderRadius: radii.fila,
+                backgroundColor: activo ? c.primaryBg : feriado ? c.surfaceAlt : c.surface,
               }}
             >
-              <Text style={{ ...typeScale.cuerpoDestacado, color: activo ? c.brandInk : feriado ? c.textSecondary : c.text, textDecorationLine: feriado ? 'line-through' : 'none' }}>{String(d.numero)}</Text>
-              <Text style={{ ...typeScale.etiqueta, color: activo ? c.brandInk : c.textSecondary }}>{d.semana}</Text>
-            </Pressable>
+              <Text style={{ ...typeScale.cuerpoDestacado, color: activo ? c.primaryFg : feriado ? c.textSecondary : c.text, textDecorationLine: feriado ? 'line-through' : 'none' }}>{String(d.numero)}</Text>
+              <Text style={{ ...typeScale.etiqueta, color: activo ? c.primaryFg : c.textSecondary }}>{d.semana}</Text>
+            </PressableFx>
           )
         })}
       </View>
