@@ -11,6 +11,7 @@ export function useAccionAvisos(): TopBarAction {
   const router = useRouter()
   const noLeidas = useAvisosNoLeidos()
   return {
+    id: 'avisos',
     icon: Bell,
     accessibilityLabel: noLeidas > 0 ? `Avisos, ${noLeidas} sin leer` : 'Avisos',
     onPress: () => router.push('/(tabs)/avisos' as never),

@@ -36,6 +36,14 @@ describe.each(['light', 'dark'] as const)('TopBar: insignia de la campana (%s)',
     expect(screen.getByRole('button', { name: 'Avisos, 3 sin leer' })).toBeTruthy()
   })
 
+  it('el botón no se vuelve a montar cuando cambia la cantidad de avisos', () => {
+    const conId = (badge?: number) => ({ ...campana(badge), id: 'avisos' })
+    const { rerender } = render(<TopBar title="Hola" actions={[conId(0)]} />)
+    const antes = screen.getByRole('button', { name: 'Avisos' })
+    rerender(<TopBar title="Hola" actions={[conId(3)]} />)
+    expect(screen.getByRole('button', { name: 'Avisos, 3 sin leer' })).toBe(antes)
+  })
+
   it('desde 100 muestra 99+ y hasta 99 el número entero', () => {
     const { rerender } = render(<TopBar title="Hola" actions={[campana(99)]} />)
     expect(screen.getByText('99')).toBeTruthy()

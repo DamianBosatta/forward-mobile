@@ -20,6 +20,8 @@ export const AvisoSinConexionContext = createContext(false)
 export const AccionesEnEsperaContext = createContext(0)
 
 export interface TopBarAction {
+  /** Stable identity of the action. Use it when `accessibilityLabel` changes with state (e.g. the unread count). */
+  id?: string
   icon: LucideIcon
   accessibilityLabel: string
   onPress: () => void
@@ -120,9 +122,9 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
             <Text style={{ ...typeScale.secundario, color: colors.onTopBar }}>{syncLabel}</Text>
           </View>
         ) : null}
-        {actions.map(({ icon: Icono, accessibilityLabel, onPress, disabled = false, label, badge }) => (
+        {actions.map(({ id, icon: Icono, accessibilityLabel, onPress, disabled = false, label, badge }) => (
           <PressableFx
-            key={accessibilityLabel}
+            key={id ?? accessibilityLabel}
             onPress={onPress}
             disabled={disabled}
             accessibilityRole="button"
