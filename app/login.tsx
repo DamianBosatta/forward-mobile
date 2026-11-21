@@ -273,15 +273,15 @@ export default function LoginScreen() {
   if (isTablet) {
     return (
       <KeyboardAvoidingView testID="login-raiz" behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, flexDirection: 'row', backgroundColor: c.bg }}>
-        <View style={{ flex: 1, padding: 64, paddingTop: 64 + insets.top, paddingBottom: 64 + insetInferior, justifyContent: 'space-between', backgroundColor: c.topBar }}>
+        <View style={{ flex: 1, padding: 64, paddingTop: 64 + insets.top, paddingBottom: 64 + insetInferior, justifyContent: 'space-between', backgroundColor: c.panelOscuro }}>
           {logo(72)}
           <View style={{ gap: space[3] }}>
-            <Text accessibilityRole="header" style={{ ...typeScale.hero, color: c.onTopBarStrong }}>Forward</Text>
-            <Text style={{ ...typeScale.titulo, fontFamily: FONT.semibold, fontWeight: '600', lineHeight: 30, color: c.onTopBar, maxWidth: 420 }}>
+            <Text accessibilityRole="header" style={{ ...typeScale.hero, color: c.onPanelOscuroStrong }}>Forward</Text>
+            <Text style={{ ...typeScale.titulo, fontFamily: FONT.semibold, fontWeight: '600', lineHeight: 30, color: c.onPanelOscuro, maxWidth: 420 }}>
               Vendé, cobrá y seguí tus pedidos desde la calle, con los mismos datos que la web.
             </Text>
           </View>
-          <Text style={[typeScale.secundario, { color: c.onTopBar }]}>Forward Distribuidora</Text>
+          <Text style={[typeScale.secundario, { color: c.onPanelOscuro }]}>Forward Distribuidora</Text>
         </View>
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingTop: 64 + insets.top, paddingBottom: 64 + insetInferior, paddingHorizontal: 80 }} keyboardShouldPersistTaps="handled">
           {formulario}

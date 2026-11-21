@@ -164,16 +164,16 @@ function FranjaVendido({ r }: { r: ResumenVendedor }) {
       testID="reporte-ventas"
       accessible
       accessibilityLabel={`Vendido: ${monto}, ${plural(ventas.operaciones, 'venta', 'ventas')}`}
-      style={{ backgroundColor: c.topBar, borderRadius: radii.tarjeta, padding: space[5], gap: space[1] }}
+      style={{ backgroundColor: c.panelOscuro, borderRadius: radii.tarjeta, padding: space[5], gap: space[1] }}
     >
-      <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>Vendido</Text>
-      <Text style={{ ...typeScale.cifra, color: c.onTopBarStrong, ...cifras }} adjustsFontSizeToFit numberOfLines={1}>{monto}</Text>
-      <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>
+      <Text style={{ ...typeScale.secundario, color: c.onPanelOscuro }}>Vendido</Text>
+      <Text style={{ ...typeScale.cifra, color: c.onPanelOscuroStrong, ...cifras }} adjustsFontSizeToFit numberOfLines={1}>{monto}</Text>
+      <Text style={{ ...typeScale.secundario, color: c.onPanelOscuro }}>
         {`${plural(ventas.operaciones, 'venta', 'ventas')} · Ticket promedio ${formatImporte(ventas.ticketPromedio)}`}
       </Text>
       {/* Sin CAP_VER_COSTOS el servidor no lo manda: el margen revela el costo. */}
       {ventas.margenBrutoPorcentaje != null ? (
-        <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>{`Margen bruto ${porcentaje(ventas.margenBrutoPorcentaje)}`}</Text>
+        <Text style={{ ...typeScale.secundario, color: c.onPanelOscuro }}>{`Margen bruto ${porcentaje(ventas.margenBrutoPorcentaje)}`}</Text>
       ) : null}
     </View>
   )

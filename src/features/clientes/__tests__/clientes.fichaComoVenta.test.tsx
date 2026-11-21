@@ -36,7 +36,7 @@ describe('hero de saldo (frames 5 y 11)', () => {
     renderConQuery(<FichaCliente id="c1" />)
 
     const hero = await screen.findByTestId('hero-saldo')
-    expect(estilo(hero).backgroundColor).toBe(themeColors.light.topBar)
+    expect(estilo(hero).backgroundColor).toBe(themeColors.light.panelOscuro)
     expect(within(hero).getByLabelText('Saldo $ 186.420,00')).toBeTruthy()
     expect(within(hero).getByText('Crédito libre')).toBeTruthy()
     expect(estilo(within(hero).getByTestId('hero-credito-relleno')).backgroundColor).toBe(themeColors.light.brand)

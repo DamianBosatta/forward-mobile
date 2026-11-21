@@ -59,6 +59,10 @@ function pares(c: ForwardColors): Par[] {
   lista.push(['onPrimary sobre primaryHover', c.onPrimary, c.primaryHover])
   lista.push(['onTopBar sobre topBar', c.onTopBar, c.topBar])
   lista.push(['onTopBarStrong sobre topBar', c.onTopBarStrong, c.topBar])
+  // Receta FWD .round: íconos y texto de los botones del encabezado sobre surface.
+  lista.push(['onTopBarStrong sobre surface (botón redondo)', c.onTopBarStrong, c.surface])
+  lista.push(['onPanelOscuro sobre panelOscuro', c.onPanelOscuro, c.panelOscuro])
+  lista.push(['onPanelOscuroStrong sobre panelOscuro', c.onPanelOscuroStrong, c.panelOscuro])
   lista.push(['onDangerStrong sobre dangerStrong', c.onDangerStrong, c.dangerStrong])
   lista.push(['blanco sobre dangerStrong', '#FFFFFF', c.dangerStrong])
   for (const [estado, chip] of Object.entries(c.chip ?? {})) {
@@ -174,6 +178,10 @@ describe('global.css (nativewind) usa los mismos valores que libs/theme.ts', () 
 
 // Valores aprobados por el dueño (docs/mobile/restyle-fwd/00-spec.md, secciones 2 y 4). Defienden la regla escrita.
 describe('tokens FWD de la spec', () => {
+  it.each(['light', 'dark'] as const)('la barra superior va sobre el fondo de la pantalla, sin franja oscura (receta .header) en el tema %s', (tema) => {
+    const c = themeColors[tema]
+    expect([c.topBar, c.onTopBar, c.onTopBarStrong, c.topBarBorder]).toEqual([c.bg, c.textSecondary, c.text, c.border])
+  })
   it.each(['light', 'dark'] as const)('marca igual en el tema %s', (tema) => {
     const c = themeColors[tema]
     expect([c.lime, c.teal, c.ink]).toEqual(['#E0EB3C', '#00AB96', '#201E1E'])

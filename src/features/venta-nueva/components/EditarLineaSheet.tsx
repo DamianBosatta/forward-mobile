@@ -112,8 +112,8 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
       <View style={{ flex: 1, flexDirection: 'row', backgroundColor: isTablet ? c.veil : c.bg }}>
         {isTablet && <Pressable accessibilityRole="button" accessibilityLabel="Cerrar" onPress={onClose} style={{ flex: 1 }} />}
         <View testID="editar-linea" accessibilityLabel="Editar línea" style={{ flex: isTablet ? undefined : 1, width: isTablet ? 440 : undefined, backgroundColor: c.bg }}>
-          {/* Teléfono: la raíz deja los íconos de la barra de estado en claro, así que esa franja va del color de las barras
-              del resto de la app (topBar, oscuro en los dos temas) y no sobre la cabecera blanca. */}
+          {/* Teléfono: la franja de la barra de estado va del color de las barras del resto de la app
+              (topBar, el fondo de la pantalla) y no sobre la cabecera blanca. */}
           {!isTablet ? <View testID="franja-barra-estado" style={{ height: insets.top, backgroundColor: c.topBar }} /> : null}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], padding: space[4], paddingTop: space[4] + (isTablet ? insets.top : 0), backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.border }}>
             <View style={{ flex: 1 }}>
