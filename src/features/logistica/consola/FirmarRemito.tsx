@@ -61,7 +61,7 @@ export function FirmarRemito({ obligatoria, url, onUrl, onSubiendo, referencia, 
           style={{ alignItems: 'center', justifyContent: 'center', gap: space[2], paddingHorizontal: space[5], paddingVertical: space[6], borderRadius: radii.tarjetaGrande, backgroundColor: c.lime }}
         >
           {/* Disco ink con la cámara en lime, con un aro de ink al 20 %. */}
-          <View style={{ width: 104, height: 104, borderRadius: radii.pastilla, alignItems: 'center', justifyContent: 'center', borderWidth: 6, borderColor: 'rgba(32, 30, 30, 0.2)' }}>
+          <View style={{ width: 104, height: 104, borderRadius: radii.pastilla, alignItems: 'center', justifyContent: 'center', borderWidth: 6, borderColor: c.veilInk20 }}>
             <View style={{ width: 92, height: 92, borderRadius: radii.pastilla, backgroundColor: c.ink, alignItems: 'center', justifyContent: 'center' }}>
               {subiendo ? <ActivityIndicator color={c.lime} /> : <Camera size={44} color={c.lime} strokeWidth={2.2} />}
             </View>

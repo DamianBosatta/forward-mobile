@@ -74,6 +74,8 @@ export interface ForwardColors {
   onPanelOscuroStrong: string
   panelOscuroBorder: string
   veil: string // velo de la hoja inferior
+  veilInk12: string // `ink` al 12 %: dato o botón sobre una tarjeta lime o teal (igual en los dos temas)
+  veilInk20: string // `ink` al 20 %: pista de barra y aro sobre lime o teal (igual en los dos temas)
   chip: Record<ChipEstado, ChipColors>
   /** Chips de estado de la spec FWD §5: relleno pleno con texto `ink` (pendiente: `surfaceAlt` con `text`). El estado va siempre escrito. `chip` queda para texto sobre `surface` (p. ej. errores). */
   chipFill: Record<ChipEstado, ChipColors>
@@ -105,6 +107,9 @@ export interface ForwardColors {
 
 // Marca y estados: iguales en los dos temas. `success` e `info` siguen como hoy (S5: el teal de marca no marca estados).
 const MARCA = { lime: '#E0EB3C', teal: '#00AB96', ink: '#201E1E' } as const
+// `ink` (#201E1E) al 12 % y al 20 %: velos sobre lime y teal, que no cambian con el tema.
+const VELO_INK_12 = 'rgba(32, 30, 30, 0.12)'
+const VELO_INK_20 = 'rgba(32, 30, 30, 0.2)'
 const ESTADOS = {
   success: '#21C45D',
   warning: '#FFB020', // spec: solo estados, texto ink
@@ -186,6 +191,8 @@ const LIGHT_COLORS: ForwardColors = {
   onPanelOscuroStrong: '#F5F5F1',
   panelOscuroBorder: '#201E1E',
   veil: 'rgba(90, 87, 87, 0.85)', // textMuted #5A5757 al 85 %
+  veilInk12: VELO_INK_12,
+  veilInk20: VELO_INK_20,
   chip: {
     confirmado: { bg: '#EAF4F1', text: '#00796A' },
     pendiente: { bg: '#E2E3DE', text: '#5A5757' },
@@ -229,6 +236,8 @@ const DARK_COLORS: ForwardColors = {
   onPanelOscuroStrong: '#F5F5F1',
   panelOscuroBorder: '#454142',
   veil: 'rgba(20, 18, 19, 0.80)', // fondo oscuro #141213 al 80 %
+  veilInk12: VELO_INK_12,
+  veilInk20: VELO_INK_20,
   chip: {
     confirmado: { bg: '#3A3637', text: '#E0EB3C' },
     pendiente: { bg: '#3A3637', text: '#B5B2B3' },
