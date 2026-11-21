@@ -162,7 +162,7 @@ describe('Avisos como venta (propuesta Cuenta, frames 8 a 11)', () => {
     pintar()
     await screen.findByText('Venta A00421 autorizada')
     const vista = screen.getByTestId('vista-calendario-avisos')
-    expect(estilo(vista).backgroundColor).toBe(themeColors.light.surface2)
+    expect(estilo(vista).backgroundColor).toBe(themeColors.light.surface)
     const avisos = within(vista).getByRole('tab', { name: 'Avisos (2)' })
     expect(avisos.props.accessibilityState.selected).toBe(true)
     expect(within(vista).getByRole('tab', { name: 'Calendario' }).props.accessibilityState.selected).toBe(false)
@@ -175,10 +175,10 @@ describe('Avisos como venta (propuesta Cuenta, frames 8 a 11)', () => {
     expect(screen.queryAllByRole('tab').every((t) => within(vista).queryByLabelText(t.props.accessibilityLabel) !== null)).toBe(true)
   })
 
-  it('cada aviso va en tarjeta sin borde: sin leer en verde claro con su etiqueta, leído en blanco', async () => {
+  it('cada aviso va en tarjeta sin borde: sin leer en blanco con su etiqueta, leído en blanco', async () => {
     pintar()
     const sinLeer = await screen.findByLabelText('Venta A00421 autorizada, sin leer')
-    expect(estilo(sinLeer)).toEqual(expect.objectContaining({ backgroundColor: themeColors.light.brandSoft }))
+    expect(estilo(sinLeer)).toEqual(expect.objectContaining({ backgroundColor: themeColors.light.surface }))
     expect(estilo(sinLeer).borderWidth ?? 0).toBe(0)
     expect(within(sinLeer).getByText('Sin leer')).toBeTruthy()
     const leido = screen.getByLabelText('Tu semana')

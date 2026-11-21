@@ -109,7 +109,7 @@ export function BandejaAvisos() {
           <>
             {q.hasNextPage ? (
               <FormContainer>
-                <Button label="Ver avisos anteriores" variant="secundario" loading={q.isFetchingNextPage} onPress={() => void q.fetchNextPage()} />
+                <Button label="Ver avisos anteriores" variant="secundario" size="lg" loading={q.isFetchingNextPage} onPress={() => void q.fetchNextPage()} />
               </FormContainer>
             ) : null}
             {/* Los avisos salen de los eventos del calendario: no hay "crear aviso". */}
