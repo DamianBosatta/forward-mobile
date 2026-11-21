@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
-import { Check, X } from 'lucide-react-native'
+import { Check, Plus } from 'lucide-react-native'
 import { Button, Field, Notice, PieFijo } from '@/core/ui/fw'
 import { evaluarClave, type CodigoRequisitoClave } from '@/libs/reglas'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
@@ -24,15 +24,18 @@ function ReglasDeClave({ clave }: { clave: string }) {
   const c = useColors()
   const estado = new Map(evaluarClave(clave).map((r) => [r.codigo, r.cumple]))
   return (
-    <View style={{ gap: space[2] }}>
+    <View style={{ gap: space[3] }}>
       {RULES.map(({ codigo, texto }) => {
         const cumple = estado.get(codigo) === true
-        const Icono = cumple ? Check : X
+        const Icono = cumple ? Check : Plus
         const etiqueta = `${texto} · ${cumple ? 'cumple' : 'falta'}`
         return (
-          <View key={codigo} accessible accessibilityLabel={etiqueta} style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-            <Icono size={16} color={cumple ? c.success : c.danger} />
-            <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{etiqueta}</Text>
+          <View key={codigo} accessible accessibilityLabel={etiqueta} style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
+            {/* Estado en el ícono (tilde / más) y escrito en el texto; nunca solo el color. */}
+            <View style={{ width: 28, height: 28, borderRadius: radii.pastilla, alignItems: 'center', justifyContent: 'center', backgroundColor: cumple ? c.teal : c.surfaceAlt }}>
+              <Icono size={16} color={cumple ? c.ink : c.text} strokeWidth={2.5} />
+            </View>
+            <Text style={[typeScale.cuerpoDestacado, { color: c.text, flexShrink: 1 }]}>{etiqueta}</Text>
           </View>
         )
       })}
@@ -58,7 +61,7 @@ export function CambiarContrasena({ email }: { email: string | undefined }) {
     )
   }
 
-  const tarjeta = { backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4] }
+  const tarjeta = { backgroundColor: c.surface, borderRadius: radii.tarjetaGrande, padding: space[5] }
 
   // Propuesta Cuenta, frames 4 y 5: avisos arriba, campos en una tarjeta sin borde, reglas en otra y el botón en el pie fijo.
   return (
@@ -94,7 +97,7 @@ export function CambiarContrasena({ email }: { email: string | undefined }) {
         </View>
       </ScrollView>
       <PieFijo testID="pie-clave">
-        <Button label="Cambiar contraseña" onPress={cambiar} disabled={!completo} loading={m.isPending} />
+        <Button size="lg" label="Cambiar contraseña" onPress={cambiar} disabled={!completo} loading={m.isPending} />
         {completo ? null : <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Se habilita cuando todo está completo y las dos nuevas coinciden.</Text>}
       </PieFijo>
     </View>

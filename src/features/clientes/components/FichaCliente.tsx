@@ -195,7 +195,7 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
                       accessibilityLabel={`${v.codigoPedido ?? 'Venta'}, ${tipo}, ${formatImporte(v.totalAmount)}`}
                       onPress={() => router.push({ pathname: '/(tabs)/ventas/[id]', params: { id: v.id } })}
                       android_ripple={{ color: c.surface2 }}
-                      style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3], paddingLeft: space[4], paddingRight: space[3], borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.surface2 }}
+                      style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3], paddingLeft: space[4], paddingRight: space[3] }}
                     >
                       <View style={{ flex: 1, minWidth: 0 }}>
                         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{v.codigoPedido ?? '—'}</Text>
@@ -251,7 +251,7 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
             {puedePedirCambio(esAdmin, puedeEditar) ? (
               <Button label="Pedir cambio" variant="secundario" icon={FilePen} onPress={() => setPidiendoCambio(true)} />
             ) : null}
-            <View style={{ borderTopWidth: 1, borderTopColor: c.border }} />
+            <View style={{ height: space[2] }} />
             {puedeAutorizar ? (
               <Dato etiquetaChica etiqueta="Condición de pago" valor={textoCondicionPago(cliente.condicionPago)} />
             ) : (
@@ -262,7 +262,7 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
       </ScrollView>
 
       {alVender || verCuenta ? (
-        <View style={{ padding: space[4], gap: space[2], backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border }}>
+        <View style={{ padding: space[4], gap: space[2], backgroundColor: c.bg }}>
           <View style={{ flexDirection: 'row', gap: space[2] }}>
             {alVender ? (
               <View style={{ flex: 1 }}>

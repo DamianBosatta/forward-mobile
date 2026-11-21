@@ -23,7 +23,7 @@ describe.each(['light', 'dark'] as const)('AvisoSoloWeb, tema %s', (modo) => {
 
   it('usa el par de colores de info del tema', () => {
     render(<AvisoSoloWeb accion="rendicion" />)
-    const fondo = themeColors[modo].chip.enCurso.bg
+    const fondo = themeColors[modo].surface
     expect(JSON.stringify(screen.getByTestId('aviso-solo-web').props.style)).toContain(fondo)
   })
 })

@@ -7,11 +7,14 @@ interface StatusChipProps {
   estado: ChipEstado
   /** Texto del chip; por defecto, el nombre del estado. */
   label?: string
+  /** Sobre fondo teal el chip `entregado` no se vería: `sobreTeal` lo pasa a tinta con texto lime. */
+  sobreTeal?: boolean
 }
 
-/** Chip de estado de la lámina F4: el mismo en todas las pantallas. */
-export function StatusChip({ estado, label = CHIP_LABEL[estado] }: StatusChipProps) {
-  const { bg, text } = useColors().chip[estado]
+/** Chip de estado FWD (spec §5): píldora de relleno pleno con texto `ink`, el mismo en todas las pantallas. El estado va siempre escrito. */
+export function StatusChip({ estado, label = CHIP_LABEL[estado], sobreTeal = false }: StatusChipProps) {
+  const c = useColors()
+  const { bg, text } = sobreTeal ? { bg: c.ink, text: c.lime } : c.chipFill[estado]
   return (
     <View
       accessible
@@ -20,8 +23,9 @@ export function StatusChip({ estado, label = CHIP_LABEL[estado] }: StatusChipPro
         flexShrink: 0,
         backgroundColor: bg,
         borderRadius: radii.pastilla,
-        paddingVertical: space[1],
-        paddingHorizontal: 10, // lámina F4: 4 × 10
+        height: 28,
+        justifyContent: 'center',
+        paddingHorizontal: space[3],
         alignSelf: 'flex-start',
       }}
     >

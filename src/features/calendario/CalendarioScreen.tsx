@@ -157,11 +157,11 @@ export function CalendarioScreen({ precarga, onAbrirVenta, onCobrar, nuevo, avis
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Calendario" leading={menu} />
-      {!isTablet && onIrAAvisos ? <CalendarioAvisosTabs actual="calendario" sinLeer={avisosSinLeer} onElegir={onIrAAvisos} /> : null}
       <View style={{ flex: 1, flexDirection: 'row' }}>
         <View style={{ flex: 1 }}>
           <ScrollView ref={scroll} testID="calendario" style={{ flex: 1 }} contentContainerStyle={{ padding: space[4], paddingBottom: space[12] }}>
             <FormContainer style={{ gap: space[3] }}>
+              {!isTablet && onIrAAvisos ? <CalendarioAvisosTabs actual="calendario" sinLeer={avisosSinLeer} onElegir={onIrAAvisos} /> : null}
               <ControlesCalendario
                 vista={vista}
                 onVista={elegirVista}

@@ -15,7 +15,7 @@ import { ChipAntiguedadDeuda } from './ChipAntiguedadDeuda'
 import { usePuedeCobrar } from '../lib/permiso'
 
 /** Esqueleto del hero "Debés" y de una fila (frame 7). */
-const DEBO_CARGANDO = [{ alto: 96, radio: radii.hoja, testID: 'esqueleto-hero' }, { alto: 76 }]
+const DEBO_CARGANDO = [{ alto: 96, radio: radii.tarjetaGrande, testID: 'esqueleto-hero' }, { alto: 76 }]
 
 /**
  * Lado "Debo" de Cuentas (lámina cuentas-lista; propuesta "Finanzas como venta", frames 6 y 7): lo que se le debe a
@@ -94,10 +94,8 @@ const FilaDeDeuda = memo(function FilaDeDeuda({ deuda, primera, ultima, onPagar 
         paddingHorizontal: space[4],
         gap: space[2],
         backgroundColor: c.surface,
-        borderBottomWidth: ultima ? 0 : 1,
-        borderBottomColor: c.surface2,
-        ...(primera ? { borderTopLeftRadius: radii.tarjeta, borderTopRightRadius: radii.tarjeta } : null),
-        ...(ultima ? { borderBottomLeftRadius: radii.tarjeta, borderBottomRightRadius: radii.tarjeta } : null),
+        marginBottom: ultima ? 0 : space[2],
+        borderRadius: radii.fila,
       }}
     >
       <View accessible accessibilityLabel={`${deuda.razonSocial}, le debés ${monto}${antiguedad ? `, ${antiguedad}` : ''}`} style={{ gap: space[2] }}>
@@ -113,7 +111,7 @@ const FilaDeDeuda = memo(function FilaDeDeuda({ deuda, primera, ultima, onPagar 
           accessibilityLabel={`Pagar a ${deuda.razonSocial}`}
           onPress={() => onPagar(deuda.socioId)}
           android_ripple={{ color: c.border }}
-          style={{ alignSelf: 'flex-start', minHeight: 44, minWidth: 88, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.borderStrong }}
+          style={{ alignSelf: 'flex-start', minHeight: 44, minWidth: 88, justifyContent: 'center', alignItems: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, backgroundColor: c.surface2 }}
         >
           <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Pagar</Text>
         </Pressable>

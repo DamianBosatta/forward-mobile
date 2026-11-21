@@ -190,6 +190,18 @@ describe('Inicio: acción Buscar (bloque 12, R14)', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Buscar' }))
     expect(mockPush).toHaveBeenCalledWith('/buscar')
   })
+
+  it('la campana de Avisos va en la barra, después de Buscar, y abre la bandeja', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    pintar()
+
+    const nombres = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel)
+    expect(nombres.indexOf('Buscar')).toBeGreaterThanOrEqual(0)
+    expect(nombres.findIndex((n) => /^Avisos/.test(n ?? ''))).toBeGreaterThan(nombres.indexOf('Buscar'))
+    await userEvent.press(screen.getByRole('button', { name: /^Avisos/ }))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/avisos')
+  })
 })
 
 describe('Inicio: "Ver todo" de lo reciente', () => {

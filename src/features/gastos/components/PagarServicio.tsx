@@ -55,7 +55,7 @@ export function PagarServicio({ onListo }: { onListo: () => void }) {
     })
   }
 
-  const tarjeta = { borderRadius: radii.tarjeta, backgroundColor: c.surface, padding: space[4], gap: space[3] }
+  const tarjeta = { borderRadius: radii.tarjetaGrande, backgroundColor: c.surface, padding: space[5], gap: space[3] }
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ padding: space[4] }} keyboardShouldPersistTaps="handled">
@@ -106,7 +106,7 @@ export function PagarServicio({ onListo }: { onListo: () => void }) {
             {registrar.error ? <Notice tone="peligro">{mensajeDelServidor(registrar.error, 'No se pudo registrar el pago.')}</Notice> : null}
           </View>
         ) : null}
-        <Button label="Registrar pago" loading={registrar.isPending} disabled={registrar.isPending || subiendo || !puede} onPress={enviar} />
+        <Button size="lg" label="Registrar pago" loading={registrar.isPending} disabled={registrar.isPending || subiendo || !puede} onPress={enviar} />
         {!puede ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_SERVICIO}</MotivoDeshabilitado> : null}
       </PieFijo>
     </View>

@@ -113,7 +113,7 @@ export function MedioYMonto(p: Props) {
       </ScrollView>
       <PieFijo>
         {p.motivo ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{p.motivo}</Text> : null}
-        <Button label={p.editando ? 'Guardar este medio' : 'Agregar este medio'} icon={p.editando ? undefined : Plus} disabled={!!p.motivo} onPress={p.onGuardar} />
+        <Button size="lg" label={p.editando ? 'Guardar este medio' : 'Agregar este medio'} icon={p.editando ? undefined : Plus} disabled={!!p.motivo} onPress={p.onGuardar} />
       </PieFijo>
     </View>
   )

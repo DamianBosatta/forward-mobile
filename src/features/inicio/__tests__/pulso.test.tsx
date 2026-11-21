@@ -55,11 +55,11 @@ describe('Inicio general: el hero de ventas del día en cada tema', () => {
   const pintar = () =>
     render(<PulsoDelNegocio ventasDelDia={100} cantidadVentas={2} pedidosPendientes={0} rutasActivas={0} meDeben={null} debo={null} />)
 
-  it('"Ventas del día" va en el hero con la marca-suave de cada tema (auditoría de UI, tanda 6)', () => {
+  it('"Ventas del día" va en el hero en lima de marca en cada tema (auditoría de UI, tanda 6)', () => {
     for (const mode of ['dark', 'light'] as const) {
       useThemeStore.setState({ mode })
       const r = pintar()
-      expect(estiloHero().backgroundColor).toBe(themeColors[mode].brandSoft)
+      expect(estiloHero().backgroundColor).toBe(themeColors[mode].lime)
       r.unmount()
     }
   })

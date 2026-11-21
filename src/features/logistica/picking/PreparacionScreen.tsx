@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useIsFocused } from 'expo-router/react-navigation'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { ScrollView, Text, View } from 'react-native'
 import { Filter } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { Notice, TopBar, useMenuLeading, pesoSemibold } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
+import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { useResponsive } from '@/libs/useResponsive'
@@ -138,18 +139,18 @@ function Tablero() {
           ))}
           <FiltroChip label="Rango exacto" activo={atajo === null && !filtros.dia} onPress={() => { setFiltros({ ...filtros, exacto: true, dia: null }); setFiltrando(true) }} />
         </ScrollView>
-        <Pressable
+        <PressableFx
           onPress={() => setFiltrando(true)}
-          android_ripple={{ color: c.surface2, borderless: true }}
+          android_ripple={{ color: c.surfaceAlt, borderless: true }}
           accessibilityRole="button"
           accessibilityLabel="Filtros: rango exacto, método de entrega y vendedor"
           style={{
-            width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: 1,
-            borderColor: deApertura ? c.border : c.brand, backgroundColor: deApertura ? c.surface : c.brandSoft,
+            width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center',
+            backgroundColor: deApertura ? c.surface : c.primaryBg,
           }}
         >
-          <Filter size={20} color={c.brandInk} />
-        </Pressable>
+          <Filter size={20} color={deApertura ? c.text : c.primaryFg} strokeWidth={2.5} />
+        </PressableFx>
       </View>
     </View>
   )

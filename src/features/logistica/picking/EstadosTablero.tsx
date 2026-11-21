@@ -12,9 +12,9 @@ export { DepositoDelTablero, ElegirDepositoSheet } from '@/features/deposito-ses
 export function TableroEsqueleto() {
   return (
     <View accessible accessibilityRole="progressbar" accessibilityLabel="Cargando el tablero de preparación" style={{ gap: space[3] }}>
-      <Skeleton width="100%" height={116} borderRadius={radii.campo} />
-      <Skeleton width="100%" height={140} borderRadius={radii.tarjeta} />
-      <Skeleton width="100%" height={140} borderRadius={radii.tarjeta} />
+      <Skeleton width="100%" height={116} borderRadius={radii.pastilla} />
+      <Skeleton width="100%" height={140} borderRadius={radii.tarjetaGrande} />
+      <Skeleton width="100%" height={140} borderRadius={radii.tarjetaGrande} />
     </View>
   )
 }
@@ -35,7 +35,7 @@ function Estado({ icono: Icono, titulo, texto, children }: { icono: typeof Inbox
   const c = useColors()
   return (
     <View style={{ alignItems: 'center', gap: space[3], padding: space[6] }}>
-      <View style={{ width: 64, height: 64, borderRadius: radii.pastilla, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 72, height: 72, borderRadius: radii.pastilla, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
         <Icono size={28} color={c.textSecondary} />
       </View>
       <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text, textAlign: 'center' }}>{titulo}</Text>

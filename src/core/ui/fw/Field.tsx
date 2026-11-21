@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 import { Pressable, Text, TextInput, View, type TextInputProps } from 'react-native'
 import { Eye, EyeOff } from 'lucide-react-native'
-import { maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
-import { pesoSemibold } from './tipografia'
+import { FONT, maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
 
 interface FieldProps extends Omit<TextInputProps, 'style' | 'placeholderTextColor'> {
   label: string
@@ -20,20 +19,22 @@ interface FieldProps extends Omit<TextInputProps, 'style' | 'placeholderTextColo
   prefijo?: string
 }
 
-const etiqueta = { ...typeScale.secundario, ...pesoSemibold }
+// Spec FWD §3: etiqueta 13-14 / 700 en `textMuted`; el texto tipeado 16 / 700.
+const ALTO = 56
+const etiqueta = { ...typeScale.secundario, fontFamily: FONT.bold, fontWeight: '700' as const }
+const tipeado = { ...typeScale.cuerpo, fontFamily: FONT.bold, fontWeight: '700' as const }
 
-/** Campo de la lámina F4: etiqueta 14/600, alto 48, relleno superficie, contorno fuerte (3:1), foco con la marca y error en rojo. */
+/** Campo FWD: alto 56, radio de fila, relleno superficie sin contorno; foco = borde `text` de 2 px y error en rojo. */
 export function Field({ label, help, error, alignRight, verOcultar, labelSuffix, invalid, prefijo, secureTextEntry, onFocus, onBlur, ...input }: FieldProps) {
   const colors = useColors()
   const [foco, setFoco] = useState(false)
   const colorError = colors.chip.anulado.text
   const [visible, setVisible] = useState(false)
-  const conMarca = foco || !!error || !!invalid
-  const ojo = !!verOcultar && !!secureTextEntry
+    const ojo = !!verOcultar && !!secureTextEntry
 
   return (
     <View style={{ gap: space[1] }}>
-      <Text style={{ ...etiqueta, color: colors.text }}>
+      <Text style={{ ...etiqueta, color: colors.textMuted }}>
         {label}
         {labelSuffix ? <Text style={{ color: colorError }}>{` ${labelSuffix}`}</Text> : null}
       </Text>
@@ -54,15 +55,15 @@ export function Field({ label, help, error, alignRight, verOcultar, labelSuffix,
         placeholderTextColor={colors.textSecondary}
         maxFontSizeMultiplier={maxFontScale}
         style={{
-          ...typeScale.cuerpo,
-          height: space[12],
-          borderRadius: radii.campo,
-          borderWidth: conMarca ? 2 : 1,
-          borderColor: error || invalid ? colorError : foco ? colors.brand : colors.borderStrong,
+          ...tipeado,
+          height: ALTO,
+          borderRadius: radii.fila,
+          borderWidth: 2,
+          borderColor: error || invalid ? colorError : foco ? colors.text : 'transparent',
           backgroundColor: colors.surface,
-          paddingHorizontal: space[3] - (conMarca ? 1 : 0),
-          paddingLeft: prefijo ? space[8] : space[3] - (conMarca ? 1 : 0),
-          paddingRight: ojo ? space[12] : space[3] - (conMarca ? 1 : 0),
+          paddingHorizontal: space[4],
+          paddingLeft: prefijo ? space[8] : space[4],
+          paddingRight: ojo ? space[12] : space[4],
           paddingVertical: 0,
           color: colors.text,
           textAlign: alignRight ? 'right' : 'left',
@@ -73,7 +74,7 @@ export function Field({ label, help, error, alignRight, verOcultar, labelSuffix,
           importantForAccessibility="no"
           pointerEvents="none"
           maxFontSizeMultiplier={maxFontScale}
-          style={{ ...typeScale.cuerpoDestacado, position: 'absolute', left: space[4], top: 0, height: space[12], lineHeight: space[12], color: colors.textSecondary }}
+          style={{ ...typeScale.cuerpoDestacado, position: 'absolute', left: space[4], top: 0, height: ALTO, lineHeight: ALTO, color: colors.textSecondary }}
         >
           {prefijo}
         </Text>
@@ -83,7 +84,7 @@ export function Field({ label, help, error, alignRight, verOcultar, labelSuffix,
           accessibilityRole="button"
           accessibilityLabel={visible ? `Ocultar ${label.toLowerCase()}` : `Mostrar ${label.toLowerCase()}`}
           onPress={() => setVisible((v) => !v)}
-          style={{ position: 'absolute', right: 0, top: 0, width: space[12], height: space[12], alignItems: 'center', justifyContent: 'center' }}
+          style={{ position: 'absolute', right: 0, top: 0, width: space[12], height: ALTO, alignItems: 'center', justifyContent: 'center' }}
         >
           {visible ? <EyeOff size={20} color={colors.textSecondary} /> : <Eye size={20} color={colors.textSecondary} />}
         </Pressable>

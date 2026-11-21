@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
-import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import { ActivityIndicator, Text, View } from 'react-native'
 import { FlashList } from '@shopify/flash-list'
 import { separadorDeFilas } from '@/core/ui/listaFlash'
-import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
-import { Field, FormContainer, Notice, StatusChip } from '@/core/ui/fw'
+import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { Field, FiltroChip, FormContainer, Notice, StatusChip } from '@/core/ui/fw'
 import { useInfiniteCatalogoStock } from '@/libs/api-client'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useNetworkStatus } from '@/core/utils/useNetworkStatus'
@@ -38,7 +38,6 @@ const SEPARADOR = separadorDeFilas(space[3])
 
 export function CatalogoCompra({ proveedor, lineas, onAgregar, onCambiar, onQuitar, onAbrir }: Props) {
   const c = useColors()
-  const sombra = useSombraTarjeta()
   const [busqueda, setBusqueda] = useState('')
   const enviada = useDebouncedValue(busqueda.trim(), 300)
   const [filtro, setFiltro] = useState<Filtro>('todos')
@@ -55,7 +54,7 @@ export function CatalogoCompra({ proveedor, lineas, onAgregar, onCambiar, onQuit
   const textoUltima = ultimas.isLoading ? 'Cargando…' : ultimas.isError ? 'No se pudo cargar' : ultima ? numeroDeCompra(ultima) : 'Sin compras'
 
   const condicion = (k: string, v: string) => (
-    <View accessible accessibilityLabel={`${k}: ${v}`} style={{ flex: 1, gap: 2, padding: space[3], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }}>
+    <View accessible accessibilityLabel={`${k}: ${v}`} style={{ flex: 1, gap: 2, padding: space[4], borderRadius: radii.fila, backgroundColor: c.surface }}>
       <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{k}</Text>
       <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{v}</Text>
     </View>
@@ -89,11 +88,7 @@ export function CatalogoCompra({ proveedor, lineas, onAgregar, onCambiar, onQuit
             {FILTROS.map((f) => {
               const sel = f.value === filtro
               return (
-                <Pressable key={f.value} accessibilityRole="radio" accessibilityLabel={f.label} accessibilityState={{ checked: sel, selected: sel }} onPress={() => setFiltro(f.value)}
-                  android_ripple={{ color: c.surface2 }}
-                  style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: sel ? c.brand : c.border, backgroundColor: sel ? c.brandSoft : c.surface }}>
-                  <Text style={{ ...typeScale.secundario, color: sel ? c.brandInk : c.text }}>{f.label}</Text>
-                </Pressable>
+                <FiltroChip key={f.value} rol="radio" label={f.label} activo={sel} onPress={() => setFiltro(f.value)} />
               )
             })}
           </View>

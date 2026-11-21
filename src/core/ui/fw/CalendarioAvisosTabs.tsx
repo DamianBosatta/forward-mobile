@@ -1,31 +1,44 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { Bell, CalendarDays, type LucideIcon } from 'lucide-react-native'
+import { maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
 
 export type VistaCalendarioAvisos = 'calendario' | 'avisos'
 
 /**
- * "Calendario | Avisos n" de las láminas M16 y M17: son dos solapas hermanas en la barra superior
- * (el filtro Todos / Sin leer baja al cuerpo de Avisos). Se pinta pegada al `TopBar`, con su mismo fondo.
- * En tablet van juntas (TM10) y no se muestra.
+ * "Calendario | Avisos N" como segmentado con ícono dentro del cuerpo (maquetas de Calendario y Avisos).
+ * Es la única copia: Calendario la pinta arriba de sus controles (solo teléfono) y Avisos arriba de "Todos / Sin leer".
+ * Tocar la vista que ya está elegida no hace nada.
  */
 export function CalendarioAvisosTabs({ actual, sinLeer = 0, onElegir }: { actual: VistaCalendarioAvisos; sinLeer?: number; onElegir: (v: VistaCalendarioAvisos) => void }) {
   const c = useColors()
-  const tab = (valor: VistaCalendarioAvisos, label: string, cuenta = 0) => {
-    const elegida = valor === actual
+  const segmento = (valor: VistaCalendarioAvisos, label: string, Icono: LucideIcon, cuenta = 0) => {
+    const elegido = valor === actual
     return (
       <Pressable
         key={valor}
-        onPress={() => { if (!elegida) onElegir(valor) }}
+        onPress={() => { if (!elegido) onElegir(valor) }}
         accessibilityRole="tab"
         accessibilityLabel={cuenta > 0 ? `${label} (${cuenta})` : label}
-        accessibilityState={{ selected: elegida }}
-        style={{ minHeight: space[12], flexDirection: 'row', alignItems: 'center', gap: space[2], borderBottomWidth: 3, borderBottomColor: elegida ? c.brand : 'transparent' }}
+        accessibilityState={{ selected: elegido }}
+        android_ripple={elegido ? undefined : { color: c.surfaceAlt }}
+        style={{
+          flex: 1,
+          minHeight: 44,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: space[2],
+          paddingHorizontal: space[1],
+          borderRadius: radii.pastilla,
+          backgroundColor: elegido ? c.primaryBg : 'transparent',
+        }}
       >
-        <Text style={{ ...(elegida ? typeScale.cuerpoDestacado : typeScale.cuerpo), color: elegida ? c.onTopBarStrong : c.onTopBar }}>{label}</Text>
+        <Icono size={18} color={elegido ? c.primaryFg : c.textSecondary} />
+        <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.cuerpoDestacado, color: elegido ? c.primaryFg : c.textSecondary }}>{label}</Text>
         {cuenta > 0 ? (
-          <View style={{ minWidth: 24, height: 24, paddingHorizontal: space[1], borderRadius: radii.pastilla, alignItems: 'center', justifyContent: 'center', backgroundColor: elegida ? c.action : c.surface2 }}>
-            <Text style={{ ...typeScale.etiqueta, color: elegida ? c.onAction : c.text }}>{cuenta}</Text>
+          <View style={{ minWidth: 22, height: 22, paddingHorizontal: space[1], borderRadius: radii.pastilla, alignItems: 'center', justifyContent: 'center', backgroundColor: c.primaryFg }}>
+            <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.etiqueta, color: c.primaryBg }}>{cuenta}</Text>
           </View>
         ) : null}
       </Pressable>
@@ -33,12 +46,13 @@ export function CalendarioAvisosTabs({ actual, sinLeer = 0, onElegir }: { actual
   }
   return (
     <View
+      testID="vista-calendario-avisos"
       accessibilityRole="tablist"
       accessibilityLabel="Calendario o avisos"
-      style={{ flexDirection: 'row', gap: space[6], paddingHorizontal: space[4], backgroundColor: c.topBar, borderBottomWidth: 1, borderBottomColor: c.topBarBorder }}
+      style={{ flexDirection: 'row', gap: space[1], padding: space[1], backgroundColor: c.surface, borderRadius: radii.pastilla }}
     >
-      {tab('calendario', 'Calendario')}
-      {tab('avisos', 'Avisos', sinLeer)}
+      {segmento('calendario', 'Calendario', CalendarDays)}
+      {segmento('avisos', 'Avisos', Bell, sinLeer)}
     </View>
   )
 }

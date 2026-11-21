@@ -4,6 +4,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { CatalogoVenta } from '../components/CatalogoVenta'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { cajaDe6, producto } from '../__testing__/producto'
+import { themeColors } from '@/libs/theme'
 
 const mockDims = jest.fn()
 jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({ __esModule: true, default: () => mockDims() }))
@@ -122,7 +123,7 @@ describe('CatalogoVenta (agregar productos)', () => {
     expect(within(barra).getByText('1 producto · 1 u')).toBeTruthy()
     expect(within(barra).getByText('Total estimado')).toBeTruthy()
     expect(within(barra).getByTestId('carrito-total')).toHaveTextContent('$ 1.000,00')
-    expect(within(barra).getByRole('button', { name: /^Ver venta/ })).toHaveStyle({ backgroundColor: '#2BD4BD' })
+    expect(within(barra).getByRole('button', { name: /^Ver venta/ })).toHaveStyle({ backgroundColor: themeColors.light.primaryBg })
     await userEvent.press(within(barra).getByText('Ver venta'))
     expect(onVerVenta).toHaveBeenCalledTimes(1)
   })

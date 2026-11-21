@@ -29,8 +29,6 @@ jest.mock('@/core/utils/haptics', () => ({
 }))
 const mockCerrarSesion = jest.fn()
 jest.mock('@/features/cuenta/hooks/useCerrarSesion', () => ({ useCerrarSesion: () => ({ cerrarSesion: mockCerrarSesion }) }))
-let mockNoLeidos = 0
-jest.mock('@/features/notificaciones', () => ({ useAvisosNoLeidos: () => mockNoLeidos }))
 jest.mock('@/core/auth/RequirePermission', () => ({
   usePermissions: () => ({ canDo: mockCanDo }),
 }))
@@ -51,12 +49,16 @@ const comoAdmin = () => {
   mockRoles = ['Administrador', 'AdministradorSistemas', 'Gerencia', 'Empleado']
 }
 
-const SECCIONES = ['VENDER', 'COMPRAR', 'GESTIÓN', 'LOGÍSTICA']
+const SECCIONES = ['VENDER', 'COMPRAR', 'GESTIÓN']
 
-const FUERA_DE_ALCANCE = ['Usuarios', 'Depósitos', 'Cargas masivas', 'Viajes', 'Vehículos', 'Picking', 'Perfiles', 'Roles']
+const FUERA_DE_ALCANCE = ['Usuarios', 'Depósitos', 'Cargas masivas', 'Viajes', 'Vehículos', 'Perfiles', 'Roles']
 
 // Sin pantalla todavía: no se ofrecen enlaces a pantallas que no existen.
 const SIN_PANTALLA: string[] = []
+
+/** Las filas de Logística viven plegadas: se abren tocando "Logística". */
+const HIJOS_DE_LOGISTICA = ['Picking', 'Consola del chofer']
+const abrirLogistica = async () => userEvent.press(screen.getByRole('button', { name: 'Logística' }))
 
 const APROBADOS = [
   'Inicio',
@@ -67,12 +69,10 @@ const APROBADOS = [
   'Catálogo',
   'Stock',
   'Cuentas corrientes',
-  'Transferencias',
+  'Tesorería',
   'Calendario',
-  'Avisos',
   'Reportes',
-  'Consola del chofer',
-  'Preparación de pedidos',
+  'Logística',
   'Mi cuenta y contraseña',
 ]
 
@@ -98,7 +98,34 @@ describe('CustomDrawerContent — recorte al alcance aprobado', () => {
     for (const nombre of [...APROBADOS, ...SECCIONES]) {
       expect(screen.getByText(nombre)).toBeTruthy()
     }
-    expect(screen.queryByText('Tesorería')).toBeNull()
+    // Cambios de L4: "Transferencias", "Avisos" y "Preparación de pedidos" ya no son entradas del menú.
+    for (const viejo of ['Transferencias', 'Avisos', 'Preparación de pedidos', 'LOGÍSTICA']) {
+      expect(screen.queryByText(viejo)).toBeNull()
+    }
+  })
+
+  it('Logística es una sola fila plegada; al tocarla despliega Picking y la Consola del chofer, y otra vez la pliega', async () => {
+    render(<CustomDrawerContent {...props()} />)
+    const fila = screen.getByRole('button', { name: 'Logística' })
+    expect(fila.props.accessibilityState).toMatchObject({ expanded: false })
+    for (const h of HIJOS_DE_LOGISTICA) expect(screen.queryByText(h)).toBeNull()
+
+    await userEvent.press(fila)
+    expect(screen.getByRole('button', { name: 'Logística' }).props.accessibilityState).toMatchObject({ expanded: true })
+    for (const h of HIJOS_DE_LOGISTICA) expect(screen.getByText(h)).toBeTruthy()
+    expect(mockPush).not.toHaveBeenCalled()
+
+    await userEvent.press(screen.getByRole('button', { name: 'Logística' }))
+    for (const h of HIJOS_DE_LOGISTICA) expect(screen.queryByText(h)).toBeNull()
+  })
+
+  it('Picking lleva a la pantalla de la ex Preparación y Tesorería a la de siempre', async () => {
+    render(<CustomDrawerContent {...props()} />)
+    await abrirLogistica()
+    await userEvent.press(screen.getByRole('button', { name: 'Picking' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Consola del chofer' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Tesorería' }))
+    expect(mockPush.mock.calls.map(([r]) => r)).toEqual(['/(tabs)/logistica/picking', '/(tabs)/logistica/consola', '/(tabs)/tesoreria'])
   })
 
   it('las secciones salen en el orden del diseño y cada entrada cae en la suya', () => {
@@ -108,7 +135,7 @@ describe('CustomDrawerContent — recorte al alcance aprobado', () => {
     expect(titulos).toEqual(SECCIONES)
     const texto = JSON.stringify(screen.toJSON())
     const posicion = (t: string) => texto.indexOf(JSON.stringify(t))
-    const orden = ['Inicio', 'VENDER', 'Ventas', 'Clientes', 'Catálogo', 'Stock', 'COMPRAR', 'Compras', 'Proveedores', 'GESTIÓN', 'Cuentas corrientes', 'Calendario', 'LOGÍSTICA', 'Preparación de pedidos', 'Consola del chofer', 'Reportes']
+    const orden = ['Inicio', 'VENDER', 'Ventas', 'Clientes', 'Catálogo', 'Stock', 'COMPRAR', 'Compras', 'Proveedores', 'GESTIÓN', 'Cuentas corrientes', 'Tesorería', 'Calendario', 'Logística', 'Reportes']
     const posiciones = orden.map(posicion)
     expect(orden.filter((t, i) => posiciones[i] < 0)).toEqual([])
     expect([...posiciones].sort((a, b) => a - b)).toEqual(posiciones)
@@ -129,26 +156,15 @@ describe('CustomDrawerContent — recorte al alcance aprobado', () => {
 
     for (const nombre of APROBADOS) {
       await user.press(screen.getByRole('button', { name: nombre }))
+      // Logística solo despliega: sus hijas se tocan aparte.
+      if (nombre === 'Logística') for (const h of HIJOS_DE_LOGISTICA) await user.press(screen.getByRole('button', { name: h }))
     }
 
     const rutas = mockPush.mock.calls.map(([ruta]) => String(ruta))
-    expect(rutas).toHaveLength(APROBADOS.length)
+    expect(rutas).toHaveLength(APROBADOS.length - 1 + HIJOS_DE_LOGISTICA.length)
     for (const fuera of RUTAS_FUERA_DE_ALCANCE) {
       expect(rutas.some((r) => r.includes(fuera))).toBe(false)
     }
-  })
-
-  it('Avisos muestra cuántos quedan sin leer y lleva a la bandeja', async () => {
-    mockNoLeidos = 3
-    render(<CustomDrawerContent {...props()} />)
-    const avisos = screen.getByRole('button', { name: 'Avisos, 3 sin leer' })
-    expect(screen.getByText('3')).toBeTruthy()
-    await userEvent.press(avisos)
-    expect(mockPush).toHaveBeenCalledWith('/(tabs)/avisos')
-    mockNoLeidos = 120
-    screen.rerender(<CustomDrawerContent {...props()} />)
-    expect(screen.getByText('99+')).toBeTruthy()
-    mockNoLeidos = 0
   })
 
   it('marca la entrada de la pantalla actual, también en sus pantallas hijas', () => {
@@ -181,12 +197,13 @@ describe('CustomDrawerContent — recorte al alcance aprobado', () => {
     ['ventas', '[id]', 'Ventas'],
     ['inventario', 'stock', 'Stock'],
     ['logistica', 'consola', 'Consola del chofer'],
-    ['logistica', 'picking', 'Preparación de pedidos'],
+    ['logistica', 'picking', 'Picking'],
     ['perfil', 'clave', 'Mi cuenta y contraseña'],
     ['perfil', 'usuarios', 'Mi cuenta y contraseña'],
     ['perfil', 'index', 'Mi cuenta y contraseña'],
   ])('en %s/%s del Stack de la sección marca %s', (seccion, pantalla, entrada) => {
     render(<CustomDrawerContent {...conSeccion(seccion, pantalla)} />)
+    // Estando en una hija de Logística, el grupo abre solo y la hija queda marcada.
 
     expect(seleccionada(entrada)).toBe(true)
     expect(seleccionada('Inicio')).toBe(false)
@@ -221,19 +238,19 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     conPermisos('MOD_VENTAS:read', 'MOD_VENTAS:create', 'MOD_CLIENTES:read', 'MOD_CATALOGO:read', 'MOD_STOCK:read', 'MOD_CC:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Ventas', 'Clientes', 'Catálogo', 'Stock', 'Cuentas corrientes', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Ventas', 'Clientes', 'Catálogo', 'Stock', 'Cuentas corrientes', 'Calendario', 'Reportes', 'Mi cuenta y contraseña'])
     expect(screen.getByText('VENDER')).toBeTruthy()
     expect(screen.getByText('GESTIÓN')).toBeTruthy()
     // Un grupo sin entradas visibles no deja su título colgado.
     expect(screen.queryByText('COMPRAR')).toBeNull()
-    expect(screen.queryByText('LOGÍSTICA')).toBeNull()
+    expect(screen.queryByText('Logística')).toBeNull()
   })
 
   it('Proveedores sale con MOD_PROVEEDORES:read, junto a Compras, y no depende de Clientes ni de Compras', async () => {
     conPermisos('MOD_PROVEEDORES:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Proveedores', 'Calendario', 'Avisos', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Proveedores', 'Calendario', 'Mi cuenta y contraseña'])
     await userEvent.press(screen.getByRole('button', { name: 'Proveedores' }))
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/proveedores')
   })
@@ -242,7 +259,7 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     conPermisos('MOD_CLIENTES:read', 'MOD_COMPRAS:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Compras', 'Clientes', 'Calendario', 'Avisos', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Compras', 'Clientes', 'Calendario', 'Mi cuenta y contraseña'])
   })
 
   // S8 (T1): la web muestra "Ventas / Presupuestos" con MOD_VENTAS:create (sidebar.tsx); leer no alcanza.
@@ -251,7 +268,7 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     conPermisos('MOD_VENTAS:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Reportes', 'Mi cuenta y contraseña'])
   })
 
   it('con solo lectura de pedidos tampoco aparece Ventas', () => {
@@ -265,18 +282,42 @@ describe('CustomDrawerContent — filtrado por permisos (usuario sin rol de admi
     conPermisos('MOD_VENTAS:read', 'MOD_VIAJES:read')
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Preparación de pedidos', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Logística', 'Mi cuenta y contraseña'])
     expect(screen.queryByText('VENDER')).toBeNull()
   })
 
-  it('sin ningún permiso quedan Inicio, Calendario y Avisos (el servidor no los gatea por módulo) y Mi cuenta', () => {
+  it('sin ningún permiso quedan Inicio, Calendario (el servidor no los gatea por módulo) y Mi cuenta', () => {
     conPermisos()
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Mi cuenta y contraseña'])
     expect(screen.queryByText('VENDER')).toBeNull()
     expect(screen.queryByText('COMPRAR')).toBeNull()
-    expect(screen.queryByText('LOGÍSTICA')).toBeNull()
+    expect(screen.queryByText('Logística')).toBeNull()
+  })
+
+  it('Tesorería pide MOD_PAGOS como antes la pedía Transferencias', () => {
+    conPermisos('MOD_CLIENTES:read')
+    const { unmount } = render(<CustomDrawerContent {...props()} />)
+    expect(screen.queryByText('Tesorería')).toBeNull()
+    unmount()
+
+    conPermisos('MOD_PAGOS:read')
+    render(<CustomDrawerContent {...props()} />)
+    expect(screen.getByText('Tesorería')).toBeTruthy()
+  })
+
+  it('Logística aparece con MOD_VIAJES (Picking y Consola) y desaparece entera sin él', async () => {
+    conPermisos('MOD_CLIENTES:read')
+    const { unmount } = render(<CustomDrawerContent {...props()} />)
+    expect(screen.queryByText('Logística')).toBeNull()
+    unmount()
+
+    conPermisos('MOD_VIAJES:read')
+    render(<CustomDrawerContent {...props()} />)
+    await abrirLogistica()
+    expect(screen.getByText('Picking')).toBeTruthy()
+    expect(screen.getByText('Consola del chofer')).toBeTruthy()
   })
 
   it('Autorizaciones aparece solo con la capacidad de autorizar ventas, aunque lea ventas', async () => {
@@ -330,11 +371,11 @@ describe('CustomDrawerContent — por puesto sembrado (C-004, L-12)', () => {
   }
 
   const ESPERADO: Record<string, string[]> = {
-    Vendedor: ['Inicio', 'Ventas', 'Clientes', 'Calendario', 'Avisos', 'Reportes', 'Mi cuenta y contraseña'],
+    Vendedor: ['Inicio', 'Ventas', 'Clientes', 'Calendario', 'Reportes', 'Mi cuenta y contraseña'],
     // Lee viajes y no crea ventas: el menú lo trata como al chofer, más su stock. El Catálogo es otro módulo (MOD_CATALOGO), que el puesto sembrado no trae.
-    Depósito: ['Inicio', 'Stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Preparación de pedidos', 'Mi cuenta y contraseña'],
-    Chofer: ['Inicio', 'Calendario', 'Avisos', 'Consola del chofer', 'Preparación de pedidos', 'Mi cuenta y contraseña'],
-    'Gerente de depósito': ['Inicio', 'Stock', 'Calendario', 'Avisos', 'Consola del chofer', 'Preparación de pedidos', 'Mi cuenta y contraseña'],
+    Depósito: ['Inicio', 'Stock', 'Calendario', 'Logística', 'Mi cuenta y contraseña'],
+    Chofer: ['Inicio', 'Calendario', 'Logística', 'Mi cuenta y contraseña'],
+    'Gerente de depósito': ['Inicio', 'Stock', 'Calendario', 'Logística', 'Mi cuenta y contraseña'],
   }
 
   const visibles = () => APROBADOS.filter((n) => screen.queryByText(n) !== null)
@@ -355,7 +396,7 @@ describe('CustomDrawerContent — por puesto sembrado (C-004, L-12)', () => {
     conFilas([])
     render(<CustomDrawerContent {...props()} />)
 
-    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Avisos', 'Mi cuenta y contraseña'])
+    expect(visibles()).toEqual(['Inicio', 'Calendario', 'Mi cuenta y contraseña'])
   })
 
   it('AdministradorSistemas ve todo el alcance porque el backend le manda el catálogo completo como filas', () => {

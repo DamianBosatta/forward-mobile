@@ -1,6 +1,7 @@
 import React from 'react'
 import { render, screen, userEvent } from '@testing-library/react-native'
 import { formatImporte } from '@/core/ui/fw'
+import { themeColors } from '@/libs/theme'
 import { ProductoCatalogoCard } from '../components/ProductoCatalogoCard'
 import { cajaDe6, producto } from '../__testing__/producto'
 
@@ -22,12 +23,12 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
     expect(screen.getAllByTestId('producto-p1')).toHaveLength(1)
   })
 
-  it('lo que ya está en el carrito se marca con el fondo y el borde de la marca; lo que no, queda liso', () => {
+  it('la tarjeta es de surface con radio de tile, esté o no en el carrito (lo que lleva lo dice el bloque lima)', () => {
     const r = pintar(6)
-    expect(screen.getByTestId('producto-p1')).toHaveStyle({ backgroundColor: '#E0F8F3', borderColor: '#00C29E' })
+    expect(screen.getByTestId('producto-p1')).toHaveStyle({ backgroundColor: '#FFFFFF', borderRadius: 28 })
     r.unmount()
     pintar(0)
-    expect(screen.getByTestId('producto-p1')).toHaveStyle({ backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' })
+    expect(screen.getByTestId('producto-p1')).toHaveStyle({ backgroundColor: '#FFFFFF', borderRadius: 28 })
   })
 
   it('con foto la muestra; sin foto deja el ícono de producto', () => {
@@ -182,7 +183,7 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
     it('va en su propia fila, a todo el ancho, con el relleno de acción y alto de 48', () => {
       padre()
       const boton = screen.getByRole('button', { name: 'Elegir fragancias' })
-      expect(boton).toHaveStyle({ backgroundColor: '#2BD4BD', height: 48 })
+      expect(boton).toHaveStyle({ backgroundColor: themeColors.light.primaryBg, height: 48 })
       // La fila del precio ya no comparte renglón con el botón: el contenedor del botón es columna (estira).
       expect(screen.getByTestId('elegir-fragancias-p1')).toBe(boton)
     })
@@ -195,9 +196,9 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
       expect(texto.parent?.parent?.parent?.parent).toHaveStyle({ flexWrap: 'wrap' })
     })
 
-    it('Agregar y Sin stock siguen con su look liso (sin relleno de acción)', () => {
-      tarjetaSimple()
-      expect(screen.getByRole('button', { name: /Añadir/ })).not.toHaveStyle({ backgroundColor: '#2BD4BD' })
+    it('Agregar lleva el relleno de acción (píldora de 48)', () => {
+      pintar(0, { puedeVenderse: true })
+      expect(screen.getByRole('button', { name: /Añadir/ })).toHaveStyle({ backgroundColor: themeColors.light.primaryBg, minHeight: 48 })
     })
   })
 })

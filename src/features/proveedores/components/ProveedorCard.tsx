@@ -16,9 +16,6 @@ interface ProveedorCardProps {
   seleccionado?: boolean
   /** Si viene, la fila ofrece "Nueva compra" (el padre decide con el permiso de MOD_COMPRAS). */
   onNuevaCompra?: () => void
-  /** Dónde cae la fila en la tarjeta de la lista (redondea esa punta). */
-  primera?: boolean
-  ultima?: boolean
 }
 
 /**
@@ -27,7 +24,7 @@ interface ProveedorCardProps {
  * "A favor $ X" o "Al día") y "Nueva compra" en el botón redondo donde Clientes pone Llamar.
  * El saldo solo con `puedeVerSaldo` y MOD_CC:read.
  */
-export function ProveedorCard({ proveedor, onPress, seleccionado = false, onNuevaCompra, primera = false, ultima = false }: ProveedorCardProps) {
+export function ProveedorCard({ proveedor, onPress, seleccionado = false, onNuevaCompra }: ProveedorCardProps) {
   const c = useColors()
   const { canRead } = usePermissions()
   const cuit = proveedor.cuit?.trim() ? `CUIT ${formatearCuit(proveedor.cuit.trim())}` : 'Sin CUIT cargado'
@@ -53,10 +50,8 @@ export function ProveedorCard({ proveedor, onPress, seleccionado = false, onNuev
         paddingRight: space[2],
         overflow: 'hidden',
         backgroundColor: seleccionado ? c.brandSoft : c.surface,
-        borderBottomWidth: ultima ? 0 : 1,
-        borderBottomColor: c.surface2,
-        ...(primera ? { borderTopLeftRadius: radii.tarjeta, borderTopRightRadius: radii.tarjeta } : null),
-        ...(ultima ? { borderBottomLeftRadius: radii.tarjeta, borderBottomRightRadius: radii.tarjeta } : null),
+        marginBottom: space[2],
+        borderRadius: radii.fila,
       }}
     >
       <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
@@ -86,7 +81,7 @@ export function ProveedorCard({ proveedor, onPress, seleccionado = false, onNuev
           accessibilityLabel="Nueva compra"
           accessibilityHint={proveedor.razonSocial}
           onPress={onNuevaCompra}
-          style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}
+          style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}
         >
           <ShoppingCart size={20} color={c.brandInk} />
         </Pressable>

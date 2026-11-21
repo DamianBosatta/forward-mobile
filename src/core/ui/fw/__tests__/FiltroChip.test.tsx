@@ -17,9 +17,10 @@ describe('FiltroChip', () => {
     expect(screen.getByTestId('chip-tilde')).toBeTruthy()
   })
 
-  it('el inactivo se contornea con borderStrong, no con el borde de separadores', () => {
+  it('el inactivo no lleva borde (receta FWD)', () => {
     render(<FiltroChip label="Hay stock" activo={false} onPress={jest.fn()} />)
     const estilo = StyleSheet.flatten(screen.getByRole('button', { name: 'Hay stock' }).props.style)
-    expect(estilo.borderColor).toBe(themeColors.light.borderStrong)
+    expect(estilo.borderWidth ?? 0).toBe(0)
+    expect(estilo.backgroundColor).toBe(themeColors.light.surface)
   })
 })

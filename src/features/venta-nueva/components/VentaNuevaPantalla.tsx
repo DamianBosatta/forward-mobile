@@ -287,7 +287,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   const presupuestoSobreTope = tipo === 'Presupuesto' && superaTope
   const filaAjuste = (rotuloFila: string, valor: string | null, onPress: () => void) => (
     <Pressable accessibilityRole="button" accessibilityLabel={rotuloFila} onPress={onPress} android_ripple={{ color: c.border }}
-      style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], paddingHorizontal: space[3], borderRadius: radii.campo, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface }}>
+      style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], paddingHorizontal: space[4], borderRadius: radii.fila, backgroundColor: c.surface }}>
       <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{rotuloFila}</Text>
       {valor ? <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.brandInk }}>{valor}</Text> : null}
     </Pressable>
@@ -295,10 +295,10 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   const avisosRechazo = avisos.rechazos.map((r) => <Notice key={r} tone="peligro">{r}</Notice>)
   const ajustesCarrito = (
     <View style={{ gap: space[2] }}>
-      <Pressable accessibilityRole="button" onPress={() => setVista('catalogo')} android_ripple={{ color: c.border }}
-        style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], borderRadius: radii.campo, borderWidth: 1, borderColor: c.borderStrong, borderStyle: 'dashed' }}>
-        <Plus size={20} color={c.brandInk} />
-        <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Agregar productos</Text>
+      <Pressable accessibilityRole="button" onPress={() => setVista('catalogo')} android_ripple={{ color: c.surfaceAlt }}
+        style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], borderRadius: radii.pastilla, backgroundColor: c.primaryBg }}>
+        <Plus size={20} color={c.primaryFg} />
+        <Text style={{ ...typeScale.cuerpoDestacado, color: c.primaryFg }}>Agregar productos</Text>
       </Pressable>
       {Object.entries(stockVivo.avisos).map(([id, texto]) => <Notice key={id} tone="advertencia" testID={`aviso-stock-${id}`}>{texto}</Notice>)}
       {avisosRechazo}

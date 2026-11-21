@@ -69,7 +69,7 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
   const volver = onVolver ?? (() => router.back())
   const alResolver = () => { setResuelta(true); volver() }
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
-  const tarjeta = { padding: space[4], gap: space[2], borderRadius: radii.tarjeta, backgroundColor: c.surface }
+  const tarjeta = { padding: space[5], gap: space[2], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }
 
   const titulo = venta?.codigoPedido ?? 'Autorizar venta'
   const barra = <TopBar title={titulo} subtitle={venta ? chipForEstado('venta', venta.estado)?.label : undefined} leading={{ kind: 'atras', onPress: volver }} />
@@ -122,13 +122,13 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
             {/* Frame 19: "Por qué espera" como aviso ámbar con sus viñetas (los colores del aviso de advertencia). */}
             <View
               testID="por-que-espera"
-              style={{ flexDirection: 'row', gap: space[2], padding: space[3], borderRadius: radii.campo, backgroundColor: c.chip.porAutorizar.bg }}
+              style={{ flexDirection: 'row', gap: space[2], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.chip.porAutorizar.bg }}
             >
               <CircleAlert size={20} color={c.chip.porAutorizar.text} strokeWidth={2} />
               <View style={{ flex: 1, gap: space[1] }}>
-                <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text }]}>Por qué espera</Text>
-                {motivos.map((m) => <Text key={m.clave} style={[typeScale.secundario, { color: c.text }]}>{`• ${m.texto}`}</Text>)}
-                {venta.motivoVentaSinStock ? <Text style={[typeScale.secundario, { color: c.text }]}>{`Motivo del vendedor: «${venta.motivoVentaSinStock}»`}</Text> : null}
+                <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.chip.porAutorizar.text }]}>Por qué espera</Text>
+                {motivos.map((m) => <Text key={m.clave} style={[typeScale.secundario, { color: c.chip.porAutorizar.text }]}>{`• ${m.texto}`}</Text>)}
+                {venta.motivoVentaSinStock ? <Text style={[typeScale.secundario, { color: c.chip.porAutorizar.text }]}>{`Motivo del vendedor: «${venta.motivoVentaSinStock}»`}</Text> : null}
               </View>
             </View>
             {puedeDecidir ? null : (
@@ -187,9 +187,9 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
 
         {/* Frame 20: las líneas como filas de una tarjeta con el subtotal a la derecha; los totales, en otra. */}
         <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text, marginBottom: -space[2] }]}>{`Líneas (${q.data?.detalles.length ?? 0})`}</Text>
-        <View testID="tarjeta-lineas" style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>
+        <View testID="tarjeta-lineas" style={{ borderRadius: radii.tarjetaGrande, backgroundColor: c.surface, overflow: 'hidden' }}>
           {(q.data?.detalles ?? []).map((d, i) => (
-            <View key={d.id} style={{ gap: space[1], paddingVertical: space[3], paddingHorizontal: space[4], borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.surface2 }}>
+            <View key={d.id} style={{ gap: space[1], paddingVertical: space[3], paddingHorizontal: space[5], borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.surface2 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
                 <View style={{ flex: 1 }}><ProductoIdentidad nombre={d.productoNombre} marca={d.marca} codigo={d.codigoPropio} estiloNombre={typeScale.secundario} /></View>
                 <Text style={[typeScale.cuerpoDestacado, cifras, { color: c.text }]}>{formatImporte(totales?.subtotalDeLinea[d.id] ?? d.subtotal)}</Text>

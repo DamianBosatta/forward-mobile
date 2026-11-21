@@ -55,7 +55,7 @@ export function NuevaVentaInicio({ cargandoCliente, tipo, onTipo, onElegir, onNu
       </View>
       <ElegirClienteVenta onElegir={setElegido} onNuevoCliente={onNuevoCliente} seleccionadoId={elegido?.id} ultimoPedido={ultimo ? { fecha: ultimo.fecha, total: ultimo.totalAmount } : null} />
       <PieFijo>
-        <Button label="Continuar a productos" iconoFinal={ChevronRight} disabled={!elegido} onPress={() => elegido && onElegir(elegido)}
+        <Button size="lg" label="Continuar a productos" iconoFinal={ChevronRight} disabled={!elegido} onPress={() => elegido && onElegir(elegido)}
           accessibilityLabel={elegido ? `Continuar a productos con ${direccionDeEntrega(elegido)}` : 'Continuar a productos'} />
         {elegido && ultimo ? <Button variant="secundario" label="Repetir el último pedido" onPress={() => onElegir(elegido, { delUltimo: true })} /> : null}
       </PieFijo>

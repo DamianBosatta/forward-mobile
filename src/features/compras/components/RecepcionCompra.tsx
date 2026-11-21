@@ -1,10 +1,9 @@
 import React from 'react'
 import { formatearCuit } from '@/libs/reglas/cuit'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { ArrowLeft } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
-import { Button, Field, FormContainer, enmascararFecha, FilaInterruptor, Notice, PieFijo, TotalsRow, formatImporte } from '@/core/ui/fw'
-import { MarcaRadio } from '@/features/venta-nueva/components/MarcaRadio'
+import { ArrowLeft, Check } from 'lucide-react-native'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { Button, Field, FormContainer, enmascararFecha, FilaInterruptor, MarcaRadio, Notice, PieFijo, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { textoFaltaCosto } from './CarritoCompra'
 
 /** Lo que dice el interruptor: es la consecuencia de confirmar y recibir en un solo paso. */
@@ -18,11 +17,10 @@ export function DepositoCompra({ depositos, depositoId, onDeposito, puedeElegir 
   depositos: { id: string; nombre: string }[]; depositoId: string; onDeposito: (id: string) => void; puedeElegir: boolean
 }) {
   const c = useColors()
-  const sombra = useSombraTarjeta()
   if (!(puedeElegir && depositos.length > 1)) {
     const nombre = depositos.find((d) => d.id === depositoId)?.nombre ?? 'el tuyo'
     return (
-      <View style={{ padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }}>
+      <View style={{ padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}>
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{`Depósito: ${nombre}`}</Text>
       </View>
     )
@@ -30,15 +28,15 @@ export function DepositoCompra({ depositos, depositoId, onDeposito, puedeElegir 
   return (
     <View style={{ gap: space[2] }}>
       <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Depósito</Text>
-      <View accessibilityRole="radiogroup" accessibilityLabel="Depósito" style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface, overflow: 'hidden' }}>
-        {depositos.map((d, i) => {
+      <View accessibilityRole="radiogroup" accessibilityLabel="Depósito" style={{ gap: space[2] }}>
+        {depositos.map((d) => {
           const sel = d.id === depositoId
           return (
             <Pressable key={d.id} accessibilityRole="radio" accessibilityLabel={d.nombre} accessibilityState={{ checked: sel, selected: sel }} onPress={() => onDeposito(d.id)}
               android_ripple={{ color: c.surface2 }}
-              style={{ minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], borderTopWidth: i ? 1 : 0, borderTopColor: c.border, backgroundColor: sel ? c.brandSoft : c.surface }}>
-              <MarcaRadio elegido={sel} />
-              <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{d.nombre}</Text>
+              style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], borderRadius: radii.fila, backgroundColor: sel ? c.teal : c.surface }}>
+              <MarcaRadio elegido={sel} sobreTeal={sel} />
+              <Text style={{ ...typeScale.cuerpoDestacado, color: sel ? c.ink : c.text }}>{d.nombre}</Text>
             </Pressable>
           )
         })}
@@ -87,9 +85,8 @@ interface Props {
  */
 export function RecepcionCompra(p: Props) {
   const c = useColors()
-  const sombra = useSombraTarjeta()
   const secundario = { ...typeScale.secundario, color: c.textSecondary }
-  const tarjeta = { gap: space[2], padding: space[4], borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }
+  const tarjeta = { gap: space[2], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }
   const bloqueado = p.ocupado || p.faltanCostos > 0
   const recibir = p.puedeRecibir && p.recibirAhora
   const fila = (k: string, v: string | null) => (v ? (
@@ -159,7 +156,7 @@ export function RecepcionCompra(p: Props) {
             {p.faltanCostos > 0 ? '—' : formatImporte(p.total)}
           </Text>
         </View>
-        <Button label={recibir ? 'Confirmar y recibir' : 'Confirmar compra'} loading={p.ocupado}
+        <Button size="lg" variant={recibir && !bloqueado && (!p.pideFactura || p.fechaValida) ? 'listo' : 'primario'} label={recibir ? 'Confirmar y recibir' : 'Confirmar compra'} loading={p.ocupado}
           disabled={bloqueado || (recibir && p.pideFactura && !p.fechaValida)} onPress={p.onConfirmar} />
         <Pressable accessibilityRole="button" accessibilityLabel="Guardar nota de pedido" accessibilityState={{ disabled: bloqueado }} disabled={bloqueado} onPress={p.onGuardarNota}
           style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>

@@ -1,8 +1,9 @@
 import React, { memo, useCallback } from 'react'
-import { Alert, FlatList, Pressable, Text, View } from 'react-native'
+import { Alert, FlatList, Text, View } from 'react-native'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { Button, Notice, useInsetInferior } from '@/core/ui/fw'
+import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
 import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { useDescartarBorradorVenta, type BorradorVenta } from '@/libs/api-client/ventas'
@@ -37,8 +38,8 @@ const FilaBorrador = memo(function FilaBorrador({ b, onSeguir, onDescartar }: { 
   const { titulo, subtitulo, total } = identidadDeBorrador(b)
   const guardado = <Text style={secundario}>{`${b.cantidadLineas} ${b.cantidadLineas === 1 ? 'línea' : 'líneas'} · Guardado ${tituloDelDia(new Date(b.fechaModificacion)).toLowerCase()} ${horaDe(b.fechaModificacion)}`}</Text>
   return (
-    <View style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, padding: space[4], gap: space[3] }}>
-      <Pressable accessibilityRole="button" accessibilityHint="Retomar el borrador" onPress={() => onSeguir(b)} style={{ minHeight: 48, gap: space[1] }}>
+    <View style={{ borderRadius: radii.tarjetaGrande, backgroundColor: c.surface, padding: space[5], gap: space[3] }}>
+      <PressableFx accessibilityRole="button" accessibilityHint="Retomar el borrador" onPress={() => onSeguir(b)} android_ripple={{ color: c.surfaceAlt }} style={{ minHeight: 48, gap: space[1] }}>
         <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{titulo}</Text>
         {subtitulo ? <Text style={[typeScale.secundario, { color: c.text }]}>{subtitulo}</Text> : null}
         {/* Sin importe (servidor anterior a forward-system #898) la fila queda como siempre: solo el texto. */}
@@ -48,7 +49,7 @@ const FilaBorrador = memo(function FilaBorrador({ b, onSeguir, onDescartar }: { 
             <Text style={[typeScale.titulo, cifras, { color: c.text, textAlign: 'right' }]}>{total}</Text>
           </View>
         )}
-      </Pressable>
+      </PressableFx>
       <View style={{ flexDirection: 'row', gap: space[3] }}>
         <View style={{ flex: 1 }}><Button label="Descartar" variant="secundario" onPress={() => onDescartar(b)} /></View>
         <View style={{ flex: 1 }}><Button label="Seguir" onPress={() => onSeguir(b)} /></View>

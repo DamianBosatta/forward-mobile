@@ -32,7 +32,7 @@ export function PieFijo({ children, fondo = 'surface', sinInsetInferior = false,
       ref={ref}
       onLayout={onLayout}
       testID={testID}
-      style={[{ backgroundColor: fondo === 'bg' ? c.bg : c.surface, borderTopWidth: 1, borderTopColor: c.border }, style]}
+      style={[{ backgroundColor: fondo === 'bg' ? c.bg : c.surface }, style]}
     >
       <View
         testID={testID ? `${testID}-contenido` : undefined}

@@ -33,23 +33,23 @@ it('cada fila lleva las iniciales de la razón social, como la de Clientes', asy
   expect(within(fila).getByText('ID')).toBeTruthy()
 })
 
-it('las filas van dentro de una tarjeta: la primera redondea arriba y la última abajo', async () => {
+it('las filas van sueltas: cada una con su radio de fila y sin separador', async () => {
   get.mockResolvedValue(pagina([proveedor(), proveedor({ id: 'p2', razonSocial: 'Limpieza Norte SRL' })], 2))
   renderConQuery(<ProveedoresScreen />)
 
   const primera = await screen.findByRole('button', { name: /^Insumos del Sur SA/ })
   const ultima = screen.getByRole('button', { name: /^Limpieza Norte SRL/ })
-  expect(estilo(primera)).toMatchObject({ marginHorizontal: 16, borderTopLeftRadius: 16, borderTopRightRadius: 16 })
-  expect(estilo(primera).borderBottomLeftRadius ?? 0).toBe(0)
-  expect(estilo(ultima)).toMatchObject({ borderBottomLeftRadius: 16, borderBottomRightRadius: 16, borderBottomWidth: 0 })
+  expect(estilo(primera)).toMatchObject({ marginHorizontal: 16, borderRadius: 22 })
+  expect(estilo(ultima)).toMatchObject({ borderRadius: 22 })
+  expect(estilo(primera).borderBottomWidth ?? 0).toBe(0)
 })
 
-it('"Nueva compra" es el botón redondo de 44 con borde y no abre la ficha', async () => {
+it('"Nueva compra" es el botón redondo de 48 y no abre la ficha', async () => {
   renderConQuery(<ProveedoresScreen />)
 
   await screen.findByText('Insumos del Sur SA')
   const comprar = screen.getByLabelText('Nueva compra')
-  expect(estilo(comprar)).toMatchObject({ width: 44, height: 44, borderRadius: 22, borderWidth: 1 })
+  expect(estilo(comprar)).toMatchObject({ width: 48, height: 48, borderRadius: 24 })
   await userEvent.press(comprar)
   expect(mockPush).toHaveBeenCalledWith('/(tabs)/compras/nueva')
   expect(mockPush).not.toHaveBeenCalledWith(expect.objectContaining({ pathname: '/(tabs)/proveedores/[id]' }))

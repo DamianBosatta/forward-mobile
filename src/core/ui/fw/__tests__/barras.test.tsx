@@ -77,13 +77,13 @@ describe('BottomBar', () => {
     expect(presupuesto).toHaveBeenCalledTimes(1)
   })
 
-  it.each(TEMAS)('tema %s: el activo va en marca-tinta y el resto en texto', (tema) => {
+  it.each(TEMAS)('tema %s: el activo lleva raya accentText y el rótulo en text', (tema) => {
     conTema(tema)
     const c = themeColors[tema]
     render(<BottomBar items={items()} activeKey="pedido" />)
-    expect(estilo(screen.getByText('Pedido')).color).toBe(c.brandInk)
-    expect(estilo(screen.getByText('Presupuesto')).color).toBe(c.text)
-    expect(estilo(screen.getByRole('button', { name: 'Pedido' })).borderTopColor).toBe(c.brand)
+    expect(estilo(screen.getByText('Pedido')).color).toBe(c.text)
+    expect(estilo(screen.getByText('Presupuesto')).color).toBe(c.textMuted)
+    expect(estilo(screen.getByRole('button', { name: 'Pedido' })).borderTopColor).toBe(c.accentText)
   })
 })
 
@@ -100,12 +100,12 @@ describe('Notice', () => {
     expect(screen.getByText(/Va a quedar por autorizar/)).toHaveTextContent('Tu tope es 10 %. Va a quedar por autorizar.')
   })
 
-  it.each(TEMAS)('tema %s: texto en color de texto e ícono en color de estado', (tema) => {
+  it.each(TEMAS)('tema %s: texto e ícono en tinta sobre el relleno de estado', (tema) => {
     conTema(tema)
     const c = themeColors[tema]
     render(<Notice tone="exito" testID="aviso">Pedido guardado.</Notice>)
-    expect(estilo(screen.getByTestId('aviso')).backgroundColor).toBe(c.chip.entregado.bg)
-    expect(estilo(screen.getByText('Pedido guardado.')).color).toBe(c.text)
-    expect(screen.UNSAFE_getByType(CircleCheck).props.color).toBe(c.chip.entregado.text)
+    expect(estilo(screen.getByTestId('aviso')).backgroundColor).toBe(c.teal)
+    expect(estilo(screen.getByText('Pedido guardado.')).color).toBe(c.ink)
+    expect(screen.UNSAFE_getByType(CircleCheck).props.color).toBe(c.ink)
   })
 })

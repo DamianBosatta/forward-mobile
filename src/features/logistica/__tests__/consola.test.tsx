@@ -283,12 +283,12 @@ describe('Consola del chofer: hoja de ruta', () => {
     expect(mockPost.mock.calls.filter(([u]) => String(u).endsWith('/entregar'))).toHaveLength(1)
   })
 
-  it('en oscuro la tarjeta de la próxima parada usa la marca del tema oscuro', async () => {
+  it('en oscuro la tarjeta de la próxima parada es la tarjeta lime de la marca, sin borde', async () => {
     conTema('dark')
     pintar()
     const proxima = await screen.findByLabelText('Próxima parada')
-    expect(estilo(proxima).borderColor).toBe(themeColors.dark.brand)
-    expect(estilo(proxima).backgroundColor).toBe(themeColors.dark.surface)
+    expect(estilo(proxima).borderColor).toBeUndefined()
+    expect(estilo(proxima).backgroundColor).toBe(themeColors.dark.lime)
   })
 
   it('si la app vuelve del segundo plano pasada la medianoche, pide las rutas del día nuevo', async () => {

@@ -1,10 +1,12 @@
 import React from 'react'
 import { iniciales } from '@/core/utils/texto'
-import { View, Text, Pressable, ScrollView } from 'react-native'
+import { View, ScrollView } from 'react-native'
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated'
 import { DrawerContentComponentProps, useDrawerStatus } from 'expo-router/drawer'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { radii, space, useColors } from '@/libs/theme'
+import { DrawerExpandable, DrawerGroupTitle, DrawerHeader, DrawerItem } from '@/core/ui/fw'
 import { useResponsive } from '@/libs/useResponsive'
 import { safeHaptics } from '@/core/utils/haptics'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -12,7 +14,6 @@ import { useAuth } from '@/features/auth/hooks/useAuth'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useCerrarSesion } from '@/features/cuenta/hooks/useCerrarSesion'
-import { useAvisosNoLeidos } from '@/features/notificaciones'
 import { MENU, MI_CUENTA, esRutaActiva, menuVisible, type MenuItem } from './menuModules'
 
 /**
@@ -34,10 +35,9 @@ const inicialesDeUsuario = (nombre?: string, apellido?: string) =>
   iniciales([nombre, apellido].filter(Boolean).join(' ')) || '·'
 
 /**
- * Menú lateral (Bloque 9A, PR 0.3; D2). En teléfono es la lámina Menu: panel claro
- * con cabecera oscura, secciones VENDER / COMPRAR / GESTIÓN / LOGÍSTICA, filas de 48 con ícono y
- * "Cerrar sesión" al pie. En tablet queda fijo y sigue la
- * lámina TabInicio: panel oscuro, filas de 44 y la activa en color de acción.
+ * Menú lateral (FWD, lote drawer). En teléfono: panel `bg` con esquinas derechas de 30, filas de 44 con radio 22,
+ * la activa en píldora lime y Logística como una fila que despliega Picking y la Consola del chofer. En tablet
+ * queda fijo, con el panel oscuro y la activa en color de acción. Quién ve cada entrada lo decide `menuVisible`.
  */
 export default function CustomDrawerContent(props: DrawerContentComponentProps) {
   const c = useColors()
@@ -49,131 +49,114 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
   const { isAuthenticated, user } = useAuthStore()
   const { cerrarSesion } = useCerrarSesion()
   const isDrawerOpen = useDrawerStatus() === 'open'
+  const reducido = useReducedMotion()
+  const entrada = useSharedValue(0)
 
   React.useEffect(() => {
     if (isDrawerOpen && isAuthenticated) refreshPermissions()
   }, [isDrawerOpen, isAuthenticated])
 
-  const noLeidas = useAvisosNoLeidos()
+  // drawerIn: el contenido entra 60 px desde la izquierda con un rebote leve; con Reduce Motion, sin movimiento.
+  React.useEffect(() => {
+    if (!isDrawerOpen || reducido) {
+      entrada.value = 1
+      return
+    }
+    entrada.value = 0
+    entrada.value = withSpring(1, { damping: 14, stiffness: 160 })
+  }, [isDrawerOpen, reducido, entrada])
+  const estiloEntrada = useAnimatedStyle(() => ({ opacity: entrada.value, transform: [{ translateX: (1 - entrada.value) * -60 }] }))
+
   const rutaActual = rutaActualDelCajon(props.state)
   const grupos = menuVisible(MENU, {
     canDo,
     tieneCapacidad: (cap) => hasCapability(user?.permissions, cap),
   })
+  // Una sola fila desplegable a la vez; abre sola si la pantalla actual es una de sus hijas.
+  const [abierta, setAbierta] = React.useState<string | null>(null)
+  const grupoDeLaRuta = grupos.flatMap((g) => g.items).find((it) => it.hijos?.some((h) => esRutaActiva(h, rutaActual)))?.id ?? null
+  const desplegada = abierta ?? grupoDeLaRuta
 
-  const fondo = isTablet ? c.topBar : c.surface
-  const texto = isTablet ? c.onTopBar : c.text
-  const secundario = isTablet ? c.onTopBar : c.textSecondary
-
-  const fila = (item: MenuItem) => {
-    const activa = esRutaActiva(item, rutaActual)
-    const color = activa ? (isTablet ? c.onAction : c.brandInk) : texto
-    const Icono = item.icon
-    const contador = item.id === 'avisos' && noLeidas > 0 ? noLeidas : 0
-    return (
-      <Pressable
-        key={item.id}
-        accessibilityRole="button"
-        accessibilityLabel={contador ? `${item.label}, ${contador} sin leer` : item.label}
-        accessibilityState={{ selected: activa }}
-        onPress={() => {
-          safeHaptics.impact('light')
-          router.push(item.href as never)
-        }}
-        style={{
-          minHeight: isTablet ? 44 : 48,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: space[4],
-          paddingHorizontal: isTablet ? space[3] : space[4],
-          borderRadius: isTablet ? radii.campo : 0,
-          backgroundColor: activa ? (isTablet ? c.action : c.brandSoft) : 'transparent',
-        }}
-      >
-        {isTablet ? null : <Icono size={22} color={color} strokeWidth={2} />}
-        <Text style={{ ...(activa ? typeScale.cuerpoDestacado : typeScale.cuerpo), color, flex: 1 }}>{item.label}</Text>
-        {item.hint ? <Text style={{ ...typeScale.secundario, color: activa ? color : secundario }}>{item.hint}</Text> : null}
-        {contador ? (
-          <View style={{ minWidth: 24, height: 24, paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.dangerStrong, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ ...typeScale.etiqueta, color: c.onDangerStrong }}>{contador > 99 ? '99+' : String(contador)}</Text>
-          </View>
-        ) : null}
-      </Pressable>
-    )
+  const irA = (item: MenuItem) => {
+    safeHaptics.impact('light')
+    router.push(item.href as never)
   }
-
-  return (
-    <View style={{ flex: 1, backgroundColor: fondo, paddingHorizontal: isTablet ? space[3] : 0 }}>
-      <View
-        style={{
-          backgroundColor: c.topBar,
-          paddingTop: insets.top + (isTablet ? space[4] : space[6]),
-          paddingBottom: space[4],
-          paddingHorizontal: isTablet ? space[1] : space[4],
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: space[3],
+  const fila = (item: MenuItem, hija = false) => (
+    <DrawerItem
+      key={item.id}
+      label={item.label}
+      icon={item.icon}
+      hint={item.hint}
+      hija={hija}
+      oscuro={isTablet}
+      activa={esRutaActiva(item, rutaActual)}
+      onPress={() => irA(item)}
+    />
+  )
+  const filaDeMenu = (item: MenuItem) =>
+    item.hijos ? (
+      <DrawerExpandable
+        key={item.id}
+        label={item.label}
+        icon={item.icon}
+        oscuro={isTablet}
+        abierta={desplegada === item.id}
+        onToggle={() => {
+          safeHaptics.impact('light')
+          setAbierta(desplegada === item.id ? '' : item.id)
         }}
       >
-        <View
-          style={{
-            width: isTablet ? 44 : 48,
-            height: isTablet ? 44 : 48,
-            borderRadius: radii.pastilla,
-            backgroundColor: c.brandSoft,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>{inicialesDeUsuario(user?.nombre, user?.apellido)}</Text>
-        </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.onTopBarStrong }}>
-            {[user?.nombre, user?.apellido].filter(Boolean).join(' ') || 'Forward'}
-          </Text>
-          <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.onTopBar }}>
-            {user?.roles?.join(' · ')}
-          </Text>
-        </View>
-      </View>
+        {item.hijos.map((h) => fila(h, true))}
+      </DrawerExpandable>
+    ) : (
+      fila(item)
+    )
 
-      <ScrollView contentContainerStyle={{ paddingVertical: space[2], gap: isTablet ? space[1] : 0 }} showsVerticalScrollIndicator={false}>
+  const nombre = [user?.nombre, user?.apellido].filter(Boolean).join(' ') || 'Forward'
+  return (
+    <Animated.View
+      style={[
+        {
+          flex: 1,
+          backgroundColor: isTablet ? c.panelOscuro : c.bg,
+          borderTopRightRadius: isTablet ? 0 : radii.tarjetaGrande,
+          borderBottomRightRadius: isTablet ? 0 : radii.tarjetaGrande,
+          overflow: 'hidden',
+        },
+        estiloEntrada,
+      ]}
+    >
+      <DrawerHeader iniciales={inicialesDeUsuario(user?.nombre, user?.apellido)} nombre={nombre} rol={user?.roles?.join(' · ')} oscuro={isTablet} insetSuperior={insets.top} />
+
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: space[1], paddingHorizontal: space[3], gap: 2 }} showsVerticalScrollIndicator={false}>
         {grupos.map((g, i) => (
-          <View key={g.title ?? `grupo-${i}`} style={{ gap: isTablet ? space[1] : 0 }}>
-            {g.title ? (
-              <Text
-                accessibilityRole="header"
-                style={{ ...typeScale.etiqueta, letterSpacing: 0.5, color: secundario, paddingHorizontal: isTablet ? space[3] : space[4], paddingTop: space[3], paddingBottom: space[1] }}
-              >
-                {g.title}
-              </Text>
-            ) : null}
-            {g.items.map(fila)}
+          <View key={g.title ?? `grupo-${i}`} style={{ gap: 2 }}>
+            {g.title ? <DrawerGroupTitle oscuro={isTablet}>{g.title}</DrawerGroupTitle> : null}
+            {g.items.map(filaDeMenu)}
           </View>
         ))}
       </ScrollView>
 
       <View
         style={{
-          borderTopWidth: 1,
-          borderTopColor: isTablet ? c.textSecondary : c.border,
-          paddingTop: space[2],
-          paddingBottom: insets.bottom + space[2],
+          borderTopWidth: 2,
+          borderTopColor: isTablet ? c.panelOscuroBorder : c.border,
+          marginHorizontal: space[3],
+          marginTop: space[1],
+          paddingTop: space[1],
+          paddingBottom: insets.bottom + space[3],
         }}
       >
         {fila(MI_CUENTA)}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Cerrar sesión"
+        <DrawerItem
+          label="Cerrar sesión"
+          oscuro={isTablet}
           onPress={() => {
             safeHaptics.impact('light')
             void cerrarSesion()
           }}
-          style={{ minHeight: isTablet ? 44 : 48, flexDirection: 'row', alignItems: 'center', paddingHorizontal: isTablet ? space[3] : space[4] }}
-        >
-          <Text style={{ ...typeScale.cuerpoDestacado, color: isTablet ? texto : c.dangerStrong }}>Cerrar sesión</Text>
-        </Pressable>
+        />
       </View>
-    </View>
+    </Animated.View>
   )
 }

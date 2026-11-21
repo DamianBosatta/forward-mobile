@@ -41,13 +41,13 @@ export function EstadoDePantalla({ tipo, titulo, texto, guardadoA, accion }: Est
   const cuerpo = texto ?? textoDeSiempre(tipo, guardadoA)
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[8] }}>
-      <View style={{ width: 96, height: 96, borderRadius: radii.pastilla, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center' }}>
-        <Icono size={40} color={c.textSecondary} />
+      <View style={{ width: 96, height: 96, borderRadius: radii.pastilla, backgroundColor: c.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
+        <Icono size={40} color={c.text} />
       </View>
-      <Text accessibilityRole="header" style={[typeScale.titulo, { marginTop: space[2], color: c.text, textAlign: 'center' }]}>
+      <Text accessibilityRole="header" style={[typeScale.tituloGrande, { marginTop: space[2], color: c.text, textAlign: 'center' }]}>
         {titulo}
       </Text>
-      {cuerpo ? <Text style={[typeScale.cuerpo, { color: c.textSecondary, textAlign: 'center' }]}>{cuerpo}</Text> : null}
+      {cuerpo ? <Text style={[typeScale.cuerpo, { color: c.textMuted, textAlign: 'center' }]}>{cuerpo}</Text> : null}
       {accion ? (
         <View style={{ marginTop: space[3] }}>
           <Button label={accion.label} variant="secundario" onPress={accion.onPress} />

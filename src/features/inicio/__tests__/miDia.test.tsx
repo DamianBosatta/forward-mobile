@@ -314,6 +314,13 @@ describe('MiDiaScreen', () => {
     expect(mockPush).toHaveBeenCalledWith('/buscar')
   })
 
+  it('la campana de Avisos va en el encabezado y abre la bandeja', async () => {
+    pintar()
+    const user = userEvent.setup()
+    await user.press(screen.getByLabelText(/^Avisos/))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/avisos')
+  })
+
   it('en tablet muestra lo mismo', async () => {
     mockAncho.mockReturnValue(900)
     pintar()

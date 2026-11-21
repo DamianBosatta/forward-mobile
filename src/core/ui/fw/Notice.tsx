@@ -1,18 +1,17 @@
 import React from 'react'
 import { Text, View } from 'react-native'
 import { CircleAlert, CircleCheck, CircleX, Info, type LucideIcon } from 'lucide-react-native'
-import { radii, space, typeScale, useColors, type ChipEstado } from '@/libs/theme'
-import { pesoSemibold } from './tipografia'
+import { FONT, radii, space, typeScale, useColors, type ForwardColors } from '@/libs/theme'
 
 export type NoticeTone = 'info' | 'advertencia' | 'peligro' | 'exito'
 
-// Cada tono usa el par de chip que ya pasa 4,5:1: el fondo suave y el color
-// del estado para el ícono. El texto va en color de texto.
-const TONOS: Record<NoticeTone, { chip: ChipEstado; Icono: LucideIcon }> = {
-  info: { chip: 'enCurso', Icono: Info },
-  advertencia: { chip: 'porAutorizar', Icono: CircleAlert },
-  peligro: { chip: 'anulado', Icono: CircleX },
-  exito: { chip: 'entregado', Icono: CircleCheck },
+// Spec FWD §5 (`.notice`): relleno pleno del estado con texto e ícono `ink`; `info` es `surface` con `text`.
+// El estado nunca va solo en el color: lleva ícono y el texto lo dice.
+const TONOS: Record<NoticeTone, { fondo: (c: ForwardColors) => string; texto: (c: ForwardColors) => string; Icono: LucideIcon }> = {
+  info: { fondo: (c) => c.surface, texto: (c) => c.text, Icono: Info },
+  advertencia: { fondo: (c) => c.warning, texto: (c) => c.onState, Icono: CircleAlert },
+  peligro: { fondo: (c) => c.dangerFill, texto: (c) => c.onState, Icono: CircleX },
+  exito: { fondo: (c) => c.teal, texto: (c) => c.ink, Icono: CircleCheck },
 }
 
 interface NoticeProps {
@@ -23,11 +22,11 @@ interface NoticeProps {
   testID?: string
 }
 
-/** Aviso de la lámina F4: relleno 12, radio 10, ícono 20 y texto 14/20. */
+/** Aviso FWD: radio de fila, relleno pleno del estado con texto ink, ícono 20 y texto 14/700. */
 export function Notice({ tone, title, children, testID }: NoticeProps) {
   const colors = useColors()
-  const { chip, Icono } = TONOS[tone]
-  const par = colors.chip[chip]
+  const { fondo, texto, Icono } = TONOS[tone]
+  const tinta = texto(colors)
 
   return (
     <View
@@ -38,15 +37,16 @@ export function Notice({ tone, title, children, testID }: NoticeProps) {
       style={{
         flexDirection: 'row',
         gap: space[2],
-        padding: space[3],
-        borderRadius: radii.campo,
-        backgroundColor: par.bg,
+        paddingVertical: space[3],
+        paddingHorizontal: space[4],
+        borderRadius: radii.fila,
+        backgroundColor: fondo(colors),
       }}
     >
-      <Icono size={20} color={par.text} strokeWidth={2} />
-      <Text style={{ ...typeScale.secundario, color: colors.text, flex: 1 }}>
+      <Icono size={20} color={tinta} strokeWidth={2.5} />
+      <Text style={{ ...typeScale.secundario, fontFamily: FONT.bold, fontWeight: '700', color: tinta, flex: 1 }}>
         {title ? (
-          <Text style={pesoSemibold}>{`${title} `}</Text>
+          <Text style={{ fontFamily: FONT.extrabold, fontWeight: '800' }}>{`${title} `}</Text>
         ) : null}
         {children}
       </Text>

@@ -18,10 +18,13 @@ import { OfertaDeHuella } from '@/features/auth/components/OfertaDeHuella'
 import { View } from 'react-native'
 import {
   useFonts,
-  Inter_400Regular,
-  Inter_600SemiBold,
   Inter_900Black,
 } from '@expo-google-fonts/inter'
+import {
+  Manrope_600SemiBold,
+  Manrope_700Bold,
+  Manrope_800ExtraBold,
+} from '@expo-google-fonts/manrope'
 import { colorScheme } from 'nativewind'
 import { useColors, useIsDark, useThemeStore } from '@/libs/theme'
 import * as SplashScreen from 'expo-splash-screen'
@@ -62,12 +65,13 @@ function RootLayoutNav() {
     useThemeStore.getState().hydrate()
   }, [])
 
-  // Inter sola (plan §7). Outfit_900Black es legado: ForwardLogo lo referencia, así que se
-  // registra apuntando al archivo de Inter 900. Solo se cargan los pesos con uso verificado
-  // (400 y 600 vía FONT en libs/theme.ts, 900 por ForwardLogo): REN-06.
+  // Manrope 600/700/800 (spec FWD §3), una familia por peso vía FONT en libs/theme.ts.
+  // Outfit_900Black es legado: ForwardLogo lo referencia, así que se registra apuntando al archivo
+  // de Inter 900 (único uso que queda de Inter). Solo se cargan los pesos con uso verificado: REN-06.
   const [fontsLoaded, fontError] = useFonts({
-    Inter_400Regular,
-    Inter_600SemiBold,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+    Manrope_800ExtraBold,
     Inter_900Black,
     Outfit_900Black: Inter_900Black,
   })
@@ -100,8 +104,8 @@ function RootLayoutNav() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      {/* La barra superior es oscura en claro y en oscuro (theme.topBar): los íconos del sistema van siempre claros. */}
-      <StatusBar style="light" />
+      {/* La barra superior va sobre el fondo de la pantalla: íconos del sistema oscuros en claro y claros en oscuro. */}
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <AuthGuardHandler />
       <AvisosAlVolver />
       <PushDeAvisos />

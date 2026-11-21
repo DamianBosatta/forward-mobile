@@ -96,7 +96,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
   // (useCuentasPropias ya las saca).
   const propias: CuentaParaCobrar[] = cuentas.data ?? []
   const nombreOrigen = propias.find(k => k.id === origen)?.nombre
-  const tarjeta = { borderRadius: radii.tarjeta, backgroundColor: c.surface }
+  const tarjeta = { borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ padding: space[4] }} keyboardShouldPersistTaps="handled">
@@ -112,7 +112,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
             {restante.data && nombreOrigen && restante.data.monto === leerNumero(monto) ? <SaldoQueQueda saldo={restante.data} cuenta={nombreOrigen} /> : null}
           </View>
 
-          <View testID="tarjeta-tipo" style={{ ...tarjeta, padding: space[4] }}>
+          <View testID="tarjeta-tipo" style={{ ...tarjeta, padding: space[5] }}>
             <ElegirChip
               titulo="Tipo"
               tituloVisible
@@ -130,7 +130,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
               <View
                 importantForAccessibility="no-hide-descendants"
                 accessibilityElementsHidden
-                style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surface, borderWidth: 1, borderColor: c.borderStrong }}
+                style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surfaceAlt }}
               >
                 <ArrowDown size={16} color={c.textSecondary} strokeWidth={2} />
               </View>
@@ -151,7 +151,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
           </View>
 
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{AVISO_SOLO_CUENTAS_PROPIAS}</Text>
-          <View style={{ ...tarjeta, padding: space[4], gap: space[3] }}>
+          <View style={{ ...tarjeta, padding: space[5], gap: space[3] }}>
             <Field label="N.º de operación (opcional)" value={operacion} onChangeText={setOperacion} />
             <Field label="Observaciones (opcional)" value={observaciones} onChangeText={setObservaciones} />
           </View>
@@ -166,7 +166,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
             {registrar.error ? <Notice tone="peligro">{mensajeDelServidor(registrar.error, 'No se pudo registrar el movimiento.')}</Notice> : null}
           </View>
         ) : null}
-        <Button label="Registrar movimiento" loading={registrar.isPending} disabled={registrar.isPending || !puedeRegistrar} onPress={enviar} />
+        <Button size="lg" label="Registrar movimiento" loading={registrar.isPending} disabled={registrar.isPending || !puedeRegistrar} onPress={enviar} />
         {!puedeRegistrar ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}</MotivoDeshabilitado> : null}
       </PieFijo>
     </View>
@@ -184,15 +184,15 @@ function MovimientoRegistrado({ onVolver }: { onVolver: () => void }) {
           testID="listo-icono"
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={{ width: 96, height: 96, borderRadius: radii.pastilla, alignItems: 'center', justifyContent: 'center', backgroundColor: c.chip.entregado.bg }}
+          style={{ width: 96, height: 96, borderRadius: radii.pastilla, alignItems: 'center', justifyContent: 'center', backgroundColor: c.teal }}
         >
-          <Check size={40} color={c.chip.entregado.text} strokeWidth={2.5} />
+          <Check size={40} color={c.ink} strokeWidth={2.5} />
         </View>
-        <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text, textAlign: 'center' }}>Movimiento registrado</Text>
+        <Text accessibilityRole="header" style={{ ...typeScale.tituloTarjeta, color: c.text, textAlign: 'center' }}>Movimiento registrado</Text>
         <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>Los saldos de las cuentas ya están actualizados.</Text>
       </ScrollView>
       <PieFijo>
-        <Button label="Volver" onPress={onVolver} />
+        <Button size="lg" label="Volver" onPress={onVolver} />
       </PieFijo>
     </View>
   )

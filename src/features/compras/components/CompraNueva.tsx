@@ -239,7 +239,7 @@ Recargala para ver la versión actual antes de seguir.` : 'Recargala para ver la
             </View>
             <Text style={{ ...typeScale.titulo, ...cifras, color: c.text }}>{faltanCostos > 0 ? '—' : formatImporte(subtotal)}</Text>
           </View>
-          <Button label="Ver compra" icon={ShoppingCart} variant={edicion ? 'secundario' : 'primario'} disabled={b.lineas.length === 0} onPress={() => setPaso(3)} />
+          <Button size={edicion ? 'md' : 'lg'} label="Ver compra" icon={ShoppingCart} variant={edicion ? 'secundario' : 'primario'} disabled={b.lineas.length === 0} onPress={() => setPaso(3)} />
           {edicion ? botonGuardarCambios : null}
         </PieFijo>
       </>
@@ -263,7 +263,7 @@ Recargala para ver la versión actual antes de seguir.` : 'Recargala para ver la
             <Text accessibilityLabel={faltanCostos > 0 ? 'Total sin calcular' : undefined} style={{ ...typeScale.titulo, ...cifras, color: c.text }}>{faltanCostos > 0 ? '—' : formatImporte(total)}</Text>
           </View>
           {edicion ? botonGuardarCambios : (
-            <Button label="Continuar" iconoFinal={ChevronRight} disabled={b.lineas.length === 0 || gastosLeidos === null} onPress={() => { setErrorPaso4(null); setPaso(4) }} />
+            <Button size="lg" label="Continuar" iconoFinal={ChevronRight} disabled={b.lineas.length === 0 || gastosLeidos === null} onPress={() => { setErrorPaso4(null); setPaso(4) }} />
           )}
         </PieFijo>
       </>

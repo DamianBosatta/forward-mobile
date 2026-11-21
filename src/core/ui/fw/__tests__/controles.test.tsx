@@ -44,10 +44,10 @@ describe('Button', () => {
       </>,
     )
     const pares: [string, string, string][] = [
-      ['P', c.action, c.onAction],
+      ['P', c.primaryBg, c.primaryFg],
       ['S', c.surface, c.text],
-      ['D', c.dangerStrong, c.onDangerStrong],
-      ['X', c.surface2, c.textSecondary],
+      ['D', c.dangerFill, c.onState],
+      ['X', c.surfaceAlt, c.textMuted],
     ]
     for (const [label, fondo, texto] of pares) {
       expect(estilo(screen.getByRole('button', { name: label })).backgroundColor).toBe(fondo)
@@ -69,14 +69,15 @@ describe('Field', () => {
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
-  it.each(TEMAS)('tema %s: relleno superficie, contorno borderStrong y texto del tema', (tema) => {
+  it.each(TEMAS)('tema %s: relleno superficie, borde transparente en reposo y texto del tema', (tema) => {
     conTema(tema)
     render(<Field label="Observaciones" value="Entregar antes de las 12" />)
     const s = estilo(screen.getByLabelText('Observaciones'))
     expect(s.backgroundColor).toBe(themeColors[tema].surface)
-    expect(s.borderColor).toBe(themeColors[tema].borderStrong)
+    expect(s.borderColor).toBe('transparent')
+    expect(s.borderWidth).toBe(2)
     expect(s.color).toBe(themeColors[tema].text)
-    expect(s.height).toBe(48)
+    expect(s.height).toBe(56)
   })
 })
 
@@ -126,12 +127,12 @@ describe('Segmented', () => {
     expect(onChange).toHaveBeenCalledWith('expreso')
   })
 
-  it.each(TEMAS)('tema %s: segmentos de 44 px y el elegido en superficie', (tema) => {
+  it.each(TEMAS)('tema %s: segmentos de 44 px y el elegido en primaryBg', (tema) => {
     conTema(tema)
     render(<Segmented accessibilityLabel="Entrega" options={[...OPCIONES]} value="retiro" onChange={jest.fn()} />)
     for (const radio of screen.getAllByRole('radio')) {
       expect(estilo(radio).minHeight).toBeGreaterThanOrEqual(44)
     }
-    expect(estilo(screen.getByRole('radio', { name: 'Retiro' })).backgroundColor).toBe(themeColors[tema].surface)
+    expect(estilo(screen.getByRole('radio', { name: 'Retiro' })).backgroundColor).toBe(themeColors[tema].primaryBg)
   })
 })

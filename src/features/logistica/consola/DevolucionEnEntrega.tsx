@@ -29,11 +29,13 @@ export function DevolucionEnviada({ onSeguir }: { onSeguir: () => void }) {
   const c = useColors()
   return (
     <View accessibilityLabel="Devolución enviada" style={{ gap: space[3], alignItems: 'center', paddingTop: space[6] }}>
-      <CircleCheck size={56} color={c.brandInk} strokeWidth={2.5} />
+      <View style={{ width: 96, height: 96, borderRadius: radii.pastilla, backgroundColor: c.teal, alignItems: 'center', justifyContent: 'center' }}>
+        <CircleCheck size={56} color={c.ink} strokeWidth={2.5} />
+      </View>
       <Text accessibilityRole="header" style={{ ...typeScale.tituloGrande, color: c.text, textAlign: 'center' }}>Devolución enviada</Text>
       <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>Depósito la va a autorizar cuando reciba la mercadería. Seguí con el cobro.</Text>
       <View style={{ alignSelf: 'stretch' }}>
-        <Button size="xl" label="Seguir con el cobro" onPress={onSeguir} />
+        <Button size="xl" variant="listo" label="Seguir con el cobro" onPress={onSeguir} />
       </View>
     </View>
   )
@@ -75,7 +77,7 @@ export function DevolucionEnEntrega({ renglones, cargando, conError, valores, on
         const id = r.ventaDetalleId ?? ''
         const nombre = r.productoNombre ?? 'Producto'
         return (
-          <View key={id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 2, borderColor: c.border }}>
+          <View key={id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3], paddingVertical: space[3], paddingHorizontal: space[4], borderRadius: radii.fila, backgroundColor: c.surface }}>
             <View style={{ flex: 1 }}>
               <ProductoIdentidad nombre={nombre} marca={r.marca} codigo={r.codigoPropio} />
               <Text style={{ ...typeScale.secundario, ...importe, color: c.textSecondary }}>{`Pidió ${r.cantidadVendida ?? r.cantidadDisponible} · hasta ${r.cantidadDisponible}`}</Text>

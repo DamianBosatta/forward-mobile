@@ -99,13 +99,13 @@ it('hoja Autorizar: los cambios del pedido van en una tarjeta gris (frame 21)', 
 it('hoja Rechazar: "Rechazar" es el único botón rojo; el del pie del detalle no (frame 22)', async () => {
   pintar()
   const enPie = await screen.findByRole('button', { name: 'Rechazar' })
-  expect(StyleSheet.flatten(enPie.props.style).backgroundColor).not.toBe(themeColors.light.dangerStrong)
+  expect(StyleSheet.flatten(enPie.props.style).backgroundColor).not.toBe(themeColors.light.dangerFill)
 
   await userEvent.press(enPie)
   const hoja = within(screen.getByLabelText('Rechazar venta'))
   await userEvent.type(hoja.getByLabelText('Motivo del rechazo · obligatorio'), 'Precio fuera de lista')
-  expect(StyleSheet.flatten(hoja.getByRole('button', { name: 'Rechazar' }).props.style).backgroundColor).toBe(themeColors.light.dangerStrong)
-  expect(StyleSheet.flatten(hoja.getByRole('button', { name: 'Cancelar' }).props.style).backgroundColor).not.toBe(themeColors.light.dangerStrong)
+  expect(StyleSheet.flatten(hoja.getByRole('button', { name: 'Rechazar' }).props.style).backgroundColor).toBe(themeColors.light.dangerFill)
+  expect(StyleSheet.flatten(hoja.getByRole('button', { name: 'Cancelar' }).props.style).backgroundColor).not.toBe(themeColors.light.dangerFill)
 })
 
 it('cargando: esqueletos con la forma de las tarjetas en lugar de la ruedita (frame 23)', async () => {

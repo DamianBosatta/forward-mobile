@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { AppState, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
+import { AppState, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions } from "expo-router/react-navigation"
 import { Plus, Search } from 'lucide-react-native'
@@ -10,9 +10,11 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client/types'
 import { Button, StatusChip, TopBar, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
+import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { diaArgentina, msHastaProximaMedianocheArgentina, partesArgentina } from '@/core/utils/fecha'
 import { useHojasDeRuta } from '@/libs/api-client/logistica'
 import { DepositoSesion } from '@/features/deposito-sesion'
+import { useAccionAvisos } from '@/core/navigation/useAccionAvisos'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
 import { useCifrasGenerales, useDashboardResumen } from '../api/queries'
 import { PulsoDelNegocio } from './PulsoDelNegocio'
@@ -28,6 +30,7 @@ const dos = (n: number) => String(n).padStart(2, '0')
 export function InicioScreen() {
   const c = useColors()
   const router = useRouter()
+  const accionAvisos = useAccionAvisos()
   const navigation = useNavigation()
   const insetInferior = useInsetInferior()
   const { width, isTablet } = useResponsive()
@@ -107,7 +110,7 @@ export function InicioScreen() {
         title={`Hola, ${nombre.split(' ')[0] || ''}`.trim()}
         subtitle={`${DIAS[hoy.diaSemana]} ${hoy.dia} de ${MESES[hoy.mes]}`}
         leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
-        actions={[{ icon: Search, accessibilityLabel: 'Buscar', onPress: () => router.push('/buscar') }]}
+        actions={[{ icon: Search, accessibilityLabel: 'Buscar', onPress: () => router.push('/buscar') }, accionAvisos]}
       />
       <ScrollView
         testID="inicio-scroll"
@@ -189,12 +192,12 @@ function FilaDeVenta({ venta: v, onPress }: { venta: Venta; onPress: () => void 
   const monto = formatImporte(v.totalAmount)
   const chip = chipForEstado('venta', v.estado)
   return (
-    <Pressable
+    <PressableFx
       accessibilityRole="button"
       accessibilityLabel={[numeroYHora, direccion, nombre, monto, chip?.label].filter(Boolean).join(', ')}
       onPress={onPress}
       android_ripple={{ color: c.surface2 }}
-      style={{ minHeight: 64, flexDirection: 'row', alignItems: 'flex-start', gap: space[3], paddingVertical: space[3], paddingHorizontal: space[4] }}
+      style={{ minHeight: 68, flexDirection: 'row', alignItems: 'flex-start', gap: space[3], paddingVertical: space[4], paddingHorizontal: space[5] }}
     >
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={[typeScale.cuerpoDestacado, { color: c.text }]} numberOfLines={2}>{direccion}</Text>
@@ -202,9 +205,9 @@ function FilaDeVenta({ venta: v, onPress }: { venta: Venta; onPress: () => void 
         <Text style={[typeScale.secundario, { color: c.textSecondary }]} numberOfLines={1}>{numeroYHora}</Text>
       </View>
       <View style={{ alignItems: 'flex-end', gap: space[1] }}>
-        <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]} numberOfLines={1}>{monto}</Text>
+        <Text style={[typeScale.textoFila, importe, { color: c.text }]} numberOfLines={1}>{monto}</Text>
         {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
       </View>
-    </Pressable>
+    </PressableFx>
   )
 }

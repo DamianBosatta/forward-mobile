@@ -22,12 +22,13 @@ export function TiraDeDias({ cab }: { cab: Pick<CabeceraVentaEstado, 'tira' | 's
             accessibilityState={{ selected: sel, disabled: !d.habil }}
             accessibilityLabel={`${d.nombre} ${d.numero}${d.habil ? '' : `, sin entregas${d.feriado ? ` (${d.feriado})` : ''}`}`}
             onPress={() => cab.setFecha(d.dia)}
-            style={{ width: 56, minHeight: 64, alignItems: 'center', justifyContent: 'center', borderRadius: radii.campo, borderWidth: 1,
-              borderColor: sel ? c.brand : c.border, backgroundColor: sel ? c.brandSoft : d.habil ? c.surface : c.surface2 }}
+            android_ripple={{ color: c.surfaceAlt }}
+            style={{ width: 56, minHeight: 64, alignItems: 'center', justifyContent: 'center', borderRadius: radii.cantidad,
+              backgroundColor: sel ? c.lime : d.habil ? c.surface : c.surfaceAlt }}
           >
             {[String(d.numero), d.feriado ? 'feriado' : d.nombre].map((t, i) => (
               <Text key={i} style={{ ...(i === 0 ? typeScale.cuerpoDestacado : typeScale.secundario),
-                color: sel ? c.brandInk : d.habil ? c.text : c.textSecondary, textDecorationLine: d.habil ? 'none' : 'line-through' }}>{t}</Text>
+                color: sel ? c.ink : d.habil ? c.text : c.textSecondary, textDecorationLine: d.habil ? 'none' : 'line-through' }}>{t}</Text>
             ))}
           </Pressable>
         )

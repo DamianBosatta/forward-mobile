@@ -32,7 +32,7 @@ export function EscanearEtiqueta({ visible, etiquetas, marcadas, onLeida, onCerr
   const [flash, setFlash] = useState(false)
   const [mensaje, setMensaje] = useState<{ tono: 'exito' | 'advertencia' | 'peligro'; texto: string } | null>(null)
   const ultima = useRef(0)
-  const claro = c.onTopBarStrong
+  const claro = c.onPanelOscuroStrong
 
   const alLeer = ({ data }: { data: string }) => {
     const ahora = Date.now()
@@ -58,7 +58,7 @@ export function EscanearEtiqueta({ visible, etiquetas, marcadas, onLeida, onCerr
   return (
     <Modal visible={visible} animationType="slide" statusBarTranslucent navigationBarTranslucent onRequestClose={onCerrar}>
       <View accessibilityLabel="Escanear etiqueta" style={{ flex: 1, backgroundColor: c.bg, paddingTop: top }}>
-        <View style={{ height: 290, backgroundColor: c.topBar }}>
+        <View style={{ height: 290, backgroundColor: c.panelOscuro }}>
           {!sinPermiso ? (
             <CameraView style={StyleSheet.absoluteFill} facing="back" flash={flash ? 'on' : 'off'} barcodeScannerSettings={{ barcodeTypes: ['qr', 'code128', 'code39', 'ean13'] }} onBarcodeScanned={alLeer} />
           ) : (

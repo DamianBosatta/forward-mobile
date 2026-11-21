@@ -23,8 +23,8 @@ interface Props {
 type ProveedorDeLista = ReturnType<typeof useProveedores>['proveedores'][number]
 
 /** Fila memoizada: solo se repinta si cambia el proveedor, su posición o si pasa a estar elegido. */
-const FilaProveedor = memo(function FilaProveedor({ proveedor, seleccionado, primera, ultima, onElegir }: { proveedor: ProveedorDeLista; seleccionado: boolean; primera: boolean; ultima: boolean; onElegir: (id: string) => void }) {
-  return <ProveedorCard proveedor={proveedor} seleccionado={seleccionado} primera={primera} ultima={ultima} onPress={() => onElegir(proveedor.id)} />
+const FilaProveedor = memo(function FilaProveedor({ proveedor, seleccionado, onElegir }: { proveedor: ProveedorDeLista; seleccionado: boolean; onElegir: (id: string) => void }) {
+  return <ProveedorCard proveedor={proveedor} seleccionado={seleccionado} onPress={() => onElegir(proveedor.id)} />
 })
 
 /**
@@ -36,12 +36,11 @@ export function ElegirProveedorPago({ seleccionadoId, onElegir, onContinuar, pue
   const [busqueda, setBusqueda] = useState('')
   const { proveedores, isLoading, error, refetch, cargarMas } = useProveedores(busqueda)
   const buscando = busqueda.trim().length > 0
-  const total = proveedores.length
   const renderProveedor = useCallback(
-    ({ item, index }: { item: (typeof proveedores)[number]; index: number }) => (
-      <FilaProveedor proveedor={item} seleccionado={item.id === seleccionadoId} primera={index === 0} ultima={index === total - 1} onElegir={onElegir} />
+    ({ item }: { item: (typeof proveedores)[number] }) => (
+      <FilaProveedor proveedor={item} seleccionado={item.id === seleccionadoId} onElegir={onElegir} />
     ),
-    [seleccionadoId, total, onElegir],
+    [seleccionadoId, onElegir],
   )
 
   return (
@@ -77,7 +76,7 @@ export function ElegirProveedorPago({ seleccionadoId, onElegir, onContinuar, pue
       />
       <PieFijo>
         {!puedePagar ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_COBRO}</MotivoDeshabilitado> : null}
-        <Button label="Continuar a qué pagás" iconoFinal={ChevronRight} disabled={!seleccionadoId || !puedePagar} onPress={onContinuar} />
+        <Button size="lg" label="Continuar a qué pagás" iconoFinal={ChevronRight} disabled={!seleccionadoId || !puedePagar} onPress={onContinuar} />
       </PieFijo>
     </View>
   )

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { Pressable, Switch, Text, View } from 'react-native'
 import { useVerificarStockFiscal } from '@/libs/api-client/ventas'
 import type { components } from '@/libs/api-client/generated/schema'
-import { space, typeScale, useColors } from '@/libs/theme'
+import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice } from '@/core/ui/fw'
 import type { LineaCarrito } from '../lib/carrito'
 
@@ -43,14 +43,15 @@ export function ConFactura({ conFactura, onChange, lineas }: { conFactura: boole
       accessibilityState={{ checked: valor, disabled: conFactura === undefined }}
       disabled={conFactura === undefined}
       onPress={() => onChange(!valor)}
-      style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space[3], borderTopWidth: 1, borderBottomWidth: 1, borderColor: c.border }}
+      android_ripple={{ color: c.surfaceAlt }}
+      style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], borderRadius: radii.fila, backgroundColor: c.surface }}
     >
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Con factura</Text>
         {conFactura !== undefined ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`La deuda va a la cuenta ${cuentaDeLaVenta(conFactura)} del cliente.`}</Text> : null}
       </View>
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none">
-        <Switch value={valor} disabled={conFactura === undefined} trackColor={{ false: c.borderStrong, true: c.action }} />
+        <Switch value={valor} disabled={conFactura === undefined} trackColor={{ false: c.borderStrong, true: c.teal }} thumbColor={valor ? c.ink : c.surface} />
       </View>
     </Pressable>
     {faltantes.length > 0 ? (

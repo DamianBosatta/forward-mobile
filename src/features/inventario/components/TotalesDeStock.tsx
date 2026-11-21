@@ -8,12 +8,12 @@ import { useValorDelStockACosto } from '../hooks/useConsultasDeStock'
 
 export type VistaDeStock = 'tarjetas' | 'lista'
 
-function Total({ label, valor }: { label: string; valor: string }) {
+function Total({ label, valor, protagonista = false }: { label: string; valor: string; protagonista?: boolean }) {
   const c = useColors()
   return (
-    <View accessible accessibilityLabel={`${label}: ${valor}`} style={{ flex: 1, minWidth: 0, backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[3], gap: space[1] }}>
-      <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary }]}>{label}</Text>
-      <Text style={[typeScale.titulo, importe, { color: c.text }]}>{valor}</Text>
+    <View accessible accessibilityLabel={`${label}: ${valor}`} style={{ flex: 1, minWidth: 0, minHeight: 112, justifyContent: 'space-between', backgroundColor: protagonista ? c.lime : c.surface, borderRadius: radii.tile, padding: space[4], gap: space[1] }}>
+      <Text numberOfLines={1} style={[typeScale.cuerpoDestacado, { color: protagonista ? c.ink : c.textSecondary }]}>{label}</Text>
+      <Text style={[typeScale.numeroProtagonista, importe, { color: protagonista ? c.ink : c.text }]}>{valor}</Text>
     </View>
   )
 }
@@ -48,7 +48,7 @@ export function TotalesDeStock({ resumen, conError, vista, valorCosto }: Props) 
       </Text>
     )
   }
-  if (!resumen) return <View testID="totales-cargando" style={{ height: 72, marginHorizontal: space[4], marginTop: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface2 }} />
+  if (!resumen) return <View testID="totales-cargando" style={{ height: 72, marginHorizontal: space[4], marginTop: space[3], borderRadius: radii.tile, backgroundColor: c.surfaceAlt }} />
 
   const { articulos, conStock, sinStock, enAlerta } = resumen.totales
   const lista = vista === 'lista'
@@ -63,7 +63,7 @@ export function TotalesDeStock({ resumen, conError, vista, valorCosto }: Props) 
     <View style={{ gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }}>
       {filas.map((fila) => (
         <View key={fila[0].label} style={{ flexDirection: 'row', gap: space[2] }}>
-          {fila.map((t) => <Total key={t.label} label={t.label} valor={mostrarNumero(t.valor)} />)}
+          {fila.map((t) => <Total key={t.label} label={t.label} valor={mostrarNumero(t.valor)} protagonista={t.label === 'Artículos'} />)}
         </View>
       ))}
       {lista && valorCosto ? <ValorACosto depositoId={valorCosto.depositoId} /> : null}

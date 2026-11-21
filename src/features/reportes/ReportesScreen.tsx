@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { ChevronDown } from 'lucide-react-native'
-import { FONT, importe as cifras, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
+import { FONT, importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { BottomSheet, FormContainer, Notice, TopBar, TotalsRow, formatImporte, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { ErrorDeConsulta, esqueletoDeFilas } from '@/core/ui/estados'
@@ -73,7 +73,7 @@ export function ReportesScreen() {
               accessibilityLabel={`Vendedor: ${vendedor?.nombre ?? 'Todos'}`}
               accessibilityHint="Elegí de qué vendedor ver los reportes"
               onPress={() => setEligiendo(true)}
-              style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], borderRadius: radii.campo, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface }}
+              style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], borderRadius: radii.pastilla, backgroundColor: c.surface }}
             >
               <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Vendedor</Text>
               <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, flex: 1 }} numberOfLines={1}>{vendedor?.nombre ?? 'Todos'}</Text>
@@ -110,9 +110,9 @@ export function ReportesScreen() {
                 accessibilityLabel={v.nombre}
                 accessibilityState={{ checked: activo }}
                 onPress={() => { setVendedor(v.id ? v : null); setEligiendo(false) }}
-                style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.campo, backgroundColor: activo ? c.brandSoft : 'transparent' }}
+                style={{ minHeight: 48, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.fila, backgroundColor: activo ? c.primaryBg : 'transparent' }}
               >
-                <Text style={{ ...(activo ? typeScale.cuerpoDestacado : typeScale.cuerpo), color: activo ? c.brandInk : c.text }}>{v.nombre}</Text>
+                <Text style={{ ...(activo ? typeScale.cuerpoDestacado : typeScale.cuerpo), color: activo ? c.primaryFg : c.text }}>{v.nombre}</Text>
               </Pressable>
             )
           })}
@@ -126,30 +126,28 @@ export function ReportesScreen() {
 
 function Tarjeta({ titulo, testID, children }: { titulo: string; testID: string; children: React.ReactNode }) {
   const c = useColors()
-  const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   return (
-    <View testID={testID} style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[2], ...sombra }}>
-      <Text accessibilityRole="header" style={{ ...typeScale.secundario, ...semibold, color: c.textSecondary }}>{titulo}</Text>
+    <View testID={testID} style={{ backgroundColor: c.surface, borderRadius: radii.tarjetaGrande, padding: space[5], gap: space[2] }}>
+      <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{titulo}</Text>
       {children}
     </View>
   )
 }
 
 /** Tarjeta de cifra de apoyo (Cobrado / Por cobrar): etiqueta, importe y una línea de apoyo. */
-function Cifra({ etiqueta, importe, apoyo, testID }: { etiqueta: string; importe: number; apoyo?: string; testID: string }) {
+function Cifra({ etiqueta, importe, apoyo, testID, hecho = false }: { etiqueta: string; importe: number; apoyo?: string; testID: string; hecho?: boolean }) {
   const c = useColors()
-  const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const monto = formatImporte(importe)
   return (
     <View
       testID={testID}
       accessible
       accessibilityLabel={[`${etiqueta}: ${monto}`, apoyo].filter(Boolean).join(', ')}
-      style={{ flexGrow: 1, flexBasis: '45%', backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4], gap: space[1], ...sombra }}
+      style={{ flexGrow: 1, flexBasis: '45%', backgroundColor: hecho ? c.teal : c.surface, borderRadius: radii.tile, padding: space[5], gap: space[1] }}
     >
-      <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{etiqueta}</Text>
-      <Text style={{ ...typeScale.titulo, color: c.text }}>{monto}</Text>
-      {apoyo ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{apoyo}</Text> : null}
+      <Text style={{ ...typeScale.cuerpoDestacado, color: hecho ? c.ink : c.textSecondary }}>{etiqueta}</Text>
+      <Text style={{ ...typeScale.tituloTarjeta, ...cifras, color: hecho ? c.ink : c.text }}>{monto}</Text>
+      {apoyo ? <Text style={{ ...typeScale.secundario, color: hecho ? c.ink : c.textSecondary }}>{apoyo}</Text> : null}
     </View>
   )
 }
@@ -164,16 +162,16 @@ function FranjaVendido({ r }: { r: ResumenVendedor }) {
       testID="reporte-ventas"
       accessible
       accessibilityLabel={`Vendido: ${monto}, ${plural(ventas.operaciones, 'venta', 'ventas')}`}
-      style={{ backgroundColor: c.topBar, borderRadius: radii.tarjeta, padding: space[5], gap: space[1] }}
+      style={{ backgroundColor: c.panelOscuro, borderRadius: radii.tarjetaGrande, padding: space[5], gap: space[1] }}
     >
-      <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>Vendido</Text>
-      <Text style={{ ...typeScale.cifra, color: c.onTopBarStrong, ...cifras }} adjustsFontSizeToFit numberOfLines={1}>{monto}</Text>
-      <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>
+      <Text style={{ ...typeScale.secundario, color: c.onPanelOscuro }}>Vendido</Text>
+      <Text style={{ ...typeScale.cifra, color: c.onPanelOscuroStrong, ...cifras }} adjustsFontSizeToFit numberOfLines={1}>{monto}</Text>
+      <Text style={{ ...typeScale.secundario, color: c.onPanelOscuro }}>
         {`${plural(ventas.operaciones, 'venta', 'ventas')} · Ticket promedio ${formatImporte(ventas.ticketPromedio)}`}
       </Text>
       {/* Sin CAP_VER_COSTOS el servidor no lo manda: el margen revela el costo. */}
       {ventas.margenBrutoPorcentaje != null ? (
-        <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>{`Margen bruto ${porcentaje(ventas.margenBrutoPorcentaje)}`}</Text>
+        <Text style={{ ...typeScale.secundario, color: c.onPanelOscuro }}>{`Margen bruto ${porcentaje(ventas.margenBrutoPorcentaje)}`}</Text>
       ) : null}
     </View>
   )
@@ -186,7 +184,7 @@ function Secciones({ r }: { r: ResumenVendedor }) {
     <>
       <FranjaVendido r={r} />
       <View testID="reporte-cifras" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[3] }}>
-        <Cifra testID="cifra-cobrado" etiqueta="Cobrado" importe={ventas.cobrado} apoyo="de estas ventas" />
+        <Cifra testID="cifra-cobrado" etiqueta="Cobrado" hecho importe={ventas.cobrado} apoyo="de estas ventas" />
         <Cifra testID="cifra-por-cobrar" etiqueta="Por cobrar" importe={cobros.total} apoyo={plural(cobros.clientes, 'cliente con deuda', 'clientes con deuda')} />
       </View>
       <Tarjeta titulo="Mi cuenta de comisiones" testID="reporte-comisiones">
@@ -194,7 +192,7 @@ function Secciones({ r }: { r: ResumenVendedor }) {
         {/* Con el signo menos escrito: la reversión resta. */}
         <TotalsRow label="Reversiones" importe={comisiones.reversiones ? -Math.abs(comisiones.reversiones) : comisiones.reversiones} />
         <TotalsRow label="Pagado" importe={comisiones.pagado} />
-        <TotalsRow label="Neto del mes" importe={comisiones.neto} destacado />
+        <TotalsRow label="Neto del mes" importe={comisiones.neto} destacado tono="acento" />
         {/* El saldo de la cuenta es el de hoy, no el del mes. */}
         <TotalsRow label="A cobrar hoy" importe={comisiones.saldoActual} />
       </Tarjeta>
@@ -209,7 +207,7 @@ function Secciones({ r }: { r: ResumenVendedor }) {
                 key={d.socioId}
                 accessible
                 accessibilityLabel={`${d.cliente}, debe ${formatImporte(d.deuda)}`}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], paddingVertical: space[2], borderTopWidth: 1, borderTopColor: c.border }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], padding: space[3], borderRadius: radii.fila, backgroundColor: c.surfaceAlt }}
               >
                 {/* El cliente se identifica por la dirección; la razón social va aparte. */}
                 <View style={{ flex: 1, minWidth: 0 }}>

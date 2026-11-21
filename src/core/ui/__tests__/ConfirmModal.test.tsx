@@ -22,4 +22,10 @@ describe.each(['light', 'dark'] as const)('ConfirmModal con los colores del tema
     expect(fondoDe('Anular')).toBe(c.dangerStrong)
     expect(StyleSheet.flatten(screen.getByText('Anular').props.style).color).toBe(c.onDangerStrong)
   })
+
+  it.each(['success', 'warning', 'info'] as const)('la variante %s escribe el botón con onState (tinta) sobre su relleno', (variant) => {
+    render(<ConfirmModal visible variant={variant} title="Listo" confirmLabel="Aceptar" onConfirm={jest.fn()} onCancel={jest.fn()} />)
+    expect(StyleSheet.flatten(screen.getByText('Aceptar').props.style).color).toBe(c.onState)
+    expect(fondoDe('Aceptar')).toBe(c[variant])
+  })
 })

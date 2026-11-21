@@ -1,4 +1,4 @@
-import { themeColors, useThemeStore, type ForwardColors } from '../theme'
+import { radii, themeColors, typeScale, useThemeStore, type ForwardColors } from '../theme'
 
 // Contraste WCAG 2.x: (L1 + 0,05) / (L2 + 0,05) con luminancia relativa sRGB.
 function luminancia(hex: string): number {
@@ -26,6 +26,8 @@ function pares(c: ForwardColors): Par[] {
     ['textDisabled', c.textDisabled],
     ['brandInk', c.brandInk],
     ['primary', c.primary],
+    ['accentText', c.accentText],
+    ['danger', c.danger],
   ]
   const fondos: [string, string][] = [
     ['surface', c.surface],
@@ -41,11 +43,26 @@ function pares(c: ForwardColors): Par[] {
   // Field con error: texto y borde en chip.anulado.text sobre ambos fondos del campo.
   lista.push(['chip anulado text sobre surface', c.chip?.anulado.text ?? '', c.surface])
   lista.push(['chip anulado text sobre surface2', c.chip?.anulado.text ?? '', c.surface2])
+  // Spec FWD (00-spec.md, sección 2): sobre lime, teal y estados el texto va siempre en tinta; blanco solo sobre petróleo.
+  lista.push(['ink sobre lime', c.ink, c.lime])
+  lista.push(['ink sobre teal', c.ink, c.teal])
+  lista.push(['ink sobre warning', c.onState, c.warning])
+  lista.push(['ink sobre dangerFill', c.onState, c.dangerFill])
+  lista.push(['primaryFg sobre primaryBg', c.primaryFg, c.primaryBg])
+  lista.push(['onFab sobre fabBg', c.onFab, c.fabBg])
+  lista.push(['brandInk sobre brandSoft', c.brandInk, c.brandSoft])
+  lista.push(['text sobre brandSoft', c.text, c.brandSoft])
+  lista.push(['text sobre surfaceAlt', c.text, c.surfaceAlt])
+  lista.push(['textSecondary sobre surfaceAlt', c.textSecondary, c.surfaceAlt])
   lista.push(['onAction sobre action', c.onAction, c.action])
   lista.push(['onPrimary sobre primary', c.onPrimary, c.primary])
   lista.push(['onPrimary sobre primaryHover', c.onPrimary, c.primaryHover])
   lista.push(['onTopBar sobre topBar', c.onTopBar, c.topBar])
   lista.push(['onTopBarStrong sobre topBar', c.onTopBarStrong, c.topBar])
+  // Receta FWD .round: íconos y texto de los botones del encabezado sobre surface.
+  lista.push(['onTopBarStrong sobre surface (botón redondo)', c.onTopBarStrong, c.surface])
+  lista.push(['onPanelOscuro sobre panelOscuro', c.onPanelOscuro, c.panelOscuro])
+  lista.push(['onPanelOscuroStrong sobre panelOscuro', c.onPanelOscuroStrong, c.panelOscuro])
   lista.push(['onDangerStrong sobre dangerStrong', c.onDangerStrong, c.dangerStrong])
   lista.push(['blanco sobre dangerStrong', '#FFFFFF', c.dangerStrong])
   for (const [estado, chip] of Object.entries(c.chip ?? {})) {
@@ -53,6 +70,8 @@ function pares(c: ForwardColors): Par[] {
     // Notice: el cuerpo usa `text` sobre el fondo del chip (el icono usa chip.text, ya cubierto arriba).
     lista.push([`text sobre chip ${estado}`, c.text, chip.bg])
   }
+  // Chips FWD §5: relleno pleno con texto ink (pendiente: surfaceAlt con text).
+  for (const [estado, chip] of Object.entries(c.chipFill)) lista.push([`chipFill ${estado}`, chip.text, chip.bg])
   return lista
 }
 
@@ -135,6 +154,17 @@ describe('global.css (nativewind) usa los mismos valores que libs/theme.ts', () 
       'color-text-muted': c.textMuted,
       'color-text-disabled': c.textDisabled,
       'color-brand': c.brand,
+      'color-lime': c.lime,
+      'color-teal': c.teal,
+      'color-ink': c.ink,
+      'color-surface-alt': c.surfaceAlt,
+      'color-accent-text': c.accentText,
+      'color-primary-bg': c.primaryBg,
+      'color-primary-fg': c.primaryFg,
+      'color-fab-bg': c.fabBg,
+      'color-danger': c.danger,
+      'color-danger-fill': c.dangerFill,
+      'color-warning': c.warning,
       'color-brand-ink': c.brandInk,
       'color-brand-soft': c.brandSoft,
       'color-action': c.action,
@@ -143,5 +173,78 @@ describe('global.css (nativewind) usa los mismos valores que libs/theme.ts', () 
       'color-top-bar': c.topBar,
       'color-on-top-bar': c.onTopBar,
     })
+  })
+})
+
+// Valores aprobados por el dueño (docs/mobile/restyle-fwd/00-spec.md, secciones 2 y 4). Defienden la regla escrita.
+describe('tokens FWD de la spec', () => {
+  it.each(['light', 'dark'] as const)('la barra superior va sobre el fondo de la pantalla, sin franja oscura (receta .header) en el tema %s', (tema) => {
+    const c = themeColors[tema]
+    expect([c.topBar, c.onTopBar, c.onTopBarStrong, c.topBarBorder]).toEqual([c.bg, c.textSecondary, c.text, c.border])
+  })
+  it.each(['light', 'dark'] as const)('marca igual en el tema %s', (tema) => {
+    const c = themeColors[tema]
+    expect([c.lime, c.teal, c.ink]).toEqual(['#E0EB3C', '#00AB96', '#201E1E'])
+    expect([c.warning, c.dangerFill, c.onState]).toEqual(['#FFB020', '#FF6B5E', '#201E1E'])
+  })
+
+  it('tema claro', () => {
+    const c = themeColors.light
+    expect([c.bg, c.surface, c.surfaceAlt, c.text, c.textMuted, c.border]).toEqual(
+      ['#F1F2EE', '#FFFFFF', '#E2E3DE', '#201E1E', '#5A5757', '#E2E3DE'],
+    )
+    expect([c.accentText, c.primaryBg, c.primaryFg, c.fabBg]).toEqual(['#00796A', '#00796A', '#FFFFFF', '#E0EB3C'])
+  })
+
+  it('tema oscuro', () => {
+    const c = themeColors.dark
+    expect([c.bg, c.surface, c.surfaceAlt, c.text, c.textMuted, c.border]).toEqual(
+      ['#141213', '#2A2728', '#3A3637', '#F5F5F1', '#B5B2B3', '#454142'],
+    )
+    expect([c.accentText, c.primaryBg, c.primaryFg, c.fabBg]).toEqual(['#E0EB3C', '#E0EB3C', '#201E1E', '#00AB96'])
+  })
+
+  it('success e info siguen como hoy (S5: la flecha de Tesorería conserva verde y rojo)', () => {
+    for (const tema of ['light', 'dark'] as const) {
+      expect(themeColors[tema].success).toBe('#21C45D')
+      expect(themeColors[tema].info).toBe('#0DA2E7')
+    }
+  })
+
+  it('el teal de marca nunca es color de texto', () => {
+    for (const tema of ['light', 'dark'] as const) {
+      const c = themeColors[tema]
+      for (const texto of [c.text, c.textMuted, c.brandInk, c.primary, c.accentText, c.danger]) {
+        expect(texto.toUpperCase()).not.toBe(c.teal)
+      }
+    }
+  })
+
+  it('los fondos de estado no son color de texto: danger legado se lee sobre surface y bg', () => {
+    for (const tema of ['light', 'dark'] as const) {
+      const c = themeColors[tema]
+      expect(contraste(c.danger, c.surface)).toBeGreaterThanOrEqual(4.5)
+      expect(contraste(c.danger, c.bg)).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it('los radios son los de la spec (sección 4)', () => {
+    expect([radii.tarjetaGrande, radii.tile, radii.fila, radii.cantidad, radii.pastilla]).toEqual([30, 28, 22, 16, 9999])
+  })
+})
+
+describe('typeScale (spec FWD §3)', () => {
+  it('titulo va en peso 800', () => {
+    expect(typeScale.titulo).toMatchObject({ fontSize: 20, fontWeight: '800' })
+  })
+  it('el texto de chipFill es ink salvo en pendiente (text sobre surfaceAlt)', () => {
+    for (const modo of ['light', 'dark'] as const) {
+      const c = themeColors[modo]
+      expect(c.chipFill.confirmado.text).toBe(c.ink)
+      expect(c.chipFill.entregado.text).toBe(c.ink)
+      expect(c.chipFill.porAutorizar.text).toBe(c.onState)
+      expect(c.chipFill.anulado.text).toBe(c.onState)
+      expect(c.chipFill.pendiente).toEqual({ bg: c.surfaceAlt, text: c.text })
+    }
   })
 })

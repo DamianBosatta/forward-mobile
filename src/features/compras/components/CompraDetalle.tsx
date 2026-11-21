@@ -12,7 +12,7 @@ import type { CompraDto } from '@/libs/api-client'
 import { useSocio } from '@/libs/api-client/socios'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { BottomSheet, Button, Field, Notice, PieFijo, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
-import { PasosDeEstado } from '@/core/ui/fw/PasosDeEstado'
+import { TarjetaDeAvance } from '@/features/compras/components/PasosCompra'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
 import { diaArgentina, hoyTexto } from '@/core/utils/fecha'
 import { mostrarNumero } from '@/core/utils/numero'
@@ -32,13 +32,13 @@ import { RecibirCompra, avisoDeRecepcion } from '@/features/compras/components/R
 import { CONSECUENCIA, accionesDeDetalle, pasosDeCompra } from '@/features/compras/lib/recepcion'
 import { invalidarInicio, invalidarPorCambioDeCompra } from '@/libs/api-client/invalidaciones'
 
-/** Una fila rótulo / valor de las tarjetas del detalle. */
+/** Una fila rótulo / valor de las tarjetas del detalle (receta .kv del FWD: rótulo en muted, valor en 800 con cifras tabulares). */
 function FilaDato({ k, v }: { k: string; v: string }) {
   const c = useColors()
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[3], paddingVertical: space[1] }}>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[3], paddingVertical: space[1] }}>
       <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{k}</Text>
-      <Text style={[typeScale.secundario, { color: c.text, flexShrink: 1, textAlign: 'right' }]}>{v}</Text>
+      <Text style={[typeScale.secundario, { fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: typeScale.cuerpoDestacado.fontWeight }, cifras, { color: c.text, flexShrink: 1, textAlign: 'right' }]}>{v}</Text>
     </View>
   )
 }
@@ -196,9 +196,14 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
         subtitle={ddmmaaaa(diaArgentina(Date.parse(compra.fecha)))}
         leading={{ kind: 'atras', onPress: volver }}
       />
-      {pasos ? <PasosDeEstado pasos={pasos} accessibilityLabel="Estado de la compra" /> : null}
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: hayPie ? space[6] : space[6] + insetInferior }}>
-        <View style={{ gap: space[1], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+        {pasos ? (
+          <TarjetaDeAvance
+            accessibilityLabel="Estado de la compra"
+            pasos={pasos.map((p) => ({ ...p, accessibilityLabel: `${p.label}, ${p.estado === 'hecho' ? 'hecho' : p.estado === 'actual' ? 'paso actual' : 'pendiente'}` }))}
+          />
+        ) : null}
+        <View style={{ gap: space[1], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
             <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text, flexShrink: 1 }]}>{compra.razonSocialProveedor}</Text>
             {(() => { const chip = chipForEstado('compra', compra.estado); return chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null })()}
@@ -210,8 +215,8 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
         {error && hoja === null ? <Notice tone="peligro">{error}</Notice> : null}
         {compra.motivoCancelacion ? <Notice tone="info" title="Cancelada.">{compra.motivoCancelacion}</Notice> : null}
         {compra.motivoAnulacion ? <Notice tone="info" title="Recepción anulada.">{compra.motivoAnulacion}</Notice> : null}
-        <View style={{ gap: space[1], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
-          <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text }]}>Recepción</Text>
+        <View style={{ gap: space[1], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}>
+          <Text accessibilityRole="header" style={[typeScale.titulo, { color: c.text, marginBottom: space[1] }]}>Recepción</Text>
           <FilaDato k="Depósito" v={compra.nombreDeposito} />
           {fechaHoraTexto(compra.fecha) ? <FilaDato k="Pedido" v={fechaHoraTexto(compra.fecha)!} /> : null}
           {fechaHoraTexto(compra.fechaRecepcion) ? <FilaDato k="Recibida" v={fechaHoraTexto(compra.fechaRecepcion)!} /> : null}
@@ -221,12 +226,12 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
           {compra.condicionPago?.descripcion ? <FilaDato k="Plazo de pago" v={compra.condicionPago.descripcion} /> : null}
           <FilaDato k="Con factura" v={compra.conFactura ? 'Sí' : 'No'} />
         </View>
-        <View style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>
-          <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text, paddingHorizontal: space[4], paddingTop: space[3] }]}>
+        <View style={{ gap: space[2] }}>
+          <Text accessibilityRole="header" style={[typeScale.titulo, { color: c.text, paddingHorizontal: space[1], paddingTop: space[2] }]}>
             {`Productos · ${compra.detalles.length}`}
           </Text>
-          {compra.detalles.map((d, i) => (
-            <View key={d.id} accessible style={{ paddingHorizontal: space[4], paddingVertical: space[3], gap: space[1], borderTopWidth: i ? 1 : 0, borderTopColor: c.border }}>
+          {compra.detalles.map((d) => (
+            <View key={d.id} accessible style={{ paddingHorizontal: space[4], paddingVertical: space[3], gap: space[1], borderRadius: radii.fila, backgroundColor: c.surface }}>
               <ProductoIdentidad nombre={d.nombreProducto} marca={d.marca} codigo={d.codigoPropio} />
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2] }}>
                 <View style={{ flexShrink: 1 }}>
@@ -238,7 +243,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
             </View>
           ))}
         </View>
-        <View style={{ gap: space[1], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+        <View style={{ gap: space[1], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}>
           <TotalsRow label="Subtotal" importe={compra.subtotalBrutoAmount - compra.descuentoTotalAmount} />
           <TotalsRow label="Gastos operativos" importe={compra.gastosOperativos} />
           <TotalsRow label="Total" importe={compra.totalAmount} destacado />
@@ -262,7 +267,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
             onPress={() => router.push(`/(tabs)/compras/${compra.compraFaltanteId}` as never)} />
         ) : null}
         {compra.fotoFacturaProveedorUrl || puedeCambiarFoto ? (
-          <View style={{ gap: space[2], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+          <View style={{ gap: space[2], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}>
             <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Factura del proveedor</Text>
             {compra.fotoFacturaProveedorUrl ? (
               <ExpoImage source={{ uri: compra.fotoFacturaProveedorUrl }} cachePolicy="memory-disk" accessibilityLabel="Foto de la factura del proveedor"
@@ -283,9 +288,9 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
       </ScrollView>
       {hayBarra ? (
         <PieFijo>
-          {acciones.recibir ? <Button label="Recibir mercadería" disabled={ocupado} onPress={() => { setError(null); setAviso(null); setRecibiendoMercaderia(true) }} /> : null}
+          {acciones.recibir ? <Button size="lg" label="Recibir mercadería" disabled={ocupado} onPress={() => { setError(null); setAviso(null); setRecibiendoMercaderia(true) }} /> : null}
           {acciones.confirmar ? (
-            <Button label="Confirmar compra" loading={confirmar.isPending} disabled={ocupado} onPress={() => { void correr(() => confirmar.mutateAsync(compra.id), 'No se confirmó la compra') }} />
+            <Button size="lg" label="Confirmar compra" loading={confirmar.isPending} disabled={ocupado} onPress={() => { void correr(() => confirmar.mutateAsync(compra.id), 'No se confirmó la compra') }} />
           ) : null}
           {acciones.confirmar ? <Button label="Confirmar y recibir" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('confirmarYRecibir')} /> : null}
           {acciones.editar || acciones.cancelar ? (

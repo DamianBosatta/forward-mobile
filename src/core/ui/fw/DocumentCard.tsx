@@ -1,7 +1,8 @@
 import { iniciales } from '@/core/utils/texto'
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
-import { importe as cifras, maxFontScale, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
+import { Text, View } from 'react-native'
+import { importe as cifras, maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
+import { PressableFx } from './PressableFx'
 import { StatusChip } from './StatusChip'
 import { formatImporte } from './formatImporte'
 import type { ChipInfo } from './estadoChip'
@@ -36,10 +37,9 @@ interface DocumentCardProps {
 /** Iniciales (dos letras) para el avatar: la misma regla que las del cliente (`core/utils/texto`). */
 export { iniciales }
 
-/** Tarjeta de documento de la lámina F4 (lista de ventas y compras). En compras el título es el proveedor. */
+/** Tarjeta de documento FWD (lista de ventas y compras): radio de fila, `surface` sin borde ni sombra. En compras el título es el proveedor. */
 export function DocumentCard(p: DocumentCardProps) {
   const c = useColors()
-  const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   const encabezado = `${p.numero} · ${p.vendedor}`
   const pie = p.detalle ? `${p.hora} · ${p.detalle}` : p.hora
   const total = formatImporte(p.importe)
@@ -50,12 +50,12 @@ export function DocumentCard(p: DocumentCardProps) {
     const fechas = [p.fechaHora ? `Pedido ${p.fechaHora}` : null, p.ultimoCambio ? `Último cambio ${p.ultimoCambio}` : null].filter(Boolean) as string[]
     const etiquetaPlana = [p.direccion, p.nombre || encabezado, p.chip?.label, p.detalle || p.hora, ...fechas, total].filter(Boolean).join(', ')
     return (
-      <Pressable
+      <PressableFx
         accessibilityRole="button"
         accessibilityLabel={etiquetaPlana}
         onPress={p.onPress}
-        android_ripple={{ color: c.surface2 }}
-        style={{ minHeight: 44, padding: space[4], gap: space[1], borderRadius: radii.tarjeta, backgroundColor: c.surface, ...sombra }}
+        android_ripple={{ color: c.surfaceAlt }}
+        style={{ minHeight: 68, padding: space[4], gap: space[1], borderRadius: radii.fila, backgroundColor: c.surface }}
       >
         {/* Título y importe en la misma fila: el importe no se parte ni se corre (cifras tabulares, a la derecha, ancho propio). */}
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[3] }}>
@@ -68,24 +68,23 @@ export function DocumentCard(p: DocumentCardProps) {
           <Text numberOfLines={1} style={[secundario, { flexShrink: 1 }]}>{p.detalle || p.hora}</Text>
         </View>
         {fechas.map((f) => <Text key={f} numberOfLines={1} style={[secundario, cifras]}>{f}</Text>)}
-      </Pressable>
+      </PressableFx>
     )
   }
 
   return (
-    <Pressable
+    <PressableFx
       accessibilityRole="button"
       accessibilityLabel={etiqueta}
       onPress={p.onPress}
-      android_ripple={{ color: c.surface2 }}
+      android_ripple={{ color: c.surfaceAlt }}
       style={{
           flexDirection: 'row',
           gap: space[3],
-          minHeight: 44,
+          minHeight: 68,
           padding: space[4],
-          borderRadius: radii.tarjeta,
+          borderRadius: radii.fila,
           backgroundColor: c.surface,
-          ...sombra,
       }}
     >
       <View
@@ -93,12 +92,12 @@ export function DocumentCard(p: DocumentCardProps) {
           width: 44,
           height: 44,
           borderRadius: radii.pastilla,
-          backgroundColor: c.brandSoft,
+          backgroundColor: c.surfaceAlt,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.secundario, { ...pesoSemibold, color: c.brandInk }]}>
+        <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.secundario, { ...pesoSemibold, color: c.accentText }]}>
           {iniciales(p.avatar ?? p.vendedor)}
         </Text>
       </View>
@@ -116,6 +115,6 @@ export function DocumentCard(p: DocumentCardProps) {
           <Text style={[typeScale.titulo, cifras, { color: c.text, textAlign: 'right' }]}>{total}</Text>
         </View>
       </View>
-    </Pressable>
+    </PressableFx>
   )
 }

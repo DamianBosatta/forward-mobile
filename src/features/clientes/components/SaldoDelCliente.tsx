@@ -29,7 +29,7 @@ interface HeroSaldoProps {
 }
 
 /**
- * Hero de saldo (propuesta "Clientes como venta", frames 5, 11 y 13): una sola cifra grande sobre fondo oscuro,
+ * Hero de saldo (propuesta "Clientes como venta", frames 5, 11 y 13): una sola cifra grande sobre la tarjeta lime (texto en ink),
  * lo vencido con la deuda más vieja y la barra del crédito usado. Mobile no calcula vencimientos ni topes:
  * muestra lo que manda el servidor; la barra solo reparte el tope entre usado y disponible.
  */
@@ -43,24 +43,24 @@ export function HeroSaldo({ saldo, vencido, diasDeudaMasVieja, tope, disponible,
   return (
     <View
       testID="hero-saldo"
-      style={{ backgroundColor: c.topBar, borderWidth: 1, borderColor: c.topBarBorder, borderRadius: radii.hoja, padding: space[4], gap: 10 }}
+      style={{ backgroundColor: c.lime, borderRadius: radii.tarjetaGrande, padding: space[5], gap: space[3] }}
     >
       <View accessible accessibilityLabel={accessibilityLabel}>
-        <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>{rotulo}</Text>
+        <Text style={{ ...typeScale.secundario, color: c.ink }}>{rotulo}</Text>
         <Text
           numberOfLines={1}
           adjustsFontSizeToFit
-          style={[typeScale.cifraGrande, importe, { color: c.onTopBarStrong }]}
+          style={[typeScale.cifraGrande, importe, { color: c.ink }]}
         >
           {cifra ?? formatImporte(saldo)}
         </Text>
-        {meta ? <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>{meta}</Text> : null}
+        {meta ? <Text style={{ ...typeScale.secundario, color: c.ink }}>{meta}</Text> : null}
       </View>
       {vencido !== null && vencido > 0 ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] }}>
           <StatusChip estado="anulado" label={`Vencido ${formatImporte(vencido)}`} />
           {dias ? (
-            <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>{`Deuda más vieja: ${dias} ${dias === 1 ? 'día' : 'días'}`}</Text>
+            <Text style={{ ...typeScale.secundario, color: c.ink }}>{`Deuda más vieja: ${dias} ${dias === 1 ? 'día' : 'días'}`}</Text>
           ) : null}
         </View>
       ) : null}
@@ -71,20 +71,20 @@ export function HeroSaldo({ saldo, vencido, diasDeudaMasVieja, tope, disponible,
           accessibilityValue={{ min: 0, max: tope, now: usado }}
           style={{ height: space[2], borderRadius: radii.pastilla, overflow: 'hidden' }}
         >
-          <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: c.onTopBar, opacity: 0.3 }} />
+          <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: c.ink, opacity: 0.2 }} />
           <View
             testID="hero-credito-relleno"
-            style={{ height: space[2], width: `${tope > 0 ? (usado / tope) * 100 : 0}%`, backgroundColor: enAviso ? c.warning : c.brand }}
+            style={{ height: space[2], width: `${tope > 0 ? (usado / tope) * 100 : 0}%`, backgroundColor: enAviso ? c.dangerFill : c.ink }}
           />
         </View>
       ) : null}
       {disponible !== null ? (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
-          <Text style={{ ...typeScale.secundario, color: c.onTopBar }}>{pasado ? 'Pasado del tope' : 'Crédito libre'}</Text>
+          <Text style={{ ...typeScale.secundario, color: c.ink }}>{pasado ? 'Pasado del tope' : 'Crédito libre'}</Text>
           {pasado ? (
             <StatusChip estado="anulado" label={formatImporte(-disponible)} />
           ) : (
-            <Text style={[typeScale.cuerpoDestacado, importe, { color: c.onTopBarStrong }]}>{formatImporte(disponible)}</Text>
+            <Text style={[typeScale.cuerpoDestacado, importe, { color: c.ink }]}>{formatImporte(disponible)}</Text>
           )}
         </View>
       ) : null}
@@ -99,7 +99,7 @@ export function SaldosPorCuenta({ tst, normal }: { tst: number; normal: number }
     <View
       accessible
       accessibilityLabel={`${paraElLector}: ${formatImporte(valor)}`}
-      style={{ flex: 1, minWidth: 0, backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[3], gap: 2 }}
+      style={{ flex: 1, minWidth: 0, backgroundColor: c.surface, borderRadius: radii.fila, padding: space[4], gap: 2 }}
     >
       <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{etiqueta}</Text>
       <Text numberOfLines={1} adjustsFontSizeToFit style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(valor)}</Text>

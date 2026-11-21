@@ -167,9 +167,9 @@ export default function ConsolaChoferScreen() {
       <View accessibilityLabel="Cargando la hoja de ruta" accessibilityLiveRegion="polite" style={{ flex: 1, backgroundColor: c.bg }}>
         <TopBar title="Viaje de hoy" leading={menu} />
         <View style={{ padding: space[4], gap: space[3] }}>
-          <View style={{ height: 24, width: '60%', borderRadius: radii.campo, backgroundColor: c.surface2 }} />
-          <View style={{ height: 12, borderRadius: radii.pastilla, backgroundColor: c.surface2 }} />
-          <View style={{ height: 220, borderRadius: radii.tarjeta, backgroundColor: c.surface2 }} />
+          <View style={{ height: 24, width: '60%', borderRadius: radii.pastilla, backgroundColor: c.surface }} />
+          <View style={{ height: 12, borderRadius: radii.pastilla, backgroundColor: c.surface }} />
+          <View style={{ height: 220, borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }} />
           <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>Buscando tu viaje…</Text>
         </View>
       </View>
@@ -204,7 +204,7 @@ export default function ConsolaChoferScreen() {
           refreshControl={<RefreshControl refreshing={rutas.isRefetching || enCurso.isRefetching} onRefresh={revisar} />}
         >
           <View accessibilityRole={conError ? 'alert' : undefined} style={{ alignItems: 'center', gap: space[3] }}>
-            <View style={{ width: 96, height: 96, borderRadius: radii.pastilla, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 96, height: 96, borderRadius: radii.pastilla, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
               {conError || !enLinea ? <WifiOff size={40} color={c.textSecondary} /> : <Phone size={40} color={c.textSecondary} />}
             </View>
             <Text accessibilityRole="header" style={{ ...typeScale.tituloGrande, color: c.text, textAlign: 'center' }}>
@@ -388,23 +388,23 @@ export default function ConsolaChoferScreen() {
   const porcentaje = resumen.total > 0 ? Math.round((resumen.entregadas / resumen.total) * 100) : 0
   // chofer-01-viaje: progreso y total a cobrar del día arriba de la próxima parada.
   const cabecera = (
-    <View style={{ gap: space[2] }}>
+    <View testID="consola-progreso" style={{ gap: space[2], backgroundColor: c.teal, borderRadius: radii.tarjetaGrande, paddingHorizontal: space[5], paddingVertical: space[4] }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
-        <Text style={{ ...typeScale.seccion, color: c.text }}>{`${resumen.entregadas} de ${resumen.total} entregadas`}</Text>
-        <Text style={{ ...typeScale.secundario, ...importe, color: c.textSecondary }}>{`${porcentaje} %`}</Text>
+        <Text style={{ ...typeScale.seccion, color: c.ink }}>{`${resumen.entregadas} de ${resumen.total} entregadas`}</Text>
+        <Text style={{ ...typeScale.secundario, ...importe, color: c.ink }}>{`${porcentaje} %`}</Text>
       </View>
-      <Progress value={resumen.entregadas} max={resumen.total} accessibilityLabel="Entregas hechas" />
+      <Progress value={resumen.entregadas} max={resumen.total} accessibilityLabel="Entregas hechas" sobreColor />
       {/* Lo calcula el servidor; un servidor anterior no lo manda y no se muestra. */}
       {viaje.totalMontoCobrar != null ? (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
-          <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>A cobrar hoy</Text>
-          <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.destacado, ...importe, color: c.text }}>{formatImporte(viaje.totalMontoCobrar)}</Text>
+          <Text style={{ ...typeScale.cuerpo, color: c.ink }}>A cobrar hoy</Text>
+          <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.destacado, ...importe, color: c.ink }}>{formatImporte(viaje.totalMontoCobrar)}</Text>
         </View>
       ) : null}
       <ColaConsola acciones={deEsteViaje} />
       {/* Los km son de la última ruta calculada: sin recalcular serían los del plan anterior. */}
       {viaje.rutaCalculada === true && viaje.distanciaTotalMetros > 0 ? (
-        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Recorrido ${formatDistancia(viaje.distanciaTotalMetros)}`}</Text>
+        <Text style={{ ...typeScale.secundario, color: c.ink }}>{`Recorrido ${formatDistancia(viaje.distanciaTotalMetros)}`}</Text>
       ) : null}
     </View>
   )

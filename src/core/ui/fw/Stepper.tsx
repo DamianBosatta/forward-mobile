@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { Pressable, TextInput, View, type TextInputInstance, type TextInputProps } from 'react-native'
+import { TextInput, View, type TextInputInstance, type TextInputProps } from 'react-native'
 import { ChevronDown, ChevronUp } from 'lucide-react-native'
 import { maxFontScale, radii, space, typeScale, useColors, importe } from '@/libs/theme'
+import { PressableFx } from './PressableFx'
 
 interface Props {
   value: number
@@ -46,10 +47,8 @@ export function Stepper({ value, max, onChange, nombre, paso = 1, acotar = true,
   const boton = (activo: boolean, relleno: boolean) => ({
     width: lado,
     height: lado,
-    borderRadius: radii.campo,
-    borderWidth: 2,
-    borderColor: activo ? (relleno ? c.action : c.textSecondary) : c.border,
-    backgroundColor: activo ? (relleno ? c.action : c.surface) : c.surface2,
+    borderRadius: radii.cantidad,
+    backgroundColor: activo ? (relleno ? c.primaryBg : c.surface) : c.surfaceAlt,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
   })
@@ -59,20 +58,19 @@ export function Stepper({ value, max, onChange, nombre, paso = 1, acotar = true,
     const n = aNumero(limpio)
     onChange(acotar ? Math.min(n, Number.isFinite(max) ? max : n) : n)
   }
-  const conMarca = foco || !!error
-  return (
+    return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-      <Pressable
+      <PressableFx
         accessibilityRole="button"
         accessibilityLabel={`Quitar una de ${nombre}`}
         accessibilityState={{ disabled: !puedeBajar }}
         disabled={!puedeBajar}
-        android_ripple={{ color: c.border }}
+        android_ripple={{ color: c.surfaceAlt }}
         onPress={() => onChange(Math.max(0, value - paso))}
         style={boton(puedeBajar, false)}
       >
         <ChevronDown size={26} color={puedeBajar ? c.text : c.textSecondary} strokeWidth={3} />
-      </Pressable>
+      </PressableFx>
       <TextInput
         {...resto}
         ref={inputRef}
@@ -94,13 +92,13 @@ export function Stepper({ value, max, onChange, nombre, paso = 1, acotar = true,
           paddingVertical: 0,
           textAlign: 'center',
           color: c.text,
-          borderRadius: radii.campo,
-          borderWidth: conMarca ? 2 : 1,
-          borderColor: error ? c.chip.anulado.text : foco ? c.brand : c.border,
-          backgroundColor: conMarca ? c.surface : c.surface2,
+          borderRadius: radii.cantidad,
+          borderWidth: 2,
+          borderColor: error ? c.chip.anulado.text : foco ? c.text : 'transparent',
+          backgroundColor: c.surface,
         }}
       />
-      <Pressable
+      <PressableFx
         accessibilityRole="button"
         accessibilityLabel={`Sumar una de ${nombre}`}
         accessibilityState={{ disabled: !puedeSubir }}
@@ -109,8 +107,8 @@ export function Stepper({ value, max, onChange, nombre, paso = 1, acotar = true,
         onPress={() => onChange(value + paso)}
         style={boton(puedeSubir, true)}
       >
-        <ChevronUp size={26} color={puedeSubir ? c.onAction : c.textSecondary} strokeWidth={3} />
-      </Pressable>
+        <ChevronUp size={26} color={puedeSubir ? c.primaryFg : c.textSecondary} strokeWidth={3} />
+      </PressableFx>
     </View>
   )
 }

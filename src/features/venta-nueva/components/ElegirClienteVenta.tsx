@@ -6,7 +6,7 @@ import { Plus, Search } from 'lucide-react-native'
 import { useQueryClient } from '@tanstack/react-query'
 import type { SocioListDto } from '@/libs/api-client/types'
 import { fetchSocio, sociosKeys, useClientesRecientes } from '@/libs/api-client/socios'
-import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
+import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, StatusChip, formatImporte } from '@/core/ui/fw'
 import { partesArgentina, parseDateSafe } from '@/core/utils/fecha'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -46,11 +46,12 @@ const FilaCliente = memo(function FilaCliente({ item, sel, ultimoPedido, onElegi
   const vencida = item.tieneDeudaVencida === true
   return (
     <Pressable
+      android_ripple={{ color: c.surfaceAlt }}
       accessibilityRole="button"
       accessibilityState={{ selected: sel }}
       accessibilityLabel={[direccion, nombre, vencida && 'deuda vencida'].filter(Boolean).join(', ')}
       onPress={() => onElegir(item)}
-      style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3], borderBottomWidth: 1, borderBottomColor: c.border, backgroundColor: sel ? c.brandSoft : 'transparent' }}
+      style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], marginHorizontal: space[4], marginBottom: space[2], paddingHorizontal: space[4], paddingVertical: space[3], borderRadius: radii.fila, borderWidth: 3, borderColor: sel ? c.text : 'transparent', backgroundColor: c.surface }}
     >
       <MarcaRadio elegido={sel} />
       <View style={{ flex: 1, minWidth: 0 }}>
@@ -74,7 +75,6 @@ const FilaCliente = memo(function FilaCliente({ item, sel, ultimoPedido, onElegi
  */
 export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, ultimoPedido }: Props) {
   const c = useColors()
-  const sombra = useSombraTarjeta()
   const usuarioId = useAuthStore((s) => s.user?.id)
   const [busqueda, setBusqueda] = useState('')
   const [filtros, setFiltros] = useState<FiltrosDeCartera>(SIN_FILTROS)
@@ -129,14 +129,14 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
   }
 
   const titulo = (t: string) => (
-    <Text accessibilityRole="header" style={{ ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '600', color: c.textSecondary }}>{t}</Text>
+    <Text accessibilityRole="header" style={{ ...typeScale.etiquetaChip, fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.5, color: c.textSecondary, paddingHorizontal: space[2] }}>{t}</Text>
   )
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <FiltrosCartera valor={filtros} onCambio={setFiltros} totalCartera={totalCount} sobre="pantalla" />
       <View style={{ padding: space[4], gap: space[3] }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: 52, borderRadius: radii.campo, backgroundColor: c.surface2, paddingHorizontal: space[3], borderWidth: 1, borderColor: c.borderStrong }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: 56, borderRadius: radii.fila, backgroundColor: c.surface, paddingHorizontal: space[4] }}>
           <Search size={20} color={c.textSecondary} />
           <TextInput
             accessibilityLabel="Buscar cliente"
@@ -163,14 +163,14 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
             {recientes.length > 0 ? (
               <>
                 {titulo('Recientes')}
-                <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface, overflow: 'hidden' }}>
-                  {recientes.map((r, i) => {
+                <View style={{ gap: space[2] }}>
+                  {recientes.map((r) => {
                     const direccion = direccionDeEntrega(r)
                     const nombre = nombreDelCliente(r)
                     const sel = r.id === seleccionadoId
                     return (
-                      <Pressable key={`r-${r.id}`} accessibilityRole="button" accessibilityLabel={`Reciente: ${direccion}`} accessibilityState={{ selected: sel }} onPress={() => { void elegirReciente(r) }}
-                        style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3], borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.border, backgroundColor: sel ? c.brandSoft : 'transparent' }}>
+                      <Pressable key={`r-${r.id}`} android_ripple={{ color: c.surfaceAlt }} accessibilityRole="button" accessibilityLabel={`Reciente: ${direccion}`} accessibilityState={{ selected: sel }} onPress={() => { void elegirReciente(r) }}
+                        style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3], borderRadius: radii.fila, borderWidth: 3, borderColor: sel ? c.text : 'transparent', backgroundColor: c.surface }}>
                         <MarcaRadio elegido={sel} />
                         <View style={{ flex: 1, minWidth: 0 }}>
                           <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{direccion}</Text>

@@ -31,18 +31,18 @@ beforeEach(() => {
 })
 
 describe('hero de saldo (frames 5 y 11)', () => {
-  it('el saldo va en una tarjeta oscura con la cifra grande y el crédito libre', async () => {
+  it('el saldo va en una tarjeta lime con la cifra grande y el crédito libre', async () => {
     servidor(detalle(), { creditoDisponible: 250000 })
     renderConQuery(<FichaCliente id="c1" />)
 
     const hero = await screen.findByTestId('hero-saldo')
-    expect(estilo(hero).backgroundColor).toBe(themeColors.light.topBar)
+    expect(estilo(hero).backgroundColor).toBe(themeColors.light.lime)
     expect(within(hero).getByLabelText('Saldo $ 186.420,00')).toBeTruthy()
     expect(within(hero).getByText('Crédito libre')).toBeTruthy()
-    expect(estilo(within(hero).getByTestId('hero-credito-relleno')).backgroundColor).toBe(themeColors.light.brand)
+    expect(estilo(within(hero).getByTestId('hero-credito-relleno')).backgroundColor).toBe(themeColors.light.ink)
   })
 
-  it('pasado del tope: la barra pasa a amarillo y el importe va en un chip rojo con "Pasado del tope"', async () => {
+  it('pasado del tope: la barra pasa a rojo y el importe va en un chip rojo con "Pasado del tope"', async () => {
     servidor(detalle(), { creditoDisponible: -12000 })
     renderConQuery(<FichaCliente id="c1" />)
 
@@ -50,16 +50,16 @@ describe('hero de saldo (frames 5 y 11)', () => {
     expect(within(hero).getByText('Pasado del tope')).toBeTruthy()
     expect(within(hero).getByLabelText('Estado: $ 12.000,00')).toBeTruthy()
     expect(within(hero).queryByText('Crédito libre')).toBeNull()
-    expect(estilo(within(hero).getByTestId('hero-credito-relleno')).backgroundColor).toBe(themeColors.light.warning)
+    expect(estilo(within(hero).getByTestId('hero-credito-relleno')).backgroundColor).toBe(themeColors.light.dangerFill)
   })
 
-  it('con más del 80 % del tope usado la barra también avisa en amarillo', async () => {
+  it('con más del 80 % del tope usado la barra también avisa en rojo', async () => {
     servidor(detalle(), { creditoDisponible: 30000 })
     renderConQuery(<FichaCliente id="c1" />)
 
     const hero = await screen.findByTestId('hero-saldo')
     expect(within(hero).getByText('Crédito libre')).toBeTruthy()
-    expect(estilo(within(hero).getByTestId('hero-credito-relleno')).backgroundColor).toBe(themeColors.light.warning)
+    expect(estilo(within(hero).getByTestId('hero-credito-relleno')).backgroundColor).toBe(themeColors.light.dangerFill)
   })
 
   it('TST y Normal van en dos tarjetas aparte, fuera del hero', async () => {

@@ -36,7 +36,7 @@ export function ClienteParaAutorizar({ socio, enlace }: {
 }) {
   const c = useColors()
   const fila = enlace ? <EnlaceConFlecha {...enlace} /> : null
-  const tarjeta = { padding: space[4], gap: space[2], borderRadius: radii.tarjeta, backgroundColor: c.surface }
+  const tarjeta = { padding: space[5], gap: space[2], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }
   // Sin la ficha no hay datos del cliente, pero el enlace a su cuenta sigue (como hoy).
   if (!socio) return fila ? <View testID="enlace-cuenta" style={{ ...tarjeta, paddingVertical: space[1] }}>{fila}</View> : null
   const veImportes = socio.puedeVerSaldo === true
