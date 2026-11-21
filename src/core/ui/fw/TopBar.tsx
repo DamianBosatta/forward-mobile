@@ -19,12 +19,6 @@ export const AvisoSinConexionContext = createContext(false)
 /** Cuántas acciones pausadas por falta de señal esperan para enviarse (RED-02). Lo decide OfflineBanner. */
 export const AccionesEnEsperaContext = createContext(0)
 
-/**
- * Acciones que una pantalla raíz suma, a la derecha, a las de todas las barras que cuelgan de ella (la campana de Avisos
- * en Inicio, L12 "Solo Inicio"). Fuera de un proveedor no suma nada.
- */
-export const AccionesExtraContext = createContext<TopBarAction[]>([])
-
 export interface TopBarAction {
   icon: LucideIcon
   accessibilityLabel: string
@@ -66,11 +60,10 @@ interface TopBarProps {
  * Barra superior sobre el fondo de la pantalla (receta .header del FWD, sin franja oscura): alto 64, título 20/800, botones redondos de 48 sobre `surface` (spec FWD §4) y pestañas de 48 con raya lime. Sin señal,
  * el aviso global va debajo de la barra (propuesta de Inicio, frame 10), sobre el fondo de la pantalla.
  */
-export function TopBar({ title, subtitle, leading, actions: propias = [], syncLabel, textoDerecha, tabs, lineasMultiples = false, logo = false, campo }: TopBarProps) {
+export function TopBar({ title, subtitle, leading, actions = [], syncLabel, textoDerecha, tabs, lineasMultiples = false, logo = false, campo }: TopBarProps) {
   const colors = useColors()
   const avisoSinConexion = useContext(AvisoSinConexionContext)
   const accionesEnEspera = useContext(AccionesEnEsperaContext)
-  const actions = [...propias, ...useContext(AccionesExtraContext)]
   const insets = useSafeAreaInsets()
   const Lead = leading?.kind === 'atras' ? ArrowLeft : Menu
   const maxLineas = lineasMultiples ? 2 : 1

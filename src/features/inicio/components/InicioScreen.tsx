@@ -14,6 +14,7 @@ import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { diaArgentina, msHastaProximaMedianocheArgentina, partesArgentina } from '@/core/utils/fecha'
 import { useHojasDeRuta } from '@/libs/api-client/logistica'
 import { DepositoSesion } from '@/features/deposito-sesion'
+import { useAccionAvisos } from '@/core/navigation/useAccionAvisos'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
 import { useCifrasGenerales, useDashboardResumen } from '../api/queries'
 import { PulsoDelNegocio } from './PulsoDelNegocio'
@@ -29,6 +30,7 @@ const dos = (n: number) => String(n).padStart(2, '0')
 export function InicioScreen() {
   const c = useColors()
   const router = useRouter()
+  const accionAvisos = useAccionAvisos()
   const navigation = useNavigation()
   const insetInferior = useInsetInferior()
   const { width, isTablet } = useResponsive()
@@ -108,7 +110,7 @@ export function InicioScreen() {
         title={`Hola, ${nombre.split(' ')[0] || ''}`.trim()}
         subtitle={`${DIAS[hoy.diaSemana]} ${hoy.dia} de ${MESES[hoy.mes]}`}
         leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
-        actions={[{ icon: Search, accessibilityLabel: 'Buscar', onPress: () => router.push('/buscar') }]}
+        actions={[{ icon: Search, accessibilityLabel: 'Buscar', onPress: () => router.push('/buscar') }, accionAvisos]}
       />
       <ScrollView
         testID="inicio-scroll"

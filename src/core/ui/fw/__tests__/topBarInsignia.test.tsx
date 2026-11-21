@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native'
 import { render, screen, userEvent } from '@testing-library/react-native'
 import { themeColors, useThemeStore } from '@/libs/theme'
 import { Bell } from 'lucide-react-native'
-import { AccionesExtraContext, TopBar } from '../TopBar'
+import { TopBar } from '../TopBar'
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
@@ -43,19 +43,16 @@ describe.each(['light', 'dark'] as const)('TopBar: insignia de la campana (%s)',
     expect(screen.getByText('99+')).toBeTruthy()
   })
 
-  it('la acción de AccionesExtraContext se suma a las de la barra y responde al toque', async () => {
+  it('la campana pasada como acción va después de Buscar y responde al toque', async () => {
     const onPress = jest.fn()
-    render(
-      <AccionesExtraContext.Provider value={[campana(2, onPress)]}>
-        <TopBar title="Hola" actions={[{ icon: Bell, accessibilityLabel: 'Buscar', onPress: jest.fn() }]} />
-      </AccionesExtraContext.Provider>,
-    )
-    expect(screen.getByRole('button', { name: 'Buscar' })).toBeTruthy()
+    render(<TopBar title="Hola" actions={[{ icon: Bell, accessibilityLabel: 'Buscar', onPress: jest.fn() }, campana(2, onPress)]} />)
+    const nombres = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel)
+    expect(nombres.indexOf('Buscar')).toBeLessThan(nombres.indexOf('Avisos, 2 sin leer'))
     await userEvent.press(screen.getByRole('button', { name: 'Avisos, 2 sin leer' }))
     expect(onPress).toHaveBeenCalledTimes(1)
   })
 
-  it('sin proveedor, una barra no suma ninguna campana', () => {
+  it('sin acciones, una barra no suma ninguna campana', () => {
     render(<TopBar title="Ventas" />)
     expect(screen.queryByRole('button', { name: /Avisos/ })).toBeNull()
   })

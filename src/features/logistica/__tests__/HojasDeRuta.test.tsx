@@ -1,4 +1,6 @@
 import React from 'react'
+import { StyleSheet } from 'react-native'
+import { themeColors, useThemeStore } from '@/libs/theme'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, userEvent } from '@testing-library/react-native'
 import { crearQueryClient } from '@/core/query/queryClient'
@@ -30,8 +32,10 @@ describe('Hojas de ruta de la empresa', () => {
     pintar()
     expect(await screen.findByText('Juan Pérez')).toBeTruthy()
     expect(screen.getByText('AB123CD')).toBeTruthy()
-    expect(screen.getByText('4 entregas')).toBeTruthy()
-    expect(screen.getByText('1 entrega')).toBeTruthy()
+    expect(screen.getByText('4')).toBeTruthy()
+    expect(screen.getByText('entregas')).toBeTruthy()
+    expect(screen.getByText('1')).toBeTruthy()
+    expect(screen.getByText('entrega')).toBeTruthy()
     expect(screen.getByText('Hoja #AAAAAAAA')).toBeTruthy()
     expect(screen.getAllByLabelText('Estado: En curso')).toHaveLength(2)
   })
@@ -62,5 +66,30 @@ describe('Hojas de ruta de la empresa', () => {
     pintar()
     await userEvent.press(await screen.findByRole('button', { name: /Hoja #AAAAAAAA/ }))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/logistica/consola', params: { id: 'aaaaaaaa-1111' } })
+  })
+})
+
+const estiloDe = (el: { props: { style?: unknown } }) => StyleSheet.flatten(el.props.style as never) as Record<string, unknown>
+
+describe.each(['light', 'dark'] as const)('Hojas de ruta: receta FWD (%s)', (modo) => {
+  beforeEach(() => useThemeStore.setState({ mode: modo }))
+
+  it('cada fila es su tarjeta, sin bordes, con el bloque de entregas lime', async () => {
+    mockGet.mockResolvedValue([HOJA('aaaaaaaa-1111', 'Juan Pérez', 'AB123CD', 4)])
+    pintar()
+    const fila = estiloDe(await screen.findByRole('button', { name: /Hoja #AAAAAAAA/ }))
+    expect(fila).toMatchObject({ borderRadius: 22, backgroundColor: themeColors[modo].surface })
+    expect(fila.borderBottomWidth ?? 0).toBe(0)
+    expect(estiloDe(screen.getByTestId('bloque-entregas')).backgroundColor).toBe(themeColors[modo].lime)
+  })
+
+  it('una hoja finalizada va en teal, con bloque tinta y texto lime, y el estado escrito', async () => {
+    mockGet.mockResolvedValue([HOJA('cccccccc-3333', 'Ramiro Benítez', 'AB123CD', 8, 3)])
+    pintar()
+    const fila = estiloDe(await screen.findByRole('button', { name: /Hoja #CCCCCCCC/ }))
+    expect(fila.backgroundColor).toBe(themeColors[modo].teal)
+    expect(estiloDe(screen.getByTestId('bloque-entregas')).backgroundColor).toBe(themeColors[modo].ink)
+    expect(estiloDe(screen.getByText('8') as never).color).toBe(themeColors[modo].lime)
+    expect(screen.getByLabelText('Estado: Finalizada')).toBeTruthy()
   })
 })
