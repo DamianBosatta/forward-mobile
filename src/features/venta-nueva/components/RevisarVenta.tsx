@@ -2,7 +2,7 @@ import React, { useRef, useState, type ReactNode } from 'react'
 import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ArrowLeft, ChevronRight } from 'lucide-react-native'
-import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, PieFijo, TotalsRow, formatImporte } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { hasCapability } from '@/features/auth/lib/capabilities'
@@ -72,7 +72,6 @@ function detalleDe(l: LineaCarrito): string {
  */
 export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, descuentoGeneral, flete = 0, entrega, enviando, error, onConfirmar, deshabilitado = false, motivoDeshabilitado, onEditarLinea, onElegirFragancias, ajustes, autorizacion = [], onEditarProductos, yaReservadas, sinEncabezado = false, etiquetaConfirmar = 'Confirmar venta' }: Props) {
   const c = useColors()
-  const sombra = useSombraTarjeta()
   const verCantidades = hasCapability(useAuthStore((s) => s.user?.permissions), 'CAP_VER_CANTIDADES_STOCK')
   const { lineas, cambios, confirmado, sinConexion, revalidando, revalidar } = useRevalidarStockVenta()
   // Sin cantidades: el servidor dice, por producto, si lo pedido alcanza (sí/no, nunca el número). Al editar no se
@@ -147,11 +146,11 @@ export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, de
           </Notice>
         ) : null}
         {paso === 'carrito' ? (
-        <View style={{ borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface, paddingHorizontal: space[3], paddingBottom: space[1] }}>
+        <View style={{ borderRadius: radii.tarjetaGrande, backgroundColor: c.surface, paddingHorizontal: space[5], paddingBottom: space[2] }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Productos</Text>
           {onEditarProductos ? (
-            <Pressable accessibilityRole="button" accessibilityLabel="Editar productos" onPress={onEditarProductos} style={{ minHeight: 44, justifyContent: 'center' }}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Editar productos" onPress={onEditarProductos} android_ripple={{ color: c.surfaceAlt }} style={{ minHeight: 44, justifyContent: 'center' }}>
               <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Editar</Text>
             </Pressable>
           ) : null}
@@ -184,8 +183,8 @@ export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, de
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
                   <Text style={{ ...secundario, ...importe }}>{detalleDe(l)}</Text>
                   {l.descuentoPct > 0 ? (
-                    <View style={{ paddingHorizontal: space[2], borderRadius: radii.campo, backgroundColor: c.brandSoft }}>
-                      <Text style={{ ...typeScale.secundario, color: c.brandInk }}>{`−${mostrarNumero(l.descuentoPct)} %`}</Text>
+                    <View style={{ paddingHorizontal: space[3], borderRadius: radii.pastilla, backgroundColor: c.surfaceAlt }}>
+                      <Text style={{ ...typeScale.secundario, color: c.text }}>{`−${mostrarNumero(l.descuentoPct)} %`}</Text>
                     </View>
                   ) : null}
                 </View>
