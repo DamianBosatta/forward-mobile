@@ -54,7 +54,7 @@ interface TopBarProps {
 }
 
 /**
- * Barra superior: alto 64, título 20/800, botones de 48 (spec FWD §4) y pestañas de 48 con raya lime. Sin señal,
+ * Barra superior sobre el fondo de la pantalla (receta .header del FWD, sin franja oscura): alto 64, título 20/800, botones redondos de 48 sobre `surface` (spec FWD §4) y pestañas de 48 con raya lime. Sin señal,
  * el aviso global va debajo de la barra (propuesta de Inicio, frame 10), sobre el fondo de la pantalla.
  */
 export function TopBar({ title, subtitle, leading, actions = [], syncLabel, textoDerecha, tabs, lineasMultiples = false, logo = false, campo }: TopBarProps) {
@@ -70,8 +70,6 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
       style={{
         backgroundColor: colors.topBar,
         paddingTop: insets.top,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.topBarBorder,
       }}
     >
       <View style={{ ...(lineasMultiples ? { minHeight: 64, paddingVertical: space[1] } : { height: 64 }), flexDirection: 'row', alignItems: 'center', gap: space[1], paddingHorizontal: space[1] }}>
@@ -80,7 +78,7 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
             onPress={leading.onPress}
             accessibilityRole="button"
             accessibilityLabel={leading.kind === 'atras' ? 'Volver' : 'Abrir menú'}
-            style={{ width: TOCABLE, height: TOCABLE, alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: TOCABLE, height: TOCABLE, borderRadius: radii.pastilla, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}
           >
             <Lead size={24} color={colors.onTopBarStrong} strokeWidth={2} />
           </PressableFx>
@@ -129,8 +127,8 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
             accessibilityState={{ disabled }}
             style={
               label
-                ? { minWidth: TOCABLE, height: TOCABLE, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], paddingHorizontal: space[3], borderRadius: radii.pastilla, backgroundColor: colors.onTopBar + '26', opacity: disabled ? 0.4 : 1 }
-                : { width: TOCABLE, height: TOCABLE, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.4 : 1 }
+                ? { minWidth: TOCABLE, height: TOCABLE, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], paddingHorizontal: space[3], borderRadius: radii.pastilla, backgroundColor: colors.surface, opacity: disabled ? 0.4 : 1 }
+                : { width: TOCABLE, height: TOCABLE, borderRadius: radii.pastilla, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.4 : 1 }
             }
           >
             <Icono size={22} color={colors.onTopBarStrong} strokeWidth={2} />

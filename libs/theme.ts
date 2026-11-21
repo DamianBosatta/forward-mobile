@@ -65,10 +65,14 @@ export interface ForwardColors {
   onAction: string
   dangerStrong: string // botón de peligro
   onDangerStrong: string
-  topBar: string // barra superior
-  onTopBar: string // texto secundario en la barra
-  onTopBarStrong: string // título e íconos de la barra
-  topBarBorder: string
+  topBar: string // barra superior: sobre el fondo de la pantalla (= bg), sin franja oscura (receta FWD .header)
+  onTopBar: string // texto secundario en la barra (= textSecondary)
+  onTopBarStrong: string // título e íconos de la barra (= text)
+  topBarBorder: string // contorno de controles y tramos pendientes sobre la barra (= border)
+  panelOscuro: string // superficie siempre oscura: hero de saldo, cámara, panel del login (no es el encabezado)
+  onPanelOscuro: string
+  onPanelOscuroStrong: string
+  panelOscuroBorder: string
   veil: string // velo de la hoja inferior
   chip: Record<ChipEstado, ChipColors>
   /** Chips de estado de la spec FWD §5: relleno pleno con texto `ink` (pendiente: `surfaceAlt` con `text`). El estado va siempre escrito. `chip` queda para texto sobre `surface` (p. ej. errores). */
@@ -173,10 +177,14 @@ const LIGHT_COLORS: ForwardColors = {
   onAction: '#FFFFFF',
   dangerStrong: '#C52020',
   onDangerStrong: '#FFFFFF',
-  topBar: '#201E1E',
-  onTopBar: '#B5B2B3',
-  onTopBarStrong: '#F5F5F1',
-  topBarBorder: '#201E1E',
+  topBar: '#F1F2EE',
+  onTopBar: '#5A5757',
+  onTopBarStrong: '#201E1E',
+  topBarBorder: '#E2E3DE',
+  panelOscuro: '#201E1E',
+  onPanelOscuro: '#B5B2B3',
+  onPanelOscuroStrong: '#F5F5F1',
+  panelOscuroBorder: '#201E1E',
   veil: 'rgba(90, 87, 87, 0.85)', // textMuted #5A5757 al 85 %
   chip: {
     confirmado: { bg: '#EAF4F1', text: '#00796A' },
@@ -216,6 +224,10 @@ const DARK_COLORS: ForwardColors = {
   onTopBar: '#B5B2B3',
   onTopBarStrong: '#F5F5F1',
   topBarBorder: '#454142',
+  panelOscuro: '#141213',
+  onPanelOscuro: '#B5B2B3',
+  onPanelOscuroStrong: '#F5F5F1',
+  panelOscuroBorder: '#454142',
   veil: 'rgba(20, 18, 19, 0.80)', // fondo oscuro #141213 al 80 %
   chip: {
     confirmado: { bg: '#3A3637', text: '#E0EB3C' },

@@ -61,9 +61,9 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
     tieneCapacidad: (cap) => hasCapability(user?.permissions, cap),
   })
 
-  const fondo = isTablet ? c.topBar : c.surface
-  const texto = isTablet ? c.onTopBar : c.text
-  const secundario = isTablet ? c.onTopBar : c.textSecondary
+  const fondo = isTablet ? c.panelOscuro : c.surface
+  const texto = isTablet ? c.onPanelOscuro : c.text
+  const secundario = isTablet ? c.onPanelOscuro : c.textSecondary
 
   const fila = (item: MenuItem) => {
     const activa = esRutaActiva(item, rutaActual)
@@ -106,7 +106,7 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
     <View style={{ flex: 1, backgroundColor: fondo, paddingHorizontal: isTablet ? space[3] : 0 }}>
       <View
         style={{
-          backgroundColor: c.topBar,
+          backgroundColor: c.panelOscuro,
           paddingTop: insets.top + (isTablet ? space[4] : space[6]),
           paddingBottom: space[4],
           paddingHorizontal: isTablet ? space[1] : space[4],
@@ -128,10 +128,10 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
           <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>{inicialesDeUsuario(user?.nombre, user?.apellido)}</Text>
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.onTopBarStrong }}>
+          <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.onPanelOscuroStrong }}>
             {[user?.nombre, user?.apellido].filter(Boolean).join(' ') || 'Forward'}
           </Text>
-          <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.onTopBar }}>
+          <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.onPanelOscuro }}>
             {user?.roles?.join(' · ')}
           </Text>
         </View>

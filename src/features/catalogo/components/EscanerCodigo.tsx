@@ -53,7 +53,7 @@ export function EscanerCodigo({ visible, onClose, onLeido }: EscanerCodigoProps)
         />
         <View pointerEvents="none" style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <View style={{ width: 260, height: 160, borderRadius: radii.tarjeta, borderWidth: 2, borderColor: c.brand }} />
-          <Text style={[typeScale.cuerpoDestacado, { color: c.onTopBarStrong, marginTop: space[4], backgroundColor: c.topBar, paddingHorizontal: space[3], paddingVertical: space[1], borderRadius: radii.campo }]}>
+          <Text style={[typeScale.cuerpoDestacado, { color: c.onPanelOscuroStrong, marginTop: space[4], backgroundColor: c.panelOscuro, paddingHorizontal: space[3], paddingVertical: space[1], borderRadius: radii.campo }]}>
             Apuntá al código de barras del producto
           </Text>
         </View>

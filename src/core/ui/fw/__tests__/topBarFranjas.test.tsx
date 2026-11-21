@@ -85,7 +85,7 @@ describe('TopBar: aviso sin conexión debajo de la barra (propuesta de Inicio, f
       </QueryClientProvider>,
     )
 
-  it('sin señal el aviso va debajo de la barra, fuera del bloque oscuro, y no vuelve a sumar el margen del sistema', () => {
+  it('sin señal el aviso va debajo de la barra, fuera del bloque de la barra, y no vuelve a sumar el margen del sistema', () => {
     pintar(<TopBar title="Inventario" leading={{ kind: 'menu', onPress: jest.fn() }} />)
     const aviso = screen.getByTestId('aviso-sin-conexion')
     const barra = bloqueDeLaBarra('Inventario')
@@ -122,7 +122,7 @@ describe('TopBar: aviso sin conexión debajo de la barra (propuesta de Inicio, f
 })
 
 describe('TopBar sin pedir logo ni campo se ve como antes', () => {
-  it('un solo bloque oscuro con el margen del sistema, título, acciones y sin logo ni aviso', () => {
+  it('un solo bloque sobre el fondo de la pantalla (sin línea inferior) con el margen del sistema, título, acciones y sin logo ni aviso', () => {
     const { toJSON } = render(
       <SafeAreaInsetsContext.Provider value={INSETS}>
         <TopBar title="Stock" subtitle="Depósito central" leading={{ kind: 'atras', onPress: jest.fn() }} actions={[{ icon: Search, accessibilityLabel: 'Buscar', onPress: jest.fn() }]} />
@@ -130,7 +130,7 @@ describe('TopBar sin pedir logo ni campo se ve como antes', () => {
     )
     const raiz = toJSON() as unknown as Nodo
     expect(Array.isArray(raiz)).toBe(false)
-    expect(estilo(raiz)).toEqual({ backgroundColor: themeColors.light.topBar, paddingTop: INSETS.top, borderBottomWidth: 1, borderBottomColor: themeColors.light.topBarBorder })
+    expect(estilo(raiz)).toEqual({ backgroundColor: themeColors.light.topBar, paddingTop: INSETS.top })
     expect(screen.getByText('Stock')).toBeTruthy()
     expect(screen.getByText('Depósito central')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Buscar' })).toBeTruthy()
