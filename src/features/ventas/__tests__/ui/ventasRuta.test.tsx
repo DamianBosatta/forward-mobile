@@ -14,7 +14,7 @@ jest.mock('@/core/auth/RequirePermission', () => ({
 jest.mock('@/core/ui', () => {
   const { View } = require('react-native')
   const Pasa = ({ children }: { children?: React.ReactNode }) => <View>{children}</View>
-  return { ForwardLogo: Pasa, TopHeaderActions: Pasa, RequirePermission: Pasa, GlassCard: Pasa }
+  return { TopHeaderActions: Pasa, RequirePermission: Pasa, GlassCard: Pasa }
 })
 jest.mock('moti', () => ({ MotiView: ({ children }: { children: React.ReactNode }) => <>{children}</> }))
 jest.mock('@/features/ventas/components/ListaVentasNueva', () => {

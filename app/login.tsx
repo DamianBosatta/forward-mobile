@@ -10,7 +10,7 @@ import { useResponsive } from '../libs/useResponsive'
 import { Button, Notice, PieFijo, Segmented, type SegmentedOption } from '@/core/ui/fw'
 import { safeHaptics } from '@/core/utils/haptics'
 import { useAuth } from '@/features/auth/hooks/useAuth'
-import { LogoForward } from '@/features/auth/components/LogoForward'
+import { LogoForward } from '@/core/ui/fw/LogoForward'
 import { useTecladoVisible } from '@/core/utils/useTecladoVisible'
 import {
   authenticateWithBiometrics,

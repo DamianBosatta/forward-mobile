@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated'
 import { ArrowLeft, Menu, type LucideIcon } from 'lucide-react-native'
 import { maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
-import { LogoForward } from '@/features/auth/components/LogoForward'
+import { LogoForward } from '@/core/ui/fw/LogoForward'
 import { Notice } from './Notice'
 import { PressableFx } from './PressableFx'
 

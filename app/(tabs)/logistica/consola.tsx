@@ -43,6 +43,7 @@ import { sharePdf } from '@/features/pedidos/lib/sharePdf'
 import { diaArgentina, parseDateSafe, partesArgentina } from '@/core/utils/fecha'
 import { useAhoraArgentina } from '@/core/utils/useAhoraArgentina'
 import { invalidarLogistica } from '@/libs/api-client/invalidaciones'
+import { useAccionAvisos } from '@/core/navigation/useAccionAvisos'
 import { useRefrescarAlEnfocar } from '@/core/hooks/useRefrescarAlEnfocar'
 
 const horaDe = (ms: number) => {
@@ -60,6 +61,7 @@ export default function ConsolaChoferScreen() {
   const c = useColors()
   const router = useRouter()
   const menu = useMenuLeading()
+  const accionAvisos = useAccionAvisos()
   const { id } = useParametrosDeRuta({ id: idDeRuta })
   const { user, canDo, hasCapability, isSuperAdmin } = useAuthStore()
   // Sin permiso de viajes no se consulta nada: el servidor respondería 403. La oficina que arma
@@ -165,7 +167,7 @@ export default function ConsolaChoferScreen() {
   if ((remota.isLoading || ((rutas.isLoading || enCurso.isLoading) && !objetivo)) && !viaje) {
     return (
       <View accessibilityLabel="Cargando la hoja de ruta" accessibilityLiveRegion="polite" style={{ flex: 1, backgroundColor: c.bg }}>
-        <TopBar title="Viaje de hoy" leading={menu} />
+        <TopBar title="Viaje de hoy" leading={menu} actions={[accionAvisos]} />
         <View style={{ padding: space[4], gap: space[3] }}>
           <View style={{ height: 24, width: '60%', borderRadius: radii.pastilla, backgroundColor: c.surface }} />
           <View style={{ height: 12, borderRadius: radii.pastilla, backgroundColor: c.surface }} />
@@ -180,7 +182,7 @@ export default function ConsolaChoferScreen() {
     return (
       <RequirePermission module="MOD_VIAJES" action="read" mode="screen">
         <View style={{ flex: 1, backgroundColor: c.bg }}>
-          <TopBar title="Elegí la hoja de ruta" leading={menu} />
+          <TopBar title="Elegí la hoja de ruta" leading={menu} actions={[accionAvisos]} />
           <RouteSelector routes={rutasDeHoy} onSelect={setRutaElegida} />
         </View>
       </RequirePermission>
@@ -198,7 +200,7 @@ export default function ConsolaChoferScreen() {
     }
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <TopBar title="Viaje de hoy" leading={leading} />
+        <TopBar title="Viaje de hoy" leading={leading} actions={[accionAvisos]} />
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: space[4], gap: space[4] }}
           refreshControl={<RefreshControl refreshing={rutas.isRefetching || enCurso.isRefetching} onRefresh={revisar} />}
@@ -462,7 +464,7 @@ export default function ConsolaChoferScreen() {
   return (
     <RequirePermission module="MOD_VIAJES" action="read" mode="screen">
       <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <TopBar title="Viaje de hoy" subtitle={subtitulo || undefined} leading={leading} actions={acciones} />
+        <TopBar title="Viaje de hoy" subtitle={subtitulo || undefined} leading={leading} actions={[...acciones, accionAvisos]} />
         <HojaDeRutaVista
           hojaDeRutaId={viaje.id}
           paradasCobro={paradasCobro}

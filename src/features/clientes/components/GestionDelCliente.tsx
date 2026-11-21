@@ -11,6 +11,16 @@ import type { SocioDetailDto } from '@/libs/api-client/types'
 
 export const AVISO_UN_DEPOSITO = 'Elegí al menos un depósito.'
 
+/** Una lista que no cargó (RED-11): lo dice y ofrece Reintentar, en vez de quedar vacía sin aviso. */
+function NoCargo({ que, consulta, etiqueta }: { que: string; consulta: { isFetching: boolean; refetch: () => unknown }; etiqueta: string }) {
+  return (
+    <View style={{ gap: space[2] }}>
+      <Notice tone="peligro">{`No se pudieron cargar ${que}. Tocá Reintentar.`}</Notice>
+      <Button label="Reintentar" accessibilityLabel={etiqueta} variant="secundario" onPress={() => { void consulta.refetch() }} loading={consulta.isFetching} />
+    </View>
+  )
+}
+
 /**
  * Vendedor responsable y depósitos del cliente (solo edición). Cada bloque se guarda aparte, como en la web, y se
  * ve según la CAPACIDAD, nunca por el nombre del rol: el vendedor con CAP_GESTIONAR_CARTERA_CLIENTES; los depósitos
@@ -56,6 +66,7 @@ export function GestionDelCliente({ cliente }: { cliente: SocioDetailDto }) {
               <FiltroChip key={v.id} rol="radio" label={v.nombre} activo={vendedorId === v.id} onPress={() => setVendedorId(v.id)} />
             ))}
           </View>
+          {vendedores.isError ? <NoCargo que="los vendedores" consulta={vendedores} etiqueta="Reintentar vendedores" /> : null}
           <Button label="Guardar vendedor" variant="secundario" onPress={() => { void guardarVendedor() }} disabled={!vendedorId || vendedorId === (cliente.vendedorResponsableId ?? null)} loading={asignarVendedor.isPending} />
         </View>
       ) : null}
@@ -65,7 +76,9 @@ export function GestionDelCliente({ cliente }: { cliente: SocioDetailDto }) {
           {(depositos.data ?? []).filter(d => d.activo !== false && d.id).map(d => (
             <Casilla key={d.id} label={d.nombre ?? ''} marcada={depositoIds.includes(d.id!)} onPress={() => alternar(d.id!)} />
           ))}
-          <Button label="Guardar depósitos" variant="secundario" onPress={() => { void guardarDepositos() }} loading={asignarDepositos.isPending} />
+          {depositos.isError ? <NoCargo que="los depósitos" consulta={depositos} etiqueta="Reintentar depósitos" /> : null}
+          {/* Sin la lista no se ve qué se marca: no se guarda a ciegas (RED-11). */}
+          <Button label="Guardar depósitos" variant="secundario" onPress={() => { void guardarDepositos() }} disabled={depositos.data === undefined} loading={asignarDepositos.isPending} />
         </View>
       ) : null}
       {aviso ? <Notice tone={aviso.tono === 'exito' ? 'exito' : 'peligro'}>{aviso.texto}</Notice> : null}

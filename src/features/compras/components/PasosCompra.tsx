@@ -24,7 +24,7 @@ export function TarjetaDeAvance({ pasos, titulo, accessibilityLabel, style }: { 
   const c = useColors()
   return (
     <View accessibilityLabel={accessibilityLabel} style={[{ paddingHorizontal: space[4], paddingTop: space[4], paddingBottom: space[4], gap: space[3], borderRadius: radii.tarjetaGrande, backgroundColor: c.teal }, style]}>
-      {titulo ? <Text style={{ ...typeScale.tituloTarjeta, fontSize: 20, lineHeight: 26, color: c.ink }}>{titulo}</Text> : null}
+      {titulo ? <Text style={{ ...typeScale.titulo, color: c.ink }}>{titulo}</Text> : null}
       <View accessibilityRole="list" accessibilityLabel="Pasos" style={{ flexDirection: 'row' }}>
         {pasos.map((p, i) => {
           const actual = p.estado === 'actual'

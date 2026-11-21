@@ -23,7 +23,6 @@ const renderLogin = () => {
 };
 
 // El ingreso usa la marca FWD real (la de la web): si renderiza el logo viejo, falla.
-jest.mock('@/core/ui/ForwardLogo', () => ({ ForwardLogo: () => { throw new Error('ForwardLogo viejo'); } }));
 
 const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({

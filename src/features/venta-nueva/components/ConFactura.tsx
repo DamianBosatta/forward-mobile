@@ -3,7 +3,7 @@ import { Pressable, Switch, Text, View } from 'react-native'
 import { useVerificarStockFiscal } from '@/libs/api-client/ventas'
 import type { components } from '@/libs/api-client/generated/schema'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Notice } from '@/core/ui/fw'
+import { Button, Notice } from '@/core/ui/fw'
 import type { LineaCarrito } from '../lib/carrito'
 
 /** Por qué no se puede guardar un presupuesto con un descuento sobre el tope (lámina CalleConfirmar). */
@@ -35,6 +35,8 @@ export function ConFactura({ conFactura, onChange, lineas }: { conFactura: boole
   const items = useMemo(() => itemsParaVerificar(lineas), [lineas])
   const verificacion = useVerificarStockFiscal(items, conFactura === true && items.length > 0)
   const faltantes = conFactura === true && Array.isArray(verificacion.data) ? verificacion.data : []
+  // La verificación no corrió: se avisa para que el vendedor no lo tome como "alcanza"; sigue sin bloquear (K12, RED-11).
+  const noSeVerifico = conFactura === true && items.length > 0 && verificacion.isError
   return (
     <View style={{ gap: space[2] }}>
     <Pressable
@@ -58,6 +60,12 @@ export function ConFactura({ conFactura, onChange, lineas }: { conFactura: boole
       <Notice tone="advertencia" title="El stock fiscal no alcanza:">
         {[...faltantes.map(describirFaltanteFiscal), 'Podés confirmar igual: el stock fiscal queda negativo y sale la alerta.'].join('\n')}
       </Notice>
+    ) : null}
+    {noSeVerifico ? (
+      <View style={{ gap: space[2] }}>
+        <Notice tone="advertencia" title="No se pudo verificar el stock fiscal.">Podés confirmar igual, o tocá Reintentar para saber si alcanza.</Notice>
+        <Button label="Reintentar" accessibilityLabel="Reintentar la verificación del stock fiscal" variant="secundario" onPress={() => { void verificacion.refetch() }} loading={verificacion.isFetching} />
+      </View>
     ) : null}
     </View>
   )

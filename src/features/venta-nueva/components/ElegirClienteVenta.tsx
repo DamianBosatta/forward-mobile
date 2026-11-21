@@ -129,7 +129,7 @@ export function ElegirClienteVenta({ onElegir, onNuevoCliente, seleccionadoId, u
   }
 
   const titulo = (t: string) => (
-    <Text accessibilityRole="header" style={{ ...typeScale.etiquetaChip, fontSize: 13, textTransform: 'uppercase', letterSpacing: 0.5, color: c.textSecondary, paddingHorizontal: space[2] }}>{t}</Text>
+    <Text accessibilityRole="header" style={{ ...typeScale.etiquetaChip, textTransform: 'uppercase', letterSpacing: 0.5, color: c.textSecondary, paddingHorizontal: space[2] }}>{t}</Text>
   )
 
   return (
