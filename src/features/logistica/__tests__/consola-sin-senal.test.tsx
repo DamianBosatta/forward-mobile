@@ -3,6 +3,8 @@ import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react
 import { act, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
+import { useHojaRutaGuardada } from '@/features/logistica/store/hojaRutaGuardada.store'
+import { diaArgentina } from '@/core/utils/fecha'
 import { conTema } from '@/core/ui/fw/__testing__/tema'
 import { reiniciarCamara } from '@/features/logistica/__testing__/camara'
 import { confirmarEntrega, noSumarOtroCobro } from '@/features/logistica/__testing__/confirmar'
@@ -113,6 +115,27 @@ describe('Consola del chofer sin señal', () => {
     await pintar()
     expect(await screen.findByText(/Seguí trabajando: se manda solo cuando vuelva/)).toBeTruthy()
     expect(screen.queryByText(/necesitás conexión/)).toBeNull()
+  })
+
+  /** MR-R6-01: the trip comes from the sheet saved on the phone, which was saved on `guardadaEl`. */
+  async function conHojaGuardadaEl(guardadaEl: string) {
+    await pintar()
+    act(() => {
+      useLogisticaStore.getState().setActiveTripId('h1')
+      useHojaRutaGuardada.setState({ hoja: HOJA as never, guardadaEl })
+    })
+  }
+
+  it('MR-R6-01: offline with a sheet saved on another day, it shows the sheet and its date', async () => {
+    await conHojaGuardadaEl('2026-10-06')
+    expect(await screen.findByText(/Hoja del 06\/10\/2026, sin conexión/)).toBeTruthy()
+    expect(screen.getByLabelText('¡Llegué!')).toBeTruthy()
+  })
+
+  it("MR-R6-01: offline with today's saved sheet, there is no date notice", async () => {
+    await conHojaGuardadaEl(diaArgentina(Date.now()))
+    expect(await screen.findByText(/Seguí trabajando: se manda solo cuando vuelva/)).toBeTruthy()
+    expect(screen.queryByText(/Hoja del /)).toBeNull()
   })
 
   it('una entrega sin señal no llama al servidor: queda guardada con su clave y su cuerpo, y lo dice', async () => {
