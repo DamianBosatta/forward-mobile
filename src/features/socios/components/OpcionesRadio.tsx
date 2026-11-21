@@ -30,7 +30,9 @@ export function OpcionesRadio<T extends string>({ titulo, opciones, valor, onCha
                 android_ripple={{ color: c.ink }}
                 style={{ minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], borderRadius: radii.fila, backgroundColor: elegido ? c.teal : c.surfaceAlt }}
               >
-                <MarcaRadio elegido={elegido} sobreTeal={elegido} />
+                <View testID={elegido ? 'marca-radio-elegida' : undefined}>
+                  <MarcaRadio elegido={elegido} sobreTeal={elegido} />
+                </View>
                 <Text style={{ ...typeScale.cuerpoDestacado, color: elegido ? c.ink : c.text, flex: 1 }}>{op.label}</Text>
               </Pressable>
             )

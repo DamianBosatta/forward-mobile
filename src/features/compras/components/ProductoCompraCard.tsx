@@ -115,7 +115,7 @@ export const ProductoCompraCard = memo(function ProductoCompraCard({ producto: p
       <StockYVentas producto={p} sobreTeal={enCompra} />
       {linea ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: space[2] }}>
-          <Segmented accessibilityLabel={`Unidad de compra de ${p.nombre}`} value={linea.unidad} onChange={cambiarUnidad}
+          <Segmented tono={enCompra ? 'sobreTeal' : 'normal'} accessibilityLabel={`Unidad de compra de ${p.nombre}`} value={linea.unidad} onChange={cambiarUnidad}
             options={opcionesDeCompra(p, linea).map((o) => ({ value: o.unidad, label: corto(o) }))} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
             <Redondo c={c} label="−" a11y={`Restar ${p.nombre}`} onPress={() => sumar(-1)} />

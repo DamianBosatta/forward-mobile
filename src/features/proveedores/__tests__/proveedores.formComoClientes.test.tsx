@@ -51,16 +51,19 @@ it('cada grupo va en una tarjeta sin borde con su título', () => {
   }
 })
 
-it('la condición frente al IVA y la de pago son filas con radio dentro de una tarjeta', async () => {
+it('la condición frente al IVA y la de pago son filas en pastilla con radio', async () => {
   renderConQuery(<ProveedorFormScreen />)
 
   for (const [grupo, opcion] of [['Condición frente al IVA', 'Monotributista'], ['Condición de pago (obligatoria para comprarle)', 'Día fijo del mes']]) {
     const radios = screen.getByLabelText(grupo)
     await userEvent.press(within(radios).getByRole('radio', { name: opcion }))
     const elegido = within(radios).getByRole('radio', { name: opcion })
-    // Receta FWD: la fila elegida no lleva tinte propio; la marca teal con tilde dice cuál es (el color nunca va solo).
-    expect(estilo(elegido).backgroundColor).toBe('transparent')
+    // Receta FWD (proveedores-nuevo): la fila elegida va en teal con texto ink; el estado también va en el rol (no solo color).
+    expect(estilo(elegido)).toMatchObject({ backgroundColor: themeColors.light.teal, minHeight: 56, borderRadius: radii.fila })
     expect(within(elegido).getByTestId('marca-radio-elegida')).toBeTruthy()
+    expect(elegido.props.accessibilityState).toMatchObject({ checked: true })
+    const otra = within(radios).getAllByRole('radio').find(r => r !== elegido)!
+    expect(estilo(otra).backgroundColor).toBe(themeColors.light.surfaceAlt)
   }
 })
 
