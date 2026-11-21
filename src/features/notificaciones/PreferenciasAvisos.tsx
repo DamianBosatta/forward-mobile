@@ -3,7 +3,7 @@ import { ScrollView, Switch, Text, View } from 'react-native'
 import { Lock } from 'lucide-react-native'
 import { useRouter } from 'expo-router'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { FilaInterruptor, FormContainer, Notice, TopBar, useInsetInferior } from '@/core/ui/fw'
+import { FilaInterruptor, FormContainer, IconoEnCuadro, Notice, TopBar, useInsetInferior } from '@/core/ui/fw'
 import { useActualizarPreferenciasAvisos, usePreferenciasAvisos, type PreferenciaAviso } from '@/libs/api-client/notificaciones'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { GRUPOS_DE_AVISOS, avisoDeTipo, grupoDeTipo } from './avisos'
@@ -94,9 +94,7 @@ function FilaCritica({ titulo }: { titulo: string }) {
       accessibilityState={{ checked: true, disabled: true }}
       style={{ minHeight: 76, paddingHorizontal: space[3], paddingVertical: space[2], flexDirection: 'row', alignItems: 'center', gap: space[3], backgroundColor: c.surface, borderRadius: radii.fila }}
     >
-      <View testID="candado-critico" style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: c.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
-        <Lock size={24} color={c.text} />
-      </View>
+      <IconoEnCuadro testID="candado-critico" icono={Lock} />
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{titulo}</Text>
         <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Crítico: no se puede silenciar</Text>

@@ -2,6 +2,7 @@ import React from 'react'
 import { Pressable, Switch, Text, View } from 'react-native'
 import { ChevronRight, type LucideIcon } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
+import { IconoEnCuadro } from './IconoEnCuadro'
 
 interface FilaBase {
   titulo: string
@@ -27,7 +28,7 @@ function Contenido({ titulo, apoyo, icono: Icono }: FilaBase) {
   const c = useColors()
   return (
     <>
-      {Icono ? <Icono size={24} color={c.text} /> : null}
+      {Icono ? <IconoEnCuadro icono={Icono} /> : null}
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{titulo}</Text>
         {apoyo ? <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{apoyo}</Text> : null}
@@ -36,7 +37,7 @@ function Contenido({ titulo, apoyo, icono: Icono }: FilaBase) {
   )
 }
 
-/** Fila de ajuste que lleva a otra pantalla: ícono, título, apoyo y flecha. La fila entera es el botón. */
+/** Fila de ajuste que lleva a otra pantalla: ícono en cuadro de 48 `surfaceAlt`, título, apoyo y flecha. La fila entera es el botón. */
 export function FilaDeAjuste({ onPress, ...base }: FilaBase & { onPress: () => void }) {
   const { c, fila } = useFila(base.conDivisor)
   return (
