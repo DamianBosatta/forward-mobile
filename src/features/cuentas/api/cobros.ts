@@ -90,7 +90,7 @@ type PagoRegistrado = components['schemas']['PagoRegistradoResponse']
 export interface CobroRegistrado {
   /** `null` si un 2xx no trajo el id: el cobro se da por hecho, pero no se puede buscar su cuenta. */
   pagoId: string | null
-  /** `null` si la respuesta no la trae (servidor anterior a forward-system #868): se busca en los movimientos. */
+  /** `null` si la respuesta no la trae (un 409 por la clave o un servidor anterior a forward-system #868): se busca en los movimientos. Este camino sigue siendo necesario: el sobre del 409 nunca trae la cuenta (REQ-02). */
   tipoCuenta: TipoCuentaSocio | null
   /** El servidor ya tenía este cobro con esta clave y el mismo cuerpo (un reintento): devolvió el que había, no cargó otro. */
   yaEstaba?: boolean

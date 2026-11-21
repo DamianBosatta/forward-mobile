@@ -39,7 +39,9 @@ export function limpiarEvento(evento: ErrorEvent): ErrorEvent {
   return salida
 }
 
-const LIMPIAR_EN_SPANS = ['url', 'http.url', 'http.query'] as const
+const LIMPIAR_EN_SPANS = ['url', 'http.url', 'url.full'] as const
+/** Raw pieces of the URL (query string without "?", fragment): dropped, never redacted. */
+const QUITAR_EN_SPANS = ['http.query', 'http.fragment'] as const
 
 type Datos = Record<string, unknown> | undefined
 
@@ -47,8 +49,7 @@ const limpiarDatos = (datos: Datos): Datos => {
   if (!datos) return datos
   const salida = { ...datos }
   for (const clave of LIMPIAR_EN_SPANS) if (typeof salida[clave] === 'string') salida[clave] = sinQuery(salida[clave] as string)
-  // http.query is the raw query string itself (no "?"): drop it instead of redacting.
-  if ('http.query' in salida) delete salida['http.query']
+  for (const clave of QUITAR_EN_SPANS) delete salida[clave]
   return salida
 }
 
