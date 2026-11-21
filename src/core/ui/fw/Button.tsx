@@ -1,12 +1,20 @@
 import React from 'react'
-import { ActivityIndicator, Pressable, Text, View } from 'react-native'
+import { ActivityIndicator, Text, View } from 'react-native'
 import type { LucideIcon } from 'lucide-react-native'
 import { maxFontScale, radii, space, typeScale, useColors, useIsDark, type ForwardColors } from '@/libs/theme'
+import { PressableFx } from './PressableFx'
 
-/** `peligroContorno`: destructivo que no compite con nada (cerrar sesión); el sólido queda para confirmar. */
-export type ButtonVariant = 'primario' | 'secundario' | 'peligro' | 'peligroContorno'
-/** `xl` es la escala de la consola del chofer: 72 de alto, texto 19 y borde de 2 px (se lee al sol, con una mano). */
-export type ButtonSize = 'md' | 'xl'
+/**
+ * `listo`: la acción que cierra un trabajo terminado (teal con texto ink, spec FWD §5). `peligroContorno`:
+ * destructivo que no compite con nada (cerrar sesión); el sólido queda para confirmar.
+ */
+export type ButtonVariant = 'primario' | 'secundario' | 'peligro' | 'peligroContorno' | 'listo'
+/**
+ * `md` 48 (el alto de siempre, filas y diálogos), `lg` 64 (el botón principal de ancho completo del pie, spec FWD §4)
+ * y `xl` 72 con texto 19 (la consola del chofer: se lee al sol, con una mano).
+ */
+export type ButtonSize = 'md' | 'lg' | 'xl'
+const ALTO: Record<ButtonSize, number> = { md: 48, lg: 64, xl: 72 }
 
 interface ButtonProps {
   label: string
@@ -23,15 +31,17 @@ interface ButtonProps {
   testID?: string
 }
 
-function paleta(c: ForwardColors, variant: ButtonVariant, inactivo: boolean, xl: boolean) {
-  if (inactivo) return { fondo: c.surface2, texto: c.textSecondary, borde: c.borderStrong }
-  if (variant === 'peligro') return { fondo: c.dangerStrong, texto: c.onDangerStrong, borde: c.dangerStrong }
-  if (variant === 'peligroContorno') return { fondo: c.surface, texto: c.chip.anulado.text, borde: c.chip.anulado.text }
-  if (variant === 'secundario') return { fondo: c.surface, texto: c.text, borde: xl ? c.textSecondary : c.borderStrong }
-  return { fondo: c.action, texto: c.onAction, borde: c.action }
+/** Spec FWD §5: píldora sin borde; el contorno solo lo lleva el destructivo suave. `ondas`: color del ripple. */
+function paleta(c: ForwardColors, variant: ButtonVariant, inactivo: boolean) {
+  if (inactivo) return { fondo: c.surfaceAlt, texto: c.textMuted, borde: null, ondas: c.border }
+  if (variant === 'peligro') return { fondo: c.dangerFill, texto: c.onState, borde: null, ondas: c.ink }
+  if (variant === 'peligroContorno') return { fondo: c.surface, texto: c.chip.anulado.text, borde: c.chip.anulado.text, ondas: c.border }
+  if (variant === 'secundario') return { fondo: c.surface, texto: c.text, borde: null, ondas: c.surfaceAlt }
+  if (variant === 'listo') return { fondo: c.teal, texto: c.ink, borde: null, ondas: c.ink }
+  return { fondo: c.primaryBg, texto: c.primaryFg, borde: null, ondas: c.primaryFg }
 }
 
-/** Botón de la lámina F4: alto 48, radio 10, texto 16/600. */
+/** Botón FWD: píldora de 48 de alto (`lg` 64, `xl` 72), texto 800. Presionado: escala 0.95 (PressableFx). */
 export function Button({
   label,
   onPress,
@@ -49,10 +59,10 @@ export function Button({
   const inactivo = disabled || loading
   // Cargando conserva el color de la variante; solo deshabilitado se apaga.
   const xl = size === 'xl'
-  const p = paleta(colors, variant, disabled, xl)
+  const p = paleta(colors, variant, disabled)
 
   return (
-    <Pressable
+    <PressableFx
       // Con `android_ripple`, Android conserva el fondo nativo viejo cuando el tema cambia en vivo: el texto se
       // repinta y el fondo no. Remontar cuando cambia el tema lo corrige.
       key={oscuro ? 'oscuro' : 'claro'}
@@ -64,14 +74,12 @@ export function Button({
       accessibilityState={{ disabled: inactivo, busy: loading }}
       // Estilo fijo y no una función de `pressed`: con NativeWind 4 la función se pierde y el botón queda sin
       // fondo ni alto. El toque se marca con el ripple nativo.
-      android_ripple={inactivo ? undefined : { color: p.borde }}
+      android_ripple={inactivo ? undefined : { color: p.ondas }}
       style={{
-        height: xl ? 72 : space[12],
-        paddingHorizontal: space[5],
-        borderRadius: xl ? radii.tarjeta : radii.campo,
-        borderWidth: xl ? 2 : 1,
-        borderColor: p.borde,
-        borderStyle: disabled ? 'dashed' : 'solid',
+        height: ALTO[size],
+        paddingHorizontal: space[6],
+        borderRadius: radii.pastilla,
+        ...(p.borde ? { borderWidth: 2, borderColor: p.borde } : null),
         backgroundColor: p.fondo,
         alignItems: 'center',
         justifyContent: 'center',
@@ -84,6 +92,6 @@ export function Button({
         <Text maxFontSizeMultiplier={maxFontScale} style={{ ...(xl ? typeScale.seccionGrande : typeScale.cuerpoDestacado), color: p.texto }}>{label}</Text>
         {IconoFinal ? <IconoFinal testID="icono-final" size={xl ? 26 : 20} color={p.texto} strokeWidth={2.5} /> : null}
       </View>
-    </Pressable>
+    </PressableFx>
   )
 }

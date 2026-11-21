@@ -277,7 +277,7 @@ export default function LoginScreen() {
           {logo(72)}
           <View style={{ gap: space[3] }}>
             <Text accessibilityRole="header" style={{ ...typeScale.hero, color: c.onTopBarStrong }}>Forward</Text>
-            <Text style={{ ...typeScale.titulo, fontFamily: FONT.regular, fontWeight: '400', lineHeight: 30, color: c.onTopBar, maxWidth: 420 }}>
+            <Text style={{ ...typeScale.titulo, fontFamily: FONT.semibold, fontWeight: '600', lineHeight: 30, color: c.onTopBar, maxWidth: 420 }}>
               Vendé, cobrá y seguí tus pedidos desde la calle, con los mismos datos que la web.
             </Text>
           </View>

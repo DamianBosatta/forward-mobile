@@ -34,7 +34,7 @@ export function FilaDeSocio({ titulo, derecha, linea2, extra, accion, accessibil
         flexDirection: 'row',
         alignItems: 'center',
         gap: space[3],
-        minHeight: 64,
+        minHeight: 68,
         paddingVertical: space[3],
         paddingLeft: space[4],
         paddingRight: space[2],

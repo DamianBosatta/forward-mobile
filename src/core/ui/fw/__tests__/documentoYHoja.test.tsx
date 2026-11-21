@@ -38,13 +38,13 @@ describe.each(['light', 'dark'] as const)('tema %s', (modo) => {
     expect(flat(screen.getByRole('button').props.style).backgroundColor).toBe(c.surface)
   })
 
-  it('BottomSheet se pinta sobre la superficie del tema', () => {
+  it('BottomSheet se pinta sobre el fondo del tema', () => {
     render(
       <BottomSheet visible onClose={() => {}} accessibilityLabel="Hoja">
         <Text>Contenido</Text>
       </BottomSheet>,
     )
-    expect(flat(screen.getByLabelText('Hoja').props.style).backgroundColor).toBe(c.surface)
+    expect(flat(screen.getByLabelText('Hoja').props.style).backgroundColor).toBe(c.bg)
   })
 
   it('el velo del BottomSheet usa el color veil del tema y es translúcido', () => {
@@ -107,10 +107,10 @@ describe('BottomSheet', () => {
     expect(screen.queryByText('¿A quién le vendés?')).toBeNull()
   })
 
-  it('en teléfono es hoja inferior: radio 24 solo arriba y con manija', () => {
+  it('en teléfono es hoja inferior: radio 30 solo arriba y con manija', () => {
     render(hoja(true))
     const panel = flat(screen.getByLabelText('Elegir cliente').props.style)
-    expect(panel).toMatchObject({ borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomLeftRadius: 0 })
+    expect(panel).toMatchObject({ borderTopLeftRadius: 30, borderTopRightRadius: 30, borderBottomLeftRadius: 0 })
     expect(screen.getByTestId('hoja-manija')).toBeTruthy()
   })
 
@@ -119,7 +119,7 @@ describe('BottomSheet', () => {
     render(hoja(true))
     const panel = screen.getByLabelText('Elegir cliente')
     expect(panel.props.role).toBe('dialog')
-    expect(flat(panel.props.style)).toMatchObject({ borderRadius: 24, maxWidth: 600 })
+    expect(flat(panel.props.style)).toMatchObject({ borderRadius: 30, maxWidth: 600 })
     expect(screen.queryByTestId('hoja-manija')).toBeNull()
   })
 })

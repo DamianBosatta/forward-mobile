@@ -31,11 +31,11 @@ interface ConfirmModalProps {
 function useVariant(variant: ConfirmVariant, colors: ReturnType<typeof useColors>) {
   switch (variant) {
     case 'success':
-      return { Icon: CheckCircle2, color: colors.success, boton: colors.success, textoBoton: colors.onAction }
+      return { Icon: CheckCircle2, color: colors.success, boton: colors.success, textoBoton: colors.onState }
     case 'warning':
-      return { Icon: AlertTriangle, color: colors.warning, boton: colors.warning, textoBoton: colors.onAction }
+      return { Icon: AlertTriangle, color: colors.warning, boton: colors.warning, textoBoton: colors.onState }
     case 'info':
-      return { Icon: Info, color: colors.info, boton: colors.info, textoBoton: colors.onAction }
+      return { Icon: Info, color: colors.info, boton: colors.info, textoBoton: colors.onState }
     case 'primary':
       return { Icon: Info, color: colors.primary, boton: colors.primary, textoBoton: colors.onPrimary }
     case 'danger':

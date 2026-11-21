@@ -23,7 +23,7 @@ export const FilaDePago = memo(function FilaDePago({ pago: p, primera, ultima, o
   const c = useColors()
   const sentido = sentidoDelPago(p)
   const Flecha = sentido === 'neutro' ? ArrowRight : sentido === 'entra' ? ArrowDownLeft : ArrowUpRight
-  const colorFlecha = sentido === 'neutro' ? c.textSecondary : sentido === 'entra' ? c.success : c.danger
+  const colorFlecha = sentido === 'neutro' ? c.textSecondary : sentido === 'entra' ? c.success : c.dangerFill
   const monto = formatImporte(p.monto, { moneda: p.moneda })
   const entidad = p.socioRazonSocial?.trim() || '—'
   const fecha = formatToLocalTime(p.fecha)
@@ -35,7 +35,7 @@ export const FilaDePago = memo(function FilaDePago({ pago: p, primera, ultima, o
       onPress={() => onAbrir(p.id)}
       android_ripple={{ color: c.surface2 }}
       style={{
-        minHeight: 64,
+        minHeight: 68,
         marginHorizontal: space[4],
         paddingVertical: space[3],
         paddingLeft: space[4],
@@ -47,8 +47,8 @@ export const FilaDePago = memo(function FilaDePago({ pago: p, primera, ultima, o
         backgroundColor: c.surface,
         borderBottomWidth: ultima ? 0 : 1,
         borderBottomColor: c.surface2,
-        ...(primera ? { borderTopLeftRadius: radii.tarjeta, borderTopRightRadius: radii.tarjeta } : null),
-        ...(ultima ? { borderBottomLeftRadius: radii.tarjeta, borderBottomRightRadius: radii.tarjeta } : null),
+        ...(primera ? { borderTopLeftRadius: radii.fila, borderTopRightRadius: radii.fila } : null),
+        ...(ultima ? { borderBottomLeftRadius: radii.fila, borderBottomRightRadius: radii.fila } : null),
       }}
     >
       <Flecha size={20} color={colorFlecha} />

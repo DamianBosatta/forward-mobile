@@ -1,8 +1,9 @@
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { Check } from 'lucide-react-native'
 import type { LucideIcon } from 'lucide-react-native'
 import { maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
+import { PressableFx } from './PressableFx'
 
 interface Props {
   label: string
@@ -18,13 +19,13 @@ interface Props {
 }
 
 /**
- * Opción grande de la consola del chofer (lámina chofer-03/04): se toca con una mano y al sol. La elegida
- * lleva tilde y borde grueso, nunca solo color. Es un radio: el estado va en `accessibilityState.checked`.
+ * Opción grande de la consola del chofer (lámina chofer-03/04): se toca con una mano y al sol. Spec FWD
+ * (`.optc`): `surface` sin borde; la elegida pasa a lime con texto ink y lleva tilde, nunca solo color. Es un radio: el estado va en `accessibilityState.checked`.
  */
 export function OptionCard({ label, detail, icon: Icono, selected = false, minHeight = 76, disabled = false, onPress, accessibilityLabel }: Props) {
   const c = useColors()
   return (
-    <Pressable
+    <PressableFx
       onPress={disabled ? undefined : onPress}
       disabled={disabled}
       accessibilityRole="radio"
@@ -37,18 +38,16 @@ export function OptionCard({ label, detail, icon: Icono, selected = false, minHe
         gap: space[3],
         paddingHorizontal: space[4],
         paddingVertical: space[3],
-        borderRadius: radii.tarjeta,
-        borderWidth: selected ? 3 : 2,
-        borderColor: selected ? c.brandInk : c.textSecondary,
-        backgroundColor: selected ? c.brandSoft : c.surface,
+        borderRadius: minHeight > 100 ? radii.tarjetaGrande : radii.tile,
+        backgroundColor: selected ? c.lime : c.surface,
       }}
     >
-      {Icono ? <Icono size={minHeight > 100 ? 40 : 28} color={selected ? c.brandInk : c.text} strokeWidth={2.5} /> : null}
+      {Icono ? <Icono size={minHeight > 100 ? 40 : 28} color={selected ? c.ink : c.text} strokeWidth={2.5} /> : null}
       <View style={{ flex: 1 }}>
-        <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.seccionGrande, color: selected ? c.brandInk : c.text }}>{label}</Text>
-        {detail ? <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.secundario, color: c.textSecondary }}>{detail}</Text> : null}
+        <Text maxFontSizeMultiplier={maxFontScale} style={{ ...(minHeight > 100 ? typeScale.tituloTarjeta : typeScale.seccionGrande), color: selected ? c.ink : c.text }}>{label}</Text>
+        {detail ? <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.secundario, color: selected ? c.ink : c.textMuted }}>{detail}</Text> : null}
       </View>
-      {selected ? <Check size={28} color={c.brandInk} strokeWidth={3} /> : null}
-    </Pressable>
+      {selected ? <Check size={28} color={c.ink} strokeWidth={3} /> : null}
+    </PressableFx>
   )
 }

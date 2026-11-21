@@ -34,11 +34,11 @@ describe.each(TEMAS)('tema %s: los componentes base toman los colores del tema',
     )
     for (const [estado] of ESTADOS) {
       const chip = screen.getAllByLabelText(/^Estado: /)[ESTADOS.findIndex(([e]) => e === estado)]
-      expect(estilo(chip).backgroundColor).toBe(c.chip[estado].bg)
+      expect(estilo(chip).backgroundColor).toBe(c.chipFill[estado].bg)
     }
   })
 
-  it('Notice en sus cuatro tonos usa el fondo suave del tema', () => {
+  it('Notice en sus cuatro tonos usa el relleno de estado del tema', () => {
     render(
       <>
         <Notice tone="info" testID="n-info">a</Notice>
@@ -47,10 +47,10 @@ describe.each(TEMAS)('tema %s: los componentes base toman los colores del tema',
         <Notice tone="exito" testID="n-exi">d</Notice>
       </>,
     )
-    expect(estilo(screen.getByTestId('n-info')).backgroundColor).toBe(c.chip.enCurso.bg)
-    expect(estilo(screen.getByTestId('n-adv')).backgroundColor).toBe(c.chip.porAutorizar.bg)
-    expect(estilo(screen.getByTestId('n-pel')).backgroundColor).toBe(c.chip.anulado.bg)
-    expect(estilo(screen.getByTestId('n-exi')).backgroundColor).toBe(c.chip.entregado.bg)
+    expect(estilo(screen.getByTestId('n-info')).backgroundColor).toBe(c.surface)
+    expect(estilo(screen.getByTestId('n-adv')).backgroundColor).toBe(c.warning)
+    expect(estilo(screen.getByTestId('n-pel')).backgroundColor).toBe(c.dangerFill)
+    expect(estilo(screen.getByTestId('n-exi')).backgroundColor).toBe(c.teal)
     expect(estilo(screen.getByText('a')).color).toBe(c.text)
   })
 
@@ -58,7 +58,7 @@ describe.each(TEMAS)('tema %s: los componentes base toman los colores del tema',
     render(<Field label="Cantidad" error="Falta la cantidad" value="" onChangeText={jest.fn()} />)
     expect(estilo(screen.getByLabelText('Cantidad')).borderColor).toBe(c.chip.anulado.text)
     expect(estilo(screen.getByText('Falta la cantidad')).color).toBe(c.chip.anulado.text)
-    expect(estilo(screen.getByText('Cantidad')).color).toBe(c.text)
+    expect(estilo(screen.getByText('Cantidad')).color).toBe(c.textMuted)
   })
 
   it('Button primario, TotalsRow, Fab y Segmented', () => {
@@ -75,10 +75,10 @@ describe.each(TEMAS)('tema %s: los componentes base toman los colores del tema',
         />
       </>,
     )
-    expect(estilo(screen.getByRole('button', { name: 'Confirmar' })).backgroundColor).toBe(c.action)
+    expect(estilo(screen.getByRole('button', { name: 'Confirmar' })).backgroundColor).toBe(c.primaryBg)
     expect(estilo(screen.getByText('Total')).color).toBe(c.text)
-    expect(estilo(screen.getByRole('button', { name: 'Nueva' })).backgroundColor).toBe(c.action)
-    expect(estilo(screen.getByRole('radio', { name: 'Uno' })).backgroundColor).toBe(c.surface)
+    expect(estilo(screen.getByRole('button', { name: 'Nueva' })).backgroundColor).toBe(c.fabBg)
+    expect(estilo(screen.getByRole('radio', { name: 'Uno' })).backgroundColor).toBe(c.primaryBg)
     expect(estilo(screen.getByRole('radio', { name: 'Dos' })).backgroundColor).toBe('transparent')
   })
 
@@ -106,8 +106,8 @@ describe.each(TEMAS)('tema %s: los componentes base toman los colores del tema',
       </>,
     )
     expect(estilo(screen.getByRole('header')).color).toBe(c.onTopBarStrong)
-    expect(estilo(screen.getByText('Pedido')).color).toBe(c.brandInk)
-    expect(estilo(screen.getByText('Presupuesto')).color).toBe(c.text)
+    expect(estilo(screen.getByText('Pedido')).color).toBe(c.text)
+    expect(estilo(screen.getByText('Presupuesto')).color).toBe(c.textMuted)
     expect(estilo(screen.getByRole('button', { name: /Av\. Siempreviva/ })).backgroundColor).toBe(c.surface)
   })
 })
@@ -116,7 +116,7 @@ describe('cambio de modo en vivo', () => {
   it('al pasar de claro a oscuro con el store, los componentes ya montados cambian de color', () => {
     // Se comparan tokens que difieren entre temas (action es el mismo teal en los dos).
     expect(themeColors.dark.text).not.toBe(themeColors.light.text)
-    expect(themeColors.dark.chip.entregado.bg).not.toBe(themeColors.light.chip.entregado.bg)
+    expect(themeColors.dark.surface).not.toBe(themeColors.light.surface)
     conTema('light')
     render(
       <>
@@ -126,10 +126,10 @@ describe('cambio de modo en vivo', () => {
     )
     const etiqueta = () => estilo(screen.getByText('Cantidad')).color
     const aviso = () => estilo(screen.getByTestId('n')).backgroundColor
-    expect(etiqueta()).toBe(themeColors.light.text)
-    expect(aviso()).toBe(themeColors.light.chip.entregado.bg)
+    expect(etiqueta()).toBe(themeColors.light.textMuted)
+    expect(aviso()).toBe(themeColors.light.teal)
     act(() => conTema('dark'))
-    expect(etiqueta()).toBe(themeColors.dark.text)
-    expect(aviso()).toBe(themeColors.dark.chip.entregado.bg)
+    expect(etiqueta()).toBe(themeColors.dark.textMuted)
+    expect(aviso()).toBe(themeColors.dark.teal)
   })
 })

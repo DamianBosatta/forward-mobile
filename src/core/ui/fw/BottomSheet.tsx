@@ -14,7 +14,7 @@ interface BottomSheetProps {
 }
 
 /**
- * Hoja inferior de la lámina F4 (radio 24 arriba, manija, velo translúcido, token veil).
+ * Hoja inferior FWD (fondo `bg`, radio 30 arriba, manija de 44 × 5, velo translúcido, token veil).
  * En tablet (≥ 600 px, plan §8) la misma hoja se muestra como diálogo centrado.
  * Es un Modal y no @gorhom/bottom-sheet: el repo monta su proveedor pero ninguna
  * pantalla lo usa, y el Modal resuelve teléfono y tablet con un solo componente.
@@ -33,11 +33,11 @@ export function BottomSheet({ visible, onClose, accessibilityLabel, children }: 
   const maxHeight = Math.max(0, height - top - espacio - (isLarge ? space[6] * 2 : space[4]))
 
   const panel = isLarge
-    ? { width: '100%' as const, maxWidth: 600, maxHeight, borderRadius: radii.hoja, padding: space[6], ...sombra }
+    ? { width: '100%' as const, maxWidth: 600, maxHeight, borderRadius: radii.tarjetaGrande, padding: space[6], ...sombra }
     : {
         maxHeight,
-        borderTopLeftRadius: radii.hoja,
-        borderTopRightRadius: radii.hoja,
+        borderTopLeftRadius: radii.tarjetaGrande,
+        borderTopRightRadius: radii.tarjetaGrande,
         borderBottomLeftRadius: 0,
         borderBottomRightRadius: 0,
         paddingTop: space[2],
@@ -59,12 +59,12 @@ export function BottomSheet({ visible, onClose, accessibilityLabel, children }: 
           aria-modal
           accessibilityLabel={accessibilityLabel}
           onAccessibilityEscape={onClose}
-          style={[{ backgroundColor: c.surface, gap: space[4] }, panel]}
+          style={[{ backgroundColor: c.bg, gap: space[4] }, panel]}
         >
           {!isLarge && (
             <View
               testID="hoja-manija"
-              style={{ width: 40, height: 4, borderRadius: radii.pastilla, backgroundColor: c.border, alignSelf: 'center' }}
+              style={{ width: 44, height: 5, borderRadius: radii.pastilla, backgroundColor: c.surfaceAlt, alignSelf: 'center' }}
             />
           )}
           {children}

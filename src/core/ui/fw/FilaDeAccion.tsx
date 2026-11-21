@@ -1,7 +1,8 @@
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { ChevronRight, type LucideIcon } from 'lucide-react-native'
-import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
+import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { PressableFx } from './PressableFx'
 
 interface Props {
   title: string
@@ -21,9 +22,8 @@ interface Props {
  */
 export function FilaDeAccion({ title, subtitle, icon: Icono, disabled = false, agrupada = false, onPress }: Props) {
   const c = useColors()
-  const sombra = useSombraTarjeta()
   return (
-    <Pressable
+    <PressableFx
       onPress={disabled ? undefined : onPress}
       disabled={disabled}
       accessibilityRole="button"
@@ -35,18 +35,18 @@ export function FilaDeAccion({ title, subtitle, icon: Icono, disabled = false, a
         alignItems: 'center',
         gap: space[3],
         paddingHorizontal: space[4],
-        ...(agrupada ? {} : { borderRadius: radii.tarjeta, borderWidth: 1, borderColor: c.border, ...sombra, backgroundColor: c.surface }),
+        ...(agrupada ? {} : { borderRadius: radii.fila, backgroundColor: c.surface }),
         opacity: disabled ? 0.55 : 1,
       }}
     >
-      <View style={{ width: 40, height: 40, borderRadius: radii.campo, alignItems: 'center', justifyContent: 'center', backgroundColor: agrupada ? c.surface2 : c.brandSoft }}>
-        <Icono size={22} color={agrupada ? c.textSecondary : c.brandInk} strokeWidth={2} />
+      <View style={{ width: 40, height: 40, borderRadius: radii.cantidad, alignItems: 'center', justifyContent: 'center', backgroundColor: c.surfaceAlt }}>
+        <Icono size={22} color={agrupada ? c.textMuted : c.accentText} strokeWidth={2} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{title}</Text>
         {subtitle ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{subtitle}</Text> : null}
       </View>
       <ChevronRight size={20} color={c.textSecondary} strokeWidth={2} />
-    </Pressable>
+    </PressableFx>
   )
 }
