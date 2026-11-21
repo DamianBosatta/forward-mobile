@@ -146,18 +146,8 @@ export function DetalleVenta({ id, onVolver }: Props) {
               <View style={{ gap: space[2] }}>
                 <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Cobro</Text>
                 <View testID="detalle-cobro" style={{ gap: space[2], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.lime }}>
-                  {cobro.filas.map((f) => (
-                    <View key={f.clave} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
-                      <Text style={{ ...typeScale.cuerpo, color: c.ink }}>{f.texto}</Text>
-                      <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.ink }}>{formatImporte(f.monto)}</Text>
-                    </View>
-                  ))}
-                  {cobro.saldo !== null ? (
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2], borderTopWidth: 2, borderTopColor: c.ink, paddingTop: space[3] }}>
-                      <Text style={{ ...typeScale.cuerpoDestacado, color: c.ink }}>Saldo</Text>
-                      <Text style={{ ...typeScale.titulo, ...importe, color: c.ink }}>{formatImporte(cobro.saldo)}</Text>
-                    </View>
-                  ) : null}
+                  {cobro.filas.map((f) => <TotalsRow key={f.clave} tono="sobreLima" label={f.texto} importe={f.monto} />)}
+                  {cobro.saldo !== null ? <TotalsRow tono="sobreLima" destacado label="Saldo" importe={cobro.saldo} /> : null}
                 </View>
               </View>
             ) : null}

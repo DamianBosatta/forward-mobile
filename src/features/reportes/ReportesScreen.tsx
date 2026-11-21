@@ -192,7 +192,7 @@ function Secciones({ r }: { r: ResumenVendedor }) {
         {/* Con el signo menos escrito: la reversión resta. */}
         <TotalsRow label="Reversiones" importe={comisiones.reversiones ? -Math.abs(comisiones.reversiones) : comisiones.reversiones} />
         <TotalsRow label="Pagado" importe={comisiones.pagado} />
-        <TotalsRow label="Neto del mes" importe={comisiones.neto} destacado />
+        <TotalsRow label="Neto del mes" importe={comisiones.neto} destacado tono="acento" />
         {/* El saldo de la cuenta es el de hoy, no el del mes. */}
         <TotalsRow label="A cobrar hoy" importe={comisiones.saldoActual} />
       </Tarjeta>
