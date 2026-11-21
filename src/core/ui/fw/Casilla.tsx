@@ -1,7 +1,7 @@
 import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Check } from 'lucide-react-native'
-import { maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
+import { maxFontScale, space, typeScale, useColors } from '@/libs/theme'
 
 interface MarcaProps {
   marcada: boolean
@@ -22,8 +22,8 @@ export function MarcaDeCasilla({ marcada, error = false, tamano = 24 }: MarcaPro
       style={{
         width: tamano,
         height: tamano,
-        borderRadius: radii.campo / 2,
-        borderWidth: 2,
+        borderRadius: tamano === 36 ? 12 : 8,
+        borderWidth: tamano === 36 ? 3 : 2,
         borderColor: marcada ? c.brandInk : error ? c.chip.anulado.text : c.borderStrong,
         backgroundColor: marcada ? c.brandInk : c.surface,
         alignItems: 'center',
@@ -44,7 +44,7 @@ interface CasillaProps extends MarcaProps {
   detalle?: React.ReactNode
 }
 
-/** Casilla de 44 pt de alto: borde de 2 px `borderStrong`; tildada = relleno `brandInk` con check, nunca solo color. */
+/** Casilla de 44 pt de alto: borde de 2 px (3 en la de 36) `borderStrong`; tildada = relleno `brandInk` con check, nunca solo color. */
 export function Casilla({ label, marcada, onPress, accessibilityLabel, detalle, error, tamano }: CasillaProps) {
   const c = useColors()
   return (

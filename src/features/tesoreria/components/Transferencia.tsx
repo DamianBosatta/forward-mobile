@@ -166,7 +166,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
             {registrar.error ? <Notice tone="peligro">{mensajeDelServidor(registrar.error, 'No se pudo registrar el movimiento.')}</Notice> : null}
           </View>
         ) : null}
-        <Button label="Registrar movimiento" loading={registrar.isPending} disabled={registrar.isPending || !puedeRegistrar} onPress={enviar} />
+        <Button size="lg" label="Registrar movimiento" loading={registrar.isPending} disabled={registrar.isPending || !puedeRegistrar} onPress={enviar} />
         {!puedeRegistrar ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}</MotivoDeshabilitado> : null}
       </PieFijo>
     </View>
@@ -192,7 +192,7 @@ function MovimientoRegistrado({ onVolver }: { onVolver: () => void }) {
         <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>Los saldos de las cuentas ya están actualizados.</Text>
       </ScrollView>
       <PieFijo>
-        <Button label="Volver" onPress={onVolver} />
+        <Button size="lg" label="Volver" onPress={onVolver} />
       </PieFijo>
     </View>
   )

@@ -80,7 +80,7 @@ function Contenido({ form: inicial, fotoUrl: fotoInicial, onVolver, onGuardar, g
           </FormContainer>
         </ScrollView>
         <PieFijo>
-          <Button label="Guardar comprobante" loading={guardando} disabled={subiendo || guardando} onPress={guardar} />
+          <Button size="lg" label="Guardar comprobante" loading={guardando} disabled={subiendo || guardando} onPress={guardar} />
         </PieFijo>
       </View>
     </Modal>

@@ -2,6 +2,10 @@ import React, { useEffect, useRef, useState } from 'react'
 import { AccessibilityInfo, Animated, ViewStyle } from 'react-native'
 import { useColors } from '@/libs/theme'
 
+/** Receta FWD `shimmer`: el bloque `surfaceAlt` respira entre 100 % y 55 % de opacidad. */
+const PULSO_ALTO = 1
+const PULSO_BAJO = 0.55
+
 interface SkeletonProps {
   width?: number | string
   height?: number | string
@@ -15,7 +19,7 @@ interface SkeletonProps {
  */
 export const Skeleton = ({ width, height, borderRadius = 8, style }: SkeletonProps) => {
   const c = useColors()
-  const opacity = useRef(new Animated.Value(0.3)).current
+  const opacity = useRef(new Animated.Value(PULSO_BAJO)).current
   const [reducir, setReducir] = useState(false)
 
   useEffect(() => {
@@ -27,13 +31,13 @@ export const Skeleton = ({ width, height, borderRadius = 8, style }: SkeletonPro
 
   useEffect(() => {
     if (reducir) {
-      opacity.setValue(0.5)
+      opacity.setValue(PULSO_ALTO)
       return
     }
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(opacity, { toValue: 0.7, duration: 800, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: PULSO_ALTO, duration: 800, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: PULSO_BAJO, duration: 800, useNativeDriver: true }),
       ]),
     )
     loop.start()
@@ -43,7 +47,7 @@ export const Skeleton = ({ width, height, borderRadius = 8, style }: SkeletonPro
   return (
     <Animated.View
       style={[
-        { width: width as any, height: height as any, borderRadius, backgroundColor: c.borderStrong, opacity },
+        { width: width as any, height: height as any, borderRadius, backgroundColor: c.surfaceAlt, opacity },
         style,
       ]}
     />

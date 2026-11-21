@@ -172,7 +172,7 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
         ) : undefined}
       />
       <PieFijo>
-        <Button label="Continuar a productos" disabled={!elegido || faltaElegido.length > 0}
+        <Button size="lg" label="Continuar a productos" disabled={!elegido || faltaElegido.length > 0}
           onPress={() => { if (elegido) onElegir(elegido) }} />
       </PieFijo>
     </View>

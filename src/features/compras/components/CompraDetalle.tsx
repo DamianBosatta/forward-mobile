@@ -282,9 +282,9 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
       </ScrollView>
       {hayBarra ? (
         <PieFijo>
-          {acciones.recibir ? <Button label="Recibir mercadería" disabled={ocupado} onPress={() => { setError(null); setAviso(null); setRecibiendoMercaderia(true) }} /> : null}
+          {acciones.recibir ? <Button size="lg" label="Recibir mercadería" disabled={ocupado} onPress={() => { setError(null); setAviso(null); setRecibiendoMercaderia(true) }} /> : null}
           {acciones.confirmar ? (
-            <Button label="Confirmar compra" loading={confirmar.isPending} disabled={ocupado} onPress={() => { void correr(() => confirmar.mutateAsync(compra.id), 'No se confirmó la compra') }} />
+            <Button size="lg" label="Confirmar compra" loading={confirmar.isPending} disabled={ocupado} onPress={() => { void correr(() => confirmar.mutateAsync(compra.id), 'No se confirmó la compra') }} />
           ) : null}
           {acciones.confirmar ? <Button label="Confirmar y recibir" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('confirmarYRecibir')} /> : null}
           {acciones.editar || acciones.cancelar ? (

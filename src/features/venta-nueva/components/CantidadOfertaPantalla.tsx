@@ -259,7 +259,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
             <Text style={secundario}>{`${unidades} × ${formatImporte(precioFinal)}`}</Text>
             <Text testID="oferta-subtotal" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(calcularSubtotalConDescuento(base, unidades, pct))}</Text>
           </View>
-          <Button label="Listo, seguir cargando" disabled={deshabilitado} onPress={listo} />
+          <Button size="lg" label="Listo, seguir cargando" disabled={deshabilitado} onPress={listo} />
         </PieFijo>
       </View>
     </Modal>

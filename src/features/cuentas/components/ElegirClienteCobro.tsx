@@ -113,7 +113,7 @@ export function ElegirClienteCobro({ seleccionadoId, onElegir, onContinuar, pued
       />
       <PieFijo>
         {!puedeCobrar ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_COBRO}</MotivoDeshabilitado> : null}
-        <Button label="Continuar a qué se cobra" iconoFinal={ChevronRight} disabled={!seleccionadoId || !puedeCobrar} onPress={onContinuar} />
+        <Button size="lg" label="Continuar a qué se cobra" iconoFinal={ChevronRight} disabled={!seleccionadoId || !puedeCobrar} onPress={onContinuar} />
       </PieFijo>
     </View>
   )

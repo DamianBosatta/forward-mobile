@@ -45,7 +45,7 @@ export function ParadaGrande({ parada, numero, total, puedeLlamar, notaCargando,
         {/* El cliente se identifica por la dirección: es el punto de entrega. */}
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[2] }}>
           <MapPin size={24} color={c.text} />
-          <Text style={{ ...typeScale.consolaTexto, fontFamily: FONT.regular, fontWeight: '400', color: c.text, flex: 1 }}>{parada.direccion}</Text>
+          <Text style={{ ...typeScale.consolaTexto, fontFamily: FONT.semibold, fontWeight: '600', color: c.text, flex: 1 }}>{parada.direccion}</Text>
         </View>
         <HorarioDelDia horario={parada.horarioDelDia} />
         {nota ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Remito ${nota}`}</Text> : null}

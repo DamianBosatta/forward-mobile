@@ -234,7 +234,7 @@ export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, de
             <Text style={secundario}>Total de productos</Text>
             <Text testID="carrito-paso-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(productos)}</Text>
           </View>
-          <Button label="Continuar" iconoFinal={ChevronRight} onPress={() => onContinuar?.()} disabled={lineas.length === 0} />
+          <Button size="lg" label="Continuar" iconoFinal={ChevronRight} onPress={() => onContinuar?.()} disabled={lineas.length === 0} />
           {lineas.length === 0 ? <MotivoDeshabilitado>Agregá al menos un producto para seguir.</MotivoDeshabilitado> : null}
         </PieFijo>
       ) : (
@@ -249,7 +249,7 @@ export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, de
             <Text style={secundario}>Total estimado</Text>
             <Text testID="revisar-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(t.total)}</Text>
           </View>
-          <Button label={etiquetaConfirmar} onPress={() => { void confirmar() }} loading={enviando || confirmando} disabled={enviando || confirmando || deshabilitado || lineas.length === 0} />
+          <Button size="lg" label={etiquetaConfirmar} onPress={() => { void confirmar() }} loading={enviando || confirmando} disabled={enviando || confirmando || deshabilitado || lineas.length === 0} />
           {motivoDeshabilitado ? <MotivoDeshabilitado>{motivoDeshabilitado}</MotivoDeshabilitado> : null}
         </PieFijo>
       )}
