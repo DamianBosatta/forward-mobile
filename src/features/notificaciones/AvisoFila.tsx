@@ -14,7 +14,7 @@ interface AvisoFilaProps {
   onPress: () => void
   /**
    * 'fila' (por defecto): con borde (panel del calendario). 'tarjeta': tarjeta sin borde de la bandeja
-   * (propuesta Cuenta, frame 8); sin leer en verde claro, leído en blanco.
+   * (FWD lote 6): tarjeta `surface` sin borde; el "Sin leer" lo marca la etiqueta lime, no el fondo.
    */
   variante?: 'fila' | 'tarjeta'
 }
@@ -36,21 +36,21 @@ export function AvisoFila({ aviso, destino, cuando, onPress, variante = 'fila' }
         gap: space[3],
         padding: space[4],
         minHeight: 48,
-        borderRadius: radii.tarjeta,
+        borderRadius: variante === 'tarjeta' ? radii.tarjetaGrande : radii.tarjeta,
         ...(variante === 'tarjeta' ? null : { borderWidth: 1, borderColor: aviso.leida ? c.border : c.brand }),
-        backgroundColor: aviso.leida ? c.surface : c.brandSoft,
+        backgroundColor: variante === 'tarjeta' || aviso.leida ? c.surface : c.brandSoft,
         overflow: 'hidden',
       }}
     >
-      <View style={{ width: 40, height: 40, borderRadius: radii.pastilla, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
-        <Icono size={22} color={critico ? c.danger : c.brandInk} strokeWidth={2} />
+      <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: variante === 'tarjeta' ? c.surfaceAlt : c.surface, alignItems: 'center', justifyContent: 'center' }}>
+        <Icono size={24} color={variante === 'tarjeta' ? c.text : critico ? c.danger : c.brandInk} strokeWidth={2} />
       </View>
       <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
         {!aviso.leida || critico ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space[2] }}>
             {!aviso.leida ? (
-              <View style={{ alignSelf: 'flex-start', backgroundColor: c.action, borderRadius: radii.pastilla, paddingVertical: space[1], paddingHorizontal: 10 }}>
-                <Text style={{ ...typeScale.etiqueta, color: c.onAction }}>Sin leer</Text>
+              <View style={{ alignSelf: 'flex-start', backgroundColor: c.lime, borderRadius: radii.pastilla, paddingVertical: space[1], paddingHorizontal: 10 }}>
+                <Text style={{ ...typeScale.etiqueta, color: c.ink }}>Sin leer</Text>
               </View>
             ) : null}
             {critico ? <StatusChip estado="anulado" label="Crítico" /> : null}
@@ -63,8 +63,8 @@ export function AvisoFila({ aviso, destino, cuando, onPress, variante = 'fila' }
         <Text style={{ ...typeScale.secundario, color: c.text }}>{aviso.mensaje}</Text>
         {destino.tipo === 'ruta' ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1], minHeight: variante === 'tarjeta' ? space[8] : undefined }}>
-            <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>{destino.etiqueta}</Text>
-            <ChevronRight size={18} color={c.brandInk} />
+            <Text style={{ ...typeScale.cuerpoDestacado, color: variante === 'tarjeta' ? c.text : c.brandInk }}>{destino.etiqueta}</Text>
+            <ChevronRight size={18} color={variante === 'tarjeta' ? c.text : c.brandInk} />
           </View>
         ) : null}
         {destino.tipo === 'web' ? (
