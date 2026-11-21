@@ -1,135 +1,849 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="60" failures="0" errors="0" time="18.986">
-  <testsuite name="S4 — Inventory cost-field gating: canViewCost(permissions)" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="1.227" tests="6">
-    <testcase classname="S4 — Inventory cost-field gating: canViewCost(permissions) returns false without CAP_VER_COSTOS — cost field must be hidden" name="S4 — Inventory cost-field gating: canViewCost(permissions) returns false without CAP_VER_COSTOS — cost field must be hidden" time="0.02">
+<testsuites name="jest tests" tests="402" failures="0" errors="0" time="74.482">
+  <testsuite name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a)" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:18" time="7.897" tests="9">
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns false (fail-open) when precioMinimo is null" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns false (fail-open) when precioMinimo is null" time="0.12">
     </testcase>
-    <testcase classname="S4 — Inventory cost-field gating: canViewCost(permissions) returns false for empty permissions — cost field must be hidden" name="S4 — Inventory cost-field gating: canViewCost(permissions) returns false for empty permissions — cost field must be hidden" time="0.001">
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns false (fail-open) when precioMinimo is undefined" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns false (fail-open) when precioMinimo is undefined" time="0.001">
     </testcase>
-    <testcase classname="S4 — Inventory cost-field gating: canViewCost(permissions) returns false for an unknown capability — cost field must be hidden" name="S4 — Inventory cost-field gating: canViewCost(permissions) returns false for an unknown capability — cost field must be hidden" time="0.001">
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns false even with 0 discounts and null floor" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns false even with 0 discounts and null floor" time="0.001">
     </testcase>
-    <testcase classname="S4 — Inventory cost-field gating: canViewCost(permissions) returns true with CAP_VER_COSTOS — cost field must be visible" name="S4 — Inventory cost-field gating: canViewCost(permissions) returns true with CAP_VER_COSTOS — cost field must be visible" time="0">
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esDescuentoValidoCompuesto returns true (fail-open) when precioMinimo is null" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esDescuentoValidoCompuesto returns true (fail-open) when precioMinimo is null" time="0.006">
     </testcase>
-    <testcase classname="S4 — Inventory edit-affordance gate behavioral contract MOD_STOCK:update without CAP_VER_COSTOS → access-denied view" name="S4 — Inventory edit-affordance gate behavioral contract MOD_STOCK:update without CAP_VER_COSTOS → access-denied view" time="0">
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esDescuentoValidoCompuesto returns true (fail-open) when precioMinimo is undefined" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esDescuentoValidoCompuesto returns true (fail-open) when precioMinimo is undefined" time="0.001">
     </testcase>
-    <testcase classname="S4 — Inventory edit-affordance gate behavioral contract CAP_VER_COSTOS → edit form editable with cost field" name="S4 — Inventory edit-affordance gate behavioral contract CAP_VER_COSTOS → edit form editable with cost field" time="0.001">
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns true when floor IS known and price breaks it" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) derivarFloorBroken returns true when floor IS known and price breaks it" time="0.001">
     </testcase>
-  </testsuite>
-  <testsuite name="chipDeFilaStock" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="1.218" tests="5">
-    <testcase classname="chipDeFilaStock sin disponible dice &quot;Sin stock&quot;, aunque el servidor lo marque en alerta" name="chipDeFilaStock sin disponible dice &quot;Sin stock&quot;, aunque el servidor lo marque en alerta" time="0.019">
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esPrecioValido returns false when price is below floor" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esPrecioValido returns false when price is below floor" time="0.001">
     </testcase>
-    <testcase classname="chipDeFilaStock en alerta (lo decide el servidor) dice &quot;En alerta&quot;" name="chipDeFilaStock en alerta (lo decide el servidor) dice &quot;En alerta&quot;" time="0.001">
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esPrecioValido returns true when price meets floor exactly" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esPrecioValido returns true when price meets floor exactly" time="0.001">
     </testcase>
-    <testcase classname="chipDeFilaStock con stock de sobra dice &quot;Con stock&quot; (etiqueta de la web)" name="chipDeFilaStock con stock de sobra dice &quot;Con stock&quot; (etiqueta de la web)" time="0">
-    </testcase>
-    <testcase classname="textos del renglón el mínimo solo se escribe si existe" name="textos del renglón el mínimo solo se escribe si existe" time="0.001">
-    </testcase>
-    <testcase classname="textos del renglón reservado y por entrar van siempre, con 0 incluido; la web nunca dice &quot;Virtual&quot; ni &quot;Por ingresar&quot;" name="textos del renglón reservado y por entrar van siempre, con 0 incluido; la web nunca dice &quot;Virtual&quot; ni &quot;Por ingresar&quot;" time="0.001">
+    <testcase classname="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esPrecioValido returns true when price is above floor" name="M2 — floor-unknown: fail-OPEN policy (PR-2e-a) esPrecioValido returns true when price is above floor" time="0.001">
     </testcase>
   </testsuite>
-  <testsuite name="Stock: el buscador no queda pegado a la barra superior" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="5.344" tests="2">
-    <testcase classname="Stock: el buscador no queda pegado a la barra superior deja aire arriba con el tema dark y conserva el color de la barra" name="Stock: el buscador no queda pegado a la barra superior deja aire arriba con el tema dark y conserva el color de la barra" time="0.157">
+  <testsuite name="METODO_ENTREGA constants" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:18" time="8.094" tests="51">
+    <testcase classname="METODO_ENTREGA constants Logistica equals 1" name="METODO_ENTREGA constants Logistica equals 1" time="0.166">
     </testcase>
-    <testcase classname="Stock: el buscador no queda pegado a la barra superior deja aire arriba con el tema light y conserva el color de la barra" name="Stock: el buscador no queda pegado a la barra superior deja aire arriba con el tema light y conserva el color de la barra" time="0.009">
+    <testcase classname="METODO_ENTREGA constants RetiroEnLocal equals 2" name="METODO_ENTREGA constants RetiroEnLocal equals 2" time="0.001">
+    </testcase>
+    <testcase classname="METODO_ENTREGA constants Expreso equals 3" name="METODO_ENTREGA constants Expreso equals 3" time="0">
+    </testcase>
+    <testcase classname="resolveMetodoEntrega forces RetiroEnLocal (2) when entregaInmediata is true, regardless of selected method" name="resolveMetodoEntrega forces RetiroEnLocal (2) when entregaInmediata is true, regardless of selected method" time="0.001">
+    </testcase>
+    <testcase classname="resolveMetodoEntrega passes through the selected method when entregaInmediata is false" name="resolveMetodoEntrega passes through the selected method when entregaInmediata is false" time="0.001">
+    </testcase>
+    <testcase classname="resolveMetodoEntrega defaults to Logistica (1) when no method is provided and entregaInmediata is false" name="resolveMetodoEntrega defaults to Logistica (1) when no method is provided and entregaInmediata is false" time="0">
+    </testcase>
+    <testcase classname="resolveMetodoEntrega defaults to RetiroEnLocal (2) when no method is provided and entregaInmediata is true" name="resolveMetodoEntrega defaults to RetiroEnLocal (2) when no method is provided and entregaInmediata is true" time="0">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is ON (venta directa mode) returns false for stockDisponible = 0 (hard block — no stock)" name="isProductAddable when entregaInmediata is ON (venta directa mode) returns false for stockDisponible = 0 (hard block — no stock)" time="0.001">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is ON (venta directa mode) returns false for stockDisponible &lt; 0 (negative stock)" name="isProductAddable when entregaInmediata is ON (venta directa mode) returns false for stockDisponible &lt; 0 (negative stock)" time="0.001">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is ON (venta directa mode) returns true for stockDisponible = 1 (minimum positive)" name="isProductAddable when entregaInmediata is ON (venta directa mode) returns true for stockDisponible = 1 (minimum positive)" time="0.001">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is ON (venta directa mode) returns true for stockDisponible &gt; 1" name="isProductAddable when entregaInmediata is ON (venta directa mode) returns true for stockDisponible &gt; 1" time="0.001">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is OFF (normal mode) returns true regardless of zero stock" name="isProductAddable when entregaInmediata is OFF (normal mode) returns true regardless of zero stock" time="0.001">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is OFF (normal mode) returns true for negative stock (normal path allows sin-stock sales)" name="isProductAddable when entregaInmediata is OFF (normal mode) returns true for negative stock (normal path allows sin-stock sales)" time="0">
+    </testcase>
+    <testcase classname="isProductAddable when entregaInmediata is OFF (normal mode) returns true for positive stock" name="isProductAddable when entregaInmediata is OFF (normal mode) returns true for positive stock" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload includes entregaInmediata: true in payload when toggle is ON" name="buildVentaPayload includes entregaInmediata: true in payload when toggle is ON" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload includes entregaInmediata: false in payload when toggle is OFF" name="buildVentaPayload includes entregaInmediata: false in payload when toggle is OFF" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload forces metodoEntrega to RetiroEnLocal (2) when entregaInmediata is ON" name="buildVentaPayload forces metodoEntrega to RetiroEnLocal (2) when entregaInmediata is ON" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload sends the selected metodoEntrega when entregaInmediata is OFF" name="buildVentaPayload sends the selected metodoEntrega when entregaInmediata is OFF" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload maps detalles to items array with descuentoPorcentaje defaulting to 0" name="buildVentaPayload maps detalles to items array with descuentoPorcentaje defaulting to 0" time="0.003">
+    </testcase>
+    <testcase classname="buildVentaPayload copies clienteId, depositoId, tipoOperacion, descuentoGeneral from form data" name="buildVentaPayload copies clienteId, depositoId, tipoOperacion, descuentoGeneral from form data" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload defaults metodoEntrega to Logistica (1) when no selectedMethod is provided and toggle is OFF" name="buildVentaPayload defaults metodoEntrega to Logistica (1) when no selectedMethod is provided and toggle is OFF" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload full venta-directa payload shape: entregaInmediata + RetiroEnLocal + items" name="buildVentaPayload full venta-directa payload shape: entregaInmediata + RetiroEnLocal + items" time="0.001">
+    </testcase>
+    <testcase classname="requiereFechaEntrega returns true for Logistica (1) when entregaInmediata is OFF" name="requiereFechaEntrega returns true for Logistica (1) when entregaInmediata is OFF" time="0.001">
+    </testcase>
+    <testcase classname="requiereFechaEntrega returns true for Expreso (3) when entregaInmediata is OFF" name="requiereFechaEntrega returns true for Expreso (3) when entregaInmediata is OFF" time="0.001">
+    </testcase>
+    <testcase classname="requiereFechaEntrega returns false for RetiroEnLocal (2) when entregaInmediata is OFF" name="requiereFechaEntrega returns false for RetiroEnLocal (2) when entregaInmediata is OFF" time="0">
+    </testcase>
+    <testcase classname="requiereFechaEntrega returns false for any method when entregaInmediata is ON (forces RetiroEnLocal)" name="requiereFechaEntrega returns false for any method when entregaInmediata is ON (forces RetiroEnLocal)" time="0.001">
+    </testcase>
+    <testcase classname="requiereFechaEntrega defaults to Logistica (requires date) when no method provided and entregaInmediata is OFF" name="requiereFechaEntrega defaults to Logistica (requires date) when no method provided and entregaInmediata is OFF" time="0.001">
+    </testcase>
+    <testcase classname="requiereFechaEntrega defaults to RetiroEnLocal (no date) when no method provided and entregaInmediata is ON" name="requiereFechaEntrega defaults to RetiroEnLocal (no date) when no method provided and entregaInmediata is ON" time="0.016">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns false for null" name="esFechaEntregaValida returns false for null" time="0.001">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns false for undefined" name="esFechaEntregaValida returns false for undefined" time="0.001">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns false for a Sunday (getDay() === 0)" name="esFechaEntregaValida returns false for a Sunday (getDay() === 0)" time="0.002">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns true for a Monday (getDay() === 1)" name="esFechaEntregaValida returns true for a Monday (getDay() === 1)" time="0.001">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns true for Tuesday through Saturday (getDay() 2–6)" name="esFechaEntregaValida returns true for Tuesday through Saturday (getDay() 2–6)" time="0.001">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns false for another Sunday in a different month" name="esFechaEntregaValida returns false for another Sunday in a different month" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — cargoFlete includes cargoFlete in payload when &gt; 0" name="buildVentaPayload — cargoFlete includes cargoFlete in payload when &gt; 0" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — cargoFlete omits cargoFlete from payload when 0" name="buildVentaPayload — cargoFlete omits cargoFlete from payload when 0" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — cargoFlete omits cargoFlete from payload when not provided" name="buildVentaPayload — cargoFlete omits cargoFlete from payload when not provided" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — cargoFlete includes cargoFlete for Retiro method when flete &gt; 0" name="buildVentaPayload — cargoFlete includes cargoFlete for Retiro method when flete &gt; 0" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — fechaEntrega (parity: ISO datetime string) includes fechaEntrega as ISO datetime string for Logistica when date is provided" name="buildVentaPayload — fechaEntrega (parity: ISO datetime string) includes fechaEntrega as ISO datetime string for Logistica when date is provided" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — fechaEntrega (parity: ISO datetime string) includes fechaEntrega as ISO datetime string for Expreso when date is provided" name="buildVentaPayload — fechaEntrega (parity: ISO datetime string) includes fechaEntrega as ISO datetime string for Expreso when date is provided" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when metodo is RetiroEnLocal (no date required)" name="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when metodo is RetiroEnLocal (no date required)" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when entregaInmediata is ON even if date is provided" name="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when entregaInmediata is ON even if date is provided" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when formData.fechaEntrega is null" name="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when formData.fechaEntrega is null" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when formData.fechaEntrega is not provided" name="buildVentaPayload — fechaEntrega (parity: ISO datetime string) omits fechaEntrega when formData.fechaEntrega is not provided" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — fechaEntrega (parity: ISO datetime string) payload fechaEntrega matches fecha.toISOString() — ISO datetime format (not YYYY-MM-DD)" name="buildVentaPayload — fechaEntrega (parity: ISO datetime string) payload fechaEntrega matches fecha.toISOString() — ISO datetime format (not YYYY-MM-DD)" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — parity with nueva.tsx inline payload parity: core fields match inline payload for Logistica + no entregaInmediata" name="buildVentaPayload — parity with nueva.tsx inline payload parity: core fields match inline payload for Logistica + no entregaInmediata" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — parity with nueva.tsx inline payload parity: items array has descuentoPorcentaje 0 (not undefined) when no discount" name="buildVentaPayload — parity with nueva.tsx inline payload parity: items array has descuentoPorcentaje 0 (not undefined) when no discount" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — parity with nueva.tsx inline payload parity: fechaEntrega is ISO datetime string matching fecha.toISOString()" name="buildVentaPayload — parity with nueva.tsx inline payload parity: fechaEntrega is ISO datetime string matching fecha.toISOString()" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — parity with nueva.tsx inline payload parity: cargoFlete included when fleteMonto &gt; 0" name="buildVentaPayload — parity with nueva.tsx inline payload parity: cargoFlete included when fleteMonto &gt; 0" time="0">
+    </testcase>
+    <testcase classname="buildVentaPayload — parity with nueva.tsx inline payload parity: entregaInmediata is boolean in lib (inline used || undefined — semantically same)" name="buildVentaPayload — parity with nueva.tsx inline payload parity: entregaInmediata is boolean in lib (inline used || undefined — semantically same)" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload — parity with nueva.tsx inline payload parity: full shape for Retiro (no flete, no fechaEntrega)" name="buildVentaPayload — parity with nueva.tsx inline payload parity: full shape for Retiro (no flete, no fechaEntrega)" time="0.002">
     </testcase>
   </testsuite>
-  <testsuite name="Catálogo" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="11.113" tests="10">
-    <testcase classname="Catálogo sin productos: estado &quot;vacío&quot; con la frase de siempre" name="Catálogo sin productos: estado &quot;vacío&quot; con la frase de siempre" time="0.337">
+  <testsuite name="METODO_ENTREGA" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:18" time="8.031" tests="44">
+    <testcase classname="METODO_ENTREGA has the correct numeric values that mirror the backend C# enum" name="METODO_ENTREGA has the correct numeric values that mirror the backend C# enum" time="0.203">
     </testcase>
-    <testcase classname="Catálogo sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar, que vuelve a pedir" name="Catálogo sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar, que vuelve a pedir" time="0.297">
+    <testcase classname="resolveMetodoEntrega forces RetiroEnLocal when entregaInmediata is true, regardless of selector" name="resolveMetodoEntrega forces RetiroEnLocal when entregaInmediata is true, regardless of selector" time="0.001">
     </testcase>
-    <testcase classname="Catálogo con lo guardado y sin conexión: la lista sigue y un aviso dice a qué hora se guardó" name="Catálogo con lo guardado y sin conexión: la lista sigue y un aviso dice a qué hora se guardó" time="0.096">
+    <testcase classname="resolveMetodoEntrega returns the selected method when entregaInmediata is false" name="resolveMetodoEntrega returns the selected method when entregaInmediata is false" time="0.001">
     </testcase>
-    <testcase classname="Catálogo otro error sin datos sigue siendo el aviso de siempre" name="Catálogo otro error sin datos sigue siendo el aviso de siempre" time="0.087">
+    <testcase classname="resolveMetodoEntrega defaults to Logistica when selectedMethod is omitted and not inmediata" name="resolveMetodoEntrega defaults to Logistica when selectedMethod is omitted and not inmediata" time="0.001">
     </testcase>
-    <testcase classname="Stock con cantidades sin renglones: estado &quot;vacío&quot; con la frase de la web (S16)" name="Stock con cantidades sin renglones: estado &quot;vacío&quot; con la frase de la web (S16)" time="0.079">
+    <testcase classname="isProductAddable when entregaInmediata is false (normal sale) allows adding regardless of stock level" name="isProductAddable when entregaInmediata is false (normal sale) allows adding regardless of stock level" time="0.001">
     </testcase>
-    <testcase classname="Stock con cantidades sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar, que vuelve a pedir" name="Stock con cantidades sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar, que vuelve a pedir" time="0.279">
+    <testcase classname="isProductAddable when entregaInmediata is true (counter-sale / venta directa) blocks adding when stock is 0" name="isProductAddable when entregaInmediata is true (counter-sale / venta directa) blocks adding when stock is 0" time="0">
     </testcase>
-    <testcase classname="Stock con cantidades con lo guardado y sin conexión: la lista sigue y un aviso dice a qué hora se guardó" name="Stock con cantidades con lo guardado y sin conexión: la lista sigue y un aviso dice a qué hora se guardó" time="0.143">
+    <testcase classname="isProductAddable when entregaInmediata is true (counter-sale / venta directa) blocks adding when stock is negative" name="isProductAddable when entregaInmediata is true (counter-sale / venta directa) blocks adding when stock is negative" time="0">
     </testcase>
-    <testcase classname="Stock con cantidades otro error sin datos: estado de error con Reintentar, sin hablar de señal" name="Stock con cantidades otro error sin datos: estado de error con Reintentar, sin hablar de señal" time="0.095">
+    <testcase classname="isProductAddable when entregaInmediata is true (counter-sale / venta directa) allows adding when stock is positive" name="isProductAddable when entregaInmediata is true (counter-sale / venta directa) allows adding when stock is positive" time="0.001">
     </testcase>
-    <testcase classname="Stock sin cantidades sin productos: estado &quot;vacío&quot; con la frase de siempre" name="Stock sin cantidades sin productos: estado &quot;vacío&quot; con la frase de siempre" time="0.062">
+    <testcase classname="requiereFechaEntrega returns false when entregaInmediata is true (forced to RetiroEnLocal)" name="requiereFechaEntrega returns false when entregaInmediata is true (forced to RetiroEnLocal)" time="0.001">
     </testcase>
-    <testcase classname="Stock sin cantidades sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar" name="Stock sin cantidades sin conexión y sin nada guardado: estado &quot;sin conexión&quot; con Reintentar" time="0.061">
+    <testcase classname="requiereFechaEntrega returns false for RetiroEnLocal (no date needed for pickup)" name="requiereFechaEntrega returns false for RetiroEnLocal (no date needed for pickup)" time="0.001">
+    </testcase>
+    <testcase classname="requiereFechaEntrega returns true for Logistica (date required)" name="requiereFechaEntrega returns true for Logistica (date required)" time="0">
+    </testcase>
+    <testcase classname="requiereFechaEntrega returns true for Expreso (date required)" name="requiereFechaEntrega returns true for Expreso (date required)" time="0.01">
+    </testcase>
+    <testcase classname="requiereFechaEntrega defaults to Logistica (requires date) when selectedMethod is omitted" name="requiereFechaEntrega defaults to Logistica (requires date) when selectedMethod is omitted" time="0.001">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns false for null" name="esFechaEntregaValida returns false for null" time="0.002">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns false for undefined" name="esFechaEntregaValida returns false for undefined" time="0.001">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns false for a Sunday (getDay() === 0)" name="esFechaEntregaValida returns false for a Sunday (getDay() === 0)" time="0.003">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns true for a Monday" name="esFechaEntregaValida returns true for a Monday" time="0.002">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns true for a Saturday (only Sunday is blocked)" name="esFechaEntregaValida returns true for a Saturday (only Sunday is blocked)" time="0.001">
+    </testcase>
+    <testcase classname="esFechaEntregaValida returns true for a mid-week date" name="esFechaEntregaValida returns true for a mid-week date" time="0.002">
+    </testcase>
+    <testcase classname="buildVentaPayload entregaInmediata = true (retiro en local / counter-sale) sets metodoEntrega to RetiroEnLocal and entregaInmediata to true" name="buildVentaPayload entregaInmediata = true (retiro en local / counter-sale) sets metodoEntrega to RetiroEnLocal and entregaInmediata to true" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload entregaInmediata = true (retiro en local / counter-sale) omits fechaEntrega even when a date is present in formData" name="buildVentaPayload entregaInmediata = true (retiro en local / counter-sale) omits fechaEntrega even when a date is present in formData" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload entregaInmediata = true (retiro en local / counter-sale) copies scalar fields verbatim from formData" name="buildVentaPayload entregaInmediata = true (retiro en local / counter-sale) copies scalar fields verbatim from formData" time="0.002">
+    </testcase>
+    <testcase classname="buildVentaPayload entregaInmediata = false, Logistica (date required) includes fechaEntrega as ISO 8601 datetime string when a date is provided" name="buildVentaPayload entregaInmediata = false, Logistica (date required) includes fechaEntrega as ISO 8601 datetime string when a date is provided" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload entregaInmediata = false, Logistica (date required) omits fechaEntrega when formData.fechaEntrega is null" name="buildVentaPayload entregaInmediata = false, Logistica (date required) omits fechaEntrega when formData.fechaEntrega is null" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload entregaInmediata = false, Logistica (date required) defaults to Logistica when selectedMethod is omitted" name="buildVentaPayload entregaInmediata = false, Logistica (date required) defaults to Logistica when selectedMethod is omitted" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload entregaInmediata = false, RetiroEnLocal (date NOT required) omits fechaEntrega even when a date is provided" name="buildVentaPayload entregaInmediata = false, RetiroEnLocal (date NOT required) omits fechaEntrega even when a date is provided" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload cargoFlete handling includes cargoFlete when strictly positive" name="buildVentaPayload cargoFlete handling includes cargoFlete when strictly positive" time="0.004">
+    </testcase>
+    <testcase classname="buildVentaPayload cargoFlete handling omits cargoFlete when value is 0" name="buildVentaPayload cargoFlete handling omits cargoFlete when value is 0" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload cargoFlete handling omits cargoFlete when not provided in formData" name="buildVentaPayload cargoFlete handling omits cargoFlete when not provided in formData" time="0.002">
+    </testcase>
+    <testcase classname="buildVentaPayload items mapping maps all detail lines with correct shape" name="buildVentaPayload items mapping maps all detail lines with correct shape" time="0.004">
+    </testcase>
+    <testcase classname="buildVentaPayload items mapping defaults descuentoPorcentaje to 0 when absent in a detail" name="buildVentaPayload items mapping defaults descuentoPorcentaje to 0 when absent in a detail" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload items mapping preserves explicit descuentoPorcentaje from a detail" name="buildVentaPayload items mapping preserves explicit descuentoPorcentaje from a detail" time="0.001">
+    </testcase>
+    <testcase classname="buildVentaPayload exact full payload shape (contract test) Expreso with date and positive flete produces the complete expected payload" name="buildVentaPayload exact full payload shape (contract test) Expreso with date and positive flete produces the complete expected payload" time="0.002">
+    </testcase>
+    <testcase classname="buildVentaPayload exact full payload shape (contract test) RetiroEnLocal counter-sale with no optional fields produces minimal payload" name="buildVentaPayload exact full payload shape (contract test) RetiroEnLocal counter-sale with no optional fields produces minimal payload" time="0.001">
+    </testcase>
+    <testcase classname="isCatalogItemAddable uses disponible, never real - reservado (real 10, reservado 3, disponible 5 -&gt; addable)" name="isCatalogItemAddable uses disponible, never real - reservado (real 10, reservado 3, disponible 5 -&gt; addable)" time="0.002">
+    </testcase>
+    <testcase classname="isCatalogItemAddable blocks with entregaInmediata ON when disponible is 0 even if real &gt; reservado" name="isCatalogItemAddable blocks with entregaInmediata ON when disponible is 0 even if real &gt; reservado" time="0.001">
+    </testcase>
+    <testcase classname="isCatalogItemAddable allows with entregaInmediata ON when disponible &gt; 0 even if real - reservado &lt;= 0" name="isCatalogItemAddable allows with entregaInmediata ON when disponible &gt; 0 even if real - reservado &lt;= 0" time="0.001">
+    </testcase>
+    <testcase classname="isCatalogItemAddable keeps allowing any item when entregaInmediata is OFF (previous behavior)" name="isCatalogItemAddable keeps allowing any item when entregaInmediata is OFF (previous behavior)" time="0">
+    </testcase>
+    <testcase classname="isCatalogItemAddable sin ver cantidades permite con entregaInmediata ON si puedeVenderse=true aunque disponible llegue redactado en 0" name="isCatalogItemAddable sin ver cantidades permite con entregaInmediata ON si puedeVenderse=true aunque disponible llegue redactado en 0" time="0.001">
+    </testcase>
+    <testcase classname="isCatalogItemAddable sin ver cantidades bloquea con entregaInmediata ON si puedeVenderse=false" name="isCatalogItemAddable sin ver cantidades bloquea con entregaInmediata ON si puedeVenderse=false" time="0">
+    </testcase>
+    <testcase classname="isCatalogItemAddable sin ver cantidades quien ve cantidades sigue decidiendo por disponible, ignorando puedeVenderse (comportamiento previo)" name="isCatalogItemAddable sin ver cantidades quien ve cantidades sigue decidiendo por disponible, ignorando puedeVenderse (comportamiento previo)" time="0">
+    </testcase>
+    <testcase classname="isLineaSinStock usa disponible y no stockReal: real alcanza pero disponible no -&gt; sin stock" name="isLineaSinStock usa disponible y no stockReal: real alcanza pero disponible no -&gt; sin stock" time="0.001">
+    </testcase>
+    <testcase classname="isLineaSinStock con disponible suficiente no reporta sin stock" name="isLineaSinStock con disponible suficiente no reporta sin stock" time="0.001">
+    </testcase>
+    <testcase classname="isLineaSinStock sin ver cantidades decide puedeVenderse" name="isLineaSinStock sin ver cantidades decide puedeVenderse" time="0.002">
     </testcase>
   </testsuite>
-  <testsuite name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="12.072" tests="17">
-    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK en la Lista muestra disponible, stock real, mínimo, reservado y por entrar de cada renglón, y los totales que cuenta el servidor" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK en la Lista muestra disponible, stock real, mínimo, reservado y por entrar de cada renglón, y los totales que cuenta el servidor" time="0.528">
+  <testsuite name="esPrecioValido" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:18" time="7.983" tests="52">
+    <testcase classname="esPrecioValido returns true when price is strictly above the floor" name="esPrecioValido returns true when price is strictly above the floor" time="0.066">
     </testcase>
-    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK pide el stock del depósito del usuario y, si no tiene, el Central" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK pide el stock del depósito del usuario y, si no tiene, el Central" time="0.183">
+    <testcase classname="esPrecioValido returns true at exactly the floor (inclusive — matches server VERDE-at-floor)" name="esPrecioValido returns true at exactly the floor (inclusive — matches server VERDE-at-floor)" time="0.003">
     </testcase>
-    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK cambiar de depósito pide el stock de ese depósito" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK cambiar de depósito pide el stock de ese depósito" time="0.245">
+    <testcase classname="esPrecioValido returns false when price is below the floor" name="esPrecioValido returns false when price is below the floor" time="0.001">
     </testcase>
-    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK &quot;En alerta&quot; (en la hoja Filtros) pide solo los renglones en alerta" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK &quot;En alerta&quot; (en la hoja Filtros) pide solo los renglones en alerta" time="0.479">
+    <testcase classname="esPrecioValido handles zero floor: 0 &gt;= 0 is valid, negative is not" name="esPrecioValido handles zero floor: 0 &gt;= 0 is valid, negative is not" time="0.002">
     </testcase>
-    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK no ofrece ninguna acción de ajuste: es solo consulta" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK no ofrece ninguna acción de ajuste: es solo consulta" time="0.073">
+    <testcase classname="calcularSubtotalConDescuento unitario 8,7598 → 8,76 y el renglón ×1000 es 8760,00" name="calcularSubtotalConDescuento unitario 8,7598 → 8,76 y el renglón ×1000 es 8760,00" time="0.002">
     </testcase>
-    <testcase classname="Stock por depósito, con CAP_VER_CANTIDADES_STOCK en tablet (600 px o más) la Lista se ve como tabla con Disponible, Stock real, Reservado, Por entrar y Mínimo" name="Stock por depósito, con CAP_VER_CANTIDADES_STOCK en tablet (600 px o más) la Lista se ve como tabla con Disponible, Stock real, Reservado, Por entrar y Mínimo" time="0.248">
+    <testcase classname="calcularSubtotalConDescuento unitario 6,667 → 6,67 y ×3 es 20,01" name="calcularSubtotalConDescuento unitario 6,667 → 6,67 y ×3 es 20,01" time="0.001">
     </testcase>
-    <testcase classname="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK muestra solo &quot;Hay stock / Sin stock&quot; y no pide ni dibuja cantidades" name="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK muestra solo &quot;Hay stock / Sin stock&quot; y no pide ni dibuja cantidades" time="0.065">
+    <testcase classname="calcularSubtotalConDescuento 6,67 × 1,5 es 10,01 (en centavos: en binario daría 10,004999…)" name="calcularSubtotalConDescuento 6,67 × 1,5 es 10,01 (en centavos: en binario daría 10,004999…)" time="0.001">
     </testcase>
-    <testcase classname="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK la lista sale del catálogo por depósito, no de GET /Productos (que no filtra por depósito)" name="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK la lista sale del catálogo por depósito, no de GET /Productos (que no filtra por depósito)" time="0.063">
+    <testcase classname="calcularSubtotalConDescuento precio entero sin descuento no cambia" name="calcularSubtotalConDescuento precio entero sin descuento no cambia" time="0.001">
     </testcase>
-    <testcase classname="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK quien ve todos los depósitos no manda depósito: el servidor le devuelve su lista de siempre" name="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK quien ve todos los depósitos no manda depósito: el servidor le devuelve su lista de siempre" time="0.062">
+    <testcase classname="calcularSubtotalConDescuento 0% discount: subtotal equals price * quantity" name="calcularSubtotalConDescuento 0% discount: subtotal equals price * quantity" time="0.001">
     </testcase>
-    <testcase classname="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK la lista de stock no trae variantes hijas ni hermanas que no coinciden con la búsqueda" name="Stock por depósito, sin CAP_VER_CANTIDADES_STOCK la lista de stock no trae variantes hijas ni hermanas que no coinciden con la búsqueda" time="0.064">
+    <testcase classname="calcularSubtotalConDescuento 10% discount: unit price becomes 90, subtotal = 180 for qty 2" name="calcularSubtotalConDescuento 10% discount: unit price becomes 90, subtotal = 180 for qty 2" time="0.001">
     </testcase>
-    <testcase classname="Pantalla Stock separada del catálogo se abre sin selector Catálogo/Stock y con el título Stock" name="Pantalla Stock separada del catálogo se abre sin selector Catálogo/Stock y con el título Stock" time="0.028">
+    <testcase classname="calcularSubtotalConDescuento 100% discount: subtotal is zero" name="calcularSubtotalConDescuento 100% discount: subtotal is zero" time="0.001">
     </testcase>
-    <testcase classname="Pantalla Stock separada del catálogo viene de la ficha con ?busqueda=: la pantalla abre buscando ese código" name="Pantalla Stock separada del catálogo viene de la ficha con ?busqueda=: la pantalla abre buscando ese código" time="0.025">
+    <testcase classname="calcularSubtotalConDescuento zero quantity: subtotal is zero regardless of discount" name="calcularSubtotalConDescuento zero quantity: subtotal is zero regardless of discount" time="0.001">
     </testcase>
-    <testcase classname="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) sin ninguna de las dos capacidades no aparece &quot;Todos&quot; y se pide el depósito del usuario" name="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) sin ninguna de las dos capacidades no aparece &quot;Todos&quot; y se pide el depósito del usuario" time="0.061">
+    <testcase classname="calcularSubtotalConDescuento fractional discount: 33,5 % de 100 es exacto" name="calcularSubtotalConDescuento fractional discount: 33,5 % de 100 es exacto" time="0.002">
     </testcase>
-    <testcase classname="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con CAP_VER_TODOS_LOS_DEPOSITOS y sin elección abre en el depósito propio (el de la sesión, S8)" name="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con CAP_VER_TODOS_LOS_DEPOSITOS y sin elección abre en el depósito propio (el de la sesión, S8)" time="0.063">
+    <testcase classname="calcularSubtotalConDescuento non-trivial combination: 15% off, qty 4, price 50" name="calcularSubtotalConDescuento non-trivial combination: 15% off, qty 4, price 50" time="0.001">
     </testcase>
-    <testcase classname="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con el depósito de la sesión elegido en Inicio, Stock abre en ese depósito" name="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con el depósito de la sesión elegido en Inicio, Stock abre en ese depósito" time="0.07">
+    <testcase classname="pctFromPrecio returns 0 when precioVenta is 0 (guard against division by zero)" name="pctFromPrecio returns 0 when precioVenta is 0 (guard against division by zero)" time="0.025">
     </testcase>
-    <testcase classname="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con &quot;Todos&quot; elegido en la sesión abre en &quot;Todos&quot;: no manda DepositoId y muestra el depósito de cada renglón" name="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con &quot;Todos&quot; elegido en la sesión abre en &quot;Todos&quot;: no manda DepositoId y muestra el depósito de cada renglón" time="0.12">
+    <testcase classname="pctFromPrecio returns 0 when precioVenta is negative" name="pctFromPrecio returns 0 when precioVenta is negative" time="0.001">
     </testcase>
-    <testcase classname="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con CAP_VER_STOCK_OTROS_DEPOSITOS abre en el propio y puede pasar a &quot;Todos&quot;" name="Stock: &quot;Todos&quot; los depósitos solo con permiso (S18) con CAP_VER_STOCK_OTROS_DEPOSITOS abre en el propio y puede pasar a &quot;Todos&quot;" time="0.274">
+    <testcase classname="pctFromPrecio returns 0 when final price equals base (no discount)" name="pctFromPrecio returns 0 when final price equals base (no discount)" time="0.002">
+    </testcase>
+    <testcase classname="pctFromPrecio returns 10 for a 10% discount" name="pctFromPrecio returns 10 for a 10% discount" time="0.001">
+    </testcase>
+    <testcase classname="pctFromPrecio returns 100 when final price is 0 (maximum possible discount)" name="pctFromPrecio returns 100 when final price is 0 (maximum possible discount)" time="0.001">
+    </testcase>
+    <testcase classname="pctFromPrecio rounds to 2 decimal places" name="pctFromPrecio rounds to 2 decimal places" time="0.001">
+    </testcase>
+    <testcase classname="pctFromPrecio returns negative when final price exceeds base (premium / surcharge)" name="pctFromPrecio returns negative when final price exceeds base (premium / surcharge)" time="0">
+    </testcase>
+    <testcase classname="precioFromPct 0% discount: returns base price unchanged" name="precioFromPct 0% discount: returns base price unchanged" time="0">
+    </testcase>
+    <testcase classname="precioFromPct 10% discount: returns 90" name="precioFromPct 10% discount: returns 90" time="0.016">
+    </testcase>
+    <testcase classname="precioFromPct 100% discount: returns 0" name="precioFromPct 100% discount: returns 0" time="0.002">
+    </testcase>
+    <testcase classname="precioFromPct rounds to 2 decimal places" name="precioFromPct rounds to 2 decimal places" time="0.001">
+    </testcase>
+    <testcase classname="precioFromPct non-integer base price, non-trivial pct" name="precioFromPct non-integer base price, non-trivial pct" time="0.002">
+    </testcase>
+    <testcase classname="canViewCost returns true with CAP_VER_COSTOS:Read" name="canViewCost returns true with CAP_VER_COSTOS:Read" time="0.001">
+    </testcase>
+    <testcase classname="canViewCost returns true when the capability is mixed with module rows" name="canViewCost returns true when the capability is mixed with module rows" time="0">
+    </testcase>
+    <testcase classname="canViewCost returns false with only module rows" name="canViewCost returns false with only module rows" time="0.001">
+    </testcase>
+    <testcase classname="canViewCost returns false when the capability row has canRead=false" name="canViewCost returns false when the capability row has canRead=false" time="0.001">
+    </testcase>
+    <testcase classname="canViewCost returns false for empty / null / undefined permissions (fail-closed)" name="canViewCost returns false for empty / null / undefined permissions (fail-closed)" time="0">
+    </testcase>
+    <testcase classname="canViewCost matches the capability case-insensitively, like the backend" name="canViewCost matches the capability case-insensitively, like the backend" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto no discounts: effective price equals base; returns true when above floor" name="esDescuentoValidoCompuesto no discounts: effective price equals base; returns true when above floor" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto compound discounts: effective at exactly the floor returns true (inclusive)" name="esDescuentoValidoCompuesto compound discounts: effective at exactly the floor returns true (inclusive)" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto compound discounts: effective below floor returns false" name="esDescuentoValidoCompuesto compound discounts: effective below floor returns false" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto null precioMinimo: fail-open policy returns true" name="esDescuentoValidoCompuesto null precioMinimo: fail-open policy returns true" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto undefined precioMinimo: fail-open policy returns true" name="esDescuentoValidoCompuesto undefined precioMinimo: fail-open policy returns true" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto 100% item discount: effective is 0, always below any positive floor" name="esDescuentoValidoCompuesto 100% item discount: effective is 0, always below any positive floor" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto does NOT round before comparison (unrounded effective vs floor)" name="esDescuentoValidoCompuesto does NOT round before comparison (unrounded effective vs floor)" time="0">
+    </testcase>
+    <testcase classname="computeModalFloor returns { piso: 0, floorUnknown: true } when precioMinimo is null" name="computeModalFloor returns { piso: 0, floorUnknown: true } when precioMinimo is null" time="0.011">
+    </testcase>
+    <testcase classname="computeModalFloor returns { piso: 0, floorUnknown: true } when precioMinimo is undefined" name="computeModalFloor returns { piso: 0, floorUnknown: true } when precioMinimo is undefined" time="0.003">
+    </testcase>
+    <testcase classname="computeModalFloor returns piso = precioMinimo when no general discount (factor = 1)" name="computeModalFloor returns piso = precioMinimo when no general discount (factor = 1)" time="0.002">
+    </testcase>
+    <testcase classname="computeModalFloor raises floor when general discount is active" name="computeModalFloor raises floor when general discount is active" time="0.003">
+    </testcase>
+    <testcase classname="computeModalFloor rounds piso to 2 decimal places" name="computeModalFloor rounds piso to 2 decimal places" time="0.003">
+    </testcase>
+    <testcase classname="computeModalFloor handles descuentoGeneral=100 without dividing by zero (clamped to 0.0001)" name="computeModalFloor handles descuentoGeneral=100 without dividing by zero (clamped to 0.0001)" time="0.01">
+    </testcase>
+    <testcase classname="computeModalFloor descuentoGeneral=0 default: piso equals precioMinimo exactly" name="computeModalFloor descuentoGeneral=0 default: piso equals precioMinimo exactly" time="0.01">
+    </testcase>
+    <testcase classname="derivarFloorBroken returns false when floor is null (fail-open)" name="derivarFloorBroken returns false when floor is null (fail-open)" time="0">
+    </testcase>
+    <testcase classname="derivarFloorBroken returns false when floor is undefined (fail-open)" name="derivarFloorBroken returns false when floor is undefined (fail-open)" time="0.001">
+    </testcase>
+    <testcase classname="derivarFloorBroken returns false when effective price is above the floor" name="derivarFloorBroken returns false when effective price is above the floor" time="0.001">
+    </testcase>
+    <testcase classname="derivarFloorBroken returns false at exactly the floor (inclusive — not &quot;broken&quot;)" name="derivarFloorBroken returns false at exactly the floor (inclusive — not &quot;broken&quot;)" time="0.002">
+    </testcase>
+    <testcase classname="derivarFloorBroken returns true when effective price pierces the floor" name="derivarFloorBroken returns true when effective price pierces the floor" time="0.001">
+    </testcase>
+    <testcase classname="derivarFloorBroken returns true for compound discount that pierces floor" name="derivarFloorBroken returns true for compound discount that pierces floor" time="0.001">
     </testcase>
   </testsuite>
-  <testsuite name="Tarjetas y Lista (láminas 1 y 4)" errors="0" failures="0" skipped="0" timestamp="2026-11-18T09:08:40" time="18.341" tests="20">
-    <testcase classname="Tarjetas y Lista (láminas 1 y 4) abre en Tarjetas: cada tarjeta con el disponible grande y &quot;disponible&quot; o &quot;En alerta&quot;; totales Artículos y En alerta" name="Tarjetas y Lista (láminas 1 y 4) abre en Tarjetas: cada tarjeta con el disponible grande y &quot;disponible&quot; o &quot;En alerta&quot;; totales Artículos y En alerta" time="0.335">
+  <testsuite name="pctFromPrecio" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:18" time="7.999" tests="17">
+    <testcase classname="pctFromPrecio computes 10% discount correctly" name="pctFromPrecio computes 10% discount correctly" time="0.161">
     </testcase>
-    <testcase classname="Tarjetas y Lista (láminas 1 y 4) Lista: cada renglón con disponible, stock real, mínimo, reservado y por entrar, y los cuatro totales" name="Tarjetas y Lista (láminas 1 y 4) Lista: cada renglón con disponible, stock real, mínimo, reservado y por entrar, y los cuatro totales" time="0.287">
+    <testcase classname="pctFromPrecio computes 0% when precioFinal equals precioVenta" name="pctFromPrecio computes 0% when precioFinal equals precioVenta" time="0.001">
     </testcase>
-    <testcase classname="Tarjetas y Lista (láminas 1 y 4) &quot;Valor del stock a costo&quot; solo en la Lista y solo con CAP_VER_COSTOS, del depósito elegido" name="Tarjetas y Lista (láminas 1 y 4) &quot;Valor del stock a costo&quot; solo en la Lista y solo con CAP_VER_COSTOS, del depósito elegido" time="0.262">
+    <testcase classname="pctFromPrecio returns 0 when precioVenta is 0 (guard for division by zero)" name="pctFromPrecio returns 0 when precioVenta is 0 (guard for division by zero)" time="0.001">
     </testcase>
-    <testcase classname="Tarjetas y Lista (láminas 1 y 4) sin CAP_VER_COSTOS no hay valor a costo ni se pide el reporte" name="Tarjetas y Lista (láminas 1 y 4) sin CAP_VER_COSTOS no hay valor a costo ni se pide el reporte" time="0.266">
+    <testcase classname="pctFromPrecio returns 0 when precioVenta is negative" name="pctFromPrecio returns 0 when precioVenta is negative" time="0.001">
     </testcase>
-    <testcase classname="Filtros (lámina 3) la hoja muestra Estado de stock, Línea, Marca, &quot;Solo sin peso&quot; y &quot;Solo ocultos&quot; con lo que cuenta el servidor" name="Filtros (lámina 3) la hoja muestra Estado de stock, Línea, Marca, &quot;Solo sin peso&quot; y &quot;Solo ocultos&quot; con lo que cuenta el servidor" time="0.273">
+    <testcase classname="pctFromPrecio rounds pct to 2 decimal places" name="pctFromPrecio rounds pct to 2 decimal places" time="0.001">
     </testcase>
-    <testcase classname="Filtros (lámina 3) cada filtro viaja al listado y al resumen; el botón cuenta los activos y &quot;Limpiar&quot; los saca" name="Filtros (lámina 3) cada filtro viaja al listado y al resumen; el botón cuenta los activos y &quot;Limpiar&quot; los saca" time="2.135">
+    <testcase classname="pctFromPrecio round-trips with precioFromPct within rounding tolerance" name="pctFromPrecio round-trips with precioFromPct within rounding tolerance" time="0.001">
     </testcase>
-    <testcase classname="Filtros (lámina 3) Línea y Marca son una sola: tocar la elegida la suelta" name="Filtros (lámina 3) Línea y Marca son una sola: tocar la elegida la suelta" time="0.652">
+    <testcase classname="pctFromPrecio handles 100% discount (free item)" name="pctFromPrecio handles 100% discount (free item)" time="0.001">
     </testcase>
-    <testcase classname="Línea con sus fragancias (lámina 2) &quot;Ver fragancias&quot; pide las variantes del depósito y muestra cada fragancia con su stock" name="Línea con sus fragancias (lámina 2) &quot;Ver fragancias&quot; pide las variantes del depósito y muestra cada fragancia con su stock" time="0.454">
+    <testcase classname="pctFromPrecio handles a non-integer floor price (sub-cent precision case)" name="pctFromPrecio handles a non-integer floor price (sub-cent precision case)" time="0">
     </testcase>
-    <testcase classname="Línea con sus fragancias (lámina 2) si fallan o no hay: lo dice con los textos de la web" name="Línea con sus fragancias (lámina 2) si fallan o no hay: lo dice con los textos de la web" time="0.255">
+    <testcase classname="precioFromPct computes $900 for 10% discount on $1000 item" name="precioFromPct computes $900 for 10% discount on $1000 item" time="0.001">
     </testcase>
-    <testcase classname="Línea con sus fragancias (lámina 2) sin fragancias generadas" name="Línea con sus fragancias (lámina 2) sin fragancias generadas" time="0.293">
+    <testcase classname="precioFromPct returns precioVenta unchanged for 0% discount" name="precioFromPct returns precioVenta unchanged for 0% discount" time="0.001">
     </testcase>
-    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) muestra Stock Físico, Disponibilidad y Datos fiscales; sin costos, el aviso de gestión; nunca &quot;Editar producto&quot;" name="Detalle del producto (lámina 5) y movimientos (lámina 6) muestra Stock Físico, Disponibilidad y Datos fiscales; sin costos, el aviso de gestión; nunca &quot;Editar producto&quot;" time="0.275">
+    <testcase classname="precioFromPct returns 0 for 100% discount" name="precioFromPct returns 0 for 100% discount" time="0.001">
     </testcase>
-    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) con CAP_VER_COSTOS suma Rentabilidad: bandas de precio y costo real" name="Detalle del producto (lámina 5) y movimientos (lámina 6) con CAP_VER_COSTOS suma Rentabilidad: bandas de precio y costo real" time="0.299">
+    <testcase classname="precioFromPct rounds price to 2 decimal places" name="precioFromPct rounds price to 2 decimal places" time="0">
     </testcase>
-    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) &quot;Ver movimientos&quot; lista tipo, fecha, cantidad con signo, observación y quién" name="Detalle del producto (lámina 5) y movimientos (lámina 6) &quot;Ver movimientos&quot; lista tipo, fecha, cantidad con signo, observación y quién" time="0.516">
+    <testcase classname="precioFromPct round-trips with pctFromPrecio — price → pct → price" name="precioFromPct round-trips with pctFromPrecio — price → pct → price" time="0.001">
     </testcase>
-    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) sin movimientos y con error, los textos de la web" name="Detalle del producto (lámina 5) y movimientos (lámina 6) sin movimientos y con error, los textos de la web" time="0.47">
+    <testcase classname="precioFromPct handles fractional precioVenta" name="precioFromPct handles fractional precioVenta" time="0.001">
     </testcase>
-    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) movimientos con error" name="Detalle del producto (lámina 5) y movimientos (lámina 6) movimientos con error" time="0.478">
+    <testcase classname="canViewCost returns false without CAP_VER_COSTOS" name="canViewCost returns false without CAP_VER_COSTOS" time="0.001">
     </testcase>
-    <testcase classname="Detalle del producto (lámina 5) y movimientos (lámina 6) tocar una fragancia abre el mismo detalle" name="Detalle del producto (lámina 5) y movimientos (lámina 6) tocar una fragancia abre el mismo detalle" time="0.469">
+    <testcase classname="canViewCost returns true with CAP_VER_COSTOS:Read" name="canViewCost returns true with CAP_VER_COSTOS:Read" time="0.001">
     </testcase>
-    <testcase classname="Estados (lámina 8) cargando: esqueletos de tarjeta" name="Estados (lámina 8) cargando: esqueletos de tarjeta" time="0.025">
+    <testcase classname="canViewCost returns false for empty permissions" name="canViewCost returns false for empty permissions" time="0">
     </testcase>
-    <testcase classname="Estados (lámina 8) vacío con solo &quot;En alerta&quot;: el inventario está saludable" name="Estados (lámina 8) vacío con solo &quot;En alerta&quot;: el inventario está saludable" time="0.682">
+  </testsuite>
+  <testsuite name="computeStockProjection" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:18" time="8.172" tests="30">
+    <testcase classname="computeStockProjection returns positive projection when stock covers the order" name="computeStockProjection returns positive projection when stock covers the order" time="0.182">
     </testcase>
-    <testcase classname="Estados (lámina 8) vacío con otros filtros" name="Estados (lámina 8) vacío con otros filtros" time="0.077">
+    <testcase classname="computeStockProjection returns zero projection when stock exactly matches order" name="computeStockProjection returns zero projection when stock exactly matches order" time="0.001">
     </testcase>
-    <testcase classname="Solo ver: ninguna acción cambia datos ni en Tarjetas, ni en Lista, ni en el detalle hay ajustar, transferir, pedir, editar, duplicar, activar ni seleccionar" name="Solo ver: ninguna acción cambia datos ni en Tarjetas, ni en Lista, ni en el detalle hay ajustar, transferir, pedir, editar, duplicar, activar ni seleccionar" time="0.445">
+    <testcase classname="computeStockProjection returns negative projection when order exceeds stock" name="computeStockProjection returns negative projection when order exceeds stock" time="0.001">
+    </testcase>
+    <testcase classname="computeStockProjection returns disponible when cantidad is 0" name="computeStockProjection returns disponible when cantidad is 0" time="0.001">
+    </testcase>
+    <testcase classname="FIX #1 — typed-price floor validation (rounding over-block) [old path] recomputed price from rounded pct causes false block at non-integer floor" name="FIX #1 — typed-price floor validation (rounding over-block) [old path] recomputed price from rounded pct causes false block at non-integer floor" time="0.001">
+    </testcase>
+    <testcase classname="FIX #1 — typed-price floor validation (rounding over-block) [fix path] validating typed price allows price equal to non-integer floor" name="FIX #1 — typed-price floor validation (rounding over-block) [fix path] validating typed price allows price equal to non-integer floor" time="0">
+    </testcase>
+    <testcase classname="FIX #1 — typed-price floor validation (rounding over-block) [fix path] price just below non-integer floor is still blocked" name="FIX #1 — typed-price floor validation (rounding over-block) [fix path] price just below non-integer floor is still blocked" time="0">
+    </testcase>
+    <testcase classname="FIX #1 — typed-price floor validation (rounding over-block) [fix path] price well below floor is blocked regardless of rounding" name="FIX #1 — typed-price floor validation (rounding over-block) [fix path] price well below floor is blocked regardless of rounding" time="0">
+    </testcase>
+    <testcase classname="FIX #1 — typed-price floor validation (rounding over-block) [fix path] price above floor is always allowed" name="FIX #1 — typed-price floor validation (rounding over-block) [fix path] price above floor is always allowed" time="0.001">
+    </testcase>
+    <testcase classname="canViewCost — cost-row gating for DescuentoItemModalRN cost row NOT shown without CAP_VER_COSTOS" name="canViewCost — cost-row gating for DescuentoItemModalRN cost row NOT shown without CAP_VER_COSTOS" time="0.001">
+    </testcase>
+    <testcase classname="canViewCost — cost-row gating for DescuentoItemModalRN cost row shown with CAP_VER_COSTOS" name="canViewCost — cost-row gating for DescuentoItemModalRN cost row shown with CAP_VER_COSTOS" time="0.001">
+    </testcase>
+    <testcase classname="canViewCost — cost-row gating for DescuentoItemModalRN cost row NOT shown for empty permissions" name="canViewCost — cost-row gating for DescuentoItemModalRN cost row NOT shown for empty permissions" time="0.001">
+    </testcase>
+    <testcase classname="computeModalFloor — raised floor helper (mirrors web computeModalFloor) returns floorUnknown=true and piso=0 when precioMinimo is null" name="computeModalFloor — raised floor helper (mirrors web computeModalFloor) returns floorUnknown=true and piso=0 when precioMinimo is null" time="0.001">
+    </testcase>
+    <testcase classname="computeModalFloor — raised floor helper (mirrors web computeModalFloor) returns floorUnknown=true and piso=0 when precioMinimo is undefined" name="computeModalFloor — raised floor helper (mirrors web computeModalFloor) returns floorUnknown=true and piso=0 when precioMinimo is undefined" time="0.001">
+    </testcase>
+    <testcase classname="computeModalFloor — raised floor helper (mirrors web computeModalFloor) returns raw floor rounded to 2 decimals when descuentoGeneral is 0" name="computeModalFloor — raised floor helper (mirrors web computeModalFloor) returns raw floor rounded to 2 decimals when descuentoGeneral is 0" time="0.001">
+    </testcase>
+    <testcase classname="computeModalFloor — raised floor helper (mirrors web computeModalFloor) raises floor by general discount factor" name="computeModalFloor — raised floor helper (mirrors web computeModalFloor) raises floor by general discount factor" time="0.001">
+    </testcase>
+    <testcase classname="computeModalFloor — raised floor helper (mirrors web computeModalFloor) rounds raised floor to 2 decimal places (W2 rounding parity)" name="computeModalFloor — raised floor helper (mirrors web computeModalFloor) rounds raised floor to 2 decimal places (W2 rounding parity)" time="0">
+    </testcase>
+    <testcase classname="computeModalFloor — raised floor helper (mirrors web computeModalFloor) clamps generalFactor to 0.0001 at g=100 to prevent div/0 blow-up" name="computeModalFloor — raised floor helper (mirrors web computeModalFloor) clamps generalFactor to 0.0001 at g=100 to prevent div/0 blow-up" time="0.001">
+    </testcase>
+    <testcase classname="computeModalFloor — raised floor helper (mirrors web computeModalFloor) defaults descuentoGeneral to 0 when omitted" name="computeModalFloor — raised floor helper (mirrors web computeModalFloor) defaults descuentoGeneral to 0 when omitted" time="0.001">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) does NOT warn at pct=0 even when base price is below the raised floor (W1 parity)" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) does NOT warn at pct=0 even when base price is below the raised floor (W1 parity)" time="0.001">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) warns at pct&gt;0 when effective price is below the floor" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) warns at pct&gt;0 when effective price is below the floor" time="0.001">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) uses rounded floor for comparison (W2 rounding boundary)" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) uses rounded floor for comparison (W2 rounding boundary)" time="0.001">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) does not blow up when descuentoGeneral=100 (generalFactor clamp)" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) does not blow up when descuentoGeneral=100 (generalFactor clamp)" time="0.001">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) returns false (fail-open) when precioMinimo is null regardless of pct" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) returns false (fail-open) when precioMinimo is null regardless of pct" time="0">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) blocks when item+general compound breaks precioMinimo (C1 lesson)" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) blocks when item+general compound breaks precioMinimo (C1 lesson)" time="0.001">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) allows when item+general compound satisfies precioMinimo" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) allows when item+general compound satisfies precioMinimo" time="0">
+    </testcase>
+    <testcase classname="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) returns true (floor warning) when below floor — enables route to PendienteAutorizacion" name="Modal piercesFloor semantics — pct&gt;0 guard + rounded floor (W1 + W2 parity) returns true (floor warning) when below floor — enables route to PendienteAutorizacion" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — compound guard regression returns true (fail-open) when precioMinimo is null" name="esDescuentoValidoCompuesto — compound guard regression returns true (fail-open) when precioMinimo is null" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — compound guard regression returns true when compound effective price is at the floor (inclusive)" name="esDescuentoValidoCompuesto — compound guard regression returns true when compound effective price is at the floor (inclusive)" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — compound guard regression returns false when compound effective price breaks the floor" name="esDescuentoValidoCompuesto — compound guard regression returns false when compound effective price breaks the floor" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="esPrecioValido (unified floor guard)" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:19" time="8.056" tests="22">
+    <testcase classname="esPrecioValido (unified floor guard) returns false when precioFinal is below precioMinimo" name="esPrecioValido (unified floor guard) returns false when precioFinal is below precioMinimo" time="0.258">
+    </testcase>
+    <testcase classname="esPrecioValido (unified floor guard) returns true when precioFinal equals precioMinimo exactly (inclusive at floor)" name="esPrecioValido (unified floor guard) returns true when precioFinal equals precioMinimo exactly (inclusive at floor)" time="0.045">
+    </testcase>
+    <testcase classname="esPrecioValido (unified floor guard) returns true when precioFinal is above precioMinimo" name="esPrecioValido (unified floor guard) returns true when precioFinal is above precioMinimo" time="0.002">
+    </testcase>
+    <testcase classname="esPrecioValido (unified floor guard) returns false for price 0 against any positive floor" name="esPrecioValido (unified floor guard) returns false for price 0 against any positive floor" time="0.002">
+    </testcase>
+    <testcase classname="esPrecioValido (unified floor guard) returns false when one cent below floor" name="esPrecioValido (unified floor guard) returns false when one cent below floor" time="0.002">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts when both item+general discounts stay at or above precioMinimo" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts when both item+general discounts stay at or above precioMinimo" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) rejects when compound effective price breaks precioMinimo" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) rejects when compound effective price breaks precioMinimo" time="0.002">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts when only item discount is applied (general=0)" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts when only item discount is applied (general=0)" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts when only general discount is applied (item=0)" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts when only general discount is applied (item=0)" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts at exact precioMinimo boundary" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) accepts at exact precioMinimo boundary" time="0.001">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) rejects 1 cent below precioMinimo boundary" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) rejects 1 cent below precioMinimo boundary" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) returns true (fail-open) when precioMinimo is null" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) returns true (fail-open) when precioMinimo is null" time="0">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) returns true (fail-open) when precioMinimo is undefined" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) returns true (fail-open) when precioMinimo is undefined" time="0.04">
+    </testcase>
+    <testcase classname="esDescuentoValidoCompuesto — single server floor (precioMinimo) returns true (fail-open) for massive discount when floor is null" name="esDescuentoValidoCompuesto — single server floor (precioMinimo) returns true (fail-open) for massive discount when floor is null" time="0.008">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) returns true when compound effective price breaks precioMinimo" name="derivarFloorBroken — unified (no 0-discount early-return) returns true when compound effective price breaks precioMinimo" time="0.001">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) returns false when compound satisfies precioMinimo" name="derivarFloorBroken — unified (no 0-discount early-return) returns false when compound satisfies precioMinimo" time="0.001">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) returns true when base price is already below precioMinimo with 0 discounts" name="derivarFloorBroken — unified (no 0-discount early-return) returns true when base price is already below precioMinimo with 0 discounts" time="0.001">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) returns false when base price equals precioMinimo with 0 discounts" name="derivarFloorBroken — unified (no 0-discount early-return) returns false when base price equals precioMinimo with 0 discounts" time="0.001">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) returns false when base price is above precioMinimo with 0 discounts" name="derivarFloorBroken — unified (no 0-discount early-return) returns false when base price is above precioMinimo with 0 discounts" time="0.001">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) returns false (fail-open) when precioMinimo is null even with 0 discounts" name="derivarFloorBroken — unified (no 0-discount early-return) returns false (fail-open) when precioMinimo is null even with 0 discounts" time="0">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) returns false (fail-open) when precioMinimo is null with discounts applied" name="derivarFloorBroken — unified (no 0-discount early-return) returns false (fail-open) when precioMinimo is null with discounts applied" time="0.005">
+    </testcase>
+    <testcase classname="derivarFloorBroken — unified (no 0-discount early-return) clears (returns false) when general discount reduced to 0 and price is above floor" name="derivarFloorBroken — unified (no 0-discount early-return) clears (returns false) when general discount reduced to 0 and price is above floor" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="calcularRentabilidadVenta" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:18" time="8.299" tests="12">
+    <testcase classname="calcularRentabilidadVenta case 1: no discount, no flete → margenNeto 400, margenPct 40%" name="calcularRentabilidadVenta case 1: no discount, no flete → margenNeto 400, margenPct 40%" time="0.053">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta case 2: general discount 20%, no flete → margenNeto 200, margenPct 25%" name="calcularRentabilidadVenta case 2: general discount 20%, no flete → margenNeto 200, margenPct 25%" time="0.004">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta case 3: no discount, flete 200 excluded → margenNeto 400, margenPct 40%" name="calcularRentabilidadVenta case 3: no discount, flete 200 excluded → margenNeto 400, margenPct 40%" time="0.001">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta case 4: general 20% + flete 200 → margenNeto 200, margenPct 25% (flete excluded)" name="calcularRentabilidadVenta case 4: general 20% + flete 200 → margenNeto 200, margenPct 25% (flete excluded)" time="0.002">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta case 5a: empty detalles → null" name="calcularRentabilidadVenta case 5a: empty detalles → null" time="0.001">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta case 5b: subtotalBruto 0 → null" name="calcularRentabilidadVenta case 5b: subtotalBruto 0 → null" time="0.002">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta case 5c: ingresoNeto 0 (100% general discount) → margenPct 0 guard" name="calcularRentabilidadVenta case 5c: ingresoNeto 0 (100% general discount) → margenPct 0 guard" time="0.002">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta returns null when any line has null precioCostoSnapshot" name="calcularRentabilidadVenta returns null when any line has null precioCostoSnapshot" time="0.001">
+    </testcase>
+    <testcase classname="calcularRentabilidadVenta aggregates margin across multiple lines" name="calcularRentabilidadVenta aggregates margin across multiple lines" time="0.001">
+    </testcase>
+    <testcase classname="puedeVerRentabilidad returns true when all lines have non-null precioCostoSnapshot" name="puedeVerRentabilidad returns true when all lines have non-null precioCostoSnapshot" time="0.001">
+    </testcase>
+    <testcase classname="puedeVerRentabilidad returns false when any line has null precioCostoSnapshot" name="puedeVerRentabilidad returns false when any line has null precioCostoSnapshot" time="0.024">
+    </testcase>
+    <testcase classname="puedeVerRentabilidad returns false for empty detalles array" name="puedeVerRentabilidad returns false for empty detalles array" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="buildAnularVentaPayload" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:19" time="8.135" tests="8">
+    <testcase classname="buildAnularVentaPayload returns { version, motivoAnulacion } with no extra fields" name="buildAnularVentaPayload returns { version, motivoAnulacion } with no extra fields" time="0.044">
+    </testcase>
+    <testcase classname="buildAnularVentaPayload does NOT include usuarioModificadorId in the payload" name="buildAnularVentaPayload does NOT include usuarioModificadorId in the payload" time="0.004">
+    </testcase>
+    <testcase classname="buildAnularVentaPayload does NOT wrap the payload in a &quot;data&quot; key (not axios syntax)" name="buildAnularVentaPayload does NOT wrap the payload in a &quot;data&quot; key (not axios syntax)" time="0.001">
+    </testcase>
+    <testcase classname="buildAnularVentaPayload accepts version 0 (uint — first save)" name="buildAnularVentaPayload accepts version 0 (uint — first save)" time="0.002">
+    </testcase>
+    <testcase classname="buildAnularVentaPayload preserves motivoAnulacion exactly" name="buildAnularVentaPayload preserves motivoAnulacion exactly" time="0.001">
+    </testcase>
+    <testcase classname="buildAnularVentaPayload throws if motivoAnulacion is empty" name="buildAnularVentaPayload throws if motivoAnulacion is empty" time="0.046">
+    </testcase>
+    <testcase classname="buildAnularVentaPayload throws if motivoAnulacion is whitespace only" name="buildAnularVentaPayload throws if motivoAnulacion is whitespace only" time="0.002">
+    </testcase>
+    <testcase classname="buildAnularVentaPayload throws if version is negative" name="buildAnularVentaPayload throws if version is negative" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="descuento general en centavos enteros" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:18" time="8.669" tests="15">
+    <testcase classname="descuento general en centavos enteros 113,50 con 7 % da 105,56 (la cuenta en binario daba 105,55)" name="descuento general en centavos enteros 113,50 con 7 % da 105,56 (la cuenta en binario daba 105,55)" time="0.047">
+    </testcase>
+    <testcase classname="descuento general en centavos enteros un porcentaje con decimales también es exacto (0,25 % de 4.000,40)" name="descuento general en centavos enteros un porcentaje con decimales también es exacto (0,25 % de 4.000,40)" time="0.01">
+    </testcase>
+    <testcase classname="empate de medio centavo en el descuento general 104,50 con 13 % da 90,92: el medio centavo sube, como en el servidor" name="empate de medio centavo en el descuento general 104,50 con 13 % da 90,92: el medio centavo sube, como en el servidor" time="0.001">
+    </testcase>
+    <testcase classname="empate de medio centavo en el descuento general el total se redondea una sola vez, con el descuento sin redondear" name="empate de medio centavo en el descuento general el total se redondea una sola vez, con el descuento sin redondear" time="0.001">
+    </testcase>
+    <testcase classname="los casos de la auditoría (RED-06): celular y servidor dan lo mismo A) 1 × 10,10 con 5 % de línea: 9,60 y no 9,59" name="los casos de la auditoría (RED-06): celular y servidor dan lo mismo A) 1 × 10,10 con 5 % de línea: 9,60 y no 9,59" time="0.001">
+    </testcase>
+    <testcase classname="los casos de la auditoría (RED-06): celular y servidor dan lo mismo B) 1 × 100,10 con 5 % general: 95,10 y no 95,09" name="los casos de la auditoría (RED-06): celular y servidor dan lo mismo B) 1 × 100,10 con 5 % general: 95,10 y no 95,09" time="0.001">
+    </testcase>
+    <testcase classname="los casos de la auditoría (RED-06): celular y servidor dan lo mismo C) 12 × 10,10 al 5 % + 1 × 100,10, 5 % general, flete 1500: 1704,54 y no 1704,42" name="los casos de la auditoría (RED-06): celular y servidor dan lo mismo C) 12 × 10,10 al 5 % + 1 × 100,10, 5 % general, flete 1500: 1704,54 y no 1704,42" time="0.001">
+    </testcase>
+    <testcase classname="los casos de la auditoría (RED-06): celular y servidor dan lo mismo control: 3 × 1000 al 10 % da 2700" name="los casos de la auditoría (RED-06): celular y servidor dan lo mismo control: 3 × 1000 al 10 % da 2700" time="0">
+    </testcase>
+    <testcase classname="precio de lista y renglones lista 10,10 con 5 % de línea: el unitario 9,595 sube a 9,60" name="precio de lista y renglones lista 10,10 con 5 % de línea: el unitario 9,595 sube a 9,60" time="0">
+    </testcase>
+    <testcase classname="precio de lista y renglones un precio de lista con más de 2 decimales se redondea como el servidor" name="precio de lista y renglones un precio de lista con más de 2 decimales se redondea como el servidor" time="0.001">
+    </testcase>
+    <testcase classname="precio de lista y renglones la suma de los renglones no arrastra ruido binario" name="precio de lista y renglones la suma de los renglones no arrastra ruido binario" time="0.001">
+    </testcase>
+    <testcase classname="flete suma el flete antes de redondear: 100 con flete 12,345 da 112,35" name="flete suma el flete antes de redondear: 100 con flete 12,345 da 112,35" time="0">
+    </testcase>
+    <testcase classname="flete venta completa con descuentos, general y flete: 110,85" name="flete venta completa con descuentos, general y flete: 110,85" time="0.001">
+    </testcase>
+    <testcase classname="flete un dato que no es número da NaN en vez de un total inventado" name="flete un dato que no es número da NaN en vez de un total inventado" time="0">
+    </testcase>
+    <testcase classname="barrido contra la cuenta entera del servidor renglón y total dan lo mismo que la cuenta en enteros (empates incluidos)" name="barrido contra la cuenta entera del servidor renglón y total dan lo mismo que la cuenta en enteros (empates incluidos)" time="0.4">
+    </testcase>
+  </testsuite>
+  <testsuite name="línea de tiempo del pedido (lámina ResVentaDetalle)" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:26" time="1.171" tests="10">
+    <testcase classname="línea de tiempo del pedido (lámina ResVentaDetalle) son cinco pasos" name="línea de tiempo del pedido (lámina ResVentaDetalle) son cinco pasos" time="0.01">
+    </testcase>
+    <testcase classname="línea de tiempo del pedido (lámina ResVentaDetalle) Confirmada: el primero hecho" name="línea de tiempo del pedido (lámina ResVentaDetalle) Confirmada: el primero hecho" time="0.001">
+    </testcase>
+    <testcase classname="línea de tiempo del pedido (lámina ResVentaDetalle) En preparación: el paso actual va por la mitad" name="línea de tiempo del pedido (lámina ResVentaDetalle) En preparación: el paso actual va por la mitad" time="0.001">
+    </testcase>
+    <testcase classname="línea de tiempo del pedido (lámina ResVentaDetalle) Entregada: todo completo" name="línea de tiempo del pedido (lámina ResVentaDetalle) Entregada: todo completo" time="0.001">
+    </testcase>
+    <testcase classname="línea de tiempo del pedido (lámina ResVentaDetalle) Pendiente no tiene línea de tiempo" name="línea de tiempo del pedido (lámina ResVentaDetalle) Pendiente no tiene línea de tiempo" time="0.001">
+    </testcase>
+    <testcase classname="línea de tiempo del pedido (lámina ResVentaDetalle) PendienteAutorizacion no tiene línea de tiempo" name="línea de tiempo del pedido (lámina ResVentaDetalle) PendienteAutorizacion no tiene línea de tiempo" time="0.001">
+    </testcase>
+    <testcase classname="línea de tiempo del pedido (lámina ResVentaDetalle) Anulada no tiene línea de tiempo" name="línea de tiempo del pedido (lámina ResVentaDetalle) Anulada no tiene línea de tiempo" time="0">
+    </testcase>
+    <testcase classname="línea de tiempo del pedido (lámina ResVentaDetalle) RechazadaAutorizacion no tiene línea de tiempo" name="línea de tiempo del pedido (lámina ResVentaDetalle) RechazadaAutorizacion no tiene línea de tiempo" time="0.001">
+    </testcase>
+    <testcase classname="línea de tiempo del pedido (lámina ResVentaDetalle) Vencido no tiene línea de tiempo" name="línea de tiempo del pedido (lámina ResVentaDetalle) Vencido no tiene línea de tiempo" time="0.001">
+    </testcase>
+    <testcase classname="línea de tiempo del pedido (lámina ResVentaDetalle) NoEntregada no tiene línea de tiempo" name="línea de tiempo del pedido (lámina ResVentaDetalle) NoEntregada no tiene línea de tiempo" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts)" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:26" time="1.334" tests="8">
+    <testcase classname="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) normaliza +54 9 11 1234-5678" name="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) normaliza +54 9 11 1234-5678" time="0.047">
+    </testcase>
+    <testcase classname="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) normaliza +54 11 1234-5678" name="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) normaliza +54 11 1234-5678" time="0.002">
+    </testcase>
+    <testcase classname="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) normaliza 011 15-1234-5678" name="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) normaliza 011 15-1234-5678" time="0.002">
+    </testcase>
+    <testcase classname="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) normaliza 11 15-1234-5678" name="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) normaliza 11 15-1234-5678" time="0.001">
+    </testcase>
+    <testcase classname="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) normaliza 011 4321-5678" name="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) normaliza 011 4321-5678" time="0.001">
+    </testcase>
+    <testcase classname="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) sin teléfono válido no hay enlace" name="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) sin teléfono válido no hay enlace" time="0.001">
+    </testcase>
+    <testcase classname="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) el mensaje dice tipo, número y total, sin enlaces" name="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) el mensaje dice tipo, número y total, sin enlaces" time="0.001">
+    </testcase>
+    <testcase classname="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) el enlace lleva el número y el texto codificado" name="WhatsApp de una venta (web: telefono-whatsapp.ts y mensaje-whatsapp-venta.ts) el enlace lleva el número y el texto codificado" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="identidadDeBorrador" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:26" time="1.516" tests="4">
+    <testcase classname="identidadDeBorrador servidor nuevo: la dirección es el título, la razón social el subtítulo y el total sale formateado" name="identidadDeBorrador servidor nuevo: la dirección es el título, la razón social el subtítulo y el total sale formateado" time="0.01">
+    </testcase>
+    <testcase classname="identidadDeBorrador un total en dólares lleva el código de la moneda" name="identidadDeBorrador un total en dólares lleva el código de la moneda" time="0.001">
+    </testcase>
+    <testcase classname="identidadDeBorrador sin dirección (null, vacía o solo espacios) queda la razón social sola, y el total se mantiene" name="identidadDeBorrador sin dirección (null, vacía o solo espacios) queda la razón social sola, y el total se mantiene" time="0.002">
+    </testcase>
+    <testcase classname="identidadDeBorrador servidor anterior (sin los campos nuevos): la razón social sola y sin total" name="identidadDeBorrador servidor anterior (sin los campos nuevos): la razón social sola y sin total" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;)" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:19" time="10.543" tests="25">
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se edita en Pendiente con MOD_VENTAS modificar" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se edita en Pendiente con MOD_VENTAS modificar" time="0.051">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se edita en Confirmada con MOD_VENTAS modificar" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se edita en Confirmada con MOD_VENTAS modificar" time="0.019">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en PendienteAutorizacion aunque tenga el permiso" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en PendienteAutorizacion aunque tenga el permiso" time="0.003">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en EnPreparacion aunque tenga el permiso" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en EnPreparacion aunque tenga el permiso" time="0.003">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en Empacada aunque tenga el permiso" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en Empacada aunque tenga el permiso" time="0.002">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en EnRuta aunque tenga el permiso" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en EnRuta aunque tenga el permiso" time="0.001">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en Entregada aunque tenga el permiso" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en Entregada aunque tenga el permiso" time="0.001">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en Anulada aunque tenga el permiso" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en Anulada aunque tenga el permiso" time="0.001">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en RechazadaAutorizacion aunque tenga el permiso" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en RechazadaAutorizacion aunque tenga el permiso" time="0.002">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en Vencido aunque tenga el permiso" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) no se edita en Vencido aunque tenga el permiso" time="0.01">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) acepta el estado como número (el servidor manda uno u otro)" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) acepta el estado como número (el servidor manda uno u otro)" time="0.001">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se anula en Pendiente con MOD_VENTAS borrar" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se anula en Pendiente con MOD_VENTAS borrar" time="0.002">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se anula en Confirmada con MOD_VENTAS borrar" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se anula en Confirmada con MOD_VENTAS borrar" time="0.001">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se anula en PendienteAutorizacion con MOD_VENTAS borrar" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se anula en PendienteAutorizacion con MOD_VENTAS borrar" time="0.001">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se anula en EnPreparacion con MOD_VENTAS borrar" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se anula en EnPreparacion con MOD_VENTAS borrar" time="0.002">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se anula en Empacada con MOD_VENTAS borrar" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se anula en Empacada con MOD_VENTAS borrar" time="0.001">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se anula en Entregada con MOD_VENTAS borrar" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) se anula en Entregada con MOD_VENTAS borrar" time="0">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) en Anulada no hay anular, ni deshabilitado" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) en Anulada no hay anular, ni deshabilitado" time="0.001">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) una rechazada por autorización se anula con MOD_VENTAS borrar y sin él no" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) una rechazada por autorización se anula con MOD_VENTAS borrar y sin él no" time="0.001">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) En ruta: anular queda deshabilitado con el motivo, solo a quien podría anular" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) En ruta: anular queda deshabilitado con el motivo, solo a quien podría anular" time="0.001">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) pasar a pedido: solo un presupuesto Pendiente con MOD_VENTAS modificar" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) pasar a pedido: solo un presupuesto Pendiente con MOD_VENTAS modificar" time="0.001">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) reabrir: solo un presupuesto Vencido con MOD_VENTAS modificar" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) reabrir: solo un presupuesto Vencido con MOD_VENTAS modificar" time="0.001">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) cobrar: no en un presupuesto ni en una anulada, y pide MOD_PAGOS leer y crear" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) cobrar: no en un presupuesto ni en una anulada, y pide MOD_PAGOS leer y crear" time="0.001">
+    </testcase>
+    <testcase classname="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) un pedido que ya se prepara dice por qué no se edita" name="acciones de una venta (reglas de la web, PermMatriz &quot;2 · Ventas&quot;) un pedido que ya se prepara dice por qué no se edita" time="0.002">
+    </testcase>
+    <testcase classname="motivo de la anulación (igual que la web) es el fijo de la web, nunca elegido" name="motivo de la anulación (igual que la web) es el fijo de la web, nunca elegido" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="diaDeEntregaCorto" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:27" time="4.568" tests="3">
+    <testcase classname="diaDeEntregaCorto shows the calendar day written in an offset-less string, whatever the device time zone" name="diaDeEntregaCorto shows the calendar day written in an offset-less string, whatever the device time zone" time="0.012">
+    </testcase>
+    <testcase classname="diaDeEntregaCorto keeps converting a string with an offset to the Argentina day" name="diaDeEntregaCorto keeps converting a string with an offset to the Argentina day" time="0.021">
+    </testcase>
+    <testcase classname="diaDeEntregaCorto returns null when there is no date" name="diaDeEntregaCorto returns null when there is no date" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="días de Argentina en la lista de ventas" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:19" time="59.295" tests="8">
+    <testcase classname="días de Argentina en la lista de ventas una venta de las 20:00 argentinas (23:00Z) es de &quot;Hoy&quot; aunque el teléfono ya esté en el día siguiente" name="días de Argentina en la lista de ventas una venta de las 20:00 argentinas (23:00Z) es de &quot;Hoy&quot; aunque el teléfono ya esté en el día siguiente" time="0.015">
+    </testcase>
+    <testcase classname="días de Argentina en la lista de ventas una venta de las 21:00 argentinas del día anterior es de &quot;Ayer&quot;" name="días de Argentina en la lista de ventas una venta de las 21:00 argentinas del día anterior es de &quot;Ayer&quot;" time="0.005">
+    </testcase>
+    <testcase classname="días de Argentina en la lista de ventas la hora de la tarjeta es la argentina" name="días de Argentina en la lista de ventas la hora de la tarjeta es la argentina" time="0.001">
+    </testcase>
+    <testcase classname="días de Argentina en la lista de ventas el período &quot;Hoy&quot; pide desde el día argentino" name="días de Argentina en la lista de ventas el período &quot;Hoy&quot; pide desde el día argentino" time="0.001">
+    </testcase>
+    <testcase classname="día de entrega de la tarjeta (instante UTC de forward-system #884) el día se lee en Argentina: las 00:00 argentinas del 8 (03:00Z) son el jueves 8" name="día de entrega de la tarjeta (instante UTC de forward-system #884) el día se lee en Argentina: las 00:00 argentinas del 8 (03:00Z) son el jueves 8" time="0.003">
+    </testcase>
+    <testcase classname="día de entrega de la tarjeta (instante UTC de forward-system #884) las 23:30 argentinas del 9 (02:30Z del 10) siguen siendo el viernes 9" name="día de entrega de la tarjeta (instante UTC de forward-system #884) las 23:30 argentinas del 9 (02:30Z del 10) siguen siendo el viernes 9" time="0.001">
+    </testcase>
+    <testcase classname="día de entrega de la tarjeta (instante UTC de forward-system #884) hoy y mañana se dicen con palabras" name="día de entrega de la tarjeta (instante UTC de forward-system #884) hoy y mañana se dicen con palabras" time="0.001">
+    </testcase>
+    <testcase classname="día de entrega de la tarjeta (instante UTC de forward-system #884) sin fecha (servidor anterior o venta sin entrega) no dice nada" name="día de entrega de la tarjeta (instante UTC de forward-system #884) sin fecha (servidor anterior o venta sin entrega) no dice nada" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="ruta de ventas: la lista nueva es la única, para todos" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:26" time="54.648" tests="2">
+    <testcase classname="ruta de ventas: la lista nueva es la única, para todos un Vendedor ve la lista nueva" name="ruta de ventas: la lista nueva es la única, para todos un Vendedor ve la lista nueva" time="0.065">
+    </testcase>
+    <testcase classname="ruta de ventas: la lista nueva es la única, para todos un Administrador ve la lista nueva" name="ruta de ventas: la lista nueva es la única, para todos un Administrador ve la lista nueva" time="0.004">
+    </testcase>
+  </testsuite>
+  <testsuite name="totalesDeLaLista (tarjeta de totales de la lista de ventas)" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:26" time="54.951" tests="4">
+    <testcase classname="totalesDeLaLista (tarjeta de totales de la lista de ventas) en Pedidos muestra lo vendido sin anuladas y cuántas esperan autorización" name="totalesDeLaLista (tarjeta de totales de la lista de ventas) en Pedidos muestra lo vendido sin anuladas y cuántas esperan autorización" time="0.006">
+    </testcase>
+    <testcase classname="totalesDeLaLista (tarjeta de totales de la lista de ventas) en Presupuestos muestra lo presupuestado" name="totalesDeLaLista (tarjeta de totales de la lista de ventas) en Presupuestos muestra lo presupuestado" time="0.014">
+    </testcase>
+    <testcase classname="totalesDeLaLista (tarjeta de totales de la lista de ventas) sin resumen filtrado (servidor anterior, sin cantidad) no hay tarjeta" name="totalesDeLaLista (tarjeta de totales de la lista de ventas) sin resumen filtrado (servidor anterior, sin cantidad) no hay tarjeta" time="0.002">
+    </testcase>
+    <testcase classname="totalesDeLaLista (tarjeta de totales de la lista de ventas) sin porAutorizar el conteo es cero y la tarjeta igual se muestra" name="totalesDeLaLista (tarjeta de totales de la lista de ventas) sin porAutorizar el conteo es cero y la tarjeta igual se muestra" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="R7 · borradores (ResBorradores): como la franja &quot;En curso&quot; de la web" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:19" time="64.575" tests="5">
+    <testcase classname="R7 · borradores (ResBorradores): como la franja &quot;En curso&quot; de la web seguir retoma el borrador" name="R7 · borradores (ResBorradores): como la franja &quot;En curso&quot; de la web seguir retoma el borrador" time="0.214">
+    </testcase>
+    <testcase classname="R7 · borradores (ResBorradores): como la franja &quot;En curso&quot; de la web descartar siempre pasa por la confirmación de la web y no descarta si se vuelve" name="R7 · borradores (ResBorradores): como la franja &quot;En curso&quot; de la web descartar siempre pasa por la confirmación de la web y no descarta si se vuelve" time="0.231">
+    </testcase>
+    <testcase classname="R7 · borradores (ResBorradores): como la franja &quot;En curso&quot; de la web confirmar descarta en el servidor" name="R7 · borradores (ResBorradores): como la franja &quot;En curso&quot; de la web confirmar descarta en el servidor" time="0.165">
+    </testcase>
+    <testcase classname="R7 · borradores (ResBorradores): como la franja &quot;En curso&quot; de la web el texto de la confirmación cuenta una línea en singular" name="R7 · borradores (ResBorradores): como la franja &quot;En curso&quot; de la web el texto de la confirmación cuenta una línea en singular" time="0.001">
+    </testcase>
+    <testcase classname="R7 · borradores (ResBorradores): como la franja &quot;En curso&quot; de la web sin borradores lo dice" name="R7 · borradores (ResBorradores): como la franja &quot;En curso&quot; de la web sin borradores lo dice" time="0.009">
+    </testcase>
+  </testsuite>
+  <testsuite name="R1 · detalle del pedido (ResVentaDetalle, TV7)" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:19" time="69.322" tests="34">
+    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) muestra número, cliente, línea de tiempo, entrega, factura, líneas, flete y total" name="R1 · detalle del pedido (ResVentaDetalle, TV7) muestra número, cliente, línea de tiempo, entrega, factura, líneas, flete y total" time="0.494">
+    </testcase>
+    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) muestra la condición de pago elegida en la venta" name="R1 · detalle del pedido (ResVentaDetalle, TV7) muestra la condición de pago elegida en la venta" time="0.066">
+    </testcase>
+    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) sin cobros no hay tarjeta &quot;Cobro&quot;" name="R1 · detalle del pedido (ResVentaDetalle, TV7) sin cobros no hay tarjeta &quot;Cobro&quot;" time="0.061">
+    </testcase>
+    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) con cobros muestra la tarjeta &quot;Cobro&quot;: fecha y medio, importe y saldo; las notas de crédito no son cobros" name="R1 · detalle del pedido (ResVentaDetalle, TV7) con cobros muestra la tarjeta &quot;Cobro&quot;: fecha y medio, importe y saldo; las notas de crédito no son cobros" time="0.062">
+    </testcase>
+    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) un pedido que ya se prepara no se edita y dice por qué; anular sigue disponible" name="R1 · detalle del pedido (ResVentaDetalle, TV7) un pedido que ya se prepara no se edita y dice por qué; anular sigue disponible" time="0.063">
+    </testcase>
+    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) confirmado con MOD_VENTAS modificar: se edita (venta nueva en modo editar)" name="R1 · detalle del pedido (ResVentaDetalle, TV7) confirmado con MOD_VENTAS modificar: se edita (venta nueva en modo editar)" time="0.23">
+    </testcase>
+    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) En ruta: Anular queda deshabilitado con el motivo a la vista" name="R1 · detalle del pedido (ResVentaDetalle, TV7) En ruta: Anular queda deshabilitado con el motivo a la vista" time="0.063">
+    </testcase>
+    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) sin MOD_VENTAS borrar no hay Anular ni motivo" name="R1 · detalle del pedido (ResVentaDetalle, TV7) sin MOD_VENTAS borrar no hay Anular ni motivo" time="0.06">
+    </testcase>
+    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) Cobrar lleva al cobro del cliente (flujo de cuentas) y pide MOD_PAGOS leer y crear" name="R1 · detalle del pedido (ResVentaDetalle, TV7) Cobrar lleva al cobro del cliente (flujo de cuentas) y pide MOD_PAGOS leer y crear" time="0.295">
+    </testcase>
+    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) PDF comparte el de la venta; WhatsApp abre el chat con el texto de la web" name="R1 · detalle del pedido (ResVentaDetalle, TV7) PDF comparte el de la venta; WhatsApp abre el chat con el texto de la web" time="0.406">
+    </testcase>
+    <testcase classname="R1 · detalle del pedido (ResVentaDetalle, TV7) embebido en la tablet, volver cierra el panel" name="R1 · detalle del pedido (ResVentaDetalle, TV7) embebido en la tablet, volver cierra el panel" time="0.186">
+    </testcase>
+    <testcase classname="R4 · anular igual que la web (sin motivo) muestra la confirmación de la web y no pide motivo" name="R4 · anular igual que la web (sin motivo) muestra la confirmación de la web y no pide motivo" time="0.237">
+    </testcase>
+    <testcase classname="R4 · anular igual que la web (sin motivo) al confirmar manda &quot;Cancelación manual&quot; y la versión" name="R4 · anular igual que la web (sin motivo) al confirmar manda &quot;Cancelación manual&quot; y la versión" time="0.412">
+    </testcase>
+    <testcase classname="R4 · anular igual que la web (sin motivo) &quot;Cancelar&quot; cierra sin anular" name="R4 · anular igual que la web (sin motivo) &quot;Cancelar&quot; cierra sin anular" time="0.405">
+    </testcase>
+    <testcase classname="R2 · presupuesto (ResPresupuesto) Pasar a pedido pide confirmación y convierte con la versión" name="R2 · presupuesto (ResPresupuesto) Pasar a pedido pide confirmación y convierte con la versión" time="0.224">
+    </testcase>
+    <testcase classname="R2 · presupuesto (ResPresupuesto) avisa que no reserva stock, que vence el día que manda el servidor y no ofrece cobrar" name="R2 · presupuesto (ResPresupuesto) avisa que no reserva stock, que vence el día que manda el servidor y no ofrece cobrar" time="0.057">
+    </testcase>
+    <testcase classname="R2 · presupuesto (ResPresupuesto) sin fecha del servidor (API vieja) avisa sin fecha ni número" name="R2 · presupuesto (ResPresupuesto) sin fecha del servidor (API vieja) avisa sin fecha ni número" time="0.061">
+    </testcase>
+    <testcase classname="R2 · presupuesto (ResPresupuesto) sin MOD_VENTAS modificar no hay Pasar a pedido ni Editar" name="R2 · presupuesto (ResPresupuesto) sin MOD_VENTAS modificar no hay Pasar a pedido ni Editar" time="0.057">
+    </testcase>
+    <testcase classname="R2 · presupuesto (ResPresupuesto) vencido: el botón dice Reabrir y el aviso no repite el plazo" name="R2 · presupuesto (ResPresupuesto) vencido: el botón dice Reabrir y el aviso no repite el plazo" time="0.228">
+    </testcase>
+    <testcase classname="R3 · rechazado (ResRechazada, TV8) muestra el motivo del rechazo, quién lo decidió y por qué esperaba" name="R3 · rechazado (ResRechazada, TV8) muestra el motivo del rechazo, quién lo decidió y por qué esperaba" time="0.059">
+    </testcase>
+    <testcase classname="R3 · rechazado (ResRechazada, TV8) no se edita, pero se puede anular" name="R3 · rechazado (ResRechazada, TV8) no se edita, pero se puede anular" time="0.064">
+    </testcase>
+    <testcase classname="R3 · rechazado (ResRechazada, TV8) sin MOD_VENTAS borrar no ofrece anular" name="R3 · rechazado (ResRechazada, TV8) sin MOD_VENTAS borrar no ofrece anular" time="0.06">
+    </testcase>
+    <testcase classname="R3 · rechazado (ResRechazada, TV8) ¿Qué hacés ahora?: cobrar lo vencido, armar uno nuevo igual y llamar al cliente" name="R3 · rechazado (ResRechazada, TV8) ¿Qué hacés ahora?: cobrar lo vencido, armar uno nuevo igual y llamar al cliente" time="0.56">
+    </testcase>
+    <testcase classname="R3 · rechazado (ResRechazada, TV8) sin MOD_VENTAS crear no ofrece armar uno nuevo; sin MOD_PAGOS no ofrece cobrar" name="R3 · rechazado (ResRechazada, TV8) sin MOD_VENTAS crear no ofrece armar uno nuevo; sin MOD_PAGOS no ofrece cobrar" time="0.061">
+    </testcase>
+    <testcase classname="R5 · motivo de la autorización en el detalle (light) lo muestra con su rótulo cuando viene con texto" name="R5 · motivo de la autorización en el detalle (light) lo muestra con su rótulo cuando viene con texto" time="0.075">
+    </testcase>
+    <testcase classname="R5 · motivo de la autorización en el detalle (light) no muestra el bloque con null" name="R5 · motivo de la autorización en el detalle (light) no muestra el bloque con null" time="0.066">
+    </testcase>
+    <testcase classname="R5 · motivo de la autorización en el detalle (light) no muestra el bloque con &quot;&quot;" name="R5 · motivo de la autorización en el detalle (light) no muestra el bloque con &quot;&quot;" time="0.063">
+    </testcase>
+    <testcase classname="R5 · motivo de la autorización en el detalle (light) no muestra el bloque con &quot;   &quot;" name="R5 · motivo de la autorización en el detalle (light) no muestra el bloque con &quot;   &quot;" time="0.066">
+    </testcase>
+    <testcase classname="R5 · motivo de la autorización en el detalle (dark) lo muestra con su rótulo cuando viene con texto" name="R5 · motivo de la autorización en el detalle (dark) lo muestra con su rótulo cuando viene con texto" time="0.08">
+    </testcase>
+    <testcase classname="R5 · motivo de la autorización en el detalle (dark) no muestra el bloque con null" name="R5 · motivo de la autorización en el detalle (dark) no muestra el bloque con null" time="0.082">
+    </testcase>
+    <testcase classname="R5 · motivo de la autorización en el detalle (dark) no muestra el bloque con &quot;&quot;" name="R5 · motivo de la autorización en el detalle (dark) no muestra el bloque con &quot;&quot;" time="0.064">
+    </testcase>
+    <testcase classname="R5 · motivo de la autorización en el detalle (dark) no muestra el bloque con &quot;   &quot;" name="R5 · motivo de la autorización en el detalle (dark) no muestra el bloque con &quot;   &quot;" time="0.064">
+    </testcase>
+    <testcase classname="línea de tiempo con los colores del tema (auditoría de UI, tanda 6) en light el riel de cada tramo sale del tema, no de un gris fijo" name="línea de tiempo con los colores del tema (auditoría de UI, tanda 6) en light el riel de cada tramo sale del tema, no de un gris fijo" time="0.098">
+    </testcase>
+    <testcase classname="línea de tiempo con los colores del tema (auditoría de UI, tanda 6) en dark el riel de cada tramo sale del tema, no de un gris fijo" name="línea de tiempo con los colores del tema (auditoría de UI, tanda 6) en dark el riel de cada tramo sale del tema, no de un gris fijo" time="0.086">
+    </testcase>
+  </testsuite>
+  <testsuite name="lista de ventas nueva" errors="0" failures="0" skipped="0" timestamp="2026-11-21T05:28:18" time="73.004" tests="39">
+    <testcase classname="lista de ventas nueva arranca en Pedidos de los últimos 30 días, agrupa por día y el contador es del servidor" name="lista de ventas nueva arranca en Pedidos de los últimos 30 días, agrupa por día y el contador es del servidor" time="0.362">
+    </testcase>
+    <testcase classname="lista de ventas nueva Presupuestos, estado y período van como filtros al servidor" name="lista de ventas nueva Presupuestos, estado y período van como filtros al servidor" time="0.729">
+    </testcase>
+    <testcase classname="lista de ventas nueva la búsqueda va al servidor después de una pausa, no con cada letra" name="lista de ventas nueva la búsqueda va al servidor después de una pausa, no con cada letra" time="0.677">
+    </testcase>
+    <testcase classname="lista de ventas nueva Borradores muestra los del usuario que devuelve el servidor" name="lista de ventas nueva Borradores muestra los del usuario que devuelve el servidor" time="0.245">
+    </testcase>
+    <testcase classname="lista de ventas nueva tocar un borrador pregunta si sigue como pedido o presupuesto y lo abre en la venta nueva" name="lista de ventas nueva tocar un borrador pregunta si sigue como pedido o presupuesto y lo abre en la venta nueva" time="0.417">
+    </testcase>
+    <testcase classname="lista de ventas nueva en el teléfono tocar una tarjeta abre el detalle de la venta" name="lista de ventas nueva en el teléfono tocar una tarjeta abre el detalle de la venta" time="0.251">
+    </testcase>
+    <testcase classname="lista de ventas nueva en tablet horizontal el detalle se abre al costado, sin salir de la lista" name="lista de ventas nueva en tablet horizontal el detalle se abre al costado, sin salir de la lista" time="0.265">
+    </testcase>
+    <testcase classname="lista de ventas nueva: entrega y motivo en la tarjeta (forward-system #884) la tarjeta dice el día de entrega al lado de la hora" name="lista de ventas nueva: entrega y motivo en la tarjeta (forward-system #884) la tarjeta dice el día de entrega al lado de la hora" time="0.095">
+    </testcase>
+    <testcase classname="lista de ventas nueva: entrega y motivo en la tarjeta (forward-system #884) una venta por autorizar dice el motivo en lugar de la entrega" name="lista de ventas nueva: entrega y motivo en la tarjeta (forward-system #884) una venta por autorizar dice el motivo en lugar de la entrega" time="0.091">
+    </testcase>
+    <testcase classname="lista de ventas nueva: entrega y motivo en la tarjeta (forward-system #884) con más de un motivo dice el primero y cuántos más hay" name="lista de ventas nueva: entrega y motivo en la tarjeta (forward-system #884) con más de un motivo dice el primero y cuántos más hay" time="0.078">
+    </testcase>
+    <testcase classname="lista de ventas nueva: entrega y motivo en la tarjeta (forward-system #884) una venta anulada dice el motivo de anulación al lado de la hora (9B prioridad 3)" name="lista de ventas nueva: entrega y motivo en la tarjeta (forward-system #884) una venta anulada dice el motivo de anulación al lado de la hora (9B prioridad 3)" time="0.085">
+    </testcase>
+    <testcase classname="lista de ventas nueva: entrega y motivo en la tarjeta (forward-system #884) con un servidor anterior (sin esos campos) la tarjeta muestra solo la hora" name="lista de ventas nueva: entrega y motivo en la tarjeta (forward-system #884) con un servidor anterior (sin esos campos) la tarjeta muestra solo la hora" time="0.089">
+    </testcase>
+    <testcase classname="lista de ventas nueva: total del filtro (GET /Ventas/resumen) la tarjeta de totales dice lo vendido sin anuladas y cuántas esperan autorización" name="lista de ventas nueva: total del filtro (GET /Ventas/resumen) la tarjeta de totales dice lo vendido sin anuladas y cuántas esperan autorización" time="0.09">
+    </testcase>
+    <testcase classname="lista de ventas nueva: total del filtro (GET /Ventas/resumen) en Pedidos suma el importe del servidor, pedido con los mismos filtros que la lista" name="lista de ventas nueva: total del filtro (GET /Ventas/resumen) en Pedidos suma el importe del servidor, pedido con los mismos filtros que la lista" time="0.854">
+    </testcase>
+    <testcase classname="lista de ventas nueva: total del filtro (GET /Ventas/resumen) en Presupuestos y con Anulado solo la cantidad: el importe del servidor es de pedidos no anulados" name="lista de ventas nueva: total del filtro (GET /Ventas/resumen) en Presupuestos y con Anulado solo la cantidad: el importe del servidor es de pedidos no anulados" time="0.624">
+    </testcase>
+    <testcase classname="lista de ventas nueva: total del filtro (GET /Ventas/resumen) en Presupuestos suma el importe de presupuestos del servidor (totalPresupuestado)" name="lista de ventas nueva: total del filtro (GET /Ventas/resumen) en Presupuestos suma el importe de presupuestos del servidor (totalPresupuestado)" time="0.48">
+    </testcase>
+    <testcase classname="lista de ventas nueva: total del filtro (GET /Ventas/resumen) con el resumen listo y la lista cargando no hay contador (nada de &quot;Mostrando 0 de M&quot;)" name="lista de ventas nueva: total del filtro (GET /Ventas/resumen) con el resumen listo y la lista cargando no hay contador (nada de &quot;Mostrando 0 de M&quot;)" time="0.078">
+    </testcase>
+    <testcase classname="lista de ventas nueva: total del filtro (GET /Ventas/resumen) con el resumen listo y la lista con error no hay contador" name="lista de ventas nueva: total del filtro (GET /Ventas/resumen) con el resumen listo y la lista con error no hay contador" time="0.139">
+    </testcase>
+    <testcase classname="lista de ventas nueva: total del filtro (GET /Ventas/resumen) con el servidor anterior a #873 (resumen sin cantidad) queda el contador de la lista, sin importe" name="lista de ventas nueva: total del filtro (GET /Ventas/resumen) con el servidor anterior a #873 (resumen sin cantidad) queda el contador de la lista, sin importe" time="0.079">
+    </testcase>
+    <testcase classname="lista de ventas nueva: borradores por dirección y total (forward-system #898) servidor nuevo: la dirección identifica al cliente, la razón social va debajo y se ve el total" name="lista de ventas nueva: borradores por dirección y total (forward-system #898) servidor nuevo: la dirección identifica al cliente, la razón social va debajo y se ve el total" time="0.213">
+    </testcase>
+    <testcase classname="lista de ventas nueva: borradores por dirección y total (forward-system #898) servidor nuevo: un total en otra moneda lleva su código" name="lista de ventas nueva: borradores por dirección y total (forward-system #898) servidor nuevo: un total en otra moneda lleva su código" time="0.219">
+    </testcase>
+    <testcase classname="lista de ventas nueva: borradores por dirección y total (forward-system #898) servidor nuevo: un cliente sin dirección queda con la razón social sola, y el total igual" name="lista de ventas nueva: borradores por dirección y total (forward-system #898) servidor nuevo: un cliente sin dirección queda con la razón social sola, y el total igual" time="0.262">
+    </testcase>
+    <testcase classname="lista de ventas nueva: borradores por dirección y total (forward-system #898) servidor anterior (sin dirección ni total): la tarjeta queda como siempre, sin importe" name="lista de ventas nueva: borradores por dirección y total (forward-system #898) servidor anterior (sin dirección ni total): la tarjeta queda como siempre, sin importe" time="0.222">
+    </testcase>
+    <testcase classname="lista de ventas nueva: borradores por dirección y total (forward-system #898) tocar un borrador con dirección la usa para preguntar cómo seguirlo" name="lista de ventas nueva: borradores por dirección y total (forward-system #898) tocar un borrador con dirección la usa para preguntar cómo seguirlo" time="0.384">
+    </testcase>
+    <testcase classname="lista de ventas nueva: el borrador recuerda si era pedido o presupuesto (forward-system #883) servidor nuevo: un borrador de Pedido se retoma como tal, sin preguntar" name="lista de ventas nueva: el borrador recuerda si era pedido o presupuesto (forward-system #883) servidor nuevo: un borrador de Pedido se retoma como tal, sin preguntar" time="0.341">
+    </testcase>
+    <testcase classname="lista de ventas nueva: el borrador recuerda si era pedido o presupuesto (forward-system #883) servidor nuevo: un borrador de Presupuesto se retoma como tal, sin preguntar" name="lista de ventas nueva: el borrador recuerda si era pedido o presupuesto (forward-system #883) servidor nuevo: un borrador de Presupuesto se retoma como tal, sin preguntar" time="0.373">
+    </testcase>
+    <testcase classname="lista de ventas nueva: botón &quot;Nueva venta&quot; (S1) en teléfono la lista ya no trae el botón flotante: la venta nueva sale del botón central de la barra" name="lista de ventas nueva: botón &quot;Nueva venta&quot; (S1) en teléfono la lista ya no trae el botón flotante: la venta nueva sale del botón central de la barra" time="0.079">
+    </testcase>
+    <testcase classname="lista de ventas nueva: botón &quot;Nueva venta&quot; (S1) en tablet (sin barra inferior) el botón sigue en la lista y abre ventas/nueva" name="lista de ventas nueva: botón &quot;Nueva venta&quot; (S1) en tablet (sin barra inferior) el botón sigue en la lista y abre ventas/nueva" time="0.25">
+    </testcase>
+    <testcase classname="lista de ventas nueva: botón &quot;Nueva venta&quot; (S1) sin permiso de crear ventas no hay botón" name="lista de ventas nueva: botón &quot;Nueva venta&quot; (S1) sin permiso de crear ventas no hay botón" time="0.082">
+    </testcase>
+    <testcase classname="lista de ventas nueva: estados de pantalla mientras carga muestra los esqueletos de las filas" name="lista de ventas nueva: estados de pantalla mientras carga muestra los esqueletos de las filas" time="0.041">
+    </testcase>
+    <testcase classname="lista de ventas nueva: estados de pantalla sin ventas muestra el estado vacío con su texto" name="lista de ventas nueva: estados de pantalla sin ventas muestra el estado vacío con su texto" time="0.083">
+    </testcase>
+    <testcase classname="lista de ventas nueva: estados de pantalla con error del servidor avisa y Reintentar vuelve a pedir la lista" name="lista de ventas nueva: estados de pantalla con error del servidor avisa y Reintentar vuelve a pedir la lista" time="0.272">
+    </testcase>
+    <testcase classname="lista de ventas nueva: estados de pantalla sin red y sin ventas muestra la pantalla de sin conexión; Reintentar vuelve a pedir" name="lista de ventas nueva: estados de pantalla sin red y sin ventas muestra la pantalla de sin conexión; Reintentar vuelve a pedir" time="0.271">
+    </testcase>
+    <testcase classname="lista de ventas nueva: estados de pantalla sin red y sin nada guardado (la consulta queda en pausa, sin error) ventas: muestra la pantalla de sin conexión con Reintentar, no el vacío" name="lista de ventas nueva: estados de pantalla sin red y sin nada guardado (la consulta queda en pausa, sin error) ventas: muestra la pantalla de sin conexión con Reintentar, no el vacío" time="0.04">
+    </testcase>
+    <testcase classname="lista de ventas nueva: estados de pantalla sin red y sin nada guardado (la consulta queda en pausa, sin error) borradores: muestra la pantalla de sin conexión, no el vacío" name="lista de ventas nueva: estados de pantalla sin red y sin nada guardado (la consulta queda en pausa, sin error) borradores: muestra la pantalla de sin conexión, no el vacío" time="0.219">
+    </testcase>
+    <testcase classname="lista de ventas nueva: estados de pantalla Borradores: esqueletos mientras carga" name="lista de ventas nueva: estados de pantalla Borradores: esqueletos mientras carga" time="0.218">
+    </testcase>
+    <testcase classname="lista de ventas nueva: estados de pantalla Borradores: vacío con su texto" name="lista de ventas nueva: estados de pantalla Borradores: vacío con su texto" time="0.225">
+    </testcase>
+    <testcase classname="lista de ventas nueva: estados de pantalla Borradores: con error avisa y Reintentar los vuelve a pedir" name="lista de ventas nueva: estados de pantalla Borradores: con error avisa y Reintentar los vuelve a pedir" time="0.388">
+    </testcase>
+    <testcase classname="lista de ventas nueva: estados de pantalla Borradores: sin red muestra la pantalla de sin conexión" name="lista de ventas nueva: estados de pantalla Borradores: sin red muestra la pantalla de sin conexión" time="0.203">
     </testcase>
   </testsuite>
 </testsuites>

@@ -1,10 +1,11 @@
 import React from 'react'
-import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native'
+import { PressableFx } from '@/core/ui/fw/PressableFx'
+import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Check } from 'lucide-react-native'
-import { FONT, importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
-import { Button, Notice, StatusChip, TopBar, chipForEstado, formatImporte } from '@/core/ui/fw'
+import { FONT, importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { Button, Notice, TopBar, chipForEstado, formatImporte } from '@/core/ui/fw'
 import { usePuedeCobrar } from '@/features/cuentas/lib/permiso'
 import { urlWhatsApp } from '@/features/clientes/lib/contacto'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
@@ -27,7 +28,6 @@ interface Props {
  */
 export function VentaGuardadaPantalla({ id, mensaje }: Props) {
   const c = useColors()
-  const sombra = useSombraTarjeta()
   const insets = useSafeAreaInsets()
   const router = useRouter()
   const puedeCobrarPagos = usePuedeCobrar()
@@ -70,8 +70,8 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
   const direccion = socio.data ? direccionDeEntrega(socio.data) : (h.clienteNombre ?? '')
   const nombre = socio.data ? nombreDelCliente(socio.data) : ''
   const fila = (k: string, v: React.ReactNode, ultima = false) => (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: space[12], borderBottomWidth: ultima ? 0 : 1, borderBottomColor: c.border }}>
-      <Text style={secundario}>{k}</Text>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: space[12], borderBottomWidth: ultima ? 0 : 2, borderBottomColor: c.ink }}>
+      <Text style={{ ...secundario, color: c.ink }}>{k}</Text>
       {v}
     </View>
   )
@@ -80,37 +80,42 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
     <View testID="venta-guardada" style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Venta guardada" />
       <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: insets.bottom + space[6], gap: space[4] }}>
-        <View testID="venta-guardada-resumen" style={{ padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, ...sombra, gap: space[2] }}>
-          <View style={{ alignItems: 'center', gap: space[1], paddingBottom: space[2] }}>
-            <View testID="venta-guardada-marca" style={{ width: 56, height: 56, borderRadius: radii.pastilla, backgroundColor: c.action, alignItems: 'center', justifyContent: 'center' }}>
-              <Check size={30} color={c.onAction} strokeWidth={2.5} />
+        <View testID="venta-guardada-resumen" style={{ padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.lime, gap: space[2] }}>
+          <View style={{ gap: space[1], paddingBottom: space[2] }}>
+            <View testID="venta-guardada-marca" style={{ width: 56, height: 56, borderRadius: radii.pastilla, backgroundColor: c.ink, alignItems: 'center', justifyContent: 'center' }}>
+              <Check size={30} color={c.lime} strokeWidth={2.5} />
             </View>
-            <Text accessibilityRole="header" style={{ ...typeScale.titulo, ...negrita, color: c.text, textAlign: 'center', marginTop: space[2] }}>
+            <Text accessibilityRole="header" style={{ ...typeScale.titulo, ...negrita, color: c.ink, marginTop: space[2] }}>
               {`${tipo === 'Pedido' ? 'Venta' : tipo} ${codigoDeVenta(h)} ${esPedido && confirmada ? 'confirmada' : esPedido ? 'guardada' : 'guardado'}`}
             </Text>
-            <Text style={{ ...typeScale.cuerpoDestacado, color: c.text, textAlign: 'center' }}>{direccion}</Text>
-            {nombre ? <Text style={{ ...secundario, textAlign: 'center' }}>{nombre}</Text> : null}
-            <Text style={{ ...secundario, textAlign: 'center' }}>{resumenDeLineas(vigente.detalles)}</Text>
+            <Text style={{ ...typeScale.cuerpoDestacado, color: c.ink }}>{direccion}</Text>
+            {nombre ? <Text style={{ ...secundario, color: c.ink }}>{nombre}</Text> : null}
+            <Text style={{ ...secundario, color: c.ink }}>{resumenDeLineas(vigente.detalles)}</Text>
           </View>
-          {fila('Estado', chip ? <StatusChip estado={chip.estado} label={chip.label} /> : <Text style={{ ...typeScale.cuerpo, color: c.text }}>{rotulo}</Text>)}
-          {entrega ? fila('Entrega', <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{entrega}</Text>) : null}
-          {fila('Total', <Text style={{ ...typeScale.titulo, ...importe, ...negrita, color: c.text }}>{formatImporte(h.totalAmount)}</Text>, true)}
+          {fila('Estado', chip ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: 32, paddingHorizontal: space[3], borderRadius: radii.pastilla, backgroundColor: c.ink }}>
+              <View style={{ width: 10, height: 10, borderRadius: radii.pastilla, backgroundColor: c.teal }} />
+              <Text style={{ ...typeScale.etiquetaChip, color: c.lime }}>{chip.label}</Text>
+            </View>
+          ) : <Text style={{ ...typeScale.cuerpo, color: c.ink }}>{rotulo}</Text>)}
+          {entrega ? fila('Entrega', <Text style={{ ...typeScale.cuerpoDestacado, color: c.ink }}>{entrega}</Text>) : null}
+          {fila('Total', <Text style={{ ...typeScale.titulo, ...importe, ...negrita, color: c.ink }}>{formatImporte(h.totalAmount)}</Text>, true)}
         </View>
         <Notice tone={porAutorizar ? 'advertencia' : 'exito'}>
           {mensaje ?? (porAutorizar ? 'Falta que la autoricen. Hasta entonces no sale a reparto. Te avisamos cuando la resuelvan.' : 'Quedó guardado.')}
         </Notice>
         {!porAutorizar ? <Text style={secundario}>La factura no se hace desde el teléfono: la emite la oficina.</Text> : null}
         <Button label="Ver la venta" onPress={() => router.push({ pathname: '/(tabs)/ventas/[id]', params: { id } } as never)} />
-        {puedeCobrar ? <Button label="Cobrar ahora" onPress={() => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: h.clienteId } } as never)} /> : null}
+        {puedeCobrar ? <Button label="Cobrar ahora" variant="secundario" onPress={() => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: h.clienteId } } as never)} /> : null}
         {whatsapp ? <Button label={porAutorizar ? 'Avisar al cliente por WhatsApp' : 'Mandar por WhatsApp'} variant="secundario" onPress={mandarPorWhatsApp} /> : null}
         <AccionesVenta venta={vigente} rotulo={rotulo} />
         <Button label="Vender a otro cliente" variant="secundario" onPress={() => router.replace('/(tabs)/ventas/nueva' as never)} />
-        <Pressable accessibilityRole="button" accessibilityLabel="Volver a Mi día" onPress={() => router.replace('/(tabs)' as never)} style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+        <PressableFx accessibilityRole="button" accessibilityLabel="Volver a Mi día" onPress={() => router.replace('/(tabs)' as never)} android_ripple={{ color: c.surfaceAlt }} style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Volver a Mi día</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Listo" onPress={listo} style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+        </PressableFx>
+        <PressableFx accessibilityRole="button" accessibilityLabel="Listo" onPress={listo} android_ripple={{ color: c.surfaceAlt }} style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Listo</Text>
-        </Pressable>
+        </PressableFx>
       </ScrollView>
     </View>
   )

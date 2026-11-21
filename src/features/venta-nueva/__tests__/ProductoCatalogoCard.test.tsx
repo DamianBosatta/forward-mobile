@@ -23,12 +23,12 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
     expect(screen.getAllByTestId('producto-p1')).toHaveLength(1)
   })
 
-  it('lo que ya está en el carrito se marca con el fondo y el borde de la marca; lo que no, queda liso', () => {
+  it('la tarjeta es de surface con radio de tile, esté o no en el carrito (lo que lleva lo dice el bloque lima)', () => {
     const r = pintar(6)
-    expect(screen.getByTestId('producto-p1')).toHaveStyle({ backgroundColor: themeColors.light.brandSoft, borderColor: themeColors.light.brand })
+    expect(screen.getByTestId('producto-p1')).toHaveStyle({ backgroundColor: '#FFFFFF', borderRadius: 28 })
     r.unmount()
     pintar(0)
-    expect(screen.getByTestId('producto-p1')).toHaveStyle({ backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' })
+    expect(screen.getByTestId('producto-p1')).toHaveStyle({ backgroundColor: '#FFFFFF', borderRadius: 28 })
   })
 
   it('con foto la muestra; sin foto deja el ícono de producto', () => {
@@ -196,9 +196,9 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
       expect(texto.parent?.parent?.parent?.parent).toHaveStyle({ flexWrap: 'wrap' })
     })
 
-    it('Agregar y Sin stock siguen con su look liso (sin relleno de acción)', () => {
-      tarjetaSimple()
-      expect(screen.getByRole('button', { name: /Añadir/ })).not.toHaveStyle({ backgroundColor: themeColors.light.primaryBg })
+    it('Agregar lleva el relleno de acción (píldora de 48)', () => {
+      pintar(0, { puedeVenderse: true })
+      expect(screen.getByRole('button', { name: /Añadir/ })).toHaveStyle({ backgroundColor: themeColors.light.primaryBg, minHeight: 48 })
     })
   })
 })

@@ -332,7 +332,7 @@ describe('línea de tiempo con los colores del tema (auditoría de UI, tanda 6)'
     pantalla()
     await screen.findByText('Pedido A00419')
     const riel = StyleSheet.flatten(screen.getByTestId('tramo-Preparando').props.style).backgroundColor
-    expect(riel).toBe(`${themeColors[mode].onTopBar}40`)
+    expect(riel).toBe(themeColors[mode].surfaceAlt)
     expect(riel).not.toBe('#33403D')
   })
 })

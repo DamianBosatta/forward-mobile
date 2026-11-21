@@ -40,7 +40,7 @@ export const ProductoCatalogoCard = React.memo(function ProductoCatalogoCard({
 }: ProductoCatalogoCardProps) {
   const c = useColors()
   const stock = stockDeTarjeta(p, verCantidades, enVivo)
-  const colorStock = stock.nivel === 'hay' ? c.success : stock.nivel === 'poco' ? c.warning : c.danger
+  const colorStock = stock.nivel === 'hay' ? c.teal : stock.nivel === 'poco' ? c.warning : c.dangerFill
   const porBulto = vendePorBulto(p)
   const unitario = precioServidor(p)
   const pistas = [llevoAntes ? `Llevó ${llevoAntes} la última vez` : null].filter((t): t is string => !!t)
@@ -56,11 +56,11 @@ export const ProductoCatalogoCard = React.memo(function ProductoCatalogoCard({
     <View
       testID={`producto-${p.id}`}
       style={{
-        flex: 1, flexDirection: 'row', gap: space[3], padding: space[3], borderRadius: radii.tarjeta,
-        backgroundColor: cantidad > 0 ? c.brandSoft : c.surface, borderWidth: 2, borderColor: cantidad > 0 ? c.brand : c.surface,
+        flex: 1, flexDirection: 'row', gap: space[3], padding: space[4], borderRadius: radii.tile,
+        backgroundColor: c.surface,
       }}
     >
-      <View style={{ width: 76, height: 76, borderRadius: radii.campo, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <View style={{ width: 76, height: 76, borderRadius: radii.fila, backgroundColor: c.surfaceAlt, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         {p.imageUrl ? (
           <Image source={{ uri: p.imageUrl }} style={{ width: 76, height: 76 }} cachePolicy="memory-disk" contentFit="cover" recyclingKey={p.id} accessibilityIgnoresInvertColors />
         ) : (
@@ -91,9 +91,11 @@ export const ProductoCatalogoCard = React.memo(function ProductoCatalogoCard({
               onCambiar={(m) => { setModoElegido(m); onCambiarCantidad?.(p.id, convertirModo(pr, m, linea.cantidad)) }} />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
               <Redondo c={c} label="−" a11y={`Restar ${p.nombre}`} disabled={linea.cantidad - paso < multiploDe(p)} onPress={() => onCambiarCantidad?.(p.id, linea.cantidad - paso)} />
-              <Text accessibilityLabel={`${modo === 'bultos' ? 'Bultos' : 'Unidades'}: ${valorEn(pr, modo, linea.cantidad)}`} style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.text, minWidth: 28, textAlign: 'center' }}>
-                {mostrarNumero(valorEn(pr, modo, linea.cantidad))}
-              </Text>
+              <View style={{ minWidth: 56, height: 48, paddingHorizontal: space[2], borderRadius: radii.cantidad, backgroundColor: c.lime, alignItems: 'center', justifyContent: 'center' }}>
+                <Text accessibilityLabel={`${modo === 'bultos' ? 'Bultos' : 'Unidades'}: ${valorEn(pr, modo, linea.cantidad)}`} style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.ink, textAlign: 'center' }}>
+                  {mostrarNumero(valorEn(pr, modo, linea.cantidad))}
+                </Text>
+              </View>
               <Redondo c={c} label="+" a11y={`Sumar ${p.nombre}`} disabled={linea.cantidad + paso > TOPE_CANTIDAD} onPress={() => onCambiarCantidad?.(p.id, linea.cantidad + paso)} />
             </View>
           </View>
@@ -118,12 +120,13 @@ export const ProductoCatalogoCard = React.memo(function ProductoCatalogoCard({
               accessibilityRole="button"
               accessibilityLabel={`Editar ${p.nombre}`}
               onPress={abrir}
-              style={{ flexShrink: 0, minHeight: 44, paddingHorizontal: space[4], borderRadius: radii.campo, backgroundColor: c.brandSoft, borderWidth: 1, borderColor: c.brand, justifyContent: 'center' }}
+              android_ripple={{ color: c.surfaceAlt }}
+              style={{ flexShrink: 0, minHeight: 48, paddingHorizontal: space[4], borderRadius: radii.pastilla, backgroundColor: c.lime, justifyContent: 'center' }}
             >
-              <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{`${cantidadEnPresentacion(p, cantidad)} ✎`}</Text>
+              <Text style={{ ...typeScale.cuerpoDestacado, color: c.ink }}>{`${cantidadEnPresentacion(p, cantidad)} ✎`}</Text>
             </Pressable>
           ) : (
-            <Accion c={c} label={stock.nivel === 'sin' ? 'Sin stock' : 'Agregar'} a11y={`Añadir ${p.nombre}`} onPress={abrir} />
+            <Accion c={c} principal={stock.nivel !== 'sin'} label={stock.nivel === 'sin' ? 'Sin stock' : 'Agregar'} a11y={`Añadir ${p.nombre}`} onPress={abrir} />
           )}
         </View>
         {p.esPadreDeVariantes ? (
@@ -136,23 +139,24 @@ export const ProductoCatalogoCard = React.memo(function ProductoCatalogoCard({
 })
 
 function Chip({ c, texto, tono }: { c: ForwardColors; texto: string; tono?: 'oferta' }) {
-  const colores = tono === 'oferta' ? c.chip.porAutorizar : { bg: c.surface2, text: c.text }
+  const colores = tono === 'oferta' ? c.chipFill.porAutorizar : { bg: c.surfaceAlt, text: c.text }
   return (
-    <View style={{ paddingHorizontal: space[2], paddingVertical: 2, borderRadius: radii.campo, backgroundColor: colores.bg }}>
+    <View style={{ paddingHorizontal: space[3], paddingVertical: space[1], borderRadius: radii.pastilla, backgroundColor: colores.bg }}>
       <Text style={{ ...typeScale.etiqueta, color: colores.text }}>{texto}</Text>
     </View>
   )
 }
 
-function Accion({ c, label, a11y, onPress }: { c: ForwardColors; label: string; a11y?: string; onPress?: () => void }) {
+function Accion({ c, label, a11y, onPress, principal = true }: { c: ForwardColors; label: string; a11y?: string; onPress?: () => void; principal?: boolean }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={a11y ?? label}
       onPress={onPress}
-      style={{ flexShrink: 0, minHeight: 44, paddingHorizontal: space[4], borderRadius: radii.campo, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface, justifyContent: 'center' }}
+      android_ripple={{ color: c.surfaceAlt }}
+      style={{ flexShrink: 0, minHeight: 48, paddingHorizontal: space[5], borderRadius: radii.pastilla, backgroundColor: principal ? c.primaryBg : c.surfaceAlt, justifyContent: 'center' }}
     >
-      <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{label}</Text>
+      <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: principal ? c.primaryFg : c.text }}>{label}</Text>
     </Pressable>
   )
 }
@@ -165,7 +169,8 @@ export function Redondo({ c, label, a11y, onPress, disabled = false }: { c: Forw
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={{ width: 44, height: 44, borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}
+      android_ripple={{ color: c.surface }}
+      style={{ width: 48, height: 48, borderRadius: radii.pastilla, backgroundColor: c.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}
     >
       <Text style={{ ...typeScale.titulo, color: disabled ? c.textSecondary : c.text }}>{label}</Text>
     </Pressable>

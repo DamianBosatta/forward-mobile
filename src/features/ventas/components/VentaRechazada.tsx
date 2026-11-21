@@ -1,5 +1,6 @@
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
+import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { formatImporte } from '@/core/ui/fw'
 import type { VentaHeaderDto } from '@/libs/api-client/types'
@@ -27,15 +28,16 @@ interface Props {
 function Accion({ titulo, detalle, onPress }: { titulo: string; detalle: string; onPress: () => void }) {
   const c = useColors()
   return (
-    <Pressable
+    <PressableFx
       accessibilityRole="button"
       accessibilityLabel={titulo}
       onPress={onPress}
-      style={{ minHeight: 56, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.borderStrong, gap: 2 }}
+      android_ripple={{ color: c.surfaceAlt }}
+      style={{ minHeight: 56, padding: space[4], borderRadius: radii.fila, backgroundColor: c.surface, gap: 2 }}
     >
       <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{titulo}</Text>
       <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{detalle}</Text>
-    </Pressable>
+    </PressableFx>
   )
 }
 
