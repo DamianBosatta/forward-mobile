@@ -2,6 +2,7 @@ import React from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { ShoppingCart } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
+import { formatearCuit } from '@/libs/reglas/cuit'
 import { StatusChip, formatImporte } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import type { SocioListDto } from '@/libs/api-client/types'
@@ -29,7 +30,7 @@ interface ProveedorCardProps {
 export function ProveedorCard({ proveedor, onPress, seleccionado = false, onNuevaCompra, primera = false, ultima = false }: ProveedorCardProps) {
   const c = useColors()
   const { canRead } = usePermissions()
-  const cuit = proveedor.cuit?.trim() ? `CUIT ${proveedor.cuit.trim()}` : 'Sin CUIT cargado'
+  const cuit = proveedor.cuit?.trim() ? `CUIT ${formatearCuit(proveedor.cuit.trim())}` : 'Sin CUIT cargado'
   const saldo = proveedor.puedeVerSaldo && canRead('MOD_CC') ? saldoDelProveedor(proveedor.saldoAmount) : null
   const secundario = (t: string) => <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{t}</Text>
   const conChips = proveedor.requiereCompletar || saldo

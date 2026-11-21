@@ -1,4 +1,5 @@
 import React from 'react'
+import { formatearCuit } from '@/libs/reglas/cuit'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ArrowLeft } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
@@ -120,7 +121,7 @@ export function RecepcionCompra(p: Props) {
           <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>Proveedor</Text>
           <View>
             <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{p.proveedor.nombre}</Text>
-            {p.proveedor.cuit ? <Text style={{ ...secundario, ...importe }}>{`CUIT ${p.proveedor.cuit}`}</Text> : null}
+            {p.proveedor.cuit ? <Text style={{ ...secundario, ...importe }}>{`CUIT ${formatearCuit(p.proveedor.cuit)}`}</Text> : null}
           </View>
           {fila('Plazo de pago', p.proveedor.condicion)}
           {fila('Franja horaria', p.proveedor.franja)}
