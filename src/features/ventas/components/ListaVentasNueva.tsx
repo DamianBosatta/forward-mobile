@@ -1,11 +1,12 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { ActivityIndicator, Alert, Pressable, ScrollView, SectionList, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, ScrollView, SectionList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import {
-  Button, DocumentCard, Field, Notice, Segmented, StatusChip, TopBar, TwoPane, chipForEstado, useMenuLeading,
+  Button, DocumentCard, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, useMenuLeading,
   type SegmentedOption, useInsetInferior } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
+import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { EstadoDeConsulta, FILAS_CARGANDO } from '@/core/ui/estados'
@@ -148,29 +149,35 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
         {ESTADOS.map((e) => {
           const sel = e.value === l.estado
           return (
-            <Pressable
+            <PressableFx
               key={e.value}
               accessibilityRole="radio"
               accessibilityLabel={e.label}
               accessibilityState={{ selected: sel }}
               onPress={() => l.setEstado(e.value)}
-              style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: space[1], justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: sel ? c.brand : c.border, backgroundColor: sel ? c.brandSoft : c.surface }}
+              android_ripple={{ color: c.surfaceAlt }}
+              style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: space[2], justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, backgroundColor: sel ? c.primaryBg : c.surface }}
             >
-              <Text style={[typeScale.secundario, { color: sel ? c.brandInk : c.text }]}>{e.label}</Text>
+              <Text style={[typeScale.etiquetaChip, { color: sel ? c.primaryFg : c.text }]}>{e.label}</Text>
               {e.value === 'PendienteAutorizacion' && contadorPorAutorizar ? (
-                <Text style={[typeScale.secundario, cifras, { color: c.textSecondary }]}>{contadorPorAutorizar}</Text>
+                <View style={{ minWidth: 20, height: 20, paddingHorizontal: space[1], borderRadius: radii.pastilla, alignItems: 'center', justifyContent: 'center', backgroundColor: c.warning }}>
+                  <Text style={[typeScale.etiquetaChip, cifras, { color: c.onState }]}>{contadorPorAutorizar}</Text>
+                </View>
               ) : null}
-            </Pressable>
+            </PressableFx>
           )
         })}
       </ScrollView>
       {l.totales ? (
-        <View testID="totales-lista" style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space[3], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
-          <View style={{ flexShrink: 1 }}>
-            <Text style={secundario}>{l.totales.rotulo}</Text>
-            <Text style={[typeScale.titulo, cifras, { color: c.text }]}>{l.totales.importe}</Text>
-          </View>
-          {l.totales.porAutorizar > 0 ? <StatusChip estado="porAutorizar" label={`${l.totales.porAutorizar} por autorizar`} /> : null}
+        <View testID="totales-lista" style={{ gap: space[3], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.lime }}>
+          <Text style={[typeScale.secundario, { color: c.ink }]}>{l.totales.rotulo}</Text>
+          <Text style={[typeScale.titulo, cifras, { color: c.ink }]}>{l.totales.importe}</Text>
+          {l.totales.porAutorizar > 0 ? (
+            <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[3], minHeight: 32, borderRadius: radii.pastilla, backgroundColor: c.ink }}>
+              <View style={{ width: 10, height: 10, borderRadius: radii.pastilla, backgroundColor: c.warning }} />
+              <Text style={[typeScale.etiquetaChip, { color: c.lime }]}>{`${l.totales.porAutorizar} por autorizar`}</Text>
+            </View>
+          ) : null}
         </View>
       ) : null}
       {l.contador ? <Text style={secundario}>{l.contador}</Text> : null}
