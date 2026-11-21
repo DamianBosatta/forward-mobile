@@ -102,7 +102,7 @@ describe('Ingreso', () => {
     const marca = screen.getByTestId('login-marca', { includeHiddenElements: true });
     // El logo de la web (icon.svg), no el cuadrado con la flecha.
     expect(within(marca).getByTestId('logo-fwd', { includeHiddenElements: true })).toBeTruthy();
-    expect(within(marca).getByTestId('logo-fwd', { includeHiddenElements: true }).props.height).toBe(72);
+    expect(within(marca).getByTestId('logo-fwd', { includeHiddenElements: true }).props.height).toBe(56);
   });
 
   it('el logo FWD se ve también en tablet', () => {
