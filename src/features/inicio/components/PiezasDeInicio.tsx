@@ -1,8 +1,10 @@
 import React from 'react'
 import { Pressable, Text, View, type TextStyle } from 'react-native'
+import Svg, { Polygon, Rect } from 'react-native-svg'
 import { ChevronRight } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, pesoSemibold } from '@/core/ui/fw'
+import { PressableFx } from '@/core/ui/fw/PressableFx'
 
 /**
  * Piezas de Inicio con el modelo de la venta y de la galería v2 (propuesta de Inicio, frames 1 a 9):
@@ -10,13 +12,31 @@ import { Notice, pesoSemibold } from '@/core/ui/fw'
  * "Reintentar" y los bloques de carga. Presentacionales: reciben todo por props.
  */
 
-/** Colores del hero con los del tema: fondo marca-suave, cifra en el texto, apoyo en el secundario (en oscuro, los de la galería v2). */
+/** Colores del hero (receta FWD: tarjeta protagonista lima, texto y bloques siempre en ink, iguales en claro y oscuro). */
 function useColoresHero() {
   const c = useColors()
-  return { fondo: c.brandSoft, texto: c.text, apoyo: c.textSecondary, carga: c.surface2 }
+  return { fondo: c.lime, texto: c.ink, carga: c.ink }
 }
-/** La cifra grande del hero (token cifraGrande, 32/40). */
-const CIFRA_HERO: TextStyle = { ...typeScale.cifraGrande, ...importe }
+/** El texto de apoyo sobre lima: ink al 78 % (receta `.secondary` de la tarjeta protagonista). */
+const APOYO_SOBRE_LIMA = { opacity: 0.78 } as const
+/** La cifra protagonista del hero (spec §3: 38-40, 800, cifras tabulares). */
+const CIFRA_HERO: TextStyle = { ...typeScale.numeroProtagonista, ...importe }
+
+/**
+ * Motivo del logo de la tarjeta protagonista de Inicio (receta `.motif`): franja diagonal ink y cuña teal que
+ * asoman por la esquina derecha. Decorativo; la tarjeta recorta lo que sobra.
+ */
+function MotivoDeHero() {
+  const c = useColors()
+  return (
+    <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ position: 'absolute', right: -96, top: -34, width: 150, height: 190 }}>
+      <Svg width={150} height={190} viewBox="0 0 150 190">
+        <Rect x={40} y={-40} width={34} height={280} fill={c.ink} transform="rotate(28 57 100)" />
+        <Polygon points="150,100 150,190 60,190" fill={c.teal} />
+      </Svg>
+    </View>
+  )
+}
 const TOCABLE = { minHeight: 44, minWidth: 44, justifyContent: 'center' as const }
 
 export function HeroDeInicio({ etiqueta, cifra, meta, accessibilityLabel, children, testID }: {
@@ -29,11 +49,12 @@ export function HeroDeInicio({ etiqueta, cifra, meta, accessibilityLabel, childr
 }) {
   const hero = useColoresHero()
   return (
-    <View testID={testID} style={{ backgroundColor: hero.fondo, borderRadius: radii.hoja, padding: space[4], gap: space[2] }}>
+    <View testID={testID} style={{ backgroundColor: hero.fondo, borderRadius: radii.tarjetaGrande, padding: space[5], gap: space[2], minHeight: 168, justifyContent: 'center', overflow: 'hidden' }}>
+      <MotivoDeHero />
       <View accessible accessibilityLabel={accessibilityLabel ?? [`${etiqueta}: ${cifra}`, meta].filter(Boolean).join(', ')} style={{ gap: space[1] }}>
-        <Text style={[typeScale.secundario, { color: hero.apoyo }]}>{etiqueta}</Text>
+        <Text style={[typeScale.secundario, APOYO_SOBRE_LIMA, { color: hero.texto }]}>{etiqueta}</Text>
         <Text style={[CIFRA_HERO, { color: hero.texto }]} numberOfLines={1} adjustsFontSizeToFit>{cifra}</Text>
-        {meta ? <Text style={[typeScale.secundario, { color: hero.apoyo }]}>{meta}</Text> : null}
+        {meta ? <Text style={[typeScale.secundario, APOYO_SOBRE_LIMA, { color: hero.texto }]}>{meta}</Text> : null}
       </View>
       {children ? <View style={{ marginTop: space[1] }}>{children}</View> : null}
     </View>
@@ -48,10 +69,10 @@ export function HeroCargando({ accessibilityLabel }: { accessibilityLabel: strin
       testID="hero-cargando"
       accessible
       accessibilityLabel={accessibilityLabel}
-      style={{ backgroundColor: hero.fondo, borderRadius: radii.hoja, padding: space[4], gap: space[3] }}
+      style={{ backgroundColor: hero.fondo, borderRadius: radii.tarjetaGrande, padding: space[5], gap: space[3], minHeight: 168, justifyContent: 'center' }}
     >
-      <View style={{ height: space[4], width: '40%', borderRadius: radii.campo, backgroundColor: hero.carga }} />
-      <View style={{ height: space[8], width: '70%', borderRadius: radii.campo, backgroundColor: hero.carga }} />
+      <View style={{ height: space[4], width: '40%', borderRadius: radii.campo, backgroundColor: hero.carga, opacity: 0.15 }} />
+      <View style={{ height: space[8], width: '70%', borderRadius: radii.campo, backgroundColor: hero.carga, opacity: 0.15 }} />
     </View>
   )
 }
@@ -59,7 +80,7 @@ export function HeroCargando({ accessibilityLabel }: { accessibilityLabel: strin
 /** Bloque gris con la forma de una tarjeta mientras carga (frame 3). */
 export function BloqueCargando({ accessibilityLabel }: { accessibilityLabel: string }) {
   const c = useColors()
-  return <View testID="bloque-cargando" accessible accessibilityLabel={accessibilityLabel} style={{ height: 76, borderRadius: radii.tarjeta, backgroundColor: c.surface2 }} />
+  return <View testID="bloque-cargando" accessible accessibilityLabel={accessibilityLabel} style={{ height: 76, borderRadius: radii.fila, backgroundColor: c.surface2 }} />
 }
 
 /** Título de sección con un enlace opcional a la derecha ("Todos los clientes", "Ver todo"). */
@@ -68,7 +89,7 @@ export function SeccionDeInicio({ titulo, enlace, children }: { titulo: string; 
   return (
     <View style={{ gap: space[2] }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 44 }}>
-        <Text accessibilityRole="header" style={[typeScale.seccion, { color: c.text, flexShrink: 1 }]}>{titulo}</Text>
+        <Text accessibilityRole="header" style={[typeScale.titulo, { color: c.text, flexShrink: 1 }]}>{titulo}</Text>
         {enlace ? (
           <Pressable accessibilityRole="link" accessibilityLabel={enlace.label} onPress={enlace.onPress} style={TOCABLE}>
             <Text style={[typeScale.secundario, pesoSemibold, { color: c.brandInk }]}>{enlace.label}</Text>
@@ -80,14 +101,14 @@ export function SeccionDeInicio({ titulo, enlace, children }: { titulo: string; 
   )
 }
 
-/** Filas en una tarjeta sin borde, separadas por una línea suave (frame 2 y 8 de la venta). */
+/** Filas sueltas de 22 de radio sobre `bg`, sin bordes ni sombras: las separa el contraste y el espacio (receta `.row`). */
 export function ListaEnTarjeta({ children, testID }: { children: React.ReactNode; testID?: string }) {
   const c = useColors()
   const filas = React.Children.toArray(children).filter(Boolean)
   return (
-    <View testID={testID} style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, overflow: 'hidden' }}>
+    <View testID={testID} style={{ gap: space[2] }}>
       {filas.map((f, i) => (
-        <View key={i} style={i > 0 ? { borderTopWidth: 1, borderTopColor: c.surface2 } : null}>{f}</View>
+        <View key={i} style={{ backgroundColor: c.surface, borderRadius: radii.fila, overflow: 'hidden' }}>{f}</View>
       ))}
     </View>
   )
@@ -110,12 +131,12 @@ export function FilaDeInicio({ titulo, apoyo, izquierda, punto, derecha, onPress
   testID?: string
 }) {
   const c = useColors()
-  const colorPunto = { neutro: c.textSecondary, atencion: c.warning, peligro: c.danger, info: c.info }
+  const colorPunto = { neutro: c.textSecondary, atencion: c.warning, peligro: c.dangerFill, info: c.teal }
   const etiqueta = accessibilityLabel ?? [titulo, apoyo].filter(Boolean).join('. ')
-  const estilo = { minHeight: 64, flexDirection: 'row' as const, alignItems: 'center' as const, gap: space[3], paddingVertical: space[3], paddingLeft: space[4], paddingRight: onPress ? space[1] : space[4] }
+  const estilo = { minHeight: 68, flexDirection: 'row' as const, alignItems: 'center' as const, gap: space[3], paddingVertical: space[3], paddingLeft: space[4], paddingRight: onPress ? space[1] : space[4] }
   const contenido = (
     <>
-      {punto ? <View testID={testID ? `${testID}-punto` : undefined} style={{ width: space[2], height: space[2], borderRadius: radii.pastilla, backgroundColor: colorPunto[punto] }} /> : null}
+      {punto ? <View testID={testID ? `${testID}-punto` : undefined} style={{ width: space[3], height: space[3], borderRadius: radii.pastilla, backgroundColor: colorPunto[punto] }} /> : null}
       {izquierda}
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={[typeScale.cuerpoDestacado, { color: c.text }]} numberOfLines={2}>{titulo}</Text>
@@ -129,9 +150,9 @@ export function FilaDeInicio({ titulo, apoyo, izquierda, punto, derecha, onPress
     return <View testID={testID} accessible accessibilityLabel={etiqueta} style={estilo}>{contenido}</View>
   }
   return (
-    <Pressable testID={testID} accessibilityRole="button" accessibilityLabel={etiqueta} onPress={onPress} android_ripple={{ color: c.surface2 }} style={estilo}>
+    <PressableFx testID={testID} accessibilityRole="button" accessibilityLabel={etiqueta} onPress={onPress} android_ripple={{ color: c.surface2 }} style={estilo}>
       {contenido}
-    </Pressable>
+    </PressableFx>
   )
 }
 
@@ -159,7 +180,7 @@ export function ErrorConReintentar({ texto, detalle, accessibilityLabel, onReint
 export function TarjetaDeTexto({ texto }: { texto: string }) {
   const c = useColors()
   return (
-    <View style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, padding: space[4] }}>
+    <View style={{ backgroundColor: c.surface, borderRadius: radii.fila, padding: space[4] }}>
       <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{texto}</Text>
     </View>
   )

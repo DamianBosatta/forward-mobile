@@ -12,19 +12,19 @@ describe.each(['light', 'dark'] as const)('el hero de Inicio sigue el tema (%s)'
   beforeEach(() => useThemeStore.setState({ mode: modo }))
   afterAll(() => useThemeStore.setState({ mode: 'system' }))
 
-  it('fondo marca-suave, cifra en el color de texto y el apoyo en el secundario del tema', () => {
+  it('fondo lima de marca con cifra y apoyo en tinta', () => {
     render(<HeroDeInicio testID="hero" etiqueta="Mi día" cifra="10 pendientes" meta="Todo al día." />)
-    expect(estilo('hero').backgroundColor).toBe(c.brandSoft)
-    expect(colorDe('10 pendientes')).toBe(c.text)
-    expect(colorDe('Mi día')).toBe(c.textSecondary)
-    expect(colorDe('Todo al día.')).toBe(c.textSecondary)
+    expect(estilo('hero').backgroundColor).toBe(c.lime)
+    expect(colorDe('10 pendientes')).toBe(c.ink)
+    expect(colorDe('Mi día')).toBe(c.ink)
+    expect(colorDe('Todo al día.')).toBe(c.ink)
   })
 
-  it('mientras carga, el mismo fondo con bloques en superficie-2 del tema', () => {
+  it('mientras carga, el mismo fondo con bloques en tinta del tema', () => {
     render(<HeroCargando accessibilityLabel="Cargando Mi día" />)
     const hero = screen.getByTestId('hero-cargando')
-    expect(StyleSheet.flatten(hero.props.style).backgroundColor).toBe(c.brandSoft)
+    expect(StyleSheet.flatten(hero.props.style).backgroundColor).toBe(c.lime)
     const bloques = hero.children as unknown as { props: { style: unknown } }[]
-    for (const b of bloques) expect(StyleSheet.flatten(b.props.style as never).backgroundColor).toBe(c.surface2)
+    for (const b of bloques) expect(StyleSheet.flatten(b.props.style as never).backgroundColor).toBe(c.ink)
   })
 })
