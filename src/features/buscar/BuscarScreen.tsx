@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { ScrollView, Text, TextInput, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Search } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Button, Notice, StatusChip, TopBar, chipForEstado, formatImporte, iniciales, useInsetInferior } from '@/core/ui/fw'
+import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useInfiniteVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client'
@@ -45,12 +46,13 @@ export function BuscarScreen() {
         title="Buscar"
         leading={{ kind: 'atras', onPress: () => router.back() }}
         campo={
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: space[12], borderRadius: radii.campo, backgroundColor: c.onTopBar + '1A', paddingHorizontal: space[3] }}>
-            <Search size={20} color={c.onTopBar} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: space[12] + space[1], borderRadius: radii.pastilla, backgroundColor: c.surface, paddingHorizontal: space[4] }}>
+            <Search size={20} color={c.onTopBarStrong} />
             <TextInput
               accessibilityLabel="Buscar"
               placeholder="Cliente, pedido o cuenta"
               placeholderTextColor={c.onTopBar}
+              cursorColor={c.onTopBarStrong}
               value={texto}
               onChangeText={setTexto}
               autoFocus
@@ -67,7 +69,7 @@ export function BuscarScreen() {
         ) : !buscando ? (
           // Propuesta Cuenta, frame 14: la lupa en círculo con el mismo pedido de letras.
           <View testID="buscar-antes" style={{ alignItems: 'center', gap: space[3], paddingTop: space[12], paddingHorizontal: space[4] }}>
-            <View style={{ width: 96, height: 96, borderRadius: radii.pastilla, backgroundColor: c.surface2, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 96, height: 96, borderRadius: radii.pastilla, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
               <Search size={40} color={c.textSecondary} />
             </View>
             <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>{`Escribí al menos ${MINIMO_BUSQUEDA} letras para buscar.`}</Text>
@@ -100,17 +102,17 @@ function Seccion({ titulo, cantidad, testID, columna, estado, pie, children }: {
   const c = useColors()
   return (
     <View testID={testID} style={{ gap: space[2], ...(columna ? { flex: 1, minWidth: 0 } : null) }}>
-      <Text accessibilityRole="header" style={{ ...typeScale.etiqueta, color: c.textSecondary }}>
+      <Text accessibilityRole="header" style={{ ...typeScale.etiqueta, letterSpacing: 0.72, color: c.textSecondary }}>
         {cantidad !== undefined ? `${titulo.toUpperCase()} · ${cantidad}` : titulo.toUpperCase()}
       </Text>
       {estado === 'cargando' ? <Esqueletos bloques={[{ alto: 64 }]} /> : null}
       {estado === 'error' ? <Notice tone="peligro">{`No se pudo buscar en ${titulo.toLowerCase()}.`}</Notice> : null}
       {estado === 'vacio' ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Sin resultados.</Text> : null}
       {estado === 'ok' ? (
-        // Propuesta Cuenta, frames 15 y 16: las filas de la sección en una tarjeta sin borde, como "Elegir cliente" de la venta.
-        <View testID="tarjeta-seccion" style={{ backgroundColor: c.surface, borderRadius: radii.tarjeta, overflow: 'hidden' }}>
+        // Receta FWD: una fila suelta de 22 de radio por resultado, sin bordes; las separa el espacio.
+        <View testID="tarjeta-seccion" style={{ gap: space[2] }}>
           {React.Children.toArray(children).map((fila, i) => (
-            <View key={React.isValidElement(fila) && fila.key !== null ? fila.key : i} style={i > 0 ? { borderTopWidth: 1, borderTopColor: c.surface2 } : null}>{fila}</View>
+            <View key={React.isValidElement(fila) && fila.key !== null ? fila.key : i} style={{ backgroundColor: c.surface, borderRadius: radii.fila, overflow: 'hidden' }}>{fila}</View>
           ))}
         </View>
       ) : null}
@@ -124,7 +126,7 @@ function Fila({ etiqueta, avatar, titulo, detalle, detalleEnRojo = false, derech
   avatar?: string
   titulo: string
   detalle?: string | null
-  /** El detalle es una deuda vencida: va en rojo y con su texto. */
+  /** El detalle es una deuda vencida: va destacado (peso 800) y con su texto "Vencido"; el color nunca va solo. */
   detalleEnRojo?: boolean
   derecha?: string
   chip?: React.ComponentProps<typeof StatusChip> | null
@@ -136,21 +138,21 @@ function Fila({ etiqueta, avatar, titulo, detalle, detalleEnRojo = false, derech
   const c = useColors()
   return (
     <View testID={testID} style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], paddingRight: vender ? space[2] : 0 }}>
-      <Pressable
+      <PressableFx
         accessibilityRole="button"
         accessibilityLabel={etiqueta}
         onPress={onPress}
         android_ripple={{ color: c.surface2 }}
-        style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 64, paddingVertical: space[3], paddingLeft: space[4], paddingRight: vender ? space[1] : space[4] }}
+        style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 68, paddingVertical: space[3], paddingLeft: space[4], paddingRight: vender ? space[1] : space[4] }}
       >
         {avatar ? (
-          <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ width: 44, height: 44, borderRadius: radii.pastilla, backgroundColor: c.brandSoft, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>{avatar}</Text>
+          <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={{ width: 44, height: 44, borderRadius: radii.pastilla, backgroundColor: c.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{avatar}</Text>
           </View>
         ) : null}
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
           <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{titulo}</Text>
-          {detalle ? <Text numberOfLines={1} style={{ ...typeScale.secundario, color: detalleEnRojo ? c.chip.anulado.text : c.textSecondary }}>{detalle}</Text> : null}
+          {detalle ? <Text numberOfLines={1} style={detalleEnRojo ? { ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '800', color: c.text } : { ...typeScale.secundario, color: c.textSecondary }}>{detalle}</Text> : null}
         </View>
         {derecha || chip ? (
           <View style={{ alignItems: 'flex-end', gap: space[1] }}>
@@ -158,7 +160,7 @@ function Fila({ etiqueta, avatar, titulo, detalle, detalleEnRojo = false, derech
             {chip ? <StatusChip {...chip} /> : null}
           </View>
         ) : null}
-      </Pressable>
+      </PressableFx>
       {vender ? <Button label="Vender" accessibilityLabel={vender.label} onPress={vender.onPress} /> : null}
     </View>
   )
