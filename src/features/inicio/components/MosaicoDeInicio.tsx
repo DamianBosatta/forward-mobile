@@ -11,7 +11,7 @@ export function MosaicoDeInicio({ etiqueta, valor, onPress }: { etiqueta: string
   const contenido = (
     <>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[1] }}>
-        <Text style={[typeScale.secundario, { color: c.textSecondary, flexShrink: 1 }]} numberOfLines={1}>{etiqueta}</Text>
+        <Text style={[typeScale.secundario, { color: c.textSecondary, flexShrink: 1 }]} numberOfLines={2}>{etiqueta}</Text>
         {onPress ? <ChevronRight size={18} color={c.textSecondary} strokeWidth={2} /> : null}
       </View>
       <Text style={[typeScale.titulo, cifras, { color: c.accentText }]} numberOfLines={1} adjustsFontSizeToFit>{valor}</Text>
