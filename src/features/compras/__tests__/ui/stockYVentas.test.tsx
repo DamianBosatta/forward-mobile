@@ -1,6 +1,7 @@
 import React from 'react'
 import { render, screen } from '@testing-library/react-native'
-import { useThemeStore } from '@/libs/theme'
+import { StyleSheet } from 'react-native'
+import { themeColors, useThemeStore } from '@/libs/theme'
 import { ProductoCompraCard, type ProductoComprable } from '../../components/ProductoCompraCard'
 
 const base: ProductoComprable = { id: 'p1', nombre: 'Balde Nuvia 10L', marca: 'Nuvia', codigoPropio: 'PROBL912' }
@@ -35,5 +36,13 @@ describe.each(['light', 'dark'] as const)('catálogo de la compra: stock actual 
     const linea = { productoId: 'p1', nombre: base.nombre, cantidad: 2, unidad: 'Unidad' as const, unidadesPorUnidad: 1, costoUnitario: 100 }
     render(<ProductoCompraCard producto={{ ...base, stockActual: 5, vendidoDesdeUltimaCompra: 3 }} linea={linea} {...props} />)
     expect(screen.getByLabelText('Stock actual: 5')).toBeTruthy()
+  })
+  it('en la compra (tarjeta teal) la marca, el nombre, el código y el empaque van en ink, sin fondo surface', () => {
+    const c = themeColors[modo]
+    const linea = { productoId: 'p1', nombre: base.nombre, cantidad: 2, unidad: 'Unidad' as const, unidadesPorUnidad: 1, costoUnitario: 100 }
+    render(<ProductoCompraCard producto={{ ...base, ventaMinimaUnidades: 6 }} linea={linea} {...props} />)
+    const estilo = (t: string) => StyleSheet.flatten(screen.getByText(t).props.style)
+    for (const t of ['Balde Nuvia 10L', 'Nuvia', 'PROBL912', 'Pack x6']) expect(estilo(t).color).toBe(c.ink)
+    expect(estilo('Pack x6').backgroundColor).not.toBe(c.surface)
   })
 })

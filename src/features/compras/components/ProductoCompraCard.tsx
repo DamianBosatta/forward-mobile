@@ -90,11 +90,11 @@ export const ProductoCompraCard = memo(function ProductoCompraCard({ producto: p
           {img ? <ExpoImage source={img} style={{ width: 56, height: 56 }} contentFit="cover" /> : <Package size={28} color={c.textSecondary} />}
         </View>
         <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
-          <ProductoIdentidad nombre={p.nombre} marca={p.marca} codigo={p.codigoPropio} />
+          <ProductoIdentidad nombre={p.nombre} marca={p.marca} codigo={p.codigoPropio} sobreTeal={enCompra} />
           {empaque.length > 0 ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[1] }}>
               {empaque.map((e) => (
-                <Text key={e} style={{ ...typeScale.etiqueta, color: enCompra ? c.ink : c.textSecondary, backgroundColor: enCompra ? c.surface : c.surface2, borderRadius: radii.pastilla, paddingHorizontal: space[2], paddingVertical: 2 }}>{e}</Text>
+                <Text key={e} style={{ ...typeScale.etiqueta, color: enCompra ? c.ink : c.textSecondary, backgroundColor: enCompra ? c.veilInk12 : c.surface2, borderRadius: radii.pastilla, paddingHorizontal: space[2], paddingVertical: 2 }}>{e}</Text>
               ))}
             </View>
           ) : null}
