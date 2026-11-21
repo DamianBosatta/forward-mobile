@@ -16,7 +16,7 @@ export function BuscadorCartera({
   onCambio: (texto: string) => void
   etiqueta?: string
   placeholder?: string
-  /** 'barra' (por defecto): pegado a la barra superior; 'pantalla': sobre el fondo, con borde (lámina clientes-lista). */
+  /** 'barra' (por defecto): pegado a la barra superior; 'pantalla': sobre el fondo, en pastilla sin borde (lámina clientes-lista). */
   sobre?: 'barra' | 'pantalla'
   /** El buscador grande de "Elegir cliente" de la venta (52 de alto; lista de Clientes). */
   grande?: boolean
@@ -31,10 +31,8 @@ export function BuscadorCartera({
           alignItems: 'center',
           gap: space[2],
           height: grande ? 52 : space[12],
-          borderRadius: radii.campo,
-          backgroundColor: sobre === 'barra' ? c.surface : c.surface2,
-          borderWidth: sobre === 'barra' ? 0 : 1,
-          borderColor: c.borderStrong,
+          borderRadius: radii.pastilla,
+          backgroundColor: c.surface,
           paddingHorizontal: space[3],
         }}
       >

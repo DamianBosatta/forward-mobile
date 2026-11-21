@@ -53,7 +53,7 @@ export function ElegirComprobantes({ socioId, valor, onCambio, sinPendientes = '
               onPress={() => alternar(d)}
               style={{
                 minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[3],
-                borderRadius: radii.campo, borderWidth: elegido ? 2 : 1, borderColor: elegido ? c.brand : c.borderStrong,
+                borderRadius: radii.fila,
                 backgroundColor: elegido ? c.brandSoft : c.surface,
               }}
             >

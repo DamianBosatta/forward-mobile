@@ -146,7 +146,7 @@ export function SeleccionarClienteSheet({ visible, onClose, onSelect, onNuevoCli
         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Tu cartera, por dirección de entrega</Text>
       </View>
       <Segmented options={TIPOS} value={tipo} onChange={setTipo} accessibilityLabel="Tipo de documento" />
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: space[12], borderRadius: radii.campo, backgroundColor: c.surface2, paddingHorizontal: space[3] }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], height: space[12], borderRadius: radii.pastilla, backgroundColor: c.surface2, paddingHorizontal: space[3] }}>
         <Search size={20} color={c.textSecondary} />
         <TextInput
           accessibilityLabel="Buscar cliente"
