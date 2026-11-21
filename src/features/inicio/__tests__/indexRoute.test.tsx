@@ -8,6 +8,7 @@ jest.mock('@/features/inicio/components/InicioScreen', () => ({ InicioScreen: ()
 jest.mock('@/features/inicio/components/MiDiaScreen', () => ({ MiDiaScreen: () => require('react').createElement(require('react-native').Text, null, 'MIDIA') }))
 jest.mock('@/features/inicio/components/InicioDeposito', () => ({ InicioDeposito: () => require('react').createElement(require('react-native').Text, null, 'DEPOSITO') }))
 jest.mock('@/src/components/layout/AccesosRapidos', () => ({ ConAccesosRapidos: ({ children }: { children: React.ReactNode }) => children }))
+jest.mock('@/core/navigation/useAccionAvisos', () => ({ useAccionAvisos: () => ({ icon: () => null, accessibilityLabel: 'Avisos', onPress: () => undefined, badge: 0 }) }))
 const mockChofer = jest.fn(() => false)
 jest.mock('@/src/components/layout/menuModules', () => ({ esChofer: () => mockChofer() }))
 
