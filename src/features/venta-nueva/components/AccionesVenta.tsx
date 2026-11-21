@@ -117,7 +117,7 @@ export function AccionesVenta({ venta, rotulo }: Props) {
   return (
     <View style={{ gap: space[3] }}>
       {puedeConvertir ? <Button label="Convertir en pedido" loading={convertir.isPending} onPress={aPedido} /> : null}
-      <Button label="Compartir PDF con el cliente" variant={puedeConvertir ? 'secundario' : 'primario'} loading={pdf} onPress={() => void compartir()} />
+      <Button label="Compartir PDF con el cliente" variant="secundario" loading={pdf} onPress={() => void compartir()} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[3] }}>
         {[
           puedeEditar && <Button key="e" label="Editar" variant="secundario" onPress={() => ir('editar')} />,

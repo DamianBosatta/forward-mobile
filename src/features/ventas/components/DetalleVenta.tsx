@@ -1,7 +1,8 @@
 import React from 'react'
-import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
+import { PressableFx } from '@/core/ui/fw/PressableFx'
+import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, pesoRegular, useInsetInferior } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { esEstadoVenta } from '@/core/constants/estados'
@@ -36,13 +37,13 @@ interface Props {
 function LineaDeTiempo({ pasos }: { pasos: NonNullable<ReturnType<typeof pasosDeLaVenta>> }) {
   const c = useColors()
   return (
-    <View accessibilityRole="list" accessibilityLabel="Estado del pedido" style={{ flexDirection: 'row', gap: 4, paddingHorizontal: space[3], paddingBottom: space[4], backgroundColor: c.topBar }}>
+    <View accessibilityRole="list" accessibilityLabel="Estado del pedido" style={{ flexDirection: 'row', gap: 4, marginHorizontal: space[4], marginBottom: space[2], padding: space[4], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}>
       {pasos.map((p) => (
         <View key={p.etiqueta} accessibilityState={{ selected: p.actual }} style={{ flex: 1, gap: 6 }}>
-          <View testID={`tramo-${p.etiqueta}`} style={{ height: 6, borderRadius: radii.pastilla, backgroundColor: `${c.onTopBar}40`, overflow: 'hidden' }}>
-            <View style={{ height: 6, width: p.avance === 'completo' ? '100%' : p.avance === 'medio' ? '50%' : '0%', backgroundColor: c.brand }} />
+          <View testID={`tramo-${p.etiqueta}`} style={{ height: 6, borderRadius: radii.pastilla, backgroundColor: c.surfaceAlt, overflow: 'hidden' }}>
+            <View style={{ height: 6, width: p.avance === 'completo' ? '100%' : p.avance === 'medio' ? '50%' : '0%', backgroundColor: c.teal }} />
           </View>
-          <Text style={{ ...typeScale.etiqueta, ...(p.actual ? null : pesoRegular), color: p.actual ? c.onTopBarStrong : c.onTopBar }}>{p.etiqueta}</Text>
+          <Text style={{ ...typeScale.etiqueta, ...(p.actual ? null : pesoRegular), color: p.actual ? c.text : c.textSecondary }}>{p.etiqueta}</Text>
         </View>
       ))}
     </View>
@@ -56,7 +57,6 @@ function LineaDeTiempo({ pasos }: { pasos: NonNullable<ReturnType<typeof pasosDe
 export function DetalleVenta({ id, onVolver }: Props) {
   const insetInferior = useInsetInferior()
   const c = useColors()
-  const sombra = useSombraTarjeta()
   const router = useRouter()
   const { canDo } = usePermissions()
   const userId = useAuthStore((s) => s.user?.id)
@@ -97,7 +97,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
   const cobrar = () => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: h.clienteId } } as never)
   const fecha = h.fecha ? new Date(h.fecha) : null
   const dato = (k: string, v: string) => (
-    <View style={{ flex: 1, padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, ...sombra, gap: space[1] }}>
+    <View style={{ flex: 1, padding: space[4], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface, gap: space[1] }}>
       <Text style={sec}>{k}</Text>
       <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{v}</Text>
     </View>
@@ -145,9 +145,19 @@ export function DetalleVenta({ id, onVolver }: Props) {
             {cobro ? (
               <View style={{ gap: space[2] }}>
                 <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Cobro</Text>
-                <View style={{ gap: space[1], padding: space[3], borderRadius: radii.tarjeta, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, ...sombra }}>
-                  {cobro.filas.map((f) => <TotalsRow key={f.clave} label={f.texto} importe={f.monto} />)}
-                  {cobro.saldo !== null ? <TotalsRow label="Saldo" importe={cobro.saldo} destacado /> : null}
+                <View testID="detalle-cobro" style={{ gap: space[2], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.lime }}>
+                  {cobro.filas.map((f) => (
+                    <View key={f.clave} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
+                      <Text style={{ ...typeScale.cuerpo, color: c.ink }}>{f.texto}</Text>
+                      <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.ink }}>{formatImporte(f.monto)}</Text>
+                    </View>
+                  ))}
+                  {cobro.saldo !== null ? (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2], borderTopWidth: 2, borderTopColor: c.ink, paddingTop: space[3] }}>
+                      <Text style={{ ...typeScale.cuerpoDestacado, color: c.ink }}>Saldo</Text>
+                      <Text style={{ ...typeScale.titulo, ...importe, color: c.ink }}>{formatImporte(cobro.saldo)}</Text>
+                    </View>
+                  ) : null}
                 </View>
               </View>
             ) : null}
@@ -158,7 +168,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
               {h.cargoFleteAmount ? <TotalsRow label="Flete" importe={h.cargoFleteAmount} /> : null}
               <TotalsRow label="Total" importe={h.totalAmount} destacado />
               {sim?.comisionActiva && sim.montoCobro > 0 ? (
-                <Text style={{ ...typeScale.secundario, alignSelf: 'flex-start', paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.brandSoft, color: c.brandInk }}>
+                <Text style={{ ...typeScale.secundario, alignSelf: 'flex-start', paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.surfaceAlt, color: c.text }}>
                   {`Tu comisión estimada${sim.montoCobro < h.totalAmount ? ' sobre lo pendiente de cobro' : ''} ${formatImporte(sim.montoComision)}`}
                 </Text>
               ) : null}
@@ -171,9 +181,9 @@ export function DetalleVenta({ id, onVolver }: Props) {
               </View>
             ) : null}
             {acciones.motivoNoEditable ? <Notice tone="info">{acciones.motivoNoEditable}</Notice> : null}
-            <Pressable accessibilityRole="link" onPress={() => router.push(`/(tabs)/socios/${h.clienteId}` as never)} style={{ minHeight: 44, justifyContent: 'center' }}>
+            <PressableFx accessibilityRole="link" onPress={() => router.push(`/(tabs)/socios/${h.clienteId}` as never)} android_ripple={{ color: c.surfaceAlt }} style={{ minHeight: 44, justifyContent: 'center' }}>
               <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Ver ficha del cliente</Text>
-            </Pressable>
+            </PressableFx>
             <AccionesDeVenta venta={q.data} acciones={acciones} onAnulada={() => (onVolver ? onVolver() : router.back())} />
           </>
         )}

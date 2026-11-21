@@ -15,7 +15,7 @@ export function LineasDeLaVenta({ detalles }: { detalles: VentaDetalleDto['detal
   const c = useColors()
   const sec = { ...typeScale.secundario, color: c.textSecondary }
   return (
-    <View style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+    <View style={{ borderRadius: radii.tarjetaGrande, backgroundColor: c.surface, paddingHorizontal: space[2] }}>
       {agruparPorPadre(detalles, (d) => d.productoPadreId).map((g, i) => {
         const items = g.tipo === 'producto' ? [g.item] : g.items
         const padre = g.tipo === 'fragancias' ? (items[0]!.productoPadreNombre ?? items[0]!.productoNombre.split(' - ')[0]!) : null
@@ -28,7 +28,7 @@ export function LineasDeLaVenta({ detalles }: { detalles: VentaDetalleDto['detal
         return (
           <View
             key={g.tipo === 'producto' ? g.item.id : g.padreId}
-            style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2], padding: space[3], borderTopWidth: i ? 1 : 0, borderTopColor: c.border }}
+            style={{ flexDirection: 'row', justifyContent: 'space-between', gap: space[2], padding: space[3], borderTopWidth: i ? 2 : 0, borderTopColor: c.surfaceAlt }}
           >
             <View style={{ flex: 1, gap: 2 }}>
               <ProductoIdentidad nombre={padre ?? items[0]!.productoNombre} marca={items[0]!.marca} codigo={padre ? null : items[0]!.codigoPropio} />
