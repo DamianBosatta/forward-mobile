@@ -7,9 +7,9 @@ import type { TonoDePunto } from './presentacion'
 export function PuntoDeEstado({ tono, texto }: { tono: TonoDePunto; texto: string }) {
   const c = useColors()
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] + 2 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] + 2, alignSelf: 'flex-start', backgroundColor: c.surfaceAlt, borderRadius: radii.pastilla, paddingHorizontal: space[2], paddingVertical: space[1] }}>
       <View style={{ width: 8, height: 8, borderRadius: radii.pastilla, backgroundColor: c[tono] }} />
-      <Text style={{ ...typeScale.secundario, color: c.text }}>{texto}</Text>
+      <Text style={{ ...typeScale.etiquetaChip, color: c.text }}>{texto}</Text>
     </View>
   )
 }

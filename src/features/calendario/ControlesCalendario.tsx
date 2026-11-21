@@ -31,7 +31,7 @@ interface Props {
 export function ControlesCalendario(p: Props) {
   const c = useColors()
   const flecha = (Icono: typeof ChevronLeft, label: string, sentido: -1 | 1) => (
-    <Pressable onPress={() => p.onMover(sentido)} accessibilityRole="button" accessibilityLabel={label} android_ripple={{ color: c.surface2, borderless: true }} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+    <Pressable onPress={() => p.onMover(sentido)} accessibilityRole="button" accessibilityLabel={label} android_ripple={{ color: c.surfaceAlt, borderless: true }} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
       <Icono size={22} color={c.text} />
     </Pressable>
   )
@@ -42,8 +42,8 @@ export function ControlesCalendario(p: Props) {
         {flecha(ChevronLeft, 'Anterior', -1)}
         <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={{ ...typeScale.seccion, color: c.text, flex: 1, textAlign: 'center' }}>{p.titulo}</Text>
         {flecha(ChevronRight, 'Siguiente', 1)}
-        <Pressable onPress={p.onHoy} accessibilityRole="button" accessibilityLabel="Hoy" android_ripple={{ color: c.surface2 }} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, borderWidth: 1, borderColor: c.borderStrong, backgroundColor: c.surface }}>
-          <Text style={{ ...typeScale.secundario, color: c.text }}>Hoy</Text>
+        <Pressable onPress={p.onHoy} accessibilityRole="button" accessibilityLabel="Hoy" android_ripple={{ color: c.surfaceAlt }} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radii.pastilla, backgroundColor: c.lime }}>
+          <Text style={{ ...typeScale.cuerpoDestacado, color: c.ink }}>Hoy</Text>
         </Pressable>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityLabel="Filtrar por tipo" contentContainerStyle={{ gap: space[2] }}>

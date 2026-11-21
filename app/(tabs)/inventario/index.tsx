@@ -7,7 +7,7 @@ import { useNavigation, useRouter } from 'expo-router'
 import { DrawerActions, useFocusEffect } from "expo-router/react-navigation"
 import { useMutation } from '@tanstack/react-query'
 import { LayoutGrid, List, ScanBarcode } from 'lucide-react-native'
-import { FONT, space, typeScale, useColors } from '@/libs/theme'
+import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
 import { Notice, TopBar, useInsetInferior } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
@@ -108,16 +108,9 @@ function CatalogoConsulta() {
   const lista = (
     <View style={{ flex: 1 }}>
       <View
-        style={{
-          minHeight: 52,
-          justifyContent: 'center',
-          paddingHorizontal: space[4],
-          backgroundColor: c.surface,
-          borderBottomWidth: 1,
-          borderBottomColor: c.border,
-        }}
+        style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[2], paddingHorizontal: space[5] }}
       >
-        <Text style={[typeScale.secundario, { color: c.text, fontFamily: FONT.semibold, fontWeight: '600' }]}>
+        <Text style={[typeScale.cuerpoDestacado, { color: c.text, flexShrink: 1 }]}>
           {cat.totalCount != null ? `${productos.length} de ${cat.totalCount} productos` : ' '}
         </Text>
         <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{`Novedades: ${DIAS_DE_NOVEDADES} días`}</Text>
@@ -190,7 +183,7 @@ function CatalogoConsulta() {
 
       {dosPaneles ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>
-          <View style={{ flex: 1, borderRightWidth: 1, borderRightColor: c.border }}>{lista}</View>
+          <View style={{ flex: 1 }}>{lista}</View>
           <View testID="panel-ficha" style={{ flex: 1 }}>
             {seleccion ? (
               <FichaProducto productoId={seleccion} onVerStock={verStock} novedad={novedadDe(seleccion)} />

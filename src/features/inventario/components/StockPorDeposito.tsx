@@ -45,7 +45,7 @@ function Esqueletos({ columnas }: { columnas: number }) {
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2], padding: space[4] }}>
       {Array.from({ length: 4 }).map((_, i) => (
-        <View key={i} testID="esqueleto-tarjeta" style={{ width: `${Math.floor(100 / columnas) - 3}%`, height: 200, borderRadius: radii.tarjeta, backgroundColor: c.surface2 }} />
+        <View key={i} testID="esqueleto-tarjeta" style={{ width: `${Math.floor(100 / columnas) - 3}%`, height: 200, borderRadius: radii.tarjetaGrande, backgroundColor: c.surfaceAlt }} />
       ))}
     </View>
   )
