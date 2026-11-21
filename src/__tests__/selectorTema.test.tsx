@@ -17,7 +17,7 @@ jest.mock('@tanstack/react-query', () => ({
   useMutation: () => ({ mutate: jest.fn(), reset: jest.fn(), isPending: false, isError: false, isSuccess: false }),
   useQuery: () => ({ data: undefined, isLoading: false, isError: false }),
 }))
-jest.mock('@/core/ui', () => ({ ForwardLogo: () => null, ConfirmModal: () => null }))
+jest.mock('@/core/ui', () => ({ ConfirmModal: () => null }))
 jest.mock('@/core/utils/haptics', () => ({ safeHaptics: { impact: jest.fn(), notification: jest.fn() } }))
 jest.mock('@/libs/api-client', () => ({ API_URL: 'x', setApiUrl: jest.fn(), ENV_PROD: 'p', ENV_DEV: 'd', ENV_LOCAL: 'l' }))
 jest.mock('@/features/auth/store/auth.store', () => ({

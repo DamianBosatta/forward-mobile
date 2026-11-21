@@ -1,5 +1,4 @@
 export * from './ConfirmModal'
-export * from './ForwardLogo'
 export * from '../auth/RequirePermission'
 export * from './GlobalErrorBoundary'
 export * from './Skeleton'

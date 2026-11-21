@@ -3,7 +3,7 @@ import { View, Text, Modal, TouchableOpacity, ScrollView, StyleSheet, ActivityIn
 import { space, useColors, typeScale } from '@/libs/theme'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { X, Package, PackageCheck, AlertCircle } from 'lucide-react-native'
-import Animated, { FadeIn, FadeOut, SlideInDown } from 'react-native-reanimated'
+import Animated, { FadeIn, FadeOut, SlideInDown, useReducedMotion } from 'react-native-reanimated'
 import { useVenta } from '@/libs/api-client'
 import { formatImporte, pesoSemibold } from '@/core/ui/fw'
 
@@ -21,6 +21,7 @@ interface PedidoDetalleModalProps {
 export const PedidoDetalleModal = ({ ventaId, clienteNombre, isVisible, onClose }: PedidoDetalleModalProps) => {
   const colors = useColors()
   const insets = useSafeAreaInsets()
+  const reducido = useReducedMotion()
   const { data, isLoading, isError } = useVenta(ventaId ?? '')
 
   const items = data?.detalles ?? []
@@ -32,15 +33,15 @@ export const PedidoDetalleModal = ({ ventaId, clienteNombre, isVisible, onClose 
     <Modal visible={isVisible} transparent animationType="none" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
       <View style={{ flex: 1, justifyContent: 'flex-end' }}>
         <Animated.View
-          entering={FadeIn}
-          exiting={FadeOut}
+          entering={reducido ? undefined : FadeIn}
+          exiting={reducido ? undefined : FadeOut}
           style={{ ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.6)' }}
         >
           <TouchableOpacity style={{ flex: 1 }} onPress={onClose} />
         </Animated.View>
 
         <Animated.View
-          entering={SlideInDown.springify().damping(20)}
+          entering={reducido ? undefined : SlideInDown.springify().damping(20)}
           style={{
             backgroundColor: colors.surface,
             borderTopLeftRadius: 32,

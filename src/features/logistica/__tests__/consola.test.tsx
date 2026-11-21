@@ -96,6 +96,12 @@ describe('Consola del chofer: hoja de ruta', () => {
     expect(within(screen.getByLabelText('Parada 1: Tarantino 1898')).getByLabelText('Estado: Entregado')).toBeTruthy()
   })
 
+  it('MF-R7-01: el chofer tiene la campana de Avisos en la barra de su Inicio', async () => {
+    pintar()
+    await screen.findByLabelText('Próxima parada')
+    expect(screen.getByLabelText('Avisos')).toBeTruthy()
+  })
+
   it('Cómo llegar abre el mapa con la dirección y Llamar marca el teléfono', async () => {
     const abrir = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined)
     pintar()

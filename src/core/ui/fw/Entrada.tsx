@@ -10,11 +10,13 @@ export const ENTRADA = {
 
 type TipoDeEntrada = keyof typeof ENTRADA
 
-/** Animación de entrada (`entering` de Reanimated) o `undefined` si el sistema pidió menos movimiento. Solo las primeras filas escalonan. */
+/** Animación de entrada (`entering` de Reanimated) o `undefined` si el sistema pidió menos movimiento. Solo las primeras filas animan y escalonan. */
 export function entradaDe(tipo: TipoDeEntrada, indice: number, reducido: boolean, escalon?: number) {
   if (reducido) return undefined
   const { duracion, escalon: paso, tope } = ENTRADA[tipo]
-  const demora = Math.min(Math.max(indice, 0), tope) * (escalon ?? paso)
+  // Pasada la primera pantalla no se anima: esas filas aparecen al scrollear (o se reciclan) y no pueden esperar ni repetir la entrada.
+  if (indice >= tope) return undefined
+  const demora = Math.max(indice, 0) * (escalon ?? paso)
   return tipo === 'tarjeta' ? FadeInDown.duration(duracion).delay(demora) : FadeInRight.duration(duracion).delay(demora)
 }
 

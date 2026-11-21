@@ -16,10 +16,7 @@ import { limpiarEvento, limpiarMigaDePan, limpiarTransaccion, vincularUsuarioASe
 import { protegerCapturaDeLaApp } from '@/core/utils/proteccionDeCaptura'
 import { OfertaDeHuella } from '@/features/auth/components/OfertaDeHuella'
 import { View } from 'react-native'
-import {
-  useFonts,
-  Inter_900Black,
-} from '@expo-google-fonts/inter'
+import { useFonts } from '@expo-google-fonts/inter'
 import {
   Manrope_600SemiBold,
   Manrope_700Bold,
@@ -66,14 +63,11 @@ function RootLayoutNav() {
   }, [])
 
   // Manrope 600/700/800 (spec FWD §3), una familia por peso vía FONT en libs/theme.ts.
-  // Outfit_900Black es legado: ForwardLogo lo referencia, así que se registra apuntando al archivo
-  // de Inter 900 (único uso que queda de Inter). Solo se cargan los pesos con uso verificado: REN-06.
+  // Solo se cargan los pesos con uso verificado: REN-06.
   const [fontsLoaded, fontError] = useFonts({
     Manrope_600SemiBold,
     Manrope_700Bold,
     Manrope_800ExtraBold,
-    Inter_900Black,
-    Outfit_900Black: Inter_900Black,
   })
   const colors = useColors()
   const isDark = useIsDark()

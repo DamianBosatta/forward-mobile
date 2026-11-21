@@ -8,7 +8,6 @@ jest.mock('moti', () => ({ MotiView: ({ children }: { children: React.ReactNode 
 jest.mock('expo-linear-gradient', () => ({ LinearGradient: ({ children }: { children: React.ReactNode }) => children }))
 jest.mock('lucide-react-native', () => new Proxy({}, { get: () => () => null }))
 jest.mock('react-native-safe-area-context', () => ({ SafeAreaView: ({ children }: { children: React.ReactNode }) => children, useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) }))
-jest.mock('../ForwardLogo', () => ({ ForwardLogo: () => null }))
 
 import { GlobalErrorBoundary } from '../GlobalErrorBoundary'
 
@@ -21,6 +20,11 @@ describe('GlobalErrorBoundary (OPS-02)', () => {
     expect(mockLogError).toHaveBeenCalledTimes(1)
     expect(mockLogError.mock.calls[0]).toContain(error)
     expect(mockLogError.mock.calls[0].every((a: unknown) => typeof a !== 'string' || !a.includes('boom interno'))).toBe(true)
+  })
+
+  it('ME-R7-1: usa el logo vigente (LogoForward), el mismo del login y la barra', () => {
+    render(<GlobalErrorBoundary error={new Error('x')} retry={jest.fn()} />)
+    expect(screen.getByTestId('logo-fwd', { includeHiddenElements: true })).toBeTruthy()
   })
 
   it('no le muestra a la persona el texto crudo del error', () => {

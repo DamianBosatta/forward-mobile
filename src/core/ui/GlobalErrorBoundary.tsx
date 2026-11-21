@@ -3,11 +3,12 @@ import { View, Text, StyleSheet, ScrollView, Platform, BackHandler, TouchableOpa
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { maxFontScale, useColors, typeScale } from '@/libs/theme'
-import { ForwardLogo } from './ForwardLogo'
+import { LogoForward } from './fw/LogoForward'
 import { AlertOctagon, RefreshCcw, Home, LogOut, ChevronLeft } from 'lucide-react-native'
 import { safeHaptics } from '@/core/utils/haptics'
 import { LinearGradient } from 'expo-linear-gradient'
 import { MotiView } from 'moti'
+import { useReducedMotion } from 'react-native-reanimated'
 import { logger } from '@/src/core/utils/logger'
 
 export interface GlobalErrorBoundaryProps {
@@ -24,6 +25,7 @@ export function GlobalErrorBoundary({ error, retry }: GlobalErrorBoundaryProps) 
 
   const colors = useColors()
   const router = useRouter()
+  const reducido = useReducedMotion()
 
   const handleRetry = () => {
     safeHaptics.notification('success')
@@ -49,12 +51,12 @@ export function GlobalErrorBoundary({ error, retry }: GlobalErrorBoundaryProps) 
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'bottom']}>
       <View style={styles.container}>
         <MotiView 
-          from={{ opacity: 0, scale: 0.9 }} 
-          animate={{ opacity: 1, scale: 1 }} 
+          from={reducido ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
           style={styles.content}
         >
           <View style={styles.header}>
-            <ForwardLogo size={60} showText={false} />
+            <LogoForward alto={60} />
             <Text style={[styles.brandText, { color: colors.text }]}>FORWARD</Text>
           </View>
 
