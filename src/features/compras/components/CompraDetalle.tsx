@@ -197,7 +197,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
       />
       {pasos ? <PasosDeEstado pasos={pasos} accessibilityLabel="Estado de la compra" /> : null}
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: hayPie ? space[6] : space[6] + insetInferior }}>
-        <View style={{ gap: space[1], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+        <View style={{ gap: space[1], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
             <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text, flexShrink: 1 }]}>{compra.razonSocialProveedor}</Text>
             {(() => { const chip = chipForEstado('compra', compra.estado); return chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null })()}
@@ -209,7 +209,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
         {error && hoja === null ? <Notice tone="peligro">{error}</Notice> : null}
         {compra.motivoCancelacion ? <Notice tone="info" title="Cancelada.">{compra.motivoCancelacion}</Notice> : null}
         {compra.motivoAnulacion ? <Notice tone="info" title="Recepción anulada.">{compra.motivoAnulacion}</Notice> : null}
-        <View style={{ gap: space[1], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+        <View style={{ gap: space[1], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}>
           <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text }]}>Recepción</Text>
           <FilaDato k="Depósito" v={compra.nombreDeposito} />
           {fechaHoraTexto(compra.fecha) ? <FilaDato k="Pedido" v={fechaHoraTexto(compra.fecha)!} /> : null}
@@ -220,7 +220,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
           {compra.condicionPago?.descripcion ? <FilaDato k="Plazo de pago" v={compra.condicionPago.descripcion} /> : null}
           <FilaDato k="Con factura" v={compra.conFactura ? 'Sí' : 'No'} />
         </View>
-        <View style={{ borderRadius: radii.tarjeta, backgroundColor: c.surface, overflow: 'hidden' }}>
+        <View style={{ borderRadius: radii.tarjetaGrande, backgroundColor: c.surface, overflow: 'hidden' }}>
           <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.text, paddingHorizontal: space[4], paddingTop: space[3] }]}>
             {`Productos · ${compra.detalles.length}`}
           </Text>
@@ -237,7 +237,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
             </View>
           ))}
         </View>
-        <View style={{ gap: space[1], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+        <View style={{ gap: space[1], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}>
           <TotalsRow label="Subtotal" importe={compra.subtotalBrutoAmount - compra.descuentoTotalAmount} />
           <TotalsRow label="Gastos operativos" importe={compra.gastosOperativos} />
           <TotalsRow label="Total" importe={compra.totalAmount} destacado />
@@ -261,7 +261,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
             onPress={() => router.push(`/(tabs)/compras/${compra.compraFaltanteId}` as never)} />
         ) : null}
         {compra.fotoFacturaProveedorUrl || puedeCambiarFoto ? (
-          <View style={{ gap: space[2], padding: space[4], borderRadius: radii.tarjeta, backgroundColor: c.surface }}>
+          <View style={{ gap: space[2], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}>
             <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Factura del proveedor</Text>
             {compra.fotoFacturaProveedorUrl ? (
               <ExpoImage source={{ uri: compra.fotoFacturaProveedorUrl }} cachePolicy="memory-disk" accessibilityLabel="Foto de la factura del proveedor"
