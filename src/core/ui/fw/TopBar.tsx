@@ -1,12 +1,14 @@
 import React, { createContext, useContext } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ArrowLeft, Menu, type LucideIcon } from 'lucide-react-native'
 import { maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
 import { LogoForward } from '@/features/auth/components/LogoForward'
 import { Notice } from './Notice'
+import { PressableFx } from './PressableFx'
 
-const TOCABLE = 44
+/** Spec FWD §4: 48 en los botones redondos del encabezado. */
+const TOCABLE = 48
 
 /**
  * Si la barra muestra el aviso global sin conexión. Lo decide OfflineBanner (app/_layout) una sola vez
@@ -52,7 +54,7 @@ interface TopBarProps {
 }
 
 /**
- * Barra superior de la lámina F4: alto 64, título 20/600, botones de 44 y pestañas de 48. Sin señal,
+ * Barra superior: alto 64, título 20/800, botones de 48 (spec FWD §4) y pestañas de 48 con raya lime. Sin señal,
  * el aviso global va debajo de la barra (propuesta de Inicio, frame 10), sobre el fondo de la pantalla.
  */
 export function TopBar({ title, subtitle, leading, actions = [], syncLabel, textoDerecha, tabs, lineasMultiples = false, logo = false, campo }: TopBarProps) {
@@ -74,14 +76,14 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
     >
       <View style={{ ...(lineasMultiples ? { minHeight: 64, paddingVertical: space[1] } : { height: 64 }), flexDirection: 'row', alignItems: 'center', gap: space[1], paddingHorizontal: space[1] }}>
         {leading ? (
-          <Pressable
+          <PressableFx
             onPress={leading.onPress}
             accessibilityRole="button"
             accessibilityLabel={leading.kind === 'atras' ? 'Volver' : 'Abrir menú'}
             style={{ width: TOCABLE, height: TOCABLE, alignItems: 'center', justifyContent: 'center' }}
           >
             <Lead size={24} color={colors.onTopBarStrong} strokeWidth={2} />
-          </Pressable>
+          </PressableFx>
         ) : null}
         {logo ? <View style={{ paddingLeft: leading ? 0 : space[3] }}><LogoForward alto={26} /></View> : null}
         {campo ? (
@@ -118,7 +120,7 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
           </View>
         ) : null}
         {actions.map(({ icon: Icono, accessibilityLabel, onPress, disabled = false, label }) => (
-          <Pressable
+          <PressableFx
             key={accessibilityLabel}
             onPress={onPress}
             disabled={disabled}
@@ -127,19 +129,19 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
             accessibilityState={{ disabled }}
             style={
               label
-                ? { minWidth: TOCABLE, height: TOCABLE, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], paddingHorizontal: space[3], borderRadius: radii.campo, backgroundColor: colors.onTopBar + '26', opacity: disabled ? 0.4 : 1 }
+                ? { minWidth: TOCABLE, height: TOCABLE, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[2], paddingHorizontal: space[3], borderRadius: radii.pastilla, backgroundColor: colors.onTopBar + '26', opacity: disabled ? 0.4 : 1 }
                 : { width: TOCABLE, height: TOCABLE, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.4 : 1 }
             }
           >
             <Icono size={22} color={colors.onTopBarStrong} strokeWidth={2} />
             {label ? <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.cuerpoDestacado, color: colors.onTopBarStrong }}>{label}</Text> : null}
-          </Pressable>
+          </PressableFx>
         ))}
       </View>
       {tabs?.length ? (
         <View accessibilityRole="tablist" style={{ flexDirection: 'row' }}>
           {tabs.map((tab) => (
-            <Pressable
+            <PressableFx
               key={tab.label}
               onPress={tab.onPress}
               accessibilityRole="tab"
@@ -151,7 +153,7 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderBottomWidth: 3,
-                borderBottomColor: tab.selected ? colors.brand : 'transparent',
+                borderBottomColor: tab.selected ? colors.lime : 'transparent',
               }}
             >
               <Text
@@ -163,7 +165,7 @@ export function TopBar({ title, subtitle, leading, actions = [], syncLabel, text
               >
                 {tab.label}
               </Text>
-            </Pressable>
+            </PressableFx>
           ))}
         </View>
       ) : null}

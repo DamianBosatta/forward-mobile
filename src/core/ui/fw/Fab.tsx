@@ -1,7 +1,8 @@
 import React from 'react'
-import { Pressable, Text, type StyleProp, type ViewStyle } from 'react-native'
+import { Text, type StyleProp, type ViewStyle } from 'react-native'
 import { Plus } from 'lucide-react-native'
 import { useInsetInferior } from './insetInferior'
+import { PressableFx } from './PressableFx'
 import { maxFontScale, radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 
 interface FabProps {
@@ -14,17 +15,17 @@ interface FabProps {
   style?: StyleProp<ViewStyle>
 }
 
-/** Botón flotante de la lámina F4: 56 px, color de acción y la única sombra. */
+/** Botón flotante FWD: 56 px, `fabBg` (lime en claro, teal en oscuro) con ícono y texto `onFab` (ink) y la única sombra. */
 export function Fab({ accessibilityLabel, onPress, label, style }: FabProps) {
   const c = useColors()
   const inset = useInsetInferior()
   const sombra = shadowMd[useIsDark() ? 'dark' : 'light']
   return (
-    <Pressable
+    <PressableFx
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      android_ripple={{ color: c.surface2, foreground: true }}
+      android_ripple={{ color: c.ink, foreground: true }}
       style={[
         {
           position: 'absolute',
@@ -33,7 +34,7 @@ export function Fab({ accessibilityLabel, onPress, label, style }: FabProps) {
           height: 56,
           ...(label ? { flexDirection: 'row' as const, gap: space[2], paddingLeft: space[4], paddingRight: space[5] } : { width: 56 }),
           borderRadius: radii.pastilla,
-          backgroundColor: c.action,
+          backgroundColor: c.fabBg,
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
@@ -42,8 +43,8 @@ export function Fab({ accessibilityLabel, onPress, label, style }: FabProps) {
         style,
       ]}
     >
-      <Plus size={label ? 24 : 26} strokeWidth={2.5} color={c.onAction} />
-      {label ? <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.cuerpoDestacado, color: c.onAction }}>{label}</Text> : null}
-    </Pressable>
+      <Plus size={label ? 24 : 26} strokeWidth={2.5} color={c.onFab} />
+      {label ? <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.cuerpoDestacado, color: c.onFab }}>{label}</Text> : null}
+    </PressableFx>
   )
 }

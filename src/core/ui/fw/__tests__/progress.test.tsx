@@ -41,10 +41,10 @@ describe.each(['light', 'dark'] as const)('tema %s', (modo) => {
   const c = themeColors[modo]
   beforeEach(() => useThemeStore.setState({ mode: modo }))
 
-  it('sobre superficie: pista borderStrong y relleno brand', () => {
+  it('sobre superficie: pista surfaceAlt y relleno accentText', () => {
     render(<Progress value={1} max={2} accessibilityLabel="Entregas hechas" />)
-    expect(flat(barra().props.style).backgroundColor).toBe(c.borderStrong)
-    expect(flat((barra().children[0] as unknown as { props: { style: unknown } }).props.style).backgroundColor).toBe(c.brand)
+    expect(flat(barra().props.style).backgroundColor).toBe(c.surfaceAlt)
+    expect(flat((barra().children[0] as unknown as { props: { style: unknown } }).props.style).backgroundColor).toBe(c.accentText)
   })
 
   it('sobre la barra superior: la pista de la consola del chofer', () => {

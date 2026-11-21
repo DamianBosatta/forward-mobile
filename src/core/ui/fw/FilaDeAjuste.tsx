@@ -17,7 +17,7 @@ function useFila(conDivisor?: boolean) {
   return {
     c,
     fila: [
-      { minHeight: 64, paddingHorizontal: space[4], paddingVertical: space[2], flexDirection: 'row' as const, alignItems: 'center' as const, gap: space[3] },
+      { minHeight: 68, paddingHorizontal: space[4], paddingVertical: space[2], flexDirection: 'row' as const, alignItems: 'center' as const, gap: space[3] },
       conDivisor ? { borderBottomWidth: 1, borderBottomColor: c.border } : null,
     ],
   }

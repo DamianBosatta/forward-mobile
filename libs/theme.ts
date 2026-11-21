@@ -71,6 +71,8 @@ export interface ForwardColors {
   topBarBorder: string
   veil: string // velo de la hoja inferior
   chip: Record<ChipEstado, ChipColors>
+  /** Chips de estado de la spec FWD §5: relleno pleno con texto `ink` (pendiente: `surfaceAlt` con `text`). El estado va siempre escrito. `chip` queda para texto sobre `surface` (p. ej. errores). */
+  chipFill: Record<ChipEstado, ChipColors>
   // ── Claves legadas (ver mapeo arriba) ──
   bg: string
   background: string
@@ -126,6 +128,14 @@ function conLegados(t: {
   return {
     ...MARCA,
     ...ESTADOS,
+    chipFill: {
+      confirmado: { bg: MARCA.lime, text: MARCA.ink },
+      pendiente: { bg: t.surfaceAlt, text: t.text },
+      porAutorizar: { bg: ESTADOS.warning, text: ESTADOS.onState },
+      enCurso: { bg: ESTADOS.info, text: ESTADOS.onState },
+      entregado: { bg: MARCA.teal, text: MARCA.ink },
+      anulado: { bg: ESTADOS.dangerFill, text: ESTADOS.onState },
+    },
     surfaceAlt: t.surfaceAlt,
     accentText: t.accentText,
     primaryBg: t.primaryBg,
@@ -295,7 +305,7 @@ export const typeScale = {
   textoFila: texto(16, 800, 22),
   etiquetaChip: texto(12, 800, 16),
   // Escala existente: mismos nombres y tamaños, pesos Manrope (spec §3: 600 secundario, 800 títulos y filas).
-  titulo: texto(20, 600, 28), // título de pantalla y totales. Sigue en 600: src/core/ui/fw/__tests__/componentes.test.tsx (fuera de U0a) lo fija; pasar a 800 es de U0b
+  titulo: texto(20, 800, 28), // título de pantalla y totales (spec §3: 800)
   seccion: texto(18, 800, 24),
   cuerpo: texto(16, 600, 24),
   cuerpoDestacado: texto(16, 800, 24), // nombres e importes de fila

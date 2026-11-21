@@ -18,13 +18,13 @@ describe.each(['light', 'dark'] as const)('tema %s', (modo) => {
   it('StatusChip usa los colores del chip de ese tema', () => {
     render(<StatusChip estado="porAutorizar" />)
     const label = screen.getByText('Por autorizar')
-    expect(flat(label.props.style).color).toBe(c.chip.porAutorizar.text)
-    expect(flat(screen.getByLabelText('Estado: Por autorizar').props.style).backgroundColor).toBe(c.chip.porAutorizar.bg)
+    expect(flat(label.props.style).color).toBe(c.chipFill.porAutorizar.text)
+    expect(flat(screen.getByLabelText('Estado: Por autorizar').props.style).backgroundColor).toBe(c.chipFill.porAutorizar.bg)
   })
 
-  it('Fab usa action / onAction', () => {
+  it('Fab usa fabBg', () => {
     render(<Fab accessibilityLabel="Nueva venta" onPress={() => {}} />)
-    expect(flat(screen.getByRole('button', { name: 'Nueva venta' }).props.style).backgroundColor).toBe(c.action)
+    expect(flat(screen.getByRole('button', { name: 'Nueva venta' }).props.style).backgroundColor).toBe(c.fabBg)
   })
 })
 
@@ -35,11 +35,11 @@ describe('TotalsRow', () => {
     expect(screen.getByText('$ 48.049,50')).toBeTruthy()
   })
 
-  it('la variante destacada usa 20/600 para el total', () => {
+  it('la variante destacada usa 20/800 para el total', () => {
     render(<TotalsRow label="Total" importe={51350.13} destacado />)
     const total = flat(screen.getByText('$ 51.350,13').props.style)
     expect(total.fontSize).toBe(20)
-    expect(total.fontWeight).toBe('600')
+    expect(total.fontWeight).toBe('800')
   })
 })
 

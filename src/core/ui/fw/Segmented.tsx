@@ -1,7 +1,8 @@
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { Check } from 'lucide-react-native'
-import { radii, shadowMd, space, typeScale, useColors, useIsDark } from '@/libs/theme'
+import { radii, space, typeScale, useColors } from '@/libs/theme'
+import { PressableFx } from './PressableFx'
 
 export interface SegmentedOption<T extends string> {
   value: T
@@ -15,10 +16,9 @@ interface SegmentedProps<T extends string> {
   accessibilityLabel: string
 }
 
-/** Selector segmentado de la lámina F4: segmentos de 44 px sobre superficie-2; el elegido en superficie con sombra. */
+/** Selector segmentado FWD: píldora `surfaceAlt` sin borde ni sombra; el elegido pasa a botón principal con tilde. */
 export function Segmented<T extends string>({ options, value, onChange, accessibilityLabel }: SegmentedProps<T>) {
   const colors = useColors()
-  const sombra = useIsDark() ? shadowMd.dark : shadowMd.light
 
   return (
     <View
@@ -28,16 +28,14 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
         flexDirection: 'row',
         gap: space[1],
         padding: space[1],
-        backgroundColor: colors.surface2,
-        borderRadius: radii.campo,
-        borderWidth: 1,
-        borderColor: colors.borderStrong,
+        backgroundColor: colors.surfaceAlt,
+        borderRadius: radii.pastilla,
       }}
     >
       {options.map((op) => {
         const elegido = op.value === value
         return (
-          <Pressable
+          <PressableFx
             key={op.value}
             onPress={() => {
               if (!elegido) onChange(op.value)
@@ -51,27 +49,24 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
               gap: space[1],
               flexShrink: 0,
               minHeight: 44,
-              borderRadius: radii.campo,
+              borderRadius: radii.pastilla,
               alignItems: 'center',
               justifyContent: 'center',
               paddingHorizontal: space[1],
-              borderWidth: elegido ? 2 : 0,
-              borderColor: colors.brand,
-              backgroundColor: elegido ? colors.surface : 'transparent',
-              ...(elegido ? sombra : null),
+              backgroundColor: elegido ? colors.primaryBg : 'transparent',
             }}
           >
-            {elegido ? <Check size={16} color={colors.brandInk} strokeWidth={2.5} /> : null}
+            {elegido ? <Check size={16} color={colors.primaryFg} strokeWidth={2.5} /> : null}
             <Text
               numberOfLines={1}
               style={{
                 ...(elegido ? typeScale.cuerpoDestacado : typeScale.cuerpo),
-                color: elegido ? colors.text : colors.textSecondary,
+                color: elegido ? colors.primaryFg : colors.textMuted,
               }}
             >
               {op.label}
             </Text>
-          </Pressable>
+          </PressableFx>
         )
       })}
     </View>

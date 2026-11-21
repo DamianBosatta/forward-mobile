@@ -115,10 +115,10 @@ describe.each(TEMAS)('PieFijo (%s)', (tema) => {
     expect(estilo(screen.getByTestId('pie-contenido')).paddingBottom).toBe(16 + 800)
   })
 
-  it('usa tokens del tema: fondo y borde superior', () => {
+  it('usa tokens del tema: fondo y sin borde superior', () => {
     montar()
     const s = estilo(screen.getByTestId('pie'))
-    expect(s.borderTopWidth).toBe(1)
+    expect(s.borderTopWidth ?? 0).toBe(0)
     expect(typeof s.backgroundColor).toBe('string')
   })
 })

@@ -24,10 +24,10 @@ describe('Field prefijo (opt-in)', () => {
 describe('FilaDeAccion agrupada (opt-in)', () => {
   const estiloPlano = (el: { props: { style?: unknown } }) => ([] as Record<string, unknown>[]).concat(el.props.style as never).flat().reduce((a, s) => ({ ...a, ...(s as object) }), {} as Record<string, unknown>)
 
-  it('por defecto conserva borde y radio propios', () => {
+  it('por defecto conserva radio propio y no lleva borde ni sombra', () => {
     render(<FilaDeAccion icon={ArrowLeftRight} title="Fila" onPress={() => {}} />)
     const s = estiloPlano(screen.getByRole('button', { name: 'Fila' }))
-    expect(s.borderWidth).toBe(1)
+    expect(s.borderWidth ?? 0).toBe(0)
     expect(s.borderRadius).toBeGreaterThan(0)
   })
 

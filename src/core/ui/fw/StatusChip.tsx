@@ -9,9 +9,9 @@ interface StatusChipProps {
   label?: string
 }
 
-/** Chip de estado de la lámina F4: el mismo en todas las pantallas. */
+/** Chip de estado FWD (spec §5): píldora de relleno pleno con texto `ink`, el mismo en todas las pantallas. El estado va siempre escrito. */
 export function StatusChip({ estado, label = CHIP_LABEL[estado] }: StatusChipProps) {
-  const { bg, text } = useColors().chip[estado]
+  const { bg, text } = useColors().chipFill[estado]
   return (
     <View
       accessible
@@ -20,8 +20,9 @@ export function StatusChip({ estado, label = CHIP_LABEL[estado] }: StatusChipPro
         flexShrink: 0,
         backgroundColor: bg,
         borderRadius: radii.pastilla,
-        paddingVertical: space[1],
-        paddingHorizontal: 10, // lámina F4: 4 × 10
+        height: 28,
+        justifyContent: 'center',
+        paddingHorizontal: space[3],
         alignSelf: 'flex-start',
       }}
     >

@@ -3,12 +3,18 @@ import { Text } from 'react-native'
 import { render, screen, userEvent } from '@testing-library/react-native'
 import { House, User } from 'lucide-react-native'
 import { themeColors } from '@/libs/theme'
+import { useReducedMotion } from 'react-native-reanimated'
 import { BottomBar, NuevaVentaCentral, ALTO_BARRA_CON_CENTRO, DIAMETRO_NUEVA_VENTA } from '../index'
 import { TEMAS, conTema, estilo } from '../__testing__/tema'
 
+jest.mock('react-native-reanimated', () => {
+  const actual = jest.requireActual('react-native-reanimated')
+  return { ...actual, __esModule: true, default: actual.default ?? actual, useReducedMotion: jest.fn(() => false) }
+})
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) }))
 
 afterEach(() => conTema('light'))
+beforeEach(() => (useReducedMotion as jest.Mock).mockReturnValue(false))
 
 const items = [
   { key: 'inicio', label: 'Mi día', icon: House, onPress: jest.fn() },
@@ -18,20 +24,34 @@ const items = [
 describe.each(TEMAS)('NuevaVentaCentral y BottomBar con botón central (%s)', (tema) => {
   beforeEach(() => conTema(tema))
 
-  it('es un botón "Nueva venta" de 64 pt, en color de acción, que responde al toque', async () => {
+  it('es un botón "Nueva venta" de 84 pt, en fabBg, que responde al toque', async () => {
     const alTocar = jest.fn()
     render(<NuevaVentaCentral onPress={alTocar} />)
     const boton = screen.getByRole('button', { name: 'Nueva venta' })
-    expect(estilo(boton)).toMatchObject({ width: DIAMETRO_NUEVA_VENTA, height: DIAMETRO_NUEVA_VENTA, backgroundColor: themeColors[tema].action })
+    expect(estilo(boton)).toMatchObject({ width: DIAMETRO_NUEVA_VENTA, height: DIAMETRO_NUEVA_VENTA, backgroundColor: themeColors[tema].fabBg })
     await userEvent.press(boton)
     expect(alTocar).toHaveBeenCalledTimes(1)
+  })
+
+  it('es un círculo solo de ícono: tinta onFab, etiqueta fuera de la vista y halo prendido', () => {
+    render(<NuevaVentaCentral onPress={jest.fn()} />)
+    expect(screen.getByTestId('nueva-venta-halo')).toBeTruthy()
+    const etiqueta = screen.getByText('Nueva venta')
+    expect(estilo(etiqueta)).toMatchObject({ width: 1, height: 1, opacity: 0 })
+    expect(screen.getByRole('button', { name: 'Nueva venta' })).toBeTruthy()
+  })
+
+  it('con Reducir movimiento no dibuja el halo', () => {
+    ;(useReducedMotion as jest.Mock).mockReturnValue(true)
+    render(<NuevaVentaCentral onPress={jest.fn()} />)
+    expect(screen.queryByTestId('nueva-venta-halo')).toBeNull()
   })
 
   it('la barra sube de alto solo con `center` y el botón con su etiqueta entra entero en sus límites', () => {
     const { rerender } = render(<BottomBar items={items} center={<Text>centro</Text>} />)
     expect(estilo(screen.getByLabelText('Acciones rápidas')).height).toBe(ALTO_BARRA_CON_CENTRO)
-    // Android no entrega toques fuera del padre: el botón (64) más la etiqueta y el aire tienen que caber.
-    expect(DIAMETRO_NUEVA_VENTA + 16).toBeLessThanOrEqual(ALTO_BARRA_CON_CENTRO)
+    // Android no entrega toques fuera del padre: el botón (84) más la etiqueta y el aire tienen que caber.
+    expect(DIAMETRO_NUEVA_VENTA + 12).toBeLessThanOrEqual(ALTO_BARRA_CON_CENTRO)
     expect(screen.getByTestId('barra-centro')).toBeTruthy()
     rerender(<BottomBar items={items} />)
     expect(estilo(screen.getByLabelText('Acciones rápidas')).height).toBe(76)

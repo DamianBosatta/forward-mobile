@@ -1,7 +1,8 @@
 import React from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 import { Check } from 'lucide-react-native'
 import { maxFontScale, radii, space, typeScale, useColors } from '@/libs/theme'
+import { PressableFx } from './PressableFx'
 
 interface FiltroChipProps {
   label: string
@@ -17,31 +18,30 @@ interface FiltroChipProps {
   conTilde?: boolean
 }
 
-/** Chip de filtro y de opción de formularios (44 pt): activo en color de marca con tilde, inactivo con contorno `borderStrong`. */
+/** Chip de filtro y de opción de formularios (44 pt, píldora): activo = botón principal con tilde, inactivo = `surface` sin borde. */
 export function FiltroChip({ label, activo, onPress, oscuro = false, rol = 'button', accessibilityLabel, conTilde = true }: FiltroChipProps) {
   const c = useColors()
   return (
-    <Pressable
+    <PressableFx
       onPress={onPress}
       accessibilityRole={rol}
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={rol === 'button' ? { selected: activo } : { selected: activo, checked: activo }}
-      android_ripple={{ color: oscuro ? c.topBarBorder : c.surface2 }}
+      android_ripple={{ color: oscuro ? c.topBarBorder : c.surfaceAlt }}
       style={{
         minHeight: 44,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: space[1],
-        paddingHorizontal: space[3] - (activo && !oscuro ? 1 : 0),
+        paddingHorizontal: space[4],
         borderRadius: radii.pastilla,
-        borderWidth: activo && !oscuro ? 2 : 1,
-        borderColor: oscuro ? (activo ? c.action : c.topBarBorder) : activo ? c.brand : c.borderStrong,
-        backgroundColor: oscuro ? (activo ? c.action : 'transparent') : activo ? c.brandSoft : c.surface,
+        ...(oscuro ? { borderWidth: 1, borderColor: activo ? c.primaryBg : c.topBarBorder } : null),
+        backgroundColor: oscuro ? (activo ? c.primaryBg : 'transparent') : activo ? c.primaryBg : c.surface,
       }}
     >
-      {activo && !oscuro && conTilde ? <View testID="chip-tilde"><Check size={16} color={c.brandInk} strokeWidth={2.5} /></View> : null}
-      <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.secundario, { color: oscuro ? (activo ? c.onAction : c.onTopBarStrong) : activo ? c.brandInk : c.text }]}>{label}</Text>
-    </Pressable>
+      {activo && !oscuro && conTilde ? <View testID="chip-tilde"><Check size={16} color={c.primaryFg} strokeWidth={2.5} /></View> : null}
+      <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.etiquetaChip, { color: oscuro ? (activo ? c.primaryFg : c.onTopBarStrong) : activo ? c.primaryFg : c.text }]}>{label}</Text>
+    </PressableFx>
   )
 }

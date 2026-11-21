@@ -1,4 +1,4 @@
-import { radii, themeColors, useThemeStore, type ForwardColors } from '../theme'
+import { radii, themeColors, typeScale, useThemeStore, type ForwardColors } from '../theme'
 
 // Contraste WCAG 2.x: (L1 + 0,05) / (L2 + 0,05) con luminancia relativa sRGB.
 function luminancia(hex: string): number {
@@ -66,6 +66,8 @@ function pares(c: ForwardColors): Par[] {
     // Notice: el cuerpo usa `text` sobre el fondo del chip (el icono usa chip.text, ya cubierto arriba).
     lista.push([`text sobre chip ${estado}`, c.text, chip.bg])
   }
+  // Chips FWD §5: relleno pleno con texto ink (pendiente: surfaceAlt con text).
+  for (const [estado, chip] of Object.entries(c.chipFill)) lista.push([`chipFill ${estado}`, chip.text, chip.bg])
   return lista
 }
 
@@ -220,5 +222,21 @@ describe('tokens FWD de la spec', () => {
 
   it('los radios son los de la spec (sección 4)', () => {
     expect([radii.tarjetaGrande, radii.tile, radii.fila, radii.cantidad, radii.pastilla]).toEqual([30, 28, 22, 16, 9999])
+  })
+})
+
+describe('typeScale (spec FWD §3)', () => {
+  it('titulo va en peso 800', () => {
+    expect(typeScale.titulo).toMatchObject({ fontSize: 20, fontWeight: '800' })
+  })
+  it('el texto de chipFill es ink salvo en pendiente (text sobre surfaceAlt)', () => {
+    for (const modo of ['light', 'dark'] as const) {
+      const c = themeColors[modo]
+      expect(c.chipFill.confirmado.text).toBe(c.ink)
+      expect(c.chipFill.entregado.text).toBe(c.ink)
+      expect(c.chipFill.porAutorizar.text).toBe(c.onState)
+      expect(c.chipFill.anulado.text).toBe(c.onState)
+      expect(c.chipFill.pendiente).toEqual({ bg: c.surfaceAlt, text: c.text })
+    }
   })
 })

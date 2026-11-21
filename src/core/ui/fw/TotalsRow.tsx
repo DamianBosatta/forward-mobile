@@ -6,7 +6,7 @@ import { formatImporte } from './formatImporte'
 interface TotalsRowProps {
   label: string
   importe: number | null | undefined
-  /** El total: etiqueta 16/600, importe 20/600 y un borde arriba. */
+  /** El total: etiqueta 16/800, importe 20/800 y una línea arriba. */
   destacado?: boolean
 }
 
