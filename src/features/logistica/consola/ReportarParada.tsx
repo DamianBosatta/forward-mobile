@@ -18,6 +18,7 @@ import { FotoEntrega } from './FotoEntrega'
 import { FirmarRemito } from './FirmarRemito'
 import { CobroEnEntrega } from './CobroEnEntrega'
 import { DevolucionEnEntrega, DevolucionEnviada, EleccionDevolucion } from './DevolucionEnEntrega'
+import { PasosDeEntrega } from './PasosDeEntrega'
 import { ContadorCobro } from './ContadorCobro'
 import { ResumenEntrega } from './ResumenEntrega'
 
@@ -185,6 +186,7 @@ export function ReportarParada({ hojaDeRutaId, parada, numero, enviando, error, 
             : `Parada ${numero} · ${parada.direccion} · ${parada.clienteNombre}`}
           leading={{ kind: 'atras', onPress: atras }}
         />
+        {entregado ? <PasosDeEntrega numero={pos.numero} total={pos.total} /> : null}
         {entregado && paso === 'cobro' && !preguntandoOtro && aCobrarHoy != null ? (
           <View style={columna ?? undefined}>
             <ContadorCobro cobrado={cobrado} falta={Math.max(0, redondear2(aCobrarHoy - cobrado))} />
