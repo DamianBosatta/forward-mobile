@@ -77,7 +77,7 @@ export function ElegirProveedorPago({ seleccionadoId, onElegir, onContinuar, pue
       />
       <PieFijo>
         {!puedePagar ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_COBRO}</MotivoDeshabilitado> : null}
-        <Button label="Continuar a qué pagás" iconoFinal={ChevronRight} disabled={!seleccionadoId || !puedePagar} onPress={onContinuar} />
+        <Button size="lg" label="Continuar a qué pagás" iconoFinal={ChevronRight} disabled={!seleccionadoId || !puedePagar} onPress={onContinuar} />
       </PieFijo>
     </View>
   )

@@ -393,7 +393,7 @@ function CobroDelCliente({ socioId, medioInicial, contraparte, paso, onPaso, onV
     pieDelPaso = (
       <PieFijo>
         <Text style={secundario}>{t.quedaRegistrado}</Text>
-        <Button
+        <Button size="lg"
           label={t.registrar(total)}
           loading={registrar.isPending}
           disabled={ocupado || sinCajaUtil}

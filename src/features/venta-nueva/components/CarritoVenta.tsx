@@ -29,7 +29,7 @@ export function CarritoFlotante({ lineas, onVerVenta }: CarritoProps) {
         <Text testID="carrito-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{total}</Text>
       </View>
       {/* La lámina la dibuja siempre: sin productos queda en 0 y "Ver venta" no responde. */}
-      <Button icon={ShoppingCart} label="Ver venta" accessibilityLabel={`Ver venta: ${lineas.length} ítems, ${ROTULO.toLowerCase()} ${total}`} disabled={vacio} onPress={onVerVenta} />
+      <Button size="lg" icon={ShoppingCart} label="Ver venta" accessibilityLabel={`Ver venta: ${lineas.length} ítems, ${ROTULO.toLowerCase()} ${total}`} disabled={vacio} onPress={onVerVenta} />
     </PieFijo>
   )
 }

@@ -222,7 +222,7 @@ function EditarLineaContenido({ linea, onClose, onConfirm, onQuitar, maxCantidad
             )}
           </ScrollView>
           <PieFijo>
-            <Button label="Confirmar" disabled={invalido} onPress={() => onConfirm({ ...linea, cantidad, descuentoPct: pct })} />
+            <Button size="lg" label="Confirmar" disabled={invalido} onPress={() => onConfirm({ ...linea, cantidad, descuentoPct: pct })} />
           </PieFijo>
         </View>
       </View>

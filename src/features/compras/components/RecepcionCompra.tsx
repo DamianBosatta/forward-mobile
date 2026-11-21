@@ -158,7 +158,7 @@ export function RecepcionCompra(p: Props) {
             {p.faltanCostos > 0 ? '—' : formatImporte(p.total)}
           </Text>
         </View>
-        <Button label={recibir ? 'Confirmar y recibir' : 'Confirmar compra'} loading={p.ocupado}
+        <Button size="lg" label={recibir ? 'Confirmar y recibir' : 'Confirmar compra'} loading={p.ocupado}
           disabled={bloqueado || (recibir && p.pideFactura && !p.fechaValida)} onPress={p.onConfirmar} />
         <Pressable accessibilityRole="button" accessibilityLabel="Guardar nota de pedido" accessibilityState={{ disabled: bloqueado }} disabled={bloqueado} onPress={p.onGuardarNota}
           style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>

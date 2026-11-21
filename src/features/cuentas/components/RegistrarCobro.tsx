@@ -236,7 +236,7 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false, medioInici
 
   const pie = (
     <PieFijo>
-      <Button label={total > 0 ? `Registrar cobro de ${formatImporte(total)}` : 'Registrar cobro'} loading={registrar.isPending} disabled={registrar.isPending || sinCajaUtil || subiendo} onPress={enviar} />
+      <Button size="lg" label={total > 0 ? `Registrar cobro de ${formatImporte(total)}` : 'Registrar cobro'} loading={registrar.isPending} disabled={registrar.isPending || sinCajaUtil || subiendo} onPress={enviar} />
     </PieFijo>
   )
 

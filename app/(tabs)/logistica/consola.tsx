@@ -386,23 +386,23 @@ export default function ConsolaChoferScreen() {
   const porcentaje = resumen.total > 0 ? Math.round((resumen.entregadas / resumen.total) * 100) : 0
   // chofer-01-viaje: progreso y total a cobrar del día arriba de la próxima parada.
   const cabecera = (
-    <View style={{ gap: space[2] }}>
+    <View testID="consola-progreso" style={{ gap: space[2], backgroundColor: c.teal, borderRadius: radii.tarjetaGrande, paddingHorizontal: space[5], paddingVertical: space[4] }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
-        <Text style={{ ...typeScale.seccion, color: c.text }}>{`${resumen.entregadas} de ${resumen.total} entregadas`}</Text>
-        <Text style={{ ...typeScale.secundario, ...importe, color: c.textSecondary }}>{`${porcentaje} %`}</Text>
+        <Text style={{ ...typeScale.seccion, color: c.ink }}>{`${resumen.entregadas} de ${resumen.total} entregadas`}</Text>
+        <Text style={{ ...typeScale.secundario, ...importe, color: c.ink }}>{`${porcentaje} %`}</Text>
       </View>
-      <Progress value={resumen.entregadas} max={resumen.total} accessibilityLabel="Entregas hechas" />
+      <Progress value={resumen.entregadas} max={resumen.total} accessibilityLabel="Entregas hechas" sobreColor />
       {/* Lo calcula el servidor; un servidor anterior no lo manda y no se muestra. */}
       {viaje.totalMontoCobrar != null ? (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: space[2] }}>
-          <Text style={{ ...typeScale.cuerpo, color: c.textSecondary }}>A cobrar hoy</Text>
-          <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.destacado, ...importe, color: c.text }}>{formatImporte(viaje.totalMontoCobrar)}</Text>
+          <Text style={{ ...typeScale.cuerpo, color: c.ink }}>A cobrar hoy</Text>
+          <Text maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.destacado, ...importe, color: c.ink }}>{formatImporte(viaje.totalMontoCobrar)}</Text>
         </View>
       ) : null}
       <ColaConsola acciones={deEsteViaje} />
       {/* Los km son de la última ruta calculada: sin recalcular serían los del plan anterior. */}
       {viaje.rutaCalculada === true && viaje.distanciaTotalMetros > 0 ? (
-        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{`Recorrido ${formatDistancia(viaje.distanciaTotalMetros)}`}</Text>
+        <Text style={{ ...typeScale.secundario, color: c.ink }}>{`Recorrido ${formatDistancia(viaje.distanciaTotalMetros)}`}</Text>
       ) : null}
     </View>
   )

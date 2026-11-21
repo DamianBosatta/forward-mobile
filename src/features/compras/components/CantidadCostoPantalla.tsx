@@ -120,7 +120,7 @@ function Contenido({ linea, onClose, onListo, onQuitar }: Props & { linea: Linea
             <Text style={{ ...secundario, ...importe }}>{subtotal !== null ? `${mostrarNumero(cantidad!)} × ${formatImporte(porUnidad * costo!)}` : 'Subtotal'}</Text>
             <Text style={{ ...typeScale.titulo, ...importe, color: c.text }}>{subtotal !== null ? formatImporte(subtotal) : costo === null ? 'Sin costo' : '$ —'}</Text>
           </View>
-          <Button label="Listo, seguir cargando" disabled={cantidadInvalida || costoInvalido}
+          <Button size="lg" label="Listo, seguir cargando" disabled={cantidadInvalida || costoInvalido}
             onPress={() => onListo({ ...linea, unidad, cantidad: cantidad!, unidadesPorUnidad: porUnidad, costoUnitario: costo })} />
         </PieFijo>
       </View>

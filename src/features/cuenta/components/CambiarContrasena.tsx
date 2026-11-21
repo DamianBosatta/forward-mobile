@@ -94,7 +94,7 @@ export function CambiarContrasena({ email }: { email: string | undefined }) {
         </View>
       </ScrollView>
       <PieFijo testID="pie-clave">
-        <Button label="Cambiar contraseña" onPress={cambiar} disabled={!completo} loading={m.isPending} />
+        <Button size="lg" label="Cambiar contraseña" onPress={cambiar} disabled={!completo} loading={m.isPending} />
         {completo ? null : <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Se habilita cuando todo está completo y las dos nuevas coinciden.</Text>}
       </PieFijo>
     </View>

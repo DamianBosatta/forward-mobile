@@ -192,7 +192,7 @@ export function RecibirCompra({ compra, onVolver, onHecho, onConflicto }: Props)
       </ScrollView>
       <PieFijo>
         <Text style={[secundario, { textAlign: 'center' }]}>{textoSuma(unidades)}</Text>
-        <Button label="Confirmar recepción" loading={ocupado} disabled={!!problema || plan.problema !== null} onPress={() => { void confirmar() }} />
+        <Button size="lg" label="Confirmar recepción" loading={ocupado} disabled={!!problema || plan.problema !== null} onPress={() => { void confirmar() }} />
       </PieFijo>
       <ComprobanteProveedorPantalla visible={comprobanteAbierto}
         form={comprobante?.form ?? (compra.comprobante ? formDesdeComprobante(compra.comprobante) : formNuevo(socio.data ?? { razonSocial: compra.razonSocialProveedor }, hoyTexto()))}
