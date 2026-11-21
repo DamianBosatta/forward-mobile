@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, ScrollView, SectionList, Text, View } from 'r
 import { useRouter } from 'expo-router'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import {
-  Button, DocumentCard, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, useMenuLeading,
+  Button, DocumentCard, Entrada, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, useMenuLeading,
   type SegmentedOption, useInsetInferior } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { PressableFx } from '@/core/ui/fw/PressableFx'
@@ -75,9 +75,9 @@ interface Props {
 }
 
 /** Fila memoizada: no se vuelve a pintar mientras la venta y `onAbrir` no cambien. */
-const FilaVenta = memo(function FilaVenta({ v, onAbrir }: { v: Venta; onAbrir: (id: string) => void }) {
+const FilaVenta = memo(function FilaVenta({ v, indice, onAbrir }: { v: Venta; indice: number; onAbrir: (id: string) => void }) {
   return (
-    <View style={{ marginBottom: space[3] }}>
+    <Entrada tipo="fila" indice={indice} style={{ marginBottom: space[3] }}>
       <DocumentCard
         numero={v.codigoPedido ?? v.id.slice(0, 8).toUpperCase()}
         vendedor={v.vendedorNombre}
@@ -88,7 +88,7 @@ const FilaVenta = memo(function FilaVenta({ v, onAbrir }: { v: Venta; onAbrir: (
         chip={chipForEstado('venta', v.estado)}
         onPress={() => onAbrir(v.id)}
       />
-    </View>
+    </Entrada>
   )
 })
 
@@ -113,7 +113,7 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
     else router.push(`/(tabs)/ventas/${id}` as never)
   }, [isTabletLandscape, router])
   const secciones = useMemo(() => agruparPorDia(l.ventas, (v) => v.fecha), [l.ventas])
-  const renderVenta = useCallback(({ item }: { item: Venta }) => <FilaVenta v={item} onAbrir={abrir} />, [abrir])
+  const renderVenta = useCallback(({ item, index }: { item: Venta; index: number }) => <FilaVenta v={item} indice={index} onAbrir={abrir} />, [abrir])
 
   // Desde forward-system #883 el borrador guarda si se armaba un pedido o un presupuesto y se retoma
   // como tal. Un servidor anterior no lo manda (todo borrador es presupuesto ahí): se pregunta.

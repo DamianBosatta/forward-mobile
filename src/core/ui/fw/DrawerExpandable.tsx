@@ -1,9 +1,10 @@
 import React from 'react'
 import { View } from 'react-native'
-import Animated, { FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
 import { ChevronDown, type LucideIcon } from 'lucide-react-native'
 import { space, useColors } from '@/libs/theme'
 import { DrawerItem } from './DrawerItem'
+import { Entrada } from './Entrada'
 
 interface Props {
   label: string
@@ -44,9 +45,9 @@ export function DrawerExpandable({ label, icon, abierta, onToggle, oscuro = fals
       {abierta ? (
         <View style={{ marginLeft: space[5], marginVertical: 2, gap: 2 }}>
           {hijas.map((h, i) => (
-            <Animated.View key={i} entering={reducido ? undefined : FadeInDown.duration(450).delay(i * 70)}>
+            <Entrada key={i} tipo="fila" indice={i} escalon={70}>
               {h}
-            </Animated.View>
+            </Entrada>
           ))}
         </View>
       ) : null}
