@@ -140,7 +140,7 @@ describe('retomar usa la revisión nueva (S9)', () => {
     await aEntrega()
     expect(screen.queryByRole('button', { name: 'Seguir' })).toBeNull()
     await userEvent.press(await screen.findByRole('button', { name: 'Confirmar venta' }))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b9/guardar-presupuesto', { ventaId: 'b9', version: expect.any(Number) }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b9/guardar-presupuesto', { ventaId: 'b9', version: expect.any(Number), claveIdempotencia: expect.stringMatching(/^mobile-./) }))
     expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas', expect.anything())
   })
 })

@@ -249,7 +249,7 @@ describe('R2 · presupuesto (ResPresupuesto)', () => {
     expect(screen.queryByText(/45 d[ií]as/)).toBeNull()
     await userEvent.press(await screen.findByRole('button', { name: 'Reabrir' }))
     expect(screen.queryByRole('button', { name: 'Pasar a pedido' })).toBeNull()
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v9/reabrir'))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/v9/reabrir', { claveIdempotencia: expect.stringMatching(/^mobile-./) }))
   })
 })
 
