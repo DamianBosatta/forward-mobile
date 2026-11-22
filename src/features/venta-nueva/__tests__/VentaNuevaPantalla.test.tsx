@@ -221,7 +221,7 @@ describe('venta nueva: cliente, borrador y autoguardado', () => {
     mockPost.mockResolvedValue(true)
     await userEvent.press(screen.getByRole('button', { name: 'Descartar borrador' }))
     await waitFor(() => expect(mockBack).toHaveBeenCalled())
-    expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Ventas/b1/descartar-borrador')
+    expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Ventas/b1/descartar-borrador', { claveIdempotencia: expect.stringMatching(/^mobile-./) })
   })
 })
 
@@ -583,7 +583,7 @@ describe('confirmar', () => {
       items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 0 }], fechaEntrega: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
       claveIdempotencia: expect.stringMatching(/^mobile-/),
     })
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador')
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador', { claveIdempotencia: expect.stringMatching(/^mobile-./) })
   })
 
   it('un reintento tras un corte reusa la misma clave de idempotencia (no duplica el pedido)', async () => {
@@ -683,7 +683,7 @@ describe('confirmar', () => {
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', CON_LO_DE_ANTES)))
     expect(mockReplace).toHaveBeenCalledTimes(1)
     expect(altas()[1][1].claveIdempotencia).toBe(altas()[0][1].claveIdempotencia)
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador')
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador', { claveIdempotencia: expect.stringMatching(/^mobile-./) })
     expect(screen.queryByText(/clave de idempotencia/)).toBeNull()
     expect(useCarritoVenta.getState().lineas).toEqual([])
   })
@@ -695,7 +695,7 @@ describe('confirmar', () => {
     expect(await screen.findByText(/Este pedido ya se estaba grabando/)).toBeTruthy()
     expect(screen.queryByText(/datos duplicados/)).toBeNull()
     expect(mockReplace).not.toHaveBeenCalled()
-    expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador')
+    expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador', expect.anything())
     alAlta(() => Promise.resolve({ ventaId: 'v9', version: 1, message: REPETIDA }))
     await confirmar()
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', YA_GRABADO)))

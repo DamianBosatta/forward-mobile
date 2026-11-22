@@ -88,14 +88,14 @@ describe('foto de la factura del proveedor (R22b)', () => {
   it('con permiso: saca la foto, la sube a upload-comprobante y la adjunta con PUT foto-factura', async () => {
     abrir()
     await userEvent.press(await screen.findByRole('button', { name: 'Sacar foto de la factura' }))
-    await waitFor(() => expect(mockPut).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/foto-factura', { fotoUrl: URL_FOTO }))
+    await waitFor(() => expect(mockPut).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/foto-factura', { fotoUrl: URL_FOTO, claveIdempotencia: expect.stringMatching(/^mobile-./) }))
     expect(mockPost.mock.calls[0][0]).toBe('/api/v1/Media/upload-comprobante')
   })
 
   it('con permiso: quita la foto mandando fotoUrl null', async () => {
     abrir({ fotoFacturaProveedorUrl: URL_FOTO })
     await userEvent.press(await screen.findByRole('button', { name: 'Quitar la foto de la factura' }))
-    await waitFor(() => expect(mockPut).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/foto-factura', { fotoUrl: null }))
+    await waitFor(() => expect(mockPut).toHaveBeenCalledWith('/api/v1/Compras/aaaa1111-0000/foto-factura', { fotoUrl: null, claveIdempotencia: expect.stringMatching(/^mobile-./) }))
   })
 
   it('si el servidor rechaza (409), el motivo queda a la vista', async () => {

@@ -139,6 +139,11 @@ const intentoCrearCompra = crearIntento()
 const intentoConfirmarCompra = crearIntento()
 const intentoRecibirCompra = crearIntento()
 const intentoIniciarBorradorCompra = crearIntento()
+const intentoGuardarCompra = crearIntento()
+const intentoGuardarNotaPedido = crearIntento()
+const intentoDescartarBorradorCompra = crearIntento()
+const intentoFotoFacturaCompra = crearIntento()
+const intentoComprobanteCompra = crearIntento()
 
 /** Confirma una compra (nota de pedido → confirmada). Una sola copia: el hook y el autoguardado del borrador la usan. */
 const confirmarCompra = (id: string) =>
@@ -212,7 +217,7 @@ export function useAsignarFotoFacturaCompra() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, fotoUrl }: { id: string; fotoUrl: string | null }) =>
-      api.put<string>(`/api/v1/Compras/${id}/foto-factura`, { fotoUrl }),
+      conClave(intentoFotoFacturaCompra, { fotoUrl }, (cuerpo) => api.put<string>(`/api/v1/Compras/${id}/foto-factura`, cuerpo), id),
     onSuccess: () => invalidarPorCambioDeCompra(queryClient),
   })
 }
@@ -222,7 +227,9 @@ export function useGuardarComprobanteCompra() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, comprobante }: { id: string; comprobante: ComprobanteCompraInput }) =>
-      api.put<components['schemas']['ComprobanteRecibidoDto']>(`/api/v1/Compras/${id}/comprobante`, comprobante),
+      // GuardarComprobanteCompraRequest: los mismos campos del comprobante, planos, más la clave.
+      conClave(intentoComprobanteCompra, comprobante, (cuerpo) =>
+        api.put<components['schemas']['ComprobanteRecibidoDto']>(`/api/v1/Compras/${id}/comprobante`, cuerpo), id),
     onSuccess: () => invalidarPorCambioDeCompra(queryClient),
   })
 }
@@ -261,9 +268,13 @@ export interface GuardarCompraBody {
 export const borradorCompraApi = {
   iniciar: (proveedorId: string, depositoId: string) =>
     conClave(intentoIniciarBorradorCompra, { proveedorId, depositoId }, (cuerpo) => api.post<CompraActionResponse>('/api/v1/Compras/borradores', cuerpo)),
-  guardar: (body: GuardarCompraBody) => api.put<CompraActionResponse>(`/api/v1/Compras/${body.id}`, body),
+  guardar: (body: GuardarCompraBody) =>
+    conClave(intentoGuardarCompra, body, (cuerpo) => api.put<CompraActionResponse>(`/api/v1/Compras/${body.id}`, cuerpo)),
   guardarNota: (id: string, version: number) =>
-    api.post<CompraActionResponse>(`/api/v1/Compras/${id}/guardar-nota-pedido`, { compraId: id, version }),
+    conClave(intentoGuardarNotaPedido, { compraId: id, version }, (cuerpo) =>
+      api.post<CompraActionResponse>(`/api/v1/Compras/${id}/guardar-nota-pedido`, cuerpo)),
   confirmar: confirmarCompra,
-  descartar: (id: string) => api.post<boolean>(`/api/v1/Compras/${id}/descartar-borrador`, {}),
+  // Cuerpo vacío: el id de la ruta entra en la huella para que dos borradores no compartan la clave.
+  descartar: (id: string) =>
+    conClave(intentoDescartarBorradorCompra, {}, (cuerpo) => api.post<boolean>(`/api/v1/Compras/${id}/descartar-borrador`, cuerpo), id),
 }

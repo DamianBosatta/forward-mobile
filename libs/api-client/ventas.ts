@@ -325,6 +325,7 @@ export function useVendedores(enabled: boolean) {
 /** Una clave por intento (ver `crearIntento`): el reintento o el doble toque de la misma operación manda la misma. */
 const intentoBorradorVenta = crearIntento()
 const intentoGuardarVenta = crearIntento()
+const intentoDescartarBorradorVenta = crearIntento()
 const intentoConvertirPresupuesto = crearIntento()
 const intentoAutorizarVenta = crearIntento()
 const intentoEditarVenta = crearIntento()
@@ -362,7 +363,9 @@ export function guardarBorradorVenta(id: string, version: number, data: Record<s
 export function useDescartarBorradorVenta() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => api.post<boolean>(`/api/v1/Ventas/${id}/descartar-borrador`),
+    // Antes iba sin cuerpo: ahora `{ claveIdempotencia }`, con el id de la ruta en la huella.
+    mutationFn: (id: string) =>
+      conClave(intentoDescartarBorradorVenta, {}, (cuerpo) => api.post<boolean>(`/api/v1/Ventas/${id}/descartar-borrador`, cuerpo), id),
     onSettled: () => invalidarBorradoresDeVenta(queryClient),
   })
 }
