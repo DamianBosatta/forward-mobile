@@ -1,4 +1,5 @@
 import React from 'react'
+import { esRetiroEnLocal, etiquetaMetodo } from '@/core/utils/metodoEntrega'
 import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { PressableFx } from '@/core/ui/fw/PressableFx'
@@ -34,7 +35,7 @@ interface Props {
 }
 
 /** Línea de tiempo del pedido (ResVentaDetalle): cinco tramos; el actual, en blanco y a la mitad si se está preparando. El riel es el texto secundario de la barra al 25 % (sigue el tema). */
-function LineaDeTiempo({ pasos }: { pasos: NonNullable<ReturnType<typeof pasosDeLaVenta>> }) {
+export function LineaDeTiempo({ pasos }: { pasos: NonNullable<ReturnType<typeof pasosDeLaVenta>> }) {
   const c = useColors()
   return (
     <View accessibilityRole="list" accessibilityLabel="Estado del pedido" style={{ flexDirection: 'row', gap: 4, marginHorizontal: space[4], marginBottom: space[2], padding: space[4], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}>
@@ -43,7 +44,7 @@ function LineaDeTiempo({ pasos }: { pasos: NonNullable<ReturnType<typeof pasosDe
           <View testID={`tramo-${p.etiqueta}`} style={{ height: 6, borderRadius: radii.pastilla, backgroundColor: c.surfaceAlt, overflow: 'hidden' }}>
             <View style={{ height: 6, width: p.avance === 'completo' ? '100%' : p.avance === 'medio' ? '50%' : '0%', backgroundColor: c.teal }} />
           </View>
-          <Text style={{ ...typeScale.etiqueta, ...(p.actual ? null : pesoRegular), color: p.actual ? c.text : c.textSecondary }}>{p.etiqueta}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ ...typeScale.etiqueta, ...(p.actual ? null : pesoRegular), color: p.actual ? c.text : c.textSecondary }}>{p.etiqueta}</Text>
         </View>
       ))}
     </View>
@@ -92,7 +93,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
   const motivos = motivosAutorizacion(h.motivoPendienteAutorizacion)
   const sim = comision.data
   const cobro = esPresupuesto ? null : cobroDeLaVenta(pagos.data)
-  const entrega = h.metodoEntregaNombre === 'RetiroEnLocal' ? 'Retiro en el local' : diaDeEntregaCorto(h.fechaEntrega)
+  const entrega = esRetiroEnLocal(null, h.metodoEntregaNombre) ? etiquetaMetodo(null, h.metodoEntregaNombre, { larga: true }) : diaDeEntregaCorto(h.fechaEntrega)
   const telefono = cliente?.telefono ?? h.clienteTelefono ?? null
   const cobrar = () => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: h.clienteId } } as never)
   const fecha = h.fecha ? new Date(h.fecha) : null

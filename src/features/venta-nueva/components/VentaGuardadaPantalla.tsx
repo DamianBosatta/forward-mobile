@@ -1,4 +1,5 @@
 import React from 'react'
+import { esRetiroEnLocal, etiquetaMetodo } from '@/core/utils/metodoEntrega'
 import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -56,7 +57,7 @@ export function VentaGuardadaPantalla({ id, mensaje }: Props) {
   const porAutorizar = esEstadoVenta(h.estado, 'PendienteAutorizacion')
   const esPedido = tipo === 'Pedido'
   const confirmada = esEstadoVenta(h.estado, 'Confirmada')
-  const entrega = h.metodoEntregaNombre === 'RetiroEnLocal' ? 'Retiro en el local' : diaDeEntregaCorto(h.fechaEntrega)
+  const entrega = esRetiroEnLocal(null, h.metodoEntregaNombre) ? etiquetaMetodo(null, h.metodoEntregaNombre, { larga: true }) : diaDeEntregaCorto(h.fechaEntrega)
   const chip = chipForEstado('venta', h.estado)
   const whatsapp = urlWhatsApp(socio.data?.telefono)
   // Cobrar: la misma regla que la ficha del cliente (cobros del módulo Pagos y cuenta del cliente a la vista); una venta por autorizar todavía no se cobra (S5).

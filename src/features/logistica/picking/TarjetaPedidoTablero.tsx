@@ -2,7 +2,8 @@ import React, { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { CalendarDays, Clock, History, Package, Route, UserRound, type LucideIcon } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { diaCorto, estaAtrasado, etiquetaMetodo, textoPaso, textoUltimoCambio, type VentaTablero } from './tablero'
+import { diaCorto, estaAtrasado, textoPaso, textoUltimoCambio, type VentaTablero } from './tablero'
+import { etiquetaMetodo } from '@/core/utils/metodoEntrega'
 import { pesoSemibold } from '@/core/ui/fw'
 
 
