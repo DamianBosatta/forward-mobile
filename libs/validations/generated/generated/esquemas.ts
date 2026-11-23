@@ -22,6 +22,11 @@ export const AcreditarTarjetaCommandSchema = z.object({
   cuentaDestinoId: z.string().optional(),
 })
 
+export const ActivarCuentaCorrienteCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
+  id: z.string().optional(),
+})
+
 export const ActualizarAvisosTalonarioCommandSchema = z.object({
   diasAvisoCai: z.number().int().min(1).max(365).optional(),
   porcentajeAvisoRangoCai: z.number().int().min(1).max(50).optional(),
@@ -178,6 +183,7 @@ export const AnularRecepcionCompraCommandSchema = z.object({
 })
 
 export const AnularRemitoCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   id: z.string().optional(),
   motivo: z.string().min(1).max(500).nullable().optional(),
 })
@@ -236,11 +242,13 @@ export const AsignarDepositosSocioCommandSchema = z.object({
 })
 
 export const AsignarFotoFacturaProveedorCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   fotoUrl: z.string().nullable().optional(),
 })
 
 export const AsignarImagenChequeCommandSchema = z.object({
   chequeId: z.string().optional(),
+  claveIdempotencia: z.string().nullable().optional(),
   imagenUrl: z.string().nullable().optional(),
 })
 
@@ -261,6 +269,7 @@ export const AutorizarCotPesoIncompletoRequestSchema = z.object({
 })
 
 export const AutorizarCotPesoIncompletoTransferenciaCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   motivo: z.string().nullable().optional(),
   version: z.number().int().nullable().optional(),
 })
@@ -314,6 +323,7 @@ export const CancelCompraCommandSchema = z.object({
 })
 
 export const CancelarFacturaCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   id: z.string().optional(),
   motivo: z.string().min(1).max(500).nullable().optional(),
 })
@@ -332,6 +342,7 @@ export const CancelarTransferenciaStockCommandSchema = z.object({
 export const CargarCodigoCotRequestSchema = z.object({ codigo: z.string().nullable().optional() })
 
 export const CargarCodigoCotTransferenciaCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   codigo: z.string().nullable().optional(),
   version: z.number().int().nullable().optional(),
 })
@@ -427,6 +438,7 @@ export const CerrarSesionRequestSchema = z.object({
 })
 
 export const CerrarVigenciaReglaComisionCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   hasta: z.string().optional(),
   id: z.string().optional(),
 })
@@ -673,6 +685,7 @@ export const AlcanceReglaComisionSchema = z.enum([
 
 export const CrearReglaComisionCommandSchema = z.object({
   alcance: AlcanceReglaComisionSchema.optional(),
+  claveIdempotencia: z.string().nullable().optional(),
   motivo: z.string().max(200).nullable().optional(),
   porcentaje: z.number().optional(),
   targetId: z.string().optional(),
@@ -778,6 +791,7 @@ export const CreateFraganciaCommandSchema = z.object({
 })
 
 export const CreateMedioPagoCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   comisionPorcentaje: z.number().min(0).max(100).optional(),
   diasAcreditacion: z.number().int().min(0).optional(),
   nombre: z.string().min(1).max(150).nullable().optional(),
@@ -867,10 +881,12 @@ export const CreateSocioCommandSchema = z.object({
 })
 
 export const CreateTipoGastoCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   nombre: z.string().min(1).max(150).nullable().optional(),
 })
 
 export const CreateTipoMovimientoInternoCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   nombre: z.string().min(1).max(150).nullable().optional(),
 })
 
@@ -954,7 +970,28 @@ export const DepositarChequesCommandSchema = z.object({
   cuentaDestinoId: z.string().optional(),
 })
 
+export const DesactivarCuentaCorrienteCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
+  id: z.string().optional(),
+})
+
+export const DesactivarReglaComisionCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
+  id: z.string().optional(),
+})
+
+export const DescartarBorradorCompraCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
+  compraId: z.string().optional(),
+})
+
+export const DescartarBorradorVentaCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
+  ventaId: z.string().optional(),
+})
+
 export const DespacharExpresoCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   numeroGuia: z.string().min(1).max(80).nullable().optional(),
   observacion: z.string().max(500).nullable().optional(),
   transportista: z.string().min(1).max(160).nullable().optional(),
@@ -1007,6 +1044,7 @@ export const EditarVentaDepositoCommandSchema = z.object({
 })
 
 export const EliminarCompraCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   compraId: z.string().optional(),
   motivo: z.string().min(1).max(280).nullable().optional(),
   version: z.number().int().nullable().optional(),
@@ -1043,6 +1081,7 @@ export const EmitirNotaCreditoCommandSchema = z.object({
 
 export const EmpacarVentaCommandSchema = z.object({
   cantidadBultos: z.number().int().gt(0).max(500).optional(),
+  claveIdempotencia: z.string().nullable().optional(),
   ventaId: z.string().optional(),
   version: z.number().int().optional(),
 })
@@ -1125,12 +1164,30 @@ export const GetVistaPreviaRentabilidadCompraQuerySchema = z.object({
   gastosOperativos: z.number().optional(),
 })
 
+export const GuardarComprobanteCompraRequestSchema = z.object({
+  alicuotas: z.array(AlicuotaComprobanteInputSchema).nullable().optional(),
+  claveIdempotencia: z.string().nullable().optional(),
+  cuitEmisor: z.string().nullable().optional(),
+  exento: z.number().optional(),
+  fecha: z.string().optional(),
+  letra: LetraComprobanteSchema.optional(),
+  noGravado: z.number().optional(),
+  numero: z.number().int().optional(),
+  puntoVenta: z.number().int().optional(),
+  razonSocialEmisor: z.string().nullable().optional(),
+  tipo: TipoComprobanteRecibidoSchema.optional(),
+  total: z.number().optional(),
+  tributos: z.array(TributoComprobanteInputSchema).nullable().optional(),
+})
+
 export const GuardarNotaPedidoCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   compraId: z.string().optional(),
   version: z.number().int().optional(),
 })
 
 export const GuardarPresupuestoCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   ventaId: z.string().optional(),
   version: z.number().int().optional(),
 })
@@ -1174,6 +1231,11 @@ export const PagarComisionVendedorCommandSchema = z.object({
 export const ReabrirPeriodoFiscalCommandSchema = z.object({
   motivo: z.string().min(1).max(500).nullable().optional(),
   periodo: z.number().int().optional(),
+})
+
+export const ReabrirPresupuestoCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
+  ventaId: z.string().optional(),
 })
 
 export const ReactivarSocioCommandSchema = z.object({
@@ -1245,6 +1307,7 @@ export const RecibirTrasladoEfectivoCommandSchema = z.object({
 })
 
 export const ReemplazarReglaComisionCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   id: z.string().optional(),
   motivo: z.string().max(200).nullable().optional(),
   porcentaje: z.number().optional(),
@@ -1591,6 +1654,7 @@ export const UpdateCategoriaCommandSchema = z.object({
 })
 
 export const UpdateCompraCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   depositoId: z.string().optional(),
   descuentoPorcentaje: z.number().min(0).max(100).optional(),
   detalles: z.array(CompraDetalleDtoSchema).nullable().optional(),
@@ -1620,6 +1684,7 @@ export const CambioDeTitularSchema = z.object({
 })
 
 export const UpdateCuentaCorrienteCommandSchema = z.object({
+  claveIdempotencia: z.string().nullable().optional(),
   depositoId: z.string().nullable().optional(),
   depositoIds: z.array(z.string()).nullable().optional(),
   esPrincipal: z.boolean().nullable().optional(),
@@ -1683,6 +1748,7 @@ export const UpdateMargenMinimoCommandSchema = z.object({
 
 export const UpdateMedioPagoCommandSchema = z.object({
   activo: z.boolean().optional(),
+  claveIdempotencia: z.string().nullable().optional(),
   comisionPorcentaje: z.number().min(0).max(100).optional(),
   cuentaPropiaDefaultId: z.string().nullable().optional(),
   diasAcreditacion: z.number().int().min(0).optional(),
@@ -1767,12 +1833,14 @@ export const UpdateSocioCommandSchema = z.object({
 
 export const UpdateTipoGastoCommandSchema = z.object({
   activo: z.boolean().optional(),
+  claveIdempotencia: z.string().nullable().optional(),
   id: z.string().optional(),
   nombre: z.string().min(1).max(150).nullable().optional(),
 })
 
 export const UpdateTipoMovimientoInternoCommandSchema = z.object({
   activo: z.boolean().optional(),
+  claveIdempotencia: z.string().nullable().optional(),
   id: z.string().optional(),
   nombre: z.string().min(1).max(150).nullable().optional(),
 })

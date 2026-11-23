@@ -2806,7 +2806,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DesactivarReglaComisionCommand"];
+                    "text/json": components["schemas"]["DesactivarReglaComisionCommand"];
+                    "application/*+json": components["schemas"]["DesactivarReglaComisionCommand"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -3580,7 +3586,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DescartarBorradorCompraCommand"];
+                    "text/json": components["schemas"]["DescartarBorradorCompraCommand"];
+                    "application/*+json": components["schemas"]["DescartarBorradorCompraCommand"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -3911,9 +3923,9 @@ export interface paths {
             };
             requestBody?: {
                 content: {
-                    "application/json": components["schemas"]["ComprobanteCompraInput"];
-                    "text/json": components["schemas"]["ComprobanteCompraInput"];
-                    "application/*+json": components["schemas"]["ComprobanteCompraInput"];
+                    "application/json": components["schemas"]["GuardarComprobanteCompraRequest"];
+                    "text/json": components["schemas"]["GuardarComprobanteCompraRequest"];
+                    "application/*+json": components["schemas"]["GuardarComprobanteCompraRequest"];
                 };
             };
             responses: {
@@ -6967,7 +6979,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DesactivarCuentaCorrienteCommand"];
+                    "text/json": components["schemas"]["DesactivarCuentaCorrienteCommand"];
+                    "application/*+json": components["schemas"]["DesactivarCuentaCorrienteCommand"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -7002,7 +7020,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ActivarCuentaCorrienteCommand"];
+                    "text/json": components["schemas"]["ActivarCuentaCorrienteCommand"];
+                    "application/*+json": components["schemas"]["ActivarCuentaCorrienteCommand"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -9113,6 +9137,56 @@ export interface paths {
                         "text/plain": components["schemas"]["EmisionArcaDtoResponse"];
                         "application/json": components["schemas"]["EmisionArcaDtoResponse"];
                         "text/json": components["schemas"]["EmisionArcaDtoResponse"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/facturas/{id}/arca/consulta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ConsultaArcaDtoResponse"];
+                        "application/json": components["schemas"]["ConsultaArcaDtoResponse"];
+                        "text/json": components["schemas"]["ConsultaArcaDtoResponse"];
                     };
                 };
                 /** @description Not Found */
@@ -16139,6 +16213,17 @@ export interface paths {
                         "text/json": components["schemas"]["RemitoDtoResponse"];
                     };
                 };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
                 /** @description Forbidden */
                 403: {
                     headers: {
@@ -20276,6 +20361,17 @@ export interface paths {
                         "text/json": components["schemas"]["UserDetailDto"];
                     };
                 };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProblemDetails"];
+                        "application/json": components["schemas"]["ProblemDetails"];
+                        "text/json": components["schemas"]["ProblemDetails"];
+                    };
+                };
             };
         };
         put: {
@@ -21139,7 +21235,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DescartarBorradorVentaCommand"];
+                    "text/json": components["schemas"]["DescartarBorradorVentaCommand"];
+                    "application/*+json": components["schemas"]["DescartarBorradorVentaCommand"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -21223,7 +21325,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ReabrirPresupuestoCommand"];
+                    "text/json": components["schemas"]["ReabrirPresupuestoCommand"];
+                    "application/*+json": components["schemas"]["ReabrirPresupuestoCommand"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -22221,6 +22329,11 @@ export interface components {
             /** Format: uuid */
             cuentaDestinoId?: string;
         };
+        ActivarCuentaCorrienteCommand: {
+            claveIdempotencia?: string | null;
+            /** Format: uuid */
+            id?: string;
+        };
         ActualizarAvisosTalonarioCommand: {
             /** Format: int32 */
             diasAvisoCai?: number;
@@ -22418,6 +22531,7 @@ export interface components {
             version?: number | null;
         };
         AnularRemitoCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             id?: string;
             motivo?: string | null;
@@ -22530,9 +22644,11 @@ export interface components {
             depositoIds?: string[] | null;
         };
         AsignarFotoFacturaProveedorCommand: {
+            claveIdempotencia?: string | null;
             fotoUrl?: string | null;
         };
         AsignarImagenChequeCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             chequeId?: string;
             imagenUrl?: string | null;
@@ -22590,6 +22706,7 @@ export interface components {
             motivo?: string | null;
         };
         AutorizarCotPesoIncompletoTransferenciaCommand: {
+            claveIdempotencia?: string | null;
             motivo?: string | null;
             /** Format: int32 */
             version?: number | null;
@@ -22900,6 +23017,7 @@ export interface components {
             motivoAnulacion?: string | null;
         };
         CancelarFacturaCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             id?: string;
             motivo?: string | null;
@@ -22925,6 +23043,7 @@ export interface components {
             codigo?: string | null;
         };
         CargarCodigoCotTransferenciaCommand: {
+            claveIdempotencia?: string | null;
             codigo?: string | null;
             /** Format: int32 */
             version?: number | null;
@@ -23135,6 +23254,7 @@ export interface components {
             refreshToken?: string | null;
         };
         CerrarVigenciaReglaComisionCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             id?: string;
             /** Format: date */
@@ -24072,6 +24192,32 @@ export interface components {
             numeroFila?: number;
             motivo?: string | null;
         };
+        ConsultaArcaDto: {
+            resultado: components["schemas"]["ResultadoConsultaArca"];
+            mensaje: string;
+            /** Format: int32 */
+            puntoVenta?: number | null;
+            /** Format: int64 */
+            numero?: number | null;
+            cae?: string | null;
+            /** Format: date */
+            caeVencimiento?: string | null;
+            /** Format: date */
+            fechaComprobante?: string | null;
+            observaciones: string[];
+            /** Format: date-time */
+            consultadoUtc: string;
+        };
+        ConsultaArcaDtoResponse: {
+            /** Format: int32 */
+            statusCode?: number;
+            succeeded?: boolean;
+            message?: string | null;
+            traceId?: string | null;
+            errors?: string[] | null;
+            data?: components["schemas"]["ConsultaArcaDto"];
+            codigo?: string | null;
+        };
         ContadoresMenuDto: {
             /** Format: int32 */
             autorizaciones?: number | null;
@@ -24246,6 +24392,7 @@ export interface components {
             uso?: components["schemas"]["UsoPuntoVenta"];
         };
         CrearReglaComisionCommand: {
+            claveIdempotencia?: string | null;
             alcance?: components["schemas"]["AlcanceReglaComision"];
             /** Format: uuid */
             targetId?: string;
@@ -24355,6 +24502,7 @@ export interface components {
             productoPadreId?: string | null;
         };
         CreateMedioPagoCommand: {
+            claveIdempotencia?: string | null;
             nombre?: string | null;
             requiereCaja?: boolean;
             /** Format: double */
@@ -24432,9 +24580,11 @@ export interface components {
             usuarioId?: string;
         };
         CreateTipoGastoCommand: {
+            claveIdempotencia?: string | null;
             nombre?: string | null;
         };
         CreateTipoMovimientoInternoCommand: {
+            claveIdempotencia?: string | null;
             nombre?: string | null;
         };
         CreateUserCommand: {
@@ -24711,6 +24861,26 @@ export interface components {
             listaPrecioId?: string | null;
             listaPrecioNombre?: string | null;
         };
+        DesactivarCuentaCorrienteCommand: {
+            claveIdempotencia?: string | null;
+            /** Format: uuid */
+            id?: string;
+        };
+        DesactivarReglaComisionCommand: {
+            claveIdempotencia?: string | null;
+            /** Format: uuid */
+            id?: string;
+        };
+        DescartarBorradorCompraCommand: {
+            claveIdempotencia?: string | null;
+            /** Format: uuid */
+            compraId?: string;
+        };
+        DescartarBorradorVentaCommand: {
+            claveIdempotencia?: string | null;
+            /** Format: uuid */
+            ventaId?: string;
+        };
         DescuentosDto: {
             periodo?: components["schemas"]["PeriodoDto"];
             periodoAnterior?: components["schemas"]["PeriodoDto"];
@@ -24733,6 +24903,7 @@ export interface components {
             codigo?: string | null;
         };
         DespacharExpresoCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             ventaId?: string;
             /** Format: int32 */
@@ -25081,6 +25252,7 @@ export interface components {
             codigo?: string | null;
         };
         EliminarCompraCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             compraId?: string;
             motivo?: string | null;
@@ -25130,6 +25302,7 @@ export interface components {
             items?: components["schemas"]["NotaCreditoItemInput"][] | null;
         };
         EmpacarVentaCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             ventaId?: string;
             /** Format: int32 */
@@ -25883,13 +26056,36 @@ export interface components {
             esValido: boolean;
             socios: components["schemas"]["SocioDuplicadoDto"][];
         };
+        GuardarComprobanteCompraRequest: {
+            tipo?: components["schemas"]["TipoComprobanteRecibido"];
+            letra?: components["schemas"]["LetraComprobante"];
+            /** Format: int32 */
+            puntoVenta?: number;
+            /** Format: int64 */
+            numero?: number;
+            /** Format: date */
+            fecha?: string;
+            cuitEmisor?: string | null;
+            razonSocialEmisor?: string | null;
+            /** Format: double */
+            noGravado?: number;
+            /** Format: double */
+            exento?: number;
+            /** Format: double */
+            total?: number;
+            alicuotas?: components["schemas"]["AlicuotaComprobanteInput"][] | null;
+            tributos?: components["schemas"]["TributoComprobanteInput"][] | null;
+            claveIdempotencia?: string | null;
+        };
         GuardarNotaPedidoCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             compraId?: string;
             /** Format: int32 */
             version?: number;
         };
         GuardarPresupuestoCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             ventaId?: string;
             /** Format: int32 */
@@ -27775,6 +27971,11 @@ export interface components {
             periodo?: number;
             motivo?: string | null;
         };
+        ReabrirPresupuestoCommand: {
+            claveIdempotencia?: string | null;
+            /** Format: uuid */
+            ventaId?: string;
+        };
         ReactivarSocioCommand: {
             /** Format: uuid */
             socioId?: string;
@@ -27988,6 +28189,7 @@ export interface components {
             diasSemana?: number[] | null;
         };
         ReemplazarReglaComisionCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             id?: string;
             /** Format: double */
@@ -28603,6 +28805,8 @@ export interface components {
             ok?: boolean;
             error?: string | null;
         };
+        /** @enum {string} */
+        ResultadoConsultaArca: "Autorizado" | "Rechazado" | "NoEncontrado" | "ErrorArca" | "SinRespuesta" | "Deshabilitada" | "OtraConfiguracion" | "SinNumero" | "NoElectronica";
         ResumenClaseAbcDto: {
             clase?: components["schemas"]["ClaseAbc"];
             /** Format: int32 */
@@ -29831,6 +30035,7 @@ export interface components {
             activo?: boolean;
         };
         UpdateCompraCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             id?: string;
             /** Format: uuid */
@@ -29858,6 +30063,7 @@ export interface components {
             cuentaCarteraChequesId?: string | null;
         };
         UpdateCuentaCorrienteCommand: {
+            claveIdempotencia?: string | null;
             /** Format: int32 */
             rowVersion?: number;
             nombre?: string | null;
@@ -29923,6 +30129,7 @@ export interface components {
             nuevoMargen?: number;
         };
         UpdateMedioPagoCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             id?: string;
             nombre?: string | null;
@@ -30034,12 +30241,14 @@ export interface components {
             usuarioId?: string;
         };
         UpdateTipoGastoCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             id?: string;
             nombre?: string | null;
             activo?: boolean;
         };
         UpdateTipoMovimientoInternoCommand: {
+            claveIdempotencia?: string | null;
             /** Format: uuid */
             id?: string;
             nombre?: string | null;
