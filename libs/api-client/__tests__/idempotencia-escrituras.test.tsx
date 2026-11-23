@@ -1,10 +1,10 @@
 import React from 'react'
 import { act, renderHook } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider, useMutation, type UseMutationResult } from '@tanstack/react-query'
-import { useConfirmarCompra, useRecibirCompra, borradorCompraApi } from '../compras'
+import { useConfirmarCompra, useRecibirCompra, borradorCompraApi, useAsignarFotoFacturaCompra, useGuardarComprobanteCompra, type GuardarCompraBody } from '../compras'
 import { useCreateSocio } from '../socios'
 import { useCrearEvento } from '../calendario'
-import { guardarBorradorVenta, useAutorizarVenta, useConvertirPresupuesto, useIniciarBorradorVenta } from '../ventas'
+import { guardarBorradorVenta, useAutorizarVenta, useConvertirPresupuesto, useDescartarBorradorVenta, useIniciarBorradorVenta } from '../ventas'
 import { useAbrirCaja } from '../finanzas'
 import { api } from '@/core/api/client'
 
@@ -42,6 +42,18 @@ const LINEA = { compraDetalleId: 'd1', cantidadRecibida: 2 }
 /** `borradorCompraApi.iniciar` es una llamada suelta (la usa `useCompraBorrador`): se la envuelve en una mutación para correr los mismos casos. */
 const useIniciarBorradorCompra = () =>
   useMutation({ mutationFn: (v: { proveedorId: string; depositoId: string }) => borradorCompraApi.iniciar(v.proveedorId, v.depositoId) })
+
+/** Las otras llamadas sueltas del borrador de compra (las encadena `useCompraBorrador`), envueltas igual. */
+const useGuardarBorradorCompra = () => useMutation({ mutationFn: (b: GuardarCompraBody) => borradorCompraApi.guardar(b) })
+const useGuardarNotaPedido = () =>
+  useMutation({ mutationFn: (v: { id: string; version: number }) => borradorCompraApi.guardarNota(v.id, v.version) })
+const useDescartarBorradorCompra = () => useMutation({ mutationFn: (id: string) => borradorCompraApi.descartar(id) })
+
+const COMPRA: GuardarCompraBody = {
+  id: 'c1', version: 3, proveedorId: 'pr1', depositoId: 'd1', gastosOperativos: 0, descuentoPorcentaje: 0,
+  detalles: [{ productoId: 'p1', cantidad: 2, costoUnitario: 10, monedaCosto: 'ARS', unidadCompra: 'Unidad' }],
+}
+const COMPROBANTE: Record<string, unknown> = { tipo: 'Factura', letra: 'A', puntoVenta: 3, numero: 1234, fecha: '2026-11-20', noGravado: 0, exento: 0 }
 
 const SOCIO = { razonSocial: 'Almacén Don José', cuit: '20123456786', tipoRaw: 1, direccion: 'Mitre 123' }
 const EVENTO = { tipo: 'Tarea', titulo: 'Visita', fechaInicio: '2026-11-20', avisarDiasAntes: 0, visibilidad: 'Personal' }
@@ -84,6 +96,32 @@ const casos: Caso[] = [
     nombre: 'alta de borrador de compra', metodo: 'post', url: '/api/v1/Compras/borradores',
     cuerpo: { proveedorId: 'pr1', depositoId: 'd1' },
     usar: useIniciarBorradorCompra, vars: { proveedorId: 'pr1', depositoId: 'd1' }, otras: { proveedorId: 'pr2', depositoId: 'd1' },
+  },
+  {
+    nombre: 'autoguardado del borrador de compra', metodo: 'put', url: '/api/v1/Compras/c1', cuerpo: { ...COMPRA },
+    usar: useGuardarBorradorCompra, vars: COMPRA, otras: { ...COMPRA, version: 4 },
+  },
+  {
+    nombre: 'guardar la nota de pedido', metodo: 'post', url: '/api/v1/Compras/c1/guardar-nota-pedido',
+    cuerpo: { compraId: 'c1', version: 3 },
+    usar: useGuardarNotaPedido, vars: { id: 'c1', version: 3 }, otras: { id: 'c1', version: 4 },
+  },
+  {
+    nombre: 'descartar el borrador de compra', metodo: 'post', url: '/api/v1/Compras/c1/descartar-borrador', cuerpo: {},
+    usar: useDescartarBorradorCompra, vars: 'c1', otras: 'c2',
+  },
+  {
+    nombre: 'foto de la factura del proveedor', metodo: 'put', url: '/api/v1/Compras/c1/foto-factura',
+    cuerpo: { fotoUrl: 'https://r2/f.jpg' },
+    usar: useAsignarFotoFacturaCompra, vars: { id: 'c1', fotoUrl: 'https://r2/f.jpg' }, otras: { id: 'c1', fotoUrl: null },
+  },
+  {
+    nombre: 'comprobante del proveedor', metodo: 'put', url: '/api/v1/Compras/c1/comprobante', cuerpo: { ...COMPROBANTE },
+    usar: useGuardarComprobanteCompra, vars: { id: 'c1', comprobante: COMPROBANTE }, otras: { id: 'c1', comprobante: { ...COMPROBANTE, numero: 1235 } },
+  },
+  {
+    nombre: 'descartar el borrador de venta', metodo: 'post', url: '/api/v1/Ventas/v1/descartar-borrador', cuerpo: {},
+    usar: useDescartarBorradorVenta, vars: 'v1', otras: 'v2',
   },
   {
     nombre: 'alta de socio comercial', metodo: 'post', url: '/api/v1/socios-comerciales', cuerpo: SOCIO,

@@ -48,7 +48,7 @@ describe('R7 · borradores (ResBorradores): como la franja "En curso" de la web'
     const alerta = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, botones) => botones?.find((x) => x.text === 'Descartar')?.onPress?.())
     pantalla([b()])
     await userEvent.press(screen.getByRole('button', { name: 'Descartar' }))
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador'))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador', { claveIdempotencia: expect.stringMatching(/^mobile-./) }))
     alerta.mockRestore()
   })
 

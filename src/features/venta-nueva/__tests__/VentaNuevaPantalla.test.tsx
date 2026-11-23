@@ -221,7 +221,7 @@ describe('venta nueva: cliente, borrador y autoguardado', () => {
     mockPost.mockResolvedValue(true)
     await userEvent.press(screen.getByRole('button', { name: 'Descartar borrador' }))
     await waitFor(() => expect(mockBack).toHaveBeenCalled())
-    expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Ventas/b1/descartar-borrador')
+    expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Ventas/b1/descartar-borrador', { claveIdempotencia: expect.stringMatching(/^mobile-./) })
   })
 })
 
@@ -548,6 +548,7 @@ describe('pestaña Cabecera', () => {
 describe('confirmar', () => {
   const pala = producto({ real: 100, disponible: 100 })
   const altas = () => mockPost.mock.calls.filter(([u]) => u === '/api/v1/Ventas')
+  const presupuestos = () => mockPost.mock.calls.filter(([u]) => String(u).endsWith('/guardar-presupuesto'))
   let alerta: jest.SpyInstance
   beforeEach(() => {
     alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => {})
@@ -582,7 +583,7 @@ describe('confirmar', () => {
       items: [{ productoId: 'p1', cantidad: 12, descuentoPorcentaje: 0 }], fechaEntrega: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
       claveIdempotencia: expect.stringMatching(/^mobile-/),
     })
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador')
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador', { claveIdempotencia: expect.stringMatching(/^mobile-./) })
   })
 
   it('un reintento tras un corte reusa la misma clave de idempotencia (no duplica el pedido)', async () => {
@@ -682,7 +683,7 @@ describe('confirmar', () => {
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', CON_LO_DE_ANTES)))
     expect(mockReplace).toHaveBeenCalledTimes(1)
     expect(altas()[1][1].claveIdempotencia).toBe(altas()[0][1].claveIdempotencia)
-    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador')
+    expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador', { claveIdempotencia: expect.stringMatching(/^mobile-./) })
     expect(screen.queryByText(/clave de idempotencia/)).toBeNull()
     expect(useCarritoVenta.getState().lineas).toEqual([])
   })
@@ -694,7 +695,7 @@ describe('confirmar', () => {
     expect(await screen.findByText(/Este pedido ya se estaba grabando/)).toBeTruthy()
     expect(screen.queryByText(/datos duplicados/)).toBeNull()
     expect(mockReplace).not.toHaveBeenCalled()
-    expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador')
+    expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Ventas/b1/descartar-borrador', expect.anything())
     alAlta(() => Promise.resolve({ ventaId: 'v9', version: 1, message: REPETIDA }))
     await confirmar()
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('v9', YA_GRABADO)))
@@ -825,7 +826,7 @@ describe('confirmar', () => {
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     await waitFor(() => expect(sync()).toHaveTextContent('Guardado'))
     await confirmarVenta()
-    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/guardar-presupuesto', { ventaId: 'b1', version: 8 }))
+    await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/b1/guardar-presupuesto', { ventaId: 'b1', version: 8, claveIdempotencia: expect.stringMatching(/^mobile-./) }))
     expect(altas()).toHaveLength(0)
     expect(mockReplace).toHaveBeenCalledWith(guardada('b1', ''))
   })
@@ -840,6 +841,20 @@ describe('confirmar', () => {
     await confirmarVenta()
     expect(await screen.findByText(/Un presupuesto no admite descuentos sobre tu tope\./, {}, ESPERA)).toBeTruthy()
     expect(mockReplace).not.toHaveBeenCalled()
+  })
+
+  it('presupuesto: el reintento de guardar-presupuesto tras un corte repite la clave y el resto del cuerpo', async () => {
+    mockTipo = 'Presupuesto'
+    await armar()
+    await waitFor(() => expect(sync()).toHaveTextContent('Guardado'), ESPERA)
+    mockPost.mockImplementationOnce(() => Promise.reject(new TypeError('Network request failed')))
+    await confirmarVenta()
+    await waitFor(() => expect(presupuestos()).toHaveLength(1))
+    await confirmarVenta()
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(guardada('b1', '')))
+    const [primero, reintento] = presupuestos().map(([, cuerpo]) => cuerpo as { claveIdempotencia?: string })
+    expect(primero.claveIdempotencia).toMatch(/^mobile-./)
+    expect(reintento).toEqual(primero)
   })
 
   it('guardar la venta marca el resumen de Inicio para volver a pedirlo (no pasa por una mutación de react-query)', async () => {

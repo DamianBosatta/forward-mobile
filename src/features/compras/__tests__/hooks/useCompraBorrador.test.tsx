@@ -191,7 +191,7 @@ describe('useCompraBorrador', () => {
     await act(() => result.current.elegirProveedor('p1'))
     act(() => result.current.setLineas([{ productoId: 'pr1', nombre: 'Balde', cantidad: 7, unidad: 'Unidad', unidadesPorUnidad: 1, costoUnitario: 900 }]))
     await act(() => result.current.descartar())
-    expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Compras/c1/descartar-borrador', {})
+    expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Compras/c1/descartar-borrador', { claveIdempotencia: expect.stringMatching(/^mobile-./) })
     await new Promise((r) => setTimeout(r, 1200))
     unmount()
     await new Promise((r) => setTimeout(r, 50))
@@ -210,10 +210,10 @@ describe('useCompraBorrador', () => {
     let listo = false
     const d = result.current.descartar().then(() => { listo = true })
     await new Promise((r) => setTimeout(r, 50))
-    expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Compras/c1/descartar-borrador', {})
+    expect(mockPost).not.toHaveBeenCalledWith('/api/v1/Compras/c1/descartar-borrador', expect.anything())
     await act(async () => { soltar(); await d })
     expect(listo).toBe(true)
-    expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Compras/c1/descartar-borrador', {})
+    expect(mockPost).toHaveBeenLastCalledWith('/api/v1/Compras/c1/descartar-borrador', { claveIdempotencia: expect.stringMatching(/^mobile-./) })
   })
 
   it('salir con un cambio pendiente y reabrir el mismo borrador: el GET espera al guardado de salida y trae lo guardado, sin 409 después', async () => {

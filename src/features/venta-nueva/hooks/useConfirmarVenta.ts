@@ -21,6 +21,8 @@ import { dejarMensajeDeVenta } from '../lib/mensajeDeGuardada'
 
 /** Una clave por intento de guardar la edición de una venta: el reintento o el doble toque manda la misma (ver `crearIntento`). */
 const intentoEdicion = crearIntento()
+/** Una clave por intento de guardar el presupuesto: el reintento tras un corte o un error del servidor repite la misma. */
+const intentoPresupuesto = crearIntento()
 
 interface Datos {
   clienteId: string
@@ -102,7 +104,9 @@ export function useConfirmarVenta(d: Datos) {
         ...(d.cabecera.condicionPago ? { condicionPago: d.cabecera.condicionPago } : {}),
       }, (cuerpo) => api.put<VentaActionResponseDto>(`/api/v1/Ventas/${ventaId}`, cuerpo))
     } else if (!d.esPedido && b.borrador) {
-      r = await api.post<VentaActionResponseDto>(`/api/v1/Ventas/${b.borrador.id}/guardar-presupuesto`, { ventaId: b.borrador.id, version: await b.flush() })
+      const ventaId = b.borrador.id
+      r = await conClave(intentoPresupuesto, { ventaId, version: await b.flush() }, (cuerpo) =>
+        api.post<VentaActionResponseDto>(`/api/v1/Ventas/${ventaId}/guardar-presupuesto`, cuerpo))
     } else {
       const cuerpo = (claveIdempotencia: string) => aAlta(d.lineas, d.descuentoGeneral, d.cabecera, {
         clienteId: d.clienteId, depositoId, esPedido: d.esPedido, claveIdempotencia,
