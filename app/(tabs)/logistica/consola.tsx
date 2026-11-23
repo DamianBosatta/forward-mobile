@@ -20,6 +20,7 @@ import { esChofer } from '@/src/components/layout/menuModules'
 import { useLogisticaStore } from '@/features/logistica/store/logistica.store'
 import { useHojaRutaGuardada } from '@/features/logistica/store/hojaRutaGuardada.store'
 import { RouteSelector } from '@/features/logistica/components/RouteSelector'
+import { AvisoHojaGuardada } from '@/features/logistica/components/AvisoHojaGuardada'
 import { HojaDeRutaVista } from '@/features/logistica/consola/HojaDeRutaVista'
 import { paradasCobroDe } from '@/features/cobros/paradaCobro'
 import { avisoDeFinalizar, paradasCobroSinResolver } from '@/features/logistica/consola/avisoFinalizar'
@@ -72,6 +73,7 @@ export default function ConsolaChoferScreen() {
   const { activeTripId, setActiveTripId, clearActiveTrip } = useLogisticaStore()
   // The open trip kept on the phone (its own persistence): it serves offline after any restart or OTA.
   const activeTrip = useHojaRutaGuardada((s) => s.hoja)
+  const guardadaEl = useHojaRutaGuardada((s) => s.guardadaEl)
   const guardarHoja = useHojaRutaGuardada((s) => s.guardar)
   const updateStopStatus = useHojaRutaGuardada((s) => s.updateStopStatus)
   const [rutaElegida, setRutaElegida] = useState<string | null>(null)
@@ -416,6 +418,8 @@ export default function ConsolaChoferScreen() {
       {!enLinea ? (
         <Notice tone="advertencia" title="Sin señal.">Seguí trabajando: se manda solo cuando vuelva.</Notice>
       ) : null}
+      {/* MR-R6-01: sin señal se sigue mostrando la hoja guardada; si no es la de hoy, se avisa su fecha. */}
+      {viaje === activeTrip ? <AvisoHojaGuardada enLinea={enLinea} guardadaEl={guardadaEl} /> : null}
       {guardado && esperando > 0 ? <Notice tone="info" title="Guardado sin señal.">Se manda cuando haya señal.</Notice> : null}
       {soloLectura ? <Notice tone="info">Esta hoja de ruta es de otro chofer: solo podés verla.</Notice> : null}
       {finalizada ? <Notice tone="exito" title="Viaje finalizado.">Quedó cerrado en el sistema.</Notice> : null}
