@@ -40,7 +40,7 @@ describe('Avisos: estados de la bandeja', () => {
   it('MB-7: sin avisos explica qué son y ofrece crear un evento, sin el enlace suelto "Nuevo evento"', async () => {
     pintar()
     await screen.findByRole('header', { name: 'No tenés avisos.' })
-    expect(screen.getByText('Los avisos salen de los eventos de tu calendario y de lo que pasa en tus ventas.')).toBeTruthy()
+    expect(screen.getByText('Acá te avisamos de tus ventas, cobros y pagos, vencimientos del calendario, facturación y stock.')).toBeTruthy()
     expect(screen.queryByLabelText('Nuevo evento')).toBeNull()
     await userEvent.press(screen.getByRole('button', { name: 'Crear evento en el calendario' }))
     expect(mockPush).toHaveBeenCalledWith('/calendario?nuevo=1')

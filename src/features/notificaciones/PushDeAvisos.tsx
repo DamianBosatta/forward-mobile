@@ -101,7 +101,7 @@ export function PushDeAvisos() {
       visible={autenticado && explicar && !ofertaDeHuella}
       variant="primary"
       title="Te avisamos cuando autoricen tus ventas"
-      message="Te llega al teléfono lo mismo que ves en Avisos. Lo podés cambiar después en los ajustes del teléfono."
+      message="Te llega a este equipo lo mismo que ves en Avisos. Lo podés cambiar después en los ajustes del equipo."
       confirmLabel="Activar avisos"
       cancelLabel="Ahora no"
       onConfirm={activar}

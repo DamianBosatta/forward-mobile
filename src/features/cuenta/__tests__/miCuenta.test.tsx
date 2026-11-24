@@ -113,10 +113,10 @@ describe('Mi cuenta reducida (bloque 12, T2: R15 y reglas mobile §14)', () => {
     expect(await screen.findByText('Apagada')).toBeTruthy()
   })
 
-  it('agrupa las filas con encabezados: Seguridad, En este teléfono y Equipo (solo con permiso)', () => {
+  it('agrupa las filas con encabezados: Seguridad, En este equipo y Equipo (solo con permiso)', () => {
     usuario({ permissions: [{ module: 'MOD_USUARIOS', canRead: true }] })
     pintar()
-    for (const t of ['Seguridad', 'En este teléfono', 'Equipo']) expect(screen.getByRole('header', { name: t })).toBeTruthy()
+    for (const t of ['Seguridad', 'En este equipo', 'Equipo']) expect(screen.getByRole('header', { name: t })).toBeTruthy()
   })
 
   it('apagar "Entrar con huella" lo guarda y borra la contraseña del teléfono', async () => {
@@ -146,10 +146,10 @@ describe('Mi cuenta reducida (bloque 12, T2: R15 y reglas mobile §14)', () => {
     await waitFor(() => expect(screen.queryByRole('switch', { name: 'Entrar con huella' })).toBeNull())
   })
 
-  it('"Avisos en el teléfono" lleva a las preferencias de avisos', async () => {
+  it('"Avisos en este equipo" lleva a las preferencias de avisos', async () => {
     usuario()
     pintar()
-    await userEvent.press(screen.getByRole('button', { name: 'Avisos en el teléfono' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Avisos en este equipo' }))
     expect(mockPush).toHaveBeenCalledWith('/avisos/preferencias')
   })
 
