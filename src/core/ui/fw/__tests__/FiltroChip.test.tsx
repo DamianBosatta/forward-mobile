@@ -3,6 +3,9 @@ import { StyleSheet } from 'react-native'
 import { render, screen } from '@testing-library/react-native'
 import { themeColors } from '@/libs/theme'
 import { FiltroChip } from '../FiltroChip'
+import { conTema } from '../__testing__/tema'
+
+afterEach(() => conTema('light'))
 
 describe('FiltroChip', () => {
   it.each([false, true])('se toca con el dedo: mide 44 de alto como mínimo (oscuro: %s)', (oscuro) => {
@@ -17,10 +20,11 @@ describe('FiltroChip', () => {
     expect(screen.getByTestId('chip-tilde')).toBeTruthy()
   })
 
-  it('el inactivo no lleva borde (receta FWD)', () => {
+  it.each(['light', 'dark'] as const)('el inactivo se ve sobre una tarjeta surface: relleno surface2, no surface (tema %s)', (tema) => {
+    conTema(tema)
     render(<FiltroChip label="Hay stock" activo={false} onPress={jest.fn()} />)
     const estilo = StyleSheet.flatten(screen.getByRole('button', { name: 'Hay stock' }).props.style)
-    expect(estilo.borderWidth ?? 0).toBe(0)
-    expect(estilo.backgroundColor).toBe(themeColors.light.surface)
+    expect(estilo.backgroundColor).toBe(themeColors[tema].surface2)
+    expect(estilo.backgroundColor).not.toBe(themeColors[tema].surface)
   })
 })
