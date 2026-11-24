@@ -1,3 +1,5 @@
+import { etiquetasDeRoles } from '@/core/utils/rol'
+
 interface UsuarioIdentidad {
   roles?: string[]
   username?: string
@@ -8,6 +10,6 @@ interface UsuarioIdentidad {
 export function lineasDeIdentidad(user: UsuarioIdentidad | null | undefined): { rol: string; email: string | null } {
   const email = user?.email || null
   const usuario = user?.username && user.username.toLowerCase() !== email?.toLowerCase() ? user.username : undefined
-  const rol = [user?.roles?.join(' · '), usuario].filter(Boolean).join(' · ')
+  const rol = [etiquetasDeRoles(user?.roles), usuario].filter(Boolean).join(' · ')
   return { rol, email }
 }

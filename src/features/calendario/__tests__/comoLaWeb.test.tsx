@@ -1,5 +1,6 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
+import { StyleSheet } from 'react-native'
 import { cleanup, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { CalendarioScreen } from '../CalendarioScreen'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -111,6 +112,15 @@ describe.each(TEMAS)('Calendario como la web (%s)', (tema) => {
     expect(within(screen.getByTestId('dia-2026-11-15')).getByText('Sin entregas')).toBeTruthy()
     expect(within(screen.getByTestId('dia-2026-11-12')).queryByText('Sin entregas')).toBeNull()
     expect(screen.getAllByText('Sin entregas')).toHaveLength(2)
+  })
+
+  it('MB-14: "Sin entregas" y "Sin eventos" se apilan con el mismo espaciado', async () => {
+    pintar()
+    const dia = within(await screen.findByTestId('dia-2026-11-15'))
+    const marca = dia.getByText('Sin entregas')
+    const vacio = dia.getByText('Sin eventos')
+    expect(marca.parent).toBe(vacio.parent)
+    expect(StyleSheet.flatten(marca.props.style).paddingHorizontal).toBe(StyleSheet.flatten(vacio.props.style).paddingHorizontal)
   })
 
   it('sin la configuración de entregas no marca ningún día', async () => {
