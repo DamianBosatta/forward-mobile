@@ -102,7 +102,7 @@ describe('ProductoCatalogoCard (CalleCatalogo)', () => {
       expect(onAbrirOferta).toHaveBeenCalledWith(p)
       r.unmount()
       render(<ProductoCatalogoCard producto={p} cantidad={12} verCantidades onAbrirOferta={onAbrirOferta} />)
-      await userEvent.press(screen.getByText('2 bultos ✎'))
+      await userEvent.press(screen.getByText('2 bultos'))
       expect(onAbrirOferta).toHaveBeenCalledTimes(2)
     })
   })

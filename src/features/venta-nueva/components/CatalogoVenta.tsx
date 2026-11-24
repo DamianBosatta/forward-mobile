@@ -4,7 +4,7 @@ import { ScanBarcode, Search } from 'lucide-react-native'
 import { FlashList } from '@shopify/flash-list'
 import { CeldaDeGrilla, paddingDeGrilla } from '@/core/ui/listaFlash'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Notice, StatusChip } from '@/core/ui/fw'
+import { Notice } from '@/core/ui/fw'
 import { EstadoDeConsulta, esqueletoDeFilas } from '@/core/ui/estados'
 import { mensajeDeError } from '@/core/api/errores'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
@@ -139,8 +139,10 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
           <FiltroChip label="Hay stock" activo={filtros.hayStock} onPress={() => alternar('hayStock')} />
         </ScrollView>
         {enVivo === undefined ? null : (
-          <View style={{ alignSelf: 'flex-start' }}>
-            <StatusChip estado={enVivo ? 'entregado' : 'pendiente'} label={enVivo ? 'Stock en vivo' : 'Sin conexión'} />
+          <View accessible accessibilityLabel={enVivo ? 'Stock en vivo' : 'Sin conexión'} style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
+            {/* Es un estado, no un filtro: punto y texto suelto, sin la forma de pastilla de los chips de arriba. */}
+            <View style={{ width: 8, height: 8, borderRadius: radii.pastilla, backgroundColor: enVivo ? c.chip.entregado.text : c.textSecondary }} />
+            <Text style={{ ...typeScale.secundario, color: enVivo ? c.chip.entregado.text : c.textSecondary }}>{enVivo ? 'Stock en vivo' : 'Sin conexión'}</Text>
           </View>
         )}
         {avisoEscaneo ? <Notice tone="advertencia">{avisoEscaneo}</Notice> : null}
