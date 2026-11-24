@@ -128,6 +128,8 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
   const sinRed = q.isError && esFallaDeRed(q.error)
   const visibles = lista.filter((v) => tieneMotivo(v.motivoPendienteAutorizacion, filtro))
   const hero = heroDeBandeja(visibles)
+  // Con la bandeja cargada y vacía no hay nada que elegir: el panel derecho no lo pide.
+  const sinVentas = lista.length === 0 && !q.isLoading && !q.isError
   const secundario = useMemo(() => [typeScale.secundario, { color: c.textSecondary }], [c.textSecondary])
 
   const abrir = useCallback((id: string) => {
@@ -153,6 +155,8 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
       {puedeDecidir ? null : (
         <MotivoDeshabilitado testID="motivo-sin-decidir">Para decidir necesitás el permiso de modificar ventas.</MotivoDeshabilitado>
       )}
+      {/* Sin ventas por autorizar no hay nada que filtrar: "Todas · 0" solo es ruido. */}
+      {lista.length > 0 ? (
       <View accessibilityRole="radiogroup" accessibilityLabel="Motivo" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
         {filtrosConConteo(lista).map((f) => (
           <FiltroChip
@@ -165,6 +169,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
           />
         ))}
       </View>
+      ) : null}
       {aviso ? <Notice tone="peligro">{aviso}</Notice> : null}
       {sinRed && lista.length > 0 ? <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice> : null}
     </View>
@@ -206,7 +211,7 @@ export function BandejaAutorizaciones({ detalle, rutaDetalle }: Props) {
       <TwoPane
         list={cuerpo}
         detail={isTabletLandscape && elegida ? detalle(elegida, () => setElegida(null)) : null}
-        emptyDetail={<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: space[6] }}><Text style={secundario}>Elegí una venta para decidir.</Text></View>}
+        emptyDetail={<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: space[6] }}><Text style={secundario}>{sinVentas ? 'Cuando una venta necesite tu autorización, la vas a poder revisar acá.' : 'Elegí una venta para decidir.'}</Text></View>}
       />
       <DecisionSheet
         decision={decidiendo?.decision ?? null}
