@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { AppState, RefreshControl, ScrollView, Text, View } from 'react-native'
-import { useNavigation, useRouter } from 'expo-router'
-import { DrawerActions } from "expo-router/react-navigation"
+import { useRouter } from 'expo-router'
 import { Plus, Search } from 'lucide-react-native'
 import { importe, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
@@ -10,11 +9,13 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 import { useVentas } from '@/libs/api-client/ventas'
 import type { Venta } from '@/libs/api-client/types'
 import { Button, StatusChip, TopBar, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
+import { useMenuLeading } from '@/core/ui/fw/useMenuLeading'
 import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { diaArgentina, msHastaProximaMedianocheArgentina, partesArgentina } from '@/core/utils/fecha'
 import { useHojasDeRuta } from '@/libs/api-client/logistica'
 import { DepositoSesion } from '@/features/deposito-sesion'
 import { useAccionAvisos } from '@/core/navigation/useAccionAvisos'
+import { clienteDeVenta } from '../lib/clienteDeVenta'
 import { usePendientesInicio } from '../hooks/usePendientesInicio'
 import { useCifrasGenerales, useDashboardResumen } from '../api/queries'
 import { PulsoDelNegocio } from './PulsoDelNegocio'
@@ -31,7 +32,7 @@ export function InicioScreen() {
   const c = useColors()
   const router = useRouter()
   const accionAvisos = useAccionAvisos()
-  const navigation = useNavigation()
+  const menuLeading = useMenuLeading()
   const insetInferior = useInsetInferior()
   const { width, isTablet } = useResponsive()
   const tablet = width >= 600
@@ -109,7 +110,7 @@ export function InicioScreen() {
         logo
         title={`Hola, ${nombre.split(' ')[0] || ''}`.trim()}
         subtitle={`${DIAS[hoy.diaSemana]} ${hoy.dia} de ${MESES[hoy.mes]}`}
-        leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
+        leading={menuLeading}
         actions={[{ icon: Search, accessibilityLabel: 'Buscar', onPress: () => router.push('/buscar') }, accionAvisos]}
       />
       <ScrollView
@@ -125,8 +126,8 @@ export function InicioScreen() {
             cantidadVentas={recientes.data?.totalCount ?? null}
             pedidosPendientes={pendientes.ventas?.pedidos.cantidad ?? null}
             rutasActivas={rutas.data?.length ?? null}
-            meDeben={cifras.meDeben}
             debo={cifras.debo}
+            onPedidos={() => router.push('/(tabs)/ventas?tipo=pedidos&estado=Confirmada' as never)}
             onRutas={canDo('MOD_VIAJES', 'read') ? () => router.push('/(tabs)/logistica/hojas' as never) : undefined}
           >
             {nuevaVentaEnTablet}
@@ -187,8 +188,7 @@ function FilaDeVenta({ venta: v, onPress }: { venta: Venta; onPress: () => void 
   const f = partesArgentina(new Date(v.fecha).getTime())
   const tipo = v.tipoOperacion === 1 ? 'Presupuesto' : 'Pedido'
   const numeroYHora = `${[tipo, v.codigoPedido].filter(Boolean).join(' ')} · ${dos(f.hora)}:${dos(f.minuto)}`
-  const direccion = v.direccionCliente || v.displayNameCliente
-  const nombre = v.direccionCliente ? v.displayNameCliente : null
+  const { titulo: direccion, nombre } = clienteDeVenta(v)
   const monto = formatImporte(v.totalAmount)
   const chip = chipForEstado('venta', v.estado)
   return (
@@ -197,7 +197,7 @@ function FilaDeVenta({ venta: v, onPress }: { venta: Venta; onPress: () => void 
       accessibilityLabel={[numeroYHora, direccion, nombre, monto, chip?.label].filter(Boolean).join(', ')}
       onPress={onPress}
       android_ripple={{ color: c.surface2 }}
-      style={{ minHeight: 68, flexDirection: 'row', alignItems: 'flex-start', gap: space[3], paddingVertical: space[4], paddingHorizontal: space[5] }}
+      style={{ minHeight: 68, flexDirection: 'row', alignItems: 'flex-start', gap: space[4], paddingVertical: space[4], paddingHorizontal: space[5] }}
     >
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={[typeScale.cuerpoDestacado, { color: c.text }]} numberOfLines={2}>{direccion}</Text>
