@@ -150,6 +150,9 @@ export function DetalleVenta({ id, onVolver }: Props) {
             <View style={{ gap: space[1] }}>
               {h.montoDescuentoAmount ? <TotalsRow label={`Descuento general ${mostrarNumero(h.porcentajeDescuento)} %`} importe={-h.montoDescuentoAmount} /> : null}
               {h.cargoFleteAmount ? <TotalsRow label="Flete" importe={h.cargoFleteAmount} /> : null}
+              {/* IVA encima del neto: con IVA (régimen nuevo) el servidor manda el neto y el IVA por alícuota; sin IVA, un solo total como siempre. */}
+              {(h.ivaAmount ?? 0) > 0 ? <TotalsRow label="Neto" importe={h.totalNetoAmount ?? 0} /> : null}
+              {(h.ivaAmount ?? 0) > 0 ? (h.ivaPorAlicuota ?? []).map((f) => <TotalsRow key={f.porcentaje} label={`IVA ${f.porcentaje} %`} importe={f.iva} />) : null}
               <TotalsRow label="Total" importe={h.totalAmount} destacado />
               {sim?.comisionActiva && sim.montoCobro > 0 ? (
                 <Text style={{ ...typeScale.secundario, alignSelf: 'flex-start', paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.surfaceAlt, color: c.text }}>

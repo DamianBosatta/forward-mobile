@@ -91,7 +91,8 @@ export function DetalleAutorizacion({ id, onVolver }: Props) {
   }
 
   // Con cantidades editadas el total es una estimación (la cuenta definitiva es la del servidor al confirmar).
-  const rotuloTotal = totales?.estimado ? 'Total estimado' : 'Total'
+  // Con IVA encima del neto (venta con factura del régimen nuevo) la cuenta local es del neto: se dice "sin IVA", no se le suma IVA acá.
+  const rotuloTotal = totales?.estimado ? ((venta.ivaAmount ?? 0) > 0 ? 'Total estimado sin IVA' : 'Total estimado') : 'Total'
   const totalMostrado = totales ? totales.total : venta.totalAmount
   const debajoDelMinimo = preview.data?.items ?? []
   const motivos = textosDeMotivos(venta.motivoPendienteAutorizacion, q.data?.detalleMotivos)

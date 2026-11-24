@@ -1,5 +1,5 @@
 import { ApiError, leerError } from '@/core/api/client'
-import { esError, esFallaDeRed, mensajeDeError } from '@/core/api/errores'
+import { esError, esFallaDeRed, mensajeDeError, totalCambiadoDe } from '@/core/api/errores'
 
 jest.mock('@/core/query/persistConfig', () => ({ mmkvPersister: { removeClient: jest.fn() } }))
 
@@ -88,5 +88,22 @@ describe('mensajeDeError: fallas de red y tiempo agotado', () => {
     expect(mensajeDeError(new ApiError(409, 'La clave ya existe.'))).toBe('La clave ya existe.')
     expect(mensajeDeError(new Error('otro'))).toBe('otro')
     expect(mensajeDeError(new TypeError('x is not a function'))).toBe('x is not a function')
+  })
+})
+
+describe('totalCambiadoDe: el 409 TotalCambiado de POST /Ventas', () => {
+  const data = { total: 121, lineas: [{ productoId: 'p1', precioBase: 100 }] }
+  it('con el código del catálogo da el total de hoy', () => {
+    expect(totalCambiadoDe(new ApiError(409, 'x', undefined, 'TotalCambiado', data))).toEqual({ total: 121 })
+  })
+  it('con el código sin catalogar (Desconocido) se reconoce por la forma de data', () => {
+    expect(totalCambiadoDe(new ApiError(409, 'x', undefined, 'Desconocido', data))).toEqual({ total: 121 })
+    expect(totalCambiadoDe(new ApiError(409, 'x', undefined, 'Desconocido', { total: 5 }))).toBeNull()
+  })
+  it('sin total en data devuelve null en el total; otro 409 o otro status no es este error', () => {
+    expect(totalCambiadoDe(new ApiError(409, 'x', undefined, 'TotalCambiado', {}))).toEqual({ total: null })
+    expect(totalCambiadoDe(new ApiError(409, 'x', undefined, 'Duplicado', data))).toBeNull()
+    expect(totalCambiadoDe(new ApiError(400, 'x', undefined, 'TotalCambiado', data))).toBeNull()
+    expect(totalCambiadoDe(new Error('x'))).toBeNull()
   })
 })

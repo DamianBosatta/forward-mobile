@@ -276,6 +276,16 @@ describe('Autorizar venta: el detalle', () => {
         expect(screen.getByText('$ 900,00')).toBeTruthy()
       })
 
+      it('venta con factura del régimen nuevo (IVA > 0): el total que se estima es del neto y lo dice "sin IVA"', async () => {
+        permisos('MOD_VENTAS', 'CAP_AUTORIZAR_VENTA')
+        pintar({ ...CON_DESCUENTO_Y_FLETE, venta: { ...CON_DESCUENTO_Y_FLETE.venta, totalNetoAmount: 1110, ivaAmount: 233.1, totalAmount: 1343.1 } })
+        await screen.findByText('Líneas (2)')
+        await userEvent.clear(screen.getByLabelText('Cantidad de Detergente Magistral'))
+        await userEvent.type(screen.getByLabelText('Cantidad de Detergente Magistral'), '9')
+        expect(screen.getAllByLabelText('Total estimado sin IVA: $ 1.020,00').length).toBe(2)
+        expect(screen.queryByLabelText(/^Total estimado: /)).toBeNull()
+      })
+
       it('quitar una línea (0) la descuenta del total', async () => {
         await editar({ 'Lavandina Ayudín': '0' })
         expect(screen.getAllByLabelText('Total estimado: $ 930,00').length).toBe(2)

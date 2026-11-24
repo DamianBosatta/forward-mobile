@@ -86,6 +86,8 @@ describe.each([['light', 390], ['dark', 390], ['light', 820], ['dark', 820]] as 
   it('el alta manda la condición vigente en condicionPago', async () => {
     await abrirRevision()
     await waitFor(() => expect(screen.getByRole('radio', { name: /15 días desde la entrega/ })).toBeChecked())
+    // Con factura (el default) Confirmar espera el cálculo del servidor.
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeEnabled())
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(cuerpoDelAlta()).toBeDefined())
     expect(cuerpoDelAlta().condicionPago).toEqual({ tipo: 'DiasDesdeEntrega', dias: 15 })
@@ -96,6 +98,8 @@ describe.each([['light', 390], ['dark', 390], ['light', 820], ['dark', 820]] as 
     await waitFor(() => expect(screen.getByRole('radio', { name: /15 días desde la entrega/ })).toBeChecked())
     await userEvent.press(screen.getByRole('radio', { name: 'Contado' }))
     expect(screen.getByRole('radio', { name: 'Contado' })).toBeChecked()
+    // Con factura (el default) Confirmar espera el cálculo del servidor.
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar venta' })).toBeEnabled())
     await userEvent.press(screen.getByRole('button', { name: 'Confirmar venta' }))
     await waitFor(() => expect(cuerpoDelAlta()).toBeDefined())
     expect(cuerpoDelAlta().condicionPago).toEqual({ tipo: 'Contado' })

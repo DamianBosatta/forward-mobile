@@ -3,11 +3,11 @@ import { Alert } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '@/core/api/client'
-import { esError } from '@/core/api/errores'
+import { esError, totalCambiadoDe } from '@/core/api/errores'
 import type { VentaActionResponseDto, VentaDetalleDto } from '@/libs/api-client/types'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import type { ClienteNombrable } from '@/features/clientes/lib/cliente'
-import { encolarSiFaltaSenal, loQueVio } from '@/features/venta-sin-senal'
+import { encolarSiFaltaSenal, llevaIva, loQueVio, totalVisto } from '@/features/venta-sin-senal'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { aAlta, aAutoguardado, errorDeAltaVenta, type Cabecera } from '../lib/payload'
 import { conClave, crearIntento, nuevaClaveIdempotencia } from '@/core/utils/idempotencia'
@@ -18,6 +18,9 @@ import { useDepositoDeVenta } from './useDepositoDeVenta'
 import type { useBorradorVenta } from './useBorradorVenta'
 import { invalidarPorCambioDeVenta } from '@/libs/api-client/invalidaciones'
 import { dejarMensajeDeVenta } from '../lib/mensajeDeGuardada'
+import type { TotalConIva } from '../lib/totalConIva'
+import { ERROR_IVA, MOTIVO_CALCULANDO_IVA } from '../components/TotalConIvaVista'
+import { formatImporte } from '@/core/ui/fw'
 
 /** Una clave por intento de guardar la edición de una venta: el reintento o el doble toque manda la misma (ver `crearIntento`). */
 const intentoEdicion = crearIntento()
@@ -37,6 +40,10 @@ interface Datos {
   alGuardar: () => void
   /** Editar una venta existente: PUT /Ventas/{id} con su versión, sin borrador. */
   edicion?: { ventaId: string; version: number } | null
+  /** Con factura: lo que el servidor calculó para esta misma venta. Solo el alta lo usa (`totalEsperado`); editar y convertir no. */
+  totalConIva?: TotalConIva
+  /** El servidor dijo que el total cambió (409): la pantalla vuelve a pedir el cálculo. */
+  alCambiarElTotal?: () => void
 }
 
 /** El servidor devolvió la venta que ya existía con esa clave (CreateVentaCommandHandler, operación repetida). */
@@ -115,17 +122,32 @@ export function useConfirmarVenta(d: Datos) {
       const invalido = errorDeAltaVenta(cuerpo(clave))
       if (invalido) throw new Error(invalido)
       const firma = JSON.stringify(cuerpo(''))
+      // Con factura se manda el total que el servidor calculó para esta venta. Sin él (sin señal o sin total) se manda el neto que
+      // vio el vendedor: el servidor la graba solo si no suma IVA, o contesta 409 TotalCambiado. Nunca va sin total.
+      const t = d.totalConIva
+      if (t?.estado === 'calculando') throw new Error(MOTIVO_CALCULANDO_IVA)
+      if (t?.estado === 'error' && !t.sinSenal) throw new Error(ERROR_IVA)
+      const visto = loQueVio(d.lineas, d.descuentoGeneral, d.cabecera.flete)
+      const totalEsperado = t?.estado === 'listo' && t.total !== null ? { totalEsperado: t.total }
+        : llevaIva(d.cabecera) ? { totalEsperado: totalVisto(visto) } : {}
       try {
-        r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', cuerpo(clave))
+        r = await api.post<VentaActionResponseDto>('/api/v1/Ventas', { ...cuerpo(clave), ...totalEsperado })
         // Grabada por un intento anterior con otro cuerpo: las ediciones de después no están en la venta.
         conLoDeAntes = yaExistia(r) && [...sinRespuesta.current].some((f) => f !== firma)
       } catch (e) {
+        const cambio = totalCambiadoDe(e)
+        if (cambio) {
+          d.alCambiarElTotal?.()
+          throw new Error(cambio.total !== null
+            ? `El total cambió: ahora es ${formatImporte(cambio.total)}. Revisalo y confirmá de nuevo.`
+            : 'El total cambió. Revisalo y confirmá de nuevo.')
+        }
         const grabada = ventaConOtroCuerpo(e)
         if (!grabada) {
           // Sin respuesta: no llegó (red) o un gateway cortó (5xx); el alta pudo haberse grabado igual.
           if (!(e instanceof ApiError) || e.status >= 500) sinRespuesta.current.add(firma)
           // Sin señal (V9): la venta queda en el teléfono con esta misma clave y se manda sola al volver la red.
-          const enCola = encolarSiFaltaSenal(usuarioId, e, { alta: cuerpo(clave), cliente: d.cliente ?? {}, visto: loQueVio(d.lineas, d.descuentoGeneral, d.cabecera.flete) })
+          const enCola = encolarSiFaltaSenal(usuarioId, e, { alta: { ...cuerpo(clave), ...totalEsperado }, cliente: d.cliente ?? {}, visto })
           if (enCola) {
             renovarClave()
             b.cerrar()
