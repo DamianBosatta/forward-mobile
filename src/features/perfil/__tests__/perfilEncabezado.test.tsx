@@ -28,7 +28,7 @@ describe('Mi cuenta: encabezado y servidor', () => {
   it('el email aparece una sola vez y el rol va solo en su línea', () => {
     render(<PerfilScreen />)
     expect(screen.getAllByText(/superadmin@forward\.com/)).toHaveLength(1)
-    expect(screen.getByText('AdministradorSistemas')).toBeTruthy()
+    expect(screen.getByText('Administrador de sistemas')).toBeTruthy()
   })
 
   it('el bloque Servidor se muestra solo en desarrollo', () => {

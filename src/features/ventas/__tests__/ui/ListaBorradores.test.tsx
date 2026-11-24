@@ -31,6 +31,12 @@ describe('R7 · borradores (ResBorradores): como la franja "En curso" de la web'
     expect(seguir).toHaveBeenCalledWith(expect.objectContaining({ id: 'b1' }))
   })
 
+  it('MV-8: sin borradores dice qué hacer, con la frase de siempre del vacío', () => {
+    pantalla([])
+    expect(screen.getByRole('header', { name: 'No tenés borradores.' })).toBeTruthy()
+    expect(screen.getByText('Empezá una venta nueva y, si no la terminás, queda guardada acá.')).toBeTruthy()
+  })
+
   it('descartar siempre pasa por la confirmación de la web y no descarta si se vuelve', async () => {
     const alerta = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined)
     pantalla([b()])

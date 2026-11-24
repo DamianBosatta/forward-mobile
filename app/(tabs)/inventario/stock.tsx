@@ -1,12 +1,10 @@
 import React from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { View } from 'react-native'
-import { useNavigation } from 'expo-router'
 import { textoDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
-import { DrawerActions } from "expo-router/react-navigation"
 import { useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { TopBar } from '@/core/ui/fw'
+import { TopBar, useMenuLeading } from '@/core/ui/fw'
 import { RequirePermission } from '@/core/ui'
 import { BusquedaBajoBarra } from '@/features/inventario/components/BusquedaBajoBarra'
 import { StockPorDeposito } from '@/features/inventario/components/StockPorDeposito'
@@ -18,7 +16,7 @@ const ANCHO_TABLET = 600
 /** Stock, solo ver, con la estructura de "Inventario & Stock" de la web (S16). Se abre buscando `?busqueda=` si viene de la ficha. */
 export default function StockScreen() {
   useRefrescarAlEnfocar()
-  const navigation = useNavigation()
+  const menu = useMenuLeading()
   const c = useColors()
   const { width } = useResponsive()
   const { busqueda: inicial } = useParametrosDeRuta({ busqueda: textoDeRuta(100) })
@@ -30,7 +28,7 @@ export default function StockScreen() {
         <TopBar
           title="Stock"
           subtitle="Solo consulta"
-          leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
+          leading={menu}
         />
         <BusquedaBajoBarra value={busqueda} onChangeText={setBusqueda} />
         <StockPorDeposito busqueda={busqueda} tablet={width >= ANCHO_TABLET} />

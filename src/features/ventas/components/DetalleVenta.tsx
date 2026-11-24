@@ -97,6 +97,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
   const telefono = cliente?.telefono ?? h.clienteTelefono ?? null
   const cobrar = () => router.push({ pathname: '/(tabs)/cuentas/cobro', params: { socioId: h.clienteId } } as never)
   const fecha = h.fecha ? new Date(h.fecha) : null
+  const conBarra = !(rechazada || esEstadoVenta(h.estado, 'Anulada'))
   const dato = (k: string, v: string) => (
     <View style={{ flex: 1, padding: space[4], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface, gap: space[1] }}>
       <Text style={sec}>{k}</Text>
@@ -108,7 +109,8 @@ export function DetalleVenta({ id, onVolver }: Props) {
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title={`${tipoDeVenta(h)} ${codigoDeVenta(h)}`} subtitle={nombre ? `${direccion} · ${nombre}` : direccion} leading={volver} />
       {pasos ? <LineaDeTiempo pasos={pasos} /> : null}
-      <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[4] }}>
+      {/* Con la barra de abajo, el margen del sistema lo lleva la barra; sin ella, el contenido. */}
+      <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + (conBarra ? 0 : insetInferior), gap: space[4] }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[2] }}>
           <Text style={sec}>{[fecha ? `${tituloDelDia(fecha)} ${horaDe(h.fecha)}` : null, h.vendedorNombre].filter(Boolean).join(' · ')}</Text>
           {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
@@ -143,15 +145,6 @@ export function DetalleVenta({ id, onVolver }: Props) {
               </Notice>
             ) : null}
             {h.motivoAnulacion ? <Notice tone="peligro" title="Se anuló">{h.motivoAnulacion}</Notice> : null}
-            {cobro ? (
-              <View style={{ gap: space[2] }}>
-                <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Cobro</Text>
-                <View testID="detalle-cobro" style={{ gap: space[2], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.lime }}>
-                  {cobro.filas.map((f) => <TotalsRow key={f.clave} tono="sobreLima" label={f.texto} importe={f.monto} />)}
-                  {cobro.saldo !== null ? <TotalsRow tono="sobreLima" destacado label="Saldo" importe={cobro.saldo} /> : null}
-                </View>
-              </View>
-            ) : null}
             <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Productos</Text>
             <LineasDeLaVenta detalles={q.data.detalles} />
             <View style={{ gap: space[1] }}>
@@ -164,6 +157,16 @@ export function DetalleVenta({ id, onVolver }: Props) {
                 </Text>
               ) : null}
             </View>
+            {/* El Total va antes que el Cobro: primero cuánto es, después cuánto se pagó y cuánto falta. */}
+            {cobro ? (
+              <View style={{ gap: space[2] }}>
+                <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: c.text }}>Cobro</Text>
+                <View testID="detalle-cobro" style={{ gap: space[2], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.lime }}>
+                  {cobro.filas.map((f) => <TotalsRow key={f.clave} tono="sobreLima" label={f.texto} importe={f.monto} />)}
+                  {cobro.saldo !== null ? <TotalsRow tono="sobreLima" destacado label="Saldo" importe={cobro.saldo} /> : null}
+                </View>
+              </View>
+            ) : null}
             {h.observaciones ? <Text style={sec}>{`Observaciones: ${h.observaciones}`}</Text> : null}
             {h.motivoAutorizacion?.trim() ? (
               <View style={{ gap: space[1] }}>
@@ -179,7 +182,7 @@ export function DetalleVenta({ id, onVolver }: Props) {
           </>
         )}
       </ScrollView>
-      {rechazada || esEstadoVenta(h.estado, 'Anulada') ? null : (
+      {!conBarra ? null : (
         <BarraDeLaVenta venta={q.data} acciones={acciones} conSaldo={(pagos.data?.saldoPendiente ?? 0) > 0} onCobrar={cobrar} />
       )}
     </View>

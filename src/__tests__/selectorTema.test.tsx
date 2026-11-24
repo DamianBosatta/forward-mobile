@@ -33,12 +33,12 @@ beforeEach(() => {
 })
 
 describe('selector de tema en Mi cuenta', () => {
-  it('ofrece Claro, Oscuro y Como el teléfono, con el modo actual elegido', () => {
+  it('ofrece Claro, Oscuro y Como el equipo, con el modo actual elegido', () => {
     render(<PerfilScreen />)
     expect(screen.getByLabelText('Tema')).toBeTruthy()
     expect(screen.getByRole('radio', { name: 'Claro' })).not.toBeSelected()
     expect(screen.getByRole('radio', { name: 'Oscuro' })).not.toBeSelected()
-    expect(screen.getByRole('radio', { name: 'Como el teléfono' })).toBeSelected()
+    expect(screen.getByRole('radio', { name: 'Como el equipo' })).toBeSelected()
   })
 
   it('elegir Oscuro cambia el modo a dark y lo persiste', async () => {
@@ -49,10 +49,10 @@ describe('selector de tema en Mi cuenta', () => {
     expect(screen.getByRole('radio', { name: 'Oscuro' })).toBeSelected()
   })
 
-  it('"Como el teléfono" vuelve a system y lo persiste', async () => {
+  it('"Como el equipo" vuelve a system y lo persiste', async () => {
     useThemeStore.setState({ mode: 'dark' })
     render(<PerfilScreen />)
-    await userEvent.press(screen.getByRole('radio', { name: 'Como el teléfono' }))
+    await userEvent.press(screen.getByRole('radio', { name: 'Como el equipo' }))
     expect(useThemeStore.getState().mode).toBe('system')
     expect(mockSetItem).toHaveBeenCalledWith('forward_theme_mode', 'system')
   })

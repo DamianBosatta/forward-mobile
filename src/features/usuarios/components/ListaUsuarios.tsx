@@ -1,8 +1,9 @@
 import React, { useCallback } from 'react'
+import { etiquetaDeRol, etiquetasDeRoles } from '@/core/utils/rol'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { FlatList, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
-import { Notice, StatusChip, TopBar, useInsetInferior } from '@/core/ui/fw'
+import { Notice, StatusChip, TopBar, useColumnaDeFormulario, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
 import { RequirePermission } from '@/core/auth/RequirePermission'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
@@ -33,6 +34,7 @@ export function ListaUsuarios() {
 
 function Contenido() {
   const insetInferior = useInsetInferior()
+  const columna = useColumnaDeFormulario()
   const c = useColors()
   const router = useRouter()
   const yo = useAuthStore((s) => s.user?.id)
@@ -74,7 +76,7 @@ function Contenido() {
         data={[0]}
         keyExtractor={() => 'usuarios'}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingVertical: space[4], gap: space[4], paddingBottom: space[12] + insetInferior, width: '100%', maxWidth: 640, alignSelf: 'center' }}
+        contentContainerStyle={[{ paddingVertical: space[4], gap: space[4], paddingBottom: space[12] + insetInferior }, columna]}
         renderItem={renderItem}
       />
     </View>
@@ -87,6 +89,8 @@ function FilaUsuario({ u, esYo }: { u: UserListDto; esYo: boolean }) {
   const nombre = nombreDe(u)
   const letras = iniciales([u.nombre, u.apellido].filter(Boolean).join(' ') || nombre)
   const activo = u.estaActivo !== false
+  // MB-8: el puesto o, sin puesto, los roles, con su nombre legible (nunca "AdministradorSistemas").
+  const puesto = u.puestoNombre ? etiquetaDeRol(u.puestoNombre) : etiquetasDeRoles(u.roles)
   return (
     <View
       style={{ minHeight: 76, paddingHorizontal: space[3], paddingVertical: space[3], flexDirection: 'row', alignItems: 'center', gap: space[3], borderRadius: radii.fila, backgroundColor: c.surface }}
@@ -96,9 +100,12 @@ function FilaUsuario({ u, esYo }: { u: UserListDto; esYo: boolean }) {
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text numberOfLines={1} style={[typeScale.cuerpoDestacado, { color: c.text }]}>{esYo ? `${nombre} · vos` : nombre}</Text>
-        {u.puestoNombre || u.roles?.length ? <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary }]}>{u.puestoNombre || u.roles?.join(' · ')}</Text> : null}
+        {puesto ? <Text numberOfLines={1} style={[typeScale.secundario, { color: c.textSecondary }]}>{puesto}</Text> : null}
       </View>
-      <StatusChip estado={activo ? 'entregado' : 'pendiente'} label={activo ? 'Activo' : 'Inactivo'} />
+      {/* MB-27: el chip se pega arriba por sí solo (`alignSelf: flex-start`); el envoltorio lo centra con la fila. */}
+      <View testID="estado-usuario" style={{ alignSelf: 'center' }}>
+        <StatusChip estado={activo ? 'entregado' : 'pendiente'} label={activo ? 'Activo' : 'Inactivo'} />
+      </View>
     </View>
   )
 }

@@ -22,9 +22,10 @@ export function CreditoDeudaVenta({ clienteId, tipo }: Props) {
   const disponible = s?.puedeVerSaldo === true && typeof s.creditoDisponible === 'number' ? s.creditoDisponible : null
   const vencida = s?.tieneDeudaVencida === true
   const montoVencido = vencida && typeof s?.deudaVencidaAmount === 'number' ? s.deudaVencidaAmount : null
-  const deuda = vencida ? (montoVencido !== null ? formatImporte(montoVencido) : 'Sí') : 'Ninguna'
+  const deuda = montoVencido !== null ? formatImporte(montoVencido) : 'Sí'
   const tarjeta = { flex: 1, padding: space[4], borderRadius: radii.fila, backgroundColor: c.surface }
-  if (disponible === null && s?.tieneDeudaVencida === undefined) return null
+  // Sin deuda vencida no hay nada que avisar: la tarjeta "Ninguna" solo bajaba el catálogo (MV-11).
+  if (disponible === null && !vencida) return null
   return (
     <View style={{ paddingHorizontal: space[4], paddingTop: space[3], gap: space[2] }}>
       <View style={{ flexDirection: 'row', gap: space[2] }}>
@@ -34,10 +35,10 @@ export function CreditoDeudaVenta({ clienteId, tipo }: Props) {
             <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: disponible < 0 ? c.chip.anulado.text : c.text }}>{textoDisponible(disponible)}</Text>
           </View>
         ) : null}
-        {s?.tieneDeudaVencida !== undefined ? (
+        {vencida ? (
           <View accessible accessibilityLabel={`Deuda vencida: ${deuda}`} style={tarjeta}>
             <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>Deuda vencida</Text>
-            <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: vencida ? c.chip.anulado.text : c.chip.entregado.text }}>{deuda}</Text>
+            <Text style={{ ...typeScale.cuerpoDestacado, ...importe, color: c.chip.anulado.text }}>{deuda}</Text>
           </View>
         ) : null}
       </View>

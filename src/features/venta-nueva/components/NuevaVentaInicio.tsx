@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Text, View } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
+import { FormContainer } from '@/core/ui/fw/FormContainer'
 import { EstadoDeConsulta } from '@/core/ui/estados/EstadoDeConsulta'
 import { Button, PieFijo, Segmented, TopBar } from '@/core/ui/fw'
 import { useUltimoPedido } from '../hooks/useUltimoPedido'
@@ -48,16 +49,20 @@ export function NuevaVentaInicio({ cargandoCliente, tipo, onTipo, onElegir, onNu
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Nueva venta" leading={{ kind: 'atras', onPress: onVolver }} />
       <PasosVenta paso={1} />
+      <FormContainer style={{ flex: 1 }}>
       <View style={{ paddingHorizontal: space[4], paddingTop: space[3], gap: space[2] }}>
         <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Elegí el cliente para ver sus precios y el stock.</Text>
         <Segmented options={TIPOS} value={tipo} onChange={onTipo} accessibilityLabel="Tipo de venta" />
         <SelectorDepositoVenta />
       </View>
       <ElegirClienteVenta onElegir={setElegido} onNuevoCliente={onNuevoCliente} seleccionadoId={elegido?.id} ultimoPedido={ultimo ? { fecha: ultimo.fecha, total: ultimo.totalAmount } : null} />
+      </FormContainer>
       <PieFijo>
+        <FormContainer style={{ gap: space[2] }}>
         <Button size="lg" label="Continuar a productos" iconoFinal={ChevronRight} disabled={!elegido} onPress={() => elegido && onElegir(elegido)}
           accessibilityLabel={elegido ? `Continuar a productos con ${direccionDeEntrega(elegido)}` : 'Continuar a productos'} />
         {elegido && ultimo ? <Button variant="secundario" label="Repetir el último pedido" onPress={() => onElegir(elegido, { delUltimo: true })} /> : null}
+        </FormContainer>
       </PieFijo>
     </View>
   )

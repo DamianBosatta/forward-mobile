@@ -43,8 +43,15 @@ describe('Preferencias de avisos', () => {
     expect(screen.getByRole('header', { name: 'Cobros y pagos' })).toBeTruthy()
     expect(screen.getByRole('header', { name: 'Calendario' })).toBeTruthy()
     expect(screen.queryByRole('header', { name: 'Facturación y stock' })).toBeNull()
-    expect(screen.getByText('Salta apenas llega')).toBeTruthy()
+    expect(screen.getByText('Salta en la web apenas llega')).toBeTruthy()
     expect(screen.getByText('Solo en la bandeja')).toBeTruthy()
+  })
+
+  it('MB-13 y MB-22: la explicación dice dónde salta y habla de "este equipo", no del teléfono', async () => {
+    pintar()
+    await screen.findByLabelText('Venta autorizada')
+    expect(screen.getByText(/saltan apenas llegan en la web; en este equipo se ven en la bandeja/)).toBeTruthy()
+    expect(screen.queryByText(/teléfono/i)).toBeNull()
   })
 
 
@@ -100,12 +107,12 @@ describe('Preferencias como venta (propuesta Cuenta, frames 12 y 13)', () => {
     for (const g of ['Ventas', 'Cobros y pagos', 'Calendario']) expect(StyleSheet.flatten(screen.getByTestId(`grupo-${g}`).props.style).borderWidth ?? 0).toBe(0)
   })
 
-  it('un crítico muestra el candado, su texto y el interruptor atenuado', async () => {
+  it('un crítico muestra el candado, su texto y el interruptor atenuado pero visible (MB-26)', async () => {
     pintar()
     const caja = await screen.findByLabelText('Caja sin cerrar')
     expect(within(caja).getByTestId('candado-critico')).toBeTruthy()
     expect(within(caja).getByText('Crítico: no se puede silenciar')).toBeTruthy()
-    expect(StyleSheet.flatten(within(caja).getByTestId('interruptor-atenuado').props.style).opacity).toBe(0.5)
+    expect(StyleSheet.flatten(within(caja).getByTestId('interruptor-atenuado').props.style).opacity).toBeGreaterThanOrEqual(0.7)
     const venta = screen.getByLabelText('Venta autorizada')
     expect(within(venta).queryByTestId('candado-critico')).toBeNull()
   })

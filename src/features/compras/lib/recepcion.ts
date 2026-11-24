@@ -4,15 +4,16 @@
  * `ui/CompraDetalle.tsx`, `core/domain/fecha-factura.ts` y `core/domain/vencimiento-estimado.ts`.
  * Deciden qué se ofrece; el servidor vuelve a chequear cada transición y es el que manda.
  */
+import { chipForEstado } from '@/core/ui/fw/estadoChip'
 import { leerNumero, mostrarNumero, numeroCompleto } from '@/core/utils/numero'
 
 export interface PasoCompra { label: string; estado: 'hecho' | 'actual' | 'pendiente' }
 
-/** El camino de una compra (lienzo R8): Nota de pedido → Confirmada → Recibida. Cancelada y Anulada no lo tienen. */
+/** El camino de una compra (lienzo R8): Nota de pedido → Por recibir → Recibida (el del medio dice lo mismo que el chip, MC-3). Cancelada y Anulada no lo tienen. */
 export function pasosDeCompra(estado: string): PasoCompra[] | null {
   const actual = ['NotaPedido', 'Confirmado', 'Entregado'].indexOf(estado)
   if (actual < 0) return null
-  return ['Nota de pedido', 'Confirmada', 'Recibida'].map((label, i) => ({
+  return ['Nota de pedido', chipForEstado('compra', 'Confirmado')?.label ?? 'Por recibir', 'Recibida'].map((label, i) => ({
     label,
     estado: i < actual ? 'hecho' : i === actual ? 'actual' : 'pendiente',
   }))

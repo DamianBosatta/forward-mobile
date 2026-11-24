@@ -175,7 +175,7 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
 
         {solapa === 'compras' ? (
           <View style={{ gap: space[3] }}>
-            <Titulo>Últimas ventas</Titulo>
+            <Titulo>Últimas compras</Titulo>
             {ventas.isLoading ? <Esqueletos bloques={FILAS_CARGANDO} /> : null}
             {ventas.error ? <Notice tone="peligro">{mensajeDelServidor(ventas.error, 'No se pudieron cargar las ventas.')}</Notice> : null}
             {!ventas.isLoading && !ventas.error && ultimas.length === 0 ? (

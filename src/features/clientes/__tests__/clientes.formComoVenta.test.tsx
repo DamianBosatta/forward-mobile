@@ -35,7 +35,7 @@ beforeEach(() => {
 it('cada grupo va en una tarjeta sin borde con su título', () => {
   renderConQuery(<ClienteFormScreen />)
 
-  for (const grupo of ['Entrega', 'Datos fiscales', 'Contacto', 'Cómo paga']) {
+  for (const grupo of ['Entrega', 'Datos fiscales', 'Datos de contacto', 'Cómo paga']) {
     const tarjeta = screen.getByTestId(`grupo-${grupo}`)
     expect(estilo(tarjeta)).toMatchObject({ backgroundColor: themeColors.light.surface, borderRadius: 30 })
     expect(within(tarjeta).getByRole('header', { name: grupo })).toBeTruthy()
@@ -58,14 +58,14 @@ it('"Alta provisoria" es un interruptor: prendido, el alta va como provisoria y 
   expect(post.mock.calls[0][1]).toMatchObject({ altaProvisoria: true })
 })
 
-it('la condición frente al IVA son filas con radio dentro de una tarjeta, como el paso Cliente de la venta', async () => {
+it('la condición frente al IVA son opciones en pastilla, la elegida rellena (igual que en Nuevo proveedor)', async () => {
   renderConQuery(<ClienteFormScreen />)
 
   const grupo = screen.getByLabelText('Condición frente al IVA')
   await userEvent.press(within(grupo).getByRole('radio', { name: 'Monotributista' }))
   const elegido = within(grupo).getByRole('radio', { name: 'Monotributista' })
   expect(elegido.props.accessibilityState).toEqual(expect.objectContaining({ checked: true }))
-  expect(estilo(elegido).backgroundColor).toBe('transparent')
+  expect(estilo(elegido).backgroundColor).toBe(themeColors.light.teal)
   expect(within(elegido).getByTestId('marca-radio-elegida')).toBeTruthy()
 })
 

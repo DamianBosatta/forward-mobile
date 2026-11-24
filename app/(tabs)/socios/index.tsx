@@ -2,13 +2,13 @@ import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { RefreshControl, SectionList, Text, View } from 'react-native'
-import { useNavigation, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
 import { opcionDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
-import { DrawerActions } from "expo-router/react-navigation"
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Fab, Notice, TopBar, formatImporte, useInsetInferior } from '@/core/ui/fw'
-import { textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
+import { Fab, Notice, TopBar, formatImporte, useInsetInferior, useMenuLeading } from '@/core/ui/fw'
+import { espacioBajoElFab } from '@/core/ui/fw/espacioDelFab'
+import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { useCartera } from '@/features/clientes/hooks/useCartera'
@@ -29,15 +29,13 @@ import { useRefrescarAlEnfocar } from '@/core/hooks/useRefrescarAlEnfocar'
 const ANCHO_DOS_PANELES = 900
 /** Valor del parametro de ruta `filtro` que abre la pestana Clientes en Deudores (lo usa Inicio). */
 export const FILTRO_DEUDORES = 'deudores'
-/** Alto del `Fab` (src/core/ui/fw/Fab.tsx): la lista deja ese lugar libre abajo. */
-const ALTO_FAB = 56
 
 /** Clientes (láminas Clientes y TabClientes): la cartera del vendedor, por dirección de entrega. */
 function ClientesScreen() {
   const c = useColors()
   const insetInferior = useInsetInferior()
   const router = useRouter()
-  const navigation = useNavigation()
+  const menu = useMenuLeading()
   const { width } = useResponsive()
   const { canCreate } = usePermissions()
   const [busqueda, setBusqueda] = useFiltroPersistente('socios.busqueda', '')
@@ -118,7 +116,7 @@ function ClientesScreen() {
         sections={secciones}
         keyExtractor={item => item.id}
         stickySectionHeadersEnabled
-        contentContainerStyle={{ paddingBottom: ALTO_FAB + space[6] + insetInferior + space[4] }}
+        contentContainerStyle={{ paddingBottom: espacioBajoElFab(insetInferior) }}
         renderSectionHeader={({ section }) => (
           <View testID={`encabezado-letra-${section.title}`} accessibilityRole="header" style={{ paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[2], backgroundColor: c.bg }}>
             <Text style={{ ...typeScale.etiqueta, color: c.textSecondary }}>{section.title}</Text>
@@ -158,8 +156,8 @@ function ClientesScreen() {
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
         title="Clientes"
-        subtitle="Mi cartera"
-        leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
+        subtitle={verDeudores ? 'Deudores' : 'Mi cartera'}
+        leading={menu}
       />
       {verDeudores ? null : <BuscadorCartera sobre="pantalla" grande valor={busqueda} onCambio={setBusqueda} />}
       <FiltrosCartera
@@ -177,9 +175,7 @@ function ClientesScreen() {
             {abierto ? (
               <FichaCliente key={abierto} id={abierto} />
             ) : (
-              <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center', marginTop: space[12] }}>
-                Elegí un cliente para ver su ficha.
-              </Text>
+              <EstadoDePantalla tipo="vacio" titulo="Elegí un cliente para ver su ficha." />
             )}
           </View>
         </View>

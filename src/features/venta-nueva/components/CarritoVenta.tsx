@@ -12,11 +12,12 @@ interface CarritoProps {
 }
 
 const ROTULO = 'Total estimado'
+const textoItems = (n: number) => `${n} ${n === 1 ? 'ítem' : 'ítems'}`
 
-/** Teléfono: barra fija abajo con el total estimado, productos y bultos, y "Ver venta" (lámina CalleCatalogo). */
+/** Teléfono: barra fija abajo con el total estimado, productos y bultos, y "Ver carrito" (lámina CalleCatalogo). */
 export function CarritoFlotante({ lineas, onVerVenta }: CarritoProps) {
   const c = useColors()
-  // La lámina la dibuja siempre: sin productos queda en 0 y "Ver venta" no responde.
+  // La lámina la dibuja siempre: sin productos queda en 0 y "Ver carrito" no responde.
   const vacio = lineas.length === 0
   const total = formatImporte(totalEstimado(lineas))
   return (
@@ -28,8 +29,8 @@ export function CarritoFlotante({ lineas, onVerVenta }: CarritoProps) {
         </View>
         <Text testID="carrito-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{total}</Text>
       </View>
-      {/* La lámina la dibuja siempre: sin productos queda en 0 y "Ver venta" no responde. */}
-      <Button size="lg" icon={ShoppingCart} label="Ver venta" accessibilityLabel={`Ver venta: ${lineas.length} ítems, ${ROTULO.toLowerCase()} ${total}`} disabled={vacio} onPress={onVerVenta} />
+      {/* La lámina la dibuja siempre: sin productos queda en 0 y "Ver carrito" no responde. */}
+      <Button size="lg" icon={ShoppingCart} label="Ver carrito" accessibilityLabel={`Ver carrito: ${textoItems(lineas.length)}, ${ROTULO.toLowerCase()} ${total}`} disabled={vacio} onPress={onVerVenta} />
     </PieFijo>
   )
 }
@@ -39,7 +40,7 @@ export function CarritoPanel({ lineas, onVerVenta }: CarritoProps) {
   const c = useColors()
   return (
     <View testID="carrito-panel" style={{ width: 360, borderLeftWidth: 1, borderLeftColor: c.border, backgroundColor: c.surface, padding: space[4], gap: space[3] }}>
-      <Text style={{ ...typeScale.seccion, color: c.text }}>{`Venta · ${lineas.length} ítems`}</Text>
+      <Text style={{ ...typeScale.seccion, color: c.text }}>{`Carrito · ${textoItems(lineas.length)}`}</Text>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: space[3] }}>
         {lineas.length === 0 && <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>Todavía no agregaste productos.</Text>}
         {lineas.map((l) => (
@@ -59,7 +60,7 @@ export function CarritoPanel({ lineas, onVerVenta }: CarritoProps) {
         <Text testID="carrito-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(totalEstimado(lineas))}</Text>
       </View>
       <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>El total final lo calcula el sistema al guardar.</Text>
-      <Button label="Ver venta" onPress={onVerVenta} disabled={lineas.length === 0} />
+      <Button label="Ver carrito" onPress={onVerVenta} disabled={lineas.length === 0} />
     </View>
   )
 }

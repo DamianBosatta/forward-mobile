@@ -44,6 +44,23 @@ it('lista la cartera por dirección y en el teléfono tocar un cliente abre su c
   expect(screen.getByText('Mostrando 1 de 142')).toBeTruthy()
 })
 
+it('el resumen de la lista no repite el saldo redondeado de la tarjeta de arriba', async () => {
+  get.mockImplementation(async (url: string) => {
+    if (url.startsWith('/api/v1/socios-comerciales?')) return { ...pagina([clienteDeLista()], 4), saldoTotal: 34868.5 }
+    if (url.endsWith('/estado-cuenta')) return estadoDeCuenta()
+    if (url.includes('/movimientos')) return paginaDeMovimientos([])
+    return fichaConCuentas()
+  })
+  renderConQuery(<CuentasCorrientesScreen />)
+  expect(await screen.findByText('Mostrando 1 de 4', {}, ESPERA)).toBeTruthy()
+})
+
+it('la segunda pestaña se llama "Deudas"', async () => {
+  conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_CLIENTES', canRead: true }, { module: 'MOD_PAGOS', canRead: true }])
+  renderConQuery(<CuentasCorrientesScreen />)
+  expect(await screen.findByRole('radio', { name: 'Deudas' }, ESPERA)).toBeTruthy()
+})
+
 it('en tablet horizontal la cuenta se abre al costado, sin salir de la lista', async () => {
   mockHorizontal.mockReturnValue(true)
   renderConQuery(<CuentasCorrientesScreen />)

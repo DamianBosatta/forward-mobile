@@ -2,11 +2,11 @@ import React, { memo, useCallback, useState } from 'react'
 import { FlashList } from '@shopify/flash-list'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { RefreshControl, Text, View } from 'react-native'
-import { useNavigation, useRouter } from 'expo-router'
-import { DrawerActions } from "expo-router/react-navigation"
+import { useRouter } from 'expo-router'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Fab, Notice, TopBar, useInsetInferior } from '@/core/ui/fw'
+import { Fab, Notice, TopBar, useInsetInferior, useMenuLeading } from '@/core/ui/fw'
+import { espacioBajoElFab } from '@/core/ui/fw/espacioDelFab'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { usePermissions } from '@/core/auth/RequirePermission'
@@ -33,7 +33,7 @@ export default function ProveedoresScreen() {
   const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
-  const navigation = useNavigation()
+  const leading = useMenuLeading()
   const { width } = useResponsive()
   const { canCreate } = usePermissions()
   const [busqueda, setBusqueda] = useFiltroPersistente('proveedores.busqueda', '')
@@ -82,7 +82,7 @@ export default function ProveedoresScreen() {
         data={proveedores}
         keyExtractor={item => item.id}
         renderItem={renderProveedor}
-        contentContainerStyle={{ paddingBottom: 88 + insetInferior }}
+        contentContainerStyle={{ paddingBottom: espacioBajoElFab(insetInferior) }}
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => { void refetch() }} tintColor={c.brandInk} />}
@@ -114,7 +114,7 @@ export default function ProveedoresScreen() {
       <TopBar
         title="Proveedores"
         subtitle="A quién le compramos"
-        leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
+        leading={leading}
       />
       <BuscadorCartera sobre="pantalla" grande valor={busqueda} onCambio={setBusqueda} etiqueta="Buscar proveedor" placeholder="Nombre o CUIT" />
 
@@ -125,9 +125,7 @@ export default function ProveedoresScreen() {
             {abierto ? (
               <FichaProveedor key={abierto} id={abierto} />
             ) : (
-              <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center', marginTop: space[12] }}>
-                Elegí un proveedor para ver su ficha.
-              </Text>
+              <EstadoDePantalla tipo="vacio" titulo="Elegí un proveedor para ver su ficha." />
             )}
           </View>
         </View>

@@ -94,7 +94,7 @@ export function ListaBorradores({ borradores, cargando, error, sinConexion = fal
               {onReintentar ? <Button label="Reintentar" variant="secundario" onPress={onReintentar} /> : null}
             </View>
           )
-          : <EstadoDePantalla tipo="vacio" titulo="No tenés borradores." />
+          : <EstadoDePantalla tipo="vacio" titulo="No tenés borradores." texto="Empezá una venta nueva y, si no la terminás, queda guardada acá." />
       }
     />
   )

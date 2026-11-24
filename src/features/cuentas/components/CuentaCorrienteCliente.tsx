@@ -61,14 +61,15 @@ function LineaDeDetalle({ partes }: { partes: string[] }) {
 
 /**
  * Un movimiento como una línea del carrito de la venta (propuesta "Clientes como venta", frame 13): la fecha en
- * pastilla, el detalle en una línea, el importe y el saldo a la derecha (lo cobrado en accentText con "−").
+ * pastilla, el detalle en una línea, el importe y el saldo a la derecha (lo cobrado en accentText, cada importe con su palabra).
  */
 function Movimiento({ m, tabla }: { m: MovimientoConCuenta; tabla?: boolean }) {
   const c = useColors()
   const fecha = formatToLocalTime(m.fecha, 'EEE d MMM')
   const esDebe = m.debe > 0
-  const monto = esDebe ? `+ ${formatImporte(m.debe)}` : `− ${formatImporte(m.haber)}`
-  const saldo = `Saldo ${formatImporte(m.saldoHistorico)}`
+  // Con palabra y no con signo: un cobro con "−" en verde se lee como pérdida (MP-4).
+  const monto = esDebe ? `Deuda ${formatImporte(m.debe)}` : `Cobro ${formatImporte(m.haber)}`
+  const saldo = `Saldo después ${formatImporte(m.saldoHistorico)}`
   const detalle = m.medioPagoNombre?.trim()
   const descripcion = descripcionDe(m)
   const vence = textoVencimiento(m.vencimiento)
@@ -238,7 +239,7 @@ export function CuentaCorrienteCliente({ socioId, onRegistrarCobro, conBarra = f
             </Tarjeta>
           ) : null}
           {movs.movimientos.length > 0 ? (
-            <View testID="lista-movimientos" style={{ gap: space[2] }}>
+            <View testID="lista-movimientos" style={{ gap: space[2], ...(isTabletLandscape ? { maxWidth: 760 } : null) }}>
               {movs.movimientos.map(m => (
                 <Movimiento key={`${m.cuenta}-${m.id}`} m={m} tabla={isTabletLandscape} />
               ))}

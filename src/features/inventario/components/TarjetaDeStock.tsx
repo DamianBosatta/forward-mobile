@@ -8,7 +8,7 @@ import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { mostrarNumero } from '@/core/utils/numero'
 import { getFullImageUrl } from '@/libs/api-client/media'
 import type { StockItem } from '@/libs/api-client/types'
-import { chipDeFilaStock, textoReservadas, textoStockReal } from '../lib/stock-presentacion'
+import { chipDeFilaStock, leyendaDeDisponible, textoReservadas, textoStockReal } from '../lib/stock-presentacion'
 
 /** Foto del producto o, sin foto, el ícono de paquete (web ProductoCard). */
 export function FotoDeProducto({ imageUrl, alto }: { imageUrl?: string | null; alto: number }) {
@@ -29,12 +29,12 @@ export function FotoDeProducto({ imageUrl, alto }: { imageUrl?: string | null; a
  * Bloque "disponible" (spec FWD §5, bloque de cantidad): lima con stock, warning "En alerta", danger "Sin stock".
  * Texto siempre `ink` y el estado siempre escrito.
  */
-export function BloqueDisponible({ cantidad, estado }: { cantidad: string; estado: 'entregado' | 'porAutorizar' | 'anulado' | null }) {
+export function BloqueDisponible({ cantidad, estado, numero = 0 }: { cantidad: string; estado: 'entregado' | 'porAutorizar' | 'anulado' | null; numero?: number }) {
   const c = useColors()
   const fondo = estado === 'porAutorizar' ? c.warning : estado === 'anulado' ? c.dangerFill : c.lime
-  const palabra = estado === 'porAutorizar' ? 'En alerta' : estado === 'anulado' ? 'Sin stock' : 'disponible'
+  const palabra = leyendaDeDisponible(estado ?? 'entregado', numero)
   return (
-    <View accessible={false} style={{ minWidth: 76, minHeight: 56, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radii.cantidad, backgroundColor: fondo }}>
+    <View accessible={false} style={{ minWidth: 88, minHeight: 56, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[4], paddingVertical: space[2], borderRadius: radii.cantidad, backgroundColor: fondo }}>
       <Text style={[typeScale.seccionGrande, importe, { color: c.ink }]}>{cantidad}</Text>
       <Text maxFontSizeMultiplier={1.3} style={[typeScale.etiquetaChip, { color: c.ink }]}>{palabra}</Text>
     </View>
@@ -67,9 +67,12 @@ export function TarjetaDeProducto({ item, onPress }: TarjetaProps) {
       style={{ flex: 1, minWidth: 0, gap: space[2], padding: space[4], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}
     >
       <FotoDeProducto imageUrl={item.imageUrl} alto={72} />
-      <ProductoIdentidad nombre={item.producto} marca={item.marca} codigo={item.codigoPropio} />
+      {/* flex 1: the identity absorbs the free height so every card's quantity block sits at the same bottom line */}
+      <View style={{ flex: 1 }}>
+        <ProductoIdentidad nombre={item.producto} marca={item.marca} codigo={item.codigoPropio} />
+      </View>
       <View style={{ alignSelf: 'flex-start' }}>
-        <BloqueDisponible cantidad={disponible} estado={chip?.estado === 'porAutorizar' || chip?.estado === 'anulado' ? chip.estado : 'entregado'} />
+        <BloqueDisponible numero={item.cantidadDisponible ?? 0} cantidad={disponible} estado={chip?.estado === 'porAutorizar' || chip?.estado === 'anulado' ? chip.estado : 'entregado'} />
       </View>
     </Pressable>
   )
@@ -154,7 +157,7 @@ export function FilaDeLista({ item, onPress, conDeposito, linea }: FilaListaProp
           <Text style={[typeScale.secundario, { color: c.textSecondary }]}>{textoReservadas(item.cantidadReservada, item.cantidadVirtual)}</Text>
         </View>
         <View accessible accessibilityLabel={`Disponible ${mostrarNumero(item.cantidadDisponible)}`} style={{ justifyContent: 'center' }}>
-          <BloqueDisponible cantidad={mostrarNumero(item.cantidadDisponible)} estado={chip?.estado === 'porAutorizar' || chip?.estado === 'anulado' ? chip.estado : 'entregado'} />
+          <BloqueDisponible numero={item.cantidadDisponible} cantidad={mostrarNumero(item.cantidadDisponible)} estado={chip?.estado === 'porAutorizar' || chip?.estado === 'anulado' ? chip.estado : 'entregado'} />
         </View>
       </Pressable>
       {linea ? <BotonFragancias abierta={linea.abierta} onPress={linea.onAlternar} /> : null}

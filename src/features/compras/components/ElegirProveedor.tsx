@@ -3,6 +3,7 @@ import { formatearCuit } from '@/libs/reglas/cuit'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
 import { Lock } from 'lucide-react-native'
+import { useRouter } from 'expo-router'
 import { Button, Field, FormContainer, MarcaRadio, Notice, PieFijo, formatImporte } from '@/core/ui/fw'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { useSocio, useSocios } from '@/libs/api-client/socios'
@@ -12,6 +13,8 @@ import { useComprasDelProveedor } from '@/features/proveedores/hooks/useProveedo
 import { formatToLocalDate } from '@/core/utils/fecha'
 import { franjaTexto } from '../lib/fecha'
 import { numeroDeCompra } from '../lib/numero'
+import { FALTAN_DATOS_DE_COMPRA } from '@/features/proveedores/lib/proveedor'
+import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { PasosCompra } from './PasosCompra'
 
 /** Cuántos proveedores van en "Recientes" y de cuántas compras se sacan. */
@@ -53,12 +56,14 @@ function recientesDe(compras: readonly { id: string; numero?: number | null; pro
  */
 export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
   const c = useColors()
+  const router = useRouter()
   const [busqueda, setBusqueda] = useState('')
   const enviada = useDebouncedValue(busqueda.trim(), 300)
   const [elegido, setElegido] = useState<string | null>(null)
   const ficha = useSocio(elegido ?? '')
   // "Última compra" y "Recientes" salen de GET /Compras (MOD_COMPRAS:Read): sin el permiso no se piden.
-  const puedeVerCompras = usePermissions().canDo('MOD_COMPRAS', 'read')
+  const { canDo } = usePermissions()
+  const puedeVerCompras = canDo('MOD_COMPRAS', 'read')
   const ultimas = useComprasDelProveedor(elegido ?? '', puedeVerCompras, 1)
   const ultima = ultimas.data?.items?.[0]
   const delServidor = useInfiniteCompras({ pageSize: COMPRAS_PARA_RECIENTES }, { enabled: puedeVerCompras })
@@ -66,9 +71,14 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
   const q = useSocios({ tipo: 2, activo: true, pageSize: 50, search: buscando ? enviada : undefined })
   const secundario = useMemo(() => [typeScale.secundario, { color: c.textSecondary }], [c.textSecondary])
 
-  const recientes = buscando || !puedeVerCompras ? [] : recientesDe(delServidor.data?.pages[0]?.items ?? [])
   const lista: FilaProveedor[] = (q.data?.items ?? []).map((p) => ({ id: p.id, nombre: p.razonSocial, cuit: p.cuit, falta: !!p.requiereCompletar }))
+  // MC-19: "Recientes" viene de las compras y no trae CUIT ni la marca de datos faltantes: se completan con la lista cargada.
+  const recientes = (buscando || !puedeVerCompras ? [] : recientesDe(delServidor.data?.pages[0]?.items ?? []))
+    .map((r) => { const l = lista.find((x) => x.id === r.id); return l ? { ...r, cuit: l.cuit, falta: l.falta } : r })
   const faltaElegido = ficha.data?.condicionesDeCompraFaltantes ?? []
+  // MC-2: completar las condiciones se hace en la edición del proveedor, con el mismo permiso que la ficha.
+  const puedeCompletar = !!ficha.data?.puedeEditar && canDo('MOD_PROVEEDORES', 'update')
+  const completarCondiciones = (id: string) => router.push({ pathname: '/(tabs)/proveedores/nuevo', params: { id } } as never)
   const condicion = ficha.data?.condicionPago?.descripcion ?? null
   const franja = franjaTexto(ficha.data?.franjaEntrega)
   const textoUltima = ultimas.isLoading ? 'Cargando…'
@@ -93,7 +103,7 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
         <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
           <Text style={[typeScale.cuerpoDestacado, { color: sel ? c.ink : c.text }]}>{p.nombre}</Text>
           {p.cuit ? <Text style={[typeScale.secundario, { color: sel ? c.ink : c.textSecondary }]}>{`CUIT ${formatearCuit(p.cuit)}`}</Text> : null}
-          {p.falta ? <Text style={[typeScale.secundario, { color: sel ? c.ink : c.chip.porAutorizar.text }]}>Faltan datos de compra: se completan en la web</Text> : null}
+          {p.falta ? <Text style={[typeScale.secundario, { color: sel ? c.ink : c.chip.porAutorizar.text }]}>{FALTAN_DATOS_DE_COMPRA}</Text> : null}
           {p.ultima ? <Text style={[typeScale.secundario, { color: sel ? c.ink : c.textSecondary }]}>{p.ultima}</Text> : null}
         </View>
       </Pressable>
@@ -115,12 +125,15 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
 
   return (
     <View style={{ flex: 1 }}>
-      <PasosCompra paso={1} />
+      {/* MC-22: la tarjeta de pasos se alinea con la columna del formulario (en tablet, 640 centrada). */}
+      <View style={{ paddingHorizontal: space[4] }}>
+        <FormContainer><PasosCompra paso={1} margen={0} /></FormContainer>
+      </View>
       <FlatList
         style={{ flex: 1 }}
         data={lista.length ? [lista] : []}
         keyExtractor={() => 'lista'}
-        extraData={[elegido, condicion, franja, textoUltima]}
+        extraData={[elegido, condicion, franja, textoUltima, faltaElegido.length, puedeCompletar]}
         contentContainerStyle={{ padding: space[4], gap: space[3] }}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
@@ -128,7 +141,7 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
             <Text style={secundario}>Elegí el proveedor para ver sus condiciones.</Text>
             <Field label="Buscar proveedor" placeholder="Nombre, CUIT o código" value={busqueda} onChangeText={setBusqueda} autoCorrect={false} />
             {faltantes ? (
-              <Notice tone="advertencia" title={`A ${faltantes.nombre} le falta ${faltantes.lista.join(' y ')}.`}>Completalo en la web para poder comprarle.</Notice>
+              <Notice tone="advertencia" title={`A ${faltantes.nombre} le falta ${faltantes.lista.join(' y ')}.`}>Completá las condiciones para poder comprarle.</Notice>
             ) : null}
             {error ? <Notice tone="peligro">{error}</Notice> : null}
             {recientes.length > 0 ? (
@@ -156,7 +169,12 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
         ListFooterComponent={elegido ? (
           <FormContainer>
             {faltaElegido.length > 0 ? (
-              <Notice tone="advertencia" title={`A ${ficha.data?.razonSocial ?? 'este proveedor'} le falta ${faltaElegido.join(' y ')}.`}>Completalo en la web para poder comprarle.</Notice>
+              <View style={{ gap: space[3] }}>
+                <Notice tone="advertencia" title={`A ${ficha.data?.razonSocial ?? 'este proveedor'} le falta ${faltaElegido.join(' y ')}.`}>
+                  {puedeCompletar ? 'Completá las condiciones para poder comprarle.' : 'Pedile a un administrador que lo complete.'}
+                </Notice>
+                {puedeCompletar && elegido ? <Button label="Completar condiciones" variant="secundario" onPress={() => completarCondiciones(elegido)} /> : null}
+              </View>
             ) : (
               // TODO API: las condiciones editables no existen en el servidor; las condiciones van de solo lectura.
               <View style={{ gap: space[1], padding: space[5], borderRadius: radii.tarjetaGrande, backgroundColor: c.surface }}>
@@ -164,15 +182,18 @@ export function ElegirProveedor({ onElegir, faltantes, error }: Props) {
                 {dato('Plazo de pago', condicion)}
                 {dato('Franja horaria', franja)}
                 {puedeVerCompras ? dato('Última compra', conNumero) : null}
-                <Text style={secundario}>Se cambian en la ficha del proveedor, en la web.</Text>
+                <Text style={secundario}>Se cambian en la ficha del proveedor.</Text>
               </View>
             )}
           </FormContainer>
         ) : undefined}
       />
       <PieFijo>
-        <Button size="lg" label="Continuar a productos" disabled={!elegido || faltaElegido.length > 0}
-          onPress={() => { if (elegido) onElegir(elegido) }} />
+        <FormContainer style={{ gap: space[2] }}>
+          <Button size="lg" label="Continuar a productos" disabled={!elegido || faltaElegido.length > 0}
+            onPress={() => { if (elegido) onElegir(elegido) }} />
+          {elegido && faltaElegido.length > 0 ? <MotivoDeshabilitado>Completá las condiciones del proveedor para continuar.</MotivoDeshabilitado> : null}
+        </FormContainer>
       </PieFijo>
     </View>
   )

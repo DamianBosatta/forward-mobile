@@ -1,6 +1,7 @@
 import React from 'react'
 import { iniciales } from '@/core/utils/texto'
-import { View, ScrollView } from 'react-native'
+import { etiquetasDeRoles } from '@/core/utils/rol'
+import { View, ScrollView, type LayoutChangeEvent, type ScrollViewInstance } from 'react-native'
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated'
 import { DrawerContentComponentProps, useDrawerStatus } from 'expo-router/drawer'
 import { useRouter } from 'expo-router'
@@ -77,6 +78,16 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
   const grupoDeLaRuta = grupos.flatMap((g) => g.items).find((it) => it.hijos?.some((h) => esRutaActiva(h, rutaActual)))?.id ?? null
   const desplegada = abierta ?? grupoDeLaRuta
 
+  // El ítem de la pantalla abierta queda a la vista: si cae bajo el pliegue de la lista, se desplaza hasta él una vez por ruta.
+  const lista = React.useRef<ScrollViewInstance>(null)
+  const posicion = React.useRef({ grupo: 0, item: 0, hecho: '' })
+  const verActivo = (cierra: boolean) => {
+    if (posicion.current.hecho === rutaActual) return
+    lista.current?.scrollTo({ y: Math.max(0, posicion.current.grupo + posicion.current.item - space[3]), animated: false })
+    if (cierra) posicion.current.hecho = rutaActual ?? ''
+  }
+  const esActivoElItem = (item: MenuItem) => esRutaActiva(item, rutaActual) || !!item.hijos?.some((h) => esRutaActiva(h, rutaActual))
+
   const irA = (item: MenuItem) => {
     safeHaptics.impact('light')
     router.push(item.href as never)
@@ -126,13 +137,46 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
         estiloEntrada,
       ]}
     >
-      <DrawerHeader iniciales={inicialesDeUsuario(user?.nombre, user?.apellido)} nombre={nombre} rol={user?.roles?.join(' · ')} oscuro={isTablet} insetSuperior={insets.top} />
+      <DrawerHeader iniciales={inicialesDeUsuario(user?.nombre, user?.apellido)} nombre={nombre} rol={etiquetasDeRoles(user?.roles)} oscuro={isTablet} insetSuperior={insets.top} />
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: space[1], paddingHorizontal: space[3], gap: 2 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        ref={lista}
+        testID="menu-lista"
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingTop: space[1], paddingHorizontal: space[3], gap: 2 }}
+        showsVerticalScrollIndicator
+        persistentScrollbar
+      >
         {grupos.map((g, i) => (
-          <View key={g.title ?? `grupo-${i}`} style={{ gap: 2 }}>
+          <View
+            key={g.title ?? `grupo-${i}`}
+            style={{ gap: 2 }}
+            onLayout={
+              g.items.some(esActivoElItem)
+                ? (e: LayoutChangeEvent) => {
+                    posicion.current.grupo = e.nativeEvent.layout.y
+                    verActivo(true)
+                  }
+                : undefined
+            }
+          >
             {g.title ? <DrawerGroupTitle oscuro={isTablet}>{g.title}</DrawerGroupTitle> : null}
-            {g.items.map(filaDeMenu)}
+            {g.items.map((item) =>
+              esActivoElItem(item) ? (
+                <View
+                  key={item.id}
+                  testID="menu-activo"
+                  onLayout={(e: LayoutChangeEvent) => {
+                    posicion.current.item = e.nativeEvent.layout.y
+                    verActivo(false)
+                  }}
+                >
+                  {filaDeMenu(item)}
+                </View>
+              ) : (
+                filaDeMenu(item)
+              ),
+            )}
           </View>
         ))}
       </ScrollView>

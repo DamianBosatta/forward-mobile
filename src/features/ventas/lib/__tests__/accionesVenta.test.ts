@@ -70,6 +70,12 @@ describe('acciones de una venta (reglas de la web, PermMatriz "2 · Ventas")', (
     expect(accionesDeVenta(pedido('EnPreparacion'), TODO).motivoNoEditable).toBe('Ya lo están preparando: no se puede editar. Para cambiarlo, hablá con el depósito.')
     expect(accionesDeVenta(pedido('Confirmada'), TODO).motivoNoEditable).toBeUndefined()
   })
+
+  it('MV-18: un pedido en ruta no manda al depósito: ya salió, dice que está en ruta', () => {
+    const a = accionesDeVenta(pedido('EnRuta'), TODO)
+    expect(a.motivoNoEditable).toBe('No se puede editar: el pedido está en ruta.')
+    expect(a.editar).toBe(false)
+  })
 })
 
 describe('motivo de la anulación (igual que la web)', () => {

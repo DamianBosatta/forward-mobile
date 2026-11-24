@@ -24,6 +24,7 @@ import {
 } from '@expo-google-fonts/manrope'
 import { colorScheme } from 'nativewind'
 import { useColors, useIsDark, useThemeStore } from '@/libs/theme'
+import { useResponsive } from '@/libs/useResponsive'
 import * as SplashScreen from 'expo-splash-screen'
 import { OfflineBanner } from '@/core/ui/OfflineBanner'
 import { AlmacenBloqueado } from '@/core/ui/AlmacenBloqueado'
@@ -37,6 +38,15 @@ import { EnvioVentasSinSenal } from '@/features/venta-sin-senal'
 import { EnvioConsolaSinSenal } from '@/features/logistica/cola'
 
 SplashScreen.preventAutoHideAsync()
+
+/**
+ * Íconos de la barra de estado según lo que hay pintado debajo. En teléfono, el fondo de la pantalla (oscuros en
+ * claro, claros en oscuro). En tablet, el menú fijo y el panel izquierdo del login son oscuros en cualquier tema,
+ * así que los íconos van claros (MB-19).
+ */
+export function estiloDeBarraDeEstado(isDark: boolean, isTablet: boolean): 'light' | 'dark' {
+  return isDark || isTablet ? 'light' : 'dark'
+}
 
 const queryClient = crearQueryClient()
 conectarCierreDeSesion(queryClient, asyncStoragePersister)
@@ -71,6 +81,7 @@ function RootLayoutNav() {
   })
   const colors = useColors()
   const isDark = useIsDark()
+  const { isTablet } = useResponsive()
   const modoTema = useThemeStore((state) => state.mode)
 
   // NativeWind aplica las variables de .dark (global.css) según su propio esquema. Con un modo fijo se
@@ -99,7 +110,7 @@ function RootLayoutNav() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       {/* La barra superior va sobre el fondo de la pantalla: íconos del sistema oscuros en claro y claros en oscuro. */}
-      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <StatusBar style={estiloDeBarraDeEstado(isDark, isTablet)} />
       <AuthGuardHandler />
       <AvisosAlVolver />
       <PushDeAvisos />

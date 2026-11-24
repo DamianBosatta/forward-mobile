@@ -54,7 +54,7 @@ describe('CatalogoVenta (agregar productos)', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Añadir Bettanin Pala Rebatible' }))
     expect(onAbrirOferta).toHaveBeenCalledWith(expect.objectContaining({ id: 'p6' }))
     act(() => useCarritoVenta.getState().agregar(mockProductos[1]))
-    await userEvent.press(within(screen.getByTestId('producto-p6')).getByText('1 bulto ✎'))
+    await userEvent.press(within(screen.getByTestId('producto-p6')).getByText('1 bulto'))
     expect(onAbrirOferta).toHaveBeenCalledTimes(2)
   })
 
@@ -92,7 +92,7 @@ describe('CatalogoVenta (agregar productos)', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Añadir Bettanin Pala Rebatible' }))
     expect(screen.getByText('2 productos · 1 bulto · 1 u')).toBeTruthy()
     expect(screen.getByTestId('carrito-total')).toHaveTextContent('$ 4.000,00')
-    await userEvent.press(screen.getByRole('button', { name: /^Ver venta/ }))
+    await userEvent.press(screen.getByRole('button', { name: /^Ver carrito/ }))
     expect(onVerVenta).toHaveBeenCalled()
   })
 
@@ -103,13 +103,13 @@ describe('CatalogoVenta (agregar productos)', () => {
     expect(within(screen.getByTestId('catalogo-encabezado')).getByRole('button', { name: 'Hay stock' })).toBeTruthy()
   })
 
-  it('V4: la barra del carrito se ve siempre: sin productos dice 0 y "Ver venta" no responde', async () => {
+  it('V4: la barra del carrito se ve siempre: sin productos dice 0 y "Ver carrito" no responde', async () => {
     const onVerVenta = jest.fn()
     render(<CatalogoVenta onVerVenta={onVerVenta} onAbrirOferta={abrirYAgregar} />)
     const barra = screen.getByTestId('carrito-barra')
     expect(within(barra).getByText('0 productos')).toBeTruthy()
     expect(within(barra).getByTestId('carrito-total')).toHaveTextContent('$ 0,00')
-    const boton = within(barra).getByRole('button', { name: /^Ver venta/ })
+    const boton = within(barra).getByRole('button', { name: /^Ver carrito/ })
     expect(boton).toBeDisabled()
     await userEvent.press(boton)
     expect(onVerVenta).not.toHaveBeenCalled()
@@ -123,8 +123,8 @@ describe('CatalogoVenta (agregar productos)', () => {
     expect(within(barra).getByText('1 producto · 1 u')).toBeTruthy()
     expect(within(barra).getByText('Total estimado')).toBeTruthy()
     expect(within(barra).getByTestId('carrito-total')).toHaveTextContent('$ 1.000,00')
-    expect(within(barra).getByRole('button', { name: /^Ver venta/ })).toHaveStyle({ backgroundColor: themeColors.light.primaryBg })
-    await userEvent.press(within(barra).getByText('Ver venta'))
+    expect(within(barra).getByRole('button', { name: /^Ver carrito/ })).toHaveStyle({ backgroundColor: themeColors.light.primaryBg })
+    await userEvent.press(within(barra).getByText('Ver carrito'))
     expect(onVerVenta).toHaveBeenCalledTimes(1)
   })
 

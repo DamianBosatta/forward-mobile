@@ -7,7 +7,7 @@ export interface FilaParaResolver {
   /** Lo que se cuenta, en singular y en plural: "pedido por autorizar" / "pedidos por autorizar". */
   nombre: [uno: string, varios: string]
   detalle: string
-  /** `null` = sin dato: la fila no se muestra (nunca un 0 inventado). */
+  /** `null` = sin dato y `0` = nada que resolver: la fila no se muestra. */
   cantidad: number | null
   /** Punto de color en lugar de la pastilla (atención, peligro, en curso). */
   punto: TonoPunto
@@ -16,7 +16,7 @@ export interface FilaParaResolver {
 
 /** "Para resolver" con los textos de la galería v2 (propuesta, frame 7): la cantidad en el título, un punto de color y la flecha. */
 export function ParaResolver({ filas }: { filas: FilaParaResolver[] }) {
-  const visibles = filas.filter((f): f is FilaParaResolver & { cantidad: number } => f.cantidad != null)
+  const visibles = filas.filter((f): f is FilaParaResolver & { cantidad: number } => f.cantidad != null && f.cantidad > 0)
   if (visibles.length === 0) return null
   return (
     <View style={{ paddingHorizontal: space[4] }}>

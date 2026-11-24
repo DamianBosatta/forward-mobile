@@ -20,6 +20,7 @@ import { useComprasList, type PeriodoCompras, type PestanaCompras } from '../hoo
 import { fechaHoraTexto, llegaTexto } from '../lib/fecha'
 import type { EstadoCompraRuta } from '@/features/listas/lib/filtroDeRuta'
 import { numeroDeCompra } from '../lib/numero'
+import { espacioBajoElFab } from '@/core/ui/fw/espacioDelFab'
 
 const PESTANAS: SegmentedOption<PestanaCompras>[] = [
   { value: 'pendientes', label: 'Pendientes' },
@@ -42,9 +43,14 @@ const ESTADOS_PENDIENTES: { value: EstadoCompraRuta | null; label: string }[] = 
 const productos = (n: number) => `${n} ${n === 1 ? 'producto' : 'productos'}`
 
 /** Fila memoizada: no se vuelve a pintar mientras la compra y `onAbrir` no cambien. */
-const FilaCompra = memo(function FilaCompra({ x, onAbrir }: { x: CompraDtoList; onAbrir: (id: string) => void }) {
+const FilaCompra = memo(function FilaCompra({ x, onAbrir, elegida }: { x: CompraDtoList; onAbrir: (id: string) => void; elegida: boolean }) {
+  const c = useColors()
   return (
-    <View style={{ marginBottom: space[3] }}>
+    // MC-25: en tablet la compra abierta se marca con un aro de la marca; sin elegir, el aro es transparente y el alto no cambia.
+    <View
+      testID={elegida ? 'fila-elegida' : undefined}
+      style={{ marginBottom: space[3], borderWidth: 2, borderRadius: radii.tarjeta, borderColor: elegida ? c.brand : 'transparent' }}
+    >
       <DocumentCard
         plano
         numero={numeroDeCompra(x)}
@@ -65,7 +71,7 @@ const FilaCompra = memo(function FilaCompra({ x, onAbrir }: { x: CompraDtoList; 
 /** Fila memoizada de un borrador: no se vuelve a pintar mientras el borrador y `onAbrir` no cambien. */
 const FilaBorrador = memo(function FilaBorrador({ b, onAbrir }: { b: BorradorCompra; onAbrir: (id: string) => void }) {
   const c = useColors()
-  const pie = `${b.cantidadLineas} ${b.cantidadLineas === 1 ? 'línea' : 'líneas'} · Guardado ${tituloDelDia(new Date(b.fechaModificacion)).toLowerCase()} ${horaDe(b.fechaModificacion)}`
+  const pie = `${productos(b.cantidadLineas)} · Guardado ${tituloDelDia(new Date(b.fechaModificacion)).toLowerCase()} ${horaDe(b.fechaModificacion)}`
   return (
     <Pressable
       accessibilityRole="button"
@@ -109,7 +115,7 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
   }, [isTabletLandscape, router])
   const abrirBorrador = useCallback((id: string) => router.push(`/(tabs)/compras/nueva?borrador=${id}` as never), [router])
   const secciones = useMemo(() => agruparPorDia(l.compras, (x) => x.fecha), [l.compras])
-  const renderCompra = useCallback(({ item }: { item: CompraDtoList }) => <FilaCompra x={item} onAbrir={abrir} />, [abrir])
+  const renderCompra = useCallback(({ item }: { item: CompraDtoList }) => <FilaCompra x={item} onAbrir={abrir} elegida={isTabletLandscape && item.id === elegida} />, [abrir, isTabletLandscape, elegida])
   const renderBorrador = useCallback(({ item }: { item: BorradorCompra }) => <FilaBorrador b={item} onAbrir={abrirBorrador} />, [abrirBorrador])
 
   const secundario = [typeScale.secundario, { color: c.textSecondary }]
@@ -126,9 +132,11 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
   const filtros = (
     <View style={{ gap: space[3], paddingBottom: space[2] }}>
       <Field label="Buscar" placeholder="Proveedor o número" value={l.busqueda} onChangeText={l.setBusqueda} autoCorrect={false} />
+      <Text style={[typeScale.etiqueta, { color: c.textSecondary }]}>Fecha</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityLabel="Período" contentContainerStyle={{ gap: space[2] }}>
         {PERIODOS.map((p) => <FiltroChip key={p.value} label={p.label} activo={p.value === l.periodo} onPress={() => l.setPeriodo(p.value)} />)}
       </ScrollView>
+      {l.pestana === 'pendientes' ? <Text style={[typeScale.etiqueta, { color: c.textSecondary }]}>Tipo</Text> : null}
       {l.pestana === 'pendientes' ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" accessibilityLabel="Estado" contentContainerStyle={{ gap: space[2] }}>
           {ESTADOS_PENDIENTES.map((e) => {
@@ -147,6 +155,9 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
           </View>
           <Text style={[typeScale.etiqueta, { color: c.text, paddingHorizontal: space[3], paddingVertical: space[1], borderRadius: radii.pastilla, backgroundColor: c.surfaceAlt }]}>{l.tarjeta.cuenta}</Text>
         </View>
+      ) : l.resumenCargando ? (
+        // MC-11: reserva el lugar de la tarjeta de totales para que la lista no salte cuando llegan los datos.
+        <View testID="totales-cargando" style={{ height: 96, borderRadius: radii.tarjetaGrande, backgroundColor: c.surface2 }} />
       ) : null}
       {l.contador ? <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{l.contador}</Text> : null}
       {l.resumenTexto ? <Text style={secundario}>{l.resumenTexto}</Text> : null}
@@ -170,7 +181,8 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
       sections={secciones}
       keyExtractor={(x) => x.id}
       ListHeaderComponent={filtros}
-      contentContainerStyle={{ padding: space[4], paddingBottom: space[12] * 2 + insetInferior }}
+      extraData={elegida}
+      contentContainerStyle={{ padding: space[4], paddingBottom: espacioBajoElFab(insetInferior) }}
       renderSectionHeader={({ section }) => (
         <Text accessibilityRole="header" style={[typeScale.cuerpoDestacado, { color: c.textSecondary, backgroundColor: c.bg, paddingVertical: space[2] }]}>{section.titulo}</Text>
       )}
@@ -193,7 +205,7 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
     <FlatList<BorradorCompra> {...LISTA_LARGA_PROPS}
       data={l.borradores}
       keyExtractor={(b) => b.id}
-      contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[3] }}
+      contentContainerStyle={{ padding: space[4], paddingBottom: espacioBajoElFab(insetInferior), gap: space[3] }}
       ListHeaderComponent={<Notice tone="info">Los borradores se guardan solos mientras cargás una compra. Tocá uno para seguirlo.</Notice>}
       renderItem={renderBorrador}
       ListEmptyComponent={
@@ -228,7 +240,7 @@ export function ListaCompras({ detalle, estadoDeRuta = null }: Props) {
           </View>
         }
         detail={isTabletLandscape && elegida ? detalle(elegida, () => setElegida(null)) : null}
-        emptyDetail={<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: space[6] }}><Text style={secundario}>Elegí una compra para ver el detalle.</Text></View>}
+        emptyDetail={<EstadoDePantalla tipo="vacio" titulo="Elegí una compra para ver el detalle." />}
       />
     </View>
   )

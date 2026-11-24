@@ -17,7 +17,10 @@ interface Props {
   onHoyMedido?: (y: number) => void
 }
 
-/** La semana de lunes a domingo, un día debajo del otro, como la web en teléfono (`VistaSemanal`). */
+/**
+ * La semana de lunes a domingo: un día debajo del otro en toda orientación, como la web en teléfono (`VistaSemanal`).
+ * No es grilla de siete columnas: con ~83 dp por día no entran las tarjetas de evento.
+ */
 export function VistaSemanal({ dias, hoy, porDia, onAbrir, entregas, onHoyMedido }: Props) {
   const c = useColors()
   return (
@@ -38,10 +41,11 @@ export function VistaSemanal({ dias, hoy, porDia, onAbrir, entregas, onHoyMedido
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', paddingVertical: space[1] + 2, paddingHorizontal: space[2], borderRadius: radii.fila, backgroundColor: esHoy ? c.lime : 'transparent' }}>
               <Text accessibilityRole="header" style={{ ...typeScale.cuerpoDestacado, color: tinta }}>{cabeceraDeDia(d)}</Text>
               {esHoy ? <Text style={{ ...typeScale.etiqueta, color: tinta }}>Hoy</Text> : null}
-              {marca?.feriado || marca?.sinEntregas ? (
-                <Text style={{ ...typeScale.secundario, color: esHoy ? tinta : c.textSecondary, flexBasis: '100%' }}>{marca.feriado ?? 'Sin entregas'}</Text>
-              ) : null}
             </View>
+            {/* MB-14: la marca del día va en el cuerpo, con el mismo texto y espaciado que "Sin eventos", no pegada a la cabecera. */}
+            {marca?.feriado || marca?.sinEntregas ? (
+              <Text style={{ ...typeScale.secundario, color: c.textSecondary, paddingHorizontal: space[2] }}>{marca.feriado ?? 'Sin entregas'}</Text>
+            ) : null}
             {delDia.length === 0 ? (
               <Text style={{ ...typeScale.secundario, color: c.textSecondary, paddingHorizontal: space[2] }}>Sin eventos</Text>
             ) : (

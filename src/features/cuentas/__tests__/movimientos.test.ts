@@ -49,4 +49,9 @@ describe('texto de vencimiento e imputación', () => {
     expect(descripcionDe({ referencia: 'Cobro', comprobante: null })).toBe('Cobro')
     expect(descripcionDe({ referencia: 'Cobro' })).toBe('Cobro')
   })
+
+  it('el concepto siempre empieza con mayúscula', () => {
+    expect(descripcionDe({ referencia: 'revisión visual' })).toBe('Revisión visual')
+    expect(descripcionDe({ referencia: 'revisión visual', comprobante: 'A1' })).toBe('Revisión visual · A1')
+  })
 })

@@ -4,6 +4,7 @@ import { themeColors, useThemeStore } from '@/libs/theme'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, userEvent } from '@testing-library/react-native'
 import { crearQueryClient } from '@/core/query/queryClient'
+import { fechaCorta } from '@/core/utils/fecha'
 import { HojasDeRutaScreen } from '../components/HojasDeRutaScreen'
 
 const mockGet = jest.fn()
@@ -26,17 +27,36 @@ const pintar = () => render(<QueryClientProvider client={crearQueryClient({ retr
 
 beforeEach(() => jest.clearAllMocks())
 
+describe('Hojas de ruta de la empresa: filas y bloque', () => {
+  it('MD-9: the subtitle says "Todas las hojas"', async () => {
+    mockGet.mockResolvedValue([])
+    pintar()
+    await screen.findByText('No hay hojas de ruta en curso.')
+    expect(screen.getByText('Todas las hojas')).toBeTruthy()
+    expect(screen.queryByText('De toda la empresa')).toBeNull()
+  })
+
+  it('MD-22: the quantity block has a fixed width, so every row lines up', async () => {
+    mockGet.mockResolvedValue([HOJA('aaaaaaaa-1111', 'Juan Pérez', 'AB123CD', 4), HOJA('bbbbbbbb-2222', 'Ana Gómez', 'XY987ZT', 12)])
+    pintar()
+    await screen.findByText('Juan Pérez')
+    const anchos = screen.getAllByTestId('bloque-entregas').map((b) => StyleSheet.flatten(b.props.style))
+    expect(anchos).toHaveLength(2)
+    for (const e of anchos) { expect(e.width).toBeGreaterThanOrEqual(72); expect(e.minWidth).toBeUndefined() }
+  })
+})
+
 describe('Hojas de ruta de la empresa', () => {
   it('lista chofer, vehículo, entregas y estado de cada hoja', async () => {
     mockGet.mockResolvedValue([HOJA('aaaaaaaa-1111', 'Juan Pérez', 'AB123CD', 4), HOJA('bbbbbbbb-2222', 'Ana Gómez', 'XY987ZT', 1)])
     pintar()
     expect(await screen.findByText('Juan Pérez')).toBeTruthy()
-    expect(screen.getByText('AB123CD')).toBeTruthy()
+    expect(screen.getByText('Vehículo AB123CD')).toBeTruthy()
     expect(screen.getByText('4')).toBeTruthy()
     expect(screen.getByText('entregas')).toBeTruthy()
     expect(screen.getByText('1')).toBeTruthy()
     expect(screen.getByText('entrega')).toBeTruthy()
-    expect(screen.getByText('Hoja #AAAAAAAA')).toBeTruthy()
+    expect(screen.getByText(`Hoja #AAAAAAAA · ${fechaCorta('2026-10-30T11:00:00Z')}`)).toBeTruthy()
     expect(screen.getAllByLabelText('Estado: En curso')).toHaveLength(2)
   })
 

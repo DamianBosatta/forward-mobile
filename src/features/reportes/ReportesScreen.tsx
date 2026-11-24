@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { ChevronDown } from 'lucide-react-native'
-import { FONT, importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
+import { FONT, importe as cifras, radii, space, typeScale, useColors, useIsDark } from '@/libs/theme'
 import { BottomSheet, FormContainer, Notice, TopBar, TotalsRow, formatImporte, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { ErrorDeConsulta, esqueletoDeFilas } from '@/core/ui/estados'
@@ -87,12 +87,12 @@ export function ReportesScreen() {
           ) : q.isError && esFallaDeRed(q.error) && q.data ? (
             <>
               <Notice tone="advertencia">{textoSinConexion(q.dataUpdatedAt || undefined)}</Notice>
-              <Secciones r={q.data} />
+              <Secciones r={q.data} periodo={periodo} />
             </>
           ) : q.isError || !q.data ? (
             <ErrorDeConsulta error={q.error ?? new Error('Sin datos')} titulo="No pudimos cargar los reportes" onReintentar={() => void q.refetch()} />
           ) : (
-            <Secciones r={q.data} />
+            <Secciones r={q.data} periodo={periodo} />
           )}
           <Text style={{ ...typeScale.secundario, color: c.textSecondary, textAlign: 'center' }}>
             Reporte básico del vendedor. Los reportes de gestión se ven en la web.
@@ -146,7 +146,8 @@ function Cifra({ etiqueta, importe, apoyo, testID, hecho = false }: { etiqueta: 
       style={{ flexGrow: 1, flexBasis: '45%', backgroundColor: hecho ? c.teal : c.surface, borderRadius: radii.tile, padding: space[5], gap: space[1] }}
     >
       <Text style={{ ...typeScale.cuerpoDestacado, color: hecho ? c.ink : c.textSecondary }}>{etiqueta}</Text>
-      <Text style={{ ...typeScale.tituloTarjeta, ...cifras, color: hecho ? c.ink : c.text }}>{monto}</Text>
+      {/* Una sola línea: en una tarjeta de medio ancho el importe se achica en vez de partirse. */}
+      <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ ...typeScale.tituloTarjeta, ...cifras, color: hecho ? c.ink : c.text }}>{monto}</Text>
       {apoyo ? <Text style={{ ...typeScale.secundario, color: hecho ? c.ink : c.textSecondary }}>{apoyo}</Text> : null}
     </View>
   )
@@ -155,6 +156,8 @@ function Cifra({ etiqueta, importe, apoyo, testID, hecho = false }: { etiqueta: 
 /** Franja oscura con lo que más importa: lo vendido, grande, con la cantidad y el ticket promedio. */
 function FranjaVendido({ r }: { r: ResumenVendedor }) {
   const c = useColors()
+  // En oscuro la pantalla y el panel oscuro son el mismo color: la franja se apoya en `surface` para no perderse.
+  const fondo = useIsDark() ? c.surface : c.panelOscuro
   const { ventas } = r
   const monto = formatImporte(ventas.facturado)
   return (
@@ -162,7 +165,7 @@ function FranjaVendido({ r }: { r: ResumenVendedor }) {
       testID="reporte-ventas"
       accessible
       accessibilityLabel={`Vendido: ${monto}, ${plural(ventas.operaciones, 'venta', 'ventas')}`}
-      style={{ backgroundColor: c.panelOscuro, borderRadius: radii.tarjetaGrande, padding: space[5], gap: space[1] }}
+      style={{ backgroundColor: fondo, borderRadius: radii.tarjetaGrande, padding: space[5], gap: space[1] }}
     >
       <Text style={{ ...typeScale.secundario, color: c.onPanelOscuro }}>Vendido</Text>
       <Text style={{ ...typeScale.cifra, color: c.onPanelOscuroStrong, ...cifras }} adjustsFontSizeToFit numberOfLines={1}>{monto}</Text>
@@ -177,15 +180,15 @@ function FranjaVendido({ r }: { r: ResumenVendedor }) {
   )
 }
 
-function Secciones({ r }: { r: ResumenVendedor }) {
+function Secciones({ r, periodo }: { r: ResumenVendedor; periodo: 'semana' | 'actual' | 'anterior' }) {
   const c = useColors()
   const { ventas, comisiones, cobrosPendientes: cobros } = r
   return (
     <>
       <FranjaVendido r={r} />
       <View testID="reporte-cifras" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[3] }}>
-        <Cifra testID="cifra-cobrado" etiqueta="Cobrado" hecho importe={ventas.cobrado} apoyo="de estas ventas" />
-        <Cifra testID="cifra-por-cobrar" etiqueta="Por cobrar" importe={cobros.total} apoyo={plural(cobros.clientes, 'cliente con deuda', 'clientes con deuda')} />
+        <Cifra testID="cifra-cobrado" etiqueta="Cobrado" hecho importe={ventas.cobrado} apoyo={periodo === 'semana' ? 'De las ventas de la semana' : 'De las ventas del mes'} />
+        <Cifra testID="cifra-por-cobrar" etiqueta="Por cobrar" importe={cobros.total} apoyo={`${plural(cobros.clientes, 'cliente con deuda', 'clientes con deuda')} · toda la cartera`} />
       </View>
       <Tarjeta titulo="Mi cuenta de comisiones" testID="reporte-comisiones">
         <TotalsRow label="Generado" importe={comisiones.devengado} />

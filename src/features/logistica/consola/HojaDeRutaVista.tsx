@@ -2,6 +2,7 @@ import React from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Check, Navigation } from 'lucide-react-native'
+import { useResponsive } from '@/libs/useResponsive'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Notice, StatusChip, formatImporte, useColumnaDeFormulario } from '@/core/ui/fw'
 import { EstadoParada, type ParadaDto } from '@/libs/api-client/types'
@@ -46,18 +47,19 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue,
   const { bottom } = useSafeAreaInsets()
   const { proxima, despues, reportadas } = resumen
   // Tablet: la hoja queda en una columna legible, no estirada.
-  const columna = useColumnaDeFormulario()
+  const columnaForm = useColumnaDeFormulario()
+  // Wide tablet: next stop on the left, the rest of the route on the right, using the full width.
+  const { isTabletLandscape } = useResponsive()
+  const dosColumnas = isTabletLandscape && !!proxima && despues.length > 0
+  const columna = dosColumnas ? null : columnaForm
   const tituloSeccion = { ...typeScale.titulo, color: c.text }
   // Cada parada es su propia tarjeta (radio fila, sin sombra ni borde), separadas por 8.
   const lista = { gap: space[2] }
   const puedeLlegar = !!proxima && !soloLectura && puedeReportar
   const cobrosPendientes = (paradasCobro ?? []).filter((p) => p.estado === PARADA_COBRO_PENDIENTE).length
 
-  return (
-    <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], ...columna }}>
-        {cabecera}
-        {avisos}
+  const bloqueProxima = (
+    <>
         {proxima ? (
           <ParadaGrande
             parada={proxima.parada}
@@ -79,6 +81,10 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue,
           <Notice tone="info">Esta hoja de ruta no tiene paradas.</Notice>
         )}
 
+    </>
+  )
+  const bloqueDespues = (
+    <>
         {despues.length > 0 ? (
           <>
             <Text accessibilityRole="header" style={tituloSeccion}>{`Después (${despues.length})`}</Text>
@@ -89,6 +95,26 @@ export function HojaDeRutaVista({ resumen, soloLectura, puedeReportar, onLlegue,
             </View>
           </>
         ) : null}
+
+    </>
+  )
+
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], ...columna }}>
+        {cabecera}
+        {avisos}
+        {dosColumnas ? (
+          <View testID="consola-dos-columnas" style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[4] }}>
+            <View testID="consola-columna-proxima" style={{ flex: 1, gap: space[3] }}>{bloqueProxima}</View>
+            <View testID="consola-columna-despues" style={{ flex: 1, gap: space[3] }}>{bloqueDespues}</View>
+          </View>
+        ) : (
+          <>
+            {bloqueProxima}
+            {bloqueDespues}
+          </>
+        )}
 
         {hojaDeRutaId && paradasCobro && paradasCobro.length > 0 ? (
           <ParadasCobro hojaDeRutaId={hojaDeRutaId} paradas={paradasCobro} paradasDeEntrega={resumen.total} puedeReportar={!soloLectura && puedeReportar} />

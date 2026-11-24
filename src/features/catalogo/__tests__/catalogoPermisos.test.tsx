@@ -7,6 +7,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 
 // S2 (#123): el catálogo lee de GET /api/v1/catalogo y se habilita con MOD_CATALOGO; Stock sigue pidiendo MOD_STOCK.
 
+jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390 }) }))
 jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), useLocalSearchParams: () => ({}), useRouter: () => ({ push: jest.fn() }) }))
 jest.mock('expo-router/react-navigation', () => ({ DrawerActions: { openDrawer: jest.fn() }, useFocusEffect: jest.fn() }))

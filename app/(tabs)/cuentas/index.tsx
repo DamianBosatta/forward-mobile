@@ -97,7 +97,7 @@ function CuentasCorrientesScreen() {
           accessibilityLiveRegion="polite"
           style={{ ...typeScale.secundario, color: c.text, paddingHorizontal: space[4], paddingTop: space[3] }}
         >
-          {textoMostrando(clientes.length, totalCount, saldoTotal)}
+          {textoMostrando(clientes.length, totalCount)}
         </Text>
       ) : null}
       {error && hayDatos ? (
@@ -158,7 +158,7 @@ function CuentasCorrientesScreen() {
         <Segmented
           options={[
             { value: 'medeben', label: totalCount !== undefined ? `Me deben · ${totalCount}` : 'Me deben' },
-            ...(puedeVerDeudas ? [{ value: 'deudores' as const, label: 'Deudores' }] : []),
+            ...(puedeVerDeudas ? [{ value: 'deudores' as const, label: 'Deudas' }] : []),
             { value: 'debo', label: 'Debo' },
           ]}
           value={lado}

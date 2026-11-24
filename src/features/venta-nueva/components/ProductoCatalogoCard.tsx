@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { ProductoIdentidad } from '@/core/ui/fw/ProductoIdentidad'
 import { Image } from 'expo-image'
 import { Pressable, Text, View } from 'react-native'
-import { Package } from 'lucide-react-native'
+import { Package, Pencil } from 'lucide-react-native'
 import { radii, space, typeScale, importe, useColors, type ForwardColors } from '@/libs/theme'
 import { Button, formatImporte } from '@/core/ui/fw'
 import type { CatalogoStockItem } from '@/libs/api-client'
@@ -123,7 +123,10 @@ export const ProductoCatalogoCard = React.memo(function ProductoCatalogoCard({
               android_ripple={{ color: c.surfaceAlt }}
               style={{ flexShrink: 0, minHeight: 48, paddingHorizontal: space[4], borderRadius: radii.pastilla, backgroundColor: c.lime, justifyContent: 'center' }}
             >
-              <Text style={{ ...typeScale.cuerpoDestacado, color: c.ink }}>{`${cantidadEnPresentacion(p, cantidad)} ✎`}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
+                <Text style={{ ...typeScale.cuerpoDestacado, color: c.ink }}>{cantidadEnPresentacion(p, cantidad)}</Text>
+                <Pencil size={16} color={c.ink} />
+              </View>
             </Pressable>
           ) : (
             <Accion c={c} principal={stock.nivel !== 'sin'} label={stock.nivel === 'sin' ? 'Sin stock' : 'Agregar'} a11y={`Añadir ${p.nombre}`} onPress={abrir} />

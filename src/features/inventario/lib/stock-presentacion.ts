@@ -36,6 +36,13 @@ export function chipDeFilaStock(f: Pick<FilaDeStock, 'cantidadDisponible' | 'enA
   return { estado: 'entregado', label: ESTADO_STOCK_LABEL.ConStock }
 }
 
+/** Caption under the big available number: always names the unit ("un."), then the alert state if any. */
+export function leyendaDeDisponible(estado: 'entregado' | 'porAutorizar' | 'anulado', cantidad: number): string {
+  if (estado === 'porAutorizar') return `un. · ${ESTADO_STOCK_LABEL.EnAlerta}`
+  if (estado === 'anulado') return `un. · ${ESTADO_STOCK_LABEL.SinStock}`
+  return cantidad === 1 ? 'un. disponible' : 'un. disponibles'
+}
+
 /** "Mín. 24" o nada si el producto no tiene mínimo. */
 export function textoMinimo(stockMinimo: number): string | null {
   return stockMinimo > 0 ? `Mín. ${stockMinimo}` : null

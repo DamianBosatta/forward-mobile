@@ -16,10 +16,12 @@ interface FiltroChipProps {
   accessibilityLabel?: string
   /** Tilde delante del activo (por defecto sí: el color nunca va solo). */
   conTilde?: boolean
+  /** Etiqueta en una sola línea (por defecto no: el texto puede partirse). Para filtros de etiqueta corta junto a otros. */
+  unaLinea?: boolean
 }
 
-/** Chip de filtro y de opción de formularios (44 pt, píldora): activo = botón principal con tilde, inactivo = `surface` sin borde. */
-export function FiltroChip({ label, activo, onPress, oscuro = false, rol = 'button', accessibilityLabel, conTilde = true }: FiltroChipProps) {
+/** Chip de filtro y de opción de formularios (44 pt, píldora): activo = botón principal con tilde, inactivo = `surface2` (P10) sin borde. */
+export function FiltroChip({ label, activo, onPress, oscuro = false, rol = 'button', accessibilityLabel, conTilde = true, unaLinea = false }: FiltroChipProps) {
   const c = useColors()
   return (
     <PressableFx
@@ -37,11 +39,11 @@ export function FiltroChip({ label, activo, onPress, oscuro = false, rol = 'butt
         paddingHorizontal: space[4],
         borderRadius: radii.pastilla,
         ...(oscuro ? { borderWidth: 1, borderColor: activo ? c.primaryBg : c.topBarBorder } : null),
-        backgroundColor: oscuro ? (activo ? c.primaryBg : 'transparent') : activo ? c.primaryBg : c.surface,
+        backgroundColor: oscuro ? (activo ? c.primaryBg : 'transparent') : activo ? c.primaryBg : c.surface2,
       }}
     >
       {activo && !oscuro && conTilde ? <View testID="chip-tilde"><Check size={16} color={c.primaryFg} strokeWidth={2.5} /></View> : null}
-      <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.etiquetaChip, { color: oscuro ? (activo ? c.primaryFg : c.onTopBarStrong) : activo ? c.primaryFg : c.text }]}>{label}</Text>
+      <Text maxFontSizeMultiplier={maxFontScale} numberOfLines={unaLinea ? 1 : undefined} style={[typeScale.etiquetaChip, { color: oscuro ? (activo ? c.primaryFg : c.onTopBarStrong) : activo ? c.primaryFg : c.text }]}>{label}</Text>
     </PressableFx>
   )
 }

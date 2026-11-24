@@ -1,5 +1,4 @@
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { fechaCorta } from '@/core/utils/fecha'
 import type { ImputacionMovimientoDto, MovimientoCuentaDto, MovimientoSocioDto, TipoCuentaSocio } from '@/libs/api-client/types'
 
 /** Qué cuenta del cliente se mira: las dos juntas, o una sola. */
@@ -43,9 +42,7 @@ export function unirMovimientos(fuentes: MovimientosDeCuenta[]): MovimientoConCu
 
 /** "17 oct" para un día AAAA-MM-DD, sin pasar por un instante: el día del servidor no se corre por el huso del teléfono. */
 export function diaCorto(dia: string): string {
-  const [anio, mes, d] = dia.split('-').map(Number)
-  if (!anio || !mes || !d) return ''
-  return format(new Date(anio, mes - 1, d), 'd MMM', { locale: es })
+  return fechaCorta(dia)
 }
 
 /** "Vence 17 oct", o cadena vacía si el movimiento no vence (no es una deuda, ya se saldó o el servidor no lo sabe). */
@@ -68,5 +65,7 @@ export function textoImputacion(imputadoA: ImputacionMovimientoDto[] | null | un
 /** El concepto con el código de la venta cuando el servidor lo manda y el concepto no lo dice ya. */
 export function descripcionDe(m: Pick<MovimientoConCuenta, 'referencia' | 'comprobante'>): string {
   const comprobante = m.comprobante?.trim()
-  return comprobante && !m.referencia.includes(comprobante) ? `${m.referencia} · ${comprobante}` : m.referencia
+  const concepto = comprobante && !m.referencia.includes(comprobante) ? `${m.referencia} · ${comprobante}` : m.referencia
+  // El concepto lo escribe quien carga el movimiento: se muestra con mayúscula inicial, como los demás.
+  return concepto.charAt(0).toUpperCase() + concepto.slice(1)
 }

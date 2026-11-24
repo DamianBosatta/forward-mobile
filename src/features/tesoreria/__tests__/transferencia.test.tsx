@@ -145,7 +145,7 @@ it('registra el movimiento entre dos cuentas propias con el tipo del catálogo',
   await userEvent.press(radio('Hacia', /^Banco Galicia/))
   fireEvent.changeText(screen.getByLabelText('Monto'), '350.000')
 
-  await userEvent.press(screen.getByRole('button', { name: 'Registrar movimiento' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Registrar transferencia' }))
 
   expect(post).toHaveBeenCalledWith('/api/v1/movimientos-internos', {
     tipoMovimientoInternoId: 't-tr', cuentaOrigenId: 'caja', cuentaDestinoId: 'gal', monto: 350000, observaciones: null, retiradoPorNombre: null, claveIdempotencia: expect.any(String),
@@ -167,12 +167,12 @@ it('sin destino la plata sale: pide quién se la lleva y no manda cuenta de dest
   await userEvent.press(radio('Desde', /^Caja de Emanuel/))
   await userEvent.press(radio('Hacia', /^Ninguna/))
   fireEvent.changeText(screen.getByLabelText('Monto'), '1000')
-  await userEvent.press(screen.getByRole('button', { name: 'Registrar movimiento' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Registrar transferencia' }))
   expect(screen.getByText('Decí quién se lleva la plata.')).toBeTruthy()
   expect(post).not.toHaveBeenCalled()
 
   fireEvent.changeText(screen.getByLabelText('Quién se la lleva'), 'Emanuel')
-  await userEvent.press(screen.getByRole('button', { name: 'Registrar movimiento' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Registrar transferencia' }))
 
   expect(post.mock.calls[0][1]).toMatchObject({ cuentaDestinoId: null, retiradoPorNombre: 'Emanuel' })
 })
@@ -184,7 +184,7 @@ it('si el servidor rechaza, se ve su motivo', async () => {
   await userEvent.press(radio('Desde', /^Caja de Emanuel/))
   await userEvent.press(radio('Hacia', /^Banco Galicia/))
   fireEvent.changeText(screen.getByLabelText('Monto'), '10')
-  await userEvent.press(screen.getByRole('button', { name: 'Registrar movimiento' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Registrar transferencia' }))
 
   expect(await screen.findByText(/no coincide con la moneda/)).toBeTruthy()
   expect(screen.queryByText('Movimiento registrado')).toBeNull()
@@ -249,7 +249,7 @@ describe('M15 Transferencia: permiso y aclaración (web)', () => {
     conPermisos([{ module: 'MOD_PAGOS', canRead: true }, { module: 'MOD_CC', canRead: true }])
     renderConQuery(<Transferencia onListo={jest.fn()} />)
 
-    const boton = await screen.findByRole('button', { name: 'Registrar movimiento' }, ESPERA)
+    const boton = await screen.findByRole('button', { name: 'Registrar transferencia' }, ESPERA)
     expect(boton.props.accessibilityState?.disabled).toBe(true)
     expect(screen.getByText(MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA)).toBeTruthy()
     await userEvent.press(boton)
@@ -261,7 +261,7 @@ describe('M15 Transferencia: permiso y aclaración (web)', () => {
 
     expect(await screen.findByText(AVISO_COBRO_DE_CLIENTE, {}, ESPERA)).toBeTruthy()
     expect(screen.queryByText(MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA)).toBeNull()
-    expect(screen.getByRole('button', { name: 'Registrar movimiento' }).props.accessibilityState?.disabled).toBe(false)
+    expect(screen.getByRole('button', { name: 'Registrar transferencia' }).props.accessibilityState?.disabled).toBe(false)
   })
 })
 
@@ -274,7 +274,7 @@ describe('N.º de operación (opcional): viaja dentro de observaciones', () => {
     fireEvent.changeText(screen.getByLabelText('Monto'), '1000')
     if (numero) fireEvent.changeText(screen.getByLabelText('N.º de operación (opcional)'), numero)
     if (nota) fireEvent.changeText(screen.getByLabelText('Observaciones (opcional)'), nota)
-    await userEvent.press(screen.getByRole('button', { name: 'Registrar movimiento' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Registrar transferencia' }))
     return post.mock.calls[0][1].observaciones
   }
 

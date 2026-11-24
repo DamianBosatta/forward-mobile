@@ -184,7 +184,7 @@ describe('lista de compras', () => {
     pantalla()
     await userEvent.press(screen.getByRole('radio', { name: 'Borradores' }))
     expect(await screen.findByText('Gorrión Mayorista')).toBeTruthy()
-    expect(screen.getByText(/3 líneas · Guardado hoy/)).toBeTruthy()
+    expect(screen.getByText(/3 productos · Guardado hoy/)).toBeTruthy()
     expect(mockGet).toHaveBeenCalledWith('/api/v1/Compras/borradores/mios')
     // Tocar un borrador lo retoma en la compra nueva.
     await userEvent.press(screen.getByRole('button', { name: /Gorrión Mayorista/ }))
@@ -299,5 +299,44 @@ describe('lista de compras: estados de pantalla', () => {
     pantalla()
     await userEvent.press(screen.getByRole('radio', { name: 'Borradores' }))
     expect(await screen.findByRole('header', { name: 'No pudimos cargar los borradores' })).toBeTruthy()
+  })
+})
+
+describe.each(['light', 'dark'] as const)('revisión visual de compras (%s)', () => {
+  it('MC-10: los dos grupos de chips dicen qué filtran (Fecha y Tipo)', async () => {
+    pantalla()
+    expect(await screen.findByText('Fecha')).toBeTruthy()
+    expect(screen.getByText('Tipo')).toBeTruthy()
+    await userEvent.press(screen.getByRole('radio', { name: 'Recibidas' }))
+    expect(screen.queryByText('Tipo')).toBeNull()
+  })
+
+  it('MC-11: mientras cargan, el lugar de la tarjeta de totales no salta al llegar los datos', async () => {
+    mockGet.mockImplementation(() => new Promise(() => {}))
+    pantalla()
+    expect(await screen.findByTestId('totales-cargando')).toBeTruthy()
+  })
+
+  it('MC-9: un borrador con una sola línea dice "1 producto"', async () => {
+    mockGet.mockImplementation((url: string) => (url.includes('borradores/mios')
+      ? Promise.resolve([{ id: 'b1', version: 1, proveedorId: 'p', proveedorNombre: 'Gorrión Mayorista', depositoId: 'd', fechaModificacion: ahora.toISOString(), cantidadLineas: 1 }])
+      : Promise.resolve(pagina([], 0))))
+    pantalla()
+    await userEvent.press(screen.getByRole('radio', { name: 'Borradores' }))
+    expect(await screen.findByText(/1 producto · Guardado/)).toBeTruthy()
+  })
+
+  it('MC-25: en tablet la compra elegida queda marcada y las demás no', async () => {
+    pantalla(1200)
+    expect(screen.queryByTestId('fila-elegida')).toBeNull()
+    await userEvent.press(await screen.findByRole('button', { name: /BBBB2222/ }))
+    const marcada = await screen.findAllByTestId('fila-elegida')
+    expect(marcada).toHaveLength(1)
+    expect(within(marcada[0]!).getByRole('button', { name: /BBBB2222/ })).toBeTruthy()
+  })
+
+  it('MC-32: el panel vacío de la tablet es la pantalla vacía común (ícono y título)', async () => {
+    pantalla(1200)
+    expect(await screen.findByRole('header', { name: 'Elegí una compra para ver el detalle.' })).toBeTruthy()
   })
 })

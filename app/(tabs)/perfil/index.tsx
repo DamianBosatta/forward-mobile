@@ -18,7 +18,7 @@ import { isBiometricLoginEnabled, isBiometricsAvailable, setBiometricLoginEnable
 const THEME_OPTIONS: SegmentedOption<ThemeMode>[] = [
   { value: 'light', label: 'Claro' },
   { value: 'dark', label: 'Oscuro' },
-  { value: 'system', label: 'Como el teléfono' },
+  { value: 'system', label: 'Como el equipo' },
 ]
 const ENTORNOS: SegmentedOption<string>[] = [
   { value: ENV_PROD, label: 'Producción' },
@@ -131,10 +131,10 @@ export default function PerfilScreen() {
         </View>
         {avisoHuella ? <Notice tone="info">{avisoHuella}</Notice> : null}
 
-        {seccion('En este teléfono')}
+        {seccion('En este equipo')}
         <View testID="tarjeta-telefono" style={{ gap: space[2] }}>
           <View style={pastilla}>
-            <FilaDeAjuste icono={Bell} titulo="Avisos en el teléfono" apoyo="Cuáles saltan apenas llegan" onPress={() => router.push('/avisos/preferencias')} />
+            <FilaDeAjuste icono={Bell} titulo="Avisos en este equipo" apoyo="Cuáles saltan apenas llegan" onPress={() => router.push('/avisos/preferencias')} />
           </View>
           <View style={[pastilla, { padding: space[4], paddingTop: space[3], gap: space[2] }]}>
             <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>Tema</Text>

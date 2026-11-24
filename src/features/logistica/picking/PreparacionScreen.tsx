@@ -130,15 +130,15 @@ function Tablero() {
 
   const cabeza = (
     <View style={{ gap: space[3] }}>
-      <TiraDeDias dias={dias} elegido={filtros.dia} esFeriado={esFeriado} onElegir={(fecha) => setFiltros({ ...filtros, exacto: false, dia: fecha, rango: { desde: fecha, hasta: fecha } })} />
+      <TiraDeDias dias={dias} elegido={filtros.dia ?? (atajo === 'hoy' ? hoy : null)} esFeriado={esFeriado} onElegir={(fecha) => setFiltros({ ...filtros, exacto: false, dia: fecha, rango: { desde: fecha, hasta: fecha } })} />
       <DepositoDelTablero nombre={nombreDeposito} asignado={!veTodos} onElegir={veTodos ? () => setEligiendoDeposito(true) : undefined} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ gap: space[2], alignItems: 'center' }}>
+        <View testID="atajos-entrega" style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: space[2], alignItems: 'center' }}>
           {ATAJOS_ENTREGA.map(({ id, label }) => (
             <FiltroChip key={id} label={label} activo={atajo === id} onPress={() => setFiltros({ ...filtros, exacto: false, dia: null, rango: rangoDeAtajo(id, hoy) })} />
           ))}
           <FiltroChip label="Rango exacto" activo={atajo === null && !filtros.dia} onPress={() => { setFiltros({ ...filtros, exacto: true, dia: null }); setFiltrando(true) }} />
-        </ScrollView>
+        </View>
         <PressableFx
           onPress={() => setFiltrando(true)}
           android_ripple={{ color: c.surfaceAlt, borderless: true }}
@@ -157,7 +157,7 @@ function Tablero() {
 
   const abrir = (v: VentaTablero) => setPedido(v)
   let cuerpo: React.ReactNode
-  if (q.isLoading) cuerpo = <TableroEsqueleto />
+  if (q.isLoading) cuerpo = <TableroEsqueleto columnas={isTabletLandscape ? COLUMNAS.length : 1} />
   else if (q.isError && !hayDatos) {
     cuerpo = sinRed
       ? <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar el tablero" accion={{ label: 'Reintentar', onPress: () => { void q.refetch(); void conteosQ.refetch() } }} />

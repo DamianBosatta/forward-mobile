@@ -26,7 +26,7 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
   useNavigation: () => ({ dispatch: jest.fn() }),
 }))
-jest.mock('expo-router/react-navigation', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
+jest.mock('expo-router/react-navigation', () => ({ DrawerActions: { openDrawer: jest.fn() }, useNavigation: () => ({ dispatch: jest.fn() }) }))
 
 const mockAncho = jest.fn(() => 390)
 jest.mock('@/libs/useResponsive', () => ({
@@ -39,6 +39,7 @@ const VENTA_HOY = {
   vendedorNombre: 'Emanuel Parraquini',
   direccionCliente: 'Juan B. Justo 6376',
   displayNameCliente: 'Carlos',
+  nombreFantasiaCliente: 'Carlos',
   fecha: '2026-10-07T13:03:00Z',
   estado: 'Confirmada',
   tipoOperacion: 2,
@@ -81,7 +82,7 @@ const RESUMEN = {
     pedidosConfirmados: pendiente(5, importe(940120), importe(1200, 'USD')),
     porAutorizar: pendiente(1, importe(80000)),
   },
-  compras: { notasPedido: pendiente(3, importe(358777)), porRecibir: pendiente(0) },
+  compras: { notasPedido: pendiente(3, importe(358777)), porRecibir: pendiente(2) },
   autorizacionesPendientes: pendiente(2, importe(302750)),
 }
 const pedidosDelResumen = () => mockGet.mock.calls.filter(([u]) => String(u).includes('Inicio/resumen')).length
@@ -158,7 +159,9 @@ describe('Inicio: me deben y debo salen de /deudas/resumen (MOD_PAGOS:Read)', ()
     servidor({ resumen: RESUMEN, hoy: pagina(0, []), deudas: DEUDAS })
     pintar()
 
-    expect(await screen.findByLabelText(`Me deben los clientes: ${ars('48.920.300,00')}`)).toBeTruthy()
+    expect(await screen.findByLabelText(/^Deudores/)).toBeTruthy()
+    // MB-4: lo que deben los clientes se dice una sola vez, en la tarjeta Deudores.
+    expect(screen.queryByLabelText(/^Me deben los clientes/)).toBeNull()
     expect(screen.getByLabelText(`Debo a proveedores: ${ars('21.150.000,00')}`)).toBeTruthy()
   })
 
@@ -167,8 +170,8 @@ describe('Inicio: me deben y debo salen de /deudas/resumen (MOD_PAGOS:Read)', ()
     servidor({ resumen: RESUMEN, hoy: pagina(0, []), deudas: DEUDAS })
     pintar()
 
-    expect(await screen.findByLabelText('Me deben los clientes: —')).toBeTruthy()
-    expect(screen.getByLabelText('Debo a proveedores: —')).toBeTruthy()
+    expect(await screen.findByLabelText('Debo a proveedores: —')).toBeTruthy()
+    expect(screen.queryByLabelText(/^Me deben los clientes/)).toBeNull()
     expect(mockGet.mock.calls.some(([u]) => String(u).includes('deudas/resumen'))).toBe(false)
   })
 
@@ -177,7 +180,43 @@ describe('Inicio: me deben y debo salen de /deudas/resumen (MOD_PAGOS:Read)', ()
     servidor({ resumen: RESUMEN, hoy: pagina(0, []), deudas: new Error('boom') })
     pintar()
 
-    expect(await screen.findByLabelText('Me deben los clientes: —')).toBeTruthy()
+    expect(await screen.findByLabelText('Debo a proveedores: —')).toBeTruthy()
+  })
+})
+
+describe('Inicio: botón de menú (MB-23)', () => {
+  it('en teléfono la barra trae el botón de menú; en tablet el menú es fijo y no hay botón', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    const r = pintar()
+    expect(await screen.findByRole('button', { name: 'Abrir menú' })).toBeTruthy()
+    r.desmontar()
+
+    mockAncho.mockReturnValue(1024)
+    pintar()
+    expect(await screen.findByRole('button', { name: 'Buscar' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Abrir menú' })).toBeNull()
+  })
+})
+
+describe('Inicio: "Para resolver" solo lo que hay que resolver (MB-5)', () => {
+  it('una fila en cero no se muestra, ni "por autorizar" ni "compras por recibir"', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
+    servidor({ resumen: { ...RESUMEN, ventas: { ...RESUMEN.ventas, porAutorizar: pendiente(0) }, autorizacionesPendientes: pendiente(0), compras: { ...RESUMEN.compras, porRecibir: pendiente(3) } }, hoy: pagina(0, []) })
+    pintar()
+
+    expect(await screen.findByLabelText('3 compras por recibir. Confirmadas, sin recepción')).toBeTruthy()
+    expect(screen.queryByLabelText(/^0 pedidos/)).toBeNull()
+  })
+
+  it('si nada hay que resolver no se dibuja la sección', async () => {
+    conPermisos('MOD_VENTAS', 'MOD_COMPRAS', 'CAP_AUTORIZAR_VENTA')
+    servidor({ resumen: { ...RESUMEN, ventas: { ...RESUMEN.ventas, porAutorizar: pendiente(0) }, autorizacionesPendientes: pendiente(0), compras: { ...RESUMEN.compras, porRecibir: pendiente(0) } }, hoy: pagina(0, []) })
+    pintar()
+
+    await screen.findByLabelText(/^Ventas del día/)
+    expect(screen.queryByTestId('para-resolver')).toBeNull()
+    expect(screen.queryByText('Para resolver')).toBeNull()
   })
 })
 
@@ -265,7 +304,7 @@ describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
     servidor({ resumen: { ventas: null, compras: RESUMEN.compras, autorizacionesPendientes: null }, hoy: pagina(0, []) })
     pintar()
 
-    expect(await screen.findByLabelText('0 compras por recibir. Confirmadas, sin recepción')).toBeTruthy()
+    expect(await screen.findByLabelText('2 compras por recibir. Confirmadas, sin recepción')).toBeTruthy()
     expect(screen.queryByLabelText(/por autorizar/)).toBeNull()
   })
 
@@ -303,7 +342,7 @@ describe('Inicio: resumen en una llamada (GET /Inicio/resumen)', () => {
 
     servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
     await userEvent.setup().press(screen.getByRole('button', { name: 'Reintentar pendientes' }))
-    expect(await screen.findByLabelText('0 compras por recibir. Confirmadas, sin recepción')).toBeTruthy()
+    expect(await screen.findByLabelText('2 compras por recibir. Confirmadas, sin recepción')).toBeTruthy()
     expect(screen.queryByText('No se pudieron cargar los pendientes')).toBeNull()
   })
 
@@ -335,7 +374,7 @@ describe('Inicio: cualquier mutación vuelve a pedir el resumen', () => {
     const qc = crearQueryClient({ retry: false })
     const mutar = mutacion(qc, usar, variables)
     pintar(qc)
-    await screen.findByLabelText('0 compras por recibir. Confirmadas, sin recepción')
+    await screen.findByLabelText('2 compras por recibir. Confirmadas, sin recepción')
 
     servidor({ resumen: despues, hoy: pagina(0, []) })
     await mutar()
@@ -363,7 +402,7 @@ describe('Inicio: cualquier mutación vuelve a pedir el resumen', () => {
     const qc = crearQueryClient({ retry: false })
     const mutar = mutacion(qc, usar, variables)
     const { desmontar } = pintar(qc)
-    await screen.findByLabelText('0 compras por recibir. Confirmadas, sin recepción')
+    await screen.findByLabelText('2 compras por recibir. Confirmadas, sin recepción')
     desmontar()
 
     servidor({ resumen: despues, hoy: pagina(0, []) })
@@ -438,6 +477,42 @@ describe('Inicio: servidor sin /Inicio/resumen (404), las cuatro llamadas de ant
 })
 
 describe('Inicio: Reciente · Hoy', () => {
+  // El servidor arma `displayNameCliente` con la dirección: el nombre sale de fantasía o razón social (MB-1).
+  const VENTA_REAL = { ...VENTA_HOY, displayNameCliente: 'Juan B. Justo 6376', nombreFantasiaCliente: 'Kiosco Chela', razonSocialCliente: 'Chela SRL' }
+
+  it('el subtítulo es el nombre del cliente y la dirección no se repite (MB-1)', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(1, [VENTA_REAL]) })
+    pintar()
+
+    const tarjeta = await screen.findByLabelText(/^Pedido A00418 · 10:03/)
+    expect(within(tarjeta).getAllByText('Juan B. Justo 6376')).toHaveLength(1)
+    expect(within(tarjeta).getByText('Kiosco Chela')).toBeTruthy()
+  })
+
+  it('MB-25: el chip de estado queda alineado al borde derecho del importe', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(1, [VENTA_REAL]) })
+    pintar()
+
+    const tarjeta = await screen.findByLabelText(/^Pedido A00418 · 10:03/)
+    expect(flat(within(tarjeta).getByTestId('estado-venta')).alignSelf).toBe('flex-end')
+  })
+
+  it('sin nombre de fantasía usa la razón social, y sin dirección el nombre pasa a ser el título (MB-1)', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(2, [
+      { ...VENTA_REAL, id: 'v2', codigoPedido: 'A00419', nombreFantasiaCliente: null },
+      { ...VENTA_REAL, id: 'v3', codigoPedido: 'A00420', direccionCliente: null },
+    ]) })
+    pintar()
+
+    expect(within(await screen.findByLabelText(/^Pedido A00419/)).getByText('Chela SRL')).toBeTruthy()
+    const sinDireccion = await screen.findByLabelText(/^Pedido A00420/)
+    expect(within(sinDireccion).getByText('Kiosco Chela')).toBeTruthy()
+    expect(within(sinDireccion).queryByText('Juan B. Justo 6376')).toBeNull()
+  })
+
   it('usa la dirección como título y el nombre en su propia línea', async () => {
     conPermisos('MOD_VENTAS')
     servidor({ resumen: RESUMEN, hoy: pagina(1, [VENTA_HOY]) })

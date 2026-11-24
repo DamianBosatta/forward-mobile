@@ -257,3 +257,64 @@ describe('Buscar como venta (propuesta Cuenta, frames 14 a 17)', () => {
     expect(within(ventas).getByTestId('esqueleto-fila')).toBeTruthy()
   })
 })
+
+describe('Buscar: revisión visual (MB-2, MB-9, MB-17, MB-18)', () => {
+  const estiloDe = (el: { props: { style?: unknown } }) => (StyleSheet.flatten(el.props.style as never) ?? {}) as Record<string, unknown>
+  const conAncho = (width: number) =>
+    jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({ width, height: 900, scale: 1, fontScale: 1 })
+  afterEach(() => jest.restoreAllMocks())
+
+  it('MB-17: en tablet vertical las secciones van una debajo de la otra; en horizontal, en columnas', async () => {
+    conAncho(768)
+    const r = pintar()
+    await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')
+    expect(estiloDe(await screen.findByTestId('buscar-resultados')).flexDirection).toBe('column')
+    r.unmount()
+
+    jest.restoreAllMocks()
+    conAncho(1024)
+    pintar()
+    await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')
+    expect(estiloDe(await screen.findByTestId('buscar-resultados')).flexDirection).toBe('row')
+  })
+
+  it('MB-2: en Ventas la línea de apoyo es el nombre del cliente y no repite la dirección', async () => {
+    pintar()
+    await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')
+    const ventas = await screen.findByTestId('buscar-ventas')
+    await within(ventas).findByText('Pedido A00419')
+    expect(within(ventas).getByText(/^Abel SRL · /)).toBeTruthy()
+    expect(within(ventas).queryByText(/Tarantino 1898/)).toBeNull()
+  })
+
+  it('P15: la fecha de la venta es la fecha corta de la app ("9 nov"), no "Hoy" ni "lun 9 de noviembre"', async () => {
+    const original = VENTA.fecha
+    VENTA.fecha = '2026-11-09T15:00:00Z'
+    try {
+      pintar()
+      await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')
+      const ventas = await screen.findByTestId('buscar-ventas')
+      await within(ventas).findByText('Pedido A00419')
+      expect(within(ventas).getByText('Abel SRL · 9 nov')).toBeTruthy()
+    } finally {
+      VENTA.fecha = original
+    }
+  })
+
+  it('MB-2: el título de la fila (la dirección) admite dos líneas antes de cortarse', async () => {
+    pintar()
+    await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')
+    const clientes = await screen.findByTestId('buscar-clientes')
+    expect((await within(clientes).findAllByText('Tarantino 1898'))[0].props.numberOfLines).toBe(2)
+  })
+
+  it('MB-9: el campo pide "Cliente, venta o cuenta"', () => {
+    pintar()
+    expect(screen.getByPlaceholderText('Cliente, venta o cuenta')).toBeTruthy()
+  })
+
+  it('MB-18: la línea de permisos va centrada, igual que el pedido de letras', () => {
+    pintar()
+    expect(estiloDe(screen.getByText('La búsqueda solo muestra lo que tu usuario puede ver.')).textAlign).toBe('center')
+  })
+})

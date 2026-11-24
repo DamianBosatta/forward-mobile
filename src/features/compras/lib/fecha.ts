@@ -8,6 +8,12 @@ export function fechaHoraTexto(iso: string | null | undefined): string | null {
   return `${ddmmaaaa(diaArgentina(f.getTime()))} ${horaDe(iso)}`
 }
 
+/** Instante del servidor → "dd/mm/aaaa" con el día de Argentina (X9); null sin fecha válida. */
+export function diaDeCompraTexto(iso: string | null | undefined): string | null {
+  const f = parseDateSafe(iso)
+  return f ? ddmmaaaa(diaArgentina(f.getTime())) : null
+}
+
 /** "dd/mm/aaaa" → "aaaa-mm-dd" (fecha calendario, sin zona); null si no es una fecha válida. */
 export function fechaIso(texto: string): string | null {
   const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(texto.trim())
