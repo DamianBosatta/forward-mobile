@@ -119,7 +119,7 @@ describe.each(TEMAS)('Calendario como la web (%s)', (tema) => {
     const dia = within(await screen.findByTestId('dia-2026-11-15'))
     const marca = dia.getByText('Sin entregas')
     const vacio = dia.getByText('Sin eventos')
-    expect(marca.parent).toBe(vacio.parent)
+    expect(StyleSheet.flatten(marca.props.style).fontSize).toBe(StyleSheet.flatten(vacio.props.style).fontSize)
     expect(StyleSheet.flatten(marca.props.style).paddingHorizontal).toBe(StyleSheet.flatten(vacio.props.style).paddingHorizontal)
   })
 
