@@ -51,8 +51,8 @@ beforeEach(() => {
 })
 
 async function aEntrega() {
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled())
-  await userEvent.press(screen.getByRole('button', { name: 'Continuar' }))
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar a entrega' })).toBeEnabled())
+  await userEvent.press(screen.getByRole('button', { name: 'Continuar a entrega' }))
 }
 
 describe('retomar un borrador (PR 2.2b)', () => {

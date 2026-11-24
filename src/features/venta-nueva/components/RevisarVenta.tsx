@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 import { ArrowLeft, ChevronRight } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { Button, Entrada, Notice, PieFijo, TotalsRow, formatImporte } from '@/core/ui/fw'
+import { FormContainer } from '@/core/ui/fw/FormContainer'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -15,9 +16,9 @@ import { disponibleParaLinea, faltaStock, totalesEstimados, type YaReservadas } 
 import { mostrarNumero } from '../lib/linea'
 
 interface Props {
-  /** Qué paso de la venta dibuja: 'carrito' (paso 3: las líneas y "Continuar") o 'entrega' (paso 4: total y confirmar). */
+  /** Qué paso de la venta dibuja: 'carrito' (paso 3: las líneas y "Continuar a entrega") o 'entrega' (paso 4: total y confirmar). */
   paso: 'carrito' | 'entrega'
-  /** Paso 3: "Continuar" lleva a la entrega y facturación (apagado sin productos). */
+  /** Paso 3: "Continuar a entrega" lleva a la entrega y facturación (apagado sin productos). */
   onContinuar?: () => void
   /** Paso 4: vuelve al carrito, por ejemplo a corregir lo que el confirmar rechazó. */
   onVolverAlCarrito?: () => void
@@ -66,7 +67,7 @@ function detalleDe(l: LineaCarrito): string {
 
 /**
  * Pasos 3 y 4 de la venta (lámina Carrito, S5/S6/S7). Paso 3, 'carrito': solo las líneas con el stock vuelto a chequear al abrir,
- * lo que cambió desde que se cargó marcado (el banner lo cuenta), el descuento general y "Continuar". Paso 4, 'entrega': la entrega y la
+ * lo que cambió desde que se cargó marcado (el banner lo cuenta), el descuento general y "Continuar a entrega". Paso 4, 'entrega': la entrega y la
  * factura (`ajustes`), el aviso de autorización, el total y "Confirmar venta", que vuelve a chequear el stock y manda la venta
  * (no hay segunda confirmación). Si falta stock no se bloquea: el flujo de confirmar pide el motivo y la venta va a autorización.
  */
@@ -119,7 +120,8 @@ export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, de
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3] }}>
+      <ScrollView contentContainerStyle={{ padding: space[4] }}>
+        <FormContainer style={{ gap: space[3] }}>
         {sinEncabezado || paso !== 'carrito' ? null : <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>Revisar venta</Text>}
         {cliente && !sinEncabezado && paso === 'carrito' ? (
           <View style={{ gap: 2 }}>
@@ -227,18 +229,22 @@ export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, de
           ) : null}
           <Text style={secundario}>Los totales son estimados: el total final lo calcula el sistema al guardar.</Text>
         </Entrada>
+        </FormContainer>
       </ScrollView>
       {paso === 'carrito' ? (
         <PieFijo fondo="bg">
+          <FormContainer style={{ gap: space[2] }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <Text style={secundario}>Total de productos</Text>
             <Text testID="carrito-paso-total" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(productos)}</Text>
           </View>
-          <Button size="lg" label="Continuar" iconoFinal={ChevronRight} onPress={() => onContinuar?.()} disabled={lineas.length === 0} />
+          <Button size="lg" label="Continuar a entrega" iconoFinal={ChevronRight} onPress={() => onContinuar?.()} disabled={lineas.length === 0} />
           {lineas.length === 0 ? <MotivoDeshabilitado>Agregá al menos un producto para seguir.</MotivoDeshabilitado> : null}
+          </FormContainer>
         </PieFijo>
       ) : (
         <PieFijo fondo="bg">
+          <FormContainer style={{ gap: space[2] }}>
           {error ? (
             <>
               <Notice tone="peligro">{error}</Notice>
@@ -251,6 +257,7 @@ export function RevisarVenta({ paso, onContinuar, onVolverAlCarrito, cliente, de
           </View>
           <Button size="lg" label={etiquetaConfirmar} onPress={() => { void confirmar() }} loading={enviando || confirmando} disabled={enviando || confirmando || deshabilitado || lineas.length === 0} />
           {motivoDeshabilitado ? <MotivoDeshabilitado>{motivoDeshabilitado}</MotivoDeshabilitado> : null}
+          </FormContainer>
         </PieFijo>
       )}
     </View>
