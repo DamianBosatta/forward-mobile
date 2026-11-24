@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Crosshair } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { cuitDigitosFaltantes, cuitEsValido } from '@/libs/reglas'
+import { cuitDigitosFaltantes, cuitEsValido, formatearCuit } from '@/libs/reglas'
 import { Button, FormContainer, Notice, TopBar } from '@/core/ui/fw'
 import { useCambiosSinGuardar } from '@/core/hooks/useCambiosSinGuardar'
 import { CampoDeSocio } from '@/features/socios/components/CampoDeSocio'
@@ -69,6 +69,8 @@ export function ClienteForm({ id }: { id?: string }) {
   const cuitInvalido = !bloqueo.cuit && datos.cuit.trim() !== '' && !cuitEsValido(datos.cuit)
   const errorCuit = cuitInvalido ? ERROR_CUIT : errores.cuit
   const cuitFaltan = cuitInvalido ? cuitDigitosFaltantes(datos.cuit) : 0
+  // Lo que la web exige en un alta nueva no provisoria (validarCliente): se marca junto a la etiqueta.
+  const marcaObligatorio = !editando && !datos.altaProvisoria ? 'obligatorio' : undefined
   const hayBloqueo = bloqueo.razonSocial || bloqueo.cuit || bloqueo.direccion
 
   return (
@@ -104,7 +106,7 @@ export function ClienteForm({ id }: { id?: string }) {
               <Grupo titulo="Entrega">
                 {!bloqueo.direccion ? (
                   <View>
-                    <CampoDeSocio label="Dirección de entrega" value={datos.direccion} onChangeText={v => cambiar('direccion', v)} help="Es como lo van a encontrar los vendedores y el chofer." error={errores.direccion} />
+                    <CampoDeSocio label="Dirección de entrega" labelSuffix={marcaObligatorio} value={datos.direccion} onChangeText={v => cambiar('direccion', v)} help="Es como lo van a encontrar los vendedores y el chofer." error={errores.direccion} />
                     {/* La mira va dentro del campo (lámina clientes-nuevo): a la altura de la caja, sin la etiqueta. */}
                     <Pressable
                       accessibilityRole="button"
@@ -118,7 +120,7 @@ export function ClienteForm({ id }: { id?: string }) {
                   </View>
                 ) : null}
                 {errorUbicacion ? <Notice tone="advertencia">{ERROR_UBICACION}</Notice> : null}
-                <CampoDeSocio label="Nombre del local" value={datos.nombreFantasia} onChangeText={v => cambiar('nombreFantasia', v)} error={errores.nombreFantasia} />
+                <CampoDeSocio label="Nombre del local" labelSuffix={marcaObligatorio} value={datos.nombreFantasia} onChangeText={v => cambiar('nombreFantasia', v)} error={errores.nombreFantasia} />
                 <CampoDeSocio label="Localidad (para armar el recorrido)" value={datos.localidad} onChangeText={v => cambiar('localidad', v)} placeholder="Barrio o localidad" />
               </Grupo>
 
@@ -133,11 +135,11 @@ export function ClienteForm({ id }: { id?: string }) {
                 {!bloqueo.cuit ? (
                 <View style={{ gap: space[1] }}>
                   <CampoDeSocio
-                    label="CUIT"
+                    label="CUIT" labelSuffix={marcaObligatorio}
                     value={datos.cuit}
                     onChangeText={v => cambiar('cuit', v)}
                     keyboardType="number-pad"
-                    placeholder="20123456789"
+                    placeholder={formatearCuit('20123456789')}
                     error={errorCuit}
                   />
                   {cuitFaltan > 0 ? <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{avisoCuitIncompleto(cuitFaltan)}</Text> : null}
@@ -157,8 +159,8 @@ export function ClienteForm({ id }: { id?: string }) {
               </Grupo>
 
               <Grupo titulo="Contacto">
-                <CampoDeSocio label="Contacto" value={datos.nombreContacto} onChangeText={v => cambiar('nombreContacto', v)} help="A quién preguntar al llegar." error={errores.nombreContacto} />
-                <CampoDeSocio label="Teléfono" value={datos.telefono} onChangeText={v => cambiar('telefono', v)} keyboardType="phone-pad" placeholder="221 555-0123" error={errores.telefono} />
+                <CampoDeSocio label="Contacto" labelSuffix={marcaObligatorio} value={datos.nombreContacto} onChangeText={v => cambiar('nombreContacto', v)} help="A quién preguntar al llegar." error={errores.nombreContacto} />
+                <CampoDeSocio label="Teléfono" labelSuffix={marcaObligatorio} value={datos.telefono} onChangeText={v => cambiar('telefono', v)} keyboardType="phone-pad" placeholder="221 555-0123" error={errores.telefono} />
                 <CampoDeSocio label="Email" value={datos.email} onChangeText={v => cambiar('email', v)} keyboardType="email-address" autoCapitalize="none" placeholder="opcional" error={errores.email} />
               </Grupo>
 

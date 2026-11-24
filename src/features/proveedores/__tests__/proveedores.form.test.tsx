@@ -178,3 +178,15 @@ describe('edición', () => {
     expect(screen.queryByRole('button', { name: 'Guardar cambios' })).toBeNull()
   })
 })
+
+describe('alta de proveedor: ejemplo de CUIT y marca de obligatorio (MC-18)', () => {
+  it('el ejemplo del CUIT se muestra con guiones', () => {
+    renderConQuery(<ProveedorFormScreen />)
+    expect(screen.getByLabelText('CUIT').props.placeholder).toBe('30-12345678-9')
+  })
+
+  it('la razón social, que el servidor exige, lleva la palabra "obligatorio" junto a la etiqueta', () => {
+    renderConQuery(<ProveedorFormScreen />)
+    expect(screen.getByText(/obligatorio/, { exact: false })).toBeTruthy()
+  })
+})

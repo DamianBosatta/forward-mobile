@@ -2,6 +2,7 @@ import React, { useRef } from 'react'
 import { ScrollView, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { radii, space, useColors } from '@/libs/theme'
+import { formatearCuit } from '@/libs/reglas'
 import { Button, FormContainer, Notice, TopBar } from '@/core/ui/fw'
 import { CampoDeSocio } from '@/features/socios/components/CampoDeSocio'
 import { FilaBloqueada } from '@/features/socios/components/FilaBloqueada'
@@ -66,10 +67,10 @@ export function ProveedorForm({ id }: { id?: string }) {
 
               <Grupo titulo="Datos fiscales">
                 {!bloqueo.razonSocial ? (
-                  <CampoDeSocio label="Razón social" value={datos.razonSocial} onChangeText={v => cambiar('razonSocial', v)} placeholder="Como figura en ARCA" />
+                  <CampoDeSocio label="Razón social" labelSuffix="obligatorio" value={datos.razonSocial} onChangeText={v => cambiar('razonSocial', v)} placeholder="Como figura en ARCA" />
                 ) : null}
                 {!bloqueo.cuit ? (
-                  <CampoDeSocio label="CUIT" value={datos.cuit} onChangeText={v => cambiar('cuit', v)} keyboardType="number-pad" placeholder="30123456789" />
+                  <CampoDeSocio label="CUIT" value={datos.cuit} onChangeText={v => cambiar('cuit', v)} keyboardType="number-pad" placeholder={formatearCuit('30123456789')} />
                 ) : null}
                 <OpcionesRadio
                   enPastilla

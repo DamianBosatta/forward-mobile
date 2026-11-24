@@ -256,3 +256,24 @@ describe('D7: dirección, razón social y CUIT solo los cambia un administrador 
     expect(screen.queryByText(AVISO)).toBeNull()
   })
 })
+
+describe('alta de cliente: ejemplo de CUIT y marca de obligatorio (MC-18)', () => {
+  it('el ejemplo del CUIT se muestra con guiones', () => {
+    conPermisos(SIN_CAP)
+    renderConQuery(<ClienteFormScreen />)
+    expect(screen.getByLabelText('CUIT').props.placeholder).toBe('20-12345678-9')
+  })
+
+  it('en un alta no provisoria los cinco campos que la web exige llevan "obligatorio"; el email no', () => {
+    conPermisos(SIN_CAP)
+    renderConQuery(<ClienteFormScreen />)
+    expect(screen.getAllByText(/obligatorio/)).toHaveLength(5)
+  })
+
+  it('en alta provisoria ya no se marcan', async () => {
+    conPermisos(SIN_CAP)
+    renderConQuery(<ClienteFormScreen />)
+    await userEvent.press(screen.getByRole('switch', { name: /Alta provisoria/ }))
+    expect(screen.queryByText(/obligatorio/)).toBeNull()
+  })
+})
