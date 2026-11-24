@@ -81,7 +81,7 @@ export function ProveedorForm({ id }: { id?: string }) {
                 />
               </Grupo>
 
-              <Grupo titulo="Contacto">
+              <Grupo titulo="Datos de contacto">
                 <CampoDeSocio label="Teléfono" value={datos.telefono} onChangeText={v => cambiar('telefono', v)} keyboardType="phone-pad" placeholder="11 4555-0000" />
               </Grupo>
 

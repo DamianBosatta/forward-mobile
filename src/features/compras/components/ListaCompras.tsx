@@ -20,7 +20,7 @@ import { useComprasList, type PeriodoCompras, type PestanaCompras } from '../hoo
 import { fechaHoraTexto, llegaTexto } from '../lib/fecha'
 import type { EstadoCompraRuta } from '@/features/listas/lib/filtroDeRuta'
 import { numeroDeCompra } from '../lib/numero'
-import { espacioBajoElFab } from '../lib/espacioDelFab'
+import { espacioBajoElFab } from '@/core/ui/fw/espacioDelFab'
 
 const PESTANAS: SegmentedOption<PestanaCompras>[] = [
   { value: 'pendientes', label: 'Pendientes' },

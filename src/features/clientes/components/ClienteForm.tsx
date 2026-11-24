@@ -147,7 +147,7 @@ export function ClienteForm({ id }: { id?: string }) {
                 </View>
                 ) : null}
                 <OpcionesRadio
-                  enTarjeta
+                  enPastilla
                   titulo="Condición frente al IVA"
                   opciones={CONDICIONES_IVA.map(v => ({ value: v, label: v }))}
                   valor={datos.condicionIva}
@@ -158,7 +158,7 @@ export function ClienteForm({ id }: { id?: string }) {
                 ) : null}
               </Grupo>
 
-              <Grupo titulo="Contacto">
+              <Grupo titulo="Datos de contacto">
                 <CampoDeSocio label="Contacto" labelSuffix={marcaObligatorio} value={datos.nombreContacto} onChangeText={v => cambiar('nombreContacto', v)} help="A quién preguntar al llegar." error={errores.nombreContacto} />
                 <CampoDeSocio label="Teléfono" labelSuffix={marcaObligatorio} value={datos.telefono} onChangeText={v => cambiar('telefono', v)} keyboardType="phone-pad" placeholder="221 555-0123" error={errores.telefono} />
                 <CampoDeSocio label="Email" value={datos.email} onChangeText={v => cambiar('email', v)} keyboardType="email-address" autoCapitalize="none" placeholder="opcional" error={errores.email} />
