@@ -55,7 +55,7 @@ export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = 
   const dias = conAntiguedad && verSaldo ? cliente.diasDeudaMasVieja : null
   const antiguedad = chipAntiguedadDeuda(dias)?.texto
   const linea2 = [nombre, localidad].filter(Boolean).join(' · ')
-  const accessibilityLabel = [direccion, vencida && 'deuda vencida', nombre, localidad, saldo && `saldo ${saldo}`, antiguedad, !verSaldo && TAG_CARTERA_AJENA].filter(Boolean).join(', ')
+  const accessibilityLabel = [direccion, vencida && 'deuda vencida', nombre, localidad, saldo && !sinDeuda && `debe ${saldo}`, antiguedad, !verSaldo && TAG_CARTERA_AJENA].filter(Boolean).join(', ')
   const secundario = (t: string) => <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{t}</Text>
   // MC-20: "Sin deuda" y el vendedor en una sola línea con separador, no dos textos pegados.
   const lineaDeuda = sinDeuda || vendedor ? secundario([sinDeuda ? 'Sin deuda' : null, vendedor ? `Vendedor: ${vendedor}` : null].filter(Boolean).join(' · ')) : null
@@ -66,6 +66,7 @@ export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = 
     </View>
   ) : null
   const llamar = telefono ? () => Linking.openURL(urlLlamar(telefono)) : null
+  const importeDeuda = <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{saldo}</Text>
 
   if (variante === 'cartera') {
     const extras = (
@@ -116,7 +117,11 @@ export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = 
           <View style={{ marginTop: space[2], flexDirection: 'row', alignItems: 'flex-end', flexWrap: 'wrap', rowGap: space[1], columnGap: space[2] }}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[1], flexShrink: 1 }}>{extras}</View>
             {saldo && !sinDeuda ? (
-              <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text, marginLeft: 'auto' }]}>{saldo}</Text>
+              // MP-1: el importe dice qué es ("Debe $ X"), como "Le debemos $ X" en proveedores.
+              <View testID="saldo-cliente" style={{ flexDirection: 'row', alignItems: 'baseline', gap: space[1], marginLeft: 'auto' }}>
+                {secundario('Debe')}
+                {importeDeuda}
+              </View>
             ) : null}
           </View>
         </View>
@@ -151,7 +156,11 @@ export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = 
       accessibilityLabel={accessibilityLabel}
       derecha={
         saldo && !sinDeuda ? (
-          <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{saldo}</Text>
+          // MP-1: "Debe" sobre el importe, en columna para no quitarle ancho a la dirección.
+          <View testID="saldo-cliente" style={{ alignItems: 'flex-end' }}>
+            {secundario('Debe')}
+            {importeDeuda}
+          </View>
         ) : sinDeuda ? null : (
           <Lock size={16} color={c.textSecondary} accessibilityLabel={SALDO_RESERVADO} />
         )
