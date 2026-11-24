@@ -60,10 +60,12 @@ it('los movimientos de las dos cuentas van juntos y cada uno dice en qué cuenta
 
   const venta = await screen.findByLabelText(/Venta A00409 entregada/, {}, ESPERA)
   expect(venta.props.accessibilityLabel).toContain('Cuenta Normal')
-  expect(venta.props.accessibilityLabel).toContain(`+ ${$(84400)}`)
+  expect(venta.props.accessibilityLabel).toContain(`Deuda ${$(84400)}`)
   const cobro = screen.getByLabelText(/Cobro/)
   expect(cobro.props.accessibilityLabel).toContain('Cuenta TST')
-  expect(cobro.props.accessibilityLabel).toContain(`− ${$(66940)}`)
+  expect(cobro.props.accessibilityLabel).toContain(`Cobro ${$(66940)}`)
+  expect(cobro.props.accessibilityLabel).not.toContain('−')
+  expect(venta.props.accessibilityLabel).toContain('Saldo después')
   expect(within(cobro).getByText('Transferencia')).toBeTruthy()
 })
 
@@ -203,11 +205,13 @@ describe('movimientos de las dos cuentas en un solo endpoint (servidor con PR #9
 
     expect(venta.props.accessibilityLabel).toContain('Cuenta Normal')
     expect(venta.props.accessibilityLabel).toContain('Entrega de Venta · A00409')
-    expect(venta.props.accessibilityLabel).toContain(`+ ${$(84400)}`)
+    expect(venta.props.accessibilityLabel).toContain(`Deuda ${$(84400)}`)
     expect(within(venta).getByText('Entrega de Venta · A00409')).toBeTruthy()
     const cobro = screen.getByLabelText(/Cobro/)
     expect(cobro.props.accessibilityLabel).toContain('Cuenta TST')
-    expect(cobro.props.accessibilityLabel).toContain(`− ${$(66940)}`)
+    expect(cobro.props.accessibilityLabel).toContain(`Cobro ${$(66940)}`)
+  expect(cobro.props.accessibilityLabel).not.toContain('−')
+  expect(venta.props.accessibilityLabel).toContain('Saldo después')
   })
 
   it('una deuda impaga dice cuándo vence y un cobro dice a qué se imputó', async () => {
