@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { Landmark } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { formatImporte } from '@/core/ui/fw'
+import { Notice, formatImporte } from '@/core/ui/fw'
 import type { CuentaCorrienteResumenDto } from '@/libs/api-client/types'
 import { MarcaRadio } from '@/features/venta-nueva/components/MarcaRadio'
 
@@ -18,13 +18,15 @@ interface Props {
   extra?: { valor: string; label: string }
   /** Dentro de la tarjeta conectada Desde → Hacia: las opciones sin elegir van sin marco propio. */
   plano?: boolean
+  /** Mientras las cuentas se cargan no se avisa que faltan. */
+  cargando?: boolean
 }
 
 /**
  * Lista de cuentas propias para elegir una, con el saldo que informa el servidor cuando lo manda (lámina Transferencia).
  * Cada cuenta es una fila con radio (propuesta "Finanzas como venta", frames 10 y 14): la elegida lleva borde y marca, no solo color.
  */
-export function ElegirCuenta({ titulo, cuentas, valor, onCambio, extra, plano = false }: Props) {
+export function ElegirCuenta({ titulo, cuentas, valor, onCambio, extra, plano = false, cargando = false }: Props) {
   const c = useColors()
   // Elegida la cuenta, la tarjeta se pliega a una sola fila (lámina Transferencia); "Cambiar" vuelve a abrir la lista.
   const [abierta, setAbierta] = useState(false)
@@ -58,6 +60,7 @@ export function ElegirCuenta({ titulo, cuentas, valor, onCambio, extra, plano = 
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={titulo} style={{ gap: space[1], padding: plano ? space[2] : 0 }}>
       <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{titulo}</Text>
+      {!cargando && cuentas.length === 0 ? <Notice tone="info">No hay cuentas disponibles para elegir.</Notice> : null}
       {opciones.map(o => {
         const elegida = o.id === valor
         return (

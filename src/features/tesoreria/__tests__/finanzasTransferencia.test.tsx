@@ -85,7 +85,7 @@ it('el aviso de qué falta y el error al guardar quedan arriba del pie, a la vis
   renderConQuery(<Transferencia onListo={jest.fn()} />)
   await screen.findByRole('radio', { name: 'Transferencia' }, ESPERA)
 
-  await userEvent.press(screen.getByRole('button', { name: 'Registrar movimiento' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Registrar transferencia' }))
 
   expect(within(screen.getByTestId('pie-avisos')).getByText('Elegí el tipo de movimiento.')).toBeTruthy()
 })
@@ -97,7 +97,7 @@ it('registrado: dibujo de "listo", título, explicación y "Volver" en el pie (f
   await userEvent.press(radio('Desde', /^Caja de Emanuel/))
   await userEvent.press(radio('Hacia', /^Banco Galicia/))
   fireEvent.changeText(screen.getByLabelText('Monto'), '350.000')
-  await userEvent.press(screen.getByRole('button', { name: 'Registrar movimiento' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Registrar transferencia' }))
 
   expect(await screen.findByTestId('listo-icono', { includeHiddenElements: true }, ESPERA)).toBeTruthy()
   expect(screen.getByText('Movimiento registrado')).toBeTruthy()
@@ -115,7 +115,7 @@ it('el cuerpo de un retiro no cambia: sin destino, con quién se la lleva y "Op.
   fireEvent.changeText(screen.getByLabelText('Quién se la lleva'), ' Emanuel ')
   fireEvent.changeText(screen.getByLabelText('N.º de operación (opcional)'), '77')
   fireEvent.changeText(screen.getByLabelText('Observaciones (opcional)'), 'Viáticos')
-  await userEvent.press(screen.getByRole('button', { name: 'Registrar movimiento' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Registrar transferencia' }))
 
   expect(post).toHaveBeenCalledTimes(1)
   expect(post.mock.calls[0]).toEqual(['/api/v1/movimientos-internos', {

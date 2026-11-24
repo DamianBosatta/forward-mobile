@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { radii, space, useColors } from '@/libs/theme'
 import { MOTIVO_SIN_PERMISO_DE_SERVICIO, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
-import { Button, Field, FormContainer, Notice, PieFijo } from '@/core/ui/fw'
+import { Button, Field, FormContainer, Notice, PieFijo, useColumnaDeFormulario } from '@/core/ui/fw'
 import { useToast } from '@/core/ui/Toast'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -26,6 +26,7 @@ const VACIO: FormServicio = { monto: '', tipoGastoId: null, descripcion: '', med
  */
 export function PagarServicio({ onListo }: { onListo: () => void }) {
   const c = useColors()
+  const columna = useColumnaDeFormulario()
   const toast = useToast()
   const { canRead } = usePermissions()
   const puede = usePuedePagarServicio()
@@ -89,7 +90,7 @@ export function PagarServicio({ onListo }: { onListo: () => void }) {
             {f.medioPagoId ? (
               <>
                 {cuentas.error ? <Notice tone="peligro">{mensajeDelServidor(cuentas.error, 'No se pudieron cargar las cuentas.')}</Notice> : null}
-                <ElegirCuenta titulo="Cuenta de origen" cuentas={cuentas.data ?? []} valor={f.cuentaOrigenId} onCambio={cuentaOrigenId => setF(p => ({ ...p, cuentaOrigenId }))} />
+                <ElegirCuenta titulo="Cuenta de origen" cuentas={cuentas.data ?? []} cargando={cuentas.isLoading} valor={f.cuentaOrigenId} onCambio={cuentaOrigenId => setF(p => ({ ...p, cuentaOrigenId }))} />
               </>
             ) : null}
           </View>
@@ -99,6 +100,8 @@ export function PagarServicio({ onListo }: { onListo: () => void }) {
         </FormContainer>
       </ScrollView>
       {/* El aviso de qué falta y el error al guardar quedan arriba del pie, a la vista del botón (frame 15). */}
+      <View style={{ backgroundColor: c.surface }}>
+      <View testID="pie-columna" style={columna}>
       <PieFijo>
         {aviso || registrar.error ? (
           <View testID="pie-avisos" style={{ gap: space[2] }}>
@@ -106,9 +109,11 @@ export function PagarServicio({ onListo }: { onListo: () => void }) {
             {registrar.error ? <Notice tone="peligro">{mensajeDelServidor(registrar.error, 'No se pudo registrar el pago.')}</Notice> : null}
           </View>
         ) : null}
-        <Button size="lg" label="Registrar pago" loading={registrar.isPending} disabled={registrar.isPending || subiendo || !puede} onPress={enviar} />
+        <Button size="lg" label="Pagar un servicio" loading={registrar.isPending} disabled={registrar.isPending || subiendo || !puede} onPress={enviar} />
         {!puede ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_SERVICIO}</MotivoDeshabilitado> : null}
       </PieFijo>
+      </View>
+      </View>
     </View>
   )
 }

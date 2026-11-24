@@ -48,7 +48,7 @@ it('el aviso de qué falta queda arriba del pie (frame 15)', async () => {
   renderConQuery(<PagarServicio onListo={jest.fn()} />)
   await screen.findByRole('radio', { name: 'Luz' }, ESPERA)
 
-  await userEvent.press(screen.getByRole('button', { name: 'Registrar pago' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Pagar un servicio' }))
 
   expect(within(screen.getByTestId('pie-avisos')).getByText('Ingresá el monto.')).toBeTruthy()
   expect(post).not.toHaveBeenCalled()
@@ -61,7 +61,7 @@ it('el cuerpo del pago no cambia: descripción recortada, medio y cuenta de orig
   fireEvent.changeText(screen.getByLabelText('Descripción (opcional)'), '  Factura de octubre ')
   await userEvent.press(screen.getByRole('radio', { name: 'Transferencia' }))
   await userEvent.press(await screen.findByRole('radio', { name: /^Banco Galicia/ }, ESPERA))
-  await userEvent.press(screen.getByRole('button', { name: 'Registrar pago' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Pagar un servicio' }))
 
   await waitFor(() => expect(post).toHaveBeenCalledTimes(1), ESPERA)
   expect(post.mock.calls[0]).toEqual(['/api/v1/gastos', {

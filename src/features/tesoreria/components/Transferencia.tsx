@@ -5,7 +5,7 @@ import { useCambiosSinGuardar } from '@/core/hooks/useCambiosSinGuardar'
 import { useDebouncedValue } from '@/core/hooks/useDebouncedValue'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
-import { Button, Field, FormContainer, Notice, PieFijo, formatImporte, useInsetInferior } from '@/core/ui/fw'
+import { Button, Field, FormContainer, Notice, PieFijo, formatImporte, useColumnaDeFormulario, useInsetInferior } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { leerNumero } from '@/features/venta-nueva/lib/linea'
@@ -43,6 +43,7 @@ export function observacionesConOperacion(operacion: string, nota: string): stri
  */
 export function Transferencia({ onListo }: { onListo: () => void }) {
   const c = useColors()
+  const columna = useColumnaDeFormulario()
   const tipos = useTiposMovimientoInterno()
   const { canRead, canDo } = usePermissions()
   // Como la web: sin MOD_PAGOS:Create el botón no desaparece, se deshabilita y dice por qué.
@@ -125,7 +126,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
 
           {/* "Desde → Hacia" en una tarjeta conectada; elegida, "Desde" se pliega a una fila con "Cambiar" (frame 11). */}
           <View testID="tarjeta-cuentas" style={{ ...tarjeta, overflow: 'hidden' }}>
-            <ElegirCuenta plano titulo="Desde" cuentas={propias} valor={origen} onCambio={id => { setOrigen(id); if (id === destino) setDestino(null) }} />
+            <ElegirCuenta plano titulo="Desde" cuentas={propias} cargando={cuentas.isLoading} valor={origen} onCambio={id => { setOrigen(id); if (id === destino) setDestino(null) }} />
             <View style={{ height: 1, backgroundColor: c.surface2, justifyContent: 'center', alignItems: 'flex-end', paddingRight: space[6] }}>
               <View
                 importantForAccessibility="no-hide-descendants"
@@ -138,6 +139,7 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
             <ElegirCuenta
               plano
               titulo="Hacia"
+              cargando={cuentas.isLoading}
               cuentas={propias.filter(k => k.id !== origen)}
               valor={destino}
               onCambio={setDestino}
@@ -159,6 +161,8 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
         </FormContainer>
       </ScrollView>
       {/* Acción primaria fija abajo; el aviso de qué falta y el error quedan arriba, a la vista del botón (frame 12). */}
+      <View style={{ backgroundColor: c.surface }}>
+      <View testID="pie-columna" style={columna}>
       <PieFijo>
         {aviso || registrar.error ? (
           <View testID="pie-avisos" style={{ gap: space[2] }}>
@@ -166,9 +170,11 @@ export function Transferencia({ onListo }: { onListo: () => void }) {
             {registrar.error ? <Notice tone="peligro">{mensajeDelServidor(registrar.error, 'No se pudo registrar el movimiento.')}</Notice> : null}
           </View>
         ) : null}
-        <Button size="lg" label="Registrar movimiento" loading={registrar.isPending} disabled={registrar.isPending || !puedeRegistrar} onPress={enviar} />
+        <Button size="lg" label="Registrar transferencia" loading={registrar.isPending} disabled={registrar.isPending || !puedeRegistrar} onPress={enviar} />
         {!puedeRegistrar ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA}</MotivoDeshabilitado> : null}
       </PieFijo>
+      </View>
+      </View>
     </View>
   )
 }

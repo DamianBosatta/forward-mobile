@@ -3,7 +3,8 @@ import { FlashList } from '@shopify/flash-list'
 import { Text, View } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
-import { Button, Field, Notice, PieFijo } from '@/core/ui/fw'
+import { Button, Notice, PieFijo, useColumnaDeFormulario } from '@/core/ui/fw'
+import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { MOTIVO_SIN_PERMISO_DE_COBRO, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { ErrorDeConsulta, esqueletoDeFilas } from '@/core/ui/estados'
 import { Esqueletos, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
@@ -12,6 +13,9 @@ import { esFallaDeRed } from '@/core/api/errores'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { useProveedores } from '@/features/proveedores/hooks/useProveedores'
 import { ProveedorCard } from '@/features/proveedores/components/ProveedorCard'
+
+/** Por qué "Continuar" está apagado cuando todavía no se eligió proveedor. */
+const MOTIVO_SIN_PROVEEDOR_ELEGIDO = 'Elegí un proveedor para continuar.'
 
 interface Props {
   seleccionadoId: string | null
@@ -33,6 +37,7 @@ const FilaProveedor = memo(function FilaProveedor({ proveedor, seleccionado, onE
  */
 export function ElegirProveedorPago({ seleccionadoId, onElegir, onContinuar, puedePagar }: Props) {
   const c = useColors()
+  const columna = useColumnaDeFormulario()
   const [busqueda, setBusqueda] = useState('')
   const { proveedores, isLoading, error, refetch, cargarMas } = useProveedores(busqueda)
   const buscando = busqueda.trim().length > 0
@@ -45,6 +50,7 @@ export function ElegirProveedorPago({ seleccionadoId, onElegir, onContinuar, pue
 
   return (
     <View style={{ flex: 1 }}>
+    <View testID="columna-proveedores" style={[{ flex: 1 }, columna]}>
       <FlashList
         style={{ flex: 1 }}
         data={proveedores}
@@ -53,10 +59,10 @@ export function ElegirProveedorPago({ seleccionadoId, onElegir, onContinuar, pue
         onEndReached={cargarMas}
         onEndReachedThreshold={0.5}
         ListHeaderComponent={
-          <View style={{ gap: space[2], paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[2] }}>
-            <Field label="Buscar proveedor" value={busqueda} onChangeText={setBusqueda} placeholder="Nombre o CUIT" returnKeyType="search" />
+          <View style={{ gap: space[2], paddingBottom: space[2] }}>
+            <BuscadorCartera sobre="pantalla" etiqueta="Buscar proveedor" valor={busqueda} onCambio={setBusqueda} placeholder="Nombre o CUIT" />
             {error && proveedores.length > 0 ? (
-              <View style={{ gap: space[2] }}>
+              <View style={{ gap: space[2], paddingHorizontal: space[4] }}>
                 <Notice tone={esFallaDeRed(error) ? 'advertencia' : 'peligro'}>
                   {esFallaDeRed(error) ? textoSinConexion() : mensajeDelServidor(error, 'No se pudieron cargar los proveedores.')}
                 </Notice>
@@ -75,9 +81,10 @@ export function ElegirProveedorPago({ seleccionadoId, onElegir, onContinuar, pue
         }
       />
       <PieFijo>
-        {!puedePagar ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_COBRO}</MotivoDeshabilitado> : null}
+        {!puedePagar ? <MotivoDeshabilitado>{MOTIVO_SIN_PERMISO_DE_COBRO}</MotivoDeshabilitado> : !seleccionadoId ? <MotivoDeshabilitado>{MOTIVO_SIN_PROVEEDOR_ELEGIDO}</MotivoDeshabilitado> : null}
         <Button size="lg" label="Continuar a qué pagás" iconoFinal={ChevronRight} disabled={!seleccionadoId || !puedePagar} onPress={onContinuar} />
       </PieFijo>
+    </View>
     </View>
   )
 }

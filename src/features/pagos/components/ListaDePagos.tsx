@@ -4,7 +4,8 @@ import { RefreshControl, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Plus } from 'lucide-react-native'
 import { space, useColors } from '@/libs/theme'
-import { Button, Field, Notice, Segmented, TopBar, useInsetInferior } from '@/core/ui/fw'
+import { Button, Notice, Segmented, TopBar, useColumnaDeFormulario, useInsetInferior } from '@/core/ui/fw'
+import { BuscadorCartera } from '@/features/clientes/components/BuscadorCartera'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
@@ -27,6 +28,7 @@ import { FilaDePago } from './FilaDePago'
 export function ListaDePagos({ onVolver }: { onVolver: () => void }) {
   const insetInferior = useInsetInferior()
   const c = useColors()
+  const columna = useColumnaDeFormulario()
   const router = useRouter()
   const puedeVer = usePuedeVerPagos()
   const puedePagar = usePuedeCobrar()
@@ -66,9 +68,12 @@ export function ListaDePagos({ onVolver }: { onVolver: () => void }) {
   return (
     <View style={{ flex: 1 }}>
       {encabezado}
-      <View style={{ gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }}>
+      <View testID="columna-pagos" style={[{ flex: 1 }, columna]}>
+      <View style={{ paddingHorizontal: space[4], paddingTop: space[3] }}>
         <Segmented options={FILTROS_DE_PAGOS} value={filtro} onChange={setFiltro} accessibilityLabel="Qué pagos ver" />
-        <Field label="Buscar" value={busqueda} onChangeText={setBusqueda} placeholder="Proveedor, cliente o referencia" returnKeyType="search" />
+      </View>
+      <BuscadorCartera sobre="pantalla" etiqueta="Buscar" valor={busqueda} onCambio={setBusqueda} placeholder="Proveedor, cliente o referencia" />
+      <View style={{ gap: space[2], paddingHorizontal: space[4] }}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
           {PERIODOS_DE_CUENTA.map(p => (
             <FiltroChip key={p.valor} label={p.label} activo={periodo === p.valor} onPress={() => setPeriodo(periodo === p.valor ? null : p.valor)} />
@@ -102,10 +107,15 @@ export function ListaDePagos({ onVolver }: { onVolver: () => void }) {
           ) : sinConexion ? (
             <EstadoDePantalla tipo="sinConexion" titulo="No pudimos cargar los pagos" accion={reintentar} />
           ) : q.error ? undefined : (
-            <EstadoDePantalla tipo="vacio" titulo={textoSinPagos(filtro, !!texto || !!periodo)} />
+            <EstadoDePantalla
+              tipo="vacio"
+              titulo={textoSinPagos(filtro, !!texto || !!periodo)}
+              accion={puedePagar && !texto && !periodo ? { label: 'Registrar un pago', onPress: () => router.push('/(tabs)/tesoreria/pagos/pagar') } : undefined}
+            />
           )
         }
       />
+      </View>
     </View>
   )
 }
