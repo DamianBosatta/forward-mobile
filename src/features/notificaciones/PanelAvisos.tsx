@@ -25,9 +25,10 @@ export function PanelAvisos() {
           accessibilityRole="button"
           accessibilityLabel="Marcar leídos"
           accessibilityState={{ disabled: noLeidas === 0 || marcar.isPending }}
-          style={{ minHeight: 44, justifyContent: 'center', opacity: noLeidas === 0 ? 0.4 : 1 }}
+          style={{ minHeight: 44, justifyContent: 'center' }}
         >
-          <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Marcar leídos</Text>
+          {/* MB-26: deshabilitado no baja el contraste (regla del tema): pasa al texto secundario, sin opacidad. */}
+          <Text style={{ ...typeScale.cuerpoDestacado, color: noLeidas === 0 ? c.textSecondary : c.brandInk }}>Marcar leídos</Text>
         </Pressable>
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: space[12], gap: space[3] }}>

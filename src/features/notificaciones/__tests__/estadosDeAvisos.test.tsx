@@ -8,8 +8,9 @@ import { act, render, screen, userEvent } from '@testing-library/react-native'
 import { BandejaAvisos } from '../BandejaAvisos'
 
 const mockGet = jest.fn()
+const mockPush = jest.fn()
 jest.mock('@/core/api/client', () => ({ api: { get: (url: string) => mockGet(url), post: jest.fn() } }))
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }))
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }))
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390, isTablet: false, isTabletLandscape: false }) }))
 jest.mock('expo-router/react-navigation', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), DrawerActions: { openDrawer: jest.fn() } }))
 
@@ -34,6 +35,15 @@ describe('Avisos: estados de la bandeja', () => {
   it('sin avisos: estado "vacío" con la frase de siempre', async () => {
     pintar()
     expect(await screen.findByRole('header', { name: 'No tenés avisos.' })).toBeTruthy()
+  })
+
+  it('MB-7: sin avisos explica qué son y ofrece crear un evento, sin el enlace suelto "Nuevo evento"', async () => {
+    pintar()
+    await screen.findByRole('header', { name: 'No tenés avisos.' })
+    expect(screen.getByText('Los avisos salen de los eventos de tu calendario y de lo que pasa en tus ventas.')).toBeTruthy()
+    expect(screen.queryByLabelText('Nuevo evento')).toBeNull()
+    await userEvent.press(screen.getByRole('button', { name: 'Crear evento en el calendario' }))
+    expect(mockPush).toHaveBeenCalledWith('/calendario?nuevo=1')
   })
 
   it('sin avisos sin leer: la frase de "Sin leer"', async () => {

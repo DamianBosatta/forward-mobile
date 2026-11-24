@@ -490,6 +490,15 @@ describe('Inicio: Reciente · Hoy', () => {
     expect(within(tarjeta).getByText('Kiosco Chela')).toBeTruthy()
   })
 
+  it('MB-25: el chip de estado queda alineado al borde derecho del importe', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(1, [VENTA_REAL]) })
+    pintar()
+
+    const tarjeta = await screen.findByLabelText(/^Pedido A00418 · 10:03/)
+    expect(flat(within(tarjeta).getByTestId('estado-venta')).alignSelf).toBe('flex-end')
+  })
+
   it('sin nombre de fantasía usa la razón social, y sin dirección el nombre pasa a ser el título (MB-1)', async () => {
     conPermisos('MOD_VENTAS')
     servidor({ resumen: RESUMEN, hoy: pagina(2, [

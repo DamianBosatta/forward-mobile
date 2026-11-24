@@ -287,6 +287,20 @@ describe('Buscar: revisión visual (MB-2, MB-9, MB-17, MB-18)', () => {
     expect(within(ventas).queryByText(/Tarantino 1898/)).toBeNull()
   })
 
+  it('P15: la fecha de la venta es la fecha corta de la app ("9 nov"), no "Hoy" ni "lun 9 de noviembre"', async () => {
+    const original = VENTA.fecha
+    VENTA.fecha = '2026-11-09T15:00:00Z'
+    try {
+      pintar()
+      await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')
+      const ventas = await screen.findByTestId('buscar-ventas')
+      await within(ventas).findByText('Pedido A00419')
+      expect(within(ventas).getByText('Abel SRL · 9 nov')).toBeTruthy()
+    } finally {
+      VENTA.fecha = original
+    }
+  })
+
   it('MB-2: el título de la fila (la dirección) admite dos líneas antes de cortarse', async () => {
     pintar()
     await userEvent.type(screen.getByLabelText('Buscar'), 'Tarantino')

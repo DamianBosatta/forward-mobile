@@ -65,7 +65,12 @@ export function BandejaAvisos() {
       <Button label="Reintentar" variant="secundario" onPress={() => void q.refetch()} />
     </View>
   ) : (
-    <EstadoDePantalla tipo="vacio" titulo={soloNoLeidas ? 'No tenés avisos sin leer.' : 'No tenés avisos.'} />
+    <EstadoDePantalla
+      tipo="vacio"
+      titulo={soloNoLeidas ? 'No tenés avisos sin leer.' : 'No tenés avisos.'}
+      texto="Los avisos salen de los eventos de tu calendario y de lo que pasa en tus ventas."
+      accion={soloNoLeidas ? undefined : { label: 'Crear evento en el calendario', onPress: () => router.push('/calendario?nuevo=1' as never) }}
+    />
   )
 
   return (
@@ -113,6 +118,7 @@ export function BandejaAvisos() {
               </FormContainer>
             ) : null}
             {/* Los avisos salen de los eventos del calendario: no hay "crear aviso". */}
+            {avisos.length > 0 ? (
             <FormContainer style={{ marginTop: space[2] }}>
               <Pressable
                 accessibilityRole="button"
@@ -124,6 +130,7 @@ export function BandejaAvisos() {
                 <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk, textAlign: 'center' }}>Nuevo evento</Text>
               </Pressable>
             </FormContainer>
+            ) : null}
           </>
         }
       />

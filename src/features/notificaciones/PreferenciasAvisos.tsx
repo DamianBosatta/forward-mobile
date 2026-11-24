@@ -38,7 +38,7 @@ export function PreferenciasAvisos() {
       <View key={p.tipo} style={pastilla}>
         <FilaInterruptor
           titulo={etiqueta}
-          apoyo={valor ? 'Salta apenas llega' : 'Solo en la bandeja'}
+          apoyo={valor ? 'Salta en la web apenas llega' : 'Solo en la bandeja'}
           prendido={valor}
           onChange={() => guardar.mutate([{ tipo: p.tipo, toast: !valor }])}
         />
@@ -57,7 +57,7 @@ export function PreferenciasAvisos() {
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[12] + insetInferior }}>
         <FormContainer style={{ gap: space[3] }}>
           <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
-            Todos los avisos quedan en la bandeja. Elegí cuáles saltan apenas llegan en la web; en el teléfono se ven en la bandeja y en el número del menú.
+            Todos los avisos quedan en la bandeja. Elegí cuáles saltan apenas llegan en la web; en este equipo se ven en la bandeja y en el número del menú.
           </Text>
           {guardar.isError ? <Notice tone="peligro">{mensajeDe(guardar.error, 'No se pudo guardar la preferencia.')}</Notice> : null}
           {q.isLoading ? (
@@ -99,7 +99,7 @@ function FilaCritica({ titulo }: { titulo: string }) {
         <Text style={[typeScale.cuerpoDestacado, { color: c.text }]}>{titulo}</Text>
         <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Crítico: no se puede silenciar</Text>
       </View>
-      <View testID="interruptor-atenuado" pointerEvents="none" style={{ opacity: 0.5 }}>
+      <View testID="interruptor-atenuado" pointerEvents="none" style={{ opacity: 0.7 }}>
         <Switch value disabled trackColor={{ false: c.borderStrong, true: c.action }} thumbColor={c.onAction} />
       </View>
     </View>

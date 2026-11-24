@@ -14,8 +14,7 @@ import { useCartera, useValorDiferido } from '@/features/clientes/hooks/useCarte
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
 import { clienteDeVenta } from '@/features/inicio/lib/clienteDeVenta'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
-import { tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
-import { parseDateSafe } from '@/core/utils/fecha'
+import { fechaCorta } from '@/core/utils/fecha'
 import { useVenderA } from '@/features/venta-nueva/hooks/useVenderA'
 import { MINIMO_BUSQUEDA, clientesConCuenta, seccionesVisibles } from './lib/secciones'
 
@@ -233,11 +232,6 @@ function SeccionCuentas({ termino, columna }: { termino: string; columna: boolea
       })}
     </Seccion>
   )
-}
-
-function fechaCorta(iso: string): string {
-  const f = parseDateSafe(iso)
-  return f ? tituloDelDia(f) : ''
 }
 
 function SeccionVentas({ termino, columna }: { termino: string; columna: boolean }) {
