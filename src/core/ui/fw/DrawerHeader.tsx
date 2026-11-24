@@ -25,7 +25,7 @@ export function DrawerHeader({ iniciales, nombre, rol, oscuro = false, insetSupe
           {nombre}
         </Text>
         {rol ? (
-          <Text numberOfLines={1} maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.secundario, color: oscuro ? c.onPanelOscuro : c.textMuted }}>
+          <Text numberOfLines={2} maxFontSizeMultiplier={maxFontScale} style={{ ...typeScale.secundario, color: oscuro ? c.onPanelOscuro : c.textMuted }}>
             {rol}
           </Text>
         ) : null}
