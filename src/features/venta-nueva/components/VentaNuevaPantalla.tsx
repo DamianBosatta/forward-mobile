@@ -367,7 +367,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
       <PasosVenta paso={2} />
       <CreditoDeudaVenta clienteId={cliente.id} tipo={tipo} />
       {avisoDelBorrador}
-      <CatalogoVenta onVerVenta={() => setVista('carrito')} llevo={llevo} filtroInicialDelUltimo={arrancarDelUltimo} enVivo={stockVivo.enVivo} onAbrirOferta={setOferta} />
+      <CatalogoVenta onVerVenta={() => setVista('carrito')} llevo={llevo} filtroInicialDelUltimo={arrancarDelUltimo} enVivo={stockVivo.enVivo} conexion={stockVivo.conexion} onAbrirOferta={setOferta} />
     </>
   )
 
@@ -384,7 +384,7 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
       />
       {ofertaVivo ? (
         <CantidadOfertaPantalla visible producto={ofertaVivo} linea={lineas.find((l) => l.productoId === ofertaVivo.id) ?? null}
-          enVivo={stockVivo.enVivo} yaReservada={yaReservadas?.[ofertaVivo.id]} onClose={() => setOferta(null)} onListo={() => setOferta(null)} />
+          enVivo={stockVivo.enVivo} conexion={stockVivo.conexion} yaReservada={yaReservadas?.[ofertaVivo.id]} onClose={() => setOferta(null)} onListo={() => setOferta(null)} />
       ) : null}
       {/* Una fragancia suelta se edita en el detalle (tope por stock disponible). */}
       <EditarLineaSheet linea={conLoVivo(editando)} onClose={() => setEditando(null)} descuentoGeneral={descuentoValido}

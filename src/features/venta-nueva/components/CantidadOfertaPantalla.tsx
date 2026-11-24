@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { Image } from 'expo-image'
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { Package, Trash2 } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, Notice, PieFijo, StatusChip, TopBar, formatImporte } from '@/core/ui/fw'
 import { FormContainer } from '@/core/ui/fw/FormContainer'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import type { CatalogoStockItem } from '@/libs/api-client'
+import { conexionDeBooleano, type ConexionStockVivo } from '@/core/realtime/stockEnVivo'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import { calcularSubtotalConDescuento, canViewCost, pctFromPrecio, precioFromPct } from '@/features/ventas/lib/descuentos'
@@ -28,6 +29,8 @@ interface Props {
   linea?: LineaCarrito | null
   /** Señal de stock en vivo (`useStockVivoVenta().enVivo`); sin dato no se dibuja el indicador. */
   enVivo?: boolean
+  /** Estado de la conexión (`useStockVivoVenta().conexion`): "Conectando…", "En vivo" o "Sin conexión". Manda sobre `enVivo`. */
+  conexion?: ConexionStockVivo
   /** Editando una venta: las unidades que ya tenía de este producto (ya descontadas del `disponible`). */
   yaReservada?: number
   /** Vuelve sin cambios, o después de quitar la línea. */
@@ -49,12 +52,15 @@ export function CantidadOfertaPantalla(props: Props) {
   return <Contenido key={props.producto.id} {...props} />
 }
 
-function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }: Props) {
+const TEXTO_CONEXION: Record<ConexionStockVivo, string> = { conectando: 'Conectando…', enVivo: 'En vivo', sinConexion: 'Sin conexión' }
+
+function Contenido({ producto: p, linea, enVivo, conexion, yaReservada, onClose, onListo }: Props) {
   const c = useColors()
   const sombra = useSombraTarjeta()
   const user = useAuthStore((s) => s.user)
   const reemplazar = useCarritoVenta((s) => s.reemplazar)
   const quitar = useCarritoVenta((s) => s.quitar)
+  const estadoConexion = conexion ?? conexionDeBooleano(enVivo)
   const base = precioServidor(p)
   const minimo = multiploDe(p)
   const pr = presentacionDe(p)
@@ -157,10 +163,14 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
             ) : (
               <StatusChip estado={p.puedeVenderse ? 'entregado' : 'anulado'} label={p.puedeVenderse ? 'Hay stock' : 'Sin stock'} />
             )}
-            {enVivo === undefined ? null : (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
-                <View style={{ width: 8, height: 8, borderRadius: radii.pastilla, backgroundColor: enVivo ? c.chip.entregado.text : c.textSecondary }} />
-                <Text style={{ ...typeScale.secundario, fontWeight: '600', color: enVivo ? c.chip.entregado.text : c.textSecondary }}>{enVivo ? 'En vivo' : 'Sin conexión'}</Text>
+            {estadoConexion === undefined ? null : (
+              <View testID="conexion-estado" accessible accessibilityLabel={TEXTO_CONEXION[estadoConexion].replace('…', '')} style={{ flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
+                {estadoConexion === 'conectando' ? (
+                  <ActivityIndicator testID="conexion-cargando" size="small" color={c.textSecondary} />
+                ) : (
+                  <View style={{ width: 8, height: 8, borderRadius: radii.pastilla, backgroundColor: estadoConexion === 'enVivo' ? c.chip.entregado.text : c.textSecondary }} />
+                )}
+                <Text style={{ ...typeScale.secundario, fontWeight: '600', flexShrink: 1, color: estadoConexion === 'enVivo' ? c.chip.entregado.text : c.textSecondary }}>{TEXTO_CONEXION[estadoConexion]}</Text>
               </View>
             )}
           </View>
@@ -169,7 +179,7 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
 
           <View style={{ gap: space[2] }}>
             <Text style={secundario}>Cantidad</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[3] }}>
+            <View testID="cantidad-fila" style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[3] }}>
               {pr.modos.length > 1 ? (
                 <View accessibilityRole="radiogroup" accessibilityLabel="Presentación" style={{ flexDirection: 'row', padding: 3, borderRadius: radii.tarjeta, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.border, ...sombra }}>
                   {pr.modos.map((m) => (
@@ -182,12 +192,12 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
               ) : (
                 <Text style={destacado}>{ROTULO_MODO[pr.modos[0]]}</Text>
               )}
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 48, borderRadius: radii.campo, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.borderStrong }}>
+              <View testID="cantidad-contador" style={{ flexGrow: 1, flexBasis: 152, minWidth: 152, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 48, borderRadius: radii.campo, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.borderStrong }}>
                 <Pressable accessibilityRole="button" accessibilityLabel="Uno menos" onPress={() => mover(-1)} style={{ width: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ ...typeScale.titulo, color: c.text }}>−</Text>
                 </Pressable>
                 <TextInput accessibilityLabel="Cantidad" keyboardType="number-pad" value={texto} onChangeText={(t) => setTexto(limitarDigitos(t))} maxLength={MAX_DIGITOS} selectTextOnFocus
-                  style={{ ...typeScale.titulo, ...importe, color: c.text, minWidth: 56, textAlign: 'center' }} />
+                  style={{ ...typeScale.titulo, ...importe, color: c.text, flex: 1, minWidth: 56, textAlign: 'center' }} />
                 <Pressable accessibilityRole="button" accessibilityLabel="Uno más" onPress={() => mover(1)} style={{ width: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ ...typeScale.titulo, color: c.brandInk }}>+</Text>
                 </Pressable>

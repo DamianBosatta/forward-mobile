@@ -232,6 +232,18 @@ describe('CatalogoVenta (propuesta T3)', () => {
     expect(screen.queryByText('Stock en vivo')).toBeNull()
   })
 
+  it('con la conexión "conectando" el chip dice "Conectando…" con indicador; "enVivo", "Stock en vivo"; "sinConexion", "Sin conexión"', () => {
+    const r = render(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={abrirYAgregar} conexion="conectando" />)
+    expect(screen.getByText('Conectando…')).toBeTruthy()
+    expect(screen.getByTestId('conexion-cargando')).toBeTruthy()
+    expect(screen.queryByText('Sin conexión')).toBeNull()
+    r.rerender(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={abrirYAgregar} conexion="enVivo" />)
+    expect(screen.getByText('Stock en vivo')).toBeTruthy()
+    expect(screen.queryByTestId('conexion-cargando')).toBeNull()
+    r.rerender(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={abrirYAgregar} conexion="sinConexion" />)
+    expect(screen.getByText('Sin conexión')).toBeTruthy()
+  })
+
   it('con onAbrirOferta, Agregar la abre con el producto y no toca el carrito', async () => {
     const onAbrirOferta = jest.fn()
     render(<CatalogoVenta onVerVenta={jest.fn()} onAbrirOferta={onAbrirOferta} />)

@@ -1,6 +1,20 @@
 import { AppState } from 'react-native'
 jest.mock('@/core/utils/logger', () => ({ logger: { warn: jest.fn(), info: jest.fn(), error: jest.fn() } }))
-import { crearGestorStock, type ConexionStock, type MensajeStock } from '../stockEnVivo'
+import { crearGestorStock as crearGestorReal, type ConexionStock, type MensajeStock } from '../stockEnVivo'
+
+// Ningún test deja oyentes suscritos: si quedara uno, el reintento de apertura (setTimeout real)
+// sobreviviría a la suite y dispararía tras el teardown de Jest.
+const bajas: Array<() => void> = []
+const crearGestorStock: typeof crearGestorReal = (...args) => {
+  const g = crearGestorReal(...args)
+  const suscribirReal = g.suscribir.bind(g)
+  g.suscribir = ((...a: Parameters<typeof g.suscribir>) => {
+    const baja = suscribirReal(...a)
+    bajas.push(baja)
+    return baja
+  }) as typeof g.suscribir
+  return g
+}
 
 /** Una conexión de mentira: guarda lo que se le pide y deja disparar los eventos del hub a mano. */
 function conexionFalsa() {
@@ -28,7 +42,11 @@ beforeEach(() => {
     return { remove: jest.fn() }
   }) as never)
 })
-afterEach(() => { jest.restoreAllMocks(); poner(original) })
+afterEach(() => {
+  bajas.splice(0).forEach((baja) => baja())
+  jest.restoreAllMocks()
+  poner(original)
+})
 
 const oyente = () => ({ alConectar: jest.fn(), alCambio: jest.fn(), alEstado: jest.fn() })
 const flush = () => act0()
@@ -297,5 +315,85 @@ describe('reintento de la apertura por red o 5xx (RED-R4-01 residual)', () => {
     cambioDeEstado('background')
     await jest.advanceTimersByTimeAsync(10 * 60_000)
     expect(c.start).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('estado de la conexión (Conectando / En vivo / Sin conexión)', () => {
+  const conexionOyente = () => ({ ...oyente(), alConexion: jest.fn() })
+
+  it('al primer intento avisa "conectando" y al conectar "enVivo"', async () => {
+    const { c } = conexionFalsa()
+    const g = crearGestorStock(() => c)
+    const o = conexionOyente()
+    g.suscribir(['d1'], o)
+    expect(o.alConexion).toHaveBeenCalledWith('conectando')
+    expect(g.conexion()).toBe('conectando')
+    await flush()
+    expect(o.alConexion).toHaveBeenLastCalledWith('enVivo')
+    expect(g.conexion()).toBe('enVivo')
+  })
+
+  it('tras un intento fallido pasa a "sinConexion"', async () => {
+    const { c } = conexionFalsa()
+    c.start.mockRejectedValueOnce(new Error('sin red'))
+    const g = crearGestorStock(() => c)
+    const o = conexionOyente()
+    g.suscribir(['d1'], o)
+    await flush()
+    expect(o.alConexion).toHaveBeenLastCalledWith('sinConexion')
+    expect(g.conexion()).toBe('sinConexion')
+  })
+
+  it('durante un reintento silencioso sigue en "sinConexion" (no parpadea) hasta conectar', async () => {
+    const { c } = conexionFalsa()
+    c.start.mockRejectedValueOnce(new Error('sin red'))
+    let suelta: () => void = () => undefined
+    c.start.mockImplementationOnce(() => new Promise<void>((r) => { suelta = r }))
+    const g = crearGestorStock(() => c)
+    const o = conexionOyente()
+    g.suscribir(['d1'], o)
+    await flush()
+    o.alConexion.mockClear()
+    g.reintentar()
+    expect(g.conexion()).toBe('sinConexion')
+    expect(o.alConexion).not.toHaveBeenCalled()
+    suelta()
+    await flush()
+    expect(g.conexion()).toBe('enVivo')
+  })
+
+  it('la reconexión automática desde en vivo es "conectando"; si reconecta vuelve a "enVivo"', async () => {
+    const { c, h } = conexionFalsa()
+    const g = crearGestorStock(() => c)
+    const o = conexionOyente()
+    g.suscribir(['d1'], o)
+    await flush()
+    h.reconectando!()
+    expect(g.conexion()).toBe('conectando')
+    expect(g.enVivo()).toBe(false)
+    h.reconectada!()
+    await flush()
+    expect(g.conexion()).toBe('enVivo')
+  })
+
+  it('al cerrarse la conexión queda "sinConexion"', async () => {
+    const { c, h } = conexionFalsa()
+    const g = crearGestorStock(() => c)
+    const o = conexionOyente()
+    g.suscribir(['d1'], o)
+    await flush()
+    h.cerrada!()
+    expect(g.conexion()).toBe('sinConexion')
+    expect(o.alConexion).toHaveBeenLastCalledWith('sinConexion')
+  })
+
+  it('un oyente que se suma después recibe el estado actual', async () => {
+    const { c } = conexionFalsa()
+    const g = crearGestorStock(() => c)
+    g.suscribir(['d1'], conexionOyente())
+    await flush()
+    const tarde = conexionOyente()
+    g.suscribir(['d1'], tarde)
+    expect(tarde.alConexion).toHaveBeenCalledWith('enVivo')
   })
 })
