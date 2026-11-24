@@ -14,7 +14,7 @@ jest.mock('../components/ElegirClienteVenta', () => ({ ElegirClienteVenta: () =>
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 820, isTablet: true, isTabletLandscape: false }) }))
 jest.mock('@/core/api/client', () => ({ ...jest.requireActual('@/core/api/client'), api: { get: jest.fn(), put: jest.fn(), post: jest.fn() } }))
 
-const columnasDe = (c: { props: { style: unknown } }) => StyleSheet.flatten(c.props.style as never)
+const columnasDe = (c: { props: Record<string, unknown> }) => StyleSheet.flatten(c.props.style as never)
 
 describe('MV-23: en tablet el cuerpo y la barra de acción comparten la columna de 640', () => {
   it('la pantalla de cantidad usa FormContainer para el cuerpo y para la barra', () => {
