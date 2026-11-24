@@ -9,7 +9,6 @@ import type { CatalogoStockItem } from '@/libs/api-client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { hasCapability } from '@/features/auth/lib/capabilities'
 import type { TipoDocumento } from '@/features/clientes/components/SeleccionarClienteSheet'
-import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { aElegido, type ClienteElegido } from '@/features/clientes/lib/recientes'
 import { useSocio } from '@/libs/api-client/socios'
 import { useCarritoVenta } from '../hooks/useCarritoVenta'
@@ -29,6 +28,7 @@ import { CatalogoVenta } from './CatalogoVenta'
 import { CantidadOfertaPantalla } from './CantidadOfertaPantalla'
 import { CreditoDeudaVenta } from './CreditoDeudaVenta'
 import { PasosVenta } from './PasosVenta'
+import { ClienteDeLaVenta } from './ClienteDeLaVenta'
 import { RevisarVenta } from './RevisarVenta'
 import { ConFactura, MOTIVO_PRESUPUESTO_SOBRE_TOPE } from './ConFactura'
 import { DescuentoGeneralSheet } from './DescuentoGeneralSheet'
@@ -68,7 +68,7 @@ type VistaVenta = 'catalogo' | 'carrito' | 'entrega'
 
 /**
  * Venta nueva en cuatro pasos: Cliente (elegirlo crea el borrador en el servidor y desde ahí se autoguarda), Productos
- * (el catálogo, donde se arma), Carrito ("Ver venta": las líneas) y Entrega ("Continuar": cabecera, factura, total y
+ * (el catálogo, donde se arma), Carrito ("Ver carrito": las líneas) y Entrega ("Continuar a entrega": cabecera, factura, total y
  * confirmar, que lleva a la pantalla de venta guardada). El paso no se guarda en el borrador: una venta que se abre
  * (retomar, editar, duplicar) arranca en el carrito, como antes arrancaba en la revisión.
  */
@@ -253,8 +253,6 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   ])
   const aviso = b.errorAlCrear ? `${b.errorAlCrear} La venta se puede seguir armando, pero no se guarda sola.`
     : b.estado === 'error' || b.estado === 'conflicto' ? b.motivo : null
-  // El cliente se identifica por la dirección; el nombre va aparte.
-  const nombre = nombreDelCliente(cliente)
   const avisos = avisosVenta(lineas, { tipo, tope, exento, descuentoGeneral: descuentoValido, verCantidades, yaReservadas })
   // La cesión no viaja en el autoguardado (el borrador es Presupuesto); va al confirmar, y siempre a autorización.
   if (cab.porcentajeCedido) avisos.porAutorizar.push('cediste parte de tu comisión')
@@ -266,7 +264,6 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
     avisos.porAutorizar = vistaPrevia.data!.motivos
     avisos.rechazos = vistaPrevia.data!.rechazos
   }
-  const rotulo = nombre ? `${direccionDeEntrega(cliente)} · ${nombre}` : direccionDeEntrega(cliente)
   const superaTope = superaElTope(lineas, descuentoValido, tope, exento)
   // En una venta nueva la flecha del carrito vuelve al catálogo; en las que se abren, sale de la pantalla.
   const volverDelCarrito = abrir ? volver : { kind: 'atras' as const, onPress: () => setVista('catalogo') }
@@ -319,17 +316,18 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
     </View>
   )
   const enEntrega = vistaActual === 'entrega'
-  const tituloDeLaVenta = edicion ? `Editar ${tipo.toLowerCase()} ${edicion.codigo}` : enEntrega ? 'Entrega y facturación' : 'Carrito'
+  // El encabezado no cambia de forma de un paso al otro: el paso lo dice la barra de pasos y el cliente va debajo.
+  const tituloDeLaVenta = edicion ? `Editar ${tipo.toLowerCase()} ${edicion.codigo}` : 'Nueva venta'
   const vistaCarritoOEntrega = (
     <>
       <TopBar
         lineasMultiples
         title={tituloDeLaVenta}
-        subtitle={rotulo}
         leading={enEntrega ? { kind: 'atras', onPress: () => setVista('carrito') } : volverDelCarrito}
         syncLabel={b.etiqueta}
         actions={b.borrador ? [{ icon: Trash2, accessibilityLabel: 'Descartar borrador', onPress: descartar }] : []}
       />
+      <ClienteDeLaVenta cliente={cliente} rotulo={tipo === 'Presupuesto' ? 'Presupuesto' : undefined} />
       <PasosVenta paso={enEntrega ? 4 : 3} />
       {avisoDelBorrador}
       <RevisarVenta
@@ -357,16 +355,15 @@ export function VentaNuevaPantalla({ abrir, clienteId, alTerminar, activa = true
   )
 
   // Vista de catálogo: donde se arma la venta de una venta nueva. Con la flecha se sale de la venta.
-  // "Ver venta" (la barra del carrito) lleva al carrito.
+  // "Ver carrito" (la barra del carrito) lleva al carrito.
   const vistaCatalogo = (
     <>
       <TopBar
-        lineasMultiples
-        title={direccionDeEntrega(cliente)}
-        subtitle={[nombre, tipo === 'Presupuesto' ? 'Presupuesto' : null].filter(Boolean).join(' · ') || undefined}
+        title="Nueva venta"
         leading={abrir ? { kind: 'atras', onPress: () => setVista('carrito') } : volver}
         syncLabel={b.etiqueta}
       />
+      <ClienteDeLaVenta cliente={cliente} rotulo={tipo === 'Presupuesto' ? 'Presupuesto' : undefined} />
       <PasosVenta paso={2} />
       <CreditoDeudaVenta clienteId={cliente.id} tipo={tipo} />
       {avisoDelBorrador}

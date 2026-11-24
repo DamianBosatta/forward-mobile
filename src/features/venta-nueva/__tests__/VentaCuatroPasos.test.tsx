@@ -62,7 +62,7 @@ async function alCarrito() {
 }
 async function aEntrega() {
   await alCarrito()
-  await userEvent.press(screen.getByRole('button', { name: 'Continuar' }))
+  await userEvent.press(screen.getByRole('button', { name: 'Continuar a entrega' }))
   await screen.findByText('Paso 4 de 4')
 }
 /** El atrás de Android: manda el último oyente registrado que lo atiende, como el sistema. */
@@ -97,7 +97,7 @@ describe('venta en cuatro pasos: Cliente, Productos, Carrito, Entrega', () => {
     await userEvent.press(screen.getByRole('button', { name: 'Ver venta' }))
     expect(screen.getByText('Paso 3 de 4')).toBeTruthy()
     expect(screen.getByLabelText('Paso 3 de 4: Carrito')).toHaveProp('accessibilityState', { selected: true })
-    await userEvent.press(screen.getByRole('button', { name: 'Continuar' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Continuar a entrega' }))
     expect(screen.getByText('Paso 4 de 4')).toBeTruthy()
     expect(screen.getByLabelText('Paso 4 de 4: Entrega')).toHaveProp('accessibilityState', { selected: true })
   })
@@ -107,7 +107,7 @@ describe('venta en cuatro pasos: Cliente, Productos, Carrito, Entrega', () => {
     expect(screen.getByText('Pala c/Cabo Fija LP')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Descuento a toda la venta' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Agregar productos' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Continuar a entrega' })).toBeEnabled()
     expect(screen.queryByRole('switch', { name: 'Con factura' })).toBeNull()
     expect(screen.queryByText('Fecha de entrega')).toBeNull()
     expect(screen.queryByLabelText('Observaciones')).toBeNull()
@@ -132,8 +132,8 @@ describe('venta en cuatro pasos: Cliente, Productos, Carrito, Entrega', () => {
   it('con el carrito vacío "Continuar" está apagado y no se llega al paso 4', async () => {
     await alCarrito()
     useCarritoVenta.setState({ lineas: [] })
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar' })).toBeDisabled())
-    await userEvent.press(screen.getByRole('button', { name: 'Continuar' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar a entrega' })).toBeDisabled())
+    await userEvent.press(screen.getByRole('button', { name: 'Continuar a entrega' }))
     expect(screen.queryByText('Paso 4 de 4')).toBeNull()
     expect(screen.getByText('Paso 3 de 4')).toBeTruthy()
   })
@@ -142,7 +142,7 @@ describe('venta en cuatro pasos: Cliente, Productos, Carrito, Entrega', () => {
     await aEntrega()
     await userEvent.press(screen.getByRole('button', { name: 'Volver' }))
     expect(screen.getByText('Paso 3 de 4')).toBeTruthy()
-    await userEvent.press(screen.getByRole('button', { name: 'Continuar' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Continuar a entrega' }))
     expect(screen.getByText('Paso 4 de 4')).toBeTruthy()
     act(() => { expect(hardwareBack()).toBe(true) })
     expect(screen.getByText('Paso 3 de 4')).toBeTruthy()
@@ -204,7 +204,7 @@ describe('borrador retomado (el paso no se guarda en el borrador)', () => {
     expect(await screen.findByText('Paso 3 de 4', undefined, ESPERA)).toBeTruthy()
     expect(screen.getByText('Pala c/Cabo Fija LP')).toBeTruthy()
     expect(screen.queryByLabelText('Observaciones')).toBeNull()
-    await userEvent.press(screen.getByRole('button', { name: 'Continuar' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Continuar a entrega' }))
     expect(screen.getByLabelText('Observaciones')).toHaveProp('value', 'Portón negro')
     // Una venta abierta sale de la pantalla desde el paso 3, como hoy.
     await userEvent.press(screen.getByRole('button', { name: 'Volver' }))

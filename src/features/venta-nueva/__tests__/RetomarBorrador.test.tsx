@@ -51,8 +51,8 @@ beforeEach(() => {
 })
 
 async function aEntrega() {
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled())
-  await userEvent.press(screen.getByRole('button', { name: 'Continuar' }))
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Continuar a entrega' })).toBeEnabled())
+  await userEvent.press(screen.getByRole('button', { name: 'Continuar a entrega' }))
 }
 
 describe('retomar un borrador (PR 2.2b)', () => {
@@ -60,7 +60,8 @@ describe('retomar un borrador (PR 2.2b)', () => {
     pantalla()
     expect(await screen.findByText('Paso 3 de 4')).toBeTruthy()
     // El cliente por la dirección; el nombre aparte.
-    expect(screen.getByText('Tarantino 1898 · Autoservicio Abel')).toBeTruthy()
+    expect(screen.getByText('Tarantino 1898')).toBeTruthy()
+    expect(screen.getByText('Autoservicio Abel · Presupuesto')).toBeTruthy()
     // La línea toma el precio del catálogo de hoy, con la cantidad y el descuento del borrador.
     expect(useCarritoVenta.getState().lineas).toEqual([{ productoId: 'p1', producto: pala, cantidad: 3, descuentoPct: 10 }])
     expect(screen.getByText('3 u × $ 2.600,00')).toBeTruthy()

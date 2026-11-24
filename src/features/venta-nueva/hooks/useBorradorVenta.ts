@@ -94,7 +94,7 @@ export function useBorradorVenta(valores: AutoguardadoVenta, topePedido = 0) {
     : errorAlCrear ? 'Sin autoguardado'
     : !borrador ? undefined
     : autoguardado.estado === 'guardando' ? 'Guardando…'
-    : autoguardado.estado === 'error' || autoguardado.estado === 'conflicto' ? 'Sin guardar' : 'Guardado'
+    : autoguardado.estado === 'error' || autoguardado.estado === 'conflicto' ? 'Sin guardar' : 'Borrador guardado'
 
   return { borrador, errorAlCrear, retenido, crear, retomar, descartar, etiqueta, ...autoguardado }
 }
