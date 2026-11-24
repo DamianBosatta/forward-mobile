@@ -22,6 +22,8 @@ export function avisoPresupuesto(vencido: boolean, fechaVencimiento: string | nu
 export const MOTIVO_ANULAR_EN_RUTA = 'No se puede anular: el pedido está en ruta.'
 
 const MOTIVO_NO_EDITABLE = 'Ya lo están preparando: no se puede editar. Para cambiarlo, hablá con el depósito.'
+/** Ya salió del depósito: no hay a quién pedirle el cambio, así que el motivo no manda al depósito. */
+const MOTIVO_NO_EDITABLE_EN_RUTA = 'No se puede editar: el pedido está en ruta.'
 
 type CanDo = (modulo: 'MOD_VENTAS' | 'MOD_PAGOS', accion: 'read' | 'create' | 'update' | 'delete') => boolean
 
@@ -72,7 +74,7 @@ export function accionesDeVenta(
     pasarAPedido: esPresupuesto && esEstadoVenta(estado, 'Pendiente') && puedeModificar,
     reabrir: esPresupuesto && esEstadoVenta(estado, 'Vencido') && puedeModificar,
     cobrar: !esPresupuesto && !anulada && canDo('MOD_PAGOS', 'read') && canDo('MOD_PAGOS', 'create'),
-    motivoNoEditable: esEstadoVenta(estado, 'EnPreparacion', 'Empacada', 'EnRuta') ? MOTIVO_NO_EDITABLE : undefined,
+    motivoNoEditable: enRuta ? MOTIVO_NO_EDITABLE_EN_RUTA : esEstadoVenta(estado, 'EnPreparacion', 'Empacada') ? MOTIVO_NO_EDITABLE : undefined,
   }
 }
 
