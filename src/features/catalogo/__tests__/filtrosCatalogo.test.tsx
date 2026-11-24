@@ -8,6 +8,7 @@ import { fichaDeCatalogo, paginaDeCatalogo } from '../testing/fichasDeCatalogo'
 // R19: filtros "Con oferta" y "Línea / Familia" del catálogo. Pantalla real, react-query real,
 // solo el transporte HTTP mockeado.
 
+jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390, isLarge: false }) }))
 jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), useRouter: () => ({ push: jest.fn() }) }))
 jest.mock('expo-router/react-navigation', () => ({ DrawerActions: { openDrawer: jest.fn() }, useFocusEffect: jest.fn() }))

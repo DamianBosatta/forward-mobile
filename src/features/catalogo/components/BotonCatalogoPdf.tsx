@@ -109,7 +109,7 @@ function ExportarCatalogoPdf({ busqueda, soloConStock, conOferta, categoriaId, t
 
   return (
     <>
-      <Button label="Exportar PDF" variant="secundario" onPress={() => setAbierta(true)} />
+      <FiltroChip label="Exportar PDF" activo={false} onPress={() => setAbierta(true)} />
       <BottomSheet visible={abierta} onClose={() => setAbierta(false)} accessibilityLabel="Exportar el catálogo a PDF">
         <Text style={[typeScale.titulo, { color: c.text }]}>Exportar catálogo</Text>
 

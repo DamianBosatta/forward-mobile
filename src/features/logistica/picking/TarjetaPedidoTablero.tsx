@@ -42,20 +42,20 @@ function Etiqueta({ texto, icono: Icono, tono = 'neutra', hecho = false }: { tex
   )
 }
 
-function Dato({ icono: Icono, children, hecho = false }: { icono: LucideIcon; children: React.ReactNode; hecho?: boolean }) {
+function Dato({ icono: Icono, children, hecho = false, unaLinea = false }: { icono: LucideIcon; children: React.ReactNode; hecho?: boolean; unaLinea?: boolean }) {
   const c = useColors()
   const color = hecho ? c.ink : c.textSecondary
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
       <Icono size={16} color={color} />
-      <Text style={{ ...typeScale.secundario, color, opacity: hecho ? 0.78 : 1, flex: 1 }}>{children}</Text>
+      <Text numberOfLines={unaLinea ? 1 : undefined} style={{ ...typeScale.secundario, color, opacity: hecho ? 0.78 : 1, flex: 1 }}>{children}</Text>
     </View>
   )
 }
 
-const PASOS_VISIBLES = 3
+const PASOS_VISIBLES = 1
 
-/** Pasos del pedido (estado · usuario · fecha y hora), del más viejo al más nuevo; más de 3 se pliegan. */
+/** Pasos del pedido (estado · usuario · fecha y hora), del más viejo al más nuevo; plegado se ve solo el último, en una línea. */
 function ListaDePasos({ pasos, hecho }: { pasos: NonNullable<VentaTablero['pasos']>; hecho: boolean }) {
   const c = useColors()
   const [todos, setTodos] = useState(false)
@@ -64,7 +64,7 @@ function ListaDePasos({ pasos, hecho }: { pasos: NonNullable<VentaTablero['pasos
   return (
     <View testID="pasos-pedido" style={{ gap: space[1] }}>
       {visibles.map((p, i) => (
-        <Dato key={`${p.fecha}-${i}`} icono={History} hecho={hecho}>{textoPaso(p)}</Dato>
+        <Dato key={`${p.fecha}-${i}`} icono={History} hecho={hecho} unaLinea={!todos}>{textoPaso(p)}</Dato>
       ))}
       {ordenados.length > PASOS_VISIBLES ? (
         <Pressable

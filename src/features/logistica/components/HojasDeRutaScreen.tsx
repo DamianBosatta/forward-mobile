@@ -8,6 +8,7 @@ import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { EstadoDePantalla } from '@/core/ui/fw/EstadoDePantalla'
 import { LISTA_LARGA_PROPS } from '@/core/ui/listaLargaProps'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
+import { fechaCorta } from '@/core/utils/fecha'
 import { useHojasDeRuta } from '@/libs/api-client/logistica'
 import type { HojaRutaListItemDto } from '@/libs/api-client/types'
 import { ESTADO_HOJA_RUTA, resolverEstadoHojaRuta } from '@/libs/reglas/estados'
@@ -30,7 +31,7 @@ function BloqueEntregas({ cantidad, hecha }: { cantidad: number; hecha: boolean 
   const c = useColors()
   const texto = hecha ? c.lime : c.ink
   return (
-    <View accessible={false} testID="bloque-entregas" style={{ minWidth: 60, height: 60, paddingHorizontal: space[2], borderRadius: radii.cantidad, backgroundColor: hecha ? c.ink : c.lime, alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+    <View accessible={false} testID="bloque-entregas" style={{ width: 76, height: 60, paddingHorizontal: space[1], borderRadius: radii.cantidad, backgroundColor: hecha ? c.ink : c.lime, alignItems: 'center', justifyContent: 'center', gap: 3 }}>
       <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.titulo, importe, { color: texto }]}>{cantidad}</Text>
       <Text maxFontSizeMultiplier={maxFontScale} style={[typeScale.etiquetaChip, { color: texto }]}>{cantidad === 1 ? 'entrega' : 'entregas'}</Text>
     </View>
@@ -55,9 +56,9 @@ const FilaDeHoja = memo(function FilaDeHoja({ hoja, indice, onAbrir }: { hoja: H
       >
         <BloqueEntregas cantidad={hoja.cantidadParadas} hecha={hecha} />
         <View style={{ flex: 1, minWidth: 0, gap: space[1] }}>
-          <Text style={[typeScale.secundario, { color: apagado }]} numberOfLines={1}>{codigoDe(hoja.id)}</Text>
+          <Text style={[typeScale.secundario, { color: apagado }]} numberOfLines={1}>{[codigoDe(hoja.id), fechaCorta(hoja.fechaSalida)].filter(Boolean).join(' · ')}</Text>
           <Text style={[typeScale.cuerpoDestacado, { color: hecha ? c.ink : c.text }]} numberOfLines={1}>{hoja.choferNombre}</Text>
-          <Text style={[typeScale.secundario, { color: apagado }]} numberOfLines={1}>{hoja.vehiculoPatente}</Text>
+          <Text style={[typeScale.secundario, { color: apagado }]} numberOfLines={1}>{`Vehículo ${hoja.vehiculoPatente}`}</Text>
         </View>
         {estado && etiqueta ? <StatusChip estado={CHIP_DE_TONO[estado.info.tono] ?? 'pendiente'} label={etiqueta} sobreTeal={hecha} /> : null}
         <ChevronRight size={20} color={apagado} />
@@ -83,7 +84,7 @@ export function HojasDeRutaScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar title="Hojas de ruta" subtitle="De toda la empresa" leading={menu ?? { kind: 'atras', onPress: () => router.back() }} />
+      <TopBar title="Hojas de ruta" subtitle="Todas las hojas" leading={menu ?? { kind: 'atras', onPress: () => router.back() }} />
       <View style={{ flexDirection: 'row', gap: space[2], padding: space[4], paddingBottom: space[2] }}>
         {FILTROS.map((f) => <FiltroChip key={f.clave} label={f.label} activo={f.clave === clave} onPress={() => setClave(f.clave)} />)}
       </View>

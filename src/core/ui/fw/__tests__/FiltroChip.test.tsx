@@ -27,4 +27,14 @@ describe('FiltroChip', () => {
     expect(estilo.backgroundColor).toBe(themeColors[tema].surface2)
     expect(estilo.backgroundColor).not.toBe(themeColors[tema].surface)
   })
+
+  it('por defecto la etiqueta puede partirse en dos líneas (sin numberOfLines)', () => {
+    render(<FiltroChip label="Con stock" activo={false} onPress={jest.fn()} />)
+    expect(screen.getByText('Con stock').props.numberOfLines).toBeUndefined()
+  })
+
+  it('con unaLinea la etiqueta se queda en una sola línea', () => {
+    render(<FiltroChip label="Con stock" unaLinea activo={false} onPress={jest.fn()} />)
+    expect(screen.getByText('Con stock').props.numberOfLines).toBe(1)
+  })
 })

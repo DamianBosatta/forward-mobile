@@ -295,6 +295,32 @@ describe.each(['light', 'dark'] as const)('Preparación de pedidos (%s)', (esque
     expect(screen.getByRole('button', { name: 'Depósito: Todos los depósitos' })).toBeTruthy()
   })
 
+  it('MD-24: when the Hoy shortcut is active the day strip marks today, and a shortcut for another range marks none', async () => {
+    pintar()
+    await screen.findByTestId('tarjeta-v1')
+    expect(screen.getByLabelText('vie 9 · Hoy').props.accessibilityState.checked).toBe(true)
+    await userEvent.press(screen.getByRole('button', { name: 'Esta semana' }))
+    expect(screen.getByLabelText('vie 9 · Hoy').props.accessibilityState.checked).toBe(false)
+  })
+
+  it('MD-12: the shortcut chips wrap instead of scrolling sideways, so "Todo" and "Rango exacto" are always visible', async () => {
+    pintar()
+    await screen.findByTestId('tarjeta-v1')
+    expect(estilo(screen.getByTestId('atajos-entrega')).flexWrap).toBe('wrap')
+    expect(screen.getByRole('button', { name: 'Todo' })).toBeTruthy()
+  })
+
+  it('MD-24: loading on a wide tablet shows four skeleton columns, like the board; on a phone it is one column', () => {
+    mockGet.mockImplementation(() => new Promise(() => {}))
+    mockAncho.mockReturnValue(1024)
+    const { unmount } = pintar()
+    expect(screen.getAllByTestId('esqueleto-columna')).toHaveLength(4)
+    unmount()
+    mockAncho.mockReturnValue(390)
+    pintar()
+    expect(screen.queryAllByTestId('esqueleto-columna')).toHaveLength(0)
+  })
+
   it('cargando, error con Reintentar, sin pedidos con Ver todo y Limpiar filtros, y columna vacía', async () => {
     mockGet.mockImplementation(() => new Promise(() => {}))
     const { unmount } = pintar()

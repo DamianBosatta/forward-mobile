@@ -9,12 +9,26 @@ import { Skeleton } from '@/core/ui/Skeleton'
 export { DepositoDelTablero, ElegirDepositoSheet } from '@/features/deposito-sesion/components/ElegirDeposito'
 
 /** Cargando con la forma del tablero (TableroEsqueleto): pestañas y tarjetas grises, para que nada salte al llegar. */
-export function TableroEsqueleto() {
-  return (
-    <View accessible accessibilityRole="progressbar" accessibilityLabel="Cargando el tablero de preparación" style={{ gap: space[3] }}>
+export function TableroEsqueleto({ columnas = 1 }: { columnas?: number }) {
+  const columna = (
+    <>
       <Skeleton width="100%" height={116} borderRadius={radii.pastilla} />
       <Skeleton width="100%" height={140} borderRadius={radii.tarjetaGrande} />
       <Skeleton width="100%" height={140} borderRadius={radii.tarjetaGrande} />
+    </>
+  )
+  return (
+    <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel="Cargando el tablero de preparación"
+      style={columnas > 1 ? { flexDirection: 'row', gap: space[3] } : { gap: space[3] }}
+    >
+      {columnas > 1
+        ? Array.from({ length: columnas }, (_, i) => (
+            <View key={i} testID="esqueleto-columna" style={{ flex: 1, gap: space[3] }}>{columna}</View>
+          ))
+        : columna}
     </View>
   )
 }

@@ -9,6 +9,7 @@ import StockScreen from '../../../../app/(tabs)/inventario/stock'
 import { DEPOSITO_CENTRAL_ID } from '@/core/constants/depositos'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 
+jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390 }) }))
 jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), useLocalSearchParams: () => ({}) }))
 jest.mock('expo-router/react-navigation', () => ({ DrawerActions: { openDrawer: jest.fn() }, useFocusEffect: jest.fn() }))
@@ -107,7 +108,7 @@ describe('Tarjetas y Lista (láminas 1 y 4)', () => {
     expect(screen.getByRole('radio', { name: 'Tarjetas', selected: true })).toBeTruthy()
     const make = screen.getByLabelText('Make Lavajean, disponible: 8, en alerta de stock')
     expect(within(make).getByText('8')).toBeTruthy()
-    expect(within(make).getByText('En alerta')).toBeTruthy()
+    expect(within(make).getByText('un. · En alerta')).toBeTruthy()
     const linea = screen.getByLabelText('Aromas 250 ml, total en stock: 214')
     expect(within(linea).getByText('en stock (línea)')).toBeTruthy()
     await waitFor(() => expect(screen.getByLabelText('Artículos: 1703')).toBeTruthy())
@@ -123,7 +124,7 @@ describe('Tarjetas y Lista (láminas 1 y 4)', () => {
     expect(screen.getByRole('radio', { name: 'Lista', selected: true })).toBeTruthy()
     expect(await screen.findByText('Stock real 14 · Mín. 24')).toBeTruthy()
     expect(screen.getByText('Reservado 6 · Por entrar 48')).toBeTruthy()
-    expect(within(screen.getByLabelText('Ocean Toalla Rollo, TR905')).getByText('Sin stock')).toBeTruthy()
+    expect(within(screen.getByLabelText('Ocean Toalla Rollo, TR905')).getByText('un. · Sin stock')).toBeTruthy()
     expect(screen.getByLabelText('Artículos: 1703')).toBeTruthy()
     expect(screen.getByLabelText('Con stock: 1557')).toBeTruthy()
     expect(screen.getByLabelText('Sin stock: 34')).toBeTruthy()

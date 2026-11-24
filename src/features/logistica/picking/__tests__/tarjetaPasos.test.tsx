@@ -55,7 +55,7 @@ describe.each(["light", "dark"] as const)(
         />,
       );
 
-    it("muestra cada paso con estado, usuario, día y hora de Argentina, y el vendedor", () => {
+    it("MD-28: collapsed, only the last step shows (one line); \"Ver todos\" lists each step with state, user, day and Argentina time", async () => {
       pintar({
         ...base,
         pasos: PASOS,
@@ -63,21 +63,20 @@ describe.each(["light", "dark"] as const)(
         ultimoCambioEn: "2026-10-09T15:42:00Z",
       });
       expect(screen.getByText("Emanuel Parraquini")).toBeTruthy();
-      expect(
-        screen.getByText("Confirmada · Emanuel Parraquini · 09/10 10:05"),
-      ).toBeTruthy();
-      expect(
-        screen.getByText(
-          "Confirmada → En Preparación · Operario Uno · 09/10 11:10",
-        ),
-      ).toBeTruthy();
-      expect(
-        screen.getByText(
-          "En Preparación → Empacada · Operario Dos · 09/10 12:42",
-        ),
-      ).toBeTruthy();
+      const ultimo = screen.getByText("En Preparación → Empacada · Operario Dos · 09/10 12:42");
+      expect(ultimo.props.numberOfLines).toBe(1);
+      expect(screen.queryByText("Confirmada · Emanuel Parraquini · 09/10 10:05")).toBeNull();
+      expect(screen.queryByText("Confirmada → En Preparación · Operario Uno · 09/10 11:10")).toBeNull();
+      await userEvent.press(screen.getByRole("button", { name: "Ver todos los pasos" }));
+      expect(screen.getByText("Confirmada · Emanuel Parraquini · 09/10 10:05")).toBeTruthy();
+      expect(screen.getByText("Confirmada → En Preparación · Operario Uno · 09/10 11:10")).toBeTruthy();
       // Con pasos, la línea de último cambio se reemplaza.
       expect(screen.queryByText(/^Otro/)).toBeNull();
+    });
+
+    it("a single step has nothing to unfold: no \"Ver todos\"", () => {
+      pintar({ ...base, pasos: [PASOS[0]] });
+      expect(screen.queryByRole("button", { name: "Ver todos los pasos" })).toBeNull();
     });
 
     it("sin pasos cae en la línea de último cambio", () => {
@@ -89,7 +88,7 @@ describe.each(["light", "dark"] as const)(
       expect(screen.getByText("Operario Uno · 09/10 10:42")).toBeTruthy();
     });
 
-    it('con más de 3 pasos muestra los últimos 3 y "Ver todos" despliega el resto', async () => {
+    it('with more steps than one it shows the last and "Ver todos (N)" unfolds the rest', async () => {
       const mas = [
         {
           estadoAnterior: null,
@@ -101,6 +100,7 @@ describe.each(["light", "dark"] as const)(
       ];
       pintar({ ...base, pasos: mas });
       expect(screen.queryByText(/Vieja/)).toBeNull();
+      expect(screen.getByText("Ver todos (4)")).toBeTruthy();
       await userEvent.press(
         screen.getByRole("button", { name: "Ver todos los pasos" }),
       );
