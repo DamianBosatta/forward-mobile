@@ -12,6 +12,7 @@ import { formatImporte } from '@/core/ui/fw'
 // solo se reemplaza el transporte HTTP (api.get / api.post) por respuestas del servidor.
 
 let mockAncho = 390
+jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: mockAncho }) }))
 const mockPush = jest.fn()
 jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), useRouter: () => ({ push: mockPush }) }))

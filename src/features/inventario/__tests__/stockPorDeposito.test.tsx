@@ -9,6 +9,7 @@ import { elegirDepositoDeSesion, limpiarDepositoDeSesion } from '@/features/depo
 // Vista Stock (láminas ModStock y TabStock): solo ver. Pantalla real con react-query real; solo el transporte HTTP es falso.
 
 let mockAncho = 390
+jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
 jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: mockAncho }) }))
 let mockParams: { busqueda?: string } = {}
 jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), useLocalSearchParams: () => mockParams }))
@@ -103,7 +104,7 @@ describe('Stock por depósito, con CAP_VER_CANTIDADES_STOCK', () => {
     expect(screen.getByText('Stock real 14 · Mín. 24')).toBeTruthy()
     expect(screen.getByText('Reservado 6 · Por entrar 48')).toBeTruthy()
     expect(screen.getByLabelText('Disponible 8')).toBeTruthy()
-    expect(within(screen.getByLabelText('Make Lavajean, PRO06787')).getByText('En alerta')).toBeTruthy()
+    expect(within(screen.getByLabelText('Make Lavajean, PRO06787')).getByText('un. · En alerta')).toBeTruthy()
     // Sin disponible: "Sin stock", y reservado / por entrar en 0.
     expect(screen.getByText('Reservado 0 · Por entrar 0')).toBeTruthy()
     await waitFor(() => expect(screen.getByText('1703')).toBeTruthy())

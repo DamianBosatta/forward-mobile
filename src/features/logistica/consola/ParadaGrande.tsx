@@ -43,14 +43,12 @@ export function ParadaGrande({ parada, numero, total, puedeLlamar, notaCargando,
         {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
       </View>
       <View style={{ gap: space[1] }}>
-        <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.consolaCifra, color: c.ink }}>
-          {parada.clienteNombre}
-        </Text>
-        {/* El cliente se identifica por la dirección: es el punto de entrega. */}
+        {/* The address is the delivery point and what the driver navigates by: it leads, large; the client name is the second line. */}
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[2] }}>
-          <MapPin size={24} color={c.ink} />
-          <Text style={{ ...typeScale.consolaTexto, fontFamily: FONT.semibold, fontWeight: '600', color: c.ink, flex: 1 }}>{parada.direccion}</Text>
+          <MapPin size={28} color={c.ink} />
+          <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.consolaCifra, color: c.ink, flex: 1 }}>{parada.direccion}</Text>
         </View>
+        <Text style={{ ...typeScale.consolaTexto, fontFamily: FONT.semibold, fontWeight: '600', color: c.ink }}>{parada.clienteNombre}</Text>
         <HorarioDelDia horario={parada.horarioDelDia} color={c.ink} />
         {nota ? <Text style={{ ...typeScale.secundario, color: c.ink }}>{`Remito ${nota}`}</Text> : null}
       </View>
@@ -87,7 +85,7 @@ function Atajo({ label, onPress, disabled, busy }: { label: string; onPress: () 
       accessibilityLabel={label}
       accessibilityState={{ disabled: !!inactivo, busy: !!busy }}
       android_ripple={{ color: c.ink }}
-      style={{ flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.veilInk12, opacity: inactivo ? 0.5 : 1 }}
+      style={{ flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space[2], borderRadius: radii.pastilla, backgroundColor: c.veilInk12, borderWidth: 2, borderColor: c.ink, opacity: inactivo ? 0.5 : 1 }}
     >
       <Text maxFontSizeMultiplier={1.3} style={{ ...typeScale.cuerpoDestacado, color: c.ink, textAlign: 'center' }}>{label}</Text>
     </PressableFx>

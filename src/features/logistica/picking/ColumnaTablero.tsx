@@ -27,12 +27,12 @@ export function CabeceraColumna({ id, items }: { id: ColumnaId; items: readonly 
   return (
     <View
       testID={`cabecera-${id}`}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], backgroundColor: fondo, borderRadius: radii.tarjetaGrande, padding: space[5] }}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: 88, backgroundColor: fondo, borderRadius: radii.tarjetaGrande, padding: space[5] }}
     >
       <View style={{ flex: 1, gap: space[1] }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
           <Icono size={24} color={c.ink} strokeWidth={2.5} />
-          <Text accessibilityRole="header" style={{ ...typeScale.tituloTarjeta, color: c.ink, flexShrink: 1 }}>{col.titulo}</Text>
+          <Text accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ ...typeScale.titulo, color: c.ink, flexShrink: 1 }}>{col.titulo}</Text>
         </View>
         <Text style={{ ...typeScale.secundario, ...importe, color: c.ink, opacity: 0.78 }}>{subtotalDeColumna(id, items)}</Text>
       </View>

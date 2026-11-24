@@ -3,7 +3,7 @@ import { Linking, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { idDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
 import { onlineManager, useQueryClient } from '@tanstack/react-query'
-import { FileText, Phone, RefreshCw, WifiOff } from 'lucide-react-native'
+import { FileText, RefreshCw, Truck, WifiOff } from 'lucide-react-native'
 import { RequirePermission } from '@/core/ui'
 import { BottomSheet, Button, Notice, Progress, formatImporte, TopBar, useMenuLeading, type TopBarAction } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
@@ -107,6 +107,8 @@ export default function ConsolaChoferScreen() {
     if (!id && cerrado) clearActiveTrip()
   }, [id, clearActiveTrip])
 
+  // Same name as the Hojas list the trip is opened from; without an id it is today's trip.
+  const tituloDeBarra = id ? 'Hoja de ruta' : 'Viaje de hoy'
   const objetivo = id || activeTripId || rutaElegida || ''
   // El servidor devuelve todo el historial del chofer: se piden solo las de hoy (día argentino) y sin las canceladas.
   const hoy = diaArgentina(useAhoraArgentina())
@@ -169,7 +171,7 @@ export default function ConsolaChoferScreen() {
   if ((remota.isLoading || ((rutas.isLoading || enCurso.isLoading) && !objetivo)) && !viaje) {
     return (
       <View accessibilityLabel="Cargando la hoja de ruta" accessibilityLiveRegion="polite" style={{ flex: 1, backgroundColor: c.bg }}>
-        <TopBar title="Viaje de hoy" leading={menu} actions={[accionAvisos]} />
+        <TopBar title={tituloDeBarra} leading={menu} actions={[accionAvisos]} />
         <View style={{ padding: space[4], gap: space[3] }}>
           <View style={{ height: 24, width: '60%', borderRadius: radii.pastilla, backgroundColor: c.surface }} />
           <View style={{ height: 12, borderRadius: radii.pastilla, backgroundColor: c.surface }} />
@@ -195,6 +197,8 @@ export default function ConsolaChoferScreen() {
 
   if (!viaje) {
     const conError = remota.isError || rutas.isError || enCurso.isError
+    // The button shows the spinner or the icon, never both.
+    const revisando = rutas.isRefetching || enCurso.isRefetching
     const revisar = async () => {
       safeHaptics.impact('light')
       await Promise.all([rutas.refetch(), enCurso.refetch(), remota.refetch()])
@@ -202,14 +206,14 @@ export default function ConsolaChoferScreen() {
     }
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <TopBar title="Viaje de hoy" leading={leading} actions={[accionAvisos]} />
+        <TopBar title={tituloDeBarra} leading={leading} actions={[accionAvisos]} />
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: space[4], gap: space[4] }}
           refreshControl={<RefreshControl refreshing={rutas.isRefetching || enCurso.isRefetching} onRefresh={revisar} />}
         >
           <View accessibilityRole={conError ? 'alert' : undefined} style={{ alignItems: 'center', gap: space[3] }}>
             <View style={{ width: 96, height: 96, borderRadius: radii.pastilla, backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center' }}>
-              {conError || !enLinea ? <WifiOff size={40} color={c.textSecondary} /> : <Phone size={40} color={c.textSecondary} />}
+              {conError || !enLinea ? <WifiOff size={40} color={c.textSecondary} /> : <Truck size={40} color={c.textSecondary} />}
             </View>
             <Text accessibilityRole="header" style={{ ...typeScale.tituloGrande, color: c.text, textAlign: 'center' }}>
               {conError ? 'No pudimos traer tu viaje' : 'Hoy no tenés viaje'}
@@ -222,7 +226,7 @@ export default function ConsolaChoferScreen() {
             ) : null}
           </View>
           {/* TODO API: el número de Logística no tiene campo hoy; cuando llegue de la config va "Llamar a Logística" (urlLlamar). */}
-          <Button size="xl" icon={RefreshCw} label={conError ? 'Probar de nuevo' : 'Revisar de nuevo'} loading={rutas.isRefetching || enCurso.isRefetching} onPress={revisar} />
+          <Button size="xl" icon={revisando ? undefined : RefreshCw} label={conError ? 'Probar de nuevo' : 'Revisar de nuevo'} loading={revisando} onPress={revisar} />
           <Button size="xl" label="Volver" variant="secundario" onPress={() => router.replace(volverA as never)} />
         </ScrollView>
       </View>
@@ -269,7 +273,7 @@ export default function ConsolaChoferScreen() {
 
   const abrir = (url: string | null) => {
     if (!url) return
-    Linking.openURL(url).catch(() => setAviso('No se pudo abrir esa aplicación en el teléfono.'))
+    Linking.openURL(url).catch(() => setAviso('No se pudo abrir esa aplicación en el equipo.'))
   }
 
   const guardarEntrega = (parada: ParadaDto, cuerpo: CuerpoEntregaParada, cobrado: number) =>
@@ -468,7 +472,7 @@ export default function ConsolaChoferScreen() {
   return (
     <RequirePermission module="MOD_VIAJES" action="read" mode="screen">
       <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <TopBar title="Viaje de hoy" subtitle={subtitulo || undefined} leading={leading} actions={[...acciones, accionAvisos]} />
+        <TopBar title={tituloDeBarra} subtitle={subtitulo || undefined} leading={leading} actions={[...acciones, accionAvisos]} />
         <HojaDeRutaVista
           hojaDeRutaId={viaje.id}
           paradasCobro={paradasCobro}

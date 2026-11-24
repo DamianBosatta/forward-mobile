@@ -3,13 +3,13 @@ import { CeldaDeGrilla, paddingDeGrilla } from '@/core/ui/listaFlash'
 import React, { memo, useCallback, useRef, useState } from 'react'
 import { useFiltroPersistente } from '@/core/hooks/useFiltroPersistente'
 import { ActivityIndicator, Modal, Text, View } from 'react-native'
-import { useNavigation, useRouter } from 'expo-router'
-import { DrawerActions, useFocusEffect } from "expo-router/react-navigation"
+import { useRouter } from 'expo-router'
+import { useFocusEffect } from "expo-router/react-navigation"
 import { useMutation } from '@tanstack/react-query'
 import { LayoutGrid, List, ScanBarcode } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Notice, TopBar, useInsetInferior } from '@/core/ui/fw'
+import { Notice, TopBar, useInsetInferior, useMenuLeading } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { EstadoDeConsulta } from '@/core/ui/estados'
@@ -45,7 +45,7 @@ const FilaProducto = memo(function FilaProducto({ onAbrir, ...tarjeta }: PropsPr
 
 function CatalogoConsulta() {
   const insetInferior = useInsetInferior()
-  const navigation = useNavigation()
+  const menu = useMenuLeading()
   const router = useRouter()
   const c = useColors()
   const { width } = useResponsive()
@@ -146,7 +146,7 @@ function CatalogoConsulta() {
       <TopBar
         title="Catálogo"
         subtitle="Solo consulta"
-        leading={{ kind: 'menu', onPress: () => navigation.dispatch(DrawerActions.openDrawer()) }}
+        leading={menu}
         actions={[
           { icon: ScanBarcode, accessibilityLabel: 'Escanear código de barras', onPress: () => { cancelarEscaneo(); setEscaneando(true) } },
           ...(dosPaneles
@@ -162,7 +162,7 @@ function CatalogoConsulta() {
       />
       <BusquedaBajoBarra value={cat.busqueda} onChangeText={(texto) => { cancelarEscaneo(); cat.setBusqueda(texto) }} />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }}>
-        <FiltroChip label="Con stock" activo={soloConStock} onPress={() => setSoloConStock((v) => !v)} />
+        <FiltroChip label="Con stock" unaLinea activo={soloConStock} onPress={() => setSoloConStock((v) => !v)} />
         <FiltroChip label="Con oferta" activo={cat.soloConOferta} onPress={() => cat.setSoloConOferta((v) => !v)} />
         <SelectorLineaFamilia categoriaId={cat.categoriaId} onChange={cat.setCategoriaId} />
         <BotonCatalogoPdf

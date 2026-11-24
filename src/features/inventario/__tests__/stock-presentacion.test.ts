@@ -1,4 +1,4 @@
-import { chipDeFilaStock, textoMinimo, textoReservadas } from '../lib/stock-presentacion'
+import { chipDeFilaStock, textoMinimo, leyendaDeDisponible, textoReservadas } from '../lib/stock-presentacion'
 
 describe('chipDeFilaStock', () => {
   it('sin disponible dice "Sin stock", aunque el servidor lo marque en alerta', () => {
@@ -23,5 +23,14 @@ describe('textos del renglón', () => {
   it('reservado y por entrar van siempre, con 0 incluido; la web nunca dice "Virtual" ni "Por ingresar"', () => {
     expect(textoReservadas(6, 48)).toBe('Reservado 6 · Por entrar 48')
     expect(textoReservadas(0, 0)).toBe('Reservado 0 · Por entrar 0')
+  })
+})
+
+describe('leyendaDeDisponible', () => {
+  it('names the unit so a bare number is never ambiguous', () => {
+    expect(leyendaDeDisponible('entregado', 12)).toBe('un. disponibles')
+    expect(leyendaDeDisponible('entregado', 1)).toBe('un. disponible')
+    expect(leyendaDeDisponible('porAutorizar', 8)).toBe('un. · En alerta')
+    expect(leyendaDeDisponible('anulado', 0)).toBe('un. · Sin stock')
   })
 })

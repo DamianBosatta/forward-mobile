@@ -1,5 +1,7 @@
 import React from 'react'
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { conTema, estilo } from '@/core/ui/fw/__testing__/tema'
+import { themeColors, radii } from '@/libs/theme'
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
 import { BotonCatalogoPdf } from '../components/BotonCatalogoPdf'
 import { novedadesDesde } from '../lib/presentacion'
@@ -45,6 +47,18 @@ beforeEach(() => {
   conPermisos(['MOD_CATALOGO'])
   mockSharePdf.mockResolvedValue({ ok: true })
   api.get.mockImplementation((url: string) => (url === '/api/v1/listas-precios' ? Promise.resolve(LISTAS) : Promise.reject(new Error(url))))
+})
+
+describe.each(['light', 'dark'] as const)('Exportar PDF looks like the filter chips next to it (%s)', (tema) => {
+  beforeEach(() => conTema(tema))
+
+  it('MD-7: a 44 pt resting-grey pill, not the taller secondary button', () => {
+    renderBoton()
+    const e = estilo(screen.getByRole('button', { name: 'Exportar PDF' }))
+    expect(e.minHeight).toBe(44)
+    expect(e.borderRadius).toBe(radii.pastilla)
+    expect(e.backgroundColor).toBe(themeColors[tema].surface2)
+  })
 })
 
 describe('Permiso', () => {

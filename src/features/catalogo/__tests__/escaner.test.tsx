@@ -12,6 +12,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store'
 let mockPermiso: { granted: boolean; canAskAgain: boolean } | null = { granted: true, canAskAgain: true }
 let mockCodigos: string[] = []
 const mockPedirPermiso = jest.fn()
+jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
 jest.mock('expo-camera', () => {
   const { Pressable } = require('react-native')
   return {
