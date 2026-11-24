@@ -4,6 +4,7 @@ import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-nativ
 import { Package, Trash2 } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors, useSombraTarjeta } from '@/libs/theme'
 import { Button, Notice, PieFijo, StatusChip, TopBar, formatImporte } from '@/core/ui/fw'
+import { FormContainer } from '@/core/ui/fw/FormContainer'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import type { CatalogoStockItem } from '@/libs/api-client'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -128,7 +129,8 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
           actions={linea ? [{ icon: Trash2, accessibilityLabel: 'Quitar la línea', onPress: quitarLinea }] : []}
         />
 
-        <ScrollView contentContainerStyle={{ padding: space[4], gap: space[4] }} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={{ padding: space[4] }} keyboardShouldPersistTaps="handled">
+          <FormContainer style={{ gap: space[4] }}>
           <View style={{ flexDirection: 'row', gap: space[3], alignItems: 'center' }}>
             <View style={{ width: 84, height: 84, borderRadius: radii.tarjeta, backgroundColor: c.surface2, borderWidth: 1, borderColor: c.borderStrong, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               {p.imageUrl ? <Image source={{ uri: p.imageUrl }} style={{ width: 84, height: 84 }} cachePolicy="memory-disk" contentFit="cover" accessibilityIgnoresInvertColors /> : <Package size={28} color={c.textSecondary} />}
@@ -252,14 +254,17 @@ function Contenido({ producto: p, linea, enVivo, yaReservada, onClose, onListo }
               </View>
             </View>
           ) : null}
+          </FormContainer>
         </ScrollView>
 
         <PieFijo>
+          <FormContainer style={{ gap: space[2] }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <Text style={secundario}>{`${unidades} × ${formatImporte(precioFinal)}`}</Text>
             <Text testID="oferta-subtotal" style={{ ...typeScale.titulo, ...importe, color: c.text }}>{formatImporte(calcularSubtotalConDescuento(base, unidades, pct))}</Text>
           </View>
           <Button size="lg" label="Listo, seguir cargando" disabled={deshabilitado} onPress={listo} />
+          </FormContainer>
         </PieFijo>
       </View>
     </Modal>
