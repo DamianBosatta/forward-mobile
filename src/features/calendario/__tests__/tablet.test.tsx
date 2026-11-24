@@ -68,11 +68,12 @@ describe('Calendario y avisos en tablet (TM10)', () => {
     expect(mockGet.mock.calls.map(([u]) => String(u))).toContain('/api/v1/Calendario?Desde=2026-10-26&Hasta=2026-12-06')
   })
 
-  it('MB-21: en horizontal la semana es una grilla de siete columnas; en vertical, un día debajo del otro', async () => {
+  it('MB-21: en horizontal la semana también va apilada, un día debajo del otro', async () => {
     pintar()
     await screen.findByText('Reunión de vendedores')
-    expect(StyleSheet.flatten(screen.getByLabelText('Calendario semanal').props.style).flexDirection).toBe('row')
+    expect(StyleSheet.flatten(screen.getByLabelText('Calendario semanal').props.style).flexDirection).not.toBe('row')
     expect(screen.getAllByTestId(/^dia-/)).toHaveLength(7)
+    for (const d of screen.getAllByTestId(/^dia-/)) expect(StyleSheet.flatten(d.props.style).flex).toBeUndefined()
   })
 
   it('MB-21: en vertical la semana sigue apilada', async () => {
