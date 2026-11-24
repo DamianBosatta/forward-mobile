@@ -65,5 +65,7 @@ export function textoImputacion(imputadoA: ImputacionMovimientoDto[] | null | un
 /** El concepto con el código de la venta cuando el servidor lo manda y el concepto no lo dice ya. */
 export function descripcionDe(m: Pick<MovimientoConCuenta, 'referencia' | 'comprobante'>): string {
   const comprobante = m.comprobante?.trim()
-  return comprobante && !m.referencia.includes(comprobante) ? `${m.referencia} · ${comprobante}` : m.referencia
+  const concepto = comprobante && !m.referencia.includes(comprobante) ? `${m.referencia} · ${comprobante}` : m.referencia
+  // El concepto lo escribe quien carga el movimiento: se muestra con mayúscula inicial, como los demás.
+  return concepto.charAt(0).toUpperCase() + concepto.slice(1)
 }

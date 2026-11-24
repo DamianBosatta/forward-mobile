@@ -28,7 +28,7 @@ export interface TextosDelFlujo {
 
 /** Imputación automática del cobro (el texto de siempre del formulario y del cobro en pasos). */
 export const AVISO_IMPUTACION =
-  'Imputación automática: el servidor lo aplica a la deuda más vieja y te dice en qué cuenta (TST o Normal) quedó.'
+  'Se aplica a la deuda más vieja y te muestra en qué cuenta (TST o Normal) quedó.'
 export const AVISO_IMPUTACION_PAGO = 'Imputación automática: el servidor lo aplica a la deuda más vieja con el proveedor.'
 export const CHEQUE_VA_SOLO_EN_EL_PAGO = 'El cheque propio va en un pago de un solo medio.'
 

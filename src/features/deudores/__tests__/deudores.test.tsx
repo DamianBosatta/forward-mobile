@@ -74,7 +74,7 @@ beforeEach(() => {
 
 async function abrirDeudores() {
   renderConQuery(<CuentasCorrientesScreen />)
-  await userEvent.press(await screen.findByRole('radio', { name: 'Deudores' }, ESPERA))
+  await userEvent.press(await screen.findByRole('radio', { name: 'Deudas' }, ESPERA))
 }
 
 describe('Deudores en Cuentas', () => {
@@ -96,7 +96,7 @@ describe('Deudores en Cuentas', () => {
     renderConQuery(<CuentasCorrientesScreen />)
     await screen.findByRole('radio', { name: /Me deben/ }, ESPERA)
 
-    expect(screen.queryByRole('radio', { name: 'Deudores' })).toBeNull()
+    expect(screen.queryByRole('radio', { name: 'Deudas' })).toBeNull()
     expect(pedidosDeDeudas()).toHaveLength(0)
   })
 
