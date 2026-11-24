@@ -24,7 +24,7 @@ const ALTO = 56
 const etiqueta = { ...typeScale.secundario, fontFamily: FONT.bold, fontWeight: '700' as const }
 const tipeado = { ...typeScale.cuerpo, fontFamily: FONT.bold, fontWeight: '700' as const }
 
-/** Campo FWD: alto 56, radio de fila, relleno superficie sin contorno; foco = borde `text` de 2 px y error en rojo. */
+/** Campo FWD: alto 56, radio de fila, relleno gris suave (surface2, P10) sin contorno; foco = borde `text` de 2 px y error en rojo. */
 export function Field({ label, help, error, alignRight, verOcultar, labelSuffix, invalid, prefijo, secureTextEntry, onFocus, onBlur, ...input }: FieldProps) {
   const colors = useColors()
   const [foco, setFoco] = useState(false)
@@ -60,7 +60,7 @@ export function Field({ label, help, error, alignRight, verOcultar, labelSuffix,
           borderRadius: radii.fila,
           borderWidth: 2,
           borderColor: error || invalid ? colorError : foco ? colors.text : 'transparent',
-          backgroundColor: colors.surface,
+          backgroundColor: colors.surface2,
           paddingHorizontal: space[4],
           paddingLeft: prefijo ? space[8] : space[4],
           paddingRight: ojo ? space[12] : space[4],

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { render, screen, userEvent } from '@testing-library/react-native'
+import { render, screen, userEvent, fireEvent } from '@testing-library/react-native'
 import { themeColors } from '@/libs/theme'
 import { Button, Field, Segmented } from '../index'
 import { TEMAS, conTema, estilo } from '../__testing__/tema'
@@ -69,15 +69,27 @@ describe('Field', () => {
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
-  it.each(TEMAS)('tema %s: relleno superficie, borde transparente en reposo y texto del tema', (tema) => {
+  it.each(TEMAS)('tema %s: en reposo relleno gris suave (surface2), borde transparente y texto del tema', (tema) => {
     conTema(tema)
     render(<Field label="Observaciones" value="Entregar antes de las 12" />)
     const s = estilo(screen.getByLabelText('Observaciones'))
-    expect(s.backgroundColor).toBe(themeColors[tema].surface)
+    expect(s.backgroundColor).toBe(themeColors[tema].surface2)
+    expect(s.backgroundColor).not.toBe(themeColors[tema].surface)
     expect(s.borderColor).toBe('transparent')
     expect(s.borderWidth).toBe(2)
     expect(s.color).toBe(themeColors[tema].text)
     expect(s.height).toBe(56)
+  })
+
+  it.each(TEMAS)('tema %s: el foco muestra el borde oscuro y el error el rojo, sobre el mismo gris', (tema) => {
+    conTema(tema)
+    const { rerender } = render(<Field label="Observaciones" value="" />)
+    fireEvent(screen.getByLabelText('Observaciones'), 'focus')
+    const enFoco = estilo(screen.getByLabelText('Observaciones'))
+    expect(enFoco.borderColor).toBe(themeColors[tema].text)
+    expect(enFoco.backgroundColor).toBe(themeColors[tema].surface2)
+    rerender(<Field label="Observaciones" value="" error="Falta" />)
+    expect(estilo(screen.getByLabelText('Observaciones')).borderColor).toBe(themeColors[tema].chip.anulado.text)
   })
 })
 
