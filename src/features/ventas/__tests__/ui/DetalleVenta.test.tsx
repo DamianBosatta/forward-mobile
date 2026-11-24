@@ -92,6 +92,23 @@ describe('R1 · detalle del pedido (ResVentaDetalle, TV7)', () => {
     expect(screen.getByText('Cuenta corriente, 15 días desde la entrega')).toBeTruthy()
   })
 
+  it('MV-2: el Total va antes que el Cobro', async () => {
+    const pagos = {
+      ventaId: 'v9', total: 88738.89, montoPagado: 40000, saldoPendiente: 48738.89, estadoPago: 'Parcial',
+      imputaciones: [{ numeroPago: 'P-1', medioPago: 'Efectivo', cuentaNombre: null, monto: 40000, fechaImputacion: '2026-10-30T15:00:00Z', origen: 'AutomaticaFifo' }],
+    }
+    mockGet.mockImplementation((url: string) => Promise.resolve(
+      url === '/api/v1/Ventas/v9' ? mockVenta : url === '/api/v1/socios-comerciales/c7' ? socio : url === '/api/v1/Ventas/v9/pagos' ? pagos : undefined))
+    pantalla()
+    const cobro = await screen.findByRole('header', { name: 'Cobro' })
+    const total = screen.getByText('Total')
+    const todo = JSON.stringify(screen.toJSON())
+    expect(todo.indexOf('"Total"')).toBeGreaterThan(-1)
+    expect(todo.indexOf('"Total"')).toBeLessThan(todo.indexOf('"Cobro"'))
+    expect(total).toBeTruthy()
+    expect(cobro).toBeTruthy()
+  })
+
   it('sin cobros no hay tarjeta "Cobro"', async () => {
     pantalla()
     await screen.findByText('Pedido A00419')
@@ -140,6 +157,14 @@ describe('R1 · detalle del pedido (ResVentaDetalle, TV7)', () => {
     await screen.findByText('Pedido A00419')
     expect(screen.getByRole('button', { name: 'Anular' })).toBeDisabled()
     expect(screen.getByText('No se puede anular: el pedido está en ruta.')).toBeTruthy()
+  })
+
+  it('MV-18: En ruta, el motivo de no editar dice "en ruta", sin mandar al depósito', async () => {
+    venta({ estado: 5 })
+    pantalla()
+    await screen.findByText('Pedido A00419')
+    expect(screen.getByText('No se puede editar: el pedido está en ruta.')).toBeTruthy()
+    expect(screen.queryByText(/hablá con el depósito/)).toBeNull()
   })
 
   it('sin MOD_VENTAS borrar no hay Anular ni motivo', async () => {

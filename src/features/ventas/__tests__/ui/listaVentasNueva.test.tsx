@@ -2,7 +2,7 @@ import React from 'react'
 import { Alert, Text } from 'react-native'
 import { act, cleanup, render, screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { subDays } from 'date-fns'
+import { addDays, subDays } from 'date-fns'
 import { diaArgentina } from '@/core/utils/fecha'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { formatImporte } from '@/core/ui/fw'
@@ -206,7 +206,7 @@ describe('lista de ventas nueva: total del filtro (GET /Ventas/resumen)', () => 
   it('en Pedidos suma el importe del servidor, pedido con los mismos filtros que la lista', async () => {
     conResumen(servidorNuevo)
     pantalla()
-    expect(await screen.findByText('Mostrando 2 de 61 · $ 6.860.919,00')).toBeTruthy()
+    expect(await screen.findByText('Mostrando 2 de 61')).toBeTruthy()
     expect(filtros(ultimoResumen())).toBe(filtros(ultimaConsulta()))
     await userEvent.press(screen.getByRole('radio', { name: 'Entregado' }))
     await userEvent.type(screen.getByLabelText('Buscar'), 'luis')
@@ -219,11 +219,11 @@ describe('lista de ventas nueva: total del filtro (GET /Ventas/resumen)', () => 
   it('en Presupuestos y con Anulado solo la cantidad: el importe del servidor es de pedidos no anulados', async () => {
     conResumen(servidorNuevo)
     pantalla()
-    await screen.findByText('Mostrando 2 de 61 · $ 6.860.919,00')
+    await screen.findByText('Mostrando 2 de 61')
     await userEvent.press(screen.getByRole('radio', { name: 'Anulado' }))
     expect(await screen.findByText('Mostrando 2 de 61')).toBeTruthy()
     await userEvent.press(screen.getByRole('radio', { name: 'Todos' }))
-    await screen.findByText('Mostrando 2 de 61 · $ 6.860.919,00')
+    await screen.findByText('Mostrando 2 de 61')
     await userEvent.press(screen.getByRole('radio', { name: 'Presupuestos' }))
     await waitFor(() => expect(ultimoResumen().get('tipoOperacion')).toBe('1'))
     expect(await screen.findByText('Mostrando 2 de 61')).toBeTruthy()
@@ -233,9 +233,9 @@ describe('lista de ventas nueva: total del filtro (GET /Ventas/resumen)', () => 
   it('en Presupuestos suma el importe de presupuestos del servidor (totalPresupuestado)', async () => {
     conResumen({ ...servidorNuevo, totalPresupuestado: 1250000 })
     pantalla()
-    await screen.findByText('Mostrando 2 de 61 · $ 6.860.919,00')
+    await screen.findByText('Mostrando 2 de 61')
     await userEvent.press(screen.getByRole('radio', { name: 'Presupuestos' }))
-    expect(await screen.findByText('Mostrando 2 de 61 · $ 1.250.000,00')).toBeTruthy()
+    expect(await screen.findByText('Mostrando 2 de 61')).toBeTruthy()
     await userEvent.press(screen.getByRole('radio', { name: 'Anulado' }))
     expect(await screen.findByText('Mostrando 2 de 61')).toBeTruthy()
   })
@@ -360,11 +360,47 @@ describe('lista de ventas nueva: botón "Nueva venta" (S1)', () => {
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/nueva')
   })
 
+  it('MV-20: en tablet apaisada, con una venta abierta en el panel, el botón flotante no tapa el detalle', async () => {
+    conPermiso(true)
+    pantalla(1194)
+    await screen.findByText('Mostrando 2 de 61')
+    expect(screen.getAllByRole('button', { name: 'Nueva venta' })).toHaveLength(1)
+    await userEvent.press(screen.getByRole('button', { name: /A00418/ }))
+    expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
+  })
+
   it('sin permiso de crear ventas no hay botón', async () => {
     conPermiso(false)
     pantalla()
     await screen.findByText('Mostrando 2 de 61')
     expect(screen.queryByRole('button', { name: 'Nueva venta' })).toBeNull()
+  })
+})
+
+describe('lista de ventas nueva: saldo y entrega en la tarjeta (MV-2, MV-5)', () => {
+  function conVentas(items: unknown[]) {
+    mockGet.mockImplementation((url: string) => Promise.resolve(url.includes('borradores/mios') ? [] : pagina(items, items.length)))
+  }
+
+  it('MV-2: una venta con saldo pendiente lo dice en la tarjeta', async () => {
+    conVentas([venta({ saldo: 50000 })])
+    pantalla()
+    const tarjeta = await screen.findByRole('button', { name: /A00418/ })
+    expect(within(tarjeta).getByText(/Saldo \$ 50\.000,00/)).toBeTruthy()
+  })
+
+  it('MV-2: sin saldo, o con la venta anulada, no hay línea de saldo', async () => {
+    conVentas([venta({ saldo: 0 }), venta({ id: 'v2', codigoPedido: 'A00419', estado: 'Anulada', saldo: 9000 })])
+    pantalla()
+    await screen.findByRole('button', { name: /A00418/ })
+    expect(screen.queryByText(/Saldo/)).toBeNull()
+  })
+
+  it('MV-5: una venta entregada no dice "Entrega mañana"', async () => {
+    conVentas([venta({ estado: 'Entregada', fechaEntrega: addDays(ahora, 1).toISOString() })])
+    pantalla()
+    const tarjeta = await screen.findByRole('button', { name: /A00418/ })
+    expect(within(tarjeta).queryByText(/Entrega (hoy|mañana)/)).toBeNull()
   })
 })
 

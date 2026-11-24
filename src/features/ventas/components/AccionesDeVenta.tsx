@@ -4,7 +4,7 @@ import { PressableFx } from '@/core/ui/fw/PressableFx'
 import { useRouter } from 'expo-router'
 import { CreditCard, FileText, MessageCircle, type LucideIcon } from 'lucide-react-native'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
-import { Button, formatImporte, pesoSemibold } from '@/core/ui/fw'
+import { Button, formatImporte, pesoSemibold, useInsetInferior } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { getNotaEntregaUrl, getVentaPdfUrl, useAnularVenta, useConvertirPresupuesto } from '@/libs/api-client/ventas'
@@ -70,7 +70,7 @@ export function AccionesDeVenta({ venta, acciones, onAnulada }: Props) {
         <Button label="Reabrir" loading={reabrir.isPending} onPress={() => void reabrir.mutateAsync(h.id).catch((e) => Alert.alert('No se pudo reabrir', mensajeDelServidor(e)))} />
       ) : null}
       {acciones.editar ? <Button label="Editar" variant="secundario" onPress={() => router.push(`/(tabs)/ventas/nueva?editar=${h.id}` as never)} /> : null}
-      {a.visible ? <Button label="Anular" variant="secundario" disabled={!a.habilitado} onPress={() => { setError(null); setHoja(true) }} /> : null}
+      {a.visible ? <Button label="Anular" variant="peligroContornoNeutro" disabled={!a.habilitado} onPress={() => { setError(null); setHoja(true) }} /> : null}
       {a.visible && !a.habilitado && a.motivo ? <MotivoDeshabilitado>{a.motivo}</MotivoDeshabilitado> : null}
       <AnularVentaSheet
         visible={hoja}
@@ -114,6 +114,7 @@ interface BarraProps {
 /** Barra de abajo (ResVentaDetalle): WhatsApp, PDF y Cobrar. El teléfono sin número válido deja WhatsApp sin enlace. */
 export function BarraDeLaVenta({ venta, acciones, conSaldo, onCobrar }: BarraProps) {
   const c = useColors()
+  const insetInferior = useInsetInferior()
   const h = venta.venta
   const [pdf, setPdf] = useState(false)
   const url = urlWhatsAppVenta(h.clienteTelefono, mensajeWhatsAppVenta({ tipoOperacion: h.tipoOperacion, id: h.id, codigoPedido: h.codigoPedido, total: formatImporte(h.totalAmount, { moneda: h.totalCurrency }) }))
@@ -129,7 +130,8 @@ export function BarraDeLaVenta({ venta, acciones, conSaldo, onCobrar }: BarraPro
   }
 
   return (
-    <View style={{ flexDirection: 'row', gap: space[2], padding: space[3], backgroundColor: c.bg }}>
+    // Mismos márgenes laterales que el contenido (space[4]) y el margen de abajo del sistema, para que su línea no pise los botones.
+    <View style={{ flexDirection: 'row', gap: space[2], paddingHorizontal: space[4], paddingTop: space[3], paddingBottom: space[3] + insetInferior, backgroundColor: c.bg }}>
       <Celda icono={MessageCircle} label="WhatsApp" deshabilitado={!url} onPress={() => url && void Linking.openURL(url)} />
       <Celda icono={FileText} label="PDF" cargando={pdf} onPress={() => void compartir()} />
       {acciones.cobrar && conSaldo ? <Celda icono={CreditCard} label="Cobrar" principal onPress={onCobrar} /> : null}

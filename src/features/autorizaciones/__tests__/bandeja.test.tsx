@@ -222,6 +222,25 @@ describe('Autorizaciones: la bandeja', () => {
     expect(within(screen.getByTestId('two-pane-detail')).queryByText('Elegí una venta para decidir.')).toBeNull()
   })
 
+  it('MV-29: en tablet horizontal sin ventas, el panel no pide elegir una venta que no existe', async () => {
+    mockAncho.mockReturnValue(1194)
+    conCapacidades('CAP_AUTORIZAR_VENTA')
+    bandeja([])
+    pintar()
+
+    expect(await screen.findByText('Cuando una venta necesite tu autorización, la vas a poder revisar acá.')).toBeTruthy()
+    expect(screen.queryByText('Elegí una venta para decidir.')).toBeNull()
+  })
+
+  it('MV-17: sin ventas no hay filtro "Todas · 0" suelto', async () => {
+    conCapacidades('CAP_AUTORIZAR_VENTA')
+    bandeja([])
+    pintar()
+
+    await screen.findByRole('header', { name: 'No hay ventas por autorizar.' })
+    expect(screen.queryByText(/Todas/)).toBeNull()
+  })
+
   describe('con el servidor de forward-system #884 (número, cliente por partes y versión)', () => {
     const nueva = (extra: object = {}) => venta('a', 32, 507977.55, {
       clienteDisplayName: 'Juan B. Justo 6376 - Carlos', direccionCliente: 'Juan B. Justo 6376', nombreFantasiaCliente: 'Carlos',

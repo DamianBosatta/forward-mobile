@@ -62,10 +62,7 @@ export function useVentasListaNueva(filtroDeRuta: FiltroVentasRuta | null = null
   const borradores = useBorradoresVentaMios(esBorradores)
 
   const items = useMemo(() => itemsCargados<Venta>(ventas.data?.pages), [ventas.data])
-  const contador = contadorVentas(items.length, totalDelServidor(ventas.data?.pages), resumen.data, {
-    tipoOperacion: filtro.tipoOperacion,
-    estados: filtro.estado ? [filtro.estado] : [],
-  })
+  const contador = contadorVentas(items.length, totalDelServidor(ventas.data?.pages))
 
   return {
     pestana, setPestana,
