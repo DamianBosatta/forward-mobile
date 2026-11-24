@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, ScrollView, SectionList, Text, View } from 'r
 import { useRouter } from 'expo-router'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import {
-  Button, DocumentCard, Entrada, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, useMenuLeading,
+  Button, DocumentCard, Entrada, Field, Notice, Segmented, TopBar, TwoPane, chipForEstado, formatImporte, useMenuLeading,
   type SegmentedOption, useInsetInferior } from '@/core/ui/fw'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
 import { PressableFx } from '@/core/ui/fw/PressableFx'
@@ -21,6 +21,7 @@ import { identidadDeBorrador } from '../lib/borradorCliente'
 import { useSinConexionSinDatos } from '../lib/sinConexion'
 import { ListaBorradores } from './ListaBorradores'
 import { Fab } from '@/core/ui/fw/Fab'
+import { esEstadoVenta } from '@/core/constants/estados'
 import { motivosDe } from '@/features/autorizaciones/lib/motivos'
 import { useVentasListaNueva, type FiltroEstado, type PeriodoVentas, type PestanaVentas } from '../hooks/useVentasListaNueva'
 
@@ -64,7 +65,23 @@ function detalleDe(v: Venta): string | undefined {
   // El servidor solo lo manda mientras la venta espera autorización.
   const motivos = motivosDe(v.motivoPendienteAutorizacion)
   if (motivos.length) return `${motivos[0]!.texto}${motivos.length > 1 ? ` (+${motivos.length - 1})` : ''}`
+  // Una venta ya entregada no tiene día de entrega por delante: "Entrega mañana" la contradice.
+  if (esEstadoVenta(v.estado, 'Entregada')) return undefined
   return entregaDe(v.fechaEntrega) || undefined
+}
+
+/** Lo que queda por cobrar de un pedido en pie; null si no hay deuda o la venta no cuenta como plata. */
+function saldoDe(v: Venta): number | null {
+  if (esEstadoVenta(v.estado, 'Anulada', 'RechazadaAutorizacion')) return null
+  return typeof v.saldo === 'number' && v.saldo > 0 ? v.saldo : null
+}
+
+/** El pie de la tarjeta: el saldo, si lo hay, y a continuación el detalle (motivo o día de entrega). */
+function pieDe(v: Venta): string | undefined {
+  const saldo = saldoDe(v)
+  const detalle = detalleDe(v)
+  if (saldo === null) return detalle
+  return [`Saldo ${formatImporte(saldo)}`, detalle].filter(Boolean).join(' · ')
 }
 
 interface Props {
@@ -83,7 +100,7 @@ const FilaVenta = memo(function FilaVenta({ v, indice, onAbrir }: { v: Venta; in
         vendedor={v.vendedorNombre}
         {...clienteDe(v)}
         hora={horaDe(v.fecha)}
-        detalle={detalleDe(v)}
+        detalle={pieDe(v)}
         importe={v.totalAmount}
         chip={chipForEstado('venta', v.estado)}
         onPress={() => onAbrir(v.id)}
@@ -145,7 +162,8 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityLabel="Período" contentContainerStyle={{ gap: space[2] }}>
         {PERIODOS.map((p) => <FiltroChip key={p.value} label={p.label} activo={p.value === l.periodo} onPress={() => l.setPeriodo(p.value)} />)}
       </ScrollView>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" accessibilityLabel="Estado" contentContainerStyle={{ gap: space[2] }}>
+      {/* La barra queda a la vista en Android: sin ella, el último chip cortado no dice que la fila se desliza. */}
+      <ScrollView horizontal showsHorizontalScrollIndicator persistentScrollbar accessibilityRole="radiogroup" accessibilityLabel="Estado" contentContainerStyle={{ gap: space[2] }}>
         {ESTADOS.map((e) => {
           const sel = e.value === l.estado
           return (
@@ -250,7 +268,8 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
       />
       {/* En teléfono la venta nueva sale del botón central de la barra inferior (NuevaVentaCentral): acá no se repite.
           En tablet no hay barra inferior, así que el botón sigue acá; pide elegir el cliente primero. */}
-      {isTablet && canDo('MOD_VENTAS', 'create') ? <Fab accessibilityLabel="Nueva venta" label="Nueva venta" onPress={() => router.push('/(tabs)/ventas/nueva' as never)} /> : null}
+      {/* Con una venta abierta en el panel el botón taparía su barra de acciones (Cobrar, Total): se oculta. */}
+      {isTablet && !(isTabletLandscape && elegida) && canDo('MOD_VENTAS', 'create') ? <Fab accessibilityLabel="Nueva venta" label="Nueva venta" onPress={() => router.push('/(tabs)/ventas/nueva' as never)} /> : null}
     </View>
   )
 }
