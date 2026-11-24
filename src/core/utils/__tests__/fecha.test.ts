@@ -21,3 +21,28 @@ describe('hoyTexto', () => {
     }
   })
 })
+
+// P15: one short-date function for the whole app (it replaces three local copies).
+import { fechaCorta } from '../fecha'
+
+describe('fechaCorta', () => {
+  it('writes a business day (AAAA-MM-DD) as day and month, as written, without a time zone shift', () => {
+    expect(fechaCorta('2026-10-17')).toBe('17 oct')
+    expect(fechaCorta('2026-01-01')).toBe('1 ene')
+  })
+
+  it('writes an instant with the Argentine calendar day, whatever the phone time zone', () => {
+    expect(fechaCorta('2026-11-10T02:00:00Z')).toBe('9 nov')
+    expect(fechaCorta('2026-11-09T15:00:00Z', 'semanaDiaMes')).toBe('lun 9/11')
+  })
+
+  it('writes the weekday style for a business day too', () => {
+    expect(fechaCorta('2026-11-09', 'semanaDiaMes')).toBe('lun 9/11')
+  })
+
+  it('is an empty text when there is no valid date', () => {
+    expect(fechaCorta('no es una fecha')).toBe('')
+    expect(fechaCorta(null)).toBe('')
+    expect(fechaCorta(undefined, 'semanaDiaMes')).toBe('')
+  })
+})

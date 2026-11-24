@@ -59,6 +59,17 @@ describe('Usuarios (solo consulta)', () => {
     expect(screen.getAllByLabelText('Estado: Inactivo')).toHaveLength(1)
   })
 
+  it('MB-8: el puesto interno se lee con su nombre, y sin puesto sale el rol con su nombre', async () => {
+    conLectura()
+    mockGet.mockResolvedValue(pagina([
+      { id: 'a', nombre: 'Ana', apellido: 'Paz', nombreCompleto: 'Ana Paz', puestoNombre: 'AdministradorSistemas', roles: ['AdministradorSistemas'], estaActivo: true },
+      { id: 'b', nombre: 'Beto', apellido: 'Sol', nombreCompleto: 'Beto Sol', puestoNombre: null, roles: ['AdministradorSistemas'], estaActivo: true },
+    ]))
+    pintar()
+    expect(await screen.findAllByText('Administrador de sistemas')).toHaveLength(2)
+    expect(screen.queryByText('AdministradorSistemas')).toBeNull()
+  })
+
   it('marca con "· vos" al usuario de la sesión', async () => {
     conLectura()
     pintar()

@@ -12,6 +12,7 @@ import type { Venta } from '@/libs/api-client'
 import type { SocioListDto } from '@/libs/api-client/types'
 import { useCartera, useValorDiferido } from '@/features/clientes/hooks/useCartera'
 import { Esqueletos } from '@/features/clientes/components/Esqueletos'
+import { clienteDeVenta } from '@/features/inicio/lib/clienteDeVenta'
 import { direccionDeEntrega, nombreDelCliente } from '@/features/clientes/lib/cliente'
 import { tituloDelDia } from '@/features/ventas/lib/agruparPorDia'
 import { parseDateSafe } from '@/core/utils/fecha'
@@ -31,7 +32,7 @@ export function BuscarScreen() {
   const insetInferior = useInsetInferior()
   const c = useColors()
   const router = useRouter()
-  const { isTablet } = useResponsive()
+  const { isTablet, isTabletLandscape } = useResponsive()
   const { canDo } = usePermissions()
   const [texto, setTexto] = useState('')
   const termino = texto.trim()
@@ -50,7 +51,7 @@ export function BuscarScreen() {
             <Search size={20} color={c.onTopBarStrong} />
             <TextInput
               accessibilityLabel="Buscar"
-              placeholder="Cliente, pedido o cuenta"
+              placeholder="Cliente, venta o cuenta"
               placeholderTextColor={c.onTopBar}
               cursorColor={c.onTopBarStrong}
               value={texto}
@@ -75,13 +76,13 @@ export function BuscarScreen() {
             <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center' }}>{`Escribí al menos ${MINIMO_BUSQUEDA} letras para buscar.`}</Text>
           </View>
         ) : (
-          <View testID="buscar-resultados" style={{ flexDirection: isTablet ? 'row' : 'column', alignItems: isTablet ? 'flex-start' : 'stretch', gap: space[4] }}>
-            {visibles.clientes ? <SeccionClientes termino={termino} columna={isTablet} /> : null}
-            {visibles.ventas ? <SeccionVentas termino={termino} columna={isTablet} /> : null}
-            {visibles.cuentas ? <SeccionCuentas termino={termino} columna={isTablet} /> : null}
+          <View testID="buscar-resultados" style={{ flexDirection: isTabletLandscape ? 'row' : 'column', alignItems: isTabletLandscape ? 'flex-start' : 'stretch', gap: space[4] }}>
+            {visibles.clientes ? <SeccionClientes termino={termino} columna={isTabletLandscape} /> : null}
+            {visibles.ventas ? <SeccionVentas termino={termino} columna={isTabletLandscape} /> : null}
+            {visibles.cuentas ? <SeccionCuentas termino={termino} columna={isTabletLandscape} /> : null}
           </View>
         )}
-        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>
+        <Text style={{ ...typeScale.secundario, color: c.textSecondary, textAlign: 'center' }}>
           La búsqueda solo muestra lo que tu usuario puede ver.
         </Text>
       </ScrollView>
@@ -151,7 +152,7 @@ function Fila({ etiqueta, avatar, titulo, detalle, detalleEnRojo = false, derech
           </View>
         ) : null}
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-          <Text numberOfLines={1} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{titulo}</Text>
+          <Text numberOfLines={2} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{titulo}</Text>
           {detalle ? <Text numberOfLines={1} style={detalleEnRojo ? { ...typeScale.secundario, fontFamily: typeScale.cuerpoDestacado.fontFamily, fontWeight: '800', color: c.text } : { ...typeScale.secundario, color: c.textSecondary }}>{detalle}</Text> : null}
         </View>
         {derecha || chip ? (
@@ -261,7 +262,9 @@ function SeccionVentas({ termino, columna }: { termino: string; columna: boolean
       ) : null}
     >
       {ventas.map((v) => {
-        const direccion = v.direccionCliente?.trim() || v.nombreFantasiaCliente?.trim() || v.razonSocialCliente
+        // La dirección es el título del cliente en cualquier otra lista; acá el título es el pedido, así que va el nombre.
+        const { titulo: cliente, nombre } = clienteDeVenta(v)
+        const quien = nombre ?? cliente
         const tipo = v.tipoOperacion === 1 ? 'Presupuesto' : 'Pedido'
         const numero = v.codigoPedido ?? v.id.slice(0, 8).toUpperCase()
         const monto = formatImporte(v.totalAmount)
@@ -269,9 +272,9 @@ function SeccionVentas({ termino, columna }: { termino: string; columna: boolean
         return (
           <Fila
             key={v.id}
-            etiqueta={[`${tipo} ${numero}`, direccion, fechaCorta(v.fecha), monto, chip?.label].filter(Boolean).join(', ')}
+            etiqueta={[`${tipo} ${numero}`, quien, fechaCorta(v.fecha), monto, chip?.label].filter(Boolean).join(', ')}
             titulo={`${tipo} ${numero}`}
-            detalle={`${direccion} · ${fechaCorta(v.fecha)}`}
+            detalle={`${quien} · ${fechaCorta(v.fecha)}`}
             derecha={monto}
             chip={chip}
             onPress={() => router.push(`/(tabs)/ventas/${v.id}` as never)}

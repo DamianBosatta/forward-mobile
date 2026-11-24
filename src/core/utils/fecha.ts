@@ -98,3 +98,31 @@ export const ddmmaaaa = (iso: string) => iso.slice(0, 10).split('-').reverse().j
 
 /** Today's Argentina calendar day as "dd/mm/aaaa". */
 export const hoyTexto = () => ddmmaaaa(diaArgentina(Date.now()))
+
+const SEMANA_CORTA = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+const SOLO_DIA = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** 'diaMes' → "17 oct"; 'semanaDiaMes' → "lun 9/11". */
+export type EstiloFechaCorta = 'diaMes' | 'semanaDiaMes';
+
+/**
+ * La fecha corta de la app (P15). Un día de negocio ("2026-10-17") se lee como está escrito, sin pasar por un instante,
+ * para que el huso del teléfono no lo corra (X9); un instante (con hora) se lee en el calendario argentino.
+ * Cadena vacía si no hay una fecha válida.
+ */
+export function fechaCorta(valor: string | null | undefined, estilo: EstiloFechaCorta = 'diaMes'): string {
+  if (!valor) return '';
+  let anio: number, mes: number, dia: number, diaSemana: number;
+  const solo = SOLO_DIA.exec(valor);
+  if (solo) {
+    [anio, mes, dia] = [Number(solo[1]), Number(solo[2]) - 1, Number(solo[3])];
+    diaSemana = new Date(Date.UTC(anio, mes, dia)).getUTCDay();
+  } else {
+    const ms = Date.parse(valor);
+    if (Number.isNaN(ms)) return '';
+    ({ anio, mes, dia, diaSemana } = partesArgentina(ms));
+  }
+  if (!anio || mes < 0 || !dia) return '';
+  if (estilo === 'semanaDiaMes') return `${SEMANA_CORTA[diaSemana]} ${dia}/${mes + 1}`;
+  return format(new Date(anio, mes, dia), 'd MMM', { locale: es });
+}

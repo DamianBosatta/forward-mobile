@@ -3,7 +3,7 @@ import type { ChipEstado } from '@/libs/theme'
 import type { ConteosPreparacion, VentaPreparacion } from '@/libs/api-client/logistica'
 import type { components } from '@/libs/api-client/generated/schema'
 import { resolverEstadoVenta } from '@/libs/reglas/estados'
-import { diaArgentina, formatToLocalTime, partesArgentina } from '@/core/utils/fecha'
+import { diaArgentina, fechaCorta, formatToLocalTime, partesArgentina } from '@/core/utils/fecha'
 import { moverDia } from '@/features/calendario/semana'
 
 /**
@@ -85,15 +85,11 @@ export function estaAtrasado(fechaEntrega: string | null | undefined, hoy: strin
   return diaArgentina(ms) < hoy
 }
 
-const SEMANA = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
 const dos = (n: number) => String(n).padStart(2, '0')
 
 /** "lun 9/11", el día de entrega en Argentina. */
 export function diaCorto(fecha: string): string | null {
-  const ms = Date.parse(fecha)
-  if (Number.isNaN(ms)) return null
-  const p = partesArgentina(ms)
-  return `${SEMANA[p.diaSemana]} ${p.dia}/${p.mes + 1}`
+  return fechaCorta(fecha, 'semanaDiaMes') || null
 }
 
 /** "Operario · 11/11 10:42": quién y cuándo cambió el pedido por última vez; null sin datos. */

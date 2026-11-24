@@ -1,5 +1,4 @@
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { fechaCorta } from '@/core/utils/fecha'
 import type { ImputacionMovimientoDto, MovimientoCuentaDto, MovimientoSocioDto, TipoCuentaSocio } from '@/libs/api-client/types'
 
 /** Qué cuenta del cliente se mira: las dos juntas, o una sola. */
@@ -43,9 +42,7 @@ export function unirMovimientos(fuentes: MovimientosDeCuenta[]): MovimientoConCu
 
 /** "17 oct" para un día AAAA-MM-DD, sin pasar por un instante: el día del servidor no se corre por el huso del teléfono. */
 export function diaCorto(dia: string): string {
-  const [anio, mes, d] = dia.split('-').map(Number)
-  if (!anio || !mes || !d) return ''
-  return format(new Date(anio, mes - 1, d), 'd MMM', { locale: es })
+  return fechaCorta(dia)
 }
 
 /** "Vence 17 oct", o cadena vacía si el movimiento no vence (no es una deuda, ya se saldó o el servidor no lo sabe). */

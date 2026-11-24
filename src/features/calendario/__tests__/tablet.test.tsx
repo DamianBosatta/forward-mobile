@@ -1,5 +1,6 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { StyleSheet } from 'react-native'
 import { render, screen, userEvent, within } from '@testing-library/react-native'
 import { CalendarioScreen } from '../CalendarioScreen'
 import { storage } from '@/core/utils/storage'
@@ -65,6 +66,20 @@ describe('Calendario y avisos en tablet (TM10)', () => {
     await userEvent.press(screen.getByLabelText('Siguiente'))
     expect(await screen.findByText('Noviembre de 2026')).toBeTruthy()
     expect(mockGet.mock.calls.map(([u]) => String(u))).toContain('/api/v1/Calendario?Desde=2026-10-26&Hasta=2026-12-06')
+  })
+
+  it('MB-21: en horizontal la semana es una grilla de siete columnas; en vertical, un día debajo del otro', async () => {
+    pintar()
+    await screen.findByText('Reunión de vendedores')
+    expect(StyleSheet.flatten(screen.getByLabelText('Calendario semanal').props.style).flexDirection).toBe('row')
+    expect(screen.getAllByTestId(/^dia-/)).toHaveLength(7)
+  })
+
+  it('MB-21: en vertical la semana sigue apilada', async () => {
+    mockHorizontal = false
+    pintar()
+    await screen.findByText('Reunión de vendedores')
+    expect(StyleSheet.flatten(screen.getByLabelText('Calendario semanal').props.style).flexDirection).not.toBe('row')
   })
 
   it('"Nuevo evento" abre la hoja con los tipos', async () => {
