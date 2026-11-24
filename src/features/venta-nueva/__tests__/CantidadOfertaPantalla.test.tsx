@@ -1,4 +1,5 @@
 import React from 'react'
+import { StyleSheet } from 'react-native'
 import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/store/auth.store'
@@ -7,6 +8,7 @@ import { useCarritoVenta } from '../hooks/useCarritoVenta'
 import { cajaDe6, producto } from '../__testing__/producto'
 import type { CatalogoStockItem } from '@/libs/api-client'
 import type { LineaCarrito } from '../lib/carrito'
+import type { ConexionStockVivo } from '@/core/realtime/stockEnVivo'
 
 const mockPost = jest.fn()
 jest.mock('@/core/api/client', () => ({
@@ -21,11 +23,11 @@ const conUsuario = (maxDescuentoPorcentaje: number, permissions: object[] = []) 
 
 const bulto10 = (over: Partial<CatalogoStockItem> = {}) => producto({ marca: 'Maxi Bag', bultoContenido: 10, disponible: 18, ...over })
 
-function abrir(p: CatalogoStockItem = bulto10(), extra: { linea?: LineaCarrito; enVivo?: boolean; yaReservada?: number } = {}) {
+function abrir(p: CatalogoStockItem = bulto10(), extra: { linea?: LineaCarrito; enVivo?: boolean; conexion?: ConexionStockVivo; yaReservada?: number } = {}) {
   const onListo = jest.fn()
   const onClose = jest.fn()
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  render(<QueryClientProvider client={qc}><CantidadOfertaPantalla visible producto={p} linea={extra.linea} enVivo={extra.enVivo} yaReservada={extra.yaReservada} onClose={onClose} onListo={onListo} /></QueryClientProvider>)
+  render(<QueryClientProvider client={qc}><CantidadOfertaPantalla visible producto={p} linea={extra.linea} enVivo={extra.enVivo} conexion={extra.conexion} yaReservada={extra.yaReservada} onClose={onClose} onListo={onListo} /></QueryClientProvider>)
   return { onListo, onClose }
 }
 const escribir = (campo: string, texto: string) => fireEvent.changeText(screen.getByLabelText(campo), texto)
@@ -127,6 +129,49 @@ describe('Cantidad y oferta: stock en vivo y más de lo disponible (S6, S7)', ()
   it('sin conexión en vivo lo dice', () => {
     abrir(bulto10(), { enVivo: false })
     expect(screen.getByText('Sin conexión')).toBeTruthy()
+  })
+
+  it('con la conexión "conectando" dice "Conectando…" con un indicador de carga y lo lee en su etiqueta', () => {
+    abrir(bulto10(), { conexion: 'conectando' })
+    expect(screen.getByText('Conectando…')).toBeTruthy()
+    expect(screen.getByTestId('conexion-cargando')).toBeTruthy()
+    expect(screen.getByLabelText('Conectando')).toBeTruthy()
+    expect(screen.queryByText('Sin conexión')).toBeNull()
+  })
+
+  it('con la conexión "enVivo" dice "En vivo" y con "sinConexion", "Sin conexión", sin indicador de carga', () => {
+    abrir(bulto10(), { conexion: 'enVivo' })
+    expect(screen.getByText('En vivo')).toBeTruthy()
+    expect(screen.queryByTestId('conexion-cargando')).toBeNull()
+  })
+
+  it('con la conexión "sinConexion" dice "Sin conexión"', () => {
+    abrir(bulto10(), { conexion: 'sinConexion' })
+    expect(screen.getByText('Sin conexión')).toBeTruthy()
+    expect(screen.queryByTestId('conexion-cargando')).toBeNull()
+  })
+
+  it('el indicador de conexión puede achicarse o partirse en la tarjeta (no se desborda)', () => {
+    abrir(bulto10(), { conexion: 'conectando' })
+    const estilo = StyleSheet.flatten(screen.getByTestId('conexion-estado').props.style)
+    expect(estilo.flexShrink).toBe(1)
+    expect(StyleSheet.flatten(screen.getByText('Conectando…').props.style).flexShrink).toBe(1)
+  })
+
+  it('la fila de cantidad parte en dos líneas si no entra: el contador crece y pide su ancho (152)', () => {
+    abrir(bulto10({ bultoContenido: 10 }))
+    const fila = StyleSheet.flatten(screen.getByTestId('cantidad-fila').props.style)
+    const contador = StyleSheet.flatten(screen.getByTestId('cantidad-contador').props.style)
+    expect(fila.flexWrap).toBe('wrap')
+    expect(contador.flexGrow).toBe(1)
+    expect(contador.flexBasis).toBe(152)
+    expect(contador.minWidth).toBe(152)
+  })
+
+  it('con una sola presentación la fila muestra la etiqueta fija y el contador', () => {
+    abrir(producto({ marca: 'X', disponible: 18 }))
+    expect(screen.getByText('Unidades')).toBeTruthy()
+    expect(screen.getByTestId('cantidad-contador')).toBeTruthy()
   })
 
   it('si pide más de lo disponible avisa que va a autorización, "Te quedan" es negativo y no bloquea', async () => {

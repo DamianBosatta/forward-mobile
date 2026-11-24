@@ -36,7 +36,7 @@ export function useStockVivoVenta(lineas: LineaCarrito[], gestor: GestorStock = 
     }
   }, [qc, ajeno])
 
-  const { enVivo } = useStockEnVivo({ depositoIds: depositos, alRefrescar, alCambio, gestor })
+  const { enVivo, conexion } = useStockEnVivo({ depositoIds: depositos, alRefrescar, alCambio, gestor })
 
   const avisos = useMemo(() => {
     const r: Record<string, string> = {}
@@ -48,5 +48,5 @@ export function useStockVivoVenta(lineas: LineaCarrito[], gestor: GestorStock = 
     return r
   }, [lineas, cambios])
 
-  return { enVivo, avisos }
+  return { enVivo, conexion, avisos }
 }

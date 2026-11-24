@@ -100,4 +100,11 @@ describe('useStockVivoVenta (S1, S2)', () => {
     act(() => g.oyente!.alEstado(true))
     expect(result.current.enVivo).toBe(true)
   })
+  it('pasa el estado de la conexión (arranca "conectando")', () => {
+    const { g, gestor } = gestorFalso()
+    const { result } = renderHook(() => useStockVivoVenta([], gestor), { wrapper })
+    expect(result.current.conexion).toBe('conectando')
+    act(() => g.oyente!.alConexion!('sinConexion'))
+    expect(result.current.conexion).toBe('sinConexion')
+  })
 })

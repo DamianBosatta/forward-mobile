@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { AppState } from 'react-native'
-import { gestorStock, type GestorStock, type MensajeStock } from './stockEnVivo'
+import { gestorStock, type ConexionStockVivo, type GestorStock, type MensajeStock } from './stockEnVivo'
 
 /** Sin conexión en vivo, lo que se ve se vuelve a pedir cada tanto (y al volver al primer plano). */
 export const REFRESCO_SIN_CONEXION_MS = 30_000
@@ -14,8 +14,10 @@ interface Opciones {
 }
 
 /** Stock en vivo para una pantalla: se suscribe al hub y dice si hay conexión ("Stock en vivo" / "Sin conexión"). */
-export function useStockEnVivo({ depositoIds, alRefrescar, alCambio, gestor = gestorStock }: Opciones): { enVivo: boolean } {
+export function useStockEnVivo({ depositoIds, alRefrescar, alCambio, gestor = gestorStock }: Opciones): { enVivo: boolean; conexion: ConexionStockVivo } {
   const [enVivo, setEnVivo] = useState(false)
+  // Lo que se muestra: "Conectando…" hasta que el gestor diga otra cosa (el booleano `enVivo` sigue igual).
+  const [conexion, setConexion] = useState<ConexionStockVivo>('conectando')
   // Los callbacks cambian en cada render: se leen de acá para no reabrir la suscripción.
   const refrescar = useRef(alRefrescar)
   const cambio = useRef(alCambio)
@@ -25,10 +27,12 @@ export function useStockEnVivo({ depositoIds, alRefrescar, alCambio, gestor = ge
 
   useEffect(() => {
     setEnVivo(false)
+    setConexion('conectando')
     return gestor.suscribir(clave ? clave.split(',') : [], {
       alConectar: () => refrescar.current(),
       alCambio: (m) => cambio.current?.(m),
       alEstado: setEnVivo,
+      alConexion: setConexion,
     })
   }, [clave, gestor])
 
@@ -39,5 +43,5 @@ export function useStockEnVivo({ depositoIds, alRefrescar, alCambio, gestor = ge
     return () => { clearInterval(id); sub.remove() }
   }, [enVivo, gestor])
 
-  return { enVivo }
+  return { enVivo, conexion }
 }

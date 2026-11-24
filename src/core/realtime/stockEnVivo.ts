@@ -28,12 +28,22 @@ export interface MensajeStock {
 /** Lo que se usa de `HubConnection` (así un test puede darle una de mentira). */
 export type ConexionStock = Pick<HubConnection, 'start' | 'stop' | 'invoke' | 'on' | 'onreconnecting' | 'onreconnected' | 'onclose'>
 
+/** Cómo está la conexión para quien la muestra: intentando (primer intento o reconexión automática), lista o cortada. */
+export type ConexionStockVivo = 'conectando' | 'enVivo' | 'sinConexion'
+
+/** Para quien solo tiene el booleano `enVivo` (sin dato no hay estado): true es "enVivo", false "sinConexion". */
+export function conexionDeBooleano(enVivo: boolean | undefined): ConexionStockVivo | undefined {
+  return enVivo === undefined ? undefined : enVivo ? 'enVivo' : 'sinConexion'
+}
+
 export interface OyenteStock {
   /** La conexión (re)quedó lista y unida a los depósitos: hay que refrescar lo que se muestra. */
   alConectar: () => void
   alCambio: (mensaje: MensajeStock) => void
   /** true: llegan avisos; false: sin conexión. */
   alEstado: (enVivo: boolean) => void
+  /** Cómo está la conexión (se avisa también al suscribirse, con el estado actual). */
+  alConexion?: (conexion: ConexionStockVivo) => void
 }
 
 /** Avisos de cambios de datos (`[{ tipo, id }]`, lote cada ~300 ms) para refrescar lo que ya está en pantalla. */
@@ -75,6 +85,8 @@ export function crearGestorStock(
   let conexion: ConexionStock | null = null
   let conectando = false
   let enVivo = false
+  // Lo que se muestra. "Sin conexión" solo tras un intento fallido o un cierre, y ahí se queda durante los reintentos silenciosos.
+  let situacion: ConexionStockVivo = 'conectando'
   // Si el servidor mandó que este usuario recibe cantidades en al menos un depósito (sin ellas, solo el estado).
   let cantidades = false
   // Cada apertura/cierre invalida las rondas anteriores que siguen en vuelo.
@@ -101,6 +113,12 @@ export function crearGestorStock(
     oyentes.forEach((_, o) => o.alEstado(valor))
   }
 
+  const ponerConexion = (valor: ConexionStockVivo) => {
+    if (situacion === valor) return
+    situacion = valor
+    oyentes.forEach((_, o) => o.alConexion?.(valor))
+  }
+
   async function unirse(c: ConexionStock, ids: string[]) {
     // Un depósito sin acceso tira error: no tumba a los demás.
     const r = await Promise.all(ids.map((id) => c.invoke('UnirseAlDeposito', id).catch((e) => { logger.warn('No se pudo unir al depósito de stock', e); return false })))
@@ -111,6 +129,7 @@ export function crearGestorStock(
     await unirse(c, depositos())
     if (mia !== ronda) return
     poner(true)
+    ponerConexion('enVivo')
     oyentes.forEach((_, o) => o.alConectar())
     if (yaConecto) oyentesAvisos.forEach((o) => o.alReconectar())
     yaConecto = true
@@ -120,13 +139,15 @@ export function crearGestorStock(
     if (conexion || conectando || (oyentes.size === 0 && oyentesAvisos.size === 0) || AppState.currentState !== 'active') return
     cancelarReintento()
     conectando = true
+    // Un reintento silencioso desde "sin conexión" no cambia lo que se ve.
+    if (situacion !== 'sinConexion') ponerConexion('conectando')
     const mia = ++ronda
     const c = crear()
     c.on(EVENTO, (m: MensajeStock) => { if (mia === ronda) oyentes.forEach((_, o) => o.alCambio(m)) })
     c.on(EVENTO_ENTIDADES, (avisos: unknown) => { if (mia === ronda) oyentesAvisos.forEach((o) => o.alAvisos(avisos)) })
-    c.onreconnecting(() => { if (mia === ronda) { cantidades = false; poner(false) } })
+    c.onreconnecting(() => { if (mia === ronda) { cantidades = false; poner(false); ponerConexion('conectando') } })
     c.onreconnected(() => { if (mia === ronda) void conectado(c, mia) })
-    c.onclose(() => { if (mia === ronda) { conexion = null; poner(false) } })
+    c.onclose(() => { if (mia === ronda) { conexion = null; poner(false); ponerConexion('sinConexion') } })
     try {
       await c.start()
       if (mia !== ronda) { void c.stop(); return }
@@ -135,7 +156,7 @@ export function crearGestorStock(
       await conectado(c, mia)
     } catch (e) {
       logger.warn('No se pudo abrir el stock en vivo', e)
-      if (mia === ronda) { poner(false); if (!esRechazoPermanente(e)) reintentarLuego() }
+      if (mia === ronda) { poner(false); ponerConexion('sinConexion'); if (!esRechazoPermanente(e)) reintentarLuego() }
     } finally {
       conectando = false
     }
@@ -149,6 +170,8 @@ export function crearGestorStock(
     conexion = null
     conectando = false
     poner(false)
+    // Suelta por segundo plano o sin oyentes: al volver es un intento nuevo.
+    ponerConexion('conectando')
     cantidades = false
     if (c) void c.stop().catch(() => undefined)
   }
@@ -180,6 +203,7 @@ export function crearGestorStock(
     /** Se une a `depositoIds`; abre la conexión si es el primero. Devuelve la baja. */
     suscribir(depositoIds: string[], oyente: OyenteStock): () => void {
       oyentes.set(oyente, depositoIds)
+      oyente.alConexion?.(situacion)
       escucharAppState()
       if (conexion && enVivo) void unirse(conexion, depositoIds)
       else void abrir()
@@ -201,6 +225,8 @@ export function crearGestorStock(
     /** Reintenta abrir si no hay conexión (la reconexión automática no cubre una apertura fallida). */
     reintentar: () => { void abrir() },
     enVivo: () => enVivo,
+    /** Estado de la conexión para mostrar: conectando, en vivo o sin conexión. */
+    conexion: () => situacion,
     /** Los avisos traen cantidades (el usuario tiene `CAP_VER_CANTIDADES_STOCK`); si no, solo el estado. */
     veCantidades: () => cantidades,
   }

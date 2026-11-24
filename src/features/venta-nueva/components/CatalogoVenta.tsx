@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { ScanBarcode, Search } from 'lucide-react-native'
 import { FlashList } from '@shopify/flash-list'
 import { CeldaDeGrilla, paddingDeGrilla } from '@/core/ui/listaFlash'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { Notice } from '@/core/ui/fw'
+import { conexionDeBooleano, type ConexionStockVivo } from '@/core/realtime/stockEnVivo'
 import { EstadoDeConsulta, esqueletoDeFilas } from '@/core/ui/estados'
 import { mensajeDeError } from '@/core/api/errores'
 import { FiltroChip } from '@/core/ui/fw/FiltroChip'
@@ -23,6 +24,8 @@ import { FraganciasSheet } from './FraganciasSheet'
 import { cantidadDeFragancias } from '../lib/fragancias'
 import { columnasDelCatalogo } from '../lib/columnasCatalogo'
 
+const TEXTO_CONEXION: Record<ConexionStockVivo, string> = { conectando: 'Conectando…', enVivo: 'Stock en vivo', sinConexion: 'Sin conexión' }
+
 interface CatalogoVentaProps {
   onVerVenta: () => void
   /** Lo que el cliente llevó en su último pedido (producto → cantidad); sin él no se ofrece ese filtro. */
@@ -33,6 +36,8 @@ interface CatalogoVentaProps {
   filtroInicialDelUltimo?: boolean
   /** Señal del stock en vivo (`useStockVivoVenta`): chip "Stock en vivo" / "Sin conexión"; sin ella no hay chip. */
   enVivo?: boolean
+  /** Estado de la conexión (`useStockVivoVenta().conexion`): "Conectando…", "Stock en vivo" o "Sin conexión". Manda sobre `enVivo` para el chip. */
+  conexion?: ConexionStockVivo
   /** Abre la pantalla de cantidad y oferta del producto ("Agregar" y el chip de edición de la tarjeta). */
   onAbrirOferta: (producto: CatalogoStockItem) => void
 }
@@ -42,8 +47,9 @@ interface CatalogoVentaProps {
  * Tablet vertical: dos columnas. Tablet horizontal (≥ 900): grilla de 3 con la venta en curso fija a la derecha.
  * Filtros con lo que ya manda el servidor (oferta, stock) y con el último pedido; escáner de código de barras.
  */
-export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = false, filtroInicialDelUltimo = false, enVivo, onAbrirOferta }: CatalogoVentaProps) {
+export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = false, filtroInicialDelUltimo = false, enVivo, conexion, onAbrirOferta }: CatalogoVentaProps) {
   const c = useColors()
+  const estadoConexion = conexion ?? conexionDeBooleano(enVivo)
   const { formFactor, isTabletLandscape } = useResponsive()
   const [busqueda, setBusqueda] = useState('')
   const [filtros, setFiltros] = useState(FILTROS_VACIOS)
@@ -138,11 +144,15 @@ export function CatalogoVenta({ onVerVenta, llevo = null, escanearAlAbrir = fals
           <FiltroChip label="Con oferta" activo={filtros.conOferta} onPress={() => alternar('conOferta')} />
           <FiltroChip label="Hay stock" activo={filtros.hayStock} onPress={() => alternar('hayStock')} />
         </ScrollView>
-        {enVivo === undefined ? null : (
-          <View accessible accessibilityLabel={enVivo ? 'Stock en vivo' : 'Sin conexión'} style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
-            {/* Es un estado, no un filtro: punto y texto suelto, sin la forma de pastilla de los chips de arriba. */}
-            <View style={{ width: 8, height: 8, borderRadius: radii.pastilla, backgroundColor: enVivo ? c.chip.entregado.text : c.textSecondary }} />
-            <Text style={{ ...typeScale.secundario, color: enVivo ? c.chip.entregado.text : c.textSecondary }}>{enVivo ? 'Stock en vivo' : 'Sin conexión'}</Text>
+        {estadoConexion === undefined ? null : (
+          <View accessible accessibilityLabel={TEXTO_CONEXION[estadoConexion].replace('…', '')} style={{ alignSelf: 'flex-start', flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
+            {/* Es un estado, no un filtro: punto (o rueda de carga) y texto suelto, sin la forma de pastilla de los chips de arriba. */}
+            {estadoConexion === 'conectando' ? (
+              <ActivityIndicator testID="conexion-cargando" size="small" color={c.textSecondary} />
+            ) : (
+              <View style={{ width: 8, height: 8, borderRadius: radii.pastilla, backgroundColor: estadoConexion === 'enVivo' ? c.chip.entregado.text : c.textSecondary }} />
+            )}
+            <Text style={{ ...typeScale.secundario, flexShrink: 1, color: estadoConexion === 'enVivo' ? c.chip.entregado.text : c.textSecondary }}>{TEXTO_CONEXION[estadoConexion]}</Text>
           </View>
         )}
         {avisoEscaneo ? <Notice tone="advertencia">{avisoEscaneo}</Notice> : null}
