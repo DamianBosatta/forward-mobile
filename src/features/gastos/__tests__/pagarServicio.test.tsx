@@ -83,7 +83,7 @@ describe('pantalla', () => {
     await userEvent.press(await screen.findByRole('radio', { name: 'Luz' }, ESPERA))
     await userEvent.press(await screen.findByRole('radio', { name: 'Transferencia' }, ESPERA))
     await userEvent.press(await screen.findByRole('radio', { name: /^Banco Galicia/ }, ESPERA))
-    await userEvent.press(screen.getByRole('button', { name: 'Registrar pago' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Pagar un servicio' }))
 
     await waitFor(() => expect(post).toHaveBeenCalledWith('/api/v1/gastos', {
       descripcion: 'Luz', monto: 1500.5, tipoGastoId: 'tg-luz', medioPagoId: 'm-tr', cuentaOrigenId: 'gal', comprobanteUrl: null,
@@ -96,7 +96,7 @@ describe('pantalla', () => {
   it('sin concepto no llama al servidor y dice qué falta', async () => {
     renderConQuery(<PagarServicio onListo={jest.fn()} />)
     fireEvent.changeText(await screen.findByLabelText('Monto', {}, ESPERA), '100')
-    await userEvent.press(screen.getByRole('button', { name: 'Registrar pago' }))
+    await userEvent.press(screen.getByRole('button', { name: 'Pagar un servicio' }))
     expect(await screen.findByText('Elegí el concepto.')).toBeTruthy()
     expect(post).not.toHaveBeenCalled()
   })
@@ -118,7 +118,7 @@ describe('pantalla', () => {
   it('sin el permiso del servidor (MOD_PAGOS crear) el botón queda deshabilitado con el motivo', async () => {
     conPermisos([{ module: 'MOD_PAGOS', canRead: true }, { module: 'CAP_VER_TESORERIA', canRead: true }])
     renderConQuery(<PagarServicio onListo={jest.fn()} />)
-    const boton = await screen.findByRole('button', { name: 'Registrar pago' }, ESPERA)
+    const boton = await screen.findByRole('button', { name: 'Pagar un servicio' }, ESPERA)
     expect(boton.props.accessibilityState.disabled).toBe(true)
     expect(screen.getByText(MOTIVO_SIN_PERMISO_DE_SERVICIO)).toBeTruthy()
     expect(post).not.toHaveBeenCalled()

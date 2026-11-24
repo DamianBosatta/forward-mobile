@@ -195,6 +195,26 @@ describe('Lista de pagos', () => {
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/tesoreria/pagos/pagar')
   })
 
+  it('la lista vacía ofrece registrar un pago, solo con permiso (MP-16)', async () => {
+    get.mockResolvedValue(paginaDe([]))
+    const { unmount } = renderConQuery(<PagosScreen />)
+    await screen.findByText('No hay pagos a proveedores.', {}, ESPERA)
+    expect(screen.queryByRole('button', { name: 'Registrar un pago' })).toBeNull()
+    unmount()
+
+    conPermisos(PAGAR)
+    renderConQuery(<PagosScreen />)
+    await userEvent.press(await screen.findByRole('button', { name: 'Registrar un pago' }, ESPERA))
+    expect(mockPush).toHaveBeenCalledWith('/(tabs)/tesoreria/pagos/pagar')
+  })
+
+  it('el buscador es el mismo que el de las otras listas, con lupa (MP-17)', async () => {
+    renderConQuery(<PagosScreen />)
+    await screen.findByText('Molinos SA', {}, ESPERA)
+    expect(screen.getByTestId('buscador-cartera')).toBeTruthy()
+    expect(screen.getByLabelText('Buscar')).toBeTruthy()
+  })
+
   it('sin permiso para ver pagos no pide nada y lo dice', async () => {
     conPermisos([{ module: 'MOD_PAGOS', canRead: true }])
     renderConQuery(<PagosScreen />)

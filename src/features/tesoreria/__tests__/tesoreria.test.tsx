@@ -78,7 +78,7 @@ describe('Tesorería: cargar un cheque', () => {
     renderConQuery(<TesoreriaScreen />)
     await userEvent.press(await screen.findByRole('button', { name: 'Cargar un cheque' }, ESPERA))
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/cuentas', params: { cobrar: 'cheque' } })
-    expect(screen.getByText('El cheque se carga como cobro de un cliente.')).toBeTruthy()
+    expect(screen.getByText('El cheque se carga como cobro de un cliente')).toBeTruthy()
   })
 
   it('sin permiso de cobro la fila no se muestra', async () => {

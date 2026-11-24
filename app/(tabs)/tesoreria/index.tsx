@@ -15,7 +15,7 @@ import { useRefrescarAlEnfocar } from '@/core/hooks/useRefrescarAlEnfocar'
 const AVISO_COBROS_DE_CLIENTES = 'Los cobros de clientes se cargan desde la ficha del cliente, con "Cobrar".'
 
 /** El cheque no tiene alta propia: se carga como cobro de un cliente. */
-const AYUDA_CHEQUE_COMO_COBRO = 'El cheque se carga como cobro de un cliente.'
+const AYUDA_CHEQUE_COMO_COBRO = 'El cheque se carga como cobro de un cliente'
 
 /**
  * Tesorería en mobile (plan §3, recortada a acciones): transferencias entre cuentas propias. Los
@@ -63,7 +63,7 @@ export default function TesoreriaScreen() {
               <FilaDeTesoreria
                 icon={HandCoins}
                 title="Pagos"
-                subtitle="Pagos a proveedores y cobros de clientes"
+                subtitle="Pagos a proveedores y el historial de cobros"
                 onPress={() => router.push('/(tabs)/tesoreria/pagos')}
               />
             ) : null}
