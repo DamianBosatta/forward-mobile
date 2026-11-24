@@ -59,6 +59,15 @@ describe('Usuarios (solo consulta)', () => {
     expect(screen.getAllByLabelText('Estado: Inactivo')).toHaveLength(1)
   })
 
+  it('MB-27: el estado queda centrado con la fila, no arriba a la derecha', async () => {
+    conLectura()
+    pintar()
+    await screen.findByText('Marcelo Bianchi')
+    for (const chip of screen.getAllByTestId('estado-usuario')) {
+      expect(StyleSheet.flatten(chip.props.style).alignSelf).toBe('center')
+    }
+  })
+
   it('MB-8: el puesto interno se lee con su nombre, y sin puesto sale el rol con su nombre', async () => {
     conLectura()
     mockGet.mockResolvedValue(pagina([

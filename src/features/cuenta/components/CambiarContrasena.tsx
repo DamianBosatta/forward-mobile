@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { Check, Plus } from 'lucide-react-native'
-import { Button, Field, Notice, PieFijo } from '@/core/ui/fw'
+import { Button, Field, FORM_MAX_WIDTH, Notice, PieFijo, useColumnaDeFormulario } from '@/core/ui/fw'
 import { evaluarClave, type CodigoRequisitoClave } from '@/libs/reglas'
 import { radii, space, typeScale, useColors } from '@/libs/theme'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
@@ -61,13 +61,14 @@ export function CambiarContrasena({ email }: { email: string | undefined }) {
     )
   }
 
+  const columna = useColumnaDeFormulario()
   const tarjeta = { backgroundColor: c.surface, borderRadius: radii.tarjetaGrande, padding: space[5] }
 
   // Propuesta Cuenta, frames 4 y 5: avisos arriba, campos en una tarjeta sin borde, reglas en otra y el botón en el pie fijo.
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' }}>
-        {!email ? <Notice tone="info">No tenemos tu correo en este teléfono. Cerrá sesión y volvé a entrar para cambiar la contraseña.</Notice> : null}
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[{ padding: space[4], gap: space[3], paddingBottom: space[8] }, columna]}>
+        {!email ? <Notice tone="info">No tenemos tu correo en este equipo. Cerrá sesión y volvé a entrar para cambiar la contraseña.</Notice> : null}
         {m.isError ? <Notice tone="peligro">{mensajeDelServidor(m.error, 'No se pudo cambiar la contraseña.')}</Notice> : null}
         {m.isSuccess ? <Notice tone="exito">Listo: la contraseña nueva ya vale para entrar.</Notice> : null}
         <View testID="tarjeta-campos" style={[tarjeta, { gap: space[3] }]}>
@@ -97,8 +98,11 @@ export function CambiarContrasena({ email }: { email: string | undefined }) {
         </View>
       </ScrollView>
       <PieFijo testID="pie-clave">
+        {/* MB-20: el botón tiene el ancho del formulario (la columna menos el relleno de la pantalla). */}
+        <View testID="pie-clave-columna" style={columna ? { width: '100%', maxWidth: FORM_MAX_WIDTH - 2 * space[4], alignSelf: 'center', gap: space[2] } : { gap: space[2] }}>
         <Button size="lg" label="Cambiar contraseña" onPress={cambiar} disabled={!completo} loading={m.isPending} />
         {completo ? null : <Text style={[typeScale.secundario, { color: c.textSecondary }]}>Se habilita cuando todo está completo y las dos nuevas coinciden.</Text>}
+        </View>
       </PieFijo>
     </View>
   )

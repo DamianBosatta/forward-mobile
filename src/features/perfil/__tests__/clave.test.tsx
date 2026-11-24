@@ -14,7 +14,8 @@ jest.mock('@/core/api/client', () => ({ API_URL: 'http://api.test', api: { post:
 const mockBack = jest.fn()
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn(), back: mockBack }) }))
 jest.mock('expo-router/react-navigation', () => ({ useNavigation: () => ({ dispatch: jest.fn() }), DrawerActions: { openDrawer: jest.fn() } }))
-jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390, isTablet: false, isTabletLandscape: false, isLarge: false }) }))
+let mockTablet = false
+jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: mockTablet ? 1280 : 390, isTablet: mockTablet, isTabletLandscape: mockTablet, isLarge: mockTablet }) }))
 
 function pintar() {
   useAuthStore.setState({ isAuthenticated: true, user: { id: 'u1', username: 'ep', email: 'ep@forward.com.ar', roles: [], permissions: [] } } as never)
@@ -28,7 +29,7 @@ async function completar(actual: string, nueva: string, repetida: string) {
 }
 const botonCambiar = () => screen.getByRole('button', { name: 'Cambiar contraseña' })
 
-beforeEach(() => { jest.clearAllMocks(); mockPost.mockResolvedValue(true) })
+beforeEach(() => { mockTablet = false; jest.clearAllMocks(); mockPost.mockResolvedValue(true) })
 
 describe('Cambiar contraseña (ruta propia)', () => {
   it('tiene su barra con título y vuelta a Mi cuenta', async () => {
@@ -129,5 +130,22 @@ describe('Cambiar contraseña como venta (propuesta Cuenta, frames 4 y 5)', () =
     await screen.findByText(/la contraseña nueva ya vale/)
     const plano = JSON.stringify(screen.toJSON())
     expect(plano.indexOf('la contraseña nueva ya vale')).toBeLessThan(plano.indexOf('tarjeta-campos'))
+  })
+})
+
+describe('Cambiar contraseña en tablet (MB-20, MB-22)', () => {
+  it('el botón fijo tiene el ancho del formulario: la columna de 640 menos el relleno de la pantalla', () => {
+    mockTablet = true
+    pintar()
+    const columna = StyleSheet.flatten(screen.getByTestId('pie-clave-columna').props.style)
+    expect(columna).toEqual(expect.objectContaining({ width: '100%', maxWidth: 640 - 2 * 16, alignSelf: 'center' }))
+  })
+
+  it('sin correo, el aviso habla de este equipo y no del teléfono', () => {
+    useAuthStore.setState({ isAuthenticated: true, user: { id: 'u1', username: 'ep', roles: [], permissions: [] } } as never)
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+    render(<QueryClientProvider client={qc}><ClaveRoute /></QueryClientProvider>)
+    expect(screen.getByText(/No tenemos tu correo en este equipo/)).toBeTruthy()
+    expect(screen.queryByText(/teléfono/i)).toBeNull()
   })
 })

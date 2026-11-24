@@ -206,7 +206,8 @@ function FilaDeVenta({ venta: v, onPress }: { venta: Venta; onPress: () => void 
       </View>
       <View style={{ alignItems: 'flex-end', gap: space[1] }}>
         <Text style={[typeScale.textoFila, importe, { color: c.text }]} numberOfLines={1}>{monto}</Text>
-        {chip ? <StatusChip estado={chip.estado} label={chip.label} /> : null}
+        {/* MB-25: el chip se pega a la izquierda por sí solo; el envoltorio lo alinea con el borde derecho del importe. */}
+        {chip ? <View testID="estado-venta" style={{ alignSelf: 'flex-end' }}><StatusChip estado={chip.estado} label={chip.label} /></View> : null}
       </View>
     </PressableFx>
   )

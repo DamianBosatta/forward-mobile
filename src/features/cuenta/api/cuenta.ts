@@ -34,4 +34,4 @@ export async function cerrarSesionEnElServidor(): Promise<boolean> {
 }
 
 export const AVISO_SESION_NO_CERRADA_EN_TODOS =
-  'Se cerró en este teléfono; no se pudo cerrar en los demás dispositivos. Probá de nuevo desde la web o más tarde.'
+  'Se cerró en este equipo; no se pudo cerrar en los demás dispositivos. Probá de nuevo desde la web o más tarde.'
