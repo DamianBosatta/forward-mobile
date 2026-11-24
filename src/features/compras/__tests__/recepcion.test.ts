@@ -13,7 +13,7 @@ describe('pasosDeCompra (R8: nota de pedido, confirmada, recibida)', () => {
     ['Entregado', ['hecho', 'hecho', 'actual']],
   ])('%s', (estado, esperado) => {
     const pasos = pasosDeCompra(estado)!
-    expect(pasos.map((p) => p.label)).toEqual(['Nota de pedido', 'Confirmada', 'Recibida'])
+    expect(pasos.map((p) => p.label)).toEqual(['Nota de pedido', 'Por recibir', 'Recibida'])
     expect(pasos.map((p) => p.estado)).toEqual(esperado)
   })
   it.each(['Cancelada', 'Anulada'])('%s no tiene camino que mostrar', (estado) => expect(pasosDeCompra(estado)).toBeNull())

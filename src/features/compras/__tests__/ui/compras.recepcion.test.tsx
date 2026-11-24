@@ -52,20 +52,20 @@ describe('detalle de compra (R8)', () => {
     const camino = await screen.findByLabelText('Estado de la compra')
     expect(camino).toBeTruthy()
     expect(screen.getByText('Nota de pedido')).toBeTruthy()
-    expect(screen.getByLabelText('Confirmada, paso actual')).toBeTruthy()
+    expect(screen.getByLabelText('Por recibir, paso actual')).toBeTruthy()
     expect(screen.getByLabelText('Recibida, pendiente')).toBeTruthy()
   })
 
-  it('confirmada: avisa que ya cuenta como stock por ingresar y ofrece Recibir mercadería', async () => {
+  it('confirmada: avisa que se recibe al llegar y ofrece Recibir mercadería', async () => {
     abrir()
-    expect(await screen.findByText('Ya cuenta como stock por ingresar. Cuando llegue, marcala recibida.')).toBeTruthy()
+    expect(await screen.findByText('Cuando llegue, recibí la mercadería.')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Recibir mercadería' })).toBeTruthy()
   })
 
   it('una compra eliminada es historial: sin ningún botón de operar', async () => {
     abrir({ eliminada: true })
     await screen.findByText('Balde Nuvia 10L')
-    expect(screen.queryByRole('button', { name: /Recibir mercadería|Cancelar compra|Editar la compra|Confirmar compra/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Recibir mercadería|Cancelar compra|Editar compra|Confirmar compra/ })).toBeNull()
   })
 
   it('una nota de pedido sin líneas no ofrece confirmar', async () => {
@@ -222,5 +222,29 @@ describe('recibir mercadería (M11)', () => {
     await abrirRecepcion({}, 1194)
     expect(screen.getByText('Subtotal')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Confirmar recepción' })).toBeTruthy()
+  })
+})
+
+describe.each(['light', 'dark'] as const)('acciones del detalle según el ancho (%s)', () => {
+  const estilo = (n: { props: { style?: unknown } }) => Object.assign({}, ...[n.props.style].flat(3).filter(Boolean))
+
+  it('MC-24: en tablet los botones van juntos en una fila que se parte si no entran', async () => {
+    abrir({ estado: 'NotaPedido' }, 1024)
+    await screen.findByRole('button', { name: 'Confirmar compra' })
+    const acciones = estilo(screen.getByTestId('acciones-compra'))
+    expect(acciones).toMatchObject({ flexDirection: 'row', flexWrap: 'wrap' })
+    expect(screen.getAllByRole('button', { name: /Confirmar compra|Confirmar y recibir|Editar compra|Cancelar compra/ })).toHaveLength(4)
+  })
+
+  it('MC-24: en teléfono los botones siguen apilados', async () => {
+    abrir({ estado: 'NotaPedido' }, 390)
+    await screen.findByRole('button', { name: 'Confirmar compra' })
+    expect(estilo(screen.getByTestId('acciones-compra')).flexDirection).not.toBe('row')
+  })
+
+  it('MC-12: el título lleva el número sin "#" y el día de Argentina de la compra va de subtítulo', async () => {
+    abrir({ numero: 7 })
+    expect(await screen.findByText('Compra C-00007')).toBeTruthy()
+    expect(screen.queryByText(/Compra #/)).toBeNull()
   })
 })

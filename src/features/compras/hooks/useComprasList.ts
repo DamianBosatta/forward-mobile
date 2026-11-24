@@ -57,7 +57,7 @@ export function useComprasList(estadoDeRuta: EstadoCompraRuta | null = null) {
 
   const estados = pestana === 'pendientes' && soloEstado ? [soloEstado] : ESTADOS[esBorradores ? 'pendientes' : pestana]
   const compras = useInfiniteCompras({ pageSize: 20, estados, fechaDesde, searchTerm }, { enabled: !esBorradores })
-  const { data: resumen, refetch: refetchResumen } = useComprasResumen({ fechaDesde, searchTerm, estados })
+  const { data: resumen, refetch: refetchResumen, isLoading: resumenCargando } = useComprasResumen({ fechaDesde, searchTerm, estados })
   const borradores = useBorradoresCompraMios(esBorradores)
 
   const items = useMemo(() => itemsCargados<CompraDtoList>(compras.data?.pages), [compras.data])
@@ -95,6 +95,8 @@ export function useComprasList(estadoDeRuta: EstadoCompraRuta | null = null) {
 
   return {
     tarjeta,
+    /** El resumen que alimenta la tarjeta de totales todavía no llegó. */
+    resumenCargando,
     pestana, setPestana,
     soloEstado, setSoloEstado,
     periodo, setPeriodo,

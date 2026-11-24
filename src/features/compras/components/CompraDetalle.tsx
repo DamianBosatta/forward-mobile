@@ -14,11 +14,12 @@ import { usePermissions } from '@/core/auth/RequirePermission'
 import { BottomSheet, Button, Field, Notice, PieFijo, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
 import { TarjetaDeAvance } from '@/features/compras/components/PasosCompra'
 import { importe as cifras, radii, space, typeScale, useColors } from '@/libs/theme'
-import { diaArgentina, hoyTexto } from '@/core/utils/fecha'
+import { hoyTexto } from '@/core/utils/fecha'
+import { useResponsive } from '@/libs/useResponsive'
 import { mostrarNumero } from '@/core/utils/numero'
 import { mensajeDelServidor } from '@/features/compras/lib/mensaje-error'
 import { ddmmaaaa } from '@/core/utils/fecha'
-import { fechaHoraTexto, franjaTexto } from '@/features/compras/lib/fecha'
+import { diaDeCompraTexto, fechaHoraTexto, franjaTexto } from '@/features/compras/lib/fecha'
 import { confirmarYRecibir, type Aviso } from '@/features/compras/lib/confirmar-y-recibir'
 import { ConfirmarYRecibirSheet } from '@/features/compras/components/ConfirmarYRecibirSheet'
 import { ComprobanteCampos } from '@/features/compras/components/ComprobanteCampos'
@@ -55,6 +56,7 @@ type Hoja = 'cancelar' | 'anularRecepcion' | 'confirmarYRecibir' | 'comprobante'
 export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: string; onVolver?: () => void; aviso?: Aviso }) {
   const insetInferior = useInsetInferior()
   const c = useColors()
+  const { isTablet } = useResponsive()
   const router = useRouter()
   const { canDo } = usePermissions()
   const q = useCompra(id)
@@ -192,8 +194,8 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
-        title={`Compra #${numeroDeCompra(compra)}`}
-        subtitle={ddmmaaaa(diaArgentina(Date.parse(compra.fecha)))}
+        title={`Compra ${numeroDeCompra(compra)}`}
+        subtitle={diaDeCompraTexto(compra.fecha) ?? undefined}
         leading={{ kind: 'atras', onPress: volver }}
       />
       <ScrollView contentContainerStyle={{ padding: space[4], gap: space[3], paddingBottom: hayPie ? space[6] : space[6] + insetInferior }}>
@@ -211,7 +213,7 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
           {socio.data?.cuit ? <Text style={[secundario, cifras]}>{`CUIT ${formatearCuit(socio.data.cuit)}`}</Text> : null}
         </View>
         {aviso ? <Notice tone={aviso.tono}>{aviso.texto}</Notice> : null}
-        {esEstadoCompra(estado, 'Confirmado') && !compra.eliminada ? <Notice tone="info">Ya cuenta como stock por ingresar. Cuando llegue, marcala recibida.</Notice> : null}
+        {esEstadoCompra(estado, 'Confirmado') && !compra.eliminada ? <Notice tone="info">Cuando llegue, recibí la mercadería.</Notice> : null}
         {error && hoja === null ? <Notice tone="peligro">{error}</Notice> : null}
         {compra.motivoCancelacion ? <Notice tone="info" title="Cancelada.">{compra.motivoCancelacion}</Notice> : null}
         {compra.motivoAnulacion ? <Notice tone="info" title="Recepción anulada.">{compra.motivoAnulacion}</Notice> : null}
@@ -288,17 +290,29 @@ export function CompraDetalle({ id, onVolver, aviso: avisoInicial }: { id: strin
       </ScrollView>
       {hayBarra ? (
         <PieFijo>
-          {acciones.recibir ? <Button size="lg" label="Recibir mercadería" disabled={ocupado} onPress={() => { setError(null); setAviso(null); setRecibiendoMercaderia(true) }} /> : null}
-          {acciones.confirmar ? (
-            <Button size="lg" label="Confirmar compra" loading={confirmar.isPending} disabled={ocupado} onPress={() => { void correr(() => confirmar.mutateAsync(compra.id), 'No se confirmó la compra') }} />
-          ) : null}
-          {acciones.confirmar ? <Button label="Confirmar y recibir" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('confirmarYRecibir')} /> : null}
-          {acciones.editar || acciones.cancelar ? (
-            <View style={{ flexDirection: 'row', gap: space[2] }}>
-              {acciones.editar ? <View style={{ flex: 1 }}><Button label="Editar la compra" variant="secundario" disabled={ocupado} onPress={() => router.push(`/(tabs)/compras/nueva?edit=${compra.id}` as never)} /></View> : null}
-              {acciones.cancelar ? <View style={{ flex: 1 }}><Button label="Cancelar compra" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('cancelar')} /></View> : null}
-            </View>
-          ) : null}
+          {/* MC-24: en tablet todas las acciones van en una fila que se parte si no entran; en teléfono se apilan. */}
+          <View testID="acciones-compra" style={isTablet ? { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] } : { gap: space[2] }}>
+            {[
+              acciones.recibir ? { k: 'recibir', n: <Button size="lg" label="Recibir mercadería" disabled={ocupado} onPress={() => { setError(null); setAviso(null); setRecibiendoMercaderia(true) }} /> } : null,
+              acciones.confirmar ? { k: 'confirmar', n: <Button size="lg" label="Confirmar compra" loading={confirmar.isPending} disabled={ocupado} onPress={() => { void correr(() => confirmar.mutateAsync(compra.id), 'No se confirmó la compra') }} /> } : null,
+              acciones.confirmar ? { k: 'confirmarYRecibir', n: <Button label="Confirmar y recibir" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('confirmarYRecibir')} /> } : null,
+              acciones.editar ? { k: 'editar', n: <Button label="Editar compra" variant="secundario" disabled={ocupado} onPress={() => router.push(`/(tabs)/compras/nueva?edit=${compra.id}` as never)} /> } : null,
+              acciones.cancelar ? { k: 'cancelar', n: <Button label="Cancelar compra" variant="secundario" disabled={ocupado} onPress={() => abrirHoja('cancelar')} /> } : null,
+            ].filter((x): x is { k: string; n: React.ReactElement } => x !== null).map((x, i, todos) => {
+              // Teléfono: Editar y Cancelar comparten renglón, como antes.
+              if (!isTablet && x.k === 'cancelar' && todos[i - 1]?.k === 'editar') return null
+              if (!isTablet && x.k === 'editar') {
+                const par = todos[i + 1]?.k === 'cancelar' ? todos[i + 1] : null
+                return (
+                  <View key="editar-cancelar" style={{ flexDirection: 'row', gap: space[2] }}>
+                    <View style={{ flex: 1 }}>{x.n}</View>
+                    {par ? <View style={{ flex: 1 }}>{par.n}</View> : null}
+                  </View>
+                )
+              }
+              return isTablet ? <View key={x.k} style={{ flexGrow: 1, flexBasis: 160 }}>{x.n}</View> : <View key={x.k}>{x.n}</View>
+            })}
+          </View>
         </PieFijo>
       ) : acciones.anularRecepcion ? (
         <PieFijo>

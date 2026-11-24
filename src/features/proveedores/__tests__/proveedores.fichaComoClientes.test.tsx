@@ -73,7 +73,10 @@ describe('solapas (frames 5 a 7)', () => {
 
     const fila = await screen.findByRole('button', { name: /1783/ })
     expect(within(fila).getAllByTestId('compra-chevron').length).toBeGreaterThan(0)
-    expect(within(screen.getByTestId('lista-compras-recientes')).getByText('Compra 1783')).toBeTruthy()
+    // MC-6: el número sale de numeroDeCompra (C-01783) y el día es dd/mm/aaaa de Argentina, como en la lista de compras.
+    const lista = within(screen.getByTestId('lista-compras-recientes'))
+    expect(lista.getByText('Compra C-01783')).toBeTruthy()
+    expect(lista.getByText('15/10/2026')).toBeTruthy()
   })
 
   it('Condiciones: plazo de pago y horarios de entrega en su solapa', async () => {

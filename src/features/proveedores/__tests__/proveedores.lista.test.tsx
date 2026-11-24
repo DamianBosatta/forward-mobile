@@ -9,12 +9,12 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn() }),
   useNavigation: () => ({ dispatch: jest.fn() }),
 }))
-jest.mock('expo-router/react-navigation', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
+jest.mock('expo-router/react-navigation', () => ({ DrawerActions: { openDrawer: jest.fn() }, useNavigation: () => ({ dispatch: jest.fn() }) }))
 jest.mock('@/core/api/client', () => ({ api: { get: jest.fn() }, API_URL: '' }))
 
 const mockAncho = jest.fn(() => 390)
 jest.mock('@/libs/useResponsive', () => ({
-  useResponsive: () => ({ width: mockAncho(), isLarge: mockAncho() >= 600 }),
+  useResponsive: () => ({ width: mockAncho(), isLarge: mockAncho() >= 600, isTablet: mockAncho() >= 600 }),
 }))
 
 const get = api.get as jest.Mock
@@ -68,7 +68,7 @@ it('un proveedor que el servidor marca para completar muestra "Faltan datos"', a
   get.mockResolvedValue(pagina([proveedor({ requiereCompletar: true })], 1))
   renderConQuery(<ProveedoresScreen />)
 
-  expect(await screen.findByText('Faltan datos')).toBeTruthy()
+  expect(await screen.findByText('Faltan datos de compra')).toBeTruthy()
 })
 
 it('la búsqueda va al servidor una sola vez, después de dejar de tipear', async () => {
@@ -115,7 +115,8 @@ it('en tablet, lista y ficha van lado a lado: tocar una tarjeta abre la ficha en
   )
   renderConQuery(<ProveedoresScreen />)
 
-  expect(await screen.findByText('Elegí un proveedor para ver su ficha.')).toBeTruthy()
+  // MC-32: el panel vacío es la pantalla vacía común (título con ícono), no un texto suelto.
+  expect(await screen.findByRole('header', { name: 'Elegí un proveedor para ver su ficha.' })).toBeTruthy()
   await userEvent.press(await screen.findByRole('button', { name: /Insumos del Sur SA/ }))
 
   expect(await screen.findByRole('header', { name: 'Insumos del Sur SA' })).toBeTruthy()
@@ -143,5 +144,27 @@ describe('Nueva compra en la tarjeta (ModProveedores)', () => {
 
     await screen.findByText('Insumos del Sur SA')
     expect(screen.queryByLabelText('Nueva compra')).toBeNull()
+  })
+})
+
+describe.each(['light', 'dark'] as const)('revisión visual de proveedores (%s)', () => {
+  it('MC-8: la lista deja libre el botón flotante al final (96 + inset)', async () => {
+    renderConQuery(<ProveedoresScreen />)
+    await screen.findByText('Insumos del Sur SA')
+    const lista = screen.UNSAFE_getByType(require('@shopify/flash-list').FlashList)
+    expect(lista.props.contentContainerStyle.paddingBottom).toBeGreaterThanOrEqual(96)
+  })
+
+  it('en teléfono el menú lateral se abre con la hamburguesa', async () => {
+    renderConQuery(<ProveedoresScreen />)
+    await screen.findByText('Insumos del Sur SA')
+    expect(screen.getByLabelText('Abrir menú')).toBeTruthy()
+  })
+
+  it('en tablet el menú ya está fijo y la barra no repite la hamburguesa', async () => {
+    mockAncho.mockReturnValue(1024)
+    renderConQuery(<ProveedoresScreen />)
+    await screen.findByText('Insumos del Sur SA')
+    expect(screen.queryByLabelText('Abrir menú')).toBeNull()
   })
 })

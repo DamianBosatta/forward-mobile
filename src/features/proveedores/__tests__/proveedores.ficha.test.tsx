@@ -123,7 +123,7 @@ it('un proveedor sin condiciones de pago avisa que faltan', async () => {
   servidor(detalle({ condicionPago: undefined, condicionesDeCompraFaltantes: ['condicionPago'] }))
   renderConQuery(<FichaProveedor id="p1" />)
 
-  expect(await screen.findByText(/Faltan datos para comprarle/)).toBeTruthy()
+  expect(await screen.findByText(/Faltan datos de compra: la condición de pago/)).toBeTruthy()
 })
 
 it('si el servidor rechaza, muestra su mensaje', async () => {
