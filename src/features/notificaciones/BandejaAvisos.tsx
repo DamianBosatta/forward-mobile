@@ -68,7 +68,7 @@ export function BandejaAvisos() {
     <EstadoDePantalla
       tipo="vacio"
       titulo={soloNoLeidas ? 'No tenés avisos sin leer.' : 'No tenés avisos.'}
-      texto="Los avisos salen de los eventos de tu calendario y de lo que pasa en tus ventas."
+      texto="Acá te avisamos de tus ventas, cobros y pagos, vencimientos del calendario, facturación y stock."
       accion={soloNoLeidas ? undefined : { label: 'Crear evento en el calendario', onPress: () => router.push('/calendario?nuevo=1' as never) }}
     />
   )
