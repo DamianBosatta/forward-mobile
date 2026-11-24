@@ -4,6 +4,7 @@ import {
   Dimensions, StyleSheet, ActivityIndicator
 } from 'react-native'
 import { AlertTriangle, CheckCircle2, Info } from 'lucide-react-native'
+import { useResponsive } from '@/libs/useResponsive'
 import { useColors, useIsDark, maxFontScale, radii, shadowMd, space, typeScale } from '@/libs/theme'
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
@@ -61,6 +62,7 @@ export function ConfirmModal({
   loading = false,
 }: ConfirmModalProps) {
   const colors = useColors()
+  const { isTablet } = useResponsive()
   const isDark = useIsDark()
   const { Icon, color: accentColor, boton, textoBoton } = useVariant(variant, colors)
 
@@ -86,6 +88,8 @@ export function ConfirmModal({
           <View
             style={{
               width: '100%',
+              // En tablet la tarjeta no se estira a todo el ancho (MB-16); en teléfono mide lo de siempre.
+              ...(isTablet ? { maxWidth: 480, alignSelf: 'center' as const } : null),
               backgroundColor: colors.surface,
               borderRadius: radii.hoja,
               padding: space[6],
