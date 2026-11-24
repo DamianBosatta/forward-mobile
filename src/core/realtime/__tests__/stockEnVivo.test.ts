@@ -1,6 +1,20 @@
 import { AppState } from 'react-native'
 jest.mock('@/core/utils/logger', () => ({ logger: { warn: jest.fn(), info: jest.fn(), error: jest.fn() } }))
-import { crearGestorStock, type ConexionStock, type MensajeStock } from '../stockEnVivo'
+import { crearGestorStock as crearGestorReal, type ConexionStock, type MensajeStock } from '../stockEnVivo'
+
+// Ningún test deja oyentes suscritos: si quedara uno, el reintento de apertura (setTimeout real)
+// sobreviviría a la suite y dispararía tras el teardown de Jest.
+const bajas: Array<() => void> = []
+const crearGestorStock: typeof crearGestorReal = (...args) => {
+  const g = crearGestorReal(...args)
+  const suscribirReal = g.suscribir.bind(g)
+  g.suscribir = ((...a: Parameters<typeof g.suscribir>) => {
+    const baja = suscribirReal(...a)
+    bajas.push(baja)
+    return baja
+  }) as typeof g.suscribir
+  return g
+}
 
 /** Una conexión de mentira: guarda lo que se le pide y deja disparar los eventos del hub a mano. */
 function conexionFalsa() {
@@ -28,7 +42,11 @@ beforeEach(() => {
     return { remove: jest.fn() }
   }) as never)
 })
-afterEach(() => { jest.restoreAllMocks(); poner(original) })
+afterEach(() => {
+  bajas.splice(0).forEach((baja) => baja())
+  jest.restoreAllMocks()
+  poner(original)
+})
 
 const oyente = () => ({ alConectar: jest.fn(), alCambio: jest.fn(), alEstado: jest.fn() })
 const flush = () => act0()
