@@ -12,6 +12,7 @@ import { clienteDeLista, conPermisos, pagina, renderConQuery } from '../__testin
 
 const mockPush = jest.fn()
 let mockParams: Record<string, string> = {}
+jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn() }),
   useNavigation: () => ({ dispatch: jest.fn() }),
@@ -97,6 +98,16 @@ describe('Clientes: filtro Deudores', () => {
     const [url, nombre] = mockSharePdf.mock.calls[0] as [string, string]
     expect(url).toContain('/cuentas-corrientes/socios/c1/estado-cuenta/export?formato=Pdf')
     expect(nombre).toMatch(/^estado-cuenta-graciela-ruiz-\d{4}-\d{2}-\d{2}\.pdf$/)
+  })
+
+  it('con el filtro Deudores el subtítulo de la barra deja de decir "Mi cartera"', async () => {
+    renderConQuery(<ClientesScreen />)
+    await screen.findByRole('button', { name: 'Deudores' }, ESPERA)
+    const antes = screen.getAllByText('Deudores').length
+    await userEvent.press(await screen.findByRole('button', { name: 'Deudores' }, ESPERA))
+    await screen.findByText('Graciela Ruiz', undefined, ESPERA)
+
+    expect(screen.getAllByText('Deudores').length).toBe(antes + 1)
   })
 
   it('"Mi cartera" vuelve a la lista completa', async () => {

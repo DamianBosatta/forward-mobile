@@ -6,6 +6,7 @@ import { api } from '@/core/api/client'
 import { clienteDeLista, conPermisos, pagina, renderConQuery } from '../__testing__/ayuda'
 
 const mockPush = jest.fn()
+jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn() }),
   useNavigation: () => ({ dispatch: jest.fn() }),
@@ -308,6 +309,13 @@ describe('lista de clientes como el diseño (D6c)', () => {
     renderConQuery(<ClientesScreen />)
 
     expect(await screen.findByText('Sin deuda')).toBeTruthy()
+  })
+
+  it('"Sin deuda" y el vendedor van en una sola línea, separados por un punto medio', async () => {
+    get.mockResolvedValue(pagina([clienteDeLista({ saldoAmount: 0, vendedorResponsableNombre: 'Lucía R.' })], 1))
+    renderConQuery(<ClientesScreen />)
+
+    expect(await screen.findByText('Sin deuda · Vendedor: Lucía R.')).toBeTruthy()
   })
 })
 

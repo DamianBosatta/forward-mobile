@@ -57,6 +57,8 @@ export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = 
   const linea2 = [nombre, localidad].filter(Boolean).join(' · ')
   const accessibilityLabel = [direccion, vencida && 'deuda vencida', nombre, localidad, saldo && `saldo ${saldo}`, antiguedad, !verSaldo && TAG_CARTERA_AJENA].filter(Boolean).join(', ')
   const secundario = (t: string) => <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{t}</Text>
+  // MC-20: "Sin deuda" y el vendedor en una sola línea con separador, no dos textos pegados.
+  const lineaDeuda = sinDeuda || vendedor ? secundario([sinDeuda ? 'Sin deuda' : null, vendedor ? `Vendedor: ${vendedor}` : null].filter(Boolean).join(' · ')) : null
   const tagAjena = !verSaldo ? (
     <View style={{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: space[1], backgroundColor: c.surface2, borderRadius: radii.pastilla, paddingVertical: space[1], paddingHorizontal: 10 }}>
       <Lock size={12} color={c.textSecondary} />
@@ -75,8 +77,7 @@ export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = 
             {secundario(SALDO_RESERVADO)}
           </View>
         ) : null}
-        {sinDeuda ? secundario('Sin deuda') : null}
-        {vendedor ? secundario(`Vendedor: ${vendedor}`) : null}
+        {lineaDeuda}
         <ChipAntiguedadDeuda dias={dias} />
         {vencido ? <StatusChip estado="anulado" label={`Vencido ${vencido}`} /> : null}
         {tagAjena}
@@ -158,8 +159,7 @@ export function ClienteCard({ cliente, onPress, seleccionado = false, chevron = 
       extra={
         <>
           {/* "Sin deuda" va debajo y no junto al título: a 360dp le sacaba el lugar a la dirección. */}
-          {sinDeuda ? secundario('Sin deuda') : null}
-          {vendedor ? secundario(`Vendedor: ${vendedor}`) : null}
+          {lineaDeuda}
           <ChipAntiguedadDeuda dias={dias} />
           {vencido ? <StatusChip estado="anulado" label={`Vencido ${vencido}`} /> : null}
           {tagAjena}

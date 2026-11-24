@@ -7,6 +7,7 @@ import { api } from '@/core/api/client'
 import { clienteDeLista, conPermisos, pagina, renderConQuery } from '../__testing__/ayuda'
 
 const mockPush = jest.fn()
+jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn() }),
   useNavigation: () => ({ dispatch: jest.fn() }),

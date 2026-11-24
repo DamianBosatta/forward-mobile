@@ -2,6 +2,7 @@
 jest.unmock('react-native/Libraries/Components/ScrollView/ScrollView')
 // On Android the real ScrollView nests the native scroll view inside the RefreshControl; the preset's mock drops
 // its children, so this one renders them.
+jest.mock('@/core/ui/fw/useMenuLeading', () => ({ useMenuLeading: () => undefined }))
 jest.mock('react-native/Libraries/Components/RefreshControl/RefreshControl', () => ({
   __esModule: true,
   default: ({ children }: { children?: unknown }) => children ?? null,

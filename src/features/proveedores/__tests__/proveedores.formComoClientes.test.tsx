@@ -43,7 +43,7 @@ beforeEach(() => {
 it('cada grupo va en una tarjeta sin borde con su título', () => {
   renderConQuery(<ProveedorFormScreen />)
 
-  for (const grupo of ['Datos fiscales', 'Contacto', 'Condiciones de compra']) {
+  for (const grupo of ['Datos fiscales', 'Datos de contacto', 'Condiciones de compra']) {
     const tarjeta = screen.getByTestId(`grupo-${grupo}`)
     expect(estilo(tarjeta)).toMatchObject({ backgroundColor: themeColors.light.surface, borderRadius: radii.tarjetaGrande })
     expect(estilo(tarjeta).borderWidth ?? 0).toBe(0)
