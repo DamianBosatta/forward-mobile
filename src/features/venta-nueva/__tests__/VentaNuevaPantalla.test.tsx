@@ -168,6 +168,13 @@ describe('venta nueva: cliente, borrador y autoguardado', () => {
     expect(mockPut.mock.calls[0][1]).toMatchObject({ items: [], fechaEntrega: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) })
   })
 
+  it('el estado del autoguardado dice "Borrador guardado" y no un "Guardado" suelto (MV-4)', async () => {
+    await elegirCliente()
+    expect(screen.getByText('Borrador guardado')).toBeTruthy()
+    expect(screen.queryByText('Guardado')).toBeNull()
+    expect(screen.getByLabelText('Borrador guardado')).toBeTruthy()
+  })
+
   it('autoguarda las líneas con la versión del borrador y encadena la que devuelve el servidor', async () => {
     await elegirCliente()
     await anadir()
@@ -414,9 +421,9 @@ describe('pestaña Cabecera', () => {
     await aEntrega()
   }
 
-  it('la barra de la entrega deja el título entero en hasta 2 líneas junto al estado de guardado y al descarte', async () => {
+  it('la barra de la entrega mantiene el título fijo "Nueva venta" en hasta 2 líneas junto al estado de guardado y al descarte (MV-3)', async () => {
     await enCabecera()
-    expect(screen.getByRole('header', { name: 'Entrega y facturación' }).props.numberOfLines).toBe(2)
+    expect(screen.getByRole('header', { name: 'Nueva venta' }).props.numberOfLines).toBe(2)
     expect(screen.getByText('Borrador guardado')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Descartar borrador' })).toBeTruthy()
   })

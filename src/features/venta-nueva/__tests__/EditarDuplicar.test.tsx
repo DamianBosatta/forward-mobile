@@ -193,7 +193,8 @@ describe('editar y duplicar (PR 2.9b)', () => {
   it('duplicar crea un borrador nuevo para el mismo cliente y le autoguarda las líneas, sin copiar la fecha', async () => {
     abrir({ modo: 'duplicar', ventaId: 'v9' })
     expect(await screen.findByText('Paso 3 de 4')).toBeTruthy()
-    expect(screen.getByText('Tarantino 1898 · Autoservicio Abel')).toBeTruthy()
+    expect(screen.getByText('Tarantino 1898')).toBeTruthy()
+    expect(screen.getByText('Autoservicio Abel')).toBeTruthy()
     await waitFor(() => expect(mockPost).toHaveBeenCalledWith('/api/v1/Ventas/borradores', { clienteId: 'c7', depositoId: DEPOSITO_CENTRAL_ID, tipoOperacion: 'Pedido', claveIdempotencia: expect.any(String) }))
     await waitFor(() => expect(mockPut).toHaveBeenCalled(), ESPERA)
     expect(mockPut.mock.calls[0][0]).toBe('/api/v1/Ventas/b1')
