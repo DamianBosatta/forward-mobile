@@ -85,8 +85,8 @@ describe('Reportes', () => {
 
     // Las cuatro cifras de la lámina M20, todas del servidor.
     expect(screen.getByLabelText('Vendido: $ 1.250.000,00, 5 ventas')).toBeTruthy()
-    expect(screen.getByLabelText('Cobrado: $ 400.000,00, de estas ventas')).toBeTruthy()
-    expect(screen.getByLabelText('Por cobrar: $ 830.000,00, 2 clientes con deuda')).toBeTruthy()
+    expect(screen.getByLabelText('Cobrado: $ 400.000,00, De las ventas del mes')).toBeTruthy()
+    expect(screen.getByLabelText('Por cobrar: $ 830.000,00, 2 clientes con deuda · toda la cartera')).toBeTruthy()
     expect(within(ventas).getByText('5 ventas · Ticket promedio $ 250.000,00')).toBeTruthy()
     // Lo que el servidor no da no se inventa: ni vencido, ni ventas por semana, ni ranking de compradores.
     expect(screen.queryByText(/vencido/i)).toBeNull()
@@ -134,6 +134,37 @@ describe('Reportes', () => {
 
     expect(await screen.findByText('Semana del 26/10 al 1/11')).toBeTruthy()
     expect(resumenUrls()).toContain('/api/v1/Reportes/mobile/resumen-vendedor?semana=2026-10-31')
+  })
+
+  it('MV-15: en la semana, "Cobrado" dice que es De las ventas de la semana', async () => {
+    pintar()
+    await screen.findByText('Octubre 2026')
+    await userEvent.press(screen.getByRole('tab', { name: 'Semana' }))
+    await screen.findByText('Semana del 26/10 al 1/11')
+    expect(screen.getByLabelText('Cobrado: $ 400.000,00, De las ventas de la semana')).toBeTruthy()
+  })
+
+  it('MV-1: los importes de las cifras caben en una línea y se achican en lugar de partirse', async () => {
+    pintar()
+    const cifra = await screen.findByTestId('cifra-cobrado')
+    const monto = within(cifra).getByText('$ 400.000,00')
+    expect(monto.props.numberOfLines).toBe(1)
+    expect(monto.props.adjustsFontSizeToFit).toBe(true)
+  })
+
+  describe('MV-25: la franja "Vendido" se distingue de la pantalla en claro y en oscuro', () => {
+    const { StyleSheet } = jest.requireActual('react-native')
+    const { themeColors, useThemeStore } = jest.requireActual('@/libs/theme')
+    afterEach(() => useThemeStore.setState({ mode: 'system' }))
+
+    it.each(['light', 'dark'] as const)('en %s su fondo no es el de la pantalla', async (mode) => {
+      useThemeStore.setState({ mode })
+      pintar()
+      const franja = await screen.findByTestId('reporte-ventas')
+      const fondo = StyleSheet.flatten(franja.props.style).backgroundColor
+      expect(fondo).not.toBe(themeColors[mode].bg)
+      expect(fondo).toBe(mode === 'dark' ? themeColors.dark.surface : themeColors.light.panelOscuro)
+    })
   })
 
   it('"Semana" respeta el filtro de vendedor', async () => {
