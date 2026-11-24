@@ -62,7 +62,7 @@ const conCapacidad = () => useAuthStore.setState({
 describe('detalle de compra', () => {
   it('con el número del servidor (9C), el título lo muestra como C-00232 y la fecha va en el cuerpo', async () => {
     abrir({ numero: 232 })
-    expect(await screen.findByText('Compra #C-00232')).toBeTruthy()
+    expect(await screen.findByText('Compra C-00232')).toBeTruthy()
     expect(screen.getByText('07/10/2026')).toBeTruthy()
   })
 
@@ -71,7 +71,7 @@ describe('detalle de compra', () => {
     expect(await screen.findByText('Balde Nuvia 10L')).toBeTruthy()
     expect(screen.getByText('Pendiente')).toBeTruthy()
     // 01:30 UTC del 8 es el 7 en Argentina: el día es el del servidor, no el del teléfono.
-    expect(screen.getByText('Compra #AAAA1111')).toBeTruthy()
+    expect(screen.getByText('Compra AAAA1111')).toBeTruthy()
     expect(screen.getByText('07/10/2026')).toBeTruthy()
     expect(screen.getByLabelText('Total: $ 55.200,00')).toBeTruthy()
     mockPost.mockRejectedValueOnce(Object.assign(new Error('No se le puede comprar a Insumos del Sur SA'), { status: 400 }))
@@ -124,14 +124,14 @@ describe('detalle de compra', () => {
 
   it.each(['NotaPedido', 'Confirmado'])('en %s se puede editar con el formulario nuevo', async (estado) => {
     abrir({ estado })
-    await userEvent.press(await screen.findByRole('button', { name: 'Editar la compra' }))
+    await userEvent.press(await screen.findByRole('button', { name: 'Editar compra' }))
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/compras/nueva?edit=aaaa1111-0000')
   })
 
   it.each(['Entregado', 'Cancelada', 'Anulada'])('en %s no hay botón de editar', async (estado) => {
     abrir({ estado })
     await screen.findByText('Balde Nuvia 10L')
-    expect(screen.queryByRole('button', { name: 'Editar la compra' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Editar compra' })).toBeNull()
   })
 
   it('cada hoja arranca limpia: el motivo y el error de una no pasan a la otra', async () => {
@@ -226,7 +226,7 @@ describe('detalle de compra', () => {
     abrir({ estado: 'Entregado', fechaVencimientoPago: '2026-11-07' })
     expect(await screen.findByText('Recibido')).toBeTruthy()
     expect(screen.getByText('Vence el 07/11/2026')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: /Confirmar compra|Recibir|Cancelar compra|Editar la compra/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Confirmar compra|Recibir|Cancelar compra|Editar compra/ })).toBeNull()
   })
 
   it('sin permiso de modificar no hay confirmar ni editar', async () => {
@@ -234,7 +234,7 @@ describe('detalle de compra', () => {
     abrir({})
     await screen.findByText('Balde Nuvia 10L')
     expect(screen.queryByRole('button', { name: 'Confirmar compra' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Editar la compra' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Editar compra' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Cancelar compra' })).toBeNull()
   })
 

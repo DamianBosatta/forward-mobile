@@ -81,7 +81,7 @@ describe('detalle de compra: márgenes del sistema', () => {
       nodo = nodo.parent
     }
     expect(relleno).toBe(16 + 34)
-    const titulo = screen.getByRole('header', { name: 'Compra #A1' })
+    const titulo = screen.getByRole('header', { name: 'Compra A1' })
     let barra = titulo.parent
     let arriba: number | undefined
     while (barra && arriba === undefined) {

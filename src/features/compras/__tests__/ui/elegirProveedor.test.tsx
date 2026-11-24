@@ -7,9 +7,14 @@ import { formatImporte } from '@/core/ui/fw'
 
 const mockGet = jest.fn()
 jest.mock('@/core/api/client', () => ({ api: { get: (...a: unknown[]) => mockGet(...a) }, API_URL: 'x' }))
+const mockPush = jest.fn()
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, replace: jest.fn() }) }))
 let mockPuedeVerCompras = true
+let mockPuedeEditarProveedor = false
 jest.mock('@/core/auth/RequirePermission', () => ({
-  usePermissions: () => ({ canDo: (m: string, a: string) => mockPuedeVerCompras && m === 'MOD_COMPRAS' && a === 'read' }),
+  usePermissions: () => ({
+    canDo: (m: string, a: string) => (m === 'MOD_COMPRAS' && a === 'read' && mockPuedeVerCompras) || (m === 'MOD_PROVEEDORES' && a === 'update' && mockPuedeEditarProveedor),
+  }),
 }))
 
 const ESPERA = { timeout: 3000 }
@@ -32,12 +37,13 @@ const recientesPedidos = () => mockGet.mock.calls.map(([u]) => String(u)).filter
 beforeEach(() => {
   jest.clearAllMocks()
   mockPuedeVerCompras = true
+  mockPuedeEditarProveedor = false
   respuestaCompras = async () => ({ items: [COMPRA], totalCount: 9, page: 1, pageSize: 1 })
   respuestaRecientes = async () => ({ items: [], totalCount: 0, page: 1, hasNextPage: false })
   respuestaProveedores = async () => ({ items: [PROVEEDOR, INCOMPLETO], totalCount: 2 })
   mockGet.mockImplementation((url: string) => {
     if (url.startsWith('/api/v1/socios-comerciales?')) return respuestaProveedores()
-    if (url === '/api/v1/socios-comerciales/p2') return Promise.resolve({ id: 'p2', razonSocial: INCOMPLETO.razonSocial, condicionesDeCompraFaltantes: ['el plazo de pago'] })
+    if (url === '/api/v1/socios-comerciales/p2') return Promise.resolve({ id: 'p2', razonSocial: INCOMPLETO.razonSocial, condicionesDeCompraFaltantes: ['el plazo de pago'], puedeEditar: true })
     if (url.startsWith('/api/v1/socios-comerciales/')) return Promise.resolve({ id: 'p1', razonSocial: PROVEEDOR.razonSocial, condicionesDeCompraFaltantes: [] })
     if (url.startsWith('/api/v1/Compras?proveedorId')) return respuestaCompras()
     if (url.startsWith('/api/v1/Compras?')) return respuestaRecientes()
@@ -117,9 +123,39 @@ describe('Elegir proveedor (paso 1)', () => {
     const onElegir = pintar()
     await userEvent.press(await screen.findByRole('radio', { name: 'Lácteos Ficticios SRL, faltan datos de compra' }, ESPERA))
     expect(await screen.findByText('A Lácteos Ficticios SRL le falta el plazo de pago.', {}, ESPERA)).toBeTruthy()
-    expect(screen.getByText(/Completalo en la web para poder comprarle\./)).toBeTruthy()
+    expect(screen.queryByText(/en la web/)).toBeNull()
     expect(screen.getByRole('button', { name: 'Continuar a productos' })).toBeDisabled()
     expect(onElegir).not.toHaveBeenCalled()
+  })
+
+  it('MC-2: con permiso para editar, el aviso trae "Completar condiciones" que abre la edición del proveedor', async () => {
+    mockPuedeEditarProveedor = true
+    pintar()
+    await userEvent.press(await screen.findByRole('radio', { name: 'Lácteos Ficticios SRL, faltan datos de compra' }, ESPERA))
+    await userEvent.press(await screen.findByRole('button', { name: 'Completar condiciones' }, ESPERA))
+    expect(mockPush).toHaveBeenCalledWith({ pathname: '/(tabs)/proveedores/nuevo', params: { id: 'p2' } })
+  })
+
+  it('MC-2: sin permiso para editar no hay botón y se dice a quién pedirlo', async () => {
+    pintar()
+    await userEvent.press(await screen.findByRole('radio', { name: 'Lácteos Ficticios SRL, faltan datos de compra' }, ESPERA))
+    expect(await screen.findByText(/Pedile a un administrador que lo complete./, {}, ESPERA)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Completar condiciones' })).toBeNull()
+  })
+
+  it('MC-2: con "Continuar" apagado por falta de datos, dice por qué debajo del botón', async () => {
+    pintar()
+    expect(screen.queryByText('Completá las condiciones del proveedor para continuar.')).toBeNull()
+    await userEvent.press(await screen.findByRole('radio', { name: 'Lácteos Ficticios SRL, faltan datos de compra' }, ESPERA))
+    expect(await screen.findByText('Completá las condiciones del proveedor para continuar.', {}, ESPERA)).toBeTruthy()
+  })
+
+  it('MC-19: "Recientes" muestra el CUIT y la marca de datos faltantes igual que la lista', async () => {
+    respuestaRecientes = async () => ({ items: [{ id: 'c9', numero: 12, proveedorId: 'p2', razonSocialProveedor: INCOMPLETO.razonSocial, fecha: COMPRA.fecha }], totalCount: 1, page: 1, hasNextPage: false })
+    pintar()
+    expect(await screen.findByText('Recientes', {}, ESPERA)).toBeTruthy()
+    await waitFor(() => expect(screen.getAllByText(/CUIT 30-11223344-5/)).toHaveLength(2), ESPERA)
+    expect(screen.getAllByRole('radio', { name: 'Lácteos Ficticios SRL, faltan datos de compra' })).toHaveLength(2)
   })
 
   it('si no cargan los proveedores lo dice y "Reintentar" los vuelve a pedir', async () => {

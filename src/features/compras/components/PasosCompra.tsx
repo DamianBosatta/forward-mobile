@@ -44,11 +44,11 @@ export function TarjetaDeAvance({ pasos, titulo, accessibilityLabel, style }: { 
 }
 
 /** Tarjeta de pasos de la compra nueva: "Paso N de 4" y los cuatro pasos. */
-export function PasosCompra({ paso }: { paso: PasoCompra }) {
+export function PasosCompra({ paso, margen = space[4] }: { paso: PasoCompra; /** Margen lateral: 0 cuando el padre ya alinea la columna (MC-22). */ margen?: number }) {
   const pasos: PasoDeAvance[] = PASOS_COMPRA.map((nombre, i) => ({
     label: nombre,
     estado: i + 1 < paso ? 'hecho' : i + 1 === paso ? 'actual' : 'pendiente',
     accessibilityLabel: `Paso ${i + 1} de ${PASOS_COMPRA.length}: ${nombre}`,
   }))
-  return <TarjetaDeAvance titulo={`Paso ${paso} de ${PASOS_COMPRA.length}`} pasos={pasos} style={{ marginHorizontal: space[4], marginTop: space[2] }} />
+  return <TarjetaDeAvance titulo={`Paso ${paso} de ${PASOS_COMPRA.length}`} pasos={pasos} style={{ marginHorizontal: margen, marginTop: space[2] }} />
 }

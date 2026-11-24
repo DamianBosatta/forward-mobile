@@ -15,7 +15,8 @@ import { SolicitudCambioSheet } from '@/features/clientes/components/SolicitudCa
 import { HeroSaldo } from '@/features/clientes/components/SaldoDelCliente'
 import { Esqueletos, FICHA_CARGANDO, FILAS_CARGANDO } from '@/features/clientes/components/Esqueletos'
 import { urlLlamar, urlWhatsApp } from '@/features/clientes/lib/contacto'
-import { formatToLocalTime } from '@/core/utils/fecha'
+import { numeroDeCompra } from '@/features/compras/lib/numero'
+import { diaDeCompraTexto } from '@/features/compras/lib/fecha'
 import { useComprasDelProveedor } from '../hooks/useProveedores'
 import { AVISO_FALTAN_DATOS, condicionBreve, horariosDeEntrega, saldoDelProveedor } from '../lib/proveedor'
 
@@ -151,14 +152,14 @@ export function FichaProveedor({ id, conBarra = false }: { id: string; conBarra?
                     <Pressable
                       key={k.id}
                       accessibilityRole="button"
-                      accessibilityLabel={`Compra ${k.numero}, ${formatImporte(k.totalAmount)}`}
+                      accessibilityLabel={`Compra ${numeroDeCompra(k)}, ${formatImporte(k.totalAmount)}`}
                       onPress={() => router.push({ pathname: '/(tabs)/compras/[id]', params: { id: k.id } })}
                       android_ripple={{ color: c.surface2 }}
                       style={{ minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3], paddingLeft: space[4], paddingRight: space[3], borderTopWidth: i === 0 ? 0 : 1, borderTopColor: c.surface2 }}
                     >
                       <View style={{ flex: 1, minWidth: 0 }}>
-                        <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{`Compra ${k.numero}`}</Text>
-                        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{formatToLocalTime(k.fecha, 'EEE d MMM')}</Text>
+                        <Text style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{`Compra ${numeroDeCompra(k)}`}</Text>
+                        <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{diaDeCompraTexto(k.fecha)}</Text>
                       </View>
                       <View style={{ alignItems: 'flex-end', gap: space[1] }}>
                         <Text style={[typeScale.titulo, importe, { color: c.text }]}>{formatImporte(k.totalAmount)}</Text>

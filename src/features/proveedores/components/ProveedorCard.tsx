@@ -7,7 +7,7 @@ import { StatusChip, formatImporte } from '@/core/ui/fw'
 import { usePermissions } from '@/core/auth/RequirePermission'
 import type { SocioListDto } from '@/libs/api-client/types'
 import { inicialesDeDireccion } from '@/features/clientes/lib/cliente'
-import { saldoDelProveedor } from '../lib/proveedor'
+import { FALTAN_DATOS_DE_COMPRA, saldoDelProveedor } from '../lib/proveedor'
 
 interface ProveedorCardProps {
   proveedor: SocioListDto
@@ -20,8 +20,8 @@ interface ProveedorCardProps {
 
 /**
  * Fila de proveedor con el estilo de la lista de Clientes (`ClienteCard variante="cartera"`): iniciales de la razón
- * social, razón social y CUIT, el renglón de chips ("Faltan datos") con el saldo a la derecha ("Le debemos $ X",
- * "A favor $ X" o "Al día") y "Nueva compra" en el botón redondo donde Clientes pone Llamar.
+ * social y CUIT, el chip "Faltan datos de compra", el saldo en su renglón ("Le debemos $ X", "A favor $ X" o "Al día")
+ * y "Comprar" (accesible como "Nueva compra") en una pastilla donde Clientes pone Llamar.
  * El saldo solo con `puedeVerSaldo` y MOD_CC:read.
  */
 export function ProveedorCard({ proveedor, onPress, seleccionado = false, onNuevaCompra }: ProveedorCardProps) {
@@ -30,7 +30,6 @@ export function ProveedorCard({ proveedor, onPress, seleccionado = false, onNuev
   const cuit = proveedor.cuit?.trim() ? `CUIT ${formatearCuit(proveedor.cuit.trim())}` : 'Sin CUIT cargado'
   const saldo = proveedor.puedeVerSaldo && canRead('MOD_CC') ? saldoDelProveedor(proveedor.saldoAmount) : null
   const secundario = (t: string) => <Text style={{ ...typeScale.secundario, color: c.textSecondary }}>{t}</Text>
-  const conChips = proveedor.requiereCompletar || saldo
 
   return (
     <Pressable
@@ -60,18 +59,17 @@ export function ProveedorCard({ proveedor, onPress, seleccionado = false, onNuev
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text numberOfLines={2} style={{ ...typeScale.cuerpoDestacado, color: c.text }}>{proveedor.razonSocial}</Text>
         <Text numberOfLines={1} style={{ ...typeScale.secundario, color: c.textSecondary }}>{cuit}</Text>
-        {conChips ? (
-          <View style={{ marginTop: space[2], flexDirection: 'row', alignItems: 'flex-end', flexWrap: 'wrap', rowGap: space[1], columnGap: space[2] }}>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[1], flexShrink: 1 }}>
-              {proveedor.requiereCompletar ? <StatusChip estado="pendiente" label="Faltan datos" /> : null}
-              {saldo?.etiqueta === 'Al día' ? secundario(saldo.etiqueta) : null}
-            </View>
-            {saldo && saldo.etiqueta !== 'Al día' ? (
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: space[1], marginLeft: 'auto' }}>
-                {secundario(saldo.etiqueta)}
-                <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(saldo.monto)}</Text>
-              </View>
-            ) : null}
+        {proveedor.requiereCompletar ? (
+          // MC-7: la falta de datos es un aviso (ámbar), no un estado "pendiente"; va en su renglón.
+          <View testID="chips-proveedor" style={{ marginTop: space[2], flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[1] }}>
+            <StatusChip estado="porAutorizar" label={FALTAN_DATOS_DE_COMPRA} />
+          </View>
+        ) : null}
+        {saldo ? (
+          // MC-7/MP-18: el saldo ("Le debemos $ X", "A favor $ X" o "Al día") en su propio renglón, pegado a la izquierda.
+          <View testID="saldo-proveedor" style={{ marginTop: space[2], flexDirection: 'row', alignItems: 'baseline', gap: space[1] }}>
+            {secundario(saldo.etiqueta)}
+            {saldo.etiqueta !== 'Al día' ? <Text style={[typeScale.cuerpoDestacado, importe, { color: c.text }]}>{formatImporte(saldo.monto)}</Text> : null}
           </View>
         ) : null}
       </View>
@@ -81,9 +79,11 @@ export function ProveedorCard({ proveedor, onPress, seleccionado = false, onNuev
           accessibilityLabel="Nueva compra"
           accessibilityHint={proveedor.razonSocial}
           onPress={onNuevaCompra}
-          style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: c.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}
+          android_ripple={{ color: c.surface2 }}
+          style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', alignSelf: 'center', gap: space[1], paddingHorizontal: space[3], borderRadius: radii.pastilla, backgroundColor: c.surfaceAlt }}
         >
-          <ShoppingCart size={20} color={c.brandInk} />
+          <ShoppingCart size={18} color={c.brandInk} />
+          <Text style={{ ...typeScale.cuerpoDestacado, color: c.brandInk }}>Comprar</Text>
         </Pressable>
       ) : null}
     </Pressable>

@@ -21,7 +21,9 @@ export function saldoDelProveedor(saldo: number): { etiqueta: 'Le debemos' | 'A 
   return { etiqueta: 'Al día', monto: 0 }
 }
 
-export const AVISO_FALTAN_DATOS = 'Faltan datos para comprarle: la condición de pago tiene que estar cargada.'
+/** Una sola frase para "al proveedor le falta algo para comprarle": chip, avisos y filas la comparten (MC-14). */
+export const FALTAN_DATOS_DE_COMPRA = 'Faltan datos de compra'
+export const AVISO_FALTAN_DATOS = `${FALTAN_DATOS_DE_COMPRA}: la condición de pago tiene que estar cargada.`
 export const AVISO_CAMPOS_SENSIBLES_PROVEEDOR = 'La razón social y el CUIT los cambia un administrador: pedilo con «Pedir cambio» en la ficha del proveedor.'
 export const AVISO_EDICION_PROVEEDOR = 'No se dan de baja desde la app.'
 export const RAZON_SOCIAL_CORTA = 'La razón social necesita al menos 3 caracteres.'

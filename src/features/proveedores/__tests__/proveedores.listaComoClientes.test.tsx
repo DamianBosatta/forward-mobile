@@ -10,9 +10,9 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn() }),
   useNavigation: () => ({ dispatch: jest.fn() }),
 }))
-jest.mock('expo-router/react-navigation', () => ({ DrawerActions: { openDrawer: jest.fn() } }))
+jest.mock('expo-router/react-navigation', () => ({ DrawerActions: { openDrawer: jest.fn() }, useNavigation: () => ({ dispatch: jest.fn() }) }))
 jest.mock('@/core/api/client', () => ({ api: { get: jest.fn() }, API_URL: '' }))
-jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390, isLarge: false }) }))
+jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: 390, isLarge: false, isTablet: false }) }))
 
 /** S9: la lista de proveedores con el mismo estilo que la de Clientes (propuesta "Clientes como venta", frames 1 a 4). */
 const get = api.get as jest.Mock
@@ -44,25 +44,30 @@ it('las filas van sueltas: cada una con su radio de fila y sin separador', async
   expect(estilo(primera).borderBottomWidth ?? 0).toBe(0)
 })
 
-it('"Nueva compra" es el botón redondo de 48 y no abre la ficha', async () => {
+it('MC-13: "Nueva compra" es una pastilla con ícono y el texto "Comprar" (48 de alto) y no abre la ficha', async () => {
   renderConQuery(<ProveedoresScreen />)
 
   await screen.findByText('Insumos del Sur SA')
   const comprar = screen.getByLabelText('Nueva compra')
-  expect(estilo(comprar)).toMatchObject({ width: 48, height: 48, borderRadius: 24 })
+  expect(within(comprar).getByText('Comprar')).toBeTruthy()
+  expect(estilo(comprar).minHeight).toBeGreaterThanOrEqual(48)
+  expect(estilo(comprar).borderRadius).toBe(9999)
   await userEvent.press(comprar)
   expect(mockPush).toHaveBeenCalledWith('/(tabs)/compras/nueva')
   expect(mockPush).not.toHaveBeenCalledWith(expect.objectContaining({ pathname: '/(tabs)/proveedores/[id]' }))
 })
 
-it('"Le debemos" y el importe van en el renglón de los chips, con "Faltan datos" al lado', async () => {
+it('MC-7: "Faltan datos de compra" va en su chip y el saldo en su propio renglón, a la izquierda', async () => {
   get.mockResolvedValue(pagina([proveedor({ requiereCompletar: true })], 1))
   renderConQuery(<ProveedoresScreen />)
 
   const fila = await screen.findByRole('button', { name: /^Insumos del Sur SA/ })
-  expect(within(fila).getByText('Faltan datos')).toBeTruthy()
-  expect(within(fila).getByText('Le debemos')).toBeTruthy()
-  expect(within(fila).getByText('$ 710.430,00')).toBeTruthy()
+  expect(within(fila).getByText('Faltan datos de compra')).toBeTruthy()
+  expect(within(within(fila).getByTestId('chips-proveedor')).queryByText('Le debemos')).toBeNull()
+  const saldo = within(fila).getByTestId('saldo-proveedor')
+  expect(within(saldo).getByText('Le debemos')).toBeTruthy()
+  expect(within(saldo).getByText('$ 710.430,00')).toBeTruthy()
+  expect(estilo(saldo).marginLeft).toBeUndefined()
 })
 
 it('"N de M proveedores" va en una tarjeta', async () => {
