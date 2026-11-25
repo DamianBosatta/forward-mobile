@@ -4,8 +4,7 @@ import type { components } from '@/libs/api-client/generated/schema'
 import { cuentasKeys } from '@/features/cuentas/api/queries'
 import type { RangoDeDias } from '@/features/cuentas/lib/periodo'
 
-/** `direccion` (opcional, solo clientes) lo agrega el contrato de 2026-11-24 y todavía no está en el schema generado: sin ella, la fila dice "Sin dirección cargada". */
-export type Deudor = components['schemas']['DeudaSocioDto'] & { direccion?: string | null }
+export type Deudor = components['schemas']['DeudaSocioDto']
 type DeudoresPagina = components['schemas']['DeudasSocioPagedResult']
 
 export interface FiltrosDeudores {

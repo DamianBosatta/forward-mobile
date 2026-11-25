@@ -24964,6 +24964,7 @@ export interface components {
             /** Format: uuid */
             vendedorId?: string | null;
             vendedorNombre?: string | null;
+            direccion?: string | null;
         };
         DeudaSocioDtoPaginatedResponse: {
             /** Format: int32 */
@@ -26827,6 +26828,8 @@ export interface components {
             stockAnterior?: number | null;
             /** Format: double */
             stockNuevo?: number | null;
+            origenTipo?: string | null;
+            origenNumero?: string | null;
         };
         MovimientoStockDtoPaginatedResponse: {
             /** Format: int32 */
