@@ -234,36 +234,51 @@ export function RegistrarCobro({ socioId, onVolver, conBarra = false, medioInici
   )
 
   const pie = (
-    <PieFijo>
+    <PieFijo testID="cobro-pie">
       <Button size="lg" label={total > 0 ? `Registrar cobro de ${formatImporte(total)}` : 'Registrar cobro'} loading={registrar.isPending} disabled={registrar.isPending || sinCajaUtil || subiendo} onPress={enviar} />
     </PieFijo>
+  )
+
+  // MP-23 A: panel de Cuentas = tablet horizontal sin barra propia (con barra es la pantalla completa, de 640).
+  const enPanel = isTabletLandscape && !conBarra
+  const contenido = (
+    <>
+      {encabezado}
+      {isTabletLandscape ? (
+        <View style={{ flexDirection: 'row', gap: space[6], alignItems: 'flex-start' }}>
+          <View style={{ flex: 1, minWidth: 0, gap: space[4] }}>
+            <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>¿Qué cobrás?</Text>
+            {imputacion}
+          </View>
+          <View style={{ flex: 1, minWidth: 0, gap: space[4] }}>
+            <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>¿Cómo te pagó?</Text>
+            {pago}
+          </View>
+        </View>
+      ) : (
+        <>
+          {pago}
+          {imputacion}
+        </>
+      )}
+      {avisos}
+    </>
   )
 
   return (
     <View style={{ flex: 1 }}>
       {conBarra ? <TopBar lineasMultiples title="Cobrar" subtitle={estado.data ? `${direccionDeEntrega(cliente)} · Saldo ${formatImporte(estado.data.saldoActual)}` : direccionDeEntrega(cliente)} leading={{ kind: 'atras', onPress: onVolver }} /> : null}
-      <ScrollView contentContainerStyle={{ padding: space[4] }} keyboardShouldPersistTaps="handled">
-        <FormContainer style={{ gap: space[4] }}>
-          {encabezado}
-          {isTabletLandscape ? (
-            <View style={{ flexDirection: 'row', gap: space[6], alignItems: 'flex-start' }}>
-              <View style={{ flex: 1, minWidth: 0, gap: space[4] }}>
-                <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>¿Qué cobrás?</Text>
-                {imputacion}
-              </View>
-              <View style={{ flex: 1, minWidth: 0, gap: space[4] }}>
-                <Text accessibilityRole="header" style={{ ...typeScale.seccion, color: c.text }}>¿Cómo te pagó?</Text>
-                {pago}
-              </View>
-            </View>
-          ) : (
-            <>
-              {pago}
-              {imputacion}
-            </>
-          )}
-          {avisos}
-        </FormContainer>
+      <ScrollView style={enPanel ? { flex: 1 } : undefined} contentContainerStyle={{ padding: space[4] }} keyboardShouldPersistTaps="handled">
+        {enPanel ? (
+          // MP-23 A: en el panel de Cuentas (tablet horizontal) las dos columnas usan todo el ancho del panel, no los 640 del formulario.
+          <View testID="cobro-panel" style={{ gap: space[4] }}>
+            {contenido}
+          </View>
+        ) : (
+          <FormContainer style={{ gap: space[4] }}>
+            {contenido}
+          </FormContainer>
+        )}
       </ScrollView>
       {pie}
     </View>

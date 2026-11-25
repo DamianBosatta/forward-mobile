@@ -255,14 +255,19 @@ export function ListaVentasNueva({ detalle, filtroDeRuta = null }: Props) {
     />
   )
 
+  // P17 A (MV-26, MC-28): en tablet horizontal el selector de pestañas va en la columna de la lista, no cruza los dos paneles.
+  const selector = (
+    <View testID="selector-pestanas" style={{ paddingHorizontal: space[4], paddingTop: space[3] }}>
+      <Segmented accessibilityLabel="Pestaña" options={PESTANAS} value={l.pestana} onChange={(p) => { l.setPestana(p); setElegida(null) }} />
+    </View>
+  )
+
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar title="Ventas" leading={leading} />
-      <View style={{ paddingHorizontal: space[4], paddingTop: space[3] }}>
-        <Segmented accessibilityLabel="Pestaña" options={PESTANAS} value={l.pestana} onChange={(p) => { l.setPestana(p); setElegida(null) }} />
-      </View>
+      {isTabletLandscape ? null : selector}
       <TwoPane
-        list={esBorradores ? listaBorradores : listaVentas}
+        list={isTabletLandscape ? <View style={{ flex: 1 }}>{selector}{esBorradores ? listaBorradores : listaVentas}</View> : esBorradores ? listaBorradores : listaVentas}
         detail={isTabletLandscape && elegida ? detalle(elegida, () => setElegida(null)) : null}
         emptyDetail={<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: space[6] }}><Text style={secundario}>Elegí una venta para ver el detalle.</Text></View>}
       />

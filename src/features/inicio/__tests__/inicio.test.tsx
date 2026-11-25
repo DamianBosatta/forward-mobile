@@ -7,6 +7,7 @@ import { useAnularVenta, useAutorizarVenta, ventasKeys } from '@/libs/api-client
 import { useCreateCompra } from '@/libs/api-client/compras'
 import { crearQueryClient } from '@/core/query/queryClient'
 import { InicioScreen } from '../components/InicioScreen'
+import { FORM_MAX_WIDTH } from '@/core/ui/fw'
 
 const mockGet = jest.fn()
 const mockEscribir = jest.fn((_url: string) => Promise.resolve({}))
@@ -617,6 +618,32 @@ describe('Inicio: tablet', () => {
 
     expect(screen.queryByTestId('inicio-pendientes')).toBeNull()
     expect(screen.getAllByLabelText(/por recibir/)).toHaveLength(1)
+  })
+})
+
+describe('Inicio: ancho en tablet (P17 A)', () => {
+  const columna = () => StyleSheet.flatten(screen.getByTestId('inicio-scroll').props.contentContainerStyle) as ViewStyle
+
+  it('en tablet es una sola columna centrada de FORM_MAX_WIDTH (640), con las ventas de hoy en una columna', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(2, [VENTA_HOY, { ...VENTA_HOY, id: 'v2', codigoPedido: 'A00419' }]) })
+    mockAncho.mockReturnValue(1194)
+    pintar()
+    await screen.findByLabelText(/^Pedido A00418/)
+
+    expect(columna().maxWidth).toBe(FORM_MAX_WIDTH)
+    expect(columna().alignSelf).toBe('center')
+    expect(StyleSheet.flatten(screen.getByTestId('inicio-recientes').props.style)?.flexDirection).not.toBe('row')
+  })
+
+  it('en teléfono no cambia: sin ancho máximo', async () => {
+    conPermisos('MOD_VENTAS')
+    servidor({ resumen: RESUMEN, hoy: pagina(0, []) })
+    mockAncho.mockReturnValue(390)
+    pintar()
+    await screen.findByText('Hola, Emanuel')
+
+    expect(columna().maxWidth).toBeUndefined()
   })
 })
 

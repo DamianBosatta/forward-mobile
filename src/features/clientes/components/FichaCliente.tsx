@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router'
 import { ChevronRight, FilePen, FileText, HandCoins, MapPin, MessageCircle, Pencil, Phone, ShoppingCart } from 'lucide-react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { formatearCuit } from '@/libs/reglas/cuit'
-import { Button, Notice, Segmented, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, useInsetInferior } from '@/core/ui/fw'
+import { Button, Notice, Segmented, StatusChip, TopBar, TotalsRow, chipForEstado, formatImporte, useColumnaDeFormulario, useInsetInferior } from '@/core/ui/fw'
 import { MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
 import { useSocio } from '@/libs/api-client/socios'
 import { useVentas } from '@/libs/api-client/ventas'
@@ -61,6 +61,7 @@ function Titulo({ children }: { children: string }) {
  */
 export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: boolean }) {
   const insetInferior = useInsetInferior()
+  const columna = useColumnaDeFormulario()
   const c = useColors()
   const router = useRouter()
   const { canUpdate } = usePermissions()
@@ -133,7 +134,7 @@ export function FichaCliente({ id, conBarra = false }: { id: string; conBarra?: 
           actions={puedeEditar ? [{ icon: Pencil, accessibilityLabel: 'Editar', onPress: () => router.push({ pathname: '/(tabs)/socios/nuevo', params: { id } }) }] : []}
         />
       ) : null}
-      <ScrollView contentContainerStyle={{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[4] }}>
+      <ScrollView testID="ficha-scroll" contentContainerStyle={[{ padding: space[4], paddingBottom: space[4] + insetInferior, gap: space[4] }, columna]}>
         {!conBarra ? (
           <View style={{ gap: space[1] }}>
             <Text accessibilityRole="header" style={{ ...typeScale.titulo, color: c.text }}>{direccion}</Text>

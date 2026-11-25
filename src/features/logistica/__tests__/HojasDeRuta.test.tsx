@@ -1,11 +1,15 @@
 import React from 'react'
-import { StyleSheet } from 'react-native'
+import { FlatList, StyleSheet } from 'react-native'
 import { themeColors, useThemeStore } from '@/libs/theme'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, userEvent } from '@testing-library/react-native'
 import { crearQueryClient } from '@/core/query/queryClient'
 import { fechaCorta } from '@/core/utils/fecha'
+import { FORM_MAX_WIDTH } from '@/core/ui/fw'
 import { HojasDeRutaScreen } from '../components/HojasDeRutaScreen'
+
+let mockAncho = 390
+jest.mock('@/libs/useResponsive', () => ({ useResponsive: () => ({ width: mockAncho, isTablet: mockAncho >= 600, isTabletLandscape: mockAncho >= 900 }) }))
 
 const mockGet = jest.fn()
 jest.mock('@/core/api/client', () => ({
@@ -25,7 +29,7 @@ const HOJA = (id: string, chofer: string, patente: string, paradas: number, esta
 
 const pintar = () => render(<QueryClientProvider client={crearQueryClient({ retry: false })}><HojasDeRutaScreen /></QueryClientProvider>)
 
-beforeEach(() => jest.clearAllMocks())
+beforeEach(() => { jest.clearAllMocks(); mockAncho = 390 })
 
 describe('Hojas de ruta de la empresa: filas y bloque', () => {
   it('MD-9: the subtitle says "Todas las hojas"', async () => {
@@ -111,5 +115,30 @@ describe.each(['light', 'dark'] as const)('Hojas de ruta: receta FWD (%s)', (mod
     expect(estiloDe(screen.getByTestId('bloque-entregas')).backgroundColor).toBe(themeColors[modo].ink)
     expect(estiloDe(screen.getByText('8') as never).color).toBe(themeColors[modo].lime)
     expect(screen.getByLabelText('Estado: Finalizada')).toBeTruthy()
+  })
+})
+
+describe('Hojas de ruta: ancho en tablet (P17 A, MD-16)', () => {
+  const estilos = () => ({
+    filtros: StyleSheet.flatten(screen.getByTestId('hojas-filtros').props.style),
+    lista: StyleSheet.flatten(screen.UNSAFE_getByType(FlatList).props.contentContainerStyle),
+  })
+
+  it('en tablet los filtros y la lista son una sola columna centrada de FORM_MAX_WIDTH (640)', async () => {
+    mockAncho = 1194
+    mockGet.mockResolvedValue([HOJA('aaaaaaaa-1111', 'Juan Pérez', 'AB123CD', 4)])
+    pintar()
+    await screen.findByText('Juan Pérez')
+    const { filtros, lista } = estilos()
+    for (const e of [filtros, lista]) { expect(e.maxWidth).toBe(FORM_MAX_WIDTH); expect(e.alignSelf).toBe('center') }
+  })
+
+  it('en teléfono no cambia: sin ancho máximo', async () => {
+    mockGet.mockResolvedValue([HOJA('aaaaaaaa-1111', 'Juan Pérez', 'AB123CD', 4)])
+    pintar()
+    await screen.findByText('Juan Pérez')
+    const { filtros, lista } = estilos()
+    expect(filtros.maxWidth).toBeUndefined()
+    expect(lista.maxWidth).toBeUndefined()
   })
 })

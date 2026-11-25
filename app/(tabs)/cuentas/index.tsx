@@ -137,6 +137,32 @@ function CuentasCorrientesScreen() {
     </View>
   )
 
+  // MP-29 (P17 A): en tablet horizontal el encabezado va dentro de la columna de la lista; el detalle toma todo el alto.
+  const encabezado = (
+    <>
+      <ResumenDeCuentas saldoTotal={saldoTotal} clientesConDeuda={resumenDeudas.data?.clientesConDeuda} cargando={isLoading} />
+      <BuscadorCartera sobre="pantalla" grande valor={busqueda} onCambio={setBusqueda} />
+      <View style={{ flexDirection: 'row', paddingHorizontal: space[4], paddingBottom: space[1] }}>
+        <FiltroChip label="Con deuda vencida" activo={soloVencidas} onPress={() => setSoloVencidas(v => !v)} />
+      </View>
+    </>
+  )
+
+  const selectorDeLado = (
+    <View style={{ paddingHorizontal: space[4], paddingTop: space[3] }}>
+      <Segmented
+        options={[
+          { value: 'medeben', label: totalCount !== undefined ? `Me deben · ${totalCount}` : 'Me deben' },
+          ...(puedeVerDeudas ? [{ value: 'deudores' as const, label: 'Deudas' }] : []),
+          { value: 'debo', label: 'Debo' },
+        ]}
+        value={lado}
+        onChange={setLado}
+        accessibilityLabel="Lado de las cuentas"
+      />
+    </View>
+  )
+
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <TopBar
@@ -154,18 +180,7 @@ function CuentasCorrientesScreen() {
           <Notice tone="info">Elegí el cliente que te dio el cheque.</Notice>
         </View>
       ) : null}
-      <View style={{ paddingHorizontal: space[4], paddingTop: space[3] }}>
-        <Segmented
-          options={[
-            { value: 'medeben', label: totalCount !== undefined ? `Me deben · ${totalCount}` : 'Me deben' },
-            ...(puedeVerDeudas ? [{ value: 'deudores' as const, label: 'Deudas' }] : []),
-            { value: 'debo', label: 'Debo' },
-          ]}
-          value={lado}
-          onChange={setLado}
-          accessibilityLabel="Lado de las cuentas"
-        />
-      </View>
+      {isTabletLandscape && lado === 'medeben' ? null : selectorDeLado}
       {lado === 'deudores' ? (
         <DeudoresClientes onAbrir={id => router.push({ pathname: '/(tabs)/cuentas/[id]', params: { id } })} />
       ) : lado === 'debo' ? (
@@ -178,33 +193,29 @@ function CuentasCorrientesScreen() {
         )
       ) : (
         <>
-          <ResumenDeCuentas saldoTotal={saldoTotal} clientesConDeuda={resumenDeudas.data?.clientesConDeuda} cargando={isLoading} />
-          <BuscadorCartera sobre="pantalla" grande valor={busqueda} onCambio={setBusqueda} />
-          <View style={{ flexDirection: 'row', paddingHorizontal: space[4], paddingBottom: space[1] }}>
-            <FiltroChip label="Con deuda vencida" activo={soloVencidas} onPress={() => setSoloVencidas(v => !v)} />
-          </View>
-      <TwoPane
-        list={lista}
-        detail={
-          isTabletLandscape && abierto ? (
-            cobrando ? (
-              <View style={{ flex: 1 }}>
-                <View style={{ padding: space[4], paddingBottom: 0, alignItems: 'flex-start' }}>
-                  <Button label="Volver a la cuenta" variant="secundario" onPress={() => setCobrando(false)} />
-                </View>
-                <RegistrarCobro key={abierto} socioId={abierto} medioInicial={cargandoCheque ? 'cheque' : undefined} onVolver={() => setCobrando(false)} />
-              </View>
-            ) : (
-              <CuentaCorrienteCliente key={abierto} socioId={abierto} onRegistrarCobro={() => setCobrando(true)} />
-            )
-          ) : null
-        }
-        emptyDetail={
-          <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center', marginTop: space[12] }}>
-            Elegí un cliente para ver su cuenta.
-          </Text>
-        }
-      />
+          {isTabletLandscape ? null : encabezado}
+          <TwoPane
+            list={isTabletLandscape ? <View style={{ flex: 1 }}>{selectorDeLado}{encabezado}{lista}</View> : lista}
+            detail={
+              isTabletLandscape && abierto ? (
+                cobrando ? (
+                  <View style={{ flex: 1 }}>
+                    <View style={{ padding: space[4], paddingBottom: 0, alignItems: 'flex-start' }}>
+                      <Button label="Volver a la cuenta" variant="secundario" onPress={() => setCobrando(false)} />
+                    </View>
+                    <RegistrarCobro key={abierto} socioId={abierto} medioInicial={cargandoCheque ? 'cheque' : undefined} onVolver={() => setCobrando(false)} />
+                  </View>
+                ) : (
+                  <CuentaCorrienteCliente key={abierto} socioId={abierto} onRegistrarCobro={() => setCobrando(true)} />
+                )
+              ) : null
+            }
+            emptyDetail={
+              <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center', marginTop: space[12] }}>
+                Elegí un cliente para ver su cuenta.
+              </Text>
+            }
+          />
         </>
       )}
     </View>

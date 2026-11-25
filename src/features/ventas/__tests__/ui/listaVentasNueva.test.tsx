@@ -120,6 +120,20 @@ describe('lista de ventas nueva', () => {
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/ventas/v2')
   })
 
+  it('en tablet horizontal el selector de pestañas queda dentro de la columna de la lista (P17 A, MV-26)', async () => {
+    pantalla(1200)
+    await screen.findByText('Elegí una venta para ver el detalle.')
+    const lista = within(screen.getByTestId('two-pane-list'))
+    expect(lista.getByTestId('selector-pestanas')).toBeTruthy()
+    expect(lista.getByRole('radio', { name: 'Borradores' })).toBeTruthy()
+  })
+
+  it('en el teléfono el selector de pestañas sigue arriba de la lista, fuera de ella', async () => {
+    pantalla(390)
+    expect(await screen.findByRole('radio', { name: 'Borradores' })).toBeTruthy()
+    expect(within(screen.getByTestId('two-pane-list')).queryByRole('radio', { name: 'Borradores' })).toBeNull()
+  })
+
   it('en tablet horizontal el detalle se abre al costado, sin salir de la lista', async () => {
     pantalla(1200)
     expect(await screen.findByText('Elegí una venta para ver el detalle.')).toBeTruthy()

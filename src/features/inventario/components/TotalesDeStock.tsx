@@ -1,7 +1,7 @@
 import React from 'react'
 import { Text, View } from 'react-native'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
-import { formatImporte } from '@/core/ui/fw'
+import { formatImporte, useColumnaDeFormulario } from '@/core/ui/fw'
 import { mostrarNumero } from '@/core/utils/numero'
 import type { StockResumen } from '../hooks/useStockPorDeposito'
 import { useValorDelStockACosto } from '../hooks/useConsultasDeStock'
@@ -41,6 +41,8 @@ interface Props {
  */
 export function TotalesDeStock({ resumen, conError, vista, valorCosto }: Props) {
   const c = useColors()
+  // P17 A / MD-20: en tablet los totales van en la columna de FORM_MAX_WIDTH; en teléfono no cambia.
+  const columna = useColumnaDeFormulario()
   if (conError) {
     return (
       <Text accessibilityRole="alert" style={[typeScale.secundario, { color: c.chip.anulado.text, paddingHorizontal: space[4], paddingTop: space[3] }]}>
@@ -60,7 +62,7 @@ export function TotalesDeStock({ resumen, conError, vista, valorCosto }: Props) 
   for (let i = 0; i < totales.length; i += 2) filas.push(totales.slice(i, i + 2))
 
   return (
-    <View style={{ gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }}>
+    <View testID="totales-de-stock" style={[{ gap: space[2], paddingHorizontal: space[4], paddingTop: space[3] }, columna]}>
       {filas.map((fila) => (
         <View key={fila[0].label} style={{ flexDirection: 'row', gap: space[2] }}>
           {fila.map((t) => <Total key={t.label} label={t.label} valor={mostrarNumero(t.valor)} protagonista={t.label === 'Artículos'} />)}

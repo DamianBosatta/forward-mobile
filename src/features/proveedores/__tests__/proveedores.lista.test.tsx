@@ -1,5 +1,6 @@
 import React from 'react'
-import { fireEvent, screen, userEvent, waitFor } from '@testing-library/react-native'
+import { StyleSheet } from 'react-native'
+import { fireEvent, within, screen, userEvent, waitFor } from '@testing-library/react-native'
 import ProveedoresScreen from '../../../../app/(tabs)/proveedores/index'
 import { api } from '@/core/api/client'
 import { clienteDeLista, conPermisos, pagina, renderConQuery } from '../../clientes/__testing__/ayuda'
@@ -166,5 +167,30 @@ describe.each(['light', 'dark'] as const)('revisión visual de proveedores (%s)'
     renderConQuery(<ProveedoresScreen />)
     await screen.findByText('Insumos del Sur SA')
     expect(screen.queryByLabelText('Abrir menú')).toBeNull()
+  })
+})
+
+describe('buscador sobre la columna de la lista (P17 A, MC-28)', () => {
+  it('en tablet vertical el buscador usa la columna de 640, la misma de la lista', async () => {
+    mockAncho.mockReturnValue(700)
+    renderConQuery(<ProveedoresScreen />)
+    await screen.findByText('Insumos del Sur SA')
+    const estilo = StyleSheet.flatten(screen.getByTestId('buscador-proveedores').props.style)
+    expect(estilo.maxWidth).toBe(640)
+    expect(estilo.alignSelf).toBe('center')
+  })
+
+  it('en tablet horizontal el buscador queda dentro de la columna de la lista', async () => {
+    mockAncho.mockReturnValue(1000)
+    renderConQuery(<ProveedoresScreen />)
+    await screen.findByText('Insumos del Sur SA')
+    expect(within(screen.getByTestId('columna-lista-proveedores')).getByTestId('buscador-proveedores')).toBeTruthy()
+  })
+
+  it('en el teléfono el buscador no cambia: sin ancho máximo', async () => {
+    renderConQuery(<ProveedoresScreen />)
+    await screen.findByText('Insumos del Sur SA')
+    expect(StyleSheet.flatten(screen.getByTestId('buscador-proveedores').props.style)?.maxWidth).toBeUndefined()
+    expect(screen.queryByTestId('columna-lista-proveedores')).toBeNull()
   })
 })

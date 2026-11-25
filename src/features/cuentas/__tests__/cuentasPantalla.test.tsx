@@ -1,5 +1,5 @@
 import React from 'react'
-import { screen, userEvent, waitFor } from '@testing-library/react-native'
+import { screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import CuentasCorrientesScreen from '../../../../app/(tabs)/cuentas/index'
 import { api } from '@/core/api/client'
 import { formatImporte as $ } from '@/core/ui/fw'
@@ -297,5 +297,23 @@ describe('Me deben: antigüedad de la deuda más vieja', () => {
 
     await screen.findByRole('button', { name: /^Av\. del Valle 89/ }, ESPERA)
     expect(screen.queryByText(/Vencida ·|Deuda de/)).toBeNull()
+  })
+})
+
+describe('encabezado de Cuentas en tablet horizontal (P17 A, MP-29)', () => {
+  it('el selector, el resumen y el buscador van dentro de la columna de la lista', async () => {
+    mockHorizontal.mockReturnValue(true)
+    renderConQuery(<CuentasCorrientesScreen />)
+    await screen.findByText('Mostrando 1 de 142', undefined, ESPERA)
+    const lista = within(screen.getByTestId('two-pane-list'))
+    expect(lista.getByRole('radio', { name: /Me deben/ })).toBeTruthy()
+    expect(lista.getByText('Con deuda vencida')).toBeTruthy()
+  })
+
+  it('en el teléfono el encabezado sigue arriba de la lista, fuera de ella', async () => {
+    renderConQuery(<CuentasCorrientesScreen />)
+    await screen.findByText('Mostrando 1 de 142', undefined, ESPERA)
+    expect(screen.getByRole('radio', { name: /Me deben/ })).toBeTruthy()
+    expect(within(screen.getByTestId('two-pane-list')).queryByRole('radio', { name: /Me deben/ })).toBeNull()
   })
 })

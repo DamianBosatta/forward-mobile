@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router'
 import { opcionDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosDeRuta'
 import { importe, radii, space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Fab, Notice, TopBar, formatImporte, useInsetInferior, useMenuLeading } from '@/core/ui/fw'
+import { Fab, Notice, TopBar, formatImporte, useColumnaDeFormulario, useInsetInferior, useMenuLeading } from '@/core/ui/fw'
 import { espacioBajoElFab } from '@/core/ui/fw/espacioDelFab'
 import { EstadoDePantalla, textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
@@ -37,6 +37,7 @@ function ClientesScreen() {
   const router = useRouter()
   const menu = useMenuLeading()
   const { width } = useResponsive()
+  const columna = useColumnaDeFormulario()
   const { canCreate } = usePermissions()
   const [busqueda, setBusqueda] = useFiltroPersistente('socios.busqueda', '')
   const [abierto, setAbierto] = useState<string | null>(null)
@@ -152,13 +153,9 @@ function ClientesScreen() {
     </View>
   )
 
-  return (
-    <View style={{ flex: 1, backgroundColor: c.bg }}>
-      <TopBar
-        title="Clientes"
-        subtitle={verDeudores ? 'Deudores' : 'Mi cartera'}
-        leading={menu}
-      />
+  // P17 A (MC-28): buscador y pestañas usan la misma columna que la lista (en dos paneles, dentro de la columna de la lista).
+  const encabezado = (
+    <View testID="encabezado-clientes" style={columna}>
       {verDeudores ? null : <BuscadorCartera sobre="pantalla" grande valor={busqueda} onCambio={setBusqueda} />}
       <FiltrosCartera
         sobre="pantalla"
@@ -167,10 +164,21 @@ function ClientesScreen() {
         totalCartera={verDeudores || filtrando || busqueda.trim() ? undefined : totalCount}
         deudores={puedeVerDeudores ? { activo: verDeudores, onCambio: setSoloDeudores } : undefined}
       />
+    </View>
+  )
+
+  return (
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <TopBar
+        title="Clientes"
+        subtitle={verDeudores ? 'Deudores' : 'Mi cartera'}
+        leading={menu}
+      />
+      {dosPaneles ? null : encabezado}
 
       {dosPaneles ? (
         <View style={{ flex: 1, flexDirection: 'row' }}>
-          <View style={{ width: 420, borderRightWidth: 1, borderRightColor: c.border }}>{lista}</View>
+          <View testID="columna-lista-clientes" style={{ width: 420, borderRightWidth: 1, borderRightColor: c.border }}>{encabezado}{lista}</View>
           <View style={{ flex: 1 }}>
             {abierto ? (
               <FichaCliente key={abierto} id={abierto} />
