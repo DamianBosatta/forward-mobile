@@ -7,7 +7,7 @@ import { opcionDeRuta, useParametrosDeRuta } from '@/core/navigation/parametrosD
 import { ArrowLeftRight } from 'lucide-react-native'
 import { space, typeScale, useColors } from '@/libs/theme'
 import { useResponsive } from '@/libs/useResponsive'
-import { Button, FiltroChip, Notice, Segmented, TopBar, TwoPane, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
+import { Button, FiltroChip, Notice, Segmented, TopBar, TwoPane, useColumnaDeFormulario, useMenuLeading, useInsetInferior } from '@/core/ui/fw'
 import { textoSinConexion } from '@/core/ui/fw/EstadoDePantalla'
 import { esFallaDeRed } from '@/core/api/errores'
 import { MOTIVO_SIN_PERMISO_DE_TRANSFERENCIA, MotivoDeshabilitado } from '@/core/ui/fw/MotivoDeshabilitado'
@@ -46,6 +46,7 @@ function CuentasCorrientesScreen() {
   const router = useRouter()
   const menu = useMenuLeading()
   const { isTabletLandscape, width } = useResponsive()
+  const columna = useColumnaDeFormulario()
   // Tesorería > "Cargar un cheque" llega con `cobrar=cheque`: elegir el cliente abre su cobro con el medio Cheque.
   const { cobrar } = useParametrosDeRuta({ cobrar: opcionDeRuta(['cheque']) })
   const cargandoCheque = cobrar === 'cheque'
@@ -180,44 +181,47 @@ function CuentasCorrientesScreen() {
           <Notice tone="info">Elegí el cliente que te dio el cheque.</Notice>
         </View>
       ) : null}
-      {isTabletLandscape && lado === 'medeben' ? null : selectorDeLado}
-      {lado === 'deudores' ? (
-        <DeudoresClientes onAbrir={id => router.push({ pathname: '/(tabs)/cuentas/[id]', params: { id } })} />
-      ) : lado === 'debo' ? (
-        puedeVerDeudas ? (
-          <DeudasAProveedores onPagar={socioId => router.push({ pathname: '/(tabs)/tesoreria/pagos/pagar', params: { socioId } })} />
+      {/* P17 A: en tablet "Deudas" y "Debo" son listas de una columna: selector y lista comparten la columna de 640. */}
+      <View testID="columna-lado-cuentas" style={[{ flex: 1 }, lado === 'medeben' ? null : columna]}>
+        {isTabletLandscape && lado === 'medeben' ? null : selectorDeLado}
+        {lado === 'deudores' ? (
+          <DeudoresClientes onAbrir={id => router.push({ pathname: '/(tabs)/cuentas/[id]', params: { id } })} />
+        ) : lado === 'debo' ? (
+          puedeVerDeudas ? (
+            <DeudasAProveedores onPagar={socioId => router.push({ pathname: '/(tabs)/tesoreria/pagos/pagar', params: { socioId } })} />
+          ) : (
+            <View style={{ padding: space[4] }}>
+              <Notice tone="info">{AVISO_DEBO_SIN_PERMISO}</Notice>
+            </View>
+          )
         ) : (
-          <View style={{ padding: space[4] }}>
-            <Notice tone="info">{AVISO_DEBO_SIN_PERMISO}</Notice>
-          </View>
-        )
-      ) : (
-        <>
-          {isTabletLandscape ? null : encabezado}
-          <TwoPane
-            list={isTabletLandscape ? <View style={{ flex: 1 }}>{selectorDeLado}{encabezado}{lista}</View> : lista}
-            detail={
-              isTabletLandscape && abierto ? (
-                cobrando ? (
-                  <View style={{ flex: 1 }}>
-                    <View style={{ padding: space[4], paddingBottom: 0, alignItems: 'flex-start' }}>
-                      <Button label="Volver a la cuenta" variant="secundario" onPress={() => setCobrando(false)} />
+          <>
+            {isTabletLandscape ? null : encabezado}
+            <TwoPane
+              list={isTabletLandscape ? <View style={{ flex: 1 }}>{selectorDeLado}{encabezado}{lista}</View> : lista}
+              detail={
+                isTabletLandscape && abierto ? (
+                  cobrando ? (
+                    <View style={{ flex: 1 }}>
+                      <View style={{ padding: space[4], paddingBottom: 0, alignItems: 'flex-start' }}>
+                        <Button label="Volver a la cuenta" variant="secundario" onPress={() => setCobrando(false)} />
+                      </View>
+                      <RegistrarCobro key={abierto} socioId={abierto} medioInicial={cargandoCheque ? 'cheque' : undefined} onVolver={() => setCobrando(false)} />
                     </View>
-                    <RegistrarCobro key={abierto} socioId={abierto} medioInicial={cargandoCheque ? 'cheque' : undefined} onVolver={() => setCobrando(false)} />
-                  </View>
-                ) : (
-                  <CuentaCorrienteCliente key={abierto} socioId={abierto} onRegistrarCobro={() => setCobrando(true)} />
-                )
-              ) : null
-            }
-            emptyDetail={
-              <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center', marginTop: space[12] }}>
-                Elegí un cliente para ver su cuenta.
-              </Text>
-            }
-          />
-        </>
-      )}
+                  ) : (
+                    <CuentaCorrienteCliente key={abierto} socioId={abierto} onRegistrarCobro={() => setCobrando(true)} />
+                  )
+                ) : null
+              }
+              emptyDetail={
+                <Text style={{ ...typeScale.cuerpo, color: c.textSecondary, textAlign: 'center', marginTop: space[12] }}>
+                  Elegí un cliente para ver su cuenta.
+                </Text>
+              }
+            />
+          </>
+        )}
+      </View>
     </View>
   )
 }

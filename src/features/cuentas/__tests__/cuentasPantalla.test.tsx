@@ -1,4 +1,5 @@
 import React from 'react'
+import { StyleSheet } from 'react-native'
 import { screen, userEvent, waitFor, within } from '@testing-library/react-native'
 import CuentasCorrientesScreen from '../../../../app/(tabs)/cuentas/index'
 import { api } from '@/core/api/client'
@@ -193,6 +194,56 @@ describe('Cuentas: deudas con proveedores y clientes con deuda (MOD_PAGOS:Read)'
       return base(url)
     })
   }
+
+  describe('columna de 640 en tablet (P17 A)', () => {
+    const PERMISOS = [{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true }]
+
+    it.each(['Deudas', 'Debo'])('en tablet horizontal el lado "%s" pone el selector y la lista en la columna de 640', async lado => {
+      mockHorizontal.mockReturnValue(true)
+      conPermisos(PERMISOS)
+      servidorConDeudas()
+      renderConQuery(<CuentasCorrientesScreen />)
+      await userEvent.press(await screen.findByRole('radio', { name: lado }, ESPERA))
+
+      const columna = await screen.findByTestId('columna-lado-cuentas', {}, ESPERA)
+      const estilo = StyleSheet.flatten(columna.props.style)
+      expect(estilo.maxWidth).toBe(640)
+      expect(estilo.alignSelf).toBe('center')
+      expect(within(columna).getByRole('radio', { name: lado })).toBeTruthy()
+    })
+
+    it('en el teléfono no hay columna: sin ancho máximo', async () => {
+      conPermisos(PERMISOS)
+      servidorConDeudas()
+      renderConQuery(<CuentasCorrientesScreen />)
+      await userEvent.press(await screen.findByRole('radio', { name: 'Debo' }, ESPERA))
+
+      const columna = await screen.findByTestId('columna-lado-cuentas', {}, ESPERA)
+      expect(StyleSheet.flatten(columna.props.style).maxWidth).toBeUndefined()
+    })
+
+    it('en el teléfono el selector no se remonta al pasar de "Me deben" a "Deudas" (mantiene el foco de TalkBack)', async () => {
+      conPermisos(PERMISOS)
+      servidorConDeudas()
+      renderConQuery(<CuentasCorrientesScreen />)
+      const antes = await screen.findByLabelText('Lado de las cuentas', {}, ESPERA)
+
+      await userEvent.press(screen.getByRole('radio', { name: 'Deudas' }))
+      await screen.findByTestId('columna-lado-cuentas', {}, ESPERA)
+
+      expect(screen.getByLabelText('Lado de las cuentas')).toBe(antes)
+    })
+
+    it('"Me deben" en tablet horizontal no cambia: el selector sigue en la columna de la lista, sin ancho máximo', async () => {
+      mockHorizontal.mockReturnValue(true)
+      conPermisos(PERMISOS)
+      servidorConDeudas()
+      renderConQuery(<CuentasCorrientesScreen />)
+
+      expect(await screen.findByRole('radio', { name: 'Me deben · 142' }, ESPERA)).toBeTruthy()
+      expect(StyleSheet.flatten(screen.getByTestId('columna-lado-cuentas').props.style).maxWidth).toBeUndefined()
+    })
+  })
 
   it('con MOD_PAGOS:Read el lado "Debo" lista las deudas con proveedores y el total del servidor', async () => {
     conPermisos([{ module: 'MOD_CC', canRead: true }, { module: 'MOD_PAGOS', canRead: true }])
