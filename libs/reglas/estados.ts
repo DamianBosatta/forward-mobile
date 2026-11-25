@@ -99,7 +99,7 @@ export interface EstadoHojaRutaInfo extends EstadoInfo {
 
 export const ESTADO_HOJA_RUTA = {
   Programada: { valor: 1, etiqueta: 'Programada', tono: 'pendiente' },
-  EnCurso: { valor: 2, etiqueta: 'En Curso', tono: 'enruta' },
+  EnCurso: { valor: 2, etiqueta: 'En curso', tono: 'enruta' },
   Finalizada: { valor: 3, etiqueta: 'Finalizada', tono: 'entregada' },
   Cancelada: { valor: 4, etiqueta: 'Cancelada', tono: 'anulada' },
   Documentada: { valor: 5, etiqueta: 'Documentada', tono: 'pendiente' },
